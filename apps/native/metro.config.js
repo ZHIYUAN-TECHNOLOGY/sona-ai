@@ -11,4 +11,9 @@ config.resolver.blockList = [
   /[/\\]packages[/\\]infra[/\\]\.alchemy(?:[/\\]|$)/,
 ];
 
+// Bundle audio assets (spike sample consult clip) as binary assets.
+if (!config.resolver.assetExts.includes("wav")) {
+  config.resolver.assetExts.push("wav");
+}
+
 module.exports = config;
