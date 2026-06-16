@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sona — UI Prototype</title>
+<style>
+  :root{
+    --bg:#0a0f14; --ink:#e7eef5; --muted:#8aa0b2; --line:#223040; --teal:#14b8a6; --teal-d:#0f766e;
+    --green:#10b981; --amber:#f59e0b; --red:#ef4444; --violet:#7c3aed; --blue:#2563eb;
+    /* app (light) */
+    --app-bg:#f4f7f9; --card:#ffffff; --app-ink:#0f1c26; --app-mut:#5b7385; --app-line:#e6ecf1;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,#13202b 0,var(--bg) 55%);color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1240px;margin:0 auto;padding:40px 24px 90px}
+  header.top{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+  .logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,#2dd4bf,#0ea5a0);display:grid;place-items:center;font-weight:800;color:#03201d;font-size:20px}
+  h1{font-size:26px;margin:0;letter-spacing:-.02em}
+  .sub{color:var(--muted);margin:2px 0 0;font-size:13.5px}
+  .note{margin:20px 0 8px;color:var(--muted);font-size:13px;border-left:3px solid var(--teal);padding:8px 14px;background:#0e1c1a;border-radius:0 10px 10px 0}
+  .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:30px;justify-items:center;margin-top:26px}
+  figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:12px;width:300px}
+  figcaption{text-align:center}
+  figcaption b{display:block;font-size:14px}
+  figcaption span{color:var(--muted);font-size:12px}
+  .tagn{display:inline-block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);margin-bottom:8px}
+  .tagn.p0{color:var(--green);border-color:#1f4034} .tagn.guard{color:#c4b5fd;border-color:#3a2f55} .tagn.web{color:#93c5fd;border-color:#1d3350}
+
+  /* phone */
+  .phone{width:300px;height:620px;background:#0c141c;border-radius:40px;padding:10px;box-shadow:0 30px 60px -20px #000,0 0 0 1px #1c2a36;position:relative}
+  .scr{width:100%;height:100%;background:var(--app-bg);border-radius:30px;overflow:hidden;position:relative;color:var(--app-ink)}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:26px;background:#0c141c;border-radius:0 0 16px 16px;z-index:5}
+  .sb{display:flex;justify-content:space-between;align-items:center;padding:10px 18px 4px;font-size:11px;font-weight:600;color:var(--app-ink)}
+  .sb .r{display:flex;gap:5px;align-items:center}
+  .body{padding:8px 16px 16px;height:calc(100% - 34px);overflow:auto}
+  .body::-webkit-scrollbar{display:none}
+  .apphead{display:flex;align-items:center;justify-content:space-between;margin:6px 2px 14px}
+  .apphead .brand{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:-.01em}
+  .apphead .brand i{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,#2dd4bf,#0ea5a0);display:grid;place-items:center;color:#03201d;font-size:13px;font-style:normal;font-weight:800}
+  .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;display:inline-flex;gap:5px;align-items:center}
+  .badge.edge{background:#e7f7f1;color:#0c7a5e} .badge.cloud{background:#e8effb;color:#1d4ed8} .badge.off{background:#eef2f5;color:#5b7385}
+  .badge.live{background:#fdeaea;color:#c0322f}
+  .card{background:var(--card);border:1px solid var(--app-line);border-radius:16px;padding:13px;margin-bottom:11px;box-shadow:0 1px 2px #0f1c2608}
+  .card h5{margin:0 0 6px;font-size:12.5px}
+  .muted{color:var(--app-mut)}
+  .toggle{display:flex;align-items:center;justify-content:space-between;font-size:12.5px}
+  .sw{width:38px;height:22px;border-radius:999px;background:#dbe3ea;position:relative;flex:none}
+  .sw.on{background:var(--teal)}
+  .sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 2px #0003}
+  .sw.on::after{left:18px}
+  /* record */
+  .recwrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:26px 0 14px}
+  .recbtn{width:96px;height:96px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#19c5b3,#0f766e);display:grid;place-items:center;box-shadow:0 14px 30px -8px #0f766e88,0 0 0 8px #14b8a61f;position:relative}
+  .recbtn::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid #14b8a644;animation:pulse 2s ease-out infinite}
+  @keyframes pulse{0%{transform:scale(.9);opacity:.8}100%{transform:scale(1.25);opacity:0}}
+  .recbtn .mic{width:26px;height:38px;border-radius:13px;background:#fff;position:relative}
+  .recbtn .mic::after{content:"";position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);width:20px;height:20px;border:3px solid #fff;border-top:none;border-radius:0 0 14px 14px}
+  .wave{display:flex;align-items:center;gap:3px;height:40px}
+  .wave i{width:4px;border-radius:3px;background:var(--teal);animation:eq 1s ease-in-out infinite}
+  @keyframes eq{0%,100%{height:8px}50%{height:34px}}
+  .wave i:nth-child(2n){animation-duration:.8s} .wave i:nth-child(3n){animation-duration:1.3s} .wave i:nth-child(5n){animation-duration:.6s}
+  .timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px}
+  /* transcript */
+  .line{font-size:12.5px;margin:0 0 9px;padding-left:10px;border-left:2px solid #e6ecf1}
+  .line b{color:var(--teal-d)}
+  .line.partial{opacity:.5}
+  .hl{background:#fff7d6;border-radius:3px;padding:0 2px}
+  /* soap */
+  .tabs{display:flex;gap:6px;margin-bottom:10px}
+  .tab{flex:1;text-align:center;font-size:11px;font-weight:700;padding:6px 0;border-radius:9px;background:#eef2f5;color:#5b7385}
+  .tab.act{background:var(--teal);color:#fff}
+  .soap{font-size:12px;line-height:1.5}
+  .soap p{margin:0 0 7px}
+  .src{cursor:default;border-bottom:1px dashed #b9c6d0}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .pchip{font-size:10.5px;padding:3px 8px;border-radius:999px;background:#eef7f4;color:#0c7a5e;border:1px solid #cdeae0}
+  .pchip.drug{background:#f3eefb;color:#6d28d9;border-color:#e2d6f7}
+  .pchip.code{background:#eef2f5;color:#5b7385;border-color:#e0e7ed}
+  /* sign */
+  .btn{display:block;width:100%;text-align:center;font-weight:700;font-size:13px;padding:12px;border-radius:13px;border:none;margin-top:8px}
+  .btn.primary{background:var(--teal);color:#fff} .btn.ghost{background:#eef2f5;color:#22323f}
+  .rowico{display:flex;align-items:center;gap:9px;font-size:12px;padding:7px 0;border-bottom:1px solid #eef2f5}
+  .rowico:last-child{border-bottom:0}
+  .rowico .i{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:12px;background:#eef7f4;color:#0c7a5e;flex:none}
+  /* guardian */
+  .gscr{background:#070d12}
+  .view{position:relative;height:330px;background:radial-gradient(120px 150px at 50% 42%,#15303a,#0a151c);border-radius:18px;overflow:hidden;margin:6px 0 12px}
+  .face{position:absolute;top:46%;left:50%;transform:translate(-50%,-50%);width:130px;height:165px;border:2px solid #2dd4bf66;border-radius:50% 50% 48% 48%/55% 55% 45% 45%}
+  .mesh{position:absolute;inset:0;background-image:linear-gradient(#2dd4bf22 1px,transparent 1px),linear-gradient(90deg,#2dd4bf22 1px,transparent 1px);background-size:14px 14px;mix-blend-mode:screen;opacity:.5}
+  .scan{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#2dd4bf,transparent);animation:scan 2.4s linear infinite}
+  @keyframes scan{0%{top:8%}100%{top:88%}}
+  .gtag{position:absolute;top:10px;left:10px;font-size:10px;font-weight:700;color:#7ff3e3;background:#0b1f1d;padding:3px 8px;border-radius:999px;border:1px solid #134e48}
+  .vit{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .v{background:#0d1820;border:1px solid #14323a;border-radius:13px;padding:10px}
+  .v .lab{font-size:10px;color:#7fa0a8;letter-spacing:.06em;text-transform:uppercase}
+  .v .num{font-size:22px;font-weight:800;color:#eafffb;margin-top:2px}
+  .v .num small{font-size:11px;font-weight:600;color:#7fa0a8}
+  .emerg{margin-top:10px;background:#2a0e0e;border:1px solid #5b1d1d;color:#fca5a5;border-radius:13px;padding:11px;font-size:12px;display:flex;gap:9px;align-items:center}
+  .emerg b{color:#fecaca}
+  /* web dashboard */
+  .web{width:540px;max-width:100%;background:#0e1620;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .web .bar{display:flex;align-items:center;gap:6px;padding:9px 12px;border-bottom:1px solid var(--line);background:#0b121a}
+  .web .bar i{width:10px;height:10px;border-radius:50%;background:#33414f}
+  .web .bar .u{margin-left:10px;font-size:11px;color:var(--muted);background:#0a1119;border:1px solid var(--line);border-radius:6px;padding:3px 10px;flex:1}
+  .web .grid{display:grid;grid-template-columns:150px 1fr;min-height:300px}
+  .web .side{border-right:1px solid var(--line);padding:12px}
+  .web .nav{font-size:12px;color:var(--muted);padding:7px 9px;border-radius:8px;margin-bottom:3px}
+  .web .nav.act{background:#13242b;color:var(--ink)}
+  .web .main{padding:14px}
+  .web .row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;background:#0c1521}
+  .web .pill{font-size:10px;padding:2px 8px;border-radius:999px}
+  .web .pill.signed{background:#0e2018;color:#34d399} .web .pill.draft{background:#2a230e;color:#fbbf24}
+  footer{margin-top:60px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">S</div>
+    <div><h1>Sona — UI Prototype</h1>
+    <p class="sub">Clickable-feel mockups of every key screen · static visual concept · generated 2026-06-16</p></div>
+  </header>
+  <div class="note">Concept mockups for visualization only — not the built app. Colours/animation indicate intent. <b>Green “on-device” badge = nothing left the phone.</b></div>
+
+  <div class="gallery">
+
+    <!-- 1. CAPTURE -->
+    <figure>
+      <div class="phone"><div class="scr"><div class="notch"></div>
+        <div class="sb"><span>9:41</span><span class="r">●●● ▢ 🔋</span></div>
+        <div class="body">
+          <div class="apphead"><div class="brand"><i>S</i>Sona</div><span class="badge edge">● on-device</span></div>
+          <div class="card"><div class="toggle"><div><b style="font-size:12.5px">Patient consent</b><div class="muted" style="font-size:11px">Recorded before capture · PDPA</div></div><div class="sw on"></div></div></div>
+          <div class="recwrap">
+            <div class="recbtn"><div class="mic"></div></div>
+            <div class="muted" style="font-size:12px">Tap to start the consult</div>
+          </div>
+          <h5 style="margin:6px 2px">Recent notes</h5>
+          <div class="card" style="padding:11px"><div style="display:flex;justify-content:space-between;font-size:12px"><b>Encik Rahman · URTI</b><span class="muted">2h</span></div><div class="muted" style="font-size:11px">Signed · exported FHIR</div></div>
+          <div class="card" style="padding:11px"><div style="display:flex;justify-content:space-between;font-size:12px"><b>Ms Tan · Follow-up</b><span class="muted">Yest</span></div><div class="muted" style="font-size:11px">Signed</div></div>
+        </div>
+      </div></div>
+      <figcaption><span class="tagn p0">P0 · 1, 8</span><b>Capture + consent</b><span>Consent gate, then one big record button.</span></figcaption>
+    </figure>
+
+    <!-- 2. RECORDING -->
+    <figure>
+      <div class="phone"><div class="scr"><div class="notch"></div>
+        <div class="sb"><span>9:42</span><span class="r">●●● ▢ 🔋</span></div>
+        <div class="body">
+          <div class="apphead"><div class="brand"><i>S</i>Recording</div><span class="badge live">● REC 01:12</span></div>
+          <div class="card" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px">
+            <div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <span class="badge edge">● transcribing on-device</span>
+          </div>
+          <h5 style="margin:8px 2px">Live transcript</h5>
+          <div class="card">
+            <p class="line"><b>Dr:</b> Apa yang boleh saya bantu hari ini?</p>
+            <p class="line"><b>Pt:</b> Doctor, saya ada <i>fever</i> dah tiga hari, and <i>batuk kering</i>.</p>
+            <p class="line"><b>Pt:</b> My throat <i>sakit</i> bila telan.</p>
+            <p class="line partial"><b>Dr:</b> Ada shortness of breath atau chest…</p>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><span class="tagn p0">P0 · 2</span><b>Live transcript</b><span>On-device Whisper, Malay/English code-switch.</span></figcaption>
+    </figure>
+
+    <!-- 3. SOAP REVIEW -->
+    <figure>
+      <div class="phone"><div class="scr"><div class="notch"></div>
+        <div class="sb"><span>9:44</span><span class="r">●●● ▢ 🔋</span></div>
+        <div class="body">
+          <div class="apphead"><div class="brand"><i>S</i>SOAP note</div><span class="badge off">offline ✓</span></div>
+          <div class="card"><div class="toggle"><div><b style="font-size:12px">Summarizer</b><div class="muted" style="font-size:10.5px">Offline (Gemma 4) · flip for cloud premium</div></div><div class="sw"></div></div></div>
+          <div class="tabs"><div class="tab act">S</div><div class="tab">O</div><div class="tab">A</div><div class="tab">P</div></div>
+          <div class="card soap">
+            <p><b>Subjective</b></p>
+            <p><span class="src">3-day fever, dry cough</span>, <span class="src">sore throat worse on swallowing</span>. No SOB or chest pain. Mild headache + body aches.</p>
+            <p class="muted" style="font-size:10.5px">↑ tap any phrase → jumps to transcript evidence</p>
+            <div class="chips"><span class="pchip">Dx: viral URTI</span><span class="pchip drug">paracetamol</span><span class="pchip code">ICD-10 J06.9</span></div>
+          </div>
+          <button class="btn ghost">Edit note</button>
+        </div>
+      </div></div>
+      <figcaption><span class="tagn p0">P0 · 4, 5</span><b>SOAP review</b><span>Structured note, traceable lines, offline/cloud toggle.</span></figcaption>
+    </figure>
+
+    <!-- 4. SIGN & EXPORT -->
+    <figure>
+      <div class="phone"><div class="scr"><div class="notch"></div>
+        <div class="sb"><span>9:45</span><span class="r">●●● ▢ 🔋</span></div>
+        <div class="body">
+          <div class="apphead"><div class="brand"><i>S</i>Sign &amp; export</div><span class="badge edge">● on-device</span></div>
+          <div class="card">
+            <h5>Ready to sign</h5>
+            <div class="rowico"><span class="i">✓</span><div>SOAP note complete · 4 sections</div></div>
+            <div class="rowico"><span class="i">⚕</span><div>2 diagnoses · 1 medication coded</div></div>
+            <div class="rowico"><span class="i">🔒</span><div>Audio never left device</div></div>
+            <div class="rowico"><span class="i">🗑</span><div>Raw audio discarded after transcript</div></div>
+          </div>
+          <button class="btn primary">✓ Sign as Dr Lim</button>
+          <button class="btn ghost">Export FHIR R4</button>
+          <button class="btn ghost">Export PDF · Copy</button>
+          <div class="muted" style="font-size:10.5px;text-align:center;margin-top:8px">Immutable audit entry written</div>
+        </div>
+      </div></div>
+      <figcaption><span class="tagn p0">P0 · 6, 7</span><b>Sign &amp; export</b><span>Doctor-in-the-loop, FHIR/PDF, audit.</span></figcaption>
+    </figure>
+
+    <!-- 5. GUARDIAN VITALS -->
+    <figure>
+      <div class="phone"><div class="scr gscr"><div class="notch"></div>
+        <div class="sb" style="color:#cfeee8"><span>9:46</span><span class="r">●●● ▢ 🔋</span></div>
+        <div class="body">
+          <div class="apphead"><div class="brand" style="color:#eafffb"><i style="background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#fff">G</i>Guardian</div><span class="badge" style="background:#1b1430;color:#c4b5fd">● measuring</span></div>
+          <div class="view">
+            <span class="gtag">rPPG · on-device · point at face</span>
+            <div class="mesh"></div><div class="face"></div><div class="scan"></div>
+          </div>
+          <div class="vit">
+            <div class="v"><div class="lab">Heart rate</div><div class="num">78 <small>bpm</small></div></div>
+            <div class="v"><div class="lab">Breathing</div><div class="num">16 <small>/min</small></div></div>
+            <div class="v"><div class="lab">HRV</div><div class="num">42 <small>ms</small></div></div>
+            <div class="v"><div class="lab">Stress</div><div class="num">Low</div></div>
+          </div>
+          <div class="emerg"><span>⚠️</span><div><b>Not a diagnosis.</b> Signs concerning? <b>Guided steps + call 999</b> →</div></div>
+        </div>
+      </div></div>
+      <figcaption><span class="tagn guard">P1 hero</span><b>Guardian — camera vitals</b><span>rPPG vitals on-device + emergency escalation.</span></figcaption>
+    </figure>
+
+    <!-- 6. GUARDIAN PILL-ID -->
+    <figure>
+      <div class="phone"><div class="scr gscr"><div class="notch"></div>
+        <div class="sb" style="color:#cfeee8"><span>9:47</span><span class="r">●●● ▢ 🔋</span></div>
+        <div class="body">
+          <div class="apphead"><div class="brand" style="color:#eafffb"><i style="background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#fff">G</i>Pill ID</div><span class="badge" style="background:#1b1430;color:#c4b5fd">● on-device VLM</span></div>
+          <div class="view" style="height:220px"><span class="gtag">point at the pill / box</span><div class="mesh"></div>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:84px;height:38px;border-radius:20px;background:linear-gradient(#f8fafc,#cbd5e1);box-shadow:0 8px 20px #000"></div>
+            <div class="scan"></div>
+          </div>
+          <div class="v" style="margin-bottom:8px"><div class="lab">Identified</div><div class="num" style="font-size:17px">Paracetamol 500&nbsp;mg</div></div>
+          <div class="card" style="background:#0d1820;border-color:#14323a;color:#cfe7e2">
+            <h5 style="color:#eafffb">Key info</h5>
+            <div class="muted" style="color:#7fa0a8;font-size:11.5px">Max 4g/day · caution in liver disease · check interactions with warfarin.</div>
+          </div>
+          <div class="emerg"><span>⚠️</span><div>Guidance only — confirm with a pharmacist.</div></div>
+        </div>
+      </div></div>
+      <figcaption><span class="tagn guard">P2 · Guardian</span><b>Guardian — pill identifier</b><span>On-device VLM → drug + interaction info.</span></figcaption>
+    </figure>
+
+  </div>
+
+  <h2 style="font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:54px 0 16px;font-weight:600">P1 — Clinician web dashboard</h2>
+  <div class="web">
+    <div class="bar"><i></i><i></i><i></i><span class="u">app.sona.health/notes</span></div>
+    <div class="grid">
+      <div class="side">
+        <div style="display:flex;align-items:center;gap:8px;font-weight:800;margin-bottom:12px"><span class="logo" style="width:24px;height:24px;font-size:13px">S</span> Sona</div>
+        <div class="nav act">📝 Notes</div><div class="nav">👥 Patients</div><div class="nav">📊 Accuracy</div><div class="nav">🔗 FHIR exports</div><div class="nav">⚙ Settings</div>
+      </div>
+      <div class="main">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:14px">Today’s notes</b><span style="font-size:11px;color:var(--muted)">Dr Lim · Klinik Sihat</span></div>
+        <div class="row"><span>Encik Rahman — Viral URTI <span style="color:var(--muted)">· J06.9</span></span><span class="pill signed">signed</span></div>
+        <div class="row"><span>Ms Tan — Hypertension follow-up <span style="color:var(--muted)">· I10</span></span><span class="pill signed">signed</span></div>
+        <div class="row"><span>Baby Aisyah — Fever review <span style="color:var(--muted)">· R50.9</span></span><span class="pill draft">draft</span></div>
+        <div class="row"><span>Mr Kumar — Lower back pain <span style="color:var(--muted)">· M54.5</span></span><span class="pill draft">draft</span></div>
+        <div style="margin-top:12px;font-size:11px;color:var(--muted)">WER 8.2% · note acceptance 91% · 12 notes today · ⌀ 47s/note</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Sona UI prototype · concept only. Companion views: <code>sona-architecture.html</code> · <code>sona-plan.html</code>.
+    Source of truth: <code>docs/superpowers/specs/2026-06-16-sona-ambient-scribe-design.md</code>.
+  </footer>
+</div>
+</body>
+</html>
