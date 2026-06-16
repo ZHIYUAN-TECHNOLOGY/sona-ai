@@ -18,12 +18,12 @@
 
 Measured on the target device, not simulator:
 
-| Stage | Metric | GO threshold |
-|---|---|---|
-| STT (multilingual) | Transcribe a 60s consult clip | ≤ 90s wall-clock (≤1.5× audio) and intelligible BM/EN output |
-| LLM (local) | SOAP note from ~500-word transcript | ≤ 30s to full note, ≥ 6 tokens/sec, coherent SOAP structure |
-| PII/NER (on-device) | Redact a sample transcript | Runs on-device at all, recall ≥ 0.9 on the 10 seeded PII spans — OR a documented redaction fallback |
-| End-to-end | record → note, perceived | ≤ 90s, no OOM crash across 5 consecutive runs |
+| Stage               | Metric                              | GO threshold                                                                                        |
+| ------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------- |
+| STT (multilingual)  | Transcribe a 60s consult clip       | ≤ 90s wall-clock (≤1.5× audio) and intelligible BM/EN output                                        |
+| LLM (local)         | SOAP note from ~500-word transcript | ≤ 30s to full note, ≥ 6 tokens/sec, coherent SOAP structure                                         |
+| PII/NER (on-device) | Redact a sample transcript          | Runs on-device at all, recall ≥ 0.9 on the 10 seeded PII spans — OR a documented redaction fallback |
+| End-to-end          | record → note, perceived            | ≤ 90s, no OOM crash across 5 consecutive runs                                                       |
 
 **If any stage misses:** do not silently proceed. Record the miss in the decision doc and trigger the documented fallback (smaller model / RunAnywhere spike / streaming STT). The point of the spike is to find this out in week 1.
 
@@ -55,6 +55,7 @@ med-ai/                              # better-t-stack monorepo root (generated)
 ## Task 0: Scaffold the monorepo
 
 **Files:**
+
 - Create: entire `med-ai/` monorepo via CLI
 
 - [ ] **Step 1: Run the Better-T-Stack scaffolder**
@@ -62,6 +63,7 @@ med-ai/                              # better-t-stack monorepo root (generated)
 The exact config is the one saved in the builder URL (`api=orpc, fe-n=native-bare, rt=workers, sd=cloudflare, db=postgres, dbs=neon, wd=cloudflare, add=vite-plus`). The builder page renders the precise command for that config — open it and copy the shown command. As a starting point (cross-check flag names against the builder output, the CLI evolves):
 
 Run from the parent of the current repo, naming the project `med-ai`:
+
 ```bash
 npm create better-t-stack@latest med-ai -- \
   --frontend native-bare \
@@ -73,22 +75,27 @@ npm create better-t-stack@latest med-ai -- \
   --addons turborepo \
   --install
 ```
+
 If a flag is rejected, drop `--<flag>` and the wizard will prompt for it interactively — accept the values matching the config above.
 
 - [ ] **Step 2: Verify the scaffold installed and type-checks**
 
 Run:
+
 ```bash
 cd med-ai && npm run check-types || npx turbo run check-types
 ```
+
 Expected: completes with no type errors (a fresh template is clean). If the script name differs, list scripts with `npm run` and run the type-check one.
 
 - [ ] **Step 3: Verify the web/API dev server boots**
 
 Run (template script name may be `dev`):
+
 ```bash
 npm run dev
 ```
+
 Expected: the Workers/web dev server starts and prints a local URL with no crash. Stop it with Ctrl-C.
 
 - [ ] **Step 4: Commit the scaffold**
@@ -103,37 +110,46 @@ git commit -m "chore: scaffold med-ai monorepo (better-t-stack: native-bare + or
 ## Task 1: Get the native-bare app building on the target device
 
 **Files:**
+
 - Modify: `apps/native/package.json` (add on-device deps)
 - Record: real app path + run commands
 
 - [ ] **Step 1: Identify the native app path and run commands**
 
 Run:
+
 ```bash
 ls apps && cat apps/*/package.json | grep -A20 '"scripts"'
 ```
+
 Expected: find the React Native app folder (e.g. `apps/native`). Note its `ios`/`android`/`start` scripts. Use this path everywhere `apps/native` appears below.
 
 - [ ] **Step 2: Add on-device + audio dependencies**
 
 From the app folder:
+
 ```bash
 cd apps/native
 npm install react-native-executorch react-native-audio-api react-native-blob-util
 ```
+
 Expected: installs without peer-dependency errors. `react-native-executorch` requires the New Architecture (default in current RN templates).
 
 - [ ] **Step 3: Install native pods (iOS) and confirm a clean device build**
 
 iOS:
+
 ```bash
 cd ios && pod install && cd ..
 npm run ios -- --device   # or open the workspace in Xcode and run on the connected device
 ```
+
 Android:
+
 ```bash
 npm run android   # with a physical device connected and USB debugging on
 ```
+
 Expected: app builds and launches on the **physical** device showing the template home screen. A simulator build is acceptable only to confirm compilation — all later benchmarks must run on the physical device.
 
 - [ ] **Step 4: Commit**
@@ -149,6 +165,7 @@ git commit -m "chore(native): add react-native-executorch + audio-api on-device 
 ## Task 2: Sample data + metrics harness
 
 **Files:**
+
 - Create: `apps/native/src/spike/metrics.ts`
 - Create: `apps/native/src/spike/sampleData.ts`
 - Create: `apps/native/src/assets/sample-consult.wav`
@@ -160,15 +177,16 @@ Record (or have a teammate record) a ~60-second scripted doctor–patient role-p
 - [ ] **Step 2: Write the metrics module**
 
 Create `apps/native/src/spike/metrics.ts`:
+
 ```typescript
-import RNBlobUtil from 'react-native-blob-util';
+import RNBlobUtil from "react-native-blob-util";
 
 export interface StageMetric {
-  stage: 'stt' | 'llm' | 'ner' | 'e2e';
-  ms: number;            // wall-clock duration
-  ok: boolean;           // passed its go threshold
+  stage: "stt" | "llm" | "ner" | "e2e";
+  ms: number; // wall-clock duration
+  ok: boolean; // passed its go threshold
   extra?: Record<string, number | string>; // tokens/sec, recall, etc.
-  output?: string;       // transcript / note / redacted text (truncated)
+  output?: string; // transcript / note / redacted text (truncated)
 }
 
 export async function timed<T>(fn: () => Promise<T>): Promise<{ result: T; ms: number }> {
@@ -179,7 +197,7 @@ export async function timed<T>(fn: () => Promise<T>): Promise<{ result: T; ms: n
 
 export async function dumpMetrics(runs: StageMetric[]): Promise<string> {
   const path = `${RNBlobUtil.fs.dirs.DocumentDir}/spike-metrics.json`;
-  await RNBlobUtil.fs.writeFile(path, JSON.stringify(runs, null, 2), 'utf8');
+  await RNBlobUtil.fs.writeFile(path, JSON.stringify(runs, null, 2), "utf8");
   return path; // shown in UI so the engineer can pull the file
 }
 ```
@@ -187,6 +205,7 @@ export async function dumpMetrics(runs: StageMetric[]): Promise<string> {
 - [ ] **Step 3: Write the sample data + prompt module**
 
 Create `apps/native/src/spike/sampleData.ts`:
+
 ```typescript
 // A pre-written de-identified transcript used to benchmark the LLM in isolation
 // (so STT variance doesn't pollute LLM timing). ~500 words.
@@ -196,13 +215,20 @@ export const SAMPLE_TRANSCRIPT = `Patient is a 34 year old presenting with a thr
 export const SEEDED_PII_TEXT = `Ahmad bin Hassan, IC 880101-14-5523, a 34 year old from Petaling Jaya, phone 012-3456789, email ahmad.h@example.com, seen on 14 June 2026 by Dr Lim Wei Sheng at Klinik Sihat presents with fever and sore throat. Next of kin Siti Aminah, contactable at 019-8765432.`;
 
 export const SEEDED_PII_SPANS = [
-  'Ahmad bin Hassan', '880101-14-5523', 'Petaling Jaya', '012-3456789',
-  'ahmad.h@example.com', '14 June 2026', 'Dr Lim Wei Sheng', 'Klinik Sihat',
-  'Siti Aminah', '019-8765432',
+  "Ahmad bin Hassan",
+  "880101-14-5523",
+  "Petaling Jaya",
+  "012-3456789",
+  "ahmad.h@example.com",
+  "14 June 2026",
+  "Dr Lim Wei Sheng",
+  "Klinik Sihat",
+  "Siti Aminah",
+  "019-8765432",
 ]; // 10 spans; recall = (spans removed) / 10
 
 export const SOAP_SYSTEM_PROMPT =
-  'You are a clinical documentation assistant. Convert the consultation transcript into a concise SOAP note with four labelled sections: Subjective, Objective, Assessment, Plan. Use only information present in the transcript. Do not invent findings, medications, or doses.';
+  "You are a clinical documentation assistant. Convert the consultation transcript into a concise SOAP note with four labelled sections: Subjective, Objective, Assessment, Plan. Use only information present in the transcript. Do not invent findings, medications, or doses.";
 ```
 
 - [ ] **Step 4: Commit**
@@ -217,27 +243,29 @@ git commit -m "test(spike): add sample consult, seeded-PII fixture, and metrics 
 ## Task 3: STT benchmark (Whisper, multilingual)
 
 **Files:**
+
 - Create: `apps/native/src/spike/sttBench.ts`
 
 - [ ] **Step 1: Write the STT benchmark runner**
 
 Create `apps/native/src/spike/sttBench.ts`. It loads the multilingual Whisper model, transcribes the bundled clip, and times it. (Hook usage per `react-native-executorch`: `useSpeechToText` exposes `.transcribe(audioBuffer, opts)` and `.isReady`.)
+
 ```typescript
-import { AudioContext } from 'react-native-audio-api';
-import RNBlobUtil from 'react-native-blob-util';
-import { timed, StageMetric } from './metrics';
+import { AudioContext } from "react-native-audio-api";
+import RNBlobUtil from "react-native-blob-util";
+import { timed, StageMetric } from "./metrics";
 
 const STT_GO_MS = 90_000; // 60s clip must transcribe in <= 90s
 
 // Resolve the bundled wav to a file uri the AudioContext can decode.
 async function sampleUri(): Promise<string> {
   // react-native asset -> copy into a readable path
-  const asset = require('../assets/sample-consult.wav');
-  const { uri } = require('react-native/Libraries/Image/resolveAssetSource')(asset);
-  if (uri.startsWith('http') || uri.startsWith('file')) return uri;
+  const asset = require("../assets/sample-consult.wav");
+  const { uri } = require("react-native/Libraries/Image/resolveAssetSource")(asset);
+  if (uri.startsWith("http") || uri.startsWith("file")) return uri;
   // Dev bundler returns an http uri; download to cache for decode.
   const dest = `${RNBlobUtil.fs.dirs.CacheDir}/sample-consult.wav`;
-  await RNBlobUtil.config({ path: dest }).fetch('GET', uri);
+  await RNBlobUtil.config({ path: dest }).fetch("GET", uri);
   return `file://${dest}`;
 }
 
@@ -252,7 +280,7 @@ export async function runSttBench(model: {
 
   const { result, ms } = await timed(() => model.transcribe(buffer)); // multilingual auto-detect
   return {
-    stage: 'stt',
+    stage: "stt",
     ms,
     ok: ms <= STT_GO_MS && result.text.trim().length > 0,
     output: result.text.slice(0, 400),
@@ -276,36 +304,39 @@ git commit -m "feat(spike): on-device Whisper STT benchmark runner"
 ## Task 4: LLM benchmark (local SOAP generation)
 
 **Files:**
+
 - Create: `apps/native/src/spike/llmBench.ts`
 
 - [ ] **Step 1: Write the LLM benchmark runner**
 
 Create `apps/native/src/spike/llmBench.ts`. It feeds the fixed `SAMPLE_TRANSCRIPT` to a local instruct model and produces a SOAP note, timing it and estimating tokens/sec. (Per `react-native-executorch`: `useLLM` exposes `.generate(messages)` returning the full string, plus `.response`/`.isReady`.)
+
 ```typescript
-import { timed, StageMetric } from './metrics';
-import { SAMPLE_TRANSCRIPT, SOAP_SYSTEM_PROMPT } from './sampleData';
+import { timed, StageMetric } from "./metrics";
+import { SAMPLE_TRANSCRIPT, SOAP_SYSTEM_PROMPT } from "./sampleData";
 
-const LLM_GO_MS = 30_000;       // full note in <= 30s
-const LLM_GO_TPS = 6;           // >= 6 tokens/sec
+const LLM_GO_MS = 30_000; // full note in <= 30s
+const LLM_GO_TPS = 6; // >= 6 tokens/sec
 
-type Msg = { role: 'system' | 'user' | 'assistant'; content: string };
+type Msg = { role: "system" | "user" | "assistant"; content: string };
 
 export async function runLlmBench(llm: {
   generate: (messages: Msg[]) => Promise<string>;
 }): Promise<StageMetric> {
   const messages: Msg[] = [
-    { role: 'system', content: SOAP_SYSTEM_PROMPT },
-    { role: 'user', content: SAMPLE_TRANSCRIPT },
+    { role: "system", content: SOAP_SYSTEM_PROMPT },
+    { role: "user", content: SAMPLE_TRANSCRIPT },
   ];
   const { result, ms } = await timed(() => llm.generate(messages));
 
   const approxTokens = Math.ceil(result.length / 4); // ~4 chars/token heuristic
   const tps = approxTokens / (ms / 1000);
-  const hasAllSections = ['Subjective', 'Objective', 'Assessment', 'Plan']
-    .every((s) => result.includes(s));
+  const hasAllSections = ["Subjective", "Objective", "Assessment", "Plan"].every((s) =>
+    result.includes(s),
+  );
 
   return {
-    stage: 'llm',
+    stage: "llm",
     ms,
     ok: ms <= LLM_GO_MS && tps >= LLM_GO_TPS && hasAllSections,
     extra: { tokensPerSec: Math.round(tps), hasAllSections: hasAllSections ? 1 : 0 },
@@ -330,16 +361,18 @@ git commit -m "feat(spike): on-device LLM SOAP-generation benchmark runner"
 ## Task 5: On-device PII/NER probe (the riskiest stage)
 
 **Files:**
+
 - Create: `apps/native/src/spike/nerBench.ts`
 
-> **Honest framing:** OpenMed ships Hugging Face `transformers` models (PyTorch). There is no first-class React Native binding. This task is a *feasibility probe with a decision*, not a guaranteed integration. It tries the realistic on-device path and, if that path is not viable inside the spike window, records a concrete fallback. Either outcome is a valid spike result.
+> **Honest framing:** OpenMed ships Hugging Face `transformers` models (PyTorch). There is no first-class React Native binding. This task is a _feasibility probe with a decision_, not a guaranteed integration. It tries the realistic on-device path and, if that path is not viable inside the spike window, records a concrete fallback. Either outcome is a valid spike result.
 
 - [ ] **Step 1: Write a redaction-recall scorer (runtime-agnostic)**
 
 Create `apps/native/src/spike/nerBench.ts`. The scorer is independent of how redaction is produced, so it works for whichever path Step 2 picks:
+
 ```typescript
-import { StageMetric, timed } from './metrics';
-import { SEEDED_PII_TEXT, SEEDED_PII_SPANS } from './sampleData';
+import { StageMetric, timed } from "./metrics";
+import { SEEDED_PII_TEXT, SEEDED_PII_SPANS } from "./sampleData";
 
 const NER_GO_RECALL = 0.9;
 
@@ -351,7 +384,7 @@ export async function runNerBench(
   const removed = SEEDED_PII_SPANS.filter((span) => !redacted.includes(span));
   const recall = removed.length / SEEDED_PII_SPANS.length;
   return {
-    stage: 'ner',
+    stage: "ner",
     ms,
     ok: recall >= NER_GO_RECALL,
     extra: { recall: Number(recall.toFixed(2)), removedSpans: removed.length },
@@ -368,16 +401,24 @@ Implement `redactFn` using the FIRST path that works on the target device, and r
 - **Path B (pragmatic on-device fallback):** a deterministic Malaysian-PII redactor — regex for IC numbers (`\d{6}-\d{2}-\d{4}`), phone (`01\d-?\d{7,8}`), email, dates, plus a small bundled gazetteer of common names/clinics. Fully on-device, zero ML risk. This is the realistic P0 redaction floor; ML NER becomes an accuracy upgrade later.
 
 Add this Path B implementation now so the benchmark always runs (Path A can replace it if it lands):
+
 ```typescript
 export async function regexRedact(text: string): Promise<string> {
   return text
-    .replace(/\d{6}-\d{2}-\d{4}/g, '[IC]')
-    .replace(/01\d-?\d{7,8}/g, '[PHONE]')
-    .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '[EMAIL]')
-    .replace(/\b\d{1,2}\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b/g, '[DATE]')
-    .replace(/\b(Ahmad bin Hassan|Siti Aminah|Dr Lim Wei Sheng|Klinik Sihat|Petaling Jaya)\b/g, '[REDACTED]');
+    .replace(/\d{6}-\d{2}-\d{4}/g, "[IC]")
+    .replace(/01\d-?\d{7,8}/g, "[PHONE]")
+    .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "[EMAIL]")
+    .replace(
+      /\b\d{1,2}\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b/g,
+      "[DATE]",
+    )
+    .replace(
+      /\b(Ahmad bin Hassan|Siti Aminah|Dr Lim Wei Sheng|Klinik Sihat|Petaling Jaya)\b/g,
+      "[REDACTED]",
+    );
 }
 ```
+
 > The gazetteer line is sample-specific on purpose — it exists only to validate the harness end-to-end. The decision doc must state plainly that production Path B needs a real Malaysian name/place gazetteer + broader patterns, and that Path A (ML NER) is the accuracy target. Do not present Path B's sample recall as production recall.
 
 - [ ] **Step 3: Commit**
@@ -392,28 +433,33 @@ git commit -m "feat(spike): on-device PII redaction probe + recall scorer"
 ## Task 6: Benchmark screen + end-to-end run
 
 **Files:**
+
 - Create: `apps/native/src/spike/BenchmarkScreen.tsx`
 - Modify: app entry to show `BenchmarkScreen` (record exact file in Step 1)
 
 - [ ] **Step 1: Build the benchmark screen**
 
 Create `apps/native/src/spike/BenchmarkScreen.tsx`. It loads both models via hooks, runs all stages, computes an end-to-end metric, and writes the JSON dump:
+
 ```tsx
-import React, { useState } from 'react';
-import { SafeAreaView, ScrollView, Text, Button, View } from 'react-native';
+import React, { useState } from "react";
+import { SafeAreaView, ScrollView, Text, Button, View } from "react-native";
 import {
-  useSpeechToText, useLLM, WHISPER_SMALL, LFM2_5_1_2B_INSTRUCT,
-} from 'react-native-executorch';
-import { StageMetric, dumpMetrics } from './metrics';
-import { runSttBench } from './sttBench';
-import { runLlmBench } from './llmBench';
-import { runNerBench, regexRedact } from './nerBench';
+  useSpeechToText,
+  useLLM,
+  WHISPER_SMALL,
+  LFM2_5_1_2B_INSTRUCT,
+} from "react-native-executorch";
+import { StageMetric, dumpMetrics } from "./metrics";
+import { runSttBench } from "./sttBench";
+import { runLlmBench } from "./llmBench";
+import { runNerBench, regexRedact } from "./nerBench";
 
 export default function BenchmarkScreen() {
   const stt = useSpeechToText({ model: WHISPER_SMALL });
   const llm = useLLM({ model: LFM2_5_1_2B_INSTRUCT });
   const [metrics, setMetrics] = useState<StageMetric[]>([]);
-  const [path, setPath] = useState('');
+  const [path, setPath] = useState("");
   const [running, setRunning] = useState(false);
 
   const ready = stt.isReady && llm.isReady;
@@ -425,8 +471,9 @@ export default function BenchmarkScreen() {
     const sttM = await runSttBench(stt);
     const llmM = await runLlmBench(llm);
     const e2e: StageMetric = {
-      stage: 'e2e', ms: Date.now() - e2eStart,
-      ok: ner.ok && sttM.ok && llmM.ok && (Date.now() - e2eStart) <= 90_000,
+      stage: "e2e",
+      ms: Date.now() - e2eStart,
+      ok: ner.ok && sttM.ok && llmM.ok && Date.now() - e2eStart <= 90_000,
     };
     const all = [ner, sttM, llmM, e2e];
     setMetrics(all);
@@ -437,22 +484,34 @@ export default function BenchmarkScreen() {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <Text style={{ fontSize: 20, fontWeight: '600' }}>Sona On-Device Spike</Text>
-        <Text>STT ready: {String(stt.isReady)} ({Math.round((stt.downloadProgress ?? 0) * 100)}%)</Text>
-        <Text>LLM ready: {String(llm.isReady)} ({Math.round((llm.downloadProgress ?? 0) * 100)}%)</Text>
+        <Text style={{ fontSize: 20, fontWeight: "600" }}>Sona On-Device Spike</Text>
+        <Text>
+          STT ready: {String(stt.isReady)} ({Math.round((stt.downloadProgress ?? 0) * 100)}%)
+        </Text>
+        <Text>
+          LLM ready: {String(llm.isReady)} ({Math.round((llm.downloadProgress ?? 0) * 100)}%)
+        </Text>
         <View style={{ height: 12 }} />
-        <Button title={running ? 'Running…' : 'Run all benchmarks'} onPress={runAll} disabled={!ready || running} />
+        <Button
+          title={running ? "Running…" : "Run all benchmarks"}
+          onPress={runAll}
+          disabled={!ready || running}
+        />
         <View style={{ height: 12 }} />
         {metrics.map((m) => (
           <View key={m.stage} style={{ marginVertical: 6 }}>
-            <Text style={{ fontWeight: '600' }}>
-              {m.stage.toUpperCase()} — {m.ok ? '✅ GO' : '❌ NO-GO'} — {m.ms} ms
+            <Text style={{ fontWeight: "600" }}>
+              {m.stage.toUpperCase()} — {m.ok ? "✅ GO" : "❌ NO-GO"} — {m.ms} ms
             </Text>
             {m.extra && <Text>{JSON.stringify(m.extra)}</Text>}
             {m.output && <Text numberOfLines={4}>{m.output}</Text>}
           </View>
         ))}
-        {path ? <Text selectable style={{ marginTop: 12 }}>Metrics JSON: {path}</Text> : null}
+        {path ? (
+          <Text selectable style={{ marginTop: 12 }}>
+            Metrics JSON: {path}
+          </Text>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -466,6 +525,7 @@ Find the app entry (e.g. `apps/native/App.tsx` or `apps/native/index.js` registe
 - [ ] **Step 3: Run on the target device and capture numbers**
 
 Launch on the **physical** target device. Wait for both models to finish downloading (first launch downloads weights — note the download time and size too; it matters for real-world onboarding). Tap **Run all benchmarks**. Record:
+
 - Each stage's GO/NO-GO + ms (and tokens/sec, recall)
 - Run it **5 times**; note any crash/OOM and the spread.
 
@@ -483,35 +543,42 @@ git commit -m "feat(spike): benchmark screen running STT + LLM + redaction end-t
 ## Task 7: Decision doc (the deliverable)
 
 **Files:**
+
 - Create: `docs/superpowers/decisions/2026-06-16-ondevice-runtime-decision.md`
 
 - [ ] **Step 1: Write the decision doc from measured numbers**
 
 Create `docs/superpowers/decisions/2026-06-16-ondevice-runtime-decision.md` with the real recorded data:
+
 ```markdown
 # Decision: On-Device Runtime for Sona — 2026-06-16
 
 ## Target device
+
 <model, chip, RAM, OS version>
 
 ## Measured results (median of 5 runs)
-| Stage | Model | Median ms | tokens/sec | recall | GO/NO-GO |
-|---|---|---|---|---|---|
-| STT  | WHISPER_SMALL          | … | — | — | … |
-| LLM  | LFM2_5_1_2B_INSTRUCT   | … | … | — | … |
-| NER  | <Path A or B>          | … | — | … | … |
-| E2E  | —                      | … | — | — | … |
-| First-launch model download | — | … (size MB) | — | — | note |
+
+| Stage                       | Model                | Median ms   | tokens/sec | recall | GO/NO-GO |
+| --------------------------- | -------------------- | ----------- | ---------- | ------ | -------- |
+| STT                         | WHISPER_SMALL        | …           | —          | —      | …        |
+| LLM                         | LFM2_5_1_2B_INSTRUCT | …           | …          | —      | …        |
+| NER                         | <Path A or B>        | …           | —          | …      | …        |
+| E2E                         | —                    | …           | —          | —      | …        |
+| First-launch model download | —                    | … (size MB) | —          | —      | note     |
 
 ## Decision
+
 - Runtime chosen: **react-native-executorch** | **RunAnywhere** (with reason).
 - Redaction path chosen: **A (ML NER)** | **B (deterministic)** (with reason + production gap noted).
 - Models locked for P0: STT=<>, LLM=<>.
 
 ## If NO-GO on any stage — fallback taken
+
 <e.g. smaller LLM, streaming STT for perceived latency, or spin RunAnywhere comparison spike>
 
 ## Implications for the P0 plan
+
 <e.g. "cloud Claude is the default summarizer; local LLM is the offline toggle only" if local LLM is too slow for primary use>
 ```
 
