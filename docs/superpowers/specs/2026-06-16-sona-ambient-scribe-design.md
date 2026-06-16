@@ -128,8 +128,8 @@ Consent toggle
 - **DB:** **Neon Postgres** via Hyperdrive binding.
 - **Web dashboard:** **Vite**, deployed on Cloudflare.
 - **IaC / deploy:** **Alchemy.run** (TypeScript) provisioning Workers + Hyperdrive→Neon + R2 (exports) + KV/D1 (audit/config) + optional Durable Objects (sync) + optional Workers AI (de-identified premium STT/LLM).
-- **On-device engine:** Whisper/Moonshine STT · LFM2 1.2B / Qwen2.5 1.5–3B local LLM · OpenMed PII + clinical NER (quantized/ONNX) · rPPG (Shen.ai SDK) · multimodal VLM (Moondream/SmolVLM/Qwen2-VL) for pill-ID · MediaPipe FaceMesh for FAST.
-- **On-device runtime candidates:** RN-ExecuTorch vs RunAnywhere — decided by a week-1 performance spike.
+- **On-device engine:** Whisper/Moonshine STT · **Gemma 4 E4B/E2B local LLM** (edge-optimized, 140 languages incl. Malay, multimodal) with Qwen3-1.7B as the runs-today fallback · OpenMed PII + clinical NER (quantized/ONNX) · rPPG (Shen.ai SDK) · multimodal VLM (Gemma 4 E-series / Moondream / SmolVLM) for pill-ID · MediaPipe FaceMesh for FAST.
+- **On-device runtime candidates:** RN-ExecuTorch (ships Whisper + Qwen/Llama/Phi/LFM2, **no Gemma**) vs **Google AI Edge / LiteRT (MediaPipe)** vs RunAnywhere — Gemma 4 needs LiteRT or RunAnywhere; decided by the week-1 spike.
 - **Cloud premium path:** Claude (`claude-opus-4-8` / `claude-sonnet-4-6`) via Workers — de-identified text only.
 
 **Stack constraint:** Cloudflare Workers cannot run heavy Python ML (OpenMed transformers). This is by design — all PHI-touching ML runs on-device; Workers only does orchestration, auth, sync, FHIR, Claude proxy, billing. Any future server-side ML uses Workers AI or a separate container service.
