@@ -4,9 +4,11 @@
 
 **Goal:** Scaffold the `med-ai` monorepo with the locked stack, then prove (or disprove) that a phone can run on-device STT + a small LLM + PII/NER fast enough for a smooth Sona demo — and lock the on-device runtime choice.
 
-**Architecture:** Generate the Better-T-Stack monorepo (React Native bare + oRPC + Cloudflare Workers + Neon). In the native-bare app, integrate `react-native-executorch` for on-device Whisper STT and a 1–1.5B instruct LLM, plus an on-device PII/NER probe. Build an in-app **Benchmark** screen that runs each stage against a bundled sample consult and logs structured latency/quality metrics. Compare results to explicit go/no-go thresholds and write a decision doc choosing RN-ExecuTorch vs RunAnywhere.
+**Architecture:** Generate the Better-T-Stack monorepo (Expo bare RN + oRPC + Cloudflare Workers + Neon). In the native app, integrate on-device Whisper STT, an on-device instruct LLM for SOAP generation, and an on-device PII/NER probe. The **target summarizer is Gemma 4 E4B/E2B** (edge-optimized, 140 languages incl. Malay, multimodal) — but `react-native-executorch` ships NO Gemma build (only Llama/Qwen/Phi/SmolLM/LFM2), so the LLM stage is a **runtime bake-off**: Gemma 4 via **Google AI Edge / LiteRT (MediaPipe LLM Inference)** or **RunAnywhere**, against a guaranteed-works **Qwen3-1.7B on RN-ExecuTorch** baseline. Build an in-app **Benchmark** screen that runs each stage against a bundled sample consult and logs structured latency/quality metrics. Compare to explicit go/no-go thresholds and write a decision doc that locks the runtime, the summarizer model, and the redaction path.
 
-**Tech Stack:** Better-T-Stack CLI, **Expo bare workflow** (`native-bare` = Expo + Expo Router; native projects via `expo prebuild`, on-device modules run in a **dev client**, NOT Expo Go), `react-native-executorch`, `react-native-audio-api`, `expo-asset`, `expo-file-system`, TypeScript, Cloudflare Workers, Neon Postgres, Alchemy (deploy — out of scope for this spike).
+**Tech Stack:** Better-T-Stack CLI, **Expo bare workflow** (`native-bare` = Expo + Expo Router; native projects via `expo prebuild`, on-device modules run in a **dev client**, NOT Expo Go), `react-native-executorch` (Whisper STT + Qwen3 baseline LLM), **Google AI Edge / LiteRT (MediaPipe LLM Inference)** or **RunAnywhere** (to run **Gemma 4 E4B/E2B**), `react-native-audio-api`, `expo-asset`, `expo-file-system`, TypeScript, Cloudflare Workers, Neon Postgres, Alchemy (deploy — out of scope for this spike).
+
+> **Gemma 4 reality:** Gemma 4 edge variants (E2B/E4B) are distributed via Hugging Face, Ollama, and **Google AI Edge (LiteRT)** — NOT as a `react-native-executorch` constant. Running it on-device means either (a) Google AI Edge LiteRT / MediaPipe LLM Inference (official Gemma path, has iOS/Android, needs an RN bridge or small native module), (b) the RunAnywhere SDK if it exposes a LiteRT/Gemma backend, or (c) exporting Gemma 4's text path to an ExecuTorch `.pte` yourself. The spike measures whichever lands first; Qwen3-1.7B on RN-ExecuTorch is the fallback that always produces a number.
 
 > **Scaffold reality (recorded post-Task-0):** `apps/native` is an Expo app whose source lives in `app/`, `components/`, `lib/`, `utils/` (no `src/`). Spike code goes in `apps/native/spike/`, assets in `apps/native/assets/`. There are no `ios/`/`android/` folders until `expo prebuild` runs.
 
@@ -23,7 +25,7 @@ Measured on the target device, not simulator:
 | Stage               | Metric                              | GO threshold                                                                                        |
 | ------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------- |
 | STT (multilingual)  | Transcribe a 60s consult clip       | ≤ 90s wall-clock (≤1.5× audio) and intelligible BM/EN output                                        |
-| LLM (local)         | SOAP note from ~500-word transcript | ≤ 30s to full note, ≥ 6 tokens/sec, coherent SOAP structure                                         |
+| LLM (Gemma 4 E4B target; Qwen3 baseline) | SOAP note from ~500-word transcript | ≤ 30s to full note, ≥ 6 tokens/sec, coherent SOAP structure                  |
 | PII/NER (on-device) | Redact a sample transcript          | Runs on-device at all, recall ≥ 0.9 on the 10 seeded PII spans — OR a documented redaction fallback |
 | End-to-end          | record → note, perceived            | ≤ 90s, no OOM crash across 5 consecutive runs                                                       |
 
@@ -303,7 +305,7 @@ git commit -m "feat(spike): on-device Whisper STT benchmark runner"
 
 - [ ] **Step 1: Write the LLM benchmark runner**
 
-Create `apps/native/spike/llmBench.ts`. It feeds the fixed `SAMPLE_TRANSCRIPT` to a local instruct model and produces a SOAP note, timing it and estimating tokens/sec. (Per `react-native-executorch`: `useLLM` exposes `.generate(messages)` returning the full string, plus `.response`/`.isReady`.)
+Create `apps/native/spike/llmBench.ts`. It is **runtime-agnostic on purpose** — it takes any object with a `generate(messages) => Promise<string>` method, so the same benchmark scores Gemma 4 (via LiteRT/RunAnywhere) and the Qwen3 baseline (via `react-native-executorch`, whose `useLLM` already exposes `.generate(messages)`). It feeds the fixed `SAMPLE_TRANSCRIPT`, produces a SOAP note, and times it + estimates tokens/sec.
 
 ```typescript
 import { timed, StageMetric } from "./metrics";
@@ -339,9 +341,14 @@ export async function runLlmBench(llm: {
 }
 ```
 
-- [ ] **Step 2: Wire the model in the screen (verified in Task 6)**
+- [ ] **Step 2: Provide a `generate()` for each candidate (bake-off)**
 
-The screen will call `useLLM({ model: LFM2_5_1_2B_INSTRUCT })` and pass the hook object into `runLlmBench`. `LFM2_5_1_2B_INSTRUCT` is the documented default; if it OOMs on the target device, fall back to a smaller listed model (record which one in the decision doc).
+`runLlmBench` needs an object with `generate(messages)`. Wire candidates in this priority, feeding each into `runLlmBench` and recording its numbers:
+
+- **Candidate A — Gemma 4 E4B (target).** Get the LiteRT/`.task` build of Gemma 4 E4B from Google AI Edge (Hugging Face / AI Edge) and run it through **MediaPipe LLM Inference** (or the RunAnywhere SDK if it exposes a Gemma/LiteRT backend). Wrap its call in a `generate(messages)` adapter that flattens the `Msg[]` into the model's prompt format and returns the full string. If RAM-constrained, try **E2B** first.
+- **Candidate B — Qwen3-1.7B baseline (guaranteed).** `react-native-executorch`'s `useLLM({ model: QWEN3_1_7B_QUANTIZED })` already returns a `.generate(messages)`-shaped object — pass it straight in. This always yields a number so the spike never stalls waiting on the Gemma toolchain.
+
+Run BOTH if you can; the decision doc compares them. Gemma 4 wins on multilingual (Malay) + future multimodal (Guardian); Qwen3 wins on "it runs in our existing runtime today." If Gemma 4 OOMs or has no working on-device build in the spike window, ship P0 on the baseline and keep Gemma 4 as the upgrade — record this explicitly.
 
 - [ ] **Step 3: Commit**
 
@@ -433,7 +440,7 @@ git commit -m "feat(spike): on-device PII redaction probe + recall scorer"
 
 - [ ] **Step 1: Build the benchmark screen**
 
-Create `apps/native/spike/BenchmarkScreen.tsx`. It loads both models via hooks, runs all stages, computes an end-to-end metric, and writes the JSON dump:
+Create `apps/native/spike/BenchmarkScreen.tsx`. It loads both models via hooks, runs all stages, computes an end-to-end metric, and writes the JSON dump. This baseline wiring uses the **Qwen3 RN-ExecuTorch** path (always runs); to benchmark Gemma 4, replace `llm` with the LiteRT/RunAnywhere adapter from Task 4 Step 2 (same `.generate(messages)` shape — `runLlmBench(llm)` is unchanged) and re-run.
 
 ```tsx
 import React, { useState } from "react";
@@ -442,7 +449,7 @@ import {
   useSpeechToText,
   useLLM,
   WHISPER_SMALL,
-  LFM2_5_1_2B_INSTRUCT,
+  QWEN3_1_7B_QUANTIZED,
 } from "react-native-executorch";
 import { StageMetric, dumpMetrics } from "./metrics";
 import { runSttBench } from "./sttBench";
@@ -451,7 +458,8 @@ import { runNerBench, regexRedact } from "./nerBench";
 
 export default function BenchmarkScreen() {
   const stt = useSpeechToText({ model: WHISPER_SMALL });
-  const llm = useLLM({ model: LFM2_5_1_2B_INSTRUCT });
+  // Baseline LLM (always available). Swap for the Gemma 4 LiteRT/RunAnywhere adapter to benchmark the target.
+  const llm = useLLM({ model: QWEN3_1_7B_QUANTIZED });
   const [metrics, setMetrics] = useState<StageMetric[]>([]);
   const [path, setPath] = useState("");
   const [running, setRunning] = useState(false);
@@ -553,33 +561,37 @@ Create `docs/superpowers/decisions/2026-06-16-ondevice-runtime-decision.md` with
 
 ## Measured results (median of 5 runs)
 
-| Stage                       | Model                | Median ms   | tokens/sec | recall | GO/NO-GO |
-| --------------------------- | -------------------- | ----------- | ---------- | ------ | -------- |
-| STT                         | WHISPER_SMALL        | …           | —          | —      | …        |
-| LLM                         | LFM2_5_1_2B_INSTRUCT | …           | …          | —      | …        |
-| NER                         | <Path A or B>        | …           | —          | …      | …        |
-| E2E                         | —                    | …           | —          | —      | …        |
-| First-launch model download | —                    | … (size MB) | —          | —      | note     |
+| Stage                       | Model / Runtime                          | Median ms   | tokens/sec | recall | GO/NO-GO |
+| --------------------------- | ---------------------------------------- | ----------- | ---------- | ------ | -------- |
+| STT                         | WHISPER_SMALL (RN-ExecuTorch)            | …           | —          | —      | …        |
+| LLM — target                | Gemma 4 E4B/E2B (LiteRT / RunAnywhere)   | …           | …          | —      | …        |
+| LLM — baseline              | QWEN3_1_7B_QUANTIZED (RN-ExecuTorch)     | …           | …          | —      | …        |
+| NER                         | <Path A or B>                            | …           | —          | …      | …        |
+| E2E                         | —                                        | …           | —          | —      | …        |
+| First-launch model download | —                                        | … (size MB) | —          | —      | note     |
 
 ## Decision
 
-- Runtime chosen: **react-native-executorch** | **RunAnywhere** (with reason).
+- Summarizer runtime chosen: **Google AI Edge / LiteRT** | **RunAnywhere** | **RN-ExecuTorch (baseline)** (with reason).
+- Summarizer model locked for P0: **Gemma 4 E4B** | **Gemma 4 E2B** | **Qwen3-1.7B (fallback)** (with reason).
+- STT: **WHISPER_SMALL on RN-ExecuTorch** (or note if STT moved to the same runtime as the LLM).
 - Redaction path chosen: **A (ML NER)** | **B (deterministic)** (with reason + production gap noted).
-- Models locked for P0: STT=<>, LLM=<>.
+- Two-runtime note: if STT stays on RN-ExecuTorch while the LLM runs on LiteRT/RunAnywhere, confirm both coexist in one dev-client build without conflict.
 
 ## If NO-GO on any stage — fallback taken
 
-<e.g. smaller LLM, streaming STT for perceived latency, or spin RunAnywhere comparison spike>
+<e.g. Gemma 4 has no working on-device build in window → ship P0 on Qwen3 baseline, Gemma 4 as upgrade; or smaller LLM / streaming STT for perceived latency>
 
 ## Implications for the P0 plan
 
 <e.g. "cloud Claude is the default summarizer; local LLM is the offline toggle only" if local LLM is too slow for primary use>
 ```
 
-- [ ] **Step 2: Decide RN-ExecuTorch vs RunAnywhere explicitly**
+- [ ] **Step 2: Decide the summarizer runtime explicitly (3-way)**
 
-- If all stages are **GO** on RN-ExecuTorch → lock RN-ExecuTorch; do **not** spend time integrating RunAnywhere. Record this.
-- If LLM or STT is **NO-GO** → before switching SDKs, retry with a smaller model and with streaming STT (perceived latency). If still NO-GO → open a follow-up spike to repeat Tasks 3–6 against the RunAnywhere RN SDK and compare. Note this as the next action; it is out of scope for this plan.
+- If **Gemma 4 E4B/E2B is GO** on LiteRT or RunAnywhere (meets thresholds, coexists with Whisper STT) → lock it. This is the preferred outcome (Malay + multimodal future).
+- If Gemma 4 has **no working on-device build / OOMs / misses thresholds** in the spike window → ship P0 on the **Qwen3-1.7B RN-ExecuTorch baseline** (a real number you already have) and file Gemma 4 as a fast-follow upgrade. Do NOT block P0 on the Gemma toolchain.
+- Either way, record the exact builds tried (model file, runtime version) so the next engineer doesn't repeat dead ends.
 
 - [ ] **Step 3: Commit**
 
