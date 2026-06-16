@@ -6,7 +6,9 @@
 
 **Architecture:** Generate the Better-T-Stack monorepo (React Native bare + oRPC + Cloudflare Workers + Neon). In the native-bare app, integrate `react-native-executorch` for on-device Whisper STT and a 1–1.5B instruct LLM, plus an on-device PII/NER probe. Build an in-app **Benchmark** screen that runs each stage against a bundled sample consult and logs structured latency/quality metrics. Compare results to explicit go/no-go thresholds and write a decision doc choosing RN-ExecuTorch vs RunAnywhere.
 
-**Tech Stack:** Better-T-Stack CLI, React Native (bare, new architecture), `react-native-executorch`, `react-native-audio-api`, `react-native-blob-util`, TypeScript, Cloudflare Workers, Neon Postgres, Alchemy (deploy — out of scope for this spike).
+**Tech Stack:** Better-T-Stack CLI, **Expo bare workflow** (`native-bare` = Expo + Expo Router; native projects via `expo prebuild`, on-device modules run in a **dev client**, NOT Expo Go), `react-native-executorch`, `react-native-audio-api`, `expo-asset`, `expo-file-system`, TypeScript, Cloudflare Workers, Neon Postgres, Alchemy (deploy — out of scope for this spike).
+
+> **Scaffold reality (recorded post-Task-0):** `apps/native` is an Expo app whose source lives in `app/`, `components/`, `lib/`, `utils/` (no `src/`). Spike code goes in `apps/native/spike/`, assets in `apps/native/assets/`. There are no `ios/`/`android/` folders until `expo prebuild` runs.
 
 **Why this is a spike, not a feature:** It is deliberately throwaway-tolerant. Its only deliverables are (a) a working scaffolded monorepo and (b) a decision doc with measured numbers. Code quality bar is "stable enough to measure," not "production." This de-risks the #1 technical unknown before any real feature work.
 
@@ -32,23 +34,24 @@ Measured on the target device, not simulator:
 ## File structure (created by this plan)
 
 ```
-med-ai/                              # better-t-stack monorepo root (generated)
-  apps/native/                       # React Native bare app (name may vary by template)
-    src/
-      spike/
-        BenchmarkScreen.tsx          # in-app harness: runs all stages, shows metrics
-        sttBench.ts                  # STT run + timing
-        llmBench.ts                  # LLM run + timing + tokens/sec
-        nerBench.ts                  # on-device PII/NER probe + recall calc
-        metrics.ts                   # Metric type + structured logger + JSON dump
-        sampleData.ts                # SAMPLE_TRANSCRIPT + SEEDED_PII + SOAP_PROMPT
-      assets/
-        sample-consult.wav           # ~60s BM/EN role-play consult (16 kHz mono)
+med-ai/                              # better-t-stack monorepo root (scaffolded in Task 0)
+  apps/native/                       # Expo bare-workflow app (source in app/, components/, lib/, utils/)
+    spike/
+      BenchmarkScreen.tsx            # in-app harness: runs all stages, shows metrics
+      sttBench.ts                    # STT run + timing
+      llmBench.ts                    # LLM run + timing + tokens/sec
+      nerBench.ts                    # on-device PII/NER probe + recall calc
+      metrics.ts                     # Metric type + structured logger + JSON dump
+      sampleData.ts                  # SAMPLE_TRANSCRIPT + SEEDED_PII + SOAP_PROMPT
+    assets/
+      sample-consult.wav             # ~60s BM/EN role-play consult (16 kHz mono)
+  apps/web/                          # tanstack-router (Vite) — clinician dashboard (later plans)
+  apps/server/                       # hono on Cloudflare Workers (later plans)
   docs/superpowers/decisions/
     2026-06-16-ondevice-runtime-decision.md   # the deliverable
 ```
 
-> The exact app folder (`apps/native` vs `apps/mobile`) depends on the template output. Task 1 records the real path; later tasks use it.
+> App folder confirmed as `apps/native` (Expo). Web = `apps/web`, server = `apps/server`.
 
 ---
 
@@ -58,52 +61,39 @@ med-ai/                              # better-t-stack monorepo root (generated)
 
 - Create: entire `med-ai/` monorepo via CLI
 
-- [ ] **Step 1: Run the Better-T-Stack scaffolder**
+- [x] **Step 1: Run the Better-T-Stack scaffolder** ✅ DONE
 
-The exact config is the one saved in the builder URL (`api=orpc, fe-n=native-bare, rt=workers, sd=cloudflare, db=postgres, dbs=neon, wd=cloudflare, add=vite-plus`). The builder page renders the precise command for that config — open it and copy the shown command. As a starting point (cross-check flag names against the builder output, the CLI evolves):
-
-Run from the parent of the current repo, naming the project `med-ai`:
+Scaffolded directly into this repo with `--directory-conflict merge` (preserves `docs/` + git history). Two config resolutions vs the builder URL: a web frontend (`tanstack-router`) was added because `--web-deploy cloudflare` requires one (and the spec needs a Vite dashboard), and `turborepo` was dropped because `vite-plus` is itself the task runner. Actual reproducible command:
 
 ```bash
-npm create better-t-stack@latest med-ai -- \
-  --frontend native-bare \
-  --backend hono \
-  --runtime workers \
-  --api orpc \
-  --database postgres \
-  --db-setup neon \
-  --addons turborepo \
-  --install
+npm create better-t-stack@latest -- create . \
+  --frontend native-bare tanstack-router \
+  --backend hono --runtime workers --api orpc \
+  --database postgres --orm drizzle --db-setup neon --manual-db \
+  --web-deploy cloudflare --server-deploy cloudflare \
+  --addons vite-plus --auth none --payments none --examples none \
+  --package-manager npm --no-git --no-install \
+  --directory-conflict merge --disable-analytics
 ```
 
-If a flag is rejected, drop `--<flag>` and the wizard will prompt for it interactively — accept the values matching the config above.
-
-- [ ] **Step 2: Verify the scaffold installed and type-checks**
-
-Run:
+- [ ] **Step 2: Install deps and verify type-check**
 
 ```bash
-cd med-ai && npm run check-types || npx turbo run check-types
+npm install
+npm run check        # vite-plus lint+format+typecheck (see root package.json scripts)
 ```
 
-Expected: completes with no type errors (a fresh template is clean). If the script name differs, list scripts with `npm run` and run the type-check one.
+Expected: install completes; `check` passes on the fresh template. If `check` isn't present, run `npx tsc --noEmit` per workspace.
 
 - [ ] **Step 3: Verify the web/API dev server boots**
-
-Run (template script name may be `dev`):
 
 ```bash
 npm run dev
 ```
 
-Expected: the Workers/web dev server starts and prints a local URL with no crash. Stop it with Ctrl-C.
+Expected: web on http://localhost:5173 and backend on http://localhost:3000 (OpenAPI at /api-reference) with no crash. Stop with Ctrl-C. (Note: `--manual-db` means Neon isn't provisioned yet — DB-dependent routes need a `DATABASE_URL` set first; not required for this spike.)
 
-- [ ] **Step 4: Commit the scaffold**
-
-```bash
-git add -A
-git commit -m "chore: scaffold med-ai monorepo (better-t-stack: native-bare + orpc + workers + neon)"
-```
+- [x] **Step 4: Commit the scaffold** ✅ DONE (commit `chore: scaffold med-ai monorepo (better-t-stack)`)
 
 ---
 
@@ -126,31 +116,39 @@ Expected: find the React Native app folder (e.g. `apps/native`). Note its `ios`/
 
 - [ ] **Step 2: Add on-device + audio dependencies**
 
-From the app folder:
+From the repo root (installs the whole monorepo first if not done), then add to the native app:
+
+```bash
+npm install
+npm install --workspace apps/native react-native-executorch react-native-audio-api expo-asset expo-file-system
+```
+
+Expected: installs without peer-dependency errors. `react-native-executorch` requires the New Architecture — Expo SDK enables it by default. `expo-asset`/`expo-file-system` handle bundled-asset reads (no `react-native-blob-util` needed under Expo).
+
+- [ ] **Step 3: Prebuild native projects, build a dev client, run on device**
+
+`native-bare` is the Expo bare workflow, so generate native projects then build a custom **dev client** (Expo Go cannot load these native modules):
 
 ```bash
 cd apps/native
-npm install react-native-executorch react-native-audio-api react-native-blob-util
+npx expo prebuild --clean          # generates ios/ and android/ from config
 ```
 
-Expected: installs without peer-dependency errors. `react-native-executorch` requires the New Architecture (default in current RN templates).
-
-- [ ] **Step 3: Install native pods (iOS) and confirm a clean device build**
-
-iOS:
+iOS (physical device):
 
 ```bash
-cd ios && pod install && cd ..
-npm run ios -- --device   # or open the workspace in Xcode and run on the connected device
+npx expo run:ios --device          # builds the dev client and installs on the connected device
 ```
 
-Android:
+Android (physical device, USB debugging on):
 
 ```bash
-npm run android   # with a physical device connected and USB debugging on
+npx expo run:android --device
 ```
 
-Expected: app builds and launches on the **physical** device showing the template home screen. A simulator build is acceptable only to confirm compilation — all later benchmarks must run on the physical device.
+Expected: the dev client builds and launches on the **physical** device showing the Expo Router home screen. A simulator/emulator build is acceptable only to confirm compilation — all later benchmarks must run on the physical device (no Neural Engine/NPU in simulators).
+
+> If `react-native-audio-api` or `react-native-executorch` need a config plugin, add it to `apps/native/app.json` under `expo.plugins` before `prebuild` (check each package's README). Re-run `expo prebuild --clean` after any plugin change.
 
 - [ ] **Step 4: Commit**
 
@@ -166,20 +164,20 @@ git commit -m "chore(native): add react-native-executorch + audio-api on-device 
 
 **Files:**
 
-- Create: `apps/native/src/spike/metrics.ts`
-- Create: `apps/native/src/spike/sampleData.ts`
-- Create: `apps/native/src/assets/sample-consult.wav`
+- Create: `apps/native/spike/metrics.ts`
+- Create: `apps/native/spike/sampleData.ts`
+- Create: `apps/native/assets/sample-consult.wav`
 
 - [ ] **Step 1: Add the sample audio asset**
 
-Record (or have a teammate record) a ~60-second scripted doctor–patient role-play that **code-switches Malay/English** (e.g. "Doctor, saya ada fever dah tiga hari, batuk kering, and my throat sakit bila telan…"). Export as **16 kHz mono WAV** to `apps/native/src/assets/sample-consult.wav`. This single clip is the fixed input for every benchmark run so numbers are comparable.
+Record (or have a teammate record) a ~60-second scripted doctor–patient role-play that **code-switches Malay/English** (e.g. "Doctor, saya ada fever dah tiga hari, batuk kering, and my throat sakit bila telan…"). Export as **16 kHz mono WAV** to `apps/native/assets/sample-consult.wav`. This single clip is the fixed input for every benchmark run so numbers are comparable.
 
 - [ ] **Step 2: Write the metrics module**
 
-Create `apps/native/src/spike/metrics.ts`:
+Create `apps/native/spike/metrics.ts`:
 
 ```typescript
-import RNBlobUtil from "react-native-blob-util";
+import * as FileSystem from "expo-file-system";
 
 export interface StageMetric {
   stage: "stt" | "llm" | "ner" | "e2e";
@@ -196,15 +194,15 @@ export async function timed<T>(fn: () => Promise<T>): Promise<{ result: T; ms: n
 }
 
 export async function dumpMetrics(runs: StageMetric[]): Promise<string> {
-  const path = `${RNBlobUtil.fs.dirs.DocumentDir}/spike-metrics.json`;
-  await RNBlobUtil.fs.writeFile(path, JSON.stringify(runs, null, 2), "utf8");
+  const path = `${FileSystem.documentDirectory}spike-metrics.json`;
+  await FileSystem.writeAsStringAsync(path, JSON.stringify(runs, null, 2));
   return path; // shown in UI so the engineer can pull the file
 }
 ```
 
 - [ ] **Step 3: Write the sample data + prompt module**
 
-Create `apps/native/src/spike/sampleData.ts`:
+Create `apps/native/spike/sampleData.ts`:
 
 ```typescript
 // A pre-written de-identified transcript used to benchmark the LLM in isolation
@@ -234,7 +232,7 @@ export const SOAP_SYSTEM_PROMPT =
 - [ ] **Step 4: Commit**
 
 ```bash
-git add apps/native/src/spike/metrics.ts apps/native/src/spike/sampleData.ts apps/native/src/assets/sample-consult.wav
+git add apps/native/spike/metrics.ts apps/native/spike/sampleData.ts apps/native/assets/sample-consult.wav
 git commit -m "test(spike): add sample consult, seeded-PII fixture, and metrics harness"
 ```
 
@@ -244,29 +242,25 @@ git commit -m "test(spike): add sample consult, seeded-PII fixture, and metrics 
 
 **Files:**
 
-- Create: `apps/native/src/spike/sttBench.ts`
+- Create: `apps/native/spike/sttBench.ts`
 
 - [ ] **Step 1: Write the STT benchmark runner**
 
-Create `apps/native/src/spike/sttBench.ts`. It loads the multilingual Whisper model, transcribes the bundled clip, and times it. (Hook usage per `react-native-executorch`: `useSpeechToText` exposes `.transcribe(audioBuffer, opts)` and `.isReady`.)
+Create `apps/native/spike/sttBench.ts`. It loads the multilingual Whisper model, transcribes the bundled clip, and times it. (Hook usage per `react-native-executorch`: `useSpeechToText` exposes `.transcribe(audioBuffer, opts)` and `.isReady`.)
 
 ```typescript
 import { AudioContext } from "react-native-audio-api";
-import RNBlobUtil from "react-native-blob-util";
+import { Asset } from "expo-asset";
 import { timed, StageMetric } from "./metrics";
 
 const STT_GO_MS = 90_000; // 60s clip must transcribe in <= 90s
 
-// Resolve the bundled wav to a file uri the AudioContext can decode.
+// Resolve the bundled wav to a local file uri the AudioContext can decode.
+// expo-asset downloads the bundled asset to the local cache and exposes localUri.
 async function sampleUri(): Promise<string> {
-  // react-native asset -> copy into a readable path
-  const asset = require("../assets/sample-consult.wav");
-  const { uri } = require("react-native/Libraries/Image/resolveAssetSource")(asset);
-  if (uri.startsWith("http") || uri.startsWith("file")) return uri;
-  // Dev bundler returns an http uri; download to cache for decode.
-  const dest = `${RNBlobUtil.fs.dirs.CacheDir}/sample-consult.wav`;
-  await RNBlobUtil.config({ path: dest }).fetch("GET", uri);
-  return `file://${dest}`;
+  const asset = Asset.fromModule(require("../assets/sample-consult.wav"));
+  await asset.downloadAsync();
+  return asset.localUri ?? asset.uri;
 }
 
 // `model` is the object returned by useSpeechToText (passed in from the screen).
@@ -295,7 +289,7 @@ The screen will call `useSpeechToText({ model: WHISPER_SMALL })` (multilingual; 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add apps/native/src/spike/sttBench.ts
+git add apps/native/spike/sttBench.ts
 git commit -m "feat(spike): on-device Whisper STT benchmark runner"
 ```
 
@@ -305,11 +299,11 @@ git commit -m "feat(spike): on-device Whisper STT benchmark runner"
 
 **Files:**
 
-- Create: `apps/native/src/spike/llmBench.ts`
+- Create: `apps/native/spike/llmBench.ts`
 
 - [ ] **Step 1: Write the LLM benchmark runner**
 
-Create `apps/native/src/spike/llmBench.ts`. It feeds the fixed `SAMPLE_TRANSCRIPT` to a local instruct model and produces a SOAP note, timing it and estimating tokens/sec. (Per `react-native-executorch`: `useLLM` exposes `.generate(messages)` returning the full string, plus `.response`/`.isReady`.)
+Create `apps/native/spike/llmBench.ts`. It feeds the fixed `SAMPLE_TRANSCRIPT` to a local instruct model and produces a SOAP note, timing it and estimating tokens/sec. (Per `react-native-executorch`: `useLLM` exposes `.generate(messages)` returning the full string, plus `.response`/`.isReady`.)
 
 ```typescript
 import { timed, StageMetric } from "./metrics";
@@ -352,7 +346,7 @@ The screen will call `useLLM({ model: LFM2_5_1_2B_INSTRUCT })` and pass the hook
 - [ ] **Step 3: Commit**
 
 ```bash
-git add apps/native/src/spike/llmBench.ts
+git add apps/native/spike/llmBench.ts
 git commit -m "feat(spike): on-device LLM SOAP-generation benchmark runner"
 ```
 
@@ -362,13 +356,13 @@ git commit -m "feat(spike): on-device LLM SOAP-generation benchmark runner"
 
 **Files:**
 
-- Create: `apps/native/src/spike/nerBench.ts`
+- Create: `apps/native/spike/nerBench.ts`
 
 > **Honest framing:** OpenMed ships Hugging Face `transformers` models (PyTorch). There is no first-class React Native binding. This task is a _feasibility probe with a decision_, not a guaranteed integration. It tries the realistic on-device path and, if that path is not viable inside the spike window, records a concrete fallback. Either outcome is a valid spike result.
 
 - [ ] **Step 1: Write a redaction-recall scorer (runtime-agnostic)**
 
-Create `apps/native/src/spike/nerBench.ts`. The scorer is independent of how redaction is produced, so it works for whichever path Step 2 picks:
+Create `apps/native/spike/nerBench.ts`. The scorer is independent of how redaction is produced, so it works for whichever path Step 2 picks:
 
 ```typescript
 import { StageMetric, timed } from "./metrics";
@@ -424,7 +418,7 @@ export async function regexRedact(text: string): Promise<string> {
 - [ ] **Step 3: Commit**
 
 ```bash
-git add apps/native/src/spike/nerBench.ts
+git add apps/native/spike/nerBench.ts
 git commit -m "feat(spike): on-device PII redaction probe + recall scorer"
 ```
 
@@ -434,12 +428,12 @@ git commit -m "feat(spike): on-device PII redaction probe + recall scorer"
 
 **Files:**
 
-- Create: `apps/native/src/spike/BenchmarkScreen.tsx`
+- Create: `apps/native/spike/BenchmarkScreen.tsx`
 - Modify: app entry to show `BenchmarkScreen` (record exact file in Step 1)
 
 - [ ] **Step 1: Build the benchmark screen**
 
-Create `apps/native/src/spike/BenchmarkScreen.tsx`. It loads both models via hooks, runs all stages, computes an end-to-end metric, and writes the JSON dump:
+Create `apps/native/spike/BenchmarkScreen.tsx`. It loads both models via hooks, runs all stages, computes an end-to-end metric, and writes the JSON dump:
 
 ```tsx
 import React, { useState } from "react";
