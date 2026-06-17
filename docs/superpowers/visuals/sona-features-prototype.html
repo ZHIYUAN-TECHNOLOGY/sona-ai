@@ -239,6 +239,52 @@
   .sw{width:42px;height:25px;border-radius:999px;background:var(--blue);position:relative;flex:none}
   .sw span{position:absolute;top:2.5px;right:2.5px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 
+  /* transcript (Otter-style) */
+  .tsearch{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:10px 14px;margin-bottom:12px;box-shadow:var(--card-sh);font-size:12.5px;color:var(--faint)}
+  .kwrap{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 14px}
+  .kw{font-size:11px;font-weight:600;color:var(--blue-ink);background:var(--blue-t);border:1px solid #d7e6fb;border-radius:8px;padding:4px 10px}
+  .tline{display:flex;gap:10px;padding:9px 8px;border-radius:12px;margin-bottom:2px}
+  .tline.on{background:#eaf5ef}
+  .tav{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;flex:none;font-family:var(--serif)}
+  .tline .tt{flex:1}
+  .tmeta{font-size:10px;color:var(--faint);margin-bottom:2px}
+  .ttx{font-size:13px;line-height:1.45}
+  .cs2{background:#fff7d6;border-radius:3px;padding:0 2px}
+  .play{position:absolute;left:16px;right:16px;bottom:14px;z-index:15;border-radius:18px;padding:11px 14px;display:flex;align-items:center;gap:11px}
+  .pbar{flex:1;height:4px;border-radius:3px;background:#d3deeb;position:relative}
+  .pbar i{position:absolute;left:0;top:0;bottom:0;width:42%;border-radius:3px;background:var(--blue)}
+  .pbar b{position:absolute;left:42%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:var(--blue);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .pt{font-size:10.5px;color:var(--mut);font-variant-numeric:tabular-nums}
+  .pbtn{width:38px;height:38px;border-radius:50%;background:linear-gradient(180deg,#4a8cee,#2767c8);display:grid;place-items:center;color:#fff;font-size:16px;flex:none;box-shadow:0 6px 14px -6px rgba(39,103,200,.6)}
+
+  /* live note building */
+  .building{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;color:var(--urgent)}
+  .pulse{width:8px;height:8px;border-radius:50%;background:var(--urgent);animation:pul 1.2s ease-in-out infinite}
+  @keyframes pul{0%,100%{opacity:1}50%{opacity:.25}}
+  .typing{display:inline-flex;gap:3px;margin-left:4px;vertical-align:middle}
+  .typing i{width:5px;height:5px;border-radius:50%;background:var(--faint);animation:typ 1s infinite}
+  .typing i:nth-child(2){animation-delay:.15s} .typing i:nth-child(3){animation-delay:.3s}
+  @keyframes typ{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-3px);opacity:1}}
+
+  /* pre-visit brief */
+  .brief{display:flex;gap:12px;padding:12px 2px;border-bottom:1px solid var(--line);font-size:13px;align-items:center}
+  .brief:last-child{border-bottom:0}
+  .brief .bi2{width:32px;height:32px;border-radius:10px;background:var(--blue-t);color:var(--blue);display:grid;place-items:center;font-size:15px;flex:none}
+  .brief .bt{flex:1} .brief .bt b{font-weight:600} .brief .bt .bs{color:var(--mut);font-size:11.5px;margin-top:1px}
+
+  /* coding */
+  .code{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #eef2f7;border-radius:14px;padding:12px 14px;box-shadow:var(--card-sh);margin-bottom:9px}
+  .code .cc{font-family:var(--serif);font-weight:600;font-size:13.5px;background:var(--blue-t);color:var(--blue-ink);border-radius:8px;padding:5px 10px;flex:none;white-space:nowrap}
+  .code .ci2{flex:1;min-width:0} .code .ci2 b{font-size:13.5px;font-weight:600} .code .ci2 div{font-size:11px;color:var(--mut);margin-top:1px}
+  .conf{font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .conf.hi{background:var(--manage-t);color:var(--manage)} .conf.mid{background:var(--advice-t);color:#a96420}
+
+  /* calm states */
+  .successwrap{display:flex;flex-direction:column;align-items:center;text-align:center;margin-top:54px}
+  .bigcheck{width:86px;height:86px;border-radius:50%;background:var(--manage-t);display:grid;place-items:center;color:var(--manage);font-size:36px;margin-bottom:20px;box-shadow:0 0 0 12px rgba(17,160,116,.07)}
+  .empty{display:flex;flex-direction:column;align-items:center;text-align:center;margin-top:78px;color:var(--mut)}
+  .emptyic{width:66px;height:66px;border-radius:20px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--faint);font-size:26px;margin-bottom:18px;box-shadow:var(--card-sh)}
+
   /* dashboard */
   .web{width:100%;max-width:620px;background:#fff;border-radius:20px;overflow:hidden;margin-top:6px;box-shadow:0 30px 70px -20px rgba(0,0,0,.55)}
   .web .bar{display:flex;align-items:center;gap:7px;padding:12px 15px;border-bottom:1px solid var(--line);background:#f1f5f9}
@@ -291,6 +337,10 @@
   <symbol id="i-pill" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="6" rx="3"/><path d="M12 9v6"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5l11 7l-11 7z"/></symbol>
+  <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9z"/></symbol>
+  <symbol id="i-droplet" viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></symbol>
 </svg>
 
 <div class="wrap">
@@ -299,7 +349,7 @@
     <div><h1>Sona - App Prototype</h1>
     <p class="psub">Premium pass: Ada language, richer Liquid Glass, depth, GSAP reveal. Generated 2026-06-17.</p></div>
   </header>
-  <p class="read"><b>Designer audit applied:</b> richer glass material, layered depth, more spacing, lighter serif display, screen-gloss, and a loading state. Open in Chrome or Safari for the glass.</p>
+  <p class="read"><b>Premium theme kept, winning screens added:</b> pre-visit brief (SmartPrep), Otter-style transcript (keywords + timestamps + playhead), live note-building, AI coding panel, and calm success + empty states. Open in Chrome or Safari for the glass.</p>
   <div class="rate">Prior pass <b>7.0</b> &nbsp;to&nbsp; this pass <b>8.7</b> (self-assessed against premium criteria)</div>
 
   <h2>Onboarding</h2>
@@ -373,6 +423,29 @@
 
   <h2>Scribe</h2>
   <div class="gallery">
+
+    <!-- PRE-VISIT BRIEF (SmartPrep) -->
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="island"></div>
+        <div class="sb"><span>9:40</span><span class="rt">5G 100</span></div>
+        <div class="body pb">
+          <div class="brandrow"><div class="b"><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-back"/></svg></span><span class="nm" style="font-size:16px">Pre-visit</span></div></div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px"><span class="ava" style="width:44px;height:44px;border-radius:14px;font-size:16px;background:#11a074">TM</span><div><div class="display" style="font-size:20px">Tan Mei Ling</div><div class="mut" style="font-size:11.5px">58 years &middot; 10:00 follow-up</div></div></div>
+          <div class="eyebrow">Sona prepared this</div>
+          <div class="card" style="padding:6px 16px">
+            <div class="brief"><span class="bi2"><svg class="ic" style="font-size:15px"><use href="#i-clock"/></svg></span><div class="bt"><b>Last visit, 12 weeks ago</b><div class="bs">Hypertension, BP 148/92, dose increased</div></div></div>
+            <div class="brief"><span class="bi2"><svg class="ic" style="font-size:15px"><use href="#i-pill"/></svg></span><div class="bt"><b>Active medications</b><div class="bs">Amlodipine 10 mg, Metformin 500 mg</div></div></div>
+            <div class="brief"><span class="bi2" style="background:var(--urgent-t);color:var(--urgent)"><svg class="ic" style="font-size:15px"><use href="#i-alert"/></svg></span><div class="bt"><b>Allergy</b><div class="bs">Penicillin, rash</div></div></div>
+            <div class="brief"><span class="bi2"><svg class="ic" style="font-size:15px"><use href="#i-flask"/></svg></span><div class="bt"><b>Last labs</b><div class="bs">HbA1c 7.4%, eGFR 78</div></div></div>
+          </div>
+          <p class="mut" style="font-size:11px;line-height:1.5">Surfaced from this patient's record, on device. Review, then record.</p>
+          <button class="btn blue" style="margin-top:14px"><svg class="ic" style="font-size:16px"><use href="#i-mic"/></svg>Start consult</button>
+        </div>
+      </div></div>
+      <figcaption><span class="tagn">Scribe</span><b>Pre-visit brief</b><span>SmartPrep: relevant history surfaced before the visit.</span></figcaption>
+    </figure>
+
     <figure>
       <div class="phone"><div class="scr">
         <div class="amb"></div><div class="island"></div>
@@ -386,22 +459,50 @@
       <figcaption><span class="tagn">Scribe</span><b>Recording</b><span>Glowing ring, frosted transport.</span></figcaption>
     </figure>
 
+    <!-- TRANSCRIPT (Otter-style) -->
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="island"></div>
+        <div class="sb"><span>9:43</span><span class="rt">5G 100</span></div>
+        <div class="body" style="padding-bottom:84px">
+          <div class="brandrow"><div class="b"><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-back"/></svg></span></div><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-search"/></svg></span></div>
+          <div class="display" style="font-size:21px">Encik Rahman, URTI</div>
+          <div class="mut" style="font-size:11.5px;margin:2px 2px 12px">17 June &middot; 2:33 &middot; on device</div>
+          <div class="eyebrow" style="margin:0 2px 9px">Summary keywords</div>
+          <div class="kwrap"><span class="kw">fever</span><span class="kw">dry cough</span><span class="kw">sore throat</span><span class="kw">no chest pain</span><span class="kw">paracetamol</span></div>
+          <div class="tline"><span class="tav" style="background:var(--blue)">Dr</span><div class="tt"><div class="tmeta">Dr Lim &middot; 0:06</div><div class="ttx">Apa yang boleh saya bantu hari ini?</div></div></div>
+          <div class="tline on"><span class="tav" style="background:#11a074">Pt</span><div class="tt"><div class="tmeta">Patient &middot; 0:11</div><div class="ttx">Doctor, saya ada <span class="cs2">fever</span> dah tiga hari, and <span class="cs2">batuk kering</span>. My throat <span class="cs2">sakit</span> bila telan.</div></div></div>
+          <div class="tline"><span class="tav" style="background:var(--blue)">Dr</span><div class="tt"><div class="tmeta">Dr Lim &middot; 0:29</div><div class="ttx">Ada shortness of breath atau chest pain?</div></div></div>
+          <div class="tline"><span class="tav" style="background:#11a074">Pt</span><div class="tt"><div class="tmeta">Patient &middot; 0:34</div><div class="ttx">No, tiada. Tapi badan rasa lemah and sakit kepala sikit.</div></div></div>
+        </div>
+        <div class="play glass"><div class="pbtn"><svg class="ic" style="font-size:16px"><use href="#i-play"/></svg></div><div class="pbar"><i></i><b></b></div><span class="pt">1:04 / 2:33</span></div>
+      </div></div>
+      <figcaption><span class="tagn">Scribe</span><b>Transcript (Otter-style)</b><span>Keyword chips, speaker + timestamps, tap-to-jump playhead.</span></figcaption>
+    </figure>
+
+    <!-- LIVE NOTE BUILDING (Abridge) -->
     <figure>
       <div class="phone"><div class="scr">
         <div class="island"></div>
         <div class="sb"><span>9:43</span><span class="rt">5G 100</span></div>
         <div class="body pb">
-          <div class="brandrow"><div class="b"><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-back"/></svg></span><span class="nm" style="font-size:16px">Transcript</span></div><span style="font-size:11px;color:var(--urgent);font-weight:700">REC 01:42</span></div>
-          <div class="daydiv">Live, on device</div>
-          <p class="pichat"><b style="color:var(--blue-ink)">Dr</b> &nbsp;Apa yang boleh saya bantu hari ini?</p>
-          <div class="bubble">Doctor, saya ada fever dah tiga hari, and batuk kering.</div>
-          <div class="bubble">My throat sakit bila telan.</div>
-          <p class="pichat"><b style="color:var(--blue-ink)">Dr</b> &nbsp;Ada shortness of breath atau chest pain?</p>
-          <div class="bubble" style="opacity:.5">No, tiada. Tapi badan rasa lemah</div>
+          <div class="brandrow"><div class="b"><span class="nm" style="font-size:16px">Note, live</span></div><span class="building"><span class="pulse"></span>REC 01:42</span></div>
+          <div class="card">
+            <div class="soap">
+              <h4>Subjective</h4>
+              <p>3-day fever, dry cough, sore throat worse on swallowing. No breathlessness or chest pain.</p>
+              <h4>Objective</h4>
+              <p>Throat mildly erythematous, no exudate. Chest clear<span class="typing"><i></i><i></i><i></i></span></p>
+              <h4 style="opacity:.5">Assessment</h4>
+              <div class="sk" style="height:11px;width:86%;margin:2px 0 8px"></div>
+              <div class="sk" style="height:11px;width:60%"></div>
+            </div>
+          </div>
+          <p class="mut" style="font-size:11px;text-align:center">The note writes itself as you talk. Keep going, or finish.</p>
         </div>
-        <div class="toolbar glass"><div class="tbtn"><svg class="ic" style="font-size:15px"><use href="#i-notes"/></svg>Note</div><div class="tbtn solid"><svg class="ic" style="font-size:15px"><use href="#i-stop"/></svg>Finish consult</div></div>
+        <div class="toolbar glass"><div class="tbtn"><svg class="ic" style="font-size:15px"><use href="#i-notes"/></svg>Transcript</div><div class="tbtn solid"><svg class="ic" style="font-size:15px"><use href="#i-stop"/></svg>Finish consult</div></div>
       </div></div>
-      <figcaption><span class="tagn">Scribe</span><b>Live transcript</b><span>Code-switch chat, glass action bar.</span></figcaption>
+      <figcaption><span class="tagn">Scribe</span><b>Live note-building</b><span>Note assembles while recording, section by section.</span></figcaption>
     </figure>
 
     <!-- SKELETON / GENERATING -->
@@ -445,6 +546,27 @@
       <figcaption><span class="tagn">Scribe</span><b>Consult note</b><span>Serif SOAP, captured-data rows.</span></figcaption>
     </figure>
 
+    <!-- CODING PANEL (AI Coding) -->
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="island"></div>
+        <div class="sb"><span>9:44</span><span class="rt">5G 100</span></div>
+        <div class="body pb">
+          <div class="brandrow"><div class="b"><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-back"/></svg></span><span class="nm" style="font-size:16px">Coding</span></div><span class="stat signed">audit-ready</span></div>
+          <div class="display" style="font-size:21px;margin-bottom:4px">Suggested codes</div>
+          <p class="mut" style="font-size:12px;margin:0 2px 14px">From the note, on device. Review before you accept.</p>
+          <div class="eyebrow" style="margin-top:0">Visit level</div>
+          <div class="code"><span class="cc">99213</span><div class="ci2"><b>Established patient, E/M</b><div>Low complexity, 15 to 29 min</div></div><span class="conf hi">high</span></div>
+          <div class="eyebrow">Diagnoses, ICD-10</div>
+          <div class="code"><span class="cc">J06.9</span><div class="ci2"><b>Acute upper respiratory infection</b><div>primary</div></div><span class="conf hi">high</span></div>
+          <div class="code"><span class="cc">R05</span><div class="ci2"><b>Cough</b><div>secondary</div></div><span class="conf mid">review</span></div>
+          <div class="code"><span class="cc">R51</span><div class="ci2"><b>Headache</b><div>secondary</div></div><span class="conf mid">review</span></div>
+          <button class="btn blue" style="margin-top:6px"><svg class="ic" style="font-size:16px"><use href="#i-check"/></svg>Accept codes</button>
+        </div>
+      </div></div>
+      <figcaption><span class="tagn">Scribe</span><b>AI coding</b><span>E/M + ICD-10 with confidence. The revenue feature.</span></figcaption>
+    </figure>
+
     <figure>
       <div class="phone"><div class="scr">
         <div class="island"></div>
@@ -462,6 +584,29 @@
         </div>
       </div></div>
       <figcaption><span class="tagn">Scribe</span><b>Sign and export</b><span>Gradient primary, glass secondary.</span></figcaption>
+    </figure>
+
+    <!-- SUCCESS (calm state) -->
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="island"></div>
+        <div class="sb"><span>9:45</span><span class="rt">5G 100</span></div>
+        <div class="body" style="display:flex;flex-direction:column">
+          <div class="successwrap">
+            <div class="bigcheck"><svg class="ic" style="font-size:38px"><use href="#i-check"/></svg></div>
+            <div class="display" style="font-size:24px">Signed and sent.</div>
+            <p class="mut serif" style="font-size:14.5px;line-height:1.5;margin:10px 18px 0">The note is in Tan Mei Ling's record. FHIR exported, audit logged, and the audio is gone.</p>
+          </div>
+          <div style="margin-top:auto">
+            <div class="card" style="padding:6px 16px;margin-bottom:14px">
+              <div class="check"><span class="ci"><svg class="ic" style="font-size:14px"><use href="#i-link"/></svg></span>FHIR sent to the record</div>
+              <div class="check"><span class="ci"><svg class="ic" style="font-size:14px"><use href="#i-shield"/></svg></span>Raw audio discarded</div>
+            </div>
+            <button class="btn blue">Back to today</button>
+          </div>
+        </div>
+      </div></div>
+      <figcaption><span class="tagn">Scribe</span><b>Success state</b><span>Calm confirmation, not a blank screen.</span></figcaption>
     </figure>
   </div>
 
@@ -501,6 +646,24 @@
         </div>
       </div></div>
       <figcaption><span class="tagn">Patients</span><b>Patient profile</b><span>Continuity ring, note history.</span></figcaption>
+    </figure>
+
+    <!-- EMPTY STATE (calm) -->
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="island"></div>
+        <div class="sb"><span>8:02</span><span class="rt">5G 100</span></div>
+        <div class="body" style="display:flex;flex-direction:column">
+          <div class="display" style="font-size:24px;margin:4px 2px 0">Today</div>
+          <div class="empty">
+            <div class="emptyic"><svg class="ic" style="font-size:26px"><use href="#i-mic"/></svg></div>
+            <div class="serif" style="font-size:18px;color:var(--ink);font-weight:500">A quiet start.</div>
+            <p style="font-size:13px;line-height:1.5;margin:8px 24px 0">No consults yet. When you are ready, record one and the note writes itself.</p>
+          </div>
+          <button class="btn blue" style="margin-top:auto"><svg class="ic" style="font-size:16px"><use href="#i-mic"/></svg>Record first consult</button>
+        </div>
+      </div></div>
+      <figcaption><span class="tagn">Patients</span><b>Empty state</b><span>Designed, warm, with a clear next step.</span></figcaption>
     </figure>
 
     <figure>
