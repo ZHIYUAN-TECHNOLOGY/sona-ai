@@ -6,212 +6,248 @@
 <title>Sona - App Prototype</title>
 <!--
   Concept mockups for review (not the built app). Mobile product UI.
-  Warm language inspired by the Pi (Inflection) iOS app: cream/blush background,
-  deep forest-green brand, elegant serif headers, soft tan bubbles, full-pill green
-  buttons, layered green hills on voice screens. Status colors (green optimal /
-  amber watch / rose attention) used only for real data state. Icons are Tabler-style
-  inline strokes. Single accent: forest green. Zero em-dashes. Reduced-motion guarded.
-  Mobbin refs: Pi (home chat, onboarding, voice mode, suggestion tiles, profile),
+  Clean clinical language inspired by the Ada (Ada Health) iOS app: white/cool
+  background, navy serif headlines, friendly blue primary, semantic urgency colors
+  (green manage / orange seek advice / red urgent), circled-number cards, and
+  conversational outlined answer chips.
+  Liquid Glass is a WEB APPROXIMATION (backdrop-filter) per the expo-liquid-glass
+  skill: glass on chrome/controls only (tab bars, toolbars, chip bars, camera
+  overlays), content edge-to-edge behind it, reduced-transparency fallback.
+  Entrance animation uses GSAP ScrollTrigger.batch, loaded from CDN; if GSAP is
+  absent (offline) or reduced-motion is set, all screens simply show, no animation.
+  Single accent: blue. Urgency colors are real status, not decoration. Zero em-dashes.
+  Mobbin refs: Ada (welcome, assessment chips, condition cards, urgency labels),
   Superpower (biomarker rows), Deepstash/Mercury (scan frame), WHOOP/Withings (vitals).
 -->
 <style>
   :root{
-    --cream:#faf1e8; --cream2:#f5e9dd; --card:#fffaf3; --tan:#efe2d2; --line:#ece0d1;
-    --ink:#20312a; --mut:#7c7568; --faint:#a59b8c;
-    --green:#1f4a37; --green2:#15503a; --green-ink:#0e3d2c; --sage:#5f7d70;
-    --ok:#2f8f5b; --watch:#c4912e; --rose:#cf5d73; --red:#d6453f;
-    --ok-t:#e6f1ea; --watch-t:#f6eed9; --rose-t:#f7e7ea;
-    --serif:ui-serif,"New York",Georgia,"Iowan Old Style","Apple Garamond",serif;
-    --sh:0 2px 4px rgba(58,40,20,.04),0 10px 28px rgba(58,40,20,.06);
-    --r:22px;
+    --bg:#f5f8fc; --card:#ffffff; --ink:#1a2a3a; --mut:#647688; --faint:#97a8b8; --line:#e6edf4;
+    --blue:#3d82e6; --blue-ink:#2a6fd0; --blue-t:#eaf2fd;
+    --manage:#15a37a; --advice:#e0843a; --urgent:#df524d;
+    --manage-t:#e6f5ef; --advice-t:#fbeede; --urgent-t:#fbe9e8;
+    --serif:ui-serif,"New York",Georgia,"Iowan Old Style",serif;
+    --sh:0 1px 2px rgba(20,40,70,.04),0 8px 24px rgba(20,40,70,.06);
+    --r:18px;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:#171a18;color:#e9e3da;
+  html,body{margin:0;background:#0f141a;color:#dfe7ef;
     font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1320px;margin:0 auto;padding:44px 24px 100px}
+  .wrap{max-width:1320px;margin:0 auto;padding:44px 24px 110px}
   header.top{display:flex;align-items:center;gap:14px}
-  .logo{width:46px;height:46px;border-radius:13px;background:var(--green);display:grid;place-items:center;font-weight:700;color:#eaf3ee;font-size:22px;font-family:var(--serif)}
+  .logo{width:46px;height:46px;border-radius:13px;background:var(--blue);display:grid;place-items:center;font-weight:700;color:#fff;font-size:22px;font-family:var(--serif)}
   h1{font-size:28px;margin:0;letter-spacing:-.02em;font-family:var(--serif)}
-  .psub{color:#9d9488;margin:3px 0 0;font-size:13.5px}
-  .read{margin:22px 0 4px;color:#b6ab9c;font-size:13px;border-left:3px solid var(--green);padding:9px 14px;background:#1d211e;border-radius:0 10px 10px 0}
-  .read b{color:#a7d8bf}
-  h2{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#8f8678;margin:54px 0 18px;font-weight:600}
+  .psub{color:#94a3b2;margin:3px 0 0;font-size:13.5px}
+  .read{margin:22px 0 4px;color:#aebdcc;font-size:13px;border-left:3px solid var(--blue);padding:9px 14px;background:#141b22;border-radius:0 10px 10px 0}
+  .read b{color:#8fc0f5}
+  h2{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#8497a8;margin:54px 0 18px;font-weight:600}
   .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:34px;justify-items:center;margin-top:24px}
   figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:12px;width:300px}
-  figcaption{text-align:center} figcaption b{display:block;font-size:14px;color:#e9e3da} figcaption span{color:#9d9488;font-size:12px}
-  .tagn{display:inline-block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:2px 9px;border-radius:999px;border:1px solid #2f3a33;color:#9d9488;margin-bottom:8px}
+  figcaption{text-align:center} figcaption b{display:block;font-size:14px;color:#dfe7ef} figcaption span{color:#94a3b2;font-size:12px}
+  .tagn{display:inline-block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:2px 9px;border-radius:999px;border:1px solid #2c3a48;color:#94a3b2;margin-bottom:8px}
 
   .ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:-.13em;flex:none}
 
-  /* phone */
-  .phone{width:300px;height:628px;background:#0c0d0c;border-radius:46px;padding:10px;box-shadow:0 36px 76px -28px #000,0 0 0 1px #2a322c;position:relative}
-  .scr{width:100%;height:100%;border-radius:37px;overflow:hidden;position:relative;background:var(--cream);color:var(--ink)}
-  .island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:92px;height:25px;background:#0c0d0c;border-radius:999px;z-index:30}
-  .sb{position:absolute;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;padding:13px 22px 0;font-size:12.5px;font-weight:600;color:var(--green-ink)}
+  .phone{width:300px;height:628px;background:#0a0e12;border-radius:46px;padding:10px;box-shadow:0 36px 76px -28px #000,0 0 0 1px #25313d;position:relative}
+  .scr{width:100%;height:100%;border-radius:37px;overflow:hidden;position:relative;background:var(--bg);color:var(--ink)}
+  .island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:92px;height:25px;background:#000;border-radius:999px;z-index:30}
+  .sb{position:absolute;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;padding:13px 22px 0;font-size:12.5px;font-weight:600}
   .sb .rt{font-size:11px;letter-spacing:.4px}
   .body{position:absolute;inset:0;padding:48px 18px 18px;overflow:auto}
   .body::-webkit-scrollbar{display:none}
   .body.pb{padding-bottom:90px}
 
+  /* liquid glass (web approximation) */
+  .glass{
+    background:linear-gradient(135deg,rgba(255,255,255,.7),rgba(255,255,255,.42)),rgba(255,255,255,.5);
+    backdrop-filter:blur(20px) saturate(165%);-webkit-backdrop-filter:blur(20px) saturate(165%);
+    border:1px solid rgba(255,255,255,.75);box-shadow:0 8px 28px rgba(20,40,70,.12),inset 0 1px 0 rgba(255,255,255,.9)}
+  .glass-dark{
+    background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.04)),rgba(12,22,30,.34);
+    backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%);
+    border:1px solid rgba(255,255,255,.18);box-shadow:0 12px 34px rgba(0,0,0,.4)}
+  @media (prefers-reduced-transparency: reduce){
+    .glass{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none}
+    .glass-dark{background:rgba(14,22,30,.96);backdrop-filter:none;-webkit-backdrop-filter:none}
+  }
+  .tabbar{position:absolute;left:16px;right:16px;bottom:14px;z-index:15;height:60px;border-radius:22px;display:flex;align-items:center;justify-content:space-around}
+  .tb{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;font-weight:600;color:var(--faint)}
+  .tb.on{color:var(--blue-ink)}
+
   /* type */
   .serif{font-family:var(--serif)}
-  .display{font-family:var(--serif);font-size:26px;line-height:1.18;letter-spacing:-.01em;font-weight:600;padding-bottom:2px}
+  .display{font-family:var(--serif);font-size:26px;line-height:1.2;letter-spacing:-.01em;font-weight:600;padding-bottom:2px}
   .display .it{font-style:italic}
-  .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:20px 4px 11px}
+  .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:20px 4px 11px}
   .mut{color:var(--mut)}
 
-  /* buttons (full pill) */
-  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-weight:600;font-size:14px;padding:15px;border-radius:999px;border:none}
+  /* buttons */
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-weight:600;font-size:14px;padding:14px;border-radius:999px;border:none}
   .btn:active{transform:translateY(1px)}
-  .btn.green{background:var(--green);color:#f3faf6}
-  .btn.tan{background:var(--tan);color:var(--green-ink)}
-  .send{width:46px;height:46px;border-radius:50%;background:var(--green);display:grid;place-items:center;color:#eaf3ee;font-size:19px;flex:none}
+  .btn.blue{background:var(--blue);color:#fff} .btn.out{background:transparent;border:1.5px solid #cfe0f5;color:var(--blue-ink)}
+  .chip{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--blue-ink);border:1.5px solid #cfe0f5;background:rgba(255,255,255,.6);border-radius:999px;padding:9px 16px}
+  .chips-r{display:flex;flex-direction:column;align-items:flex-end;gap:9px}
+  .send{width:46px;height:46px;border-radius:50%;background:var(--blue);display:grid;place-items:center;color:#fff;font-size:19px;flex:none}
 
-  /* cards */
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--sh);margin-bottom:13px}
-  .inputpill{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:11px 11px 11px 18px;box-shadow:var(--sh)}
-  .inputpill .ph{flex:1;color:var(--faint);font-size:13.5px}
-
-  /* brand row */
+  /* brand glyph (dot cluster, Ada-style) */
   .brandrow{display:flex;align-items:center;justify-content:space-between;margin:0 2px 16px}
   .brandrow .b{display:flex;align-items:center;gap:9px}
-  .brandrow .bi{width:26px;height:26px;border-radius:8px;background:var(--green);display:grid;place-items:center;color:#eaf3ee;font-weight:700;font-size:14px;font-family:var(--serif)}
-  .brandrow .nm{font-weight:600;font-family:var(--serif);font-size:17px}
-  .circ{width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;color:var(--green);font-size:16px}
+  .glyph{width:26px;height:26px;display:grid;grid-template-columns:repeat(3,1fr);gap:2px;align-content:center;padding:3px}
+  .glyph span{height:4px;border-radius:2px;background:var(--blue)} .glyph span:nth-child(2){background:var(--manage)} .glyph span:nth-child(4){background:var(--advice)} .glyph span:nth-child(5){background:var(--ink)}
+  .nm{font-weight:600;font-family:var(--serif);font-size:17px}
+  .circ{width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;color:var(--ink);font-size:16px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--sh);margin-bottom:13px}
+  .inputpill{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:12px 16px;box-shadow:var(--sh)}
+  .inputpill .ph{flex:1;color:var(--faint);font-size:13.5px}
 
   /* chat */
-  .bubble{background:var(--tan);border-radius:18px 18px 6px 18px;padding:11px 14px;font-family:var(--serif);font-size:14px;line-height:1.45;margin:0 0 12px auto;max-width:82%}
-  .pichat{font-family:var(--serif);font-size:14.5px;line-height:1.5;margin:0 2px 14px}
+  .bubble{background:#eef2f7;border-radius:16px;padding:11px 14px;font-size:13.5px;line-height:1.45;margin:0 0 11px auto;max-width:82%}
+  .pichat{font-family:var(--serif);font-size:15px;line-height:1.5;margin:0 2px 14px}
   .daydiv{text-align:center;color:var(--faint);font-size:11px;letter-spacing:.06em;margin:6px 0 14px}
 
-  /* hills */
-  .hills{position:absolute;left:0;right:0;bottom:0;height:140px;z-index:1}
-  .hills i{position:absolute;left:-10%;right:-10%;border-radius:50%}
-  .hills .h1{bottom:-90px;height:170px;background:#cfe6d2;left:-20%;right:-20%}
-  .hills .h2{bottom:-110px;height:170px;background:#9fd0a8;left:-10%;right:-30%}
-  .hills .h3{bottom:-120px;height:170px;background:#3f8d5b;left:-25%;right:-5%}
-  .voicebar{position:absolute;left:0;right:0;bottom:20px;z-index:5;display:flex;justify-content:center;gap:14px}
-  .vb{width:48px;height:48px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;color:var(--green-ink);font-size:18px;box-shadow:var(--sh)}
-  .vb.mic{background:var(--green);color:#eaf3ee;border:none}
+  /* condition / step cards (Ada signature: circled number + urgency label) */
+  .cond{display:flex;gap:13px;padding:14px 2px;border-bottom:1px solid var(--line)}
+  .cond:last-child{border-bottom:0}
+  .num{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:13px;color:var(--mut);flex:none;font-family:var(--serif)}
+  .cond .ct h4{margin:0;font-size:15px;font-family:var(--serif);font-weight:600}
+  .cond .ct .urg{font-size:11.5px;font-weight:700;margin:3px 0}
+  .urg.manage{color:var(--manage)} .urg.advice{color:var(--advice)} .urg.urgent{color:var(--urgent)}
+  .cond .ct p{margin:0;font-size:12px;color:var(--mut)}
 
   /* list rows */
   .lrow{display:flex;align-items:center;gap:13px;padding:13px 2px;border-bottom:1px solid var(--line)}
   .lrow:last-child{border-bottom:0}
-  .ava{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;font-size:13px;font-weight:700;color:#f3faf6;flex:none;font-family:var(--serif)}
+  .ava{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;flex:none;font-family:var(--serif)}
   .lrow .who{flex:1;min-width:0} .lrow .who b{font-size:14px;font-weight:600} .lrow .who div{font-size:11.5px;color:var(--mut);margin-top:1px}
-  .chev{color:#c3b9a9;font-size:16px}
+  .chev{color:#c0cdd9;font-size:16px}
   .stat{font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px}
-  .stat.signed{background:var(--ok-t);color:var(--ok)} .stat.draft{background:var(--watch-t);color:#9a7016}
+  .stat.signed{background:var(--manage-t);color:var(--manage)} .stat.draft{background:var(--advice-t);color:#a96420}
 
-  /* tiles (Pi suggestion grid) */
+  /* tiles */
   .tiles{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-  .tile{border-radius:18px;overflow:hidden;aspect-ratio:1/.92;position:relative;display:flex;align-items:flex-end;padding:12px;box-shadow:var(--sh)}
-  .tile .tl{font-family:var(--serif);font-size:14px;font-weight:600;color:var(--green-ink);position:relative;z-index:2;line-height:1.2}
-  .tile .ti{position:absolute;top:12px;left:12px;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.7);display:grid;place-items:center;color:var(--green);font-size:16px;z-index:2}
-  .t-rec{background:linear-gradient(150deg,#dff0e2,#bfe0c8)}
-  .t-ask{background:linear-gradient(150deg,#e7ecdb,#cde0bc)}
-  .t-guard{background:linear-gradient(150deg,#f3e3d8,#eccfc0)}
-  .t-pill{background:linear-gradient(150deg,#e6e9f1,#cfd6e6)}
+  .tile{border-radius:16px;overflow:hidden;aspect-ratio:1/.92;position:relative;display:flex;align-items:flex-end;padding:13px;box-shadow:var(--sh);border:1px solid var(--line)}
+  .tile .tl{font-size:14px;font-weight:600;color:var(--ink);position:relative;z-index:2;line-height:1.2}
+  .tile .ti{position:absolute;top:13px;left:13px;width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.8);display:grid;place-items:center;font-size:16px;z-index:2}
+  .t-rec{background:linear-gradient(150deg,#eaf2fd,#d4e6fb)} .t-rec .ti{color:var(--blue)}
+  .t-ask{background:linear-gradient(150deg,#e9f5f0,#d2ece1)} .t-ask .ti{color:var(--manage)}
+  .t-guard{background:linear-gradient(150deg,#fbeede,#f6dcc2)} .t-guard .ti{color:var(--advice)}
+  .t-pill{background:linear-gradient(150deg,#eef1f6,#dde4ee)} .t-pill .ti{color:var(--ink)}
 
   /* summary + score */
   .stats{display:flex;justify-content:space-between;margin-bottom:13px}
   .stat2 .n{font-size:24px;font-weight:700;font-family:var(--serif)} .stat2 .l{font-size:11px;color:var(--mut);margin-top:1px}
   .segbar{height:8px;border-radius:6px;overflow:hidden;display:flex;gap:2px}
-  .segbar i{height:100%} .segbar .g{background:var(--ok)} .segbar .a{background:var(--watch)} .segbar .p{background:var(--rose)}
+  .segbar i{height:100%} .segbar .g{background:var(--manage)} .segbar .a{background:var(--advice)} .segbar .p{background:var(--urgent)}
   .scorewrap{display:flex;align-items:center;gap:15px}
   .ring{width:80px;height:80px;flex:none}
   .scoretx .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
-  .scoretx .grade{font-size:26px;font-weight:600;font-family:var(--serif);margin-top:2px}
+  .scoretx .grade{font-size:25px;font-weight:600;font-family:var(--serif);margin-top:2px}
   .scoretx .sub{font-size:12px;color:var(--mut);margin-top:1px}
 
   /* biomarker rows */
-  .bm{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:13px 15px;box-shadow:var(--sh);margin-bottom:9px}
+  .bm{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 15px;box-shadow:var(--sh);margin-bottom:9px}
   .bm .info{flex:1;min-width:0}
   .bm .cat{font-size:10px;color:var(--faint);margin-bottom:3px}
-  .bm .nm{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;font-family:var(--serif)}
-  .bm .nm .d{width:8px;height:8px;border-radius:50%;flex:none}
+  .bm .nm2{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;font-family:var(--serif)}
+  .bm .nm2 .d{width:8px;height:8px;border-radius:50%;flex:none}
   .bm .val{font-size:12px;color:var(--mut);margin-top:2px}
   .gauge{position:relative;width:58px;height:24px;border-radius:12px;flex:none}
-  .gauge.g{background:linear-gradient(90deg,rgba(47,143,91,.18),rgba(47,143,91,.04))}
-  .gauge.a{background:linear-gradient(90deg,rgba(196,145,46,.18),rgba(196,145,46,.05))}
+  .gauge.g{background:linear-gradient(90deg,rgba(21,163,122,.18),rgba(21,163,122,.04))}
+  .gauge.a{background:linear-gradient(90deg,rgba(224,132,58,.18),rgba(224,132,58,.05))}
   .gauge .knob{position:absolute;top:50%;transform:translate(-50%,-50%);width:13px;height:13px;border-radius:50%;border:2.5px solid var(--card);box-shadow:0 1px 3px rgba(0,0,0,.16)}
 
   /* recording */
-  .orbwrap{position:absolute;top:128px;left:50%;transform:translateX(-50%);width:188px;height:188px;display:grid;place-items:center}
-  .rg{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(31,74,55,.35);box-shadow:0 0 44px 4px rgba(63,141,91,.16),inset 0 0 40px rgba(63,141,91,.1)}
-  .rg.r2{inset:22px;animation:breathe 3.6s ease-in-out infinite} .rg.r3{inset:46px;animation:breathe 3.6s ease-in-out .5s infinite;border-color:rgba(31,74,55,.22)}
+  .amb{position:absolute;inset:0;background:radial-gradient(120% 70% at 50% 24%,#eaf3fd 0,#d6e8fb 42%,#bcd9f6 100%)}
+  .orbwrap{position:absolute;top:132px;left:50%;transform:translateX(-50%);width:184px;height:184px;display:grid;place-items:center}
+  .rg{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(61,130,230,.4);box-shadow:0 0 44px 4px rgba(61,130,230,.2),inset 0 0 40px rgba(61,130,230,.12)}
+  .rg.r2{inset:22px;animation:breathe 3.6s ease-in-out infinite} .rg.r3{inset:46px;animation:breathe 3.6s ease-in-out .5s infinite;border-color:rgba(61,130,230,.26)}
   @keyframes breathe{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.06);opacity:1}}
-  .orbmic{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;color:var(--green);font-size:25px}
-  .ambmeta{position:absolute;left:0;right:0;top:340px;text-align:center;z-index:4}
-  .ambmeta .t{font-family:var(--serif);font-size:24px;font-weight:600;color:var(--green-ink)} .ambmeta .s{font-size:12.5px;color:var(--sage);margin-top:4px}
+  .orbmic{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;color:var(--blue);font-size:25px}
+  .ambmeta{position:absolute;left:0;right:0;top:345px;text-align:center;z-index:4}
+  .ambmeta .t{font-family:var(--serif);font-size:24px;font-weight:600;color:var(--ink)} .ambmeta .s{font-size:12.5px;color:#3f6da6;margin-top:4px}
+  .wavew{position:absolute;left:0;right:0;top:300px;display:flex;align-items:center;justify-content:center;gap:3px;height:34px}
+  .wavew i{width:3.5px;border-radius:3px;background:var(--blue);animation:eq 1.1s ease-in-out infinite}
+  @keyframes eq{0%,100%{height:7px}50%{height:28px}}
+  .transport{position:absolute;left:28px;right:28px;bottom:22px;z-index:15;height:64px;border-radius:22px;display:flex;align-items:center;justify-content:space-around}
+  .gpill{display:inline-flex;gap:6px;align-items:center;font-size:11.5px;font-weight:600;color:var(--blue-ink)}
+  .tcircle{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;background:var(--urgent);color:#fff;font-size:22px;box-shadow:0 6px 16px rgba(223,82,77,.4)}
 
   /* camera */
-  .campv{height:150px;border-radius:18px;overflow:hidden;position:relative;margin-bottom:14px;background:radial-gradient(120px 120px at 50% 42%,#2c4a40,#10201a)}
-  .mesh{position:absolute;inset:0;background-image:linear-gradient(rgba(159,208,168,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(159,208,168,.14) 1px,transparent 1px);background-size:16px 16px;mix-blend-mode:screen}
-  .oval{position:absolute;top:46%;left:50%;transform:translate(-50%,-50%);width:78px;height:98px;border:2px solid rgba(159,208,168,.55);border-radius:50% 50% 47% 47%/56% 56% 44% 44%}
-  .scan{position:absolute;left:30%;right:30%;height:2px;background:linear-gradient(90deg,transparent,#9fd0a8,transparent);box-shadow:0 0 10px #9fd0a8;animation:scan 2.4s linear infinite}
+  .campv{height:150px;border-radius:16px;overflow:hidden;position:relative;margin-bottom:14px;background:radial-gradient(120px 120px at 50% 42%,#23394d,#0f1b26)}
+  .mesh{position:absolute;inset:0;background-image:linear-gradient(rgba(120,180,240,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(120,180,240,.14) 1px,transparent 1px);background-size:16px 16px;mix-blend-mode:screen}
+  .oval{position:absolute;top:46%;left:50%;transform:translate(-50%,-50%);width:78px;height:98px;border:2px solid rgba(140,200,250,.55);border-radius:50% 50% 47% 47%/56% 56% 44% 44%}
+  .scan{position:absolute;left:30%;right:30%;height:2px;background:linear-gradient(90deg,transparent,#8cc8fa,transparent);box-shadow:0 0 10px #8cc8fa;animation:scan 2.4s linear infinite}
   @keyframes scan{0%{top:24%}100%{top:70%}}
-  .camtag{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:600;color:#eaf6ee;background:rgba(16,32,26,.55);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:5px 11px;backdrop-filter:blur(6px)}
+  .camtag{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:600;color:#eaf3ff;border-radius:999px;padding:5px 11px}
   .frame{position:absolute;top:46%;left:50%;transform:translate(-50%,-50%);width:150px;height:96px}
   .frame i{position:absolute;width:24px;height:24px;border:2.5px solid rgba(255,255,255,.85)}
   .frame i.tl{top:0;left:0;border-right:0;border-bottom:0;border-radius:8px 0 0 0}.frame i.tr{top:0;right:0;border-left:0;border-bottom:0;border-radius:0 8px 0 0}
   .frame i.bl{bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 8px}.frame i.br{bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 8px 0}
-  .capsule{position:absolute;top:46%;left:50%;transform:translate(-50%,-50%) rotate(-24deg);width:74px;height:28px;border-radius:15px;background:linear-gradient(90deg,#f7f1e8 0 50%,#cf5d73 50% 100%);box-shadow:0 8px 20px #0006}
+  .capsule{position:absolute;top:46%;left:50%;transform:translate(-50%,-50%) rotate(-24deg);width:74px;height:28px;border-radius:15px;background:linear-gradient(90deg,#f4f8fc 0 50%,#df524d 50% 100%);box-shadow:0 8px 20px #0006}
 
   /* note */
-  .seg{display:flex;background:var(--cream2);border-radius:13px;padding:3px;margin-bottom:13px}
+  .seg{display:flex;background:#eaf0f6;border-radius:13px;padding:3px;margin-bottom:13px}
   .seg b{flex:1;text-align:center;font-size:12px;font-weight:600;padding:8px 0;border-radius:10px;color:var(--mut)}
-  .seg b.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(58,40,20,.08)}
+  .seg b.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(20,40,70,.08)}
   .soap h4{margin:16px 0 5px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
   .soap h4:first-child{margin-top:0}
-  .soap p{margin:0;font-family:var(--serif);font-size:14px;line-height:1.55}
-  .ev{border-bottom:1px dashed #c8bba9}
-  .toolbar{position:absolute;left:16px;right:16px;bottom:14px;z-index:15;border-radius:999px;padding:8px;display:flex;gap:8px;background:var(--card);border:1px solid var(--line);box-shadow:0 8px 24px rgba(58,40,20,.12)}
-  .tbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--green-ink);padding:11px 6px;border-radius:999px}
-  .tbtn.solid{background:var(--green);color:#f3faf6}
+  .soap p{margin:0;font-family:var(--serif);font-size:14.5px;line-height:1.55}
+  .ev{border-bottom:1px dashed #b6c6d4}
+  .toolbar{position:absolute;left:16px;right:16px;bottom:14px;z-index:15;border-radius:999px;padding:8px;display:flex;gap:8px}
+  .tbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--blue-ink);padding:11px 6px;border-radius:999px}
+  .tbtn.solid{background:var(--blue);color:#fff}
   .check{display:flex;align-items:center;gap:12px;font-size:13px;padding:11px 0;border-bottom:1px solid var(--line)}
   .check:last-child{border-bottom:0}
-  .check .ci{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:14px;background:var(--ok-t);color:var(--ok);flex:none}
-  .escal{display:flex;gap:9px;align-items:center;font-size:11.5px;color:#8a2f2b;background:var(--rose-t);border:1px solid #eccdd2;border-radius:14px;padding:11px 13px}
-  .escal b{color:#6f211d} .escal .ei{color:var(--red);font-size:16px;flex:none}
+  .check .ci{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:14px;background:var(--manage-t);color:var(--manage);flex:none}
 
   /* detail */
-  .pill-status{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:999px;background:var(--ok-t);color:var(--ok)}
+  .pill-status{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:999px;background:var(--manage-t);color:var(--manage)}
   .pill-status .d{width:7px;height:7px;border-radius:50%;background:currentColor}
   .mini2{display:flex;gap:10px;margin:14px 0}
-  .mini{flex:1;border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:var(--card)}
+  .mini{flex:1;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--card)}
   .mini .l{font-size:10.5px;color:var(--mut)} .mini .v{font-size:18px;font-weight:600;font-family:var(--serif);margin-top:3px}
   .explain h5{margin:0 0 6px;font-size:16px;font-family:var(--serif);font-weight:600}
   .explain p{margin:0;font-size:12.5px;color:var(--mut);line-height:1.55}
 
+  /* emergency steps */
+  .estep{display:flex;gap:13px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .estep:last-child{border-bottom:0}
+  .estep .en{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex:none}
+  .estep .et{font-size:13.5px;line-height:1.4} .estep .et b{font-weight:600}
+
   /* settings */
   .srow{display:flex;align-items:center;gap:13px;padding:14px 2px;border-bottom:1px solid var(--line)}
   .srow:last-child{border-bottom:0}
-  .srow .si{width:30px;height:30px;border-radius:9px;background:var(--cream2);display:grid;place-items:center;color:var(--green);font-size:16px;flex:none}
+  .srow .si{width:30px;height:30px;border-radius:9px;background:var(--blue-t);display:grid;place-items:center;color:var(--blue);font-size:16px;flex:none}
   .srow .st{flex:1;font-size:14px;font-weight:500}
+  .sw{width:40px;height:24px;border-radius:999px;background:var(--blue);position:relative;flex:none}
+  .sw span{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:#fff}
+
+  .escal{display:flex;gap:9px;align-items:center;font-size:11.5px;color:#8f2f2b;background:var(--urgent-t);border:1px solid #f3cfcd;border-radius:14px;padding:11px 13px}
+  .escal b{color:#742421} .escal .ei{color:var(--urgent);font-size:16px;flex:none}
 
   /* dashboard */
   .web{width:100%;max-width:600px;background:var(--card);border-radius:18px;overflow:hidden;margin-top:6px;box-shadow:0 24px 60px rgba(0,0,0,.4)}
-  .web .bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--cream2)}
-  .web .bar i{width:10px;height:10px;border-radius:50%;background:#d8cab8}
+  .web .bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--line);background:#f1f5f9}
+  .web .bar i{width:10px;height:10px;border-radius:50%;background:#cfdae6}
   .web .bar .u{margin-left:10px;font-size:11.5px;color:var(--mut);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 12px;flex:1}
   .web .grid{display:grid;grid-template-columns:168px 1fr;min-height:316px;color:var(--ink)}
-  .web .side{border-right:1px solid var(--line);padding:14px;background:var(--cream)}
+  .web .side{border-right:1px solid var(--line);padding:14px;background:#f6f9fc}
   .web .side .bd{display:flex;align-items:center;gap:8px;font-weight:600;font-family:var(--serif);margin-bottom:16px;font-size:16px}
   .web .nv{font-size:12.5px;color:var(--mut);padding:9px 11px;border-radius:10px;margin-bottom:3px;display:flex;align-items:center;gap:10px}
-  .web .nv.on{background:var(--ok-t);color:var(--green-ink)}
+  .web .nv.on{background:var(--blue-t);color:var(--blue-ink)}
   .web .main{padding:18px}
   .web .mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
   .web .row{display:flex;align-items:center;gap:12px;font-size:12.5px;padding:12px 13px;border:1px solid var(--line);border-radius:13px;margin-bottom:9px;background:var(--card)}
-  .web .row .nm2{flex:1} .web .row .nm2 small{color:var(--mut)}
-  .av{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:11px;font-weight:700;color:#f3faf6;flex:none;font-family:var(--serif)}
+  .web .row .n2{flex:1} .web .row .n2 small{color:var(--mut)}
+  .av{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;flex:none;font-family:var(--serif)}
   .web .tp{font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px}
-  .web .tp.signed{background:var(--ok-t);color:var(--ok)} .web .tp.draft{background:var(--watch-t);color:#9a7016}
+  .web .tp.signed{background:var(--manage-t);color:var(--manage)} .web .tp.draft{background:var(--advice-t);color:#a96420}
   .metrics{display:flex;gap:22px;margin-top:14px;font-size:11px;color:var(--mut);flex-wrap:wrap}
   .metrics b{display:block;color:var(--ink);font-size:18px;font-weight:600;font-family:var(--serif);margin-top:2px}
   .smpl{font-size:10px;color:var(--faint);margin-top:8px}
-  footer{margin-top:66px;color:#9d9488;font-size:12px;border-top:1px solid #2a322c;padding-top:18px;line-height:1.7}
-  code{background:#20241f;border:1px solid #2a322c;border-radius:5px;padding:1px 6px;font-size:12px}
+  footer{margin-top:66px;color:#94a3b2;font-size:12px;border-top:1px solid #25313d;padding-top:18px;line-height:1.7}
+  code{background:#1a222b;border:1px solid #25313d;border-radius:5px;padding:1px 6px;font-size:12px}
   @media (prefers-reduced-motion: reduce){*{animation:none !important}}
 </style>
 </head>
@@ -236,15 +272,11 @@
   <symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 19V5"/><path d="M5 19h14"/><path d="M9 16v-4M13 16V9M17 16v-6"/></symbol>
   <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a3.5 3.5 0 0 0 5 0l2-2a3.5 3.5 0 0 0-5-5l-1 1"/><path d="M14 11a3.5 3.5 0 0 0-5 0l-2 2a3.5 3.5 0 0 0 5 5l1-1"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M5 5l1.5 1.5M17.5 17.5L19 19M3 12h2M19 12h2M5 19l1.5-1.5M17.5 6.5L19 5"/></symbol>
-  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4 -4"/></symbol>
   <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h3l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5-2.5l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></symbol>
   <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
   <symbol id="i-pill" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="6" rx="3"/><path d="M12 9v6"/></symbol>
-  <symbol id="i-cc" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M9 10.5a2 2 0 1 0 0 3M16 10.5a2 2 0 1 0 0 3"/></symbol>
-  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
-  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
 </svg>
 
@@ -252,9 +284,9 @@
   <header class="top">
     <div class="logo">S</div>
     <div><h1>Sona - App Prototype</h1>
-    <p class="psub">Warm companion language (Pi-inspired): cream, forest green, serif. Generated 2026-06-17.</p></div>
+    <p class="psub">Clinical-clean language (Ada-inspired) with Liquid Glass chrome and GSAP scroll-reveal. Generated 2026-06-17.</p></div>
   </header>
-  <p class="read"><b>Design read:</b> a warm, human medical companion for clinicians and patients. Cream and forest-green palette, elegant serif headers, full-pill buttons, soft tan bubbles, layered hills on voice screens. One accent (green); status colors only for real data.</p>
+  <p class="read"><b>Design read:</b> trustworthy clinical companion. White and cool base, navy serif headlines, friendly blue, urgency colors (green manage, orange seek advice, red urgent), conversational answer chips. Glass on chrome only. Open in Chrome or Safari for glass and GSAP.</p>
 
   <h2>Onboarding</h2>
   <div class="gallery">
@@ -264,21 +296,19 @@
         <div class="island"></div>
         <div class="sb"><span>9:41</span><span class="rt">5G 100</span></div>
         <div class="body" style="display:flex;flex-direction:column">
-          <div style="margin-top:30px">
-            <div class="brandrow" style="margin-bottom:24px"><div class="b"><span class="bi">S</span><span class="nm">Sona</span></div></div>
-            <div class="display" style="font-size:30px">Sona, your calm <span class="it">clinical</span> companion.</div>
-            <p class="mut serif" style="font-size:15px;line-height:1.5;margin-top:14px">It listens to the consult, writes the note, and keeps every word on your device.</p>
-          </div>
+          <div style="position:absolute;top:54px;right:18px"><span class="chip" style="font-size:11.5px;color:var(--faint);border-color:var(--line)">Continue as guest</span></div>
           <div style="margin-top:auto">
-            <div class="tiles" style="margin-bottom:16px">
-              <div class="tile t-rec"><span class="ti"><svg class="ic" style="font-size:15px"><use href="#i-mic"/></svg></span><span class="tl">Ambient scribe</span></div>
-              <div class="tile t-guard"><span class="ti"><svg class="ic" style="font-size:15px"><use href="#i-heart"/></svg></span><span class="tl">Guardian care</span></div>
-            </div>
-            <button class="btn green">Get started</button>
+            <div class="glyph" style="width:42px;height:42px;margin-bottom:16px"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="display" style="font-size:27px">Hi, I'm Sona.<br>I help if someone is <span class="it">unwell.</span></div>
+          </div>
+          <div class="chips-r" style="margin-top:24px">
+            <button class="btn blue" style="width:auto;padding:13px 22px">Start a consult</button>
+            <span class="chip">Set up my clinic</span>
+            <span class="chip">Sign in</span>
           </div>
         </div>
       </div></div>
-      <figcaption><span class="tagn">Onboarding</span><b>Welcome</b><span>Serif hero, warm tiles, green pill CTA.</span></figcaption>
+      <figcaption><span class="tagn">Onboarding</span><b>Welcome</b><span>Ada glyph, serif intro, outlined answer chips.</span></figcaption>
     </figure>
 
     <!-- SETUP -->
@@ -288,19 +318,17 @@
         <div class="sb"><span>9:41</span><span class="rt">5G 100</span></div>
         <div class="body">
           <div class="circ" style="margin-bottom:18px"><svg class="ic"><use href="#i-back"/></svg></div>
-          <div class="display"><span class="it">Hello.</span> A few things first.</div>
+          <div class="glyph" style="width:34px;height:34px;margin-bottom:14px"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          <div class="display">A few things first.</div>
+          <p class="mut serif" style="font-size:15px;margin:10px 0 18px">I get better the more you tell me, so I will keep your consults on this device.</p>
           <div class="eyebrow" style="margin-left:2px">What should patients call you?</div>
-          <div class="inputpill" style="padding:14px 18px;border-radius:16px;margin-bottom:14px"><span style="font-family:var(--serif);font-size:15px">Dr Lim Wei Sheng</span></div>
-          <div class="eyebrow" style="margin-left:2px">Your role</div>
-          <div class="card" style="padding:6px 14px;margin-bottom:14px">
-            <div class="check" style="border-color:var(--line)"><span class="ci"><svg class="ic" style="font-size:14px"><use href="#i-check"/></svg></span>General practitioner</div>
-            <div class="check"><span class="ci" style="background:var(--cream2);color:var(--faint)"></span>Specialist</div>
-          </div>
-          <p class="mut" style="font-size:11.5px;line-height:1.5">Consults stay on this device. Only de-identified text is ever sent, and only if you turn on the cloud helper.</p>
-          <button class="btn green" style="margin-top:16px">Continue</button>
+          <div class="inputpill" style="border-radius:14px;margin-bottom:14px"><span style="flex:1;font-family:var(--serif);font-size:15px">Dr Lim Wei Sheng</span></div>
+          <div class="eyebrow" style="margin-left:2px">Who are you assessing for?</div>
+          <div class="chips-r" style="align-items:flex-start"><div style="display:flex;gap:10px"><span class="chip" style="background:var(--blue-t);border-color:var(--blue)">A patient</span><span class="chip">Myself</span></div></div>
+          <button class="btn blue" style="margin-top:20px">Continue</button>
         </div>
       </div></div>
-      <figcaption><span class="tagn">Onboarding</span><b>Set up</b><span>Pi-style form: serif prompt, rounded fields, radio.</span></figcaption>
+      <figcaption><span class="tagn">Onboarding</span><b>Set up</b><span>Ada conversational form, blue selected chip.</span></figcaption>
     </figure>
 
     <!-- HOME -->
@@ -309,16 +337,11 @@
         <div class="island"></div>
         <div class="sb"><span>9:41</span><span class="rt">5G 100</span></div>
         <div class="body pb">
-          <div class="brandrow"><div class="b"><span class="bi">S</span><span class="nm">Sona</span></div><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-bell"/></svg></span></div>
+          <div class="brandrow"><div class="b"><span class="glyph"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span><span class="nm">Sona</span></div><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-bell"/></svg></span></div>
           <div class="display" style="font-size:24px;margin-bottom:14px">Good morning, <span class="it">Dr Lim.</span></div>
           <div class="card">
             <div style="font-size:12.5px;font-weight:600;margin-bottom:12px">Documentation today</div>
-            <div class="stats">
-              <div class="stat2"><div class="n">12</div><div class="l">Total</div></div>
-              <div class="stat2"><div class="n">9</div><div class="l">Signed</div></div>
-              <div class="stat2"><div class="n">2</div><div class="l">Drafts</div></div>
-              <div class="stat2"><div class="n">1</div><div class="l">Flagged</div></div>
-            </div>
+            <div class="stats"><div class="stat2"><div class="n">12</div><div class="l">Total</div></div><div class="stat2"><div class="n">9</div><div class="l">Signed</div></div><div class="stat2"><div class="n">2</div><div class="l">Drafts</div></div><div class="stat2"><div class="n">1</div><div class="l">Flagged</div></div></div>
             <div class="segbar"><i class="g" style="flex:9"></i><i class="a" style="flex:2"></i><i class="p" style="flex:1"></i></div>
           </div>
           <div class="tiles">
@@ -326,14 +349,14 @@
             <div class="tile t-ask"><span class="ti"><svg class="ic" style="font-size:15px"><use href="#i-search"/></svg></span><span class="tl">Ask Sona</span></div>
           </div>
         </div>
-        <div class="toolbar" style="border-radius:24px;padding:8px 6px">
-          <div class="tbtn solid"><svg class="ic" style="font-size:16px"><use href="#i-home"/></svg></div>
-          <div class="tbtn"><svg class="ic" style="font-size:16px"><use href="#i-users"/></svg></div>
-          <div class="tbtn"><svg class="ic" style="font-size:16px"><use href="#i-heart"/></svg></div>
-          <div class="tbtn"><svg class="ic" style="font-size:16px"><use href="#i-user"/></svg></div>
+        <div class="tabbar glass">
+          <div class="tb on"><svg class="ic" style="font-size:18px"><use href="#i-home"/></svg>Today</div>
+          <div class="tb"><svg class="ic" style="font-size:18px"><use href="#i-users"/></svg>Patients</div>
+          <div class="tb"><svg class="ic" style="font-size:18px"><use href="#i-mic"/></svg>Record</div>
+          <div class="tb"><svg class="ic" style="font-size:18px"><use href="#i-heart"/></svg>Guardian</div>
         </div>
       </div></div>
-      <figcaption><span class="tagn">Scribe</span><b>Today</b><span>Serif greeting, summary card, warm action tiles.</span></figcaption>
+      <figcaption><span class="tagn">Scribe</span><b>Today</b><span>Summary, action tiles, glass tab bar.</span></figcaption>
     </figure>
   </div>
 
@@ -342,15 +365,15 @@
     <!-- RECORDING -->
     <figure>
       <div class="phone"><div class="scr">
-        <div class="island"></div>
-        <div class="sb"><span>9:42</span><span class="rt">5G 100</span></div>
-        <div class="brandrow" style="position:absolute;top:46px;left:18px;right:18px;z-index:5"><div class="b"></div><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-x"/></svg></span></div>
+        <div class="amb"></div><div class="island"></div>
+        <div class="sb" style="color:var(--ink)"><span>9:42</span><span class="rt">5G 100</span></div>
+        <div style="position:absolute;top:46px;right:18px;z-index:5"><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-x"/></svg></span></div>
         <div class="orbwrap"><div class="rg"></div><div class="rg r2"></div><div class="rg r3"></div><div class="orbmic"><svg class="ic" style="font-size:25px"><use href="#i-mic"/></svg></div></div>
+        <div class="wavew"><i style="height:10px"></i><i style="height:20px"></i><i style="height:28px"></i><i style="height:14px"></i><i style="height:24px"></i><i style="height:10px"></i><i style="height:22px"></i><i style="height:28px"></i><i style="height:13px"></i><i style="height:22px"></i><i style="height:17px"></i><i style="height:24px"></i></div>
         <div class="ambmeta"><div class="t">Listening</div><div class="s">01:12 &middot; transcribing on device</div></div>
-        <div class="hills"><i class="h1"></i><i class="h2"></i><i class="h3"></i></div>
-        <div class="voicebar"><div class="vb"><svg class="ic" style="font-size:18px"><use href="#i-dots"/></svg></div><div class="vb"><svg class="ic" style="font-size:18px"><use href="#i-cc"/></svg></div><div class="vb mic"><svg class="ic" style="font-size:18px"><use href="#i-stop"/></svg></div><div class="vb"><svg class="ic" style="font-size:18px"><use href="#i-pause"/></svg></div></div>
+        <div class="transport glass"><span class="gpill"><svg class="ic" style="font-size:15px"><use href="#i-notes"/></svg> Transcript</span><div class="tcircle"><svg class="ic" style="font-size:22px"><use href="#i-stop"/></svg></div><span class="gpill"><svg class="ic" style="font-size:15px"><use href="#i-pause"/></svg> Pause</span></div>
       </div></div>
-      <figcaption><span class="tagn">Scribe</span><b>Recording</b><span>Listening ring, Pi hills, cream control buttons.</span></figcaption>
+      <figcaption><span class="tagn">Scribe</span><b>Recording</b><span>Listening ring, glass transport bar.</span></figcaption>
     </figure>
 
     <!-- TRANSCRIPT -->
@@ -359,17 +382,17 @@
         <div class="island"></div>
         <div class="sb"><span>9:43</span><span class="rt">5G 100</span></div>
         <div class="body pb">
-          <div class="brandrow"><div class="b"><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-back"/></svg></span><span class="nm" style="font-size:16px">Transcript</span></div><span style="font-size:11px;color:var(--rose);font-weight:700">REC 01:42</span></div>
+          <div class="brandrow"><div class="b"><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-back"/></svg></span><span class="nm" style="font-size:16px">Transcript</span></div><span style="font-size:11px;color:var(--urgent);font-weight:700">REC 01:42</span></div>
           <div class="daydiv">Live, on device</div>
-          <p class="pichat"><b class="serif" style="color:var(--green-ink)">Dr</b> &nbsp;Apa yang boleh saya bantu hari ini?</p>
+          <p class="pichat"><b style="color:var(--blue-ink)">Dr</b> &nbsp;Apa yang boleh saya bantu hari ini?</p>
           <div class="bubble">Doctor, saya ada fever dah tiga hari, and batuk kering.</div>
           <div class="bubble">My throat sakit bila telan.</div>
-          <p class="pichat"><b class="serif" style="color:var(--green-ink)">Dr</b> &nbsp;Ada shortness of breath atau chest pain?</p>
+          <p class="pichat"><b style="color:var(--blue-ink)">Dr</b> &nbsp;Ada shortness of breath atau chest pain?</p>
           <div class="bubble" style="opacity:.5">No, tiada. Tapi badan rasa lemah</div>
         </div>
-        <div class="toolbar"><div class="tbtn"><svg class="ic" style="font-size:15px"><use href="#i-notes"/></svg>Note</div><div class="tbtn solid"><svg class="ic" style="font-size:15px"><use href="#i-stop"/></svg>Finish consult</div></div>
+        <div class="toolbar glass"><div class="tbtn"><svg class="ic" style="font-size:15px"><use href="#i-notes"/></svg>Note</div><div class="tbtn solid"><svg class="ic" style="font-size:15px"><use href="#i-stop"/></svg>Finish consult</div></div>
       </div></div>
-      <figcaption><span class="tagn">Scribe</span><b>Live transcript</b><span>Serif chat, tan patient bubbles, BM/EN code-switch.</span></figcaption>
+      <figcaption><span class="tagn">Scribe</span><b>Live transcript</b><span>Chat, BM/EN code-switch, glass action bar.</span></figcaption>
     </figure>
 
     <!-- NOTE -->
@@ -381,21 +404,14 @@
           <div class="mut serif" style="font-size:13px">Encik Rahman Idris, 34</div>
           <div class="display" style="font-size:23px;margin-bottom:12px">Consult note</div>
           <div class="seg"><b class="on">Note</b><b>Transcript</b></div>
-          <div class="card">
-            <div class="soap">
-              <h4>Subjective</h4>
-              <p><span class="ev">3-day fever, dry cough</span>, <span class="ev">sore throat worse on swallowing</span>. No breathlessness or chest pain.</p>
-              <h4>Assessment</h4>
-              <p>Working impression: viral upper respiratory tract infection.</p>
-            </div>
-          </div>
+          <div class="card"><div class="soap"><h4>Subjective</h4><p><span class="ev">3-day fever, dry cough</span>, <span class="ev">sore throat worse on swallowing</span>. No breathlessness or chest pain.</p><h4>Assessment</h4><p>Working impression: viral upper respiratory tract infection.</p></div></div>
           <div class="eyebrow" style="margin-top:4px">Captured data</div>
-          <div class="bm"><div class="info"><div class="cat">Diagnosis</div><div class="nm"><span class="d" style="background:var(--ok)"></span>Viral URTI</div><div class="val">ICD-10 J06.9 &middot; high confidence</div></div><div class="gauge g"><span class="knob" style="left:80%;background:var(--ok)"></span></div></div>
-          <div class="bm"><div class="info"><div class="cat">Medication</div><div class="nm"><span class="d" style="background:var(--watch)"></span>Paracetamol</div><div class="val">500 mg PRN &middot; verify dose</div></div><div class="gauge a"><span class="knob" style="left:52%;background:var(--watch)"></span></div></div>
+          <div class="bm"><div class="info"><div class="cat">Diagnosis</div><div class="nm2"><span class="d" style="background:var(--manage)"></span>Viral URTI</div><div class="val">ICD-10 J06.9 &middot; high confidence</div></div><div class="gauge g"><span class="knob" style="left:80%;background:var(--manage)"></span></div></div>
+          <div class="bm"><div class="info"><div class="cat">Medication</div><div class="nm2"><span class="d" style="background:var(--advice)"></span>Paracetamol</div><div class="val">500 mg PRN &middot; verify dose</div></div><div class="gauge a"><span class="knob" style="left:52%;background:var(--advice)"></span></div></div>
         </div>
-        <div class="toolbar"><div class="tbtn"><svg class="ic" style="font-size:15px"><use href="#i-spark"/></svg>Improve</div><div class="tbtn">Shorten</div><div class="tbtn solid"><svg class="ic" style="font-size:15px"><use href="#i-edit"/></svg>Edit</div></div>
+        <div class="toolbar glass"><div class="tbtn"><svg class="ic" style="font-size:15px"><use href="#i-spark"/></svg>Improve</div><div class="tbtn">Shorten</div><div class="tbtn solid"><svg class="ic" style="font-size:15px"><use href="#i-edit"/></svg>Edit</div></div>
       </div></div>
-      <figcaption><span class="tagn">Scribe</span><b>Consult note</b><span>Serif SOAP, captured-data rows, action bar.</span></figcaption>
+      <figcaption><span class="tagn">Scribe</span><b>Consult note</b><span>Serif SOAP, captured-data rows.</span></figcaption>
     </figure>
 
     <!-- SIGN -->
@@ -411,18 +427,17 @@
             <div class="check"><span class="ci"><svg class="ic" style="font-size:14px"><use href="#i-pulse"/></svg></span>2 diagnoses, 1 medication coded</div>
             <div class="check"><span class="ci"><svg class="ic" style="font-size:14px"><use href="#i-shield"/></svg></span>Audio never left this device</div>
           </div>
-          <button class="btn green" style="margin-bottom:10px"><svg class="ic" style="font-size:16px"><use href="#i-check"/></svg>Sign as Dr Lim</button>
-          <div style="display:flex;gap:10px"><button class="btn tan"><svg class="ic" style="font-size:15px"><use href="#i-link"/></svg>FHIR</button><button class="btn tan"><svg class="ic" style="font-size:15px"><use href="#i-file"/></svg>PDF</button></div>
-          <p class="mut" style="font-size:10.5px;text-align:center;margin-top:12px">An immutable audit entry is written on sign.</p>
+          <button class="btn blue" style="margin-bottom:10px"><svg class="ic" style="font-size:16px"><use href="#i-check"/></svg>Sign as Dr Lim</button>
+          <div style="display:flex;gap:10px"><button class="btn out"><svg class="ic" style="font-size:15px"><use href="#i-link"/></svg>FHIR</button><button class="btn out"><svg class="ic" style="font-size:15px"><use href="#i-file"/></svg>PDF</button></div>
         </div>
       </div></div>
-      <figcaption><span class="tagn">Scribe</span><b>Sign and export</b><span>Green primary, tan secondary pills.</span></figcaption>
+      <figcaption><span class="tagn">Scribe</span><b>Sign and export</b><span>Blue primary, outlined secondary.</span></figcaption>
     </figure>
   </div>
 
   <h2>Patients and Assistant</h2>
   <div class="gallery">
-    <!-- PATIENTS LIST -->
+    <!-- PATIENTS -->
     <figure>
       <div class="phone"><div class="scr">
         <div class="island"></div>
@@ -430,34 +445,34 @@
         <div class="body pb">
           <div class="display" style="font-size:24px;margin:4px 2px 12px">Patients</div>
           <div class="inputpill" style="margin-bottom:14px"><svg class="ic" style="font-size:16px;color:var(--faint)"><use href="#i-search"/></svg><span class="ph">Search by name or condition</span></div>
-          <div class="lrow"><span class="ava" style="background:var(--green)">RA</span><div class="who"><b>Encik Rahman Idris</b><div>Viral URTI &middot; seen today</div></div><span class="stat signed">Signed</span></div>
-          <div class="lrow"><span class="ava" style="background:#2f8f5b">TM</span><div class="who"><b>Tan Mei Ling</b><div>Hypertension &middot; today</div></div><span class="stat signed">Signed</span></div>
-          <div class="lrow"><span class="ava" style="background:#c4912e">AK</span><div class="who"><b>Arjun Kumar</b><div>Lower back pain &middot; draft</div></div><span class="stat draft">Draft</span></div>
-          <div class="lrow"><span class="ava" style="background:#cf5d73">AN</span><div class="who"><b>Baby Aisyah Nawaz</b><div>Fever review &middot; flagged</div></div><svg class="ic chev"><use href="#i-chevron"/></svg></div>
-          <div class="lrow"><span class="ava" style="background:#3a6ea5">SL</span><div class="who"><b>Siti Lim Abdullah</b><div>Diabetes follow-up</div></div><svg class="ic chev"><use href="#i-chevron"/></svg></div>
+          <div class="lrow"><span class="ava" style="background:var(--blue)">RA</span><div class="who"><b>Encik Rahman Idris</b><div>Viral URTI &middot; seen today</div></div><span class="stat signed">Signed</span></div>
+          <div class="lrow"><span class="ava" style="background:#15a37a">TM</span><div class="who"><b>Tan Mei Ling</b><div>Hypertension &middot; today</div></div><span class="stat signed">Signed</span></div>
+          <div class="lrow"><span class="ava" style="background:#e0843a">AK</span><div class="who"><b>Arjun Kumar</b><div>Lower back pain &middot; draft</div></div><span class="stat draft">Draft</span></div>
+          <div class="lrow"><span class="ava" style="background:#df524d">AN</span><div class="who"><b>Baby Aisyah Nawaz</b><div>Fever review &middot; flagged</div></div><svg class="ic chev"><use href="#i-chevron"/></svg></div>
+          <div class="lrow"><span class="ava" style="background:#5b7da8">SL</span><div class="who"><b>Siti Lim Abdullah</b><div>Diabetes follow-up</div></div><svg class="ic chev"><use href="#i-chevron"/></svg></div>
         </div>
       </div></div>
-      <figcaption><span class="tagn">Patients</span><b>Patient list</b><span>Serif names, rounded avatars, status pills.</span></figcaption>
+      <figcaption><span class="tagn">Patients</span><b>Patient list</b><span>Serif names, status pills.</span></figcaption>
     </figure>
 
-    <!-- PATIENT PROFILE -->
+    <!-- PROFILE -->
     <figure>
       <div class="phone"><div class="scr">
         <div class="island"></div>
         <div class="sb"><span>9:48</span><span class="rt">5G 100</span></div>
         <div class="body pb">
-          <div class="brandrow"><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-back"/></svg></span><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-dots"/></svg></span></div>
-          <div style="text-align:center;margin-bottom:14px"><span class="ava" style="width:64px;height:64px;border-radius:22px;font-size:22px;background:var(--green);margin:0 auto 10px">RA</span><div class="display" style="font-size:22px">Encik Rahman Idris</div><div class="mut" style="font-size:12.5px">34 years &middot; Klinik Sihat Damansara</div></div>
+          <div class="brandrow"><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-back"/></svg></span></div>
+          <div style="text-align:center;margin-bottom:14px"><span class="ava" style="width:64px;height:64px;border-radius:20px;font-size:22px;background:var(--blue);margin:0 auto 10px">RA</span><div class="display" style="font-size:22px">Encik Rahman Idris</div><div class="mut" style="font-size:12.5px">34 years &middot; Klinik Sihat Damansara</div></div>
           <div class="card"><div class="scorewrap">
-            <svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="#ece0d1" stroke-width="3"/><circle cx="18" cy="18" r="15.5" fill="none" stroke="#2f8f5b" stroke-width="3" stroke-linecap="round" stroke-dasharray="97" stroke-dashoffset="26" transform="rotate(-90 18 18)"/></svg>
+            <svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="#e6edf4" stroke-width="3"/><circle cx="18" cy="18" r="15.5" fill="none" stroke="#15a37a" stroke-width="3" stroke-linecap="round" stroke-dasharray="97" stroke-dashoffset="26" transform="rotate(-90 18 18)"/></svg>
             <div class="scoretx"><div class="lab">Care continuity</div><div class="grade">On track</div><div class="sub">4 visits, all documented</div></div>
           </div></div>
           <div class="eyebrow">Recent notes</div>
-          <div class="lrow"><span class="si" style="width:30px;height:30px;border-radius:9px;background:var(--cream2);display:grid;place-items:center;color:var(--green)"><svg class="ic" style="font-size:15px"><use href="#i-notes"/></svg></span><div class="who"><b>Viral URTI</b><div>Today &middot; J06.9</div></div><svg class="ic chev"><use href="#i-chevron"/></svg></div>
-          <div class="lrow"><span class="si" style="width:30px;height:30px;border-radius:9px;background:var(--cream2);display:grid;place-items:center;color:var(--green)"><svg class="ic" style="font-size:15px"><use href="#i-notes"/></svg></span><div class="who"><b>Annual check</b><div>Mar 2026</div></div><svg class="ic chev"><use href="#i-chevron"/></svg></div>
+          <div class="lrow"><span class="si" style="width:30px;height:30px;border-radius:9px;background:var(--blue-t);display:grid;place-items:center;color:var(--blue)"><svg class="ic" style="font-size:15px"><use href="#i-notes"/></svg></span><div class="who"><b>Viral URTI</b><div>Today &middot; J06.9</div></div><svg class="ic chev"><use href="#i-chevron"/></svg></div>
+          <div class="lrow"><span class="si" style="width:30px;height:30px;border-radius:9px;background:var(--blue-t);display:grid;place-items:center;color:var(--blue)"><svg class="ic" style="font-size:15px"><use href="#i-notes"/></svg></span><div class="who"><b>Annual check</b><div>Mar 2026</div></div><svg class="ic chev"><use href="#i-chevron"/></svg></div>
         </div>
       </div></div>
-      <figcaption><span class="tagn">Patients</span><b>Patient profile</b><span>Header, continuity ring, note history.</span></figcaption>
+      <figcaption><span class="tagn">Patients</span><b>Patient profile</b><span>Continuity ring, note history.</span></figcaption>
     </figure>
 
     <!-- ASK SONA -->
@@ -465,82 +480,106 @@
       <div class="phone"><div class="scr">
         <div class="island"></div>
         <div class="sb"><span>9:49</span><span class="rt">5G 100</span></div>
-        <div style="position:absolute;top:60px;left:0;right:0;text-align:center;z-index:4"><div class="display" style="font-size:22px">Ask Sona</div><div class="mut serif" style="font-size:14px;margin-top:6px">about this patient, hands-free</div></div>
-        <div style="position:absolute;top:200px;left:0;right:0;text-align:center;z-index:4;font-family:var(--serif);font-size:18px;color:var(--green-ink)">Sona is listening..</div>
-        <div style="position:absolute;top:250px;left:24px;right:24px;z-index:4;display:flex;flex-direction:column;gap:9px">
-          <div class="card" style="margin:0;padding:12px 15px;font-family:var(--serif);font-size:13.5px">"What was his last HbA1c?"</div>
-          <div class="card" style="margin:0;padding:12px 15px;font-family:var(--serif);font-size:13.5px">"Summarise today's visits"</div>
+        <div class="body">
+          <div class="brandrow"><div class="b"><span class="glyph"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></div></div>
+          <div style="margin-top:24px"><div class="display" style="font-size:22px">What would you like to know about <span class="it">Encik Rahman?</span></div></div>
+          <div class="chips-r" style="margin-top:auto">
+            <span class="chip">What was his last HbA1c?</span>
+            <span class="chip">Summarise today's visits</span>
+            <span class="chip">Any interactions in this list?</span>
+          </div>
+          <div class="inputpill glass" style="margin-top:16px"><svg class="ic" style="font-size:16px;color:var(--faint)"><use href="#i-search"/></svg><span class="ph">Ask Sona, on device</span><span class="send"><svg class="ic" style="font-size:18px"><use href="#i-mic"/></svg></span></div>
         </div>
-        <div class="hills"><i class="h1"></i><i class="h2"></i><i class="h3"></i></div>
-        <div class="voicebar"><div class="vb"><svg class="ic" style="font-size:18px"><use href="#i-dots"/></svg></div><div class="vb"><svg class="ic" style="font-size:18px"><use href="#i-cc"/></svg></div><div class="vb mic"><svg class="ic" style="font-size:18px"><use href="#i-mic"/></svg></div><div class="vb"><svg class="ic" style="font-size:18px"><use href="#i-x"/></svg></div></div>
       </div></div>
-      <figcaption><span class="tagn">Assistant</span><b>Ask Sona</b><span>Pi voice mode: hills, listening, suggestion cards.</span></figcaption>
+      <figcaption><span class="tagn">Assistant</span><b>Ask Sona</b><span>Ada conversational chips, glass input bar.</span></figcaption>
     </figure>
   </div>
 
   <h2>Guardian</h2>
   <div class="gallery">
-    <!-- GUARDIAN HUB -->
+    <!-- HUB -->
     <figure>
       <div class="phone"><div class="scr">
         <div class="island"></div>
         <div class="sb"><span>9:50</span><span class="rt">5G 100</span></div>
         <div class="body pb">
           <div class="display" style="font-size:24px;margin:4px 2px 6px">Guardian</div>
-          <p class="mut serif" style="font-size:14px;margin:0 2px 16px">On-device help when it matters. Not a diagnosis, always escalates.</p>
+          <p class="mut serif" style="font-size:14.5px;margin:0 2px 16px">On-device help when it matters. Not a diagnosis, always escalates.</p>
           <div class="tiles">
             <div class="tile t-guard"><span class="ti"><svg class="ic" style="font-size:15px"><use href="#i-heart"/></svg></span><span class="tl">Camera vitals</span></div>
             <div class="tile t-pill"><span class="ti"><svg class="ic" style="font-size:15px"><use href="#i-pill"/></svg></span><span class="tl">Identify a pill</span></div>
             <div class="tile t-ask"><span class="ti"><svg class="ic" style="font-size:15px"><use href="#i-alert"/></svg></span><span class="tl">Stroke check</span></div>
             <div class="tile t-rec"><span class="ti"><svg class="ic" style="font-size:15px"><use href="#i-shield"/></svg></span><span class="tl">First aid</span></div>
           </div>
-          <button class="btn green" style="margin-top:16px;background:var(--red)"><svg class="ic" style="font-size:16px"><use href="#i-phone"/></svg>Call 999</button>
+          <button class="btn blue" style="margin-top:16px;background:var(--urgent)"><svg class="ic" style="font-size:16px"><use href="#i-phone"/></svg>Call 999</button>
         </div>
       </div></div>
-      <figcaption><span class="tagn">Guardian</span><b>Guardian hub</b><span>Warm action tiles, prominent emergency call.</span></figcaption>
+      <figcaption><span class="tagn">Guardian</span><b>Guardian hub</b><span>Action tiles, prominent emergency call.</span></figcaption>
     </figure>
 
-    <!-- GUARDIAN VITALS -->
+    <!-- VITALS -->
     <figure>
       <div class="phone"><div class="scr">
         <div class="island"></div>
         <div class="sb"><span>9:51</span><span class="rt">5G 100</span></div>
         <div class="body pb">
           <div class="brandrow"><div class="b"><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-back"/></svg></span><span class="nm" style="font-size:16px">Vitals</span></div></div>
-          <div class="campv"><div class="mesh"></div><div class="oval"></div><div class="scan"></div><div class="camtag">rPPG, on device &middot; measuring 64%</div></div>
+          <div class="campv"><div class="mesh"></div><div class="oval"></div><div class="scan"></div><div class="camtag glass-dark">rPPG, on device &middot; measuring 64%</div></div>
           <div class="card"><div class="scorewrap">
-            <svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="#ece0d1" stroke-width="3"/><circle cx="18" cy="18" r="15.5" fill="none" stroke="#2f8f5b" stroke-width="3" stroke-linecap="round" stroke-dasharray="97" stroke-dashoffset="6" transform="rotate(-90 18 18)"/></svg>
+            <svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="#e6edf4" stroke-width="3"/><circle cx="18" cy="18" r="15.5" fill="none" stroke="#15a37a" stroke-width="3" stroke-linecap="round" stroke-dasharray="97" stroke-dashoffset="6" transform="rotate(-90 18 18)"/></svg>
             <div class="scoretx"><div class="lab">Vitals snapshot</div><div class="grade">Stable</div><div class="sub">4 of 4 in range</div></div>
           </div></div>
-          <div class="bm"><div class="info"><div class="cat">Cardiac</div><div class="nm"><span class="d" style="background:var(--ok)"></span>Heart rate</div><div class="val">78 bpm &middot; range 60 to 100</div></div><div class="gauge g"><span class="knob" style="left:45%;background:var(--ok)"></span></div></div>
-          <div class="bm"><div class="info"><div class="cat">Respiratory</div><div class="nm"><span class="d" style="background:var(--ok)"></span>Breathing</div><div class="val">16 /min &middot; range 12 to 20</div></div><div class="gauge g"><span class="knob" style="left:50%;background:var(--ok)"></span></div></div>
-          <div class="bm"><div class="info"><div class="cat">Autonomic</div><div class="nm"><span class="d" style="background:var(--ok)"></span>HRV</div><div class="val">42 ms &middot; typical 20 to 60</div></div><div class="gauge g"><span class="knob" style="left:55%;background:var(--ok)"></span></div></div>
-          <div class="escal"><svg class="ic ei"><use href="#i-alert"/></svg><div><b>Not a diagnosis.</b> If signs concern you, call 999.</div></div>
+          <div class="bm"><div class="info"><div class="cat">Cardiac</div><div class="nm2"><span class="d" style="background:var(--manage)"></span>Heart rate</div><div class="val">78 bpm &middot; range 60 to 100</div></div><div class="gauge g"><span class="knob" style="left:45%;background:var(--manage)"></span></div></div>
+          <div class="bm"><div class="info"><div class="cat">Respiratory</div><div class="nm2"><span class="d" style="background:var(--manage)"></span>Breathing</div><div class="val">16 /min &middot; range 12 to 20</div></div><div class="gauge g"><span class="knob" style="left:50%;background:var(--manage)"></span></div></div>
+          <div class="bm"><div class="info"><div class="cat">Autonomic</div><div class="nm2"><span class="d" style="background:var(--manage)"></span>HRV</div><div class="val">42 ms &middot; typical 20 to 60</div></div><div class="gauge g"><span class="knob" style="left:55%;background:var(--manage)"></span></div></div>
         </div>
       </div></div>
-      <figcaption><span class="tagn">Guardian</span><b>Camera vitals</b><span>Camera preview, snapshot ring, biomarker rows.</span></figcaption>
+      <figcaption><span class="tagn">Guardian</span><b>Camera vitals</b><span>Glass camera tag, snapshot ring, biomarker rows.</span></figcaption>
+    </figure>
+
+    <!-- EMERGENCY STEPS (Ada urgency) -->
+    <figure>
+      <div class="phone"><div class="scr">
+        <div class="island"></div>
+        <div class="sb"><span>9:51</span><span class="rt">5G 100</span></div>
+        <div class="body pb">
+          <div class="brandrow"><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-back"/></svg></span></div>
+          <div class="mut serif" style="font-size:13px">Possible stroke signs</div>
+          <div class="display" style="font-size:22px;margin-bottom:4px">Act now</div>
+          <div class="urg urgent" style="font-size:12.5px;font-weight:700;margin-bottom:14px">Seek emergency care</div>
+          <div class="card" style="padding:6px 16px">
+            <div class="estep"><span class="en" style="background:var(--urgent)">1</span><div class="et"><b>Call 999 immediately.</b> Say you suspect a stroke and give the location.</div></div>
+            <div class="estep"><span class="en" style="background:var(--advice)">2</span><div class="et">Note the <b>time symptoms started.</b> It guides treatment.</div></div>
+            <div class="estep"><span class="en" style="background:var(--advice)">3</span><div class="et">Keep the person <b>still and calm.</b> Do not give food or drink.</div></div>
+            <div class="estep"><span class="en" style="background:var(--manage)">4</span><div class="et">Stay on the line. Sona can <b>share these vitals</b> with the responder.</div></div>
+          </div>
+          <button class="btn blue" style="background:var(--urgent)"><svg class="ic" style="font-size:16px"><use href="#i-phone"/></svg>Call 999 now</button>
+          <div class="escal" style="margin-top:12px"><svg class="ic ei"><use href="#i-alert"/></svg><div><b>Guidance only.</b> Sona does not diagnose. Emergency services decide care.</div></div>
+        </div>
+      </div></div>
+      <figcaption><span class="tagn">Guardian</span><b>Emergency steps</b><span>Ada urgency colors, circled numbered steps.</span></figcaption>
     </figure>
 
     <!-- VITAL DETAIL -->
     <figure>
       <div class="phone"><div class="scr">
         <div class="island"></div>
-        <div class="sb"><span>9:51</span><span class="rt">5G 100</span></div>
+        <div class="sb"><span>9:52</span><span class="rt">5G 100</span></div>
         <div class="body">
           <div class="brandrow"><span class="circ"><svg class="ic" style="font-size:15px"><use href="#i-back"/></svg></span></div>
           <div class="display" style="font-size:23px;margin-bottom:8px">Heart rate</div>
           <span class="pill-status"><span class="d"></span>In range &middot; 78 bpm</span>
           <div class="card" style="margin-top:14px">
             <svg viewBox="0 0 280 120" preserveAspectRatio="none" style="width:100%;height:110px">
-              <rect x="0" y="40" width="280" height="44" fill="#e6f1ea"/>
-              <line x1="0" y1="40" x2="280" y2="40" stroke="#2f8f5b" stroke-width="1" stroke-dasharray="4 4"/>
-              <line x1="0" y1="84" x2="280" y2="84" stroke="#2f8f5b" stroke-width="1" stroke-dasharray="4 4"/>
-              <polyline points="10,70 50,62 90,74 130,58 170,66 210,60 250,64 272,62" fill="none" stroke="#20312a" stroke-width="2.5"/>
-              <circle cx="272" cy="62" r="4" fill="#2f8f5b"/>
+              <rect x="0" y="40" width="280" height="44" fill="#e6f5ef"/>
+              <line x1="0" y1="40" x2="280" y2="40" stroke="#15a37a" stroke-width="1" stroke-dasharray="4 4"/>
+              <line x1="0" y1="84" x2="280" y2="84" stroke="#15a37a" stroke-width="1" stroke-dasharray="4 4"/>
+              <polyline points="10,70 50,62 90,74 130,58 170,66 210,60 250,64 272,62" fill="none" stroke="#1a2a3a" stroke-width="2.5"/>
+              <circle cx="272" cy="62" r="4" fill="#15a37a"/>
             </svg>
             <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:4px"><span>Mon</span><span>Wed</span><span>Fri</span><span>Sun</span></div>
           </div>
-          <div class="mini2"><div class="mini"><div class="l">Latest reading</div><div class="v" style="color:var(--ok)">78 bpm</div></div><div class="mini"><div class="l">Healthy range</div><div class="v">60 to 100</div></div></div>
+          <div class="mini2"><div class="mini"><div class="l">Latest reading</div><div class="v" style="color:var(--manage)">78 bpm</div></div><div class="mini"><div class="l">Healthy range</div><div class="v">60 to 100</div></div></div>
           <div class="explain"><h5>What this means</h5><p>Heart rate is read from the camera using rPPG, fully on device. A resting rate of 78 sits comfortably in the healthy adult range. This is a wellness signal, not a diagnosis.</p></div>
         </div>
       </div></div>
@@ -551,36 +590,36 @@
     <figure>
       <div class="phone"><div class="scr">
         <div class="island"></div>
-        <div class="sb"><span>9:52</span><span class="rt">5G 100</span></div>
+        <div class="sb"><span>9:53</span><span class="rt">5G 100</span></div>
         <div class="body pb">
           <div class="display" style="font-size:23px;margin:4px 2px 12px">Identify a pill</div>
-          <div class="campv" style="height:198px"><div class="mesh"></div><div class="frame"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i></div><div class="capsule"></div><div class="scan" style="left:24%;right:24%"></div><div class="camtag">point at the pill or its box</div></div>
-          <div class="bm"><div class="info"><div class="cat">Identified &middot; 92% match</div><div class="nm"><span class="d" style="background:var(--ok)"></span>Paracetamol 500 mg</div><div class="val">on-device vision model</div></div><svg class="ic chev"><use href="#i-chevron"/></svg></div>
+          <div class="campv" style="height:198px"><div class="mesh"></div><div class="frame"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i></div><div class="capsule"></div><div class="scan" style="left:24%;right:24%"></div><div class="camtag glass-dark">point at the pill or its box</div></div>
+          <div class="bm"><div class="info"><div class="cat">Identified &middot; 92% match</div><div class="nm2"><span class="d" style="background:var(--manage)"></span>Paracetamol 500 mg</div><div class="val">on-device vision model</div></div><svg class="ic chev"><use href="#i-chevron"/></svg></div>
           <div class="card"><div style="font-size:12px;font-weight:600;margin-bottom:6px">Key information</div><p class="serif" style="margin:0;font-size:13px;color:var(--mut);line-height:1.5">Adult max 4 g per day. Caution in liver disease. Check interaction with warfarin.</p></div>
-          <div class="escal" style="color:#7e5910;background:var(--watch-t);border-color:#ecdcb6"><svg class="ic ei" style="color:var(--watch)"><use href="#i-alert"/></svg><div>Guidance only. Confirm with a pharmacist.</div></div>
+          <div class="escal" style="color:#8a5a14;background:var(--advice-t);border-color:#eddbbe"><svg class="ic ei" style="color:var(--advice)"><use href="#i-alert"/></svg><div>Guidance only. Confirm with a pharmacist.</div></div>
         </div>
       </div></div>
-      <figcaption><span class="tagn">Guardian</span><b>Pill identifier</b><span>Corner-bracket frame, result row, warm warning.</span></figcaption>
+      <figcaption><span class="tagn">Guardian</span><b>Pill identifier</b><span>Corner-bracket frame, glass tag, result row.</span></figcaption>
     </figure>
 
     <!-- SETTINGS -->
     <figure>
       <div class="phone"><div class="scr">
         <div class="island"></div>
-        <div class="sb"><span>9:53</span><span class="rt">5G 100</span></div>
+        <div class="sb"><span>9:54</span><span class="rt">5G 100</span></div>
         <div class="body pb">
           <div class="display" style="font-size:24px;margin:4px 2px 14px">Account</div>
-          <div style="display:flex;align-items:center;gap:13px;margin-bottom:16px"><span class="ava" style="width:52px;height:52px;border-radius:18px;font-size:18px;background:var(--green)">WS</span><div><div class="serif" style="font-size:17px;font-weight:600">Dr Lim Wei Sheng</div><div class="mut" style="font-size:12px">General practitioner</div></div></div>
+          <div style="display:flex;align-items:center;gap:13px;margin-bottom:16px"><span class="ava" style="width:52px;height:52px;border-radius:16px;font-size:18px;background:var(--blue)">WS</span><div><div class="serif" style="font-size:17px;font-weight:600">Dr Lim Wei Sheng</div><div class="mut" style="font-size:12px">General practitioner</div></div></div>
           <div class="card" style="padding:4px 16px">
             <div class="srow"><span class="si"><svg class="ic" style="font-size:15px"><use href="#i-shield"/></svg></span><span class="st">Privacy and on-device data</span><svg class="ic chev"><use href="#i-chevron"/></svg></div>
             <div class="srow"><span class="si"><svg class="ic" style="font-size:15px"><use href="#i-link"/></svg></span><span class="st">EHR and FHIR export</span><svg class="ic chev"><use href="#i-chevron"/></svg></div>
-            <div class="srow"><span class="si"><svg class="ic" style="font-size:15px"><use href="#i-spark"/></svg></span><span class="st">Cloud helper (premium notes)</span><div class="sw" style="width:40px;height:24px;border-radius:999px;background:var(--green);position:relative"><span style="position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:#fff"></span></div></div>
+            <div class="srow"><span class="si"><svg class="ic" style="font-size:15px"><use href="#i-spark"/></svg></span><span class="st">Cloud helper (premium notes)</span><div class="sw"><span></span></div></div>
             <div class="srow"><span class="si"><svg class="ic" style="font-size:15px"><use href="#i-gear"/></svg></span><span class="st">Languages and templates</span><svg class="ic chev"><use href="#i-chevron"/></svg></div>
           </div>
-          <button class="btn tan">Manage subscription</button>
+          <button class="btn out">Manage subscription</button>
         </div>
       </div></div>
-      <figcaption><span class="tagn">Account</span><b>Settings</b><span>Profile, grouped rows, on-device privacy first.</span></figcaption>
+      <figcaption><span class="tagn">Account</span><b>Settings</b><span>Profile, grouped rows, privacy first.</span></figcaption>
     </figure>
   </div>
 
@@ -598,10 +637,10 @@
       </div>
       <div class="main">
         <div class="mh"><b class="serif" style="font-size:17px">Today's notes</b><span style="font-size:11.5px;color:var(--mut)">Dr Lim, Klinik Sihat Damansara</span></div>
-        <div class="row"><span class="av" style="background:var(--green)">RA</span><span class="nm2">Encik Rahman Idris <small>&middot; viral URTI &middot; J06.9</small></span><span class="tp signed">signed</span></div>
-        <div class="row"><span class="av" style="background:#2f8f5b">TM</span><span class="nm2">Tan Mei Ling <small>&middot; hypertension review &middot; I10</small></span><span class="tp signed">signed</span></div>
-        <div class="row"><span class="av" style="background:#c4912e">AB</span><span class="nm2">Baby Aisyah Nawaz <small>&middot; fever review &middot; R50.9</small></span><span class="tp draft">draft</span></div>
-        <div class="row"><span class="av" style="background:#cf5d73">AK</span><span class="nm2">Arjun Kumar <small>&middot; lower back pain &middot; M54.5</small></span><span class="tp draft">draft</span></div>
+        <div class="row"><span class="av" style="background:var(--blue)">RA</span><span class="n2">Encik Rahman Idris <small>&middot; viral URTI &middot; J06.9</small></span><span class="tp signed">signed</span></div>
+        <div class="row"><span class="av" style="background:#15a37a">TM</span><span class="n2">Tan Mei Ling <small>&middot; hypertension review &middot; I10</small></span><span class="tp signed">signed</span></div>
+        <div class="row"><span class="av" style="background:#e0843a">AB</span><span class="n2">Baby Aisyah Nawaz <small>&middot; fever review &middot; R50.9</small></span><span class="tp draft">draft</span></div>
+        <div class="row"><span class="av" style="background:#df524d">AK</span><span class="n2">Arjun Kumar <small>&middot; lower back pain &middot; M54.5</small></span><span class="tp draft">draft</span></div>
         <div class="metrics"><span>WER<b>8.2%</b></span><span>acceptance<b>91%</b></span><span>notes today<b>12</b></span><span>avg / note<b>47s</b></span></div>
         <div class="smpl">Sample data for illustration.</div>
       </div>
@@ -609,9 +648,32 @@
   </div>
 
   <footer>
-    Sona app prototype, concept only. Warm companion language inspired by the Pi (Inflection) iOS app: cream, forest green, serif, soft hills. Other refs: Superpower (biomarker rows), Deepstash and Mercury (scan frame), WHOOP and Withings (camera vitals).<br>
+    Sona app prototype, concept only. Clinical-clean language inspired by the Ada (Ada Health) iOS app: white, navy serif, friendly blue, urgency colors, conversational chips. Liquid Glass rendered as a web approximation (backdrop-filter) on chrome only; entrance animation via GSAP ScrollTrigger. Other refs: Superpower (biomarker rows), Deepstash and Mercury (scan frame), WHOOP and Withings (camera vitals).<br>
     Companion views: <code>sona-architecture.html</code> and <code>sona-plan.html</code>. Source of truth: <code>docs/superpowers/specs/2026-06-16-sona-ambient-scribe-design.md</code>.
   </footer>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+  // Entrance reveal via GSAP ScrollTrigger.batch. Offline-safe: only runs if GSAP
+  // loaded (CDN reachable) AND reduced-motion is not requested. Otherwise screens
+  // simply show (no hidden initial state is applied unless GSAP is present).
+  (function () {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!window.gsap || !window.ScrollTrigger || reduce) return;
+    gsap.registerPlugin(ScrollTrigger);
+    var targets = gsap.utils.toArray(".phone, .web");
+    gsap.set(targets, { opacity: 0, y: 42 });
+    ScrollTrigger.batch(targets, {
+      start: "top 88%",
+      once: true,
+      onEnter: function (batch) {
+        gsap.to(batch, { opacity: 1, y: 0, duration: 0.6, stagger: 0.09, ease: "power2.out", overwrite: true });
+      }
+    });
+    ScrollTrigger.refresh();
+  })();
+</script>
 </body>
 </html>
