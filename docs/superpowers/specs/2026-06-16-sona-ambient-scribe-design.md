@@ -89,7 +89,7 @@ Consent toggle
 2. On-device STT, live transcript, EN + BM code-switch
 3. On-device PII redaction (OpenMed)
 4. SOAP generation — cloud Claude on de-identified text + **offline local-LLM toggle**
-5. On-device clinical NER → problem list + med list
+5. On-device clinical NER → problem list + med list + **orders/follow-ups/referrals extraction** (action items the doctor voiced)
 6. Doctor review / edit / sign screen
 7. Export PDF + copy-to-clipboard
 8. Consent capture + audit log
@@ -102,9 +102,11 @@ Consent toggle
 10. FHIR R4 export (DocumentReference / Encounter)
 11. Summary-language choice (BM consult → EN note) + specialty SOAP templates
 12. Auth + encrypted multi-device sync (oRPC / Workers / Neon)
-13. Auto ICD-10 coding surfaced from NER
+13. Auto **ICD-10 + E/M coding** surfaced from NER — audit-ready, with a charge-captured / "code the typed note misses" revenue readout
 14. Accuracy-metrics screen (WER, acceptance rate) — pitch ammunition
 15. **🦸 Guardian hero:** on-device camera vitals (rPPG / Shen.ai) + guided emergency escalation
+15a. **On-device symptom triage:** sorts symptoms to a safe next step (self-care → see GP → urgent → 999) with a red-flag safety net. Borrows the "AI Triage Nurse" value, no EHR/telephony needed.
+15b. **On-device adaptive learning ("Note style"):** personalizes note structure/phrasing per clinician from accepted edits + plain-language rules, stored and applied locally. DeepScribe's differentiator, re-cast as a privacy moat (no cloud training on PHI).
 
 ### P2 — grand finals (Nov) / scale + moat
 
@@ -113,11 +115,28 @@ Consent toggle
 18. Subscription / billing (Stripe), admin console
 19. Mandarin + Tamil; speaker diarization (doctor vs patient)
 20. EMR integration + public API
-21. Guardian polish: FAST stroke screen (FaceMesh), offline first-aid/CPR coaching, pill/drug identifier (VLM)
+21. Guardian polish: FAST stroke screen (FaceMesh), offline first-aid/CPR coaching, pill/drug identifier (VLM) with **on-device interaction check against the patient's own med list** (the "AI Pharmacist" value, local drug DB)
+
+## 8a. Competitor read — Sully.ai (and why we don't clone it)
+
+Sully ships a **horizontal cloud suite** of "AI employees" (Triage Nurse, Receptionist, Consultant, Scribe, Pharmacist, Medical Coder) + EHR Bridge + multi-model Consensus. Their moat is breadth + integrations + US enterprise distribution — un-clonable in a hackathon and reads as vaporware if attempted. Our moat is the one thing every Sully agent is not: **fully on-device**. Decision: cherry-pick only the agents that sharpen the on-device wedge, skip the cloud/telephony/EHR plumbing.
+
+- **Fold in:** Medical Coder → audit-ready ICD-10/E-M + charge capture (P1.13). Consultant → already = Ask Sona. Triage Nurse → on-device symptom triage (P1.15a). Pharmacist → drug-interaction check in pill-ID (P2.21).
+- **Skip:** Receptionist (telephony/scheduling, zero on-device story), full EHR Bridge (keep light FHIR export only), Consensus (multi-cloud-model → kills the $0/min cost moat).
+- **Steal as a pitch asset, not a feature:** their ROI Calculator → a defensible ROI number in the deck (~2 hrs/day back, RM 30k+/clinician/yr, ~$0/consult-minute).
+
+## 8b. Competitor read — DeepScribe (and what we adopt)
+
+DeepScribe is a pure ambient scribe (no Guardian). Workflow: select patient from schedule → record → review in EHR → sign. Headline differentiator: **"learns your style, absorbs every edit, applies it to future notes."** Claims 99.92% note approval, 1.6-min chart closure.
+
+- **Adopt (it sharpens our moat):** **on-device adaptive learning** — the note model personalizes per-clinician *locally* from accepted edits + plain-language rules. This is DeepScribe's top selling point AND a moat amplifier: cloud rivals train on clinician/PHI data; Sona's personalization never leaves the device. Surfaced as a "Note style" screen (learned rules + custom-instruction line).
+- **Adopt (depth, no new infra):** **orders / follow-ups / referrals extraction** — beyond SOAP, pull the action items the doctor voiced ("review in 1 week", "FBC if fever persists", safety-net advice). Captures what otherwise goes undocumented. Added as a note section.
+- **Fold in lightly:** schedule-led entry → a mini day-agenda on the Today home (tap → pre-visit), not a cloud calendar/EHR sync. Mirror their chart-closure-time metric on the dashboard.
+- **Skip:** EHR-review-then-sign step (their cloud/EHR dependency; we export FHIR/PDF).
 
 ## 9. Sona Guardian (scoped emergency surface)
 
-**Build for comp:** camera vitals (rPPG) + guided emergency escalation. **Roadmap:** FAST stroke screen, offline first-aid coaching, pill-ID.
+**Build for comp:** camera vitals (rPPG) + guided emergency escalation + on-device symptom triage. **Roadmap:** FAST stroke screen, offline first-aid coaching, pill-ID with interaction check.
 
 **Safety reframe — non-negotiable:** Guardian **detects warning signs, measures vitals, guides first response, and escalates to 999 / a clinician.** It does **not** diagnose conditions or prescribe treatment. A laypeople-facing "diagnose + cure a heart attack from video" feature is a regulated medical device (SaMD) with maximum liability and a false-negative can kill — explicitly out of scope. Guardian mirrors the scribe's doctor-in-the-loop rule: human + emergency services always in the loop.
 

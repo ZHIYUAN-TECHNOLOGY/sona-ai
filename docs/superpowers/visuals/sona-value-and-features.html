@@ -70,6 +70,12 @@
   <div class="vp">
     <div class="big">Sona writes the clinical note for the doctor, <b>on their own phone</b>, in their own language. The patient's audio <b>never leaves the device</b>.</div>
     <div class="sub2">Doctors lose about 2 hours a day to paperwork. Every rival scribe is cloud-based, English-first, and useless offline. Sona is on-device, so it is PDPA-clean, works in rural clinics, speaks Malay and Manglish, and costs near zero per minute to run.</div>
+    <div class="grid g3" style="margin-top:18px">
+      <div class="pill" style="text-align:center"><div class="m" style="font-size:23px;font-family:inherit">~2 hrs</div><p style="margin-top:3px">of paperwork handed back to each doctor, every day</p></div>
+      <div class="pill" style="text-align:center"><div class="m" style="font-size:23px">RM 30k+</div><p style="margin-top:3px">recovered per clinician each year, time plus captured coding</p></div>
+      <div class="pill" style="text-align:center"><div class="m" style="font-size:23px">~$0</div><p style="margin-top:3px">cloud cost per consult minute, inference runs on device</p></div>
+    </div>
+    <div class="sub2" style="font-size:11.5px;margin-top:8px">Sample ROI for a 20-consult day. Replaces a sales "ROI calculator" with a number we can defend.</div>
   </div>
 
   <h2>Why it matters - 4 reasons</h2>
@@ -99,10 +105,10 @@
 
   <h2>The features - and how each one works</h2>
   <div class="grid g2">
-    <div class="feat"><span class="bar" style="background:var(--teal)"></span><div class="tag">Core - B2B revenue</div><h3>Ambient scribe</h3><p class="how">Listens to the consult and <b>auto-writes a SOAP note</b> plus problem list, medications, and ICD-10 codes. Doctor reviews and signs. This is the paid product.</p></div>
+    <div class="feat"><span class="bar" style="background:var(--teal)"></span><div class="tag">Core - B2B revenue</div><h3>Ambient scribe + coding</h3><p class="how">Listens to the consult and <b>auto-writes a SOAP note</b>, then suggests <b>audit-ready ICD-10 and E/M codes</b>. It captures charges a typed note misses. Doctor reviews and signs. This is the paid product.</p></div>
     <div class="feat"><span class="bar" style="background:var(--green)"></span><div class="tag">Assistant</div><h3>Ask Sona</h3><p class="how">Hands-free voice query over the patient's own notes, on device. <b>"What was his last HbA1c?"</b> No typing, no cloud.</p></div>
-    <div class="feat"><span class="bar" style="background:var(--violet)"></span><div class="tag">Guardian - reach + impact</div><h3>Camera vitals</h3><p class="how">Points the camera at a face and reads <b>heart rate, breathing, HRV, stress</b> using rPPG, fully on device. Shown as in-range or out-of-range, never as a diagnosis.</p></div>
-    <div class="feat"><span class="bar" style="background:var(--rose)"></span><div class="tag">Guardian - save a life</div><h3>Emergency + pill ID</h3><p class="how">Detects warning signs, gives <b>guided first-response steps</b>, escalates to 999, and identifies a pill from the camera with interaction warnings. Always human-in-the-loop.</p></div>
+    <div class="feat"><span class="bar" style="background:var(--violet)"></span><div class="tag">Guardian - reach + impact</div><h3>Symptom triage + camera vitals</h3><p class="how">On-device triage sorts symptoms to a <b>safe next step</b> with a red-flag safety net. The camera reads <b>heart rate, breathing, HRV</b> via rPPG. Always in-range or out-of-range, never a diagnosis.</p></div>
+    <div class="feat"><span class="bar" style="background:var(--rose)"></span><div class="tag">Guardian - save a life</div><h3>Emergency + pill ID</h3><p class="how">Gives <b>guided first-response steps</b> (stroke FAST, CPR), escalates to 999, and identifies a pill from the camera. It <b>checks interactions against the patient's own med list</b>, on device. Always human-in-the-loop.</p></div>
   </div>
 
   <h2>Why it can scale - the moats</h2>
