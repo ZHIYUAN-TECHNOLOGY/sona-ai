@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sona — System Architecture & Data Flow</title>
+<style>
+  :root{
+    --bg:#0a0f14; --panel:#111922; --panel2:#16212c; --line:#223040;
+    --ink:#e7eef5; --muted:#8aa0b2; --teal:#2dd4bf; --teal2:#14b8a6;
+    --green:#34d399; --amber:#f59e0b; --red:#fb7185; --violet:#a78bfa; --blue:#60a5fa;
+    --radius:14px; --maxw:1180px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,#13202b 0,var(--bg) 55%);color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:40px 24px 80px}
+  header.top{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+  .logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--teal),#0ea5a0);
+    display:grid;place-items:center;font-weight:800;color:#03201d;font-size:20px;box-shadow:0 8px 24px -8px var(--teal2)}
+  h1{font-size:26px;margin:0;letter-spacing:-.02em}
+  .sub{color:var(--muted);margin:2px 0 0;font-size:13.5px}
+  .crumbs{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 30px}
+  .crumb{font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--line);padding:6px 11px;border-radius:999px}
+  .crumb b{color:var(--teal)}
+  h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:46px 0 16px;font-weight:600}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .grid{display:grid;gap:14px}
+  .g3{grid-template-columns:repeat(3,1fr)} .g2{grid-template-columns:repeat(2,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:880px){.g3,.g2,.g4{grid-template-columns:1fr}}
+  .comp{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden}
+  .comp .tag{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+  .comp h3{margin:8px 0 6px;font-size:16px}
+  .comp p{margin:0;color:var(--muted);font-size:13px}
+  .comp .where{display:inline-block;margin-top:10px;font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line)}
+  .on{color:var(--green);border-color:#1f4034;background:#0e1f19}
+  .cloud{color:var(--blue);border-color:#1d3350;background:#0e1a2a}
+  .edgebar{position:absolute;left:0;top:0;bottom:0;width:4px}
+  /* flow */
+  .flow{display:flex;flex-direction:column;gap:0}
+  .device{border:1.5px dashed var(--teal);border-radius:18px;padding:18px 18px 6px;position:relative;background:linear-gradient(180deg,#0d1c1a22,transparent)}
+  .device::before{content:"📱 ON-DEVICE BOUNDARY — nothing inside crosses the network";position:absolute;top:-11px;left:18px;
+    background:var(--bg);padding:0 10px;font-size:11px;letter-spacing:.08em;color:var(--teal);font-weight:600}
+  .step{display:flex;align-items:flex-start;gap:14px;padding:11px 0}
+  .dot{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:14px;font-weight:700;
+    background:var(--panel2);border:1px solid var(--line)}
+  .step h4{margin:0;font-size:14.5px}
+  .step p{margin:3px 0 0;color:var(--muted);font-size:12.5px}
+  .arrow{margin-left:14px;color:var(--line);font-size:18px;line-height:1;padding:2px 0}
+  .cross{margin:14px 0;padding:14px 16px;border-radius:12px;border:1px solid #1d3350;background:#0c1726;display:flex;gap:12px;align-items:center}
+  .cross .ic{font-size:20px}
+  .cross b{color:var(--blue)}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);margin-left:6px}
+  .rule{margin-top:16px;border-left:3px solid var(--teal);background:#0e1c1a;padding:12px 16px;border-radius:0 10px 10px 0;font-size:13.5px}
+  .rule b{color:var(--teal)}
+  .stack{display:grid;gap:10px}
+  .layer{display:grid;grid-template-columns:140px 1fr;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .layer .lname{font-weight:700;font-size:13px;color:var(--ink)}
+  .layer .ltag{font-size:11px;color:var(--muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{font-size:12px;padding:5px 10px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);color:var(--ink)}
+  .chip.edge{border-color:#1f4034;color:var(--green)} .chip.cloud{border-color:#1d3350;color:var(--blue)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:14px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+  footer{margin-top:60px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">S</div>
+    <div>
+      <h1>Sona — System Architecture</h1>
+      <p class="sub">On-device ambient medical scribe (+ Guardian) · MAIC Nexus T2 · generated 2026-06-16</p>
+    </div>
+  </header>
+  <div class="crumbs">
+    <span class="crumb"><b>2 surfaces</b> · Scribe + Guardian</span>
+    <span class="crumb"><b>1 engine</b> · on-device multimodal</span>
+    <span class="crumb"><b>Moat</b> · only de-identified text leaves the phone</span>
+    <span class="crumb"><b>Stack</b> · RN/Expo · oRPC · Workers · Neon · Alchemy</span>
+  </div>
+
+  <h2>The privacy pipeline — data flow</h2>
+  <div class="card">
+    <div class="flow">
+      <div class="device">
+        <div class="step"><div class="dot">1</div><div><h4>Consent + capture</h4><p>Doctor toggles consent, taps record. Mic → VAD detects speech.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="step"><div class="dot">2</div><div><h4>STT — Whisper (on-device)</h4><p>Audio → raw transcript. Encrypted, stays on device. Malay/English/Manglish.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="step"><div class="dot">3</div><div><h4>Privacy gate — OpenMed PII (on-device)</h4><p>De-identifies transcript → de-identified text + a re-ID map that <b>never leaves the device</b>.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="step"><div class="dot">4a</div><div><h4>Summarize — local LLM (offline path)</h4><p>Gemma&nbsp;4 E4B / Qwen3 on-device → SOAP note. 100% private. Airplane-mode works.</p></div></div>
+      </div>
+
+      <div class="cross">
+        <span class="ic">🔓</span>
+        <div><b>The only thing that may cross the boundary</b> — and only on the optional premium path:
+          de-identified text → TLS → Claude. <span class="pill">no audio</span><span class="pill">no names</span><span class="pill">blocked if redaction unsure</span></div>
+      </div>
+
+      <div class="device" style="border-style:solid">
+        <div class="step"><div class="dot">5</div><div><h4>Re-identify locally</h4><p>Re-ID map reapplied on-device — names reinserted into the returned note.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="step"><div class="dot">6</div><div><h4>Clinical NER + review</h4><p>OpenMed tags Dx/drug → problem &amp; med list. Doctor edits, every line traces to transcript, signs.</p></div></div>
+        <div class="arrow">↓</div>
+        <div class="step"><div class="dot">7</div><div><h4>Export + audit</h4><p>FHIR R4 + PDF. Immutable audit log. Raw audio discarded after transcript.</p></div></div>
+      </div>
+    </div>
+    <div class="rule"><b>Hard rule (enforced in code, not policy):</b> only de-identified text may ever cross the device boundary; the re-ID map never leaves. Low redaction confidence → cloud send blocked → local-only. This single rule = the PDPA story + the airplane-mode demo.</div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--green)"></i> runs on the phone (edge)</span>
+      <span><i class="sw" style="background:var(--blue)"></i> optional cloud (de-identified only)</span>
+      <span><i class="sw" style="background:var(--teal);border:1px dashed var(--teal)"></i> device boundary</span>
+    </div>
+  </div>
+
+  <h2>Components — 2 surfaces, 1 engine</h2>
+  <div class="grid g3">
+    <div class="comp"><div class="edgebar" style="background:var(--green)"></div><div class="tag">Surface · Scribe</div><h3>Capture app</h3><p>RN/Expo. Consent → record → live transcript → review/sign. The clinician's phone/tablet.</p><span class="where on">on-device</span></div>
+    <div class="comp"><div class="edgebar" style="background:var(--green)"></div><div class="tag">Engine</div><h3>Voice pipeline</h3><p>VAD → Whisper STT, multilingual code-switch. Produces the text stage the privacy gate needs.</p><span class="where on">on-device</span></div>
+    <div class="comp"><div class="edgebar" style="background:var(--green)"></div><div class="tag">Engine · moat</div><h3>Privacy gate</h3><p>OpenMed PII-NER de-identifies; holds the re-ID map locally. The enforcement point.</p><span class="where on">on-device</span></div>
+    <div class="comp"><div class="edgebar" style="background:linear-gradient(var(--green),var(--blue))"></div><div class="tag">Engine · dual path</div><h3>Summarizer</h3><p>Gemma 4 E4B / Qwen3 local <i>or</i> Claude cloud (de-identified) → structured SOAP + entities.</p><span class="where on">on-device</span> <span class="where cloud">+ optional cloud</span></div>
+    <div class="comp"><div class="edgebar" style="background:var(--green)"></div><div class="tag">Engine</div><h3>Clinical NER</h3><p>OpenMed tags disease/drug/anatomy → problem list, med list, ICD-10 coding.</p><span class="where on">on-device</span></div>
+    <div class="comp"><div class="edgebar" style="background:var(--violet)"></div><div class="tag">Surface · Guardian</div><h3>Guardian engine</h3><p>rPPG camera vitals (Shen.ai) · VLM pill-ID · MediaPipe FaceMesh (FAST) · guided first-aid.</p><span class="where on">on-device</span></div>
+    <div class="comp" style="grid-column:span 3"><div class="edgebar" style="background:var(--blue)"></div><div class="tag">Server</div><h3>Backend — Cloudflare Workers (+ on-prem option)</h3><p>oRPC API · auth · encrypted sync · immutable audit log · FHIR/PDF export · Claude proxy (de-identified only) · billing. Never touches PHI ML — that all runs on-device.</p><span class="where cloud">cloud / on-prem</span></div>
+  </div>
+
+  <h2>Tech stack — by layer</h2>
+  <div class="stack">
+    <div class="layer"><div><div class="lname">Mobile</div><div class="ltag">clinician + consumer app</div></div><div class="chips"><span class="chip">React Native (Expo bare)</span><span class="chip">Expo Router</span><span class="chip">dev client (not Expo Go)</span><span class="chip">TypeScript</span></div></div>
+    <div class="layer"><div><div class="lname">On-device AI</div><div class="ltag">the edge engine</div></div><div class="chips"><span class="chip edge">Whisper STT</span><span class="chip edge">Gemma 4 E4B / Qwen3 LLM</span><span class="chip edge">OpenMed NER + PII</span><span class="chip edge">rPPG (Shen.ai)</span><span class="chip edge">MediaPipe FaceMesh</span><span class="chip edge">ExecuTorch / LiteRT / RunAnywhere</span></div></div>
+    <div class="layer"><div><div class="lname">API + data</div><div class="ltag">server-side, no PHI ML</div></div><div class="chips"><span class="chip cloud">oRPC</span><span class="chip cloud">Cloudflare Workers (Hono)</span><span class="chip cloud">Neon Postgres</span><span class="chip cloud">Drizzle</span><span class="chip cloud">Claude (de-identified)</span></div></div>
+    <div class="layer"><div><div class="lname">Web</div><div class="ltag">clinician dashboard</div></div><div class="chips"><span class="chip">TanStack Router (Vite)</span><span class="chip">vite-plus</span></div></div>
+    <div class="layer"><div><div class="lname">Deploy</div><div class="ltag">infra-as-code</div></div><div class="chips"><span class="chip cloud">Alchemy.run (TS IaC)</span><span class="chip cloud">Cloudflare (Workers/R2/KV)</span><span class="chip">Docker (on-prem option)</span></div></div>
+  </div>
+
+  <footer>
+    Sona architecture · derived from <code>docs/superpowers/specs/2026-06-16-sona-ambient-scribe-design.md</code>.
+    Companion views: <code>sona-plan.html</code> (roadmap) · <code>sona-features-prototype.html</code> (UI mockups).
+  </footer>
+</div>
+</body>
+</html>

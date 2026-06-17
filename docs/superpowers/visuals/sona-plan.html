@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sona — Build Plan & Roadmap</title>
+<style>
+  :root{
+    --bg:#0a0f14; --panel:#111922; --panel2:#16212c; --line:#223040;
+    --ink:#e7eef5; --muted:#8aa0b2; --teal:#2dd4bf; --green:#34d399;
+    --amber:#f59e0b; --red:#fb7185; --violet:#a78bfa; --blue:#60a5fa; --maxw:1180px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,#13202b 0,var(--bg) 55%);color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:40px 24px 80px}
+  header.top{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+  .logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--teal),#0ea5a0);
+    display:grid;place-items:center;font-weight:800;color:#03201d;font-size:20px}
+  h1{font-size:26px;margin:0;letter-spacing:-.02em}
+  .sub{color:var(--muted);margin:2px 0 0;font-size:13.5px}
+  h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:46px 0 16px;font-weight:600}
+  /* timeline */
+  .tl{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:8px}
+  @media(max-width:880px){.tl{grid-template-columns:1fr}}
+  .ms{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;position:relative}
+  .ms .mo{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal)}
+  .ms h4{margin:6px 0 4px;font-size:14px}
+  .ms p{margin:0;color:var(--muted);font-size:12px}
+  .ms .bar{height:4px;border-radius:4px;margin-top:10px;background:linear-gradient(90deg,var(--teal),transparent)}
+  .now{outline:1px solid var(--teal);box-shadow:0 0 0 4px #2dd4bf22}
+  .nowtag{position:absolute;top:-9px;right:10px;background:var(--teal);color:#04221f;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px}
+  /* tiers */
+  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:880px){.tiers{grid-template-columns:1fr}}
+  .tier{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .tier .head{padding:14px 16px;border-bottom:1px solid var(--line)}
+  .tier .head .k{font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+  .tier .head h3{margin:6px 0 2px;font-size:17px}
+  .tier .head p{margin:0;color:var(--muted);font-size:12px}
+  .tier.p0 .k{color:var(--green)} .tier.p1 .k{color:var(--amber)} .tier.p2 .k{color:var(--violet)}
+  .feat{display:flex;gap:10px;align-items:flex-start;padding:9px 16px;border-bottom:1px solid #1a2632;font-size:13px}
+  .feat:last-child{border-bottom:0}
+  .feat .n{flex:none;width:20px;height:20px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);font-size:11px;display:grid;place-items:center;color:var(--muted)}
+  .feat .hero{background:#241c33;border-color:#3a2f55;color:var(--violet)}
+  .feat b{font-weight:600}
+  .feat small{color:var(--muted)}
+  /* spike tracker */
+  .tasks{display:grid;gap:8px}
+  .task{display:grid;grid-template-columns:26px 1fr auto;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 14px}
+  .task .ck{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:13px;font-weight:700}
+  .done .ck{background:#0e2018;border:1px solid #1f4034;color:var(--green)}
+  .todo .ck{background:var(--panel2);border:1px solid var(--line);color:var(--muted)}
+  .code .ck{background:#172a1d;border:1px solid #234a30;color:var(--green)}
+  .task .t{font-size:13.5px}
+  .task .t small{color:var(--muted);display:block;font-size:11.5px}
+  .st{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .st.ok{color:var(--green);border-color:#1f4034} .st.dev{color:var(--blue);border-color:#1d3350} .st.you{color:var(--amber);border-color:#3a2f12}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin:14px 0 0}
+  .rubric{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  @media(max-width:880px){.rubric{grid-template-columns:1fr 1fr}}
+  .rb{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .rb .pct{font-size:22px;font-weight:800}
+  .rb .nm{font-size:12px;color:var(--muted);margin-top:2px}
+  .rb .meter{height:5px;border-radius:5px;background:var(--panel2);margin-top:8px;overflow:hidden}
+  .rb .fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--green))}
+  footer{margin-top:60px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">S</div>
+    <div><h1>Sona — Build Plan &amp; Roadmap</h1>
+    <p class="sub">Features mapped to the MAIC competition funnel · generated 2026-06-16</p></div>
+  </header>
+
+  <h2>Competition timeline</h2>
+  <div class="tl">
+    <div class="ms"><div class="mo">Jun 2026</div><h4>Launch + apply</h4><p>Scaffold, on-device spike, build P0.</p><div class="bar"></div></div>
+    <div class="ms now"><span class="nowtag">YOU ARE HERE</span><div class="mo">Jun–Jul</div><h4>Build P0</h4><p>Scribe loop + demo video + artifact.</p><div class="bar"></div></div>
+    <div class="ms"><div class="mo">Aug</div><h4>Online prelim</h4><p>Pitch deck + summary + AI disclosure + demo.</p><div class="bar"></div></div>
+    <div class="ms"><div class="mo">Sep</div><h4>Semi-finals · KL</h4><p>Demo day: P1 + Guardian hero live.</p><div class="bar"></div></div>
+    <div class="ms"><div class="mo">Nov</div><h4>Grand finals</h4><p>P2 scale + platform pitch + gala.</p><div class="bar"></div></div>
+  </div>
+
+  <h2>Feature roadmap — 3 tiers</h2>
+  <div class="tiers">
+    <div class="tier p0">
+      <div class="head"><div class="k">● P0 · prelim (4–6 wks)</div><h3>The scribe loop</h3><p>9 features — fully demo-able. Passes prelim alone.</p></div>
+      <div class="feat"><span class="n">1</span><div><b>Record consult</b> <small>· mobile capture + consent</small></div></div>
+      <div class="feat"><span class="n">2</span><div><b>On-device STT</b> <small>· live transcript, EN + BM code-switch</small></div></div>
+      <div class="feat"><span class="n">3</span><div><b>PII redaction</b> <small>· on-device, before anything leaves</small></div></div>
+      <div class="feat"><span class="n">4</span><div><b>SOAP generation</b> <small>· cloud Claude + offline local-LLM toggle</small></div></div>
+      <div class="feat"><span class="n">5</span><div><b>Clinical NER</b> <small>· problem list + med list</small></div></div>
+      <div class="feat"><span class="n">6</span><div><b>Review / edit / sign</b> <small>· doctor-in-the-loop</small></div></div>
+      <div class="feat"><span class="n">7</span><div><b>Export</b> <small>· PDF + copy-to-clipboard</small></div></div>
+      <div class="feat"><span class="n">8</span><div><b>Consent + audit log</b> <small>· PDPA</small></div></div>
+    </div>
+    <div class="tier p1">
+      <div class="head"><div class="k">◆ P1 · semis (Sep)</div><h3>Polish + the wow</h3><p>Dashboard, FHIR, coding — and the Guardian hero demo.</p></div>
+      <div class="feat"><span class="n">9</span><div><b>Web dashboard</b> <small>· Vite · history, edit, export</small></div></div>
+      <div class="feat"><span class="n">10</span><div><b>FHIR R4 export</b> <small>· DocumentReference / Encounter</small></div></div>
+      <div class="feat"><span class="n">11</span><div><b>Lang choice + templates</b> <small>· BM consult → EN note</small></div></div>
+      <div class="feat"><span class="n">12</span><div><b>Auth + encrypted sync</b> <small>· oRPC / Workers / Neon</small></div></div>
+      <div class="feat"><span class="n">13</span><div><b>ICD-10 coding</b> <small>· surfaced from NER</small></div></div>
+      <div class="feat"><span class="n">14</span><div><b>Accuracy metrics screen</b> <small>· WER, acceptance rate</small></div></div>
+      <div class="feat"><span class="n hero">★</span><div><b>Guardian hero</b> <small>· camera vitals (rPPG) + emergency escalation</small></div></div>
+    </div>
+    <div class="tier p2">
+      <div class="head"><div class="k">▲ P2 · finals (Nov)</div><h3>Scale + moat</h3><p>The platform pitch: B2G, billing, multilingual, Guardian polish.</p></div>
+      <div class="feat"><span class="n">16</span><div><b>On-prem backend</b> <small>· MOH, data stays on soil</small></div></div>
+      <div class="feat"><span class="n">17</span><div><b>Coding/billing module</b> <small>· land-and-expand</small></div></div>
+      <div class="feat"><span class="n">18</span><div><b>Subscription / billing</b> <small>· Stripe + admin console</small></div></div>
+      <div class="feat"><span class="n">19</span><div><b>Mandarin + Tamil</b> <small>· + speaker diarization</small></div></div>
+      <div class="feat"><span class="n">20</span><div><b>EMR integration + API</b></div></div>
+      <div class="feat"><span class="n hero">★</span><div><b>Guardian polish</b> <small>· FAST stroke screen, first-aid, pill-ID</small></div></div>
+    </div>
+  </div>
+
+  <h2>Plan 1 — scaffold + on-device spike (current work)</h2>
+  <div class="tasks">
+    <div class="task done"><span class="ck">✓</span><div class="t">Task 0 — Scaffold monorepo <small>better-t-stack merged into repo</small></div><span class="st ok">done</span></div>
+    <div class="task code"><span class="ck">⌁</span><div class="t">Tasks 2–6 — Benchmark harness code <small>metrics · sampleData · STT · LLM · NER · screen — written + tsc clean</small></div><span class="st dev">code ready</span></div>
+    <div class="task todo"><span class="ck">○</span><div class="t">Task 1 — Dev client on your phone <small>expo prebuild → run on physical device</small></div><span class="st you">needs device</span></div>
+    <div class="task todo"><span class="ck">○</span><div class="t">Record real BM/Manglish clip <small>stand-in TTS clip already generated</small></div><span class="st you">your hands</span></div>
+    <div class="task todo"><span class="ck">○</span><div class="t">Gemma 4 E4B LiteRT build <small>for the summarizer bake-off (Qwen3 baseline runs without it)</small></div><span class="st you">your hands</span></div>
+    <div class="task todo"><span class="ck">○</span><div class="t">Tasks 6–7 — Run benchmarks + decision doc <small>5 runs, lock runtime + model + redaction</small></div><span class="st you">on device</span></div>
+  </div>
+  <div class="legend">
+    <span>✓ done</span><span>⌁ code written, awaiting device</span><span>○ needs your phone / accounts</span>
+  </div>
+
+  <h2>Why it scores — rubric coverage</h2>
+  <div class="rubric">
+    <div class="rb"><div class="pct">25%</div><div class="nm">Technical Feasibility</div><div class="meter"><div class="fill" style="width:92%"></div></div></div>
+    <div class="rb"><div class="pct">25%</div><div class="nm">Commercial Viability</div><div class="meter"><div class="fill" style="width:88%"></div></div></div>
+    <div class="rb"><div class="pct">20%</div><div class="nm">Industry Relevance</div><div class="meter"><div class="fill" style="width:95%"></div></div></div>
+    <div class="rb"><div class="pct">15%</div><div class="nm">Scalability</div><div class="meter"><div class="fill" style="width:85%"></div></div></div>
+    <div class="rb"><div class="pct">15%</div><div class="nm">ESG / National Impact</div><div class="meter"><div class="fill" style="width:96%"></div></div></div>
+  </div>
+
+  <footer>
+    Sona roadmap · derived from <code>docs/superpowers/specs/2026-06-16-sona-ambient-scribe-design.md</code> + <code>docs/superpowers/plans/2026-06-16-scaffold-and-ondevice-spike.md</code>.
+    Companion views: <code>sona-architecture.html</code> · <code>sona-features-prototype.html</code>.
+  </footer>
+</div>
+</body>
+</html>
