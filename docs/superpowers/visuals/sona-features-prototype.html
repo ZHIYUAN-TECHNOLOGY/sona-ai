@@ -3,217 +3,216 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sona - UI Prototype (Liquid Glass)</title>
+<title>Sona - UI Prototype</title>
 <!--
-  Concept mockups for review (not the built app). Mobile product UI.
-  Liquid Glass here is a WEB APPROXIMATION (backdrop-filter + layered borders +
-  specular highlight). Apple Liquid Glass has no official web CSS. Applied per the
-  expo-liquid-glass skill: glass on controls/chrome only (tab bars, toolbars,
-  pills, overlays), never on primary content; content runs edge-to-edge behind
-  glass so it refracts; reduced-transparency fallback provided.
-  Reference patterns from Mobbin: Roku/Tolan/Natural AI/NAVER (voice assistant ring + orb),
-  Deepstash/Mercury/Shopee (corner-bracket scan frame), WHOOP/Withings/Lovi (camera vitals),
-  Plazo/Zocdoc (clinical list), stoic/Fabric/Speechify (recording + note review).
-  Single accent: teal (Scribe). Violet reserved for Guardian. Zero em-dashes.
+  Concept mockups for review (not the built app). Premium near-black theme inspired
+  by the Superpower iOS app (big editorial numbers, biomarker cards with status +
+  reference ranges + sparklines, hero stat, generous spacing). Liquid Glass is a
+  WEB APPROXIMATION (backdrop-filter); glass on chrome/controls only, content
+  edge-to-edge behind it, reduced-transparency fallback. Single accent teal;
+  status colors (optimal/watch/high) for data; violet reserved for Guardian.
+  Mobbin was unavailable (token expired) this pass; design language applied from
+  knowledge of the Superpower app, to be refined against exact screens next.
+  Zero em-dashes.
 -->
 <style>
   :root{
-    --bg:#0a1016; --bg2:#0f1822; --line:#22303d; --ink:#e8eff5; --mut:#8499a9; --teal:#19b6a6;
-    /* app light */
-    --aink:#0e1a24; --amut:#5e7281; --aline:#e7edf1; --t:#0d9488; --t-ink:#0b7c70; --t-soft:#e7f5f2;
-    --good:#15a06b; --good-soft:#e6f4ee; --warn:#b4791f; --warn-soft:#fdf1dd; --alert:#d6453f;
-    --violet:#7c5cff;
-    --r-card:18px;
+    --bg:#07090c; --surface:#0e1318; --surface2:#141b22; --hair:rgba(255,255,255,.08); --hair2:rgba(255,255,255,.05);
+    --ink:#f3f6f8; --mut:#8b98a5; --faint:#5d6a76;
+    --t:#2ad3c0; --t-dim:#0f8e82;
+    --ok:#3fd08a; --watch:#e7b23a; --high:#f06a5e; --violet:#8b6cff;
+    --r:20px;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:radial-gradient(1100px 560px at 72% -12%,#13212d 0,var(--bg) 55%);color:var(--ink);
-    font:15px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1280px;margin:0 auto;padding:42px 24px 96px}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1280px;margin:0 auto;padding:44px 24px 100px}
   header.top{display:flex;align-items:center;gap:14px}
-  .logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#2dd4bf,#0d9488);display:grid;place-items:center;font-weight:800;color:#03201d;font-size:21px}
-  h1{font-size:27px;margin:0;letter-spacing:-.025em}
+  .logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#46e6d4,#0f8e82);display:grid;place-items:center;font-weight:800;color:#03201d;font-size:22px}
+  h1{font-size:28px;margin:0;letter-spacing:-.03em}
   .sub{color:var(--mut);margin:3px 0 0;font-size:13.5px}
-  .read{margin:22px 0 4px;color:var(--mut);font-size:13px;border-left:3px solid var(--teal);padding:9px 14px;background:#0e1c1c;border-radius:0 10px 10px 0}
-  .read b{color:#5fe0d2}
-  h2{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin:50px 0 18px;font-weight:600}
-  .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(304px,1fr));gap:34px;justify-items:center;margin-top:24px}
-  figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:13px;width:304px}
+  .read{margin:22px 0 4px;color:var(--mut);font-size:13px;border-left:3px solid var(--t);padding:9px 14px;background:#0c1614;border-radius:0 10px 10px 0}
+  .read b{color:#6fe7da}
+  h2{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin:54px 0 18px;font-weight:600}
+  .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(306px,1fr));gap:36px;justify-items:center;margin-top:24px}
+  figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:13px;width:306px}
   figcaption{text-align:center}
   figcaption b{display:block;font-size:14px}
   figcaption span{color:var(--mut);font-size:12px}
-  .tagn{display:inline-block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--mut);margin-bottom:8px}
-  .tagn.p0{color:#46d6a0;border-color:#1f4034} .tagn.guard{color:#b9a8ff;border-color:#332a55}
+  .tagn{display:inline-block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:2px 9px;border-radius:999px;border:1px solid var(--hair);color:var(--mut);margin-bottom:8px}
+  .tagn.p0{color:#5fe3c9;border-color:#1c4842} .tagn.guard{color:#b9a8ff;border-color:#352b5a}
 
-  .ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:-.13em;flex:none}
+  .ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:-.13em;flex:none}
 
-  /* phone shell */
-  .phone{width:304px;height:632px;background:#05080c;border-radius:46px;padding:11px;box-shadow:0 34px 70px -24px #000,0 0 0 1px #1b2733,inset 0 0 0 2px #0c131b;position:relative}
-  .scr{width:100%;height:100%;border-radius:34px;overflow:hidden;position:relative;background:#f2f5f7;color:var(--aink)}
-  .island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:96px;height:26px;background:#04070b;border-radius:999px;z-index:30}
-  .sb{position:absolute;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:13px 22px 0;font-size:13px;font-weight:600}
-  .sb .rt{font-size:11px;letter-spacing:.5px}
-  .body{position:absolute;inset:0;padding:46px 16px 16px;overflow:auto}
+  /* phone */
+  .phone{width:306px;height:638px;background:#020305;border-radius:48px;padding:10px;box-shadow:0 38px 80px -28px #000,0 0 0 1px #161e26,inset 0 0 0 2px #0a0f15;position:relative}
+  .scr{width:100%;height:100%;border-radius:38px;overflow:hidden;position:relative;background:var(--bg);color:var(--ink)}
+  .glow{position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:340px;height:300px;border-radius:50%;filter:blur(60px);opacity:.5;pointer-events:none}
+  .glow.teal{background:radial-gradient(circle,#15b9a8,transparent 70%)}
+  .glow.violet{background:radial-gradient(circle,#6f4ff0,transparent 70%)}
+  .island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:96px;height:26px;background:#000;border-radius:999px;z-index:30}
+  .sb{position:absolute;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;padding:13px 22px 0;font-size:13px;font-weight:600}
+  .sb .rt{font-size:11px;letter-spacing:.5px;opacity:.85}
+  .body{position:absolute;inset:0;padding:50px 18px 18px;overflow:auto}
   .body::-webkit-scrollbar{display:none}
-  .body.pad-bottom{padding-bottom:96px}
+  .body.pb{padding-bottom:98px}
 
-  /* LIQUID GLASS (web approximation of Apple Liquid Glass) */
+  /* glass (web approximation of Liquid Glass) */
   .glass{
-    background:linear-gradient(135deg,rgba(255,255,255,.30),rgba(255,255,255,.08)),rgba(255,255,255,.12);
-    backdrop-filter:blur(20px) saturate(175%); -webkit-backdrop-filter:blur(20px) saturate(175%);
-    border:1px solid rgba(255,255,255,.42);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(255,255,255,.14),0 12px 34px rgba(13,40,38,.16);
+    background:linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,.03)),rgba(14,20,26,.34);
+    backdrop-filter:blur(22px) saturate(150%); -webkit-backdrop-filter:blur(22px) saturate(150%);
+    border:1px solid rgba(255,255,255,.16);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 16px 44px rgba(0,0,0,.5);
   }
-  .glass-dark{
-    background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.03)),rgba(8,16,20,.30);
-    backdrop-filter:blur(22px) saturate(160%); -webkit-backdrop-filter:blur(22px) saturate(160%);
-    border:1px solid rgba(255,255,255,.20);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.26),0 14px 40px rgba(0,0,0,.42);
-  }
-  @media (prefers-reduced-transparency: reduce){
-    .glass{background:rgba(255,255,255,.97);backdrop-filter:none;-webkit-backdrop-filter:none}
-    .glass-dark{background:rgba(12,19,25,.97);backdrop-filter:none;-webkit-backdrop-filter:none}
-  }
+  @media (prefers-reduced-transparency: reduce){.glass{background:rgba(16,22,28,.97);backdrop-filter:none;-webkit-backdrop-filter:none}}
 
-  /* glass chrome pieces */
-  .tabbar{position:absolute;left:14px;right:14px;bottom:14px;z-index:15;height:62px;border-radius:22px;display:flex;align-items:center;justify-content:space-around}
-  .tabbar .tb{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;font-weight:600;color:#5b7280}
-  .tabbar .tb.on{color:var(--t-ink)}
-  .gpill{display:inline-flex;gap:6px;align-items:center;padding:7px 12px;border-radius:999px;font-size:11px;font-weight:600;color:var(--t-ink)}
+  .tabbar{position:absolute;left:16px;right:16px;bottom:14px;z-index:15;height:62px;border-radius:24px;display:flex;align-items:center;justify-content:space-around}
+  .tb{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;font-weight:600;color:var(--faint)}
+  .tb.on{color:var(--t)}
+  .gpill{display:inline-flex;gap:6px;align-items:center;padding:7px 12px;border-radius:999px;font-size:11px;font-weight:600;color:var(--t)}
   .gpill .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
-  .toolbar{position:absolute;left:14px;right:14px;bottom:14px;z-index:15;border-radius:20px;padding:9px;display:flex;gap:8px;align-items:center}
-  .tbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--t-ink);padding:10px 6px;border-radius:13px}
-  .tbtn.solid{background:var(--t);color:#fff;box-shadow:0 6px 16px -6px #0d948899}
 
-  /* generic */
-  .nav{display:flex;align-items:center;justify-content:space-between;margin:0 2px 14px}
-  .nav .brand{display:flex;align-items:center;gap:9px}
-  .nav .brand .bi{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#2dd4bf,#0d9488);display:grid;place-items:center;color:#03201d;font-weight:800;font-size:13px}
-  .nav .brand .nm{font-weight:700;letter-spacing:-.01em}
-  .nav .brand .dt{font-size:11px;color:var(--amut);font-weight:500}
-  .card{background:#fff;border:1px solid var(--aline);border-radius:var(--r-card);padding:14px;margin-bottom:12px}
-  .mut{color:var(--amut)}
-  .seclabel{font-size:12px;font-weight:700;margin:8px 4px 8px}
-  .consent{display:flex;align-items:center;gap:12px}
-  .consent .ico{width:34px;height:34px;border-radius:10px;background:var(--t-soft);color:var(--t-ink);display:grid;place-items:center;font-size:18px;flex:none}
-  .consent .tx{flex:1} .consent .tx b{font-size:13px} .consent .tx div{font-size:11px;color:var(--amut)}
-  .sw{width:42px;height:25px;border-radius:999px;background:#d6dee5;position:relative;flex:none}
-  .sw.on{background:var(--t)}
-  .sw::after{content:"";position:absolute;top:2.5px;left:2.5px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003;transition:.2s}
-  .sw.on::after{left:19.5px}
-  .prow{display:flex;align-items:center;gap:11px;padding:11px 4px;border-bottom:1px solid var(--aline)}
-  .prow:last-child{border-bottom:0}
-  .ava{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex:none}
-  .prow .who{flex:1;min-width:0} .prow .who b{font-size:13px} .prow .who div{font-size:11px;color:var(--amut)}
-  .stat{font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px}
-  .stat.signed{background:var(--good-soft);color:var(--good)} .stat.draft{background:var(--warn-soft);color:var(--warn)}
-  .chev{color:#b6c2cc;font-size:16px}
+  /* premium structure */
+  .hello{margin:0 2px 4px;font-size:13px;color:var(--mut)}
+  .htitle{margin:0 2px 18px;font-size:25px;font-weight:700;letter-spacing:-.03em}
+  .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:22px 4px 12px}
+  .hero{border:1px solid var(--hair);border-radius:var(--r);padding:20px;background:linear-gradient(180deg,rgba(42,211,192,.07),rgba(255,255,255,0));margin-bottom:14px}
+  .hero .lab{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+  .hero .big{font-size:50px;font-weight:800;letter-spacing:-.04em;line-height:1;margin:8px 0 2px;font-variant-numeric:tabular-nums}
+  .hero .big small{font-size:20px;font-weight:700;color:var(--mut);letter-spacing:0}
+  .hero .meta{font-size:12px;color:var(--mut);display:flex;gap:8px;align-items:center}
+  .spark{height:30px;width:100%;margin-top:12px;display:block}
 
-  /* ambient recording */
-  .amb{position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 18%,#bdeee6 0,#7fd8cb 32%,#129a8c 78%,#0b6f64 100%)}
-  .orbwrap{position:absolute;top:150px;left:50%;transform:translateX(-50%);width:184px;height:184px;display:grid;place-items:center}
-  .ring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,255,255,.55);box-shadow:0 0 50px 6px rgba(255,255,255,.45),inset 0 0 40px rgba(255,255,255,.4)}
-  .ring.r2{inset:18px;border-color:rgba(255,255,255,.4);animation:breathe 3.4s ease-in-out infinite}
-  .ring.r3{inset:36px;border-color:rgba(255,255,255,.3);animation:breathe 3.4s ease-in-out .4s infinite}
-  @keyframes breathe{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.08);opacity:1}}
-  .orbmic{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;color:#0b6f64;font-size:24px}
-  .wavew{position:absolute;left:0;right:0;top:360px;display:flex;align-items:center;justify-content:center;gap:3px;height:40px}
-  .wavew i{width:3.5px;border-radius:3px;background:rgba(255,255,255,.9);animation:eq 1.1s ease-in-out infinite}
-  @keyframes eq{0%,100%{height:8px}50%{height:34px}}
-  .ambmeta{position:absolute;left:0;right:0;top:415px;text-align:center;color:#eafffb}
-  .ambmeta .t{font-size:24px;font-weight:800;letter-spacing:-.01em} .ambmeta .s{font-size:12.5px;opacity:.85;margin-top:3px}
-  .transport{position:absolute;left:30px;right:30px;bottom:26px;z-index:15;height:66px;border-radius:24px;display:flex;align-items:center;justify-content:space-around;color:#06433c}
-  .tcircle{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.9);color:#bd362f;font-size:22px;box-shadow:0 8px 20px rgba(0,0,0,.18)}
+  /* consult rows */
+  .crow{display:flex;align-items:center;gap:12px;padding:13px 2px;border-bottom:1px solid var(--hair2)}
+  .crow:last-child{border-bottom:0}
+  .ava{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;font-size:12px;font-weight:700;color:#04130f;flex:none}
+  .crow .who{flex:1;min-width:0} .crow .who b{font-size:14px;font-weight:600} .crow .who div{font-size:11.5px;color:var(--mut);margin-top:1px}
+  .sdot{width:8px;height:8px;border-radius:50%;flex:none}
+  .stime{font-size:11px;color:var(--faint)}
 
-  /* assistant orb */
-  .asst{position:absolute;inset:0;background:radial-gradient(110% 70% at 50% 30%,#1d3a52 0,#152a44 40%,#0c1830 75%,#0a1226 100%)}
-  .aorb{position:absolute;top:150px;left:50%;transform:translateX(-50%);width:150px;height:150px;border-radius:50%;
-    background:radial-gradient(circle at 38% 34%,#9af6ea,#19b6a6 46%,#0c6f73 78%);
-    box-shadow:0 0 70px 10px rgba(25,182,166,.55),inset -12px -16px 40px rgba(0,0,0,.35),inset 10px 12px 30px rgba(255,255,255,.4);
-    animation:breathe 3.6s ease-in-out infinite}
-  .asstt{position:absolute;left:0;right:0;top:330px;text-align:center;color:#dff6f2}
-  .asstt .t{font-size:22px;font-weight:800} .asstt .s{font-size:12px;opacity:.8;margin-top:4px}
-  .sugg{position:absolute;left:18px;right:18px;top:392px;display:flex;flex-direction:column;gap:9px}
-  .sg{border-radius:15px;padding:12px 14px;color:#eafaf7;font-size:12.5px;display:flex;align-items:center;gap:10px}
-  .sg .sgi{color:#7ff0e2;font-size:16px;flex:none}
-  .asstmic{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:15;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;color:#eafaf7;font-size:24px}
+  /* biomarker cards (Superpower-style) */
+  .bio{border:1px solid var(--hair);border-radius:16px;padding:13px 14px;background:var(--surface)}
+  .bio .top{display:flex;justify-content:space-between;align-items:center}
+  .bio .nm{font-size:11px;color:var(--mut);letter-spacing:.04em;text-transform:uppercase}
+  .bio .val{font-size:30px;font-weight:800;letter-spacing:-.03em;margin-top:6px;font-variant-numeric:tabular-nums}
+  .bio .val small{font-size:13px;font-weight:600;color:var(--mut)}
+  .bio .rng{font-size:11px;color:var(--faint);margin-top:3px}
+  .stchip{font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;display:inline-flex;gap:5px;align-items:center}
+  .stchip.ok{color:var(--ok);background:rgba(63,208,138,.12)} .stchip.watch{color:var(--watch);background:rgba(231,178,58,.12)} .stchip.high{color:var(--high);background:rgba(240,106,94,.12)}
+  .stchip .d{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+  /* recording */
+  .amb{position:absolute;inset:0;background:radial-gradient(120% 70% at 50% 26%,#0c2b2a 0,#08191d 46%,#06090d 82%)}
+  .orbwrap{position:absolute;top:120px;left:50%;transform:translateX(-50%);width:200px;height:200px;display:grid;place-items:center}
+  .ring{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(42,211,192,.5);box-shadow:0 0 60px 4px rgba(42,211,192,.3),inset 0 0 50px rgba(42,211,192,.18)}
+  .ring.r2{inset:22px;animation:breathe 3.6s ease-in-out infinite;border-color:rgba(42,211,192,.4)}
+  .ring.r3{inset:46px;animation:breathe 3.6s ease-in-out .5s infinite;border-color:rgba(42,211,192,.28)}
+  @keyframes breathe{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.07);opacity:1}}
+  .orbmic{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;color:var(--t);font-size:25px}
+  .wavew{position:absolute;left:0;right:0;top:350px;display:flex;align-items:center;justify-content:center;gap:3px;height:38px}
+  .wavew i{width:3.5px;border-radius:3px;background:rgba(42,211,192,.85);animation:eq 1.1s ease-in-out infinite}
+  @keyframes eq{0%,100%{height:8px}50%{height:32px}}
+  .ambmeta{position:absolute;left:0;right:0;top:404px;text-align:center}
+  .ambmeta .t{font-size:26px;font-weight:800;letter-spacing:-.02em} .ambmeta .s{font-size:12.5px;color:var(--mut);margin-top:4px}
+  .transport{position:absolute;left:30px;right:30px;bottom:26px;z-index:15;height:66px;border-radius:24px;display:flex;align-items:center;justify-content:space-around}
+  .tcircle{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#bd362f;font-size:22px;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+
+  /* assistant */
+  .asst{position:absolute;inset:0;background:radial-gradient(110% 70% at 50% 28%,#10283e 0,#0b1a2e 44%,#07090f 82%)}
+  .aorb{position:absolute;top:120px;left:50%;transform:translateX(-50%);width:150px;height:150px;border-radius:50%;
+    background:radial-gradient(circle at 38% 34%,#9af6ea,#2ad3c0 46%,#0c6f73 80%);
+    box-shadow:0 0 80px 12px rgba(42,211,192,.5),inset -12px -16px 40px rgba(0,0,0,.4),inset 10px 12px 30px rgba(255,255,255,.4);animation:breathe 3.8s ease-in-out infinite}
+  .asstt{position:absolute;left:0;right:0;top:300px;text-align:center}
+  .asstt .t{font-size:24px;font-weight:800} .asstt .s{font-size:12.5px;color:var(--mut);margin-top:4px}
+  .sugg{position:absolute;left:18px;right:18px;top:372px;display:flex;flex-direction:column;gap:9px}
+  .sg{border-radius:16px;padding:13px 15px;font-size:12.5px;display:flex;align-items:center;gap:11px}
+  .sg .sgi{color:var(--t);font-size:16px;flex:none}
+  .asstmic{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:15;width:66px;height:66px;border-radius:50%;display:grid;place-items:center;color:var(--ink);font-size:25px}
 
   /* note review */
-  .seg{display:flex;background:#e9eef2;border-radius:11px;padding:3px;margin-bottom:12px}
-  .seg b{flex:1;text-align:center;font-size:12px;font-weight:600;padding:7px 0;border-radius:8px;color:var(--amut)}
-  .seg b.on{background:#fff;color:var(--aink);box-shadow:0 1px 3px #0e1a2412}
-  .src-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-bottom:12px;background:#fff;border:1px solid var(--aline);border-radius:var(--r-card);padding:11px 13px}
-  .src-row .lab b{font-size:12px} .src-row .lab div{font-size:10.5px;color:var(--amut)}
-  .soap h4{margin:0 0 4px;font-size:12px}
-  .soap h4 .k{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;background:var(--t-soft);color:var(--t-ink);font-size:10px;font-weight:800;margin-right:7px;vertical-align:-.32em}
-  .soap p{margin:0 0 12px;font-size:12.5px;line-height:1.5;padding-left:25px}
-  .ev{border-bottom:1px dashed #b9c6d0}
-  .hint{font-size:10.5px;color:var(--amut);padding-left:25px;margin:-6px 0 12px;display:flex;align-items:center;gap:5px}
-  .chips{display:flex;flex-wrap:wrap;gap:6px}
-  .ch{font-size:10.5px;font-weight:600;padding:4px 9px;border-radius:7px;background:var(--t-soft);color:var(--t-ink);border:1px solid #cfeae3}
-  .ch.drug{background:#f1ecfb;color:#5b34c9;border-color:#e0d4f6} .ch.code{background:#eef2f5;color:var(--amut);border-color:#e0e7ed}
-  .check{display:flex;align-items:center;gap:11px;font-size:12.5px;padding:9px 0;border-bottom:1px solid var(--aline)}
+  .seg{display:flex;background:var(--surface2);border-radius:13px;padding:3px;margin-bottom:14px}
+  .seg b{flex:1;text-align:center;font-size:12px;font-weight:600;padding:8px 0;border-radius:10px;color:var(--mut)}
+  .seg b.on{background:rgba(255,255,255,.07);color:var(--ink)}
+  .srcrow{display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-bottom:14px;border:1px solid var(--hair);border-radius:16px;padding:12px 14px}
+  .srcrow .lab b{font-size:12.5px} .srcrow .lab div{font-size:10.5px;color:var(--mut);margin-top:1px}
+  .sw{width:42px;height:25px;border-radius:999px;background:#2a343d;position:relative;flex:none}
+  .sw.on{background:var(--t)}
+  .sw::after{content:"";position:absolute;top:2.5px;left:2.5px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+  .sw.on::after{left:19.5px}
+  .soap h4{margin:18px 0 6px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .soap h4:first-child{margin-top:0}
+  .soap p{margin:0;font-size:13.5px;line-height:1.55}
+  .ev{border-bottom:1px dashed rgba(255,255,255,.22)}
+  .hint{font-size:10.5px;color:var(--faint);margin:8px 0 0;display:flex;align-items:center;gap:5px}
+  .captrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .cap{font-size:11px;font-weight:600;padding:6px 11px;border-radius:10px;border:1px solid var(--hair);color:var(--ink);display:inline-flex;gap:6px;align-items:center}
+  .cap .d{width:6px;height:6px;border-radius:50%}
+  .toolbar{position:absolute;left:16px;right:16px;bottom:14px;z-index:15;border-radius:20px;padding:9px;display:flex;gap:8px}
+  .tbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--t);padding:11px 6px;border-radius:13px}
+  .tbtn.solid{background:var(--t);color:#04130f}
+  .check{display:flex;align-items:center;gap:12px;font-size:13px;padding:11px 0;border-bottom:1px solid var(--hair2)}
   .check:last-child{border-bottom:0}
-  .check .ci{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:14px;background:var(--t-soft);color:var(--t-ink);flex:none}
-  .btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;font-weight:700;font-size:13px;padding:13px;border-radius:13px;border:none;margin-top:9px}
-  .btn.primary{background:var(--t);color:#fff} .btn.ghost{background:#eef2f5;color:#27343f}
+  .check .ci{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:14px;background:rgba(42,211,192,.12);color:var(--t);flex:none}
+  .btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;font-weight:700;font-size:13.5px;padding:14px;border-radius:14px;border:none}
+  .btn.primary{background:var(--t);color:#04130f}
 
   /* guardian camera */
-  .scr.g{background:#070b0f;color:#e9f3f1}
-  .g .nav .brand .bi{background:linear-gradient(135deg,#a78bfa,#7c5cff);color:#fff}
   .feed{position:absolute;inset:0}
-  .feed.vit{background:radial-gradient(150px 180px at 50% 38%,#26474b 0,#132227 46%,#070d10 78%)}
-  .feed.pill{background:radial-gradient(150px 150px at 50% 46%,#2a2433 0,#0c1016 72%)}
-  .mesh{position:absolute;inset:0;background-image:linear-gradient(rgba(25,182,166,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(25,182,166,.10) 1px,transparent 1px);background-size:16px 16px;mix-blend-mode:screen}
-  .oval{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);width:132px;height:166px;border:2px solid rgba(63,224,207,.42);border-radius:50% 50% 47% 47%/56% 56% 44% 44%;box-shadow:0 0 30px rgba(63,224,207,.18) inset}
+  .feed.vit{background:radial-gradient(160px 190px at 50% 32%,#274a4e 0,#11212a 46%,#06090d 80%)}
+  .feed.pill{background:radial-gradient(150px 150px at 50% 42%,#2a2436 0,#08090f 74%)}
+  .mesh{position:absolute;inset:0;background-image:linear-gradient(rgba(42,211,192,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(42,211,192,.08) 1px,transparent 1px);background-size:17px 17px;mix-blend-mode:screen}
+  .oval{position:absolute;top:34%;left:50%;transform:translate(-50%,-50%);width:132px;height:166px;border:2px solid rgba(92,240,223,.4);border-radius:50% 50% 47% 47%/56% 56% 44% 44%}
   .scan{position:absolute;left:12%;right:12%;height:2px;background:linear-gradient(90deg,transparent,#5cf0df,transparent);box-shadow:0 0 12px #5cf0df;animation:scan 2.6s linear infinite}
-  @keyframes scan{0%{top:14%}100%{top:74%}}
-  /* corner-bracket scan frame (Deepstash / Mercury) */
-  .frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:188px;height:128px}
+  @keyframes scan{0%{top:12%}100%{top:62%}}
+  .frame{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);width:190px;height:128px}
   .frame i{position:absolute;width:28px;height:28px;border:2.5px solid rgba(255,255,255,.85)}
-  .frame i.tl{top:0;left:0;border-right:0;border-bottom:0;border-radius:8px 0 0 0}
-  .frame i.tr{top:0;right:0;border-left:0;border-bottom:0;border-radius:0 8px 0 0}
-  .frame i.bl{bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 8px}
-  .frame i.br{bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 8px 0}
-  .capsule{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-26deg);width:84px;height:32px;border-radius:17px;background:linear-gradient(90deg,#f5f7fa 0 50%,#e2604f 50% 100%);box-shadow:0 10px 26px #000a}
-  .vtagG{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:12;border-radius:999px;padding:7px 13px;font-size:11px;font-weight:600;color:#dff6f2}
-  .ppg{position:absolute;left:0;right:0;top:248px;height:40px;overflow:hidden;z-index:8}
+  .frame i.tl{top:0;left:0;border-right:0;border-bottom:0;border-radius:9px 0 0 0}
+  .frame i.tr{top:0;right:0;border-left:0;border-bottom:0;border-radius:0 9px 0 0}
+  .frame i.bl{bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 9px}
+  .frame i.br{bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 9px 0}
+  .capsule{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%) rotate(-26deg);width:84px;height:32px;border-radius:17px;background:linear-gradient(90deg,#f5f7fa 0 50%,#e2604f 50% 100%);box-shadow:0 10px 26px #000a}
+  .vtagG{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:12;border-radius:999px;padding:7px 13px;font-size:11px;font-weight:600;color:#dff6f2}
+  .ppg{position:absolute;left:0;right:0;top:230px;height:38px;overflow:hidden;z-index:8}
   .ppg svg{position:absolute;left:0;height:100%;width:200%;animation:ppg 2.2s linear infinite}
   @keyframes ppg{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-  /* glass overlay panel docked bottom of camera */
-  .gpanel{position:absolute;left:14px;right:14px;bottom:14px;z-index:14;border-radius:22px;padding:13px}
-  .vit2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px}
-  .v{border-radius:13px;padding:9px 11px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)}
-  .v .vl{font-size:9.5px;color:#aacdd2;letter-spacing:.06em;text-transform:uppercase}
-  .v .vn{font-size:20px;font-weight:800;color:#f1fffb;margin-top:2px;font-variant-numeric:tabular-nums}
-  .v .vn small{font-size:10px;font-weight:600;color:#aacdd2}
-  .escal{display:flex;gap:9px;align-items:center;font-size:11px;color:#ffd2cf;background:rgba(214,69,63,.18);border:1px solid rgba(214,69,63,.4);border-radius:13px;padding:9px 11px}
+  .gpanel{position:absolute;left:14px;right:14px;bottom:14px;z-index:14;border-radius:24px;padding:15px}
+  .gscore{display:flex;align-items:center;gap:14px;margin-bottom:13px}
+  .gring{width:60px;height:60px;flex:none}
+  .gscore .lab{font-size:11px;color:#aacdd2;letter-spacing:.06em;text-transform:uppercase} .gscore .num{font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .gscore .sub2{font-size:11px;color:#9fc}
+  .vit2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .vc{border-radius:14px;padding:10px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
+  .vc .vl{font-size:9.5px;color:#aacdd2;letter-spacing:.06em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+  .vc .vn{font-size:22px;font-weight:800;color:#f1fffb;margin-top:3px;font-variant-numeric:tabular-nums}
+  .vc .vn small{font-size:10px;font-weight:600;color:#aacdd2}
+  .vc .vr{font-size:9.5px;color:#7fa1a8;margin-top:2px}
+  .escal{display:flex;gap:9px;align-items:center;font-size:11px;color:#ffd2cf;background:rgba(214,69,63,.16);border:1px solid rgba(214,69,63,.36);border-radius:14px;padding:10px 12px;margin-top:11px}
   .escal b{color:#fff} .escal .ei{color:#ff7b76;font-size:16px;flex:none}
-  .gbtn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;font-weight:700;font-size:12.5px;padding:11px;border-radius:13px;border:none;margin-top:10px;background:var(--violet);color:#fff}
-  .result b{color:#f1fffb;font-size:14px} .result .sub{color:#aacdd2;font-size:11px;margin-top:2px}
-  .result p{margin:8px 0 0;color:#cfe7e3;font-size:11.5px;line-height:1.5}
+  .gbtn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;font-weight:700;font-size:12.5px;padding:12px;border-radius:14px;border:none;margin-top:10px;background:var(--violet);color:#fff}
+  .result b{color:#f1fffb;font-size:15px} .result .sub{color:#aacdd2;font-size:11px;margin-top:2px} .result p{margin:9px 0 0;color:#cfe7e3;font-size:11.5px;line-height:1.5}
 
   /* dashboard */
-  .web{width:100%;max-width:600px;background:var(--bg2);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:6px}
-  .web .bar{display:flex;align-items:center;gap:7px;padding:10px 13px;border-bottom:1px solid var(--line);background:#0a1119}
-  .web .bar i{width:10px;height:10px;border-radius:50%;background:#32414f}
-  .web .bar .u{margin-left:10px;font-size:11.5px;color:var(--mut);background:#0a121a;border:1px solid var(--line);border-radius:7px;padding:4px 11px;flex:1}
-  .web .grid{display:grid;grid-template-columns:158px 1fr;min-height:316px}
-  .web .side{border-right:1px solid var(--line);padding:13px}
-  .web .side .bd{display:flex;align-items:center;gap:8px;font-weight:800;margin-bottom:14px}
-  .web .nv{font-size:12.5px;color:var(--mut);padding:8px 10px;border-radius:9px;margin-bottom:3px;display:flex;align-items:center;gap:9px}
-  .web .nv.on{background:#13242b;color:var(--ink)}
-  .web .main{padding:16px}
-  .web .mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}
-  .web .row{display:flex;align-items:center;gap:11px;font-size:12.5px;padding:11px 12px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px;background:#0c1521}
+  .web{width:100%;max-width:600px;background:var(--surface);border:1px solid var(--hair);border-radius:18px;overflow:hidden;margin-top:6px}
+  .web .bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--hair);background:#0a0f14}
+  .web .bar i{width:10px;height:10px;border-radius:50%;background:#2a343d}
+  .web .bar .u{margin-left:10px;font-size:11.5px;color:var(--mut);background:#0a0f14;border:1px solid var(--hair);border-radius:8px;padding:4px 12px;flex:1}
+  .web .grid{display:grid;grid-template-columns:166px 1fr;min-height:320px}
+  .web .side{border-right:1px solid var(--hair);padding:14px}
+  .web .side .bd{display:flex;align-items:center;gap:8px;font-weight:800;margin-bottom:16px}
+  .web .nv{font-size:12.5px;color:var(--mut);padding:9px 11px;border-radius:10px;margin-bottom:3px;display:flex;align-items:center;gap:10px}
+  .web .nv.on{background:rgba(255,255,255,.05);color:var(--ink)}
+  .web .main{padding:18px}
+  .web .mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .web .row{display:flex;align-items:center;gap:12px;font-size:12.5px;padding:12px 13px;border:1px solid var(--hair);border-radius:13px;margin-bottom:9px}
   .web .row .nm2{flex:1} .web .row .nm2 small{color:var(--mut)}
-  .web .row .ava{width:28px;height:28px;font-size:11px}
   .web .tp{font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px}
-  .web .tp.signed{background:#0e2018;color:#34d399} .web .tp.draft{background:#2a230e;color:#fbbf24}
-  .metrics{display:flex;gap:18px;margin-top:13px;font-size:11.5px;color:var(--mut);flex-wrap:wrap}
-  .metrics b{color:var(--ink)}
-  .smpl{font-size:10px;color:var(--mut);opacity:.7}
-  footer{margin-top:64px;color:var(--mut);font-size:12px;border-top:1px solid var(--line);padding-top:18px;line-height:1.7}
-  code{background:#0e1822;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12px}
+  .web .tp.signed{background:rgba(63,208,138,.14);color:var(--ok)} .web .tp.draft{background:rgba(231,178,58,.14);color:var(--watch)}
+  .metrics{display:flex;gap:20px;margin-top:14px;font-size:11.5px;color:var(--mut);flex-wrap:wrap}
+  .metrics b{color:var(--ink);font-size:15px;font-weight:700}
+  .smpl{font-size:10px;color:var(--faint);margin-top:7px}
+  footer{margin-top:66px;color:var(--mut);font-size:12px;border-top:1px solid var(--hair);padding-top:18px;line-height:1.7}
+  code{background:#0d141b;border:1px solid var(--hair);border-radius:5px;padding:1px 6px;font-size:12px}
   @media (prefers-reduced-motion: reduce){*{animation:none !important}}
 </style>
 </head>
@@ -246,31 +245,33 @@
   <header class="top">
     <div class="logo">S</div>
     <div><h1>Sona - UI Prototype</h1>
-    <p class="sub">Liquid Glass (web approximation), redesigned from Mobbin patterns. Generated 2026-06-17.</p></div>
+    <p class="sub">Premium dark language (Superpower-inspired) with Liquid Glass chrome. Generated 2026-06-17.</p></div>
   </header>
-  <p class="read"><b>Glass rule applied:</b> glass on controls and chrome only (tab bars, toolbars, pills, camera overlays), never on note content. Content runs edge-to-edge so glass refracts. Reduced-transparency falls back to solid.</p>
+  <p class="read"><b>Direction:</b> near-black premium theme, editorial numbers, biomarker-style cards with status and reference ranges, hero stat, generous spacing. Glass on chrome only. View in Chrome or Safari for the glass blur.</p>
 
   <h2>Scribe - the P0 loop</h2>
   <div class="gallery">
 
-    <!-- 1. TODAY + glass tab bar -->
+    <!-- 1. HOME -->
     <figure>
       <div class="phone"><div class="scr">
+        <div class="glow teal"></div>
         <div class="island"></div>
         <div class="sb"><span>9:41</span><span class="rt">5G 100</span></div>
-        <div class="body pad-bottom">
-          <div class="nav"><div class="brand"><span class="bi">S</span><div><div class="nm">Sona</div><div class="dt">Wednesday, 17 June</div></div></div><span class="gpill glass"><span class="dot"></span>on-device</span></div>
-          <div class="card" style="padding:13px"><div class="consent"><span class="ico"><svg class="ic" style="font-size:18px"><use href="#i-shield"/></svg></span><div class="tx"><b>Patient consent</b><div>Captured before recording, per PDPA</div></div><span class="sw on"></span></div></div>
-          <div class="seclabel">Today's notes</div>
-          <div class="card" style="padding:6px 14px">
-            <div class="prow"><span class="ava" style="background:#0d9488">RA</span><div class="who"><b>Encik Rahman Idris</b><div>Viral URTI, J06.9</div></div><span class="stat signed">Signed</span><svg class="ic chev"><use href="#i-chevron"/></svg></div>
-            <div class="prow"><span class="ava" style="background:#5b34c9">TM</span><div class="who"><b>Tan Mei Ling</b><div>Hypertension review</div></div><span class="stat signed">Signed</span><svg class="ic chev"><use href="#i-chevron"/></svg></div>
-            <div class="prow"><span class="ava" style="background:#b4791f">AK</span><div class="who"><b>Arjun Kumar</b><div>Lower back pain</div></div><span class="stat draft">Draft</span><svg class="ic chev"><use href="#i-chevron"/></svg></div>
+        <div class="body pb">
+          <div class="hello">Good morning, Dr Lim</div>
+          <div class="htitle">Wednesday clinic</div>
+          <div class="hero">
+            <div class="lab">Time saved today</div>
+            <div class="big">4.2<small>h</small></div>
+            <div class="meta"><span class="gpill" style="padding:0;color:var(--ok)"><span class="dot"></span>12 notes</span> &middot; 47s avg per note</div>
+            <svg class="spark" viewBox="0 0 300 30" preserveAspectRatio="none"><polyline points="0,24 40,20 80,22 120,14 160,16 200,9 240,11 300,4" fill="none" stroke="#2ad3c0" stroke-width="2.5"/></svg>
           </div>
-          <div class="seclabel">Quick start</div>
-          <div class="card" style="display:flex;gap:10px;align-items:center"><span class="ico" style="width:34px;height:34px;border-radius:10px;background:var(--t-soft);color:var(--t-ink);display:grid;place-items:center"><svg class="ic" style="font-size:17px"><use href="#i-mic"/></svg></span><div style="flex:1;font-size:12.5px"><b>New consult</b><div class="mut" style="font-size:11px">Record and auto-write the note</div></div><svg class="ic chev"><use href="#i-chevron"/></svg></div>
+          <div class="eyebrow">Recent consults</div>
+          <div class="crow"><span class="ava" style="background:#2ad3c0">RA</span><div class="who"><b>Encik Rahman Idris</b><div>Viral URTI, J06.9</div></div><span class="stime">9:12</span><span class="sdot" style="background:var(--ok)"></span></div>
+          <div class="crow"><span class="ava" style="background:#8b6cff;color:#fff">TM</span><div class="who"><b>Tan Mei Ling</b><div>Hypertension review</div></div><span class="stime">8:48</span><span class="sdot" style="background:var(--ok)"></span></div>
+          <div class="crow"><span class="ava" style="background:#e7b23a">AK</span><div class="who"><b>Arjun Kumar</b><div>Lower back pain, draft</div></div><span class="stime">8:30</span><span class="sdot" style="background:var(--watch)"></span></div>
         </div>
-        <!-- glass tab bar -->
         <div class="tabbar glass">
           <div class="tb on"><svg class="ic" style="font-size:19px"><use href="#i-home"/></svg>Today</div>
           <div class="tb"><svg class="ic" style="font-size:19px"><use href="#i-users"/></svg>Patients</div>
@@ -278,101 +279,94 @@
           <div class="tb"><svg class="ic" style="font-size:19px"><use href="#i-heart"/></svg>Guardian</div>
         </div>
       </div></div>
-      <figcaption><span class="tagn p0">P0 / 1, 8</span><b>Today, with glass tab bar</b><span>Consent chip and tab bar are glass; the list is solid content.</span></figcaption>
+      <figcaption><span class="tagn p0">P0 / home</span><b>Today</b><span>Hero stat, sparkline, status-dot consult list, glass tab bar.</span></figcaption>
     </figure>
 
-    <!-- 2. AMBIENT RECORDING -->
+    <!-- 2. RECORDING -->
     <figure>
       <div class="phone"><div class="scr">
         <div class="amb"></div>
         <div class="island"></div>
-        <div class="sb" style="color:#eafffb"><span>9:42</span><span class="rt">5G 100</span></div>
-        <div class="orbwrap"><div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div><div class="orbmic"><svg class="ic" style="font-size:24px"><use href="#i-mic"/></svg></div></div>
-        <div class="wavew"><i style="height:12px"></i><i style="height:24px"></i><i style="height:34px"></i><i style="height:18px"></i><i style="height:30px"></i><i style="height:12px"></i><i style="height:26px"></i><i style="height:34px"></i><i style="height:16px"></i><i style="height:28px"></i><i style="height:20px"></i><i style="height:30px"></i></div>
+        <div class="sb"><span>9:42</span><span class="rt">5G 100</span></div>
+        <div class="orbwrap"><div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div><div class="orbmic"><svg class="ic" style="font-size:25px"><use href="#i-mic"/></svg></div></div>
+        <div class="wavew"><i style="height:12px"></i><i style="height:22px"></i><i style="height:32px"></i><i style="height:16px"></i><i style="height:28px"></i><i style="height:12px"></i><i style="height:24px"></i><i style="height:32px"></i><i style="height:15px"></i><i style="height:26px"></i><i style="height:19px"></i><i style="height:28px"></i></div>
         <div class="ambmeta"><div class="t">Listening</div><div class="s">01:12 &middot; transcribing on device</div></div>
-        <!-- glass transport cluster -->
         <div class="transport glass">
-          <span class="gpill" style="color:#06433c"><svg class="ic" style="font-size:15px"><use href="#i-notes"/></svg> Transcript</span>
+          <span class="gpill"><svg class="ic" style="font-size:15px"><use href="#i-notes"/></svg> Transcript</span>
           <div class="tcircle"><svg class="ic" style="font-size:22px"><use href="#i-stop"/></svg></div>
-          <span class="gpill" style="color:#06433c"><svg class="ic" style="font-size:15px"><use href="#i-pause"/></svg> Pause</span>
+          <span class="gpill"><svg class="ic" style="font-size:15px"><use href="#i-pause"/></svg> Pause</span>
         </div>
       </div></div>
-      <figcaption><span class="tagn p0">P0 / 2</span><b>Ambient recording</b><span>Listening ring (Roku / Natural AI), glass transport cluster.</span></figcaption>
+      <figcaption><span class="tagn p0">P0 / 2</span><b>Ambient recording</b><span>Listening ring, glass transport cluster.</span></figcaption>
     </figure>
 
-    <!-- 3. ASK SONA assistant -->
+    <!-- 3. ASK SONA -->
     <figure>
       <div class="phone"><div class="scr">
         <div class="asst"></div>
         <div class="island"></div>
-        <div class="sb" style="color:#dff6f2"><span>9:43</span><span class="rt">5G 100</span></div>
+        <div class="sb"><span>9:43</span><span class="rt">5G 100</span></div>
         <div class="aorb"></div>
         <div class="asstt"><div class="t">Listening</div><div class="s">Ask about this patient, hands-free</div></div>
         <div class="sugg">
-          <div class="sg glass-dark"><svg class="ic sgi"><use href="#i-search"/></svg>"What was his last HbA1c?"</div>
-          <div class="sg glass-dark"><svg class="ic sgi"><use href="#i-clock"/></svg>"Summarise today's visits"</div>
-          <div class="sg glass-dark"><svg class="ic sgi"><use href="#i-pulse"/></svg>"Any drug interactions for this list?"</div>
+          <div class="sg glass"><svg class="ic sgi"><use href="#i-search"/></svg>"What was his last HbA1c?"</div>
+          <div class="sg glass"><svg class="ic sgi"><use href="#i-clock"/></svg>"Summarise today's visits"</div>
+          <div class="sg glass"><svg class="ic sgi"><use href="#i-pulse"/></svg>"Any interactions in this list?"</div>
         </div>
-        <div class="asstmic glass-dark"><svg class="ic" style="font-size:24px"><use href="#i-mic"/></svg></div>
+        <div class="asstmic glass"><svg class="ic" style="font-size:25px"><use href="#i-mic"/></svg></div>
       </div></div>
-      <figcaption><span class="tagn p0">P1 / assistant</span><b>Ask Sona, voice query</b><span>On-device assistant orb + glass suggestion chips.</span></figcaption>
+      <figcaption><span class="tagn p0">P1 / assistant</span><b>Ask Sona</b><span>On-device assistant orb, glass suggestion chips.</span></figcaption>
     </figure>
 
-    <!-- 4. SOAP REVIEW + glass toolbar -->
+    <!-- 4. SOAP REVIEW -->
     <figure>
       <div class="phone"><div class="scr">
         <div class="island"></div>
         <div class="sb"><span>9:44</span><span class="rt">5G 100</span></div>
-        <div class="body pad-bottom">
-          <div class="nav"><div class="brand"><span class="bi">S</span><span class="nm">SOAP note</span></div><span class="gpill glass" style="color:var(--amut)">offline</span></div>
+        <div class="body pb">
+          <div class="hello">Encik Rahman Idris &middot; 34</div>
+          <div class="htitle" style="margin-bottom:14px">Consult note</div>
           <div class="seg"><b class="on">Note</b><b>Transcript</b></div>
-          <div class="src-row"><div class="lab"><b>Summarizer</b><div>Gemma 4, on-device</div></div><span class="sw"></span></div>
-          <div class="card">
-            <div class="soap">
-              <h4><span class="k">S</span>Subjective</h4>
-              <p><span class="ev">3-day fever, dry cough</span>, <span class="ev">sore throat worse on swallowing</span>. No breathlessness or chest pain. Mild headache and body aches.</p>
-              <div class="hint"><svg class="ic" style="font-size:13px;color:var(--t-ink)"><use href="#i-spark"/></svg> Tap any phrase to see its transcript evidence</div>
-              <h4><span class="k">A</span>Assessment</h4>
-              <p>Working impression: viral upper respiratory tract infection.</p>
-              <div class="chips"><span class="ch">Dx viral URTI</span><span class="ch drug">paracetamol PRN</span><span class="ch code">ICD-10 J06.9</span></div>
-            </div>
+          <div class="srcrow"><div class="lab"><b>Summarizer</b><div>Gemma 4, on-device</div></div><span class="sw"></span></div>
+          <div class="soap">
+            <h4>Subjective</h4>
+            <p><span class="ev">3-day fever, dry cough</span>, <span class="ev">sore throat worse on swallowing</span>. No breathlessness or chest pain. Mild headache and body aches.</p>
+            <div class="hint"><svg class="ic" style="font-size:13px;color:var(--t)"><use href="#i-spark"/></svg> Tap any phrase to see its transcript evidence</div>
+            <h4>Assessment</h4>
+            <p>Working impression: viral upper respiratory tract infection.</p>
+            <div class="eyebrow" style="margin:18px 0 8px">Captured data</div>
+            <div class="captrow"><span class="cap"><span class="d" style="background:var(--ok)"></span>Dx viral URTI</span><span class="cap"><span class="d" style="background:var(--violet)"></span>paracetamol PRN</span><span class="cap"><span class="d" style="background:var(--mut)"></span>ICD-10 J06.9</span></div>
           </div>
         </div>
-        <!-- glass AI toolbar -->
         <div class="toolbar glass">
           <div class="tbtn"><svg class="ic" style="font-size:15px"><use href="#i-spark"/></svg>Improve</div>
           <div class="tbtn">Shorten</div>
           <div class="tbtn solid"><svg class="ic" style="font-size:15px"><use href="#i-edit"/></svg>Edit</div>
         </div>
       </div></div>
-      <figcaption><span class="tagn p0">P0 / 4, 5</span><b>SOAP review</b><span>Solid note content, glass AI action toolbar floating over it.</span></figcaption>
+      <figcaption><span class="tagn p0">P0 / 4, 5</span><b>Consult note</b><span>Editorial sections, captured-data chips, glass AI toolbar.</span></figcaption>
     </figure>
 
-    <!-- 5. SIGN + EXPORT -->
+    <!-- 5. SIGN -->
     <figure>
       <div class="phone"><div class="scr">
         <div class="island"></div>
         <div class="sb"><span>9:45</span><span class="rt">5G 100</span></div>
-        <div class="body pad-bottom">
-          <div class="nav"><div class="brand"><span class="bi">S</span><span class="nm">Sign and export</span></div><span class="gpill glass"><span class="dot"></span>on-device</span></div>
-          <div class="card">
-            <div class="seclabel" style="margin:0 0 6px">Ready to sign</div>
-            <div class="check"><span class="ci"><svg class="ic" style="font-size:14px"><use href="#i-check"/></svg></span>SOAP note complete, 4 sections</div>
-            <div class="check"><span class="ci"><svg class="ic" style="font-size:14px"><use href="#i-pulse"/></svg></span>2 diagnoses, 1 medication coded</div>
-            <div class="check"><span class="ci"><svg class="ic" style="font-size:14px"><use href="#i-shield"/></svg></span>Audio never left this device</div>
-            <div class="check"><span class="ci"><svg class="ic" style="font-size:14px"><use href="#i-trash"/></svg></span>Raw audio discarded after transcript</div>
-          </div>
-          <div class="mut" style="font-size:10.5px;text-align:center">An immutable audit entry is written on sign</div>
+        <div class="body pb">
+          <div class="hello">Final step</div>
+          <div class="htitle" style="margin-bottom:14px">Sign and export</div>
+          <div class="check"><span class="ci"><svg class="ic" style="font-size:14px"><use href="#i-check"/></svg></span>SOAP note complete, 4 sections</div>
+          <div class="check"><span class="ci"><svg class="ic" style="font-size:14px"><use href="#i-pulse"/></svg></span>2 diagnoses, 1 medication coded</div>
+          <div class="check"><span class="ci"><svg class="ic" style="font-size:14px"><use href="#i-shield"/></svg></span>Audio never left this device</div>
+          <div class="check"><span class="ci"><svg class="ic" style="font-size:14px"><use href="#i-trash"/></svg></span>Raw audio discarded after transcript</div>
+          <div class="smpl" style="text-align:center;margin-top:14px">An immutable audit entry is written on sign</div>
         </div>
         <div class="toolbar glass" style="flex-direction:column;gap:9px;padding:11px">
           <button class="btn primary" style="margin:0"><svg class="ic" style="font-size:15px"><use href="#i-check"/></svg>Sign as Dr Lim Wei Sheng</button>
-          <div style="display:flex;gap:9px;width:100%">
-            <div class="tbtn"><svg class="ic" style="font-size:15px"><use href="#i-link"/></svg>FHIR R4</div>
-            <div class="tbtn"><svg class="ic" style="font-size:15px"><use href="#i-file"/></svg>PDF</div>
-          </div>
+          <div style="display:flex;gap:9px;width:100%"><div class="tbtn"><svg class="ic" style="font-size:15px"><use href="#i-link"/></svg>FHIR R4</div><div class="tbtn"><svg class="ic" style="font-size:15px"><use href="#i-file"/></svg>PDF</div></div>
         </div>
       </div></div>
-      <figcaption><span class="tagn p0">P0 / 6, 7</span><b>Sign and export</b><span>Solid primary CTA, glass secondary export cluster.</span></figcaption>
+      <figcaption><span class="tagn p0">P0 / 6, 7</span><b>Sign and export</b><span>Solid primary CTA, glass export cluster.</span></figcaption>
     </figure>
 
   </div>
@@ -380,45 +374,48 @@
   <h2>Guardian - the P1 hero</h2>
   <div class="gallery">
 
-    <!-- 6. GUARDIAN VITALS -->
+    <!-- 6. GUARDIAN VITALS (biomarker treatment) -->
     <figure>
-      <div class="phone"><div class="scr g">
+      <div class="phone"><div class="scr">
         <div class="feed vit"></div><div class="mesh"></div><div class="oval"></div><div class="scan"></div>
         <div class="island"></div>
         <div class="sb" style="color:#d7efea"><span>9:46</span><span class="rt">5G 100</span></div>
-        <div class="vtagG glass-dark">rPPG, on-device, hold steady</div>
-        <div class="ppg"><svg viewBox="0 0 400 40" preserveAspectRatio="none"><polyline points="0,20 30,20 40,20 48,7 56,33 64,20 110,20 120,20 128,8 136,32 144,20 200,20 230,20 240,20 248,7 256,33 264,20 310,20 320,20 328,8 336,32 344,20 400,20" fill="none" stroke="#5cf0df" stroke-width="2"/></svg></div>
-        <!-- glass vitals panel -->
-        <div class="gpanel glass-dark">
+        <div class="vtagG glass">rPPG, on-device, hold steady</div>
+        <div class="ppg"><svg viewBox="0 0 400 38" preserveAspectRatio="none"><polyline points="0,19 30,19 40,19 48,6 56,31 64,19 110,19 120,19 128,7 136,30 144,19 200,19 230,19 240,19 248,6 256,31 264,19 310,19 320,19 328,7 336,30 344,19 400,19" fill="none" stroke="#5cf0df" stroke-width="2"/></svg></div>
+        <div class="gpanel glass">
+          <div class="gscore">
+            <svg class="gring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="3.5"/><circle cx="18" cy="18" r="15.5" fill="none" stroke="#3fd08a" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="97" stroke-dashoffset="20" transform="rotate(-90 18 18)"/></svg>
+            <div><div class="lab">Vitals snapshot</div><div class="num">Looks stable</div><div class="sub2" style="color:#9fc3bd;font-size:11px">4 of 4 in range</div></div>
+          </div>
           <div class="vit2">
-            <div class="v"><div class="vl">Heart rate</div><div class="vn">78 <small>bpm</small></div></div>
-            <div class="v"><div class="vl">Breathing</div><div class="vn">16 <small>/min</small></div></div>
-            <div class="v"><div class="vl">HRV</div><div class="vn">42 <small>ms</small></div></div>
-            <div class="v"><div class="vl">Stress</div><div class="vn">Low</div></div>
+            <div class="vc"><div class="vl">Heart rate <span class="stchip ok"><span class="d"></span>OK</span></div><div class="vn">78 <small>bpm</small></div><div class="vr">range 60 to 100</div></div>
+            <div class="vc"><div class="vl">Breathing <span class="stchip ok"><span class="d"></span>OK</span></div><div class="vn">16 <small>/min</small></div><div class="vr">range 12 to 20</div></div>
+            <div class="vc"><div class="vl">HRV <span class="stchip ok"><span class="d"></span>OK</span></div><div class="vn">42 <small>ms</small></div><div class="vr">typical 20 to 60</div></div>
+            <div class="vc"><div class="vl">Stress <span class="stchip ok"><span class="d"></span>Low</span></div><div class="vn">Low</div><div class="vr">calm</div></div>
           </div>
           <div class="escal"><svg class="ic ei"><use href="#i-alert"/></svg><div><b>Not a diagnosis.</b> If signs concern you, get guided steps and call 999.</div></div>
           <button class="gbtn"><svg class="ic" style="font-size:15px"><use href="#i-shield"/></svg>Start emergency guidance</button>
         </div>
       </div></div>
-      <figcaption><span class="tagn guard">P1 hero</span><b>Guardian, camera vitals</b><span>Camera edge-to-edge, vitals in a glass panel over the feed.</span></figcaption>
+      <figcaption><span class="tagn guard">P1 hero</span><b>Guardian, camera vitals</b><span>Biomarker cards with status and ranges, vitals-snapshot ring.</span></figcaption>
     </figure>
 
     <!-- 7. GUARDIAN PILL-ID -->
     <figure>
-      <div class="phone"><div class="scr g">
+      <div class="phone"><div class="scr">
         <div class="feed pill"></div><div class="mesh"></div>
         <div class="frame"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i></div>
         <div class="capsule"></div><div class="scan" style="left:24%;right:24%"></div>
         <div class="island"></div>
         <div class="sb" style="color:#d7efea"><span>9:47</span><span class="rt">5G 100</span></div>
-        <div class="vtagG glass-dark">point at the pill or its box</div>
-        <div class="gpanel glass-dark">
+        <div class="vtagG glass">point at the pill or its box</div>
+        <div class="gpanel glass">
           <div class="result"><b>Paracetamol 500 mg</b><div class="sub">on-device vision model &middot; 92% match</div>
             <p>Adult max 4 g per day. Caution in liver disease. Check interaction with warfarin.</p></div>
-          <div class="escal" style="margin-top:11px;color:#f0d49a;background:rgba(180,121,31,.18);border-color:rgba(180,121,31,.42)"><svg class="ic ei" style="color:#e7b34a"><use href="#i-alert"/></svg><div>Guidance only. Confirm with a pharmacist or doctor.</div></div>
+          <div class="escal" style="margin-top:11px;color:#f0d49a;background:rgba(180,121,31,.16);border-color:rgba(180,121,31,.38)"><svg class="ic ei" style="color:#e7b34a"><use href="#i-alert"/></svg><div>Guidance only. Confirm with a pharmacist or doctor.</div></div>
         </div>
       </div></div>
-      <figcaption><span class="tagn guard">P2 / Guardian</span><b>Guardian, pill identifier</b><span>Corner-bracket scan frame (Deepstash / Mercury), glass result sheet.</span></figcaption>
+      <figcaption><span class="tagn guard">P2 / Guardian</span><b>Guardian, pill identifier</b><span>Corner-bracket scan frame, glass result sheet.</span></figcaption>
     </figure>
 
   </div>
@@ -436,19 +433,19 @@
         <div class="nv"><svg class="ic" style="font-size:15px"><use href="#i-gear"/></svg>Settings</div>
       </div>
       <div class="main">
-        <div class="mh"><b style="font-size:14px">Today's notes</b><span style="font-size:11.5px;color:var(--mut)">Dr Lim, Klinik Sihat Damansara</span></div>
-        <div class="row"><span class="ava" style="background:#0d9488">RA</span><span class="nm2">Encik Rahman Idris <small>&middot; viral URTI &middot; J06.9</small></span><span class="tp signed">signed</span></div>
-        <div class="row"><span class="ava" style="background:#5b34c9">TM</span><span class="nm2">Tan Mei Ling <small>&middot; hypertension review &middot; I10</small></span><span class="tp signed">signed</span></div>
-        <div class="row"><span class="ava" style="background:#b4791f">AB</span><span class="nm2">Baby Aisyah Nawaz <small>&middot; fever review &middot; R50.9</small></span><span class="tp draft">draft</span></div>
-        <div class="row"><span class="ava" style="background:#1d6fb8">AK</span><span class="nm2">Arjun Kumar <small>&middot; lower back pain &middot; M54.5</small></span><span class="tp draft">draft</span></div>
-        <div class="metrics"><span>WER <b>8.2%</b></span><span>note acceptance <b>91%</b></span><span><b>12</b> notes today</span><span>avg <b>47s</b> per note</span></div>
-        <div class="smpl" style="margin-top:6px">Sample data for illustration.</div>
+        <div class="mh"><b style="font-size:15px;letter-spacing:-.01em">Today's notes</b><span style="font-size:11.5px;color:var(--mut)">Dr Lim, Klinik Sihat Damansara</span></div>
+        <div class="row"><span class="ava" style="width:28px;height:28px;font-size:11px;background:#2ad3c0">RA</span><span class="nm2">Encik Rahman Idris <small>&middot; viral URTI &middot; J06.9</small></span><span class="tp signed">signed</span></div>
+        <div class="row"><span class="ava" style="width:28px;height:28px;font-size:11px;background:#8b6cff;color:#fff">TM</span><span class="nm2">Tan Mei Ling <small>&middot; hypertension review &middot; I10</small></span><span class="tp signed">signed</span></div>
+        <div class="row"><span class="ava" style="width:28px;height:28px;font-size:11px;background:#e7b23a">AB</span><span class="nm2">Baby Aisyah Nawaz <small>&middot; fever review &middot; R50.9</small></span><span class="tp draft">draft</span></div>
+        <div class="row"><span class="ava" style="width:28px;height:28px;font-size:11px;background:#1d6fb8;color:#fff">AK</span><span class="nm2">Arjun Kumar <small>&middot; lower back pain &middot; M54.5</small></span><span class="tp draft">draft</span></div>
+        <div class="metrics"><span>WER<br><b>8.2%</b></span><span>acceptance<br><b>91%</b></span><span>notes today<br><b>12</b></span><span>avg / note<br><b>47s</b></span></div>
+        <div class="smpl">Sample data for illustration.</div>
       </div>
     </div>
   </div>
 
   <footer>
-    Sona UI prototype, concept only. Liquid Glass rendered as a web approximation (backdrop-filter) per the expo-liquid-glass skill; real app would use expo-glass-effect GlassView on controls. Patterns referenced from Mobbin (Roku, Tolan, Natural AI, NAVER, ChatGPT voice; Deepstash, Mercury, Shopee scan frames; WHOOP, Withings, Lovi vitals; Plazo, Zocdoc lists; stoic, Fabric, Speechify recording and note review).<br>
+    Sona UI prototype, concept only. Premium dark language inspired by the Superpower iOS app; Liquid Glass rendered as a web approximation (backdrop-filter) on chrome only. Mobbin was unavailable this pass (token expired); reconnect via /mcp for a precision pass against the exact reference screen.<br>
     Companion views: <code>sona-architecture.html</code> and <code>sona-plan.html</code>. Source of truth: <code>docs/superpowers/specs/2026-06-16-sona-ambient-scribe-design.md</code>.
   </footer>
 </div>
