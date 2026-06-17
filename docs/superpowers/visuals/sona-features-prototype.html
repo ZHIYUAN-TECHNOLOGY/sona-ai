@@ -333,6 +333,19 @@
   .smpl{font-size:10px;color:var(--faint);margin-top:9px}
   footer{margin-top:66px;color:#94a3b2;font-size:12px;border-top:1px solid #25313d;padding-top:18px;line-height:1.7}
   code{background:#1a222b;border:1px solid #25313d;border-radius:5px;padding:1px 6px;font-size:12px}
+  /* live animation details */
+  .wavew i:nth-child(2n){animation-duration:.78s;animation-delay:.12s}
+  .wavew i:nth-child(3n){animation-duration:1.26s;animation-delay:.3s}
+  .wavew i:nth-child(4n){animation-duration:.62s}
+  .wavew i:nth-child(5n){animation-duration:1.04s;animation-delay:.18s}
+  .wavew i:nth-child(7n){animation-duration:.92s;animation-delay:.4s}
+  .caret{display:inline-block;width:2px;height:1.02em;background:var(--blue);vertical-align:-2px;margin-left:1px;border-radius:1px;animation:blink 1.05s step-end infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+  .sheen{background:linear-gradient(90deg,var(--mut),var(--blue-ink) 50%,var(--mut));background-size:200% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:sheen 2.2s linear infinite}
+  @keyframes sheen{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .genline{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;margin-bottom:13px}
+  .genline svg{color:var(--blue)}
+
   /* micro-interactions (desktop review) */
   .btn,.tile,.chip,.circ,.lrow,.tb,.code,.bm,.srow,.callbtn,.send,.pbtn{transition:transform .15s ease,box-shadow .15s ease,background .2s ease,filter .15s ease}
   .phone{transition:transform .28s cubic-bezier(.2,.8,.2,1),box-shadow .28s ease}
@@ -478,7 +491,7 @@
           <div class="display" style="font-size:24px;margin-bottom:16px">Good morning, <span class="it">Dr Lim.</span></div>
           <div class="card">
             <div style="font-size:12.5px;font-weight:600;margin-bottom:13px">Documentation today</div>
-            <div class="stats"><div class="stat2"><div class="n">12</div><div class="l">Total</div></div><div class="stat2"><div class="n">9</div><div class="l">Signed</div></div><div class="stat2"><div class="n">2</div><div class="l">Drafts</div></div><div class="stat2"><div class="n">1</div><div class="l">Flagged</div></div></div>
+            <div class="stats"><div class="stat2"><div class="n" data-count="12">12</div><div class="l">Total</div></div><div class="stat2"><div class="n" data-count="9">9</div><div class="l">Signed</div></div><div class="stat2"><div class="n" data-count="2">2</div><div class="l">Drafts</div></div><div class="stat2"><div class="n" data-count="1">1</div><div class="l">Flagged</div></div></div>
             <div class="segbar"><i class="g" style="flex:9"></i><i class="a" style="flex:2"></i><i class="p" style="flex:1"></i></div>
           </div>
           <div class="tiles">
@@ -564,11 +577,12 @@
         <div class="body pb">
           <div class="brandrow"><div class="b"><span class="nm" style="font-size:16px">Note, live</span></div><span class="building"><span class="pulse"></span>REC 01:42</span></div>
           <div class="card">
+            <div class="genline"><svg class="ic" style="font-size:15px"><use href="#i-spark"/></svg><span class="sheen">Writing the note on device</span></div>
             <div class="soap">
               <h4>Subjective</h4>
               <p>3-day fever, dry cough, sore throat worse on swallowing. No breathlessness or chest pain.</p>
               <h4>Objective</h4>
-              <p>Throat mildly erythematous, no exudate. Chest clear<span class="typing"><i></i><i></i><i></i></span></p>
+              <p data-stream="Throat mildly erythematous, no exudate. Chest clear on auscultation. Oxygen saturation 98 percent on room air.">Throat mildly erythematous, no exudate. Chest clear on auscultation. Oxygen saturation 98 percent on room air.</p>
               <h4 style="opacity:.5">Assessment</h4>
               <div class="sk" style="height:11px;width:86%;margin:2px 0 8px"></div>
               <div class="sk" style="height:11px;width:60%"></div>
@@ -965,6 +979,57 @@
       }
     });
     ScrollTrigger.refresh();
+  })();
+</script>
+<script>
+  // Live micro-details: AI streaming typewriter + count-up, triggered on scroll-in.
+  // Reduced-motion or no-IO: skip (static fallback text already in the DOM).
+  (function () {
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || !('IntersectionObserver' in window)) return;
+
+    function typewrite(el) {
+      var full = el.getAttribute('data-stream');
+      el.textContent = '';
+      var caret = document.createElement('span');
+      caret.className = 'caret';
+      el.appendChild(caret);
+      var i = 0;
+      (function step() {
+        if (i < full.length) {
+          caret.insertAdjacentText('beforebegin', full.charAt(i));
+          i++;
+          setTimeout(step, 16 + Math.random() * 24);
+        } else {
+          setTimeout(function () { if (caret.parentNode) caret.parentNode.removeChild(caret); }, 1200);
+        }
+      })();
+    }
+
+    function countup(el) {
+      var target = parseInt(el.getAttribute('data-count'), 10) || 0;
+      var start = null, dur = 900;
+      function step(now) {
+        if (start === null) start = now;
+        var p = Math.min(1, (now - start) / dur);
+        var e = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(e * target);
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    var seen = new WeakSet();
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting && !seen.has(en.target)) {
+          seen.add(en.target);
+          if (en.target.hasAttribute('data-stream')) typewrite(en.target);
+          else if (en.target.hasAttribute('data-count')) countup(en.target);
+        }
+      });
+    }, { threshold: 0.6 });
+    document.querySelectorAll('[data-stream],[data-count]').forEach(function (el) { io.observe(el); });
   })();
 </script>
 </body>
