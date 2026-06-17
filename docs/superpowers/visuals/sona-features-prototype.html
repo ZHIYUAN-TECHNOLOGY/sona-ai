@@ -19,7 +19,7 @@
 -->
 <style>
   :root{
-    --bg:#eef3f9; --bg2:#f6f9fc; --card:#ffffff; --ink:#16263a; --mut:#5f7286; --faint:#93a4b6; --line:#e7eef5;
+    --bg:#eef3f9; --bg2:#f6f9fc; --card:#ffffff; --ink:#16263a; --mut:#566b7e; --faint:#6f8296; --line:#e7eef5;
     --blue:#3a7fe6; --blue-ink:#2767c8; --blue-t:#eaf2fd;
     --manage:#11a074; --advice:#df8138; --urgent:#dd504c;
     --manage-t:#e6f5ef; --advice-t:#fbeede; --urgent-t:#fbe9e8;
@@ -333,7 +333,52 @@
   .smpl{font-size:10px;color:var(--faint);margin-top:9px}
   footer{margin-top:66px;color:#94a3b2;font-size:12px;border-top:1px solid #25313d;padding-top:18px;line-height:1.7}
   code{background:#1a222b;border:1px solid #25313d;border-radius:5px;padding:1px 6px;font-size:12px}
-  @media (prefers-reduced-motion: reduce){*{animation:none !important}}
+  /* micro-interactions (desktop review) */
+  .btn,.tile,.chip,.circ,.lrow,.tb,.code,.bm,.srow,.callbtn,.send,.pbtn{transition:transform .15s ease,box-shadow .15s ease,background .2s ease,filter .15s ease}
+  .phone{transition:transform .28s cubic-bezier(.2,.8,.2,1),box-shadow .28s ease}
+  .phone:hover{transform:translateY(-5px)}
+  .tile:hover{transform:translateY(-2px)}
+  .btn:hover,.callbtn:hover{filter:brightness(1.04)}
+  .chip:hover{background:var(--blue-t)}
+  .circ:hover{background:var(--blue-t);color:var(--blue-ink)}
+  .lrow:hover,.code:hover,.bm:hover,.srow:hover{transform:translateX(2px)}
+
+  /* DARK MODE (toggle on the review page) */
+  body.dark{
+    --bg:#0e141c; --bg2:#121a23; --card:#19222e; --ink:#e9eff5; --mut:#9fb1c2; --faint:#728599;
+    --line:#2a3744; --blue-t:#15314f;
+    --manage-t:#11281f; --advice-t:#2a2113; --urgent-t:#2c1513;
+    --card-sh:0 1px 2px rgba(0,0,0,.4),0 18px 40px -16px rgba(0,0,0,.6);
+  }
+  body.dark .phone{background:linear-gradient(160deg,#10161e,#03060a)}
+  body.dark .card,body.dark .bm,body.dark .inputpill,body.dark .code,body.dark .mini,body.dark .tsearch,body.dark .fcell,body.dark .srcrow{background:var(--card);border-color:var(--line)}
+  body.dark .seg{background:#0f1822} body.dark .seg b{color:var(--mut)} body.dark .seg b.on{background:#222d3a;color:var(--ink);box-shadow:none}
+  body.dark .bubble{background:#222d3a;color:var(--ink)}
+  body.dark .tline.on{background:#11281f} body.dark .cs2{background:#3a3416;color:#f0e3a8}
+  body.dark .circ{background:#222d3a;border-color:var(--line);color:var(--ink)}
+  body.dark .kw{background:#15314f;border-color:#28496e;color:#9cc6f5}
+  body.dark .tile{border-color:rgba(255,255,255,.06)}
+  body.dark .t-rec{background:linear-gradient(150deg,#15273f,#0f1f34)} body.dark .t-ask{background:linear-gradient(150deg,#10261d,#0d1f17)}
+  body.dark .t-guard{background:linear-gradient(150deg,#2a2113,#221a0e)} body.dark .t-pill{background:linear-gradient(150deg,#1c2531,#161d27)}
+  body.dark .tile .ti{background:rgba(255,255,255,.1)}
+  body.dark .glass{background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.03)),rgba(15,23,32,.5);border-color:rgba(255,255,255,.14);box-shadow:0 14px 34px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.2)}
+  body.dark .glass::before{background:radial-gradient(130% 80% at 10% -15%,rgba(255,255,255,.2),transparent 46%)}
+  body.dark .scr::after{background:rgba(255,255,255,.4)}
+  body.dark .btn.out{background:rgba(255,255,255,.05);border-color:#2a3744;color:#9cc6f5}
+  body.dark .amb{background:radial-gradient(120% 70% at 50% 22%,#15263a,#0e1b2a 42%,#0a121c)}
+  body.dark .asst{background:radial-gradient(110% 70% at 50% 26%,#16283e,#0e1c30 45%,#0a121c)}
+  body.dark .orbmic{background:rgba(255,255,255,.08)}
+  body.dark .ambmeta .s{color:#7fa6d6}
+  body.dark .sk{background:linear-gradient(90deg,#1a232e 25%,#222d3a 50%,#1a232e 75%);background-size:200% 100%}
+  body.dark .ev{border-color:#3a4a59} body.dark .pbar{background:#2a3744}
+  body.dark .web{display:none}
+
+  /* theme toggle */
+  .themebtn{display:inline-flex;align-items:center;gap:8px;margin-top:14px;background:#131b24;border:1px solid #25313d;border-radius:999px;padding:9px 16px;font-size:13px;color:#cdd9e4;cursor:pointer}
+  .themebtn:hover{background:#19232e}
+  .themebtn b{color:#8fc0f5}
+
+  @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
 </style>
 </head>
 <body>
@@ -380,8 +425,8 @@
     <div><h1>Sona - App Prototype</h1>
     <p class="psub">Premium pass: Ada language, richer Liquid Glass, depth, GSAP reveal. Generated 2026-06-17.</p></div>
   </header>
-  <p class="read"><b>Detail pass:</b> real iOS status bars + home indicator, tighter spacing and shadows, and the emergency flow rewritten to genuine FAST stroke first-aid + a follow-along CPR screen with a sticky call button. Open in Chrome or Safari for the glass.</p>
-  <div class="rate">Prior pass <b>7.0</b> &nbsp;to&nbsp; this pass <b>8.7</b> (self-assessed against premium criteria)</div>
+  <p class="read"><b>UX upgrade pass:</b> full <b>dark mode</b> (clinical baseline), stronger text contrast (WCAG-leaning), and live micro-interactions (hover lift, press states). Toggle the theme below. Open in Chrome or Safari for the glass.</p>
+  <button class="themebtn" onclick="document.body.classList.toggle('dark');this.querySelector('b').textContent=document.body.classList.contains('dark')?'Dark':'Light';">Theme: <b>Light</b></button>
 
   <h2>Onboarding</h2>
   <div class="gallery">
