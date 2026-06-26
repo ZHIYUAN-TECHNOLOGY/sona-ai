@@ -52,3 +52,11 @@ coverage
 .cache
 tmp
 temp
+
+# Python (spike: pii-test)
+.venv/
+__pycache__/
+*.pyc
+
+# Model weights — multi-GB, re-downloadable via apps/spike/mac-bench/setup.sh
+apps/spike/mac-bench/models/

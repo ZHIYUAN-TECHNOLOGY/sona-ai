@@ -1,0 +1,8 @@
+{
+  "model": "obi/deid_roberta_i2b2",
+  "labels": 5,
+  "ner_recall": 0.6,
+  "combined_recall": 1.0,
+  "missed": [],
+  "verdict": "PASS"
+}
