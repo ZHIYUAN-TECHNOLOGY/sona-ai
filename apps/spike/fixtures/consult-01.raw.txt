@@ -1,0 +1,12 @@
+[Doctor] Okay Encik Amir, apa yang boleh saya bantu hari ni?
+[Patient] Doctor, saya ada batuk dah tiga hari, and fever also. 喉咙很痛。
+[Doctor] Demam tinggi tak? Any shortness of breath?
+[Patient] Sikit-sikit la doctor, especially bila naik tangga.
+[Wife] அவருக்கு இரவில தூக்கம் வரல, cannot sleep properly.
+[Doctor] Okay. Amir bin Hassan, 38 tahun, betul? IC ending 5821. Ada history kencing manis kan, on metformin?
+[Patient] Ya doctor, metformin 500 dua kali sehari. Atorvastatin pun ada, 10mg malam.
+[Doctor] Any allergy? Penicillin kan?
+[Patient] Yes, penicillin allergy.
+[Doctor] Let me check. Temperature 38.2. Throat sikit merah, no pus. Chest okay, ada sikit rhonchi. BP today 148 over 92 — eh, machine baru calibrate semalam. SpO2 98 percent.
+[Doctor] Okay Amir, looks like viral upper respiratory infection. Saya bagi paracetamol satu gram, empat kali sehari kalau demam ke sakit. Banyak minum air, rest. Continue metformin macam biasa. Kalau sesak nafas teruk or demam lebih tiga hari lagi, datang balik. Saya bagi MC dua hari.
+[Patient] Okay doctor, terima kasih.

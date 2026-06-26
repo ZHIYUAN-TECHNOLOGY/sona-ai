@@ -1,0 +1,8 @@
+{
+  "_comment": "GO/NO-GO gates for the Sona on-device spike. All measured on a real flagship phone for the final call; Mac Phase-0 gives a directional read.",
+  "stt":  { "maxSecondsPer60sClip": 90 },
+  "llm":  { "maxSecondsSoap": 30, "minTokensPerSec": 6 },
+  "pii":  { "minRecall": 0.90 },
+  "e2e":  { "maxSeconds": 90, "runs": 5, "maxOOM": 0 },
+  "ram":  { "maxGB": 6 }
+}

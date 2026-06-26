@@ -1,0 +1,13 @@
+# Model weights — re-downloadable via apps/spike/mac-bench/setup.sh
+apps/spike/mac-bench/models/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+
+# OS
+.DS_Store

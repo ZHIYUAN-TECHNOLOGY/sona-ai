@@ -1,0 +1,32 @@
+{
+  "name": "sona-spike-phone",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Sona on-device spike — Phase 1 (real phone). Benches Malaysian-Qwen (LLM) + Whisper (STT) via RunAnywhere. Run inside RunAnywhere AI Studio, NOT Expo Go.",
+  "main": "App.tsx",
+  "scripts": {
+    "start": "expo start --dev-client",
+    "ios": "expo run:ios",
+    "android": "expo run:android",
+    "compat": "node ../mac-bench/../../../node_modules/.bin/true || echo 'see README'"
+  },
+  "dependencies": {
+    "expo": "^52.0.0",
+    "react": "18.3.1",
+    "react-native": "0.76.5",
+
+    "@runanywhere/core": "latest",
+    "@runanywhere/llamacpp": "latest",
+    "@runanywhere/onnx": "latest",
+    "react-native-nitro-modules": "latest",
+
+    "react-native-fs": "^2.20.0",
+    "react-native-zip-archive": "^6.1.0",
+
+    "react-native-reanimated": "^3.16.0",
+    "react-native-gesture-handler": "^2.20.2",
+    "react-native-safe-area-context": "latest",
+    "react-native-screens": "latest"
+  },
+  "comment_versions": "Pin react-native-reanimated to 3.x (NOT 4.x) per RunAnywhere AI Studio. react-native-fs + react-native-zip-archive are REQUIRED for model downloads. Align RN/Expo versions to whatever AI Studio bundles."
+}
