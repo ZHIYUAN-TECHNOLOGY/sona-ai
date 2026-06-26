@@ -1,0 +1,10 @@
+{
+  "_comment": "Ground-truth PII/PHI spans in consult-01.raw.txt. Used to score the de-identification model: recall = (spans correctly redacted) / (total spans here).",
+  "spans": [
+    { "text": "Amir", "type": "NAME" },
+    { "text": "Encik Amir", "type": "NAME" },
+    { "text": "Amir bin Hassan", "type": "NAME" },
+    { "text": "38", "type": "AGE" },
+    { "text": "5821", "type": "ID" }
+  ]
+}
