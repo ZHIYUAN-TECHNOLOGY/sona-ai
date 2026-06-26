@@ -1,0 +1,17 @@
+{
+  "when": "2026-06-24T12:49:57.903Z",
+  "model": "7b",
+  "stages": {
+    "llm": {
+      "genTokensPerSec": 71.6,
+      "promptTokensPerSec": 743.8,
+      "estSoapSeconds": 5.6
+    },
+    "stt": {
+      "clipSeconds": 8.3,
+      "processSeconds": 1.4,
+      "per60sClip": 10.1
+    }
+  },
+  "verdict": "GO (directional — confirm on phone)"
+}
