@@ -54,6 +54,13 @@ device. Only de-identified text may ever cross the boundary, and only on the opt
 ## Day-by-day (human critical path ∥ agent tracks)
 
 ### Day 1 — Spike + scaffold (the make-or-break gate)
+> **Status 2026-07-05:** monorepo + on-device spike harness already scaffolded from a prior session
+> (`apps/native/spike/` uses `react-native-executorch` = Whisper Small + Qwen3-1.7B; routed as the app
+> home screen). Mac proxy bench already GREEN (Qwen2.5-7B: 71 tok/s, 5.6 s SOAP; STT 10 s/60 s) and PII
+> combined recall 1.0. Spike fixtures **now aligned to the locked demo consult** and the redactor verified
+> at recall 1.0 on it. **Remaining: the on-device run on the 17 Pro Max** — see `apps/spike/RUN-GATE-0.md`.
+> That run is the actual Gate-0 decision and is the one step that needs your Xcode build + device.
+
 - **You (critical path):** scaffold the monorepo; stand up the bare RN app on the **target device**; get `whisper.rn` STT and `llama.rn` LLM each loading and running once on-device. Run the **Day-1 gate** below.
 - **Agents (parallel):**
   - Port the 6 slice screens from the HTML prototype to RN + NativeWind (static, mocked data, pixel-faithful tokens).
