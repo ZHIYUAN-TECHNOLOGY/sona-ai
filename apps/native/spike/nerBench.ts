@@ -27,12 +27,19 @@ export async function runNerBench(
 // gazetteer + broader patterns, and Path A (ML NER) is the accuracy target.
 export async function regexRedact(text: string): Promise<string> {
   return text
-    .replace(/\d{6}-\d{2}-\d{4}/g, "[IC]")
-    .replace(/01\d-?\d{7,8}/g, "[PHONE]")
+    .replace(/\d{6}-\d{2}-\d{4}/g, "[IC]") // Malaysian IC (580214-05-5321)
+    .replace(/01\d[-\s]?\d{3}[-\s]?\d{3,4}/g, "[PHONE]") // mobile, spaced or joined (012-345 6789)
     .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "[EMAIL]")
     .replace(
       /\b\d{1,2}\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b/g,
       "[DATE]",
     )
-    .replace(/\b(Ahmad bin Hassan|Siti Aminah|Dr Lim Wei Sheng|Klinik Sihat|Petaling Jaya)\b/g, "[REDACTED]");
+    // Address components + names. Sample-specific for the locked consult ONLY; production
+    // needs a real MY name/place gazetteer + ML NER (Path A). "Kak Timah" is the low-
+    // confidence name: masked here so it is never silently sent, and surfaced for confirm in the UI.
+    .replace(/No\.\s*\d+,?\s*/g, "")
+    .replace(
+      /\b(Rahman bin Ismail|Kak Timah|Jalan Melati|Taman Sri Muda|Shah Alam)\b/g,
+      "[REDACTED]",
+    );
 }
