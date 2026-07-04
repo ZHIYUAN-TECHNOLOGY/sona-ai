@@ -8,7 +8,13 @@
     "scheme": "med-ai",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "entitlements": {
+        "com.apple.developer.kernel.increased-memory-limit": true
+      },
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Sona records the consult on-device to transcribe it. Audio never leaves the phone and is deleted when you sign."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -38,7 +44,16 @@
           }
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      "react-native-audio-api",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "17.0"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
