@@ -32,15 +32,16 @@ If that script works 5 times in a row on the locked device, the slice is done. N
 
 | In (build it) | Out (defer, stays mockup) | Stretch (only if Gate 3 is early) |
 | --- | --- | --- |
-| Consent capture + on-device audit log | Web clinician dashboard | ICD-10 / E-M coding surfaced from the note |
-| Audio capture + on-device STT, live transcript | Multi-device sync / auth | One Guardian hero (camera vitals on a judge) |
-| On-device PII redaction + local re-ID map | Ask Sona | Cloud-vs-local quality A/B in the demo |
-| SOAP generation: on-device LLM + optional cloud toggle (de-identified only) | Pricing / plans, Note-style learning | Specialty template switch |
-| Review / edit / sign | Guardian (triage, pill-ID, emergency) | Streaming token render for "AI feel" |
-| Export FHIR DocumentReference + PDF | Mandarin / Tamil, diarization | |
+| Consent capture + on-device audit log | Web clinician dashboard | **Multi-doc from one session: note + referral letter + patient explainer, all offline (Heidi read, §8c — ~2 extra prompts, triples demo value)** |
+| Audio capture + on-device STT, live transcript | Multi-device sync / auth | ICD-10 / E-M coding surfaced from the note, **with verbatim transcript justification quotes (Heidi pattern)** |
+| On-device PII redaction + local re-ID map | Ask Sona | One Guardian hero (camera vitals on a judge) |
+| SOAP generation: on-device LLM + optional cloud toggle (de-identified only) | Pricing / plans, Note-style learning | Cloud-vs-local quality A/B in the demo |
+| Review / edit / sign | Guardian (triage, pill-ID, emergency) | Specialty template switch |
+| Export FHIR DocumentReference + PDF | Mandarin / Tamil, diarization | Streaming token render for "AI feel" |
 | Local-first persistence (consult, transcript, note, audit) | Orders extraction (nice, not load-bearing) | |
+| **BM/EN code-switch demo moment (promoted per §8c — the language pill Heidi can't do offline)** | | |
 
-**One device, one specialty (general practice), one language pair (BM/EN), happy path + airplane-mode proof.** Edge cases, error recovery polish, and breadth are explicitly out. Resist every urge to widen this.
+**One device, one specialty (general practice), one language pair (BM/EN), happy path + airplane-mode proof.** Edge cases, error recovery polish, and breadth are explicitly out. Resist every urge to widen this. The BM/EN pair is now a *featured demo beat*, not just a constraint: one exchange of the scripted consult happens in Bahasa Malaysia and the note comes out in clean English — offline.
 
 ---
 
