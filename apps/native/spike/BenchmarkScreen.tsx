@@ -4,6 +4,7 @@ import {
   useSpeechToText,
   useLLM,
   WHISPER_SMALL,
+  WHISPER_SMALL_MODEL_XNNPACK,
   QWEN3_1_7B_QUANTIZED,
 } from "react-native-executorch";
 import { StageMetric, dumpMetrics } from "./metrics";
@@ -12,7 +13,13 @@ import { runLlmBench } from "./llmBench";
 import { runNerBench, regexRedact } from "./nerBench";
 
 export default function BenchmarkScreen() {
-  const stt = useSpeechToText({ model: WHISPER_SMALL });
+  // Force the XNNPACK Whisper model. The CoreML .pte variants are NOT published
+  // at v0.9.0 (every coreml URL 404s; every xnnpack URL is live), and executorch
+  // otherwise picks CoreML on iOS -> "Load failed: 404". XNNPACK runs on-device
+  // fine (CPU/GPU, not the ANE); swap to CoreML later if/when SWM publishes it.
+  const stt = useSpeechToText({
+    model: { ...WHISPER_SMALL, modelSource: WHISPER_SMALL_MODEL_XNNPACK },
+  });
   // Baseline LLM (always available in RN-ExecuTorch). Swap for the Gemma 4
   // LiteRT/RunAnywhere adapter (same .generate(messages) shape) to benchmark the target.
   const llm = useLLM({ model: QWEN3_1_7B_QUANTIZED });
