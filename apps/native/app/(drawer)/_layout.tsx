@@ -40,6 +40,16 @@ const DrawerLayout = () => {
         }}
       />
       <Drawer.Screen
+        name="consult"
+        options={{
+          headerTitle: "Consult demo",
+          drawerLabel: "Consult demo",
+          drawerIcon: ({ size, color }) => (
+            <Ionicons name="medkit-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Drawer.Screen
         name="(tabs)"
         options={{
           headerTitle: "Tabs",

@@ -39,6 +39,7 @@ export default function RootLayout() {
           <GestureHandlerRootView style={styles.container}>
             <Stack>
               <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+              <Stack.Screen name="(consult)" options={{ headerShown: false }} />
               <Stack.Screen name="modal" options={{ title: "Modal", presentation: "modal" }} />
             </Stack>
           </GestureHandlerRootView>
