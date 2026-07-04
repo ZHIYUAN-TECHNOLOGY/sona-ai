@@ -1,0 +1,1337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sona · On-Device AI Scribe (White + Green)</title>
+<style>
+  :root{
+    --bg:#ffffff;
+    --surface:#f5f9f7;
+    --surface-2:#eef4f0;
+    --line:#e4ebe7;
+    --line-strong:#cddbd3;
+    --ink:#0b1e16;
+    --ink-2:#42534b;
+    --ink-3:#5f6d64;
+    --green:#0e7c52;
+    --green-deep:#0a5c3e;
+    --green-ink:#0a3d2b;
+    --green-50:#e9f5ef;
+    --green-100:#d2ebde;
+    --green-glow:rgba(14,124,82,.18);
+    --red:#b42318;
+    --red-50:#fdf0ee;
+    --red-line:#f4d3ce;
+    --amber:#8a5a00;
+    --amber-50:#fdf5e6;
+    --amber-line:#f0e0b6;
+    --blue:#1f5f8b;
+    --blue-50:#eaf2f8;
+    --blue-line:#cfe0ee;
+    --r-sm:10px;
+    --r:14px;
+    --r-lg:20px;
+    --r-phone:46px;
+    --ease-out:cubic-bezier(0.23,1,0.32,1);
+    --ease-in-out:cubic-bezier(0.77,0,0.175,1);
+    --ease-spring:cubic-bezier(0.34,1.56,0.64,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:
+      radial-gradient(1200px 620px at 82% -8%, var(--green-50), transparent 62%),
+      var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",system-ui,sans-serif;
+    font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  ::selection{background:var(--green-100);color:var(--green-ink)}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 32px}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+
+  /* ============ NAV ============ */
+  nav{
+    position:sticky;top:0;z-index:40;
+    background:rgba(255,255,255,.78);
+    backdrop-filter:saturate(180%) blur(16px);
+    -webkit-backdrop-filter:saturate(180%) blur(16px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-in{max-width:1240px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;justify-content:space-between;height:64px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand-mark{
+    width:32px;height:32px;border-radius:9px;
+    background:linear-gradient(140deg,var(--green),var(--green-deep));
+    display:grid;place-items:center;color:#fff;font-weight:700;font-size:15px;
+    box-shadow:0 4px 14px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  .brand-name{font-weight:600;font-size:16px;letter-spacing:-.01em}
+  .nav-links{display:flex;align-items:center;gap:26px}
+  .nav-links a{color:var(--ink-2);text-decoration:none;font-size:13.5px;font-weight:500;transition:color .15s ease}
+  .nav-links a:hover{color:var(--green)}
+  .nav-cta{
+    font-size:13px;font-weight:600;color:#fff;background:var(--green);
+    padding:8px 15px;border-radius:99px;text-decoration:none;
+    box-shadow:0 4px 12px var(--green-glow);
+    transition:transform .16s var(--ease-out),background-color .16s ease;
+  }
+  .nav-cta:hover{background:var(--green-deep)}
+  .nav-cta:active{transform:scale(.97)}
+  @media(max-width:820px){.nav-links a:not(.nav-cta){display:none}}
+
+  /* ============ HERO ============ */
+  header{padding:64px 0 40px;overflow:hidden}
+  .hero{display:grid;grid-template-columns:1.05fr .95fr;gap:52px;align-items:center}
+  @media(max-width:900px){.hero{grid-template-columns:1fr;gap:40px}}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:12.5px;font-weight:600;color:var(--green-ink);
+    background:var(--green-50);border:1px solid var(--green-100);
+    border-radius:99px;padding:6px 13px;margin-bottom:22px;
+  }
+  .eyebrow .live{
+    width:7px;height:7px;border-radius:99px;background:var(--green);
+    box-shadow:0 0 0 0 var(--green-glow);animation:pulse 2s var(--ease-out) infinite;
+  }
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(14,124,82,.4)}70%{box-shadow:0 0 0 8px rgba(14,124,82,0)}100%{box-shadow:0 0 0 0 rgba(14,124,82,0)}}
+  h1{font-size:clamp(34px,5vw,54px);font-weight:700;letter-spacing:-.035em;line-height:1.04}
+  h1 .g{color:var(--green)}
+  .lede{margin-top:20px;font-size:18px;line-height:1.55;color:var(--ink-2);max-width:520px}
+  .lede b{color:var(--ink);font-weight:600}
+  .hero-cta{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    font-family:inherit;font-size:14.5px;font-weight:600;cursor:pointer;
+    border-radius:99px;border:none;padding:13px 22px;text-decoration:none;
+    transition:transform .16s var(--ease-out),background-color .16s ease,box-shadow .16s ease;
+  }
+  .btn:active{transform:scale(.97)}
+  .btn.primary{background:var(--green);color:#fff;box-shadow:0 8px 20px var(--green-glow)}
+  .btn.primary:hover{background:var(--green-deep);box-shadow:0 10px 26px var(--green-glow)}
+  .btn.ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line-strong)}
+  .btn.ghost:hover{border-color:var(--green);color:var(--green)}
+  .hero-proof{display:flex;gap:22px;margin-top:30px;flex-wrap:wrap}
+  .hero-proof .p{display:flex;flex-direction:column;gap:1px}
+  .hero-proof .pn{font-size:20px;font-weight:700;letter-spacing:-.02em;color:var(--green-deep)}
+  .hero-proof .pl{font-size:12px;color:var(--ink-3)}
+  .hero-proof .sep{width:1px;background:var(--line);align-self:stretch}
+
+  /* ============ PHONE (shared) ============ */
+  .phone{
+    position:relative;width:100%;max-width:376px;margin:0 auto;
+    aspect-ratio:390/812;background:var(--bg);
+    border:1px solid var(--line-strong);border-radius:var(--r-phone);
+    box-shadow:0 2px 4px rgba(11,30,22,.04),0 22px 60px rgba(11,30,22,.10),0 0 0 7px #fff,0 0 0 8px var(--surface-2);
+    overflow:hidden;display:flex;flex-direction:column;
+  }
+  .phone.hero-phone{max-width:392px}
+  .notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:108px;height:26px;background:var(--ink);border-radius:99px;z-index:5}
+  .statusbar{display:flex;justify-content:space-between;align-items:center;padding:13px 24px 7px;font-size:12px;font-weight:600;color:var(--ink);flex:none}
+  .sb-r{display:flex;align-items:center;gap:6px}
+  .airplane{display:inline-flex;align-items:center;gap:4px;color:var(--green-ink);background:var(--green-50);border-radius:99px;padding:2px 9px;font-size:10px;font-weight:700;letter-spacing:.01em}
+  .airplane svg{width:11px;height:11px}
+  .screen{flex:1;display:flex;flex-direction:column;padding:8px 17px 16px;min-height:0;overflow:hidden}
+  .top{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex:none}
+  .top .back{width:30px;height:30px;border-radius:99px;border:1px solid var(--line);background:var(--bg);display:grid;place-items:center;color:var(--ink-2);flex:none;font-size:16px;cursor:pointer;position:relative;transition:transform .16s var(--ease-out),border-color .16s ease,color .16s ease}
+  .top .back::after{content:"";position:absolute;inset:-8px}
+  .top .back:hover{border-color:var(--green);color:var(--green)}
+  .top .back:active{transform:scale(.92)}
+  .top .tt{flex:1;min-width:0}
+  .top h4{font-size:16px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .top .sub{font-size:11px;color:var(--ink-3);margin-top:1px}
+
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;border-radius:99px;padding:3px 9px;white-space:nowrap}
+  .pill.green{color:var(--green-ink);background:var(--green-50);border:1px solid var(--green-100)}
+  .pill.red{color:var(--red);background:var(--red-50);border:1px solid var(--red-line)}
+  .pill.amber{color:var(--amber);background:var(--amber-50);border:1px solid var(--amber-line)}
+  .pill.blue{color:var(--blue);background:var(--blue-50);border:1px solid var(--blue-line)}
+  .pill.line{color:var(--ink-2);background:var(--bg);border:1px solid var(--line)}
+  .pill .d{width:6px;height:6px;border-radius:99px;background:currentColor}
+
+  .card{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:13px}
+  .card+.card{margin-top:9px}
+  .card.tint{background:var(--surface)}
+  .card.green{background:var(--green-50);border-color:var(--green-100)}
+  .card-h{font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px}
+  .card-b{font-size:11.5px;color:var(--ink-2);margin-top:5px;line-height:1.5}
+  .micro{font-size:10.5px;color:var(--ink-3)}
+
+  .p-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:12px;border-radius:12px;border:none;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;transition:transform .16s var(--ease-out),background-color .16s ease}
+  .p-btn:active{transform:scale(.97)}
+  .p-btn.primary{background:var(--green);color:#fff;box-shadow:0 6px 15px var(--green-glow)}
+  .p-btn.primary:hover{background:var(--green-deep)}
+  .p-btn.ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line-strong)}
+  .p-btn.ghost:hover{border-color:var(--green);color:var(--green)}
+  .p-btn.sm{padding:10px;font-size:12px;border-radius:11px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+
+  .toggle{width:38px;height:23px;border:none;padding:0;border-radius:99px;background:var(--green);position:relative;flex:none;cursor:pointer;transition:background-color .2s ease}
+  .toggle::after{content:"";position:absolute;top:2.5px;left:17px;width:18px;height:18px;border-radius:99px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .24s var(--ease-spring)}
+  .toggle.off{background:var(--line-strong)}
+  .toggle.off::after{left:2.5px}
+  .toggle:active::after{width:22px}
+
+  :focus-visible{outline:2px solid var(--green-deep);outline-offset:2px;border-radius:4px}
+  :focus:not(:focus-visible){outline:none}
+
+  /* diarization transcript */
+  .diar{display:flex;gap:9px;margin-top:10px;align-items:flex-start}
+  .diar .who{flex:none;font-size:9.5px;font-weight:700;letter-spacing:.03em;border-radius:6px;padding:2px 6px;margin-top:1px;text-transform:uppercase}
+  .diar .who.dr{color:var(--green-ink);background:var(--green-50);border:1px solid var(--green-100)}
+  .diar .who.pt{color:var(--blue);background:var(--blue-50);border:1px solid #cfe0ee}
+  .diar p{font-size:12px;color:var(--ink);line-height:1.5}
+  .diar p.faint{color:var(--ink-2)}
+  .bm{background:var(--green-50);border-radius:5px;padding:0 4px;color:var(--green-ink);box-decoration-break:clone}
+
+  .redact{display:inline-flex;align-items:center;gap:4px;background:var(--ink);color:#fff;border-radius:6px;padding:0 7px;font-size:10.5px;font-weight:700;letter-spacing:.02em;line-height:1.7;vertical-align:baseline}
+  .redact svg{width:9px;height:9px}
+  .uncertain{color:var(--amber);font-weight:600;border-bottom:1.5px dashed var(--amber);padding-bottom:1px;cursor:pointer}
+  .steps{margin-top:12px;display:flex;flex-direction:column;gap:2px}
+  .step{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-2);padding:7px 2px}
+  .step+.step{border-top:1px solid var(--line)}
+  .step .sn{width:20px;height:20px;border-radius:99px;background:var(--green-50);color:var(--green-ink);font-size:10.5px;font-weight:700;display:grid;place-items:center;flex:none}
+
+  /* waveform (transform-only, no layout thrash) */
+  .wave{display:flex;align-items:center;gap:2.5px;height:40px;justify-content:center}
+  .wave i{width:3px;height:34px;border-radius:2px;background:var(--green);transform-origin:center;transform:scaleY(.22)}
+  .wave.live i{animation:wv 1s ease-in-out infinite}
+  .wave i:nth-child(3n){animation-delay:.15s}
+  .wave i:nth-child(4n){animation-delay:.3s;opacity:.8}
+  .wave i:nth-child(5n){animation-delay:.45s;opacity:.6}
+  .wave i:nth-child(7n){animation-delay:.1s}
+  @keyframes wv{0%,100%{transform:scaleY(.16)}50%{transform:scaleY(.92)}}
+  .rec{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
+  .rec .dot{width:8px;height:8px;border-radius:99px;background:var(--red);transition:background-color .3s var(--ease-out)}
+  .rec .dot.on{animation:blink 1.3s ease infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+  .devchip{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;color:var(--ink-2);background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:3px 9px}
+  .devchip svg{width:11px;height:11px;color:var(--ink-3)}
+  .meter{display:inline-flex;align-items:flex-end;gap:2px;height:13px}
+  .meter i{width:2.5px;border-radius:1px;background:var(--green);transform-origin:bottom;transform:scaleY(.5)}
+  .meter i:nth-child(1){height:6px}.meter i:nth-child(2){height:11px}.meter i:nth-child(3){height:13px}.meter i:nth-child(4){height:8px}
+  .meter.live i{animation:meter .85s ease-in-out infinite}
+  .meter.live i:nth-child(2){animation-delay:.12s}.meter.live i:nth-child(3){animation-delay:.24s}.meter.live i:nth-child(4){animation-delay:.06s}
+  @keyframes meter{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+
+  .progress{height:5px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+  .progress i{display:block;height:100%;border-radius:99px;background:var(--green);width:30%;transition:width .4s var(--ease-out)}
+  .progress.indet i{width:40%;animation:prog 1.5s var(--ease-in-out) infinite}
+  @keyframes prog{0%{transform:translateX(-110%)}100%{transform:translateX(260%)}}
+
+  .soap h6{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--green);margin:11px 0 3px}
+  .soap h6:first-child{margin-top:0}
+  .soap p{font-size:11.5px;color:var(--ink-2);line-height:1.5}
+  .soap p b{color:var(--ink);font-weight:600}
+
+  /* ============ HERO PHONE living scribe ============ */
+  .scribe-body{flex:1;display:flex;flex-direction:column;min-height:0}
+  .scribe-cap{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:9px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);margin-bottom:9px;flex:none;
+  }
+  #scribe-transcript{flex:1;overflow:hidden;position:relative}
+  .diar.stream{opacity:0;transform:translateY(8px);transition:opacity .45s var(--ease-out),transform .45s var(--ease-out)}
+  .diar.stream.in{opacity:1;transform:none}
+  .pii-swap{display:inline-grid;vertical-align:baseline}
+  .pii-real,.pii-chip{grid-area:1/1;white-space:nowrap}
+  .pii-real{transition:opacity .3s ease,filter .3s ease}
+  .pii-chip{opacity:0;transform:scale(.92);transition:opacity .3s var(--ease-out),transform .3s var(--ease-out)}
+  .pii-swap.redacted .pii-real{opacity:0;filter:blur(3px)}
+  .pii-swap.redacted .pii-chip{opacity:1;transform:none}
+  .lang-badge{
+    position:absolute;right:2px;top:2px;opacity:0;transform:translateY(-4px) scale(.92);
+    transform-origin:top right;
+    transition:opacity .3s var(--ease-out),transform .3s var(--ease-out);
+  }
+  .lang-badge.in{opacity:1;transform:none}
+  .redact-toast{
+    position:absolute;left:50%;bottom:8px;transform:translate(-50%,10px);opacity:0;
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--ink);color:#fff;font-size:10.5px;font-weight:600;
+    padding:7px 12px;border-radius:99px;box-shadow:0 8px 22px rgba(11,30,22,.28);
+    transition:opacity .35s var(--ease-out),transform .35s var(--ease-out);white-space:nowrap;z-index:6;
+  }
+  .redact-toast.in{opacity:1;transform:translate(-50%,0)}
+  #scribe-analyse{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .38s var(--ease-out),opacity .3s ease}
+  #scribe-analyse>*{overflow:hidden;min-height:0}
+  #scribe-analyse.in{grid-template-rows:1fr;opacity:1;margin-top:9px}
+  #scribe-note{opacity:0;transform:translateY(10px);transition:opacity .5s var(--ease-out),transform .5s var(--ease-out);flex:none}
+  #scribe-note.in{opacity:1;transform:none}
+  #scribe-note .soap p{opacity:0;transform:translateY(6px);transition:opacity .4s var(--ease-out),transform .4s var(--ease-out)}
+  #scribe-note.in .soap p{opacity:1;transform:none}
+  #scribe-note.in .soap p:nth-of-type(1){transition-delay:.08s}
+  #scribe-note.in .soap p:nth-of-type(2){transition-delay:.20s}
+  #scribe-note.in .soap p:nth-of-type(3){transition-delay:.32s}
+  .bytes{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--green-ink);background:var(--green-50);border:1px solid var(--green-100);border-radius:99px;padding:4px 11px}
+  .bytes .d{width:6px;height:6px;border-radius:99px;background:var(--green);animation:pulse 2s infinite}
+
+  .hero-annot{position:relative}
+  .annot{
+    position:absolute;z-index:8;
+    background:linear-gradient(135deg,rgba(255,255,255,.82),rgba(255,255,255,.64));
+    -webkit-backdrop-filter:blur(16px) saturate(170%);
+    backdrop-filter:blur(16px) saturate(170%);
+    border:1px solid rgba(255,255,255,.7);
+    border-radius:13px;padding:9px 12px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 14px 34px rgba(11,30,22,.16);
+    font-size:11.5px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px;max-width:210px;
+  }
+  .annot .ai{width:26px;height:26px;border-radius:8px;background:var(--green-50);display:grid;place-items:center;color:var(--green);flex:none}
+  .annot .ai svg{width:15px;height:15px}
+  .annot small{display:block;font-weight:500;color:var(--ink-3);font-size:10px;margin-top:1px}
+  .annot.a1{top:16%;left:-38px}
+  .annot.a2{top:47%;right:-46px}
+  .annot.a3{bottom:12%;left:-30px}
+  @media(max-width:1120px){.annot{display:none}}
+
+  /* ============ SECTIONS ============ */
+  section{padding:74px 0 8px}
+  .sec-head{max-width:680px;margin-bottom:14px}
+  .kicker{font-size:12px;font-weight:700;letter-spacing:.02em;color:var(--green);margin-bottom:11px;text-transform:none}
+  .sec-head h2{font-size:30px;font-weight:600;letter-spacing:-.025em;line-height:1.12}
+  .sec-head p{margin-top:10px;color:var(--ink-2);font-size:16px}
+
+  .band{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+  @media(max-width:820px){.band{grid-template-columns:1fr}}
+  .feat{padding:20px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--bg);position:relative;overflow:hidden}
+  .feat .ic{width:38px;height:38px;border-radius:11px;background:var(--green-50);display:grid;place-items:center;color:var(--green);margin-bottom:13px}
+  .feat .ic svg{width:20px;height:20px}
+  .feat h3{font-size:16px;font-weight:600;letter-spacing:-.01em}
+  .feat p{font-size:13.5px;color:var(--ink-2);margin-top:6px;line-height:1.5}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:44px 30px;margin-top:36px;padding-bottom:20px}
+  .shot{display:flex;flex-direction:column;gap:15px}
+  .cap{max-width:376px;margin:0 auto;width:100%}
+  .cap-b{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+  .cap-t{font-size:11px;font-weight:700;color:var(--green);background:var(--green-50);border-radius:6px;padding:2px 7px}
+  .cap h3{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
+  .cap p{font-size:13px;color:var(--ink-2);margin-top:4px;line-height:1.5}
+  .tag{display:inline-block;margin-top:9px;font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-radius:6px;padding:3px 8px}
+  .tag.real{color:var(--green-ink);background:var(--green-50);border:1px solid var(--green-100)}
+  .tag.stretch{color:var(--amber);background:var(--amber-50);border:1px solid #f0e0b6}
+
+  /* note style controls */
+  .slider{height:5px;border-radius:99px;background:var(--surface-2);position:relative;margin:11px 0 4px}
+  .slider i{position:absolute;left:0;top:0;height:100%;width:50%;border-radius:99px;background:var(--green)}
+  .slider .knob{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:15px;height:15px;border-radius:99px;background:#fff;border:2px solid var(--green);box-shadow:0 1px 4px rgba(0,0,0,.15)}
+  .seg{display:flex;gap:5px;margin-top:9px}
+  .seg .s{flex:1;text-align:center;font-size:10.5px;font-weight:600;padding:6px;border-radius:9px;border:1px solid var(--line);color:var(--ink-2)}
+  .seg .s.on{background:var(--green);color:#fff;border-color:var(--green)}
+  .chiprow{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+
+  /* Ask Sona */
+  .ask-bar{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--line-strong);border-radius:99px;padding:9px 12px;flex:none}
+  .ask-bar .ic{width:20px;height:20px;color:var(--green);flex:none}
+  .ask-bar input{border:none;background:none;font-family:inherit;font-size:12px;color:var(--ink);flex:1;outline:none}
+  .ask-bar .send{width:28px;height:28px;border-radius:99px;background:var(--green);display:grid;place-items:center;color:#fff;flex:none;border:none;padding:0;cursor:pointer;position:relative;transition:transform .16s var(--ease-out),background-color .16s ease}
+  .ask-bar .send::after{content:"";position:absolute;inset:-9px}
+  .ask-bar .send:hover{background:var(--green-deep)}
+  .ask-bar .send:active{transform:scale(.9)}
+  .ask-resp{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:9px}
+  .think{display:inline-flex;gap:3px;align-items:center}
+  .think i{width:5px;height:5px;border-radius:99px;background:var(--green);animation:think 1.2s ease-in-out infinite}
+  .think i:nth-child(2){animation-delay:.15s}
+  .think i:nth-child(3){animation-delay:.3s}
+  @keyframes think{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-2px)}}
+  .quote{border-left:2.5px solid var(--green);background:var(--surface);border-radius:0 8px 8px 0;padding:6px 9px;font-size:10.5px;color:var(--ink-2);font-style:italic;margin-top:6px}
+  .code-row{display:flex;gap:9px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+  .code-row:last-child{border-bottom:none}
+  .code-badge{flex:none;font-size:10.5px;font-weight:700;color:var(--green-ink);background:var(--green-50);border:1px solid var(--green-100);border-radius:7px;padding:3px 7px}
+  .sig{height:58px;border:1.5px dashed var(--line-strong);border-radius:11px;display:grid;place-items:center;background:var(--surface)}
+  .audit{font-size:10.5px}
+  .audit .ar{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+  .audit .ar:last-child{border-bottom:none}
+  .audit .t{color:var(--ink-3);flex:none;width:34px}
+  .audit .ok{color:var(--green);flex:none}
+  .safety{display:flex;align-items:center;gap:8px;font-size:10.5px;font-weight:600;color:var(--amber);background:var(--amber-50);border:1px solid #f0e0b6;border-radius:10px;padding:8px 11px;margin-top:9px;line-height:1.4}
+  .safety svg{width:15px;height:15px;flex:none}
+  .stat{text-align:center;padding:16px 12px;background:linear-gradient(180deg,var(--green-50),#fff);border:1px solid var(--green-100);border-radius:var(--r)}
+  .stat .n{font-size:32px;font-weight:700;letter-spacing:-.03em;color:var(--green-deep)}
+  .stat .l{font-size:11px;color:var(--ink-2);margin-top:2px}
+
+  /* contrast */
+  .contrast{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-top:32px}
+  @media(max-width:760px){.contrast{grid-template-columns:1fr}}
+  .contrast>div{background:var(--bg);padding:26px 30px}
+  .contrast .us{background:linear-gradient(180deg,#fafdfb,#f1f8f4)}
+  .side-label{font-size:11px;font-weight:700;letter-spacing:.02em;margin-bottom:13px}
+  .contrast .them .side-label{color:var(--ink-3)}
+  .contrast .us .side-label{color:var(--green)}
+  .contrast ul{list-style:none}
+  .contrast li{font-size:13.5px;color:var(--ink-2);padding:6px 0 6px 24px;position:relative;line-height:1.45}
+  .contrast li::before{position:absolute;left:0;top:6px;font-size:12px}
+  .contrast .them li::before{content:"×";color:var(--ink-3);top:5px;font-size:14px}
+  .contrast .us li::before{content:"✓";color:var(--green);font-weight:700}
+  .contrast li b{color:var(--ink);font-weight:600}
+
+  footer{border-top:1px solid var(--line);margin-top:64px;padding:34px 0 68px;color:var(--ink-3);font-size:13px}
+  footer b{color:var(--ink);font-weight:600}
+  footer .fl{color:var(--ink-2);max-width:760px}
+
+  /* ===== segmentation groups ===== */
+  .segment-head{margin:82px 0 6px;padding:30px 0 0;border-top:2px solid var(--line)}
+  .seg-tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;border-radius:99px;padding:6px 14px;margin-bottom:15px}
+  .seg-tag.ships{color:#fff;background:var(--green);box-shadow:0 6px 16px var(--green-glow)}
+  .seg-tag.ships .d{width:7px;height:7px;border-radius:99px;background:#fff}
+  .seg-tag.vision{color:var(--ink-2);background:var(--bg);border:1px solid var(--line-strong)}
+  .seg-tag.vision .d{width:7px;height:7px;border-radius:99px;background:var(--ink-3)}
+  .segment-head h2{font-size:31px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+  .segment-head p{margin-top:11px;color:var(--ink-2);font-size:16px;max-width:700px}
+  .vision-wrap{background:linear-gradient(180deg,#fbfdfc,#f2f8f4);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:26px;padding:2px 0 20px}
+  .group-label{display:flex;align-items:center;gap:12px;margin:46px 0 2px;font-size:12.5px;font-weight:700;color:var(--green);letter-spacing:.01em}
+  .group-label .ln{flex:1;height:1px;background:var(--line-strong)}
+  .tag.vision{color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line-strong)}
+
+  /* ===== Guardian ===== */
+  .triage{display:flex;gap:4px;margin-top:10px}
+  .triage .ts{flex:1;text-align:center;font-size:8.5px;font-weight:700;padding:7px 2px;border-radius:8px;background:var(--surface);color:var(--ink-3);border:1px solid var(--line);text-transform:uppercase;letter-spacing:.02em}
+  .triage .ts.on{background:var(--amber-50);color:var(--amber);border-color:#f0e0b6;box-shadow:0 2px 8px rgba(138,90,0,.1)}
+  .flag{display:flex;gap:8px;align-items:flex-start;font-size:11.5px;color:var(--ink-2);padding:5px 0}
+  .flag .fi{color:var(--red);flex:none;margin-top:2px}
+  .ring{position:relative;width:118px;height:118px;margin:8px auto 2px}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .rn{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .ring .rn b{font-size:25px;font-weight:700;color:var(--ink);line-height:1;font-variant-numeric:tabular-nums}
+  .ring .rn small{font-size:10px;color:var(--ink-3);margin-top:2px}
+  .heart{display:inline-block;color:var(--red)}
+  .heart.beat{animation:beat 1s ease-in-out infinite}
+  @keyframes beat{0%,100%{transform:scale(1)}14%{transform:scale(1.22)}28%{transform:scale(1)}42%{transform:scale(1.12)}}
+  .p-btn.sos{background:var(--red);color:#fff;box-shadow:0 6px 16px rgba(180,35,24,.28)}
+  .p-btn.sos:hover{background:#991d13}
+
+  /* ===== metrics ===== */
+  .metric{margin-top:12px}
+  .metric .mh{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-2)}
+  .metric .mh b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+  .mbar{height:6px;border-radius:99px;background:var(--surface-2);margin-top:5px;overflow:hidden}
+  .mbar i{display:block;height:100%;border-radius:99px;background:var(--green)}
+  .stat-row{display:flex;gap:8px}
+  .stat-mini{flex:1;text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:12px 6px}
+  .stat-mini .n{font-size:19px;font-weight:700;color:var(--green-deep);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .stat-mini .l{font-size:9.5px;color:var(--ink-3);margin-top:2px;line-height:1.3}
+
+  /* ===== pricing ===== */
+  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:26px}
+  @media(max-width:820px){.tiers{grid-template-columns:1fr}}
+  .tier{border:1px solid var(--line);border-radius:18px;padding:22px;background:var(--bg);position:relative}
+  .tier.feat{border-color:var(--green);box-shadow:0 14px 34px var(--green-glow)}
+  .tier .tname{font-size:14px;font-weight:600}
+  .tier .tprice{font-size:27px;font-weight:700;letter-spacing:-.02em;margin:9px 0 1px}
+  .tier .tprice span{font-size:12.5px;font-weight:500;color:var(--ink-3)}
+  .tier .tsub{font-size:12px;color:var(--ink-3)}
+  .tier ul{list-style:none;margin:15px 0 0}
+  .tier li{font-size:12.5px;color:var(--ink-2);padding:5px 0 5px 21px;position:relative;line-height:1.4}
+  .tier li::before{content:"✓";position:absolute;left:0;top:5px;color:var(--green);font-weight:700}
+  .tier .tbadge{position:absolute;top:-10px;left:22px;font-size:10px;font-weight:700;color:#fff;background:var(--green);padding:3px 11px;border-radius:99px}
+
+  /* ===== desktop dashboard ===== */
+  .laptop{max-width:940px;margin:26px auto 0;border:1px solid var(--line-strong);border-radius:16px;overflow:hidden;background:var(--bg);box-shadow:0 24px 64px rgba(11,30,22,.12)}
+  .lbar{display:flex;align-items:center;gap:7px;padding:11px 15px;background:var(--surface);border-bottom:1px solid var(--line)}
+  .lbar .ld{width:10px;height:10px;border-radius:99px;background:var(--line-strong)}
+  .lbar .url{margin-left:12px;font-size:11px;color:var(--ink-3);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:4px 12px}
+  .lbody{display:grid;grid-template-columns:190px 1fr 210px}
+  @media(max-width:760px){.lbody{grid-template-columns:1fr}}
+  .lcol{padding:16px;border-right:1px solid var(--line);min-height:340px}
+  .lcol:last-child{border-right:none}
+  @media(max-width:760px){.lcol{border-right:none;border-bottom:1px solid var(--line);min-height:0}}
+  .lsess{display:flex;gap:9px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+  .lsess:last-child{border-bottom:none}
+  .lav{width:28px;height:28px;border-radius:8px;background:var(--green-50);color:var(--green-ink);display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
+  .lsess .lm{min-width:0}
+  .lsess .lm b{font-size:12px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lsess .lm span{font-size:10px;color:var(--ink-3)}
+
+  /* ===== iOS liquid-glass tab bar (web approximation, brand-tinted) ===== */
+  .phone.tabbed .screen{padding-bottom:80px}
+  .tabbar{
+    position:absolute;left:10px;right:10px;bottom:10px;z-index:9;
+    display:flex;align-items:center;justify-content:space-around;gap:2px;
+    padding:9px 8px;border-radius:26px;
+    background:linear-gradient(135deg,rgba(255,255,255,.74),rgba(233,245,239,.60));
+    -webkit-backdrop-filter:blur(22px) saturate(180%);
+    backdrop-filter:blur(22px) saturate(180%);
+    border:1px solid rgba(255,255,255,.65);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(255,255,255,.22),0 10px 30px rgba(11,30,22,.16);
+  }
+  .tabbar .tab{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;flex:1;
+    min-height:46px;
+    background:none;border:none;font-family:inherit;font-size:9px;font-weight:600;
+    color:var(--ink-3);cursor:pointer;padding:2px 0;transition:color .16s ease,transform .16s var(--ease-out);
+  }
+  .tabbar .tab svg{width:21px;height:21px}
+  .tabbar .tab.on{color:var(--green)}
+  .tabbar .tab:not(.center):active{transform:scale(.9)}
+  .tabbar .tab.center{
+    flex:0 0 auto;width:50px;height:50px;min-height:0;border-radius:99px;margin-top:-24px;
+    background:linear-gradient(140deg,var(--green),var(--green-deep));color:#fff;
+    display:grid;place-items:center;
+    box-shadow:0 8px 20px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.35);
+    border:2.5px solid rgba(255,255,255,.92);
+    transition:transform .18s var(--ease-out),box-shadow .18s ease;
+  }
+  .tabbar .tab.center svg{width:23px;height:23px}
+  .tabbar .tab.center:active{transform:scale(.94)}
+  .tabbar .tab.center.live{box-shadow:0 0 0 4px rgba(14,124,82,.16),0 8px 20px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.35);animation:reclive 2.2s var(--ease-out) infinite}
+  @keyframes reclive{0%{box-shadow:0 0 0 0 rgba(14,124,82,.35),0 8px 20px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.35)}70%{box-shadow:0 0 0 9px rgba(14,124,82,0),0 8px 20px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.35)}100%{box-shadow:0 0 0 0 rgba(14,124,82,0),0 8px 20px var(--green-glow),inset 0 1px 0 rgba(255,255,255,.35)}}
+
+  .feat,.tier{transition:transform .2s var(--ease-out),box-shadow .2s var(--ease-out)}
+  @media(hover:hover) and (pointer:fine){
+    .feat:hover,.tier:hover{transform:translateY(-3px);box-shadow:0 16px 38px rgba(11,30,22,.10)}
+  }
+  .seg .s{cursor:pointer;transition:transform .14s var(--ease-out),background-color .16s ease,color .16s ease,border-color .16s ease}
+  .seg .s:active{transform:scale(.95)}
+
+  @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+    nav{background:#fff}
+    .tabbar{background:#fff}
+    .annot{background:#fff}
+  }
+  @media(prefers-reduced-transparency:reduce){
+    nav{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none}
+    .tabbar{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none}
+    .annot{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none}
+  }
+
+  .reveal{opacity:0;transform:translateY(16px);transition:opacity .55s var(--ease-out),transform .55s var(--ease-out)}
+  .reveal.in{opacity:1;transform:none}
+
+  @media(max-width:760px){.wrap{padding:0 20px}.nav-in{padding:12px 20px}}
+  @media(prefers-reduced-motion:reduce){
+    .reveal{opacity:1;transform:none;transition:none}
+    .wave i,.rec .dot,.progress.indet i,.eyebrow .live,.bytes .d,.think i,.meter.live i,.heart.beat,.tabbar .tab.center.live{animation:none!important}
+    .meter.live i{transform:scaleY(.8)}
+    .wave i{transform:scaleY(.55)}
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-in">
+    <div class="brand"><div class="brand-mark">S</div><div class="brand-name">Sona</div></div>
+    <div class="nav-links">
+      <a href="#scribe">The scribe</a>
+      <a href="#demo">Demo slice</a>
+      <a href="#product">Full product</a>
+      <a href="#why">Why it wins</a>
+      <a href="#demo" class="nav-cta">See it run</a>
+    </div>
+  </div>
+</nav>
+<main>
+
+<header>
+  <div class="wrap">
+    <div class="hero">
+      <div class="hero-copy reveal">
+        <div class="eyebrow"><span class="live"></span>Recording, redacting and writing, all on-device</div>
+        <h1>Watch a clinical note<br>write itself. <span class="g">Offline.</span></h1>
+        <p class="lede">Sona listens to the consult, strips every identifier on the phone, and drafts the note without a single byte leaving the device. The card on the right is running the real pipeline, in <b>airplane mode</b>.</p>
+        <div class="hero-cta">
+          <a href="#demo" class="btn primary">Walk the 3-minute demo</a>
+          <a href="#why" class="btn ghost">Why judges remember it</a>
+        </div>
+        <div class="hero-proof">
+          <div class="p"><span class="pn num">0 bytes</span><span class="pl">of PHI ever transmitted</span></div>
+          <div class="sep"></div>
+          <div class="p"><span class="pn num">~62s</span><span class="pl">consult to signed note</span></div>
+          <div class="sep"></div>
+          <div class="p"><span class="pn">BM + EN</span><span class="pl">code-switch, offline</span></div>
+        </div>
+      </div>
+
+      <div class="hero-annot reveal">
+        <div class="annot a1" aria-hidden="true">
+          <div class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 17v4"/></svg></div>
+          <div>Speaker-aware transcript<small>Doctor and patient, colour-tagged</small></div>
+        </div>
+        <div class="annot a2" aria-hidden="true">
+          <div class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <div>Names removed live<small>Re-ID map stays on the phone</small></div>
+        </div>
+        <div class="annot a3" aria-hidden="true">
+          <div class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2v6h6"/><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M9 13h6M9 17h4"/></svg></div>
+          <div>SOAP note appears<small>Radio off the entire time</small></div>
+        </div>
+
+        <div class="phone hero-phone">
+          <div class="notch"></div>
+          <div class="statusbar"><span class="num">9:42</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+          <div class="screen">
+            <div class="top">
+              <div class="tt"><h4>Live consult</h4><div class="sub">Follow-up · General practice</div></div>
+              <span class="pill green"><span class="d"></span>On-device</span>
+            </div>
+
+            <div class="scribe-body">
+              <div class="scribe-cap">
+                <span class="rec"><span class="dot on" id="scribe-recdot"></span><span id="scribe-state">Listening</span></span>
+                <span style="display:flex;align-items:center;gap:9px">
+                  <span class="devchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 17v4"/></svg>iPhone mic<span class="meter live" id="scribe-meter"><i></i><i></i><i></i><i></i></span></span>
+                  <span class="num" id="scribe-timer" style="font-size:12px;font-weight:600">00:47</span>
+                </span>
+              </div>
+              <div class="wave live" id="scribe-wave" aria-hidden="true"></div>
+
+              <div id="scribe-transcript" style="margin-top:6px">
+                <span class="pill green lang-badge" id="scribe-lang"><span class="d"></span>Bahasa Malaysia</span>
+                <div class="diar stream" data-step="0"><span class="who dr">Dr</span><p class="faint">Morning, how is the cough today?</p></div>
+                <div class="diar stream" data-step="1"><span class="who pt">Pt</span><p><span class="bm">Demam dah tiga hari, malam lagi teruk.</span></p></div>
+                <div class="diar stream" data-step="2"><span class="who dr">Dr</span><p class="faint">Any chest pain? Sesak nafas?</p></div>
+                <div class="diar stream" data-step="3"><span class="who pt">Pt</span><p>No chest pain. Nurse can call
+                  <span class="pii-swap" id="scribe-pii"><span class="pii-real">Encik Rahman</span><span class="pii-chip"><span class="redact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>NAME_1</span></span></span>.</p></div>
+                <div class="redact-toast" id="scribe-toast"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>1 identifier removed on-device</div>
+              </div>
+
+              <div id="scribe-analyse">
+                <div class="card green" style="padding:11px">
+                  <div class="row"><span class="card-h" style="color:var(--green-ink)">Writing note on-device</span><span class="micro num">Gemma 4</span></div>
+                  <div class="progress indet" style="margin-top:8px"><i></i></div>
+                </div>
+              </div>
+
+              <div id="scribe-note" style="margin-top:9px">
+                <div class="card soap">
+                  <div class="row" style="margin-bottom:4px"><span class="card-h">Consult note</span><span class="bytes"><span class="d"></span>0 bytes sent</span></div>
+                  <h6>Subjective</h6><p>3 days fever, worse at night. Productive cough, <b>yellow sputum</b>. No chest pain or dyspnoea.</p>
+                  <h6>Assessment</h6><p><b>Acute upper respiratory tract infection</b>, likely viral. No red flags.</p>
+                  <h6>Plan</h6><p>Symptomatic care. Review in 1 week if fever persists. Safety-net advice given.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="scribe">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="kicker">The AI scribe</div>
+      <h2>Three things happen at once, and none of them touch the cloud</h2>
+      <p>Cloud scribes stream your patient's voice to a server and ask you to trust a privacy policy. Sona does the work where the audio already is.</p>
+    </div>
+    <div class="band">
+      <div class="feat reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 17v4M8 21h8"/></svg></div>
+        <h3>Hears the room</h3>
+        <p>On-device Whisper transcribes in real time, tags who is speaking, and follows the conversation as it slips between Bahasa Malaysia and English.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1.4"/></svg></div>
+        <h3>Removes the person</h3>
+        <p>Names, IC numbers, phone and address are stripped before any model reads a word. The map that puts them back never leaves the Secure Enclave.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2v6h6"/><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M9 13h6M9 17h4"/></svg></div>
+        <h3>Writes the note</h3>
+        <p>A local model drafts a structured SOAP note with orders and follow-ups. You review, edit and sign. The audio is destroyed the moment you do.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="wrap">
+    <div class="segment-head reveal">
+      <span class="seg-tag ships"><span class="d"></span>Segment one · ships for the live demo</span>
+      <h2>The whole story, hand the phone to a judge</h2>
+      <p>Ten screens, one continuous flow, radio off from the first second. This is the working software built for the Semi-Finals. Every screen is tagged Real in slice or Stretch.</p>
+    </div>
+
+    <div class="grid">
+
+      <!-- 1 consent -->
+      <div class="shot reveal">
+        <div class="phone">
+          <div class="statusbar"><span class="num">9:41</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+          <div class="screen">
+            <div class="top"><div class="tt"><h4>New consult</h4><div class="sub">Klinik Sihat, Room 2</div></div><span class="pill green"><span class="d"></span>On-device</span></div>
+            <div class="card green">
+              <div class="card-h">Patient consent</div>
+              <div class="card-b">"Saya setuju perbualan ini dirakam untuk nota klinikal." Consent is captured spoken, in the first ten seconds.</div>
+              <div class="row" style="margin-top:10px"><span class="micro">Seal consent line in the audit log</span><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Toggle setting"></button></div>
+            </div>
+            <div class="card tint">
+              <div class="card-h">Where this consult lives</div>
+              <div class="card-b">Audio, transcript and identifiers stay on this phone. Audio is deleted the moment you sign.</div>
+              <div class="chiprow"><span class="pill green">Works offline</span><span class="pill line">0 bytes to cloud</span></div>
+            </div>
+            <div class="steps">
+              <div class="step"><span class="sn">1</span>Record the consult</div>
+              <div class="step"><span class="sn">2</span>Names removed on-device</div>
+              <div class="step"><span class="sn">3</span>Review, sign, export</div>
+            </div>
+            <div style="flex:1"></div>
+            <button class="p-btn primary">Start consult</button>
+          </div>
+        </div>
+        <div class="cap"><div class="cap-b"><span class="cap-t num">0:00</span><h3>Consent, then capture</h3></div><p>Judges watch airplane mode go on before anything records. Consent is a logged artifact, not a splash screen.</p><span class="tag real">Real in slice</span></div>
+      </div>
+
+      <!-- 2 recording / diarized -->
+      <div class="shot reveal">
+        <div class="phone">
+          <div class="statusbar"><span class="num">9:42</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+          <div class="screen">
+            <div class="top"><div class="tt"><h4>Recording</h4><div class="sub">Encik R. · 58 · follow-up</div></div><span class="pill green">BM + EN → EN</span></div>
+            <div class="card tint" style="text-align:center">
+              <div class="row" style="justify-content:center;gap:12px">
+                <span class="rec"><span class="dot on"></span><span class="num">00:47</span></span>
+                <span class="devchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 17v4"/></svg>iPhone mic<span class="meter live"><i></i><i></i><i></i><i></i></span></span>
+              </div>
+              <div class="wave live" style="margin-top:8px" aria-hidden="true"></div>
+              <div class="micro" style="margin-top:4px">Transcribing on-device, no network</div>
+            </div>
+            <div class="card" style="flex:1;overflow:hidden">
+              <div class="row"><span class="card-h">Live transcript</span><span class="pill blue">2 speakers</span></div>
+              <div class="diar"><span class="who dr">Dr</span><p class="faint">How is the cough today?</p></div>
+              <div class="diar"><span class="who pt">Pt</span><p><span class="bm">Demam tiga hari, malam teruk.</span></p></div>
+              <div class="diar"><span class="who dr">Dr</span><p class="faint">Sakit dada? Any breathlessness?</p></div>
+              <div class="diar"><span class="who pt">Pt</span><p>No. <span class="bm">Batuk berkahak kuning.</span></p></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:9px"><button class="p-btn ghost sm">Pause</button><button class="p-btn primary sm">End consult</button></div>
+          </div>
+        </div>
+        <div class="cap"><div class="cap-b"><span class="cap-t num">0:20</span><h3>Speaker-aware, code-switched</h3></div><p>Doctor and patient are colour-tagged and the talk drifts between Malay and English, the way real MY clinics sound. Heidi does this in the cloud. Sona does it with the radio off.</p><span class="tag real">Real in slice · demo beat</span></div>
+      </div>
+
+      <!-- 3 redaction proof -->
+      <div class="shot reveal">
+        <div class="phone">
+          <div class="statusbar"><span class="num">9:43</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+          <div class="screen">
+            <div class="top"><div class="tt"><h4>Privacy gate</h4><div class="sub">Before any model reads text</div></div><span class="pill red"><span class="d"></span>4 removed</span></div>
+            <div class="card">
+              <div class="card-h">What the model will see</div>
+              <div class="diar"><span class="who dr">Dr</span><p class="faint">Morning <span class="redact">NAME_1</span>, cough today?</p></div>
+              <div class="diar"><span class="who pt">Pt</span><p>My IC is <span class="redact">IC_1</span>, call <span class="redact">PHONE_1</span>.</p></div>
+              <div class="diar"><span class="who dr">Dr</span><p class="faint">Nurse visits <span class="redact">ADDR_1</span> Friday.</p></div>
+            </div>
+            <div class="card" style="border-color:var(--amber-line);background:var(--amber-50)">
+              <div class="card-h" style="color:var(--amber)">1 uncertain, tap to confirm</div>
+              <div class="diar" style="margin-top:7px"><span class="who pt">Pt</span><p style="color:var(--ink-2)">Ask <span class="uncertain">Kak Timah</span> to bring the card.</p></div>
+              <div class="micro" style="margin-top:6px;color:var(--amber)">Low-confidence name kept local until you decide. Never sent while unsure.</div>
+            </div>
+            <div class="card green">
+              <div class="card-h">Re-identify map</div>
+              <div class="card-b">NAME_1 goes back to the real name only on this device, at render time.</div>
+              <div class="chiprow"><span class="pill green">Sealed in Secure Enclave</span></div>
+            </div>
+            <div class="card tint"><div class="row"><span class="card-h">Leaving this phone</span><span class="pill green num">0 bytes</span></div></div>
+          </div>
+        </div>
+        <div class="cap"><div class="cap-b"><span class="cap-t num">1:10</span><h3>Redaction proof, the moat</h3></div><p>Heidi de-identifies inside their cloud and asks you to trust the policy. Sona shows the model's exact input, on the device, names already gone.</p><span class="tag real">Real in slice · Gate 1</span></div>
+      </div>
+
+      <!-- 4 note review + template chip + thumbs -->
+      <div class="shot reveal">
+        <div class="phone">
+          <div class="statusbar"><span class="num">9:45</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+          <div class="screen">
+            <div class="top"><button class="back" type="button" aria-label="Go back">‹</button><div class="tt"><h4>Consult note</h4><div class="sub">Draft, review before signing</div></div><span class="pill amber">Unsigned</span></div>
+            <div class="chiprow" style="margin-bottom:2px"><span class="pill green">GP SOAP</span><span class="pill line">On-device model</span></div>
+            <div class="card soap" style="flex:1;overflow:hidden">
+              <h6>Subjective</h6><p>3 days fever, worse at night. Productive cough, <b>yellow sputum</b>. No chest pain. <span class="micro">(BM history, noted in English)</span></p>
+              <h6>Objective</h6><p>T 38.2, HR 92, SpO₂ 97% RA. Throat erythematous, chest clear.</p>
+              <h6>Assessment</h6><p><b>Acute URTI</b>, likely viral. No red flags.</p>
+              <h6>Orders & follow-ups</h6><p>Review in <b>1 week</b> if fever persists. FBC if not settling. Return if breathless.</p>
+            </div>
+            <div class="safety"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Review before use so the note reflects the visit. You sign.</div>
+            <div style="display:flex;gap:8px;margin-top:9px"><button class="p-btn ghost sm">Edit</button><button class="p-btn primary sm">Looks right</button></div>
+          </div>
+        </div>
+        <div class="cap"><div class="cap-b"><span class="cap-t num">1:50</span><h3>Review, edit, stay in charge</h3></div><p>Doctor-in-the-loop is the clinical credibility beat. Orders and follow-ups are pulled out as first-class items, the detail cloud scribes bury.</p><span class="tag real">Real in slice · Gate 3</span></div>
+      </div>
+
+      <!-- 5 Ask Sona -->
+      <div class="shot reveal">
+        <div class="phone">
+          <div class="statusbar"><span class="num">9:45</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+          <div class="screen">
+            <div class="top"><button class="back" type="button" aria-label="Go back">‹</button><div class="tt"><h4>Ask Sona</h4><div class="sub">Scoped to this consult</div></div><span class="pill green"><span class="d"></span>Local</span></div>
+            <div class="card tint" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+              <div class="diar" style="margin-top:0"><span class="who" style="color:var(--ink-3);background:var(--surface);border:1px solid var(--line)">You</span><p>Draft a patient explainer in simple Malay.</p></div>
+              <div class="ask-resp">
+                <div class="row"><span class="micro" style="font-weight:600;color:var(--green)">Sona</span><span class="pill green" style="font-size:9.5px;padding:2px 8px"><span class="d"></span>Answered on-device · 0.4s</span></div>
+                <p style="font-size:11.5px;color:var(--ink-2);margin-top:7px;line-height:1.5" lang="ms">Encik, jangkitan saluran nafas atas. Rehat, minum air, ambil ubat demam bila perlu. Datang semula jika sesak nafas atau demam tak turun.</p>
+                <div class="chiprow"><span class="pill line">Add to note</span><span class="pill line">New document</span><span class="pill line">Regenerate</span></div>
+              </div>
+              <div style="flex:1"></div>
+            </div>
+            <div class="ask-bar" style="margin-top:9px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 17v4"/></svg><input placeholder="Ask Sona to do anything" aria-label="Ask Sona" readonly><button class="send" type="button" aria-label="Send"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+          </div>
+        </div>
+        <div class="cap"><div class="cap-b"><span class="cap-t num">2:00</span><h3>Ask Sona, on-device</h3></div><p>Heidi's command bar, reproduced without the cloud round-trip. Turn the same consult into a patient letter in Malay, still zero bytes out.</p><span class="tag stretch">Stretch, mockup for the deck</span></div>
+      </div>
+
+      <!-- 6 codes -->
+      <div class="shot reveal">
+        <div class="phone">
+          <div class="statusbar"><span class="num">9:46</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+          <div class="screen">
+            <div class="top"><button class="back" type="button" aria-label="Go back">‹</button><div class="tt"><h4>Suggested codes</h4><div class="sub">Every code shows its evidence</div></div><span class="pill green">2 of 2</span></div>
+            <div class="card">
+              <div class="code-row"><span class="code-badge">J06.9</span><div><div style="font-size:12px;font-weight:600">Acute upper respiratory infection</div><div class="quote">"Demam dah tiga hari, batuk berkahak kuning."</div></div></div>
+              <div class="code-row"><span class="code-badge">R50.9</span><div><div style="font-size:12px;font-weight:600">Fever, unspecified</div><div class="quote">"3 days of fever, worse at night."</div></div></div>
+            </div>
+            <div class="card green"><div class="row"><div><div class="card-h">Charge capture</div><div class="card-b">One code a typed note usually misses</div></div><div class="num" style="font-size:17px;font-weight:700;color:var(--green-deep)">RM 95</div></div></div>
+            <div style="flex:1"></div>
+            <button class="p-btn primary">Confirm all</button>
+          </div>
+        </div>
+        <div class="cap"><div class="cap-b"><span class="cap-t num">2:10</span><h3>Codes with receipts</h3></div><p>Heidi's best pattern, adopted: every ICD-10 suggestion carries its verbatim transcript quote. Audit-ready trust, plus a revenue number the judges keep.</p><span class="tag stretch">Stretch, if Gate 3 early</span></div>
+      </div>
+
+      <!-- 7 note style -->
+      <div class="shot reveal">
+        <div class="phone">
+          <div class="statusbar"><span class="num">9:46</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+          <div class="screen">
+            <div class="top"><button class="back" type="button" aria-label="Go back">‹</button><div class="tt"><h4>Note style</h4><div class="sub">Learned on this device</div></div><span class="pill green"><span class="d"></span>Private</span></div>
+            <div class="card">
+              <div class="card-h">Detail</div>
+              <div class="slider"><i></i><span class="knob"></span></div>
+              <div class="seg"><span class="s">Concise</span><span class="s on">Balanced</span><span class="s">Thorough</span></div>
+            </div>
+            <div class="card">
+              <div class="row"><span class="card-h">Bullet points</span><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Toggle setting"></button></div>
+              <div class="row" style="margin-top:11px"><span class="card-h">Keep patient quotes</span><button class="toggle off" type="button" role="switch" aria-checked="false" aria-label="Toggle setting"></button></div>
+              <div class="row" style="margin-top:11px"><span class="card-h">Expand abbreviations</span><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Toggle setting"></button></div>
+            </div>
+            <div class="card green">
+              <div class="card-h">Learned from your edits</div>
+              <div class="card-b">You always write "review in 1 week", not "RV 1/52". Sona now does too. Nothing about how you write leaves the phone.</div>
+            </div>
+          </div>
+        </div>
+        <div class="cap"><div class="cap-b"><span class="cap-t num">2:20</span><h3>Learns your style, privately</h3></div><p>DeepScribe and Heidi personalise in the cloud. Sona adapts to your phrasing on-device, so your style is never training data on someone's server.</p><span class="tag stretch">Stretch, mockup for the deck</span></div>
+      </div>
+
+      <!-- 8 multi-doc -->
+      <div class="shot reveal">
+        <div class="phone">
+          <div class="statusbar"><span class="num">9:46</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+          <div class="screen">
+            <div class="top"><button class="back" type="button" aria-label="Go back">‹</button><div class="tt"><h4>Documents</h4><div class="sub">3 documents, 1 consult, 0 cloud</div></div></div>
+            <div class="chiprow" style="margin-bottom:3px"><span class="pill line">SOAP note</span><span class="pill green">Referral letter</span><span class="pill line">Explainer</span></div>
+            <div class="card" style="flex:1;overflow:hidden">
+              <div class="micro" style="margin-bottom:6px">To: ENT Department, Hospital Kuala Lumpur</div>
+              <p style="font-size:11.5px;color:var(--ink-2);line-height:1.5">Dear colleague, thank you for seeing <b style="color:var(--ink)">this 58-year-old gentleman</b> with recurrent URTI, third episode in four months, now with persistent post-nasal drip.</p>
+              <p style="font-size:11.5px;color:var(--ink-2);line-height:1.5;margin-top:6px">Relevant history and current management are summarised below. He remains systemically well.</p>
+              <div class="quote" style="font-style:normal">Generated from the same on-device transcript. Names restored locally at render time.</div>
+            </div>
+            <button class="p-btn primary sm" style="margin-top:9px">New document from this consult</button>
+          </div>
+        </div>
+        <div class="cap"><div class="cap-b"><span class="cap-t num">2:25</span><h3>One consult, three documents</h3></div><p>Heidi's headline feature, reproduced with two extra prompts on the local model. Note, referral and patient letter from one recording. Triples the value in fifteen seconds.</p><span class="tag stretch">Stretch, promoted from roadmap</span></div>
+      </div>
+
+      <!-- 9 sign & export -->
+      <div class="shot reveal">
+        <div class="phone">
+          <div class="statusbar"><span class="num">9:47</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+          <div class="screen">
+            <div class="top"><button class="back" type="button" aria-label="Go back">‹</button><div class="tt"><h4>Sign & export</h4><div class="sub">Dr. A. Tan · MMC 45678</div></div></div>
+            <div class="card"><div class="card-h">Signature</div><div class="sig"><svg width="118" height="32" viewBox="0 0 120 34" fill="none"><path d="M6 24c9-14 14-16 16-10s-3 14 2 14 9-16 14-16 2 18 8 18 7-13 12-13 4 9 9 9 8-6 14-8 17-2 33-2" stroke="#0e7c52" stroke-width="2" stroke-linecap="round"/></svg></div></div>
+            <div class="card tint"><div class="card-h">Export destinations</div><div style="display:flex;gap:7px;margin-top:9px"><button class="p-btn ghost sm">FHIR R4</button><button class="p-btn ghost sm">PDF</button><button class="p-btn ghost sm">Copy</button></div><div class="micro" style="margin-top:7px">DocumentReference plus Encounter, ready for any EMR ingest</div></div>
+            <div class="card" style="border-color:#f4d3ce;background:var(--red-50)"><div class="card-h" style="color:var(--red)">On sign, audio is destroyed</div><div class="card-b">The raw recording is deleted from this device. Only the signed note and audit log remain. Nothing was ever uploaded.</div></div>
+            <div style="flex:1"></div>
+            <button class="p-btn primary">Sign and finish</button>
+          </div>
+        </div>
+        <div class="cap"><div class="cap-b"><span class="cap-t num">2:40</span><h3>Sign, export, destroy the audio</h3></div><p>Heidi says "audio is never stored" as policy. Sona makes deletion a visible consequence of the clinician's own signature.</p><span class="tag real">Real in slice</span></div>
+      </div>
+
+      <!-- 10 proof -->
+      <div class="shot reveal">
+        <div class="phone">
+          <div class="statusbar"><span class="num">9:47</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+          <div class="screen">
+            <div class="top"><div class="tt"><h4>Consult complete</h4><div class="sub">4 min consult, 62s to signed note</div></div></div>
+            <div class="stat"><div class="n num">0 bytes</div><div class="l">of PHI transmitted, verified by the on-device network monitor.</div></div>
+            <div class="card" style="margin-top:9px;flex:1;overflow:hidden">
+              <div class="card-h">Audit log</div>
+              <div class="audit" style="margin-top:4px">
+                <div class="ar"><span class="t num">9:42</span><span class="ok">✓</span><span>Consent captured, spoken BM</span></div>
+                <div class="ar"><span class="t num">9:42</span><span class="ok">✓</span><span>Recording started, airplane mode</span></div>
+                <div class="ar"><span class="t num">9:46</span><span class="ok">✓</span><span>4 identifiers redacted on-device</span></div>
+                <div class="ar"><span class="t num">9:46</span><span class="ok">✓</span><span>Note drafted, Gemma 4, local</span></div>
+                <div class="ar"><span class="t num">9:47</span><span class="ok">✓</span><span>Signed, Dr. A. Tan</span></div>
+                <div class="ar"><span class="t num">9:47</span><span class="ok">✓</span><span>Audio deleted, hash sealed</span></div>
+              </div>
+            </div>
+            <button class="p-btn primary" style="margin-top:9px">Next patient</button>
+          </div>
+        </div>
+        <div class="cap"><div class="cap-b"><span class="cap-t num">2:55</span><h3>The receipts</h3></div><p>Close on the number that wins the room: zero bytes. Then hand the phone to a judge and let them scroll the audit log themselves.</p><span class="tag real">Real in slice · Gate 4</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="product">
+  <div class="wrap">
+    <div class="segment-head reveal">
+      <span class="seg-tag vision"><span class="d"></span>Segment two · the full product</span>
+      <h2>The vision the deck sells, one product, not a second app</h2>
+      <p>Everything below is designed but not built for the demo. It shows judges the roadmap and buyers the destination. Same on-device rule throughout: nothing here needs the cloud either.</p>
+    </div>
+  </div>
+
+  <div class="vision-wrap">
+    <div class="wrap">
+
+      <div class="group-label reveal">Onboarding and the daily flow<span class="ln"></span></div>
+      <div class="grid">
+
+        <div class="shot reveal">
+          <div class="phone">
+            <div class="statusbar"><span class="num">9:38</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+            <div class="screen">
+              <div class="top"><div class="tt"><h4>Set up Sona</h4><div class="sub">Two minutes, then you never open settings again</div></div></div>
+              <div class="card"><div class="card-h">What should patients call you?</div><div class="card-b" style="margin-top:8px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;color:var(--ink)">Dr. Aisyah Tan</div></div>
+              <div class="card"><div class="card-h">Your specialty</div><div class="chiprow"><span class="pill green">General practice</span><span class="pill line">Paediatrics</span><span class="pill line">O&amp;G</span><span class="pill line">Mental health</span></div></div>
+              <div class="card green"><div class="card-h">Note style learns the rest</div><div class="card-b">Sona adapts to how you write from your first few edits, all on this device.</div></div>
+              <div style="flex:1"></div>
+              <button class="p-btn primary">Continue</button>
+            </div>
+          </div>
+          <div class="cap"><div class="cap-b"><h3>Onboarding</h3></div><p>One name, one specialty, done. Everything else is learned on-device, never configured.</p><span class="tag vision">Vision · deck</span></div>
+        </div>
+
+        <div class="shot reveal">
+          <div class="phone">
+            <div class="statusbar"><span class="num">8:55</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+            <div class="screen">
+              <div class="top"><div class="tt"><h4>Today</h4><div class="sub">Thursday, 12 consults</div></div><span class="pill green"><span class="d"></span>2h saved</span></div>
+              <div class="card"><div class="card-h">Next on your schedule</div>
+                <div class="lsess" style="border-color:var(--line)"><div class="lav">RH</div><div class="lm"><b>Encik Rahman</b><span>9:00 · cough follow-up</span></div></div>
+                <div class="lsess"><div class="lav">SL</div><div class="lm"><b>Siti Lim</b><span>9:20 · antenatal</span></div></div>
+                <div class="lsess"><div class="lav">AK</div><div class="lm"><b>Arjun Kumar</b><span>9:40 · diabetes review</span></div></div>
+              </div>
+              <div class="card green"><div class="row"><div><div class="card-h">Charts closed today</div><div class="card-b">Average 58s per note</div></div><div class="num" style="font-size:20px;font-weight:700;color:var(--green-deep)">8</div></div></div>
+              <div style="flex:1"></div>
+              <button class="p-btn primary">Start next consult</button>
+            </div>
+          </div>
+          <div class="cap"><div class="cap-b"><h3>Today, your day at a glance</h3></div><p>A schedule-led home. Tap a patient to open their pre-visit brief. No cloud calendar, no EHR sync required.</p><span class="tag vision">Vision · deck</span></div>
+        </div>
+
+        <div class="shot reveal">
+          <div class="phone">
+            <div class="statusbar"><span class="num">8:58</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+            <div class="screen">
+              <div class="top"><button class="back" type="button" aria-label="Go back">‹</button><div class="tt"><h4>Pre-visit brief</h4><div class="sub">Encik Rahman · 58</div></div></div>
+              <div class="card green"><div class="card-h">Sona prepared this</div><div class="card-b">Last seen 6 days ago for the same cough. Started on symptomatic care. Advised review in 1 week if not settling. That review is due today.</div></div>
+              <div class="card"><div class="card-h">Active medications</div><div class="card-b">Amlodipine 5mg OD, Metformin 500mg BD.</div></div>
+              <div class="card tint"><div class="card-h">What happens on device</div><div class="card-b">This brief was built from notes stored on this phone. Nothing was fetched from a server.</div></div>
+              <div style="flex:1"></div>
+              <button class="p-btn primary">Start consult</button>
+            </div>
+          </div>
+          <div class="cap"><div class="cap-b"><h3>Pre-visit brief</h3></div><p>Walk in already knowing the story. Sona summarises the last visit and flags the follow-up that is due, from local notes only.</p><span class="tag vision">Vision · deck</span></div>
+        </div>
+
+      </div>
+
+      <div class="group-label reveal">Guardian, the consumer safety surface<span class="ln"></span></div>
+      <div class="grid">
+
+        <div class="shot reveal">
+          <div class="phone">
+            <div class="statusbar"><span class="num">21:14</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+            <div class="screen">
+              <div class="top"><div class="tt"><h4>Guardian</h4><div class="sub">Your child, fever 3 days</div></div><span class="pill green"><span class="d"></span>On-device</span></div>
+              <div class="card">
+                <div class="card-h">A safe next step</div>
+                <div class="triage"><span class="ts">Self-care</span><span class="ts on">See GP today</span><span class="ts">Urgent</span><span class="ts">999</span></div>
+                <div class="card-b" style="margin-top:9px">Fever this long with poor feeding should be seen by a doctor today. Not an emergency right now.</div>
+              </div>
+              <div class="card" style="border-color:#f4d3ce">
+                <div class="card-h" style="color:var(--red)">Seek care now if any appear</div>
+                <div class="flag"><span class="fi">▲</span>Stiff neck, or a rash that does not fade under pressure</div>
+                <div class="flag"><span class="fi">▲</span>Breathing fast, or drowsy and hard to wake</div>
+              </div>
+              <div style="flex:1"></div>
+              <button class="p-btn primary">Find the nearest clinic</button>
+            </div>
+          </div>
+          <div class="cap"><div class="cap-b"><h3>Symptom triage</h3></div><p>Sorts symptoms to a safe next step with a red-flag safety net. It signposts, it never diagnoses. A human and 999 stay in the loop.</p><span class="tag vision">Vision · deck</span></div>
+        </div>
+
+        <div class="shot reveal">
+          <div class="phone">
+            <div class="statusbar"><span class="num">21:15</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+            <div class="screen">
+              <div class="top"><div class="tt"><h4>Guardian vitals</h4><div class="sub">Hold still, face the camera</div></div><span class="pill green"><span class="d"></span>Camera only</span></div>
+              <div class="card tint" style="text-align:center">
+                <div class="ring">
+                  <svg width="118" height="118" viewBox="0 0 118 118"><circle cx="59" cy="59" r="52" fill="none" stroke="#eef4f0" stroke-width="9"/><circle cx="59" cy="59" r="52" fill="none" stroke="#0e7c52" stroke-width="9" stroke-linecap="round" stroke-dasharray="326" stroke-dashoffset="72"/></svg>
+                  <div class="rn"><b>72</b><small>bpm</small></div>
+                </div>
+                <div class="micro"><span class="heart beat">♥</span> Reading pulse from skin colour</div>
+              </div>
+              <div class="stat-row" style="margin-top:9px"><div class="stat-mini"><div class="n">16</div><div class="l">breaths / min</div></div><div class="stat-mini"><div class="n">Steady</div><div class="l">rhythm</div></div></div>
+              <div class="card" style="border-color:#f0e0b6;background:var(--amber-50)"><div class="card-b" style="color:var(--amber);font-weight:600">Estimated from the camera to guide you. Not a medical device. See a clinician for a diagnosis.</div></div>
+            </div>
+          </div>
+          <div class="cap"><div class="cap-b"><h3>Camera vitals</h3></div><p>Contactless pulse and breathing from the front camera (rPPG), computed on-device. Framed as guidance, never a diagnosis. Closes the P1 Guardian hero gap.</p><span class="tag vision">Vision · deck</span></div>
+        </div>
+
+        <div class="shot reveal">
+          <div class="phone">
+            <div class="statusbar"><span class="num">21:16</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+            <div class="screen">
+              <div class="top"><div class="tt"><h4 style="color:var(--red)">Emergency</h4><div class="sub">Possible stroke signs detected</div></div></div>
+              <button class="p-btn sos" style="font-size:16px;padding:15px">Call 999 now</button>
+              <div class="card" style="margin-top:9px"><div class="card-h">Do this now</div>
+                <div class="card-b" style="margin-top:2px">1. Note the time symptoms started<br>2. Keep them sitting, no food or drink<br>3. Stay with them until help arrives</div>
+              </div>
+              <div class="card tint"><div class="card-h">Tell the responder</div><div class="card-b">Face drooping on the left, arm weakness, speech slurred. Started about 10 minutes ago. Location is shared on this screen.</div></div>
+            </div>
+          </div>
+          <div class="cap"><div class="cap-b"><h3>Emergency escalation</h3></div><p>Detects warning signs, guides first response, and hands a clear script to the 999 operator. Guides and escalates, never treats.</p><span class="tag vision">Vision · deck</span></div>
+        </div>
+
+        <div class="shot reveal">
+          <div class="phone">
+            <div class="statusbar"><span class="num">21:18</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+            <div class="screen">
+              <div class="top"><div class="tt"><h4>Identify a medicine</h4><div class="sub">Point the camera at the tablet</div></div><span class="pill green"><span class="d"></span>Local drug DB</span></div>
+              <div class="card"><div class="row"><div><div class="card-h">Identified</div><div class="card-b">Ibuprofen 400mg, an anti-inflammatory painkiller.</div></div><span class="pill green">98% match</span></div></div>
+              <div class="card" style="border-color:#f4d3ce;background:var(--red-50)"><div class="card-h" style="color:var(--red)">Interaction with her medication</div><div class="card-b">She takes warfarin. Ibuprofen raises bleeding risk with warfarin. Do not combine without asking a pharmacist or doctor.</div></div>
+              <div style="flex:1"></div>
+              <button class="p-btn ghost">Message a pharmacist</button>
+            </div>
+          </div>
+          <div class="cap"><div class="cap-b"><h3>Pill-ID with interaction check</h3></div><p>Identifies a tablet by camera and checks it against the family member's own med list, against a local drug database. The AI Pharmacist value, on-device.</p><span class="tag vision">Vision · deck</span></div>
+        </div>
+
+      </div>
+
+      <div class="group-label reveal">Clinical depth and proof<span class="ln"></span></div>
+      <div class="grid">
+
+        <div class="shot reveal">
+          <div class="phone">
+            <div class="statusbar"><span class="num">9:50</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+            <div class="screen">
+              <div class="top"><div class="tt"><h4>Accuracy</h4><div class="sub">This clinician, last 30 days</div></div></div>
+              <div class="stat-row"><div class="stat-mini"><div class="n">4.2%</div><div class="l">word error rate</div></div><div class="stat-mini"><div class="n">94%</div><div class="l">notes accepted</div></div><div class="stat-mini"><div class="n">38s</div><div class="l">median edit</div></div></div>
+              <div class="card" style="margin-top:9px">
+                <div class="metric"><div class="mh"><span>Transcription accuracy</span><b>95.8%</b></div><div class="mbar"><i style="width:96%"></i></div></div>
+                <div class="metric"><div class="mh"><span>Redaction recall</span><b>99.1%</b></div><div class="mbar"><i style="width:99%"></i></div></div>
+                <div class="metric"><div class="mh"><span>Note accepted, light edits</span><b>94%</b></div><div class="mbar"><i style="width:94%"></i></div></div>
+              </div>
+              <div class="card tint"><div class="card-b">Sample metrics for the pitch. Redaction recall is the number that guards the moat, so it is measured every release.</div></div>
+            </div>
+          </div>
+          <div class="cap"><div class="cap-b"><h3>Accuracy metrics</h3></div><p>Turns quality into pitch ammunition: word error rate, note acceptance, and the redaction recall that protects the privacy claim. Closes the P1 metrics gap.</p><span class="tag vision">Vision · deck</span></div>
+        </div>
+
+        <div class="shot reveal">
+          <div class="phone">
+            <div class="statusbar"><span class="num">9:44</span><span class="sb-r"><span class="airplane"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5 14 11V4a2 2 0 0 0-4 0v7l-8 5.5V19l8-2.5V21l-2 1.5V24l4-1 4 1v-1.5L14 21v-4.5l8 2.5z"/></svg>Airplane</span></span></div>
+            <div class="screen">
+              <div class="top"><div class="tt"><h4>Templates</h4><div class="sub">Switch per consult</div></div><span class="pill green"><span class="d"></span>On-device</span></div>
+              <div class="card">
+                <div class="lsess" style="border-color:var(--line)"><div class="lav" style="background:var(--green);color:#fff">✓</div><div class="lm"><b>General practice SOAP</b><span>In use now</span></div></div>
+                <div class="lsess"><div class="lav" style="background:var(--surface);color:var(--ink-3)">P</div><div class="lm"><b>Paediatrics</b><span>Weight, feeding, milestones</span></div></div>
+                <div class="lsess"><div class="lav" style="background:var(--surface);color:var(--ink-3)">A</div><div class="lm"><b>Antenatal visit</b><span>Gestation, fundal height, BP</span></div></div>
+                <div class="lsess"><div class="lav" style="background:var(--surface);color:var(--ink-3)">C</div><div class="lm"><b>Chronic disease review</b><span>Diabetes, hypertension</span></div></div>
+              </div>
+              <div class="card green"><div class="card-h">All templates run locally</div><div class="card-b">Switching the format never sends the consult anywhere. The model rewrites the same on-device transcript.</div></div>
+            </div>
+          </div>
+          <div class="cap"><div class="cap-b"><h3>Specialty templates</h3></div><p>One tap reshapes the note for the specialty in the room. Bahasa Malaysia input to English output stays constant across every template.</p><span class="tag vision">Vision · deck</span></div>
+        </div>
+
+      </div>
+
+      <div class="group-label reveal">Plans and the platform<span class="ln"></span></div>
+      <div class="tiers reveal">
+        <div class="tier">
+          <div class="tname">Solo</div>
+          <div class="tprice">RM 99 <span>/ month</span></div>
+          <div class="tsub">Single GP, self-serve</div>
+          <ul><li>Unlimited on-device notes</li><li>BM and EN, offline</li><li>FHIR and PDF export</li><li>Guardian for your family</li></ul>
+        </div>
+        <div class="tier feat">
+          <span class="tbadge">Most clinics</span>
+          <div class="tname">Clinic</div>
+          <div class="tprice">RM 199 <span>/ seat / month</span></div>
+          <div class="tsub">Multi-seat, shared admin</div>
+          <ul><li>Everything in Solo</li><li>Coding and charge capture</li><li>Clinician web dashboard</li><li>Priority note style tuning</li></ul>
+        </div>
+        <div class="tier">
+          <div class="tname">Enterprise and B2G</div>
+          <div class="tprice">Let's talk</div>
+          <div class="tsub">Hospital groups, MOH</div>
+          <ul><li>On-prem, data stays on soil</li><li>SSO and audit exports</li><li>EMR integration</li><li>Deployment support</li></ul>
+        </div>
+      </div>
+      <p class="reveal" style="text-align:center;color:var(--ink-3);font-size:12.5px;margin-top:16px">Billing rides a non-PHI licence only. No patient data ever crosses the boundary to enable a payment.</p>
+
+      <div class="group-label reveal">Clinician web dashboard<span class="ln"></span></div>
+      <div class="laptop reveal">
+        <div class="lbar"><span class="ld"></span><span class="ld"></span><span class="ld"></span><span class="url">app.sona.clinic/sessions</span></div>
+        <div class="lbody">
+          <div class="lcol">
+            <div style="font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px">Sessions</div>
+            <div class="lsess"><div class="lav">RH</div><div class="lm"><b>Encik Rahman</b><span>Today 9:00 · signed</span></div></div>
+            <div class="lsess"><div class="lav">SL</div><div class="lm"><b>Siti Lim</b><span>Today 9:20 · signed</span></div></div>
+            <div class="lsess"><div class="lav">AK</div><div class="lm"><b>Arjun Kumar</b><span>Today 9:40 · draft</span></div></div>
+            <div class="lsess"><div class="lav">MW</div><div class="lm"><b>Mei Wong</b><span>Yesterday · signed</span></div></div>
+          </div>
+          <div class="lcol">
+            <div style="font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px">Encik Rahman · consult note</div>
+            <div class="soap">
+              <h6>Subjective</h6><p>3 days fever, worse at night. Productive cough, <b>yellow sputum</b>.</p>
+              <h6>Assessment</h6><p><b>Acute URTI</b>, likely viral. No red flags.</p>
+              <h6>Plan</h6><p>Symptomatic care. Review in 1 week if fever persists.</p>
+            </div>
+            <div class="chiprow" style="margin-top:12px"><span class="pill green">Signed</span><span class="pill line">J06.9</span><span class="pill line">R50.9</span></div>
+          </div>
+          <div class="lcol">
+            <div style="font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px">This week</div>
+            <div class="stat-mini" style="margin-bottom:9px"><div class="n">2.1h</div><div class="l">time saved</div></div>
+            <div class="metric"><div class="mh"><span>Charts closed</span><b>41</b></div><div class="mbar"><i style="width:82%"></i></div></div>
+            <div class="metric"><div class="mh"><span>Notes accepted</span><b>94%</b></div><div class="mbar"><i style="width:94%"></i></div></div>
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:7px"><button class="p-btn ghost sm">Export FHIR bundle</button><button class="p-btn ghost sm">Download PDFs</button></div>
+          </div>
+        </div>
+      </div>
+      <p class="reveal" style="text-align:center;color:var(--ink-3);font-size:12.5px;margin:16px 0 0">The dashboard reads notes that already live on the clinic's devices. It manages seats and exports. It is not a second copy of the record in the cloud.</p>
+
+    </div>
+  </div>
+</section>
+
+<section id="why">
+  <div class="wrap">
+    <div class="sec-head reveal"><div class="kicker">Why it wins</div><h2>The category leader just proved the thesis</h2><p>Heidi raised 65 million dollars and shipped a wearable microphone to get audio on-device. The note still generates in their cloud. Ours never needs one.</p></div>
+    <div class="contrast reveal">
+      <div class="them">
+        <div class="side-label">Heidi, cloud-first</div>
+        <ul>
+          <li>Note generation is <b>100% cloud</b>, even with their wearable</li>
+          <li>Offline mode only queues audio, <b>no note without signal</b></li>
+          <li>De-identification runs in <b>their</b> cloud, a policy you trust</li>
+          <li>Lost-recording reviews dragged Trustpilot to about 3.3</li>
+          <li>Pricing 40 to 150 US dollars per user monthly, <b>no SEA plan</b></li>
+        </ul>
+      </div>
+      <div class="us">
+        <div class="side-label">Sona, on-device</div>
+        <ul>
+          <li>The note is <b>born on the phone</b>, airplane mode is the demo</li>
+          <li>Full pipeline offline: transcribe, redact, draft, sign, export</li>
+          <li>Redaction is <b>visible on screen</b>, re-ID map sealed locally</li>
+          <li>No network, no lost recordings, nothing to intercept</li>
+          <li>RM 99 a month, built for MY and SEA clinics under <b>PDPA 2024</b></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer>
+  <div class="wrap">
+    <p class="fl"><b>Two segments, one file.</b> <b>Segment one</b> (Real in slice, Stretch) is the working software built for the Semi-Finals live demo. <b>Segment two</b> (Vision, deck) is the full product, designed but not built for the demo. The on-device rule holds across both: nothing crosses the boundary except de-identified text, and only on the optional cloud path.</p>
+    <p style="margin-top:12px">Sona, privacy-first ambient scribe. White and clinical green. Reference: sona-slice-prototype-green.html</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* build waveforms */
+  document.querySelectorAll('.wave').forEach(function(w){
+    var n = 34; var html='';
+    for(var i=0;i<n;i++){ html += '<i></i>'; }
+    w.innerHTML = html;
+  });
+
+  /* scroll reveal */
+  var reveals = document.querySelectorAll('.reveal');
+  if (reduce || !('IntersectionObserver' in window)){
+    reveals.forEach(function(el){el.classList.add('in');});
+  } else {
+    var count=0;
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting){
+          e.target.style.transitionDelay = Math.min((count++%3)*70,140)+'ms';
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    },{rootMargin:'-50px 0px',threshold:0.08});
+    reveals.forEach(function(el){io.observe(el);});
+  }
+
+  /* living scribe timeline */
+  var steps = document.querySelectorAll('#scribe-transcript .diar.stream');
+  var lang = document.getElementById('scribe-lang');
+  var pii = document.getElementById('scribe-pii');
+  var toast = document.getElementById('scribe-toast');
+  var analyse = document.getElementById('scribe-analyse');
+  var note = document.getElementById('scribe-note');
+  var wave = document.getElementById('scribe-wave');
+  var stateEl = document.getElementById('scribe-state');
+  var recdot = document.getElementById('scribe-recdot');
+  var timerEl = document.getElementById('scribe-timer');
+  var meter = document.getElementById('scribe-meter');
+  var timers = [];
+  function clearAll(){ timers.forEach(clearTimeout); timers=[]; }
+  function at(ms, fn){ timers.push(setTimeout(fn, ms)); }
+
+  var listening = false, recSecs = 44;
+  function fmtTime(s){ var m = Math.floor(s/60), ss = s%60; return m + ':' + (ss<10?'0':'') + ss; }
+  function setState(txt){
+    if (reduce){ stateEl.textContent = txt; return; }
+    stateEl.style.transition = 'opacity .16s ease';
+    stateEl.style.opacity = '0';
+    setTimeout(function(){ stateEl.textContent = txt; stateEl.style.opacity = '1'; }, 160);
+  }
+
+  function reset(){
+    steps.forEach(function(s){ s.classList.remove('in'); });
+    lang.classList.remove('in');
+    pii.classList.remove('redacted');
+    toast.classList.remove('in');
+    analyse.classList.remove('in');
+    note.classList.remove('in');
+    wave.classList.add('live');
+    if (meter) meter.classList.add('live');
+    stateEl.textContent = 'Listening';
+    recdot.classList.add('on');
+    recdot.style.background = 'var(--red)';
+    recSecs = 44; listening = true;
+    timerEl.textContent = fmtTime(recSecs);
+  }
+
+  function run(){
+    reset();
+    var t = 400;
+    // stream lines
+    at(t, function(){ steps[0].classList.add('in'); }); t += 900;
+    at(t, function(){ steps[1].classList.add('in'); lang.classList.add('in'); }); t += 1100;
+    at(t+1400, function(){ lang.classList.remove('in'); });
+    at(t, function(){ steps[2].classList.add('in'); }); t += 900;
+    at(t, function(){ steps[3].classList.add('in'); }); t += 900;
+    // live redaction
+    at(t, function(){ pii.classList.add('redacted'); toast.classList.add('in'); }); t += 1500;
+    at(t, function(){ toast.classList.remove('in'); }); t += 300;
+    // analysing (recording stops, timer freezes)
+    at(t, function(){
+      listening = false;
+      wave.classList.remove('live');
+      if (meter) meter.classList.remove('live');
+      setState('Analysing');
+      recdot.classList.remove('on');
+      recdot.style.background = 'var(--green)';
+      analyse.classList.add('in');
+    }); t += 1900;
+    // note ready
+    at(t, function(){
+      analyse.classList.remove('in');
+      setState('Note ready');
+      note.classList.add('in');
+    }); t += 3800;
+    // soft restart: fade the composed state out, hold, then re-run
+    at(t, function(){
+      note.classList.remove('in');
+      steps.forEach(function(s){ s.classList.remove('in'); });
+    });
+    at(t + 520, run);
+  }
+
+  function tick(){
+    if(reduce) return;
+    if (listening){ recSecs++; timerEl.textContent = fmtTime(recSecs); }
+    setTimeout(tick, 1000);
+  }
+
+  if (steps.length){
+    if (reduce){
+      // static composed final state
+      steps.forEach(function(s){s.classList.add('in');});
+      pii.classList.add('redacted');
+      wave.classList.remove('live');
+      stateEl.textContent = 'Note ready';
+      recdot.style.background = 'var(--green)';
+      recdot.classList.remove('on');
+      note.classList.add('in');
+    } else {
+      run();
+      tick();
+    }
+  }
+})();
+
+/* inject iOS liquid-glass tab bar into app phone screens */
+(function(){
+  var IC = {
+    today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>',
+    patients:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.4 20a5.6 5.6 0 0 1 11.2 0"/><path d="M16 5.4a3 3 0 0 1 0 5.8"/><path d="M18.5 20a5.2 5.2 0 0 0-3-4.7"/></svg>',
+    mic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 17v4"/></svg>',
+    shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 3 7.4 7 8.9 4-1.5 7-4.5 7-8.9V6z"/></svg>',
+    account:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>'
+  };
+  function tab(key,label,svg,active){ return '<button class="tab'+(active===key?' on':'')+'" type="button">'+svg+'<span>'+label+'</span></button>'; }
+  function bar(active, live){
+    return '<div class="tabbar" aria-hidden="true">'
+      + tab('today','Today',IC.today,active)
+      + tab('patients','Patients',IC.patients,active)
+      + '<button class="tab center'+(live?' live':'')+'" type="button" aria-label="Record">'+IC.mic+'</button>'
+      + tab('guardian','Guardian',IC.shield,active)
+      + tab('account','Account',IC.account,active)
+      + '</div>';
+  }
+  var SKIP = /ask sona|emergency|guardian vitals|set up sona/i;
+  document.querySelectorAll('.phone').forEach(function(ph){
+    // standardize device chrome: every phone gets a notch
+    if(!ph.querySelector('.notch')) ph.insertAdjacentHTML('afterbegin','<div class="notch"></div>');
+    var h = ph.querySelector('h4');
+    var title = h ? h.textContent : '';
+    if (SKIP.test(title)) return;
+    var active = 'record';
+    if (/today|pre-visit/i.test(title)) active = 'today';
+    else if (/guardian|identify a medicine/i.test(title)) active = 'guardian';
+    else if (/templates|accuracy/i.test(title)) active = 'account';
+    ph.classList.add('tabbed');
+    ph.insertAdjacentHTML('beforeend', bar(active, ph.classList.contains('hero-phone')));
+  });
+
+  /* in-phone control feedback: toggles flip, segmented controls select */
+  document.querySelectorAll('.toggle').forEach(function(t){
+    t.addEventListener('click', function(){
+      var off = t.classList.toggle('off');
+      t.setAttribute('aria-checked', off ? 'false' : 'true');
+    });
+  });
+  document.querySelectorAll('.seg').forEach(function(seg){
+    seg.querySelectorAll('.s').forEach(function(s){
+      s.addEventListener('click', function(){
+        seg.querySelectorAll('.s').forEach(function(x){ x.classList.remove('on'); });
+        s.classList.add('on');
+      });
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

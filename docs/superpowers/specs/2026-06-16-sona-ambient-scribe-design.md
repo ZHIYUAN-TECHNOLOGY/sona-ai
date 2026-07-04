@@ -134,6 +134,16 @@ DeepScribe is a pure ambient scribe (no Guardian). Workflow: select patient from
 - **Fold in lightly:** schedule-led entry → a mini day-agenda on the Today home (tap → pre-visit), not a cloud calendar/EHR sync. Mirror their chart-closure-time metric on the dashboard.
 - **Skip:** EHR-review-then-sign step (their cloud/EHR dependency; we export FHIR/PDF).
 
+## 8c. Competitor read — Heidi (the giant that validates our bet)
+
+Heidi Health ($65M Series B, ~116 countries, 200+ specialties, 40+ EHR integrations) is the category leader — and in 2026 it built **dedicated hardware (Heidi Remote, a wearable mic doing on-device WhisperKit transcription)** precisely because cloud dependency was hurting it: Trustpilot fell to ~3.3 on lost-recording / dropped-session reviews. Even Remote only gets audio on-device; **note generation is still 100% cloud, and nothing in Heidi's line generates a note offline.** Their de-identification runs in *their* cloud (a policy promise); ours runs on-device (an architecture). Their pricing ($40–150/user/mo) and expansion targets are rich-market only — no SEA strategy.
+
+- **Adopt (cheap once the local LLM runs):** **multi-document from one session** — note + referral letter + patient explainer generated from the same consult, all offline. Heidi's v3.1 headline feature; for us it is ~2 extra prompts and it triples perceived value in the 3-min demo. Promoted from P2 → slice stretch.
+- **Promote (demo-critical for MY judges):** **BM/EN code-switch input → EN note output** (the "language pill"). Heidi does 110+ languages — all cloud. Offline Bahasa Malaysia is a national-impact story Heidi structurally cannot tell. Promoted from P1 nice-to-have into the demo path.
+- **Steal as UI patterns:** (1) ICD-10 suggestions with **verbatim transcript justification quotes** (audit-ready trust, pairs with P1.13); (2) the **"audio is never stored"** framing — Heidi states it as policy, we prove it locally with the audit log + audio-discard-on-sign.
+- **Skip (validated by Heidi's own gaps):** scheduling, billing/claims submission, e-prescribing, patient portal — even $65M Heidi doesn't build these. Templates community, telehealth capture, dictation mode, Evidence, teams: breadth we leave in the mockup/deck.
+- **Pitch ammo:** "Heidi built a $200 wearable to get audio on-device. We run the entire pipeline — transcription, redaction, and the note — on the phone already in your pocket." Cloud failure mode (lost recordings) is exactly what the airplane-mode demo attacks. Measure our battery burn and print it (their app draws ~40%/hr complaints).
+
 ## 9. Sona Guardian (scoped emergency surface)
 
 **Build for comp:** camera vitals (rPPG) + guided emergency escalation + on-device symptom triage. **Roadmap:** FAST stroke screen, offline first-aid coaching, pill-ID with interaction check.
