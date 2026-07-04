@@ -60,3 +60,6 @@ __pycache__/
 
 # Model weights — multi-GB, re-downloadable via apps/spike/mac-bench/setup.sh
 apps/spike/mac-bench/models/
+
+# agent-native local plan bridge token
+**/.plan-url

@@ -60,6 +60,15 @@ device. Only de-identified text may ever cross the boundary, and only on the opt
 > combined recall 1.0. Spike fixtures **now aligned to the locked demo consult** and the redactor verified
 > at recall 1.0 on it. **Remaining: the on-device run on the 17 Pro Max** — see `apps/spike/RUN-GATE-0.md`.
 > That run is the actual Gate-0 decision and is the one step that needs your Xcode build + device.
+>
+> **Agent tracks landed (2026-07-05):** the three engine-independent tracks are built, tested, and typecheck clean.
+> - **Export** — `apps/native/lib/export/` (FHIR R4 DocumentReference + PDF + HTML), 10/10 pure tests.
+> - **Persistence + secure store** — `apps/native/lib/db/` + `lib/secure/` (local SQLite + secure re-ID map, moat enforced), 25/25 pure tests.
+> - **UI** — the 6 slice screens + 16 components + shared theme under `apps/native/app/(consult)/`, `components/consult/`, `lib/theme.ts`, mapped onto the canonical `lib/db/types.ts`.
+> - Deps added: `expo-print`, `expo-sqlite`. Whole-app `tsc --noEmit` exit 0.
+> - An adversarial verify pass (17 findings → 8 confirmed) ran; durable defects fixed (FHIR UTF-8 charset, structured `orders` + a re-identification export guard, `clinical_note UNIQUE(consultId)` + deterministic `getNote`, a real re-ID prefix-collision test, sign-gating, and a clean "Next patient" stack reset). Wire-time cleanups deferred to Days 2-4 (privacy-gate count/re-ID map become data-driven; the consult-flow glass tab bar is finalized with the app shell).
+>
+> **Tracked hardening (post-demo, not the moat):** the raw pre-redaction transcript is stored in plaintext SQLite. The moat holds (nothing leaves the device), but at-rest this should be SQLCipher-encrypted (key in SecureStore), or keep only de-identified text in SQLite with the raw transcript in secure storage.
 
 - **You (critical path):** scaffold the monorepo; stand up the bare RN app on the **target device**; get `whisper.rn` STT and `llama.rn` LLM each loading and running once on-device. Run the **Day-1 gate** below.
 - **Agents (parallel):**
