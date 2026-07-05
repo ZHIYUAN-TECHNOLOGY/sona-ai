@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Card } from "@/components/consult/Card";
@@ -10,12 +10,23 @@ import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { CardHeading } from "@/components/consult/SectionLabel";
 import { Steps } from "@/components/consult/Steps";
 import { Toggle } from "@/components/consult/Toggle";
+import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
 import { colors } from "@/lib/theme";
 
 // Screen 1 of 6 — Consent + audit start.
 export default function ConsentScreen() {
   const [sealConsent, setSealConsent] = useState(true);
-  const start = () => router.push("/recording");
+  const { startConsult } = useConsultPipeline();
+  const starting = useRef(false);
+
+  // Create the consult (SQLite row + consent audit entry) on-device, then advance.
+  // Guarded so a double-tap can't spawn two consults.
+  const start = useCallback(async () => {
+    if (starting.current) return;
+    starting.current = true;
+    await startConsult(consult.consentText);
+    router.push("/recording");
+  }, [startConsult]);
 
   return (
     <ConsultScreen
