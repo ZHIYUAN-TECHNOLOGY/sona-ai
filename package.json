@@ -30,9 +30,9 @@
     "@med-ai/env": "*",
     "dotenv": "^17.2.2",
     "zod": "^4.1.13",
-    "expo": "~56.0.12",
+    "expo": "~57.0.2",
     "react": "19.2.3",
-    "react-native": "0.85.3"
+    "react-native": "0.86.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251213.0",
