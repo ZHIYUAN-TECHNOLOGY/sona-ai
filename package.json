@@ -7,7 +7,8 @@
   ],
   "type": "module",
   "scripts": {
-    "dev": "vp run -r dev",
+    "dev": "vp run --filter native dev",
+    "dev:all": "vp run -r dev",
     "build": "vp run -r build",
     "check-types": "vp run -r check-types",
     "check": "vp check && vp run -r check-types",
@@ -28,7 +29,10 @@
   "dependencies": {
     "@med-ai/env": "*",
     "dotenv": "^17.2.2",
-    "zod": "^4.1.13"
+    "zod": "^4.1.13",
+    "expo": "~56.0.12",
+    "react": "19.2.3",
+    "react-native": "0.85.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251213.0",
@@ -42,5 +46,6 @@
     "vite": "npm:@voidzero-dev/vite-plus-core@0.1.24",
     "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.24"
   },
-  "packageManager": "npm@11.7.0"
+  "packageManager": "npm@11.7.0",
+  "version": "1.0.0"
 }
