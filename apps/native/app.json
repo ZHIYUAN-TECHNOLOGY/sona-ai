@@ -14,7 +14,8 @@
       },
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Sona records the consult on-device to transcribe it. Audio never leaves the phone and is deleted when you sign."
-      }
+      },
+      "bundleIdentifier": "com.anonymous.mybettertapp"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +25,11 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.mybettertapp"
+      "package": "com.anonymous.mybettertapp",
+      "permissions": [
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     },
     "web": {
       "output": "static",
@@ -53,7 +58,12 @@
             "deploymentTarget": "17.0"
           }
         }
-      ]
+      ],
+      "expo-asset",
+      "expo-font",
+      "expo-secure-store",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
