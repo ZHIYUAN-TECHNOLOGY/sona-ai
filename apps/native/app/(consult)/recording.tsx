@@ -1,19 +1,46 @@
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useRef } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
 import { DiarRow } from "@/components/consult/DiarRow";
 import { DeviceMicChip, RecDot } from "@/components/consult/LiveIndicators";
-import { consult, liveTranscript } from "@/components/consult/mockData";
+import type { SpeakerKey, TextSpan } from "@/components/consult/mockData";
+import { consult } from "@/components/consult/mockData";
 import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { CardHeading } from "@/components/consult/SectionLabel";
 import { Waveform } from "@/components/consult/Waveform";
+import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
+import type { RawSegment } from "@/lib/pipeline/mockStt";
 import { colors } from "@/lib/theme";
+
+// Map a live RawSegment onto DiarRow props: doctor lines are faint + "dr"; a
+// Bahasa Malaysia line (lang "ms") is highlighted green; "mixed"/"en" render plain.
+function toDiarRow(seg: RawSegment): { speaker: SpeakerKey; spans: TextSpan[]; faint: boolean } {
+  const isDoctor = seg.speaker === "doctor";
+  return {
+    speaker: isDoctor ? "dr" : "pt",
+    faint: isDoctor,
+    spans: [{ text: seg.text, bm: seg.lang === "ms" }],
+  };
+}
 
 // Screen 2 of 6 — Recording: live diarized transcript, waveform, mic + timer.
 export default function RecordingScreen() {
+  const { segments, startRecording } = useConsultPipeline();
+  const started = useRef(false);
+
+  // Kick off the on-device STT stream once, when the screen first focuses.
+  useFocusEffect(
+    useCallback(() => {
+      if (started.current) return;
+      started.current = true;
+      startRecording();
+    }, [startRecording]),
+  );
+
   return (
     <ConsultScreen
       time="9:42"
@@ -51,9 +78,10 @@ export default function RecordingScreen() {
           <CardHeading>Live transcript</CardHeading>
           <Pill label="2 speakers" variant="blue" />
         </View>
-        {liveTranscript.map((line, i) => (
-          <DiarRow key={i} speaker={line.speaker} spans={line.spans} faint={line.faint} />
-        ))}
+        {segments.map((seg, i) => {
+          const line = toDiarRow(seg);
+          return <DiarRow key={i} speaker={line.speaker} spans={line.spans} faint={line.faint} />;
+        })}
       </Card>
     </ConsultScreen>
   );
