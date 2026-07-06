@@ -1,21 +1,43 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
-import { auditLog, proof } from "@/components/consult/mockData";
+import { proof } from "@/components/consult/mockData";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { CardHeading } from "@/components/consult/SectionLabel";
 import { Stat } from "@/components/consult/Stat";
+import { getAudit } from "@/lib/db";
+import type { AuditEntry } from "@/lib/db/types";
+import { markComplete } from "@/lib/pipeline/consultPipeline";
+import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
 import { colors } from "@/lib/theme";
 
-// Screen 6 of 6 — Consult complete: audit log + the "0 bytes" proof stat.
+function hhmm(ts: number): string {
+  const d = new Date(ts);
+  const p = (n: number) => n.toString().padStart(2, "0");
+  return `${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+// Screen 6 of 6 — Consult complete: the REAL on-device audit log (append-only,
+// from SQLite) and the "0 bytes transmitted" proof. Every row is evidence the
+// consult ran entirely on-device.
 export default function CompleteScreen() {
-  // "Next patient" restarts the flow at consent with a clean stack. Replacing the
-  // top screen alone would leave the finished consult's recording/privacy/note/sign
-  // screens on the (consult) stack, so dismiss them first.
+  const { consultId, reset } = useConsultPipeline();
+  const [rows, setRows] = useState<AuditEntry[]>([]);
+
+  useEffect(() => {
+    if (!consultId) return;
+    void markComplete(consultId);
+    void getAudit(consultId).then(setRows);
+  }, [consultId]);
+
+  // "Next patient" resets pipeline state and restarts the flow at consent with a
+  // clean stack — the finished consult's screens are dismissed first.
   const nextPatient = () => {
+    reset();
     if (router.canDismiss?.()) router.dismissAll();
     router.replace("/consent");
   };
@@ -33,9 +55,9 @@ export default function CompleteScreen() {
       <Card>
         <CardHeading>Audit log</CardHeading>
         <View style={styles.log}>
-          {auditLog.map((row, i) => (
-            <View key={i} style={[styles.ar, i > 0 && styles.arDivider]}>
-              <Text style={styles.t}>{row.time}</Text>
+          {rows.map((row, i) => (
+            <View key={row.id} style={[styles.ar, i > 0 && styles.arDivider]}>
+              <Text style={styles.t}>{hhmm(row.ts)}</Text>
               <Ionicons name="checkmark" size={13} color={colors.green} />
               <Text style={styles.detail}>{row.detail}</Text>
             </View>
