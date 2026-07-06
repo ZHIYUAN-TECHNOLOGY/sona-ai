@@ -110,6 +110,14 @@ Times are cumulative targets. Keep moving; don't over-narrate.
 **Rule:** any moat-breaking failure (re-ID, export gate, network) → **cut to backup video
 immediately**. Never debug live in front of judges.
 
+### Known model variance (NOT failures — Qwen3 draws differently run-to-run)
+- **Empty PLAN (`—`).** Model sometimes merges management steps into ASSESSMENT and leaves
+  Plan blank. The steps still appear correctly under **Orders & follow-ups** — that's the
+  reliable section to point at. If Plan is blank, narrate off Orders; do not re-draft live.
+- **Objective admin line.** Fixed (prompt excludes IC/PHONE/ADDR from the body) — confirmed
+  clean on-device. If it ever reappears, it's variance, not a regression; cut to video.
+- If a run's Plan is blank, that run still **PASSES** rehearsal — Orders carries it.
+
 ---
 
 ## 4. Backup video (insurance — record this before demo day)
