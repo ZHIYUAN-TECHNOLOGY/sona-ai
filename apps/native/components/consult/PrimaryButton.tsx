@@ -12,6 +12,7 @@ export function PrimaryButton({
   size = "md",
   icon,
   style,
+  disabled = false,
 }: {
   label: string;
   onPress?: () => void;
@@ -19,6 +20,7 @@ export function PrimaryButton({
   size?: "sm" | "md";
   icon?: ReactNode;
   style?: object;
+  disabled?: boolean;
 }) {
   const isPrimary = variant === "primary";
   const isDanger = variant === "danger";
@@ -28,6 +30,8 @@ export function PrimaryButton({
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
         styles.btn,
@@ -37,6 +41,7 @@ export function PrimaryButton({
         (isPrimary || isDanger) && glowShadow,
         isDanger && styles.dangerShadow,
         pressed && styles.pressed,
+        disabled && styles.disabled,
         style,
       ]}
     >
@@ -62,4 +67,5 @@ const styles = StyleSheet.create({
   label: { fontSize: 13.5, fontWeight: "600" },
   labelSm: { fontSize: 12 },
   pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
+  disabled: { opacity: 0.4 },
 });

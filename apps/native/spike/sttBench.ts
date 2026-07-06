@@ -1,6 +1,10 @@
 import { AudioContext } from "react-native-audio-api";
 import { Asset } from "expo-asset";
-import type { DecodingOptions, TranscriptionResult } from "react-native-executorch";
+import type {
+  DecodingOptions,
+  SpeechToTextLanguage,
+  TranscriptionResult,
+} from "react-native-executorch";
 import { timed, StageMetric } from "./metrics";
 
 const STT_GO_MS = 90_000; // 60s clip must transcribe in <= 90s
@@ -14,15 +18,22 @@ async function sampleUri(): Promise<string> {
 }
 
 // `model` is the object returned by useSpeechToText (passed in from the screen).
-export async function runSttBench(model: {
-  transcribe: (waveform: Float32Array, options?: DecodingOptions) => Promise<TranscriptionResult>;
-}): Promise<StageMetric> {
+// Whisper SMALL is multilingual, so `transcribe` MUST be given a language; with
+// none it throws "Model is multilingual, provide a language" (no auto-detect).
+// The locked consult is BM + EN, patient speech Malay-dominant -> default "ms".
+// Flip to "en" to benchmark the English-forced decode of the same clip.
+export async function runSttBench(
+  model: {
+    transcribe: (waveform: Float32Array, options?: DecodingOptions) => Promise<TranscriptionResult>;
+  },
+  language: SpeechToTextLanguage = "ms",
+): Promise<StageMetric> {
   const uri = await sampleUri();
   const audioContext = new AudioContext({ sampleRate: 16000 });
   const decoded = await audioContext.decodeAudioData(uri);
   const buffer = decoded.getChannelData(0);
 
-  const { result, ms } = await timed(() => model.transcribe(buffer)); // multilingual auto-detect
+  const { result, ms } = await timed(() => model.transcribe(buffer, { language }));
   return {
     stage: "stt",
     ms,

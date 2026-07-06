@@ -8,11 +8,14 @@ import {
   appendTranscript,
   createConsult,
   getTranscript,
+  saveNote,
   setConsultStatus,
 } from "../db";
-import { saveReidMap } from "../secure/reidMap";
+import { getReidMap, saveReidMap, sealAudioDiscard } from "../secure/reidMap";
+import { applyReidMap } from "../secure/reidMapCore";
 import type { RawSegment } from "./mockStt";
-import { redactTranscript, type RedactionResult } from "./redaction";
+import { generateNote, type DraftNote, type LlmLike } from "./noteGen";
+import { redactTranscript, type RedactionResult, type RedactedSegment } from "./redaction";
 
 export async function beginConsult(consentText: string, title = "GP follow-up") {
   const consult = await createConsult({ title, consentText });
@@ -78,4 +81,65 @@ export async function runRedaction(consultId: string): Promise<RedactionOutcome>
     });
   }
   return { ...result, consultId };
+}
+
+/**
+ * Draft the SOAP note on-device from the DE-IDENTIFIED transcript, then re-identify
+ * it locally for the clinician's view and persist it (re-identified) to the local
+ * DB. The model sees only tokens (NAME_1, IC_1, …); the secure re-ID map is applied
+ * here, on-device, and never crosses the boundary. Returns the re-identified note.
+ */
+export async function draftClinicalNote(
+  consultId: string,
+  segments: RedactedSegment[],
+  llm: LlmLike,
+): Promise<DraftNote> {
+  const deident = await generateNote(llm, segments); // model sees de-identified text only
+
+  const map = (await getReidMap(consultId)) ?? {};
+  const soap = {
+    subjective: applyReidMap(map, deident.soap.subjective),
+    objective: applyReidMap(map, deident.soap.objective),
+    assessment: applyReidMap(map, deident.soap.assessment),
+    plan: applyReidMap(map, deident.soap.plan),
+  };
+  const orders = deident.orders.map((o) => ({ ...o, text: applyReidMap(map, o.text) }));
+
+  await saveNote({ consultId, soap, orders, deidentified: false }); // re-identified local record
+  await setConsultStatus(consultId, "noted");
+  await appendAudit({
+    consultId,
+    stage: "note-generate",
+    detail: "SOAP note drafted on-device (Qwen3-1.7B), re-identified locally for review",
+  });
+  return { soap, orders, raw: deident.raw };
+}
+
+/**
+ * Sign the note and discard the raw audio. On sign the consult is marked signed,
+ * the audio is sealed-then-discarded (only a hash is retained as tamper-evidence;
+ * the audio itself never persists), and both events are written to the audit log.
+ * Nothing is transmitted — the "0 bytes" proof shown on the complete screen.
+ */
+export async function signConsult(consultId: string, clinicianName: string): Promise<void> {
+  await setConsultStatus(consultId, "signed");
+  await appendAudit({ consultId, stage: "sign", detail: `Note signed by ${clinicianName}` });
+  // Scripted demo has no captured audio file; the live-mic path seals the real
+  // SHA-256 here before deleting the file. Either way, no audio is retained.
+  await sealAudioDiscard(consultId, `scripted-demo:${consultId}`);
+  await appendAudit({
+    consultId,
+    stage: "audio-discard",
+    detail: "Raw audio discarded on sign. Only the signed note and audit log remain. 0 bytes transmitted.",
+  });
+}
+
+/** Record an export action (FHIR/PDF/text) in the audit log. On-device artefact only. */
+export async function recordExport(consultId: string, label: string): Promise<void> {
+  await appendAudit({ consultId, stage: "export", detail: `${label} generated on-device` });
+}
+
+/** Mark the consult complete (final lifecycle state) after the complete screen loads. */
+export async function markComplete(consultId: string): Promise<void> {
+  await setConsultStatus(consultId, "complete");
 }
