@@ -26,6 +26,9 @@ export default function SignScreen() {
   const { note, consultId, redaction } = useConsultPipeline();
   const [signed, setSigned] = useState(false);
   const [signedAt, setSignedAt] = useState<string | null>(null);
+  // FHIR R4 is the default export destination (standards-based EMR ingest) and is
+  // shown pre-selected + prominent; tapping any destination selects it and exports.
+  const [selectedExport, setSelectedExport] = useState<ExportKind>("FHIR R4");
 
   const buildSignedNote = (): SignedNote | null => {
     if (!note || !consultId) return null;
@@ -109,18 +112,21 @@ export default function SignScreen() {
             <PrimaryButton
               key={label}
               label={label}
-              variant="ghost"
+              variant={selectedExport === label ? "primary" : "ghost"}
               size="sm"
               style={styles.grow}
               disabled={!signed}
-              onPress={() => void doExport(label)}
+              onPress={() => {
+                setSelectedExport(label);
+                void doExport(label);
+              }}
             />
           ))}
         </View>
         <Text style={styles.micro}>
           {signed
-            ? "DocumentReference plus note, re-identified, ready for any EMR ingest"
-            : "Sign to unlock export"}
+            ? `${selectedExport} selected · re-identified, ready for any EMR ingest`
+            : `Sign to unlock export · ${selectedExport} selected by default`}
         </Text>
       </Card>
 
