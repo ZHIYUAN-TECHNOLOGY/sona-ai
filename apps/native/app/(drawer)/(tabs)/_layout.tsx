@@ -2,11 +2,10 @@ import { Tabs } from "expo-router";
 
 import { TabBarIcon } from "@/components/tabbar-icon";
 import { NAV_THEME } from "@/lib/constants";
-import { useColorScheme } from "@/lib/use-color-scheme";
 
 export default function TabLayout() {
-  const { isDarkColorScheme } = useColorScheme();
-  const theme = isDarkColorScheme ? NAV_THEME.dark : NAV_THEME.light;
+  // Light-theme only (see root _layout) — pin tab chrome to the light palette.
+  const theme = NAV_THEME.light;
 
   return (
     <Tabs
