@@ -67,6 +67,11 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const seq = useRef(0);
   const idRef = useRef<string | null>(null);
   const redactionRef = useRef<RedactionOutcome | null>(null);
+  // Transcript segments persist to SQLite asynchronously as they stream. Redaction
+  // reads the transcript BACK from SQLite, so it must wait for every write to commit
+  // first — otherwise it redacts a partial transcript (device disk I/O is slower than
+  // the sim, so the last segments' writes can still be in flight at End-consult).
+  const pendingWrites = useRef<Promise<unknown>[]>([]);
 
   // On-device note model. Loads once for the whole consult flow so the note screen
   // can draft without a cold start. Same model benchmarked at Gate 0 (Qwen3-1.7B).
@@ -80,6 +85,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setSegments([]);
     setRedaction(null);
     seq.current = 0;
+    pendingWrites.current = [];
   }, []);
 
   const startRecording = useCallback(() => {
@@ -91,11 +97,11 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
       (segment) => {
         setSegments((prev) => [...prev, segment]);
         const s = seq.current++;
-        void persistSegment(id, s, segment);
+        pendingWrites.current.push(persistSegment(id, s, segment));
       },
       {
         onDone: () => {
-          void persistRecordingStop(id);
+          pendingWrites.current.push(persistRecordingStop(id));
           setStatus("transcribed");
         },
       },
@@ -105,6 +111,9 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const redact = useCallback(async () => {
     const id = idRef.current;
     if (!id) return;
+    // Wait for all transcript writes to commit before reading the transcript back,
+    // so redaction always runs over the COMPLETE consult, never a partial one.
+    await Promise.allSettled(pendingWrites.current);
     const result = await runRedaction(id);
     redactionRef.current = result;
     setRedaction(result);
@@ -146,6 +155,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setNoteStatus("idle");
     setNoteError(null);
     seq.current = 0;
+    pendingWrites.current = [];
   }, []);
 
   useEffect(() => () => streamer.current?.cancel(), []);
