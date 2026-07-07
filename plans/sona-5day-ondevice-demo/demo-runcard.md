@@ -144,6 +144,24 @@ Log each run: PASS / what broke. 5/5 PASS = demo-ready.
 
 ---
 
+## 5b. Real Gate-0 numbers (iPhone 17 Pro Max, iOS 26.5.1, on-device)
+
+Measured on physical hardware (not sim). Confirms the demo architecture.
+
+| Stage | Result | Number | Read |
+|---|---|---|---|
+| Redaction (NER) | ✅ GO | **32 ms**, recall 1.0, 7 spans | Superb; the moat is cheap. |
+| STT (Whisper-small) | ran | **86.8 s** + garbage Malay | Unusable live → **scripted transcript is correct**, not a shortcut. |
+| LLM note-gen (Qwen3-1.7B) | ❌ vs budget | **23 tok/s**, all sections present | Quality fine; ~half Mac's 42 tok/s. A ~200-tok demo note ≈ 9 s + model load. |
+| E2E (incl. STT) | ❌ vs budget | **127 s** | STT-dominated; the demo path skips STT so this doesn't apply. |
+
+The ❌ are the benchmark's strict latency budgets *including the dead STT stage*. The
+demo runs no live STT and a short note, so real demo timing is model-load + ~9 s draft.
+Pre-warm the model (§0) and this is invisible.
+
+**Demo implication:** on-device draft is ~2× slower than the sim you rehearse on. Warm
+the model before every run; never let a cold model load happen in front of judges.
+
 ## 6. Anticipated Q&A
 
 - **"What about the cloud?"** — Optional. Only *de-identified* text may cross, only on the opt-in
