@@ -5,7 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { GlassTabBar } from "@/components/consult/GlassTabBar";
 import { PhoneStatusBar } from "@/components/consult/PhoneStatusBar";
 import { TopBar } from "@/components/consult/TopBar";
-import { colors } from "@/lib/theme";
+import { colors, space } from "@/lib/theme";
 
 /**
  * Shared consult-flow screen scaffold: fixed light background, the airplane
@@ -71,15 +71,15 @@ export function ConsultScreen({
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   body: { flex: 1 },
-  bodyContent: { paddingHorizontal: 17, paddingBottom: 16, gap: 9 },
+  bodyContent: { paddingHorizontal: space.lg, paddingBottom: space.xl, gap: space.md },
   bodyFlex: { flex: 1 },
   footer: {
-    paddingHorizontal: 17,
-    paddingTop: 9,
-    gap: 8,
+    paddingHorizontal: space.lg,
+    paddingTop: space.md,
+    gap: space.sm,
   },
   tabWrap: {
-    paddingHorizontal: 10,
-    paddingTop: 4,
+    paddingHorizontal: space.md,
+    paddingTop: space.xs,
   },
 });

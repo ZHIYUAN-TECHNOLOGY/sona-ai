@@ -34,11 +34,16 @@ export default function CompleteScreen() {
     void getAudit(consultId).then(setRows);
   }, [consultId]);
 
-  // "Next patient" resets pipeline state and restarts the flow at consent with a
-  // clean stack — the finished consult's screens are dismissed first.
-  const nextPatient = () => {
+  // Done: reset pipeline state, dismiss the consult stack, and return to the Today
+  // tab — the just-signed consult now appears in the list. Start next: restart a
+  // fresh consult in place.
+  const done = () => {
     reset();
     if (router.canDismiss?.()) router.dismissAll();
+    router.navigate("/");
+  };
+  const startNext = () => {
+    reset();
     router.replace("/consent");
   };
 
@@ -47,8 +52,12 @@ export default function CompleteScreen() {
       time="9:47"
       title="Consult complete"
       sub={proof.duration}
-      footer={<PrimaryButton label="Next patient" onPress={nextPatient} />}
-      tabBar={{ activeKey: "home", onRecord: () => router.replace("/recording") }}
+      footer={
+        <View style={styles.footer}>
+          <PrimaryButton label="Done" onPress={done} />
+          <PrimaryButton label="Start next consult" variant="ghost" onPress={startNext} />
+        </View>
+      }
     >
       <Stat value={proof.bytesLabel} label={proof.bytesSub} />
 
@@ -69,6 +78,7 @@ export default function CompleteScreen() {
 }
 
 const styles = StyleSheet.create({
+  footer: { gap: 8 },
   log: { marginTop: 4 },
   ar: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6 },
   arDivider: { borderTopWidth: 1, borderTopColor: colors.line },

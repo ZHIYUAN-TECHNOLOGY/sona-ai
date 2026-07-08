@@ -15,6 +15,10 @@ export default function ConsultLayout() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: colors.bg },
+          // Forward-committed flow: no swipe-back (explicit back buttons remain on
+          // privacy/note/sign). Prevents swiping back onto the Record launcher tab,
+          // which would relaunch the flow in a loop.
+          gestureEnabled: false,
         }}
       />
     </PipelineProvider>
