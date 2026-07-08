@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "@/lib/theme";
+import { colors, font, space } from "@/lib/theme";
 
 /** Screen header: optional back button, title + subtitle, and a right slot (pill). */
 export function TopBar({
@@ -40,21 +40,22 @@ const styles = StyleSheet.create({
   top: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 17,
-    marginBottom: 12,
+    gap: space.md,
+    paddingHorizontal: 18,
+    marginBottom: 14,
   },
   back: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     borderWidth: 1,
     borderColor: colors.line,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.card,
     alignItems: "center",
     justifyContent: "center",
   },
   tt: { flex: 1, minWidth: 0 },
-  title: { fontSize: 16, fontWeight: "600", letterSpacing: -0.16, color: colors.ink },
-  sub: { fontSize: 11, color: colors.ink3, marginTop: 1 },
+  // Serif display title (Fraunces) — the editorial header.
+  title: { ...font.h3, color: colors.ink },
+  sub: { ...font.bodySm, color: colors.ink3, marginTop: 2 },
 });

@@ -332,4 +332,32 @@ export async function getConsult(consultId: string): Promise<Consult | null> {
   return row ?? null;
 }
 
+/** Rename a consult (AI-generated title, or a clinician edit). Title must be PII-free. */
+export async function setConsultTitle(consultId: string, title: string): Promise<void> {
+  const db = await initDb();
+  await db.runAsync(`UPDATE consult SET title = ?, updatedAt = ? WHERE id = ?;`, [
+    title,
+    Date.now(),
+    consultId,
+  ]);
+}
+
+const CONSULT_COLS =
+  "id, createdAt, updatedAt, status, title, consentText, audioHash, signedAt";
+
+/** All consults, newest first — powers the Today / History tab lists. */
+export async function listConsults(): Promise<Consult[]> {
+  const db = await initDb();
+  return db.getAllAsync<Consult>(`SELECT ${CONSULT_COLS} FROM consult ORDER BY createdAt DESC;`);
+}
+
+/** Consults that have reached a note stage — powers the Notes tab. */
+export async function listNotedConsults(): Promise<Consult[]> {
+  const db = await initDb();
+  return db.getAllAsync<Consult>(
+    `SELECT ${CONSULT_COLS} FROM consult
+     WHERE status IN ('noted','signed','complete') ORDER BY createdAt DESC;`,
+  );
+}
+
 export * from "./types";

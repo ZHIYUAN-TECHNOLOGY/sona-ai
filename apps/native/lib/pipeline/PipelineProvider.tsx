@@ -4,7 +4,7 @@
 // scripted STT today; swap `streamLockedTranscript` for a real executorch
 // useSpeechToText stream after Gate 0 with no change to consumers.
 
-import { QWEN3_1_7B_QUANTIZED, useLLM } from "react-native-executorch";
+import { useLLM } from "react-native-executorch";
 import React, {
   createContext,
   useCallback,
@@ -24,7 +24,9 @@ import {
   type RedactionOutcome,
 } from "./consultPipeline";
 import { streamLockedTranscript, type RawSegment, type Streamer } from "./mockStt";
+import { NOTE_MODEL } from "./model";
 import type { DraftNote } from "./noteGen";
+import { DEFAULT_TEMPLATE, templateById, templatePrompt } from "./templates";
 
 export type PipelineStatus =
   | "idle"
@@ -46,10 +48,12 @@ export interface PipelineState {
   noteError: string | null;
   llmReady: boolean; // on-device note model loaded
   llmProgress: number; // 0..1 model download progress
+  templateId: string; // selected note template (drives the generation prompt)
   startConsult: (consentText: string) => Promise<void>;
   startRecording: () => void;
   redact: () => Promise<void>;
   draftNote: () => Promise<void>;
+  setTemplate: (id: string) => void;
   reset: () => void;
 }
 
@@ -63,6 +67,8 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const [note, setNote] = useState<DraftNote | null>(null);
   const [noteStatus, setNoteStatus] = useState<NoteStatus>("idle");
   const [noteError, setNoteError] = useState<string | null>(null);
+  const [templateId, setTemplateId] = useState<string>(DEFAULT_TEMPLATE.id);
+  const templateRef = useRef<string>(DEFAULT_TEMPLATE.id);
   const streamer = useRef<Streamer | null>(null);
   const seq = useRef(0);
   const idRef = useRef<string | null>(null);
@@ -74,8 +80,8 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const pendingWrites = useRef<Promise<unknown>[]>([]);
 
   // On-device note model. Loads once for the whole consult flow so the note screen
-  // can draft without a cold start. Same model benchmarked at Gate 0 (Qwen3-1.7B).
-  const llm = useLLM({ model: QWEN3_1_7B_QUANTIZED });
+  // can draft without a cold start. Model is configured in ./model (NOTE_MODEL).
+  const llm = useLLM({ model: NOTE_MODEL });
 
   const startConsult = useCallback(async (consentText: string) => {
     const consult = await beginConsult(consentText);
@@ -133,7 +139,8 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setNoteStatus("generating");
     setNoteError(null);
     try {
-      const drafted = await draftClinicalNote(id, red.segments, llm);
+      const prompt = templatePrompt(templateById(templateRef.current));
+      const drafted = await draftClinicalNote(id, red.segments, llm, prompt);
       setNote(drafted);
       setNoteStatus("ready");
       setStatus("noted");
@@ -142,6 +149,11 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
       setNoteStatus("error");
     }
   }, [llm]);
+
+  const setTemplate = useCallback((id: string) => {
+    templateRef.current = id;
+    setTemplateId(id);
+  }, []);
 
   const reset = useCallback(() => {
     streamer.current?.cancel();
@@ -172,10 +184,12 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         noteError,
         llmReady: llm.isReady,
         llmProgress: llm.downloadProgress ?? 0,
+        templateId,
         startConsult,
         startRecording,
         redact,
         draftNote,
+        setTemplate,
         reset,
       }}
     >

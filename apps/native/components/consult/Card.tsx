@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 import { StyleSheet, View, type ViewStyle } from "react-native";
 
-import { colors, radius, space } from "@/lib/theme";
+import { colors, radius, shadow, space } from "@/lib/theme";
 
 export type CardVariant = "default" | "tint" | "green" | "amber" | "danger";
 
-const VARIANTS: Record<CardVariant, { bg: string; border: string }> = {
-  default: { bg: colors.bg, border: colors.line },
+const VARIANTS: Record<CardVariant, { bg: string; border: string; lift?: boolean }> = {
+  default: { bg: colors.card, border: colors.line, lift: true },
   tint: { bg: colors.surface, border: colors.line },
   green: { bg: colors.green50, border: colors.green100 },
   amber: { bg: colors.amber50, border: colors.amberLine },
@@ -24,7 +24,14 @@ export function Card({
 }) {
   const v = VARIANTS[variant];
   return (
-    <View style={[styles.card, { backgroundColor: v.bg, borderColor: v.border }, style]}>
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: v.bg, borderColor: v.border },
+        v.lift ? styles.lift : null,
+        style,
+      ]}
+    >
       {children}
     </View>
   );
@@ -33,7 +40,9 @@ export function Card({
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
+    borderCurve: "continuous",
     padding: space.lg,
   },
+  lift: { boxShadow: shadow.card },
 });

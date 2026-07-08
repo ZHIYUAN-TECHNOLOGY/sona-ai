@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { GlassSurface } from "@/components/consult/GlassSurface";
 import { colors, radius } from "@/lib/theme";
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -13,10 +14,10 @@ const TABS: { key: string; label: string; icon: IconName }[] = [
 ];
 
 /**
- * iOS glass tab bar approximation with the raised center Record button.
- * expo-blur / linear-gradient are not in the deps, so the "liquid glass" is
- * approximated with a translucent surface + border + soft shadow (the prototype
- * calls this a web/native approximation too). The center Record starts a consult.
+ * Floating glass tab bar with a raised center Record button. The pill backdrop is
+ * REAL glass (GlassSurface: liquid glass on iOS 26, gaussian blur on iOS 18-25).
+ * The center button lives OUTSIDE the clipped glass pill so it can poke above it.
+ * The center Record starts a consult.
  */
 export function GlassTabBar({
   activeKey = "home",
@@ -31,18 +32,25 @@ export function GlassTabBar({
   const right = TABS.slice(2);
 
   return (
-    <View style={styles.bar} pointerEvents="box-none">
-      {left.map((t) => (
-        <TabItem key={t.key} tab={t} active={activeKey === t.key} onPress={() => onTabPress?.(t.key)} />
-      ))}
+    <View style={styles.wrap} pointerEvents="box-none">
+      <GlassSurface style={styles.pill}>
+        {left.map((t) => (
+          <TabItem key={t.key} tab={t} active={activeKey === t.key} onPress={() => onTabPress?.(t.key)} />
+        ))}
+        <View style={styles.centerGap} />
+        {right.map((t) => (
+          <TabItem key={t.key} tab={t} active={activeKey === t.key} onPress={() => onTabPress?.(t.key)} />
+        ))}
+      </GlassSurface>
 
-      <Pressable accessibilityRole="button" accessibilityLabel="Record" onPress={onRecord} style={styles.center}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Start consult"
+        onPress={onRecord}
+        style={({ pressed }) => [styles.center, pressed && styles.centerPressed]}
+      >
         <Ionicons name="mic" size={23} color={colors.white} />
       </Pressable>
-
-      {right.map((t) => (
-        <TabItem key={t.key} tab={t} active={activeKey === t.key} onPress={() => onTabPress?.(t.key)} />
-      ))}
     </View>
   );
 }
@@ -66,7 +74,14 @@ function TabItem({
 }
 
 const styles = StyleSheet.create({
-  bar: {
+  wrap: {
+    // Non-clipping container so the center button can overflow above the pill,
+    // and the pill's drop shadow renders outside the clipped glass.
+    boxShadow: "0px 10px 24px rgba(11,30,22,0.16)",
+    borderRadius: 26,
+    borderCurve: "continuous",
+  },
+  pill: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
@@ -74,37 +89,28 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     paddingHorizontal: 10,
     borderRadius: 26,
-    backgroundColor: "rgba(245,249,247,0.94)",
+    borderCurve: "continuous",
     borderWidth: 1,
     borderColor: "rgba(205,219,211,0.9)",
-    shadowColor: colors.ink,
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 12,
+    overflow: "hidden",
   },
-  tab: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 3,
-    minHeight: 46,
-  },
+  centerGap: { width: 58 },
+  tab: { flex: 1, alignItems: "center", justifyContent: "center", gap: 3, minHeight: 46 },
   tabLabel: { fontSize: 9, fontWeight: "600" },
   center: {
+    position: "absolute",
+    top: -22,
+    left: "50%",
+    marginLeft: -25,
     width: 50,
     height: 50,
     borderRadius: radius.pill,
-    marginTop: -24,
     backgroundColor: colors.green,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2.5,
     borderColor: "rgba(255,255,255,0.92)",
-    shadowColor: colors.green,
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
+    boxShadow: "0px 8px 16px rgba(14,124,82,0.4)",
   },
+  centerPressed: { opacity: 0.9, transform: [{ scale: 0.96 }] },
 });

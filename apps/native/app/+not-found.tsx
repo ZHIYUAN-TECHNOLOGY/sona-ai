@@ -1,62 +1,41 @@
-import { Button, Column, Host, Text as ExpoUIText } from "@expo/ui";
 import { Stack, router } from "expo-router";
-import { Text, View, StyleSheet } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
-import { Container } from "@/components/container";
-import { NAV_THEME } from "@/lib/constants";
-import { useColorScheme } from "@/lib/use-color-scheme";
+import { colors, font } from "@/lib/theme";
 
 export default function NotFoundScreen() {
-  const { colorScheme } = useColorScheme();
-  const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
-
   return (
     <>
-      <Stack.Screen options={{ title: "Oops!" }} />
-      <Container>
-        <View style={styles.container}>
-          <View style={styles.content}>
-            <Text style={styles.emoji}>🤔</Text>
-            <Host matchContents={{ vertical: true }}>
-              <Column spacing={12} alignment="center">
-                <ExpoUIText
-                  textStyle={{
-                    color: theme.text,
-                    fontSize: 20,
-                    fontWeight: "bold",
-                    textAlign: "center",
-                  }}
-                >
-                  Page Not Found
-                </ExpoUIText>
-                <ExpoUIText
-                  textStyle={{ color: theme.text, fontSize: 14, textAlign: "center" }}
-                  style={{ opacity: 0.7 }}
-                >
-                  Sorry, the page you're looking for doesn't exist.
-                </ExpoUIText>
-                <Button label="Go to Home" variant="outlined" onPress={() => router.replace("/")} />
-              </Column>
-            </Host>
-          </View>
-        </View>
-      </Container>
+      <Stack.Screen options={{ title: "Not found" }} />
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.bg,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 24,
+          gap: 12,
+        }}
+      >
+        <Text style={{ fontSize: 44 }}>🤔</Text>
+        <Text style={[font.h2, { color: colors.ink, textAlign: "center" }]}>Page not found</Text>
+        <Text style={[font.body, { color: colors.ink3, textAlign: "center" }]}>
+          That screen doesn&apos;t exist.
+        </Text>
+        <Pressable
+          onPress={() => router.replace("/")}
+          style={{
+            marginTop: 8,
+            backgroundColor: colors.green,
+            paddingVertical: 13,
+            paddingHorizontal: 22,
+            borderRadius: 16,
+            borderCurve: "continuous",
+          }}
+        >
+          <Text style={{ color: colors.white, fontSize: 15, fontWeight: "600" }}>Go home</Text>
+        </Pressable>
+      </View>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 16,
-  },
-  content: {
-    alignItems: "center",
-  },
-  emoji: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-});

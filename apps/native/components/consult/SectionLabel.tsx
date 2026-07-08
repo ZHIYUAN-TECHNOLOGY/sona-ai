@@ -18,11 +18,12 @@ export function CardHeading({ children, color }: { children: string; color?: str
 
 const styles = StyleSheet.create({
   label: {
-    ...font.overline,
+    ...font.label,
     color: colors.green,
   },
   cardHeading: {
-    ...font.cardHeading,
+    fontSize: 13,
+    fontWeight: "600",
     color: colors.ink,
   },
 });

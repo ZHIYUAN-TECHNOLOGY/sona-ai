@@ -10,14 +10,16 @@ import {
   getTranscript,
   saveNote,
   setConsultStatus,
+  setConsultTitle,
 } from "../db";
 import { getReidMap, saveReidMap, sealAudioDiscard } from "../secure/reidMap";
 import { applyReidMap } from "../secure/reidMapCore";
+import { NOTE_MODEL_NAME } from "./model";
 import type { RawSegment } from "./mockStt";
 import { generateNote, type DraftNote, type LlmLike } from "./noteGen";
 import { redactTranscript, type RedactionResult, type RedactedSegment } from "./redaction";
 
-export async function beginConsult(consentText: string, title = "GP follow-up") {
+export async function beginConsult(consentText: string, title = "New consult") {
   const consult = await createConsult({ title, consentText });
   await appendAudit({
     consultId: consult.id,
@@ -93,8 +95,9 @@ export async function draftClinicalNote(
   consultId: string,
   segments: RedactedSegment[],
   llm: LlmLike,
+  systemPrompt?: string,
 ): Promise<DraftNote> {
-  const deident = await generateNote(llm, segments); // model sees de-identified text only
+  const deident = await generateNote(llm, segments, systemPrompt); // model sees de-identified text only
 
   const map = (await getReidMap(consultId)) ?? {};
   const soap = {
@@ -104,15 +107,20 @@ export async function draftClinicalNote(
     plan: applyReidMap(map, deident.soap.plan),
   };
   const orders = deident.orders.map((o) => ({ ...o, text: applyReidMap(map, o.text) }));
+  // Re-identify the Markdown body too (same secure map, on-device) for rich display.
+  const markdown = applyReidMap(map, deident.markdown);
 
   await saveNote({ consultId, soap, orders, deidentified: false }); // re-identified local record
+  // The AI title is de-identified (generated from tokens, tokens stripped) — save it
+  // AS-IS, never re-identified, so no patient name can reach a list screen.
+  await setConsultTitle(consultId, deident.title);
   await setConsultStatus(consultId, "noted");
   await appendAudit({
     consultId,
     stage: "note-generate",
-    detail: "SOAP note drafted on-device (Qwen3-1.7B), re-identified locally for review",
+    detail: `SOAP note drafted on-device (${NOTE_MODEL_NAME}), re-identified locally for review`,
   });
-  return { soap, orders, raw: deident.raw };
+  return { soap, orders, raw: deident.raw, title: deident.title, markdown };
 }
 
 /**

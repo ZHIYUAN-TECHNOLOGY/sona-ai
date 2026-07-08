@@ -1,7 +1,7 @@
 // On-device SOAP note generation (Day 3, Gate 2/3).
 //
 // Takes the DE-IDENTIFIED transcript (redaction tokens in place) and asks the
-// on-device LLM (Qwen3-1.7B) to draft a SOAP note. The model only ever sees
+// on-device LLM to draft a SOAP note. The model only ever sees
 // de-identified text (tokens like NAME_1, IC_1) — the caller re-identifies the
 // result locally, from the secure map, before showing it to the clinician. This
 // keeps the moat intact: only de-identified text is ever fed to the model, so the
@@ -30,14 +30,66 @@ export interface DraftNote {
   orders: NoteOrder[];
   /** Full model text after think-strip. De-identified until the caller re-IDs it. */
   raw: string;
+  /**
+   * Short, PII-FREE clinical title for the consult list (e.g. "URTI follow-up").
+   * Generated from the de-identified transcript and kept de-identified — never
+   * re-identified, so a patient name can never surface in a list screen.
+   */
+  title: string;
+  /**
+   * The note body as Markdown (## headings, **bold** key findings, - lists),
+   * for rich rendering. Re-identified by the caller before display. The structured
+   * `soap`/`orders` above are the plain-text derivation used for export.
+   */
+  markdown: string;
+}
+
+// Any surviving redaction token — a title must never contain one.
+const TITLE_TOKEN_RE = /\b(?:NAME|NAME_UNCERTAIN|IC|PHONE|ADDR|ADDRESS|MRN|EMAIL|DOB)_\d+\b/gi;
+
+/**
+ * Peel a leading "Title: …" line off the model output. Returns the raw title and
+ * the remaining text (so the SOAP parser doesn't see the title line).
+ */
+export function parseTitle(text: string): { title: string; rest: string } {
+  const m = text.match(/^[\s>#*\-]*\*{0,2}title\*{0,2}\s*[:\-]\s*(.+)$/im);
+  if (!m || m.index === undefined) return { title: "", rest: text };
+  const title = m[1].trim().replace(/^["'“‘]+|["'”’.]+$/g, "").trim();
+  const rest = text.slice(0, m.index) + text.slice(m.index + m[0].length);
+  return { title, rest };
+}
+
+/**
+ * Make a safe consult title: strip any redaction token, bound the length, and
+ * fall back to the assessment/subjective first phrase, then a generic, if the
+ * model's title is empty or unusable. The result is always PII-free.
+ */
+export function safeTitle(rawTitle: string, soap: DraftNote["soap"]): string {
+  const clean = (s: string) =>
+    s.replace(TITLE_TOKEN_RE, "").replace(/\s{2,}/g, " ").replace(/[·•:\-–—]+$/g, "").trim();
+
+  const t = clean(rawTitle);
+  if (t.length >= 3 && t.length <= 60) return t;
+
+  for (const section of [soap.assessment, soap.subjective]) {
+    const first = clean(section.split(/[.,;\n]/)[0] ?? "");
+    if (first.length >= 3) return first.slice(0, 60);
+  }
+  return "Consult";
 }
 
 export const NOTE_SYSTEM_PROMPT =
   "You are a clinical documentation assistant. Convert the de-identified consultation " +
-  "transcript into a concise SOAP note in English. Output exactly four sections, each " +
-  "heading on its own line: 'Subjective', 'Objective', 'Assessment', 'Plan'. After the " +
-  "Plan section add a heading 'Orders & follow-ups' followed by a bulleted list, one item " +
-  "per line starting with '- ', covering review intervals, tests ordered, medications with " +
+  "transcript into a concise SOAP note in English. FIRST output a single line " +
+  "'Title: ' followed by a 3 to 6 word clinical summary of the visit (the chief " +
+  "complaint or assessment, e.g. 'URTI follow-up' or 'Cough and fever'). The title must " +
+  "contain NO patient names, IC numbers, phone numbers, addresses, or identifier tokens. " +
+  "Then output the note as GitHub-flavoured Markdown: each section as a level-2 heading " +
+  "('## Subjective', '## Objective', '## Assessment', '## Plan'), then a final " +
+  "'## Orders & follow-ups' heading with a '- ' bulleted list. Use **bold** to emphasise " +
+  "the key clinical findings (working diagnosis, abnormal vitals, red-flag symptoms). The " +
+  "Orders list should cover " +
+  "review intervals, tests ordered, medications with " +
   "doses, and safety-net advice the clinician stated. Use ONLY information present in the " +
   "transcript. Do not invent findings, medications, or doses. The identity-verification " +
   "exchange (IC number, phone number, address tokens such as IC_1, PHONE_1, ADDR_1) is " +
@@ -45,10 +97,24 @@ export const NOTE_SYSTEM_PROMPT =
   "patient, keep any identifier token such as NAME_1 exactly as written. No preamble, no " +
   "closing remarks.";
 
+/** Strip inline Markdown (bold/italic/code/heading/list marks) → clean plain text for export. */
+export function stripInlineMd(s: string): string {
+  return s
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/(^|[^*])\*([^*]+)\*/g, "$1$2")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/^\s{0,3}#{1,6}\s*/gm, "")
+    .replace(/^\s*[-*•]\s+/gm, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
 /**
- * Qwen3 is a reasoning model: it wraps its scratchpad in <think>…</think> before the
- * answer. Strip closed think blocks, and if generation was cut off inside an unclosed
- * <think>, drop everything from it onward so no scratchpad leaks into the note.
+ * Model-agnostic scratchpad strip. Some reasoning models wrap their chain-of-thought
+ * in <think>…</think> before the answer. Strip closed blocks, and if generation was
+ * cut off inside an unclosed <think>, drop everything from it onward so no scratchpad
+ * leaks into the note. A harmless no-op for models that never emit <think>.
  */
 export function stripThink(text: string): string {
   let out = text.replace(/<think>[\s\S]*?<\/think>/gi, "");
@@ -143,13 +209,30 @@ export function parseSoap(text: string): { soap: DraftNote["soap"]; orders: Note
  * tokens; the returned note is still de-identified — the caller re-identifies it
  * locally (secure map) before display/persist. Throws if the LLM call fails.
  */
-export async function generateNote(llm: LlmLike, segments: RedactedSegment[]): Promise<DraftNote> {
+export async function generateNote(
+  llm: LlmLike,
+  segments: RedactedSegment[],
+  systemPrompt: string = NOTE_SYSTEM_PROMPT,
+): Promise<DraftNote> {
   const messages: Msg[] = [
-    { role: "system", content: NOTE_SYSTEM_PROMPT },
+    { role: "system", content: systemPrompt },
     { role: "user", content: buildTranscript(segments) },
   ];
   const rawOut = await llm.generate(messages);
   const clean = stripThink(rawOut);
-  const { soap, orders } = parseSoap(clean);
-  return { soap, orders, raw: clean };
+  const { title: rawTitle, rest } = parseTitle(clean);
+  const markdown = rest.trim();
+
+  // Parse into structured sections, then strip inline markdown → clean text for
+  // export. The markdown string above is kept for rich on-screen rendering.
+  const parsed = parseSoap(rest);
+  const soap = {
+    subjective: stripInlineMd(parsed.soap.subjective),
+    objective: stripInlineMd(parsed.soap.objective),
+    assessment: stripInlineMd(parsed.soap.assessment),
+    plan: stripInlineMd(parsed.soap.plan),
+  };
+  const orders = parsed.orders.map((o) => ({ ...o, text: stripInlineMd(o.text) }));
+  const title = safeTitle(rawTitle, soap);
+  return { soap, orders, raw: clean, title, markdown };
 }
