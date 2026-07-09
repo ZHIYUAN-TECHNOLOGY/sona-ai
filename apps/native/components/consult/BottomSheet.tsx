@@ -1,12 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { ReactNode } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Easing,
   FadeIn,
   FadeOut,
+  runOnJS,
   SlideInDown,
   SlideOutDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -30,6 +35,24 @@ export function BottomSheet({
   children: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
+  const ty = useSharedValue(0);
+
+  // Drag the sheet down to dismiss: translateY follows the finger (clamped so it
+  // can't be dragged up), release past ~120px or with a flick closes it, else it
+  // springs back. Runs on the UI thread via gesture-handler + reanimated.
+  const pan = Gesture.Pan()
+    .onChange((e) => {
+      ty.value = Math.max(0, ty.value + e.changeY);
+    })
+    .onEnd((e) => {
+      if (ty.value > 120 || e.velocityY > 800) {
+        runOnJS(onClose)();
+      } else {
+        ty.value = withSpring(0, { damping: 20, stiffness: 240 });
+      }
+    });
+
+  const dragStyle = useAnimatedStyle(() => ({ transform: [{ translateY: ty.value }] }));
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
@@ -38,10 +61,11 @@ export function BottomSheet({
           <Pressable style={styles.backdrop} accessibilityLabel="Close" onPress={onClose} />
         </Animated.View>
 
+        <GestureDetector gesture={pan}>
         <Animated.View
           entering={SlideInDown.duration(320).easing(Easing.bezier(0.32, 0.72, 0, 1))}
           exiting={SlideOutDown.duration(220).easing(Easing.bezier(0.32, 0.72, 0, 1))}
-          style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space.lg) }]}
+          style={[styles.sheet, dragStyle, { paddingBottom: Math.max(insets.bottom, space.lg) }]}
         >
           <View style={styles.grabber} />
           <View style={styles.head}>
@@ -53,6 +77,7 @@ export function BottomSheet({
           </View>
           {children}
         </Animated.View>
+        </GestureDetector>
       </View>
     </Modal>
   );

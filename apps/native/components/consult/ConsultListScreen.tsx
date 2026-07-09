@@ -1,14 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import type { ReactNode } from "react";
 import { useCallback, useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { ListRow } from "@/components/consult/ListRow";
 import { Pill } from "@/components/consult/Pill";
+import { SwipeableRow } from "@/components/consult/SwipeableRow";
 import { TabScaffold } from "@/components/consult/TabScaffold";
 import { consultInitials, consultTime, isToday, statusMeta } from "@/lib/consultFormat";
-import { setConsultTitle } from "@/lib/db";
+import { deleteConsult, pruneEmptyDrafts, setConsultTitle } from "@/lib/db";
 import type { Consult } from "@/lib/db/types";
 import { colors, font, space } from "@/lib/theme";
 
@@ -34,14 +36,20 @@ export function ConsultListScreen({
   const [items, setItems] = useState<Consult[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-  const reload = useCallback(() => {
-    void load().then((r) => {
-      setItems(r);
-      setLoaded(true);
-    });
+  const reload = useCallback(async () => {
+    // Clear abandoned empty drafts before showing the list, so the junk from
+    // started-then-abandoned consults never accumulates.
+    await pruneEmptyDrafts();
+    const r = await load();
+    setItems(r);
+    setLoaded(true);
   }, [load]);
 
-  useFocusEffect(reload);
+  useFocusEffect(
+    useCallback(() => {
+      void reload();
+    }, [reload]),
+  );
 
   // Long-press a row to rename the consult (edits the AI-generated title). iOS
   // Alert.prompt; the title stays local + PII-free.
@@ -62,11 +70,26 @@ export function ConsultListScreen({
     [reload],
   );
 
+  // Swipe-to-delete: confirm first, then wipe the consult + all child rows on-device.
+  const remove = useCallback(
+    (c: Consult) => {
+      Alert.alert("Delete consult?", `"${c.title}" and its note will be permanently removed.`, [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => void deleteConsult(c.id).then(reload),
+        },
+      ]);
+    },
+    [reload],
+  );
+
   const today = items.filter((c) => isToday(c.createdAt));
   const earlier = items.filter((c) => !isToday(c.createdAt));
 
   return (
-    <TabScaffold title={title}>
+    <TabScaffold title={title} onRefresh={reload}>
       {topSlot}
       {!loaded ? null : items.length === 0 ? (
         <View style={styles.empty}>
@@ -76,8 +99,12 @@ export function ConsultListScreen({
         </View>
       ) : (
         <>
-          {today.length > 0 ? <Group label="Today" items={today} onRename={rename} /> : null}
-          {earlier.length > 0 ? <Group label="Earlier" items={earlier} onRename={rename} /> : null}
+          {today.length > 0 ? (
+            <Group label="Today" items={today} onRename={rename} onRemove={remove} />
+          ) : null}
+          {earlier.length > 0 ? (
+            <Group label="Earlier" items={earlier} onRename={rename} onRemove={remove} />
+          ) : null}
         </>
       )}
     </TabScaffold>
@@ -88,25 +115,36 @@ function Group({
   label,
   items,
   onRename,
+  onRemove,
 }: {
   label: string;
   items: Consult[];
   onRename: (c: Consult) => void;
+  onRemove: (c: Consult) => void;
 }) {
   return (
     <View style={styles.group}>
       <Text style={styles.groupLabel}>{label}</Text>
-      {items.map((c) => {
+      {items.map((c, i) => {
         const s = statusMeta(c.status);
         return (
-          <ListRow
-            key={c.id}
-            initials={consultInitials(c.title)}
-            title={c.title}
-            sub={consultTime(c.createdAt)}
-            right={<Pill label={s.label} variant={s.variant} />}
-            onLongPress={() => onRename(c)}
-          />
+          <Animated.View key={c.id} entering={FadeInDown.delay(i * 45).duration(280)}>
+            <SwipeableRow
+              actions={[
+                { label: "Rename", icon: "pencil", color: colors.ink3, onPress: () => onRename(c) },
+                { label: "Delete", icon: "trash", color: colors.red, onPress: () => onRemove(c) },
+              ]}
+            >
+              <ListRow
+                initials={consultInitials(c.title)}
+                title={c.title}
+                sub={consultTime(c.createdAt)}
+                right={<Pill label={s.label} variant={s.variant} />}
+                onPress={() => router.push(`/consult/${c.id}`)}
+                onLongPress={() => onRename(c)}
+              />
+            </SwipeableRow>
+          </Animated.View>
         );
       })}
     </View>

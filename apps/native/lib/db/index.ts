@@ -29,7 +29,7 @@ import type {
 const DB_NAME = "sona.db";
 
 /** Schema version — bump + add a migration branch in initDb when the schema changes. */
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS clinical_note (
   assessment    TEXT NOT NULL,
   plan          TEXT NOT NULL,
   orders        TEXT NOT NULL,   -- JSON-encoded NoteOrder[]
+  redFlags      TEXT NOT NULL DEFAULT '[]',  -- JSON-encoded string[] (hybrid highlighter)
   deidentified  INTEGER NOT NULL,
   edited        INTEGER NOT NULL,
   FOREIGN KEY (consultId) REFERENCES consult(id),
@@ -117,6 +118,20 @@ export async function initDb(): Promise<SQLite.SQLiteDatabase> {
       await db.execAsync("PRAGMA journal_mode = WAL;");
       await db.execAsync("PRAGMA foreign_keys = ON;");
       await db.execAsync(SCHEMA_SQL);
+      // Migrations for DBs created before the current SCHEMA_VERSION. CREATE TABLE
+      // IF NOT EXISTS above is a no-op on an existing DB, so pre-existing tables must
+      // be ALTER-ed here. Each branch is idempotent (guarded by the stored version).
+      const { user_version: v = 0 } =
+        (await db.getFirstAsync<{ user_version: number }>("PRAGMA user_version;")) ?? {};
+      if (v < 2) {
+        // v2: add clinical_note.redFlags (hybrid highlighter). Wrapped — the column
+        // already exists on fresh DBs from SCHEMA_SQL, so ignore the duplicate error.
+        try {
+          await db.execAsync("ALTER TABLE clinical_note ADD COLUMN redFlags TEXT NOT NULL DEFAULT '[]';");
+        } catch {
+          // column already present (fresh DB) — nothing to migrate
+        }
+      }
       await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
       return db;
     })();
@@ -206,6 +221,7 @@ export async function saveNote(input: {
   consultId: string;
   soap: ClinicalNote["soap"];
   orders: NoteOrder[];
+  redFlags?: string[];
   deidentified: boolean;
   edited?: boolean;
   id?: string;
@@ -220,13 +236,14 @@ export async function saveNote(input: {
     updatedAt: now,
     soap: input.soap,
     orders: input.orders,
+    redFlags: input.redFlags ?? existing?.redFlags ?? [],
     deidentified: input.deidentified,
     edited: input.edited ?? existing?.edited ?? false,
   };
   await db.runAsync(
     `INSERT OR REPLACE INTO clinical_note
-       (id, consultId, createdAt, updatedAt, subjective, objective, assessment, plan, orders, deidentified, edited)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+       (id, consultId, createdAt, updatedAt, subjective, objective, assessment, plan, orders, redFlags, deidentified, edited)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
     [
       note.id,
       note.consultId,
@@ -237,6 +254,7 @@ export async function saveNote(input: {
       note.soap.assessment,
       note.soap.plan,
       JSON.stringify(note.orders),
+      JSON.stringify(note.redFlags),
       note.deidentified ? 1 : 0,
       note.edited ? 1 : 0,
     ],
@@ -254,6 +272,7 @@ interface NoteRow {
   assessment: string;
   plan: string;
   orders: string;
+  redFlags: string | null;
   deidentified: number;
   edited: number;
 }
@@ -262,7 +281,7 @@ interface NoteRow {
 export async function getNote(consultId: string): Promise<ClinicalNote | null> {
   const db = await initDb();
   const row = await db.getFirstAsync<NoteRow>(
-    `SELECT id, consultId, createdAt, updatedAt, subjective, objective, assessment, plan, orders, deidentified, edited
+    `SELECT id, consultId, createdAt, updatedAt, subjective, objective, assessment, plan, orders, redFlags, deidentified, edited
      FROM clinical_note WHERE consultId = ? ORDER BY updatedAt DESC LIMIT 1;`,
     [consultId],
   );
@@ -279,6 +298,7 @@ export async function getNote(consultId: string): Promise<ClinicalNote | null> {
       plan: row.plan,
     },
     orders: JSON.parse(row.orders) as NoteOrder[],
+    redFlags: row.redFlags ? (JSON.parse(row.redFlags) as string[]) : [],
     deidentified: row.deidentified === 1,
     edited: row.edited === 1,
   };
@@ -340,6 +360,34 @@ export async function setConsultTitle(consultId: string, title: string): Promise
     Date.now(),
     consultId,
   ]);
+}
+
+/** Permanently delete a consult and all its child rows (transcript, note, audit).
+ *  On-device only; wipes the raw transcript too. Wrapped in a transaction. */
+export async function deleteConsult(consultId: string): Promise<void> {
+  const db = await initDb();
+  await db.withTransactionAsync(async () => {
+    await db.runAsync(`DELETE FROM transcript_segment WHERE consultId = ?;`, [consultId]);
+    await db.runAsync(`DELETE FROM clinical_note WHERE consultId = ?;`, [consultId]);
+    await db.runAsync(`DELETE FROM audit_entry WHERE consultId = ?;`, [consultId]);
+    await db.runAsync(`DELETE FROM consult WHERE id = ?;`, [consultId]);
+  });
+}
+
+/** Delete abandoned empty drafts: consults still in a pre-note state that never
+ *  captured any transcript AND never produced a note. Clears the junk left when a
+ *  consult is started (row created at consent) then abandoned. Returns the count.
+ *  Safe: anything with transcript or a note is kept; the active in-flow consult is
+ *  never on a tab list when this runs. */
+export async function pruneEmptyDrafts(): Promise<number> {
+  const db = await initDb();
+  const res = await db.runAsync(
+    `DELETE FROM consult
+       WHERE status IN ('consented','recording','transcribed','redacted')
+         AND id NOT IN (SELECT DISTINCT consultId FROM transcript_segment)
+         AND id NOT IN (SELECT DISTINCT consultId FROM clinical_note);`,
+  );
+  return res.changes ?? 0;
 }
 
 const CONSULT_COLS =

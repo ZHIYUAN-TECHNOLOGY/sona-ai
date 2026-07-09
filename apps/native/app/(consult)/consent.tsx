@@ -4,7 +4,6 @@ import { useCallback, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Card } from "@/components/consult/Card";
-import { ChooseTemplateSheet } from "@/components/consult/ChooseTemplateSheet";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
 import { consult } from "@/components/consult/mockData";
 import { Pill } from "@/components/consult/Pill";
@@ -19,9 +18,8 @@ import { colors, font, radius, space } from "@/lib/theme";
 // Screen 1 of 6 — Consent + audit start.
 export default function ConsentScreen() {
   const [sealConsent, setSealConsent] = useState(true);
-  const { startConsult, templateId, setTemplate } = useConsultPipeline();
+  const { startConsult, templateId } = useConsultPipeline();
   const starting = useRef(false);
-  const [templateSheet, setTemplateSheet] = useState(false);
   const template = templateById(templateId);
 
   // Create the consult (SQLite row + consent audit entry) on-device, then advance.
@@ -41,7 +39,6 @@ export default function ConsentScreen() {
   }, []);
 
   return (
-    <>
     <ConsultScreen
       time="9:41"
       title="New consult"
@@ -75,8 +72,8 @@ export default function ConsentScreen() {
         <CardHeading>Note template</CardHeading>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Note template: ${template.name}`}
-          onPress={() => setTemplateSheet(true)}
+          accessibilityLabel={`Note template: ${template.name}. Tap to change.`}
+          onPress={() => router.push("/template")}
           style={({ pressed }) => [styles.tmpl, pressed && styles.tmplPressed]}
         >
           <View style={styles.tmplIcon}>
@@ -86,7 +83,7 @@ export default function ConsentScreen() {
             <Text style={styles.tmplName}>{template.name}</Text>
             <Text style={styles.tmplDesc}>{template.description}</Text>
           </View>
-          <Ionicons name="chevron-down" size={16} color={colors.ink3} />
+          <Ionicons name="chevron-forward" size={16} color={colors.ink3} />
         </Pressable>
       </Card>
 
@@ -96,14 +93,6 @@ export default function ConsentScreen() {
         />
       </Card>
     </ConsultScreen>
-
-    <ChooseTemplateSheet
-      visible={templateSheet}
-      onClose={() => setTemplateSheet(false)}
-      selectedId={templateId}
-      onSelect={setTemplate}
-    />
-    </>
   );
 }
 

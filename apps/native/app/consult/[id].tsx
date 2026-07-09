@@ -1,0 +1,192 @@
+import { Ionicons } from "@expo/vector-icons";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, Alert, Pressable, Share, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
+
+import { Card } from "@/components/consult/Card";
+import { ConsultScreen } from "@/components/consult/ConsultScreen";
+import { NoteMarkdown } from "@/components/consult/NoteMarkdown";
+import { Pill } from "@/components/consult/Pill";
+import { PrimaryButton } from "@/components/consult/PrimaryButton";
+import { consultTime, statusMeta } from "@/lib/consultFormat";
+import { deleteConsult, getAudit, getConsult, getNote } from "@/lib/db";
+import type { AuditEntry, ClinicalNote, Consult } from "@/lib/db/types";
+import { soapToMarkdown } from "@/lib/pipeline/noteFormat";
+import { colors, font, radius, space } from "@/lib/theme";
+
+// Consult detail — pushed over the tabs when a list row is tapped (native back).
+// Reads everything from the on-device DB; renders the re-identified note (rebuilt
+// from stored SOAP + orders). Draft consults show a "no note yet" state. Privacy &
+// audit proves the moat. Nothing here leaves the device.
+export default function ConsultDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const [consult, setConsult] = useState<Consult | null>(null);
+  const [note, setNote] = useState<ClinicalNote | null>(null);
+  const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [showAudit, setShowAudit] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      void (async () => {
+        const [c, n, a] = await Promise.all([getConsult(id), getNote(id), getAudit(id)]);
+        if (!alive) return;
+        setConsult(c);
+        setNote(n);
+        setAudit(a);
+        setLoaded(true);
+      })();
+      return () => {
+        alive = false;
+      };
+    }, [id]),
+  );
+
+  const remove = useCallback(() => {
+    if (!consult) return;
+    Alert.alert("Delete consult?", `"${consult.title}" and its note will be permanently removed.`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => void deleteConsult(consult.id).then(() => router.back()),
+      },
+    ]);
+  }, [consult]);
+
+  const markdown = note ? soapToMarkdown(note.soap, note.orders) : "";
+
+  const share = useCallback(() => {
+    if (!consult || !markdown) return;
+    void Share.share({ message: `${consult.title}\n\n${markdown}` });
+  }, [consult, markdown]);
+
+  const status = consult ? statusMeta(consult.status) : null;
+
+  return (
+    <ConsultScreen
+      time=""
+      title={consult?.title ?? "Consult"}
+      sub={consult ? consultTime(consult.createdAt) : "Loading…"}
+      onBack={() => router.back()}
+      right={status ? <Pill label={status.label} variant={status.variant} /> : undefined}
+    >
+      {!loaded ? (
+        <Card>
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.green} />
+          </View>
+        </Card>
+      ) : note ? (
+        <>
+          <Animated.View entering={FadeIn.duration(240)}>
+            <Card>
+              <NoteMarkdown markdown={markdown} redFlags={note.redFlags} />
+            </Card>
+          </Animated.View>
+
+          <View style={styles.actions}>
+            <PrimaryButton
+              label="Share"
+              variant="ghost"
+              style={styles.action}
+              icon={<Ionicons name="share-outline" size={17} color={colors.ink} />}
+              onPress={share}
+            />
+            <PrimaryButton
+              label="Delete"
+              variant="danger"
+              style={styles.action}
+              icon={<Ionicons name="trash-outline" size={17} color={colors.white} />}
+              onPress={remove}
+            />
+          </View>
+
+          <Card variant="green">
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setShowAudit((s) => !s)}
+              style={styles.auditHead}
+            >
+              <Ionicons name="shield-checkmark" size={18} color={colors.green} />
+              <Text style={styles.auditTitle}>Privacy & audit</Text>
+              <Ionicons
+                name={showAudit ? "chevron-up" : "chevron-down"}
+                size={16}
+                color={colors.ink3}
+              />
+            </Pressable>
+            <View style={styles.chiprow}>
+              <Pill label="0 bytes to cloud" variant="green" />
+              <Pill label="On-device" variant="line" />
+            </View>
+            {showAudit && (
+              <Animated.View entering={FadeIn.duration(200)} style={styles.auditList}>
+                {audit.length === 0 ? (
+                  <Text style={styles.auditEmpty}>No audit entries.</Text>
+                ) : (
+                  audit.map((a) => (
+                    <View key={a.id} style={styles.auditRow}>
+                      <Text style={styles.auditStage}>{a.stage}</Text>
+                      <Text style={styles.auditDetail} numberOfLines={2}>
+                        {a.detail}
+                      </Text>
+                    </View>
+                  ))
+                )}
+              </Animated.View>
+            )}
+          </Card>
+        </>
+      ) : (
+        <Card>
+          <View style={styles.center}>
+            <View style={styles.emptyIcon}>
+              <Ionicons name="document-outline" size={26} color={colors.ink3} />
+            </View>
+            <Text style={styles.emptyTitle}>No note yet</Text>
+            <Text style={styles.emptyBody}>
+              This consult was started but never produced a note. You can remove it.
+            </Text>
+            <PrimaryButton
+              label="Delete consult"
+              variant="danger"
+              size="sm"
+              style={styles.retry}
+              icon={<Ionicons name="trash-outline" size={15} color={colors.white} />}
+              onPress={remove}
+            />
+          </View>
+        </Card>
+      )}
+    </ConsultScreen>
+  );
+}
+
+const styles = StyleSheet.create({
+  center: { alignItems: "center", gap: space.sm, paddingVertical: space.xl },
+  actions: { flexDirection: "row", gap: space.sm },
+  action: { flex: 1 },
+  auditHead: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  auditTitle: { ...font.body, fontWeight: "600", color: colors.ink, flex: 1 },
+  chiprow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: space.sm },
+  auditList: { marginTop: space.md, gap: space.sm },
+  auditRow: { gap: 1 },
+  auditStage: { ...font.label, color: colors.green, textTransform: "uppercase" },
+  auditDetail: { ...font.bodySm, color: colors.ink2 },
+  auditEmpty: { ...font.bodySm, color: colors.ink3 },
+  emptyIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: space.xs,
+  },
+  emptyTitle: { ...font.h3, color: colors.ink },
+  emptyBody: { ...font.bodySm, color: colors.ink3, textAlign: "center", paddingHorizontal: space.md },
+  retry: { marginTop: space.sm },
+});

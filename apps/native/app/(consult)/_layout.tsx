@@ -19,6 +19,10 @@ export default function ConsultLayout() {
           // privacy/note/sign). Prevents swiping back onto the Record launcher tab,
           // which would relaunch the flow in a loop.
           gestureEnabled: false,
+          // Consistent forward-progress slide across all 6 steps (also normalises
+          // Android, which would otherwise use a different default).
+          animation: "slide_from_right",
+          animationDuration: 300,
         }}
       />
     </PipelineProvider>

@@ -5,7 +5,8 @@
 
 import assert from "node:assert/strict";
 
-import { buildTranscript, classifyOrder, parseSoap, stripThink } from "./noteGen";
+import { buildTranscript, classifyOrder, parseFlags, parseSoap, stripThink } from "./noteGen";
+import { highlightClinical } from "./noteHighlight";
 
 let checks = 0;
 const ok = (cond: boolean, msg: string) => {
@@ -71,6 +72,39 @@ ok(classifyOrder("FBC if fever does not settle") === "test", "test classified");
 ok(classifyOrder("Review in one week") === "review", "review classified");
 ok(classifyOrder("Return if breathless") === "safety-net", "safety-net classified");
 ok(classifyOrder("Oral fluids and rest") === "other", "other classified");
+
+// --- parseFlags (hybrid highlighter sidecar) ------------------------------
+{
+  const withFlags = `## Assessment\nViral URTI.\n\nFlags: breathlessness; haemoptysis`;
+  const { flags, rest } = parseFlags(withFlags);
+  ok(flags.length === 2 && flags[0] === "breathlessness" && flags[1] === "haemoptysis", "flags split on ;");
+  ok(!rest.includes("Flags:"), "flags line peeled off the body");
+
+  ok(parseFlags("## Plan\nRest.\n\nFlags: none").flags.length === 0, "'none' → no flags");
+  ok(parseFlags("## Plan\nRest.").flags.length === 0, "no Flags line → empty");
+  // Defence in depth: a stray token must never survive into a flag phrase.
+  ok(parseFlags("Flags: chest pain NAME_1").flags[0] === "chest pain", "token stripped from flag");
+}
+
+// --- highlightClinical: model flags + negation guard ----------------------
+{
+  // Model-supplied flags drive the red channel (dynamic, not the fixed lexicon).
+  const h = highlightClinical("Patient reports palpitations today.", ["palpitations"]);
+  ok(h.includes("`palpitations`"), "model flag highlighted even though not in lexicon");
+
+  // Negation guard: "no chest pain" must NOT be red-flagged (the old bug).
+  const neg = highlightClinical("No chest pain or breathlessness reported.", ["chest pain", "breathlessness"]);
+  ok(!neg.includes("`chest pain`") && !neg.includes("`breathlessness`"), "negated symptoms not highlighted");
+
+  // Present red flag in a later clause of the same line still highlights.
+  const mixed = highlightClinical("Denies fever, but has chest pain.", ["fever", "chest pain"]);
+  ok(!mixed.includes("`fever`") && mixed.includes("`chest pain`"), "clause-scoped negation");
+
+  // Numbers stay deterministic and the "1 gram" boundary bug stays fixed.
+  const dose = highlightClinical("Paracetamol 1 gram for 3 days.", []);
+  ok(dose.includes("**1 gram**") && !dose.includes("**1 g**"), "dose highlighted whole, no 'g' bleed");
+  ok(dose.includes("*3 days*"), "duration highlighted blue");
+}
 
 // --- fallback: model ignored the format -----------------------------------
 const messy = parseSoap("Patient has a cough, likely viral. Advised rest.");

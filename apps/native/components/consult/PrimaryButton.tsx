@@ -61,8 +61,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  md: { paddingVertical: 15 },
-  sm: { paddingVertical: 11, borderRadius: radius.sm },
+  // Horizontal padding matters when the button is content-width (not stretched),
+  // e.g. centered in an empty state. Full-width buttons stretch past it anyway.
+  md: { paddingVertical: 15, paddingHorizontal: 24 },
+  sm: { paddingVertical: 11, paddingHorizontal: 18, borderRadius: radius.sm },
   ghostBorder: { borderWidth: 1, borderColor: colors.lineStrong },
   glow: { boxShadow: shadow.glow },
   dangerGlow: { boxShadow: "0px 8px 20px rgba(180,35,24,0.22)" },

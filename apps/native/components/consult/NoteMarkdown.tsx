@@ -32,22 +32,32 @@ const noteStyles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 4,
   },
-  // Emphasised clinical terms (vitals, doses, red-flags): green, bold, subtle
-  // green highlight behind them so they pop as the scannable data.
+  // Three-colour clinical highlight system (set by highlightClinical):
+  //  strong = doses & vitals → green (clinical values)
   strong: {
     fontWeight: "700",
     color: colors.greenDeep,
     backgroundColor: colors.greenSoft,
   },
-  em: { fontStyle: "italic", color: colors.ink2 },
+  //  em = timeframes → blue (the "when"). Non-italic; colour + weight carry it.
+  em: {
+    fontStyle: "normal",
+    fontWeight: "600",
+    color: colors.blue,
+    backgroundColor: colors.blue50,
+  },
   bullet_list: { marginTop: 2 },
   ordered_list: { marginTop: 2 },
   list_item: { marginBottom: 4 },
   bullet_list_icon: { color: colors.green, marginLeft: 2, marginRight: 8 },
   ordered_list_icon: { color: colors.green, marginLeft: 2, marginRight: 8 },
+  //  code = red-flag symptoms → red (danger). fontFamily undefined so it renders
+  //  in the body sans, not the renderer's default monospace.
   code_inline: {
-    color: colors.greenDeep,
-    backgroundColor: colors.greenSoft,
+    fontFamily: undefined,
+    fontWeight: "700",
+    color: colors.red,
+    backgroundColor: colors.red50,
     borderWidth: 0,
     borderRadius: 4,
   },
@@ -55,8 +65,14 @@ const noteStyles = StyleSheet.create({
   paragraph: { marginTop: 0, marginBottom: 12 },
 });
 
-/** Renders a re-identified clinical note (Markdown) with the green clinical theme,
- *  with vitals / doses / red-flags deterministically highlighted. */
-export function NoteMarkdown({ markdown }: { markdown: string }) {
-  return <Markdown style={noteStyles}>{highlightClinical(normalizeNoteMarkdown(markdown))}</Markdown>;
+/** Renders a re-identified clinical note (Markdown) with the green clinical theme.
+ *  Doses/vitals/timeframes are highlighted deterministically; red-flag symptoms come
+ *  from the model's context-aware `redFlags` (hybrid highlighter), falling back to a
+ *  lexicon when absent. */
+export function NoteMarkdown({ markdown, redFlags }: { markdown: string; redFlags?: string[] }) {
+  return (
+    <Markdown style={noteStyles}>
+      {highlightClinical(normalizeNoteMarkdown(markdown), redFlags)}
+    </Markdown>
+  );
 }
