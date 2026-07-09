@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion } from "react-native-reanimated";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
@@ -29,6 +30,17 @@ export default function NoteScreen() {
 
   const ready = noteStatus === "ready" && note;
   const empty = !!ready && noteIsEmpty(note.markdown);
+
+  // Elegant reveal for the drafted note: a gentle fade + short rise on a strong
+  // ease-out curve (no spring/bounce — this is a document, not a toast). The
+  // safety notice settles just after. Reduced motion → opacity-only fade.
+  const reduce = useReducedMotion();
+  const revealNote = reduce
+    ? FadeIn.duration(220)
+    : FadeInDown.duration(460).easing(Easing.bezier(0.23, 1, 0.32, 1)).withInitialValues({
+        transform: [{ translateY: 14 }],
+      });
+  const revealNotice = reduce ? FadeIn.duration(220) : FadeIn.delay(180).duration(340);
 
   return (
     <ConsultScreen
@@ -76,31 +88,40 @@ export default function NoteScreen() {
           )}
         </Card>
       ) : empty ? (
-        <Card>
-          <View style={styles.center}>
-            <Ionicons name="document-text-outline" size={30} color={colors.ink3} />
-            <Text style={styles.loadTitle}>Not enough to draft a note</Text>
-            <Text style={styles.loadSub}>
-              This consult was too short for the model to draft a note. Record a longer
-              conversation, then try again.
-            </Text>
-            <PrimaryButton
-              label="Try again"
-              size="sm"
-              style={styles.retry}
-              onPress={() => void draftNote()}
-            />
-          </View>
-        </Card>
+        <Animated.View entering={FadeIn.duration(300)}>
+          <Card>
+            <View style={styles.center}>
+              <View style={styles.emptyIcon}>
+                <Ionicons name="mic-outline" size={26} color={colors.green} />
+              </View>
+              <Text style={styles.emptyTitle}>Too short to draft a note</Text>
+              <Text style={styles.loadSub}>
+                Aurio needs a little more of the conversation for a reliable note. Try again,
+                or record a longer consult next time.
+              </Text>
+              <PrimaryButton
+                label="Try again"
+                size="sm"
+                style={styles.retry}
+                icon={<Ionicons name="refresh" size={15} color={colors.white} />}
+                onPress={() => void draftNote()}
+              />
+            </View>
+          </Card>
+        </Animated.View>
       ) : (
         <>
-          <Card>
-            <NoteMarkdown markdown={note.markdown} />
-          </Card>
+          <Animated.View entering={revealNote}>
+            <Card>
+              <NoteMarkdown markdown={note.markdown} redFlags={note.redFlags} />
+            </Card>
+          </Animated.View>
 
-          <SafetyNotice>
-            AI-drafted from this consult only. Review every line before signing. Not a diagnosis.
-          </SafetyNotice>
+          <Animated.View entering={revealNotice}>
+            <SafetyNotice>
+              AI-drafted from this consult only. Review every line before signing. Not a diagnosis.
+            </SafetyNotice>
+          </Animated.View>
         </>
       )}
     </ConsultScreen>
@@ -110,6 +131,16 @@ export default function NoteScreen() {
 const styles = StyleSheet.create({
   chiprow: { flexDirection: "row", flexWrap: "wrap", gap: space.sm, marginBottom: space.xs },
   center: { alignItems: "center", gap: space.sm, paddingVertical: space.xl },
+  emptyIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 999,
+    backgroundColor: colors.greenSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: space.xs,
+  },
+  emptyTitle: { ...font.h3, color: colors.ink },
   loadTitle: { ...font.body, fontWeight: "600", color: colors.ink, marginTop: space.xs },
   loadSub: { ...font.bodySm, color: colors.ink3, textAlign: "center" },
   errTitle: { ...font.body, fontWeight: "600", color: colors.red },

@@ -109,8 +109,11 @@ export async function draftClinicalNote(
   const orders = deident.orders.map((o) => ({ ...o, text: applyReidMap(map, o.text) }));
   // Re-identify the Markdown body too (same secure map, on-device) for rich display.
   const markdown = applyReidMap(map, deident.markdown);
+  // Red flags are symptom phrases (no tokens) — the map is a no-op, but apply it for
+  // defence in depth so a flag can never carry a token into the highlighter.
+  const redFlags = deident.redFlags.map((f) => applyReidMap(map, f));
 
-  await saveNote({ consultId, soap, orders, deidentified: false }); // re-identified local record
+  await saveNote({ consultId, soap, orders, redFlags, deidentified: false }); // re-identified local record
   // The AI title is de-identified (generated from tokens, tokens stripped) — save it
   // AS-IS, never re-identified, so no patient name can reach a list screen.
   await setConsultTitle(consultId, deident.title);
@@ -120,7 +123,7 @@ export async function draftClinicalNote(
     stage: "note-generate",
     detail: `SOAP note drafted on-device (${NOTE_MODEL_NAME}), re-identified locally for review`,
   });
-  return { soap, orders, raw: deident.raw, title: deident.title, markdown };
+  return { soap, orders, raw: deident.raw, title: deident.title, markdown, redFlags };
 }
 
 /**

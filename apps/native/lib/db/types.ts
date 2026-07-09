@@ -89,6 +89,12 @@ export interface ClinicalNote {
   /** Structured orders & follow-ups (renders under Plan). */
   orders: NoteOrder[];
   /**
+   * Present red-flag / danger symptoms the model tagged (hybrid highlighter). Drives
+   * the red highlight in the rendered note; empty when the model emitted none. These
+   * are symptom phrases only (no PII), safe to persist alongside the note.
+   */
+  redFlags: string[];
+  /**
    * True while the note still contains redaction tokens (NAME_1, IC_1, …); false
    * once locally re-identified for the clinician view. Persisted so the UI knows
    * which form it is showing.

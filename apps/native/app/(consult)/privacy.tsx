@@ -1,6 +1,7 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useReducedMotion } from "react-native-reanimated";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
@@ -9,9 +10,17 @@ import { uncertainRedaction } from "@/components/consult/mockData";
 import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { RedactChip } from "@/components/consult/RedactChip";
+import { RedactSweepChip } from "@/components/consult/RedactSweepChip";
 import { CardHeading } from "@/components/consult/SectionLabel";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
 import { colors } from "@/lib/theme";
+
+// A parsed transcript fragment: either plain text, or a redacted token that
+// carries its real value (from the on-device reidMap) + a global sweep index
+// so the reveal-then-redact animation staggers top-to-bottom across the card.
+type Frag =
+  | { type: "text"; text: string }
+  | { type: "token"; token: string; real: string; idx: number };
 
 // Tokens the redactor emits inline in the de-identified text. Split-with-capture
 // keeps the tokens as their own fragments so we can render them as RedactChips.
@@ -27,6 +36,26 @@ export default function PrivacyScreen() {
   const [confirmed, setConfirmed] = useState(false);
   const { redaction, redact } = useConsultPipeline();
   const started = useRef(false);
+  const reduce = useReducedMotion();
+
+  // Parse each de-identified line into fragments, assigning every token a global
+  // sweep index (top-to-bottom) and its reidMap real value for the reveal.
+  const rows = useMemo(() => {
+    if (!redaction) return [];
+    let n = 0;
+    return redaction.segments.map((seg) => ({
+      speaker: (seg.speaker === "doctor" ? "dr" : "pt") as SpeakerKey,
+      faint: seg.speaker === "doctor",
+      frags: seg.text
+        .split(TOKEN_RE)
+        .filter((p) => p.length > 0)
+        .map<Frag>((part) =>
+          isToken(part)
+            ? { type: "token", token: part, real: redaction.reidMap[part] ?? part, idx: n++ }
+            : { type: "text", text: part },
+        ),
+    }));
+  }, [redaction]);
 
   // De-identify the stored transcript on-device once, when the gate first focuses.
   useFocusEffect(
@@ -67,13 +96,8 @@ export default function PrivacyScreen() {
         <>
           <Card>
             <CardHeading>What the model will see</CardHeading>
-            {redaction.segments.map((seg, i) => (
-              <RedactedRow
-                key={i}
-                speaker={seg.speaker === "doctor" ? "dr" : "pt"}
-                text={seg.text}
-                faint={seg.speaker === "doctor"}
-              />
+            {rows.map((row, i) => (
+              <RedactedRow key={i} speaker={row.speaker} frags={row.frags} faint={row.faint} reduce={reduce} />
             ))}
           </Card>
 
@@ -143,29 +167,30 @@ export default function PrivacyScreen() {
   );
 }
 
-// A redacted transcript line: speaker tag + wrapping run of text fragments and chips.
-// The de-identified text has tokens inline (e.g. "Encik NAME_1"); we split it into
-// string fragments and token fragments, rendering tokens as RedactChips.
+// A redacted transcript line: speaker tag + wrapping run of text + token chips.
+// Token fragments animate the reveal-then-redact sweep (RedactSweepChip); plain
+// text renders as-is. Fragments are precomputed upstream so sweep indices are global.
 function RedactedRow({
   speaker,
-  text,
+  frags,
   faint,
+  reduce,
 }: {
   speaker: SpeakerKey;
-  text: string;
+  frags: Frag[];
   faint?: boolean;
+  reduce?: boolean;
 }) {
-  const parts = text.split(TOKEN_RE).filter((p) => p.length > 0);
   return (
     <View style={styles.redactRow}>
       <WhoTag speaker={speaker} />
       <View style={styles.redactBody}>
-        {parts.map((part, i) =>
-          isToken(part) ? (
-            <RedactChip key={i} token={part} />
+        {frags.map((f, i) =>
+          f.type === "token" ? (
+            <RedactSweepChip key={i} token={f.token} real={f.real} index={f.idx} reduce={reduce} />
           ) : (
             <Text key={i} style={[styles.redactText, faint && styles.faint]}>
-              {part}
+              {f.text}
             </Text>
           )
         )}

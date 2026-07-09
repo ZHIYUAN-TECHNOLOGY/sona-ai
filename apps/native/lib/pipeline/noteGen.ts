@@ -42,6 +42,15 @@ export interface DraftNote {
    * `soap`/`orders` above are the plain-text derivation used for export.
    */
   markdown: string;
+  /**
+   * Red-flag / danger symptoms the model judged ACTUALLY PRESENT in this patient
+   * (context-aware: "no chest pain" yields nothing). This is the model half of the
+   * hybrid highlighter — the deterministic regex handles numbers/doses/vitals it can
+   * be trusted with, the model handles which symptoms are present vs denied. Each
+   * entry is a short symptom phrase, de-identified (no tokens), and only highlighted
+   * where it appears verbatim in the note. Empty when the model emitted none.
+   */
+  redFlags: string[];
 }
 
 // Any surviving redaction token — a title must never contain one.
@@ -95,7 +104,28 @@ export const NOTE_SYSTEM_PROMPT =
   "exchange (IC number, phone number, address tokens such as IC_1, PHONE_1, ADDR_1) is " +
   "administrative — do not repeat it in any section of the note. If you must refer to the " +
   "patient, keep any identifier token such as NAME_1 exactly as written. No preamble, no " +
-  "closing remarks.";
+  "closing remarks. " +
+  "FINALLY, on the very last line output 'Flags: ' followed by a semicolon-separated list " +
+  "of any red-flag or danger symptoms that are ACTUALLY PRESENT in this patient (e.g. " +
+  "'chest pain; haemoptysis'). Include a symptom ONLY if the transcript states the patient " +
+  "HAS it — never list a symptom that was denied, ruled out, or absent ('no chest pain', " +
+  "'denies breathlessness' → do NOT list it). Write each symptom exactly as it appears in " +
+  "the note. If there are no present red flags, output 'Flags: none'.";
+
+// Peel the trailing "Flags: …" line (present red-flag symptoms). Case-insensitive,
+// tolerant of markdown/list marks. Splits on ; or , into trimmed phrases; treats
+// "none"/"nil"/empty as no flags. Strips any stray redaction token (defence in depth
+// — the list should already be symptom words only).
+export function parseFlags(text: string): { flags: string[]; rest: string } {
+  const m = text.match(/^[\s>#*\-]*\*{0,2}(?:red[-\s]?)?flags?\*{0,2}\s*[:\-]\s*(.*)$/im);
+  if (!m || m.index === undefined) return { flags: [], rest: text };
+  const rest = text.slice(0, m.index) + text.slice(m.index + m[0].length);
+  const flags = m[1]
+    .split(/[;,]/)
+    .map((f) => f.replace(TITLE_TOKEN_RE, "").replace(/[*_`."'“”‘’]/g, "").trim())
+    .filter((f) => f.length >= 3 && !/^(none|nil|n\/a|no red flags?)$/i.test(f));
+  return { flags, rest: rest.trim() };
+}
 
 /** Strip inline Markdown (bold/italic/code/heading/list marks) → clean plain text for export. */
 export function stripInlineMd(s: string): string {
@@ -106,6 +136,11 @@ export function stripInlineMd(s: string): string {
     .replace(/`([^`]+)`/g, "$1")
     .replace(/^\s{0,3}#{1,6}\s*/gm, "")
     .replace(/^\s*[-*•]\s+/gm, "")
+    // Drop any residual UNBALANCED emphasis markers the small model left behind
+    // (e.g. an opened "**" whose closer it dropped). Balanced pairs are gone above;
+    // this clears the leftovers so raw "**" never reaches the stored/rendered note.
+    .replace(/\*\*/g, "")
+    .replace(/__/g, "")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
 }
@@ -220,7 +255,10 @@ export async function generateNote(
   ];
   const rawOut = await llm.generate(messages);
   const clean = stripThink(rawOut);
-  const { title: rawTitle, rest } = parseTitle(clean);
+  const { title: rawTitle, rest: afterTitle } = parseTitle(clean);
+  // Peel the trailing Flags line before anything else parses the body, so the
+  // sidecar never leaks into the SOAP sections or the rendered markdown.
+  const { flags: redFlags, rest } = parseFlags(afterTitle);
   const markdown = rest.trim();
 
   // Parse into structured sections, then strip inline markdown → clean text for
@@ -234,5 +272,5 @@ export async function generateNote(
   };
   const orders = parsed.orders.map((o) => ({ ...o, text: stripInlineMd(o.text) }));
   const title = safeTitle(rawTitle, soap);
-  return { soap, orders, raw: clean, title, markdown };
+  return { soap, orders, raw: clean, title, markdown, redFlags };
 }

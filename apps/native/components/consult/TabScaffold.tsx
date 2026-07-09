@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { useCallback, useState } from "react";
+import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 
 import { SerifTitle } from "@/components/consult/SerifTitle";
 import { colors, space } from "@/lib/theme";
@@ -15,17 +16,31 @@ export function TabScaffold({
   title,
   right,
   children,
+  onRefresh,
 }: {
   title: string;
   right?: ReactNode;
   children: ReactNode;
+  onRefresh?: () => void | Promise<void>;
 }) {
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = useCallback(() => {
+    if (!onRefresh) return;
+    setRefreshing(true);
+    void Promise.resolve(onRefresh()).finally(() => setRefreshing(false));
+  }, [onRefresh]);
+
   return (
     <ScrollView
       style={styles.body}
       contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.green} />
+        ) : undefined
+      }
     >
       <View style={styles.titleRow}>
         <SerifTitle>{title}</SerifTitle>
