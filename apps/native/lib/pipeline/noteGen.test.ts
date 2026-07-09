@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 
 import { buildTranscript, classifyOrder, parseFlags, parseSoap, stripThink } from "./noteGen";
-import { highlightClinical } from "./noteHighlight";
+import { highlightClinical, normalizeNoteMarkdown } from "./noteHighlight";
 
 let checks = 0;
 const ok = (cond: boolean, msg: string) => {
@@ -104,6 +104,58 @@ ok(classifyOrder("Oral fluids and rest") === "other", "other classified");
   const dose = highlightClinical("Paracetamol 1 gram for 3 days.", []);
   ok(dose.includes("**1 gram**") && !dose.includes("**1 g**"), "dose highlighted whole, no 'g' bleed");
   ok(dose.includes("*3 days*"), "duration highlighted blue");
+}
+
+// --- hardened highlighter: negation, units, timeframes, code-switch --------
+// Regression corpus distilled from the adversarial hardening sweep. hasRed/Blue/Green
+// read the emphasis channels the renderer colours.
+{
+  const H = (s: string, f?: string[]) => highlightClinical(normalizeNoteMarkdown(s), f);
+  const hasRed = (s: string) => /`[^`]+`/.test(s);
+  const hasBlue = (s: string) => /(^|[^*])\*[^*]+\*/.test(s);
+  const hasGreen = (s: string) => /\*\*[^*]+\*\*/.test(s);
+
+  // Negation — DENIED / ABSENT / RULED-OUT symptoms must NOT be red (patient safety).
+  ok(!hasRed(H("Chest pain denied.")), "post-nominal: 'X denied'");
+  ok(!hasRed(H("Chest pain: nil.")), "post-nominal: 'X: nil'");
+  ok(!hasRed(H("Chest pain resolved, now comfortable.")), "post-nominal: 'X resolved'");
+  ok(!hasRed(H("Chest pain ruled out after normal ECG.")), "post-nominal: 'X ruled out'");
+  ok(!hasRed(H("Denies chest pain, breathlessness and haemoptysis.")), "list-carry across commas");
+  ok(!hasRed(H("Patient is free of chest pain and breathlessness.")), "cue 'free of'");
+  ok(!hasRed(H("No cough, chest pain, or shortness of breath reported.")), "'No … reported' list");
+  ok(!hasRed(H("Patient doesn't have chest pain.")), "contraction: doesn't");
+
+  // Scope-reset — a PRESENT symptom after 'but'/'now reports' must stay red.
+  ok(hasRed(H("No fever but has chest pain.")), "scope-reset on 'but'");
+  ok(hasRed(H("Patient has no allergies and now reports chest pain.")), "scope-reset on 'now reports'");
+  ok(hasRed(H("No chest pain at rest but chest pain on exertion.")), "exertional CP survives leading 'No'");
+
+  // Malay negation + Malay red flags.
+  ok(!hasRed(H("Pesakit tiada chest pain")), "Malay cue 'tiada'");
+  ok(!hasRed(H("Tidak sesak, tidak chest pain")), "Malay cue 'tidak' distributes");
+  ok(hasRed(H("Batuk darah sejak semalam")), "Malay red flag 'batuk darah'");
+  ok(hasRed(H("Sesak nafas bila baring")), "Malay red flag 'sesak nafas'");
+  ok(hasRed(H("No fever tapi chest pain makin teruk")), "Malay scope-reset 'tapi'");
+
+  // Dose & vital (green) + address/percentage safety (NOT green).
+  ok(hasGreen(H("Weight 12 kg, otherwise well")), "weight kg");
+  ok(hasGreen(H("RBS 15 mmol/L, ketones negative")), "glucose mmol/L");
+  ok(hasGreen(H("PCM 1-2 tablets QID PRN")), "range dose + frequency");
+  ok(hasGreen(H("Clonazepam .5 mg nocte")), "leading-decimal dose");
+  ok(hasGreen(H("Hb 12g/dL, weight 72kg.")), "g/dL and kg, not split");
+  ok(!hasGreen(H("Lives at 12G Jalan Ampang.")), "address '12G' is not a dose");
+  ok(!hasGreen(H("Compliance improved by 20%")), "bare percentage is not a vital");
+
+  // Timeframes (blue) incl. Commonwealth shorthand + Malay.
+  ok(hasBlue(H("3/7 history of fever, cough productive")), "shorthand 3/7");
+  ok(hasBlue(H("3-day history of cough and fever")), "hyphenated 3-day");
+  ok(hasBlue(H("Fever for 2-3 days, worse at night")), "range 2-3 days");
+  ok(hasBlue(H("Demam dah tiga hari, malam lagi teruk")), "Malay word-number 'tiga hari'");
+  ok(hasBlue(H("Batuk 2 minggu, kahak hijau")), "Malay unit 'minggu'");
+
+  // Mixed line: dose + frequency + timeframe together.
+  const mix = H("Augmentin 625mg BD for 5 days");
+  ok(hasGreen(mix) && hasBlue(mix), "green dose + blue duration in one line");
 }
 
 // --- fallback: model ignored the format -----------------------------------
