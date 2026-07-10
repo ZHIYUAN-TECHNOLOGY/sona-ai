@@ -7,7 +7,7 @@ import { Card } from "@/components/consult/Card";
 import { Pill } from "@/components/consult/Pill";
 import { TabScaffold } from "@/components/consult/TabScaffold";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
-import { CATEGORIES, CORPUS, type KnowledgeDoc } from "@/lib/knowledge/corpus";
+import { CATEGORIES, getCorpus, type KnowledgeDoc } from "@/lib/knowledge/corpus";
 import {
   useGroundedAnswer,
   type AnswerStatus,
@@ -23,6 +23,7 @@ const LABEL: Record<string, string> = Object.fromEntries(CATEGORIES.map((c) => [
 // or note ever leaves the phone). Idle → browse by category. Retrieval is lexical
 // today; the KnowledgeDoc/retrieve seam upgrades to on-device embeddings later.
 export default function KnowledgeScreen() {
+  const corpus = getCorpus();
   const [query, setQuery] = useState("");
   const q = query.trim();
   const { search, semanticReady, downloadProgress } = useSemanticRetrieve();
@@ -75,7 +76,7 @@ export default function KnowledgeScreen() {
       </View>
 
       <Text style={styles.disclaimer}>
-        On-device reference · {CORPUS.length} entries · not a substitute for clinical judgement.
+        On-device reference · {corpus.length} entries · not a substitute for clinical judgement.
       </Text>
 
       {loadingModel ? (
@@ -120,7 +121,7 @@ export default function KnowledgeScreen() {
         )
       ) : (
         CATEGORIES.map((cat) => {
-          const items = CORPUS.filter((d) => d.category === cat.key);
+          const items = corpus.filter((d) => d.category === cat.key);
           if (items.length === 0) return null;
           return (
             <View key={cat.key} style={styles.section}>
