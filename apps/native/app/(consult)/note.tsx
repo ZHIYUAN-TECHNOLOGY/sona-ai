@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion } from "react-native-reanimated";
 
@@ -12,11 +12,16 @@ import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { SafetyNotice } from "@/components/consult/SafetyNotice";
 import { haptic } from "@/lib/haptics";
+import { checkOrders } from "@/lib/meds/drugCheck";
+import { DRUGS, INTERACTIONS } from "@/lib/meds/drugRules.data";
 import { NOTE_MODEL_NAME } from "@/lib/pipeline/model";
 import { noteIsEmpty } from "@/lib/pipeline/noteHighlight";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
 import { templateById } from "@/lib/pipeline/templates";
 import { colors, font, space } from "@/lib/theme";
+
+// Amber for a "moderate" medication flag (severe → red, info → ink3).
+const MODERATE = "#B45309";
 
 // Screen 4 of 6 — Consult note. The note is generated ON-DEVICE from the
 // de-identified transcript, re-identified locally, and rendered as rich Markdown.
@@ -48,6 +53,12 @@ export default function NoteScreen() {
 
   const ready = noteStatus === "ready" && note;
   const empty = !!ready && noteIsEmpty(note.markdown);
+
+  // Inline medication-safety check over the note's orders (reference only).
+  const drugFlags = useMemo(
+    () => (note ? checkOrders(note.orders, DRUGS, INTERACTIONS) : []),
+    [note],
+  );
 
   const saveEdit = async (edited: string) => {
     setSaving(true);
@@ -164,6 +175,39 @@ export default function NoteScreen() {
             </Animated.View>
           ) : null}
 
+          {drugFlags.length > 0 ? (
+            <Animated.View entering={revealNotice}>
+              <Card>
+                <View style={styles.medHead}>
+                  <Ionicons name="medkit-outline" size={15} color={colors.green} />
+                  <Text style={styles.medTitle}>Medication safety</Text>
+                </View>
+                {drugFlags.map((f, i) => (
+                  <View key={i} style={styles.medRow}>
+                    <View
+                      style={[
+                        styles.medDot,
+                        {
+                          backgroundColor:
+                            f.severity === "severe"
+                              ? colors.red
+                              : f.severity === "moderate"
+                                ? MODERATE
+                                : colors.ink3,
+                        },
+                      ]}
+                    />
+                    <View style={styles.medBody}>
+                      <Text style={styles.medMsg}>{f.message}</Text>
+                      {f.source ? <Text style={styles.medSrc}>{f.source}</Text> : null}
+                    </View>
+                  </View>
+                ))}
+                <Text style={styles.medNote}>Reference only — verify before prescribing.</Text>
+              </Card>
+            </Animated.View>
+          ) : null}
+
           <View style={styles.editRow}>
             <PrimaryButton
               label="Edit note"
@@ -191,6 +235,14 @@ const styles = StyleSheet.create({
   guideRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6, marginTop: space.xs },
   guideLabel: { ...font.label, color: colors.ink3, textTransform: "uppercase", marginRight: 2 },
   guideChips: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  medHead: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: space.xs },
+  medTitle: { ...font.label, color: colors.green, textTransform: "uppercase" },
+  medRow: { flexDirection: "row", gap: space.sm, alignItems: "flex-start", marginTop: 6 },
+  medDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6 },
+  medBody: { flex: 1 },
+  medMsg: { ...font.body, color: colors.ink, lineHeight: 20 },
+  medSrc: { ...font.bodySm, color: colors.ink3, marginTop: 1 },
+  medNote: { ...font.bodySm, color: colors.ink3, fontStyle: "italic", marginTop: space.sm },
   center: { alignItems: "center", gap: space.sm, paddingVertical: space.xl },
   emptyIcon: {
     width: 52,
