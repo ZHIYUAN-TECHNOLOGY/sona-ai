@@ -14,6 +14,7 @@
 import * as SQLite from "expo-sqlite";
 import * as Crypto from "expo-crypto";
 
+import type { SearchDoc } from "../search/noteSearch";
 import { buildAudit, buildConsult, buildTranscriptSegment } from "./builders";
 import type {
   AuditEntry,
@@ -406,6 +407,45 @@ export async function listNotedConsults(): Promise<Consult[]> {
     `SELECT ${CONSULT_COLS} FROM consult
      WHERE status IN ('noted','signed','complete') ORDER BY createdAt DESC;`,
   );
+}
+
+interface SearchRow {
+  consultId: string;
+  title: string;
+  status: string;
+  createdAt: number;
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+  orders: string;
+}
+
+/**
+ * Load every noted consult as a searchable doc (title + SOAP body + order text),
+ * for the on-device note search. Reads locally only — the notes never leave the
+ * device, so searching them is inside the moat.
+ */
+export async function getSearchDocs(): Promise<SearchDoc[]> {
+  const db = await initDb();
+  const rows = await db.getAllAsync<SearchRow>(
+    `SELECT c.id AS consultId, c.title AS title, c.status AS status, c.createdAt AS createdAt,
+            n.subjective, n.objective, n.assessment, n.plan, n.orders
+     FROM consult c JOIN clinical_note n ON n.consultId = c.id
+     ORDER BY c.createdAt DESC;`,
+  );
+  return rows.map((r) => {
+    let orderText = "";
+    try {
+      orderText = (JSON.parse(r.orders) as NoteOrder[]).map((o) => o.text).join(" ");
+    } catch {
+      orderText = "";
+    }
+    const text = [r.subjective, r.objective, r.assessment, r.plan, orderText]
+      .filter((s) => s && s.trim())
+      .join(" ");
+    return { consultId: r.consultId, title: r.title, status: r.status, createdAt: r.createdAt, text };
+  });
 }
 
 export * from "./types";

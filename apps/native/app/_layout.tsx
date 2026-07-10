@@ -73,6 +73,7 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="(consult)" options={{ headerShown: false }} />
             <Stack.Screen name="consult/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="search" options={{ headerShown: false }} />
             <Stack.Screen name="bench" options={{ headerShown: true }} />
           </Stack>
         </GestureHandlerRootView>
