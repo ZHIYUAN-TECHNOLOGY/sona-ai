@@ -16,7 +16,7 @@ import { getReidMap, saveReidMap, sealAudioDiscard } from "../secure/reidMap";
 import { applyReidMap } from "../secure/reidMapCore";
 import { NOTE_MODEL_NAME } from "./model";
 import type { RawSegment } from "./mockStt";
-import { generateNote, type DraftNote, type LlmLike } from "./noteGen";
+import { generateNote, parseSoap, stripInlineMd, type DraftNote, type LlmLike } from "./noteGen";
 import { redactTranscript, type RedactionResult, type RedactedSegment } from "./redaction";
 
 export async function beginConsult(consentText: string, title = "New consult") {
@@ -124,6 +124,35 @@ export async function draftClinicalNote(
     detail: `SOAP note drafted on-device (${NOTE_MODEL_NAME}), re-identified locally for review`,
   });
   return { soap, orders, raw: deident.raw, title: deident.title, markdown, redFlags };
+}
+
+/**
+ * Persist a clinician's manual edit of the note. The clinician edits the rendered
+ * Markdown (## sections + Orders bullets); we parse it back into structured SOAP +
+ * orders (same tolerant parser used for the model draft), strip any inline marks, and
+ * upsert with edited=true. An audit row records the on-device edit. The model's
+ * red-flag tags are left as-is (saveNote preserves them). Fully on-device — nothing
+ * is transmitted. Returns the parsed structure for the caller to reflect in the UI.
+ */
+export async function editClinicalNote(
+  consultId: string,
+  markdown: string,
+): Promise<{ soap: DraftNote["soap"]; orders: DraftNote["orders"] }> {
+  const parsed = parseSoap(markdown);
+  const soap = {
+    subjective: stripInlineMd(parsed.soap.subjective),
+    objective: stripInlineMd(parsed.soap.objective),
+    assessment: stripInlineMd(parsed.soap.assessment),
+    plan: stripInlineMd(parsed.soap.plan),
+  };
+  const orders = parsed.orders.map((o) => ({ ...o, text: stripInlineMd(o.text) }));
+  await saveNote({ consultId, soap, orders, deidentified: false, edited: true });
+  await appendAudit({
+    consultId,
+    stage: "note-edit",
+    detail: "Clinician edited the note on-device",
+  });
+  return { soap, orders };
 }
 
 /**

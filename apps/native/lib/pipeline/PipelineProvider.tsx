@@ -17,6 +17,7 @@ import React, {
 import {
   beginConsult,
   draftClinicalNote,
+  editClinicalNote,
   persistRecordingStart,
   persistRecordingStop,
   persistSegment,
@@ -53,6 +54,7 @@ export interface PipelineState {
   startRecording: () => void;
   redact: () => Promise<void>;
   draftNote: () => Promise<void>;
+  editNote: (markdown: string) => Promise<void>; // persist a clinician edit + reflect it
   setTemplate: (id: string) => void;
   reset: () => void;
 }
@@ -150,6 +152,15 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     }
   }, [llm]);
 
+  // Persist a clinician's manual edit of the drafted note (before signing) and reflect
+  // it in the in-memory note so the review screen re-renders. On-device only.
+  const editNote = useCallback(async (markdown: string) => {
+    const id = idRef.current;
+    if (!id) return;
+    const { soap, orders } = await editClinicalNote(id, markdown);
+    setNote((prev) => (prev ? { ...prev, soap, orders, markdown } : prev));
+  }, []);
+
   const setTemplate = useCallback((id: string) => {
     templateRef.current = id;
     setTemplateId(id);
@@ -189,6 +200,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         startRecording,
         redact,
         draftNote,
+        editNote,
         setTemplate,
         reset,
       }}

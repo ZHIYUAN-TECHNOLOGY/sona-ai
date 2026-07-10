@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 
 import { buildTranscript, classifyOrder, parseFlags, parseSoap, stripThink } from "./noteGen";
 import { highlightClinical, normalizeNoteMarkdown } from "./noteHighlight";
+import { soapToMarkdown } from "./noteFormat";
 
 let checks = 0;
 const ok = (cond: boolean, msg: string) => {
@@ -156,6 +157,32 @@ ok(classifyOrder("Oral fluids and rest") === "other", "other classified");
   // Mixed line: dose + frequency + timeframe together.
   const mix = H("Augmentin 625mg BD for 5 days");
   ok(hasGreen(mix) && hasBlue(mix), "green dose + blue duration in one line");
+}
+
+// --- editable notes: rendered markdown -> parseSoap round-trips -----------
+// The clinician edits the rebuilt note Markdown; editClinicalNote parses it back to
+// SOAP + orders. This locks the render->parse contract that edit relies on.
+{
+  const soap = {
+    subjective: "Cough for 3 days.",
+    objective: "Temp 38.2, chest clear.",
+    assessment: "Viral URTI.",
+    plan: "Paracetamol PRN.",
+  };
+  const orders = [
+    { kind: "review" as const, text: "Review in 1 week if not better" },
+    { kind: "test" as const, text: "FBC if fever persists" },
+  ];
+  const md = soapToMarkdown(soap, orders);
+  const back = parseSoap(md);
+  ok(back.soap.subjective.includes("Cough for 3 days"), "edit round-trip: subjective");
+  ok(back.soap.assessment.includes("Viral URTI"), "edit round-trip: assessment");
+  ok(back.orders.length === 2 && back.orders[0].text.includes("Review in 1 week"), "edit round-trip: orders");
+  // A hand-edit still re-parses cleanly.
+  const edited = md.replace("Paracetamol PRN.", "Paracetamol 1g QID PRN and oral fluids.");
+  const backEdited = parseSoap(edited);
+  ok(backEdited.soap.plan.includes("oral fluids"), "edited plan text re-parses");
+  ok(!backEdited.soap.plan.includes("Review in 1 week"), "orders stay out of the plan body after edit");
 }
 
 // --- fallback: model ignored the format -----------------------------------
