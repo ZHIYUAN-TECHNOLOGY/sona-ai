@@ -16,7 +16,16 @@ import { getReidMap, saveReidMap, sealAudioDiscard } from "../secure/reidMap";
 import { applyReidMap } from "../secure/reidMapCore";
 import { NOTE_MODEL_NAME } from "./model";
 import type { RawSegment } from "./mockStt";
-import { generateNote, parseSoap, stripInlineMd, type DraftNote, type LlmLike } from "./noteGen";
+import { getCorpus } from "../knowledge/corpus";
+import {
+  buildTranscript,
+  generateNote,
+  parseSoap,
+  stripInlineMd,
+  type DraftNote,
+  type LlmLike,
+} from "./noteGen";
+import { buildGuidelineContext } from "./noteGrounding";
 import { redactTranscript, type RedactionResult, type RedactedSegment } from "./redaction";
 
 export async function beginConsult(consentText: string, title = "New consult") {
@@ -97,7 +106,15 @@ export async function draftClinicalNote(
   llm: LlmLike,
   systemPrompt?: string,
 ): Promise<DraftNote> {
-  const deident = await generateNote(llm, segments, systemPrompt); // model sees de-identified text only
+  // Ground the note in the on-device reference corpus: retrieve guidelines relevant to
+  // the DE-IDENTIFIED transcript and inject them into the prompt. Query + corpus are
+  // non-PHI and retrieval is on-device — the moat holds.
+  const { context: guidelineContext, refs: guidelines } = buildGuidelineContext(
+    buildTranscript(segments),
+    getCorpus(),
+    3,
+  );
+  const deident = await generateNote(llm, segments, systemPrompt, guidelineContext); // model sees de-identified text only
 
   const map = (await getReidMap(consultId)) ?? {};
   const soap = {
@@ -123,7 +140,7 @@ export async function draftClinicalNote(
     stage: "note-generate",
     detail: `SOAP note drafted on-device (${NOTE_MODEL_NAME}), re-identified locally for review`,
   });
-  return { soap, orders, raw: deident.raw, title: deident.title, markdown, redFlags };
+  return { soap, orders, raw: deident.raw, title: deident.title, markdown, redFlags, guidelines };
 }
 
 /**
