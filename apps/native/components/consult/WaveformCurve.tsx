@@ -1,83 +1,56 @@
+import { Canvas, LinearGradient, Path, Skia, vec } from "@shopify/react-native-skia";
+import { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import Animated, {
-  clamp,
-  useAnimatedStyle,
-  useDerivedValue,
-  withSpring,
-  type SharedValue,
-} from "react-native-reanimated";
+import { useDerivedValue, useFrameCallback, useSharedValue, type SharedValue } from "react-native-reanimated";
 
 import { WAVE_POINTS } from "@/lib/audio/useMicAmplitude";
+import { buildWavePath } from "@/lib/audio/waveform";
 import { colors } from "@/lib/theme";
 
 const HEIGHT = 44;
-// Overdamped spring — smooth follow of the live target, no wobble/overshoot, keeps
-// velocity between the ~31 Hz pushes so the motion reads continuous, not stepped.
-const SPRING = { mass: 0.5, stiffness: 150, damping: 20 } as const;
-
-// Centre-weighted envelope: bars taper toward the edges (cosine falloff) so the wave
-// focuses in the middle and dissolves at the sides — the elegant, not-a-block look.
-function envelopeAt(i: number): number {
-  const x = (i / (WAVE_POINTS - 1)) * 2 - 1; // -1..1
-  return 0.28 + 0.72 * Math.cos((x * Math.PI) / 2) ** 1.5;
-}
-const ENVELOPE = Array.from({ length: WAVE_POINTS }, (_, i) => envelopeAt(i));
 
 /**
- * Premium mic waveform: centre-mirrored, edge-tapered bars with a vertical gradient and
- * pill caps. Each bar springs toward a SPATIALLY-SMOOTHED target (averaged with its
- * neighbours) so the discrete amplitudes read as one flowing curve. Transform-only
- * (scaleY on the UI thread), no per-frame React re-render, no native SVG.
+ * Premium continuous waveform (react-native-skia). A single smooth, gradient-filled
+ * curve — the amplitude ring is temporally eased toward on every frame (lerp) so the
+ * curve flows fluidly regardless of the source update rate, then rendered as a mirrored
+ * quadratic-smoothed Skia Path with a horizontal green gradient. All on the UI thread.
  */
 export function WaveformCurve({ amplitudes }: { amplitudes: SharedValue<number[]> }) {
+  const [width, setWidth] = useState(0);
+
+  // Temporally-eased copy of the amplitudes: each frame lerp toward the live target so
+  // the 31 Hz mic pushes (or 60 fps idle) render as a continuously smooth curve.
+  const eased = useSharedValue<number[]>(new Array(WAVE_POINTS).fill(0));
+  useFrameCallback(() => {
+    "worklet";
+    eased.modify((e) => {
+      "worklet";
+      const a = amplitudes.value;
+      for (let i = 0; i < e.length; i++) e[i] += ((a[i] ?? 0) - e[i]) * 0.22;
+      return e;
+    });
+  });
+
+  const path = useDerivedValue(() => {
+    if (width <= 0) return Skia.Path.Make();
+    return Skia.Path.MakeFromSVGString(buildWavePath(eased.value, width, HEIGHT)) ?? Skia.Path.Make();
+  }, [width]);
+
   return (
-    <View style={styles.wave} accessible={false} pointerEvents="none">
-      {Array.from({ length: WAVE_POINTS }).map((_, i) => (
-        <Bar key={i} amplitudes={amplitudes} index={i} env={ENVELOPE[i]} />
-      ))}
+    <View style={styles.wrap} onLayout={(e) => setWidth(Math.round(e.nativeEvent.layout.width))}>
+      {width > 0 ? (
+        <Canvas style={{ width, height: HEIGHT }}>
+          <Path path={path}>
+            <LinearGradient
+              start={vec(0, HEIGHT / 2)}
+              end={vec(width, HEIGHT / 2)}
+              colors={[colors.green, colors.greenDeep, colors.green]}
+            />
+          </Path>
+        </Canvas>
+      ) : null}
     </View>
   );
 }
 
-function Bar({
-  amplitudes,
-  index,
-  env,
-}: {
-  amplitudes: SharedValue<number[]>;
-  index: number;
-  env: number;
-}) {
-  const eased = useDerivedValue(() => {
-    const a = amplitudes.value;
-    const c = a[index] ?? 0;
-    const l = a[index - 1] ?? c;
-    const r = a[index + 1] ?? c;
-    // 1-2-1 neighbour blur → a smooth envelope across the bars (curve, not spikes).
-    const smoothed = (l + 2 * c + r) / 4;
-    return withSpring(clamp(smoothed * env, 0, 1), SPRING);
-  });
-  const style = useAnimatedStyle(() => ({ transform: [{ scaleY: 0.035 + eased.value * 0.965 }] }));
-  return <Animated.View style={[styles.bar, style]} />;
-}
-
-const styles = StyleSheet.create({
-  wave: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 3,
-    height: HEIGHT,
-    width: "100%",
-  },
-  bar: {
-    flex: 1,
-    maxWidth: 3.5,
-    height: HEIGHT,
-    borderRadius: 2,
-    // Solid base (always visible) + a soft vertical gradient on top for depth. The
-    // gradient is New-Arch only; if unsupported the solid green still shows.
-    backgroundColor: colors.green,
-    experimental_backgroundImage: `linear-gradient(to top, ${colors.greenDeep}, ${colors.green})`,
-  },
-});
+const styles = StyleSheet.create({ wrap: { width: "100%", height: HEIGHT } });
