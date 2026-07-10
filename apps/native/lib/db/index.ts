@@ -30,7 +30,7 @@ import type {
 const DB_NAME = "sona.db";
 
 /** Schema version — bump + add a migration branch in initDb when the schema changes. */
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -106,6 +106,19 @@ CREATE TABLE IF NOT EXISTS audit_entry (
   FOREIGN KEY (consultId) REFERENCES consult(id)
 );
 CREATE INDEX IF NOT EXISTS idx_audit_consult ON audit_entry(consultId, ts);
+
+-- On-device embedding cache for semantic note search. Vectors are computed locally
+-- (executorch MiniLM) from the note text and stored ONLY on-device — like everything
+-- else, they never leave the phone. Keyed per consult; the model column invalidates
+-- the cache if the embedding model changes. New TABLE via IF NOT EXISTS auto-creates on
+-- DBs, so no ALTER migration is needed for v3.
+CREATE TABLE IF NOT EXISTS note_embedding (
+  consultId  TEXT PRIMARY KEY NOT NULL,
+  vec        TEXT NOT NULL,   -- JSON-encoded number[] (embedding vector)
+  model      TEXT NOT NULL,   -- embedding model name (cache key)
+  updatedAt  INTEGER NOT NULL,
+  FOREIGN KEY (consultId) REFERENCES consult(id)
+);
 `;
 
 /**
@@ -371,6 +384,7 @@ export async function deleteConsult(consultId: string): Promise<void> {
     await db.runAsync(`DELETE FROM transcript_segment WHERE consultId = ?;`, [consultId]);
     await db.runAsync(`DELETE FROM clinical_note WHERE consultId = ?;`, [consultId]);
     await db.runAsync(`DELETE FROM audit_entry WHERE consultId = ?;`, [consultId]);
+    await db.runAsync(`DELETE FROM note_embedding WHERE consultId = ?;`, [consultId]);
     await db.runAsync(`DELETE FROM consult WHERE id = ?;`, [consultId]);
   });
 }
@@ -446,6 +460,39 @@ export async function getSearchDocs(): Promise<SearchDoc[]> {
       .join(" ");
     return { consultId: r.consultId, title: r.title, status: r.status, createdAt: r.createdAt, text };
   });
+}
+
+/**
+ * Upsert the embedding vector for a consult's note (semantic-search cache). Stored
+ * on-device only; `model` lets a later model change invalidate stale vectors.
+ */
+export async function saveNoteEmbedding(
+  consultId: string,
+  model: string,
+  vec: number[],
+): Promise<void> {
+  const db = await initDb();
+  await db.runAsync(
+    `INSERT OR REPLACE INTO note_embedding (consultId, vec, model, updatedAt) VALUES (?, ?, ?, ?);`,
+    [consultId, JSON.stringify(vec), model, Date.now()],
+  );
+}
+
+interface EmbRow {
+  consultId: string;
+  vec: string;
+}
+
+/** All cached note embeddings for a given embedding model. */
+export async function getNoteEmbeddings(
+  model: string,
+): Promise<{ consultId: string; vec: number[] }[]> {
+  const db = await initDb();
+  const rows = await db.getAllAsync<EmbRow>(
+    `SELECT consultId, vec FROM note_embedding WHERE model = ?;`,
+    [model],
+  );
+  return rows.map((r) => ({ consultId: r.consultId, vec: JSON.parse(r.vec) as number[] }));
 }
 
 export * from "./types";
