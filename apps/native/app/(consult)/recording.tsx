@@ -12,16 +12,19 @@ import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { RecordButton } from "@/components/consult/RecordButton";
 import { SegmentedControl } from "@/components/consult/SegmentedControl";
 import { Waveform } from "@/components/consult/Waveform";
+import { useDiarizedTranscript } from "@/lib/diarize/useDiarizedTranscript";
+import type { DiarTurn } from "@/lib/diarize/types";
 import { haptic } from "@/lib/haptics";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
-import type { RawSegment } from "@/lib/pipeline/mockStt";
 import { colors, font, space } from "@/lib/theme";
 
 type Mode = "transcribe" | "dictate";
 
-function toDiarRow(seg: RawSegment): { speaker: SpeakerKey; spans: TextSpan[]; faint: boolean } {
-  const isDoctor = seg.speaker === "doctor";
-  return { speaker: isDoctor ? "dr" : "pt", faint: isDoctor, spans: [{ text: seg.text, bm: seg.lang === "ms" }] };
+// Map a diarized turn (doctor / patient / unknown, from the on-device diarizer) to a
+// transcript row. Unknown (a third party — family, nurse) gets the neutral chip.
+function toDiarRow(turn: DiarTurn): { speaker: SpeakerKey; spans: TextSpan[]; faint: boolean } {
+  const speaker: SpeakerKey = turn.speaker === "doctor" ? "dr" : turn.speaker === "patient" ? "pt" : "you";
+  return { speaker, faint: turn.speaker === "doctor", spans: [{ text: turn.text, bm: turn.lang === "ms" }] };
 }
 
 function mmss(total: number): string {
@@ -53,7 +56,8 @@ export default function RecordingScreen() {
     return () => clearInterval(id);
   }, []);
 
-  const peek = segments.slice(-3);
+  const turns = useDiarizedTranscript(segments);
+  const peek = turns.slice(-3);
   const end = () => router.push("/privacy");
 
   return (
@@ -86,12 +90,12 @@ export default function RecordingScreen() {
       </View>
 
       <Card variant="tint" style={styles.peek}>
-        <Text style={styles.peekLabel}>Live transcript</Text>
+        <Text style={styles.peekLabel}>Live transcript · speakers separated on-device</Text>
         {peek.length === 0 ? (
           <Text style={styles.waiting}>Listening…</Text>
         ) : (
-          peek.map((seg, i) => {
-            const line = toDiarRow(seg);
+          peek.map((turn, i) => {
+            const line = toDiarRow(turn);
             return <DiarRow key={i} speaker={line.speaker} spans={line.spans} faint={line.faint} />;
           })
         )}

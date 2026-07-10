@@ -64,7 +64,10 @@ export function embedPcm(pcm: Float32Array, sr = SAMPLE_RATE): Voiceprint {
     sumSq += vec[b] * vec[b];
   }
   const nrm = Math.sqrt(sumSq);
-  if (nrm > 0) for (let b = 0; b < BANDS.length; b++) vec[b] /= nrm; // L2 normalize
+  // L2 normalize. A silent / flat window yields the zero vector (can't be unit-length);
+  // that's handled downstream — cosineSim returns 0 for a zero vector. VAD gates silence
+  // upstream anyway, so this is the degenerate edge, not the norm.
+  if (nrm > 0) for (let b = 0; b < BANDS.length; b++) vec[b] /= nrm;
   return vec;
 }
 
