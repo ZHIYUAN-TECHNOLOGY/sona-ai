@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { haptic } from "@/lib/haptics";
 import { colors, radius, shadow } from "@/lib/theme";
 
 export type ButtonVariant = "primary" | "ghost" | "danger";
@@ -28,12 +29,19 @@ export function PrimaryButton({
   const fg = variant === "ghost" ? colors.ink : colors.white;
   const glow = isPrimary || isDanger;
 
+  // A light tap on the meaningful CTAs (primary/danger); ghost stays silent.
+  const press = () => {
+    if (!isPrimary && !isDanger) return onPress?.();
+    haptic("tap");
+    onPress?.();
+  };
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
-      onPress={onPress}
+      onPress={press}
       style={({ pressed }) => [
         styles.btn,
         size === "sm" ? styles.sm : styles.md,

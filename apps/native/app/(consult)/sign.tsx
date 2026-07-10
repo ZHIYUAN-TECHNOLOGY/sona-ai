@@ -13,6 +13,7 @@ import { toFhirDocumentReference } from "@/lib/export/fhir";
 import { assertReidentified, toNoteText } from "@/lib/export/noteText";
 import { exportPdf } from "@/lib/export/pdf";
 import type { SignedNote } from "@/lib/export/types";
+import { haptic } from "@/lib/haptics";
 import { recordExport, signConsult } from "@/lib/pipeline/consultPipeline";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
 import { colors, font, radius, space } from "@/lib/theme";
@@ -50,6 +51,7 @@ export default function SignScreen() {
     if (!consultId) return;
     setSignedAt(new Date().toISOString());
     setSigned(true);
+    haptic("signSuccess");
     await signConsult(consultId, consult.clinicianName);
   };
 
