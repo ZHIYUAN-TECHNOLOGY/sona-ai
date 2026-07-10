@@ -97,6 +97,9 @@ export default function NoteScreen() {
       <View style={styles.chiprow}>
         <Pill label={note?.title ?? "Consult note"} variant="green" />
         <Pill label={templateById(templateId).name} variant="line" />
+        {ready && note.generationMs > 0 ? (
+          <Pill label={`${(note.generationMs / 1000).toFixed(1)}s · on-device`} variant="line" />
+        ) : null}
       </View>
 
       {!ready ? (

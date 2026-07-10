@@ -57,6 +57,8 @@ export interface DraftNote {
    * Shown as citation chips on the note screen. Empty when grounding is off / no match.
    */
   guidelines: KnowledgeDoc[];
+  /** Wall-clock time of the on-device model inference (ms) — proof of on-device speed. */
+  generationMs: number;
 }
 
 // Any surviving redaction token — a title must never contain one.
@@ -265,7 +267,9 @@ export async function generateNote(
     { role: "system", content: system },
     { role: "user", content: buildTranscript(segments) },
   ];
+  const t0 = Date.now();
   const rawOut = await llm.generate(messages);
+  const generationMs = Date.now() - t0;
   const clean = stripThink(rawOut);
   const { title: rawTitle, rest: afterTitle } = parseTitle(clean);
   // Peel the trailing Flags line before anything else parses the body, so the
@@ -285,5 +289,5 @@ export async function generateNote(
   const orders = parsed.orders.map((o) => ({ ...o, text: stripInlineMd(o.text) }));
   const title = safeTitle(rawTitle, soap);
   // guidelines are attached by the caller (draftClinicalNote), which did the retrieval.
-  return { soap, orders, raw: clean, title, markdown, redFlags, guidelines: [] };
+  return { soap, orders, raw: clean, title, markdown, redFlags, guidelines: [], generationMs };
 }
