@@ -26,9 +26,11 @@ export function Waveform({ live = true }: { live?: boolean }) {
       idle.modify((arr) => {
         "worklet";
         for (let i = 0; i < arr.length; i++) {
-          const a = Math.sin(t * 1.7 - i * 0.32) * 0.5 + 0.5;
-          const b = Math.sin(t * 0.9 + i * 0.14) * 0.5 + 0.5;
-          arr[i] = 0.08 + 0.24 * a * (0.55 + 0.45 * b);
+          // Two slow, layered sines → a gentle elegant breathing flow (low amplitude;
+          // the renderer's edge envelope tapers the sides further).
+          const a = Math.sin(t * 1.15 - i * 0.26) * 0.5 + 0.5;
+          const b = Math.sin(t * 0.55 + i * 0.11) * 0.5 + 0.5;
+          arr[i] = 0.05 + 0.16 * a * (0.6 + 0.4 * b);
         }
         return arr;
       });
