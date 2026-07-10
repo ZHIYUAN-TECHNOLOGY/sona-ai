@@ -1,35 +1,44 @@
+import type { ComponentType } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, {
   clamp,
   useAnimatedStyle,
   useDerivedValue,
-  withSpring,
   type SharedValue,
 } from "react-native-reanimated";
 
 import { WAVE_POINTS } from "@/lib/audio/useMicAmplitude";
 import { colors } from "@/lib/theme";
 
-const HEIGHT = 44;
-// Overdamped spring — smooth follow of the live target, no wobble/overshoot, keeps
-// velocity between the ~31 Hz pushes so the motion reads continuous, not stepped.
-const SPRING = { mass: 0.5, stiffness: 150, damping: 20 } as const;
+// Prefer the premium Skia curve. If its native module (RNSkiaModule) isn't registered in
+// the binary, the require throws at import — caught here so we fall back to bars and
+// never crash. On a build where Skia links, the continuous curve is used.
+let SkiaWaveform: ComponentType<{ amplitudes: SharedValue<number[]> }> | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  SkiaWaveform = require("./SkiaWaveform").SkiaWaveform;
+} catch {
+  SkiaWaveform = null;
+}
 
-// Centre-weighted envelope: bars taper toward the edges (cosine falloff) so the wave
-// focuses in the middle and dissolves at the sides — the elegant, not-a-block look.
+const HEIGHT = 44;
+
+// Centre-weighted envelope: bars taper toward the edges so the wave focuses in the
+// middle and dissolves at the sides.
 function envelopeAt(i: number): number {
-  const x = (i / (WAVE_POINTS - 1)) * 2 - 1; // -1..1
+  const x = (i / (WAVE_POINTS - 1)) * 2 - 1;
   return 0.28 + 0.72 * Math.cos((x * Math.PI) / 2) ** 1.5;
 }
 const ENVELOPE = Array.from({ length: WAVE_POINTS }, (_, i) => envelopeAt(i));
 
 /**
- * Premium mic waveform: centre-mirrored, edge-tapered bars with a vertical gradient and
- * pill caps. Each bar springs toward a SPATIALLY-SMOOTHED target (averaged with its
- * neighbours) so the discrete amplitudes read as one flowing curve. Transform-only
- * (scaleY on the UI thread), no per-frame React re-render, no native SVG.
+ * Waveform renderer. `amplitudes` is already temporally smoothed by the parent (a slow
+ * per-frame lerp), so this just maps it to a shape — the Skia curve when available, else
+ * centre-mirrored, edge-tapered, spatially-smoothed bars. No spring here (would fight the
+ * parent's smoothing); transform-only, UI-thread.
  */
 export function WaveformCurve({ amplitudes }: { amplitudes: SharedValue<number[]> }) {
+  if (SkiaWaveform) return <SkiaWaveform amplitudes={amplitudes} />;
   return (
     <View style={styles.wave} accessible={false} pointerEvents="none">
       {Array.from({ length: WAVE_POINTS }).map((_, i) => (
@@ -48,16 +57,15 @@ function Bar({
   index: number;
   env: number;
 }) {
-  const eased = useDerivedValue(() => {
+  const h = useDerivedValue(() => {
     const a = amplitudes.value;
     const c = a[index] ?? 0;
     const l = a[index - 1] ?? c;
     const r = a[index + 1] ?? c;
-    // 1-2-1 neighbour blur → a smooth envelope across the bars (curve, not spikes).
-    const smoothed = (l + 2 * c + r) / 4;
-    return withSpring(clamp(smoothed * env, 0, 1), SPRING);
+    // 1-2-1 neighbour blur → smooth envelope across the bars (reads curve-like).
+    return clamp(((l + 2 * c + r) / 4) * env, 0, 1);
   });
-  const style = useAnimatedStyle(() => ({ transform: [{ scaleY: 0.035 + eased.value * 0.965 }] }));
+  const style = useAnimatedStyle(() => ({ transform: [{ scaleY: 0.035 + h.value * 0.965 }] }));
   return <Animated.View style={[styles.bar, style]} />;
 }
 
@@ -75,8 +83,6 @@ const styles = StyleSheet.create({
     maxWidth: 3.5,
     height: HEIGHT,
     borderRadius: 2,
-    // Solid base (always visible) + a soft vertical gradient on top for depth. The
-    // gradient is New-Arch only; if unsupported the solid green still shows.
     backgroundColor: colors.green,
     experimental_backgroundImage: `linear-gradient(to top, ${colors.greenDeep}, ${colors.green})`,
   },
