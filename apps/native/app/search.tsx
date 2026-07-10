@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
@@ -18,22 +18,38 @@ import { colors, font, radius, space } from "@/lib/theme";
 // consult detail.
 export default function SearchScreen() {
   const [query, setQuery] = useState("");
-  const { search, semanticReady, downloadProgress, count } = useSemanticNoteSearch();
+  const { search, reload, semanticReady, downloadProgress, count } = useSemanticNoteSearch();
   const [result, setResult] = useState<NoteSearchResult>({ hits: [], mode: "keyword" });
+
+  // Debounce the query so we don't fire a native embed + cosine scan on every keystroke;
+  // clearing is instant.
+  const [debounced, setDebounced] = useState("");
+  useEffect(() => {
+    if (!query.trim()) {
+      setDebounced(query);
+      return;
+    }
+    const id = setTimeout(() => setDebounced(query), 250);
+    return () => clearTimeout(id);
+  }, [query]);
+
+  // Re-load notes (+ embed any new ones) whenever the screen regains focus, so notes
+  // added/edited while it stayed mounted under a pushed detail are reflected.
+  useFocusEffect(useCallback(() => void reload(), [reload]));
 
   useEffect(() => {
     let alive = true;
-    void search(query).then((r) => {
+    void search(debounced).then((r) => {
       if (alive) setResult(r);
     });
     return () => {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, semanticReady]);
+  }, [debounced, semanticReady]);
 
   const hits = result.hits;
-  const q = query.trim();
+  const q = debounced.trim();
   const loadingModel = !semanticReady && downloadProgress > 0 && downloadProgress < 1;
 
   return (
