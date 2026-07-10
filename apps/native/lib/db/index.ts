@@ -273,6 +273,9 @@ export async function saveNote(input: {
       note.edited ? 1 : 0,
     ],
   );
+  // Invalidate the cached semantic-search embedding: the note text just changed, so its
+  // stored vector is stale. Backfill re-embeds it on the next search.
+  await db.runAsync(`DELETE FROM note_embedding WHERE consultId = ?;`, [input.consultId]);
   return note;
 }
 

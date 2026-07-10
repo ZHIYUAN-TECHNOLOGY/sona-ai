@@ -58,16 +58,19 @@ export function useSemanticRetrieve() {
   async function search(query: string, k = 6): Promise<RetrieveResult> {
     const q = query.trim();
     if (!q) return { hits: [], mode: ready ? "semantic" : "keyword" };
+    const lexical = (): RetrieveResult => ({ hits: lexicalRetrieve(q, corpus, k), mode: "keyword" });
     if (ready && vectorsRef.current) {
       try {
         const qv = await embed.forward(q);
         const ranked = topKByCosine(qv, vectorsRef.current, k, 0.25);
+        // Empty semantic set → lexical, so a low-cosine exact match is not lost.
+        if (ranked.length === 0) return lexical();
         return { hits: ranked.map((r) => ({ doc: corpus[r.index], score: r.score })), mode: "semantic" };
       } catch {
         // fall through to lexical
       }
     }
-    return { hits: lexicalRetrieve(q, corpus, k), mode: "keyword" };
+    return lexical();
   }
 
   return {

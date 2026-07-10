@@ -8,11 +8,8 @@ import { Pill } from "@/components/consult/Pill";
 import { TabScaffold } from "@/components/consult/TabScaffold";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { CATEGORIES, getCorpus, type KnowledgeDoc } from "@/lib/knowledge/corpus";
-import {
-  useGroundedAnswer,
-  type AnswerStatus,
-  type GroundedAnswer,
-} from "@/lib/knowledge/useGroundedAnswer";
+import type { KnowledgeHit } from "@/lib/knowledge/retrieve";
+import { useGroundedAnswer } from "@/lib/knowledge/useGroundedAnswer";
 import { useSemanticRetrieve, type RetrieveResult } from "@/lib/knowledge/useSemanticRetrieve";
 import { colors, font, radius, space } from "@/lib/theme";
 
@@ -25,35 +22,42 @@ const LABEL: Record<string, string> = Object.fromEntries(CATEGORIES.map((c) => [
 export default function KnowledgeScreen() {
   const corpus = getCorpus();
   const [query, setQuery] = useState("");
-  const q = query.trim();
   const { search, semanticReady, downloadProgress } = useSemanticRetrieve();
   const [result, setResult] = useState<RetrieveResult>({ hits: [], mode: "keyword" });
 
-  // Retrieve on query change (and once semantic search comes online). Async because
-  // the semantic path embeds the query on-device; the lexical fallback resolves
-  // immediately. Latest-wins guard avoids an out-of-order stale result.
+  // Debounce so a native query-embed doesn't fire on every keystroke; clearing is instant.
+  const [debounced, setDebounced] = useState("");
+  useEffect(() => {
+    if (!query.trim()) {
+      setDebounced(query);
+      return;
+    }
+    const id = setTimeout(() => setDebounced(query), 250);
+    return () => clearTimeout(id);
+  }, [query]);
+  const q = debounced.trim();
+
+  // Retrieve on (debounced) query change and once semantic search comes online. Async
+  // because the semantic path embeds the query on-device; lexical fallback is instant.
   useEffect(() => {
     let alive = true;
-    void search(query, 6).then((r) => {
+    void search(debounced, 6).then((r) => {
       if (alive) setResult(r);
     });
     return () => {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, semanticReady]);
+  }, [debounced, semanticReady]);
 
   const hits = result.hits;
   const loadingModel = !semanticReady && downloadProgress > 0 && downloadProgress < 1;
 
-  // Opt-in grounded answer (lazy on-device LLM). Cleared whenever the query changes so
-  // a stale answer never shows against a new question.
-  const grounded = useGroundedAnswer();
-  useEffect(() => {
-    grounded.clear();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q]);
-  const answer = grounded.answer && grounded.answer.question === q ? grounded.answer : null;
+  // Opt-in grounded answer. The LLM-bearing section mounts ONLY after the clinician taps
+  // Generate for the current query, and unmounts (unloading the Qwen model) when the
+  // query changes — so the Knowledge model never lingers alongside the consult-flow one.
+  const [asked, setAsked] = useState<string | null>(null);
+  useEffect(() => setAsked(null), [q]);
 
   return (
     <TabScaffold title="Knowledge">
@@ -103,13 +107,17 @@ export default function KnowledgeScreen() {
           </View>
         ) : (
           <>
-            <AnswerBlock
-              answer={answer}
-              status={grounded.status}
-              downloadProgress={grounded.downloadProgress}
-              onAsk={() => grounded.ask(q, hits)}
-            />
-            <Text style={styles.sourcesLabel}>{answer ? "Sources" : `${hits.length} references`}</Text>
+            {asked === q ? (
+              <GroundedAnswerSection key={q} question={q} hits={hits} />
+            ) : (
+              <PrimaryButton
+                label="Generate answer"
+                variant="ghost"
+                icon={<Ionicons name="sparkles" size={16} color={colors.green} />}
+                onPress={() => setAsked(q)}
+              />
+            )}
+            <Text style={styles.sourcesLabel}>{asked === q ? "Sources" : `${hits.length} references`}</Text>
             <View style={styles.list}>
               {hits.map((h, i) => (
                 <Animated.View key={h.doc.id} entering={FadeIn.delay(Math.min(i, 6) * 30).duration(220)}>
@@ -139,17 +147,17 @@ export default function KnowledgeScreen() {
   );
 }
 
-function AnswerBlock({
-  answer,
-  status,
-  downloadProgress,
-  onAsk,
-}: {
-  answer: GroundedAnswer | null;
-  status: AnswerStatus;
-  downloadProgress: number;
-  onAsk: () => void;
-}) {
+// Mounts the on-device LLM (useGroundedAnswer) and asks on mount. Rendered ONLY while
+// the user is viewing an answer for the current query; unmounting it unloads the model,
+// bounding memory so it never sits resident alongside the consult-flow model.
+function GroundedAnswerSection({ question, hits }: { question: string; hits: KnowledgeHit[] }) {
+  const grounded = useGroundedAnswer();
+  useEffect(() => {
+    grounded.ask(question, hits);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const { answer, status, downloadProgress } = grounded;
+
   if (answer) {
     return (
       <Animated.View entering={FadeIn.duration(240)}>
@@ -173,28 +181,18 @@ function AnswerBlock({
       </Animated.View>
     );
   }
-  if (status === "loading-model" || status === "thinking") {
-    return (
-      <View style={styles.answerPending}>
-        <ActivityIndicator color={colors.green} />
-        <Text style={styles.pendingText}>
-          {status === "loading-model"
-            ? `Loading on-device model… ${Math.round(downloadProgress * 100)}%`
-            : "Generating answer…"}
-        </Text>
-      </View>
-    );
-  }
   if (status === "error") {
     return <Text style={styles.pendingText}>Couldn’t generate an answer — see the references below.</Text>;
   }
   return (
-    <PrimaryButton
-      label="Generate answer"
-      variant="ghost"
-      icon={<Ionicons name="sparkles" size={16} color={colors.green} />}
-      onPress={onAsk}
-    />
+    <View style={styles.answerPending}>
+      <ActivityIndicator color={colors.green} />
+      <Text style={styles.pendingText}>
+        {status === "loading-model"
+          ? `Loading on-device model… ${Math.round(downloadProgress * 100)}%`
+          : "Generating answer…"}
+      </Text>
+    </View>
   );
 }
 
