@@ -266,9 +266,16 @@ export function highlightClinical(markdown: string, redFlags?: string[]): string
       l = l.replace(RELATIVE, (m) => `*${m}*`);
       l = l.replace(DURATION, (m) => `*${m}*`);
       l = l.replace(GREEN, (m) => `**${m}**`);
-      l = l.replace(DOSE_BARE, (m, offset: number) =>
-        l[offset - 1] === "*" ? m : `**${m}**`,
-      );
+      l = l.replace(DOSE_BARE, (m, offset: number) => {
+        // Skip if already inside a bold span: GREEN may have wrapped a whole labelled
+        // vital that ends in a bare unit ("**Wt 70 g**"), and re-wrapping the inner
+        // "70 g" produces broken markdown ("**Wt **70 g"). An odd count of "**" before
+        // the match means we're inside an open bold span.
+        if (l[offset - 1] === "*") return m;
+        const openBolds = (l.slice(0, offset).match(/\*\*/g) ?? []).length;
+        if (openBolds % 2 === 1) return m;
+        return `**${m}**`;
+      });
       return l;
     })
     .join("\n")

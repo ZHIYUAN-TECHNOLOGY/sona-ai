@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
 import { Card } from "@/components/consult/Card";
@@ -80,11 +80,6 @@ export default function ConsultDetailScreen() {
     ]);
   }, [consult]);
 
-  const share = useCallback(() => {
-    if (!consult || !markdown) return;
-    void Share.share({ message: `${consult.title}\n\n${markdown}` });
-  }, [consult, markdown]);
-
   const status = consult ? statusMeta(consult.status) : null;
 
   return (
@@ -131,13 +126,6 @@ export default function ConsultDetailScreen() {
                   style={styles.action}
                   icon={<Ionicons name="create-outline" size={17} color={colors.ink} />}
                   onPress={() => setEditing(true)}
-                />
-                <PrimaryButton
-                  label="Share"
-                  variant="ghost"
-                  style={styles.action}
-                  icon={<Ionicons name="share-outline" size={17} color={colors.ink} />}
-                  onPress={share}
                 />
                 <PrimaryButton
                   label="Delete"

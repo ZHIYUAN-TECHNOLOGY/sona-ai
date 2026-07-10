@@ -87,12 +87,19 @@ export function useMicAmplitude(enabled: boolean): MicAmplitude {
     return () => {
       cancelled = true;
       setActive(false);
-      if (recorder) {
-        recorder.clearOnAudioReady();
-        recorder.clearOnError();
-        recorder.stop().catch(() => {});
+      // Wrap the whole teardown: a missing native module can throw SYNCHRONOUSLY,
+      // which a trailing .catch() (async-rejection only) would not catch — that would
+      // crash on unmount and defeat the graceful fallback.
+      try {
+        if (recorder) {
+          recorder.clearOnAudioReady();
+          recorder.clearOnError();
+          recorder.stop().catch(() => {});
+        }
+        AudioManager.setAudioSessionActivity(false).catch(() => {});
+      } catch {
+        // native unavailable — nothing to release
       }
-      AudioManager.setAudioSessionActivity(false).catch(() => {});
     };
   }, [enabled, amplitudes]);
 

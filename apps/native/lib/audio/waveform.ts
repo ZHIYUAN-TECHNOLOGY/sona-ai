@@ -35,8 +35,11 @@ export function pushRing(ring: number[], value: number, size: number): number[] 
   return ring;
 }
 
-/** Round to 1 dp for a compact path string. */
+/** Round to 1 dp for a compact path string. `worklet` so buildWavePath (which runs
+ *  on the UI thread) can call it without the Worklets runtime treating it as a remote
+ *  function and throwing. The directive is a harmless no-op under plain Node. */
 function r1(n: number): number {
+  "worklet";
   return Math.round(n * 10) / 10;
 }
 
