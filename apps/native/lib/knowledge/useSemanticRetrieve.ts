@@ -1,9 +1,9 @@
 import { useTextEmbeddings } from "react-native-executorch";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { EMBED_MODEL } from "@/lib/pipeline/model";
 
-import { CORPUS } from "./corpus";
+import { getCorpus } from "./corpus";
 import { retrieve as lexicalRetrieve, type KnowledgeHit } from "./retrieve";
 import { topKByCosine } from "./vector";
 
@@ -13,13 +13,6 @@ export interface RetrieveResult {
   mode: RetrieveMode;
 }
 
-// What to embed per corpus entry — title + guidance + keywords, so a Malay keyword
-// contributes to the vector even when the guidance text is English.
-function docText(id: string): string {
-  const d = CORPUS.find((x) => x.id === id)!;
-  return `${d.title}. ${d.text} ${d.keywords.join(" ")}`;
-}
-
 /**
  * On-device semantic retrieval over the Knowledge corpus, via the executorch
  * multilingual MiniLM embedder. Embeds the (small, static) corpus once the model is
@@ -27,21 +20,26 @@ function docText(id: string): string {
  * "chest pain" guideline. DEGRADES to the lexical ranker until the model has
  * downloaded/loaded, or on any embedding error, so the tab always works. On-device
  * only: the query is embedded in-process and never leaves the phone.
+ *
+ * Reads the corpus via getCorpus() (a stable snapshot per hook lifetime) so a licensed
+ * pack registered via registerCorpusSource is included automatically.
  */
 export function useSemanticRetrieve() {
   const embed = useTextEmbeddings({ model: EMBED_MODEL });
+  const corpus = useMemo(() => getCorpus(), []);
   const vectorsRef = useRef<Float32Array[] | null>(null);
   const [ready, setReady] = useState(false);
 
-  // Embed the corpus once, when the model becomes ready.
+  // Embed the corpus once, when the model becomes ready. Title + guidance + keywords,
+  // so a Malay keyword contributes to the vector even when the guidance is English.
   useEffect(() => {
     if (!embed.isReady || vectorsRef.current) return;
     let cancelled = false;
     void (async () => {
       try {
         const vecs: Float32Array[] = [];
-        for (const d of CORPUS) {
-          const v = await embed.forward(docText(d.id));
+        for (const d of corpus) {
+          const v = await embed.forward(`${d.title}. ${d.text} ${d.keywords.join(" ")}`);
           if (cancelled) return;
           vecs.push(v);
         }
@@ -54,7 +52,7 @@ export function useSemanticRetrieve() {
     return () => {
       cancelled = true;
     };
-  }, [embed.isReady]);
+  }, [embed.isReady, corpus]);
 
   // Retrieve for a query: semantic when the corpus is embedded, else lexical.
   async function search(query: string, k = 6): Promise<RetrieveResult> {
@@ -64,12 +62,12 @@ export function useSemanticRetrieve() {
       try {
         const qv = await embed.forward(q);
         const ranked = topKByCosine(qv, vectorsRef.current, k, 0.25);
-        return { hits: ranked.map((r) => ({ doc: CORPUS[r.index], score: r.score })), mode: "semantic" };
+        return { hits: ranked.map((r) => ({ doc: corpus[r.index], score: r.score })), mode: "semantic" };
       } catch {
         // fall through to lexical
       }
     }
-    return { hits: lexicalRetrieve(q, CORPUS, k), mode: "keyword" };
+    return { hits: lexicalRetrieve(q, corpus, k), mode: "keyword" };
   }
 
   return {

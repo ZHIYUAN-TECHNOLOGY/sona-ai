@@ -37,6 +37,18 @@ export const CATEGORIES: { key: KnowledgeCategory; label: string; sf: string }[]
   { key: "paediatric", label: "Paediatrics", sf: "figure.and.child.holdinghands" },
 ];
 
-// Populated from a verified curation pass (see lib/knowledge/corpus.data). Kept in a
-// separate data module so this file stays the stable API surface.
-export { CORPUS } from "./corpus.data";
+// The bundled corpus (verified curation pass, lib/knowledge/corpus.data) is registered
+// as the default source. Consumers read the merged corpus via getCorpus() so a
+// licensed / imported pack can be added later with registerCorpusSource — no consumer
+// changes needed. See lib/knowledge/corpusSource.
+import { CORPUS as BUNDLED_CORPUS } from "./corpus.data";
+import { registerCorpusSource } from "./corpusSource";
+
+registerCorpusSource("bundled", BUNDLED_CORPUS);
+
+export {
+  getCorpus,
+  registerCorpusSource,
+  unregisterCorpusSource,
+  corpusSourceIds,
+} from "./corpusSource";
