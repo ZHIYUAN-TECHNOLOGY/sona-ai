@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion } from "react-native-reanimated";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
+import { NoteEditor } from "@/components/consult/NoteEditor";
 import { NoteMarkdown } from "@/components/consult/NoteMarkdown";
 import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
@@ -20,8 +21,19 @@ import { colors, font, space } from "@/lib/theme";
 // de-identified transcript, re-identified locally, and rendered as rich Markdown.
 // The model never sees real identifiers; the re-ID map never leaves the device.
 export default function NoteScreen() {
-  const { redaction, note, noteStatus, noteError, draftNote, llmReady, llmProgress, templateId } =
-    useConsultPipeline();
+  const {
+    redaction,
+    note,
+    noteStatus,
+    noteError,
+    draftNote,
+    editNote,
+    llmReady,
+    llmProgress,
+    templateId,
+  } = useConsultPipeline();
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Draft once, when a redaction is ready and the on-device model has loaded.
   useEffect(() => {
@@ -30,6 +42,16 @@ export default function NoteScreen() {
 
   const ready = noteStatus === "ready" && note;
   const empty = !!ready && noteIsEmpty(note.markdown);
+
+  const saveEdit = async (edited: string) => {
+    setSaving(true);
+    try {
+      await editNote(edited);
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Elegant reveal for the drafted note: a gentle fade + short rise on a strong
   // ease-out curve (no spring/bounce — this is a document, not a toast). The
@@ -50,7 +72,7 @@ export default function NoteScreen() {
       onBack={() => router.back()}
       right={<Pill label="Unsigned" variant="amber" />}
       footer={
-        ready && !empty ? (
+        ready && !empty && !editing ? (
           <PrimaryButton label="Looks right" onPress={() => router.push("/sign")} />
         ) : undefined
       }
@@ -109,6 +131,13 @@ export default function NoteScreen() {
             </View>
           </Card>
         </Animated.View>
+      ) : editing ? (
+        <NoteEditor
+          initial={note.markdown}
+          saving={saving}
+          onSave={saveEdit}
+          onCancel={() => setEditing(false)}
+        />
       ) : (
         <>
           <Animated.View entering={revealNote}>
@@ -116,6 +145,16 @@ export default function NoteScreen() {
               <NoteMarkdown markdown={note.markdown} redFlags={note.redFlags} />
             </Card>
           </Animated.View>
+
+          <View style={styles.editRow}>
+            <PrimaryButton
+              label="Edit note"
+              variant="ghost"
+              size="sm"
+              icon={<Ionicons name="create-outline" size={15} color={colors.ink} />}
+              onPress={() => setEditing(true)}
+            />
+          </View>
 
           <Animated.View entering={revealNotice}>
             <SafetyNotice>
@@ -130,6 +169,7 @@ export default function NoteScreen() {
 
 const styles = StyleSheet.create({
   chiprow: { flexDirection: "row", flexWrap: "wrap", gap: space.sm, marginBottom: space.xs },
+  editRow: { alignItems: "flex-start", marginTop: space.xs },
   center: { alignItems: "center", gap: space.sm, paddingVertical: space.xl },
   emptyIcon: {
     width: 52,

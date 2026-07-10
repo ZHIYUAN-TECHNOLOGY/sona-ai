@@ -6,12 +6,14 @@ import Animated, { FadeIn } from "react-native-reanimated";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
+import { NoteEditor } from "@/components/consult/NoteEditor";
 import { NoteMarkdown } from "@/components/consult/NoteMarkdown";
 import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { consultTime, statusMeta } from "@/lib/consultFormat";
 import { deleteConsult, getAudit, getConsult, getNote } from "@/lib/db";
 import type { AuditEntry, ClinicalNote, Consult } from "@/lib/db/types";
+import { editClinicalNote } from "@/lib/pipeline/consultPipeline";
 import { soapToMarkdown } from "@/lib/pipeline/noteFormat";
 import { colors, font, radius, space } from "@/lib/theme";
 
@@ -26,22 +28,44 @@ export default function ConsultDetailScreen() {
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [showAudit, setShowAudit] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    const [c, n, a] = await Promise.all([getConsult(id), getNote(id), getAudit(id)]);
+    setConsult(c);
+    setNote(n);
+    setAudit(a);
+    setLoaded(true);
+  }, [id]);
 
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       void (async () => {
-        const [c, n, a] = await Promise.all([getConsult(id), getNote(id), getAudit(id)]);
-        if (!alive) return;
-        setConsult(c);
-        setNote(n);
-        setAudit(a);
-        setLoaded(true);
+        if (alive) await load();
       })();
       return () => {
         alive = false;
       };
-    }, [id]),
+    }, [load]),
+  );
+
+  const markdown = note ? soapToMarkdown(note.soap, note.orders) : "";
+
+  const saveEdit = useCallback(
+    async (edited: string) => {
+      if (!consult) return;
+      setSaving(true);
+      try {
+        await editClinicalNote(consult.id, edited);
+        await load(); // re-read the persisted, re-parsed note
+        setEditing(false);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [consult, load],
   );
 
   const remove = useCallback(() => {
@@ -55,8 +79,6 @@ export default function ConsultDetailScreen() {
       },
     ]);
   }, [consult]);
-
-  const markdown = note ? soapToMarkdown(note.soap, note.orders) : "";
 
   const share = useCallback(() => {
     if (!consult || !markdown) return;
@@ -81,28 +103,52 @@ export default function ConsultDetailScreen() {
         </Card>
       ) : note ? (
         <>
-          <Animated.View entering={FadeIn.duration(240)}>
-            <Card>
-              <NoteMarkdown markdown={markdown} redFlags={note.redFlags} />
-            </Card>
-          </Animated.View>
+          {editing ? (
+            <NoteEditor
+              initial={markdown}
+              saving={saving}
+              onSave={saveEdit}
+              onCancel={() => setEditing(false)}
+            />
+          ) : (
+            <>
+              <Animated.View entering={FadeIn.duration(240)}>
+                <Card>
+                  <NoteMarkdown markdown={markdown} redFlags={note.redFlags} />
+                  {note.edited ? (
+                    <View style={styles.editedRow}>
+                      <Ionicons name="create-outline" size={12} color={colors.ink3} />
+                      <Text style={styles.editedNote}>Edited by clinician</Text>
+                    </View>
+                  ) : null}
+                </Card>
+              </Animated.View>
 
-          <View style={styles.actions}>
-            <PrimaryButton
-              label="Share"
-              variant="ghost"
-              style={styles.action}
-              icon={<Ionicons name="share-outline" size={17} color={colors.ink} />}
-              onPress={share}
-            />
-            <PrimaryButton
-              label="Delete"
-              variant="danger"
-              style={styles.action}
-              icon={<Ionicons name="trash-outline" size={17} color={colors.white} />}
-              onPress={remove}
-            />
-          </View>
+              <View style={styles.actions}>
+                <PrimaryButton
+                  label="Edit"
+                  variant="ghost"
+                  style={styles.action}
+                  icon={<Ionicons name="create-outline" size={17} color={colors.ink} />}
+                  onPress={() => setEditing(true)}
+                />
+                <PrimaryButton
+                  label="Share"
+                  variant="ghost"
+                  style={styles.action}
+                  icon={<Ionicons name="share-outline" size={17} color={colors.ink} />}
+                  onPress={share}
+                />
+                <PrimaryButton
+                  label="Delete"
+                  variant="danger"
+                  style={styles.action}
+                  icon={<Ionicons name="trash-outline" size={17} color={colors.white} />}
+                  onPress={remove}
+                />
+              </View>
+            </>
+          )}
 
           <Card variant="green">
             <Pressable
@@ -169,6 +215,8 @@ const styles = StyleSheet.create({
   center: { alignItems: "center", gap: space.sm, paddingVertical: space.xl },
   actions: { flexDirection: "row", gap: space.sm },
   action: { flex: 1 },
+  editedRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: space.sm },
+  editedNote: { ...font.bodySm, color: colors.ink3, fontStyle: "italic" },
   auditHead: { flexDirection: "row", alignItems: "center", gap: space.sm },
   auditTitle: { ...font.body, fontWeight: "600", color: colors.ink, flex: 1 },
   chiprow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: space.sm },
