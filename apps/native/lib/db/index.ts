@@ -30,7 +30,7 @@ import type {
 const DB_NAME = "sona.db";
 
 /** Schema version — bump + add a migration branch in initDb when the schema changes. */
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -118,6 +118,18 @@ CREATE TABLE IF NOT EXISTS note_embedding (
   model      TEXT NOT NULL,   -- embedding model name (cache key)
   updatedAt  INTEGER NOT NULL,
   FOREIGN KEY (consultId) REFERENCES consult(id)
+);
+
+-- Enrolled clinician voiceprint for speaker diarization (v4). A single row (id='self')
+-- holds the doctor's speaker embedding so the diarizer can label which voice is the
+-- clinician. BIOMETRIC PHI: this is device-only like the re-ID map — it is never logged,
+-- exported, or transmitted. The model column invalidates it if the embedder changes.
+-- New TABLE via IF NOT EXISTS auto-creates on existing DBs, so no ALTER migration needed.
+CREATE TABLE IF NOT EXISTS doctor_voiceprint (
+  id         TEXT PRIMARY KEY NOT NULL,   -- always 'self' (singleton)
+  vec        TEXT NOT NULL,   -- JSON-encoded number[] (unit-normalized voiceprint)
+  model      TEXT NOT NULL,   -- embedder id (cache key)
+  updatedAt  INTEGER NOT NULL
 );
 `;
 
@@ -496,6 +508,33 @@ export async function getNoteEmbeddings(
     [model],
   );
   return rows.map((r) => ({ consultId: r.consultId, vec: JSON.parse(r.vec) as number[] }));
+}
+
+// --- Doctor voiceprint (diarization enrollment) ------------------------------
+// BIOMETRIC PHI — device-only. Singleton row id='self'. Never logged/exported.
+
+/** Store (upsert) the enrolled clinician voiceprint. `model` = embedder id (cache key). */
+export async function saveDoctorVoiceprint(model: string, vec: number[]): Promise<void> {
+  const db = await initDb();
+  await db.runAsync(
+    `INSERT OR REPLACE INTO doctor_voiceprint (id, vec, model, updatedAt) VALUES ('self', ?, ?, ?);`,
+    [JSON.stringify(vec), model, Date.now()],
+  );
+}
+
+/** The enrolled clinician voiceprint, or null if the doctor hasn't enrolled. */
+export async function getDoctorVoiceprint(): Promise<{ vec: number[]; model: string } | null> {
+  const db = await initDb();
+  const row = await db.getFirstAsync<{ vec: string; model: string }>(
+    `SELECT vec, model FROM doctor_voiceprint WHERE id = 'self';`,
+  );
+  return row ? { vec: JSON.parse(row.vec) as number[], model: row.model } : null;
+}
+
+/** Delete the enrolled voiceprint (e.g. re-enroll, or clinician revokes). */
+export async function clearDoctorVoiceprint(): Promise<void> {
+  const db = await initDb();
+  await db.runAsync(`DELETE FROM doctor_voiceprint WHERE id = 'self';`);
 }
 
 export * from "./types";
