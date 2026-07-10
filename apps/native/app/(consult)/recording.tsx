@@ -12,6 +12,7 @@ import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { RecordButton } from "@/components/consult/RecordButton";
 import { SegmentedControl } from "@/components/consult/SegmentedControl";
 import { Waveform } from "@/components/consult/Waveform";
+import { haptic } from "@/lib/haptics";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
 import type { RawSegment } from "@/lib/pipeline/mockStt";
 import { colors, font, space } from "@/lib/theme";
@@ -42,6 +43,7 @@ export default function RecordingScreen() {
     useCallback(() => {
       if (started.current) return;
       started.current = true;
+      haptic("recordStart");
       startRecording();
     }, [startRecording]),
   );

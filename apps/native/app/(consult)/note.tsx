@@ -11,6 +11,7 @@ import { NoteMarkdown } from "@/components/consult/NoteMarkdown";
 import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { SafetyNotice } from "@/components/consult/SafetyNotice";
+import { haptic } from "@/lib/haptics";
 import { NOTE_MODEL_NAME } from "@/lib/pipeline/model";
 import { noteIsEmpty } from "@/lib/pipeline/noteHighlight";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
@@ -39,6 +40,11 @@ export default function NoteScreen() {
   useEffect(() => {
     if (noteStatus === "idle" && redaction && llmReady) void draftNote();
   }, [noteStatus, redaction, llmReady, draftNote]);
+
+  // A success tap the moment the on-device note lands.
+  useEffect(() => {
+    if (noteStatus === "ready") haptic("noteReady");
+  }, [noteStatus]);
 
   const ready = noteStatus === "ready" && note;
   const empty = !!ready && noteIsEmpty(note.markdown);
