@@ -5,7 +5,9 @@
 
 import assert from "node:assert/strict";
 
-import { buildTranscript, classifyOrder, parseFlags, parseSoap, stripThink } from "./noteGen";
+import type { KnowledgeDoc } from "../knowledge/corpus";
+import { buildTranscript, classifyOrder, generateNote, parseFlags, parseSoap, stripThink } from "./noteGen";
+import { buildGuidelineContext } from "./noteGrounding";
 import { highlightClinical, normalizeNoteMarkdown } from "./noteHighlight";
 import { soapToMarkdown } from "./noteFormat";
 
@@ -195,5 +197,37 @@ ok(
   "unparseable output falls back into subjective, nothing dropped",
 );
 
-// eslint-disable-next-line no-console
-console.log(`noteGen: ${checks}/${checks} checks pass`);
+// --- grounded note-gen: buildGuidelineContext + prompt injection ----------
+{
+  const corpus: KnowledgeDoc[] = [
+    { id: "cp", title: "Chest pain red flags", text: "Refer urgently if central chest pain with breathlessness.", category: "red-flags", source: "NICE", keywords: ["chest pain", "sakit dada"] },
+    { id: "ankle", title: "Ankle sprain", text: "RICE; refer if unable to weight-bear.", category: "referral", source: "NICE", keywords: ["ankle"] },
+  ];
+  const g = buildGuidelineContext("patient reports central chest pain and breathlessness", corpus, 3);
+  ok(g.refs.length >= 1 && g.refs[0].id === "cp", "grounding retrieves the relevant guideline");
+  ok(g.context.includes("[G1] Chest pain red flags"), "context is numbered for citation");
+  ok(buildGuidelineContext("xyzzy nothing", corpus).context === "", "no match → empty context");
+}
+
+// --- generateNote injects the guideline context into the system prompt -----
+void (async () => {
+  let capturedSystem = "";
+  const mockLlm = {
+    generate: async (msgs: { role: string; content: string }[]) => {
+      capturedSystem = msgs.find((m) => m.role === "system")?.content ?? "";
+      return "Title: URTI\n## Subjective\nCough for 3 days.\n\nFlags: none";
+    },
+  };
+  const segs = [{ speaker: "patient" as const, text: "I have a cough." }];
+  const withCtx = await generateNote(mockLlm, segs, "BASE PROMPT.", "[G1] Chest pain: refer if central.");
+  ok(capturedSystem.includes("[G1] Chest pain"), "guideline context injected into the system prompt");
+  ok(capturedSystem.includes("BASE PROMPT."), "base prompt preserved when grounding");
+  ok(Array.isArray(withCtx.guidelines), "DraftNote carries a guidelines array");
+
+  capturedSystem = "";
+  await generateNote(mockLlm, segs, "BASE PROMPT.");
+  ok(capturedSystem === "BASE PROMPT.", "no context → prompt unchanged (additive)");
+
+  // eslint-disable-next-line no-console
+  console.log(`noteGen: ${checks}/${checks} checks pass`);
+})();

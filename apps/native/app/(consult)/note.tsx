@@ -152,6 +152,18 @@ export default function NoteScreen() {
             </Card>
           </Animated.View>
 
+          {note.guidelines.length > 0 ? (
+            <Animated.View entering={revealNotice} style={styles.guideRow}>
+              <Ionicons name="sparkles" size={13} color={colors.green} />
+              <Text style={styles.guideLabel}>Grounded in</Text>
+              <View style={styles.guideChips}>
+                {note.guidelines.map((g) => (
+                  <Pill key={g.id} label={g.title} variant="line" />
+                ))}
+              </View>
+            </Animated.View>
+          ) : null}
+
           <View style={styles.editRow}>
             <PrimaryButton
               label="Edit note"
@@ -176,6 +188,9 @@ export default function NoteScreen() {
 const styles = StyleSheet.create({
   chiprow: { flexDirection: "row", flexWrap: "wrap", gap: space.sm, marginBottom: space.xs },
   editRow: { alignItems: "flex-start", marginTop: space.xs },
+  guideRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6, marginTop: space.xs },
+  guideLabel: { ...font.label, color: colors.ink3, textTransform: "uppercase", marginRight: 2 },
+  guideChips: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   center: { alignItems: "center", gap: space.sm, paddingVertical: space.xl },
   emptyIcon: {
     width: 52,

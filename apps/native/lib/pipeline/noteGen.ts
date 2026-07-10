@@ -12,6 +12,7 @@
 // native dependency and are unit-tested in ./noteGen.test.ts. Only `generateNote`
 // touches the native LLM.
 
+import type { KnowledgeDoc } from "../knowledge/corpus";
 import type { NoteOrder } from "../db/types";
 import type { RedactedSegment } from "./redaction";
 
@@ -51,6 +52,11 @@ export interface DraftNote {
    * where it appears verbatim in the note. Empty when the model emitted none.
    */
   redFlags: string[];
+  /**
+   * Reference-corpus entries the note was grounded in (retrieved from the transcript).
+   * Shown as citation chips on the note screen. Empty when grounding is off / no match.
+   */
+  guidelines: KnowledgeDoc[];
 }
 
 // Any surviving redaction token — a title must never contain one.
@@ -248,9 +254,15 @@ export async function generateNote(
   llm: LlmLike,
   segments: RedactedSegment[],
   systemPrompt: string = NOTE_SYSTEM_PROMPT,
+  guidelineContext = "",
 ): Promise<DraftNote> {
+  // Optionally ground the note in retrieved references — additive, so an empty context
+  // leaves the prompt (and existing behaviour) unchanged.
+  const system = guidelineContext
+    ? `${systemPrompt}\n\nRELEVANT CLINICAL REFERENCES (use ONLY to strengthen safety-netting and red-flag advice; never contradict the transcript and never invent findings or doses):\n${guidelineContext}`
+    : systemPrompt;
   const messages: Msg[] = [
-    { role: "system", content: systemPrompt },
+    { role: "system", content: system },
     { role: "user", content: buildTranscript(segments) },
   ];
   const rawOut = await llm.generate(messages);
@@ -272,5 +284,6 @@ export async function generateNote(
   };
   const orders = parsed.orders.map((o) => ({ ...o, text: stripInlineMd(o.text) }));
   const title = safeTitle(rawTitle, soap);
-  return { soap, orders, raw: clean, title, markdown, redFlags };
+  // guidelines are attached by the caller (draftClinicalNote), which did the retrieval.
+  return { soap, orders, raw: clean, title, markdown, redFlags, guidelines: [] };
 }
