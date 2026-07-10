@@ -148,7 +148,7 @@ if (failed > 0) {
 
 // --- Manual device checklist (needs a real device / simulator build) ---------
 // 1. initDb(): open sona.db, confirm tables consult/transcript_segment/
-//    clinical_note/audit_entry exist and PRAGMA user_version = 2.
+//    clinical_note/audit_entry/note_embedding exist and PRAGMA user_version = 3.
 // 2. createConsult -> getConsult round-trips; status starts "consented".
 // 3. appendTranscript x N -> getTranscript returns them ordered by seq.
 // 4. saveNote -> getNote round-trips SOAP + orders (JSON) + flags.

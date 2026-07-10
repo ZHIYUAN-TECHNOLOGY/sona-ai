@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router, useFocusEffect } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
@@ -8,38 +8,39 @@ import { ConsultScreen } from "@/components/consult/ConsultScreen";
 import { ListRow } from "@/components/consult/ListRow";
 import { Pill } from "@/components/consult/Pill";
 import { consultInitials, statusMeta } from "@/lib/consultFormat";
-import { getSearchDocs } from "@/lib/db";
 import type { ConsultStatus } from "@/lib/db/types";
-import { rankNotes, type SearchDoc } from "@/lib/search/noteSearch";
+import { useSemanticNoteSearch, type NoteSearchResult } from "@/lib/search/useSemanticNoteSearch";
 import { colors, font, radius, space } from "@/lib/theme";
 
-// On-device note search — pushed over the tabs. Loads every noted consult as a
-// searchable doc and ranks locally (lib/search/noteSearch). Nothing leaves the phone:
-// the notes are on-device and the matching runs in-process. Tap a hit → consult detail.
+// On-device note search — pushed over the tabs. Semantic (executorch MiniLM over a
+// persisted vector store) with a lexical fallback until the model loads. Nothing
+// leaves the phone: notes, vectors, and the query are all on-device. Tap a hit →
+// consult detail.
 export default function SearchScreen() {
-  const [docs, setDocs] = useState<SearchDoc[]>([]);
   const [query, setQuery] = useState("");
+  const { search, semanticReady, downloadProgress, count } = useSemanticNoteSearch();
+  const [result, setResult] = useState<NoteSearchResult>({ hits: [], mode: "keyword" });
 
-  useFocusEffect(
-    useCallback(() => {
-      let alive = true;
-      void getSearchDocs().then((d) => {
-        if (alive) setDocs(d);
-      });
-      return () => {
-        alive = false;
-      };
-    }, []),
-  );
+  useEffect(() => {
+    let alive = true;
+    void search(query).then((r) => {
+      if (alive) setResult(r);
+    });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, semanticReady]);
 
-  const hits = useMemo(() => rankNotes(query, docs), [query, docs]);
+  const hits = result.hits;
   const q = query.trim();
+  const loadingModel = !semanticReady && downloadProgress > 0 && downloadProgress < 1;
 
   return (
     <ConsultScreen
       time=""
       title="Search notes"
-      sub={`${docs.length} note${docs.length === 1 ? "" : "s"} on-device`}
+      sub={`${count} note${count === 1 ? "" : "s"} on-device`}
       onBack={() => router.back()}
     >
       <View style={styles.field}>
@@ -74,9 +75,25 @@ export default function SearchScreen() {
         </View>
       ) : (
         <View style={styles.list}>
-          <Text style={styles.count}>
-            {hits.length} result{hits.length === 1 ? "" : "s"}
-          </Text>
+          <View style={styles.countRow}>
+            <Text style={styles.count}>
+              {hits.length} result{hits.length === 1 ? "" : "s"}
+            </Text>
+            <View style={styles.modeChip}>
+              <Ionicons
+                name={loadingModel ? "cloud-download-outline" : result.mode === "semantic" ? "sparkles" : "search"}
+                size={11}
+                color={colors.green}
+              />
+              <Text style={styles.modeText}>
+                {loadingModel
+                  ? `Semantic ${Math.round(downloadProgress * 100)}%`
+                  : result.mode === "semantic"
+                    ? "Semantic"
+                    : "Keyword"}
+              </Text>
+            </View>
+          </View>
           {hits.map((h, i) => {
             const s = statusMeta(h.doc.status as ConsultStatus);
             return (
@@ -113,7 +130,10 @@ const styles = StyleSheet.create({
   },
   input: { ...font.body, color: colors.ink, flex: 1, padding: 0 },
   hint: { ...font.bodySm, color: colors.ink3, marginTop: space.md, paddingHorizontal: space.xs },
-  count: { ...font.label, color: colors.ink3, textTransform: "uppercase", marginBottom: space.xs },
+  count: { ...font.label, color: colors.ink3, textTransform: "uppercase" },
+  countRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: space.xs },
+  modeChip: { flexDirection: "row", alignItems: "center", gap: 4 },
+  modeText: { ...font.label, color: colors.green, fontWeight: "700" },
   list: { gap: space.sm, marginTop: space.md },
   empty: { alignItems: "center", gap: space.sm, paddingVertical: 56 },
   emptyTitle: { ...font.h3, color: colors.ink },
