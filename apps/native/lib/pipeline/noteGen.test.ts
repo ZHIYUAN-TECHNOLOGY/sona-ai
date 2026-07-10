@@ -146,6 +146,9 @@ ok(classifyOrder("Oral fluids and rest") === "other", "other classified");
   ok(hasGreen(H("Hb 12g/dL, weight 72kg.")), "g/dL and kg, not split");
   ok(!hasGreen(H("Lives at 12G Jalan Ampang.")), "address '12G' is not a dose");
   ok(!hasGreen(H("Compliance improved by 20%")), "bare percentage is not a vital");
+  // A labelled vital ending in a bare unit must not be double-wrapped (GREEN + DOSE_BARE).
+  ok(!H("Wt 70 g").includes("**Wt **"), "labelled vital + bare gram not double-wrapped");
+  ok(!H("Birth weight 3200 g, feeding well").includes("**weight **"), "neonatal weight not split");
 
   // Timeframes (blue) incl. Commonwealth shorthand + Malay.
   ok(hasBlue(H("3/7 history of fever, cough productive")), "shorthand 3/7");

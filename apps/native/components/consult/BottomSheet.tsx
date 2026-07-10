@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -37,6 +37,13 @@ export function BottomSheet({
 }) {
   const insets = useSafeAreaInsets();
   const ty = useSharedValue(0);
+
+  // The Modal keeps this component mounted across open/close, and the drag-to-dismiss
+  // branch doesn't reset ty — so reset the drag offset each time the sheet opens, or a
+  // reopened sheet would appear shifted down by the leftover drag distance.
+  useEffect(() => {
+    if (visible) ty.value = 0;
+  }, [visible, ty]);
 
   // Drag the sheet down to dismiss: translateY follows the finger (clamped so it
   // can't be dragged up), release past ~120px or with a flick closes it, else it
