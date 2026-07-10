@@ -11,6 +11,7 @@ import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { RecordButton } from "@/components/consult/RecordButton";
 import { SegmentedControl } from "@/components/consult/SegmentedControl";
+import { Waveform } from "@/components/consult/Waveform";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
 import type { RawSegment } from "@/lib/pipeline/mockStt";
 import { colors, font, space } from "@/lib/theme";
@@ -76,6 +77,9 @@ export default function RecordingScreen() {
       <View style={styles.hero}>
         <RecordButton recording onPress={end} accessibilityLabel="End consult" />
         <Text style={styles.timer}>{mmss(elapsed)}</Text>
+        <View style={styles.waveWrap}>
+          <Waveform live />
+        </View>
         <Text style={styles.caption}>Transcribing on-device · no network</Text>
       </View>
 
@@ -97,6 +101,7 @@ export default function RecordingScreen() {
 const styles = StyleSheet.create({
   top: { alignItems: "center", paddingTop: space.sm },
   hero: { flex: 1, alignItems: "center", justifyContent: "center", gap: space.md },
+  waveWrap: { width: "78%", height: 40 },
   timer: {
     fontSize: 34,
     fontWeight: "300",

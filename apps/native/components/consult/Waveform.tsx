@@ -1,28 +1,34 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 
+import { WaveformCurve } from "@/components/consult/WaveformCurve";
+import { useMicAmplitude } from "@/lib/audio/useMicAmplitude";
 import { colors } from "@/lib/theme";
 
 const BAR_COUNT = 32;
 
 /**
- * Transform-only animated waveform (scaleY on fixed-height bars). Uses the RN
- * Animated driver on the native thread — no layout thrash, cheap on device.
- * Purely decorative mock; the real amplitude stream binds in on Day 2.
+ * Record-screen waveform. When the mic is driving real amplitude
+ * (useMicAmplitude.active), renders the live SVG curve; otherwise falls back to the
+ * decorative bar animation — so the visual is always alive, even in Expo Go / a
+ * simulator with no mic, or when permission is denied. The demo never shows a dead box.
  */
 export function Waveform({ live = true }: { live?: boolean }) {
-  const anims = useRef(
-    Array.from({ length: BAR_COUNT }, () => new Animated.Value(0.3))
-  ).current;
+  const { amplitudes, active } = useMicAmplitude(live);
+  if (active) return <WaveformCurve amplitudes={amplitudes} />;
+  return <DecorativeWave live={live} />;
+}
 
-  // Stable per-bar timing so the motion looks organic, not uniform.
+/**
+ * Transform-only animated bars (scaleY) on the RN Animated native driver — cheap,
+ * no layout thrash. Purely decorative fallback when no real mic amplitude is available.
+ */
+function DecorativeWave({ live }: { live: boolean }) {
+  const anims = useRef(Array.from({ length: BAR_COUNT }, () => new Animated.Value(0.3))).current;
+
   const timings = useMemo(
-    () =>
-      anims.map((_, i) => ({
-        duration: 460 + (i % 5) * 120,
-        delay: (i % 7) * 55,
-      })),
-    [anims]
+    () => anims.map((_, i) => ({ duration: 460 + (i % 5) * 120, delay: (i % 7) * 55 })),
+    [anims],
   );
 
   useEffect(() => {
@@ -41,8 +47,8 @@ export function Waveform({ live = true }: { live?: boolean }) {
             duration: timings[i].duration,
             useNativeDriver: true,
           }),
-        ])
-      )
+        ]),
+      ),
     );
     loops.forEach((l) => l.start());
     return () => loops.forEach((l) => l.stop());
@@ -71,10 +77,5 @@ const styles = StyleSheet.create({
     gap: 2.5,
     height: 40,
   },
-  bar: {
-    width: 3,
-    height: 34,
-    borderRadius: 2,
-    backgroundColor: colors.green,
-  },
+  bar: { width: 3, height: 34, borderRadius: 2, backgroundColor: colors.green },
 });
