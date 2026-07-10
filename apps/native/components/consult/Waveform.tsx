@@ -4,40 +4,49 @@ import { useFrameCallback, useReducedMotion, useSharedValue } from "react-native
 import { WaveformCurve } from "@/components/consult/WaveformCurve";
 import { useMicAmplitude, WAVE_POINTS } from "@/lib/audio/useMicAmplitude";
 
+// Temporal smoothing rate: fraction of the gap closed per frame (60fps). Low = slow,
+// calm, elegant follow — high felt jittery/too fast. ~0.09 ≈ 170ms settle.
+const FOLLOW = 0.09;
+
 /**
- * Record-screen waveform. One smooth Reanimated renderer (WaveformCurve) fed by either
- * the real mic amplitude (when the audio module is live) or a synthetic flowing idle
- * wave — so the visual is always alive and fluid, never a stepped or dead line, and it
- * needs no native SVG. Both paths spring-ease, so switching between them stays smooth.
+ * Record-screen waveform. Produces ONE temporally-smoothed `display` signal — each frame
+ * it eases (lerps) toward either the live mic amplitude or a slow synthetic idle wave —
+ * and hands it to WaveformCurve (Skia curve, or bars fallback). The slow lerp is what
+ * makes the motion feel calm and fluid instead of snapping to every amplitude spike.
  */
 export function Waveform({ live = true }: { live?: boolean }) {
   const { amplitudes, active } = useMicAmplitude(live);
-  const idle = useSharedValue<number[]>(new Array(WAVE_POINTS).fill(0.12));
+  const idle = useSharedValue<number[]>(new Array(WAVE_POINTS).fill(0.08));
+  const display = useSharedValue<number[]>(new Array(WAVE_POINTS).fill(0.06));
   const reduce = useReducedMotion();
 
-  // 60fps synthetic wave when the mic isn't driving amplitude. Two layered sines give an
-  // organic left-to-right flow. modify() mutates in place (no per-frame allocation) and
-  // triggers the bars. Skipped when the mic is live or reduced-motion is on.
   const onFrame = useCallback(
     (f: { timeSinceFirstFrame: number }) => {
       "worklet";
-      if (active || reduce) return;
       const t = f.timeSinceFirstFrame / 1000;
-      idle.modify((arr) => {
+      // Slow synthetic breath when the mic isn't driving amplitude.
+      if (!active && !reduce) {
+        idle.modify((arr) => {
+          "worklet";
+          for (let i = 0; i < arr.length; i++) {
+            const a = Math.sin(t * 0.9 - i * 0.22) * 0.5 + 0.5;
+            const b = Math.sin(t * 0.45 + i * 0.09) * 0.5 + 0.5;
+            arr[i] = 0.05 + 0.14 * a * (0.6 + 0.4 * b);
+          }
+          return arr;
+        });
+      }
+      const target = active ? amplitudes.value : reduce ? display.value : idle.value;
+      // Ease display toward the target — the calm, smooth follow.
+      display.modify((d) => {
         "worklet";
-        for (let i = 0; i < arr.length; i++) {
-          // Two slow, layered sines → a gentle elegant breathing flow (low amplitude;
-          // the renderer's edge envelope tapers the sides further).
-          const a = Math.sin(t * 1.15 - i * 0.26) * 0.5 + 0.5;
-          const b = Math.sin(t * 0.55 + i * 0.11) * 0.5 + 0.5;
-          arr[i] = 0.05 + 0.16 * a * (0.6 + 0.4 * b);
-        }
-        return arr;
+        for (let i = 0; i < d.length; i++) d[i] += ((target[i] ?? 0) - d[i]) * FOLLOW;
+        return d;
       });
     },
-    [active, reduce, idle],
+    [active, reduce, amplitudes, idle, display],
   );
   useFrameCallback(onFrame);
 
-  return <WaveformCurve amplitudes={active ? amplitudes : idle} />;
+  return <WaveformCurve amplitudes={display} />;
 }
