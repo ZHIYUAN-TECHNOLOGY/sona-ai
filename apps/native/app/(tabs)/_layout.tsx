@@ -21,6 +21,10 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Icon sf={{ default: "doc.text", selected: "doc.text.fill" }} />
         <NativeTabs.Trigger.Label>Notes</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="knowledge">
+        <NativeTabs.Trigger.Icon sf="sparkles" />
+        <NativeTabs.Trigger.Label>Knowledge</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings">
         <NativeTabs.Trigger.Icon sf="gearshape" />
         <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
