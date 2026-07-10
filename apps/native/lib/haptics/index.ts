@@ -31,12 +31,16 @@ export function setHapticsEnabled(value: boolean): void {
 export function haptic(moment: HapticMoment): void {
   if (!enabled || process.env.EXPO_OS === "web") return;
   const plan = hapticPlan(moment);
+  // Swallow BOTH sync throws and async rejections. expo-haptics rejects (not throws)
+  // when the native module isn't linked ("impactAsync is not available on ios"), which
+  // a bare `void` would surface as an unhandled promise rejection / red screen.
+  const ignore = () => {};
   try {
-    if (plan.kind === "impact") void Haptics.impactAsync(IMPACT[plan.strength]);
-    else if (plan.kind === "notify") void Haptics.notificationAsync(NOTIFY[plan.strength]);
-    else void Haptics.selectionAsync();
+    if (plan.kind === "impact") Haptics.impactAsync(IMPACT[plan.strength]).catch(ignore);
+    else if (plan.kind === "notify") Haptics.notificationAsync(NOTIFY[plan.strength]).catch(ignore);
+    else Haptics.selectionAsync().catch(ignore);
   } catch {
-    // no taptic engine / native module unavailable — silently ignore
+    // native module unavailable / no taptic engine — silently ignore
   }
 }
 
