@@ -15,6 +15,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GlassSurface } from "@/components/consult/GlassSurface";
 import { colors, font, radius, space } from "@/lib/theme";
 
 /**
@@ -62,21 +63,27 @@ export function BottomSheet({
         </Animated.View>
 
         <GestureDetector gesture={pan}>
-        <Animated.View
-          entering={SlideInDown.duration(320).easing(Easing.bezier(0.32, 0.72, 0, 1))}
-          exiting={SlideOutDown.duration(220).easing(Easing.bezier(0.32, 0.72, 0, 1))}
-          style={[styles.sheet, dragStyle, { paddingBottom: Math.max(insets.bottom, space.lg) }]}
-        >
-          <View style={styles.grabber} />
-          <View style={styles.head}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={onClose} hitSlop={10}>
-              <Ionicons name="close" size={22} color={colors.ink3} />
-            </Pressable>
-            <Text style={styles.title}>{title}</Text>
-            <View style={styles.spacer} />
-          </View>
-          {children}
-        </Animated.View>
+          <Animated.View
+            entering={SlideInDown.duration(320).easing(Easing.bezier(0.32, 0.72, 0, 1))}
+            exiting={SlideOutDown.duration(220).easing(Easing.bezier(0.32, 0.72, 0, 1))}
+            style={[styles.sheetWrap, dragStyle]}
+          >
+            {/* Translucent glass surface (liquid glass → blur → solid fallback). The
+                transform/layout animation stays on the wrapper; the glass is static. */}
+            <GlassSurface style={styles.sheet}>
+              <View style={[styles.sheetInner, { paddingBottom: Math.max(insets.bottom, space.lg) }]}>
+                <View style={styles.grabber} />
+                <View style={styles.head}>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={onClose} hitSlop={10}>
+                    <Ionicons name="close" size={22} color={colors.ink3} />
+                  </Pressable>
+                  <Text style={styles.title}>{title}</Text>
+                  <View style={styles.spacer} />
+                </View>
+                {children}
+              </View>
+            </GlassSurface>
+          </Animated.View>
         </GestureDetector>
       </View>
     </Modal>
@@ -114,14 +121,16 @@ const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: "flex-end" },
   backdropWrap: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
   backdrop: { flex: 1, backgroundColor: "rgba(11,30,22,0.35)" },
-  sheet: {
-    backgroundColor: colors.card,
+  // Wrapper owns the drag transform + slide animation and clips the glass to the
+  // sheet's rounded top corners (overflow:hidden). No background — the glass is the fill.
+  sheetWrap: {
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
     borderCurve: "continuous",
-    paddingTop: space.sm,
-    paddingHorizontal: space.lg,
+    overflow: "hidden",
   },
+  sheet: { width: "100%" },
+  sheetInner: { paddingTop: space.sm, paddingHorizontal: space.lg },
   grabber: {
     alignSelf: "center",
     width: 40,
