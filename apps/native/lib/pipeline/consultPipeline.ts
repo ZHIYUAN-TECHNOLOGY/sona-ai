@@ -140,7 +140,16 @@ export async function draftClinicalNote(
     stage: "note-generate",
     detail: `SOAP note drafted on-device (${NOTE_MODEL_NAME}), re-identified locally for review`,
   });
-  return { soap, orders, raw: deident.raw, title: deident.title, markdown, redFlags, guidelines };
+  return {
+    soap,
+    orders,
+    raw: deident.raw,
+    title: deident.title,
+    markdown,
+    redFlags,
+    guidelines,
+    generationMs: deident.generationMs,
+  };
 }
 
 /**
