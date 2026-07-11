@@ -1,88 +1,39 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import type { ReactElement } from "react";
 
-import { Card } from "@/components/consult/Card";
-import { PrimaryButton } from "@/components/consult/PrimaryButton";
-import { colors, font, radius, space } from "@/lib/theme";
+import { NativeFallbackBoundary } from "@/components/consult/NativeFallbackBoundary";
+import { PlainNoteEditor, type NoteEditorProps } from "@/components/consult/PlainNoteEditor";
 
-/**
- * Plain-Markdown note editor. The clinician edits the rebuilt note Markdown (##
- * sections + `- ` orders); the caller parses it back into structured SOAP on save
- * (see editClinicalNote). On-device only — the edited text never leaves the phone.
- * A native rich-text engine (react-native-enriched-markdown) can replace the raw
- * TextInput later without changing this contract.
- */
-export function NoteEditor({
-  initial,
-  onSave,
-  onCancel,
-  saving = false,
-}: {
-  initial: string;
-  onSave: (markdown: string) => void;
-  onCancel: () => void;
-  saving?: boolean;
-}) {
-  const [text, setText] = useState(initial);
-  const dirty = text.trim() !== initial.trim();
+// The note editor. Prefers the native rich WYSIWYG editor (react-native-enriched-markdown) —
+// bold / headings / bullets render live, no raw ** or ## — and falls back to the plain
+// Markdown editor if that native module isn't in the binary. Two guards: a require() try/catch
+// for a JS import failure, and an error boundary for a native Fabric render failure (the
+// svg/skia "Unimplemented component" mode in this precompiled-RN setup). Both editors share
+// the markdown-in → markdown-out contract, so editClinicalNote is unchanged either way.
+// Set RICH_EDITOR_ENABLED = false to force the plain editor.
+const RICH_EDITOR_ENABLED = true;
 
+type EditorComponent = (props: NoteEditorProps) => ReactElement;
+
+let EnrichedNoteEditor: EditorComponent | null = null;
+if (RICH_EDITOR_ENABLED) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    EnrichedNoteEditor = require("./EnrichedNoteEditor").EnrichedNoteEditor;
+  } catch {
+    EnrichedNoteEditor = null; // native module absent — plain editor only
+  }
+}
+
+export function NoteEditor(props: NoteEditorProps): ReactElement {
+  if (!EnrichedNoteEditor) return <PlainNoteEditor {...props} />;
   return (
-    <>
-      <Card>
-        <View style={styles.head}>
-          <Ionicons name="create-outline" size={16} color={colors.green} />
-          <Text style={styles.headLabel}>Editing note</Text>
-        </View>
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          multiline
-          autoFocus
-          editable={!saving}
-          textAlignVertical="top"
-          style={styles.input}
-          placeholder="Note is empty. Type the note here…"
-          placeholderTextColor={colors.ink3}
-          scrollEnabled={false}
-        />
-      </Card>
-      <Text style={styles.hint}>
-        Edits stay on this device. Use ## for a section heading and - for an order.
-      </Text>
-      <View style={styles.actions}>
-        <PrimaryButton
-          label="Cancel"
-          variant="ghost"
-          style={styles.action}
-          onPress={onCancel}
-          disabled={saving}
-        />
-        <PrimaryButton
-          label={saving ? "Saving…" : "Save"}
-          style={styles.action}
-          onPress={() => onSave(text)}
-          disabled={saving || !dirty}
-          icon={
-            saving ? undefined : <Ionicons name="checkmark" size={17} color={colors.white} />
-          }
-        />
-      </View>
-    </>
+    <NativeFallbackBoundary
+      fallback={<PlainNoteEditor {...props} />}
+      onError={(e) => console.warn("[NoteEditor] rich editor failed, using plain:", e?.message)}
+    >
+      <EnrichedNoteEditor {...props} />
+    </NativeFallbackBoundary>
   );
 }
 
-const styles = StyleSheet.create({
-  head: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: space.sm },
-  headLabel: { ...font.label, color: colors.green, textTransform: "uppercase" },
-  input: {
-    ...font.body,
-    color: colors.ink,
-    minHeight: 260,
-    lineHeight: 22,
-    padding: 0,
-  },
-  hint: { ...font.bodySm, color: colors.ink3, marginTop: space.xs, marginBottom: space.sm },
-  actions: { flexDirection: "row", gap: space.sm },
-  action: { flex: 1 },
-});
+export type { NoteEditorProps };
