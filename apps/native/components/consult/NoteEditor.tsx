@@ -1,16 +1,24 @@
 import type { ReactElement } from "react";
+import { UIManager } from "react-native";
 
 import { NativeFallbackBoundary } from "@/components/consult/NativeFallbackBoundary";
 import { PlainNoteEditor, type NoteEditorProps } from "@/components/consult/PlainNoteEditor";
 
 // The note editor. Prefers the native rich WYSIWYG editor (react-native-enriched-markdown) —
 // bold / headings / bullets render live, no raw ** or ## — and falls back to the plain
-// Markdown editor if that native module isn't in the binary. Two guards: a require() try/catch
-// for a JS import failure, and an error boundary for a native Fabric render failure (the
-// svg/skia "Unimplemented component" mode in this precompiled-RN setup). Both editors share
-// the markdown-in → markdown-out contract, so editClinicalNote is unchanged either way.
+// Markdown editor when that native Fabric component isn't compiled into the binary.
+//
+// THREE guards, because an unregistered Fabric component fails SILENTLY (it renders RN's
+// "Unimplemented component" placeholder — it does NOT throw, so a require()-guard and an
+// error boundary alone miss it):
+//   1. require() try/catch — a JS import failure of the package.
+//   2. UIManager.hasViewManagerConfig(name) — New Arch (bridgeless) routes this to
+//      unstable_hasComponent, which reports whether the native component is actually
+//      registered in THIS binary. False on a JS-only reload of a build without the module.
+//   3. NativeFallbackBoundary — catches any render-time throw as a last resort.
 // Set RICH_EDITOR_ENABLED = false to force the plain editor.
 const RICH_EDITOR_ENABLED = true;
+const RICH_COMPONENT = "EnrichedMarkdownTextInput";
 
 type EditorComponent = (props: NoteEditorProps) => ReactElement;
 
@@ -20,12 +28,23 @@ if (RICH_EDITOR_ENABLED) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     EnrichedNoteEditor = require("./EnrichedNoteEditor").EnrichedNoteEditor;
   } catch {
-    EnrichedNoteEditor = null; // native module absent — plain editor only
+    EnrichedNoteEditor = null; // package JS failed to import
   }
 }
 
+let registered: boolean | null = null;
+function isRichRegistered(): boolean {
+  if (registered !== null) return registered;
+  try {
+    registered = !!UIManager.hasViewManagerConfig?.(RICH_COMPONENT);
+  } catch {
+    registered = false;
+  }
+  return registered;
+}
+
 export function NoteEditor(props: NoteEditorProps): ReactElement {
-  if (!EnrichedNoteEditor) return <PlainNoteEditor {...props} />;
+  if (!EnrichedNoteEditor || !isRichRegistered()) return <PlainNoteEditor {...props} />;
   return (
     <NativeFallbackBoundary
       fallback={<PlainNoteEditor {...props} />}
