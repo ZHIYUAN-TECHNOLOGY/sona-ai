@@ -1,16 +1,29 @@
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { StyleSheet, Text } from "react-native";
 
 import { Card } from "@/components/consult/Card";
 import { CardHeading } from "@/components/consult/SectionLabel";
 import { SettingsRow } from "@/components/consult/SettingsRow";
 import { TabScaffold } from "@/components/consult/TabScaffold";
+import { isDoctorEnrolled } from "@/lib/diarize";
 import { NOTE_MODEL_NAME } from "@/lib/pipeline/model";
 import { colors, font, space } from "@/lib/theme";
 
 // Tab 4 — Settings, rebuilt in the green design system (replaces the deleted
 // blue Better-T-Stack scaffold). On-device status, privacy posture, and about.
 export default function SettingsScreen() {
+  const [enrolled, setEnrolled] = useState<boolean | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      isDoctorEnrolled().then((e) => alive && setEnrolled(e));
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
+
   return (
     <TabScaffold title="Settings">
       <Card>
@@ -18,6 +31,17 @@ export default function SettingsScreen() {
         <SettingsRow first icon="hardware-chip-outline" label="Note model" value={NOTE_MODEL_NAME} />
         <SettingsRow icon="mic-outline" label="Speech-to-text" value="Whisper (on-device)" />
         <SettingsRow icon="shield-checkmark-outline" label="Redaction" value="On-device" />
+      </Card>
+
+      <Card>
+        <CardHeading>Speaker ID</CardHeading>
+        <SettingsRow
+          first
+          icon="person-outline"
+          label="My voice"
+          value={enrolled === null ? "…" : enrolled ? "Enrolled" : "Not set up"}
+          onPress={() => router.push("/enroll")}
+        />
       </Card>
 
       <Card>

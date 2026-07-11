@@ -10,6 +10,7 @@ export * from "./cluster";
 export * from "./roleClassifier";
 export * from "./diarize";
 export { enrollDoctorVoiceprint, loadDoctorVoiceprint, unenrollDoctor, isDoctorEnrolled } from "./enroll";
+export { captureEnrollmentWindows, CLINICIAN_VOICE_ID } from "./enrollCapture";
 export { mockVoiceprint, mockDiarUtterances } from "./mock";
 export { synthUtterancePcm, SAMPLE_RATE, hashStr } from "./mockAudio";
 export { mockSpeakerEmbedder, embedPcm, MOCK_EMBED_DIM } from "./mockEmbedder";
