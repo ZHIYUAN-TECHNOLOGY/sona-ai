@@ -1,4 +1,4 @@
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useState } from "react";
 import { StyleSheet, Text } from "react-native";
 
@@ -61,6 +61,11 @@ export default function SettingsScreen() {
           icon="speedometer-outline"
           label="On-device bench"
           onPress={() => router.push("/bench")}
+        />
+        <SettingsRow
+          icon="pulse-outline"
+          label="Diarization lab"
+          onPress={() => router.push("/diarize-lab" as Href)}
         />
       </Card>
 

@@ -8,6 +8,7 @@ import { CardHeading } from "@/components/consult/SectionLabel";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import {
   captureEnrollmentWindows,
+  captureEnrollmentWindowsMic,
   enrollDoctorVoiceprint,
   isDoctorEnrolled,
   unenrollDoctor,
@@ -23,7 +24,6 @@ import { colors, font, space } from "@/lib/theme";
 export default function EnrollScreen() {
   const [enrolled, setEnrolled] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Guards setState after the async capture / DB writes resolve past an unmount.
   const mounted = useRef(true);
   useEffect(() => () => void (mounted.current = false), []);
@@ -34,28 +34,31 @@ export default function EnrollScreen() {
       isDoctorEnrolled().then((e) => alive && setEnrolled(e));
       return () => {
         alive = false;
-        if (timer.current) clearTimeout(timer.current);
       };
     }, []),
   );
 
-  const enrol = () => {
+  const enrol = async () => {
     if (busy) return;
     setBusy(true);
     haptic("recordStart");
-    // Brief "listening" beat, then capture → embed → persist. On real mic this is the
-    // few seconds of the clinician reading the prompt.
-    timer.current = setTimeout(async () => {
+    try {
+      // Record the clinician's voice through the mic (real VAD-gated windows). Falls back to
+      // synth windows if the mic / native modules aren't available (Expo Go, denied perms).
+      let windows: Float32Array[];
       try {
-        await enrollDoctorVoiceprint(captureEnrollmentWindows());
-        if (mounted.current) setEnrolled(true);
-        haptic("signSuccess");
+        windows = await captureEnrollmentWindowsMic();
       } catch {
-        haptic("error");
-      } finally {
-        if (mounted.current) setBusy(false);
+        windows = captureEnrollmentWindows();
       }
-    }, 1400);
+      await enrollDoctorVoiceprint(windows);
+      if (mounted.current) setEnrolled(true);
+      haptic("signSuccess");
+    } catch {
+      haptic("error");
+    } finally {
+      if (mounted.current) setBusy(false);
+    }
   };
 
   const remove = async () => {
