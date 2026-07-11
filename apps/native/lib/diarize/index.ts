@@ -20,3 +20,6 @@ export { createExecutorchSpeakerEmbedder, type ExecutorchEmbedderConfig } from "
 export { logMelFbank, type Fbank, type FbankOptions } from "./features";
 export { detectSpeech, sliceSegments, disposeVad, type SpeechSegment } from "./vad";
 export { initSpeakerModel, speakerModelStatus, SPEAKER_MODEL, type SpeakerModelStatus } from "./speakerModel";
+export { startCapture, CAPTURE_SAMPLE_RATE, type CaptureController, type CaptureOptions } from "./audioCapture";
+export { diarizeAudio, diarizeWindows, type DiarizedSpeech, type DiarizeAudioOptions } from "./liveDiarizer";
+export { captureEnrollmentWindowsMic } from "./enrollCaptureMic";

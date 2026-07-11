@@ -83,6 +83,7 @@ export default function RootLayout() {
             <Stack.Screen name="search" options={{ headerShown: false }} />
             <Stack.Screen name="bench" options={{ headerShown: true }} />
             <Stack.Screen name="enroll" options={{ headerShown: true }} />
+            <Stack.Screen name="diarize-lab" options={{ headerShown: true }} />
           </Stack>
         </GestureHandlerRootView>
       </ThemeProvider>
