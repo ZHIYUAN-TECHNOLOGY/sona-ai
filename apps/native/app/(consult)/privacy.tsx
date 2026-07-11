@@ -199,10 +199,11 @@ function RedactedRow({
   );
 }
 
-function WhoTag({ speaker }: { speaker: "dr" | "pt" | "you" }) {
+function WhoTag({ speaker }: { speaker: SpeakerKey }) {
   const map = {
     dr: { label: "DR", color: colors.greenInk, bg: colors.green50, border: colors.green100 },
     pt: { label: "PT", color: colors.blue, bg: colors.blue50, border: colors.blueLine },
+    other: { label: "OTHER", color: colors.amber, bg: colors.amber50, border: colors.amberLine },
     you: { label: "YOU", color: colors.ink3, bg: colors.surface, border: colors.line },
   }[speaker];
   return (

@@ -5,7 +5,9 @@
 // AuditEntry) so the screens can bind to the DB with minimal change. See the
 // mapping notes at the bottom of this file.
 
-export type SpeakerKey = "dr" | "pt" | "you";
+// dr = clinician, pt = patient, other = a third party (family, nurse) the diarizer
+// couldn't tie to either role, you = the clinician dictating (dictate mode).
+export type SpeakerKey = "dr" | "pt" | "other" | "you";
 
 /** A run of transcript text; `bm` marks a Bahasa Malaysia span (green highlight). */
 export interface TextSpan {
