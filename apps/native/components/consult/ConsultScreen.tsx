@@ -48,6 +48,12 @@ export function ConsultScreen({
           style={styles.body}
           contentContainerStyle={styles.bodyContent}
           showsVerticalScrollIndicator={false}
+          // Keyboard handling (built-in, no native dep): iOS auto-insets the content by the
+          // keyboard height so a focused input (e.g. the note editor) scrolls above it
+          // instead of being covered; drag-to-dismiss feels native.
+          automaticallyAdjustKeyboardInsets
+          keyboardDismissMode="interactive"
+          keyboardShouldPersistTaps="handled"
         >
           {children}
         </ScrollView>
