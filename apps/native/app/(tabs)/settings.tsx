@@ -6,7 +6,7 @@ import { Card } from "@/components/consult/Card";
 import { CardHeading } from "@/components/consult/SectionLabel";
 import { SettingsRow } from "@/components/consult/SettingsRow";
 import { TabScaffold } from "@/components/consult/TabScaffold";
-import { isDoctorEnrolled } from "@/lib/diarize";
+import { initSpeakerModel, isDoctorEnrolled } from "@/lib/diarize";
 import { NOTE_MODEL_NAME } from "@/lib/pipeline/model";
 import { colors, font, space } from "@/lib/theme";
 
@@ -14,10 +14,12 @@ import { colors, font, space } from "@/lib/theme";
 // blue Better-T-Stack scaffold). On-device status, privacy posture, and about.
 export default function SettingsScreen() {
   const [enrolled, setEnrolled] = useState<boolean | null>(null);
+  const [diarModel, setDiarModel] = useState("Mock (band-energy)");
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       isDoctorEnrolled().then((e) => alive && setEnrolled(e));
+      initSpeakerModel().then((s) => alive && setDiarModel(s.real ? s.id : "Mock (band-energy)"));
       return () => {
         alive = false;
       };
@@ -31,6 +33,7 @@ export default function SettingsScreen() {
         <SettingsRow first icon="hardware-chip-outline" label="Note model" value={NOTE_MODEL_NAME} />
         <SettingsRow icon="mic-outline" label="Speech-to-text" value="Whisper (on-device)" />
         <SettingsRow icon="shield-checkmark-outline" label="Redaction" value="On-device" />
+        <SettingsRow icon="people-outline" label="Diarization" value={diarModel} />
       </Card>
 
       <Card>
