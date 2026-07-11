@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   EnrichedMarkdownTextInput,
   type EnrichedMarkdownTextInputInstance,
@@ -12,20 +12,25 @@ import type { NoteEditorProps } from "@/components/consult/PlainNoteEditor";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { colors, font, radius, space } from "@/lib/theme";
 
-// Rich WYSIWYG note editor (react-native-enriched-markdown). The clinician edits the note
-// with bold / headings / bullets rendered LIVE — no raw ** or ## — and the component emits
-// Markdown, so the save contract (markdown in → markdown out → editClinicalNote parses SOAP)
-// is unchanged. Native Fabric view; wrapped by NoteEditor in an error boundary so a build
-// where it isn't registered falls back to the plain editor. On-device only.
+// Rich WYSIWYG note editor (react-native-enriched-markdown). The clinician edits with the
+// styles the library's INPUT actually supports — headings (H1/H2) + inline bold / italic /
+// underline / strikethrough / link — rendered live, no raw ** or ##. The component emits
+// Markdown, so the save contract (markdown → editClinicalNote → SOAP parse) is unchanged.
+// Note: the input is a flat inline+heading surface — bullets/blockquote/code are not
+// rendered by the editor (library limit); they stay as markdown text and render in the
+// read-only note view. Native Fabric view; NoteEditor guards + falls back if unregistered.
+// On-device only.
 
-function ToolBtn({ label, active, onPress }: { label: string; active?: boolean; onPress: () => void }) {
+interface ToolProps {
+  label: string;
+  active?: boolean;
+  strike?: boolean;
+  onPress: () => void;
+}
+function ToolBtn({ label, active, strike, onPress }: ToolProps) {
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      style={[styles.toolBtn, active && styles.toolBtnActive]}
-    >
-      <Text style={[styles.toolLabel, active && styles.toolLabelActive]}>{label}</Text>
+    <Pressable onPress={onPress} accessibilityRole="button" style={[styles.toolBtn, active && styles.toolBtnActive]}>
+      <Text style={[styles.toolLabel, active && styles.toolLabelActive, strike && styles.strike]}>{label}</Text>
     </Pressable>
   );
 }
@@ -34,12 +39,23 @@ export function EnrichedNoteEditor({ initial, onSave, onCancel, saving = false }
   const ref = useRef<EnrichedMarkdownTextInputInstance>(null);
   const [state, setState] = useState<StyleState | null>(null);
 
-  // Read the authoritative markdown from the native side on save (not the onChangeMarkdown
-  // echo, which may emit canonicalized text on mount). Falls back to `initial` if unavailable.
+  // Read the authoritative markdown from the native side on save (not an onChangeMarkdown
+  // echo, which can emit canonicalized text on mount). Falls back to `initial`.
   const save = async () => {
     const md = (await ref.current?.getMarkdown().catch(() => undefined)) ?? initial;
     onSave(md);
   };
+
+  const onLink = () => {
+    if (state?.link.isActive) return ref.current?.removeLink();
+    if (Platform.OS === "ios") {
+      Alert.prompt("Add link", "Enter a URL", (url) => url && ref.current?.insertLink(url, url), "plain-text", "https://");
+    } else {
+      ref.current?.insertLink("https://", "https://");
+    }
+  };
+
+  const headingActive = (level: number) => !!state?.heading.isActive && state.heading.level === level;
 
   return (
     <>
@@ -49,11 +65,22 @@ export function EnrichedNoteEditor({ initial, onSave, onCancel, saving = false }
           <Text style={styles.headLabel}>Editing note</Text>
         </View>
 
-        <View style={styles.toolbar}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.toolbar}
+          keyboardShouldPersistTaps="always"
+        >
+          <ToolBtn label="H1" active={headingActive(1)} onPress={() => ref.current?.toggleHeading(1)} />
+          <ToolBtn label="H2" active={headingActive(2)} onPress={() => ref.current?.toggleHeading(2)} />
+          <View style={styles.sep} />
           <ToolBtn label="B" active={state?.bold.isActive} onPress={() => ref.current?.toggleBold()} />
           <ToolBtn label="I" active={state?.italic.isActive} onPress={() => ref.current?.toggleItalic()} />
           <ToolBtn label="U" active={state?.underline.isActive} onPress={() => ref.current?.toggleUnderline()} />
-        </View>
+          <ToolBtn label="S" strike active={state?.strikethrough.isActive} onPress={() => ref.current?.toggleStrikethrough()} />
+          <View style={styles.sep} />
+          <ToolBtn label="Link" active={state?.link.isActive} onPress={onLink} />
+        </ScrollView>
 
         <EnrichedMarkdownTextInput
           ref={ref}
@@ -68,16 +95,10 @@ export function EnrichedNoteEditor({ initial, onSave, onCancel, saving = false }
         />
       </Card>
       <Text style={styles.hint}>
-        Rich editor · edits stay on this device. Bold, ## headings and - lists render live.
+        Rich editor · edits stay on this device. Headings + bold/italic/underline render live.
       </Text>
       <View style={styles.actions}>
-        <PrimaryButton
-          label="Cancel"
-          variant="ghost"
-          style={styles.action}
-          onPress={onCancel}
-          disabled={saving}
-        />
+        <PrimaryButton label="Cancel" variant="ghost" style={styles.action} onPress={onCancel} disabled={saving} />
         <PrimaryButton
           label={saving ? "Saving…" : "Save"}
           style={styles.action}
@@ -93,10 +114,12 @@ export function EnrichedNoteEditor({ initial, onSave, onCancel, saving = false }
 const styles = StyleSheet.create({
   head: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: space.sm },
   headLabel: { ...font.label, color: colors.green, textTransform: "uppercase" },
-  toolbar: { flexDirection: "row", gap: space.xs, marginBottom: space.sm },
+  toolbar: { flexDirection: "row", alignItems: "center", gap: space.xs, marginBottom: space.sm, paddingRight: space.sm },
+  sep: { width: 1, height: 20, backgroundColor: colors.line, marginHorizontal: space.xs },
   toolBtn: {
-    width: 34,
+    minWidth: 34,
     height: 30,
+    paddingHorizontal: 8,
     borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.line,
@@ -105,15 +128,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   toolBtnActive: { backgroundColor: colors.green50, borderColor: colors.green100 },
-  toolLabel: { fontSize: 15, fontWeight: "700", color: colors.ink2 },
+  toolLabel: { fontSize: 14, fontWeight: "700", color: colors.ink2 },
   toolLabelActive: { color: colors.greenInk },
-  input: {
-    ...font.body,
-    color: colors.ink,
-    minHeight: 260,
-    lineHeight: 22,
-    padding: 0,
-  },
+  strike: { textDecorationLine: "line-through" },
+  input: { ...font.body, color: colors.ink, minHeight: 260, lineHeight: 22, padding: 0 },
   hint: { ...font.bodySm, color: colors.ink3, marginTop: space.xs, marginBottom: space.sm },
   actions: { flexDirection: "row", gap: space.sm },
   action: { flex: 1 },
