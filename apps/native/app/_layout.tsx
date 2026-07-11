@@ -20,6 +20,7 @@ import { ExpoResourceFetcher } from "react-native-executorch-expo-resource-fetch
 // an Expo app and the spike hooks never become ready. (Required as of RN-ExecuTorch 0.9.)
 initExecutorch({ resourceFetcher: ExpoResourceFetcher });
 
+import { initSpeakerModel } from "@/lib/diarize";
 import { colors } from "@/lib/theme";
 import { queryClient } from "@/utils/orpc";
 
@@ -62,6 +63,12 @@ export default function RootLayout() {
     if (fontsLoaded) void SplashScreen.hideAsync();
   }, [fontsLoaded]);
 
+  // Load the real on-device speaker model if one is configured (speakerModel.ts). No-op /
+  // instant when none is set — diarization stays on the mock embedder. Never throws.
+  useEffect(() => {
+    void initSpeakerModel();
+  }, []);
+
   if (!fontsLoaded) return null;
 
   return (
@@ -75,6 +82,7 @@ export default function RootLayout() {
             <Stack.Screen name="consult/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="search" options={{ headerShown: false }} />
             <Stack.Screen name="bench" options={{ headerShown: true }} />
+            <Stack.Screen name="enroll" options={{ headerShown: true }} />
           </Stack>
         </GestureHandlerRootView>
       </ThemeProvider>

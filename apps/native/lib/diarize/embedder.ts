@@ -15,8 +15,12 @@ export interface SpeakerEmbedder {
   id: string;
   /** Voiceprint dimensionality. */
   dim: number;
-  /** Embed one audio window into a unit-normalized voiceprint. Pure/synchronous. */
-  embed(pcm: Float32Array): Voiceprint;
+  /**
+   * Embed one audio window into a unit-normalized voiceprint. Async — a real on-device
+   * neural model (ECAPA-TDNN via ExecuTorch) runs off the JS thread. The mock resolves
+   * immediately.
+   */
+  embed(pcm: Float32Array): Promise<Voiceprint>;
 }
 
 let active: SpeakerEmbedder | null = null;
@@ -35,4 +39,9 @@ export function getSpeakerEmbedder(): SpeakerEmbedder {
 /** Whether an embedder is available (for a settings / capability check). */
 export function hasSpeakerEmbedder(): boolean {
   return active !== null;
+}
+
+/** Id of the active embedder (e.g. "mock-goertzel-bands", "ecapa-tdnn-192"), or "none". */
+export function activeSpeakerEmbedderId(): string {
+  return active?.id ?? "none";
 }

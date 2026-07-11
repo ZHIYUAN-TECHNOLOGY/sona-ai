@@ -1,16 +1,15 @@
-import { getSpeakerEmbedder } from "./embedder";
-import "./mockEmbedder"; // side effect: registers the mock embedder as active
+import { embedPcm } from "./mockEmbedder";
 import { synthUtterancePcm } from "./mockAudio";
 import type { DiarUtterance, Voiceprint } from "./types";
 
 // MOCK bridge used by the demo/tests until the real mic+model path is wired. `voiceId` is
 // the real speaker, standing in for "the audio of whoever spoke": synthesize a stand-in
-// window and run the active embedder. Same-speaker windows cluster; the diarizer never
-// sees voiceId. Native-free (no DB import) so pure tests can use it.
+// window and run the mock band-energy embedder synchronously (deterministic, native-free,
+// so pure tests can use it). Same-speaker windows cluster; the diarizer never sees voiceId.
 
-/** Voiceprint for a (voiceId, text) pair via synthetic audio + the active embedder. */
+/** Voiceprint for a (voiceId, text) pair via synthetic audio + the mock embedder (sync). */
 export function mockVoiceprint(voiceId: string, text: string): Voiceprint {
-  return getSpeakerEmbedder().embed(synthUtterancePcm(voiceId, text));
+  return embedPcm(synthUtterancePcm(voiceId, text));
 }
 
 /** Build diarization utterances from scripted segments (voiceId = ground-truth speaker). */

@@ -28,7 +28,8 @@ function averageNormalized(vps: Voiceprint[]): Voiceprint {
 export async function enrollDoctorVoiceprint(windows: Float32Array[]): Promise<Voiceprint> {
   if (windows.length === 0) throw new Error("enrollDoctorVoiceprint: need at least one audio window");
   const embedder = getSpeakerEmbedder();
-  const vp = averageNormalized(windows.map((w) => embedder.embed(w)));
+  const vps = await Promise.all(windows.map((w) => embedder.embed(w)));
+  const vp = averageNormalized(vps);
   await saveDoctorVoiceprint(embedder.id, Array.from(vp));
   return vp;
 }
