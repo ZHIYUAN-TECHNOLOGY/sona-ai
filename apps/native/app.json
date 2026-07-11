@@ -9,13 +9,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "entitlements": {
-        "com.apple.developer.kernel.increased-memory-limit": true
-      },
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Sona records the consult on-device to transcribe it. Audio never leaves the phone and is deleted when you sign."
       },
-      "bundleIdentifier": "com.anonymous.mybettertapp"
+      "bundleIdentifier": "ai.zhiyuantech.aurio"
     },
     "android": {
       "adaptiveIcon": {
