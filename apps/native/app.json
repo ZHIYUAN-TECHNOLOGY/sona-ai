@@ -63,7 +63,11 @@
       "expo-font",
       "expo-secure-store",
       "expo-status-bar",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "react-native-enriched-markdown",
+        { "enableMath": false }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
