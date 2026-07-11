@@ -67,7 +67,8 @@
       [
         "react-native-enriched-markdown",
         { "enableMath": false }
-      ]
+      ],
+      "./plugins/withObjcLinker"
     ],
     "experiments": {
       "typedRoutes": true,
