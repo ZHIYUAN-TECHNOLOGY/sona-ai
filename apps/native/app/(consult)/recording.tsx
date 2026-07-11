@@ -23,7 +23,7 @@ type Mode = "transcribe" | "dictate";
 // Map a diarized turn (doctor / patient / unknown, from the on-device diarizer) to a
 // transcript row. Unknown (a third party — family, nurse) gets the neutral chip.
 function toDiarRow(turn: DiarTurn): { speaker: SpeakerKey; spans: TextSpan[]; faint: boolean } {
-  const speaker: SpeakerKey = turn.speaker === "doctor" ? "dr" : turn.speaker === "patient" ? "pt" : "you";
+  const speaker: SpeakerKey = turn.speaker === "doctor" ? "dr" : turn.speaker === "patient" ? "pt" : "other";
   return { speaker, faint: turn.speaker === "doctor", spans: [{ text: turn.text, bm: turn.lang === "ms" }] };
 }
 

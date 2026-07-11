@@ -6,6 +6,7 @@ import { colors } from "@/lib/theme";
 const WHO: Record<SpeakerKey, { label: string; color: string; bg: string; border: string }> = {
   dr: { label: "DR", color: colors.greenInk, bg: colors.green50, border: colors.green100 },
   pt: { label: "PT", color: colors.blue, bg: colors.blue50, border: colors.blueLine },
+  other: { label: "OTHER", color: colors.amber, bg: colors.amber50, border: colors.amberLine },
   you: { label: "YOU", color: colors.ink3, bg: colors.surface, border: colors.line },
 };
 
