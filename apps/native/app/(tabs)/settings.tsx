@@ -1,6 +1,6 @@
 import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useState } from "react";
-import { StyleSheet, Text } from "react-native";
+import { StyleSheet, Switch, Text } from "react-native";
 
 import { Card } from "@/components/consult/Card";
 import { CardHeading } from "@/components/consult/SectionLabel";
@@ -8,6 +8,7 @@ import { SettingsRow } from "@/components/consult/SettingsRow";
 import { TabScaffold } from "@/components/consult/TabScaffold";
 import { initSpeakerModel, isDoctorEnrolled } from "@/lib/diarize";
 import { NOTE_MODEL_NAME } from "@/lib/pipeline/model";
+import { getSttMode, setSttMode } from "@/lib/pipeline/sttMode";
 import { colors, font, space } from "@/lib/theme";
 
 // Tab 4 — Settings, rebuilt in the green design system (replaces the deleted
@@ -15,6 +16,7 @@ import { colors, font, space } from "@/lib/theme";
 export default function SettingsScreen() {
   const [enrolled, setEnrolled] = useState<boolean | null>(null);
   const [diarModel, setDiarModel] = useState("Mock (band-energy)");
+  const [demo, setDemo] = useState(getSttMode() === "demo");
   useFocusEffect(
     useCallback(() => {
       let alive = true;
@@ -34,6 +36,19 @@ export default function SettingsScreen() {
         <SettingsRow icon="mic-outline" label="Speech-to-text" value="Whisper (on-device)" />
         <SettingsRow icon="shield-checkmark-outline" label="Redaction" value="On-device" />
         <SettingsRow icon="people-outline" label="Diarization" value={diarModel} />
+        <SettingsRow
+          icon="albums-outline"
+          label="Demo transcript"
+          right={
+            <Switch
+              value={demo}
+              onValueChange={(v) => {
+                setDemo(v);
+                setSttMode(v ? "demo" : "real");
+              }}
+            />
+          }
+        />
       </Card>
 
       <Card>

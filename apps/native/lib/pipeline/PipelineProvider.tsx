@@ -24,13 +24,15 @@ import {
   runRedaction,
   type RedactionOutcome,
 } from "./consultPipeline";
+import type { Speaker } from "../db/types";
 import { streamLockedTranscript, type RawSegment, type Streamer } from "./mockStt";
 import {
-  finishRealCapture,
+  finishRealCaptureClusters,
   startRealCapture,
-  USE_REAL_STT,
   type CaptureController,
 } from "./realConsultStt";
+import type { ClusterSegment } from "./sttAlign";
+import { getSttMode } from "./sttMode";
 import { NOTE_MODEL } from "./model";
 import type { DraftNote } from "./noteGen";
 import { DEFAULT_TEMPLATE, templateById, templatePrompt } from "./templates";
@@ -50,6 +52,7 @@ export interface PipelineState {
   consultId: string | null;
   status: PipelineStatus;
   segments: RawSegment[]; // live transcript as it streams in
+  candidates: ClusterSegment[]; // real: transcribed lines tagged by anonymous cluster (pre-label)
   redaction: RedactionOutcome | null; // de-identified output + counts + re-ID map
   note: DraftNote | null; // re-identified SOAP note for the clinician view
   noteStatus: NoteStatus;
@@ -59,7 +62,8 @@ export interface PipelineState {
   templateId: string; // selected note template (drives the generation prompt)
   startConsult: (consentText: string) => Promise<void>;
   startRecording: () => void;
-  stopRecording: () => Promise<void>; // real: transcribe+diarize on-device; mock: end stream
+  stopRecording: () => Promise<"label" | "privacy">; // real → speaker-label step; mock → privacy
+  applySpeakerLabels: (labels: Record<number, Speaker>) => Promise<void>; // cluster → role
   redact: () => Promise<void>;
   draftNote: () => Promise<void>;
   editNote: (markdown: string) => Promise<void>; // persist a clinician edit + reflect it
@@ -73,6 +77,8 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const [consultId, setConsultId] = useState<string | null>(null);
   const [status, setStatus] = useState<PipelineStatus>("idle");
   const [segments, setSegments] = useState<RawSegment[]>([]);
+  const [candidates, setCandidates] = useState<ClusterSegment[]>([]);
+  const candidatesRef = useRef<ClusterSegment[]>([]);
   const [redaction, setRedaction] = useState<RedactionOutcome | null>(null);
   const [note, setNote] = useState<DraftNote | null>(null);
   const [noteStatus, setNoteStatus] = useState<NoteStatus>("idle");
@@ -101,6 +107,8 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setConsultId(consult.id);
     setStatus("consented");
     setSegments([]);
+    setCandidates([]);
+    candidatesRef.current = [];
     setRedaction(null);
     seq.current = 0;
     pendingWrites.current = [];
@@ -128,7 +136,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     if (!id) return;
     setStatus("recording");
     void persistRecordingStart(id);
-    if (USE_REAL_STT) {
+    if (getSttMode() === "real") {
       // Real mic capture; transcription runs at stopRecording. Fall back to the scripted
       // stream if the mic / native modules can't start (Expo Go, denied permission).
       stopRequested.current = false;
@@ -152,28 +160,54 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
 
   // End recording. Real path: stop capture, transcribe + diarize on-device, persist the
   // aligned transcript. Mock path: the stream's onDone already advanced state.
-  const stopRecording = useCallback(async () => {
+  const stopRecording = useCallback(async (): Promise<"label" | "privacy"> => {
     const id = idRef.current;
-    if (!id) return;
+    if (!id) return "privacy";
     stopRequested.current = true; // if capture is still starting, its .then will stop it
-    if (USE_REAL_STT && captureRef.current) {
+    if (getSttMode() === "real" && captureRef.current) {
       const capture = captureRef.current;
       captureRef.current = null;
       setStatus("transcribing");
       try {
-        const segments = await finishRealCapture(capture);
-        segments.forEach((seg, i) => pendingWrites.current.push(persistSegment(id, i, seg)));
-        setSegments(segments);
-        seq.current = segments.length;
+        // Transcribe + diarize on-device → lines tagged by anonymous cluster. Segments are
+        // NOT persisted yet — the clinician labels the clusters (Dr/Patient) next, then
+        // applySpeakerLabels writes the final transcript.
+        const cands = await finishRealCaptureClusters(capture);
+        candidatesRef.current = cands;
+        setCandidates(cands);
       } catch {
-        // transcription failed → empty transcript; the privacy/note screens handle empty
+        candidatesRef.current = [];
+        setCandidates([]);
       }
-      pendingWrites.current.push(persistRecordingStop(id));
       setStatus("transcribed");
-      return;
+      return "label"; // persistRecordingStop is deferred to applySpeakerLabels (after segments)
     }
-    // Mock path: no-op — the scripted stream finalizes itself via onDone (persistRecordingStop
-    // + "transcribed"), exactly as the demo did before. Leaving it running preserves that.
+    // Mock / fallback path: stop any stray real capture (e.g. the Demo toggle was flipped
+    // mid-consult so this isn't the real path), then let the scripted stream finalize itself
+    // via onDone (persistRecordingStop + "transcribed") — exactly as the demo did before.
+    if (captureRef.current) {
+      captureRef.current.stop().catch(() => {});
+      captureRef.current = null;
+    }
+    return "privacy";
+  }, []);
+
+  // Apply the clinician's cluster → role labels to the transcribed candidates, building and
+  // persisting the final transcript the redaction/note steps consume. Segments are written
+  // FIRST, then the record-stop marker — so redaction (which awaits all writes) sees the full
+  // transcript. Candidates whose cluster is −1 (no diarization overlap) fall back to "unknown".
+  const applySpeakerLabels = useCallback(async (labels: Record<number, Speaker>) => {
+    const id = idRef.current;
+    if (!id) return;
+    const segs: RawSegment[] = candidatesRef.current.map((c) => ({
+      speaker: labels[c.cluster] ?? "unknown",
+      text: c.text,
+      lang: c.lang,
+    }));
+    segs.forEach((s, i) => pendingWrites.current.push(persistSegment(id, i, s)));
+    pendingWrites.current.push(persistRecordingStop(id));
+    seq.current = segs.length;
+    setSegments(segs);
   }, []);
 
   const redact = useCallback(async () => {
@@ -235,6 +269,8 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setConsultId(null);
     setStatus("idle");
     setSegments([]);
+    setCandidates([]);
+    candidatesRef.current = [];
     setRedaction(null);
     setNote(null);
     setNoteStatus("idle");
@@ -257,6 +293,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         consultId,
         status,
         segments,
+        candidates,
         redaction,
         note,
         noteStatus,
@@ -267,6 +304,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         startConsult,
         startRecording,
         stopRecording,
+        applySpeakerLabels,
         redact,
         draftNote,
         editNote,
