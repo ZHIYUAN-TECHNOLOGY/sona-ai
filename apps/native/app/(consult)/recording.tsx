@@ -16,6 +16,7 @@ import { useDiarizedTranscript } from "@/lib/diarize/useDiarizedTranscript";
 import type { DiarTurn } from "@/lib/diarize/types";
 import { haptic } from "@/lib/haptics";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
+import { getSttMode } from "@/lib/pipeline/sttMode";
 import { colors, font, space } from "@/lib/theme";
 
 type Mode = "transcribe" | "dictate";
@@ -102,7 +103,10 @@ export default function RecordingScreen() {
         <RecordButton recording onPress={end} accessibilityLabel="End consult" />
         <Text style={styles.timer}>{mmss(elapsed)}</Text>
         <View style={styles.waveWrap}>
-          <Waveform live />
+          {/* Real mode: the STT capture owns the mic — keep the waveform DECORATIVE (live={false})
+              so it doesn't open a second AudioRecorder and starve the STT capture of audio.
+              Demo mode has no real capture, so the waveform can drive the mic itself. */}
+          <Waveform live={getSttMode() !== "real"} />
         </View>
         <Text style={styles.caption}>Transcribing on-device · no network</Text>
       </View>
