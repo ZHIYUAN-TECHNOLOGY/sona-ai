@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
@@ -47,6 +47,9 @@ export default function LabelScreen() {
     try {
       await applySpeakerLabels(labels);
       router.push("/privacy");
+    } catch (e) {
+      // Surface the exact failure (e.g. "Consult row missing: <id>") instead of a red screen.
+      Alert.alert("Couldn't save the transcript", String(e));
     } finally {
       setSaving(false);
     }

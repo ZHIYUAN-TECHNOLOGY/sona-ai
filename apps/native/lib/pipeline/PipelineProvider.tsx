@@ -24,6 +24,7 @@ import {
   runRedaction,
   type RedactionOutcome,
 } from "./consultPipeline";
+import { getConsult } from "../db";
 import type { Speaker } from "../db/types";
 import { streamLockedTranscript, type RawSegment, type Streamer } from "./mockStt";
 import {
@@ -139,7 +140,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     const id = idRef.current;
     if (!id) return;
     setStatus("recording");
-    void persistRecordingStart(id);
+    void persistRecordingStart(id).catch(() => {}); // don't red-screen if the audit write races
     if (getSttMode() === "real") {
       // Real mic capture; transcription runs at stopRecording. Fall back to the scripted
       // stream if the mic / native modules can't start (Expo Go, denied permission).
@@ -204,14 +205,17 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   // transcript. Candidates whose cluster is −1 (no diarization overlap) fall back to "unknown".
   const applySpeakerLabels = useCallback(async (labels: Record<number, Speaker>) => {
     const id = idRef.current;
-    if (!id) return;
+    if (!id) throw new Error("No active consult (idRef is null).");
+    // Verify the consult row exists — the FK failure means a write referenced a consult that
+    // isn't there. Surface the exact id so we can see WHY (instead of an opaque FK crash).
+    const consult = await getConsult(id).catch(() => null);
+    if (!consult) throw new Error(`Consult row missing: ${id}`);
     const segs: RawSegment[] = candidatesRef.current.map((c) => ({
       speaker: labels[c.cluster] ?? "unknown",
       text: c.text,
       lang: c.lang,
     }));
-    // Persist SEQUENTIALLY — firing all N writes at once on the single SQLite connection
-    // fails (finalizeAsync / FK under concurrency). Await each, then the record-stop marker.
+    // Persist SEQUENTIALLY (one SQLite connection). Await each, then the record-stop marker.
     for (let i = 0; i < segs.length; i++) {
       await persistSegment(id, i, segs[i]);
     }
