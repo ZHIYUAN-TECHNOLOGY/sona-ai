@@ -31,6 +31,7 @@
     "expo-font": "~57.0.0",
     "expo-glass-effect": "~57.0.0",
     "expo-haptics": "~57.0.0",
+    "expo-image-picker": "~57.0.2",
     "expo-linking": "~57.0.1",
     "expo-network": "~57.0.0",
     "expo-print": "~57.0.0",

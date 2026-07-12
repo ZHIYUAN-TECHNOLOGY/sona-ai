@@ -65,6 +65,13 @@
         "react-native-enriched-markdown",
         { "enableMath": false }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Aurio reads text from document photos on-device to add to the consult. Photos stay on this phone.",
+          "cameraPermission": "Aurio scans documents (labs, referrals) on-device. Images stay on this phone."
+        }
+      ],
       "./plugins/withObjcLinker"
     ],
     "experiments": {
