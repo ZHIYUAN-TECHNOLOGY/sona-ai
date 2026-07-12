@@ -15,6 +15,7 @@ export const SPEAKER_MODEL: ExecutorchEmbedderConfig | null = null;
 //   dim: 192,
 //   inputKind: "fbank",
 //   numMel: 80,
+//   threshold: 0.5, // ECAPA cosine scale — NOT 0.9; tune to your model or it over-splits
 //   modelSource: "https://your-host/ecapa_tdnn_xnnpack.pte",
 // };
 

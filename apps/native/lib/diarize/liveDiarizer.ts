@@ -41,7 +41,10 @@ export async function diarizeWindows(
   const embedder = getSpeakerEmbedder();
   const embeddings = await Promise.all(windows.map((w) => embedder.embed(w)));
   const utterances = embeddings.map((embedding, i) => ({ text: texts?.[i] ?? "", embedding }));
-  return diarize(utterances, opts);
+  // Use the embedder's recommended clustering threshold for its cosine scale, unless the
+  // caller overrode it — so swapping the embedder (band-energy → MFCC → ECAPA) clusters right.
+  const threshold = opts.threshold ?? embedder.threshold;
+  return diarize(utterances, { ...opts, threshold });
 }
 
 export interface DiarizeAudioOptions extends DiarizeOptions {

@@ -16,6 +16,13 @@ export interface SpeakerEmbedder {
   /** Voiceprint dimensionality. */
   dim: number;
   /**
+   * Recommended clustering cosine threshold for THIS embedder's voiceprint scale — the
+   * min cosine for two windows to be the same speaker. Critical: it is embedder-specific
+   * (band-energy ≈ 0.9, MFCC ≈ 0.99, a neural ECAPA ≈ 0.4–0.6). The diarizer uses it so a
+   * different model doesn't silently over- or under-split. Omit → cluster default.
+   */
+  threshold?: number;
+  /**
    * Embed one audio window into a unit-normalized voiceprint. Async — a real on-device
    * neural model (ECAPA-TDNN via ExecuTorch) runs off the JS thread. The mock resolves
    * immediately.
@@ -44,4 +51,9 @@ export function hasSpeakerEmbedder(): boolean {
 /** Id of the active embedder (e.g. "mock-goertzel-bands", "ecapa-tdnn-192"), or "none". */
 export function activeSpeakerEmbedderId(): string {
   return active?.id ?? "none";
+}
+
+/** The active embedder's recommended clustering threshold (undefined → cluster default). */
+export function activeSpeakerEmbedderThreshold(): number | undefined {
+  return active?.threshold;
 }
