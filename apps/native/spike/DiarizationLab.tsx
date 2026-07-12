@@ -14,6 +14,8 @@ import {
   type DiarizedSpeech,
 } from "@/lib/diarize";
 import { haptic } from "@/lib/haptics";
+import type { RawSegment } from "@/lib/pipeline/mockStt";
+import { alignTextToSpeakers, transcribeAudio } from "@/lib/pipeline/realStt";
 import { colors, font, space } from "@/lib/theme";
 
 type Phase = "idle" | "recording" | "analyzing" | "done" | "error";
@@ -36,6 +38,8 @@ function mmss(sec: number): string {
 export default function DiarizationLab() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [result, setResult] = useState<DiarizedSpeech[]>([]);
+  const [transcript, setTranscript] = useState<RawSegment[]>([]);
+  const [sttNote, setSttNote] = useState("");
   const [elapsed, setElapsed] = useState(0);
   const [err, setErr] = useState("");
   const capture = useRef<CaptureController | null>(null);
@@ -62,6 +66,8 @@ export default function DiarizationLab() {
   const start = async () => {
     setErr("");
     setResult([]);
+    setTranscript([]);
+    setSttNote("");
     setElapsed(0);
     haptic("recordStart");
     try {
@@ -84,10 +90,18 @@ export default function DiarizationLab() {
       capture.current = null;
       const doctorVoiceprint = await loadDoctorVoiceprint();
       const diarized = await diarizeAudio(waveform, { doctorVoiceprint });
-      if (mounted.current) {
-        setResult(diarized);
-        setPhase("done");
+      if (!mounted.current) return;
+      setResult(diarized);
+      // Real STT: transcribe the same audio on-device (Whisper), then align the text to the
+      // diarized speakers. Guarded — if the STT model isn't available, keep the diarization.
+      try {
+        const tr = await transcribeAudio(waveform);
+        if (mounted.current) setTranscript(alignTextToSpeakers(tr.segments, diarized, tr.language));
+      } catch {
+        // Keep the diarization result; STT model may not be linked on this build.
+        if (mounted.current) setSttNote("Transcription unavailable on this build (rebuild to link Whisper).");
       }
+      if (mounted.current) setPhase("done");
     } catch (e) {
       if (mounted.current) {
         setErr(String(e));
@@ -103,8 +117,8 @@ export default function DiarizationLab() {
           <CardHeading>What this does</CardHeading>
           <Text style={styles.body}>
             Records a few seconds through the mic, then runs the real on-device pipeline:
-            voice-activity detection → speaker embedding → clustering → doctor / patient /
-            other. Nothing leaves the phone.
+            Whisper transcription + voice-activity detection → speaker embedding → clustering
+            → text aligned to doctor / patient / other. Nothing leaves the phone.
           </Text>
         </Card>
 
@@ -133,7 +147,7 @@ export default function DiarizationLab() {
           ) : phase === "analyzing" ? (
             <View style={styles.recRow}>
               <ActivityIndicator color={colors.green} />
-              <Text style={styles.recText}>Analyzing on-device…</Text>
+              <Text style={styles.recText}>Transcribing + diarizing on-device…</Text>
             </View>
           ) : null}
 
@@ -156,6 +170,31 @@ export default function DiarizationLab() {
             </Text>
           ) : null}
         </Card>
+
+        {phase === "done" && transcript.length > 0 ? (
+          <Card>
+            <CardHeading>Transcript · on-device</CardHeading>
+            {transcript.map((r, i) => {
+              const c = CHIP[r.speaker] ?? CHIP.unknown;
+              return (
+                <View key={i} style={styles.segRow}>
+                  <View style={[styles.chip, { backgroundColor: c.bg, borderColor: c.border }]}>
+                    <Text style={[styles.chipText, { color: c.color }]}>{c.label}</Text>
+                  </View>
+                  <Text style={styles.txt} selectable>
+                    {r.text}
+                  </Text>
+                </View>
+              );
+            })}
+          </Card>
+        ) : phase === "done" && sttNote ? (
+          <Card variant="amber">
+            <Text style={styles.note} selectable>
+              {sttNote}
+            </Text>
+          </Card>
+        ) : null}
 
         {phase === "done" ? (
           <Card>
@@ -199,8 +238,9 @@ const styles = StyleSheet.create({
   actions: { flexDirection: "row", gap: space.sm, marginTop: space.lg },
   grow: { flex: 1 },
   err: { ...font.bodySm, color: colors.red, marginTop: space.sm },
-  segRow: { flexDirection: "row", alignItems: "center", gap: space.sm, marginTop: 10 },
-  chip: { borderWidth: 1, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  segRow: { flexDirection: "row", alignItems: "flex-start", gap: space.sm, marginTop: 10 },
+  txt: { ...font.body, color: colors.ink, flex: 1, lineHeight: 20 },
+  chip: { borderWidth: 1, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, marginTop: 1 },
   chipText: { fontSize: 9, fontWeight: "700", letterSpacing: 0.5 },
   segTime: { ...font.body, color: colors.ink, fontVariant: ["tabular-nums"] },
   segMeta: { ...font.bodySm, color: colors.ink3, marginLeft: "auto", fontVariant: ["tabular-nums"] },
