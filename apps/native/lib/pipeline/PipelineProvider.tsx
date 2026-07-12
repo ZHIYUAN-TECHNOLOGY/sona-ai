@@ -125,11 +125,13 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
       (segment) => {
         setSegments((prev) => [...prev, segment]);
         const s = seq.current++;
-        pendingWrites.current.push(persistSegment(id, s, segment));
+        // .catch so a write failure never becomes an uncaught red screen; the rejection is
+        // still surfaced via redact()'s allSettled if it matters.
+        pendingWrites.current.push(persistSegment(id, s, segment).catch(() => {}));
       },
       {
         onDone: () => {
-          pendingWrites.current.push(persistRecordingStop(id));
+          pendingWrites.current.push(persistRecordingStop(id).catch(() => {}));
           setStatus("transcribed");
         },
       },

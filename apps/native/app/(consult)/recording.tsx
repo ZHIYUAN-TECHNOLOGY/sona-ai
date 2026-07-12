@@ -1,6 +1,8 @@
 import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
+
+import { getConsult } from "@/lib/db";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
@@ -38,8 +40,19 @@ function mmss(total: number): string {
 // segmented Transcribe/Dictate toggle, a live ticking timer, and the transcript
 // peeking below. The note template is chosen upstream on the New-consult screen.
 export default function RecordingScreen() {
-  const { segments, startRecording, stopRecording } = useConsultPipeline();
+  const { consultId, segments, startRecording, stopRecording } = useConsultPipeline();
   const started = useRef(false);
+
+  // DIAGNOSTIC: the FK crash means a write hits a consult row that isn't there. Check it
+  // exists the moment recording starts, so we know whether the consult was created at all.
+  useEffect(() => {
+    if (!consultId) return;
+    void getConsult(consultId)
+      .then((c) => {
+        if (!c) Alert.alert("Consult row missing at record start", String(consultId));
+      })
+      .catch(() => {});
+  }, [consultId]);
   const [mode, setMode] = useState<Mode>("transcribe");
   const [elapsed, setElapsed] = useState(0);
   const [ending, setEnding] = useState(false);
