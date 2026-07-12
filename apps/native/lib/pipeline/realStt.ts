@@ -1,6 +1,7 @@
 import { SpeechToTextModule } from "react-native-executorch";
 
 import { STT_MODEL } from "./model";
+import { getSttLanguage } from "./sttMode";
 import { alignTextToSpeakers, type SttSegment } from "./sttAlign";
 
 // Real on-device speech-to-text (ExecuTorch Whisper). Transcribes a captured 16 kHz
@@ -57,7 +58,10 @@ async function runTranscribe(
   opts: { language?: "ms" | "en"; onProgress?: (p: number) => void },
 ): Promise<Transcription> {
   const stt = await getStt(opts.onProgress);
-  const res = await stt.transcribe(waveform, { language: opts.language, verbose: true });
+  // The multilingual Whisper model REQUIRES a non-empty language — passing undefined throws
+  // "Model is multilingual, provide a language". Fall back to the app's configured language.
+  const language = opts.language ?? getSttLanguage();
+  const res = await stt.transcribe(waveform, { language, verbose: true });
   const segments: SttSegment[] = (res.segments ?? [])
     .map((s) => ({ start: s.start, end: s.end, text: (s.text ?? "").trim() }))
     .filter((s) => s.text);
