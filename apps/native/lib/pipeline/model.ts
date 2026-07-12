@@ -1,6 +1,7 @@
 import {
   PARAPHRASE_MULTILINGUAL_MINILM_L12_V2_QUANTIZED,
   QWEN3_0_6B_QUANTIZED,
+  WHISPER_BASE,
 } from "react-native-executorch";
 
 // Single source of truth for the on-device note model. The rest of the pipeline
@@ -25,3 +26,11 @@ export const NOTE_MODEL_NAME = "Qwen3-0.6B";
 // use; retrieval falls back to the lexical ranker until it's ready.
 export const EMBED_MODEL = PARAPHRASE_MULTILINGUAL_MINILM_L12_V2_QUANTIZED;
 export const EMBED_MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2";
+
+// On-device speech-to-text (Whisper). Multilingual on purpose — the consult is code-
+// switched BM + EN, and whisper-base handles both ('ms' + 'en'). iOS runs the CoreML
+// variant (GPU-accelerated); Android runs XNNPACK. Runs via SpeechToTextModule.transcribe
+// (verbose → per-segment timestamps) — audio in, text out, on-device, so nothing leaves the
+// phone. Swap to WHISPER_TINY for faster load / WHISPER_SMALL for higher accuracy here.
+export const STT_MODEL = WHISPER_BASE;
+export const STT_MODEL_NAME = "Whisper-base";
