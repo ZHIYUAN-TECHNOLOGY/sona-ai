@@ -39,9 +39,16 @@ function mmss(total: number): string {
 // Screen 2 of 6 — Recording. Big circular record affordance (Heidi-inspired),
 // segmented Transcribe/Dictate toggle, a live ticking timer, and the transcript
 // peeking below. The note template is chosen upstream on the New-consult screen.
+// Consult states that mean recording is already OVER — a re-focus must NOT restart the mic.
+const ENDED_STATUSES = new Set(["transcribing", "transcribed", "redacted", "noted"]);
+
 export default function RecordingScreen() {
-  const { consultId, segments, startRecording, stopRecording } = useConsultPipeline();
+  const { consultId, status, segments, startRecording, stopRecording, cancelRecording } =
+    useConsultPipeline();
   const started = useRef(false);
+  const endedHere = useRef(false); // End was pressed on this screen (don't cancel on the resulting blur)
+  const statusRef = useRef(status);
+  statusRef.current = status; // read the freshest status inside the focus effect without re-subscribing
 
   // DIAGNOSTIC: the FK crash means a write hits a consult row that isn't there. Check it
   // exists the moment recording starts, so we know whether the consult was created at all.
@@ -59,11 +66,23 @@ export default function RecordingScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      if (started.current) return;
-      started.current = true;
-      haptic("recordStart");
-      startRecording();
-    }, [startRecording]),
+      // Returning to a consult that already ended (e.g. back-navigation) must NOT reopen the
+      // mic. Forward to that consult's result instead of showing a fake live recorder.
+      if (ENDED_STATUSES.has(statusRef.current)) {
+        router.replace((getSttMode() === "real" ? "/label" : "/privacy") as Href);
+        return;
+      }
+      if (!started.current) {
+        started.current = true;
+        haptic("recordStart");
+        startRecording();
+      }
+      // Leaving the screen WITHOUT pressing End (tab switch, back-swipe) → stop the mic so no
+      // orphan capture / orange indicator survives. End's own path already stopped it.
+      return () => {
+        if (!endedHere.current) cancelRecording();
+      };
+    }, [startRecording, cancelRecording]),
   );
 
   useEffect(() => {
@@ -78,9 +97,12 @@ export default function RecordingScreen() {
   const end = useCallback(async () => {
     if (ending) return;
     setEnding(true);
+    endedHere.current = true; // mark so the blur cleanup doesn't double-cancel the (already stopped) mic
     try {
       const next = await stopRecording(); // real → label speakers; mock/demo → privacy
-      router.push((next === "label" ? "/label" : "/privacy") as Href);
+      // REPLACE (not push): drop the recording screen from the stack so back-navigation can
+      // never return to a finished consult as a live recorder.
+      router.replace((next === "label" ? "/label" : "/privacy") as Href);
     } finally {
       setEnding(false);
     }
