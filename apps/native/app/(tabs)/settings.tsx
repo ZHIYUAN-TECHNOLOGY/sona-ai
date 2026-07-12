@@ -49,7 +49,12 @@ export default function SettingsScreen() {
 
       <Card>
         <CardHeading>Privacy</CardHeading>
-        <SettingsRow first icon="airplane-outline" label="Network" value="Airplane · 0 bytes" />
+        <SettingsRow
+          first
+          icon="shield-checkmark-outline"
+          label="On-device proof"
+          onPress={() => router.push("/on-device" as Href)}
+        />
         <SettingsRow icon="lock-closed-outline" label="Data" value="Stays on this device" />
         <SettingsRow icon="sunny-outline" label="Appearance" value="Light only" />
       </Card>
