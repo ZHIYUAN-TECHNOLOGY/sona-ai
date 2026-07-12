@@ -20,13 +20,13 @@ import {
   type SttAccuracy,
   type SttLanguage,
 } from "@/lib/pipeline/sttMode";
-import { prewarmWhisper, whisperModelFor, whisperModelInfo } from "@/lib/pipeline/whisperStt";
+import { prewarmWhisper, whisperIsBundled, whisperModelFor, whisperModelInfo } from "@/lib/pipeline/whisperStt";
 import { haptic } from "@/lib/haptics";
 import { colors, font, space } from "@/lib/theme";
 
 const ACCURACY_OPTIONS: SheetOption<SttAccuracy>[] = [
-  { key: "fast", name: "Fast", desc: "Whisper-base multilingual · ~60MB · quick", icon: "flash-outline" },
-  { key: "high", name: "High accuracy", desc: "Whisper-small multilingual · ~180MB · best for code-switch", icon: "speedometer-outline" },
+  { key: "fast", name: "Fast", desc: "Whisper-base multilingual · ~60MB download · quick", icon: "flash-outline" },
+  { key: "high", name: "Malaysian (recommended)", desc: "Malaysian Whisper · Malay+English+中文 · bundled offline", icon: "sparkles-outline" },
 ];
 
 const LANGUAGE_OPTIONS: SheetOption<SttLanguage>[] = [
@@ -139,6 +139,16 @@ export default function SettingsScreen() {
           slower model. Force a language only if a consult is strongly one language.
         </Text>
 
+        {whisperIsBundled(accuracy) ? (
+          <View style={[styles.prepareBtn, styles.prepareBtnReady]}>
+            <View style={styles.prepareRow}>
+              <Ionicons name="checkmark-circle" size={18} color={colors.greenInk} />
+              <Text style={[styles.prepareText, { color: colors.greenInk }]}>
+                {`${whisperModelInfo(accuracy).name} — bundled in app, ready offline`}
+              </Text>
+            </View>
+          </View>
+        ) : (
         <Pressable
           onPress={downloadModel}
           disabled={prep.status === "downloading" || prep.status === "ready"}
@@ -178,6 +188,7 @@ export default function SettingsScreen() {
             </View>
           )}
         </Pressable>
+        )}
       </Card>
 
       <Card>
