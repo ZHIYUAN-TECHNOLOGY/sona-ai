@@ -4,8 +4,13 @@ import {
   startCapture,
   type CaptureController,
 } from "../diarize";
+import { filterHallucinations } from "./hallucination";
 import { alignTextToClusters, type ClusterSegment } from "./sttAlign";
 import { transcribeAudio, unloadStt } from "./realStt";
+
+// A consult has few speakers (doctor, patient, maybe one family member) — cap diarization so
+// noisy audio can't explode into "Speaker 5". The clinician merges/relabels on Review anyway.
+const MAX_CONSULT_SPEAKERS = 4;
 
 // Real-audio consult source. Flip USE_REAL_STT to true to record REAL mic audio and produce
 // the transcript on-device (Whisper) + diarize it, instead of the scripted mockStt. Default
@@ -78,13 +83,16 @@ export async function finishRealCaptureClusters(capture: CaptureController): Pro
 
   let diarized: Awaited<ReturnType<typeof diarizeAudio>> = [];
   try {
-    diarized = await diarizeAudio(waveform, { doctorVoiceprint });
+    diarized = await diarizeAudio(waveform, { doctorVoiceprint, maxSpeakers: MAX_CONSULT_SPEAKERS });
     diag.vadSegments = diarized.length;
   } catch (e) {
     diag.vadError = String(e);
   }
 
-  let candidates = tr ? alignTextToClusters(tr.segments, diarized, tr.language) : [];
+  // Strip Whisper hallucinations (bracketed non-speech, repetition loops, caption artifacts)
+  // before aligning + displaying, so junk lines don't reach the transcript or spawn speakers.
+  const cleanSegs = tr ? filterHallucinations(tr.segments) : [];
+  let candidates = tr ? alignTextToClusters(cleanSegs, diarized, tr.language) : [];
   // If diarization found no regions but we DID transcribe, keep the text under one speaker
   // instead of dropping it (VAD failing shouldn't discard a real transcript).
   if (candidates.length > 0 && candidates.every((c) => c.cluster < 0)) {
