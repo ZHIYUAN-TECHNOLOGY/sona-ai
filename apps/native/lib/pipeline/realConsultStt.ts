@@ -5,7 +5,7 @@ import {
   type CaptureController,
 } from "../diarize";
 import { alignTextToClusters, type ClusterSegment } from "./sttAlign";
-import { transcribeAudio } from "./realStt";
+import { transcribeAudio, unloadStt } from "./realStt";
 
 // Real-audio consult source. Flip USE_REAL_STT to true to record REAL mic audio and produce
 // the transcript on-device (Whisper) + diarize it, instead of the scripted mockStt. Default
@@ -71,6 +71,10 @@ export async function finishRealCaptureClusters(capture: CaptureController): Pro
   } catch (e) {
     diag.sttError = String(e);
   }
+  // Free the Whisper model's native memory now — the rest of the consult (diarize, then the
+  // Qwen cleanup + note pass) doesn't need it, and whisper-small is ~1.1GB we don't want to
+  // hold alongside the LLM.
+  await unloadStt();
 
   let diarized: Awaited<ReturnType<typeof diarizeAudio>> = [];
   try {
