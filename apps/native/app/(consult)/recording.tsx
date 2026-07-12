@@ -1,4 +1,4 @@
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -65,8 +65,8 @@ export default function RecordingScreen() {
     if (ending) return;
     setEnding(true);
     try {
-      await stopRecording();
-      router.push("/privacy");
+      const next = await stopRecording(); // real → label speakers; mock/demo → privacy
+      router.push((next === "label" ? "/label" : "/privacy") as Href);
     } finally {
       setEnding(false);
     }

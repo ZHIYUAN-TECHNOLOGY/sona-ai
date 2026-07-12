@@ -4,8 +4,8 @@ import {
   startCapture,
   type CaptureController,
 } from "../diarize";
-import type { RawSegment } from "./mockStt";
-import { alignTextToSpeakers, transcribeAudio } from "./realStt";
+import { alignTextToClusters, type ClusterSegment } from "./sttAlign";
+import { transcribeAudio } from "./realStt";
 
 // Real-audio consult source. Flip USE_REAL_STT to true to record REAL mic audio and produce
 // the transcript on-device (Whisper) + diarize it, instead of the scripted mockStt. Default
@@ -16,8 +16,6 @@ import { alignTextToSpeakers, transcribeAudio } from "./realStt";
 // MOAT: audio, transcript, and voiceprints are computed on-device and discarded; only the
 // resulting de-identified text later crosses the boundary (optional cloud path).
 
-export const USE_REAL_STT = false;
-
 export type { CaptureController };
 
 /** Begin real mic capture for the consult. Rejects if mic/native unavailable. */
@@ -27,9 +25,10 @@ export function startRealCapture(): Promise<CaptureController> {
 
 /**
  * Stop capture, transcribe the audio on-device (Whisper), diarize it, and align the text to
- * speakers → the diarized transcript the pipeline consumes. Empty transcript if no audio.
+ * anonymous speaker CLUSTERS. The clinician labels each cluster (Doctor / Patient / Other) in
+ * the UI afterwards. Empty result if no audio was captured.
  */
-export async function finishRealCapture(capture: CaptureController): Promise<RawSegment[]> {
+export async function finishRealCaptureClusters(capture: CaptureController): Promise<ClusterSegment[]> {
   const waveform = await capture.stop();
   if (waveform.length === 0) return [];
   const doctorVoiceprint = await loadDoctorVoiceprint();
@@ -37,5 +36,5 @@ export async function finishRealCapture(capture: CaptureController): Promise<Raw
     transcribeAudio(waveform),
     diarizeAudio(waveform, { doctorVoiceprint }),
   ]);
-  return alignTextToSpeakers(tr.segments, diarized, tr.language);
+  return alignTextToClusters(tr.segments, diarized, tr.language);
 }

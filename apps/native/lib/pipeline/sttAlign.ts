@@ -46,3 +46,39 @@ export function alignTextToSpeakers(
     .filter((s) => s.text.trim())
     .map((s) => ({ speaker: speakerForSegment(s, diarized), text: s.text.trim(), lang }));
 }
+
+/** One transcript line tagged with its ANONYMOUS diarization cluster (before role labeling). */
+export interface ClusterSegment {
+  cluster: number;
+  text: string;
+  lang?: RawSegment["lang"];
+}
+
+/** The diarized cluster whose region overlaps this STT segment most (-1 if none). */
+export function clusterForSegment(seg: { start: number; end: number }, diarized: DiarizedSpeech[]): number {
+  let best = -1;
+  let bestOverlap = 0;
+  for (const d of diarized) {
+    const overlap = Math.max(0, Math.min(seg.end, d.end) - Math.max(seg.start, d.start));
+    if (overlap > bestOverlap) {
+      bestOverlap = overlap;
+      best = d.cluster;
+    }
+  }
+  return best;
+}
+
+/**
+ * Align STT text to anonymous diarization CLUSTERS (not roles). The clinician then labels
+ * each cluster as Doctor / Patient / Other in the UI — more reliable than guessing.
+ */
+export function alignTextToClusters(
+  sttSegs: SttSegment[],
+  diarized: DiarizedSpeech[],
+  language?: string,
+): ClusterSegment[] {
+  const lang = langTag(language);
+  return sttSegs
+    .filter((s) => s.text.trim())
+    .map((s) => ({ cluster: clusterForSegment(s, diarized), text: s.text.trim(), lang }));
+}
