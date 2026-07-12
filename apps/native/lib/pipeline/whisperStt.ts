@@ -20,21 +20,26 @@ export interface Transcription {
   segments: SttSegment[];
 }
 
-/** ggml model tiers. Multilingual builds handle Malay/English/Mandarin far better than base-en. */
+/** A ggml model source: either a bundled app asset (offline) or a download URL. */
 export interface WhisperModel {
-  file: string; // local filename in the document dir
-  url: string; // ggml .bin download source
+  file: string; // stable local filename (download tier) / cache key
+  url?: string; // ggml .bin download source (Fast tier)
+  asset?: number; // require() id of a bundled ggml (ships in the app — offline, nothing downloads)
 }
 
-// Phase 1 validation models (standard multilingual whisper.cpp ggml). Phase 2 swaps HIGH to a
-// Mesolitica Malaysian-Whisper ggml (Manglish + Mandarin + Malay) at the same interface.
+// FAST — standard multilingual whisper-base, downloaded once (small, quick, generic).
 export const WHISPER_FAST: WhisperModel = {
   file: "ggml-base-q5.bin",
   url: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base-q5_1.bin",
 };
+
+// HIGH — Mesolitica Malaysian Whisper-small (q5_1, 181MB), converted to ggml and BUNDLED in the
+// app. Trained on Malay + Manglish + Mandarin + Tamil → the moat model for Malaysian consults.
+// Bundled (not downloaded): ships offline, nothing leaves the device, instant (no download wait).
 export const WHISPER_HIGH: WhisperModel = {
-  file: "ggml-small-q5.bin",
-  url: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q5_1.bin",
+  file: "ggml-malaysian-small.bin",
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  asset: require("../../assets/models/ggml-malaysian-small.bin"),
 };
 
 /** The ggml model for an accuracy tier. */
@@ -42,11 +47,16 @@ export function whisperModelFor(accuracy: "fast" | "high"): WhisperModel {
   return accuracy === "high" ? WHISPER_HIGH : WHISPER_FAST;
 }
 
-/** Human label + approximate download size per tier (for Settings). */
+/** Human label + source note per tier (for Settings). */
 export function whisperModelInfo(accuracy: "fast" | "high"): { name: string; size: string } {
   return accuracy === "high"
-    ? { name: "Whisper-small (multilingual)", size: "~180MB" }
-    : { name: "Whisper-base (multilingual)", size: "~60MB" };
+    ? { name: "Malaysian Whisper-small", size: "bundled · offline" }
+    : { name: "Whisper-base (multilingual)", size: "~60MB download" };
+}
+
+/** True if the tier's model ships in the app (no download needed). */
+export function whisperIsBundled(accuracy: "fast" | "high"): boolean {
+  return whisperModelFor(accuracy).asset != null;
 }
 
 let ctxPromise: Promise<WhisperContext> | null = null;
@@ -54,6 +64,7 @@ let loadedFile: string | null = null;
 
 /** Download the ggml model to app storage if absent; return its local file path. */
 async function ensureModel(model: WhisperModel, onProgress?: (p: number) => void): Promise<string> {
+  if (!model.url) throw new Error("whisper model has no download URL");
   const file = new File(Paths.document, model.file);
   if (file.exists) return file.uri;
   const downloaded = await File.downloadFileAsync(model.url, new Directory(Paths.document), {
@@ -81,8 +92,13 @@ async function getCtx(model: WhisperModel, onProgress?: (p: number) => void): Pr
   if (!ctxPromise) {
     loadedFile = model.file;
     ctxPromise = (async () => {
+      // Bundled model → load the app asset directly (offline, no download). useGpu → Metal.
+      if (model.asset != null) {
+        onProgress?.(1);
+        return initWhisper({ filePath: model.asset, useGpu: true });
+      }
       const path = await ensureModel(model, onProgress);
-      // useGpu → Metal on iOS. filePath accepts the file:// URI from expo-file-system.
+      // filePath accepts the file:// URI from expo-file-system.
       return initWhisper({ filePath: path, useGpu: true });
     })().catch((e) => {
       ctxPromise = null;

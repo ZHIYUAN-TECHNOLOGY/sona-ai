@@ -11,9 +11,10 @@ config.resolver.blockList = [
   /[/\\]packages[/\\]infra[/\\]\.alchemy(?:[/\\]|$)/,
 ];
 
-// Bundle audio assets (spike sample consult clip) as binary assets.
-if (!config.resolver.assetExts.includes("wav")) {
-  config.resolver.assetExts.push("wav");
+// Bundle audio assets (spike sample consult clip) + on-device model weights as binary assets.
+// .bin = the Malaysian Whisper ggml shipped in the app (offline STT, nothing downloads/leaves).
+for (const ext of ["wav", "bin"]) {
+  if (!config.resolver.assetExts.includes(ext)) config.resolver.assetExts.push(ext);
 }
 
 module.exports = config;

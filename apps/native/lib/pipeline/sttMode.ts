@@ -45,7 +45,9 @@ export function setSttLanguage(next: SttLanguage): void {
 // loads the matching model (and unloads the old one) on the next transcription.
 export type SttAccuracy = "fast" | "high";
 
-let accuracy: SttAccuracy = "fast";
+// Default "high" = the bundled Malaysian Whisper (offline, instant, best for code-switch) —
+// the moat model. "fast" downloads a smaller generic multilingual base.
+let accuracy: SttAccuracy = "high";
 
 export function getSttAccuracy(): SttAccuracy {
   return accuracy;
