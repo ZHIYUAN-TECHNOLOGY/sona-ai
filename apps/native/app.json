@@ -72,7 +72,8 @@
           "cameraPermission": "Aurio scans documents (labs, referrals) on-device. Images stay on this phone."
         }
       ],
-      "./plugins/withObjcLinker"
+      "./plugins/withObjcLinker",
+      "./plugins/withSigning"
     ],
     "experiments": {
       "typedRoutes": true,
