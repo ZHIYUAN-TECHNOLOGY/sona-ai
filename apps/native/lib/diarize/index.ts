@@ -14,6 +14,8 @@ export { captureEnrollmentWindows, CLINICIAN_VOICE_ID } from "./enrollCapture";
 export { mockVoiceprint, mockDiarUtterances } from "./mock";
 export { synthUtterancePcm, SAMPLE_RATE, hashStr } from "./mockAudio";
 export { mockSpeakerEmbedder, embedPcm, MOCK_EMBED_DIM } from "./mockEmbedder";
+export { mfccSpeakerEmbedder } from "./mfccEmbedder";
+export { embedPcmMfcc, MFCC_EMBED_DIM, type MfccOptions } from "./mfcc";
 
 // Real (production) on-device pipeline — ExecuTorch speaker model, VAD, fbank frontend.
 export { createExecutorchSpeakerEmbedder, type ExecutorchEmbedderConfig } from "./executorchEmbedder";

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { RawSegment } from "../pipeline/mockStt";
 import { diarize } from "./diarize";
-import { getSpeakerEmbedder } from "./embedder";
+import { activeSpeakerEmbedderThreshold, getSpeakerEmbedder } from "./embedder";
 import { loadDoctorVoiceprint } from "./enroll";
 import { synthUtterancePcm } from "./mockAudio";
 import type { DiarTurn, Voiceprint } from "./types";
@@ -64,7 +64,11 @@ export function useDiarizedTranscript(segments: RawSegment[]): DiarTurn[] {
       lang: s.lang,
       embedding: vps.current[i],
     }));
-    return diarize(utterances, doctorVp ? { doctorVoiceprint: doctorVp, voiceprintWeight: 0.6 } : undefined);
+    const threshold = activeSpeakerEmbedderThreshold();
+    return diarize(
+      utterances,
+      doctorVp ? { threshold, doctorVoiceprint: doctorVp, voiceprintWeight: 0.6 } : { threshold },
+    );
     // `ready` drives re-diarization once async voiceprints resolve.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [segments, ready, doctorVp]);

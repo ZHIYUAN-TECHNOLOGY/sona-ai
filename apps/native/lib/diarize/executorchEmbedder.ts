@@ -31,6 +31,13 @@ export interface ExecutorchEmbedderConfig {
   sampleRate?: number;
   /** Mel-band count when `inputKind === "fbank"`. */
   numMel?: number;
+  /**
+   * Clustering cosine threshold for THIS model's embedding scale. Neural speaker models
+   * (ECAPA etc.) score same-speaker ≈ 0.4–0.6 and cross ≈ 0.1–0.3 — nothing like the
+   * band-energy 0.9 — so set this to what your model produces or diarization will over-
+   * split. Defaults to 0.5 (typical ECAPA). Tune against your exported model.
+   */
+  threshold?: number;
   /** Progress callback for the initial model download. */
   onDownloadProgress?: (p: number) => void;
 }
@@ -63,6 +70,7 @@ export async function createExecutorchSpeakerEmbedder(
   return {
     id: cfg.id ?? "executorch-speaker",
     dim: cfg.dim,
+    threshold: cfg.threshold ?? 0.5,
     async embed(pcm: Float32Array): Promise<Voiceprint> {
       let input: TensorPtr;
       if (inputKind === "fbank") {

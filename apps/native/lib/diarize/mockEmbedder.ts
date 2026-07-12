@@ -74,6 +74,7 @@ export function embedPcm(pcm: Float32Array, sr = SAMPLE_RATE): Voiceprint {
 export const mockSpeakerEmbedder: SpeakerEmbedder = {
   id: "mock-goertzel-bands",
   dim: MOCK_EMBED_DIM,
+  threshold: 0.9, // verified on the synth transcript (same ≥0.97, cross ≤0.85)
   // Async to satisfy the SpeakerEmbedder contract; the work itself is synchronous DSP.
   embed: (pcm) => Promise.resolve(embedPcm(pcm)),
 };
