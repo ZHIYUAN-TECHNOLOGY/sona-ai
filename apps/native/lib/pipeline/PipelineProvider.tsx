@@ -25,6 +25,12 @@ import {
   type RedactionOutcome,
 } from "./consultPipeline";
 import { streamLockedTranscript, type RawSegment, type Streamer } from "./mockStt";
+import {
+  finishRealCapture,
+  startRealCapture,
+  USE_REAL_STT,
+  type CaptureController,
+} from "./realConsultStt";
 import { NOTE_MODEL } from "./model";
 import type { DraftNote } from "./noteGen";
 import { DEFAULT_TEMPLATE, templateById, templatePrompt } from "./templates";
@@ -33,6 +39,7 @@ export type PipelineStatus =
   | "idle"
   | "consented"
   | "recording"
+  | "transcribing"
   | "transcribed"
   | "redacted"
   | "noted";
@@ -52,6 +59,7 @@ export interface PipelineState {
   templateId: string; // selected note template (drives the generation prompt)
   startConsult: (consentText: string) => Promise<void>;
   startRecording: () => void;
+  stopRecording: () => Promise<void>; // real: transcribe+diarize on-device; mock: end stream
   redact: () => Promise<void>;
   draftNote: () => Promise<void>;
   editNote: (markdown: string) => Promise<void>; // persist a clinician edit + reflect it
@@ -72,6 +80,8 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const [templateId, setTemplateId] = useState<string>(DEFAULT_TEMPLATE.id);
   const templateRef = useRef<string>(DEFAULT_TEMPLATE.id);
   const streamer = useRef<Streamer | null>(null);
+  const captureRef = useRef<CaptureController | null>(null); // real mic capture (USE_REAL_STT)
+  const stopRequested = useRef(false); // guards the async capture-start vs an early stop
   const seq = useRef(0);
   const idRef = useRef<string | null>(null);
   const redactionRef = useRef<RedactionOutcome | null>(null);
@@ -96,11 +106,8 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     pendingWrites.current = [];
   }, []);
 
-  const startRecording = useCallback(() => {
-    const id = idRef.current;
-    if (!id) return;
-    setStatus("recording");
-    void persistRecordingStart(id);
+  // Scripted (mock) transcript stream — the demo default.
+  const startMockStream = (id: string) => {
     streamer.current = streamLockedTranscript(
       (segment) => {
         setSegments((prev) => [...prev, segment]);
@@ -114,6 +121,59 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         },
       },
     );
+  };
+
+  const startRecording = useCallback(() => {
+    const id = idRef.current;
+    if (!id) return;
+    setStatus("recording");
+    void persistRecordingStart(id);
+    if (USE_REAL_STT) {
+      // Real mic capture; transcription runs at stopRecording. Fall back to the scripted
+      // stream if the mic / native modules can't start (Expo Go, denied permission).
+      stopRequested.current = false;
+      startRealCapture()
+        .then((c) => {
+          // If the user already ended before capture started, don't keep a live mic.
+          if (stopRequested.current) {
+            c.stop().catch(() => {});
+            return;
+          }
+          captureRef.current = c;
+        })
+        .catch(() => {
+          captureRef.current = null;
+          startMockStream(id);
+        });
+      return;
+    }
+    startMockStream(id);
+  }, []);
+
+  // End recording. Real path: stop capture, transcribe + diarize on-device, persist the
+  // aligned transcript. Mock path: the stream's onDone already advanced state.
+  const stopRecording = useCallback(async () => {
+    const id = idRef.current;
+    if (!id) return;
+    stopRequested.current = true; // if capture is still starting, its .then will stop it
+    if (USE_REAL_STT && captureRef.current) {
+      const capture = captureRef.current;
+      captureRef.current = null;
+      setStatus("transcribing");
+      try {
+        const segments = await finishRealCapture(capture);
+        segments.forEach((seg, i) => pendingWrites.current.push(persistSegment(id, i, seg)));
+        setSegments(segments);
+        seq.current = segments.length;
+      } catch {
+        // transcription failed → empty transcript; the privacy/note screens handle empty
+      }
+      pendingWrites.current.push(persistRecordingStop(id));
+      setStatus("transcribed");
+      return;
+    }
+    // Mock path: no-op — the scripted stream finalizes itself via onDone (persistRecordingStop
+    // + "transcribed"), exactly as the demo did before. Leaving it running preserves that.
   }, []);
 
   const redact = useCallback(async () => {
@@ -168,6 +228,8 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
 
   const reset = useCallback(() => {
     streamer.current?.cancel();
+    captureRef.current?.stop().catch(() => {}); // stop the mic if a real capture is live
+    captureRef.current = null;
     idRef.current = null;
     redactionRef.current = null;
     setConsultId(null);
@@ -181,7 +243,13 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     pendingWrites.current = [];
   }, []);
 
-  useEffect(() => () => streamer.current?.cancel(), []);
+  useEffect(
+    () => () => {
+      streamer.current?.cancel();
+      captureRef.current?.stop().catch(() => {});
+    },
+    [],
+  );
 
   return (
     <Ctx.Provider
@@ -198,6 +266,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         templateId,
         startConsult,
         startRecording,
+        stopRecording,
         redact,
         draftNote,
         editNote,
