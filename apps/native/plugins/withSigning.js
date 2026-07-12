@@ -6,7 +6,7 @@
 // -allowProvisioningUpdates, so automatic signing provisions against this team.
 const { withXcodeProject } = require("expo/config-plugins");
 
-const DEVELOPMENT_TEAM = "B646K6VZT5"; // Apple Development: Ng Chwan Lii
+const DEVELOPMENT_TEAM = "LTF2YZMF2D"; // ZHIYUAN TECHNOLOGY (MY) SDN. BHD.
 
 module.exports = function withSigning(config) {
   return withXcodeProject(config, (cfg) => {
