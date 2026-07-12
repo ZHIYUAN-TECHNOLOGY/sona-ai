@@ -411,13 +411,26 @@ export async function deleteConsult(consultId: string): Promise<void> {
  *  never on a tab list when this runs. */
 export async function pruneEmptyDrafts(): Promise<number> {
   const db = await initDb();
-  const res = await db.runAsync(
-    `DELETE FROM consult
-       WHERE status IN ('consented','recording','transcribed','redacted')
-         AND id NOT IN (SELECT DISTINCT consultId FROM transcript_segment)
-         AND id NOT IN (SELECT DISTINCT consultId FROM clinical_note);`,
-  );
-  return res.changes ?? 0;
+  let count = 0;
+  await db.withTransactionAsync(async () => {
+    const drafts = await db.getAllAsync<{ id: string }>(
+      `SELECT id FROM consult
+         WHERE status IN ('consented','recording','transcribed','redacted')
+           AND id NOT IN (SELECT DISTINCT consultId FROM transcript_segment)
+           AND id NOT IN (SELECT DISTINCT consultId FROM clinical_note);`,
+    );
+    // Delete child rows FIRST — the FKs have no ON DELETE CASCADE, so deleting a consult
+    // that still has audit_entry (every draft has consent/record-start audits) would fail
+    // "FOREIGN KEY constraint failed". Mirror deleteConsult's child order.
+    for (const d of drafts) {
+      await db.runAsync(`DELETE FROM audit_entry WHERE consultId = ?;`, [d.id]);
+      await db.runAsync(`DELETE FROM note_embedding WHERE consultId = ?;`, [d.id]);
+      await db.runAsync(`DELETE FROM transcript_segment WHERE consultId = ?;`, [d.id]);
+      await db.runAsync(`DELETE FROM consult WHERE id = ?;`, [d.id]);
+    }
+    count = drafts.length;
+  });
+  return count;
 }
 
 const CONSULT_COLS =
