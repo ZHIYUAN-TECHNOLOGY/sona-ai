@@ -14,6 +14,8 @@ import { SafetyNotice } from "@/components/consult/SafetyNotice";
 import { haptic } from "@/lib/haptics";
 import { checkOrders } from "@/lib/meds/drugCheck";
 import { DRUGS, INTERACTIONS } from "@/lib/meds/drugRules.data";
+import { noteToSpeech } from "@/lib/tts/noteSpeech";
+import { readAloud, stopReading } from "@/lib/tts/readAloud";
 import { NOTE_MODEL_NAME } from "@/lib/pipeline/model";
 import { noteIsEmpty } from "@/lib/pipeline/noteHighlight";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
@@ -40,6 +42,30 @@ export default function NoteScreen() {
   } = useConsultPipeline();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+
+  // Stop any speech when leaving the screen or entering edit mode.
+  useEffect(() => () => stopReading(), []);
+  useEffect(() => {
+    if (editing) {
+      stopReading();
+      setSpeaking(false);
+    }
+  }, [editing]);
+
+  const toggleRead = () => {
+    if (speaking) {
+      stopReading();
+      setSpeaking(false);
+      return;
+    }
+    if (!note) return;
+    readAloud(noteToSpeech(note.markdown), {
+      onDone: () => setSpeaking(false),
+      onStopped: () => setSpeaking(false),
+    });
+    setSpeaking(true);
+  };
 
   // Draft once, when a redaction is ready and the on-device model has loaded.
   useEffect(() => {
@@ -219,6 +245,19 @@ export default function NoteScreen() {
               icon={<Ionicons name="create-outline" size={15} color={colors.ink} />}
               onPress={() => setEditing(true)}
             />
+            <PrimaryButton
+              label={speaking ? "Stop" : "Read aloud"}
+              variant="ghost"
+              size="sm"
+              icon={
+                <Ionicons
+                  name={speaking ? "stop" : "volume-high-outline"}
+                  size={15}
+                  color={colors.ink}
+                />
+              }
+              onPress={toggleRead}
+            />
           </View>
 
           <Animated.View entering={revealNotice}>
@@ -234,7 +273,7 @@ export default function NoteScreen() {
 
 const styles = StyleSheet.create({
   chiprow: { flexDirection: "row", flexWrap: "wrap", gap: space.sm, marginBottom: space.xs },
-  editRow: { alignItems: "flex-start", marginTop: space.xs },
+  editRow: { flexDirection: "row", flexWrap: "wrap", gap: space.sm, marginTop: space.xs },
   guideRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6, marginTop: space.xs },
   guideLabel: { ...font.label, color: colors.ink3, textTransform: "uppercase", marginRight: 2 },
   guideChips: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
