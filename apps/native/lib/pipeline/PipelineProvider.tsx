@@ -204,8 +204,12 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
       text: c.text,
       lang: c.lang,
     }));
-    segs.forEach((s, i) => pendingWrites.current.push(persistSegment(id, i, s)));
-    pendingWrites.current.push(persistRecordingStop(id));
+    // Persist SEQUENTIALLY — firing all N writes at once on the single SQLite connection
+    // fails (finalizeAsync / FK under concurrency). Await each, then the record-stop marker.
+    for (let i = 0; i < segs.length; i++) {
+      await persistSegment(id, i, segs[i]);
+    }
+    await persistRecordingStop(id);
     seq.current = segs.length;
     setSegments(segs);
   }, []);
