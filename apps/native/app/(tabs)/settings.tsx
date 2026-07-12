@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 
 import { Card } from "@/components/consult/Card";
+import { OptionSheet, type SheetOption } from "@/components/consult/OptionSheet";
 import { CardHeading } from "@/components/consult/SectionLabel";
 import { SettingsRow } from "@/components/consult/SettingsRow";
 import { TabScaffold } from "@/components/consult/TabScaffold";
@@ -23,6 +24,16 @@ import { prewarmStt } from "@/lib/pipeline/realStt";
 import { haptic } from "@/lib/haptics";
 import { colors, font, space } from "@/lib/theme";
 
+const ACCURACY_OPTIONS: SheetOption<SttAccuracy>[] = [
+  { key: "fast", name: "Fast", desc: "Whisper-base · 398MB · quick", icon: "flash-outline" },
+  { key: "high", name: "High accuracy", desc: "Whisper-small · 1.1GB · best for Malay", icon: "speedometer-outline" },
+];
+
+const LANGUAGE_OPTIONS: SheetOption<SttLanguage>[] = [
+  { key: "en", name: "English", desc: "Forced English decode", icon: "language-outline" },
+  { key: "ms", name: "Bahasa Melayu", desc: "Forced Malay decode", icon: "language-outline" },
+];
+
 // Tab 4 — Settings, rebuilt in the green design system (replaces the deleted
 // blue Better-T-Stack scaffold). On-device status, privacy posture, and about.
 export default function SettingsScreen() {
@@ -38,8 +49,11 @@ export default function SettingsScreen() {
     pct: 0,
   });
 
-  const toggleAccuracy = () => {
-    const next: SttAccuracy = accuracy === "high" ? "fast" : "high";
+  const [accuracySheet, setAccuracySheet] = useState(false);
+  const [languageSheet, setLanguageSheet] = useState(false);
+
+  const selectAccuracy = (next: SttAccuracy) => {
+    if (next === accuracy) return;
     haptic("select");
     setAccuracyState(next);
     setSttAccuracy(next);
@@ -57,8 +71,8 @@ export default function SettingsScreen() {
       setPrep({ status: "error", pct: 0 });
     }
   };
-  const toggleLanguage = () => {
-    const next: SttLanguage = language === "ms" ? "en" : "ms";
+  const selectLanguage = (next: SttLanguage) => {
+    if (next === language) return;
     haptic("select");
     setLanguageState(next);
     setSttLanguage(next);
@@ -104,13 +118,13 @@ export default function SettingsScreen() {
           icon="speedometer-outline"
           label="Accuracy"
           value={accuracy === "high" ? "High · Whisper-small (1.1GB)" : "Fast · Whisper-base (398MB)"}
-          onPress={toggleAccuracy}
+          onPress={() => setAccuracySheet(true)}
         />
         <SettingsRow
           icon="language-outline"
           label="Language"
           value={language === "ms" ? "Bahasa Melayu" : "English"}
-          onPress={toggleLanguage}
+          onPress={() => setLanguageSheet(true)}
         />
         <Text style={styles.hint}>
           High accuracy transcribes Malay + code-switch far better, but downloads 1.1GB and runs
@@ -202,6 +216,23 @@ export default function SettingsScreen() {
       </Card>
 
       <Text style={styles.footer}>Sona — privacy-first ambient scribe. Nothing leaves the phone.</Text>
+
+      <OptionSheet
+        visible={accuracySheet}
+        onClose={() => setAccuracySheet(false)}
+        title="Transcription accuracy"
+        options={ACCURACY_OPTIONS}
+        selectedKey={accuracy}
+        onSelect={selectAccuracy}
+      />
+      <OptionSheet
+        visible={languageSheet}
+        onClose={() => setLanguageSheet(false)}
+        title="Transcription language"
+        options={LANGUAGE_OPTIONS}
+        selectedKey={language}
+        onSelect={selectLanguage}
+      />
     </TabScaffold>
   );
 }
