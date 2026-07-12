@@ -21,7 +21,7 @@ const ROLES: { key: Speaker; label: string; color: string; bg: string; border: s
 // The clinician assigns each one a role (Doctor / Patient / Other) — more reliable than
 // guessing. On confirm the labels are applied to the transcript, then the privacy gate runs.
 export default function LabelScreen() {
-  const { candidates, applySpeakerLabels } = useConsultPipeline();
+  const { candidates, applySpeakerLabels, captureDiag } = useConsultPipeline();
   const [labels, setLabels] = useState<Record<number, Speaker>>({});
   const [saving, setSaving] = useState(false);
 
@@ -79,6 +79,13 @@ export default function LabelScreen() {
               We didn&apos;t catch enough audio to separate speakers. Continue to review, or go
               back and record again.
             </Text>
+            {captureDiag ? (
+              <Text style={styles.diag} selectable>
+                {`audio ${captureDiag.seconds}s · peak ${captureDiag.peak} · transcript ${captureDiag.transcriptChars} chars · ${captureDiag.vadSegments} speech segs`}
+                {captureDiag.sttError ? `\nSTT: ${captureDiag.sttError}` : ""}
+                {captureDiag.vadError ? `\nVAD: ${captureDiag.vadError}` : ""}
+              </Text>
+            ) : null}
           </View>
         </Card>
       ) : (
@@ -133,4 +140,11 @@ const styles = StyleSheet.create({
   empty: { alignItems: "center", gap: space.sm, paddingVertical: space.lg },
   emptyTitle: { ...font.h3, color: colors.ink },
   emptyBody: { ...font.bodySm, color: colors.ink3, textAlign: "center" },
+  diag: {
+    ...font.bodySm,
+    color: colors.ink2,
+    textAlign: "center",
+    marginTop: space.sm,
+    fontVariant: ["tabular-nums"],
+  },
 });

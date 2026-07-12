@@ -18,23 +18,73 @@ import { transcribeAudio } from "./realStt";
 
 export type { CaptureController };
 
+/** Per-stage diagnostics so a "no speech" outcome tells us WHICH stage was empty. */
+export interface CaptureDiag {
+  seconds: number; // audio captured from the mic
+  peak: number; // peak amplitude (0 = silence / mic delivered nothing)
+  transcriptChars: number; // Whisper output length
+  vadSegments: number; // diarization speech regions
+  sttError?: string;
+  vadError?: string;
+}
+
+export interface CaptureResult {
+  candidates: ClusterSegment[];
+  diag: CaptureDiag;
+}
+
 /** Begin real mic capture for the consult. Rejects if mic/native unavailable. */
 export function startRealCapture(): Promise<CaptureController> {
   return startCapture();
 }
 
+function peakOf(w: Float32Array): number {
+  let p = 0;
+  for (let i = 0; i < w.length; i++) {
+    const a = w[i] < 0 ? -w[i] : w[i];
+    if (a > p) p = a;
+  }
+  return p;
+}
+
 /**
  * Stop capture, transcribe the audio on-device (Whisper), diarize it, and align the text to
- * anonymous speaker CLUSTERS. The clinician labels each cluster (Doctor / Patient / Other) in
- * the UI afterwards. Empty result if no audio was captured.
+ * anonymous speaker CLUSTERS. Each stage is isolated so a failure/empty in one is reported in
+ * `diag` (not silently swallowed) — the clinician labels the clusters afterwards.
  */
-export async function finishRealCaptureClusters(capture: CaptureController): Promise<ClusterSegment[]> {
+export async function finishRealCaptureClusters(capture: CaptureController): Promise<CaptureResult> {
   const waveform = await capture.stop();
-  if (waveform.length === 0) return [];
-  const doctorVoiceprint = await loadDoctorVoiceprint();
-  const [tr, diarized] = await Promise.all([
-    transcribeAudio(waveform),
-    diarizeAudio(waveform, { doctorVoiceprint }),
-  ]);
-  return alignTextToClusters(tr.segments, diarized, tr.language);
+  const diag: CaptureDiag = {
+    seconds: Math.round((waveform.length / 16000) * 10) / 10,
+    peak: Math.round(peakOf(waveform) * 1000) / 1000,
+    transcriptChars: 0,
+    vadSegments: 0,
+  };
+  if (waveform.length === 0) return { candidates: [], diag };
+
+  const doctorVoiceprint = await loadDoctorVoiceprint().catch(() => null);
+
+  let tr: Awaited<ReturnType<typeof transcribeAudio>> | null = null;
+  try {
+    tr = await transcribeAudio(waveform);
+    diag.transcriptChars = tr.text?.length ?? 0;
+  } catch (e) {
+    diag.sttError = String(e);
+  }
+
+  let diarized: Awaited<ReturnType<typeof diarizeAudio>> = [];
+  try {
+    diarized = await diarizeAudio(waveform, { doctorVoiceprint });
+    diag.vadSegments = diarized.length;
+  } catch (e) {
+    diag.vadError = String(e);
+  }
+
+  let candidates = tr ? alignTextToClusters(tr.segments, diarized, tr.language) : [];
+  // If diarization found no regions but we DID transcribe, keep the text under one speaker
+  // instead of dropping it (VAD failing shouldn't discard a real transcript).
+  if (candidates.length > 0 && candidates.every((c) => c.cluster < 0)) {
+    candidates = candidates.map((c) => ({ ...c, cluster: 0 }));
+  }
+  return { candidates, diag };
 }
