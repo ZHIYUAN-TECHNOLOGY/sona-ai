@@ -68,6 +68,7 @@ export interface PipelineState {
   startConsult: (consentText: string) => Promise<void>;
   startRecording: () => void;
   stopRecording: () => Promise<"label" | "privacy">; // real → speaker-label step; mock → privacy
+  cancelRecording: () => void; // abandon a live capture (leave screen w/o End) — mic off, no transcribe
   applySpeakerLabels: (labels: Record<number, Speaker>) => Promise<void>; // cluster → role
   updateCandidateText: (index: number, text: string) => void; // clinician edits a transcript line
   redact: () => Promise<void>;
@@ -209,6 +210,18 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
       captureRef.current = null;
     }
     return "privacy";
+  }, []);
+
+  // Abandon a live capture without transcribing — used when the clinician LEAVES the recording
+  // screen without tapping End (tab switch, back-swipe). Releases the mic + audio session (via
+  // capture.stop → setAudioSessionActivity(false)) so the orange mic indicator clears; the
+  // captured audio is discarded. Idempotent and safe when nothing is capturing.
+  const cancelRecording = useCallback(() => {
+    stopRequested.current = true; // if capture is still starting, its .then will stop it
+    const cap = captureRef.current;
+    captureRef.current = null;
+    cap?.stop().catch(() => {});
+    streamer.current?.cancel();
   }, []);
 
   // Apply the clinician's cluster → role labels to the transcribed candidates, building and
@@ -372,6 +385,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         startConsult,
         startRecording,
         stopRecording,
+        cancelRecording,
         applySpeakerLabels,
         updateCandidateText,
         redact,
