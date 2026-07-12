@@ -98,6 +98,17 @@ export async function unloadStt(): Promise<void> {
   }
 }
 
+/**
+ * Pre-download + load the CURRENT accuracy tier's model, reporting download progress (0..1).
+ * Lets Settings pre-warm whisper-small (1.1GB) on wifi so the first High-accuracy consult
+ * doesn't stall silently mid-transcription. Idempotent: a no-op (progress→1) if already loaded;
+ * the on-disk download is one-time (later loads read the local cache).
+ */
+export async function prewarmStt(onProgress?: (p: number) => void): Promise<void> {
+  await getStt(onProgress);
+  onProgress?.(1);
+}
+
 /** Release the cached STT model (teardown). Frees native memory via unloadStt(). */
 export function disposeStt(): void {
   void unloadStt();

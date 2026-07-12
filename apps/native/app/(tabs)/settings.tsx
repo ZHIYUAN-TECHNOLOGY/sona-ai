@@ -1,6 +1,7 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useState } from "react";
-import { StyleSheet, Switch, Text } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 
 import { Card } from "@/components/consult/Card";
 import { CardHeading } from "@/components/consult/SectionLabel";
@@ -18,6 +19,7 @@ import {
   type SttAccuracy,
   type SttLanguage,
 } from "@/lib/pipeline/sttMode";
+import { prewarmStt } from "@/lib/pipeline/realStt";
 import { haptic } from "@/lib/haptics";
 import { colors, font, space } from "@/lib/theme";
 
@@ -29,12 +31,31 @@ export default function SettingsScreen() {
   const [demo, setDemo] = useState(getSttMode() === "demo");
   const [accuracy, setAccuracyState] = useState<SttAccuracy>(getSttAccuracy());
   const [language, setLanguageState] = useState<SttLanguage>(getSttLanguage());
+  // Pre-download state for the selected tier's model, so High mode can pre-warm on wifi instead
+  // of stalling silently mid-consult. Resets when the tier changes (a different model to fetch).
+  const [prep, setPrep] = useState<{ status: "idle" | "downloading" | "ready" | "error"; pct: number }>({
+    status: "idle",
+    pct: 0,
+  });
 
   const toggleAccuracy = () => {
     const next: SttAccuracy = accuracy === "high" ? "fast" : "high";
     haptic("select");
     setAccuracyState(next);
     setSttAccuracy(next);
+    setPrep({ status: "idle", pct: 0 }); // different model → download state no longer applies
+  };
+
+  const downloadModel = async () => {
+    if (prep.status === "downloading") return;
+    haptic("tap");
+    setPrep({ status: "downloading", pct: 0 });
+    try {
+      await prewarmStt((p) => setPrep({ status: "downloading", pct: p }));
+      setPrep({ status: "ready", pct: 1 });
+    } catch {
+      setPrep({ status: "error", pct: 0 });
+    }
   };
   const toggleLanguage = () => {
     const next: SttLanguage = language === "ms" ? "en" : "ms";
@@ -95,6 +116,46 @@ export default function SettingsScreen() {
           High accuracy transcribes Malay + code-switch far better, but downloads 1.1GB and runs
           slower. Language sets the forced decode — pick the consult&apos;s dominant one.
         </Text>
+
+        <Pressable
+          onPress={downloadModel}
+          disabled={prep.status === "downloading" || prep.status === "ready"}
+          style={[styles.prepareBtn, prep.status === "ready" && styles.prepareBtnReady]}
+        >
+          {prep.status === "downloading" ? (
+            <>
+              <View style={styles.prepareRow}>
+                <ActivityIndicator size="small" color={colors.greenInk} />
+                <Text style={styles.prepareText}>
+                  {`Downloading ${sttModelName(accuracy)}… ${Math.round(prep.pct * 100)}%`}
+                </Text>
+              </View>
+              <View style={styles.track}>
+                <View style={[styles.fill, { width: `${Math.max(3, Math.round(prep.pct * 100))}%` }]} />
+              </View>
+            </>
+          ) : prep.status === "ready" ? (
+            <View style={styles.prepareRow}>
+              <Ionicons name="checkmark-circle" size={18} color={colors.greenInk} />
+              <Text style={[styles.prepareText, { color: colors.greenInk }]}>
+                {`${sttModelName(accuracy)} ready on-device`}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.prepareRow}>
+              <Ionicons
+                name={prep.status === "error" ? "refresh-outline" : "cloud-download-outline"}
+                size={18}
+                color={colors.ink2}
+              />
+              <Text style={styles.prepareText}>
+                {prep.status === "error"
+                  ? "Download failed — tap to retry"
+                  : `Download & prepare ${sttModelName(accuracy)} · ${accuracy === "high" ? "1.1GB" : "398MB"}`}
+              </Text>
+            </View>
+          )}
+        </Pressable>
       </Card>
 
       <Card>
@@ -160,4 +221,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.xs,
     lineHeight: 18,
   },
+  prepareBtn: {
+    marginTop: space.sm,
+    padding: space.sm,
+    borderRadius: 12,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+    gap: space.sm,
+  },
+  prepareBtnReady: { borderColor: colors.green100, backgroundColor: colors.green50 },
+  prepareRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  prepareText: { ...font.bodySm, color: colors.ink2, flexShrink: 1 },
+  track: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.line,
+    overflow: "hidden",
+  },
+  fill: { height: 6, borderRadius: 3, backgroundColor: colors.greenInk },
 });
