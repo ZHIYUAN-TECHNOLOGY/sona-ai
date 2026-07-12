@@ -67,9 +67,10 @@ async function runTranscribe(
   opts: { language?: "ms" | "en"; onProgress?: (p: number) => void },
 ): Promise<Transcription> {
   const stt = await getStt(opts.onProgress);
-  // The multilingual Whisper model REQUIRES a non-empty language — passing undefined throws
-  // "Model is multilingual, provide a language". Fall back to the app's configured language.
-  const language = opts.language ?? getSttLanguage();
+  // Executorch Whisper (now only the diarization lab uses this path) can't auto-detect, so map
+  // the app's "auto" setting to English here. REQUIRES a non-empty language or it throws.
+  const configured = getSttLanguage();
+  const language = opts.language ?? (configured === "auto" ? "en" : configured);
   const res = await stt.transcribe(waveform, { language, verbose: true });
   const segments: SttSegment[] = (res.segments ?? [])
     .map((s) => ({ start: s.start, end: s.end, text: (s.text ?? "").trim() }))
