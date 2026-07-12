@@ -9,7 +9,14 @@ import { colors } from "@/lib/theme";
 // (Five main tabs overflowed the capsule into More — hence four.)
 export default function TabsLayout() {
   return (
-    <NativeTabs tintColor={colors.green}>
+    // disableTransparentOnScrollEdge: by default the tab bar's SCROLL-EDGE appearance (used when
+    // a screen sits at the top / doesn't scroll under the bar) is built with blurEffect 'none' +
+    // null background — which iOS renders as an opaque grey. That's why switching to a short tab
+    // turned the bar grey while a scrollable tab stayed glass. Setting this makes the scroll-edge
+    // reuse the STANDARD appearance; since we pass no blurEffect, that's the iOS 26 liquid-glass
+    // default → glass on every tab, no grey.
+    <NativeTabs tintColor={colors.green} disableTransparentOnScrollEdge>
+
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Icon sf={{ default: "house", selected: "house.fill" }} />
         <NativeTabs.Trigger.Label>Consults</NativeTabs.Trigger.Label>
