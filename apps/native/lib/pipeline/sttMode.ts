@@ -18,3 +18,20 @@ export function setSttMode(next: SttMode): void {
 export function isDemoMode(): boolean {
   return mode === "demo";
 }
+
+// The on-device Whisper model is MULTILINGUAL — it REQUIRES a forced decode language (it can't
+// auto-detect through the executorch wrapper). A Malaysian consult code-switches BM+EN; whisper-
+// base can't be told two languages at once, so we pick one. Default "en": the clinical content
+// and demo are English-dominant, and English Whisper still passes Malay loanwords through
+// legibly. A record-screen toggle can flip this to "ms" for a Malay-dominant consult.
+export type SttLanguage = "en" | "ms";
+
+let language: SttLanguage = "en";
+
+export function getSttLanguage(): SttLanguage {
+  return language;
+}
+
+export function setSttLanguage(next: SttLanguage): void {
+  language = next;
+}

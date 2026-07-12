@@ -9,10 +9,17 @@ import { isAvailable, VADModule } from "react-native-executorch";
 const FSMN_VAD_URL =
   "https://huggingface.co/software-mansion/react-native-executorch-fsmn-vad/resolve/v0.9.0/xnnpack/fsmn_vad_xnnpack_fp32.pte";
 
+const SAMPLE_RATE = 16000;
+
 /** A detected speech region, in seconds. */
 export interface SpeechSegment {
   start: number;
   end: number;
+}
+
+/** The raw native VAD binding, reached past the broken JS wrapper (see detectSpeech). */
+interface NativeVad {
+  generate?: (waveform: Float32Array, mergeGap: number) => Promise<{ start: number; end: number }[]>;
 }
 
 let vadPromise: Promise<VADModule> | null = null;
@@ -36,7 +43,17 @@ export async function detectSpeech(
   source: string = FSMN_VAD_URL,
 ): Promise<SpeechSegment[]> {
   const vad = await getVad(source);
-  return vad.forward(waveform);
+  // react-native-executorch 0.9.2 bug: VADModule.forward() calls the native generate() with a
+  // SINGLE arg, but the native binding is generate(waveform, mergeGap) — arity 2 — so forward()
+  // throws "Argument count mismatch, was expecting: 2 but got: 1". Call the native fn directly
+  // with the mergeGap default (0 = no merging).
+  const native = (vad as unknown as { nativeModule?: NativeVad }).nativeModule;
+  if (!native?.generate) throw new Error("VAD native generate() unavailable");
+  const raw = await native.generate(waveform, 0);
+  // The native segments are SAMPLE INDICES (score-frame × hopLength), despite the TS type doc
+  // claiming seconds — convert to seconds so the rest of the pipeline (minSegmentSec filter,
+  // sliceSegments, STT-timestamp alignment) works in a single, consistent unit.
+  return raw.map((s) => ({ start: s.start / SAMPLE_RATE, end: s.end / SAMPLE_RATE }));
 }
 
 /** Slice a waveform into its speech regions — the windows fed to the speaker embedder. */
