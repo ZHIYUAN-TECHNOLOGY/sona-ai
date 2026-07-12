@@ -30,6 +30,7 @@ import {
   finishRealCaptureClusters,
   startRealCapture,
   type CaptureController,
+  type CaptureDiag,
 } from "./realConsultStt";
 import type { ClusterSegment } from "./sttAlign";
 import { getSttMode } from "./sttMode";
@@ -53,6 +54,7 @@ export interface PipelineState {
   status: PipelineStatus;
   segments: RawSegment[]; // live transcript as it streams in
   candidates: ClusterSegment[]; // real: transcribed lines tagged by anonymous cluster (pre-label)
+  captureDiag: CaptureDiag | null; // per-stage capture diagnostics (mic/STT/diarize)
   redaction: RedactionOutcome | null; // de-identified output + counts + re-ID map
   note: DraftNote | null; // re-identified SOAP note for the clinician view
   noteStatus: NoteStatus;
@@ -79,6 +81,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const [segments, setSegments] = useState<RawSegment[]>([]);
   const [candidates, setCandidates] = useState<ClusterSegment[]>([]);
   const candidatesRef = useRef<ClusterSegment[]>([]);
+  const [captureDiag, setCaptureDiag] = useState<CaptureDiag | null>(null);
   const [redaction, setRedaction] = useState<RedactionOutcome | null>(null);
   const [note, setNote] = useState<DraftNote | null>(null);
   const [noteStatus, setNoteStatus] = useState<NoteStatus>("idle");
@@ -109,6 +112,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setSegments([]);
     setCandidates([]);
     candidatesRef.current = [];
+    setCaptureDiag(null);
     setRedaction(null);
     seq.current = 0;
     pendingWrites.current = [];
@@ -172,12 +176,14 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         // Transcribe + diarize on-device → lines tagged by anonymous cluster. Segments are
         // NOT persisted yet — the clinician labels the clusters (Dr/Patient) next, then
         // applySpeakerLabels writes the final transcript.
-        const cands = await finishRealCaptureClusters(capture);
+        const { candidates: cands, diag } = await finishRealCaptureClusters(capture);
         candidatesRef.current = cands;
         setCandidates(cands);
-      } catch {
+        setCaptureDiag(diag);
+      } catch (e) {
         candidatesRef.current = [];
         setCandidates([]);
+        setCaptureDiag({ seconds: 0, peak: 0, transcriptChars: 0, vadSegments: 0, sttError: String(e) });
       }
       setStatus("transcribed");
       return "label"; // persistRecordingStop is deferred to applySpeakerLabels (after segments)
@@ -275,6 +281,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setSegments([]);
     setCandidates([]);
     candidatesRef.current = [];
+    setCaptureDiag(null);
     setRedaction(null);
     setNote(null);
     setNoteStatus("idle");
@@ -298,6 +305,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         status,
         segments,
         candidates,
+        captureDiag,
         redaction,
         note,
         noteStatus,
