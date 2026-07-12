@@ -50,7 +50,10 @@ export function alignTextToSpeakers(
 /** One transcript line tagged with its ANONYMOUS diarization cluster (before role labeling). */
 export interface ClusterSegment {
   cluster: number;
+  /** Display text — may be AI-cleaned or clinician-edited. Persisted as the transcript. */
   text: string;
+  /** Original Whisper output, kept so the Review screen can show "raw" behind the cleaned text. */
+  rawText?: string;
   lang?: RawSegment["lang"];
 }
 
@@ -80,5 +83,8 @@ export function alignTextToClusters(
   const lang = langTag(language);
   return sttSegs
     .filter((s) => s.text.trim())
-    .map((s) => ({ cluster: clusterForSegment(s, diarized), text: s.text.trim(), lang }));
+    .map((s) => {
+      const text = s.text.trim();
+      return { cluster: clusterForSegment(s, diarized), text, rawText: text, lang };
+    });
 }

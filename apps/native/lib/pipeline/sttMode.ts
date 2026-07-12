@@ -35,3 +35,19 @@ export function getSttLanguage(): SttLanguage {
 export function setSttLanguage(next: SttLanguage): void {
   language = next;
 }
+
+// STT accuracy tier. "fast" = whisper-base (398MB, already downloaded, quick) — the safe
+// default. "high" = whisper-small (1.1GB, multilingual) — markedly better on Malay + code-
+// switch, at a bigger download + more RAM/latency. A Settings toggle flips this; realStt
+// loads the matching model (and unloads the old one) on the next transcription.
+export type SttAccuracy = "fast" | "high";
+
+let accuracy: SttAccuracy = "fast";
+
+export function getSttAccuracy(): SttAccuracy {
+  return accuracy;
+}
+
+export function setSttAccuracy(next: SttAccuracy): void {
+  accuracy = next;
+}

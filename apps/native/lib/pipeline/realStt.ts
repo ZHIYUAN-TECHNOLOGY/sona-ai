@@ -1,7 +1,7 @@
 import { SpeechToTextModule } from "react-native-executorch";
 
-import { STT_MODEL } from "./model";
-import { getSttLanguage } from "./sttMode";
+import { sttModelFor } from "./model";
+import { getSttAccuracy, getSttLanguage } from "./sttMode";
 import { alignTextToSpeakers, type SttSegment } from "./sttAlign";
 
 // Real on-device speech-to-text (ExecuTorch Whisper). Transcribes a captured 16 kHz
@@ -20,12 +20,21 @@ export interface Transcription {
 }
 
 let sttPromise: Promise<SpeechToTextModule> | null = null;
+let loadedModelName: string | null = null; // which tier the cached promise loaded
 
 async function getStt(onProgress?: (p: number) => void): Promise<SpeechToTextModule> {
+  const config = sttModelFor(getSttAccuracy());
+  // If a DIFFERENT tier is cached (user flipped Fast↔High), free it first so we never hold
+  // two Whisper models in RAM at once.
+  if (sttPromise && loadedModelName !== config.modelName) {
+    await unloadStt();
+  }
   if (!sttPromise) {
+    loadedModelName = config.modelName;
     // Clear the cache on a failed load so a transient error can retry.
-    sttPromise = SpeechToTextModule.fromModelName(STT_MODEL, undefined, onProgress).catch((e) => {
+    sttPromise = SpeechToTextModule.fromModelName(config, undefined, onProgress).catch((e) => {
       sttPromise = null;
+      loadedModelName = null;
       throw e;
     });
   }
@@ -71,7 +80,25 @@ async function runTranscribe(
   return { text: res.text, language: res.language, segments };
 }
 
-/** Release the cached STT model (teardown). */
-export function disposeStt(): void {
+/**
+ * Unload the STT model and FREE its native memory (module.delete()). Call after a consult's
+ * transcription so whisper-small's ~1.1GB is released before the Qwen note/cleanup pass —
+ * the two models never need to co-reside. Safe to call when nothing is loaded.
+ */
+export async function unloadStt(): Promise<void> {
+  const p = sttPromise;
   sttPromise = null;
+  loadedModelName = null;
+  if (!p) return;
+  try {
+    const mod = await p;
+    mod.delete(); // releases native tensors/buffers
+  } catch {
+    // load already failed — nothing native to free
+  }
+}
+
+/** Release the cached STT model (teardown). Frees native memory via unloadStt(). */
+export function disposeStt(): void {
+  void unloadStt();
 }

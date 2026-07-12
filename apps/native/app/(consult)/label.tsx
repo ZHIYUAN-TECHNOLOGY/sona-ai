@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
@@ -17,26 +17,29 @@ const ROLES: { key: Speaker; label: string; color: string; bg: string; border: s
   { key: "unknown", label: "Other", color: colors.amber, bg: colors.amber50, border: colors.amberLine },
 ];
 
-// After a REAL consult, on-device diarization found N anonymous speakers ("Speaker 1/2/…").
-// The clinician assigns each one a role (Doctor / Patient / Other) — more reliable than
-// guessing. On confirm the labels are applied to the transcript, then the privacy gate runs.
+// After a REAL consult, on-device diarization found N anonymous speakers ("Speaker 1/2/…") and
+// Whisper transcribed each line (then an on-device LLM conservatively cleaned obvious errors).
+// This is the human-in-the-loop review: the clinician FIXES any mis-heard words inline AND
+// assigns each speaker a role (Doctor / Patient / Other). The corrected, labeled transcript
+// flows into redaction + the SOAP note — so edits here improve everything downstream.
 export default function LabelScreen() {
-  const { candidates, applySpeakerLabels, captureDiag } = useConsultPipeline();
+  const { candidates, cleaning, applySpeakerLabels, updateCandidateText, captureDiag } =
+    useConsultPipeline();
   const [labels, setLabels] = useState<Record<number, Speaker>>({});
   const [saving, setSaving] = useState(false);
 
-  // Unique clusters (skip the −1 "no-overlap" bucket) with a couple of sample utterances.
+  // Group EVERY transcript line under its acoustic cluster, keeping each line's global index so
+  // edits map back to the right candidate. (cluster −1 = "no diarization overlap" → its own group.)
   const clusters = useMemo(() => {
-    const map = new Map<number, string[]>();
-    for (const c of candidates) {
-      if (c.cluster < 0) continue;
+    const map = new Map<number, { index: number; text: string }[]>();
+    candidates.forEach((c, index) => {
       const arr = map.get(c.cluster) ?? [];
-      if (arr.length < 2) arr.push(c.text);
+      arr.push({ index, text: c.text });
       map.set(c.cluster, arr);
-    }
+    });
     return [...map.entries()]
       .sort((a, b) => a[0] - b[0])
-      .map(([cluster, samples]) => ({ cluster, samples }));
+      .map(([cluster, lines]) => ({ cluster, lines }));
   }, [candidates]);
 
   const allLabeled = clusters.length > 0 && clusters.every((c) => labels[c.cluster]);
@@ -58,8 +61,8 @@ export default function LabelScreen() {
   return (
     <ConsultScreen
       time="9:42"
-      title="Who spoke?"
-      sub="Label the speakers we heard"
+      title="Review & label"
+      sub="Fix any mis-heard words, then say who spoke"
       onBack={() => router.back()}
       footer={
         clusters.length === 0 ? (
@@ -92,36 +95,58 @@ export default function LabelScreen() {
           </View>
         </Card>
       ) : (
-        clusters.map(({ cluster, samples }, i) => (
-          <Card key={cluster}>
-            <Text style={styles.spk}>{`Speaker ${i + 1}`}</Text>
-            {samples.map((s, j) => (
-              <Text key={j} style={styles.sample} numberOfLines={2}>
-                “{s}”
-              </Text>
-            ))}
-            <View style={styles.roles}>
-              {ROLES.map((r) => {
-                const on = labels[cluster] === r.key;
-                return (
-                  <Pressable
-                    key={r.key}
-                    onPress={() => {
-                      haptic("select");
-                      setLabels((prev) => ({ ...prev, [cluster]: r.key }));
-                    }}
-                    style={[
-                      styles.role,
-                      { borderColor: on ? r.border : colors.line, backgroundColor: on ? r.bg : colors.surface },
-                    ]}
-                  >
-                    <Text style={[styles.roleLabel, { color: on ? r.color : colors.ink2 }]}>{r.label}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </Card>
-        ))
+        <>
+          <View style={styles.banner}>
+            {cleaning ? (
+              <>
+                <ActivityIndicator size="small" color={colors.ink3} />
+                <Text style={styles.bannerText}>Cleaning up transcript on-device…</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="sparkles-outline" size={14} color={colors.ink3} />
+                <Text style={styles.bannerText}>AI-cleaned · tap any line to correct it</Text>
+              </>
+            )}
+          </View>
+          {clusters.map(({ cluster, lines }, i) => (
+            <Card key={cluster}>
+              <Text style={styles.spk}>{`Speaker ${i + 1}`}</Text>
+              {lines.map(({ index, text }) => (
+                <TextInput
+                  key={index}
+                  value={text}
+                  onChangeText={(t) => updateCandidateText(index, t)}
+                  multiline
+                  scrollEnabled={false}
+                  style={styles.lineInput}
+                  placeholder="(edit this line)"
+                  placeholderTextColor={colors.ink3}
+                />
+              ))}
+              <View style={styles.roles}>
+                {ROLES.map((r) => {
+                  const on = labels[cluster] === r.key;
+                  return (
+                    <Pressable
+                      key={r.key}
+                      onPress={() => {
+                        haptic("select");
+                        setLabels((prev) => ({ ...prev, [cluster]: r.key }));
+                      }}
+                      style={[
+                        styles.role,
+                        { borderColor: on ? r.border : colors.line, backgroundColor: on ? r.bg : colors.surface },
+                      ]}
+                    >
+                      <Text style={[styles.roleLabel, { color: on ? r.color : colors.ink2 }]}>{r.label}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </Card>
+          ))}
+        </>
       )}
     </ConsultScreen>
   );
@@ -129,7 +154,21 @@ export default function LabelScreen() {
 
 const styles = StyleSheet.create({
   spk: { ...font.label, color: colors.ink3, textTransform: "uppercase" },
-  sample: { ...font.body, color: colors.ink, marginTop: 6, lineHeight: 20 },
+  lineInput: {
+    ...font.body,
+    color: colors.ink,
+    marginTop: 6,
+    lineHeight: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderCurve: "continuous",
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  banner: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 4, paddingBottom: space.xs },
+  bannerText: { ...font.bodySm, color: colors.ink3 },
   roles: { flexDirection: "row", gap: space.sm, marginTop: space.md },
   role: {
     flex: 1,
