@@ -67,6 +67,11 @@ export default function SettingsScreen() {
           label="Diarization lab"
           onPress={() => router.push("/diarize-lab" as Href)}
         />
+        <SettingsRow
+          icon="scan-outline"
+          label="Document OCR"
+          onPress={() => router.push("/ocr-lab" as Href)}
+        />
       </Card>
 
       <Text style={styles.footer}>Sona — privacy-first ambient scribe. Nothing leaves the phone.</Text>
