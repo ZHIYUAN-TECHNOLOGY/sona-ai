@@ -9,7 +9,7 @@ import { CardHeading } from "@/components/consult/SectionLabel";
 import { SettingsRow } from "@/components/consult/SettingsRow";
 import { TabScaffold } from "@/components/consult/TabScaffold";
 import { initSpeakerModel, isDoctorEnrolled } from "@/lib/diarize";
-import { NOTE_MODEL_NAME, sttModelName } from "@/lib/pipeline/model";
+import { NOTE_MODEL_NAME } from "@/lib/pipeline/model";
 import {
   getSttAccuracy,
   getSttLanguage,
@@ -20,19 +20,26 @@ import {
   type SttAccuracy,
   type SttLanguage,
 } from "@/lib/pipeline/sttMode";
-import { prewarmStt } from "@/lib/pipeline/realStt";
+import { prewarmWhisper, whisperModelFor, whisperModelInfo } from "@/lib/pipeline/whisperStt";
 import { haptic } from "@/lib/haptics";
 import { colors, font, space } from "@/lib/theme";
 
 const ACCURACY_OPTIONS: SheetOption<SttAccuracy>[] = [
-  { key: "fast", name: "Fast", desc: "Whisper-base · 398MB · quick", icon: "flash-outline" },
-  { key: "high", name: "High accuracy", desc: "Whisper-small · 1.1GB · best for Malay", icon: "speedometer-outline" },
+  { key: "fast", name: "Fast", desc: "Whisper-base multilingual · ~60MB · quick", icon: "flash-outline" },
+  { key: "high", name: "High accuracy", desc: "Whisper-small multilingual · ~180MB · best for code-switch", icon: "speedometer-outline" },
 ];
 
 const LANGUAGE_OPTIONS: SheetOption<SttLanguage>[] = [
-  { key: "en", name: "English", desc: "Forced English decode", icon: "language-outline" },
-  { key: "ms", name: "Bahasa Melayu", desc: "Forced Malay decode", icon: "language-outline" },
+  { key: "auto", name: "Auto-detect", desc: "Best for Malaysian mixed speech (Malay+English+Chinese)", icon: "sparkles-outline" },
+  { key: "en", name: "English", desc: "Force English decode", icon: "language-outline" },
+  { key: "ms", name: "Bahasa Melayu", desc: "Force Malay decode", icon: "language-outline" },
 ];
+
+const LANGUAGE_LABEL: Record<SttLanguage, string> = {
+  auto: "Auto-detect",
+  en: "English",
+  ms: "Bahasa Melayu",
+};
 
 // Tab 4 — Settings, rebuilt in the green design system (replaces the deleted
 // blue Better-T-Stack scaffold). On-device status, privacy posture, and about.
@@ -65,7 +72,7 @@ export default function SettingsScreen() {
     haptic("tap");
     setPrep({ status: "downloading", pct: 0 });
     try {
-      await prewarmStt((p) => setPrep({ status: "downloading", pct: p }));
+      await prewarmWhisper(whisperModelFor(accuracy), (p) => setPrep({ status: "downloading", pct: p }));
       setPrep({ status: "ready", pct: 1 });
     } catch {
       setPrep({ status: "error", pct: 0 });
@@ -93,7 +100,7 @@ export default function SettingsScreen() {
       <Card>
         <CardHeading>On-device AI</CardHeading>
         <SettingsRow first icon="hardware-chip-outline" label="Note model" value={NOTE_MODEL_NAME} />
-        <SettingsRow icon="mic-outline" label="Speech-to-text" value={`${sttModelName(accuracy)} (on-device)`} />
+        <SettingsRow icon="mic-outline" label="Speech-to-text" value={`${whisperModelInfo(accuracy).name}`} />
         <SettingsRow icon="shield-checkmark-outline" label="Redaction" value="On-device" />
         <SettingsRow icon="people-outline" label="Diarization" value={diarModel} />
         <SettingsRow
@@ -117,18 +124,19 @@ export default function SettingsScreen() {
           first
           icon="speedometer-outline"
           label="Accuracy"
-          value={accuracy === "high" ? "High · Whisper-small (1.1GB)" : "Fast · Whisper-base (398MB)"}
+          value={`${accuracy === "high" ? "High" : "Fast"} · ${whisperModelInfo(accuracy).size}`}
           onPress={() => setAccuracySheet(true)}
         />
         <SettingsRow
           icon="language-outline"
           label="Language"
-          value={language === "ms" ? "Bahasa Melayu" : "English"}
+          value={LANGUAGE_LABEL[language]}
           onPress={() => setLanguageSheet(true)}
         />
         <Text style={styles.hint}>
-          High accuracy transcribes Malay + code-switch far better, but downloads 1.1GB and runs
-          slower. Language sets the forced decode — pick the consult&apos;s dominant one.
+          On-device whisper.cpp with language auto-detect — handles Malaysian mixed speech
+          (Malay + English + Chinese) and won&apos;t hallucinate. High accuracy is a bigger,
+          slower model. Force a language only if a consult is strongly one language.
         </Text>
 
         <Pressable
@@ -141,7 +149,7 @@ export default function SettingsScreen() {
               <View style={styles.prepareRow}>
                 <ActivityIndicator size="small" color={colors.greenInk} />
                 <Text style={styles.prepareText}>
-                  {`Downloading ${sttModelName(accuracy)}… ${Math.round(prep.pct * 100)}%`}
+                  {`Downloading ${whisperModelInfo(accuracy).name}… ${Math.round(prep.pct * 100)}%`}
                 </Text>
               </View>
               <View style={styles.track}>
@@ -152,7 +160,7 @@ export default function SettingsScreen() {
             <View style={styles.prepareRow}>
               <Ionicons name="checkmark-circle" size={18} color={colors.greenInk} />
               <Text style={[styles.prepareText, { color: colors.greenInk }]}>
-                {`${sttModelName(accuracy)} ready on-device`}
+                {`${whisperModelInfo(accuracy).name} ready on-device`}
               </Text>
             </View>
           ) : (
@@ -165,7 +173,7 @@ export default function SettingsScreen() {
               <Text style={styles.prepareText}>
                 {prep.status === "error"
                   ? "Download failed — tap to retry"
-                  : `Download & prepare ${sttModelName(accuracy)} · ${accuracy === "high" ? "1.1GB" : "398MB"}`}
+                  : `Download & prepare ${whisperModelInfo(accuracy).name} · ${whisperModelInfo(accuracy).size}`}
               </Text>
             </View>
           )}

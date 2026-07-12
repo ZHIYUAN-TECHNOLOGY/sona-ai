@@ -6,7 +6,8 @@ import {
 } from "../diarize";
 import { filterHallucinations } from "./hallucination";
 import { alignTextToClusters, type ClusterSegment } from "./sttAlign";
-import { transcribeAudio, unloadStt } from "./realStt";
+import { getSttAccuracy, getSttLanguage } from "./sttMode";
+import { transcribeWaveform, unloadWhisper, whisperModelFor } from "./whisperStt";
 
 // A consult has few speakers (doctor, patient, maybe one family member) — cap diarization so
 // noisy audio can't explode into "Speaker 5". The clinician merges/relabels on Review anyway.
@@ -69,17 +70,20 @@ export async function finishRealCaptureClusters(capture: CaptureController): Pro
 
   const doctorVoiceprint = await loadDoctorVoiceprint().catch(() => null);
 
-  let tr: Awaited<ReturnType<typeof transcribeAudio>> | null = null;
+  let tr: Awaited<ReturnType<typeof transcribeWaveform>> | null = null;
   try {
-    tr = await transcribeAudio(waveform);
+    // whisper.cpp on-device: auto-detect language (default) + built-in hallucination guards.
+    tr = await transcribeWaveform(waveform, {
+      model: whisperModelFor(getSttAccuracy()),
+      language: getSttLanguage(), // "auto" | "en" | "ms"
+    });
     diag.transcriptChars = tr.text?.length ?? 0;
   } catch (e) {
     diag.sttError = String(e);
   }
-  // Free the Whisper model's native memory now — the rest of the consult (diarize, then the
-  // Qwen cleanup + note pass) doesn't need it, and whisper-small is ~1.1GB we don't want to
-  // hold alongside the LLM.
-  await unloadStt();
+  // Free the whisper.cpp context now — the rest of the consult (diarize, then the Qwen cleanup +
+  // note pass) doesn't need it, and we don't want it resident alongside the LLM.
+  await unloadWhisper();
 
   let diarized: Awaited<ReturnType<typeof diarizeAudio>> = [];
   try {

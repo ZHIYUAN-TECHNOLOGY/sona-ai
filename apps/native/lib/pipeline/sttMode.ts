@@ -24,9 +24,12 @@ export function isDemoMode(): boolean {
 // base can't be told two languages at once, so we pick one. Default "en": the clinical content
 // and demo are English-dominant, and English Whisper still passes Malay loanwords through
 // legibly. A record-screen toggle can flip this to "ms" for a Malay-dominant consult.
-export type SttLanguage = "en" | "ms";
+// "auto" lets whisper.cpp detect the language per audio (best for Malaysian code-switch —
+// Malay+English+Mandarin in one consult). "en"/"ms" force a single language when a consult is
+// strongly one-language. Default "auto".
+export type SttLanguage = "auto" | "en" | "ms";
 
-let language: SttLanguage = "en";
+let language: SttLanguage = "auto";
 
 export function getSttLanguage(): SttLanguage {
   return language;
