@@ -37,10 +37,11 @@ function mmss(total: number): string {
 // segmented Transcribe/Dictate toggle, a live ticking timer, and the transcript
 // peeking below. The note template is chosen upstream on the New-consult screen.
 export default function RecordingScreen() {
-  const { segments, startRecording } = useConsultPipeline();
+  const { segments, startRecording, stopRecording } = useConsultPipeline();
   const started = useRef(false);
   const [mode, setMode] = useState<Mode>("transcribe");
   const [elapsed, setElapsed] = useState(0);
+  const [ending, setEnding] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -58,7 +59,18 @@ export default function RecordingScreen() {
 
   const turns = useDiarizedTranscript(segments);
   const peek = turns.slice(-3);
-  const end = () => router.push("/privacy");
+  // End the consult: stop recording (real path transcribes + diarizes on-device here; mock
+  // path is instant), then move to the privacy gate. Guard against double-tap.
+  const end = useCallback(async () => {
+    if (ending) return;
+    setEnding(true);
+    try {
+      await stopRecording();
+      router.push("/privacy");
+    } finally {
+      setEnding(false);
+    }
+  }, [ending, stopRecording]);
 
   return (
     <ConsultScreen
@@ -67,7 +79,13 @@ export default function RecordingScreen() {
       sub={consult.patientLabel}
       right={<Pill label={consult.langBadge} variant="green" />}
       scroll={false}
-      footer={<PrimaryButton label="End consult" onPress={end} />}
+      footer={
+        <PrimaryButton
+          label={ending ? "Transcribing on-device…" : "End consult"}
+          onPress={end}
+          disabled={ending}
+        />
+      }
     >
       <View style={styles.top}>
         <SegmentedControl<Mode>
