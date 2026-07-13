@@ -16,12 +16,31 @@ const BUFFER_LENGTH = 512;
 const MAX_SECONDS = 20 * 60; // hard cap on retained audio (memory + safety)
 
 export interface CaptureController {
-  /** Stop the recorder and return the accumulated mono 16 kHz PCM. */
+  /** Stop the recorder and return the accumulated mono 16 kHz PCM (resampled if needed). */
   stop(): Promise<Float32Array>;
   /** Whether capture is still running. */
   active(): boolean;
   /** Seconds of audio captured so far. */
   seconds(): number;
+  /** The ACTUAL sample rate the device delivered (may differ from the requested 16 kHz). */
+  deliveredRate(): number;
+}
+
+/** Linear-resample mono PCM to 16 kHz. No-op when already 16 kHz. */
+function resampleTo16k(input: Float32Array, inRate: number): Float32Array {
+  if (inRate === SAMPLE_RATE || input.length === 0) return input;
+  const ratio = inRate / SAMPLE_RATE;
+  const outLen = Math.floor(input.length / ratio);
+  const out = new Float32Array(outLen);
+  for (let i = 0; i < outLen; i++) {
+    const pos = i * ratio;
+    const i0 = Math.floor(pos);
+    const frac = pos - i0;
+    const a = input[i0];
+    const b = i0 + 1 < input.length ? input[i0 + 1] : a;
+    out[i] = a + (b - a) * frac;
+  }
+  return out;
 }
 
 export interface CaptureOptions {
@@ -49,10 +68,13 @@ export async function startCapture(opts: CaptureOptions = {}): Promise<CaptureCo
   const recorder = new AudioRecorder();
   const chunks: Float32Array[] = [];
   let total = 0;
-  const cap = SAMPLE_RATE * MAX_SECONDS;
+  // Cap sized to the DEVICE rate below (up to 48 kHz), so a long recording isn't cut short.
+  const cap = 48000 * MAX_SECONDS;
   let live = true;
+  let rate = SAMPLE_RATE; // actual delivered rate (from the buffer) — may be 44.1/48 kHz
 
   recorder.onAudioReady({ sampleRate: SAMPLE_RATE, bufferLength: BUFFER_LENGTH, channelCount: 1 }, ({ buffer, numFrames }) => {
+    rate = buffer.sampleRate || SAMPLE_RATE; // the device's real rate, not the requested one
     const view = buffer.getChannelData(0).subarray(0, numFrames);
     if (total < cap) {
       const take = Math.min(numFrames, cap - total); // clamp exactly to the cap
@@ -69,7 +91,8 @@ export async function startCapture(opts: CaptureOptions = {}): Promise<CaptureCo
   let stopping: Promise<Float32Array> | null = null;
   return {
     active: () => live,
-    seconds: () => total / SAMPLE_RATE,
+    seconds: () => total / rate, // actual delivered rate, not the requested 16 kHz
+    deliveredRate: () => rate,
     // Idempotent: concurrent/repeat calls (e.g. stop() + unmount cleanup) share one promise,
     // so teardown runs once and every caller gets the same waveform.
     stop() {
@@ -84,14 +107,16 @@ export async function startCapture(opts: CaptureOptions = {}): Promise<CaptureCo
         } catch {
           // native unavailable — nothing to release
         }
-        const out = new Float32Array(total);
+        const assembled = new Float32Array(total);
         let o = 0;
         for (const c of chunks) {
-          out.set(c, o); // sum(chunks) === total (capped above), so this never overruns
+          assembled.set(c, o); // sum(chunks) === total (capped above), so this never overruns
           o += c.length;
         }
         chunks.length = 0; // drop references — audio discarded
-        return out;
+        // The device often ignores the requested 16 kHz and delivers 44.1/48 kHz; Whisper needs
+        // 16 kHz, so resample here (no-op if already 16 kHz).
+        return resampleTo16k(assembled, rate);
       })();
       return stopping;
     },

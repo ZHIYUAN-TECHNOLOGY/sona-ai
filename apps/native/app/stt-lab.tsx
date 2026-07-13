@@ -19,9 +19,11 @@ type Phase = "idle" | "recording" | "transcribing" | "done" | "error";
 
 interface Result {
   text: string;
+  raw: string;
   language: string;
   seconds: number;
   ms: number;
+  rate: number;
 }
 
 export default function SttLabScreen() {
@@ -52,16 +54,19 @@ export default function SttLabScreen() {
     setPhase("transcribing");
     try {
       const waveform = await cap.stop();
+      const rate = cap.deliveredRate();
       const t0 = Date.now();
       const tr = await transcribeWaveform(waveform, {
         model: whisperModelFor(getSttAccuracy()),
         language: getSttLanguage(),
       });
       setResult({
-        text: tr.text || "(no speech)",
+        text: tr.text || "(empty)",
+        raw: tr.raw ?? "",
         language: tr.language || "?",
         seconds: Math.round((waveform.length / 16000) * 10) / 10,
         ms: Date.now() - t0,
+        rate,
       });
       setPhase("done");
     } catch (e) {
@@ -114,7 +119,11 @@ export default function SttLabScreen() {
             {result.text}
           </Text>
           <Text style={styles.stats}>
-            {`${result.language} · ${result.seconds}s audio · ${result.ms}ms on-device`}
+            {`${result.language} · ${result.seconds}s · ${result.rate}Hz · ${result.ms}ms on-device`}
+          </Text>
+          <Text style={[styles.label, { marginTop: space.md }]}>RAW (debug)</Text>
+          <Text style={styles.raw} selectable>
+            {result.raw || "(empty)"}
           </Text>
         </Card>
       ) : null}
@@ -147,6 +156,7 @@ const styles = StyleSheet.create({
   hint: { ...font.body, color: colors.ink3, textAlign: "center", paddingHorizontal: space.lg },
   label: { ...font.label, color: colors.ink3, textTransform: "uppercase", marginBottom: space.xs },
   transcript: { ...font.body, color: colors.ink, lineHeight: 24 },
+  raw: { ...font.bodySm, color: colors.ink2, lineHeight: 20, fontVariant: ["tabular-nums"] },
   stats: {
     ...font.bodySm,
     color: colors.ink3,
