@@ -13,7 +13,13 @@ import {
   getSttLanguage,
   setSttAccuracy,
 } from "@/lib/pipeline/sttMode";
-import { prewarmWhisper, whisperModelFor, whisperModelInfo } from "@/lib/pipeline/whisperStt";
+import {
+  prewarmWhisper,
+  whisperIsBundled,
+  whisperIsReady,
+  whisperModelFor,
+  whisperModelInfo,
+} from "@/lib/pipeline/whisperStt";
 import { colors, font, radius, space } from "@/lib/theme";
 
 // "On-device AI" — the seamless model-prep screen. Aurio's moat model (Malaysian Whisper STT)
@@ -54,17 +60,24 @@ export default function AiModelsScreen() {
   const [note, setNote] = useState<DlState>({ status: "idle", pct: 0 });
   const [noteDownloading, setNoteDownloading] = useState(false);
 
-  // Fast STT tier (optional generic multilingual base) — prewarm via whisper.rn.
-  const [fast, setFast] = useState<DlState>({ status: "idle", pct: 0 });
+  // Selected STT tier. ONE card, reflecting the real on-disk state — bundled tiers are
+  // always ready; the turbo tier shows a download button ONLY when its 547MB ggml isn't
+  // in app storage yet. (A separate always-visible downloader card used to duplicate
+  // this one whenever the selected tier was already turbo.)
+  const accuracy = getSttAccuracy();
+  const [stt, setStt] = useState<DlState>(() => ({
+    status: whisperIsReady(accuracy) ? "ready" : "idle",
+    pct: 0,
+  }));
 
-  const downloadHigh = async () => {
+  const downloadStt = async () => {
     haptic("tap");
-    setFast({ status: "downloading", pct: 0 });
+    setStt({ status: "downloading", pct: 0 });
     try {
-      await prewarmWhisper(whisperModelFor("high"), (p) => setFast({ status: "downloading", pct: p }));
-      setFast({ status: "ready", pct: 1 });
+      await prewarmWhisper(whisperModelFor(accuracy), (p) => setStt({ status: "downloading", pct: p }));
+      setStt({ status: "ready", pct: 1 });
     } catch {
-      setFast({ status: "error", pct: 0 });
+      setStt({ status: "error", pct: 0 });
     }
   };
 
@@ -75,7 +88,7 @@ export default function AiModelsScreen() {
       sub="Every model runs on this phone — nothing leaves the device"
       onBack={() => router.back()}
     >
-      {/* STT — best-accuracy tier downloads once; the bundled Malaysian model is the offline fallback. */}
+      {/* STT — the selected tier, with its true on-disk state. */}
       <Card>
         <View style={styles.head}>
           <View style={[styles.iconWrap, styles.iconReady]}>
@@ -83,17 +96,40 @@ export default function AiModelsScreen() {
           </View>
           <View style={styles.headText}>
             <Text style={styles.name}>Speech-to-text</Text>
-            <Text style={styles.role}>{`${whisperModelInfo(getSttAccuracy()).name} · Malay + English + 中文`}</Text>
+            <Text style={styles.role}>{`${whisperModelInfo(accuracy).name} · Malay + English + 中文`}</Text>
           </View>
         </View>
-        <View style={styles.statusReady}>
-          <Ionicons name="checkmark-circle" size={16} color={colors.greenInk} />
-          <Text style={styles.statusReadyText}>
-            {getSttAccuracy() === "high"
-              ? "Best accuracy · 547MB one-time download (below)"
-              : "Bundled in app · ready offline · 181MB"}
-          </Text>
-        </View>
+        {stt.status === "ready" ? (
+          <View style={styles.statusReady}>
+            <Ionicons name="checkmark-circle" size={16} color={colors.greenInk} />
+            <Text style={styles.statusReadyText}>
+              {whisperIsBundled(accuracy)
+                ? "Bundled in app · ready offline · 181MB"
+                : "Ready on-device · downloaded"}
+            </Text>
+          </View>
+        ) : stt.status === "downloading" ? (
+          <>
+            <View style={styles.progressRow}>
+              <ActivityIndicator size="small" color={colors.greenInk} />
+              <Text style={styles.progressText}>{`Downloading… ${Math.round(stt.pct * 100)}%`}</Text>
+            </View>
+            <Bar pct={stt.pct} />
+          </>
+        ) : (
+          <Pressable style={styles.action} onPress={downloadStt}>
+            <Ionicons
+              name={stt.status === "error" ? "refresh-outline" : "cloud-download-outline"}
+              size={18}
+              color={colors.ink2}
+            />
+            <Text style={styles.actionText}>
+              {stt.status === "error"
+                ? "Download failed — tap to retry"
+                : `Download & prepare · ${whisperModelInfo(accuracy).size}`}
+            </Text>
+          </Pressable>
+        )}
         <Text style={styles.note}>
           {`Language: ${getSttLanguage() === "ms" ? "Bahasa Melayu" : getSttLanguage() === "en" ? "English" : "Auto-detect (recommended)"} · change in Settings → Transcription`}
         </Text>
@@ -144,48 +180,10 @@ export default function AiModelsScreen() {
         <Text style={styles.note}>Otherwise it downloads automatically on your first consult.</Text>
       </Card>
 
-      {/* Optional Fast STT tier. */}
-      <Card>
-        <View style={styles.head}>
-          <View style={styles.iconWrap}>
-            <Ionicons name="sparkles-outline" size={18} color={colors.green} />
-          </View>
-          <View style={styles.headText}>
-            <Text style={styles.name}>Best-accuracy speech-to-text</Text>
-            <Text style={styles.role}>{`${whisperModelInfo("high").name} · best for Malaysian code-switch`}</Text>
-          </View>
-        </View>
-        {fast.status === "ready" ? (
-          <View style={styles.statusReady}>
-            <Ionicons name="checkmark-circle" size={16} color={colors.greenInk} />
-            <Text style={styles.statusReadyText}>Ready on-device</Text>
-          </View>
-        ) : fast.status === "downloading" ? (
-          <>
-            <View style={styles.progressRow}>
-              <ActivityIndicator size="small" color={colors.greenInk} />
-              <Text style={styles.progressText}>{`Downloading… ${Math.round(fast.pct * 100)}%`}</Text>
-            </View>
-            <Bar pct={fast.pct} />
-          </>
-        ) : (
-          <Pressable style={styles.action} onPress={downloadHigh}>
-            <Ionicons
-              name={fast.status === "error" ? "refresh-outline" : "cloud-download-outline"}
-              size={18}
-              color={colors.ink2}
-            />
-            <Text style={styles.actionText}>
-              {fast.status === "error" ? "Download failed — tap to retry" : `Download & prepare · ${whisperModelInfo("high").size}`}
-            </Text>
-          </Pressable>
-        )}
-      </Card>
-
       <Text style={styles.footer}>
-        Total footprint under ~1GB. Models are cached once and reused. Raw audio is never stored or
-        uploaded — only de-identified text may ever cross the boundary, and only on the optional
-        cloud path.
+        Total footprint ~2GB with both downloads. Models are cached once and reused. Raw audio is
+        never stored or uploaded — only de-identified text may ever cross the boundary, and only
+        on the optional cloud path.
       </Text>
     </ConsultScreen>
   );

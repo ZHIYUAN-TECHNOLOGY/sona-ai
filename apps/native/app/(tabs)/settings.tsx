@@ -22,7 +22,13 @@ import {
   type SttAccuracy,
   type SttLanguage,
 } from "@/lib/pipeline/sttMode";
-import { prewarmWhisper, whisperIsBundled, whisperModelFor, whisperModelInfo } from "@/lib/pipeline/whisperStt";
+import {
+  prewarmWhisper,
+  whisperIsBundled,
+  whisperIsReady,
+  whisperModelFor,
+  whisperModelInfo,
+} from "@/lib/pipeline/whisperStt";
 import { haptic } from "@/lib/haptics";
 import { colors, font, space } from "@/lib/theme";
 
@@ -53,11 +59,12 @@ export default function SettingsScreen() {
   const [accuracy, setAccuracyState] = useState<SttAccuracy>(getSttAccuracy());
   const [language, setLanguageState] = useState<SttLanguage>(getSttLanguage());
   // Pre-download state for the selected tier's model, so High mode can pre-warm on wifi instead
-  // of stalling silently mid-consult. Resets when the tier changes (a different model to fetch).
-  const [prep, setPrep] = useState<{ status: "idle" | "downloading" | "ready" | "error"; pct: number }>({
-    status: "idle",
+  // of stalling silently mid-consult. Initialized (and reset on tier change) from the REAL
+  // on-disk state — an already-downloaded model must show ready, not a download button.
+  const [prep, setPrep] = useState<{ status: "idle" | "downloading" | "ready" | "error"; pct: number }>(() => ({
+    status: whisperIsReady(getSttAccuracy()) ? "ready" : "idle",
     pct: 0,
-  });
+  }));
 
   const [accuracySheet, setAccuracySheet] = useState(false);
   const [languageSheet, setLanguageSheet] = useState(false);
@@ -67,7 +74,8 @@ export default function SettingsScreen() {
     haptic("select");
     setAccuracyState(next);
     setSttAccuracy(next);
-    setPrep({ status: "idle", pct: 0 }); // different model → download state no longer applies
+    // Different model → reflect ITS on-disk state (ready if bundled/already downloaded).
+    setPrep({ status: whisperIsReady(next) ? "ready" : "idle", pct: 0 });
   };
 
   const downloadModel = async () => {
