@@ -71,6 +71,7 @@ async function readRecordingFile(path: string): Promise<{ pcm: Float32Array; rat
  * native module is unavailable — the caller catches and falls back (e.g. to synth capture).
  */
 export async function startCapture(opts: CaptureOptions = {}): Promise<CaptureController> {
+  const t0 = Date.now();
   const status = await AudioManager.requestRecordingPermissions();
   if (status !== "Granted") throw new Error("microphone permission not granted");
 
@@ -124,6 +125,7 @@ export async function startCapture(opts: CaptureOptions = {}): Promise<CaptureCo
 
   const res = await recorder.start();
   if (res.status === "error") throw new Error("recorder failed to start");
+  console.log(`[CAP] recorder LIVE +${Date.now() - t0}ms (fileOutput=${fileOutput})`);
 
   let stopping: Promise<Float32Array> | null = null;
   return {
@@ -133,7 +135,11 @@ export async function startCapture(opts: CaptureOptions = {}): Promise<CaptureCo
     // Idempotent: concurrent/repeat calls (e.g. stop() + unmount cleanup) share one promise,
     // so teardown runs once and every caller gets the same waveform.
     stop() {
-      if (stopping) return stopping;
+      if (stopping) {
+        console.log(`[CAP] stop() REPEAT — returning cached result (recorded ${(total / cbRate).toFixed(1)}s)`);
+        return stopping;
+      }
+      console.log(`[CAP] stop() FIRST — after ${(total / cbRate).toFixed(1)}s of audio`);
       live = false;
       stopping = (async () => {
         let fileInfoPath: string | null = null;

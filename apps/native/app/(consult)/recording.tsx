@@ -66,6 +66,7 @@ export default function RecordingScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      console.log("[RECSCREEN] focus effect run");
       // Returning to a consult that already ended (e.g. back-navigation) must NOT reopen the
       // mic. Forward to that consult's result instead of showing a fake live recorder.
       if (ENDED_STATUSES.has(statusRef.current)) {
@@ -80,6 +81,7 @@ export default function RecordingScreen() {
       // Leaving the screen WITHOUT pressing End (tab switch, back-swipe) → stop the mic so no
       // orphan capture / orange indicator survives. End's own path already stopped it.
       return () => {
+        console.log(`[RECSCREEN] blur/cleanup (endedHere=${endedHere.current})`);
         if (!endedHere.current) cancelRecording();
       };
     }, [startRecording, cancelRecording]),
