@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getNoteEmbeddings, getSearchDocs, saveNoteEmbedding } from "@/lib/db";
 import { topKByCosine } from "@/lib/knowledge/vector";
 import { EMBED_MODEL, EMBED_MODEL_NAME } from "@/lib/pipeline/model";
+import { getSemanticSearch } from "@/lib/pipeline/sttMode";
 
 import { rankNotes, type SearchDoc, type SearchHit } from "./noteSearch";
 
@@ -39,7 +40,9 @@ function snippet(text: string, query: string): string {
  * On-device only: notes, vectors, and the query never leave the phone.
  */
 export function useSemanticNoteSearch() {
-  const embed = useTextEmbeddings({ model: EMBED_MODEL });
+  // Opt-in: skip the 397MB embeddings download unless semantic search is enabled — note search
+  // falls back to the lexical ranker otherwise.
+  const embed = useTextEmbeddings({ model: EMBED_MODEL, preventLoad: !getSemanticSearch() });
   const docsRef = useRef<SearchDoc[]>([]);
   const vecsRef = useRef<Map<string, Float32Array>>(new Map());
   const runId = useRef(0);
