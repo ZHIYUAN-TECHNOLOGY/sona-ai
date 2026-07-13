@@ -26,52 +26,6 @@ export const NOTE_MODEL_NAME = "Qwen3-0.6B";
 export const EMBED_MODEL = PARAPHRASE_MULTILINGUAL_MINILM_L12_V2_QUANTIZED;
 export const EMBED_MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2";
 
-// On-device speech-to-text (Whisper). Multilingual — the consult is code-switched BM + EN.
-// We pin the XNNPACK builds explicitly: the exported WHISPER_* constants point iOS at CoreML
-// .pte files that 404 on Hugging Face for v0.9.0 (verified), whereas the XNNPACK .pte exists
-// on both platforms. Runs via SpeechToTextModule.transcribe (verbose → per-segment timestamps).
-//
-// Two tiers, chosen by the Settings accuracy toggle (see sttMode: SttAccuracy):
-//   - FAST  = whisper-base  (74M, 398MB) — quick, already downloaded; weak on Malay.
-//   - HIGH  = whisper-small (244M, 1.1GB) — much better Malay + code-switch; heavier
-//             download + RAM, so realStt unloads it before the Qwen note pass.
-// modelName is narrowed to the two tiers we ship — both members of executorch's
-// SpeechToTextModelName union, so the config passes straight to SpeechToTextModule.fromModelName.
-export type SttModelConfig = {
-  modelName: "whisper-base" | "whisper-small";
-  isMultilingual: boolean;
-  modelSource: string;
-  tokenizerSource: string;
-};
-
-export const STT_MODEL_FAST: SttModelConfig = {
-  modelName: "whisper-base",
-  isMultilingual: true,
-  modelSource:
-    "https://huggingface.co/software-mansion/react-native-executorch-whisper-base/resolve/v0.9.0/xnnpack/whisper_base_xnnpack_fp32.pte",
-  tokenizerSource:
-    "https://huggingface.co/software-mansion/react-native-executorch-whisper-base/resolve/v0.9.0/tokenizer.json",
-};
-
-export const STT_MODEL_HIGH: SttModelConfig = {
-  modelName: "whisper-small",
-  isMultilingual: true,
-  modelSource:
-    "https://huggingface.co/software-mansion/react-native-executorch-whisper-small/resolve/v0.9.0/xnnpack/whisper_small_xnnpack_fp32.pte",
-  tokenizerSource:
-    "https://huggingface.co/software-mansion/react-native-executorch-whisper-small/resolve/v0.9.0/tokenizer.json",
-};
-
-/** The STT model config for an accuracy tier. */
-export function sttModelFor(accuracy: "fast" | "high"): SttModelConfig {
-  return accuracy === "high" ? STT_MODEL_HIGH : STT_MODEL_FAST;
-}
-
-/** Human label for an accuracy tier (note screen / audit / settings). */
-export function sttModelName(accuracy: "fast" | "high"): string {
-  return accuracy === "high" ? "Whisper-small" : "Whisper-base";
-}
-
-// Back-compat default (fast tier). Prefer sttModelFor(getSttAccuracy()) at call sites.
-export const STT_MODEL = STT_MODEL_FAST;
-export const STT_MODEL_NAME = "Whisper-base";
+// Speech-to-text now lives entirely in ./whisperStt (whisper.cpp via whisper.rn) — the
+// Malaysian Whisper ggml, bundled + offline. This module keeps only the ExecuTorch models
+// (note LLM + embeddings). See lib/pipeline/whisperStt.ts for the STT model tiers.

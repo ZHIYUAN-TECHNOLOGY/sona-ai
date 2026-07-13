@@ -15,7 +15,8 @@ import {
 } from "@/lib/diarize";
 import { haptic } from "@/lib/haptics";
 import type { RawSegment } from "@/lib/pipeline/mockStt";
-import { alignTextToSpeakers, transcribeAudio } from "@/lib/pipeline/realStt";
+import { alignTextToSpeakers } from "@/lib/pipeline/sttAlign";
+import { transcribeWaveform, whisperModelFor } from "@/lib/pipeline/whisperStt";
 import { colors, font, space } from "@/lib/theme";
 
 type Phase = "idle" | "recording" | "analyzing" | "done" | "error";
@@ -95,7 +96,7 @@ export default function DiarizationLab() {
       // Real STT: transcribe the same audio on-device (Whisper), then align the text to the
       // diarized speakers. Guarded — if the STT model isn't available, keep the diarization.
       try {
-        const tr = await transcribeAudio(waveform);
+        const tr = await transcribeWaveform(waveform, { model: whisperModelFor("high") });
         if (mounted.current) setTranscript(alignTextToSpeakers(tr.segments, diarized, tr.language));
       } catch {
         // Keep the diarization result; STT model may not be linked on this build.
