@@ -30,19 +30,25 @@ export interface WhisperModel {
   asset?: number; // require() id of a bundled ggml (ships in the app — offline, nothing downloads)
 }
 
-// FAST — standard multilingual whisper-base, downloaded once (small, quick, generic).
+// Tier choice is EVIDENCE-BASED (bake-off on a real Malaysian consult clip, Jul 2026):
+// official large-v3-turbo transcribed the code-switch best by far — perfect 中文 script + clean
+// English (Mesolitica small/medium/distil all hallucinated on real far-field audio). See
+// assets/models/REGENERATE.md.
+//
+// FAST — Mesolitica Malaysian Whisper-small (q5_1, 181MB), BUNDLED in the app: fully offline,
+// instant, weaker accuracy. The no-network fallback.
 export const WHISPER_FAST: WhisperModel = {
-  file: "ggml-base-q5.bin",
-  url: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base-q5_1.bin",
-};
-
-// HIGH — Mesolitica Malaysian Whisper-small (q5_1, 181MB), converted to ggml and BUNDLED in the
-// app. Trained on Malay + Manglish + Mandarin + Tamil → the moat model for Malaysian consults.
-// Bundled (not downloaded): ships offline, nothing leaves the device, instant (no download wait).
-export const WHISPER_HIGH: WhisperModel = {
   file: "ggml-malaysian-small.bin",
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   asset: require("../../assets/models/ggml-malaysian-small.bin"),
+};
+
+// HIGH (default) — official Whisper large-v3-turbo (q5_0, 547MB), downloaded once from Hugging
+// Face. Best Malaysian code-switch accuracy of everything tested; still fully on-device at
+// inference (the download is the model, never the audio).
+export const WHISPER_HIGH: WhisperModel = {
+  file: "ggml-large-v3-turbo-q5_0.bin",
+  url: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q5_0.bin",
 };
 
 /** The ggml model for an accuracy tier. */
@@ -53,8 +59,8 @@ export function whisperModelFor(accuracy: "fast" | "high"): WhisperModel {
 /** Human label + source note per tier (for Settings). */
 export function whisperModelInfo(accuracy: "fast" | "high"): { name: string; size: string } {
   return accuracy === "high"
-    ? { name: "Malaysian Whisper-small", size: "bundled · offline" }
-    : { name: "Whisper-base (multilingual)", size: "~60MB download" };
+    ? { name: "Whisper large-v3-turbo", size: "547MB download" }
+    : { name: "Malaysian Whisper-small", size: "bundled · offline" };
 }
 
 /** True if the tier's model ships in the app (no download needed). */

@@ -27,8 +27,8 @@ import { haptic } from "@/lib/haptics";
 import { colors, font, space } from "@/lib/theme";
 
 const ACCURACY_OPTIONS: SheetOption<SttAccuracy>[] = [
-  { key: "fast", name: "Fast", desc: "Whisper-base multilingual · ~60MB download · quick", icon: "flash-outline" },
-  { key: "high", name: "Malaysian (recommended)", desc: "Malaysian Whisper · Malay+English+中文 · bundled offline", icon: "sparkles-outline" },
+  { key: "fast", name: "Offline", desc: "Malaysian Whisper-small · bundled, no download · quicker, less accurate", icon: "flash-outline" },
+  { key: "high", name: "Best accuracy (recommended)", desc: "Whisper large-v3-turbo · Malay+English+中文 · 547MB one-time download", icon: "sparkles-outline" },
 ];
 
 const LANGUAGE_OPTIONS: SheetOption<SttLanguage>[] = [
