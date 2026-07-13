@@ -35,9 +35,7 @@ import {
 } from "./realConsultStt";
 import type { ClusterSegment } from "./sttAlign";
 import { cleanupClusters } from "./cleanupTranscript";
-import { getNoteEngine, getSttMode } from "./sttMode";
-import { LLAMA_LLM, unloadLlama } from "./llamaLlm";
-import type { LlmLike } from "./noteGen";
+import { getSttMode } from "./sttMode";
 import { NOTE_MODEL } from "./model";
 import type { DraftNote } from "./noteGen";
 import { DEFAULT_TEMPLATE, templateById, templatePrompt } from "./templates";
@@ -111,12 +109,9 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   // the sim, so the last segments' writes can still be in flight at End-consult).
   const pendingWrites = useRef<Promise<unknown>[]>([]);
 
-  // On-device note model. ExecuTorch Qwen3 loads once for the flow (unless the llama.rn engine
-  // is selected — then skip its download; llama.cpp handles the note LLM). See ./llamaLlm.
-  const usingLlama = getNoteEngine() === "llama";
-  const llm = useLLM({ model: NOTE_MODEL, preventLoad: usingLlama });
-  // The active note LLM behind the shared LlmLike seam — ExecuTorch hook or the llama.cpp adapter.
-  const noteLlm: LlmLike = usingLlama ? LLAMA_LLM : llm;
+  // On-device note model. Loads once for the whole consult flow so the note screen
+  // can draft without a cold start. Model is configured in ./model (NOTE_MODEL).
+  const llm = useLLM({ model: NOTE_MODEL });
 
   const startConsult = useCallback(async (consentText: string) => {
     const consult = await beginConsult(consentText);
@@ -266,7 +261,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     if (cands.length === 0) return;
     setCleaning(true);
     try {
-      const cleaned = await cleanupClusters(cands, noteLlm);
+      const cleaned = await cleanupClusters(cands, llm);
       // Skip if a newer capture started while we were cleaning (stale result).
       if (captureSeqRef.current === targetSeq) {
         candidatesRef.current = cleaned;
@@ -275,7 +270,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setCleaning(false);
     }
-  }, [noteLlm]);
+  }, [llm]);
 
   useEffect(() => {
     if (getSttMode() === "real" && llm.isReady && candidates.length > 0) void runCleanup();
@@ -316,7 +311,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setNoteError(null);
     try {
       const prompt = templatePrompt(templateById(templateRef.current));
-      const drafted = await draftClinicalNote(id, red.segments, noteLlm, prompt);
+      const drafted = await draftClinicalNote(id, red.segments, llm, prompt);
       setNote(drafted);
       setNoteStatus("ready");
       setStatus("noted");
@@ -324,7 +319,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
       setNoteError(e instanceof Error ? e.message : String(e));
       setNoteStatus("error");
     }
-  }, [noteLlm]);
+  }, [llm]);
 
   // Persist a clinician's manual edit of the drafted note (before signing) and reflect
   // it in the in-memory note so the review screen re-renders. On-device only.
@@ -384,10 +379,8 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         note,
         noteStatus,
         noteError,
-        // llama.cpp loads lazily on first generate → report ready so the note screen isn't
-        // blocked waiting on the (skipped) ExecuTorch download.
-        llmReady: usingLlama ? true : llm.isReady,
-        llmProgress: usingLlama ? 1 : (llm.downloadProgress ?? 0),
+        llmReady: llm.isReady,
+        llmProgress: llm.downloadProgress ?? 0,
         templateId,
         startConsult,
         startRecording,
