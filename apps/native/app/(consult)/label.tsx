@@ -87,7 +87,8 @@ export default function LabelScreen() {
             </Text>
             {captureDiag ? (
               <Text style={styles.diag} selectable>
-                {`audio ${captureDiag.seconds}s · peak ${captureDiag.peak} · transcript ${captureDiag.transcriptChars} chars · ${captureDiag.vadSegments} speech segs`}
+                {`audio ${captureDiag.seconds}s · peak ${captureDiag.peak} · ${captureDiag.rate ?? "?"}Hz · transcript ${captureDiag.transcriptChars} chars · ${captureDiag.vadSegments} speech segs`}
+                {captureDiag.raw ? `\nraw: ${captureDiag.raw}` : ""}
                 {captureDiag.sttError ? `\nSTT: ${captureDiag.sttError}` : ""}
                 {captureDiag.vadError ? `\nVAD: ${captureDiag.vadError}` : ""}
               </Text>
@@ -146,6 +147,14 @@ export default function LabelScreen() {
               </View>
             </Card>
           ))}
+          {/* Capture diagnostics — visible during the debugging phase so a bad transcript run
+              still reports the device rate + whisper's raw output. */}
+          {captureDiag ? (
+            <Text style={styles.diag} selectable>
+              {`audio ${captureDiag.seconds}s · peak ${captureDiag.peak} · ${captureDiag.rate ?? "?"}Hz · ${captureDiag.transcriptChars} chars`}
+              {captureDiag.raw ? `\nraw: ${captureDiag.raw}` : ""}
+            </Text>
+          ) : null}
         </>
       )}
     </ConsultScreen>
