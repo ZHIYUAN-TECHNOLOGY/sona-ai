@@ -1,6 +1,8 @@
 import * as Speech from "expo-speech";
 import { AudioManager } from "react-native-audio-api";
 
+import { langToBcp47, segmentByLanguage } from "./language";
+
 // On-device text-to-speech via expo-speech (the OS speech synthesizer — AVSpeechSynthesizer
 // on iOS, TextToSpeech on Android). Fully on-device + multilingual (incl. Malay), no model
 // download, no cloud — fits the moat. Guarded: every call swallows errors so a build without
@@ -27,17 +29,42 @@ export interface ReadOptions {
   onStopped?: () => void;
 }
 
-/** Speak text aloud on-device. Stops any current utterance first. */
+/**
+ * Speak text aloud on-device. Stops any current utterance first. With no forced `language`, the
+ * text is split by language (BM / English / 中文) and each run is queued on its matching system
+ * voice — so a Malaysian mixed note is pronounced correctly instead of one voice mangling the
+ * rest. Pass `language` to force a single voice.
+ */
 export function readAloud(text: string, opts: ReadOptions = {}): void {
   const done = opts.onStopped ?? (() => {});
   prepPlaybackSession(); // ensure the session routes output (mic left it in "record")
   try {
     Speech.stop();
-    Speech.speak(text, {
-      language: opts.language ?? "en-US",
-      onDone: opts.onDone,
-      onStopped: opts.onStopped,
-      onError: done,
+    // Forced single voice (caller knows the language).
+    if (opts.language) {
+      Speech.speak(text, {
+        language: opts.language,
+        onDone: opts.onDone,
+        onStopped: opts.onStopped,
+        onError: done,
+      });
+      return;
+    }
+    // Malaysian mixed: route each language run to its own voice. expo-speech QUEUES successive
+    // speak() calls, so they play in order; the last one carries the completion callbacks.
+    const segs = segmentByLanguage(text);
+    if (segs.length === 0) {
+      opts.onDone?.();
+      return;
+    }
+    segs.forEach((seg, i) => {
+      const last = i === segs.length - 1;
+      Speech.speak(seg.text, {
+        language: langToBcp47(seg.lang),
+        onDone: last ? opts.onDone : undefined,
+        onStopped: last ? opts.onStopped : undefined,
+        onError: last ? done : undefined,
+      });
     });
   } catch {
     done(); // native TTS unavailable — reflect "not speaking"
