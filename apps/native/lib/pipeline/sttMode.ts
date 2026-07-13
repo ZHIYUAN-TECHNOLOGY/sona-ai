@@ -49,6 +49,21 @@ export type SttAccuracy = "fast" | "high";
 // the moat model. "fast" downloads a smaller generic multilingual base.
 let accuracy: SttAccuracy = "high";
 
+// Note LLM engine. "executorch" = the shipped Qwen3-0.6B (default, works today, demo-safe).
+// "llama" = Qwen2.5-1.5B-Instruct GGUF via llama.rn (production path: bigger/better, one ggml
+// runtime with the Whisper). Default executorch until the llama path is device-validated.
+export type NoteEngine = "executorch" | "llama";
+
+let noteEngine: NoteEngine = "executorch";
+
+export function getNoteEngine(): NoteEngine {
+  return noteEngine;
+}
+
+export function setNoteEngine(next: NoteEngine): void {
+  noteEngine = next;
+}
+
 // Semantic search / RAG (the MiniLM embeddings model, ~397MB). OFF by default — the core scribe
 // doesn't need it, and search/RAG already degrade to a lexical ranker. Turning it on downloads
 // the model + enables cosine retrieval. Keeps the default footprint lean.
