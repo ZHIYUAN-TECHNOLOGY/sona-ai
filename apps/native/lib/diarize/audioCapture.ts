@@ -1,46 +1,44 @@
-import { AudioManager, AudioRecorder } from "react-native-audio-api";
+import {
+  AudioManager,
+  AudioRecorder,
+  BitDepth,
+  FileDirectory,
+  FileFormat,
+  FlacCompressionLevel,
+  IOSAudioQuality,
+} from "react-native-audio-api";
+import { File } from "expo-file-system";
 
-// Real microphone capture for diarization. Reuses the proven standalone-AudioRecorder
-// setup from useMicAmplitude (permission → iOS session → onAudioReady frames), but instead
-// of only reducing to loudness it ACCUMULATES the mono 16 kHz PCM into an in-memory buffer
-// so VAD + speaker embedding can run on the whole utterance. One recorder only — a second
-// concurrent AudioRecorder clashes on iOS.
+import { parseWav, resampleTo16k } from "../pipeline/wav";
+
+// Real microphone capture for transcription + diarization.
 //
-// MOAT: enableFileOutput() and connect() are NEVER called — audio is never written to disk
-// or routed anywhere. The buffer lives in memory, is handed to on-device VAD/embedding, and
-// is discarded. Nothing persists or transmits. The buffer is capped so it can't grow without
-// bound.
+// PRIMARY PATH — NATIVE FILE RECORDING: the recorder writes a 16 kHz/16-bit WAV natively
+// (enableFileOutput), with NO JavaScript in the audio hot path. The earlier JS-callback
+// capture (onAudioReady every ~32 ms) silently DROPPED FRAMES whenever the JS thread janked
+// (e.g. with the 1.3GB note LLM resident) — captured clips came out with 2-second holes and
+// transcribed as garbage. A native file cannot lose frames to JS jank. At stop() the WAV is
+// read, parsed to PCM, resampled to 16 kHz if needed, and the file is DELETED immediately.
+//
+// The JS callback remains for two demoted jobs only: the live amplitude indicator, and an
+// in-memory PCM FALLBACK in case file output fails on some device.
+//
+// MOAT: the recording exists transiently as a file in the app sandbox and is deleted at
+// stop(); it is never uploaded, shared, or retained. connect() is never called.
 
 const SAMPLE_RATE = 16000;
-const BUFFER_LENGTH = 512;
-const MAX_SECONDS = 20 * 60; // hard cap on retained audio (memory + safety)
+const BUFFER_LENGTH = 2048; // amplitude-only callback → big buffers, few callbacks
+const MAX_SECONDS = 20 * 60; // hard cap on retained fallback audio (memory + safety)
 
 export interface CaptureController {
-  /** Stop the recorder and return the accumulated mono 16 kHz PCM (resampled if needed). */
+  /** Stop the recorder and return the mono 16 kHz PCM (from the native file when available). */
   stop(): Promise<Float32Array>;
   /** Whether capture is still running. */
   active(): boolean;
   /** Seconds of audio captured so far. */
   seconds(): number;
-  /** The ACTUAL sample rate the device delivered (may differ from the requested 16 kHz). */
+  /** The ACTUAL sample rate delivered (from the recorded file header, else the callback). */
   deliveredRate(): number;
-}
-
-/** Linear-resample mono PCM to 16 kHz. No-op when already 16 kHz. */
-function resampleTo16k(input: Float32Array, inRate: number): Float32Array {
-  if (inRate === SAMPLE_RATE || input.length === 0) return input;
-  const ratio = inRate / SAMPLE_RATE;
-  const outLen = Math.floor(input.length / ratio);
-  const out = new Float32Array(outLen);
-  for (let i = 0; i < outLen; i++) {
-    const pos = i * ratio;
-    const i0 = Math.floor(pos);
-    const frac = pos - i0;
-    const a = input[i0];
-    const b = i0 + 1 < input.length ? input[i0 + 1] : a;
-    out[i] = a + (b - a) * frac;
-  }
-  return out;
 }
 
 export interface CaptureOptions {
@@ -52,6 +50,20 @@ function frameRms(frame: Float32Array): number {
   let s = 0;
   for (let i = 0; i < frame.length; i++) s += frame[i] * frame[i];
   return Math.min(1, Math.sqrt(s / Math.max(1, frame.length)) * 4);
+}
+
+/** Read + parse the recorder's WAV, delete it, return 16 kHz mono PCM. */
+async function readRecordingFile(path: string): Promise<{ pcm: Float32Array; rate: number }> {
+  const uri = path.startsWith("file://") ? path : `file://${path}`;
+  const f = new File(uri);
+  const bytes = new Uint8Array(await f.arrayBuffer());
+  try {
+    f.delete(); // transient artifact — never retained (moat)
+  } catch {
+    // deletion best-effort; sandbox-only file
+  }
+  const { rate, samples } = parseWav(bytes);
+  return { pcm: resampleTo16k(samples, rate), rate };
 }
 
 /**
@@ -66,20 +78,45 @@ export async function startCapture(opts: CaptureOptions = {}): Promise<CaptureCo
   await AudioManager.setAudioSessionActivity(true); // rejects on failure in 0.13.1
 
   const recorder = new AudioRecorder();
+
+  // PRIMARY: native 16 kHz / 16-bit mono WAV — immune to JS-thread jank.
+  let fileOutput = false;
+  try {
+    const res = recorder.enableFileOutput({
+      channelCount: 1,
+      format: FileFormat.Wav,
+      preset: {
+        sampleRate: SAMPLE_RATE,
+        bitDepth: BitDepth.Bit16,
+        bitRate: SAMPLE_RATE * 16,
+        iosQuality: IOSAudioQuality.Max,
+        flacCompressionLevel: FlacCompressionLevel.L5, // unused for wav; type requires it
+      },
+      directory: FileDirectory.Cache,
+      fileNamePrefix: "consult-rec",
+    });
+    fileOutput = res.status === "success";
+  } catch {
+    fileOutput = false; // fall back to JS PCM accumulation below
+  }
+
+  // FALLBACK + amplitude: JS callback. When file output is on, big buffers keep this cheap.
   const chunks: Float32Array[] = [];
   let total = 0;
-  // Cap sized to the DEVICE rate below (up to 48 kHz), so a long recording isn't cut short.
   const cap = 48000 * MAX_SECONDS;
   let live = true;
-  let rate = SAMPLE_RATE; // actual delivered rate (from the buffer) — may be 44.1/48 kHz
+  let cbRate = SAMPLE_RATE; // actual delivered rate per the callback buffers
+  let fileRate = 0; // actual rate per the recorded file header (authoritative)
 
   recorder.onAudioReady({ sampleRate: SAMPLE_RATE, bufferLength: BUFFER_LENGTH, channelCount: 1 }, ({ buffer, numFrames }) => {
-    rate = buffer.sampleRate || SAMPLE_RATE; // the device's real rate, not the requested one
+    cbRate = buffer.sampleRate || SAMPLE_RATE;
     const view = buffer.getChannelData(0).subarray(0, numFrames);
-    if (total < cap) {
+    if (!fileOutput && total < cap) {
       const take = Math.min(numFrames, cap - total); // clamp exactly to the cap
-      chunks.push(Float32Array.from(view.subarray(0, take))); // copy — view is a transient window
+      chunks.push(Float32Array.from(view.subarray(0, take))); // copy — view is transient
       total += take;
+    } else if (fileOutput) {
+      total += numFrames; // track duration only; PCM comes from the file
     }
     opts.onAmplitude?.(frameRms(view));
   });
@@ -91,32 +128,50 @@ export async function startCapture(opts: CaptureOptions = {}): Promise<CaptureCo
   let stopping: Promise<Float32Array> | null = null;
   return {
     active: () => live,
-    seconds: () => total / rate, // actual delivered rate, not the requested 16 kHz
-    deliveredRate: () => rate,
+    seconds: () => total / cbRate,
+    deliveredRate: () => fileRate || cbRate,
     // Idempotent: concurrent/repeat calls (e.g. stop() + unmount cleanup) share one promise,
     // so teardown runs once and every caller gets the same waveform.
     stop() {
       if (stopping) return stopping;
       live = false;
       stopping = (async () => {
+        let fileInfoPath: string | null = null;
         try {
           recorder.clearOnAudioReady();
           recorder.clearOnError();
-          await recorder.stop().catch(() => {});
+          const stopRes = await recorder.stop().catch(() => null);
+          if (stopRes && stopRes.status === "success" && stopRes.paths?.length) {
+            fileInfoPath = stopRes.paths[0];
+          }
           await AudioManager.setAudioSessionActivity(false).catch(() => {});
         } catch {
           // native unavailable — nothing to release
         }
-        const assembled = new Float32Array(total);
-        let o = 0;
-        for (const c of chunks) {
-          assembled.set(c, o); // sum(chunks) === total (capped above), so this never overruns
-          o += c.length;
+
+        // Primary: the native recording file (gap-free).
+        if (fileOutput && fileInfoPath) {
+          try {
+            const { pcm, rate } = await readRecordingFile(fileInfoPath);
+            fileRate = rate;
+            chunks.length = 0;
+            return pcm;
+          } catch {
+            // fall through to the JS fallback (empty when fileOutput was on — but try anyway)
+          }
+        }
+
+        // Fallback: accumulated JS PCM (may have gaps under JS jank — better than nothing).
+        const assembled = new Float32Array(fileOutput ? 0 : total);
+        if (!fileOutput) {
+          let o = 0;
+          for (const c of chunks) {
+            assembled.set(c, o);
+            o += c.length;
+          }
         }
         chunks.length = 0; // drop references — audio discarded
-        // The device often ignores the requested 16 kHz and delivers 44.1/48 kHz; Whisper needs
-        // 16 kHz, so resample here (no-op if already 16 kHz).
-        return resampleTo16k(assembled, rate);
+        return resampleTo16k(assembled, cbRate);
       })();
       return stopping;
     },
