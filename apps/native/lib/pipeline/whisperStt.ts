@@ -68,6 +68,17 @@ export function whisperIsBundled(accuracy: "fast" | "high"): boolean {
   return whisperModelFor(accuracy).asset != null;
 }
 
+/** True if the tier's model is usable right now — bundled, or already downloaded. */
+export function whisperIsReady(accuracy: "fast" | "high"): boolean {
+  const model = whisperModelFor(accuracy);
+  if (model.asset != null) return true;
+  try {
+    return new File(Paths.document, model.file).exists;
+  } catch {
+    return false; // native FS unavailable (web/tests) — treat as not downloaded
+  }
+}
+
 let ctxPromise: Promise<WhisperContext> | null = null;
 let loadedFile: string | null = null;
 
