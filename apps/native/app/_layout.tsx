@@ -85,6 +85,7 @@ export default function RootLayout() {
             <Stack.Screen name="enroll" options={{ headerShown: true }} />
             <Stack.Screen name="diarize-lab" options={{ headerShown: true }} />
             <Stack.Screen name="ocr-lab" options={{ headerShown: true }} />
+            <Stack.Screen name="stt-lab" options={{ headerShown: false }} />
             <Stack.Screen name="on-device" options={{ headerShown: true }} />
           </Stack>
         </GestureHandlerRootView>
