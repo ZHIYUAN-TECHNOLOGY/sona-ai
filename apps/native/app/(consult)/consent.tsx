@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Card } from "@/components/consult/Card";
@@ -12,6 +12,7 @@ import { CardHeading } from "@/components/consult/SectionLabel";
 import { Steps } from "@/components/consult/Steps";
 import { Toggle } from "@/components/consult/Toggle";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
+import { clearPendingScanDoc } from "@/lib/pipeline/scanAttach";
 import { templateById } from "@/lib/pipeline/templates";
 import { colors, font, radius, space } from "@/lib/theme";
 
@@ -34,9 +35,21 @@ export default function ConsentScreen() {
   // Escape hatch: consent is the flow entry (launched from the Record capsule) and
   // swipe-back is disabled, so an accidental start must be cancellable back to Today.
   const cancel = useCallback(() => {
+    clearPendingScanDoc(); // abandoned scan handoff must never attach to a later consult
     if (router.canDismiss?.()) router.dismissAll();
     router.navigate("/");
   }, []);
+
+  // Backstop for ANY exit that isn't startConsult (cancel, swipe, crash-nav): a scan
+  // doc parked by "New consult with this document" is one-shot — if this screen goes
+  // away without starting, the handoff dies with it. startConsult consumes the id
+  // before unmount, so the successful path is unaffected.
+  useEffect(
+    () => () => {
+      clearPendingScanDoc();
+    },
+    [],
+  );
 
   return (
     <ConsultScreen

@@ -119,7 +119,45 @@ export type AuditStage =
   | "sign"
   | "audio-discard"
   | "export"
-  | "network-check";
+  | "network-check"
+  | "doc-attach"
+  | "image-discard";
+
+/** Lifecycle of a scanned document. review → saved (standalone) or attached (consult). */
+export type ScannedDocStatus = "review" | "saved" | "attached";
+
+/**
+ * A scanned paper document (Smart Scan): referral letter, lab result, prescription…
+ * Captured with the native document scanner, OCR'd on-device, de-identified with the
+ * same redactor as the transcript. `rawText` is device-only PHI (like the raw
+ * transcript); only `redactedText`/`summary` may ever cross the boundary. Page images
+ * are DESTROYED the moment OCR completes — `imageUris` is persisted empty and exists
+ * only as a defensive seam (sign-time discard sweeps any stragglers from old rows).
+ */
+export interface ScannedDocument {
+  id: string;
+  createdAt: number;
+  updatedAt: number;
+  /** Linked consult, or null for a standalone document note. Signed consults never accept new docs. */
+  consultId: string | null;
+  /** PII-free list label, e.g. "Lab result · 2 pages". */
+  title: string;
+  /** Keyword-classified type: referral | lab-result | prescription | discharge | other. */
+  docType: string;
+  /** Page count at capture (images may be discarded later). */
+  pages: number;
+  /** Local page-image URIs; emptied on discard. Never leave the device. */
+  imageUris: string[];
+  /** Raw OCR text — device-only, never transmitted. */
+  rawText: string;
+  /** De-identified text (DOC_-namespaced tokens) — the only form that may cross the boundary. */
+  redactedText: string;
+  /** High-confidence identifiers redacted from the raw text. */
+  identifiers: number;
+  /** On-device AI summary (de-identified Markdown), or null before/without generation. */
+  summary: string | null;
+  status: ScannedDocStatus;
+}
 
 /** One append-only audit row. Never mutated after write. */
 export interface AuditEntry {

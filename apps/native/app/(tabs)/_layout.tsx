@@ -25,9 +25,11 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Icon sf={{ default: "doc.text", selected: "doc.text.fill" }} />
         <NativeTabs.Trigger.Label>Notes</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="knowledge">
-        <NativeTabs.Trigger.Icon sf="sparkles" />
-        <NativeTabs.Trigger.Label>Knowledge</NativeTabs.Trigger.Label>
+      {/* Smart Scan replaced Knowledge in the 4-slot capsule (Jul 2026) — scanning paper
+          docs is a headline feature; Knowledge lives on via Settings → Knowledge search. */}
+      <NativeTabs.Trigger name="scan">
+        <NativeTabs.Trigger.Icon sf={{ default: "doc.viewfinder", selected: "doc.viewfinder.fill" }} />
+        <NativeTabs.Trigger.Label>Smart Scan</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings">
         <NativeTabs.Trigger.Icon sf="gearshape" />

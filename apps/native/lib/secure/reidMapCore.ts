@@ -28,15 +28,22 @@ export function buildReidMap(base: ReidMap, entries: ReidMap): ReidMap {
   return { ...base, ...entries };
 }
 
+const RE_ESCAPE = /[.*+?^${}()|[\]\\]/g;
+
 /**
  * Pure, on-device substitution: replace each token in `text` with its real value.
  * Longer tokens are replaced first so NAME_UNCERTAIN_1 wins over a NAME_1 substring.
+ * Replacement is BOUNDARY-GUARDED: a token must not be preceded by a word character
+ * (so the consult's NAME_1 never fires inside a scanned document's DOC_NAME_1 token —
+ * that spliced the consult patient's real name into the document's slot) and must not
+ * be followed by a digit (so NAME_1 never eats the front of an unmapped NAME_12).
  * The result must never be transmitted.
  */
 export function applyReidMap(map: ReidMap, text: string): string {
   let out = text;
   for (const token of Object.keys(map).sort((a, b) => b.length - a.length)) {
-    out = out.split(token).join(map[token]);
+    const re = new RegExp(`(?<![A-Za-z0-9_])${token.replace(RE_ESCAPE, "\\$&")}(?![0-9])`, "g");
+    out = out.replace(re, () => map[token]);
   }
   return out;
 }

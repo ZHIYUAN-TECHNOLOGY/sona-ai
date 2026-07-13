@@ -63,12 +63,20 @@
       "expo-web-browser",
       [
         "react-native-enriched-markdown",
-        { "enableMath": false }
+        {
+          "enableMath": false
+        }
       ],
       [
         "expo-image-picker",
         {
           "photosPermission": "Aurio reads text from document photos on-device to add to the consult. Photos stay on this phone.",
+          "cameraPermission": "Aurio scans documents (labs, referrals) on-device. Images stay on this phone."
+        }
+      ],
+      [
+        "react-native-document-scanner-plugin",
+        {
           "cameraPermission": "Aurio scans documents (labs, referrals) on-device. Images stay on this phone."
         }
       ],

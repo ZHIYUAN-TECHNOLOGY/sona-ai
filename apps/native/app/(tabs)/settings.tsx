@@ -111,6 +111,13 @@ export default function SettingsScreen() {
           label="AI models & downloads"
           onPress={() => router.push("/ai-models" as Href)}
         />
+        {/* Knowledge search moved here when Smart Scan took its tab slot. */}
+        <SettingsRow
+          icon="sparkles"
+          label="Knowledge search"
+          value="On-device reference"
+          onPress={() => router.push("/knowledge" as Href)}
+        />
         <SettingsRow
           icon="search-outline"
           label="Semantic search"

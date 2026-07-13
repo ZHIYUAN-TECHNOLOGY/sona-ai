@@ -15,7 +15,12 @@ import * as SQLite from "expo-sqlite";
 import * as Crypto from "expo-crypto";
 
 import type { SearchDoc } from "../search/noteSearch";
-import { buildAudit, buildConsult, buildTranscriptSegment } from "./builders";
+import {
+  buildAudit,
+  buildConsult,
+  buildScannedDocument,
+  buildTranscriptSegment,
+} from "./builders";
 import type {
   AuditEntry,
   AuditStage,
@@ -23,6 +28,8 @@ import type {
   Consult,
   ConsultStatus,
   NoteOrder,
+  ScannedDocStatus,
+  ScannedDocument,
   Speaker,
   TranscriptSegment,
 } from "./types";
@@ -30,7 +37,7 @@ import type {
 const DB_NAME = "sona.db";
 
 /** Schema version — bump + add a migration branch in initDb when the schema changes. */
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -45,7 +52,12 @@ function newId(): string {
 
 // Pure row builders live in ./builders (native-free, unit-testable). Re-exported
 // here so the whole persistence API is importable from "lib/db".
-export { buildAudit, buildConsult, buildTranscriptSegment } from "./builders";
+export {
+  buildAudit,
+  buildConsult,
+  buildScannedDocument,
+  buildTranscriptSegment,
+} from "./builders";
 
 // --- Schema ------------------------------------------------------------------
 
@@ -119,6 +131,30 @@ CREATE TABLE IF NOT EXISTS note_embedding (
   updatedAt  INTEGER NOT NULL,
   FOREIGN KEY (consultId) REFERENCES consult(id)
 );
+
+-- Scanned paper documents (Smart Scan, v5). rawText + imageUris are device-only PHI
+-- (same posture as transcript_segment.text — see the HARDENING TODO above); only
+-- redactedText/summary may ever cross the boundary. consultId is NULL for standalone
+-- document notes and set on attach; page images are deleted when the linked consult
+-- signs (mirrors audio-discard) or when a standalone note is saved. New TABLE via
+-- IF NOT EXISTS auto-creates on existing DBs, so no ALTER migration is needed.
+CREATE TABLE IF NOT EXISTS scanned_document (
+  id            TEXT PRIMARY KEY NOT NULL,
+  createdAt     INTEGER NOT NULL,
+  updatedAt     INTEGER NOT NULL,
+  consultId     TEXT,
+  title         TEXT NOT NULL,
+  docType       TEXT NOT NULL,
+  pages         INTEGER NOT NULL,
+  imageUris     TEXT NOT NULL,   -- JSON-encoded string[] (local file URIs)
+  rawText       TEXT NOT NULL,
+  redactedText  TEXT NOT NULL,
+  identifiers   INTEGER NOT NULL,
+  summary       TEXT,
+  status        TEXT NOT NULL,
+  FOREIGN KEY (consultId) REFERENCES consult(id)
+);
+CREATE INDEX IF NOT EXISTS idx_doc_consult ON scanned_document(consultId);
 
 -- Enrolled clinician voiceprint for speaker diarization (v4). A single row (id='self')
 -- holds the doctor's speaker embedding so the diarizer can label which voice is the
@@ -400,6 +436,11 @@ export async function deleteConsult(consultId: string): Promise<void> {
     await db.runAsync(`DELETE FROM clinical_note WHERE consultId = ?;`, [consultId]);
     await db.runAsync(`DELETE FROM audit_entry WHERE consultId = ?;`, [consultId]);
     await db.runAsync(`DELETE FROM note_embedding WHERE consultId = ?;`, [consultId]);
+    // Detach (don't delete) scanned documents — the scan itself remains in Smart Scan.
+    await db.runAsync(
+      `UPDATE scanned_document SET consultId = NULL, status = 'saved' WHERE consultId = ?;`,
+      [consultId],
+    );
     await db.runAsync(`DELETE FROM consult WHERE id = ?;`, [consultId]);
   });
 }
@@ -426,6 +467,11 @@ export async function pruneEmptyDrafts(): Promise<number> {
       await db.runAsync(`DELETE FROM audit_entry WHERE consultId = ?;`, [d.id]);
       await db.runAsync(`DELETE FROM note_embedding WHERE consultId = ?;`, [d.id]);
       await db.runAsync(`DELETE FROM transcript_segment WHERE consultId = ?;`, [d.id]);
+      // Detach scanned docs (FK) — the scan survives in Smart Scan as a standalone doc.
+      await db.runAsync(
+        `UPDATE scanned_document SET consultId = NULL, status = 'saved' WHERE consultId = ?;`,
+        [d.id],
+      );
       await db.runAsync(`DELETE FROM consult WHERE id = ?;`, [d.id]);
     }
     count = drafts.length;
@@ -521,6 +567,150 @@ export async function getNoteEmbeddings(
     [model],
   );
   return rows.map((r) => ({ consultId: r.consultId, vec: JSON.parse(r.vec) as number[] }));
+}
+
+// --- Scanned documents (Smart Scan) -------------------------------------------
+
+interface DocRow {
+  id: string;
+  createdAt: number;
+  updatedAt: number;
+  consultId: string | null;
+  title: string;
+  docType: string;
+  pages: number;
+  imageUris: string;
+  rawText: string;
+  redactedText: string;
+  identifiers: number;
+  summary: string | null;
+  status: string;
+}
+
+function docFromRow(row: DocRow): ScannedDocument {
+  let imageUris: string[] = [];
+  try {
+    imageUris = JSON.parse(row.imageUris) as string[];
+  } catch {
+    imageUris = [];
+  }
+  return { ...row, imageUris, status: row.status as ScannedDocStatus };
+}
+
+const DOC_COLS =
+  "id, createdAt, updatedAt, consultId, title, docType, pages, imageUris, rawText, redactedText, identifiers, summary, status";
+
+/** Persist a freshly scanned document (status "review"). Returns the row. */
+export async function createScannedDocument(input: {
+  docType: string;
+  title: string;
+  pages: number;
+  imageUris: string[];
+  rawText: string;
+  redactedText: string;
+  identifiers: number;
+}): Promise<ScannedDocument> {
+  const db = await initDb();
+  const doc = buildScannedDocument({ ...input, id: newId() });
+  await db.runAsync(
+    `INSERT INTO scanned_document (${DOC_COLS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+    [
+      doc.id,
+      doc.createdAt,
+      doc.updatedAt,
+      doc.consultId,
+      doc.title,
+      doc.docType,
+      doc.pages,
+      JSON.stringify(doc.imageUris),
+      doc.rawText,
+      doc.redactedText,
+      doc.identifiers,
+      doc.summary,
+      doc.status,
+    ],
+  );
+  return doc;
+}
+
+/** Read one scanned document, or null. */
+export async function getScannedDocument(id: string): Promise<ScannedDocument | null> {
+  const db = await initDb();
+  const row = await db.getFirstAsync<DocRow>(
+    `SELECT ${DOC_COLS} FROM scanned_document WHERE id = ? LIMIT 1;`,
+    [id],
+  );
+  return row ? docFromRow(row) : null;
+}
+
+/** All scanned documents, newest first — powers the Smart Scan tab list. */
+export async function listScannedDocuments(): Promise<ScannedDocument[]> {
+  const db = await initDb();
+  const rows = await db.getAllAsync<DocRow>(
+    `SELECT ${DOC_COLS} FROM scanned_document ORDER BY createdAt DESC;`,
+  );
+  return rows.map(docFromRow);
+}
+
+/** Documents attached to a consult — powers the note screen's document context. */
+export async function getConsultDocuments(consultId: string): Promise<ScannedDocument[]> {
+  const db = await initDb();
+  const rows = await db.getAllAsync<DocRow>(
+    `SELECT ${DOC_COLS} FROM scanned_document WHERE consultId = ? ORDER BY createdAt ASC;`,
+    [consultId],
+  );
+  return rows.map(docFromRow);
+}
+
+/** Persist the clinician's text corrections (review screen edit). Re-redacted by the caller. */
+export async function updateScannedDocumentText(
+  id: string,
+  rawText: string,
+  redactedText: string,
+  identifiers: number,
+): Promise<void> {
+  const db = await initDb();
+  await db.runAsync(
+    `UPDATE scanned_document SET rawText = ?, redactedText = ?, identifiers = ?, updatedAt = ? WHERE id = ?;`,
+    [rawText, redactedText, identifiers, Date.now(), id],
+  );
+}
+
+/** Store the on-device AI summary and mark the doc saved (standalone document note). */
+export async function setScannedDocumentSummary(
+  id: string,
+  summary: string | null,
+  status: ScannedDocStatus = "saved",
+): Promise<void> {
+  const db = await initDb();
+  await db.runAsync(
+    `UPDATE scanned_document SET summary = ?, status = ?, updatedAt = ? WHERE id = ?;`,
+    [summary, status, Date.now(), id],
+  );
+}
+
+/** Link a document to a consult (status "attached"). The caller audits + guards signed consults. */
+export async function attachScannedDocument(id: string, consultId: string): Promise<void> {
+  const db = await initDb();
+  await db.runAsync(
+    `UPDATE scanned_document SET consultId = ?, status = 'attached', updatedAt = ? WHERE id = ?;`,
+    [consultId, Date.now(), id],
+  );
+}
+
+/** Clear a document's page-image URIs after the files are deleted (sign / note save). */
+export async function clearScannedDocumentImages(id: string): Promise<void> {
+  const db = await initDb();
+  await db.runAsync(`UPDATE scanned_document SET imageUris = '[]', updatedAt = ? WHERE id = ?;`, [
+    Date.now(),
+    id,
+  ]);
+}
+
+/** Permanently delete a scanned document row. Image files are the caller's to delete. */
+export async function deleteScannedDocument(id: string): Promise<void> {
+  const db = await initDb();
+  await db.runAsync(`DELETE FROM scanned_document WHERE id = ?;`, [id]);
 }
 
 // --- Doctor voiceprint (diarization enrollment) ------------------------------
