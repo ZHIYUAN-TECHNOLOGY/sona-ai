@@ -190,31 +190,35 @@ export default function ScanReviewScreen() {
       onBack={generating ? undefined : () => router.back()}
       right={<Pill label="On-device" variant="green" dot />}
       footer={
+        // Stacked full-width CTAs: two long labels side-by-side wrapped to two lines
+        // (ugly, unbalanced). Primary action on top, quiet secondary under it.
         <View style={styles.footerCol}>
           {banner ? <Text style={styles.banner}>{banner}</Text> : null}
-          <View style={styles.footerRow}>
-            <PrimaryButton
-              label={
-                summary && !dirty
-                  ? "Regenerate note"
-                  : summaryPhase === "error"
-                    ? "Retry document note"
-                    : "Create document note"
-              }
-              onPress={makeSummary}
-              disabled={generating}
-              icon={<Ionicons name="sparkles" size={16} color={colors.white} />}
-              style={styles.grow}
-            />
-            <PrimaryButton
-              label="Attach to consult"
-              variant="ghost"
-              onPress={openAttach}
-              disabled={generating || doc.status === "attached"}
-              icon={<Ionicons name="folder-open-outline" size={16} color={colors.ink} />}
-              style={styles.grow}
-            />
-          </View>
+          <PrimaryButton
+            label={
+              summary && !dirty
+                ? "Regenerate document note"
+                : summaryPhase === "error"
+                  ? "Retry document note"
+                  : "Create document note"
+            }
+            onPress={makeSummary}
+            disabled={generating}
+            icon={<Ionicons name="sparkles" size={16} color={colors.white} />}
+          />
+          <PrimaryButton
+            label={doc.status === "attached" ? "Attached to consult" : "Attach to consult"}
+            variant="ghost"
+            onPress={openAttach}
+            disabled={generating || doc.status === "attached"}
+            icon={
+              <Ionicons
+                name={doc.status === "attached" ? "checkmark-circle" : "folder-open-outline"}
+                size={16}
+                color={doc.status === "attached" ? colors.greenInk : colors.ink}
+              />
+            }
+          />
         </View>
       }
     >
@@ -300,7 +304,5 @@ const styles = StyleSheet.create({
   busyText: { ...font.body, color: colors.greenInk },
   note: { ...font.bodySm, color: colors.greenInk, marginTop: space.sm },
   banner: { ...font.bodySm, color: colors.greenInk, textAlign: "center", marginBottom: space.xs },
-  footerCol: { gap: space.xs },
-  footerRow: { flexDirection: "row", gap: space.sm },
-  grow: { flex: 1 },
+  footerCol: { gap: space.sm },
 });
