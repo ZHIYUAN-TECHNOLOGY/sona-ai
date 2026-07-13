@@ -173,7 +173,7 @@ export default function AiModelsScreen() {
               color={colors.ink2}
             />
             <Text style={styles.actionText}>
-              {note.status === "error" ? "Download failed — tap to retry" : "Download over Wi-Fi · ~1.3GB, one-time"}
+              {note.status === "error" ? "Download failed — tap to retry" : "Download over Wi-Fi · ~2.5GB, one-time"}
             </Text>
           </Pressable>
         )}
@@ -181,7 +181,7 @@ export default function AiModelsScreen() {
       </Card>
 
       <Text style={styles.footer}>
-        Total footprint ~2GB with both downloads. Models are cached once and reused. Raw audio is
+        Total footprint ~3GB with both downloads. Models are cached once and reused. Raw audio is
         never stored or uploaded — only de-identified text may ever cross the boundary, and only
         on the optional cloud path.
       </Text>
