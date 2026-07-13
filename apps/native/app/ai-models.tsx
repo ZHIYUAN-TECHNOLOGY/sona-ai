@@ -107,7 +107,7 @@ export default function AiModelsScreen() {
           </View>
           <View style={styles.headText}>
             <Text style={styles.name}>Note AI</Text>
-            <Text style={styles.role}>{NOTE_MODEL_NAME} · writes the SOAP note + cleans the transcript</Text>
+            <Text style={styles.role}>{NOTE_MODEL_NAME} · writes the SOAP note + document summaries</Text>
           </View>
         </View>
         {note.status === "ready" ? (
@@ -137,7 +137,7 @@ export default function AiModelsScreen() {
               color={colors.ink2}
             />
             <Text style={styles.actionText}>
-              {note.status === "error" ? "Download failed — tap to retry" : "Download over Wi-Fi · ~1.1GB, one-time"}
+              {note.status === "error" ? "Download failed — tap to retry" : "Download over Wi-Fi · ~1.3GB, one-time"}
             </Text>
           </Pressable>
         )}

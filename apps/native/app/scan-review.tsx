@@ -109,15 +109,18 @@ export default function ScanReviewScreen() {
         setModelPct(p);
         if (p >= 1) setSummaryPhase("generating");
       });
-      setSummary(res.markdown);
+      // Title rides inside the persisted markdown (bold first line) so a reopened
+      // doc renders identically from the single summary column.
+      const summaryMd = `**${res.title}**\n\n${res.markdown}`;
+      setSummary(summaryMd);
       setSummaryPhase("done");
       setDirty(false);
       haptic("noteReady");
       // An attached doc STAYS attached — summarizing must not flip it back to
       // "saved" (that re-enabled Attach and let the doc move between consults).
       const keepStatus = doc.status === "attached" ? "attached" : "saved";
-      await setScannedDocumentSummary(doc.id, res.markdown, keepStatus);
-      setDoc((d) => (d ? { ...d, summary: res.markdown, status: keepStatus } : d));
+      await setScannedDocumentSummary(doc.id, summaryMd, keepStatus);
+      setDoc((d) => (d ? { ...d, summary: summaryMd, status: keepStatus } : d));
     } catch {
       setSummaryPhase("error");
     }

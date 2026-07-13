@@ -25,7 +25,8 @@ export function buildRagMessages(question: string, sources: KnowledgeDoc[]): Msg
     .join("\n");
   return [
     { role: "system", content: RAG_SYSTEM },
-    { role: "user", content: `Question: ${question.trim()}\n\nReferences:\n${refs}` },
+    // /no_think: Qwen3 soft switch — skip the <think> phase (stripThink cleans residue).
+    { role: "user", content: `Question: ${question.trim()}\n\nReferences:\n${refs}\n/no_think` },
   ];
 }
 
