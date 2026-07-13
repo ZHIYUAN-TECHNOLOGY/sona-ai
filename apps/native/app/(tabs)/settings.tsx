@@ -245,6 +245,11 @@ export default function SettingsScreen() {
           onPress={() => router.push("/bench")}
         />
         <SettingsRow
+          icon="mic-outline"
+          label="STT test (Malaysian Whisper)"
+          onPress={() => router.push("/stt-lab" as Href)}
+        />
+        <SettingsRow
           icon="pulse-outline"
           label="Diarization lab"
           onPress={() => router.push("/diarize-lab" as Href)}
