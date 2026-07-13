@@ -15,7 +15,13 @@ import {
 // Trade up to QWEN2_5_3B_QUANTIZED (premium/tablet) or down to QWEN2_5_0_5B_QUANTIZED (low-end)
 // here — one-line change, no other code. (The Malaysian Whisper STT already handles the
 // Malaysian speech; the note LLM works on de-identified clinical text.)
-export const NOTE_MODEL = QWEN2_5_1_5B_QUANTIZED;
+// generationConfig: repetitionPenalty is the fix for degenerate loops ("He is not on any
+// current medical treatment." ×30) a small model falls into on thin transcripts; low
+// temperature keeps clinical notes factual rather than creative.
+export const NOTE_MODEL = {
+  ...QWEN2_5_1_5B_QUANTIZED,
+  generationConfig: { temperature: 0.3, topP: 0.9, repetitionPenalty: 1.15 },
+};
 export const NOTE_MODEL_NAME = "Qwen2.5-1.5B";
 
 // On-device text-embedding model for semantic search / RAG (the Knowledge tab and,

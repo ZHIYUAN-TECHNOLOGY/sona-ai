@@ -23,7 +23,10 @@ const BASE_RULES =
   "diagnosis, abnormal vitals, red-flag symptoms). Use ONLY information present in the transcript; " +
   "do not invent findings, medications, or doses. The identity-verification exchange (IC, phone, " +
   "address) is administrative — do not repeat it. Keep identifier tokens such as NAME_1 exactly as " +
-  "written. No preamble, no closing remarks.";
+  "written. No preamble, no closing remarks. If the transcript is brief or lacks clinical " +
+  "content, keep each section to ONE short line (e.g. 'Not discussed.') — NEVER pad, repeat " +
+  "sentences, or invent demographics (age, sex), history, examination findings, or diagnoses " +
+  "that are not stated in the transcript.";
 
 export const TEMPLATES: NoteTemplate[] = [
   {

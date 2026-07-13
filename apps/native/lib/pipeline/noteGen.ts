@@ -167,6 +167,31 @@ export function stripThink(text: string): string {
 }
 
 /**
+ * Collapse degenerate repetition loops in model output: a small model on a thin transcript can
+ * emit the same sentence dozens of times ("He is not on any current medical treatment." ×30).
+ * Keeps the FIRST occurrence of each consecutive duplicate sentence (per line, so Markdown
+ * structure is untouched); distinct content and non-adjacent repeats are preserved. Pure.
+ */
+export function collapseRepeats(text: string): string {
+  const norm = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  return text
+    .split(/\r?\n/)
+    .map((line) => {
+      const parts = line.split(/(?<=[.!?])\s+/);
+      const out: string[] = [];
+      let last = "";
+      for (const p of parts) {
+        const n = norm(p);
+        if (n && n === last) continue; // consecutive duplicate sentence → drop
+        last = n || last;
+        out.push(p);
+      }
+      return out.join(" ");
+    })
+    .join("\n");
+}
+
+/**
  * Join the de-identified transcript into a compact "Speaker: text" script for the
  * note prompt. Tokens (NAME_1, IC_1, …) are preserved verbatim.
  */
@@ -270,7 +295,7 @@ export async function generateNote(
   const t0 = Date.now();
   const rawOut = await llm.generate(messages);
   const generationMs = Date.now() - t0;
-  const clean = stripThink(rawOut);
+  const clean = collapseRepeats(stripThink(rawOut));
   const { title: rawTitle, rest: afterTitle } = parseTitle(clean);
   // Peel the trailing Flags line before anything else parses the body, so the
   // sidecar never leaks into the SOAP sections or the rendered markdown.

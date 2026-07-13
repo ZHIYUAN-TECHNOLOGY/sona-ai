@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 
 import type { KnowledgeDoc } from "../knowledge/corpus";
-import { buildTranscript, classifyOrder, generateNote, parseFlags, parseSoap, stripThink } from "./noteGen";
+import { buildTranscript, classifyOrder, collapseRepeats, generateNote, parseFlags, parseSoap, stripThink } from "./noteGen";
 import { buildGuidelineContext } from "./noteGrounding";
 import { highlightClinical, normalizeNoteMarkdown } from "./noteHighlight";
 import { soapToMarkdown } from "./noteFormat";
@@ -227,6 +227,13 @@ void (async () => {
   capturedSystem = "";
   await generateNote(mockLlm, segs, "BASE PROMPT.");
   ok(capturedSystem === "BASE PROMPT.", "no context → prompt unchanged (additive)");
+
+  // collapseRepeats — degenerate loop collapses to one sentence; distinct content survives.
+  const looped = "He is well. " + "He is not on any current medical treatment. ".repeat(30).trim();
+  const collapsed = collapseRepeats(looped);
+  ok(collapsed === "He is well. He is not on any current medical treatment.", "30x repeated sentence -> 1");
+  ok(collapseRepeats("## Plan\n- rest\n- rest more") === "## Plan\n- rest\n- rest more", "markdown lines untouched");
+  ok(collapseRepeats("A. B. A.") === "A. B. A.", "non-adjacent repeats preserved");
 
   // eslint-disable-next-line no-console
   console.log(`noteGen: ${checks}/${checks} checks pass`);
