@@ -7,7 +7,8 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Card } from "@/components/consult/Card";
 import { CardHeading } from "@/components/consult/SectionLabel";
 import { activeSpeakerEmbedderId } from "@/lib/diarize";
-import { EMBED_MODEL_NAME, NOTE_MODEL_NAME, STT_MODEL_NAME } from "@/lib/pipeline/model";
+import { EMBED_MODEL_NAME, NOTE_MODEL_NAME } from "@/lib/pipeline/model";
+import { whisperModelInfo } from "@/lib/pipeline/whisperStt";
 import { colors, font, space } from "@/lib/theme";
 
 // "On-device & privacy" — the moat made visible. A live network badge (run a whole consult
@@ -58,7 +59,7 @@ export default function OnDeviceScreen() {
         <Card>
           <CardHeading>Runs on this phone</CardHeading>
           <Row icon="hardware-chip-outline" label="Clinical note" value={NOTE_MODEL_NAME} />
-          <Row icon="mic-outline" label="Speech-to-text" value={STT_MODEL_NAME} />
+          <Row icon="mic-outline" label="Speech-to-text" value={whisperModelInfo("high").name} />
           <Row icon="search-outline" label="Search / grounding" value={EMBED_MODEL_NAME} />
           <Row icon="people-outline" label="Diarization" value={activeSpeakerEmbedderId()} />
           <Row icon="scan-outline" label="Document OCR" value="CRAFT + CRNN" />
