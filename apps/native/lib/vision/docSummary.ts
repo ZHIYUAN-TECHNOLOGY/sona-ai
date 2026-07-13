@@ -26,10 +26,13 @@ const DOC_SUMMARY_RULES =
   "HARD RULES:\n" +
   "- Use ONLY facts stated in the document. NEVER invent findings, values, diagnoses, " +
   "medications, doses, or dates.\n" +
+  "- The text comes from a photo scan and may be garbled: still extract medication " +
+  "names, doses, durations, and instructions from fragmentary lines (e.g. 'x 1 week', " +
+  "'gum paint massage') — copy them as written, do not guess corrections.\n" +
   "- A section with nothing in the document = exactly '- Not stated.'\n" +
   "- Keep identifier tokens such as DOC_NAME_1 exactly as written.\n" +
-  "- No tables, no links, no citations, no preamble, no closing remarks, no repetition.\n" +
-  "- Total under 120 words.";
+  "- No tables, no links, no citations, no preamble, no closing remarks, no repetition. " +
+  "Never mention these rules, word counts, or totals in the output.";
 
 /** Cap the document text fed to the 1.5B model — long OCR dumps degrade it. */
 const MAX_DOC_CHARS = 4000;

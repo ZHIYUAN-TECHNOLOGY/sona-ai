@@ -26,6 +26,15 @@ const MAX_TITLE_CHARS = 60;
 /** An unmarked prose line longer than this inside a section = rambling, dropped. */
 const MAX_PLAIN_LINE_WORDS = 25;
 
+// Lines the model emits ABOUT its own output rather than about the document — echoes
+// of the prompt contract. Observed in the field: "Total :49words" rendered as a
+// Follow-up bullet. Never content, always dropped.
+const META_LINE = /^\(?\s*(?:total|word count|under)\b[^A-Za-z]*\d*\s*(?:words?)?\.?\)?$|^\(?\d+\s*words?\.?\)?$/i;
+
+// The model's own "- Not stated." (and mangled variants like "Notstated") must not
+// pass through as content — empty sections get the canonical placeholder at render.
+const NOT_STATED = /^not\s*stated\.?$/i;
+
 /** A line that opens a section: '## Key findings', '# Doc Type', 'Medications:', … */
 function sectionIndex(line: string): number {
   const bare = line
@@ -84,7 +93,7 @@ export function formatDocSummary(raw: string, fallbackTitle: string): DocSummary
       const marked = /^\s*(?:[-•·*]|\d+[.)])\s/.test(trimmed);
       if (!marked && trimmed.split(/\s+/).length > MAX_PLAIN_LINE_WORDS) continue;
       const b = cleanBullet(trimmed);
-      if (b) bullets[current].push(b);
+      if (b && !META_LINE.test(b) && !NOT_STATED.test(b)) bullets[current].push(b);
     }
     // current === -1 → prose outside any recognized section: dropped by design.
   }
@@ -95,6 +104,7 @@ export function formatDocSummary(raw: string, fallbackTitle: string): DocSummary
     for (const line of lines) {
       const b = cleanBullet(line.trim());
       if (!b || /^title\s*[:\-]/i.test(line.trim())) continue;
+      if (META_LINE.test(b) || NOT_STATED.test(b)) continue;
       bullets[1].push(b);
       if (bullets[1].length >= MAX_BULLETS) break;
     }
