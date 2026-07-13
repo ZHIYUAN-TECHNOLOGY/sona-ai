@@ -24,7 +24,7 @@ const ROLES: { key: Speaker; label: string; color: string; bg: string; border: s
 // assigns each speaker a role (Doctor / Patient / Other). The corrected, labeled transcript
 // flows into redaction + the SOAP note — so edits here improve everything downstream.
 export default function LabelScreen() {
-  const { candidates, cleaning, applySpeakerLabels, updateCandidateText, captureDiag } =
+  const { candidates, applySpeakerLabels, updateCandidateText, captureDiag } =
     useConsultPipeline();
   const [labels, setLabels] = useState<Record<number, Speaker>>({});
   const [saving, setSaving] = useState(false);
@@ -111,17 +111,8 @@ export default function LabelScreen() {
       ) : (
         <>
           <View style={styles.banner}>
-            {cleaning ? (
-              <>
-                <ActivityIndicator size="small" color={colors.ink3} />
-                <Text style={styles.bannerText}>Cleaning up transcript on-device…</Text>
-              </>
-            ) : (
-              <>
-                <Ionicons name="sparkles-outline" size={14} color={colors.ink3} />
-                <Text style={styles.bannerText}>AI-cleaned · tap any line to correct it</Text>
-              </>
-            )}
+            <Ionicons name="create-outline" size={14} color={colors.ink3} />
+            <Text style={styles.bannerText}>Tap any line to correct it</Text>
           </View>
           {clusters.map(({ cluster, lines }, i) => (
             <Card key={cluster}>

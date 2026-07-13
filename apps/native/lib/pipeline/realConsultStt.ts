@@ -126,6 +126,9 @@ export async function finishRealCaptureClusters(capture: CaptureController): Pro
     diag.vadError = String(e); // diarize failed → everything falls back to one speaker below
   }
 
+  // NOTE: a tri-decode (forced zh/ms) + LLM-arbitration stage lived here briefly and was
+  // REMOVED: the multi-voice eval harness measured it as net harmful (overall 75.8% → 66.2%,
+  // Malay 95.8% → 68.1%). Pure whisper (beam 5) + human edit is the measured best transcript.
   const lang = langTag(tr.language);
   const candidates: ClusterSegment[] = cleanSegs.map((s, i) => ({
     cluster: turns[i]?.cluster ?? 0, // no diarization → single speaker
@@ -133,26 +136,5 @@ export async function finishRealCaptureClusters(capture: CaptureController): Pro
     rawText: s.text,
     lang,
   }));
-
-  // TRI-DECODE ENSEMBLE: re-decode each segment's own audio with FORCED 中文 and Malay. A
-  // code-switched line that the primary (single-language) pass romanized ("Oh long hentong")
-  // decodes natively in the forced pass (喉咙很痛). The Qwen cleanup then ARBITRATES per line
-  // between real acoustic alternatives instead of guessing from text. Best-effort: failures
-  // simply leave the alternates absent.
-  const model = whisperModelFor(getSttAccuracy());
-  for (let i = 0; i < cleanSegs.length; i++) {
-    const s = cleanSegs[i];
-    const window = sliceWindow(waveform, s.start, s.end);
-    if (window.length < SAMPLE_RATE / 2) continue; // <0.5s — too short to re-decode
-    try {
-      // Sequential — the native whisper context is single-flight.
-      const zh = await transcribeWaveform(window, { model, language: "zh" });
-      if (zh.text) candidates[i].altZh = zh.text;
-      const ms = await transcribeWaveform(window, { model, language: "ms" });
-      if (ms.text) candidates[i].altMs = ms.text;
-    } catch {
-      // alternates are optional — keep the primary decode
-    }
-  }
   return { candidates, diag };
 }
