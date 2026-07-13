@@ -14,9 +14,11 @@ import {
   getSttAccuracy,
   getSttLanguage,
   getSttMode,
+  getSemanticSearch,
   setSttAccuracy,
   setSttLanguage,
   setSttMode,
+  setSemanticSearch,
   type SttAccuracy,
   type SttLanguage,
 } from "@/lib/pipeline/sttMode";
@@ -47,6 +49,7 @@ export default function SettingsScreen() {
   const [enrolled, setEnrolled] = useState<boolean | null>(null);
   const [diarModel, setDiarModel] = useState("Mock (band-energy)");
   const [demo, setDemo] = useState(getSttMode() === "demo");
+  const [semantic, setSemantic] = useState(getSemanticSearch());
   const [accuracy, setAccuracyState] = useState<SttAccuracy>(getSttAccuracy());
   const [language, setLanguageState] = useState<SttLanguage>(getSttLanguage());
   // Pre-download state for the selected tier's model, so High mode can pre-warm on wifi instead
@@ -107,6 +110,20 @@ export default function SettingsScreen() {
           icon="cloud-download-outline"
           label="AI models & downloads"
           onPress={() => router.push("/ai-models" as Href)}
+        />
+        <SettingsRow
+          icon="search-outline"
+          label="Semantic search"
+          value={semantic ? undefined : "Off · lexical"}
+          right={
+            <Switch
+              value={semantic}
+              onValueChange={(v) => {
+                setSemantic(v);
+                setSemanticSearch(v);
+              }}
+            />
+          }
         />
         <SettingsRow
           icon="albums-outline"

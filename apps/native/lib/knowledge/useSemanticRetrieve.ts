@@ -2,6 +2,7 @@ import { useTextEmbeddings } from "react-native-executorch";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { EMBED_MODEL } from "@/lib/pipeline/model";
+import { getSemanticSearch } from "@/lib/pipeline/sttMode";
 
 import { getCorpus } from "./corpus";
 import { retrieve as lexicalRetrieve, type KnowledgeHit } from "./retrieve";
@@ -25,7 +26,9 @@ export interface RetrieveResult {
  * pack registered via registerCorpusSource is included automatically.
  */
 export function useSemanticRetrieve() {
-  const embed = useTextEmbeddings({ model: EMBED_MODEL });
+  // Opt-in: don't download the 397MB embeddings model unless semantic search is enabled — RAG
+  // degrades to the lexical ranker otherwise (see below).
+  const embed = useTextEmbeddings({ model: EMBED_MODEL, preventLoad: !getSemanticSearch() });
   const corpus = useMemo(() => getCorpus(), []);
   const vectorsRef = useRef<Float32Array[] | null>(null);
   const [ready, setReady] = useState(false);

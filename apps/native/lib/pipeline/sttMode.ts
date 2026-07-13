@@ -49,6 +49,19 @@ export type SttAccuracy = "fast" | "high";
 // the moat model. "fast" downloads a smaller generic multilingual base.
 let accuracy: SttAccuracy = "high";
 
+// Semantic search / RAG (the MiniLM embeddings model, ~397MB). OFF by default — the core scribe
+// doesn't need it, and search/RAG already degrade to a lexical ranker. Turning it on downloads
+// the model + enables cosine retrieval. Keeps the default footprint lean.
+let semanticSearch = false;
+
+export function getSemanticSearch(): boolean {
+  return semanticSearch;
+}
+
+export function setSemanticSearch(on: boolean): void {
+  semanticSearch = on;
+}
+
 export function getSttAccuracy(): SttAccuracy {
   return accuracy;
 }
