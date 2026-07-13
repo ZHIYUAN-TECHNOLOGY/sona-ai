@@ -109,9 +109,13 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   // the sim, so the last segments' writes can still be in flight at End-consult).
   const pendingWrites = useRef<Promise<unknown>[]>([]);
 
-  // On-device note model. Loads once for the whole consult flow so the note screen
-  // can draft without a cold start. Model is configured in ./model (NOTE_MODEL).
-  const llm = useLLM({ model: NOTE_MODEL });
+  // On-device note model — loaded ONLY AFTER transcription finishes. Loading the 1.3GB Qwen
+  // concurrently with whisper's Metal encode starves it (memory/GPU contention) and whisper
+  // emits timestamp-only garbage (proven by the launch self-test: same audio transcribes fine
+  // without Qwen loading, fails during a consult). Sequence: record → transcribe → THEN load
+  // Qwen while the clinician labels speakers (dead time). Configured in ./model (NOTE_MODEL).
+  const [llmWanted, setLlmWanted] = useState(false);
+  const llm = useLLM({ model: NOTE_MODEL, preventLoad: !llmWanted });
 
   const startConsult = useCallback(async (consentText: string) => {
     const consult = await beginConsult(consentText);
@@ -199,6 +203,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         setCaptureDiag({ seconds: 0, peak: 0, transcriptChars: 0, vadSegments: 0, sttError: String(e) });
       }
       captureSeqRef.current++; // a new capture's transcript is ready → eligible for one cleanup pass
+      setLlmWanted(true); // transcription done → NOW load the note LLM (labeling covers the wait)
       setStatus("transcribed");
       return "label"; // persistRecordingStop is deferred to applySpeakerLabels (after segments)
     }
@@ -209,6 +214,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
       captureRef.current.stop().catch(() => {});
       captureRef.current = null;
     }
+    setLlmWanted(true); // mock/demo path: no whisper conflict — load the note LLM now
     return "privacy";
   }, []);
 
@@ -349,6 +355,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     captureSeqRef.current = 0;
     cleanedSeqRef.current = 0;
     setCleaning(false);
+    setLlmWanted(false); // next consult transcribes BEFORE the LLM loads again
     setCaptureDiag(null);
     setRedaction(null);
     setNote(null);
