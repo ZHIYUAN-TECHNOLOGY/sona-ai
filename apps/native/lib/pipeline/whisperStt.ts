@@ -18,6 +18,8 @@ export interface Transcription {
   text: string;
   language: string;
   segments: SttSegment[];
+  /** Raw whisper output BEFORE special-token stripping (diagnostics). */
+  raw?: string;
 }
 
 /** A ggml model source: either a bundled app asset (offline) or a download URL. */
@@ -143,7 +145,7 @@ export async function transcribeWaveform(
     .filter((s) => s.text);
   const text = stripSpecialTokens(res.result ?? "");
   if (segments.length === 0 && text) segments.push({ start: 0, end: 0, text });
-  return { text, language: res.language, segments };
+  return { text, language: res.language, segments, raw: res.result ?? "" };
 }
 
 /** Encode 16 kHz mono float32 [-1,1] PCM → int16 little-endian (what whisper.rn transcribeData reads). */
