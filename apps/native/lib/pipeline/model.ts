@@ -1,6 +1,6 @@
 import {
   PARAPHRASE_MULTILINGUAL_MINILM_L12_V2_QUANTIZED,
-  QWEN3_4B_QUANTIZED,
+  QWEN3_1_7B_QUANTIZED,
 } from "react-native-executorch";
 
 // Single source of truth for the on-device note model. The rest of the pipeline
@@ -9,18 +9,18 @@ import {
 //   - NOTE_MODEL: the executorch model source passed to useLLM.
 //   - NOTE_MODEL_NAME: the human label shown in the note screen / audit / settings.
 //
-// Qwen3-4B (quantized, ~2.5GB, Apache-2.0) — the PREMIER note model executorch ships,
-// used across every text feature (consult SOAP note, document summaries, knowledge RAG).
-// The 1.5B/1.7B tiers under-extracted from noisy scanned text ("Not stated." for
-// sections the document clearly covered, Jul 2026); 4B is the accuracy tier a clinician
-// signs. RAM discipline: whisper is UNLOADED before this model loads (PipelineProvider /
-// docSummary) — 4B + resident whisper-turbo would pressure 6GB iPhones. Qwen3 emits
-// <think> blocks; every consumer runs stripThink, and prompts append /no_think.
-// Trade down to QWEN3_1_7B_QUANTIZED (~1.2GB, low-end devices) here — one-line change.
+// Qwen3-1.7B (quantized, ~1.2GB, Apache-2.0) — the note model for every text feature
+// (consult SOAP note, document summaries, knowledge RAG). Qwen3-4B (~2.5GB) was tried
+// and JETSAMMED the app at model load on the dev device (Jul 2026) — a 4B model plus
+// the app crosses iOS's per-app memory ceiling on 6GB iPhones; MedGemma-4B would hit
+// the same wall. 1.7B is the honest on-device ceiling for this device class. RAM
+// discipline stays: whisper is UNLOADED before this model loads (PipelineProvider /
+// docSummary). Qwen3 emits <think> blocks; every consumer runs stripThink, and prompts
+// append /no_think. QWEN3_4B_QUANTIZED remains a one-line upgrade for 8GB+ devices.
 // Sampling (temperature / repetitionPenalty) is applied at RUNTIME via llm.configure() in
 // PipelineProvider — executorch ignores a generationConfig field on the model object.
-export const NOTE_MODEL = QWEN3_4B_QUANTIZED;
-export const NOTE_MODEL_NAME = "Qwen3-4B";
+export const NOTE_MODEL = QWEN3_1_7B_QUANTIZED;
+export const NOTE_MODEL_NAME = "Qwen3-1.7B";
 
 // On-device text-embedding model for semantic search / RAG (the Knowledge tab and,
 // later, note search). Multilingual on purpose: a quantized paraphrase MiniLM that
