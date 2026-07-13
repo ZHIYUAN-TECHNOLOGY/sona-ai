@@ -2,6 +2,7 @@ import { LLMModule } from "react-native-executorch";
 
 import { NOTE_MODEL, NOTE_MODEL_NAME } from "../pipeline/model";
 import { collapseRepeats, stripThink, truncateDegenerate } from "../pipeline/noteGen";
+import { formatDocSummary } from "./docSummaryFormat";
 
 // On-device "abstract the document" summary — the Heidi-style wow for Smart Scan. Runs the
 // note model (Qwen) over the DE-IDENTIFIED, clinician-verified document text and returns a
@@ -34,7 +35,9 @@ const DOC_SUMMARY_RULES =
 const MAX_DOC_CHARS = 4000;
 
 export interface DocSummary {
-  /** Structured Markdown summary (Title + sections). De-identified. */
+  /** Short PII-free title for the summary card. */
+  title: string;
+  /** Normalized four-section Markdown (via formatDocSummary — never raw model text). */
   markdown: string;
   generationMs: number;
   model: string;
@@ -56,16 +59,20 @@ export async function generateDocSummary(
       generationConfig: { temperature: 0.3, topP: 0.9, repetitionPenalty: 1.3 },
     });
     const t0 = Date.now();
+    // /no_think: Qwen3 soft switch — skip the <think> phase (stripThink cleans residue).
     const raw = await llm.generate([
       { role: "system", content: DOC_SUMMARY_RULES },
       {
         role: "user",
-        content: `Document (detected type: ${docTypeLabel}):\n${redactedText.slice(0, MAX_DOC_CHARS)}`,
+        content: `Document (detected type: ${docTypeLabel}):\n${redactedText.slice(0, MAX_DOC_CHARS)}\n/no_think`,
       },
     ]);
-    const markdown = truncateDegenerate(collapseRepeats(stripThink(raw))).trim();
-    if (!markdown) throw new Error("empty summary");
-    return { markdown, generationMs: Date.now() - t0, model: NOTE_MODEL_NAME };
+    const clean = truncateDegenerate(collapseRepeats(stripThink(raw))).trim();
+    if (!clean) throw new Error("empty summary");
+    // NEVER render raw model output: parse into the four canonical sections, cap
+    // bullets, drop off-format rambling (same discipline as the consult note).
+    const { title, markdown } = formatDocSummary(clean, docTypeLabel);
+    return { title, markdown, generationMs: Date.now() - t0, model: NOTE_MODEL_NAME };
   } finally {
     try {
       llm.delete();

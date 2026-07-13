@@ -320,9 +320,11 @@ export async function generateNote(
     : systemPrompt;
   // Attached scanned documents ride in the USER message — they are encounter facts
   // (like the transcript), not instructions. De-identified + clinician-verified upstream.
-  const userContent = docContext
-    ? `${buildTranscript(segments)}\n\n${docContext}`
-    : buildTranscript(segments);
+  // Trailing /no_think = Qwen3's soft switch to skip the <think> phase (fast, and the
+  // strict format leaves nothing to deliberate about); stripThink cleans any residue.
+  const userContent =
+    (docContext ? `${buildTranscript(segments)}\n\n${docContext}` : buildTranscript(segments)) +
+    "\n/no_think";
   const messages: Msg[] = [
     { role: "system", content: system },
     { role: "user", content: userContent },
