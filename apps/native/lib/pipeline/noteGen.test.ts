@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 
 import type { KnowledgeDoc } from "../knowledge/corpus";
-import { buildTranscript, classifyOrder, collapseRepeats, generateNote, parseFlags, parseSoap, stripThink } from "./noteGen";
+import { buildTranscript, classifyOrder, collapseRepeats, generateNote, parseFlags, parseSoap, stripThink, truncateDegenerate } from "./noteGen";
 import { buildGuidelineContext } from "./noteGrounding";
 import { highlightClinical, normalizeNoteMarkdown } from "./noteHighlight";
 import { soapToMarkdown } from "./noteFormat";
@@ -234,6 +234,15 @@ void (async () => {
   ok(collapsed === "He is well. He is not on any current medical treatment.", "30x repeated sentence -> 1");
   ok(collapseRepeats("## Plan\n- rest\n- rest more") === "## Plan\n- rest\n- rest more", "markdown lines untouched");
   ok(collapseRepeats("A. B. A.") === "A. B. A.", "non-adjacent repeats preserved");
+
+  // truncateDegenerate — cuts synonym waterfalls + alphabet soup, keeps real notes.
+  const adverbs = "## Plan\n- rest and fluids\nmet appropriately thoroughly comprehensively accurately faithfully diligently conscientiously carefully meticulously attentively zealously enthusiastically fervently ardently";
+  ok(truncateDegenerate(adverbs) === "## Plan\n- rest and fluids", "adverb waterfall truncated");
+  const soup = "## Assessment\n- viral URTI likely\naaa bbb ccc dd ee ff gg hh iii jj kk ll mm nn oo pp";
+  ok(truncateDegenerate(soup) === "## Assessment\n- viral URTI likely", "alphabet soup truncated");
+  const good = "## Subjective\n- cough one week, sore throat, poor sleep\n## Plan\n- paracetamol 500 mg twice daily for three days if fever";
+  ok(truncateDegenerate(good) === good, "normal note untouched");
+  ok(truncateDegenerate("病人咳嗽一周，喉咙很痛，晚上睡不好，没有发烧，胃口正常，无其他不适症状。") !== "", "CJK line untouched");
 
   // eslint-disable-next-line no-console
   console.log(`noteGen: ${checks}/${checks} checks pass`);

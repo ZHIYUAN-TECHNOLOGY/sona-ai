@@ -12,21 +12,24 @@ export interface NoteTemplate {
   structure: string;
 }
 
-// Shared rules — identical safety + formatting contract for every template.
+// Shared rules — identical safety + formatting contract for every template. Deliberately SHORT
+// and rigid: the 1.5B note model rambles and invents when given latitude, so the contract is
+// terse bullets, hard caps, and nothing beyond the transcript.
 const BASE_RULES =
   "You are a clinical documentation assistant. Convert the de-identified consultation " +
-  "transcript into a clinical note in English. FIRST output a single line 'Title: ' followed " +
-  "by a 3 to 6 word clinical summary of the visit (chief complaint or assessment), containing " +
-  "NO patient names, IC numbers, phone numbers, addresses, or identifier tokens. Then output the " +
-  "note as GitHub-flavoured Markdown following the structure below, using level-2 headings " +
-  "('## ') for each section and **bold** to emphasise the key clinical findings (working " +
-  "diagnosis, abnormal vitals, red-flag symptoms). Use ONLY information present in the transcript; " +
-  "do not invent findings, medications, or doses. The identity-verification exchange (IC, phone, " +
-  "address) is administrative — do not repeat it. Keep identifier tokens such as NAME_1 exactly as " +
-  "written. No preamble, no closing remarks. If the transcript is brief or lacks clinical " +
-  "content, keep each section to ONE short line (e.g. 'Not discussed.') — NEVER pad, repeat " +
-  "sentences, or invent demographics (age, sex), history, examination findings, or diagnoses " +
-  "that are not stated in the transcript.";
+  "transcript into a SHORT clinical note in English.\n" +
+  "OUTPUT FORMAT (exactly):\n" +
+  "Line 1 — 'Title: ' + 3-6 word clinical summary (no names, IC, phones, addresses, tokens).\n" +
+  "Then the sections below as '## ' Markdown headings. Each section: 1-3 bullet points " +
+  "('- '), each bullet under 12 words. Plain factual clinical language.\n" +
+  "HARD RULES:\n" +
+  "- Use ONLY facts stated in the transcript. NEVER invent symptoms, findings, diagnoses, " +
+  "medications, doses, demographics (age, sex), or history.\n" +
+  "- A section with nothing in the transcript = exactly '- Not discussed.'\n" +
+  "- No tables, no links, no citations, no [G1]-style references, no asterisks, no preamble, " +
+  "no closing remarks, no repetition.\n" +
+  "- Keep identifier tokens such as NAME_1 exactly as written.\n" +
+  "- Total note under 150 words.";
 
 export const TEMPLATES: NoteTemplate[] = [
   {

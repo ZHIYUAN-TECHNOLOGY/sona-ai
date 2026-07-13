@@ -106,14 +106,14 @@ export async function draftClinicalNote(
   llm: LlmLike,
   systemPrompt?: string,
 ): Promise<DraftNote> {
-  // Ground the note in the on-device reference corpus: retrieve guidelines relevant to
-  // the DE-IDENTIFIED transcript and inject them into the prompt. Query + corpus are
-  // non-PHI and retrieval is on-device — the moat holds.
-  const { context: guidelineContext, refs: guidelines } = buildGuidelineContext(
-    buildTranscript(segments),
-    getCorpus(),
-    3,
-  );
+  // NOTE GROUNDING (RAG) IS OFF: injecting retrieved guidelines overwhelmed the 1.5B note
+  // model — a 3-line cough consult retrieved "cancer & TB pathways" and the note became
+  // oncology/TB fiction with [G1] citation tokens leaking into the text (Jul 2026).
+  // Re-enable only after the note eval harness proves a net win.
+  const NOTE_GROUNDING = false;
+  const { context: guidelineContext, refs: guidelines } = NOTE_GROUNDING
+    ? buildGuidelineContext(buildTranscript(segments), getCorpus(), 3)
+    : { context: "", refs: [] as ReturnType<typeof buildGuidelineContext>["refs"] };
   const deident = await generateNote(llm, segments, systemPrompt, guidelineContext); // model sees de-identified text only
 
   const map = (await getReidMap(consultId)) ?? {};
