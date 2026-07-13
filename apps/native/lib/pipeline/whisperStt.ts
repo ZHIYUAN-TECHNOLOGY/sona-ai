@@ -1,3 +1,4 @@
+import { Asset } from "expo-asset";
 import { Directory, File, Paths } from "expo-file-system";
 import { initWhisper, type WhisperContext } from "whisper.rn";
 
@@ -98,13 +99,28 @@ async function getCtx(model: WhisperModel, onProgress?: (p: number) => void): Pr
       // (single junk tokens), while the exact same model + params transcribe correctly on CPU and
       // on macOS Metal. whisper-small on modern A-series CPU is fast enough (few seconds per
       // clip). Re-evaluate per-device GPU enablement later.
+      //
+      // Bundled model: resolve the asset OURSELVES via expo-asset (downloadAsync → guaranteed
+      // local file) instead of handing whisper.rn the require() id — its dev-mode asset handling
+      // is unverified, and this lets us log the actual file the native side loads.
+      let path: string;
       if (model.asset != null) {
+        const asset = Asset.fromModule(model.asset);
+        await asset.downloadAsync();
+        if (!asset.localUri) throw new Error("model asset has no localUri after download");
+        path = asset.localUri;
         onProgress?.(1);
-        return initWhisper({ filePath: model.asset, useGpu: false });
+      } else {
+        path = await ensureModel(model, onProgress);
       }
-      const path = await ensureModel(model, onProgress);
-      // filePath accepts the file:// URI from expo-file-system.
-      return initWhisper({ filePath: path, useGpu: false });
+      const filePath = path.startsWith("file://") ? path.slice(7) : path;
+      try {
+        const size = new File(path).size;
+        console.log(`[WHISPER] model file: ${filePath} (${size ? Math.round(size / 1e6) : "?"}MB)`);
+      } catch {
+        console.log(`[WHISPER] model file: ${filePath} (size unknown)`);
+      }
+      return initWhisper({ filePath, useGpu: false });
     })().catch((e) => {
       ctxPromise = null;
       loadedFile = null;

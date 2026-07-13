@@ -69,6 +69,17 @@ export default function RootLayout() {
     void initSpeakerModel();
   }, []);
 
+  // DEV-ONLY: STT self-test on launch — transcribes a bundled known-good clip through the real
+  // engine path and logs [STT-SELFTEST] to Metro. Splits engine/model faults from mic faults
+  // without touching the microphone. Lazy import keeps whisper out of the prod launch path.
+  useEffect(() => {
+    if (!__DEV__) return;
+    const t = setTimeout(() => {
+      void import("@/lib/pipeline/sttSelfTest").then((m) => m.runSttSelfTest());
+    }, 3000);
+    return () => clearTimeout(t);
+  }, []);
+
   if (!fontsLoaded) return null;
 
   return (
