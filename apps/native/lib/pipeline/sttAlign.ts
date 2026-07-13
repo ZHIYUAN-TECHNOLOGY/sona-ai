@@ -54,6 +54,10 @@ export interface ClusterSegment {
   text: string;
   /** Original Whisper output, kept so the Review screen can show "raw" behind the cleaned text. */
   rawText?: string;
+  /** Alternate acoustic decodes of the SAME audio (forced 中文 / Malay) for the code-switch
+   *  arbitrator — real recognition alternatives, not LLM guesses. */
+  altZh?: string;
+  altMs?: string;
   lang?: RawSegment["lang"];
 }
 

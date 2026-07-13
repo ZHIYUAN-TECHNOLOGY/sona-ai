@@ -154,10 +154,11 @@ export async function transcribeWaveform(
     // NOTE: tokenTimestamps makes whisper.cpp emit special timestamp tokens (<|0.0|>) into the
     // segment text — we only need SEGMENT t0/t1 (always present), so leave it off.
     // Hallucination guards: greedy at temp 0 with fallback increments; beam search for stability.
+    // beam/bestOf 5 = the exact settings the Mac bake-off used (turbo Metal absorbs the cost).
     temperature: 0,
     temperatureInc: 0.2,
-    beamSize: 2,
-    bestOf: 2,
+    beamSize: 5,
+    bestOf: 5,
     maxThreads: 4,
   });
   const res = await promise;

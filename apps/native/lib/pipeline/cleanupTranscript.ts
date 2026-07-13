@@ -26,20 +26,23 @@ const SYSTEM_PROMPT = [
   "You are a proofreader for a MALAYSIAN clinic consultation transcript produced by on-device",
   "speech-to-text. The speakers code-switch between Malay, English, and Mandarin (中文), but the",
   "recognizer forces everything through ONE language, so words from the other languages come out",
-  "as phonetic gibberish. Restore each line to what the speaker actually said:",
-  "- Restore romanized Mandarin to 中文 characters when phonetically clear, e.g.",
-  '  "Oh long hentong" → "喉咙很痛", "nali bu sufu" → "哪里不舒服".',
-  "- Fix mangled Malay to correct Malay, e.g. \"beratuk\" → \"batuk\", \"apacaba\" → \"apa khabar\".",
-  '- Fix mangled English, e.g. "wanhwik" → "one week".',
+  "as phonetic gibberish. Each input line is an object:",
+  '  {"heard": <primary transcription>, "zh": <the SAME audio decoded as Mandarin>, "ms": <the SAME audio decoded as Malay>}',
+  "The zh/ms fields are REAL acoustic alternatives of the same speech — use them to reconstruct",
+  "what was actually said: for each phrase pick the rendition that reads as genuine language",
+  "(e.g. heard \"Oh long hentong\" + zh \"喉咙很痛\" → use 喉咙很痛; heard \"beratuk\" + ms",
+  '"batuk" → use batuk). English that already reads correctly stays as-is. Also restore',
+  'phonetically-obvious garble, e.g. "wanhwik" → "one week", "apacaba" → "apa khabar".',
   "- Common clinic words: batuk, demam, sakit, ubat, makan, selsema, 喉咙痛, 发烧, 头晕, 不舒服.",
   "STRICT RULES:",
   "- Do NOT add, remove, or infer any clinical information (symptoms, doses, numbers, findings).",
   "- Do NOT guess or invent names, places, or medications. If a proper noun is garbled and you are",
   "  not certain, replace just that word with [unclear]. Never fabricate a name.",
-  "- Only restore a word when the intended word is phonetically obvious; otherwise leave it as-is.",
+  "- The zh/ms decodes are OFTEN garbage for parts that were not that language — only take the",
+  "  fragments that are clearly the real utterance; never splice in unrelated content from them.",
   "- Preserve meaning and word order. Keep each line roughly the same length; never add sentences.",
-  "Return ONLY a JSON array of strings — one cleaned string per input line, same order, same count.",
-  "No commentary, no keys, no code fences.",
+  "Return ONLY a JSON array of strings — ONE final cleaned string per input line, same order,",
+  "same count. No commentary, no keys, no code fences.",
 ].join(" ");
 
 /** Pull the first top-level JSON string-array out of a model reply (tolerant of surrounding text). */
@@ -90,7 +93,12 @@ export async function cleanupClusters(
   if (withRaw.length === 0) return withRaw;
   const messages: Msg[] = [
     { role: "system", content: SYSTEM_PROMPT },
-    { role: "user", content: JSON.stringify(withRaw.map((c) => c.rawText)) },
+    {
+      role: "user",
+      content: JSON.stringify(
+        withRaw.map((c) => ({ heard: c.rawText, zh: c.altZh ?? "", ms: c.altMs ?? "" })),
+      ),
+    },
   ];
   try {
     const out = await llm.generate(messages);
