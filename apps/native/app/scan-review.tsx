@@ -1,37 +1,33 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams, type Href } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams, type Href } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
+import { NoteEditor } from "@/components/consult/NoteEditor";
 import { NoteMarkdown } from "@/components/consult/NoteMarkdown";
-import { OptionSheet, type SheetOption } from "@/components/consult/OptionSheet";
 import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { CardHeading } from "@/components/consult/SectionLabel";
 import { haptic } from "@/lib/haptics";
 import {
   getScannedDocument,
-  listConsults,
   setScannedDocumentSummary,
   updateScannedDocumentText,
 } from "@/lib/db";
-import type { Consult, ScannedDocument } from "@/lib/db/types";
-import { attachDocumentToConsult } from "@/lib/pipeline/consultPipeline";
-import { setPendingScanDoc } from "@/lib/pipeline/scanAttach";
+import type { ScannedDocument } from "@/lib/db/types";
 import { generateDocSummary } from "@/lib/vision/docSummary";
 import { redactDocText } from "@/lib/vision/ocr";
 import { colors, font, space } from "@/lib/theme";
 
 // Smart Scan review — the human gate between OCR and any AI use (same pattern as the
 // consult "Review & label" screen). The clinician reads and corrects the extracted text,
-// then either abstracts it into a structured document note (on-device Qwen) or attaches
-// it to a consult so its de-identified text informs that consult's note.
+// then either abstracts it into a structured document note (on-device Qwen, editable
+// like the consult note) or attaches it to a consult via the full-screen picker
+// (/scan-attach) so its de-identified text informs that consult's note.
 
 type SummaryPhase = "idle" | "loading-model" | "generating" | "done" | "error";
-
-const NEW_CONSULT_KEY = "__new__";
 
 export default function ScanReviewScreen() {
   const { docId } = useLocalSearchParams<{ docId: string }>();
@@ -42,9 +38,8 @@ export default function ScanReviewScreen() {
   const [summaryPhase, setSummaryPhase] = useState<SummaryPhase>("idle");
   const [modelPct, setModelPct] = useState(0);
   const [summary, setSummary] = useState<string | null>(null);
-  const [attachSheet, setAttachSheet] = useState(false);
-  const [openConsults, setOpenConsults] = useState<Consult[]>([]);
-  const [banner, setBanner] = useState("");
+  const [editingSummary, setEditingSummary] = useState(false);
+  const [savingSummary, setSavingSummary] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -60,6 +55,21 @@ export default function ScanReviewScreen() {
       })
       .catch(() => setDoc(null));
   }, [docId]);
+
+  // Refresh attach state when returning from the full-screen picker (/scan-attach) —
+  // status/consultId may have changed there. The clinician's in-progress TEXT edits are
+  // deliberately left untouched.
+  useFocusEffect(
+    useCallback(() => {
+      if (!docId) return;
+      getScannedDocument(docId)
+        .then((d) => {
+          if (!d) return;
+          setDoc((prev) => (prev ? { ...prev, status: d.status, consultId: d.consultId } : d));
+        })
+        .catch(() => {});
+    }, [docId]),
+  );
 
   // Persist clinician corrections (debounced): re-redact the edited text so the
   // de-identified form — the only form any AI sees — always matches what's on screen.
@@ -126,51 +136,31 @@ export default function ScanReviewScreen() {
     }
   };
 
-  // "Attach to consult" — only consults whose note ISN'T drafted yet (pre-note
-  // statuses). Attaching after the note exists would silently change nothing (nothing
-  // regenerates a drafted note), and signed consults are sealed outright.
-  const ATTACHABLE = ["consented", "recording", "transcribed", "redacted"];
-  const openAttach = async () => {
+  // "Attach to consult" — full-screen scrollable picker (/scan-attach). Flush any
+  // pending text edit first so the attached consult sees the corrected redaction.
+  const openAttach = () => {
+    if (!doc) return;
     haptic("tap");
     if (saveTimer.current) clearTimeout(saveTimer.current);
     persistText(text);
-    const all = await listConsults().catch(() => [] as Consult[]);
-    setOpenConsults(all.filter((c) => ATTACHABLE.includes(c.status)));
-    setAttachSheet(true);
+    router.push({ pathname: "/scan-attach", params: { docId: doc.id } } as Href);
   };
 
-  const attach = async (key: string) => {
+  // Clinician edit of the generated document note — same editor as the consult note.
+  // The edited Markdown becomes the stored summary; attach state is preserved.
+  const saveSummaryEdit = async (edited: string) => {
     if (!doc) return;
-    if (key === NEW_CONSULT_KEY) {
-      // Park the doc; PipelineProvider.startConsult attaches it when the row exists.
-      setPendingScanDoc(doc.id);
-      router.push("/consent" as Href);
-      return;
-    }
+    setSavingSummary(true);
     try {
-      await attachDocumentToConsult(doc.id, key);
-      haptic("select");
-      setDoc((d) => (d ? { ...d, consultId: key, status: "attached" } : d));
-      setBanner("Attached — this document will inform the consult note.");
-    } catch (e) {
-      setBanner(e instanceof Error ? e.message : String(e));
+      const keepStatus = doc.status === "attached" ? "attached" : "saved";
+      await setScannedDocumentSummary(doc.id, edited, keepStatus);
+      setSummary(edited);
+      setDoc((d) => (d ? { ...d, summary: edited, status: keepStatus } : d));
+      setEditingSummary(false);
+    } finally {
+      setSavingSummary(false);
     }
   };
-
-  const attachOptions: SheetOption<string>[] = [
-    {
-      key: NEW_CONSULT_KEY,
-      name: "New consult with this document",
-      desc: "Start recording — the document is already attached",
-      icon: "mic-outline",
-    },
-    ...openConsults.map((c) => ({
-      key: c.id,
-      name: c.title,
-      desc: new Date(c.createdAt).toLocaleString(),
-      icon: "folder-open-outline" as const,
-    })),
-  ];
 
   if (!doc) {
     return (
@@ -194,35 +184,37 @@ export default function ScanReviewScreen() {
       right={<Pill label="On-device" variant="green" dot />}
       footer={
         // Stacked full-width CTAs: two long labels side-by-side wrapped to two lines
-        // (ugly, unbalanced). Primary action on top, quiet secondary under it.
-        <View style={styles.footerCol}>
-          {banner ? <Text style={styles.banner}>{banner}</Text> : null}
-          <PrimaryButton
-            label={
-              summary && !dirty
-                ? "Regenerate document note"
-                : summaryPhase === "error"
-                  ? "Retry document note"
-                  : "Create document note"
-            }
-            onPress={makeSummary}
-            disabled={generating}
-            icon={<Ionicons name="sparkles" size={16} color={colors.white} />}
-          />
-          <PrimaryButton
-            label={doc.status === "attached" ? "Attached to consult" : "Attach to consult"}
-            variant="ghost"
-            onPress={openAttach}
-            disabled={generating || doc.status === "attached"}
-            icon={
-              <Ionicons
-                name={doc.status === "attached" ? "checkmark-circle" : "folder-open-outline"}
-                size={16}
-                color={doc.status === "attached" ? colors.greenInk : colors.ink}
-              />
-            }
-          />
-        </View>
+        // (ugly, unbalanced). Primary action on top, quiet secondary under it. Hidden
+        // while the summary editor is open — its own Save/Cancel owns the screen.
+        editingSummary ? undefined : (
+          <View style={styles.footerCol}>
+            <PrimaryButton
+              label={
+                summary && !dirty
+                  ? "Regenerate document note"
+                  : summaryPhase === "error"
+                    ? "Retry document note"
+                    : "Create document note"
+              }
+              onPress={makeSummary}
+              disabled={generating}
+              icon={<Ionicons name="sparkles" size={16} color={colors.white} />}
+            />
+            <PrimaryButton
+              label={doc.status === "attached" ? "Attached to consult" : "Attach to consult"}
+              variant="ghost"
+              onPress={openAttach}
+              disabled={generating || doc.status === "attached"}
+              icon={
+                <Ionicons
+                  name={doc.status === "attached" ? "checkmark-circle" : "folder-open-outline"}
+                  size={16}
+                  color={doc.status === "attached" ? colors.greenInk : colors.ink}
+                />
+              }
+            />
+          </View>
+        )
       }
     >
       <Card>
@@ -270,23 +262,35 @@ export default function ScanReviewScreen() {
       ) : null}
 
       {summary && summaryPhase === "done" ? (
-        <Card variant="green">
-          <CardHeading>{`Document note · on-device`}</CardHeading>
-          <NoteMarkdown markdown={summary} />
-          <Text style={styles.note}>
-            Generated from the de-identified text only. Review before relying on it.
-          </Text>
-        </Card>
+        editingSummary ? (
+          <NoteEditor
+            initial={summary}
+            saving={savingSummary}
+            onSave={(md) => void saveSummaryEdit(md)}
+            onCancel={() => setEditingSummary(false)}
+          />
+        ) : (
+          <Card variant="green">
+            <View style={styles.summaryHead}>
+              <CardHeading>{`Document note · on-device`}</CardHeading>
+              <PrimaryButton
+                label="Edit"
+                variant="ghost"
+                size="sm"
+                onPress={() => {
+                  haptic("tap");
+                  setEditingSummary(true);
+                }}
+                icon={<Ionicons name="pencil" size={14} color={colors.ink} />}
+              />
+            </View>
+            <NoteMarkdown markdown={summary} />
+            <Text style={styles.note}>
+              Generated from the de-identified text only. Review before relying on it.
+            </Text>
+          </Card>
+        )
       ) : null}
-
-      <OptionSheet
-        visible={attachSheet}
-        onClose={() => setAttachSheet(false)}
-        title="Attach to consult"
-        options={attachOptions}
-        selectedKey={"" as string}
-        onSelect={(k) => void attach(k)}
-      />
     </ConsultScreen>
   );
 }
@@ -306,6 +310,11 @@ const styles = StyleSheet.create({
   busyRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
   busyText: { ...font.body, color: colors.greenInk },
   note: { ...font.bodySm, color: colors.greenInk, marginTop: space.sm },
-  banner: { ...font.bodySm, color: colors.greenInk, textAlign: "center", marginBottom: space.xs },
   footerCol: { gap: space.sm },
+  summaryHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: space.sm,
+  },
 });
