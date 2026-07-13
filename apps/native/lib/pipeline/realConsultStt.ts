@@ -7,7 +7,7 @@ import {
 import { filterHallucinations } from "./hallucination";
 import { langTag, type ClusterSegment } from "./sttAlign";
 import { getSttAccuracy, getSttLanguage } from "./sttMode";
-import { transcribeWaveform, unloadWhisper, whisperModelFor } from "./whisperStt";
+import { transcribeWaveform, whisperModelFor } from "./whisperStt";
 
 const SAMPLE_RATE = 16000;
 
@@ -91,9 +91,10 @@ export async function finishRealCaptureClusters(capture: CaptureController): Pro
   } catch (e) {
     diag.sttError = String(e);
   }
-  // Free the whisper.cpp context now — diarization embeds windows (no model) and the Qwen note
-  // pass shouldn't share memory with it.
-  await unloadWhisper();
+  // Keep the whisper context RESIDENT — unloading here forced a full 181MB model reload +
+  // Metal warmup on every consult (the "Transcribing…" stall). Whisper-small (~300MB) + the
+  // Qwen note model (~1.3GB) comfortably coexist on modern iPhones; getCtx still frees the old
+  // context on an accuracy-tier switch, and unloadWhisper() remains available for teardown.
   if (!tr) return { candidates: [], diag };
 
   // Strip hallucinations (bracketed non-speech, repetition loops, caption artifacts) before the
