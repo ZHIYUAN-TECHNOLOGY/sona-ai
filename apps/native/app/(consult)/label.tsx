@@ -8,6 +8,7 @@ import { ConsultScreen } from "@/components/consult/ConsultScreen";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import type { Speaker } from "@/lib/db/types";
 import { haptic } from "@/lib/haptics";
+import { hasLastCapture, playLastCapture } from "@/lib/pipeline/captureDebug";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
 import { colors, font, space } from "@/lib/theme";
 
@@ -27,6 +28,12 @@ export default function LabelScreen() {
     useConsultPipeline();
   const [labels, setLabels] = useState<Record<number, Speaker>>({});
   const [saving, setSaving] = useState(false);
+  const [playing, setPlaying] = useState(false);
+
+  const playCapture = () => {
+    haptic("tap");
+    if (playLastCapture(() => setPlaying(false))) setPlaying(true);
+  };
 
   // Group EVERY transcript line under its acoustic cluster, keeping each line's global index so
   // edits map back to the right candidate. (cluster −1 = "no diarization overlap" → its own group.)
@@ -93,6 +100,12 @@ export default function LabelScreen() {
                 {captureDiag.vadError ? `\nVAD: ${captureDiag.vadError}` : ""}
               </Text>
             ) : null}
+            {hasLastCapture() ? (
+              <Pressable onPress={playCapture} style={styles.playBtn}>
+                <Ionicons name={playing ? "volume-high" : "play-circle-outline"} size={18} color={colors.greenInk} />
+                <Text style={styles.playText}>{playing ? "Playing captured audio…" : "Play captured audio (debug)"}</Text>
+              </Pressable>
+            ) : null}
           </View>
         </Card>
       ) : (
@@ -155,6 +168,12 @@ export default function LabelScreen() {
               {captureDiag.raw ? `\nraw: ${captureDiag.raw}` : ""}
             </Text>
           ) : null}
+          {hasLastCapture() ? (
+            <Pressable onPress={playCapture} style={styles.playBtn}>
+              <Ionicons name={playing ? "volume-high" : "play-circle-outline"} size={18} color={colors.greenInk} />
+              <Text style={styles.playText}>{playing ? "Playing captured audio…" : "Play captured audio (debug)"}</Text>
+            </Pressable>
+          ) : null}
         </>
       )}
     </ConsultScreen>
@@ -198,4 +217,18 @@ const styles = StyleSheet.create({
     marginTop: space.sm,
     fontVariant: ["tabular-nums"],
   },
+  playBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: space.sm,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    borderColor: colors.green100,
+    backgroundColor: colors.green50,
+  },
+  playText: { ...font.bodySm, color: colors.greenInk, fontWeight: "600" },
 });

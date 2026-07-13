@@ -4,6 +4,7 @@ import {
   startCapture,
   type CaptureController,
 } from "../diarize";
+import { saveLastCaptureWav, setLastCapture } from "./captureDebug";
 import { filterHallucinations } from "./hallucination";
 import { langTag, type ClusterSegment } from "./sttAlign";
 import { getSttAccuracy, getSttLanguage } from "./sttMode";
@@ -80,6 +81,11 @@ export async function finishRealCaptureClusters(capture: CaptureController): Pro
     rate: capture.deliveredRate(),
   };
   if (waveform.length === 0) return { candidates: [], diag };
+
+  // DEBUG rig: keep the exact PCM fed to whisper as a playable/pullable artifact
+  // (in-app Play button + Documents/last-capture.wav). Remove before release.
+  setLastCapture(waveform);
+  if (__DEV__) saveLastCaptureWav(waveform);
 
   const doctorVoiceprint = await loadDoctorVoiceprint().catch(() => null);
 
