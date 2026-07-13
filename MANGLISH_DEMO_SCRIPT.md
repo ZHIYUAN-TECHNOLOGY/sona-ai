@@ -14,6 +14,11 @@ even mixed **within a single sentence**.
 > First STT run downloads the 190MB model from Metro (one-time, ~1–2 min). After that it's instant.
 > Language = **Auto-detect** (Settings) handles the mixing; no need to pick a language.
 
+> **Speaking tip for 中文 phrases:** take a brief half-second pause before switching into
+> Mandarin (e.g. before 今天哪里不舒服). The pause gives the recognizer its own segment for the
+> Chinese phrase, so it comes out in real 中文 script instead of romanized English. Mid-sentence
+> switches without a pause may romanize — just tap the line to fix.
+
 ---
 
 ## The script (a short Manglish clinic consult)
