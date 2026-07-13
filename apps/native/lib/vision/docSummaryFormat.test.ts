@@ -102,4 +102,37 @@ ok("DOC_ tokens survive untouched", () => {
   assert.match(out.markdown, /DOC_NAME_1/);
 });
 
+// Regression: field failure Jul 2026 — model echoed the word-count contract as
+// content ("Total :49words") and emitted a mangled "Notstated." variant; both
+// rendered as real bullets under Follow-up needed.
+ok("contract echoes and Not-stated variants never render as bullets", () => {
+  const raw = [
+    "## Document type",
+    "- Dentist Service Provider",
+    "## Key findings",
+    "- Not stated.",
+    "## Medications & doses",
+    "- Not stated.",
+    "## Follow-up needed",
+    "- Notstated.",
+    "Total :49words",
+  ].join("\n");
+  const out = formatDocSummary(raw, "Document");
+  assert.ok(!/total/i.test(out.markdown), `word-count echo survived: ${out.markdown}`);
+  assert.ok(!/notstated/i.test(out.markdown), `mangled variant survived: ${out.markdown}`);
+  assert.match(out.markdown, /## Follow-up needed\n- Not stated\./);
+  assert.match(out.markdown, /## Document type\n- Dentist Service Provider/);
+});
+
+ok("word-count echoes in other shapes are dropped too", () => {
+  for (const junk of ["(118 words)", "Word count: 97", "Total: 84 words", "Under 120 words."]) {
+    const out = formatDocSummary(`## Key findings\n- Real finding\n${junk}`, "Document");
+    assert.ok(
+      !/\b(words?|count)\b/i.test(out.markdown.replace("Follow-up", "")),
+      `echo "${junk}" survived: ${out.markdown}`,
+    );
+    assert.match(out.markdown, /- Real finding/);
+  }
+});
+
 console.log(`\n${passed} passed`);
