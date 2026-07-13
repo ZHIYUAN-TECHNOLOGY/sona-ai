@@ -93,6 +93,14 @@ export default function RootLayout() {
             <Stack.Screen name="stt-lab" options={{ headerShown: false }} />
             <Stack.Screen name="ai-models" options={{ headerShown: false }} />
             <Stack.Screen name="on-device" options={{ headerShown: true }} />
+            {/* Knowledge moved out of the tab capsule (Smart Scan took the slot) —
+                minimal transparent header = just the back chevron; the screen's own
+                serif title is the real title. */}
+            <Stack.Screen
+              name="knowledge"
+              options={{ headerShown: true, title: "", headerTransparent: true }}
+            />
+            <Stack.Screen name="scan-review" options={{ headerShown: false }} />
           </Stack>
         </GestureHandlerRootView>
       </ThemeProvider>

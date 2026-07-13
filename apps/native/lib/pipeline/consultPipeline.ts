@@ -3,15 +3,23 @@
 // map) -> audit. Everything runs on-device; the re-ID map goes only to secure
 // storage. Note-gen + sign + export land Day 3-4 behind the same seam.
 
+import { File } from "expo-file-system";
+
 import {
   appendAudit,
   appendTranscript,
+  attachScannedDocument,
+  clearScannedDocumentImages,
   createConsult,
+  getConsult,
+  getConsultDocuments,
   getTranscript,
   saveNote,
   setConsultStatus,
   setConsultTitle,
 } from "../db";
+import type { ScannedDocument } from "../db/types";
+import { buildDocContext } from "./docContext";
 import { getReidMap, saveReidMap, sealAudioDiscard } from "../secure/reidMap";
 import { applyReidMap } from "../secure/reidMapCore";
 import { NOTE_MODEL_NAME } from "./model";
@@ -27,6 +35,41 @@ import {
 } from "./noteGen";
 import { buildGuidelineContext } from "./noteGrounding";
 import { redactTranscript, type RedactionResult, type RedactedSegment } from "./redaction";
+
+/**
+ * Attach a scanned document to a consult. Guards the seal: a signed/complete consult
+ * never accepts new documents (same integrity rule as audio-discard-on-sign). Audited.
+ */
+export async function attachDocumentToConsult(docId: string, consultId: string): Promise<void> {
+  const consult = await getConsult(consultId);
+  if (!consult) throw new Error(`Consult not found: ${consultId}`);
+  if (consult.status === "signed" || consult.status === "complete") {
+    throw new Error("Signed consults are sealed — documents can no longer be attached.");
+  }
+  await attachScannedDocument(docId, consultId);
+  await appendAudit({
+    consultId,
+    stage: "doc-attach",
+    detail: "Scanned document attached on-device; de-identified text will inform the note",
+  });
+}
+
+/**
+ * Delete a document's page-image files and clear their URIs. Called on sign (for
+ * attached docs, mirroring audio-discard) and on standalone note save. Best-effort
+ * per file — a missing file must not block signing.
+ */
+export async function discardDocumentImages(doc: ScannedDocument): Promise<void> {
+  if (doc.imageUris.length === 0) return;
+  for (const uri of doc.imageUris) {
+    try {
+      new File(uri).delete();
+    } catch {
+      // already gone / cache-evicted — the URI clear below is what matters
+    }
+  }
+  await clearScannedDocumentImages(doc.id);
+}
 
 export async function beginConsult(consentText: string, title = "New consult") {
   const consult = await createConsult({ title, consentText });
@@ -114,7 +157,11 @@ export async function draftClinicalNote(
   const { context: guidelineContext, refs: guidelines } = NOTE_GROUNDING
     ? buildGuidelineContext(buildTranscript(segments), getCorpus(), 3)
     : { context: "", refs: [] as ReturnType<typeof buildGuidelineContext>["refs"] };
-  const deident = await generateNote(llm, segments, systemPrompt, guidelineContext); // model sees de-identified text only
+  // Attached scanned documents (Smart Scan) — de-identified, clinician-verified text
+  // joins the transcript as encounter facts. "" when none (the common path).
+  const docs = await getConsultDocuments(consultId).catch(() => []);
+  const docContext = buildDocContext(docs);
+  const deident = await generateNote(llm, segments, systemPrompt, guidelineContext, docContext); // model sees de-identified text only
 
   const map = (await getReidMap(consultId)) ?? {};
   const soap = {
@@ -138,7 +185,9 @@ export async function draftClinicalNote(
   await appendAudit({
     consultId,
     stage: "note-generate",
-    detail: `SOAP note drafted on-device (${NOTE_MODEL_NAME}), re-identified locally for review`,
+    detail:
+      `SOAP note drafted on-device (${NOTE_MODEL_NAME}), re-identified locally for review` +
+      (docs.length > 0 ? `; ${docs.length} attached document(s) informed the note` : ""),
   });
   return {
     soap,
@@ -198,6 +247,20 @@ export async function signConsult(consultId: string, clinicianName: string): Pro
     stage: "audio-discard",
     detail: "Raw audio discarded on sign. Only the signed note and audit log remain. 0 bytes transmitted.",
   });
+  // Attached scanned-document page images are discarded with the audio (same seal):
+  // the verified text (raw device-only + de-identified) is what the record keeps.
+  const docs = await getConsultDocuments(consultId).catch(() => []);
+  const withImages = docs.filter((d) => d.imageUris.length > 0);
+  for (const doc of withImages) {
+    await discardDocumentImages(doc);
+  }
+  if (withImages.length > 0) {
+    await appendAudit({
+      consultId,
+      stage: "image-discard",
+      detail: `Scanned page images (${withImages.length} document(s)) discarded on sign.`,
+    });
+  }
 }
 
 /** Record an export action (FHIR/PDF/text) in the audit log. On-device artefact only. */

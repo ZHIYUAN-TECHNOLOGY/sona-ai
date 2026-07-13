@@ -13,9 +13,10 @@ import { colors, font, space } from "@/lib/theme";
 type Phase = "idle" | "reading" | "done" | "error";
 
 // Dev screen: on-device document OCR. Snap or pick a photo of a lab result / referral /
-// medication label → CRAFT+CRNN reads the text locally → it's de-identified with the same
-// redactor as the consult transcript. The image and raw text never leave the phone; only the
-// de-identified form may ever cross the boundary (the moat). Reached from Settings → About.
+// medication label → ML Kit reads the text locally (no download) → it's de-identified with
+// the same redactor as the consult transcript. The image and raw text never leave the phone;
+// only the de-identified form may ever cross the boundary (the moat). The PRODUCTION flow is
+// the Smart Scan tab; this lab stays for quick engine checks. Reached from Settings → About.
 export default function OcrLab() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [raw, setRaw] = useState("");
@@ -46,7 +47,7 @@ export default function OcrLab() {
       if (!r.raw) setErr("No text detected in the image.");
     } catch {
       if (mounted.current) {
-        setErr("OCR unavailable on this build (rebuild to link the model).");
+        setErr("OCR unavailable on this build (rebuild to link ML Kit).");
         setPhase("error");
       }
     }

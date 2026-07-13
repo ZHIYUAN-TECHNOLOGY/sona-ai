@@ -311,15 +311,21 @@ export async function generateNote(
   segments: RedactedSegment[],
   systemPrompt: string = NOTE_SYSTEM_PROMPT,
   guidelineContext = "",
+  docContext = "",
 ): Promise<DraftNote> {
   // Optionally ground the note in retrieved references — additive, so an empty context
   // leaves the prompt (and existing behaviour) unchanged.
   const system = guidelineContext
     ? `${systemPrompt}\n\nRELEVANT CLINICAL REFERENCES (use ONLY to strengthen safety-netting and red-flag advice; never contradict the transcript and never invent findings or doses):\n${guidelineContext}`
     : systemPrompt;
+  // Attached scanned documents ride in the USER message — they are encounter facts
+  // (like the transcript), not instructions. De-identified + clinician-verified upstream.
+  const userContent = docContext
+    ? `${buildTranscript(segments)}\n\n${docContext}`
+    : buildTranscript(segments);
   const messages: Msg[] = [
     { role: "system", content: system },
-    { role: "user", content: buildTranscript(segments) },
+    { role: "user", content: userContent },
   ];
   const t0 = Date.now();
   const rawOut = await llm.generate(messages);

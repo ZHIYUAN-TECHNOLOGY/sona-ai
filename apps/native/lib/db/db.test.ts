@@ -131,6 +131,35 @@ function eq<T>(actual: T, expected: T, msg: string): void {
     "Seen Ali and Siti today",
     "longest-first stops NAME_1 from eating NAME_10",
   );
+
+  // DOC_ namespace boundary: the consult map must NEVER fire inside a scanned
+  // document's DOC_-namespaced token — that spliced the consult patient's real
+  // name/IC into the document's slot (misattributed identity in the note).
+  eq(
+    applyReidMap(map, "Referral from DOC_NAME_1; verify DOC_IC_1 before dispensing."),
+    "Referral from DOC_NAME_1; verify DOC_IC_1 before dispensing.",
+    "consult tokens do not re-identify inside DOC_ document tokens",
+  );
+  eq(
+    applyReidMap(map, "NAME_1 brought a letter about DOC_NAME_1."),
+    "Rahman bin Ismail brought a letter about DOC_NAME_1.",
+    "consult token still re-identifies next to a DOC_ token",
+  );
+
+  // Trailing-digit boundary: NAME_1 in the map must not eat the front of an
+  // unmapped NAME_12 in the text.
+  eq(
+    applyReidMap({ NAME_1: "Ali" }, "NAME_12 was mentioned"),
+    "NAME_12 was mentioned",
+    "NAME_1 does not partially replace an unmapped NAME_12",
+  );
+
+  // Real values containing regex-special chars ($&) must be inserted literally.
+  eq(
+    applyReidMap({ NAME_1: "A$& Sdn Bhd" }, "Employer: NAME_1"),
+    "Employer: A$& Sdn Bhd",
+    "replacement string is literal (no $-pattern expansion)",
+  );
 }
 
 // --- secure-store keys are namespaced + per-consult --------------------------

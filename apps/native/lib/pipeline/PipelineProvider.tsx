@@ -15,6 +15,7 @@ import React, {
 } from "react";
 
 import {
+  attachDocumentToConsult,
   beginConsult,
   draftClinicalNote,
   editClinicalNote,
@@ -24,6 +25,7 @@ import {
   runRedaction,
   type RedactionOutcome,
 } from "./consultPipeline";
+import { consumePendingScanDoc } from "./scanAttach";
 import { getConsult } from "../db";
 import type { Speaker } from "../db/types";
 import { streamLockedTranscript, type RawSegment, type Streamer } from "./mockStt";
@@ -130,6 +132,15 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
 
   const startConsult = useCallback(async (consentText: string) => {
     const consult = await beginConsult(consentText);
+    // Smart Scan handoff: a doc parked by "New consult with this document" attaches
+    // the moment the consult row exists. Best-effort — a failed attach must not
+    // block the consult itself.
+    const pendingDoc = consumePendingScanDoc();
+    if (pendingDoc) {
+      await attachDocumentToConsult(pendingDoc, consult.id).catch((e) =>
+        console.log(`[SCAN] pending doc attach failed: ${String(e)}`),
+      );
+    }
     idRef.current = consult.id;
     setConsultId(consult.id);
     setStatus("consented");

@@ -12,6 +12,7 @@ import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { SafetyNotice } from "@/components/consult/SafetyNotice";
 import { haptic } from "@/lib/haptics";
+import { getConsultDocuments } from "@/lib/db";
 import { checkOrders } from "@/lib/meds/drugCheck";
 import { DRUGS, INTERACTIONS } from "@/lib/meds/drugRules.data";
 import { noteToSpeech } from "@/lib/tts/noteSpeech";
@@ -30,6 +31,7 @@ const MODERATE = "#B45309";
 // The model never sees real identifiers; the re-ID map never leaves the device.
 export default function NoteScreen() {
   const {
+    consultId,
     redaction,
     note,
     noteStatus,
@@ -43,6 +45,16 @@ export default function NoteScreen() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [docCount, setDocCount] = useState(0);
+
+  // Attached Smart Scan documents (if any) — their de-identified text joined the
+  // transcript for generation; the chip makes that provenance visible.
+  useEffect(() => {
+    if (!consultId) return;
+    getConsultDocuments(consultId)
+      .then((docs) => setDocCount(docs.length))
+      .catch(() => setDocCount(0));
+  }, [consultId]);
 
   // Stop any speech when leaving the screen or entering edit mode.
   useEffect(() => () => stopReading(), []);
@@ -125,6 +137,9 @@ export default function NoteScreen() {
         <Pill label={templateById(templateId).name} variant="line" />
         {ready && note.generationMs > 0 ? (
           <Pill label={`${(note.generationMs / 1000).toFixed(1)}s · on-device`} variant="line" />
+        ) : null}
+        {docCount > 0 ? (
+          <Pill label={`${docCount} document${docCount === 1 ? "" : "s"} attached`} variant="line" />
         ) : null}
       </View>
 

@@ -7,6 +7,7 @@ import type {
   AuditEntry,
   AuditStage,
   Consult,
+  ScannedDocument,
   Speaker,
   TranscriptSegment,
 } from "./types";
@@ -54,6 +55,36 @@ export function buildTranscriptSegment(input: {
     startMs: input.startMs,
     endMs: input.endMs,
     confidence: input.confidence ?? null,
+  };
+}
+
+export function buildScannedDocument(input: {
+  docType: string;
+  title: string;
+  pages: number;
+  imageUris: string[];
+  rawText: string;
+  redactedText: string;
+  identifiers: number;
+  consultId?: string | null;
+  now?: number;
+  id?: string;
+}): ScannedDocument {
+  const now = input.now ?? Date.now();
+  return {
+    id: input.id ?? fallbackId(),
+    createdAt: now,
+    updatedAt: now,
+    consultId: input.consultId ?? null,
+    title: input.title,
+    docType: input.docType,
+    pages: input.pages,
+    imageUris: input.imageUris,
+    rawText: input.rawText,
+    redactedText: input.redactedText,
+    identifiers: input.identifiers,
+    summary: null,
+    status: "review",
   };
 }
 
