@@ -1,8 +1,9 @@
 import { Asset } from "expo-asset";
-import { File } from "expo-file-system";
+import { File, Paths } from "expo-file-system";
+import { AudioManager } from "react-native-audio-api";
 
 import { getSttAccuracy } from "./sttMode";
-import { transcribeWaveform, whisperModelFor } from "./whisperStt";
+import { transcribeWaveform, unloadWhisper, whisperModelFor } from "./whisperStt";
 
 // DEV-ONLY STT self-test. Transcribes a BUNDLED known-good speech clip (JFK, 16 kHz mono
 // 16-bit WAV) through the exact same engine path the consult uses — no microphone involved.
@@ -50,13 +51,50 @@ export async function runSttSelfTest(): Promise<void> {
     const buf = await new File(asset.localUri).arrayBuffer();
     const wave = wavToFloat32(new Uint8Array(buf));
     console.log(`[STT-SELFTEST] clip: ${Math.round((wave.length / 16000) * 10) / 10}s, ${wave.length} samples`);
-    const t0 = Date.now();
-    const tr = await transcribeWaveform(wave, { model: whisperModelFor(getSttAccuracy()), language: "auto" });
-    console.log(
-      `[STT-SELFTEST] done in ${Date.now() - t0}ms · lang=${tr.language} · chars=${tr.text.length}`,
-    );
-    console.log(`[STT-SELFTEST] raw: ${JSON.stringify((tr.raw ?? "").slice(0, 200))}`);
-    console.log(`[STT-SELFTEST] text: ${JSON.stringify(tr.text.slice(0, 200))}`);
+    const model = whisperModelFor(getSttAccuracy());
+    const run = async (label: string) => {
+      const t0 = Date.now();
+      const tr = await transcribeWaveform(wave, { model, language: "auto" });
+      console.log(
+        `[STT-SELFTEST] ${label}: ${Date.now() - t0}ms · chars=${tr.text.length} · raw=${JSON.stringify((tr.raw ?? "").slice(0, 80))}`,
+      );
+      return tr.text.length;
+    };
+    // The consult always transcribes on a REUSED context (the launch self-test used it first).
+    // Run twice on the same context to test the reuse path, then once after a fresh re-init.
+    await run("run1 (fresh ctx)");
+    await run("run2 (reused ctx)");
+    await unloadWhisper();
+    await run("run3 (re-init ctx)");
+
+    // run4 — the USER'S OWN last consult recording (saved by the capture rig). The Mac
+    // transcribes these exact bytes fine; if the device does too (outside the consult flow),
+    // the content is innocent and the consult-moment ENVIRONMENT is the bug.
+    const userWav = new File(Paths.document, "last-capture.wav");
+    if (userWav.exists) {
+      const b = new Uint8Array(await userWav.arrayBuffer());
+      const w2 = wavToFloat32(b);
+      console.log(`[STT-SELFTEST] user clip: ${Math.round((w2.length / 16000) * 10) / 10}s`);
+      const t0 = Date.now();
+      const tr = await transcribeWaveform(w2, { model, language: "auto" });
+      console.log(
+        `[STT-SELFTEST] run4 (user audio): ${Date.now() - t0}ms · chars=${tr.text.length} · raw=${JSON.stringify((tr.raw ?? "").slice(0, 120))}`,
+      );
+    } else {
+      console.log("[STT-SELFTEST] run4 skipped — no last-capture.wav yet");
+    }
+
+    // run5 — replicate the consult's audio-session dance (mic session activated then
+    // deactivated) before transcribing the KNOWN-GOOD clip. Garbage here → the audio session
+    // interaction is the bug.
+    try {
+      AudioManager.setAudioSessionOptions({ iosCategory: "record", iosMode: "default", iosOptions: [] });
+      await AudioManager.setAudioSessionActivity(true);
+      await AudioManager.setAudioSessionActivity(false);
+    } catch (e) {
+      console.log(`[STT-SELFTEST] session dance failed: ${String(e)}`);
+    }
+    await run("run5 (after mic session)");
   } catch (e) {
     console.log(`[STT-SELFTEST] ERROR: ${String(e)}`);
   }
