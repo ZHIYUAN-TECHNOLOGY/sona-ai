@@ -37,6 +37,7 @@ import {
 } from "./realConsultStt";
 import type { ClusterSegment } from "./sttAlign";
 import { getSttMode } from "./sttMode";
+import { unloadWhisper } from "./whisperStt";
 import { NOTE_MODEL } from "./model";
 import type { DraftNote } from "./noteGen";
 import { DEFAULT_TEMPLATE, templateById, templatePrompt } from "./templates";
@@ -236,7 +237,11 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         setCandidates([]);
         setCaptureDiag({ seconds: 0, peak: 0, transcriptChars: 0, vadSegments: 0, sttError: String(e) });
       }
-      setLlmWanted(true); // transcription done → NOW load the note LLM (labeling covers the wait)
+      // Transcription done → free whisper BEFORE the note LLM loads. The 4B note model
+      // + resident whisper-turbo together pressure 6GB devices; whisper transparently
+      // reloads on the next consult's transcription.
+      void unloadWhisper().catch(() => {});
+      setLlmWanted(true); // NOW load the note LLM (labeling covers the wait)
       setStatus("transcribed");
       return "label"; // persistRecordingStop is deferred to applySpeakerLabels (after segments)
     }

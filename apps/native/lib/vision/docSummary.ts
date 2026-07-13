@@ -2,6 +2,7 @@ import { LLMModule } from "react-native-executorch";
 
 import { NOTE_MODEL, NOTE_MODEL_NAME } from "../pipeline/model";
 import { collapseRepeats, stripThink, truncateDegenerate } from "../pipeline/noteGen";
+import { unloadWhisper } from "../pipeline/whisperStt";
 import { formatDocSummary } from "./docSummaryFormat";
 
 // On-device "abstract the document" summary — the Heidi-style wow for Smart Scan. Runs the
@@ -56,6 +57,10 @@ export async function generateDocSummary(
   docTypeLabel: string,
   onProgress?: (p: number) => void,
 ): Promise<DocSummary> {
+  // Whisper's context survives the consult flow (kept resident for fast next-consult
+  // starts). Free it before loading the 4B model — the two together pressure 6GB
+  // devices. Whisper transparently reloads on the next transcription.
+  await unloadWhisper().catch(() => {});
   const llm = await LLMModule.fromModelName(NOTE_MODEL, onProgress);
   try {
     llm.configure({
@@ -71,6 +76,16 @@ export async function generateDocSummary(
       },
     ]);
     const clean = truncateDegenerate(collapseRepeats(stripThink(raw))).trim();
+    // Dev diagnostics: when a section unexpectedly reads "Not stated.", THIS shows
+    // whether the model under-extracted or the formatter dropped content. The text is
+    // de-identified (input was redacted) and the log is dev-only — nothing leaves the
+    // device either way.
+    if (__DEV__) {
+      console.log(
+        `[DOCSUM] model=${NOTE_MODEL_NAME} rawChars=${raw.length} cleanChars=${clean.length}\n` +
+          `[DOCSUM] head: ${clean.slice(0, 400).replace(/\n/g, " ⏎ ")}`,
+      );
+    }
     if (!clean) throw new Error("empty summary");
     // NEVER render raw model output: parse into the four canonical sections, cap
     // bullets, drop off-format rambling (same discipline as the consult note).
