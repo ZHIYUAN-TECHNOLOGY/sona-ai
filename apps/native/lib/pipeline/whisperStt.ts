@@ -119,11 +119,10 @@ export async function transcribeWaveform(
 ): Promise<Transcription> {
   const model = opts.model ?? WHISPER_FAST;
   const ctx = await getCtx(model, opts.onProgress);
-  // Pass raw float32 PCM in memory — no wav file, audio never persists.
-  const pcm = waveform.buffer.slice(
-    waveform.byteOffset,
-    waveform.byteOffset + waveform.byteLength,
-  ) as ArrayBuffer;
+  // whisper.rn's transcribeData reads the ArrayBuffer as INT16 PCM (or a WAV) — NOT float32
+  // (despite the docs). Encode our 16 kHz mono float32 [-1,1] → int16 LE in memory (no wav file,
+  // audio never persists). Passing float32 bytes made whisper read garbage → empty transcript.
+  const pcm = floatTo16BitPcm(waveform);
   const { promise } = ctx.transcribeData(pcm, {
     language: opts.language ?? "auto",
     translate: false,
@@ -145,6 +144,16 @@ export async function transcribeWaveform(
   const text = stripSpecialTokens(res.result ?? "");
   if (segments.length === 0 && text) segments.push({ start: 0, end: 0, text });
   return { text, language: res.language, segments };
+}
+
+/** Encode 16 kHz mono float32 [-1,1] PCM → int16 little-endian (what whisper.rn transcribeData reads). */
+function floatTo16BitPcm(waveform: Float32Array): ArrayBuffer {
+  const out = new Int16Array(waveform.length);
+  for (let i = 0; i < waveform.length; i++) {
+    const s = waveform[i] < -1 ? -1 : waveform[i] > 1 ? 1 : waveform[i];
+    out[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+  }
+  return out.buffer;
 }
 
 /** Remove Whisper special tokens (<|…|>) and collapse whitespace. */
