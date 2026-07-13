@@ -99,6 +99,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const templateRef = useRef<string>(DEFAULT_TEMPLATE.id);
   const streamer = useRef<Streamer | null>(null);
   const captureRef = useRef<CaptureController | null>(null); // real mic capture (USE_REAL_STT)
+  const startingCapture = useRef(false); // guards against a double start spawning 2 recorders
   const stopRequested = useRef(false); // guards the async capture-start vs an early stop
   const seq = useRef(0);
   const idRef = useRef<string | null>(null);
@@ -158,19 +159,32 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setStatus("recording");
     void persistRecordingStart(id).catch(() => {}); // don't red-screen if the audit write races
     if (getSttMode() === "real") {
+      // GUARD: a second start (double focus-fire, re-render) must never spawn a second
+      // AudioRecorder — iOS kills the first recorder's session, truncating its file.
+      if (captureRef.current || startingCapture.current) {
+        console.log("[REC] startRecording IGNORED — capture already live/starting");
+        return;
+      }
+      startingCapture.current = true;
+      console.log("[REC] startRecording — starting capture");
       // Real mic capture; transcription runs at stopRecording. Fall back to the scripted
       // stream if the mic / native modules can't start (Expo Go, denied permission).
       stopRequested.current = false;
       startRealCapture()
         .then((c) => {
+          startingCapture.current = false;
+          console.log("[REC] capture STARTED");
           // If the user already ended before capture started, don't keep a live mic.
           if (stopRequested.current) {
+            console.log("[REC] stopRequested during setup → stopping fresh capture");
             c.stop().catch(() => {});
             return;
           }
           captureRef.current = c;
         })
-        .catch(() => {
+        .catch((e) => {
+          startingCapture.current = false;
+          console.log(`[REC] capture FAILED → mock fallback: ${String(e)}`);
           captureRef.current = null;
           startMockStream(id);
         });
@@ -184,6 +198,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const stopRecording = useCallback(async (): Promise<"label" | "privacy"> => {
     const id = idRef.current;
     if (!id) return "privacy";
+    console.log(`[REC] stopRecording — capture ${captureRef.current ? "live" : "ABSENT"}`);
     stopRequested.current = true; // if capture is still starting, its .then will stop it
     if (getSttMode() === "real" && captureRef.current) {
       const capture = captureRef.current;
@@ -223,6 +238,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   // capture.stop → setAudioSessionActivity(false)) so the orange mic indicator clears; the
   // captured audio is discarded. Idempotent and safe when nothing is capturing.
   const cancelRecording = useCallback(() => {
+    console.log(`[REC] cancelRecording — capture ${captureRef.current ? "live → stopping" : "absent"}`);
     stopRequested.current = true; // if capture is still starting, its .then will stop it
     const cap = captureRef.current;
     captureRef.current = null;
