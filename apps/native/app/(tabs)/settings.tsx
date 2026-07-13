@@ -104,6 +104,11 @@ export default function SettingsScreen() {
         <SettingsRow icon="shield-checkmark-outline" label="Redaction" value="On-device" />
         <SettingsRow icon="people-outline" label="Diarization" value={diarModel} />
         <SettingsRow
+          icon="cloud-download-outline"
+          label="AI models & downloads"
+          onPress={() => router.push("/ai-models" as Href)}
+        />
+        <SettingsRow
           icon="albums-outline"
           label="Demo transcript"
           right={
