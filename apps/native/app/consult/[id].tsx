@@ -11,8 +11,8 @@ import { NoteMarkdown } from "@/components/consult/NoteMarkdown";
 import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { consultTime, statusMeta } from "@/lib/consultFormat";
-import { deleteConsult, getAudit, getConsult, getNote } from "@/lib/db";
-import type { AuditEntry, ClinicalNote, Consult } from "@/lib/db/types";
+import { deleteConsult, getAudit, getConsult, getConsultDocuments, getNote } from "@/lib/db";
+import type { AuditEntry, ClinicalNote, Consult, ScannedDocument } from "@/lib/db/types";
 import { editClinicalNote } from "@/lib/pipeline/consultPipeline";
 import { soapToMarkdown } from "@/lib/pipeline/noteFormat";
 import { colors, font, radius, space } from "@/lib/theme";
@@ -26,16 +26,23 @@ export default function ConsultDetailScreen() {
   const [consult, setConsult] = useState<Consult | null>(null);
   const [note, setNote] = useState<ClinicalNote | null>(null);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [docs, setDocs] = useState<ScannedDocument[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [showAudit, setShowAudit] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
-    const [c, n, a] = await Promise.all([getConsult(id), getNote(id), getAudit(id)]);
+    const [c, n, a, d] = await Promise.all([
+      getConsult(id),
+      getNote(id),
+      getAudit(id),
+      getConsultDocuments(id).catch(() => [] as ScannedDocument[]),
+    ]);
     setConsult(c);
     setNote(n);
     setAudit(a);
+    setDocs(d);
     setLoaded(true);
   }, [id]);
 
@@ -81,6 +88,49 @@ export default function ConsultDetailScreen() {
   }, [consult]);
 
   const status = consult ? statusMeta(consult.status) : null;
+
+  // Smart Scan documents attached to this consult — tap to reopen in the review
+  // screen. Their de-identified text informed (or will inform) the note generation.
+  const docIcon: Record<string, keyof typeof Ionicons.glyphMap> = {
+    referral: "mail-outline",
+    "lab-result": "flask-outline",
+    prescription: "medkit-outline",
+    discharge: "exit-outline",
+  };
+  const docsCard =
+    docs.length > 0 ? (
+      <Card>
+        <View style={styles.docsHead}>
+          <Ionicons name="scan-outline" size={16} color={colors.green} />
+          <Text style={styles.docsTitle}>Attached documents</Text>
+          <Pill label={`${docs.length}`} variant="line" />
+        </View>
+        {docs.map((d) => (
+          <Pressable
+            key={d.id}
+            accessibilityRole="button"
+            onPress={() => router.push({ pathname: "/scan-review", params: { docId: d.id } })}
+            style={({ pressed }) => [styles.docRow, pressed && styles.docPressed]}
+          >
+            <View style={styles.docIcon}>
+              <Ionicons name={docIcon[d.docType] ?? "document-outline"} size={16} color={colors.green} />
+            </View>
+            <View style={styles.docText}>
+              <Text style={styles.docTitle} numberOfLines={1}>
+                {d.title}
+              </Text>
+              <Text style={styles.docSub} numberOfLines={1}>
+                {`${d.identifiers} identifier${d.identifiers === 1 ? "" : "s"} redacted${d.summary ? " · summarized" : ""}`}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={15} color={colors.ink3} />
+          </Pressable>
+        ))}
+        <Text style={styles.docsNote}>
+          De-identified document text informs this consult’s note generation.
+        </Text>
+      </Card>
+    ) : null;
 
   return (
     <ConsultScreen
@@ -138,6 +188,8 @@ export default function ConsultDetailScreen() {
             </>
           )}
 
+          {docsCard}
+
           <Card variant="green">
             <Pressable
               accessibilityRole="button"
@@ -175,25 +227,28 @@ export default function ConsultDetailScreen() {
           </Card>
         </>
       ) : (
-        <Card>
-          <View style={styles.center}>
-            <View style={styles.emptyIcon}>
-              <Ionicons name="document-outline" size={26} color={colors.ink3} />
+        <>
+          <Card>
+            <View style={styles.center}>
+              <View style={styles.emptyIcon}>
+                <Ionicons name="document-outline" size={26} color={colors.ink3} />
+              </View>
+              <Text style={styles.emptyTitle}>No note yet</Text>
+              <Text style={styles.emptyBody}>
+                This consult was started but never produced a note. You can remove it.
+              </Text>
+              <PrimaryButton
+                label="Delete consult"
+                variant="danger"
+                size="sm"
+                style={styles.retry}
+                icon={<Ionicons name="trash-outline" size={15} color={colors.white} />}
+                onPress={remove}
+              />
             </View>
-            <Text style={styles.emptyTitle}>No note yet</Text>
-            <Text style={styles.emptyBody}>
-              This consult was started but never produced a note. You can remove it.
-            </Text>
-            <PrimaryButton
-              label="Delete consult"
-              variant="danger"
-              size="sm"
-              style={styles.retry}
-              icon={<Ionicons name="trash-outline" size={15} color={colors.white} />}
-              onPress={remove}
-            />
-          </View>
-        </Card>
+          </Card>
+          {docsCard}
+        </>
       )}
     </ConsultScreen>
   );
@@ -213,6 +268,22 @@ const styles = StyleSheet.create({
   auditStage: { ...font.label, color: colors.green, textTransform: "uppercase" },
   auditDetail: { ...font.bodySm, color: colors.ink2 },
   auditEmpty: { ...font.bodySm, color: colors.ink3 },
+  docsHead: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  docsTitle: { ...font.body, fontWeight: "600", color: colors.ink, flex: 1 },
+  docRow: { flexDirection: "row", alignItems: "center", gap: space.md, marginTop: space.md },
+  docPressed: { opacity: 0.6 },
+  docIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.pill,
+    backgroundColor: colors.greenSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  docText: { flex: 1, minWidth: 0 },
+  docTitle: { ...font.body, fontWeight: "600", color: colors.ink },
+  docSub: { ...font.bodySm, color: colors.ink3, marginTop: 1 },
+  docsNote: { ...font.bodySm, color: colors.ink3, marginTop: space.md },
   emptyIcon: {
     width: 52,
     height: 52,
