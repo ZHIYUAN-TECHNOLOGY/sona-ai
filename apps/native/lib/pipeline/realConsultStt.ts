@@ -1,17 +1,26 @@
 import {
-  diarizeAudio,
+  diarizeWindows,
   loadDoctorVoiceprint,
   startCapture,
   type CaptureController,
 } from "../diarize";
 import { filterHallucinations } from "./hallucination";
-import { alignTextToClusters, type ClusterSegment } from "./sttAlign";
+import { langTag, type ClusterSegment } from "./sttAlign";
 import { getSttAccuracy, getSttLanguage } from "./sttMode";
 import { transcribeWaveform, unloadWhisper, whisperModelFor } from "./whisperStt";
+
+const SAMPLE_RATE = 16000;
 
 // A consult has few speakers (doctor, patient, maybe one family member) — cap diarization so
 // noisy audio can't explode into "Speaker 5". The clinician merges/relabels on Review anyway.
 const MAX_CONSULT_SPEAKERS = 4;
+
+/** Slice the [startSec, endSec] window out of a 16 kHz waveform (a whisper speech segment). */
+function sliceWindow(waveform: Float32Array, startSec: number, endSec: number): Float32Array {
+  const a = Math.max(0, Math.floor(startSec * SAMPLE_RATE));
+  const b = Math.min(waveform.length, Math.ceil(endSec * SAMPLE_RATE));
+  return waveform.subarray(a, b);
+}
 
 // Real-audio consult source. Flip USE_REAL_STT to true to record REAL mic audio and produce
 // the transcript on-device (Whisper) + diarize it, instead of the scripted mockStt. Default
@@ -54,14 +63,15 @@ function peakOf(w: Float32Array): number {
 }
 
 /**
- * Stop capture, transcribe the audio on-device (Whisper), diarize it, and align the text to
- * anonymous speaker CLUSTERS. Each stage is isolated so a failure/empty in one is reported in
- * `diag` (not silently swallowed) — the clinician labels the clusters afterwards.
+ * Stop capture, transcribe on-device (whisper.cpp), then diarize the WHISPER SEGMENTS directly —
+ * the transcription already located the speech regions (segment timestamps), so there's no
+ * separate VAD pass/model. Each utterance becomes a cluster candidate the clinician labels on
+ * Review. Every stage is isolated so a failure/empty is reported in `diag`, not swallowed.
  */
 export async function finishRealCaptureClusters(capture: CaptureController): Promise<CaptureResult> {
   const waveform = await capture.stop();
   const diag: CaptureDiag = {
-    seconds: Math.round((waveform.length / 16000) * 10) / 10,
+    seconds: Math.round((waveform.length / SAMPLE_RATE) * 10) / 10,
     peak: Math.round(peakOf(waveform) * 1000) / 1000,
     transcriptChars: 0,
     vadSegments: 0,
@@ -81,26 +91,36 @@ export async function finishRealCaptureClusters(capture: CaptureController): Pro
   } catch (e) {
     diag.sttError = String(e);
   }
-  // Free the whisper.cpp context now — the rest of the consult (diarize, then the Qwen cleanup +
-  // note pass) doesn't need it, and we don't want it resident alongside the LLM.
+  // Free the whisper.cpp context now — diarization embeds windows (no model) and the Qwen note
+  // pass shouldn't share memory with it.
   await unloadWhisper();
+  if (!tr) return { candidates: [], diag };
 
-  let diarized: Awaited<ReturnType<typeof diarizeAudio>> = [];
+  // Strip hallucinations (bracketed non-speech, repetition loops, caption artifacts) before the
+  // segments become speech windows — junk lines shouldn't spawn speakers.
+  const cleanSegs = filterHallucinations(tr.segments);
+  diag.vadSegments = cleanSegs.length; // speech segments (from whisper, not a separate VAD)
+  if (cleanSegs.length === 0) return { candidates: [], diag };
+
+  // Embed + cluster each whisper segment's audio window → anonymous speakers + roles.
+  let turns: Awaited<ReturnType<typeof diarizeWindows>> = [];
   try {
-    diarized = await diarizeAudio(waveform, { doctorVoiceprint, maxSpeakers: MAX_CONSULT_SPEAKERS });
-    diag.vadSegments = diarized.length;
+    const windows = cleanSegs.map((s) => sliceWindow(waveform, s.start, s.end));
+    turns = await diarizeWindows(
+      windows,
+      cleanSegs.map((s) => s.text),
+      { doctorVoiceprint, maxSpeakers: MAX_CONSULT_SPEAKERS },
+    );
   } catch (e) {
-    diag.vadError = String(e);
+    diag.vadError = String(e); // diarize failed → everything falls back to one speaker below
   }
 
-  // Strip Whisper hallucinations (bracketed non-speech, repetition loops, caption artifacts)
-  // before aligning + displaying, so junk lines don't reach the transcript or spawn speakers.
-  const cleanSegs = tr ? filterHallucinations(tr.segments) : [];
-  let candidates = tr ? alignTextToClusters(cleanSegs, diarized, tr.language) : [];
-  // If diarization found no regions but we DID transcribe, keep the text under one speaker
-  // instead of dropping it (VAD failing shouldn't discard a real transcript).
-  if (candidates.length > 0 && candidates.every((c) => c.cluster < 0)) {
-    candidates = candidates.map((c) => ({ ...c, cluster: 0 }));
-  }
+  const lang = langTag(tr.language);
+  const candidates: ClusterSegment[] = cleanSegs.map((s, i) => ({
+    cluster: turns[i]?.cluster ?? 0, // no diarization → single speaker
+    text: s.text,
+    rawText: s.text,
+    lang,
+  }));
   return { candidates, diag };
 }
