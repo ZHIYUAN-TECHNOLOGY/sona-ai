@@ -94,14 +94,17 @@ async function getCtx(model: WhisperModel, onProgress?: (p: number) => void): Pr
   if (!ctxPromise) {
     loadedFile = model.file;
     ctxPromise = (async () => {
-      // Bundled model → load the app asset directly (offline, no download). useGpu → Metal.
+      // useGpu:false — DELIBERATE. On the iPhone GPU (Metal), this q5_1 model decodes to garbage
+      // (single junk tokens), while the exact same model + params transcribe correctly on CPU and
+      // on macOS Metal. whisper-small on modern A-series CPU is fast enough (few seconds per
+      // clip). Re-evaluate per-device GPU enablement later.
       if (model.asset != null) {
         onProgress?.(1);
-        return initWhisper({ filePath: model.asset, useGpu: true });
+        return initWhisper({ filePath: model.asset, useGpu: false });
       }
       const path = await ensureModel(model, onProgress);
       // filePath accepts the file:// URI from expo-file-system.
-      return initWhisper({ filePath: path, useGpu: true });
+      return initWhisper({ filePath: path, useGpu: false });
     })().catch((e) => {
       ctxPromise = null;
       loadedFile = null;

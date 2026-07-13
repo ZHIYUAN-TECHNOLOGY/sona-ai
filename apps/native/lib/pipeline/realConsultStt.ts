@@ -39,6 +39,8 @@ export interface CaptureDiag {
   peak: number; // peak amplitude (0 = silence / mic delivered nothing)
   transcriptChars: number; // Whisper output length
   vadSegments: number; // diarization speech regions
+  rate?: number; // ACTUAL device sample rate delivered by the recorder
+  raw?: string; // first chars of whisper's untouched output (debug)
   sttError?: string;
   vadError?: string;
 }
@@ -75,6 +77,7 @@ export async function finishRealCaptureClusters(capture: CaptureController): Pro
     peak: Math.round(peakOf(waveform) * 1000) / 1000,
     transcriptChars: 0,
     vadSegments: 0,
+    rate: capture.deliveredRate(),
   };
   if (waveform.length === 0) return { candidates: [], diag };
 
@@ -88,6 +91,7 @@ export async function finishRealCaptureClusters(capture: CaptureController): Pro
       language: getSttLanguage(), // "auto" | "en" | "ms"
     });
     diag.transcriptChars = tr.text?.length ?? 0;
+    diag.raw = (tr.raw ?? "").slice(0, 140); // whisper's untouched output (debug)
   } catch (e) {
     diag.sttError = String(e);
   }
