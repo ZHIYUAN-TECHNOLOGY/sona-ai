@@ -101,6 +101,7 @@ export default function RootLayout() {
               options={{ headerShown: true, title: "", headerTransparent: true }}
             />
             <Stack.Screen name="scan-review" options={{ headerShown: false }} />
+            <Stack.Screen name="scan-attach" options={{ headerShown: false }} />
           </Stack>
         </GestureHandlerRootView>
       </ThemeProvider>
