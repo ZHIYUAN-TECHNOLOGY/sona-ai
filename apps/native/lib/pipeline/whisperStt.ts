@@ -95,11 +95,6 @@ async function getCtx(model: WhisperModel, onProgress?: (p: number) => void): Pr
   if (!ctxPromise) {
     loadedFile = model.file;
     ctxPromise = (async () => {
-      // useGpu:false — DELIBERATE. On the iPhone GPU (Metal), this q5_1 model decodes to garbage
-      // (single junk tokens), while the exact same model + params transcribe correctly on CPU and
-      // on macOS Metal. whisper-small on modern A-series CPU is fast enough (few seconds per
-      // clip). Re-evaluate per-device GPU enablement later.
-      //
       // Bundled model: resolve the asset OURSELVES via expo-asset (downloadAsync → guaranteed
       // local file) instead of handing whisper.rn the require() id — its dev-mode asset handling
       // is unverified, and this lets us log the actual file the native side loads.
@@ -120,7 +115,10 @@ async function getCtx(model: WhisperModel, onProgress?: (p: number) => void): Pr
       } catch {
         console.log(`[WHISPER] model file: ${filePath} (size unknown)`);
       }
-      return initWhisper({ filePath, useGpu: false });
+      // useGpu: earlier "Metal decodes garbage" runs were against a CORRUPT model file (the real
+      // root cause — whisper.rn's dev-mode handling of a raw require() id). With the intact file,
+      // Metal is expected fine and ~3-5× faster than CPU; the launch self-test verifies it.
+      return initWhisper({ filePath, useGpu: true });
     })().catch((e) => {
       ctxPromise = null;
       loadedFile = null;
