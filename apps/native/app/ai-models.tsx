@@ -57,18 +57,14 @@ export default function AiModelsScreen() {
   // Fast STT tier (optional generic multilingual base) — prewarm via whisper.rn.
   const [fast, setFast] = useState<DlState>({ status: "idle", pct: 0 });
 
-  const downloadFast = async () => {
+  const downloadHigh = async () => {
     haptic("tap");
-    const prev = getSttAccuracy();
-    setSttAccuracy("fast"); // ensure prewarm targets the Fast tier's model
     setFast({ status: "downloading", pct: 0 });
     try {
-      await prewarmWhisper(whisperModelFor("fast"), (p) => setFast({ status: "downloading", pct: p }));
+      await prewarmWhisper(whisperModelFor("high"), (p) => setFast({ status: "downloading", pct: p }));
       setFast({ status: "ready", pct: 1 });
     } catch {
       setFast({ status: "error", pct: 0 });
-    } finally {
-      setSttAccuracy(prev);
     }
   };
 
@@ -79,7 +75,7 @@ export default function AiModelsScreen() {
       sub="Every model runs on this phone — nothing leaves the device"
       onBack={() => router.back()}
     >
-      {/* Moat model — bundled, offline, no download. */}
+      {/* STT — best-accuracy tier downloads once; the bundled Malaysian model is the offline fallback. */}
       <Card>
         <View style={styles.head}>
           <View style={[styles.iconWrap, styles.iconReady]}>
@@ -87,12 +83,16 @@ export default function AiModelsScreen() {
           </View>
           <View style={styles.headText}>
             <Text style={styles.name}>Speech-to-text</Text>
-            <Text style={styles.role}>Malaysian Whisper · Malay + English + 中文</Text>
+            <Text style={styles.role}>{`${whisperModelInfo(getSttAccuracy()).name} · Malay + English + 中文`}</Text>
           </View>
         </View>
         <View style={styles.statusReady}>
           <Ionicons name="checkmark-circle" size={16} color={colors.greenInk} />
-          <Text style={styles.statusReadyText}>Bundled in app · ready offline · 181MB</Text>
+          <Text style={styles.statusReadyText}>
+            {getSttAccuracy() === "high"
+              ? "Best accuracy · 547MB one-time download (below)"
+              : "Bundled in app · ready offline · 181MB"}
+          </Text>
         </View>
         <Text style={styles.note}>
           {`Language: ${getSttLanguage() === "ms" ? "Bahasa Melayu" : getSttLanguage() === "en" ? "English" : "Auto-detect (recommended)"} · change in Settings → Transcription`}
@@ -148,11 +148,11 @@ export default function AiModelsScreen() {
       <Card>
         <View style={styles.head}>
           <View style={styles.iconWrap}>
-            <Ionicons name="flash-outline" size={18} color={colors.green} />
+            <Ionicons name="sparkles-outline" size={18} color={colors.green} />
           </View>
           <View style={styles.headText}>
-            <Text style={styles.name}>Fast speech-to-text (optional)</Text>
-            <Text style={styles.role}>{whisperModelInfo("fast").name} · quicker, generic</Text>
+            <Text style={styles.name}>Best-accuracy speech-to-text</Text>
+            <Text style={styles.role}>{`${whisperModelInfo("high").name} · best for Malaysian code-switch`}</Text>
           </View>
         </View>
         {fast.status === "ready" ? (
@@ -169,14 +169,14 @@ export default function AiModelsScreen() {
             <Bar pct={fast.pct} />
           </>
         ) : (
-          <Pressable style={styles.action} onPress={downloadFast}>
+          <Pressable style={styles.action} onPress={downloadHigh}>
             <Ionicons
               name={fast.status === "error" ? "refresh-outline" : "cloud-download-outline"}
               size={18}
               color={colors.ink2}
             />
             <Text style={styles.actionText}>
-              {fast.status === "error" ? "Download failed — tap to retry" : `Download · ${whisperModelInfo("fast").size}`}
+              {fast.status === "error" ? "Download failed — tap to retry" : `Download & prepare · ${whisperModelInfo("high").size}`}
             </Text>
           </Pressable>
         )}
