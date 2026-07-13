@@ -112,6 +112,22 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const [llmWanted, setLlmWanted] = useState(false);
   const llm = useLLM({ model: NOTE_MODEL, preventLoad: !llmWanted });
 
+  // Sampling MUST be applied via the runtime configure() call — a generationConfig field on the
+  // model object is ignored by executorch. Without repetitionPenalty the 1.5B degenerates into
+  // repetition loops / alphabet soup on long generations (observed Jul 2026).
+  useEffect(() => {
+    if (!llm.isReady) return;
+    try {
+      llm.configure({
+        generationConfig: { temperature: 0.3, topP: 0.9, repetitionPenalty: 1.3 },
+      });
+      console.log("[LLM] generationConfig applied (temp 0.3, topP 0.9, repPenalty 1.3)");
+    } catch (e) {
+      console.log(`[LLM] configure failed: ${String(e)}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [llm.isReady]);
+
   const startConsult = useCallback(async (consentText: string) => {
     const consult = await beginConsult(consentText);
     idRef.current = consult.id;

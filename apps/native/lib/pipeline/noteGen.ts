@@ -167,6 +167,35 @@ export function stripThink(text: string): string {
 }
 
 /**
+ * Truncate at the first DEGENERATE line — the failure mode where a small model dissolves into
+ * synonym waterfalls ("zealously fervently ardently…") or alphabet soup ("dadada abcdefgh…").
+ * Heuristics per line (long lines only, CJK-safe): low unique-word ratio, vowel-less latin
+ * blobs, or single-letter runs. Everything from the first degenerate line onward is dropped —
+ * model junk can never reach the clinician. Pure + unit-tested.
+ */
+export function truncateDegenerate(text: string): string {
+  const lines = text.split(/\r?\n/);
+  const out: string[] = [];
+  for (const line of lines) {
+    const words = line.trim().split(/\s+/).filter(Boolean);
+    if (words.length >= 12) {
+      const latin = words.filter((w) => /^[a-zA-Z'’-]+$/.test(w));
+      const uniq = new Set(words.map((w) => w.toLowerCase())).size / words.length;
+      const shortish = latin.filter((w) => w.length <= 3).length / (latin.length || 1);
+      const novowel = latin.filter((w) => w.length >= 4 && !/[aeiouy]/i.test(w)).length / (latin.length || 1);
+      // Real English prose of this length always carries function words; synonym waterfalls
+      // ("zealously fervently ardently…") are long runs of unique content words with none.
+      const FN = /^(the|a|an|is|are|was|were|be|to|of|in|on|at|for|and|or|but|with|if|as|by|no|not|has|have|had|his|her|their|this|that|from|after|before|when|while|which)$/i;
+      const fnRatio = latin.length >= 12 ? words.filter((w) => FN.test(w)).length / words.length : 1;
+      // Degenerate: heavy word-reuse, letter-soup tokens, vowel-less blobs, or zero-glue prose.
+      if (uniq < 0.45 || (latin.length >= 10 && (shortish > 0.6 || novowel > 0.3)) || fnRatio < 0.05) break;
+    }
+    out.push(line);
+  }
+  return out.join("\n").trim();
+}
+
+/**
  * Collapse degenerate repetition loops in model output: a small model on a thin transcript can
  * emit the same sentence dozens of times ("He is not on any current medical treatment." ×30).
  * Keeps the FIRST occurrence of each consecutive duplicate sentence (per line, so Markdown
@@ -295,7 +324,7 @@ export async function generateNote(
   const t0 = Date.now();
   const rawOut = await llm.generate(messages);
   const generationMs = Date.now() - t0;
-  const clean = collapseRepeats(stripThink(rawOut));
+  const clean = truncateDegenerate(collapseRepeats(stripThink(rawOut)));
   const { title: rawTitle, rest: afterTitle } = parseTitle(clean);
   // Peel the trailing Flags line before anything else parses the body, so the
   // sidecar never leaks into the SOAP sections or the rendered markdown.
