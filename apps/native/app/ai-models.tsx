@@ -1,16 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import { useLLM } from "react-native-executorch";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
 import { haptic } from "@/lib/haptics";
+import { noteLlamaModelName, prewarmLlama } from "@/lib/pipeline/llamaLlm";
 import { NOTE_MODEL, NOTE_MODEL_NAME } from "@/lib/pipeline/model";
 import {
+  getNoteEngine,
   getSttAccuracy,
+  setNoteEngine,
   setSttAccuracy,
+  type NoteEngine,
 } from "@/lib/pipeline/sttMode";
 import { prewarmWhisper, whisperModelFor, whisperModelInfo } from "@/lib/pipeline/whisperStt";
 import { colors, font, radius, space } from "@/lib/theme";
@@ -55,6 +59,27 @@ export default function AiModelsScreen() {
 
   // Fast STT tier (optional generic multilingual base) — prewarm via whisper.rn.
   const [fast, setFast] = useState<DlState>({ status: "idle", pct: 0 });
+
+  // Production note engine (Qwen2.5-1.5B via llama.cpp) vs the default ExecuTorch Qwen3-0.6B.
+  const [engine, setEngineState] = useState<NoteEngine>(getNoteEngine());
+  const [llama, setLlama] = useState<DlState>({ status: "idle", pct: 0 });
+
+  const chooseEngine = (next: NoteEngine) => {
+    haptic("select");
+    setEngineState(next);
+    setNoteEngine(next);
+  };
+
+  const downloadLlama = async () => {
+    haptic("tap");
+    setLlama({ status: "downloading", pct: 0 });
+    try {
+      await prewarmLlama((p) => setLlama({ status: "downloading", pct: p }));
+      setLlama({ status: "ready", pct: 1 });
+    } catch {
+      setLlama({ status: "error", pct: 0 });
+    }
+  };
 
   const downloadFast = async () => {
     haptic("tap");
@@ -138,6 +163,52 @@ export default function AiModelsScreen() {
           </Pressable>
         )}
         <Text style={styles.note}>Otherwise it downloads automatically on your first consult.</Text>
+      </Card>
+
+      {/* Production note model — Qwen2.5-1.5B via llama.cpp. */}
+      <Card>
+        <View style={styles.head}>
+          <View style={styles.iconWrap}>
+            <Ionicons name="sparkles-outline" size={18} color={colors.green} />
+          </View>
+          <View style={styles.headText}>
+            <Text style={styles.name}>Production note model</Text>
+            <Text style={styles.role}>{`${noteLlamaModelName()} · Apache-2.0 · sharper SOAP`}</Text>
+          </View>
+          <Switch value={engine === "llama"} onValueChange={(v) => chooseEngine(v ? "llama" : "executorch")} />
+        </View>
+        {engine === "llama" ? (
+          llama.status === "ready" ? (
+            <View style={styles.statusReady}>
+              <Ionicons name="checkmark-circle" size={16} color={colors.greenInk} />
+              <Text style={styles.statusReadyText}>Ready on-device</Text>
+            </View>
+          ) : llama.status === "downloading" ? (
+            <>
+              <View style={styles.progressRow}>
+                <ActivityIndicator size="small" color={colors.greenInk} />
+                <Text style={styles.progressText}>{`Downloading… ${Math.round(llama.pct * 100)}%`}</Text>
+              </View>
+              <Bar pct={llama.pct} />
+            </>
+          ) : (
+            <Pressable style={styles.action} onPress={downloadLlama}>
+              <Ionicons
+                name={llama.status === "error" ? "refresh-outline" : "cloud-download-outline"}
+                size={18}
+                color={colors.ink2}
+              />
+              <Text style={styles.actionText}>
+                {llama.status === "error" ? "Download failed — tap to retry" : "Download over Wi-Fi · ~1GB, one-time"}
+              </Text>
+            </Pressable>
+          )
+        ) : (
+          <Text style={styles.note}>
+            On = notes use Qwen2.5-1.5B (llama.cpp, one runtime with the Malaysian Whisper). Off =
+            the smaller ExecuTorch Qwen3-0.6B above.
+          </Text>
+        )}
       </Card>
 
       {/* Optional Fast STT tier. */}
