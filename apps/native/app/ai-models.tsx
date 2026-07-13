@@ -10,6 +10,7 @@ import { haptic } from "@/lib/haptics";
 import { NOTE_MODEL, NOTE_MODEL_NAME } from "@/lib/pipeline/model";
 import {
   getSttAccuracy,
+  getSttLanguage,
   setSttAccuracy,
 } from "@/lib/pipeline/sttMode";
 import { prewarmWhisper, whisperModelFor, whisperModelInfo } from "@/lib/pipeline/whisperStt";
@@ -93,6 +94,9 @@ export default function AiModelsScreen() {
           <Ionicons name="checkmark-circle" size={16} color={colors.greenInk} />
           <Text style={styles.statusReadyText}>Bundled in app · ready offline · 181MB</Text>
         </View>
+        <Text style={styles.note}>
+          {`Language: ${getSttLanguage() === "ms" ? "Bahasa Melayu" : getSttLanguage() === "en" ? "English" : "Auto-detect (recommended)"} · change in Settings → Transcription`}
+        </Text>
       </Card>
 
       {/* Note LLM — one-time download over Wi-Fi. */}
