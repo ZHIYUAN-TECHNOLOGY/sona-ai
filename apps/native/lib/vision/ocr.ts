@@ -1,26 +1,37 @@
 import TextRecognition from "@react-native-ml-kit/text-recognition";
+import { Platform } from "react-native";
 
+import VisionOcr from "../../modules/vision-ocr";
 import { redactDocText, type RedactedDocText } from "./ocrText";
 
-// On-device OCR via ML Kit text recognition — models ship inside the app binary, so
-// recognition works instantly on a fresh install (no download, unlike the earlier
-// ExecuTorch CRAFT+CRNN spike). The Latin recognizer reads English and Malay; the image
-// never leaves the phone. Extracted text is treated as PHI — see ./ocrText for the
-// de-identification half (pure, unit-tested). This module is the engine seam: swapping
-// recognizers (Apple Vision, executorch) changes nothing downstream.
+// On-device OCR — the engine seam for Smart Scan. iOS: Apple Vision
+// (VNRecognizeTextRequest, .accurate + language correction — best print accuracy,
+// usable handwriting, correct reading order; see modules/vision-ocr). Android, or an
+// iOS build that predates the module: ML Kit text recognition (in the app binary, no
+// download). Both fully on-device; the image never leaves the phone. Extracted text is
+// treated as PHI — see ./ocrText for the de-identification half (pure, unit-tested).
+// Everything downstream sees only `extractText()`, so engines swap freely.
 
 export { joinPages, redactDocText, type RedactedDocText } from "./ocrText";
 
 export interface OcrResult {
-  /** Recognized text, blocks joined in reading order (newline-separated). */
+  /** Recognized text, lines/blocks joined in reading order (newline-separated). */
   text: string;
-  /** Number of detected text blocks. */
+  /** Number of detected text lines/blocks. */
   boxes: number;
 }
 
 /** Recognize text in one image (local file URI). Runs fully on-device. */
 export async function extractText(imageUri: string): Promise<OcrResult> {
-  const result = await TextRecognition.recognize(normalizeUri(imageUri));
+  const uri = normalizeUri(imageUri);
+  if (Platform.OS === "ios" && VisionOcr) {
+    try {
+      return await VisionOcr.recognize(uri);
+    } catch (e) {
+      console.log(`[OCR] Vision failed → ML Kit fallback: ${String(e)}`);
+    }
+  }
+  const result = await TextRecognition.recognize(uri);
   const text = result.blocks
     .map((b) => b.text.trim())
     .filter(Boolean)
