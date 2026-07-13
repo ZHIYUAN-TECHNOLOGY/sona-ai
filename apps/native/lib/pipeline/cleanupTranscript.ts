@@ -23,17 +23,22 @@ import { stripThink } from "./noteGen";
 import type { LlmLike, Msg } from "./noteGen";
 
 const SYSTEM_PROMPT = [
-  "You are a proofreader for a medical consultation transcript produced by on-device speech-to-text.",
-  "Each input line may contain recognition errors (the audio was code-switched Malay + English).",
-  "Fix ONLY clear transcription errors: spelling, punctuation, capitalization, and obviously garbled",
-  "words whose intended word is unambiguous from context.",
+  "You are a proofreader for a MALAYSIAN clinic consultation transcript produced by on-device",
+  "speech-to-text. The speakers code-switch between Malay, English, and Mandarin (中文), but the",
+  "recognizer forces everything through ONE language, so words from the other languages come out",
+  "as phonetic gibberish. Restore each line to what the speaker actually said:",
+  "- Restore romanized Mandarin to 中文 characters when phonetically clear, e.g.",
+  '  "Oh long hentong" → "喉咙很痛", "nali bu sufu" → "哪里不舒服".',
+  "- Fix mangled Malay to correct Malay, e.g. \"beratuk\" → \"batuk\", \"apacaba\" → \"apa khabar\".",
+  '- Fix mangled English, e.g. "wanhwik" → "one week".',
+  "- Common clinic words: batuk, demam, sakit, ubat, makan, selsema, 喉咙痛, 发烧, 头晕, 不舒服.",
   "STRICT RULES:",
   "- Do NOT add, remove, or infer any clinical information (symptoms, doses, numbers, findings).",
   "- Do NOT guess or invent names, places, or medications. If a proper noun is garbled and you are",
   "  not certain, replace just that word with [unclear]. Never fabricate a name.",
-  "- Preserve the speaker's meaning and wording. If a line is already fine, return it unchanged.",
-  "- Keep each line roughly the same length; never expand a line into new sentences.",
-  'Return ONLY a JSON array of strings — one cleaned string per input line, same order, same count.',
+  "- Only restore a word when the intended word is phonetically obvious; otherwise leave it as-is.",
+  "- Preserve meaning and word order. Keep each line roughly the same length; never add sentences.",
+  "Return ONLY a JSON array of strings — one cleaned string per input line, same order, same count.",
   "No commentary, no keys, no code fences.",
 ].join(" ");
 
