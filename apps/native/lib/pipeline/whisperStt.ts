@@ -127,7 +127,8 @@ export async function transcribeWaveform(
   const { promise } = ctx.transcribeData(pcm, {
     language: opts.language ?? "auto",
     translate: false,
-    tokenTimestamps: true,
+    // NOTE: tokenTimestamps makes whisper.cpp emit special timestamp tokens (<|0.0|>) into the
+    // segment text — we only need SEGMENT t0/t1 (always present), so leave it off.
     // Hallucination guards: greedy at temp 0 with fallback increments; beam search for stability.
     temperature: 0,
     temperatureInc: 0.2,
@@ -136,13 +137,22 @@ export async function transcribeWaveform(
     maxThreads: 4,
   });
   const res = await promise;
-  // whisper.cpp segment timestamps t0/t1 are centiseconds (10ms) → seconds.
+  // whisper.cpp segment timestamps t0/t1 are centiseconds (10ms) → seconds. Defensively strip any
+  // Whisper special tokens (<|0.0|>, <|en|>, <|startoftranscript|>, …) that can leak into the text.
   const segments: SttSegment[] = (res.segments ?? [])
-    .map((s) => ({ start: s.t0 / 100, end: s.t1 / 100, text: (s.text ?? "").trim() }))
+    .map((s) => ({ start: s.t0 / 100, end: s.t1 / 100, text: stripSpecialTokens(s.text ?? "") }))
     .filter((s) => s.text);
-  const text = (res.result ?? "").trim();
+  const text = stripSpecialTokens(res.result ?? "");
   if (segments.length === 0 && text) segments.push({ start: 0, end: 0, text });
   return { text, language: res.language, segments };
+}
+
+/** Remove Whisper special tokens (<|…|>) and collapse whitespace. */
+function stripSpecialTokens(s: string): string {
+  return s
+    .replace(/<\|[^>]*\|>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /** Pre-download + load a tier's model (Settings pre-warm), reporting progress. */
