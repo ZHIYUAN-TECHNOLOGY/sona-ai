@@ -34,7 +34,6 @@ import {
   type CaptureDiag,
 } from "./realConsultStt";
 import type { ClusterSegment } from "./sttAlign";
-import { cleanupClusters } from "./cleanupTranscript";
 import { getSttMode } from "./sttMode";
 import { NOTE_MODEL } from "./model";
 import type { DraftNote } from "./noteGen";
@@ -56,7 +55,6 @@ export interface PipelineState {
   status: PipelineStatus;
   segments: RawSegment[]; // live transcript as it streams in
   candidates: ClusterSegment[]; // real: transcribed lines tagged by anonymous cluster (pre-label)
-  cleaning: boolean; // on-device LLM cleanup of the raw transcript is running
   captureDiag: CaptureDiag | null; // per-stage capture diagnostics (mic/STT/diarize)
   redaction: RedactionOutcome | null; // de-identified output + counts + re-ID map
   note: DraftNote | null; // re-identified SOAP note for the clinician view
@@ -86,10 +84,6 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const [segments, setSegments] = useState<RawSegment[]>([]);
   const [candidates, setCandidates] = useState<ClusterSegment[]>([]);
   const candidatesRef = useRef<ClusterSegment[]>([]);
-  const [cleaning, setCleaning] = useState(false);
-  // Each real capture bumps captureSeq; cleanup runs once per capture (cleanedSeq catches up).
-  const captureSeqRef = useRef(0);
-  const cleanedSeqRef = useRef(0);
   const [captureDiag, setCaptureDiag] = useState<CaptureDiag | null>(null);
   const [redaction, setRedaction] = useState<RedactionOutcome | null>(null);
   const [note, setNote] = useState<DraftNote | null>(null);
@@ -126,8 +120,6 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setSegments([]);
     setCandidates([]);
     candidatesRef.current = [];
-    captureSeqRef.current = 0;
-    cleanedSeqRef.current = 0;
     setCaptureDiag(null);
     setRedaction(null);
     seq.current = 0;
@@ -217,7 +209,6 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         setCandidates([]);
         setCaptureDiag({ seconds: 0, peak: 0, transcriptChars: 0, vadSegments: 0, sttError: String(e) });
       }
-      captureSeqRef.current++; // a new capture's transcript is ready → eligible for one cleanup pass
       setLlmWanted(true); // transcription done → NOW load the note LLM (labeling covers the wait)
       setStatus("transcribed");
       return "label"; // persistRecordingStop is deferred to applySpeakerLabels (after segments)
@@ -271,37 +262,15 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setSegments(segs);
   }, []);
 
-  // Conservative on-device LLM cleanup of the raw transcript (fix ASR garbles, keep raw). Runs
-  // ONCE per capture, only when the Qwen model is ready (STT has been unloaded by then, so they
-  // don't co-reside). Best-effort: any failure leaves the raw text. Guarded by cleanedSeq so the
-  // setCandidates it performs can't re-trigger itself.
-  const runCleanup = useCallback(async () => {
-    if (cleanedSeqRef.current >= captureSeqRef.current) return;
-    const targetSeq = captureSeqRef.current;
-    cleanedSeqRef.current = targetSeq; // mark attempted up-front → no re-entry / loop
-    const cands = candidatesRef.current;
-    if (cands.length === 0) return;
-    setCleaning(true);
-    try {
-      const cleaned = await cleanupClusters(cands, llm);
-      // Skip if a newer capture started while we were cleaning (stale result).
-      if (captureSeqRef.current === targetSeq) {
-        candidatesRef.current = cleaned;
-        setCandidates(cleaned);
-      }
-    } finally {
-      setCleaning(false);
-    }
-  }, [llm]);
-
-  useEffect(() => {
-    if (getSttMode() === "real" && llm.isReady && candidates.length > 0) void runCleanup();
-  }, [candidates, llm.isReady, runCleanup]);
+  // NOTE: the LLM transcript-cleanup pass was REMOVED after the multi-voice eval harness showed
+  // every Qwen-1.5B transcript rewrite is net harmful (overall 75.8% → 56-69%; Malay 95.8% →
+  // 44.7% on the conservative prompt). The measured best transcript = pure whisper (beam 5) +
+  // human edit. The LLM's job is the NOTE (summarization), not the transcript.
+  // See scratchpad stt-eval dashboard, Jul 2026.
 
   // Clinician edits a transcript line on the Review screen. The edit becomes authoritative — mark
   // this capture cleaned so an in-flight/late cleanup can't clobber it — and flows to the note.
   const updateCandidateText = useCallback((index: number, text: string) => {
-    cleanedSeqRef.current = captureSeqRef.current;
     const next = candidatesRef.current.map((c, i) => (i === index ? { ...c, text } : c));
     candidatesRef.current = next;
     setCandidates(next);
@@ -368,9 +337,6 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setSegments([]);
     setCandidates([]);
     candidatesRef.current = [];
-    captureSeqRef.current = 0;
-    cleanedSeqRef.current = 0;
-    setCleaning(false);
     setLlmWanted(false); // next consult transcribes BEFORE the LLM loads again
     setCaptureDiag(null);
     setRedaction(null);
@@ -396,7 +362,6 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         status,
         segments,
         candidates,
-        cleaning,
         captureDiag,
         redaction,
         note,
