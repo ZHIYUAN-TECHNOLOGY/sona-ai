@@ -29,7 +29,9 @@ const BASE_RULES =
   "- No tables, no links, no citations, no [G1]-style references, no asterisks, no preamble, " +
   "no closing remarks, no repetition.\n" +
   "- Keep identifier tokens such as NAME_1 exactly as written.\n" +
-  "- Total note under 150 words.";
+  "- Total note under 150 words.\n" +
+  "- COMPLETENESS: include EVERY medication, dose, duration, vital sign, and follow-up " +
+  "instruction stated in the transcript. Omitting a stated fact is as wrong as inventing one.";
 
 export const TEMPLATES: NoteTemplate[] = [
   {
@@ -49,7 +51,23 @@ export const TEMPLATES: NoteTemplate[] = [
     structure:
       "Structure: '## Subjective', '## Objective', '## Assessment', '## Plan', then a final " +
       "'## Orders & follow-ups' heading with a '- ' bulleted list covering review intervals, tests " +
-      "ordered, medications with doses, and safety-net advice the clinician stated.",
+      "ordered, medications with doses, and safety-net advice the clinician stated." +
+      // Few-shot example — harness-proven (note-eval, Jul 2026): inventions 2→0 at equal
+      // recall vs rules-only. SOAP is the default/demo template; other templates rely on
+      // BASE_RULES' completeness clause alone.
+      "\n\nEXAMPLE (follow this shape exactly — note EVERY stated symptom, vital, medication and " +
+      "follow-up is captured):\n" +
+      "Transcript:\ndoctor: NAME_1, sore throat how many days?\npatient: Four days doctor, pain when " +
+      "swallow, and very itchy eyes also. Saya tak demam.\ndoctor: Temperature 37.1, throat red, no pus. " +
+      "Tonsillitis, likely viral. Salt water gargle, cetirizine 10 milligram at night for the eyes. " +
+      "Come back in five days if not better, earlier if fever or cannot swallow.\n" +
+      "Output:\n" +
+      "Title: Sore throat with itchy eyes\n" +
+      "## Subjective\n- Sore throat four days, painful swallowing\n- Itchy eyes\n- No fever reported\n" +
+      "## Objective\n- Temperature 37.1\n- Throat red, no pus\n" +
+      "## Assessment\n- Tonsillitis, likely viral\n" +
+      "## Plan\n- Salt water gargle\n- Cetirizine 10 mg at night\n" +
+      "## Orders & follow-ups\n- Review in five days if not better\n- Return earlier if fever or unable to swallow",
   },
   {
     id: "progress",
