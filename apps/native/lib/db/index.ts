@@ -465,6 +465,26 @@ export async function getConsult(consultId: string): Promise<Consult | null> {
   return row ?? null;
 }
 
+/** Set/replace a consult's patient context (device-only PHI — see the schema note). */
+export async function setConsultPatient(
+  consultId: string,
+  patient: PatientDetails,
+): Promise<void> {
+  const db = await initDb();
+  await db.runAsync(
+    `UPDATE consult SET patientName = ?, patientPhone = ?, room = ?, visitType = ?, updatedAt = ?
+     WHERE id = ?;`,
+    [
+      patient.patientName?.trim() || null,
+      patient.patientPhone?.trim() || null,
+      patient.room?.trim() || null,
+      patient.visitType,
+      Date.now(),
+      consultId,
+    ],
+  );
+}
+
 /** Rename a consult (AI-generated title, or a clinician edit). Title must be PII-free. */
 export async function setConsultTitle(consultId: string, title: string): Promise<void> {
   const db = await initDb();

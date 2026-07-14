@@ -21,7 +21,7 @@ import {
 import type { ScannedDocument } from "@/lib/db/types";
 import { generateDocSummary } from "@/lib/vision/docSummary";
 import { redactDocText } from "@/lib/vision/ocr";
-import { colors, font, space } from "@/lib/theme";
+import { colors, font, redaction, redactionClassOf, space } from "@/lib/theme";
 
 // Smart Scan review — the human gate between OCR and any AI use (same pattern as the
 // consult "Review & label" screen). The clinician reads and corrects the extracted text,
@@ -37,20 +37,38 @@ type TextView = "original" | "deidentified";
 // in the array so they can be rendered as highlighted spans.
 const DOC_TOKEN_SPLIT = /(\bDOC_[A-Z]+(?:_[A-Z]+)*(?:_\d+)?\b)/g;
 
-/** Read-only de-identified text with each DOC_ token highlighted — "what the AI sees". */
+/**
+ * Read-only de-identified text — "what the AI sees". Each DOC_ token renders in
+ * its app-wide redaction class color (theme.redaction), with a legend of the
+ * classes actually present in this document.
+ */
 function DeidentifiedText({ text }: { text: string }) {
+  const parts = text.split(DOC_TOKEN_SPLIT);
+  const present = [...new Set(parts.filter((_, i) => i % 2 === 1).map(redactionClassOf))];
   return (
-    <Text style={styles.deidText} selectable>
-      {text.split(DOC_TOKEN_SPLIT).map((part, i) =>
-        i % 2 === 1 ? (
-          <Text key={i} style={styles.deidToken}>
-            {` ${part} `}
-          </Text>
-        ) : (
-          part
-        ),
-      )}
-    </Text>
+    <View>
+      {present.length > 0 ? (
+        <View style={styles.legend}>
+          {present.map((cls) => (
+            <View key={cls} style={[styles.legendChip, { backgroundColor: redaction[cls].bg, borderColor: redaction[cls].line }]}>
+              <View style={[styles.legendDot, { backgroundColor: redaction[cls].fg }]} />
+              <Text style={[styles.legendText, { color: redaction[cls].fg }]}>{redaction[cls].label}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+      <Text style={styles.deidText} selectable>
+        {parts.map((part, i) => {
+          if (i % 2 === 0) return part;
+          const c = redaction[redactionClassOf(part)];
+          return (
+            <Text key={i} style={[styles.deidToken, { color: c.fg, backgroundColor: c.bg }]}>
+              {` ${part} `}
+            </Text>
+          );
+        })}
+      </Text>
+    </View>
   );
 }
 
@@ -385,12 +403,19 @@ const styles = StyleSheet.create({
   hint: { ...font.bodySm, color: colors.ink3, marginTop: space.sm },
   viewToggle: { marginTop: space.md },
   deidText: { ...font.body, color: colors.ink2, lineHeight: 22, marginTop: space.sm },
-  deidToken: {
-    color: colors.greenInk,
-    backgroundColor: colors.greenSoft,
-    fontWeight: "700",
-    fontSize: 12,
+  deidToken: { fontWeight: "700", fontSize: 12 },
+  legend: { flexDirection: "row", flexWrap: "wrap", gap: 5, marginTop: space.sm },
+  legendChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
+  legendDot: { width: 6, height: 6, borderRadius: 3 },
+  legendText: { fontSize: 10, fontWeight: "700", letterSpacing: 0.2 },
   editor: {
     ...font.body,
     color: colors.ink,

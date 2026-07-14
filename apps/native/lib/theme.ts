@@ -50,8 +50,47 @@ export const colors = {
   blue50: "#eaf2f8",
   blueLine: "#cfe0ee",
 
+  purple: "#6941c6",
+  purple50: "#f2edfb",
+  purpleLine: "#e0d5f5",
+
+  teal: "#0e7490",
+  teal50: "#e8f6f9",
+  tealLine: "#c9e8ef",
+
   white: "#ffffff",
 } as const;
+
+// --- Redaction color codes -----------------------------------------------------
+// One hue per identifier class, used EVERYWHERE a de-identified token renders
+// (privacy gate chips, scan review de-identified view, legends). Keep this the
+// single source of truth — never hardcode a token color in a screen.
+
+export type RedactionClass = "name" | "ic" | "phone" | "email" | "address" | "other";
+
+export const redaction: Record<
+  RedactionClass,
+  { label: string; fg: string; bg: string; line: string }
+> = {
+  name: { label: "Name", fg: colors.greenDeep, bg: colors.green100, line: colors.green100 },
+  ic: { label: "IC / ID", fg: colors.purple, bg: colors.purple50, line: colors.purpleLine },
+  phone: { label: "Phone", fg: colors.blue, bg: colors.blue50, line: colors.blueLine },
+  email: { label: "Email", fg: colors.teal, bg: colors.teal50, line: colors.tealLine },
+  address: { label: "Address", fg: colors.amber, bg: colors.amber50, line: colors.amberLine },
+  other: { label: "Other", fg: colors.ink3, bg: colors.surface2, line: colors.line },
+} as const;
+
+/** Class of a redaction token — handles both consult (NAME_1) and document
+ *  (DOC_NAME_2, DOC_NAME_FIELD) shapes, plus NAME_UNCERTAIN_1. */
+export function redactionClassOf(token: string): RedactionClass {
+  const bare = token.replace(/^DOC_/, "");
+  if (bare.startsWith("NAME")) return "name";
+  if (bare.startsWith("IC")) return "ic";
+  if (bare.startsWith("PHONE") || bare.startsWith("TEL")) return "phone";
+  if (bare.startsWith("EMAIL")) return "email";
+  if (bare.startsWith("ADDR")) return "address";
+  return "other";
+}
 
 // Softer, larger radii for the calmer look.
 export const radius = {

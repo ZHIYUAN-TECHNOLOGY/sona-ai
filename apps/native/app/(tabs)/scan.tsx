@@ -44,6 +44,15 @@ const TYPE_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   other: "document-outline",
 };
 
+// One-line content preview so a generically-titled card ("Document") is still
+// identifiable: the AI note's title when one exists, else the first line of the
+// extracted text (device-only display — same PHI posture as the consult snippet).
+function docPreview(d: ScannedDocument): string {
+  const t = d.summary?.match(/^\*\*(.+?)\*\*/)?.[1]?.trim();
+  if (t) return t;
+  return d.rawText.split("\n").map((l) => l.trim()).find(Boolean) ?? "";
+}
+
 function timeAgo(ts: number): string {
   const mins = Math.max(0, Math.round((Date.now() - ts) / 60000));
   if (mins < 1) return "now";
@@ -294,6 +303,11 @@ export default function SmartScanScreen() {
                       <Text style={styles.rowSub} numberOfLines={1}>
                         {`${timeAgo(d.createdAt)} · ${d.pages} page${d.pages === 1 ? "" : "s"} · ${d.identifiers} identifier${d.identifiers === 1 ? "" : "s"} redacted`}
                       </Text>
+                      {docPreview(d) ? (
+                        <Text style={styles.rowSnippet} numberOfLines={1}>
+                          {docPreview(d)}
+                        </Text>
+                      ) : null}
                       {d.status === "attached" && d.attachedTo ? (
                         <View style={styles.attachedRow}>
                           <Ionicons name="person-outline" size={11} color={colors.greenDeep} />
@@ -375,6 +389,7 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, minWidth: 0 },
   rowTitle: { ...font.body, fontWeight: "600", color: colors.ink },
   rowSub: { ...font.bodySm, color: colors.ink3, marginTop: 1 },
+  rowSnippet: { ...font.bodySm, color: colors.ink2, marginTop: 2, fontStyle: "italic" },
   attachedRow: { flexDirection: "row", alignItems: "center", gap: 3, marginTop: 3 },
   attachedText: { fontSize: 11, fontWeight: "600", color: colors.greenDeep, flexShrink: 1 },
   footer: {

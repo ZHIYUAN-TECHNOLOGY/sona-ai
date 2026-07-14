@@ -11,8 +11,15 @@ import { NoteMarkdown } from "@/components/consult/NoteMarkdown";
 import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { consultFullSubtitle, consultHeadline, statusMeta } from "@/lib/consultFormat";
-import { deleteConsult, getAudit, getConsult, getConsultDocuments, getNote } from "@/lib/db";
-import type { AuditEntry, ClinicalNote, Consult, ScannedDocument } from "@/lib/db/types";
+import {
+  deleteConsult,
+  getAudit,
+  getConsult,
+  getConsultDocuments,
+  getNote,
+  setConsultPatient,
+} from "@/lib/db";
+import type { AuditEntry, ClinicalNote, Consult, ScannedDocument, VisitType } from "@/lib/db/types";
 import { editClinicalNote } from "@/lib/pipeline/consultPipeline";
 import { soapToMarkdown } from "@/lib/pipeline/noteFormat";
 import { colors, font, radius, space } from "@/lib/theme";
@@ -97,6 +104,67 @@ export default function ConsultDetailScreen() {
     prescription: "medkit-outline",
     discharge: "exit-outline",
   };
+  // Patient details — editable AFTER the consult too, so consults recorded before
+  // the details feature (or in a hurry) can be labelled for the list. Each field
+  // persists immediately; the card and list header pick it up on reload.
+  const editPatientField = (field: "patientName" | "patientPhone" | "room", label: string) => {
+    if (!consult || process.env.EXPO_OS !== "ios") return;
+    Alert.prompt(
+      label,
+      "Stays on this phone only.",
+      (text) => {
+        const t = text?.trim() ?? "";
+        void setConsultPatient(consult.id, {
+          patientName: consult.patientName,
+          patientPhone: consult.patientPhone,
+          room: consult.room,
+          visitType: consult.visitType,
+          [field]: t || null,
+        }).then(load);
+      },
+      "plain-text",
+      consult[field] ?? "",
+    );
+  };
+  const setVisit = (v: VisitType) => {
+    if (!consult) return;
+    void setConsultPatient(consult.id, {
+      patientName: consult.patientName,
+      patientPhone: consult.patientPhone,
+      room: consult.room,
+      visitType: consult.visitType === v ? null : v,
+    }).then(load);
+  };
+  const patientCard = consult ? (
+    <Card>
+      <View style={styles.patHead}>
+        <Ionicons name="person-outline" size={16} color={colors.green} />
+        <Text style={styles.patTitle}>Patient details</Text>
+      </View>
+      <PatientRow label="Name" value={consult.patientName} onPress={() => editPatientField("patientName", "Patient name")} />
+      <PatientRow label="Phone" value={consult.patientPhone} onPress={() => editPatientField("patientPhone", "Patient phone")} />
+      <PatientRow label="Room / bed" value={consult.room} onPress={() => editPatientField("room", "Room / bed")} />
+      <View style={styles.visitRow}>
+        <Text style={styles.patLabel}>Visit</Text>
+        <View style={styles.visitChips}>
+          {(["walk-in", "appointment"] as const).map((v) => (
+            <Pressable
+              key={v}
+              accessibilityRole="button"
+              accessibilityState={{ selected: consult.visitType === v }}
+              onPress={() => setVisit(v)}
+              style={[styles.visitChip, consult.visitType === v && styles.visitChipOn]}
+            >
+              <Text style={[styles.visitChipText, consult.visitType === v && styles.visitChipTextOn]}>
+                {v === "walk-in" ? "Walk-in" : "Appointment"}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    </Card>
+  ) : null;
+
   const docsCard =
     docs.length > 0 ? (
       <Card>
@@ -188,6 +256,7 @@ export default function ConsultDetailScreen() {
             </>
           )}
 
+          {patientCard}
           {docsCard}
 
           <Card variant="green">
@@ -247,6 +316,7 @@ export default function ConsultDetailScreen() {
               />
             </View>
           </Card>
+          {patientCard}
           {docsCard}
         </>
       )}
@@ -254,7 +324,50 @@ export default function ConsultDetailScreen() {
   );
 }
 
+function PatientRow({
+  label,
+  value,
+  onPress,
+}: {
+  label: string;
+  value: string | null;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.patRow, pressed && styles.patPressed]}
+    >
+      <Text style={styles.patLabel}>{label}</Text>
+      <Text style={[styles.patValue, !value && styles.patValueEmpty]} numberOfLines={1}>
+        {value ?? "Add"}
+      </Text>
+      <Ionicons name="pencil-outline" size={13} color={colors.ink3} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  patHead: { flexDirection: "row", alignItems: "center", gap: space.sm, marginBottom: 2 },
+  patTitle: { ...font.body, fontWeight: "600", color: colors.ink, flex: 1 },
+  patRow: { flexDirection: "row", alignItems: "center", gap: space.sm, paddingVertical: 8 },
+  patPressed: { opacity: 0.6 },
+  patLabel: { ...font.bodySm, color: colors.ink3, width: 82 },
+  patValue: { ...font.body, color: colors.ink, flex: 1 },
+  patValueEmpty: { color: colors.ink3, fontStyle: "italic" },
+  visitRow: { flexDirection: "row", alignItems: "center", gap: space.sm, paddingVertical: 6 },
+  visitChips: { flexDirection: "row", gap: 6 },
+  visitChip: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    borderRadius: radius.pill,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+  },
+  visitChipOn: { backgroundColor: colors.greenSoft, borderColor: colors.green },
+  visitChipText: { fontSize: 11, color: colors.ink2 },
+  visitChipTextOn: { color: colors.greenInk, fontWeight: "600" },
   center: { alignItems: "center", gap: space.sm, paddingVertical: space.xl },
   actions: { flexDirection: "row", gap: space.sm },
   action: { flex: 1 },
