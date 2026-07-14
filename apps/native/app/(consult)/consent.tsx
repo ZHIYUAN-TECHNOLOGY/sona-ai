@@ -15,16 +15,20 @@ import type { VisitType } from "@/lib/db/types";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
 import { useProfile } from "@/lib/profile";
 import { clearPendingScanDoc } from "@/lib/pipeline/scanAttach";
+import { isDemoMode } from "@/lib/pipeline/sttMode";
 import { templateById } from "@/lib/pipeline/templates";
 import { colors, font, radius, space } from "@/lib/theme";
 
 // Screen 1 of 6 — Consent + audit start.
 export default function ConsentScreen() {
   const [sealConsent, setSealConsent] = useState(true);
-  const [patientName, setPatientName] = useState("");
-  const [patientPhone, setPatientPhone] = useState("");
-  const [room, setRoom] = useState("");
-  const [visitType, setVisitType] = useState<VisitType | null>(null);
+  // Demo transcript mode pre-fills the locked demo consult's patient (synthetic) so
+  // the on-camera flow carries full card details without typing.
+  const demo = isDemoMode();
+  const [patientName, setPatientName] = useState(demo ? "Encik Rahman bin Yusof" : "");
+  const [patientPhone, setPatientPhone] = useState(demo ? "012-345 6789" : "");
+  const [room, setRoom] = useState(demo ? "Room 2" : "");
+  const [visitType, setVisitType] = useState<VisitType | null>(demo ? "walk-in" : null);
   const { startConsult, templateId } = useConsultPipeline();
   const [profile] = useProfile();
   const starting = useRef(false);
