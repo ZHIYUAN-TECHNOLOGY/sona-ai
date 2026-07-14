@@ -1,4 +1,7 @@
-import { PARAPHRASE_MULTILINGUAL_MINILM_L12_V2_QUANTIZED } from "react-native-executorch";
+import {
+  PARAPHRASE_MULTILINGUAL_MINILM_L12_V2_QUANTIZED,
+  QWEN3_1_7B_QUANTIZED,
+} from "react-native-executorch";
 
 // Single source of truth for the on-device note model. The rest of the pipeline
 // is model-agnostic — it only depends on the `LlmLike.generate(messages)` shape
@@ -6,43 +9,25 @@ import { PARAPHRASE_MULTILINGUAL_MINILM_L12_V2_QUANTIZED } from "react-native-ex
 //   - NOTE_MODEL: the executorch model source passed to useLLM.
 //   - NOTE_MODEL_NAME: the human label shown in the note screen / audit / settings.
 //
-// MedPsy-1.7B (QVAC/Tether, Apache-2.0) — a MEDICAL fine-tune of Qwen3-1.7B, and the
-// note model for every text feature (consult SOAP note, document summaries, knowledge
-// RAG). Beats MedGemma-4B by +11 avg across 7 medical benchmarks at less than half the
-// size — medical-domain quality at the exact RAM footprint this device class proved it
-// can hold (Qwen3-4B jetsammed at load on the 6GB dev iPhone, Jul 2026; any 4B-class
-// model incl. MedGemma-4B hits the same iOS per-app memory ceiling).
-//
-// The .pte is OUR export (scratchpad medpsy-export). MUST be built with executorch's
-// OFFICIAL export_llm pipeline (convert_weights → export_llm, qwen3_xnnpack_q8da4w
-// config, max_seq 4096): it embeds the metadata methods the native runner requires —
-// an optimum-executorch export loads then fails with "Model did not provide any EOS
-// token IDs via 'get_eos_ids'" (Jul 2026). Verified before serving:
-// method_names ⊇ {get_eos_ids:[151645], get_bos_id, get_max_context_len, forward}.
-// Tokenizer files come straight from the upstream HF repo. modelName stays
-// "qwen3-1.7b-quantized": it is that architecture — telemetry + reload identity only.
-//
-// DEV HOSTING: the .pte is served from the dev Mac over LAN (python -m http.server 8090
-// in scratchpad/medpsy-export/out). Before release, upload it to a HuggingFace repo and
-// point MEDPSY_PTE_URL there — nothing else changes.
-//
-// Same arch → same machinery: stripThink on every consumer, /no_think in prompts
-// (MedPsy's chat template disables thinking by default anyway), whisper unloaded before
-// load (PipelineProvider / docSummary). Fallback: swap back to QWEN3_1_7B_QUANTIZED.
+// Qwen3-1.7B (quantized, ~1.2GB, Apache-2.0) — the note model for every text feature
+// (consult SOAP note, document summaries, knowledge RAG), and the MEASURED winner for
+// this codebase's tasks:
+// - Qwen3-4B (~2.5GB): jetsammed at load on the 6GB dev iPhone — any 4B-class model
+//   (incl. MedGemma-4B) crosses iOS's per-app memory ceiling on this device class.
+// - MedPsy-1.7B (medical fine-tune of this exact model; we exported it to .pte and ran
+//   it on-device + on-Mac, Jul 2026): an RL-trained THINKING model — it reasons in
+//   plain prose (no <think> tags, stripThink can't help), never reaches the required
+//   format, and on garbled scans it SPECULATES about drug identities ("possibly
+//   codeine?"), which the note contract forbids. Great at clinical Q&A, wrong tool for
+//   strict-format extraction. Export + trial harness: scratchpad/medpsy-export.
+// Model swaps happen here in one line — but only after a Mac-side trial on the real
+// prompts (see medpsy-export/trial.py for the harness pattern).
+// Qwen3 emits <think> blocks; every consumer runs stripThink, and prompts append
+// /no_think. RAM discipline stays: whisper is UNLOADED before this model loads.
 // Sampling (temperature / repetitionPenalty) is applied at RUNTIME via llm.configure() in
 // PipelineProvider — executorch ignores a generationConfig field on the model object.
-// v2 filename = cache-bust: the resource fetcher caches by URL, and v1 (the metadata-less
-// optimum export) may already sit in the app's cache.
-const MEDPSY_PTE_URL = "http://192.168.0.139:8090/medpsy-1.7b-8da4w-v2.pte";
-const MEDPSY_HF = "https://huggingface.co/qvac/MedPsy-1.7B/resolve/main";
-
-export const NOTE_MODEL = {
-  modelName: "qwen3-1.7b-quantized",
-  modelSource: MEDPSY_PTE_URL,
-  tokenizerSource: `${MEDPSY_HF}/tokenizer.json`,
-  tokenizerConfigSource: `${MEDPSY_HF}/tokenizer_config.json`,
-} as const;
-export const NOTE_MODEL_NAME = "MedPsy-1.7B";
+export const NOTE_MODEL = QWEN3_1_7B_QUANTIZED;
+export const NOTE_MODEL_NAME = "Qwen3-1.7B";
 
 // On-device text-embedding model for semantic search / RAG (the Knowledge tab and,
 // later, note search). Multilingual on purpose: a quantized paraphrase MiniLM that
