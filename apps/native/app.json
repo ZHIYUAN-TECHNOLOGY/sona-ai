@@ -12,7 +12,10 @@
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Sona records the consult on-device to transcribe it. Audio never leaves the phone and is deleted when you sign."
       },
-      "bundleIdentifier": "ai.zhiyuantech.aurio"
+      "bundleIdentifier": "ai.zhiyuantech.aurio",
+      "entitlements": {
+        "com.apple.developer.kernel.increased-memory-limit": true
+      }
     },
     "android": {
       "adaptiveIcon": {
