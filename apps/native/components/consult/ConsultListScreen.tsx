@@ -9,7 +9,13 @@ import { ListRow } from "@/components/consult/ListRow";
 import { Pill } from "@/components/consult/Pill";
 import { SwipeableRow } from "@/components/consult/SwipeableRow";
 import { TabScaffold } from "@/components/consult/TabScaffold";
-import { consultInitials, consultTime, isToday, statusMeta } from "@/lib/consultFormat";
+import {
+  consultHeadline,
+  consultInitials,
+  consultSubtitle,
+  isToday,
+  statusMeta,
+} from "@/lib/consultFormat";
 import { deleteConsult, pruneEmptyDrafts, setConsultTitle } from "@/lib/db";
 import type { Consult } from "@/lib/db/types";
 import { colors, font, space } from "@/lib/theme";
@@ -136,9 +142,9 @@ function Group({
               ]}
             >
               <ListRow
-                initials={consultInitials(c.title)}
-                title={c.title}
-                sub={consultTime(c.createdAt)}
+                initials={consultInitials(consultHeadline(c))}
+                title={consultHeadline(c)}
+                sub={consultSubtitle(c)}
                 right={<Pill label={s.label} variant={s.variant} />}
                 onPress={() => router.push(`/consult/${c.id}`)}
                 onLongPress={() => onRename(c)}

@@ -18,7 +18,7 @@ import {
   setConsultStatus,
   setConsultTitle,
 } from "../db";
-import type { ScannedDocument } from "../db/types";
+import type { PatientDetails, ScannedDocument } from "../db/types";
 import { buildDocContext } from "./docContext";
 import { getReidMap, saveReidMap, sealAudioDiscard } from "../secure/reidMap";
 import { applyReidMap } from "../secure/reidMapCore";
@@ -71,8 +71,12 @@ export async function discardDocumentImages(doc: ScannedDocument): Promise<void>
   await clearScannedDocumentImages(doc.id);
 }
 
-export async function beginConsult(consentText: string, title = "New consult") {
-  const consult = await createConsult({ title, consentText });
+export async function beginConsult(
+  consentText: string,
+  patient?: Partial<PatientDetails>,
+  title = "New consult",
+) {
+  const consult = await createConsult({ title, consentText, patient });
   await appendAudit({
     consultId: consult.id,
     stage: "consent",

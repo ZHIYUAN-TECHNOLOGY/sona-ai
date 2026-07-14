@@ -28,6 +28,7 @@ import type {
   Consult,
   ConsultStatus,
   NoteOrder,
+  PatientDetails,
   ScannedDocStatus,
   ScannedDocument,
   Speaker,
@@ -37,7 +38,7 @@ import type {
 const DB_NAME = "sona.db";
 
 /** Schema version — bump + add a migration branch in initDb when the schema changes. */
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -62,15 +63,22 @@ export {
 // --- Schema ------------------------------------------------------------------
 
 const SCHEMA_SQL = `
+-- patientName/patientPhone/room/visitType (v6) are optional patient context shown
+-- on the consult card. DEVICE-ONLY PHI, same posture as transcript_segment.text:
+-- never fed to the model, never exported, never transmitted.
 CREATE TABLE IF NOT EXISTS consult (
-  id           TEXT PRIMARY KEY NOT NULL,
-  createdAt    INTEGER NOT NULL,
-  updatedAt    INTEGER NOT NULL,
-  status       TEXT NOT NULL,
-  title        TEXT NOT NULL,
-  consentText  TEXT NOT NULL,
-  audioHash    TEXT,
-  signedAt     INTEGER
+  id            TEXT PRIMARY KEY NOT NULL,
+  createdAt     INTEGER NOT NULL,
+  updatedAt     INTEGER NOT NULL,
+  status        TEXT NOT NULL,
+  title         TEXT NOT NULL,
+  consentText   TEXT NOT NULL,
+  patientName   TEXT,
+  patientPhone  TEXT,
+  room          TEXT,
+  visitType     TEXT,
+  audioHash     TEXT,
+  signedAt      INTEGER
 );
 
 -- HARDENING TODO (post-demo, not the moat): transcript_segment.text holds the
@@ -194,6 +202,16 @@ export async function initDb(): Promise<SQLite.SQLiteDatabase> {
           // column already present (fresh DB) — nothing to migrate
         }
       }
+      if (v < 6) {
+        // v6: optional patient context on the consult card (device-only PHI).
+        for (const col of ["patientName", "patientPhone", "room", "visitType"]) {
+          try {
+            await db.execAsync(`ALTER TABLE consult ADD COLUMN ${col} TEXT;`);
+          } catch {
+            // column already present (fresh DB) — nothing to migrate
+          }
+        }
+      }
       await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
       return db;
     })();
@@ -212,12 +230,14 @@ export function _resetDbHandle(): void {
 export async function createConsult(input: {
   title: string;
   consentText: string;
+  patient?: Partial<PatientDetails>;
 }): Promise<Consult> {
   const db = await initDb();
   const consult = buildConsult({ ...input, id: newId() });
   await db.runAsync(
-    `INSERT INTO consult (id, createdAt, updatedAt, status, title, consentText, audioHash, signedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+    `INSERT INTO consult (id, createdAt, updatedAt, status, title, consentText,
+                          patientName, patientPhone, room, visitType, audioHash, signedAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
     [
       consult.id,
       consult.createdAt,
@@ -225,6 +245,10 @@ export async function createConsult(input: {
       consult.status,
       consult.title,
       consult.consentText,
+      consult.patientName,
+      consult.patientPhone,
+      consult.room,
+      consult.visitType,
       consult.audioHash,
       consult.signedAt,
     ],
@@ -410,8 +434,7 @@ export async function sealConsultAudio(
 export async function getConsult(consultId: string): Promise<Consult | null> {
   const db = await initDb();
   const row = await db.getFirstAsync<Consult>(
-    `SELECT id, createdAt, updatedAt, status, title, consentText, audioHash, signedAt
-     FROM consult WHERE id = ? LIMIT 1;`,
+    `SELECT ${CONSULT_COLS} FROM consult WHERE id = ? LIMIT 1;`,
     [consultId],
   );
   return row ?? null;
@@ -480,7 +503,7 @@ export async function pruneEmptyDrafts(): Promise<number> {
 }
 
 const CONSULT_COLS =
-  "id, createdAt, updatedAt, status, title, consentText, audioHash, signedAt";
+  "id, createdAt, updatedAt, status, title, consentText, patientName, patientPhone, room, visitType, audioHash, signedAt";
 
 /** All consults, newest first — powers the Today / History tab lists. */
 export async function listConsults(): Promise<Consult[]> {

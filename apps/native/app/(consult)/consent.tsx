@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
@@ -11,6 +11,7 @@ import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { CardHeading } from "@/components/consult/SectionLabel";
 import { Steps } from "@/components/consult/Steps";
 import { Toggle } from "@/components/consult/Toggle";
+import type { VisitType } from "@/lib/db/types";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
 import { clearPendingScanDoc } from "@/lib/pipeline/scanAttach";
 import { templateById } from "@/lib/pipeline/templates";
@@ -19,6 +20,10 @@ import { colors, font, radius, space } from "@/lib/theme";
 // Screen 1 of 6 — Consent + audit start.
 export default function ConsentScreen() {
   const [sealConsent, setSealConsent] = useState(true);
+  const [patientName, setPatientName] = useState("");
+  const [patientPhone, setPatientPhone] = useState("");
+  const [room, setRoom] = useState("");
+  const [visitType, setVisitType] = useState<VisitType | null>(null);
   const { startConsult, templateId } = useConsultPipeline();
   const starting = useRef(false);
   const template = templateById(templateId);
@@ -28,9 +33,9 @@ export default function ConsentScreen() {
   const start = useCallback(async () => {
     if (starting.current) return;
     starting.current = true;
-    await startConsult(consult.consentText);
+    await startConsult(consult.consentText, { patientName, patientPhone, room, visitType });
     router.push("/recording");
-  }, [startConsult]);
+  }, [startConsult, patientName, patientPhone, room, visitType]);
 
   // Escape hatch: consent is the flow entry (launched from the Record capsule) and
   // swipe-back is disabled, so an accidental start must be cancellable back to Today.
@@ -67,6 +72,54 @@ export default function ConsentScreen() {
         <View style={styles.row}>
           <Text style={styles.micro}>Seal consent line in the audit log</Text>
           <Toggle value={sealConsent} onValueChange={setSealConsent} />
+        </View>
+      </Card>
+
+      <Card>
+        <CardHeading>Patient details</CardHeading>
+        <Text style={styles.body}>
+          Optional. Stays on this phone only — never sent to the AI or exported.
+        </Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Patient name"
+          placeholderTextColor={colors.ink3}
+          value={patientName}
+          onChangeText={setPatientName}
+          autoCorrect={false}
+        />
+        <View style={styles.inputRow}>
+          <TextInput
+            style={[styles.input, styles.inputHalf]}
+            placeholder="Phone"
+            placeholderTextColor={colors.ink3}
+            value={patientPhone}
+            onChangeText={setPatientPhone}
+            keyboardType="phone-pad"
+          />
+          <TextInput
+            style={[styles.input, styles.inputHalf]}
+            placeholder="Room / bed"
+            placeholderTextColor={colors.ink3}
+            value={room}
+            onChangeText={setRoom}
+            autoCorrect={false}
+          />
+        </View>
+        <View style={styles.chiprow}>
+          {(["walk-in", "appointment"] as const).map((v) => (
+            <Pressable
+              key={v}
+              accessibilityRole="button"
+              accessibilityState={{ selected: visitType === v }}
+              onPress={() => setVisitType(visitType === v ? null : v)}
+              style={[styles.visitChip, visitType === v && styles.visitChipOn]}
+            >
+              <Text style={[styles.visitChipText, visitType === v && styles.visitChipTextOn]}>
+                {v === "walk-in" ? "Walk-in" : "Appointment"}
+              </Text>
+            </Pressable>
+          ))}
         </View>
       </Card>
 
@@ -127,6 +180,29 @@ const styles = StyleSheet.create({
   },
   micro: { flex: 1, fontSize: 10.5, color: colors.ink3 },
   chiprow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 9 },
+  input: {
+    marginTop: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    fontSize: 13,
+    color: colors.ink,
+    backgroundColor: colors.bg,
+  },
+  inputRow: { flexDirection: "row", gap: 8 },
+  inputHalf: { flex: 1 },
+  visitChip: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    borderRadius: radius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  visitChipOn: { backgroundColor: colors.greenSoft, borderColor: colors.green },
+  visitChipText: { fontSize: 11.5, color: colors.ink2 },
+  visitChipTextOn: { color: colors.greenInk, fontWeight: "600" },
   tmpl: { flexDirection: "row", alignItems: "center", gap: space.md, marginTop: space.md },
   tmplPressed: { opacity: 0.6 },
   tmplIcon: {
