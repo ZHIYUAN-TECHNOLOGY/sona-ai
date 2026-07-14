@@ -30,6 +30,7 @@ import {
   whisperModelInfo,
 } from "@/lib/pipeline/whisperStt";
 import { haptic } from "@/lib/haptics";
+import { isDemoSeeded, resetDemoData, seedDemoData } from "@/lib/demo/seed";
 import { useProfile, type ClinicianProfile } from "@/lib/profile";
 import { colors, font, space } from "@/lib/theme";
 
@@ -108,6 +109,31 @@ export default function SettingsScreen() {
   );
 
   const [profile, updateProfile] = useProfile();
+  const [seeded, setSeeded] = useState<boolean | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      void isDemoSeeded().then((s) => alive && setSeeded(s));
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
+  const seedDemo = () => {
+    haptic("tap");
+    void seedDemoData().then(() => {
+      setSeeded(true);
+      haptic("select");
+      Alert.alert("Demo data seeded", "Consults and Smart Scan now show sample rows.");
+    });
+  };
+  const resetDemo = () => {
+    haptic("tap");
+    void resetDemoData().then(() => {
+      setSeeded(false);
+      Alert.alert("Demo data removed", "Only seeded rows were deleted.");
+    });
+  };
   // iOS Alert.prompt edit — same lightweight pattern as consult rename.
   const editProfileField = (field: keyof ClinicianProfile, label: string) => {
     if (process.env.EXPO_OS !== "ios") return;
@@ -175,7 +201,12 @@ export default function SettingsScreen() {
             />
           }
         />
+      </Card>
+
+      <Card>
+        <CardHeading>Demo</CardHeading>
         <SettingsRow
+          first
           icon="albums-outline"
           label="Demo transcript"
           right={
@@ -188,6 +219,17 @@ export default function SettingsScreen() {
             />
           }
         />
+        <SettingsRow
+          icon="sparkles-outline"
+          label="Seed demo data"
+          value={seeded === null ? "…" : seeded ? "Seeded" : undefined}
+          onPress={seedDemo}
+        />
+        <SettingsRow icon="trash-outline" label="Reset demo data" onPress={resetDemo} />
+        <Text style={styles.hint}>
+          Seeds fictional consults and a sample scan so lists look populated for a demo.
+          Reset removes exactly what was seeded — real consults are never touched.
+        </Text>
       </Card>
 
       <Card>

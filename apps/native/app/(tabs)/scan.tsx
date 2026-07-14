@@ -20,6 +20,8 @@ import {
 import type { ScannedDocument } from "@/lib/db/types";
 import * as ImagePicker from "expo-image-picker";
 
+import { Asset } from "expo-asset";
+
 import { classifyDocType } from "@/lib/vision/docType";
 import { extractPages, joinPages, redactDocText } from "@/lib/vision/ocr";
 import { pickFromLibrary } from "@/lib/vision/pickImage";
@@ -100,19 +102,27 @@ export default function SmartScanScreen() {
 
   // Scan (or pick) → OCR each page → de-identify → persist → review screen. The page
   // images are DESTROYED the moment OCR finishes (every path): the verified text is
-  // the record; a PHI image in the sandbox has no further use.
-  const capture = async (source: "scanner" | "library") => {
+  // the record; a PHI image in the sandbox has no further use. "sample" runs the
+  // bundled synthetic referral letter through the SAME real pipeline (demo aid — no
+  // printed prop or lighting needed; the asset is app-bundled, not a user photo, so
+  // the destroy step skips it).
+  const capture = async (source: "scanner" | "library" | "sample") => {
     setErr("");
     haptic("tap");
     setPhase("scanning");
     let uris: string[] = [];
     try {
-      uris = source === "scanner" ? await scanDocumentPages() : await oneFromLibrary();
+      uris =
+        source === "scanner"
+          ? await scanDocumentPages()
+          : source === "library"
+            ? await oneFromLibrary()
+            : await sampleLetterUri();
     } catch {
       uris = [];
     }
     if (uris.length === 0) {
-      setErr(await permissionHint(source));
+      setErr(source === "sample" ? "Sample unavailable." : await permissionHint(source));
       setPhase("idle");
       return;
     }
@@ -148,7 +158,9 @@ export default function SmartScanScreen() {
       setErr(`Couldn't read the document: ${e instanceof Error ? e.message : String(e)}`);
       setPhase("idle");
     } finally {
-      deletePageImages(uris);
+      // The bundled sample is an app asset, not a captured PHI image — keep its
+      // cached copy so the button works offline next time.
+      if (source !== "sample") deletePageImages(uris);
     }
   };
 
@@ -223,6 +235,12 @@ export default function SmartScanScreen() {
             />
           </View>
         )}
+        {!busy ? (
+          <Pressable onPress={() => capture("sample")} hitSlop={6} style={styles.sampleBtn}>
+            <Ionicons name="flask-outline" size={13} color={colors.greenInk} />
+            <Text style={styles.sampleText}>Try a sample document</Text>
+          </Pressable>
+        ) : null}
         {err ? (
           <Text style={styles.err} selectable>
             {err}
@@ -316,6 +334,14 @@ async function oneFromLibrary(): Promise<string[]> {
   return uri ? [uri] : [];
 }
 
+// Bundled synthetic referral letter (fictional patient/clinic) — resolves to a
+// local file URI the OCR engines can read. Works fully offline.
+async function sampleLetterUri(): Promise<string[]> {
+  const asset = Asset.fromModule(require("../../assets/demo/sample-referral.png"));
+  await asset.downloadAsync();
+  return asset.localUri ? [asset.localUri] : [];
+}
+
 const styles = StyleSheet.create({
   body: { ...font.body, color: colors.greenInk, marginTop: space.xs, lineHeight: 20 },
   actions: { flexDirection: "row", gap: space.sm, marginTop: space.md },
@@ -323,6 +349,15 @@ const styles = StyleSheet.create({
   busyRow: { flexDirection: "row", alignItems: "center", gap: space.sm, marginTop: space.md },
   busyText: { ...font.body, color: colors.greenInk },
   err: { ...font.bodySm, color: colors.red, marginTop: space.sm },
+  sampleBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    marginTop: space.sm,
+    paddingVertical: 4,
+  },
+  sampleText: { ...font.bodySm, color: colors.greenInk, fontWeight: "600" },
   listHead: { marginTop: space.sm },
   empty: { alignItems: "center", gap: 6, paddingVertical: space.lg },
   emptyTitle: { ...font.body, fontWeight: "600", color: colors.ink2 },
