@@ -91,6 +91,10 @@ export function sanitizeModelText(s: string): string {
   });
   out = out.replace(/_+/g, " ");
   out = out.replace(/\u0000(\d+)\u0000/g, (_, i: string) => tokens[Number(i)]);
+  // Quote-mania: the model wraps drug names/doses in nested double quotes
+  // ("Augmentor"in", "67" mg). Double quotes are never load-bearing clinically —
+  // strip them all; single quotes (as-written markers) survive.
+  out = out.replace(/["“”]+/g, "");
   // Drop stray per-mille filler; collapse the space debris left by the folds.
   out = out.replace(/[‰]+/g, "").replace(/ {2,}/g, " ").trim();
   return out;
@@ -100,6 +104,13 @@ export function sanitizeModelText(s: string): string {
 // model shovels into Follow-up needed — never a clinical instruction. Dropped wherever
 // it appears; the verified source text above the card keeps the real contact details.
 const CONTACT_LINE = /^\W*(?:ph|tel|phone|fax|web|website|url|email|e-mail)\b\W*:/i;
+
+// Model SELF-NARRATION — commentary about the scan/task ("Note: due to formatting
+// issues during scanning, some information was lost…", often with mixed-language
+// bleed) instead of document facts. Same family as META_LINE (talking ABOUT the
+// output), field-observed Jul 14 2026.
+const SELF_NARRATION =
+  /\b(?:due to (?:the )?(?:formatting|scan)|formatting issues|during scanning|information (?:was|is) (?:lost|missing)|misaligned|based on (?:the )?available information|following is (?:a )?summar|基于可用信息|以下是)/i;
 
 /** A line that opens a section: '## Key findings', '# Doc Type', 'Medications:', … */
 function sectionIndex(line: string): number {
@@ -166,6 +177,7 @@ export function formatDocSummary(raw: string, fallbackTitle: string): DocSummary
         !NOT_STATED.test(b) &&
         !LABEL_ONLY.test(b) &&
         !CONTACT_LINE.test(b) &&
+        !SELF_NARRATION.test(b) &&
         !isGibberish(b)
       ) {
         bullets[current].push(b);
@@ -186,6 +198,7 @@ export function formatDocSummary(raw: string, fallbackTitle: string): DocSummary
         NOT_STATED.test(b) ||
         LABEL_ONLY.test(b) ||
         CONTACT_LINE.test(b) ||
+        SELF_NARRATION.test(b) ||
         isGibberish(b)
       ) {
         continue;
