@@ -122,9 +122,9 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     if (!llm.isReady) return;
     try {
       llm.configure({
-        generationConfig: { temperature: 0.3, topP: 0.9, repetitionPenalty: 1.3 },
+        generationConfig: { temperature: 0.15, topP: 0.9, repetitionPenalty: 1.3 },
       });
-      console.log("[LLM] generationConfig applied (temp 0.3, topP 0.9, repPenalty 1.3)");
+      console.log("[LLM] generationConfig applied (temp 0.15, topP 0.9, repPenalty 1.3)");
     } catch (e) {
       console.log(`[LLM] configure failed: ${String(e)}`);
     }

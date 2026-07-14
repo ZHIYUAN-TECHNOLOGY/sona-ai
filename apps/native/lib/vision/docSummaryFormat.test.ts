@@ -191,4 +191,44 @@ ok("legit long-but-real bullets survive the gibberish net", () => {
   assert.match(out.markdown, /thewhitetusk\.com/);
 });
 
+// Regression #136 (Jul 14): single underscores, LaTeX junk, contact-metadata bullets.
+ok("single underscores fold to spaces; DOC tokens keep theirs", () => {
+  const raw = "## Medications & doses\n- _Tab._Augmentor_in 625mg, once_every_five_day_s by DOC_NAME_1";
+  const out = formatDocSummary(raw, "Document");
+  assert.match(out.markdown, /Tab\. Augmentor in 625mg, once every five day s by DOC_NAME_1/);
+});
+
+ok("LaTeX fragments and dollar runs are stripped", () => {
+  const raw = "## Medications & doses\n- Tab. Enzflemen, once every five days, _$\\geq$ $-$ $+$$";
+  const out = formatDocSummary(raw, "Document");
+  assert.ok(!/[$\\]/.test(out.markdown), `latex survived: ${out.markdown}`);
+  assert.match(out.markdown, /Enzflemen, once every five days/);
+});
+
+ok("contact-metadata bullets (Ph/Web/Email) are dropped from any section", () => {
+  const raw = [
+    "## Follow-up needed",
+    "- review if fever",
+    "- Ph:+OR CSTN EYI LZB",
+    "- _WEB:_www.thewhitetusk.com|",
+    "- Email:DOC_EAMLONIONONE_",
+  ].join("\n");
+  const out = formatDocSummary(raw, "Document");
+  assert.ok(!/Ph:|WEB|Email|CSTN/i.test(out.markdown), `contact junk survived: ${out.markdown}`);
+  assert.match(out.markdown, /review if fever/);
+});
+
+ok("DOC-token protection never collides with real digits in dose text", () => {
+  const raw = "## Medications & doses\n- DOC_NAME_1 prescribed 0 - 1x5 days, sig_ned DOC_NAME_2";
+  const out = formatDocSummary(raw, "Document");
+  assert.match(out.markdown, /DOC_NAME_1 prescribed 0 - 1x5 days, sig ned DOC_NAME_2/);
+});
+
+ok("bullets that clean to pure punctuation are dropped (no empty dots)", () => {
+  const out = formatDocSummary("## Key findings\n- _\n- $$\n- Real finding", "Document");
+  const lines = out.markdown.split("\n").filter((l) => l.startsWith("- "));
+  assert.ok(lines.every((l) => /[A-Za-z0-9一-鿿]/.test(l)), `empty bullet: ${JSON.stringify(lines)}`);
+  assert.match(out.markdown, /Real finding/);
+});
+
 console.log(`\n${passed} passed`);
