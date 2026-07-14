@@ -65,6 +65,7 @@ export interface PipelineState {
   noteError: string | null;
   llmReady: boolean; // on-device note model loaded
   llmProgress: number; // 0..1 model download progress
+  noteStream: string; // live accumulating tokens while the note drafts (empty otherwise)
   templateId: string; // selected note template (drives the generation prompt)
   startConsult: (consentText: string, patient?: Partial<PatientDetails>) => Promise<void>;
   startRecording: () => void;
@@ -406,6 +407,9 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         noteError,
         llmReady: llm.isReady,
         llmProgress: llm.downloadProgress ?? 0,
+        // Live token stream (raw, think-stripped by the consumer) — lets the note
+        // screen show the draft materializing instead of a 20-30s dead spinner.
+        noteStream: llm.response ?? "",
         templateId,
         startConsult,
         startRecording,
