@@ -1,15 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Card } from "@/components/consult/Card";
 import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { CardHeading } from "@/components/consult/SectionLabel";
+import { SwipeableRow } from "@/components/consult/SwipeableRow";
 import { TabScaffold } from "@/components/consult/TabScaffold";
 import { haptic } from "@/lib/haptics";
-import { createScannedDocument, listScannedDocuments } from "@/lib/db";
+import {
+  createScannedDocument,
+  deleteScannedDocument,
+  listScannedDocuments,
+  renameScannedDocument,
+} from "@/lib/db";
 import type { ScannedDocument } from "@/lib/db/types";
 import * as ImagePicker from "expo-image-picker";
 
@@ -145,6 +151,43 @@ export default function SmartScanScreen() {
     }
   };
 
+  // Rename / delete for a scan card — same interactions as consult rows (swipe
+  // actions + long-press rename). Delete keeps its confirm: it wipes the extracted
+  // text and summary too.
+  const renameDoc = useCallback(
+    (d: ScannedDocument) => {
+      if (process.env.EXPO_OS !== "ios") return;
+      Alert.prompt(
+        "Rename document",
+        "A short, PII-free label.",
+        (text) => {
+          const t = text?.trim();
+          if (t) void renameScannedDocument(d.id, t).then(reload);
+        },
+        "plain-text",
+        d.title,
+      );
+    },
+    [reload],
+  );
+  const removeDoc = useCallback(
+    (d: ScannedDocument) => {
+      Alert.alert(
+        "Delete scan?",
+        `"${d.title}" and its extracted text will be permanently removed from this device.`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: () => void deleteScannedDocument(d.id).then(reload),
+          },
+        ],
+      );
+    },
+    [reload],
+  );
+
   const busy = phase !== "idle";
 
   return (
@@ -201,41 +244,51 @@ export default function SmartScanScreen() {
         </Card>
       ) : (
         docs.map((d) => (
-          <Pressable
+          <SwipeableRow
             key={d.id}
-            accessibilityRole="button"
-            onPress={() =>
-              router.push({ pathname: "/scan-review", params: { docId: d.id } } as Href)
-            }
+            actions={[
+              { label: "Rename", icon: "pencil", color: colors.ink3, onPress: () => renameDoc(d) },
+              { label: "Delete", icon: "trash", color: colors.red, onPress: () => removeDoc(d) },
+            ]}
           >
-            {({ pressed }) => (
-              <Card style={pressed ? styles.rowPressed : undefined}>
-                <View style={styles.row}>
-                  <View style={styles.rowIcon}>
-                    <Ionicons
-                      name={TYPE_ICON[d.docType] ?? "document-outline"}
-                      size={18}
-                      color={colors.green}
-                    />
+            <Pressable
+              accessibilityRole="button"
+              onPress={() =>
+                router.push({ pathname: "/scan-review", params: { docId: d.id } } as Href)
+              }
+              onLongPress={() => renameDoc(d)}
+            >
+              {({ pressed }) => (
+                <Card style={pressed ? styles.rowPressed : undefined}>
+                  <View style={styles.row}>
+                    <View style={styles.rowIcon}>
+                      <Ionicons
+                        name={TYPE_ICON[d.docType] ?? "document-outline"}
+                        size={18}
+                        color={colors.green}
+                      />
+                    </View>
+                    <View style={styles.rowText}>
+                      <Text style={styles.rowTitle} numberOfLines={1}>
+                        {d.title}
+                      </Text>
+                      <Text style={styles.rowSub} numberOfLines={1}>
+                        {`${timeAgo(d.createdAt)} · ${d.pages} page${d.pages === 1 ? "" : "s"} · ${d.identifiers} identifier${d.identifiers === 1 ? "" : "s"} redacted`}
+                      </Text>
+                    </View>
+                    {d.status === "attached" ? (
+                      <Pill label="In consult" variant="green" />
+                    ) : d.summary ? (
+                      <Pill label="Noted" variant="green" />
+                    ) : (
+                      <Pill label="Text only" variant="line" />
+                    )}
+                    <Ionicons name="chevron-forward" size={16} color={colors.ink3} />
                   </View>
-                  <View style={styles.rowText}>
-                    <Text style={styles.rowTitle} numberOfLines={1}>
-                      {d.title}
-                    </Text>
-                    <Text style={styles.rowSub} numberOfLines={1}>
-                      {`${timeAgo(d.createdAt)} · ${d.identifiers} identifier${d.identifiers === 1 ? "" : "s"} redacted`}
-                    </Text>
-                  </View>
-                  {d.status === "attached" ? (
-                    <Pill label="In consult" variant="green" />
-                  ) : d.summary ? (
-                    <Pill label="Summarized" variant="line" />
-                  ) : null}
-                  <Ionicons name="chevron-forward" size={16} color={colors.ink3} />
-                </View>
-              </Card>
-            )}
-          </Pressable>
+                </Card>
+              )}
+            </Pressable>
+          </SwipeableRow>
         ))
       )}
 

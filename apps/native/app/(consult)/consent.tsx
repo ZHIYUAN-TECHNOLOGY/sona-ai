@@ -13,6 +13,7 @@ import { Steps } from "@/components/consult/Steps";
 import { Toggle } from "@/components/consult/Toggle";
 import type { VisitType } from "@/lib/db/types";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
+import { useProfile } from "@/lib/profile";
 import { clearPendingScanDoc } from "@/lib/pipeline/scanAttach";
 import { templateById } from "@/lib/pipeline/templates";
 import { colors, font, radius, space } from "@/lib/theme";
@@ -25,6 +26,7 @@ export default function ConsentScreen() {
   const [room, setRoom] = useState("");
   const [visitType, setVisitType] = useState<VisitType | null>(null);
   const { startConsult, templateId } = useConsultPipeline();
+  const [profile] = useProfile();
   const starting = useRef(false);
   const template = templateById(templateId);
 
@@ -60,7 +62,7 @@ export default function ConsentScreen() {
     <ConsultScreen
       time="9:41"
       title="New consult"
-      sub={consult.room}
+      sub={room.trim() ? `${profile.clinicName}, ${room.trim()}` : profile.clinicName}
       onBack={cancel}
       right={<Pill label="On-device" variant="green" dot />}
       footer={<PrimaryButton label="Start consult" onPress={start} />}

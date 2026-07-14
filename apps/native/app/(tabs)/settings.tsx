@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 
 import { Card } from "@/components/consult/Card";
 import { OptionSheet, type SheetOption } from "@/components/consult/OptionSheet";
@@ -30,6 +30,7 @@ import {
   whisperModelInfo,
 } from "@/lib/pipeline/whisperStt";
 import { haptic } from "@/lib/haptics";
+import { useProfile, type ClinicianProfile } from "@/lib/profile";
 import { colors, font, space } from "@/lib/theme";
 
 const ACCURACY_OPTIONS: SheetOption<SttAccuracy>[] = [
@@ -106,8 +107,42 @@ export default function SettingsScreen() {
     }, []),
   );
 
+  const [profile, updateProfile] = useProfile();
+  // iOS Alert.prompt edit — same lightweight pattern as consult rename.
+  const editProfileField = (field: keyof ClinicianProfile, label: string) => {
+    if (process.env.EXPO_OS !== "ios") return;
+    haptic("tap");
+    Alert.prompt(label, "Shown on consult headers, signatures and exports.", (text) => {
+      const t = text?.trim();
+      if (t) updateProfile({ [field]: t });
+    }, "plain-text", profile[field]);
+  };
+
   return (
     <TabScaffold title="Settings">
+      <Card>
+        <CardHeading>Clinician</CardHeading>
+        <SettingsRow
+          first
+          icon="person-circle-outline"
+          label="Name"
+          value={profile.clinicianName}
+          onPress={() => editProfileField("clinicianName", "Clinician name")}
+        />
+        <SettingsRow
+          icon="ribbon-outline"
+          label="MMC no."
+          value={profile.mmcNo}
+          onPress={() => editProfileField("mmcNo", "MMC registration no.")}
+        />
+        <SettingsRow
+          icon="business-outline"
+          label="Clinic"
+          value={profile.clinicName}
+          onPress={() => editProfileField("clinicName", "Clinic name")}
+        />
+      </Card>
+
       <Card>
         <CardHeading>On-device AI</CardHeading>
         <SettingsRow first icon="hardware-chip-outline" label="Note model" value={NOTE_MODEL_NAME} />

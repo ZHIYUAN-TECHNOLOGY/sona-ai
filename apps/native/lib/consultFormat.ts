@@ -12,14 +12,24 @@ export function consultHeadline(c: Consult): string {
   return c.patientName || c.title;
 }
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "8:32 PM" today, "12 Jul · 8:32 PM" for older consults — a bare clock time is
+ *  meaningless a week later. */
+export function consultDateTime(ms: number): string {
+  if (isToday(ms)) return consultTime(ms);
+  const d = new Date(ms);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} · ${consultTime(ms)}`;
+}
+
 /**
- * Card detail line: time plus whatever patient context exists —
+ * Card detail line: date/time plus whatever patient context exists —
  * "9:41 AM · Room 3 · Walk-in · 012-345 6789". Fields are optional; absent ones
  * are simply skipped. When the headline is the patient name, the consult title
  * leads so the visit reason stays visible.
  */
 export function consultSubtitle(c: Consult): string {
-  const parts: string[] = [consultTime(c.createdAt)];
+  const parts: string[] = [consultDateTime(c.createdAt)];
   if (c.patientName) parts.push(c.title);
   if (c.room) parts.push(c.room);
   if (c.visitType) parts.push(c.visitType === "walk-in" ? "Walk-in" : "Appointment");

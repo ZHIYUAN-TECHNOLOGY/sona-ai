@@ -16,7 +16,7 @@ import {
   isToday,
   statusMeta,
 } from "@/lib/consultFormat";
-import { deleteConsult, pruneEmptyDrafts, setConsultTitle } from "@/lib/db";
+import { deleteConsult, pruneEmptyDrafts, setConsultTitle, type ConsultListItem } from "@/lib/db";
 import type { Consult } from "@/lib/db/types";
 import { colors, font, space } from "@/lib/theme";
 
@@ -33,13 +33,13 @@ export function ConsultListScreen({
   topSlot,
 }: {
   title: string;
-  load: () => Promise<Consult[]>;
+  load: () => Promise<(Consult | ConsultListItem)[]>;
   emptyIcon?: keyof typeof Ionicons.glyphMap;
   emptyTitle: string;
   emptyBody: string;
   topSlot?: ReactNode;
 }) {
-  const [items, setItems] = useState<Consult[]>([]);
+  const [items, setItems] = useState<(Consult | ConsultListItem)[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   const reload = useCallback(async () => {
@@ -124,7 +124,7 @@ function Group({
   onRemove,
 }: {
   label: string;
-  items: Consult[];
+  items: (Consult | ConsultListItem)[];
   onRename: (c: Consult) => void;
   onRemove: (c: Consult) => void;
 }) {
@@ -145,6 +145,7 @@ function Group({
                 initials={consultInitials(consultHeadline(c))}
                 title={consultHeadline(c)}
                 sub={consultSubtitle(c)}
+                snippet={("snippet" in c && c.snippet?.trim()) || undefined}
                 right={<Pill label={s.label} variant={s.variant} />}
                 onPress={() => router.push(`/consult/${c.id}`)}
                 onLongPress={() => onRename(c)}
