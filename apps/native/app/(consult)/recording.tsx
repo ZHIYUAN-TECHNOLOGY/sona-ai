@@ -12,7 +12,6 @@ import { consult } from "@/components/consult/mockData";
 import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { RecordButton } from "@/components/consult/RecordButton";
-import { SegmentedControl } from "@/components/consult/SegmentedControl";
 import { Waveform } from "@/components/consult/Waveform";
 import { useDiarizedTranscript } from "@/lib/diarize/useDiarizedTranscript";
 import type { DiarTurn } from "@/lib/diarize/types";
@@ -20,8 +19,6 @@ import { haptic } from "@/lib/haptics";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
 import { getSttMode } from "@/lib/pipeline/sttMode";
 import { colors, font, space } from "@/lib/theme";
-
-type Mode = "transcribe" | "dictate";
 
 // Map a diarized turn (doctor / patient / unknown, from the on-device diarizer) to a
 // transcript row. Unknown (a third party — family, nurse) gets the neutral chip.
@@ -37,7 +34,7 @@ function mmss(total: number): string {
 }
 
 // Screen 2 of 6 — Recording. Big circular record affordance (Heidi-inspired),
-// segmented Transcribe/Dictate toggle, a live ticking timer, and the transcript
+// a live ticking timer, and the transcript
 // peeking below. The note template is chosen upstream on the New-consult screen.
 // Consult states that mean recording is already OVER — a re-focus must NOT restart the mic.
 const ENDED_STATUSES = new Set(["transcribing", "transcribed", "redacted", "noted"]);
@@ -60,7 +57,6 @@ export default function RecordingScreen() {
       })
       .catch(() => {});
   }, [consultId]);
-  const [mode, setMode] = useState<Mode>("transcribe");
   const [elapsed, setElapsed] = useState(0);
   const [ending, setEnding] = useState(false);
 
@@ -125,17 +121,6 @@ export default function RecordingScreen() {
         />
       }
     >
-      <View style={styles.top}>
-        <SegmentedControl<Mode>
-          options={[
-            { key: "transcribe", label: "Transcribe" },
-            { key: "dictate", label: "Dictate" },
-          ]}
-          value={mode}
-          onChange={setMode}
-        />
-      </View>
-
       <View style={styles.hero}>
         <RecordButton recording onPress={end} accessibilityLabel="End consult" />
         <Text style={styles.timer}>{mmss(elapsed)}</Text>
