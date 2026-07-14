@@ -1,0 +1,89 @@
+diff --git a/common/rnexecutorch/host_objects/ModelHostObject.h b/common/rnexecutorch/host_objects/ModelHostObject.h
+index cb8313598f5acc90754142bd953c9271d2375fa9..26d78f06cf7b9442e5229a0053c6b651544fe000 100644
+--- a/common/rnexecutorch/host_objects/ModelHostObject.h
++++ b/common/rnexecutorch/host_objects/ModelHostObject.h
+@@ -55,6 +55,11 @@ public:
+                                        promiseHostFunction<&Model::forwardJS>,
+                                        "forward"));
+ 
++      // PATCH(aurio): expose named-method execution (multi-method .pte).
++      addFunctions(JSI_EXPORT_FUNCTION(ModelHostObject<Model>,
++                                       promiseHostFunction<&Model::executeJS>,
++                                       "execute"));
++
+       addFunctions(JSI_EXPORT_FUNCTION(
+           ModelHostObject<Model>, promiseHostFunction<&Model::getInputShape>,
+           "getInputShape"));
+diff --git a/common/rnexecutorch/models/BaseModel.cpp b/common/rnexecutorch/models/BaseModel.cpp
+index 735b257f51c6b17f5b382dbab479fff8623ba329..13e1d89d59f18637e796d84e39e2db1153303b88 100644
+--- a/common/rnexecutorch/models/BaseModel.cpp
++++ b/common/rnexecutorch/models/BaseModel.cpp
+@@ -131,6 +131,54 @@ BaseModel::forwardJS(std::vector<JSTensorViewIn> tensorViewVec) const {
+   return output;
+ }
+ 
++// PATCH(aurio): named-method execution for multi-method .pte files
++// (e.g. software-mansion/react-native-executorch-pp-ocrv6 bucket methods).
++std::vector<JSTensorViewOut>
++BaseModel::executeJS(std::string methodName,
++                     std::vector<JSTensorViewIn> tensorViewVec) const {
++  if (!module_) {
++    THROW_NOT_LOADED_ERROR();
++  }
++  std::vector<executorch::runtime::EValue> evalues;
++  evalues.reserve(tensorViewVec.size());
++  // Because EValue doesn't hold to the dynamic data and metadata from
++  // TensorPtr, we need to make sure that the TensorPtr for each EValue is valid
++  // as long as that EValue is in use. Therefore we create a vec solely for
++  // keeping references to the TensorPtr
++  std::vector<TensorPtr> tensorPtrs;
++  tensorPtrs.reserve(evalues.size());
++
++  for (size_t i = 0; i < tensorViewVec.size(); i++) {
++    const auto &currTensorView = tensorViewVec[i];
++    auto tensorPtr =
++        make_tensor_ptr(currTensorView.sizes, currTensorView.dataPtr,
++                        currTensorView.scalarType);
++    tensorPtrs.emplace_back(tensorPtr);
++    evalues.emplace_back(*tensorPtr); // Dereference TensorPtr to get Tensor,
++                                      // which implicitly converts to EValue
++  }
++
++  auto result = module_->execute(methodName, evalues);
++  CHECK_OK_OR_THROW_FORWARD_ERROR(result);
++
++  auto &outputs = result.get();
++  std::vector<JSTensorViewOut> output;
++  output.reserve(outputs.size());
++
++  // Convert ET outputs to a vector of JSTensorViewOut which are later
++  // converted to JSI types via JsiConversions.h
++  for (size_t i = 0; i < outputs.size(); i++) {
++    auto &outputTensor = outputs[i].toTensor();
++    std::vector<int32_t> sizes = getTensorShape(outputTensor);
++    size_t bufferSize = outputTensor.numel() * outputTensor.element_size();
++    auto buffer = std::make_shared<OwningArrayBuffer>(
++        outputTensor.const_data_ptr(), bufferSize);
++    auto jsTensor = JSTensorViewOut(sizes, outputTensor.scalar_type(), buffer);
++    output.emplace_back(jsTensor);
++  }
++  return output;
++}
++
+ Result<executorch::runtime::MethodMeta>
+ BaseModel::getMethodMeta(const std::string &methodName) const {
+   if (!module_) {
+diff --git a/common/rnexecutorch/models/BaseModel.h b/common/rnexecutorch/models/BaseModel.h
+index 6d44976b9049a4669a4d75f2d5a621990cc51499..5feb74e2c5f4c374ef9d05727ec31a44d94bcca1 100644
+--- a/common/rnexecutorch/models/BaseModel.h
++++ b/common/rnexecutorch/models/BaseModel.h
+@@ -34,6 +34,9 @@ public:
+   getAllInputShapes(std::string methodName = "forward") const;
+   [[nodiscard("Registered non-void function")]] std::vector<JSTensorViewOut>
+   forwardJS(std::vector<JSTensorViewIn> tensorViewVec) const;
++  [[nodiscard("Registered non-void function")]] std::vector<JSTensorViewOut>
++  executeJS(std::string methodName,
++            std::vector<JSTensorViewIn> tensorViewVec) const;
+   Result<std::vector<EValue>> forward(const EValue &input_value) const;
+   Result<std::vector<EValue>>
+   forward(const std::vector<EValue> &input_value) const;
