@@ -18,6 +18,7 @@ import { DRUGS, INTERACTIONS } from "@/lib/meds/drugRules.data";
 import { noteToSpeech } from "@/lib/tts/noteSpeech";
 import { readAloud, stopReading } from "@/lib/tts/readAloud";
 import { NOTE_MODEL_NAME } from "@/lib/pipeline/model";
+import { stripThink } from "@/lib/pipeline/noteGen";
 import { noteIsEmpty } from "@/lib/pipeline/noteHighlight";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
 import { templateById } from "@/lib/pipeline/templates";
@@ -40,6 +41,7 @@ export default function NoteScreen() {
     editNote,
     llmReady,
     llmProgress,
+    noteStream,
     templateId,
   } = useConsultPipeline();
   const [editing, setEditing] = useState(false);
@@ -167,6 +169,14 @@ export default function NoteScreen() {
               <Text style={styles.loadSub}>
                 {NOTE_MODEL_NAME} · de-identified transcript in, note out. Nothing leaves the phone.
               </Text>
+              {llmReady && noteStream ? (
+                // Live token stream — raw preview while the model writes (think-tags
+                // stripped, unterminated block cut); the parsed note replaces it on
+                // completion. Same pattern as the scan-review streaming card.
+                <Text style={styles.stream} numberOfLines={14}>
+                  {stripThink(noteStream).replace(/<think>[\s\S]*/, "").trim()}
+                </Text>
+              ) : null}
             </View>
           )}
         </Card>
@@ -313,6 +323,14 @@ const styles = StyleSheet.create({
   emptyTitle: { ...font.h3, color: colors.ink },
   loadTitle: { ...font.body, fontWeight: "600", color: colors.ink, marginTop: space.xs },
   loadSub: { ...font.bodySm, color: colors.ink3, textAlign: "center" },
+  stream: {
+    ...font.bodySm,
+    color: colors.ink2,
+    lineHeight: 18,
+    opacity: 0.85,
+    alignSelf: "stretch",
+    marginTop: space.sm,
+  },
   errTitle: { ...font.body, fontWeight: "600", color: colors.red },
   errBody: { ...font.bodySm, color: colors.ink2, textAlign: "center" },
   retry: { marginTop: space.sm },
