@@ -27,7 +27,7 @@ import {
 } from "./consultPipeline";
 import { consumePendingScanDoc } from "./scanAttach";
 import { getConsult } from "../db";
-import type { Speaker } from "../db/types";
+import type { PatientDetails, Speaker } from "../db/types";
 import { streamLockedTranscript, type RawSegment, type Streamer } from "./mockStt";
 import {
   finishRealCaptureClusters,
@@ -66,7 +66,7 @@ export interface PipelineState {
   llmReady: boolean; // on-device note model loaded
   llmProgress: number; // 0..1 model download progress
   templateId: string; // selected note template (drives the generation prompt)
-  startConsult: (consentText: string) => Promise<void>;
+  startConsult: (consentText: string, patient?: Partial<PatientDetails>) => Promise<void>;
   startRecording: () => void;
   stopRecording: () => Promise<"label" | "privacy">; // real → speaker-label step; mock → privacy
   cancelRecording: () => void; // abandon a live capture (leave screen w/o End) — mic off, no transcribe
@@ -131,8 +131,9 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [llm.isReady]);
 
-  const startConsult = useCallback(async (consentText: string) => {
-    const consult = await beginConsult(consentText);
+  const startConsult = useCallback(
+    async (consentText: string, patient?: Partial<PatientDetails>) => {
+    const consult = await beginConsult(consentText, patient);
     // Smart Scan handoff: a doc parked by "New consult with this document" attaches
     // the moment the consult row exists. Best-effort — a failed attach must not
     // block the consult itself.
@@ -152,7 +153,9 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setRedaction(null);
     seq.current = 0;
     pendingWrites.current = [];
-  }, []);
+    },
+    [],
+  );
 
   // Scripted (mock) transcript stream — the demo default.
   const startMockStream = (id: string) => {

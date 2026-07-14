@@ -1,10 +1,30 @@
-import type { ConsultStatus } from "./db/types";
+import type { Consult, ConsultStatus } from "./db/types";
 
 /** Initials for a consult list avatar, from its (non-PII) title. */
 export function consultInitials(title: string): string {
   const parts = title.trim().split(/\s+/).slice(0, 2);
   const s = parts.map((w) => w[0]?.toUpperCase() ?? "").join("");
   return s || "C";
+}
+
+/** Card headline: patient name when captured, else the consult title. */
+export function consultHeadline(c: Consult): string {
+  return c.patientName || c.title;
+}
+
+/**
+ * Card detail line: time plus whatever patient context exists —
+ * "9:41 AM · Room 3 · Walk-in · 012-345 6789". Fields are optional; absent ones
+ * are simply skipped. When the headline is the patient name, the consult title
+ * leads so the visit reason stays visible.
+ */
+export function consultSubtitle(c: Consult): string {
+  const parts: string[] = [consultTime(c.createdAt)];
+  if (c.patientName) parts.push(c.title);
+  if (c.room) parts.push(c.room);
+  if (c.visitType) parts.push(c.visitType === "walk-in" ? "Walk-in" : "Appointment");
+  if (c.patientPhone) parts.push(c.patientPhone);
+  return parts.join(" · ");
 }
 
 /** "9:41 AM" style clock label from epoch millis. */

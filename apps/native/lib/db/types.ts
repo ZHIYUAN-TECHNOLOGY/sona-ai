@@ -19,8 +19,24 @@ export type ConsultStatus =
   | "signed"
   | "complete";
 
+/** How the patient arrived — shown on the consult card. */
+export type VisitType = "walk-in" | "appointment";
+
+/**
+ * Optional patient context captured at consent. DEVICE-ONLY PHI (same posture as
+ * the raw transcript): stored in local SQLite, shown to the clinician, and never
+ * included in the de-identified model input or any export.
+ */
+export interface PatientDetails {
+  patientName: string | null;
+  patientPhone: string | null;
+  /** Consultation room / bed, e.g. "Room 3". */
+  room: string | null;
+  visitType: VisitType | null;
+}
+
 /** A single patient encounter. The top-level entity everything else hangs off. */
-export interface Consult {
+export interface Consult extends PatientDetails {
   id: string;
   /** Epoch millis when the consult (consent) was created. */
   createdAt: number;

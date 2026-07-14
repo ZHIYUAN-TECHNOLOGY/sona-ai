@@ -7,6 +7,7 @@ import type {
   AuditEntry,
   AuditStage,
   Consult,
+  PatientDetails,
   ScannedDocument,
   Speaker,
   TranscriptSegment,
@@ -20,6 +21,7 @@ export function fallbackId(): string {
 export function buildConsult(input: {
   title: string;
   consentText: string;
+  patient?: Partial<PatientDetails>;
   now?: number;
   id?: string;
 }): Consult {
@@ -31,6 +33,10 @@ export function buildConsult(input: {
     status: "consented",
     title: input.title,
     consentText: input.consentText,
+    patientName: input.patient?.patientName?.trim() || null,
+    patientPhone: input.patient?.patientPhone?.trim() || null,
+    room: input.patient?.room?.trim() || null,
+    visitType: input.patient?.visitType ?? null,
     audioHash: null,
     signedAt: null,
   };
