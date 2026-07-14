@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, useLocalSearchParams, type Href } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
@@ -28,12 +29,37 @@ import { colors, font, space } from "@/lib/theme";
 // (/scan-attach) so its de-identified text informs that consult's note.
 
 type SummaryPhase = "idle" | "loading-model" | "generating" | "done" | "error";
+type TextView = "original" | "deidentified";
+
+// DOC_-namespaced redaction tokens (DOC_NAME_1, DOC_IC_2, DOC_NAME_FIELD, …) — same
+// shape the sanitizer fences in docSummaryFormat. Split-with-capture keeps the tokens
+// in the array so they can be rendered as highlighted spans.
+const DOC_TOKEN_SPLIT = /(\bDOC_[A-Z]+(?:_[A-Z]+)*(?:_\d+)?\b)/g;
+
+/** Read-only de-identified text with each DOC_ token highlighted — "what the AI sees". */
+function DeidentifiedText({ text }: { text: string }) {
+  return (
+    <Text style={styles.deidText} selectable>
+      {text.split(DOC_TOKEN_SPLIT).map((part, i) =>
+        i % 2 === 1 ? (
+          <Text key={i} style={styles.deidToken}>
+            {` ${part} `}
+          </Text>
+        ) : (
+          part
+        ),
+      )}
+    </Text>
+  );
+}
 
 export default function ScanReviewScreen() {
   const { docId } = useLocalSearchParams<{ docId: string }>();
   const [doc, setDoc] = useState<ScannedDocument | null>(null);
   const [text, setText] = useState("");
   const [identifiers, setIdentifiers] = useState(0);
+  const [redacted, setRedacted] = useState("");
+  const [view, setView] = useState<TextView>("original");
   const [dirty, setDirty] = useState(false);
   const [summaryPhase, setSummaryPhase] = useState<SummaryPhase>("idle");
   const [modelPct, setModelPct] = useState(0);
@@ -52,6 +78,7 @@ export default function ScanReviewScreen() {
         setDoc(d);
         setText(d.rawText);
         setIdentifiers(d.identifiers);
+        setRedacted(d.redactedText);
         setSummary(d.summary);
         if (d.summary) setSummaryPhase("done");
       })
@@ -78,9 +105,10 @@ export default function ScanReviewScreen() {
   const persistText = useCallback(
     (next: string) => {
       if (!doc) return;
-      const { redacted, identifiers: count } = redactDocText(next);
+      const { redacted: red, identifiers: count } = redactDocText(next);
       setIdentifiers(count);
-      void updateScannedDocumentText(doc.id, next, redacted, count).catch(() => {});
+      setRedacted(red);
+      void updateScannedDocumentText(doc.id, next, red, count).catch(() => {});
     },
     [doc],
   );
@@ -241,15 +269,61 @@ export default function ScanReviewScreen() {
           />
           {doc.status === "attached" ? <Pill label="In consult" variant="green" /> : null}
         </View>
-        <Text style={styles.hint}>Tap the text to correct anything the scanner misread.</Text>
-        <TextInput
-          value={text}
-          onChangeText={onEdit}
-          multiline
-          scrollEnabled={false}
-          style={styles.editor}
-          textAlignVertical="top"
-        />
+        {/* Original ↔ De-identified toggle: the privacy boundary made visible. The
+            de-identified view is exactly the text any AI is allowed to see, with each
+            DOC_ token highlighted. Editing lives on the original only. */}
+        <View style={styles.viewToggle}>
+          {(
+            [
+              { key: "original", label: "Original" },
+              { key: "deidentified", label: "De-identified" },
+            ] as const
+          ).map((t) => (
+            <Pressable
+              key={t.key}
+              accessibilityRole="button"
+              accessibilityState={{ selected: view === t.key }}
+              onPress={() => {
+                if (view !== t.key) haptic("tap");
+                // An edit still inside the 600ms debounce must be visible here —
+                // re-redact now so the view never shows a stale de-identification.
+                if (t.key === "deidentified" && latestText.current.pending) {
+                  setRedacted(redactDocText(text).redacted);
+                }
+                setView(t.key);
+              }}
+              style={({ pressed }) => [
+                styles.viewTab,
+                view === t.key && styles.viewTabOn,
+                pressed && styles.viewTabPressed,
+              ]}
+            >
+              <Text style={[styles.viewTabText, view === t.key && styles.viewTabTextOn]}>
+                {t.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        {view === "original" ? (
+          <>
+            <Text style={styles.hint}>Tap the text to correct anything the scanner misread.</Text>
+            <TextInput
+              value={text}
+              onChangeText={onEdit}
+              multiline
+              scrollEnabled={false}
+              style={styles.editor}
+              textAlignVertical="top"
+            />
+          </>
+        ) : (
+          <Animated.View entering={FadeIn.duration(180)}>
+            <Text style={styles.hint}>
+              What the AI sees — identifiers replaced on-device before any model runs.
+            </Text>
+            <DeidentifiedText text={redacted} />
+          </Animated.View>
+        )}
       </Card>
 
       {generating ? (
@@ -321,6 +395,27 @@ const styles = StyleSheet.create({
   body: { ...font.body, color: colors.ink2, lineHeight: 20 },
   metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, alignItems: "center" },
   hint: { ...font.bodySm, color: colors.ink3, marginTop: space.sm },
+  viewToggle: {
+    flexDirection: "row",
+    gap: 4,
+    marginTop: space.sm,
+    padding: 3,
+    borderRadius: 9,
+    backgroundColor: colors.bg,
+    alignSelf: "flex-start",
+  },
+  viewTab: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 7, borderCurve: "continuous" },
+  viewTabOn: { backgroundColor: colors.white, boxShadow: "0 1px 2px rgba(0,0,0,0.08)" },
+  viewTabPressed: { opacity: 0.7 },
+  viewTabText: { fontSize: 11.5, color: colors.ink3, fontWeight: "500" },
+  viewTabTextOn: { color: colors.ink, fontWeight: "600" },
+  deidText: { ...font.body, color: colors.ink2, lineHeight: 22, marginTop: space.sm },
+  deidToken: {
+    color: colors.greenInk,
+    backgroundColor: colors.greenSoft,
+    fontWeight: "700",
+    fontSize: 12,
+  },
   editor: {
     ...font.body,
     color: colors.ink,
