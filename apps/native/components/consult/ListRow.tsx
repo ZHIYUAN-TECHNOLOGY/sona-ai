@@ -8,10 +8,16 @@ import { colors, font, radius, space } from "@/lib/theme";
  * A consult/note list row: initials avatar, title + subtitle, optional right
  * accessory (a Pill), and a chevron. Used across Today / History / Notes.
  */
+export interface ListRowChip {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+}
+
 export function ListRow({
   initials,
   title,
   sub,
+  chips,
   snippet,
   right,
   onPress,
@@ -20,7 +26,9 @@ export function ListRow({
   initials: string;
   title: string;
   sub?: string;
-  /** Optional third line: a muted one-line content preview (note first line, …). */
+  /** Scannable icon-chips row (room, visit type, phone, …) under the subtitle. */
+  chips?: ListRowChip[];
+  /** Optional last line: a muted one-line content preview (note first line, …). */
   snippet?: string;
   right?: ReactNode;
   onPress?: () => void;
@@ -39,6 +47,18 @@ export function ListRow({
           <Text numberOfLines={1} style={styles.sub}>
             {sub}
           </Text>
+        ) : null}
+        {chips && chips.length > 0 ? (
+          <View style={styles.chips}>
+            {chips.map((c, i) => (
+              <View key={i} style={styles.chip}>
+                <Ionicons name={c.icon} size={11} color={colors.greenDeep} />
+                <Text numberOfLines={1} style={styles.chipText}>
+                  {c.label}
+                </Text>
+              </View>
+            ))}
+          </View>
         ) : null}
         {snippet ? (
           <Text numberOfLines={1} style={styles.snippet}>
@@ -91,5 +111,17 @@ const styles = StyleSheet.create({
   tt: { flex: 1, minWidth: 0 },
   title: { ...font.body, fontWeight: "600", color: colors.ink },
   sub: { ...font.bodySm, color: colors.ink3, marginTop: 1 },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 5 },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: radius.pill,
+    backgroundColor: colors.greenSoft,
+    maxWidth: 160,
+  },
+  chipText: { fontSize: 10.5, fontWeight: "600", color: colors.greenDeep },
   snippet: { ...font.bodySm, color: colors.ink2, marginTop: 2, fontStyle: "italic" },
 });

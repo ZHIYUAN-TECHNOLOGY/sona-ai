@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, useLocalSearchParams, type Href } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
 import { Card } from "@/components/consult/Card";
@@ -11,6 +11,7 @@ import { NoteMarkdown } from "@/components/consult/NoteMarkdown";
 import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { CardHeading } from "@/components/consult/SectionLabel";
+import { SegmentedControl } from "@/components/consult/SegmentedControl";
 import { haptic } from "@/lib/haptics";
 import {
   getScannedDocument,
@@ -269,40 +270,27 @@ export default function ScanReviewScreen() {
           />
           {doc.status === "attached" ? <Pill label="In consult" variant="green" /> : null}
         </View>
-        {/* Original ↔ De-identified toggle: the privacy boundary made visible. The
-            de-identified view is exactly the text any AI is allowed to see, with each
-            DOC_ token highlighted. Editing lives on the original only. */}
+        {/* Original ↔ De-identified segmented control: the privacy boundary made
+            visible. The de-identified view is exactly the text any AI is allowed to
+            see, with each DOC_ token highlighted. Editing lives on the original only. */}
         <View style={styles.viewToggle}>
-          {(
-            [
+          <SegmentedControl
+            stretch
+            options={[
               { key: "original", label: "Original" },
               { key: "deidentified", label: "De-identified" },
-            ] as const
-          ).map((t) => (
-            <Pressable
-              key={t.key}
-              accessibilityRole="button"
-              accessibilityState={{ selected: view === t.key }}
-              onPress={() => {
-                if (view !== t.key) haptic("tap");
-                // An edit still inside the 600ms debounce must be visible here —
-                // re-redact now so the view never shows a stale de-identification.
-                if (t.key === "deidentified" && latestText.current.pending) {
-                  setRedacted(redactDocText(text).redacted);
-                }
-                setView(t.key);
-              }}
-              style={({ pressed }) => [
-                styles.viewTab,
-                view === t.key && styles.viewTabOn,
-                pressed && styles.viewTabPressed,
-              ]}
-            >
-              <Text style={[styles.viewTabText, view === t.key && styles.viewTabTextOn]}>
-                {t.label}
-              </Text>
-            </Pressable>
-          ))}
+            ]}
+            value={view}
+            onChange={(next) => {
+              if (next !== view) haptic("tap");
+              // An edit still inside the 600ms debounce must be visible here —
+              // re-redact now so the view never shows a stale de-identification.
+              if (next === "deidentified" && latestText.current.pending) {
+                setRedacted(redactDocText(text).redacted);
+              }
+              setView(next);
+            }}
+          />
         </View>
         {view === "original" ? (
           <>
@@ -395,20 +383,7 @@ const styles = StyleSheet.create({
   body: { ...font.body, color: colors.ink2, lineHeight: 20 },
   metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, alignItems: "center" },
   hint: { ...font.bodySm, color: colors.ink3, marginTop: space.sm },
-  viewToggle: {
-    flexDirection: "row",
-    gap: 4,
-    marginTop: space.sm,
-    padding: 3,
-    borderRadius: 9,
-    backgroundColor: colors.bg,
-    alignSelf: "flex-start",
-  },
-  viewTab: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 7, borderCurve: "continuous" },
-  viewTabOn: { backgroundColor: colors.white, boxShadow: "0 1px 2px rgba(0,0,0,0.08)" },
-  viewTabPressed: { opacity: 0.7 },
-  viewTabText: { fontSize: 11.5, color: colors.ink3, fontWeight: "500" },
-  viewTabTextOn: { color: colors.ink, fontWeight: "600" },
+  viewToggle: { marginTop: space.md },
   deidText: { ...font.body, color: colors.ink2, lineHeight: 22, marginTop: space.sm },
   deidToken: {
     color: colors.greenInk,
