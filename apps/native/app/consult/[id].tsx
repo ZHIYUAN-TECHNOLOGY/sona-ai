@@ -10,7 +10,7 @@ import { NoteEditor } from "@/components/consult/NoteEditor";
 import { NoteMarkdown } from "@/components/consult/NoteMarkdown";
 import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
-import { consultHeadline, consultSubtitle, statusMeta } from "@/lib/consultFormat";
+import { consultFullSubtitle, consultHeadline, statusMeta } from "@/lib/consultFormat";
 import { deleteConsult, getAudit, getConsult, getConsultDocuments, getNote } from "@/lib/db";
 import type { AuditEntry, ClinicalNote, Consult, ScannedDocument } from "@/lib/db/types";
 import { editClinicalNote } from "@/lib/pipeline/consultPipeline";
@@ -136,7 +136,7 @@ export default function ConsultDetailScreen() {
     <ConsultScreen
       time=""
       title={consult ? consultHeadline(consult) : "Consult"}
-      sub={consult ? consultSubtitle(consult) : "Loading…"}
+      sub={consult ? consultFullSubtitle(consult) : "Loading…"}
       onBack={() => router.back()}
       right={status ? <Pill label={status.label} variant={status.variant} /> : undefined}
     >

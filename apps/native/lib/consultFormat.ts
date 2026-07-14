@@ -23,18 +23,35 @@ export function consultDateTime(ms: number): string {
 }
 
 /**
- * Card detail line: date/time plus whatever patient context exists —
- * "9:41 AM · Room 3 · Walk-in · 012-345 6789". Fields are optional; absent ones
- * are simply skipped. When the headline is the patient name, the consult title
- * leads so the visit reason stays visible.
+ * Card detail line: date/time, plus the consult title (visit reason) when the
+ * headline is the patient name. Patient context (room / visit type / phone) renders
+ * as icon chips via consultChips — not crammed into this line.
  */
 export function consultSubtitle(c: Consult): string {
   const parts: string[] = [consultDateTime(c.createdAt)];
   if (c.patientName) parts.push(c.title);
-  if (c.room) parts.push(c.room);
-  if (c.visitType) parts.push(c.visitType === "walk-in" ? "Walk-in" : "Appointment");
-  if (c.patientPhone) parts.push(c.patientPhone);
   return parts.join(" · ");
+}
+
+/** One-line everything variant for the consult detail header (no chips up there). */
+export function consultFullSubtitle(c: Consult): string {
+  return [consultSubtitle(c), ...consultChips(c).map((chip) => chip.label)].join(" · ");
+}
+
+/**
+ * Scannable patient-context chips for the consult card — the details a clinician
+ * hunts for when finding a session (room, walk-in vs appointment, phone). Absent
+ * fields are skipped; pre-patient-details consults get no chips.
+ */
+export function consultChips(
+  c: Consult,
+): { icon: "location-outline" | "walk-outline" | "calendar-outline" | "call-outline"; label: string }[] {
+  const chips: ReturnType<typeof consultChips> = [];
+  if (c.room) chips.push({ icon: "location-outline", label: c.room });
+  if (c.visitType === "walk-in") chips.push({ icon: "walk-outline", label: "Walk-in" });
+  if (c.visitType === "appointment") chips.push({ icon: "calendar-outline", label: "Appointment" });
+  if (c.patientPhone) chips.push({ icon: "call-outline", label: c.patientPhone });
+  return chips;
 }
 
 /** "9:41 AM" style clock label from epoch millis. */

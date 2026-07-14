@@ -10,6 +10,7 @@ import { Pill } from "@/components/consult/Pill";
 import { SwipeableRow } from "@/components/consult/SwipeableRow";
 import { TabScaffold } from "@/components/consult/TabScaffold";
 import {
+  consultChips,
   consultHeadline,
   consultInitials,
   consultSubtitle,
@@ -145,6 +146,7 @@ function Group({
                 initials={consultInitials(consultHeadline(c))}
                 title={consultHeadline(c)}
                 sub={consultSubtitle(c)}
+                chips={consultChips(c)}
                 snippet={("snippet" in c && c.snippet?.trim()) || undefined}
                 right={<Pill label={s.label} variant={s.variant} />}
                 onPress={() => router.push(`/consult/${c.id}`)}

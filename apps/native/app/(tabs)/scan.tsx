@@ -15,6 +15,7 @@ import {
   deleteScannedDocument,
   listScannedDocuments,
   renameScannedDocument,
+  type ScannedDocumentListItem,
 } from "@/lib/db";
 import type { ScannedDocument } from "@/lib/db/types";
 import * as ImagePicker from "expo-image-picker";
@@ -54,7 +55,7 @@ export default function SmartScanScreen() {
   const [phase, setPhase] = useState<ScanPhase>("idle");
   const [progress, setProgress] = useState("");
   const [err, setErr] = useState("");
-  const [docs, setDocs] = useState<ScannedDocument[]>([]);
+  const [docs, setDocs] = useState<ScannedDocumentListItem[]>([]);
 
   const reload = useCallback(() => {
     listScannedDocuments()
@@ -275,6 +276,14 @@ export default function SmartScanScreen() {
                       <Text style={styles.rowSub} numberOfLines={1}>
                         {`${timeAgo(d.createdAt)} · ${d.pages} page${d.pages === 1 ? "" : "s"} · ${d.identifiers} identifier${d.identifiers === 1 ? "" : "s"} redacted`}
                       </Text>
+                      {d.status === "attached" && d.attachedTo ? (
+                        <View style={styles.attachedRow}>
+                          <Ionicons name="person-outline" size={11} color={colors.greenDeep} />
+                          <Text style={styles.attachedText} numberOfLines={1}>
+                            {d.attachedTo}
+                          </Text>
+                        </View>
+                      ) : null}
                     </View>
                     {d.status === "attached" ? (
                       <Pill label="In consult" variant="green" />
@@ -331,6 +340,8 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, minWidth: 0 },
   rowTitle: { ...font.body, fontWeight: "600", color: colors.ink },
   rowSub: { ...font.bodySm, color: colors.ink3, marginTop: 1 },
+  attachedRow: { flexDirection: "row", alignItems: "center", gap: 3, marginTop: 3 },
+  attachedText: { fontSize: 11, fontWeight: "600", color: colors.greenDeep, flexShrink: 1 },
   footer: {
     ...font.bodySm,
     color: colors.ink3,

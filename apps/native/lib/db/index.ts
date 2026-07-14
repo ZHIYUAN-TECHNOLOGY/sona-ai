@@ -702,12 +702,21 @@ export async function getScannedDocument(id: string): Promise<ScannedDocument | 
 }
 
 /** All scanned documents, newest first — powers the Smart Scan tab list. */
-export async function listScannedDocuments(): Promise<ScannedDocument[]> {
+/** A scanned document for the list screen, with its consult's display label when attached. */
+export interface ScannedDocumentListItem extends ScannedDocument {
+  /** Patient name (preferred) or consult title of the attached consult, or null. */
+  attachedTo: string | null;
+}
+
+export async function listScannedDocuments(): Promise<ScannedDocumentListItem[]> {
   const db = await initDb();
-  const rows = await db.getAllAsync<DocRow>(
-    `SELECT ${DOC_COLS} FROM scanned_document ORDER BY createdAt DESC;`,
+  const cols = DOC_COLS.split(", ").map((c) => `d.${c}`).join(", ");
+  const rows = await db.getAllAsync<DocRow & { attachedTo: string | null }>(
+    `SELECT ${cols}, COALESCE(c.patientName, c.title) AS attachedTo
+     FROM scanned_document d LEFT JOIN consult c ON c.id = d.consultId
+     ORDER BY d.createdAt DESC;`,
   );
-  return rows.map(docFromRow);
+  return rows.map((r) => ({ ...docFromRow(r), attachedTo: r.attachedTo }));
 }
 
 /** Documents attached to a consult — powers the note screen's document context. */
