@@ -18,7 +18,7 @@ attention is NOT quantizable yet), English + Malay + Chinese, STRICT-format extr
 
 | # | Model | Size / RAM@4bit | License | Status |
 |---|---|---|---|---|
-| 1 | **Gemma-SEA-LION-v4-4B** (`aisingapore/Gemma-SEA-LION-v4-4B-VL`) | 4B / ~2.6GB | Gemma | ⭐ Trial next. Gemma-3-4B + 500B SEA tokens (Malay+中文 native), 6.7M instr pairs. gemma3 arch → exportable. |
+| 1 | ~~Gemma-SEA-LION-v4-4B~~ | 4B / ~2.6GB | Gemma | **TRIALED Jul 14, LOST**: 82.2% recall vs Qwen3-1.7B's 93.5% on identical cases (both 0 inventions, 6/6 format). Drops stated facts — missed NSAID allergy, FBC order, review intervals. Malay pretraining didn't translate to extraction completeness. Results: `tools/note-eval/out_sealion.json`. |
 | 2 | **Ministral-3-3B-Instruct-2512** | 3B / ~2.1GB | Apache 2.0 | Dark horse. Instruct kept separate from reasoning ckpt. Malay UNLISTED — gate on Malay trial. |
 | 3 | **Qwen3-4B-Instruct-2507** | 4B / ~2.7GB | Apache 2.0 | Our best Mac score (92.8% recall / 0 inventions). Needs own export + hosting + device eval. |
 | 4 | Gemma 4 E4B-it | ~4.5B eff | Apache 2.0 | BLOCKED: RN-executorch #1062 (per-layer embeddings) — lands v0.10. |
