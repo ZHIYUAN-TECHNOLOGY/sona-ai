@@ -3,6 +3,21 @@ import {
   QWEN3_1_7B_QUANTIZED,
 } from "react-native-executorch";
 
+// SEA-LION v4 4B — OUR OWN export (official executorch gemma3 weight mapping +
+// hand-derived 4B params; scratchpad sealion-export, Jul 15 2026). DEV-TEST ONLY:
+// served from the dev Mac over LAN — phone and Mac must share wifi for the one-time
+// download; after that the model is cached on-device. User-directed trial despite
+// losing the Mac harness to Qwen3-1.7B (82.2% vs 93.5% recall — docs/model-roadmap.md);
+// pending the device-quantized eval gate. QWEN3_1_7B_QUANTIZED stays the revert line.
+const SEALION_V4_4B_LAN = {
+  // Custom exports aren't in the library's LLMModelName union — the cast is the
+  // supported escape hatch (name is only telemetry + reload key).
+  modelName: "sealion-v4-4b-8da4w",
+  modelSource: "http://192.168.0.139:8765/sealion_v4_4b_8da4w.pte",
+  tokenizerSource: "http://192.168.0.139:8765/tokenizer.json",
+  tokenizerConfigSource: "http://192.168.0.139:8765/tokenizer_config.json",
+} as unknown as typeof QWEN3_1_7B_QUANTIZED;
+
 // Single source of truth for the on-device note model. The rest of the pipeline
 // is model-agnostic — it only depends on the `LlmLike.generate(messages)` shape
 // (see noteGen.ts). To switch models, change these two lines only:
@@ -35,8 +50,10 @@ import {
 // /no_think. RAM discipline stays: whisper is UNLOADED before this model loads.
 // Sampling (temperature / repetitionPenalty) is applied at RUNTIME via llm.configure() in
 // PipelineProvider — executorch ignores a generationConfig field on the model object.
-export const NOTE_MODEL = QWEN3_1_7B_QUANTIZED;
-export const NOTE_MODEL_NAME = "Qwen3-1.7B";
+export const NOTE_MODEL = SEALION_V4_4B_LAN;
+export const NOTE_MODEL_NAME = "SEA-LION v4 4B";
+// Revert line (device-proven): NOTE_MODEL = QWEN3_1_7B_QUANTIZED, name "Qwen3-1.7B".
+void QWEN3_1_7B_QUANTIZED;
 
 // On-device text-embedding model for semantic search / RAG (the Knowledge tab and,
 // later, note search). Multilingual on purpose: a quantized paraphrase MiniLM that
