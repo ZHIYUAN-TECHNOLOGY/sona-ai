@@ -13,11 +13,14 @@ import { PARAPHRASE_MULTILINGUAL_MINILM_L12_V2_QUANTIZED } from "react-native-ex
 // can hold (Qwen3-4B jetsammed at load on the 6GB dev iPhone, Jul 2026; any 4B-class
 // model incl. MedGemma-4B hits the same iOS per-app memory ceiling).
 //
-// The .pte is OUR export (scratchpad medpsy-export: optimum-executorch, executorch 1.1,
-// XNNPACK 8da4w linear + 8w embedding, max_seq_len 4096 — the same recipe as the stock
-// qwen3-1.7b-quantized binary this replaced). Tokenizer files come straight from the
-// upstream HF repo. modelName stays "qwen3-1.7b-quantized": it is that architecture —
-// the field only drives telemetry + hook reload identity.
+// The .pte is OUR export (scratchpad medpsy-export). MUST be built with executorch's
+// OFFICIAL export_llm pipeline (convert_weights → export_llm, qwen3_xnnpack_q8da4w
+// config, max_seq 4096): it embeds the metadata methods the native runner requires —
+// an optimum-executorch export loads then fails with "Model did not provide any EOS
+// token IDs via 'get_eos_ids'" (Jul 2026). Verified before serving:
+// method_names ⊇ {get_eos_ids:[151645], get_bos_id, get_max_context_len, forward}.
+// Tokenizer files come straight from the upstream HF repo. modelName stays
+// "qwen3-1.7b-quantized": it is that architecture — telemetry + reload identity only.
 //
 // DEV HOSTING: the .pte is served from the dev Mac over LAN (python -m http.server 8090
 // in scratchpad/medpsy-export/out). Before release, upload it to a HuggingFace repo and
@@ -28,7 +31,9 @@ import { PARAPHRASE_MULTILINGUAL_MINILM_L12_V2_QUANTIZED } from "react-native-ex
 // load (PipelineProvider / docSummary). Fallback: swap back to QWEN3_1_7B_QUANTIZED.
 // Sampling (temperature / repetitionPenalty) is applied at RUNTIME via llm.configure() in
 // PipelineProvider — executorch ignores a generationConfig field on the model object.
-const MEDPSY_PTE_URL = "http://192.168.0.139:8090/medpsy-1.7b-8da4w.pte";
+// v2 filename = cache-bust: the resource fetcher caches by URL, and v1 (the metadata-less
+// optimum export) may already sit in the app's cache.
+const MEDPSY_PTE_URL = "http://192.168.0.139:8090/medpsy-1.7b-8da4w-v2.pte";
 const MEDPSY_HF = "https://huggingface.co/qvac/MedPsy-1.7B/resolve/main";
 
 export const NOTE_MODEL = {
