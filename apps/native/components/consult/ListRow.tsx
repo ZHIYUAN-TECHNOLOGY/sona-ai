@@ -12,6 +12,7 @@ export function ListRow({
   initials,
   title,
   sub,
+  snippet,
   right,
   onPress,
   onLongPress,
@@ -19,6 +20,8 @@ export function ListRow({
   initials: string;
   title: string;
   sub?: string;
+  /** Optional third line: a muted one-line content preview (note first line, …). */
+  snippet?: string;
   right?: ReactNode;
   onPress?: () => void;
   onLongPress?: () => void;
@@ -35,6 +38,11 @@ export function ListRow({
         {sub ? (
           <Text numberOfLines={1} style={styles.sub}>
             {sub}
+          </Text>
+        ) : null}
+        {snippet ? (
+          <Text numberOfLines={1} style={styles.snippet}>
+            {snippet}
           </Text>
         ) : null}
       </View>
@@ -83,4 +91,5 @@ const styles = StyleSheet.create({
   tt: { flex: 1, minWidth: 0 },
   title: { ...font.body, fontWeight: "600", color: colors.ink },
   sub: { ...font.bodySm, color: colors.ink3, marginTop: 1 },
+  snippet: { ...font.bodySm, color: colors.ink2, marginTop: 2, fontStyle: "italic" },
 });

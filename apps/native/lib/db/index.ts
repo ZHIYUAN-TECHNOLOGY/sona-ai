@@ -164,6 +164,13 @@ CREATE TABLE IF NOT EXISTS scanned_document (
 );
 CREATE INDEX IF NOT EXISTS idx_doc_consult ON scanned_document(consultId);
 
+-- Tiny on-device key/value store for user preferences (clinician profile, …).
+-- Never synced, never exported. New TABLE via IF NOT EXISTS — no migration needed.
+CREATE TABLE IF NOT EXISTS app_setting (
+  key    TEXT PRIMARY KEY NOT NULL,
+  value  TEXT NOT NULL
+);
+
 -- Enrolled clinician voiceprint for speaker diarization (v4). A single row (id='self')
 -- holds the doctor's speaker embedding so the diarizer can label which voice is the
 -- clinician. BIOMETRIC PHI: this is device-only like the re-ID map — it is never logged,
@@ -222,6 +229,24 @@ export async function initDb(): Promise<SQLite.SQLiteDatabase> {
 /** Reset the cached handle (tests / teardown). Does not delete data. */
 export function _resetDbHandle(): void {
   dbPromise = null;
+}
+
+// --- Settings kv ---------------------------------------------------------------
+
+/** Read one app setting, or null. Device-only preferences (see app_setting table). */
+export async function getSetting(key: string): Promise<string | null> {
+  const db = await initDb();
+  const row = await db.getFirstAsync<{ value: string }>(
+    `SELECT value FROM app_setting WHERE key = ? LIMIT 1;`,
+    [key],
+  );
+  return row?.value ?? null;
+}
+
+/** Upsert one app setting. */
+export async function setSetting(key: string, value: string): Promise<void> {
+  const db = await initDb();
+  await db.runAsync(`INSERT OR REPLACE INTO app_setting (key, value) VALUES (?, ?);`, [key, value]);
 }
 
 // --- CRUD --------------------------------------------------------------------
@@ -505,10 +530,20 @@ export async function pruneEmptyDrafts(): Promise<number> {
 const CONSULT_COLS =
   "id, createdAt, updatedAt, status, title, consentText, patientName, patientPhone, room, visitType, audioHash, signedAt";
 
+/** A consult row for list screens, with a one-line note preview when a note exists. */
+export interface ConsultListItem extends Consult {
+  snippet: string | null;
+}
+
 /** All consults, newest first — powers the Today / History tab lists. */
-export async function listConsults(): Promise<Consult[]> {
+export async function listConsults(): Promise<ConsultListItem[]> {
   const db = await initDb();
-  return db.getAllAsync<Consult>(`SELECT ${CONSULT_COLS} FROM consult ORDER BY createdAt DESC;`);
+  const cols = CONSULT_COLS.split(", ").map((c) => `c.${c}`).join(", ");
+  return db.getAllAsync<ConsultListItem>(
+    `SELECT ${cols}, substr(n.subjective, 1, 120) AS snippet
+     FROM consult c LEFT JOIN clinical_note n ON n.consultId = c.id
+     ORDER BY c.createdAt DESC;`,
+  );
 }
 
 /** Consults that have reached a note stage — powers the Notes tab. */
@@ -722,6 +757,16 @@ export async function attachScannedDocument(id: string, consultId: string): Prom
 }
 
 /** Clear a document's page-image URIs after the files are deleted (sign / note save). */
+/** Rename a scanned document (list label — keep it PII-free). */
+export async function renameScannedDocument(id: string, title: string): Promise<void> {
+  const db = await initDb();
+  await db.runAsync(`UPDATE scanned_document SET title = ?, updatedAt = ? WHERE id = ?;`, [
+    title,
+    Date.now(),
+    id,
+  ]);
+}
+
 export async function clearScannedDocumentImages(id: string): Promise<void> {
   const db = await initDb();
   await db.runAsync(`UPDATE scanned_document SET imageUris = '[]', updatedAt = ? WHERE id = ?;`, [

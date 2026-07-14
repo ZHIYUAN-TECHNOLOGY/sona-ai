@@ -21,10 +21,8 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Icon sf={{ default: "house", selected: "house.fill" }} />
         <NativeTabs.Trigger.Label>Consults</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="notes">
-        <NativeTabs.Trigger.Icon sf={{ default: "doc.text", selected: "doc.text.fill" }} />
-        <NativeTabs.Trigger.Label>Notes</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
+      {/* Notes tab removed (Jul 2026): it showed the same consult rows as Consults,
+          just filtered to noted — pure duplication. Search moved onto Consults. */}
       {/* Smart Scan replaced Knowledge in the 4-slot capsule (Jul 2026) — scanning paper
           docs is a headline feature; Knowledge lives on via Settings → Knowledge search. */}
       <NativeTabs.Trigger name="scan">

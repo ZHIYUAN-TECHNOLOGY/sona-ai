@@ -1,14 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { Alert, Share, StyleSheet, Text } from "react-native";
 
 import { BottomSheet, SheetRow } from "@/components/consult/BottomSheet";
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
-import { consult } from "@/components/consult/mockData";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { CardHeading } from "@/components/consult/SectionLabel";
+import { SignaturePad } from "@/components/consult/SignaturePad";
 import { toFhirDocumentReference } from "@/lib/export/fhir";
 import { assertReidentified, toNoteText } from "@/lib/export/noteText";
 import { exportPdf } from "@/lib/export/pdf";
@@ -16,7 +16,8 @@ import type { SignedNote } from "@/lib/export/types";
 import { haptic } from "@/lib/haptics";
 import { recordExport, signConsult } from "@/lib/pipeline/consultPipeline";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
-import { colors, font, radius, space } from "@/lib/theme";
+import { useProfile } from "@/lib/profile";
+import { colors, font, space } from "@/lib/theme";
 
 type ExportKind = "FHIR R4" | "PDF" | "Copy";
 
@@ -26,7 +27,9 @@ type ExportKind = "FHIR R4" | "PDF" | "Copy";
 // so a leaked token can never be exported.
 export default function SignScreen() {
   const { note, consultId, redaction } = useConsultPipeline();
+  const [profile] = useProfile();
   const [signed, setSigned] = useState(false);
+  const [inked, setInked] = useState(false); // a signature has been drawn
   const [signedAt, setSignedAt] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -35,8 +38,8 @@ export default function SignScreen() {
     return {
       consultId,
       patientDisplayName: redaction?.reidMap?.["NAME_1"] ?? "Patient",
-      clinicianName: consult.clinicianName,
-      mmcNo: consult.mmcNo,
+      clinicianName: profile.clinicianName,
+      mmcNo: profile.mmcNo,
       signedAtISO: signedAt ?? new Date().toISOString(),
       soap: note.soap,
       orders: note.orders,
@@ -48,11 +51,11 @@ export default function SignScreen() {
       router.push("/complete");
       return;
     }
-    if (!consultId) return;
+    if (!consultId || !inked) return;
     setSignedAt(new Date().toISOString());
     setSigned(true);
     haptic("signSuccess");
-    await signConsult(consultId, consult.clinicianName);
+    await signConsult(consultId, profile.clinicianName);
   };
 
   const doExport = async (kind: ExportKind) => {
@@ -80,27 +83,24 @@ export default function SignScreen() {
       <ConsultScreen
         time="9:47"
         title="Sign & export"
-        sub={`${consult.clinicianName} · ${consult.mmcNo}`}
+        sub={`${profile.clinicianName} · ${profile.mmcNo}`}
         onBack={() => router.back()}
-        footer={<PrimaryButton label={signed ? "Finish consult" : "Sign and finish"} onPress={onPrimary} />}
+        footer={
+          <PrimaryButton
+            label={signed ? "Finish consult" : "Sign and finish"}
+            onPress={onPrimary}
+            disabled={!signed && !inked}
+          />
+        }
       >
         <Card>
           <CardHeading>Signature</CardHeading>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Sign here"
-            onPress={onPrimary}
-            style={[styles.sig, signed && styles.sigSigned]}
-          >
-            {signed ? (
-              <Text style={styles.sigMark}>{consult.clinicianName}</Text>
-            ) : (
-              <View style={styles.sigHint}>
-                <Ionicons name="create-outline" size={16} color={colors.ink3} />
-                <Text style={styles.sigHintText}>Tap to sign</Text>
-              </View>
-            )}
-          </Pressable>
+          <SignaturePad
+            signed={signed}
+            signedLabel={`${profile.clinicianName} · ${profile.mmcNo}`}
+            onFirstStroke={() => setInked(true)}
+            onClear={() => setInked(false)}
+          />
         </Card>
 
         <Card variant="tint">
@@ -140,22 +140,6 @@ export default function SignScreen() {
 }
 
 const styles = StyleSheet.create({
-  sig: {
-    height: 64,
-    borderWidth: 1.5,
-    borderStyle: "dashed",
-    borderColor: colors.lineStrong,
-    borderRadius: radius.md,
-    borderCurve: "continuous",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.surface,
-    marginTop: space.md,
-  },
-  sigSigned: { borderStyle: "solid", borderColor: colors.green100, backgroundColor: colors.green50 },
-  sigMark: { ...font.h3, color: colors.green, fontStyle: "italic" },
-  sigHint: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  sigHintText: { ...font.bodySm, color: colors.ink3 },
   micro: { marginTop: space.sm, ...font.bodySm, color: colors.ink3 },
   exportBtn: { marginTop: space.md },
   dangerBody: { marginTop: space.xs, ...font.bodySm, color: colors.ink2 },
