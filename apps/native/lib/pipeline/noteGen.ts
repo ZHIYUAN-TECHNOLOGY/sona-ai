@@ -166,6 +166,41 @@ export function stripThink(text: string): string {
   return out.trim();
 }
 
+// Trailing model self-narration — commentary ABOUT the note instead of the note
+// ("Note: The above has been formatted strictly according to instructions…").
+// Observed from Qwen3-4B on the first device run (Jul 14 2026). Same defense
+// family as docSummaryFormat's SELF_NARRATION; phrased narrowly so a clinical
+// "Note: …" line about the PATIENT is never dropped.
+const NOTE_SELF_NARRATION =
+  /^\s*(?:>?\s*)?note\s*[:：]\s*(?:the above|this (?:note|summary)|i have|all data|formatted)/im;
+
+/**
+ * Deterministically normalize model markdown BEFORE any parsing/rendering. The 4B
+ * model emits (field screenshot #146): full-width punctuation（：，％＊）, headings
+ * without a space ("##Subjective" — invalid markdown, renders literally), em/en-dash
+ * and middle-dot bullets, multi-dash bullet runs ("----text"), and a trailing
+ * self-narration paragraph. No renderer can fix these — they are folded here, once,
+ * for every consumer (title parse, SOAP parse, markdown render). Pure + idempotent.
+ */
+export function normalizeModelMarkdown(text: string): string {
+  // NFKC folds full-width forms (：→:, ，→,, ％→%, ＊→*, 　→space) without touching CJK.
+  let out = text.normalize("NFKC");
+  // "##Heading" → "## Heading" — heading markers need a following space to BE markdown.
+  out = out.replace(/^(#{1,6})(?=\S)/gm, "$1 ");
+  // "Title:Cough" → "Title: Cough" — line-leading label glued to its value (the
+  // full-width colon fold above loses the visual gap). Letter-led labels only, so
+  // times ("10:30") and ratios are untouched.
+  out = out.replace(/^([A-Za-z][A-Za-z &/-]*):(?=[^\s:])/gm, "$1: ");
+  // Bullet variants → "- ": em/en-dash/minus/middle-dot markers and 2+ dash runs.
+  out = out.replace(/^[^\S\n]*[–—−·•][^\S\n]*/gm, "- ").replace(/^[^\S\n]*-{2,}[^\S\n]*/gm, "- ");
+  // Drop everything from a trailing self-narration line onward.
+  const meta = NOTE_SELF_NARRATION.exec(out);
+  if (meta) out = out.slice(0, meta.index);
+  // Collapse the space debris the folds leave behind (never across newlines).
+  out = out.replace(/[^\S\n]{2,}/g, " ");
+  return out.trim();
+}
+
 /**
  * Truncate at the first DEGENERATE line — the failure mode where a small model dissolves into
  * synonym waterfalls ("zealously fervently ardently…") or alphabet soup ("dadada abcdefgh…").
@@ -339,7 +374,7 @@ export async function generateNote(
   const t0 = Date.now();
   const rawOut = await llm.generate(messages);
   const generationMs = Date.now() - t0;
-  const clean = truncateDegenerate(collapseRepeats(stripThink(rawOut)));
+  const clean = normalizeModelMarkdown(truncateDegenerate(collapseRepeats(stripThink(rawOut))));
   const { title: rawTitle, rest: afterTitle } = parseTitle(clean);
   // Peel the trailing Flags line before anything else parses the body, so the
   // sidecar never leaks into the SOAP sections or the rendered markdown.

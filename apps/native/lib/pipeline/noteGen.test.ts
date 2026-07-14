@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 
 import type { KnowledgeDoc } from "../knowledge/corpus";
-import { buildTranscript, classifyOrder, collapseRepeats, generateNote, parseFlags, parseSoap, stripThink, truncateDegenerate } from "./noteGen";
+import { buildTranscript, classifyOrder, collapseRepeats, generateNote, normalizeModelMarkdown, parseFlags, parseSoap, stripThink, truncateDegenerate } from "./noteGen";
 import { buildGuidelineContext } from "./noteGrounding";
 import { highlightClinical, normalizeNoteMarkdown } from "./noteHighlight";
 import { soapToMarkdown } from "./noteFormat";
@@ -262,4 +262,31 @@ void (async () => {
   const runs = "## Plan\n- follow up XXXXXXX soon";
   assert(!truncateDegenerate(runs).includes("XXXXXXX"), "identical-char run line truncated");
   console.log("truncateDegenerate spaceless: 3/3 checks pass");
+}
+
+// --- normalizeModelMarkdown: Qwen3-4B dirty output (field screenshot #146, Jul 14 2026) ---
+{
+  const raw = [
+    "Title：Cough persisting with yellow sputum",
+    "##Subjective",
+    "· Cough lasting three Days， worse overnight",
+    "##Objective",
+    "–Temperature ＊",
+    "—Pulse",
+    "–Oxygen saturation ％",
+    "###Plan",
+    "----If Fever Or Severe Breathlessness return early",
+    "",
+    "Note : The above has been formatted strictly according to instructions; all data from transcripts have been included without addition of any information .",
+  ].join("\n");
+  const n = normalizeModelMarkdown(raw);
+  assert(n.includes("Title: Cough"), "full-width colon folded to ASCII");
+  assert(/^## Subjective$/m.test(n), "space inserted after ## heading");
+  assert(/^### Plan$/m.test(n), "space inserted after ### heading");
+  assert(/^- Pulse$/m.test(n), "em-dash bullet folded to '- '");
+  assert(/^- Temperature \*$/m.test(n), "en-dash bullet + full-width asterisk folded");
+  assert(/^- Cough lasting three Days, worse overnight$/m.test(n), "middle-dot bullet + full-width comma folded");
+  assert(/^- If Fever/m.test(n), "dash-run bullet collapsed to '- '");
+  assert(!/formatted strictly according to instructions/.test(n), "trailing self-narration dropped");
+  console.log("normalizeModelMarkdown: 8/8 checks pass");
 }
