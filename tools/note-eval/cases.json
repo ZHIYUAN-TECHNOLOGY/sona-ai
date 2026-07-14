@@ -1,0 +1,44 @@
+[
+  {
+    "id": "soap_manglish_uri",
+    "kind": "soap",
+    "input": "doctor: NAME_1, how long already the cough?\npatient: Three days doctor, malam lagi teruk. Ada kahak kuning.\ndoctor: Any chest pain or breathless?\npatient: No chest pain. Sikit-sikit breathless when climb stairs only.\ndoctor: Temperature 37.9, pulse 92, oxygen 97 percent. Throat red, chest clear. This is viral upper respiratory infection. Paracetamol 1 gram four times a day if fever. Review in one week, come earlier if breathless worsen or fever not settle. I order FBC if not improving.",
+    "must": ["cough", "three days", "yellow", "37.9", "92", "97", "throat red", "chest clear", "viral upper respiratory", "paracetamol", "1 g", "four times", "one week", "breathless", "FBC"],
+    "forbid": ["amoxicillin", "antibiotic", "asthma", "pneumonia", "48", "x-ray"]
+  },
+  {
+    "id": "soap_thin",
+    "kind": "soap",
+    "input": "doctor: NAME_1 what brings you in?\npatient: Itchy rash on both arms since yesterday, doctor. Very itchy at night.\ndoctor: Any new soaps, foods, medicines?\npatient: I used a new detergent two days ago.\ndoctor: Rash looks like contact dermatitis. Stop the detergent. Cetirizine 10 milligram at night for five days. Come back if it spreads or blisters.",
+    "must": ["itchy", "rash", "arms", "detergent", "contact dermatitis", "cetirizine", "10 mg", "night", "five days", "spreads"],
+    "forbid": ["steroid", "prednisolone", "fungal", "scabies", "fever"]
+  },
+  {
+    "id": "soap_meds_heavy",
+    "kind": "soap",
+    "input": "doctor: NAME_1, your diabetes review. Sugar control okay?\npatient: Morning readings around seven. But my knee pain worse two weeks already, I take ibuprofen sometimes.\ndoctor: Careful with ibuprofen, your gastritis history. Fasting glucose 6.8 today, blood pressure 128 over 82, weight stable. Continue metformin 500 milligram twice daily. For the knee use topical diclofenac gel three times daily instead of ibuprofen. HbA1c test today, physio referral for the knee. Review in three months with results.",
+    "must": ["diabetes", "6.8", "128", "82", "metformin", "500 mg", "twice daily", "knee", "two weeks", "ibuprofen", "gastritis", "diclofenac gel", "three times", "HbA1c", "physio", "three months"],
+    "forbid": ["insulin", "statin", "x-ray", "surgery", "96"]
+  },
+  {
+    "id": "doc_garbled_rx",
+    "kind": "doc",
+    "input": "KLINIK DOC_NAME_FIELD\nRx\nTab PanD40ng 1-0-1 bfre food x 2wk\nsyr Loratadin 5ml nite x 5day\ngum paint massage tds\nreveiw 2 wks or if pain wrse\nDr DOC_NAME_1",
+    "must": ["PanD40ng", "1-0-1", "2wk", "Loratadin", "5ml", "5day", "gum paint", "review", "2 wks"],
+    "forbid": ["pantoprazole", "omeprazole", "loratadine 10", "codeine", "possibly", "likely refers"]
+  },
+  {
+    "id": "doc_clean_referral",
+    "kind": "doc",
+    "input": "KLINIK SEJAHTERA — Jalan Merbau 12, Taman Desa\nDate: 10 July 2026\nRe: Referral — DOC_NAME_1 (IC: DOC_IC_1)\nDear Colleague,\nThank you for seeing this 48-year-old gentleman with persistent productive cough of three weeks, low-grade evening fever up to 38.1C and reduced effort tolerance.\nExamination: Right basal crackles. SpO2 97% on room air. Weight stable.\nCurrent medications: Tab Amoxicillin 500 mg TDS x 7 days (day 5, partial response), Tab Paracetamol 1 g QID PRN, Tab Metformin 500 mg BD.\nAllergy: NSAID — facial swelling.\nKindly assess for further imaging and management.",
+    "must": ["referral", "cough", "three weeks", "38.1", "crackles", "97%", "amoxicillin", "500 mg", "TDS", "paracetamol", "1 g", "metformin", "500 mg BD", "NSAID", "imaging"],
+    "forbid": ["tuberculosis", "cancer", "CT ordered", "penicillin allergy"]
+  },
+  {
+    "id": "doc_lab_report",
+    "kind": "doc",
+    "input": "PATHLAB REPORT\nPatient: DOC_NAME_1\nFBC: Hb 10.2 g/dL (L), WBC 11.8 (H), Platelets 210\nFasting glucose: 7.4 mmol/L (H)\nHbA1c: 7.9% (H)\nCreatinine 88 umol/L\nComment: microcytic picture, suggest iron studies.\nReviewing clinician to advise follow-up.",
+    "must": ["Hb 10.2", "WBC 11.8", "210", "7.4", "7.9", "88", "microcytic", "iron studies"],
+    "forbid": ["anemia treatment started", "transfusion", "ferritin result", "12.", "normal FBC"]
+  }
+]
