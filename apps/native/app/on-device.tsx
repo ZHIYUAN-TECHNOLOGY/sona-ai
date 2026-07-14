@@ -8,6 +8,7 @@ import { Card } from "@/components/consult/Card";
 import { CardHeading } from "@/components/consult/SectionLabel";
 import { activeSpeakerEmbedderId } from "@/lib/diarize";
 import { EMBED_MODEL_NAME, NOTE_MODEL_NAME } from "@/lib/pipeline/model";
+import { getSttAccuracy } from "@/lib/pipeline/sttMode";
 import { whisperModelInfo } from "@/lib/pipeline/whisperStt";
 import { colors, font, space } from "@/lib/theme";
 
@@ -59,10 +60,11 @@ export default function OnDeviceScreen() {
         <Card>
           <CardHeading>Runs on this phone</CardHeading>
           <Row icon="hardware-chip-outline" label="Clinical note" value={NOTE_MODEL_NAME} />
-          <Row icon="mic-outline" label="Speech-to-text" value={whisperModelInfo("high").name} />
+          {/* Reflect the tier actually selected in Settings, not a hardcoded one. */}
+          <Row icon="mic-outline" label="Speech-to-text" value={whisperModelInfo(getSttAccuracy()).name} />
           <Row icon="search-outline" label="Search / grounding" value={EMBED_MODEL_NAME} />
-          <Row icon="people-outline" label="Diarization" value={activeSpeakerEmbedderId()} />
-          <Row icon="scan-outline" label="Document OCR" value="CRAFT + CRNN" />
+          <Row icon="people-outline" label="Diarization" value={embedderDisplayName(activeSpeakerEmbedderId())} />
+          <Row icon="scan-outline" label="Document OCR" value="PP-OCRv6 · Vision fallback" />
           <Row icon="volume-high-outline" label="Read aloud" value="System voices" />
         </Card>
 
@@ -83,6 +85,20 @@ export default function OnDeviceScreen() {
       </ScrollView>
     </View>
   );
+}
+
+// Display names for embedder ids — the raw id ("mock-goertzel-bands") is a cache key,
+// not a user-facing label. The value stays LIVE from activeSpeakerEmbedderId() so this
+// page can never claim a model that isn't actually registered.
+function embedderDisplayName(id: string): string {
+  switch (id) {
+    case "mock-goertzel-bands":
+      return "Band-energy clustering";
+    case "mfcc-stats":
+      return "MFCC speaker features";
+    default:
+      return id; // real .pte ids (e.g. ecapa-tdnn-192) read fine as-is
+  }
 }
 
 function Row({
