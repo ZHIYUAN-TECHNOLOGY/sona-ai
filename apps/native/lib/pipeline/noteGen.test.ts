@@ -290,3 +290,14 @@ void (async () => {
   assert(!/formatted strictly according to instructions/.test(n), "trailing self-narration dropped");
   console.log("normalizeModelMarkdown: 8/8 checks pass");
 }
+
+// --- self-narration variants (field screenshot #147: "Note: The output has been…") ---
+{
+  const raw = "## Plan\n- Review in one week\n\nNote: The output has been formatted strictly according to instructions—using only information from provided transcripts; avoiding any invented data.";
+  const n = normalizeModelMarkdown(raw);
+  assert(!/output has been formatted/.test(n), "'The output has been…' narration dropped");
+  assert(n.includes("Review in one week"), "clinical content before narration survives");
+  const clinical = normalizeModelMarkdown("## Plan\n- Note: patient prefers BM follow-up call");
+  assert(clinical.includes("patient prefers BM"), "clinical 'Note:' about the patient survives");
+  console.log("self-narration variants: 3/3 checks pass");
+}
