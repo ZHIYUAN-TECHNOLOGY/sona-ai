@@ -53,6 +53,10 @@ sinks the entry. All of the below is standard, legitimate demo craft:
 
 ## Pre-flight checklist (morning of recording)
 
+- [ ] **Build RELEASE, not dev** — `npx expo run:ios --configuration Release --device`.
+      Dev builds need Metro running on the Mac; if Metro dies mid-take you get a red
+      error screen (happened 3× in development). Release bundles the JS — immune.
+
 - [ ] Airplane mode works end-to-end (STT model + MedPsy + tokenizer all cached on device)
 - [ ] Best-accuracy STT shows "Ready on-device" (Settings → AI models)
 - [ ] Note AI (MedPsy-1.7B) shows "Ready on-device"
