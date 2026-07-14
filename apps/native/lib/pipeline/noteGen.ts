@@ -178,6 +178,13 @@ export function truncateDegenerate(text: string): string {
   const out: string[] = [];
   for (const line of lines) {
     const words = line.trim().split(/\s+/).filter(Boolean);
+    // SPACELESS degeneration: one giant letter-soup token ("DOCNAME:WHITETUSS…XXXXYYY")
+    // reads as 1 word and evades every word-level check below. ASCII-only on purpose —
+    // Chinese runs spaceless legitimately. No clinical line carries a 40+ char unbroken
+    // ASCII-alphanumeric run or 5+ identical consecutive characters.
+    const spaceless = words.some((w) => w.replace(/[^A-Za-z0-9]/g, "").length > 40)
+      || /([A-Za-z0-9])\1{4,}/.test(line);
+    if (spaceless) break;
     if (words.length >= 12) {
       const latin = words.filter((w) => /^[a-zA-Z'’-]+$/.test(w));
       const uniq = new Set(words.map((w) => w.toLowerCase())).size / words.length;

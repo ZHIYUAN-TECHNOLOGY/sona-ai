@@ -247,3 +247,19 @@ void (async () => {
   // eslint-disable-next-line no-console
   console.log(`noteGen: ${checks}/${checks} checks pass`);
 })();
+
+// --- truncateDegenerate: spaceless mega-token degeneration (field, Jul 14 2026) ---
+{
+  const soup =
+    "## Plan\n- Review in one week\n- DOCNAME:WHITETUSSMALLPACIENTREVIEWDATE:DEC79BECFDEEEDCFFAAADCCBFBCABDBFAEBDXXXXXXYYYYYZZZ\n- never reached";
+  const t = truncateDegenerate(soup);
+  assert(!t.includes("WHITETUSS"), "spaceless letter-soup line must be truncated");
+  assert(t.includes("Review in one week"), "content before the soup survives");
+
+  const zh = "## Subjective\n- 患者说喉咙很痛已经三天了晚上睡不好胃口也不好而且有一点发烧和咳嗽的情况持续中";
+  assert(truncateDegenerate(zh).includes("喉咙很痛"), "long spaceless CJK line must SURVIVE");
+
+  const runs = "## Plan\n- follow up XXXXXXX soon";
+  assert(!truncateDegenerate(runs).includes("XXXXXXX"), "identical-char run line truncated");
+  console.log("truncateDegenerate spaceless: 3/3 checks pass");
+}

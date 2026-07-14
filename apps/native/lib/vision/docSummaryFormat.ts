@@ -47,6 +47,27 @@ const CYRILLIC_FOLD: Record<string, string> = {
   У: "Y", Х: "X",
 };
 
+// Tail-degeneration detector. The word-level guards (noteGen truncateDegenerate) are
+// blind to gibberish with NO SPACES — one giant letter-soup token reads as "1 word".
+// Real clinical bullets never contain 30+ char unbroken alphanumeric runs (longest
+// legit tokens: URLs ~20 chars, DOC_ tokens, drug names) nor 5+ identical chars in
+// a row ("XXXXX"). Field screenshot, Jul 14 2026.
+export function isGibberish(text: string): boolean {
+  if (/([A-Za-z0-9])\1{4,}/.test(text)) return true;
+  for (const run of text.split(/\s+/)) {
+    const bare = run.replace(/[^A-Za-z0-9]/g, "");
+    if (bare.length > 30) return true;
+  }
+  const letters = text.replace(/[^A-Za-z]/g, "");
+  if (letters.length > 40 && letters.replace(/[^A-Z]/g, "").length / letters.length > 0.8) {
+    return true; // long all-caps soup
+  }
+  return false;
+}
+
+/** A content-free label bullet: ≤2 words ending in ':' ("Tabs :", "Summary:"). */
+const LABEL_ONLY = /^\s*\S+(?:\s+\S+)?\s*:\s*$/;
+
 /** Fold model glyph noise back into plain Latin clinical text. Pure + idempotent. */
 export function sanitizeModelText(s: string): string {
   // NFKC folds sub/superscript digits (₅ → 5, ¹ˣ → 1x) and width variants.
@@ -122,7 +143,9 @@ export function formatDocSummary(raw: string, fallbackTitle: string): DocSummary
       const marked = /^\s*(?:[-•·*]|\d+[.)])\s/.test(trimmed);
       if (!marked && trimmed.split(/\s+/).length > MAX_PLAIN_LINE_WORDS) continue;
       const b = cleanBullet(trimmed);
-      if (b && !META_LINE.test(b) && !NOT_STATED.test(b)) bullets[current].push(b);
+      if (b && !META_LINE.test(b) && !NOT_STATED.test(b) && !LABEL_ONLY.test(b) && !isGibberish(b)) {
+        bullets[current].push(b);
+      }
     }
     // current === -1 → prose outside any recognized section: dropped by design.
   }
@@ -133,7 +156,7 @@ export function formatDocSummary(raw: string, fallbackTitle: string): DocSummary
     for (const line of lines) {
       const b = cleanBullet(line.trim());
       if (!b || /^title\s*[:\-]/i.test(line.trim())) continue;
-      if (META_LINE.test(b) || NOT_STATED.test(b)) continue;
+      if (META_LINE.test(b) || NOT_STATED.test(b) || LABEL_ONLY.test(b) || isGibberish(b)) continue;
       bullets[1].push(b);
       if (bullets[1].length >= MAX_BULLETS) break;
     }
