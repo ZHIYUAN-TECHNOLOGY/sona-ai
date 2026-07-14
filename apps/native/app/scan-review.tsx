@@ -115,10 +115,14 @@ export default function ScanReviewScreen() {
     setModelPct(0);
     try {
       const { redacted } = redactDocText(text);
-      const res = await generateDocSummary(redacted, doc.title, (p) => {
-        setModelPct(p);
-        if (p >= 1) setSummaryPhase("generating");
-      });
+      // onProgress fires ONLY for a fresh download (never when cached) — phase must
+      // come from onLoaded, or a cached model shows "Loading note AI…" forever.
+      const res = await generateDocSummary(
+        redacted,
+        doc.title,
+        (p) => setModelPct(p),
+        () => setSummaryPhase("generating"),
+      );
       // Title rides inside the persisted markdown (bold first line) so a reopened
       // doc renders identically from the single summary column.
       const summaryMd = `**${res.title}**\n\n${res.markdown}`;

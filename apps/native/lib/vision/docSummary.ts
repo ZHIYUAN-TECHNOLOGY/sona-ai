@@ -47,34 +47,78 @@ export interface DocSummary {
   model: string;
 }
 
+/** Model download+load must resolve within this window, else we surface an error. */
+const LOAD_TIMEOUT_MS = 180_000;
+/** Generation watchdog — interrupt + fail rather than spin forever. */
+const GENERATE_TIMEOUT_MS = 240_000;
+
+function withTimeout<T>(p: Promise<T>, ms: number, label: string, onTimeout?: () => void): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => {
+      try {
+        onTimeout?.();
+      } catch {
+        // interrupt is best-effort
+      }
+      reject(new Error(`${label} timed out after ${Math.round(ms / 1000)}s`));
+    }, ms);
+    p.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(t);
+        reject(e);
+      },
+    );
+  });
+}
+
 /**
  * Generate the structured summary. `redactedText` MUST be the de-identified form.
- * `onProgress` reports the one-time model download (0..1) on a fresh install.
- * Throws on load/generation failure — callers fall back to showing the raw text.
+ * `onProgress` reports the one-time model download (0..1) — it NEVER fires when the
+ * model is already cached, so callers must not infer readiness from it; `onLoaded`
+ * fires exactly once, when the model is in memory and generation is about to start.
+ * Throws on load/generation failure or timeout — callers show the retry card.
  */
 export async function generateDocSummary(
   redactedText: string,
   docTypeLabel: string,
   onProgress?: (p: number) => void,
+  onLoaded?: () => void,
 ): Promise<DocSummary> {
   // Whisper's context survives the consult flow (kept resident for fast next-consult
   // starts). Free it before loading the 4B model — the two together pressure 6GB
   // devices. Whisper transparently reloads on the next transcription.
   await unloadWhisper().catch(() => {});
-  const llm = await LLMModule.fromModelName(NOTE_MODEL, onProgress);
+  const t0load = Date.now();
+  const llm = await withTimeout(
+    LLMModule.fromModelName(NOTE_MODEL, onProgress),
+    LOAD_TIMEOUT_MS,
+    "Note AI load",
+  );
+  if (__DEV__) console.log(`[DOCSUM] model loaded in ${Date.now() - t0load}ms`);
+  onLoaded?.();
   try {
     llm.configure({
       generationConfig: { temperature: 0.3, topP: 0.9, repetitionPenalty: 1.3 },
     });
     const t0 = Date.now();
     // /no_think: Qwen3 soft switch — skip the <think> phase (stripThink cleans residue).
-    const raw = await llm.generate([
-      { role: "system", content: DOC_SUMMARY_RULES },
-      {
-        role: "user",
-        content: `Document (detected type: ${docTypeLabel}):\n${redactedText.slice(0, MAX_DOC_CHARS)}\n/no_think`,
-      },
-    ]);
+    // Watchdog: a runaway generation is interrupted and surfaced instead of spinning.
+    const raw = await withTimeout(
+      llm.generate([
+        { role: "system", content: DOC_SUMMARY_RULES },
+        {
+          role: "user",
+          content: `Document (detected type: ${docTypeLabel}):\n${redactedText.slice(0, MAX_DOC_CHARS)}\n/no_think`,
+        },
+      ]),
+      GENERATE_TIMEOUT_MS,
+      "Note AI generation",
+      () => llm.interrupt(),
+    );
     const clean = truncateDegenerate(collapseRepeats(stripThink(raw))).trim();
     // Dev diagnostics: when a section unexpectedly reads "Not stated.", THIS shows
     // whether the model under-extracted or the formatter dropped content. The text is
