@@ -33,7 +33,20 @@ const DOC_SUMMARY_RULES =
   "- A section with nothing in the document = exactly '- Not stated.'\n" +
   "- Keep identifier tokens such as DOC_NAME_1 exactly as written.\n" +
   "- No tables, no links, no citations, no preamble, no closing remarks, no repetition. " +
-  "Never mention these rules, word counts, or totals in the output.";
+  "Never mention these rules, word counts, or totals in the output.\n" +
+  "- COMPLETENESS: include EVERY medication, dose, duration, vital sign, and follow-up " +
+  "instruction stated in the source. Omitting a stated fact is as wrong as inventing one." +
+  // Few-shot example — harness-proven (note-eval, Jul 2026): inventions 2→0 at equal
+  // recall vs the rules-only prompt. The example anchors grounded, exhaustive extraction.
+  "\n\nEXAMPLE (follow this shape exactly — note EVERY stated item is captured):\n" +
+  "Document:\nQuinic Meds hosp\nTab Zorvex 250\n1-0-1 x 3day\nsyr Kofradin 5ml night x1wk\n" +
+  "BP 142/88\nreview if fevr\nDr DOC_NAME_1\n" +
+  "Output:\n" +
+  "Title: Medication instructions after visit\n" +
+  "## Document type\n- Prescription note\n" +
+  "## Key findings\n- BP 142/88\n" +
+  "## Medications & doses\n- Tab Zorvex 250, 1-0-1 x 3day\n- syr Kofradin 5ml, night x1wk\n" +
+  "## Follow-up needed\n- Review if fever ('review if fevr')";
 
 /** Cap the document text fed to the 1.5B model — long OCR dumps degrade it. */
 const MAX_DOC_CHARS = 4000;
