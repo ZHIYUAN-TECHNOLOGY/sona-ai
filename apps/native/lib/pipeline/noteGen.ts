@@ -172,7 +172,7 @@ export function stripThink(text: string): string {
 // family as docSummaryFormat's SELF_NARRATION; phrased narrowly so a clinical
 // "Note: …" line about the PATIENT is never dropped.
 const NOTE_SELF_NARRATION =
-  /^\s*(?:>?\s*)?note\s*[:：]\s*(?:the above|this (?:note|summary)|i have|all data|formatted)/im;
+  /^\s*(?:>?\s*)?note\s*[:：]\s*(?:the (?:above|output|note)|this (?:note|summary)|i have|all data|formatted|output)/im;
 
 /**
  * Deterministically normalize model markdown BEFORE any parsing/rendering. The 4B
