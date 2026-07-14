@@ -1,0 +1,155 @@
+---
+title: "Sona UI Refactor — Heidi-inspired, green-first"
+kind: plan
+slug: sona-ui-refactor
+---
+
+# Sona UI Refactor — editorial calm, kept clinical-green
+
+Sona works end-to-end but reads like a dense tools screen: tight 4pt spacing, 10–16px type, heavy bordered cards, system font, and a leftover blue Better-T-Stack scaffold bolted next to the green consult flow. Heidi (the competitor we just catalogued in `heidi_ui_review.html`, 28 screens) reads like a calm editorial product: a **serif display headline**, generous whitespace, large type, soft rounded cards, a single bottom **CTA pill**, a floating **pill tab bar**, a big circular **record button**, and **bottom sheets** for settings/export.
+
+**This plan adopts Heidi's spatial system and calm — and keeps green as the brand** (green = healthy, our clinical signal), swapping Heidi's maroon for our `#0e7c52` family. It also deletes the blue scaffold so there is one design system, not two.
+
+**Decisions locked (this revision):** serif face = **Fraunces**; scope = **all 6 consult screens + a new Home in one pass**; **add** the Home/Consults list. The Home session list reads the existing SQLite `consults` table via a new `listConsults()` query in `lib/db`, seeded with 2–3 demo rows for the pitch and falling back to the locked demo consult when empty.
+
+**Outcome:** the six consult screens + a new Home feel premium and unhurried, on a single green design system, with a serif display face, an 8pt scale, bottom-sheet patterns, and motion — no change to the on-device pipeline, security moat, or data flow.
+
+## What this looks like (the target)
+
+The wireframes below show layout/hierarchy only — the Plan renderer owns the sketch look and its own accent colour. **Read "accent" as our green `#0e7c52`; the real palette is in the Design system section.**
+
+### Home / Consults — new entry screen (replaces the drawer launcher)
+
+<WireframeBlock id="wf-home"><Screen surface="mobile" frame="show" caption="Serif 'Consults' title, search, session rows with avatars, one bottom CTA pill, floating tab bar. Heidi's Sessions layout, green." html={"<div style='display:flex;flex-direction:column;gap:14px;padding:22px 18px 16px;height:100%;box-sizing:border-box'><div style='display:flex;justify-content:space-between;align-items:center'><span class='wf-pill'><span data-icon='plus'></span> Add device</span><div style='display:flex;gap:14px'><span data-icon='settings' class='wf-icon' aria-label='Settings'></span></div></div><h1 style='font-size:34px;line-height:1.1;margin:6px 0 2px'>Consults</h1><div class='wf-box' style='display:flex;align-items:center;gap:10px;padding:13px 14px;border-radius:14px'><span data-icon='search'></span><span class='wf-muted'>Search consults</span></div><div class='wf-muted' style='font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-top:6px'>Today</div><div class='wf-card' style='display:flex;align-items:center;gap:12px;border-radius:16px'><div style='width:42px;height:42px;border-radius:999px;background:var(--wf-accent-soft);display:flex;align-items:center;justify-content:center;font-weight:600'>ER</div><div style='flex:1'><div style='font-weight:600;font-size:16px'>Encik Rahman</div><div class='wf-muted' style='font-size:12px'>9:41 AM · URTI follow-up</div></div><span class='wf-pill accent'>Signed</span></div><div class='wf-card' style='display:flex;align-items:center;gap:12px;border-radius:16px'><div style='width:42px;height:42px;border-radius:999px;background:var(--wf-accent-soft);display:flex;align-items:center;justify-content:center;font-weight:600'>SL</div><div style='flex:1'><div style='font-weight:600;font-size:16px'>Siti Lim</div><div class='wf-muted' style='font-size:12px'>9:12 AM · Draft note</div></div><span class='wf-pill'>Draft</span></div><div style='flex:1'></div><button class='primary' style='padding:16px;border-radius:18px;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px'><span data-icon='plus'></span> Start consult</button><div class='wf-box' style='display:flex;justify-content:space-around;padding:11px 8px;border-radius:22px;margin-top:2px'><span style='font-weight:600'>Today</span><span class='wf-muted'>History</span><span class='wf-muted'>Notes</span><span class='wf-muted'>Settings</span></div></div>"} /></WireframeBlock>
+
+### Recording — before → after
+
+The single biggest visual upgrade: Heidi's calm full-screen record affordance (big circular mic, pulsing rings, serif) replacing our dense card stack.
+
+<Columns id="wf-rec-cmp">
+<Column id="wf-rec-before" label="Before (current)">
+
+<WireframeBlock id="wf-rec-before-b"><Screen surface="mobile" frame="show" caption="Dense: tinted card with timer+chip+waveform, then a bordered transcript card. 10–13px type." html={"<div style='display:flex;flex-direction:column;gap:9px;padding:14px;height:100%;box-sizing:border-box'><div style='display:flex;justify-content:space-between'><div><div style='font-size:16px;font-weight:600'>Recording</div><div class='wf-muted' style='font-size:11px'>Encik R. · 58 · follow-up</div></div><span class='wf-pill accent'>BM + EN</span></div><div class='wf-card' style='display:flex;flex-direction:column;gap:8px'><div style='display:flex;align-items:center;gap:8px'><span style='width:8px;height:8px;border-radius:999px;background:var(--wf-warn)'></span><b>00:47</b><span class='wf-pill'>iPhone mic</span></div><div style='height:26px;background:var(--wf-line)'></div><div class='wf-muted' style='font-size:10px'>Transcribing on-device, no network</div></div><div class='wf-card' style='display:flex;flex-direction:column;gap:6px'><div style='font-size:12px;font-weight:600'>Live transcript</div><div style='font-size:11px'><b>DR</b> Morning Encik Rahman, apa khabar?</div><div style='font-size:11px'><b>PT</b> Masih ada. Demam dah tiga hari.</div><div style='font-size:11px'><b>DR</b> Batuk berkahak, or dry?</div></div><div style='display:flex;gap:7px'><button style='flex:1'>Pause</button><button class='primary' style='flex:1'>End consult</button></div></div>"} /></WireframeBlock>
+
+</Column>
+<Column id="wf-rec-after" label="After (Heidi-inspired, green)">
+
+<WireframeBlock id="wf-rec-after-a"><Screen surface="mobile" frame="show" caption="Big circular record button + pulsing rings, serif timer, a Transcribe/Dictate segmented toggle, transcript peeks below. Calm." html={"<div style='display:flex;flex-direction:column;gap:14px;padding:20px 18px;height:100%;box-sizing:border-box;align-items:center'><div style='width:100%;display:flex;justify-content:center'><div class='wf-box' style='display:flex;gap:2px;padding:4px;border-radius:999px'><span class='wf-pill accent'>Transcribe</span><span class='wf-pill'>Dictate</span></div></div><div style='flex:1'></div><div style='width:120px;height:120px;border-radius:999px;background:var(--wf-accent);display:flex;align-items:center;justify-content:center'><span data-icon='x' aria-label='Stop' style='color:var(--wf-accent-fg)'></span></div><div style='font-size:30px;margin-top:6px'>00:47</div><div class='wf-muted' style='font-size:13px'>Transcribing on-device · no network</div><div style='flex:1'></div><div class='wf-card' style='width:100%;display:flex;flex-direction:column;gap:6px;border-radius:16px'><div class='wf-muted' style='font-size:11px;letter-spacing:.06em;text-transform:uppercase'>Live transcript</div><div style='font-size:14px'>Batuk berkahak, warna kuning…</div></div></div>"} /></WireframeBlock>
+
+</Column>
+</Columns>
+
+### Consult note — tabbed, serif, sheet-driven actions
+
+<WireframeBlock id="wf-note"><Screen surface="mobile" frame="show" caption="Serif patient title, Context/Transcript/Note tabs (Heidi pattern), SOAP with roomy section labels, customise + export as top-right icons opening bottom sheets." html={"<div style='display:flex;flex-direction:column;gap:12px;padding:18px;height:100%;box-sizing:border-box'><div style='display:flex;justify-content:space-between;align-items:center'><span data-icon='arrowLeft' aria-label='Back'></span><div style='display:flex;gap:16px'><span data-icon='settings' aria-label='Customise'></span><span data-icon='send' aria-label='Export'></span></div></div><h1 style='font-size:26px;margin:2px 0 0'>Encik Rahman</h1><div class='wf-muted' style='font-size:13px'>URTI follow-up · 9:45 AM · <span class='wf-pill'>Unsigned</span></div><div style='display:flex;gap:18px;margin-top:2px'><span class='wf-muted'>Context</span><span class='wf-muted'>Transcript</span><span style='font-weight:600;border-bottom:2px solid var(--wf-accent);padding-bottom:4px'>Note</span></div><div style='display:flex;flex-direction:column;gap:12px;margin-top:4px'><div><div style='font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--wf-accent)'>Subjective</div><div style='font-size:15px;line-height:1.5'>Persistent productive cough 3 days, worse at night. No chest pain.</div></div><div><div style='font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--wf-accent)'>Objective</div><div style='font-size:15px;line-height:1.5'>Temp 38.2°C · Pulse 92 · SpO₂ 97% · Throat red, chest clear.</div></div><div><div style='font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--wf-accent)'>Assessment</div><div style='font-size:15px;line-height:1.5'>Viral URTI. No bacterial infection suspected.</div></div></div><div class='wf-box' style='display:flex;gap:8px;padding:12px;border-radius:14px;font-size:12px'><span data-icon='bell'></span> AI-drafted from this consult only. Review before signing.</div><button class='primary' style='padding:15px;border-radius:16px;font-size:16px'>Looks right → Sign</button></div>"} /></WireframeBlock>
+
+### Sign & export — bottom sheet (Heidi's Export & Share pattern)
+
+<WireframeBlock id="wf-export"><Screen surface="mobile" frame="show" caption="Export becomes a bottom sheet with a grabber: FHIR R4 / PDF / Email / Copy as tappable rows with leading icons, re-identified. Replaces three inline ghost buttons." html={"<div style='display:flex;flex-direction:column;height:100%;box-sizing:border-box'><div style='flex:1;background:var(--wf-line);opacity:.35'></div><div class='wf-card' style='border-radius:22px 22px 0 0;display:flex;flex-direction:column;gap:2px;padding:8px 0 18px'><div style='align-self:center;width:40px;height:5px;border-radius:999px;background:var(--wf-line);margin:6px 0 10px'></div><div style='display:flex;justify-content:space-between;align-items:center;padding:0 18px 8px'><span data-icon='x' aria-label='Close'></span><b style='font-size:17px'>Export &amp; share</b><span style='width:16px'></span></div><div style='display:flex;align-items:center;gap:14px;padding:14px 18px;border-top:1px solid var(--wf-line)'><span data-icon='send'></span> <span style='font-size:16px'>FHIR R4 — EMR ingest</span></div><div style='display:flex;align-items:center;gap:14px;padding:14px 18px;border-top:1px solid var(--wf-line)'><span data-icon='mail'></span> <span style='font-size:16px'>Download PDF</span></div><div style='display:flex;align-items:center;gap:14px;padding:14px 18px;border-top:1px solid var(--wf-line)'><span data-icon='edit'></span> <span style='font-size:16px'>Copy note text</span></div><div class='wf-muted' style='font-size:12px;padding:10px 18px 0'>Re-identified on-device · nothing was uploaded.</div></div></div>"} /></WireframeBlock>
+
+### Complete — big proof stat, serif
+
+<WireframeBlock id="wf-complete"><Screen surface="mobile" frame="show" caption="Keep the '0 bytes' proof but scale it as a serif hero stat; audit log as clean rows; one bottom CTA. Reuses the real SQLite audit data." html={"<div style='display:flex;flex-direction:column;gap:16px;padding:22px 18px 16px;height:100%;box-sizing:border-box'><h1 style='font-size:26px;margin:2px 0 0'>Consult complete</h1><div class='wf-muted' style='font-size:13px'>4 min · 62s to signed note</div><div class='wf-card' style='text-align:center;padding:26px;border-radius:20px;background:var(--wf-accent-soft)'><div style='font-size:44px;font-weight:700;color:var(--wf-accent)'>0 bytes</div><div class='wf-muted' style='font-size:13px;margin-top:4px'>of PHI transmitted · verified on-device</div></div><div class='wf-muted' style='font-size:11px;letter-spacing:.08em;text-transform:uppercase'>Audit log</div><div style='display:flex;flex-direction:column;gap:10px;font-size:13px'><div style='display:flex;gap:10px'><span data-icon='check' style='color:var(--wf-accent)'></span> 4 identifiers redacted on-device</div><div style='display:flex;gap:10px'><span data-icon='check' style='color:var(--wf-accent)'></span> Note drafted on-device (Qwen3-1.7B)</div><div style='display:flex;gap:10px'><span data-icon='check' style='color:var(--wf-accent)'></span> Signed · raw audio discarded</div></div><div style='flex:1'></div><button class='primary' style='padding:16px;border-radius:18px;font-size:16px'>Next patient</button></div>"} /></WireframeBlock>
+
+## Heidi vs Sona — what we borrow (and what we don't)
+
+| Dimension | Heidi | Sona today | Sona target |
+|---|---|---|---|
+| Headings | Serif display, large | System sans, 16px | **Serif display face** (Fraunces/Newsreader via expo-font), 26–34px |
+| Background | Warm cream `#faf7f4` | Flat white `#fff` | Warm-neutral, faint green tint `#f8faf7` |
+| Brand accent | Maroon `#4a2230` | Green `#0e7c52` | **Green `#0e7c52` kept** — deep `#0a5c3e` pressed |
+| Spacing | Generous, ~8pt | Tight 4pt | **8pt scale**, roomier |
+| Cards | Soft, ~20px radius, minimal border | 14px radius, hard 1px border | 18–20px radius, softer line |
+| Primary action | One bottom pill | Bottom pill (ok) | Keep — larger, 16px label |
+| Tabs | Floating pill bar | GlassTabBar (close) | Refine spacing/size |
+| Record | Big circular mic + rings | Card w/ timer + waveform | **Big circular record button** |
+| Pickers/actions | Bottom sheets | Inline cards / buttons | **Bottom sheets** (export, customise, session settings) |
+| Toggles | Segmented (Transcribe/Dictate) | n/a | **Segmented control** on record |
+| List rows | Avatar + title + time | n/a (no list) | New Home list rows |
+
+**We do NOT borrow:** Heidi's maroon palette, its web-based sub-flows, or its density in settings. Our security surfaces (privacy gate, "0 bytes", audit) stay first-class — Heidi hides them; we lead with them.
+
+## Design system — the green-first token overhaul
+
+Everything lives in `lib/theme.ts` (single source; the blue `lib/constants.ts` scaffold is deleted). New/changed tokens:
+
+**Typography (new).** Load **Fraunces** (chosen serif display) via `expo-font`; keep the system sans for body.
+- `display` — Fraunces, 34/28/24px, weight 600, for screen titles + hero stats.
+- `body` — system sans, 15/14px, lineHeight 1.5 (up from 11.5px).
+- `label` — 11px uppercase, letterSpacing 0.08em, green — section labels.
+- Font loaded via `expo-font` `useFonts` in `app/_layout.tsx` (currently unused — we wire it).
+
+**Colour (kept green, warmed).**
+- `paper #f8faf7` (was `#fff`), `card #ffffff`, `surface #eef4f0`.
+- `green #0e7c52` (unchanged), `greenDeep #0a5c3e`, `greenSoft #e9f5ef`, `greenInk #0a3d2b`.
+- `ink #0b1e16`, `ink2 #42534b`, `ink3 #5f6d64` (unchanged — already warm).
+- Semantic red/amber/blue banks unchanged.
+
+**Space (8pt).** `xs 4 · sm 8 · md 12 · lg 16 · xl 24 · xxl 32` (was 4/6/9/13/17/24).
+
+**Radius.** `sm 12 · md 16 · lg 20 · xl 24 · pill 999` (was 10/14/20).
+
+**Elevation.** Keep `glowShadow` green, soften to opacity 0.18 for cards; reserve the 0.28 glow for the primary CTA + record button only.
+
+## Component plan — reuse first, then the new primitives
+
+**Refactor (keep the API, restyle):**
+- `ConsultScreen` — body padding 18/gap 16; title slot renders the serif display face.
+- `Card` — radius 16–20, softer border, more padding; variants keep their colour banks.
+- `PrimaryButton` — 16px label, 15–16px padding, radius 16; disabled/press states unchanged.
+- `TopBar` — icon-only actions (customise/export/back) instead of text pills.
+- `GlassTabBar` — reuse; retune spacing + size to the floating-pill proportion.
+- `Stat` → scale to a serif hero on Complete.
+- `Pill`, `Toggle`, `Waveform`, `DiarRow`, `RedactChip`, `SafetyNotice`, `Steps`, `LiveIndicators` — restyle via tokens, no API change.
+
+**New primitives:**
+- `BottomSheet` — grabber + spring-in; hosts export, customise-note, (future) session settings. `react-native-gesture-handler` already installed; add `react-native-reanimated` if not present for the spring.
+- `SegmentedControl` — Transcribe / Dictate on the record screen.
+- `RecordButton` — big circular button + pulsing rings (Reanimated), idle/recording/paused.
+- `SerifTitle` — the display-face heading used across screens.
+- `ListRow` + `SearchField` — for Home/Today, History, and Notes lists.
+- `SettingsRow` — labelled setting rows (value + chevron / toggle) for the rebuilt Settings.
+
+**Delete (the blue scaffold):** `lib/constants.ts` NAV_THEME usage, `components/container.tsx`, `components/header-button.tsx`, `components/tabbar-icon.tsx`, `app/(drawer)/(tabs)/*`, `app/modal.tsx` placeholders, and the drawer's Tabs entry. The drawer becomes: **Home (consults)** + **Consult demo** + **Spike bench** (dev-only).
+
+## Motion
+
+- **Record button**: two pulsing rings (scale + fade, Reanimated loop) while recording; spring on start/stop.
+- **Bottom sheets**: spring translateY in, backdrop fade.
+- **Screen titles**: subtle fade+rise on mount (120ms).
+- **Tab bar**: active-tab colour/scale spring.
+- **Waveform**: keep existing native-driver animation.
+- Respect `prefers-reduced-motion` (skip pulses/rise).
+
+## Implementation phases
+
+1. **Tokens + fonts** — rewrite `lib/theme.ts` (type scale, 8pt space, radii, warmed paper), wire `useFonts` for the serif face in `app/_layout.tsx`, delete `lib/constants.ts` + blue scaffold. The app still builds; nothing visual ships until Phase 2 consumes it.
+2. **Primitives** — restyle `ConsultScreen`/`Card`/`PrimaryButton`/`TopBar`/`Stat`/`Pill`; add `BottomSheet`, `SegmentedControl`, `RecordButton`, `SerifTitle`, `ListRow`, `SearchField`.
+3. **Screens** — redesign consent → recording → privacy → note → sign → complete; build the **4 tab destinations** (Today, History, Notes, Settings); move export + customise into bottom sheets. Adds `listConsults()` + `listNotes()` queries over the existing SQLite tables (+ a 2–3 row demo seed); rows deep-link into the flow / a read-only note view.
+4. **Motion** — record pulses, sheet springs, title rise, tab spring; reduced-motion guard.
+5. **Device QA** — walk the flow on the physical iPhone (mobilecli), check type legibility, sheet gestures, record timing, light-only correctness; screenshot each.
+
+**Hard-to-reverse bets to get right in Phase 1:** the type scale + serif face choice (touches every screen), the 8pt space/radius tokens (every component), and keeping `lib/theme.ts` the single source (deleting `constants.ts`). Cheap now, expensive after screens depend on them.
+
+## Non-goals
+
+- No change to the on-device pipeline, redaction, re-ID map, or "de-identified text only" moat.
+- No dark theme (light-only stays — clinical + projector demos).
+- No new data/persistence; screens keep reading the same SQLite + PipelineProvider state.
+- Not a Heidi clone — green identity, security-forward, our consult flow.
+
+### Decisions (locked)
+
+- **Serif face → Fraunces.** Warm editorial display, loaded via `expo-font` `useFonts` in `app/_layout.tsx` (weights 400/600). System sans stays for body.
+- **Scope → all 6 consult screens + new Home in one pass.** No spike; the full flow ships together so the demo is coherent end-to-end.
+- **Home/Consults → added.** New route (top of the drawer / first tab). Session list = new `listConsults()` over the existing SQLite `consults` table, seeded with 2–3 demo rows; empty-state falls back to the locked demo consult. Rows push into the existing consult flow.
+
+### Decision — Home tab bar (locked)
+
+**Four real destinations, all wired** (no stubs):
+- **Today** — active consult list (`listConsults()` over SQLite `consults`, today's rows).
+- **History** — past/archived consults (same query, grouped by date; signed + complete).
+- **Notes** — signed clinical notes (`listNotes()` over the `notes` table); tap → read-only note view.
+- **Settings** — rebuilt in the green system: on-device status + model info, light-theme note, about/version. Replaces the deleted blue Better-T-Stack settings entirely.
+
+All four reuse the same `ListRow` / `SearchField` / `SettingsRow` primitives + the floating tab bar, so the added scope is mostly data wiring, not new visual language.
