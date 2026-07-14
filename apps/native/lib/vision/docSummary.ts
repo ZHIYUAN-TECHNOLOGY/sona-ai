@@ -127,7 +127,7 @@ export async function generateDocSummary(
   onLoaded?.();
   try {
     llm.configure({
-      generationConfig: { temperature: 0.3, topP: 0.9, repetitionPenalty: 1.3 },
+      generationConfig: { temperature: 0.15, topP: 0.9, repetitionPenalty: 1.3 },
     });
     const t0 = Date.now();
     // /no_think: Qwen3 soft switch — skip the <think> phase (stripThink cleans residue).

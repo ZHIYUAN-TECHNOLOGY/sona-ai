@@ -80,10 +80,26 @@ export function sanitizeModelText(s: string): string {
   out = out.replace(/\b(\d(?: \d)+)\s*(mg|mcg|ml|g)\b/gi, (_, digits: string, unit: string) =>
     `${digits.replace(/ /g, "")} ${unit}`,
   );
-  // Drop stray per-mille / underscore filler the model uses as padding.
-  out = out.replace(/[‰]+/g, "").replace(/_{2,}/g, " ").replace(/ {2,}/g, " ");
+  // LaTeX droppings ("$\geq$ $-$ $+$$") — backslash commands and dollar markers.
+  out = out.replace(/\\[A-Za-z]+/g, "").replace(/\$+/g, "");
+  // Underscore filler ("_Tab._Augmentor_in", "once_every_five_days") folds to spaces —
+  // EXCEPT inside de-identification tokens, whose underscores are load-bearing.
+  const tokens: string[] = [];
+  out = out.replace(/\bDOC_[A-Z]+(?:_[A-Z]+)*(?:_\d+)?\b/g, (t) => {
+    tokens.push(t);
+    return `\u0000${tokens.length - 1}\u0000`;
+  });
+  out = out.replace(/_+/g, " ");
+  out = out.replace(/\u0000(\d+)\u0000/g, (_, i: string) => tokens[Number(i)]);
+  // Drop stray per-mille filler; collapse the space debris left by the folds.
+  out = out.replace(/[‰]+/g, "").replace(/ {2,}/g, " ").trim();
   return out;
 }
+
+// Contact metadata ("Ph: …", "Web: …", "Email: …") is source-document boilerplate the
+// model shovels into Follow-up needed — never a clinical instruction. Dropped wherever
+// it appears; the verified source text above the card keeps the real contact details.
+const CONTACT_LINE = /^\W*(?:ph|tel|phone|fax|web|website|url|email|e-mail)\b\W*:/i;
 
 /** A line that opens a section: '## Key findings', '# Doc Type', 'Medications:', … */
 function sectionIndex(line: string): number {
@@ -143,7 +159,15 @@ export function formatDocSummary(raw: string, fallbackTitle: string): DocSummary
       const marked = /^\s*(?:[-•·*]|\d+[.)])\s/.test(trimmed);
       if (!marked && trimmed.split(/\s+/).length > MAX_PLAIN_LINE_WORDS) continue;
       const b = cleanBullet(trimmed);
-      if (b && !META_LINE.test(b) && !NOT_STATED.test(b) && !LABEL_ONLY.test(b) && !isGibberish(b)) {
+      if (
+        b &&
+        /[A-Za-z0-9一-鿿]/.test(b) && // pure-punctuation husks render as empty dots
+        !META_LINE.test(b) &&
+        !NOT_STATED.test(b) &&
+        !LABEL_ONLY.test(b) &&
+        !CONTACT_LINE.test(b) &&
+        !isGibberish(b)
+      ) {
         bullets[current].push(b);
       }
     }
@@ -156,7 +180,16 @@ export function formatDocSummary(raw: string, fallbackTitle: string): DocSummary
     for (const line of lines) {
       const b = cleanBullet(line.trim());
       if (!b || /^title\s*[:\-]/i.test(line.trim())) continue;
-      if (META_LINE.test(b) || NOT_STATED.test(b) || LABEL_ONLY.test(b) || isGibberish(b)) continue;
+      if (
+        !/[A-Za-z0-9一-鿿]/.test(b) ||
+        META_LINE.test(b) ||
+        NOT_STATED.test(b) ||
+        LABEL_ONLY.test(b) ||
+        CONTACT_LINE.test(b) ||
+        isGibberish(b)
+      ) {
+        continue;
+      }
       bullets[1].push(b);
       if (bullets[1].length >= MAX_BULLETS) break;
     }
