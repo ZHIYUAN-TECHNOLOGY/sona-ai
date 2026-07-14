@@ -135,4 +135,27 @@ ok("word-count echoes in other shapes are dropped too", () => {
   }
 });
 
+// Regression: quantized-model glyph noise (field screenshots, Jul 2026) — Cyrillic
+// confusables, sub/superscript digits, diacritics, letter-spaced doses, filler chars.
+ok("model glyph noise is folded to plain Latin", () => {
+  const raw = [
+    "## Medications & doses",
+    "- Augмenтин tab., 6 2 5 mg, 1 x ₅days",
+    "- .Tab.Enzflemán :‰ 0 x five_days",
+    "## Follow-up needed",
+    "- Adu.:Hexigel gum pint,x __one_week",
+  ].join("\n");
+  const out = formatDocSummary(raw, "Document");
+  assert.match(out.markdown, /Augmentun tab\., 625 mg, 1 x 5days/);
+  assert.ok(!/[Ѐ-ӿ]/.test(out.markdown), `cyrillic survived: ${out.markdown}`);
+  assert.ok(!/[₀-₉‰]/.test(out.markdown), `sub‑scripts/filler survived: ${out.markdown}`);
+  assert.match(out.markdown, /Enzfleman/);
+  assert.match(out.markdown, /one_week|one week/);
+});
+
+ok("sanitizer leaves clean text and CJK untouched", () => {
+  const out = formatDocSummary("## Key findings\n- 喉咙很痛, Paracetamol 1 g QID", "Document");
+  assert.match(out.markdown, /喉咙很痛, Paracetamol 1 g QID/);
+});
+
 console.log(`\n${passed} passed`);

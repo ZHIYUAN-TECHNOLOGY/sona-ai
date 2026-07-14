@@ -37,6 +37,8 @@ export default function ScanReviewScreen() {
   const [dirty, setDirty] = useState(false);
   const [summaryPhase, setSummaryPhase] = useState<SummaryPhase>("idle");
   const [modelPct, setModelPct] = useState(0);
+  const [streamText, setStreamText] = useState("");
+  const streamThrottle = useRef(0);
   const [summary, setSummary] = useState<string | null>(null);
   const [editingSummary, setEditingSummary] = useState(false);
   const [savingSummary, setSavingSummary] = useState(false);
@@ -113,6 +115,7 @@ export default function ScanReviewScreen() {
     persistText(text); // summary must run over the latest correction
     setSummaryPhase("loading-model");
     setModelPct(0);
+    setStreamText("");
     try {
       const { redacted } = redactDocText(text);
       // onProgress fires ONLY for a fresh download (never when cached) — phase must
@@ -122,6 +125,14 @@ export default function ScanReviewScreen() {
         doc.title,
         (p) => setModelPct(p),
         () => setSummaryPhase("generating"),
+        (partial) => {
+          // Live token stream → preview. Throttled: a state write per token would
+          // re-render ~20×/s for no visible gain.
+          const now = Date.now();
+          if (now - streamThrottle.current < 150) return;
+          streamThrottle.current = now;
+          setStreamText(partial);
+        },
       );
       // Title rides inside the persisted markdown (bold first line) so a reopened
       // doc renders identically from the single summary column.
@@ -253,6 +264,13 @@ export default function ScanReviewScreen() {
                 : "Abstracting on-device…"}
             </Text>
           </View>
+          {summaryPhase === "generating" && streamText ? (
+            // Live token stream — raw preview while the model writes; the formatted
+            // card replaces it on completion.
+            <Text style={styles.stream} numberOfLines={12}>
+              {streamText}
+            </Text>
+          ) : null}
         </Card>
       ) : null}
 
@@ -313,6 +331,7 @@ const styles = StyleSheet.create({
   },
   busyRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
   busyText: { ...font.body, color: colors.greenInk },
+  stream: { ...font.bodySm, color: colors.ink2, marginTop: space.sm, lineHeight: 18, opacity: 0.85 },
   note: { ...font.bodySm, color: colors.greenInk, marginTop: space.sm },
   footerCol: { gap: space.sm },
   summaryHead: {

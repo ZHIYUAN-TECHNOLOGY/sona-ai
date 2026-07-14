@@ -35,6 +35,35 @@ const META_LINE = /^\(?\s*(?:total|word count|under)\b[^A-Za-z]*\d*\s*(?:words?)
 // pass through as content — empty sections get the canonical placeholder at render.
 const NOT_STATED = /^not\s*stated\.?$/i;
 
+// The 4-bit model emits Unicode confusables under sampling pressure — Cyrillic
+// lookalikes inside Latin words ("Augмenтин"), sub/superscript digits ("₅days"),
+// stray diacritics ("Enzflemán"), letter-spaced numbers ("6 2 5 mg"). These are
+// CONTENT defects, not rendering ones — no markdown renderer can fix them, so they
+// are folded deterministically here. Field-observed set, Jul 2026.
+const CYRILLIC_FOLD: Record<string, string> = {
+  а: "a", в: "b", е: "e", ё: "e", з: "3", и: "u", й: "u", к: "k", м: "m", н: "n",
+  о: "o", р: "p", с: "c", т: "t", у: "y", х: "x", ь: "b",
+  А: "A", В: "B", Е: "E", К: "K", М: "M", Н: "H", О: "O", Р: "P", С: "C", Т: "T",
+  У: "Y", Х: "X",
+};
+
+/** Fold model glyph noise back into plain Latin clinical text. Pure + idempotent. */
+export function sanitizeModelText(s: string): string {
+  // NFKC folds sub/superscript digits (₅ → 5, ¹ˣ → 1x) and width variants.
+  let out = s.normalize("NFKC");
+  // Strip diacritics from Latin letters (Enzflemán → Enzfleman) without touching CJK.
+  out = out.normalize("NFD").replace(/[̀-ͯ]/g, "").normalize("NFC");
+  // Fold Cyrillic lookalikes that appear glued to Latin word fragments.
+  out = out.replace(/[Ѐ-ӿ]/g, (ch) => CYRILLIC_FOLD[ch] ?? ch);
+  // Collapse letter-spaced digit runs before a dose unit: "6 2 5 mg" → "625 mg".
+  out = out.replace(/\b(\d(?: \d)+)\s*(mg|mcg|ml|g)\b/gi, (_, digits: string, unit: string) =>
+    `${digits.replace(/ /g, "")} ${unit}`,
+  );
+  // Drop stray per-mille / underscore filler the model uses as padding.
+  out = out.replace(/[‰]+/g, "").replace(/_{2,}/g, " ").replace(/ {2,}/g, " ");
+  return out;
+}
+
 /** A line that opens a section: '## Key findings', '# Doc Type', 'Medications:', … */
 function sectionIndex(line: string): number {
   const bare = line
@@ -49,7 +78,7 @@ function sectionIndex(line: string): number {
 }
 
 function cleanBullet(line: string): string {
-  const text = line
+  const text = sanitizeModelText(line)
     .replace(/^\s*(?:[-•·*]|\d+[.)])\s*/, "")
     .replace(/[*`]/g, "")
     .trim();
@@ -74,7 +103,7 @@ export function formatDocSummary(raw: string, fallbackTitle: string): DocSummary
 
     const titleMatch = trimmed.match(/^(?:#*\s*)?title\s*[:\-]\s*(.+)$/i);
     if (titleMatch && !title) {
-      title = titleMatch[1].replace(/[*`#]/g, "").trim().slice(0, MAX_TITLE_CHARS);
+      title = sanitizeModelText(titleMatch[1]).replace(/[*`#]/g, "").trim().slice(0, MAX_TITLE_CHARS);
       continue;
     }
 

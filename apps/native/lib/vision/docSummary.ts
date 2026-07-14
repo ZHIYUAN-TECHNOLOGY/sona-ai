@@ -93,6 +93,8 @@ function withTimeout<T>(p: Promise<T>, ms: number, label: string, onTimeout?: ()
  * `onProgress` reports the one-time model download (0..1) — it NEVER fires when the
  * model is already cached, so callers must not infer readiness from it; `onLoaded`
  * fires exactly once, when the model is in memory and generation is about to start.
+ * `onToken` streams the ACCUMULATED raw text as it generates (think-tags stripped) —
+ * for live preview only; the returned markdown is still the formatted final form.
  * Throws on load/generation failure or timeout — callers show the retry card.
  */
 export async function generateDocSummary(
@@ -100,14 +102,22 @@ export async function generateDocSummary(
   docTypeLabel: string,
   onProgress?: (p: number) => void,
   onLoaded?: () => void,
+  onToken?: (partial: string) => void,
 ): Promise<DocSummary> {
   // Whisper's context survives the consult flow (kept resident for fast next-consult
   // starts). Free it before loading the 4B model — the two together pressure 6GB
   // devices. Whisper transparently reloads on the next transcription.
   await unloadWhisper().catch(() => {});
   const t0load = Date.now();
+  let streamed = "";
   const llm = await withTimeout(
-    LLMModule.fromModelName(NOTE_MODEL, onProgress),
+    LLMModule.fromModelName(NOTE_MODEL, onProgress, (token: string) => {
+      if (!onToken) return;
+      streamed += token;
+      // stripThink handles closed think-blocks; an UNTERMINATED one (mid-stream)
+      // is cut at its opening tag so reasoning never flashes in the preview.
+      onToken(stripThink(streamed).replace(/<think>[\s\S]*/, "").trim());
+    }),
     LOAD_TIMEOUT_MS,
     "Note AI load",
   );
