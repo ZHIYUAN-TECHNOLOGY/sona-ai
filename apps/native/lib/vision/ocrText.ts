@@ -27,7 +27,17 @@ export interface RedactedDocText {
  * next to it anyway, so there is nothing to re-identify remotely).
  */
 export function redactDocText(raw: string): RedactedDocText {
-  const res = redactTranscript([{ speaker: "unknown", text: raw }]);
+  // Structural form-field redaction BEFORE the transcript redactor: scanned paperwork
+  // labels names explicitly ("Name: me sachin sansare", "Patient Name - ..."), a form
+  // the honorific-based name regexes can't catch (lowercase, no Encik/Dr). The label
+  // itself is the high-precision signal — everything after it on that line is a name.
+  // Prompt-side suppression was tried and failed (harness, Jul 2026): the model echoes
+  // whatever reaches it, so the name must never reach it.
+  const fielded = raw.replace(
+    /^([^\S\n]*(?:patient|pt|clinician|doctor|dr)?[^\S\n]*name[^\S\n]*[:\-][^\S\n]*)(\S.*)$/gim,
+    "$1DOC_NAME_FIELD",
+  );
+  const res = redactTranscript([{ speaker: "unknown", text: fielded }]);
   const redacted = (res.segments[0]?.text ?? "").replace(
     /\b(NAME_UNCERTAIN|NAME|IC|PHONE|EMAIL|ADDR)_(\d+)\b/g,
     "DOC_$1_$2",

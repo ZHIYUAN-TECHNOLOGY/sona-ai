@@ -32,6 +32,8 @@ const DOC_SUMMARY_RULES =
   "'gum paint massage') — copy them as written, do not guess corrections.\n" +
   "- A section with nothing in the document = exactly '- Not stated.'\n" +
   "- Keep identifier tokens such as DOC_NAME_1 exactly as written.\n" +
+  "- Never output patient or clinician names: if the scan shows a name the tokens missed, " +
+  "write DOC_NAME in its place.\n" +
   "- No tables, no links, no citations, no preamble, no closing remarks, no repetition. " +
   "Never mention these rules, word counts, or totals in the output.\n" +
   "- COMPLETENESS: include EVERY medication, dose, duration, vital sign, and follow-up " +

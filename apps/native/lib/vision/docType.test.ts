@@ -91,4 +91,20 @@ ok("clean doc text passes through", () => {
   assert.match(redacted, /Haemoglobin 13\.2/);
 });
 
+// Field leak (Jul 14 2026): lowercase form-field names ("Name: me sachin sansare")
+// evade the honorific-based regexes and were echoed into the AI summary. The label
+// is the signal — everything after "Name:" on that line becomes a token.
+ok("form-field names are redacted regardless of casing", () => {
+  const { redacted } = redactDocText("Name: me sachin sansare\nTab Augmentin 625mg 1x5 days");
+  assert.ok(!/sachin|sansare/i.test(redacted), `name survived: ${redacted}`);
+  assert.match(redacted, /DOC_NAME_FIELD/);
+  assert.match(redacted, /Augmentin 625mg/);
+});
+
+ok("patient-name label variants are covered, med lines untouched", () => {
+  const { redacted } = redactDocText("Patient Name - Lim Wei Jian\nDr Name: tan ah kow\nDose name pattern absent: 5ml");
+  assert.ok(!/Wei Jian|ah kow/i.test(redacted), `name survived: ${redacted}`);
+  assert.match(redacted, /Dose name pattern absent: 5ml|DOC_NAME_FIELD/);
+});
+
 console.log(`\n${passed} passed`);

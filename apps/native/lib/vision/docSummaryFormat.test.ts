@@ -63,9 +63,9 @@ ok("bullets capped at 3 per section", () => {
 });
 
 ok("run-on bullets hard-capped with ellipsis", () => {
-  const long = "x".repeat(400);
+  const long = "patient reports mild dizziness ".repeat(14).trim(); // ~430 chars, realistic words
   const out = formatDocSummary(`## Key findings\n- ${long}`, "Document");
-  const bullet = out.markdown.split("\n").find((l) => l.startsWith("- x"))!;
+  const bullet = out.markdown.split("\n").find((l) => l.startsWith("- patient"))!;
   assert.ok(bullet.length <= 163, `bullet too long: ${bullet.length}`);
   assert.ok(bullet.endsWith("…"));
 });
@@ -156,6 +156,39 @@ ok("model glyph noise is folded to plain Latin", () => {
 ok("sanitizer leaves clean text and CJK untouched", () => {
   const out = formatDocSummary("## Key findings\n- 喉咙很痛, Paracetamol 1 g QID", "Document");
   assert.match(out.markdown, /喉咙很痛, Paracetamol 1 g QID/);
+});
+
+// Regression: tail degeneration evaded word-level guards by having NO SPACES
+// (field screenshot Jul 14 2026 — one giant token of letter soup under Follow-up).
+ok("space-free gibberish mega-tokens are dropped", () => {
+  const raw = [
+    "## Follow-up needed",
+    "- review If fever ('ReviewIffever')",
+    "- DOCNAME:WHITETUSSMALLPACIENTREVIEWDATE:DEC79BECFDEEEDCFFAAADCCBFBCABDBFAEBDFDAFCDDCBDCBAADDCECAADCBDCAFCDCAAACECFADAACAFABCADBACCAXXXXXXXXXXXXYYYYYYZZZWWVVUTSR",
+  ].join("\n");
+  const out = formatDocSummary(raw, "Document");
+  assert.ok(!/WHITETUSS|XXXX|DEC79/.test(out.markdown), `gibberish survived: ${out.markdown}`);
+  assert.match(out.markdown, /review If fever/);
+});
+
+ok("repeated-char runs are dropped even in short bullets", () => {
+  const out = formatDocSummary("## Key findings\n- XXXXXXXX review\n- Real finding", "Document");
+  assert.ok(!/XXXX/.test(out.markdown), `run survived: ${out.markdown}`);
+  assert.match(out.markdown, /Real finding/);
+});
+
+ok("label-only bullets ('Tabs :') are dropped", () => {
+  const out = formatDocSummary("## Medications & doses\n- Tabs :\n- Amoxicillin 500 mg TDS", "Document");
+  assert.ok(!/Tabs\s*:/.test(out.markdown), `label bullet survived: ${out.markdown}`);
+  assert.match(out.markdown, /Amoxicillin 500 mg TDS/);
+});
+
+ok("legit long-but-real bullets survive the gibberish net", () => {
+  const out = formatDocSummary(
+    "## Follow-up needed\n- Review at www.thewhitetusk.com if fever persists beyond three days",
+    "Document",
+  );
+  assert.match(out.markdown, /thewhitetusk\.com/);
 });
 
 console.log(`\n${passed} passed`);
