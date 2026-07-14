@@ -240,10 +240,12 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         setCandidates([]);
         setCaptureDiag({ seconds: 0, peak: 0, transcriptChars: 0, vadSegments: 0, sttError: String(e) });
       }
-      // Transcription done → free whisper BEFORE the note LLM loads. The 4B note model
-      // + resident whisper-turbo together pressure 6GB devices; whisper transparently
-      // reloads on the next consult's transcription.
-      void unloadWhisper().catch(() => {});
+      // Transcription done → free whisper BEFORE the note LLM loads. AWAITED, not
+      // fire-and-forget: the Qwen3-4B load peak (~3GB) racing a still-resident
+      // whisper-turbo (~1.7GB) jetsam-killed the app at the privacy gate (SIGKILL,
+      // TRIM_MEMORY_RUNNING_CRITICAL in the console capture, Jul 14 2026). Whisper
+      // transparently reloads on the next consult's transcription.
+      await unloadWhisper().catch(() => {});
       setLlmWanted(true); // NOW load the note LLM (labeling covers the wait)
       setStatus("transcribed");
       return "label"; // persistRecordingStop is deferred to applySpeakerLabels (after segments)
