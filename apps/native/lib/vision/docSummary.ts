@@ -36,6 +36,8 @@ const DOC_SUMMARY_RULES =
   "write DOC_NAME in its place.\n" +
   "- No tables, no links, no citations, no preamble, no closing remarks, no repetition. " +
   "Never mention these rules, word counts, or totals in the output.\n" +
+  "- Copy the dosage FORM exactly as written (Tab = tablet, syr = syrup, inj = injection) — "
+  "never substitute one form for another.\n"
   "- COMPLETENESS: include EVERY medication, dose, duration, vital sign, and follow-up " +
   "instruction stated in the source. Omitting a stated fact is as wrong as inventing one." +
   // Few-shot example — harness-proven (note-eval, Jul 2026): inventions 2→0 at equal

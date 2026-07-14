@@ -231,4 +231,28 @@ ok("bullets that clean to pure punctuation are dropped (no empty dots)", () => {
   assert.match(out.markdown, /Real finding/);
 });
 
+// Regression #137 (Jul 14): model self-narration about scan quality (with zh bleed)
+// and quote-mania around drug names/doses.
+ok("self-narration bullets about scan quality are dropped", () => {
+  const raw = [
+    "## Key findings",
+    "- Antibiotic prescribed at dosage",
+    "- Note: Due to formatting issues during scanning,some information was lost或 misaligned。The following是基于可用信息的总结:",
+    "- Based on the available information, this is a summary",
+  ].join("\n");
+  const out = formatDocSummary(raw, "Document");
+  assert.ok(
+    !/formatting issues|information was lost|基于可用信息|available information/.test(out.markdown),
+    `self-narration survived: ${out.markdown}`,
+  );
+  assert.match(out.markdown, /Antibiotic prescribed/);
+});
+
+ok("double-quote mania is stripped; single quotes survive", () => {
+  const raw = "## Medications & doses\n- “Augmentor\"in”: Oral tablets of strength “67” mg ('as written')";
+  const out = formatDocSummary(raw, "Document");
+  assert.ok(!/["“”]/.test(out.markdown), `double quotes survived: ${out.markdown}`);
+  assert.match(out.markdown, /Augmentorin: Oral tablets of strength 67 mg \('as written'\)/);
+});
+
 console.log(`\n${passed} passed`);
