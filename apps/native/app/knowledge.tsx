@@ -157,8 +157,10 @@ export default function KnowledgeScreen() {
             <View key={cat.key} style={styles.section}>
               <Text style={styles.sectionLabel}>{cat.label}</Text>
               <View style={styles.list}>
-                {items.map((d) => (
-                  <KnowledgeCard key={d.id} doc={d} />
+                {items.map((d, i) => (
+                  <Animated.View key={d.id} entering={FadeIn.delay(Math.min(i, 6) * 30).duration(220)}>
+                    <KnowledgeCard doc={d} />
+                  </Animated.View>
                 ))}
               </View>
             </View>

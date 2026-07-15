@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion } from "react-native-reanimated";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
@@ -27,6 +28,16 @@ function hhmm(ts: number): string {
 export default function CompleteScreen() {
   const { consultId, reset } = useConsultPipeline();
   const [rows, setRows] = useState<AuditEntry[]>([]);
+  const reduce = useReducedMotion();
+  // The proof settles first, then the audit rows cascade — evidence arriving,
+  // not a list popping. Same ease-out family as the note reveal.
+  const reveal = (delay: number) =>
+    reduce
+      ? FadeIn.delay(delay).duration(220)
+      : FadeInDown.delay(delay)
+          .duration(420)
+          .easing(Easing.bezier(0.23, 1, 0.32, 1))
+          .withInitialValues({ transform: [{ translateY: 10 }] });
 
   useEffect(() => {
     if (!consultId) return;
@@ -59,20 +70,30 @@ export default function CompleteScreen() {
         </View>
       }
     >
-      <Stat value={proof.bytesLabel} label={proof.bytesSub} />
+      <Animated.View entering={reveal(0)}>
+        <Stat value={proof.bytesLabel} label={proof.bytesSub} />
+      </Animated.View>
 
-      <Card>
-        <CardHeading>Audit log</CardHeading>
-        <View style={styles.log}>
-          {rows.map((row, i) => (
-            <View key={row.id} style={[styles.ar, i > 0 && styles.arDivider]}>
-              <Text style={styles.t}>{hhmm(row.ts)}</Text>
-              <Ionicons name="checkmark" size={13} color={colors.green} />
-              <Text style={styles.detail}>{row.detail}</Text>
-            </View>
-          ))}
-        </View>
-      </Card>
+      <Animated.View entering={reveal(140)}>
+        <Card>
+          <CardHeading>Audit log</CardHeading>
+          <View style={styles.log}>
+            {rows.map((row, i) => (
+              <Animated.View
+                key={row.id}
+                entering={reduce ? FadeIn.duration(200) : FadeIn.delay(200 + i * 50).duration(300)}
+                style={[styles.ar, i > 0 && styles.arDivider]}
+              >
+                <Text style={styles.t}>{hhmm(row.ts)}</Text>
+                <Ionicons name="checkmark" size={13} color={colors.green} />
+                <Text style={styles.detail} selectable>
+                  {row.detail}
+                </Text>
+              </Animated.View>
+            ))}
+          </View>
+        </Card>
+      </Animated.View>
     </ConsultScreen>
   );
 }

@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import * as Network from "expo-network";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 import { Card } from "@/components/consult/Card";
 import { CardHeading } from "@/components/consult/SectionLabel";
@@ -38,7 +39,12 @@ export default function OnDeviceScreen() {
       <Stack.Screen options={{ title: "On-device & privacy" }} />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
         <Card variant={offline ? "green" : "default"}>
-          <View style={styles.netRow}>
+          {/* Keyed so the resolved status fades over "Checking network…" rather than snapping. */}
+          <Animated.View
+            key={net == null ? "checking" : offline ? "offline" : "online"}
+            entering={FadeIn.duration(240)}
+            style={styles.netRow}
+          >
             <Ionicons
               name={offline ? "airplane" : "shield-checkmark"}
               size={22}
@@ -54,7 +60,7 @@ export default function OnDeviceScreen() {
                   : "Even online, your patient's data never leaves this phone."}
               </Text>
             </View>
-          </View>
+          </Animated.View>
         </Card>
 
         <Card>

@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 import { Card } from "@/components/consult/Card";
 import { OptionSheet, type SheetOption } from "@/components/consult/OptionSheet";
@@ -279,8 +280,9 @@ export default function SettingsScreen() {
           disabled={prep.status === "downloading" || prep.status === "ready"}
           style={[styles.prepareBtn, prep.status === "ready" && styles.prepareBtnReady]}
         >
+          {/* Keyed fades: idle → downloading → ready crossfade instead of snapping. */}
           {prep.status === "downloading" ? (
-            <>
+            <Animated.View key="downloading" entering={FadeIn.duration(240)}>
               <View style={styles.prepareRow}>
                 <ActivityIndicator size="small" color={colors.greenInk} />
                 <Text style={styles.prepareText}>
@@ -290,14 +292,14 @@ export default function SettingsScreen() {
               <View style={styles.track}>
                 <View style={[styles.fill, { width: `${Math.max(3, Math.round(prep.pct * 100))}%` }]} />
               </View>
-            </>
+            </Animated.View>
           ) : prep.status === "ready" ? (
-            <View style={styles.prepareRow}>
+            <Animated.View key="ready" entering={FadeIn.duration(240)} style={styles.prepareRow}>
               <Ionicons name="checkmark-circle" size={18} color={colors.greenInk} />
               <Text style={[styles.prepareText, { color: colors.greenInk }]}>
                 {`${whisperModelInfo(accuracy).name} ready on-device`}
               </Text>
-            </View>
+            </Animated.View>
           ) : (
             <View style={styles.prepareRow}>
               <Ionicons

@@ -1,7 +1,7 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useReducedMotion } from "react-native-reanimated";
+import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion } from "react-native-reanimated";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
@@ -68,6 +68,16 @@ export default function PrivacyScreen() {
 
   const uncertain = redaction?.uncertain[0];
 
+  // The redaction reveal is a hero moment: cards settle in sequence on the same
+  // ease-out curve as the note reveal (note.tsx). Reduced motion → plain fades.
+  const reveal = (delay: number) =>
+    reduce
+      ? FadeIn.delay(delay).duration(220)
+      : FadeInDown.delay(delay)
+          .duration(460)
+          .easing(Easing.bezier(0.23, 1, 0.32, 1))
+          .withInitialValues({ transform: [{ translateY: 14 }] });
+
   return (
     <ConsultScreen
       time="9:43"
@@ -100,14 +110,17 @@ export default function PrivacyScreen() {
         </Card>
       ) : (
         <>
-          <Card>
-            <CardHeading>What the model will see</CardHeading>
-            {rows.map((row, i) => (
-              <RedactedRow key={i} speaker={row.speaker} frags={row.frags} faint={row.faint} reduce={reduce} />
-            ))}
-          </Card>
+          <Animated.View entering={reveal(0)}>
+            <Card>
+              <CardHeading>What the model will see</CardHeading>
+              {rows.map((row, i) => (
+                <RedactedRow key={i} speaker={row.speaker} frags={row.frags} faint={row.faint} reduce={reduce} />
+              ))}
+            </Card>
+          </Animated.View>
 
           {uncertain && (
+            <Animated.View entering={reveal(120)}>
             <Card variant="amber">
               <CardHeading color={colors.amber}>
                 {`${redaction.uncertain.length} uncertain, tap to confirm`}
@@ -138,8 +151,10 @@ export default function PrivacyScreen() {
                   : uncertainRedaction.note}
               </Text>
             </Card>
+            </Animated.View>
           )}
 
+          <Animated.View entering={reveal(200)}>
           <Card variant="green">
             <CardHeading>Re-identify map</CardHeading>
             <Text style={styles.body}>
@@ -160,13 +175,16 @@ export default function PrivacyScreen() {
               <Pill label="Sealed in Secure Enclave" variant="green" />
             </View>
           </Card>
+          </Animated.View>
 
+          <Animated.View entering={reveal(280)}>
           <Card variant="tint">
             <View style={styles.row}>
               <CardHeading>Leaving this phone</CardHeading>
               <Pill label="0 bytes" variant="green" />
             </View>
           </Card>
+          </Animated.View>
         </>
       )}
     </ConsultScreen>

@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import Animated, { FadeIn, FadeInDown, useReducedMotion } from "react-native-reanimated";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
@@ -26,6 +27,7 @@ const ROLES: { key: Speaker; label: string; color: string; bg: string; border: s
 export default function LabelScreen() {
   const { candidates, applySpeakerLabels, updateCandidateText, captureDiag } =
     useConsultPipeline();
+  const reduce = useReducedMotion();
   const [labels, setLabels] = useState<Record<number, Speaker>>({});
   const [saving, setSaving] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -118,7 +120,12 @@ export default function LabelScreen() {
             <Text style={styles.bannerText}>Tap any line to correct it</Text>
           </View>
           {clusters.map(({ cluster, lines }, i) => (
-            <Card key={cluster}>
+            // Speaker cards cascade in — same list-arrival language as the consult list.
+            <Animated.View
+              key={cluster}
+              entering={reduce ? FadeIn.duration(200) : FadeInDown.delay(i * 60).duration(320)}
+            >
+            <Card>
               <Text style={styles.spk}>{`Speaker ${i + 1}`}</Text>
               {lines.map(({ index, text }) => (
                 <TextInput
@@ -154,6 +161,7 @@ export default function LabelScreen() {
                 })}
               </View>
             </Card>
+            </Animated.View>
           ))}
           {/* Capture diagnostics — visible during the debugging phase so a bad transcript run
               still reports the device rate + whisper's raw output. */}
@@ -164,7 +172,10 @@ export default function LabelScreen() {
             </Text>
           ) : null}
           {hasLastCapture() ? (
-            <Pressable onPress={playCapture} style={styles.playBtn}>
+            <Pressable
+              onPress={playCapture}
+              style={({ pressed }) => [styles.playBtn, pressed && styles.pressedDim]}
+            >
               <Ionicons name={playing ? "volume-high" : "play-circle-outline"} size={18} color={colors.greenInk} />
               <Text style={styles.playText}>{playing ? "Playing captured audio…" : "Play captured audio (debug)"}</Text>
             </Pressable>
