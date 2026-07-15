@@ -190,6 +190,10 @@ export function normalizeModelMarkdown(text: string): string {
   // Lookahead excludes '#' so the greedy run can't backtrack and split a VALID
   // heading ("## Subjective" must never become "# # Subjective").
   out = out.replace(/^(#{1,6})(?=[^#\s])/gm, "$1 ");
+  // A heading emitted MID-LINE ("…prose. ## Summary - …", device screenshot Jul 15)
+  // is invisible to markdown — break the line so it becomes a real heading. "## "
+  // never appears inside legitimate clinical prose.
+  out = out.replace(/(\S)[ \t]+(#{2,6} )/g, "$1\n$2");
   // "Title:Cough" → "Title: Cough" — line-leading label glued to its value (the
   // full-width colon fold above loses the visual gap). Letter-led labels only, so
   // times ("10:30") and ratios are untouched.

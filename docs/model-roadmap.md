@@ -29,7 +29,7 @@ attention is NOT quantizable yet), English + Malay + Chinese, STRICT-format extr
 ## Rejected (with reasons — do not re-litigate)
 
 - **Qwen3-4B (bundled 8da4w)** — device output degraded + intermittent jetsam (Jul 14).
-- **Qwen3.5-2B** — 51% recall, invented amoxicillin for penicillin-allergic case; also DeltaNet-blocked. Re-trialed Jul 15 (transformers 5.13.1, `tools/note-eval/out_q35_2b_retrial.json`): 36.7% recall, invented "antibiotic"+"steroid", format 3/6 — third independent failure (Mac old, Mac new, device screenshot #149). **Currently shipped anyway as a user-insisted override (`model.ts`, Jul 15 pm)** — Qwen3-1.7B stays the revert line.
+- **Qwen3.5-2B** — 51% recall, invented amoxicillin for penicillin-allergic case; also DeltaNet-blocked. Re-trialed Jul 15 (transformers 5.13.1, `tools/note-eval/out_q35_2b_retrial.json`): 36.7% recall, invented "antibiotic"+"steroid", format 3/6 — third independent failure (Mac old, Mac new, device screenshot #149). Shipped briefly as a user-insisted override (Jul 15 pm), failed on device a FOURTH time (wordy hallucinated ramble, inline "## Summary", invented referral/imaging) → reverted to Qwen3-1.7B same evening after systematic diagnosis confirmed the model as root cause. **Do not retry.**
 - **DeepSeek** (all small) — only R1 reasoning-distills exist ≤4B; reasoning-RL fails strict format.
 - **GLM-Edge-4B** — chatglm arch (no export path), no Malay, stale (Nov 2024), custom license.
 - **Hunyuan-4B** — baked-in reasoning modes, custom arch, restrictive license.
