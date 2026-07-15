@@ -76,7 +76,13 @@ export default function PrivacyScreen() {
       onBack={() => router.back()}
       right={
         redaction ? (
-          <Pill label={`${redaction.highConfidenceCount} removed`} variant="red" dot />
+          // Confirming the uncertain token(s) adds them to the headline count live —
+          // the pill always equals the number of identifiers locked away from the model.
+          <Pill
+            label={`${redaction.highConfidenceCount + (confirmed ? redaction.uncertain.length : 0)} removed`}
+            variant="red"
+            dot
+          />
         ) : (
           <Pill label="Redacting…" variant="line" />
         )
