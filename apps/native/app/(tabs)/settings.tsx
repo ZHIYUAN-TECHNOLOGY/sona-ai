@@ -58,6 +58,9 @@ export default function SettingsScreen() {
   const [enrolled, setEnrolled] = useState<boolean | null>(null);
   const [diarModel, setDiarModel] = useState("Mock (band-energy)");
   const [demo, setDemo] = useState(getSttMode() === "demo");
+  // Demo card hidden by default; long-press the Version row to reveal. Stays
+  // revealed while demo mode is armed so the OFF switch is always findable.
+  const [demoUnlocked, setDemoUnlocked] = useState(getSttMode() === "demo");
   const [semantic, setSemantic] = useState(getSemanticSearch());
   const [accuracy, setAccuracyState] = useState<SttAccuracy>(getSttAccuracy());
   const [language, setLanguageState] = useState<SttLanguage>(getSttLanguage());
@@ -218,32 +221,33 @@ export default function SettingsScreen() {
         />
       </Card>
 
-      <Card>
-        <CardHeading>Demo</CardHeading>
-        {/* Master switch — arms every filming aid in one tap: scripted transcript
-            (drives the redaction sweep + note-gen with identical input each take),
-            demo patient prefill on consent, and seeded list data. OFF returns to the
-            real pipeline; seeded rows stay until Reset so retakes are cheap. */}
-        <SettingsRow
-          first
-          icon="videocam-outline"
-          label="Demo mode"
-          value={demoMode ? "Filming aids armed" : undefined}
-          right={<Switch value={demoMode} onValueChange={(v) => void setDemoMode(v)} />}
-        />
-        <SettingsRow
-          icon="sparkles-outline"
-          label="Seed demo data"
-          value={seeded === null ? "…" : seeded ? "Seeded" : undefined}
-          onPress={seedDemo}
-        />
-        <SettingsRow icon="trash-outline" label="Reset demo data" onPress={resetDemo} />
-        <Text style={styles.hint}>
-          Demo mode arms everything for filming: scripted consult transcript, prefilled
-          demo patient, seeded lists, sample scan. Real consults are never touched;
-          Reset removes exactly what was seeded.
-        </Text>
-      </Card>
+      {/* Demo controls are hidden from the default Settings surface — long-press
+          the Version row (About) to reveal them. State is unchanged; this is
+          presentation only. */}
+      {demoUnlocked ? (
+        <Card>
+          <CardHeading>Demo</CardHeading>
+          <SettingsRow
+            first
+            icon="videocam-outline"
+            label="Demo mode"
+            value={demoMode ? "Filming aids armed" : undefined}
+            right={<Switch value={demoMode} onValueChange={(v) => void setDemoMode(v)} />}
+          />
+          <SettingsRow
+            icon="sparkles-outline"
+            label="Seed demo data"
+            value={seeded === null ? "…" : seeded ? "Seeded" : undefined}
+            onPress={seedDemo}
+          />
+          <SettingsRow icon="trash-outline" label="Reset demo data" onPress={resetDemo} />
+          <Text style={styles.hint}>
+            Demo mode arms everything for filming: scripted consult transcript, prefilled
+            demo patient, seeded lists, sample scan. Real consults are never touched;
+            Reset removes exactly what was seeded.
+          </Text>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeading>Transcription</CardHeading>
@@ -344,7 +348,16 @@ export default function SettingsScreen() {
 
       <Card>
         <CardHeading>About</CardHeading>
-        <SettingsRow first icon="information-circle-outline" label="Version" value="Sona 0.1" />
+        <SettingsRow
+          first
+          icon="information-circle-outline"
+          label="Version"
+          value="Sona 0.1"
+          onLongPress={() => {
+            haptic("select");
+            setDemoUnlocked((v) => !v);
+          }}
+        />
         <SettingsRow
           icon="speedometer-outline"
           label="On-device bench"

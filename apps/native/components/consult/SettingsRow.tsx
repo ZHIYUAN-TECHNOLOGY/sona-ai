@@ -11,6 +11,7 @@ export function SettingsRow({
   value,
   right,
   onPress,
+  onLongPress,
   first = false,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
@@ -18,6 +19,8 @@ export function SettingsRow({
   value?: string;
   right?: ReactNode;
   onPress?: () => void;
+  /** Optional hidden affordance (e.g. dev/demo unlock) — no chevron is shown for it. */
+  onLongPress?: () => void;
   first?: boolean;
 }) {
   const inner = (
@@ -31,13 +34,21 @@ export function SettingsRow({
       </View>
     </>
   );
-  if (!onPress) return <View style={[styles.row, !first && styles.divider]}>{inner}</View>;
+  if (!onPress && !onLongPress)
+    return <View style={[styles.row, !first && styles.divider]}>{inner}</View>;
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      // The row acknowledges the touch instantly (iOS list-row dim).
-      style={({ pressed }) => [styles.row, !first && styles.divider, pressed && styles.pressed]}
+      onLongPress={onLongPress}
+      delayLongPress={onLongPress ? 600 : undefined}
+      // The row acknowledges the touch instantly (iOS list-row dim). A row with
+      // only a hidden long-press stays visually static — no press dim, no chevron.
+      style={({ pressed }) => [
+        styles.row,
+        !first && styles.divider,
+        onPress && pressed && styles.pressed,
+      ]}
     >
       {inner}
     </Pressable>
