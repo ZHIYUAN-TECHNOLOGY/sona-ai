@@ -73,7 +73,12 @@ export default function SearchScreen() {
           style={styles.input}
         />
         {q ? (
-          <Pressable accessibilityRole="button" onPress={() => setQuery("")} hitSlop={8}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setQuery("")}
+            hitSlop={8}
+            style={({ pressed }) => pressed && { opacity: 0.5, transform: [{ scale: 0.9 }] }}
+          >
             <Ionicons name="close-circle" size={18} color={colors.ink3} />
           </Pressable>
         ) : null}

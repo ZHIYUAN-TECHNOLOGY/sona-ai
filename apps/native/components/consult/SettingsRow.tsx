@@ -20,13 +20,8 @@ export function SettingsRow({
   onPress?: () => void;
   first?: boolean;
 }) {
-  const Wrapper: typeof Pressable | typeof View = onPress ? Pressable : View;
-  return (
-    <Wrapper
-      accessibilityRole={onPress ? "button" : undefined}
-      onPress={onPress}
-      style={[styles.row, !first && styles.divider]}
-    >
+  const inner = (
+    <>
       <Ionicons name={icon} size={19} color={colors.green} />
       <Text style={styles.label}>{label}</Text>
       <View style={styles.rightWrap}>
@@ -34,7 +29,18 @@ export function SettingsRow({
         {right}
         {onPress ? <Ionicons name="chevron-forward" size={16} color={colors.ink3} /> : null}
       </View>
-    </Wrapper>
+    </>
+  );
+  if (!onPress) return <View style={[styles.row, !first && styles.divider]}>{inner}</View>;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      // The row acknowledges the touch instantly (iOS list-row dim).
+      style={({ pressed }) => [styles.row, !first && styles.divider, pressed && styles.pressed]}
+    >
+      {inner}
+    </Pressable>
   );
 }
 
@@ -46,6 +52,7 @@ const styles = StyleSheet.create({
     paddingVertical: space.md,
   },
   divider: { borderTopWidth: 1, borderTopColor: colors.line },
+  pressed: { opacity: 0.55 },
   label: { ...font.body, color: colors.ink, flex: 1 },
   rightWrap: { flexDirection: "row", alignItems: "center", gap: space.sm },
   value: { ...font.bodySm, color: colors.ink3 },

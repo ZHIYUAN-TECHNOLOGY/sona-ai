@@ -11,6 +11,7 @@ import { NoteMarkdown } from "@/components/consult/NoteMarkdown";
 import { Pill } from "@/components/consult/Pill";
 import { PrimaryButton } from "@/components/consult/PrimaryButton";
 import { consultFullSubtitle, consultHeadline, statusMeta } from "@/lib/consultFormat";
+import { haptic } from "@/lib/haptics";
 import {
   deleteConsult,
   getAudit,
@@ -152,8 +153,15 @@ export default function ConsultDetailScreen() {
               key={v}
               accessibilityRole="button"
               accessibilityState={{ selected: consult.visitType === v }}
-              onPress={() => setVisit(v)}
-              style={[styles.visitChip, consult.visitType === v && styles.visitChipOn]}
+              onPress={() => {
+                haptic("select");
+                setVisit(v);
+              }}
+              style={({ pressed }) => [
+                styles.visitChip,
+                consult.visitType === v && styles.visitChipOn,
+                pressed && styles.visitChipPressed,
+              ]}
             >
               <Text style={[styles.visitChipText, consult.visitType === v && styles.visitChipTextOn]}>
                 {v === "walk-in" ? "Walk-in" : "Appointment"}
@@ -366,6 +374,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   visitChipOn: { backgroundColor: colors.greenSoft, borderColor: colors.green },
+  visitChipPressed: { transform: [{ scale: 0.96 }], opacity: 0.85 },
   visitChipText: { fontSize: 11, color: colors.ink2 },
   visitChipTextOn: { color: colors.greenInk, fontWeight: "600" },
   center: { alignItems: "center", gap: space.sm, paddingVertical: space.xl },

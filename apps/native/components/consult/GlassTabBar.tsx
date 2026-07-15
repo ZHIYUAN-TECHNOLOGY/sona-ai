@@ -66,7 +66,11 @@ function TabItem({
 }) {
   const color = active ? colors.green : colors.ink3;
   return (
-    <Pressable style={styles.tab} onPress={onPress} accessibilityRole="button">
+    <Pressable
+      style={({ pressed }) => [styles.tab, pressed && styles.tabPressed]}
+      onPress={onPress}
+      accessibilityRole="button"
+    >
       <Ionicons name={tab.icon} size={21} color={color} />
       <Text style={[styles.tabLabel, { color }]}>{tab.label}</Text>
     </Pressable>
@@ -96,6 +100,7 @@ const styles = StyleSheet.create({
   },
   centerGap: { width: 58 },
   tab: { flex: 1, alignItems: "center", justifyContent: "center", gap: 3, minHeight: 46 },
+  tabPressed: { transform: [{ scale: 0.94 }], opacity: 0.7 },
   tabLabel: { fontSize: 9, fontWeight: "600" },
   center: {
     position: "absolute",
