@@ -230,19 +230,6 @@ export default function SettingsScreen() {
           right={<Switch value={demoMode} onValueChange={(v) => void setDemoMode(v)} />}
         />
         <SettingsRow
-          icon="albums-outline"
-          label="Demo transcript"
-          right={
-            <Switch
-              value={demo}
-              onValueChange={(v) => {
-                setDemo(v);
-                setSttMode(v ? "demo" : "real");
-              }}
-            />
-          }
-        />
-        <SettingsRow
           icon="sparkles-outline"
           label="Seed demo data"
           value={seeded === null ? "…" : seeded ? "Seeded" : undefined}
