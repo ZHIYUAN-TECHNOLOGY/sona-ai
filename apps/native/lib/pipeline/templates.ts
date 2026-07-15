@@ -12,24 +12,33 @@ export interface NoteTemplate {
   structure: string;
 }
 
-// Shared rules — identical safety + formatting contract for every template. Deliberately SHORT
-// and rigid: the 1.5B note model rambles and invents when given latitude, so the contract is
-// terse bullets, hard caps, and nothing beyond the transcript.
+// Shared rules — identical safety + formatting contract for every template. The structure
+// stays rigid (the small note model rambles and invents when given latitude) but bullets are
+// full clinical statements, not telegrams: the earlier 12-word/150-word caps read as skimpy,
+// low-quality notes to clinicians (user feedback Jul 15). Caps stay — just roomier — because
+// an unbounded note is how small models dissolve into token-cap rambles.
+// ANY change here must be mirrored into tools/note-eval/harness.py and re-scored vs the
+// incumbent baseline BEFORE it ships (same gate as a model swap).
 const BASE_RULES =
   "You are a clinical documentation assistant. Convert the de-identified consultation " +
-  "transcript into a SHORT clinical note in English.\n" +
+  "transcript into a clear, complete clinical note in English.\n" +
   "OUTPUT FORMAT (exactly):\n" +
   "Line 1 — 'Title: ' + 3-6 word clinical summary (no names, IC, phones, addresses, tokens).\n" +
-  "Then the sections below as '## ' Markdown headings. Each section: 1-3 bullet points " +
-  "('- '), each bullet under 12 words. Plain factual clinical language.\n" +
+  "Then the sections below as '## ' Markdown headings. Each section: 2-5 bullet points " +
+  "('- '). Each bullet is one complete, natural clinical statement under 20 words — written " +
+  "the way a doctor writes, never fragmented single words.\n" +
   "HARD RULES:\n" +
   "- Use ONLY facts stated in the transcript. NEVER invent symptoms, findings, diagnoses, " +
   "medications, doses, demographics (age, sex), or history.\n" +
+  "- The transcript may mix Malay and English. Write the note in standard English clinical " +
+  "language, translating Malay clinical content faithfully ('saya tak demam' → 'no fever'; " +
+  "'batuk berkahak' → 'productive cough'). Never leave untranslated Malay in the note; " +
+  "never guess at an unclear phrase — omit what you cannot understand.\n" +
   "- A section with nothing in the transcript = exactly '- Not discussed.'\n" +
   "- No tables, no links, no citations, no [G1]-style references, no asterisks, no preamble, " +
   "no closing remarks, no repetition.\n" +
   "- Keep identifier tokens such as NAME_1 exactly as written.\n" +
-  "- Total note under 150 words.\n" +
+  "- Total note under 250 words.\n" +
   "- COMPLETENESS: include EVERY medication, dose, duration, vital sign, and follow-up " +
   "instruction stated in the transcript. Omitting a stated fact is as wrong as inventing one.";
 
@@ -63,11 +72,11 @@ export const TEMPLATES: NoteTemplate[] = [
       "Come back in five days if not better, earlier if fever or cannot swallow.\n" +
       "Output:\n" +
       "Title: Sore throat with itchy eyes\n" +
-      "## Subjective\n- Sore throat four days, painful swallowing\n- Itchy eyes\n- No fever reported\n" +
-      "## Objective\n- Temperature 37.1\n- Throat red, no pus\n" +
+      "## Subjective\n- Sore throat for four days with pain on swallowing\n- Itchy eyes accompanying the sore throat\n- No fever reported\n" +
+      "## Objective\n- Temperature 37.1\n- Throat erythematous with no pus seen\n" +
       "## Assessment\n- Tonsillitis, likely viral\n" +
-      "## Plan\n- Salt water gargle\n- Cetirizine 10 mg at night\n" +
-      "## Orders & follow-ups\n- Review in five days if not better\n- Return earlier if fever or unable to swallow",
+      "## Plan\n- Salt water gargle for symptomatic relief\n- Cetirizine 10 mg at night for the itchy eyes\n" +
+      "## Orders & follow-ups\n- Review in five days if not better\n- Return earlier if fever develops or swallowing becomes impossible",
   },
   {
     id: "progress",

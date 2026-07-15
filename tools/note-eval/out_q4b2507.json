@@ -1,0 +1,172 @@
+[
+ {
+  "id": "soap_manglish_uri",
+  "kind": "soap",
+  "input": "doctor: NAME_1, how long already the cough?\npatient: Three days doctor, malam lagi teruk. Ada kahak kuning.\ndoctor: Any chest pain or breathless?\npatient: No chest pain. Sikit-sikit breathless when climb stairs only.\ndoctor: Temperature 37.9, pulse 92, oxygen 97 percent. Throat red, chest clear. This is viral upper respiratory infection. Paracetamol 1 gram four times a day if fever. Review in one week, come earlier if breathless worsen or fever not settle. I order FBC if not improving.",
+  "must": [
+   "cough",
+   "three days",
+   "yellow",
+   "37.9",
+   "92",
+   "97",
+   "throat red",
+   "chest clear",
+   "viral upper respiratory",
+   "paracetamol",
+   "1 g",
+   "four times",
+   "one week",
+   "breathless",
+   "FBC"
+  ],
+  "forbid": [
+   "amoxicillin",
+   "antibiotic",
+   "asthma",
+   "pneumonia",
+   "48",
+   "x-ray"
+  ],
+  "output": "Title: Cough with yellow sputum and mild dyspnea  \n\n## Subjective  \n- Cough three days, worse at night  \n- Yellow sputum produced  \n- Mild shortness of breath on stair climbing  \n\n## Objective  \n- Temperature 37.9°C  \n- Pulse 92 bpm  \n- Oxygen saturation 9 IMD%  \n- Throat red, chest clear  \n\n## Assessment  \n- Viral upper respiratory infection  \n\n## Plan  \n- Paracetamol 1 g every 8 hours if fever present  \n\n## Orders & follow-ups  \n- Review in one week  \n- Return early if breathlessness worsens or fever persists  \n- Order FBC if condition does not improve",
+  "secs": 8.8
+ },
+ {
+  "id": "soap_thin",
+  "kind": "soap",
+  "input": "doctor: NAME_1 what brings you in?\npatient: Itchy rash on both arms since yesterday, doctor. Very itchy at night.\ndoctor: Any new soaps, foods, medicines?\npatient: I used a new detergent two days ago.\ndoctor: Rash looks like contact dermatitis. Stop the detergent. Cetirizine 10 milligram at night for five days. Come back if it spreads or blisters.",
+  "must": [
+   "itchy",
+   "rash",
+   "arms",
+   "detergent",
+   "contact dermatitis",
+   "cetirizine",
+   "10 mg",
+   "night",
+   "five days",
+   "spreads"
+  ],
+  "forbid": [
+   "steroid",
+   "prednisolone",
+   "fungal",
+   "scabies",
+   "fever"
+  ],
+  "output": "Title: Itchy rash after new soap use  \n## Subjectiveﻍ  \n- Itchy rash on both arms since yesterday  \n- Intense itching worsens at night  \n\n##来的Objective  \n- Rash appearance consistent with contact dermatitis  \n\n## Assessment  \n- Contact dermatitis suspected due to new detergent exposure  \n\n## Plan  \n- Discontinue使用new detergent immediately  \n- Start cetirizine 10mg nightly for five days  \n\n## Orders & follow-ups  \n- Return if rash spreads or develops blisters  \n- Monitor for worsening symptoms over next few slog_insn",
+  "secs": 6.5
+ },
+ {
+  "id": "soap_meds_heavy",
+  "kind": "soap",
+  "input": "doctor: NAME_1, your diabetes review. Sugar control okay?\npatient: Morning readings around seven. But my knee pain worse two weeks already, I take ibuprofen sometimes.\ndoctor: Careful with ibuprofen, your gastritis history. Fasting glucose 6.8 today, blood pressure 128 over 82, weight stable. Continue metformin 500 milligram twice daily. For the knee use topical diclofenac gel three times daily instead of ibuprofen. HbA1c test today, physio referral for the knee. Review in three months with results.",
+  "must": [
+   "diabetes",
+   "6.8",
+   "128",
+   "82",
+   "metformin",
+   "500 mg",
+   "twice daily",
+   "knee",
+   "two weeks",
+   "ibuprofen",
+   "gastritis",
+   "diclofenac gel",
+   "three times",
+   "HbA1c",
+   "physio",
+   "three months"
+  ],
+  "forbid": [
+   "insulin",
+   "statin",
+   "x-ray",
+   "surgery",
+   "96"
+  ],
+  "output": "Title: Diabetes management with knee pain  \n\n## Subjective  \n- Morning血糖 ~7 mmol/L  \n- Knee pain worsening two weeks ago  \n- Uses ibuprofen occasionally  \n\n## Objective  \n- Fasting glucose 6.8 mmol/L  \n- Blood pressure 128/82 mmHg  \n- Weight stable  \n\n## Assessment  \n- Stable glycemic control  \n- Chronic knee pain requiring alternative analgesia  \n\n## Plan  \n-Continue metformin 500mg BID  \n-Topical diclofenac gel 3x/day for knee pain  \n\n## Orders & follow-ups  \n- HbA1c testing performed  \n- Physiotherapy referred for knee issue  \n- Follow up in three months with lab results",
+  "secs": 8.3
+ },
+ {
+  "id": "doc_garbled_rx",
+  "kind": "doc",
+  "input": "KLINIK DOC_NAME_FIELD\nRx\nTab PanD40ng 1-0-1 bfre food x 2wk\nsyr Loratadin 5ml nite x 5day\ngum paint massage tds\nreveiw 2 wks or if pain wrse\nDr DOC_NAME_1",
+  "must": [
+   "PanD40ng",
+   "1-0-1",
+   "2wk",
+   "Loratadin",
+   "5ml",
+   "5day",
+   "gum paint",
+   "review",
+   "2 wks"
+  ],
+  "forbid": [
+   "pantoprazole",
+   "omeprazole",
+   "loratadine 10",
+   "codeine",
+   "possibly",
+   "likely refers"
+  ],
+  "output": "Title: Post-visits meds and care plan  \n## Document type  \n- Rx prescription  \n\n##ivre found  \n- BP not stated  \n- Pain worsening noted (\"if pain wrse\")  \n\n## Medications & doses  \n- Tab PanD40ng 1-0-1 bfore food x 2wk  \n- syr Loratadin 5ml nite x 5day  \n- gum paint massage tds  \n\n## Follow-up needed  \n- Review in 2 weeks or if pain worsens",
+  "secs": 5.9
+ },
+ {
+  "id": "doc_clean_referral",
+  "kind": "doc",
+  "input": "KLINIK SEJAHTERA — Jalan Merbau 12, Taman Desa\nDate: 10 July 2026\nRe: Referral — DOC_NAME_1 (IC: DOC_IC_1)\nDear Colleague,\nThank you for seeing this 48-year-old gentleman with persistent productive cough of three weeks, low-grade evening fever up to 38.1C and reduced effort tolerance.\nExamination: Right basal crackles. SpO2 97% on room air. Weight stable.\nCurrent medications: Tab Amoxicillin 500 mg TDS x 7 days (day 5, partial response), Tab Paracetamol 1 g QID PRN, Tab Metformin 500 mg BD.\nAllergy: NSAID — facial swelling.\nKindly assess for further imaging and management.",
+  "must": [
+   "referral",
+   "cough",
+   "three weeks",
+   "38.1",
+   "crackles",
+   "97%",
+   "amoxicillin",
+   "500 mg",
+   "TDS",
+   "paracetamol",
+   "1 g",
+   "metformin",
+   "500 mg BD",
+   "NSAID",
+   "imaging"
+  ],
+  "forbid": [
+   "tuberculosis",
+   "cancer",
+   "CT ordered",
+   "penicillin allergy"
+  ],
+  "output": "Title: Cough and fever referral  \n## Document type  \n- Referral letter  \n\n## Key findings  \n- Persistent productive cough for three weeks  \n- Low-grade evening fever up to 38.1°C  \n- Reduced effort tolerance  \n- Right basal crackles  \n- SpO2 97% on room air  \n- Stable weight  \n\n## Medications & doses  \n- Tab Amoxicillin 500 mg TDS x 7 days (partial response by day 5)  \n- Tab Paracetamol 1\tcs QID PRN  \n- Tab Metformin 500 mg BD  \n\n## Follow-up needed  \n- Assess for further imaging and management",
+  "secs": 8.1
+ },
+ {
+  "id": "doc_lab_report",
+  "kind": "doc",
+  "input": "PATHLAB REPORT\nPatient: DOC_NAME_1\nFBC: Hb 10.2 g/dL (L), WBC 11.8 (H), Platelets 210\nFasting glucose: 7.4 mmol/L (H)\nHbA1c: 7.9% (H)\nCreatinine 88 umol/L\nComment: microcytic picture, suggest iron studies.\nReviewing clinician to advise follow-up.",
+  "must": [
+   "Hb 10.2",
+   "WBC 11.8",
+   "210",
+   "7.4",
+   "7.9",
+   "88",
+   "microcytic",
+   "iron studies"
+  ],
+  "forbid": [
+   "anemia treatment started",
+   "transfusion",
+   "ferritin result",
+   "12.",
+   "normal FBC"
+  ],
+  "output": "Title: Lab results with abnormal readings  \n## Document type  \n- Pathlab report  \n\n## Key findings  \n- Hb 10.2 g/dL (low)  \n- ĐóWBC 11.8 (high)  \n- Platelets 210 (normal)  \n- Fasting glucose 7.4 mmol/L (high)  \n- HbA1c 7.9% (high)  \n- Creatinine 88 umol/L (within normal range)  \n- Microcytic picture noted  \n\n## Medications & doses  \n- Not stated  \n\n## Follow-up needed  \n- Iron studies advised  \n- Reviewing clinician to advise follow-up",
+  "secs": 7.9
+ }
+]
