@@ -14,6 +14,7 @@
 
 import type { KnowledgeDoc } from "../knowledge/corpus";
 import type { NoteOrder } from "../db/types";
+import { repairSoapStructure } from "./noteHighlight";
 import type { RedactedSegment } from "./redaction";
 
 export interface Msg {
@@ -69,7 +70,7 @@ const TITLE_TOKEN_RE = /\b(?:NAME|NAME_UNCERTAIN|IC|PHONE|ADDR|ADDRESS|MRN|EMAIL
  * the remaining text (so the SOAP parser doesn't see the title line).
  */
 export function parseTitle(text: string): { title: string; rest: string } {
-  const m = text.match(/^[\s>#*\-]*\*{0,2}title\*{0,2}\s*[:\-]\s*(.+)$/im);
+  const m = text.match(/^[\s>#*\-]*\*{0,2}title\*{0,2}\s*[:;\-–—]\s*(.+)$/im);
   if (!m || m.index === undefined) return { title: "", rest: text };
   const title = m[1].trim().replace(/^["'“‘]+|["'”’.]+$/g, "").trim();
   const rest = text.slice(0, m.index) + text.slice(m.index + m[0].length);
@@ -374,7 +375,12 @@ export async function generateNote(
   const t0 = Date.now();
   const rawOut = await llm.generate(messages);
   const generationMs = Date.now() - t0;
-  const clean = normalizeModelMarkdown(truncateDegenerate(collapseRepeats(stripThink(rawOut))));
+  // repairSoapStructure last: it rebuilds "## " headings from label-shaped prose
+  // ("Subjectve – …"), so the title/flags/SOAP parsers below see real structure
+  // even when the model dropped every markdown mark.
+  const clean = repairSoapStructure(
+    normalizeModelMarkdown(truncateDegenerate(collapseRepeats(stripThink(rawOut)))),
+  );
   const { title: rawTitle, rest: afterTitle } = parseTitle(clean);
   // Peel the trailing Flags line before anything else parses the body, so the
   // sidecar never leaks into the SOAP sections or the rendered markdown.
