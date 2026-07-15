@@ -125,7 +125,7 @@ export default function PrivacyScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={`Confirm ${uncertain.original} is an identifier`}
                     onPress={() => setConfirmed(true)}
-                    style={styles.dashed}
+                    style={({ pressed }) => [styles.dashed, pressed && styles.dashedPressed]}
                   >
                     <Text style={styles.dashedText}>{uncertain.original}</Text>
                   </Pressable>
@@ -253,6 +253,7 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     borderColor: colors.amber,
   },
+  dashedPressed: { opacity: 0.6 },
   dashedText: { fontSize: 12, fontWeight: "600", color: colors.amber },
   amberNote: { marginTop: 8, fontSize: 10.5, color: colors.amber, lineHeight: 15 },
 

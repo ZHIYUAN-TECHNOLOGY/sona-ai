@@ -29,7 +29,15 @@ interface ToolProps {
 }
 function ToolBtn({ label, active, strike, onPress }: ToolProps) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={[styles.toolBtn, active && styles.toolBtnActive]}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => [
+        styles.toolBtn,
+        active && styles.toolBtnActive,
+        pressed && styles.toolBtnPressed,
+      ]}
+    >
       <Text style={[styles.toolLabel, active && styles.toolLabelActive, strike && styles.strike]}>{label}</Text>
     </Pressable>
   );
@@ -128,6 +136,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   toolBtnActive: { backgroundColor: colors.green50, borderColor: colors.green100 },
+  toolBtnPressed: { transform: [{ scale: 0.94 }], opacity: 0.8 },
   toolLabel: { fontSize: 14, fontWeight: "700", color: colors.ink2 },
   toolLabelActive: { color: colors.greenInk },
   strike: { textDecorationLine: "line-through" },

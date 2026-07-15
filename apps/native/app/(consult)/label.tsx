@@ -101,7 +101,10 @@ export default function LabelScreen() {
               </Text>
             ) : null}
             {hasLastCapture() ? (
-              <Pressable onPress={playCapture} style={styles.playBtn}>
+              <Pressable
+                onPress={playCapture}
+                style={({ pressed }) => [styles.playBtn, pressed && styles.pressedDim]}
+              >
                 <Ionicons name={playing ? "volume-high" : "play-circle-outline"} size={18} color={colors.greenInk} />
                 <Text style={styles.playText}>{playing ? "Playing captured audio…" : "Play captured audio (debug)"}</Text>
               </Pressable>
@@ -139,9 +142,10 @@ export default function LabelScreen() {
                         haptic("select");
                         setLabels((prev) => ({ ...prev, [cluster]: r.key }));
                       }}
-                      style={[
+                      style={({ pressed }) => [
                         styles.role,
                         { borderColor: on ? r.border : colors.line, backgroundColor: on ? r.bg : colors.surface },
+                        pressed && styles.rolePressed,
                       ]}
                     >
                       <Text style={[styles.roleLabel, { color: on ? r.color : colors.ink2 }]}>{r.label}</Text>
@@ -198,6 +202,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   roleLabel: { ...font.body, fontWeight: "600" },
+  rolePressed: { transform: [{ scale: 0.96 }], opacity: 0.85 },
+  pressedDim: { opacity: 0.6 },
   empty: { alignItems: "center", gap: space.sm, paddingVertical: space.lg },
   emptyTitle: { ...font.h3, color: colors.ink },
   emptyBody: { ...font.bodySm, color: colors.ink3, textAlign: "center" },

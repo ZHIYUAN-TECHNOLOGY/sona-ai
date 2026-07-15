@@ -300,7 +300,7 @@ export default function ScanReviewScreen() {
             ]}
             value={view}
             onChange={(next) => {
-              if (next !== view) haptic("tap");
+              // SegmentedControl fires its own selection haptic.
               // An edit still inside the 600ms debounce must be visible here —
               // re-redact now so the view never shows a stale de-identification.
               if (next === "deidentified" && latestText.current.pending) {

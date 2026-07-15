@@ -12,6 +12,7 @@ import { CardHeading } from "@/components/consult/SectionLabel";
 import { Steps } from "@/components/consult/Steps";
 import { Toggle } from "@/components/consult/Toggle";
 import type { VisitType } from "@/lib/db/types";
+import { haptic } from "@/lib/haptics";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
 import { useProfile } from "@/lib/profile";
 import { clearPendingScanDoc } from "@/lib/pipeline/scanAttach";
@@ -118,8 +119,15 @@ export default function ConsentScreen() {
               key={v}
               accessibilityRole="button"
               accessibilityState={{ selected: visitType === v }}
-              onPress={() => setVisitType(visitType === v ? null : v)}
-              style={[styles.visitChip, visitType === v && styles.visitChipOn]}
+              onPress={() => {
+                haptic("select");
+                setVisitType(visitType === v ? null : v);
+              }}
+              style={({ pressed }) => [
+                styles.visitChip,
+                visitType === v && styles.visitChipOn,
+                pressed && styles.visitChipPressed,
+              ]}
             >
               <Text style={[styles.visitChipText, visitType === v && styles.visitChipTextOn]}>
                 {v === "walk-in" ? "Walk-in" : "Appointment"}
@@ -207,6 +215,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   visitChipOn: { backgroundColor: colors.greenSoft, borderColor: colors.green },
+  visitChipPressed: { transform: [{ scale: 0.96 }], opacity: 0.85 },
   visitChipText: { fontSize: 11.5, color: colors.ink2 },
   visitChipTextOn: { color: colors.greenInk, fontWeight: "600" },
   tmpl: { flexDirection: "row", alignItems: "center", gap: space.md, marginTop: space.md },
