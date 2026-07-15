@@ -187,7 +187,9 @@ export function normalizeModelMarkdown(text: string): string {
   // NFKC folds full-width forms (：→:, ，→,, ％→%, ＊→*, 　→space) without touching CJK.
   let out = text.normalize("NFKC");
   // "##Heading" → "## Heading" — heading markers need a following space to BE markdown.
-  out = out.replace(/^(#{1,6})(?=\S)/gm, "$1 ");
+  // Lookahead excludes '#' so the greedy run can't backtrack and split a VALID
+  // heading ("## Subjective" must never become "# # Subjective").
+  out = out.replace(/^(#{1,6})(?=[^#\s])/gm, "$1 ");
   // "Title:Cough" → "Title: Cough" — line-leading label glued to its value (the
   // full-width colon fold above loses the visual gap). Letter-led labels only, so
   // times ("10:30") and ratios are untouched.
