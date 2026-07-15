@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useLLM } from "react-native-executorch";
 
 import { Card } from "@/components/consult/Card";
@@ -99,25 +100,29 @@ export default function AiModelsScreen() {
             <Text style={styles.role}>{`${whisperModelInfo(accuracy).name} · Malay + English + 中文`}</Text>
           </View>
         </View>
+        {/* Keyed by status so idle → downloading → ready crossfades, never snaps. */}
         {stt.status === "ready" ? (
-          <View style={styles.statusReady}>
+          <Animated.View key="ready" entering={FadeIn.duration(240)} style={styles.statusReady}>
             <Ionicons name="checkmark-circle" size={16} color={colors.greenInk} />
             <Text style={styles.statusReadyText}>
               {whisperIsBundled(accuracy)
                 ? "Bundled in app · ready offline · 181MB"
                 : "Ready on-device · downloaded"}
             </Text>
-          </View>
+          </Animated.View>
         ) : stt.status === "downloading" ? (
-          <>
+          <Animated.View key="downloading" entering={FadeIn.duration(240)}>
             <View style={styles.progressRow}>
               <ActivityIndicator size="small" color={colors.greenInk} />
               <Text style={styles.progressText}>{`Downloading… ${Math.round(stt.pct * 100)}%`}</Text>
             </View>
             <Bar pct={stt.pct} />
-          </>
+          </Animated.View>
         ) : (
-          <Pressable style={styles.action} onPress={downloadStt}>
+          <Pressable
+            style={({ pressed }) => [styles.action, pressed && styles.actionPressed]}
+            onPress={downloadStt}
+          >
             <Ionicons
               name={stt.status === "error" ? "refresh-outline" : "cloud-download-outline"}
               size={18}
@@ -147,10 +152,10 @@ export default function AiModelsScreen() {
           </View>
         </View>
         {note.status === "ready" ? (
-          <View style={styles.statusReady}>
+          <Animated.View key="note-ready" entering={FadeIn.duration(240)} style={styles.statusReady}>
             <Ionicons name="checkmark-circle" size={16} color={colors.greenInk} />
             <Text style={styles.statusReadyText}>Ready on-device</Text>
-          </View>
+          </Animated.View>
         ) : noteDownloading ? (
           <NoteModelDownloader
             onDone={(ok) => {
@@ -160,7 +165,7 @@ export default function AiModelsScreen() {
           />
         ) : (
           <Pressable
-            style={styles.action}
+            style={({ pressed }) => [styles.action, pressed && styles.actionPressed]}
             onPress={() => {
               haptic("tap");
               setNoteDownloading(true);
@@ -227,6 +232,7 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     backgroundColor: colors.surface,
   },
+  actionPressed: { transform: [{ scale: 0.98 }], opacity: 0.8 },
   actionText: { ...font.bodySm, color: colors.ink2, flexShrink: 1 },
   progressRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: space.md },
   progressText: { ...font.bodySm, color: colors.ink2 },

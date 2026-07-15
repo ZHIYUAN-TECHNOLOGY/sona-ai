@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, Share, StyleSheet, Text } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 import { BottomSheet, SheetRow } from "@/components/consult/BottomSheet";
 import { Card } from "@/components/consult/Card";
@@ -105,11 +106,12 @@ export default function SignScreen() {
 
         <Card variant="tint">
           <CardHeading>Export &amp; share</CardHeading>
-          <Text style={styles.micro}>
+          {/* Keyed so the unlock copy fades in rather than snapping when signing. */}
+          <Animated.Text key={signed ? "unlocked" : "locked"} entering={FadeIn.duration(240)} style={styles.micro}>
             {signed
               ? "Re-identified on-device · ready for any EMR ingest"
               : "Sign to unlock export"}
-          </Text>
+          </Animated.Text>
           <PrimaryButton
             label="Export & share"
             variant="ghost"

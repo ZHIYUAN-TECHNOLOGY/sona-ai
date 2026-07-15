@@ -1,6 +1,7 @@
 import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeInDown, useReducedMotion } from "react-native-reanimated";
 
 import { getConsult } from "@/lib/db";
 
@@ -42,6 +43,7 @@ const ENDED_STATUSES = new Set(["transcribing", "transcribed", "redacted", "note
 export default function RecordingScreen() {
   const { consultId, status, segments, startRecording, stopRecording, cancelRecording } =
     useConsultPipeline();
+  const reduce = useReducedMotion();
   const started = useRef(false);
   const endedHere = useRef(false); // End was pressed on this screen (don't cancel on the resulting blur)
   const statusRef = useRef(status);
@@ -140,7 +142,16 @@ export default function RecordingScreen() {
         ) : (
           peek.map((turn, i) => {
             const line = toDiarRow(turn);
-            return <DiarRow key={i} speaker={line.speaker} spans={line.spans} faint={line.faint} />;
+            return (
+              // Each transcript line settles in as it lands — the live feed reads
+              // as arriving speech, not rows popping. Reduced motion: no animation.
+              <Animated.View
+                key={i}
+                entering={reduce ? undefined : FadeInDown.duration(260).withInitialValues({ transform: [{ translateY: 6 }] })}
+              >
+                <DiarRow speaker={line.speaker} spans={line.spans} faint={line.faint} />
+              </Animated.View>
+            );
           })
         )}
       </Card>

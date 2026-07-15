@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeIn, FadeInDown, useReducedMotion } from "react-native-reanimated";
 
 import { Card } from "@/components/consult/Card";
 import { Pill } from "@/components/consult/Pill";
@@ -63,6 +64,7 @@ function timeAgo(ts: number): string {
 }
 
 export default function SmartScanScreen() {
+  const reduce = useReducedMotion();
   const [phase, setPhase] = useState<ScanPhase>("idle");
   const [progress, setProgress] = useState("");
   const [err, setErr] = useState("");
@@ -221,14 +223,15 @@ export default function SmartScanScreen() {
           The image and text never leave the device.
         </Text>
         {busy ? (
-          <View style={styles.busyRow}>
+          // Keyed fades so busy ↔ actions crossfade instead of snapping.
+          <Animated.View key="busy" entering={FadeIn.duration(220)} style={styles.busyRow}>
             <ActivityIndicator color={colors.green} />
             <Text style={styles.busyText}>
               {phase === "scanning" ? "Scanner open…" : progress || "Reading on-device…"}
             </Text>
-          </View>
+          </Animated.View>
         ) : (
-          <View style={styles.actions}>
+          <Animated.View key="actions" entering={FadeIn.duration(220)} style={styles.actions}>
             <PrimaryButton
               label="Scan document"
               onPress={() => capture("scanner")}
@@ -242,7 +245,7 @@ export default function SmartScanScreen() {
               icon={<Ionicons name="image-outline" size={18} color={colors.ink} />}
               style={styles.grow}
             />
-          </View>
+          </Animated.View>
         )}
         {err ? (
           <Text style={styles.err} selectable>
@@ -265,9 +268,17 @@ export default function SmartScanScreen() {
           </View>
         </Card>
       ) : (
-        docs.map((d) => (
-          <SwipeableRow
+        docs.map((d, i) => (
+          // Recent scans cascade in like the consult list (30ms stagger, capped).
+          <Animated.View
             key={d.id}
+            entering={
+              reduce
+                ? FadeIn.duration(200)
+                : FadeInDown.delay(Math.min(i, 8) * 30).duration(300)
+            }
+          >
+          <SwipeableRow
             actions={[
               { label: "Rename", icon: "pencil", color: colors.ink3, onPress: () => renameDoc(d) },
               { label: "Delete", icon: "trash", color: colors.red, onPress: () => removeDoc(d) },
@@ -324,6 +335,7 @@ export default function SmartScanScreen() {
               )}
             </Pressable>
           </SwipeableRow>
+          </Animated.View>
         ))
       )}
 
