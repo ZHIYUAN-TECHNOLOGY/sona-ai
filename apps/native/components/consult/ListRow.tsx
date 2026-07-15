@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { haptic } from "@/lib/haptics";
 import { colors, font, radius, space } from "@/lib/theme";
 
 /**
@@ -76,7 +77,16 @@ export function ListRow({
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      onLongPress={onLongPress}
+      // Long-press opens rename — a mode change worth confirming. Plain nav taps
+      // stay silent (buzzing every list navigation trains people to ignore haptics).
+      onLongPress={
+        onLongPress
+          ? () => {
+              haptic("select");
+              onLongPress();
+            }
+          : undefined
+      }
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
       {body}

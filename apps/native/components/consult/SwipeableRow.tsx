@@ -11,6 +11,7 @@ import Animated, {
   useAnimatedStyle,
 } from "react-native-reanimated";
 
+import { haptic } from "@/lib/haptics";
 import { colors, font, radius, space } from "@/lib/theme";
 
 export type SwipeAction = {
@@ -85,6 +86,8 @@ export function SwipeableRow({
           progress={progress}
           index={i}
           onRun={() => {
+            // Destructive actions (styled red) warn; the rest confirm lightly.
+            haptic(a.color === colors.red ? "warn" : "tap");
             ref.current?.close();
             a.onPress();
           }}
