@@ -19,7 +19,7 @@ import {
 } from "@/lib/consultFormat";
 import { deleteConsult, pruneEmptyDrafts, setConsultTitle, type ConsultListItem } from "@/lib/db";
 import type { Consult } from "@/lib/db/types";
-import { colors, font, space } from "@/lib/theme";
+import { colors, font, radius, space } from "@/lib/theme";
 
 /**
  * Shared list body for the Today / History / Notes tabs. Loads on focus, groups
@@ -98,7 +98,15 @@ export function ConsultListScreen({
   return (
     <TabScaffold title={title} onRefresh={reload}>
       {topSlot}
-      {!loaded ? null : items.length === 0 ? (
+      {!loaded ? (
+        // Quiet skeleton instead of a blank flash — the list shape is already
+        // there when the rows stagger in over it.
+        <View style={styles.skeletonGroup}>
+          {[0, 1, 2].map((i) => (
+            <View key={i} style={[styles.skeletonRow, { opacity: 1 - i * 0.25 }]} />
+          ))}
+        </View>
+      ) : items.length === 0 ? (
         <View style={styles.empty}>
           <Ionicons name={emptyIcon} size={30} color={colors.ink3} />
           <Text style={styles.emptyTitle}>{emptyTitle}</Text>
@@ -168,6 +176,13 @@ const styles = StyleSheet.create({
   group: { gap: space.sm },
   groupLabel: { ...font.label, color: colors.ink3, marginTop: space.sm, marginBottom: space.xs },
   empty: { alignItems: "center", gap: space.sm, paddingVertical: 64 },
+  skeletonGroup: { gap: space.sm, marginTop: space.sm },
+  skeletonRow: {
+    height: 76,
+    borderRadius: radius.lg,
+    borderCurve: "continuous",
+    backgroundColor: colors.surface2,
+  },
   emptyTitle: { ...font.h3, color: colors.ink, marginTop: space.xs },
   emptyBody: { ...font.body, color: colors.ink3, textAlign: "center", paddingHorizontal: space.xl },
 });

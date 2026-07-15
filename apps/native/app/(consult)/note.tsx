@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     marginBottom: space.xs,
   },
   emptyTitle: { ...font.h3, color: colors.ink },
-  loadTitle: { ...font.body, fontWeight: "600", color: colors.ink, marginTop: space.xs },
+  loadTitle: { ...font.body, fontWeight: "600", color: colors.ink, marginTop: space.xs, fontVariant: ["tabular-nums"] },
   loadSub: { ...font.bodySm, color: colors.ink3, textAlign: "center" },
   stream: {
     opacity: 0.9,

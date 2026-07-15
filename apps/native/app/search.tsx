@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   count: { ...font.label, color: colors.ink3, textTransform: "uppercase" },
   countRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: space.xs },
   modeChip: { flexDirection: "row", alignItems: "center", gap: 4 },
-  modeText: { ...font.label, color: colors.green, fontWeight: "700" },
+  modeText: { ...font.label, color: colors.green, fontWeight: "700", fontVariant: ["tabular-nums"] },
   list: { gap: space.sm, marginTop: space.md },
   empty: { alignItems: "center", gap: space.sm, paddingVertical: 56 },
   emptyTitle: { ...font.h3, color: colors.ink },

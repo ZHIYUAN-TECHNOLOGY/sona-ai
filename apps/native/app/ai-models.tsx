@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   actionPressed: { transform: [{ scale: 0.98 }], opacity: 0.8 },
   actionText: { ...font.bodySm, color: colors.ink2, flexShrink: 1 },
   progressRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: space.md },
-  progressText: { ...font.bodySm, color: colors.ink2 },
+  progressText: { ...font.bodySm, color: colors.ink2, fontVariant: ["tabular-nums"] },
   track: { height: 6, borderRadius: 3, backgroundColor: colors.line, overflow: "hidden", marginTop: space.sm },
   fill: { height: 6, borderRadius: 3, backgroundColor: colors.greenInk },
   note: { ...font.bodySm, color: colors.ink3, marginTop: space.sm },

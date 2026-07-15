@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 import { Card } from "@/components/consult/Card";
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
@@ -217,11 +217,15 @@ export default function ConsultDetailScreen() {
       right={status ? <Pill label={status.label} variant={status.variant} /> : undefined}
     >
       {!loaded ? (
-        <Card>
-          <View style={styles.center}>
-            <ActivityIndicator color={colors.green} />
-          </View>
-        </Card>
+        // Exiting fade so the spinner card dissolves into the note instead of
+        // vanishing the frame before the note fades in.
+        <Animated.View exiting={FadeOut.duration(150)}>
+          <Card>
+            <View style={styles.center}>
+              <ActivityIndicator color={colors.green} />
+            </View>
+          </Card>
+        </Animated.View>
       ) : note ? (
         <>
           {editing ? (

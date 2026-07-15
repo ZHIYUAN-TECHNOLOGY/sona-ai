@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   },
   prepareBtnReady: { borderColor: colors.green100, backgroundColor: colors.green50 },
   prepareRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  prepareText: { ...font.bodySm, color: colors.ink2, flexShrink: 1 },
+  prepareText: { ...font.bodySm, color: colors.ink2, flexShrink: 1, fontVariant: ["tabular-nums"] },
   track: {
     height: 6,
     borderRadius: 3,
