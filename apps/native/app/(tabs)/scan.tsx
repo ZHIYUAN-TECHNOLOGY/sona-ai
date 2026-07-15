@@ -244,12 +244,6 @@ export default function SmartScanScreen() {
             />
           </View>
         )}
-        {!busy ? (
-          <Pressable onPress={() => capture("sample")} hitSlop={6} style={styles.sampleBtn}>
-            <Ionicons name="flask-outline" size={13} color={colors.greenInk} />
-            <Text style={styles.sampleText}>Try a sample document</Text>
-          </Pressable>
-        ) : null}
         {err ? (
           <Text style={styles.err} selectable>
             {err}
@@ -363,15 +357,6 @@ const styles = StyleSheet.create({
   busyRow: { flexDirection: "row", alignItems: "center", gap: space.sm, marginTop: space.md },
   busyText: { ...font.body, color: colors.greenInk },
   err: { ...font.bodySm, color: colors.red, marginTop: space.sm },
-  sampleBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 5,
-    marginTop: space.sm,
-    paddingVertical: 4,
-  },
-  sampleText: { ...font.bodySm, color: colors.greenInk, fontWeight: "600" },
   listHead: { marginTop: space.sm },
   empty: { alignItems: "center", gap: 6, paddingVertical: space.lg },
   emptyTitle: { ...font.body, fontWeight: "600", color: colors.ink2 },
