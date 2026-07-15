@@ -70,14 +70,14 @@ const QWEN3_4B_2507_LAN = {
 // weeks device-proven, clean 4-section notes in ~15s. Kept loaded-constant as
 // the ONE-LINE REVERT for the 4B trial below.
 //
-// Qwen3-4B-Instruct-2507 — USER-DIRECTED production pick (Jul 15 pm), our own
-// LAN-served export (QWEN3_4B_2507_LAN above). Expect ~30s notes and a one-time
-// ~2.7GB wifi download on first use. If device output shows the classic-4B
-// quantization failure (spaceless text, mangled doses, invented vitals), flip
-// the two lines below back to QWEN3_1_7B_QUANTIZED / "Qwen3-1.7B".
-export const NOTE_MODEL = QWEN3_4B_2507_LAN;
-export const NOTE_MODEL_NAME = "Qwen3-4B-Instruct-2507";
-void QWEN3_1_7B_QUANTIZED;
+// Qwen3-1.7B — the production model (user-directed revert, Jul 15 late pm,
+// after the LAN-served Qwen3-4B-Instruct-2507 trial). 93.5%/0-invention record,
+// weeks device-proven, ~15s notes, bundled (no LAN dependency). The 4B export
+// (QWEN3_4B_2507_LAN above) stays wired for comparison switching — its .pte
+// lives in scratchpad q4b-export and needs the Mac LAN server running.
+export const NOTE_MODEL = QWEN3_1_7B_QUANTIZED;
+export const NOTE_MODEL_NAME = "Qwen3-1.7B";
+void QWEN3_4B_2507_LAN;
 void QWEN3_5_2B_QUANTIZED;
 
 // On-device text-embedding model for semantic search / RAG (the Knowledge tab and,
