@@ -209,6 +209,7 @@ export default function SettingsScreen() {
             <Switch
               value={semantic}
               onValueChange={(v) => {
+                haptic("select");
                 setSemantic(v);
                 setSemanticSearch(v);
               }}

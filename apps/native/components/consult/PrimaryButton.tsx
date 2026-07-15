@@ -29,10 +29,10 @@ export function PrimaryButton({
   const fg = variant === "ghost" ? colors.ink : colors.white;
   const glow = isPrimary || isDanger;
 
-  // A light tap on the meaningful CTAs (primary/danger); ghost stays silent.
+  // A light tap on the primary CTA; danger warns (destructive weight); ghost stays silent.
   const press = () => {
     if (!isPrimary && !isDanger) return onPress?.();
-    haptic("tap");
+    haptic(isDanger ? "warn" : "tap");
     onPress?.();
   };
 
