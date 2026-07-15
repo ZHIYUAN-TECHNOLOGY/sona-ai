@@ -4,17 +4,19 @@ import {
   QWEN3_5_2B_QUANTIZED,
 } from "react-native-executorch";
 
-// SEA-LION v4 4B — OUR OWN export (official executorch gemma3 weight mapping +
-// hand-derived 4B params; scratchpad sealion-export, Jul 15 2026). DEV-TEST ONLY:
-// served from the dev Mac over LAN — phone and Mac must share wifi for the one-time
-// download; after that the model is cached on-device. User-directed trial despite
-// losing the Mac harness to Qwen3-1.7B (82.2% vs 93.5% recall — docs/model-roadmap.md);
-// pending the device-quantized eval gate. QWEN3_1_7B_QUANTIZED stays the revert line.
-const SEALION_V4_4B_LAN = {
+// Qwen3-4B-Instruct-2507 — OUR OWN ExecuTorch export (official qwen3 recipe,
+// 8da4w XNNPACK; scratchpad q4b-export, Jul 15 2026). DEV-TEST SERVING: from the
+// dev Mac over LAN — phone and Mac must share wifi for the one-time download;
+// after that the model is cached on-device. User-directed production pick
+// (Jul 15 pm). Mac harness on the rich prompt: 90.8% recall / 1 invention
+// ("fever", thin case) / 6-of-6 format vs Qwen3-1.7B's 90.7% / 0 / 6-of-6 —
+// device-quantized behaviour is the open risk (classic Qwen3-4B degraded badly
+// after 8da4w). QWEN3_1_7B_QUANTIZED stays the one-line revert.
+const QWEN3_4B_2507_LAN = {
   // Custom exports aren't in the library's LLMModelName union — the cast is the
   // supported escape hatch (name is only telemetry + reload key).
-  modelName: "sealion-v4-4b-8da4w",
-  modelSource: "http://192.168.0.139:8765/sealion_v4_4b_8da4w.pte",
+  modelName: "qwen3-4b-instruct-2507-8da4w",
+  modelSource: "http://192.168.0.139:8765/q4b2507_8da4w.pte",
   tokenizerSource: "http://192.168.0.139:8765/tokenizer.json",
   tokenizerConfigSource: "http://192.168.0.139:8765/tokenizer_config.json",
 } as unknown as typeof QWEN3_1_7B_QUANTIZED;
@@ -65,12 +67,18 @@ const SEALION_V4_4B_LAN = {
 //   "antibiotic" + "steroid", format 3/6 — vs Qwen3-1.7B's 93.5% / 0 / 6/6.
 // - On-device again (Jul 15 pm): same ramble class. DO NOT RETRY Qwen3.5-2B.
 // Qwen3-1.7B: 93.5% recall / 0 inventions / 6-of-6 format on the harness,
-// weeks device-proven, clean 4-section notes in ~15s.
-export const NOTE_MODEL = QWEN3_1_7B_QUANTIZED;
-export const NOTE_MODEL_NAME = "Qwen3-1.7B";
+// weeks device-proven, clean 4-section notes in ~15s. Kept loaded-constant as
+// the ONE-LINE REVERT for the 4B trial below.
+//
+// Qwen3-4B-Instruct-2507 — USER-DIRECTED production pick (Jul 15 pm), our own
+// LAN-served export (QWEN3_4B_2507_LAN above). Expect ~30s notes and a one-time
+// ~2.7GB wifi download on first use. If device output shows the classic-4B
+// quantization failure (spaceless text, mangled doses, invented vitals), flip
+// the two lines below back to QWEN3_1_7B_QUANTIZED / "Qwen3-1.7B".
+export const NOTE_MODEL = QWEN3_4B_2507_LAN;
+export const NOTE_MODEL_NAME = "Qwen3-4B-Instruct-2507";
+void QWEN3_1_7B_QUANTIZED;
 void QWEN3_5_2B_QUANTIZED;
-// SEA-LION LAN export kept for comparison switching (see SEALION_V4_4B_LAN above).
-void SEALION_V4_4B_LAN;
 
 // On-device text-embedding model for semantic search / RAG (the Knowledge tab and,
 // later, note search). Multilingual on purpose: a quantized paraphrase MiniLM that
