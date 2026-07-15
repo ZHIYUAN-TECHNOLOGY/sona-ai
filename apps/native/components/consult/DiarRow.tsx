@@ -49,6 +49,7 @@ const styles = StyleSheet.create({
   who: {
     borderWidth: 1,
     borderRadius: 6,
+    borderCurve: "continuous",
     paddingHorizontal: 6,
     paddingVertical: 2,
     marginTop: 1,

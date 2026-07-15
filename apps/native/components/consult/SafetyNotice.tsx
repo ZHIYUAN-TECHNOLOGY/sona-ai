@@ -22,6 +22,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.amberLine,
     borderRadius: 10,
+    borderCurve: "continuous",
     paddingVertical: 8,
     paddingHorizontal: 11,
     marginTop: 9,

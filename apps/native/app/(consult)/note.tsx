@@ -25,7 +25,7 @@ import { templateById } from "@/lib/pipeline/templates";
 import { colors, font, space } from "@/lib/theme";
 
 // Amber for a "moderate" medication flag (severe → red, info → ink3).
-const MODERATE = "#B45309";
+const MODERATE = colors.amber;
 
 // Screen 4 of 6 — Consult note. The note is generated ON-DEVICE from the
 // de-identified transcript, re-identified locally, and rendered as rich Markdown.
