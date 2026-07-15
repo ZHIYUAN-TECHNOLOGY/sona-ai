@@ -235,14 +235,28 @@ function editDistance(a: string, b: string): number {
 const SECTION_CANON = ["Subjective", "Objective", "Assessment", "Plan"] as const;
 
 // Fuzzy budget: 2 edits for long section words, 1 for "Plan" (short words false-hit
-// too easily at distance 2 — "plant" stays prose, "plann" still repairs).
+// too easily at distance 2 — "plant" stays prose, "plann" still repairs). BEST match
+// wins, not first-within-budget: "Objective" is only 2 edits from "Subjective", so a
+// first-match scan would misfile every correctly-spelled Objective heading. A tie
+// between two canons is ambiguous → no repair.
 function canonSection(word: string): string | null {
   const w = word.toLowerCase();
+  let best: string | null = null;
+  let bestDist = 3;
+  let tied = false;
   for (const canon of SECTION_CANON) {
     const c = canon.toLowerCase();
-    if (editDistance(w, c) <= (c.length >= 8 ? 2 : 1)) return canon;
+    const d = editDistance(w, c);
+    if (d > (c.length >= 8 ? 2 : 1)) continue;
+    if (d < bestDist) {
+      best = canon;
+      bestDist = d;
+      tied = false;
+    } else if (d === bestDist) {
+      tied = true;
+    }
   }
-  return null;
+  return tied ? null : best;
 }
 
 // A label line is: optional heading/quote marks (NOT a "- " bullet), the label,

@@ -36,7 +36,8 @@ import {
   type CaptureDiag,
 } from "./realConsultStt";
 import type { ClusterSegment } from "./sttAlign";
-import { getSttMode } from "./sttMode";
+import { makeDemoNoteLlm } from "./demoNote";
+import { getSttMode, isDemoMode } from "./sttMode";
 import { unloadWhisper } from "./whisperStt";
 import { NOTE_MODEL } from "./model";
 import type { DraftNote } from "./noteGen";
@@ -258,7 +259,10 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
       captureRef.current.stop().catch(() => {});
       captureRef.current = null;
     }
-    setLlmWanted(true); // mock/demo path: no whisper conflict — load the note LLM now
+    // Demo mode never touches the real LLM (the note is scripted) — skipping the
+    // 1.2GB load keeps RAM free and the filming flow instant. Mock-without-demo
+    // still loads it (no whisper conflict on that path).
+    if (!isDemoMode()) setLlmWanted(true);
     return "privacy";
   }, []);
 
@@ -329,9 +333,17 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setNoteError(null);
   }, []);
 
+  // Demo mode's live-draft stream (the scripted note materializing). Kept separate
+  // from llm.response so the two sources can never interleave.
+  const [demoNoteStream, setDemoNoteStream] = useState("");
+
   // Draft the SOAP note on-device from the de-identified transcript, re-identify
   // locally, persist, and expose it. Idempotent: no-op unless idle with a redaction
   // ready. The note screen calls this once the model is loaded.
+  //
+  // Demo mode swaps ONLY the LlmLike: the scripted locked-consult note streams in
+  // word-by-word (~9s — a deterministic filming beat) and then rides the exact same
+  // parse → re-identify → persist → audit path as a real generation.
   const draftNote = useCallback(async () => {
     const id = idRef.current;
     const red = redactionRef.current;
@@ -340,13 +352,16 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setNoteError(null);
     try {
       const prompt = templatePrompt(templateById(templateRef.current));
-      const drafted = await draftClinicalNote(id, red.segments, llm, prompt);
+      const source = isDemoMode() ? makeDemoNoteLlm(setDemoNoteStream) : llm;
+      const drafted = await draftClinicalNote(id, red.segments, source, prompt);
       setNote(drafted);
       setNoteStatus("ready");
       setStatus("noted");
     } catch (e) {
       setNoteError(e instanceof Error ? e.message : String(e));
       setNoteStatus("error");
+    } finally {
+      setDemoNoteStream("");
     }
   }, [llm]);
 
@@ -405,11 +420,14 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         note,
         noteStatus,
         noteError,
-        llmReady: llm.isReady,
+        // Demo mode is always "ready": the scripted note needs no model. Read at
+        // render time — any state change (status, streams) re-evaluates it.
+        llmReady: isDemoMode() || llm.isReady,
         llmProgress: llm.downloadProgress ?? 0,
         // Live token stream (raw, think-stripped by the consumer) — lets the note
         // screen show the draft materializing instead of a 20-30s dead spinner.
-        noteStream: llm.response ?? "",
+        // Demo mode streams the scripted note through its own channel.
+        noteStream: isDemoMode() ? demoNoteStream : (llm.response ?? ""),
         templateId,
         startConsult,
         startRecording,
