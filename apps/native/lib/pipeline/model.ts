@@ -70,15 +70,20 @@ const QWEN3_4B_2507_LAN = {
 // weeks device-proven, clean 4-section notes in ~15s. Kept loaded-constant as
 // the ONE-LINE REVERT for the 4B trial below.
 //
-// Qwen3-1.7B — the production model (user-directed revert, Jul 15 late pm,
-// after the LAN-served Qwen3-4B-Instruct-2507 trial). 93.5%/0-invention record,
-// weeks device-proven, ~15s notes, bundled (no LAN dependency). The 4B export
-// (QWEN3_4B_2507_LAN above) stays wired for comparison switching — its .pte
-// lives in scratchpad q4b-export and needs the Mac LAN server running.
-export const NOTE_MODEL = QWEN3_1_7B_QUANTIZED;
-export const NOTE_MODEL_NAME = "Qwen3-1.7B";
+// Qwen3.5-2B — THIRD user-directed swap to this model (Jul 15 night), confirmed
+// via explicit prompt with the full failure record restated. The record stands
+// unchanged (do-not-retry was AND REMAINS the engineering position):
+// 4 failures Jul 15 alone — Mac 51%, Mac re-trial 36.7% (invented antibiotic/
+// steroid), device am (screenshot #149), device pm (user's own screenshots:
+// hallucinated referrals/imaging, token-cap rambles, no SOAP structure).
+// User confirmed understanding that output will return. Post-processing
+// (SOAP salvage, mid-line heading repair) softens the FORMAT damage only.
+// Reverts one line away: QWEN3_1_7B_QUANTIZED / "Qwen3-1.7B" (bundled) or
+// QWEN3_4B_2507_LAN / "Qwen3-4B-Instruct-2507" (LAN).
+export const NOTE_MODEL = QWEN3_5_2B_QUANTIZED;
+export const NOTE_MODEL_NAME = "Qwen3.5-2B";
+void QWEN3_1_7B_QUANTIZED;
 void QWEN3_4B_2507_LAN;
-void QWEN3_5_2B_QUANTIZED;
 
 // On-device text-embedding model for semantic search / RAG (the Knowledge tab and,
 // later, note search). Multilingual on purpose: a quantized paraphrase MiniLM that
