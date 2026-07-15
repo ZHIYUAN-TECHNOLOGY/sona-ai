@@ -151,15 +151,6 @@ export const shadow = {
   glow: "0px 8px 20px rgba(14,124,82,0.22)",
 } as const;
 
-// Legacy RN shadow object — still used by components not yet migrated to `shadow`.
-export const glowShadow = {
-  shadowColor: colors.green,
-  shadowOpacity: 0.22,
-  shadowRadius: 14,
-  shadowOffset: { width: 0, height: 8 },
-  elevation: 6,
-} as const;
-
 // Emil-calibrated motion tokens (durations in ms, RN Reanimated easing via cubic-bezier).
 export const motion = {
   duration: { press: 140, sheet: 320, title: 220, tab: 180 },
@@ -170,5 +161,5 @@ export const motion = {
   pressScale: 0.97,
 } as const;
 
-export const theme = { colors, radius, space, font, fonts, shadow, glowShadow, motion } as const;
+export const theme = { colors, radius, space, font, fonts, shadow, motion } as const;
 export type Theme = typeof theme;

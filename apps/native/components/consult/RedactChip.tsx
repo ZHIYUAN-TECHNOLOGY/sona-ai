@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 
-import { redaction, redactionClassOf } from "@/lib/theme";
+import { colors, redaction, redactionClassOf } from "@/lib/theme";
 
 /**
  * The "redacted identifier" chip (NAME_1, IC_1, …) shown inline in the
@@ -12,7 +12,7 @@ export function RedactChip({ token }: { token: string }) {
   const c = redaction[redactionClassOf(token)];
   return (
     <View style={[styles.chip, { backgroundColor: c.fg }]}>
-      <Ionicons name="lock-closed" size={9} color="#ffffff" />
+      <Ionicons name="lock-closed" size={9} color={colors.white} />
       <Text style={styles.text}>{token}</Text>
     </View>
   );
@@ -24,11 +24,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 3,
     borderRadius: 6,
+    borderCurve: "continuous",
     paddingHorizontal: 6,
     paddingVertical: 1,
   },
   text: {
-    color: "#ffffff",
+    color: colors.white,
     fontSize: 10.5,
     fontWeight: "700",
     letterSpacing: 0.2,
