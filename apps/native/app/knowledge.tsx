@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   input: { ...font.body, color: colors.ink, flex: 1, padding: 0 },
   disclaimer: { ...font.bodySm, color: colors.ink3, paddingHorizontal: space.xs },
   modeChip: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: space.xs },
-  modeText: { ...font.bodySm, color: colors.green, fontWeight: "600", paddingHorizontal: space.xs },
+  modeText: { ...font.bodySm, color: colors.green, fontWeight: "600", paddingHorizontal: space.xs, fontVariant: ["tabular-nums"] },
   section: { gap: space.sm },
   sectionLabel: { ...font.label, color: colors.ink3, textTransform: "uppercase", marginTop: space.xs },
   list: { gap: space.sm },

@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   busyRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  busyText: { ...font.body, color: colors.greenInk },
+  busyText: { ...font.body, color: colors.greenInk, fontVariant: ["tabular-nums"] },
   stream: { ...font.bodySm, color: colors.ink2, marginTop: space.sm, lineHeight: 18, opacity: 0.85 },
   note: { ...font.bodySm, color: colors.greenInk, marginTop: space.sm },
   footerCol: { gap: space.sm },
