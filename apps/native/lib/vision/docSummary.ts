@@ -1,6 +1,6 @@
 import { LLMModule } from "react-native-executorch";
 
-import { LOCKED_DEMO_DOC_SUMMARY, streamDemoText } from "../pipeline/demoNote";
+import { demoDocSummaryFor, streamDemoText } from "../pipeline/demoNote";
 import { NOTE_MODEL, NOTE_MODEL_NAME } from "../pipeline/model";
 import { collapseRepeats, stripThink, truncateDegenerate } from "../pipeline/noteGen";
 import { isDemoMode } from "../pipeline/sttMode";
@@ -110,14 +110,16 @@ export async function generateDocSummary(
   onLoaded?: () => void,
   onToken?: (partial: string) => void,
 ): Promise<DocSummary> {
-  // Demo mode: the scripted summary of the seeded demo referral streams in
-  // (~7s filming beat) — no model load, no RAM pressure, deterministic every
-  // take — then rides the SAME formatDocSummary path as a real generation.
+  // Demo mode: a scripted summary streams in (~7s filming beat) — no model
+  // load, no RAM pressure, deterministic every take — then rides the SAME
+  // formatDocSummary path as a real generation. The script is picked by the
+  // DETECTED doc type: the seeded demo referral gets its referral summary;
+  // anything else (the live-scan dental Rx filming prop) gets the Rx summary.
   if (isDemoMode()) {
     await new Promise((r) => setTimeout(r, 400)); // brief "load" beat before tokens flow
     onLoaded?.();
     const t0 = Date.now();
-    const raw = await streamDemoText(LOCKED_DEMO_DOC_SUMMARY, (acc) => onToken?.(acc), 60);
+    const raw = await streamDemoText(demoDocSummaryFor(docTypeLabel), (acc) => onToken?.(acc), 60);
     const { title, markdown } = formatDocSummary(raw, docTypeLabel);
     return { title, markdown, generationMs: Date.now() - t0, model: NOTE_MODEL_NAME };
   }
