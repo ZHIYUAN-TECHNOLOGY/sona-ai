@@ -51,13 +51,14 @@ const SEALION_V4_4B_LAN = {
 // /no_think. RAM discipline stays: whisper is UNLOADED before this model loads.
 // Sampling (temperature / repetitionPenalty) is applied at RUNTIME via llm.configure() in
 // PipelineProvider — executorch ignores a generationConfig field on the model object.
-// Qwen3.5-2B — user-directed trial (Jul 15 2026), bundled SM 8da4w pte. Mac-harness
-// record (docs/model-roadmap.md): 51% recall, invented amoxicillin for a
-// penicillin-allergic case — judge device output against that before filming.
-export const NOTE_MODEL = QWEN3_5_2B_QUANTIZED;
-export const NOTE_MODEL_NAME = "Qwen3.5-2B";
-// Revert line (device-proven): NOTE_MODEL = QWEN3_1_7B_QUANTIZED, name "Qwen3-1.7B".
-void QWEN3_1_7B_QUANTIZED;
+// Qwen3-1.7B — the production model. DEVICE-VALIDATED winner of every trial
+// (docs/model-roadmap.md): 93.5% recall / 0 inventions on the harness, clean
+// 4-section notes in ~15s on the phone. Qwen3.5-2B was user-trialed on-device
+// (Jul 15 2026) and reproduced its Mac failure exactly — hallucinated timelines,
+// invented findings, no format, rambled to the token cap. Do not retry it.
+export const NOTE_MODEL = QWEN3_1_7B_QUANTIZED;
+export const NOTE_MODEL_NAME = "Qwen3-1.7B";
+void QWEN3_5_2B_QUANTIZED;
 // SEA-LION LAN export kept for comparison switching (see SEALION_V4_4B_LAN above).
 void SEALION_V4_4B_LAN;
 
