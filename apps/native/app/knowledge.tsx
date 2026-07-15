@@ -83,6 +83,23 @@ export default function KnowledgeScreen() {
         On-device reference · {corpus.length} entries · not a substitute for clinical judgement.
       </Text>
 
+      {/* One-tap sample queries — demo aid + an empty-state hint of what to ask. */}
+      {!q ? (
+        <View style={styles.sampleRow}>
+          {["tonsillitis antibiotic dose", "sakit dada bila refer", "URTI safety netting"].map((s) => (
+            <Pressable
+              key={s}
+              accessibilityRole="button"
+              onPress={() => setQuery(s)}
+              style={({ pressed }) => [styles.sampleChip, pressed && styles.samplePressed]}
+            >
+              <Ionicons name="search-outline" size={12} color={colors.greenInk} />
+              <Text style={styles.sampleText}>{s}</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+
       {loadingModel ? (
         <Text style={styles.modeText}>Loading semantic model… {Math.round(downloadProgress * 100)}%</Text>
       ) : q ? (
@@ -210,6 +227,20 @@ function KnowledgeCard({ doc }: { doc: KnowledgeDoc }) {
 }
 
 const styles = StyleSheet.create({
+  sampleRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  sampleChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.green100,
+    backgroundColor: colors.greenSoft,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  samplePressed: { opacity: 0.6 },
+  sampleText: { fontSize: 12, fontWeight: "600", color: colors.greenInk },
   field: {
     flexDirection: "row",
     alignItems: "center",
