@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { formatDocSummary } from "../vision/docSummaryFormat";
-import { LOCKED_DEMO_DOC_SUMMARY, LOCKED_DEMO_NOTE, makeDemoNoteLlm, streamDemoText } from "./demoNote";
+import {
+  demoDocSummaryFor,
+  LOCKED_DEMO_DOC_SUMMARY,
+  LOCKED_DEMO_NOTE,
+  LOCKED_DEMO_RX_SUMMARY,
+  makeDemoNoteLlm,
+  streamDemoText,
+} from "./demoNote";
 import { generateNote } from "./noteGen";
 
 describe("demo note", () => {
@@ -47,4 +54,21 @@ describe("demo note", () => {
     expect(markdown).toContain("NSAID allergy");
     expect(markdown).toContain("three weeks");
   }, 30_000);
+
+  it("selects the script by detected doc type", () => {
+    expect(demoDocSummaryFor("Referral letter")).toBe(LOCKED_DEMO_DOC_SUMMARY);
+    expect(demoDocSummaryFor("Prescription")).toBe(LOCKED_DEMO_RX_SUMMARY);
+    expect(demoDocSummaryFor("Document")).toBe(LOCKED_DEMO_RX_SUMMARY);
+  });
+
+  it("dental Rx script survives formatDocSummary with every med, timing and advice intact", () => {
+    const { title, markdown } = formatDocSummary(LOCKED_DEMO_RX_SUMMARY, "Prescription");
+    expect(title).toBe("Dental prescription, five-day course");
+    expect(markdown).toContain("Tab Augmentin 625mg, 1-0-1 x 5 days, after meals");
+    expect(markdown).toContain("Tab Enzoflam, 1-0-1 x 5 days, after meals");
+    expect(markdown).toContain("Tab Pan-D 40mg, 1-0-0 x 5 days, before meals");
+    expect(markdown).toContain("Hexigel gum paint massage, 1-0-1 x 1 week");
+    expect(markdown).toContain("Not stated."); // Key findings honest gap
+    expect(markdown).not.toMatch(/sachin/i); // never any patient name
+  });
 });

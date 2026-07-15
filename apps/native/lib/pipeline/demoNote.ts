@@ -34,12 +34,13 @@ export const LOCKED_DEMO_NOTE = [
   "Flags: breathlessness",
 ].join("\n");
 
-// The Smart Scan counterpart: the ideal summary of the seeded demo referral
-// letter (lib/demo/seed.ts DEMO_DOC_TEXT — three-week cough, amoxicillin course
-// completed, paracetamol PRN, metformin, NSAID allergy, imaging request).
-// Rides docSummary's formatDocSummary path, so the final card is formatted by
-// the exact production code. If a different document is open in Demo mode, this
-// script still plays — Demo mode is scripted by definition.
+// Smart Scan counterparts: scripted summaries riding docSummary's
+// formatDocSummary path, so the final card is formatted by the exact
+// production code. Two scripts, selected by the DETECTED document type:
+//
+// 1. The seeded demo referral letter (lib/demo/seed.ts DEMO_DOC_TEXT —
+//    three-week cough, completed amoxicillin, paracetamol PRN, metformin,
+//    NSAID allergy, imaging request).
 export const LOCKED_DEMO_DOC_SUMMARY = [
   "Title: Referral for persistent cough",
   "## Document type",
@@ -54,6 +55,31 @@ export const LOCKED_DEMO_DOC_SUMMARY = [
   "## Follow-up needed",
   "- Assess for further imaging and management",
 ].join("\n");
+
+// 2. The LIVE-SCAN filming prop: the handwritten White Tusk dental
+//    prescription (12/10/22 — Augmentin 625mg and Enzoflam after meals,
+//    Pan-D 40mg before meals, all 1-0-1/1-0-0 × 5 days, Hexigel gum paint
+//    advice × 1 week). Key findings stays "Not stated." on purpose — the
+//    prescription carries no findings, and the honest gap is itself the
+//    anti-hallucination demo beat. No patient name anywhere (PII rules).
+export const LOCKED_DEMO_RX_SUMMARY = [
+  "Title: Dental prescription, five-day course",
+  "## Document type",
+  "- Handwritten dental clinic prescription",
+  "## Key findings",
+  "- Not stated.",
+  "## Medications & doses",
+  "- Tab Augmentin 625mg, 1-0-1 x 5 days, after meals",
+  "- Tab Enzoflam, 1-0-1 x 5 days, after meals",
+  "- Tab Pan-D 40mg, 1-0-0 x 5 days, before meals",
+  "## Follow-up needed",
+  "- Hexigel gum paint massage, 1-0-1 x 1 week",
+].join("\n");
+
+/** Pick the scripted Smart Scan summary matching the detected document type. */
+export function demoDocSummaryFor(docTypeLabel: string): string {
+  return /referral/i.test(docTypeLabel) ? LOCKED_DEMO_DOC_SUMMARY : LOCKED_DEMO_RX_SUMMARY;
+}
 
 // Word-level cadence ≈ a 1.7B model's decode rate on-device; ~120 words × 75ms
 // lands the full draft in roughly nine seconds — a good filming beat.
