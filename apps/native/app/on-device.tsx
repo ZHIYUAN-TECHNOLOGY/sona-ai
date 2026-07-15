@@ -120,7 +120,9 @@ function Row({
     <View style={styles.row}>
       <Ionicons name={icon} size={18} color={colors.green} />
       <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
+      <Text style={styles.rowValue} selectable>
+        {value}
+      </Text>
     </View>
   );
 }

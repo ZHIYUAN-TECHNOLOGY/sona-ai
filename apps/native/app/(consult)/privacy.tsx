@@ -165,7 +165,7 @@ export default function PrivacyScreen() {
                 <View key={token} style={styles.mapRow}>
                   <RedactChip token={token} />
                   <Text style={styles.mapArrow}>→</Text>
-                  <Text style={styles.mapReal} numberOfLines={1}>
+                  <Text style={styles.mapReal} numberOfLines={1} selectable>
                     {real}
                   </Text>
                 </View>
