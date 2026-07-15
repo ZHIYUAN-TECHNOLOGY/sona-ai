@@ -127,6 +127,19 @@ export default function SettingsScreen() {
       Alert.alert("Demo data seeded", "Consults and Smart Scan now show sample rows.");
     });
   };
+  // Master demo switch: transcript + prefill ride on sttMode "demo"; lists get seeded
+  // on first arm. Disarm returns to the real pipeline but keeps seeded rows (Reset
+  // clears them) so takes can be re-shot without re-seeding.
+  const demoMode = demo;
+  const setDemoMode = async (v: boolean) => {
+    haptic(v ? "select" : "tap");
+    setDemo(v);
+    setSttMode(v ? "demo" : "real");
+    if (v && seeded === false) {
+      await seedDemoData();
+      setSeeded(true);
+    }
+  };
   const resetDemo = () => {
     haptic("tap");
     void resetDemoData().then(() => {
@@ -205,8 +218,18 @@ export default function SettingsScreen() {
 
       <Card>
         <CardHeading>Demo</CardHeading>
+        {/* Master switch — arms every filming aid in one tap: scripted transcript
+            (drives the redaction sweep + note-gen with identical input each take),
+            demo patient prefill on consent, and seeded list data. OFF returns to the
+            real pipeline; seeded rows stay until Reset so retakes are cheap. */}
         <SettingsRow
           first
+          icon="videocam-outline"
+          label="Demo mode"
+          value={demoMode ? "Filming aids armed" : undefined}
+          right={<Switch value={demoMode} onValueChange={(v) => void setDemoMode(v)} />}
+        />
+        <SettingsRow
           icon="albums-outline"
           label="Demo transcript"
           right={
@@ -227,8 +250,9 @@ export default function SettingsScreen() {
         />
         <SettingsRow icon="trash-outline" label="Reset demo data" onPress={resetDemo} />
         <Text style={styles.hint}>
-          Seeds fictional consults and a sample scan so lists look populated for a demo.
-          Reset removes exactly what was seeded — real consults are never touched.
+          Demo mode arms everything for filming: scripted consult transcript, prefilled
+          demo patient, seeded lists, sample scan. Real consults are never touched;
+          Reset removes exactly what was seeded.
         </Text>
       </Card>
 
