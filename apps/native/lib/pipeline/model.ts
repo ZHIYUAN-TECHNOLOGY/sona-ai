@@ -51,14 +51,21 @@ const SEALION_V4_4B_LAN = {
 // /no_think. RAM discipline stays: whisper is UNLOADED before this model loads.
 // Sampling (temperature / repetitionPenalty) is applied at RUNTIME via llm.configure() in
 // PipelineProvider — executorch ignores a generationConfig field on the model object.
-// Qwen3-1.7B — the production model. DEVICE-VALIDATED winner of every trial
-// (docs/model-roadmap.md): 93.5% recall / 0 inventions on the harness, clean
-// 4-section notes in ~15s on the phone. Qwen3.5-2B was user-trialed on-device
-// (Jul 15 2026) and reproduced its Mac failure exactly — hallucinated timelines,
-// invented findings, no format, rambled to the token cap. Do not retry it.
-export const NOTE_MODEL = QWEN3_1_7B_QUANTIZED;
-export const NOTE_MODEL_NAME = "Qwen3-1.7B";
-void QWEN3_5_2B_QUANTIZED;
+// Qwen3.5-2B — USER-INSISTED OVERRIDE (Jul 15 2026) against the trial record.
+// Its full record, so the context never gets lost:
+// - Mac harness (old env): 51% recall, invented amoxicillin for a
+//   penicillin-allergic case (docs/model-roadmap.md).
+// - On-device (Jul 15 am, screenshot #149): hallucinated timelines, invented
+//   findings, no SOAP structure, rambled to token cap → reverted same hour.
+// - Mac harness RE-TRIAL (Jul 15 pm, transformers 5.13.1,
+//   tools/note-eval/out_q35_2b_retrial.json): 36.7% recall, invented
+//   "antibiotic" + "steroid", format 3/6 — vs Qwen3-1.7B's 93.5% / 0 / 6/6.
+// User was shown all three results and directed the swap anyway.
+// QWEN3_1_7B_QUANTIZED remains the device-validated revert line — flip the two
+// lines below to restore it.
+export const NOTE_MODEL = QWEN3_5_2B_QUANTIZED;
+export const NOTE_MODEL_NAME = "Qwen3.5-2B";
+void QWEN3_1_7B_QUANTIZED;
 // SEA-LION LAN export kept for comparison switching (see SEALION_V4_4B_LAN above).
 void SEALION_V4_4B_LAN;
 
