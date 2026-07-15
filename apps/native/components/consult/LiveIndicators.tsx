@@ -1,14 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
+import { useReducedMotion } from "react-native-reanimated";
 
 import { colors, radius } from "@/lib/theme";
 
-/** Blinking red record dot. */
+/** Blinking red record dot. Reduced motion: solid dot (state still legible by colour). */
 export function RecDot({ live = true }: { live?: boolean }) {
+  const reduce = useReducedMotion();
+  const animate = live && !reduce;
   const opacity = useRef(new Animated.Value(1)).current;
   useEffect(() => {
-    if (!live) return;
+    if (!animate) return;
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(opacity, { toValue: 0.2, duration: 650, useNativeDriver: true }),
@@ -17,15 +20,17 @@ export function RecDot({ live = true }: { live?: boolean }) {
     );
     loop.start();
     return () => loop.stop();
-  }, [live, opacity]);
-  return <Animated.View style={[styles.dot, { opacity: live ? opacity : 1 }]} />;
+  }, [animate, opacity]);
+  return <Animated.View style={[styles.dot, { opacity: animate ? opacity : 1 }]} />;
 }
 
-/** 4-bar mic level meter, animated. */
+/** 4-bar mic level meter, animated. Reduced motion: static mid-height bars. */
 export function MicMeter({ live = true }: { live?: boolean }) {
+  const reduce = useReducedMotion();
+  const animate = live && !reduce;
   const bars = useRef([6, 11, 13, 8].map((h) => ({ h, v: new Animated.Value(0.5) }))).current;
   useEffect(() => {
-    if (!live) return;
+    if (!animate) return;
     const loops = bars.map(({ v }, i) =>
       Animated.loop(
         Animated.sequence([
@@ -41,7 +46,7 @@ export function MicMeter({ live = true }: { live?: boolean }) {
     );
     loops.forEach((l) => l.start());
     return () => loops.forEach((l) => l.stop());
-  }, [live, bars]);
+  }, [animate, bars]);
   return (
     <View style={styles.meter}>
       {bars.map(({ h, v }, i) => (
@@ -52,7 +57,7 @@ export function MicMeter({ live = true }: { live?: boolean }) {
             height: h,
             borderRadius: 1,
             backgroundColor: colors.green,
-            transform: [{ scaleY: live ? v : 0.6 }],
+            transform: [{ scaleY: animate ? v : 0.6 }],
           }}
         />
       ))}

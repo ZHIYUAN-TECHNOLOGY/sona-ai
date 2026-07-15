@@ -10,6 +10,7 @@ import Animated, {
   SlideInDown,
   SlideOutDown,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
@@ -37,6 +38,8 @@ export function BottomSheet({
 }) {
   const insets = useSafeAreaInsets();
   const ty = useSharedValue(0);
+  // Reduced motion: the sheet fades in place instead of sliding the viewport height.
+  const reduce = useReducedMotion();
 
   // The Modal keeps this component mounted across open/close, and the drag-to-dismiss
   // branch doesn't reset ty — so reset the drag offset each time the sheet opens, or a
@@ -71,8 +74,16 @@ export function BottomSheet({
 
         <GestureDetector gesture={pan}>
           <Animated.View
-            entering={SlideInDown.duration(320).easing(Easing.bezier(0.32, 0.72, 0, 1))}
-            exiting={SlideOutDown.duration(220).easing(Easing.bezier(0.32, 0.72, 0, 1))}
+            entering={
+              reduce
+                ? FadeIn.duration(200)
+                : SlideInDown.duration(320).easing(Easing.bezier(0.32, 0.72, 0, 1))
+            }
+            exiting={
+              reduce
+                ? FadeOut.duration(160)
+                : SlideOutDown.duration(220).easing(Easing.bezier(0.32, 0.72, 0, 1))
+            }
             style={[styles.sheetWrap, dragStyle]}
           >
             {/* Translucent glass surface (liquid glass → blur → solid fallback). The

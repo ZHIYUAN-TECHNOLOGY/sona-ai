@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInDown, useReducedMotion } from "react-native-reanimated";
 
 import { ConsultScreen } from "@/components/consult/ConsultScreen";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
@@ -13,6 +13,7 @@ import { colors, font, radius, space } from "@/lib/theme";
 // it and returns. Purely a UI preference — no PHI involved.
 export default function TemplateScreen() {
   const { templateId, setTemplate } = useConsultPipeline();
+  const reduce = useReducedMotion();
 
   const choose = (id: string) => {
     setTemplate(id);
@@ -30,7 +31,10 @@ export default function TemplateScreen() {
         {TEMPLATES.map((t, i) => {
           const active = t.id === templateId;
           return (
-            <Animated.View key={t.id} entering={FadeInDown.delay(i * 45).duration(280)}>
+            <Animated.View
+              key={t.id}
+              entering={reduce ? FadeIn.duration(200) : FadeInDown.delay(i * 45).duration(280)}
+            >
               <Pressable
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}

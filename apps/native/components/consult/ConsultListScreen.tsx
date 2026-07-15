@@ -3,7 +3,7 @@ import { router, useFocusEffect } from "expo-router";
 import type { ReactNode } from "react";
 import { useCallback, useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInDown, useReducedMotion } from "react-native-reanimated";
 
 import { ListRow } from "@/components/consult/ListRow";
 import { Pill } from "@/components/consult/Pill";
@@ -129,13 +129,17 @@ function Group({
   onRename: (c: Consult) => void;
   onRemove: (c: Consult) => void;
 }) {
+  const reduce = useReducedMotion();
   return (
     <View style={styles.group}>
       <Text style={styles.groupLabel}>{label}</Text>
       {items.map((c, i) => {
         const s = statusMeta(c.status);
         return (
-          <Animated.View key={c.id} entering={FadeInDown.delay(i * 45).duration(280)}>
+          <Animated.View
+            key={c.id}
+            entering={reduce ? FadeIn.duration(200) : FadeInDown.delay(i * 45).duration(280)}
+          >
             <SwipeableRow
               actions={[
                 { label: "Rename", icon: "pencil", color: colors.ink3, onPress: () => onRename(c) },
