@@ -18,8 +18,8 @@ import { DRUGS, INTERACTIONS } from "@/lib/meds/drugRules.data";
 import { noteToSpeech } from "@/lib/tts/noteSpeech";
 import { readAloud, stopReading } from "@/lib/tts/readAloud";
 import { NOTE_MODEL_NAME } from "@/lib/pipeline/model";
-import { stripThink } from "@/lib/pipeline/noteGen";
-import { noteIsEmpty } from "@/lib/pipeline/noteHighlight";
+import { normalizeModelMarkdown, stripThink } from "@/lib/pipeline/noteGen";
+import { hardenStreamingMarkdown, noteIsEmpty } from "@/lib/pipeline/noteHighlight";
 import { useConsultPipeline } from "@/lib/pipeline/PipelineProvider";
 import { templateById } from "@/lib/pipeline/templates";
 import { colors, font, space } from "@/lib/theme";
@@ -170,12 +170,20 @@ export default function NoteScreen() {
                 {NOTE_MODEL_NAME} · de-identified transcript in, note out. Nothing leaves the phone.
               </Text>
               {llmReady && noteStream ? (
-                // Live token stream — raw preview while the model writes (think-tags
-                // stripped, unterminated block cut); the parsed note replaces it on
-                // completion. Same pattern as the scan-review streaming card.
-                <Text style={styles.stream} numberOfLines={14}>
-                  {stripThink(noteStream).replace(/<think>[\s\S]*/, "").trim()}
-                </Text>
+                // Live draft — the stream renders as FORMATTED markdown while the
+                // model writes (streamdown pattern): think-tags stripped, model
+                // punctuation folded, SOAP structure repaired, dangling marks
+                // closed. The parsed + highlighted note replaces it on completion.
+                <View style={styles.stream}>
+                  <NoteMarkdown
+                    streaming
+                    markdown={hardenStreamingMarkdown(
+                      normalizeModelMarkdown(
+                        stripThink(noteStream).replace(/<think>[\s\S]*/, ""),
+                      ),
+                    )}
+                  />
+                </View>
               ) : null}
             </View>
           )}
@@ -324,10 +332,7 @@ const styles = StyleSheet.create({
   loadTitle: { ...font.body, fontWeight: "600", color: colors.ink, marginTop: space.xs },
   loadSub: { ...font.bodySm, color: colors.ink3, textAlign: "center" },
   stream: {
-    ...font.bodySm,
-    color: colors.ink2,
-    lineHeight: 18,
-    opacity: 0.85,
+    opacity: 0.9,
     alignSelf: "stretch",
     marginTop: space.sm,
   },

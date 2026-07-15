@@ -202,20 +202,127 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// ---------------------------------------------------------------------------
+// Structure repair — salvage SOAP structure a sloppy model dropped
+// ---------------------------------------------------------------------------
+//
+// Small models under pressure emit section labels as prose ("Subjectve – Patient
+// reports…", "Title; Cough…") with no "## " marks and frequent one-letter typos.
+// Without headings the note renders as a wall of text and the SOAP parser sees
+// nothing. This pass deterministically rebuilds the structure: a line-leading
+// word within edit distance of a canonical section name, followed by a separator
+// (or alone on its line), becomes a proper "## Heading" with its content on the
+// next line. Bullet lines ("- Plan: …") are never touched. Pure + idempotent.
+
+// Bounded Levenshtein — section words are ≤ 10 chars, so the DP is tiny.
+function editDistance(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (Math.abs(m - n) > 2) return 3;
+  const row = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    let prev = row[0];
+    row[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const tmp = row[j];
+      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = tmp;
+    }
+  }
+  return row[n];
+}
+
+const SECTION_CANON = ["Subjective", "Objective", "Assessment", "Plan"] as const;
+
+// Fuzzy budget: 2 edits for long section words, 1 for "Plan" (short words false-hit
+// too easily at distance 2 — "plant" stays prose, "plann" still repairs).
+function canonSection(word: string): string | null {
+  const w = word.toLowerCase();
+  for (const canon of SECTION_CANON) {
+    const c = canon.toLowerCase();
+    if (editDistance(w, c) <= (c.length >= 8 ? 2 : 1)) return canon;
+  }
+  return null;
+}
+
+// A label line is: optional heading/quote marks (NOT a "- " bullet), the label,
+// then EITHER a separator + content (":" / ";" / "=" attach directly; a dash run
+// must be space-preceded so "Plant-based …" stays prose) OR nothing but an
+// optional trailing separator (a bare label line). Content is captured group 2.
+const LABEL_TAIL =
+  "(?:(?:[^\\S\\n]*[:;=]|[^\\S\\n]+[-–—]+)[^\\S\\n]*(\\S.*)|[^\\S\\n]*(?:[:;=]|[-–—]+)?[^\\S\\n]*)$";
+const LINE_HEAD = "^[^\\S\\n]*(?:#{1,6}[^\\S\\n]+|>[^\\S\\n]*)?";
+
+// "Orders", "Follow-ups", "Orders & follow-ups", "Orders and follow-ups", ….
+const ORDERS_LINE = new RegExp(
+  `${LINE_HEAD}(?:orders?(?:[^\\S\\n]*(?:&|and)[^\\S\\n]*follow[\\s-]?ups?)?|follow[\\s-]?ups?)${LABEL_TAIL}`,
+  "i",
+);
+// A single word that may be a (misspelled) SOAP section name.
+const SECTION_LINE = new RegExp(`${LINE_HEAD}([A-Za-z][A-Za-z']{2,14})${LABEL_TAIL}`);
+
+/**
+ * Rebuild "## " SOAP headings from label-shaped lines the model left as prose.
+ * "Subjectve – Patient reports…" → "## Subjective\nPatient reports…".
+ */
+export function repairSoapStructure(markdown: string): string {
+  return markdown
+    .split("\n")
+    .map((line) => {
+      if (/^\s*[-*•]\s/.test(line)) return line; // bullets are content, never headings
+      const om = ORDERS_LINE.exec(line);
+      if (om) {
+        const rest = (om[1] ?? "").trim();
+        return rest ? `## Orders & follow-ups\n${rest}` : "## Orders & follow-ups";
+      }
+      const m = SECTION_LINE.exec(line);
+      if (!m) return line;
+      const canon = canonSection(m[1]);
+      if (!canon) return line;
+      const rest = (m[2] ?? "").trim();
+      return rest ? `## ${canon}\n${rest}` : `## ${canon}`;
+    })
+    .join("\n");
+}
+
 /**
  * Normalise model output before the deterministic highlighter runs:
- *  1. collapse a doubled leading bullet ("- • item" / "- - item" → "- item").
- *  2. strip the model's own emphasis marks (**bold**, __bold__). Emphasis is owned
+ *  1. rebuild dropped SOAP structure (repairSoapStructure) — legacy stored notes
+ *     and malformed model output both gain real "## " headings at render time.
+ *  2. surface a stray leading "Title: …" line (a parse the generator missed) as
+ *     an H1 instead of a plain-text label line.
+ *  3. collapse a doubled leading bullet ("- • item" / "- - item" → "- item").
+ *  4. strip the model's own emphasis marks (**bold**, __bold__). Emphasis is owned
  *     entirely by highlightClinical; leaving the model's marks in causes an unbalanced
  *     "**" to render as literal asterisks and to suppress this line's highlighting.
  */
 export function normalizeNoteMarkdown(markdown: string): string {
-  return markdown
+  return repairSoapStructure(markdown)
+    .replace(/^[\s>#*-]*title\s*[:;–—-]\s*(.+)$/im, "# $1")
     .replace(/^(\s*[-*])\s+[•·*+-]\s+/gm, "$1 ")
     .replace(/\*\*([\s\S]*?)\*\*/g, "$1")
     .replace(/__([\s\S]*?)__/g, "$1")
     .replace(/\*\*/g, "")
     .replace(/__/g, "");
+}
+
+/**
+ * Harden a PARTIAL markdown string for live rendering while the model streams
+ * (the streamdown idea, in-process): the tail of the buffer is mid-token, so
+ * dangling marks would flash as literal `**`/backticks or half-formed headings.
+ *  - close an odd trailing `**` / `` ` `` pair so emphasis never leaks raw marks;
+ *  - drop a final line that is only markdown scaffolding ("##", "-", ">") — it
+ *    completes on the next token and renders as noise until then.
+ * Pure; safe on complete markdown (no-op).
+ */
+export function hardenStreamingMarkdown(markdown: string): string {
+  let out = markdown;
+  // Trailing scaffold-only line (heading/bullet/quote mark with no content yet).
+  out = out.replace(/\n[^\S\n]*(?:#{1,6}|[-*>•]+)[^\S\n]*$/, "");
+  // Balance dangling inline marks: an odd count means the closer hasn't streamed.
+  if (((out.match(/\*\*/g) ?? []).length) % 2 === 1) out += "**";
+  if (((out.match(/`/g) ?? []).length) % 2 === 1) out += "`";
+  return out;
 }
 
 /**
