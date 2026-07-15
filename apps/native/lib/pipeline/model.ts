@@ -1,6 +1,7 @@
 import {
   PARAPHRASE_MULTILINGUAL_MINILM_L12_V2_QUANTIZED,
   QWEN3_1_7B_QUANTIZED,
+  QWEN3_5_2B_QUANTIZED,
 } from "react-native-executorch";
 
 // SEA-LION v4 4B — OUR OWN export (official executorch gemma3 weight mapping +
@@ -50,10 +51,15 @@ const SEALION_V4_4B_LAN = {
 // /no_think. RAM discipline stays: whisper is UNLOADED before this model loads.
 // Sampling (temperature / repetitionPenalty) is applied at RUNTIME via llm.configure() in
 // PipelineProvider — executorch ignores a generationConfig field on the model object.
-export const NOTE_MODEL = SEALION_V4_4B_LAN;
-export const NOTE_MODEL_NAME = "SEA-LION v4 4B";
+// Qwen3.5-2B — user-directed trial (Jul 15 2026), bundled SM 8da4w pte. Mac-harness
+// record (docs/model-roadmap.md): 51% recall, invented amoxicillin for a
+// penicillin-allergic case — judge device output against that before filming.
+export const NOTE_MODEL = QWEN3_5_2B_QUANTIZED;
+export const NOTE_MODEL_NAME = "Qwen3.5-2B";
 // Revert line (device-proven): NOTE_MODEL = QWEN3_1_7B_QUANTIZED, name "Qwen3-1.7B".
 void QWEN3_1_7B_QUANTIZED;
+// SEA-LION LAN export kept for comparison switching (see SEALION_V4_4B_LAN above).
+void SEALION_V4_4B_LAN;
 
 // On-device text-embedding model for semantic search / RAG (the Knowledge tab and,
 // later, note search). Multilingual on purpose: a quantized paraphrase MiniLM that
