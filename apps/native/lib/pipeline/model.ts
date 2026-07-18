@@ -81,9 +81,18 @@ const QWEN3_4B_2507_LAN = {
 // Reverts one line away: QWEN3_1_7B_QUANTIZED / "Qwen3-1.7B" (bundled) or
 // QWEN3_4B_2507_LAN / "Qwen3-4B-Instruct-2507" (LAN).
 export const NOTE_MODEL = QWEN3_5_2B_QUANTIZED;
-export const NOTE_MODEL_NAME = "Qwen3.5-2B";
 void QWEN3_1_7B_QUANTIZED;
 void QWEN3_4B_2507_LAN;
+
+// NOTE ENGINE — which runtime drafts notes/doc summaries:
+//   "llamarn"    → Bonsai-8B GGUF via llama.rn (lib/pipeline/llamaLlm.ts).
+//                  Mac harness Jul 17: 92.5% recall / 0 inventions / 6-of-6 on
+//                  the rich prompt — best candidate ever. DEVICE eval pending;
+//                  4.8GB one-time LAN download; 12GB-device tier only.
+//   "executorch" → the executorch NOTE_MODEL above (one-line revert path).
+export type NoteEngine = "llamarn" | "executorch";
+export const NOTE_ENGINE: NoteEngine = "llamarn";
+export const NOTE_MODEL_NAME = NOTE_ENGINE === "llamarn" ? "Bonsai-8B" : "Qwen3.5-2B";
 
 // On-device text-embedding model for semantic search / RAG (the Knowledge tab and,
 // later, note search). Multilingual on purpose: a quantized paraphrase MiniLM that

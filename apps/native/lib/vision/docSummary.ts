@@ -1,7 +1,8 @@
 import { LLMModule } from "react-native-executorch";
 
 import { demoDocSummaryFor, streamDemoText } from "../pipeline/demoNote";
-import { NOTE_MODEL, NOTE_MODEL_NAME } from "../pipeline/model";
+import { BONSAI_8B, makeLlamaLlm } from "../pipeline/llamaLlm";
+import { NOTE_ENGINE, NOTE_MODEL, NOTE_MODEL_NAME } from "../pipeline/model";
 import { collapseRepeats, stripThink, truncateDegenerate } from "../pipeline/noteGen";
 import { isDemoMode } from "../pipeline/sttMode";
 import { unloadWhisper } from "../pipeline/whisperStt";
@@ -127,6 +128,27 @@ export async function generateDocSummary(
   // starts). Free it before loading the 4B model — the two together pressure 6GB
   // devices. Whisper transparently reloads on the next transcription.
   await unloadWhisper().catch(() => {});
+  // llama.rn engine (Bonsai): same LlmLike contract, same parse/format tail.
+  if (NOTE_ENGINE === "llamarn") {
+    const llm = makeLlamaLlm(BONSAI_8B, (acc) => onToken?.(stripThink(acc).replace(/<think>[\s\S]*/, "").trim()), onProgress);
+    onLoaded?.();
+    const t0 = Date.now();
+    const raw = await withTimeout(
+      llm.generate([
+        { role: "system", content: DOC_SUMMARY_RULES },
+        {
+          role: "user",
+          content: `Document (detected type: ${docTypeLabel}):\n${redactedText.slice(0, MAX_DOC_CHARS)}\n/no_think`,
+        },
+      ]),
+      GENERATE_TIMEOUT_MS,
+      "Note AI generation",
+    );
+    const clean = truncateDegenerate(collapseRepeats(stripThink(raw))).trim();
+    if (!clean) throw new Error("empty summary");
+    const { title, markdown } = formatDocSummary(clean, docTypeLabel);
+    return { title, markdown, generationMs: Date.now() - t0, model: NOTE_MODEL_NAME };
+  }
   const t0load = Date.now();
   let streamed = "";
   const llm = await withTimeout(

@@ -37,9 +37,10 @@ import {
 } from "./realConsultStt";
 import type { ClusterSegment } from "./sttAlign";
 import { makeDemoNoteLlm } from "./demoNote";
+import { BONSAI_8B, loadLlama, makeLlamaLlm, unloadLlama } from "./llamaLlm";
 import { getSttMode, isDemoMode } from "./sttMode";
 import { unloadWhisper } from "./whisperStt";
-import { NOTE_MODEL } from "./model";
+import { NOTE_ENGINE, NOTE_MODEL } from "./model";
 import type { DraftNote } from "./noteGen";
 import { DEFAULT_TEMPLATE, templateById, templatePrompt } from "./templates";
 
@@ -115,7 +116,27 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   // without Qwen loading, fails during a consult). Sequence: record → transcribe → THEN load
   // Qwen while the clinician labels speakers (dead time). Configured in ./model (NOTE_MODEL).
   const [llmWanted, setLlmWanted] = useState(false);
-  const llm = useLLM({ model: NOTE_MODEL, preventLoad: !llmWanted });
+  // llama.rn engine state (NOTE_ENGINE === "llamarn"): the executorch hook stays
+  // mounted (hooks rules) but never loads; Bonsai loads through llamaLlm instead.
+  const llamaEngine = NOTE_ENGINE === "llamarn";
+  const [llamaReady, setLlamaReady] = useState(false);
+  const [llamaProgress, setLlamaProgress] = useState(0);
+  const [llamaStream, setLlamaStream] = useState("");
+  const llm = useLLM({ model: NOTE_MODEL, preventLoad: !llmWanted || llamaEngine });
+
+  // Preload Bonsai when the pipeline wants the note model (same trigger as
+  // executorch): download once over LAN, then init — progress drives the same
+  // UI bar. Demo mode never loads it.
+  useEffect(() => {
+    if (!llamaEngine || !llmWanted || llamaReady || isDemoMode()) return;
+    let cancelled = false;
+    void loadLlama(BONSAI_8B, (p) => !cancelled && setLlamaProgress(p))
+      .then(() => !cancelled && setLlamaReady(true))
+      .catch((e) => console.log(`[LLAMA] load failed: ${String(e)}`));
+    return () => {
+      cancelled = true;
+    };
+  }, [llamaEngine, llmWanted, llamaReady]);
 
   // Sampling MUST be applied via the runtime configure() call — a generationConfig field on the
   // model object is ignored by executorch. Without repetitionPenalty the 1.5B degenerates into
@@ -352,7 +373,11 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setNoteError(null);
     try {
       const prompt = templatePrompt(templateById(templateRef.current));
-      const source = isDemoMode() ? makeDemoNoteLlm(setDemoNoteStream) : llm;
+      const source = isDemoMode()
+        ? makeDemoNoteLlm(setDemoNoteStream)
+        : llamaEngine
+          ? makeLlamaLlm(BONSAI_8B, setLlamaStream, setLlamaProgress)
+          : llm;
       const drafted = await draftClinicalNote(id, red.segments, source, prompt);
       setNote(drafted);
       setNoteStatus("ready");
@@ -362,8 +387,9 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
       setNoteStatus("error");
     } finally {
       setDemoNoteStream("");
+      setLlamaStream("");
     }
-  }, [llm]);
+  }, [llm, llamaEngine]);
 
   // Persist a clinician's manual edit of the drafted note (before signing) and reflect
   // it in the in-memory note so the review screen re-renders. On-device only.
@@ -391,6 +417,10 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setCandidates([]);
     candidatesRef.current = [];
     setLlmWanted(false); // next consult transcribes BEFORE the LLM loads again
+    // Same RAM discipline for the llama.rn engine: Bonsai (4.8GB) must not sit
+    // resident while whisper's Metal encode runs on the next consult.
+    setLlamaReady(false);
+    void unloadLlama().catch(() => {});
     setCaptureDiag(null);
     setRedaction(null);
     setNote(null);
@@ -422,12 +452,16 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         noteError,
         // Demo mode is always "ready": the scripted note needs no model. Read at
         // render time — any state change (status, streams) re-evaluates it.
-        llmReady: isDemoMode() || llm.isReady,
-        llmProgress: llm.downloadProgress ?? 0,
+        llmReady: isDemoMode() || (llamaEngine ? llamaReady : llm.isReady),
+        llmProgress: llamaEngine ? llamaProgress : (llm.downloadProgress ?? 0),
         // Live token stream (raw, think-stripped by the consumer) — lets the note
         // screen show the draft materializing instead of a 20-30s dead spinner.
         // Demo mode streams the scripted note through its own channel.
-        noteStream: isDemoMode() ? demoNoteStream : (llm.response ?? ""),
+        noteStream: isDemoMode()
+          ? demoNoteStream
+          : llamaEngine
+            ? llamaStream
+            : (llm.response ?? ""),
         templateId,
         startConsult,
         startRecording,
