@@ -1,6 +1,6 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
+  "configVersion": 1,
   "workspaces": {
     "": {
       "name": "med-ai",
@@ -59,6 +59,7 @@
         "expo-status-bar": "~57.0.0",
         "expo-system-ui": "~57.0.0",
         "expo-web-browser": "~57.0.0",
+        "llama.rn": "^0.12.6",
         "punycode": "^2.3.1",
         "react": "19.2.3",
         "react-dom": "19.2.3",
@@ -236,6 +237,9 @@
       },
     },
   },
+  "trustedDependencies": [
+    "llama.rn",
+  ],
   "patchedDependencies": {
     "react-native-executorch@0.9.2": "patches/react-native-executorch@0.9.2.patch",
   },
@@ -1845,6 +1849,8 @@
     "lines-and-columns": ["lines-and-columns@1.2.4", "", {}, "sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg=="],
 
     "linkify-it": ["linkify-it@2.2.0", "", { "dependencies": { "uc.micro": "^1.0.1" } }, "sha512-GnAl/knGn+i1U/wjBz3akz2stz+HrHLsxMwHQGofCDfPvlf+gDKN58UtfmUquTY4/MXeE2x7k19KQmeoZi94Iw=="],
+
+    "llama.rn": ["llama.rn@0.12.6", "", { "peerDependencies": { "react": "*", "react-native": "*" }, "bin": { "llama-rn-download-artifacts": "install/download-native-artifacts.js" } }, "sha512-qh8ysRykn0IQqN6kO7xirKhuZnZYzuI3fQWs9cFoQHpQeYfCfkhqgRuhzTw1Bh/A1H8Z2PPu5PFS45R2jfszTA=="],
 
     "locate-path": ["locate-path@3.0.0", "", { "dependencies": { "p-locate": "^3.0.0", "path-exists": "^3.0.0" } }, "sha512-7AO748wWnIhNqAuaty2ZWHkQHRSNfPVIsPIfwEOWO22AmaoVrWavlOcMR5nzTLNYvp36X220/maaRsrec1G65A=="],
 
