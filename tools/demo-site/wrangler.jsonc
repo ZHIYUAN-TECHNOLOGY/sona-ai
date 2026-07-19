@@ -1,0 +1,11 @@
+{
+  "name": "sona-demo",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+  "r2_buckets": [
+    {
+      "binding": "DEMO",
+      "bucket_name": "sona-demo"
+    }
+  ]
+}
