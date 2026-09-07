@@ -10,7 +10,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Sona records the consult on-device to transcribe it. Audio never leaves the phone and is deleted when you sign."
+        "NSMicrophoneUsageDescription": "Sona records the consult on-device to transcribe it. Audio never leaves the phone and is deleted when you sign.",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "bundleIdentifier": "ai.zhiyuantech.aurio",
       "entitlements": {
@@ -28,7 +29,8 @@
       "package": "com.anonymous.mybettertapp",
       "permissions": [
         "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -89,6 +91,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e9fa4ed3-143f-4684-a54a-012383fac6a4"
+      }
+    },
+    "owner": "zhiyuan-technology"
   }
 }

@@ -19,9 +19,8 @@ export interface GgufModel {
 
 export const BONSAI_8B: GgufModel = {
   file: "bonsai-8b-q4km.gguf",
-  // DEV LAN source — Mac and phone must share wifi for the one-time download.
-  // (Mac's DHCP address moved .139 → .8 on Jul 18; update here if it moves again.)
-  url: "http://192.168.0.8:8765/prism-ml_Bonsai-8B-unpacked-Q4_K_M.gguf",
+  // Public HF mirror (bartowski unpacked Q4_K_M, 5.2GB) — TestFlight phones download once, wifi only.
+  url: "https://huggingface.co/bartowski/prism-ml_Bonsai-8B-unpacked-GGUF/resolve/main/prism-ml_Bonsai-8B-unpacked-Q4_K_M.gguf",
 };
 
 let ctx: LlamaContext | null = null;

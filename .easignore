@@ -1,0 +1,19 @@
+# Replaces .gitignore for EAS uploads so apps/native/assets/models/*.bin (gitignored) ships.
+# Top-level dirs anchored with "/" — a bare "demo" would also drop apps/native/assets/demo.
+node_modules
+.git
+.expo
+.env
+.env*.local
+.DS_Store
+*.tsbuildinfo
+/dist
+/build
+/heidi_ui_capture
+/heidi_ui_capture.zip
+/heidi_ui_review.html
+/docs
+/demo
+/plans
+/apps/native/ios
+/apps/native/android
