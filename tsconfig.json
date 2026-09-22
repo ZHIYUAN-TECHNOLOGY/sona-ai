@@ -1,0 +1,3 @@
+{
+  "extends": "@sona-ai/config/tsconfig.base.json"
+}
