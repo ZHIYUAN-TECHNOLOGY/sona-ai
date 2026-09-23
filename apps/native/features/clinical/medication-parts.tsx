@@ -45,10 +45,10 @@ const PULSE = { from: { opacity: 0.25, transform: [{ scale: 0.6 }] }, to: { opac
 export function Mark({ state, delay = 0, size = 24 }: { state: MarkState; delay?: number; size?: number }) {
   const reduced = useReduceMotionPreference();
   const done = state === "done", blocked = state === "blocked";
-  const inner = (on: boolean) => ({ position: "absolute" as const, opacity: on ? 1 : 0, transform: [{ scale: on || reduced ? 1 : 0.5 }], transitionProperty: ["opacity", "transform"], transitionDuration: 240, transitionDelay: delay, transitionTimingFunction: EASE });
+  const inner = (on: boolean) => ({ position: "absolute" as const, opacity: on ? 1 : 0, transform: [{ scale: on || reduced ? 1 : 0.5 }], transitionProperty: ["opacity", "transform"], transitionDuration: 240, transitionDelay: `${delay}ms`, transitionTimingFunction: EASE });
   return <Animated.View style={{ width: size, height: size, borderRadius: size / 2, borderWidth: 1.6, alignItems: "center", justifyContent: "center", borderColor: done ? palette.blue : blocked ? palette.amber : RING, backgroundColor: done ? palette.blue : blocked ? AMBER_WASH : "transparent", transitionProperty: ["backgroundColor", "borderColor"], transitionDuration: 180, transitionDelay: delay }}>
-    <Animated.View style={inner(done)}><BrandIcon name="check" size={size * 0.62} color={palette.white} strokeWidth={2.4} /></Animated.View>
-    <Animated.View style={inner(blocked)}><Text style={{ fontSize: size * 0.54, lineHeight: size * 0.66, fontWeight: "700", color: palette.amber }}>!</Text></Animated.View>
+    <Animated.View style={inner(done) as never}><BrandIcon name="check" size={size * 0.62} color={palette.white} strokeWidth={2.4} /></Animated.View>
+    <Animated.View style={inner(blocked) as never}><Text style={{ fontSize: size * 0.54, lineHeight: size * 0.66, fontWeight: "700", color: palette.amber }}>!</Text></Animated.View>
     {state === "pending" && <Animated.View style={{ width: size / 3, height: size / 3, borderRadius: size / 6, backgroundColor: palette.blue, opacity: reduced ? 0.5 : undefined, animationName: reduced ? undefined : PULSE, animationDuration: 640, animationDelay: delay, animationDirection: "alternate", animationIterationCount: "infinite", animationTimingFunction: "ease-in-out" }} />}
   </Animated.View>;
 }
