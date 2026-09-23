@@ -46,11 +46,10 @@ function TaskOrigin({ value }: { value: Pick<Task, "sourceId" | "sourceRevision"
 const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
 const OWNERS = ["Treating clinician", "Clinic nurse", "Care coordinator", "Pharmacist"];
 const SWIPE = 88;
-// The ruler runs to the end of the year after next; far dates are one tap away in the native picker.
-const TICK = 12;
-const DAYS_AHEAD = (() => { const t = new Date(); return Math.round((new Date(t.getFullYear() + 2, 11, 31).getTime() - new Date(t.getFullYear(), t.getMonth(), t.getDate()).getTime()) / 86400000) + 1; })();
-/** Common review intervals, marked under the ruler and tappable. */
-const MILESTONES: Record<number, string> = { 0: "Today", 7: "1 wk", 14: "2 wk", 28: "4 wk", 42: "6 wk", 56: "8 wk", 84: "12 wk", 182: "6 mo", 365: "1 yr", 730: "2 yr" };
+// The ruler has no end: it loads a year of days at a time and adds the next year before you reach it.
+const TICK = 12, YEAR_OF_DAYS = 366;
+/** Review intervals marked under the ruler (tap to jump); yearly anniversaries are added on the fly. */
+const MILESTONES: Record<number, string> = { 0: "Today", 7: "1 wk", 14: "2 wk", 28: "4 wk", 42: "6 wk", 56: "8 wk", 84: "12 wk", 182: "6 mo" };
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -69,7 +68,9 @@ function friendlyDate(due: string) {
   return longDate(due);
 }
 
-const clampDay = (i: number) => { "worklet"; return Math.min(DAYS_AHEAD - 1, Math.max(0, Math.round(i))); };
+const clampDay = (i: number) => { "worklet"; return Math.max(0, Math.round(i)); };
+/** Days from today to a YYYY-MM-DD date (0 for today or earlier). */
+function dayIndex(due: string) { const t = new Date(); return Math.max(0, Math.round((new Date(`${due}T12:00:00`).getTime() - new Date(t.getFullYear(), t.getMonth(), t.getDate(), 12).getTime()) / 86400000)); }
 
 function relativeDay(i: number) {
   if (i === 0) return "Today";
@@ -82,14 +83,17 @@ function relativeDay(i: number) {
 /**
  * Due-date ruler (after Habitastic's timeline scroll): one tick per day slides under a fixed ink
  * marker. Drag with momentum; it snaps to a day, ticks a haptic per day passed, and commits when
- * it settles. Months and years are labelled above, review intervals below (tap to jump), and
- * the native compact picker jumps straight to any date up to the end of the year after next.
- * Ticks are virtualised, so only the visible stretch is mounted.
+ * it settles. Months and years are labelled above, review intervals and yearly anniversaries
+ * below (tap to jump), and the native compact picker jumps straight to any future date. The
+ * ruler never ends: ticks are virtualised and another year loads before you reach the last one.
  */
 function DayRuler({ value, onPick }: { value: string; onPick: (due: string) => void }) {
   const { reducedMotion } = useAccessibleEffects();
-  const days = useMemo(() => Array.from({ length: DAYS_AHEAD }, (_, i) => dayFromToday(i)), []);
-  const [initial] = useState(() => Math.max(0, days.indexOf(value)));
+  const [initial] = useState(() => value ? dayIndex(value) : 0);
+  // Loaded days; grows by a year whenever the end comes near, so scrolling never runs out.
+  const [count, setCount] = useState(() => initial + 2 * YEAR_OF_DAYS);
+  const days = useMemo(() => Array.from({ length: count }, (_, i) => dayFromToday(i)), [count]);
+  const pendingJump = useRef<number | null>(null);
   const [shown, setShown] = useState(initial);
   const [width, setWidth] = useState(0);
   const ref = useAnimatedRef<Animated.FlatList<string>>();
@@ -103,13 +107,21 @@ function DayRuler({ value, onPick }: { value: string; onPick: (due: string) => v
     onEndDrag: e => { if (Math.abs(e.velocity?.x ?? 0) < 0.05) scheduleOnRN(commit, clampDay(e.contentOffset.x / TICK)); },
     onMomentumEnd: e => { scheduleOnRN(commit, clampDay(e.contentOffset.x / TICK)); },
   });
-  const jump = (i: number, animated = !reducedMotion) => { const day = clampDay(i); ref.current?.scrollToOffset({ offset: day * TICK, animated }); setShown(day); commit(day); };
+  const jump = (i: number, animated = !reducedMotion) => {
+    const day = clampDay(i);
+    // A date beyond what is loaded: load up to it (and a year past), then jump once it has rendered.
+    if (day >= days.length) { pendingJump.current = day; setCount(day + YEAR_OF_DAYS); return; }
+    ref.current?.scrollToOffset({ offset: day * TICK, animated }); setShown(day); commit(day);
+  };
+  useEffect(() => { const day = pendingJump.current; if (day !== null && day < days.length) { pendingJump.current = null; jumpRef.current(day, false); } }, [days]);
   const jumpRef = useRef(jump); jumpRef.current = jump;
   const side = Math.max(0, width / 2 - TICK / 2);
   // Nothing is chosen until the clinician moves the ruler, taps an interval or picks a date.
   const unset = !value && shown === initial;
   const renderTick = useCallback(({ item: day, index: i }: { item: string; index: number }) => {
-    const d = new Date(`${day}T12:00:00`), label = MILESTONES[i], first = d.getDate() === 1, week = i % 7 === 0;
+    const d = new Date(`${day}T12:00:00`), t = new Date(), first = d.getDate() === 1, week = i % 7 === 0;
+    const years = d.getFullYear() - t.getFullYear();
+    const label = MILESTONES[i] ?? (years > 0 && d.getMonth() === t.getMonth() && d.getDate() === t.getDate() ? `${years} yr` : undefined);
     return <View style={{ width: TICK, height: 74, alignItems: "center" }}>
       {first && <Text numberOfLines={1} style={{ position: "absolute", top: 0, width: 60, left: (TICK - 60) / 2, textAlign: "center", fontSize: 10, fontWeight: "600", color: d.getMonth() === 0 ? palette.ink : palette.muted }}>{d.getMonth() === 0 ? String(d.getFullYear()) : MONTHS[d.getMonth()]}</Text>}
       <View style={{ marginTop: label || first ? 16 : week ? 21 : 25, width: 1.5, height: label || first ? 26 : week ? 21 : 17, borderRadius: 1, backgroundColor: label || first ? "rgba(20,28,40,0.32)" : week ? "rgba(20,28,40,0.2)" : "rgba(20,28,40,0.11)" }} />
@@ -127,14 +139,14 @@ function DayRuler({ value, onPick }: { value: string; onPick: (due: string) => v
         <Text style={{ fontSize: 13, color: palette.muted, fontVariant: ["tabular-nums"] }}>{unset ? "Slide, tap an interval, or pick a date" : relativeDay(shown)}</Text>
       </View>
       {/* Native compact picker: its calendar popover reaches any month or year in a couple of taps. */}
-      <DateTimePicker style={{ width: 124 }} value={pickerDate} mode="date" display="compact" minimumDate={new Date(`${days[0]}T00:00:00`)} maximumDate={new Date(`${days[DAYS_AHEAD - 1]}T23:59:59`)} themeVariant="light" accentColor={palette.blue}
-        onValueChange={(_, date) => jump(Math.round((new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() - new Date(`${days[0]}T00:00:00`).getTime()) / 86400000), false)} />
+      <DateTimePicker style={{ width: 124 }} value={pickerDate} mode="date" display="compact" minimumDate={new Date(`${days[0]}T00:00:00`)} themeVariant="light" accentColor={palette.blue}
+        onValueChange={(_, date) => jump(dayIndex(localDate(date)), false)} />
     </View>
     <View onLayout={e => setWidth(e.nativeEvent.layout.width)} style={{ height: 74, marginHorizontal: -18 }}>
       {width > 0 && <Animated.FlatList ref={ref} horizontal data={days} keyExtractor={day => day} renderItem={renderTick}
         getItemLayout={(_, i) => ({ length: TICK, offset: side + TICK * i, index: i })} ListHeaderComponent={<View style={{ width: side }} />} ListFooterComponent={<View style={{ width: side }} />}
-        initialNumToRender={80} maxToRenderPerBatch={80} windowSize={7} onScroll={onScroll} scrollEventThrottle={16} showsHorizontalScrollIndicator={false} snapToInterval={TICK} decelerationRate="fast"
-        contentOffset={{ x: initial * TICK, y: 0 }} />}
+        initialNumToRender={80} maxToRenderPerBatch={80} windowSize={7} onEndReachedThreshold={6} onEndReached={() => setCount(value => value + YEAR_OF_DAYS)} onScroll={onScroll} scrollEventThrottle={16} showsHorizontalScrollIndicator={false} snapToInterval={TICK} decelerationRate="fast"
+        onLayout={() => { if (initial > 0) ref.current?.scrollToOffset({ offset: initial * TICK, animated: false }); }} />}
       {/* Soft edges, then the fixed marker: ink line under a small halftone glow. */}
       <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0.96)", "rgba(255,255,255,0)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 56 }} />
       <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.96)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 56 }} />
@@ -223,12 +235,10 @@ function Composer({ draft, onChange, onSave, pending, error }: { draft: TaskDraf
         <SuggestionRow icon="calendar" label={`Due ${friendlyDate(parsed.due)}`} index={0} reduced={reducedMotion} onPress={takeDue} />
       </Suggestions>}
     </View>
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-      <View style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+    {/* Chips keep clear of the add button, which always sits in the card's bottom-right corner. */}
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, paddingRight: 52 }}>
         <Animated.View key={draft.owner ? `owner-${draft.owner}` : "owner"} layout={layout} entering={draft.owner && !reducedMotion ? tokenIn : undefined}><Chip icon={tokenIcon("person", Boolean(draft.owner))} label={draft.owner || "Owner"} filled={Boolean(draft.owner)} expanded={open === "owner"} onPress={() => toggle("owner")} accessibilityLabel={draft.owner ? `Owner, ${draft.owner}. Change` : "Choose an owner"} /></Animated.View>
         <Animated.View key={draft.due ? `due-${draft.due}` : "due"} layout={layout} entering={draft.due && !reducedMotion ? tokenIn : undefined}><Chip icon={tokenIcon("calendar", Boolean(draft.due))} label={friendlyDate(draft.due) || "Due"} filled={Boolean(draft.due)} expanded={open === "due"} onPress={() => toggle("due")} accessibilityLabel={draft.due ? `Due ${friendlyDate(draft.due)}. Change` : "Choose a due date"} /></Animated.View>
-      </View>
-      <RoundAction icon="add" size={40} label={error ? "Retry adding task" : "Add task"} hint={missing.length ? `Needs ${missing.join(", ")}` : undefined} ready={ready} onPress={onSave} />
     </View>
 
     {open === "owner" && <Expand key="owner" style={{ gap: 10 }}>
@@ -243,7 +253,13 @@ function Composer({ draft, onChange, onSave, pending, error }: { draft: TaskDraf
 
     {open === "due" && <Expand key="due"><DayRuler value={draft.due} onPick={due => set({ due })} /></Expand>}
 
-    {error && <Animated.Text layout={layout} entering={FadeIn.duration(160)} style={{ fontSize: 13, lineHeight: 18, color: palette.amber }}>{error}</Animated.Text>}
+    {/* With a panel open (or an error), a footer row keeps the corner free below it. */}
+    {(open || error) && <Animated.View layout={layout} entering={FadeIn.duration(150)} style={{ minHeight: 40, justifyContent: "center", paddingRight: 52 }}>
+      {error && <Text style={{ fontSize: 13, lineHeight: 18, color: palette.amber }}>{error}</Text>}
+    </Animated.View>}
+    <Animated.View layout={layout} style={{ position: "absolute", right: 18, bottom: 18, zIndex: 1 }}>
+      <RoundAction icon="add" size={40} label={error ? "Retry adding task" : "Add task"} hint={missing.length ? `Needs ${missing.join(", ")}` : undefined} ready={ready} onPress={onSave} />
+    </Animated.View>
   </Surface>;
 }
 
