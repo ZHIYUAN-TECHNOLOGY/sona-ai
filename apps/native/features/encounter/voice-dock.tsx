@@ -6,10 +6,11 @@ import { riseIn } from "@/components/sona/motion";
 import { LiquidVeil } from "@/components/sona/liquid-veil";
 import { GlassOrb } from "@/components/sona/glass-orb";
 import { OrbGlyph, type OrbActivity } from "@/components/sona/orb-glyph";
-import { HalftoneShimmer } from "@/components/sona/halftone-shimmer";
+import { HalftoneGlint, HalftoneShimmer } from "@/components/sona/halftone-shimmer";
 import { BrandIcon, type BrandIconName } from "@/components/sona/brand-icon";
 import { AttachmentsMenu, MENU_CLOSE, MENU_SPRING, type Attachment } from "@/components/sona/attachments-menu";
 import { BlurView } from "expo-blur";
+import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import * as Haptics from "expo-haptics";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { AccessibilityInfo, Keyboard, Pressable, StyleSheet, TextInput, View, useWindowDimensions } from "react-native";
@@ -71,8 +72,28 @@ function RoundButton({ icon, label, onPress, hidden }: { icon: BrandIconName; la
   </Animated.View>;
 }
 
+/** Composer tool: bare icon at rest, a small glass bubble under the finger. */
+function ToolButton({ icon, label, onPress }: { icon: BrandIconName; label: string; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={4}
+    style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 120 } as never)}>
+    <BrandIcon name={icon} size={21} color="#5B6472" />
+  </Pressable>;
+}
+
+/** Glass bubble while empty; fills ink with a dotted glint once there is something to send. */
+function SendButton({ ready, onPress, glint }: { ready: boolean; onPress: () => void; glint: boolean }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel="Send message" accessibilityState={{ disabled: !ready }} disabled={!ready} onPress={onPress} hitSlop={6}
+    style={({ pressed }) => ({ width: 36, height: 36, borderRadius: 18, overflow: "hidden", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: ready ? palette.ink : "rgba(255,255,255,0.9)", backgroundColor: ready ? palette.ink : "rgba(255,255,255,0.55)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor", "borderColor"], transitionDuration: 160 } as never)}>
+    {glint && <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: ready ? 1 : 0, transitionProperty: "opacity", transitionDuration: 200 } as never]}>
+      <HalftoneGlint width={36} height={36} origin={[7, 5]} reach={[26, 22]} pitch={3} strength={0.8} tint={[0.62, 0.78, 1]} hueShift={0.6} />
+    </Animated.View>}
+    <BrandIcon name="send" size={17} color={ready ? palette.white : "#8A929E"} strokeWidth={2} />
+  </Pressable>;
+}
+
 /** Voice-first dock: tap to talk hands-free, or hold to talk and release to send; keyboard morphs into a composer. */
 export function VoiceDock(props: Props) {
+  const glass = process.env.EXPO_OS === "ios" && isLiquidGlassAvailable();
   const { thinking, activity, onCancel, onSubmit, spokenPrompt, placeholder, draft, onDraft, voiceEnabled, onVoiceDisabled, above, backdrop } = props;
   const insets = useSafeAreaInsets();
   const { reducedMotion, reducedTransparency } = useAccessibleEffects();
@@ -217,7 +238,14 @@ export function VoiceDock(props: Props) {
 
       {/* One surface for both states: bar at rest, composer card while typing. */}
       <View pointerEvents="box-none" style={{ height: BAR_H, marginHorizontal: 20 }}>
-        <Animated.View pointerEvents="none" style={[{ position: "absolute", bottom: 0, overflow: "hidden", borderCurve: "continuous", backgroundColor: "rgba(255,255,255,0.94)", boxShadow: "0 8px 28px rgba(24,32,48,0.12)" }, shellStyle]}>
+        {/* Liquid glass (native on iOS 26+, frosted blur before that, solid with Reduce Transparency).
+            The dots are only accents: a glint on the top rim and the shimmer while it morphs. */}
+        <Animated.View pointerEvents="none" style={[{ position: "absolute", bottom: 0, overflow: "hidden", borderCurve: "continuous", borderWidth: 1, borderColor: reducedTransparency ? "rgba(20,28,40,0.06)" : "rgba(255,255,255,0.78)", backgroundColor: reducedTransparency ? "rgba(255,255,255,0.97)" : glass ? "transparent" : "rgba(250,251,255,0.55)", boxShadow: "0 10px 30px rgba(24,32,48,0.10), inset 0 1px 0 rgba(255,255,255,0.9)" }, shellStyle]}>
+          {!reducedTransparency && (glass
+            // Frost under the glass keeps typed text legible over busy answers; the glass adds rim light and refraction.
+            ? <><BlurView tint="systemThinMaterialLight" intensity={70} style={StyleSheet.absoluteFill} /><GlassView colorScheme="light" glassEffectStyle="regular" tintColor="rgba(250,251,255,0.45)" style={[StyleSheet.absoluteFill, { borderRadius: CARD_R }]} /></>
+            : <BlurView tint="systemUltraThinMaterialLight" intensity={60} style={StyleSheet.absoluteFill} />)}
+          {!reducedTransparency && <HalftoneGlint width={screenW} height={22} origin={[28, 0]} reach={[screenW * 0.5, 18]} strength={0.45} style={{ top: 0, left: 0 }} />}
           {!reducedMotion && <HalftoneShimmer width={screenW} height={220} progress={morph} />}
         </Animated.View>
 
@@ -255,16 +283,13 @@ export function VoiceDock(props: Props) {
 
         {composerMounted && <Animated.View pointerEvents={mode === "composing" ? "box-none" : "none"} onLayout={e => cardH.set(e.nativeEvent.layout.height)}
           style={[{ position: "absolute", bottom: 0, left: CARD_INSET, right: CARD_INSET, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10, gap: 12 }, composerStyle]}>
-          <TextInput autoFocus onBlur={() => setMode(current => current === "composing" ? "idle" : current)} accessibilityLabel="Ask Sona" value={draft} onChangeText={onDraft} placeholder={placeholder} placeholderTextColor="#8A9099" multiline style={{ fontSize: 17, lineHeight: 22, color: palette.ink, maxHeight: 120, minHeight: 26 }} />
+          <TextInput autoFocus onBlur={() => setMode(current => current === "composing" ? "idle" : current)} accessibilityLabel="Ask Sona" value={draft} onChangeText={onDraft} placeholder={placeholder} placeholderTextColor="#7D8591" multiline style={{ fontSize: 17, lineHeight: 22, color: palette.ink, maxHeight: 120, minHeight: 26 }} />
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Attach or review a chest X-ray" onPress={props.onImage} hitSlop={4} style={{ width: 38, height: 38, alignItems: "center", justifyContent: "center" }}><BrandIcon name="image" size={21} color={palette.muted} /></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Start the consultation recorder" onPress={props.onConsultation} hitSlop={4} style={{ width: 38, height: 38, alignItems: "center", justifyContent: "center" }}><BrandIcon name="wave" size={21} color={palette.muted} /></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Open the consultation note" onPress={props.onNote} hitSlop={4} style={{ width: 38, height: 38, alignItems: "center", justifyContent: "center" }}><BrandIcon name="note" size={21} color={palette.muted} /></Pressable>
+            <ToolButton icon="image" label="Attach or review a chest X-ray" onPress={props.onImage} />
+            <ToolButton icon="wave" label="Start the consultation recorder" onPress={props.onConsultation} />
+            <ToolButton icon="note" label="Open the consultation note" onPress={props.onNote} />
             <View style={{ flex: 1 }} />
-            <Pressable accessibilityRole="button" accessibilityLabel="Send message" accessibilityState={{ disabled: !draft.trim() }} disabled={!draft.trim()} onPress={send}
-              style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: draft.trim() ? palette.ink : "#C9CDD3", transitionProperty: "backgroundColor", transitionDuration: 160 } as never}>
-              <BrandIcon name="send" size={17} color={palette.white} strokeWidth={2} />
-            </Pressable>
+            <SendButton ready={Boolean(draft.trim())} onPress={send} glint={!reducedTransparency} />
           </View>
         </Animated.View>}
       </View>
