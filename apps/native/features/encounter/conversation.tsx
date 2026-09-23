@@ -135,8 +135,10 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
   const { reducedMotion } = useAccessibleEffects();
   const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 80 + i * 70, distance: 14, duration: 460 });
   const lead = { fontSize: 27, lineHeight: 35, letterSpacing: -0.6, color: palette.ink } as const;
-  return <View style={{ flex: 1, justifyContent: "space-between", gap: 36 }}>
-    <View style={{ flex: 1, justifyContent: "center", gap: 22, paddingTop: 40 }}>
+  // Reading order top-down: greeting under the top bar, then the next section at a fixed rhythm.
+  // Nothing is centred or pinned to the bottom, so the gap never stretches with screen height.
+  return <View style={{ gap: 44, paddingTop: 20 }}>
+    <View style={{ gap: 18 }}>
       <Animated.View entering={rise(0)}><Text accessibilityRole="header" style={lead}>{greeting()}</Text></Animated.View>
       <Animated.View entering={rise(1)}>
         {patient ? <Text style={lead}>
@@ -149,7 +151,7 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
       </Animated.View>
     </View>
     <Animated.View entering={rise(3)} style={{ gap: 12 }}>
-      <Text style={{ fontSize: 15, fontWeight: "600", color: palette.ink, paddingLeft: 4 }}>{patient ? "You might want to ask" : "Today’s visits"}</Text>
+      <Text accessibilityRole="header" style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>{patient ? "You might want to ask" : "Today’s visits"}</Text>
       {patient ? <SuggestionList items={(["briefing", "xray", "medication"] as const).map(kind => suggestionFor(kind, patient))} onPick={onPick} />
         : <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20, marginVertical: -14 }} contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 14, gap: 10 }}>
           {patients.map(item => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`${item.name}, ${item.time}, ${item.subtitle}`} onPress={() => onSelectPatient(item.id)}
