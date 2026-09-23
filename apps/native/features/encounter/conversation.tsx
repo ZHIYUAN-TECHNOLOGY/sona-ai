@@ -1,6 +1,7 @@
 import { Text } from "@/components/sona/text";
 import { palette } from "@/components/sona/theme";
 import { Icon, useAccessibleEffects } from "@/components/sona/ui";
+import { BrandIcon } from "@/components/sona/brand-icon";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, ScrollView, View } from "react-native";
@@ -117,7 +118,7 @@ export function TopBar({ patient, faded, onMenu, onPatient }: { patient?: Patien
       <LinearGradient colors={[palette.canvas, palette.canvas, "rgba(245,246,248,0)"]} locations={[0, 0.62, 1]} style={{ flex: 1 }} />
     </Animated.View>
     <View pointerEvents="box-none" style={{ paddingTop: insets.top + 6, paddingHorizontal: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-      <Round label="History and settings" onPress={onMenu}><Icon name="line.3.horizontal" size={18} /></Round>
+      <Round label="History and settings" onPress={onMenu}><BrandIcon name="menu" size={22} /></Round>
       <Round label={patient ? `Change patient, ${patient.name}, ${patient.id}` : "Choose a patient"} onPress={onPatient}>
         {patient ? <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingRight: 10 }}>
           <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: "#DCE7FB", alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 12, fontWeight: "600", color: palette.blue }}>{patient.initials}</Text></View>
