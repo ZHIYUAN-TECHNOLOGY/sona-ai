@@ -8,12 +8,13 @@ import { GlassOrb } from "@/components/sona/glass-orb";
 import { OrbGlyph, type OrbActivity } from "@/components/sona/orb-glyph";
 import { HalftoneShimmer } from "@/components/sona/halftone-shimmer";
 import { BrandIcon, type BrandIconName } from "@/components/sona/brand-icon";
+import { AttachmentsMenu, MENU_CLOSE, MENU_SPRING, type Attachment } from "@/components/sona/attachments-menu";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { AccessibilityInfo, Keyboard, Pressable, StyleSheet, TextInput, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { cubicBezier, Easing, FadeIn, FadeOut, interpolate, useAnimatedReaction, withDelay, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, { cubicBezier, Easing, FadeIn, FadeOut, interpolate, useAnimatedReaction, withDelay, withSpring, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from "react-native-reanimated";
 import { useKeyboardHandler } from "react-native-keyboard-controller";
 import { scheduleOnRN } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -42,6 +43,8 @@ type Props = {
   onConsultation: () => void;
   onNote: () => void;
   above?: ReactNode;
+  /** A photo, capture or file chosen from the attachments menu. */
+  onAttach: (item: Attachment) => void;
   /** Screen content captured for the liquid hold-to-talk veil. */
   backdrop: RefObject<View | null>;
 };
@@ -75,6 +78,8 @@ export function VoiceDock(props: Props) {
   const { reducedMotion, reducedTransparency } = useAccessibleEffects();
   const [mode, setMode] = useState<Mode>("idle");
   const [used, setUsed] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const menuProgress = useSharedValue(0), menuExtend = useSharedValue(0);
   const [armed, setArmed] = useState(false);
   const [words, setWords] = useState(0);
   const [flooding, setFlooding] = useState(false);
@@ -163,6 +168,15 @@ export function VoiceDock(props: Props) {
   const closeComposer = () => { Keyboard.dismiss(); setMode(current => current === "composing" ? "idle" : current); };
   const send = () => { const value = draft.trim(); if (!value) return; onSubmit(value); Keyboard.dismiss(); };
 
+  // Attachments: the plus morphs into the menu; closing from any depth is one spring back.
+  const openMenu = () => { setMenu(true); haptic("light"); menuProgress.set(reducedMotion ? 1 : withSpring(1, MENU_SPRING)); };
+  const closeMenu = () => {
+    menuExtend.set(reducedMotion ? 0 : withTiming(0, MENU_CLOSE));
+    menuProgress.set(reducedMotion ? 0 : withTiming(0, MENU_CLOSE, finished => { "worklet"; if (finished) { menuExtend.set(0); scheduleOnRN(setMenu, false); } }));
+    if (reducedMotion) setMenu(false);
+  };
+  const attach = (item: Attachment) => { closeMenu(); props.onAttach(item); };
+
   // Lift so the card rests 8 pt above the keyboard; the bar stays where it is.
   const restBottom = Math.max(insets.bottom, 12) + 4;
   const shellStyle = useAnimatedStyle(() => {
@@ -209,7 +223,7 @@ export function VoiceDock(props: Props) {
 
         <Animated.View pointerEvents={mode === "composing" ? "none" : "box-none"} style={[StyleSheet.absoluteFill, { justifyContent: "center" }, dockStyle]}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 14 }}>
-            {handsfree ? <RoundButton icon="close" label="Cancel voice input" onPress={() => finish(false)} /> : <RoundButton icon="add" label="Attach or review a chest X-ray" onPress={props.onImage} hidden={holding || busy} />}
+            {handsfree ? <RoundButton icon="close" label="Cancel voice input" onPress={() => finish(false)} /> : <View style={{ opacity: menu ? 0 : 1 }}><RoundButton icon="add" label="Attach a photo, camera capture or file" onPress={openMenu} hidden={holding || busy} /></View>}
             <RoundButton icon="keyboard" label="Type a message" onPress={() => setMode("composing")} hidden={holding || busy} />
           </View>
 
@@ -255,5 +269,7 @@ export function VoiceDock(props: Props) {
         </Animated.View>}
       </View>
     </View>
+
+    <AttachmentsMenu visible={menu} progress={menuProgress} extend={menuExtend} anchor={{ left: 34, bottom: Math.max(insets.bottom, 12) + 4 + (BAR_H - 50) / 2, size: 50 }} reducedMotion={reducedMotion} onClose={closeMenu} onAttach={attach} />
   </View>;
 }

@@ -7,20 +7,26 @@ import { ClinicalResponseRenderer } from "@/features/presentation";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, Keyboard, Pressable, ScrollView, View } from "react-native";
+import { AccessibilityInfo, BackHandler, Keyboard, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { capabilityLabels, followUpsFor, Home, leadFor, StreamedLead, SuggestionList, suggestionFor, thinkingLabel, TopBar, type Suggestion } from "./conversation";
 import { routePrompt } from "./state";
 import { useEncounter } from "./store";
 import type { Capability, FeatureProps, FocusView } from "./types";
 import { VoiceDock } from "./voice-dock";
+import { Sidebar, SIDEBAR_WIDTH } from "./sidebar";
+import { useAccessibleEffects } from "@/components/sona/ui";
+import * as Haptics from "expo-haptics";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import type { OrbActivity } from "@/components/sona/orb-glyph";
 
 const activities: Record<Capability, OrbActivity> = { briefing: "reading", reasoning: "solving", xray: "breathing", medication: "checking", prescription: "composing", followup: "connecting", note: "composing" };
 const prompts: Record<Capability, string> = { briefing: "Brief me on this patient", reasoning: "What possibilities should I consider?", xray: "Review the chest X-ray", medication: "Review medication interactions", prescription: "Run the prescribing simulation", followup: "Prepare a follow-up plan", note: "Show the consultation note" };
 
 export function WorkspaceScreen() {
-  const { patient, patients, encounter, request, cancel, voiceInput, compactResponses, selectPatient } = useEncounter();
+  const { patient, patients, encounter, request, cancel, voiceInput, compactResponses, selectPatient, updateEncounter } = useEncounter();
   const insets = useSafeAreaInsets();
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const draftKey = patient?.id ?? "unassigned";
@@ -29,6 +35,30 @@ export function WorkspaceScreen() {
   const [showEarlier, setShowEarlier] = useState(false);
   const [notice, setNotice] = useState<string>();
   const [scrolled, setScrolled] = useState(false);
+  // Sidebar: the page slides right to reveal it. A finger drives it, so springs carry velocity.
+  const { reducedMotion } = useAccessibleEffects();
+  const [drawer, setDrawer] = useState(false);
+  const drawerP = useSharedValue(0);
+  const DRAWER = { duration: 420, dampingRatio: 0.9 };
+  const openDrawer = () => { Keyboard.dismiss(); setDrawer(true); if (process.env.EXPO_OS === "ios") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); drawerP.set(reducedMotion ? 1 : withSpring(1, DRAWER)); };
+  const closeDrawer = () => { setDrawer(false); drawerP.set(reducedMotion ? 0 : withSpring(0, DRAWER)); };
+  useEffect(() => { if (!drawer) return; const sub = BackHandler.addEventListener("hardwareBackPress", () => { closeDrawer(); return true; }); return () => sub.remove(); }, [drawer]);
+  const dragClose = Gesture.Pan().activeOffsetX([-12, 12]).enabled(drawer)
+    .onUpdate(e => { drawerP.set(Math.min(1, Math.max(0, 1 + e.translationX / SIDEBAR_WIDTH))); })
+    .onEnd(e => {
+      const shut = e.velocityX < -300 || drawerP.value < 0.6;
+      drawerP.set(withSpring(shut ? 0 : 1, { ...DRAWER, velocity: e.velocityX / SIDEBAR_WIDTH }));
+      if (shut) scheduleOnRN(setDrawer, false);
+    });
+  const pageStyle = useAnimatedStyle(() => {
+    const p = drawerP.value;
+    return {
+      transform: [{ translateX: p * SIDEBAR_WIDTH }, { scale: interpolate(p, [0, 1], [1, 0.96]) }],
+      borderRadius: interpolate(p, [0, 0.15], [0, 44], "clamp"),
+      boxShadow: `-8px 0px ${interpolate(p, [0, 1], [0, 32])}px rgba(24,32,48,${interpolate(p, [0, 1], [0, 0.12])})`,
+    };
+  });
+  const dimStyle = useAnimatedStyle(() => ({ opacity: drawerP.value * 0.55 }));
   const [phase, setPhase] = useState<"thinking" | "working">("thinking");
   const [justDone, setJustDone] = useState(false);
   const scroll = useRef<ScrollView>(null);
@@ -65,7 +95,10 @@ export function WorkspaceScreen() {
   const visible = compactResponses && !showEarlier ? requests.slice(-1) : requests;
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
 
-  return <View style={{ flex: 1, backgroundColor: palette.canvas }}>
+  return <View style={{ flex: 1, backgroundColor: "#F1F2F4" }}>
+    <Sidebar progress={drawerP} onClose={closeDrawer} onNew={() => router.push("/patients")} />
+    <GestureDetector gesture={dragClose}>
+    <Animated.View style={[{ flex: 1, overflow: "hidden", borderCurve: "continuous", backgroundColor: palette.canvas }, pageStyle]}>
     <View ref={backdrop} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas }}>
     <AmbientWash quiet={requests.length > 0} thinking={Boolean(thinking)} />
     <ScrollView ref={scroll} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentInsetAdjustmentBehavior="never" scrollEventThrottle={48}
@@ -96,7 +129,7 @@ export function WorkspaceScreen() {
       </View>}
     </ScrollView>
 
-    <TopBar patient={patient} faded={scrolled || requests.length > 0} onMenu={() => router.push("/history")} onPatient={() => router.push("/patients")} />
+    <TopBar patient={patient} faded={scrolled || requests.length > 0} onMenu={openDrawer} onPatient={() => router.push("/patients")} />
     </View>
 
     {requests.length > 0 && <LinearGradient pointerEvents="none" colors={["rgba(245,246,248,0)", "rgba(245,246,248,0.9)", palette.canvas]} locations={[0, 0.5, 1]} style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: insets.bottom + 120 }} />}
@@ -113,6 +146,13 @@ export function WorkspaceScreen() {
       voiceEnabled={voiceInput}
       onVoiceDisabled={() => setNotice("Voice input is turned off in settings. Type your request instead.")}
       onImage={() => open("xray")}
+      onAttach={item => {
+        if (!patient) { setNotice("Pick a visit first, then attach an image to review."); return; }
+        if (item.kind === "file") { setNotice(`${item.name} is attached for reference. Document review arrives with the backend.`); return; }
+        // Teaching image: show the bundled radiograph; anything else becomes the encounter's attachment.
+        updateEncounter(current => item.uri === "teaching" ? { ...current, imagingAttachment: undefined, hideTeachingImage: false } : { ...current, imagingAttachment: { uri: item.uri, name: item.name } }, true);
+        run("xray", "Review the attached image");
+      }}
       onConsultation={() => open("recording")}
       onNote={() => open("note")}
       above={<>
@@ -122,5 +162,10 @@ export function WorkspaceScreen() {
         {notice && <Notice>{notice}</Notice>}
       </>}
     />
+    {/* While open, the page is a quiet surface: it fades back and a tap anywhere closes it. */}
+    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: palette.canvas }, dimStyle]} />
+    {drawer && <Pressable accessibilityRole="button" accessibilityLabel="Close menu" onPress={closeDrawer} style={StyleSheet.absoluteFill} />}
+    </Animated.View>
+    </GestureDetector>
   </View>;
 }
