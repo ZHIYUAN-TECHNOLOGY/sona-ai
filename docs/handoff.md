@@ -6,7 +6,7 @@ Updated 24 September 2026. Prepared for Claude Opus 5.5 or another continuing ag
 
 1. Continue in `/Users/ngchwanlii/zyt/projects/sona-ai`. Inspect `git status --short` before editing. All work so far is committed on `main` and pushed to the private repo `github.com/zyt-ngchwanlii/sona-ai`. Preserve any uncommitted work you find.
 2. Read [implementation status and verification](ui-implementation-progress.md), then [the walkthrough](ui-walkthrough.md). The previous Codex UI goal is complete; that means implemented and ready for user review, not user acceptance or live AI completion.
-3. **UI feedback in progress (24 Sep 2026):** reviewed and approved piece by piece: the Monogram-style home, voice interaction (aurora glass veil, aurora orb, living status glyphs, tap-or-hold), keyboard-synced glass chatbox, attachments menu, workspace sidebar, top bar (tasks button + in-encounter patient chip), the glass-first design system (90% glass, 10% dithering; `components/sona/ui.tsx`, `motion.ts`) and the rebuilt Follow-up tasks screen (sentence card with `@owner` / date parsing, endless day ruler with native picker, tap-to-complete rows, worklist across visits). See [design direction](design-direction.md#design-system-glass-first-dithering-as-accent-2026-09-24). Still pending: rebuilding the other capabilities (scribe/note, reasoning, X-ray, medication, prescribing) as generated sections on the new design system (only the briefing and tasks are done), whole-UI acceptance, and release-build frame-time, VoiceOver and physical-iPhone checks.
+3. **UI feedback in progress (24 Sep 2026):** reviewed and approved piece by piece: the Monogram-style home, voice interaction (aurora glass veil, aurora orb, living status glyphs, tap-or-hold), keyboard-synced glass chatbox, attachments menu, workspace sidebar, top bar (tasks button + in-encounter patient chip), the glass-first design system (90% glass, 10% dithering; `components/sona/ui.tsx`, `motion.ts`) and the rebuilt Follow-up tasks screen (sentence card with `@owner` / date parsing, endless day ruler with native picker, tap-to-complete rows, worklist across visits). See [design direction](design-direction.md#design-system-glass-first-dithering-as-accent-2026-09-24). All seven capability answers are now rebuilt as generated sections on the design system (scribe/note, reasoning, X-ray, medication and prescribing were built in parallel by worktree subagents and merged on 24 Sep). Still pending: device review of the prescribing run, promoting duplicated local parts (disclosure rows, status lines, marks, press wrapper) into `components/sona/`, whole-UI acceptance, and release-build frame-time, VoiceOver and physical-iPhone checks.
 4. Help the user review the running app and address their concrete visual/interaction feedback. The UI is not yet accepted.
 5. Before starting backend implementation, obtain the user's UI acceptance. Then use the existing [delivery plan](delivery-plan.md) and recheck the actual competition deadline/remaining time. The original planning constraint was 18 days, with an expected 10–15 minute demo; these are not a fresh countdown.
 
@@ -56,7 +56,7 @@ Read [walkthrough run instructions](ui-walkthrough.md#run) for exact launch comm
 
 ## Verification and fixes to preserve
 
-Last implementation verification: **43 Bun tests, 163 assertions** (24 Sep 2026), native TypeScript and whitespace checks passed. Core simulator checks exercised sources, X-ray original/zoom/reset, reconciliation, blocked/automatic prescribing, English recording/correction, structured note save, plan-to-task create/complete/reopen, archived source provenance, patient isolation, keyboard scrolling and live large-text reflow. Read [verification notes](verification/README.md) before treating historical screenshots as current proof.
+Last implementation verification: **47 Bun tests** (24 Sep 2026), native TypeScript and whitespace checks passed. Core simulator checks exercised sources, X-ray original/zoom/reset, reconciliation, blocked/automatic prescribing, English recording/correction, structured note save, plan-to-task create/complete/reopen, archived source provenance, patient isolation, keyboard scrolling and live large-text reflow. Read [verification notes](verification/README.md) before treating historical screenshots as current proof.
 
 Physical iPhone/release performance, VoiceOver and exact runtime Reduce Motion/Reduce Transparency toggles remain unverified. Reactive reduced-effects support is implemented and code-reviewed. Earlier Manglish playback was exercised, but it was not rerun in the final audit. Not every recovery case received a fresh end-to-end device run. High host load caused some XCTest timeouts even when the action had applied; inspect the resulting state before retrying.
 
@@ -71,12 +71,15 @@ Preserve these fixes:
 For changes affecting these behaviors, run the affected tests and relevant simulator interaction. The established full native test command, from `apps/native`, is:
 
 ```sh
-bun test features/encounter/state.test.js features/scribe/model.test.js features/tasks/state.test.js features/clinical/interaction-lookup.test.js features/presentation/catalog.test.js
+bun test features/encounter/state.test.js features/scribe/model.test.js features/tasks/state.test.js features/clinical/interaction-lookup.test.js features/presentation/catalog.test.js features/imaging/zoom.test.js
 ```
 
 Use the package's `check-types` script for the native/API type dependency build. Documentation-only handoff edits do not require repeating runtime tests.
 
 ## Tools and working scope
+
+`apps/native/src/env.ts` is untracked, so new git worktrees lack it and `check-types` fails there until it is linked or copied from the main checkout.
+
 
 The user requested agent-device for mobile interaction; use its installed skill. For additional motion inspiration, use 60fpsdesign search/detail/breakdown/code/related-shot tools when available, translating SwiftUI references into React Native. Relevant requested skills include emil-design-eng, animate-expo, global-dev-toolkit:animations, expo-native-ui and react-native-best-practices. Discover what the new session actually exposes; previous MCP availability does not guarantee the same tools in Claude.
 
