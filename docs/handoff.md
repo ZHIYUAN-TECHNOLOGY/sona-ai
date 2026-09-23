@@ -4,9 +4,9 @@ Updated 23 September 2026. Prepared for Claude Opus 5.5 or another continuing ag
 
 ## Start here
 
-1. Continue in `/Users/ngchwanlii/zyt/projects/sona-ai`. Inspect `git status --short` before editing. The native UI, screenshots and planning documents include uncommitted/untracked work; a fresh checkout alone will omit much of this milestone. Preserve the entire working tree.
+1. Continue in `/Users/ngchwanlii/zyt/projects/sona-ai`. Inspect `git status --short` before editing. All work so far is committed on `main` and pushed to the private repo `github.com/zyt-ngchwanlii/sona-ai`. Preserve any uncommitted work you find.
 2. Read [implementation status and verification](ui-implementation-progress.md), then [the walkthrough](ui-walkthrough.md). The previous Codex UI goal is complete; that means implemented and ready for user review, not user acceptance or live AI completion.
-3. **UI feedback in progress (23 Sep 2026):** the home screen was too crowded; a first Monogram-style pass is implemented and awaiting review. See [design direction: UI review feedback](design-direction.md#ui-review-feedback-monogram-generative-ui-direction-2026-09-23). Only the briefing has been rebuilt as generated sections; the other six capabilities still use the earlier card layouts inside the new answer page.
+3. **UI feedback in progress (23 Sep 2026):** the Monogram-style redesign is implemented and the voice interaction (aurora glass veil, aurora orb, living status glyphs, tap-or-hold) has been reviewed and approved piece by piece; see [design direction: UI review feedback](design-direction.md#ui-review-feedback-monogram-generative-ui-direction-2026-09-23). Still pending: rebuilding the other six capabilities as generated sections (only the briefing is done), whole-UI acceptance, and on-device frame-time measurement in a release build.
 4. Help the user review the running app and address their concrete visual/interaction feedback. The UI is not yet accepted.
 5. Before starting backend implementation, obtain the user's UI acceptance. Then use the existing [delivery plan](delivery-plan.md) and recheck the actual competition deadline/remaining time. The original planning constraint was 18 days, with an expected 10–15 minute demo; these are not a fresh countdown.
 
@@ -46,7 +46,7 @@ The existing backend/auth/database/infra directories are scaffold code. The new 
 
 At handoff, Sona's Metro endpoint responded at `http://127.0.0.1:8088/status`. This is a historical observation, so check again. Reuse it only after verifying the listening process belongs to this project's `apps/native` directory. If another project owns the port, choose a free port and use that port consistently in Metro and the Expo URL; leave the other process running.
 
-The tested device is iPhone 17 Pro, iOS 26.5, UDID `A98E7DA8-36A6-4CEC-A05F-2BF1D6B18058`; another simulator also exists. Target the exact device and preserve other simulator sessions. The last verified app state had Amelia selected with her saved note/task retained and the keyboard dismissed.
+The current preview device is iPhone 18 Pro Max, iOS 27.0, UDID `409FA8ED-3EF5-49BB-B727-B9883BEE1F27`, driven with agent-device session `sona18` (Expo Go was installed on it from the iPhone 17 Pro bundle). The earlier iPhone 17 Pro (`A98E7DA8-…`) was taken over by another project (`bible-alarm`, Metro on 8081); leave it alone. Target the exact device and preserve other simulator sessions. The last verified app state had Amelia selected with her saved note/task retained and the keyboard dismissed.
 
 **Visibility gotcha:** this Xcode installation has Device Hub at `/Applications/Xcode.app/Contents/Applications/DeviceHub.app`, rather than `Contents/Developer/Applications/Simulator.app`. An agent-device iOS `open --foreground` successfully opens the app inside the simulated phone but did not surface its desktop window. Even `--device-hub` alone did not resolve that in this session. The native macOS `open` command in the walkthrough did. The visible window title is `iPhone 17 Pro – iOS 26.5`; Device Hub's bundle identifier is `com.apple.dt.Devices`.
 
