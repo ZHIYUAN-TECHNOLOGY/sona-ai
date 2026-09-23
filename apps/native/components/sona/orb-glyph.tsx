@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { View } from "react-native";
 import Animated, { withSpring, withTiming } from "react-native-reanimated";
 import { Icon } from "./ui";
+import { BrandIcon } from "./brand-icon";
 
 /**
  * Living status glyphs for the aurora orb (after Wabi's animated glass icons): each state has
@@ -72,7 +73,7 @@ function Glyph({ activity, still }: { activity: OrbActivity; still: boolean }) {
     // Linked points pulsing as the plan connects tasks.
     case "connecting": return <Moving still={still} motion={loop({ "0%": { transform: [{ scale: 0.92 }], opacity: 0.7 }, "50%": { transform: [{ scale: 1.06 }], opacity: 1 }, "100%": { transform: [{ scale: 0.92 }], opacity: 0.7 } }, 1200)}><Icon name="point.3.connected.trianglepath.dotted" size={22} color={INK} /></Moving>;
     case "done": return <Icon name="checkmark" size={22} color={INK} />;
-    default: return <Icon name="mic.fill" size={24} color={INK} />;
+    default: return <BrandIcon name="mic" size={26} color={INK} strokeWidth={1.9} />;
   }
 }
 
