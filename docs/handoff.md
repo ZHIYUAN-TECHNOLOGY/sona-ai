@@ -1,12 +1,12 @@
 # Sona AI handoff
 
-Updated 23 September 2026. Prepared for Claude Opus 5.5 or another continuing agent.
+Updated 24 September 2026. Prepared for Claude Opus 5.5 or another continuing agent.
 
 ## Start here
 
 1. Continue in `/Users/ngchwanlii/zyt/projects/sona-ai`. Inspect `git status --short` before editing. All work so far is committed on `main` and pushed to the private repo `github.com/zyt-ngchwanlii/sona-ai`. Preserve any uncommitted work you find.
 2. Read [implementation status and verification](ui-implementation-progress.md), then [the walkthrough](ui-walkthrough.md). The previous Codex UI goal is complete; that means implemented and ready for user review, not user acceptance or live AI completion.
-3. **UI feedback in progress (23 Sep 2026):** the Monogram-style redesign is implemented and the voice interaction (aurora glass veil, aurora orb, living status glyphs, tap-or-hold) has been reviewed and approved piece by piece; see [design direction: UI review feedback](design-direction.md#ui-review-feedback-monogram-generative-ui-direction-2026-09-23). Still pending: rebuilding the other six capabilities as generated sections (only the briefing is done), whole-UI acceptance, and on-device frame-time measurement in a release build.
+3. **UI feedback in progress (24 Sep 2026):** reviewed and approved piece by piece: the Monogram-style home, voice interaction (aurora glass veil, aurora orb, living status glyphs, tap-or-hold), keyboard-synced glass chatbox, attachments menu, workspace sidebar, top bar (tasks button + in-encounter patient chip), the glass-first design system (90% glass, 10% dithering; `components/sona/ui.tsx`, `motion.ts`) and the rebuilt Follow-up tasks screen (sentence card with `@owner` / date parsing, endless day ruler with native picker, tap-to-complete rows, worklist across visits). See [design direction](design-direction.md#design-system-glass-first-dithering-as-accent-2026-09-24). Still pending: rebuilding the other capabilities (scribe/note, reasoning, X-ray, medication, prescribing) as generated sections on the new design system (only the briefing and tasks are done), whole-UI acceptance, and release-build frame-time, VoiceOver and physical-iPhone checks.
 4. Help the user review the running app and address their concrete visual/interaction feedback. The UI is not yet accepted.
 5. Before starting backend implementation, obtain the user's UI acceptance. Then use the existing [delivery plan](delivery-plan.md) and recheck the actual competition deadline/remaining time. The original planning constraint was 18 days, with an expected 10–15 minute demo; these are not a fresh countdown.
 
@@ -56,7 +56,7 @@ Read [walkthrough run instructions](ui-walkthrough.md#run) for exact launch comm
 
 ## Verification and fixes to preserve
 
-Last implementation verification: **40 Bun tests, 149 assertions**, native TypeScript and whitespace checks passed. Core simulator checks exercised sources, X-ray original/zoom/reset, reconciliation, blocked/automatic prescribing, English recording/correction, structured note save, plan-to-task create/complete/reopen, archived source provenance, patient isolation, keyboard scrolling and live large-text reflow. Read [verification notes](verification/README.md) before treating historical screenshots as current proof.
+Last implementation verification: **43 Bun tests, 163 assertions** (24 Sep 2026), native TypeScript and whitespace checks passed. Core simulator checks exercised sources, X-ray original/zoom/reset, reconciliation, blocked/automatic prescribing, English recording/correction, structured note save, plan-to-task create/complete/reopen, archived source provenance, patient isolation, keyboard scrolling and live large-text reflow. Read [verification notes](verification/README.md) before treating historical screenshots as current proof.
 
 Physical iPhone/release performance, VoiceOver and exact runtime Reduce Motion/Reduce Transparency toggles remain unverified. Reactive reduced-effects support is implemented and code-reviewed. Earlier Manglish playback was exercised, but it was not rerun in the final audit. Not every recovery case received a fresh end-to-end device run. High host load caused some XCTest timeouts even when the action had applied; inspect the resulting state before retrying.
 
