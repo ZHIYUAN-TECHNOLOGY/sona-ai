@@ -41,7 +41,7 @@ export function Sidebar({ progress, onClose, onNew }: { progress: SharedValue<nu
     { label: "Patients", icon: "patients", detail: `${patients.length} visits today`, onPress: go(() => router.push("/patients")) },
     { label: "Consultation", icon: "stethoscope", detail: patient ? `Record with ${patient.name.split(" ")[0]}` : "Pick a visit first", onPress: go(() => router.push(patient ? "/recording" : "/patients")) },
     { label: "Notes", icon: "note", onPress: go(() => router.push(patient ? "/note" : "/patients")) },
-    { label: "Follow-up tasks", icon: "tasks", onPress: go(() => router.push(patient ? "/tasks" : "/patients")) },
+    { label: "Follow-up tasks", icon: "tasks", onPress: go(() => router.push("/tasks")) },
   ];
 
   // Content drifts in from slightly left and fades up, following the page as it slides away.

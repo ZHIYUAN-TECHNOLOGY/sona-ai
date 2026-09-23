@@ -26,7 +26,7 @@ const activities: Record<Capability, OrbActivity> = { briefing: "reading", reaso
 const prompts: Record<Capability, string> = { briefing: "Brief me on this patient", reasoning: "What possibilities should I consider?", xray: "Review the chest X-ray", medication: "Review medication interactions", prescription: "Run the prescribing simulation", followup: "Prepare a follow-up plan", note: "Show the consultation note" };
 
 export function WorkspaceScreen() {
-  const { patient, patients, encounter, request, cancel, voiceInput, compactResponses, selectPatient, updateEncounter } = useEncounter();
+  const { patient, patients, encounter, encounters, request, cancel, voiceInput, compactResponses, selectPatient, updateEncounter } = useEncounter();
   const insets = useSafeAreaInsets();
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const draftKey = patient?.id ?? "unassigned";
@@ -129,7 +129,7 @@ export function WorkspaceScreen() {
       </View>}
     </ScrollView>
 
-    <TopBar patient={patient} inEncounter={requests.length > 0} openTasks={encounter?.tasks.filter(task => !task.completed).length ?? 0} faded={scrolled || requests.length > 0} onMenu={openDrawer} onPatient={() => router.push("/patients")} onTasks={() => router.push(patient ? "/tasks" : "/patients")} />
+    <TopBar patient={patient} inEncounter={requests.length > 0} openTasks={(patient ? [encounter] : Object.values(encounters)).reduce((sum, value) => sum + (value?.tasks.filter(task => !task.completed).length ?? 0), 0)} faded={scrolled || requests.length > 0} onMenu={openDrawer} onPatient={() => router.push("/patients")} onTasks={() => router.push("/tasks")} />
     </View>
 
     {requests.length > 0 && <LinearGradient pointerEvents="none" colors={["rgba(245,246,248,0)", "rgba(245,246,248,0.9)", palette.canvas]} locations={[0, 0.5, 1]} style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: insets.bottom + 120 }} />}

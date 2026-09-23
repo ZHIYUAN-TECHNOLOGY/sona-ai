@@ -28,3 +28,33 @@ export function localDate(date: Date): string {
 export function readableDate(date: string): string {
   return date ? new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "Not set";
 }
+
+const WEEKDAY_WORDS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+/**
+ * Reads a due-date phrase typed at the end of a task sentence ("tomorrow", "in 2 weeks", "10d",
+ * "next mon"). Returns the phrase as typed and the date it means, or undefined.
+ */
+export function parseDuePhrase(text: string, today = new Date()): { phrase: string; due: string } | undefined {
+  const at = (days: number) => localDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + days));
+  const match = text.match(/(?:^|\s)((?:in\s+)?(\d{1,2})\s*(d|days?|w|wks?|weeks?)|today|tomorrow|tmr|next\s+week|(?:next\s+)?(sun|mon|tue|wed|thu|fri|sat)[a-z]*)\s*$/i);
+  if (!match) return undefined;
+  const phrase = match[1]!, word = phrase.toLowerCase();
+  if (word === "today") return { phrase, due: at(0) };
+  if (word === "tomorrow" || word === "tmr") return { phrase, due: at(1) };
+  if (/^next\s+week$/.test(word)) return { phrase, due: at(7) };
+  if (match[2]) {
+    const n = Number(match[2]);
+    if (!n) return undefined;
+    return { phrase, due: at(match[3]!.toLowerCase().startsWith("w") ? n * 7 : n) };
+  }
+  const day = WEEKDAY_WORDS.indexOf(match[4]!.toLowerCase());
+  const full = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][day]!;
+  // Only whole or 3-letter weekday names ("mon", "monday"), not other words starting the same.
+  if (!full.startsWith(word.replace(/^next\s+/, "")) || word.replace(/^next\s+/, "").length < 3) return undefined;
+  return { phrase, due: at(((day - today.getDay() + 7) % 7) || 7) };
+}
+
+/** The "@query" being typed at the end of a task sentence, if any. */
+export function mentionQuery(text: string): string | undefined {
+  return text.match(/(?:^|\s)@([^\s@]*)$/)?.[1];
+}
