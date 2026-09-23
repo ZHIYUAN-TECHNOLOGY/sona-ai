@@ -141,6 +141,9 @@ export function VoiceDock(props: Props) {
   const liquid = !reducedTransparency && !veilFailed;
   const scrim = busy || (holding && !liquid);
   const veil = holding ? "listening" : flooding && busy ? "flood" : "idle";
+  // Tapping anywhere outside the composer closes it, even when no software keyboard is showing
+  // (hardware keyboard), where the input would otherwise never blur. The draft is kept.
+  const closeComposer = () => { Keyboard.dismiss(); setMode(current => current === "composing" ? "idle" : current); };
   const send = () => { const value = draft.trim(); if (!value) return; onSubmit(value); Keyboard.dismiss(); };
 
   return <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
@@ -157,12 +160,14 @@ export function VoiceDock(props: Props) {
       <Text style={{ marginTop: 4, fontSize: 12, color: palette.muted }}>Sample voice command · no audio is recorded</Text>
     </Animated.View>}
 
+    {mode === "composing" && <Pressable accessibilityRole="button" accessibilityLabel="Close message composer" onPress={closeComposer} style={StyleSheet.absoluteFill} />}
+
     <View pointerEvents="box-none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, paddingBottom: Math.max(insets.bottom, 12) + 4, gap: 10 }}>
       {mode !== "composing" && above && <View pointerEvents="box-none" style={{ paddingHorizontal: 20, gap: 8 }}>{above}</View>}
 
       {mode === "composing" ? <Animated.View key="composer" entering={reducedMotion ? FadeIn.duration(150) : composerEntering} exiting={FadeOut.duration(120)} style={[{ marginHorizontal: 12, transformOrigin: "bottom" }, composerStyle]}>
         <View style={{ backgroundColor: palette.white, borderRadius: 26, borderCurve: "continuous", paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10, gap: 12, boxShadow: "0 8px 30px rgba(24,32,48,0.12)" }}>
-          <TextInput autoFocus onBlur={() => setMode(current => current === "composing" ? "idle" : current)} accessibilityLabel="Ask Sona" value={draft} onChangeText={onDraft} placeholder={placeholder} placeholderTextColor="#8A9099" multiline onSubmitEditing={send} style={{ fontSize: 17, lineHeight: 22, color: palette.ink, maxHeight: 120, minHeight: 26 }} />
+          <TextInput autoFocus onBlur={() => setMode(current => current === "composing" ? "idle" : current)} accessibilityLabel="Ask Sona" value={draft} onChangeText={onDraft} placeholder={placeholder} placeholderTextColor="#8A9099" multiline style={{ fontSize: 17, lineHeight: 22, color: palette.ink, maxHeight: 120, minHeight: 26 }} />
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             <Pressable accessibilityRole="button" accessibilityLabel="Attach or review a chest X-ray" onPress={props.onImage} hitSlop={4} style={{ width: 38, height: 38, alignItems: "center", justifyContent: "center" }}><Icon name="photo" size={20} color={palette.muted} /></Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel="Start the consultation recorder" onPress={props.onConsultation} hitSlop={4} style={{ width: 38, height: 38, alignItems: "center", justifyContent: "center" }}><Icon name="waveform" size={20} color={palette.muted} /></Pressable>
