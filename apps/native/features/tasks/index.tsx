@@ -10,34 +10,85 @@ import { LinearGradient } from "expo-linear-gradient";
 import { scheduleOnRN } from "react-native-worklets";
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
-import { Action, Body, Card, Chip, Expand, Notice, RoundAction, Screen, SourceLink, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Chip, Expand, glass, Icon, RoundAction, Screen, SourceLink, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Section as AnswerSection } from "@/components/sona/sections";
 import { HalftoneGlint } from "@/components/sona/halftone-shimmer";
 import { palette } from "@/components/sona/theme";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps, Task } from "@/features/encounter/types";
-import { createTaskOnce, localDate, mentionQuery, parseDuePhrase, proposedTask, readableDate, taskDraftErrors, taskProposal, type TaskDraft } from "./state";
+import { createTaskOnce, localDate, mentionQuery, parseDuePhrase, proposedTask, taskDraftErrors, taskProposal, type TaskDraft } from "./state";
 
+/**
+ * Follow-up answer: a generated section in the tasks screen's language. Before any task exists it
+ * proposes one sentence with quiet owner/due tokens and one action; afterwards it shows the counts
+ * and the latest tasks as read-only rows. Every path leads to the tasks screen, where edits happen.
+ */
 export function FollowupCard({ patient, onOpen, onSource }: FeatureProps) {
   const { encounter } = useEncounter();
+  const { reducedMotion } = useAccessibleEffects();
   const created = encounter?.tasks ?? [];
-  const proposal = encounter?.taskDraft ?? (encounter ? taskProposal(encounter, patient) : undefined);
-  return <Card feature label="Follow-up · local simulation" title={created.length ? "Keep the next step in sight" : "A clear next step"} footer={created.length ? undefined : proposal ? <TaskOrigin value={proposal} /> : <SourceLink label="Encounter context" onPress={() => onSource("history")} />}>
-    {created.length ? <><Body>{created.filter(task => !task.completed).length} open · {created.filter(task => task.completed).length} completed</Body>{created.slice(-2).map(task => <TaskSummary key={task.id} task={task} />)}</> : <><Body>{proposal?.title ?? proposedTask}</Body><View style={{ gap: 8 }}><Detail label="Patient" value={`${patient.name} · ${patient.id}`} /><Detail label="Owner" value="Needs assignment" /><Detail label="Due" value="Needs a date" /></View><Notice>{proposal?.sourceId === "clinical-note" ? "Proposed from the clinician-entered plan in this synthetic encounter. Set the owner and date before creating it." : "Authored synthetic proposal from the encounter context. Set the details before creating it."}</Notice></>}
-    <Action label={created.length ? "Manage follow-up" : "Set task details"} icon="calendar.badge.plus" onPress={() => onOpen("tasks")} />
-  </Card>;
+  const draft = encounter?.taskDraft;
+  const proposal = draft ?? (encounter ? taskProposal(encounter, patient) : undefined);
+  const open = () => onOpen("tasks");
+  // Generated reveal (after Remy AI's staggered analysis): blocks rise 8 pt, 60 ms apart, ease-out.
+  const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 60 * i, distance: 8, duration: 320 });
+  const safety = <Text style={{ fontSize: 12, lineHeight: 17, color: palette.muted }}>Local simulation · nothing is booked or sent.</Text>;
+
+  if (created.length) {
+    const openCount = created.filter(task => !task.completed).length;
+    return <AnswerSection title="Keep the next step in sight" subtitle={openCount ? `${openCount} open · ${created.length - openCount} completed, saved for this session.` : "All follow-ups are done."}>
+      <Surface feature style={{ paddingHorizontal: 18, paddingTop: 4, paddingBottom: 18, gap: 10 }}>
+        <View>{created.slice(-2).map((task, i) => <Animated.View key={task.id} entering={rise(i)} style={i ? { borderTopWidth: 1, borderColor: glass.hairline } : undefined}><TaskSummary task={task} /></Animated.View>)}</View>
+        <Animated.View entering={rise(2)}><Action label="Manage follow-up" icon="checklist" onPress={open} /></Animated.View>
+      </Surface>
+      {safety}
+    </AnswerSection>;
+  }
+
+  const owner = draft?.owner, due = draft?.due;
+  return <AnswerSection title="A clear next step" subtitle={proposal?.sourceId === "clinical-note" ? "Taken from the plan you wrote. Give it an owner and a date to make it a task." : "Proposed from this synthetic encounter. Give it an owner and a date to make it a task."}>
+    <Surface feature style={{ padding: 18, gap: 16 }}>
+      <Animated.View entering={rise(0)}><Text selectable style={{ fontSize: 20, lineHeight: 26, fontWeight: "500", letterSpacing: -0.3, color: palette.ink }}>{proposal?.title ?? proposedTask}</Text></Animated.View>
+      <Animated.View entering={rise(1)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+        <Chip icon={<BrandIcon name="person" size={17} color={owner ? palette.blue : palette.muted} />} label={owner || "Owner"} filled={Boolean(owner)} onPress={open} accessibilityLabel={owner ? `Owner, ${owner}` : "Owner, not assigned"} />
+        <Chip icon={<BrandIcon name="calendar" size={17} color={due ? palette.blue : palette.muted} />} label={due ? friendlyDate(due) : "Due"} filled={Boolean(due)} onPress={open} accessibilityLabel={due ? `Due ${friendlyDate(due)}` : "Due date, not set"} />
+      </Animated.View>
+      <Animated.View entering={rise(2)}><Action label="Make it a task" icon="calendar.badge.plus" onPress={open} /></Animated.View>
+    </Surface>
+    {proposal ? <TaskOrigin value={proposal} /> : <SourceLink label="Encounter context" onPress={() => onSource("history")} />}
+    {safety}
+  </AnswerSection>;
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
-  return <View style={{ flexDirection: "row", alignItems: "baseline", gap: 14 }}><Text style={{ fontSize: 13, color: palette.muted, minWidth: 58 }}>{label}</Text><Text selectable style={{ color: palette.ink, fontSize: 14, lineHeight: 21, flex: 1 }}>{value}</Text></View>;
-}
+/** Read-only task row with the tasks screen's check: filled circle and struck title once done. */
 function TaskSummary({ task }: { task: Task }) {
-  return <View style={{ padding: 14, backgroundColor: task.completed ? "#E9F1ED" : "#EAF0F9", borderRadius: 16, gap: 6 }}><Text selectable style={{ color: palette.ink, fontSize: 16, fontWeight: "500" }}>{task.title}</Text><Text selectable style={{ color: palette.muted, fontSize: 13, lineHeight: 20 }}>{task.owner} · {readableDate(task.due)} · {task.completed ? "Completed" : "Open"}</Text><TaskOrigin value={task} /></View>;
+  const done = task.completed;
+  return <View style={{ flexDirection: "row", gap: 12, paddingVertical: 12 }}>
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 22, height: 22, marginTop: 1, borderRadius: 11, borderWidth: 1.6, borderColor: done ? palette.blue : palette.line, backgroundColor: done ? palette.blue : "transparent", alignItems: "center", justifyContent: "center" }}>
+      {done && <BrandIcon name="check" size={14} color={palette.white} strokeWidth={2.4} />}
+    </View>
+    <View style={{ flex: 1, gap: 3 }}>
+      <Text selectable accessibilityLabel={`${task.title}, ${done ? "completed" : "open"}`} style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: done ? palette.muted : palette.ink, textDecorationLine: done ? "line-through" : "none", textDecorationColor: palette.muted }}>{task.title}</Text>
+      <Text selectable style={{ fontSize: 13, lineHeight: 18, color: palette.muted }}>{task.owner} · {done ? "Done" : friendlyDate(task.due)}</Text>
+      <TaskOrigin value={task} />
+    </View>
+  </View>;
 }
 
+/** One quiet line: who wrote it, then its source at the revision it was taken from. */
 function TaskOrigin({ value }: { value: Pick<Task, "sourceId" | "sourceRevision" | "provenance" | "sourceSnapshot"> & { id?: string; operationId?: string } }) {
   const { patient } = useEncounter();
   const source = value.sourceSnapshot ?? patient?.sources.find(item => item.id === value.sourceId);
-  return <View style={{ gap: 5 }}><Text selectable style={{ color: palette.muted, fontSize: 12, lineHeight: 18 }}>{value.provenance === "clinician" ? "Clinician-entered details · synthetic encounter" : value.provenance === "fixture" ? "Authored synthetic proposal" : "Origin not recorded"}</Text>{source && patient ? <SourceLink label={`${source.title}${value.sourceRevision ? ` · revision ${value.sourceRevision}` : ""}`} onPress={() => router.push({ pathname: "/source", params: { id: source.id, patientId: patient.id, revision: String(value.sourceRevision ?? ""), taskId: value.id ?? value.operationId ?? "" } })} /> : <Text selectable style={{ color: palette.muted, fontSize: 12 }}>No originating source linked</Text>}</View>;
+  const origin = value.provenance === "clinician" ? "Clinician-entered details" : value.provenance === "fixture" ? "Authored synthetic proposal" : "Origin not recorded";
+  const label = source ? `${source.title}${value.sourceRevision ? ` · revision ${value.sourceRevision}` : ""}` : "";
+  return <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 6 }}>
+    <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>{origin} ·</Text>
+    {source && patient ? <Pressable accessibilityRole="link" accessibilityLabel={`Source, ${label}`} hitSlop={{ top: 13, bottom: 13, left: 6, right: 12 }}
+      onPress={() => router.push({ pathname: "/source", params: { id: source.id, patientId: patient.id, revision: String(value.sourceRevision ?? ""), taskId: value.id ?? value.operationId ?? "" } })}
+      style={({ pressed }) => ({ flexShrink: 1, flexDirection: "row", alignItems: "center", gap: 4, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+      <Text style={{ flexShrink: 1, fontSize: 12, lineHeight: 18, fontWeight: "500", color: palette.blue }}>{label}</Text><Icon name="arrow.up.right" size={10} color={palette.blue} />
+    </Pressable> : <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>No originating source linked</Text>}
+  </View>;
 }
 
 // ---- Task screen (after Superlist's sentence composer, Canopi's quick dates, Particle's check
