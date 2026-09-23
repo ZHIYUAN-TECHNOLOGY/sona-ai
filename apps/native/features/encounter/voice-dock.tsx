@@ -8,7 +8,7 @@ import { GlassOrb } from "@/components/sona/glass-orb";
 import { OrbGlyph, type OrbActivity } from "@/components/sona/orb-glyph";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { AccessibilityInfo, Keyboard, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { cubicBezier, FadeIn, FadeOut, useAnimatedKeyboard, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
@@ -17,7 +17,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
 const ORB = 64;
 
-type Mode = "idle" | "holding" | "composing";
+type Mode = "idle" | "holding" | "handsfree" | "composing";
+/** Silence after the last heard word before a hands-free request is sent. */
+const ENDPOINT_MS = 1300;
 type Props = {
   /** Status text while a response is being prepared. Undefined when idle. */
   thinking?: string;
@@ -70,13 +72,14 @@ function RoundButton({ icon, label, onPress, hidden }: { icon: string; label: st
   </Animated.View>;
 }
 
-/** Monogram-style voice-first dock: tap for a hint, hold to talk, keyboard morphs into a composer. */
+/** Voice-first dock: tap to talk hands-free, or hold to talk and release to send; keyboard morphs into a composer. */
 export function VoiceDock(props: Props) {
   const { thinking, activity, onCancel, onSubmit, spokenPrompt, placeholder, draft, onDraft, voiceEnabled, onVoiceDisabled, above, backdrop } = props;
   const insets = useSafeAreaInsets();
   const { reducedMotion, reducedTransparency } = useAccessibleEffects();
   const [mode, setMode] = useState<Mode>("idle");
-  const [hint, setHint] = useState(false);
+  const [used, setUsed] = useState(false);
+  const [armed, setArmed] = useState(false);
   const [words, setWords] = useState(0);
   const [flooding, setFlooding] = useState(false);
   const [veilFailed, setVeilFailed] = useState(false);
@@ -95,39 +98,53 @@ export function VoiceDock(props: Props) {
     const sub = AccessibilityInfo.addEventListener("screenReaderChanged", value => { screenReader.current = value; });
     return () => sub.remove();
   }, []);
-  useEffect(() => { if (thinking) { clear(); setHint(false); setMode(current => current === "composing" ? current : "idle"); } }, [thinking]);
+  useEffect(() => { if (thinking) { clear(); setMode(current => current === "composing" ? current : "idle"); } }, [thinking]);
 
-  const showHint = () => {
+  const listen = (next: "holding" | "handsfree") => {
+    clear(); setUsed(true); setWords(0); setFlooding(false); setMode(next); haptic("light");
+    transcript.forEach((_, i) => timers.current.push(setTimeout(() => {
+      setWords(i + 1);
+      // Hands-free ends on a pause after the last word, like a real voice endpoint.
+      if (next === "handsfree" && i === transcript.length - 1) timers.current.push(setTimeout(() => finish(true), ENDPOINT_MS));
+    }, 380 + i * 170)));
+  };
+  const finish = (send: boolean) => {
+    clear();
+    const heard = wordsRef.current;
+    setWords(0); setMode("idle");
+    if (send && heard > 0) { haptic("select"); setFlooding(true); onSubmit(spokenPrompt); }
+  };
+  const tapOrb = () => {
     if (!voiceEnabled) { onVoiceDisabled(); return; }
     if (screenReader.current) { onSubmit(spokenPrompt); return; }
-    clear(); setHint(true);
-    timers.current.push(setTimeout(() => setHint(false), 2200));
+    if (modeRef.current === "handsfree") finish(true); else listen("handsfree");
   };
   const startHold = () => {
     if (!voiceEnabled) { onVoiceDisabled(); return; }
-    clear(); setHint(false); setWords(0); setFlooding(false); setMode("holding"); haptic("light");
-    transcript.forEach((_, i) => timers.current.push(setTimeout(() => setWords(i + 1), 380 + i * 170)));
+    if (modeRef.current !== "handsfree") listen("holding");
   };
-  const release = () => {
-    clear();
-    if (modeRef.current !== "holding") return;
-    const heard = wordsRef.current;
-    setWords(0); setMode("idle");
-    if (heard > 0) { haptic("select"); setFlooding(true); onSubmit(spokenPrompt); }
-  };
-  const hold = Gesture.LongPress().minDuration(220).maxDistance(60).runOnJS(true).onStart(startHold).onFinalize(release);
-  const tap = Gesture.Tap().runOnJS(true).onEnd(showHint);
-  const stop = Gesture.Tap().runOnJS(true).onEnd(onCancel);
-  const micGesture = thinking ? stop : Gesture.Exclusive(hold, tap);
+  const release = () => { if (modeRef.current === "holding") finish(true); };
+  // Gestures are built once and call the latest handlers, so re-renders (one per heard word) don't re-attach them.
+  const handlers = useRef({ startHold, release, tapOrb, onCancel, arm: (on: boolean) => setArmed(on) });
+  handlers.current = { startHold, release, tapOrb, onCancel, arm: (on: boolean) => setArmed(on) };
+  const gestures = useMemo(() => {
+    const hold = Gesture.LongPress().minDuration(400).maxDistance(60).runOnJS(true)
+      .onBegin(() => handlers.current.arm(true)).onStart(() => handlers.current.startHold())
+      .onFinalize(() => { handlers.current.arm(false); handlers.current.release(); });
+    const tap = Gesture.Tap().runOnJS(true).onEnd(() => handlers.current.tapOrb());
+    const stop = Gesture.Tap().runOnJS(true).onEnd(() => handlers.current.onCancel());
+    return { listen: Gesture.Exclusive(hold, tap), stop };
+  }, []);
+  const micGesture = thinking ? gestures.stop : gestures.listen;
 
-  const holding = mode === "holding", busy = Boolean(thinking);
+  const holding = mode === "holding" || mode === "handsfree", handsfree = mode === "handsfree", busy = Boolean(thinking);
   const liquid = !reducedTransparency && !veilFailed;
   const scrim = busy || (holding && !liquid);
   const veil = holding ? "listening" : flooding && busy ? "flood" : "idle";
   const send = () => { const value = draft.trim(); if (!value) return; onSubmit(value); Keyboard.dismiss(); };
 
   return <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-    {liquid && <LiquidVeil backdrop={backdrop} state={veil} words={words} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
+    {liquid && <LiquidVeil backdrop={backdrop} state={veil} armed={armed && !busy} words={words} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
     {/* Frosted focus layer: a static blur crossfaded by opacity. */}
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: scrim ? 1 : 0, transitionProperty: "opacity", transitionDuration: scrim ? 320 : 240, transitionTimingFunction: EASE_OUT }]}>
       {reducedTransparency ? <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(236,239,244,0.94)" }]} /> : <BlurView tint="light" intensity={38} style={StyleSheet.absoluteFill} />}
@@ -136,7 +153,8 @@ export function VoiceDock(props: Props) {
 
     {holding && <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(140)} pointerEvents="none" style={{ position: "absolute", left: 32, right: 32, bottom: insets.bottom + 132, alignItems: "center" }}>
       <Text accessibilityLiveRegion="polite" style={{ textAlign: "center", fontSize: 25, lineHeight: 32, letterSpacing: -0.4, fontWeight: "500", color: words ? palette.ink : palette.muted }}>{words ? transcript.slice(0, words).join(" ") : "Listening…"}</Text>
-      <Text style={{ marginTop: 10, fontSize: 12, color: palette.muted }}>Sample voice command · no audio is recorded</Text>
+      <Text style={{ marginTop: 10, fontSize: 13, fontWeight: "500", color: palette.ink }}>{handsfree ? "Pause or tap the orb to send" : "Release to send"}</Text>
+      <Text style={{ marginTop: 4, fontSize: 12, color: palette.muted }}>Sample voice command · no audio is recorded</Text>
     </Animated.View>}
 
     <View pointerEvents="box-none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, paddingBottom: Math.max(insets.bottom, 12) + 4, gap: 10 }}>
@@ -159,14 +177,15 @@ export function VoiceDock(props: Props) {
       </Animated.View>
       : <Animated.View key="dock" entering={reducedMotion ? undefined : dockEntering} exiting={FadeOut.duration(100)} style={{ height: 64, marginHorizontal: 20, justifyContent: "center" }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <RoundButton icon="plus" label="Attach or review a chest X-ray" onPress={props.onImage} hidden={holding || busy} />
-          <RoundButton icon="keyboard" label="Type a message" onPress={() => { setHint(false); setMode("composing"); }} hidden={holding || busy} />
+          {handsfree ? <RoundButton icon="xmark" label="Cancel voice input" onPress={() => finish(false)} /> : <RoundButton icon="plus" label="Attach or review a chest X-ray" onPress={props.onImage} hidden={holding || busy} />}
+          <RoundButton icon="keyboard" label="Type a message" onPress={() => setMode("composing")} hidden={holding || busy} />
         </View>
 
-        {hint && !busy && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ distance: 8, scale: 0.96, duration: 220 })} exiting={FadeOut.duration(140)} pointerEvents="none"
-          style={{ position: "absolute", bottom: 74, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 10, paddingLeft: 8, paddingRight: 18, paddingVertical: 8, borderRadius: 26, backgroundColor: palette.white, boxShadow: "0 8px 24px rgba(24,32,48,0.12)", transformOrigin: "bottom" }}>
-          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: "#E4EDFD", alignItems: "center", justifyContent: "center" }}><Icon name="mic.fill" size={15} color={palette.blue} /></View>
-          <Text style={{ fontSize: 15, fontWeight: "500", color: palette.ink }}>Hold while you speak</Text>
+        {/* Coach mark until the first voice request: states both gestures up front. */}
+        {!used && !busy && mode === "idle" && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ delay: 600, distance: 6, scale: 0.96, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="none"
+          style={{ position: "absolute", bottom: 76, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 6, paddingRight: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.94)", boxShadow: "0 6px 20px rgba(24,32,48,0.1)", transformOrigin: "bottom" }}>
+          <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: "#E4EDFD", alignItems: "center", justifyContent: "center" }}><Icon name="waveform" size={13} color={palette.blue} /></View>
+          <Text style={{ fontSize: 13, fontWeight: "500", color: palette.ink }}>Tap or hold to talk</Text>
         </Animated.View>}
 
         <View pointerEvents="box-none" style={{ position: "absolute", left: 0, right: 0, alignItems: "center" }}>
@@ -176,8 +195,11 @@ export function VoiceDock(props: Props) {
             <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: "500", color: palette.ink, animationName: reducedMotion ? undefined : { "0%": { opacity: 1 }, "50%": { opacity: 0.5 }, "100%": { opacity: 1 } }, animationDuration: 1600, animationIterationCount: "infinite" } as never}>{thinking}</Text>
           </Animated.View>}
           <GestureDetector gesture={micGesture}>
-            <Animated.View accessible accessibilityRole="button" accessibilityLabel={busy ? `${thinking}. Stop response` : "Talk to Sona"} accessibilityHint={busy ? undefined : "Hold while you speak. With VoiceOver, double-tap to use the sample command."} accessibilityActions={[{ name: "activate" }]} onAccessibilityAction={() => busy ? onCancel() : onSubmit(spokenPrompt)}
-              style={{ width: ORB, height: ORB, borderRadius: ORB / 2, alignItems: "center", justifyContent: "center", boxShadow: holding ? "0 10px 28px rgba(60,100,200,0.32)" : "0 8px 22px rgba(40,70,140,0.22)", transform: [{ scale: holding ? 1.12 : 1 }], transitionProperty: ["transform", "boxShadow"], transitionDuration: 320, transitionTimingFunction: EASE_OUT } as never}>
+            <Animated.View accessible accessibilityRole="button" accessibilityLabel={busy ? `${thinking}. Stop response` : "Talk to Sona"} accessibilityHint={busy ? undefined : handsfree ? "Double-tap to send what you said." : "Tap to talk hands-free, or hold and release to send. With VoiceOver, double-tap to use the sample command."} accessibilityActions={[{ name: "activate" }]} onAccessibilityAction={() => busy ? onCancel() : onSubmit(spokenPrompt)}
+              style={{ width: ORB, height: ORB, borderRadius: ORB / 2, alignItems: "center", justifyContent: "center", transform: [{ scale: holding ? 1.12 : 1 }], transitionProperty: "transform", transitionDuration: 320, transitionTimingFunction: EASE_OUT } as never}>
+              {/* Two pre-shadowed layers crossfaded by opacity: animating boxShadow would repaint it every frame. */}
+              <Animated.View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: ORB / 2, backgroundColor: palette.white, boxShadow: "0 8px 22px rgba(40,70,140,0.22)", opacity: holding ? 0 : 1, transitionProperty: "opacity", transitionDuration: 320, transitionTimingFunction: EASE_OUT }} />
+              <Animated.View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: ORB / 2, backgroundColor: palette.white, boxShadow: "0 10px 28px rgba(60,100,200,0.32)", opacity: holding ? 1 : 0, transitionProperty: "opacity", transitionDuration: 320, transitionTimingFunction: EASE_OUT }} />
               <View style={{ position: "absolute", inset: 0 }}><GlassOrb size={ORB} energy={holding ? 1 : busy ? 0.7 : 0} still={reducedMotion} /></View>
               <OrbGlyph activity={holding ? "listening" : activity ?? (busy ? "searching" : "idle")} still={reducedMotion} />
             </Animated.View>
