@@ -1,49 +1,24 @@
-import { QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
-import { DarkTheme, DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
+import { Stack, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { palette } from "@/components/sona/theme";
+import { IconButton } from "@/components/sona/ui";
+import { EncounterProvider } from "@/features/encounter/store";
+import { ScribePlayback } from "@/features/scribe";
 
-import { NAV_THEME } from "@/lib/constants";
-import { useColorScheme } from "@/lib/use-color-scheme";
-import { queryClient } from "@/utils/orpc";
-
-const LIGHT_THEME = {
-  ...DefaultTheme,
-  colors: NAV_THEME.light,
-};
-const DARK_THEME = {
-  ...DarkTheme,
-  colors: NAV_THEME.dark,
-};
-
-export const unstable_settings = {
-  initialRouteName: "(drawer)",
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
+export const unstable_settings = { initialRouteName: "index" };
 
 export default function RootLayout() {
-  const { isDarkColorScheme } = useColorScheme();
-
-  return (
-    <>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-          <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-          <GestureHandlerRootView style={styles.container}>
-            <Stack>
-              <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-              <Stack.Screen name="modal" options={{ title: "Modal", presentation: "modal" }} />
-            </Stack>
-          </GestureHandlerRootView>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </>
-  );
+  return <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider><EncounterProvider><ScribePlayback /><StatusBar style="dark" /><Stack screenOptions={{ headerLeft: () => <IconButton name="chevron.left" label="Return to previous screen" onPress={() => router.canGoBack() ? router.back() : router.replace("/")} />, headerStyle: { backgroundColor: palette.canvas }, headerTintColor: palette.ink, headerShadowVisible: false, headerBackButtonDisplayMode: "minimal", contentStyle: { backgroundColor: palette.canvas } }}>
+    <Stack.Screen name="index" options={{ headerShown: false }} />
+    <Stack.Screen name="patients" options={{ title: "Choose a patient", presentation: "formSheet", sheetAllowedDetents: [0.75, 1], sheetGrabberVisible: true }} />
+    <Stack.Screen name="source" options={{ title: "Source detail", presentation: "formSheet", sheetAllowedDetents: [0.6, 1], sheetGrabberVisible: true }} />
+    <Stack.Screen name="recording" options={{ title: "Consultation", presentation: "modal" }} />
+    <Stack.Screen name="note" options={{ title: "Consultation note" }} />
+    <Stack.Screen name="xray" options={{ title: "Chest X-ray", presentation: "modal" }} />
+    <Stack.Screen name="tasks" options={{ title: "Follow-up tasks" }} />
+    <Stack.Screen name="history" options={{ title: "Your workspace", presentation: "modal" }} />
+    <Stack.Screen name="account" options={{ title: "Account scaffold" }} />
+  </Stack></EncounterProvider></SafeAreaProvider></GestureHandlerRootView>;
 }

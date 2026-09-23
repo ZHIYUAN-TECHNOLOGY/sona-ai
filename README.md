@@ -1,5 +1,7 @@
 # sona-ai
 
+The current deliverable is a synthetic iPhone clinical-assistant UI awaiting user review. Start with the [UI walkthrough](docs/ui-walkthrough.md) to preview it, or the [agent handoff](docs/handoff.md) to continue development. The UI preview does not require database or infrastructure setup; the scaffold instructions below describe the broader stack.
+
 This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React Native, Expo, Hono, ORPC, and more.
 
 ## Features

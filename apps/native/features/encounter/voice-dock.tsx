@@ -1,0 +1,186 @@
+import { Text } from "@/components/sona/text";
+import { palette } from "@/components/sona/theme";
+import { Icon } from "@/components/sona/ui";
+import { useAccessibleEffects } from "@/components/sona/ui";
+import { riseIn } from "@/components/sona/motion";
+import { LiquidVeil } from "@/components/sona/liquid-veil";
+import { BlurView } from "expo-blur";
+import * as Haptics from "expo-haptics";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { AccessibilityInfo, Keyboard, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, { cubicBezier, FadeIn, FadeOut, useAnimatedKeyboard, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
+const MIC = 92, THINKING = 176;
+
+type Mode = "idle" | "holding" | "composing";
+type Props = {
+  /** Status text while a response is being prepared. Undefined when idle. */
+  thinking?: string;
+  onCancel: () => void;
+  onSubmit: (prompt: string) => void;
+  /** Authored transcript used by the hold-to-talk fixture; no microphone is recorded. */
+  spokenPrompt: string;
+  placeholder: string;
+  draft: string;
+  onDraft: (value: string) => void;
+  voiceEnabled: boolean;
+  onVoiceDisabled: () => void;
+  onImage: () => void;
+  onConsultation: () => void;
+  onNote: () => void;
+  above?: ReactNode;
+  /** Screen content captured for the liquid hold-to-talk veil. */
+  backdrop: RefObject<View | null>;
+};
+
+function haptic(kind: "light" | "select") {
+  if (process.env.EXPO_OS !== "ios") return;
+  (kind === "light" ? Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light) : Haptics.selectionAsync()).catch(() => {});
+}
+
+// Composer grows out of the dock, anchored at its bottom edge.
+function composerEntering() {
+  "worklet";
+  return {
+    initialValues: { opacity: 0, transform: [{ translateY: 14 }, { scale: 0.94 }] },
+    animations: { opacity: withTiming(1, { duration: 200 }), transform: [{ translateY: withSpring(0, { duration: 380, dampingRatio: 0.86 }) }, { scale: withSpring(1, { duration: 380, dampingRatio: 0.86 }) }] },
+  };
+}
+function dockEntering() {
+  "worklet";
+  return {
+    initialValues: { opacity: 0, transform: [{ translateY: 10 }, { scale: 0.92 }] },
+    animations: { opacity: withTiming(1, { duration: 220 }), transform: [{ translateY: withSpring(0, { duration: 360, dampingRatio: 0.84 }) }, { scale: withSpring(1, { duration: 360, dampingRatio: 0.84 }) }] },
+  };
+}
+
+function RoundButton({ icon, label, onPress, hidden }: { icon: string; label: string; onPress: () => void; hidden?: boolean }) {
+  return <Animated.View pointerEvents={hidden ? "none" : "auto"} style={{ opacity: hidden ? 0 : 1, transform: [{ scale: hidden ? 0.6 : 1 }], transitionProperty: ["opacity", "transform"], transitionDuration: 260, transitionTimingFunction: EASE_OUT }}>
+    <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityElementsHidden={hidden} onPress={onPress} hitSlop={6}
+      style={({ pressed }) => ({ width: 50, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.92)", boxShadow: "0 4px 14px rgba(24,32,48,0.10)", transform: [{ scale: pressed ? 0.94 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+      <Icon name={icon} size={19} />
+    </Pressable>
+  </Animated.View>;
+}
+
+/** Monogram-style voice-first dock: tap for a hint, hold to talk, keyboard morphs into a composer. */
+export function VoiceDock(props: Props) {
+  const { thinking, onCancel, onSubmit, spokenPrompt, placeholder, draft, onDraft, voiceEnabled, onVoiceDisabled, above, backdrop } = props;
+  const insets = useSafeAreaInsets();
+  const { reducedMotion, reducedTransparency } = useAccessibleEffects();
+  const [mode, setMode] = useState<Mode>("idle");
+  const [hint, setHint] = useState(false);
+  const [words, setWords] = useState(0);
+  const [flooding, setFlooding] = useState(false);
+  const [veilFailed, setVeilFailed] = useState(false);
+  const modeRef = useRef(mode); modeRef.current = mode;
+  const wordsRef = useRef(words); wordsRef.current = words;
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const screenReader = useRef(false);
+  const transcript = spokenPrompt.split(" ");
+  const keyboard = useAnimatedKeyboard();
+  const composerStyle = useAnimatedStyle(() => ({ transform: [{ translateY: -Math.max(0, keyboard.height.value - insets.bottom) }] }));
+
+  const clear = () => { timers.current.forEach(clearTimeout); timers.current = []; };
+  useEffect(() => clear, []);
+  useEffect(() => {
+    AccessibilityInfo.isScreenReaderEnabled().then(value => { screenReader.current = value; });
+    const sub = AccessibilityInfo.addEventListener("screenReaderChanged", value => { screenReader.current = value; });
+    return () => sub.remove();
+  }, []);
+  useEffect(() => { if (thinking) { clear(); setHint(false); setMode(current => current === "composing" ? current : "idle"); } }, [thinking]);
+
+  const showHint = () => {
+    if (!voiceEnabled) { onVoiceDisabled(); return; }
+    if (screenReader.current) { onSubmit(spokenPrompt); return; }
+    clear(); setHint(true);
+    timers.current.push(setTimeout(() => setHint(false), 2200));
+  };
+  const startHold = () => {
+    if (!voiceEnabled) { onVoiceDisabled(); return; }
+    clear(); setHint(false); setWords(0); setFlooding(false); setMode("holding"); haptic("light");
+    transcript.forEach((_, i) => timers.current.push(setTimeout(() => setWords(i + 1), 380 + i * 170)));
+  };
+  const release = () => {
+    clear();
+    if (modeRef.current !== "holding") return;
+    const heard = wordsRef.current;
+    setWords(0); setMode("idle");
+    if (heard > 0) { haptic("select"); setFlooding(true); onSubmit(spokenPrompt); }
+  };
+  const hold = Gesture.LongPress().minDuration(220).maxDistance(60).runOnJS(true).onStart(startHold).onFinalize(release);
+  const tap = Gesture.Tap().runOnJS(true).onEnd(showHint);
+  const stop = Gesture.Tap().runOnJS(true).onEnd(onCancel);
+  const micGesture = thinking ? stop : Gesture.Exclusive(hold, tap);
+
+  const holding = mode === "holding", busy = Boolean(thinking);
+  const liquid = !reducedTransparency && !veilFailed;
+  const scrim = busy || (holding && !liquid);
+  const veil = holding ? "listening" : flooding && busy ? "flood" : "idle";
+  const send = () => { const value = draft.trim(); if (!value) return; onSubmit(value); Keyboard.dismiss(); };
+
+  return <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+    {liquid && <LiquidVeil backdrop={backdrop} state={veil} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
+    {/* Frosted focus layer: a static blur crossfaded by opacity. */}
+    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: scrim ? 1 : 0, transitionProperty: "opacity", transitionDuration: scrim ? 320 : 240, transitionTimingFunction: EASE_OUT }]}>
+      {reducedTransparency ? <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(236,239,244,0.94)" }]} /> : <BlurView tint="light" intensity={38} style={StyleSheet.absoluteFill} />}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(232,236,243,0.28)" }]} />
+    </Animated.View>
+
+    {holding && <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(140)} pointerEvents="none" style={{ position: "absolute", left: 32, right: 32, bottom: insets.bottom + 132, alignItems: "center" }}>
+      <Text accessibilityLiveRegion="polite" style={{ textAlign: "center", fontSize: 25, lineHeight: 32, letterSpacing: -0.4, fontWeight: "500", color: words ? palette.ink : palette.muted }}>{words ? transcript.slice(0, words).join(" ") : "Listening…"}</Text>
+      <Text style={{ marginTop: 10, fontSize: 12, color: palette.muted }}>Sample voice command · no audio is recorded</Text>
+    </Animated.View>}
+
+    <View pointerEvents="box-none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, paddingBottom: Math.max(insets.bottom, 12) + 4, gap: 10 }}>
+      {mode !== "composing" && above && <View pointerEvents="box-none" style={{ paddingHorizontal: 20, gap: 8 }}>{above}</View>}
+
+      {mode === "composing" ? <Animated.View key="composer" entering={reducedMotion ? FadeIn.duration(150) : composerEntering} exiting={FadeOut.duration(120)} style={[{ marginHorizontal: 12, transformOrigin: "bottom" }, composerStyle]}>
+        <View style={{ backgroundColor: palette.white, borderRadius: 26, borderCurve: "continuous", paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10, gap: 12, boxShadow: "0 8px 30px rgba(24,32,48,0.12)" }}>
+          <TextInput autoFocus onBlur={() => setMode(current => current === "composing" ? "idle" : current)} accessibilityLabel="Ask Sona" value={draft} onChangeText={onDraft} placeholder={placeholder} placeholderTextColor="#8A9099" multiline onSubmitEditing={send} style={{ fontSize: 17, lineHeight: 22, color: palette.ink, maxHeight: 120, minHeight: 26 }} />
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Attach or review a chest X-ray" onPress={props.onImage} hitSlop={4} style={{ width: 38, height: 38, alignItems: "center", justifyContent: "center" }}><Icon name="photo" size={20} color={palette.muted} /></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Start the consultation recorder" onPress={props.onConsultation} hitSlop={4} style={{ width: 38, height: 38, alignItems: "center", justifyContent: "center" }}><Icon name="waveform" size={20} color={palette.muted} /></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Open the consultation note" onPress={props.onNote} hitSlop={4} style={{ width: 38, height: 38, alignItems: "center", justifyContent: "center" }}><Icon name="doc.text" size={19} color={palette.muted} /></Pressable>
+            <View style={{ flex: 1 }} />
+            <Pressable accessibilityRole="button" accessibilityLabel="Send message" accessibilityState={{ disabled: !draft.trim() }} disabled={!draft.trim()} onPress={send}
+              style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: draft.trim() ? palette.ink : "#C9CDD3", transitionProperty: "backgroundColor", transitionDuration: 160 } as never}>
+              <Icon name="arrow.up" size={16} color={palette.white} />
+            </Pressable>
+          </View>
+        </View>
+      </Animated.View>
+      : <Animated.View key="dock" entering={reducedMotion ? undefined : dockEntering} exiting={FadeOut.duration(100)} style={{ height: 64, marginHorizontal: 20, justifyContent: "center" }}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <RoundButton icon="plus" label="Attach or review a chest X-ray" onPress={props.onImage} hidden={holding || busy} />
+          <RoundButton icon="keyboard" label="Type a message" onPress={() => { setHint(false); setMode("composing"); }} hidden={holding || busy} />
+        </View>
+
+        {hint && !busy && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ distance: 8, scale: 0.96, duration: 220 })} exiting={FadeOut.duration(140)} pointerEvents="none"
+          style={{ position: "absolute", bottom: 74, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 10, paddingLeft: 8, paddingRight: 18, paddingVertical: 8, borderRadius: 26, backgroundColor: palette.white, boxShadow: "0 8px 24px rgba(24,32,48,0.12)", transformOrigin: "bottom" }}>
+          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: "#E4EDFD", alignItems: "center", justifyContent: "center" }}><Icon name="mic.fill" size={15} color={palette.blue} /></View>
+          <Text style={{ fontSize: 15, fontWeight: "500", color: palette.ink }}>Hold while you speak</Text>
+        </Animated.View>}
+
+        <View pointerEvents="box-none" style={{ position: "absolute", left: 0, right: 0, alignItems: "center" }}>
+          {holding && !reducedMotion && <Animated.View pointerEvents="none" style={{ position: "absolute", width: MIC, height: 56, borderRadius: 28, backgroundColor: "rgba(36,91,204,0.18)", animationName: { from: { transform: [{ scale: 1 }], opacity: 0.8 }, to: { transform: [{ scale: 1.55 }], opacity: 0 } }, animationDuration: 1300, animationIterationCount: "infinite", animationTimingFunction: "ease-out" }} />}
+          <GestureDetector gesture={micGesture}>
+            <Animated.View accessible accessibilityRole="button" accessibilityLabel={busy ? `${thinking}. Stop response` : "Talk to Sona"} accessibilityHint={busy ? undefined : "Hold while you speak. With VoiceOver, double-tap to use the sample command."} accessibilityActions={[{ name: "activate" }]} onAccessibilityAction={() => busy ? onCancel() : onSubmit(spokenPrompt)}
+              style={{ width: busy ? THINKING : MIC, height: 56, borderRadius: 28, overflow: "hidden", alignItems: "center", justifyContent: "center", backgroundColor: holding ? "#2A2E36" : "#15171B", borderWidth: 3, borderColor: holding ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.92)", boxShadow: "0 6px 18px rgba(20,24,32,0.22)", transform: [{ scale: holding ? 1.14 : 1 }], transitionProperty: ["width", "transform", "backgroundColor", "borderColor"], transitionDuration: 320, transitionTimingFunction: EASE_OUT }}>
+              {busy ? <Animated.View key="thinking" entering={FadeIn.duration(200).delay(90)} exiting={FadeOut.duration(90)} style={{ width: THINKING - 6, flexDirection: "row", alignItems: "center", paddingHorizontal: 12, gap: 10 }}>
+                <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: palette.white, alignItems: "center", justifyContent: "center" }}><View style={{ width: 7, height: 7, borderRadius: 1.5, backgroundColor: "#15171B" }} /></View>
+                <Animated.View key={thinking} entering={FadeIn.duration(220)} style={{ flex: 1, animationName: reducedMotion ? undefined : { "0%": { opacity: 1 }, "50%": { opacity: 0.45 }, "100%": { opacity: 1 } }, animationDuration: 1500, animationIterationCount: "infinite" }}>
+                  <Text numberOfLines={1} style={{ color: "rgba(255,255,255,0.92)", fontSize: 13, fontWeight: "500" }}>{thinking}</Text>
+                </Animated.View>
+              </Animated.View>
+              : <Animated.View key="mic" entering={FadeIn.duration(180)} exiting={FadeOut.duration(80)}><Icon name="mic.fill" size={18} color={palette.white} /></Animated.View>}
+            </Animated.View>
+          </GestureDetector>
+        </View>
+      </Animated.View>}
+    </View>
+  </View>;
+}
