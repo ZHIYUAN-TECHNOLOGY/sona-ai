@@ -5,6 +5,7 @@ import { useAccessibleEffects } from "@/components/sona/ui";
 import { riseIn } from "@/components/sona/motion";
 import { LiquidVeil } from "@/components/sona/liquid-veil";
 import { GlassOrb } from "@/components/sona/glass-orb";
+import { OrbGlyph, type OrbActivity } from "@/components/sona/orb-glyph";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
@@ -20,6 +21,8 @@ type Mode = "idle" | "holding" | "composing";
 type Props = {
   /** Status text while a response is being prepared. Undefined when idle. */
   thinking?: string;
+  /** What the orb shows while Sona works (or a brief "done"). */
+  activity?: OrbActivity;
   onCancel: () => void;
   onSubmit: (prompt: string) => void;
   /** Authored transcript used by the hold-to-talk fixture; no microphone is recorded. */
@@ -69,7 +72,7 @@ function RoundButton({ icon, label, onPress, hidden }: { icon: string; label: st
 
 /** Monogram-style voice-first dock: tap for a hint, hold to talk, keyboard morphs into a composer. */
 export function VoiceDock(props: Props) {
-  const { thinking, onCancel, onSubmit, spokenPrompt, placeholder, draft, onDraft, voiceEnabled, onVoiceDisabled, above, backdrop } = props;
+  const { thinking, activity, onCancel, onSubmit, spokenPrompt, placeholder, draft, onDraft, voiceEnabled, onVoiceDisabled, above, backdrop } = props;
   const insets = useSafeAreaInsets();
   const { reducedMotion, reducedTransparency } = useAccessibleEffects();
   const [mode, setMode] = useState<Mode>("idle");
@@ -168,18 +171,15 @@ export function VoiceDock(props: Props) {
 
         <View pointerEvents="box-none" style={{ position: "absolute", left: 0, right: 0, alignItems: "center" }}>
           {busy && <Animated.View key={thinking} entering={riseIn({ distance: 6, scale: 0.96, duration: 240 })} exiting={FadeOut.duration(120)} pointerEvents="none"
-            style={{ position: "absolute", bottom: ORB + 10, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.9)", boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
+            style={{ position: "absolute", bottom: ORB + 10, flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.9)", boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
+            <Icon name="stop.fill" size={9} color={palette.muted} />
             <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: "500", color: palette.ink, animationName: reducedMotion ? undefined : { "0%": { opacity: 1 }, "50%": { opacity: 0.5 }, "100%": { opacity: 1 } }, animationDuration: 1600, animationIterationCount: "infinite" } as never}>{thinking}</Text>
           </Animated.View>}
           <GestureDetector gesture={micGesture}>
             <Animated.View accessible accessibilityRole="button" accessibilityLabel={busy ? `${thinking}. Stop response` : "Talk to Sona"} accessibilityHint={busy ? undefined : "Hold while you speak. With VoiceOver, double-tap to use the sample command."} accessibilityActions={[{ name: "activate" }]} onAccessibilityAction={() => busy ? onCancel() : onSubmit(spokenPrompt)}
               style={{ width: ORB, height: ORB, borderRadius: ORB / 2, alignItems: "center", justifyContent: "center", boxShadow: holding ? "0 10px 28px rgba(60,100,200,0.32)" : "0 8px 22px rgba(40,70,140,0.22)", transform: [{ scale: holding ? 1.12 : 1 }], transitionProperty: ["transform", "boxShadow"], transitionDuration: 320, transitionTimingFunction: EASE_OUT } as never}>
               <View style={{ position: "absolute", inset: 0 }}><GlassOrb size={ORB} energy={holding ? 1 : busy ? 0.7 : 0} still={reducedMotion} /></View>
-              {/* Inverse glyph: dark ink over the pale glass, lifted by a soft white bloom. */}
-              <Animated.View key={busy ? "stop" : "mic"} entering={FadeIn.duration(180)} exiting={FadeOut.duration(80)} style={{ alignItems: "center", justifyContent: "center" }}>
-                <View style={{ position: "absolute", width: 34, height: 34, borderRadius: 17, backgroundColor: "rgba(255,255,255,0.55)", boxShadow: "0 0 12px rgba(255,255,255,0.7)" }} />
-                <Icon name={busy ? "stop.fill" : "mic.fill"} size={busy ? 16 : 24} color="#16213A" />
-              </Animated.View>
+              <OrbGlyph activity={holding ? "listening" : activity ?? (busy ? "searching" : "idle")} still={reducedMotion} />
             </Animated.View>
           </GestureDetector>
         </View>

@@ -14,7 +14,9 @@ import { routePrompt } from "./state";
 import { useEncounter } from "./store";
 import type { Capability, FeatureProps, FocusView } from "./types";
 import { VoiceDock } from "./voice-dock";
+import type { OrbActivity } from "@/components/sona/orb-glyph";
 
+const activities: Record<Capability, OrbActivity> = { briefing: "reading", reasoning: "solving", xray: "breathing", medication: "checking", prescription: "composing", followup: "connecting", note: "composing" };
 const prompts: Record<Capability, string> = { briefing: "Brief me on this patient", reasoning: "What possibilities should I consider?", xray: "Review the chest X-ray", medication: "Review medication interactions", prescription: "Run the prescribing simulation", followup: "Prepare a follow-up plan", note: "Show the consultation note" };
 
 export function WorkspaceScreen() {
@@ -28,6 +30,7 @@ export function WorkspaceScreen() {
   const [notice, setNotice] = useState<string>();
   const [scrolled, setScrolled] = useState(false);
   const [phase, setPhase] = useState<"thinking" | "working">("thinking");
+  const [justDone, setJustDone] = useState(false);
   const scroll = useRef<ScrollView>(null);
   const backdrop = useRef<View>(null);
   const offsets = useRef<Record<string, number>>({});
@@ -45,7 +48,11 @@ export function WorkspaceScreen() {
 
   useEffect(() => { setShowEarlier(false); setNotice(undefined); if (!patient) setDrafts({}); }, [patient?.id]);
   useEffect(() => { if (!active) return; setPhase("thinking"); const timer = setTimeout(() => setPhase("working"), 320); return () => clearTimeout(timer); }, [active?.id]);
-  useEffect(() => { if (latest?.status === "complete") AccessibilityInfo.announceForAccessibility(`${capabilityLabels[latest.kind]} ready`); }, [latest?.id, latest?.status]);
+  useEffect(() => {
+    if (latest?.status !== "complete") return;
+    AccessibilityInfo.announceForAccessibility(`${capabilityLabels[latest.kind]} ready`);
+    setJustDone(true); const timer = setTimeout(() => setJustDone(false), 1400); return () => clearTimeout(timer);
+  }, [latest?.id, latest?.status]);
   // Bring each new answer to the top of the canvas as it resolves, like a fresh page.
   const latestCard = latest && encounter?.cards.find(c => c.requestId === latest.id);
   useEffect(() => {
@@ -96,6 +103,7 @@ export function WorkspaceScreen() {
     <VoiceDock
       backdrop={backdrop}
       thinking={thinking}
+      activity={active ? (phase === "thinking" ? "searching" : activities[active.kind]) : justDone ? "done" : undefined}
       onCancel={cancel}
       onSubmit={submit}
       spokenPrompt={patient ? suggestionFor("briefing", patient).text : "Who am I seeing first?"}
