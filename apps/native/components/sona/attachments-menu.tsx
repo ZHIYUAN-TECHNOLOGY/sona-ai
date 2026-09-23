@@ -11,7 +11,10 @@ import Animated, { Easing, interpolate, interpolateColor, type SharedValue, useA
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { BrandIcon, type BrandIconName } from "./brand-icon";
-import { HalftoneShimmer } from "./halftone-shimmer";
+import { BlurView } from "expo-blur";
+import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
+import { HalftoneGlint, HalftoneShimmer } from "./halftone-shimmer";
+import { useAccessibleEffects } from "./ui";
 import { palette } from "./theme";
 
 /**
@@ -24,7 +27,8 @@ import { palette } from "./theme";
 export type Attachment = { uri: string; name: string; kind: "image" | "file" };
 type Surface = "photos" | "camera";
 
-export const MENU_SPRING = { duration: 450, dampingRatio: 0.86 };
+// After Whistle's plus menu (spring 0.42 s, damping 0.76), a touch calmer because the glass itself resizes.
+export const MENU_SPRING = { duration: 420, dampingRatio: 0.8 };
 /**
  * Closing is a system response, not a gesture, so it uses timing on the iOS sheet curve: fast
  * start, long soft landing, no overshoot — the shape eases into the plus instead of arriving.
@@ -54,6 +58,8 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
   onAttach: (item: Attachment) => void;
 }) {
   const { width: W, height: H } = useWindowDimensions();
+  const { reducedTransparency } = useAccessibleEffects();
+  const glass = process.env.EXPO_OS === "ios" && isLiquidGlassAvailable();
   const insets = useSafeAreaInsets();
   const [surface, setSurface] = useState<Surface>("photos");
   const [extended, setExtended] = useState(false);
@@ -97,7 +103,7 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
   };
 
   // Three key states, blended continuously.
-  const menuW = 250, menuH = 212;
+  const menuW = 212, menuH = 184;
   const openLeft = anchor.left - 14, openBottom = anchor.bottom - 8;
   const extTop = insets.top + 64, extBottom = 8;
   // Read both drivers directly in the worklet: Reanimated tracks shared values it can see here,
@@ -114,15 +120,25 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
       width: geo(anchor.size, menuW, W - 16, p, x),
       height: geo(anchor.size, menuH, H - extTop - extBottom, p, x),
       borderRadius: geo(anchor.size / 2, 30, 34, p, x),
-      backgroundColor: interpolateColor(p, [0, 0.35], ["rgba(255,255,255,0.72)", "rgba(255,255,255,0.96)"]),
-      borderColor: interpolateColor(p, [0, 0.35], ["rgba(255,255,255,0.9)", "rgba(255,255,255,0)"]),
+      // Same glass as the plus it grows from: frost shows through, the bright rim stays.
+      backgroundColor: interpolateColor(p, [0, 0.35], ["rgba(255,255,255,0.72)", reducedTransparency ? "rgba(255,255,255,0.97)" : "rgba(250,251,255,0.45)"]),
+      borderColor: "rgba(255,255,255,0.9)",
     };
   });
-  const plusStyle = useAnimatedStyle(() => ({ opacity: interpolate(progress.value, [0, 0.3], [1, 0], "clamp"), transform: [{ rotate: `${interpolate(progress.value, [0, 1], [0, 45], "clamp")}deg` }] }));
+  // The plus spins toward a close mark as the glass grows over it.
+  const plusStyle = useAnimatedStyle(() => ({ opacity: interpolate(progress.value, [0, 0.45], [1, 0], "clamp"), transform: [{ rotate: `${interpolate(progress.value, [0, 0.6], [0, 135], "clamp")}deg` }] }));
+  // The screen behind frosts over for focus: a static blur, crossfaded by opacity.
+  const scrimStyle = useAnimatedStyle(() => ({ opacity: interpolate(progress.value, [0, 0.6], [0, 1], "clamp") }));
   const itemsStyle = useAnimatedStyle(() => ({
-    opacity: Math.max(0, interpolate(progress.value, [0.6, 1], [0, 1], "clamp") - extend.value * 2),
+    opacity: Math.max(0, 1 - extend.value * 2),
     transform: [{ scale: interpolate(progress.value, [0, 1], [0.75, 1]) }],
   }));
+  // Items arrive top first, each rising from the bottom edge as the glass opens, and leave in reverse.
+  const item0 = useAnimatedStyle(() => ({ opacity: interpolate(progress.value, [0.35, 0.75], [0, 1], "clamp"), transform: [{ translateY: interpolate(progress.value, [0.35, 0.75], [12, 0], "clamp") }, { scale: interpolate(progress.value, [0.35, 0.75], [0.9, 1], "clamp") }] }));
+  const item1 = useAnimatedStyle(() => ({ opacity: interpolate(progress.value, [0.5, 0.9], [0, 1], "clamp"), transform: [{ translateY: interpolate(progress.value, [0.5, 0.9], [12, 0], "clamp") }, { scale: interpolate(progress.value, [0.5, 0.9], [0.9, 1], "clamp") }] }));
+  const item2 = useAnimatedStyle(() => ({ opacity: interpolate(progress.value, [0.65, 1], [0, 1], "clamp"), transform: [{ translateY: interpolate(progress.value, [0.65, 1], [12, 0], "clamp") }, { scale: interpolate(progress.value, [0.65, 1], [0.9, 1], "clamp") }] }));
+  const itemStyles = [item0, item1, item2];
+  const glintStyle = useAnimatedStyle(() => ({ opacity: Math.max(0, interpolate(progress.value, [0.5, 1], [0, 1], "clamp") - extend.value * 2) }));
   const surfaceStyle = useAnimatedStyle(() => ({ opacity: interpolate(extend.value, [0.6, 1], [0, 1], "clamp") }));
   const controlsStyle = useAnimatedStyle(() => ({
     opacity: interpolate(extend.value, [0.8, 1], [0, 1], "clamp"),
@@ -134,21 +150,31 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
   if (!visible) return null;
   const cell = (W - 16 - 2) / 3;
   return <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, scrimStyle]}>
+      {reducedTransparency ? <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(236,239,244,0.85)" }]} /> : <BlurView tint="light" intensity={28} style={StyleSheet.absoluteFill} />}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(232,236,243,0.3)" }]} />
+    </Animated.View>
     <Pressable accessibilityRole="button" accessibilityLabel="Close attachments" onPress={onClose} style={StyleSheet.absoluteFill} />
 
     <Animated.View style={[{ position: "absolute", overflow: "hidden", borderCurve: "continuous", borderWidth: 1, boxShadow: "0 8px 28px rgba(40,70,140,0.14)" }, shell]}>
+      {!reducedTransparency && (glass
+        ? <><BlurView tint="systemThinMaterialLight" intensity={70} style={StyleSheet.absoluteFill} /><GlassView colorScheme="light" glassEffectStyle="regular" tintColor="rgba(250,251,255,0.4)" style={[StyleSheet.absoluteFill, { borderRadius: 30 }]} /></>
+        : <BlurView tint="systemUltraThinMaterialLight" intensity={60} style={StyleSheet.absoluteFill} />)}
+      {!reducedTransparency && <Animated.View pointerEvents="none" style={[{ position: "absolute", top: 0, left: 0 }, glintStyle]}><HalftoneGlint width={menuW} height={40} origin={[24, 0]} reach={[menuW * 0.7, 30]} strength={0.45} /></Animated.View>}
       {!reducedMotion && <HalftoneShimmer width={W} height={H} progress={sweep} />}
 
       <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, bottom: 0, width: anchor.size, height: anchor.size, alignItems: "center", justifyContent: "center" }, plusStyle]}>
         <BrandIcon name="add" size={23} />
       </Animated.View>
 
-      <Animated.View pointerEvents={extended ? "none" : "auto"} style={[{ position: "absolute", left: 0, bottom: 0, width: menuW, height: menuH, paddingHorizontal: 22, paddingVertical: 20, justifyContent: "space-between", transformOrigin: "left bottom" }, itemsStyle]}>
-        {ITEMS.map(item => <Pressable key={item.label} accessibilityRole="button" accessibilityLabel={item.label} onPress={() => open(item.action)}
-          style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 16, minHeight: 48, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(36,91,204,0.08)", alignItems: "center", justifyContent: "center" }}><BrandIcon name={item.icon} size={23} color={palette.ink} /></View>
-          <Text style={{ fontSize: 18, color: palette.ink }}>{item.label}</Text>
-        </Pressable>)}
+      <Animated.View pointerEvents={extended ? "none" : "auto"} style={[{ position: "absolute", left: 0, bottom: 0, width: menuW, height: menuH, paddingHorizontal: 20, paddingVertical: 16, justifyContent: "space-between", transformOrigin: "left bottom" }, itemsStyle]}>
+        {ITEMS.map((item, i) => <Animated.View key={item.label} style={[{ transformOrigin: "bottom left" }, itemStyles[i]]}>
+          <Pressable accessibilityRole="button" accessibilityLabel={item.label} onPress={() => open(item.action)}
+            style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 14, minHeight: 44, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+            <BrandIcon name={item.icon} size={22} color={palette.ink} />
+            <Text style={{ fontSize: 17, color: palette.ink }}>{item.label}</Text>
+          </Pressable>
+        </Animated.View>)}
       </Animated.View>
 
       {extended && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: palette.surface }, surfaceStyle]}>
