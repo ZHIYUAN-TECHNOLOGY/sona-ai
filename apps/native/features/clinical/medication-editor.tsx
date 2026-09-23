@@ -1,36 +1,84 @@
 import { View } from "react-native";
-import { Action, Body, Card, Label, Notice } from "@/components/sona/ui";
+import Animated from "react-native-reanimated";
+import { Section } from "@/components/sona/sections";
+import { Text } from "@/components/sona/text";
+import { palette } from "@/components/sona/theme";
+import { Action, Icon, Surface } from "@/components/sona/ui";
 import { defaultMedications } from "@/features/encounter/clinical-state";
 import { useEncounter } from "@/features/encounter/store";
-import type { FeatureProps } from "@/features/encounter/types";
+import type { FeatureProps, MedicationEntry } from "@/features/encounter/types";
 import { ClinicalField } from "./controls";
+import { Footnote, FormReveal, Hairline, Mark, Press, useLayoutSpring } from "./medication-parts";
 
-export function MedicationEditor({ patient, onRequest }: Pick<FeatureProps, "patient" | "onRequest">) {
+/**
+ * Reconciliation checklist: one row per reported medicine with its confirmation state. Tapping a
+ * row opens its identity form in place (one at a time); saving a correction revises the
+ * encounter, which invalidates earlier medication checks. The proposed ingredient closes the list.
+ * Review itself is requested from the interactions and next-step sections below.
+ */
+export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "onRequest">) {
   const { encounters, updateEncounter } = useEncounter();
+  const layout = useLayoutSpring();
   const encounter = encounters[patient.id];
   const entries = encounter?.medicationEntries ?? defaultMedications(patient);
   const draft = encounter?.medicationDraft;
   const proposed = encounter?.proposedMedicineDraft ?? encounter?.proposedMedicine ?? "Paracetamol";
   const editProposed = encounter?.proposedMedicineDraft !== undefined;
-  const busy = encounter?.requests.some(request => request.status === "streaming") ?? false;
-  return <Card label="Current reconciliation" title="Confirm what is being taken">
-    <Body muted>Confirm ingredients and formulations from the synthetic record. Names are editable; unknown entries remain unresolved.</Body>
-    {entries.map(entry => <View key={entry.id} style={{ gap: 8, paddingVertical: 9 }}>
-      <Label muted>{entry.confirmed ? "Confirmed in simulation" : "Needs confirmation"}</Label>
-      <Body>{entry.name}</Body><Body muted>{entry.ingredient || "Ingredient unknown"} · {entry.formulation || "Formulation unknown"}</Body>
-      <Action label={draft?.id === entry.id ? "Editing this medicine" : entry.confirmed ? "Correct this medicine" : "Confirm ingredient & formulation"} secondary disabled={Boolean(draft)} onPress={() => updateEncounter(value => ({ ...value, medicationDraft: { ...entry } }))} />
-    </View>)}
-    {draft && <View style={{ gap: 14 }}>
-      <ClinicalField label="Recorded medicine name" value={draft.name} onChange={name => updateEncounter(value => ({ ...value, medicationDraft: value.medicationDraft ? { ...value.medicationDraft, name, confirmed: false } : undefined }))} />
-      <ClinicalField label="Active ingredient" value={draft.ingredient} onChange={ingredient => updateEncounter(value => ({ ...value, medicationDraft: value.medicationDraft ? { ...value.medicationDraft, ingredient, confirmed: false } : undefined }))} />
-      <ClinicalField label="Formulation" value={draft.formulation} onChange={formulation => updateEncounter(value => ({ ...value, medicationDraft: value.medicationDraft ? { ...value.medicationDraft, formulation, confirmed: false } : undefined }))} />
-      <Action label="Save confirmed identity" disabled={!draft.name.trim() || !draft.ingredient.trim() || !draft.formulation.trim()} onPress={() => updateEncounter(value => ({ ...value, medicationEntries: (value.medicationEntries ?? entries).map(entry => entry.id === draft.id ? { ...draft, name: draft.name.trim(), ingredient: draft.ingredient.trim(), formulation: draft.formulation.trim(), confirmed: true } : entry), medicationDraft: undefined }), true)} />
-      <Action label="Keep unresolved" secondary onPress={() => updateEncounter(value => ({ ...value, medicationEntries: (value.medicationEntries ?? entries).map(entry => entry.id === draft.id ? { ...draft, confirmed: false } : entry), medicationDraft: undefined }), true)} />
-      <Action label="Discard medicine edit" secondary onPress={() => updateEncounter(value => ({ ...value, medicationDraft: undefined }))} />
-    </View>}
-    <Label>Proposed medicine</Label><Body>{encounter?.proposedMedicine ?? "Paracetamol"}</Body>
-    {editProposed ? <><ClinicalField label="Proposed medication" value={proposed} onChange={proposedMedicineDraft => updateEncounter(value => ({ ...value, proposedMedicineDraft }))} /><Action label="Save proposed medicine" disabled={!proposed.trim()} onPress={() => updateEncounter(value => ({ ...value, proposedMedicine: proposed.trim(), proposedMedicineDraft: undefined }), true)} /><Action label="Cancel proposed change" secondary onPress={() => updateEncounter(value => ({ ...value, proposedMedicineDraft: undefined }))} /></> : <Action label="Change proposed medicine" secondary onPress={() => updateEncounter(value => ({ ...value, proposedMedicineDraft: value.proposedMedicine ?? "Paracetamol" }))} />}
-    <Notice>Saving a correction invalidates earlier medication checks. The authored paracetamol scenario has bounded simulated coverage; other combinations may remain unsupported.</Notice>
-    <Action label="Review current medication context" icon="arrow.clockwise" disabled={busy || Boolean(draft)} onPress={() => onRequest("medication")} />
-  </Card>;
+  const confirmed = entries.filter(entry => entry.confirmed).length;
+  const editDraft = (change: Partial<MedicationEntry>) => updateEncounter(value => ({ ...value, medicationDraft: value.medicationDraft ? { ...value.medicationDraft, ...change, confirmed: false } : undefined }));
+  const row = { flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 13 } as const;
+
+  return <Section title="Confirm what’s being taken" subtitle={`${confirmed} of ${entries.length} confirmed. Names are editable; unknown entries stay unresolved.`}>
+    <Surface layout={layout} style={{ paddingVertical: 4 }}>
+      {entries.map((entry, index) => {
+        const editing = draft?.id === entry.id;
+        const identity = `${entry.ingredient || "Ingredient unknown"} · ${entry.formulation || "Formulation unknown"}`;
+        const state = editing ? "Editing this medicine" : entry.confirmed ? "Confirmed in simulation" : "Needs confirmation";
+        return <Animated.View key={entry.id} layout={layout}>
+          {index > 0 && <Hairline inset={54} />}
+          <Press disabled={Boolean(draft)} onPress={() => updateEncounter(value => ({ ...value, medicationDraft: { ...entry } }))}
+            accessibilityLabel={`${entry.name}. ${identity}. ${state}`} accessibilityHint={draft ? undefined : entry.confirmed ? "Correct this medicine" : "Confirm ingredient and formulation"} style={[row, draft && !editing && { opacity: 0.5 }]}>
+            <Mark state={entry.confirmed ? "done" : "open"} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: palette.ink }}>{entry.name}</Text>
+              <Text style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{identity}</Text>
+              <Text style={{ fontSize: 12, lineHeight: 17, fontWeight: "600", color: editing || entry.confirmed ? palette.blue : palette.amber }}>{state}</Text>
+            </View>
+            {!draft && <Text style={{ fontSize: 14, fontWeight: "500", color: palette.blue }}>{entry.confirmed ? "Correct" : "Confirm"}</Text>}
+          </Press>
+          {editing && draft && <FormReveal style={{ paddingHorizontal: 16, paddingBottom: 16, gap: 12 }}>
+            <ClinicalField label="Recorded medicine name" value={draft.name} onChange={name => editDraft({ name })} />
+            <ClinicalField label="Active ingredient" value={draft.ingredient} onChange={ingredient => editDraft({ ingredient })} />
+            <ClinicalField label="Formulation" value={draft.formulation} onChange={formulation => editDraft({ formulation })} />
+            <Action label="Save confirmed identity" disabled={!draft.name.trim() || !draft.ingredient.trim() || !draft.formulation.trim()} onPress={() => updateEncounter(value => ({ ...value, medicationEntries: (value.medicationEntries ?? entries).map(item => item.id === draft.id ? { ...draft, name: draft.name.trim(), ingredient: draft.ingredient.trim(), formulation: draft.formulation.trim(), confirmed: true } : item), medicationDraft: undefined }), true)} />
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              <Action label="Keep unresolved" secondary onPress={() => updateEncounter(value => ({ ...value, medicationEntries: (value.medicationEntries ?? entries).map(item => item.id === draft.id ? { ...draft, confirmed: false } : item), medicationDraft: undefined }), true)} />
+              <Action label="Discard medicine edit" secondary onPress={() => updateEncounter(value => ({ ...value, medicationDraft: undefined }))} />
+            </View>
+          </FormReveal>}
+        </Animated.View>;
+      })}
+
+      <Animated.View layout={layout}>
+        <Hairline />
+        <Press disabled={editProposed} onPress={() => updateEncounter(value => ({ ...value, proposedMedicineDraft: value.proposedMedicine ?? "Paracetamol" }))}
+          accessibilityLabel={`Proposed medicine, ${encounter?.proposedMedicine ?? "Paracetamol"}`} accessibilityHint={editProposed ? undefined : "Change proposed medicine"} style={row}>
+          <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: palette.blueWash }}><Icon name="pills" size={13} color={palette.blue} /></View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={{ fontSize: 12, lineHeight: 17, fontWeight: "600", color: palette.muted }}>Proposed medicine</Text>
+            <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: palette.ink }}>{encounter?.proposedMedicine ?? "Paracetamol"}</Text>
+          </View>
+          {!editProposed && <Text style={{ fontSize: 14, fontWeight: "500", color: palette.blue }}>Change</Text>}
+        </Press>
+        {editProposed && <FormReveal style={{ paddingHorizontal: 16, paddingBottom: 16, gap: 12 }}>
+          <ClinicalField label="Proposed medication" value={proposed} onChange={proposedMedicineDraft => updateEncounter(value => ({ ...value, proposedMedicineDraft }))} />
+          <Action label="Save proposed medicine" disabled={!proposed.trim()} onPress={() => updateEncounter(value => ({ ...value, proposedMedicine: proposed.trim(), proposedMedicineDraft: undefined }), true)} />
+          <Action label="Cancel proposed change" secondary onPress={() => updateEncounter(value => ({ ...value, proposedMedicineDraft: undefined }))} />
+        </FormReveal>}
+      </Animated.View>
+    </Surface>
+    <Animated.View layout={layout}>
+      <Footnote>Saving a correction invalidates earlier medication checks. Only the authored paracetamol scenario has bounded simulated coverage; other combinations may stay unsupported.</Footnote>
+    </Animated.View>
+  </Section>;
 }
