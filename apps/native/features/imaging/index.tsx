@@ -1,18 +1,33 @@
 import { Text } from "@/components/sona/text";
-import { Image } from "expo-image";
-import { BottomSheet, Button as NativeButton, Column, Host, Text as NativeText } from "@expo/ui";
+import * as Haptics from "expo-haptics";
+import { Image, type ImageSource } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Linking, Pressable, View, useWindowDimensions } from "react-native";
-import { Gesture, GestureDetector, ScrollView } from "react-native-gesture-handler";
-import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Action, Body, Card, Icon, Label, Notice, Reveal, Screen, SourceLink } from "@/components/sona/ui";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Linking, Pressable, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
+import Animated, { cancelAnimation, Easing, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
+import { HalftoneShimmer } from "@/components/sona/halftone-shimmer";
+import { LAYOUT, riseIn } from "@/components/sona/motion";
+import { IconRow, Section } from "@/components/sona/sections";
+import { palette } from "@/components/sona/theme";
+import { Action, Body, Chip, Expand, Icon, Notice, Reveal, Screen, SourceLink, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
-import type { FeatureProps } from "@/features/encounter/types";
+import type { Encounter, FeatureProps } from "@/features/encounter/types";
 import { teachingImage, type TeachingImage } from "./fixture";
+import { ImageEdge, OriginalImageViewer, VIEWING } from "./viewer";
 
+export { OriginalImageViewer } from "./viewer";
+
+type Scenario = NonNullable<Encounter["imagingScenario"]>;
+const SCENARIOS: Record<Scenario, string> = { reference: "Reference", unsupported: "Unsupported category", "no-finding": "No finding result" };
+
+function haptic() { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); }
+
+/**
+ * The answer in the conversation, as generated sections: the image as hero with its provenance,
+ * then what the source says, then the limits that travel with it. Tap the image to open the original.
+ */
 export function XrayCard({ onOpen, onRequest, result }: FeatureProps) {
   const { encounter } = useEncounter();
   const evidence = result?.imagingSnapshot ?? encounter;
@@ -26,74 +41,98 @@ export function XrayCard({ onOpen, onRequest, result }: FeatureProps) {
   const referenceImage = evidence?.hideTeachingImage ? undefined : teachingImage;
   const [sourceError, setSourceError] = useState(false);
   const imageSource = attachment ? { uri: attachment.uri } : referenceImage?.source;
-  return <Card label={attachment ? "Imaging · local attachment" : "Imaging · reference example"} title="Chest X-ray" footer={sections >= 3 ? attachment ? <Body muted>User-selected local image · no upload or inference.</Body> : referenceImage ? <><Body muted>{referenceImage.attribution} · {referenceImage.license}</Body><SourceLink label="Read original description & license" onPress={() => { void Linking.openURL(referenceImage.sourceUrl).catch(() => setSourceError(true)); }} />{sourceError && <Notice warning>The source page could not be opened. Attribution remains available here.</Notice>}</> : undefined : undefined}>
-    <View style={{ minHeight: 164, backgroundColor: "#252930", borderRadius: 18, padding: 22, justifyContent: "center", alignItems: "center", gap: 12 }}>
-      {imageSource ? <Image source={imageSource} contentFit="contain" style={{ width: "100%", height: 220 }} accessibilityLabel={attachment ? "Selected local teaching image" : "Reference radiograph, unrelated to this patient"} /> : <Icon name="photo" size={32} color="#BDC9D8" />}
-      <Text selectable style={{ color: "#E7EDF5", fontSize: 15, textAlign: "center" }}>{attachment?.name ?? (referenceImage ? referenceImage.title : "Teaching image not attached")}</Text>
-    </View>
-    <Notice>{attachment ? "Local image · no model analysis or upload." : "Reference example — not model analysis or this patient’s image."}</Notice>
-    {sections < 2 && <View accessibilityLiveRegion="polite" style={{ gap: 8 }}><Label muted>{interrupted ? "Response interrupted" : "Analysing · simulated workflow"}</Label><Body muted>{interrupted ? "The preview and attachment are kept." : "Preparing the fixture response. No image inference is running."}</Body></View>}
-    {sections >= 2 && <Reveal>{scenario === "unsupported" ? <><Label>Unsupported category · simulation</Label><Notice warning>This sample response represents a category outside chest radiography. No interpretation is available. The attached image has not been classified by a model.</Notice></> : scenario === "no-finding" || attachment ? <><Label muted>Findings unavailable</Label><Body muted>{attachment ? "The selected image has no linked interpretation. Its modality and clinical meaning have not been verified." : "This fixture returned no finding result. An unavailable result does not establish a normal examination."}</Body></> : referenceImage?.referenceSummary ? <><Label>{sections < 3 ? "Partial reference response" : "Source-described finding"}</Label><Body>{referenceImage.referenceSummary}</Body></> : <Notice>No image is attached and no findings have been generated.</Notice>}</Reveal>}
-    {sections >= 3 && <Reveal><View style={{ gap: 8 }}><Label muted>Limitations</Label><Body muted>{attachment || scenario !== "reference" ? "No image-derived conclusion can be made from this simulated response. Its original attachment remains available for inspection." : "This summary belongs only to the published example. It does not assess the current encounter or establish model accuracy."}</Body></View><Label muted>Fixture response complete</Label></Reveal>}
-    {sections === 2 && !interrupted && <Body muted>Completing provenance and limitations…</Body>}
+  const openOriginal = () => { if (result && (attachment || referenceImage)) router.push({ pathname: "/xray", params: { recordCardId: result.id, patientId: result.patientId } }); else onOpen("xray"); };
+  return <View style={{ gap: 34 }}>
+    <Section title={attachment ? "Your attached image" : referenceImage ? "Reference radiograph" : "No image attached"}
+      subtitle={attachment ? "User-selected local image · no upload or inference." : referenceImage ? "Reference example — not model analysis or this patient’s image." : "Add a teaching image to review it here."}>
+      <Preview source={imageSource} label={attachment ? "Selected local teaching image" : referenceImage ? "Reference radiograph, unrelated to this patient" : "Add a teaching image"} onPress={openOriginal} />
+      <View style={{ gap: 2 }}>
+        <Text selectable style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>{attachment?.name ?? (referenceImage ? referenceImage.title : "Teaching image not attached")}</Text>
+        {!attachment && referenceImage && <>
+          <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>{referenceImage.attribution} · {referenceImage.license}</Text>
+          <SourceLink label="Read original description & license" onPress={() => { void Linking.openURL(referenceImage.sourceUrl).catch(() => setSourceError(true)); }} />
+        </>}
+      </View>
+      {sourceError && <Notice warning>The source page could not be opened. Attribution remains available here.</Notice>}
+      {sections < 2 && <AnalysisStatus interrupted={interrupted} />}
+    </Section>
+
+    {sections >= 2 && <Reveal><Findings scenario={scenario} attachment={Boolean(attachment)} summary={referenceImage?.referenceSummary} partial={sections < 3} /></Reveal>}
+    {sections >= 3 && <Reveal><Section title="What this can’t tell you" subtitle="Limits that stay with this response.">
+      {attachment || scenario !== "reference"
+        ? <IconRow icon="eye.slash" title="No image-derived conclusion" detail="No image-derived conclusion can be made from this simulated response. Its original attachment remains available for inspection." />
+        : <IconRow icon="person.crop.circle.badge.questionmark" title="Only the published example" detail="This summary belongs only to the published example. It does not assess the current encounter or establish model accuracy." />}
+    </Section></Reveal>}
+    {sections === 2 && !interrupted && <Text style={{ fontSize: 13, color: palette.muted }}>Completing provenance and limitations…</Text>}
+
     {superseded && <Notice>This response preserves an earlier image and scenario. New requests use the current encounter image.</Notice>}
-    {(interrupted || sections >= 3 && scenario !== "reference") && <Action label={superseded ? "Analyse current encounter image" : "Retry simulated analysis"} secondary icon="arrow.clockwise" disabled={busy} onPress={() => onRequest("xray")} />}
-    <Action label={attachment || referenceImage ? "Open original image" : "Add a teaching image"} icon="arrow.up.left.and.arrow.down.right" onPress={() => { if (result && (attachment || referenceImage)) router.push({ pathname: "/xray", params: { recordCardId: result.id, patientId: result.patientId } }); else onOpen("xray"); }} />
-  </Card>;
+    <View style={{ gap: 12 }}>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+        <Action label={attachment || referenceImage ? "Open original image" : "Add a teaching image"} icon="arrow.up.left.and.arrow.down.right" onPress={openOriginal} />
+        {(interrupted || sections >= 3 && scenario !== "reference") && <Action label={superseded ? "Analyse current encounter image" : "Retry simulated analysis"} secondary icon="arrow.clockwise" disabled={busy} onPress={() => onRequest("xray")} />}
+      </View>
+      {sections >= 3 && <Text style={{ fontSize: 12, color: palette.muted }}>Fixture response complete</Text>}
+    </View>
+  </View>;
 }
 
-/** Gesture transforms affect positioning only; no filter, tint, blur or shader touches pixels. */
-export function OriginalImageViewer({ asset }: { asset: TeachingImage }) {
-  const { height, width } = useWindowDimensions();
-  const imageHeight = Math.max(240, Math.min(500, height * 0.44, width * 1.15));
-  const [sourceError, setSourceError] = useState(false);
-  const [viewport, setViewport] = useState({ width: 1, height: 1 });
-  const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
-  const [attempt, setAttempt] = useState(0);
-  const scale = useSharedValue(1);
-  const startScale = useSharedValue(1);
-  const x = useSharedValue(0);
-  const y = useSharedValue(0);
-  const startX = useSharedValue(0);
-  const startY = useSharedValue(0);
-  const reset = () => { scale.set(1); startScale.set(1); x.set(0); y.set(0); startX.set(0); startY.set(0); };
-  const gestures = useMemo(() => {
-    const pinch = Gesture.Pinch().enabled(status === "ready").onStart(() => { startScale.set(scale.get()); }).onUpdate(event => {
-      scale.set(Math.max(1, Math.min(5, startScale.get() * event.scale)));
-      const boundX = viewport.width * (scale.get() - 1) / 2;
-      const boundY = viewport.height * (scale.get() - 1) / 2;
-      x.set(Math.max(-boundX, Math.min(boundX, x.get())));
-      y.set(Math.max(-boundY, Math.min(boundY, y.get())));
-    });
-    const pan = Gesture.Pan().enabled(status === "ready").maxPointers(1).onTouchesDown((_event, manager) => {
-      // At fit-to-screen size, a swipe scrolls the page instead of a stationary image.
-      if (scale.get() <= 1) manager.fail();
-    }).onStart(() => { startX.set(x.get()); startY.set(y.get()); }).onUpdate(event => {
-      const boundX = viewport.width * (scale.get() - 1) / 2;
-      const boundY = viewport.height * (scale.get() - 1) / 2;
-      x.set(Math.max(-boundX, Math.min(boundX, startX.get() + event.translationX)));
-      y.set(Math.max(-boundY, Math.min(boundY, startY.get() + event.translationY)));
-    });
-    return Gesture.Simultaneous(pinch, pan);
-  }, [scale, startScale, x, y, startX, startY, viewport, status]);
-  const transform = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }, { translateY: y.get() }, { scale: scale.get() }] }));
-  return <View style={{ gap: 16 }}>
-    <View style={{ height: imageHeight, overflow: "hidden" }} onLayout={event => { setViewport(event.nativeEvent.layout); reset(); }}>
-      <GestureDetector gesture={gestures}><Animated.View style={[{ width: "100%", height: "100%" }, transform]}>
-        <Image key={`${asset.id}-${attempt}`} source={asset.source} contentFit="contain" style={{ width: "100%", height: "100%" }} accessibilityLabel={`Original teaching image: ${asset.title}`} onLoadStart={() => setStatus("loading")} onLoad={() => setStatus("ready")} onError={() => setStatus("failed")} />
-      </Animated.View></GestureDetector>
-      {status !== "ready" && <View style={{ position: "absolute", inset: 0, backgroundColor: "#171A1F", justifyContent: "center", alignItems: "center", padding: 24, gap: 16 }}>
-        {status === "loading" ? <><ActivityIndicator color="#DCE7F8" /><Text style={{ color: "#DCE7F8" }}>Loading original image…</Text></> : <><Text selectable style={{ color: "#DCE7F8", textAlign: "center" }}>This attachment could not be opened.</Text><Action label="Retry image" secondary onPress={() => { setStatus("loading"); setAttempt(value => value + 1); }} /></>}
+/** The image as hero: a dark viewing tile that settles in (Arc's source-to-summary, calmed) and opens the original. */
+function Preview({ source, label, onPress }: { source?: ImageSource | number; label: string; onPress: () => void }) {
+  const { reducedMotion } = useAccessibleEffects();
+  return <Animated.View entering={reducedMotion ? undefined : riseIn({ distance: 8, scale: 0.97 })}>
+    <Pressable accessibilityRole={source ? "imagebutton" : "button"} accessibilityLabel={label} accessibilityHint={source ? "Opens the original image" : undefined} onPress={onPress}
+      style={({ pressed }) => ({ ...VIEWING, aspectRatio: 1.25, transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+      {source
+        ? <Image source={source} contentFit="contain" style={{ flex: 1 }} transition={reducedMotion ? 0 : 200} />
+        : <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 10 }}><Icon name="photo" size={32} color={palette.line} /><Text style={{ fontSize: 15, color: palette.line }}>Add a teaching image</Text></View>}
+      {source && <View pointerEvents="none" style={{ position: "absolute", right: 12, bottom: 12, width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.12)", borderWidth: 1, borderColor: "rgba(255,255,255,0.16)" }}>
+        <Icon name="arrow.up.left.and.arrow.down.right" size={14} color={palette.white} />
       </View>}
-    </View>
-    <Text style={{ color: "#BEC8D6", fontSize: 13, textAlign: "center" }}>Pinch to zoom · drag to inspect</Text>
-    <View style={{ flexDirection: "row", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-      <Action label="Zoom in" secondary disabled={status !== "ready"} onPress={() => scale.set(Math.min(5, scale.get() + 0.5))} />
-      <Action label="Reset view" secondary disabled={status !== "ready"} onPress={reset} />
-    </View>
-    <Text selectable style={{ color: "#BEC8D6", fontSize: 12, lineHeight: 18 }}>{asset.attribution} · {asset.license}</Text>
-    {asset.sourceUrl.startsWith("https://") ? <Pressable accessibilityRole="link" style={{ minHeight: 44, justifyContent: "center", alignItems: "center" }} onPress={() => { void Linking.openURL(asset.sourceUrl).catch(() => setSourceError(true)); }}><Text style={{ color: "#AAC7F6", fontSize: 14 }}>Original source & license ↗</Text></Pressable> : <Text selectable style={{ color: "#BEC8D6", fontSize: 12 }}>{asset.sourceUrl}</Text>}
-    {sourceError && <Text selectable style={{ color: "#DCE7F8", fontSize: 13 }}>Source page unavailable. Try again when connected.</Text>}
+      <ImageEdge />
+    </Pressable>
+  </Animated.View>;
+}
+
+/** While the fixture streams: a quiet status with a halftone sweep beside the image, never over its pixels. */
+function AnalysisStatus({ interrupted }: { interrupted: boolean }) {
+  const { reducedMotion } = useAccessibleEffects();
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const sweep = useSharedValue(0);
+  const live = !interrupted && !reducedMotion;
+  useEffect(() => {
+    if (!live) return;
+    sweep.set(withRepeat(withTiming(1, { duration: 1400, easing: Easing.linear }), -1));
+    return () => cancelAnimation(sweep);
+  }, [live, sweep]);
+  return <View accessibilityLiveRegion="polite" onLayout={e => setSize(e.nativeEvent.layout)} style={[surfaceStyle, { borderRadius: 18, padding: 14, gap: 3 }]}>
+    {live && size.width > 0 && <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: 17, overflow: "hidden" }}><HalftoneShimmer width={size.width} height={size.height} progress={sweep} /></View>}
+    <Text style={{ fontSize: 14, fontWeight: "600", color: interrupted ? palette.amber : palette.ink }}>{interrupted ? "Response interrupted" : "Analysing · simulated workflow"}</Text>
+    <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>{interrupted ? "The preview and attachment are kept." : "Preparing the fixture response. No image inference is running."}</Text>
+  </View>;
+}
+
+/** Only ever the source's own description or an honest unavailable state; nothing is read from the pixels. */
+function Findings({ scenario, attachment, summary, partial }: { scenario: Scenario; attachment: boolean; summary?: string; partial: boolean }) {
+  if (scenario === "unsupported") return <Section title="Outside chest radiography" subtitle="Unsupported category · simulation">
+    <Notice warning>This sample response represents a category outside chest radiography. No interpretation is available. The attached image has not been classified by a model.</Notice>
+  </Section>;
+  if (scenario === "no-finding" || attachment) return <Section title="Findings unavailable" subtitle={attachment ? "Nothing has been read from this image." : "Sample response · no finding result"}>
+    <Body muted>{attachment ? "The selected image has no linked interpretation. Its modality and clinical meaning have not been verified." : "This fixture returned no finding result. An unavailable result does not establish a normal examination."}</Body>
+  </Section>;
+  if (summary) return <Section title="What the source describes" subtitle={partial ? "Partial reference response" : "In the uploader’s words, not a model reading."}>
+    <IconRow icon="text.quote" title="Source-described finding" detail={summary} />
+  </Section>;
+  return <Section title="No findings" subtitle="There is no image to describe."><Notice>No image is attached and no findings have been generated.</Notice></Section>;
+}
+
+/** Focused viewer page: canvas like `Screen`, but a gesture-handler scroll view that stops scrolling while the image is zoomed. */
+function ViewerPage({ children, scrollEnabled = true }: { children: ReactNode; scrollEnabled?: boolean }) {
+  return <ScrollView scrollEnabled={scrollEnabled} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: "linear-gradient(to bottom, #F5F6F8 0%, #EFF2F7 45%, #E3EBF7 100%)" }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 44, gap: 20 }}>{children}</ScrollView>;
+}
+function Identity({ title, detail }: { title: string; detail: string }) {
+  return <View style={{ gap: 4 }}>
+    <Text selectable style={{ fontSize: 13, fontWeight: "600", color: palette.blue }}>{title}</Text>
+    <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>{detail}</Text>
   </View>;
 }
 
@@ -103,13 +142,16 @@ export function XrayScreen() {
   const savedCard = recordCardId ? encounter?.cards.find(card => card.id === recordCardId && card.kind === "xray" && card.patientId === patient?.id && card.encounterId === patient?.encounterId) : undefined;
   const historical = Boolean(recordCardId);
   const evidence = historical ? savedCard?.imagingSnapshot : encounter;
+  const { reducedMotion } = useAccessibleEffects();
+  const layout = reducedMotion ? undefined : LAYOUT;
   const [picking, setPicking] = useState(false);
   const [pickerError, setPickerError] = useState<string>();
+  const [showScenarios, setShowScenarios] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
   const activePatient = useRef(patient?.id);
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   activePatient.current = patient?.id;
-  const insets = useSafeAreaInsets();
   const pickImage = async () => {
     if (picking || historical) return;
     const patientId = patient?.id;
@@ -129,24 +171,66 @@ export function XrayScreen() {
   const analysing = encounter?.requests.some(item => item.kind === "xray" && item.status === "streaming") ?? false;
   const analyse = () => { if (!image || analysing || historical) return; request("xray", "Analyse X-ray · simulated workflow"); router.dismissTo("/"); };
   const scenario = evidence?.imagingScenario ?? "reference";
-  const [showScenarios, setShowScenarios] = useState(false);
+  const pickScenario = (value: Scenario) => { if (analysing) return; haptic(); updateEncounter(current => ({ ...current, imagingScenario: value }), true); setShowScenarios(false); };
+
   if (!patient) return <Screen><Notice>Choose a patient before opening an attachment.</Notice></Screen>;
   if (historical && (sourcePatientId !== patient.id || !savedCard?.imagingSnapshot)) return <Screen><Notice warning>This saved image is unavailable in the active patient’s encounter. No current image has been substituted.</Notice><Action label="Return to encounter" secondary onPress={() => router.dismissTo("/")} /></Screen>;
-  if (historical) return <ScrollView style={{ flex: 1, backgroundColor: "#171A1F" }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: Math.max(insets.bottom, 20), gap: 12 }}><Text selectable style={{ color: "#E5EBF3", fontSize: 15 }}>{patient.name} · saved response revision {savedCard?.revision}</Text><Text selectable style={{ color: "#BEC8D6", fontSize: 13 }}>{attachment ? "Original local attachment · no model inference" : "Original reference example · unrelated to this patient"}</Text>{image ? <OriginalImageViewer key={image.id} asset={image} /> : <Notice>No image was attached when this response was created.</Notice>}<Action label="Open current image & analysis" secondary onPress={() => router.replace("/xray")} /></ScrollView>;
-  if (!image) return <Screen>
-    <Label>{patient.name} · {patient.id}</Label>
-    <Card label="Attachment unavailable" title="An original image belongs here">
-      <View style={{ backgroundColor: "#252930", minHeight: 250, borderRadius: 18, alignItems: "center", justifyContent: "center", gap: 20, padding: 26 }}><Icon name="photo.badge.exclamationmark" color="#BEC8D6" size={44} /><Text selectable style={{ color: "#DCE7F8", fontSize: 16, lineHeight: 24, textAlign: "center" }}>No licensed teaching radiograph has been attached to this demonstration.</Text></View>
-      <Body>Image review will preserve the original pixels, with zoom, pan and reset controls.</Body>
+  if (historical) return <ViewerPage scrollEnabled={!zoomed}>
+    <Identity title={`${patient.name} · saved response revision ${savedCard?.revision}`} detail={attachment ? "Original local attachment · no model inference" : "Original reference example · unrelated to this patient"} />
+    {image ? <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} /> : <Notice>No image was attached when this response was created.</Notice>}
+    <Action label="Open current image & analysis" secondary onPress={() => router.replace("/xray")} />
+  </ViewerPage>;
+
+  if (!image) return <ViewerPage>
+    <Identity title={`${patient.name} · ${patient.id}`} detail="Attachment unavailable" />
+    <Section title="An original image belongs here" subtitle="Image review will preserve the original pixels, with zoom, pan and reset controls.">
+      <View style={[VIEWING, { minHeight: 250, alignItems: "center", justifyContent: "center", gap: 18, padding: 26 }]}>
+        <Icon name="photo.badge.exclamationmark" color={palette.line} size={40} />
+        <Text selectable style={{ color: palette.line, fontSize: 16, lineHeight: 24, textAlign: "center" }}>No licensed teaching radiograph has been attached to this demonstration.</Text>
+        <ImageEdge />
+      </View>
       <Notice>There is no image analysis result to interpret. This empty state does not indicate a normal chest X-ray.</Notice>
+    </Section>
+    <Surface feature style={{ padding: 18, gap: 14 }}>
+      <Text selectable style={{ fontSize: 15, lineHeight: 21, color: palette.muted, paddingRight: 40 }}>Choose a deidentified teaching image you have permission to use. It stays on this device and is not analysed.</Text>
       <Action label={picking ? "Opening photo library…" : "Choose teaching image"} icon="photo.badge.plus" disabled={picking} onPress={pickImage} />
       {pickerError && <Notice warning>{pickerError}</Notice>}
-    </Card>
-    <Action label="Restore bundled reference" secondary onPress={() => updateEncounter(current => ({ ...current, hideTeachingImage: false }))} /><Body muted>Choose a deidentified teaching image you have permission to use. It stays on this device and is not analysed.</Body>
-  </Screen>;
-  return <ScrollView style={{ flex: 1, backgroundColor: "#171A1F" }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: Math.max(insets.bottom, 20), gap: 10 }}><Text selectable style={{ color: "#E5EBF3", fontSize: 15 }}>{attachment ? `${patient.name} · local teaching image` : "Reference example · unrelated to this patient"}</Text><Text selectable style={{ color: "#BEC8D6", fontSize: 13 }}>No model analysis has been run.</Text><OriginalImageViewer key={image.id} asset={image} />
-    <Action label={analysing ? "Analysing · simulation…" : "Analyse X-ray · simulation"} icon="sparkles" disabled={analysing || picking} onPress={analyse} />
-    <Action label={`Demo response: ${scenario === "no-finding" ? "no finding result" : scenario}`} secondary disabled={analysing} onPress={() => setShowScenarios(value => !value)} />
-    <Host colorScheme="light" style={{ position: "absolute" }}><BottomSheet isPresented={showScenarios} onDismiss={() => setShowScenarios(false)} snapPoints={["half", "full"]}><Column spacing={16}><NativeText>Choose a UI sample response. This does not classify the image.</NativeText>{(["reference", "unsupported", "no-finding"] as const).map(value => <NativeButton key={value} label={value === "no-finding" ? "No finding result" : value === "reference" ? "Reference" : "Unsupported category"} onPress={() => { if (analysing) return; updateEncounter(current => ({ ...current, imagingScenario: value }), true); setShowScenarios(false); }} />)}</Column></BottomSheet></Host>
-    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}><Action label="Remove image" secondary disabled={analysing} onPress={() => updateEncounter(current => ({ ...current, imagingAttachment: undefined, hideTeachingImage: true }), true)} /><Action label={picking ? "Opening library…" : "Choose local image"} secondary disabled={picking || analysing} onPress={pickImage} /></View>{pickerError && <Notice warning>{pickerError}</Notice>}</ScrollView>;
+    </Surface>
+    <Action label="Restore bundled reference" secondary onPress={() => updateEncounter(current => ({ ...current, hideTeachingImage: false }))} />
+  </ViewerPage>;
+
+  return <ViewerPage scrollEnabled={!zoomed}>
+    <Identity title={attachment ? `${patient.name} · local teaching image` : "Reference example · unrelated to this patient"} detail="No model analysis has been run." />
+    <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} />
+
+    {/* The one feature surface: the simulated review this screen asks for. */}
+    <Surface feature layout={layout} style={{ padding: 18, gap: 14 }}>
+      <View style={{ gap: 4, paddingRight: 40 }}>
+        <Text accessibilityRole="header" style={{ fontSize: 17, fontWeight: "600", letterSpacing: -0.2, color: palette.ink }}>Simulated review</Text>
+        <Text selectable style={{ fontSize: 14, lineHeight: 20, color: palette.muted }}>Sends a sample response to the conversation. It does not classify or read this image.</Text>
+      </View>
+      <Animated.View layout={layout} pointerEvents={analysing ? "none" : "auto"} style={{ gap: 10, opacity: analysing ? 0.45 : 1 }}>
+        <View style={{ alignSelf: "flex-start" }}>
+          <Chip label={`Demo response: ${SCENARIOS[scenario]}`} filled expanded={showScenarios} onPress={() => { haptic(); setShowScenarios(value => !value); }} accessibilityLabel={`Demo response, ${SCENARIOS[scenario]}. Change`} />
+        </View>
+        {showScenarios && <Expand key="scenarios" style={{ gap: 10 }}>
+          <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>Choose a UI sample response. This does not classify the image.</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {(Object.keys(SCENARIOS) as Scenario[]).map(value => <Chip key={value} label={SCENARIOS[value]} selected={scenario === value} onPress={() => pickScenario(value)} />)}
+          </View>
+        </Expand>}
+      </Animated.View>
+      <Animated.View layout={layout}>
+        <Action label={analysing ? "Analysing · simulation…" : "Analyse X-ray · simulation"} icon="sparkles" disabled={analysing || picking} onPress={analyse} />
+      </Animated.View>
+    </Surface>
+
+    <Animated.View layout={layout} style={{ gap: 10 }}>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+        <Action label={picking ? "Opening library…" : "Choose local image"} icon="photo.on.rectangle" secondary disabled={picking || analysing} onPress={pickImage} />
+        <Action label="Remove image" icon="trash" secondary disabled={analysing} onPress={() => updateEncounter(current => ({ ...current, imagingAttachment: undefined, hideTeachingImage: true }), true)} />
+      </View>
+      {pickerError && <Notice warning>{pickerError}</Notice>}
+    </Animated.View>
+  </ViewerPage>;
 }
