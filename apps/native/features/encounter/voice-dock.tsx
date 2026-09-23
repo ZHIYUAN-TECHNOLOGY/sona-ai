@@ -4,6 +4,7 @@ import { Icon } from "@/components/sona/ui";
 import { useAccessibleEffects } from "@/components/sona/ui";
 import { riseIn } from "@/components/sona/motion";
 import { LiquidVeil } from "@/components/sona/liquid-veil";
+import { GlassOrb } from "@/components/sona/glass-orb";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
@@ -13,7 +14,7 @@ import Animated, { cubicBezier, FadeIn, FadeOut, useAnimatedKeyboard, useAnimate
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
-const MIC = 92, THINKING = 176;
+const ORB = 64;
 
 type Mode = "idle" | "holding" | "composing";
 type Props = {
@@ -166,17 +167,19 @@ export function VoiceDock(props: Props) {
         </Animated.View>}
 
         <View pointerEvents="box-none" style={{ position: "absolute", left: 0, right: 0, alignItems: "center" }}>
-          {holding && !reducedMotion && <Animated.View pointerEvents="none" style={{ position: "absolute", width: MIC, height: 56, borderRadius: 28, backgroundColor: "rgba(36,91,204,0.18)", animationName: { from: { transform: [{ scale: 1 }], opacity: 0.8 }, to: { transform: [{ scale: 1.55 }], opacity: 0 } }, animationDuration: 1300, animationIterationCount: "infinite", animationTimingFunction: "ease-out" }} />}
+          {busy && <Animated.View key={thinking} entering={riseIn({ distance: 6, scale: 0.96, duration: 240 })} exiting={FadeOut.duration(120)} pointerEvents="none"
+            style={{ position: "absolute", bottom: ORB + 10, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.9)", boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
+            <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: "500", color: palette.ink, animationName: reducedMotion ? undefined : { "0%": { opacity: 1 }, "50%": { opacity: 0.5 }, "100%": { opacity: 1 } }, animationDuration: 1600, animationIterationCount: "infinite" } as never}>{thinking}</Text>
+          </Animated.View>}
           <GestureDetector gesture={micGesture}>
             <Animated.View accessible accessibilityRole="button" accessibilityLabel={busy ? `${thinking}. Stop response` : "Talk to Sona"} accessibilityHint={busy ? undefined : "Hold while you speak. With VoiceOver, double-tap to use the sample command."} accessibilityActions={[{ name: "activate" }]} onAccessibilityAction={() => busy ? onCancel() : onSubmit(spokenPrompt)}
-              style={{ width: busy ? THINKING : MIC, height: 56, borderRadius: 28, overflow: "hidden", alignItems: "center", justifyContent: "center", backgroundColor: holding ? "#2A2E36" : "#15171B", borderWidth: 3, borderColor: holding ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.92)", boxShadow: "0 6px 18px rgba(20,24,32,0.22)", transform: [{ scale: holding ? 1.14 : 1 }], transitionProperty: ["width", "transform", "backgroundColor", "borderColor"], transitionDuration: 320, transitionTimingFunction: EASE_OUT }}>
-              {busy ? <Animated.View key="thinking" entering={FadeIn.duration(200).delay(90)} exiting={FadeOut.duration(90)} style={{ width: THINKING - 6, flexDirection: "row", alignItems: "center", paddingHorizontal: 12, gap: 10 }}>
-                <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: palette.white, alignItems: "center", justifyContent: "center" }}><View style={{ width: 7, height: 7, borderRadius: 1.5, backgroundColor: "#15171B" }} /></View>
-                <Animated.View key={thinking} entering={FadeIn.duration(220)} style={{ flex: 1, animationName: reducedMotion ? undefined : { "0%": { opacity: 1 }, "50%": { opacity: 0.45 }, "100%": { opacity: 1 } }, animationDuration: 1500, animationIterationCount: "infinite" }}>
-                  <Text numberOfLines={1} style={{ color: "rgba(255,255,255,0.92)", fontSize: 13, fontWeight: "500" }}>{thinking}</Text>
-                </Animated.View>
+              style={{ width: ORB, height: ORB, borderRadius: ORB / 2, alignItems: "center", justifyContent: "center", boxShadow: holding ? "0 10px 28px rgba(60,100,200,0.32)" : "0 8px 22px rgba(40,70,140,0.22)", transform: [{ scale: holding ? 1.12 : 1 }], transitionProperty: ["transform", "boxShadow"], transitionDuration: 320, transitionTimingFunction: EASE_OUT } as never}>
+              <View style={{ position: "absolute", inset: 0 }}><GlassOrb size={ORB} energy={holding ? 1 : busy ? 0.7 : 0} still={reducedMotion} /></View>
+              {/* Inverse glyph: dark ink over the pale glass, lifted by a soft white bloom. */}
+              <Animated.View key={busy ? "stop" : "mic"} entering={FadeIn.duration(180)} exiting={FadeOut.duration(80)} style={{ alignItems: "center", justifyContent: "center" }}>
+                <View style={{ position: "absolute", width: 34, height: 34, borderRadius: 17, backgroundColor: "rgba(255,255,255,0.55)", boxShadow: "0 0 12px rgba(255,255,255,0.7)" }} />
+                <Icon name={busy ? "stop.fill" : "mic.fill"} size={busy ? 16 : 24} color="#16213A" />
               </Animated.View>
-              : <Animated.View key="mic" entering={FadeIn.duration(180)} exiting={FadeOut.duration(80)}><Icon name="mic.fill" size={18} color={palette.white} /></Animated.View>}
             </Animated.View>
           </GestureDetector>
         </View>
