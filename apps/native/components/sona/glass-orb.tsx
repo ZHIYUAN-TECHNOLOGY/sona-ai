@@ -1,5 +1,6 @@
 import { Canvas, Fill, Shader, Skia } from "@shopify/react-native-skia";
 import { useEffect } from "react";
+import { useVisible } from "./use-visible";
 import { useDerivedValue, useFrameCallback, useSharedValue, withTiming } from "react-native-reanimated";
 
 /**
@@ -59,10 +60,13 @@ export function GlassOrb({ size, energy, still = false }: { size: number; energy
   const t = useSharedValue(Math.random() * 40), level = useSharedValue(energy);
   useEffect(() => { level.set(withTiming(energy, { duration: 600 })); }, [energy, level]);
   // Integrate time on the UI thread so the swirl speeds up smoothly instead of jumping.
-  useFrameCallback(frame => {
+  const frames = useFrameCallback(frame => {
     const dt = Math.min(frame.timeSincePreviousFrame ?? 16, 64) / 1000;
     t.set(t.value + dt * (0.5 + 1.2 * level.value));
-  }, !still);
+  }, false);
+  const visible = useVisible();
+  // Stop redrawing while hidden, backgrounded or under Reduce Motion (including when toggled live).
+  useEffect(() => { frames.setActive(visible && !still); return () => frames.setActive(false); }, [visible, still, frames]);
   const uniforms = useDerivedValue(() => ({ res: [size, size], t: t.value, energy: level.value }));
   return <Canvas pointerEvents="none" style={{ width: size, height: size }}>
     <Fill><Shader source={effect} uniforms={uniforms} /></Fill>

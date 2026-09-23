@@ -1,8 +1,9 @@
 import { Canvas, Circle, RadialGradient, vec } from "@shopify/react-native-skia";
 import { useEffect } from "react";
 import { StyleSheet, useWindowDimensions } from "react-native";
-import Animated, { Easing, type SharedValue, useDerivedValue, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
+import Animated, { cancelAnimation, Easing, type SharedValue, useDerivedValue, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { useReduceMotionPreference } from "./accessibility";
+import { useVisible } from "./use-visible";
 
 // Soft light pools: ice blue, teal and periwinkle replace Monogram's pastel pink wash.
 const pools = [
@@ -22,13 +23,18 @@ function Pool({ pool, width, height, drift }: { pool: (typeof pools)[number]; wi
 export function AmbientWash({ quiet = false, thinking = false }: { quiet?: boolean; thinking?: boolean }) {
   const { width, height } = useWindowDimensions();
   const reduced = useReduceMotionPreference();
+  const visible = useVisible();
   const drift = useSharedValue(0), pulse = useSharedValue(0);
+  // Skia redraws the full-screen wash whenever drift changes, so stop the loop while nobody can see it.
   useEffect(() => {
-    drift.set(reduced ? 0 : withRepeat(withTiming(1, { duration: 9000, easing: Easing.inOut(Easing.sin) }), -1, true));
-  }, [reduced, drift]);
+    if (reduced) { drift.set(0); return; }
+    if (!visible) { cancelAnimation(drift); return; }
+    drift.set(withRepeat(withTiming(1, { duration: 9000, easing: Easing.inOut(Easing.sin) }), -1, true));
+  }, [reduced, visible, drift]);
   useEffect(() => {
+    if (!visible) { cancelAnimation(pulse); return; }
     pulse.set(thinking ? (reduced ? 0.5 : withRepeat(withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.sin) }), -1, true)) : withTiming(0, { duration: 350 }));
-  }, [thinking, reduced, pulse]);
+  }, [thinking, reduced, visible, pulse]);
   const glowCenter = vec(width * 0.28, height * 0.2);
   const glowRadius = useDerivedValue(() => 150 + pulse.value * 60);
   const glowOpacity = useDerivedValue(() => (thinking ? 0.55 + pulse.value * 0.45 : pulse.value));
