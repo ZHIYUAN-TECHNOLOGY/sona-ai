@@ -1,23 +1,39 @@
 import { DateTimePicker } from "@expo/ui/community/datetime-picker";
 import { useEffect, useState } from "react";
-import { Keyboard, View } from "react-native";
-import { Action, Body, Card, Label, Notice, SourceLink } from "@/components/sona/ui";
+import { Keyboard, TextInput, View, type TextStyle } from "react-native";
+import Animated from "react-native-reanimated";
+import { Text } from "@/components/sona/text";
+import { Section } from "@/components/sona/sections";
+import { LAYOUT, riseIn } from "@/components/sona/motion";
+import { palette } from "@/components/sona/theme";
+import { Action, Chip, SourceLink, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { Capability, FeatureProps, HistoryFact } from "@/features/encounter/types";
-import { ClinicalChoice, ClinicalField } from "./controls";
+import { Caption, Disclosure, haptic, IconDisc } from "./reasoning-parts";
 
-const categories: { value: HistoryFact["category"]; label: string }[] = [
-  { value: "presenting", label: "Presenting history" }, { value: "medical", label: "Medical history" },
-  { value: "family", label: "Family history" }, { value: "social", label: "Social history" }, { value: "allergy", label: "Allergies" },
+const categories: { value: HistoryFact["category"]; label: string; icon: string }[] = [
+  { value: "presenting", label: "Presenting history", icon: "text.bubble" }, { value: "medical", label: "Medical history", icon: "cross.case" },
+  { value: "family", label: "Family history", icon: "figure.2.and.child.holdinghands" }, { value: "social", label: "Social history", icon: "house" }, { value: "allergy", label: "Allergies", icon: "allergens" },
 ];
+const categoryOf = (value: HistoryFact["category"]) => categories.find(category => category.value === value)!;
 function localDate(date: Date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
 
+const field: TextStyle = { fontSize: 17, lineHeight: 23, color: palette.ink, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 16, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" };
+const placeholder = "rgba(89,97,107,0.55)";
+function FieldLabel({ children }: { children: string }) { return <Text style={{ fontSize: 13, fontWeight: "600", color: palette.muted }}>{children}</Text>; }
+
+/**
+ * History as a generated section: the latest recorded change, then two rows that open in place,
+ * the correction form and the version trail. Saving bumps the encounter revision and requests a
+ * refreshed `refresh` answer; this result keeps the history it was built from.
+ */
 export function HistoryEditor({ patient, result, onSource, onRequest, refresh }: Pick<FeatureProps, "patient" | "result" | "onSource" | "onRequest"> & { refresh: Capability }) {
   const { encounters, patient: activePatient, updateEncounter } = useEncounter();
+  const { reducedMotion } = useAccessibleEffects();
+  const layout = reducedMotion ? undefined : LAYOUT;
   const encounter = encounters[patient.id];
   const [open, setOpen] = useState(false);
   const [versions, setVersions] = useState(false);
-  const [pickDate, setPickDate] = useState(false);
   const [pendingRevision, setPendingRevision] = useState<number>();
   const [recorded, setRecorded] = useState<HistoryFact>();
   const draft = encounter?.historyDraft;
@@ -35,25 +51,79 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
     const revision = encounter.revision + 1;
     const fact: HistoryFact = { ...draft, value: draft.value.trim(), source: draft.source.trim(), id: `history-${patient.id}-${Date.now()}`, revision };
     updateEncounter(value => ({ ...value, historyFacts: [...(value.historyFacts ?? []), fact], historyDraft: undefined, noteReviewed: false }), true);
-    setRecorded(fact); setPendingRevision(revision); setOpen(false); Keyboard.dismiss();
+    haptic("done"); setRecorded(fact); setPendingRevision(revision); setOpen(false); Keyboard.dismiss();
   };
-  return <Card label="History updates" title={last ? "Context updated" : "Keep the history current"}>
-    {recorded && <Notice>Recorded at revision {recorded.revision}: {recorded.value}. The refreshed response will reflect this update; the earlier result remains unchanged.</Notice>}
-    {last ? <><Body>{last.value}</Body><Body muted>{last.category} · {last.date} · revision {last.revision}</Body><SourceLink label="Source of this update" onPress={() => onSource(last.id)} /></> : <Body muted>No earlier visit record is available for comparison. The timeline reflects this encounter's intake.</Body>}
-    {!current && <Notice>This result retains the history available at revision {result?.revision}. Open the latest response to add a correction.</Notice>}
-    {current && <Action label={open ? "Hide history form" : draft ? "Continue history draft" : "Add or correct history"} secondary icon={open ? "chevron.up" : "pencil"} onPress={() => open ? setOpen(false) : start()} />}
-    {current && open && draft && <View style={{ gap: 14 }}>
-      <ClinicalChoice label="Category" value={draft.category} options={categories} onChange={category => updateDraft({ category })} />
-      <ClinicalField label="Recorded fact" value={draft.value} onChange={value => updateDraft({ value })} multiline />
-      <ClinicalField label="Source or speaker" value={draft.source} onChange={source => updateDraft({ source })} />
-      <Body muted>Date: {draft.date}</Body>
-      <Action label={pickDate ? "Finish choosing date" : "Change date"} secondary icon="calendar" onPress={() => setPickDate(value => !value)} />
-      {pickDate && <DateTimePicker value={new Date(`${draft.date}T12:00:00`)} mode="date" display="inline" presentation="inline" onValueChange={(_, date) => updateDraft({ date: localDate(date) })} themeVariant="light" />}
-      <Notice>This correction replaces the current summary for its category. Earlier facts and their sources remain inspectable.</Notice>
-      <Action label="Save history & update response" disabled={!draft.value.trim() || !draft.source.trim()} onPress={save} />
-      <Action label="Discard this history draft" secondary onPress={() => { updateEncounter(value => ({ ...value, historyDraft: undefined })); setOpen(false); }} />
-    </View>}
-    {!!facts.length && <Action label={versions ? "Hide history versions" : "Inspect history versions"} secondary onPress={() => setVersions(value => !value)} />}
-    {versions && facts.map((fact, index) => <View key={fact.id} style={{ gap: 5, paddingVertical: 10 }}><Label muted>Revision {fact.revision} · {fact.category} · {fact.date}</Label><Body>{fact.value}</Body><Body muted>Source: {fact.source}{facts.slice(index + 1).some(next => next.category === fact.category) ? " · Superseded in this result" : " · Current for this category"}</Body><SourceLink label="Inspect recorded source" onPress={() => onSource(fact.id)} /></View>)}
-  </Card>;
+  const discard = () => { updateEncounter(value => ({ ...value, historyDraft: undefined })); setOpen(false); };
+  const ready = Boolean(draft?.value.trim() && draft.source.trim());
+
+  return <Animated.View layout={layout}>
+    <Section title={last ? "Context updated" : "Keep the history current"}
+      subtitle={last ? "The latest recorded change. Earlier facts and their sources stay inspectable." : "No earlier visit record is available for comparison. The timeline reflects this encounter’s intake."}>
+      {recorded && <Animated.View entering={reducedMotion ? undefined : riseIn({ distance: 6, duration: 260 })}>
+        <Caption icon="checkmark.circle" color={palette.blue}>Recorded at revision {recorded.revision}: {recorded.value}. The refreshed response will reflect this update; the earlier result remains unchanged.</Caption>
+      </Animated.View>}
+      {!current && <Caption>This result retains the history available at revision {result?.revision}. Open the latest response to add a correction.</Caption>}
+      {(last || current || facts.length > 0) && <Surface layout={layout} style={{ paddingHorizontal: 16 }}>
+        {last && <View style={{ flexDirection: "row", gap: 12, paddingVertical: 16 }}>
+          <IconDisc icon={categoryOf(last.category).icon} />
+          <View style={{ flex: 1, gap: 3, paddingTop: 1 }}>
+            <Text selectable style={{ fontSize: 13, lineHeight: 18, color: palette.muted }}>{categoryOf(last.category).label} · {last.date} · revision {last.revision}</Text>
+            <Text selectable style={{ fontSize: 16, lineHeight: 23, color: palette.ink }}>{last.value}</Text>
+            <SourceLink label="Source of this update" onPress={() => onSource(last.id)} />
+          </View>
+        </View>}
+
+        {current && <Disclosure first={!last} icon="pencil" title={!open && draft ? "Continue history draft" : "Add or correct history"} detail="Saving refreshes this answer. Earlier results stay as they were."
+          accessibilityLabel={open ? "Hide history form" : draft ? "Continue history draft" : "Add or correct history"} open={open && !!draft} onToggle={() => open && draft ? setOpen(false) : start()}>
+          {draft && <>
+            <View style={{ gap: 8 }}>
+              <FieldLabel>Category</FieldLabel>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                {categories.map(category => <Chip key={category.value} label={category.label} selected={draft.category === category.value} onPress={() => { haptic(); updateDraft({ category: category.value }); }} />)}
+              </View>
+            </View>
+            <View style={{ gap: 8 }}>
+              <FieldLabel>Recorded fact</FieldLabel>
+              <TextInput testID="clinical-recorded-fact" accessibilityLabel="Recorded fact" value={draft.value} onChangeText={value => updateDraft({ value })} multiline maxLength={600}
+                placeholder="What was reported or found" placeholderTextColor={placeholder} style={[field, { minHeight: 88, textAlignVertical: "top" }]} />
+            </View>
+            <View style={{ gap: 8 }}>
+              <FieldLabel>Source or speaker</FieldLabel>
+              <TextInput testID="clinical-source-or-speaker" accessibilityLabel="Source or speaker" value={draft.source} onChangeText={source => updateDraft({ source })} maxLength={120} returnKeyType="done"
+                placeholder="Patient, relative, referral letter…" placeholderTextColor={placeholder} style={[field, { minHeight: 48 }]} />
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <FieldLabel>Date</FieldLabel>
+              <DateTimePicker style={{ width: 124 }} value={new Date(`${draft.date}T12:00:00`)} mode="date" display="compact" themeVariant="light" accentColor={palette.blue} onValueChange={(_, date) => updateDraft({ date: localDate(date) })} />
+            </View>
+            <Caption>This correction replaces the current summary for its category. Earlier facts and their sources remain inspectable.</Caption>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <Action label="Discard" accessibilityLabel="Discard this history draft" secondary onPress={discard} />
+              <View style={{ flex: 1 }}><Action label="Save & update" accessibilityLabel="Save history and update response" icon="checkmark" disabled={!ready} onPress={save} /></View>
+            </View>
+          </>}
+        </Disclosure>}
+
+        {facts.length > 0 && <Disclosure first={!last && !current} icon="clock.arrow.circlepath" title="History versions" detail={`${facts.length} recorded ${facts.length === 1 ? "change" : "changes"} in this result`}
+          accessibilityLabel={versions ? "Hide history versions" : "Inspect history versions"} open={versions} onToggle={() => setVersions(value => !value)}>
+          {/* A trail: the current fact for each category is a filled dot, superseded ones hollow. */}
+          <View>{facts.map((fact, index) => {
+            const superseded = facts.slice(index + 1).some(next => next.category === fact.category);
+            return <View key={fact.id} style={{ flexDirection: "row", gap: 12 }}>
+              <View style={{ width: 36, alignItems: "center", paddingTop: 5 }}>
+                <View style={{ width: 9, height: 9, borderRadius: 4.5, borderWidth: 1.5, borderColor: superseded ? palette.muted : palette.blue, backgroundColor: superseded ? "transparent" : palette.blue }} />
+                {index < facts.length - 1 && <View style={{ flex: 1, width: 1.5, marginTop: 4, borderRadius: 1, backgroundColor: palette.line }} />}
+              </View>
+              <View style={{ flex: 1, gap: 3, paddingBottom: index < facts.length - 1 ? 16 : 0 }}>
+                <Text selectable style={{ fontSize: 12, lineHeight: 17, color: palette.muted }}>Revision {fact.revision} · {categoryOf(fact.category).label} · {fact.date}</Text>
+                <Text selectable style={{ fontSize: 15, lineHeight: 21, color: superseded ? palette.muted : palette.ink }}>{fact.value}</Text>
+                <Text selectable style={{ fontSize: 13, lineHeight: 18, color: palette.muted }}>Source: {fact.source} · {superseded ? "Superseded in this result" : "Current for this category"}</Text>
+                <SourceLink label="Inspect recorded source" onPress={() => onSource(fact.id)} />
+              </View>
+            </View>;
+          })}</View>
+        </Disclosure>}
+      </Surface>}
+    </Section>
+  </Animated.View>;
 }
