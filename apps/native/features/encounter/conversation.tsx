@@ -111,7 +111,11 @@ function Round({ children, label, onPress }: { children: ReactNode; label: strin
 }
 
 /** Floating header: menu on the left, the patient in context on the right. Content scrolls beneath a soft fade. */
-export function TopBar({ patient, faded, onMenu, onPatient }: { patient?: Patient; faded: boolean; onMenu: () => void; onPatient: () => void }) {
+/**
+ * Floating header: menu on the left; follow-up tasks on the right (the thing a clinician checks
+ * between patients). Inside an encounter, the patient chip joins it so every answer's subject stays visible.
+ */
+export function TopBar({ patient, inEncounter, openTasks, faded, onMenu, onPatient, onTasks }: { patient?: Patient; inEncounter: boolean; openTasks: number; faded: boolean; onMenu: () => void; onPatient: () => void; onTasks: () => void }) {
   const insets = useSafeAreaInsets();
   return <View pointerEvents="box-none" style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
     <Animated.View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top + 84, opacity: faded ? 1 : 0, transitionProperty: "opacity", transitionDuration: 200, transitionTimingFunction: EASE_OUT }}>
@@ -119,12 +123,22 @@ export function TopBar({ patient, faded, onMenu, onPatient }: { patient?: Patien
     </Animated.View>
     <View pointerEvents="box-none" style={{ paddingTop: insets.top + 6, paddingHorizontal: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
       <Round label="History and settings" onPress={onMenu}><BrandIcon name="menu" size={22} /></Round>
-      <Round label={patient ? `Change patient, ${patient.name}, ${patient.id}` : "Choose a patient"} onPress={onPatient}>
-        {patient ? <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingRight: 10 }}>
-          <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: "#DCE7FB", alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 12, fontWeight: "600", color: palette.blue }}>{patient.initials}</Text></View>
-          <View><Text style={{ fontSize: 13, fontWeight: "600", color: palette.ink }}>{patient.name}</Text><Text style={{ fontSize: 11, color: palette.muted, fontVariant: ["tabular-nums"] }}>{patient.id} · synthetic</Text></View>
-        </View> : <Icon name="person.crop.circle.badge.plus" size={20} />}
-      </Round>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        {patient && inEncounter && <Animated.View entering={riseIn({ distance: 6, scale: 0.96, duration: 240 })}>
+          <Round label={`Current patient ${patient.name}, ${patient.id}. Change patient`} onPress={onPatient}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingRight: 10 }}>
+              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: "#DCE7FB", alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 12, fontWeight: "600", color: palette.blue }}>{patient.initials}</Text></View>
+              <Text style={{ fontSize: 14, fontWeight: "600", color: palette.ink }}>{patient.name.split(" ")[0]}</Text>
+            </View>
+          </Round>
+        </Animated.View>}
+        <Round label={openTasks ? `Follow-up tasks, ${openTasks} open` : "Follow-up tasks"} onPress={onTasks}>
+          <View style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}><BrandIcon name="tasks" size={22} /></View>
+          {openTasks > 0 && <View accessibilityElementsHidden style={{ position: "absolute", top: -3, right: -3, minWidth: 19, height: 19, borderRadius: 10, paddingHorizontal: 5, backgroundColor: palette.blue, borderWidth: 2, borderColor: palette.white, alignItems: "center", justifyContent: "center" }}>
+            <Text style={{ fontSize: 10, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{openTasks}</Text>
+          </View>}
+        </Round>
+      </View>
     </View>
   </View>;
 }

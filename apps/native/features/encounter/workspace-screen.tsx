@@ -129,7 +129,7 @@ export function WorkspaceScreen() {
       </View>}
     </ScrollView>
 
-    <TopBar patient={patient} faded={scrolled || requests.length > 0} onMenu={openDrawer} onPatient={() => router.push("/patients")} />
+    <TopBar patient={patient} inEncounter={requests.length > 0} openTasks={encounter?.tasks.filter(task => !task.completed).length ?? 0} faded={scrolled || requests.length > 0} onMenu={openDrawer} onPatient={() => router.push("/patients")} onTasks={() => router.push(patient ? "/tasks" : "/patients")} />
     </View>
 
     {requests.length > 0 && <LinearGradient pointerEvents="none" colors={["rgba(245,246,248,0)", "rgba(245,246,248,0.9)", palette.canvas]} locations={[0, 0.5, 1]} style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: insets.bottom + 120 }} />}
