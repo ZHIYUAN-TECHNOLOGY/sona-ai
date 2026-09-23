@@ -1,6 +1,7 @@
 import { Text } from "@/components/sona/text";
+import { DateTimePicker } from "@expo/ui/community/datetime-picker";
 import { router } from "expo-router";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Pressable, Text as RNText, TextInput, View } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -45,10 +46,11 @@ function TaskOrigin({ value }: { value: Pick<Task, "sourceId" | "sourceRevision"
 const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
 const OWNERS = ["Treating clinician", "Clinic nurse", "Care coordinator", "Pharmacist"];
 const SWIPE = 88;
-// ponytail: 13 weeks covers outpatient follow-up; add a calendar if longer horizons are needed.
-const DAYS_AHEAD = 91, TICK = 12;
-/** Common review intervals, marked on the ruler and tappable. */
-const MILESTONES: Record<number, string> = { 0: "Today", 7: "1 wk", 14: "2 wk", 28: "4 wk", 42: "6 wk", 56: "8 wk", 84: "12 wk" };
+// The ruler runs to the end of the year after next; far dates are one tap away in the native picker.
+const TICK = 12;
+const DAYS_AHEAD = (() => { const t = new Date(); return Math.round((new Date(t.getFullYear() + 2, 11, 31).getTime() - new Date(t.getFullYear(), t.getMonth(), t.getDate()).getTime()) / 86400000) + 1; })();
+/** Common review intervals, marked under the ruler and tappable. */
+const MILESTONES: Record<number, string> = { 0: "Today", 7: "1 wk", 14: "2 wk", 28: "4 wk", 42: "6 wk", 56: "8 wk", 84: "12 wk", 182: "6 mo", 365: "1 yr", 730: "2 yr" };
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -57,23 +59,32 @@ function haptic(kind: "select" | "done") {
   (kind === "done" ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success) : Haptics.selectionAsync()).catch(() => {});
 }
 function dayFromToday(days: number) { const t = new Date(); return localDate(new Date(t.getFullYear(), t.getMonth(), t.getDate() + days)); }
-/** "Today", "Tomorrow", else "Thu 3 Sep". */
+/** "Thu 3 Sep", with the year once it is not this year ("Fri 13 Oct 2028"). */
+function longDate(due: string) { const d = new Date(`${due}T12:00:00`); return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}${d.getFullYear() === new Date().getFullYear() ? "" : ` ${d.getFullYear()}`}`; }
+/** "Today", "Tomorrow", else the long date. */
 function friendlyDate(due: string) {
   if (!due) return "";
   if (due === dayFromToday(0)) return "Today";
   if (due === dayFromToday(1)) return "Tomorrow";
-  const d = new Date(`${due}T12:00:00`);
-  return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  return longDate(due);
 }
 
 const clampDay = (i: number) => { "worklet"; return Math.min(DAYS_AHEAD - 1, Math.max(0, Math.round(i))); };
-function longDate(due: string) { const d = new Date(`${due}T12:00:00`); return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`; }
-function relativeDay(i: number) { return i === 0 ? "Today" : i === 1 ? "Tomorrow" : i % 7 === 0 ? `In ${i / 7} ${i === 7 ? "week" : "weeks"}` : `In ${i} days`; }
+
+function relativeDay(i: number) {
+  if (i === 0) return "Today";
+  if (i === 1) return "Tomorrow";
+  if (i < 60) return i % 7 === 0 ? `In ${i / 7} ${i === 7 ? "week" : "weeks"}` : `In ${i} days`;
+  const months = Math.round(i / 30.44);
+  return months < 24 ? `In about ${months} months` : `In about ${Math.round(i / 365)} years`;
+}
 
 /**
  * Due-date ruler (after Habitastic's timeline scroll): one tick per day slides under a fixed ink
  * marker. Drag with momentum; it snaps to a day, ticks a haptic per day passed, and commits when
- * it settles. Milestones mark common review intervals and jump there on tap.
+ * it settles. Months and years are labelled above, review intervals below (tap to jump), and
+ * the native compact picker jumps straight to any date up to the end of the year after next.
+ * Ticks are virtualised, so only the visible stretch is mounted.
  */
 function DayRuler({ value, onPick }: { value: string; onPick: (due: string) => void }) {
   const { reducedMotion } = useAccessibleEffects();
@@ -81,44 +92,53 @@ function DayRuler({ value, onPick }: { value: string; onPick: (due: string) => v
   const [initial] = useState(() => Math.max(0, days.indexOf(value)));
   const [shown, setShown] = useState(initial);
   const [width, setWidth] = useState(0);
-  const ref = useAnimatedRef<Animated.ScrollView>();
+  const ref = useAnimatedRef<Animated.FlatList<string>>();
   const x = useSharedValue(initial * TICK);
   // Only the day index crosses to React, once per day passed, never per frame.
   useAnimatedReaction(() => clampDay(x.value / TICK), (i, prev) => { if (prev !== null && i !== prev) { scheduleOnRN(setShown, i); scheduleOnRN(haptic, "select"); } });
-  const commit = (i: number) => { const due = days[i]; if (due && due !== value) onPick(due); };
+  const latest = useRef({ value, onPick }); latest.current = { value, onPick };
+  const commit = (i: number) => { const due = days[i]; if (due && due !== latest.current.value) latest.current.onPick(due); };
   const onScroll = useAnimatedScrollHandler({
     onScroll: e => { x.set(e.contentOffset.x); },
     onEndDrag: e => { if (Math.abs(e.velocity?.x ?? 0) < 0.05) scheduleOnRN(commit, clampDay(e.contentOffset.x / TICK)); },
     onMomentumEnd: e => { scheduleOnRN(commit, clampDay(e.contentOffset.x / TICK)); },
   });
-  const jump = (i: number) => { const day = clampDay(i); ref.current?.scrollTo({ x: day * TICK, animated: !reducedMotion }); setShown(day); commit(day); };
+  const jump = (i: number, animated = !reducedMotion) => { const day = clampDay(i); ref.current?.scrollToOffset({ offset: day * TICK, animated }); setShown(day); commit(day); };
+  const jumpRef = useRef(jump); jumpRef.current = jump;
   const side = Math.max(0, width / 2 - TICK / 2);
-  // Nothing is chosen until the clinician moves the ruler or taps an interval.
+  // Nothing is chosen until the clinician moves the ruler, taps an interval or picks a date.
   const unset = !value && shown === initial;
+  const renderTick = useCallback(({ item: day, index: i }: { item: string; index: number }) => {
+    const d = new Date(`${day}T12:00:00`), label = MILESTONES[i], first = d.getDate() === 1, week = i % 7 === 0;
+    return <View style={{ width: TICK, height: 74, alignItems: "center" }}>
+      {first && <Text numberOfLines={1} style={{ position: "absolute", top: 0, width: 60, left: (TICK - 60) / 2, textAlign: "center", fontSize: 10, fontWeight: "600", color: d.getMonth() === 0 ? palette.ink : palette.muted }}>{d.getMonth() === 0 ? String(d.getFullYear()) : MONTHS[d.getMonth()]}</Text>}
+      <View style={{ marginTop: label || first ? 16 : week ? 21 : 25, width: 1.5, height: label || first ? 26 : week ? 21 : 17, borderRadius: 1, backgroundColor: label || first ? "rgba(20,28,40,0.32)" : week ? "rgba(20,28,40,0.2)" : "rgba(20,28,40,0.11)" }} />
+      {label && <Pressable accessible={false} hitSlop={10} onPress={() => jumpRef.current(i)} style={{ position: "absolute", top: 54, width: 44, left: (TICK - 44) / 2, alignItems: "center" }}>
+        <Text style={{ fontSize: 11, fontWeight: "500", color: palette.muted }}>{label}</Text>
+      </Pressable>}
+    </View>;
+  }, []);
+  const pickerDate = new Date(`${days[shown]}T12:00:00`);
   return <View accessible accessibilityRole="adjustable" accessibilityLabel="Due date" accessibilityValue={{ text: `${longDate(days[shown]!)}, ${relativeDay(shown)}` }}
-    accessibilityActions={[{ name: "increment" }, { name: "decrement" }]} onAccessibilityAction={e => jump(shown + (e.nativeEvent.actionName === "increment" ? 1 : -1))} style={{ gap: 10 }}>
-    <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" }}>
-      <Text style={{ fontSize: 20, fontWeight: "600", letterSpacing: -0.3, color: unset ? palette.muted : palette.ink, fontVariant: ["tabular-nums"] }}>{longDate(days[shown]!)}</Text>
-      <Text style={{ fontSize: 13, color: palette.muted, fontVariant: ["tabular-nums"] }}>{unset ? "Slide to choose a day" : relativeDay(shown)}</Text>
+    accessibilityActions={[{ name: "increment" }, { name: "decrement" }]} onAccessibilityAction={e => jump(shown + (e.nativeEvent.actionName === "increment" ? 1 : -1))} style={{ gap: 8 }}>
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 20, fontWeight: "600", letterSpacing: -0.3, color: unset ? palette.muted : palette.ink, fontVariant: ["tabular-nums"] }}>{longDate(days[shown]!)}</Text>
+        <Text style={{ fontSize: 13, color: palette.muted, fontVariant: ["tabular-nums"] }}>{unset ? "Slide, tap an interval, or pick a date" : relativeDay(shown)}</Text>
+      </View>
+      {/* Native compact picker: its calendar popover reaches any month or year in a couple of taps. */}
+      <DateTimePicker style={{ width: 124 }} value={pickerDate} mode="date" display="compact" minimumDate={new Date(`${days[0]}T00:00:00`)} maximumDate={new Date(`${days[DAYS_AHEAD - 1]}T23:59:59`)} themeVariant="light" accentColor={palette.blue}
+        onValueChange={(_, date) => jump(Math.round((new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() - new Date(`${days[0]}T00:00:00`).getTime()) / 86400000), false)} />
     </View>
-    <View onLayout={e => setWidth(e.nativeEvent.layout.width)} style={{ height: 62, marginHorizontal: -18 }}>
-      {width > 0 && <Animated.ScrollView ref={ref} horizontal onScroll={onScroll} scrollEventThrottle={16} showsHorizontalScrollIndicator={false} snapToInterval={TICK} decelerationRate="fast"
-        contentOffset={{ x: initial * TICK, y: 0 }} contentContainerStyle={{ paddingHorizontal: side }}>
-        {days.map((day, i) => {
-          const label = MILESTONES[i], week = i % 7 === 0;
-          return <View key={day} style={{ width: TICK, height: 62, alignItems: "center" }}>
-            <View style={{ width: 3, height: 3, borderRadius: 1.5, marginTop: 4, backgroundColor: label ? "rgba(20,28,40,0.3)" : "transparent" }} />
-            <View style={{ marginTop: label ? 4 : week ? 9 : 13, width: 1.5, height: label ? 26 : week ? 21 : 17, borderRadius: 1, backgroundColor: label ? "rgba(20,28,40,0.32)" : week ? "rgba(20,28,40,0.2)" : "rgba(20,28,40,0.11)" }} />
-            {label && <Pressable accessible={false} hitSlop={10} onPress={() => jump(i)} style={{ position: "absolute", top: 42, width: 44, left: (TICK - 44) / 2, alignItems: "center" }}>
-              <Text style={{ fontSize: 11, fontWeight: "500", color: palette.muted }}>{label}</Text>
-            </Pressable>}
-          </View>;
-        })}
-      </Animated.ScrollView>}
+    <View onLayout={e => setWidth(e.nativeEvent.layout.width)} style={{ height: 74, marginHorizontal: -18 }}>
+      {width > 0 && <Animated.FlatList ref={ref} horizontal data={days} keyExtractor={day => day} renderItem={renderTick}
+        getItemLayout={(_, i) => ({ length: TICK, offset: side + TICK * i, index: i })} ListHeaderComponent={<View style={{ width: side }} />} ListFooterComponent={<View style={{ width: side }} />}
+        initialNumToRender={80} maxToRenderPerBatch={80} windowSize={7} onScroll={onScroll} scrollEventThrottle={16} showsHorizontalScrollIndicator={false} snapToInterval={TICK} decelerationRate="fast"
+        contentOffset={{ x: initial * TICK, y: 0 }} />}
       {/* Soft edges, then the fixed marker: ink line under a small halftone glow. */}
       <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0.96)", "rgba(255,255,255,0)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 56 }} />
       <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.96)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 56 }} />
-      {width > 0 && <View pointerEvents="none" style={{ position: "absolute", top: 0, left: width / 2 - 12, width: 24, alignItems: "center" }}>
+      {width > 0 && <View pointerEvents="none" style={{ position: "absolute", top: 12, left: width / 2 - 12, width: 24, alignItems: "center" }}>
         <HalftoneGlint width={24} height={12} origin={[12, 12]} reach={[12, 11]} pitch={3} strength={0.9} />
         <View style={{ width: 2.5, height: 30, borderRadius: 1.25, backgroundColor: palette.ink }} />
       </View>}
@@ -213,8 +233,9 @@ function Composer({ draft, onChange, onSave, pending, error }: { draft: TaskDraf
 
     {open === "owner" && <Expand key="owner" style={{ gap: 10 }}>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {OWNERS.map(owner => <Chip key={owner} label={owner} selected={draft.owner === owner} onPress={() => { haptic("select"); setCustomOwner(false); set({ owner }); setOpen(null); }} />)}
-        <Chip label="Someone else" selected={customOwner} onPress={() => { haptic("select"); setCustomOwner(true); if (OWNERS.includes(draft.owner)) set({ owner: "" }); }} />
+        {/* Tapping the chosen owner again clears it. */}
+        {OWNERS.map(owner => <Chip key={owner} label={owner} selected={draft.owner === owner} onPress={() => { haptic("select"); setCustomOwner(false); if (draft.owner === owner) set({ owner: "" }); else { set({ owner }); setOpen(null); } }} />)}
+        <Chip label="Someone else" selected={customOwner} onPress={() => { haptic("select"); if (customOwner) { setCustomOwner(false); set({ owner: "" }); return; } setCustomOwner(true); if (OWNERS.includes(draft.owner)) set({ owner: "" }); }} />
       </View>
       {customOwner && <Expand><TextInput autoFocus accessibilityLabel="Owner name or team" value={draft.owner} onChangeText={owner => set({ owner })} placeholder="Name or team" placeholderTextColor="#A2A8B1" maxLength={100} returnKeyType="done" onSubmitEditing={() => setOpen(null)}
         style={{ fontSize: 16, color: palette.ink, paddingHorizontal: 14, height: 44, borderRadius: 14, backgroundColor: "rgba(20,28,40,0.04)" }} /></Expand>}
@@ -262,23 +283,26 @@ function TaskRow({ task, disabled, onToggle }: { task: Task; disabled: boolean; 
       <BrandIcon name={reopens ? "back" : "check"} size={22} color={palette.blue} strokeWidth={2} />
     </Animated.View>
     <GestureDetector gesture={pan}>
-      <Surface style={[{ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 20 }, rowStyle]}>
-        <Pressable accessibilityRole="checkbox" accessibilityLabel={task.title} accessibilityState={{ checked: done, disabled }} accessibilityHint={done ? "Reopens the task" : "Marks the task completed"} onPress={toggle} hitSlop={10}
-          style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.6, alignItems: "center", justifyContent: "center", borderColor: done ? palette.blue : "#B7BDC6", backgroundColor: done ? palette.blue : "transparent", transitionProperty: ["backgroundColor", "borderColor"], transitionDuration: 180 } as never}>
-          <Animated.View style={{ opacity: done ? 1 : 0, transform: [{ scale: done ? 1 : 0.5 }], transitionProperty: ["opacity", "transform"], transitionDuration: 240, transitionTimingFunction: EASE_OUT }}>
-            <BrandIcon name="check" size={15} color={palette.white} strokeWidth={2.4} />
-          </Animated.View>
-        </Pressable>
-        <View style={{ flex: 1, gap: 3 }}>
-          <View style={{ alignSelf: "flex-start" }}>
-            <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: done ? palette.muted : palette.ink, transitionProperty: "color", transitionDuration: 200 } as never}>{task.title}</Text>
-            <Animated.View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: 11, height: 1.5, borderRadius: 1, backgroundColor: palette.muted, transformOrigin: "left", transform: [{ scaleX: done ? 1 : 0 }], transitionProperty: "transform", transitionDuration: 320, transitionTimingFunction: EASE_OUT }} />
+      <Surface style={[{ borderRadius: 20 }, rowStyle]}>
+        {/* The whole row is the checkbox; only the Source link inside it does something else. */}
+        <Pressable accessibilityRole="checkbox" accessibilityLabel={`${task.title}, ${task.owner}, ${done ? "done" : `due ${friendlyDate(task.due)}`}`} accessibilityState={{ checked: done, disabled }} accessibilityHint={done ? "Reopens the task" : "Marks the task completed"} onPress={toggle} disabled={disabled}
+          style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 14, transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+          <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.6, alignItems: "center", justifyContent: "center", borderColor: done ? palette.blue : "#B7BDC6", backgroundColor: done ? palette.blue : "transparent", transitionProperty: ["backgroundColor", "borderColor"], transitionDuration: 180 } as never}>
+            <Animated.View style={{ opacity: done ? 1 : 0, transform: [{ scale: done ? 1 : 0.5 }], transitionProperty: ["opacity", "transform"], transitionDuration: 240, transitionTimingFunction: EASE_OUT }}>
+              <BrandIcon name="check" size={15} color={palette.white} strokeWidth={2.4} />
+            </Animated.View>
           </View>
-          <Text style={{ fontSize: 13, color: palette.muted }}>
-            {task.owner} · {done ? "Done" : friendlyDate(task.due)}
-            {source && <Text accessibilityRole="link" accessibilityLabel={`Source, ${source.title}`} onPress={openSource} style={{ color: palette.blue }}>  Source ↗</Text>}
-          </Text>
-        </View>
+          <View style={{ flex: 1, gap: 3 }}>
+            <View style={{ alignSelf: "flex-start" }}>
+              <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: done ? palette.muted : palette.ink, transitionProperty: "color", transitionDuration: 200 } as never}>{task.title}</Text>
+              <Animated.View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: 11, height: 1.5, borderRadius: 1, backgroundColor: palette.muted, transformOrigin: "left", transform: [{ scaleX: done ? 1 : 0 }], transitionProperty: "transform", transitionDuration: 320, transitionTimingFunction: EASE_OUT }} />
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Text style={{ fontSize: 13, color: palette.muted }}>{task.owner} · {done ? "Done" : friendlyDate(task.due)}</Text>
+              {source && <Pressable accessibilityRole="link" accessibilityLabel={`Source, ${source.title}`} onPress={openSource} hitSlop={8}><Text style={{ fontSize: 13, color: palette.blue }}>Source ↗</Text></Pressable>}
+            </View>
+          </View>
+        </Pressable>
       </Surface>
     </GestureDetector>
   </View>;
