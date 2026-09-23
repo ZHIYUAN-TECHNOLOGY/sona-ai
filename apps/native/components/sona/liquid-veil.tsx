@@ -1,5 +1,5 @@
 import { Canvas, Fill, ImageShader, Shader, Skia, TileMode, makeImageFromView, type SkImage } from "@shopify/react-native-skia";
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { StyleSheet, useWindowDimensions, type View } from "react-native";
 import { Easing, useDerivedValue, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,8 +8,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
  * Aurora glass — Sona's listening surface.
  * Frosted liquid glass widens out of the mic and lifts; its top is a slow aurora wave drawn
  * only by refraction and sheen, with dithered aurora curtains rising from it. It breathes on
- * a 4 s in / 6 s out cycle, and every heard word sends a double swell ("lub-dub") through the
- * glass while the curtains brighten and reach higher.
+ * a 4 s in / 6 s out cycle; every heard word is a gust: the wave swells and glides a little
+ * further while a band of light climbs the curtains.
  */
 const effect = Skia.RuntimeEffect.Make(`
 uniform shader soft;
@@ -20,36 +20,24 @@ uniform float level;    // 0 = resting at the mic, 1 = listening, >1 floods upwa
 uniform float spread;   // 0..1 how far the slab has widened out of the mic
 uniform float time;     // seconds, for slow drift
 uniform float breath;   // 0..1 breathing
-uniform float beat;     // seconds since the latest word
-uniform float beatPrev; // seconds since the word before it
-uniform float voice;    // 0..1 envelope of the latest word
+uniform float voice;    // 0..1 gust envelope of the latest word
+uniform float phase;    // extra wave travel, advanced a little on each word
+uniform float flare;    // seconds since the latest word, for light climbing the curtains
 
-float wave(float x, float t) {
-  if (t > 2.6) { return 0.0; }
-  float dist = abs(x - size.x * 0.5);
-  float front = t * 210.0;
-  float fade = exp(-t * 1.5) * smoothstep(0.0, 0.05, t);
-  // Broad, soft swells so the surface stays a smooth sine.
-  float lub = exp(-pow((dist - front) / 64.0, 2.0));
-  float dub = 0.55 * exp(-pow((dist - front + 110.0) / 56.0, 2.0));
-  return (lub + dub) * fade;
-}
-
-float beatAt(float x) { return clamp(wave(x, beat) + 0.6 * wave(x, beatPrev), 0.0, 1.4); }
-
-// Aurora wave: three slow undulations over a broad, low arch. Corners round off at the
+// Aurora wave: a soft travelling sine over a broad, low arch. Corners round off at the
 // current reach, so the glass widens out of the mic.
 float horizon(float x) {
   float lit = min(level, 1.0);
   float nx = x / size.x;
   float y = mix(base, size.y * 0.5, level) - size.y * 0.012 * breath * lit;
   // One broad travelling sine (~1.2 wavelengths across) with a single gentle harmonic.
-  float wave = 0.8 * sin(nx * 7.5 - time * 0.42) + 0.2 * sin(nx * 3.1 + time * 0.27 + 1.1);
+  float wave = 0.8 * sin(nx * 7.5 - time * 0.42 - phase) + 0.2 * sin(nx * 3.1 + time * 0.27 + 1.1 + phase * 0.4);
   float arch = 12.0 * sin(3.14159 * nx);
   float reach = spread * (size.x * 0.5 + 30.0);
   float inset = reach - abs(x - size.x * 0.5);
   float corner = 34.0 * exp(-max(inset, 0.0) / 26.0) + max(-inset, 0.0) * 6.0;
-  return y - (arch + wave * (13.0 + 4.0 * voice)) * lit + corner - beatAt(x) * 6.0 * lit;
+  // Each word is a gust: the whole wave swells in amplitude, then eases back.
+  return y - (arch * (1.0 + 0.25 * voice) + wave * 13.0 * (1.0 + 0.4 * voice)) * lit + corner;
 }
 
 // Aurora curtains rising from the wave: vertical folds that sway slowly.
@@ -80,29 +68,30 @@ half4 main(float2 p) {
   float lit = min(level, 1.0);
   float h = horizon(p.x);
   float d = p.y - h;
-  float pulseHere = beatAt(p.x);
   half3 ink = mix(half3(0.3, 0.58, 0.86), half3(0.38, 0.44, 0.9), p.x / size.x);
 
-  // Halftone band just inside the glass, swelling with the voice and under each beat.
-  float band = exp(-pow((d - 20.0) / (18.0 + 10.0 * voice + 8.0 * pulseHere), 2.0));
-  float dots = halftone(p, band * (0.16 + 0.2 * voice + 0.5 * pulseHere) * lit);
+  // Halftone band just inside the glass, swelling with each gust.
+  float band = exp(-pow((d - 20.0) / (18.0 + 12.0 * voice), 2.0));
+  float dots = halftone(p, band * (0.16 + 0.34 * voice) * lit);
 
   // Above the glass: dithered aurora curtains plus a soft contact shadow.
   if (d < 0.0) {
     float above = -d;
-    float light = curtain(p.x, above) * (0.55 + 0.35 * voice + 0.5 * pulseHere) * lit;
+    // A band of light climbs the curtains after each word and fades near their tips.
+    float climb = exp(-pow((above - flare * 120.0) / 24.0, 2.0)) * exp(-flare * 1.4) * smoothstep(0.0, 0.08, flare);
+    float light = curtain(p.x, above) * (0.55 + 0.3 * voice + 1.3 * climb) * lit;
     half3 aurora = mix(mix(half3(0.32, 0.78, 0.8), half3(0.45, 0.5, 0.95), p.x / size.x), half3(0.72, 0.62, 0.98), clamp(above / 140.0, 0.0, 1.0));
     float speck = halftone(p, light * 0.9) * 0.5;
     float haze = light * 0.1;
-    float shade = exp(-pow((d + 3.0) / 12.0, 2.0)) * (0.05 + 0.03 * pulseHere) * lit;
+    float shade = exp(-pow((d + 3.0) / 12.0, 2.0)) * (0.05 + 0.02 * voice) * lit;
     float a = speck + haze;
     return half4(aurora * a, a + shade * (1.0 - a));
   }
 
-  // Refraction is strongest just under the edge, and swells as a beat passes through.
+  // Refraction is strongest just under the edge, and deepens with each gust.
   float slope = (horizon(p.x + 1.5) - horizon(p.x - 1.5)) / 3.0;
   float2 normal = normalize(float2(slope, -1.0));
-  float bend = exp(-pow(d / 52.0, 2.0)) * (20.0 + 14.0 * pulseHere) * lit + 4.0;
+  float bend = exp(-pow(d / 52.0, 2.0)) * (20.0 + 8.0 * voice) * lit + 4.0;
   float2 q = p - normal * bend;
 
   float depth = clamp(d / (size.y * 0.42), 0.0, 1.0);
@@ -120,8 +109,8 @@ half4 main(float2 p) {
 
   // Glass edge from light alone: a soft specular sheen and an inner glow, no drawn stroke.
   float sheen = 0.6 + 0.4 * sin(p.x / size.x * 3.0 - time * 0.35);
-  c += half3(exp(-pow(d / 3.2, 2.0)) * (0.26 + 0.18 * pulseHere) * sheen);
-  c += half3(exp(-pow((d - 12.0) / 20.0, 2.0)) * (0.06 + 0.05 * pulseHere));
+  c += half3(exp(-pow(d / 3.2, 2.0)) * (0.26 + 0.12 * voice) * sheen);
+  c += half3(exp(-pow((d - 12.0) / 20.0, 2.0)) * (0.06 + 0.04 * voice));
 
   float alpha = smoothstep(0.0, 3.0, d);
   return half4(c * alpha, alpha);
@@ -148,7 +137,8 @@ export function LiquidVeil({ backdrop, state, words = 0, reducedMotion, onUnavai
   const restY = height - Math.max(insets.bottom, 12) - 78;
   const [layers, setLayers] = useState<{ soft: SkImage; heavy: SkImage } | null>(null);
   const level = useSharedValue(0), spread = useSharedValue(0), time = useSharedValue(0), breath = useSharedValue(0);
-  const beat = useSharedValue(10), beatPrev = useSharedValue(10), voice = useSharedValue(0);
+  const voice = useSharedValue(0), phase = useSharedValue(0), flare = useSharedValue(10);
+  const lastGust = useRef(0);
 
   // Capture once per hold. The veil shows a frozen frame, so nothing re-renders underneath it.
   useEffect(() => {
@@ -182,18 +172,21 @@ export function LiquidVeil({ backdrop, state, words = 0, reducedMotion, onUnavai
     }
   }, [state, layers, reducedMotion]);
 
-  // Each heard word: a double beat travels outward and the halftone band swells.
+  // Each heard word is a gust: the wave swells and glides a little further, light climbs the curtains.
   useEffect(() => {
     if (state !== "listening" || !words) { voice.set(withTiming(0, { duration: 300 })); return; }
     if (reducedMotion) { voice.set(0.3); return; }
-    const previous = beat.get();
-    beatPrev.set(previous); beatPrev.set(withTiming(previous + 3, { duration: 3000, easing: Easing.linear }));
-    beat.set(0); beat.set(withTiming(3, { duration: 3000, easing: Easing.linear }));
-    voice.set(withSequence(withTiming(1, { duration: 140, easing: EASE_OUT }), withTiming(0.28, { duration: 900, easing: EASE_IN_OUT })));
+    voice.set(withSequence(withTiming(1, { duration: 220, easing: EASE_OUT }), withTiming(0.2, { duration: 800, easing: EASE_IN_OUT })));
+    // Speech lands several words a second; let each gust's light finish climbing before the next.
+    const now = Date.now();
+    if (now - lastGust.current < 450) return;
+    lastGust.current = now;
+    phase.set(withTiming(phase.get() + 0.7, { duration: 900, easing: EASE_OUT }));
+    flare.set(0); flare.set(withTiming(2.2, { duration: 2200, easing: Easing.linear }));
   }, [words, state, reducedMotion]);
   useEffect(() => { if (state === "idle") { const t = setTimeout(() => setLayers(null), 480); return () => clearTimeout(t); } }, [state]);
 
-  const uniforms = useDerivedValue(() => ({ size: [width, height], base: restY, level: level.value, spread: spread.value, time: time.value, breath: breath.value, beat: beat.value, beatPrev: beatPrev.value, voice: voice.value }));
+  const uniforms = useDerivedValue(() => ({ size: [width, height], base: restY, level: level.value, spread: spread.value, time: time.value, breath: breath.value, voice: voice.value, phase: phase.value, flare: flare.value }));
   if (!layers) return null;
   return <Canvas pointerEvents="none" style={StyleSheet.absoluteFill}>
     <Fill>
