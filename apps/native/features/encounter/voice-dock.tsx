@@ -1,7 +1,7 @@
 import { Text } from "@/components/sona/text";
 import { palette } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
-import { useAccessibleEffects } from "@/components/sona/ui";
+import { RoundAction, useAccessibleEffects } from "@/components/sona/ui";
 import { riseIn } from "@/components/sona/motion";
 import { LiquidVeil } from "@/components/sona/liquid-veil";
 import { GlassOrb } from "@/components/sona/glass-orb";
@@ -77,17 +77,6 @@ function ToolButton({ icon, label, onPress }: { icon: BrandIconName; label: stri
   return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={4}
     style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 120 } as never)}>
     <BrandIcon name={icon} size={21} color="#5B6472" />
-  </Pressable>;
-}
-
-/** Glass bubble while empty; fills ink with a dotted glint once there is something to send. */
-function SendButton({ ready, onPress, glint }: { ready: boolean; onPress: () => void; glint: boolean }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel="Send message" accessibilityState={{ disabled: !ready }} disabled={!ready} onPress={onPress} hitSlop={6}
-    style={({ pressed }) => ({ width: 36, height: 36, borderRadius: 18, overflow: "hidden", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: ready ? palette.ink : "rgba(255,255,255,0.9)", backgroundColor: ready ? palette.ink : "rgba(255,255,255,0.55)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor", "borderColor"], transitionDuration: 160 } as never)}>
-    {glint && <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: ready ? 1 : 0, transitionProperty: "opacity", transitionDuration: 200 } as never]}>
-      <HalftoneGlint width={36} height={36} origin={[7, 5]} reach={[26, 22]} pitch={3} strength={0.8} tint={[0.62, 0.78, 1]} hueShift={0.6} />
-    </Animated.View>}
-    <BrandIcon name="send" size={17} color={ready ? palette.white : "#8A929E"} strokeWidth={2} />
   </Pressable>;
 }
 
@@ -289,7 +278,7 @@ export function VoiceDock(props: Props) {
             <ToolButton icon="wave" label="Start the consultation recorder" onPress={props.onConsultation} />
             <ToolButton icon="note" label="Open the consultation note" onPress={props.onNote} />
             <View style={{ flex: 1 }} />
-            <SendButton ready={Boolean(draft.trim())} onPress={send} glint={!reducedTransparency} />
+            <RoundAction icon="send" label="Send message" ready={Boolean(draft.trim())} onPress={send} />
           </View>
         </Animated.View>}
       </View>

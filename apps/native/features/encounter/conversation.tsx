@@ -1,6 +1,6 @@
 import { Text } from "@/components/sona/text";
 import { palette } from "@/components/sona/theme";
-import { Icon, useAccessibleEffects } from "@/components/sona/ui";
+import { Icon, pillStyle, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState, type ReactNode } from "react";
@@ -85,7 +85,7 @@ export function StreamedLead({ text, animate }: { text: string; animate: boolean
 
 export function SuggestionList({ items, onPick, stagger = true }: { items: Suggestion[]; onPick: (item: Suggestion) => void; stagger?: boolean }) {
   const { reducedMotion } = useAccessibleEffects();
-  return <View style={{ borderRadius: 24, borderCurve: "continuous", backgroundColor: "rgba(255,255,255,0.86)", overflow: "hidden", boxShadow: "0 6px 22px rgba(24,32,48,0.06)" }}>
+  return <View style={{ ...surfaceStyle, overflow: "hidden" }}>
     {items.map((item, i) => <Animated.View key={item.text} entering={reducedMotion || !stagger ? undefined : riseIn({ delay: 60 + i * 45, distance: 10 })}>
       {i > 0 && <View style={{ height: 1, marginLeft: 18, backgroundColor: "rgba(20,28,40,0.07)" }} />}
       <Pressable accessibilityRole="button" accessibilityLabel={item.text} onPress={() => onPick(item)}
@@ -100,14 +100,14 @@ export function SuggestionList({ items, onPick, stagger = true }: { items: Sugge
 
 export function Pill({ label, emoji: glyph, onPress }: { label: string; emoji?: string; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress}
-    style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 15, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 7, backgroundColor: "rgba(255,255,255,0.9)", boxShadow: "0 2px 10px rgba(24,32,48,0.07)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+    style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 15, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 7, ...pillStyle, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
     {glyph && <Text style={{ fontSize: 15 }}>{glyph}</Text>}<Text style={{ fontSize: 14, fontWeight: "500", color: palette.ink }}>{label}</Text>
   </Pressable>;
 }
 
 function Round({ children, label, onPress }: { children: ReactNode; label: string; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={4}
-    style={({ pressed }) => ({ height: 44, minWidth: 44, borderRadius: 22, paddingHorizontal: 4, alignItems: "center", justifyContent: "center", flexDirection: "row", backgroundColor: "rgba(255,255,255,0.9)", boxShadow: "0 3px 12px rgba(24,32,48,0.08)", transform: [{ scale: pressed ? 0.95 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>{children}</Pressable>;
+    style={({ pressed }) => ({ height: 44, minWidth: 44, borderRadius: 22, paddingHorizontal: 4, alignItems: "center", justifyContent: "center", flexDirection: "row", ...pillStyle, transform: [{ scale: pressed ? 0.95 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>{children}</Pressable>;
 }
 
 /** Floating header: menu on the left, the patient in context on the right. Content scrolls beneath a soft fade. */
@@ -170,7 +170,7 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
       {patient ? <SuggestionList items={(["briefing", "xray", "medication"] as const).map(kind => suggestionFor(kind, patient))} onPick={onPick} />
         : <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20, marginVertical: -14 }} contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 14, gap: 10 }}>
           {patients.map(item => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`${item.name}, ${item.time}, ${item.subtitle}`} onPress={() => onSelectPatient(item.id)}
-            style={({ pressed }) => ({ width: 188, padding: 16, gap: 14, borderRadius: 22, borderCurve: "continuous", backgroundColor: "rgba(255,255,255,0.9)", boxShadow: "0 6px 22px rgba(24,32,48,0.06)", transform: [{ scale: pressed ? 0.97 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+            style={({ pressed }) => ({ width: 188, padding: 16, gap: 14, ...surfaceStyle, borderRadius: 22, transform: [{ scale: pressed ? 0.97 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
               <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: "#DCE7FB", alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 13, fontWeight: "600", color: palette.blue }}>{item.initials}</Text></View>
               <Text style={{ fontSize: 13, color: palette.muted, fontVariant: ["tabular-nums"] }}>{item.time}</Text>

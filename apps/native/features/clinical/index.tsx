@@ -109,7 +109,7 @@ export function ReasoningCard({ patient, result, onSource, onOpen, onRequest }: 
       </EvidenceCard>
     </>}
     <HistoryEditor patient={patient} result={result} onSource={onSource} onRequest={onRequest} refresh="reasoning" />
-    <Card label="Next step" title="Bring the assessment into the note">
+    <Card feature label="Next step" title="Bring the assessment into the note">
       <Body muted>{patient.incomplete ? "Capture the missing history before adding an assessment." : "Record examination findings and your assessment alongside the captured history. Keep patient facts distinct from these exploratory possibilities."}</Body>
       <Action label="Open consultation note" icon="square.and.pencil" secondary onPress={() => onOpen("note")} />
     </Card>

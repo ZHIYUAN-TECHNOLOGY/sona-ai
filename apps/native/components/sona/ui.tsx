@@ -6,7 +6,10 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState, type ReactNode } from "react";
 import { AccessibilityInfo, Pressable, ScrollView, View, type StyleProp, type ViewStyle } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInDown, FadeOut, type AnimatedStyle, type LayoutAnimationFunction } from "react-native-reanimated";
+import { BrandIcon, type BrandIconName } from "./brand-icon";
+import { HalftoneGlint } from "./halftone-shimmer";
+import { fold, LAYOUT, unfold } from "./motion";
 import { palette } from "./theme";
 
 export function useAccessibleEffects() {
@@ -32,19 +35,71 @@ export function Icon({ name, size = 21, color = palette.ink }: { name: string; s
 export function Label({ children, muted = false }: { children: ReactNode; muted?: boolean }) { return <Text selectable style={{ color: muted ? palette.muted : palette.blue, fontSize: 11, fontWeight: "700", letterSpacing: 1.6, textTransform: "uppercase" }}>{children}</Text>; }
 export function Body({ children, muted = false }: { children: ReactNode; muted?: boolean }) { return <Text selectable style={{ color: muted ? palette.muted : palette.ink, fontSize: 16, lineHeight: 24 }}>{children}</Text>; }
 export function Title({ children }: { children: ReactNode }) { return <Text selectable style={{ color: palette.ink, fontSize: 23, lineHeight: 29, fontWeight: "600", letterSpacing: -0.6 }}>{children}</Text>; }
+/**
+ * Primary: ink capsule with a dotted glint (the brand's dithering, kept to the action that matters).
+ * Secondary: a quiet glass capsule. Both press to 0.96.
+ */
 export function Action({ label, icon, onPress, secondary = false, disabled = false, accessibilityLabel }: { label: string; icon?: string; onPress: () => void; secondary?: boolean; disabled?: boolean; accessibilityLabel?: string }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={({ pressed }) => ({ minHeight: 46, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 24, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8, backgroundColor: secondary ? "#E9EDF4" : palette.dark, opacity: disabled ? 0.5 : pressed ? 0.8 : 1 })}>
+  return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress}
+    style={({ pressed }) => ({ minHeight: 46, paddingHorizontal: 18, paddingVertical: 12, borderRadius: 23, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8, borderWidth: 1, borderColor: secondary ? glass.rim : palette.dark, backgroundColor: secondary ? "rgba(233,238,246,0.85)" : palette.dark, boxShadow: secondary ? `inset 0 1px 0 ${palette.white}` : "0 6px 16px rgba(24,32,48,0.16)", opacity: disabled ? 0.45 : 1, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "opacity"], transitionDuration: 120 } as never)}>
+    {!secondary && !disabled && <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: 22, overflow: "hidden" }}><HalftoneGlint width={72} height={46} origin={[10, 2]} reach={[64, 40]} pitch={3} strength={0.7} tint={[0.62, 0.78, 1]} hueShift={0.6} style={{ top: 0, left: 0 }} /></View>}
     {icon && <Icon name={icon} size={17} color={secondary ? palette.ink : palette.white} />}<Text style={{ color: secondary ? palette.ink : palette.white, fontSize: 14, fontWeight: "600", flexShrink: 1 }}>{label}</Text>
   </Pressable>;
 }
 export function IconButton({ name, label, onPress, dark = false }: { name: string; label: string; onPress: () => void; dark?: boolean }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => ({ minWidth: 46, minHeight: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", backgroundColor: dark ? palette.dark : "transparent", opacity: pressed ? 0.65 : 1 })}><Icon name={name} color={dark ? palette.white : palette.ink} /></Pressable>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => ({ minWidth: 46, minHeight: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", backgroundColor: dark ? palette.dark : "transparent", transform: [{ scale: pressed ? 0.94 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}><Icon name={name} color={dark ? palette.white : palette.ink} /></Pressable>;
 }
-export function Card({ children, label, title, footer }: { children: ReactNode; label?: string; title?: string; footer?: ReactNode }) {
-  return <View style={{ backgroundColor: palette.surface, borderRadius: 24, borderCurve: "continuous", padding: 20, gap: 14, boxShadow: "0 6px 24px rgba(24,32,48,0.06)" }}>{label && <Label>{label}</Label>}{title && <Title>{title}</Title>}{children}{footer && <View style={{ paddingTop: 12, borderTopWidth: 1, borderColor: palette.line }}>{footer}</View>}</View>;
+
+/**
+ * Surfaces. Content sits on frosted cards (milky white, bright rim, inner highlight, soft
+ * layered shadow; no live blur so long lists stay cheap). Real glass is reserved for chrome
+ * floating over content (top bar, dock, composer). A `feature` surface is the one card on a
+ * screen that asks for action or carries Sona's proposal: a touch brighter, blue-tinted lift,
+ * and a halftone glint in its top-right corner.
+ */
+export const glass = { fill: "rgba(255,255,255,0.78)", rim: "rgba(255,255,255,0.95)", hairline: "rgba(20,28,40,0.07)" };
+export const surfaceStyle: ViewStyle = { borderRadius: 24, borderCurve: "continuous", borderWidth: 1, borderColor: glass.rim, backgroundColor: glass.fill, boxShadow: "0 1px 2px rgba(24,32,48,0.04), 0 8px 24px rgba(24,32,48,0.06), inset 0 1px 0 #FFFFFF" };
+/** Small floating controls (pills, round buttons) on the same material. */
+export const pillStyle: ViewStyle = { borderWidth: 1, borderColor: glass.rim, backgroundColor: "rgba(255,255,255,0.86)", boxShadow: "0 3px 12px rgba(24,32,48,0.08), inset 0 1px 0 #FFFFFF" };
+const featureSurface: ViewStyle = { backgroundColor: "rgba(255,255,255,0.88)", boxShadow: "0 1px 2px rgba(24,32,48,0.04), 0 14px 34px rgba(36,91,204,0.11), inset 0 1px 0 #FFFFFF" };
+export function Surface({ children, feature = false, style, layout }: { children?: ReactNode; feature?: boolean; style?: StyleProp<AnimatedStyle<ViewStyle>>; layout?: typeof LAYOUT | LayoutAnimationFunction }) {
+  return <Animated.View layout={layout} style={[surfaceStyle, feature && featureSurface, style]}>
+    {feature && <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: 23, overflow: "hidden" }}><HalftoneGlint width={170} height={90} origin={[170, 0]} reach={[160, 84]} strength={0.5} style={{ top: 0, right: 0 }} /></View>}
+    {children}
+  </Animated.View>;
+}
+
+/** Opens in place under its trigger: the clip grows on the same spring as `layout={LAYOUT}` siblings, so the card and everything below move as one. */
+export function Expand({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const reduced = useReduceMotionPreference();
+  return <Animated.View entering={reduced ? FadeIn.duration(150) : unfold} exiting={reduced ? FadeOut.duration(120) : fold} layout={reduced ? undefined : LAYOUT} style={[{ overflow: "hidden" }, style]}>{children}</Animated.View>;
+}
+
+/** Round commit button (send, add): a glass bubble until it can act, then ink with a dotted glint. */
+export function RoundAction({ icon, label, ready, onPress, size = 36, hint }: { icon: BrandIconName; label: string; ready: boolean; onPress: () => void; size?: number; hint?: string }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityHint={hint} accessibilityState={{ disabled: !ready }} disabled={!ready} onPress={onPress} hitSlop={6}
+    style={({ pressed }) => ({ width: size, height: size, borderRadius: size / 2, overflow: "hidden", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: ready ? palette.ink : glass.hairline, backgroundColor: ready ? palette.ink : "rgba(20,28,40,0.035)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor", "borderColor"], transitionDuration: 160 } as never)}>
+    <Animated.View pointerEvents="none" style={{ position: "absolute", inset: 0, opacity: ready ? 1 : 0, transitionProperty: "opacity", transitionDuration: 200 } as never}>
+      <HalftoneGlint width={size} height={size} origin={[size * 0.2, size * 0.14]} reach={[size * 0.72, size * 0.6]} pitch={3} strength={0.8} tint={[0.62, 0.78, 1]} hueShift={0.6} />
+    </Animated.View>
+    <BrandIcon name={icon} size={size * 0.47} color={ready ? palette.white : "#8A929E"} strokeWidth={2} />
+  </Pressable>;
+}
+
+/** Pill control. `filled` shows a chosen value (blue wash), `selected` a picked option (ink), `expanded` the pill whose options are open. */
+export function Chip({ label, icon, filled = false, selected = false, expanded, onPress, accessibilityLabel }: { label: string; icon?: ReactNode; filled?: boolean; selected?: boolean; expanded?: boolean; onPress: () => void; accessibilityLabel?: string }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} accessibilityState={{ selected, expanded }} onPress={onPress}
+    style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: icon ? 13 : 15, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 7, borderWidth: 1, borderColor: expanded ? palette.blue : selected ? palette.ink : filled ? "rgba(36,91,204,0.14)" : glass.hairline, backgroundColor: selected ? palette.ink : filled ? "#E6EEFC" : "rgba(244,246,250,0.9)", boxShadow: selected || filled ? undefined : `inset 0 1px 0 ${palette.white}`, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor", "borderColor"], transitionDuration: 150 } as never)}>
+    {icon}
+    <Animated.Text key={label} entering={FadeIn.duration(160)} style={{ fontSize: 15, fontWeight: "500", color: selected ? palette.white : filled ? palette.blue : palette.ink }}>{label}</Animated.Text>
+  </Pressable>;
+}
+
+export function Card({ children, label, title, footer, feature = false }: { children: ReactNode; label?: string; title?: string; footer?: ReactNode; feature?: boolean }) {
+  return <Surface feature={feature} style={{ padding: 20, gap: 14 }}>{label && <Label>{label}</Label>}{title && <Title>{title}</Title>}{children}{footer && <View style={{ paddingTop: 12, borderTopWidth: 1, borderColor: glass.hairline }}>{footer}</View>}</Surface>;
 }
 export function SourceLink({ label = "View source", onPress }: { label?: string; onPress: () => void }) { return <Pressable accessibilityRole="button" onPress={onPress} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 7 }}><Icon name="doc.text" color={palette.blue} size={15} /><Text style={{ fontSize: 13, color: palette.blue, fontWeight: "500", flexShrink: 1 }}>{label}</Text><Icon name="arrow.up.right" color={palette.blue} size={11} /></Pressable>; }
-export function Notice({ children, warning = false }: { children: ReactNode; warning?: boolean }) { return <View style={{ backgroundColor: warning ? "#F4EBDD" : "#E8EFF9", borderRadius: 16, padding: 14, flexDirection: "row", alignItems: "flex-start", gap: 9 }}><Icon name={warning ? "exclamationmark.circle" : "info.circle"} color={warning ? palette.amber : palette.blue} size={17} /><Text selectable style={{ color: warning ? palette.amber : palette.muted, fontSize: 13, lineHeight: 20, flex: 1 }}>{children}</Text></View>; }
-export function Screen({ children }: { children: ReactNode }) { return <ScrollView style={{ flex: 1, backgroundColor: palette.canvas }} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingBottom: 44, gap: 18 }}>{children}</ScrollView>; }
+export function Notice({ children, warning = false }: { children: ReactNode; warning?: boolean }) { return <View style={{ backgroundColor: warning ? "rgba(244,235,221,0.85)" : "rgba(226,235,250,0.75)", borderWidth: 1, borderColor: "rgba(255,255,255,0.8)", borderRadius: 18, borderCurve: "continuous", padding: 14, flexDirection: "row", alignItems: "flex-start", gap: 9 }}><Icon name={warning ? "exclamationmark.circle" : "info.circle"} color={warning ? palette.amber : palette.blue} size={17} /><Text selectable style={{ color: warning ? palette.amber : palette.muted, fontSize: 13, lineHeight: 20, flex: 1 }}>{children}</Text></View>; }
+export function Screen({ children }: { children: ReactNode }) { return <ScrollView style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: "linear-gradient(to bottom, #F5F6F8 0%, #EFF2F7 45%, #E3EBF7 100%)" }} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingBottom: 44, gap: 18 }}>{children}</ScrollView>; }
 export function Reveal({ children }: { children: ReactNode }) { const reduced = useReduceMotionPreference(); return <Animated.View entering={reduced ? undefined : FadeInDown.duration(220)} style={{ gap: 14 }}>{children}</Animated.View>; }
 export function CanvasBackground() { return <LinearGradient pointerEvents="none" colors={[palette.canvas, palette.canvas, "#DDE5EF", "#CDDEF5"]} locations={[0, 0.35, 0.72, 1]} style={{ position: "absolute", inset: 0 }} />; }

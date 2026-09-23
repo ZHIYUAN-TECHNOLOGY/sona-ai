@@ -5,7 +5,7 @@ import { Pressable, View, useWindowDimensions } from "react-native";
 import Animated, { interpolate, interpolateColor, type SharedValue, useAnimatedReaction, useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { palette } from "./theme";
-import { Icon } from "./ui";
+import { Icon, surfaceStyle } from "./ui";
 
 export type TimelineItem = { id: string; label: string; icon: string; glyph: string; title: string; meta: string; body: string };
 
@@ -31,7 +31,7 @@ function Card({ item, index, progress, width }: { item: TimelineItem; index: num
     const d = Math.min(1, Math.abs(progress.value - index));
     return { opacity: 1 - d * 0.45, transform: [{ scale: 1 - d * 0.06 }] };
   });
-  return <Animated.View accessible accessibilityLabel={`${item.label}. ${item.title}. ${item.meta}. ${item.body}`} style={[{ width, minHeight: 208, padding: 18, gap: 10, borderRadius: 24, borderCurve: "continuous", backgroundColor: palette.white, boxShadow: "0 8px 26px rgba(24,32,48,0.08)" }, style]}>
+  return <Animated.View accessible accessibilityLabel={`${item.label}. ${item.title}. ${item.meta}. ${item.body}`} style={[{ width, minHeight: 208, padding: 18, gap: 10, ...surfaceStyle }, style]}>
     <Text style={{ fontSize: 40 }}>{item.glyph}</Text>
     <View style={{ flex: 1 }} />
     <View style={{ gap: 2 }}>

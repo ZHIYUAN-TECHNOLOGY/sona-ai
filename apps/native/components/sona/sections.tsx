@@ -2,7 +2,7 @@ import { Text } from "@/components/sona/text";
 import type { ReactNode } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { palette } from "./theme";
-import { Icon } from "./ui";
+import { Icon, surfaceStyle } from "./ui";
 
 /** A generated answer section: bold heading, one-line framing, then its visual block. */
 export function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
@@ -22,7 +22,7 @@ export function Shelf({ children }: { children: ReactNode }) {
 
 export function GlanceTile({ value, label, caption, glyph }: { value: string; label: string; caption: string; glyph?: string }) {
   return <View accessible accessibilityLabel={`${label}, ${value}. ${caption}`} style={{ width: 112, gap: 8 }}>
-    <View style={{ height: 96, borderRadius: 20, borderCurve: "continuous", backgroundColor: palette.white, boxShadow: "0 4px 16px rgba(24,32,48,0.06)", alignItems: "center", justifyContent: "center", gap: 2 }}>
+    <View style={{ height: 96, ...surfaceStyle, borderRadius: 20, alignItems: "center", justifyContent: "center", gap: 2 }}>
       {glyph && <Text style={{ fontSize: 18 }}>{glyph}</Text>}
       <Text selectable numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: 21, fontWeight: "600", letterSpacing: -0.4, color: palette.ink, fontVariant: ["tabular-nums"], paddingHorizontal: 8 }}>{value}</Text>
     </View>
