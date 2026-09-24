@@ -1,6 +1,7 @@
 import { defineCatalog, type Spec } from "@json-render/core";
 import { schema } from "@json-render/react-native/schema";
 import { z } from "zod";
+import { medicineIds } from "@/features/clinical/medicine-catalog";
 import type { Capability, FeatureProps } from "@/features/encounter/types";
 
 const reference = z.string().min(1).max(256);
@@ -23,6 +24,7 @@ export const clinicalCatalog = defineCatalog(schema, {
     ClinicalNote: { props: resultReference, description: "Existing draft consultation note." },
     ContextNotice: { props: z.object({ noticeId: z.enum(["missing-context", "snapshot-provenance"]) }).strict(), description: "App-owned context or provenance notice." },
     SourceAction: { props: z.object({ sourceId: reference }).strict(), description: "Open a source that belongs to this response's patient snapshot." },
+    MedicineThumb: { props: z.object({ medicineId: z.enum(medicineIds), confirmed: z.boolean() }).strict(), description: "Illustrative dosage-form thumbnail. Name a catalogue medicine; the app draws it (never supply an image)." },
   },
 });
 

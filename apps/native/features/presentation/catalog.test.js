@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { patients } from "@/features/encounter/fixtures";
-import { clinicalComponentNames, composeClinicalSpec, validateClinicalSpec } from "./catalog";
+import { clinicalCatalog, clinicalComponentNames, composeClinicalSpec, validateClinicalSpec } from "./catalog";
 
 const feature = patient => ({ patient, onSource() {}, onOpen() {}, onRequest() {} });
 
@@ -47,4 +47,10 @@ test("wrong patient result and missing required context are rejected", () => {
   const noticeId = spec.elements[spec.root].children.shift();
   delete spec.elements[noticeId];
   expect(validateClinicalSpec(spec, incomplete, "briefing")).toBeNull();
+});
+
+test("medicine thumbnails accept catalogue IDs only", () => {
+  const thumb = clinicalCatalog.data.components.MedicineThumb.props;
+  expect(thumb.safeParse({ medicineId: "salbutamol-inhaler", confirmed: true }).success).toBe(true);
+  expect(thumb.safeParse({ medicineId: "https://example.com/pill.png", confirmed: true }).success).toBe(false);
 });

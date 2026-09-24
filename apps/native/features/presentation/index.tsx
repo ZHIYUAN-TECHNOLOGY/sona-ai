@@ -1,4 +1,6 @@
 import { JSONUIProvider, Renderer, defineRegistry } from "@json-render/react-native";
+import { medicineById } from "@/features/clinical/medicine-catalog";
+import { MedicineThumb } from "@/features/clinical/medicine-thumb";
 import { Component, createContext, use, type ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { Text } from "@/components/sona/text";
@@ -63,6 +65,7 @@ const { registry } = defineRegistry(clinicalCatalog, {
     ClinicalNote: ({ props }) => <ClinicalLeaf kind="note" resultId={props.resultId} />,
     ContextNotice: ({ props }) => <ContextNotice noticeId={props.noticeId} />,
     SourceAction: ({ props }) => <ValidatedSource sourceId={props.sourceId} />,
+    MedicineThumb: ({ props }) => { const look = medicineById(props.medicineId); return look ? <MedicineThumb look={look} confirmed={props.confirmed} /> : null; },
   },
 });
 

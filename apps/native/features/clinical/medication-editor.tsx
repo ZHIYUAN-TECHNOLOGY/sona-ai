@@ -3,12 +3,14 @@ import Animated from "react-native-reanimated";
 import { Section } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette } from "@/components/sona/theme";
-import { Action, Icon, Surface } from "@/components/sona/ui";
+import { Action, Surface } from "@/components/sona/ui";
 import { defaultMedications } from "@/features/encounter/clinical-state";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps, MedicationEntry } from "@/features/encounter/types";
 import { ClinicalField } from "./controls";
-import { Footnote, FormReveal, Hairline, Mark, Press, useLayoutSpring } from "./medication-parts";
+import { Footnote, FormReveal, Hairline, Press, useLayoutSpring } from "./medication-parts";
+import { resolveMedicine } from "./medicine-catalog";
+import { MedicineThumb } from "./medicine-thumb";
 
 /**
  * Reconciliation checklist: one row per reported medicine with its confirmation state. Tapping a
@@ -35,10 +37,10 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
         const identity = `${entry.ingredient || "Ingredient unknown"} · ${entry.formulation || "Formulation unknown"}`;
         const state = editing ? "Editing this medicine" : entry.confirmed ? "Confirmed in simulation" : "Needs confirmation";
         return <Animated.View key={entry.id} layout={layout}>
-          {index > 0 && <Hairline inset={54} />}
+          {index > 0 && <Hairline inset={74} />}
           <Press disabled={Boolean(draft)} onPress={() => updateEncounter(value => ({ ...value, medicationDraft: { ...entry } }))}
             accessibilityLabel={`${entry.name}. ${identity}. ${state}`} accessibilityHint={draft ? undefined : entry.confirmed ? "Correct this medicine" : "Confirm ingredient and formulation"} style={[row, draft && !editing && { opacity: 0.5 }]}>
-            <Mark state={entry.confirmed ? "done" : "open"} />
+            <MedicineThumb look={resolveMedicine(entry.ingredient, entry.formulation)} confirmed={entry.confirmed} />
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: palette.ink }}>{entry.name}</Text>
               <Text style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{identity}</Text>
@@ -62,7 +64,7 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
         <Hairline />
         <Press disabled={editProposed} onPress={() => updateEncounter(value => ({ ...value, proposedMedicineDraft: value.proposedMedicine ?? "Paracetamol" }))}
           accessibilityLabel={`Proposed medicine, ${encounter?.proposedMedicine ?? "Paracetamol"}`} accessibilityHint={editProposed ? undefined : "Change proposed medicine"} style={row}>
-          <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: palette.blueWash }}><Icon name="pills" size={13} color={palette.blue} /></View>
+          <MedicineThumb look={resolveMedicine(encounter?.proposedMedicine ?? "Paracetamol", "tablet")} confirmed badge={false} />
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={{ fontSize: 12, lineHeight: 17, fontWeight: "600", color: palette.muted }}>Proposed medicine</Text>
             <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: palette.ink }}>{encounter?.proposedMedicine ?? "Paracetamol"}</Text>
@@ -77,7 +79,7 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
       </Animated.View>
     </Surface>
     <Animated.View layout={layout}>
-      <Footnote>A correction invalidates earlier checks. Only the authored paracetamol scenario has simulated coverage.</Footnote>
+      <Footnote>A correction invalidates earlier checks. Only the authored paracetamol scenario has simulated coverage. Thumbnails show the dosage form, not a specific brand.</Footnote>
     </Animated.View>
   </Section>;
 }

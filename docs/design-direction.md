@@ -126,6 +126,12 @@ Takeaway text is authored for the fixtures; generated responses should emit take
 - History now has its own landmark (person-and-record icon, teal): the last update and every version collect into its pill even while the editor is collapsed. The medication "See an example" alert gathers its DailyMed citation into its own pill above the alert's top right.
 - Consecutive answer landmarks (`Anchor`) are parted by a hairline and 20 pt of extra air, so each section starts a new band. "No consultation sample" on the recording page now has its icon (amber, waveform slashed); the X-ray empty-state section still lacks one.
 
+## Medicine thumbnails (2026-09-24)
+
+- Each medicine row shows an illustrative dosage-form thumbnail (inhaler, tablet, caplet, capsule, liquid) drawn in-app from a trusted catalogue (`features/clinical/medicine-catalog.ts`). The model only names a catalogue medicine (`MedicineThumb` in the json-render catalogue accepts catalogue IDs only); it never supplies or chooses an image. Unknown products fall back to the reported form, never to another medicine.
+- Unconfirmed medicines show a dashed outline of the reported form. Confirming morphs it into the drawn medicine with a check badge (after Fold's placeholder-to-logo morph: outline rotates and fades, drawing springs in at 380 ms, damping 0.72). Reduce Motion crossfades only.
+- Thumbnails show the dosage form, not a brand's pack or imprint, and the medication footnote says so.
+
 ## Typography and AI text (2026-09-24)
 
 - **Type scale** (`type` in `components/sona/theme.ts`, iOS-sized, named by use): display 27/35, title 22/31, heading 19/25, headline 17/23, body 16/24, callout 15/21, subhead 14/20, footnote 13/18, caption 12/16, overline 11/14 uppercase +0.8 tracking. Headings track slightly negative; body text sits near 1.5; nothing thinner than 400 below 18 pt except display numerals (timers, clocks). One-off sizes were folded onto the scale. The shared `Text` uses iOS "push-out" line breaking so a lone word doesn't strand on the last line.
