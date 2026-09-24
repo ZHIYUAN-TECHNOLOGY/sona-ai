@@ -10,7 +10,7 @@ type Store = {
   selectPatient: (id: string) => void; leaveVisit: () => void; request: (kind: Capability, prompt?: string) => void; cancel: () => void;
   updateEncounter: (update: (current: Encounter) => Encounter, revise?: boolean) => void;
   voiceInput: boolean; setVoiceInput: (value: boolean) => void; compactResponses: boolean; setCompactResponses: (value: boolean) => void; simulateInvalid: boolean; setSimulateInvalid: (value: boolean) => void;
-  simulateFailure: boolean; setSimulateFailure: (enabled: boolean) => void; reset: () => void;
+  simulateFailure: boolean; setSimulateFailure: (enabled: boolean) => void; showDemoControls: boolean; setShowDemoControls: (value: boolean) => void; reset: () => void;
 };
 const Context = createContext<Store | null>(null);
 export function EncounterProvider({ children }: { children: ReactNode }) {
@@ -20,6 +20,8 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
   const [simulateInvalid, setSimulateInvalid] = useState(false);
   const [voiceInput, setVoiceInput] = useState(true);
   const [compactResponses, setCompactResponses] = useState(false);
+  // Prototype/fixture controls stay out of clinical answers unless a presenter turns them on.
+  const [showDemoControls, setShowDemoControls] = useState(false);
   const stateRef = useRef(encounters); stateRef.current = encounters;
   const activeRef = useRef(patientId); activeRef.current = patientId;
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -91,6 +93,6 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
   const reset = useCallback(() => { cancel(); setEncounters(initialEncounters()); setPatientId(undefined); activeRef.current = undefined; setSimulateFailure(false); setSimulateInvalid(false); }, [cancel]);
   const currentPatients = patients.map(p => effectivePatient(p, encounters[p.id]));
   const patient = currentPatients.find(p => p.id === patientId);
-  return <Context value={{ patient, patients: currentPatients, encounters, encounter: patientId ? encounters[patientId] : undefined, selectPatient, leaveVisit, request, cancel, startAmendment, updateEncounter, voiceInput, setVoiceInput, compactResponses, setCompactResponses, simulateInvalid, setSimulateInvalid, simulateFailure, setSimulateFailure, reset }}>{children}</Context>;
+  return <Context value={{ patient, patients: currentPatients, encounters, encounter: patientId ? encounters[patientId] : undefined, selectPatient, leaveVisit, request, cancel, startAmendment, updateEncounter, voiceInput, setVoiceInput, compactResponses, setCompactResponses, simulateInvalid, setSimulateInvalid, simulateFailure, setSimulateFailure, showDemoControls, setShowDemoControls, reset }}>{children}</Context>;
 }
 export function useEncounter() { const value = use(Context); if (!value) throw new Error("EncounterProvider is required"); return value; }

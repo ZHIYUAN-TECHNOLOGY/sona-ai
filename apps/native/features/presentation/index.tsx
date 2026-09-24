@@ -1,7 +1,9 @@
 import { JSONUIProvider, Renderer, defineRegistry } from "@json-render/react-native";
 import { Component, createContext, use, type ReactNode } from "react";
-import { View } from "react-native";
-import { Notice, SourceLink } from "@/components/sona/ui";
+import { Pressable, View } from "react-native";
+import { Text } from "@/components/sona/text";
+import { palette } from "@/components/sona/theme";
+import { Notice } from "@/components/sona/ui";
 import { BriefingCard, MedicationCard, PrescriptionCard, ReasoningCard } from "@/features/clinical";
 import type { Capability, FeatureProps } from "@/features/encounter/types";
 import { XrayCard } from "@/features/imaging";
@@ -34,19 +36,19 @@ function ClinicalLeaf({ resultId, kind }: { resultId: string; kind: Capability }
   return <VisibleBoundary key={resultId}><Feature {...authoritative} onSource={onSource} /></VisibleBoundary>;
 }
 
+// Provenance is one quiet line under the answer (minimalist frame); a missing-context warning stays a real notice.
 function ContextNotice({ noticeId }: { noticeId: "missing-context" | "snapshot-provenance" }) {
-  return <Notice warning={noticeId === "missing-context"}>{noticeId === "missing-context"
-    ? "This encounter has missing history or medication information. Unknown details remain explicit in the response."
-    : "This response uses the selected encounter snapshot. Its linked sources distinguish authored fixtures from published references."}</Notice>;
+  if (noticeId === "missing-context") return <Notice warning>This encounter has missing history or medication information. Unknown details remain explicit in the response.</Notice>;
+  return <Text accessibilityLabel="Synthetic encounter snapshot. Linked sources distinguish authored fixtures from published references." style={{ fontSize: 12, color: palette.muted }}>Synthetic snapshot · fixtures and published references are labelled</Text>;
 }
 
 function ValidatedSource({ sourceId }: { sourceId: string }) {
   const context = use(PresentationContext);
   const source = context?.featureProps.patient.sources.find(item => item.id === sourceId);
   if (!source || !context) return <VisibleFallback />;
-  return <SourceLink label={`Response source · ${source.title}`} onPress={() => {
+  return <Pressable accessibilityRole="link" accessibilityLabel={`Response source, ${source.title}`} hitSlop={10} onPress={() => {
     if (context.featureProps.patient.sources.some(item => item.id === sourceId)) context.featureProps.onSource(sourceId);
-  }} />;
+  }}><Text style={{ fontSize: 12, color: palette.blue }}>Source · {source.title} ↗</Text></Pressable>;
 }
 
 const { registry } = defineRegistry(clinicalCatalog, {
