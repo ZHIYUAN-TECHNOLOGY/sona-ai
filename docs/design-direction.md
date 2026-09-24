@@ -132,6 +132,12 @@ Takeaway text is authored for the fixtures; generated responses should emit take
 - Unconfirmed medicines show a dashed outline of the reported form. Confirming morphs it into the drawn medicine with a check badge (after Fold's placeholder-to-logo morph: outline rotates and fades, drawing springs in at 380 ms, damping 0.72). Reduce Motion crossfades only.
 - Thumbnails show the dosage form, not a brand's pack or imprint, and the medication footnote says so.
 
+## Next-step decision bar (2026-09-24)
+
+- Medication and prescribing answers show a floating glass bar above the dock: a progress ring, the one step blocking progress, and its action (Confirm, Run, Record, View). Steps come from the same checks the prescribing panel runs (`features/encounter/next-steps.ts`), so the bar never disagrees with them.
+- Tapping or swiping the bar up sinks it away as a sheet of every step rises (spring 0.45 s, damping 0.82), each with its own action; dismissing springs the bar back with a slight overshoot (0.5 s, damping 0.72). This follows Moonlitt's floating bottom bar. When a step completes, its label slides out left and the next slides in.
+- Actions jump to the relevant section and open it (a medicine's confirm form, the eligibility inputs) instead of acting silently. Reduce Motion replaces movement with fades.
+
 ## Typography and AI text (2026-09-24)
 
 - **Type scale** (`type` in `components/sona/theme.ts`, iOS-sized, named by use): display 27/35, title 22/31, heading 19/25, headline 17/23, body 16/24, callout 15/21, subhead 14/20, footnote 13/18, caption 12/16, overline 11/14 uppercase +0.8 tracking. Headings track slightly negative; body text sits near 1.5; nothing thinner than 400 below 18 pt except display numerals (timers, clocks). One-off sizes were folded onto the scale. The shared `Text` uses iOS "push-out" line breaking so a lone word doesn't strand on the last line.

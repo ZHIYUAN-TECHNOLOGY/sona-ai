@@ -3,6 +3,7 @@ import { View } from "react-native";
 import Animated, { LayoutAnimationConfig } from "react-native-reanimated";
 import { useReduceMotionPreference } from "@/components/sona/accessibility";
 import { riseIn } from "@/components/sona/motion";
+import { Anchor } from "@/components/sona/answer-kit";
 import { Section } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -71,6 +72,9 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
   const encounter = encounters[patient.id];
   const prescription = result ? result.prescription : encounter?.prescription;
   const [showInputs, setShowInputs] = useState(false);
+  // The "Next step" bar asks for the eligibility form by stamping the encounter.
+  const inputsOpen = encounter?.prescriptionInputsOpen;
+  useEffect(() => { if (inputsOpen) setShowInputs(true); }, [inputsOpen]);
   const [audit, setAudit] = useState(false);
   const [amending, setAmending] = useState(false);
   const [showScenarios, setShowScenarios] = useState(false);
@@ -125,7 +129,7 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
 
   return <LayoutAnimationConfig skipEntering>
     <View style={{ gap: 28 }}>
-      <Animated.View layout={layout}>
+      <Anchor id="result" title="Result"><Animated.View layout={layout}>
         <Section icon="cross.case" tone="blue" title={title} subtitle={subtitle}>
           {stale && <Notice warning>Receipt revision {prescription.revision} is retained unchanged. The current encounter is revision {encounter?.revision}.</Notice>}
           {reasons.map((reason, index) => <StatusLine key={`${index}-${reason}`} state="blocked">{reason}</StatusLine>)}
@@ -135,9 +139,9 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
           </View>}
           {!created && <Footnote>{REGIMEN_LINE}</Footnote>}
         </Section>
-      </Animated.View>
+      </Animated.View></Anchor>
 
-      <Animated.View layout={layout}>
+      <Anchor id="checks" title="Checks"><Animated.View layout={layout}>
         <Section icon="checklist" tone="teal" title="Checks before action" subtitle={issuing ? "Checking each prerequisite against the current encounter…" : `${passed} of ${checks.length} met · workflow checks, not clinical confidence`}>
           <Surface feature={!created} layout={layout} style={{ paddingHorizontal: 18, paddingTop: 6, paddingBottom: 18, gap: 12 }}>
             <CheckList checks={checks} checking={issuing} fresh={fresh} />
@@ -162,9 +166,9 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
             {amendment?.phase === "cancelled" && !amendment.error && <Notice>Amendment cancelled. The original receipt is unchanged.</Notice>}
           </Surface>
         </Section>
-      </Animated.View>
+      </Animated.View></Anchor>
 
-      {created && prescription && <Animated.View layout={layout} entering={fresh && !reduced ? riseIn({ delay: riseDelay, distance: 16, duration: 380 }) : undefined}>
+      {created && prescription && <Anchor id="receipt" title="Receipt"><Animated.View layout={layout} entering={fresh && !reduced ? riseIn({ delay: riseDelay, distance: 16, duration: 380 }) : undefined}>
         <Section icon="checkmark.seal" tone="teal" title="Immutable receipt" subtitle="This version never changes; an amendment adds a new one.">
           <Surface feature layout={layout} style={{ padding: 20, gap: 16 }}>
             <View accessible accessibilityLabel={`Simulated prescription created. ${regimen.medication}, simulation only. Synthetic patient.`} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -194,7 +198,7 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
             </FormReveal>}
           </Surface>
         </Section>
-      </Animated.View>}
+      </Animated.View></Anchor>}
 
       <Animated.View layout={layout} style={{ gap: 4 }}>
         <DisclosureButton label="Evidence & audit" open={audit} onToggle={() => setAudit(value => !value)} />

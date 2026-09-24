@@ -45,6 +45,8 @@ type Props = {
   onConsultation: () => void;
   onNote: () => void;
   above?: ReactNode;
+  /** Hides the first-run coach mark while something else sits above the dock. */
+  quiet?: boolean;
   /** A photo, capture or file chosen from the attachments menu. */
   /** Attachments waiting to be sent with the next question. */
   attachments: Attachment[];
@@ -87,7 +89,7 @@ function ToolButton({ icon, label, onPress }: { icon: BrandIconName; label: stri
 /** Voice-first dock: tap to talk hands-free, or hold to talk and release to send; keyboard morphs into a composer. */
 export function VoiceDock(props: Props) {
   const glass = process.env.EXPO_OS === "ios" && isLiquidGlassAvailable();
-  const { thinking, activity, onCancel, onSubmit, spokenPrompt, placeholder, draft, onDraft, voiceEnabled, onVoiceDisabled, above, backdrop } = props;
+  const { thinking, activity, onCancel, onSubmit, spokenPrompt, placeholder, draft, onDraft, voiceEnabled, onVoiceDisabled, above, backdrop, quiet } = props;
   const insets = useSafeAreaInsets();
   const { reducedMotion, reducedTransparency } = useAccessibleEffects();
   const [mode, setMode] = useState<Mode>("idle");
@@ -262,7 +264,7 @@ export function VoiceDock(props: Props) {
             style={{ position: "absolute", bottom: BAR_H + 4, alignSelf: "center" }}>
             <AttachmentStack items={attachments} reduced={reducedMotion} onPress={openMenu} />
           </Animated.View>}
-          {!used && !busy && mode === "idle" && !attachments.length && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ delay: 600, distance: 6, scale: 0.96, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="none"
+          {!used && !quiet && !busy && mode === "idle" && !attachments.length && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ delay: 600, distance: 6, scale: 0.96, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="none"
             style={{ position: "absolute", bottom: BAR_H + 8, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 6, paddingRight: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.94)", boxShadow: "0 6px 20px rgba(24,32,48,0.1)", transformOrigin: "bottom" }}>
             <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: "#E4EDFD", alignItems: "center", justifyContent: "center" }}><BrandIcon name="wave" size={14} color={palette.blue} strokeWidth={1.8} /></View>
             <Text style={{ fontSize: 13, fontWeight: "500", color: palette.ink }}>Tap or hold to talk</Text>

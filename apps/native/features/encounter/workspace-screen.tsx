@@ -15,6 +15,9 @@ import { openSession } from "./navigation";
 import { useEncounter } from "./store";
 import type { Capability, FeatureProps, FocusView } from "./types";
 import { VoiceDock } from "./voice-dock";
+import { defaultMedications } from "./clinical-state";
+import { nextSteps, type Step } from "./next-steps";
+import { NextStepBar, NextStepSheet, useNextStep } from "./next-step";
 import { AnswerSections, SectionTabs, type AnswerSection } from "@/components/sona/answer-kit";
 import type { Attachment } from "@/components/sona/attachments-menu";
 import { Sidebar, SIDEBAR_WIDTH } from "./sidebar";
@@ -121,6 +124,26 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   // Blur the canvas only until the first renderable section arrives.
   const thinking = active && !activeCard && patient ? (phase === "thinking" ? "Thinking…" : thinkingLabel(active.kind, patient)) : undefined;
 
+  // "Next step" bar: the one action blocking the medication → prescribing path, with the full list on demand.
+  const steps = patient && latest && !active ? nextSteps(latest.kind, encounter, patient) : undefined;
+  const next = useNextStep();
+  const jumpToId = (id: string) => { const index = sections.findIndex(section => section.id === id); if (index >= 0) jumpTo(index); return index >= 0; };
+  const perform = (step: Step) => {
+    const action = step.action;
+    if (!patient || !latest) return;
+    if (action.type === "confirm") {
+      const entry = (encounter?.medicationEntries ?? defaultMedications(patient)).find(item => item.id === action.entryId);
+      if (latest.kind !== "medication" || !entry) { run("medication"); return; }
+      updateEncounter(value => ({ ...value, medicationDraft: { ...entry } }));
+      jumpToId("medicines");
+    } else if (action.type === "request") run(action.kind);
+    else if (action.type === "inputs") {
+      updateEncounter(value => ({ ...value, prescriptionInputsOpen: Date.now() }));
+      if (latest.kind !== "prescription" || !jumpToId("checks")) run("prescription");
+    } else jumpToId("receipt");
+  };
+  const act = (step: Step) => next.open ? next.hide(() => perform(step)) : perform(step);
+
   const open = (view: FocusView) => { if (!patient) { router.push({ pathname: "/patients", params: { view } }); return; } router.push(`/${view}`); };
   const run = (kind: Capability, prompt = prompts[kind]) => { setNotice(undefined); if (!patient) { router.push({ pathname: "/patients", params: { next: kind, prompt } }); return; } request(kind, prompt); Keyboard.dismiss(); };
   // Open a session at its latest answer rather than the top of the thread. Earlier answers can
@@ -166,7 +189,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     <ScrollView ref={scroll} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentInsetAdjustmentBehavior="never" scrollEventThrottle={48}
       onScroll={event => { scrollY.current = event.nativeEvent.contentOffset.y; const next = scrollY.current > 8; if (next !== scrolled) setScrolled(next); }}
       onScrollEndDrag={syncTab} onMomentumScrollEnd={syncTab}
-      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + (!home && sections.length >= 2 ? 112 : 72), paddingBottom: insets.bottom + 150, flexGrow: 1 }}>
+      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + (!home && sections.length >= 2 ? 112 : 72), paddingBottom: insets.bottom + 150 + (steps ? 66 : 0), flexGrow: 1 }}>
       {!requests.length ? <Home patient={patient} patients={patients} onPick={pick} onChoosePatient={() => router.push("/patients")} onSelectPatient={id => openSession(id)} />
       : <View style={{ gap: 44 }}>
         {compactResponses && requests.length > 1 && <Action label={showEarlier ? "Collapse earlier responses" : `Show ${requests.length - 1} earlier responses`} secondary onPress={() => setShowEarlier(value => !value)} />}
@@ -208,6 +231,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     {requests.length > 0 && <LinearGradient pointerEvents="none" colors={["rgba(245,246,248,0)", "rgba(245,246,248,0.9)", palette.canvas]} locations={[0, 0.5, 1]} style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: insets.bottom + 120 }} />}
     <VoiceDock
       backdrop={backdrop}
+      quiet={Boolean(steps)}
       thinking={thinking}
       activity={active ? (phase === "thinking" ? "searching" : activities[active.kind]) : justDone ? "done" : undefined}
       onCancel={cancel}
@@ -228,8 +252,10 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: encounter?.recording === "paused" ? palette.amber : palette.red }} /><Text style={{ fontSize: 13, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>Consultation {encounter?.recording === "paused" ? "paused" : "playing"} · {encounter?.recordingSeconds}s</Text>
         </Pressable>}
         {notice && <Notice>{notice}</Notice>}
+        {steps && !drawer && <NextStepBar steps={steps} p={next.p} onExpand={next.show} onAct={act} />}
       </>}
     />
+    {steps && next.open && <NextStepSheet steps={steps} p={next.p} onClose={() => next.hide()} onAct={act} />}
     {/* While open, the page is a quiet surface: it fades back and a tap anywhere closes it. */}
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: palette.canvas }, dimStyle]} />
     {drawer && <Pressable accessibilityRole="button" accessibilityLabel="Close menu" onPress={closeDrawer} style={StyleSheet.absoluteFill} />}
