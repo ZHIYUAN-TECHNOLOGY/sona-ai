@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { View } from "react-native";
 import Animated, { LayoutAnimationConfig } from "react-native-reanimated";
-import { IconRow, Section } from "@/components/sona/sections";
+import { IconRow } from "@/components/sona/sections";
 import { Action, Expand, Notice, SourceLink, Surface } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
 import { InteractionResults } from "./interaction-results";
 import { MedicationEditor } from "./medication-editor";
-import { AlertRow, Detail, DisclosureButton, StatusLine, useLayoutSpring } from "./medication-parts";
+import { AlertRow, DisclosureButton, Footnote, StatusLine, TextLink, useLayoutSpring } from "./medication-parts";
 
 /**
- * Medication review as generated sections: the reconciliation checklist and allergy record, the
- * current combinations, then one feature surface that says what still blocks a clinical check and
- * offers the next step. A labelled example of a sourced alert sits at the end, closed by default.
+ * Medication review, condensed: the confirm checklist, one allergy line with its source, one
+ * interactions line (detail on demand), then the single feature surface with one primary action.
+ * A labelled example of a sourced alert sits behind a small link at the end.
  */
 export function MedicationCard({ patient, onSource, onRequest, onOpen }: FeatureProps) {
   const [previewAlert, setPreviewAlert] = useState(false);
@@ -24,45 +24,36 @@ export function MedicationCard({ patient, onSource, onRequest, onOpen }: Feature
   const busy = encounter?.requests.some(request => request.status === "streaming") ?? false;
   const reviewing = encounter?.requests.some(request => request.status === "streaming" && request.kind === "medication") ?? false;
 
-  return <LayoutAnimationConfig skipEntering><View style={{ gap: 34 }}>
-    <Animated.View layout={layout} style={{ gap: 20 }}>
+  return <LayoutAnimationConfig skipEntering><View style={{ gap: 28 }}>
+    <Animated.View layout={layout}>
       <MedicationEditor patient={patient} onRequest={onRequest} />
-      <View style={{ gap: 2 }}>
-        <IconRow icon="allergens" title="Allergy record" detail={patient.allergies ?? "Unknown — collect an allergy history"} />
-        <View style={{ paddingLeft: 38 }}><SourceLink label="Original intake & allergy record" onPress={() => onSource("history")} /></View>
-      </View>
     </Animated.View>
 
-    <Animated.View layout={layout}>
+    <Animated.View layout={layout} style={{ gap: 16 }}>
+      <IconRow icon="allergens" title="Allergies" detail={patient.allergies ?? "Unknown — collect an allergy history"} sourceLabel="Original intake & allergy record" onSource={() => onSource("history")} />
       <InteractionResults patient={patient} onSource={onSource} onRequest={onRequest} />
     </Animated.View>
 
-    <Animated.View layout={layout}>
-      <Section title="Unable to complete a clinical check" subtitle="No validated drug-interaction database is connected. This fixture cannot clear a medicine or establish that a combination is safe.">
-        <Surface feature style={{ padding: 18, gap: 14 }}>
-          <StatusLine state={confirmed ? "done" : "blocked"}>{confirmed ? "Medication identities are confirmed for the simulation. Clinical interaction coverage remains unvalidated." : "One or more medication identities remain unconfirmed. Resolve each ingredient and formulation in the checklist above."}</StatusLine>
-          <StatusLine state={reviewing ? "pending" : reviewed ? "done" : "blocked"}>{reviewed ? "Medication review recorded for the current encounter. Bounded fixture checks are available for the authored prescribing simulation; this is not clinical interaction clearance." : "Review is not current for this encounter revision. Run the review again before the prescribing simulation."}</StatusLine>
-          <SourceLink label="Medication coverage & limits" onPress={() => onSource("medication")} />
-          <Action label="Run prescribing simulation" icon="doc.badge.plus" disabled={busy} onPress={() => onRequest("prescription")} />
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-            <Action label={reviewed ? "Run review again" : "Run medication review"} icon="arrow.clockwise" secondary disabled={busy} onPress={() => onRequest("medication")} />
-            <Action label="Open consultation note" icon="square.and.pencil" secondary onPress={() => onOpen("note")} />
-          </View>
-        </Surface>
-      </Section>
-    </Animated.View>
+    <Surface feature layout={layout} style={{ padding: 18, gap: 12 }}>
+      <StatusLine state={confirmed ? "done" : "blocked"}>{confirmed ? "Identities confirmed for the simulation" : "Unconfirmed identities block the simulation"}</StatusLine>
+      <StatusLine state={reviewing ? "pending" : reviewed ? "done" : "blocked"}>{reviewed ? "Review current for this revision" : "Review not current — run it before simulating"}</StatusLine>
+      <Footnote>No validated interaction database is connected. This fixture can’t clear a medicine or show a combination is safe.</Footnote>
+      <Action label="Run prescribing simulation" icon="doc.badge.plus" disabled={busy} onPress={() => onRequest("prescription")} />
+      <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: 20 }}>
+        <TextLink label={reviewed ? "Review again" : "Run review"} disabled={busy} onPress={() => onRequest("medication")} />
+        <TextLink label="Open note" onPress={() => onOpen("note")} />
+        <SourceLink label="Coverage & limits" onPress={() => onSource("medication")} />
+      </View>
+    </Surface>
 
-    {patient.sources.some(source => source.id === "beta-reference") && <Animated.View layout={layout}>
-      <Section title="See how a sourced alert appears" subtitle="A labelled example, kept apart from this patient’s results.">
-        <DisclosureButton label={previewAlert ? "Hide interaction example" : "Preview an interaction alert"} open={previewAlert} onToggle={() => setPreviewAlert(current => !current)} />
-        {previewAlert && <Expand style={{ gap: 12 }}>
-          <Notice>Example combination — not detected in this patient. No beta-blocker has been added to the medication list.</Notice>
-          <AlertRow title="Albuterol + beta-blocker class" kind="Example · label warning" detail="Beta-blockers can reduce albuterol’s bronchodilator effect and may cause severe bronchospasm in people with asthma.">
-            <Detail label="Why the alert appears" value="The beta-blocker class can oppose the airway effects of a beta-agonist. The source describes a class interaction, not an evaluated combination for this patient." />
-            <SourceLink label="DailyMed · section 7.1" onPress={() => onSource("beta-reference")} />
-          </AlertRow>
-        </Expand>}
-      </Section>
+    {patient.sources.some(source => source.id === "beta-reference") && <Animated.View layout={layout} style={{ gap: 4 }}>
+      <DisclosureButton label="See an example" accessibilityLabel="See an example of a sourced interaction alert" open={previewAlert} onToggle={() => setPreviewAlert(current => !current)} />
+      {previewAlert && <Expand style={{ gap: 12 }}>
+        <Notice>Example only — not detected in this patient. No beta-blocker was added.</Notice>
+        <AlertRow title="Albuterol + beta-blocker class" kind="Example · label warning" detail="Beta-blockers can reduce albuterol’s bronchodilator effect and may cause severe bronchospasm in people with asthma.">
+          <SourceLink label="DailyMed · section 7.1" onPress={() => onSource("beta-reference")} />
+        </AlertRow>
+      </Expand>}
     </Animated.View>}
   </View></LayoutAnimationConfig>;
 }

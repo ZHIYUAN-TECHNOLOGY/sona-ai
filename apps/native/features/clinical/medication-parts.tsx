@@ -90,6 +90,15 @@ export function DisclosureButton({ label, open, onToggle, accessibilityLabel }: 
   </View>;
 }
 
+/** Quiet secondary action: blue text only, 44 pt target. Used where a capsule would compete with the one primary. */
+export function TextLink({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) {
+  return <View style={{ alignSelf: "flex-start" }}>
+    <Press onPress={onPress} disabled={disabled} scale={0.96} style={{ minHeight: 44, justifyContent: "center", opacity: disabled ? 0.45 : 1 }}>
+      <Text style={{ fontSize: 15, fontWeight: "500", color: palette.blue }}>{label}</Text>
+    </Press>
+  </View>;
+}
+
 /**
  * Disclosure body for native form controls. It rises into place while the surrounding layout
  * springs; a measured-height clip (`Expand`) could cut off native hosts that size a frame late.
