@@ -38,7 +38,7 @@ export function AmbientWash({ quiet = false, thinking = false }: { quiet?: boole
   const glowCenter = vec(width * 0.28, height * 0.2);
   const glowRadius = useDerivedValue(() => 150 + pulse.value * 60);
   const glowOpacity = useDerivedValue(() => (thinking ? 0.55 + pulse.value * 0.45 : pulse.value));
-  return <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: quiet ? 0.45 : 1, transitionProperty: "opacity", transitionDuration: 500 }]}>
+  return <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: quiet ? 0.8 : 1, transitionProperty: "opacity", transitionDuration: 500 }]}>
     <Canvas style={StyleSheet.absoluteFill}>
       {pools.map((pool, i) => <Pool key={i} pool={pool} width={width} height={height} drift={drift} />)}
       <Circle c={glowCenter} r={glowRadius} opacity={glowOpacity}><RadialGradient c={glowCenter} r={210} colors={["rgba(120,168,255,0.42)", "rgba(150,196,255,0.22)", "rgba(255,255,255,0)"]} /></Circle>
