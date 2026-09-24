@@ -1,12 +1,11 @@
 import { DateTimePicker } from "@expo/ui/community/datetime-picker";
 import { useEffect, useState } from "react";
-import { Keyboard, TextInput, View, type TextStyle } from "react-native";
+import { Keyboard, Pressable, TextInput, View, type TextStyle } from "react-native";
 import Animated from "react-native-reanimated";
 import { Text } from "@/components/sona/text";
-import { Section } from "@/components/sona/sections";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { palette } from "@/components/sona/theme";
-import { Action, Chip, SourceLink, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Chip, Expand, Icon, SourceLink, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { Capability, FeatureProps, HistoryFact } from "@/features/encounter/types";
 import { Caption, Disclosure, haptic, IconDisc } from "./reasoning-parts";
@@ -23,20 +22,21 @@ const placeholder = "rgba(89,97,107,0.55)";
 function FieldLabel({ children }: { children: string }) { return <Text style={{ fontSize: 13, fontWeight: "600", color: palette.muted }}>{children}</Text>; }
 
 /**
- * History as a generated section: the latest recorded change, then two rows that open in place,
- * the correction form and the version trail. Saving bumps the encounter revision and requests a
- * refreshed `refresh` answer; this result keeps the history it was built from.
+ * History collapses to one quiet row, "Update history ›", that opens in place: the latest recorded
+ * change, then the correction form and the version trail. Saving bumps the encounter revision and
+ * requests a refreshed `refresh` answer; this result keeps the history it was built from.
  */
 export function HistoryEditor({ patient, result, onSource, onRequest, refresh }: Pick<FeatureProps, "patient" | "result" | "onSource" | "onRequest"> & { refresh: Capability }) {
   const { encounters, patient: activePatient, updateEncounter } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const layout = reducedMotion ? undefined : LAYOUT;
   const encounter = encounters[patient.id];
+  const draft = encounter?.historyDraft;
+  const [shown, setShown] = useState(!!draft);
   const [open, setOpen] = useState(false);
   const [versions, setVersions] = useState(false);
   const [pendingRevision, setPendingRevision] = useState<number>();
   const [recorded, setRecorded] = useState<HistoryFact>();
-  const draft = encounter?.historyDraft;
   const current = !result || result.revision === encounter?.revision;
   const facts = (encounter?.historyFacts ?? []).filter(fact => !result || fact.revision <= result.revision);
   const last = facts.at(-1);
@@ -55,14 +55,26 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
   };
   const discard = () => { updateEncounter(value => ({ ...value, historyDraft: undefined })); setOpen(false); };
   const ready = Boolean(draft?.value.trim() && draft.source.trim());
+  const count = facts.length ? `${facts.length} ${facts.length === 1 ? "change" : "changes"} in this result` : undefined;
+  const title = current ? "Update history" : "History used";
 
-  return <Animated.View layout={layout}>
-    <Section title={last ? "Context updated" : "Keep the history current"}
-      subtitle={last ? "The latest recorded change. Earlier facts and their sources stay inspectable." : "No earlier visit record is available for comparison. The timeline reflects this encounter’s intake."}>
-      {recorded && <Animated.View entering={reducedMotion ? undefined : riseIn({ distance: 6, duration: 260 })}>
-        <Caption icon="checkmark.circle" color={palette.blue}>Recorded at revision {recorded.revision}: {recorded.value}. The refreshed response will reflect this update; the earlier result remains unchanged.</Caption>
-      </Animated.View>}
+  return <Animated.View layout={layout} style={{ gap: 12 }}>
+    <Pressable accessibilityRole="button" accessibilityLabel={count ? `${title}. ${count}` : title} accessibilityState={{ expanded: shown }}
+      onPress={() => { haptic(); setShown(value => !value); }}
+      style={({ pressed }) => ({ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+      <Icon name="clock.arrow.circlepath" size={15} color={palette.muted} />
+      <Text style={{ fontSize: 15, fontWeight: "500", color: palette.ink }}>{title}</Text>
+      {count && <Text style={{ fontSize: 13, color: palette.muted, fontVariant: ["tabular-nums"] }}>{count}</Text>}
+      <Animated.View style={{ transform: [{ rotate: shown ? "90deg" : "0deg" }], transitionProperty: "transform", transitionDuration: reducedMotion ? 0 : 240 }}>
+        <Icon name="chevron.right" size={12} color={palette.muted} />
+      </Animated.View>
+    </Pressable>
+    {recorded && <Animated.View entering={reducedMotion ? undefined : riseIn({ distance: 6, duration: 260 })}>
+      <Caption icon="checkmark.circle" color={palette.blue}>Recorded at revision {recorded.revision}: {recorded.value}. The refreshed response will reflect this update; the earlier result remains unchanged.</Caption>
+    </Animated.View>}
+    {shown && <Expand style={{ gap: 12 }}>
       {!current && <Caption>This result retains the history available at revision {result?.revision}. Open the latest response to add a correction.</Caption>}
+      {!last && <Caption>No earlier visit record to compare. This reflects the encounter’s intake.</Caption>}
       {(last || current || facts.length > 0) && <Surface layout={layout} style={{ paddingHorizontal: 16 }}>
         {last && <View style={{ flexDirection: "row", gap: 12, paddingVertical: 16 }}>
           <IconDisc icon={categoryOf(last.category).icon} />
@@ -124,6 +136,6 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
           })}</View>
         </Disclosure>}
       </Surface>}
-    </Section>
+    </Expand>}
   </Animated.View>;
 }
