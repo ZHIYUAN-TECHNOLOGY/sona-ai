@@ -1,7 +1,7 @@
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { useEncounter } from "./store";
-import { MarkedText, wordCount } from "@/components/sona/marked-text";
+import { SweptLead, wordCount } from "@/components/sona/marked-text";
 import { Icon, pillStyle, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { LinearGradient } from "expo-linear-gradient";
@@ -78,9 +78,8 @@ export function StreamedLead({ text, animate }: { text: string; animate: boolean
     const timer = setTimeout(() => setShown(count => Math.min(words.length, count + 2)), 45);
     return () => clearTimeout(timer);
   }, [shown, words.length]);
-  return <View accessible accessibilityLabel={text}>
-    <MarkedText text={text} shown={shown} style={{ ...type.title, color: palette.ink }} />
-  </View>;
+  // Key terms become chips; a highlight sweeps across them once a fresh answer finishes streaming.
+  return <SweptLead text={text} shown={shown} sweep={animate && !reducedMotion} style={{ ...type.title, color: palette.ink }} />;
 }
 
 export function SuggestionList({ items, onPick, stagger = true }: { items: Suggestion[]; onPick: (item: Suggestion) => void; stagger?: boolean }) {
