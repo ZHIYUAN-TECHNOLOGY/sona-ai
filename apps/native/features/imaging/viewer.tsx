@@ -145,8 +145,7 @@ export function OriginalImageViewer({ asset, onZoomChange }: { asset: TeachingIm
       <ImageEdge />
     </View>
 
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-      <Text style={{ flex: 1, fontSize: 13, lineHeight: 18, color: palette.muted }}>{zoomed ? "Drag to inspect · double-tap to fit" : "Pinch or double-tap to zoom"}</Text>
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
       {zoomed && <Animated.View entering={FadeIn.duration(150)} exiting={FadeOut.duration(120)}>
         <Chip label="Reset view" icon={<Icon name="arrow.counterclockwise" size={15} />} onPress={reset} />
       </Animated.View>}
@@ -157,13 +156,10 @@ export function OriginalImageViewer({ asset, onZoomChange }: { asset: TeachingIm
       </View>
     </View>
 
-    <View style={{ gap: 2 }}>
-      <Text selectable style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>{asset.title}</Text>
-      <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>{asset.attribution} · {asset.license}</Text>
-      {asset.sourceUrl.startsWith("https://")
-        ? <SourceLink label="Original source & license" onPress={() => { void Linking.openURL(asset.sourceUrl).catch(() => setSourceError(true)); }} />
-        : <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>{asset.sourceUrl}</Text>}
-      {sourceError && <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.amber }}>Source page unavailable. Try again when connected.</Text>}
+    {/* Provenance as one line: attribution · licence, with the original source when there is one. */}
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <Text selectable style={{ flex: 1, fontSize: 13, lineHeight: 18, color: palette.muted }}>{asset.attribution} · {asset.license}{sourceError && <Text style={{ color: palette.amber }}> · Source unavailable offline</Text>}</Text>
+      {asset.sourceUrl.startsWith("https://") && <SourceLink label="Source" onPress={() => { void Linking.openURL(asset.sourceUrl).catch(() => setSourceError(true)); }} />}
     </View>
   </View>;
 }
