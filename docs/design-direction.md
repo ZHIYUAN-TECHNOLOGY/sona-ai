@@ -103,6 +103,13 @@ Roughly 90% of what a clinician sees is liquid glass and quiet material; about 1
 
 Rules: never put dithering on body content, list rows, secondary controls or more than one surface per screen. Every pressable scales to 0.96 on press (120 ms). Motion uses `EASE_OUT` for entrances and exits, and one no-bounce layout spring (`LAYOUT`, 380 ms) for anything that resizes or reflows. In-place disclosure uses `Expand`: its clip grows on that same spring while siblings carry `layout={LAYOUT}`, so a card and everything below it move as one piece.
 
+## Navigation model: home, visit sessions and tool pages (2026-09-24)
+
+- **Home** (`app/index.tsx`) is the launchpad: greeting, today's visits and "All patients". It never shows answers and has no visit open (entering it calls `leaveVisit`, which also stops an answer still arriving). A visit with a conversation shows "Continue · N answers" on its card.
+- **Session** (`app/session/[patientId].tsx`) is one patient visit's conversation, pushed over home with the native stack (slide in; edge swipe or the back button returns home). Empty, it shows the visit greeting and suggestions; otherwise the thread, opening at the latest answer while earlier answers of the same visit stay reachable above. New answers still land at the top like a fresh page. Everything asked about that visit (briefing, reasoning, medicines, X-ray, follow-up) stays in its session so context carries through the visit.
+- **Tool pages** (recording, note, X-ray viewer, tasks, source) keep a preset layout with generated content and open from a session. Opening one without a visit goes through the patient picker, which opens the session and then the page.
+- Entry points: a visit card, the sidebar's History and the settings "Resume" open a session; asking without a visit opens the patient picker, which opens the session and runs the question there; the patient chip in a session switches visits by replacing the session.
+
 ## Motion reference study
 
 The Arc entries below were retrieved using both `60fps_get_shot` and `60fps_get_motion_breakdown`. Descriptions are from 60fps; timing/easing categories are estimates, not measurements of original source code. Prior Monogram research included search, related shots, details, breakdowns, and generated SwiftUI reference code. Generated reference code is not Monogram's implementation and does not establish real model streaming.
