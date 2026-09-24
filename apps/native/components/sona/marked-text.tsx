@@ -62,9 +62,15 @@ export function MarkedText({ text, style, shown, selectable = true }: { text: st
     word += 1;
     return shown === undefined ? token : <Text key={key} style={{ opacity: visible ? 1 : 0 }}>{token}</Text>;
   };
+  // Tint each word on its own and keep the spaces between words untinted: a line break then falls
+  // on a plain space, so a multi-word term ("respiratory review") never paints past the end of a line.
   const parts: ReactNode[] = segments(text).map((seg, i) => {
-    const tokens = seg.text.split(/(\s+)/).map((token, j) => reveal(token, `${i}-${j}`));
-    return seg.mark ? <Text key={i} style={[TINT[seg.mark], { fontWeight: "500" }]}>{"\u2009"}{tokens}{"\u2009"}</Text> : <Text key={i}>{tokens}</Text>;
+    const tokens = seg.text.split(/(\s+)/).map((token, j) => {
+      const shownToken = reveal(token, `${i}-${j}`);
+      if (!seg.mark || !token.trim()) return shownToken;
+      return <Text key={`${i}-${j}`} style={[TINT[seg.mark], { fontWeight: "500" }]}>{"\u202F"}{shownToken}{"\u202F"}</Text>;
+    });
+    return <Text key={i}>{tokens}</Text>;
   });
   return <Text selectable={selectable} style={style}>{parts}</Text>;
 }
