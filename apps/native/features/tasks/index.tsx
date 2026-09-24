@@ -32,16 +32,15 @@ export function FollowupCard({ patient, onOpen, onSource }: FeatureProps) {
   const open = () => onOpen("tasks");
   // Generated reveal (after Remy AI's staggered analysis): blocks rise 8 pt, 60 ms apart, ease-out.
   const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 60 * i, distance: 8, duration: 320 });
-  const safety = <Text style={{ fontSize: 12, lineHeight: 17, color: palette.muted }}>Local simulation · nothing is booked or sent.</Text>;
 
   if (created.length) {
     const openCount = created.filter(task => !task.completed).length;
-    return <AnswerSection title="Keep the next step in sight" subtitle={openCount ? `${openCount} open · ${created.length - openCount} completed, saved for this session.` : "All follow-ups are done."}>
+    return <AnswerSection title="Keep the next step in sight" subtitle={openCount ? `${openCount} open · ${created.length - openCount} completed` : "All follow-ups are done."}>
       <Surface feature style={{ paddingHorizontal: 18, paddingTop: 4, paddingBottom: 18, gap: 10 }}>
         <View>{created.slice(-2).map((task, i) => <Animated.View key={task.id} entering={rise(i)} style={i ? { borderTopWidth: 1, borderColor: glass.hairline } : undefined}><TaskSummary task={task} /></Animated.View>)}</View>
         <Animated.View entering={rise(2)}><Action label="Manage follow-up" icon="checklist" onPress={open} /></Animated.View>
       </Surface>
-      {safety}
+      <SessionNote />
     </AnswerSection>;
   }
 
@@ -55,8 +54,7 @@ export function FollowupCard({ patient, onOpen, onSource }: FeatureProps) {
       </Animated.View>
       <Animated.View entering={rise(2)}><Action label="Make it a task" icon="calendar.badge.plus" onPress={open} /></Animated.View>
     </Surface>
-    {proposal ? <TaskOrigin value={proposal} /> : <SourceLink label="Encounter context" onPress={() => onSource("history")} />}
-    {safety}
+    {proposal ? <TaskOrigin value={proposal} local /> : <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 6 }}><SourceLink label="Encounter context" onPress={() => onSource("history")} /><SessionNote /></View>}
   </AnswerSection>;
 }
 
@@ -75,8 +73,13 @@ function TaskSummary({ task }: { task: Task }) {
   </View>;
 }
 
-/** One quiet line: who wrote it, then its source at the revision it was taken from. */
-function TaskOrigin({ value }: { value: Pick<Task, "sourceId" | "sourceRevision" | "provenance" | "sourceSnapshot"> & { id?: string; operationId?: string } }) {
+/** The session/simulation boundary, said once per screen as one quiet line. */
+function SessionNote() {
+  return <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>Local simulation · nothing is booked or sent</Text>;
+}
+
+/** One quiet line: who wrote it, its source at the revision it was taken from, and (with `local`) the simulation note. */
+function TaskOrigin({ value, local = false }: { value: Pick<Task, "sourceId" | "sourceRevision" | "provenance" | "sourceSnapshot"> & { id?: string; operationId?: string }; local?: boolean }) {
   const { patient } = useEncounter();
   const source = value.sourceSnapshot ?? patient?.sources.find(item => item.id === value.sourceId);
   const origin = value.provenance === "clinician" ? "Clinician-entered details" : value.provenance === "fixture" ? "Authored synthetic proposal" : "Origin not recorded";
@@ -88,6 +91,7 @@ function TaskOrigin({ value }: { value: Pick<Task, "sourceId" | "sourceRevision"
       style={({ pressed }) => ({ flexShrink: 1, flexDirection: "row", alignItems: "center", gap: 4, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
       <Text style={{ flexShrink: 1, fontSize: 12, lineHeight: 18, fontWeight: "500", color: palette.blue }}>{label}</Text><Icon name="arrow.up.right" size={10} color={palette.blue} />
     </Pressable> : <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>No originating source linked</Text>}
+    {local && <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>· local simulation, nothing sent</Text>}
   </View>;
 }
 
@@ -409,7 +413,6 @@ function AllFollowUps() {
   const { patients, encounters, selectPatient } = useEncounter();
   const any = patients.some(p => encounters[p.id]?.tasks.length);
   return <Screen>
-    <Text style={{ fontSize: 13, color: palette.muted }}>Across today's visits · saved for this session only.</Text>
     <VisitFollowUps />
     {!any && <Text style={{ fontSize: 15, color: palette.muted, paddingHorizontal: 4 }}>No follow-ups yet.</Text>}
     <View style={{ gap: 10 }}>
@@ -418,6 +421,7 @@ function AllFollowUps() {
         {patients.map(p => <Chip key={p.id} label={p.name} onPress={() => { haptic("select"); selectPatient(p.id); }} accessibilityLabel={`Add a follow-up for ${p.name}`} />)}
       </View>
     </View>
+    <SessionNote />
   </Screen>;
 }
 
@@ -467,10 +471,7 @@ export function TasksScreen() {
   </Animated.View>;
 
   return <Screen>
-    <View style={{ gap: 4 }}>
-      <Text style={{ fontSize: 13, fontWeight: "600", color: palette.blue }}>{patient.name} · {patient.id}</Text>
-      <Text style={{ fontSize: 13, color: palette.muted }}>Saved for this session only. Nothing is booked or sent.</Text>
-    </View>
+    <Text style={{ fontSize: 13, fontWeight: "600", color: palette.blue }}>{patient.name}</Text>
     {draft && <Composer key={draft.operationId} draft={draft} pending={pending} error={error} onChange={change => updateEncounter(current => ({ ...current, taskDraft: { ...current.taskDraft!, ...change } }))} onSave={save} />}
     {/* One keyed list, so a completed row glides into Completed instead of remounting there. */}
     {[
@@ -480,8 +481,8 @@ export function TasksScreen() {
       done.length > 0 && <Section key="done" title="Completed" count={done.length} />,
       ...done.map(row),
     ]}
-    {encounter.tasks.length > 0 && <Text style={{ fontSize: 12, color: palette.muted, paddingHorizontal: 4 }}>Swipe a task right to complete it.</Text>}
     {patients.some(p => p.id !== patient.id && encounters[p.id]?.tasks.length) && <Text accessibilityRole="header" style={{ fontSize: 15, fontWeight: "600", color: palette.ink, paddingTop: 10, paddingHorizontal: 4 }}>Other visits</Text>}
     <VisitFollowUps except={patient.id} />
+    <SessionNote />
   </Screen>;
 }
