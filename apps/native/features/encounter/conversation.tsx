@@ -1,6 +1,7 @@
 import { Text } from "@/components/sona/text";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { useEncounter } from "./store";
+import { MarkedText, wordCount } from "@/components/sona/marked-text";
 import { Icon, pillStyle, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { LinearGradient } from "expo-linear-gradient";
@@ -70,7 +71,7 @@ export function leadFor(kind: Capability, patient: Patient) {
 /** Words arrive in a quick sweep, the way Monogram's answers settle in. */
 export function StreamedLead({ text, animate }: { text: string; animate: boolean }) {
   const { reducedMotion } = useAccessibleEffects();
-  const words = text.split(" ");
+  const words = { length: wordCount(text) };
   const [shown, setShown] = useState(animate && !reducedMotion ? 0 : words.length);
   useEffect(() => {
     if (shown >= words.length) return;
@@ -78,9 +79,7 @@ export function StreamedLead({ text, animate }: { text: string; animate: boolean
     return () => clearTimeout(timer);
   }, [shown, words.length]);
   return <View accessible accessibilityLabel={text}>
-    <Text selectable style={{ fontSize: 22, lineHeight: 30, letterSpacing: -0.45, color: palette.ink }}>
-      {words.map((word, i) => <Text key={i} style={{ opacity: i < shown ? 1 : 0 }}>{word}{i < words.length - 1 ? " " : ""}</Text>)}
-    </Text>
+    <MarkedText text={text} shown={shown} style={{ ...type.title, color: palette.ink }} />
   </View>;
 }
 
@@ -151,7 +150,7 @@ function greeting() { const hour = new Date().getHours(); return hour < 12 ? "Go
 export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatient }: { patient?: Patient; patients: Patient[]; onPick: (item: Suggestion) => void; onChoosePatient: () => void; onSelectPatient: (id: string) => void }) {
   const { reducedMotion } = useAccessibleEffects();
   const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 80 + i * 70, distance: 14, duration: 460 });
-  const lead = { fontSize: 27, lineHeight: 35, letterSpacing: -0.6, color: palette.ink } as const;
+  const lead = { ...type.display, color: palette.ink } as const;
   // Reading order top-down: greeting under the top bar, then the next section at a fixed rhythm.
   // Nothing is centred or pinned to the bottom, so the gap never stretches with screen height.
   return <View style={{ gap: 44, paddingTop: 20 }}>
@@ -217,7 +216,7 @@ function VisitsAgenda({ patients, onOpen }: { patients: Patient[]; onOpen: (id: 
           </View>
           <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 14 }}>
             <View style={{ flex: 1, gap: 4 }}>
-              <Text style={{ fontSize: 24, lineHeight: 29, fontWeight: "600", letterSpacing: -0.5, color: palette.ink }}>{next.name}</Text>
+              <Text style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{next.name}</Text>
               <Text style={{ fontSize: 15, color: palette.muted }}>{next.subtitle} · {next.age} · {next.sex}</Text>
             </View>
             <Text style={{ fontSize: 30, lineHeight: 34, fontWeight: "300", letterSpacing: -1, color: palette.ink, fontVariant: ["tabular-nums"] }}>{next.time}</Text>
