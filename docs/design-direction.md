@@ -105,6 +105,15 @@ Roughly 90% of what a clinician sees is liquid glass and quiet material; about 1
 
 Rules: never put dithering on body content, list rows, secondary controls or more than one surface per screen. Every pressable scales to 0.96 on press (120 ms). Motion uses `EASE_OUT` for entrances and exits, and one no-bounce layout spring (`LAYOUT`, 380 ms) for anything that resizes or reflows. In-place disclosure uses `Expand`: its clip grows on that same spring while siblings carry `layout={LAYOUT}`, so a card and everything below it move as one piece.
 
+## Answer structure: digest, sections, tabs (2026-09-24)
+
+Generated answers no longer read as one long scroll (`components/sona/answer-kit.tsx`):
+- **Takeaways first:** every answer opens with at most three toned lines (caution, good, info) with key terms tinted, on the one feature surface.
+- **Sections:** detail below is grouped into named sections (`Anchor`, or `Fold` for a section collapsed to a one-line preview that opens in place).
+- **Pinned tabs:** when the latest answer has two or more sections, a frosted tab bar pins under the top bar; tapping glides to the section (and opens a fold), and the ink thumb follows scrolling (spring 380 ms, no bounce).
+- **Briefing as pages:** the pre-visit briefing shows its detail as swipeable pages (Vitals, Timeline, History, Next) with segmented progress; side pages sit back at 0.96 and dim.
+Takeaway text is authored for the fixtures; generated responses should emit takeaways and sections in the json-render spec.
+
 ## Typography and AI text (2026-09-24)
 
 - **Type scale** (`type` in `components/sona/theme.ts`, iOS-sized, named by use): display 27/35, title 22/31, heading 19/25, headline 17/23, body 16/24, callout 15/21, subhead 14/20, footnote 13/18, caption 12/16, overline 11/14 uppercase +0.8 tracking. Headings track slightly negative; body text sits near 1.5; nothing thinner than 400 below 18 pt except display numerals (timers, clocks). One-off sizes were folded onto the scale. The shared `Text` uses iOS "push-out" line breaking so a lone word doesn't strand on the last line.
