@@ -2,7 +2,7 @@ import { Text } from "@/components/sona/text";
 import * as Haptics from "expo-haptics";
 import { Image, type ImageSource } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
@@ -138,25 +138,25 @@ function menuIn() {
 }
 
 type MenuItem = { label: string; icon: string; disabled?: boolean; onPress: () => void };
-/** Secondary image actions behind a small glass `⋯`; the trigger dips as the compact menu springs open beneath it. */
-function ImageMenu({ items }: { items: MenuItem[] }) {
-  const [open, setOpen] = useState(false);
+/** The `⋯` trigger, placed in the navigation header's right slot; it dips while its menu is open. */
+function MenuTrigger({ open, onPress }: { open: boolean; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel="Image options" accessibilityState={{ expanded: open }} onPress={() => { haptic(); onPress(); }} hitSlop={6}
+    style={({ pressed }) => ({ ...pillStyle, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", transform: [{ scale: pressed ? 0.96 : open ? 0.92 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+    <Icon name="ellipsis" size={18} />
+  </Pressable>;
+}
+/** Secondary image actions: a compact glass menu that springs open from the header's `⋯`. */
+function MenuPanel({ items, onClose }: { items: MenuItem[]; onClose: () => void }) {
   const { reducedMotion } = useAccessibleEffects();
-  return <View>
-    <Pressable accessibilityRole="button" accessibilityLabel="Image options" accessibilityState={{ expanded: open }} onPress={() => { haptic(); setOpen(value => !value); }}
-      style={({ pressed }) => ({ ...pillStyle, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", transform: [{ scale: pressed ? 0.96 : open ? 0.92 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-      <Icon name="ellipsis" size={18} />
-    </Pressable>
-    {open && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : menuIn} exiting={FadeOut.duration(120)} style={{ position: "absolute", top: 52, right: 0, width: 224, transformOrigin: "top right", boxShadow: "0 12px 32px rgba(24,32,48,0.18)", borderRadius: 18 }}>
-      <Glass style={{ borderRadius: 18, paddingVertical: 4 }}>
-        {items.map(item => <Pressable key={item.label} accessibilityRole="button" accessibilityState={{ disabled: item.disabled }} disabled={item.disabled} onPress={() => { setOpen(false); item.onPress(); }}
-          style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 10, opacity: item.disabled ? 0.4 : 1, backgroundColor: pressed ? "rgba(20,28,40,0.06)" : "transparent" })}>
-          <Icon name={item.icon} size={17} />
-          <Text style={{ fontSize: 15, color: palette.ink }}>{item.label}</Text>
-        </Pressable>)}
-      </Glass>
-    </Animated.View>}
-  </View>;
+  return <Animated.View entering={reducedMotion ? FadeIn.duration(120) : menuIn} exiting={FadeOut.duration(120)} style={{ position: "absolute", top: 0, right: 0, width: 224, zIndex: 10, transformOrigin: "top right", boxShadow: "0 12px 32px rgba(24,32,48,0.18)", borderRadius: 18 }}>
+    <Glass style={{ borderRadius: 18, paddingVertical: 4 }}>
+      {items.map(item => <Pressable key={item.label} accessibilityRole="button" accessibilityState={{ disabled: item.disabled }} disabled={item.disabled} onPress={() => { onClose(); item.onPress(); }}
+        style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 10, opacity: item.disabled ? 0.4 : 1, backgroundColor: pressed ? "rgba(20,28,40,0.06)" : "transparent" })}>
+        <Icon name={item.icon} size={17} />
+        <Text style={{ fontSize: 15, color: palette.ink }}>{item.label}</Text>
+      </Pressable>)}
+    </Glass>
+  </Animated.View>;
 }
 
 export function XrayScreen() {
@@ -171,6 +171,7 @@ export function XrayScreen() {
   const [pickerError, setPickerError] = useState<string>();
   const [showScenarios, setShowScenarios] = useState(false);
   const [zoomed, setZoomed] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const activePatient = useRef(patient?.id);
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
@@ -224,10 +225,13 @@ export function XrayScreen() {
   </ViewerPage>;
 
   return <ViewerPage scrollEnabled={!zoomed}>
-    <Identity trailing={<ImageMenu items={[
+    {/* Image actions live in the header's right slot, level with the back button. */}
+    <Stack.Screen options={{ headerRight: () => <MenuTrigger open={menuOpen} onPress={() => setMenuOpen(value => !value)} /> }} />
+    {menuOpen && <MenuPanel onClose={() => setMenuOpen(false)} items={[
       { label: picking ? "Opening library…" : "Choose local image", icon: "photo.on.rectangle", disabled: picking || analysing, onPress: pickImage },
       { label: "Remove image", icon: "trash", disabled: analysing, onPress: () => updateEncounter(current => ({ ...current, imagingAttachment: undefined, hideTeachingImage: true }), true) },
-    ]} />}>{attachment ? `${patient.name} · local teaching image` : "Reference example · not this patient"}</Identity>
+    ]} />}
+    <Identity>{attachment ? `${patient.name} · local teaching image` : "Reference example · not this patient"}</Identity>
     {pickerError && <Notice warning>{pickerError}</Notice>}
     <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} />
 
