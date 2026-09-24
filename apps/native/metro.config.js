@@ -10,6 +10,8 @@ const blockListPatterns = Array.isArray(blockList) ? blockList : [blockList];
 config.resolver.blockList = [
   ...blockListPatterns,
   /[/\\]packages[/\\]infra[/\\]\.alchemy(?:[/\\]|$)/,
+  // Agent worktrees carry their own node_modules; resolving from them breaks native module lookup.
+  /[/\\]\.claude[/\\]worktrees[/\\]/,
 ];
 
 module.exports = withVarlockMetroConfig(config);
