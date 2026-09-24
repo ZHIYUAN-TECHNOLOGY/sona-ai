@@ -186,7 +186,7 @@ export function RecordingScreen() {
       <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>Scripted sample · no microphone active, no audio recorded.</Text>
     </View>
 
-    {unavailable ? <Section title="No consultation sample" subtitle="This patient has incomplete history. A dialogue has not been authored for this encounter.">
+    {unavailable ? <Section icon="waveform.slash" tone="amber" title="No consultation sample"subtitle="This patient has incomplete history. A dialogue has not been authored for this encounter.">
       <Action label="Return to encounter" onPress={() => router.back()} />
     </Section> : <>
       <Surface feature layout={layout} style={{ padding: 22, gap: 18 }}>

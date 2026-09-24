@@ -7,7 +7,7 @@ import { LAYOUT, riseIn } from "./motion";
 import { Section } from "./sections";
 import { Text } from "./text";
 import { palette, type } from "./theme";
-import { Expand, Icon, Surface, pillStyle, useAccessibleEffects } from "./ui";
+import { Expand, Icon, Surface, glass, pillStyle, useAccessibleEffects } from "./ui";
 
 /**
  * Answer structure (digest first, detail on demand, section tabs when long):
@@ -83,10 +83,13 @@ export function Fold({ id, title, preview, defaultOpen = false, children }: { id
   </Surface>;
 }
 
-/** An always-open section that still gets a tab; with an icon it draws a section header (and sources pill). */
+/**
+ * An always-open section that still gets a tab; with an icon it draws a section header (and sources pill).
+ * Consecutive anchors are parted by a hairline and a little extra air, so each landmark starts a new band.
+ */
 export function Anchor({ id, title, icon, tone, children }: { id: string; title: string; icon?: string; tone?: ComponentProps<typeof Section>["tone"]; children: ReactNode }) {
   const ref = useRegister(id, title);
-  return <View ref={ref} collapsable={false}>{icon ? <Section icon={icon} tone={tone} title={title}>{children}</Section> : children}</View>;
+  return <View ref={ref} collapsable={false} style={{ paddingTop: 20, borderTopWidth: 1, borderColor: glass.hairline }}>{icon ? <Section icon={icon} tone={tone} title={title}>{children}</Section> : children}</View>;
 }
 
 /**

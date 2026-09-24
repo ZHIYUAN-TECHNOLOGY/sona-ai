@@ -2,7 +2,8 @@ import { useState } from "react";
 import { View } from "react-native";
 import Animated, { LayoutAnimationConfig } from "react-native-reanimated";
 import { IconRow } from "@/components/sona/sections";
-import { Action, Expand, Notice, SourceLink, Surface } from "@/components/sona/ui";
+import { SourceRef, SourceScope, SourcesPill } from "@/components/sona/sources";
+import { Action, Expand, Label, Notice, Surface } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
 import { InteractionResults } from "./interaction-results";
@@ -39,7 +40,7 @@ export function MedicationCard({ patient, onSource, onRequest, onOpen }: Feature
     </Animated.View></Anchor>
 
     <Anchor id="interactions" title="Interactions" icon="arrow.triangle.branch" tone="amber"><Animated.View layout={layout} style={{ gap: 16 }}>
-      <IconRow icon="allergens" title="Allergies" detail={patient.allergies ?? "Unknown — collect an allergy history"} sourceLabel="Original intake & allergy record" onSource={() => onSource("history")} />
+      <IconRow icon="allergens" title="Allergies" detail={patient.allergies ?? "Unknown — collect an allergy history"} sourceLabel="Original intake & allergy record" sourceKind="record" onSource={() => onSource("history")} />
       <InteractionResults patient={patient} onSource={onSource} onRequest={onRequest} />
     </Animated.View></Anchor>
 
@@ -51,7 +52,7 @@ export function MedicationCard({ patient, onSource, onRequest, onOpen }: Feature
       <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: 20 }}>
         <TextLink label={reviewed ? "Review again" : "Run review"} disabled={busy} onPress={() => onRequest("medication")} />
         <TextLink label="Open note" onPress={() => onOpen("note")} />
-        <SourceLink label="Coverage & limits" onPress={() => onSource("medication")} />
+        <SourceRef label="Coverage & limits" kind="fixture" onPress={() => onSource("medication")} />
       </View>
     </Surface></Anchor>
 
@@ -59,9 +60,13 @@ export function MedicationCard({ patient, onSource, onRequest, onOpen }: Feature
       <DisclosureButton label="See an example" accessibilityLabel="See an example of a sourced interaction alert" open={previewAlert} onToggle={() => setPreviewAlert(current => !current)} />
       {previewAlert && <Expand style={{ gap: 12 }}>
         <Notice>Example only — not detected in this patient. No beta-blocker was added.</Notice>
-        <AlertRow title="Albuterol + beta-blocker class" kind="Example · label warning" detail="Beta-blockers can reduce albuterol’s bronchodilator effect and may cause severe bronchospasm in people with asthma.">
-          <SourceLink label="DailyMed · section 7.1" onPress={() => onSource("beta-reference")} />
-        </AlertRow>
+        {/* The example's citation gathers into its own pill above the alert's top right, like a section's. */}
+        <SourceScope>{sources => <View style={{ gap: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingLeft: 4 }}><Label muted>Example alert</Label><SourcesPill sources={sources} /></View>
+          <AlertRow title="Albuterol + beta-blocker class" kind="Example · label warning" detail="Beta-blockers can reduce albuterol’s bronchodilator effect and may cause severe bronchospasm in people with asthma.">
+            <SourceRef label="DailyMed · Albuterol HFA" detail="Section 7.1 · beta-blockers" kind="reference" onPress={() => onSource("beta-reference")} />
+          </AlertRow>
+        </View>}</SourceScope>
       </Expand>}
     </Animated.View>}
   </View></LayoutAnimationConfig>;
