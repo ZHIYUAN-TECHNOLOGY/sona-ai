@@ -44,14 +44,6 @@ const GAPS: { title: string; detail: string; categories: HistoryFact["category"]
   { title: "Background", detail: "Medical history, medicines, allergies and family/social history remain incomplete.", categories: ["medical", "family", "social", "allergy"] },
 ];
 
-/** The complaint everything is weighed against, set a size up with a quiet rule. */
-function Complaint({ text, onSource }: { text: string; onSource: () => void }) {
-  return <View style={{ gap: 2, paddingLeft: 14, borderLeftWidth: 2, borderColor: palette.blueWash }}>
-    <Text selectable style={{ fontSize: 19, lineHeight: 26, fontWeight: "500", letterSpacing: -0.3, color: palette.ink }}>{text}</Text>
-    <SourceLink label="Patient context used" onPress={onSource} />
-  </View>;
-}
-
 /**
  * One gap to collect (after Finma's setup checklist): rows rise in 70 ms apart; a dashed ring
  * means nothing is documented yet. A recorded history update for that area fills the ring with a
@@ -81,11 +73,12 @@ export function ReasoningCard({ patient, result, onSource, onOpen, onRequest }: 
   const presentingSource = facts.findLast(fact => fact.category === "presenting")?.id ?? "history";
   const medicalSource = facts.findLast(fact => fact.category === "medical")?.id ?? "history";
   const toggle = (id: string) => setOpen(ids => ids.includes(id) ? ids.filter(value => value !== id) : [...ids, id]);
-  return <View style={{ gap: 34 }}>
-    <Section title={patient.incomplete ? "More context is needed" : "Possibilities to explore"}
-      subtitle={patient.incomplete ? "An authored clinical example, not a model diagnosis." : "Unranked. An authored clinical example, not a model diagnosis."}>
-      <Complaint text={patient.complaint} onSource={() => onSource(presentingSource)} />
-      {!!facts.length && <Caption icon="clock.arrow.circlepath">Updated context includes {facts.length} recorded history {facts.length === 1 ? "change" : "changes"}. The evidence below uses this result’s saved patient context.</Caption>}
+  // One quiet provenance line replaces the section subtitle, the complaint quote and the sources caption.
+  const provenance = patient.incomplete
+    ? "An authored clinical example, not a model diagnosis. Missing findings don’t rule anything in or out."
+    : "Unranked. An authored clinical example, not a model diagnosis. Sources give background, not confirmation.";
+  return <View style={{ gap: 28 }}>
+    <Section title={patient.incomplete ? "What to collect first" : "Possibilities to explore"}>
       {!patient.incomplete && <Surface layout={layout} style={{ paddingHorizontal: 16 }}>
         {possibilities(patient, presentingSource, medicalSource).map((item, index) => <Disclosure key={item.id} first={index === 0} icon={item.icon} title={item.title} detail={item.summary}
           open={open.includes(item.id)} onToggle={() => toggle(item.id)} accessibilityHint="Shows what supports it, what conflicts and what is still needed">
@@ -98,18 +91,19 @@ export function ReasoningCard({ patient, result, onSource, onOpen, onRequest }: 
           {item.xray && <Action label="Review the X-ray attachment" icon="photo" secondary onPress={() => onRequest("xray")} />}
         </Disclosure>)}
       </Surface>}
-      <Animated.View layout={layout}><Caption>Sources give background, not confirmation, for this fictional patient.</Caption></Animated.View>
-    </Section>
-    {patient.incomplete && <Section title="What to collect first" subtitle="Missing findings don’t rule anything in or out.">
-      <Surface style={{ paddingHorizontal: 16 }}>
+      {patient.incomplete && <Surface style={{ paddingHorizontal: 16 }}>
         {GAPS.map((gap, index) => <GapRow key={gap.title} title={gap.title} detail={gap.detail} index={index} reduced={reducedMotion} updates={facts.filter(fact => gap.categories.includes(fact.category)).length} />)}
-      </Surface>
-      <Notice warning>A ranked differential and treatment suggestions are unavailable in this fixture.</Notice>
-    </Section>}
+      </Surface>}
+      <Animated.View layout={layout} style={{ gap: 2 }}>
+        <Caption>{provenance}</Caption>
+        {patient.incomplete && <View style={{ paddingLeft: 22 }}><SourceLink label="Patient context used" onPress={() => onSource(presentingSource)} /></View>}
+      </Animated.View>
+      {patient.incomplete && <Notice warning>A ranked differential and treatment suggestions are unavailable in this fixture.</Notice>}
+    </Section>
     <HistoryEditor patient={patient} result={result} onSource={onSource} onRequest={onRequest} refresh="reasoning" />
     <Animated.View layout={layout}>
       <Card feature label="Next step" title={patient.incomplete ? "Start with the missing history" : "Bring the assessment into the note"}>
-        <Body muted>{patient.incomplete ? "Capture the missing history before adding an assessment." : "Record examination findings and your assessment alongside the captured history. Keep patient facts distinct from these exploratory possibilities."}</Body>
+        {!patient.incomplete && <Body muted>Add examination findings and your assessment. Keep patient facts distinct from these possibilities.</Body>}
         {patient.incomplete && <Action label="Capture the missing history" icon="waveform" onPress={() => onOpen("recording")} />}
         <Action label="Open consultation note" icon="square.and.pencil" secondary={patient.incomplete} onPress={() => onOpen("note")} />
       </Card>
