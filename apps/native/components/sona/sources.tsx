@@ -1,6 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
+import { router } from "expo-router";
+import { Pressable, ScrollView, TextInput, View, useWindowDimensions } from "react-native";
 import Animated, { ZoomIn } from "react-native-reanimated";
 import { riseIn } from "./motion";
 import { Text } from "./text";
@@ -42,58 +43,55 @@ export function SourceScope({ children }: { children: (sources: SourceEntry[]) =
   return <ScopeContext value={scope}>{children(sources)}</ScopeContext>;
 }
 
+// The sheet is a route (a fit-to-content form sheet), so the tapped section's sources are handed over here.
+// ponytail: one module slot holds the open sheet's sources; fine while only one sheet shows at a time.
+let open: SourceEntry[] = [];
+
 /** Stacked badges plus a count; tapping opens the sources sheet. Nothing renders without sources. */
 export function SourcesPill({ sources }: { sources: SourceEntry[] }) {
-  const [open, setOpen] = useState(false);
   const { reducedMotion } = useAccessibleEffects();
   if (!sources.length) return null;
-  const show = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); setOpen(true); };
-  return <>
-    <Pressable accessibilityRole="button" accessibilityLabel={`${sources.length} ${sources.length === 1 ? "source" : "sources"}`} accessibilityHint="Lists the sources for this section" onPress={show} hitSlop={8}
-      style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 6, height: 28, paddingLeft: 4, paddingRight: 10, borderRadius: 14, borderWidth: 1, borderColor: glass.hairline, backgroundColor: "rgba(255,255,255,0.7)", transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-      <View style={{ flexDirection: "row" }}>
-        {sources.slice(0, 3).map((source, i) => <Animated.View key={source.label} entering={reducedMotion ? undefined : riseIn({ delay: i * 40, distance: 0, scale: 0.6, duration: 260 })}
-          style={{ width: 20, height: 20, borderRadius: 10, marginLeft: i ? -7 : 0, borderWidth: 1.5, borderColor: palette.white, backgroundColor: ["#E6EEFC", "#E8F4F2", "#F1ECFB"][i], alignItems: "center", justifyContent: "center", zIndex: 3 - i }}>
-          <Icon name="doc.text" size={10} color={palette.blue} />
-        </Animated.View>)}
-      </View>
-      <Animated.Text key={sources.length} entering={reducedMotion ? undefined : ZoomIn.duration(200)} style={{ ...type.caption, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>
-        {sources.length} {sources.length === 1 ? "source" : "sources"}
-      </Animated.Text>
-    </Pressable>
-    <SourcesSheet visible={open} sources={sources} onClose={() => setOpen(false)} />
-  </>;
+  const show = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); open = sources; router.push("/sources"); };
+  return <Pressable accessibilityRole="button" accessibilityLabel={`${sources.length} ${sources.length === 1 ? "source" : "sources"}`} accessibilityHint="Lists the sources for this section" onPress={show} hitSlop={8}
+    style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 6, height: 28, paddingLeft: 4, paddingRight: 10, borderRadius: 14, borderWidth: 1, borderColor: glass.hairline, backgroundColor: "rgba(255,255,255,0.7)", transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+    <View style={{ flexDirection: "row" }}>
+      {sources.slice(0, 3).map((source, i) => <Animated.View key={source.label} entering={reducedMotion ? undefined : riseIn({ delay: i * 40, distance: 0, scale: 0.6, duration: 260 })}
+        style={{ width: 20, height: 20, borderRadius: 10, marginLeft: i ? -7 : 0, borderWidth: 1.5, borderColor: palette.white, backgroundColor: ["#E6EEFC", "#E8F4F2", "#F1ECFB"][i], alignItems: "center", justifyContent: "center", zIndex: 3 - i }}>
+        <Icon name="doc.text" size={10} color={palette.blue} />
+      </Animated.View>)}
+    </View>
+    <Animated.Text key={sources.length} entering={reducedMotion ? undefined : ZoomIn.duration(200)} style={{ ...type.caption, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>
+      {sources.length} {sources.length === 1 ? "source" : "sources"}
+    </Animated.Text>
+  </Pressable>;
 }
 
-/** Native page sheet listing a section's sources; a filter appears once there are more than six. */
-function SourcesSheet({ visible, sources, onClose }: { visible: boolean; sources: SourceEntry[]; onClose: () => void }) {
+/** The sources sheet (route `/sources`): sized to its list, with a filter once there are more than six. */
+export function SourcesSheet() {
+  const [sources] = useState(open);
   const [query, setQuery] = useState("");
+  const { height } = useWindowDimensions();
   const shown = sources.filter(s => s.label.toLowerCase().includes(query.trim().toLowerCase()));
-  // Close first so the source screen presents over the page, not over this sheet.
-  const pick = (source: SourceEntry) => { onClose(); setTimeout(source.onPress, 350); };
-  return <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose} onDismiss={() => setQuery("")}>
-    <View style={{ flex: 1, backgroundColor: palette.canvas }}>
-      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 18, paddingBottom: 10 }}>
-        <Text accessibilityRole="header" style={{ flex: 1, ...type.heading, color: palette.ink }}>Sources <Text style={{ color: palette.muted, fontWeight: "500" }}>{sources.length}</Text></Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="Close sources" onPress={onClose} hitSlop={10} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: "rgba(20,28,40,0.06)", alignItems: "center", justifyContent: "center" }}>
-          <Icon name="xmark" size={12} color={palette.ink} />
-        </Pressable>
-      </View>
-      {sources.length > 6 && <View style={{ paddingHorizontal: 20, paddingBottom: 8 }}>
-        <TextInput value={query} onChangeText={setQuery} placeholder="Filter sources" placeholderTextColor="#8A929E" accessibilityLabel="Filter sources" clearButtonMode="while-editing"
-          style={{ height: 40, borderRadius: 12, paddingHorizontal: 12, fontSize: 16, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
-      </View>}
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-        <View style={{ borderRadius: 18, borderCurve: "continuous", backgroundColor: palette.white, overflow: "hidden" }}>
-          {shown.map((source, i) => <Pressable key={source.label} accessibilityRole="link" accessibilityLabel={source.label} onPress={() => pick(source)}
-            style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 13, borderTopWidth: i ? 1 : 0, borderColor: glass.hairline, backgroundColor: pressed ? "rgba(20,28,40,0.04)" : "transparent" })}>
-            <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: "#E6EEFC", alignItems: "center", justifyContent: "center" }}><Icon name="doc.text" size={13} color={palette.blue} /></View>
-            <Text style={{ flex: 1, ...type.subhead, color: palette.ink }}>{source.label}</Text>
-            <Icon name="chevron.right" size={12} color={palette.muted} />
-          </Pressable>)}
-          {!shown.length && <Text style={{ padding: 16, ...type.footnote, color: palette.muted }}>No source matches “{query}”.</Text>}
-        </View>
-      </ScrollView>
+  // Dismiss first so the source detail presents over the page, not over this sheet.
+  const pick = (source: SourceEntry) => { router.back(); setTimeout(source.onPress, 350); };
+  return <View style={{ paddingTop: 22, paddingBottom: 34, gap: 10 }}>
+    <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 20 }}>
+      <Text accessibilityRole="header" style={{ flex: 1, ...type.heading, color: palette.ink }}>Sources <Text style={{ color: palette.muted, fontWeight: "500" }}>{sources.length}</Text></Text>
     </View>
-  </Modal>;
+    {sources.length > 6 && <View style={{ paddingHorizontal: 20 }}>
+      <TextInput value={query} onChangeText={setQuery} placeholder="Filter sources" placeholderTextColor="#8A929E" accessibilityLabel="Filter sources" clearButtonMode="while-editing"
+        style={{ height: 40, borderRadius: 12, paddingHorizontal: 12, fontSize: 16, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
+    </View>}
+    <ScrollView style={{ maxHeight: height * 0.6, flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 20 }} keyboardShouldPersistTaps="handled">
+      <View style={{ borderRadius: 18, borderCurve: "continuous", backgroundColor: palette.white, overflow: "hidden" }}>
+        {shown.map((source, i) => <Pressable key={source.label} accessibilityRole="link" accessibilityLabel={source.label} onPress={() => pick(source)}
+          style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 13, borderTopWidth: i ? 1 : 0, borderColor: glass.hairline, backgroundColor: pressed ? "rgba(20,28,40,0.04)" : "transparent" })}>
+          <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: "#E6EEFC", alignItems: "center", justifyContent: "center" }}><Icon name="doc.text" size={13} color={palette.blue} /></View>
+          <Text style={{ flex: 1, ...type.subhead, color: palette.ink }}>{source.label}</Text>
+          <Icon name="chevron.right" size={12} color={palette.muted} />
+        </Pressable>)}
+        {!shown.length && <Text style={{ padding: 16, ...type.footnote, color: palette.muted }}>{sources.length ? `No source matches “${query}”.` : "No sources."}</Text>}
+      </View>
+    </ScrollView>
+  </View>;
 }
