@@ -1,11 +1,13 @@
+import type { ReactNode } from "react";
 import { View } from "react-native";
-import { Notice, Reveal, SourceLink } from "@/components/sona/ui";
-import { IconRow, Section } from "@/components/sona/sections";
+import { AnswerDeck, Takeaways, type Takeaway } from "@/components/sona/answer-kit";
+import { MarkedText } from "@/components/sona/marked-text";
+import { Action, Notice, SourceLink, Surface } from "@/components/sona/ui";
+import { IconRow } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { VitalsCard } from "./vitals-card";
-import { TimelineCarousel, type TimelineItem } from "@/components/sona/timeline-carousel";
-import { Pill } from "@/features/encounter/conversation";
+import type { TimelineItem } from "@/components/sona/timeline-carousel";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
 import { HistoryEditor } from "./history-editor";
@@ -27,30 +29,34 @@ export function BriefingCard({ patient, result, onSource, onOpen, onRequest }: F
     { id: "fever", label: "Yesterday", icon: "thermometer.medium", glyph: "🌡️", title: "Fever starts", meta: "Patient report", body: "Fever started the day before intake, according to the patient." },
     { id: "today", label: "Today", icon: "stethoscope", glyph: "🩺", title: "Respiratory review", meta: "22 Sep · this encounter", body: "Respiratory review with recorded observations." },
   ];
-  return <View style={{ gap: 34 }}>
-    <Section title="Vitals">
-      {patient.incomplete
-        ? <Notice warning>Not recorded yet. Missing information is not a negative finding.</Notice>
-        : <VitalsCard vitals={patient.vitals} allergy={patient.allergies} onSource={() => onSource("vitals")} />}
-    </Section>
-    {sections >= 2 && <Reveal><Section title="How it unfolded" subtitle={patient.incomplete ? "Only the intake so far." : "Swipe from background to today."}>
-      {!!facts.length && <Text style={{ ...type.footnote, color: palette.muted }}>Original intake shown · newer history is below.</Text>}
-      <TimelineCarousel items={timeline} />
-      <SourceLink label="Timeline source" onPress={() => onSource("history")} />
-    </Section></Reveal>}
-    {sections >= 3 && <Reveal><Section title="History that matters">
-      <View style={{ gap: 20 }}>
+  const takeaways: Takeaway[] = patient.incomplete
+    ? [{ tone: "caution", text: "Onset, observations and background are missing" }, { tone: "info", text: "Breathlessness on exertion is the only recorded complaint" }, { tone: "caution", text: "Medicines and allergies are unknown" }]
+    : [{ tone: "caution", text: `Temperature ${patient.vitals.find(v => v.label === "Temp")?.value ?? ""} is the only raised vital` }, { tone: "good", text: "Long history of asthma, no admissions on record" }, { tone: "caution", text: `${patient.allergies?.split(" — ")[0] ?? "Allergy"} allergy still needs confirming` }];
+  const card = (children: ReactNode) => <Surface style={{ padding: 16, gap: 14 }}>{children}</Surface>;
+  // Digest first, then the detail as swipeable pages (briefing is a glance before the visit).
+  return <View style={{ gap: 20 }}>
+    <Takeaways items={takeaways} />
+    {sections >= 2 && <AnswerDeck pages={[
+      { title: "Vitals", content: patient.incomplete ? card(<Notice warning>Not recorded yet. Missing information is not a negative finding.</Notice>) : <VitalsCard vitals={patient.vitals} allergy={patient.allergies} onSource={() => onSource("vitals")} /> },
+      { title: "Timeline", content: card(<>
+        {timeline.map(item => <View key={item.id} style={{ flexDirection: "row", gap: 12 }}>
+          <Text style={{ width: 78, ...type.footnote, color: palette.muted }}>{item.label}</Text>
+          <View style={{ flex: 1, gap: 2 }}><MarkedText text={item.title} style={{ ...type.callout, fontWeight: "600", color: palette.ink }} /><Text style={{ ...type.footnote, color: palette.muted }}>{item.meta}</Text></View>
+        </View>)}
+        {!!facts.length && <Text style={{ ...type.footnote, color: palette.muted }}>Original intake shown · newer history is below.</Text>}
+        <SourceLink label="Timeline source" onPress={() => onSource("history")} />
+      </>) },
+      { title: "History", content: card(<>
         <IconRow icon="cross.case" title="Medical" detail={patient.history.join(". ")} sourceLabel="Medical history source" onSource={() => onSource(sourceFor("medical"))} />
         <IconRow icon="figure.2.and.child.holdinghands" title="Family" detail={patient.family} sourceLabel="Family history source" onSource={() => onSource(sourceFor("family"))} />
         <IconRow icon="house" title="Social" detail={patient.social} sourceLabel="Social history source" onSource={() => onSource(sourceFor("social"))} />
-        <IconRow icon="allergens" title="Allergies" detail={patient.allergies ?? "Not documented — history still needed"} sourceLabel="Allergy history source" onSource={() => onSource(sourceFor("allergy"))} />
-      </View>
-      <Notice warning>{patient.incomplete ? "Complete medicines, allergies and family/social history before any treatment simulation." : "Medicines and the reported allergy still need confirming."}</Notice>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        <Pill label="Start the consultation" emoji="🎙️" onPress={() => onOpen("recording")} />
-        <Pill label="Explore clinical questions" emoji="🔎" onPress={() => onRequest("reasoning")} />
-      </View>
-    </Section></Reveal>}
+      </>) },
+      { title: "Next", content: <Surface feature style={{ padding: 16, gap: 14 }}>
+        <Text style={{ ...type.callout, color: palette.ink }}>{patient.incomplete ? "Complete medicines, allergies and family/social history before any treatment simulation." : "Confirm medicines and the reported allergy, then start the consultation."}</Text>
+        <Action label="Start the consultation" icon="waveform" onPress={() => onOpen("recording")} />
+        <Action label="Explore clinical questions" icon="magnifyingglass" secondary onPress={() => onRequest("reasoning")} />
+      </Surface> },
+    ]} />}
     {sections >= 3 && <HistoryEditor patient={patient} result={result} onSource={onSource} onRequest={onRequest} refresh="briefing" />}
   </View>;
 }

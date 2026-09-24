@@ -8,6 +8,7 @@ import { palette } from "@/components/sona/theme";
 import { Action, Body, Card, glass, Notice, SourceLink, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps, HistoryFact, Patient } from "@/features/encounter/types";
+import { Anchor, Takeaways, type Takeaway } from "@/components/sona/answer-kit";
 import { HistoryEditor } from "./history-editor";
 import { Caption, Disclosure } from "./reasoning-parts";
 
@@ -77,7 +78,12 @@ export function ReasoningCard({ patient, result, onSource, onOpen, onRequest }: 
   const provenance = patient.incomplete
     ? "An authored clinical example, not a model diagnosis. Missing findings don’t rule anything in or out."
     : "Unranked. An authored clinical example, not a model diagnosis. Sources give background, not confirmation.";
-  return <View style={{ gap: 28 }}>
+  const takeaways: Takeaway[] = patient.incomplete
+    ? [{ tone: "caution", text: "Not enough history yet to weigh possibilities" }, { tone: "info", text: "Collect onset, observations and background first" }, { tone: "caution", text: "Allergy and medicines are unknown" }]
+    : [{ tone: "info", text: "Two unranked possibilities: pneumonia and an asthma contribution" }, { tone: "caution", text: "Chest examination and imaging are still needed" }, { tone: "good", text: "Long history of asthma; current control needs review" }];
+  return <View style={{ gap: 20 }}>
+    <Takeaways items={takeaways} />
+    <Anchor id="possibilities" title={patient.incomplete ? "Gaps" : "Possibilities"}>
     <Section title={patient.incomplete ? "What to collect first" : "Possibilities to explore"}>
       {!patient.incomplete && <Surface layout={layout} style={{ paddingHorizontal: 16 }}>
         {possibilities(patient, presentingSource, medicalSource).map((item, index) => <Disclosure key={item.id} first={index === 0} icon={item.icon} title={item.title} detail={item.summary}
@@ -100,13 +106,14 @@ export function ReasoningCard({ patient, result, onSource, onOpen, onRequest }: 
       </Animated.View>
       {patient.incomplete && <Notice warning>A ranked differential and treatment suggestions are unavailable in this fixture.</Notice>}
     </Section>
-    <HistoryEditor patient={patient} result={result} onSource={onSource} onRequest={onRequest} refresh="reasoning" />
-    <Animated.View layout={layout}>
+    </Anchor>
+    <Anchor id="history" title="History"><HistoryEditor patient={patient} result={result} onSource={onSource} onRequest={onRequest} refresh="reasoning" /></Anchor>
+    <Anchor id="next" title="Next"><Animated.View layout={layout}>
       <Card feature label="Next step" title={patient.incomplete ? "Start with the missing history" : "Bring the assessment into the note"}>
         {!patient.incomplete && <Body muted>Add examination findings and your assessment. Keep patient facts distinct from these possibilities.</Body>}
         {patient.incomplete && <Action label="Capture the missing history" icon="waveform" onPress={() => onOpen("recording")} />}
         <Action label="Open consultation note" icon="square.and.pencil" secondary={patient.incomplete} onPress={() => onOpen("note")} />
       </Card>
-    </Animated.View>
+    </Animated.View></Anchor>
   </View>;
 }
