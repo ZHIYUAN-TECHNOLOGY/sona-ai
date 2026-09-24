@@ -14,6 +14,7 @@ import { BrandIcon, type BrandIconName } from "./brand-icon";
 import { BlurView } from "expo-blur";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import { HalftoneGlint, HalftoneShimmer } from "./halftone-shimmer";
+import { AttachmentStrip } from "./attachment-stack";
 import { useAccessibleEffects } from "./ui";
 import { palette } from "./theme";
 
@@ -45,7 +46,7 @@ type Tile = { id: string; uri?: string; source?: number; name: string };
 
 function tick() { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); }
 
-export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMotion, onClose, onAttach }: {
+export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMotion, onClose, attached, onAdd, onRemove }: {
   visible: boolean;
   /** 0 → 1: plus → menu. */
   progress: SharedValue<number>;
@@ -55,7 +56,10 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
   anchor: { left: number; bottom: number; size: number };
   reducedMotion: boolean;
   onClose: () => void;
-  onAttach: (item: Attachment) => void;
+  /** Attachments chosen so far; shown as a carousel at the top of the menu. */
+  attached: Attachment[];
+  onAdd: (items: Attachment[]) => void;
+  onRemove: (item: Attachment) => void;
 }) {
   const { width: W, height: H } = useWindowDimensions();
   const { reducedTransparency } = useAccessibleEffects();
@@ -67,8 +71,11 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
   const [libraryNote, setLibraryNote] = useState<string>();
   const [camPermission, requestCam] = useCameraPermissions();
   const camera = useRef<CameraView>(null);
+  // Photos are multi-select: tap to pick, then Add.
+  const [picked, setPicked] = useState<Tile[]>([]);
+  const togglePick = (tile: Tile) => { tick(); setPicked(current => current.some(t => t.id === tile.id) ? current.filter(t => t.id !== tile.id) : [...current, tile]); };
 
-  useEffect(() => { if (!visible) setExtended(false); }, [visible]);
+  useEffect(() => { if (!visible) { setExtended(false); setPicked([]); } }, [visible]);
 
   const loadPhotos = async () => {
     const permission = await MediaLibrary.requestPermissionsAsync(false, ["photo"]).catch(() => null);
@@ -83,7 +90,7 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
     if (action === "files") {
       DocumentPicker.getDocumentAsync({ type: ["image/*", "application/pdf"], copyToCacheDirectory: true }).then(result => {
         const file = result.canceled ? undefined : result.assets[0];
-        if (file) onAttach({ uri: file.uri, name: file.name, kind: file.mimeType?.startsWith("image/") ? "image" : "file" });
+        if (file) onAdd([{ uri: file.uri, name: file.name, kind: file.mimeType?.startsWith("image/") ? "image" : "file" }]);
       }).catch(() => {});
       return;
     }
@@ -99,11 +106,14 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
   const capture = async () => {
     tick();
     const photo = await camera.current?.takePictureAsync({ quality: 0.8 }).catch(() => undefined);
-    if (photo?.uri) onAttach({ uri: photo.uri, name: "Camera capture", kind: "image" });
+    if (photo?.uri) { onAdd([{ uri: photo.uri, name: "Camera capture", kind: "image" }]); backToMenu(); }
   };
 
   // Three key states, blended continuously.
-  const menuW = 212, menuH = 184;
+  // With attachments chosen, the menu widens and a carousel of them sits above the items.
+  const STRIP = attached.length ? 128 : 0;
+  const menuW = attached.length ? W - 40 : 212, menuH = 184 + STRIP;
+  const addPicked = () => { tick(); onAdd(picked.map(t => ({ uri: t.uri ?? "teaching", name: t.name, kind: "image" as const }))); setPicked([]); backToMenu(); };
   const openLeft = anchor.left - 14, openBottom = anchor.bottom - 8;
   const extTop = insets.top + 64, extBottom = 8;
   // Read both drivers directly in the worklet: Reanimated tracks shared values it can see here,
@@ -167,7 +177,10 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
         <BrandIcon name="add" size={23} />
       </Animated.View>
 
-      <Animated.View pointerEvents={extended ? "none" : "auto"} style={[{ position: "absolute", left: 0, bottom: 0, width: menuW, height: menuH, paddingHorizontal: 20, paddingVertical: 16, justifyContent: "space-between", transformOrigin: "left bottom" }, itemsStyle]}>
+      {attached.length > 0 && <Animated.View pointerEvents={extended ? "none" : "auto"} style={[{ position: "absolute", left: 16, right: 0, bottom: 184, height: STRIP, paddingTop: 16, paddingBottom: 12, borderBottomWidth: 1, borderColor: "rgba(20,28,40,0.07)", marginRight: 16 }, itemsStyle]}>
+        <AttachmentStrip items={attached} onRemove={onRemove} />
+      </Animated.View>}
+      <Animated.View pointerEvents={extended ? "none" : "auto"} style={[{ position: "absolute", left: 0, bottom: 0, width: 212, height: 184, paddingHorizontal: 20, paddingVertical: 16, justifyContent: "space-between", transformOrigin: "left bottom" }, itemsStyle]}>
         {ITEMS.map((item, i) => <Animated.View key={item.label} style={[{ transformOrigin: "bottom left" }, itemStyles[i]]}>
           <Pressable accessibilityRole="button" accessibilityLabel={item.label} onPress={() => open(item.action)}
             style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 14, minHeight: 44, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
@@ -186,9 +199,13 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
           : <LegendList data={tiles} keyExtractor={tile => tile.id} numColumns={3} estimatedItemSize={cell} recycleItems showsVerticalScrollIndicator={false}
             columnWrapperStyle={{ gap: 1 }} contentContainerStyle={{ paddingBottom: 96 }}
             ListHeaderComponent={libraryNote ? <Text style={{ padding: 16, fontSize: 13, color: palette.muted }}>{libraryNote}</Text> : null}
-            renderItem={({ item }) => <Pressable accessibilityRole="button" accessibilityLabel={`Attach ${item.name}`} onPress={() => { tick(); onAttach({ uri: item.uri ?? "teaching", name: item.name, kind: "image" }); }} style={{ flex: 1, aspectRatio: 1, marginBottom: 1 }}>
-              <Image source={item.source ?? { uri: item.uri }} contentFit="cover" recyclingKey={item.id} style={{ flex: 1, backgroundColor: "rgba(120,120,128,0.12)" }} />
-            </Pressable>} />}
+            extraData={picked}
+            renderItem={({ item }) => { const order = picked.findIndex(t => t.id === item.id); return <Pressable accessibilityRole="button" accessibilityLabel={`${order >= 0 ? "Deselect" : "Select"} ${item.name}`} accessibilityState={{ selected: order >= 0 }} onPress={() => togglePick(item)} style={{ flex: 1, aspectRatio: 1, marginBottom: 1 }}>
+              <Image source={item.source ?? { uri: item.uri }} contentFit="cover" recyclingKey={item.id} style={{ flex: 1, backgroundColor: "rgba(120,120,128,0.12)", opacity: order >= 0 ? 0.82 : 1 }} />
+              <View pointerEvents="none" style={{ position: "absolute", right: 8, bottom: 8, width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: palette.white, alignItems: "center", justifyContent: "center", backgroundColor: order >= 0 ? palette.blue : "rgba(0,0,0,0.18)", transform: [{ scale: order >= 0 ? 1 : 0.9 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 160 } as never}>
+                {order >= 0 && <Text style={{ fontSize: 12, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{order + 1}</Text>}
+              </View>
+            </Pressable>; }} />}
       </Animated.View>}
     </Animated.View>
 
@@ -201,7 +218,13 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
         style={{ width: 64, height: 64, borderRadius: 32, borderWidth: 4, borderColor: palette.white, alignItems: "center", justifyContent: "center" }}>
         <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: palette.white }} />
       </Pressable>}
-      <View style={{ width: 48 }} />
+      {surface === "photos" && picked.length > 0
+        ? <Pressable accessibilityRole="button" accessibilityLabel={`Add ${picked.length} ${picked.length === 1 ? "photo" : "photos"}`} onPress={addPicked}
+          style={({ pressed }) => ({ height: 48, paddingHorizontal: 22, borderRadius: 24, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: palette.ink, boxShadow: "0 6px 16px rgba(24,32,48,0.2)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+          <BrandIcon name="check" size={18} color={palette.white} strokeWidth={2.2} />
+          <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>Add {picked.length}</Text>
+        </Pressable>
+        : <View style={{ width: 48 }} />}
     </Animated.View>}
   </View>;
 }

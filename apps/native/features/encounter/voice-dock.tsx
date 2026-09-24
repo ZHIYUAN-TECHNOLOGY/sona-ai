@@ -8,6 +8,7 @@ import { GlassOrb } from "@/components/sona/glass-orb";
 import { OrbGlyph, type OrbActivity } from "@/components/sona/orb-glyph";
 import { HalftoneGlint, HalftoneShimmer } from "@/components/sona/halftone-shimmer";
 import { BrandIcon, type BrandIconName } from "@/components/sona/brand-icon";
+import { AttachmentStack, AttachmentStrip } from "@/components/sona/attachment-stack";
 import { AttachmentsMenu, MENU_CLOSE, MENU_SPRING, type Attachment } from "@/components/sona/attachments-menu";
 import { BlurView } from "expo-blur";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
@@ -45,7 +46,9 @@ type Props = {
   onNote: () => void;
   above?: ReactNode;
   /** A photo, capture or file chosen from the attachments menu. */
-  onAttach: (item: Attachment) => void;
+  /** Attachments waiting to be sent with the next question. */
+  attachments: Attachment[];
+  onAttachmentsChange: (items: Attachment[]) => void;
   /** Screen content captured for the liquid hold-to-talk veil. */
   backdrop: RefObject<View | null>;
 };
@@ -176,7 +179,9 @@ export function VoiceDock(props: Props) {
   // Tapping anywhere outside the composer closes it, even when no software keyboard is showing
   // (hardware keyboard), where the input would otherwise never blur. The draft is kept.
   const closeComposer = () => { Keyboard.dismiss(); setMode(current => current === "composing" ? "idle" : current); };
-  const send = () => { const value = draft.trim(); if (!value) return; onSubmit(value); Keyboard.dismiss(); };
+  const attachments = props.attachments;
+  // Attachments alone can be sent; the question then defaults to reviewing them.
+  const send = () => { const value = draft.trim(); if (!value && !attachments.length) return; onSubmit(value || `Review the attached ${attachments.length === 1 ? "image" : "images"}`); Keyboard.dismiss(); };
 
   // Attachments: the plus morphs into the menu; closing from any depth is one spring back.
   const openMenu = () => { setMenu(true); haptic("light"); menuProgress.set(reducedMotion ? 1 : withSpring(1, MENU_SPRING)); };
@@ -185,7 +190,9 @@ export function VoiceDock(props: Props) {
     menuProgress.set(reducedMotion ? 0 : withTiming(0, MENU_CLOSE, finished => { "worklet"; if (finished) { menuExtend.set(0); scheduleOnRN(setMenu, false); } }));
     if (reducedMotion) setMenu(false);
   };
-  const attach = (item: Attachment) => { closeMenu(); props.onAttach(item); };
+  // Chosen items join the carousel at the top of the menu; the menu stays open to pick more.
+  const addAttachments = (items: Attachment[]) => { haptic("select"); props.onAttachmentsChange([...attachments, ...items.filter(item => !attachments.some(a => a.uri === item.uri))]); };
+  const removeAttachment = (item: Attachment) => { haptic("select"); props.onAttachmentsChange(attachments.filter(a => a.uri !== item.uri)); };
 
   // Lift so the card rests 8 pt above the keyboard; the bar stays where it is.
   const restBottom = Math.max(insets.bottom, 12) + 4;
@@ -246,7 +253,12 @@ export function VoiceDock(props: Props) {
           </View>
 
           {/* Coach mark until the first voice request: states both gestures up front. */}
-          {!used && !busy && mode === "idle" && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ delay: 600, distance: 6, scale: 0.96, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="none"
+          {/* Attachments waiting to send: a small deck above the mic (after Airbnb's photo pop and slide). */}
+          {!busy && mode === "idle" && !holding && attachments.length > 0 && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ distance: 10, scale: 0.8, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="box-none"
+            style={{ position: "absolute", bottom: BAR_H + 4, alignSelf: "center" }}>
+            <AttachmentStack items={attachments} reduced={reducedMotion} />
+          </Animated.View>}
+          {!used && !busy && mode === "idle" && !attachments.length && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ delay: 600, distance: 6, scale: 0.96, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="none"
             style={{ position: "absolute", bottom: BAR_H + 8, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 6, paddingRight: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.94)", boxShadow: "0 6px 20px rgba(24,32,48,0.1)", transformOrigin: "bottom" }}>
             <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: "#E4EDFD", alignItems: "center", justifyContent: "center" }}><BrandIcon name="wave" size={14} color={palette.blue} strokeWidth={1.8} /></View>
             <Text style={{ fontSize: 13, fontWeight: "500", color: palette.ink }}>Tap or hold to talk</Text>
@@ -273,18 +285,19 @@ export function VoiceDock(props: Props) {
 
         {composerMounted && <Animated.View pointerEvents={mode === "composing" ? "box-none" : "none"} onLayout={e => cardH.set(e.nativeEvent.layout.height)}
           style={[{ position: "absolute", bottom: 0, left: CARD_INSET, right: CARD_INSET, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10, gap: 12 }, composerStyle]}>
+          {attachments.length > 0 && <AttachmentStrip items={attachments} onRemove={removeAttachment} size={84} />}
           <TextInput autoFocus onBlur={() => setMode(current => current === "composing" ? "idle" : current)} accessibilityLabel="Ask Sona" value={draft} onChangeText={onDraft} placeholder={placeholder} placeholderTextColor="#7D8591" multiline style={{ fontSize: 17, lineHeight: 22, color: palette.ink, maxHeight: 120, minHeight: 26 }} />
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             <ToolButton icon="image" label="Attach or review a chest X-ray" onPress={props.onImage} />
             <ToolButton icon="wave" label="Start the consultation recorder" onPress={props.onConsultation} />
             <ToolButton icon="note" label="Open the consultation note" onPress={props.onNote} />
             <View style={{ flex: 1 }} />
-            <RoundAction icon="send" label="Send message" ready={Boolean(draft.trim())} onPress={send} />
+            <RoundAction icon="send" label="Send message" ready={Boolean(draft.trim()) || attachments.length > 0} onPress={send} />
           </View>
         </Animated.View>}
       </View>
     </View>
 
-    <AttachmentsMenu visible={menu} progress={menuProgress} extend={menuExtend} anchor={{ left: 34, bottom: Math.max(insets.bottom, 12) + 4 + (BAR_H - 50) / 2, size: 50 }} reducedMotion={reducedMotion} onClose={closeMenu} onAttach={attach} />
+    <AttachmentsMenu visible={menu} progress={menuProgress} extend={menuExtend} anchor={{ left: 34, bottom: Math.max(insets.bottom, 12) + 4 + (BAR_H - 50) / 2, size: 50 }} reducedMotion={reducedMotion} onClose={closeMenu} attached={attachments} onAdd={addAttachments} onRemove={removeAttachment} />
   </View>;
 }

@@ -15,6 +15,7 @@ import { openSession } from "./navigation";
 import { useEncounter } from "./store";
 import type { Capability, FeatureProps, FocusView } from "./types";
 import { VoiceDock } from "./voice-dock";
+import type { Attachment } from "@/components/sona/attachments-menu";
 import { Sidebar, SIDEBAR_WIDTH } from "./sidebar";
 import { useAccessibleEffects } from "@/components/sona/ui";
 import * as Haptics from "expo-haptics";
@@ -59,6 +60,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const setInput = (value: string) => setDrafts(current => ({ ...current, [draftKey]: value }));
   const [showEarlier, setShowEarlier] = useState(false);
   const [notice, setNotice] = useState<string>();
+  // Attachments picked in the dock wait here and go out with the next question.
+  const [pending, setPending] = useState<Attachment[]>([]);
   const [scrolled, setScrolled] = useState(false);
   // Sidebar: the page slides right to reveal it. A finger drives it, so springs carry velocity.
   const { reducedMotion } = useAccessibleEffects();
@@ -102,9 +105,18 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   // still settle (images, reveals) just after mount, so the landing follows them for a moment.
   const landedAt = useRef<number | undefined>(undefined);
   const pick = (item: Suggestion) => item.kind === "recording" ? open("recording") : run(item.kind, item.text);
-  const submit = (text: string) => { const prompt = text.trim(); if (!prompt) return; if (!patient) { setNotice("Pick a visit first. Today’s visits are listed above."); return; } const kind = routePrompt(prompt); if (!kind) { setNotice("Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan. Demo routing uses supported phrases."); return; } setInput(""); run(kind, prompt); };
+  const submit = (text: string) => { const prompt = text.trim(); if (!prompt) return; if (!patient) { setNotice("Pick a visit first. Today’s visits are listed above."); return; }
+    if (pending.length) {
+      // Images go to the imaging review (the first becomes the encounter's attachment); files are kept for reference.
+      const image = pending.find(item => item.kind === "image");
+      const files = pending.filter(item => item.kind === "file");
+      setPending([]);
+      const fileNote = files.length ? `${files.map(f => f.name).join(", ")} kept for reference. Document review arrives with the backend.` : undefined;
+      if (image) { updateEncounter(current => image.uri === "teaching" ? { ...current, imagingAttachment: undefined, hideTeachingImage: false } : { ...current, imagingAttachment: { uri: image.uri, name: image.name } }, true); run("xray", prompt); if (fileNote) setNotice(fileNote); return; }
+      if (fileNote) setNotice(fileNote);
+    } const kind = routePrompt(prompt); if (!kind) { setNotice("Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan. Demo routing uses supported phrases."); return; } setInput(""); run(kind, prompt); };
 
-  useEffect(() => { setShowEarlier(false); setNotice(undefined); if (!patient) setDrafts({}); }, [patient?.id]);
+  useEffect(() => { setShowEarlier(false); setNotice(undefined); setPending([]); if (!patient) setDrafts({}); }, [patient?.id]);
   useEffect(() => { if (!active) return; setPhase("thinking"); const timer = setTimeout(() => setPhase("working"), 320); return () => clearTimeout(timer); }, [active?.id]);
   useEffect(() => {
     if (latest?.status !== "complete") return;
@@ -179,13 +191,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       voiceEnabled={voiceInput}
       onVoiceDisabled={() => setNotice("Voice input is turned off in settings. Type your request instead.")}
       onImage={() => open("xray")}
-      onAttach={item => {
-        if (!patient) { setNotice("Pick a visit first, then attach an image to review."); return; }
-        if (item.kind === "file") { setNotice(`${item.name} is attached for reference. Document review arrives with the backend.`); return; }
-        // Teaching image: show the bundled radiograph; anything else becomes the encounter's attachment.
-        updateEncounter(current => item.uri === "teaching" ? { ...current, imagingAttachment: undefined, hideTeachingImage: false } : { ...current, imagingAttachment: { uri: item.uri, name: item.name } }, true);
-        run("xray", "Review the attached image");
-      }}
+      attachments={pending}
+      onAttachmentsChange={setPending}
       onConsultation={() => open("recording")}
       onNote={() => open("note")}
       above={<>
