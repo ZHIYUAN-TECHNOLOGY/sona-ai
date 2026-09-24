@@ -77,15 +77,16 @@ export function AttachmentStack({ items, reduced, onPress }: { items: Attachment
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => { setTop(0); }, [items.length]);
   useEffect(() => () => clearTimeout(timer.current), []);
+  // Tapping pops the front card (the deck's acknowledgement), then opens the attachments menu.
   const shuffle = () => {
-    onPress?.();
-    if (items.length < 2 || popping !== null) return;
+    if (popping !== null) return;
+    if (items.length < 2) { onPress?.(); return; }
     if (process.env.EXPO_OS === "ios") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setPopping(top);
-    timer.current = setTimeout(() => { setTop(t => (t + 1) % items.length); setPopping(null); }, reduced ? 0 : 150);
+    timer.current = setTimeout(() => { setTop(t => (t + 1) % items.length); setPopping(null); onPress?.(); }, reduced ? 0 : 150);
   };
   const shown = items.slice(0, 4);
-  return <Pressable accessibilityRole="button" accessibilityLabel={`${items.length} ${items.length === 1 ? "attachment" : "attachments"} ready to send`} accessibilityHint={items.length > 1 ? "Shuffles the attachments" : undefined} onPress={shuffle}
+  return <Pressable accessibilityRole="button" accessibilityLabel={`${items.length} ${items.length === 1 ? "attachment" : "attachments"} ready to send`} accessibilityHint="Opens the attachments menu" onPress={shuffle}
     hitSlop={10} style={{ width: CARD + 30, height: CARD + 12, alignItems: "center", justifyContent: "center" }}>
     {shown.map((item, i) => {
       const rel = (i - (top % shown.length) + shown.length) % shown.length;

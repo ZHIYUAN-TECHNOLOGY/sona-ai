@@ -256,7 +256,7 @@ export function VoiceDock(props: Props) {
           {/* Attachments waiting to send: a small deck above the mic (after Airbnb's photo pop and slide). */}
           {!busy && mode === "idle" && !holding && attachments.length > 0 && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ distance: 10, scale: 0.8, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="box-none"
             style={{ position: "absolute", bottom: BAR_H + 4, alignSelf: "center" }}>
-            <AttachmentStack items={attachments} reduced={reducedMotion} />
+            <AttachmentStack items={attachments} reduced={reducedMotion} onPress={openMenu} />
           </Animated.View>}
           {!used && !busy && mode === "idle" && !attachments.length && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ delay: 600, distance: 6, scale: 0.96, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="none"
             style={{ position: "absolute", bottom: BAR_H + 8, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 6, paddingRight: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.94)", boxShadow: "0 6px 20px rgba(24,32,48,0.1)", transformOrigin: "bottom" }}>
