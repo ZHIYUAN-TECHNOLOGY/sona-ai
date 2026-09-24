@@ -30,7 +30,7 @@ const Divider = () => <View style={{ height: 1, marginHorizontal: 14, marginVert
  * Workspace sidebar, revealed underneath as the page slides right (after the ChatGPT-style
  * drawer): clinician, primary destinations, feedback, then recent encounters as history.
  */
-export function Sidebar({ progress, onClose, onNew }: { progress: SharedValue<number>; onClose: () => void; onNew: () => void }) {
+export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; progress: SharedValue<number>; onClose: () => void; onNew: () => void }) {
   const insets = useSafeAreaInsets();
   const { patient, patients, encounters } = useEncounter();
   // Close first, then navigate, so the page is back in place when the next screen presents.
@@ -51,7 +51,7 @@ export function Sidebar({ progress, onClose, onNew }: { progress: SharedValue<nu
     transform: [{ translateX: interpolate(progress.value, [0, 1], [-24, 0]) }],
   }));
 
-  return <View style={[StyleSheet.absoluteFill, { backgroundColor: "#F1F2F4" }]}>
+  return <View accessibilityViewIsModal={open} accessibilityElementsHidden={!open} importantForAccessibility={open ? "auto" : "no-hide-descendants"} onAccessibilityEscape={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: "#F1F2F4" }]}>
     <Animated.View style={[{ width: SIDEBAR_WIDTH, flex: 1 }, contentStyle]}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 12, paddingBottom: insets.bottom + 110 }} showsVerticalScrollIndicator={false}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 14, minHeight: 56 }}>
@@ -69,7 +69,7 @@ export function Sidebar({ progress, onClose, onNew }: { progress: SharedValue<nu
         <Divider />
         <Row item={{ label: "Share feedback", icon: "feedback", onPress: go(() => router.push("/history")) }} />
         <Divider />
-        <Text style={{ fontSize: 13, color: palette.muted, paddingHorizontal: 14, paddingTop: 4, paddingBottom: 6 }}>History</Text>
+        <Text accessibilityRole="header" style={{ fontSize: 13, color: palette.muted, paddingHorizontal: 14, paddingTop: 4, paddingBottom: 6 }}>History</Text>
         {recent.length ? recent.map(p => <Row key={p.id} item={{ label: p.name, icon: "clock", detail: `${p.subtitle} · ${encounters[p.id]!.requests.length} ${encounters[p.id]!.requests.length === 1 ? "request" : "requests"}`, onPress: go(() => openSession(p.id)) }} />)
           : <Text style={{ fontSize: 15, color: palette.muted, paddingHorizontal: 14, paddingVertical: 8 }}>Encounters appear here after your first request.</Text>}
       </ScrollView>
@@ -77,7 +77,7 @@ export function Sidebar({ progress, onClose, onNew }: { progress: SharedValue<nu
 
     <Animated.View pointerEvents="box-none" style={[{ position: "absolute", left: 0, width: SIDEBAR_WIDTH, bottom: Math.max(insets.bottom, 12) + 10, alignItems: "center" }, contentStyle]}>
       <Pressable accessibilityRole="button" accessibilityLabel="New visit" onPress={go(onNew)}
-        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 10, height: 56, paddingHorizontal: 26, borderRadius: 28, backgroundColor: "#15171B", borderWidth: 3, borderColor: "rgba(255,255,255,0.92)", boxShadow: "0 8px 22px rgba(20,24,32,0.22)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 10, minHeight: 56, paddingVertical: 8, paddingHorizontal: 26, borderRadius: 28, backgroundColor: "#15171B", borderWidth: 3, borderColor: "rgba(255,255,255,0.92)", boxShadow: "0 8px 22px rgba(20,24,32,0.22)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
         <BrandIcon name="add" size={22} color={palette.white} strokeWidth={1.8} />
         <Text style={{ fontSize: 17, fontWeight: "600", color: palette.white }}>New visit</Text>
       </Pressable>

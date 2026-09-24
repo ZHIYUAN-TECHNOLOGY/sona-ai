@@ -2,7 +2,7 @@ import { Text } from "@/components/sona/text";
 import { DateTimePicker } from "@expo/ui/community/datetime-picker";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Pressable, Text as RNText, TextInput, View } from "react-native";
+import { AccessibilityInfo, Pressable, Text as RNText, TextInput, View } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { cubicBezier, FadeIn, FadeOut, interpolate, withTiming, useAnimatedReaction, useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
@@ -185,11 +185,16 @@ function DayRuler({ value, onPick }: { value: string; onPick: (due: string) => v
       </Pressable>}
     </View>;
   }, []);
+  // Stable list props: the ruler re-renders once per day passed while dragging.
+  const getItemLayout = useCallback((_: unknown, i: number) => ({ length: TICK, offset: side + TICK * i, index: i }), [side]);
+  const edge = useMemo(() => <View style={{ width: side }} />, [side]);
+  const loadMore = useCallback(() => setCount(value => value + YEAR_OF_DAYS), []);
   const pickerDate = new Date(`${days[shown]}T12:00:00`);
-  return <View accessible accessibilityRole="adjustable" accessibilityLabel="Due date" accessibilityValue={{ text: `${longDate(days[shown]!)}, ${relativeDay(shown)}` }}
-    accessibilityActions={[{ name: "increment" }, { name: "decrement" }]} onAccessibilityAction={e => jump(shown + (e.nativeEvent.actionName === "increment" ? 1 : -1))} style={{ gap: 8 }}>
+  return <View style={{ gap: 8 }}>
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-      <View style={{ flex: 1 }}>
+      {/* Only the readout is adjustable (swipe up/down a day); the native picker beside it stays reachable for big jumps. */}
+      <View accessible accessibilityRole="adjustable" accessibilityLabel="Due date" accessibilityValue={{ text: unset ? "Not set" : `${longDate(days[shown]!)}, ${relativeDay(shown)}` }} accessibilityHint="Swipe up or down to move a day. Use the date picker to jump further."
+        accessibilityActions={[{ name: "increment" }, { name: "decrement" }]} onAccessibilityAction={e => jump(shown + (e.nativeEvent.actionName === "increment" ? 1 : -1))} style={{ flex: 1 }}>
         <Text style={{ ...type.heading, color: unset ? palette.muted : palette.ink, fontVariant: ["tabular-nums"] }}>{longDate(days[shown]!)}</Text>
         <Text style={{ fontSize: 13, color: palette.muted, fontVariant: ["tabular-nums"] }}>{unset ? "Slide, tap an interval, or pick a date" : relativeDay(shown)}</Text>
       </View>
@@ -197,10 +202,10 @@ function DayRuler({ value, onPick }: { value: string; onPick: (due: string) => v
       <DateTimePicker style={{ width: 124 }} value={pickerDate} mode="date" display="compact" minimumDate={new Date(`${days[0]}T00:00:00`)} themeVariant="light" accentColor={palette.blue}
         onValueChange={(_, date) => jump(dayIndex(localDate(date)), false)} />
     </View>
-    <View onLayout={e => setWidth(e.nativeEvent.layout.width)} style={{ height: 74, marginHorizontal: -18 }}>
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" onLayout={e => setWidth(e.nativeEvent.layout.width)} style={{ height: 74, marginHorizontal: -18 }}>
       {width > 0 && <Animated.FlatList ref={ref} horizontal data={days} keyExtractor={day => day} renderItem={renderTick}
-        getItemLayout={(_, i) => ({ length: TICK, offset: side + TICK * i, index: i })} ListHeaderComponent={<View style={{ width: side }} />} ListFooterComponent={<View style={{ width: side }} />}
-        initialNumToRender={80} maxToRenderPerBatch={80} windowSize={7} onEndReachedThreshold={6} onEndReached={() => setCount(value => value + YEAR_OF_DAYS)} onScroll={onScroll} scrollEventThrottle={16} showsHorizontalScrollIndicator={false} snapToInterval={TICK} decelerationRate="fast"
+        getItemLayout={getItemLayout} ListHeaderComponent={edge} ListFooterComponent={edge}
+        initialNumToRender={80} maxToRenderPerBatch={80} windowSize={7} onEndReachedThreshold={6} onEndReached={loadMore} onScroll={onScroll} scrollEventThrottle={16} showsHorizontalScrollIndicator={false} snapToInterval={TICK} decelerationRate="fast"
         onLayout={() => { if (initial > 0) ref.current?.scrollToOffset({ offset: initial * TICK, animated: false }); }} />}
       {/* Soft edges, then the fixed marker: ink line under a small halftone glow. */}
       <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0.96)", "rgba(255,255,255,0)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 56 }} />
@@ -243,7 +248,7 @@ function Suggestions({ children, reduced }: { children: ReactNode; reduced: bool
 }
 function SuggestionRow({ icon, label, index, onPress, reduced }: { icon: "person" | "calendar"; label: string; index: number; onPress: () => void; reduced: boolean }) {
   return <Animated.View entering={reduced ? undefined : riseIn({ delay: 40 * index, distance: 4, duration: 220 })}>
-    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress}
+    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={{ top: 2, bottom: 2 }}
       style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 10, borderRadius: 12, flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: pressed ? "rgba(255,255,255,0.12)" : "transparent", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 120 } as never)}>
       <BrandIcon name={icon} size={16} color="rgba(255,255,255,0.8)" />
       <Text style={{ fontSize: 15, fontWeight: "500", color: palette.white }}>{label}</Text>
@@ -303,14 +308,14 @@ function Composer({ draft, onChange, onSave, pending, error }: { draft: TaskDraf
         <Chip label="Someone else" selected={customOwner} onPress={() => { haptic("select"); if (customOwner) { setCustomOwner(false); set({ owner: "" }); return; } setCustomOwner(true); if (OWNERS.includes(draft.owner)) set({ owner: "" }); }} />
       </View>
       {customOwner && <Expand><TextInput autoFocus accessibilityLabel="Owner name or team" value={draft.owner} onChangeText={owner => set({ owner })} placeholder="Name or team" placeholderTextColor="#A2A8B1" maxLength={100} returnKeyType="done" onSubmitEditing={() => setOpen(null)}
-        style={{ fontSize: 16, color: palette.ink, paddingHorizontal: 14, height: 44, borderRadius: 14, backgroundColor: "rgba(20,28,40,0.04)" }} /></Expand>}
+        style={{ fontSize: 16, color: palette.ink, paddingHorizontal: 14, paddingVertical: 10, minHeight: 44, borderRadius: 14, backgroundColor: "rgba(20,28,40,0.04)" }} /></Expand>}
     </Expand>}
 
     {open === "due" && <Expand key="due"><DayRuler value={draft.due} onPick={due => set({ due })} /></Expand>}
 
     {/* With a panel open (or an error), a footer row keeps the corner free below it. */}
     {(open || error) && <Animated.View layout={layout} entering={FadeIn.duration(150)} style={{ minHeight: 40, justifyContent: "center", paddingRight: 52 }}>
-      {error && <Text style={{ fontSize: 13, lineHeight: 18, color: palette.amber }}>{error}</Text>}
+      {error && <Text accessibilityLiveRegion="polite" style={{ fontSize: 13, lineHeight: 18, color: palette.amber }}>{error}</Text>}
     </Animated.View>}
     <Animated.View layout={layout} style={{ position: "absolute", right: 18, bottom: 18, zIndex: 1 }}>
       <RoundAction icon="add" size={40} label={error ? "Retry adding task" : "Add task"} hint={missing.length ? `Needs ${missing.join(", ")}` : undefined} ready={ready} onPress={onSave} />
@@ -357,20 +362,21 @@ function TaskRow({ task, disabled, onToggle }: { task: Task; disabled: boolean; 
       <Surface style={[{ borderRadius: 20 }, rowStyle]}>
         {/* The whole row is the checkbox; only the Source link inside it does something else. */}
         <Pressable accessibilityRole="checkbox" accessibilityLabel={`${task.title}, ${task.owner}, ${done ? "done" : `due ${friendlyDate(task.due)}`}`} accessibilityState={{ checked: done, disabled }} accessibilityHint={done ? "Reopens the task" : "Marks the task completed"} onPress={toggle} disabled={disabled}
+          accessibilityActions={source ? [{ name: "activate" }, { name: "source", label: "Open source" }] : undefined} onAccessibilityAction={e => e.nativeEvent.actionName === "source" ? openSource() : toggle()}
           style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 14, transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-          <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.6, alignItems: "center", justifyContent: "center", borderColor: done ? palette.blue : "#B7BDC6", backgroundColor: done ? palette.blue : "transparent", transitionProperty: ["backgroundColor", "borderColor"], transitionDuration: 180 } as never}>
-            <Animated.View style={{ opacity: done ? 1 : 0, transform: [{ scale: done ? 1 : 0.5 }], transitionProperty: ["opacity", "transform"], transitionDuration: 240, transitionTimingFunction: EASE_OUT }}>
+          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.6, alignItems: "center", justifyContent: "center", borderColor: done ? palette.blue : "#B7BDC6", backgroundColor: done ? palette.blue : "transparent", transitionProperty: ["backgroundColor", "borderColor"], transitionDuration: 180 } as never}>
+            <Animated.View style={{ opacity: done ? 1 : 0, transform: [{ scale: done || reducedMotion ? 1 : 0.5 }], transitionProperty: ["opacity", "transform"], transitionDuration: 240, transitionTimingFunction: EASE_OUT }}>
               <BrandIcon name="check" size={15} color={palette.white} strokeWidth={2.4} />
             </Animated.View>
           </View>
           <View style={{ flex: 1, gap: 3 }}>
             <View style={{ alignSelf: "flex-start" }}>
               <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: done ? palette.muted : palette.ink, transitionProperty: "color", transitionDuration: 200 } as never}>{task.title}</Text>
-              <Animated.View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: 11, height: 1.5, borderRadius: 1, backgroundColor: palette.muted, transformOrigin: "left", transform: [{ scaleX: done ? 1 : 0 }], transitionProperty: "transform", transitionDuration: 320, transitionTimingFunction: EASE_OUT }} />
+              <Animated.View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: 11, height: 1.5, borderRadius: 1, backgroundColor: palette.muted, transformOrigin: "left", opacity: done || !reducedMotion ? 1 : 0, transform: [{ scaleX: done || reducedMotion ? 1 : 0 }], transitionProperty: ["transform", "opacity"], transitionDuration: 320, transitionTimingFunction: EASE_OUT }} />
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <Text style={{ fontSize: 13, color: palette.muted }}>{task.owner} · {done ? "Done" : friendlyDate(task.due)}</Text>
-              {source && <Pressable accessibilityRole="link" accessibilityLabel={`Source, ${source.title}`} onPress={openSource} hitSlop={8}><Text style={{ fontSize: 13, color: palette.blue }}>Source ↗</Text></Pressable>}
+              {source && <Pressable accessibilityRole="link" accessibilityLabel={`Source, ${source.title}`} onPress={openSource} hitSlop={{ top: 13, bottom: 13, left: 8, right: 8 }}><Text style={{ fontSize: 13, color: palette.blue }}>Source ↗</Text></Pressable>}
             </View>
           </View>
         </Pressable>
@@ -380,10 +386,11 @@ function TaskRow({ task, disabled, onToggle }: { task: Task; disabled: boolean; 
 }
 
 function Section({ title, count }: { title: string; count: number }) {
-  return <Animated.View layout={LAYOUT} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingTop: 10, paddingHorizontal: 4 }}>
-    <Text accessibilityRole="header" style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>{title}</Text>
+  const { reducedMotion } = useAccessibleEffects();
+  return <Animated.View layout={reducedMotion ? undefined : LAYOUT} accessible accessibilityRole="header" accessibilityLabel={`${title}, ${count}`} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingTop: 10, paddingHorizontal: 4 }}>
+    <Text style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>{title}</Text>
     <View style={{ minWidth: 24, height: 22, paddingHorizontal: 7, borderRadius: 11, backgroundColor: "rgba(20,28,40,0.06)", alignItems: "center", justifyContent: "center" }}>
-      <Animated.Text key={count} entering={riseIn({ distance: 6, scale: 0.9, duration: 220 })} style={{ fontSize: 12, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{count}</Animated.Text>
+      <Animated.Text key={count} entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, scale: 0.9, duration: 220 })} style={{ fontSize: 12, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{count}</Animated.Text>
     </View>
   </Animated.View>;
 }
@@ -393,14 +400,14 @@ function VisitFollowUps({ except }: { except?: string }) {
   const { patients, encounters, selectPatient } = useEncounter();
   return <>{patients.filter(p => p.id !== except && encounters[p.id]?.tasks.length).map(p => {
     const pending = encounters[p.id]!.tasks.filter(task => !task.completed);
-    return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={`${p.name}, ${pending.length} open follow-ups`} onPress={() => { haptic("select"); selectPatient(p.id); }}
+    return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={`${p.name}, ${pending.length} open follow-ups`} accessibilityHint="Shows this visit's follow-ups" onPress={() => { haptic("select"); selectPatient(p.id); }}
       style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
       <Surface style={{ padding: 16, gap: 12 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#E6EEFC", alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 13, fontWeight: "600", color: palette.blue }}>{p.initials}</Text></View>
           <Text style={{ flex: 1, fontSize: 16, fontWeight: "600", color: palette.ink }}>{p.name}</Text>
           <Text style={{ fontSize: 13, color: palette.muted, fontVariant: ["tabular-nums"] }}>{pending.length ? `${pending.length} open` : "All done"}</Text>
-          <View style={{ transform: [{ rotate: "180deg" }] }}><BrandIcon name="back" size={16} color={palette.muted} strokeWidth={1.8} /></View>
+          <View accessibilityElementsHidden style={{ transform: [{ rotate: "180deg" }] }}><BrandIcon name="back" size={16} color={palette.muted} strokeWidth={1.8} /></View>
         </View>
         {pending.slice(0, 3).map(task => <Text key={task.id} numberOfLines={1} style={{ fontSize: 14, color: palette.ink }}>{task.title}<Text style={{ color: palette.muted }}>  {task.owner} · {friendlyDate(task.due)}</Text></Text>)}
       </Surface>
@@ -416,7 +423,7 @@ function AllFollowUps() {
     <VisitFollowUps />
     {!any && <Text style={{ fontSize: 15, color: palette.muted, paddingHorizontal: 4 }}>No follow-ups yet.</Text>}
     <View style={{ gap: 10 }}>
-      <Text style={{ fontSize: 13, fontWeight: "600", color: palette.muted, paddingHorizontal: 4 }}>Add a follow-up for</Text>
+      <Text accessibilityRole="header" style={{ fontSize: 13, fontWeight: "600", color: palette.muted, paddingHorizontal: 4 }}>Add a follow-up for</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {patients.map(p => <Chip key={p.id} label={p.name} onPress={() => { haptic("select"); selectPatient(p.id); }} accessibilityLabel={`Add a follow-up for ${p.name}`} />)}
       </View>
@@ -432,7 +439,9 @@ export function TasksScreen() {
   const [pending, setPending] = useState(false);
   const pendingRef = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const activePatient = useRef(patient?.id); activePatient.current = patient?.id;
+  const activePatient = useRef(patient?.id);
+  useEffect(() => { activePatient.current = patient?.id; }, [patient?.id]);
+  useEffect(() => { if (error) AccessibilityInfo.announceForAccessibility(error); }, [error]);
   useEffect(() => {
     if (!patient || !encounter || encounter.taskDraft) return;
     const draft: TaskDraft = { operationId: `task-${patient.encounterId}-${Date.now()}`, owner: "", due: "", ...taskProposal(encounter, patient) };
@@ -456,7 +465,7 @@ export function TasksScreen() {
   // Creating hands the composer a fresh blank draft, so the next step can be typed straight away.
   const save = () => {
     if (!draft || taskDraftErrors(draft).length) return;
-    saveLocally(() => { haptic("done"); updateEncounter(current => {
+    saveLocally(() => { haptic("done"); AccessibilityInfo.announceForAccessibility("Task added"); updateEncounter(current => {
       const next = createTaskOnce(current, draft);
       if (next === current) return current;
       return { ...next, taskDraft: { ...taskProposal(next, patient), operationId: `task-${patient.encounterId}-${Date.now()}`, title: "", owner: "", due: "", provenance: "clinician" } };
@@ -471,13 +480,13 @@ export function TasksScreen() {
   </Animated.View>;
 
   return <Screen>
-    <Text style={{ fontSize: 13, fontWeight: "600", color: palette.blue }}>{patient.name}</Text>
+    <Text accessibilityRole="header" style={{ fontSize: 13, fontWeight: "600", color: palette.blue }}>{patient.name}</Text>
     {draft && <Composer key={draft.operationId} draft={draft} pending={pending} error={error} onChange={change => updateEncounter(current => ({ ...current, taskDraft: { ...current.taskDraft!, ...change } }))} onSave={save} />}
     {/* One keyed list, so a completed row glides into Completed instead of remounting there. */}
     {[
       open.length > 0 && <Section key="open" title="Open" count={open.length} />,
       ...open.map(row),
-      open.length === 0 && done.length > 0 && <Animated.Text key="all-done" layout={LAYOUT} entering={FadeIn.duration(200)} style={{ fontSize: 15, color: palette.muted, paddingHorizontal: 4 }}>All follow-ups are done.</Animated.Text>,
+      open.length === 0 && done.length > 0 && <Animated.Text key="all-done" layout={reducedMotion ? undefined : LAYOUT} entering={FadeIn.duration(200)} style={{ fontSize: 15, color: palette.muted, paddingHorizontal: 4 }}>All follow-ups are done.</Animated.Text>,
       done.length > 0 && <Section key="done" title="Completed" count={done.length} />,
       ...done.map(row),
     ]}
