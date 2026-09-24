@@ -5,7 +5,8 @@ import { useReduceMotionPreference } from "@/components/sona/accessibility";
 import { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette } from "@/components/sona/theme";
-import { Action, Expand, Icon, Notice, SourceLink, Surface } from "@/components/sona/ui";
+import { SourceRef } from "@/components/sona/sources";
+import { Action, Expand, Icon, Notice, Surface } from "@/components/sona/ui";
 import { defaultMedications } from "@/features/encounter/clinical-state";
 import { patients as baselinePatients } from "@/features/encounter/fixtures";
 import { useEncounter } from "@/features/encounter/store";
@@ -53,7 +54,7 @@ export function InteractionResults({ patient, onSource }: Pick<FeatureProps, "pa
     : <Animated.View layout={layout} entering={reduced ? FadeIn.duration(150) : riseIn({ distance: 8, duration: 280 })} style={{ gap: 10 }}>
       {alerts.map(pair => <AlertRow key={pair.id} title={`${pair.left} + ${pair.right}`} kind={statusLabel.alert} detail={pair.detail}>
         <Text selectable style={{ fontSize: 14, lineHeight: 20, color: palette.muted }}>{betaBlockerAlert.qualifiers}</Text>
-        <SourceLink label={interactionSource.title} onPress={openSource} />
+        <SourceRef id={interactionSource.id} label={interactionSource.title} kind="reference" onPress={openSource} />
       </AlertRow>)}
       {quiet.length > 0 && <Press onPress={() => setDetails(value => !value)} expanded={details} accessibilityLabel={`${summary}. ${details ? "Hide" : "Show"} pairs`} style={{ flexDirection: "row", gap: 14, alignItems: "center", minHeight: 44 }}>
         <View style={{ width: 24, alignItems: "center" }}><PairGlyph status={unresolved ? "unresolved" : "uncovered"} /></View>

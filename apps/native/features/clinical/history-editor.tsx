@@ -5,7 +5,8 @@ import Animated from "react-native-reanimated";
 import { Text } from "@/components/sona/text";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { palette } from "@/components/sona/theme";
-import { Action, Chip, Expand, Icon, SourceLink, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { SourceRef, useSourceScope, type SourceEntry } from "@/components/sona/sources";
+import { Action, Chip, Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { Capability, FeatureProps, HistoryFact } from "@/features/encounter/types";
 import { Caption, Disclosure, haptic, IconDisc } from "./reasoning-parts";
@@ -15,6 +16,11 @@ const categories: { value: HistoryFact["category"]; label: string; icon: string 
   { value: "family", label: "Family history", icon: "figure.2.and.child.holdinghands" }, { value: "social", label: "Social history", icon: "house" }, { value: "allergy", label: "Allergies", icon: "allergens" },
 ];
 const categoryOf = (value: HistoryFact["category"]) => categories.find(category => category.value === value)!;
+const shortDate = (value: string) => new Date(`${value}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+/** Each recorded change is its own source; the detail line tells revisions apart in the sources sheet. */
+const sourceOf = (fact: HistoryFact, onSource: (id: string) => void): SourceEntry => ({
+  id: fact.id, label: "History update", kind: "record", detail: `Revision ${fact.revision} · ${categoryOf(fact.category).label} · ${shortDate(fact.date)} · ${fact.source}`, onPress: () => onSource(fact.id),
+});
 function localDate(date: Date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
 
 const field: TextStyle = { fontSize: 17, lineHeight: 23, color: palette.ink, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 16, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" };
@@ -29,6 +35,7 @@ function FieldLabel({ children }: { children: string }) { return <Text style={{ 
 export function HistoryEditor({ patient, result, onSource, onRequest, refresh }: Pick<FeatureProps, "patient" | "result" | "onSource" | "onRequest"> & { refresh: Capability }) {
   const { encounters, patient: activePatient, updateEncounter } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
+  const scope = useSourceScope();
   const layout = reducedMotion ? undefined : LAYOUT;
   const encounter = encounters[patient.id];
   const draft = encounter?.historyDraft;
@@ -59,6 +66,8 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
   const title = current ? "Update history" : "History used";
 
   return <Animated.View layout={layout} style={{ gap: 12 }}>
+    {/* Under a section header every change registers up front, so the pill counts them while this stays collapsed. */}
+    {scope && facts.map(fact => <SourceRef key={fact.id} {...sourceOf(fact, onSource)} />)}
     <Pressable accessibilityRole="button" accessibilityLabel={count ? `${title}. ${count}` : title} accessibilityState={{ expanded: shown }}
       onPress={() => { haptic(); setShown(value => !value); }}
       style={({ pressed }) => ({ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
@@ -81,7 +90,7 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
           <View style={{ flex: 1, gap: 3, paddingTop: 1 }}>
             <Text selectable style={{ fontSize: 13, lineHeight: 18, color: palette.muted }}>{categoryOf(last.category).label} · {last.date} · revision {last.revision}</Text>
             <Text selectable style={{ fontSize: 16, lineHeight: 23, color: palette.ink }}>{last.value}</Text>
-            <SourceLink label="Source of this update" onPress={() => onSource(last.id)} />
+            <SourceRef {...sourceOf(last, onSource)} />
           </View>
         </View>}
 
@@ -130,7 +139,7 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
                 <Text selectable style={{ fontSize: 12, lineHeight: 17, color: palette.muted }}>Revision {fact.revision} · {categoryOf(fact.category).label} · {fact.date}</Text>
                 <Text selectable style={{ fontSize: 15, lineHeight: 21, color: superseded ? palette.muted : palette.ink }}>{fact.value}</Text>
                 <Text selectable style={{ fontSize: 13, lineHeight: 18, color: palette.muted }}>Source: {fact.source} · {superseded ? "Superseded in this result" : "Current for this category"}</Text>
-                <SourceLink label="Inspect recorded source" onPress={() => onSource(fact.id)} />
+                <SourceRef {...sourceOf(fact, onSource)} />
               </View>
             </View>;
           })}</View>

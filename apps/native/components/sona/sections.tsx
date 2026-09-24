@@ -4,7 +4,7 @@ import { Pressable, ScrollView, View } from "react-native";
 import { palette, type } from "./theme";
 import { Icon, surfaceStyle } from "./ui";
 import { MarkedText } from "./marked-text";
-import { SourceScope, SourcesPill, useCapturedSource } from "./sources";
+import { SourceScope, SourcesPill, useCapturedSource, type SourceKind } from "./sources";
 
 /** A generated answer section: bold heading, one-line framing, then its visual block. */
 const TONE = {
@@ -52,8 +52,8 @@ export function GlanceTile({ value, label, caption, glyph }: { value: string; la
 }
 
 /** Icon, title and caption, as in Monogram's "what changes" lists. */
-export function IconRow({ icon, title, detail, sourceLabel, onSource }: { icon: string; title: string; detail: string; sourceLabel?: string; onSource?: () => void }) {
-  const captured = useCapturedSource(onSource ? { label: sourceLabel ?? `${title} source`, onPress: onSource } : undefined);
+export function IconRow({ icon, title, detail, sourceLabel, sourceKind, onSource }: { icon: string; title: string; detail: string; sourceLabel?: string; sourceKind?: SourceKind; onSource?: () => void }) {
+  const captured = useCapturedSource(onSource ? { label: sourceLabel ?? `${title} source`, kind: sourceKind, onPress: onSource } : undefined);
   return <View style={{ flexDirection: "row", gap: 14 }}>
     <View style={{ width: 24, paddingTop: 1, alignItems: "center" }}><Icon name={icon} size={19} color={palette.ink} /></View>
     <View style={{ flex: 1, gap: 3 }}>

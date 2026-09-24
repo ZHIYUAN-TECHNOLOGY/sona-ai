@@ -120,6 +120,11 @@ Takeaway text is authored for the fixtures; generated responses should emit take
 - Sources no longer sit inline. Every `SourceLink` or `IconRow` source inside a section registers with the section, which shows one quiet pill on the right of its header (up to three stacked badges plus "N sources", after Slack's summarize pill). Ten or twenty sources still cost one pill.
 - Tapping the pill opens a native sheet listing the sources, with a filter once there are more than six. Picking a row closes the sheet and opens the source detail.
 - Briefing deck pages show the pill at the bottom right of each page.
+- Each source has a stable id (falling back to its label), so different sources that share a label stay separate and two links citing one source count once. Same-label rows carry a one-line detail in the sheet (for history: "Revision 3 · Social history · 22 Sep · Patient"). `SourceRef` (`components/sona/sources.tsx`) registers a source with an id, detail and kind, and draws a plain link outside a scope.
+- The sheet groups rows by kind under small overlines, "From the record", "Published references", "Demo notes", only once more than one kind is present. The filter also searches detail lines. Rows are at least 52 pt and rise in on a 30 ms stagger capped at eight rows (after the Emphasis focus-areas list: fixed header, rows slide up and fade on a subtle ease-out stagger), so twenty sources settle as quickly as five.
+- The pill's count rolls through a clipped slot, up when sources are added and down when removed, on a subtle spring (after GO Club's step-count ticker: only the digit moves through a vertical mask). Reduce Motion swaps it in place.
+- History now has its own landmark (person-and-record icon, teal): the last update and every version collect into its pill even while the editor is collapsed. The medication "See an example" alert gathers its DailyMed citation into its own pill above the alert's top right.
+- Consecutive answer landmarks (`Anchor`) are parted by a hairline and 20 pt of extra air, so each section starts a new band. "No consultation sample" on the recording page now has its icon (amber, waveform slashed); the X-ray empty-state section still lacks one.
 
 ## Typography and AI text (2026-09-24)
 

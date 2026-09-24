@@ -5,7 +5,8 @@ import { Text } from "@/components/sona/text";
 import { IconRow, Section } from "@/components/sona/sections";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { palette } from "@/components/sona/theme";
-import { Action, Body, Card, glass, Notice, SourceLink, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { SourceRef, type SourceKind } from "@/components/sona/sources";
+import { Action, Body, Card, glass, Notice, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps, HistoryFact, Patient } from "@/features/encounter/types";
 import { Anchor, Takeaways, type Takeaway } from "@/components/sona/answer-kit";
@@ -13,7 +14,7 @@ import { HistoryEditor } from "./history-editor";
 import { Caption, Disclosure } from "./reasoning-parts";
 
 type Evidence = { context: string; supports: string; conflicts: string; needed: string };
-type Possibility = { id: string; icon: string; title: string; summary: string; evidence: Evidence; sources: { label: string; id: string }[]; xray?: boolean };
+type Possibility = { id: string; icon: string; title: string; summary: string; evidence: Evidence; sources: { label: string; id: string; kind: SourceKind }[]; xray?: boolean };
 
 /** Same four slots, same order, for every possibility, so they compare row by row. */
 const EVIDENCE: [keyof Evidence, string, string][] = [
@@ -29,13 +30,13 @@ function possibilities(patient: Patient, presentingSource: string, medicalSource
       supports: coughAndFever ? "Cough and fever overlap with symptoms the NHS describes." : "The presenting history has changed. The original cough-and-fever rationale needs reassessment.",
       conflicts: "No specific contradictory finding is documented. Missing findings don’t rule this in or out.",
       needed: "Chest examination and relevant imaging findings. The history alone doesn’t establish pneumonia.",
-    }, sources: [{ label: "Patient history", id: presentingSource }, { label: "NHS · pneumonia background", id: "pneumonia-reference" }] },
+    }, sources: [{ label: "Patient history", id: presentingSource, kind: "record" }, { label: "NHS · pneumonia background", id: "pneumonia-reference", kind: "reference" }] },
     { id: "asthma", icon: "wind", title: "Asthma contribution", summary: "Weigh the recorded asthma without assuming it explains this episode.", evidence: {
       context: patient.history.join(". "),
       supports: "Cough can occur with asthma, but other conditions cause it too. Reported inhaler use needs reconciliation.",
       conflicts: "No specific contradictory finding is documented. The record doesn’t establish that asthma explains this episode.",
       needed: "Current symptom control, reliever frequency, airflow assessment and examination. Wheeze hasn’t been documented.",
-    }, sources: [{ label: "Medical history used", id: medicalSource }, { label: "NHLBI · asthma symptoms", id: "asthma-reference" }] },
+    }, sources: [{ label: "Medical history used", id: medicalSource, kind: "record" }, { label: "NHLBI · asthma symptoms", id: "asthma-reference", kind: "reference" }] },
   ];
 }
 
@@ -94,19 +95,19 @@ export function ReasoningCard({ patient, result, onSource, onOpen, onRequest }: 
           {item.xray && <Action label="Review the X-ray attachment" icon="photo" secondary onPress={() => onRequest("xray")} />}
         </Disclosure>)}
         {/* Registered outside the disclosures so the section's sources pill counts them while collapsed. */}
-        {possibilities(patient, presentingSource, medicalSource).flatMap(item => item.sources).map(source => <SourceLink key={source.label} label={source.label} onPress={() => onSource(source.id)} />)}
+        {possibilities(patient, presentingSource, medicalSource).flatMap(item => item.sources).map(source => <SourceRef key={source.label} id={source.label} label={source.label} kind={source.kind} onPress={() => onSource(source.id)} />)}
       </Surface>}
       {patient.incomplete && <Surface style={{ paddingHorizontal: 16 }}>
         {GAPS.map((gap, index) => <GapRow key={gap.title} title={gap.title} detail={gap.detail} index={index} reduced={reducedMotion} updates={facts.filter(fact => gap.categories.includes(fact.category)).length} />)}
       </Surface>}
       <Animated.View layout={layout} style={{ gap: 2 }}>
         <Caption>{provenance}</Caption>
-        {patient.incomplete && <View style={{ paddingLeft: 22 }}><SourceLink label="Patient context used" onPress={() => onSource(presentingSource)} /></View>}
+        {patient.incomplete && <View style={{ paddingLeft: 22 }}><SourceRef label="Patient context used" kind="record" onPress={() => onSource(presentingSource)} /></View>}
       </Animated.View>
       {patient.incomplete && <Notice warning>A ranked differential and treatment suggestions are unavailable in this fixture.</Notice>}
     </Section>
     </Anchor>
-    <Anchor id="history" title="History"><HistoryEditor patient={patient} result={result} onSource={onSource} onRequest={onRequest} refresh="reasoning" /></Anchor>
+    <Anchor id="history" title="History" icon="person.text.rectangle" tone="teal"><HistoryEditor patient={patient} result={result} onSource={onSource} onRequest={onRequest} refresh="reasoning" /></Anchor>
     <Anchor id="next" title="Next"><Animated.View layout={layout}>
       <Card feature label="Next step" title={patient.incomplete ? "Start with the missing history" : "Bring the assessment into the note"}>
         {!patient.incomplete && <Body muted>Add examination findings and your assessment. Keep patient facts distinct from these possibilities.</Body>}
