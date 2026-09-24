@@ -108,6 +108,22 @@ function AnalysisStatus({ interrupted }: { interrupted: boolean }) {
 }
 
 /** Only ever the source's own description or an honest unavailable state; nothing is read from the pixels. */
+/** What an X-ray answer said, shown under the image so the viewer and its analysis are one page. */
+function AnalysisDetails({ snapshot }: { snapshot?: Pick<Encounter, "imagingAttachment" | "hideTeachingImage" | "imagingScenario"> }) {
+  if (!snapshot) return null;
+  const attachment = Boolean(snapshot.imagingAttachment);
+  const scenario = snapshot.imagingScenario ?? "reference";
+  const summary = snapshot.hideTeachingImage ? undefined : teachingImage?.referenceSummary;
+  return <View style={{ gap: 14 }}>
+    <Text accessibilityRole="header" style={{ fontSize: 17, fontWeight: "600", letterSpacing: -0.2, color: palette.ink }}>Analysis</Text>
+    <Findings scenario={scenario} attachment={attachment} summary={summary} />
+    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
+      <Icon name="info.circle" size={15} color={palette.muted} />
+      <Caption>{attachment || scenario !== "reference" ? "Simulated response: no image-derived conclusion can be made." : "Describes only the published example, not this encounter, and does not establish model accuracy."}</Caption>
+    </View>
+  </View>;
+}
+
 function Findings({ scenario, attachment, summary }: { scenario: Scenario; attachment: boolean; summary?: string }) {
   if (scenario === "unsupported") return <Notice warning>Unsupported category (simulation): outside chest radiography. No interpretation is available, and the image has not been classified by a model.</Notice>;
   if (scenario === "no-finding" || attachment) return <IconRow icon="eye.slash" title="Findings unavailable" detail={attachment ? "Nothing has been read from this image. Its modality and clinical meaning have not been verified." : "This sample returned no finding result. That does not establish a normal examination."} />;
@@ -194,16 +210,16 @@ export function XrayScreen() {
   // A local image has no source page: its provenance line says it stays on this device and is not analysed.
   const image: TeachingImage | undefined = attachment ? { id: attachment.uri, source: { uri: attachment.uri }, title: attachment.name, attribution: "Kept on this device · not uploaded or analysed", license: "rights and deidentification not verified", sourceUrl: "" } : referenceImage;
   const analysing = encounter?.requests.some(item => item.kind === "xray" && item.status === "streaming") ?? false;
-  const analyse = () => { if (!image || analysing || historical) return; request("xray", "Analyse X-ray · simulated workflow"); router.dismissTo("/"); };
+  const analyse = () => { if (!image || analysing || historical) return; request("xray", "Analyse X-ray · simulated workflow"); if (router.canGoBack()) router.back(); };
   const scenario = evidence?.imagingScenario ?? "reference";
   const pickScenario = (value: Scenario) => { if (analysing) return; haptic(); updateEncounter(current => ({ ...current, imagingScenario: value }), true); setShowScenarios(false); };
 
   if (!patient) return <Screen><Notice>Choose a patient before opening an attachment.</Notice></Screen>;
-  if (historical && (sourcePatientId !== patient.id || !savedCard?.imagingSnapshot)) return <Screen><Notice warning>This saved image is unavailable in the active patient’s encounter. No current image has been substituted.</Notice><Action label="Return to encounter" secondary onPress={() => router.dismissTo("/")} /></Screen>;
+  if (historical && (sourcePatientId !== patient.id || !savedCard?.imagingSnapshot)) return <Screen><Notice warning>This saved image is unavailable in the active patient’s encounter. No current image has been substituted.</Notice><Action label="Return to encounter" secondary onPress={() => (router.canGoBack() ? router.back() : undefined)} /></Screen>;
   if (historical) return <ViewerPage scrollEnabled={!zoomed}>
     <Identity>{`${patient.name} · saved revision ${savedCard?.revision} · ${attachment ? "local image, no model inference" : "reference example, not this patient"}`}</Identity>
     {image ? <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} /> : <Notice>No image was attached when this response was created.</Notice>}
-    <Action label="Open current image & analysis" secondary onPress={() => router.replace("/xray")} />
+    <AnalysisDetails snapshot={savedCard?.imagingSnapshot} />
   </ViewerPage>;
 
   if (!image) return <ViewerPage>
@@ -234,6 +250,8 @@ export function XrayScreen() {
     <Identity>{attachment ? `${patient.name} · local teaching image` : "Reference example · not this patient"}</Identity>
     {pickerError && <Notice warning>{pickerError}</Notice>}
     <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} />
+    {/* The latest analysis sits right under the image: one page, no separate details screen. */}
+    <AnalysisDetails snapshot={encounter?.cards.findLast(card => card.kind === "xray" && card.imagingSnapshot)?.imagingSnapshot} />
 
     {/* The one feature surface: the simulated review this screen asks for. */}
     <Surface feature layout={layout} style={{ padding: 18, gap: 14 }}>
