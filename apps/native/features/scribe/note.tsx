@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { GlanceTile, IconRow, Section, Shelf } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { Action, Chip, Expand, Glass, glass, Icon, Notice, Screen, SourceLink, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
@@ -128,7 +128,7 @@ export function NoteScreen() {
   return <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}>
     <Screen>
       <Animated.View entering={rise(0)} style={{ gap: 12 }}>
-        <Text selectable accessibilityRole="header" style={{ fontSize: 26, lineHeight: 32, fontWeight: "600", letterSpacing: -0.6, color: palette.ink }}>{patient.name}</Text>
+        <Text selectable accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{patient.name}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
           <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 11, backgroundColor: encounter.noteReviewed ? "rgba(40,104,80,0.1)" : "#E6EEFC" }}>
             <Text style={{ fontSize: 12, fontWeight: "600", color: encounter.noteReviewed ? palette.green : palette.blue }}>{encounter.noteReviewed ? "Reviewed" : "Draft"}</Text>

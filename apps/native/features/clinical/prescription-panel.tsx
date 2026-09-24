@@ -5,7 +5,7 @@ import { useReduceMotionPreference } from "@/components/sona/accessibility";
 import { riseIn } from "@/components/sona/motion";
 import { Section } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { Action, Expand, Label, Notice, SourceLink, Surface } from "@/components/sona/ui";
 import { getPrescriptionChecks, simulatedRegimen } from "@/features/encounter/clinical-state";
 import { useEncounter } from "@/features/encounter/store";
@@ -171,7 +171,7 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
               <Seal stampDelay={fresh ? stampDelay : undefined} />
               <View style={{ flex: 1, gap: 3 }}>
                 <Label muted>Simulated prescription · synthetic</Label>
-                <Text style={{ fontSize: 21, lineHeight: 26, fontWeight: "600", letterSpacing: -0.4, color: palette.ink }}>{regimen.medication} · {regimen.formulation}</Text>
+                <Text style={{ ...type.heading, color: palette.ink }}>{regimen.medication} · {regimen.formulation}</Text>
               </View>
             </View>
             <Perforation />

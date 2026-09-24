@@ -13,7 +13,7 @@ import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Action, Chip, Expand, glass, Icon, RoundAction, Screen, SourceLink, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { Section as AnswerSection } from "@/components/sona/sections";
 import { HalftoneGlint } from "@/components/sona/halftone-shimmer";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps, Task } from "@/features/encounter/types";
 import { createTaskOnce, localDate, mentionQuery, parseDuePhrase, proposedTask, taskDraftErrors, taskProposal, type TaskDraft } from "./state";
@@ -47,7 +47,7 @@ export function FollowupCard({ patient, onOpen, onSource }: FeatureProps) {
   const owner = draft?.owner, due = draft?.due;
   return <AnswerSection title="A clear next step" subtitle={proposal?.sourceId === "clinical-note" ? "Taken from the plan you wrote. Give it an owner and a date to make it a task." : "Proposed from this synthetic encounter. Give it an owner and a date to make it a task."}>
     <Surface feature style={{ padding: 18, gap: 16 }}>
-      <Animated.View entering={rise(0)}><Text selectable style={{ fontSize: 20, lineHeight: 26, fontWeight: "500", letterSpacing: -0.3, color: palette.ink }}>{proposal?.title ?? proposedTask}</Text></Animated.View>
+      <Animated.View entering={rise(0)}><Text selectable style={{ ...type.heading, fontWeight: "500", color: palette.ink }}>{proposal?.title ?? proposedTask}</Text></Animated.View>
       <Animated.View entering={rise(1)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         <Chip icon={<BrandIcon name="person" size={17} color={owner ? palette.blue : palette.muted} />} label={owner || "Owner"} filled={Boolean(owner)} onPress={open} accessibilityLabel={owner ? `Owner, ${owner}` : "Owner, not assigned"} />
         <Chip icon={<BrandIcon name="calendar" size={17} color={due ? palette.blue : palette.muted} />} label={due ? friendlyDate(due) : "Due"} filled={Boolean(due)} onPress={open} accessibilityLabel={due ? `Due ${friendlyDate(due)}` : "Due date, not set"} />
@@ -190,7 +190,7 @@ function DayRuler({ value, onPick }: { value: string; onPick: (due: string) => v
     accessibilityActions={[{ name: "increment" }, { name: "decrement" }]} onAccessibilityAction={e => jump(shown + (e.nativeEvent.actionName === "increment" ? 1 : -1))} style={{ gap: 8 }}>
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 20, fontWeight: "600", letterSpacing: -0.3, color: unset ? palette.muted : palette.ink, fontVariant: ["tabular-nums"] }}>{longDate(days[shown]!)}</Text>
+        <Text style={{ ...type.heading, color: unset ? palette.muted : palette.ink, fontVariant: ["tabular-nums"] }}>{longDate(days[shown]!)}</Text>
         <Text style={{ fontSize: 13, color: palette.muted, fontVariant: ["tabular-nums"] }}>{unset ? "Slide, tap an interval, or pick a date" : relativeDay(shown)}</Text>
       </View>
       {/* Native compact picker: its calendar popover reaches any month or year in a couple of taps. */}
@@ -279,7 +279,7 @@ function Composer({ draft, onChange, onSave, pending, error }: { draft: TaskDraf
     <View style={{ zIndex: 2 }}>
       {/* The phrase being read is tinted blue in place (children instead of value keep the caret). */}
       <TextInput accessibilityLabel="Task" onChangeText={title => set({ title })} placeholder={'Try “Bloods @nurse in 2 weeks”'} placeholderTextColor="#A2A8B1" multiline maxLength={240} editable={!pending}
-        style={{ fontSize: 20, lineHeight: 26, fontWeight: "500", letterSpacing: -0.3, color: palette.ink, padding: 0 }}>
+        style={{ ...type.heading, fontWeight: "500", color: palette.ink, padding: 0 }}>
         {typed ? <>{head}<RNText style={{ color: palette.blue }}>{draft.title.slice(head.length)}</RNText></> : draft.title}
       </TextInput>
       {(ownerMatches.length > 0 || customMatch) && <Suggestions key="owner" reduced={reducedMotion}>

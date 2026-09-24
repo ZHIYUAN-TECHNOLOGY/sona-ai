@@ -5,7 +5,7 @@ import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Section } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { Action, Chip, Expand, Icon, IconButton, Notice, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { TranscriptLine } from "@/features/encounter/types";
@@ -217,14 +217,14 @@ export function RecordingScreen() {
 
         {(capture === "permission" || capture === "denied") && <Expand key="permission" style={{ gap: 12 }}>
           <Text style={{ fontSize: 12, fontWeight: "600", letterSpacing: 0.3, color: palette.blue }}>Synthetic permission state</Text>
-          <Text style={{ fontSize: 18, fontWeight: "600", letterSpacing: -0.3, color: palette.ink }}>{capture === "denied" ? "Microphone access unavailable" : "Before a real consultation"}</Text>
+          <Text style={{ ...type.headline, color: palette.ink }}>{capture === "denied" ? "Microphone access unavailable" : "Before a real consultation"}</Text>
           <Text selectable style={{ fontSize: 15, lineHeight: 22, color: palette.muted }}>{capture === "denied" ? "This fixture represents denied permission. No operating-system permission was requested. You can grant access in the simulation and continue." : "A connected recorder would request microphone permission and confirm consultation consent here. This prototype plays an authored sample without recording audio."}</Text>
           <Action label="Allow in simulation · play sample" icon="play.fill" onPress={play} />
           {capture === "permission" && <Action label="Simulate denied permission" secondary onPress={() => { haptic("warn"); setCapture("denied"); }} />}
         </Expand>}
         {capture === "failed" && <Expand key="failed" style={{ gap: 12 }}>
           <Text style={{ fontSize: 12, fontWeight: "600", letterSpacing: 0.3, color: palette.amber }}>Synthetic capture failure</Text>
-          <Text style={{ fontSize: 18, fontWeight: "600", letterSpacing: -0.3, color: palette.ink }}>The sample was interrupted</Text>
+          <Text style={{ ...type.headline, color: palette.ink }}>The sample was interrupted</Text>
           <Text selectable style={{ fontSize: 15, lineHeight: 22, color: palette.muted }}>Finalized dialogue and corrections are kept. Retry continues from the last sample position; it does not duplicate captured segments.</Text>
           <Action label="Retry remaining sample" icon="arrow.clockwise" onPress={play} />
         </Expand>}

@@ -1,5 +1,5 @@
 import { Text } from "@/components/sona/text";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import { RoundAction, useAccessibleEffects } from "@/components/sona/ui";
 import { riseIn } from "@/components/sona/motion";
@@ -222,7 +222,7 @@ export function VoiceDock(props: Props) {
     </Animated.View>
 
     {holding && <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(140)} pointerEvents="none" style={{ position: "absolute", left: 32, right: 32, bottom: insets.bottom + 132, alignItems: "center" }}>
-      <Text accessibilityLiveRegion="polite" style={{ textAlign: "center", fontSize: 25, lineHeight: 32, letterSpacing: -0.4, fontWeight: "500", color: words ? palette.ink : palette.muted }}>{words ? transcript.slice(0, words).join(" ") : "Listening…"}</Text>
+      <Text accessibilityLiveRegion="polite" style={{ textAlign: "center", ...type.display, fontWeight: "500", color: words ? palette.ink : palette.muted }}>{words ? transcript.slice(0, words).join(" ") : "Listening…"}</Text>
       <Text style={{ marginTop: 10, fontSize: 13, fontWeight: "500", color: palette.ink }}>{handsfree ? "Pause or tap the orb to send" : "Release to send"}</Text>
       <Text style={{ marginTop: 4, fontSize: 12, color: palette.muted }}>Sample voice command · no audio is recorded</Text>
     </Animated.View>}

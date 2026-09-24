@@ -10,7 +10,7 @@ import Animated, { FadeIn, FadeInDown, FadeOut, type AnimatedStyle, type LayoutA
 import { BrandIcon, type BrandIconName } from "./brand-icon";
 import { HalftoneGlint } from "./halftone-shimmer";
 import { fold, LAYOUT, unfold } from "./motion";
-import { palette } from "./theme";
+import { palette, type } from "./theme";
 
 export function useAccessibleEffects() {
   const reducedMotion = useReduceMotionPreference();
@@ -37,9 +37,9 @@ export function Glass({ children, style, opaque = false }: { children?: ReactNod
 export function Icon({ name, size = 21, color = palette.ink }: { name: string; size?: number; color?: string }) {
   return <Image source={`sf:${name}`} style={{ width: size, height: size }} tintColor={color} accessibilityElementsHidden />;
 }
-export function Label({ children, muted = false }: { children: ReactNode; muted?: boolean }) { return <Text selectable style={{ color: muted ? palette.muted : palette.blue, fontSize: 11, fontWeight: "700", letterSpacing: 1.6, textTransform: "uppercase" }}>{children}</Text>; }
+export function Label({ children, muted = false }: { children: ReactNode; muted?: boolean }) { return <Text selectable style={{ color: muted ? palette.muted : palette.blue, ...type.overline }}>{children}</Text>; }
 export function Body({ children, muted = false }: { children: ReactNode; muted?: boolean }) { return <Text selectable style={{ color: muted ? palette.muted : palette.ink, fontSize: 16, lineHeight: 24 }}>{children}</Text>; }
-export function Title({ children }: { children: ReactNode }) { return <Text selectable style={{ color: palette.ink, fontSize: 23, lineHeight: 29, fontWeight: "600", letterSpacing: -0.6 }}>{children}</Text>; }
+export function Title({ children }: { children: ReactNode }) { return <Text selectable style={{ color: palette.ink, ...type.title, fontWeight: "600" }}>{children}</Text>; }
 /**
  * Primary: ink capsule with a dotted glint (the brand's dithering, kept to the action that matters).
  * Secondary: a quiet glass capsule. Both press to 0.96.

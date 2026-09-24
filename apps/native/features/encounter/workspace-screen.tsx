@@ -1,7 +1,7 @@
 import { AmbientWash } from "@/components/sona/ambient";
 import { ResponseFrame } from "@/components/sona/response-frame";
 import { Text } from "@/components/sona/text";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { Action, Notice, Reveal } from "@/components/sona/ui";
 import { ClinicalResponseRenderer } from "@/features/presentation";
 import { LinearGradient } from "expo-linear-gradient";
@@ -168,7 +168,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
           </View>;
         })}
         {!active && latest && patient && <View style={{ marginHorizontal: -20, paddingHorizontal: 20, paddingTop: 32, paddingBottom: 28, gap: 16, backgroundColor: "rgba(232,235,240,0.55)" }}>
-          <Text accessibilityRole="header" style={{ textAlign: "center", fontSize: 18, fontWeight: "600", color: palette.ink, letterSpacing: -0.3 }}>You might want to ask</Text>
+          <Text accessibilityRole="header" style={{ textAlign: "center", ...type.headline, color: palette.ink, letterSpacing: -0.3 }}>You might want to ask</Text>
           <SuggestionList items={followUpsFor(latest.kind, patient)} onPick={pick} />
         </View>}
       </View>}
