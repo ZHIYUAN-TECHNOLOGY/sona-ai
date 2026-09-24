@@ -92,8 +92,8 @@ Roughly 90% of what a clinician sees is liquid glass and quiet material; about 1
 
 | Layer | Use | Material | Dithering |
 | --- | --- | --- | --- |
-| Canvas | Every screen | Pale grey to faint blue gradient (`Screen`), ambient Skia wash on home | None |
-| Content surface (`Surface`, `Card`, `surfaceStyle`) | Answers, lists, tiles, visits | Frosted: milky white 78%, bright 1 pt rim, inner top highlight, soft layered shadow. No live blur, so long lists stay cheap | None |
+| Canvas | Every screen | Pale grey with soft aurora colour fields (blue, lilac, teal) so glass has something to show; the ambient Skia wash on home and in sessions (80% while answers are shown) | None |
+| Content surface (`Surface`, `Card`, `surfaceStyle`) | Answers, lists, tiles, visits | Translucent glass: a white gradient (66% at the top edge to about 30% lower down) so the aurora canvas tints through, a bright rim with a sheen along the top, a faint blue catch along the bottom, a hairline outline and a soft blue lift. No live blur, so long lists stay cheap | None |
 | Feature surface (`Card feature`, `Surface feature`) | The one card per screen that asks for action or carries Sona's proposal (task composer, proposed follow-up, next-step card) | Content surface, a touch brighter, blue-tinted lift | Halftone glint in the top-right corner |
 | Floating chrome (`GlassView`) | Top bar, dock, composer, sheets over content | Native liquid glass on iOS 26+, blur before, solid with Reduce Transparency | Composer rim glint; morph shimmer |
 | Pills and round buttons (`Chip`, `pillStyle`) | Filters, quick choices, top bar | Glass pill with rim; chosen value = blue wash; picked option = ink | None |
