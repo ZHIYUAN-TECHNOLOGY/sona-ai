@@ -105,6 +105,12 @@ Roughly 90% of what a clinician sees is liquid glass and quiet material; about 1
 
 Rules: never put dithering on body content, list rows, secondary controls or more than one surface per screen. Every pressable scales to 0.96 on press (120 ms). Motion uses `EASE_OUT` for entrances and exits, and one no-bounce layout spring (`LAYOUT`, 380 ms) for anything that resizes or reflows. In-place disclosure uses `Expand`: its clip grows on that same spring while siblings carry `layout={LAYOUT}`, so a card and everything below it move as one piece.
 
+## Typography and AI text (2026-09-24)
+
+- **Type scale** (`type` in `components/sona/theme.ts`, iOS-sized, named by use): display 27/35, title 22/31, heading 19/25, headline 17/23, body 16/24, callout 15/21, subhead 14/20, footnote 13/18, caption 12/16, overline 11/14 uppercase +0.8 tracking. Headings track slightly negative; body text sits near 1.5; nothing thinner than 400 below 18 pt except display numerals (timers, clocks). One-off sizes were folded onto the scale. The shared `Text` uses iOS "push-out" line breaking so a lone word doesn't strand on the last line.
+- **Key terms in AI text are colour-coded** (`MarkedText`, `components/sona/marked-text.tsx`): a quiet tint behind symptoms (blue), medicines (violet), cautions (amber) and findings (teal), in answer leads and evidence rows. Terms come from explicit `[[text|kind]]` markup (what a generated response should emit) or a small clinical dictionary for the fixtures. Streaming reveals words in place without reflow.
+- **Markdown rendering for generated responses:** plan to adopt `react-native-enriched-markdown` (Software Mansion; native Fabric, GFM, streaming, native selection, VoiceOver) as a json-render `Markdown` component when the backend streams responses. It needs a dev/Release build (not Expo Go), so it is deferred during UI review. Its `linkVariants` can carry typed entity tints; rounded chips stay in `MarkedText`.
+
 ## Navigation model: home, visit sessions and tool pages (2026-09-24)
 
 - **Home** (`app/index.tsx`) is the launchpad: greeting, today's visits and "All patients". It never shows answers and has no visit open (entering it calls `leaveVisit`, which also stops an answer still arriving). A visit with a conversation shows "Continue · N answers" on its card.
