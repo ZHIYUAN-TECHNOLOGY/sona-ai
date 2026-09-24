@@ -221,7 +221,7 @@ export function XrayScreen() {
 
   if (!image) return <ViewerPage>
     <Identity>{`${patient.name} · no image attached`}</Identity>
-    <Section title="An original image belongs here" subtitle="Image review will preserve the original pixels, with zoom, pan and reset controls.">
+    <Section icon="photo" tone="blue" title="An original image belongs here" subtitle="Image review will preserve the original pixels, with zoom, pan and reset controls.">
       <View style={[VIEWING, { minHeight: 250, alignItems: "center", justifyContent: "center", gap: 18, padding: 26 }]}>
         <Icon name="photo.badge.exclamationmark" color={palette.line} size={40} />
         <Text selectable style={{ color: palette.line, fontSize: 16, lineHeight: 24, textAlign: "center" }}>No licensed teaching radiograph has been attached to this demonstration.</Text>
