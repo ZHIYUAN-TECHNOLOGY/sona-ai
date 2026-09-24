@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import Animated, { cancelAnimation, Easing, FadeIn, FadeOut, useSharedValue, withRepeat, withSpring, withTiming } from "react-native-reanimated";
+import { Caption } from "@/components/sona/parts";
 import { HalftoneShimmer } from "@/components/sona/halftone-shimmer";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { IconRow, Section } from "@/components/sona/sections";
@@ -23,10 +24,6 @@ type Scenario = NonNullable<Encounter["imagingScenario"]>;
 const SCENARIOS: Record<Scenario, string> = { reference: "Reference", unsupported: "Unsupported category", "no-finding": "No finding result" };
 
 function haptic() { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); }
-
-function Caption({ children }: { children: ReactNode }) {
-  return <Text selectable style={{ flex: 1, fontSize: 13, lineHeight: 18, color: palette.muted }}>{children}</Text>;
-}
 
 /**
  * The answer in the conversation: the image as hero with one provenance line, what the source says,
@@ -49,19 +46,19 @@ export function XrayCard({ onOpen, onRequest, result }: FeatureProps) {
   return <View style={{ gap: 18 }}>
     <View style={{ gap: 8 }}>
       <Preview source={imageSource} label={attachment ? "Selected local teaching image" : referenceImage ? "Reference radiograph, unrelated to this patient" : "Add a teaching image"} onPress={openOriginal} />
-      {attachment && <Caption>{attachment.name} · local, not uploaded or analysed</Caption>}
+      {attachment && <Caption icon={null}>{attachment.name} · local, not uploaded or analysed</Caption>}
       {!attachment && referenceImage && <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <Caption>Reference example, not this patient · {referenceImage.attribution} · {referenceImage.license}</Caption>
+        <Caption icon={null}>Reference example, not this patient · {referenceImage.attribution} · {referenceImage.license}</Caption>
         <SourceLink label="Source" onPress={() => { void Linking.openURL(referenceImage.sourceUrl).catch(() => setSourceError(true)); }} />
       </View>}
       {sourceError && <Notice warning>The source page could not be opened. Attribution remains available here.</Notice>}
     </View>
     {sections < 2 && <AnalysisStatus interrupted={interrupted} />}
     {sections >= 2 && <Reveal><Findings scenario={scenario} attachment={Boolean(attachment)} summary={referenceImage?.referenceSummary} /></Reveal>}
-    {sections === 2 && !interrupted && <Caption>Completing provenance and limitations…</Caption>}
+    {sections === 2 && !interrupted && <Caption icon={null}>Completing provenance and limitations…</Caption>}
     {sections >= 3 && <Reveal><View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
       <Icon name="info.circle" size={15} color={palette.muted} />
-      <Caption>{attachment || scenario !== "reference"
+      <Caption icon={null}>{attachment || scenario !== "reference"
         ? "Simulated response: no image-derived conclusion can be made. The original stays available to inspect."
         : "Describes only the published example, not this encounter, and does not establish model accuracy."}</Caption>
     </View></Reveal>}
@@ -119,7 +116,7 @@ function AnalysisDetails({ snapshot }: { snapshot?: Pick<Encounter, "imagingAtta
     <Findings scenario={scenario} attachment={attachment} summary={summary} />
     <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
       <Icon name="info.circle" size={15} color={palette.muted} />
-      <Caption>{attachment || scenario !== "reference" ? "Simulated response: no image-derived conclusion can be made." : "Describes only the published example, not this encounter, and does not establish model accuracy."}</Caption>
+      <Caption icon={null}>{attachment || scenario !== "reference" ? "Simulated response: no image-derived conclusion can be made." : "Describes only the published example, not this encounter, and does not establish model accuracy."}</Caption>
     </View>
   </View>;
 }
