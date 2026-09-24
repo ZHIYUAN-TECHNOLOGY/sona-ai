@@ -150,7 +150,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   useEffect(() => {
     if (!latest || !latestCard) return;
     const y = offsets.current[latest.id]; // Relative to the answer column; offset by the content inset below the top bar.
-    if (y !== undefined) scroll.current?.scrollTo({ y: Math.max(0, y + 8), animated: true });
+    if (y !== undefined) scroll.current?.scrollTo({ y: Math.max(0, y + 8), animated: !reducedMotion });
   }, [latestCard?.id]);
 
   const props: FeatureProps | undefined = patient ? { patient, onSource: id => router.push({ pathname: "/source", params: { id, patientId: patient.id } }), onOpen: open, onRequest: run } : undefined;
@@ -158,10 +158,10 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
 
   return <View style={{ flex: 1, backgroundColor: "#F1F2F4" }}>
-    {home && <Sidebar progress={drawerP} onClose={closeDrawer} onNew={() => router.push("/patients")} />}
+    {home && <Sidebar open={drawer} progress={drawerP} onClose={closeDrawer} onNew={() => router.push("/patients")} />}
     <GestureDetector gesture={dragClose}>
     <Animated.View style={[{ flex: 1, overflow: "hidden", borderCurve: "continuous", backgroundColor: palette.canvas }, pageStyle]}>
-    <View ref={backdrop} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas }}>
+    <View ref={backdrop} collapsable={false} accessibilityElementsHidden={drawer} importantForAccessibility={drawer ? "no-hide-descendants" : "auto"} style={{ flex: 1, backgroundColor: palette.canvas }}>
     <AmbientWash quiet={requests.length > 0} thinking={Boolean(thinking)} />
     <ScrollView ref={scroll} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentInsetAdjustmentBehavior="never" scrollEventThrottle={48}
       onScroll={event => { scrollY.current = event.nativeEvent.contentOffset.y; const next = scrollY.current > 8; if (next !== scrolled) setScrolled(next); }}
@@ -181,7 +181,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
               scroll.current?.scrollTo({ y: Math.max(0, event.nativeEvent.layout.y + 8), animated: false });
             }
           }} style={{ gap: 16, minHeight: req.id === latest?.id && req.status === "streaming" ? 320 : undefined }}>
-            <Text selectable style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{req.prompt || prompts[req.kind]}</Text>
+            <Text selectable accessibilityRole="header" style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{req.prompt || prompts[req.kind]}</Text>
             {resolved && answerPatient && <StreamedLead text={leadFor(req.kind, answerPatient)} animate={req.status === "streaming"} />}
             {card && props && <ResponseFrame pending={false} partial={req.status === "streaming"} onCancel={cancel} onSource={() => router.push({ pathname: "/source", params: { id: "history", patientId: patient!.id, cardId: card.id } })}>
               <Reveal>{card.revision !== encounter?.revision && <Notice>Earlier encounter revision {card.revision}. Its original context and sources are retained.</Notice>}{(() => { const body = <ClinicalResponseRenderer kind={card.kind} sections={card.sections} loading={req.status === "streaming"} featureProps={{ ...props, patient: card.patientSnapshot ?? props.patient, result: card, onSource: id => router.push({ pathname: "/source", params: { id, patientId: props.patient.id, cardId: card.id } }) }} />;
@@ -224,7 +224,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       onConsultation={() => open("recording")}
       onNote={() => open("note")}
       above={<>
-        {recording && <Pressable accessibilityRole="button" onPress={() => open("recording")} style={{ alignSelf: "center", minHeight: 40, paddingHorizontal: 16, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: palette.white, boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
+        {recording && <Pressable accessibilityRole="button" accessibilityLabel={`Consultation ${encounter?.recording === "paused" ? "paused" : "playing"}, ${encounter?.recordingSeconds} seconds`} accessibilityHint="Opens the consultation recorder" hitSlop={{ top: 2, bottom: 2 }} onPress={() => open("recording")} style={{ alignSelf: "center", minHeight: 40, paddingHorizontal: 16, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: palette.white, boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: encounter?.recording === "paused" ? palette.amber : palette.red }} /><Text style={{ fontSize: 13, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>Consultation {encounter?.recording === "paused" ? "paused" : "playing"} · {encounter?.recordingSeconds}s</Text>
         </Pressable>}
         {notice && <Notice>{notice}</Notice>}
