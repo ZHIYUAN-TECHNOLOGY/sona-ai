@@ -5,7 +5,7 @@ import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState, type ReactNode } from "react";
-import { AccessibilityInfo, Pressable, ScrollView, View, type StyleProp, type ViewStyle } from "react-native";
+import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import Animated, { FadeIn, FadeInDown, FadeOut, type AnimatedStyle, type LayoutAnimationFunction } from "react-native-reanimated";
 import { BrandIcon, type BrandIconName } from "./brand-icon";
 import { HalftoneGlint } from "./halftone-shimmer";
@@ -26,7 +26,12 @@ export function Glass({ children, style, opaque = false }: { children?: ReactNod
   const { reducedTransparency } = useAccessibleEffects();
   const base: StyleProp<ViewStyle> = [{ borderRadius: 26, borderCurve: "continuous", overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.8)" }, style];
   if (opaque || reducedTransparency) return <View style={[base, { backgroundColor: palette.surface }]}>{children}</View>;
-  if (process.env.EXPO_OS === "ios" && isLiquidGlassAvailable()) return <GlassView colorScheme="light" glassEffectStyle="regular" tintColor="rgba(248,250,255,0.3)" style={base}>{children}</GlassView>;
+  // Frost under the glass keeps content behind floating panels from competing with their text.
+  if (process.env.EXPO_OS === "ios" && isLiquidGlassAvailable()) return <View style={[base, { borderWidth: 0 }]}>
+    <BlurView tint="systemThinMaterialLight" intensity={70} style={StyleSheet.absoluteFill} />
+    <GlassView colorScheme="light" glassEffectStyle="regular" tintColor="rgba(250,251,255,0.45)" style={[StyleSheet.absoluteFill, { borderRadius: 26 }]} />
+    {children}
+  </View>;
   return <BlurView tint="light" intensity={35} style={[base, { backgroundColor: "rgba(249,251,255,0.72)" }]}>{children}</BlurView>;
 }
 export function Icon({ name, size = 21, color = palette.ink }: { name: string; size?: number; color?: string }) {
