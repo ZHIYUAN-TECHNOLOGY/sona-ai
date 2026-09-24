@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { interpolate, type SharedValue, useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEncounter } from "./store";
+import { openSession } from "./navigation";
 
 export const SIDEBAR_WIDTH = 300;
 
@@ -31,7 +32,7 @@ const Divider = () => <View style={{ height: 1, marginHorizontal: 14, marginVert
  */
 export function Sidebar({ progress, onClose, onNew }: { progress: SharedValue<number>; onClose: () => void; onNew: () => void }) {
   const insets = useSafeAreaInsets();
-  const { patient, patients, encounters, selectPatient } = useEncounter();
+  const { patient, patients, encounters } = useEncounter();
   // Close first, then navigate, so the page is back in place when the next screen presents.
   const go = (to: () => void) => () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); onClose(); setTimeout(to, 120); };
   const recent = patients.filter(p => encounters[p.id]?.requests.length);
@@ -39,8 +40,8 @@ export function Sidebar({ progress, onClose, onNew }: { progress: SharedValue<nu
   const primary: Item[] = [
     { label: "Home", icon: "home", active: true, onPress: onClose },
     { label: "Patients", icon: "patients", detail: `${patients.length} visits today`, onPress: go(() => router.push("/patients")) },
-    { label: "Consultation", icon: "stethoscope", detail: patient ? `Record with ${patient.name.split(" ")[0]}` : "Pick a visit first", onPress: go(() => router.push(patient ? "/recording" : "/patients")) },
-    { label: "Notes", icon: "note", onPress: go(() => router.push(patient ? "/note" : "/patients")) },
+    { label: "Consultation", icon: "stethoscope", detail: patient ? `Record with ${patient.name.split(" ")[0]}` : "Pick a visit first", onPress: go(() => router.push(patient ? "/recording" : { pathname: "/patients", params: { view: "recording" } })) },
+    { label: "Notes", icon: "note", onPress: go(() => router.push(patient ? "/note" : { pathname: "/patients", params: { view: "note" } })) },
     { label: "Follow-up tasks", icon: "tasks", onPress: go(() => router.push("/tasks")) },
   ];
 
@@ -69,7 +70,7 @@ export function Sidebar({ progress, onClose, onNew }: { progress: SharedValue<nu
         <Row item={{ label: "Share feedback", icon: "feedback", onPress: go(() => router.push("/history")) }} />
         <Divider />
         <Text style={{ fontSize: 13, color: palette.muted, paddingHorizontal: 14, paddingTop: 4, paddingBottom: 6 }}>History</Text>
-        {recent.length ? recent.map(p => <Row key={p.id} item={{ label: p.name, icon: "clock", detail: `${p.subtitle} · ${encounters[p.id]!.requests.length} ${encounters[p.id]!.requests.length === 1 ? "request" : "requests"}`, onPress: () => { selectPatient(p.id); onClose(); } }} />)
+        {recent.length ? recent.map(p => <Row key={p.id} item={{ label: p.name, icon: "clock", detail: `${p.subtitle} · ${encounters[p.id]!.requests.length} ${encounters[p.id]!.requests.length === 1 ? "request" : "requests"}`, onPress: go(() => openSession(p.id)) }} />)
           : <Text style={{ fontSize: 15, color: palette.muted, paddingHorizontal: 14, paddingVertical: 8 }}>Encounters appear here after your first request.</Text>}
       </ScrollView>
     </Animated.View>

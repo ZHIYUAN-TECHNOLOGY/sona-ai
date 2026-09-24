@@ -5,17 +5,19 @@ import { Alert, TextInput, View } from "react-native";
 import { Action, Body, Card, Icon, Label, Screen, SourceLink } from "@/components/sona/ui";
 import { palette } from "@/components/sona/theme";
 import { useEncounter } from "./store";
-import { capabilitySchema } from "./state";
+import { openSession } from "./navigation";
 
 export function PatientScreen() {
-  const { patients, patient, encounter, selectPatient, updateEncounter, request } = useEncounter();
-  const { next, view, prompt } = useLocalSearchParams<{ next?: string; view?: string; prompt?: string }>();
+  const { patients, patient, encounter, updateEncounter } = useEncounter();
+  const { next, view, prompt, switch: switching } = useLocalSearchParams<{ next?: string; view?: string; prompt?: string; switch?: string }>();
   const [expanded, setExpanded] = useState<string>();
   const [empty, setEmpty] = useState(false);
   const [query, setQuery] = useState("");
   const filtered = (empty ? [] : patients).filter(p => `${p.name} ${p.id}`.toLowerCase().includes(query.toLowerCase()));
   const select = (id: string) => {
-    const proceed = () => { selectPatient(id); router.back(); if (view === "recording" || view === "xray" || view === "note" || view === "tasks") setTimeout(() => router.push(`/${view}`), 250); else { const parsed = capabilitySchema.safeParse(next); if (parsed.success) request(parsed.data, prompt); } };
+    // Choosing a patient opens their session (switching from a session replaces it); a pending
+    // question or tool page is carried along and runs once the visit is open.
+    const proceed = () => { router.back(); setTimeout(() => openSession(id, { next, prompt, view }, switching === "1"), 250); };
     if (id !== patient?.id && (encounter?.recording === "recording" || encounter?.recording === "paused")) {
       Alert.alert("Stop this consultation?", "Stop the current playback before switching patients. Your transcript and note will be kept.", [{ text: "Keep this patient", style: "cancel" }, { text: "Stop & switch", onPress: () => { updateEncounter(current => ({ ...current, recording: "stopped" })); proceed(); } }]);
     } else proceed();

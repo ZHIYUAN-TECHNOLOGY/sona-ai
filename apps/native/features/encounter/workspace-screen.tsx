@@ -5,12 +5,13 @@ import { palette } from "@/components/sona/theme";
 import { Action, Notice, Reveal } from "@/components/sona/ui";
 import { ClinicalResponseRenderer } from "@/features/presentation";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, BackHandler, Keyboard, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { capabilityLabels, followUpsFor, Home, leadFor, StreamedLead, SuggestionList, suggestionFor, thinkingLabel, TopBar, type Suggestion } from "./conversation";
-import { routePrompt } from "./state";
+import { capabilitySchema, routePrompt } from "./state";
+import { openSession } from "./navigation";
 import { useEncounter } from "./store";
 import type { Capability, FeatureProps, FocusView } from "./types";
 import { VoiceDock } from "./voice-dock";
@@ -25,8 +26,32 @@ import type { OrbActivity } from "@/components/sona/orb-glyph";
 const activities: Record<Capability, OrbActivity> = { briefing: "reading", reasoning: "solving", xray: "breathing", medication: "checking", prescription: "composing", followup: "connecting", note: "composing" };
 const prompts: Record<Capability, string> = { briefing: "Brief me on this patient", reasoning: "What possibilities should I consider?", xray: "Review the chest X-ray", medication: "Review medication interactions", prescription: "Run the prescribing simulation", followup: "Prepare a follow-up plan", note: "Show the consultation note" };
 
-export function WorkspaceScreen() {
-  const { patient, patients, encounter, encounters, request, cancel, voiceInput, compactResponses, selectPatient, updateEncounter } = useEncounter();
+/**
+ * `home`: the launchpad (greeting, today's visits); never shows answers and has no visit open.
+ * `session`: one visit's conversation, pushed over home; swipe back returns home.
+ */
+export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session"; sessionId?: string }) {
+  const store = useEncounter();
+  const { patients, encounters, request, cancel, voiceInput, compactResponses, selectPatient, leaveVisit, updateEncounter } = store;
+  const home = mode === "home";
+  // Home ignores any visit another screen left selected; a session only ever shows its own visit.
+  // Read straight from the route so the first frame of the push already shows this visit.
+  const patient = home ? undefined : patients.find(p => p.id === sessionId);
+  const encounter = patient ? encounters[patient.id] : undefined;
+  const params = useLocalSearchParams<{ next?: string; prompt?: string; view?: string }>();
+  const arrived = useRef(false);
+  useFocusEffect(useCallback(() => {
+    if (home) { leaveVisit(); return; }
+    if (!sessionId) return;
+    selectPatient(sessionId);
+    // A question or tool page requested on the way in runs once, after the visit is open.
+    if (arrived.current) return;
+    arrived.current = true;
+    const next = capabilitySchema.safeParse(params.next);
+    if (next.success) request(next.data, params.prompt);
+    const view = params.view;
+    if (view === "recording" || view === "note" || view === "xray" || view === "tasks") setTimeout(() => router.push(`/${view}`), 320);
+  }, [home, sessionId, leaveVisit, selectPatient, request, params.next, params.prompt, params.view]));
   const insets = useSafeAreaInsets();
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const draftKey = patient?.id ?? "unassigned";
@@ -73,6 +98,9 @@ export function WorkspaceScreen() {
 
   const open = (view: FocusView) => { if (!patient) { router.push({ pathname: "/patients", params: { view } }); return; } router.push(`/${view}`); };
   const run = (kind: Capability, prompt = prompts[kind]) => { setNotice(undefined); if (!patient) { router.push({ pathname: "/patients", params: { next: kind, prompt } }); return; } request(kind, prompt); Keyboard.dismiss(); };
+  // Open a session at its latest answer rather than the top of the thread. Earlier answers can
+  // still settle (images, reveals) just after mount, so the landing follows them for a moment.
+  const landedAt = useRef<number | undefined>(undefined);
   const pick = (item: Suggestion) => item.kind === "recording" ? open("recording") : run(item.kind, item.text);
   const submit = (text: string) => { const prompt = text.trim(); if (!prompt) return; if (!patient) { setNotice("Pick a visit first. Today’s visits are listed above."); return; } const kind = routePrompt(prompt); if (!kind) { setNotice("Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan. Demo routing uses supported phrases."); return; } setInput(""); run(kind, prompt); };
 
@@ -96,7 +124,7 @@ export function WorkspaceScreen() {
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
 
   return <View style={{ flex: 1, backgroundColor: "#F1F2F4" }}>
-    <Sidebar progress={drawerP} onClose={closeDrawer} onNew={() => router.push("/patients")} />
+    {home && <Sidebar progress={drawerP} onClose={closeDrawer} onNew={() => router.push("/patients")} />}
     <GestureDetector gesture={dragClose}>
     <Animated.View style={[{ flex: 1, overflow: "hidden", borderCurve: "continuous", backgroundColor: palette.canvas }, pageStyle]}>
     <View ref={backdrop} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas }}>
@@ -104,14 +132,20 @@ export function WorkspaceScreen() {
     <ScrollView ref={scroll} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentInsetAdjustmentBehavior="never" scrollEventThrottle={48}
       onScroll={event => { const next = event.nativeEvent.contentOffset.y > 8; if (next !== scrolled) setScrolled(next); }}
       contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + 72, paddingBottom: insets.bottom + 150, flexGrow: 1 }}>
-      {!requests.length ? <Home patient={patient} patients={patients} onPick={pick} onChoosePatient={() => router.push("/patients")} onSelectPatient={selectPatient} />
+      {!requests.length ? <Home patient={patient} patients={patients} onPick={pick} onChoosePatient={() => router.push("/patients")} onSelectPatient={id => openSession(id)} />
       : <View style={{ gap: 44 }}>
         {compactResponses && requests.length > 1 && <Action label={showEarlier ? "Collapse earlier responses" : `Show ${requests.length - 1} earlier responses`} secondary onPress={() => setShowEarlier(value => !value)} />}
         {visible.map(req => {
           const card = encounter?.cards.find(c => c.requestId === req.id);
           const answerPatient = card?.patientSnapshot ?? patient;
           const resolved = Boolean(card) || req.status !== "streaming";
-          return <View key={req.id} collapsable={false} onLayout={event => { offsets.current[req.id] = event.nativeEvent.layout.y; }} style={{ gap: 16, minHeight: req.id === latest?.id && req.status === "streaming" ? 320 : undefined }}>
+          return <View key={req.id} collapsable={false} onLayout={event => {
+            offsets.current[req.id] = event.nativeEvent.layout.y;
+            if (req.id === latest?.id && requests.length > 1 && (landedAt.current === undefined || Date.now() - landedAt.current < 900)) {
+              landedAt.current ??= Date.now();
+              scroll.current?.scrollTo({ y: Math.max(0, event.nativeEvent.layout.y + 8), animated: false });
+            }
+          }} style={{ gap: 16, minHeight: req.id === latest?.id && req.status === "streaming" ? 320 : undefined }}>
             <Text selectable style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{req.prompt || prompts[req.kind]}</Text>
             {resolved && answerPatient && <StreamedLead text={leadFor(req.kind, answerPatient)} animate={req.status === "streaming"} />}
             {resolved && <Text style={{ fontSize: 12, color: palette.muted, letterSpacing: 0.2 }}>{capabilityLabels[req.kind]} · synthetic fixture</Text>}
@@ -129,7 +163,7 @@ export function WorkspaceScreen() {
       </View>}
     </ScrollView>
 
-    <TopBar patient={patient} inEncounter={requests.length > 0} openTasks={(patient ? [encounter] : Object.values(encounters)).reduce((sum, value) => sum + (value?.tasks.filter(task => !task.completed).length ?? 0), 0)} faded={scrolled || requests.length > 0} onMenu={openDrawer} onPatient={() => router.push("/patients")} onTasks={() => router.push("/tasks")} />
+    <TopBar patient={patient} inEncounter={!home} openTasks={(patient ? [encounter] : Object.values(encounters)).reduce((sum, value) => sum + (value?.tasks.filter(task => !task.completed).length ?? 0), 0)} faded={scrolled || requests.length > 0} onMenu={openDrawer} onBack={home ? undefined : () => router.canGoBack() ? router.back() : router.replace("/")} onPatient={() => router.push({ pathname: "/patients", params: { switch: "1" } })} onTasks={() => router.push("/tasks")} />
     </View>
 
     {requests.length > 0 && <LinearGradient pointerEvents="none" colors={["rgba(245,246,248,0)", "rgba(245,246,248,0.9)", palette.canvas]} locations={[0, 0.5, 1]} style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: insets.bottom + 120 }} />}

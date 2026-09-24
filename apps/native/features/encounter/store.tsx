@@ -7,7 +7,7 @@ import type { Capability, Encounter, Patient, RequestState } from "./types";
 type Store = {
   patient: Patient | undefined; patients: Patient[]; encounters: Record<string, Encounter>; encounter: Encounter | undefined;
   startAmendment: (reason: string) => void;
-  selectPatient: (id: string) => void; request: (kind: Capability, prompt?: string) => void; cancel: () => void;
+  selectPatient: (id: string) => void; leaveVisit: () => void; request: (kind: Capability, prompt?: string) => void; cancel: () => void;
   updateEncounter: (update: (current: Encounter) => Encounter, revise?: boolean) => void;
   voiceInput: boolean; setVoiceInput: (value: boolean) => void; compactResponses: boolean; setCompactResponses: (value: boolean) => void; simulateInvalid: boolean; setSimulateInvalid: (value: boolean) => void;
   simulateFailure: boolean; setSimulateFailure: (enabled: boolean) => void; reset: () => void;
@@ -31,6 +31,8 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
     if (id) setEncounters(prev => ({ ...prev, [id]: { ...prev[id]!, amendmentOperation: prev[id]!.amendmentOperation && !["complete", "failed", "cancelled"].includes(prev[id]!.amendmentOperation!.phase) ? { ...prev[id]!.amendmentOperation!, phase: "cancelled", error: "Amendment cancelled. The earlier receipt is retained." } : prev[id]!.amendmentOperation, requests: prev[id]!.requests.map(r => r.status === "streaming" ? { ...r, status: "cancelled" } : r) } }));
   }, [clearTimers]);
   const selectPatient = useCallback((id: string) => { if (!patients.some(p => p.id === id) || activeRef.current === id) return; cancel(); activeRef.current = id; setPatientId(id); }, [cancel]);
+  // Home has no visit open: leaving stops any answer still arriving so nothing is left half-streamed.
+  const leaveVisit = useCallback(() => { if (!activeRef.current) return; cancel(); activeRef.current = undefined; setPatientId(undefined); }, [cancel]);
   const updateEncounter = useCallback((update: (current: Encounter) => Encounter, revise = false) => {
     const id = activeRef.current; if (!id) return;
     setEncounters(prev => { const next = update(prev[id]!); return { ...prev, [id]: revise ? reviseEncounter(next) : next }; });
@@ -89,6 +91,6 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
   const reset = useCallback(() => { cancel(); setEncounters(initialEncounters()); setPatientId(undefined); activeRef.current = undefined; setSimulateFailure(false); setSimulateInvalid(false); }, [cancel]);
   const currentPatients = patients.map(p => effectivePatient(p, encounters[p.id]));
   const patient = currentPatients.find(p => p.id === patientId);
-  return <Context value={{ patient, patients: currentPatients, encounters, encounter: patientId ? encounters[patientId] : undefined, selectPatient, request, cancel, startAmendment, updateEncounter, voiceInput, setVoiceInput, compactResponses, setCompactResponses, simulateInvalid, setSimulateInvalid, simulateFailure, setSimulateFailure, reset }}>{children}</Context>;
+  return <Context value={{ patient, patients: currentPatients, encounters, encounter: patientId ? encounters[patientId] : undefined, selectPatient, leaveVisit, request, cancel, startAmendment, updateEncounter, voiceInput, setVoiceInput, compactResponses, setCompactResponses, simulateInvalid, setSimulateInvalid, simulateFailure, setSimulateFailure, reset }}>{children}</Context>;
 }
 export function useEncounter() { const value = use(Context); if (!value) throw new Error("EncounterProvider is required"); return value; }

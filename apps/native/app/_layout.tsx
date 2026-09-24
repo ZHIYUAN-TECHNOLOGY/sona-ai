@@ -13,6 +13,7 @@ export const unstable_settings = { initialRouteName: "index" };
 export default function RootLayout() {
   return <GestureHandlerRootView style={{ flex: 1 }}><KeyboardProvider><SafeAreaProvider><EncounterProvider><ScribePlayback /><StatusBar style="dark" /><Stack screenOptions={{ headerLeft: () => <IconButton name="chevron.left" label="Return to previous screen" onPress={() => router.canGoBack() ? router.back() : router.replace("/")} />, headerStyle: { backgroundColor: palette.canvas }, headerTintColor: palette.ink, headerShadowVisible: false, headerBackButtonDisplayMode: "minimal", contentStyle: { backgroundColor: palette.canvas } }}>
     <Stack.Screen name="index" options={{ headerShown: false }} />
+    <Stack.Screen name="session/[patientId]" options={{ headerShown: false }} />
     <Stack.Screen name="patients" options={{ title: "Choose a patient", presentation: "formSheet", sheetAllowedDetents: [0.75, 1], sheetGrabberVisible: true }} />
     <Stack.Screen name="source" options={{ title: "Source detail", presentation: "formSheet", sheetAllowedDetents: [0.6, 1], sheetGrabberVisible: true }} />
     <Stack.Screen name="recording" options={{ title: "Consultation", presentation: "modal" }} />

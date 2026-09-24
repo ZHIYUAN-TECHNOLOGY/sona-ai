@@ -1,5 +1,6 @@
 import { Text } from "@/components/sona/text";
 import { palette } from "@/components/sona/theme";
+import { useEncounter } from "./store";
 import { Icon, pillStyle, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { LinearGradient } from "expo-linear-gradient";
@@ -115,14 +116,15 @@ function Round({ children, label, onPress }: { children: ReactNode; label: strin
  * Floating header: menu on the left; follow-up tasks on the right (the thing a clinician checks
  * between patients). Inside an encounter, the patient chip joins it so every answer's subject stays visible.
  */
-export function TopBar({ patient, inEncounter, openTasks, faded, onMenu, onPatient, onTasks }: { patient?: Patient; inEncounter: boolean; openTasks: number; faded: boolean; onMenu: () => void; onPatient: () => void; onTasks: () => void }) {
+export function TopBar({ patient, inEncounter, openTasks, faded, onMenu, onBack, onPatient, onTasks }: { patient?: Patient; inEncounter: boolean; openTasks: number; faded: boolean; onMenu: () => void; onBack?: () => void; onPatient: () => void; onTasks: () => void }) {
   const insets = useSafeAreaInsets();
   return <View pointerEvents="box-none" style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
     <Animated.View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top + 84, opacity: faded ? 1 : 0, transitionProperty: "opacity", transitionDuration: 200, transitionTimingFunction: EASE_OUT }}>
       <LinearGradient colors={[palette.canvas, palette.canvas, "rgba(245,246,248,0)"]} locations={[0, 0.62, 1]} style={{ flex: 1 }} />
     </Animated.View>
     <View pointerEvents="box-none" style={{ paddingTop: insets.top + 6, paddingHorizontal: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-      <Round label="History and settings" onPress={onMenu}><BrandIcon name="menu" size={22} /></Round>
+      {/* Home opens the menu; a session goes back to home (swiping from the edge does the same). */}
+      {onBack ? <Round label="Back to home" onPress={onBack}><BrandIcon name="back" size={22} /></Round> : <Round label="History and settings" onPress={onMenu}><BrandIcon name="menu" size={22} /></Round>}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         {patient && inEncounter && <Animated.View entering={riseIn({ distance: 6, scale: 0.96, duration: 240 })}>
           <Round label={`Current patient ${patient.name}, ${patient.id}. Change patient`} onPress={onPatient}>
@@ -147,6 +149,7 @@ function greeting() { const hour = new Date().getHours(); return hour < 12 ? "Go
 
 /** Idle canvas: one greeting, one line of context, a couple of starting points. */
 export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatient }: { patient?: Patient; patients: Patient[]; onPick: (item: Suggestion) => void; onChoosePatient: () => void; onSelectPatient: (id: string) => void }) {
+  const { encounters } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 80 + i * 70, distance: 14, duration: 460 });
   const lead = { fontSize: 27, lineHeight: 35, letterSpacing: -0.6, color: palette.ink } as const;
@@ -169,13 +172,15 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
       <Text accessibilityRole="header" style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>{patient ? "You might want to ask" : "Today’s visits"}</Text>
       {patient ? <SuggestionList items={(["briefing", "xray", "medication"] as const).map(kind => suggestionFor(kind, patient))} onPick={onPick} />
         : <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20, marginVertical: -14 }} contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 14, gap: 10 }}>
-          {patients.map(item => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`${item.name}, ${item.time}, ${item.subtitle}`} onPress={() => onSelectPatient(item.id)}
+          {patients.map(item => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`${item.name}, ${item.time}, ${item.subtitle}${encounters[item.id]?.requests.length ? `, continue session with ${encounters[item.id]!.requests.length} answers` : ""}`} onPress={() => onSelectPatient(item.id)}
             style={({ pressed }) => ({ width: 188, padding: 16, gap: 14, ...surfaceStyle, borderRadius: 22, transform: [{ scale: pressed ? 0.97 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
               <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: "#DCE7FB", alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 13, fontWeight: "600", color: palette.blue }}>{item.initials}</Text></View>
               <Text style={{ fontSize: 13, color: palette.muted, fontVariant: ["tabular-nums"] }}>{item.time}</Text>
             </View>
             <View style={{ gap: 3 }}><Text style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>{item.name}</Text><Text style={{ fontSize: 13, color: palette.muted }}>{item.subtitle}</Text></View>
+            {/* A visit with a session shows it; tapping reopens it at the latest answer. */}
+            {!!encounters[item.id]?.requests.length && <Text style={{ fontSize: 12, fontWeight: "600", color: palette.blue }}>Continue · {encounters[item.id]!.requests.length} {encounters[item.id]!.requests.length === 1 ? "answer" : "answers"}</Text>}
           </Pressable>)}
         </ScrollView>}
     </Animated.View>
