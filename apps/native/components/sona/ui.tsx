@@ -40,7 +40,7 @@ export function Icon({ name, size = 21, color = palette.ink }: { name: string; s
 }
 export function Label({ children, muted = false }: { children: ReactNode; muted?: boolean }) { return <Text selectable style={{ color: muted ? palette.muted : palette.blue, ...type.overline }}>{children}</Text>; }
 export function Body({ children, muted = false }: { children: ReactNode; muted?: boolean }) { return <Text selectable style={{ color: muted ? palette.muted : palette.ink, fontSize: 16, lineHeight: 24 }}>{children}</Text>; }
-export function Title({ children }: { children: ReactNode }) { return <Text selectable style={{ color: palette.ink, ...type.title, fontWeight: "600" }}>{children}</Text>; }
+export function Title({ children }: { children: ReactNode }) { return <Text selectable accessibilityRole="header" style={{ color: palette.ink, ...type.title, fontWeight: "600" }}>{children}</Text>; }
 /**
  * Primary: ink capsule with a dotted glint (the brand's dithering, kept to the action that matters).
  * Secondary: a quiet glass capsule. Both press to 0.96.
@@ -99,7 +99,7 @@ export function RoundAction({ icon, label, ready, onPress, size = 36, hint }: { 
 
 /** Pill control. `filled` shows a chosen value (blue wash), `selected` a picked option (ink), `expanded` the pill whose options are open. */
 export function Chip({ label, icon, filled = false, selected = false, expanded, onPress, accessibilityLabel }: { label: string; icon?: ReactNode; filled?: boolean; selected?: boolean; expanded?: boolean; onPress: () => void; accessibilityLabel?: string }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} accessibilityState={{ selected, expanded }} onPress={onPress}
+  return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} accessibilityState={{ selected, expanded }} onPress={onPress} hitSlop={{ top: 2, bottom: 2 }}
    >{({ pressed }) => <Animated.View style={{ minHeight: 40, paddingHorizontal: icon ? 13 : 15, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 7, borderWidth: 1, borderColor: expanded ? palette.blue : selected ? palette.ink : filled ? "rgba(36,91,204,0.14)" : glass.hairline, backgroundColor: selected ? palette.ink : filled ? "#E6EEFC" : "rgba(244,246,250,0.9)", boxShadow: selected || filled ? undefined : `inset 0 1px 0 ${palette.white}`, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor", "borderColor"], transitionDuration: 150 } as never}>
     {icon}
     <Animated.Text key={label} entering={FadeIn.duration(160)} style={{ fontSize: 15, fontWeight: "500", color: selected ? palette.white : filled ? palette.blue : palette.ink }}>{label}</Animated.Text>
