@@ -88,6 +88,8 @@ Not yet done: the other six capabilities as generated sections, and on-device fe
 
 ## Design system: glass first, dithering as accent (2026-09-24)
 
+**Minimalist first.** Every screen says one thing: a lead sentence and at most one feature surface. Copy is trimmed to what a clinician needs; safety and provenance notes stay but as one quiet line each. Detail is on demand (opens in place with `Expand`), never all shown at once. No duplicate labels, hints or actions that do the same thing; no decoration without a job. When in doubt, remove.
+
 Roughly 90% of what a clinician sees is liquid glass and quiet material; about 10% is halftone dithering, and it is only ever an accent that marks where to act or where Sona is working. Primitives live in `components/sona/ui.tsx` and `components/sona/motion.ts`; screens compose them rather than styling their own cards.
 
 | Layer | Use | Material | Dithering |
