@@ -126,7 +126,7 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
   return <LayoutAnimationConfig skipEntering>
     <View style={{ gap: 28 }}>
       <Animated.View layout={layout}>
-        <Section title={title} subtitle={subtitle}>
+        <Section icon="cross.case" tone="blue" title={title} subtitle={subtitle}>
           {stale && <Notice warning>Receipt revision {prescription.revision} is retained unchanged. The current encounter is revision {encounter?.revision}.</Notice>}
           {reasons.map((reason, index) => <StatusLine key={`${index}-${reason}`} state="blocked">{reason}</StatusLine>)}
           {!created && <View style={{ gap: 4 }}>
@@ -138,7 +138,7 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
       </Animated.View>
 
       <Animated.View layout={layout}>
-        <Section title="Checks before action" subtitle={issuing ? "Checking each prerequisite against the current encounter…" : `${passed} of ${checks.length} met · workflow checks, not clinical confidence`}>
+        <Section icon="checklist" tone="teal" title="Checks before action" subtitle={issuing ? "Checking each prerequisite against the current encounter…" : `${passed} of ${checks.length} met · workflow checks, not clinical confidence`}>
           <Surface feature={!created} layout={layout} style={{ paddingHorizontal: 18, paddingTop: 6, paddingBottom: 18, gap: 12 }}>
             <CheckList checks={checks} checking={issuing} fresh={fresh} />
             <Animated.View layout={layout}><Hairline /></Animated.View>
@@ -165,7 +165,7 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
       </Animated.View>
 
       {created && prescription && <Animated.View layout={layout} entering={fresh && !reduced ? riseIn({ delay: riseDelay, distance: 16, duration: 380 }) : undefined}>
-        <Section title="Immutable receipt" subtitle="This version never changes; an amendment adds a new one.">
+        <Section icon="checkmark.seal" tone="teal" title="Immutable receipt" subtitle="This version never changes; an amendment adds a new one.">
           <Surface feature layout={layout} style={{ padding: 20, gap: 16 }}>
             <View accessible accessibilityLabel={`Simulated prescription created. ${regimen.medication}, simulation only. Synthetic patient.`} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <Seal stampDelay={fresh ? stampDelay : undefined} />

@@ -9,6 +9,7 @@ import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, View, type StyleP
 import Animated, { FadeIn, FadeInDown, FadeOut, type AnimatedStyle, type LayoutAnimationFunction } from "react-native-reanimated";
 import { BrandIcon, type BrandIconName } from "./brand-icon";
 import { HalftoneGlint } from "./halftone-shimmer";
+import { useCapturedSource } from "./sources";
 import { fold, LAYOUT, unfold } from "./motion";
 import { palette, type } from "./theme";
 
@@ -108,7 +109,11 @@ export function Chip({ label, icon, filled = false, selected = false, expanded, 
 export function Card({ children, label, title, footer, feature = false }: { children: ReactNode; label?: string; title?: string; footer?: ReactNode; feature?: boolean }) {
   return <Surface feature={feature} style={{ padding: 20, gap: 14 }}>{label && <Label>{label}</Label>}{title && <Title>{title}</Title>}{children}{footer && <View style={{ paddingTop: 12, borderTopWidth: 1, borderColor: glass.hairline }}>{footer}</View>}</Surface>;
 }
-export function SourceLink({ label = "View source", onPress }: { label?: string; onPress: () => void }) { return <Pressable accessibilityRole="button" onPress={onPress} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 7 }}><Icon name="doc.text" color={palette.blue} size={15} /><Text style={{ fontSize: 13, color: palette.blue, fontWeight: "500", flexShrink: 1 }}>{label}</Text><Icon name="arrow.up.right" color={palette.blue} size={11} /></Pressable>; }
+export function SourceLink({ label = "View source", onPress }: { label?: string; onPress: () => void }) {
+  // Inside a section, sources gather into that section's one pill instead of drawing links.
+  if (useCapturedSource({ label, onPress })) return null;
+  return <Pressable accessibilityRole="button" onPress={onPress} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 7 }}><Icon name="doc.text" color={palette.blue} size={15} /><Text style={{ fontSize: 13, color: palette.blue, fontWeight: "500", flexShrink: 1 }}>{label}</Text><Icon name="arrow.up.right" color={palette.blue} size={11} /></Pressable>;
+}
 export function Notice({ children, warning = false }: { children: ReactNode; warning?: boolean }) { return <View style={{ backgroundColor: warning ? "rgba(244,235,221,0.85)" : "rgba(226,235,250,0.75)", borderWidth: 1, borderColor: "rgba(255,255,255,0.8)", borderRadius: 18, borderCurve: "continuous", padding: 14, flexDirection: "row", alignItems: "flex-start", gap: 9 }}><Icon name={warning ? "exclamationmark.circle" : "info.circle"} color={warning ? palette.amber : palette.blue} size={17} /><Text selectable style={{ color: warning ? palette.amber : palette.muted, fontSize: 13, lineHeight: 20, flex: 1 }}>{children}</Text></View>; }
 export function Screen({ children }: { children: ReactNode }) { return <ScrollView style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: "radial-gradient(circle at 8% 4%, rgba(150,190,255,0.38) 0%, rgba(150,190,255,0) 42%), radial-gradient(circle at 96% 38%, rgba(196,176,255,0.26) 0%, rgba(196,176,255,0) 40%), radial-gradient(circle at 20% 92%, rgba(150,220,235,0.26) 0%, rgba(150,220,235,0) 45%), linear-gradient(to bottom, #F5F6F8 0%, #EFF2F7 45%, #E3EBF7 100%)" }} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingBottom: 44, gap: 18 }}>{children}</ScrollView>; }
 export function Reveal({ children }: { children: ReactNode }) { const reduced = useReduceMotionPreference(); return <Animated.View entering={reduced ? undefined : FadeInDown.duration(220)} style={{ gap: 14 }}>{children}</Animated.View>; }

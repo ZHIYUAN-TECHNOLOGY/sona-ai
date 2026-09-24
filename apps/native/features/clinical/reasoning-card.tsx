@@ -84,18 +84,17 @@ export function ReasoningCard({ patient, result, onSource, onOpen, onRequest }: 
   return <View style={{ gap: 20 }}>
     <Takeaways items={takeaways} />
     <Anchor id="possibilities" title={patient.incomplete ? "Gaps" : "Possibilities"}>
-    <Section title={patient.incomplete ? "What to collect first" : "Possibilities to explore"}>
+    <Section icon={patient.incomplete ? "checklist" : "lightbulb"} tone={patient.incomplete ? "amber" : "violet"} title={patient.incomplete ? "What to collect first" : "Possibilities to explore"}>
       {!patient.incomplete && <Surface layout={layout} style={{ paddingHorizontal: 16 }}>
         {possibilities(patient, presentingSource, medicalSource).map((item, index) => <Disclosure key={item.id} first={index === 0} icon={item.icon} title={item.title} detail={item.summary}
           open={open.includes(item.id)} onToggle={() => toggle(item.id)} accessibilityHint="Shows what supports it, what conflicts and what is still needed">
           {EVIDENCE.map(([key, icon, label], row) => <Animated.View key={key} entering={reducedMotion ? undefined : riseIn({ delay: 60 + 40 * row, distance: 6, duration: 260 })} style={{ paddingLeft: 6 }}>
             <IconRow icon={icon} title={label} detail={item.evidence[key]} />
           </Animated.View>)}
-          <View style={{ paddingLeft: 6, flexDirection: "row", flexWrap: "wrap", columnGap: 18 }}>
-            {item.sources.map(source => <SourceLink key={source.label} label={source.label} onPress={() => onSource(source.id)} />)}
-          </View>
           {item.xray && <Action label="Review the X-ray attachment" icon="photo" secondary onPress={() => onRequest("xray")} />}
         </Disclosure>)}
+        {/* Registered outside the disclosures so the section's sources pill counts them while collapsed. */}
+        {possibilities(patient, presentingSource, medicalSource).flatMap(item => item.sources).map(source => <SourceLink key={source.label} label={source.label} onPress={() => onSource(source.id)} />)}
       </Surface>}
       {patient.incomplete && <Surface style={{ paddingHorizontal: 16 }}>
         {GAPS.map((gap, index) => <GapRow key={gap.title} title={gap.title} detail={gap.detail} index={index} reduced={reducedMotion} updates={facts.filter(fact => gap.categories.includes(fact.category)).length} />)}

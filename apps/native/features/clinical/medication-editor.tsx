@@ -28,7 +28,7 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
   const editDraft = (change: Partial<MedicationEntry>) => updateEncounter(value => ({ ...value, medicationDraft: value.medicationDraft ? { ...value.medicationDraft, ...change, confirmed: false } : undefined }));
   const row = { flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 13 } as const;
 
-  return <Section title="Confirm what’s being taken" subtitle={`${confirmed} of ${entries.length} confirmed · unknown entries stay unresolved`}>
+  return <Section icon="pills" tone="blue" title="Confirm what’s being taken" subtitle={`${confirmed} of ${entries.length} confirmed · unknown entries stay unresolved`}>
     <Surface layout={layout} style={{ paddingVertical: 4 }}>
       {entries.map((entry, index) => {
         const editing = draft?.id === entry.id;

@@ -114,6 +114,13 @@ Generated answers no longer read as one long scroll (`components/sona/answer-kit
 - **Briefing as pages:** the pre-visit briefing shows its detail as swipeable pages (Vitals, Timeline, History, Next) with segmented progress; side pages sit back at 0.96 and dim.
 Takeaway text is authored for the fixtures; generated responses should emit takeaways and sections in the json-render spec.
 
+## Section headers and grouped sources (2026-09-24)
+
+- Each generated section opens with a landmark header: a 30 pt tinted icon tile (blue, teal, amber or violet by meaning), the title in the heading style, and an optional one-line subtitle. `Anchor` sections draw the same header when given an icon.
+- Sources no longer sit inline. Every `SourceLink` or `IconRow` source inside a section registers with the section, which shows one quiet pill on the right of its header (up to three stacked badges plus "N sources", after Slack's summarize pill). Ten or twenty sources still cost one pill.
+- Tapping the pill opens a native sheet listing the sources, with a filter once there are more than six. Picking a row closes the sheet and opens the source detail.
+- Briefing deck pages show the pill at the bottom right of each page.
+
 ## Typography and AI text (2026-09-24)
 
 - **Type scale** (`type` in `components/sona/theme.ts`, iOS-sized, named by use): display 27/35, title 22/31, heading 19/25, headline 17/23, body 16/24, callout 15/21, subhead 14/20, footnote 13/18, caption 12/16, overline 11/14 uppercase +0.8 tracking. Headings track slightly negative; body text sits near 1.5; nothing thinner than 400 below 18 pt except display numerals (timers, clocks). One-off sizes were folded onto the scale. The shared `Text` uses iOS "push-out" line breaking so a lone word doesn't strand on the last line.

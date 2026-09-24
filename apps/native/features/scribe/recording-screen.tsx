@@ -253,7 +253,7 @@ export function RecordingScreen() {
       </Surface>
 
       <Animated.View layout={layout}>
-        <Section title="Transcript" subtitle={!lines.length && !interim ? (stopped ? "No speech captured, so there is nothing to draft from." : "Dialogue appears here as the sample plays. Speaker labels are yours to confirm.") : interpretation ? "English interpretation, with the original kept for comparison." : "Original dialogue as captured. Tap a turn to correct its text or speaker."}>
+        <Section icon="waveform" tone="blue" title="Transcript" subtitle={!lines.length && !interim ? (stopped ? "No speech captured, so there is nothing to draft from." : "Dialogue appears here as the sample plays. Speaker labels are yours to confirm.") : interpretation ? "English interpretation, with the original kept for comparison." : "Original dialogue as captured. Tap a turn to correct its text or speaker."}>
           {lines.length > 0 && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             <Chip label="Original dialogue" selected={!interpretation} onPress={() => setInterpretation(false)} />
             <Chip label="English interpretation" selected={interpretation} onPress={() => setInterpretation(true)} />

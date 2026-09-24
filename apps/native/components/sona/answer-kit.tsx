@@ -1,9 +1,10 @@
 import * as Haptics from "expo-haptics";
-import { createContext, use, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { createContext, use, useEffect, useRef, useState, type ComponentProps, type ReactNode, type RefObject } from "react";
 import { Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { MarkedText } from "./marked-text";
 import { LAYOUT, riseIn } from "./motion";
+import { Section } from "./sections";
 import { Text } from "./text";
 import { palette, type } from "./theme";
 import { Expand, Icon, Surface, pillStyle, useAccessibleEffects } from "./ui";
@@ -82,10 +83,10 @@ export function Fold({ id, title, preview, defaultOpen = false, children }: { id
   </Surface>;
 }
 
-/** An always-open section that still gets a tab. */
-export function Anchor({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+/** An always-open section that still gets a tab; with an icon it draws a section header (and sources pill). */
+export function Anchor({ id, title, icon, tone, children }: { id: string; title: string; icon?: string; tone?: ComponentProps<typeof Section>["tone"]; children: ReactNode }) {
   const ref = useRegister(id, title);
-  return <View ref={ref} collapsable={false}>{children}</View>;
+  return <View ref={ref} collapsable={false}>{icon ? <Section icon={icon} tone={tone} title={title}>{children}</Section> : children}</View>;
 }
 
 /**

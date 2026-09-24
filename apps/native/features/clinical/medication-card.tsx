@@ -38,12 +38,12 @@ export function MedicationCard({ patient, onSource, onRequest, onOpen }: Feature
       <MedicationEditor patient={patient} onRequest={onRequest} />
     </Animated.View></Anchor>
 
-    <Anchor id="interactions" title="Interactions"><Animated.View layout={layout} style={{ gap: 16 }}>
+    <Anchor id="interactions" title="Interactions" icon="arrow.triangle.branch" tone="amber"><Animated.View layout={layout} style={{ gap: 16 }}>
       <IconRow icon="allergens" title="Allergies" detail={patient.allergies ?? "Unknown — collect an allergy history"} sourceLabel="Original intake & allergy record" onSource={() => onSource("history")} />
       <InteractionResults patient={patient} onSource={onSource} onRequest={onRequest} />
     </Animated.View></Anchor>
 
-    <Anchor id="prescribing" title="Prescribing"><Surface feature layout={layout} style={{ padding: 18, gap: 12 }}>
+    <Anchor id="prescribing" title="Prescribing" icon="doc.badge.plus" tone="teal"><Surface feature layout={layout} style={{ padding: 18, gap: 12 }}>
       <StatusLine state={confirmed ? "done" : "blocked"}>{confirmed ? "Identities confirmed for the simulation" : "Unconfirmed identities block the simulation"}</StatusLine>
       <StatusLine state={reviewing ? "pending" : reviewed ? "done" : "blocked"}>{reviewed ? "Review current for this revision" : "Review not current — run it before simulating"}</StatusLine>
       <Footnote>No validated interaction database is connected. This fixture can’t clear a medicine or show a combination is safe.</Footnote>

@@ -27,7 +27,7 @@ export function NoteCard({ onOpen, onSource, patient }: FeatureProps) {
   const note = encounter?.note;
   const sections = encounter && (encounter.noteSectionDraft ?? encounter.noteSections ?? readNoteSections(encounter.note));
   return <View style={{ gap: 18 }}>
-    <Section title={note ? "Your consultation, captured" : "Room for the conversation"} subtitle={note ? encounter?.noteReviewed ? "Marked reviewed in this local session." : "Draft ready. Add your assessment and plan." : "Play a scripted sample, then draft an editable English note."}>
+    <Section icon="doc.text" tone="blue" title={note ? "Your consultation, captured" : "Room for the conversation"} subtitle={note ? encounter?.noteReviewed ? "Marked reviewed in this local session." : "Draft ready. Add your assessment and plan." : "Play a scripted sample, then draft an editable English note."}>
       {note && sections ? <View style={{ gap: 20 }}>
         {sectionKeys.map(key => <IconRow key={key} icon={noteMeta[key].icon} title={noteMeta[key].title} detail={sections[key].trim() ? clip(sections[key].trim()) : emptyDetail[key]} />)}
         <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>Dialogue sections are drafts to verify against source. Assessment and plan are clinician authored.</Text>

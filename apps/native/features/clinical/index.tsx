@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { View } from "react-native";
 import { AnswerDeck, Takeaways, type Takeaway } from "@/components/sona/answer-kit";
 import { MarkedText } from "@/components/sona/marked-text";
+import { SourceScope, SourcesPill } from "@/components/sona/sources";
 import { Action, Notice, SourceLink, Surface } from "@/components/sona/ui";
 import { IconRow } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
@@ -32,7 +33,8 @@ export function BriefingCard({ patient, result, onSource, onOpen, onRequest }: F
   const takeaways: Takeaway[] = patient.incomplete
     ? [{ tone: "caution", text: "Onset, observations and background are missing" }, { tone: "info", text: "Breathlessness on exertion is the only recorded complaint" }, { tone: "caution", text: "Medicines and allergies are unknown" }]
     : [{ tone: "caution", text: `Temperature ${patient.vitals.find(v => v.label === "Temp")?.value ?? ""} is the only raised vital` }, { tone: "good", text: "Long history of asthma, no admissions on record" }, { tone: "caution", text: `${patient.allergies?.split(" — ")[0] ?? "Allergy"} allergy still needs confirming` }];
-  const card = (children: ReactNode) => <Surface style={{ padding: 16, gap: 14 }}>{children}</Surface>;
+  // Each page gathers its sources into one pill at the bottom instead of links under every row.
+  const card = (children: ReactNode) => <SourceScope>{sources => <Surface style={{ padding: 16, gap: 14 }}>{children}{sources.length > 0 && <View style={{ alignItems: "flex-end" }}><SourcesPill sources={sources} /></View>}</Surface>}</SourceScope>;
   // Digest first, then the detail as swipeable pages (briefing is a glance before the visit).
   return <View style={{ gap: 20 }}>
     <Takeaways items={takeaways} />
