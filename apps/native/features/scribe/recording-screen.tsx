@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Keyboard, KeyboardAvoidingView, Pressable, TextInput, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
@@ -6,7 +6,7 @@ import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Section } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette } from "@/components/sona/theme";
-import { Action, Chip, Expand, Icon, Notice, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Chip, Expand, Icon, IconButton, Notice, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { TranscriptLine } from "@/features/encounter/types";
 import { LiveWaveform } from "./live-waveform";
@@ -134,7 +134,7 @@ function statusFor(capture: Capture, recording: string | undefined): { label: st
  * controls for that state); the transcript grows beneath it as a rail of speaker turns.
  */
 export function RecordingScreen() {
-  const { patient, encounter, updateEncounter } = useEncounter();
+  const { patient, encounter, updateEncounter, showDemoControls } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const [interpretation, setInterpretation] = useState(false);
   const [capture, setCapture] = useState<Capture>("ready");
@@ -176,10 +176,14 @@ export function RecordingScreen() {
   const toneFor = (speaker: string) => speaker === firstSpeaker ? palette.blue : palette.ink;
   const lines = encounter.transcript;
 
+  const minimizeLabel = active || paused ? "Minimize to encounter" : "Return to encounter";
+
   return <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}><Screen>
+    {/* Minimize is the header's one control; playback keeps running from the encounter shell. */}
+    <Stack.Screen options={{ headerLeft: () => <IconButton name="chevron.down" label={minimizeLabel} onPress={() => router.back()} /> }} />
     <View style={{ gap: 4 }}>
       <Text selectable style={{ fontSize: 13, fontWeight: "600", color: palette.blue }}>{patient.name} · {patient.id}</Text>
-      <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>Scripted playback · no microphone is active. This sample demonstrates the recording and transcription interface.</Text>
+      <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>Scripted sample · no microphone active, no audio recorded.</Text>
     </View>
 
     {unavailable ? <Section title="No consultation sample" subtitle="This patient has incomplete history. A dialogue has not been authored for this encounter.">
@@ -201,7 +205,6 @@ export function RecordingScreen() {
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
             <LiveWaveform state={active ? "live" : idle ? "idle" : "held"} reducedMotion={reducedMotion} />
           </View>
-          <Text style={{ fontSize: 12, color: palette.muted }}>Illustrative waveform · {total}-second scripted sample</Text>
         </View>
 
         {idle && <View style={{ gap: 10 }}>
@@ -210,7 +213,6 @@ export function RecordingScreen() {
             <Chip label="English" selected={encounter.language === "english"} onPress={() => updateEncounter(current => ({ ...current, language: "english" }))} />
             <Chip label="Manglish · Malay, English, Mandarin" selected={encounter.language === "manglish"} onPress={() => updateEncounter(current => ({ ...current, language: "manglish" }))} />
           </View>
-          <Text style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>English clinical output with the original dialogue kept alongside.</Text>
         </View>}
 
         {(capture === "permission" || capture === "denied") && <Expand key="permission" style={{ gap: 12 }}>
@@ -240,11 +242,10 @@ export function RecordingScreen() {
         {stopped && <Action label={encounter.note ? "Open existing note" : "Create draft note"} icon="doc.text" secondary={capture === "failed"} disabled={!canDraft} onPress={createDraft} />}
         {partial && capture !== "failed" && <Action label="Continue remaining sample" secondary icon="play.fill" disabled={capture === "processing"} onPress={play} />}
 
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          <Chip label={active || paused ? "Minimize to encounter" : "Return to encounter"} onPress={() => router.back()} />
-          {(active || paused) && <Chip label="Prototype controls" expanded={prototype} onPress={() => setPrototype(value => !value)} />}
-        </View>
-        {(active || paused) && prototype && <Expand key="prototype" style={{ gap: 10 }}>
+        {showDemoControls && (active || paused) && <View style={{ flexDirection: "row" }}>
+          <Chip label="Prototype controls" expanded={prototype} onPress={() => setPrototype(value => !value)} />
+        </View>}
+        {showDemoControls && (active || paused) && prototype && <Expand key="prototype" style={{ gap: 10 }}>
           <Text style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>Exercise recovery without using a microphone.</Text>
           <Action label="Simulate interruption" secondary onPress={() => { haptic("warn"); setCapture("interrupted"); updateEncounter(current => ({ ...current, recording: "paused" })); }} />
           <Action label="Simulate capture failure" secondary onPress={() => { haptic("warn"); setCapture("failed"); updateEncounter(current => ({ ...current, recording: "stopped" })); }} />
@@ -252,7 +253,7 @@ export function RecordingScreen() {
       </Surface>
 
       <Animated.View layout={layout}>
-        <Section title="Transcript" subtitle={!lines.length && !interim ? (stopped ? "No speech captured. The sample stopped before its first segment, so no draft can be created from an empty transcript." : "A little space to listen. Dialogue appears here as the sample plays; speaker labels stay unassigned until you correct them.") : interpretation ? "English interpretation, with the original kept for comparison." : "Original dialogue as captured. Tap a turn to correct its text or speaker."}>
+        <Section title="Transcript" subtitle={!lines.length && !interim ? (stopped ? "No speech captured, so there is nothing to draft from." : "Dialogue appears here as the sample plays. Speaker labels are yours to confirm.") : interpretation ? "English interpretation, with the original kept for comparison." : "Original dialogue as captured. Tap a turn to correct its text or speaker."}>
           {lines.length > 0 && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             <Chip label="Original dialogue" selected={!interpretation} onPress={() => setInterpretation(false)} />
             <Chip label="English interpretation" selected={interpretation} onPress={() => setInterpretation(true)} />
