@@ -88,9 +88,9 @@ function TimeBar({ patients, now, onOpen }: { patients: Patient[]; now: number; 
           {hour && <Text style={{ position: "absolute", top: 20, width: 40, textAlign: "center", fontSize: 10, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{clock(m)}</Text>}
         </View>; })}
         {/* Now: a line through the ruler and a bubble above it. */}
-        <View pointerEvents="none" style={{ position: "absolute", left: xOf(now) - 22, top: 4, width: 44, alignItems: "center" }}>
-          <View style={{ paddingHorizontal: 7, height: 20, borderRadius: 10, justifyContent: "center", backgroundColor: palette.red }}><Text style={{ fontSize: 10, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{clock(now)}</Text></View>
-          <View style={{ width: 2, height: 70, backgroundColor: palette.red, opacity: 0.7 }} />
+        <View pointerEvents="none" style={{ position: "absolute", left: xOf(now) - 30, top: 4, width: 60, alignItems: "center" }}>
+          <View style={{ paddingHorizontal: 8, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: palette.blue, boxShadow: "0 2px 6px rgba(36,91,204,0.25)" }}><Text style={{ fontSize: 11, lineHeight: 13, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"], textAlign: "center", includeFontPadding: false }}>{clock(now)}</Text></View>
+          <View style={{ width: 2, height: 68, borderRadius: 1, backgroundColor: palette.blue, opacity: 0.55 }} />
         </View>
         {groupVisits(visits, pinMinutes).map(group => { const first = group[0]!; const incomplete = group.some(v => v.p.incomplete); const tone = TONE_PIN[incomplete ? "open" : "done"];
           const single = group.length === 1;
