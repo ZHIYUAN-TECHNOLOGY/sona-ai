@@ -38,8 +38,37 @@ export function curb65(patient: Patient): { factors: Factor[]; score: number; re
     { id: "b", label: "Blood pressure", value: c.sbp === undefined ? undefined : `${c.sbp}/${c.dbp}`, rule: "< 90 systolic or ≤ 60 diastolic", point: c.sbp === undefined ? undefined : c.sbp < 90 || (c.dbp ?? 99) <= 60 },
     { id: "a", label: "Age", value: `${patient.age}`, rule: "≥ 65", point: patient.age >= 65 },
   ];
+  return scored(factors);
+}
+
+/** Score and band; the band is withheld until all five factors are recorded. */
+function scored<F extends Factor>(factors: F[]) {
   const recorded = factors.filter(f => f.point !== undefined).length;
   const score = factors.filter(f => f.point).length;
   const risk = recorded < factors.length ? undefined : score <= 1 ? "Low risk · home treatment is usually suitable" : score === 2 ? "Moderate risk · consider admission" : "High risk · manage as severe";
   return { factors, score, recorded, risk };
+}
+
+/** An observations row; structurally the `Observation` contract in @sona-ai/api. */
+export type ObservationRow = { kind: "confusion" | "urea" | "respiratory-rate" | "systolic" | "diastolic"; value: number; unit: string; sourceId: string };
+
+/**
+ * CURB-65 from observation rows plus age, each factor citing the readings behind it. The last row of
+ * a kind wins (pass them oldest first). A reading in an unexpected unit counts as unrecorded rather
+ * than being misread. Confusion is the abbreviated mental test: 8 or less out of 10 scores.
+ */
+export function curb65FromObservations(observations: ObservationRow[], age: number) {
+  const units = { confusion: "AMT", urea: "mmol/L", "respiratory-rate": "/min", systolic: "mmHg", diastolic: "mmHg" } as const;
+  const read = (kind: ObservationRow["kind"]) => observations.findLast(o => o.kind === kind && o.unit === units[kind]);
+  const c = read("confusion"), u = read("urea"), r = read("respiratory-rate"), s = read("systolic"), d = read("diastolic");
+  const sources = (...rows: (ObservationRow | undefined)[]) => rows.flatMap(o => (o ? [o.sourceId] : []));
+  const lowBp = (s && s.value < 90) || (d && d.value <= 60);
+  const factors: (Factor & { sources: string[] })[] = [
+    { id: "c", label: "Confusion", value: c && `AMT ${c.value}/10`, rule: "new confusion", point: c && c.value <= 8, sources: sources(c) },
+    { id: "u", label: "Urea", value: u && `${u.value} mmol/L`, rule: "> 7 mmol/L", point: u && u.value > 7, sources: sources(u) },
+    { id: "r", label: "Respiratory rate", value: r && `${r.value} /min`, rule: "≥ 30 /min", point: r && r.value >= 30, sources: sources(r) },
+    { id: "b", label: "Blood pressure", value: s || d ? `${s?.value ?? "–"}/${d?.value ?? "–"} mmHg` : undefined, rule: "< 90 systolic or ≤ 60 diastolic", point: lowBp ? true : s && d ? false : undefined, sources: sources(s, d) },
+    { id: "a", label: "Age", value: `${age}`, rule: "≥ 65", point: age >= 65, sources: [] },
+  ];
+  return scored(factors);
 }

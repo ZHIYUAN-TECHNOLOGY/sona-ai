@@ -85,6 +85,23 @@ export function dischargeTasks(patient: Patient, state: DischargeState, plan: Di
   ];
 }
 
+/** An approved consequential action; structurally the `ApprovedCommand` contract in @sona-ai/api. */
+export type Approval = { encounterId: string; requestId: string; approvedBy: string };
+export type Refusal = { status: "refused"; reason: "unapproved" | "blocked"; open: string[] };
+export type DischargeReceipt = { status: "discharged"; encounterId: string; requestId: string; approvedBy: string; dischargedAt: string; savedMinutes: number };
+
+/** Labels of the checks still blocked; empty when nothing stands in the way. */
+export const openLabels = (checks: PrescriptionCheck[]) => checks.filter(c => c.status === "blocked").map(c => c.label);
+
+/** Server rule: no discharge without a named approver or while any blocker is open, whatever the app shows. */
+export function decideDischarge(state: DischargeState, plan: DischargePlan, command: Approval, fitAt: Date, at: Date): Refusal | DischargeReceipt {
+  if (!command.approvedBy.trim()) return { status: "refused", reason: "unapproved", open: [] };
+  const open = openLabels(dischargeChecks(state, plan));
+  if (open.length) return { status: "refused", reason: "blocked", open };
+  const { encounterId, requestId, approvedBy } = command;
+  return { status: "discharged", encounterId, requestId, approvedBy, dischargedAt: at.toISOString(), savedMinutes: minutesSaved(fitAt, at) };
+}
+
 export function discharge(encounter: Encounter, patient: Patient, fitAt: Date, at: Date): Encounter {
   const state = encounter.discharge ?? EMPTY_DISCHARGE;
   const tasks = dischargeTasks(patient, state, planFor(patient), at).filter(t => !encounter.tasks.some(e => e.id === t.id));

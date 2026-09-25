@@ -26,6 +26,32 @@ const ITEMS: AuditItem[] = [
   { id: "a-farah", bed: "Bed 25", patient: "Farah Nadia", doctor: "Dr Tan", gap: "Asthma: acute severe attack not stated", from: "J45.9", to: "J46", risk: 1190, query: "Farah needed magnesium and HDU care. Could you record acute severe asthma?" },
 ];
 
+export type LabFact = { test: string; value: string; unit?: string | null; sourceId: string };
+export type Casemix = Record<string, { weight: number; baseRateCents: number }>;
+/** A gap in the shape of an audit_items row; riskCents is the code's casemix weight × base rate. */
+export type CodingGap = { gap: string; fromCode: null; toCode: string; riskCents: number; sourceId: string; query: string };
+
+// ponytail: two lab-only diagnoses with adult thresholds; add rules as the audit meets them. Vague
+// wording ("organism not stated") needs the model and arrives through the coding tool, not here.
+const LAB_RULES = [
+  { test: /^(hb|ha?emoglobin)$/i, unit: "g/dL", abnormal: (v: number) => v < 12, term: "anaemia", inNote: /an(a)?emi/i, coded: /^D(5\d|6[0-4])/, code: "D64.9" },
+  { test: /^(na|sodium)$/i, unit: "mmol/L", abnormal: (v: number) => v < 135, term: "hyponatraemia", inNote: /hyponatr(a)?emi/i, coded: /^E87\.1/, code: "E87.1" },
+];
+
+/** Diagnoses the labs show but neither the note nor the current codes record, one per rule. */
+export function codingGaps(input: { sentences: { id: string; text: string }[]; labs: LabFact[]; codes: string[] }, casemix: Casemix): CodingGap[] {
+  return LAB_RULES.flatMap(rule => {
+    const lab = input.labs.find(l => rule.test.test(l.test) && l.unit === rule.unit && rule.abnormal(Number(l.value)));
+    if (!lab || input.sentences.some(s => rule.inNote.test(s.text)) || input.codes.some(c => rule.coded.test(c))) return [];
+    const price = casemix[rule.code];
+    const term = rule.term[0]!.toUpperCase() + rule.term.slice(1);
+    return [{
+      gap: `${term} in the labs, not the note`, fromCode: null, toCode: rule.code, riskCents: price ? Math.round(price.weight * price.baseRateCents) : 0, sourceId: lab.sourceId,
+      query: `${lab.test} is ${lab.value} ${rule.unit}. Is ${rule.term} a diagnosis you want recorded?`,
+    }];
+  });
+}
+
 /** Open audit items: not yet queried, and the demo patient's only while flow 2 has not fixed her note. */
 export function openItems(encounters: Record<string, Encounter | undefined>, done: Set<string>): AuditItem[] {
   const fixed = Boolean(encounters[DEMO_PATIENT]?.claim?.organismConfirmed);

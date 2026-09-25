@@ -1,4 +1,4 @@
-import { EMPTY_DISCHARGE } from "./discharge";
+import { EMPTY_DISCHARGE, openLabels, type Approval, type Refusal } from "./discharge";
 import type { Encounter, PrescriptionCheck } from "./types";
 
 /**
@@ -47,6 +47,25 @@ export function claimChecks(state: ClaimState): PrescriptionCheck[] {
     { id: "organism", label: "Organism documented", status: state.organismConfirmed ? "passed" : "blocked", detail: "J18.9 needs the note to say the organism is unknown" },
     { id: "iv", label: "Reason for IV antibiotics", status: state.ivReasonAdded ? "passed" : "blocked", detail: "The insurer asks why oral was not used first" },
   ];
+}
+
+export type ClaimReceipt = { status: "sent"; encounterId: string; requestId: string; approvedBy: string; sentAt: string };
+
+/** Server rule: a claim goes to the insurer only with a named approver and every criterion met. */
+export function decideClaimSend(state: ClaimState, command: Approval, at: Date): Refusal | ClaimReceipt {
+  if (!command.approvedBy.trim()) return { status: "refused", reason: "unapproved", open: [] };
+  const open = openLabels(claimChecks(state));
+  if (open.length) return { status: "refused", reason: "blocked", open };
+  const { encounterId, requestId, approvedBy } = command;
+  return { status: "sent", encounterId, requestId, approvedBy, sentAt: at.toISOString() };
+}
+
+// ponytail: a fixed delay stands in for the insurer; a real panel insurer replies by webhook.
+export const INSURER_DELAY_MS = 60_000;
+/** The mock insurer as a pure function of time: approved once the delay has passed since sending. */
+export function insurerDecision(sentAt: Date, now: Date): { status: "pending"; approvesAt: string } | { status: "approved"; approvedAt: string } {
+  const due = new Date(sentAt.getTime() + INSURER_DELAY_MS);
+  return now < due ? { status: "pending", approvesAt: due.toISOString() } : { status: "approved", approvedAt: due.toISOString() };
 }
 
 /** The mock insurer's approval: the claim closes and the discharge's guarantee letter resolves. */
