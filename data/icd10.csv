@@ -1,0 +1,286 @@
+# WHO ICD-10 (2019 edition) subset for the Sona demo: respiratory essentials plus the codes the
+# guarantee-letter, coding-audit and ward flows use. Source: https://icd.who.int/browse10/2019/en
+# Labels were transcribed by hand; check each against the WHO browser before production use.
+# LICENCE NOT YET CONFIRMED: WHO ICD-10 reuse terms still need confirming (docs/delivery-plan.md,
+# open action 5). Three-character rows are categories; searchIcd reads a subcategory in the
+# context of its category and only returns codes without subdivisions.
+code,label,chapter
+A09,Other gastroenteritis and colitis of infectious and unspecified origin,I
+A09.0,Other and unspecified gastroenteritis and colitis of infectious origin,I
+A09.9,Gastroenteritis and colitis of unspecified origin,I
+A15,"Respiratory tuberculosis, bacteriologically and histologically confirmed",I
+A15.0,"Tuberculosis of lung, confirmed by sputum microscopy with or without culture",I
+A16,"Respiratory tuberculosis, not confirmed bacteriologically or histologically",I
+A16.2,"Tuberculosis of lung, without mention of bacteriological or histological confirmation",I
+A40,Streptococcal sepsis,I
+A40.0,"Sepsis due to streptococcus, group A",I
+A40.1,"Sepsis due to streptococcus, group B",I
+A40.2,"Sepsis due to streptococcus, group D",I
+A40.3,Sepsis due to Streptococcus pneumoniae,I
+A40.8,Other streptococcal sepsis,I
+A40.9,"Streptococcal sepsis, unspecified",I
+A41,Other sepsis,I
+A41.0,Sepsis due to Staphylococcus aureus,I
+A41.1,Sepsis due to other specified staphylococcus,I
+A41.2,Sepsis due to unspecified staphylococcus,I
+A41.3,Sepsis due to Haemophilus influenzae,I
+A41.4,Sepsis due to anaerobes,I
+A41.5,Sepsis due to other Gram-negative organisms,I
+A41.8,Other specified sepsis,I
+A41.9,"Sepsis, unspecified",I
+A48,"Other bacterial diseases, not elsewhere classified",I
+A48.1,Legionnaires' disease,I
+A90,Dengue fever [classical dengue],I
+A91,Dengue haemorrhagic fever,I
+B01,Varicella [chickenpox],I
+B01.2,Varicella pneumonia,I
+B05,Measles,I
+B05.2,Measles complicated by pneumonia,I
+B34,Viral infection of unspecified site,I
+B34.9,"Viral infection, unspecified",I
+B95,Streptococcus and staphylococcus as the cause of diseases classified to other chapters,I
+B95.3,Streptococcus pneumoniae as the cause of diseases classified to other chapters,I
+B95.6,Staphylococcus aureus as the cause of diseases classified to other chapters,I
+B96,Other specified bacterial agents as the cause of diseases classified to other chapters,I
+B96.0,Mycoplasma pneumoniae [M. pneumoniae] as the cause of diseases classified to other chapters,I
+B96.1,Klebsiella pneumoniae [K. pneumoniae] as the cause of diseases classified to other chapters,I
+B96.2,Escherichia coli [E. coli] as the cause of diseases classified to other chapters,I
+B96.3,Haemophilus influenzae [H. influenzae] as the cause of diseases classified to other chapters,I
+B96.4,Proteus (mirabilis)(morganii) as the cause of diseases classified to other chapters,I
+B96.5,Pseudomonas (aeruginosa) as the cause of diseases classified to other chapters,I
+B96.8,Other specified bacterial agents as the cause of diseases classified to other chapters,I
+B97,Viral agents as the cause of diseases classified to other chapters,I
+B97.4,Respiratory syncytial virus as the cause of diseases classified to other chapters,I
+D50,Iron deficiency anaemia,III
+D50.0,Iron deficiency anaemia secondary to blood loss (chronic),III
+D50.9,"Iron deficiency anaemia, unspecified",III
+D62,Acute posthaemorrhagic anaemia,III
+D64,Other anaemias,III
+D64.9,"Anaemia, unspecified",III
+D69,Purpura and other haemorrhagic conditions,III
+D69.6,"Thrombocytopenia, unspecified",III
+E10,Type 1 diabetes mellitus,IV
+E10.9,Type 1 diabetes mellitus without complications,IV
+E11,Type 2 diabetes mellitus,IV
+E11.9,Type 2 diabetes mellitus without complications,IV
+E78,Disorders of lipoprotein metabolism and other lipidaemias,IV
+E78.5,"Hyperlipidaemia, unspecified",IV
+E86,Volume depletion,IV
+E87,"Other disorders of fluid, electrolyte and acid-base balance",IV
+E87.0,Hyperosmolality and hypernatraemia,IV
+E87.1,Hypo-osmolality and hyponatraemia,IV
+E87.2,Acidosis,IV
+E87.5,Hyperkalaemia,IV
+E87.6,Hypokalaemia,IV
+I10,Essential (primary) hypertension,IX
+I11,Hypertensive heart disease,IX
+I11.0,Hypertensive heart disease with (congestive) heart failure,IX
+I11.9,Hypertensive heart disease without (congestive) heart failure,IX
+I20,Angina pectoris,IX
+I20.0,Unstable angina,IX
+I20.9,"Angina pectoris, unspecified",IX
+I21,Acute myocardial infarction,IX
+I21.4,Acute subendocardial myocardial infarction,IX
+I21.9,"Acute myocardial infarction, unspecified",IX
+I25,Chronic ischaemic heart disease,IX
+I25.1,Atherosclerotic heart disease,IX
+I26,Pulmonary embolism,IX
+I26.0,Pulmonary embolism with mention of acute cor pulmonale,IX
+I26.9,Pulmonary embolism without mention of acute cor pulmonale,IX
+I27,Other pulmonary heart diseases,IX
+I27.9,"Pulmonary heart disease, unspecified",IX
+I48,Atrial fibrillation and flutter,IX
+I48.9,"Atrial fibrillation and atrial flutter, unspecified",IX
+I50,Heart failure,IX
+I50.0,Congestive heart failure,IX
+I50.1,Left ventricular failure,IX
+I50.9,"Heart failure, unspecified",IX
+I61,Intracerebral haemorrhage,IX
+I61.9,"Intracerebral haemorrhage, unspecified",IX
+I63,Cerebral infarction,IX
+I63.9,"Cerebral infarction, unspecified",IX
+I64,"Stroke, not specified as haemorrhage or infarction",IX
+I80,Phlebitis and thrombophlebitis,IX
+I80.2,Phlebitis and thrombophlebitis of other deep vessels of lower extremities,IX
+J00,Acute nasopharyngitis [common cold],X
+J01,Acute sinusitis,X
+J01.9,"Acute sinusitis, unspecified",X
+J02,Acute pharyngitis,X
+J02.0,Streptococcal pharyngitis,X
+J02.9,"Acute pharyngitis, unspecified",X
+J03,Acute tonsillitis,X
+J03.9,"Acute tonsillitis, unspecified",X
+J04,Acute laryngitis and tracheitis,X
+J04.0,Acute laryngitis,X
+J04.1,Acute tracheitis,X
+J04.2,Acute laryngotracheitis,X
+J05,Acute obstructive laryngitis [croup] and epiglottitis,X
+J05.0,Acute obstructive laryngitis [croup],X
+J05.1,Acute epiglottitis,X
+J06,Acute upper respiratory infections of multiple and unspecified sites,X
+J06.0,Acute laryngopharyngitis,X
+J06.8,Other acute upper respiratory infections of multiple sites,X
+J06.9,"Acute upper respiratory infection, unspecified",X
+J09,Influenza due to identified zoonotic or pandemic influenza virus,X
+J10,Influenza due to identified seasonal influenza virus,X
+J10.0,"Influenza with pneumonia, seasonal influenza virus identified",X
+J10.1,"Influenza with other respiratory manifestations, seasonal influenza virus identified",X
+J10.8,"Influenza with other manifestations, seasonal influenza virus identified",X
+J11,"Influenza, virus not identified",X
+J11.0,"Influenza with pneumonia, virus not identified",X
+J11.1,"Influenza with other respiratory manifestations, virus not identified",X
+J11.8,"Influenza with other manifestations, virus not identified",X
+J12,"Viral pneumonia, not elsewhere classified",X
+J12.0,Adenoviral pneumonia,X
+J12.1,Respiratory syncytial virus pneumonia,X
+J12.2,Parainfluenza virus pneumonia,X
+J12.3,Human metapneumovirus pneumonia,X
+J12.8,Other viral pneumonia,X
+J12.9,"Viral pneumonia, unspecified",X
+J13,Pneumonia due to Streptococcus pneumoniae,X
+J14,Pneumonia due to Haemophilus influenzae,X
+J15,"Bacterial pneumonia, not elsewhere classified",X
+J15.0,Pneumonia due to Klebsiella pneumoniae,X
+J15.1,Pneumonia due to Pseudomonas,X
+J15.2,Pneumonia due to staphylococcus,X
+J15.3,"Pneumonia due to streptococcus, group B",X
+J15.4,Pneumonia due to other streptococci,X
+J15.5,Pneumonia due to Escherichia coli,X
+J15.6,Pneumonia due to other aerobic Gram-negative bacteria,X
+J15.7,Pneumonia due to Mycoplasma pneumoniae,X
+J15.8,Other bacterial pneumonia,X
+J15.9,"Bacterial pneumonia, unspecified",X
+J16,"Pneumonia due to other infectious organisms, not elsewhere classified",X
+J16.0,Chlamydial pneumonia,X
+J16.8,Pneumonia due to other specified infectious organisms,X
+J17,Pneumonia in diseases classified elsewhere,X
+J17.0,Pneumonia in bacterial diseases classified elsewhere,X
+J17.1,Pneumonia in viral diseases classified elsewhere,X
+J18,"Pneumonia, organism unspecified",X
+J18.0,"Bronchopneumonia, unspecified",X
+J18.1,"Lobar pneumonia, unspecified",X
+J18.2,"Hypostatic pneumonia, unspecified",X
+J18.8,"Other pneumonia, organism unspecified",X
+J18.9,"Pneumonia, unspecified",X
+J20,Acute bronchitis,X
+J20.0,Acute bronchitis due to Mycoplasma pneumoniae,X
+J20.9,"Acute bronchitis, unspecified",X
+J21,Acute bronchiolitis,X
+J21.0,Acute bronchiolitis due to respiratory syncytial virus,X
+J21.9,"Acute bronchiolitis, unspecified",X
+J22,Unspecified acute lower respiratory infection,X
+J30,Vasomotor and allergic rhinitis,X
+J30.4,"Allergic rhinitis, unspecified",X
+J31,"Chronic rhinitis, nasopharyngitis and pharyngitis",X
+J31.0,Chronic rhinitis,X
+J32,Chronic sinusitis,X
+J32.9,"Chronic sinusitis, unspecified",X
+J35,Chronic diseases of tonsils and adenoids,X
+J35.0,Chronic tonsillitis,X
+J40,"Bronchitis, not specified as acute or chronic",X
+J41,Simple and mucopurulent chronic bronchitis,X
+J41.0,Simple chronic bronchitis,X
+J42,Unspecified chronic bronchitis,X
+J43,Emphysema,X
+J43.9,"Emphysema, unspecified",X
+J44,Other chronic obstructive pulmonary disease,X
+J44.0,Chronic obstructive pulmonary disease with acute lower respiratory infection,X
+J44.1,"Chronic obstructive pulmonary disease with acute exacerbation, unspecified",X
+J44.8,Other specified chronic obstructive pulmonary disease,X
+J44.9,"Chronic obstructive pulmonary disease, unspecified",X
+J45,Asthma,X
+J45.0,Predominantly allergic asthma,X
+J45.1,Nonallergic asthma,X
+J45.8,Mixed asthma,X
+J45.9,"Asthma, unspecified",X
+J46,Status asthmaticus,X
+J47,Bronchiectasis,X
+J69,Pneumonitis due to solids and liquids,X
+J69.0,Pneumonitis due to food and vomit,X
+J80,Adult respiratory distress syndrome,X
+J81,Pulmonary oedema,X
+J84,Other interstitial pulmonary diseases,X
+J84.1,Other interstitial pulmonary diseases with fibrosis,X
+J84.9,"Interstitial pulmonary disease, unspecified",X
+J85,Abscess of lung and mediastinum,X
+J85.1,Abscess of lung with pneumonia,X
+J85.2,Abscess of lung without pneumonia,X
+J86,Pyothorax,X
+J86.9,Pyothorax without fistula,X
+J90,"Pleural effusion, not elsewhere classified",X
+J91,Pleural effusion in conditions classified elsewhere,X
+J93,Pneumothorax,X
+J93.0,Spontaneous tension pneumothorax,X
+J93.1,Other spontaneous pneumothorax,X
+J93.9,"Pneumothorax, unspecified",X
+J96,"Respiratory failure, not elsewhere classified",X
+J96.0,Acute respiratory failure,X
+J96.1,Chronic respiratory failure,X
+J96.9,"Respiratory failure, unspecified",X
+J98,Other respiratory disorders,X
+J98.1,Pulmonary collapse,X
+J98.4,Other disorders of lung,X
+K21,Gastro-oesophageal reflux disease,XI
+K21.9,Gastro-oesophageal reflux disease without oesophagitis,XI
+K29,Gastritis and duodenitis,XI
+K29.7,"Gastritis, unspecified",XI
+K35,Acute appendicitis,XI
+K35.2,Acute appendicitis with generalized peritonitis,XI
+K35.3,Acute appendicitis with localized peritonitis,XI
+K35.8,"Acute appendicitis, other and unspecified",XI
+K37,Unspecified appendicitis,XI
+K80,Cholelithiasis,XI
+K80.2,Calculus of gallbladder without cholecystitis,XI
+K81,Cholecystitis,XI
+K81.0,Acute cholecystitis,XI
+K85,Acute pancreatitis,XI
+K85.9,"Acute pancreatitis, unspecified",XI
+K92,Other diseases of digestive system,XI
+K92.2,"Gastrointestinal haemorrhage, unspecified",XI
+L02,"Cutaneous abscess, furuncle and carbuncle",XII
+L02.4,"Cutaneous abscess, furuncle and carbuncle of limb",XII
+L03,Cellulitis,XII
+L03.0,Cellulitis of finger and toe,XII
+L03.1,Cellulitis of other parts of limb,XII
+L03.2,Cellulitis of face,XII
+L03.3,Cellulitis of trunk,XII
+L03.8,Cellulitis of other sites,XII
+L03.9,"Cellulitis, unspecified",XII
+L27,Dermatitis due to substances taken internally,XII
+L27.0,Generalized skin eruption due to drugs and medicaments,XII
+L50,Urticaria,XII
+L50.9,"Urticaria, unspecified",XII
+N10,Acute tubulo-interstitial nephritis,XIV
+N17,Acute renal failure,XIV
+N17.0,Acute renal failure with tubular necrosis,XIV
+N17.9,"Acute renal failure, unspecified",XIV
+N18,Chronic kidney disease,XIV
+N18.3,"Chronic kidney disease, stage 3",XIV
+N18.5,"Chronic kidney disease, stage 5",XIV
+N18.9,"Chronic kidney disease, unspecified",XIV
+N20,Calculus of kidney and ureter,XIV
+N20.0,Calculus of kidney,XIV
+N30,Cystitis,XIV
+N30.0,Acute cystitis,XIV
+N39,Other disorders of urinary system,XIV
+N39.0,"Urinary tract infection, site not specified",XIV
+R04,Haemorrhage from respiratory passages,XVIII
+R04.2,Haemoptysis,XVIII
+R05,Cough,XVIII
+R06,Abnormalities of breathing,XVIII
+R06.0,Dyspnoea,XVIII
+R06.2,Wheezing,XVIII
+R07,Pain in throat and chest,XVIII
+R07.4,"Chest pain, unspecified",XVIII
+R11,Nausea and vomiting,XVIII
+R50,Fever of other and unknown origin,XVIII
+R50.9,"Fever, unspecified",XVIII
+R57,"Shock, not elsewhere classified",XVIII
+R57.2,Septic shock,XVIII
+R91,Abnormal findings on diagnostic imaging of lung,XVIII
+Z88,"Personal history of allergy to drugs, medicaments and biological substances",XXI
+Z88.0,Personal history of allergy to penicillin,XXI
+Z88.1,Personal history of allergy to other antibiotic agents,XXI
+U07,Emergency use of U07,XXII
+U07.1,"COVID-19, virus identified",XXII
+U07.2,"COVID-19, virus not identified",XXII
