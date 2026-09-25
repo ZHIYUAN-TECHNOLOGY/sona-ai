@@ -6,7 +6,7 @@ import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
-import { BlockerRow, Pill, Ring } from "@/features/clinical/prescribe-card";
+import { BlockerRow, useSettling, Pill, Ring } from "@/features/clinical/prescribe-card";
 import { Seal, haptic } from "@/features/clinical/medication-parts";
 import { capabilityLabels } from "@/features/encounter/conversation";
 import { useEncounter } from "@/features/encounter/store";
@@ -119,7 +119,7 @@ const TAG: Record<MedChange["change"], { label: string; ink: string; fill: strin
   unchanged: { label: "Same", ink: palette.muted, fill: "rgba(20,28,40,0.06)" },
 };
 
-function Chip({ label, icon, onPress, strong = false }: { label: string; icon?: string; onPress: () => void; strong?: boolean }) {
+export function Chip({ label, icon, onPress, strong = false }: { label: string; icon?: string; onPress: () => void; strong?: boolean }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={() => { haptic("select"); onPress(); }} hitSlop={6}
     style={{ alignSelf: "flex-start", height: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: strong ? palette.blue : "rgba(20,28,40,0.06)" }}>
     {icon && <Icon name={icon} size={12} color={strong ? palette.white : palette.ink} />}
@@ -135,31 +135,18 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
   const state = encounter?.discharge ?? EMPTY_DISCHARGE;
   const checks = dischargeChecks(state, plan);
   const blocked = checks.filter(c => c.status === "blocked");
+  const resolving = useSettling(blocked.map(c => c.id));
   const [full, setFull] = useState(false);
   const [busy, setBusy] = useState(false);
   // The demo patient became fit a little before the card opened, so the saving reads the same at any hour.
   const [fitAt] = useState(() => new Date(Date.now() - plan.fitMinutesAgo * 60000));
-  const [resolving, setResolving] = useState<string[]>([]);
-  const lastBlocked = useRef(new Set(blocked.map(c => c.id)));
-  const blockedIds = blocked.map(c => c.id).join(",");
 
-  // A blocker that just cleared stays a moment to play its resolve, then folds away.
-  useEffect(() => {
-    const now = new Set(blockedIds ? blockedIds.split(",") : []);
-    const justPassed = [...lastBlocked.current].filter(id => !now.has(id));
-    lastBlocked.current = now;
-    if (!justPassed.length) return;
-    haptic("select");
-    setResolving(list => [...list, ...justPassed]);
-    const timer = setTimeout(() => setResolving(list => list.filter(id => !justPassed.includes(id))), reducedMotion ? 300 : 900);
-    return () => clearTimeout(timer);
-  }, [blockedIds, reducedMotion]);
 
   if (!encounter) return null;
   const set = (change: Partial<DischargeState>) => updateEncounter(value => ({ ...value, discharge: { ...(value.discharge ?? EMPTY_DISCHARGE), ...change } }));
   const done = state.dischargedAt ? new Date(state.dischargedAt) : undefined;
-  const rows = checks.filter(c => c.status === "blocked" || resolving.includes(c.id));
-  const passed = checks.filter(c => c.status === "passed" && !resolving.includes(c.id));
+  const rows = checks.filter(c => c.status === "blocked" || resolving.has(c.id));
+  const passed = checks.filter(c => c.status === "passed" && !resolving.has(c.id));
   const first = patient.name.split(" ")[0];
   const language = LANGUAGES.find(l => l.id === state.language) ?? LANGUAGES[0]!;
   const saved = state.savedMinutes ? formatMinutes(state.savedMinutes) : undefined;
@@ -171,7 +158,9 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
   };
 
   const fix = (check: PrescriptionCheck) => {
-    if (check.id === "gl") return <Chip label="Mark received" icon="checkmark" onPress={() => set({ glReceived: true })} />;
+    if (check.id === "gl") return encounter.claim?.status === "sent"
+      ? <Text style={{ ...type.footnote, color: palette.muted }}>Sent · awaiting insurer</Text>
+      : <Chip label="Review codes and send" icon="doc.text.magnifyingglass" strong onPress={() => router.push("/claim")} />;
     if (check.id === "followup") return <View style={{ flexDirection: "row", gap: 8 }}>
       {FOLLOW_UPS.map(f => <Pill key={f.id} label={f.label} on={state.followUp === f.id} onPress={() => set({ followUp: f.id })} />)}
     </View>;
@@ -205,7 +194,7 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
         </View>
       </View>
 
-      <View style={{ gap: 8 }}>
+      <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
         {summary.map(([label, value], i) => <Animated.View key={label} entering={animate ? riseIn({ delay: 180 + i * 40, distance: 10, duration: 320 }) : undefined} style={{ flexDirection: "row", gap: 12 }}>
           <Text style={{ ...type.overline, width: 72, paddingTop: 3, color: palette.muted }}>{label}</Text>
           <Text selectable style={{ ...type.subhead, flex: 1, color: palette.ink }}>{value}</Text>
@@ -215,18 +204,18 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
           <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{full ? "Show less" : "Read full"}</Text>
           <Icon name={full ? "chevron.up" : "chevron.right"} size={10} color={palette.blue} />
         </Pressable>
-      </View>
+      </Animated.View>
 
       {!done && rows.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
-        {rows.map((check, i) => <BlockerRow key={check.id} check={check} n={i + 1} resolved={resolving.includes(check.id)}>{fix(check)}</BlockerRow>)}
+        {rows.map((check, i) => <BlockerRow key={check.id} check={check} n={i + 1} resolved={resolving.has(check.id)}>{fix(check)}</BlockerRow>)}
       </Animated.View>}
 
-      {!done && passed.length > 0 && <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+      {!done && passed.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         <Icon name="checkmark.circle.fill" size={13} color={TEAL} />
         <Text style={{ ...type.footnote, fontWeight: "600", color: TEAL }}>{blocked.length ? `${passed.length} checks passed` : `All ${passed.length} checks passed`}</Text>
-      </View>}
+      </Animated.View>}
 
-      {!done && <View style={{ gap: 10 }}>
+      {!done && <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 10 }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <Text style={{ ...type.overline, color: palette.muted }}>Patient leaflet</Text>
           <View style={{ flexDirection: "row", gap: 6 }}>
@@ -236,8 +225,9 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
         <Animated.View key={state.language} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ padding: 12, borderRadius: 16, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" }}>
           <Text selectable style={{ ...type.subhead, color: palette.ink }}>{plan.leaflet[state.language]}</Text>
         </Animated.View>
-      </View>}
+      </Animated.View>}
 
+      <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
       {done ? <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ gap: 12 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 18, borderCurve: "continuous", backgroundColor: "rgba(15,110,102,0.08)" }}>
           <Seal stampDelay={reducedMotion ? undefined : 120} />
@@ -256,6 +246,7 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
           {!blocked.length && <Icon name={busy ? "hourglass" : "bed.double"} size={15} color={palette.white} />}
           <Animated.Text key={primary} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ fontSize: 16, fontWeight: "600", color: blocked.length ? palette.muted : palette.white }}>{primary}</Animated.Text>
         </Pressable>}
+      </Animated.View>
     </Surface>
   </Animated.View>;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
-import Animated, { Easing, FadeIn, FadeOutUp, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { Easing, FadeIn, FadeOut, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
 import { LAYOUT } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
@@ -60,7 +60,7 @@ export function BlockerRow({ check, n, resolved, children }: { check: Prescripti
   const numberStyle = useAnimatedStyle(() => ({ opacity: 1 - done.value, transform: [{ scale: 1 - done.value * 0.4 }] }));
   const checkStyle = useAnimatedStyle(() => ({ opacity: done.value, transform: [{ scale: 0.6 + done.value * 0.4 }] }));
   const lineStyle = useAnimatedStyle(() => ({ transform: [{ scaleX: strike.value }] }));
-  return <Animated.View layout={reducedMotion ? undefined : LAYOUT} exiting={reducedMotion ? undefined : FadeOutUp.duration(220)}
+  return <Animated.View layout={reducedMotion ? undefined : LAYOUT} exiting={reducedMotion ? undefined : FadeOut.duration(160)}
     accessible={!children} accessibilityLabel={`${check.label}. ${resolved ? "Resolved" : check.detail}`}
     style={{ flexDirection: "row", gap: 12, paddingVertical: 12, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
     <View style={{ width: 26, height: 26 }}>
@@ -84,27 +84,37 @@ export function BlockerRow({ check, n, resolved, children }: { check: Prescripti
   </Animated.View>;
 }
 
+/**
+ * Blockers that just passed, kept on screen long enough to play their resolve. A check that passed
+ * this render counts at once (from the previous blocked set), so its row never unmounts in between.
+ */
+export function useSettling(blockedIds: string[]): Set<string> {
+  const { reducedMotion } = useAccessibleEffects();
+  const [settling, setSettling] = useState<string[]>([]);
+  const last = useRef(new Set(blockedIds));
+  const key = blockedIds.join(",");
+  const fresh = [...last.current].filter(id => !blockedIds.includes(id));
+  useEffect(() => {
+    const now = new Set(key ? key.split(",") : []);
+    const justPassed = [...last.current].filter(id => !now.has(id));
+    last.current = now;
+    if (!justPassed.length) return;
+    haptic("select");
+    setSettling(list => [...list, ...justPassed]);
+    const timer = setTimeout(() => setSettling(list => list.filter(id => !justPassed.includes(id))), reducedMotion ? 300 : 900);
+    return () => clearTimeout(timer);
+  }, [key, reducedMotion]);
+  return new Set([...settling, ...fresh]);
+}
+
 export function PrescribeCard({ patient }: { patient: Patient }) {
   const { encounters, updateEncounter, runInPlace, showDemoControls } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const encounter = encounters[patient.id];
   const [showPassed, setShowPassed] = useState(false);
-  const [resolving, setResolving] = useState<string[]>([]);
-  const lastBlocked = useRef<Set<string>>(new Set());
   const checks = encounter ? getPrescriptionChecks(encounter, patient) : [];
-  const blockedIds = checks.filter(c => c.status === "blocked").map(c => c.id).join(",");
+  const resolving = useSettling(checks.filter(c => c.status === "blocked").map(c => c.id));
 
-  // A check that just passed stays a moment to play its resolve, then folds away.
-  useEffect(() => {
-    const now = new Set(blockedIds ? blockedIds.split(",") : []);
-    const justPassed = [...lastBlocked.current].filter(id => !now.has(id));
-    lastBlocked.current = now;
-    if (!justPassed.length) return;
-    haptic("select");
-    setResolving(list => [...list, ...justPassed]);
-    const timer = setTimeout(() => setResolving(list => list.filter(id => !justPassed.includes(id))), reducedMotion ? 300 : 900);
-    return () => clearTimeout(timer);
-  }, [blockedIds, reducedMotion]);
 
   if (!encounter) return null;
   const inputs = encounter.prescriptionInputs ?? EMPTY;
@@ -112,8 +122,8 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
   const blocked = checks.filter(c => c.status === "blocked");
   // The review goes last: answer everything else first, then review once.
   const last = (c: PrescriptionCheck) => (c.id === "review" ? 1 : 0);
-  const rows = checks.filter(c => c.status === "blocked" || resolving.includes(c.id)).sort((a, b) => last(a) - last(b));
-  const passed = checks.filter(c => c.status === "passed" && !resolving.includes(c.id));
+  const rows = checks.filter(c => c.status === "blocked" || resolving.has(c.id)).sort((a, b) => last(a) - last(b));
+  const passed = checks.filter(c => c.status === "passed" && !resolving.has(c.id));
   const prescription = encounter.prescription;
   const created = prescription?.status === "created" && prescription.revision === encounter.revision;
   const regimen = prescription?.regimen ?? simulatedRegimen;
@@ -156,7 +166,7 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
     </View>
 
     {!created && rows.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
-      {rows.map((check, i) => <BlockerRow key={check.id} check={label(check)} n={i + 1} resolved={resolving.includes(check.id)}>{fix(check)}</BlockerRow>)}
+      {rows.map((check, i) => <BlockerRow key={check.id} check={label(check)} n={i + 1} resolved={resolving.has(check.id)}>{fix(check)}</BlockerRow>)}
     </Animated.View>}
 
     {!created && passed.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 6 }}>
@@ -168,6 +178,7 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
       {showPassed && <Text style={{ ...type.caption, color: palette.muted, paddingLeft: 19 }}>{passed.map(c => c.label).join(" · ")}</Text>}
     </Animated.View>}
 
+    <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
     {created && prescription ? <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 18, backgroundColor: "rgba(15,110,102,0.08)" }}>
       <Seal stampDelay={reducedMotion ? undefined : 120} />
       <View style={{ flex: 1, gap: 2 }}>
@@ -181,6 +192,7 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
         {!blocked.length && <Icon name={working === "prescription" ? "hourglass" : "doc.badge.plus"} size={15} color={palette.white} />}
         <Animated.Text key={primary} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ fontSize: 16, fontWeight: "600", color: blocked.length ? palette.muted : palette.white }}>{primary}</Animated.Text>
       </Pressable>}
+    </Animated.View>
 
     {!created && showDemoControls && <Pressable accessibilityRole="button" onPress={() => updateEncounter(value => ({ ...value, prescriptionInputs: { weightKg: "62", liverDisease: "no", kidneyDisease: "no", alcoholRisk: "no", paracetamolAllergy: "no" } }), true)} style={{ alignSelf: "center", minHeight: 32, justifyContent: "center" }}>
       <Text style={{ ...type.footnote, color: palette.blue }}>Demo · load synthetic eligibility</Text>

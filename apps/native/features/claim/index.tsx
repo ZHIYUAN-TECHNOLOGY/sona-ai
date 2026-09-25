@@ -1,0 +1,177 @@
+import { router } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import { Pressable, ScrollView, View } from "react-native";
+import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
+import { EASE_OUT, LAYOUT } from "@/components/sona/motion";
+import { Text } from "@/components/sona/text";
+import { palette, type } from "@/components/sona/theme";
+import { Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { BlockerRow, useSettling, Ring } from "@/features/clinical/prescribe-card";
+import { Seal, haptic } from "@/features/clinical/medication-parts";
+import { Chip } from "@/features/discharge";
+import { useEncounter } from "@/features/encounter/store";
+import type { PrescriptionCheck } from "@/features/encounter/types";
+import { CODES, EMPTY_CLAIM, ESTIMATE, INSURER, approveClaim, claimChecks, noteFor, type ClaimState, type Sentence } from "./model";
+
+/*
+ * Final guarantee letter request, one card. The note sits above its codes; tapping a code glides a
+ * soft highlight onto the sentence that justifies it (after Threads' lyric highlight: the block
+ * slides on a fast spring, 0.25 s at damping 0.72, and its height follows a touch slower, 0.32 s at
+ * 0.8, so it stretches as it moves; other sentences dim). The insurer's gaps are blockers fixed in
+ * place, each adding its sentence to the note. Sending turns every "Required" tag into a check,
+ * 90 ms apart on a 200 ms ease-out (after Toss's terms check), then the mock insurer's approval stamps in.
+ */
+const TEAL = "#0F6E66";
+const GLIDE = { duration: 250, dampingRatio: 0.72 }, STRETCH = { duration: 320, dampingRatio: 0.8 };
+
+export function ClaimScreen() {
+  const { patient, encounters, updateEncounter } = useEncounter();
+  const { reducedMotion } = useAccessibleEffects();
+  const encounter = patient ? encounters[patient.id] : undefined;
+  const state = encounter?.claim ?? EMPTY_CLAIM;
+  const checks = claimChecks(state);
+  const blocked = checks.filter(c => c.status === "blocked");
+  const resolving = useSettling(blocked.map(c => c.id));
+  const [active, setActive] = useState(CODES[0]!.evidence);
+  const [sending, setSending] = useState(false);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+
+
+  if (!patient || !encounter) return null;
+  const set = (change: Partial<ClaimState>) => updateEncounter(value => ({ ...value, claim: { ...(value.claim ?? EMPTY_CLAIM), ...change } }));
+  const note = noteFor(state);
+  const rows = checks.filter(c => c.status === "blocked" || resolving.has(c.id));
+  const passed = checks.filter(c => c.status === "passed" && !resolving.has(c.id));
+  const approved = state.status === "approved";
+  const sent = state.status === "sent";
+
+  const send = () => {
+    haptic("select"); setSending(true);
+    // ponytail: timed mock insurer; the real reply is asynchronous and can decline or ask for more.
+    const wait = (ms: number, fn: () => void) => timers.current.push(setTimeout(fn, reducedMotion ? 0 : ms));
+    wait(900, () => set({ status: "sent" }));
+    wait(2300, () => { updateEncounter(value => approveClaim(value, new Date())); setSending(false); haptic("success"); });
+  };
+  const fix = (check: PrescriptionCheck) => {
+    if (check.id === "organism") return <Chip label="Confirm unknown" icon="checkmark" onPress={() => { set({ organismConfirmed: true }); setActive("organism"); }} />;
+    if (check.id === "iv") return <View style={{ gap: 8 }}>
+      <Text style={{ ...type.footnote, color: palette.ink }}>“IV first: vomiting on arrival, unable to keep oral tablets down.”</Text>
+      <Chip label="Add to note" icon="plus" strong onPress={() => { set({ ivReasonAdded: true }); setActive("iv"); }} />
+    </View>;
+    return undefined;
+  };
+  const primary = blocked.length ? `Resolve ${blocked.length} to send` : sent ? "Sent · awaiting insurer" : sending ? "Sending…" : `Send to ${INSURER.toLowerCase()}`;
+  const status = approved ? "Approved" : sent ? "Sent · awaiting insurer" : blocked.length ? `${blocked.length} left before sending` : "Ready to send";
+
+  return <ScrollView style={{ flex: 1, backgroundColor: palette.canvas }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 48, gap: 14 }}>
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
+      <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>Guarantee letter</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel="Close" hitSlop={8} onPress={() => router.back()} style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}>
+        <Icon name="xmark" size={13} color={palette.ink} />
+      </Pressable>
+    </View>
+
+    <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 16 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+        <Ring done={approved ? checks.length : checks.length - blocked.length} total={checks.length} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ ...type.overline, color: approved ? TEAL : blocked.length ? palette.amber : palette.blue }}>{status}</Text>
+          <Text style={{ ...type.headline, color: palette.ink }}>Final guarantee letter</Text>
+          <Text style={{ ...type.caption, color: palette.muted }}>{patient.name} · {INSURER} · estimated {ESTIMATE}</Text>
+        </View>
+      </View>
+
+      <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
+        <Text style={{ ...type.overline, color: palette.muted }}>Evidence in the note</Text>
+        <Evidence note={note} active={active} />
+      </Animated.View>
+
+      <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 2 }}>
+        <Text style={{ ...type.overline, color: palette.muted, paddingBottom: 6 }}>Codes · tap to see why</Text>
+        {CODES.map(c => { const on = c.evidence === active; return <Pressable key={c.code} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${c.code}, ${c.label}, ${c.kind}`}
+          onPress={() => { haptic("select"); setActive(c.evidence); }} style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 44 }}>
+          <View style={{ width: 58, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.blue : "rgba(20,28,40,0.06)", transitionProperty: "backgroundColor", transitionDuration: 180 } as never}>
+            <Text style={{ fontSize: 13, fontWeight: "700", color: on ? palette.white : palette.ink, fontVariant: ["tabular-nums"], transitionProperty: "color", transitionDuration: 180 } as never}>{c.code}</Text>
+          </View>
+          <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.ink }}>{c.label}</Text>
+          <Text style={{ ...type.caption, color: palette.muted }}>{c.kind}</Text>
+        </Pressable>; })}
+      </Animated.View>
+
+      {!approved && !sending && !sent && rows.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
+        {rows.map((check, i) => <BlockerRow key={check.id} check={check} n={i + 1} resolved={resolving.has(check.id)}>{fix(check)}</BlockerRow>)}
+      </Animated.View>}
+
+      {!approved && !sending && !sent && passed.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <Icon name="checkmark.circle.fill" size={13} color={TEAL} />
+        <Text style={{ ...type.footnote, fontWeight: "600", color: TEAL }}>{blocked.length ? `${passed.length} insurer criteria met` : `All ${passed.length} insurer criteria met`}</Text>
+      </Animated.View>}
+
+      {(sending || sent) && !approved && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(160)} exiting={reducedMotion ? undefined : FadeOut.duration(160)} style={{ gap: 2 }}>
+        {checks.map((c, i) => <Criterion key={c.id} label={c.label} index={i} />)}
+      </Animated.View>}
+
+      <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
+      {approved ? <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ gap: 12 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 18, borderCurve: "continuous", backgroundColor: "rgba(15,110,102,0.08)" }}>
+          <Seal stampDelay={reducedMotion ? undefined : 120} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>Final GL approved · {ESTIMATE}</Text>
+            <Text style={{ ...type.caption, color: palette.muted }}>Discharge no longer waits on the insurer · {new Date(state.approvedAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · mock insurer</Text>
+          </View>
+        </View>
+        <Chip label="Back to discharge" icon="chevron.left" onPress={() => router.back()} />
+      </Animated.View>
+        : <Pressable accessibilityRole="button" accessibilityState={{ disabled: blocked.length > 0 || sending || sent }} disabled={blocked.length > 0 || sending || sent} onPress={send}
+          style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: blocked.length || sent ? "rgba(20,28,40,0.08)" : palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 200 } as never)}>
+          {!blocked.length && <Icon name={sent ? "hourglass" : "paperplane"} size={15} color={sent ? palette.muted : palette.white} />}
+          <Animated.Text key={primary} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ fontSize: 16, fontWeight: "600", color: blocked.length || sent ? palette.muted : palette.white }}>{primary}</Animated.Text>
+        </Pressable>}
+      </Animated.View>
+    </Surface>
+  </ScrollView>;
+}
+
+/** The note as sentences with one soft highlight that glides to the active sentence and stretches to fit it. */
+function Evidence({ note, active }: { note: Sentence[]; active: string }) {
+  const { reducedMotion } = useAccessibleEffects();
+  const frames = useRef<Record<string, { y: number; h: number }>>({});
+  const top = useSharedValue(0), height = useSharedValue(0), shown = useSharedValue(0);
+  const place = (animate: boolean) => {
+    const f = frames.current[active];
+    if (!f) return;
+    const pad = 4;
+    if (!animate || reducedMotion || !shown.value) { top.set(f.y - pad); height.set(f.h + pad * 2); shown.set(withTiming(1, { duration: 180 })); return; }
+    top.set(withSpring(f.y - pad, GLIDE)); height.set(withSpring(f.h + pad * 2, STRETCH));
+  };
+  useEffect(() => place(true), [active]);
+  const block = useAnimatedStyle(() => ({ opacity: shown.value, height: height.value, transform: [{ translateY: top.value }] }));
+  return <View>
+    <Animated.View pointerEvents="none" style={[{ position: "absolute", left: -8, right: -8, top: 0, borderRadius: 10, borderCurve: "continuous", backgroundColor: "rgba(36,91,204,0.10)" }, block]} />
+    {note.map(s => <Animated.View key={s.id} entering={reducedMotion ? undefined : FadeIn.duration(220)} onLayout={e => { const { y, height: h } = e.nativeEvent.layout; frames.current[s.id] = { y, h }; if (s.id === active) place(false); }} style={{ paddingVertical: 4 }}>
+      <Text selectable style={{ ...type.subhead, color: s.id === active ? palette.ink : palette.muted, transitionProperty: "color", transitionDuration: 200 } as never}>{s.text}</Text>
+    </Animated.View>)}
+  </View>;
+}
+
+/** One criterion at send time: its "Required" tag turns into a check, staggered by its index. */
+function Criterion({ label, index }: { label: string; index: number }) {
+  const { reducedMotion } = useAccessibleEffects();
+  const p = useSharedValue(reducedMotion ? 1 : 0);
+  useEffect(() => { if (!reducedMotion) p.set(withDelay(120 + index * 90, withTiming(1, { duration: 200, easing: EASE_OUT }))); }, [p, index, reducedMotion]);
+  const tag = useAnimatedStyle(() => ({ opacity: 1 - p.value, transform: [{ scale: 1 - p.value * 0.3 }] }));
+  const check = useAnimatedStyle(() => ({ opacity: p.value, transform: [{ scale: 0.6 + p.value * 0.4 }] }));
+  return <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 34 }}>
+    <Text style={{ ...type.subhead, color: palette.ink }}>{label}</Text>
+    <View style={{ width: 70, height: 22, alignItems: "flex-end", justifyContent: "center" }}>
+      <Animated.View style={[{ position: "absolute", right: 0, paddingHorizontal: 8, height: 22, borderRadius: 11, justifyContent: "center", backgroundColor: "rgba(196,120,20,0.12)" }, tag]}>
+        <Text style={{ fontSize: 11, fontWeight: "700", color: palette.amber }}>Required</Text>
+      </Animated.View>
+      <Animated.View style={[{ position: "absolute", right: 0, width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: TEAL }, check]}>
+        <Icon name="checkmark" size={11} color={palette.white} />
+      </Animated.View>
+    </View>
+  </View>;
+}
+
