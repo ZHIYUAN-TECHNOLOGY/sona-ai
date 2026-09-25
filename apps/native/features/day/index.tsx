@@ -46,6 +46,8 @@ function Sorting() {
  * "Now" bubble marks the current time. Drag it with momentum; on release it settles on the
  * nearest visit or back on now (spring 0.6 s, damping 0.85) with one haptic. Tap a pin to open it.
  */
+// Lanes: now pill 2–24 pt, visit pins from 32 pt, ticks and hour labels at the bottom.
+const LANE_PIN = 32, PILL = 60;
 const PX = 5; // points per minute: 30 minutes = 150 pt, room for a name pin
 // A pin's width in minutes: avatars, label and padding at 13 pt (~7 pt a character), plus a gap.
 const pinMinutes = (group: { p: Patient }[]) => {
@@ -80,24 +82,28 @@ function TimeBar({ patients, now, onOpen }: { patients: Patient[]; now: number; 
   const ruler = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   const ticks = Array.from({ length: (to - from) / 5 + 1 }, (_, i) => from + i * 5);
   const clock = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
-  return <View accessible={false} style={{ height: 112, overflow: "hidden", marginHorizontal: -4, borderRadius: 16 }}>
+  // The now pill tracks the line but stays inside the view: pinned to an edge (with an arrow) when
+  // now is scrolled away, and tapping it brings the ruler back to now.
+  const nowAt = xOf(now) + 4;
+  const pill = useAnimatedStyle(() => { const px = x.value + nowAt; return { transform: [{ translateX: Math.min(view + 4 - PILL / 2 - 4, Math.max(PILL / 2 + 4, px)) - PILL / 2 }] }; });
+  const leftArrow = useAnimatedStyle(() => ({ opacity: x.value + nowAt < PILL / 2 + 4 ? 1 : 0 }));
+  const rightArrow = useAnimatedStyle(() => ({ opacity: x.value + nowAt > view - PILL / 2 ? 1 : 0 }));
+  const backToNow = () => { tick(); x.set(reducedMotion ? anchor(now) : withSpring(anchor(now), { duration: 600, dampingRatio: 0.85 })); };
+  return <View accessible={false} style={{ height: 116, overflow: "hidden", marginHorizontal: -4, borderRadius: 16 }}>
     <GestureDetector gesture={pan}>
       <Animated.View style={[{ position: "absolute", left: 4, top: 0, bottom: 0, width: xOf(to) + 1 }, ruler]}>
         {ticks.map(m => { const hour = m % 60 === 0; return <View key={m} style={{ position: "absolute", left: xOf(m), bottom: 18, alignItems: "center", width: 1 }}>
           <View style={{ width: 1.5, height: hour ? 16 : m % 15 === 0 ? 10 : 6, borderRadius: 1, backgroundColor: hour ? "rgba(20,28,40,0.3)" : m % 15 === 0 ? "rgba(20,28,40,0.16)" : "rgba(20,28,40,0.08)" }} />
           {hour && <Text style={{ position: "absolute", top: 20, width: 40, textAlign: "center", fontSize: 10, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{clock(m)}</Text>}
         </View>; })}
-        {/* Now: a line through the ruler and a bubble above it. */}
-        <View pointerEvents="none" style={{ position: "absolute", left: xOf(now) - 30, top: 4, width: 60, alignItems: "center" }}>
-          <View style={{ paddingHorizontal: 8, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: palette.blue, boxShadow: "0 2px 6px rgba(36,91,204,0.25)" }}><Text style={{ fontSize: 11, lineHeight: 13, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"], textAlign: "center", includeFontPadding: false }}>{clock(now)}</Text></View>
-          <View style={{ width: 2, height: 68, borderRadius: 1, backgroundColor: palette.blue, opacity: 0.55 }} />
-        </View>
+        {/* Now: only the line scrolls with the ruler; its time pill lives in its own lane above. */}
+        <View pointerEvents="none" style={{ position: "absolute", left: xOf(now) - 1, top: LANE_PIN - 4, width: 2, height: 116 - 18 - (LANE_PIN - 4), borderRadius: 1, backgroundColor: palette.blue, opacity: 0.5 }} />
         {groupVisits(visits, pinMinutes).map(group => { const first = group[0]!; const incomplete = group.some(v => v.p.incomplete); const tone = TONE_PIN[incomplete ? "open" : "done"];
           const single = group.length === 1;
           const label = single ? `${first.p.name}, ${first.p.time}, ${first.p.subtitle}` : `${group.length} patients from ${first.p.time}: ${group.map(v => v.p.name).join(", ")}`;
           return <Pressable key={first.p.id} accessibilityRole="button" accessibilityLabel={label} accessibilityHint={single ? "Opens the visit" : "Lists these patients"} hitSlop={6}
             onPress={() => single ? onOpen(first.p.id) : router.push({ pathname: "/visits", params: { ids: group.map(v => v.p.id).join(",") } })}
-            style={{ position: "absolute", left: xOf(first.at) - 16, top: 26, alignItems: "flex-start" }}>
+            style={{ position: "absolute", left: xOf(first.at) - 16, top: LANE_PIN, alignItems: "flex-start" }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 2, paddingRight: 10, height: 36, borderRadius: 18, backgroundColor: palette.white, borderWidth: 1, borderColor: "rgba(20,28,40,0.06)", boxShadow: "0 3px 10px rgba(24,32,48,0.08)" }}>
               <View style={{ flexDirection: "row" }}>{group.slice(0, 3).map((v, i) => { const t = TONE_PIN[v.p.incomplete ? "open" : "done"]; return <View key={v.p.id}
                 style={{ width: 30, height: 30, borderRadius: 15, marginLeft: i ? -10 : 0, borderWidth: single ? 0 : 2, borderColor: palette.white, backgroundColor: single ? t.fill : v.p.incomplete ? "#F6E7D3" : "#DCE6F8", alignItems: "center", justifyContent: "center", zIndex: 3 - i }}>
@@ -109,6 +115,14 @@ function TimeBar({ patients, now, onOpen }: { patients: Patient[]; now: number; 
           </Pressable>; })}
       </Animated.View>
     </GestureDetector>
+    <Animated.View style={[{ position: "absolute", left: 0, top: 2, width: PILL, alignItems: "center", zIndex: 3 }, pill]}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Now, ${clock(now)}. Scroll the timeline back to now`} onPress={backToNow} hitSlop={10}
+        style={{ height: 22, paddingHorizontal: 8, borderRadius: 11, flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: palette.blue, boxShadow: "0 2px 6px rgba(36,91,204,0.25)" }}>
+        <Animated.View style={[{ position: "absolute", left: -12 }, leftArrow]}><Icon name="chevron.left" size={9} color={palette.blue} /></Animated.View>
+        <Text style={{ fontSize: 11, lineHeight: 13, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"], includeFontPadding: false }}>{clock(now)}</Text>
+        <Animated.View style={[{ position: "absolute", right: -12 }, rightArrow]}><Icon name="chevron.right" size={9} color={palette.blue} /></Animated.View>
+      </Pressable>
+    </Animated.View>
   </View>;
 }
 
