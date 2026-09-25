@@ -10,7 +10,8 @@
     "prebuild": "expo prebuild",
     "web": "expo start --web",
     "check-types": "tsc -b ../../packages/api && tsc --noEmit",
-    "env:generate": "varlock codegen"
+    "env:generate": "varlock codegen",
+    "test": "bun test features components"
   },
   "dependencies": {
     "@better-auth/expo": "catalog:",
@@ -62,7 +63,8 @@
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.10.1",
     "varlock": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@sona-ai/domain": "workspace:*"
   },
   "devDependencies": {
     "@sona-ai/config": "workspace:*",

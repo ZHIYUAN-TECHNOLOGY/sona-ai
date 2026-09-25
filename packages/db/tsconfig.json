@@ -7,6 +7,11 @@
     "emitDeclarationOnly": true,
     "outDir": "dist"
   },
-  "include": ["src/**/*.ts"],
-  "references": []
+  "include": [
+    "src/**/*.ts"
+  ],
+  "references": [],
+  "exclude": [
+    "src/**/*.test.ts"
+  ]
 }

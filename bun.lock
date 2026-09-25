@@ -30,6 +30,7 @@
         "@orpc/tanstack-query": "^1.15.0",
         "@shopify/react-native-skia": "2.6.2",
         "@sona-ai/api": "workspace:*",
+        "@sona-ai/domain": "workspace:*",
         "@tanstack/react-form": "^1.33.5",
         "@tanstack/react-query": "^5.102.8",
         "@varlock/expo-integration": "1.2.1",
@@ -139,6 +140,7 @@
     "packages/db": {
       "name": "@sona-ai/db",
       "dependencies": {
+        "@electric-sql/pglite": "0.3.15",
         "@neondatabase/serverless": "^1.1.0",
         "drizzle-orm": "catalog:",
         "zod": "catalog:",
@@ -148,6 +150,13 @@
         "drizzle-kit": "1.0.0-rc.4",
         "typescript": "^6.0.3",
         "varlock": "catalog:",
+      },
+    },
+    "packages/domain": {
+      "name": "@sona-ai/domain",
+      "devDependencies": {
+        "@sona-ai/config": "workspace:*",
+        "typescript": "^6.0.3",
       },
     },
     "packages/infra": {
@@ -918,6 +927,8 @@
     "@sona-ai/config": ["@sona-ai/config@workspace:packages/config"],
 
     "@sona-ai/db": ["@sona-ai/db@workspace:packages/db"],
+
+    "@sona-ai/domain": ["@sona-ai/domain@workspace:packages/domain"],
 
     "@sona-ai/infra": ["@sona-ai/infra@workspace:packages/infra"],
 
