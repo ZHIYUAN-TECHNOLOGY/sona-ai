@@ -1,7 +1,9 @@
 import * as Haptics from "expo-haptics";
 import { useEffect, useState } from "react";
-import { Pressable, View } from "react-native";
-import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
+import { Pressable, View, useWindowDimensions } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { scheduleOnRN } from "react-native-worklets";
+import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -37,20 +39,62 @@ function Sorting() {
   </Animated.View>;
 }
 
-/** Visits as blocks on a morning track with a "now" line. */
-function TimeBar({ patients, now }: { patients: Patient[]; now: number }) {
-  // A five-hour window starting an hour before now.
-  const from = (Math.floor(now / 60) - 1) * 60, to = from + 5 * 60;
-  const at = (m: number) => `${Math.min(100, Math.max(0, ((m - from) / (to - from)) * 100))}%` as const;
-  return <View accessible accessibilityLabel={`Visits: ${patients.map(p => `${p.name} at ${p.time}`).join(", ")}`} style={{ gap: 6 }}>
-    <View style={{ height: 28, borderRadius: 10, backgroundColor: "rgba(20,28,40,0.05)", overflow: "hidden" }}>
-      {patients.map(p => { const [h, m] = p.time.split(":").map(Number); const start = h! * 60 + m!; return <View key={p.id}
-        style={{ position: "absolute", top: 4, bottom: 4, left: at(start), width: `${(30 / (to - from)) * 100}%`, borderRadius: 7, backgroundColor: p.incomplete ? "rgba(196,120,20,0.35)" : "rgba(36,91,204,0.35)", justifyContent: "center", paddingLeft: 5 }}>
-        <Text numberOfLines={1} style={{ fontSize: 10, fontWeight: "700", color: palette.ink }}>{p.initials}</Text>
-      </View>; })}
-      {now > from && now < to && <View style={{ position: "absolute", top: 0, bottom: 0, left: at(now), width: 2, backgroundColor: palette.red }} />}
-    </View>
-    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>{[0, 1, 2, 3, 4, 5].map(i => from / 60 + i).map(h => <Text key={h} style={{ ...type.caption, fontSize: 10, color: palette.muted, fontVariant: ["tabular-nums"] }}>{String(h % 24).padStart(2, "0")}:00</Text>)}</View>
+/*
+ * Time ruler (after Habitastic's check-in timeline): a quiet tick ruler (15-minute ticks, hour
+ * labels) with the window clipped to the card width. Each visit is a round avatar pin with first name and time; a
+ * "Now" bubble marks the current time. Drag it with momentum; on release it settles on the
+ * nearest visit or back on now (spring 0.6 s, damping 0.85) with one haptic. Tap a pin to open it.
+ */
+const PX = 5; // points per minute: 30 minutes = 150 pt, room for a name pin
+const TONE_PIN = { done: { fill: "rgba(36,91,204,0.14)", ink: palette.blue }, open: { fill: "rgba(196,120,20,0.16)", ink: palette.amber } };
+function TimeBar({ patients, now, onOpen }: { patients: Patient[]; now: number; onOpen: (patientId: string) => void }) {
+  const { width } = useWindowDimensions();
+  const { reducedMotion } = useAccessibleEffects();
+  const view = width - 40;
+  const from = (Math.floor(now / 60) - 1) * 60, to = from + 9 * 60;
+  const xOf = (m: number) => (m - from) * PX;
+  const visits = patients.map(p => { const [h, m] = p.time.split(":").map(Number); return { p, at: h! * 60 + m! }; }).sort((a, b) => a.at - b.at);
+  // Anchors put a time 15% across the ruler, so now and the next visits fit; the view starts on now.
+  const anchor = (m: number) => view * 0.15 - xOf(m);
+  const stops = [anchor(now), ...visits.map(v => anchor(v.at))];
+  const min = view - xOf(to), max = 0;
+  const x = useSharedValue(anchor(now)), start = useSharedValue(0);
+  const tick = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); };
+  const pan = Gesture.Pan().activeOffsetX([-8, 8]).failOffsetY([-10, 10])
+    .onBegin(() => { start.set(x.value); })
+    .onUpdate(e => { x.set(Math.min(max, Math.max(min, start.value + e.translationX))); })
+    .onEnd(e => {
+      const projected = x.value + e.velocityX * 0.2;
+      let target = stops[0]!;
+      for (const s of stops) if (Math.abs(s - projected) < Math.abs(target - projected)) target = s;
+      x.set(reducedMotion ? target : withSpring(target, { duration: 600, dampingRatio: 0.85, velocity: e.velocityX }));
+      scheduleOnRN(tick);
+    });
+  const ruler = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  const ticks = Array.from({ length: (to - from) / 5 + 1 }, (_, i) => from + i * 5);
+  const clock = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+  return <View accessible={false} style={{ height: 112, overflow: "hidden", marginHorizontal: -4, borderRadius: 16 }}>
+    <GestureDetector gesture={pan}>
+      <Animated.View style={[{ position: "absolute", left: 4, top: 0, bottom: 0, width: xOf(to) + 1 }, ruler]}>
+        {ticks.map(m => { const hour = m % 60 === 0; return <View key={m} style={{ position: "absolute", left: xOf(m), bottom: 18, alignItems: "center", width: 1 }}>
+          <View style={{ width: 1.5, height: hour ? 16 : m % 15 === 0 ? 10 : 6, borderRadius: 1, backgroundColor: hour ? "rgba(20,28,40,0.3)" : m % 15 === 0 ? "rgba(20,28,40,0.16)" : "rgba(20,28,40,0.08)" }} />
+          {hour && <Text style={{ position: "absolute", top: 20, width: 40, textAlign: "center", fontSize: 10, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{clock(m)}</Text>}
+        </View>; })}
+        {/* Now: a line through the ruler and a bubble above it. */}
+        <View pointerEvents="none" style={{ position: "absolute", left: xOf(now) - 22, top: 4, width: 44, alignItems: "center" }}>
+          <View style={{ paddingHorizontal: 7, height: 20, borderRadius: 10, justifyContent: "center", backgroundColor: palette.red }}><Text style={{ fontSize: 10, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{clock(now)}</Text></View>
+          <View style={{ width: 2, height: 70, backgroundColor: palette.red, opacity: 0.7 }} />
+        </View>
+        {visits.map(({ p, at }) => { const tone = TONE_PIN[p.incomplete ? "open" : "done"]; return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={`${p.name}, ${p.time}, ${p.subtitle}`} accessibilityHint="Opens the visit" onPress={() => onOpen(p.id)} hitSlop={6}
+          style={{ position: "absolute", left: xOf(at) - 16, top: 26, alignItems: "flex-start" }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 2, paddingRight: 10, height: 36, borderRadius: 18, backgroundColor: palette.white, borderWidth: 1, borderColor: "rgba(20,28,40,0.06)", boxShadow: "0 3px 10px rgba(24,32,48,0.08)" }}>
+            <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: tone.fill, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 11, fontWeight: "700", color: tone.ink }}>{p.initials}</Text></View>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: palette.ink }}>{p.name.split(" ")[0]} <Text style={{ fontWeight: "500", color: palette.muted, fontVariant: ["tabular-nums"] }}>· {p.time}</Text></Text>
+          </View>
+          <View style={{ marginLeft: 15, width: 2, height: 14, borderRadius: 1, backgroundColor: tone.ink, opacity: 0.5 }} />
+        </Pressable>; })}
+      </Animated.View>
+    </GestureDetector>
   </View>;
 }
 
@@ -112,7 +156,7 @@ export function MyDay({ patients, onOpen }: { patients: Patient[]; onOpen: (pati
         <Icon name="sparkles" size={11} color={palette.ink} /><Text style={{ fontSize: 13, fontWeight: "600", color: palette.ink }}>Re-rank</Text>
       </Pressable>
     </View>
-    <TimeBar patients={patients} now={now} />
+    <TimeBar patients={patients} now={now} onOpen={id => onOpen(id, {})} />
     {sorting ? <Sorting /> : <>
       {top && <Animated.View key={`top-${run}`} layout={LAYOUT} entering={animate ? riseIn({ distance: 14, scale: 0.97, duration: 450 }) : undefined}>
         <Pressable accessibilityRole="button" accessibilityLabel={`Most urgent: ${top.title}. ${top.reason}`} accessibilityHint="Opens the visit" onPress={() => onOpen(top.patientId, top.open)}
