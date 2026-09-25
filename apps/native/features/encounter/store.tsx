@@ -1,5 +1,7 @@
 import { createContext, use, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { patients } from "./fixtures";
+import { AppState } from "react-native";
+import { refreshPendingResult } from "@/features/day/model";
+import { patients, refreshDemoTimes } from "./fixtures";
 import { effectivePatient } from "./clinical-state";
 import { acceptCard, beginRequest, createCard, finishRequest, initialEncounters, issueSimulation, reviseEncounter, revealSections, queueAmendment, reconcileAmendment } from "./state";
 import type { Capability, Encounter, Patient, RequestState } from "./types";
@@ -16,6 +18,14 @@ type Store = {
 const Context = createContext<Store | null>(null);
 export function EncounterProvider({ children }: { children: ReactNode }) {
   const [patientId, setPatientId] = useState<string>();
+  // Coming back to the app (or a long idle stretch) re-times the demo schedule so it never reads "running late".
+  const [, setClock] = useState(0);
+  useEffect(() => {
+    const refresh = () => { if (refreshDemoTimes(id => Boolean(stateRef.current[id]?.requests.length))) { refreshPendingResult(); setClock(n => n + 1); } };
+    const sub = AppState.addEventListener("change", state => { if (state === "active") refresh(); });
+    const timer = setInterval(refresh, 60_000);
+    return () => { sub.remove(); clearInterval(timer); };
+  }, []);
   const [encounters, setEncounters] = useState(initialEncounters);
   const [simulateFailure, setSimulateFailure] = useState(false);
   const [simulateInvalid, setSimulateInvalid] = useState(false);

@@ -13,7 +13,8 @@ import { BlurView } from "expo-blur";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import { HalftoneGlint, HalftoneShimmer } from "./halftone-shimmer";
 import { AttachmentStrip, attachmentSource } from "./attachment-stack";
-import { CaptureScan, type ImageType } from "./capture-scan";
+import { CaptureScan } from "./capture-scan";
+import { suggestImageType, type ImageType } from "./image-type";
 import { useAccessibleEffects } from "./ui";
 import { palette } from "./theme";
 
@@ -43,7 +44,9 @@ const ITEMS: { label: string; icon: BrandIconName; action: Surface | "files" }[]
 
 function tick() { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); }
 
-export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMotion, onClose, attached, onAdd, onRemove }: {
+export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMotion, onClose, attached, onAdd, onRemove, hint }: {
+  /** What the clinician has typed so far; preselects the capture's image type. */
+  hint?: string;
   visible: boolean;
   /** 0 → 1: plus → menu. */
   progress: SharedValue<number>;
@@ -193,7 +196,7 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
             {camPermission?.granted ? <CameraView ref={camera} style={StyleSheet.absoluteFill} facing="back" />
               : <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 8 }}><Text style={{ color: "white", fontSize: 16, fontWeight: "600" }}>Camera access needed</Text><Text style={{ color: "rgba(255,255,255,0.7)", textAlign: "center" }}>Allow the camera to photograph a film or document for review.</Text></View>}
           </View>
-          {shot && <CaptureScan source={attachmentSource({ uri: shot, name: "", kind: "image" })} width={W - 16} height={H - extTop - extBottom} onRetake={() => setShot(undefined)} onAttach={attachShot} />}
+          {shot && <CaptureScan suggested={suggestImageType(hint)} source={attachmentSource({ uri: shot, name: "", kind: "image" })} width={W - 16} height={H - extTop - extBottom} onRetake={() => setShot(undefined)} onAttach={attachShot} />}
       </Animated.View>}
     </Animated.View>
 

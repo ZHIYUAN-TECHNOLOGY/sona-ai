@@ -48,3 +48,15 @@ test("any day in a month view has a valid schedule", () => {
   const monday = new Date(2026, 8, 21);
   for (let o = -40; o <= 40; o++) for (const v of scheduleFor(o, patients, monday)) expect(v.name.length).toBeGreaterThan(0);
 });
+
+test("a stale demo schedule moves back to upcoming; visits under way keep their time", () => {
+  const { refreshDemoTimes } = require("@/features/encounter/fixtures");
+  const later = new Date(); later.setHours(later.getHours() + 3);
+  const started = patients[0].time;
+  expect(refreshDemoTimes(id => id === patients[0].id, later)).toBe(true);
+  expect(patients[0].time).toBe(started);
+  const [h, m] = patients[1].time.split(":").map(Number);
+  const diff = (h * 60 + m) - (later.getHours() * 60 + later.getMinutes());
+  expect(((diff % 1440) + 1440) % 1440).toBeLessThan(60);
+  expect(refreshDemoTimes(id => id === patients[0].id, later)).toBe(false); // already current: nothing moves
+});

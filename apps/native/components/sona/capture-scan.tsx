@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { Text } from "./text";
 import { palette, type } from "./theme";
+import { IMAGE_TYPES, type ImageType } from "./image-type";
 import { useAccessibleEffects } from "./ui";
 
 /**
@@ -15,10 +16,9 @@ import { useAccessibleEffects } from "./ui";
  * halftone dots sweeps up it (1.1 s, ease-in-out), the surround dims to a focus frame, and a glass
  * sheet springs up (0.45 s, damping 0.72) asking what the image is before it is attached.
  * The sweep is an overlay that fades away; the photo's own pixels are never tinted or altered.
- * Nothing is read from the image here: the type is the clinician's choice, suggested as chest X-ray.
+ * Nothing is read from the image here: the type is the clinician's choice, preselected from what they typed.
  */
-export const IMAGE_TYPES = ["Chest X-ray", "Skin", "Wound", "Document", "Other"] as const;
-export type ImageType = (typeof IMAGE_TYPES)[number];
+export { IMAGE_TYPES, type ImageType } from "./image-type";
 
 const band = Skia.RuntimeEffect.Make(`
 uniform float2 res;
@@ -44,10 +44,10 @@ function Sweep({ width, height, progress }: { width: number; height: number; pro
   </Canvas>;
 }
 
-export function CaptureScan({ source, width, height, onRetake, onAttach }: { source: number | { uri: string }; width: number; height: number; onRetake: () => void; onAttach: (kind: ImageType) => void }) {
+export function CaptureScan({ source, width, height, suggested = "Chest X-ray", onRetake, onAttach }: { source: number | { uri: string }; suggested?: ImageType; width: number; height: number; onRetake: () => void; onAttach: (kind: ImageType) => void }) {
   const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();
-  const [kind, setKind] = useState<ImageType>("Chest X-ray");
+  const [kind, setKind] = useState<ImageType>(suggested);
   const [ready, setReady] = useState(reducedMotion);
   const scan = useSharedValue(0), dim = useSharedValue(0), sheet = useSharedValue(0);
   useEffect(() => {

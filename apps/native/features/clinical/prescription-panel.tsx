@@ -10,19 +10,17 @@ import { palette, type } from "@/components/sona/theme";
 import { Action, Expand, Label, Notice, SourceLink, Surface } from "@/components/sona/ui";
 import { getPrescriptionChecks, simulatedRegimen } from "@/features/encounter/clinical-state";
 import { useEncounter } from "@/features/encounter/store";
-import type { Encounter, FeatureProps, PrescriptionCheck, PrescriptionInputs, Regimen } from "@/features/encounter/types";
+import type { Encounter, FeatureProps, Regimen } from "@/features/encounter/types";
 import { ClinicalChoice, ClinicalField } from "./controls";
 import { PrescribeCard } from "./prescribe-card";
-import { Detail, DisclosureButton, Footnote, FormReveal, Hairline, Mark, Perforation, Seal, StatusLine, TextLink, haptic, useLayoutSpring } from "./medication-parts";
+import { Detail, DisclosureButton, Footnote, FormReveal, Mark, Perforation, Seal, TextLink, haptic, useLayoutSpring } from "./medication-parts";
 
-const emptyInputs: PrescriptionInputs = { weightKg: "", liverDisease: "unknown", kidneyDisease: "unknown", alcoholRisk: "unknown", paracetamolAllergy: "unknown" };
-const answers = [{ value: "unknown", label: "Not recorded" }, { value: "no", label: "No · explicitly recorded" }, { value: "yes", label: "Yes" }] as const;
 const scenarios: { value: NonNullable<Encounter["prescriptionScenario"]>; label: string }[] = [
   { value: "standard", label: "Standard synthetic scenario" }, { value: "unknown-coverage", label: "Unknown interaction coverage" },
   { value: "unsupported", label: "Unsupported regimen" }, { value: "failed-prerequisite", label: "Failed prerequisite" }, { value: "creation-failure", label: "Creation service fails" },
 ];
-/** Checks resolve down the list 30 ms apart (capped at 300 ms); the receipt rises in as they finish and its seal stamps. */
-const STAGGER = 30, PULSE_STAGGER = 70;
+/** The receipt rises in as the checks finish and its seal stamps. */
+const STAGGER = 30;
 const REGIMEN_LINE = "Authored synthetic regimen, not an NHS recommendation. No dispensing.";
 const REGIMEN_NOTE = "Authored synthetic regimen, narrower than the NHS adult dose limits. It is not an NHS recommendation for this patient or a validated model decision. No dispensing or pharmacy transmission.";
 
@@ -32,30 +30,6 @@ function RegimenRows({ regimen }: { regimen: Regimen }) {
     <Detail label="Route" value={regimen.route} />
     <Detail label="Frequency & limit" value={regimen.frequency} />
     <Detail label="Duration" value={regimen.duration} />
-  </View>;
-}
-
-/**
- * The fixture prerequisites as a checklist. While a real check request runs, each mark pulses in
- * a slow wave (nothing is shown as passed before the result exists); when the result arrives the
- * marks resolve in sequence and blocked checks open their reason.
- */
-function CheckList({ checks, checking, fresh }: { checks: PrescriptionCheck[]; checking: boolean; fresh: boolean }) {
-  const layout = useLayoutSpring();
-  return <View>
-    {checks.map((check, index) => {
-      const state = checking ? "pending" : check.status === "passed" ? "done" : "blocked";
-      return <Animated.View key={check.id} layout={layout}>
-        {index > 0 && <Hairline inset={38} />}
-        <View accessible accessibilityLabel={`${check.label}. ${checking ? "Checking" : check.status === "passed" ? "Passed" : `Blocked. ${check.detail}`}`} style={{ flexDirection: "row", gap: 14, paddingVertical: 11 }}>
-          <Mark state={state} delay={checking ? index * PULSE_STAGGER : fresh ? index * STAGGER : 0} />
-          <View style={{ flex: 1, gap: 3, paddingTop: 2 }}>
-            <Text style={{ fontSize: 15, lineHeight: 20, fontWeight: state === "blocked" ? "600" : "500", color: checking ? palette.muted : palette.ink }}>{check.label}</Text>
-            {state === "blocked" && <Expand><Text selectable style={{ fontSize: 14, lineHeight: 20, color: palette.muted }}>{check.detail}</Text></Expand>}
-          </View>
-        </View>
-      </Animated.View>;
-    })}
   </View>;
 }
 
@@ -74,19 +48,12 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
   // The latest answer is live: it follows the encounter as the card runs checks in place.
   const live = !result || encounter?.cards.at(-1)?.id === result.id;
   const prescription = live ? encounter?.prescription : result?.prescription;
-  const [showInputs, setShowInputs] = useState(false);
-  // The "Next step" bar asks for the eligibility form by stamping the encounter.
-  const inputsOpen = encounter?.prescriptionInputsOpen;
-  useEffect(() => { if (inputsOpen) setShowInputs(true); }, [inputsOpen]);
   const [audit, setAudit] = useState(false);
   const [amending, setAmending] = useState(false);
   const [showScenarios, setShowScenarios] = useState(false);
   const amendment = encounter?.amendmentOperation;
   const amendmentPending = amendment !== undefined && ["queued-review", "reviewing", "queued-issue", "issuing"].includes(amendment.phase);
-  const inputs = encounter?.prescriptionInputs ?? emptyInputs;
   const busy = encounter?.requests.some(request => request.status === "streaming") ?? false;
-  const issuing = encounter?.requests.some(request => request.status === "streaming" && request.kind === "prescription") ?? false;
-  const stale = prescription !== undefined && prescription.revision !== encounter?.revision;
   const checks = encounter ? getPrescriptionChecks(encounter, activePatient?.id === patient.id ? activePatient : patient) : [];
   const receiptChecks = prescription?.checks ?? [];
   const regimen = prescription?.regimen ?? simulatedRegimen;
@@ -94,7 +61,6 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
   const latestCreated = encounter?.cards.filter(card => card.prescription?.status === "created").at(-1)?.prescription;
   const canAmend = created && (!latestCreated || latestCreated.id === prescription?.id);
   const failed = prescription?.status === "failed";
-  const updateInput = (change: Partial<PrescriptionInputs>) => updateEncounter(value => ({ ...value, prescriptionInputs: { ...(value.prescriptionInputs ?? emptyInputs), ...change } }), true);
   const amend = () => {
     if (!encounter?.prescriptionAmendment?.trim()) return;
     startAmendment(encounter.prescriptionAmendment.trim());
@@ -118,60 +84,18 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
     return () => timers.forEach(clearTimeout);
   }, [fresh, createdAt, status, stampDelay, reduced]);
 
-  // Blocking reasons already visible as blocked rows below are not repeated; stale or extra ones are.
-  const blockedNow = new Set(checks.filter(check => check.status === "blocked").map(check => check.detail));
-  const reasons = prescription?.reasons.filter(reason => stale || !blockedNow.has(reason)) ?? [];
-  const passed = checks.filter(check => check.status === "passed").length;
-
-  const title = issuing ? "Checking before simulated creation" : created ? "Simulated prescription created" : failed ? "Simulated creation failed" : prescription ? "Simulation blocked" : "Review the simulation inputs";
-  const subtitle = issuing ? `Checking encounter revision ${encounter?.revision}. Nothing is created unless every check passes.`
-    : created ? "Created automatically once every fixture check passed. Simulation only."
-    : failed ? "The checks passed, but no receipt was issued."
-    : prescription ? "Nothing was created. Resolve what blocked it, then run again."
-    : "Nothing is created until every check below passes.";
-
   return <LayoutAnimationConfig skipEntering>
     <View style={{ gap: 28 }}>
-      {live ? <Anchor id="prescribing" title="Prescribe"><PrescribeCard patient={activePatient?.id === patient.id ? activePatient : patient} /></Anchor> : <>
-      <Anchor id="result" title="Result"><Animated.View layout={layout}>
-        <Section icon="cross.case" tone="blue" title={title} subtitle={subtitle}>
-          {stale && <Notice warning>Receipt revision {prescription.revision} is retained unchanged. The current encounter is revision {encounter?.revision}.</Notice>}
-          {reasons.map((reason, index) => <StatusLine key={`${index}-${reason}`} state="blocked">{reason}</StatusLine>)}
-          {!created && <View style={{ gap: 4 }}>
-            <Text selectable style={{ fontSize: 17, lineHeight: 23, fontWeight: "600", color: palette.ink }}>{regimen.medication} · {regimen.formulation}</Text>
-            <Text selectable style={{ fontSize: 15, lineHeight: 21, color: palette.muted }}>{regimen.dose} {regimen.unit} · {regimen.route} · {regimen.frequency} · {regimen.duration}</Text>
-          </View>}
-          {!created && <Footnote>{REGIMEN_LINE}</Footnote>}
-        </Section>
-      </Animated.View></Anchor>
-
-      <Anchor id="checks" title="Checks"><Animated.View layout={layout}>
-        <Section icon="checklist" tone="teal" title="Checks before action" subtitle={issuing ? "Checking each prerequisite against the current encounter…" : `${passed} of ${checks.length} met · workflow checks, not clinical confidence`}>
-          <Surface feature={!created} layout={layout} style={{ paddingHorizontal: 18, paddingTop: 6, paddingBottom: 18, gap: 12 }}>
-            <CheckList checks={checks} checking={issuing} fresh={fresh} />
-            <Animated.View layout={layout}><Hairline /></Animated.View>
-            <Animated.View layout={layout}>
-              <DisclosureButton label="Eligibility inputs" open={showInputs} onToggle={() => setShowInputs(value => !value)} />
-            </Animated.View>
-            {showInputs && <FormReveal style={{ gap: 14 }}>
-              <ClinicalField label="Weight in kg" value={inputs.weightKg} onChange={weightKg => updateInput({ weightKg })} keyboardType="decimal-pad" />
-              {([["paracetamolAllergy", "Prior paracetamol allergy"], ["liverDisease", "Liver disease"], ["kidneyDisease", "Kidney disease"], ["alcoholRisk", "Alcohol dependence or binge drinking"]] as const).map(([key, label]) => <ClinicalChoice key={key} label={label} value={inputs[key]} options={[...answers]} onChange={answer => updateInput({ [key]: answer })} />)}
-              {showDemoControls && <Action label="Load synthetic eligibility" secondary onPress={() => updateEncounter(value => ({ ...value, prescriptionInputs: { weightKg: "62", liverDisease: "no", kidneyDisease: "no", alcoholRisk: "no", paracetamolAllergy: "no" } }), true)} />}
-              {showDemoControls && <Footnote>Fills 62 kg and explicit negatives only. It doesn’t collect history, confirm medicines or clear other checks.</Footnote>}
-            </FormReveal>}
-            <Animated.View layout={layout} style={{ gap: 4, paddingTop: 4 }}>
-              <Action label={busy || amendmentPending ? "Simulation is working…" : failed ? "Retry simulated creation" : "Run prescribing simulation"} icon={busy || amendmentPending ? undefined : "doc.badge.plus"} disabled={busy || amendmentPending} onPress={() => onRequest("prescription")} />
-              {busy || amendmentPending ? <Action label="Cancel current step" secondary icon="stop.fill" onPress={cancel} />
-                : <TextLink label="Review medicines" onPress={() => onRequest("medication")} />}
-            </Animated.View>
-            {amendmentPending && <Notice>{amendment.phase === "queued-review" || amendment.phase === "reviewing" ? "Reviewing amended medication context…" : "Checking the amended simulation…"} This continues if you leave this result.</Notice>}
-            {amendment?.error && <Notice warning>{amendment.error}</Notice>}
-            {amendment?.phase === "complete" && <Notice>Amendment completed. See the latest receipt.</Notice>}
-            {amendment?.phase === "cancelled" && !amendment.error && <Notice>Amendment cancelled. The original receipt is unchanged.</Notice>}
-          </Surface>
-        </Section>
-      </Animated.View></Anchor>
-      </>}
+      {live ? <Anchor id="prescribing" title="Prescribe"><PrescribeCard patient={activePatient?.id === patient.id ? activePatient : patient} /></Anchor>
+        : <Anchor id="prescribing" title="Prescribe"><Surface layout={layout} style={{ padding: 16, gap: 8 }}>
+          {/* An earlier run, kept as it was: what it decided and why, in two lines. The live card is on the latest answer. */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Mark state={created ? "done" : "blocked"} size={22} />
+            <Text style={{ flex: 1, ...type.headline, color: palette.ink }}>{created ? "Prescribed · simulation" : failed ? "Creation failed" : "Blocked"} · {regimen.medication}</Text>
+          </View>
+          <Text style={{ ...type.footnote, color: palette.muted }}>{receiptChecks.filter(c => c.status === "passed").length} of {receiptChecks.length || checks.length} checks met at revision {prescription?.revision ?? "–"}{!created && receiptChecks.some(c => c.status === "blocked") ? ` · blocked by ${receiptChecks.filter(c => c.status === "blocked").map(c => c.label.toLowerCase()).join(", ")}` : ""}.</Text>
+          <Text style={{ ...type.caption, color: palette.muted }}>Earlier run, kept unchanged. The latest answer has the live card.</Text>
+        </Surface></Anchor>}
 
       {created && prescription && <Anchor id="receipt" title="Receipt"><Animated.View layout={layout} entering={fresh && !reduced ? riseIn({ delay: riseDelay, distance: 16, duration: 380 }) : undefined}>
         <Section icon="checkmark.seal" tone="teal" title="Immutable receipt" subtitle="This version never changes; an amendment adds a new one.">

@@ -306,6 +306,6 @@ export function VoiceDock(props: Props) {
       </View>
     </View>
 
-    <AttachmentsMenu visible={menu} progress={menuProgress} extend={menuExtend} anchor={{ left: 34, bottom: Math.max(insets.bottom, 12) + 4 + (BAR_H - 50) / 2, size: 50 }} reducedMotion={reducedMotion} onClose={closeMenu} attached={attachments} onAdd={addAttachments} onRemove={removeAttachment} />
+    <AttachmentsMenu hint={draft} visible={menu} progress={menuProgress} extend={menuExtend} anchor={{ left: 34, bottom: Math.max(insets.bottom, 12) + 4 + (BAR_H - 50) / 2, size: 50 }} reducedMotion={reducedMotion} onClose={closeMenu} attached={attachments} onAdd={addAttachments} onRemove={removeAttachment} />
   </View>;
 }

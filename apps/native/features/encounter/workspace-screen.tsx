@@ -2,7 +2,7 @@ import { AmbientWash } from "@/components/sona/ambient";
 import { ResponseFrame } from "@/components/sona/response-frame";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Action, Notice, Reveal } from "@/components/sona/ui";
+import { Action, Icon, Notice, Reveal } from "@/components/sona/ui";
 import { ClinicalResponseRenderer } from "@/features/presentation";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -225,6 +225,16 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
         {!active && latest && patient && <View style={{ marginHorizontal: -20, paddingHorizontal: 20, paddingTop: 32, paddingBottom: 28, gap: 16, backgroundColor: "rgba(232,235,240,0.55)" }}>
           <Text accessibilityRole="header" style={{ textAlign: "center", ...type.headline, color: palette.ink, letterSpacing: -0.3 }}>You might want to ask</Text>
           <SuggestionList items={followUpsFor(latest.kind, patient)} onPick={pick} />
+          {/* Closing the visit: once the note, follow-up or prescription is done, handing over is one tap away. */}
+          {(latest.kind === "note" || latest.kind === "followup" || latest.kind === "prescription") && <Pressable accessibilityRole="button" accessibilityLabel="Hand over shift" accessibilityHint="Opens the shift handover with this patient's open items"
+            onPress={() => router.push("/handover")} style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 20, borderCurve: "continuous", backgroundColor: palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+            <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.14)" }}><Icon name="arrow.left.arrow.right" size={15} color={palette.white} /></View>
+            <View style={{ flex: 1, gap: 1 }}>
+              <Text style={{ ...type.subhead, fontWeight: "600", color: palette.white }}>Done with {patient.name.split(" ")[0]}? Hand over shift</Text>
+              <Text style={{ ...type.caption, color: "rgba(255,255,255,0.7)" }}>Open items travel with each patient</Text>
+            </View>
+            <Icon name="chevron.right" size={12} color="rgba(255,255,255,0.7)" />
+          </Pressable>}
         </View>}
       </View>}
     </ScrollView>

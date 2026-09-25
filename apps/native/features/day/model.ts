@@ -18,6 +18,8 @@ export type DayItem = {
 
 // A synthetic lab result that arrived after Daniel's intake and has not been acted on.
 export const PENDING_RESULT = { patientId: "SYN-1086", test: "Potassium", value: "3.1 mmol/L", flag: "Low", receivedAt: demoTime(-120) };
+/** Keeps the demo result about two hours old when the demo schedule is refreshed. */
+export function refreshPendingResult(now = new Date()) { PENDING_RESULT.receivedAt = demoTime(-120, now); }
 
 const minutes = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); return h! * 60 + m!; };
 const ago = (from: number, now: number) => { const d = Math.max(0, now - from); return d < 60 ? `${d} min` : `${Math.floor(d / 60)} h`; };
