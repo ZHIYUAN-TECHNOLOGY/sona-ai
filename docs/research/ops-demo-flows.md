@@ -8,7 +8,7 @@ Ranked "wow" demo flows aimed at hospital operations and management judges. Draf
 
 Ranking weighs judge impact, real operational pain, and how much of the existing Sona UI each flow reuses.
 
-Status: flow 1 (discharge in 60 seconds) is built as synthetic UI: `apps/native/features/discharge`, opened from the end-of-visit Discharge button. Flow 2 (guarantee letter and claim-ready coding) is built as synthetic UI: `apps/native/features/claim`, opened from the discharge card's guarantee letter row. Flow 3 (ward command view) is built as synthetic UI: `apps/native/features/ward`, opened from the home Ward key. Flows 4 and 5 are proposals.
+Status: flow 1 (discharge in 60 seconds) is built as synthetic UI: `apps/native/features/discharge`, opened from the end-of-visit Discharge button. Flow 2 (guarantee letter and claim-ready coding) is built as synthetic UI: `apps/native/features/claim`, opened from the discharge card's guarantee letter row. Flow 3 (ward command view) is built as synthetic UI: `apps/native/features/ward`, opened from the home Ward key. Flow 4 (graded evidence answer) is built as synthetic UI: `apps/native/features/evidence`, the new evidence answer. Flow 5 is a proposal.
 
 ## Ranked flows
 

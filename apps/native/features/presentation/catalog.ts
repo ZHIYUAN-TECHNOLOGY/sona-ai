@@ -22,6 +22,7 @@ export const clinicalCatalog = defineCatalog(schema, {
     ClinicalPrescription: { props: resultReference, description: "Existing synthetic prescription workflow and checked status." },
     ClinicalFollowup: { props: resultReference, description: "Existing follow-up proposal and task actions." },
     ClinicalNote: { props: resultReference, description: "Existing draft consultation note." },
+    ClinicalEvidence: { props: resultReference, description: "Graded evidence answer with its studies and the severity score that applies." },
     ContextNotice: { props: z.object({ noticeId: z.enum(["missing-context", "snapshot-provenance"]) }).strict(), description: "App-owned context or provenance notice." },
     SourceAction: { props: z.object({ sourceId: reference }).strict(), description: "Open a source that belongs to this response's patient snapshot." },
     MedicineThumb: { props: z.object({ medicineId: z.enum(medicineIds), confirmed: z.boolean() }).strict(), description: "Illustrative dosage-form thumbnail. Name a catalogue medicine; the app draws it (never supply an image)." },
@@ -30,7 +31,7 @@ export const clinicalCatalog = defineCatalog(schema, {
 
 export const clinicalComponentNames = {
   briefing: "ClinicalBriefing", reasoning: "ClinicalReasoning", xray: "ClinicalXray", medication: "ClinicalMedication",
-  prescription: "ClinicalPrescription", followup: "ClinicalFollowup", note: "ClinicalNote",
+  prescription: "ClinicalPrescription", followup: "ClinicalFollowup", note: "ClinicalNote", evidence: "ClinicalEvidence",
 } as const satisfies Record<Capability, string>;
 
 export function responseReference(props: FeatureProps, kind: Capability): string {
@@ -45,7 +46,7 @@ export function composeClinicalSpec(props: FeatureProps, kind: Capability, secti
   const clinicalId = `${responseId}-clinical`;
   const noticeId = `${responseId}-context`;
   const sourceNodeId = `${responseId}-source`;
-  const sourcePreference: Record<Capability, string> = { briefing: "history", reasoning: "history", xray: "xray", medication: "medication", prescription: "paracetamol-reference", followup: "history", note: "consultation" };
+  const sourcePreference: Record<Capability, string> = { briefing: "history", reasoning: "history", xray: "xray", medication: "medication", prescription: "paracetamol-reference", followup: "history", note: "consultation", evidence: "history" };
   const source = props.patient.sources.find(item => item.id === sourcePreference[kind]) ?? props.patient.sources.find(item => item.id === "history");
   const children: string[] = [];
   const elements: Spec["elements"] = {};

@@ -1,4 +1,4 @@
-export type Capability = "briefing" | "reasoning" | "xray" | "medication" | "prescription" | "followup" | "note";
+export type Capability = "briefing" | "reasoning" | "xray" | "medication" | "prescription" | "followup" | "note" | "evidence";
 export type FocusView = "recording" | "note" | "xray" | "tasks";
 export type Source = { id: string; title: string; date: string; kind: "record" | "transcript" | "image" | "reference"; excerpt: string; synthetic: boolean; url?: string };
 export type Patient = {

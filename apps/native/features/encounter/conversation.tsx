@@ -20,8 +20,8 @@ import type { Capability, Patient } from "./types";
 const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
 export type Suggestion = { text: string; kind: Capability | "recording"; emoji: string };
 
-export const capabilityLabels: Record<Capability, string> = { briefing: "Patient briefing", reasoning: "Clinical reasoning", xray: "Chest X-ray", medication: "Medication review", prescription: "Prescribing simulation", followup: "Follow-up plan", note: "Consultation note" };
-const emoji: Record<Capability | "recording", string> = { briefing: "🩺", reasoning: "🔎", xray: "🫁", medication: "💊", prescription: "📝", followup: "🗓️", note: "🗒️", recording: "🎙️" };
+export const capabilityLabels: Record<Capability, string> = { briefing: "Patient briefing", reasoning: "Clinical reasoning", xray: "Chest X-ray", medication: "Medication review", prescription: "Prescribing simulation", followup: "Follow-up plan", note: "Consultation note", evidence: "Evidence" };
+const emoji: Record<Capability | "recording", string> = { briefing: "🩺", reasoning: "🔎", xray: "🫁", medication: "💊", prescription: "📝", followup: "🗓️", note: "🗒️", evidence: "📚", recording: "🎙️" };
 
 const first = (patient: Patient) => patient.name.split(" ")[0];
 
@@ -35,19 +35,20 @@ export function suggestionFor(kind: Capability | "recording", patient: Patient):
     prescription: "Run the prescribing simulation",
     followup: "Prepare a follow-up plan",
     note: "Show me the consultation note",
+    evidence: `Should ${name} get steroids for this pneumonia?`,
     recording: "Start the consultation",
   };
   return { text: text[kind], kind, emoji: emoji[kind] };
 }
 
 const nextSteps: Record<Capability, Capability[]> = {
-  briefing: ["reasoning", "xray", "medication"], reasoning: ["xray", "medication", "note"], xray: ["reasoning", "note", "followup"],
-  medication: ["prescription", "reasoning", "note"], prescription: ["followup", "note", "medication"], followup: ["note", "briefing", "reasoning"], note: ["followup", "prescription", "briefing"],
+  briefing: ["reasoning", "xray", "medication"], reasoning: ["evidence", "xray", "medication"], xray: ["evidence", "reasoning", "note"],
+  medication: ["prescription", "reasoning", "note"], prescription: ["followup", "note", "medication"], followup: ["note", "briefing", "reasoning"], note: ["followup", "prescription", "evidence"], evidence: ["prescription", "note", "followup"],
 };
 export const followUpsFor = (kind: Capability, patient: Patient) => nextSteps[kind].map(next => suggestionFor(next, patient));
 
 export function thinkingLabel(kind: Capability, patient: Patient) {
-  const labels: Record<Capability, string> = { briefing: `Reading ${first(patient)}’s record…`, reasoning: "Weighing the history…", xray: "Opening the radiograph…", medication: "Checking the medicine list…", prescription: "Checking prerequisites…", followup: "Drafting next steps…", note: "Drafting the note…" };
+  const labels: Record<Capability, string> = { briefing: `Reading ${first(patient)}’s record…`, reasoning: "Weighing the history…", xray: "Opening the radiograph…", medication: "Checking the medicine list…", prescription: "Checking prerequisites…", followup: "Drafting next steps…", note: "Drafting the note…", evidence: "Reading the studies…" };
   return labels[kind];
 }
 
@@ -69,6 +70,7 @@ export function leadFor(kind: Capability, patient: Patient) {
     prescription: "Here’s the prescribing simulation, with every check it ran before creating a receipt.",
     followup: "Here’s a follow-up plan you can turn into owned, dated tasks.",
     note: "Here’s the consultation note drafted from the transcript, ready for your edits.",
+    evidence: `The evidence is against routine steroids here. ${name}’s severity score decides which studies apply.`,
   };
   return leads[kind];
 }

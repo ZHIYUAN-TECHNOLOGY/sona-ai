@@ -11,10 +11,11 @@ import type { Capability, FeatureProps } from "@/features/encounter/types";
 import { XrayCard } from "@/features/imaging";
 import { NoteCard } from "@/features/scribe";
 import { FollowupCard } from "@/features/tasks";
+import { EvidenceCard } from "@/features/evidence";
 import { clinicalCatalog, composeClinicalSpec, responseReference, validateClinicalSpec } from "./catalog";
 
 const PresentationContext = createContext<{ featureProps: FeatureProps; kind: Capability } | null>(null);
-const components = { briefing: BriefingCard, reasoning: ReasoningCard, xray: XrayCard, medication: MedicationCard, prescription: PrescriptionCard, followup: FollowupCard, note: NoteCard };
+const components = { briefing: BriefingCard, reasoning: ReasoningCard, xray: XrayCard, medication: MedicationCard, prescription: PrescriptionCard, followup: FollowupCard, note: NoteCard, evidence: EvidenceCard };
 
 function VisibleFallback() {
   return <Notice warning>This response could not be displayed. Its saved context is retained; retry the request or open the encounter workflow.</Notice>;
@@ -63,6 +64,7 @@ const { registry } = defineRegistry(clinicalCatalog, {
     ClinicalPrescription: ({ props }) => <ClinicalLeaf kind="prescription" resultId={props.resultId} />,
     ClinicalFollowup: ({ props }) => <ClinicalLeaf kind="followup" resultId={props.resultId} />,
     ClinicalNote: ({ props }) => <ClinicalLeaf kind="note" resultId={props.resultId} />,
+    ClinicalEvidence: ({ props }) => <ClinicalLeaf kind="evidence" resultId={props.resultId} />,
     ContextNotice: ({ props }) => <ContextNotice noticeId={props.noticeId} />,
     SourceAction: ({ props }) => <ValidatedSource sourceId={props.sourceId} />,
     MedicineThumb: ({ props }) => { const look = medicineById(props.medicineId); return look ? <MedicineThumb look={look} confirmed={props.confirmed} /> : null; },
