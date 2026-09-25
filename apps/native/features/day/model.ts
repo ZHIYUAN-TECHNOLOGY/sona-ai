@@ -84,10 +84,11 @@ export function scheduleFor(offset: number, patients: Patient[], today = new Dat
   if (offset === 0) return patients.map(p => ({ id: p.id, name: p.name, initials: p.initials, time: p.time, reason: p.subtitle, incomplete: p.incomplete, patientId: p.id }));
   const day = dayOf(offset, today).getDay();
   if (day === 0 || day === 6) return [];
-  const count = 2 + ((offset + 7) % 3);
+  const mod = (n: number, k: number) => ((n % k) + k) % k;
+  const count = 2 + mod(offset, 3);
   return Array.from({ length: count }, (_, i) => {
-    const [name, initials, reason, incomplete] = OTHER[(i + offset + 6) % OTHER.length]!;
-    const m = 9 * 60 + i * 75 + ((offset + 3) % 2) * 30;
+    const [name, initials, reason, incomplete] = OTHER[mod(i + offset, OTHER.length)]!;
+    const m = 9 * 60 + i * 75 + mod(offset, 2) * 30;
     return { id: `d${offset}-${i}`, name, initials, reason, incomplete, time: `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}` };
   });
 }

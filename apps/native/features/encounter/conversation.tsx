@@ -156,23 +156,25 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
   const lead = { ...type.display, color: palette.ink } as const;
   // Reading order top-down: greeting under the top bar, then the next section at a fixed rhythm.
   // Nothing is centred or pinned to the bottom, so the gap never stretches with screen height.
+  // Without a visit, the greeting and the ranked day are one section: MyDay owns the header.
+  if (!patient) return <View style={{ paddingTop: 20 }}><MyDay patients={patients} greeting={greeting().replace(/\.$/, "")} onOpen={(id, open) => openSession(id, open)}
+    actions={<><Pill label="All patients" onPress={onChoosePatient} /><Pill label="Hand over shift" onPress={() => router.push("/handover")} /></>} /></View>;
   return <View style={{ gap: 44, paddingTop: 20 }}>
     <View style={{ gap: 18 }}>
       <Animated.View entering={rise(0)}><Text accessibilityRole="header" style={lead}>{greeting()}</Text></Animated.View>
       <Animated.View entering={rise(1)}>
         {patient ? <Text style={lead}>
           <Text style={{ fontWeight: "600" }}>{patient.name}</Text> is here for a {patient.subtitle.toLowerCase()} {patient.incomplete ? "🫁" : "🩺"} at <Text style={{ fontWeight: "600" }}>{patient.time}</Text>.{"\n"}<Text style={{ color: palette.muted }}>Ask me anything.</Text>
-        </Text> : <Text style={lead}>Here’s what needs you first.{"\n"}<Text style={{ color: palette.muted }}>Sorted by urgency, with reasons.</Text></Text>}
+        </Text> : null}
       </Animated.View>
       <Animated.View entering={rise(2)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {patient ? <><Pill label="Brief me" emoji="🩺" onPress={() => onPick(suggestionFor("briefing", patient))} /><Pill label="Start consultation" emoji="🎙️" onPress={() => onPick(suggestionFor("recording", patient))} /></>
-          : <><Pill label="All patients" onPress={onChoosePatient} /><Pill label="Hand over shift" onPress={() => router.push("/handover")} /></>}
+          : null}
       </Animated.View>
     </View>
     <Animated.View entering={rise(3)} style={{ gap: 12 }}>
-      {patient && <Text accessibilityRole="header" style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>You might want to ask</Text>}
-      {patient ? <SuggestionList items={(["briefing", "xray", "medication"] as const).map(kind => suggestionFor(kind, patient))} onPick={onPick} />
-        : <MyDay patients={patients} onOpen={(id, open) => openSession(id, open)} />}
+      <Text accessibilityRole="header" style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>You might want to ask</Text>
+      <SuggestionList items={(["briefing", "xray", "medication"] as const).map(kind => suggestionFor(kind, patient))} onPick={onPick} />
     </Animated.View>
   </View>;
 }

@@ -42,3 +42,9 @@ test("other days: weekends empty, past seen, future to prepare", () => {
   expect(rankOtherDay(1, tuesday).every(i => i.reason.startsWith("Prepare"))).toBe(true);
   expect(scheduleFor(0, patients, monday).map(v => v.patientId)).toEqual(patients.map(p => p.id));
 });
+
+test("any day in a month view has a valid schedule", () => {
+  const { scheduleFor } = require("./model");
+  const monday = new Date(2026, 8, 21);
+  for (let o = -40; o <= 40; o++) for (const v of scheduleFor(o, patients, monday)) expect(v.name.length).toBeGreaterThan(0);
+});

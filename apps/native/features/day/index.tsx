@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { scheduleOnRN } from "react-native-worklets";
@@ -11,7 +11,7 @@ import { palette, type } from "@/components/sona/theme";
 import { Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
-import { DAY_OFFSETS, dayOf, groupVisits, rankDay, rankOtherDay, scheduleFor, type DayItem, type DayTone, type ScheduleVisit } from "./model";
+import { dayOf, groupVisits, rankDay, rankOtherDay, scheduleFor, type DayItem, type DayTone, type ScheduleVisit } from "./model";
 
 /*
  * My day, ranked (after Superlist's AI list making): on first open a small "Sorting your day…"
@@ -175,35 +175,51 @@ function Rerank({ sorting, onPress }: { sorting: boolean; onPress: () => void })
 }
 
 /*
- * Week strip (after Queue's timeline scrubber): seven day chips; the selection thumb springs to the
- * chosen day (0.35 s, damping 0.82) with a selection tick, and a swipe steps one day. Dots show
- * how many visits a day holds; today keeps a blue label when another day is selected.
+ * Day picker (after Days' calendar top modal): tapping the date line springs this card down from
+ * it, scaling up from its top-left anchor (spring 0.45 s, damping 0.72) while its weeks rise in
+ * 40 ms apart. It floats over the ruler and list; picking a day folds it back. Dots mark visit
+ * counts; today keeps a blue ring. Weekend days with nothing booked are dimmed.
  */
-function DayStrip({ offset, counts, onPick }: { offset: number; counts: number[]; onPick: (offset: number) => void }) {
-  const { width } = useWindowDimensions();
+function MonthCard({ offset, counts, onPick, onClose }: { offset: number; counts: (offset: number) => number; onPick: (offset: number) => void; onClose: () => void }) {
   const { reducedMotion } = useAccessibleEffects();
-  const gap = 6, chip = (width - 40 - gap * 6) / 7;
-  const index = DAY_OFFSETS.indexOf(offset as never);
-  const thumb = useSharedValue(index * (chip + gap));
-  useEffect(() => { const to = index * (chip + gap); thumb.set(reducedMotion ? to : withSpring(to, { duration: 350, dampingRatio: 0.82 })); }, [index, chip, reducedMotion, thumb]);
-  const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateX: thumb.value }] }));
-  const step = (dir: number) => { const next = DAY_OFFSETS[Math.min(DAY_OFFSETS.length - 1, Math.max(0, index + dir))]!; onPick(next); };
-  const swipe = Gesture.Pan().activeOffsetX([-14, 14]).failOffsetY([-10, 10]).onEnd(e => { if (Math.abs(e.translationX) > 30 || Math.abs(e.velocityX) > 400) scheduleOnRN(step, e.translationX < 0 ? 1 : -1); });
-  return <GestureDetector gesture={swipe}>
-    <View accessibilityRole="tablist" style={{ flexDirection: "row", gap }}>
-      <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 0, bottom: 0, width: chip, borderRadius: 16, borderCurve: "continuous", backgroundColor: palette.ink }, thumbStyle]} />
-      {DAY_OFFSETS.map((o, i) => { const d = dayOf(o); const on = o === offset; const today = o === 0; return <Pressable key={o} accessibilityRole="tab" accessibilityState={{ selected: on }}
-        accessibilityLabel={`${today ? "Today, " : ""}${d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}, ${counts[i]} ${counts[i] === 1 ? "visit" : "visits"}`}
-        onPress={() => onPick(o)} style={{ width: chip, height: 62, borderRadius: 16, alignItems: "center", justifyContent: "center", gap: 3, backgroundColor: on ? "transparent" : "rgba(255,255,255,0.7)", borderWidth: today && !on ? 1.5 : 0, borderColor: palette.blue }}>
-        <Text style={{ fontSize: 11, fontWeight: "600", color: on ? "rgba(255,255,255,0.75)" : today ? palette.blue : palette.muted }}>{today ? "Today" : d.toLocaleDateString("en-GB", { weekday: "short" })}</Text>
-        <Text style={{ fontSize: 18, fontWeight: "700", color: on ? palette.white : palette.ink, fontVariant: ["tabular-nums"] }}>{d.getDate()}</Text>
-        <View style={{ flexDirection: "row", gap: 2, height: 4 }}>{Array.from({ length: Math.min(3, counts[i]!) }, (_, k) => <View key={k} style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: on ? palette.white : palette.blue, opacity: on ? 0.9 : 0.6 }} />)}</View>
-      </Pressable>; })}
-    </View>
-  </GestureDetector>;
+  const today = new Date(); today.setHours(12, 0, 0, 0);
+  const [month, setMonth] = useState(() => { const d = dayOf(offset, today); return new Date(d.getFullYear(), d.getMonth(), 1, 12); });
+  const lead = (month.getDay() + 6) % 7; // Monday first
+  const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  const cells = [...Array.from({ length: lead }, () => null), ...Array.from({ length: days }, (_, i) => i + 1)];
+  const weeks = Array.from({ length: Math.ceil(cells.length / 7) }, (_, w) => cells.slice(w * 7, w * 7 + 7));
+  const offsetOf = (d: number) => Math.round((new Date(month.getFullYear(), month.getMonth(), d, 12).getTime() - today.getTime()) / 86_400_000);
+  const shift = (by: number) => { haptic(); setMonth(m => new Date(m.getFullYear(), m.getMonth() + by, 1, 12)); };
+  return <>
+    <Pressable accessibilityLabel="Close day picker" onPress={onClose} style={{ position: "absolute", left: -20, right: -20, top: -400, height: 3000, zIndex: 1 }} />
+    <Animated.View entering={reducedMotion ? FadeIn.duration(160) : riseIn({ distance: -10, scale: 0.9, duration: 450 })} exiting={FadeOut.duration(140)}
+      style={{ position: "absolute", top: 78, left: 0, right: 0, zIndex: 2, transformOrigin: "top left", borderRadius: 26, borderCurve: "continuous", backgroundColor: "#FBFCFE", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 18px 44px rgba(24,32,48,0.18)", padding: 14, gap: 8 }}>
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Previous month" onPress={() => shift(-1)} hitSlop={8} style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}><Icon name="chevron.left" size={13} color={palette.ink} /></Pressable>
+        <Text accessibilityRole="header" style={{ flex: 1, textAlign: "center", ...type.headline, color: palette.ink }}>{month.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Next month" onPress={() => shift(1)} hitSlop={8} style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}><Icon name="chevron.right" size={13} color={palette.ink} /></Pressable>
+      </View>
+      <View style={{ flexDirection: "row" }}>{["M", "T", "W", "T", "F", "S", "S"].map((d, i) => <Text key={i} style={{ flex: 1, textAlign: "center", ...type.caption, fontWeight: "600", color: palette.muted }}>{d}</Text>)}</View>
+      {weeks.map((week, w) => <Animated.View key={w} entering={reducedMotion ? undefined : riseIn({ delay: 80 + w * 40, distance: 6, duration: 300 })} style={{ flexDirection: "row" }}>
+        {Array.from({ length: 7 }, (_, i) => week[i] ?? null).map((d, i) => { if (!d) return <View key={i} style={{ flex: 1, height: 44 }} />;
+          const o = offsetOf(d), n = counts(o), on = o === offset, isToday = o === 0;
+          return <Pressable key={i} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${isToday ? "Today, " : ""}${d} ${month.toLocaleDateString("en-GB", { month: "long" })}, ${n} ${n === 1 ? "visit" : "visits"}`}
+            onPress={() => onPick(o)} style={{ flex: 1, height: 44, alignItems: "center", justifyContent: "center", gap: 2 }}>
+            <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.ink : "transparent", borderWidth: isToday && !on ? 1.5 : 0, borderColor: palette.blue }}>
+              <Text style={{ fontSize: 15, fontWeight: on || isToday ? "700" : "500", color: on ? palette.white : isToday ? palette.blue : n ? palette.ink : palette.muted, fontVariant: ["tabular-nums"] }}>{d}</Text>
+            </View>
+            <View style={{ position: "absolute", bottom: 1, flexDirection: "row", gap: 2 }}>{Array.from({ length: Math.min(3, n) }, (_, k) => <View key={k} style={{ width: 3.5, height: 3.5, borderRadius: 2, backgroundColor: palette.blue, opacity: 0.7 }} />)}</View>
+          </Pressable>; })}
+      </Animated.View>)}
+      {offset !== 0 && <Pressable accessibilityRole="button" onPress={() => onPick(0)} style={{ alignSelf: "center", minHeight: 36, paddingHorizontal: 16, borderRadius: 18, justifyContent: "center", backgroundColor: palette.blueWash }}>
+        <Text style={{ fontSize: 14, fontWeight: "600", color: palette.blue }}>Jump to today</Text>
+      </Pressable>}
+    </Animated.View>
+  </>;
 }
 
-export function MyDay({ patients, onOpen: open }: { patients: Patient[]; onOpen: (patientId: string, open: DayItem["open"]) => void }) {
+export function MyDay({ patients, greeting, actions, onOpen: open }: { patients: Patient[]; greeting: string; actions: ReactNode; onOpen: (patientId: string, open: DayItem["open"]) => void }) {
+  const [calendar, setCalendar] = useState(false);
   // Only real visits open; the authored schedule on other days is read-only.
   const onOpen = (id: string | undefined, target: DayItem["open"]) => { if (id) open(id, target); };
   const [offset, setOffset] = useState(0);
@@ -233,17 +249,27 @@ export function MyDay({ patients, onOpen: open }: { patients: Patient[]; onOpen:
   const [top, ...rest] = ordered;
 
   return <View style={{ gap: 14 }}>
-    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
-      <View style={{ flex: 1, gap: 3 }}>
-        <Text accessibilityRole="header" style={{ fontSize: 24, lineHeight: 29, fontWeight: "700", letterSpacing: -0.5, color: palette.ink }}>{offset === 0 ? "Your day, ranked" : offset < 0 ? "Looking back" : "Coming up"}</Text>
-        <Text style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}{offset === 0 ? ` · ${need} need you` : ""} · {schedule.length} {schedule.length === 1 ? "visit" : "visits"}</Text>
+    <View style={{ gap: 16, zIndex: 5 }}>
+      <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
+        <View style={{ flex: 1, gap: 6 }}>
+          <Text accessibilityRole="header" style={{ ...type.display, fontWeight: "600", color: palette.ink }}>{greeting}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={`${offset === 0 ? "Today" : ""} ${date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}. Choose another day`} accessibilityState={{ expanded: calendar }}
+            onPress={() => { haptic(); setCalendar(v => !v); }} hitSlop={8} style={{ alignSelf: "flex-start", gap: 2 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Text style={{ fontSize: 17, fontWeight: "600", color: offset === 0 ? palette.blue : palette.ink }}>{offset === 0 ? "Today, " : ""}{date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}</Text>
+              <View style={{ transform: [{ rotate: calendar ? "180deg" : "0deg" }], transitionProperty: "transform", transitionDuration: reducedMotion ? 0 : 240 } as never}><Icon name="chevron.down" size={12} color={offset === 0 ? palette.blue : palette.ink} /></View>
+            </View>
+            <Text style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{offset === 0 ? `${need} need you · ` : offset < 0 ? "Looking back · " : "Coming up · "}{schedule.length} {schedule.length === 1 ? "visit" : "visits"}</Text>
+          </Pressable>
+        </View>
+        {offset !== 0 ? <Pressable accessibilityRole="button" accessibilityLabel="Back to today" onPress={() => pick(0)} hitSlop={8}
+          style={{ minHeight: 38, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, borderRadius: 19, backgroundColor: palette.blueWash, marginTop: 4 }}>
+          <Icon name="arrow.uturn.backward" size={12} color={palette.blue} /><Text style={{ fontSize: 14, fontWeight: "600", color: palette.blue }}>Today</Text>
+        </Pressable> : <View style={{ marginTop: 4 }}><Rerank sorting={sorting} onPress={rerank} /></View>}
       </View>
-      {offset !== 0 ? <Pressable accessibilityRole="button" accessibilityLabel="Back to today" onPress={() => pick(0)} hitSlop={8}
-        style={{ minHeight: 38, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, borderRadius: 19, backgroundColor: palette.blueWash }}>
-        <Icon name="arrow.uturn.backward" size={12} color={palette.blue} /><Text style={{ fontSize: 14, fontWeight: "600", color: palette.blue }}>Today</Text>
-      </Pressable> : <Rerank sorting={sorting} onPress={rerank} />}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>{actions}</View>
+      {calendar && <MonthCard offset={offset} counts={o => scheduleFor(o, patients).length} onPick={o => { setCalendar(false); pick(o); }} onClose={() => setCalendar(false)} />}
     </View>
-    <DayStrip offset={offset} counts={DAY_OFFSETS.map(o => scheduleFor(o, patients).length)} onPick={pick} />
     <TimeBar key={offset} schedule={schedule} now={offset === 0 ? now : undefined} onOpen={id => onOpen(id, {})} />
     {sorting ? <Sorting /> : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
       {top && <Animated.View key={`top-${run}`} layout={LAYOUT} entering={animate ? riseIn({ distance: 14, scale: 0.97, duration: 450 }) : undefined}>
