@@ -1,3 +1,5 @@
+import { MyDay } from "@/features/day";
+import { openSession } from "./navigation";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { useEncounter } from "./store";
@@ -159,7 +161,7 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
       <Animated.View entering={rise(1)}>
         {patient ? <Text style={lead}>
           <Text style={{ fontWeight: "600" }}>{patient.name}</Text> is here for a {patient.subtitle.toLowerCase()} {patient.incomplete ? "🫁" : "🩺"} at <Text style={{ fontWeight: "600" }}>{patient.time}</Text>.{"\n"}<Text style={{ color: palette.muted }}>Ask me anything.</Text>
-        </Text> : <Text style={lead}>Who are we seeing first?{"\n"}<Text style={{ color: palette.muted }}>Pick up a visit to begin.</Text></Text>}
+        </Text> : <Text style={lead}>Here’s what needs you first.{"\n"}<Text style={{ color: palette.muted }}>Sorted by urgency, with reasons.</Text></Text>}
       </Animated.View>
       <Animated.View entering={rise(2)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {patient ? <><Pill label="Brief me" emoji="🩺" onPress={() => onPick(suggestionFor("briefing", patient))} /><Pill label="Start consultation" emoji="🎙️" onPress={() => onPick(suggestionFor("recording", patient))} /></>
@@ -167,81 +169,10 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
       </Animated.View>
     </View>
     <Animated.View entering={rise(3)} style={{ gap: 12 }}>
-      <Text accessibilityRole="header" style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>{patient ? "You might want to ask" : "Today’s visits"}</Text>
+      {patient && <Text accessibilityRole="header" style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>You might want to ask</Text>}
       {patient ? <SuggestionList items={(["briefing", "xray", "medication"] as const).map(kind => suggestionFor(kind, patient))} onPick={onPick} />
-        : <VisitsAgenda patients={patients} onOpen={onSelectPatient} />}
+        : <MyDay patients={patients} onOpen={(id, open) => openSession(id, open)} />}
     </Animated.View>
   </View>;
 }
 
-/** Minutes until a HH:MM visit today (negative once it has passed). */
-function minutesUntil(time: string, now = new Date()) {
-  const [h, m] = time.split(":").map(Number);
-  return (h! * 60 + m!) - (now.getHours() * 60 + now.getMinutes());
-}
-function dueLabel(minutes: number) {
-  if (minutes > 180) return undefined;
-  if (minutes > 0) return minutes < 60 ? `In ${minutes} min` : `In ${Math.floor(minutes / 60)} h ${minutes % 60 ? `${minutes % 60} min` : ""}`.trim();
-  return minutes > -30 ? "Now" : undefined;
-}
-
-/**
- * Today's visits as a calm agenda (after Days' event card and Vakitler's list): the next visit is
- * the one feature card with its time large and a countdown; the rest sit in one quiet timeline.
- * Rows rise in one after another. A visit with a session shows "Continue · N answers".
- */
-function VisitsAgenda({ patients, onOpen }: { patients: Patient[]; onOpen: (id: string) => void }) {
-  const { encounters } = useEncounter();
-  const { reducedMotion } = useAccessibleEffects();
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => { const timer = setInterval(() => setNow(new Date()), 60_000); return () => clearInterval(timer); }, []);
-  const ordered = [...patients].sort((a, b) => a.time.localeCompare(b.time));
-  // Up next: the earliest visit not yet started; otherwise the earliest visit.
-  const next = ordered.find(p => !encounters[p.id]?.requests.length) ?? ordered[0];
-  if (!next) return null;
-  const rest = ordered.filter(p => p.id !== next.id);
-  const answers = (id: string) => encounters[id]?.requests.length ?? 0;
-  const status = (id: string) => answers(id) ? `Continue · ${answers(id)} ${answers(id) === 1 ? "answer" : "answers"}` : undefined;
-  const due = dueLabel(minutesUntil(next.time, now));
-  const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 60 + i * 70, distance: 10, duration: 360 });
-  const press = ({ pressed }: { pressed: boolean }) => ({ transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 }) as never;
-  return <View style={{ gap: 12 }}>
-    <Animated.View entering={rise(0)}>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Up next, ${next.name}, ${next.time}, ${next.subtitle}${due ? `, ${due}` : ""}${status(next.id) ? `, ${status(next.id)}` : ""}`} accessibilityHint="Opens the visit" onPress={() => onOpen(next.id)} style={press}>
-        <Surface feature style={{ padding: 18, gap: 16 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: palette.blue }} />
-            <Text style={{ fontSize: 12, fontWeight: "600", letterSpacing: 0.4, color: palette.blue }}>UP NEXT</Text>
-            {due && <Text style={{ fontSize: 12, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>· {due}</Text>}
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 14 }}>
-            <View style={{ flex: 1, gap: 4 }}>
-              <Text style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{next.name}</Text>
-              <Text style={{ fontSize: 15, color: palette.muted }}>{next.subtitle} · {next.age} · {next.sex}</Text>
-            </View>
-            <Text style={{ fontSize: 30, lineHeight: 34, fontWeight: "300", letterSpacing: -1, color: palette.ink, fontVariant: ["tabular-nums"] }}>{next.time}</Text>
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Text style={{ fontSize: 13, fontWeight: "600", color: status(next.id) ? palette.blue : palette.muted }}>{status(next.id) ?? "Start the visit"}</Text>
-            <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: palette.ink, alignItems: "center", justifyContent: "center" }}><Icon name="arrow.right" size={14} color={palette.white} /></View>
-          </View>
-        </Surface>
-      </Pressable>
-    </Animated.View>
-    {rest.length > 0 && <Surface style={{ paddingVertical: 6 }}>
-      {rest.map((item, i) => <Animated.View key={item.id} entering={rise(i + 1)}>
-        <Pressable accessibilityRole="button" accessibilityLabel={`${item.name}, ${item.time}, ${item.subtitle}${status(item.id) ? `, ${status(item.id)}` : ""}`} accessibilityHint="Opens the visit" onPress={() => onOpen(item.id)} style={press}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)" }}>
-            <Text style={{ minWidth: 46, fontSize: 15, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>{item.time}</Text>
-            <View style={{ width: 1.5, alignSelf: "stretch", borderRadius: 1, backgroundColor: "rgba(36,91,204,0.18)" }} />
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text style={{ fontSize: 16, fontWeight: "600", color: palette.ink }}>{item.name}</Text>
-              <Text numberOfLines={1} style={{ fontSize: 13, color: status(item.id) ? palette.blue : palette.muted }}>{status(item.id) ?? item.subtitle}</Text>
-            </View>
-            <Icon name="chevron.right" size={13} color={palette.muted} />
-          </View>
-        </Pressable>
-      </Animated.View>)}
-    </Surface>}
-  </View>;
-}

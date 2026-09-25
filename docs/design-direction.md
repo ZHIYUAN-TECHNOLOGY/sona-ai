@@ -144,6 +144,12 @@ Takeaway text is authored for the fixtures; generated responses should emit take
 - On shutter the photo freezes, a blue halftone band sweeps bottom to top (1.1 s, ease-in-out), the surround dims to a cornered focus frame, and a glass sheet springs up (0.45 s, damping 0.72) asking what the image is (Chest X-ray, Skin, Wound, Document, Other) with Retake and "Attach as …". This follows CapWords' snap-and-mask shot.
 - The sweep is an overlay that fades out; the photo's pixels are never tinted. Nothing is read from the image at this step: the type is the clinician's choice and is stored on the attachment for the analysis backend. Reduce Motion skips the sweep and fades the sheet in.
 
+## My day, ranked (2026-09-25)
+
+- Home without a selected visit shows one list ordered by urgency: a synthetic unactioned lab result, blockers found in visits (unconfirmed medicines blocking prescribing), today's visits and open follow-up tasks. The top item is the one feature card; every row carries its reason ("Low result · 2 h · no action yet", "Running 1 h late"). A morning time bar shows visit blocks and a "now" line.
+- Ranking is a transparent rule score over fixtures (`features/day/model.ts`); a model ranking replaces the score later, and the reason stays mandatory. The footer says the ranking is demo rules.
+- Motion follows Superlist's AI list making: a "Sorting your day…" pill pulses, then items drop in by rank (spring 0.45 s, damping 0.72, 90 ms apart). It plays on first open and on "Re-rank", not on every return home. Rows can be pinned or snoozed for an hour; re-ranking glides them to their new place. Tapping an item opens that visit, asking the matching question (a medication blocker opens the medication answer and its Next-step bar).
+
 ## Typography and AI text (2026-09-24)
 
 - **Type scale** (`type` in `components/sona/theme.ts`, iOS-sized, named by use): display 27/35, title 22/31, heading 19/25, headline 17/23, body 16/24, callout 15/21, subhead 14/20, footnote 13/18, caption 12/16, overline 11/14 uppercase +0.8 tracking. Headings track slightly negative; body text sits near 1.5; nothing thinner than 400 below 18 pt except display numerals (timers, clocks). One-off sizes were folded onto the scale. The shared `Text` uses iOS "push-out" line breaking so a lone word doesn't strand on the last line.
