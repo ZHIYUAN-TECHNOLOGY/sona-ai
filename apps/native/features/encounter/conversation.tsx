@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import { EdgeBlur } from "@/components/sona/edge-blur";
 import { MyDay } from "@/features/day";
 import { openSession } from "./navigation";
 import { Text } from "@/components/sona/text";
@@ -7,7 +8,6 @@ import { useEncounter } from "./store";
 import { SweptLead, wordCount } from "@/components/sona/marked-text";
 import { Icon, pillStyle, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { BrandIcon } from "@/components/sona/brand-icon";
-import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { riseIn } from "@/components/sona/motion";
@@ -122,7 +122,7 @@ export function TopBar({ patient, inEncounter, openTasks, faded, onMenu, onBack,
   const { reducedMotion } = useAccessibleEffects();
   return <View pointerEvents="box-none" style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
     <Animated.View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top + 84, opacity: faded ? 1 : 0, transitionProperty: "opacity", transitionDuration: 200, transitionTimingFunction: EASE_OUT }}>
-      <LinearGradient colors={[palette.canvas, palette.canvas, "rgba(245,246,248,0)"]} locations={[0, 0.62, 1]} style={{ flex: 1 }} />
+      <EdgeBlur edge="top" style={{ flex: 1 }} />
     </Animated.View>
     <View pointerEvents="box-none" style={{ paddingTop: insets.top + 6, paddingHorizontal: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
       {/* Home opens the menu; a session goes back to home (swiping from the edge does the same). */}

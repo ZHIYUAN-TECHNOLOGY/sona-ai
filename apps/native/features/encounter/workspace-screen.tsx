@@ -4,7 +4,7 @@ import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Action, Notice, Reveal } from "@/components/sona/ui";
 import { ClinicalResponseRenderer } from "@/features/presentation";
-import { LinearGradient } from "expo-linear-gradient";
+import { EdgeBlur } from "@/components/sona/edge-blur";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, BackHandler, Keyboard, Pressable, ScrollView, StyleSheet, View } from "react-native";
@@ -228,7 +228,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     <TopBar patient={patient} inEncounter={!home} openTasks={(patient ? [encounter] : Object.values(encounters)).reduce((sum, value) => sum + (value?.tasks.filter(task => !task.completed).length ?? 0), 0)} faded={scrolled || requests.length > 0} onMenu={openDrawer} onBack={home ? undefined : () => router.canGoBack() ? router.back() : router.replace("/")} onPatient={() => router.push({ pathname: "/patients", params: { switch: "1" } })} onTasks={() => router.push("/tasks")} />
     </View>
 
-    {requests.length > 0 && <LinearGradient pointerEvents="none" colors={["rgba(245,246,248,0)", "rgba(245,246,248,0.9)", palette.canvas]} locations={[0, 0.5, 1]} style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: insets.bottom + 120 }} />}
+    {requests.length > 0 && <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: insets.bottom + 120 }} />}
     <VoiceDock
       backdrop={backdrop}
       quiet={Boolean(steps)}
