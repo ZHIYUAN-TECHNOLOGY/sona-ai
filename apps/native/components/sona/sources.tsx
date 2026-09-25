@@ -119,7 +119,7 @@ export function SourcesSheet() {
   // Dismiss first so the source detail presents over the page, not over this sheet.
   const pick = (source: SourceEntry) => { router.back(); setTimeout(source.onPress, 350); };
   let order = 0;
-  return <View style={{ paddingTop: 22, paddingBottom: 34, gap: 10 }}>
+  return <View style={{ paddingTop: 36, paddingBottom: 34, gap: 18 }}>
     <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 20 }}>
       <Text accessibilityRole="header" style={{ flex: 1, ...type.heading, color: palette.ink }}>Sources <Text style={{ color: palette.muted, fontWeight: "500" }}>{sources.length}</Text></Text>
     </View>

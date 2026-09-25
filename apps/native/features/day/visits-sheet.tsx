@@ -16,7 +16,7 @@ export function VisitsSheet() {
   const { reducedMotion } = useAccessibleEffects();
   const list = (ids ?? "").split(",").map(id => patients.find(p => p.id === id)).filter(p => p !== undefined).sort((a, b) => a.time.localeCompare(b.time));
   const pick = (id: string) => { router.back(); setTimeout(() => openSession(id), 350); };
-  return <View style={{ paddingTop: 22, paddingBottom: 34, gap: 10 }}>
+  return <View style={{ paddingTop: 36, paddingBottom: 34, gap: 18 }}>
     <Text accessibilityRole="header" style={{ paddingHorizontal: 20, ...type.heading, color: palette.ink }}>{list.length} patients <Text style={{ color: palette.muted, fontWeight: "500" }}>· {list[0]?.time}{list.length > 1 && list.at(-1)!.time !== list[0]!.time ? `–${list.at(-1)!.time}` : ""}</Text></Text>
     <ScrollView style={{ maxHeight: height * 0.6, flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 20 }}>
       <View style={{ borderRadius: 18, borderCurve: "continuous", backgroundColor: palette.white, overflow: "hidden" }}>
