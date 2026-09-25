@@ -39,7 +39,8 @@ function Sorting() {
 
 /** Visits as blocks on a morning track with a "now" line. */
 function TimeBar({ patients, now }: { patients: Patient[]; now: number }) {
-  const from = 8 * 60, to = 13 * 60;
+  // A five-hour window starting an hour before now.
+  const from = (Math.floor(now / 60) - 1) * 60, to = from + 5 * 60;
   const at = (m: number) => `${Math.min(100, Math.max(0, ((m - from) / (to - from)) * 100))}%` as const;
   return <View accessible accessibilityLabel={`Visits: ${patients.map(p => `${p.name} at ${p.time}`).join(", ")}`} style={{ gap: 6 }}>
     <View style={{ height: 28, borderRadius: 10, backgroundColor: "rgba(20,28,40,0.05)", overflow: "hidden" }}>
@@ -49,7 +50,7 @@ function TimeBar({ patients, now }: { patients: Patient[]; now: number }) {
       </View>; })}
       {now > from && now < to && <View style={{ position: "absolute", top: 0, bottom: 0, left: at(now), width: 2, backgroundColor: palette.red }} />}
     </View>
-    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>{[8, 9, 10, 11, 12, 13].map(h => <Text key={h} style={{ ...type.caption, fontSize: 10, color: palette.muted, fontVariant: ["tabular-nums"] }}>{String(h).padStart(2, "0")}:00</Text>)}</View>
+    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>{[0, 1, 2, 3, 4, 5].map(i => from / 60 + i).map(h => <Text key={h} style={{ ...type.caption, fontSize: 10, color: palette.muted, fontVariant: ["tabular-nums"] }}>{String(h % 24).padStart(2, "0")}:00</Text>)}</View>
   </View>;
 }
 

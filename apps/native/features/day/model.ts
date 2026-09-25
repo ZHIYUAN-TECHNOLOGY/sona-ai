@@ -1,4 +1,5 @@
 import { defaultMedications } from "@/features/encounter/clinical-state";
+import { demoTime } from "@/features/encounter/fixtures";
 import type { Encounter, Patient } from "@/features/encounter/types";
 
 /**
@@ -16,7 +17,7 @@ export type DayItem = {
 };
 
 // A synthetic lab result that arrived after Daniel's intake and has not been acted on.
-export const PENDING_RESULT = { patientId: "SYN-1086", test: "Potassium", value: "3.1 mmol/L", flag: "Low", receivedAt: "08:40" };
+export const PENDING_RESULT = { patientId: "SYN-1086", test: "Potassium", value: "3.1 mmol/L", flag: "Low", receivedAt: demoTime(-120) };
 
 const minutes = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); return h! * 60 + m!; };
 const ago = (from: number, now: number) => { const d = Math.max(0, now - from); return d < 60 ? `${d} min` : `${Math.floor(d / 60)} h`; };
