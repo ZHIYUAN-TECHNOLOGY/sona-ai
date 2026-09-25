@@ -12,7 +12,8 @@ import { BrandIcon, type BrandIconName } from "./brand-icon";
 import { BlurView } from "expo-blur";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import { HalftoneGlint, HalftoneShimmer } from "./halftone-shimmer";
-import { AttachmentStrip } from "./attachment-stack";
+import { AttachmentStrip, attachmentSource } from "./attachment-stack";
+import { CaptureScan, type ImageType } from "./capture-scan";
 import { useAccessibleEffects } from "./ui";
 import { palette } from "./theme";
 
@@ -23,7 +24,7 @@ import { palette } from "./theme";
  *   value = closed + (open − closed)·progress + (extended − open)·extend
  * — so closing from anywhere is a single spring straight back into the plus.
  */
-export type Attachment = { uri: string; name: string; kind: "image" | "file" };
+export type Attachment = { uri: string; name: string; kind: "image" | "file"; imageType?: ImageType };
 type Surface = "photos" | "camera";
 
 // After Whistle's plus menu (spring 0.42 s, damping 0.76), a touch calmer because the glass itself resizes.
@@ -65,8 +66,10 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
   const [extended, setExtended] = useState(false);
   const [camPermission, requestCam] = useCameraPermissions();
   const camera = useRef<CameraView>(null);
+  // The frozen capture under review; "teaching" stands in for the camera on a simulator (dev only).
+  const [shot, setShot] = useState<string>();
 
-  useEffect(() => { if (!visible) setExtended(false); }, [visible]);
+  useEffect(() => { if (!visible) { setExtended(false); setShot(undefined); } }, [visible]);
 
   const open = (action: Surface | "files") => {
     tick();
@@ -95,7 +98,14 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
   const capture = async () => {
     tick();
     const photo = await camera.current?.takePictureAsync({ quality: 0.8 }).catch(() => undefined);
-    if (photo?.uri) { onAdd([{ uri: photo.uri, name: "Camera capture", kind: "image" }]); backToMenu(); }
+    // ponytail: simulators have no camera; in development the bundled teaching film stands in so the scan can be reviewed.
+    const uri = photo?.uri ?? (__DEV__ ? "teaching" : undefined);
+    if (uri) setShot(uri);
+  };
+  const attachShot = (imageType: ImageType) => {
+    if (!shot) return;
+    onAdd([{ uri: shot, name: `${imageType} capture`, kind: "image", imageType }]);
+    setShot(undefined); backToMenu();
   };
 
   // Three key states, blended continuously.
@@ -183,10 +193,11 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
             {camPermission?.granted ? <CameraView ref={camera} style={StyleSheet.absoluteFill} facing="back" />
               : <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 8 }}><Text style={{ color: "white", fontSize: 16, fontWeight: "600" }}>Camera access needed</Text><Text style={{ color: "rgba(255,255,255,0.7)", textAlign: "center" }}>Allow the camera to photograph a film or document for review.</Text></View>}
           </View>
+          {shot && <CaptureScan source={attachmentSource({ uri: shot, name: "", kind: "image" })} width={W - 16} height={H - extTop - extBottom} onRetake={() => setShot(undefined)} onAttach={attachShot} />}
       </Animated.View>}
     </Animated.View>
 
-    {extended && <Animated.View pointerEvents="box-none" style={[{ position: "absolute", left: 28, right: 28, bottom: 28, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }, controlsStyle]}>
+    {extended && !shot && <Animated.View pointerEvents="box-none" style={[{ position: "absolute", left: 28, right: 28, bottom: 28, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }, controlsStyle]}>
       <Pressable accessibilityRole="button" accessibilityLabel="Back to attachment options" onPress={backToMenu} hitSlop={6}
         style={{ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: surface === "camera" ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.92)", boxShadow: "0 4px 14px rgba(24,32,48,0.14)" }}>
         <BrandIcon name="back" size={22} color={surface === "camera" ? palette.white : palette.ink} />

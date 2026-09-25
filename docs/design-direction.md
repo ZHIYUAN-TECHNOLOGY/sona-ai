@@ -138,6 +138,12 @@ Takeaway text is authored for the fixtures; generated responses should emit take
 - Tapping or swiping the bar up sinks it away as a sheet of every step rises (spring 0.45 s, damping 0.82), each with its own action; dismissing springs the bar back with a slight overshoot (0.5 s, damping 0.72). This follows Moonlitt's floating bottom bar. When a step completes, its label slides out left and the next slides in.
 - Actions jump to the relevant section and open it (a medicine's confirm form, the eligibility inputs) instead of acting silently. Reduce Motion replaces movement with fades.
 
+## Camera capture scan (2026-09-25)
+
+- Camera stays on `expo-camera`; the effect is a Skia overlay, so no new dependency. VisionCamera is only worth adding for live frame analysis.
+- On shutter the photo freezes, a blue halftone band sweeps bottom to top (1.1 s, ease-in-out), the surround dims to a cornered focus frame, and a glass sheet springs up (0.45 s, damping 0.72) asking what the image is (Chest X-ray, Skin, Wound, Document, Other) with Retake and "Attach as …". This follows CapWords' snap-and-mask shot.
+- The sweep is an overlay that fades out; the photo's pixels are never tinted. Nothing is read from the image at this step: the type is the clinician's choice and is stored on the attachment for the analysis backend. Reduce Motion skips the sweep and fades the sheet in.
+
 ## Typography and AI text (2026-09-24)
 
 - **Type scale** (`type` in `components/sona/theme.ts`, iOS-sized, named by use): display 27/35, title 22/31, heading 19/25, headline 17/23, body 16/24, callout 15/21, subhead 14/20, footnote 13/18, caption 12/16, overline 11/14 uppercase +0.8 tracking. Headings track slightly negative; body text sits near 1.5; nothing thinner than 400 below 18 pt except display numerals (timers, clocks). One-off sizes were folded onto the scale. The shared `Text` uses iOS "push-out" line breaking so a lone word doesn't strand on the last line.
