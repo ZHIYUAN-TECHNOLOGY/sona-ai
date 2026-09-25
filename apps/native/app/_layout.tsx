@@ -21,6 +21,7 @@ export default function RootLayout() {
     <Stack.Screen name="note" options={{ title: "Consultation note" }} />
     <Stack.Screen name="xray" options={{ title: "Chest X-ray", presentation: "modal" }} />
     <Stack.Screen name="tasks" options={{ title: "Follow-up tasks" }} />
+    <Stack.Screen name="handover" options={{ title: "Shift handover" }} />
     <Stack.Screen name="history" options={{ title: "Your workspace", presentation: "modal" }} />
     <Stack.Screen name="account" options={{ title: "Account scaffold" }} />
   </Stack></EncounterProvider></SafeAreaProvider></KeyboardProvider></GestureHandlerRootView>;

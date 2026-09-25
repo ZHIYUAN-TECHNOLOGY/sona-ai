@@ -150,6 +150,12 @@ Takeaway text is authored for the fixtures; generated responses should emit take
 - Ranking is a transparent rule score over fixtures (`features/day/model.ts`); a model ranking replaces the score later, and the reason stays mandatory. The footer says the ranking is demo rules.
 - Motion follows Superlist's AI list making: a "Sorting your day…" pill pulses, then items drop in by rank (spring 0.45 s, damping 0.72, 90 ms apart). It plays on first open and on "Re-rank", not on every return home. Rows can be pinned or snoozed for an hour; re-ranking glides them to their new place. Tapping an item opens that visit, asking the matching question (a medication blocker opens the medication answer and its Next-step bar).
 
+## Shift handover (2026-09-25)
+
+- A handover screen (sidebar "Shift handover", home "Hand over shift") stacks one SBAR card per patient: situation, background, assessment, and recommendations derived from state (pending result, unconfirmed medicines, missing history, open tasks, unsigned note) with the card's sources. Patients to watch come first. Today's two visits are real encounters; three ward patients are labelled synthetic examples.
+- Motion follows Slack's swipe-to-triage cards: drag right to hand over, left to flag for verbal discussion; the card tilts (x / 16 degrees) and tints teal or amber, flies off past 110 pt or a quick flick (spring 0.38 s, damping 0.72) while the next card scales up from 0.95. Buttons do the same; Undo restores the last card. The counter reads "N of 5 left".
+- The receiving clinician then holds "Accept handover" (1.5 s linear fill; releasing early springs back in 0.2 s) and an acknowledged receipt names who accepted how many patients and when. VoiceOver gets an activate action instead of the hold; Reduce Motion skips the fly-off and tilt.
+
 ## Typography and AI text (2026-09-24)
 
 - **Type scale** (`type` in `components/sona/theme.ts`, iOS-sized, named by use): display 27/35, title 22/31, heading 19/25, headline 17/23, body 16/24, callout 15/21, subhead 14/20, footnote 13/18, caption 12/16, overline 11/14 uppercase +0.8 tracking. Headings track slightly negative; body text sits near 1.5; nothing thinner than 400 below 18 pt except display numerals (timers, clocks). One-off sizes were folded onto the scale. The shared `Text` uses iOS "push-out" line breaking so a lone word doesn't strand on the last line.

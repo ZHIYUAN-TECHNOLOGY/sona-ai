@@ -43,6 +43,7 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
     { label: "Consultation", icon: "stethoscope", detail: patient ? `Record with ${patient.name.split(" ")[0]}` : "Pick a visit first", onPress: go(() => router.push(patient ? "/recording" : { pathname: "/patients", params: { view: "recording" } })) },
     { label: "Notes", icon: "note", onPress: go(() => router.push(patient ? "/note" : { pathname: "/patients", params: { view: "note" } })) },
     { label: "Follow-up tasks", icon: "tasks", onPress: go(() => router.push("/tasks")) },
+    { label: "Shift handover", icon: "user", detail: `${patients.length + 3} patients`, onPress: go(() => router.push("/handover")) },
   ];
 
   // Content drifts in from slightly left and fades up, following the page as it slides away.

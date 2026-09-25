@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { MyDay } from "@/features/day";
 import { openSession } from "./navigation";
 import { Text } from "@/components/sona/text";
@@ -165,7 +166,7 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
       </Animated.View>
       <Animated.View entering={rise(2)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {patient ? <><Pill label="Brief me" emoji="🩺" onPress={() => onPick(suggestionFor("briefing", patient))} /><Pill label="Start consultation" emoji="🎙️" onPress={() => onPick(suggestionFor("recording", patient))} /></>
-          : <Pill label="All patients" onPress={onChoosePatient} />}
+          : <><Pill label="All patients" onPress={onChoosePatient} /><Pill label="Hand over shift" onPress={() => router.push("/handover")} /></>}
       </Animated.View>
     </View>
     <Animated.View entering={rise(3)} style={{ gap: 12 }}>
