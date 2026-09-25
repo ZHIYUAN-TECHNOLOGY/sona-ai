@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useEffect, useState } from "react";
 import { Pressable, View, useWindowDimensions } from "react-native";
@@ -10,7 +11,7 @@ import { palette, type } from "@/components/sona/theme";
 import { Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
-import { rankDay, type DayItem, type DayTone } from "./model";
+import { groupVisits, rankDay, type DayItem, type DayTone } from "./model";
 
 /*
  * My day, ranked (after Superlist's AI list making): on first open a small "Sorting your day…"
@@ -46,6 +47,7 @@ function Sorting() {
  * nearest visit or back on now (spring 0.6 s, damping 0.85) with one haptic. Tap a pin to open it.
  */
 const PX = 5; // points per minute: 30 minutes = 150 pt, room for a name pin
+const PIN_MINUTES = 28; // a pin is about this many minutes wide; closer visits share one pin
 const TONE_PIN = { done: { fill: "rgba(36,91,204,0.14)", ink: palette.blue }, open: { fill: "rgba(196,120,20,0.16)", ink: palette.amber } };
 function TimeBar({ patients, now, onOpen }: { patients: Patient[]; now: number; onOpen: (patientId: string) => void }) {
   const { width } = useWindowDimensions();
@@ -56,7 +58,7 @@ function TimeBar({ patients, now, onOpen }: { patients: Patient[]; now: number; 
   const visits = patients.map(p => { const [h, m] = p.time.split(":").map(Number); return { p, at: h! * 60 + m! }; }).sort((a, b) => a.at - b.at);
   // Anchors put a time 15% across the ruler, so now and the next visits fit; the view starts on now.
   const anchor = (m: number) => view * 0.15 - xOf(m);
-  const stops = [anchor(now), ...visits.map(v => anchor(v.at))];
+  const stops = [anchor(now), ...groupVisits(visits, PIN_MINUTES).map(g => anchor(g[0]!.at))];
   const min = view - xOf(to), max = 0;
   const x = useSharedValue(anchor(now)), start = useSharedValue(0);
   const tick = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); };
@@ -85,14 +87,21 @@ function TimeBar({ patients, now, onOpen }: { patients: Patient[]; now: number; 
           <View style={{ paddingHorizontal: 7, height: 20, borderRadius: 10, justifyContent: "center", backgroundColor: palette.red }}><Text style={{ fontSize: 10, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{clock(now)}</Text></View>
           <View style={{ width: 2, height: 70, backgroundColor: palette.red, opacity: 0.7 }} />
         </View>
-        {visits.map(({ p, at }) => { const tone = TONE_PIN[p.incomplete ? "open" : "done"]; return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={`${p.name}, ${p.time}, ${p.subtitle}`} accessibilityHint="Opens the visit" onPress={() => onOpen(p.id)} hitSlop={6}
-          style={{ position: "absolute", left: xOf(at) - 16, top: 26, alignItems: "flex-start" }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 2, paddingRight: 10, height: 36, borderRadius: 18, backgroundColor: palette.white, borderWidth: 1, borderColor: "rgba(20,28,40,0.06)", boxShadow: "0 3px 10px rgba(24,32,48,0.08)" }}>
-            <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: tone.fill, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 11, fontWeight: "700", color: tone.ink }}>{p.initials}</Text></View>
-            <Text style={{ fontSize: 13, fontWeight: "600", color: palette.ink }}>{p.name.split(" ")[0]} <Text style={{ fontWeight: "500", color: palette.muted, fontVariant: ["tabular-nums"] }}>· {p.time}</Text></Text>
-          </View>
-          <View style={{ marginLeft: 15, width: 2, height: 14, borderRadius: 1, backgroundColor: tone.ink, opacity: 0.5 }} />
-        </Pressable>; })}
+        {groupVisits(visits, PIN_MINUTES).map(group => { const first = group[0]!; const incomplete = group.some(v => v.p.incomplete); const tone = TONE_PIN[incomplete ? "open" : "done"];
+          const single = group.length === 1;
+          const label = single ? `${first.p.name}, ${first.p.time}, ${first.p.subtitle}` : `${group.length} patients from ${first.p.time}: ${group.map(v => v.p.name).join(", ")}`;
+          return <Pressable key={first.p.id} accessibilityRole="button" accessibilityLabel={label} accessibilityHint={single ? "Opens the visit" : "Lists these patients"} hitSlop={6}
+            onPress={() => single ? onOpen(first.p.id) : router.push({ pathname: "/visits", params: { ids: group.map(v => v.p.id).join(",") } })}
+            style={{ position: "absolute", left: xOf(first.at) - 16, top: 26, alignItems: "flex-start" }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 2, paddingRight: 10, height: 36, borderRadius: 18, backgroundColor: palette.white, borderWidth: 1, borderColor: "rgba(20,28,40,0.06)", boxShadow: "0 3px 10px rgba(24,32,48,0.08)" }}>
+              <View style={{ flexDirection: "row" }}>{group.slice(0, 3).map((v, i) => { const t = TONE_PIN[v.p.incomplete ? "open" : "done"]; return <View key={v.p.id}
+                style={{ width: 30, height: 30, borderRadius: 15, marginLeft: i ? -10 : 0, borderWidth: single ? 0 : 2, borderColor: palette.white, backgroundColor: single ? t.fill : v.p.incomplete ? "#F6E7D3" : "#DCE6F8", alignItems: "center", justifyContent: "center", zIndex: 3 - i }}>
+                <Text style={{ fontSize: 11, fontWeight: "700", color: t.ink }}>{v.p.initials}</Text>
+              </View>; })}{group.length > 3 && <View style={{ height: 30, minWidth: 30, marginLeft: -10, paddingHorizontal: 5, borderRadius: 15, borderWidth: 2, borderColor: palette.white, backgroundColor: palette.ink, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 10, fontWeight: "700", color: palette.white }}>+{group.length - 3}</Text></View>}</View>
+              <Text style={{ fontSize: 13, fontWeight: "600", color: palette.ink }}>{single ? first.p.name.split(" ")[0] : `${group.length} patients`} <Text style={{ fontWeight: "500", color: palette.muted, fontVariant: ["tabular-nums"] }}>· {first.p.time}{!single && group.at(-1)!.p.time !== first.p.time ? `–${group.at(-1)!.p.time}` : ""}</Text></Text>
+            </View>
+            <View style={{ marginLeft: 15, width: 2, height: 14, borderRadius: 1, backgroundColor: tone.ink, opacity: 0.5 }} />
+          </Pressable>; })}
       </Animated.View>
     </GestureDetector>
   </View>;
