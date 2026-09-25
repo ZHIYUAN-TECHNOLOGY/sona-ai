@@ -250,10 +250,10 @@ export function MyDay({ patients, greeting, actions, onOpen: open }: { patients:
           <Icon name="arrow.uturn.backward" size={12} color={palette.blue} /><Text style={{ fontSize: 14, fontWeight: "600", color: palette.blue }}>Today</Text>
         </Pressable> : null}
       </View>
-      {offset === 0 && actions}
       {calendar && <MonthCard offset={offset} counts={o => scheduleFor(o, patients).length} onPick={o => { setCalendar(false); pick(o); }} onClose={() => setCalendar(false)} />}
     </View>
     <TimeBar key={offset} schedule={schedule} now={offset === 0 ? now : undefined} onOpen={id => onOpen(id, {})} />
+    {offset === 0 && actions}
     {sorting ? <Sorting /> : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
       {top && <Animated.View key={`top-${run}`} layout={LAYOUT} entering={animate ? riseIn({ distance: 14, scale: 0.97, duration: 450 }) : undefined}>
         <Pressable accessibilityRole="button" accessibilityLabel={`Most urgent: ${top.title}. ${top.reason}`} accessibilityHint="Opens the visit" onPress={() => onOpen(top.patientId, top.open)}

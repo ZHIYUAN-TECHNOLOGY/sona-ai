@@ -1,7 +1,8 @@
 import * as Haptics from "expo-haptics";
-import { Pressable, View } from "react-native";
-import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
-import { HalftoneGlint } from "./halftone-shimmer";
+import { useEffect, useState } from "react";
+import { Pressable, View, useWindowDimensions } from "react-native";
+import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
+import { HalftoneGlint, HalftoneShimmer } from "./halftone-shimmer";
 import { riseIn } from "./motion";
 import { Text } from "./text";
 import { palette, type } from "./theme";
@@ -19,48 +20,65 @@ import { Glass, Icon, useAccessibleEffects } from "./ui";
 export type QuickTone = "urgent" | "caution" | "calm";
 export type QuickAction = { key: string; label: string; icon: string; status: string; tone?: QuickTone; badge?: number; onPress: () => void };
 const INK: Record<QuickTone, string> = { urgent: palette.red, caution: palette.amber, calm: palette.muted };
-const HAIR = "rgba(20,28,40,0.07)";
 const tap = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); };
 
-function Segment({ a, right, bottom }: { a: QuickAction; right: boolean; bottom: boolean }) {
-  const { reducedMotion } = useAccessibleEffects();
-  const pulse = useSharedValue(1), glow = useSharedValue(0);
-  const press = () => {
-    tap();
-    if (!reducedMotion) {
-      pulse.set(withSequence(withTiming(0.9, { duration: 90 }), withSpring(1, { duration: 320, dampingRatio: 0.55 })));
-      glow.set(withSequence(withTiming(1, { duration: 90 }), withTiming(0, { duration: 420 })));
-    }
-    a.onPress();
-  };
-  const glyph = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
-  const halo = useAnimatedStyle(() => ({ opacity: glow.value * 0.9, transform: [{ scale: 0.8 + glow.value * 0.6 }] }));
+/*
+ * Keys, not segments: each action is a raised liquid-glass key so it reads as pressable before it
+ * is touched. A bright top edge and a 2 pt shadow ledge give it height; pressing sinks it 2 pt and
+ * flattens the ledge (after Duolingo's tactile button), the glyph pulses like a droplet, one haptic.
+ * On first appearance a halftone shimmer sweeps across the keys once, 120 ms apart (after Queue's
+ * update-button shimmer: ease-in-out, 1.1 s), so the shelf announces itself without looping.
+ */
+const EASE_IN_OUT = Easing.bezier(0.65, 0, 0.35, 1);
+function Key({ a, index, shimmer }: { a: QuickAction; index: number; shimmer: boolean }) {
+  const { reducedMotion, reducedTransparency } = useAccessibleEffects();
+  const { width } = useWindowDimensions();
+  const keyW = (width - 40 - 10) / 2;
+  const down = useSharedValue(0), pulse = useSharedValue(1), sweep = useSharedValue(0);
+  useEffect(() => { if (shimmer && !reducedMotion) sweep.set(withDelay(500 + index * 120, withTiming(1, { duration: 1100, easing: EASE_IN_OUT }))); }, [shimmer, reducedMotion, index, sweep]);
   const urgent = a.tone === "urgent";
-  return <Pressable accessibilityRole="button" accessibilityLabel={`${a.label}. ${a.status}`} onPress={press}
-    style={({ pressed }) => ({ width: "50%", minHeight: 92, paddingHorizontal: 14, paddingVertical: 13, gap: 8, borderRightWidth: right ? 0 : 1, borderBottomWidth: bottom ? 0 : 1, borderColor: HAIR, backgroundColor: pressed ? "rgba(255,255,255,0.35)" : "transparent" })}>
-    {urgent && <View pointerEvents="none" style={{ position: "absolute", top: 0, right: 0, width: 90, height: 60 }}><HalftoneGlint width={90} height={60} origin={[90, 0]} reach={[84, 56]} pitch={3.5} strength={0.55} tint={[0.86, 0.42, 0.42]} hueShift={0} style={{ top: 0, left: 0 }} /></View>}
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-      <View style={{ width: 30, height: 30, alignItems: "center", justifyContent: "center" }}>
-        <Animated.View pointerEvents="none" style={[{ position: "absolute", width: 30, height: 30, borderRadius: 15, backgroundColor: urgent ? "rgba(162,62,62,0.16)" : "rgba(36,91,204,0.16)" }, halo]} />
-        <Animated.View style={glyph}><Icon name={a.icon} size={17} color={urgent ? palette.red : palette.blue} /></Animated.View>
-      </View>
-      <Text style={{ flex: 1, ...type.subhead, fontWeight: "600", color: palette.ink }}>{a.label}</Text>
-      {urgent && !!a.badge && <View style={{ minWidth: 18, height: 18, paddingHorizontal: 5, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: palette.red }}>
-        <Text style={{ fontSize: 11, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{a.badge}</Text>
-      </View>}
-    </View>
-    <Text numberOfLines={2} style={{ ...type.caption, fontWeight: "500", color: INK[a.tone ?? "calm"] }}>{a.status}</Text>
-  </Pressable>;
+  const key = useAnimatedStyle(() => ({ transform: [{ translateY: down.value * 2 }], boxShadow: `0 ${2 - down.value * 2}px 0 rgba(40,70,140,${0.14 - down.value * 0.1}), 0 ${8 - down.value * 6}px ${18 - down.value * 10}px rgba(40,70,140,0.10)` }));
+  const glyph = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
+  return <Animated.View style={[{ width: keyW, borderRadius: 24, borderCurve: "continuous" }, key]}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${a.label}. ${a.status}`}
+      onPressIn={() => { down.set(withTiming(1, { duration: 70 })); if (!reducedMotion) pulse.set(withTiming(0.88, { duration: 90 })); }}
+      onPressOut={() => { down.set(withSpring(0, { duration: 260, dampingRatio: 0.6 })); pulse.set(reducedMotion ? 1 : withSpring(1, { duration: 320, dampingRatio: 0.55 })); }}
+      onPress={() => { tap(); a.onPress(); }}>
+      <Glass opaque={reducedTransparency} style={{ borderRadius: 24, borderWidth: 1, borderColor: urgent ? "rgba(162,62,62,0.22)" : "rgba(255,255,255,0.95)" }}>
+        {/* The key's lit top edge. */}
+        <View pointerEvents="none" style={{ position: "absolute", left: 10, right: 10, top: 0, height: 1.5, borderRadius: 1, backgroundColor: "rgba(255,255,255,0.95)" }} />
+        {!reducedMotion && <View pointerEvents="none" style={{ position: "absolute", inset: 0, overflow: "hidden", borderRadius: 24 }}><HalftoneShimmer width={keyW} height={104} progress={sweep} /></View>}
+        {urgent && <View pointerEvents="none" style={{ position: "absolute", top: 0, right: 0, width: 90, height: 60 }}><HalftoneGlint width={90} height={60} origin={[90, 0]} reach={[84, 56]} pitch={3.5} strength={0.5} tint={[0.86, 0.42, 0.42]} hueShift={0} style={{ top: 0, left: 0 }} /></View>}
+        <View style={{ minHeight: 104, padding: 14, justifyContent: "space-between", gap: 10 }}>
+          <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
+            <Animated.View style={[{ width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", backgroundColor: urgent ? palette.red : palette.blue, boxShadow: `0 3px 8px ${urgent ? "rgba(162,62,62,0.3)" : "rgba(36,91,204,0.3)"}` }, glyph]}>
+              <Icon name={a.icon} size={17} color={palette.white} />
+            </Animated.View>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              {!!a.badge && <View style={{ minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: urgent ? palette.red : a.tone === "caution" ? palette.amber : "rgba(20,28,40,0.08)" }}>
+                <Text style={{ fontSize: 11, fontWeight: "700", color: urgent || a.tone === "caution" ? palette.white : palette.ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text>
+              </View>}
+              <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}><Icon name="arrow.up.right" size={10} color={palette.ink} /></View>
+            </View>
+          </View>
+          <View style={{ gap: 1 }}>
+            <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{a.label}</Text>
+            <Text numberOfLines={1} style={{ ...type.caption, fontWeight: "500", color: INK[a.tone ?? "calm"] }}>{a.status}</Text>
+          </View>
+        </View>
+      </Glass>
+    </Pressable>
+  </Animated.View>;
 }
 
+let shimmered = false;
 export function QuickActions({ actions, animate = true }: { actions: QuickAction[]; animate?: boolean }) {
   const { reducedMotion } = useAccessibleEffects();
-  return <Animated.View entering={animate && !reducedMotion ? riseIn({ delay: 60, distance: 10, duration: 380 }) : undefined}>
-    <Glass style={{ borderRadius: 26, boxShadow: "0 8px 24px rgba(40,70,140,0.08)" }}>
-      <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-        {actions.map((a, i) => <Segment key={a.key} a={a} right={i % 2 === 1} bottom={i >= actions.length - 2} />)}
-      </View>
-    </Glass>
+  // The shimmer hint plays the first time a shelf appears in a session, then never again.
+  const [shimmer, setShimmer] = useState(false);
+  useEffect(() => { if (animate && !shimmered) { shimmered = true; setShimmer(true); } }, [animate]);
+  return <Animated.View entering={animate && !reducedMotion ? riseIn({ delay: 60, distance: 10, duration: 380 }) : undefined} style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+    {actions.map((a, i) => <Key key={a.key} a={a} index={i} shimmer={shimmer} />)}
   </Animated.View>;
 }
 
