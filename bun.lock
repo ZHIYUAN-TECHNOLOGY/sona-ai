@@ -111,6 +111,8 @@
         "@orpc/zod": "catalog:",
         "@sona-ai/auth": "workspace:*",
         "@sona-ai/db": "workspace:*",
+        "@sona-ai/domain": "workspace:*",
+        "drizzle-orm": "catalog:",
         "zod": "catalog:",
       },
       "devDependencies": {
