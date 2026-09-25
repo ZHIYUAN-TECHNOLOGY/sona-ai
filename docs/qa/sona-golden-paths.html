@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sona golden paths</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+  :root { --ink: #1D1F23; --muted: #59616B; --blue: #245BCC; --wash: #E6EEFC; --line: #E3E6EB; --canvas: #F5F6F8; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.45; margin: 0; }
+  header { padding-bottom: 10px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+  h1 { font-size: 21pt; letter-spacing: -0.4px; margin: 0 0 4px; font-weight: 650; }
+  .sub { color: var(--muted); margin: 0; }
+  .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .tag { background: var(--wash); color: var(--blue); border-radius: 999px; padding: 2px 10px; font-size: 9pt; font-weight: 600; }
+  .start { background: var(--canvas); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 14px; }
+  .start b { color: var(--ink); }
+  section { break-inside: avoid; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px 8px; margin: 0 0 11px; }
+  h2 { font-size: 12.5pt; margin: 0 0 2px; display: flex; align-items: baseline; gap: 8px; }
+  h2 .n { color: var(--blue); font-variant-numeric: tabular-nums; }
+  .where { color: var(--muted); font-size: 9pt; margin: 0 0 7px; }
+  ol { margin: 0; padding: 0; list-style: none; counter-reset: step; }
+  li { counter-increment: step; display: grid; grid-template-columns: 14px 18px 1fr; gap: 6px; padding: 5px 0; border-top: 1px dashed var(--line); }
+  li:first-child { border-top: 0; }
+  li::before { content: ""; width: 11px; height: 11px; border: 1.3px solid #9AA1AB; border-radius: 3px; margin-top: 3px; }
+  li .s { color: var(--muted); font-variant-numeric: tabular-nums; }
+  li .s::before { content: counter(step) "."; }
+  .do b { font-weight: 650; }
+  .exp { display: block; color: var(--muted); font-size: 9.5pt; margin-top: 1px; }
+  .exp::before { content: "Expect  "; color: var(--blue); font-weight: 650; font-size: 8.5pt; letter-spacing: 0.3px; }
+  footer { color: var(--muted); font-size: 8.5pt; margin-top: 8px; border-top: 1px solid var(--line); padding-top: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Sona golden paths</h1>
+  <p class="sub">Manual test checklist for the iPhone UI, updated for the demo flow: ranked day, section sources, Next-step bar, medicine thumbnails, camera scan and shift handover (25 September 2026).</p>
+  <div class="meta"><span class="tag">iPhone Release build · ai.zhiyuantech.sona</span><span class="tag">Simulator · Expo Go</span><span class="tag">Session-only data</span></div>
+</header>
+
+<div class="start"><b>Start:</b> open Sona (force-quit first for a fresh session). Home shows "Here’s what needs you first." and <b>Your day, ranked</b>. Paths 3–5 and 7–12 run inside a visit session opened in path 2. Every answer opens with <b>Takeaways</b> (up to three lines marked !, + or i); each section has a tinted icon header and, on its right, one <b>N sources</b> pill instead of inline links. Key terms are tinted (blue symptom, violet medicine, amber caution, teal finding). Demo-only controls (scenario picker, "Load synthetic eligibility", failure simulations) are hidden until you turn on Settings › Show demo controls in answers.</div>
+
+<section><h2><span class="n">1</span>Your day, ranked</h2><p class="where">Home · first thing on launch</p><ol>
+<li><span class="s"></span><span class="do">Open Sona.<span class="exp">"Here’s what needs you first." A time bar (08:00–13:00) with visit blocks and a red now line; a <b>Most urgent</b> card: <b>Low potassium · Daniel Rahman</b>, "Low result · 2 h · no action yet". Below, one list: late or upcoming visits, "Confirm Amelia’s medicines · 2 unconfirmed · blocks prescribing", open tasks. Every row states its reason.</span></span></li>
+<li><span class="s"></span><span class="do">Tap <b>Re-rank</b>.<span class="exp">A dark "Sorting your day…" pill pulses, then the items drop in one after another, most urgent first.</span></span></li>
+<li><span class="s"></span><span class="do">Tap <b>⋯</b> on a row, then <b>Snooze 1 h</b>; tap <b>Snoozed · 1</b>, then Wake.<span class="exp">The row leaves the list and collects under Snoozed; Wake returns it. Pin to top moves a row above the rest.</span></span></li>
+<li><span class="s"></span><span class="do">Tap the <b>Confirm Amelia’s medicines</b> row.<span class="exp">Amelia’s session opens straight into the medication answer with its Next-step bar (path 9).</span></span></li>
+<li><span class="s"></span><span class="do">Tap the Most urgent card.<span class="exp">Daniel’s session opens with his briefing.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">2</span>Home and visit sessions</h2><p class="where">Home · session screen · patient switcher</p><ol>
+<li><span class="s"></span><span class="do">In Your day, ranked, tap the <b>09:30 · Amelia Tan</b> row.<span class="exp">Her session slides in: back arrow top-left, Amelia chip and tasks button top-right, her greeting and suggestions.</span></span></li>
+<li><span class="s"></span><span class="do">Tap <b>What should I know before I see Amelia?</b><span class="exp">The lead streams in; then a tinted block springs across "respiratory", "review", "Cough" and "fever", each turning into a rounded chip. Below: three Takeaways.</span></span></li>
+<li><span class="s"></span><span class="do">Look under the Takeaways, then swipe the card left.<span class="exp">A progress bar labelled Vitals · Timeline · History · Next. The Vitals page shows oxygen, temperature ("Raised"), heart rate and allergy with small traces that draw in; swiping snaps to Timeline and the bar fills.</span></span></li>
+<li><span class="s"></span><span class="do">Swipe to <b>Next</b> and tap <b>Explore clinical questions</b>.<span class="exp">A reasoning answer appears (path 7).</span></span></li>
+<li><span class="s"></span><span class="do">Swipe from the left edge (or tap the back arrow).<span class="exp">Home, with no answers; Amelia's visit row now reads "In progress" and has moved down the ranking.</span></span></li>
+<li><span class="s"></span><span class="do">Tap Amelia’s row again.<span class="exp">The session opens at the latest answer, not the top.</span></span></li>
+<li><span class="s"></span><span class="do">Tap the <b>Amelia</b> chip, then Daniel → <b>Open encounter</b>.<span class="exp">Daniel's session replaces Amelia's; back goes straight to Home.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">3</span>Voice orb</h2><p class="where">Inside a session · bottom centre</p><ol>
+<li><span class="s"></span><span class="do">Press and hold the orb.<span class="exp">An aurora glass wave rises, words appear as if heard, and the orb shows listening bars.</span></span></li>
+<li><span class="s"></span><span class="do">Release.<span class="exp">The wave floods up and sinks away, the question sends, and the orb's icon changes (searching, reading) while the answer loads.</span></span></li>
+<li><span class="s"></span><span class="do">Tap the orb once, then tap it again.<span class="exp">Hands-free listening starts; the second tap sends.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">4</span>Chatbox</h2><p class="where">Keyboard button · bottom-right</p><ol>
+<li><span class="s"></span><span class="do">Tap the keyboard button.<span class="exp">The bar grows into a glass card in step with the keyboard, with a dotted shimmer while it grows.</span></span></li>
+<li><span class="s"></span><span class="do">Type <b>What possibilities should I consider?</b><span class="exp">The send button turns dark with blue dots.</span></span></li>
+<li><span class="s"></span><span class="do">Send it, or tap outside the card.<span class="exp">The card shrinks back into the bar.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">5</span>Attachments menu and camera scan</h2><p class="where">+ button · bottom-left · Photos, Camera scan, Files</p><ol>
+<li><span class="s"></span><span class="do">Tap <b>+</b>.<span class="exp">The screen frosts; the + grows into a glass menu; Photos, Camera and Files arrive one after another.</span></span></li>
+<li><span class="s"></span><span class="do">Tap <b>Photos</b>, then the teaching X-ray (first tile).<span class="exp">The menu expands into a photo grid; picking the X-ray adds an X-ray answer to the conversation.</span></span></li>
+<li><span class="s"></span><span class="do">Open the menu again and tap <b>Camera</b> (allow access), then the shutter.<span class="exp">The frozen photo gets a blue halftone band sweeping bottom to top, the edges dim around a cornered frame, and a sheet springs up: <b>What is this image?</b> with Chest X-ray preselected, Skin, Wound, Document, Other. (Simulator: the teaching X-ray stands in for the camera.)</span></span></li>
+<li><span class="s"></span><span class="do">Pick a type and tap <b>Attach as …</b> (or <b>Retake</b>).<span class="exp">The menu returns with the photo as a thumbnail, named for its type. Nothing is read from the image yet: analysis says so.</span></span></li>
+<li><span class="s"></span><span class="do">Tap outside the menu.<span class="exp">It shrinks back into the +, with Files leaving first.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">6</span>Sidebar</h2><p class="where">Home only · ☰ button</p><ol>
+<li><span class="s"></span><span class="do">Tap <b>☰</b>.<span class="exp">The page slides right and shows Home, Patients, Consultation, Notes, Follow-up tasks, <b>Shift handover</b> (path 13) and History.</span></span></li>
+<li><span class="s"></span><span class="do">Tap Amelia under History.<span class="exp">Her session opens.</span></span></li>
+<li><span class="s"></span><span class="do">Open the sidebar again and drag the page back to the left.<span class="exp">It closes with a spring.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">7</span>Clinical reasoning</h2><p class="where">Ask "What possibilities should I consider?"</p><ol>
+<li><span class="s"></span><span class="do">In Amelia's session, tap the keyboard button, type <b>What possibilities should I consider?</b> and send (or, after any answer, tap it under "You might want to ask").<span class="exp">Takeaways (two unranked possibilities, exam and imaging still needed, asthma control). A frosted tab bar pins under the top bar: <b>Possibilities · History · Next</b>.</span></span></li>
+<li><span class="s"></span><span class="do">Tap the <b>Next</b> tab, then the <b>Possibilities</b> tab.<span class="exp">The page glides to each section and the dark highlight slides to the tab; scrolling by hand moves it too.</span></span></li>
+<li><span class="s"></span><span class="do">Tap <b>Pneumonia considered</b>.<span class="exp">Opens in place: Recorded context, Supports, Conflicts, Still needed. No inline links: the section header shows <b>4 sources</b>.</span></span></li>
+<li><span class="s"></span><span class="do">Tap the <b>4 sources</b> pill.<span class="exp">A short sheet rises, grouped under From the record and Published references. Tap a row: the sheet closes and the source detail opens.</span></span></li>
+<li><span class="s"></span><span class="do">Tap the quiet <b>Update history ›</b> row, fill in the fact and source, then tap <b>Save &amp; update</b>.<span class="exp">The answer refreshes with the updated history.</span></span></li>
+<li><span class="s"></span><span class="do">Ask the same question in Daniel's session.<span class="exp">A "What to collect first" checklist instead of possibilities, with "Capture the missing history" as the action.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">8</span>X-ray review and simulated analysis</h2><p class="where">Tap "Review Amelia's chest X-ray" · one page: image, then its analysis</p><ol>
+<li><span class="s"></span><span class="do">Open the answer, then tap the image.<span class="exp">The answer shows the image, one attribution line and "In the uploader's words". Tapping the image opens the X-ray page: image as hero, zoom readout 1.0×, and an <b>Analysis</b> section directly below (no separate details page).</span></span></li>
+<li><span class="s"></span><span class="do">Pinch to zoom and drag.<span class="exp">Live zoom up to 5×, a stretchy stop at the edges, and a <b>Reset view</b> button.</span></span></li>
+<li><span class="s"></span><span class="do">Double-tap, then double-tap again.<span class="exp">Jumps to 2.5×, then fits back.</span></span></li>
+<li><span class="s"></span><span class="do">Tap the <b>⋯</b> at the top right of the header (level with the back button), then tap it again.<span class="exp">A small glass menu springs open with Choose local image and Remove image, then closes.</span></span></li>
+<li><span class="s"></span><span class="do">In Amelia's session, tap the keyboard button, then the <b>image icon</b> in the chatbox (this opens the current X-ray page, which has the analyse button; the page opened from an answer is the saved view). Scroll to <b>Simulated review</b> and tap <b>Analyse X-ray · simulation</b>.<span class="exp">You return to Amelia's session (not Home) and a new X-ray answer streams in with a halftone sweep beside the image, then "In the uploader's words" and one limits line.</span></span></li>
+<li><span class="s"></span><span class="do">Tap the image in that new answer.<span class="exp">The saved view: the image with its Analysis below it, on the same page.</span></span></li>
+<li><span class="s"></span><span class="do">Optional: Settings › <b>Show demo controls in answers</b>, then back on the X-ray page choose a demo response (unsupported / no finding) before analysing.<span class="exp">The answer and Analysis show that scenario's wording instead.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">9</span>Medication review and prescribing</h2><p class="where">Tap "Check Amelia's medicines for interactions" · or the "Confirm Amelia’s medicines" row in Your day</p><ol>
+<li><span class="s"></span><span class="do">Open the answer.<span class="exp">Takeaways (medicines unconfirmed, allergy to confirm, no interaction database) and pinned tabs <b>Medicines · Interactions · Prescribing</b>. Below: "Confirm what's being taken", 0 of 2, then one allergy line, one interactions line ("… pairs without a conclusion"), and the feature card with one dark button.</span></span></li>
+<li><span class="s"></span><span class="do">Tap the <b>Prescribing</b> tab, then <b>Medicines</b>.<span class="exp">The page glides between sections; the highlight follows.</span></span></li>
+<li><span class="s"></span><span class="do">Look at the medicine rows and the bottom of the screen.<span class="exp">Each unconfirmed medicine shows a dashed outline of its form (inhaler, tablet); paracetamol shows as a white caplet. A glass <b>Next step · 1/5</b> bar sits above the dock with <b>Confirm</b>.</span></span></li>
+<li><span class="s"></span><span class="do">Tap the Next step bar (or swipe it up).<span class="exp">It sinks away and a <b>Before prescribing</b> sheet rises: confirm each medicine, run review, record eligibility, run simulation, each with its own button.</span></span></li>
+<li><span class="s"></span><span class="do">Tap <b>Confirm</b> in the bar and save the form. Do the same for the second medicine.<span class="exp">Confirm opens that medicine’s form in place. On save the outline turns away and the drawn medicine springs in with a blue check (salbutamol becomes a blue inhaler); the bar’s label slides to the next step. Count reads 2 of 2.</span></span></li>
+<li><span class="s"></span><span class="do">Tap the interactions line, then tap <b>Run review</b> (or <b>Review again</b>) in the feature card.<span class="exp">The pairs open in place; the review is marked current for this visit.</span></span></li>
+<li><span class="s"></span><span class="do">Follow the bar to <b>Run</b> the prescribing simulation.<span class="exp">Checks pulse one by one, then resolve. Without eligibility it is <b>blocked</b> (e.g. 5 of 11) and the bar points to <b>Record eligibility</b>, which opens the inputs. With every check met, the <b>Immutable receipt</b> seal lands with a haptic and the bar offers View.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">10</span>Scribe (consultation recording)</h2><p class="where">Tap "Start consultation" in a session · one-line disclaimer, minimize is the ⌄ icon top-left</p><ol>
+<li><span class="s"></span><span class="do">Tap <b>Start sample</b>, then <b>Allow in simulation · play sample</b>.<span class="exp">Blue waveform bars scroll, the timer runs to 00:12, and turns appear with a muted live line.</span></span></li>
+<li><span class="s"></span><span class="do">Tap a finished turn.<span class="exp">The correction form opens in place, with Clinician and Patient chips.</span></span></li>
+<li><span class="s"></span><span class="do">Wait for the end.<span class="exp">"Transcript ready", a frozen grey waveform, and <b>Create draft note</b>. The ⌄ icon returns to the encounter.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">11</span>Consultation note</h2><p class="where">Tap "Create draft note"</p><ol>
+<li><span class="s"></span><span class="do">Open the note.<span class="exp">Patient name, a Draft pill with one warning line, four sections with a small ⓘ each (tap one to see its provenance and source), and a floating glass bar at the bottom.</span></span></li>
+<li><span class="s"></span><span class="do">Type in Clinician assessment, then tap <b>Save draft</b> in the floating bar.<span class="exp">The bar's status line changes to saved.</span></span></li>
+<li><span class="s"></span><span class="do">Tap <b>Mark reviewed</b> in the bar.<span class="exp">The pill changes to Reviewed.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">12</span>Follow-up answer and tasks</h2><p class="where">Tap "Prepare a follow-up plan" · tasks button top-right</p><ol>
+<li><span class="s"></span><span class="do">Open the answer, then tap <b>Make it a task</b>.<span class="exp">"A clear next step" with Owner and Due chips and one quiet origin line; the tasks screen opens with just the patient name as header.</span></span></li>
+<li><span class="s"></span><span class="do">Type <b>Bloods @nur</b> and pick <b>Clinic nurse</b>.<span class="exp">"@nur" leaves the sentence and the Owner chip pops in.</span></span></li>
+<li><span class="s"></span><span class="do">Add <b>in 2 weeks</b> to the end, then tap <b>Due …</b>.<span class="exp">The Due chip fills and the + turns dark.</span></span></li>
+<li><span class="s"></span><span class="do">Tap <b>+</b>, then tap the new row.<span class="exp">The task appears under Open; tapping ticks it, strikes the title and moves it to Completed. Swipe right to reopen.</span></span></li>
+<li><span class="s"></span><span class="do">Tap the <b>Due</b> chip and flick the ruler; tap a week label; use the date pill.<span class="exp">A haptic per day; labels jump to weeks or years; the date pill reaches any future year.</span></span></li>
+<li><span class="s"></span><span class="do">Tap the chosen owner again.<span class="exp">The owner clears.</span></span></li>
+<li><span class="s"></span><span class="do">Go back to Home and tap the tasks button.<span class="exp">Follow-ups across all visits, "Add a follow-up for", and one line at the bottom: "Local simulation · nothing is booked or sent".</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">13</span>Shift handover</h2><p class="where">Home › "Hand over shift" · or sidebar › Shift handover</p><ol>
+<li><span class="s"></span><span class="do">Open the handover.<span class="exp">"5 of 5 left" and a card stack. Each card is SBAR: S, B, A lines and R open items drawn from the visit (e.g. "Act on low potassium", "Confirm 2 reported medicines", "Review and sign the consultation note"), a Watch or Stable chip and a sources pill. Watch patients first; ward patients are marked "synthetic ward".</span></span></li>
+<li><span class="s"></span><span class="do">Drag the top card right slowly, then let go past the middle.<span class="exp">It tilts and tints teal (<b>Handed over</b>), flies off, the next card scales up; the counter reads 4 of 5 and <b>Undo</b> appears.</span></span></li>
+<li><span class="s"></span><span class="do">Drag one card left, or tap <b>Discuss</b>.<span class="exp">Amber <b>Discuss verbally</b>. Tap Undo to bring a card back.</span></span></li>
+<li><span class="s"></span><span class="do">Finish the stack with <b>Hand over</b>.<span class="exp">A summary: "N handed over · N to discuss", the names to talk through, and an editable <b>Receiving clinician</b>.</span></span></li>
+<li><span class="s"></span><span class="do">Press and hold <b>Hold to accept handover</b> (let go early once).<span class="exp">Releasing early springs the fill back. Holding 1.5 s fills it teal and a <b>Handover acknowledged</b> receipt names who accepted how many patients and when.</span></span></li>
+</ol></section>
+
+<footer>Sona AI · synthetic demo data, no real patient information · generated 25 Sep 2026 from main (1ed0b5b).</footer>
+</body>
+</html>
