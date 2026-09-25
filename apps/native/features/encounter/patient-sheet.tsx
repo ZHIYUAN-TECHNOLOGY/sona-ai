@@ -115,7 +115,7 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
               <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>{started ? "Continue visit" : "Open visit"}</Text><Icon name="arrow.right" size={13} color={palette.white} />
             </Pressable>
             <QuickActions animate={false} actions={[...visitActions(patient, encounter, kind => go(kind === "recording" ? { view: "recording" } : { next: kind })).slice(0, 3),
-              { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: flags.length ? `${flags.length} open items travel with them` : "Nothing open", onPress: () => go({ to: "/handover" }) }]} />
+              { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: flags.length ? `${flags.length} open ${flags.length === 1 ? "item" : "items"}` : "Nothing open", onPress: () => go({ to: "/handover" }) }]} />
             <Pressable accessibilityRole="link" onPress={() => { onClose(); router.push({ pathname: "/source", params: { id: "history", patientId: patient.id } }); }} hitSlop={8} style={{ alignSelf: "center", minHeight: 36, justifyContent: "center" }}>
               <Text style={{ ...type.footnote, color: palette.blue }}>Full history & sources</Text>
             </Pressable>
