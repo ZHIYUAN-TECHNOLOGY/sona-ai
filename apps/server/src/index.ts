@@ -76,4 +76,12 @@ app.get("/", (c) => {
   return c.text("OK");
 });
 
-export default app;
+export { EncounterState } from "./encounter-state";
+
+export default {
+  fetch: app.fetch,
+  // ponytail: the nightly coding audit (flow 5) plugs in here; until then the cron only logs that it fired.
+  async scheduled(controller) {
+    console.log(`coding audit cron ${controller.cron}: not wired yet`);
+  },
+} satisfies ExportedHandler<Env>;
