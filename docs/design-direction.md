@@ -156,6 +156,11 @@ Takeaway text is authored for the fixtures; generated responses should emit take
 - Motion follows Slack's swipe-to-triage cards: drag right to hand over, left to flag for verbal discussion; the card tilts (x / 16 degrees) and tints teal or amber, flies off past 110 pt or a quick flick (spring 0.38 s, damping 0.72) while the next card scales up from 0.95. Buttons do the same; Undo restores the last card. The counter reads "N of 5 left".
 - The receiving clinician then holds "Accept handover" (1.5 s linear fill; releasing early springs back in 0.2 s) and an acknowledged receipt names who accepted how many patients and when. VoiceOver gets an activate action instead of the hold; Reduce Motion skips the fly-off and tilt.
 
+## Patient picker and patient sheet (2026-09-25)
+
+- The patient picker lists one compact row per patient (avatar, name, status dot and reason, time). Tapping a row slides up a patient sheet over the dimmed list (after Must's leaderboard profile sheet: spring 0.42 s, damping 0.82; sections rise in 60 ms apart; drag past 120 pt or flick to dismiss).
+- The sheet is built for a decision in one glance: who and when ("Starts in 44 min"), **Needs attention** chips derived from state (pending result, allergy to confirm, unconfirmed medicines, missing history), each opening the visit on the answer that resolves it, the reason for the visit with observations, and actions: Open visit, Brief me, Consultation, Medicines, Hand over. The previous "Patient details" / "Open encounter" buttons are gone.
+
 ## Typography and AI text (2026-09-24)
 
 - **Type scale** (`type` in `components/sona/theme.ts`, iOS-sized, named by use): display 27/35, title 22/31, heading 19/25, headline 17/23, body 16/24, callout 15/21, subhead 14/20, footnote 13/18, caption 12/16, overline 11/14 uppercase +0.8 tracking. Headings track slightly negative; body text sits near 1.5; nothing thinner than 400 below 18 pt except display numerals (timers, clocks). One-off sizes were folded onto the scale. The shared `Text` uses iOS "push-out" line breaking so a lone word doesn't strand on the last line.
