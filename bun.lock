@@ -174,6 +174,19 @@
         "varlock": "catalog:",
       },
     },
+    "packages/retrieval": {
+      "name": "@sona-ai/retrieval",
+      "dependencies": {
+        "@sona-ai/api": "workspace:*",
+        "@sona-ai/db": "workspace:*",
+        "drizzle-orm": "catalog:",
+        "zod": "catalog:",
+      },
+      "devDependencies": {
+        "@sona-ai/config": "workspace:*",
+        "typescript": "^6.0.3",
+      },
+    },
   },
   "patchedDependencies": {
     "expo-backdrop@0.1.1": "patches/expo-backdrop@0.1.1.patch",
@@ -931,6 +944,8 @@
     "@sona-ai/domain": ["@sona-ai/domain@workspace:packages/domain"],
 
     "@sona-ai/infra": ["@sona-ai/infra@workspace:packages/infra"],
+
+    "@sona-ai/retrieval": ["@sona-ai/retrieval@workspace:packages/retrieval"],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 
