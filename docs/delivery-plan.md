@@ -28,7 +28,7 @@ iPhone (Expo)
   │                 json-render experimental_composeSpec with Laya as evaluator
   └─ HTTP (oRPC) ─▶ Worker (Hono): Better Auth login, plain data (patients, tasks)
                     │
-        Neon Postgres (patients, notes, tasks, receipts, drug table) · R2 (audio, X-rays)
+        Neon Postgres (patients, notes, tasks, receipts, admissions, guarantee letters, drug table) · R2 (audio, X-rays)
                     │  server-side keys only
                     ▼
    Baseten Dedicated deployments (3×L4): ① Brain · ② Voice · ③ X-ray
@@ -42,6 +42,13 @@ iPhone (Expo)
   - Candidates own their props. Clinical values arrive only by source ID.
   - Hosted JEV is excluded because it sends prompts to Vercel's closed `typesafe-ai/jev`.
 - **Drug data:** a bounded, cited table of about 20–30 drugs covering the demo scenarios. Interactions and dosing come from openFDA labels, identifiers from RxNorm, and formulary status is entered by hand from FUKKM, citing each row. Anything outside the table is reported as "not covered", never guessed.
+- **Discharge** (demo flow 1 in [ops demo flows](research/ops-demo-flows.md); no new model or box, all on Gemma in box ①):
+  - `draft_discharge` writes the three-line summary (diagnosis, course, plan) and the full text from the note, transcript and record. Every line carries its source ID.
+  - `reconcile_medicines`: Gemma proposes the take-home list; plain code computes the changed, new and stopped diff against the admission list; doses are checked against the drug table, which must include azithromycin, paracetamol, salbutamol and cetirizine. Anything outside the table is "not covered".
+  - Gemma writes the patient leaflet in Malay, English and Chinese. VoxCPM2 in box ② may read it aloud (optional).
+  - Synthetic tables: admissions (bed, fit-for-discharge time, discharged time), guarantee letters (insurer, status, requested and received times, updated by a mock insurer) and discharge receipts.
+  - The server refuses a discharge while any blocker is open, whatever the app shows. The discharge and the follow-up tasks it creates are idempotent.
+  - The "earlier than usual" figure compares against a typical fit-to-door wait kept in config and labelled synthetic on the receipt.
 - **Privacy step:** OpenMed PII Small removes names, IC numbers and phone numbers before text reaches Gemma or MedGemma.
 - **Excluded:** closed models (Qwen-Audio-3.1, Gemini 3.8 TTS, hosted JEV), MERaLiON, Scicom, and any second inference host.
 
@@ -96,7 +103,7 @@ Train a model only if it fails its day 1–3 baseline. Because Manglish is the p
 | --- | --- | --- |
 | 1–2 | Deploy boxes ①②③; Agent skeleton; Laya data generator and Kaggle training | Start Manglish recordings; book the voice actor |
 | 1–3 | Baselines: Gemma routing and specs, STT, TTS, INT4 vs FP8, memory and WebSocket checks | Transcription (ASR draft, then human fix) |
-| 3–5 | Tools, drug table, patient isolation, JEV composition, scribe pipeline | Voice-actor session |
+| 3–5 | Tools (including discharge drafting and medicine reconciliation), drug table, discharge tables, patient isolation, JEV composition, scribe pipeline | Voice-actor session |
 | 4–6 | Qwen3-ASR fine-tune and evaluation; VoxCPM2 LoRA if needed | Held-out scoring |
 | 6–8 | Real-time voice, barge-in, OpenMed step, end-to-end encounter | — |
 | 8+ | Freeze models; rehearse on staging; record the backup video | — |
@@ -107,7 +114,8 @@ Train a model only if it fails its day 1–3 baseline. Because Manglish is the p
 2. Laya fine-tune (Gemma becomes the evaluator)
 3. Free-layout pages (keep the predefined ones)
 4. VoxCPM2 fine-tune (use it as-is)
-5. Barge-in (keep real-time voice without interruption)
+5. Spoken discharge leaflet (keep the written one)
+6. Barge-in (keep real-time voice without interruption)
 
 Manglish STT is never cut.
 
@@ -143,6 +151,6 @@ For real data, the Agent, the database and object storage must also move into th
 
 ## Verification
 
-- **Backend:** patient isolation, invalid tool arguments, schema rejection, source references, "not covered" drug answers, prescribing stop cases, cancellation, idempotent task and prescription creation.
-- **AI:** held-out Manglish sets, reporting sample sizes and failures. No accuracy claim goes beyond what was measured.
+- **Backend:** patient isolation, invalid tool arguments, schema rejection, source references, "not covered" drug answers, prescribing stop cases, discharge refused while a blocker is open, cancellation, idempotent task, prescription and discharge creation.
+- **AI:** held-out Manglish sets, reporting sample sizes and failures. A native speaker reviews the demo discharge leaflet in Malay and Chinese before it is frozen. No accuracy claim goes beyond what was measured.
 - **Integration:** a full fictional encounter on staging, voice latency (p50/p95) and time to first useful result.
