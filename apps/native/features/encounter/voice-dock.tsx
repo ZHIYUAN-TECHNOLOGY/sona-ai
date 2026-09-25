@@ -184,6 +184,8 @@ export function VoiceDock(props: Props) {
   // Tapping anywhere outside the composer closes it, even when no software keyboard is showing
   // (hardware keyboard), where the input would otherwise never blur. The draft is kept.
   const closeComposer = () => { Keyboard.dismiss(); setMode(current => current === "composing" ? "idle" : current); };
+  // Tools open another screen: close the chatbox first, or iOS hands the keyboard back to it on return.
+  const leave = (go: () => void) => () => { closeComposer(); go(); };
   const attachments = props.attachments;
   // Attachments alone can be sent; the question then defaults to reviewing them.
   const send = () => { const value = draft.trim(); if (!value && !attachments.length) return; onSubmit(value || `Review the attached ${attachments.length === 1 ? "image" : "images"}`); Keyboard.dismiss(); };
@@ -294,9 +296,9 @@ export function VoiceDock(props: Props) {
           {attachments.length > 0 && <AttachmentStrip items={attachments} onRemove={removeAttachment} size={84} />}
           <TextInput autoFocus onBlur={() => setMode(current => current === "composing" ? "idle" : current)} accessibilityLabel="Ask Sona" value={draft} onChangeText={onDraft} placeholder={placeholder} placeholderTextColor="#7D8591" multiline style={{ fontSize: 17, lineHeight: 22, color: palette.ink, maxHeight: 120, minHeight: 26 }} />
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <ToolButton icon="image" label="Attach or review a chest X-ray" onPress={props.onImage} />
-            <ToolButton icon="wave" label="Start the consultation recorder" onPress={props.onConsultation} />
-            <ToolButton icon="note" label="Open the consultation note" onPress={props.onNote} />
+            <ToolButton icon="image" label="Attach or review a chest X-ray" onPress={leave(props.onImage)} />
+            <ToolButton icon="wave" label="Start the consultation recorder" onPress={leave(props.onConsultation)} />
+            <ToolButton icon="note" label="Open the consultation note" onPress={leave(props.onNote)} />
             <View style={{ flex: 1 }} />
             <RoundAction icon="send" label="Send message" ready={Boolean(draft.trim()) || attachments.length > 0} onPress={send} />
           </View>
