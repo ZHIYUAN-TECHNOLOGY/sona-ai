@@ -23,7 +23,7 @@ Clinician/hospital B2B iPhone assistant for the healthcare competition: ambient 
 - English baseline, bounded Malay/English/Mandarin Manglish demonstration. Current dialogue is scripted; real STT/TTS/S2S and code-switching capability have not been demonstrated.
 - Baseten cloud is the intended inference platform, with hybrid deployment later. MedGemma is intended for medical/multimodal work; Gemma 4 is a candidate to evaluate, not a deployed model. Unsloth is intended for potential training. Budget was described as ample. Deployment, privacy/compliance and model capability still need actual evaluation.
 
-For feature details, consult [PRD](prd.md), [storyboard](demo-storyboard.md) and [fixture plan](ui-fixture-plan.md) as needed.
+For feature details, consult [PRD](prd.md), [storyboard](demo-storyboard.md) and [fixture plan](ui-fixture-plan.md) as needed. Proposed hospital ops demo flows (discharge, guarantee letter, ward view, evidence answers) are ranked in [ops demo flows](research/ops-demo-flows.md).
 
 ## What exists and where
 
