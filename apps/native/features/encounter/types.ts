@@ -38,5 +38,6 @@ export type Encounter = {
   imagingAttachment?: { uri: string; name: string };
   hideTeachingImage?: boolean;
   prescription?: Prescription; medicationCheckedRevision?: number;
+  discharge?: import("@/features/discharge/model").DischargeState;
 };
 export type FeatureProps = { patient: Patient; result?: ResponseCard; onSource: (id: string) => void; onOpen: (view: FocusView) => void; onRequest: (kind: Capability) => void };

@@ -8,7 +8,7 @@ Ranked "wow" demo flows aimed at hospital operations and management judges. Draf
 
 Ranking weighs judge impact, real operational pain, and how much of the existing Sona UI each flow reuses.
 
-Status: proposal. Nothing below is built yet.
+Status: flow 1 (discharge in 60 seconds) is built as synthetic UI: `apps/native/features/discharge`, opened from the end-of-visit Discharge button. Flows 2 to 5 are proposals.
 
 ## Ranked flows
 

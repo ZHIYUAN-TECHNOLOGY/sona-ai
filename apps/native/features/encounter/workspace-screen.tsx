@@ -2,7 +2,8 @@ import { AmbientWash } from "@/components/sona/ambient";
 import { ResponseFrame } from "@/components/sona/response-frame";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Action, Icon, Notice, Reveal } from "@/components/sona/ui";
+import { Action, Icon, Notice, Reveal, pillStyle } from "@/components/sona/ui";
+import { canDischarge } from "@/features/discharge/model";
 import { ClinicalResponseRenderer } from "@/features/presentation";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -226,15 +227,13 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
           <Text accessibilityRole="header" style={{ textAlign: "center", ...type.headline, color: palette.ink, letterSpacing: -0.3 }}>You might want to ask</Text>
           <SuggestionList items={followUpsFor(latest.kind, patient)} onPick={pick} />
           {/* Closing the visit: once the note, follow-up or prescription is done, handing over is one tap away. */}
-          {(latest.kind === "note" || latest.kind === "followup" || latest.kind === "prescription") && <Pressable accessibilityRole="button" accessibilityLabel="Hand over shift" accessibilityHint="Opens the shift handover with this patient's open items"
-            onPress={() => router.push("/handover")} style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 20, borderCurve: "continuous", backgroundColor: palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-            <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.14)" }}><Icon name="arrow.left.arrow.right" size={15} color={palette.white} /></View>
-            <View style={{ flex: 1, gap: 1 }}>
-              <Text style={{ ...type.subhead, fontWeight: "600", color: palette.white }}>Done with {patient.name.split(" ")[0]}? Hand over shift</Text>
-              <Text style={{ ...type.caption, color: "rgba(255,255,255,0.7)" }}>Open items travel with each patient</Text>
+          {(latest.kind === "note" || latest.kind === "followup" || latest.kind === "prescription") && <View style={{ gap: 10 }}>
+            <Text style={{ textAlign: "center", ...type.footnote, color: palette.muted }}>Done with {patient.name.split(" ")[0]}?</Text>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              {canDischarge(patient) && <EndKey primary icon={encounter?.discharge?.dischargedAt ? "checkmark" : "bed.double"} label={encounter?.discharge?.dischargedAt ? "Discharged" : "Discharge"} hint="Drafts the discharge with what still blocks it" onPress={() => router.push("/discharge")} />}
+              <EndKey primary={!canDischarge(patient)} icon="arrow.left.arrow.right" label="Hand over" hint="Opens the shift handover with this patient's open items" onPress={() => router.push("/handover")} />
             </View>
-            <Icon name="chevron.right" size={12} color="rgba(255,255,255,0.7)" />
-          </Pressable>}
+          </View>}
         </View>}
       </View>}
     </ScrollView>
@@ -281,4 +280,14 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     </Animated.View>
     </GestureDetector>
   </View>;
+}
+
+/** One of the two ways out of a finished visit: ink when it is the main one, glass otherwise. */
+function EndKey({ label, icon, hint, primary = false, onPress }: { label: string; icon: string; hint: string; primary?: boolean; onPress: () => void }) {
+  const { reducedMotion } = useAccessibleEffects();
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityHint={hint} onPress={onPress}
+    style={({ pressed }) => ({ flex: 1, height: 52, borderRadius: 26, borderCurve: "continuous", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, ...(primary ? { backgroundColor: palette.ink } : pillStyle), transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+    <Icon name={icon} size={15} color={primary ? palette.white : palette.ink} />
+    <Text style={{ fontSize: 16, fontWeight: "600", color: primary ? palette.white : palette.ink }}>{label}</Text>
+  </Pressable>;
 }

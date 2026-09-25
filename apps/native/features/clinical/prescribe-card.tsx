@@ -24,7 +24,7 @@ const HISTORY = ["paracetamolAllergy", "liverDisease", "kidneyDisease", "alcohol
 const RING_R = 22, RING_C = 2 * Math.PI * RING_R;
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-function Ring({ done, total }: { done: number; total: number }) {
+export function Ring({ done, total }: { done: number; total: number }) {
   const { reducedMotion } = useAccessibleEffects();
   const p = useSharedValue(done / total);
   useEffect(() => { p.set(reducedMotion ? done / total : withTiming(done / total, { duration: 520, easing: Easing.bezier(0.23, 1, 0.32, 1) })); }, [done, total, reducedMotion, p]);
@@ -40,7 +40,7 @@ function Ring({ done, total }: { done: number; total: number }) {
   </View>;
 }
 
-function Pill({ label, on, tone = "blue", onPress }: { label: string; on: boolean; tone?: "blue" | "amber"; onPress: () => void }) {
+export function Pill({ label, on, tone = "blue", onPress }: { label: string; on: boolean; tone?: "blue" | "amber"; onPress: () => void }) {
   const ink = tone === "amber" ? palette.amber : palette.blue;
   return <Pressable accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={label} onPress={() => { haptic("select"); onPress(); }} hitSlop={6}
     style={{ minWidth: 52, height: 34, paddingHorizontal: 14, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: on ? ink : "rgba(20,28,40,0.06)" }}>
@@ -49,7 +49,7 @@ function Pill({ label, on, tone = "blue", onPress }: { label: string; on: boolea
 }
 
 /** A blocking check: number badge + label + its inline fix; once resolved it morphs to a check, strikes and folds away. */
-function BlockerRow({ check, n, resolved, children }: { check: PrescriptionCheck; n: number; resolved: boolean; children?: React.ReactNode }) {
+export function BlockerRow({ check, n, resolved, children }: { check: PrescriptionCheck; n: number; resolved: boolean; children?: React.ReactNode }) {
   const { reducedMotion } = useAccessibleEffects();
   const done = useSharedValue(resolved ? 1 : 0), strike = useSharedValue(resolved ? 1 : 0);
   useEffect(() => {
