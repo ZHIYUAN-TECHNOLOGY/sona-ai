@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import type { QuickAction } from "@/components/sona/quick-actions";
 import { PENDING_RESULT } from "@/features/day/model";
+import { wardBeds, wardSummary } from "@/features/ward/model";
 import { defaultMedications } from "./clinical-state";
 import { openSession } from "./navigation";
 import type { Encounter, Patient } from "./types";
@@ -8,13 +9,14 @@ import type { Encounter, Patient } from "./types";
 /** Home: where a clinician's day is, each tile with its live status. */
 export function homeActions(patients: Patient[], encounters: Record<string, Encounter | undefined>): QuickAction[] {
   const next = [...patients].sort((a, b) => a.time.localeCompare(b.time)).find(p => !encounters[p.id]?.requests.length);
-  const open = Object.values(encounters).reduce((n, e) => n + (e?.tasks.filter(t => !t.completed).length ?? 0), 0);
+  const ward = wardSummary(wardBeds(patients, encounters));
   const resultFor = patients.find(p => p.id === PENDING_RESULT.patientId);
   return [
     { key: "patients", label: "Patients", icon: "person.2", status: next ? `Next ${next.name.split(" ")[0]} · ${next.time}` : `${patients.length} today`, badge: patients.length, onPress: () => router.push("/patients") },
     { key: "results", label: "Results", icon: "testtube.2", status: resultFor ? `${PENDING_RESULT.flag} ${PENDING_RESULT.test.toLowerCase()} · ${resultFor.name.split(" ")[0]}` : "Nothing new", tone: resultFor ? "urgent" : "calm", badge: resultFor ? 1 : 0, onPress: () => resultFor && openSession(resultFor.id, { next: "briefing" }) },
     { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: `${patients.length + 3} patients to hand over`, onPress: () => router.push("/handover") },
-    { key: "tasks", label: "Tasks", icon: "checklist", status: open ? `${open} open` : "All clear", tone: open ? "caution" : "calm", badge: open, onPress: () => router.push("/tasks") },
+    // Tasks live in the top bar; the ward view is the one place to see every bed's blockers.
+    { key: "ward", label: "Ward", icon: "bed.double", status: ward.blocked ? `${ward.blocked} discharges blocked` : `${ward.fit} fit to go`, tone: ward.blocked ? "caution" : "calm", badge: ward.blocked, onPress: () => router.push("/ward") },
   ];
 }
 
