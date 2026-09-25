@@ -1,0 +1,22 @@
+{
+  "name": "@sona-ai/retrieval",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "check-types": "tsc -b",
+    "test": "bun test src"
+  },
+  "dependencies": {
+    "@sona-ai/api": "workspace:*",
+    "@sona-ai/db": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@sona-ai/config": "workspace:*",
+    "typescript": "^6.0.3"
+  }
+}
