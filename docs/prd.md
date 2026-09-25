@@ -10,7 +10,7 @@ The demonstration should show one fictional encounter progressing from preparati
 
 Primary user: outpatient clinician. Proposed first buyer: a hospital outpatient department or clinical operations lead. Buyer, willingness to pay, and adoption assumptions are hypotheses; there is no customer validation yet.
 
-Constraints: one builder, 18-day planning window, sufficient GPU budget, iPhone demonstration, UI completed before backend implementation. No clinical reviewer is currently available. Presentation duration is provisionally 10–15 minutes.
+Constraints: one builder; the backend deadline is one to two weeks from 25 September 2026; the budget is cost-conscious (see [delivery plan](delivery-plan.md#costs)); the demo runs on an iPhone; backend planning runs in parallel with UI review. No clinical reviewer is currently available. Presentation duration is provisionally 10–15 minutes.
 
 ## Required capabilities and bounded scope
 
@@ -37,10 +37,10 @@ No clinical reviewer is available. Assess this workflow as a simulation; Google 
 ## Language and input
 
 - Preload synthetic patient records and support document/image attachments and live consultation recording.
-- English is the baseline. Include a bounded Malay-English-Mandarin code-switching demonstration with English clinical output.
+- English is the baseline. **Manglish, meaning Malay, English and Mandarin mixed within a sentence, is the main selling point.** It covers speech recognition and spoken replies, and the clinical output stays in English.
 - Keep the original transcript and English interpretation separate and editable. Capture corrections explicitly instead of silently rewriting source material.
-- Compare existing open-weight STT candidates before deciding whether to fine-tune. A successful example does not establish general clinical language accuracy.
-- Optional English TTS may read a completed response. Mixed-language speech output and full-duplex speech-to-speech are later work unless the baseline evaluation makes them inexpensive to integrate.
+- Speech-to-text uses Qwen3-ASR-1.7B, fine-tuned on fictional Manglish consultations if it fails the baseline. A successful example does not establish general clinical language accuracy.
+- Real-time voice conversation with interruption is in scope. It is built as a chain: STT, then Gemma, then VoxCPM2 TTS (LoRA fine-tuned on a Manglish voice actor if needed). End-to-end speech-to-speech models are excluded.
 - Use synthetic records, consented recordings of fictional conversations, and appropriately licensed/de-identified teaching images. Do not use image-generation outputs as evidence of medical-image capability.
 - Broad PDF-to-EHR import is outside the demo scope; attached documents can be inspected and used within the bounded workflow.
 
@@ -58,23 +58,23 @@ UI completion means the whole scripted encounter is usable with simulated data, 
 
 Observed in the repository manifests on 2026-09-22: Expo 57, React Native 0.86, React 19, Expo Router, Reanimated 4, Worklets, Gesture Handler, and @expo/ui. The project also has Hono/oRPC, Better Auth, Drizzle/PostgreSQL, and Cloudflare infrastructure scaffolding. Package presence is not evidence that clinical workflows, deployment, or authentication flows have been tested.
 
-Proposed request path: iPhone → application backend → validated tool execution → Baseten inference/data services → structured results → validated UI specification → native renderer.
+Agreed request path (25 September 2026): iPhone, then a Cloudflare Agent (Agents SDK, one Durable Object per encounter), then validated tool execution against Neon/R2, then Baseten Dedicated inference, then a json-render spec composed by the JEV engine with Laya as evaluator, then the native renderer. Plain data and login use oRPC over HTTP. Full detail and costs are in the [delivery plan](delivery-plan.md).
 
-| Responsibility | Candidate / decision | Still to verify |
+| Responsibility | Decision | Still to verify |
 | --- | --- | --- |
-| Hosting | Baseten Cloud initially | Runtime compatibility, image processing, streaming, latency and data handling for each selected model |
-| Routing, tool calls, UI composition | Gemma 4 | Tool selection, valid arguments, response schemas and latency on project tasks |
-| Medical text and images | MedGemma, starting with 1.5 4B | Task-specific quality; compare larger or alternative models only when evidence warrants |
-| STT | Qwen3-ASR-1.7B and Malaysian Whisper candidates | Clinical code-switching, noise, numbers, medication names, chunking and time alignment |
-| Speaker attribution | Separate diarization component | Model selection, attribution quality and correction flow |
-| Voice output | Optional open-weight English TTS | Pronunciation and playback integration; not a dependency for text output |
-| Drug evidence | Structured, sourced interaction records | Access, licensing, coverage, ingredient mapping, updates and uncertainty semantics |
-| Prescribing simulation | Bounded formulary, indication-specific regimen evidence and explicit prerequisite checks | Permitted sources, regimen completeness, patient eligibility, contraindications, missing-data handling and idempotent simulated issuance |
-| Clinical references | Small permitted reference collection | Provenance and retrieval quality; regional applicability must be labelled |
-| Dynamic UI | json-render catalogue and native components | Actual React Native integration and streaming schema behaviour; JEV remains an optional experiment |
-| Motion | Reanimated and Skia where appropriate | Compatibility with installed SDK and performance on demonstration iPhone |
+| Hosting | Baseten Cloud, pay-as-you-go Dedicated deployments (US), on 3×L4 boxes built as Docker images. Development and staging only, with synthetic data. | INT4 quality and speed on L4, memory headroom, WebSockets through a custom Docker server |
+| Routing, tool calls, reasoning, notes | Gemma 4 26B A4B-it, INT4 QAT, in box ① | Routing and spec validity on Manglish phrasing |
+| UI composition | json-render `experimental_composeSpec` (0.21.0, pinned) with Laya as evaluator, fine-tuned on synthetic decisions; Gemma as backup evaluator | Laya accuracy after fine-tuning; options budget of about 20 per question |
+| Chest X-ray | MedGemma 1.5 4B, FP8, box ③, on demand | vLLM compatibility; findings against teaching annotations |
+| STT | Qwen3-ASR-1.7B plus Qwen3-ForcedAligner-0.6B, box ② | Manglish error rate, drug names, chunking |
+| Speaker attribution | Nemotron-3-Diarization, merged by word timestamps; Gemma labels doctor or patient | Speaker attribution on real Manglish recordings |
+| Voice output | VoxCPM2 (Apache 2.0, lists Malay and Mandarin) | Real-time speed on L4; code-switched pronunciation |
+| De-identification | OpenMed PII Small before any text reaches Gemma or MedGemma | Coverage of Malaysian identifiers (IC numbers use a rule-based validator) |
+| Drug evidence | A cited table of about 20–30 drugs (openFDA, RxNorm, FUKKM); anything outside it is "not covered" | FUKKM reuse permission |
+| Prescribing simulation | Bounded formulary, indication-specific regimen evidence and explicit prerequisite checks | Regimen completeness and missing-data handling |
+| Motion | Reanimated and Skia where appropriate | Performance on the demo iPhone |
 
-Do not expose model credentials to the phone. Backend handlers enforce patient access and action authorization independent of model output. Model-selected UI actions use the same checks as fixed UI controls. Fine-tuning with Unsloth follows an identified error pattern and an appropriate held-out evaluation, not a quota of models to train.
+Do not expose model credentials to the phone. Backend handlers enforce patient access and action authorization independent of model output. Model-selected UI actions use the same checks as fixed UI controls. Fine-tuning follows a failed baseline and a held-out evaluation. Planned targets are Qwen3-ASR and VoxCPM2, trained on Baseten Training Jobs with fictional data only, plus Laya on free Kaggle GPUs. Gemma (with Unsloth) and Nemotron are trained only if their baselines fail.
 
 ## Prototype limits and evaluation
 
@@ -99,13 +99,13 @@ The published rubric lists technical feasibility 25%, commercial viability 25%, 
 
 Evidence to prepare: a working connected encounter; measured operational results; a clearly identified buyer and pilot workflow; an architecture that can support departmental expansion; and a bounded code-switching demonstration relevant to Malaysian consultations. Proposed commercial model: departmental pilot, followed by per-clinician pricing with usage allowance. Pricing and customer demand are not established.
 
-Baseten Cloud is the accepted prototype deployment. Open weights and a future hybrid option do not establish local inference. Record which data crosses each boundary and describe local/private deployment as a future path unless actually implemented and demonstrated. This is an unresolved track-fit issue, not a reason to silently change the user's platform choice.
+Baseten Cloud (US) carries synthetic data through the competition. For real patient data, production stays in **Malaysia or Singapore** (decided 25 September 2026). It will use Baseten Enterprise Self-hosted or a custom region, or the same Docker images directly on AWS or GCP, with the Agent, database and storage moved into the same region. Describe this as the production path, not as implemented, until it is demonstrated.
 
 ## Deferred work and unresolved decisions
 
-Deferred: real-patient prescription issuance or pharmacy transmission, broad autonomous triage, all-modality imaging, unrestricted drug coverage, full hospital scheduling/billing/inventory/rostering, production EHR integration, multilingual speech generation, manual specialist selection, and automatic outreach to patients or staff.
+Deferred: real-patient prescription issuance or pharmacy transmission, broad autonomous triage, all-modality imaging, unrestricted drug coverage, full hospital scheduling/billing/inventory/rostering, production EHR integration, manual specialist selection, and automatic outreach to patients or staff.
 
-To resolve during review or before dependent work: prescribing simulation's bounded conditions/formulary and regimen evidence; iPhone model/iOS version; available daily development time and actual deadline; drug source access; teaching image permissions; clinical reference selection; semifinal artifact rules; and the local-model narrative. Automatic routing and inclusion of autonomous prescribing are settled. Budget is not an open question.
+To resolve during review or before dependent work: prescribing simulation's bounded conditions/formulary and regimen evidence; FUKKM reuse permission; teaching image permissions; clinical reference selection; semifinal artifact rules; and the Baseten Enterprise quote for the production region. Backend decisions from 25 September are recorded in the [delivery plan](delivery-plan.md). Automatic routing and inclusion of autonomous prescribing are settled. Budget is not an open question.
 
 Figma MCP is unavailable, but the user's supplied PNGs resolve the visual-direction dependency. Exact tokens will be an intentional blue adaptation, not claimed Figma measurements. No additional reference gathering is required to start the UI storyboard.
 
