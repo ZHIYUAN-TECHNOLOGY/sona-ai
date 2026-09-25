@@ -39,7 +39,7 @@ const prompts: Record<Capability, string> = { briefing: "Brief me on this patien
  */
 export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session"; sessionId?: string }) {
   const store = useEncounter();
-  const { patients, encounters, request, cancel, voiceInput, compactResponses, selectPatient, leaveVisit, updateEncounter } = store;
+  const { patients, encounters, request, runInPlace, cancel, voiceInput, compactResponses, selectPatient, leaveVisit, updateEncounter } = store;
   const home = mode === "home";
   // Home ignores any visit another screen left selected; a session only ever shows its own visit.
   // Read straight from the route so the first frame of the push already shows this visit.
@@ -135,16 +135,19 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const perform = (step: Step) => {
     const action = step.action;
     if (!patient || !latest) return;
+    const inCard = latest.kind === "medication" || latest.kind === "prescription";
     if (action.type === "confirm") {
       const entry = (encounter?.medicationEntries ?? defaultMedications(patient)).find(item => item.id === action.entryId);
       if (latest.kind !== "medication" || !entry) { run("medication"); return; }
       updateEncounter(value => ({ ...value, medicationDraft: { ...entry } }));
       jumpToId("medicines");
-    } else if (action.type === "request") run(action.kind);
-    else if (action.type === "inputs") {
-      updateEncounter(value => ({ ...value, prescriptionInputsOpen: Date.now() }));
-      if (latest.kind !== "prescription" || !jumpToId("checks")) run("prescription");
-    } else jumpToId("receipt");
+    } else if (action.type === "request") {
+      // On a medication or prescribing answer the prescribe card runs it in place: no new answer.
+      if (inCard && (action.kind === "medication" || action.kind === "prescription")) { runInPlace(action.kind); jumpToId("prescribing"); }
+      else run(action.kind);
+    } else if (action.type === "inputs") {
+      if (inCard) jumpToId("prescribing"); else run("prescription");
+    } else jumpToId("prescribing");
   };
   const act = (step: Step) => next.open ? next.hide(() => perform(step)) : perform(step);
 

@@ -9,6 +9,7 @@ import type { FeatureProps } from "@/features/encounter/types";
 import { InteractionResults } from "./interaction-results";
 import { Anchor, Takeaways, type Takeaway } from "@/components/sona/answer-kit";
 import { MedicationEditor } from "./medication-editor";
+import { PrescribeCard } from "./prescribe-card";
 import { AlertRow, DisclosureButton, Footnote, StatusLine, TextLink, useLayoutSpring } from "./medication-parts";
 
 /**
@@ -16,11 +17,12 @@ import { AlertRow, DisclosureButton, Footnote, StatusLine, TextLink, useLayoutSp
  * interactions line (detail on demand), then the single feature surface with one primary action.
  * A labelled example of a sourced alert sits behind a small link at the end.
  */
-export function MedicationCard({ patient, onSource, onRequest, onOpen }: FeatureProps) {
+export function MedicationCard({ patient, result, onSource, onRequest, onOpen }: FeatureProps) {
   const [previewAlert, setPreviewAlert] = useState(false);
   const { encounters } = useEncounter();
   const layout = useLayoutSpring();
   const encounter = encounters[patient.id];
+  const live = !result || encounter?.cards.at(-1)?.id === result.id;
   const reviewed = encounter?.medicationCheckedRevision === encounter?.revision && encounter?.medicationCheckedRevision !== undefined;
   const confirmed = Boolean(encounter?.medicationEntries?.length && encounter.medicationEntries.every(entry => entry.confirmed && entry.ingredient.trim() && entry.formulation.trim()));
   const busy = encounter?.requests.some(request => request.status === "streaming") ?? false;
@@ -44,17 +46,14 @@ export function MedicationCard({ patient, onSource, onRequest, onOpen }: Feature
       <InteractionResults patient={patient} onSource={onSource} onRequest={onRequest} />
     </Animated.View></Anchor>
 
-    <Anchor id="prescribing" title="Prescribing" icon="doc.badge.plus" tone="teal"><Surface feature layout={layout} style={{ padding: 18, gap: 12 }}>
-      <StatusLine state={confirmed ? "done" : "blocked"}>{confirmed ? "Identities confirmed for the simulation" : "Unconfirmed identities block the simulation"}</StatusLine>
-      <StatusLine state={reviewing ? "pending" : reviewed ? "done" : "blocked"}>{reviewed ? "Review current for this revision" : "Review not current — run it before simulating"}</StatusLine>
-      <Footnote>No validated interaction database is connected. This fixture can’t clear a medicine or show a combination is safe.</Footnote>
-      <Action label="Run prescribing simulation" icon="doc.badge.plus" disabled={busy} onPress={() => onRequest("prescription")} />
+    <Anchor id="prescribing" title="Prescribing" icon="doc.badge.plus" tone="teal"><Animated.View layout={layout} style={{ gap: 10 }}>
+      {/* The latest answer carries the live prescribe card; earlier ones keep a one-line summary. */}
+      {live ? <PrescribeCard patient={patient} /> : <StatusLine state={confirmed ? "done" : "blocked"}>{confirmed ? "Identities confirmed for the simulation" : "Unconfirmed identities block the simulation"}</StatusLine>}
       <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: 20 }}>
-        <TextLink label={reviewed ? "Review again" : "Run review"} disabled={busy} onPress={() => onRequest("medication")} />
         <TextLink label="Open note" onPress={() => onOpen("note")} />
         <SourceRef label="Coverage & limits" kind="fixture" onPress={() => onSource("medication")} />
       </View>
-    </Surface></Anchor>
+    </Animated.View></Anchor>
 
     {patient.sources.some(source => source.id === "beta-reference") && <Animated.View layout={layout} style={{ gap: 4 }}>
       <DisclosureButton label="See an example" accessibilityLabel="See an example of a sourced interaction alert" open={previewAlert} onToggle={() => setPreviewAlert(current => !current)} />

@@ -22,8 +22,8 @@ export function nextSteps(kind: Capability, encounter: Encounter | undefined, pa
       id: `confirm-${entry.id}`, label: `Confirm ${entry.name.split(",")[0]}`, detail: [entry.ingredient, entry.formulation].filter(Boolean).join(" · ") || "Identity unknown",
       done: entry.confirmed, action: { label: "Confirm", type: "confirm", entryId: entry.id } as StepAction,
     })),
-    { id: "review", label: "Run medication review", detail: "Checks interactions for this revision", done: encounter.medicationCheckedRevision === encounter.revision, action: { label: "Run", type: "request", kind: "medication" } },
     { id: "eligibility", label: "Record eligibility", detail: "Weight, allergy, liver, kidney and alcohol history", done: checks.filter(check => ELIGIBILITY.has(check.id)).every(check => check.status === "passed"), action: { label: "Record", type: "inputs" } },
+    { id: "review", label: "Run medication review", detail: "Checks interactions for this revision", done: encounter.medicationCheckedRevision === encounter.revision, action: { label: "Run", type: "request", kind: "medication" } },
     { id: "simulate", label: "Run prescribing simulation", detail: "Creates a receipt only if every check passes", done: created, action: created ? { label: "View", type: "receipt" } : { label: "Run", type: "request", kind: "prescription" } },
   ];
 }

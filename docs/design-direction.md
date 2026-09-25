@@ -169,6 +169,12 @@ Takeaway text is authored for the fixtures; generated responses should emit take
 - Home: Patients (next visit), Results (new, red when urgent), Hand over (patients to hand over), Tasks (open count), under the date line. After District's category grid that morphs into tabs, the shelf flattens into a slim frosted glass capsule of glyphs and counts under the top bar once it scrolls away (fades and settles in over 40 pt of scroll, driven on the UI thread).
 - Inside a visit and in the patient sheet: Brief me (new result to review / history incomplete), Consultation (recording now / lines captured), Medicines (N unconfirmed), X-ray (image attached / film on file); the duplicate "You might want to ask" suggestions on the visit start are gone.
 
+## One-card prescribing (2026-09-26)
+
+- Prescribing is one card on the latest medication or prescribing answer; nothing navigates and no new answers stream in during the flow. A progress ring and the regimen sit at the top; below it only the checks that still block, each fixable where it sits: weight as a number field, paracetamol allergy, liver, kidney and alcohol as No/Yes pills, and the medication review as an inline Run (it goes last, so it runs once after the other answers). Passed checks fold into "N checks passed ›".
+- A resolved blocker follows Particle News' step check: its number badge crossfades into a teal check with a small spring (0.36 s, damping 0.6), a line draws through the label (0.26 s) and the text greys, then the row folds away. The ring fills and "N left" counts down. The button morphs from a disabled "Resolve N to prescribe" to "Prescribe paracetamol", shows "Checking all 11…", and the receipt stamps in the same card.
+- If an edit invalidates an earlier review, the row says "Needs rerun · eligibility or medicines changed since the last review" and its chip reads "Rerun review". The Next-step bar runs the review and the simulation in place too. Earlier answers keep a one-line summary.
+
 ## Typography and AI text (2026-09-24)
 
 - **Type scale** (`type` in `components/sona/theme.ts`, iOS-sized, named by use): display 27/35, title 22/31, heading 19/25, headline 17/23, body 16/24, callout 15/21, subhead 14/20, footnote 13/18, caption 12/16, overline 11/14 uppercase +0.8 tracking. Headings track slightly negative; body text sits near 1.5; nothing thinner than 400 below 18 pt except display numerals (timers, clocks). One-off sizes were folded onto the scale. The shared `Text` uses iOS "push-out" line breaking so a lone word doesn't strand on the last line.

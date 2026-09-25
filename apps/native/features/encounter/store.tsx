@@ -9,6 +9,7 @@ type Store = {
   startAmendment: (reason: string) => void;
   selectPatient: (id: string) => void; leaveVisit: () => void; request: (kind: Capability, prompt?: string) => void; cancel: () => void;
   updateEncounter: (update: (current: Encounter) => Encounter, revise?: boolean) => void;
+  runInPlace: (kind: "medication" | "prescription") => void;
   voiceInput: boolean; setVoiceInput: (value: boolean) => void; compactResponses: boolean; setCompactResponses: (value: boolean) => void; simulateInvalid: boolean; setSimulateInvalid: (value: boolean) => void;
   simulateFailure: boolean; setSimulateFailure: (enabled: boolean) => void; showDemoControls: boolean; setShowDemoControls: (value: boolean) => void; reset: () => void;
 };
@@ -79,6 +80,19 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
       });
     }, kind === "prescription" ? 1800 : 1150));
   }, [clearTimers, simulateFailure, simulateInvalid]);
+  // The prescribe card runs the review and the simulation where they are, without adding answers.
+  const runInPlace = useCallback((kind: "medication" | "prescription") => {
+    const id = activeRef.current; const base = patients.find(p => p.id === id); const patient = base ? effectivePatient(base, stateRef.current[base.id]) : undefined;
+    if (!id || !patient) return;
+    const revision = stateRef.current[id]!.revision;
+    setEncounters(prev => ({ ...prev, [id]: { ...prev[id]!, working: kind } }));
+    timers.current.push(setTimeout(() => setEncounters(prev => {
+      let current: Encounter = { ...prev[id]!, working: undefined };
+      if (current.revision !== revision) return { ...prev, [id]: current };
+      current = kind === "medication" ? { ...current, medicationCheckedRevision: revision, reviewInvalidated: false } : issueSimulation(current, patient, `simulation-${id}-${revision}-${Date.now()}`);
+      return { ...prev, [id]: current };
+    }), kind === "prescription" ? 1500 : 900));
+  }, []);
   const startAmendment = useCallback((reason: string) => {
     const id = activeRef.current; if (!id) return;
     const operationId = `amendment-${id}-${Date.now()}`;
@@ -93,6 +107,6 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
   const reset = useCallback(() => { cancel(); setEncounters(initialEncounters()); setPatientId(undefined); activeRef.current = undefined; setSimulateFailure(false); setSimulateInvalid(false); }, [cancel]);
   const currentPatients = patients.map(p => effectivePatient(p, encounters[p.id]));
   const patient = currentPatients.find(p => p.id === patientId);
-  return <Context value={{ patient, patients: currentPatients, encounters, encounter: patientId ? encounters[patientId] : undefined, selectPatient, leaveVisit, request, cancel, startAmendment, updateEncounter, voiceInput, setVoiceInput, compactResponses, setCompactResponses, simulateInvalid, setSimulateInvalid, simulateFailure, setSimulateFailure, showDemoControls, setShowDemoControls, reset }}>{children}</Context>;
+  return <Context value={{ patient, patients: currentPatients, encounters, encounter: patientId ? encounters[patientId] : undefined, selectPatient, leaveVisit, request, cancel, startAmendment, updateEncounter, runInPlace, voiceInput, setVoiceInput, compactResponses, setCompactResponses, simulateInvalid, setSimulateInvalid, simulateFailure, setSimulateFailure, showDemoControls, setShowDemoControls, reset }}>{children}</Context>;
 }
 export function useEncounter() { const value = use(Context); if (!value) throw new Error("EncounterProvider is required"); return value; }

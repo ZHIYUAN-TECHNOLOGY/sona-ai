@@ -36,7 +36,7 @@ export function finishRequest(encounter: Encounter, id: string, status: RequestS
   return { ...encounter, requests: encounter.requests.map(item => item.id === id && item.status === "streaming" ? { ...item, status, error } : item) };
 }
 export function reviseEncounter(encounter: Encounter): Encounter {
-  return { ...encounter, revision: encounter.revision + 1, medicationCheckedRevision: undefined, amendmentOperation: encounter.amendmentOperation && !["complete", "failed", "cancelled"].includes(encounter.amendmentOperation.phase) ? { ...encounter.amendmentOperation, phase: "cancelled", error: "Clinical context changed. The prior receipt is unchanged; rerun the amendment." } : encounter.amendmentOperation, requests: encounter.requests.map(item => item.status === "streaming" ? { ...item, status: "cancelled" } : item) };
+  return { ...encounter, revision: encounter.revision + 1, medicationCheckedRevision: undefined, reviewInvalidated: encounter.medicationCheckedRevision !== undefined || encounter.reviewInvalidated, amendmentOperation: encounter.amendmentOperation && !["complete", "failed", "cancelled"].includes(encounter.amendmentOperation.phase) ? { ...encounter.amendmentOperation, phase: "cancelled", error: "Clinical context changed. The prior receipt is unchanged; rerun the amendment." } : encounter.amendmentOperation, requests: encounter.requests.map(item => item.status === "streaming" ? { ...item, status: "cancelled" } : item) };
 }
 export function issueSimulation(encounter: Encounter, patient: Patient, operationId: string): Encounter {
   if (encounter.prescription?.id === operationId && encounter.prescription.status === "created") return encounter;

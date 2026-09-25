@@ -21,7 +21,11 @@ export type RequestState = { id: string; kind: Capability; prompt: string; patie
 export type Encounter = {
   revision: number; historyFacts?: HistoryFact[]; historyDraft?: Omit<HistoryFact, "id" | "revision">;
   medicationEntries?: MedicationEntry[]; medicationDraft?: MedicationEntry; proposedMedicine?: string; proposedMedicineDraft?: string;
-  prescriptionInputs?: PrescriptionInputs; prescriptionInputsOpen?: number; prescriptionScenario?: "standard" | "unknown-coverage" | "unsupported" | "failed-prerequisite" | "creation-failure"; prescriptionAmendment?: string;
+  prescriptionInputs?: PrescriptionInputs; prescriptionInputsOpen?: number;
+  /** A review or simulation running in place inside the prescribe card (no new answer). */
+  working?: "medication" | "prescription";
+  /** A review existed but a later edit invalidated it (so the card can say "rerun", not "run"). */
+  reviewInvalidated?: boolean; prescriptionScenario?: "standard" | "unknown-coverage" | "unsupported" | "failed-prerequisite" | "creation-failure"; prescriptionAmendment?: string;
   amendmentOperation?: { id: string; revision: number; phase: "queued-review" | "reviewing" | "queued-issue" | "issuing" | "complete" | "failed" | "cancelled"; requestId?: string; error?: string };
   noteSections?: NoteSections; noteSectionDraft?: NoteSections; noteSaveStatus?: "idle" | "saving" | "saved" | "failed";
   imagingScenario?: "reference" | "unsupported" | "no-finding";

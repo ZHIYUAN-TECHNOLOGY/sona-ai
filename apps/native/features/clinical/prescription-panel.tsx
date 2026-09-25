@@ -12,6 +12,7 @@ import { getPrescriptionChecks, simulatedRegimen } from "@/features/encounter/cl
 import { useEncounter } from "@/features/encounter/store";
 import type { Encounter, FeatureProps, PrescriptionCheck, PrescriptionInputs, Regimen } from "@/features/encounter/types";
 import { ClinicalChoice, ClinicalField } from "./controls";
+import { PrescribeCard } from "./prescribe-card";
 import { Detail, DisclosureButton, Footnote, FormReveal, Hairline, Mark, Perforation, Seal, StatusLine, TextLink, haptic, useLayoutSpring } from "./medication-parts";
 
 const emptyInputs: PrescriptionInputs = { weightKg: "", liverDisease: "unknown", kidneyDisease: "unknown", alcoholRisk: "unknown", paracetamolAllergy: "unknown" };
@@ -70,7 +71,9 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
   const reduced = useReduceMotionPreference();
   const layout = useLayoutSpring();
   const encounter = encounters[patient.id];
-  const prescription = result ? result.prescription : encounter?.prescription;
+  // The latest answer is live: it follows the encounter as the card runs checks in place.
+  const live = !result || encounter?.cards.at(-1)?.id === result.id;
+  const prescription = live ? encounter?.prescription : result?.prescription;
   const [showInputs, setShowInputs] = useState(false);
   // The "Next step" bar asks for the eligibility form by stamping the encounter.
   const inputsOpen = encounter?.prescriptionInputsOpen;
@@ -129,6 +132,7 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
 
   return <LayoutAnimationConfig skipEntering>
     <View style={{ gap: 28 }}>
+      {live ? <Anchor id="prescribing" title="Prescribe"><PrescribeCard patient={activePatient?.id === patient.id ? activePatient : patient} /></Anchor> : <>
       <Anchor id="result" title="Result"><Animated.View layout={layout}>
         <Section icon="cross.case" tone="blue" title={title} subtitle={subtitle}>
           {stale && <Notice warning>Receipt revision {prescription.revision} is retained unchanged. The current encounter is revision {encounter?.revision}.</Notice>}
@@ -167,6 +171,7 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
           </Surface>
         </Section>
       </Animated.View></Anchor>
+      </>}
 
       {created && prescription && <Anchor id="receipt" title="Receipt"><Animated.View layout={layout} entering={fresh && !reduced ? riseIn({ delay: riseDelay, distance: 16, duration: 380 }) : undefined}>
         <Section icon="checkmark.seal" tone="teal" title="Immutable receipt" subtitle="This version never changes; an amendment adds a new one.">
