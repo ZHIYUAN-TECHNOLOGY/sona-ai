@@ -10,6 +10,7 @@ import { palette, type } from "@/components/sona/theme";
 import { Icon, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
+import { openItems, shortRM, totalRisk, useSent } from "@/features/audit/model";
 import { OWNERS, SUGGESTED, huddle, wardBeds, wardSummary, type Bed, type Owner } from "./model";
 
 /*
@@ -64,6 +65,7 @@ export function WardScreen() {
 
   const gridStyle = useAnimatedStyle(() => ({ opacity: interpolate(p.value, [0, 1], [1, 0.2]), transform: [{ scale: interpolate(p.value, [0, 1], [1, 0.97]) }] }));
   const lines = huddle(beds, owners);
+  const audit = openItems(encounters, useSent());
   const current = open && beds.find(b => b.bed === open.bed);
 
   return <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas }}>
@@ -94,6 +96,19 @@ export function WardScreen() {
             <Text selectable style={{ ...type.subhead, flex: 1, color: palette.ink }}>{line}</Text>
           </Animated.View>)}
         </Surface>
+
+        {/* Coding audit: the notes whose vague wording puts money at risk, one tap from the ward. */}
+        <Pressable accessibilityRole="button" accessibilityLabel={`Coding audit, ${audit.length} notes, ${shortRM(totalRisk(audit))} at risk`} onPress={() => router.push("/audit")}
+          style={({ pressed }) => ({ ...surfaceStyle, padding: 14, flexDirection: "row", alignItems: "center", gap: 12, transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+          <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: audit.length ? "rgba(196,120,20,0.12)" : "rgba(15,110,102,0.1)" }}>
+            <Icon name="doc.text.magnifyingglass" size={15} color={audit.length ? palette.amber : TEAL} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>Coding audit</Text>
+            <Text style={{ ...type.caption, color: audit.length ? palette.amber : TEAL }}>{audit.length ? `${audit.length} notes · ${shortRM(totalRisk(audit))} at risk` : "All queries sent"}</Text>
+          </View>
+          <Icon name="chevron.right" size={12} color={palette.muted} />
+        </Pressable>
 
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
           {beds.map(bed => <Pressable key={bed.bed} ref={v => { tiles.current[bed.bed] = v; }} collapsable={false} accessibilityRole="button"
