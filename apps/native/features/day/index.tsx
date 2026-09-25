@@ -47,7 +47,12 @@ function Sorting() {
  * nearest visit or back on now (spring 0.6 s, damping 0.85) with one haptic. Tap a pin to open it.
  */
 const PX = 5; // points per minute: 30 minutes = 150 pt, room for a name pin
-const PIN_MINUTES = 28; // a pin is about this many minutes wide; closer visits share one pin
+// A pin's width in minutes: avatars, label and padding at 13 pt (~7 pt a character), plus a gap.
+const pinMinutes = (group: { p: Patient }[]) => {
+  const avatars = 30 + (Math.min(group.length, 3) - 1 + (group.length > 3 ? 1 : 0)) * 20;
+  const label = group.length === 1 ? group[0]!.p.name.split(" ")[0]!.length + 8 : 18 + (new Set(group.map(v => v.p.time)).size > 1 ? 6 : 0);
+  return (avatars + label * 7 + 30) / PX;
+};
 const TONE_PIN = { done: { fill: "rgba(36,91,204,0.14)", ink: palette.blue }, open: { fill: "rgba(196,120,20,0.16)", ink: palette.amber } };
 function TimeBar({ patients, now, onOpen }: { patients: Patient[]; now: number; onOpen: (patientId: string) => void }) {
   const { width } = useWindowDimensions();
@@ -58,7 +63,7 @@ function TimeBar({ patients, now, onOpen }: { patients: Patient[]; now: number; 
   const visits = patients.map(p => { const [h, m] = p.time.split(":").map(Number); return { p, at: h! * 60 + m! }; }).sort((a, b) => a.at - b.at);
   // Anchors put a time 15% across the ruler, so now and the next visits fit; the view starts on now.
   const anchor = (m: number) => view * 0.15 - xOf(m);
-  const stops = [anchor(now), ...groupVisits(visits, PIN_MINUTES).map(g => anchor(g[0]!.at))];
+  const stops = [anchor(now), ...groupVisits(visits, pinMinutes).map(g => anchor(g[0]!.at))];
   const min = view - xOf(to), max = 0;
   const x = useSharedValue(anchor(now)), start = useSharedValue(0);
   const tick = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); };
@@ -87,7 +92,7 @@ function TimeBar({ patients, now, onOpen }: { patients: Patient[]; now: number; 
           <View style={{ paddingHorizontal: 7, height: 20, borderRadius: 10, justifyContent: "center", backgroundColor: palette.red }}><Text style={{ fontSize: 10, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{clock(now)}</Text></View>
           <View style={{ width: 2, height: 70, backgroundColor: palette.red, opacity: 0.7 }} />
         </View>
-        {groupVisits(visits, PIN_MINUTES).map(group => { const first = group[0]!; const incomplete = group.some(v => v.p.incomplete); const tone = TONE_PIN[incomplete ? "open" : "done"];
+        {groupVisits(visits, pinMinutes).map(group => { const first = group[0]!; const incomplete = group.some(v => v.p.incomplete); const tone = TONE_PIN[incomplete ? "open" : "done"];
           const single = group.length === 1;
           const label = single ? `${first.p.name}, ${first.p.time}, ${first.p.subtitle}` : `${group.length} patients from ${first.p.time}: ${group.map(v => v.p.name).join(", ")}`;
           return <Pressable key={first.p.id} accessibilityRole="button" accessibilityLabel={label} accessibilityHint={single ? "Opens the visit" : "Lists these patients"} hitSlop={6}

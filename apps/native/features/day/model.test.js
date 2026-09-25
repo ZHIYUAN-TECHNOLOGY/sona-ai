@@ -23,7 +23,10 @@ test("a reviewed result drops out; confirmed medicines clear the blocker", () =>
 
 test("visits that would overlap share one pin; spaced visits stay apart", () => {
   const { groupVisits } = require("./model");
-  const groups = groupVisits([{ at: 840 }, { at: 840 }, { at: 850 }, { at: 900 }, { at: 905 }], 28);
+  const span = group => (group.length > 1 ? 40 : 28);
+  const groups = groupVisits([{ at: 840 }, { at: 840 }, { at: 850 }, { at: 900 }, { at: 905 }], span);
   expect(groups.map(g => g.length)).toEqual([3, 2]);
-  expect(groupVisits([{ at: 600 }, { at: 630 }], 28).length).toBe(2);
+  expect(groupVisits([{ at: 600 }, { at: 630 }], span).length).toBe(2);
+  // A wide group pin absorbs a visit that a single pin would not.
+  expect(groupVisits([{ at: 600 }, { at: 600 }, { at: 635 }], span).length).toBe(1);
 });

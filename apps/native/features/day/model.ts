@@ -56,13 +56,14 @@ export function rankDay(patients: Patient[], encounters: Record<string, Encounte
 
 /**
  * Visits whose pins would overlap on the ruler share one pin. A visit joins the current group when
- * it starts within `gap` minutes of that group's first visit (pins are about `gap` minutes wide).
+ * it starts before that group's pin ends; `span` gives a group's pin width in minutes (it grows
+ * with the group, so a wide "4 patients" pin also absorbs a visit a little later).
  */
-export function groupVisits<T extends { at: number }>(visits: T[], gap: number): T[][] {
+export function groupVisits<T extends { at: number }>(visits: T[], span: (group: T[]) => number): T[][] {
   const groups: T[][] = [];
   for (const visit of [...visits].sort((a, b) => a.at - b.at)) {
     const last = groups.at(-1);
-    if (last && visit.at - last[0]!.at < gap) last.push(visit); else groups.push([visit]);
+    if (last && visit.at < last[0]!.at + span(last)) last.push(visit); else groups.push([visit]);
   }
   return groups;
 }
