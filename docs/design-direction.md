@@ -163,6 +163,12 @@ Takeaway text is authored for the fixtures; generated responses should emit take
 - The patient picker lists one compact row per patient (avatar, name, status dot and reason, time). Tapping a row slides up a patient sheet over the dimmed list (after Must's leaderboard profile sheet: spring 0.42 s, damping 0.82; sections rise in 60 ms apart; drag past 120 pt or flick to dismiss).
 - The sheet is built for a decision in one glance: who and when ("Starts in 44 min"), **Needs attention** chips derived from state (pending result, allergy to confirm, unconfirmed medicines, missing history), each opening the visit on the answer that resolves it, the reason for the visit with observations, and actions: Open visit, Brief me, Consultation, Medicines, Hand over. The previous "Patient details" / "Open encounter" buttons are gone.
 
+## Quick actions (2026-09-25)
+
+- One shared component (`components/sona/quick-actions.tsx`): tiles with an icon, a label and a **live status**, so each tile answers "does this need me?" before it is tapped. Urgent tiles are red, caution amber, with a count badge. Re-rank is removed.
+- Home: Patients (next visit), Results (new, red when urgent), Hand over (patients to hand over), Tasks (open count), under the date line. After District's category grid that morphs into tabs, the grid collapses into a compact sticky row under the top bar once it scrolls away (fades and settles in over 40 pt of scroll, driven on the UI thread).
+- Inside a visit and in the patient sheet: Brief me (new result to review / history incomplete), Consultation (recording now / lines captured), Medicines (N unconfirmed), X-ray (image attached / film on file); the duplicate "You might want to ask" suggestions on the visit start are gone.
+
 ## Typography and AI text (2026-09-24)
 
 - **Type scale** (`type` in `components/sona/theme.ts`, iOS-sized, named by use): display 27/35, title 22/31, heading 19/25, headline 17/23, body 16/24, callout 15/21, subhead 14/20, footnote 13/18, caption 12/16, overline 11/14 uppercase +0.8 tracking. Headings track slightly negative; body text sits near 1.5; nothing thinner than 400 below 18 pt except display numerals (timers, clocks). One-off sizes were folded onto the scale. The shared `Text` uses iOS "push-out" line breaking so a lone word doesn't strand on the last line.

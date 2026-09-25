@@ -15,6 +15,8 @@ import { openSession } from "./navigation";
 import { useEncounter } from "./store";
 import type { Capability, FeatureProps, FocusView } from "./types";
 import { VoiceDock } from "./voice-dock";
+import { QuickRow } from "@/components/sona/quick-actions";
+import { homeActions } from "./quick-actions";
 import { defaultMedications } from "./clinical-state";
 import { nextSteps, type Step } from "./next-steps";
 import { NextStepBar, NextStepSheet, useNextStep } from "./next-step";
@@ -67,6 +69,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   // Attachments picked in the dock wait here and go out with the next question.
   const [pending, setPending] = useState<Attachment[]>([]);
   const [scrolled, setScrolled] = useState(false);
+  // Home: the quick-action grid collapses into a sticky row once it scrolls under the top bar.
+  const scrollSV = useSharedValue(0);
   // Sidebar: the page slides right to reveal it. A finger drives it, so springs carry velocity.
   const { reducedMotion } = useAccessibleEffects();
   const [drawer, setDrawer] = useState(false);
@@ -187,7 +191,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     <View ref={backdrop} collapsable={false} accessibilityElementsHidden={drawer} importantForAccessibility={drawer ? "no-hide-descendants" : "auto"} style={{ flex: 1, backgroundColor: palette.canvas }}>
     <AmbientWash quiet={requests.length > 0} thinking={Boolean(thinking)} />
     <ScrollView ref={scroll} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentInsetAdjustmentBehavior="never" scrollEventThrottle={48}
-      onScroll={event => { scrollY.current = event.nativeEvent.contentOffset.y; const next = scrollY.current > 8; if (next !== scrolled) setScrolled(next); }}
+      onScroll={event => { scrollY.current = event.nativeEvent.contentOffset.y; scrollSV.set(scrollY.current); const next = scrollY.current > 8; if (next !== scrolled) setScrolled(next); }}
       onScrollEndDrag={syncTab} onMomentumScrollEnd={syncTab}
       contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + (!home && sections.length >= 2 ? 112 : 72), paddingBottom: insets.bottom + 150 + (steps ? 66 : 0), flexGrow: 1 }}>
       {!requests.length ? <Home patient={patient} patients={patients} onPick={pick} onChoosePatient={() => router.push("/patients")} onSelectPatient={id => openSession(id)} />
@@ -225,6 +229,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     {!home && sections.length >= 2 && !active && <View pointerEvents="box-none" style={{ position: "absolute", top: TAB_TOP, left: 0, right: 0, alignItems: "center", zIndex: 2 }}>
       <SectionTabs sections={sections} active={Math.min(activeTab, sections.length - 1)} onPick={jumpTo} />
     </View>}
+    {home && !requests.length && <QuickRow actions={homeActions(patients, encounters)} scroll={scrollSV} from={210} top={insets.top + 62} />}
     <TopBar patient={patient} inEncounter={!home} openTasks={(patient ? [encounter] : Object.values(encounters)).reduce((sum, value) => sum + (value?.tasks.filter(task => !task.completed).length ?? 0), 0)} faded={scrolled || requests.length > 0} onMenu={openDrawer} onBack={home ? undefined : () => router.canGoBack() ? router.back() : router.replace("/")} onPatient={() => router.push({ pathname: "/patients", params: { switch: "1" } })} onTasks={() => router.push("/tasks")} />
     </View>
 

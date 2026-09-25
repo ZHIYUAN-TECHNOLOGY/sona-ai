@@ -1,6 +1,8 @@
 import { router } from "expo-router";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { MyDay } from "@/features/day";
+import { QuickActions } from "@/components/sona/quick-actions";
+import { homeActions, visitActions } from "./quick-actions";
 import { openSession } from "./navigation";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -152,13 +154,14 @@ function greeting() { const hour = new Date().getHours(); return hour < 12 ? "Go
 /** Idle canvas: one greeting, one line of context, a couple of starting points. */
 export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatient }: { patient?: Patient; patients: Patient[]; onPick: (item: Suggestion) => void; onChoosePatient: () => void; onSelectPatient: (id: string) => void }) {
   const { reducedMotion } = useAccessibleEffects();
+  const { encounters } = useEncounter();
   const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 80 + i * 70, distance: 14, duration: 460 });
   const lead = { ...type.display, color: palette.ink } as const;
   // Reading order top-down: greeting under the top bar, then the next section at a fixed rhythm.
   // Nothing is centred or pinned to the bottom, so the gap never stretches with screen height.
   // Without a visit, the greeting and the ranked day are one section: MyDay owns the header.
   if (!patient) return <View style={{ paddingTop: 20 }}><MyDay patients={patients} greeting={greeting().replace(/\.$/, "")} onOpen={(id, open) => openSession(id, open)}
-    actions={<><Pill label="All patients" onPress={onChoosePatient} /><Pill label="Hand over shift" onPress={() => router.push("/handover")} /></>} /></View>;
+    actions={<QuickActions actions={homeActions(patients, encounters)} />} /></View>;
   return <View style={{ gap: 44, paddingTop: 20 }}>
     <View style={{ gap: 18 }}>
       <Animated.View entering={rise(0)}><Text accessibilityRole="header" style={lead}>{greeting()}</Text></Animated.View>
@@ -168,14 +171,9 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
         </Text> : null}
       </Animated.View>
       <Animated.View entering={rise(2)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {patient ? <><Pill label="Brief me" emoji="🩺" onPress={() => onPick(suggestionFor("briefing", patient))} /><Pill label="Start consultation" emoji="🎙️" onPress={() => onPick(suggestionFor("recording", patient))} /></>
-          : null}
+        {patient ? <QuickActions actions={visitActions(patient, encounters[patient.id], kind => onPick(suggestionFor(kind, patient)))} /> : null}
       </Animated.View>
     </View>
-    <Animated.View entering={rise(3)} style={{ gap: 12 }}>
-      <Text accessibilityRole="header" style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>You might want to ask</Text>
-      <SuggestionList items={(["briefing", "xray", "medication"] as const).map(kind => suggestionFor(kind, patient))} onPick={onPick} />
-    </Animated.View>
   </View>;
 }
 

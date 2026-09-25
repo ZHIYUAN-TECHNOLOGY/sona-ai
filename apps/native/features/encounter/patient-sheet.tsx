@@ -12,6 +12,8 @@ import { palette, type } from "@/components/sona/theme";
 import { Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { PENDING_RESULT } from "@/features/day/model";
 import { defaultMedications } from "./clinical-state";
+import { QuickActions } from "@/components/sona/quick-actions";
+import { visitActions } from "./quick-actions";
 import { useEncounter } from "./store";
 import type { Patient } from "./types";
 
@@ -57,10 +59,6 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
   const sheet = useAnimatedStyle(() => ({ transform: [{ translateY: y.value + drag.value }] }));
   const dim = useAnimatedStyle(() => ({ opacity: Math.max(0, 1 - (y.value + drag.value) / height) }));
   const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 140 + i * 60, distance: 25 + i * 5, duration: 420 });
-  const action = (label: string, icon: string, target: Go) => <Pressable key={label} accessibilityRole="button" accessibilityLabel={label} onPress={() => go(target)}
-    style={({ pressed }) => ({ flex: 1, minHeight: 72, borderRadius: 18, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.05)", alignItems: "center", justifyContent: "center", gap: 6, opacity: pressed ? 0.7 : 1 })}>
-    <Icon name={icon} size={18} color={palette.ink} /><Text style={{ ...type.caption, fontWeight: "600", color: palette.ink, textAlign: "center" }}>{label}</Text>
-  </Pressable>;
 
   // The sheet stops below the list header so its back button never shows through.
   return <View style={StyleSheet.absoluteFill} onLayout={e => setBox(e.nativeEvent.layout.height)}>
@@ -116,12 +114,8 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
               style={({ pressed }) => ({ height: 54, borderRadius: 27, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
               <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>{started ? "Continue visit" : "Open visit"}</Text><Icon name="arrow.right" size={13} color={palette.white} />
             </Pressable>
-            <View style={{ flexDirection: "row", gap: 8 }}>
-              {action("Brief me", "text.alignleft", { next: "briefing" })}
-              {action("Consultation", "waveform", { view: "recording" })}
-              {action("Medicines", "pills", { next: "medication" })}
-              {action("Hand over", "arrow.left.arrow.right", { to: "/handover" })}
-            </View>
+            <QuickActions animate={false} actions={[...visitActions(patient, encounter, kind => go(kind === "recording" ? { view: "recording" } : { next: kind })).slice(0, 3),
+              { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: flags.length ? `${flags.length} open items travel with them` : "Nothing open", onPress: () => go({ to: "/handover" }) }]} />
             <Pressable accessibilityRole="link" onPress={() => { onClose(); router.push({ pathname: "/source", params: { id: "history", patientId: patient.id } }); }} hitSlop={8} style={{ alignSelf: "center", minHeight: 36, justifyContent: "center" }}>
               <Text style={{ ...type.footnote, color: palette.blue }}>Full history & sources</Text>
             </Pressable>

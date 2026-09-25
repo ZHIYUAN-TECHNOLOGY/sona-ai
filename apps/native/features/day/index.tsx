@@ -158,22 +158,6 @@ function Row({ item, first, index, animate, pinned, onOpen, onPin, onSnooze }: {
   </Animated.View>;
 }
 
-/** Re-rank: a filled blue button whose sparkle turns while the day is sorted. */
-function Rerank({ sorting, onPress }: { sorting: boolean; onPress: () => void }) {
-  const { reducedMotion } = useAccessibleEffects();
-  const spin = useSharedValue(0);
-  useEffect(() => {
-    if (sorting && !reducedMotion) spin.set(withRepeat(withTiming(1, { duration: 900, easing: Easing.linear }), -1, false));
-    else { spin.set(withTiming(0, { duration: 200 })); }
-  }, [sorting, reducedMotion, spin]);
-  const sparkle = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.value * 360}deg` }] }));
-  return <Pressable accessibilityRole="button" accessibilityLabel={sorting ? "Sorting your day" : "Re-rank my day"} accessibilityState={{ busy: sorting }} onPress={onPress} disabled={sorting} hitSlop={6}
-    style={({ pressed }) => ({ minHeight: 38, flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 15, borderRadius: 19, backgroundColor: palette.blue, boxShadow: "0 4px 12px rgba(36,91,204,0.28)", transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-    <Animated.View style={sparkle}><Icon name="sparkles" size={13} color={palette.white} /></Animated.View>
-    <Text style={{ fontSize: 14, fontWeight: "600", color: palette.white }}>{sorting ? "Sorting…" : "Re-rank"}</Text>
-  </Pressable>;
-}
-
 /*
  * Day picker (after Days' calendar top modal): tapping the date line springs this card down from
  * it, scaling up from its top-left anchor (spring 0.45 s, damping 0.72) while its weeks rise in
@@ -232,7 +216,6 @@ export function MyDay({ patients, greeting, actions, onOpen: open }: { patients:
   const [animate, setAnimate] = useState(!sortedOnce && !reducedMotion);
   const [run, setRun] = useState(0);
   useEffect(() => { sortedOnce = true; if (!sorting) return; const timer = setTimeout(() => setSorting(false), run ? 1100 : 1700); return () => clearTimeout(timer); }, [sorting, run]);
-  const rerank = () => { haptic(); setAnimate(!reducedMotion); setSorting(!reducedMotion); setRun(value => value + 1); };
   const [pins, setPins] = useState<string[]>([]);
   const [snoozed, setSnoozed] = useState<string[]>([]);
   const [showSnoozed, setShowSnoozed] = useState(false);
@@ -265,9 +248,9 @@ export function MyDay({ patients, greeting, actions, onOpen: open }: { patients:
         {offset !== 0 ? <Pressable accessibilityRole="button" accessibilityLabel="Back to today" onPress={() => pick(0)} hitSlop={8}
           style={{ minHeight: 38, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, borderRadius: 19, backgroundColor: palette.blueWash, marginTop: 4 }}>
           <Icon name="arrow.uturn.backward" size={12} color={palette.blue} /><Text style={{ fontSize: 14, fontWeight: "600", color: palette.blue }}>Today</Text>
-        </Pressable> : <View style={{ marginTop: 4 }}><Rerank sorting={sorting} onPress={rerank} /></View>}
+        </Pressable> : null}
       </View>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>{actions}</View>
+      {offset === 0 && actions}
       {calendar && <MonthCard offset={offset} counts={o => scheduleFor(o, patients).length} onPick={o => { setCalendar(false); pick(o); }} onClose={() => setCalendar(false)} />}
     </View>
     <TimeBar key={offset} schedule={schedule} now={offset === 0 ? now : undefined} onOpen={id => onOpen(id, {})} />
