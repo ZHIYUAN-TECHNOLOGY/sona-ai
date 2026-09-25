@@ -228,7 +228,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     <TopBar patient={patient} inEncounter={!home} openTasks={(patient ? [encounter] : Object.values(encounters)).reduce((sum, value) => sum + (value?.tasks.filter(task => !task.completed).length ?? 0), 0)} faded={scrolled || requests.length > 0} onMenu={openDrawer} onBack={home ? undefined : () => router.canGoBack() ? router.back() : router.replace("/")} onPatient={() => router.push({ pathname: "/patients", params: { switch: "1" } })} onTasks={() => router.push("/tasks")} />
     </View>
 
-    {requests.length > 0 && <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: insets.bottom + 120 }} />}
+    {/* Everything under the dock blurs progressively, on home and in visits alike. */}
+    <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: insets.bottom + 150 }} />
     <VoiceDock
       backdrop={backdrop}
       quiet={Boolean(steps)}
