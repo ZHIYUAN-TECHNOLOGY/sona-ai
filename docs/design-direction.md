@@ -165,8 +165,8 @@ Takeaway text is authored for the fixtures; generated responses should emit take
 
 ## Quick actions (2026-09-25)
 
-- One shared component (`components/sona/quick-actions.tsx`): tiles with an icon, a label and a **live status**, so each tile answers "does this need me?" before it is tapped. Urgent tiles are red, caution amber, with a count badge. Re-rank is removed.
-- Home: Patients (next visit), Results (new, red when urgent), Hand over (patients to hand over), Tasks (open count), under the date line. After District's category grid that morphs into tabs, the grid collapses into a compact sticky row under the top bar once it scrolls away (fades and settles in over 40 pt of scroll, driven on the UI thread).
+- One shared component (`components/sona/quick-actions.tsx`), restyled to the brand: a single liquid-glass shelf (the `Glass` material, opaque with Reduce Transparency) split into four hairline-divided segments, each a blue glyph, a label and a one-line muted status. Only urgent segments speak up, with a small red count and a faint warm halftone glint in their corner. A press swells the glyph like a droplet and settles back (after Quartr's liquid glass pulse: dip to 0.9, spring to 1 at 0.32 s, damping 0.55) with a soft glow and a haptic. Re-rank is removed.
+- Home: Patients (next visit), Results (new, red when urgent), Hand over (patients to hand over), Tasks (open count), under the date line. After District's category grid that morphs into tabs, the shelf flattens into a slim frosted glass capsule of glyphs and counts under the top bar once it scrolls away (fades and settles in over 40 pt of scroll, driven on the UI thread).
 - Inside a visit and in the patient sheet: Brief me (new result to review / history incomplete), Consultation (recording now / lines captured), Medicines (N unconfirmed), X-ray (image attached / film on file); the duplicate "You might want to ask" suggestions on the visit start are gone.
 
 ## Typography and AI text (2026-09-24)
