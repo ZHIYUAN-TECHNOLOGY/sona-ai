@@ -10,7 +10,9 @@ import { logger } from "hono/logger";
 
 import { createContext } from "./context";
 import { ENV } from "./env.server";
-import { createAuth } from "./services";
+import { createAuth, getDb } from "./services";
+import { runNightlyAudit } from "@sona-ai/api/audit-job";
+import { hospitals } from "@sona-ai/db/schema/clinical";
 
 const app = new Hono();
 
@@ -81,7 +83,12 @@ export { EncounterState } from "./encounter-state";
 export default {
   fetch: app.fetch,
   // ponytail: the nightly coding audit (flow 5) plugs in here; until then the cron only logs that it fired.
+  /** Nightly coding audit for every hospital (see packages/api/src/audit-job.ts). */
   async scheduled(controller) {
-    console.log(`coding audit cron ${controller.cron}: not wired yet`);
+    const db = await getDb();
+    for (const { id } of await db.select({ id: hospitals.id }).from(hospitals)) {
+      const { raised } = await runNightlyAudit(db, id, new Date(controller.scheduledTime));
+      console.log(`coding audit ${controller.cron}: ${id} raised ${raised}`);
+    }
   },
 } satisfies ExportedHandler<Env>;

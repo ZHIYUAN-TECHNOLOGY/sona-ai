@@ -1,5 +1,6 @@
 import type { Context } from "@sona-ai/api/context";
-import { applyEdit, loadEncounter, saveEncounter, stale, type EncounterEdit, type EncounterSnapshot } from "@sona-ai/api/routers/encounter";
+import type { EncounterEdit } from "@sona-ai/api/contracts";
+import { applyEdit, loadEncounter, saveEncounter, stale, type EncounterSnapshot } from "@sona-ai/api/routers/encounter";
 import { createDb } from "@sona-ai/db";
 import type { DatabaseConfig } from "@sona-ai/db/config";
 import { DurableObject } from "cloudflare:workers";

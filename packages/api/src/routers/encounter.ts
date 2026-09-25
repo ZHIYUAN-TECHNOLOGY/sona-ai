@@ -4,9 +4,9 @@ import type { Encounter } from "@sona-ai/domain/types";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
+import { encounterEditSchema, type EncounterEdit } from "../contracts";
 import type { Context } from "../context";
 import { protectedProcedure } from "../index";
-import { hospitalOf } from "./hospital";
 
 /**
  * Encounter state on the server. Postgres holds the snapshot and is the arbiter of revisions: every
@@ -18,16 +18,7 @@ export type EncounterState = Omit<Partial<Encounter>, "revision">;
 export type EncounterSnapshot = { encounterId: string; revision: number; state: EncounterState };
 type Db = Context["db"];
 
-const unknownYesNo = z.enum(["unknown", "no", "yes"]);
-// Not in contracts.ts yet: the edits that change prescribing eligibility or the medicine list.
-export const encounterEditSchema = z.object({
-  encounterId: z.string().min(1),
-  expectedRevision: z.number().int().positive(),
-  prescriptionInputs: z.object({ weightKg: z.string(), liverDisease: unknownYesNo, kidneyDisease: unknownYesNo, alcoholRisk: unknownYesNo, paracetamolAllergy: unknownYesNo }).optional(),
-  medicationEntries: z.array(z.object({ id: z.string().min(1), name: z.string().min(1), ingredient: z.string(), formulation: z.string(), confirmed: z.boolean() })).optional(),
-  proposedMedicine: z.string().optional(),
-}).refine(e => e.prescriptionInputs || e.medicationEntries || e.proposedMedicine !== undefined, "An edit changes eligibility or medicines");
-export type EncounterEdit = z.infer<typeof encounterEditSchema>;
+
 
 export const stale = (encounterId: string) => new ORPCError("CONFLICT", { message: `Encounter ${encounterId} has moved on; reload and retry` });
 
@@ -59,10 +50,10 @@ export async function saveEncounter(db: Db, hospitalId: string, fromRevision: nu
 
 export const encounterRouter = {
   get: protectedProcedure.input(z.object({ encounterId: z.string().min(1) }))
-    .handler(({ context, input }) => loadEncounter(context.db, hospitalOf(context.session), input.encounterId)),
+    .handler(({ context, input }) => loadEncounter(context.db, context.hospitalId, input.encounterId)),
   // ponytail: writes Postgres directly; route through the EncounterState Durable Object once the agent lives there.
   edit: protectedProcedure.input(encounterEditSchema).handler(async ({ context, input }) => {
-    const hospitalId = hospitalOf(context.session);
+    const { hospitalId } = context;
     const current = await loadEncounter(context.db, hospitalId, input.encounterId);
     return saveEncounter(context.db, hospitalId, current.revision, applyEdit(current, input));
   }),

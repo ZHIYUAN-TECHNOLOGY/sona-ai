@@ -38,3 +38,25 @@ export const observationSchema = z.object({
   value: z.number(), unit: z.string(), sourceId: z.string().min(1),
 });
 export type Observation = z.infer<typeof observationSchema>;
+
+/** The discharge card's inline fixes: take-home medicines, follow-up, leaflet language. */
+export const dischargeUpdateSchema = z.object({
+  encounterId: z.string().min(1), medsConfirmed: z.boolean().optional(),
+  followUp: z.enum(["1w", "2w", "4w"]).optional(), language: z.enum(["ms", "en", "zh"]).optional(),
+});
+export type DischargeUpdate = z.infer<typeof dischargeUpdateSchema>;
+
+/** The guarantee letter's inline fixes, each adding its sentence to the note. */
+export const claimUpdateSchema = z.object({ encounterId: z.string().min(1), organismConfirmed: z.boolean().optional(), ivReasonAdded: z.boolean().optional() });
+export type ClaimUpdate = z.infer<typeof claimUpdateSchema>;
+
+const unknownYesNo = z.enum(["unknown", "no", "yes"]);
+/** Edits that change prescribing eligibility or the medicine list; they bump the revision and invalidate the review. */
+export const encounterEditSchema = z.object({
+  encounterId: z.string().min(1),
+  expectedRevision: z.number().int().positive(),
+  prescriptionInputs: z.object({ weightKg: z.string(), liverDisease: unknownYesNo, kidneyDisease: unknownYesNo, alcoholRisk: unknownYesNo, paracetamolAllergy: unknownYesNo }).optional(),
+  medicationEntries: z.array(z.object({ id: z.string().min(1), name: z.string().min(1), ingredient: z.string(), formulation: z.string(), confirmed: z.boolean() })).optional(),
+  proposedMedicine: z.string().optional(),
+}).refine(e => e.prescriptionInputs || e.medicationEntries || e.proposedMedicine !== undefined, "An edit changes eligibility or medicines");
+export type EncounterEdit = z.infer<typeof encounterEditSchema>;

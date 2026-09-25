@@ -11,6 +11,11 @@ const created = () => timestamp("created_at").defaultNow().notNull();
 
 export const hospitals = pgTable("hospitals", { id: text("id").primaryKey(), name: text("name").notNull() });
 
+/** Which hospital a signed-in user works for; every clinical read and write is scoped by it. */
+export const hospitalMembers = pgTable("hospital_members", {
+  userId: text("user_id").primaryKey(), hospitalId: text("hospital_id").notNull().references(() => hospitals.id), createdAt: created(),
+});
+
 export const patients = pgTable("patients", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull().references(() => hospitals.id),
   name: text("name").notNull(), initials: text("initials").notNull(), age: integer("age").notNull(), sex: text("sex").notNull(),
