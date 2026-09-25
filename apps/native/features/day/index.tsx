@@ -4,14 +4,14 @@ import { useEffect, useState } from "react";
 import { Pressable, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { scheduleOnRN } from "react-native-worklets";
-import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { Easing, FadeIn, FadeOut, FadeOutDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
-import { groupVisits, rankDay, type DayItem, type DayTone } from "./model";
+import { DAY_OFFSETS, dayOf, groupVisits, rankDay, rankOtherDay, scheduleFor, type DayItem, type DayTone, type ScheduleVisit } from "./model";
 
 /*
  * My day, ranked (after Superlist's AI list making): on first open a small "Sorting your day…"
@@ -50,24 +50,26 @@ function Sorting() {
 const LANE_PIN = 32, PILL = 60;
 const PX = 5; // points per minute: 30 minutes = 150 pt, room for a name pin
 // A pin's width in minutes: avatars, label and padding at 13 pt (~7 pt a character), plus a gap.
-const pinMinutes = (group: { p: Patient }[]) => {
+const pinMinutes = (group: { p: { name: string; time: string } }[]) => {
   const avatars = 30 + (Math.min(group.length, 3) - 1 + (group.length > 3 ? 1 : 0)) * 20;
   const label = group.length === 1 ? group[0]!.p.name.split(" ")[0]!.length + 8 : 18 + (new Set(group.map(v => v.p.time)).size > 1 ? 6 : 0);
   return (avatars + label * 7 + 30) / PX;
 };
 const TONE_PIN = { done: { fill: "rgba(36,91,204,0.14)", ink: palette.blue }, open: { fill: "rgba(196,120,20,0.16)", ink: palette.amber } };
-function TimeBar({ patients, now, onOpen }: { patients: Patient[]; now: number; onOpen: (patientId: string) => void }) {
+function TimeBar({ schedule, now, onOpen }: { schedule: ScheduleVisit[]; now?: number; onOpen: (patientId: string) => void }) {
   const { width } = useWindowDimensions();
   const { reducedMotion } = useAccessibleEffects();
   const view = width - 40;
-  const from = (Math.floor(now / 60) - 1) * 60, to = from + 9 * 60;
+  // The whole day, 00:00–24:00. Today opens on now; other days on their first visit.
+  const from = 0, to = 24 * 60;
   const xOf = (m: number) => (m - from) * PX;
-  const visits = patients.map(p => { const [h, m] = p.time.split(":").map(Number); return { p, at: h! * 60 + m! }; }).sort((a, b) => a.at - b.at);
+  const visits = schedule.map(v => { const [h, m] = v.time.split(":").map(Number); return { p: { ...v, subtitle: v.reason }, at: h! * 60 + m! }; }).sort((a, b) => a.at - b.at);
+  const home = now ?? visits[0]?.at ?? 9 * 60;
   // Anchors put a time 15% across the ruler, so now and the next visits fit; the view starts on now.
   const anchor = (m: number) => view * 0.15 - xOf(m);
-  const stops = [anchor(now), ...groupVisits(visits, pinMinutes).map(g => anchor(g[0]!.at))];
+  const stops = [anchor(home), ...groupVisits(visits, pinMinutes).map(g => anchor(g[0]!.at))];
   const min = view - xOf(to), max = 0;
-  const x = useSharedValue(anchor(now)), start = useSharedValue(0);
+  const x = useSharedValue(anchor(home)), start = useSharedValue(0);
   const tick = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); };
   const pan = Gesture.Pan().activeOffsetX([-8, 8]).failOffsetY([-10, 10])
     .onBegin(() => { start.set(x.value); })
@@ -84,11 +86,11 @@ function TimeBar({ patients, now, onOpen }: { patients: Patient[]; now: number; 
   const clock = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
   // The now pill tracks the line but stays inside the view: pinned to an edge (with an arrow) when
   // now is scrolled away, and tapping it brings the ruler back to now.
-  const nowAt = xOf(now) + 4;
+  const nowAt = xOf(now ?? -9999) + 4;
   const pill = useAnimatedStyle(() => { const px = x.value + nowAt; return { transform: [{ translateX: Math.min(view + 4 - PILL / 2 - 4, Math.max(PILL / 2 + 4, px)) - PILL / 2 }] }; });
   const leftArrow = useAnimatedStyle(() => ({ opacity: x.value + nowAt < PILL / 2 + 4 ? 1 : 0 }));
   const rightArrow = useAnimatedStyle(() => ({ opacity: x.value + nowAt > view - PILL / 2 ? 1 : 0 }));
-  const backToNow = () => { tick(); x.set(reducedMotion ? anchor(now) : withSpring(anchor(now), { duration: 600, dampingRatio: 0.85 })); };
+  const backToNow = () => { tick(); x.set(reducedMotion ? anchor(home) : withSpring(anchor(home), { duration: 600, dampingRatio: 0.85 })); };
   return <View accessible={false} style={{ height: 116, overflow: "hidden", marginHorizontal: -4, borderRadius: 16 }}>
     <GestureDetector gesture={pan}>
       <Animated.View style={[{ position: "absolute", left: 4, top: 0, bottom: 0, width: xOf(to) + 1 }, ruler]}>
@@ -97,12 +99,12 @@ function TimeBar({ patients, now, onOpen }: { patients: Patient[]; now: number; 
           {hour && <Text style={{ position: "absolute", top: 20, width: 40, textAlign: "center", fontSize: 10, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{clock(m)}</Text>}
         </View>; })}
         {/* Now: only the line scrolls with the ruler; its time pill lives in its own lane above. */}
-        <View pointerEvents="none" style={{ position: "absolute", left: xOf(now) - 1, top: LANE_PIN - 4, width: 2, height: 116 - 18 - (LANE_PIN - 4), borderRadius: 1, backgroundColor: palette.blue, opacity: 0.5 }} />
+        {now !== undefined && <View pointerEvents="none" style={{ position: "absolute", left: xOf(now) - 1, top: LANE_PIN - 4, width: 2, height: 116 - 18 - (LANE_PIN - 4), borderRadius: 1, backgroundColor: palette.blue, opacity: 0.5 }} />}
         {groupVisits(visits, pinMinutes).map(group => { const first = group[0]!; const incomplete = group.some(v => v.p.incomplete); const tone = TONE_PIN[incomplete ? "open" : "done"];
           const single = group.length === 1;
           const label = single ? `${first.p.name}, ${first.p.time}, ${first.p.subtitle}` : `${group.length} patients from ${first.p.time}: ${group.map(v => v.p.name).join(", ")}`;
           return <Pressable key={first.p.id} accessibilityRole="button" accessibilityLabel={label} accessibilityHint={single ? "Opens the visit" : "Lists these patients"} hitSlop={6}
-            onPress={() => single ? onOpen(first.p.id) : router.push({ pathname: "/visits", params: { ids: group.map(v => v.p.id).join(",") } })}
+            onPress={() => { const ids = group.map(v => v.p.patientId).filter(Boolean); if (ids.length !== group.length) return; single ? onOpen(ids[0]!) : router.push({ pathname: "/visits", params: { ids: ids.join(",") } }); }}
             style={{ position: "absolute", left: xOf(first.at) - 16, top: LANE_PIN, alignItems: "flex-start" }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 2, paddingRight: 10, height: 36, borderRadius: 18, backgroundColor: palette.white, borderWidth: 1, borderColor: "rgba(20,28,40,0.06)", boxShadow: "0 3px 10px rgba(24,32,48,0.08)" }}>
               <View style={{ flexDirection: "row" }}>{group.slice(0, 3).map((v, i) => { const t = TONE_PIN[v.p.incomplete ? "open" : "done"]; return <View key={v.p.id}
@@ -115,14 +117,15 @@ function TimeBar({ patients, now, onOpen }: { patients: Patient[]; now: number; 
           </Pressable>; })}
       </Animated.View>
     </GestureDetector>
-    <Animated.View style={[{ position: "absolute", left: 0, top: 2, width: PILL, alignItems: "center", zIndex: 3 }, pill]}>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Now, ${clock(now)}. Scroll the timeline back to now`} onPress={backToNow} hitSlop={10}
+    {!visits.length && <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: LANE_PIN, alignItems: "center" }}><View style={{ height: 32, paddingHorizontal: 14, borderRadius: 16, justifyContent: "center", backgroundColor: "rgba(20,28,40,0.05)" }}><Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>No visits</Text></View></View>}
+    {now !== undefined && <Animated.View style={[{ position: "absolute", left: 0, top: 2, width: PILL, alignItems: "center", zIndex: 3 }, pill]}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Now, ${clock(now!)}. Scroll the timeline back to now`} onPress={backToNow} hitSlop={10}
         style={{ height: 22, paddingHorizontal: 8, borderRadius: 11, flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: palette.blue, boxShadow: "0 2px 6px rgba(36,91,204,0.25)" }}>
         <Animated.View style={[{ position: "absolute", left: -12 }, leftArrow]}><Icon name="chevron.left" size={9} color={palette.blue} /></Animated.View>
-        <Text style={{ fontSize: 11, lineHeight: 13, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"], includeFontPadding: false }}>{clock(now)}</Text>
+        <Text style={{ fontSize: 11, lineHeight: 13, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"], includeFontPadding: false }}>{clock(now!)}</Text>
         <Animated.View style={[{ position: "absolute", right: -12 }, rightArrow]}><Icon name="chevron.right" size={9} color={palette.blue} /></Animated.View>
       </Pressable>
-    </Animated.View>
+    </Animated.View>}
   </View>;
 }
 
@@ -155,7 +158,55 @@ function Row({ item, first, index, animate, pinned, onOpen, onPin, onSnooze }: {
   </Animated.View>;
 }
 
-export function MyDay({ patients, onOpen }: { patients: Patient[]; onOpen: (patientId: string, open: DayItem["open"]) => void }) {
+/** Re-rank: a filled blue button whose sparkle turns while the day is sorted. */
+function Rerank({ sorting, onPress }: { sorting: boolean; onPress: () => void }) {
+  const { reducedMotion } = useAccessibleEffects();
+  const spin = useSharedValue(0);
+  useEffect(() => {
+    if (sorting && !reducedMotion) spin.set(withRepeat(withTiming(1, { duration: 900, easing: Easing.linear }), -1, false));
+    else { spin.set(withTiming(0, { duration: 200 })); }
+  }, [sorting, reducedMotion, spin]);
+  const sparkle = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.value * 360}deg` }] }));
+  return <Pressable accessibilityRole="button" accessibilityLabel={sorting ? "Sorting your day" : "Re-rank my day"} accessibilityState={{ busy: sorting }} onPress={onPress} disabled={sorting} hitSlop={6}
+    style={({ pressed }) => ({ minHeight: 38, flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 15, borderRadius: 19, backgroundColor: palette.blue, boxShadow: "0 4px 12px rgba(36,91,204,0.28)", transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+    <Animated.View style={sparkle}><Icon name="sparkles" size={13} color={palette.white} /></Animated.View>
+    <Text style={{ fontSize: 14, fontWeight: "600", color: palette.white }}>{sorting ? "Sorting…" : "Re-rank"}</Text>
+  </Pressable>;
+}
+
+/*
+ * Week strip (after Queue's timeline scrubber): seven day chips; the selection thumb springs to the
+ * chosen day (0.35 s, damping 0.82) with a selection tick, and a swipe steps one day. Dots show
+ * how many visits a day holds; today keeps a blue label when another day is selected.
+ */
+function DayStrip({ offset, counts, onPick }: { offset: number; counts: number[]; onPick: (offset: number) => void }) {
+  const { width } = useWindowDimensions();
+  const { reducedMotion } = useAccessibleEffects();
+  const gap = 6, chip = (width - 40 - gap * 6) / 7;
+  const index = DAY_OFFSETS.indexOf(offset as never);
+  const thumb = useSharedValue(index * (chip + gap));
+  useEffect(() => { const to = index * (chip + gap); thumb.set(reducedMotion ? to : withSpring(to, { duration: 350, dampingRatio: 0.82 })); }, [index, chip, reducedMotion, thumb]);
+  const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateX: thumb.value }] }));
+  const step = (dir: number) => { const next = DAY_OFFSETS[Math.min(DAY_OFFSETS.length - 1, Math.max(0, index + dir))]!; onPick(next); };
+  const swipe = Gesture.Pan().activeOffsetX([-14, 14]).failOffsetY([-10, 10]).onEnd(e => { if (Math.abs(e.translationX) > 30 || Math.abs(e.velocityX) > 400) scheduleOnRN(step, e.translationX < 0 ? 1 : -1); });
+  return <GestureDetector gesture={swipe}>
+    <View accessibilityRole="tablist" style={{ flexDirection: "row", gap }}>
+      <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 0, bottom: 0, width: chip, borderRadius: 16, borderCurve: "continuous", backgroundColor: palette.ink }, thumbStyle]} />
+      {DAY_OFFSETS.map((o, i) => { const d = dayOf(o); const on = o === offset; const today = o === 0; return <Pressable key={o} accessibilityRole="tab" accessibilityState={{ selected: on }}
+        accessibilityLabel={`${today ? "Today, " : ""}${d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}, ${counts[i]} ${counts[i] === 1 ? "visit" : "visits"}`}
+        onPress={() => onPick(o)} style={{ width: chip, height: 62, borderRadius: 16, alignItems: "center", justifyContent: "center", gap: 3, backgroundColor: on ? "transparent" : "rgba(255,255,255,0.7)", borderWidth: today && !on ? 1.5 : 0, borderColor: palette.blue }}>
+        <Text style={{ fontSize: 11, fontWeight: "600", color: on ? "rgba(255,255,255,0.75)" : today ? palette.blue : palette.muted }}>{today ? "Today" : d.toLocaleDateString("en-GB", { weekday: "short" })}</Text>
+        <Text style={{ fontSize: 18, fontWeight: "700", color: on ? palette.white : palette.ink, fontVariant: ["tabular-nums"] }}>{d.getDate()}</Text>
+        <View style={{ flexDirection: "row", gap: 2, height: 4 }}>{Array.from({ length: Math.min(3, counts[i]!) }, (_, k) => <View key={k} style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: on ? palette.white : palette.blue, opacity: on ? 0.9 : 0.6 }} />)}</View>
+      </Pressable>; })}
+    </View>
+  </GestureDetector>;
+}
+
+export function MyDay({ patients, onOpen: open }: { patients: Patient[]; onOpen: (patientId: string, open: DayItem["open"]) => void }) {
+  // Only real visits open; the authored schedule on other days is read-only.
+  const onOpen = (id: string | undefined, target: DayItem["open"]) => { if (id) open(id, target); };
+  const [offset, setOffset] = useState(0);
   const { encounters } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const [now, setNow] = useState(nowMinutes);
@@ -170,29 +221,38 @@ export function MyDay({ patients, onOpen }: { patients: Patient[]; onOpen: (pati
   const [snoozed, setSnoozed] = useState<string[]>([]);
   const [showSnoozed, setShowSnoozed] = useState(false);
 
-  const ranked = rankDay(patients, encounters, now);
+  const schedule = scheduleFor(offset, patients);
+  const ranked = offset === 0 ? rankDay(patients, encounters, now) : rankOtherDay(offset, schedule);
+  const need = ranked.filter(item => item.tone !== "routine").length;
+  const date = dayOf(offset);
+  const [switched, setSwitched] = useState(false);
+  const pick = (next: number) => { if (next === offset) return; haptic(); setSwitched(true); setAnimate(false); setOffset(next); };
   const active = ranked.filter(item => !snoozed.includes(item.id));
   const ordered = [...active.filter(item => pins.includes(item.id)), ...active.filter(item => !pins.includes(item.id))];
   const later = ranked.filter(item => snoozed.includes(item.id));
   const [top, ...rest] = ordered;
 
   return <View style={{ gap: 14 }}>
-    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-      <Text accessibilityRole="header" style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>Your day, ranked</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel="Re-rank my day" onPress={rerank} disabled={sorting} hitSlop={8}
-        style={{ minHeight: 30, flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 11, borderRadius: 15, backgroundColor: "rgba(20,28,40,0.06)", opacity: sorting ? 0.5 : 1 }}>
-        <Icon name="sparkles" size={11} color={palette.ink} /><Text style={{ fontSize: 13, fontWeight: "600", color: palette.ink }}>Re-rank</Text>
-      </Pressable>
+    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
+      <View style={{ flex: 1, gap: 3 }}>
+        <Text accessibilityRole="header" style={{ fontSize: 24, lineHeight: 29, fontWeight: "700", letterSpacing: -0.5, color: palette.ink }}>{offset === 0 ? "Your day, ranked" : offset < 0 ? "Looking back" : "Coming up"}</Text>
+        <Text style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}{offset === 0 ? ` · ${need} need you` : ""} · {schedule.length} {schedule.length === 1 ? "visit" : "visits"}</Text>
+      </View>
+      {offset !== 0 ? <Pressable accessibilityRole="button" accessibilityLabel="Back to today" onPress={() => pick(0)} hitSlop={8}
+        style={{ minHeight: 38, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, borderRadius: 19, backgroundColor: palette.blueWash }}>
+        <Icon name="arrow.uturn.backward" size={12} color={palette.blue} /><Text style={{ fontSize: 14, fontWeight: "600", color: palette.blue }}>Today</Text>
+      </Pressable> : <Rerank sorting={sorting} onPress={rerank} />}
     </View>
-    <TimeBar patients={patients} now={now} onOpen={id => onOpen(id, {})} />
-    {sorting ? <Sorting /> : <>
+    <DayStrip offset={offset} counts={DAY_OFFSETS.map(o => scheduleFor(o, patients).length)} onPick={pick} />
+    <TimeBar key={offset} schedule={schedule} now={offset === 0 ? now : undefined} onOpen={id => onOpen(id, {})} />
+    {sorting ? <Sorting /> : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
       {top && <Animated.View key={`top-${run}`} layout={LAYOUT} entering={animate ? riseIn({ distance: 14, scale: 0.97, duration: 450 }) : undefined}>
         <Pressable accessibilityRole="button" accessibilityLabel={`Most urgent: ${top.title}. ${top.reason}`} accessibilityHint="Opens the visit" onPress={() => onOpen(top.patientId, top.open)}
           style={({ pressed }) => ({ transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
           <Surface feature style={{ padding: 18, gap: 12 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: TONE[top.tone].dot }} />
-              <Text style={{ ...type.overline, color: TONE[top.tone].ink }}>{pins.includes(top.id) ? "Pinned" : "Most urgent"}</Text>
+              <Text style={{ ...type.overline, color: TONE[top.tone].ink }}>{pins.includes(top.id) ? "Pinned" : offset === 0 ? "Most urgent" : offset < 0 ? "First seen" : "First to prepare"}</Text>
             </View>
             <View style={{ gap: 4 }}>
               <Text style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{top.title}</Text>
@@ -200,7 +260,7 @@ export function MyDay({ patients, onOpen }: { patients: Patient[]; onOpen: (pati
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
               <View style={{ flexShrink: 1, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: TONE[top.tone].wash }}><Text style={{ ...type.caption, fontWeight: "600", color: TONE[top.tone].ink }}>{top.reason}</Text></View>
-              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: palette.ink, alignItems: "center", justifyContent: "center" }}><Icon name="arrow.right" size={14} color={palette.white} /></View>
+              {top.patientId && <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: palette.ink, alignItems: "center", justifyContent: "center" }}><Icon name="arrow.right" size={14} color={palette.white} /></View>}
             </View>
           </Surface>
         </Pressable>
@@ -218,7 +278,8 @@ export function MyDay({ patients, onOpen }: { patients: Patient[]; onOpen: (pati
           <Text style={{ ...type.footnote, color: palette.muted }}>{item.title} · <Text style={{ color: palette.blue }}>Wake</Text></Text>
         </Pressable>)}
       </Animated.View>}
-      <Text style={{ ...type.caption, color: palette.muted }}>Ranked by urgency, with the reason on every item. Demo rules over synthetic records.</Text>
-    </>}
+      {!ordered.length && <Text style={{ ...type.callout, color: palette.muted, textAlign: "center", paddingVertical: 12 }}>Nothing scheduled this day.</Text>}
+      <Text style={{ ...type.caption, color: palette.muted }}>{offset === 0 ? "Ranked by urgency, with the reason on every item. Demo rules over synthetic records." : "Synthetic clinic schedule for other days; open today's visits to act."}</Text>
+    </Animated.View>}
   </View>;
 }

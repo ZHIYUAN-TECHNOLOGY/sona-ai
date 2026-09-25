@@ -13,7 +13,7 @@ import type { Encounter, Patient } from "@/features/encounter/types";
 export type DayTone = "urgent" | "soon" | "routine";
 export type DayItem = {
   id: string; kind: "result" | "blocker" | "visit" | "task"; title: string; detail: string; reason: string; tone: DayTone; score: number;
-  patientId: string; open: { next?: string; view?: string };
+  patientId?: string; open: { next?: string; view?: string };
 };
 
 // A synthetic lab result that arrived after Daniel's intake and has not been acted on.
@@ -66,4 +66,36 @@ export function groupVisits<T extends { at: number }>(visits: T[], span: (group:
     if (last && visit.at < last[0]!.at + span(last)) last.push(visit); else groups.push([visit]);
   }
   return groups;
+}
+
+/**
+ * Other days (a week around today). Today uses the live visits; the rest is an authored synthetic
+ * clinic list, so a doctor can look back at completed visits and ahead at what to prepare.
+ * Weekends are empty. ponytail: fixed demo schedule; the hospital scheduling feed replaces it.
+ */
+export type ScheduleVisit = { id: string; name: string; initials: string; time: string; reason: string; incomplete: boolean; patientId?: string };
+const OTHER: [string, string, string, boolean][] = [
+  ["Siti Aminah", "SA", "Diabetes review", false], ["Lim Wei Jie", "LW", "Post-op check", false], ["Ravi Kumar", "RK", "Heart failure follow-up", true],
+  ["Nur Aisyah", "NA", "Asthma action plan", false], ["Tan Mei Ling", "TM", "Blood pressure review", false], ["Arjun Pillai", "AP", "New referral · history to take", true],
+];
+export const DAY_OFFSETS = [-3, -2, -1, 0, 1, 2, 3] as const;
+export function dayOf(offset: number, today = new Date()) { const d = new Date(today); d.setDate(d.getDate() + offset); return d; }
+export function scheduleFor(offset: number, patients: Patient[], today = new Date()): ScheduleVisit[] {
+  if (offset === 0) return patients.map(p => ({ id: p.id, name: p.name, initials: p.initials, time: p.time, reason: p.subtitle, incomplete: p.incomplete, patientId: p.id }));
+  const day = dayOf(offset, today).getDay();
+  if (day === 0 || day === 6) return [];
+  const count = 2 + ((offset + 7) % 3);
+  return Array.from({ length: count }, (_, i) => {
+    const [name, initials, reason, incomplete] = OTHER[(i + offset + 6) % OTHER.length]!;
+    const m = 9 * 60 + i * 75 + ((offset + 3) % 2) * 30;
+    return { id: `d${offset}-${i}`, name, initials, reason, incomplete, time: `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}` };
+  });
+}
+/** A past day lists what was seen; a future day lists what to prepare. */
+export function rankOtherDay(offset: number, visits: ScheduleVisit[]): DayItem[] {
+  return visits.map((v, i) => ({
+    id: `other-${v.id}`, kind: "visit" as const, title: `${v.time} · ${v.name}`, detail: v.reason,
+    reason: offset < 0 ? "Seen · note signed" : v.incomplete ? "Prepare · history to take" : "Prepare · review notes", tone: offset > 0 && v.incomplete ? "soon" as const : "routine" as const,
+    score: offset > 0 && v.incomplete ? 60 - i : 40 - i, patientId: v.patientId, open: {},
+  })).sort((a, b) => b.score - a.score);
 }

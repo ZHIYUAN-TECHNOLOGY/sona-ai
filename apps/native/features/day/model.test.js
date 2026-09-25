@@ -30,3 +30,15 @@ test("visits that would overlap share one pin; spaced visits stay apart", () => 
   // A wide group pin absorbs a visit that a single pin would not.
   expect(groupVisits([{ at: 600 }, { at: 600 }, { at: 635 }], span).length).toBe(1);
 });
+
+test("other days: weekends empty, past seen, future to prepare", () => {
+  const { scheduleFor, rankOtherDay } = require("./model");
+  const monday = new Date(2026, 8, 21); // a Monday
+  expect(scheduleFor(-1, patients, monday)).toEqual([]); // Sunday
+  const tuesday = scheduleFor(1, patients, monday);
+  expect(tuesday.length).toBeGreaterThan(1);
+  expect(tuesday.every(v => v.patientId === undefined)).toBe(true);
+  expect(rankOtherDay(-2, tuesday).every(i => i.reason.startsWith("Seen"))).toBe(true);
+  expect(rankOtherDay(1, tuesday).every(i => i.reason.startsWith("Prepare"))).toBe(true);
+  expect(scheduleFor(0, patients, monday).map(v => v.patientId)).toEqual(patients.map(p => p.id));
+});
