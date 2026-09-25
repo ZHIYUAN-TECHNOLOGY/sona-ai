@@ -229,7 +229,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     </View>
 
     {/* Everything under the dock blurs progressively, on home and in visits alike. */}
-    <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: insets.bottom + 96 }} />
+    <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 100 }} />
     <VoiceDock
       backdrop={backdrop}
       quiet={Boolean(steps)}
