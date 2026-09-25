@@ -22,6 +22,8 @@ export const PENDING_RESULT = { patientId: "SYN-1086", test: "Potassium", value:
 export function refreshPendingResult(now = new Date()) { PENDING_RESULT.receivedAt = demoTime(-120, now); }
 
 const minutes = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); return h! * 60 + m!; };
+/** Minutes from `now` to a clock time, taking the nearer side of midnight (00:15 is 30 min after 23:45, not a day before). */
+const until = (hhmm: string, now: number) => ((minutes(hhmm) - now + 720) % 1440 + 1440) % 1440 - 720;
 const ago = (from: number, now: number) => { const d = Math.max(0, now - from); return d < 60 ? `${d} min` : `${Math.floor(d / 60)} h`; };
 
 export function rankDay(patients: Patient[], encounters: Record<string, Encounter | undefined>, now: number, reviewed: Set<string> = new Set()): DayItem[] {
@@ -34,7 +36,7 @@ export function rankDay(patients: Patient[], encounters: Record<string, Encounte
   });
   for (const patient of patients) {
     const encounter = encounters[patient.id];
-    const start = minutes(patient.time) - now;
+    const start = until(patient.time, now);
     if (!patient.incomplete) {
       const unconfirmed = (encounter?.medicationEntries ?? defaultMedications(patient)).filter(entry => !entry.confirmed).length;
       if (unconfirmed) items.push({
