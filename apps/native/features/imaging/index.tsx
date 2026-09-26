@@ -15,6 +15,7 @@ import { palette } from "@/components/sona/theme";
 import { Action, Chip, Expand, Glass, Icon, Notice, pillStyle, Reveal, Screen, SourceLink, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { Encounter, FeatureProps } from "@/features/encounter/types";
+import { useXrayUpload } from "@/features/live/xray-upload";
 import { teachingImage, type TeachingImage } from "./fixture";
 import { ImageEdge, OriginalImageViewer, VIEWING } from "./viewer";
 
@@ -186,6 +187,8 @@ export function XrayScreen() {
   const [zoomed, setZoomed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const activePatient = useRef(patient?.id);
+  // Live backend mode: the chosen image is also uploaded to the server (not analysed there either).
+  const server = useXrayUpload();
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   activePatient.current = patient?.id;
@@ -194,18 +197,24 @@ export function XrayScreen() {
     const patientId = patient?.id;
     setPicking(true); setPickerError(undefined);
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: false, allowsMultipleSelection: false });
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: false, allowsMultipleSelection: false, base64: server.live, quality: server.live ? 0.8 : undefined });
       if (result.canceled || !mounted.current || activePatient.current !== patientId) return;
       const asset = result.assets[0];
       if (!asset) return;
       updateEncounter(current => ({ ...current, imagingAttachment: { uri: asset.uri, name: asset.fileName ?? "Selected teaching image" } }), true);
+      if (server.live && patient) void server.send(patient.encounterId, asset);
     } catch { setPickerError("The photo library could not be opened. Try again or check access in Settings."); }
     finally { setPicking(false); }
   };
   const attachment = evidence?.imagingAttachment;
   const referenceImage = evidence?.hideTeachingImage ? undefined : teachingImage;
   // A local image has no source page: its provenance line says it stays on this device and is not analysed.
-  const image: TeachingImage | undefined = attachment ? { id: attachment.uri, source: { uri: attachment.uri }, title: attachment.name, attribution: "Kept on this device · not uploaded or analysed", license: "rights and deidentification not verified", sourceUrl: "" } : referenceImage;
+  const upload = attachment && server.upload?.uri === attachment.uri ? server.upload : undefined;
+  const kept = !upload ? "Kept on this device · not uploaded or analysed"
+    : upload.state === "uploading" ? "Uploading to the live backend (synthetic) · not analysed"
+    : upload.state === "uploaded" ? "Uploaded to the live backend (synthetic) · not analysed"
+    : `Kept on this device · upload failed: ${upload.error} · not analysed`;
+  const image: TeachingImage | undefined = attachment ? { id: attachment.uri, source: { uri: attachment.uri }, title: attachment.name, attribution: kept, license: "rights and deidentification not verified", sourceUrl: "" } : referenceImage;
   const analysing = encounter?.requests.some(item => item.kind === "xray" && item.status === "streaming") ?? false;
   const analyse = () => { if (!image || analysing || historical) return; request("xray", "Analyse X-ray · simulated workflow"); if (router.canGoBack()) router.back(); };
   const scenario = evidence?.imagingScenario ?? "reference";
@@ -230,7 +239,7 @@ export function XrayScreen() {
       <Notice>There is no image analysis result to interpret. This empty state does not indicate a normal chest X-ray.</Notice>
     </Section>
     <Surface feature style={{ padding: 18, gap: 14 }}>
-      <Text selectable style={{ fontSize: 15, lineHeight: 21, color: palette.muted, paddingRight: 40 }}>Choose a deidentified teaching image you have permission to use. It stays on this device and is not analysed.</Text>
+      <Text selectable style={{ fontSize: 15, lineHeight: 21, color: palette.muted, paddingRight: 40 }}>{`Choose a deidentified teaching image you have permission to use. ${server.live ? "Live backend mode uploads it to the server; it" : "It stays on this device and"} is not analysed.`}</Text>
       <Action label={picking ? "Opening photo library…" : "Choose teaching image"} icon="photo.badge.plus" disabled={picking} onPress={pickImage} />
       {pickerError && <Notice warning>{pickerError}</Notice>}
     </Surface>

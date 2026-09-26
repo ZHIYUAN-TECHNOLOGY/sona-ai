@@ -21,6 +21,8 @@ export async function createContext({ context }: CreateContextOptions): Promise<
     db,
     session,
     encounters: encounterStore(context.env as Env),
+    // X-ray uploads land in the Worker's R2 bucket; models stay on stubModels until Baseten is on.
+    uploads: (context.env as Env).UPLOADS,
   };
 }
 
