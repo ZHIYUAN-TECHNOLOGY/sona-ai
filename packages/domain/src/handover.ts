@@ -17,11 +17,14 @@ export type HandoverEncounter = { medicationEntries?: { confirmed: boolean }[]; 
 /** An abnormal result nobody has acted on yet. */
 export type PendingResult = { patientId: string; test: string; value: string; flag: string; receivedAt: string };
 
+/** A test's name mid-sentence: "Potassium" becomes "potassium", abbreviations like "Hb" keep their case. */
+export const testInSentence = (test: string) => /^[A-Z][a-z]{2,}$/.test(test) ? test.toLowerCase() : test;
+
 export function buildHandover(patients: HandoverPatient[], encounters: Record<string, HandoverEncounter | undefined>, pending: PendingResult[] = [], extra: HandoverCard[] = []): HandoverCard[] {
   const visits = patients.map((patient): HandoverCard => {
     const encounter = encounters[patient.id];
     const results = pending.filter(r => r.patientId === patient.id);
-    const open = results.map(r => `Act on ${r.flag.toLowerCase()} ${r.test.toLowerCase()} (${r.value}), received ${r.receivedAt}`);
+    const open = results.map(r => `Act on ${r.flag.toLowerCase()} ${testInSentence(r.test)} (${r.value}), received ${r.receivedAt}`);
     const unconfirmed = (encounter?.medicationEntries ?? patient.medicines.map(() => ({ confirmed: false }))).filter(entry => !entry.confirmed).length;
     if (!patient.incomplete && unconfirmed) open.push(`Confirm ${unconfirmed} reported ${unconfirmed === 1 ? "medicine" : "medicines"} before prescribing`);
     if (patient.incomplete) open.push("Complete onset, observations, allergies and medicines");

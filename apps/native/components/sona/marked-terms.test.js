@@ -26,3 +26,7 @@ test("low risk, high certainty and non-severe disease never turn red", () => {
   expect(marks("Low risk, high certainty, for non-severe community-acquired pneumonia."))
     .toEqual([["community-acquired pneumonia", "finding"]]);
 });
+
+test("an abbreviated analyte still marks an abnormal result", () => {
+  expect(marks("Act on low Hb (9.8 g/dL).")).toEqual([["low Hb", "alert"]]);
+});

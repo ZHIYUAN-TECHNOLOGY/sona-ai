@@ -17,7 +17,7 @@ const DICTIONARY: [RegExp, Mark][] = [
     "(?:penicillin|drug|sulfa) allerg(?:y|ic)", "allerg(?:y|ic) to \\w+", "anaphylaxis", "septic shock", "sepsis",
     "(?<!non-)severe(?: pneumonia)?", "critical", "intensive care", "hyperglycaemia", "high blood sugar", "hypokalaemia",
     // An abnormal result names its analyte, so "low risk" or "high certainty" never turns red.
-    "(?:low|high) (?:potassium|sodium|haemoglobin|glucose)", "(?:potassium|sodium|haemoglobin|glucose) (?:is )?(?:low|high)",
+    "(?:low|high) (?:potassium|sodium|haemoglobin|hb|glucose)", "(?:potassium|sodium|haemoglobin|hb|glucose) (?:is )?(?:low|high)",
   ]), "alert"],
   [words([
     "azithromycin", "amoxicillin", "co-amoxiclav", "ceftriaxone", "penicillin", "paracetamol", "salbutamol", "albuterol", "cetirizine",

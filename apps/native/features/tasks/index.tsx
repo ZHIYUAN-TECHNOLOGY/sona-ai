@@ -70,7 +70,7 @@ function TaskSummary({ task }: { task: Task }) {
     </View>
     <View style={{ flex: 1, gap: 3 }}>
       <Text selectable accessibilityLabel={`${task.title}, ${done ? "completed" : "open"}`} style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: done ? palette.muted : palette.ink, textDecorationLine: done ? "line-through" : "none", textDecorationColor: palette.muted }}>{task.title}</Text>
-      <Text selectable style={{ fontSize: 13, lineHeight: 18, color: palette.muted }}>{task.owner} · {done ? "Done" : friendlyDate(task.due)}</Text>
+      <Text selectable style={{ fontSize: 13, lineHeight: 18, color: palette.muted }}>{ownerLine(task, done)}</Text>
       <TaskOrigin value={task} />
     </View>
   </View>;
@@ -126,6 +126,8 @@ function friendlyDate(due: string) {
   if (due === dayFromToday(1)) return "Tomorrow";
   return longDate(due);
 }
+/** "Pharmacy · Tomorrow"; just the owner when a task (a server one) has no due date. */
+const ownerLine = (task: Task, done = false) => [task.owner, done ? "Done" : friendlyDate(task.due)].filter(Boolean).join(" · ");
 
 const clampDay = (i: number) => { "worklet"; return Math.max(0, Math.round(i)); };
 /** Days from today to a YYYY-MM-DD date (0 for today or earlier). */
@@ -365,7 +367,7 @@ function TaskRow({ task, disabled, onToggle }: { task: Task; disabled: boolean; 
     <GestureDetector gesture={pan}>
       <Surface style={[{ borderRadius: 20 }, rowStyle]}>
         {/* The whole row is the checkbox; only the Source link inside it does something else. */}
-        <Pressable accessibilityRole="checkbox" accessibilityLabel={`${task.title}, ${task.owner}, ${done ? "done" : `due ${friendlyDate(task.due)}`}`} accessibilityState={{ checked: done, disabled }} accessibilityHint={done ? "Reopens the task" : "Marks the task completed"} onPress={toggle} disabled={disabled}
+        <Pressable accessibilityRole="checkbox" accessibilityLabel={`${task.title}, ${task.owner}${done ? ", done" : task.due ? `, due ${friendlyDate(task.due)}` : ""}`} accessibilityState={{ checked: done, disabled }} accessibilityHint={done ? "Reopens the task" : "Marks the task completed"} onPress={toggle} disabled={disabled}
           accessibilityActions={source ? [{ name: "activate" }, { name: "source", label: "Open source" }] : undefined} onAccessibilityAction={e => e.nativeEvent.actionName === "source" ? openSource() : toggle()}
           style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 14, transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.6, alignItems: "center", justifyContent: "center", borderColor: done ? palette.blue : "#B7BDC6", backgroundColor: done ? palette.blue : "transparent", transitionProperty: ["backgroundColor", "borderColor"], transitionDuration: 180 } as never}>
@@ -379,7 +381,7 @@ function TaskRow({ task, disabled, onToggle }: { task: Task; disabled: boolean; 
               <Animated.View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: 11, height: 1.5, borderRadius: 1, backgroundColor: palette.muted, transformOrigin: "left", opacity: done || !reducedMotion ? 1 : 0, transform: [{ scaleX: done || reducedMotion ? 1 : 0 }], transitionProperty: ["transform", "opacity"], transitionDuration: 320, transitionTimingFunction: EASE_OUT }} />
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Text style={{ fontSize: 13, color: palette.muted }}>{task.owner} · {done ? "Done" : friendlyDate(task.due)}</Text>
+              <Text style={{ fontSize: 13, color: palette.muted }}>{ownerLine(task, done)}</Text>
               {source && <Pressable accessibilityRole="link" accessibilityLabel={`Source, ${source.title}`} onPress={openSource} hitSlop={{ top: 13, bottom: 13, left: 8, right: 8 }}><Text style={{ fontSize: 13, color: palette.blue }}>Source ↗</Text></Pressable>}
             </View>
           </View>
@@ -414,7 +416,7 @@ function VisitFollowUps({ except }: { except?: string }) {
           <Text style={{ fontSize: 13, color: palette.muted, fontVariant: ["tabular-nums"] }}>{pending.length ? `${pending.length} open` : "All done"}</Text>
           <View accessibilityElementsHidden style={{ transform: [{ rotate: "180deg" }] }}><BrandIcon name="back" size={16} color={palette.muted} strokeWidth={1.8} /></View>
         </View>
-        {pending.slice(0, 3).map(task => <Text key={task.id} numberOfLines={1} style={{ fontSize: 14, color: palette.ink }}>{task.title}<Text style={{ color: palette.muted }}>  {task.owner} · {friendlyDate(task.due)}</Text></Text>)}
+        {pending.slice(0, 3).map(task => <Text key={task.id} numberOfLines={1} style={{ fontSize: 14, color: palette.ink }}>{task.title}<Text style={{ color: palette.muted }}>  {ownerLine(task)}</Text></Text>)}
       </Surface>
     </Pressable>;
   })}</>;

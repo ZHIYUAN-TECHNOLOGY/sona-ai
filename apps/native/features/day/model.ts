@@ -1,3 +1,4 @@
+import { testInSentence } from "@sona-ai/domain/handover";
 import { defaultMedications } from "@/features/encounter/clinical-state";
 import { demoTime } from "@/features/encounter/fixtures";
 import type { Encounter, Patient, Task } from "@/features/encounter/types";
@@ -20,6 +21,7 @@ export type DayItem = {
 export type PendingResult = { id?: string; patientId: string; test: string; value: string; flag: string; receivedAt: string };
 export const PENDING_RESULT: PendingResult = { patientId: "SYN-1086", test: "Potassium", value: "3.1 mmol/L", flag: "Low", receivedAt: demoTime(-120) };
 /** Keeps the demo result about two hours old when the demo schedule is refreshed. */
+export { testInSentence };
 export function refreshPendingResult(now = new Date()) { PENDING_RESULT.receivedAt = demoTime(-120, now); }
 
 const minutes = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); return h! * 60 + m!; };
@@ -34,7 +36,7 @@ export function rankDay(patients: Patient[], encounters: Record<string, Encounte
   const result = live ? live.result : PENDING_RESULT;
   const resultPatient = result && patients.find(p => p.id === result.patientId);
   if (result && resultPatient && !reviewed.has("result")) items.push({
-    id: "result", kind: "result", title: `${result.flag} ${result.test.toLowerCase()} · ${resultPatient.name}`, detail: `${result.test} ${result.value}`,
+    id: "result", kind: "result", title: `${result.flag} ${testInSentence(result.test)} · ${resultPatient.name}`, detail: `${result.test} ${result.value}`,
     reason: `${result.flag} result · ${ago(minutes(result.receivedAt), now)} · no action yet`, tone: "urgent", score: 100, patientId: resultPatient.id, open: { next: "briefing" },
   });
   for (const patient of patients) {

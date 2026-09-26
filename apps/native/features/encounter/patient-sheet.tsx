@@ -10,7 +10,8 @@ import { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Icon, useAccessibleEffects } from "@/components/sona/ui";
-import { PENDING_RESULT } from "@/features/day/model";
+import { PENDING_RESULT, testInSentence } from "@/features/day/model";
+import { useServerData } from "@/features/live/server-day";
 import { defaultMedications } from "./clinical-state";
 import { QuickActions } from "@/components/sona/quick-actions";
 import { visitActions } from "./quick-actions";
@@ -29,7 +30,7 @@ const TONE = { urgent: { ink: palette.red, wash: "rgba(162,62,62,0.10)" }, cauti
 
 export function flagsFor(patient: Patient, unconfirmed: number): Flag[] {
   const flags: Flag[] = [];
-  if (PENDING_RESULT.patientId === patient.id) flags.push({ label: `${PENDING_RESULT.flag} ${PENDING_RESULT.test.toLowerCase()} ${PENDING_RESULT.value}`, tone: "urgent", go: { next: "briefing" } });
+  if (PENDING_RESULT.patientId === patient.id) flags.push({ label: `${PENDING_RESULT.flag} ${testInSentence(PENDING_RESULT.test)} ${PENDING_RESULT.value}`, tone: "urgent", go: { next: "briefing" } });
   if (patient.allergies) flags.push({ label: `${patient.allergies.split(" — ")[0]} allergy · confirm`, tone: "caution", go: { next: "medication" } });
   if (!patient.incomplete && unconfirmed) flags.push({ label: `${unconfirmed} ${unconfirmed === 1 ? "medicine" : "medicines"} unconfirmed`, tone: "caution", go: { next: "medication" } });
   if (patient.incomplete) flags.push({ label: "History incomplete", tone: "caution", go: { next: "reasoning" } }, { label: "Allergies unknown", tone: "caution", go: { view: "recording" } });
@@ -39,6 +40,7 @@ export function flagsFor(patient: Patient, unconfirmed: number): Flag[] {
 export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onClose: () => void; onGo: (go: Go) => void }) {
   const [box, setBox] = useState(0);
   const { encounters } = useEncounter();
+  const server = useServerData();
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();
@@ -114,7 +116,7 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
               style={({ pressed }) => ({ height: 54, borderRadius: 27, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
               <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>{started ? "Continue visit" : "Open visit"}</Text><Icon name="arrow.right" size={13} color={palette.white} />
             </Pressable>
-            <QuickActions animate={false} actions={[...visitActions(patient, encounter, kind => go(kind === "recording" ? { view: "recording" } : { next: kind })).slice(0, 3),
+            <QuickActions animate={false} actions={[...visitActions(patient, encounter, server, kind => go(kind === "recording" ? { view: "recording" } : { next: kind })).slice(0, 3),
               { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: flags.length ? `${flags.length} open ${flags.length === 1 ? "item" : "items"}` : "Nothing open", onPress: () => go({ to: "/handover" }) }]} />
             <Pressable accessibilityRole="link" onPress={() => { onClose(); router.push({ pathname: "/source", params: { id: "history", patientId: patient.id } }); }} hitSlop={8} style={{ alignSelf: "center", minHeight: 36, justifyContent: "center" }}>
               <Text style={{ ...type.footnote, color: palette.blue }}>Full history & sources</Text>

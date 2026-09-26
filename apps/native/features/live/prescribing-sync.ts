@@ -19,8 +19,8 @@ export async function pushAndReview(encounterId: string, local: Encounter) {
 
 export const simulateOnServer = (encounterId: string, approvedBy: string) => api.prescribing.simulate({ encounterId, requestId: requestId(), approvedBy });
 
-/** One sentence per note section, keyed by the section, so a code or claim can cite it. */
-export const noteSentences = (sections: NoteSections) => sectionKeys.map(key => ({ id: key, text: sections[key] }));
+/** One sentence per written note section, keyed by the section, so a code or claim can cite it. */
+export const noteSentences = (sections: NoteSections) => sectionKeys.filter(key => sections[key].trim()).map(key => ({ id: key, text: sections[key].trim() }));
 /** Sentences the app did not write (the seeded note) are kept in the subjective section. */
 export function noteSections(sentences: { id: string; text: string }[]): NoteSections {
   const sections: NoteSections = { subjective: "", objective: "", assessment: "", plan: "" };

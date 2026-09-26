@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { patients } from "@/features/encounter/fixtures";
-import { rankDay } from "./model";
+import { rankDay, testInSentence } from "./model";
 
 // Demo visits follow the clock; test from 30 minutes before the first one.
 const [h, m] = patients[0].time.split(":").map(Number);
@@ -59,4 +59,10 @@ test("a stale demo schedule moves back to upcoming; visits under way keep their 
   const diff = (h * 60 + m) - (later.getHours() * 60 + later.getMinutes());
   expect(((diff % 1440) + 1440) % 1440).toBeLessThan(60);
   expect(refreshDemoTimes(id => id === patients[0].id, later)).toBe(false); // already current: nothing moves
+});
+
+test("a result reads naturally mid-sentence: names lower-cased, abbreviations kept", () => {
+  expect(testInSentence("Potassium")).toBe("potassium");
+  expect(testInSentence("Hb")).toBe("Hb");
+  expect(testInSentence("HbA1c")).toBe("HbA1c");
 });

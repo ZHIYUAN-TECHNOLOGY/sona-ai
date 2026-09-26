@@ -13,12 +13,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { capabilityLabels, followUpsFor, Home, leadFor, StreamedLead, SuggestionList, suggestionFor, thinkingLabel, TopBar, type Suggestion } from "./conversation";
 import { capabilitySchema, routePrompt } from "./state";
 import { openSession } from "./navigation";
-import { useServerData } from "@/features/live/server-day";
 import { useEncounter } from "./store";
 import type { Capability, FeatureProps, FocusView } from "./types";
 import { VoiceDock } from "./voice-dock";
 import { QuickRow } from "@/components/sona/quick-actions";
-import { homeActions } from "./quick-actions";
+import { useHomeActions } from "./quick-actions";
 import { defaultMedications } from "./clinical-state";
 import { nextSteps, type Step } from "./next-steps";
 import { NextStepBar, NextStepSheet, useNextStep } from "./next-step";
@@ -43,7 +42,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const store = useEncounter();
   const { patients, encounters, request, runInPlace, cancel, voiceInput, compactResponses, selectPatient, leaveVisit, updateEncounter } = store;
   const home = mode === "home";
-  useServerData(); // live mode: the sticky quick row follows the server's tasks and results
+  const homeKeys = useHomeActions(patients, encounters); // live mode: follows the server's visits, tasks and results
   // Home ignores any visit another screen left selected; a session only ever shows its own visit.
   // Read straight from the route so the first frame of the push already shows this visit.
   const patient = home ? undefined : patients.find(p => p.id === sessionId);
@@ -243,7 +242,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     {!home && sections.length >= 2 && !active && <View pointerEvents="box-none" style={{ position: "absolute", top: TAB_TOP, left: 0, right: 0, alignItems: "center", zIndex: 2 }}>
       <SectionTabs sections={sections} active={Math.min(activeTab, sections.length - 1)} onPick={jumpTo} />
     </View>}
-    {home && !requests.length && <QuickRow actions={homeActions(patients, encounters)} scroll={scrollSV} from={210} top={insets.top + 62} />}
+    {home && !requests.length && <QuickRow actions={homeKeys} scroll={scrollSV} from={210} top={insets.top + 62} />}
     <TopBar patient={patient} inEncounter={!home} openTasks={(patient ? [encounter] : Object.values(encounters)).reduce((sum, value) => sum + (value?.tasks.filter(task => !task.completed).length ?? 0), 0)} faded={scrolled || requests.length > 0} onMenu={openDrawer} onBack={home ? undefined : () => router.canGoBack() ? router.back() : router.replace("/")} onPatient={() => router.push({ pathname: "/patients", params: { switch: "1" } })} onTasks={() => router.push("/tasks")} />
     </View>
 
