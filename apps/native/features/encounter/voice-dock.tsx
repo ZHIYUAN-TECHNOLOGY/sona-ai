@@ -94,6 +94,9 @@ export function VoiceDock(props: Props) {
   const { reducedMotion, reducedTransparency } = useAccessibleEffects();
   const [mode, setMode] = useState<Mode>("idle");
   const [used, setUsed] = useState(false);
+  // The coach mark says its piece and steps aside, so it never sits over the actions on the page behind it.
+  const [coached, setCoached] = useState(false);
+  useEffect(() => { const timer = setTimeout(() => setCoached(true), 6000); return () => clearTimeout(timer); }, []);
   const [menu, setMenu] = useState(false);
   const menuProgress = useSharedValue(0), menuExtend = useSharedValue(0);
   const [armed, setArmed] = useState(false);
@@ -266,7 +269,7 @@ export function VoiceDock(props: Props) {
             style={{ position: "absolute", bottom: BAR_H + 4, alignSelf: "center" }}>
             <AttachmentStack items={attachments} reduced={reducedMotion} onPress={openMenu} />
           </Animated.View>}
-          {!used && !quiet && !busy && mode === "idle" && !attachments.length && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ delay: 600, distance: 6, scale: 0.96, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="none"
+          {!used && !coached && !quiet && !busy && mode === "idle" && !attachments.length && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ delay: 600, distance: 6, scale: 0.96, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="none"
             style={{ position: "absolute", bottom: BAR_H + 8, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 6, paddingRight: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.94)", boxShadow: "0 6px 20px rgba(24,32,48,0.1)", transformOrigin: "bottom" }}>
             <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: "#E4EDFD", alignItems: "center", justifyContent: "center" }}><BrandIcon name="wave" size={14} color={palette.blue} strokeWidth={1.8} /></View>
             <Text style={{ fontSize: 13, fontWeight: "500", color: palette.ink }}>Tap or hold to talk</Text>

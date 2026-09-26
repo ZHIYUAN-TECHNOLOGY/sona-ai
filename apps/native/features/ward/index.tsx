@@ -146,7 +146,8 @@ export function WardScreen() {
     </Animated.View>
 
     {open && current && <BedCard bed={current} from={open.from} to={{ x: 12, y: insets.top + 52, w: width - 24, h: height - insets.top - 52 - insets.bottom - 12 }} p={p} owners={owners} onAssign={assign} onClose={close}
-      onDischarge={() => { if (!current.patientId) return; selectPatient(current.patientId); router.push("/discharge"); }} />}
+      // The card closes behind the discharge screen, so coming back shows the ward (and the bed it freed), not a stale card.
+      onDischarge={() => { if (!current.patientId) return; selectPatient(current.patientId); router.push("/discharge"); p.set(0); setOpen(undefined); }} />}
   </View>;
 }
 

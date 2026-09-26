@@ -4,7 +4,8 @@ import { PENDING_RESULT, testInSentence } from "@/features/day/model";
 import { newestResult, serverDayPatients } from "@/features/live/day";
 import { acknowledgeResult, useServerData, useServerDay, type ServerData } from "@/features/live/server-day";
 import { localDate } from "@/features/tasks/state";
-import { wardBeds, wardSummary } from "@/features/ward/model";
+import { useServerEncounter } from "@/features/live/sync";
+import { DEMO_PATIENT, wardBeds, wardSummary } from "@/features/ward/model";
 import { defaultMedications } from "./clinical-state";
 import { openSession } from "./navigation";
 import type { Encounter, Patient } from "./types";
@@ -21,6 +22,8 @@ function pendingResult(server: ServerData) {
 export function useHomeActions(patients: Patient[], encounters: Record<string, Encounter | undefined>) {
   const server = useServerData();
   const today = useServerDay(server ? localDate(new Date()) : undefined);
+  // The ward key counts bed 6 from Amelia's encounter, so it needs the server's record of it too.
+  useServerEncounter(patients.find(p => p.id === DEMO_PATIENT));
   return homeActions(today ? serverDayPatients(patients, today) : patients, encounters, server);
 }
 

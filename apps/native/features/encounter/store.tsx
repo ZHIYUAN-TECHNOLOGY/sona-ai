@@ -1,3 +1,4 @@
+import * as SecureStore from "expo-secure-store";
 import { createContext, use, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { AppState } from "react-native";
 import { refreshPendingResult } from "@/features/day/model";
@@ -16,6 +17,7 @@ type Store = {
   voiceInput: boolean; setVoiceInput: (value: boolean) => void; compactResponses: boolean; setCompactResponses: (value: boolean) => void; simulateInvalid: boolean; setSimulateInvalid: (value: boolean) => void;
   simulateFailure: boolean; setSimulateFailure: (enabled: boolean) => void; showDemoControls: boolean; setShowDemoControls: (value: boolean) => void; reset: () => void;
 };
+const DEMO_CONTROLS_KEY = "sona.demoControls";
 const Context = createContext<Store | null>(null);
 export function EncounterProvider({ children }: { children: ReactNode }) {
   const [patientId, setPatientId] = useState<string>();
@@ -33,7 +35,10 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
   const [voiceInput, setVoiceInput] = useState(true);
   const [compactResponses, setCompactResponses] = useState(false);
   // Prototype/fixture controls stay out of clinical answers unless a presenter turns them on.
-  const [showDemoControls, setShowDemoControls] = useState(false);
+  const [showDemoControls, setShowDemoControlsState] = useState(false);
+  // Remembered across reloads, so a presenter's rehearsal setup survives a JS reload mid-demo.
+  useEffect(() => { SecureStore.getItemAsync(DEMO_CONTROLS_KEY).then(v => { if (v === "1") setShowDemoControlsState(true); }).catch(() => {}); }, []);
+  const setShowDemoControls = useCallback((value: boolean) => { setShowDemoControlsState(value); SecureStore.setItemAsync(DEMO_CONTROLS_KEY, value ? "1" : "0").catch(() => {}); }, []);
   const stateRef = useRef(encounters); stateRef.current = encounters;
   const activeRef = useRef(patientId); activeRef.current = patientId;
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
