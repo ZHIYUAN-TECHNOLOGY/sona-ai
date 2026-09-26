@@ -1,6 +1,6 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
-import { guaranteeLetters } from "@sona-ai/db/schema/clinical";
+import { findings, guaranteeLetters } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
 import { createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
@@ -120,4 +120,15 @@ test("every findings route needs a signed-in doctor", async () => {
   const { api } = await signedIn({}, false);
   for (const call of [() => api.findings.detect({ encounterId: "visit-1042" }), () => api.findings.list({}), () => api.findings.track({ findingId: "f", requestId: "r" }), () => api.findings.dismiss({ findingId: "f", reason: "r" })])
     expect((await call().catch(e => e)).code).toBe("UNAUTHORIZED");
+});
+
+test("a new read refreshes where a finding is marked, but never its status, due date or rule once tracked", async () => {
+  const { api, db, clock } = await signedIn();
+  const [nodule] = await api.findings.detect({ encounterId: "visit-1042" });
+  await db.update(findings).set({ location: { x: 0.34, y: 0.3, zone: "right upper zone" } }).where(eq(findings.id, nodule!.id)); // read before boxes existed
+  await api.findings.track({ findingId: nodule!.id, requestId: "track-1" });
+  clock.now = new Date("2026-09-27T10:00:00+08:00");
+  const [again] = await api.findings.detect({ encounterId: "visit-1042" });
+  expect(again).toMatchObject({ status: "tracked", location: { box: [0.26, 0.29, 0.34, 0.39] } });
+  expect(again!.dueAt).toEqual(nodule!.dueAt);
 });

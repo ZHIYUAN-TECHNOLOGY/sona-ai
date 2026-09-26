@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { appointments, encounters, findings, followUpRules, patients, provenance, tasks } from "@sona-ai/db/schema/clinical";
 import { dueDate, findingLine, isOverdue, ruleFor } from "@sona-ai/domain/findings";
-import { and, asc, eq, inArray, type SQL } from "drizzle-orm";
+import { and, asc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 
 import { findingDismissSchema, findingTrackSchema } from "../contracts";
@@ -45,7 +45,8 @@ export const findingsRouter = {
         location: f.location, riskBand: rule?.riskBand ?? "intermediate", ruleId: rule?.id, source: read.source === "model" ? read.model : "fixture",
         dueAt: rule && dueDate(rule, at), createdAt: at,
       };
-    })).onConflictDoNothing();
+    // A repeat read may place the mark better (or add its box); status, rule and due date stay as they were.
+    })).onConflictDoUpdate({ target: findings.id, set: { location: sql`excluded.location`, label: sql`excluded.label`, source: sql`excluded.source` } });
     return listFindings(db, hospitalId, at, inArray(findings.id, ids));
   }),
   /**

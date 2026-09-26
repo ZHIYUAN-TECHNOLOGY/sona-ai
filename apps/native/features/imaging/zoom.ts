@@ -42,3 +42,20 @@ export function zoomAround(focal: number, translate: number, from: number, to: n
   "worklet";
   return focal - ((focal - translate) * to) / from;
 }
+
+/**
+ * The marker under a tap on the zoomed and panned viewport, within `reach` points on screen: the
+ * tap is taken back to the unzoomed image the markers are placed on.
+ */
+export function markerUnder(markers: { id: string; x: number; y: number }[], tapX: number, tapY: number, view: { w: number; h: number; aspect: number; scale: number; x: number; y: number }, reach: number) {
+  "worklet";
+  const { w, h, aspect, scale, x, y } = view;
+  const ix = (tapX - w / 2 - x) / scale + w / 2, iy = (tapY - h / 2 - y) / scale + h / 2;
+  let hit: string | undefined, best = reach / scale;
+  for (const m of markers) {
+    const [px, py] = markerAt(w, h, aspect, m.x, m.y);
+    const d = Math.hypot(px - ix, py - iy);
+    if (d < best) { best = d; hit = m.id; }
+  }
+  return hit;
+}

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "bun:test";
-import { MAX_ZOOM, clamp, fitted, limit, markerAt, rubberBand, zoomAround } from "./zoom";
+import { describe, expect, it, test } from "bun:test";
+import { MAX_ZOOM, clamp, fitted, limit, markerAt, markerUnder, rubberBand, zoomAround } from "./zoom";
 
 describe("image viewer geometry", () => {
   it("fits a portrait radiograph by width in a taller viewport, and by height in a wider one", () => {
@@ -38,4 +38,13 @@ describe("image viewer geometry", () => {
     expect(markerAt(400, 300, 1, 0.5, 0.5)).toEqual([200, 150]);
     expect(markerAt(400, 300, 1, 1, 1)).toEqual([350, 300]);
   });
+});
+
+test("a tap on a zoomed, panned image lands back on the marker it covers, and misses by more than a fingertip land nowhere", () => {
+  // 300 x 400 viewport, square image (letterboxed to 300 x 300), zoomed 2x and panned 50 pt left.
+  const markers = [{ id: "nodule", x: 0.34, y: 0.3 }, { id: "heart", x: 0.56, y: 0.62 }];
+  const [px, py] = markerAt(300, 400, 1, 0.34, 0.3); // 102, 140 unzoomed
+  const tapX = (px - 150) * 2 + 150 - 50, tapY = (py - 200) * 2 + 200;
+  expect(markerUnder(markers, tapX, tapY, { w: 300, h: 400, aspect: 1, scale: 2, x: -50, y: 0 }, 28)).toBe("nodule");
+  expect(markerUnder(markers, 10, 10, { w: 300, h: 400, aspect: 1, scale: 2, x: -50, y: 0 }, 28)).toBeUndefined();
 });

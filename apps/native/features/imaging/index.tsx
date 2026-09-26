@@ -3,7 +3,7 @@ import * as Haptics from "expo-haptics";
 import { Image, type ImageSource } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import Animated, { cancelAnimation, Easing, FadeIn, FadeOut, useSharedValue, withRepeat, withSpring, withTiming } from "react-native-reanimated";
@@ -194,7 +194,11 @@ export function XrayScreen() {
   // Demo flow 6: findings beyond the question asked, marked on the image and listed under it.
   const found = useFindings();
   const findings = found.findings.filter(f => f.encounterId === patient?.encounterId);
-  const markers = findings.filter(f => f.status !== "dismissed").map(f => ({ id: f.id, n: findings.indexOf(f) + 1, x: f.location.x, y: f.location.y }));
+  const markers = useMemo(() => findings.filter(f => f.status !== "dismissed").map(f => ({ id: f.id, n: findings.indexOf(f) + 1, x: f.location.x, y: f.location.y, label: f.label, box: f.location.box })), [findings.map(f => `${f.id}:${f.status}`).join()]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The finding under the torch; one tap on a marker or its row, and a dismissed finding lets go of it.
+  const [focus, setFocus] = useState<string>();
+  const focused = markers.some(m => m.id === focus) ? focus : undefined;
+  const focusOn = useCallback((id: string | undefined) => { haptic(); setFocus(current => (id === current ? undefined : id)); }, []);
   useEffect(() => { if (patient) found.detect(patient.encounterId); }, [found.live, patient?.encounterId]); // eslint-disable-line react-hooks/exhaustive-deps
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
@@ -262,8 +266,8 @@ export function XrayScreen() {
     ]} />}
     <Identity>{attachment ? `${patient.name} · local teaching image` : "Reference example · not this patient"}</Identity>
     {pickerError && <Notice warning>{pickerError}</Notice>}
-    <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} />
-    <FindingsCard findings={findings} error={found.error} onTrack={f => void found.track(f)} onDismiss={(f, reason) => void found.dismiss(f, reason)} />
+    <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} />
+    <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={f => void found.track(f)} onDismiss={(f, reason) => void found.dismiss(f, reason)} />
     {/* The latest analysis sits right under the image: one page, no separate details screen. */}
     <AnalysisDetails snapshot={encounter?.cards.findLast(card => card.kind === "xray" && card.imagingSnapshot)?.imagingSnapshot} />
 
