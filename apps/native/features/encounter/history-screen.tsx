@@ -8,6 +8,7 @@ import { palette } from "@/components/sona/theme";
 import { TermLegend } from "@/components/sona/marked-text";
 import { simulateCriticalResult } from "@/features/critical";
 import { setLive, useLive } from "@/features/live";
+import { useLiveStatus } from "@/features/live/channel";
 import { useLiveLibrary } from "@/features/live/library-sync";
 import { useEncounter } from "./store";
 import { openSession } from "./navigation";
@@ -21,9 +22,11 @@ export function HistoryScreen() {
 /** Switches the discharge, guarantee-letter, ward and audit screens to the live server. */
 function LiveCard() {
   const { wanted, user } = useLive();
+  const updates = useLiveStatus();
   return <Card label="Backend" title="Live backend">
     <Host colorScheme="light" seedColor={palette.blue} style={{ height: 44 }}><Switch label="Use the live backend" value={wanted} onValueChange={setLive} /></Host>
     <Body muted>{user ? `Signed in as ${user.email}. Discharge, guarantee letter, ward owners, coding audit, tasks, results, My Day, prescribing checks, the note, handover and X-ray upload use the server; answers that need a model stay authored.` : "Sign in first; until then every screen stays on fixtures."}</Body>
+    {user && wanted && <Body muted>{updates === "connected" ? "Live updates connected: changes on the server appear straight away." : updates === "connecting" ? "Connecting live updates…" : "Live updates off."}</Body>}
     {!user && <Action label="Sign in" secondary onPress={() => router.push("/account")} />}
   </Card>;
 }

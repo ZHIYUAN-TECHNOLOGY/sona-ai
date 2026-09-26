@@ -44,7 +44,7 @@ test("sending a claim creates a review link; the page shows the packet: patient,
 test("the insurer approves: the claim is approved, the guarantee letter received, and a second decision changes nothing", async () => {
   const { db, api, clock, token } = await sentClaim();
   clock.now = new Date(clock.now.getTime() + 5 * 60_000);
-  expect(await decideReview(db, token, "approve", "", clock.now)).toEqual({ ok: true, status: "approved" });
+  expect(await decideReview(db, token, "approve", "", clock.now)).toEqual({ ok: true, status: "approved", hospitalId: "demo", encounterId: "visit-1042" });
   expect(await api.claim.status({ encounterId: "visit-1042" })).toMatchObject({ status: "approved", approvedAt: clock.now.toISOString() });
   expect((await db.select().from(guaranteeLetters).where(eq(guaranteeLetters.id, "gl-1042")))[0]).toMatchObject({ status: "received" });
   expect(await decideReview(db, token, "query", "Why IV?", clock.now)).toEqual({ ok: false, reason: "Already decided: approved" });
@@ -53,7 +53,7 @@ test("the insurer approves: the claim is approved, the guarantee letter received
 test("the insurer queries: the claim shows their question, the letter stays outstanding, and an expired link cannot decide", async () => {
   const { db, api, clock, token } = await sentClaim();
   expect(await decideReview(db, token, "query", "  ", clock.now)).toEqual({ ok: false, reason: "Write the question for the doctor" });
-  expect(await decideReview(db, token, "query", "Please attach the sputum culture request.", clock.now)).toEqual({ ok: true, status: "queried" });
+  expect(await decideReview(db, token, "query", "Please attach the sputum culture request.", clock.now)).toMatchObject({ ok: true, status: "queried", encounterId: "visit-1042" });
   expect(await api.claim.status({ encounterId: "visit-1042" })).toMatchObject({ status: "queried", query: "Please attach the sputum culture request." });
   expect((await db.select().from(guaranteeLetters).where(eq(guaranteeLetters.id, "gl-1042")))[0]).toMatchObject({ status: "requested" });
   const other = await sentClaim();

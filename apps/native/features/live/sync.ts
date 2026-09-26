@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useEncounter } from "@/features/encounter/store";
 import type { Encounter, Patient } from "@/features/encounter/types";
 import { api, errorText, useLive } from ".";
+import { useLiveChanges } from "./channel";
 import { mergeServerState, type ServerVisitState } from "./day";
 
 /**
@@ -39,12 +40,15 @@ export function useServerEncounter(patient: Patient | undefined) {
   // Keyed on the encounter ID: the patient object is rebuilt on every render.
   }, [on, encounterId, patientId]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { void refresh().catch(() => {}); }, [refresh]);
+  // Live updates: re-read as soon as the server says this visit changed (a claim decided, a discharge, an edit elsewhere).
+  useLiveChanges(["visit"], () => { void refresh(true).catch(() => {}); }, encounterId);
   // While the claim is with the insurer, keep checking so the guarantee letter clears on whichever screen is open.
   const { encounters } = useEncounter();
   const waiting = on && patient ? encounters[patient.id]?.claim?.status === "sent" : false;
   useEffect(() => {
     if (!waiting) return;
-    const timer = setInterval(() => { void refresh().catch(() => {}); }, 5000);
+    // Safety net only: the insurer's decision normally arrives over live updates.
+    const timer = setInterval(() => { void refresh().catch(() => {}); }, 30_000);
     return () => clearInterval(timer);
   }, [waiting, refresh]);
   return { live: on, refresh };

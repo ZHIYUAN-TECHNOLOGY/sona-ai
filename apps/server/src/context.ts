@@ -27,12 +27,18 @@ export async function createContext({ context }: CreateContextOptions): Promise<
     uploads: (context.env as Env).UPLOADS,
     publicUrl: ENV.BETTER_AUTH_URL,
     mail: mailOf(context.env as Env),
+    announce: announcer(context.env as Env),
     // ponytail: hashed bag-of-words vectors until EmbeddingGemma runs in box ②; swap stubEmbedder for it then (and re-ingest).
     library: { ingest: (doc, text) => ingest(db, doc, text, stubEmbedder), search: input => search(db, input, stubEmbedder) },
   };
 }
 
 export type Context = Awaited<ReturnType<typeof createContext>>;
+
+/** Changes go to the hospital's channel, which pushes them to its connected apps. */
+export function announcer(env: Env): ApiContext["announce"] {
+  return (hospitalId, change) => env.CHANNELS.get(env.CHANNELS.idFromName(hospitalId)).announce(change);
+}
 
 /** Email only once a sender and the insurer's inbox are configured (see packages/infra/alchemy.run.ts). */
 function mailOf(env: Env): ApiContext["mail"] {

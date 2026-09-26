@@ -8,13 +8,14 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
-import { createContext } from "./context";
+import { announcer, createContext } from "./context";
 import { ENV } from "./env.server";
 import { createAuth, getDb } from "./services";
 import { runNightlyAudit } from "@sona-ai/api/audit-job";
 import { decideReview, renderReviewPage, reviewPacket } from "@sona-ai/api/insurer";
 import { sendDueCheckIns } from "@sona-ai/api/routers/check-ins";
 import { hospitals } from "@sona-ai/db/schema/clinical";
+import { hospitalOf } from "@sona-ai/api/routers/hospital";
 
 const app = new Hono();
 
@@ -87,10 +88,24 @@ app.post("/insurer/:token", async (c) => {
   const form = await c.req.parseBody();
   const decision = form.decision === "query" ? "query" : "approve";
   const result = await decideReview(db, token, decision, typeof form.note === "string" ? form.note : "", new Date());
-  if (result.ok) return c.redirect(`/insurer/${token}`, 303);
+  if (result.ok) {
+    await announcer(c.env as Env)?.(result.hospitalId, { topic: "claim", encounterId: result.encounterId }).catch(() => {});
+    return c.redirect(`/insurer/${token}`, 303);
+  }
   const packet = await reviewPacket(db, token, new Date());
   if (!packet) return c.text("This review link is not valid.", 404);
   return c.html(renderReviewPage(packet, result.reason), 400, { "cache-control": "no-store" });
+});
+
+// Live updates: a signed-in app opens one WebSocket here and joins its hospital's channel.
+app.get("/live", async (c) => {
+  if (c.req.header("upgrade")?.toLowerCase() !== "websocket") return c.text("Expected a WebSocket", 426);
+  const db = await getDb();
+  const session = await (await createAuth(db)).api.getSession({ headers: c.req.raw.headers });
+  if (!session?.user) return c.text("Sign in first", 401);
+  const hospitalId = await hospitalOf(db, session.user.id);
+  const env = c.env as Env;
+  return env.CHANNELS.get(env.CHANNELS.idFromName(hospitalId)).fetch(c.req.raw);
 });
 
 app.get("/", (c) => {
@@ -98,6 +113,7 @@ app.get("/", (c) => {
 });
 
 export { EncounterState } from "./encounter-state";
+export { HospitalChannel } from "./hospital-channel";
 
 /** Matches the hourly cron in packages/infra/alchemy.run.ts. */
 const CHECK_IN_CRON = "0 * * * *";

@@ -72,7 +72,7 @@ export function ClaimScreen() {
               if (r.status !== "approved") return;
               clearInterval(poll); updateEncounter(value => approveClaim(value, new Date(r.approvedAt ?? Date.now()))); haptic("success");
             }).catch(() => {});
-          }, 3000);
+          }, 20_000); // safety net: live updates bring the decision straight away
           timers.current.push(poll as unknown as ReturnType<typeof setTimeout>);
         })
         // A refusal means the server knows something this screen does not: show why and reload its state.

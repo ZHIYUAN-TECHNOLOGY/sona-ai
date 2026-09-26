@@ -17,7 +17,7 @@ const notify = () => listeners.forEach(l => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 
 /** Re-reads the server's findings; with an encounter, runs detection on it first (a rerun changes nothing). */
-async function refreshFindings(detect?: string) {
+export async function refreshFindings(detect?: string) {
   if (detect) await api.findings.detect({ encounterId: detect });
   server = await api.findings.list({});
   notify();

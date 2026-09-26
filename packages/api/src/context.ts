@@ -2,6 +2,7 @@ import type { Session } from "@sona-ai/auth";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 
 import type { EncounterEdit, RecordReview, RetrievalHit, SearchInput } from "./contracts";
+import type { Change } from "./events";
 import type { Models } from "./models";
 import type { EncounterSnapshot } from "./routers/encounter";
 
@@ -28,6 +29,8 @@ export type Context = {
   publicUrl?: string;
   /** Outbound email (Cloudflare Email Service); absent until a sending domain and the inboxes are configured. */
   mail?: Mail;
+  /** Live updates: tells the hospital's connected apps what a write changed (see ./events). */
+  announce?: (hospitalId: string, change: Change) => Promise<void>;
   /** The retrieval library: the Worker passes packages/retrieval's ingest and search, which import this package, so they come in here. */
   library?: Library;
 };

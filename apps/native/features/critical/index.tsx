@@ -32,7 +32,8 @@ export async function simulateCriticalResult(live: boolean) {
   await refreshServerData();
 }
 
-const POLL_MS = 10_000;
+// Live updates push new results; this slow check is only the safety net.
+const POLL_MS = 60_000;
 
 export function CriticalAlert() {
   const insets = useSafeAreaInsets();
@@ -40,7 +41,7 @@ export function CriticalAlert() {
   const { on: live } = useLive();
   const server = useServerData();
   const fixture = useSyncExternalStore(l => { listeners.add(l); return () => { listeners.delete(l); }; }, () => local);
-  // Live: check for new results every 10 s while signed in with live mode on.
+  // Live: a slow safety check; new results normally arrive over live updates.
   useEffect(() => {
     if (!live) return;
     const timer = setInterval(() => { void refreshServerData().catch(() => {}); }, POLL_MS);

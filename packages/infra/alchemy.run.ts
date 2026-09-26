@@ -5,6 +5,7 @@ import * as Effect from "effect/Effect";
 import "varlock/auto-load";
 
 import type { EncounterState } from "../../apps/server/src/encounter-state";
+import type { HospitalChannel } from "../../apps/server/src/hospital-channel";
 
 /** Audio and X-ray uploads (presigned URLs from the Worker). */
 export const uploads = Cloudflare.R2.Bucket("uploads");
@@ -20,6 +21,8 @@ export const server = Cloudflare.Worker("server", {
     BETTER_AUTH_SECRET: Config.Redacted("BETTER_AUTH_SECRET"),
     BETTER_AUTH_URL: Cloudflare.Worker.URL,
     ENCOUNTERS: Cloudflare.DurableObject<EncounterState>("ENCOUNTERS", { className: "EncounterState" }),
+    // Live updates: one channel per hospital that pushes "what changed" to connected apps.
+    CHANNELS: Cloudflare.DurableObject<HospitalChannel>("CHANNELS", { className: "HospitalChannel" }),
     UPLOADS: uploads,
     // Cloudflare Email Service. Sending needs a domain onboarded under Email Service > Email Sending;
     // until EMAIL_FROM and INSURER_EMAIL are set, the review link is only shown in the app.

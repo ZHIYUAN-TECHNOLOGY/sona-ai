@@ -2,6 +2,7 @@ import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { api, useLive } from ".";
+import { useLiveChanges } from "./channel";
 
 export type ServerBed = Awaited<ReturnType<AppRouterClient["ward"]["beds"]>>[number];
 
@@ -14,11 +15,14 @@ export type ServerBed = Awaited<ReturnType<AppRouterClient["ward"]["beds"]>>[num
 export function useServerBeds(key?: unknown) {
   const { on } = useLive();
   const [beds, setBeds] = useState<ServerBed[]>();
+  // Live updates: a change to any bed (a letter approved, an owner assigned elsewhere) re-reads the ward.
+  const [version, setVersion] = useState(0);
+  useLiveChanges(["ward"], () => setVersion(v => v + 1));
   useFocusEffect(useCallback(() => {
     if (!on) { setBeds(undefined); return; }
     let current = true;
     api.ward.beds().then(rows => { if (current) setBeds(rows); }, () => {});
     return () => { current = false; };
-  }, [on, key]));
+  }, [on, key, version]));
   return on ? beds : undefined;
 }

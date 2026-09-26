@@ -29,7 +29,7 @@ export async function reviewTokenOf(db: Db, encounterId: string) {
 
 async function claimByToken(db: Db, token: string) {
   if (!token) return undefined;
-  const [row] = await db.select({ claim: claims, patient: patients.name, state: encounters.state, patientId: patients.id }).from(claims)
+  const [row] = await db.select({ claim: claims, patient: patients.name, state: encounters.state, patientId: patients.id, hospitalId: encounters.hospitalId }).from(claims)
     .innerJoin(encounters, eq(encounters.id, claims.encounterId)).innerJoin(patients, eq(patients.id, encounters.patientId))
     .where(eq(claims.reviewToken, token));
   return row;
@@ -69,10 +69,10 @@ export async function decideReview(db: Db, token: string, decision: "approve" | 
     const question = note.trim();
     if (!question) return { ok: false as const, reason: "Write the question for the doctor" };
     await db.update(claims).set({ status: "queried", insurerNote: question.slice(0, 1000), decidedAt: now }).where(eq(claims.id, row.claim.id));
-    return { ok: true as const, status: "queried" as const };
+    return { ok: true as const, status: "queried" as const, hospitalId: row.hospitalId, encounterId: row.claim.encounterId };
   }
   await approveClaimRows(db, row.claim.id, row.patientId, now);
-  return { ok: true as const, status: "approved" as const };
+  return { ok: true as const, status: "approved" as const, hospitalId: row.hospitalId, encounterId: row.claim.encounterId };
 }
 
 const escape = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);

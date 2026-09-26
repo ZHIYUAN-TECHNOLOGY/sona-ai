@@ -17,7 +17,9 @@ const DEMO_SLOTS: Record<string, number> = { "SYN-1042": 15, "SYN-1086": 45 };
  */
 export function refreshDemoTimes(started: (id: string) => boolean, now = new Date()) {
   const clock = now.getHours() * 60 + now.getMinutes();
-  const late = patients.some(p => !started(p.id) && clock - (Number(p.time.slice(0, 2)) * 60 + Number(p.time.slice(3))) > 10);
+  // Minutes past the visit on a 24-hour clock: 00:30 is 45 min after 23:45; more than 12 h past reads as still ahead.
+  const past = (time: string) => (((clock - (Number(time.slice(0, 2)) * 60 + Number(time.slice(3)))) % 1440) + 1440) % 1440;
+  const late = patients.some(p => !started(p.id) && past(p.time) > 10 && past(p.time) <= 720);
   if (!late) return false;
   for (const p of patients) if (!started(p.id) && DEMO_SLOTS[p.id] !== undefined) p.time = demoTime(DEMO_SLOTS[p.id]!, now);
   return true;
