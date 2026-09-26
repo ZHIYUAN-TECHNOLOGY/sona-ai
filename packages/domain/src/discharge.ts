@@ -1,3 +1,4 @@
+import { followUpLine } from "./findings";
 import type { Encounter, Patient, PrescriptionCheck, Task } from "./types";
 
 /**
@@ -51,8 +52,11 @@ const PLAN: DischargePlan = {
 export const canDischarge = (patient: Patient) => !patient.incomplete;
 export const planFor = (_patient: Patient): DischargePlan => PLAN;
 
+/** An incidental finding nobody has tracked or dismissed yet (demo flow 6); it travels with the patient. */
+export type OpenFinding = { id: string; label: string; action: string | null; dueAt?: Date | string | null };
+
 /** What still stands between the patient and the door, in the prescribe card's check shape. */
-export function dischargeChecks(state: DischargeState, plan: DischargePlan): PrescriptionCheck[] {
+export function dischargeChecks(state: DischargeState, plan: DischargePlan, findings: OpenFinding[] = []): PrescriptionCheck[] {
   const changes = plan.meds.filter(m => m.change !== "unchanged");
   const count = (c: MedChange["change"]) => changes.filter(m => m.change === c).length;
   return [
@@ -61,6 +65,7 @@ export function dischargeChecks(state: DischargeState, plan: DischargePlan): Pre
     { id: "gl", label: "Final guarantee letter", status: state.glReceived ? "passed" : "blocked", detail: `${plan.insurer} · requested ${plan.glRequestedAt}` },
     { id: "meds", label: "Take-home medicines", status: state.medsConfirmed ? "passed" : "blocked", detail: [count("changed") && `${count("changed")} changed`, count("new") && `${count("new")} new`, count("stopped") && `${count("stopped")} stopped`].filter(Boolean).join(" · ") },
     { id: "followup", label: "Follow-up booked", status: state.followUp ? "passed" : "blocked", detail: "Clinic review · 2 weeks is usual after pneumonia" },
+    ...findings.map(f => ({ id: `finding-${f.id}`, label: f.label, status: "blocked" as const, detail: followUpLine(f) })),
   ];
 }
 
@@ -94,9 +99,9 @@ export type DischargeReceipt = { status: "discharged"; encounterId: string; requ
 export const openLabels = (checks: PrescriptionCheck[]) => checks.filter(c => c.status === "blocked").map(c => c.label);
 
 /** Server rule: no discharge without a named approver or while any blocker is open, whatever the app shows. */
-export function decideDischarge(state: DischargeState, plan: DischargePlan, command: Approval, fitAt: Date, at: Date): Refusal | DischargeReceipt {
+export function decideDischarge(state: DischargeState, plan: DischargePlan, command: Approval, fitAt: Date, at: Date, findings: OpenFinding[] = []): Refusal | DischargeReceipt {
   if (!command.approvedBy.trim()) return { status: "refused", reason: "unapproved", open: [] };
-  const open = openLabels(dischargeChecks(state, plan));
+  const open = openLabels(dischargeChecks(state, plan, findings));
   if (open.length) return { status: "refused", reason: "blocked", open };
   const { encounterId, requestId, approvedBy } = command;
   return { status: "discharged", encounterId, requestId, approvedBy, dischargedAt: at.toISOString(), savedMinutes: minutesSaved(fitAt, at) };

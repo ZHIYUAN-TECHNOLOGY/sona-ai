@@ -1,11 +1,12 @@
 import { ORPCError } from "@orpc/server";
-import { admissions, encounters, guaranteeLetters, patients, receipts, tasks } from "@sona-ai/db/schema/clinical";
+import { admissions, encounters, findings, guaranteeLetters, patients, receipts, tasks } from "@sona-ai/db/schema/clinical";
 import { EMPTY_DISCHARGE, TYPICAL_WAIT_MINUTES, decideDischarge, dischargeChecks, dischargeTasks, planFor, type DischargeState } from "@sona-ai/domain/discharge";
 import type { Patient } from "@sona-ai/domain/types";
 import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 
 import { approvedCommandSchema, dischargeUpdateSchema } from "../contracts";
 import { protectedProcedure } from "../index";
+import { listFindings } from "./findings";
 import { assertApprover } from "./hospital";
 import { loadEncounter } from "./encounter";
 
@@ -45,11 +46,12 @@ export const dischargeRouter = {
     const state: DischargeState = { ...EMPTY_DISCHARGE, ...encounter.state.discharge, glReceived: !gl || gl.status === "received" };
     const at = new Date();
     const fitAt = row.admission.fitAt ?? new Date(at.getTime() - plan.fitMinutesAgo * 60000);
+    const openFindings = await listFindings(db, hospitalId, at, and(eq(findings.encounterId, input.encounterId), eq(findings.status, "open"))); // lane F6
     // The domain guard decides; the refusal carries the blocked checks so the app can show them.
-    const decision = decideDischarge(state, plan, input, fitAt, at);
+    const decision = decideDischarge(state, plan, input, fitAt, at, openFindings);
     if (decision.status === "refused") throw new ORPCError("PRECONDITION_FAILED", {
       message: decision.reason === "unapproved" ? "Discharge needs a named approver" : "Discharge is blocked",
-      data: { reason: decision.reason, blockers: dischargeChecks(state, plan).filter(c => c.status === "blocked") },
+      data: { reason: decision.reason, blockers: dischargeChecks(state, plan, openFindings).filter(c => c.status === "blocked") },
     });
     const { savedMinutes } = decision;
     const followUps = dischargeTasks(person, state, plan, at);

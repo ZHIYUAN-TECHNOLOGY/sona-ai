@@ -61,6 +61,8 @@ function demoBed(patient: Patient | undefined, encounter: Encounter | undefined)
 export type BedRows = {
   admissionId: string; gl?: { status: "requested" | "received"; claimStatus?: "draft" | "sent" | "approved" };
   medsConfirmed: boolean; followUpBooked: boolean; pendingResults: { id: string; test: string; expected?: string }[];
+  /** Incidental findings nobody has tracked or dismissed yet (demo flow 6). */
+  openFindings?: { id: string; label: string }[];
 };
 
 /** A bed's blockers derived from rows (the server version of demoBed); ids are stable so owners stick. */
@@ -70,6 +72,7 @@ export function bedBlockers(rows: BedRows): WardBlocker[] {
   if (!rows.medsConfirmed) blockers.push({ id: `${id}-meds`, kind: "pharmacy", label: "Take-home medicines", detail: "Not yet confirmed" });
   if (!rows.followUpBooked) blockers.push({ id: `${id}-followup`, kind: "booking", label: "Follow-up booking", detail: "Clinic review not booked" });
   for (const r of rows.pendingResults) blockers.push({ id: `${id}-result-${r.id}`, kind: "result", label: r.test, detail: r.expected ? `Expected by ${r.expected}` : "Pending" });
+  for (const f of rows.openFindings ?? []) blockers.push({ id: `${id}-finding-${f.id}`, kind: "result", label: f.label, detail: "Unvalidated finding · follow-up not tracked" });
   return blockers;
 }
 
