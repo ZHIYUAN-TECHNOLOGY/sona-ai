@@ -40,7 +40,12 @@ For feature details, consult [PRD](prd.md), [storyboard](demo-storyboard.md) and
 
 JSON controls allowlisted native composition. Patient/encounter identity, clinical state, callbacks and action status remain app-owned. Preserve stable stream element IDs, source checks, cancellation and revision guards. Read the [presentation adapter notes](../apps/native/features/presentation/README.md) before changing this boundary. JEV-style composition has been adopted for the backend. The published `@json-render/core` 0.21.0 already exports `experimental_composeSpec`; pin that exact version. Its `evaluate` function is a self-hosted Laya server, not Vercel's hosted model. See [UI composition research](research/ui-composition.md).
 
-The existing backend/auth/database/infra directories are scaffold code; the [delivery plan](delivery-plan.md#architecture) says what to keep and what to add. The new clinical UI has no Baseten inference, actual microphone capture, hospital persistence or pharmacy connection. Runtime edits currently live in memory and can be lost on reload. Keep synthetic labels accurate.
+The backend foundation is built and deployed (26 Sep 2026): shared rules in `packages/domain`, contracts in `packages/api/src/contracts.ts`, the clinical schema and seed in `packages/db`, hybrid retrieval in `packages/retrieval`, and login-protected routes for encounters, discharge, claims, the ward, the coding audit and tasks in `packages/api/src/routers`. Model calls are stubbed until the Baseten boxes (lane B) come off hold. The app still runs on its in-memory fixtures; pointing it at the server is integration work (wave 3 in the [delivery plan](delivery-plan.md#sequence)). Keep synthetic labels accurate.
+
+**Staging** (synthetic data only):
+- Worker: https://sona-ai-server-staging-uxfqzyce5rxhzsju.zhiyuantech.workers.dev (health check `POST /rpc/healthCheck`; clinical routes need a login).
+- Database: Neon project `sona-ai-staging` in Singapore (`aws-ap-southeast-1`), database `sona`. Its connection string lives only in the gitignored `apps/server/.env` and the Worker's encrypted settings.
+- Update it from the repo root: `bun run db:migrate`, then `bun run db:seed` (safe to rerun), then `bun run deploy`, which always targets the `staging` Alchemy stage. Alchemy reads `CLOUDFLARE_ACCOUNT_ID` from the saved profile in `~/.alchemy/config.json`; if its Cloudflare login lapses, rerun `bunx alchemy profile refresh --profile default --provider Cloudflare` in a real terminal.
 
 ## Preview without disturbing other projects
 
@@ -83,4 +88,4 @@ Use the package's `check-types` script for the native/API type dependency build.
 
 The user requested agent-device for mobile interaction; use its installed skill. For additional motion inspiration, use 60fpsdesign search/detail/breakdown/code/related-shot tools when available, translating SwiftUI references into React Native. Relevant requested skills include emil-design-eng, animate-expo, global-dev-toolkit:animations, expo-native-ui and react-native-best-practices. Discover what the new session actually exposes; previous MCP availability does not guarantee the same tools in Claude.
 
-The implementation used native subagents with separate feature ownership in this same worktree. Follow the current host's delegation and managed-workspace rules if further parallel work is requested. No new worktrees/branches, deployment, publication, push or target-branch merge was performed. This document prepares a handoff; it does not itself launch a Claude session or authorize backend provisioning.
+The implementation used native subagents with separate feature ownership in this same worktree. Follow the current host's delegation and managed-workspace rules if further parallel work is requested. This document prepares a handoff; it does not itself launch a Claude session or authorize backend provisioning.
