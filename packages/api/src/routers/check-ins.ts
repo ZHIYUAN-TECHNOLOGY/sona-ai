@@ -6,7 +6,7 @@ import { and, asc, eq, inArray, isNull, lte } from "drizzle-orm";
 import { z } from "zod";
 
 import { clockOf, type Context } from "../context";
-import { checkInReplySchema } from "../contracts";
+import { checkInReplySchema, type CheckInReply } from "../contracts";
 import { protectedProcedure } from "../index";
 import { stubModels } from "../models";
 
@@ -31,11 +31,13 @@ export async function sendDueCheckIns(db: Context["db"], hospitalId: string, now
   return { sent: sent.length };
 }
 
-async function listCheckIns(db: Context["db"], hospitalId: string, encounterId?: string): Promise<CheckIn[]> {
+/** A hospital's check-ins with their replies, for one visit or (Sona Care) one patient when given. */
+export async function listCheckIns(db: Context["db"], hospitalId: string, { encounterId, patientId }: { encounterId?: string; patientId?: string } = {}): Promise<CheckIn[]> {
   const rows = await db.select({
     id: checkIns.id, patientId: checkIns.patientId, encounterId: checkIns.encounterId, day: checkIns.day, language: checkIns.language,
     message: checkIns.message, dueAt: checkIns.dueAt, sentAt: checkIns.sentAt,
-  }).from(checkIns).where(and(eq(checkIns.hospitalId, hospitalId), encounterId ? eq(checkIns.encounterId, encounterId) : undefined)).orderBy(asc(checkIns.dueAt));
+  }).from(checkIns).where(and(eq(checkIns.hospitalId, hospitalId), encounterId ? eq(checkIns.encounterId, encounterId) : undefined, patientId ? eq(checkIns.patientId, patientId) : undefined))
+    .orderBy(asc(checkIns.dueAt));
   if (!rows.length) return [];
   const replies = await db.select({ checkInId: checkInReplies.checkInId, reply: checkInReplies, task: tasks }).from(checkInReplies)
     .leftJoin(tasks, eq(tasks.id, checkInReplies.taskId))
@@ -48,27 +50,33 @@ async function listCheckIns(db: Context["db"], hospitalId: string, encounterId?:
 
 export const checkInsRouter = {
   list: protectedProcedure.input(z.object({ encounterId: z.string().min(1).optional() }).optional())
-    .handler(({ context: { db, hospitalId }, input }) => listCheckIns(db, hospitalId, input?.encounterId)),
+    .handler(({ context: { db, hospitalId }, input }) => listCheckIns(db, hospitalId, { encounterId: input?.encounterId })),
   /** Sends what is due now (the demo does not wait for the hourly cron). */
   tick: protectedProcedure.handler(({ context }) => sendDueCheckIns(context.db, context.hospitalId, clockOf(context))),
   /** The simulated patient reply. Replying to an unsent check-in sends it first, since the demo jumps two days. */
-  reply: protectedProcedure.input(checkInReplySchema).handler(async ({ context, input }) => {
-    const { db, hospitalId } = context;
-    const [row] = await db.select({ checkIn: checkIns, name: patients.name }).from(checkIns).innerJoin(patients, eq(patients.id, checkIns.patientId))
-      .where(and(eq(checkIns.id, input.checkInId), eq(checkIns.hospitalId, hospitalId)));
-    if (!row) throw new ORPCError("NOT_FOUND", { message: `No check-in ${input.checkInId}` });
-    const at = clockOf(context);
-    await db.update(checkIns).set({ sentAt: at }).where(and(eq(checkIns.id, row.checkIn.id), isNull(checkIns.sentAt)));
-    const read = await (context.models ?? stubModels).classifyReply({ text: input.text, language: row.checkIn.language });
-    const id = crypto.randomUUID();
-    const flag = replyFlag(row.name.split(" ")[0]!, read.label, input.text);
-    if (flag) await db.insert(tasks).values({
-      id, hospitalId, encounterId: row.checkIn.encounterId, kind: "check-in", title: flag.title, owner: "Attending doctor", due: "Today",
-      sourceId: id, idempotencyKey: `check-in:${id}`,
-    }).onConflictDoNothing();
-    await db.insert(checkInReplies).values({
-      id, checkInId: row.checkIn.id, text: input.text, label: read.label, source: read.source === "model" ? read.model : "fixture", taskId: flag ? id : null, receivedAt: at,
-    });
-    return (await listCheckIns(db, hospitalId, row.checkIn.encounterId)).find(c => c.id === row.checkIn.id)!;
-  }),
+  reply: protectedProcedure.input(checkInReplySchema).handler(({ context, input }) => replyToCheckIn(context, context.hospitalId, input)),
 };
+
+/**
+ * A reply as the model reads it; worse or urgent flags one task for the attending doctor. Sona Care
+ * passes `patientId` so a patient can only answer their own check-in (anything else is NOT_FOUND).
+ */
+export async function replyToCheckIn(context: Context, hospitalId: string, input: CheckInReply, patientId?: string) {
+  const { db } = context;
+  const [row] = await db.select({ checkIn: checkIns, name: patients.name }).from(checkIns).innerJoin(patients, eq(patients.id, checkIns.patientId))
+    .where(and(eq(checkIns.id, input.checkInId), eq(checkIns.hospitalId, hospitalId), patientId ? eq(checkIns.patientId, patientId) : undefined));
+  if (!row) throw new ORPCError("NOT_FOUND", { message: `No check-in ${input.checkInId}` });
+  const at = clockOf(context);
+  await db.update(checkIns).set({ sentAt: at }).where(and(eq(checkIns.id, row.checkIn.id), isNull(checkIns.sentAt)));
+  const read = await (context.models ?? stubModels).classifyReply({ text: input.text, language: row.checkIn.language });
+  const id = crypto.randomUUID();
+  const flag = replyFlag(row.name.split(" ")[0]!, read.label, input.text);
+  if (flag) await db.insert(tasks).values({
+    id, hospitalId, encounterId: row.checkIn.encounterId, kind: "check-in", title: flag.title, owner: "Attending doctor", due: "Today",
+    sourceId: id, idempotencyKey: `check-in:${id}`,
+  }).onConflictDoNothing();
+  await db.insert(checkInReplies).values({
+    id, checkInId: row.checkIn.id, text: input.text, label: read.label, source: read.source === "model" ? read.model : "fixture", taskId: flag ? id : null, receivedAt: at,
+  });
+  return (await listCheckIns(db, hospitalId, { encounterId: row.checkIn.encounterId })).find(c => c.id === row.checkIn.id)!;
+}

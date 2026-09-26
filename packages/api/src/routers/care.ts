@@ -5,7 +5,10 @@ import { z } from "zod";
 
 import { clockOf, type Context } from "../context";
 import { patientProcedure, protectedProcedure, publicProcedure, signedInProcedure } from "../index";
+import { checkInReplySchema } from "../contracts";
+import { listCheckIns, replyToCheckIn } from "./check-ins";
 import { loadEncounter } from "./encounter";
+import { careMessagesRouter } from "./messages";
 
 /**
  * Sona Care, the patient app. A doctor issues a one-time code for a visit (printed as a QR on the
@@ -77,4 +80,13 @@ export const careRouter = {
     const dischargedAt = (row.state as { discharge?: { dischargedAt?: string } } | null)?.discharge?.dischargedAt;
     return { patientId: row.patient.id, name: row.patient.name, firstName: firstName(row.patient.name), hospital: row.hospital, encounterId: row.encounterId ?? undefined, dischargedAt };
   }),
+
+  /** Patient: their own check-ins after discharge, each with their reply and how it was read. */
+  checkIns: {
+    list: patientProcedure.handler(({ context }) => listCheckIns(context.db, context.hospitalId, { patientId: context.patientId })),
+    /** The same reading and flagging as the clinician's simulated reply, for their own check-in only. */
+    reply: patientProcedure.input(checkInReplySchema).handler(({ context, input }) => replyToCheckIn(context, context.hospitalId, input, context.patientId)),
+  },
+  /** Patient: their thread with the care team. */
+  messages: careMessagesRouter,
 };

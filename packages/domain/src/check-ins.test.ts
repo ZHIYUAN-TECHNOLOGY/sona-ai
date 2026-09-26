@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { checkInMessage, checkInSchedule, replyFlag } from "./check-ins";
+import { checkInMessage, checkInSchedule, readReply, replyFlag } from "./check-ins";
 
 test("check-ins go out on day 2 and day 7 after discharge, at 10:00 Malaysian time", () => {
   // Discharged Saturday 26 Sep at 15:40 (+08:00): Monday 28 Sep and Saturday 3 Oct.
@@ -25,4 +25,9 @@ test("a fine reply is logged quietly; worse and urgent replies are flagged by wh
   expect(urgent!.score).toBeGreaterThan(worse!.score);
   expect(replyFlag("Amelia", "worse", "sesak nafas")?.title).toBe("Amelia: breathing worse after discharge");
   expect(replyFlag("Amelia", "worse", "tidak berapa baik")?.title).toBe("Amelia: feeling worse after discharge");
+});
+
+test("Sona Care's quick answers read as the patient meant them, in each language", () => {
+  expect(["Worse", "Lebih teruk", "更差"].map(readReply)).toEqual(["worse", "worse", "worse"]);
+  expect(["Better", "About the same", "Lebih baik", "Sama", "好一些", "差不多"].map(readReply)).toEqual(["fine", "fine", "fine", "fine", "fine", "fine"]);
 });

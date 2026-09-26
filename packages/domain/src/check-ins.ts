@@ -40,7 +40,8 @@ export function checkInMessage(firstName: string, language: Language): string {
  */
 export function readReply(text: string): ReplyLabel {
   if (/chest pain|sakit dada|cannot breathe|can't breathe|tak boleh bernafas|sesak nafas teruk|pengsan|faint|胸痛|呼吸困难|晕倒/i.test(text)) return "urgent";
-  return /fever|demam|发烧|breath|sesak|pain|sakit/i.test(text) ? "worse" : "fine";
+  // "worse", "teruk" and "更差" cover Sona Care's quick "Worse" answer in each language.
+  return /fever|demam|发烧|breath|sesak|pain|sakit|worse|teruk|更差/i.test(text) ? "worse" : "fine";
 }
 
 const SYMPTOMS: [RegExp, string][] = [
