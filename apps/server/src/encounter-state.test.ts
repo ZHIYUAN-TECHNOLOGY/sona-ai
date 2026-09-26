@@ -55,3 +55,15 @@ test("when Postgres has moved on under the object, its write is refused and it c
   expect(error.code).toBe("CONFLICT");
   expect(await live.get(DEMO_HOSPITAL, "visit-1086")).toEqual(elsewhere);
 });
+
+test("an edit through the object keeps discharge and claim fixes written beside it since the object last read", async () => {
+  const db = await seeded();
+  const live = objectFor(db);
+  await live.get(DEMO_HOSPITAL, "visit-1042"); // the object caches the snapshot
+  // Discharge and claim fixes are merged into Postgres in place, without going through the object.
+  await db.$client.query(`update encounters set state = jsonb_set(state, '{discharge}', '{"medsConfirmed":true}'::jsonb) where id = 'visit-1042'`);
+  const edited = await live.edit(DEMO_HOSPITAL, { encounterId: "visit-1042", expectedRevision: 1, prescriptionInputs: inputs });
+  expect(edited.state.discharge).toEqual({ medsConfirmed: true });
+  const [row] = (await db.$client.query<{ d: unknown }>(`select state->'discharge' as d from encounters where id = 'visit-1042'`)).rows;
+  expect(row?.d).toEqual({ medsConfirmed: true });
+});

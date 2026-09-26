@@ -19,14 +19,16 @@ export class EncounterState extends DurableObject<DatabaseConfig> {
     return (await this.ctx.storage.get<EncounterSnapshot>("snapshot")) ?? this.reload(hospitalId, encounterId);
   }
 
+  // Writes start from Postgres, not the cached copy: discharge and claim fixes are merged there in
+  // place (without a revision bump), so the cache can be behind and would otherwise overwrite them.
   async edit(hospitalId: string, edit: EncounterEdit): Promise<EncounterSnapshot> {
-    const current = await this.get(hospitalId, edit.encounterId);
+    const current = await this.reload(hospitalId, edit.encounterId);
     return this.commit(hospitalId, current, () => applyEdit(current, edit));
   }
 
   /** The medication review ran against `expectedRevision`; it stays current until the next eligibility or medicine edit. */
   async recordReview(hospitalId: string, review: RecordReview): Promise<EncounterSnapshot> {
-    const current = await this.get(hospitalId, review.encounterId);
+    const current = await this.reload(hospitalId, review.encounterId);
     return this.commit(hospitalId, current, () => applyReview(current, review));
   }
 

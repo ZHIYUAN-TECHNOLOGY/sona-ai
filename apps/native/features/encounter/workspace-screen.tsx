@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { capabilityLabels, followUpsFor, Home, leadFor, StreamedLead, SuggestionList, suggestionFor, thinkingLabel, TopBar, type Suggestion } from "./conversation";
 import { capabilitySchema, routePrompt } from "./state";
 import { openSession } from "./navigation";
+import { useServerData } from "@/features/live/server-day";
 import { useEncounter } from "./store";
 import type { Capability, FeatureProps, FocusView } from "./types";
 import { VoiceDock } from "./voice-dock";
@@ -42,6 +43,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const store = useEncounter();
   const { patients, encounters, request, runInPlace, cancel, voiceInput, compactResponses, selectPatient, leaveVisit, updateEncounter } = store;
   const home = mode === "home";
+  useServerData(); // live mode: the sticky quick row follows the server's tasks and results
   // Home ignores any visit another screen left selected; a session only ever shows its own visit.
   // Read straight from the route so the first frame of the push already shows this visit.
   const patient = home ? undefined : patients.find(p => p.id === sessionId);

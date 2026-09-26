@@ -19,7 +19,7 @@ function LiveCard() {
   const { wanted, user } = useLive();
   return <Card label="Backend" title="Live backend">
     <Host colorScheme="light" seedColor={palette.blue} style={{ height: 44 }}><Switch label="Use the live backend" value={wanted} onValueChange={setLive} /></Host>
-    <Body muted>{user ? `Signed in as ${user.email}. Discharge, guarantee letter, ward owners and the coding audit use the server; everything else stays on fixtures.` : "Sign in first; until then every screen stays on fixtures."}</Body>
+    <Body muted>{user ? `Signed in as ${user.email}. Discharge, guarantee letter, ward owners, coding audit, tasks, results, My Day, prescribing checks, the note, handover and X-ray upload use the server; answers that need a model stay authored.` : "Sign in first; until then every screen stays on fixtures."}</Body>
     {!user && <Action label="Sign in" secondary onPress={() => router.push("/account")} />}
   </Card>;
 }

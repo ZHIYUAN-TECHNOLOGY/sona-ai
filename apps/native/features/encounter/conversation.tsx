@@ -6,6 +6,7 @@ import { homeActions, visitActions } from "./quick-actions";
 import { openSession } from "./navigation";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
+import { useServerData } from "@/features/live/server-day";
 import { useEncounter } from "./store";
 import { SweptLead, wordCount } from "@/components/sona/marked-text";
 import { Icon, pillStyle, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
@@ -157,6 +158,7 @@ function greeting() { const hour = new Date().getHours(); return hour < 12 ? "Go
 export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatient }: { patient?: Patient; patients: Patient[]; onPick: (item: Suggestion) => void; onChoosePatient: () => void; onSelectPatient: (id: string) => void }) {
   const { reducedMotion } = useAccessibleEffects();
   const { encounters } = useEncounter();
+  useServerData(); // live mode: re-render the quick keys when the server's tasks and results arrive
   const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 80 + i * 70, distance: 14, duration: 460 });
   const lead = { ...type.display, color: palette.ink } as const;
   // Reading order top-down: greeting under the top bar, then the next section at a fixed rhythm.

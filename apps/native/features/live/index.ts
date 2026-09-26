@@ -4,9 +4,10 @@ import { authClient } from "@/lib/auth-client";
 import { client } from "@/utils/orpc";
 
 /**
- * "Live backend" mode: the discharge, guarantee-letter, ward and audit screens read and write the
- * server (EXPO_PUBLIC_SERVER_URL) instead of the in-memory fixtures. Off by default; switched on in
- * Settings, and it needs a signed-in doctor (Account screen). Everything else stays on fixtures.
+ * "Live backend" mode: discharge, guarantee letter, ward owners, coding audit, tasks, results, My Day,
+ * prescribing checks, the consultation note, handover and X-ray upload read and write the server
+ * (EXPO_PUBLIC_SERVER_URL) instead of the in-memory fixtures. Off by default; switched on in Settings
+ * with a signed-in doctor. Answers that need a model (briefing, reasoning, evidence) stay authored.
  */
 // Remembered across reloads, so a reload mid-flow comes back to the server's state, not the fixtures.
 const KEY = "sona.liveBackend";
