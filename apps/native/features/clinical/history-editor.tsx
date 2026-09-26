@@ -9,6 +9,7 @@ import { SourceRef, useSourceScope, type SourceEntry } from "@/components/sona/s
 import { Action, Chip, Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { Capability, FeatureProps, HistoryFact } from "@/features/encounter/types";
+import { useEncounterEdit } from "@/features/live/sync";
 import { Caption, Disclosure, haptic, IconDisc } from "./reasoning-parts";
 
 const categories: { value: HistoryFact["category"]; label: string; icon: string }[] = [
@@ -35,6 +36,7 @@ function FieldLabel({ children }: { children: string }) { return <Text style={{ 
 export function HistoryEditor({ patient, result, onSource, onRequest, refresh }: Pick<FeatureProps, "patient" | "result" | "onSource" | "onRequest"> & { refresh: Capability }) {
   const { encounters, patient: activePatient, updateEncounter } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
+  const edit = useEncounterEdit(patient);
   const scope = useSourceScope();
   const layout = reducedMotion ? undefined : LAYOUT;
   const encounter = encounters[patient.id];
@@ -57,8 +59,9 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
     if (!draft || !draft.value.trim() || !draft.source.trim() || !encounter) return;
     const revision = encounter.revision + 1;
     const fact: HistoryFact = { ...draft, value: draft.value.trim(), source: draft.source.trim(), id: `history-${patient.id}-${Date.now()}`, revision };
-    updateEncounter(value => ({ ...value, historyFacts: [...(value.historyFacts ?? []), fact], historyDraft: undefined, noteReviewed: false }), true);
-    haptic("done"); setRecorded(fact); setPendingRevision(revision); setOpen(false); Keyboard.dismiss();
+    // Live: saved to the server first; the draft stays open until it is, so a refusal loses nothing.
+    edit.save({ historyFacts: [...(encounter.historyFacts ?? []), fact] }, value => ({ ...value, historyFacts: [...(value.historyFacts ?? []), fact], historyDraft: undefined, noteReviewed: false }),
+      () => { haptic("done"); setRecorded(fact); setPendingRevision(revision); setOpen(false); Keyboard.dismiss(); });
   };
   const discard = () => { updateEncounter(value => ({ ...value, historyDraft: undefined })); setOpen(false); };
   const ready = Boolean(draft?.value.trim() && draft.source.trim());
@@ -118,9 +121,10 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
               <DateTimePicker style={{ width: 124 }} value={new Date(`${draft.date}T12:00:00`)} mode="date" display="compact" themeVariant="light" accentColor={palette.blue} onValueChange={(_, date) => updateDraft({ date: localDate(date) })} />
             </View>
             <Caption>This correction replaces the current summary for its category. Earlier facts and their sources remain inspectable.</Caption>
+            {edit.error && <Caption icon="exclamationmark.triangle" color={palette.amber}>{edit.error}</Caption>}
             <View style={{ flexDirection: "row", gap: 10 }}>
               <Action label="Discard" accessibilityLabel="Discard this history draft" secondary onPress={discard} />
-              <View style={{ flex: 1 }}><Action label="Save & update" accessibilityLabel="Save history and update response" icon="checkmark" disabled={!ready} onPress={save} /></View>
+              <View style={{ flex: 1 }}><Action label="Save & update" accessibilityLabel="Save history and update response" icon="checkmark" disabled={!ready || edit.saving} onPress={save} /></View>
             </View>
           </>}
         </Disclosure>}

@@ -68,6 +68,18 @@ test("a medicine edit moves the revision on, and a write against the old revisio
   expect((await api.encounter.get({ encounterId: "visit-404" }).catch(e => e)).code).toBe("NOT_FOUND");
 });
 
+const penicillin = { id: "h-pen", category: "allergy", value: "Penicillin (rash)", source: "Doctor", date: "26 Sep 2026", revision: 1 } as const;
+
+test("a history edit is saved, bumps the revision and invalidates the review; a malformed fact is refused", async () => {
+  const { api, db } = await signedIn();
+  await db.update(encounters).set({ state: { medicationCheckedRevision: 1 } }).where(eq(encounters.id, "visit-1042"));
+  const edited = await api.encounter.edit({ encounterId: "visit-1042", expectedRevision: 1, historyFacts: [penicillin] });
+  expect([edited.revision, edited.state.reviewInvalidated]).toEqual([2, true]);
+  expect((await api.encounter.get({ encounterId: "visit-1042" })).state.historyFacts).toEqual([penicillin]);
+  const bad = await api.encounter.edit({ encounterId: "visit-1042", expectedRevision: 2, historyFacts: [{ ...penicillin, category: "hobby" as "allergy" }] }).catch(e => e);
+  expect(bad.code).toBe("BAD_REQUEST");
+});
+
 const dischargeAmelia = { encounterId: "visit-1042", requestId: "req-discharge-1", approvedBy: "dr-aisyah" };
 
 test("a discharge is refused while any blocker is open, and the refusal names them", async () => {

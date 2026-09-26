@@ -1,7 +1,8 @@
-import { useCallback, useEffect } from "react";
+import type { EncounterEdit } from "@sona-ai/api/contracts";
+import { useCallback, useEffect, useState } from "react";
 import { useEncounter } from "@/features/encounter/store";
-import type { Patient } from "@/features/encounter/types";
-import { api, useLive } from ".";
+import type { Encounter, Patient } from "@/features/encounter/types";
+import { api, errorText, useLive } from ".";
 import { mergeServerState, type ServerVisitState } from "./day";
 
 /**
@@ -33,4 +34,36 @@ export function useServerEncounter(patient: Patient | undefined) {
     return () => clearInterval(timer);
   }, [waiting, refresh]);
   return { live: on, refresh };
+}
+
+type EditFields = Omit<EncounterEdit, "encounterId" | "expectedRevision">;
+/** Merges a server snapshot after an edit; the claim status and letter stay as the app last read them. */
+const mergeEdited = (value: Encounter, state: unknown) =>
+  mergeServerState(value, state as ServerVisitState, { status: value.claim?.status ?? "draft", approvedAt: value.claim?.approvedAt }, value.discharge?.glReceived ?? false);
+
+/**
+ * A history or medicine edit. In live mode it is saved to the server at its current revision first,
+ * then `apply` runs locally and the server's record is merged back; a refusal (someone else wrote
+ * first) reloads the server's record and keeps the doctor's draft, so nothing typed is lost.
+ * Fixture mode applies it at once, as before.
+ */
+export function useEncounterEdit(patient: Patient) {
+  const { on } = useLive();
+  const { updateEncounter } = useEncounter();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string>();
+  const save = (fields: EditFields, apply: (value: Encounter) => Encounter, onSaved?: () => void) => {
+    if (!on) { updateEncounter(apply, true); onSaved?.(); return; }
+    const { encounterId } = patient, patientId = patient.id;
+    setSaving(true); setError(undefined);
+    api.encounter.get({ encounterId })
+      .then(({ revision }) => api.encounter.edit({ encounterId, expectedRevision: revision, ...fields }))
+      .then(snapshot => { updateEncounter(value => mergeEdited(apply(value), snapshot.state), true, patientId); onSaved?.(); }, async e => {
+        setError(errorText(e));
+        const snapshot = await api.encounter.get({ encounterId }).catch(() => undefined);
+        if (snapshot) updateEncounter(value => mergeEdited(value, snapshot.state), false, patientId);
+      })
+      .finally(() => setSaving(false));
+  };
+  return { saving, error, save };
 }
