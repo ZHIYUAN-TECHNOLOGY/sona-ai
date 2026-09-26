@@ -1,5 +1,5 @@
 import { encounters, observations, patients, provenance, pubmedArticles } from "@sona-ai/db/schema/clinical";
-import { ANSWER, GRADE, certaintyOf, curb65FromObservations, pubmedUrl, studyKind, type ObservationRow, type StudyKind } from "@sona-ai/domain/evidence";
+import { ANSWER, GRADE, STUDIES, certaintyOf, curb65FromObservations, pubmedUrl, studyKind, type ObservationRow, type StudyKind } from "@sona-ai/domain/evidence";
 import { ORPCError } from "@orpc/server";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -52,7 +52,9 @@ export const evidenceRouter = {
 
     const rehearsed = REHEARSED.matches(input.question);
     const { articles, pubmed } = await articlesFor(db, context.fetch ?? fetch, input.question, rehearsed);
-    const studies = articles.map(a => ({ id: `pmid:${a.pmid}`, pmid: a.pmid, kind: a.kind, year: a.year, title: a.title, journal: a.journal, finding: a.conclusion, query: a.title, url: pubmedUrl({ pmid: a.pmid, query: a.title }) }));
+    // The rehearsed answer shows its reviewed summary of each study (a guideline's abstract rarely states its recommendations); others quote the abstract.
+    const summary = (pmid: string) => (rehearsed ? STUDIES.find(s => s.pmid === pmid)?.finding : undefined);
+    const studies = articles.map(a => ({ id: `pmid:${a.pmid}`, pmid: a.pmid, kind: a.kind, year: a.year, title: a.title, journal: a.journal, finding: summary(a.pmid) ?? a.conclusion, query: a.title, url: pubmedUrl({ pmid: a.pmid, query: a.title }) }));
     const strongest = RANK.find(k => studies.some(s => s.kind === k));
     const grade = { certainty: certaintyOf(studies.map(s => s.kind)), ...(strongest ? { rule: `Strongest design cited: ${DESIGNS[strongest]}` } : {}) };
 

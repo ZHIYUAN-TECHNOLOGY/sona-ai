@@ -12,7 +12,9 @@ import { palette, type } from "@/components/sona/theme";
 import { Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useSeenOnce } from "@/components/sona/use-visible";
 import { haptic } from "@/features/clinical/medication-parts";
+import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
+import { useLiveEvidence, type ServerEvidence } from "@/features/live/evidence-sync";
 import { ANSWER, GRADE, STUDIES, curb65, pubmedUrl, type Study } from "./model";
 
 /*
@@ -26,28 +28,45 @@ import { ANSWER, GRADE, STUDIES, curb65, pubmedUrl, type Study } from "./model";
 const TEAL = "#0F6E66";
 const SNAP = { duration: 360, dampingRatio: 0.82 }, TAP = { duration: 380, dampingRatio: 0.82 };
 
-export function EvidenceCard({ patient }: FeatureProps) {
+/** The rehearsed demo question, for an answer opened without its prompt. */
+const REHEARSED_QUESTION = "Steroids for this patient with community-acquired pneumonia?";
+const SOURCES_NOTE: Record<ServerEvidence["pubmed"], string> = { live: "PubMed · conclusions quoted from each abstract", cached: "PubMed, saved copy · offline now", unavailable: "PubMed unreachable · no sources" };
+
+export function EvidenceCard({ patient, result }: FeatureProps) {
+  // Live mode asks the server; the authored answer shows otherwise. While the server answers, nothing authored is shown in its place.
+  const { encounters } = useEncounter();
+  const question = encounters[patient.id]?.requests.find(r => r.id === result?.requestId)?.prompt || REHEARSED_QUESTION;
+  const { live, data, error } = useLiveEvidence(patient.encounterId, result?.requestId, question);
+  if (live && !data) return <Surface feature style={{ padding: 16, gap: 8 }}>
+    <Text style={{ ...type.subhead, color: error ? palette.red : palette.muted }}>{error ?? "Searching PubMed and checking the chart…"}</Text>
+  </Surface>;
+  const grade = data ? data.grade : { ...GRADE, rule: undefined };
+  const answer = data ? data.answer : ANSWER;
+  const studies: Study[] = data ? data.studies : STUDIES;
+  const note = !data ? "Authored summaries · links open PubMed" : data.source === "cached" && data.studies.length ? `${data.pubmed === "live" ? "PubMed records" : "PubMed, saved copy"} · reviewed summaries` : SOURCES_NOTE[data.pubmed];
   return <View style={{ gap: 14 }}>
     <Surface feature style={{ padding: 16, gap: 12 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <View style={{ height: 24, paddingHorizontal: 10, borderRadius: 12, flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "rgba(15,110,102,0.1)" }}>
           <Icon name="checkmark.seal.fill" size={11} color={TEAL} />
-          <Text style={{ fontSize: 12, fontWeight: "700", color: TEAL }}>{GRADE.certainty}</Text>
+          <Text style={{ fontSize: 12, fontWeight: "700", color: TEAL }}>{grade.certainty}</Text>
         </View>
-        <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{GRADE.direction}</Text>
-        <Text style={{ ...type.caption, color: palette.muted }}>in {GRADE.scope}</Text>
+        {grade.direction && <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{grade.direction}</Text>}
+        {grade.scope && <Text style={{ ...type.caption, color: palette.muted }}>in {grade.scope}</Text>}
       </View>
-      {ANSWER.map((line, i) => <View key={i} style={{ flexDirection: "row", gap: 10 }}>
+      {answer.map((line, i) => <View key={i} style={{ flexDirection: "row", gap: 10 }}>
         <Text style={{ ...type.footnote, fontWeight: "700", color: palette.blue, width: 12 }}>{i + 1}</Text>
         <MarkedText text={line} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
       </View>)}
+      {data && <Text selectable style={{ ...type.caption, color: palette.muted }}>{data.source === "cached" ? "Rehearsed answer, cached" : "Sample synthesis · no model has checked these sources for relevance yet"}{grade.rule ? ` · certainty by rule: ${grade.rule.toLowerCase()}` : ""}</Text>}
     </Surface>
-    <Studies />
-    <Severity patient={patient} />
+    {studies.length > 0 && <Studies studies={studies} note={note} />}
+    {data && !studies.length && <Text selectable style={{ ...type.footnote, color: palette.amber }}>{note}</Text>}
+    <Severity patient={patient} server={data?.curb65} />
   </View>;
 }
 
-function Studies() {
+function Studies({ studies: STUDIES, note }: { studies: Study[]; note: string }) {
   const { width } = useWindowDimensions();
   const { reducedMotion } = useAccessibleEffects();
   const area = width - 40, cardW = Math.round(area * 0.84), step = cardW + 12, last = STUDIES.length - 1;
@@ -68,9 +87,9 @@ function Studies() {
   return <View style={{ gap: 12 }} accessibilityLabel={`${STUDIES.length} sources`}>
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
       <Text style={{ ...type.overline, color: palette.muted }}>Sources · swipe</Text>
-      <Text style={{ ...type.caption, color: palette.muted }}>Authored summaries · links search PubMed</Text>
+      <Text style={{ ...type.caption, color: palette.muted }}>{note}</Text>
     </View>
-    <Track pos={pos} active={active} onPick={go} />
+    <Track studies={STUDIES} pos={pos} active={active} onPick={go} />
     <GestureDetector gesture={pan}>
       <View style={{ height: 196, marginHorizontal: -20, overflow: "hidden" }}>
         {STUDIES.map((s, i) => <StudyCard key={s.id} study={s} index={i} pos={pos} left={20 + (area - cardW) / 2} width={cardW} step={step} />)}
@@ -80,7 +99,7 @@ function Studies() {
 }
 
 /** The track above the row: one node per study, a pill that glides with the row's position. */
-function Track({ pos, active, onPick }: { pos: SharedValue<number>; active: number; onPick: (i: number) => void }) {
+function Track({ studies: STUDIES, pos, active, onPick }: { studies: Study[]; pos: SharedValue<number>; active: number; onPick: (i: number) => void }) {
   const [w, setW] = useState(0);
   const gap = STUDIES.length > 1 ? w / (STUDIES.length - 1) : 0;
   const pill = useAnimatedStyle(() => ({ transform: [{ translateX: Math.min(STUDIES.length - 1, Math.max(0, pos.value)) * gap - 12 }] }));
@@ -111,11 +130,11 @@ function StudyCard({ study, index, pos, left, width, step }: { study: Study; ind
         <View style={{ height: 22, paddingHorizontal: 8, borderRadius: 11, justifyContent: "center", backgroundColor: study.kind === "Guideline" ? "rgba(36,91,204,0.1)" : "rgba(20,28,40,0.06)" }}>
           <Text style={{ fontSize: 11, fontWeight: "700", color: study.kind === "Guideline" ? palette.blue : palette.ink }}>{study.kind}</Text>
         </View>
-        <Text style={{ ...type.caption, color: palette.muted, fontVariant: ["tabular-nums"] }}>{study.year}</Text>
+        <Text numberOfLines={1} style={{ ...type.caption, flex: 1, color: palette.muted, fontVariant: ["tabular-nums"] }}>{study.year}{study.journal ? ` · ${study.journal}` : ""}</Text>
       </View>
       <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{study.title}</Text>
       <MarkedText selectable={false} text={study.finding} style={{ ...type.footnote, flex: 1, color: palette.ink }} />
-      <Pressable accessibilityRole="link" accessibilityLabel={`Open abstract search for ${study.title}`} hitSlop={8} onPress={() => { void WebBrowser.openBrowserAsync(pubmedUrl(study)).catch(() => {}); }} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+      <Pressable accessibilityRole="link" accessibilityLabel={`Open the PubMed abstract for ${study.title}`} hitSlop={8} onPress={() => { void WebBrowser.openBrowserAsync(pubmedUrl(study)).catch(() => {}); }} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
         <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>Open abstract</Text>
         <Icon name="arrow.up.right" size={10} color={palette.blue} />
       </Pressable>
@@ -127,9 +146,10 @@ const R = 34, C = 2 * Math.PI * R, SWEEP = 0.75;
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 /** CURB-65: the arc sweeps as each factor is checked, then the score settles in the middle. */
-function Severity({ patient }: { patient: FeatureProps["patient"] }) {
+function Severity({ patient, server }: { patient: FeatureProps["patient"]; server?: ServerEvidence["curb65"] }) {
   const { reducedMotion } = useAccessibleEffects();
-  const { factors, score, recorded, risk } = curb65(patient);
+  // Live: the server's score from recorded readings (each factor citing its source); otherwise the app's chart fixture.
+  const { factors, score, recorded, risk } = server ?? curb65(patient);
   const [checked, setChecked] = useState(reducedMotion ? factors.length : 0);
   const p = useSharedValue(reducedMotion ? recorded / factors.length : 0);
   // The sweep waits until the card is on screen, so it is seen rather than played below the fold.

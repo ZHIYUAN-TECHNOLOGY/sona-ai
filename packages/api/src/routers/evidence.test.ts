@@ -6,6 +6,8 @@ import { createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 
+import { STUDIES } from "@sona-ai/domain/evidence";
+
 import { appRouter } from "./index";
 
 const session = {
@@ -39,7 +41,8 @@ test("the rehearsed steroid question: the cached answer, its three PubMed studie
   expect(r.source).toBe("cached");
   expect(r.answer[0]).toBe("No routine steroids for non-severe community-acquired pneumonia.");
   expect(r.studies.map(s => [s.pmid, s.kind, s.year, s.journal])).toEqual([["31573350", "Guideline", 2019, "Am J Respir Crit Care Med"], ["25608756", "Trial", 2015, "Lancet"], ["36942789", "Trial", 2023, "N Engl J Med"]]);
-  expect(r.studies[1]!.finding).toStartWith("Prednisone treatment for 7 days");
+  // A guideline abstract rarely states its recommendations, so the rehearsed answer shows its summaries of each study.
+  expect(r.studies.map(s => s.finding)).toEqual([STUDIES[0]!.finding, STUDIES[1]!.finding, STUDIES[2]!.finding]);
   expect(r.grade).toEqual({ certainty: "High certainty", direction: "Against routine use", scope: "non-severe pneumonia", rule: "Strongest design cited: guideline" });
   expect(r.pubmed).toBe("live");
   expect(r.curb65).toMatchObject({ score: 0, recorded: 5, risk: "Low risk · home treatment is usually suitable" });
@@ -72,7 +75,7 @@ test("any other question searches PubMed and never borrows the rehearsed answer:
   expect(state.calls.some(u => u.includes("esearch") && u.includes("prednisone"))).toBe(true);
   expect(r.source).toBe("fixture");
   expect(r.answer.join(" ")).toContain("no model has weighed these studies");
-  expect(r.studies.map(s => s.pmid)).toEqual(["25608756"]);
+  expect(r.studies.map(s => [s.pmid, s.finding.slice(0, 32)])).toEqual([["25608756", "Prednisone treatment for 7 days "]]);
   expect(r.grade).toEqual({ certainty: "Moderate certainty", rule: "Strongest design cited: randomised trial" });
   // Daniel has no chart readings: only age counts, and the band is withheld.
   expect(r.curb65).toMatchObject({ recorded: 1, risk: undefined });
