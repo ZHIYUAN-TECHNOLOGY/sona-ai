@@ -235,7 +235,9 @@ export function XrayScreen() {
   if (historical && (sourcePatientId !== patient.id || !savedCard?.imagingSnapshot)) return <Screen><Notice warning>This saved image is unavailable in the active patient’s encounter. No current image has been substituted.</Notice><Action label="Return to encounter" secondary onPress={() => (router.canGoBack() ? router.back() : undefined)} /></Screen>;
   if (historical) return <ViewerPage scrollEnabled={!zoomed}>
     <Identity>{`${patient.name} · saved revision ${savedCard?.revision} · ${attachment ? "local image, no model inference" : "reference example, not this patient"}`}</Identity>
-    {image ? <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} /> : <Notice>No image was attached when this response was created.</Notice>}
+    {/* The visit's findings travel with its film, so a saved answer shows the same marks as the live view. */}
+    {image ? <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} /> : <Notice>No image was attached when this response was created.</Notice>}
+    {image && <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={f => void found.track(f)} onDismiss={(f, reason) => void found.dismiss(f, reason)} />}
     <AnalysisDetails snapshot={savedCard?.imagingSnapshot} />
   </ViewerPage>;
 
