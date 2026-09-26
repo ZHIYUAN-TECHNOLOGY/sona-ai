@@ -18,6 +18,8 @@ import { prescribingRouter } from "./prescribing";
 // lane H
 import { handoverRouter } from "./handover";
 import { xrayRouter } from "./xray";
+// lane F7
+import { checkInsRouter } from "./check-ins";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -57,6 +59,8 @@ export const appRouter = {
       context.db.select().from(tasks).where(eq(tasks.hospitalId, context.hospitalId)).orderBy(asc(tasks.createdAt))),
     complete: completeTask, // lane T
   },
+  // lane F7
+  checkIns: checkInsRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

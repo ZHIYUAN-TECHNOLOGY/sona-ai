@@ -8,6 +8,7 @@ import { approvedCommandSchema, dischargeUpdateSchema } from "../contracts";
 import { protectedProcedure } from "../index";
 import { assertApprover } from "./hospital";
 import { loadEncounter } from "./encounter";
+import { scheduleCheckIns } from "./check-ins";
 
 /**
  * Discharge is refused while any blocker is open, whatever the app shows. Every side effect is
@@ -57,6 +58,7 @@ export const dischargeRouter = {
       id: crypto.randomUUID(), hospitalId: hospitalId,encounterId: input.encounterId,
       kind: "discharge" as const, title: t.title, owner: t.owner, due: t.due, idempotencyKey: `discharge:${input.encounterId}:${t.id}`,
     }))).onConflictDoNothing();
+    await scheduleCheckIns(db, hospitalId, row.patient, input.encounterId, state.language, at);
     await db.update(admissions).set({ dischargedAt: at }).where(and(eq(admissions.id, row.admission.id), isNull(admissions.dischargedAt)));
     const discharged = { ...state, dischargedAt: at.toISOString(), savedMinutes };
     // Merged in place so a concurrent edit is neither lost nor needed to bump the revision.

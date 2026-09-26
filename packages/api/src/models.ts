@@ -1,3 +1,4 @@
+import { readReply } from "@sona-ai/domain/check-ins";
 import type { Code, Sentence } from "@sona-ai/domain/claim";
 import type { Language } from "@sona-ai/domain/discharge";
 import type { Study } from "@sona-ai/domain/evidence";
@@ -54,5 +55,5 @@ export const stubModels: Models = {
   synthesiseEvidence: ({ studies }) => fixture({ answer: "Sample synthesis: no model has weighed these studies.", studyIds: studies.map(s => s.id) }),
   huddleBrief: ({ beds, owners }) => fixture({ lines: huddle(beds, owners) }),
   // ponytail: keyword rule standing in for the classifier; the demo reply is "fever returned".
-  classifyReply: ({ text }) => fixture({ label: /fever|demam|发烧|breath|sesak|pain|sakit/i.test(text) ? "worse" : "fine" }),
+  classifyReply: ({ text }) => fixture({ label: readReply(text) }),
 };
