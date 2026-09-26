@@ -81,3 +81,14 @@ export const xrayUploadSchema = z.object({
   encounterId: z.string().min(1), contentType: z.string().regex(/^image\/[a-z0-9.+-]+$/i, "Only images can be uploaded"), dataBase64: z.string().min(1).max(14_000_000).regex(/^[A-Za-z0-9+/]+={0,2}$/, "Not base64"),
 });
 export type XrayUpload = z.infer<typeof xrayUploadSchema>;
+// Demo flow 6
+/** Turning a finding into a tracked follow-up (a task and a recall); replay-safe by requestId. */
+export const findingTrackSchema = z.object({ findingId: z.string().min(1), requestId: z.string().min(1), owner: z.string().trim().min(1).optional() });
+export type FindingTrack = z.infer<typeof findingTrackSchema>;
+/** Dismissing a finding keeps it, with who dismissed it and why, so the decision is on record. */
+export const findingDismissSchema = z.object({ findingId: z.string().min(1), reason: z.string().trim().min(1).max(500) });
+export type FindingDismiss = z.infer<typeof findingDismissSchema>;
+// Demo flow 7
+/** A patient's reply in the simulated inbox (no real messaging in the demo). */
+export const checkInReplySchema = z.object({ checkInId: z.string().min(1), text: z.string().trim().min(1).max(1000) });
+export type CheckInReply = z.infer<typeof checkInReplySchema>;

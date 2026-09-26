@@ -38,7 +38,7 @@ export const notes = pgTable("notes", {
 /** Follow-ups, blocker owners and coding queries are all tasks; idempotency_key makes creation replay-safe. */
 export const tasks = pgTable("tasks", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), encounterId: text("encounter_id"),
-  kind: text("kind", { enum: ["followup", "blocker-owner", "coding-query", "discharge"] }).notNull(),
+  kind: text("kind", { enum: ["followup", "blocker-owner", "coding-query", "discharge", "finding", "check-in"] }).notNull(),
   title: text("title").notNull(), owner: text("owner").notNull(), due: text("due"), completed: boolean("completed").default(false).notNull(),
   sourceId: text("source_id"), idempotencyKey: text("idempotency_key").unique(), createdAt: created(),
 });
@@ -131,4 +131,45 @@ export const chunks = pgTable("chunks", {
 export const provenance = pgTable("provenance", {
   id: text("id").primaryKey(), encounterId: text("encounter_id"), kind: text("kind").notNull(), output: jsonb("output").notNull(),
   sourceIds: jsonb("source_ids").$type<string[]>().notNull(), model: text("model").notNull(), approvedBy: text("approved_by"), createdAt: created(),
+});
+
+/**
+ * Demo flow 6: follow-up rules as data (Fleischner-style intervals for nodules, local rules for
+ * the rest), so the interval a finding gets is looked up, never generated.
+ */
+export const followUpRules = pgTable("follow_up_rules", {
+  id: text("id").primaryKey(), kind: text("kind", { enum: ["nodule", "cardiomegaly", "effusion"] }).notNull(),
+  riskBand: text("risk_band", { enum: ["low", "intermediate", "high"] }).notNull(),
+  /** Size range in millimetres the rule covers (nodules only; empty for the rest). */
+  minMm: real("min_mm"), maxMm: real("max_mm"),
+  /** Days until the follow-up is due; empty when no routine follow-up is needed. */
+  intervalDays: integer("interval_days"), action: text("action").notNull(), source: text("source").notNull(),
+});
+
+/**
+ * Demo flow 6: something on an image beyond the question asked. Never validated in this demo; the
+ * location is normalised (0 to 1) on the image. Accepting it creates a task and a recall.
+ */
+export const findings = pgTable("findings", {
+  id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull(), encounterId: text("encounter_id").notNull(),
+  imageKey: text("image_key"), kind: text("kind", { enum: ["nodule", "cardiomegaly", "effusion"] }).notNull(), label: text("label").notNull(),
+  sizeMm: real("size_mm"), location: jsonb("location").$type<{ x: number; y: number; zone: string }>().notNull(),
+  riskBand: text("risk_band", { enum: ["low", "intermediate", "high"] }).notNull(), ruleId: text("rule_id").references(() => followUpRules.id),
+  status: text("status", { enum: ["open", "tracked", "dismissed"] }).default("open").notNull(),
+  /** "fixture" or the model version that read the image, so a fixture is never shown as a reading. */
+  source: text("source").notNull(), taskId: text("task_id"), dueAt: timestamp("due_at"), createdAt: created(),
+}, t => [uniqueIndex("findings_encounter_kind").on(t.encounterId, t.kind)]);
+
+/** Demo flow 7: messages after discharge on day 2 and day 7, in the leaflet's language, through a simulated inbox. */
+export const checkIns = pgTable("check_ins", {
+  id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull(), encounterId: text("encounter_id").notNull(),
+  day: integer("day").notNull(), language: text("language", { enum: ["ms", "en", "zh"] }).notNull(), message: text("message").notNull(),
+  dueAt: timestamp("due_at").notNull(), sentAt: timestamp("sent_at"), createdAt: created(),
+}, t => [uniqueIndex("check_ins_encounter_day").on(t.encounterId, t.day)]);
+
+/** A patient's reply to a check-in, with how it was read; worse or urgent replies carry the flagged task. */
+export const checkInReplies = pgTable("check_in_replies", {
+  id: text("id").primaryKey(), checkInId: text("check_in_id").notNull().references(() => checkIns.id), text: text("text").notNull(),
+  label: text("label", { enum: ["fine", "worse", "urgent"] }).notNull(), source: text("source").notNull(), taskId: text("task_id"),
+  receivedAt: timestamp("received_at").defaultNow().notNull(),
 });

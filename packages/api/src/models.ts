@@ -1,6 +1,7 @@
 import type { Code, Sentence } from "@sona-ai/domain/claim";
 import type { Language } from "@sona-ai/domain/discharge";
 import type { Study } from "@sona-ai/domain/evidence";
+import type { DetectedFinding } from "@sona-ai/domain/findings";
 import type { Patient } from "@sona-ai/domain/types";
 import { huddle, type Bed, type Owner } from "@sona-ai/domain/ward";
 
@@ -19,6 +20,8 @@ export type Models = {
   reasoning(input: { patient: Patient; question: string }): Answer<{ answer: string; sourceIds: string[] }>;
   /** X-ray box: never a validated read in this demo. */
   xrayRead(input: { image: Uint8Array; contentType: string }): Answer<{ findings: string[]; validated: false }>;
+  /** Demo flow 6: findings beyond the question asked, each with a location on the image. Never validated. */
+  incidentalFindings(input: { patientId: string; image?: Uint8Array; contentType?: string }): Answer<{ findings: DetectedFinding[]; validated: false }>;
   draftDischarge(input: { patient: Patient; language: Language }): Answer<{ summary: string; leaflet: string }>;
   suggestCodes(input: { sentences: Sentence[] }): Answer<{ codes: Code[] }>;
   synthesiseEvidence(input: { question: string; studies: Study[] }): Answer<{ answer: string; studyIds: string[] }>;
@@ -38,6 +41,11 @@ export const stubModels: Models = {
   ] }),
   reasoning: () => fixture({ answer: "Sample reasoning only: community-acquired pneumonia is the leading working diagnosis; confirm with a chest X-ray and CURB-65.", sourceIds: [] }),
   xrayRead: () => fixture({ findings: ["Findings unavailable: no model has read this image."], validated: false }),
+  // ponytail: Amelia's authored findings stand in for MedGemma; any other patient gets none.
+  incidentalFindings: ({ patientId }) => fixture({ validated: false, findings: patientId === "SYN-1042" ? [
+    { kind: "nodule", label: "9 mm nodule, right upper zone", sizeMm: 9, location: { x: 0.34, y: 0.3, zone: "right upper zone" } },
+    { kind: "cardiomegaly", label: "Borderline heart size", location: { x: 0.56, y: 0.62, zone: "cardiac silhouette" } },
+  ] : [] }),
   draftDischarge: ({ patient }) => fixture({
     summary: `${patient.name} was treated for ${patient.complaint.toLowerCase()} Sample discharge summary for review.`,
     leaflet: "Take your medicines as prescribed and come back if the fever returns or breathing gets harder.",

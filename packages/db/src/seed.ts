@@ -3,7 +3,7 @@ import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { admissions, appointments, casemixWeights, drugs, encounters, guaranteeLetters, hospitals, icd10Codes, insurerCriteria, labResults, notes, observations, patients } from "./schema";
+import { admissions, appointments, casemixWeights, drugs, encounters, followUpRules, guaranteeLetters, hospitals, icd10Codes, insurerCriteria, labResults, notes, observations, patients } from "./schema";
 
 /**
  * The demo ward's starting state, matching the app's fixtures (synthetic people only). Idempotent,
@@ -63,6 +63,12 @@ export async function seedDemo(db: AnyDb, now = new Date()) {
   // Daniel's note and a haemoglobin the note does not mention: the coding audit's worked example.
   await db.insert(notes).values({ id: "note-1086-1", encounterId: "visit-1086", revision: 1, sentences: [{ id: "s1", text: "Breathless on exertion; onset not yet documented." }, { id: "s2", text: "Tablet reported; ingredient unknown." }] }).onConflictDoNothing();
   await db.insert(labResults).values({ id: "lab-hb-1086", patientId: "SYN-1086", test: "Hb", value: "9.8", unit: "g/dL", flag: "low", sourceId: "lab-hb-1086", receivedAt: new Date(now.getTime() - 26 * 3600_000) }).onConflictDoNothing();
+  // Demo flow 6: follow-up intervals are looked up from this table, never generated.
+  const num = (v?: string) => (v ? Number(v) : null);
+  await db.insert(followUpRules).values(readCsv("follow-up-rules.csv").map(r => ({
+    id: r.id!, kind: r.kind as "nodule", riskBand: r.risk_band as "low", minMm: num(r.min_mm), maxMm: num(r.max_mm),
+    intervalDays: num(r.interval_days), action: r.action!, source: r.source!,
+  }))).onConflictDoUpdate({ target: followUpRules.id, set: { intervalDays: sql`excluded.interval_days`, action: sql`excluded.action`, source: sql`excluded.source`, minMm: sql`excluded.min_mm`, maxMm: sql`excluded.max_mm` } });
 }
 
 /** Rows of a reference file in the repo's data/ folder; `#` lines are provenance notes, quoted fields may hold commas. */

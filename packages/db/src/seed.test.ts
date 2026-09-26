@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
-import { admissions, appointments, casemixWeights, guaranteeLetters, insurerCriteria, labResults, observations, patients } from "./schema";
+import { admissions, appointments, casemixWeights, followUpRules, guaranteeLetters, insurerCriteria, labResults, observations, patients } from "./schema";
 import { DEMO_HOSPITAL, seedDemo } from "./seed";
 import { createTestDb } from "./testing";
 
@@ -60,4 +60,14 @@ test("both visit patients have one appointment today, still today when seeded ag
     ["SYN-1042", "2026-09-26T01:15:00.000Z"],
     ["SYN-1086", "2026-09-26T01:45:00.000Z"],
   ]);
+});
+
+test("follow-up rules are rows: a nodule over 8 mm is due in 3 months, one under 6 mm needs no routine follow-up", async () => {
+  const db = await createTestDb();
+  await seedDemo(db);
+  const rules = await db.select().from(followUpRules);
+  const byId = Object.fromEntries(rules.map(r => [r.id, r]));
+  expect(byId["nodule-over-8"]).toMatchObject({ kind: "nodule", riskBand: "high", minMm: 8.1, intervalDays: 90, action: "CT chest at 3 months, PET-CT or tissue sampling" });
+  expect(byId["nodule-under-6"]).toMatchObject({ riskBand: "low", intervalDays: null });
+  expect(byId["cardiomegaly-borderline"]).toMatchObject({ minMm: null, intervalDays: 42, action: "Echocardiogram" });
 });
