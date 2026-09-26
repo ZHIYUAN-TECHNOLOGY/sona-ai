@@ -15,6 +15,13 @@ export function fitted(viewportW: number, viewportH: number, aspect: number): [n
   return a > viewportW / viewportH ? [viewportW, viewportW / a] : [viewportH * a, viewportH];
 }
 
+/** A normalised image point (0 to 1 from the top left) in viewport points at scale 1, allowing for the letterbox. */
+export function markerAt(viewportW: number, viewportH: number, aspect: number, x: number, y: number): [number, number] {
+  "worklet";
+  const [w, h] = fitted(viewportW, viewportH, aspect);
+  return [(viewportW - w) / 2 + x * w, (viewportH - h) / 2 + y * h];
+}
+
 /** How far the scaled image may move from centre before its edge leaves the viewport edge. */
 export function limit(content: number, viewport: number, scale: number) {
   "worklet";

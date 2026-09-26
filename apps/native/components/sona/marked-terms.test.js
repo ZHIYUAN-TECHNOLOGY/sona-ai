@@ -27,6 +27,11 @@ test("low risk, high certainty and non-severe disease never turn red", () => {
     .toEqual([["community-acquired pneumonia", "finding"]]);
 });
 
+test("incidental findings on a film are findings, with their size", () => {
+  expect(marks("Follow up 9 mm nodule; borderline heart size, no cardiomegaly or effusion."))
+    .toEqual([["9 mm nodule", "finding"], ["borderline heart size", "finding"], ["cardiomegaly", "finding"], ["effusion", "finding"]]);
+});
+
 test("an abbreviated analyte still marks an abnormal result", () => {
   expect(marks("Act on low Hb (9.8 g/dL).")).toEqual([["low Hb", "alert"]]);
 });

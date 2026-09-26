@@ -29,9 +29,9 @@ export const isOverdue = (f: { status: FindingStatus; dueAt?: Date | string | nu
   f.status === "tracked" && Boolean(f.dueAt) && new Date(f.dueAt!).getTime() < at.getTime();
 
 type Line = { label: string; action: string | null; dueAt?: Date | string | null };
-// In the demo hospital's time (Malaysia), whatever the device or Worker clock says.
-const day = (at: Date | string) => new Date(at).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Asia/Kuala_Lumpur" });
-const due = (f: Line) => (f.dueAt ? ` · due ${day(f.dueAt)}` : "");
+/** "25 Dec", in the demo hospital's time (Malaysia) whatever the device or Worker clock says. */
+export const shortDate = (at: Date | string) => new Date(at).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Asia/Kuala_Lumpur" });
+const due = (f: Line) => (f.dueAt ? ` · due ${shortDate(f.dueAt)}` : "");
 
 /** The rule's action and due date, as the finding card shows it. */
 export const followUpLine = (f: Line) => `${f.action ?? "No follow-up rule"}${due(f)}`;

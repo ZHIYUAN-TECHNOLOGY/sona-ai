@@ -9,7 +9,7 @@ import { LAYOUT_SPRING } from "@/components/sona/motion";
 import { palette } from "@/components/sona/theme";
 import { Action, Chip, Icon, pillStyle, SourceLink, useAccessibleEffects } from "@/components/sona/ui";
 import type { TeachingImage } from "./fixture";
-import { clamp, DOUBLE_TAP_ZOOM, fitted, limit, MAX_ZOOM, rubberBand, ZOOM_STEP, zoomAround } from "./zoom";
+import { clamp, DOUBLE_TAP_ZOOM, fitted, limit, markerAt, MAX_ZOOM, rubberBand, ZOOM_STEP, zoomAround } from "./zoom";
 
 /** A finger let go: settle toward the limit carrying its velocity (a little give, no bounce past it). */
 const SETTLE: WithSpringConfig = { duration: 400, dampingRatio: 0.8 };
@@ -28,7 +28,7 @@ export function ImageEdge() {
  * the UI thread; only zoom thresholds cross to React. Transforms move pixels, never alter them:
  * no filter, tint, blur or shader touches the image.
  */
-export function OriginalImageViewer({ asset, onZoomChange }: { asset: TeachingImage; onZoomChange?: (zoomed: boolean) => void }) {
+export function OriginalImageViewer({ asset, onZoomChange, markers = [] }: { asset: TeachingImage; onZoomChange?: (zoomed: boolean) => void; markers?: ImageMarker[] }) {
   const { height, width } = useWindowDimensions();
   const viewportHeight = Math.max(260, Math.min(560, height * 0.52, width * 1.3));
   const { reducedMotion } = useAccessibleEffects();
@@ -128,12 +128,13 @@ export function OriginalImageViewer({ asset, onZoomChange }: { asset: TeachingIm
   return <View style={{ gap: 14 }}>
     <View style={[VIEWING, { height: viewportHeight }]}>
       <GestureDetector gesture={gesture}>
-        <View accessible accessibilityRole="adjustable" accessibilityLabel={`Original teaching image: ${asset.title}`} accessibilityValue={{ text: zoomed ? "Zoomed in" : "Fit to screen" }}
+        <View accessible accessibilityRole="adjustable" accessibilityLabel={`Original teaching image: ${asset.title}${markers.length ? `, ${markers.length} unvalidated finding markers` : ""}`} accessibilityValue={{ text: zoomed ? "Zoomed in" : "Fit to screen" }}
           accessibilityActions={[{ name: "increment", label: "Zoom in" }, { name: "decrement", label: "Zoom out" }]} onAccessibilityAction={e => step(e.nativeEvent.actionName === "increment" ? ZOOM_STEP : -ZOOM_STEP)}
           onLayout={e => { const { width: w, height: h } = e.nativeEvent.layout; viewport.set({ w, h }); scale.set(1); x.set(0); y.set(0); }} style={{ flex: 1 }}>
           <Animated.View style={[{ flex: 1 }, transform]}>
             <Image key={`${asset.id}-${attempt}`} source={asset.source} contentFit="contain" style={{ flex: 1 }} transition={reducedMotion ? 0 : 200}
               onLoadStart={() => setStatus("loading")} onLoad={e => { if (e.source.width && e.source.height) aspect.set(e.source.width / e.source.height); setStatus("ready"); }} onError={() => setStatus("failed")} />
+            {ready && markers.map(m => <Marker key={m.id} marker={m} viewport={viewport} aspect={aspect} scale={scale} />)}
           </Animated.View>
         </View>
       </GestureDetector>
@@ -142,6 +143,9 @@ export function OriginalImageViewer({ asset, onZoomChange }: { asset: TeachingIm
           ? <><ActivityIndicator color={palette.line} /><Text style={{ color: palette.line, fontSize: 14 }}>Loading original image…</Text></>
           : <><Text selectable style={{ color: palette.line, fontSize: 15, lineHeight: 21, textAlign: "center" }}>This attachment could not be opened.</Text><Action label="Retry image" secondary onPress={() => { setStatus("loading"); setAttempt(value => value + 1); }} /></>}
       </Animated.View>}
+      {ready && markers.length > 0 && <View pointerEvents="none" style={{ position: "absolute", top: 12, left: 12, height: 24, paddingHorizontal: 10, borderRadius: 12, justifyContent: "center", backgroundColor: "rgba(20,28,40,0.6)", borderWidth: 1, borderColor: "rgba(255,255,255,0.16)" }}>
+        <Text style={{ fontSize: 11, fontWeight: "700", letterSpacing: 0.4, color: palette.white }}>Unvalidated</Text>
+      </View>}
       <ImageEdge />
     </View>
 
@@ -162,6 +166,21 @@ export function OriginalImageViewer({ asset, onZoomChange }: { asset: TeachingIm
       {asset.sourceUrl.startsWith("https://") && <SourceLink label="Source" onPress={() => { void Linking.openURL(asset.sourceUrl).catch(() => setSourceError(true)); }} />}
     </View>
   </View>;
+}
+
+/** A numbered ring at a normalised point on the image (demo flow 6's finding markers). */
+export type ImageMarker = { id: string; n: number; x: number; y: number };
+const RING = 24;
+/** Rides the image's pan and zoom, counter-scaled so the ring stays one size while the pixels under it grow. */
+function Marker({ marker, viewport, aspect, scale }: { marker: ImageMarker; viewport: SharedValue<{ w: number; h: number }>; aspect: SharedValue<number>; scale: SharedValue<number> }) {
+  const place = useAnimatedStyle(() => {
+    const { w, h } = viewport.get();
+    const [px, py] = markerAt(w, h, aspect.get(), marker.x, marker.y);
+    return { left: px - RING / 2, top: py - RING / 2, transform: [{ scale: 1 / scale.get() }] };
+  });
+  return <Animated.View pointerEvents="none" style={[{ position: "absolute", width: RING, height: RING, borderRadius: RING / 2, borderWidth: 2, borderColor: "#9CC0FF", backgroundColor: "rgba(36,91,204,0.3)", alignItems: "center", justifyContent: "center" }, place]}>
+    <Text style={{ fontSize: 11, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{marker.n}</Text>
+  </Animated.View>;
 }
 
 function StepButton({ icon, label, disabled, onPress }: { icon: string; label: string; disabled: boolean; onPress: () => void }) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { MAX_ZOOM, clamp, fitted, limit, rubberBand, zoomAround } from "./zoom";
+import { MAX_ZOOM, clamp, fitted, limit, markerAt, rubberBand, zoomAround } from "./zoom";
 
 describe("image viewer geometry", () => {
   it("fits a portrait radiograph by width in a taller viewport, and by height in a wider one", () => {
@@ -30,5 +30,12 @@ describe("image viewer geometry", () => {
     expect(rubberBand(-1e6, -100, 100, 400)).toBeGreaterThan(-500);
     expect(rubberBand(0.5, 1, MAX_ZOOM, 1)).toBeGreaterThan(0.5);
     expect(clamp(rubberBand(8, 1, MAX_ZOOM, 1), 1, MAX_ZOOM)).toBe(MAX_ZOOM);
+  });
+
+  it("places a finding marker on the fitted image, not the letterbox around it", () => {
+    // A 300 × 300 image centred in a 400 × 300 viewport starts 50 pt in.
+    expect(markerAt(400, 300, 1, 0, 0)).toEqual([50, 0]);
+    expect(markerAt(400, 300, 1, 0.5, 0.5)).toEqual([200, 150]);
+    expect(markerAt(400, 300, 1, 1, 1)).toEqual([350, 300]);
   });
 });

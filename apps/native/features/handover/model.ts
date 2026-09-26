@@ -1,6 +1,8 @@
-import { buildHandover as build, type HandoverCard } from "@sona-ai/domain/handover";
+import { buildHandover as build, type HandoverCard, type HandoverEncounter } from "@sona-ai/domain/handover";
+import { findingLine } from "@sona-ai/domain/findings";
 import type { Encounter, Patient } from "@/features/encounter/types";
 import { PENDING_RESULT } from "@/features/day/model";
+import type { Finding } from "@/features/findings/model";
 
 /**
  * Shift handover: the SBAR rules live in @sona-ai/domain/handover (the server builds the same cards
@@ -15,6 +17,14 @@ const WARD: HandoverCard[] = [
   { id: "ward-09", name: "Ravi Kumar", meta: "Bed 9 · 71 · Male", priority: "watch", situation: "Admitted with heart failure exacerbation.", background: "Chronic kidney disease stage 3.", assessment: "Weight down 1.2 kg on furosemide.", recommendation: ["Repeat renal function at 06:00", "Escalate if urine output < 30 mL/h"], sources: [] },
 ];
 
-export function buildHandover(patients: Patient[], encounters: Record<string, Encounter | undefined>): HandoverCard[] {
-  return build(patients, encounters, [PENDING_RESULT], WARD);
+/** Open and tracked findings are handed over as one line each, standing in for their own tasks (as the server does). */
+export function buildHandover(patients: Patient[], encounters: Record<string, Encounter | undefined>, findings: Finding[] = []): HandoverCard[] {
+  const withFindings: Record<string, HandoverEncounter | undefined> = Object.fromEntries(patients.map(p => {
+    const mine = findings.filter(f => f.patientId === p.id && f.status !== "dismissed");
+    const encounter = encounters[p.id];
+    if (!mine.length) return [p.id, encounter];
+    const own = new Set(mine.map(f => f.taskId));
+    return [p.id, { ...encounter, tasks: [...(encounter?.tasks ?? []).filter(t => !own.has(t.id)), ...mine.map(f => ({ title: findingLine(f), completed: false }))] }];
+  }));
+  return build(patients, withFindings, [PENDING_RESULT], WARD);
 }
