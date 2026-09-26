@@ -13,7 +13,7 @@ import type { Encounter, Patient, Task } from "@/features/encounter/types";
  */
 export type DayTone = "urgent" | "soon" | "routine";
 export type DayItem = {
-  id: string; kind: "result" | "blocker" | "visit" | "task"; title: string; detail: string; reason: string; tone: DayTone; score: number;
+  id: string; kind: "result" | "blocker" | "visit" | "task" | "check-in"; title: string; detail: string; reason: string; tone: DayTone; score: number;
   patientId?: string; open: { next?: string; view?: string };
 };
 

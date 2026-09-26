@@ -15,6 +15,9 @@ import { useLive } from "@/features/live";
 import { newestResult, serverDayPatients, serverVisit } from "@/features/live/day";
 import { acknowledgeResult, serverDayCount, useServerData, useServerDay, useVisitTasks } from "@/features/live/server-day";
 import { localDate } from "@/features/tasks/state";
+import { flaggedItems, flaggedTaskIds } from "@/features/check-ins/model";
+import { useCheckIns } from "@/features/check-ins/state";
+import { FlagActions } from "@/features/check-ins/thread";
 import { dayOf, groupVisits, rankDay, rankOtherDay, scheduleFor, type DayItem, type DayTone, type ScheduleVisit } from "./model";
 
 /*
@@ -28,7 +31,7 @@ const TONE: Record<DayTone, { dot: string; ink: string; wash: string }> = {
   soon: { dot: "#C47814", ink: palette.amber, wash: "rgba(196,120,20,0.13)" },
   routine: { dot: "rgba(36,91,204,0.5)", ink: palette.blue, wash: "rgba(36,91,204,0.08)" },
 };
-const ICON: Record<DayItem["kind"], string> = { result: "testtube.2", blocker: "pills", visit: "calendar", task: "checklist" };
+const ICON: Record<DayItem["kind"], string> = { result: "testtube.2", blocker: "pills", visit: "calendar", task: "checklist", "check-in": "exclamationmark.bubble" };
 let sortedOnce = false;
 
 const nowMinutes = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
@@ -152,6 +155,7 @@ function Row({ item, first, index, animate, pinned, onOpen, onPin, onSnooze }: {
         <Pressable accessibilityRole="button" accessibilityLabel={`More for ${item.title}`} accessibilityState={{ expanded: menu }} onPress={() => { haptic(); setMenu(v => !v); }} hitSlop={6}
           style={{ width: 36, height: 44, alignItems: "center", justifyContent: "center" }}><Icon name="ellipsis" size={15} color={palette.muted} /></Pressable>
       </View>
+      {item.kind === "check-in" && <View style={{ paddingLeft: 62, paddingBottom: 12 }}><FlagActions item={item} /></View>}
       {menu && <Expand style={{ flexDirection: "row", gap: 8, paddingLeft: 62, paddingBottom: 12 }}>
         {[[pinned ? "Unpin" : "Pin to top", "pin", onPin], ["Snooze 1 h", "moon.zzz", onSnooze]].map(([label, icon, act]) => <Pressable key={label as string} accessibilityRole="button" accessibilityLabel={label as string}
           onPress={() => { haptic(); setMenu(false); (act as () => void)(); }} style={{ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: "rgba(20,28,40,0.06)" }}>
@@ -213,6 +217,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const { on: live } = useLive();
   const server = useServerData();
   const tasksOf = useVisitTasks();
+  const checkIns = useCheckIns();
   const today = useServerDay(live ? localDate(new Date()) : undefined);
   const otherDay = useServerDay(live && offset !== 0 ? localDate(dayOf(offset)) : undefined);
   const patients = live ? serverDayPatients(fixturePatients, today ?? []) : fixturePatients;
@@ -237,7 +242,8 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const [showSnoozed, setShowSnoozed] = useState(false);
 
   const schedule = live && offset !== 0 ? (otherDay ?? []).map(a => serverVisit(a, fixturePatients.map(p => p.id))) : scheduleFor(offset, patients);
-  const ranked = offset === 0 ? rankDay(patients, encounters, now, undefined, live ? { result, tasksOf } : undefined) : rankOtherDay(offset, schedule);
+  // Flagged check-in replies rank in red above the rest; their tasks are not listed twice.
+  const ranked = offset === 0 ? [...flaggedItems(checkIns), ...rankDay(patients, encounters, now, undefined, live ? { result, tasksOf: p => tasksOf(p).filter(t => !flaggedTaskIds(checkIns).includes(t.id)) } : undefined)].sort((a, b) => b.score - a.score) : rankOtherDay(offset, schedule);
   const need = ranked.filter(item => item.tone !== "routine").length;
   const date = dayOf(offset);
   const [switched, setSwitched] = useState(false);
@@ -287,6 +293,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
               <View style={{ flexShrink: 1, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: TONE[top.tone].wash }}><Text style={{ ...type.caption, fontWeight: "600", color: TONE[top.tone].ink }}>{top.reason}</Text></View>
               {top.patientId && <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: palette.ink, alignItems: "center", justifyContent: "center" }}><Icon name="arrow.right" size={14} color={palette.white} /></View>}
             </View>
+            {top.kind === "check-in" && <FlagActions item={top} />}
           </Surface>
         </Pressable>
       </Animated.View>}

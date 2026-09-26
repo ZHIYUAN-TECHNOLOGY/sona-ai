@@ -13,6 +13,8 @@ import { capabilityLabels } from "@/features/encounter/conversation";
 import { useEncounter } from "@/features/encounter/store";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { useServerEncounter } from "@/features/live/sync";
+import { scheduleLine } from "@/features/check-ins/model";
+import { refreshCheckIns } from "@/features/check-ins/state";
 import type { Patient, PrescriptionCheck } from "@/features/encounter/types";
 import { EMPTY_DISCHARGE, FOLLOW_UPS, LANGUAGES, discharge, dischargeChecks, formatMinutes, planFor, type DischargeState, type MedChange } from "./model";
 
@@ -164,7 +166,7 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
     if (live && user) {
       // The server decides: it refuses while anything blocks, and receipts once per request.
       api.discharge.request({ encounterId: patient.encounterId, requestId: requestId(), approvedBy: user.id })
-        .then(receipt => { updateEncounter(value => discharge(value, patient, fitAt, new Date(receipt.createdAt))); haptic("success"); })
+        .then(receipt => { updateEncounter(value => discharge(value, patient, fitAt, new Date(receipt.createdAt))); haptic("success"); void refreshCheckIns().catch(() => {}); })
         .catch(e => { setServerError(errorText(e)); void refresh().catch(() => {}); })
         .finally(() => setBusy(false));
       return;
@@ -253,6 +255,10 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
             <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{plan.bed} free{saved ? ` · ${saved} earlier than usual` : ""}</Text>
             <Text style={{ ...type.caption, color: palette.muted }}>2 follow-up tasks created · leaflet in {language.name} ready to print · {done.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
           </View>
+        </View>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 4 }}>
+          <Icon name="bubble.left.and.bubble.right" size={13} color={palette.blue} />
+          <Text style={{ ...type.caption, flex: 1, color: palette.muted }}><Text style={{ ...type.caption, fontWeight: "700", color: palette.ink }}>Check-ins</Text> · {scheduleLine(done)} · in {language.name} · simulated inbox</Text>
         </View>
         <View style={{ flexDirection: "row", gap: 10 }}>
           <Chip label="View tasks" icon="checklist" onPress={() => { router.back(); setTimeout(() => router.push("/tasks"), 320); }} />
