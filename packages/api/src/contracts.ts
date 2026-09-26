@@ -64,3 +64,11 @@ export type EncounterEdit = z.infer<typeof encounterEditSchema>;
 /** A medication review ran against this revision; it stays current until the next eligibility or medicine edit. */
 export const recordReviewSchema = z.object({ encounterId: z.string().min(1), expectedRevision: z.number().int().positive() });
 export type RecordReview = z.infer<typeof recordReviewSchema>;
+
+// lane P
+/** A note is its sentences with stable IDs; a save appends the next revision after the one the caller last saw (0 before any). */
+export const noteSaveSchema = z.object({
+  encounterId: z.string().min(1), expectedRevision: z.number().int().min(0),
+  sentences: z.array(z.object({ id: z.string().min(1), text: z.string() })),
+});
+export type NoteSave = z.infer<typeof noteSaveSchema>;

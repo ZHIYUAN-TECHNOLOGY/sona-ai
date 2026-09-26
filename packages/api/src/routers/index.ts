@@ -12,6 +12,9 @@ import { completeTask, dayRouter, resultsRouter } from "./day"; // lane T
 import { dischargeRouter } from "./discharge";
 import { encounterRouter } from "./encounter";
 import { wardRouter } from "./ward";
+// lane P
+import { noteRouter } from "./note";
+import { prescribingRouter } from "./prescribing";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -30,6 +33,9 @@ export const appRouter = {
   // lane T
   results: resultsRouter,
   day: dayRouter,
+  // lane P
+  prescribing: prescribingRouter,
+  note: noteRouter,
   audit: {
     list: protectedProcedure.handler(({ context }) => openAuditItems(context.db, context.hospitalId)),
     /** Runs the nightly audit now for the caller's hospital (the demo does not wait for 02:00). */
