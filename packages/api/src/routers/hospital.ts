@@ -1,6 +1,6 @@
 import { ORPCError } from "@orpc/server";
 import { hospitalMembers } from "@sona-ai/db/schema/clinical";
-import { DEMO_HOSPITAL } from "@sona-ai/db/seed";
+import { DEMO_HOSPITAL } from "@sona-ai/db/demo";
 import { eq } from "drizzle-orm";
 
 import type { Context } from "../context";

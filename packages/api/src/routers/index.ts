@@ -8,7 +8,7 @@ import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
 import { claimRouter } from "./claim";
-import { completeTask, dayRouter, resultsRouter } from "./day"; // lane T
+import { completeTask, dayRouter, patientsRouter, resultsRouter } from "./day"; // lane T
 import { dischargeRouter } from "./discharge";
 import { encounterRouter } from "./encounter";
 import { evidenceRouter } from "./evidence";
@@ -42,6 +42,7 @@ export const appRouter = {
   // lane T
   results: resultsRouter,
   day: dayRouter,
+  patients: patientsRouter,
   // lane P
   prescribing: prescribingRouter,
   note: noteRouter,

@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
+import { DEMO_PATIENTS } from "@sona-ai/domain/demo-patients";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -11,7 +12,10 @@ import { admissions, appointments, casemixWeights, drugs, encounters, followUpRu
  * from the repo's data/ folder and are upserted, so a corrected file reaches a seeded database.
  * Reads files from disk: run it from Bun/Node (tests, a seed script), not inside the Worker.
  */
-export const DEMO_HOSPITAL = "demo";
+import { DEMO_HOSPITAL } from "./demo";
+export { DEMO_HOSPITAL };
+/** The lab results the seed writes; any other result arrived during a demo run. */
+export const SEED_LAB_IDS = ["lab-1086-potassium", "lab-hb-1086"];
 /** The synthetic test doctor for local and staging end-to-end runs (never a real person or account). */
 export const TEST_DOCTOR = { name: "Dr Test Aisyah", email: "dr.test@sona.test", password: "Sona-7rcVayfxIuzr" };
 // Any drizzle Postgres database: Neon in staging, PGlite in tests.
@@ -19,10 +23,10 @@ type AnyDb = PgAsyncDatabase<any, any>;
 
 export async function seedDemo(db: AnyDb, now = new Date()) {
   await db.insert(hospitals).values({ id: DEMO_HOSPITAL, name: "Demo General Hospital (synthetic)" }).onConflictDoNothing();
-  await db.insert(patients).values([
-    { id: "SYN-1042", hospitalId: DEMO_HOSPITAL, name: "Amelia Tan", initials: "AT", age: 42, sex: "Female", complaint: "Cough for five days, with fever since yesterday.", allergies: "Penicillin — reported rash; details need confirmation" },
-    { id: "SYN-1086", hospitalId: DEMO_HOSPITAL, name: "Daniel Rahman", initials: "DR", age: 57, sex: "Male", complaint: "Breathlessness on exertion; onset not yet documented.", incomplete: true },
-  ]).onConflictDoNothing();
+  // The same records the app's fixtures show; the rest of each record (history, medicines, vitals, sources) is kept whole in `record`.
+  await db.insert(patients).values(DEMO_PATIENTS.map(({ id, name, initials, age, sex, complaint, allergies, incomplete, encounterId: _, ...record }) =>
+    ({ id, hospitalId: DEMO_HOSPITAL, name, initials, age, sex, complaint, allergies, incomplete, record })))
+    .onConflictDoUpdate({ target: patients.id, set: { complaint: sql`excluded.complaint`, allergies: sql`excluded.allergies`, incomplete: sql`excluded.incomplete`, record: sql`excluded.record` } });
   await db.insert(encounters).values([
     { id: "visit-1042", patientId: "SYN-1042", hospitalId: DEMO_HOSPITAL },
     { id: "visit-1086", patientId: "SYN-1086", hospitalId: DEMO_HOSPITAL },

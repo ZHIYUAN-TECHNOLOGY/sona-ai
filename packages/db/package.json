@@ -18,6 +18,7 @@
     "db:reset-demo": "bun src/reset-run.ts"
   },
   "dependencies": {
+    "@sona-ai/domain": "workspace:*",
     "@neondatabase/serverless": "^1.1.0",
     "drizzle-orm": "catalog:",
     "zod": "catalog:",

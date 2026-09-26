@@ -107,3 +107,13 @@ test("handover says who acknowledged a critical result and how long it took; an 
   expect(daniel.recommendation.some(l => l.startsWith("Act on low Hb"))).toBe(false);
   expect(daniel.recommendation.some(l => l.startsWith("Act on low potassium (3.1 mmol/L)"))).toBe(true);
 });
+
+test("patients list the hospital's people with their full record and visit, so live mode shows what the server holds", async () => {
+  const { api, db, as } = await signedIn();
+  const people = await api.patients.list();
+  expect(people.map(p => [p.id, p.encounterId, p.name, p.incomplete])).toEqual([["SYN-1042", "visit-1042", "Amelia Tan", false], ["SYN-1086", "visit-1086", "Daniel Rahman", true]]);
+  expect(people[0]).toMatchObject({ subtitle: "Respiratory review", allergies: "Penicillin — reported rash; details need confirmation", medicines: ["Salbutamol inhaler, as needed", "Cetirizine, patient-reported"] });
+  expect(people[0]!.history).toContain("Asthma since childhood");
+  expect(people[0]!.sources.map(s => s.id)).toContain("history");
+  expect(await (await otherHospital(db, as)).patients.list()).toEqual([]);
+});

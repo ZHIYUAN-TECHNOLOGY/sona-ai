@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { user } from "@sona-ai/db/schema/auth";
-import { appointments, labResults, patients, tasks } from "@sona-ai/db/schema/clinical";
+import { appointments, encounters, labResults, patients, tasks } from "@sona-ai/db/schema/clinical";
+import type { DemoPatient } from "@sona-ai/domain/demo-patients";
 import { criticalOf } from "@sona-ai/domain/critical";
 import { and, asc, desc, eq, gte, isNull, lt } from "drizzle-orm";
 import { z } from "zod";
@@ -68,5 +69,17 @@ export const dayRouter = {
     }).from(appointments).innerJoin(patients, eq(patients.id, appointments.patientId))
       .where(and(eq(appointments.hospitalId, hospitalId), gte(appointments.startsAt, start), lt(appointments.startsAt, end)))
       .orderBy(asc(appointments.startsAt));
+  }),
+};
+
+export const patientsRouter = {
+  /** The hospital's patients with their full record and visit, in ID order; the visit time comes from appointments. */
+  list: protectedProcedure.handler(async ({ context: { db, hospitalId } }) => {
+    const rows = await db.select({ patient: patients, encounterId: encounters.id }).from(patients)
+      .leftJoin(encounters, eq(encounters.patientId, patients.id)).where(eq(patients.hospitalId, hospitalId)).orderBy(asc(patients.id));
+    return rows.map(({ patient: p, encounterId }): DemoPatient => ({
+      ...(p.record as Omit<DemoPatient, "id" | "encounterId" | "name" | "initials" | "age" | "sex" | "complaint" | "allergies" | "incomplete">),
+      id: p.id, encounterId: encounterId ?? "", name: p.name, initials: p.initials, age: p.age, sex: p.sex, complaint: p.complaint, allergies: p.allergies, incomplete: p.incomplete,
+    }));
   }),
 };

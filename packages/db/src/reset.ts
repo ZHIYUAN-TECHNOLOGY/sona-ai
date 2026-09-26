@@ -1,8 +1,8 @@
-import { and, eq, inArray, like } from "drizzle-orm";
+import { and, eq, inArray, like, notInArray } from "drizzle-orm";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 
 import { admissions, appointments, auditItems, checkInReplies, checkIns, claims, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, patients, provenance, receipts, tasks } from "./schema";
-import { DEMO_HOSPITAL, seedDemo } from "./seed";
+import { DEMO_HOSPITAL, SEED_LAB_IDS, seedDemo } from "./seed";
 
 type AnyDb = PgAsyncDatabase<any, any>;
 
@@ -31,7 +31,11 @@ export async function resetDemo(db: AnyDb, now = new Date()) {
     await db.delete(notes).where(inArray(notes.encounterId, visits));
     await db.update(encounters).set({ revision: 1, state: {}, updatedAt: now }).where(inArray(encounters.id, visits));
   }
-  if (people.length) await db.update(labResults).set({ acknowledgedBy: null, acknowledgedAt: null }).where(inArray(labResults.patientId, people));
+  if (people.length) {
+    // Results that arrived during the run (the simulated lab feed) go; the seeded ones become unacknowledged again.
+    await db.delete(labResults).where(and(inArray(labResults.patientId, people), notInArray(labResults.id, SEED_LAB_IDS)));
+    await db.update(labResults).set({ acknowledgedBy: null, acknowledgedAt: null }).where(inArray(labResults.patientId, people));
+  }
   const beds = (await db.select({ id: admissions.id }).from(admissions).where(eq(admissions.hospitalId, DEMO_HOSPITAL))).map(a => a.id);
   await db.update(admissions).set({ dischargedAt: null, fitAt: null }).where(eq(admissions.hospitalId, DEMO_HOSPITAL));
   if (beds.length) await db.update(guaranteeLetters).set({ status: "requested", receivedAt: null }).where(inArray(guaranteeLetters.admissionId, beds));

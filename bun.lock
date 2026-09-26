@@ -144,6 +144,7 @@
       "dependencies": {
         "@electric-sql/pglite": "0.3.15",
         "@neondatabase/serverless": "^1.1.0",
+        "@sona-ai/domain": "workspace:*",
         "drizzle-orm": "catalog:",
         "zod": "catalog:",
       },

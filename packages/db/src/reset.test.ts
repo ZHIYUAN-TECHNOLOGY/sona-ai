@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
-import { admissions, appointments, auditItems, checkInReplies, checkIns, claims, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, provenance, receipts, tasks } from "./schema";
+import { admissions, appointments, auditItems, patients, checkInReplies, checkIns, claims, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, provenance, receipts, tasks } from "./schema";
 import { resetDemo } from "./reset";
 import { DEMO_HOSPITAL, seedDemo } from "./seed";
 import { createTestDb } from "./testing";
@@ -28,6 +28,8 @@ test("a demo reset undoes a whole run (discharge, claim, receipts, tasks, findin
   await db.insert(handoverAcceptances).values({ id: "h1", hospitalId: DEMO_HOSPITAL, fromUser: "u1", toUser: "Dr Lim", cardIds: ["x"] });
   await db.insert(auditItems).values({ id: "a1", hospitalId: DEMO_HOSPITAL, patientId: "SYN-1086", doctor: "Dr", gap: "g", toCode: "D64.9", riskCents: 1, query: "q" });
   await db.insert(notes).values({ id: "n2", encounterId: "visit-1086", revision: 2, sentences: [] });
+  await db.insert(labResults).values({ id: "lab-sim-1", patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L", flag: "critical low", sourceId: "lab-sim-1" });
+  await db.update(patients).set({ allergies: "Sulfa — edited during the run" });
   await db.insert(provenance).values({ id: "p1", encounterId: "visit-1042", kind: "finding-dismissed", output: {}, sourceIds: [], model: "fixture" });
 
   await resetDemo(db, now);
@@ -37,6 +39,9 @@ test("a demo reset undoes a whole run (discharge, claim, receipts, tasks, findin
   expect((await db.select().from(admissions))[0]).toMatchObject({ dischargedAt: null, fitAt: null });
   expect((await db.select().from(guaranteeLetters))[0]).toMatchObject({ status: "requested", receivedAt: null });
   expect((await db.select().from(labResults)).every(r => r.acknowledgedAt === null)).toBe(true);
+  // Results that arrived during the run are gone, not merely unacknowledged; records return to the seed.
+  expect((await db.select().from(labResults)).map(r => r.id).sort()).toEqual(["lab-1086-potassium", "lab-hb-1086"]);
+  expect((await db.select().from(patients)).map(p => p.allergies).sort()).toEqual(["Penicillin — reported rash; details need confirmation", null]);
   expect((await db.select().from(notes)).map(n => n.revision)).toEqual([1]);
   expect((await db.select().from(appointments)).map(a => a.id).sort()).toEqual(["appt-SYN-1042", "appt-SYN-1086"]);
 });

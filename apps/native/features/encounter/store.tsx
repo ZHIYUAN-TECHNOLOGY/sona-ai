@@ -2,6 +2,7 @@ import * as SecureStore from "expo-secure-store";
 import { createContext, use, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { AppState } from "react-native";
 import { refreshPendingResult } from "@/features/day/model";
+import { useServerPatients } from "@/features/live/patients-sync";
 import { patients, refreshDemoTimes } from "./fixtures";
 import { effectivePatient } from "./clinical-state";
 import { acceptCard, beginRequest, createCard, finishRequest, initialEncounters, issueSimulation, reviseEncounter, revealSections, queueAmendment, reconcileAmendment } from "./state";
@@ -121,7 +122,9 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
     if (pendingAmendment.phase === "queued-issue") request("prescription", "Create amended prescribing simulation", pendingAmendment.id);
   }, [patientId, pendingAmendment?.id, pendingAmendment?.phase, pendingAmendment?.revision, request]);
   const reset = useCallback(() => { cancel(); setEncounters(initialEncounters()); setPatientId(undefined); activeRef.current = undefined; setSimulateFailure(false); setSimulateInvalid(false); }, [cancel]);
-  const currentPatients = patients.map(p => effectivePatient(p, encounters[p.id]));
+  // Live mode: each person's record as the server holds it; the demo schedule keeps its own clock times.
+  const server = useServerPatients();
+  const currentPatients = patients.map(p => effectivePatient(server?.[p.id] ? { ...p, ...server[p.id], time: p.time } : p, encounters[p.id]));
   const patient = currentPatients.find(p => p.id === patientId);
   return <Context value={{ patient, patients: currentPatients, encounters, encounter: patientId ? encounters[patientId] : undefined, selectPatient, leaveVisit, request, cancel, startAmendment, updateEncounter, runInPlace, voiceInput, setVoiceInput, compactResponses, setCompactResponses, simulateInvalid, setSimulateInvalid, simulateFailure, setSimulateFailure, showDemoControls, setShowDemoControls, reset }}>{children}</Context>;
 }
