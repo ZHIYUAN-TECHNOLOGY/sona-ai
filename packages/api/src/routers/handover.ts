@@ -1,5 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { appointments, encounters, findings, handoverAcceptances, labResults, observations, patients, tasks } from "@sona-ai/db/schema/clinical";
+import { user } from "@sona-ai/db/schema/auth";
+import { elapsed } from "@sona-ai/domain/critical";
 import { findingLine } from "@sona-ai/domain/findings";
 import { buildHandover, type HandoverPatient } from "@sona-ai/domain/handover";
 import { and, eq, inArray, isNotNull, ne } from "drizzle-orm";
@@ -21,7 +23,7 @@ export async function handoverCards(db: Context["db"], hospitalId: string) {
   const [visits, obs, labs, open, appts, found] = await Promise.all([
     db.select().from(encounters).where(eq(encounters.hospitalId, hospitalId)),
     db.select().from(observations).where(inArray(observations.patientId, ids)),
-    db.select().from(labResults).where(and(inArray(labResults.patientId, ids), isNotNull(labResults.flag))),
+    db.select({ lab: labResults, by: user.name }).from(labResults).leftJoin(user, eq(user.id, labResults.acknowledgedBy)).where(and(inArray(labResults.patientId, ids), isNotNull(labResults.flag))),
     db.select().from(tasks).where(and(eq(tasks.hospitalId, hospitalId), eq(tasks.completed, false))),
     db.select().from(appointments).where(eq(appointments.hospitalId, hospitalId)),
     listFindings(db, hospitalId, new Date(), ne(findings.status, "dismissed")), // lane F6
@@ -40,9 +42,13 @@ export async function handoverCards(db: Context["db"], hospitalId: string) {
     const state = (visit?.state ?? {}) as { noteReviewed?: boolean };
     // A finding's own line stands in for its task, so a tracked one is handed over once, with its due date.
     const followUps = found.filter(f => f.patientId === p.id).map(f => ({ title: findingLine(f), completed: false }));
-    return [p.id, { noteReviewed: state.noteReviewed, tasks: [...open.filter(t => visit && t.encounterId === visit.id && t.kind !== "finding").map(t => ({ title: t.title, due: t.due ?? undefined, completed: t.completed })), ...followUps] }];
+    // A critical result stays in the handover once acted on: who acknowledged it, and how long it waited.
+    const acted = labs.filter(({ lab }) => lab.patientId === p.id && lab.acknowledgedAt && lab.flag?.startsWith("critical"))
+      .map(({ lab, by }) => ({ title: `Critical ${lab.test.toLowerCase()} ${[lab.value, lab.unit].filter(Boolean).join(" ")} acknowledged by ${by ?? lab.acknowledgedBy} after ${elapsed(lab.receivedAt, lab.acknowledgedAt!)}`, completed: false }));
+    return [p.id, { noteReviewed: state.noteReviewed, tasks: [...open.filter(t => visit && t.encounterId === visit.id && t.kind !== "finding").map(t => ({ title: t.title, due: t.due ?? undefined, completed: t.completed })), ...followUps, ...acted] }];
   }));
-  const pending = labs.map(l => ({ patientId: l.patientId, test: l.test, value: [l.value, l.unit].filter(Boolean).join(" "), flag: l.flag!, receivedAt: clock(l.receivedAt) }));
+  // Only results nobody has acknowledged are still to act on.
+  const pending = labs.filter(({ lab }) => !lab.acknowledgedAt).map(({ lab: l }) => ({ patientId: l.patientId, test: l.test, value: [l.value, l.unit].filter(Boolean).join(" "), flag: l.flag!, receivedAt: clock(l.receivedAt) }));
   return buildHandover(rows, byPatient, pending);
 }
 

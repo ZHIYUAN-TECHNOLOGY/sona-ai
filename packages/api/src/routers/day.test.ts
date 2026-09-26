@@ -84,3 +84,26 @@ test("my day lists that date's appointments in the hospital's day (+08:00), in t
   expect(await (await otherHospital(db, as)).day.list({ date: "2026-09-26" })).toEqual([]);
   expect((await api.day.list({ date: "26/09/2026" }).catch(e => e)).code).toBe("BAD_REQUEST");
 });
+
+test("a result from the (simulated) lab feed past a call-now limit arrives flagged critical; a normal one arrives unflagged", async () => {
+  const { api, db, as } = await signedIn();
+  const critical = await api.results.receive({ patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L" });
+  expect(critical).toMatchObject({ patientName: "Daniel Rahman", flag: "critical low", critical: true, acknowledgedAt: null });
+  const normal = await api.results.receive({ patientId: "SYN-1042", test: "Sodium", value: "138", unit: "mmol/L" });
+  expect(normal).toMatchObject({ flag: null, critical: false });
+  expect((await api.results.list({ unacknowledged: true }))[0]!.id).toBe(critical.id);
+  // Another hospital's lab cannot post to this hospital's patient.
+  expect((await (await otherHospital(db, as)).results.receive({ patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L" }).catch(e => e)).code).toBe("NOT_FOUND");
+});
+
+test("handover says who acknowledged a critical result and how long it took; an acknowledged ordinary result is no longer 'act on'", async () => {
+  const { api, clock } = await signedIn();
+  const critical = await api.results.receive({ patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L" });
+  clock.now = new Date(clock.now.getTime() + 72_000);
+  await api.results.acknowledge({ resultId: critical.id });
+  await api.results.acknowledge({ resultId: "lab-hb-1086" });
+  const daniel = (await api.handover.list()).find(c => c.patientId === "SYN-1086")!;
+  expect(daniel.recommendation).toContain("Critical potassium 2.6 mmol/L acknowledged by dr-aisyah after 1:12");
+  expect(daniel.recommendation.some(l => l.startsWith("Act on low Hb"))).toBe(false);
+  expect(daniel.recommendation.some(l => l.startsWith("Act on low potassium (3.1 mmol/L)"))).toBe(true);
+});

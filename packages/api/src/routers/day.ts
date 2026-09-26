@@ -1,5 +1,7 @@
 import { ORPCError } from "@orpc/server";
+import { user } from "@sona-ai/db/schema/auth";
 import { appointments, labResults, patients, tasks } from "@sona-ai/db/schema/clinical";
+import { criticalOf } from "@sona-ai/domain/critical";
 import { and, asc, desc, eq, gte, isNull, lt } from "drizzle-orm";
 import { z } from "zod";
 
@@ -14,16 +16,32 @@ export const completeTask = protectedProcedure.input(z.object({ taskId: z.string
   return task;
 });
 
-/** The hospital's lab results with the patient's name, newest first (lab rows are scoped through their patient). */
-const listResults = (db: Context["db"], hospitalId: string, where?: ReturnType<typeof eq>) => db.select({
+/** The hospital's lab results with the patient's name and who acknowledged each, newest first (lab rows are scoped through their patient). */
+const listResults = async (db: Context["db"], hospitalId: string, where?: ReturnType<typeof eq>) => (await db.select({
   id: labResults.id, patientId: labResults.patientId, patientName: patients.name, test: labResults.test, value: labResults.value,
   unit: labResults.unit, flag: labResults.flag, receivedAt: labResults.receivedAt, acknowledgedBy: labResults.acknowledgedBy, acknowledgedAt: labResults.acknowledgedAt,
-}).from(labResults).innerJoin(patients, eq(patients.id, labResults.patientId))
-  .where(and(eq(patients.hospitalId, hospitalId), where)).orderBy(desc(labResults.receivedAt));
+  acknowledgedByName: user.name,
+}).from(labResults).innerJoin(patients, eq(patients.id, labResults.patientId)).leftJoin(user, eq(user.id, labResults.acknowledgedBy))
+  .where(and(eq(patients.hospitalId, hospitalId), where)).orderBy(desc(labResults.receivedAt)))
+  .map(r => ({ ...r, critical: Boolean(r.flag?.startsWith("critical")) }));
 
 export const resultsRouter = {
   list: protectedProcedure.input(z.object({ unacknowledged: z.boolean().optional() }).optional()).handler(({ context: { db, hospitalId }, input }) =>
     listResults(db, hospitalId, input?.unacknowledged ? isNull(labResults.acknowledgedAt) : undefined)),
+  /**
+   * The lab feed, simulated for the demo: a result arrives for one of the hospital's patients, flagged
+   * critical by rule when it is past a call-now limit. ponytail: a real lab posts HL7/FHIR here.
+   */
+  receive: protectedProcedure.input(z.object({ patientId: z.string().min(1), test: z.string().trim().min(1), value: z.string().trim().min(1), unit: z.string().trim().min(1).optional() }))
+    .handler(async ({ context, input }) => {
+      const { db, hospitalId } = context;
+      const [patient] = await db.select({ id: patients.id }).from(patients).where(and(eq(patients.id, input.patientId), eq(patients.hospitalId, hospitalId)));
+      if (!patient) throw new ORPCError("NOT_FOUND", { message: `No patient ${input.patientId}` });
+      const id = `lab-${crypto.randomUUID()}`;
+      await db.insert(labResults).values({ id, patientId: input.patientId, test: input.test, value: input.value, unit: input.unit, flag: criticalOf(input) ?? null, sourceId: id, receivedAt: clockOf(context) });
+      const [result] = await listResults(db, hospitalId, eq(labResults.id, id));
+      return result!;
+    }),
   /** Records the first doctor to acknowledge a result; acknowledging it again returns that same record. */
   acknowledge: protectedProcedure.input(z.object({ resultId: z.string().min(1) })).handler(async ({ context, input }) => {
     const { db, hospitalId } = context;

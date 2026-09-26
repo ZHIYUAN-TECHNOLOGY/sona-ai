@@ -5,6 +5,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { palette } from "@/components/sona/theme";
 import { IconButton } from "@/components/sona/ui";
+import { CriticalAlert } from "@/features/critical";
 import { EncounterProvider } from "@/features/encounter/store";
 import { ScribePlayback } from "@/features/scribe";
 
@@ -29,5 +30,5 @@ export default function RootLayout() {
     <Stack.Screen name="claim" options={{ headerShown: false, presentation: "modal" }} />
     <Stack.Screen name="history" options={{ title: "Your workspace", presentation: "modal" }} />
     <Stack.Screen name="account" options={{ title: "Account scaffold" }} />
-  </Stack></EncounterProvider></SafeAreaProvider></KeyboardProvider></GestureHandlerRootView>;
+  </Stack><CriticalAlert /></EncounterProvider></SafeAreaProvider></KeyboardProvider></GestureHandlerRootView>;
 }
