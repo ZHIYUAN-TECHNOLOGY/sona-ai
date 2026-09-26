@@ -10,6 +10,7 @@ import { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Icon, useAccessibleEffects } from "@/components/sona/ui";
+import { CareMessages } from "@/features/care-messages";
 import { CheckInThread } from "@/features/check-ins/thread";
 import { PENDING_RESULT, testInSentence } from "@/features/day/model";
 import { useServerData } from "@/features/live/server-day";
@@ -101,6 +102,7 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
           </Animated.View>}
 
           <CheckInThread patient={patient} entering={rise(2)} />
+          <CareMessages patient={patient} entering={rise(2)} />
 
           <Animated.View entering={rise(2)} style={{ borderRadius: 22, borderCurve: "continuous", backgroundColor: palette.white, padding: 16, gap: 12 }}>
             <View style={{ gap: 3 }}>
