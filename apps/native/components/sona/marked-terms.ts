@@ -39,6 +39,9 @@ const DICTIONARY: [RegExp, Mark][] = [
   ]), "caution"],
 ];
 
+const NEGATED_BEFORE = /\b(?:no|denies|denied|without|nil)\s+$/i;
+const NEGATED_AFTER = /^\s+(?:absent|not present|denied|resolved)\b/i;
+
 export type Segment = { text: string; mark?: Mark };
 export function segments(input: string): Segment[] {
   const out: Segment[] = [];
@@ -51,6 +54,8 @@ export function segments(input: string): Segment[] {
       const found = [...text.matchAll(pattern)].sort((a, b) => b[0].length - a[0].length);
       for (const m of found) {
         const start = m.index!, end = start + m[0].length;
+        // A symptom the note says is absent ("no fever", "confusion absent") is not a finding to look at.
+        if (mark === "symptom" && (NEGATED_BEFORE.test(text.slice(0, start)) || NEGATED_AFTER.test(text.slice(end)))) continue;
         if (!hits.some(h => start < h.end && end > h.start)) hits.push({ start, end, mark });
       }
     }

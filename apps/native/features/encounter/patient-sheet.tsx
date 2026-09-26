@@ -13,6 +13,7 @@ import { Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { CheckInThread } from "@/features/check-ins/thread";
 import { PENDING_RESULT, testInSentence } from "@/features/day/model";
 import { useServerData } from "@/features/live/server-day";
+import { useServerEncounter } from "@/features/live/sync";
 import { defaultMedications } from "./clinical-state";
 import { QuickActions } from "@/components/sona/quick-actions";
 import { visitActions } from "./quick-actions";
@@ -42,6 +43,7 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
   const [box, setBox] = useState(0);
   const { encounters } = useEncounter();
   const server = useServerData();
+  useServerEncounter(patient); // live mode: medicines and discharge as the server holds them
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();

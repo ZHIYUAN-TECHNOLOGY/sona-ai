@@ -17,6 +17,7 @@ import { useEncounter } from "./store";
 import type { Capability, FeatureProps, FocusView } from "./types";
 import { VoiceDock } from "./voice-dock";
 import { QuickRow } from "@/components/sona/quick-actions";
+import { useServerEncounter } from "@/features/live/sync";
 import { useHomeActions } from "./quick-actions";
 import { defaultMedications } from "./clinical-state";
 import { nextSteps, type Step } from "./next-steps";
@@ -47,6 +48,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   // Read straight from the route so the first frame of the push already shows this visit.
   const patient = home ? undefined : patients.find(p => p.id === sessionId);
   const encounter = patient ? encounters[patient.id] : undefined;
+  useServerEncounter(patient); // live mode: the visit opens on the server's record, not the fixture
   const params = useLocalSearchParams<{ next?: string; prompt?: string; view?: string }>();
   const arrived = useRef(false);
   useFocusEffect(useCallback(() => {

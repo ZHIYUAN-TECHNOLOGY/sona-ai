@@ -1,6 +1,8 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import type { PendingResult, ScheduleVisit } from "@/features/day/model";
-import type { Patient, Task } from "@/features/encounter/types";
+import { EMPTY_CLAIM } from "@sona-ai/domain/claim";
+import { EMPTY_DISCHARGE } from "@sona-ai/domain/discharge";
+import type { Encounter, Patient, Task } from "@/features/encounter/types";
 
 /**
  * Live mode's read side for tasks, lab results and My Day: pure mappings from the server's rows to
@@ -36,4 +38,25 @@ export function serverDayPatients(patients: Patient[], rows: ServerAppointment[]
 /** Any day's appointment as a schedule row; it opens a visit only for a patient the app knows. */
 export function serverVisit(r: ServerAppointment, known: string[]): ScheduleVisit {
   return { id: r.id, name: r.patientName, initials: r.initials, time: clock(new Date(r.startsAt)), reason: sentence(r.kind), incomplete: r.incomplete, patientId: known.includes(r.patientId) ? r.patientId : undefined };
+}
+
+/** What the server holds for a visit (the encounter row's state), as far as the app reads it. */
+export type ServerVisitState = Partial<Pick<Encounter, "medicationEntries" | "prescriptionInputs" | "proposedMedicine">> & { discharge?: object; claim?: object };
+type ClaimStatus = { status: string; approvedAt?: string | Date };
+
+/**
+ * In live mode the server's record of a visit wins over the fixture: its medicines and eligibility,
+ * discharge fixes, claim fixes and status, and whether the guarantee letter has arrived. What it has
+ * not recorded yet keeps the app's own value; the app's revision counter is left alone.
+ */
+export function mergeServerState<T extends Partial<Encounter>>(value: T, server: ServerVisitState, claim: ClaimStatus, glReceived: boolean): T {
+  const status = claim.status === "approved" ? "approved" : claim.status === "sent" ? "sent" : "draft";
+  return {
+    ...value,
+    ...(server.medicationEntries ? { medicationEntries: server.medicationEntries } : {}),
+    ...(server.prescriptionInputs ? { prescriptionInputs: server.prescriptionInputs } : {}),
+    ...(server.proposedMedicine !== undefined ? { proposedMedicine: server.proposedMedicine } : {}),
+    discharge: { ...EMPTY_DISCHARGE, ...value.discharge, ...server.discharge, glReceived },
+    claim: { ...EMPTY_CLAIM, ...server.claim, status, approvedAt: claim.approvedAt === undefined ? undefined : String(claim.approvedAt) },
+  };
 }

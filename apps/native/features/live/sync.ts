@@ -1,19 +1,18 @@
 import { useCallback, useEffect } from "react";
-import { EMPTY_CLAIM } from "@/features/claim/model";
-import { EMPTY_DISCHARGE } from "@/features/discharge/model";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
 import { api, useLive } from ".";
+import { mergeServerState, type ServerVisitState } from "./day";
 
 /**
- * In live mode, pulls the server's discharge and claim state for a patient into the app's encounter
- * so the existing cards render what the server holds: discharge fixes, claim fixes and status, and
- * whether the guarantee letter has arrived (the server's bed no longer lists that blocker).
+ * In live mode, pulls the server's record of a visit into the app's encounter so every screen renders
+ * what the server holds (see `mergeServerState`): medicines, discharge and claim fixes, claim status,
+ * and whether the guarantee letter has arrived (the server's bed no longer lists that blocker).
  */
 export function useServerEncounter(patient: Patient | undefined) {
   const { on } = useLive();
   const { updateEncounter } = useEncounter();
-  const encounterId = patient?.encounterId;
+  const encounterId = patient?.encounterId, patientId = patient?.id;
   const refresh = useCallback(async () => {
     if (!on || !encounterId) return;
     // The status call settles the insurer's answer first, so the bed list read after it is current.
@@ -21,14 +20,9 @@ export function useServerEncounter(patient: Patient | undefined) {
     const [snapshot, beds] = await Promise.all([api.encounter.get({ encounterId }), api.ward.beds()]);
     const bed = beds.find(b => b.blockers.some(x => x.id.startsWith("adm-1042")) || b.admissionId === "adm-1042");
     const glReceived = !bed || !bed.blockers.some(x => x.kind === "gl");
-    const server = snapshot.state as { discharge?: object; claim?: object };
-    updateEncounter(value => ({
-      ...value,
-      discharge: { ...EMPTY_DISCHARGE, ...value.discharge, ...server.discharge, glReceived },
-      claim: { ...EMPTY_CLAIM, ...server.claim, status: claim.status === "approved" ? "approved" : claim.status === "sent" ? "sent" : "draft", approvedAt: "approvedAt" in claim ? claim.approvedAt : undefined },
-    }));
+    updateEncounter(value => mergeServerState(value, snapshot.state as ServerVisitState, claim, glReceived), false, patientId);
   // Keyed on the encounter ID: the patient object is rebuilt on every render.
-  }, [on, encounterId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [on, encounterId, patientId]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { void refresh().catch(() => {}); }, [refresh]);
   // While the claim is with the insurer, keep checking so the guarantee letter clears on whichever screen is open.
   const { encounters } = useEncounter();

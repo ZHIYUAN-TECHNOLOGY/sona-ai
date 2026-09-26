@@ -15,7 +15,8 @@ import { api, useLive } from "@/features/live";
 import { openItems, shortRM, totalRisk, useSent } from "@/features/audit/model";
 import { FollowUpList } from "@/features/findings";
 import { useFindings } from "@/features/live/findings-sync";
-import { OWNERS, SUGGESTED, huddle, wardBeds, wardSummary, type Bed, type Owner } from "./model";
+import { useServerEncounter } from "@/features/live/sync";
+import { DEMO_PATIENT, OWNERS, SUGGESTED, huddle, wardBeds, wardSummary, type Bed, type Owner } from "./model";
 
 /*
  * Ward command view (after Trackables' card-to-screen morph): a grid of bed tiles; tapping one
@@ -40,6 +41,8 @@ export function WardScreen() {
   const { reducedMotion } = useAccessibleEffects();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  // Live mode: bed 6 is drawn from Amelia's encounter, so pull the server's record of it first.
+  useServerEncounter(patients.find(p => p.id === DEMO_PATIENT));
   const beds = wardBeds(patients, encounters);
   const summary = wardSummary(beds);
   const [owners, setOwners] = useState<Record<string, Owner | undefined>>({});

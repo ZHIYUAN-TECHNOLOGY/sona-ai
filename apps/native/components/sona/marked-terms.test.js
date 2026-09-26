@@ -35,3 +35,7 @@ test("incidental findings on a film are findings, with their size", () => {
 test("an abbreviated analyte still marks an abnormal result", () => {
   expect(marks("Act on low Hb (9.8 g/dL).")).toEqual([["low Hb", "alert"]]);
 });
+
+test("a symptom that is absent or denied is not highlighted as present", () => {
+  expect(marks("Observations: Confusion absent, no fever, denies chest pain; cough since Monday.")).toEqual([["cough", "symptom"]]);
+});

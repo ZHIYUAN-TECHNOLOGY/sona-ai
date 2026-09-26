@@ -10,7 +10,8 @@ type Store = {
   patient: Patient | undefined; patients: Patient[]; encounters: Record<string, Encounter>; encounter: Encounter | undefined;
   startAmendment: (reason: string) => void;
   selectPatient: (id: string) => void; leaveVisit: () => void; request: (kind: Capability, prompt?: string) => void; cancel: () => void;
-  updateEncounter: (update: (current: Encounter) => Encounter, revise?: boolean) => void;
+  /** Updates the open visit, or `patientId`'s when given (a server read that may land after the visit changed). */
+  updateEncounter: (update: (current: Encounter) => Encounter, revise?: boolean, patientId?: string) => void;
   runInPlace: (kind: "medication" | "prescription") => void;
   voiceInput: boolean; setVoiceInput: (value: boolean) => void; compactResponses: boolean; setCompactResponses: (value: boolean) => void; simulateInvalid: boolean; setSimulateInvalid: (value: boolean) => void;
   simulateFailure: boolean; setSimulateFailure: (enabled: boolean) => void; showDemoControls: boolean; setShowDemoControls: (value: boolean) => void; reset: () => void;
@@ -46,8 +47,8 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
   const selectPatient = useCallback((id: string) => { if (!patients.some(p => p.id === id) || activeRef.current === id) return; cancel(); activeRef.current = id; setPatientId(id); }, [cancel]);
   // Home has no visit open: leaving stops any answer still arriving so nothing is left half-streamed.
   const leaveVisit = useCallback(() => { if (!activeRef.current) return; cancel(); activeRef.current = undefined; setPatientId(undefined); }, [cancel]);
-  const updateEncounter = useCallback((update: (current: Encounter) => Encounter, revise = false) => {
-    const id = activeRef.current; if (!id) return;
+  const updateEncounter = useCallback((update: (current: Encounter) => Encounter, revise = false, patientId?: string) => {
+    const id = patientId ?? activeRef.current; if (!id || !patients.some(p => p.id === id)) return;
     setEncounters(prev => { const next = update(prev[id]!); return { ...prev, [id]: revise ? reviseEncounter(next) : next }; });
   }, []);
   const request = useCallback((kind: Capability, prompt = "", amendmentId?: string) => {

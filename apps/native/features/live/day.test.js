@@ -1,6 +1,6 @@
 process.env.TZ = "Asia/Kuala_Lumpur";
 import { expect, test } from "bun:test";
-import { newestResult, serverDayPatients, serverTasks, serverVisit } from "./day";
+import { mergeServerState, newestResult, serverDayPatients, serverTasks, serverVisit } from "./day";
 
 const task = (over = {}) => ({ id: "t1", hospitalId: "demo", encounterId: "visit-1042", kind: "discharge", title: "Book review clinic", owner: "Clinic clerk", due: "2026-10-10", completed: false, sourceId: null, idempotencyKey: "k", createdAt: new Date("2026-09-26T02:00:00Z"), ...over });
 
@@ -34,4 +34,25 @@ test("today's server appointments pick which demo patients are seen and at what 
 test("any day's appointment becomes a schedule visit, opening the demo patient when there is one", () => {
   expect(serverVisit(appt(), ["SYN-1042"])).toEqual({ id: "appt-SYN-1042", name: "Amelia Tan", initials: "AT", time: "10:15", reason: "Clinic visit", incomplete: false, patientId: "SYN-1042" });
   expect(serverVisit(appt({ patientId: "SYN-7" }), ["SYN-1042"]).patientId).toBeUndefined();
+});
+
+test("the server's visit state replaces the fixture's: confirmed medicines, eligibility, discharge fixes and claim status", () => {
+  const local = { revision: 3, medicationEntries: [{ id: "m1", name: "Salbutamol", ingredient: "salbutamol", formulation: "inhaler", confirmed: false }], discharge: { language: "en" } };
+  const server = {
+    medicationEntries: [{ id: "m1", name: "Salbutamol", ingredient: "salbutamol", formulation: "inhaler", confirmed: true }],
+    prescriptionInputs: { weightKg: "62", liverDisease: "no", kidneyDisease: "no", alcoholRisk: "no", paracetamolAllergy: "no" },
+    discharge: { medsConfirmed: true, language: "ms" },
+    claim: { organismConfirmed: true },
+  };
+  const merged = mergeServerState(local, server, { status: "approved", approvedAt: "2026-09-26T06:11:00Z" }, true);
+  expect(merged.medicationEntries[0].confirmed).toBe(true);
+  expect(merged.prescriptionInputs.weightKg).toBe("62");
+  expect(merged.discharge).toMatchObject({ medsConfirmed: true, language: "ms", glReceived: true });
+  expect(merged.claim).toMatchObject({ organismConfirmed: true, status: "approved", approvedAt: "2026-09-26T06:11:00Z" });
+  expect(merged.revision).toBe(3); // the app's revision counter is its own
+});
+
+test("what the server has not recorded keeps the app's own value", () => {
+  const local = { revision: 1, medicationEntries: [{ id: "m1", name: "Cetirizine", ingredient: "cetirizine", formulation: "tablet", confirmed: false }] };
+  expect(mergeServerState(local, {}, { status: "draft" }, false).medicationEntries).toEqual(local.medicationEntries);
 });
