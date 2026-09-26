@@ -62,8 +62,12 @@ export const receipts = pgTable("receipts", {
 
 export const claims = pgTable("claims", {
   id: text("id").primaryKey(), encounterId: text("encounter_id").notNull(), insurer: text("insurer").notNull(),
-  status: text("status", { enum: ["draft", "sent", "approved"] }).notNull(), estimateCents: integer("estimate_cents").notNull(),
+  status: text("status", { enum: ["draft", "sent", "approved", "queried"] }).notNull(), estimateCents: integer("estimate_cents").notNull(),
   codes: jsonb("codes").$type<{ code: string; evidence: string }[]>().notNull(), sentAt: timestamp("sent_at"), approvedAt: timestamp("approved_at"),
+  /** The insurer's review link: an unguessable token, so the page needs no login (it expires a week after sending). */
+  reviewToken: text("review_token").unique(),
+  /** When the insurer approved or queried, and the question they asked with a query. */
+  decidedAt: timestamp("decided_at"), insurerNote: text("insurer_note"),
 });
 
 /** Insurer rules as rows so the check is deterministic; the policy text lives in the retrieval library. */

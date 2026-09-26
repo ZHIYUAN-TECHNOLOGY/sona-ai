@@ -59,7 +59,7 @@ function demoBed(patient: Patient | undefined, encounter: Encounter | undefined)
 
 /** One admission's rows, flattened: the server's view of what holds a bed. No `gl` means self-pay. */
 export type BedRows = {
-  admissionId: string; gl?: { status: "requested" | "received"; claimStatus?: "draft" | "sent" | "approved" };
+  admissionId: string; gl?: { status: "requested" | "received"; claimStatus?: "draft" | "sent" | "approved" | "queried" };
   medsConfirmed: boolean; followUpBooked: boolean; pendingResults: { id: string; test: string; expected?: string }[];
   /** Incidental findings nobody has tracked or dismissed yet (demo flow 6). */
   openFindings?: { id: string; label: string }[];
@@ -68,7 +68,7 @@ export type BedRows = {
 /** A bed's blockers derived from rows (the server version of demoBed); ids are stable so owners stick. */
 export function bedBlockers(rows: BedRows): WardBlocker[] {
   const id = rows.admissionId, blockers: WardBlocker[] = [];
-  if (rows.gl?.status === "requested") blockers.push({ id: `${id}-gl`, kind: "gl", label: "Final guarantee letter", detail: rows.gl.claimStatus === "sent" ? "Sent · awaiting insurer" : "Codes ready to review" });
+  if (rows.gl?.status === "requested") blockers.push({ id: `${id}-gl`, kind: "gl", label: "Final guarantee letter", detail: rows.gl.claimStatus === "sent" ? "Sent · awaiting insurer" : rows.gl.claimStatus === "queried" ? "Insurer asked a question" : "Codes ready to review" });
   if (!rows.medsConfirmed) blockers.push({ id: `${id}-meds`, kind: "pharmacy", label: "Take-home medicines", detail: "Not yet confirmed" });
   if (!rows.followUpBooked) blockers.push({ id: `${id}-followup`, kind: "booking", label: "Follow-up booking", detail: "Clinic review not booked" });
   for (const r of rows.pendingResults) blockers.push({ id: `${id}-result-${r.id}`, kind: "result", label: r.test, detail: r.expected ? `Expected by ${r.expected}` : "Pending" });

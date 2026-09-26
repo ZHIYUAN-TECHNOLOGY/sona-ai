@@ -24,6 +24,17 @@ export type Context = {
   uploads?: Uploads;
   /** Outbound HTTP (PubMed); tests pass a fake so nothing leaves the machine. */
   fetch?: typeof fetch;
+  /** The Worker's public address, for links that open outside the app (the insurer's review page). */
+  publicUrl?: string;
+  /** Outbound email (Cloudflare Email Service); absent until a sending domain and the inboxes are configured. */
+  mail?: Mail;
+};
+
+/** Email as the routes use it: who sends, the insurer's inbox, and the send itself. */
+export type Mail = {
+  from: string;
+  insurer: string;
+  send(message: { from: string; to: string; subject: string; text: string; html?: string }): Promise<unknown>;
 };
 
 /** The slice of an R2 bucket the routes use. */

@@ -21,6 +21,11 @@ export const server = Cloudflare.Worker("server", {
     BETTER_AUTH_URL: Cloudflare.Worker.URL,
     ENCOUNTERS: Cloudflare.DurableObject<EncounterState>("ENCOUNTERS", { className: "EncounterState" }),
     UPLOADS: uploads,
+    // Cloudflare Email Service. Sending needs a domain onboarded under Email Service > Email Sending;
+    // until EMAIL_FROM and INSURER_EMAIL are set, the review link is only shown in the app.
+    EMAIL: Cloudflare.Email.SendEmail("EMAIL"),
+    EMAIL_FROM: Config.String("EMAIL_FROM").pipe(Config.withDefault("")),
+    INSURER_EMAIL: Config.String("INSURER_EMAIL").pipe(Config.withDefault("")),
   },
   // Nightly coding audit (flow 5), 02:00 Malaysia time; after-discharge check-ins (flow 7) go out hourly.
   crons: ["0 18 * * *", "0 * * * *"],

@@ -2,6 +2,7 @@ import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { encounters, guaranteeLetters, hospitalMembers, hospitals } from "@sona-ai/db/schema/clinical";
 import { runNightlyAudit } from "../audit-job";
+import { decideReview, reviewTokenOf } from "../insurer";
 import { seedDemo } from "@sona-ai/db/seed";
 import { createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
@@ -146,13 +147,16 @@ test("a claim is refused while the organism and the reason for IV antibiotics ar
   expect(refusal?.data).toEqual({ reason: "blocked", open: ["Organism documented", "Reason for IV antibiotics"] });
 });
 
-test("once documented, the claim is sent once; a minute later the insurer approves and the discharge stops waiting on the guarantee letter", async () => {
-  const { api, clock } = await signedIn();
+test("once documented, the claim is sent once; when the insurer approves, the discharge stops waiting on the guarantee letter", async () => {
+  const { api, db, clock } = await signedIn();
   await api.claim.update({ encounterId: "visit-1042", organismConfirmed: true, ivReasonAdded: true });
   const sent = await api.claim.send({ encounterId: "visit-1042", requestId: "c2", approvedBy: "dr-aisyah" });
   expect(await api.claim.send({ encounterId: "visit-1042", requestId: "c2", approvedBy: "dr-aisyah" })).toEqual(sent);
   expect((await api.claim.status({ encounterId: "visit-1042" })).status).toBe("sent");
+  // No timer approves it any more: only the insurer's decision on the review page does.
   clock.now = new Date(clock.now.getTime() + 61_000);
+  expect((await api.claim.status({ encounterId: "visit-1042" })).status).toBe("sent");
+  await decideReview(db, await reviewTokenOf(db, "visit-1042"), "approve", "", clock.now);
   expect((await api.claim.status({ encounterId: "visit-1042" })).status).toBe("approved");
   await api.discharge.update({ encounterId: "visit-1042", medsConfirmed: true, followUp: "2w" });
   const receipt = await api.discharge.request({ encounterId: "visit-1042", requestId: "d-after-claim", approvedBy: "dr-aisyah" });

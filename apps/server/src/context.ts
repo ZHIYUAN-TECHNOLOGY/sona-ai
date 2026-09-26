@@ -3,6 +3,7 @@ import type { Context as HonoContext } from "hono";
 
 import type { EncounterStore } from "@sona-ai/api/context";
 
+import { ENV } from "./env.server";
 import { getDb } from "./services";
 import { createAuth } from "./services";
 
@@ -23,10 +24,18 @@ export async function createContext({ context }: CreateContextOptions): Promise<
     encounters: encounterStore(context.env as Env),
     // X-ray uploads land in the Worker's R2 bucket; models stay on stubModels until Baseten is on.
     uploads: (context.env as Env).UPLOADS,
+    publicUrl: ENV.BETTER_AUTH_URL,
+    mail: mailOf(context.env as Env),
   };
 }
 
 export type Context = Awaited<ReturnType<typeof createContext>>;
+
+/** Email only once a sender and the insurer's inbox are configured (see packages/infra/alchemy.run.ts). */
+function mailOf(env: Env): ApiContext["mail"] {
+  if (!env.EMAIL || !env.EMAIL_FROM || !env.INSURER_EMAIL) return undefined;
+  return { from: env.EMAIL_FROM, insurer: env.INSURER_EMAIL, send: message => env.EMAIL.send(message) };
+}
 
 /** Edits and reviews go through the encounter's own Durable Object, which writes Postgres for us. */
 function encounterStore(env: Env): EncounterStore {

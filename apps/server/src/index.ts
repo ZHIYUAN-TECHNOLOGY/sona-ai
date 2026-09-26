@@ -12,6 +12,7 @@ import { createContext } from "./context";
 import { ENV } from "./env.server";
 import { createAuth, getDb } from "./services";
 import { runNightlyAudit } from "@sona-ai/api/audit-job";
+import { decideReview, renderReviewPage, reviewPacket } from "@sona-ai/api/insurer";
 import { sendDueCheckIns } from "@sona-ai/api/routers/check-ins";
 import { hospitals } from "@sona-ai/db/schema/clinical";
 
@@ -73,6 +74,23 @@ app.use("/*", async (c, next) => {
   }
 
   await next();
+});
+
+// The insurer's review page (claims sent for a final guarantee letter): the unguessable link is the credential.
+app.get("/insurer/:token", async (c) => {
+  const packet = await reviewPacket(await getDb(), c.req.param("token"), new Date());
+  if (!packet) return c.text("This review link is not valid.", 404);
+  return c.html(renderReviewPage(packet), 200, { "cache-control": "no-store", "referrer-policy": "no-referrer" });
+});
+app.post("/insurer/:token", async (c) => {
+  const db = await getDb(), token = c.req.param("token");
+  const form = await c.req.parseBody();
+  const decision = form.decision === "query" ? "query" : "approve";
+  const result = await decideReview(db, token, decision, typeof form.note === "string" ? form.note : "", new Date());
+  if (result.ok) return c.redirect(`/insurer/${token}`, 303);
+  const packet = await reviewPacket(db, token, new Date());
+  if (!packet) return c.text("This review link is not valid.", 404);
+  return c.html(renderReviewPage(packet, result.reason), 400, { "cache-control": "no-store" });
 });
 
 app.get("/", (c) => {
