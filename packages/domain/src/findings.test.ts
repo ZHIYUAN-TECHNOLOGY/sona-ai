@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { dueDate, findingLine, followUpLine, isOverdue, ruleFor, type FollowUpRule } from "./findings";
+import { dueDate, findingLine, followUpLine, isOverdue, readBoxes, ruleFor, type FollowUpRule } from "./findings";
 
 // The rows of data/follow-up-rules.csv.
 const source = "synthetic demo table";
@@ -47,4 +47,22 @@ test("a finding reads as one short follow-up line, and as a handover line naming
   expect(followUpLine(nine)).toBe("CT chest at 3 months, PET-CT or tissue sampling · due 25 Dec");
   expect(findingLine(nine)).toBe("Follow up 9 mm nodule: CT chest at 3 months · due 25 Dec");
   expect(findingLine({ label: "Borderline heart size", action: "Echocardiogram", dueAt: null })).toBe("Follow up borderline heart size: Echocardiogram");
+});
+
+// MedGemma 1.5 answers localisation prompts with a JSON list of { label, box_2d: [y0, x0, y1, x1] }, normalised 0 to 1.
+test("a model's boxes become findings: kind from the label, centre and zone from the box, size only when stated", () => {
+  const reply = '```json\n[{"label":"9 mm nodule","box_2d":[0.26,0.28,0.34,0.38]},{"label":"Cardiomegaly","box_2d":[0.45,0.38,0.8,0.74]}]\n```';
+  expect(readBoxes(reply)).toEqual([
+    { kind: "nodule", label: "9 mm nodule", sizeMm: 9, location: { x: 0.33, y: 0.3, zone: "right upper zone", box: [0.26, 0.28, 0.34, 0.38] } },
+    { kind: "cardiomegaly", label: "Cardiomegaly", location: { x: 0.56, y: 0.625, zone: "cardiac silhouette", box: [0.45, 0.38, 0.8, 0.74] } },
+  ]);
+});
+
+test("a box outside the image, turned inside out, or a finding kind we have no rule for is dropped, not guessed", () => {
+  expect(readBoxes('[{"label":"nodule","box_2d":[0.5,0.5,0.4,0.6]},{"label":"nodule","box_2d":[0,0,1.4,0.2]},{"label":"rib fracture","box_2d":[0.1,0.1,0.2,0.2]}]')).toEqual([]);
+  expect(readBoxes("I cannot localise findings on this image.")).toEqual([]);
+});
+
+test("a left lower effusion is named from the patient's side (image right is the patient's left)", () => {
+  expect(readBoxes('[{"label":"small pleural effusion","box_2d":[0.7,0.62,0.88,0.9]}]')[0]?.location.zone).toBe("left lower zone");
 });

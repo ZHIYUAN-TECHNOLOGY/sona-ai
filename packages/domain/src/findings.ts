@@ -6,7 +6,9 @@
 export type FindingKind = "nodule" | "cardiomegaly" | "effusion";
 export type RiskBand = "low" | "intermediate" | "high";
 /** Where on the image, normalised 0 to 1 from the top left, with the zone a report would name. */
-export type FindingLocation = { x: number; y: number; zone: string };
+export type FindingLocation = { x: number; y: number; zone: string; box?: Box };
+/** A region as MedGemma 1.5 returns it: [y0, x0, y1, x1], normalised 0 to 1 from the top left. */
+export type Box = [number, number, number, number];
 /** What the image reader returns for one finding, before a rule is applied. */
 export type DetectedFinding = { kind: FindingKind; label: string; sizeMm?: number; location: FindingLocation };
 export type FollowUpRule = { id: string; kind: FindingKind; riskBand: RiskBand; minMm: number | null; maxMm: number | null; intervalDays: number | null; action: string; source: string };
@@ -40,4 +42,32 @@ export const followUpLine = (f: Line) => `${f.action ?? "No follow-up rule"}${du
 export function findingLine(f: Line) {
   const what = f.label.split(",")[0]!, action = (f.action ?? "No follow-up rule").split(",")[0];
   return `Follow up ${what.charAt(0).toLowerCase()}${what.slice(1)}: ${action}${due(f)}`;
+}
+
+const KINDS: [RegExp, FindingKind][] = [[/nodule|mass/i, "nodule"], [/cardiomegaly|heart size|enlarged heart/i, "cardiomegaly"], [/effusion/i, "effusion"]];
+const round = (n: number) => Math.round(n * 1000) / 1000;
+/** The zone a report would name. On a frontal film the image's right half is the patient's left. */
+function zoneOf(kind: FindingKind, x: number, y: number) {
+  if (kind === "cardiomegaly") return "cardiac silhouette";
+  return `${x < 0.5 ? "right" : "left"} ${y < 1 / 3 ? "upper" : y < 2 / 3 ? "middle" : "lower"} zone`;
+}
+
+/**
+ * Reads a localisation answer ({ label, box_2d }[] as JSON, possibly fenced) into findings. Only
+ * kinds with a follow-up rule are kept, and a box that is inside out or off the image is dropped
+ * rather than repaired: a wrong mark on a film is worse than none. Size comes only from the label.
+ */
+export function readBoxes(reply: string): DetectedFinding[] {
+  let rows: unknown;
+  try { rows = JSON.parse(reply.slice(reply.indexOf("["), reply.lastIndexOf("]") + 1)); } catch { return []; }
+  if (!Array.isArray(rows)) return [];
+  return rows.flatMap((row: { label?: unknown; box_2d?: unknown }): DetectedFinding[] => {
+    const box = row.box_2d, label = typeof row.label === "string" ? row.label.trim() : "";
+    const kind = KINDS.find(([re]) => re.test(label))?.[1];
+    if (!kind || !Array.isArray(box) || box.length !== 4 || !box.every(n => typeof n === "number" && n >= 0 && n <= 1)) return [];
+    const [y0, x0, y1, x1] = box as Box;
+    if (y1 <= y0 || x1 <= x0) return [];
+    const x = round((x0 + x1) / 2), y = round((y0 + y1) / 2), mm = label.match(/(\d+(?:\.\d+)?)\s*mm/i);
+    return [{ kind, label, ...(mm ? { sizeMm: Number(mm[1]) } : {}), location: { x, y, zone: zoneOf(kind, x, y), box: [y0, x0, y1, x1] } }];
+  });
 }

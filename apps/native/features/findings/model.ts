@@ -23,8 +23,8 @@ const RULES: FollowUpRule[] = [
 ];
 // Mirrors the model seam's stub (packages/api/src/models.ts): Amelia's authored findings.
 const DETECTED: DetectedFinding[] = [
-  { kind: "nodule", label: "9 mm nodule, right upper zone", sizeMm: 9, location: { x: 0.34, y: 0.3, zone: "right upper zone" } },
-  { kind: "cardiomegaly", label: "Borderline heart size", location: { x: 0.56, y: 0.62, zone: "cardiac silhouette" } },
+  { kind: "nodule", label: "9 mm nodule, right upper zone", sizeMm: 9, location: { x: 0.34, y: 0.3, zone: "right upper zone", box: [0.26, 0.29, 0.34, 0.39] } },
+  { kind: "cardiomegaly", label: "Borderline heart size", location: { x: 0.56, y: 0.62, zone: "cardiac silhouette", box: [0.45, 0.39, 0.79, 0.73] } },
 ];
 
 /** Amelia's findings as the server would list them after detection at `seenAt`. */

@@ -148,12 +148,12 @@ export const followUpRules = pgTable("follow_up_rules", {
 
 /**
  * Demo flow 6: something on an image beyond the question asked. Never validated in this demo; the
- * location is normalised (0 to 1) on the image. Accepting it creates a task and a recall.
+ * location is normalised (0 to 1) on the image, with the model's box ([y0, x0, y1, x1]) when it gave one. Accepting it creates a task and a recall.
  */
 export const findings = pgTable("findings", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull(), encounterId: text("encounter_id").notNull(),
   imageKey: text("image_key"), kind: text("kind", { enum: ["nodule", "cardiomegaly", "effusion"] }).notNull(), label: text("label").notNull(),
-  sizeMm: real("size_mm"), location: jsonb("location").$type<{ x: number; y: number; zone: string }>().notNull(),
+  sizeMm: real("size_mm"), location: jsonb("location").$type<{ x: number; y: number; zone: string; box?: [number, number, number, number] }>().notNull(),
   riskBand: text("risk_band", { enum: ["low", "intermediate", "high"] }).notNull(), ruleId: text("rule_id").references(() => followUpRules.id),
   status: text("status", { enum: ["open", "tracked", "dismissed"] }).default("open").notNull(),
   /** "fixture" or the model version that read the image, so a fixture is never shown as a reading. */

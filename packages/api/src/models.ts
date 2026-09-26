@@ -21,7 +21,7 @@ export type Models = {
   reasoning(input: { patient: Patient; question: string }): Answer<{ answer: string; sourceIds: string[] }>;
   /** X-ray box: never a validated read in this demo. */
   xrayRead(input: { image: Uint8Array; contentType: string }): Answer<{ findings: string[]; validated: false }>;
-  /** Demo flow 6: findings beyond the question asked, each with a location on the image. Never validated. */
+  /** Demo flow 6: findings beyond the question asked, each with a box on the image (a real model's reply goes through `readBoxes`). Never validated. */
   incidentalFindings(input: { patientId: string; image?: Uint8Array; contentType?: string }): Answer<{ findings: DetectedFinding[]; validated: false }>;
   draftDischarge(input: { patient: Patient; language: Language }): Answer<{ summary: string; leaflet: string }>;
   suggestCodes(input: { sentences: Sentence[] }): Answer<{ codes: Code[] }>;
@@ -44,8 +44,8 @@ export const stubModels: Models = {
   xrayRead: () => fixture({ findings: ["Findings unavailable: no model has read this image."], validated: false }),
   // ponytail: Amelia's authored findings stand in for MedGemma; any other patient gets none.
   incidentalFindings: ({ patientId }) => fixture({ validated: false, findings: patientId === "SYN-1042" ? [
-    { kind: "nodule", label: "9 mm nodule, right upper zone", sizeMm: 9, location: { x: 0.34, y: 0.3, zone: "right upper zone" } },
-    { kind: "cardiomegaly", label: "Borderline heart size", location: { x: 0.56, y: 0.62, zone: "cardiac silhouette" } },
+    { kind: "nodule", label: "9 mm nodule, right upper zone", sizeMm: 9, location: { x: 0.34, y: 0.3, zone: "right upper zone", box: [0.26, 0.29, 0.34, 0.39] } },
+    { kind: "cardiomegaly", label: "Borderline heart size", location: { x: 0.56, y: 0.62, zone: "cardiac silhouette", box: [0.45, 0.39, 0.79, 0.73] } },
   ] : [] }),
   draftDischarge: ({ patient }) => fixture({
     summary: `${patient.name} was treated for ${patient.complaint.toLowerCase()} Sample discharge summary for review.`,
