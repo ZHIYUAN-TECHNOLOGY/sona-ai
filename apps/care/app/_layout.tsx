@@ -13,7 +13,7 @@ export default function RootLayout() {
   return <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.canvas }}><KeyboardProvider><SafeAreaProvider><QueryClientProvider client={queryClient}>
     <StatusBar style="dark" />
     <CalmCanvas />
-    <Stack screenOptions={{ headerTransparent: true, headerTitle: "", headerBackButtonDisplayMode: "minimal", headerTintColor: palette.ink, contentStyle: { backgroundColor: "transparent" } }}>
+    <Stack screenOptions={{ headerTransparent: true, headerBlurEffect: "systemUltraThinMaterialLight", headerShadowVisible: false, headerTitle: "", headerBackButtonDisplayMode: "minimal", headerTintColor: palette.ink, contentStyle: { backgroundColor: "transparent" } }}>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="join" options={{ presentation: "modal", headerShown: false }} />
     </Stack>
