@@ -2,6 +2,7 @@ import type { Context as ApiContext } from "@sona-ai/api/context";
 import type { Context as HonoContext } from "hono";
 
 import type { EncounterStore } from "@sona-ai/api/context";
+import { ingest, search, stubEmbedder } from "@sona-ai/retrieval/retrieval";
 
 import { getDb } from "./services";
 import { createAuth } from "./services";
@@ -23,6 +24,8 @@ export async function createContext({ context }: CreateContextOptions): Promise<
     encounters: encounterStore(context.env as Env),
     // X-ray uploads land in the Worker's R2 bucket; models stay on stubModels until Baseten is on.
     uploads: (context.env as Env).UPLOADS,
+    // ponytail: hashed bag-of-words vectors until EmbeddingGemma runs in box ②; swap stubEmbedder for it then (and re-ingest).
+    library: { ingest: (doc, text) => ingest(db, doc, text, stubEmbedder), search: input => search(db, input, stubEmbedder) },
   };
 }
 

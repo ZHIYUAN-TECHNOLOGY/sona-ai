@@ -23,6 +23,8 @@ import { xrayRouter } from "./xray";
 import { checkInsRouter } from "./check-ins";
 // lane F6
 import { findingsRouter } from "./findings";
+// lane U
+import { libraryRouter } from "./library";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -68,6 +70,8 @@ export const appRouter = {
   checkIns: checkInsRouter,
   // lane F6
   findings: findingsRouter,
+  // lane U
+  library: libraryRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;
