@@ -69,6 +69,8 @@ iPhone (Expo)
 - **Reviewer approval and provenance:** sending a claim and discharging a patient each need an explicit approval (draft, approve, final). Every AI output is logged with its source IDs, model version and approver in a `provenance` table.
 - **Clinical tables:** appointments (My Day and the calendar), lab results with flags (the Results card), observations (CURB-65), handover acceptances (hold to accept), and the discharge, claim, ward and audit tables above.
 - **X-ray upload:** images go to R2 through a presigned URL. MedGemma confirms the image type; anything that is not a chest radiograph, such as a CT, is answered "not covered".
+- **Incidental finding tracker** (demo flow 6): MedGemma in box ③ lists findings beyond the question asked (nodule, heart size, effusion) with a rough location; a `findings` table stores each with its image, location, risk band and the follow-up rule from a small rules table (Fleischner-style intervals, stored as data). Accepting a finding creates a follow-up task and a recall; overdue follow-ups feed My Day, discharge blockers and handover. Findings are labelled unvalidated; marker placement falls back to authored overlays if MedGemma's localisation is too weak.
+- **After-discharge check-ins** (demo flow 7): a `check_ins` table and a Durable Object alarm send messages on day 2 and day 7 in the leaflet's language. Gemma classifies each reply (fine, worse, urgent) and urgent or worse replies become a flagged task on the doctor's day. Messaging goes through a WhatsApp Business provider in production; the demo uses a simulated inbox so no real patient is contacted.
 - **Push notifications (optional):** "result arrived" and "guarantee letter approved" through Expo push.
 - **Privacy step:** OpenMed PII Small removes names, IC numbers and phone numbers before text reaches Gemma or MedGemma, and before any retrieval query. Its 38 languages include Indonesian but not Malay, so Malaysian names and IC numbers need added rules.
 - **Excluded:** closed models (Qwen-Audio-3.1, Gemini 3.8 TTS, hosted JEV), MERaLiON, Scicom, and any second inference host, including Cloudflare Workers AI and AI Search. Also excluded: a separate vector database, real insurer or FHIR integration, and model-based length-of-stay prediction.
@@ -128,7 +130,8 @@ Train a model only if it fails its day 1–3 baseline. Because Manglish is the p
 | 4–6 | Retrieval ingestion and hybrid search; evidence capability; ward view and blocker owners; coding audit cron; 30-question retrieval test set | Write and check the retrieval questions |
 | 5–7 | Qwen3-ASR fine-tune and evaluation; VoxCPM2 LoRA if needed | Held-out scoring |
 | 6–8 | Real-time voice, barge-in, OpenMed step, end-to-end encounter | — |
-| 8+ | Freeze models; rehearse on staging; record the backup video | — |
+| 8–9 | Demo flows 6 and 7 (incidental finding tracker, after-discharge check-ins) on the finished backend | — |
+| 9+ | Freeze models; rehearse on staging; record the backup video | — |
 
 ## Cut order if the schedule slips
 

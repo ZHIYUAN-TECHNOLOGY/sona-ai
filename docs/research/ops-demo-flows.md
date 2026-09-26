@@ -8,7 +8,7 @@ Ranked "wow" demo flows aimed at hospital operations and management judges. Draf
 
 Ranking weighs judge impact, real operational pain, and how much of the existing Sona UI each flow reuses.
 
-Status: flow 1 (discharge in 60 seconds) is built as synthetic UI: `apps/native/features/discharge`, opened from the end-of-visit Discharge button. Flow 2 (guarantee letter and claim-ready coding) is built as synthetic UI: `apps/native/features/claim`, opened from the discharge card's guarantee letter row. Flow 3 (ward command view) is built as synthetic UI: `apps/native/features/ward`, opened from the home Ward key. Flow 4 (graded evidence answer) is built as synthetic UI: `apps/native/features/evidence`, the new evidence answer. Flow 5 (coding audit) is built as synthetic UI: `apps/native/features/audit`, opened from the ward screen.
+Status: flow 1 (discharge in 60 seconds) is built as synthetic UI: `apps/native/features/discharge`, opened from the end-of-visit Discharge button. Flow 2 (guarantee letter and claim-ready coding) is built as synthetic UI: `apps/native/features/claim`, opened from the discharge card's guarantee letter row. Flow 3 (ward command view) is built as synthetic UI: `apps/native/features/ward`, opened from the home Ward key. Flow 4 (graded evidence answer) is built as synthetic UI: `apps/native/features/evidence`, the new evidence answer. Flow 5 (coding audit) is built as synthetic UI: `apps/native/features/audit`, opened from the ward screen. Flows 6 and 7 (from the Qure.ai review) are planned; they follow the remaining backend waves.
 
 ## Ranked flows
 
@@ -88,6 +88,41 @@ This flow is clinical rather than operational, so it ranks lower with management
 
 This flow reuses the engine from flow 2. Show it as a 10-second add-on rather than a standalone flow.
 
+### 6. Incidental finding tracker (after Qure.ai qXR and lung nodule management)
+
+Added 26 September 2026 after reviewing https://www.qure.ai/ (qXR, lung nodule management, qXR-HF).
+
+**Pain.** A chest film taken for one reason shows something else, such as a small nodule or an enlarged heart. It is mentioned in the report, then nobody follows it up, and a treatable cancer or heart failure is found years later.
+
+**Demo moment.**
+
+1. Amelia's X-ray was taken for pneumonia. Sona also flags a 9 mm nodule and a borderline heart size, each marked on the image, labelled unvalidated.
+2. Each finding carries a follow-up rule (for a nodule, a CT in 3 months) and a risk band.
+3. One tap turns it into a tracked follow-up: a task with an owner and a due date, and a recall for the patient.
+4. The finding travels with her: it appears as a blocker line on discharge, a line in the handover and a row in a "Findings to follow up" list for the ward.
+5. Overdue follow-ups turn red on the doctor's day.
+
+**Reuses:** the X-ray screen, tasks, the discharge card, handover, the ward view and the colour-coded terms.
+
+**New UI:** finding markers on the image, a finding card with the follow-up rule, and the follow-up list.
+
+**Honesty:** Qure's products are regulator-cleared and trained on millions of scans. Sona's findings come from MedGemma on synthetic cases and must be labelled unvalidated; never quote Qure's accuracy figures.
+
+### 7. After-discharge check-ins (after Qure.ai Aira)
+
+**Pain.** Patients go home and the hospital hears nothing until they come back sicker. Nobody has time to call everyone.
+
+**Demo moment.**
+
+1. At discharge, Sona schedules check-ins in the patient's language (Malay, English or Chinese) for day 2 and day 7.
+2. Two days later Amelia replies "demam balik" (fever is back).
+3. Sona reads the reply, flags it red on the doctor's day as "Amelia: fever returned after discharge", and offers one tap to call her back or book her in.
+4. Replies that need nothing ("feeling better") are logged quietly.
+
+**Reuses:** the discharge card and leaflet languages, My Day ranking, tasks and the colour-coded terms.
+
+**New UI:** a check-in schedule on the discharge receipt, a reply thread on the patient sheet, and the flagged row on My Day.
+
 ## Build list
 
 ### UI first (synthetic data, matching the current milestone)
@@ -99,6 +134,8 @@ This flow reuses the engine from flow 2. Show it as a 10-second add-on rather th
 | 3 | Ward command view | about 1.5 days |
 | 4 | Citation chips, grade badge and calculator card | about half a day |
 | 5 | Patient leaflet in Malay, English and Chinese | about half a day |
+| 6 | Incidental finding tracker: markers on the image, finding card, follow-up list | about 1.5 days |
+| 7 | After-discharge check-ins: schedule, reply thread, flagged row on My Day | about 1 day |
 
 ### Backend and models (later, per [the delivery plan](../delivery-plan.md))
 
