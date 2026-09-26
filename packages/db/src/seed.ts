@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 import { DEMO_PATIENTS } from "@sona-ai/domain/demo-patients";
+import { DEMO_WARD, WARD_FIXTURE, type BlockerKind } from "@sona-ai/domain/ward";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -14,8 +15,22 @@ import { admissions, appointments, casemixWeights, drugs, encounters, followUpRu
  */
 import { DEMO_HOSPITAL } from "./demo";
 export { DEMO_HOSPITAL };
+/**
+ * The rest of the ward, read off the fixture beds so live mode draws the same ward: bed N holds SYN-20NN
+ * with each blocker turned into the row it derives from (a requested GL, a pending result, discharge state).
+ */
+const WARD = WARD_FIXTURE.filter(b => b.name).map(b => {
+  const n = b.bed.replace("Bed ", "").padStart(2, "0"), of = (kind: BlockerKind) => b.blockers.filter(x => x.kind === kind);
+  const [age, sex] = b.meta!.split(" · "), [ride] = of("transport");
+  const state = {
+    ...(b.status === "fit" && { discharge: { medsConfirmed: !of("pharmacy").length, followUp: "2w" } }),
+    // Transport has no table yet: a ride or transfer still to arrange lives in the visit state.
+    ...(ride && { transport: { label: ride.label, detail: ride.detail } }),
+  };
+  return { n, id: `SYN-20${n}`, bed: b, age: Number(age), sex: sex!, state, gl: of("gl").length > 0, labs: of("result").map(r => ({ id: `lab-20${n}-${r.id}`, test: r.label })) };
+});
 /** The lab results the seed writes; any other result arrived during a demo run. */
-export const SEED_LAB_IDS = ["lab-1086-potassium", "lab-hb-1086"];
+export const SEED_LAB_IDS = ["lab-1086-potassium", "lab-hb-1086", ...WARD.flatMap(w => w.labs.map(l => l.id))];
 /** The synthetic test doctor for local and staging end-to-end runs (never a real person or account). */
 export const TEST_DOCTOR = { name: "Dr Test Aisyah", email: "dr.test@sona.test", password: "Sona-7rcVayfxIuzr" };
 // Any drizzle Postgres database: Neon in staging, PGlite in tests.
@@ -24,14 +39,29 @@ type AnyDb = PgAsyncDatabase<any, any>;
 export async function seedDemo(db: AnyDb, now = new Date()) {
   await db.insert(hospitals).values({ id: DEMO_HOSPITAL, name: "Demo General Hospital (synthetic)" }).onConflictDoNothing();
   // The same records the app's fixtures show; the rest of each record (history, medicines, vitals, sources) is kept whole in `record`.
-  await db.insert(patients).values(DEMO_PATIENTS.map(({ id, name, initials, age, sex, complaint, allergies, incomplete, encounterId: _, ...record }) =>
-    ({ id, hospitalId: DEMO_HOSPITAL, name, initials, age, sex, complaint, allergies, incomplete, record })))
+  // The ward's own view of each admitted patient (status, SBAR, predicted time) is kept in `record.ward`.
+  await db.insert(patients).values([
+    ...DEMO_PATIENTS.map(({ id, name, initials, age, sex, complaint, allergies, incomplete, encounterId: _, ...record }) =>
+      ({ id, hospitalId: DEMO_HOSPITAL, name, initials, age, sex, complaint, allergies, incomplete, record: id === "SYN-1042" ? { ...record, ward: DEMO_WARD } : record })),
+    ...WARD.map(({ id, bed: { name, initials, status, predicted, waitingHours, sbar }, age, sex }) =>
+      ({ id, hospitalId: DEMO_HOSPITAL, name: name!, initials: initials!, age, sex, complaint: sbar!.s, record: { ward: { status, predicted, waitingHours, sbar } } })),
+  ])
     .onConflictDoUpdate({ target: patients.id, set: { complaint: sql`excluded.complaint`, allergies: sql`excluded.allergies`, incomplete: sql`excluded.incomplete`, record: sql`excluded.record` } });
   await db.insert(encounters).values([
     { id: "visit-1042", patientId: "SYN-1042", hospitalId: DEMO_HOSPITAL },
     { id: "visit-1086", patientId: "SYN-1086", hospitalId: DEMO_HOSPITAL },
   ]).onConflictDoNothing();
   await db.insert(admissions).values({ id: "adm-1042", patientId: "SYN-1042", hospitalId: DEMO_HOSPITAL, bed: "Bed 6" }).onConflictDoNothing();
+  // The rest of the ward. A visit's state is only written while empty (new, or just reset), so a run's changes survive a reboot;
+  // fit beds became fit `waitingHours` ago, kept that old on every reseed like the potassium below.
+  await db.insert(encounters).values(WARD.map(w => ({ id: `visit-20${w.n}`, patientId: w.id, hospitalId: DEMO_HOSPITAL, state: w.state })))
+    .onConflictDoUpdate({ target: encounters.id, set: { state: sql`excluded.state` }, setWhere: sql`${encounters.state} = '{}'::jsonb` });
+  await db.insert(admissions).values(WARD.map(w => ({ id: `adm-20${w.n}`, patientId: w.id, hospitalId: DEMO_HOSPITAL, bed: w.bed.bed, fitAt: w.bed.status === "fit" ? new Date(now.getTime() - (w.bed.waitingHours ?? 0) * 3600_000) : null })))
+    .onConflictDoUpdate({ target: admissions.id, set: { fitAt: sql`excluded.fit_at` } });
+  await db.insert(guaranteeLetters).values(WARD.filter(w => w.gl).map(w => ({ id: `gl-20${w.n}`, admissionId: `adm-20${w.n}`, insurer: "Synthetic insurer", status: "requested" as const, requestedAt: now }))).onConflictDoNothing();
+  // A pending result's time is when the lab logged the sample (two days ago), so it never reads as the newest result.
+  await db.insert(labResults).values(WARD.flatMap(w => w.labs.map(l => ({ id: l.id, patientId: w.id, test: l.test, value: "", flag: "pending", sourceId: l.id, receivedAt: new Date(now.getTime() - 48 * 3600_000) }))))
+    .onConflictDoUpdate({ target: labResults.id, set: { receivedAt: sql`excluded.received_at` } });
   await db.insert(icd10Codes).values(readCsv("icd10.csv").map(r => ({ code: r.code!, label: r.label!, chapter: r.chapter })))
     .onConflictDoUpdate({ target: icd10Codes.code, set: { label: sql`excluded.label`, chapter: sql`excluded.chapter` } });
   await db.insert(drugs).values(readCsv("drugs.csv").map(r => ({ id: r.id!, name: r.name!, ingredient: r.ingredient!, formulation: r.formulation, dose: r.dose!, sourceId: r.source_id! })))

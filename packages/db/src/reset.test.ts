@@ -35,13 +35,19 @@ test("a demo reset undoes a whole run (discharge, claim, receipts, tasks, findin
   await resetDemo(db, now);
 
   for (const table of [claims, receipts, tasks, findings, checkIns, checkInReplies, handoverAcceptances, auditItems, provenance]) expect(await count(db, table)).toBe(0);
-  expect((await db.select().from(encounters)).map(e => [e.id, e.revision, e.state]).sort()).toEqual([["visit-1042", 1, {}], ["visit-1086", 1, {}]]);
-  expect((await db.select().from(admissions))[0]).toMatchObject({ dischargedAt: null, fitAt: null });
-  expect((await db.select().from(guaranteeLetters))[0]).toMatchObject({ status: "requested", receivedAt: null });
+  const visits = await db.select().from(encounters);
+  expect(visits.filter(e => e.id.startsWith("visit-10")).map(e => [e.id, e.revision, e.state]).sort()).toEqual([["visit-1042", 1, {}], ["visit-1086", 1, {}]]);
+  // The rest of the ward comes back as seeded: every bed occupied, its visit state and fit time restored.
+  expect(visits.find(e => e.id === "visit-2014")).toMatchObject({ revision: 1, state: { discharge: { medsConfirmed: false, followUp: "2w" }, transport: { label: "Ride home", detail: "Family free after 17:00" } } });
+  const beds = await db.select().from(admissions);
+  expect(beds.map(a => a.dischargedAt)).toEqual(beds.map(() => null));
+  expect(beds.find(a => a.id === "adm-1042")?.fitAt).toBeNull();
+  expect(beds.find(a => a.id === "adm-2002")?.fitAt?.toISOString()).toBe("2026-09-25T20:00:00.000Z");
+  expect((await db.select().from(guaranteeLetters)).map(g => [g.status, g.receivedAt])).toEqual([["requested", null], ["requested", null]]);
   expect((await db.select().from(labResults)).every(r => r.acknowledgedAt === null)).toBe(true);
   // Results that arrived during the run are gone, not merely unacknowledged; records return to the seed.
-  expect((await db.select().from(labResults)).map(r => r.id).sort()).toEqual(["lab-1086-potassium", "lab-hb-1086"]);
-  expect((await db.select().from(patients)).map(p => p.allergies).sort()).toEqual(["Penicillin — reported rash; details need confirmation", null]);
+  expect((await db.select().from(labResults)).map(r => r.id).sort()).toEqual(["lab-1086-potassium", "lab-2002-b2-result", "lab-2009-b9-renal", "lab-hb-1086"]);
+  expect((await db.select().from(patients)).map(p => p.allergies).sort()).toEqual(["Penicillin — reported rash; details need confirmation", ...Array(7).fill(null)]);
   expect((await db.select().from(notes)).map(n => n.revision)).toEqual([1]);
   expect((await db.select().from(appointments)).map(a => a.id).sort()).toEqual(["appt-SYN-1042", "appt-SYN-1086"]);
 });

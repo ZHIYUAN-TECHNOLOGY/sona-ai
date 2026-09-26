@@ -20,10 +20,11 @@ export async function handoverCards(db: Context["db"], hospitalId: string) {
   const people = await db.select().from(patients).where(eq(patients.hospitalId, hospitalId));
   const ids = people.map(p => p.id);
   if (!ids.length) return [];
+  // A result still pending at the lab (it holds a bed on the ward) has nothing to act on yet.
   const [visits, obs, labs, open, appts, found] = await Promise.all([
     db.select().from(encounters).where(eq(encounters.hospitalId, hospitalId)),
     db.select().from(observations).where(inArray(observations.patientId, ids)),
-    db.select({ lab: labResults, by: user.name }).from(labResults).leftJoin(user, eq(user.id, labResults.acknowledgedBy)).where(and(inArray(labResults.patientId, ids), isNotNull(labResults.flag))),
+    db.select({ lab: labResults, by: user.name }).from(labResults).leftJoin(user, eq(user.id, labResults.acknowledgedBy)).where(and(inArray(labResults.patientId, ids), isNotNull(labResults.flag), ne(labResults.flag, "pending"))),
     db.select().from(tasks).where(and(eq(tasks.hospitalId, hospitalId), eq(tasks.completed, false))),
     db.select().from(appointments).where(eq(appointments.hospitalId, hospitalId)),
     listFindings(db, hospitalId, new Date(), ne(findings.status, "dismissed")), // lane F6

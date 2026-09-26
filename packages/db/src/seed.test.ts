@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
-import { admissions, appointments, casemixWeights, followUpRules, guaranteeLetters, insurerCriteria, labResults, observations, patients } from "./schema";
+import { admissions, appointments, casemixWeights, encounters, followUpRules, guaranteeLetters, insurerCriteria, labResults, observations, patients } from "./schema";
 import { DEMO_HOSPITAL, seedDemo } from "./seed";
 import { createTestDb } from "./testing";
 
@@ -9,11 +9,32 @@ test("the demo seed has the two visit patients and Amelia in bed 6 awaiting her 
   await seedDemo(db);
   await seedDemo(db); // seeding twice is harmless
   const rows = await db.select().from(patients).where(eq(patients.hospitalId, DEMO_HOSPITAL));
-  expect(rows.map(p => p.name).sort()).toEqual(["Amelia Tan", "Daniel Rahman"]);
+  expect(rows.map(p => p.name).sort()).toEqual(["Amelia Tan", "Daniel Rahman", "Lim Wei Jie", "Nurul Huda", "Priya Nair", "Ravi Kumar", "Siti Aminah", "Tan Ah Kow"]);
   const [bed] = await db.select().from(admissions).where(eq(admissions.patientId, "SYN-1042"));
   expect(bed?.bed).toBe("Bed 6");
   const [gl] = await db.select().from(guaranteeLetters).where(eq(guaranteeLetters.admissionId, bed!.id));
   expect(gl?.status).toBe("requested");
+});
+
+test("the rest of the ward is seeded as rows its blockers derive from: a GL, pending results, discharge state and a ride", async () => {
+  const db = await createTestDb();
+  const now = new Date("2026-09-26T09:00:00+08:00");
+  await seedDemo(db, now);
+  await seedDemo(db, now);
+  const beds = await db.select().from(admissions).where(eq(admissions.hospitalId, DEMO_HOSPITAL));
+  expect(beds.map(a => [a.bed, a.patientId]).sort()).toEqual([
+    ["Bed 12", "SYN-2012"], ["Bed 14", "SYN-2014"], ["Bed 2", "SYN-2002"], ["Bed 4", "SYN-2004"], ["Bed 6", "SYN-1042"], ["Bed 8", "SYN-2008"], ["Bed 9", "SYN-2009"],
+  ]);
+  // Fit beds carry the time they became fit; Nurul has waited five hours.
+  expect(beds.find(a => a.bed === "Bed 2")?.fitAt?.toISOString()).toBe("2026-09-25T20:00:00.000Z"); // 04:00 local, five hours before 09:00
+  expect(beds.find(a => a.bed === "Bed 12")?.fitAt).toBeNull();
+  expect((await db.select().from(guaranteeLetters)).map(g => [g.admissionId, g.status]).sort()).toEqual([["adm-1042", "requested"], ["adm-2002", "requested"]]);
+  const pending = await db.select().from(labResults).where(eq(labResults.flag, "pending"));
+  expect(pending.map(r => [r.patientId, r.test]).sort()).toEqual([["SYN-2002", "Urine culture sensitivities"], ["SYN-2009", "Renal function"]]);
+  const [lim] = await db.select().from(encounters).where(eq(encounters.patientId, "SYN-2014"));
+  expect(lim?.state).toEqual({ discharge: { medsConfirmed: false, followUp: "2w" }, transport: { label: "Ride home", detail: "Family free after 17:00" } });
+  const [nurul] = await db.select().from(patients).where(eq(patients.id, "SYN-2002"));
+  expect(nurul).toMatchObject({ initials: "NH", age: 29, sex: "Female", record: { ward: { status: "fit", predicted: "11:00", waitingHours: 5 } } });
 });
 
 test("the chart holds Amelia's CURB-65 readings and Daniel's low potassium, each with a source", async () => {

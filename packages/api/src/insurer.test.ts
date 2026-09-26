@@ -4,6 +4,7 @@ import { guaranteeLetters } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
 import { createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
+import { eq } from "drizzle-orm";
 
 import type { Context, Mail } from "./context";
 import { decideReview, renderReviewPage, reviewPacket, reviewTokenOf } from "./insurer";
@@ -45,7 +46,7 @@ test("the insurer approves: the claim is approved, the guarantee letter received
   clock.now = new Date(clock.now.getTime() + 5 * 60_000);
   expect(await decideReview(db, token, "approve", "", clock.now)).toEqual({ ok: true, status: "approved" });
   expect(await api.claim.status({ encounterId: "visit-1042" })).toMatchObject({ status: "approved", approvedAt: clock.now.toISOString() });
-  expect((await db.select().from(guaranteeLetters))[0]).toMatchObject({ status: "received" });
+  expect((await db.select().from(guaranteeLetters).where(eq(guaranteeLetters.id, "gl-1042")))[0]).toMatchObject({ status: "received" });
   expect(await decideReview(db, token, "query", "Why IV?", clock.now)).toEqual({ ok: false, reason: "Already decided: approved" });
 });
 
@@ -54,7 +55,7 @@ test("the insurer queries: the claim shows their question, the letter stays outs
   expect(await decideReview(db, token, "query", "  ", clock.now)).toEqual({ ok: false, reason: "Write the question for the doctor" });
   expect(await decideReview(db, token, "query", "Please attach the sputum culture request.", clock.now)).toEqual({ ok: true, status: "queried" });
   expect(await api.claim.status({ encounterId: "visit-1042" })).toMatchObject({ status: "queried", query: "Please attach the sputum culture request." });
-  expect((await db.select().from(guaranteeLetters))[0]).toMatchObject({ status: "requested" });
+  expect((await db.select().from(guaranteeLetters).where(eq(guaranteeLetters.id, "gl-1042")))[0]).toMatchObject({ status: "requested" });
   const other = await sentClaim();
   expect(await decideReview(other.db, other.token, "approve", "", new Date(other.clock.now.getTime() + 8 * 24 * 3600_000))).toEqual({ ok: false, reason: "This link has expired" });
 });

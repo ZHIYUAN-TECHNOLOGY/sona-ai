@@ -43,8 +43,8 @@ test("completing a task marks it done, a second completion changes nothing, and 
 
 test("lab results list the hospital's results with the patient's name and flag, newest first", async () => {
   const { db, api, as } = await signedIn();
-  // Seeded: Daniel's potassium came back two hours ago; his haemoglobin the day before.
-  expect((await api.results.list()).map(r => [r.patientName, r.test, r.value, r.unit, r.flag, r.receivedAt.toISOString()])).toEqual([
+  // Seeded: Daniel's potassium came back two hours ago; his haemoglobin the day before (the ward's pending samples aside).
+  expect((await api.results.list()).filter(r => r.flag !== "pending").map(r => [r.patientName, r.test, r.value, r.unit, r.flag, r.receivedAt.toISOString()])).toEqual([
     ["Daniel Rahman", "Potassium", "3.1", "mmol/L", "low", "2026-09-26T00:00:00.000Z"],
     ["Daniel Rahman", "Hb", "9.8", "g/dL", "low", "2026-09-25T00:00:00.000Z"],
   ]);
@@ -53,15 +53,16 @@ test("lab results list the hospital's results with the patient's name and flag, 
 
 test("acknowledging a result records who and when, once, and takes it out of the unacknowledged list", async () => {
   const { db, api, as, clock } = await signedIn();
-  expect((await api.results.list({ unacknowledged: true })).map(r => r.id)).toEqual(["lab-1086-potassium", "lab-hb-1086"]);
+  const unacknowledged = async () => (await api.results.list({ unacknowledged: true })).filter(r => r.flag !== "pending").map(r => r.id);
+  expect(await unacknowledged()).toEqual(["lab-1086-potassium", "lab-hb-1086"]);
   expect((await (await otherHospital(db, as)).results.acknowledge({ resultId: "lab-1086-potassium" }).catch(e => e)).code).toBe("NOT_FOUND");
 
   const acked = await api.results.acknowledge({ resultId: "lab-1086-potassium" });
   expect([acked.acknowledgedBy, acked.acknowledgedAt?.toISOString()]).toEqual(["dr-aisyah", "2026-09-26T02:00:00.000Z"]);
   clock.now = new Date("2026-09-26T11:00:00+08:00");
   expect(await as("dr-colleague").results.acknowledge({ resultId: "lab-1086-potassium" })).toEqual(acked); // the first acknowledgement stands
-  expect((await api.results.list({ unacknowledged: true })).map(r => r.id)).toEqual(["lab-hb-1086"]);
-  expect((await api.results.list()).map(r => [r.id, r.acknowledgedBy])).toEqual([["lab-1086-potassium", "dr-aisyah"], ["lab-hb-1086", null]]);
+  expect(await unacknowledged()).toEqual(["lab-hb-1086"]);
+  expect((await api.results.list()).filter(r => r.flag !== "pending").map(r => [r.id, r.acknowledgedBy])).toEqual([["lab-1086-potassium", "dr-aisyah"], ["lab-hb-1086", null]]);
   expect((await api.results.acknowledge({ resultId: "lab-none" }).catch(e => e)).code).toBe("NOT_FOUND");
 });
 
@@ -111,7 +112,10 @@ test("handover says who acknowledged a critical result and how long it took; an 
 test("patients list the hospital's people with their full record and visit, so live mode shows what the server holds", async () => {
   const { api, db, as } = await signedIn();
   const people = await api.patients.list();
-  expect(people.map(p => [p.id, p.encounterId, p.name, p.incomplete])).toEqual([["SYN-1042", "visit-1042", "Amelia Tan", false], ["SYN-1086", "visit-1086", "Daniel Rahman", true]]);
+  expect(people.map(p => [p.id, p.encounterId, p.name, p.incomplete])).toEqual([
+    ["SYN-1042", "visit-1042", "Amelia Tan", false], ["SYN-1086", "visit-1086", "Daniel Rahman", true],
+    ...[["2002", "Nurul Huda"], ["2004", "Tan Ah Kow"], ["2008", "Priya Nair"], ["2009", "Ravi Kumar"], ["2012", "Siti Aminah"], ["2014", "Lim Wei Jie"]].map(([n, name]) => [`SYN-${n}`, `visit-${n}`, name, false]),
+  ]);
   expect(people[0]).toMatchObject({ subtitle: "Respiratory review", allergies: "Penicillin — reported rash; details need confirmation", medicines: ["Salbutamol inhaler, as needed", "Cetirizine, patient-reported"] });
   expect(people[0]!.history).toContain("Asthma since childhood");
   expect(people[0]!.sources.map(s => s.id)).toContain("history");

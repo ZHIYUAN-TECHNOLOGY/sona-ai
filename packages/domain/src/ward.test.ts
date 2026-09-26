@@ -18,6 +18,15 @@ test("a received guarantee letter, confirmed medicines and a booked follow-up le
   expect(bedBlockers({ admissionId: "adm-6", gl: { status: "received" }, medsConfirmed: true, followUpBooked: true, pendingResults: [] })).toEqual([]);
 });
 
+test("a ride still to arrange holds the bed; a bed not yet fit is not held by take-home medicines or follow-up", () => {
+  expect(bedBlockers({ admissionId: "adm-14", medsConfirmed: true, followUpBooked: true, pendingResults: [], transport: { label: "Ride home", detail: "Family free after 17:00" } })).toEqual([
+    { id: "adm-14-transport", kind: "transport", label: "Ride home", detail: "Family free after 17:00" },
+  ]);
+  expect(bedBlockers({ admissionId: "adm-9", fit: false, medsConfirmed: false, followUpBooked: false, pendingResults: [{ id: "r1", test: "Renal function" }] })).toEqual([
+    { id: "adm-9-result-r1", kind: "result", label: "Renal function", detail: "Pending" },
+  ]);
+});
+
 test("a self-pay admission with no guarantee letter is not blocked on one; an unsent claim reads as codes to review", () => {
   expect(bedBlockers({ admissionId: "adm-2", medsConfirmed: true, followUpBooked: true, pendingResults: [] })).toEqual([]);
   expect(bedBlockers({ admissionId: "adm-2", gl: { status: "requested" }, medsConfirmed: true, followUpBooked: true, pendingResults: [{ id: "r1", test: "Renal function" }] })).toEqual([

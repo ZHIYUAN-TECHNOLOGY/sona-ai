@@ -43,8 +43,9 @@ const listResults = async (db: Context["db"], hospitalId: string, where?: Return
   .map(r => ({ ...r, critical: Boolean(r.flag?.startsWith("critical")) }));
 
 export const resultsRouter = {
-  list: protectedProcedure.input(z.object({ unacknowledged: z.boolean().optional() }).optional()).handler(({ context: { db, hospitalId }, input }) =>
-    listResults(db, hospitalId, input?.unacknowledged ? isNull(labResults.acknowledgedAt) : undefined)),
+  // A sample still at the lab ("pending") is a ward blocker, not a result to act on.
+  list: protectedProcedure.input(z.object({ unacknowledged: z.boolean().optional() }).optional()).handler(async ({ context: { db, hospitalId }, input }) =>
+    (await listResults(db, hospitalId, input?.unacknowledged ? isNull(labResults.acknowledgedAt) : undefined)).filter(r => r.flag !== "pending")),
   /**
    * The lab feed, simulated for the demo: a result arrives for one of the hospital's patients, flagged
    * critical by rule when it is past a call-now limit. ponytail: a real lab posts HL7/FHIR here.
