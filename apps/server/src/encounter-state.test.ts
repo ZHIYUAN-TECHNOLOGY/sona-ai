@@ -67,3 +67,13 @@ test("an edit through the object keeps discharge and claim fixes written beside 
   const [row] = (await db.$client.query<{ d: unknown }>(`select state->'discharge' as d from encounters where id = 'visit-1042'`)).rows;
   expect(row?.d).toEqual({ medsConfirmed: true });
 });
+
+test("a read shows what Postgres holds now: fixes merged beside the object, or a demo reset, are never hidden by its copy", async () => {
+  const db = await seeded();
+  const live = objectFor(db);
+  await live.edit(DEMO_HOSPITAL, { encounterId: "visit-1042", expectedRevision: 1, prescriptionInputs: inputs });
+  await db.$client.query(`update encounters set state = jsonb_set(state, '{discharge}', '{"medsConfirmed":true}'::jsonb) where id = 'visit-1042'`);
+  expect((await live.get(DEMO_HOSPITAL, "visit-1042")).state).toMatchObject({ discharge: { medsConfirmed: true }, prescriptionInputs: inputs });
+  await db.$client.query(`update encounters set state = '{}'::jsonb, revision = 1 where id = 'visit-1042'`);
+  expect(await live.get(DEMO_HOSPITAL, "visit-1042")).toEqual({ encounterId: "visit-1042", revision: 1, state: {} });
+});

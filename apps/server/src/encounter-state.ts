@@ -15,8 +15,10 @@ export class EncounterState extends DurableObject<DatabaseConfig> {
     super(ctx, env);
   }
 
+  // Reads also come from Postgres: fixes merged there in place (or a demo reset) would otherwise be
+  // hidden behind the stored copy. The object's job is ordering writes, not caching reads.
   async get(hospitalId: string, encounterId: string): Promise<EncounterSnapshot> {
-    return (await this.ctx.storage.get<EncounterSnapshot>("snapshot")) ?? this.reload(hospitalId, encounterId);
+    return this.reload(hospitalId, encounterId);
   }
 
   // Writes start from Postgres, not the cached copy: discharge and claim fixes are merged there in
