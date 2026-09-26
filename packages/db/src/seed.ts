@@ -34,8 +34,10 @@ export async function seedDemo(db: AnyDb, now = new Date()) {
     .onConflictDoUpdate({ target: drugs.id, set: { name: sql`excluded.name`, ingredient: sql`excluded.ingredient`, formulation: sql`excluded.formulation`, dose: sql`excluded.dose`, sourceId: sql`excluded.source_id` } });
   // Amelia's CURB-65 inputs (confusion is a 0/1 flag; AMT 10/10), each citable by its own source ID.
   const observedAt = new Date("2026-09-22T09:26:00+08:00");
-  await db.insert(observations).values(([["confusion", 0, "flag"], ["urea", 5.1, "mmol/L"], ["respiratory-rate", 18, "/min"], ["systolic", 124, "mmHg"], ["diastolic", 78, "mmHg"]] as const)
-    .map(([kind, value, unit]) => ({ id: `obs-1042-${kind}`, patientId: "SYN-1042", kind, value, unit, sourceId: `obs-1042-${kind}`, observedAt }))).onConflictDoNothing();
+  // Confusion is the abbreviated mental test out of 10, the scale CURB-65 reads (8 or less scores).
+  await db.insert(observations).values(([["confusion", 10, "AMT"], ["urea", 5.1, "mmol/L"], ["respiratory-rate", 18, "/min"], ["systolic", 124, "mmHg"], ["diastolic", 78, "mmHg"]] as const)
+    .map(([kind, value, unit]) => ({ id: `obs-1042-${kind}`, patientId: "SYN-1042", kind, value, unit, sourceId: `obs-1042-${kind}`, observedAt })))
+    .onConflictDoUpdate({ target: observations.id, set: { value: sql`excluded.value`, unit: sql`excluded.unit` } });
   // Daniel's potassium arrived two hours ago, like the app's pending result; reseeding keeps it two hours old.
   await db.insert(labResults).values({ id: "lab-1086-potassium", patientId: "SYN-1086", test: "Potassium", value: "3.1", unit: "mmol/L", flag: "low", sourceId: "lab-1086-potassium", receivedAt: new Date(now.getTime() - 2 * 3600_000) })
     .onConflictDoUpdate({ target: labResults.id, set: { receivedAt: sql`excluded.received_at` } });

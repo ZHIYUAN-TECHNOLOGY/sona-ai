@@ -4,10 +4,11 @@ import type { Patient } from "./types";
  * Evidence answer: a graded three-line answer, the studies behind it, and the severity score that
  * decides which evidence applies to this patient.
  *
- * ponytail: authored summaries of real, well-known publications; links open a PubMed search, not a
- * retrieved record. Retrieval, grading rules and synthesis arrive with the backend (see the plan).
+ * ponytail: authored summaries of real, well-known publications, each linked to its PubMed record
+ * (PMIDs checked against PubMed). Retrieval, grading rules and synthesis arrive with the backend (see the plan).
  */
-export type Study = { id: string; kind: "Guideline" | "Trial" | "Review"; year: number; title: string; finding: string; query: string };
+export type StudyKind = "Guideline" | "Review" | "Trial" | "Narrative review" | "Study";
+export type Study = { id: string; kind: StudyKind; year: number; title: string; finding: string; query: string; pmid?: string; journal?: string };
 export type Factor = { id: string; label: string; value?: string; rule: string; point?: boolean };
 
 export const GRADE = { certainty: "High certainty", direction: "Against routine use", scope: "non-severe pneumonia" };
@@ -17,11 +18,34 @@ export const ANSWER = [
   "They shorten time to stability a little but raise blood glucose; no mortality benefit outside severe cases.",
 ];
 export const STUDIES: Study[] = [
-  { id: "ats-idsa", kind: "Guideline", year: 2019, title: "ATS/IDSA adult CAP guideline", finding: "Recommends against routine corticosteroids in non-severe pneumonia.", query: "Metlay 2019 community-acquired pneumonia ATS IDSA guideline" },
-  { id: "blum", kind: "Trial", year: 2015, title: "Prednisone in CAP (Lancet)", finding: "A week of prednisone reached stability about a day sooner, with more high blood sugar and no mortality difference.", query: "Blum 2015 prednisone community-acquired pneumonia Lancet" },
-  { id: "cape-cod", kind: "Trial", year: 2023, title: "Hydrocortisone in severe CAP (NEJM)", finding: "Lower 28-day mortality, but only in severe pneumonia treated in intensive care.", query: "Dequin 2023 hydrocortisone severe community-acquired pneumonia" },
+  { id: "ats-idsa", pmid: "31573350", kind: "Guideline", year: 2019, title: "ATS/IDSA adult CAP guideline", finding: "Recommends against routine corticosteroids in non-severe pneumonia.", query: "Metlay 2019 community-acquired pneumonia ATS IDSA guideline" },
+  { id: "blum", pmid: "25608756", kind: "Trial", year: 2015, title: "Prednisone in CAP (Lancet)", finding: "A week of prednisone reached stability about a day sooner, with more high blood sugar and no mortality difference.", query: "Blum 2015 prednisone community-acquired pneumonia Lancet" },
+  { id: "cape-cod", pmid: "36942789", kind: "Trial", year: 2023, title: "Hydrocortisone in severe CAP (NEJM)", finding: "Lower 28-day mortality, but only in severe pneumonia treated in intensive care.", query: "Dequin 2023 hydrocortisone severe community-acquired pneumonia" },
 ];
-export const pubmedUrl = (s: Study) => `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(s.query)}`;
+/** A retrieved study opens its own abstract; an authored one opens a PubMed search for it. */
+export const pubmedUrl = (s: Pick<Study, "query" | "pmid">) => s.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${s.pmid}/` : `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(s.query)}`;
+
+/** A study's design from PubMed's publication types, strongest first. A plain "Review" is narrative, not systematic. */
+export function studyKind(publicationTypes: string[]): StudyKind {
+  const has = (t: string) => publicationTypes.includes(t);
+  if (has("Practice Guideline") || has("Guideline")) return "Guideline";
+  if (has("Systematic Review") || has("Meta-Analysis")) return "Review";
+  if (has("Randomized Controlled Trial")) return "Trial";
+  if (has("Review")) return "Narrative review";
+  return "Study";
+}
+
+/**
+ * The certainty label, by rule on the strongest design cited (GRADE's starting levels, simplified):
+ * a guideline or systematic review is high, a randomised trial moderate, anything else low.
+ * ponytail: starting level only; downgrading for bias, inconsistency or indirectness needs a reviewer.
+ */
+export function certaintyOf(kinds: StudyKind[]) {
+  if (!kinds.length) return "No evidence found";
+  if (kinds.some(k => k === "Guideline" || k === "Review")) return "High certainty";
+  if (kinds.includes("Trial")) return "Moderate certainty";
+  return "Low certainty";
+}
 
 // ponytail: the ward-chart values for the demo patient; a real chart feeds these by source ID.
 const CHART: Record<string, { confusion?: string; urea?: number; rr?: number; sbp?: number; dbp?: number }> = {

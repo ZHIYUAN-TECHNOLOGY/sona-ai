@@ -11,6 +11,7 @@ import { claimRouter } from "./claim";
 import { completeTask, dayRouter, resultsRouter } from "./day"; // lane T
 import { dischargeRouter } from "./discharge";
 import { encounterRouter } from "./encounter";
+import { evidenceRouter } from "./evidence";
 import { wardRouter } from "./ward";
 // lane P
 import { noteRouter } from "./note";
@@ -34,6 +35,7 @@ export const appRouter = {
     };
   }),
   encounter: encounterRouter,
+  evidence: evidenceRouter,
   discharge: dischargeRouter,
   claim: claimRouter,
   ward: wardRouter,

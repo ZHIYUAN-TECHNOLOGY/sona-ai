@@ -22,6 +22,8 @@ export type Context = {
   models?: Models;
   /** Image storage: the Worker passes its R2 bucket; tests pass an in-memory one. */
   uploads?: Uploads;
+  /** Outbound HTTP (PubMed); tests pass a fake so nothing leaves the machine. */
+  fetch?: typeof fetch;
 };
 
 /** The slice of an R2 bucket the routes use. */

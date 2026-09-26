@@ -22,7 +22,7 @@ test("the chart holds Amelia's CURB-65 readings and Daniel's low potassium, each
   await seedDemo(db);
   const obs = await db.select().from(observations).where(eq(observations.patientId, "SYN-1042"));
   expect(Object.fromEntries(obs.map(o => [o.kind, `${o.value} ${o.unit}`]))).toEqual({
-    confusion: "0 flag", urea: "5.1 mmol/L", "respiratory-rate": "18 /min", systolic: "124 mmHg", diastolic: "78 mmHg",
+    confusion: "10 AMT", urea: "5.1 mmol/L", "respiratory-rate": "18 /min", systolic: "124 mmHg", diastolic: "78 mmHg",
   });
   expect(obs.every(o => o.sourceId)).toBe(true);
   const [k] = await db.select().from(labResults).where(eq(labResults.id, "lab-1086-potassium"));

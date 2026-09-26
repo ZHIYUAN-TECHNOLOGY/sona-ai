@@ -173,3 +173,12 @@ export const checkInReplies = pgTable("check_in_replies", {
   label: text("label", { enum: ["fine", "worse", "urgent"] }).notNull(), source: text("source").notNull(), taskId: text("task_id"),
   receivedAt: timestamp("received_at").defaultNow().notNull(),
 });
+
+/**
+ * Flow 4: PubMed articles as last fetched, so an evidence answer still has its sources when PubMed is
+ * slow or the stage has no network. Public bibliographic data, not hospital data: no hospital_id.
+ */
+export const pubmedArticles = pgTable("pubmed_articles", {
+  pmid: text("pmid").primaryKey(), title: text("title").notNull(), journal: text("journal").notNull(), year: integer("year").notNull(),
+  publicationTypes: jsonb("publication_types").$type<string[]>().notNull(), conclusion: text("conclusion").notNull(), fetchedAt: timestamp("fetched_at").defaultNow().notNull(),
+});

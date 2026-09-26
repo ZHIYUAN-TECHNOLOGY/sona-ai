@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { curb65, curb65FromObservations } from "./evidence";
+import { certaintyOf, curb65, curb65FromObservations, studyKind } from "./evidence";
 import type { Patient } from "./types";
 
 const patient = (over: Partial<Patient>): Patient => ({ id: "X-1", encounterId: "visit-x", name: "Test Patient", initials: "TP", age: 70, sex: "Female", subtitle: "", time: "09:00", complaint: "", history: [], family: "", social: "", allergies: null, medicines: [], vitals: [], sources: [], incomplete: false, ...over });
@@ -33,4 +33,20 @@ test("CURB-65 keeps unrecorded or wrongly-united factors unknown and withholds t
   const r = curb65FromObservations([obs("diastolic", 58, "mmHg"), obs("urea", 45, "mg/dL")], 70);
   expect({ score: r.score, recorded: r.recorded, risk: r.risk }).toEqual({ score: 2, recorded: 2, risk: undefined });
   expect(r.factors.find(f => f.id === "u")?.point).toBeUndefined();
+});
+
+test("a study's kind comes from PubMed's publication types, strongest design first", () => {
+  expect(studyKind(["Journal Article", "Practice Guideline"])).toBe("Guideline");
+  expect(studyKind(["Journal Article", "Systematic Review", "Meta-Analysis"])).toBe("Review");
+  expect(studyKind(["Randomized Controlled Trial", "Multicenter Study", "Journal Article"])).toBe("Trial");
+  expect(studyKind(["Journal Article", "Review"])).toBe("Narrative review");
+  expect(studyKind(["Journal Article"])).toBe("Study");
+});
+
+test("certainty is a rule on the strongest design cited, never the model's say", () => {
+  expect(certaintyOf(["Trial", "Guideline", "Trial"])).toBe("High certainty");
+  expect(certaintyOf(["Review", "Study"])).toBe("High certainty");
+  expect(certaintyOf(["Trial", "Narrative review"])).toBe("Moderate certainty");
+  expect(certaintyOf(["Study", "Narrative review"])).toBe("Low certainty");
+  expect(certaintyOf([])).toBe("No evidence found");
 });

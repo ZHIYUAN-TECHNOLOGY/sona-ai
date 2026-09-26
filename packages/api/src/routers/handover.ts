@@ -27,7 +27,7 @@ export async function handoverCards(db: Context["db"], hospitalId: string) {
     listFindings(db, hospitalId, new Date(), ne(findings.status, "dismissed")), // lane F6
   ]);
   const rows: HandoverPatient[] = people.map(p => {
-    const vitals = obs.filter(o => o.patientId === p.id).map(o => ({ label: label(o.kind), value: o.unit === "flag" ? (o.value ? "present" : "absent") : `${o.value} ${o.unit}` }));
+    const vitals = obs.filter(o => o.patientId === p.id).map(o => ({ label: label(o.kind), value: o.unit === "AMT" ? `AMT ${o.value}/10` : `${o.value} ${o.unit}` }));
     const appt = appts.find(a => a.patientId === p.id);
     return {
       id: p.id, name: p.name, age: p.age, sex: p.sex, complaint: p.complaint, allergies: p.allergies, incomplete: p.incomplete,
