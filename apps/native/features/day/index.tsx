@@ -12,6 +12,8 @@ import { Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/u
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
 import { useLive } from "@/features/live";
+import { withFindings } from "@/features/findings/model";
+import { useFindings } from "@/features/live/findings-sync";
 import { newestResult, serverDayPatients, serverVisit } from "@/features/live/day";
 import { acknowledgeResult, serverDayCount, useServerData, useServerDay, useVisitTasks } from "@/features/live/server-day";
 import { localDate } from "@/features/tasks/state";
@@ -218,6 +220,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const server = useServerData();
   const tasksOf = useVisitTasks();
   const checkIns = useCheckIns();
+  const { findings } = useFindings(); // lane F6: overdue follow-ups rank red
   const today = useServerDay(live ? localDate(new Date()) : undefined);
   const otherDay = useServerDay(live && offset !== 0 ? localDate(dayOf(offset)) : undefined);
   const patients = live ? serverDayPatients(fixturePatients, today ?? []) : fixturePatients;
@@ -242,8 +245,8 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const [showSnoozed, setShowSnoozed] = useState(false);
 
   const schedule = live && offset !== 0 ? (otherDay ?? []).map(a => serverVisit(a, fixturePatients.map(p => p.id))) : scheduleFor(offset, patients);
-  // Flagged check-in replies rank in red above the rest; their tasks are not listed twice.
-  const ranked = offset === 0 ? [...flaggedItems(checkIns), ...rankDay(patients, encounters, now, undefined, live ? { result, tasksOf: p => tasksOf(p).filter(t => !flaggedTaskIds(checkIns).includes(t.id)) } : undefined)].sort((a, b) => b.score - a.score) : rankOtherDay(offset, schedule);
+  // Flagged check-in replies rank in red above the rest; their tasks are not listed twice. Findings follow-ups join the same ranking.
+  const ranked = offset === 0 ? withFindings([...flaggedItems(checkIns), ...rankDay(patients, encounters, now, undefined, live ? { result, tasksOf: p => tasksOf(p).filter(t => !flaggedTaskIds(checkIns).includes(t.id)) } : undefined)], findings) : rankOtherDay(offset, schedule);
   const need = ranked.filter(item => item.tone !== "routine").length;
   const date = dayOf(offset);
   const [switched, setSwitched] = useState(false);

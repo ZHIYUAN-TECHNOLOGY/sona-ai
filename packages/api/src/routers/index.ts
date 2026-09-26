@@ -20,6 +20,8 @@ import { handoverRouter } from "./handover";
 import { xrayRouter } from "./xray";
 // lane F7
 import { checkInsRouter } from "./check-ins";
+// lane F6
+import { findingsRouter } from "./findings";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -61,6 +63,8 @@ export const appRouter = {
   },
   // lane F7
   checkIns: checkInsRouter,
+  // lane F6
+  findings: findingsRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

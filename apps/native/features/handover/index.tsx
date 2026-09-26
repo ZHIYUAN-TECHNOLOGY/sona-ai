@@ -13,6 +13,7 @@ import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
+import { useFindings } from "@/features/live/findings-sync";
 import { useLiveHandover } from "@/features/live/handover-sync";
 import { buildHandover, type HandoverCard } from "./model";
 
@@ -91,7 +92,8 @@ export function HandoverScreen() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();
-  const [fixtureCards] = useState(() => buildHandover(patients, encounters));
+  const { findings } = useFindings();
+  const [fixtureCards] = useState(() => buildHandover(patients, encounters, findings));
   // Live backend mode: the server's cards, and the acceptance is written there.
   const server = useLiveHandover();
   const cards = server.live ? server.cards ?? [] : fixtureCards;

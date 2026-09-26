@@ -15,6 +15,8 @@ import { palette } from "@/components/sona/theme";
 import { Action, Chip, Expand, Glass, Icon, Notice, pillStyle, Reveal, Screen, SourceLink, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { Encounter, FeatureProps } from "@/features/encounter/types";
+import { FindingsCard } from "@/features/findings";
+import { useFindings } from "@/features/live/findings-sync";
 import { useXrayUpload } from "@/features/live/xray-upload";
 import { teachingImage, type TeachingImage } from "./fixture";
 import { ImageEdge, OriginalImageViewer, VIEWING } from "./viewer";
@@ -189,6 +191,11 @@ export function XrayScreen() {
   const activePatient = useRef(patient?.id);
   // Live backend mode: the chosen image is also uploaded to the server (not analysed there either).
   const server = useXrayUpload();
+  // Demo flow 6: findings beyond the question asked, marked on the image and listed under it.
+  const found = useFindings();
+  const findings = found.findings.filter(f => f.encounterId === patient?.encounterId);
+  const markers = findings.filter(f => f.status !== "dismissed").map(f => ({ id: f.id, n: findings.indexOf(f) + 1, x: f.location.x, y: f.location.y }));
+  useEffect(() => { if (patient) found.detect(patient.encounterId); }, [found.live, patient?.encounterId]); // eslint-disable-line react-hooks/exhaustive-deps
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   activePatient.current = patient?.id;
@@ -255,7 +262,8 @@ export function XrayScreen() {
     ]} />}
     <Identity>{attachment ? `${patient.name} · local teaching image` : "Reference example · not this patient"}</Identity>
     {pickerError && <Notice warning>{pickerError}</Notice>}
-    <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} />
+    <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} />
+    <FindingsCard findings={findings} error={found.error} onTrack={f => void found.track(f)} onDismiss={(f, reason) => void found.dismiss(f, reason)} />
     {/* The latest analysis sits right under the image: one page, no separate details screen. */}
     <AnalysisDetails snapshot={encounter?.cards.findLast(card => card.kind === "xray" && card.imagingSnapshot)?.imagingSnapshot} />
 

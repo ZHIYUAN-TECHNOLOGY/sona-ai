@@ -13,6 +13,8 @@ import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
 import { api, useLive } from "@/features/live";
 import { openItems, shortRM, totalRisk, useSent } from "@/features/audit/model";
+import { FollowUpList } from "@/features/findings";
+import { useFindings } from "@/features/live/findings-sync";
 import { OWNERS, SUGGESTED, huddle, wardBeds, wardSummary, type Bed, type Owner } from "./model";
 
 /*
@@ -84,6 +86,7 @@ export function WardScreen() {
   const gridStyle = useAnimatedStyle(() => ({ opacity: interpolate(p.value, [0, 1], [1, 0.2]), transform: [{ scale: interpolate(p.value, [0, 1], [1, 0.97]) }] }));
   const lines = huddle(beds, owners);
   const audit = openItems(encounters, useSent());
+  const { findings } = useFindings();
   const current = open && beds.find(b => b.bed === open.bed);
 
   return <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas }}>
@@ -127,6 +130,7 @@ export function WardScreen() {
           </View>
           <Icon name="chevron.right" size={12} color={palette.muted} />
         </Pressable>
+        <FollowUpList findings={findings} />
 
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
           {beds.map(bed => <Pressable key={bed.bed} ref={v => { tiles.current[bed.bed] = v; }} collapsable={false} accessibilityRole="button"

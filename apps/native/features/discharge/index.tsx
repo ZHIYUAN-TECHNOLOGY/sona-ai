@@ -15,6 +15,7 @@ import { api, errorText, requestId, useLive } from "@/features/live";
 import { useServerEncounter } from "@/features/live/sync";
 import { scheduleLine } from "@/features/check-ins/model";
 import { refreshCheckIns } from "@/features/check-ins/state";
+import { useFindings } from "@/features/live/findings-sync";
 import type { Patient, PrescriptionCheck } from "@/features/encounter/types";
 import { EMPTY_DISCHARGE, FOLLOW_UPS, LANGUAGES, discharge, dischargeChecks, formatMinutes, planFor, type DischargeState, type MedChange } from "./model";
 
@@ -138,7 +139,10 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
   const encounter = encounters[patient.id];
   const plan = planFor(patient);
   const state = encounter?.discharge ?? EMPTY_DISCHARGE;
-  const checks = dischargeChecks(state, plan);
+  // An open incidental finding travels with the patient: it blocks until tracked or dismissed.
+  const found = useFindings();
+  const openFindings = found.findings.filter(f => f.encounterId === patient.encounterId && f.status === "open");
+  const checks = dischargeChecks(state, plan, openFindings);
   const blocked = checks.filter(c => c.status === "blocked");
   const resolving = useSettling(blocked.map(c => c.id));
   const [full, setFull] = useState(false);
@@ -195,6 +199,8 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
       <Text style={{ ...type.caption, color: palette.muted }}>{plan.meds.filter(m => m.change === "unchanged").map(m => m.name).join(", ")} unchanged</Text>
       <Chip label="Confirm take-home list" strong onPress={() => set({ medsConfirmed: true })} />
     </View>;
+    const finding = openFindings.find(f => check.id === `finding-${f.id}`);
+    if (finding) return <Chip label="Track follow-up" icon="calendar.badge.plus" strong onPress={() => void found.track(finding)} />;
     return undefined;
   };
 
@@ -246,7 +252,7 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
         </Animated.View>
       </Animated.View>}
 
-      {serverError && <Text style={{ ...type.footnote, color: palette.red }}>{serverError}</Text>}
+      {(serverError ?? found.error) && <Text style={{ ...type.footnote, color: palette.red }}>{serverError ?? found.error}</Text>}
       <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
       {done ? <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ gap: 12 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 18, borderCurve: "continuous", backgroundColor: "rgba(15,110,102,0.08)" }}>

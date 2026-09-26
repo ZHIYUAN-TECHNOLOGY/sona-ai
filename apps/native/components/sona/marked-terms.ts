@@ -28,7 +28,7 @@ const DICTIONARY: [RegExp, Mark][] = [
     "community-acquired pneumonia", "pneumonia", "consolidation", "asthma", "copd", "pyelonephritis", "cellulitis", "appendicitis",
     "peritonitis", "heart failure", "chronic kidney disease", "kidney disease", "acute kidney injury", "ischaemic stroke", "stroke",
     "infarct", "anaemia", "hyponatraemia", "type 2 diabetes", "diabetes", "hypertension", "atrial fibrillation", "curb-65 \\d",
-    "respiratory review",
+    "respiratory review", "\\d+(?:\\.\\d+)? mm nodule", "nodule", "borderline heart size", "heart size", "cardiomegaly", "pleural effusion", "effusion",
   ]), "finding"],
   [words([
     "shortness of breath", "chest pain", "breathlessness", "cough", "fever", "wheeze", "wheezing", "rash", "vomiting", "confusion", "pain",
