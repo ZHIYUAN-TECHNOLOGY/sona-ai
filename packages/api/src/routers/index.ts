@@ -8,7 +8,7 @@ import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
 import { claimRouter } from "./claim";
-import { completeTask, dayRouter, patientsRouter, resultsRouter } from "./day"; // lane T
+import { completeTask, createTask, dayRouter, patientsRouter, resultsRouter } from "./day"; // lane T, T2
 import { dischargeRouter } from "./discharge";
 import { encounterRouter } from "./encounter";
 import { evidenceRouter } from "./evidence";
@@ -63,6 +63,7 @@ export const appRouter = {
     list: protectedProcedure.handler(({ context }) =>
       context.db.select().from(tasks).where(eq(tasks.hospitalId, context.hospitalId)).orderBy(asc(tasks.createdAt))),
     complete: completeTask, // lane T
+    create: createTask, // lane T2
   },
   // lane F7
   checkIns: checkInsRouter,
