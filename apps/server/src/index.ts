@@ -12,6 +12,7 @@ import { createContext } from "./context";
 import { ENV } from "./env.server";
 import { createAuth, getDb } from "./services";
 import { runNightlyAudit } from "@sona-ai/api/audit-job";
+import { sendDueCheckIns } from "@sona-ai/api/routers/check-ins";
 import { hospitals } from "@sona-ai/db/schema/clinical";
 
 const app = new Hono();
@@ -80,14 +81,23 @@ app.get("/", (c) => {
 
 export { EncounterState } from "./encounter-state";
 
+/** Matches the hourly cron in packages/infra/alchemy.run.ts. */
+const CHECK_IN_CRON = "0 * * * *";
+
 export default {
   fetch: app.fetch,
   // ponytail: the nightly coding audit (flow 5) plugs in here; until then the cron only logs that it fired.
-  /** Nightly coding audit for every hospital (see packages/api/src/audit-job.ts). */
+  /** For every hospital: the hourly check-in send (flow 7), else the nightly coding audit (see packages/api/src/audit-job.ts). */
   async scheduled(controller) {
     const db = await getDb();
+    const at = new Date(controller.scheduledTime);
     for (const { id } of await db.select({ id: hospitals.id }).from(hospitals)) {
-      const { raised } = await runNightlyAudit(db, id, new Date(controller.scheduledTime));
+      if (controller.cron === CHECK_IN_CRON) {
+        const { sent } = await sendDueCheckIns(db, id, at);
+        console.log(`check-ins ${controller.cron}: ${id} sent ${sent}`);
+        continue;
+      }
+      const { raised } = await runNightlyAudit(db, id, at);
       console.log(`coding audit ${controller.cron}: ${id} raised ${raised}`);
     }
   },

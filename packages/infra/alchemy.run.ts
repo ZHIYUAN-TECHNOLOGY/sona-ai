@@ -22,8 +22,8 @@ export const server = Cloudflare.Worker("server", {
     ENCOUNTERS: Cloudflare.DurableObject<EncounterState>("ENCOUNTERS", { className: "EncounterState" }),
     UPLOADS: uploads,
   },
-  // Nightly coding audit (flow 5), 02:00 Malaysia time.
-  crons: ["0 18 * * *"],
+  // Nightly coding audit (flow 5), 02:00 Malaysia time; after-discharge check-ins (flow 7) go out hourly.
+  crons: ["0 18 * * *", "0 * * * *"],
   dev: {
     port: 3000,
   },
