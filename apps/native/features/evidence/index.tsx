@@ -30,7 +30,7 @@ const SNAP = { duration: 360, dampingRatio: 0.82 }, TAP = { duration: 380, dampi
 
 /** The rehearsed demo question, for an answer opened without its prompt. */
 const REHEARSED_QUESTION = "Steroids for this patient with community-acquired pneumonia?";
-const SOURCES_NOTE: Record<ServerEvidence["pubmed"], string> = { live: "PubMed · conclusions quoted from each abstract", cached: "PubMed, saved copy · offline now", unavailable: "PubMed unreachable · no sources" };
+const SOURCES_NOTE: Record<ServerEvidence["pubmed"], string> = { live: "PubMed · conclusions quoted from each abstract", cached: "PubMed, saved copy · offline now", unavailable: "PubMed unreachable · no studies" };
 
 export function EvidenceCard({ patient, result }: FeatureProps) {
   // Live mode asks the server; the authored answer shows otherwise. While the server answers, nothing authored is shown in its place.
@@ -38,7 +38,7 @@ export function EvidenceCard({ patient, result }: FeatureProps) {
   const question = encounters[patient.id]?.requests.find(r => r.id === result?.requestId)?.prompt || REHEARSED_QUESTION;
   const { live, data, error } = useLiveEvidence(patient.encounterId, result?.requestId, question);
   if (live && !data) return <Surface feature style={{ padding: 16, gap: 8 }}>
-    <Text style={{ ...type.subhead, color: error ? palette.red : palette.muted }}>{error ?? "Searching PubMed and checking the chart…"}</Text>
+    <Text style={{ ...type.subhead, color: error ? palette.red : palette.muted }}>{error ?? "Searching PubMed and your library, checking the chart…"}</Text>
   </Surface>;
   const grade = data ? data.grade : { ...GRADE, rule: undefined };
   const answer = data ? data.answer : ANSWER;
@@ -62,6 +62,7 @@ export function EvidenceCard({ patient, result }: FeatureProps) {
     </Surface>
     {studies.length > 0 && <Studies studies={studies} note={note} />}
     {data && !studies.length && <Text selectable style={{ ...type.footnote, color: palette.amber }}>{note}</Text>}
+    {data && data.passages.length > 0 && <Passages passages={data.passages} />}
     <Severity patient={patient} server={data?.curb65} />
   </View>;
 }
@@ -140,6 +141,23 @@ function StudyCard({ study, index, pos, left, width, step }: { study: Study; ind
       </Pressable>
     </Surface>
   </Animated.View>;
+}
+
+/** Live only: matching sections from the library (the hospital's own sources), each labelled with its title and section. Cited, not graded. */
+function Passages({ passages }: { passages: ServerEvidence["passages"] }) {
+  return <View style={{ gap: 10 }} accessibilityLabel={`${passages.length} library passages`}>
+    <Text style={{ ...type.overline, color: palette.muted }}>From your library · not graded</Text>
+    {passages.map(p => <Surface key={p.id} style={{ padding: 16, gap: 6, borderRadius: 22 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <View style={{ height: 22, paddingHorizontal: 8, borderRadius: 11, justifyContent: "center", backgroundColor: "rgba(15,110,102,0.1)" }}>
+          <Text style={{ fontSize: 11, fontWeight: "700", color: TEAL }}>Library</Text>
+        </View>
+        <Text numberOfLines={1} style={{ ...type.caption, flex: 1, color: palette.muted, fontVariant: ["tabular-nums"] }}>{p.source} · {p.year}</Text>
+      </View>
+      <Text numberOfLines={2} style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{p.title} · {p.section}</Text>
+      <Text selectable numberOfLines={5} style={{ ...type.footnote, color: palette.ink }}>{p.text}</Text>
+    </Surface>)}
+  </View>;
 }
 
 const R = 34, C = 2 * Math.PI * R, SWEEP = 0.75;

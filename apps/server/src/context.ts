@@ -2,6 +2,7 @@ import type { Context as ApiContext } from "@sona-ai/api/context";
 import type { Context as HonoContext } from "hono";
 
 import type { EncounterStore } from "@sona-ai/api/context";
+import { ingest, search, stubEmbedder } from "@sona-ai/retrieval/retrieval";
 
 import { ENV } from "./env.server";
 import { getDb } from "./services";
@@ -26,6 +27,8 @@ export async function createContext({ context }: CreateContextOptions): Promise<
     uploads: (context.env as Env).UPLOADS,
     publicUrl: ENV.BETTER_AUTH_URL,
     mail: mailOf(context.env as Env),
+    // ponytail: hashed bag-of-words vectors until EmbeddingGemma runs in box ②; swap stubEmbedder for it then (and re-ingest).
+    library: { ingest: (doc, text) => ingest(db, doc, text, stubEmbedder), search: input => search(db, input, stubEmbedder) },
   };
 }
 

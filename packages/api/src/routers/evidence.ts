@@ -1,4 +1,4 @@
-import { encounters, observations, patients, provenance, pubmedArticles } from "@sona-ai/db/schema/clinical";
+import { documents, encounters, observations, patients, provenance, pubmedArticles } from "@sona-ai/db/schema/clinical";
 import { ANSWER, GRADE, STUDIES, certaintyOf, curb65FromObservations, pubmedUrl, studyKind, type ObservationRow, type StudyKind } from "@sona-ai/domain/evidence";
 import { ORPCError } from "@orpc/server";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
@@ -43,6 +43,20 @@ async function articlesFor(db: Context["db"], fetcher: typeof fetch, question: s
   }
 }
 
+/**
+ * Up to three passages from the library (the shared guidelines and the hospital's own uploads) for
+ * the question, each with its document title and section. They are cited, never graded: certainty
+ * stays a rule on the PubMed study designs.
+ * ponytail: the nearest passages come back with no relevance floor; add a reranker score floor when bge-reranker is on.
+ */
+async function passagesFor(context: Context, hospitalId: string, question: string) {
+  const hits = context.library ? await context.library.search({ query: question, hospitalId, k: 3 }) : [];
+  if (!hits.length) return [];
+  const docs = await context.db.select({ id: documents.id, title: documents.title }).from(documents).where(inArray(documents.id, hits.map(h => h.documentId)));
+  const title = new Map(docs.map(d => [d.id, d.title]));
+  return hits.map(h => ({ id: h.sourceId, documentId: h.documentId, title: title.get(h.documentId) ?? h.tags.source, section: h.tags.section, source: h.tags.source, year: h.tags.year, text: h.text }));
+}
+
 export const evidenceRouter = {
   ask: protectedProcedure.input(z.object({ encounterId: z.string().min(1), question: z.string().trim().min(1).max(500) })).handler(async ({ context, input }) => {
     const { db, hospitalId } = context;
@@ -55,6 +69,7 @@ export const evidenceRouter = {
     // The rehearsed answer shows its reviewed summary of each study (a guideline's abstract rarely states its recommendations); others quote the abstract.
     const summary = (pmid: string) => (rehearsed ? STUDIES.find(s => s.pmid === pmid)?.finding : undefined);
     const studies = articles.map(a => ({ id: `pmid:${a.pmid}`, pmid: a.pmid, kind: a.kind, year: a.year, title: a.title, journal: a.journal, finding: summary(a.pmid) ?? a.conclusion, query: a.title, url: pubmedUrl({ pmid: a.pmid, query: a.title }) }));
+    const passages = await passagesFor(context, hospitalId, input.question);
     const strongest = RANK.find(k => studies.some(s => s.kind === k));
     const grade = { certainty: certaintyOf(studies.map(s => s.kind)), ...(strongest ? { rule: `Strongest design cited: ${DESIGNS[strongest]}` } : {}) };
 
@@ -68,7 +83,7 @@ export const evidenceRouter = {
     const rows = await db.select().from(observations).where(eq(observations.patientId, visit.patientId)).orderBy(asc(observations.observedAt));
     const curb65 = curb65FromObservations(rows as ObservationRow[], visit.age);
 
-    await db.insert(provenance).values({ id: crypto.randomUUID(), encounterId: input.encounterId, kind: "evidence-answer", output: { question: input.question, answer, grade }, sourceIds: studies.map(s => s.id), model: source, approvedBy: null });
-    return { question: input.question, answer, source, grade: grade as { certainty: string; rule?: string; direction?: string; scope?: string }, studies, pubmed, curb65 };
+    await db.insert(provenance).values({ id: crypto.randomUUID(), encounterId: input.encounterId, kind: "evidence-answer", output: { question: input.question, answer, grade }, sourceIds: [...studies.map(s => s.id), ...passages.map(p => p.id)], model: source, approvedBy: null });
+    return { question: input.question, answer, source, grade: grade as { certainty: string; rule?: string; direction?: string; scope?: string }, studies, passages, pubmed, curb65 };
   }),
 };

@@ -1,7 +1,7 @@
 import type { Session } from "@sona-ai/auth";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 
-import type { EncounterEdit, RecordReview } from "./contracts";
+import type { EncounterEdit, RecordReview, RetrievalHit, SearchInput } from "./contracts";
 import type { Models } from "./models";
 import type { EncounterSnapshot } from "./routers/encounter";
 
@@ -28,6 +28,8 @@ export type Context = {
   publicUrl?: string;
   /** Outbound email (Cloudflare Email Service); absent until a sending domain and the inboxes are configured. */
   mail?: Mail;
+  /** The retrieval library: the Worker passes packages/retrieval's ingest and search, which import this package, so they come in here. */
+  library?: Library;
 };
 
 /** Email as the routes use it: who sends, the insurer's inbox, and the send itself. */
@@ -35,6 +37,15 @@ export type Mail = {
   from: string;
   insurer: string;
   send(message: { from: string; to: string; subject: string; text: string; html?: string }): Promise<unknown>;
+};
+
+/** A library document; hospitalId empty is the shared library, set is one hospital's own. */
+export type LibraryDocument = { id: string; hospitalId: string | null; title: string; source: string; year: number; license?: string | null; uploadedBy?: string | null };
+export type Library = {
+  /** Stores the document and its sections; re-ingesting the same ID replaces them. */
+  ingest(doc: LibraryDocument, text: string): Promise<void>;
+  /** Hybrid search over the shared library and the caller's hospital. */
+  search(input: SearchInput): Promise<RetrievalHit[]>;
 };
 
 /** The slice of an R2 bucket the routes use. */

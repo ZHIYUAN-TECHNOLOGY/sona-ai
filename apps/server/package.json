@@ -16,6 +16,7 @@
     "@sona-ai/api": "workspace:*",
     "@sona-ai/auth": "workspace:*",
     "@sona-ai/db": "workspace:*",
+    "@sona-ai/retrieval": "workspace:*",
     "better-auth": "catalog:",
     "hono": "^4.13.7",
     "varlock": "catalog:",
