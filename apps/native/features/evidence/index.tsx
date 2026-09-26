@@ -1,4 +1,5 @@
 import * as WebBrowser from "expo-web-browser";
+import { MarkedText } from "@/components/sona/marked-text";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -38,7 +39,7 @@ export function EvidenceCard({ patient }: FeatureProps) {
       </View>
       {ANSWER.map((line, i) => <View key={i} style={{ flexDirection: "row", gap: 10 }}>
         <Text style={{ ...type.footnote, fontWeight: "700", color: palette.blue, width: 12 }}>{i + 1}</Text>
-        <Text selectable style={{ ...type.subhead, flex: 1, color: palette.ink }}>{line}</Text>
+        <MarkedText text={line} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
       </View>)}
     </Surface>
     <Studies />
@@ -113,7 +114,7 @@ function StudyCard({ study, index, pos, left, width, step }: { study: Study; ind
         <Text style={{ ...type.caption, color: palette.muted, fontVariant: ["tabular-nums"] }}>{study.year}</Text>
       </View>
       <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{study.title}</Text>
-      <Text numberOfLines={4} style={{ ...type.footnote, flex: 1, color: palette.ink }}>{study.finding}</Text>
+      <MarkedText selectable={false} text={study.finding} style={{ ...type.footnote, flex: 1, color: palette.ink }} />
       <Pressable accessibilityRole="link" accessibilityLabel={`Open abstract search for ${study.title}`} hitSlop={8} onPress={() => { void WebBrowser.openBrowserAsync(pubmedUrl(study)).catch(() => {}); }} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
         <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>Open abstract</Text>
         <Icon name="arrow.up.right" size={10} color={palette.blue} />

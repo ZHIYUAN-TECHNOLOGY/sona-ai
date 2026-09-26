@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import { MarkedText } from "@/components/sona/marked-text";
 import { useRef, useState } from "react";
 import { Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import Animated, { ZoomIn, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
@@ -10,6 +11,7 @@ import { palette, type } from "@/components/sona/theme";
 import { Icon, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
+import { api, useLive } from "@/features/live";
 import { openItems, shortRM, totalRisk, useSent } from "@/features/audit/model";
 import { OWNERS, SUGGESTED, huddle, wardBeds, wardSummary, type Bed, type Owner } from "./model";
 
@@ -61,7 +63,14 @@ export function WardScreen() {
     const done = () => setOpen(undefined);
     p.set(reducedMotion ? withTiming(0, { duration: 160 }, fin => { if (fin) scheduleOnRN(done); }) : withSpring(0, CLOSE, fin => { if (fin) scheduleOnRN(done); }));
   };
-  const assign = (id: string, owner: Owner) => { haptic("select"); setOwners(o => ({ ...o, [id]: o[id] === owner ? undefined : owner })); };
+  const { on: live } = useLive();
+  // Bed 6 is the live demo bed: its owners are real tasks on the server (the other beds stay authored).
+  const LIVE_IDS: Record<string, string> = { "b6-gl": "adm-1042-gl", "b6-meds": "adm-1042-meds", "b6-followup": "adm-1042-followup" };
+  const assign = (id: string, owner: Owner) => {
+    haptic("select"); setOwners(o => ({ ...o, [id]: o[id] === owner ? undefined : owner }));
+    const serverId = LIVE_IDS[id];
+    if (live && serverId) void api.ward.assignOwner({ blockerId: serverId, owner }).catch(() => setOwners(o => ({ ...o, [id]: undefined })));
+  };
 
   const gridStyle = useAnimatedStyle(() => ({ opacity: interpolate(p.value, [0, 1], [1, 0.2]), transform: [{ scale: interpolate(p.value, [0, 1], [1, 0.97]) }] }));
   const lines = huddle(beds, owners);
@@ -93,7 +102,7 @@ export function WardScreen() {
           </View>
           {briefed && lines.map((line, i) => <Animated.View key={i} entering={reducedMotion ? undefined : riseIn({ delay: i * 60, distance: 8, duration: 300 })} style={{ flexDirection: "row", gap: 10 }}>
             <Text style={{ ...type.footnote, fontWeight: "700", color: palette.blue, width: 14 }}>{i + 1}</Text>
-            <Text selectable style={{ ...type.subhead, flex: 1, color: palette.ink }}>{line}</Text>
+            <MarkedText text={line} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
           </Animated.View>)}
         </Surface>
 
@@ -179,7 +188,7 @@ function BedCard({ bed, from, to, p, owners, onAssign, onClose, onDischarge }: {
         <View style={{ gap: 8 }}>
           {sbar.map(([label, value]) => <View key={label} style={{ flexDirection: "row", gap: 12 }}>
             <Text style={{ ...type.overline, width: 104, paddingTop: 3, color: palette.muted }}>{label}</Text>
-            <Text selectable style={{ ...type.subhead, flex: 1, color: palette.ink }}>{value}</Text>
+            <MarkedText text={value} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
           </View>)}
         </View>
 

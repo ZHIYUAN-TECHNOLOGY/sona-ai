@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import { MarkedText } from "@/components/sona/marked-text";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
@@ -10,6 +11,8 @@ import { BlockerRow, useSettling, Ring } from "@/features/clinical/prescribe-car
 import { Seal, haptic } from "@/features/clinical/medication-parts";
 import { Chip } from "@/features/discharge";
 import { useEncounter } from "@/features/encounter/store";
+import { api, errorText, requestId, useLive } from "@/features/live";
+import { useServerEncounter } from "@/features/live/sync";
 import type { PrescriptionCheck } from "@/features/encounter/types";
 import { CODES, EMPTY_CLAIM, ESTIMATE, INSURER, approveClaim, claimChecks, noteFor, type ClaimState, type Sentence } from "./model";
 
@@ -36,10 +39,16 @@ export function ClaimScreen() {
   const [sending, setSending] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
-
+  const { live, refresh } = useServerEncounter(patient);
+  const { user } = useLive();
+  const [serverError, setServerError] = useState<string>();
 
   if (!patient || !encounter) return null;
-  const set = (change: Partial<ClaimState>) => updateEncounter(value => ({ ...value, claim: { ...(value.claim ?? EMPTY_CLAIM), ...change } }));
+  const set = (change: Partial<ClaimState>) => {
+    updateEncounter(value => ({ ...value, claim: { ...(value.claim ?? EMPTY_CLAIM), ...change } }));
+    const { organismConfirmed, ivReasonAdded } = change;
+    if (live && (organismConfirmed !== undefined || ivReasonAdded !== undefined)) void api.claim.update({ encounterId: patient.encounterId, organismConfirmed, ivReasonAdded }).catch(e => setServerError(errorText(e)));
+  };
   const note = noteFor(state);
   const rows = checks.filter(c => c.status === "blocked" || resolving.has(c.id));
   const passed = checks.filter(c => c.status === "passed" && !resolving.has(c.id));
@@ -47,7 +56,24 @@ export function ClaimScreen() {
   const sent = state.status === "sent";
 
   const send = () => {
-    haptic("select"); setSending(true);
+    haptic("select"); setSending(true); setServerError(undefined);
+    if (live && user) {
+      // The server refuses while a criterion is open; once sent, the mock insurer answers after a minute.
+      api.claim.send({ encounterId: patient.encounterId, requestId: requestId(), approvedBy: user.id })
+        .then(() => {
+          timers.current.push(setTimeout(() => { set({ status: "sent" }); setSending(false); }, reducedMotion ? 0 : 900));
+          const poll = setInterval(() => {
+            api.claim.status({ encounterId: patient.encounterId }).then(r => {
+              if (r.status !== "approved") return;
+              clearInterval(poll); updateEncounter(value => approveClaim(value, new Date(r.approvedAt ?? Date.now()))); haptic("success");
+            }).catch(() => {});
+          }, 5000);
+          timers.current.push(poll as unknown as ReturnType<typeof setTimeout>);
+        })
+        // A refusal means the server knows something this screen does not: show why and reload its state.
+        .catch(e => { setServerError(errorText(e)); setSending(false); void refresh().catch(() => {}); });
+      return;
+    }
     // ponytail: timed mock insurer; the real reply is asynchronous and can decline or ask for more.
     const wait = (ms: number, fn: () => void) => timers.current.push(setTimeout(fn, reducedMotion ? 0 : ms));
     wait(900, () => set({ status: "sent" }));
@@ -79,6 +105,8 @@ export function ClaimScreen() {
           <Text style={{ ...type.overline, color: approved ? TEAL : blocked.length ? palette.amber : palette.blue }}>{status}</Text>
           <Text style={{ ...type.headline, color: palette.ink }}>Final guarantee letter</Text>
           <Text style={{ ...type.caption, color: palette.muted }}>{patient.name} · {INSURER} · estimated {ESTIMATE}</Text>
+          {live && <Text style={{ ...type.caption, fontWeight: "700", color: palette.blue }}>Live · checked by the server{sent ? " · insurer answers in about a minute" : ""}</Text>}
+          {serverError && <Text style={{ ...type.footnote, color: palette.red }}>{serverError}</Text>}
         </View>
       </View>
 
@@ -150,7 +178,7 @@ function Evidence({ note, active }: { note: Sentence[]; active: string }) {
   return <View>
     <Animated.View pointerEvents="none" style={[{ position: "absolute", left: -8, right: -8, top: 0, borderRadius: 10, borderCurve: "continuous", backgroundColor: "rgba(36,91,204,0.10)" }, block]} />
     {note.map(s => <Animated.View key={s.id} entering={reducedMotion ? undefined : FadeIn.duration(220)} onLayout={e => { const { y, height: h } = e.nativeEvent.layout; frames.current[s.id] = { y, h }; if (s.id === active) place(false); }} style={{ paddingVertical: 4 }}>
-      <Text selectable style={{ ...type.subhead, color: s.id === active ? palette.ink : palette.muted, transitionProperty: "color", transitionDuration: 200 } as never}>{s.text}</Text>
+      <MarkedText text={s.text} style={{ ...type.subhead, color: s.id === active ? palette.ink : palette.muted, transitionProperty: "color", transitionDuration: 200 } as never} />
     </Animated.View>)}
   </View>;
 }

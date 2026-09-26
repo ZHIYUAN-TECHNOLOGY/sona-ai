@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { MarkedText } from "@/components/sona/marked-text";
 import { Pressable, ScrollView, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { FadeIn, FadeOut, useAnimatedProps, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
@@ -11,6 +12,7 @@ import { palette, type } from "@/components/sona/theme";
 import { Icon, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
+import { api, useLive } from "@/features/live";
 import { formatRM, markSent, openItems, totalRisk, useSent, type AuditItem } from "./model";
 
 /*
@@ -25,11 +27,27 @@ const RING = 11, RING_C = 2 * Math.PI * RING;
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export function AuditScreen() {
-  const { encounters } = useEncounter();
+  const { encounters, patients } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const insets = useSafeAreaInsets();
   const sent = useSent();
-  const items = openItems(encounters, sent);
+  const { on: live } = useLive();
+  const [serverItems, setServerItems] = useState<AuditItem[]>();
+  // Live: run the audit now and read the server's open items (lab-only gaps until the coding model lands).
+  // Once per visit to the screen (the patient list is only read for names, so it is not a dependency).
+  const nameOf = useRef((id: string) => patients.find(p => p.id === id)?.name ?? id);
+  nameOf.current = id => patients.find(p => p.id === id)?.name ?? id;
+  useEffect(() => {
+    if (!live) { setServerItems(undefined); return; }
+    let alive = true;
+    api.audit.run().then(() => api.audit.list()).then(rows => alive && setServerItems(rows.map(r => ({
+      id: r.id, bed: "", patient: nameOf.current(r.patientId), doctor: r.doctor, gap: r.gap,
+      from: r.fromCode ?? "—", to: r.toCode, risk: Math.round(r.riskCents / 100), query: r.query,
+    })))).catch(() => alive && setServerItems([]));
+    return () => { alive = false; };
+  }, [live]);
+  // Live never shows the authored list: empty until the server answers.
+  const items = live ? (serverItems ?? []).filter(i => !sent.has(i.id)) : openItems(encounters, sent);
   const [sending, setSending] = useState<string[]>([]);
   const [open, setOpen] = useState<string>();
   const badge = useSharedValue(1);
@@ -41,6 +59,7 @@ export function AuditScreen() {
     haptic("success");
     setSending(list => [...list, item.id]);
     if (!reducedMotion) badge.set(withSequence(withTiming(0.75, { duration: 80 }), withSpring(1.25, { duration: 140, dampingRatio: 0.5 }), withSpring(1, { duration: 120, dampingRatio: 1 })));
+    if (live) void api.audit.query({ itemId: item.id }).catch(() => {});
     // The row says who it went to, then folds away.
     setTimeout(() => { markSent(item.id); setSending(list => list.filter(id => id !== item.id)); }, reducedMotion ? 0 : 650);
   };
@@ -49,14 +68,14 @@ export function AuditScreen() {
   return <ScrollView style={{ flex: 1, backgroundColor: palette.canvas }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 32, gap: 16 }}>
     <Surface feature style={{ padding: 16, gap: 10 }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <Text style={{ ...type.overline, color: palette.muted }}>Last night’s audit</Text>
+        <Text style={{ ...type.overline, color: live ? palette.blue : palette.muted }}>{live ? "Live audit · from the server" : "Last night’s audit"}</Text>
         <Animated.View style={[{ height: 26, paddingHorizontal: 10, borderRadius: 13, flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: sentCount ? "rgba(15,110,102,0.1)" : "rgba(20,28,40,0.05)" }, badgeStyle]}>
           <Icon name="paperplane.fill" size={10} color={sentCount ? TEAL : palette.muted} />
           <Text style={{ fontSize: 12, fontWeight: "700", color: sentCount ? TEAL : palette.muted, fontVariant: ["tabular-nums"] }}>Queries sent · {sentCount}</Text>
         </Animated.View>
       </View>
       <Ticker text={formatRM(risk)} />
-      <Text style={{ ...type.subhead, color: palette.muted }}>{items.length ? `at risk across ${items.length - sending.length} under-specified ${items.length - sending.length === 1 ? "note" : "notes"}` : "Nothing left at risk. Every query is out."}</Text>
+      <Text style={{ ...type.subhead, color: palette.muted }}>{live && !serverItems ? "Running the audit on the server…" : items.length ? `at risk across ${items.length - sending.length} under-specified ${items.length - sending.length === 1 ? "note" : "notes"}` : "Nothing left at risk. Every query is out."}</Text>
     </Surface>
 
     {items.length > 0 && <Text style={{ ...type.caption, color: palette.muted }}>Swipe right to send the drafted query, or tap to read it first.</Text>}
@@ -125,8 +144,8 @@ function Row({ item, sending, open, onToggle, onSend }: { item: AuditItem; sendi
                 <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "700", flex: 1, color: palette.ink }}>{item.patient}</Text>
                 <Text style={{ ...type.footnote, fontWeight: "700", color: palette.amber, fontVariant: ["tabular-nums"] }}>{formatRM(item.risk)}</Text>
               </View>
-              <Text style={{ ...type.footnote, color: palette.ink }}>{item.gap}</Text>
-              <Text style={{ ...type.caption, color: palette.muted }}>{sending ? `Sent to ${item.doctor}` : `${item.bed} · ${item.doctor} · ${item.from} → ${item.to}`}</Text>
+              <MarkedText selectable={false} text={item.gap} style={{ ...type.footnote, color: palette.ink }} />
+              <Text style={{ ...type.caption, color: palette.muted }}>{sending ? `Sent to ${item.doctor}` : [item.bed, item.doctor, `${item.from} → ${item.to}`].filter(Boolean).join(" · ")}</Text>
             </View>
           </View>
           {open && !sending && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ gap: 10, paddingLeft: 38 }}>

@@ -1,4 +1,5 @@
 import * as Haptics from "expo-haptics";
+import { MarkedText } from "@/components/sona/marked-text";
 import { router, Stack } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, TextInput, View, useWindowDimensions } from "react-native";
@@ -54,12 +55,12 @@ function Card({ card }: { card: HandoverCard }) {
     </View>
     <View style={{ height: 1, backgroundColor: "rgba(20,28,40,0.06)" }} />
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 12 }} showsVerticalScrollIndicator={false}>
-      <Line tag="S"><Text style={{ ...type.callout, color: palette.ink }}>{card.situation}</Text></Line>
-      <Line tag="B"><Text style={{ ...type.callout, color: palette.muted }}>{card.background}</Text></Line>
-      <Line tag="A"><Text style={{ ...type.callout, color: palette.muted }}>{card.assessment}</Text></Line>
+      <Line tag="S"><MarkedText text={card.situation} style={{ ...type.callout, color: palette.ink }} /></Line>
+      <Line tag="B"><MarkedText text={card.background} style={{ ...type.callout, color: palette.muted }} /></Line>
+      <Line tag="A"><MarkedText text={card.assessment} style={{ ...type.callout, color: palette.muted }} /></Line>
       <Line tag="R"><View style={{ gap: 6 }}>{card.recommendation.map(item => <View key={item} style={{ flexDirection: "row", gap: 8 }}>
         <View style={{ width: 5, height: 5, borderRadius: 3, marginTop: 8, backgroundColor: palette.amber }} />
-        <Text style={{ flex: 1, ...type.callout, fontWeight: "500", color: palette.ink }}>{item}</Text>
+        <MarkedText text={item} style={{ flex: 1, ...type.callout, fontWeight: "500", color: palette.ink }} />
       </View>)}</View></Line>
     </ScrollView>
     {sources.length > 0 && <View style={{ alignItems: "flex-end" }}><SourcesPill sources={sources} /></View>}

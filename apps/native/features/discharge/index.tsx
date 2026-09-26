@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import { MarkedText } from "@/components/sona/marked-text";
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from "react-native-reanimated";
@@ -10,6 +11,8 @@ import { BlockerRow, useSettling, Pill, Ring } from "@/features/clinical/prescri
 import { Seal, haptic } from "@/features/clinical/medication-parts";
 import { capabilityLabels } from "@/features/encounter/conversation";
 import { useEncounter } from "@/features/encounter/store";
+import { api, errorText, requestId, useLive } from "@/features/live";
+import { useServerEncounter } from "@/features/live/sync";
 import type { Patient, PrescriptionCheck } from "@/features/encounter/types";
 import { EMPTY_DISCHARGE, FOLLOW_UPS, LANGUAGES, discharge, dischargeChecks, formatMinutes, planFor, type DischargeState, type MedChange } from "./model";
 
@@ -140,10 +143,15 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
   const [busy, setBusy] = useState(false);
   // The demo patient became fit a little before the card opened, so the saving reads the same at any hour.
   const [fitAt] = useState(() => new Date(Date.now() - plan.fitMinutesAgo * 60000));
-
+  const { live, refresh } = useServerEncounter(patient);
+  const { user } = useLive();
+  const [serverError, setServerError] = useState<string>();
 
   if (!encounter) return null;
-  const set = (change: Partial<DischargeState>) => updateEncounter(value => ({ ...value, discharge: { ...(value.discharge ?? EMPTY_DISCHARGE), ...change } }));
+  const set = (change: Partial<DischargeState>) => {
+    updateEncounter(value => ({ ...value, discharge: { ...(value.discharge ?? EMPTY_DISCHARGE), ...change } }));
+    if (live) void api.discharge.update({ encounterId: patient.encounterId, ...change }).catch(e => setServerError(errorText(e)));
+  };
   const done = state.dischargedAt ? new Date(state.dischargedAt) : undefined;
   const rows = checks.filter(c => c.status === "blocked" || resolving.has(c.id));
   const passed = checks.filter(c => c.status === "passed" && !resolving.has(c.id));
@@ -152,7 +160,15 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
   const saved = state.savedMinutes ? formatMinutes(state.savedMinutes) : undefined;
 
   const go = () => {
-    haptic("select"); setBusy(true);
+    haptic("select"); setBusy(true); setServerError(undefined);
+    if (live && user) {
+      // The server decides: it refuses while anything blocks, and receipts once per request.
+      api.discharge.request({ encounterId: patient.encounterId, requestId: requestId(), approvedBy: user.id })
+        .then(receipt => { updateEncounter(value => discharge(value, patient, fitAt, new Date(receipt.createdAt))); haptic("success"); })
+        .catch(e => { setServerError(errorText(e)); void refresh().catch(() => {}); })
+        .finally(() => setBusy(false));
+      return;
+    }
     // ponytail: a short pause stands in for the bed-management call; the real one is async with failure handling.
     setTimeout(() => { updateEncounter(value => discharge(value, patient, fitAt, new Date())); setBusy(false); haptic("success"); }, reducedMotion ? 0 : 700);
   };
@@ -191,15 +207,16 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
           <Text style={{ ...type.overline, color: done ? TEAL : blocked.length ? palette.amber : palette.blue }}>{done ? "Discharged · simulation" : blocked.length ? `${blocked.length} left before discharge` : "Ready to discharge"}</Text>
           <Text style={{ ...type.headline, color: palette.ink }}>{patient.name} · {plan.bed}</Text>
           <Text style={{ ...type.caption, color: palette.muted }}>Fit for discharge since {fitAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
+          {live && <Text style={{ ...type.caption, fontWeight: "700", color: palette.blue }}>Live · checked by the server</Text>}
         </View>
       </View>
 
       <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
         {summary.map(([label, value], i) => <Animated.View key={label} entering={animate ? riseIn({ delay: 180 + i * 40, distance: 10, duration: 320 }) : undefined} style={{ flexDirection: "row", gap: 12 }}>
           <Text style={{ ...type.overline, width: 72, paddingTop: 3, color: palette.muted }}>{label}</Text>
-          <Text selectable style={{ ...type.subhead, flex: 1, color: palette.ink }}>{value}</Text>
+          <MarkedText text={value} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
         </Animated.View>)}
-        {full && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)}><Text selectable style={{ ...type.footnote, color: palette.muted }}>{plan.full}</Text></Animated.View>}
+        {full && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)}><MarkedText text={plan.full} style={{ ...type.footnote, color: palette.muted }} /></Animated.View>}
         <Pressable accessibilityRole="button" accessibilityState={{ expanded: full }} onPress={() => setFull(v => !v)} hitSlop={6} style={{ alignSelf: "flex-start", minHeight: 32, flexDirection: "row", alignItems: "center", gap: 4 }}>
           <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{full ? "Show less" : "Read full"}</Text>
           <Icon name={full ? "chevron.up" : "chevron.right"} size={10} color={palette.blue} />
@@ -227,6 +244,7 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
         </Animated.View>
       </Animated.View>}
 
+      {serverError && <Text style={{ ...type.footnote, color: palette.red }}>{serverError}</Text>}
       <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
       {done ? <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ gap: 12 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 18, borderCurve: "continuous", backgroundColor: "rgba(15,110,102,0.08)" }}>
