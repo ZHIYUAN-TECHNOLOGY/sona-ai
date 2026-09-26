@@ -1,4 +1,4 @@
-import { auditItems, casemixWeights, claims, encounters, labResults, notes } from "@sona-ai/db/schema/clinical";
+import { auditItems, casemixWeights, claims, encounters, labResults, notes, tasks } from "@sona-ai/db/schema/clinical";
 import { codingGaps, type Casemix } from "@sona-ai/domain/audit";
 import { and, desc, eq } from "drizzle-orm";
 
@@ -34,4 +34,16 @@ export async function runNightlyAudit(db: Context["db"], hospitalId: string, at:
 
 export async function openAuditItems(db: Context["db"], hospitalId: string) {
   return db.select().from(auditItems).where(and(eq(auditItems.hospitalId, hospitalId), eq(auditItems.status, "open"))).orderBy(desc(auditItems.riskCents));
+}
+
+/** Sends an audit item's drafted query to its doctor: one coding-query task, and the item stops being open. */
+export async function queryAuditItem(db: Context["db"], hospitalId: string, itemId: string) {
+  const [item] = await db.select().from(auditItems).where(and(eq(auditItems.id, itemId), eq(auditItems.hospitalId, hospitalId)));
+  if (!item) return undefined;
+  await db.insert(tasks).values({
+    id: crypto.randomUUID(), hospitalId, encounterId: item.encounterId, kind: "coding-query", title: `Coding query: ${item.gap}`,
+    owner: item.doctor, sourceId: item.id, idempotencyKey: `coding-query:${item.id}`,
+  }).onConflictDoNothing();
+  await db.update(auditItems).set({ status: "queried" }).where(eq(auditItems.id, item.id));
+  return { ...item, status: "queried" as const };
 }

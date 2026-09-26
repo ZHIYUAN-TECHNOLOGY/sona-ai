@@ -1,6 +1,6 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
-import { encounters, guaranteeLetters, hospitalMembers, hospitals, labResults, notes } from "@sona-ai/db/schema/clinical";
+import { encounters, guaranteeLetters, hospitalMembers, hospitals } from "@sona-ai/db/schema/clinical";
 import { runNightlyAudit } from "../audit-job";
 import { seedDemo } from "@sona-ai/db/seed";
 import { createTestDb } from "@sona-ai/db/testing";
@@ -149,8 +149,7 @@ test("once documented, the claim is sent once; a minute later the insurer approv
 
 test("the nightly audit raises a lab-only diagnosis once, priced from the casemix weight", async () => {
   const { db, api, clock } = await signedIn();
-  await db.insert(notes).values({ id: "n-1086", encounterId: "visit-1086", revision: 1, sentences: [{ id: "s1", text: "Breathless on exertion, onset unclear." }] });
-  await db.insert(labResults).values({ id: "hb-1086", patientId: "SYN-1086", test: "Hb", value: "9.8", unit: "g/dL", flag: "low", sourceId: "lab-hb-1086" });
+  // The seed carries Daniel's note and a haemoglobin of 9.8 g/dL that the note does not mention.
   await runNightlyAudit(db, "demo", clock.now);
   await runNightlyAudit(db, "demo", clock.now);
   const items = await api.audit.list();
@@ -194,4 +193,16 @@ test("recording a medication review at the current revision clears the invalidat
   expect([reviewed.revision, reviewed.state.medicationCheckedRevision, Boolean(reviewed.state.reviewInvalidated)]).toEqual([edited.revision, edited.revision, false]);
   const stale = await api.encounter.recordReview({ encounterId: "visit-1042", expectedRevision: 1 }).then(() => null, (e: { code?: string }) => e.code);
   expect(stale).toBe("CONFLICT");
+});
+
+test("running the audit from the app raises the seeded lab gap; querying it creates one coding-query task and closes the item", async () => {
+  const { api } = await signedIn();
+  expect((await api.audit.run()).raised).toBe(1);
+  const [item] = await api.audit.list();
+  expect([item?.patientId, item?.toCode]).toEqual(["SYN-1086", "D64.9"]);
+  await api.audit.query({ itemId: item!.id });
+  await api.audit.query({ itemId: item!.id });
+  expect(await api.audit.list()).toEqual([]);
+  const queries = (await api.tasks.list()).filter(t => t.kind === "coding-query");
+  expect(queries.map(t => t.sourceId)).toEqual([item!.id]);
 });

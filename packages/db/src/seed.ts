@@ -3,7 +3,7 @@ import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { admissions, appointments, casemixWeights, drugs, encounters, guaranteeLetters, hospitals, icd10Codes, insurerCriteria, labResults, observations, patients } from "./schema";
+import { admissions, appointments, casemixWeights, drugs, encounters, guaranteeLetters, hospitals, icd10Codes, insurerCriteria, labResults, notes, observations, patients } from "./schema";
 
 /**
  * The demo ward's starting state, matching the app's fixtures (synthetic people only). Idempotent,
@@ -12,6 +12,8 @@ import { admissions, appointments, casemixWeights, drugs, encounters, guaranteeL
  * Reads files from disk: run it from Bun/Node (tests, a seed script), not inside the Worker.
  */
 export const DEMO_HOSPITAL = "demo";
+/** The synthetic test doctor for local and staging end-to-end runs (never a real person or account). */
+export const TEST_DOCTOR = { name: "Dr Test Aisyah", email: "dr.test@sona.test", password: "Sona-7rcVayfxIuzr" };
 // Any drizzle Postgres database: Neon in staging, PGlite in tests.
 type AnyDb = PgAsyncDatabase<any, any>;
 
@@ -56,6 +58,9 @@ export async function seedDemo(db: AnyDb, now = new Date()) {
     { id: `appt-${patientId}`, patientId, hospitalId: DEMO_HOSPITAL, kind: "clinic visit", startsAt: new Date(now.getTime() + minutes * 60_000) })))
     .onConflictDoUpdate({ target: appointments.id, set: { startsAt: sql`excluded.starts_at` } });
   await db.insert(guaranteeLetters).values({ id: "gl-1042", admissionId: "adm-1042", insurer: "Synthetic insurer", status: "requested", requestedAt: new Date("2026-09-25T09:40:00+08:00") }).onConflictDoNothing();
+  // Daniel's note and a haemoglobin the note does not mention: the coding audit's worked example.
+  await db.insert(notes).values({ id: "note-1086-1", encounterId: "visit-1086", revision: 1, sentences: [{ id: "s1", text: "Breathless on exertion; onset not yet documented." }, { id: "s2", text: "Tablet reported; ingredient unknown." }] }).onConflictDoNothing();
+  await db.insert(labResults).values({ id: "lab-hb-1086", patientId: "SYN-1086", test: "Hb", value: "9.8", unit: "g/dL", flag: "low", sourceId: "lab-hb-1086" }).onConflictDoNothing();
 }
 
 /** Rows of a reference file in the repo's data/ folder; `#` lines are provenance notes, quoted fields may hold commas. */

@@ -2,7 +2,10 @@ import type { RouterClient } from "@orpc/server";
 import { tasks } from "@sona-ai/db/schema/clinical";
 import { asc, eq } from "drizzle-orm";
 
-import { openAuditItems } from "../audit-job";
+import { openAuditItems, queryAuditItem, runNightlyAudit } from "../audit-job";
+import { clockOf } from "../context";
+import { z } from "zod";
+import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
 import { claimRouter } from "./claim";
 import { dischargeRouter } from "./discharge";
@@ -25,6 +28,13 @@ export const appRouter = {
   ward: wardRouter,
   audit: {
     list: protectedProcedure.handler(({ context }) => openAuditItems(context.db, context.hospitalId)),
+    /** Runs the nightly audit now for the caller's hospital (the demo does not wait for 02:00). */
+    run: protectedProcedure.handler(({ context }) => runNightlyAudit(context.db, context.hospitalId, clockOf(context))),
+    query: protectedProcedure.input(z.object({ itemId: z.string().min(1) })).handler(async ({ context, input }) => {
+      const item = await queryAuditItem(context.db, context.hospitalId, input.itemId);
+      if (!item) throw new ORPCError("NOT_FOUND", { message: `No audit item ${input.itemId}` });
+      return item;
+    }),
   },
   tasks: {
     list: protectedProcedure.handler(({ context }) =>
