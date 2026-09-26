@@ -33,11 +33,11 @@
     "db:migrate": "turbo run db:migrate -F @sona-ai/db --",
     "deploy": "turbo run deploy -F @sona-ai/infra --",
     "destroy": "turbo run destroy -F @sona-ai/infra --",
-    "env:generate": "varlock codegen --path ./apps/server/ && varlock codegen --path ./apps/native/ && varlock codegen --path ./apps/patient/ && varlock codegen --path ./packages/db/",
-    "postinstall": "varlock codegen --path ./apps/server/ && varlock codegen --path ./apps/native/ && varlock codegen --path ./apps/patient/ && varlock codegen --path ./packages/db/",
+    "env:generate": "varlock codegen --path ./apps/server/ && varlock codegen --path ./apps/native/ && varlock codegen --path ./apps/care/ && varlock codegen --path ./packages/db/",
+    "postinstall": "varlock codegen --path ./apps/server/ && varlock codegen --path ./apps/native/ && varlock codegen --path ./apps/care/ && varlock codegen --path ./packages/db/",
     "test": "turbo run test",
     "db:seed": "turbo run db:seed -F @sona-ai/db --",
-    "dev:patient": "turbo run dev -F patient --"
+    "dev:care": "turbo run dev -F care --"
   },
   "dependencies": {
     "zod": "catalog:"

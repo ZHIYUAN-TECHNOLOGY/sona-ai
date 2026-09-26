@@ -7,7 +7,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { palette } from "@/lib/theme";
 import { queryClient } from "@/utils/orpc";
 
-/** Sona for patients: the patient's side of their care (check-ins, messages to the care team). */
+/** Sona Care: the patient's side of their care (check-ins, messages to the care team). */
 export default function RootLayout() {
   return <GestureHandlerRootView style={{ flex: 1 }}><KeyboardProvider><SafeAreaProvider><QueryClientProvider client={queryClient}>
     <StatusBar style="dark" />

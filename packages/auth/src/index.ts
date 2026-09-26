@@ -24,7 +24,7 @@ export function createAuth(
       env.CORS_ORIGIN,
       ...desktopOrigins,
       "sona-ai://",
-      "sona-patient://", // the patient app (apps/patient)
+      "sona-care://", // Sona Care, the patient app (apps/care)
       "exp://",
       "http://localhost:8081",
     ],

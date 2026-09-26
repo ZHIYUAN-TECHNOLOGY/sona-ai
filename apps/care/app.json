@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "Sona",
-    "slug": "sona-patient",
+    "name": "Sona Care",
+    "slug": "sona-care",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "sona-patient",
+    "scheme": "sona-care",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "ai.zhiyuantech.sona.patient",
+      "bundleIdentifier": "ai.zhiyuantech.sona.care",
       "appleTeamId": "LTF2YZMF2D"
     },
     "android": {
@@ -20,7 +20,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "ai.zhiyuantech.sona.patient"
+      "package": "ai.zhiyuantech.sona.care"
     },
     "web": {
       "output": "static",
