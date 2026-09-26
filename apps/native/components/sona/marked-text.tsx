@@ -11,7 +11,7 @@ export { segments, wordCount, type Mark } from "./marked-terms";
  * clinician must see first. The rules live in marked-terms.ts; plain text and screen-reader
  * output are unchanged.
  */
-const TINT: Record<Mark, { color: string; backgroundColor: string }> = {
+export const TINT: Record<Mark, { color: string; backgroundColor: string }> = {
   alert: { color: "#A23E3E", backgroundColor: "rgba(162,62,62,0.12)" },
   medicine: { color: "#5A3DB8", backgroundColor: "rgba(110,80,210,0.11)" },
   finding: { color: "#0F6E66", backgroundColor: "rgba(20,140,130,0.12)" },
@@ -109,5 +109,16 @@ export function SweptLead({ text, shown, sweep: sweepProp, style }: { text: stri
         {!!w.tail && <Text style={[style, fade]}>{w.tail}</Text>}
       </View>;
     })}
+  </View>;
+}
+
+/** The colour key: each tint once, labelled with what it means. */
+const KEY: [Mark, string][] = [["alert", "Must not miss"], ["medicine", "Medicine"], ["finding", "Diagnosis"], ["symptom", "Symptom"], ["caution", "Unconfirmed"]];
+export function TermLegend() {
+  return <View accessible accessibilityLabel={`Colour key: ${KEY.map(([m, label]) => `${label} ${m === "alert" ? "red" : m === "medicine" ? "violet" : m === "finding" ? "teal" : m === "symptom" ? "blue" : "amber"}`).join(", ")}`}
+    style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+    {KEY.map(([mark, label]) => <View key={mark} style={{ paddingHorizontal: 8, height: 24, borderRadius: 8, borderCurve: "continuous", justifyContent: "center", backgroundColor: TINT[mark].backgroundColor }}>
+      <Text style={{ fontSize: 12, fontWeight: "600", color: TINT[mark].color }}>{label}</Text>
+    </View>)}
   </View>;
 }

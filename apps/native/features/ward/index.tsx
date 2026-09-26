@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { MarkedText } from "@/components/sona/marked-text";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import Animated, { ZoomIn, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -71,6 +71,15 @@ export function WardScreen() {
     const serverId = LIVE_IDS[id];
     if (live && serverId) void api.ward.assignOwner({ blockerId: serverId, owner }).catch(() => setOwners(o => ({ ...o, [id]: undefined })));
   };
+  // Live: owners already on the server (they are blocker-owner tasks) show on open, so a reload keeps them.
+  useEffect(() => {
+    if (!live) return;
+    const localId = Object.fromEntries(Object.entries(LIVE_IDS).map(([local, server]) => [server, local]));
+    api.tasks.list().then(tasks => {
+      const saved = tasks.filter(t => t.kind === "blocker-owner" && t.sourceId && localId[t.sourceId]);
+      setOwners(o => ({ ...o, ...Object.fromEntries(saved.map(t => [localId[t.sourceId!], t.owner as Owner])) }));
+    }).catch(() => {});
+  }, [live]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const gridStyle = useAnimatedStyle(() => ({ opacity: interpolate(p.value, [0, 1], [1, 0.2]), transform: [{ scale: interpolate(p.value, [0, 1], [1, 0.97]) }] }));
   const lines = huddle(beds, owners);
