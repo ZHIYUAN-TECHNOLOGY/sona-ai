@@ -51,14 +51,24 @@ export const claimUpdateSchema = z.object({ encounterId: z.string().min(1), orga
 export type ClaimUpdate = z.infer<typeof claimUpdateSchema>;
 
 const unknownYesNo = z.enum(["unknown", "no", "yes"]);
-/** Edits that change prescribing eligibility or the medicine list; they bump the revision and invalidate the review. */
+/** A patient history fact as the app records it (HistoryFact in the domain types). */
+export const historyFactSchema = z.object({
+  id: z.string().min(1), category: z.enum(["medical", "family", "social", "allergy", "presenting"]),
+  value: z.string().trim().min(1), source: z.string(), date: z.string(), revision: z.number().int().nonnegative(),
+});
+/**
+ * Edits that change prescribing eligibility, the medicine list or the history; they bump the revision
+ * and invalidate the review. A new history fact (an allergy, liver disease) can change eligibility, so
+ * after a history edit the review must be rerun too.
+ */
 export const encounterEditSchema = z.object({
   encounterId: z.string().min(1),
   expectedRevision: z.number().int().positive(),
   prescriptionInputs: z.object({ weightKg: z.string(), liverDisease: unknownYesNo, kidneyDisease: unknownYesNo, alcoholRisk: unknownYesNo, paracetamolAllergy: unknownYesNo }).optional(),
   medicationEntries: z.array(z.object({ id: z.string().min(1), name: z.string().min(1), ingredient: z.string(), formulation: z.string(), confirmed: z.boolean() })).optional(),
   proposedMedicine: z.string().optional(),
-}).refine(e => e.prescriptionInputs || e.medicationEntries || e.proposedMedicine !== undefined, "An edit changes eligibility or medicines");
+  historyFacts: z.array(historyFactSchema).optional(),
+}).refine(e => e.prescriptionInputs || e.medicationEntries || e.proposedMedicine !== undefined || e.historyFacts, "An edit changes eligibility, medicines or history");
 export type EncounterEdit = z.infer<typeof encounterEditSchema>;
 
 /** A medication review ran against this revision; it stays current until the next eligibility or medicine edit. */

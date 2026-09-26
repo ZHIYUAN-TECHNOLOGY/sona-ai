@@ -56,3 +56,10 @@ test("what the server has not recorded keeps the app's own value", () => {
   const local = { revision: 1, medicationEntries: [{ id: "m1", name: "Cetirizine", ingredient: "cetirizine", formulation: "tablet", confirmed: false }] };
   expect(mergeServerState(local, {}, { status: "draft" }, false).medicationEntries).toEqual(local.medicationEntries);
 });
+
+test("the server's history facts replace the fixture's; without any the app keeps its own", () => {
+  const fact = (id, value) => ({ id, category: "allergy", value, source: "Doctor", date: "26 Sep 2026", revision: 1 });
+  const local = { revision: 2, historyFacts: [fact("h1", "No known allergies")] };
+  expect(mergeServerState(local, { historyFacts: [fact("h1", "Penicillin (rash)")] }, { status: "draft" }, false).historyFacts).toEqual([fact("h1", "Penicillin (rash)")]);
+  expect(mergeServerState(local, {}, { status: "draft" }, false).historyFacts).toEqual(local.historyFacts);
+});

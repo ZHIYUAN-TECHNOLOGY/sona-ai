@@ -11,7 +11,7 @@ import { protectedProcedure } from "../index";
 /**
  * Encounter state on the server. Postgres holds the snapshot and is the arbiter of revisions: every
  * write is conditional on the revision the caller last saw, so the Worker and the encounter's
- * Durable Object can never both win. An eligibility or medicine edit bumps the revision and
+ * Durable Object can never both win. An eligibility, medicine or history edit bumps the revision and
  * invalidates the medication review, as reviseEncounter does in the app.
  */
 export type EncounterState = Omit<Partial<Encounter>, "revision">;

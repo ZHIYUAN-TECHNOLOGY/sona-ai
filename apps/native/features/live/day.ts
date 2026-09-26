@@ -41,11 +41,11 @@ export function serverVisit(r: ServerAppointment, known: string[]): ScheduleVisi
 }
 
 /** What the server holds for a visit (the encounter row's state), as far as the app reads it. */
-export type ServerVisitState = Partial<Pick<Encounter, "medicationEntries" | "prescriptionInputs" | "proposedMedicine">> & { discharge?: object; claim?: object };
+export type ServerVisitState = Partial<Pick<Encounter, "medicationEntries" | "prescriptionInputs" | "proposedMedicine" | "historyFacts">> & { discharge?: object; claim?: object };
 type ClaimStatus = { status: string; approvedAt?: string | Date };
 
 /**
- * In live mode the server's record of a visit wins over the fixture: its medicines and eligibility,
+ * In live mode the server's record of a visit wins over the fixture: its history, medicines and eligibility,
  * discharge fixes, claim fixes and status, and whether the guarantee letter has arrived. What it has
  * not recorded yet keeps the app's own value; the app's revision counter is left alone.
  */
@@ -56,6 +56,7 @@ export function mergeServerState<T extends Partial<Encounter>>(value: T, server:
     ...(server.medicationEntries ? { medicationEntries: server.medicationEntries } : {}),
     ...(server.prescriptionInputs ? { prescriptionInputs: server.prescriptionInputs } : {}),
     ...(server.proposedMedicine !== undefined ? { proposedMedicine: server.proposedMedicine } : {}),
+    ...(server.historyFacts ? { historyFacts: server.historyFacts } : {}),
     discharge: { ...EMPTY_DISCHARGE, ...value.discharge, ...server.discharge, glReceived },
     claim: { ...EMPTY_CLAIM, ...server.claim, status, approvedAt: claim.approvedAt === undefined ? undefined : String(claim.approvedAt) },
   };
