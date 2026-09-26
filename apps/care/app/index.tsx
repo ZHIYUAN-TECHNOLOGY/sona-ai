@@ -1,29 +1,56 @@
 import { useQuery } from "@tanstack/react-query";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { router } from "expo-router";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { SignIn } from "@/components/sign-in";
+import { TodayCard, useCheckInNeeds } from "@/features/check-ins/today";
+import { DischargeRow } from "@/features/discharge/row";
+import { FollowUpRow, useFollowUpNeeds } from "@/features/follow-ups/row";
+import { daysHome, insightLine } from "@/features/home";
+import { useMe } from "@/features/me";
+import { CareTeamRow, useMessageNeeds } from "@/features/messages/row";
 import { authClient } from "@/lib/auth-client";
 import { palette, type } from "@/lib/theme";
+import { Button, Card, Title } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
-/** Home: signed out, the sign-in card; signed in, the patient's space (features land here). */
+/**
+ * Sona Care's home answers three questions in order: where am I (the insight line), what needs me
+ * now (one feature card, acted on in place), and what's coming (compact rows with their state).
+ */
 export default function Home() {
-  const { data: session } = authClient.useSession();
+  const { state, me } = useMe();
+  const needs = useCheckInNeeds() + useFollowUpNeeds() + useMessageNeeds();
   const health = useQuery(orpc.healthCheck.queryOptions());
-  const online = health.data === "OK";
-  return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingTop: 72, gap: 20 }}>
-    <View style={{ gap: 6 }}>
-      <Text style={{ ...type.overline, color: palette.blue }}>Sona Care</Text>
-      <Text accessibilityRole="header" style={{ ...type.display, fontWeight: "600", color: palette.ink }}>{session?.user ? `Hi, ${session.user.name.split(" ")[0]}` : "Your care, between visits"}</Text>
-      <Text style={{ ...type.footnote, color: online ? palette.green : palette.muted }}>{health.isLoading ? "Connecting…" : online ? "Connected to your hospital" : "Offline · check your connection"}</Text>
-    </View>
-    {session?.user
-      ? <View style={{ gap: 12, padding: 18, borderRadius: 22, borderCurve: "continuous", backgroundColor: palette.surface }}>
-        <Text style={{ ...type.headline, color: palette.ink }}>Nothing from your care team yet</Text>
-        <Text style={{ ...type.body, color: palette.muted }}>Check-ins after a hospital stay and messages from your doctor will appear here.</Text>
-        <Pressable accessibilityRole="button" onPress={() => { void authClient.signOut(); }} style={{ alignSelf: "flex-start", minHeight: 44, justifyContent: "center" }}>
-          <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>Sign out</Text>
-        </Pressable>
-      </View>
-      : <SignIn />}
+  const offline = health.isError || (health.data !== undefined && health.data !== "OK");
+  return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingTop: 72, paddingBottom: 48, gap: 16 }}>
+    {state === "joined" && me
+      ? <Title overline="Sona Care" line={insightLine(daysHome(me.dischargedAt), needs)}>Hi, {me.firstName}</Title>
+      : <Title overline="Sona Care" line="Check-ins, your discharge plan and follow-ups, from your hospital.">Your care, between visits</Title>}
+    {offline && <Text style={{ ...type.footnote, color: palette.amber }}>Offline · showing what was last saved</Text>}
+    {state === "loading" && <ActivityIndicator color={palette.muted} />}
+    {state === "signed-out" && <>
+      <Card feature>
+        <Text style={{ ...type.headline, color: palette.ink }}>New here?</Text>
+        <Text style={{ ...type.body, color: palette.muted }}>Scan the QR code on your discharge paper, or type the code under it.</Text>
+        <Button label="Join with my discharge code" onPress={() => router.push("/join")} />
+      </Card>
+      <SignIn />
+    </>}
+    {state === "not-joined" && <Card feature>
+      <Text style={{ ...type.headline, color: palette.ink }}>Link your hospital record</Text>
+      <Text style={{ ...type.body, color: palette.muted }}>Use the code on your discharge paper so Sona Care shows your own care.</Text>
+      <Button label="Enter my discharge code" onPress={() => router.push("/join")} />
+    </Card>}
+    {state === "joined" && <>
+      <TodayCard />
+      <Card style={{ paddingVertical: 6 }}>
+        <FollowUpRow first />
+        <DischargeRow />
+        <CareTeamRow />
+      </Card>
+    </>}
+    {state !== "signed-out" && state !== "loading" && <Pressable accessibilityRole="button" onPress={() => { void authClient.signOut(); }} style={{ alignSelf: "center", minHeight: 44, justifyContent: "center" }}>
+      <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>Sign out</Text>
+    </Pressable>}
   </ScrollView>;
 }

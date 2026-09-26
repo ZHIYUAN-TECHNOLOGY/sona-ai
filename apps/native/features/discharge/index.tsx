@@ -13,6 +13,7 @@ import { capabilityLabels } from "@/features/encounter/conversation";
 import { useEncounter } from "@/features/encounter/store";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { useServerEncounter } from "@/features/live/sync";
+import { CareInvite } from "@/features/care-invite";
 import { scheduleLine } from "@/features/check-ins/model";
 import { refreshCheckIns } from "@/features/check-ins/state";
 import { useFindings } from "@/features/live/findings-sync";
@@ -268,6 +269,7 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
           <Icon name="bubble.left.and.bubble.right" size={13} color={palette.blue} />
           <Text style={{ ...type.caption, flex: 1, color: palette.muted }}><Text style={{ ...type.caption, fontWeight: "700", color: palette.ink }}>Check-ins</Text> · {scheduleLine(done)} · in {language.name} · simulated inbox</Text>
         </View>
+        <CareInvite encounterId={patient.encounterId} />
         <View style={{ flexDirection: "row", gap: 10 }}>
           <Chip label="View tasks" icon="checklist" onPress={() => { router.back(); setTimeout(() => router.push("/tasks"), 320); }} />
           <Chip label="Done" onPress={() => router.back()} />

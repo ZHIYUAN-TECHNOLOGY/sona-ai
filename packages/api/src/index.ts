@@ -2,7 +2,7 @@ import { ORPCError, os } from "@orpc/server";
 
 import type { Context } from "./context";
 import { changeFor } from "./events";
-import { hospitalOf } from "./routers/hospital";
+import { careLinkOf, hospitalOf } from "./routers/hospital";
 
 export const o = os.$context<Context>();
 
@@ -12,7 +12,7 @@ const requireAuth = o.middleware(async ({ context, next, path }, input) => {
   if (!context.session?.user) {
     throw new ORPCError("UNAUTHORIZED");
   }
-  // Every clinical read and write below is scoped to this hospital.
+  // Every clinical read and write below is scoped to this hospital (a Sona Care account is refused there).
   const hospitalId = await hospitalOf(context.db, context.session.user.id);
   const result = await next({
     context: {
@@ -27,3 +27,24 @@ const requireAuth = o.middleware(async ({ context, next, path }, input) => {
 });
 
 export const protectedProcedure = publicProcedure.use(requireAuth);
+
+/** Any signed-in account, before it is a clinician or a patient (Sona Care's join step). */
+export const signedInProcedure = publicProcedure.use(async ({ context, next }) => {
+  if (!context.session?.user) throw new ORPCError("UNAUTHORIZED");
+  return next({ context: { session: context.session } });
+});
+
+/**
+ * Sona Care: a patient's account, linked to exactly one patient record. Every route under it reads
+ * and writes that patient only; writes are announced like clinical ones (care.checkIns.reply is a
+ * "checkIns" change to the hospital's clinicians).
+ */
+export const patientProcedure = publicProcedure.use(async ({ context, next, path }, input) => {
+  if (!context.session?.user) throw new ORPCError("UNAUTHORIZED");
+  const link = await careLinkOf(context.db, context.session.user.id);
+  if (!link) throw new ORPCError("FORBIDDEN", { message: "Join with the code on your discharge paper first" });
+  const result = await next({ context: { session: context.session, hospitalId: link.hospitalId, patientId: link.patientId } });
+  const change = changeFor(path.slice(1), input);
+  if (change && context.announce) await context.announce(link.hospitalId, change).catch(() => {});
+  return result;
+});

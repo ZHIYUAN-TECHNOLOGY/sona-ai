@@ -33,6 +33,8 @@ const WARD = WARD_FIXTURE.filter(b => b.name).map(b => {
 export const SEED_LAB_IDS = ["lab-1086-potassium", "lab-hb-1086", ...WARD.flatMap(w => w.labs.map(l => l.id))];
 /** The synthetic test doctor for local and staging end-to-end runs (never a real person or account). */
 export const TEST_DOCTOR = { name: "Dr Test Aisyah", email: "dr.test@sona.test", password: "Sona-7rcVayfxIuzr" };
+/** The synthetic test patient for Sona Care runs: signs up in the app and joins with the discharge code (never a real person). */
+export const TEST_PATIENT = { name: "Amelia Tan", email: "amelia.test@sona.test", password: "Care-MGnI1hY8BWoR" };
 // Any drizzle Postgres database: Neon in staging, PGlite in tests.
 type AnyDb = PgAsyncDatabase<any, any>;
 

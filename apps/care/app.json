@@ -42,7 +42,13 @@
       ],
       "expo-image",
       "expo-asset",
-      "./plugins/with-scene-lifecycle"
+      "./plugins/with-scene-lifecycle",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Sona Care uses the camera to scan the QR code on your discharge paper."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

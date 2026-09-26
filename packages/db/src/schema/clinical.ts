@@ -38,7 +38,7 @@ export const notes = pgTable("notes", {
 /** Follow-ups, blocker owners and coding queries are all tasks; idempotency_key makes creation replay-safe. */
 export const tasks = pgTable("tasks", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), encounterId: text("encounter_id"),
-  kind: text("kind", { enum: ["followup", "blocker-owner", "coding-query", "discharge", "finding", "check-in"] }).notNull(),
+  kind: text("kind", { enum: ["followup", "blocker-owner", "coding-query", "discharge", "finding", "check-in", "message"] }).notNull(),
   title: text("title").notNull(), owner: text("owner").notNull(), due: text("due"), completed: boolean("completed").default(false).notNull(),
   sourceId: text("source_id"), idempotencyKey: text("idempotency_key").unique(), createdAt: created(),
 });
@@ -186,3 +186,25 @@ export const pubmedArticles = pgTable("pubmed_articles", {
   pmid: text("pmid").primaryKey(), title: text("title").notNull(), journal: text("journal").notNull(), year: integer("year").notNull(),
   publicationTypes: jsonb("publication_types").$type<string[]>().notNull(), conclusion: text("conclusion").notNull(), fetchedAt: timestamp("fetched_at").defaultNow().notNull(),
 });
+
+/**
+ * Sona Care (the patient app): a one-time code printed as a QR on the discharge paper. Redeeming it
+ * links the patient's account to their own record, and only that record.
+ */
+export const careCodes = pgTable("care_codes", {
+  code: text("code").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull(),
+  encounterId: text("encounter_id").notNull().unique(), expiresAt: timestamp("expires_at").notNull(),
+  redeemedBy: text("redeemed_by"), redeemedAt: timestamp("redeemed_at"), createdAt: created(),
+});
+
+/** A Sona Care account and the one patient record it may see. A linked account never opens clinical routes. */
+export const careLinks = pgTable("care_links", {
+  userId: text("user_id").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull(), linkedAt: created(),
+});
+
+/** Messages between a patient (Sona Care) and their care team; a patient's message raises a task for the team. */
+export const careMessages = pgTable("care_messages", {
+  id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull(),
+  from: text("from", { enum: ["patient", "care-team"] }).notNull(), authorId: text("author_id").notNull(), text: text("text").notNull(),
+  taskId: text("task_id"), createdAt: created(),
+}, t => [index("care_messages_patient").on(t.patientId, t.createdAt)]);

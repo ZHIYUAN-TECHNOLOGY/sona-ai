@@ -10,6 +10,7 @@ import { protectedProcedure, publicProcedure } from "../index";
 import { claimRouter } from "./claim";
 import { completeTask, createTask, dayRouter, patientsRouter, resultsRouter } from "./day"; // lane T, T2
 import { dischargeRouter } from "./discharge";
+import { careRouter } from "./care";
 import { encounterRouter } from "./encounter";
 import { evidenceRouter } from "./evidence";
 import { wardRouter } from "./ward";
@@ -37,6 +38,8 @@ export const appRouter = {
     };
   }),
   encounter: encounterRouter,
+  // Sona Care, the patient app
+  care: careRouter,
   evidence: evidenceRouter,
   discharge: dischargeRouter,
   claim: claimRouter,
