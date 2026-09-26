@@ -16,6 +16,8 @@ import { HalftoneGlint } from "@/components/sona/halftone-shimmer";
 import { palette, type } from "@/components/sona/theme";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps, Task } from "@/features/encounter/types";
+import { useLive } from "@/features/live";
+import { completeServerTask, useServerData, useVisitTasks } from "@/features/live/server-day";
 import { createTaskOnce, localDate, mentionQuery, parseDuePhrase, proposedTask, taskDraftErrors, taskProposal, type TaskDraft } from "./state";
 
 /**
@@ -26,7 +28,8 @@ import { createTaskOnce, localDate, mentionQuery, parseDuePhrase, proposedTask, 
 export function FollowupCard({ patient, onOpen, onSource }: FeatureProps) {
   const { encounter } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
-  const created = encounter?.tasks ?? [];
+  const tasksOf = useVisitTasks();
+  const created = encounter ? tasksOf(patient) : [];
   const draft = encounter?.taskDraft;
   const proposal = draft ?? (encounter ? taskProposal(encounter, patient) : undefined);
   const open = () => onOpen("tasks");
@@ -75,7 +78,8 @@ function TaskSummary({ task }: { task: Task }) {
 
 /** The session/simulation boundary, said once per screen as one quiet line. */
 function SessionNote() {
-  return <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>Local simulation · nothing is booked or sent</Text>;
+  const { on: live } = useLive();
+  return <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>{live ? "Live backend · server tasks complete on the server; new follow-ups stay on this device" : "Local simulation · nothing is booked or sent"}</Text>;
 }
 
 /** One quiet line: who wrote it, its source at the revision it was taken from, and (with `local`) the simulation note. */
@@ -397,9 +401,10 @@ function Section({ title, count }: { title: string; count: number }) {
 
 /** One card per visit with follow-ups: open count and the next few, tap to work on that visit. */
 function VisitFollowUps({ except }: { except?: string }) {
-  const { patients, encounters, selectPatient } = useEncounter();
-  return <>{patients.filter(p => p.id !== except && encounters[p.id]?.tasks.length).map(p => {
-    const pending = encounters[p.id]!.tasks.filter(task => !task.completed);
+  const { patients, selectPatient } = useEncounter();
+  const tasksOf = useVisitTasks();
+  return <>{patients.filter(p => p.id !== except && tasksOf(p).length).map(p => {
+    const pending = tasksOf(p).filter(task => !task.completed);
     return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={`${p.name}, ${pending.length} open follow-ups`} accessibilityHint="Shows this visit's follow-ups" onPress={() => { haptic("select"); selectPatient(p.id); }}
       style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
       <Surface style={{ padding: 16, gap: 12 }}>
@@ -417,8 +422,9 @@ function VisitFollowUps({ except }: { except?: string }) {
 
 /** No visit selected: follow-ups across today's visits, and a one-tap way to add one for a visit. */
 function AllFollowUps() {
-  const { patients, encounters, selectPatient } = useEncounter();
-  const any = patients.some(p => encounters[p.id]?.tasks.length);
+  const { patients, selectPatient } = useEncounter();
+  const tasksOf = useVisitTasks();
+  const any = patients.some(p => tasksOf(p).length);
   return <Screen>
     <VisitFollowUps />
     {!any && <Text style={{ fontSize: 15, color: palette.muted, paddingHorizontal: 4 }}>No follow-ups yet.</Text>}
@@ -433,8 +439,10 @@ function AllFollowUps() {
 }
 
 export function TasksScreen() {
-  const { patient, patients, encounters, encounter, updateEncounter, simulateFailure } = useEncounter();
+  const { patient, patients, encounter, updateEncounter, simulateFailure } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
+  const tasksOf = useVisitTasks();
+  const server = useServerData();
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
   const pendingRef = useRef(false);
@@ -472,11 +480,16 @@ export function TasksScreen() {
     }); });
   };
   const byDue = (a: Task, b: Task) => a.due.localeCompare(b.due);
-  const open = encounter.tasks.filter(task => !task.completed).sort(byDue);
-  const done = encounter.tasks.filter(task => task.completed);
-  const toggle = (id: string) => updateEncounter(current => ({ ...current, tasks: current.tasks.map(value => value.id === id ? { ...value, completed: !value.completed } : value) }));
+  const tasks = tasksOf(patient);
+  const open = tasks.filter(task => !task.completed).sort(byDue);
+  const done = tasks.filter(task => task.completed);
+  // A server task can only be completed (the server keeps no reopen); a device task toggles locally.
+  const toggle = (task: Task) => {
+    if (!server?.tasks.some(value => value.id === task.id)) updateEncounter(current => ({ ...current, tasks: current.tasks.map(value => value.id === task.id ? { ...value, completed: !value.completed } : value) }));
+    else if (!task.completed) void completeServerTask(task.id).catch(() => setError("The server did not complete the task. Try again."));
+  };
   const row = (task: Task) => <Animated.View key={task.id} layout={reducedMotion ? undefined : LAYOUT} entering={reducedMotion ? undefined : riseIn({ distance: 10, duration: 320 })} exiting={FadeOut.duration(140)}>
-    <TaskRow task={task} disabled={pending} onToggle={() => toggle(task.id)} />
+    <TaskRow task={task} disabled={pending} onToggle={() => toggle(task)} />
   </Animated.View>;
 
   return <Screen>
@@ -490,7 +503,7 @@ export function TasksScreen() {
       done.length > 0 && <Section key="done" title="Completed" count={done.length} />,
       ...done.map(row),
     ]}
-    {patients.some(p => p.id !== patient.id && encounters[p.id]?.tasks.length) && <Text accessibilityRole="header" style={{ fontSize: 15, fontWeight: "600", color: palette.ink, paddingTop: 10, paddingHorizontal: 4 }}>Other visits</Text>}
+    {patients.some(p => p.id !== patient.id && tasksOf(p).length) && <Text accessibilityRole="header" style={{ fontSize: 15, fontWeight: "600", color: palette.ink, paddingTop: 10, paddingHorizontal: 4 }}>Other visits</Text>}
     <VisitFollowUps except={patient.id} />
     <SessionNote />
   </Screen>;

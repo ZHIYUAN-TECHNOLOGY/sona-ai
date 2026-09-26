@@ -36,7 +36,9 @@ export async function seedDemo(db: AnyDb, now = new Date()) {
   const observedAt = new Date("2026-09-22T09:26:00+08:00");
   await db.insert(observations).values(([["confusion", 0, "flag"], ["urea", 5.1, "mmol/L"], ["respiratory-rate", 18, "/min"], ["systolic", 124, "mmHg"], ["diastolic", 78, "mmHg"]] as const)
     .map(([kind, value, unit]) => ({ id: `obs-1042-${kind}`, patientId: "SYN-1042", kind, value, unit, sourceId: `obs-1042-${kind}`, observedAt }))).onConflictDoNothing();
-  await db.insert(labResults).values({ id: "lab-1086-potassium", patientId: "SYN-1086", test: "Potassium", value: "3.1", unit: "mmol/L", flag: "low", sourceId: "lab-1086-potassium" }).onConflictDoNothing();
+  // Daniel's potassium arrived two hours ago, like the app's pending result; reseeding keeps it two hours old.
+  await db.insert(labResults).values({ id: "lab-1086-potassium", patientId: "SYN-1086", test: "Potassium", value: "3.1", unit: "mmol/L", flag: "low", sourceId: "lab-1086-potassium", receivedAt: new Date(now.getTime() - 2 * 3600_000) })
+    .onConflictDoUpdate({ target: labResults.id, set: { receivedAt: sql`excluded.received_at` } });
   // The synthetic insurer's rules behind the final-GL checks in the claim flow (ids match the app's check ids).
   await db.insert(insurerCriteria).values([
     { id: "severity", label: "Severity score documented", rule: { requires: "severity-score" } },
@@ -60,7 +62,7 @@ export async function seedDemo(db: AnyDb, now = new Date()) {
   await db.insert(guaranteeLetters).values({ id: "gl-1042", admissionId: "adm-1042", insurer: "Synthetic insurer", status: "requested", requestedAt: new Date("2026-09-25T09:40:00+08:00") }).onConflictDoNothing();
   // Daniel's note and a haemoglobin the note does not mention: the coding audit's worked example.
   await db.insert(notes).values({ id: "note-1086-1", encounterId: "visit-1086", revision: 1, sentences: [{ id: "s1", text: "Breathless on exertion; onset not yet documented." }, { id: "s2", text: "Tablet reported; ingredient unknown." }] }).onConflictDoNothing();
-  await db.insert(labResults).values({ id: "lab-hb-1086", patientId: "SYN-1086", test: "Hb", value: "9.8", unit: "g/dL", flag: "low", sourceId: "lab-hb-1086" }).onConflictDoNothing();
+  await db.insert(labResults).values({ id: "lab-hb-1086", patientId: "SYN-1086", test: "Hb", value: "9.8", unit: "g/dL", flag: "low", sourceId: "lab-hb-1086", receivedAt: new Date(now.getTime() - 26 * 3600_000) }).onConflictDoNothing();
 }
 
 /** Rows of a reference file in the repo's data/ folder; `#` lines are provenance notes, quoted fields may hold commas. */

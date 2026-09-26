@@ -1,6 +1,6 @@
 import { defaultMedications } from "@/features/encounter/clinical-state";
 import { demoTime } from "@/features/encounter/fixtures";
-import type { Encounter, Patient } from "@/features/encounter/types";
+import type { Encounter, Patient, Task } from "@/features/encounter/types";
 
 /**
  * "My day, ranked": today's visits, open follow-up tasks, a pending result and blockers found in
@@ -17,7 +17,8 @@ export type DayItem = {
 };
 
 // A synthetic lab result that arrived after Daniel's intake and has not been acted on.
-export const PENDING_RESULT = { patientId: "SYN-1086", test: "Potassium", value: "3.1 mmol/L", flag: "Low", receivedAt: demoTime(-120) };
+export type PendingResult = { id?: string; patientId: string; test: string; value: string; flag: string; receivedAt: string };
+export const PENDING_RESULT: PendingResult = { patientId: "SYN-1086", test: "Potassium", value: "3.1 mmol/L", flag: "Low", receivedAt: demoTime(-120) };
 /** Keeps the demo result about two hours old when the demo schedule is refreshed. */
 export function refreshPendingResult(now = new Date()) { PENDING_RESULT.receivedAt = demoTime(-120, now); }
 
@@ -26,11 +27,13 @@ const minutes = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); 
 const until = (hhmm: string, now: number) => ((minutes(hhmm) - now + 720) % 1440 + 1440) % 1440 - 720;
 const ago = (from: number, now: number) => { const d = Math.max(0, now - from); return d < 60 ? `${d} min` : `${Math.floor(d / 60)} h`; };
 
-export function rankDay(patients: Patient[], encounters: Record<string, Encounter | undefined>, now: number, reviewed: Set<string> = new Set()): DayItem[] {
+/** `live` (live backend mode) replaces the fixture result and each visit's tasks with the server's. */
+export function rankDay(patients: Patient[], encounters: Record<string, Encounter | undefined>, now: number, reviewed: Set<string> = new Set(),
+  live?: { result: PendingResult | undefined; tasksOf: (patient: Patient) => Task[] }): DayItem[] {
   const items: DayItem[] = [];
-  const result = PENDING_RESULT;
-  const resultPatient = patients.find(p => p.id === result.patientId);
-  if (resultPatient && !reviewed.has("result")) items.push({
+  const result = live ? live.result : PENDING_RESULT;
+  const resultPatient = result && patients.find(p => p.id === result.patientId);
+  if (result && resultPatient && !reviewed.has("result")) items.push({
     id: "result", kind: "result", title: `${result.flag} ${result.test.toLowerCase()} · ${resultPatient.name}`, detail: `${result.test} ${result.value}`,
     reason: `${result.flag} result · ${ago(minutes(result.receivedAt), now)} · no action yet`, tone: "urgent", score: 100, patientId: resultPatient.id, open: { next: "briefing" },
   });
@@ -50,7 +53,7 @@ export function rankDay(patients: Patient[], encounters: Record<string, Encounte
       reason: started ? "In progress" : start < -10 ? `Running ${ago(minutes(patient.time), now)} late` : start <= 0 ? "Due now" : start <= 30 ? `Starts in ${start} min` : patient.incomplete ? "History incomplete · allow extra time" : `Starts at ${patient.time}`,
       tone: !started && start <= 15 ? "soon" : "routine", score: started ? 40 : Math.max(20, 80 - Math.max(0, start)), patientId: patient.id, open: {},
     });
-    for (const task of encounter?.tasks.filter(t => !t.completed) ?? []) items.push({
+    for (const task of (live ? live.tasksOf(patient) : encounter?.tasks ?? []).filter(t => !t.completed)) items.push({
       id: `task-${task.id}`, kind: "task", title: task.title, detail: `${patient.name} · ${task.owner || "Unassigned"}`,
       reason: task.due ? `Due ${task.due}` : "No due date", tone: "routine", score: 30, patientId: patient.id, open: { view: "tasks" },
     });

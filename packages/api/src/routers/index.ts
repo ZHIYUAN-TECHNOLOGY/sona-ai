@@ -8,6 +8,7 @@ import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
 import { claimRouter } from "./claim";
+import { completeTask, dayRouter, resultsRouter } from "./day"; // lane T
 import { dischargeRouter } from "./discharge";
 import { encounterRouter } from "./encounter";
 import { wardRouter } from "./ward";
@@ -26,6 +27,9 @@ export const appRouter = {
   discharge: dischargeRouter,
   claim: claimRouter,
   ward: wardRouter,
+  // lane T
+  results: resultsRouter,
+  day: dayRouter,
   audit: {
     list: protectedProcedure.handler(({ context }) => openAuditItems(context.db, context.hospitalId)),
     /** Runs the nightly audit now for the caller's hospital (the demo does not wait for 02:00). */
@@ -39,6 +43,7 @@ export const appRouter = {
   tasks: {
     list: protectedProcedure.handler(({ context }) =>
       context.db.select().from(tasks).where(eq(tasks.hospitalId, context.hospitalId)).orderBy(asc(tasks.createdAt))),
+    complete: completeTask, // lane T
   },
 };
 export type AppRouter = typeof appRouter;

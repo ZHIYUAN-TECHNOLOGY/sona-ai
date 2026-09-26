@@ -79,6 +79,8 @@ export const observations = pgTable("observations", {
 export const labResults = pgTable("lab_results", {
   id: text("id").primaryKey(), patientId: text("patient_id").notNull(), test: text("test").notNull(), value: text("value").notNull(),
   unit: text("unit"), flag: text("flag"), sourceId: text("source_id").notNull(), receivedAt: timestamp("received_at").defaultNow().notNull(),
+  /** Who first acknowledged the result, and when; empty while it still needs a doctor to see it. */
+  acknowledgedBy: text("acknowledged_by"), acknowledgedAt: timestamp("acknowledged_at"),
 });
 
 export const appointments = pgTable("appointments", {

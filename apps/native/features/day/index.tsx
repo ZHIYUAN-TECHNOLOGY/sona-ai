@@ -11,6 +11,10 @@ import { palette, type } from "@/components/sona/theme";
 import { Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
+import { useLive } from "@/features/live";
+import { newestResult, serverDayPatients, serverVisit } from "@/features/live/day";
+import { acknowledgeResult, serverDayCount, useServerData, useServerDay, useVisitTasks } from "@/features/live/server-day";
+import { localDate } from "@/features/tasks/state";
 import { dayOf, groupVisits, rankDay, rankOtherDay, scheduleFor, type DayItem, type DayTone, type ScheduleVisit } from "./model";
 
 /*
@@ -202,11 +206,23 @@ function MonthCard({ offset, counts, onPick, onClose }: { offset: number; counts
   </>;
 }
 
-export function MyDay({ patients, greeting, actions, onOpen: open }: { patients: Patient[]; greeting: string; actions: ReactNode; onOpen: (patientId: string, open: DayItem["open"]) => void }) {
+export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: open }: { patients: Patient[]; greeting: string; actions: ReactNode; onOpen: (patientId: string, open: DayItem["open"]) => void }) {
   const [calendar, setCalendar] = useState(false);
-  // Only real visits open; the authored schedule on other days is read-only.
-  const onOpen = (id: string | undefined, target: DayItem["open"]) => { if (id) open(id, target); };
   const [offset, setOffset] = useState(0);
+  // Live backend mode: the day's appointments, results and tasks come from the server (fixtures otherwise).
+  const { on: live } = useLive();
+  const server = useServerData();
+  const tasksOf = useVisitTasks();
+  const today = useServerDay(live ? localDate(new Date()) : undefined);
+  const otherDay = useServerDay(live && offset !== 0 ? localDate(dayOf(offset)) : undefined);
+  const patients = live ? serverDayPatients(fixturePatients, today ?? []) : fixturePatients;
+  const result = live ? newestResult(server?.results ?? []) : undefined;
+  // Only real visits open; the authored schedule on other days is read-only. Opening a live result acknowledges it.
+  const onOpen = (id: string | undefined, target: DayItem["open"]) => {
+    if (!id) return;
+    if (result?.id && target.next === "briefing" && id === result.patientId) void acknowledgeResult(result.id).catch(() => {});
+    open(id, target);
+  };
   const { encounters } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const [now, setNow] = useState(nowMinutes);
@@ -220,8 +236,8 @@ export function MyDay({ patients, greeting, actions, onOpen: open }: { patients:
   const [snoozed, setSnoozed] = useState<string[]>([]);
   const [showSnoozed, setShowSnoozed] = useState(false);
 
-  const schedule = scheduleFor(offset, patients);
-  const ranked = offset === 0 ? rankDay(patients, encounters, now) : rankOtherDay(offset, schedule);
+  const schedule = live && offset !== 0 ? (otherDay ?? []).map(a => serverVisit(a, fixturePatients.map(p => p.id))) : scheduleFor(offset, patients);
+  const ranked = offset === 0 ? rankDay(patients, encounters, now, undefined, live ? { result, tasksOf } : undefined) : rankOtherDay(offset, schedule);
   const need = ranked.filter(item => item.tone !== "routine").length;
   const date = dayOf(offset);
   const [switched, setSwitched] = useState(false);
@@ -250,7 +266,7 @@ export function MyDay({ patients, greeting, actions, onOpen: open }: { patients:
           <Icon name="arrow.uturn.backward" size={12} color={palette.blue} /><Text style={{ fontSize: 14, fontWeight: "600", color: palette.blue }}>Today</Text>
         </Pressable> : null}
       </View>
-      {calendar && <MonthCard offset={offset} counts={o => scheduleFor(o, patients).length} onPick={o => { setCalendar(false); pick(o); }} onClose={() => setCalendar(false)} />}
+      {calendar && <MonthCard offset={offset} counts={o => live ? serverDayCount(localDate(dayOf(o))) : scheduleFor(o, patients).length} onPick={o => { setCalendar(false); pick(o); }} onClose={() => setCalendar(false)} />}
     </View>
     <TimeBar key={offset} schedule={schedule} now={offset === 0 ? now : undefined} onOpen={id => onOpen(id, {})} />
     {offset === 0 && actions}
@@ -288,7 +304,7 @@ export function MyDay({ patients, greeting, actions, onOpen: open }: { patients:
         </Pressable>)}
       </Animated.View>}
       {!ordered.length && <Text style={{ ...type.callout, color: palette.muted, textAlign: "center", paddingVertical: 12 }}>Nothing scheduled this day.</Text>}
-      <Text style={{ ...type.caption, color: palette.muted }}>{offset === 0 ? "Ranked by urgency, with the reason on every item. Demo rules over synthetic records." : "Synthetic clinic schedule for other days; open today's visits to act."}</Text>
+      <Text style={{ ...type.caption, color: palette.muted }}>{live ? "Ranked by urgency from the live backend’s synthetic records." : offset === 0 ? "Ranked by urgency, with the reason on every item. Demo rules over synthetic records." : "Synthetic clinic schedule for other days; open today's visits to act."}</Text>
     </Animated.View>}
   </View>;
 }

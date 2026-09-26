@@ -25,8 +25,8 @@ test("the chart holds Amelia's CURB-65 readings and Daniel's low potassium, each
     confusion: "0 flag", urea: "5.1 mmol/L", "respiratory-rate": "18 /min", systolic: "124 mmHg", diastolic: "78 mmHg",
   });
   expect(obs.every(o => o.sourceId)).toBe(true);
-  const [k] = await db.select().from(labResults).where(eq(labResults.patientId, "SYN-1086"));
-  expect(k).toMatchObject({ test: "Potassium", value: "3.1", unit: "mmol/L", flag: "low" });
+  const [k] = await db.select().from(labResults).where(eq(labResults.id, "lab-1086-potassium"));
+  expect(k).toMatchObject({ patientId: "SYN-1086", test: "Potassium", value: "3.1", unit: "mmol/L", flag: "low" });
   expect(k?.sourceId).toBeTruthy();
 });
 
