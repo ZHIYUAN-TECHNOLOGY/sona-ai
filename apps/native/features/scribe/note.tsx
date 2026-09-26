@@ -12,6 +12,8 @@ import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
 import { buildDraft, readNoteSections, sectionKeys, serializeNoteSections, type NoteSections } from "./model";
 import { haptic, noteMeta, StateLine } from "./parts";
+import { api, errorText, useLive } from "@/features/live";
+import { noteSections, noteSentences } from "@/features/live/prescribing-sync";
 
 const clip = (value: string, length = 140) => value.length > length ? `${value.slice(0, length).trimEnd()}…` : value;
 const emptyDetail: Record<keyof NoteSections, string> = {
@@ -84,8 +86,30 @@ export function NoteScreen() {
   const [focused, setFocused] = useState<keyof NoteSections>();
   const [info, setInfo] = useState<keyof NoteSections>();
   const failSave = useRef(false);
+  // Live: the note is read from and saved to the server as revisions; a save against an older one is refused.
+  const { on: live } = useLive();
+  const noteRevision = useRef(0);
+  const [serverError, setServerError] = useState<string>();
+  const encounterId = patient?.encounterId;
+  useEffect(() => {
+    if (!live || !encounterId) return;
+    api.note.get({ encounterId }).then(({ revision, sentences }) => {
+      noteRevision.current = revision;
+      if (!sentences.length) return;
+      const sections = noteSections(sentences);
+      updateEncounter(current => ({ ...current, noteSections: sections, noteSectionDraft: undefined, note: serializeNoteSections(sections), noteSaveStatus: "saved" }));
+    }).catch(e => setServerError(errorText(e)));
+  }, [live, encounterId, updateEncounter]);
   useEffect(() => {
     if (encounter?.noteSaveStatus !== "saving") return;
+    if (live && encounterId) {
+      setServerError(undefined);
+      const sections = encounter.noteSectionDraft ?? encounter.noteSections ?? readNoteSections(encounter.note);
+      api.note.save({ encounterId, sentences: noteSentences(sections), expectedRevision: noteRevision.current })
+        .then(({ revision }) => { noteRevision.current = revision; updateEncounter(current => ({ ...current, noteSections: sections, noteSectionDraft: current.noteSectionDraft === sections ? undefined : current.noteSectionDraft, noteSaveStatus: "saved" })); })
+        .catch(e => { setServerError(errorText(e)); updateEncounter(current => ({ ...current, noteSaveStatus: "failed" })); });
+      return;
+    }
     const timer = setTimeout(() => {
       const failed = failSave.current;
       failSave.current = false;
@@ -94,7 +118,7 @@ export function NoteScreen() {
         : { ...current, noteSections: current.noteSectionDraft ?? current.noteSections ?? readNoteSections(current.note), noteSectionDraft: undefined, noteSaveStatus: "saved" });
     }, 650);
     return () => clearTimeout(timer);
-  }, [encounter?.noteSaveStatus, patient?.id, updateEncounter]);
+  }, [encounter?.noteSaveStatus, patient?.id, updateEncounter]); // eslint-disable-line react-hooks/exhaustive-deps
   // The haptic lands with the visual: when a save attempt settles.
   const lastStatus = useRef(encounter?.noteSaveStatus);
   useEffect(() => {
@@ -133,9 +157,10 @@ export function NoteScreen() {
           <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 11, backgroundColor: encounter.noteReviewed ? "rgba(40,104,80,0.1)" : "#E6EEFC" }}>
             <Text style={{ fontSize: 12, fontWeight: "600", color: encounter.noteReviewed ? palette.green : palette.blue }}>{encounter.noteReviewed ? "Reviewed" : "Draft"}</Text>
           </View>
-          <Text selectable style={{ flex: 1, fontSize: 13, lineHeight: 19, color: palette.muted }}>Verify drafts against source · local session only, no record connected.</Text>
+          <Text selectable style={{ flex: 1, fontSize: 13, lineHeight: 19, color: palette.muted }}>{live ? "Verify drafts against source · live: each save is a new note revision on the server." : "Verify drafts against source · local session only, no record connected."}</Text>
         </View>
         {encounter.transcript.some(line => line.corrected && !line.englishReviewed) && <StateLine warning>Unreviewed interpretations in the transcript. Check the original dialogue first.</StateLine>}
+        {serverError && <StateLine warning>{serverError}</StateLine>}
       </Animated.View>
 
       {sectionKeys.map((key, index) => <Animated.View key={key} entering={rise(index + 1)} layout={layout} style={{ gap: 10 }}>

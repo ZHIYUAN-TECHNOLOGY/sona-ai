@@ -7,8 +7,11 @@ import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { defaultMedications, getPrescriptionChecks, simulatedRegimen } from "@/features/encounter/clinical-state";
+import { issueSimulation } from "@/features/encounter/state";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient, PrescriptionCheck, PrescriptionInputs } from "@/features/encounter/types";
+import { errorText, useLive } from "@/features/live";
+import { pushAndReview, simulateOnServer } from "@/features/live/prescribing-sync";
 import { Seal, haptic } from "./medication-parts";
 
 /*
@@ -114,9 +117,21 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
   const [showPassed, setShowPassed] = useState(false);
   const checks = encounter ? getPrescriptionChecks(encounter, patient) : [];
   const resolving = useSettling(checks.filter(c => c.status === "blocked").map(c => c.id));
-
+  const { on: live, user } = useLive();
+  const [serverError, setServerError] = useState<string>();
 
   if (!encounter) return null;
+  // Live: the server records the review and re-checks everything before it writes the receipt; otherwise the local fixture runs.
+  const run = (kind: "medication" | "prescription") => {
+    if (!live || !user) return runInPlace(kind);
+    const revision = encounter.revision;
+    setServerError(undefined);
+    updateEncounter(value => ({ ...value, working: kind }));
+    const call = kind === "medication"
+      ? pushAndReview(patient.encounterId, encounter).then(() => updateEncounter(value => value.revision === revision ? { ...value, working: undefined, medicationCheckedRevision: revision, reviewInvalidated: false } : { ...value, working: undefined }))
+      : simulateOnServer(patient.encounterId, user.id).then(receipt => { updateEncounter(value => issueSimulation({ ...value, working: undefined }, patient, receipt.requestId)); haptic("success"); });
+    call.catch(e => { setServerError(errorText(e)); updateEncounter(value => ({ ...value, working: undefined })); });
+  };
   const inputs = encounter.prescriptionInputs ?? EMPTY;
   const set = (change: Partial<PrescriptionInputs>) => updateEncounter(value => ({ ...value, prescriptionInputs: { ...(value.prescriptionInputs ?? EMPTY), ...change } }), true);
   const blocked = checks.filter(c => c.status === "blocked");
@@ -141,7 +156,7 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
       <Pill label="No" on={inputs[key] === "no"} onPress={() => set({ [key]: "no" })} />
       <Pill label="Yes" tone="amber" on={inputs[key] === "yes"} onPress={() => set({ [key]: "yes" })} />
     </View>;
-    if (check.id === "review") return <Pressable accessibilityRole="button" accessibilityLabel="Run medication review" disabled={working !== undefined} onPress={() => { haptic("select"); runInPlace("medication"); }}
+    if (check.id === "review") return <Pressable accessibilityRole="button" accessibilityLabel="Run medication review" disabled={working !== undefined} onPress={() => { haptic("select"); run("medication"); }}
       style={{ alignSelf: "flex-start", height: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: palette.blue, opacity: working ? 0.6 : 1 }}>
       <Icon name={working === "medication" ? "hourglass" : "arrow.clockwise"} size={12} color={palette.white} />
       <Text style={{ fontSize: 14, fontWeight: "600", color: palette.white }}>{working === "medication" ? "Reviewing…" : reviewStale ? "Rerun review" : "Run review"}</Text>
@@ -187,14 +202,17 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
       </View>
     </Animated.View>
       : <Pressable accessibilityRole="button" accessibilityState={{ disabled: blocked.length > 0 || working !== undefined }} disabled={blocked.length > 0 || working !== undefined}
-        onPress={() => { haptic("select"); runInPlace("prescription"); }}
+        onPress={() => { haptic("select"); run("prescription"); }}
         style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: blocked.length ? "rgba(20,28,40,0.08)" : palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 200 } as never)}>
         {!blocked.length && <Icon name={working === "prescription" ? "hourglass" : "doc.badge.plus"} size={15} color={palette.white} />}
         <Animated.Text key={primary} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ fontSize: 16, fontWeight: "600", color: blocked.length ? palette.muted : palette.white }}>{primary}</Animated.Text>
       </Pressable>}
     </Animated.View>
 
-    {!created && showDemoControls && <Pressable accessibilityRole="button" onPress={() => updateEncounter(value => ({ ...value, prescriptionInputs: { weightKg: "62", liverDisease: "no", kidneyDisease: "no", alcoholRisk: "no", paracetamolAllergy: "no" } }), true)} style={{ alignSelf: "center", minHeight: 32, justifyContent: "center" }}>
+    {live && !created && <Text style={{ ...type.caption, fontWeight: "700", color: palette.blue }}>Live · checked by the server</Text>}
+    {serverError && <Text accessibilityLiveRegion="polite" style={{ ...type.caption, color: palette.amber }}>{serverError}</Text>}
+
+    {!created && showDemoControls &&<Pressable accessibilityRole="button" onPress={() => updateEncounter(value => ({ ...value, prescriptionInputs: { weightKg: "62", liverDisease: "no", kidneyDisease: "no", alcoholRisk: "no", paracetamolAllergy: "no" } }), true)} style={{ alignSelf: "center", minHeight: 32, justifyContent: "center" }}>
       <Text style={{ ...type.footnote, color: palette.blue }}>Demo · load synthetic eligibility</Text>
     </Pressable>}
   </Surface>;
