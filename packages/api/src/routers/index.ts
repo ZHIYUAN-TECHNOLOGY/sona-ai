@@ -12,6 +12,7 @@ import { completeTask, createTask, dayRouter, patientsRouter, resultsRouter } fr
 import { dischargeRouter } from "./discharge";
 import { careRouter } from "./care";
 import { carePlanRouter } from "./care-plan";
+import { messagesRouter } from "./messages";
 import { encounterRouter } from "./encounter";
 import { evidenceRouter } from "./evidence";
 import { wardRouter } from "./ward";
@@ -39,8 +40,9 @@ export const appRouter = {
     };
   }),
   encounter: encounterRouter,
-  // Sona Care, the patient app
+  // Sona Care, the patient app; `messages` is the care team's side of its thread (announced as "messages")
   care: { ...careRouter, ...carePlanRouter },
+  messages: messagesRouter,
   evidence: evidenceRouter,
   discharge: dischargeRouter,
   claim: claimRouter,

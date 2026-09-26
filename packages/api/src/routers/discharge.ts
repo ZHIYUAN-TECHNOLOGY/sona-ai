@@ -4,6 +4,7 @@ import { EMPTY_DISCHARGE, TYPICAL_WAIT_MINUTES, decideDischarge, dischargeChecks
 import type { Patient } from "@sona-ai/domain/types";
 import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 
+import { clockOf } from "../context";
 import { approvedCommandSchema, dischargeUpdateSchema } from "../contracts";
 import { protectedProcedure } from "../index";
 import { listFindings } from "./findings";
@@ -26,7 +27,8 @@ export const dischargeRouter = {
       .where(eq(encounters.id, encounterId));
     return loadEncounter(db, hospitalId, encounterId);
   }),
-  request: protectedProcedure.input(approvedCommandSchema).handler(async ({ context: { db, hospitalId, session }, input }) => {
+  request: protectedProcedure.input(approvedCommandSchema).handler(async ({ context, input }) => {
+    const { db, hospitalId, session } = context;
     assertApprover(session.user.id, input.approvedBy);
     const encounter = await loadEncounter(db, hospitalId, input.encounterId);
     const [prior] = await db.select().from(receipts)
@@ -45,7 +47,8 @@ export const dischargeRouter = {
     const person = { id: row.patient.id, name: row.patient.name } as Patient;
     const plan = planFor(person);
     const state: DischargeState = { ...EMPTY_DISCHARGE, ...encounter.state.discharge, glReceived: !gl || gl.status === "received" };
-    const at = new Date();
+    // The context's clock, so the check-in schedule follows a test's (or the demo's) day, not the wall clock.
+    const at = clockOf(context);
     const fitAt = row.admission.fitAt ?? new Date(at.getTime() - plan.fitMinutesAgo * 60000);
     const openFindings = await listFindings(db, hospitalId, at, and(eq(findings.encounterId, input.encounterId), eq(findings.status, "open"))); // lane F6
     // The domain guard decides; the refusal carries the blocked checks so the app can show them.
