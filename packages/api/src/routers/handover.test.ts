@@ -22,7 +22,13 @@ async function signedIn(extra: Partial<Context> = {}, signed = true) {
 test("the handover is one SBAR card per patient built from the server's rows, patients to watch first", async () => {
   const api = await signedIn();
   const cards = await api.handover.list();
-  expect(cards.map(c => [c.id, c.name, c.priority])).toEqual([["visit-SYN-1086", "Daniel Rahman", "watch"], ["visit-SYN-1042", "Amelia Tan", "stable"]]);
+  expect(cards.map(c => [c.id, c.name, c.priority])).toEqual([
+    ["visit-SYN-1086", "Daniel Rahman", "watch"], ["visit-SYN-1042", "Amelia Tan", "stable"],
+    // The rest of the ward; a result still pending at the lab (Nurul's culture, Ravi's renal function) is nothing to act on yet.
+    ["visit-SYN-2002", "Nurul Huda", "stable"], ["visit-SYN-2014", "Lim Wei Jie", "stable"], ["visit-SYN-2008", "Priya Nair", "stable"],
+    ["visit-SYN-2012", "Siti Aminah", "stable"], ["visit-SYN-2009", "Ravi Kumar", "stable"], ["visit-SYN-2004", "Tan Ah Kow", "stable"],
+  ]);
+  expect(cards.flatMap(c => c.recommendation).filter(l => l.startsWith("Act on pending"))).toEqual([]);
   const [daniel, amelia] = cards;
   expect(daniel!.meta).toBe("Clinic 09:45 · 57 · Male");
   expect(daniel!.recommendation).toContain("Complete onset, observations, allergies and medicines");

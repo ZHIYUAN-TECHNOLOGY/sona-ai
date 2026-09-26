@@ -4,10 +4,11 @@ import type { Encounter, Patient } from "./types";
 /**
  * The ward at a glance for the charge nurse or bed manager: every bed, who is fit to go, what is
  * holding each discharge, and who owns each blocker. Bed 6 is the demo patient and reads the live
- * discharge and guarantee-letter state, so resolving it in flows 1 and 2 clears it here.
+ * discharge and guarantee-letter state, so resolving it in flows 1 and 2 clears it here. In live
+ * mode every bed comes from the server instead (admittedBed, with blockers from bedBlockers).
  *
- * ponytail: authored ward fixtures; bed data and predicted discharge times come from the bed
- * system later. Owners are the four teams that clear most discharge blockers.
+ * ponytail: authored ward (the fixture, and the seed's `record.ward`); bed data and predicted
+ * discharge times come from the bed system later. Owners are the four teams that clear most discharge blockers.
  */
 export type Owner = "Pharmacy" | "Billing" | "Porter" | "Nurse";
 export type BlockerKind = "gl" | "pharmacy" | "transport" | "result" | "booking";
@@ -22,7 +23,8 @@ export const OWNERS: Owner[] = ["Pharmacy", "Billing", "Porter", "Nurse"];
 export const SUGGESTED: Record<BlockerKind, Owner> = { gl: "Billing", pharmacy: "Pharmacy", transport: "Porter", result: "Nurse", booking: "Nurse" };
 export const DEMO_PATIENT = "SYN-1042";
 
-const FIXED: Bed[] = [
+/** The authored ward around bed 6 (fixture mode); the seed writes the same beds as rows for live mode. */
+export const WARD_FIXTURE: Bed[] = [
   { bed: "Bed 2", name: "Nurul Huda", initials: "NH", meta: "29 · Female", status: "fit", predicted: "11:00", waitingHours: 5,
     sbar: { s: "Day 3 of antibiotics for pyelonephritis.", b: "No significant history.", a: "Afebrile 36 h, eating and walking.", r: "Discharge once the final GL and sensitivities are in." },
     blockers: [{ id: "b2-gl", kind: "gl", label: "Final guarantee letter", detail: "Synthetic TPA · requested 08:10" }, { id: "b2-result", kind: "result", label: "Urine culture sensitivities", detail: "Lab expects by 12:00" }] },
@@ -42,18 +44,24 @@ const FIXED: Bed[] = [
   { bed: "Bed 10", status: "empty", predicted: "Cleaning · ready 12:30", blockers: [] },
 ];
 
+/** What the bed system would say about an admitted patient; the server keeps it in `patients.record.ward`. No `predicted`: once cleared. */
+export type WardRecord = { status: "fit" | "watch" | "stable"; predicted?: string; waitingHours?: number; sbar?: Bed["sbar"] };
+export const DEMO_WARD: WardRecord = {
+  status: "fit", waitingHours: 1,
+  sbar: { s: "Community-acquired pneumonia, mild, day 2.", b: "Asthma. Penicillin allergy reported.", a: "Afebrile 18 h, SpO₂ 97% on room air.", r: "Discharge today on oral azithromycin." },
+};
+
 /** The demo patient's bed, built from the live discharge and guarantee-letter state. */
 function demoBed(patient: Patient | undefined, encounter: Encounter | undefined): Bed {
   const d = encounter?.discharge ?? EMPTY_DISCHARGE;
-  if (d.dischargedAt) return { bed: "Bed 6", status: "free", predicted: "Free · cleaning next", blockers: [] };
+  if (d.dischargedAt) return freedBed("Bed 6");
   const blockers: WardBlocker[] = [];
   if (!d.glReceived) blockers.push({ id: "b6-gl", kind: "gl", label: "Final guarantee letter", detail: encounter?.claim?.status === "sent" ? "Sent · awaiting insurer" : "Codes ready to review" });
   if (!d.medsConfirmed) blockers.push({ id: "b6-meds", kind: "pharmacy", label: "Take-home medicines", detail: "1 changed · 1 new · 1 stopped" });
   if (!d.followUp) blockers.push({ id: "b6-followup", kind: "booking", label: "Follow-up booking", detail: "Clinic review, about 2 weeks" });
   return {
     bed: "Bed 6", patientId: DEMO_PATIENT, name: patient?.name ?? "Amelia Tan", initials: patient?.initials ?? "AT", meta: patient ? `${patient.age} · ${patient.sex}` : undefined,
-    status: "fit", predicted: blockers.length ? "Once cleared" : "Now", waitingHours: 1,
-    sbar: { s: "Community-acquired pneumonia, mild, day 2.", b: "Asthma. Penicillin allergy reported.", a: "Afebrile 18 h, SpO₂ 97% on room air.", r: "Discharge today on oral azithromycin." }, blockers,
+    status: "fit", predicted: blockers.length ? "Once cleared" : "Now", waitingHours: DEMO_WARD.waitingHours, sbar: DEMO_WARD.sbar, blockers,
   };
 }
 
@@ -63,24 +71,40 @@ export type BedRows = {
   medsConfirmed: boolean; followUpBooked: boolean; pendingResults: { id: string; test: string; expected?: string }[];
   /** Incidental findings nobody has tracked or dismissed yet (demo flow 6). */
   openFindings?: { id: string; label: string }[];
+  /** A ride or transfer still to arrange. False `fit`: not yet fit to go, so take-home medicines and follow-up wait. */
+  transport?: { label: string; detail: string }; fit?: boolean;
 };
 
 /** A bed's blockers derived from rows (the server version of demoBed); ids are stable so owners stick. */
 export function bedBlockers(rows: BedRows): WardBlocker[] {
   const id = rows.admissionId, blockers: WardBlocker[] = [];
   if (rows.gl?.status === "requested") blockers.push({ id: `${id}-gl`, kind: "gl", label: "Final guarantee letter", detail: rows.gl.claimStatus === "sent" ? "Sent · awaiting insurer" : "Codes ready to review" });
-  if (!rows.medsConfirmed) blockers.push({ id: `${id}-meds`, kind: "pharmacy", label: "Take-home medicines", detail: "Not yet confirmed" });
-  if (!rows.followUpBooked) blockers.push({ id: `${id}-followup`, kind: "booking", label: "Follow-up booking", detail: "Clinic review not booked" });
+  const preparing = rows.fit !== false;
+  if (preparing && !rows.medsConfirmed) blockers.push({ id: `${id}-meds`, kind: "pharmacy", label: "Take-home medicines", detail: "Not yet confirmed" });
+  if (preparing && !rows.followUpBooked) blockers.push({ id: `${id}-followup`, kind: "booking", label: "Follow-up booking", detail: "Clinic review not booked" });
+  if (rows.transport) blockers.push({ id: `${id}-transport`, kind: "transport", ...rows.transport });
   for (const r of rows.pendingResults) blockers.push({ id: `${id}-result-${r.id}`, kind: "result", label: r.test, detail: r.expected ? `Expected by ${r.expected}` : "Pending" });
   for (const f of rows.openFindings ?? []) blockers.push({ id: `${id}-finding-${f.id}`, kind: "result", label: f.label, detail: "Unvalidated finding · follow-up not tracked" });
   return blockers;
 }
 
+export const freedBed = (bed: string): Bed => ({ bed, status: "free", predicted: "Free · cleaning next", blockers: [] });
+
+/** An admitted patient's bed on the server: their ward record, with blockers derived from rows (see bedBlockers). */
+export function admittedBed(bed: string, patient: { id: string; name: string; initials: string; age: number; sex: string }, ward: WardRecord, blockers: WardBlocker[]): Bed {
+  return {
+    bed, patientId: patient.id, name: patient.name, initials: patient.initials, meta: `${patient.age} · ${patient.sex}`, status: ward.status,
+    predicted: ward.predicted ?? (blockers.length ? "Once cleared" : "Now"), waitingHours: ward.waitingHours, sbar: ward.sbar, blockers,
+  };
+}
+
+// Fit-to-go beds lead, the most blocked first, so the eye lands on what to unblock.
+const rank = (b: Bed) => (b.status === "fit" ? 0 : b.status === "watch" ? 1 : b.status === "stable" ? 2 : 3) * 10 - b.blockers.length;
+export const byUrgency = (a: Bed, b: Bed) => rank(a) - rank(b);
+
 export function wardBeds(patients: Patient[], encounters: Record<string, Encounter | undefined>): Bed[] {
   const demo = demoBed(patients.find(p => p.id === DEMO_PATIENT), encounters[DEMO_PATIENT]);
-  // Fit-to-go beds lead, the most blocked first, so the eye lands on what to unblock.
-  const rank = (b: Bed) => (b.status === "fit" ? 0 : b.status === "watch" ? 1 : b.status === "stable" ? 2 : 3) * 10 - b.blockers.length;
-  return [demo, ...FIXED].sort((a, b) => rank(a) - rank(b));
+  return [demo, ...WARD_FIXTURE].sort(byUrgency);
 }
 
 export function wardSummary(beds: Bed[]) {

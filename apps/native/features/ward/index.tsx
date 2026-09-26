@@ -16,6 +16,7 @@ import { openItems, shortRM, totalRisk, useSent } from "@/features/audit/model";
 import { FollowUpList } from "@/features/findings";
 import { useFindings } from "@/features/live/findings-sync";
 import { useServerEncounter } from "@/features/live/sync";
+import { useServerBeds } from "@/features/live/ward-sync";
 import { DEMO_PATIENT, OWNERS, SUGGESTED, huddle, wardBeds, wardSummary, type Bed, type Owner } from "./model";
 
 /*
@@ -41,9 +42,12 @@ export function WardScreen() {
   const { reducedMotion } = useAccessibleEffects();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  // Live mode: bed 6 is drawn from Amelia's encounter, so pull the server's record of it first.
+  // Live mode: every bed comes from the server (the fixture ward shows until it arrives). Amelia's
+  // encounter is pulled too, so the discharge screen opened from bed 6 starts from the server's record.
   useServerEncounter(patients.find(p => p.id === DEMO_PATIENT));
-  const beds = wardBeds(patients, encounters);
+  const { findings } = useFindings();
+  const serverBeds = useServerBeds(findings);
+  const beds = serverBeds ?? wardBeds(patients, encounters);
   const summary = wardSummary(beds);
   const [owners, setOwners] = useState<Record<string, Owner | undefined>>({});
   const [briefed, setBriefed] = useState(false);
@@ -69,27 +73,23 @@ export function WardScreen() {
     p.set(reducedMotion ? withTiming(0, { duration: 160 }, fin => { if (fin) scheduleOnRN(done); }) : withSpring(0, CLOSE, fin => { if (fin) scheduleOnRN(done); }));
   };
   const { on: live } = useLive();
-  // Bed 6 is the live demo bed: its owners are real tasks on the server (the other beds stay authored).
-  const LIVE_IDS: Record<string, string> = { "b6-gl": "adm-1042-gl", "b6-meds": "adm-1042-meds", "b6-followup": "adm-1042-followup" };
+  // Live: server beds carry the server's blocker IDs, so each owner is a real task on the server.
   const assign = (id: string, owner: Owner) => {
     haptic("select"); setOwners(o => ({ ...o, [id]: o[id] === owner ? undefined : owner }));
-    const serverId = LIVE_IDS[id];
-    if (live && serverId) void api.ward.assignOwner({ blockerId: serverId, owner }).catch(() => setOwners(o => ({ ...o, [id]: undefined })));
+    if (serverBeds) void api.ward.assignOwner({ blockerId: id, owner }).catch(() => setOwners(o => ({ ...o, [id]: undefined })));
   };
   // Live: owners already on the server (they are blocker-owner tasks) show on open, so a reload keeps them.
   useEffect(() => {
     if (!live) return;
-    const localId = Object.fromEntries(Object.entries(LIVE_IDS).map(([local, server]) => [server, local]));
     api.tasks.list().then(tasks => {
-      const saved = tasks.filter(t => t.kind === "blocker-owner" && t.sourceId && localId[t.sourceId]);
-      setOwners(o => ({ ...o, ...Object.fromEntries(saved.map(t => [localId[t.sourceId!], t.owner as Owner])) }));
+      const saved = tasks.filter(t => t.kind === "blocker-owner" && t.sourceId);
+      setOwners(o => ({ ...o, ...Object.fromEntries(saved.map(t => [t.sourceId!, t.owner as Owner])) }));
     }).catch(() => {});
-  }, [live]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [live]);
 
   const gridStyle = useAnimatedStyle(() => ({ opacity: interpolate(p.value, [0, 1], [1, 0.2]), transform: [{ scale: interpolate(p.value, [0, 1], [1, 0.97]) }] }));
   const lines = huddle(beds, owners);
   const audit = openItems(encounters, useSent());
-  const { findings } = useFindings();
   const current = open && beds.find(b => b.bed === open.bed);
 
   return <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas }}>
@@ -147,7 +147,8 @@ export function WardScreen() {
 
     {open && current && <BedCard bed={current} from={open.from} to={{ x: 12, y: insets.top + 52, w: width - 24, h: height - insets.top - 52 - insets.bottom - 12 }} p={p} owners={owners} onAssign={assign} onClose={close}
       // The card closes behind the discharge screen, so coming back shows the ward (and the bed it freed), not a stale card.
-      onDischarge={() => { if (!current.patientId) return; selectPatient(current.patientId); router.push("/discharge"); p.set(0); setOpen(undefined); }} />}
+      // Only a patient the app holds a visit for (Amelia) has a discharge screen to open.
+      onDischarge={patients.some(x => x.id === current.patientId) ? () => { selectPatient(current.patientId!); router.push("/discharge"); p.set(0); setOpen(undefined); } : undefined} />}
   </View>;
 }
 
@@ -175,7 +176,7 @@ function TileFace({ bed }: { bed: Bed }) {
 
 function BedCard({ bed, from, to, p, owners, onAssign, onClose, onDischarge }: {
   bed: Bed; from: Rect; to: Rect; p: ReturnType<typeof useSharedValue<number>>; owners: Record<string, Owner | undefined>;
-  onAssign: (id: string, owner: Owner) => void; onClose: () => void; onDischarge: () => void;
+  onAssign: (id: string, owner: Owner) => void; onClose: () => void; onDischarge?: () => void;
 }) {
   const { reducedMotion } = useAccessibleEffects();
   const frame = useAnimatedStyle(() => {
@@ -231,7 +232,7 @@ function BedCard({ bed, from, to, p, owners, onAssign, onClose, onDischarge }: {
           </View>; })}
         </View>
 
-        {bed.patientId && <Pressable accessibilityRole="button" onPress={onDischarge}
+        {onDischarge && <Pressable accessibilityRole="button" onPress={onDischarge}
           style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
           <Icon name="bed.double" size={15} color={palette.white} />
           <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>Open discharge</Text>
