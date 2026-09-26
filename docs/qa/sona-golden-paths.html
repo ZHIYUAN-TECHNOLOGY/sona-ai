@@ -149,6 +149,52 @@
 <li><span class="s"></span><span class="do">Press and hold <b>Hold to accept handover</b> (let go early once).<span class="exp">Releasing early springs the fill back. Holding 1.5 s fills it teal and a <b>Handover acknowledged</b> receipt names who accepted how many patients and when.</span></span></li>
 </ol></section>
 
-<footer>Sona AI · synthetic demo data, no real patient information · generated 26 Sep 2026 from main.</footer>
+<section><h2><span class="n">14</span>Discharge in one card</h2><p class="where">Amelia’s visit › note, follow-up or prescribing answer › <b>Discharge</b> (in “Done with Amelia?”)</p><ol>
+<li><span class="s"></span><span class="do">Tap <b>Discharge</b>.<span class="exp">The visit shrinks and sways under “Drafting the discharge…”, then a card rises: ring “3 left”, Amelia Tan · Bed 6, a three-line summary (diagnosis, course, plan) with <b>Read full</b>, key words colour-coded.</span></span></li>
+<li><span class="s"></span><span class="do">Tap <b>Confirm take-home list</b>, then <b>2 wk</b> under Follow-up.<span class="exp">Each blocker checks, strikes and folds away; the ring counts down to 1 left (the final guarantee letter).</span></span></li>
+<li><span class="s"></span><span class="do">Switch the leaflet between <b>BM</b>, <b>EN</b> and <b>中文</b>.<span class="exp">The patient leaflet crossfades between Malay, English and Chinese.</span></span></li>
+<li><span class="s"></span><span class="do">Clear the guarantee letter (path 15), then tap <b>Discharge Amelia</b>.<span class="exp">“Freeing the bed…”, then a receipt stamps in: “Bed 6 free · 4 h 10 m earlier than usual”, 2 follow-up tasks created.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">15</span>Guarantee letter and claim codes</h2><p class="where">Discharge card › Final guarantee letter › <b>Review codes and send</b></p><ol>
+<li><span class="s"></span><span class="do">Open the screen.<span class="exp">Ring “2 left before sending”, Synthetic insurer, estimated RM 3,480; the note as sentences above four codes (J18.9, J45.9, Z88.0, 87.44).</span></span></li>
+<li><span class="s"></span><span class="do">Tap each code.<span class="exp">A soft highlight glides to the sentence that justifies it.</span></span></li>
+<li><span class="s"></span><span class="do">Tap <b>Confirm unknown</b>, then <b>Add to note</b>.<span class="exp">Each adds its sentence to the note and folds away; “All 5 insurer criteria met”.</span></span></li>
+<li><span class="s"></span><span class="do">Tap <b>Send to synthetic insurer</b>.<span class="exp">The five “Required” tags turn into checks one after another; the stamp reads “Final GL approved · RM 3,480” (about 2 s offline; about a minute in Live mode, path 19).</span></span></li>
+<li><span class="s"></span><span class="do">Tap <b>Back to discharge</b>.<span class="exp">The guarantee-letter blocker is gone.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">16</span>Ward command view</h2><p class="where">Home › <b>Ward</b> key (“3 discharges blocked”)</p><ol>
+<li><span class="s"></span><span class="do">Open the ward.<span class="exp">Summary strip (8 beds · 4 fit to go · 3 blocked · ~9 bed-hours), the huddle brief, the Coding audit row and a two-column bed grid, fit-to-go beds first.</span></span></li>
+<li><span class="s"></span><span class="do">Tap <b>Brief me</b>.<span class="exp">Three lines for the huddle; the third counts blockers with no owner.</span></span></li>
+<li><span class="s"></span><span class="do">Tap Bed 6.<span class="exp">The tile grows into the bed card: SBAR lines and each blocker with owner pills (the likely one outlined).</span></span></li>
+<li><span class="s"></span><span class="do">Tap <b>Pharmacy</b> on Take-home medicines, then close.<span class="exp">An owner badge pops onto the row; the card shrinks back into its tile.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">17</span>Evidence answer</h2><p class="where">Amelia’s visit › “Should Amelia get steroids for this pneumonia?”</p><ol>
+<li><span class="s"></span><span class="do">Ask the question.<span class="exp">“High certainty · Against routine use”, three numbered lines; severe pneumonia and septic shock in red, steroids in violet, non-severe left plain.</span></span></li>
+<li><span class="s"></span><span class="do">Swipe the source cards left and right, or tap a year.<span class="exp">Cards snap and the dot glides along the 2019 · 2015 · 2023 track; “Open abstract” opens a PubMed search.</span></span></li>
+<li><span class="s"></span><span class="do">Scroll to CURB-65.<span class="exp">The arc waits until the card is on screen, then sweeps as each factor is checked and settles on “0 of 5 · Low risk”. For Daniel it reads “can’t score yet” with factors “Not recorded”.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">18</span>Coding audit</h2><p class="where">Ward › <b>Coding audit</b> row</p><ol>
+<li><span class="s"></span><span class="do">Open the audit.<span class="exp">“RM 19,230 at risk across 12 under-specified notes”, one row per note with the gap, doctor, current → better code and RM at risk.</span></span></li>
+<li><span class="s"></span><span class="do">Swipe a row right past the ring.<span class="exp">“Sent to Dr …”, the row folds, “Queries sent” pops and the total rolls down.</span></span></li>
+<li><span class="s"></span><span class="do">Tap another row, then <b>Send to …</b>.<span class="exp">The drafted query shows first; sending clears the row the same way.</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">19</span>Live backend mode</h2><p class="where">Settings (sidebar › Your workspace) › Live backend · needs the local Worker (<code>cd packages/infra && bun run dev</code>) or staging, and the test doctor from <code>packages/db/src/seed.ts</code></p><ol>
+<li><span class="s"></span><span class="do">Tap <b>Sign in</b>, sign in as the test doctor, go back and switch <b>Use the live backend</b> on.<span class="exp">“Signed in as dr.test@sona.test”. The switch stays on after a reload.</span></span></li>
+<li><span class="s"></span><span class="do">Run paths 14 and 15.<span class="exp">Cards show “Live · checked by the server”. After Send the letter reads “Sent · awaiting insurer · answers in about a minute”; the server’s mock insurer approves and the discharge card clears on its own.</span></span></li>
+<li><span class="s"></span><span class="do">Reload the app while the insurer is deciding, then reopen the discharge.<span class="exp">The card rebuilds from the server: fixes kept, “Sent · awaiting insurer”.</span></span></li>
+<li><span class="s"></span><span class="do">Open the coding audit.<span class="exp">“Live audit · from the server”: Daniel’s anaemia, RM 630. Swiping sends the query as a task.</span></span></li>
+<li><span class="s"></span><span class="do">Assign a Bed 6 owner in the ward, reload, reopen Bed 6.<span class="exp">The owner badge is still there (read back from the server).</span></span></li>
+</ol></section>
+
+<section><h2><span class="n">20</span>Colour-coded terms</h2><p class="where">Any answer or card · key in Settings › Colour key</p><ol>
+<li><span class="s"></span><span class="do">Read a discharge summary, a handover card or the evidence answer.<span class="exp">Red = must not miss (allergies, severe disease, abnormal results), violet = medicines, teal = diagnoses, blue = symptoms, amber = unconfirmed. “Low risk”, “high certainty” and “non-severe” stay plain.</span></span></li>
+</ol></section>
+
+<footer>Sona AI · synthetic demo data, no real patient information · generated 26 Sep 2026 from main; paths 14–20 added for the ops flows, Live backend mode and colour-coded terms.</footer>
 </body>
 </html>
