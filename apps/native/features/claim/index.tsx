@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { MarkedText } from "@/components/sona/marked-text";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
@@ -54,24 +55,28 @@ export function ClaimScreen() {
   const passed = checks.filter(c => c.status === "passed" && !resolving.has(c.id));
   const approved = state.status === "approved";
   const sent = state.status === "sent";
+  // The insurer asked a question: the doctor answers in the note and sends again.
+  const queried = state.status === "queried";
 
   const send = () => {
     haptic("select"); setSending(true); setServerError(undefined);
     if (live && user) {
-      // The server refuses while a criterion is open; once sent, the mock insurer answers after a minute.
+      // The server refuses while a criterion is open; once sent, the insurer approves or queries on its review page.
       api.claim.send({ encounterId: patient.encounterId, requestId: requestId(), approvedBy: user.id })
-        .then(() => {
-          timers.current.push(setTimeout(() => { set({ status: "sent" }); setSending(false); }, reducedMotion ? 0 : 900));
+        .then(async () => {
+          const first = await api.claim.status({ encounterId: patient.encounterId }).catch(() => undefined);
+          timers.current.push(setTimeout(() => { set({ status: "sent", reviewUrl: first?.reviewUrl, query: undefined }); setSending(false); }, reducedMotion ? 0 : 900));
           const poll = setInterval(() => {
             api.claim.status({ encounterId: patient.encounterId }).then(r => {
+              if (r.status === "queried") { clearInterval(poll); set({ status: "queried", query: r.query }); haptic("warning"); return; }
               if (r.status !== "approved") return;
               clearInterval(poll); updateEncounter(value => approveClaim(value, new Date(r.approvedAt ?? Date.now()))); haptic("success");
             }).catch(() => {});
-          }, 5000);
+          }, 3000);
           timers.current.push(poll as unknown as ReturnType<typeof setTimeout>);
         })
         // A refusal means the server knows something this screen does not: show why and reload its state.
-        .catch(e => { setServerError(errorText(e)); setSending(false); void refresh().catch(() => {}); });
+        .catch(e => { setServerError(errorText(e)); setSending(false); void refresh(true).catch(() => {}); });
       return;
     }
     // ponytail: timed mock insurer; the real reply is asynchronous and can decline or ask for more.
@@ -87,8 +92,8 @@ export function ClaimScreen() {
     </View>;
     return undefined;
   };
-  const primary = blocked.length ? `Resolve ${blocked.length} to send` : sent ? "Sent · awaiting insurer" : sending ? "Sending…" : `Send to ${INSURER.toLowerCase()}`;
-  const status = approved ? "Approved" : sent ? "Sent · awaiting insurer" : blocked.length ? `${blocked.length} left before sending` : "Ready to send";
+  const primary = blocked.length ? `Resolve ${blocked.length} to send` : sent ? "Sent · awaiting insurer" : sending ? "Sending…" : queried ? "Send again" : `Send to ${INSURER.toLowerCase()}`;
+  const status = approved ? "Approved" : sent ? "Sent · awaiting insurer" : queried ? "Insurer asked a question" : blocked.length ? `${blocked.length} left before sending` : "Ready to send";
 
   return <ScrollView style={{ flex: 1, backgroundColor: palette.canvas }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 48, gap: 14 }}>
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
@@ -105,7 +110,7 @@ export function ClaimScreen() {
           <Text style={{ ...type.overline, color: approved ? TEAL : blocked.length ? palette.amber : palette.blue }}>{status}</Text>
           <Text style={{ ...type.headline, color: palette.ink }}>Final guarantee letter</Text>
           <Text style={{ ...type.caption, color: palette.muted }}>{patient.name} · {INSURER} · estimated {ESTIMATE}</Text>
-          {live && <Text style={{ ...type.caption, fontWeight: "700", color: palette.blue }}>Live · checked by the server{sent ? " · insurer answers in about a minute" : ""}</Text>}
+          {live && <Text style={{ ...type.caption, fontWeight: "700", color: palette.blue }}>Live · checked by the server{sent ? " · the insurer reviews it on their link" : ""}</Text>}
           {serverError && <Text style={{ ...type.footnote, color: palette.red }}>{serverError}</Text>}
         </View>
       </View>
@@ -136,6 +141,16 @@ export function ClaimScreen() {
         <Text style={{ ...type.footnote, fontWeight: "600", color: TEAL }}>{blocked.length ? `${passed.length} insurer criteria met` : `All ${passed.length} insurer criteria met`}</Text>
       </Animated.View>}
 
+      {queried && state.query && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)} style={{ gap: 4, padding: 12, borderRadius: 16, borderCurve: "continuous", backgroundColor: "rgba(196,120,20,0.1)" }}>
+        <Text style={{ ...type.overline, color: palette.amber }}>The insurer asks</Text>
+        <Text selectable style={{ ...type.subhead, color: palette.ink }}>{state.query}</Text>
+      </Animated.View>}
+
+      {sent && state.reviewUrl && <Pressable accessibilityRole="link" accessibilityLabel="Open the insurer's review page" hitSlop={8} onPress={() => { void WebBrowser.openBrowserAsync(state.reviewUrl!).catch(() => {}); }} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+        <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>Insurer's review page</Text>
+        <Icon name="arrow.up.right" size={10} color={palette.blue} />
+      </Pressable>}
+
       {(sending || sent) && !approved && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(160)} exiting={reducedMotion ? undefined : FadeOut.duration(160)} style={{ gap: 2 }}>
         {checks.map((c, i) => <Criterion key={c.id} label={c.label} index={i} />)}
       </Animated.View>}
@@ -146,7 +161,7 @@ export function ClaimScreen() {
           <Seal stampDelay={reducedMotion ? undefined : 120} />
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>Final GL approved · {ESTIMATE}</Text>
-            <Text style={{ ...type.caption, color: palette.muted }}>Discharge no longer waits on the insurer · {new Date(state.approvedAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · mock insurer</Text>
+            <Text style={{ ...type.caption, color: palette.muted }}>Discharge no longer waits on the insurer · {new Date(state.approvedAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · {live ? "approved on the insurer's page" : "mock insurer"}</Text>
           </View>
         </View>
         <Chip label="Back to discharge" icon="chevron.left" onPress={() => router.back()} />

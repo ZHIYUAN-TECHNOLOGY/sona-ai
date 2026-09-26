@@ -9,7 +9,11 @@ import type { Encounter, PrescriptionCheck } from "./types";
  * ponytail: authored fixture for the demo patient and a timed mock insurer. Codes come from a model
  * plus a terminology lookup later; criteria come from panel insurer documents stored as data.
  */
-export type ClaimState = { organismConfirmed: boolean; ivReasonAdded: boolean; status: "draft" | "sent" | "approved"; approvedAt?: string };
+export type ClaimState = {
+  organismConfirmed: boolean; ivReasonAdded: boolean; status: "draft" | "sent" | "approved" | "queried"; approvedAt?: string;
+  /** Live mode: the insurer's review page while the letter is with them, and their question if they queried it. */
+  reviewUrl?: string; query?: string;
+};
 export type Sentence = { id: string; text: string };
 export type Code = { code: string; label: string; kind: "Principal" | "Secondary" | "Procedure"; evidence: string };
 

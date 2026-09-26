@@ -42,7 +42,7 @@ export function serverVisit(r: ServerAppointment, known: string[]): ScheduleVisi
 
 /** What the server holds for a visit (the encounter row's state), as far as the app reads it. */
 export type ServerVisitState = Partial<Pick<Encounter, "medicationEntries" | "prescriptionInputs" | "proposedMedicine" | "historyFacts">> & { discharge?: object; claim?: object };
-type ClaimStatus = { status: string; approvedAt?: string | Date };
+type ClaimStatus = { status: string; approvedAt?: string | Date; reviewUrl?: string; query?: string };
 
 /**
  * In live mode the server's record of a visit wins over the fixture: its history, medicines and eligibility,
@@ -50,7 +50,7 @@ type ClaimStatus = { status: string; approvedAt?: string | Date };
  * not recorded yet keeps the app's own value; the app's revision counter is left alone.
  */
 export function mergeServerState<T extends Partial<Encounter>>(value: T, server: ServerVisitState, claim: ClaimStatus, glReceived: boolean): T {
-  const status = claim.status === "approved" ? "approved" : claim.status === "sent" ? "sent" : "draft";
+  const status = claim.status === "approved" || claim.status === "sent" || claim.status === "queried" ? claim.status : "draft";
   return {
     ...value,
     ...(server.medicationEntries ? { medicationEntries: server.medicationEntries } : {}),
@@ -58,6 +58,6 @@ export function mergeServerState<T extends Partial<Encounter>>(value: T, server:
     ...(server.proposedMedicine !== undefined ? { proposedMedicine: server.proposedMedicine } : {}),
     ...(server.historyFacts ? { historyFacts: server.historyFacts } : {}),
     discharge: { ...EMPTY_DISCHARGE, ...value.discharge, ...server.discharge, glReceived },
-    claim: { ...EMPTY_CLAIM, ...server.claim, status, approvedAt: claim.approvedAt === undefined ? undefined : String(claim.approvedAt) },
+    claim: { ...EMPTY_CLAIM, ...server.claim, status, approvedAt: claim.approvedAt === undefined ? undefined : String(claim.approvedAt), reviewUrl: claim.reviewUrl, query: claim.query },
   };
 }

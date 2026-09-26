@@ -63,3 +63,11 @@ test("the server's history facts replace the fixture's; without any the app keep
   expect(mergeServerState(local, { historyFacts: [fact("h1", "Penicillin (rash)")] }, { status: "draft" }, false).historyFacts).toEqual([fact("h1", "Penicillin (rash)")]);
   expect(mergeServerState(local, {}, { status: "draft" }, false).historyFacts).toEqual(local.historyFacts);
 });
+
+test("a claim with the insurer carries its review link; a queried one carries the insurer's question", () => {
+  const sent = mergeServerState({ revision: 1 }, {}, { status: "sent", reviewUrl: "https://sona.test/insurer/abc" }, false);
+  expect(sent.claim).toMatchObject({ status: "sent", reviewUrl: "https://sona.test/insurer/abc" });
+  const queried = mergeServerState({ revision: 1 }, {}, { status: "queried", query: "Please attach the sputum culture request." }, false);
+  expect(queried.claim).toMatchObject({ status: "queried", query: "Please attach the sputum culture request." });
+  expect(queried.discharge.glReceived).toBe(false);
+});

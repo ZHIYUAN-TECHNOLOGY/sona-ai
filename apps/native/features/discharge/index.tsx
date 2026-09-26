@@ -171,7 +171,7 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
       // The server decides: it refuses while anything blocks, and receipts once per request.
       api.discharge.request({ encounterId: patient.encounterId, requestId: requestId(), approvedBy: user.id })
         .then(receipt => { updateEncounter(value => discharge(value, patient, fitAt, new Date(receipt.createdAt))); haptic("success"); void refreshCheckIns().catch(() => {}); })
-        .catch(e => { setServerError(errorText(e)); void refresh().catch(() => {}); })
+        .catch(e => { setServerError(errorText(e)); void refresh(true).catch(() => {}); })
         .finally(() => setBusy(false));
       return;
     }
@@ -182,7 +182,9 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
   const fix = (check: PrescriptionCheck) => {
     if (check.id === "gl") return encounter.claim?.status === "sent"
       ? <Text style={{ ...type.footnote, color: palette.muted }}>Sent · awaiting insurer</Text>
-      : <Chip label="Review codes and send" icon="doc.text.magnifyingglass" strong onPress={() => router.push("/claim")} />;
+      : encounter.claim?.status === "queried"
+        ? <View style={{ gap: 8 }}><Text selectable style={{ ...type.footnote, color: palette.amber }}>Insurer asks: {encounter.claim.query}</Text><Chip label="Answer and send again" icon="doc.text.magnifyingglass" strong onPress={() => router.push("/claim")} /></View>
+        : <Chip label="Review codes and send" icon="doc.text.magnifyingglass" strong onPress={() => router.push("/claim")} />;
     if (check.id === "followup") return <View style={{ flexDirection: "row", gap: 8 }}>
       {FOLLOW_UPS.map(f => <Pill key={f.id} label={f.label} on={state.followUp === f.id} onPress={() => set({ followUp: f.id })} />)}
     </View>;
