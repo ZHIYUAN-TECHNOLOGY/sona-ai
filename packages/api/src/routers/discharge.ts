@@ -6,6 +6,7 @@ import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 
 import { approvedCommandSchema, dischargeUpdateSchema } from "../contracts";
 import { protectedProcedure } from "../index";
+import { assertApprover } from "./hospital";
 import { loadEncounter } from "./encounter";
 
 /**
@@ -23,7 +24,8 @@ export const dischargeRouter = {
       .where(eq(encounters.id, encounterId));
     return loadEncounter(db, hospitalId, encounterId);
   }),
-  request: protectedProcedure.input(approvedCommandSchema).handler(async ({ context: { db, hospitalId }, input }) => {
+  request: protectedProcedure.input(approvedCommandSchema).handler(async ({ context: { db, hospitalId, session }, input }) => {
+    assertApprover(session.user.id, input.approvedBy);
     const encounter = await loadEncounter(db, hospitalId, input.encounterId);
     const [prior] = await db.select().from(receipts)
       .where(or(eq(receipts.requestId, input.requestId), and(eq(receipts.kind, "discharge"), eq(receipts.encounterId, input.encounterId))));

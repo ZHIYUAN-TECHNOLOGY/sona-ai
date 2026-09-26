@@ -1,3 +1,4 @@
+import { ORPCError } from "@orpc/server";
 import { hospitalMembers } from "@sona-ai/db/schema/clinical";
 import { DEMO_HOSPITAL } from "@sona-ai/db/seed";
 import { eq } from "drizzle-orm";
@@ -14,4 +15,9 @@ export async function hospitalOf(db: Context["db"], userId: string) {
   if (member) return member.hospitalId;
   await db.insert(hospitalMembers).values({ userId, hospitalId: DEMO_HOSPITAL }).onConflictDoNothing();
   return DEMO_HOSPITAL;
+}
+
+/** An approval names the signed-in doctor or nobody; a blank name is left for the domain guard to refuse. */
+export function assertApprover(userId: string, approvedBy: string) {
+  if (approvedBy.trim() && approvedBy !== userId) throw new ORPCError("FORBIDDEN", { message: "You can only approve in your own name" });
 }

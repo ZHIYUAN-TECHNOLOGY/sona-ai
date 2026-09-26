@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { sql } from "drizzle-orm";
 import { retrievalHitSchema } from "@sona-ai/api/contracts";
 import { createTestDb } from "@sona-ai/db/testing";
 import { ingest, search, stubEmbedder } from "./retrieval";
@@ -97,4 +98,20 @@ test("a search returns the shared library and the caller's hospital, never anoth
   await ingest(db, policy("h2"), "# Azithromycin\nAzithromycin dose here is 250 mg daily.", stubEmbedder);
   const hits = await search(db, { query: "azithromycin dose", hospitalId: "h1", k: 20 }, stubEmbedder);
   expect(new Set(hits.map(h => h.documentId))).toEqual(new Set(["ats-2019", "h1-abx"]));
+});
+
+test("under the database's own rules, a restricted role reads the shared library and its hospital's chunks only", async () => {
+  const db = await createTestDb();
+  await ingest(db, guideline, guidelineText, stubEmbedder);
+  await ingest(db, { id: "h1-abx", hospitalId: "h1", title: "Antibiotic policy", source: "h1 pharmacy", year: 2026 }, "# Azithromycin\n500 mg on day one.", stubEmbedder);
+  await ingest(db, { id: "h2-abx", hospitalId: "h2", title: "Antibiotic policy", source: "h2 pharmacy", year: 2026 }, "# Azithromycin\n250 mg daily.", stubEmbedder);
+  await db.execute(sql`create role reader nologin`);
+  await db.execute(sql`grant select on chunks, documents to reader`);
+  const seen = await db.transaction(async tx => {
+    await tx.execute(sql`set local role reader`);
+    await tx.execute(sql`select set_config('app.hospital_id', 'h1', true)`);
+    const rows = await tx.execute(sql`select distinct document_id from chunks order by document_id`);
+    return rows.rows.map(r => r.document_id);
+  });
+  expect(seen).toEqual(["ats-2019", "h1-abx"]);
 });

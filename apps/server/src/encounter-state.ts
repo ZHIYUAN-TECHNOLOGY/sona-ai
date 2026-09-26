@@ -1,6 +1,6 @@
 import type { Context } from "@sona-ai/api/context";
-import type { EncounterEdit } from "@sona-ai/api/contracts";
-import { applyEdit, loadEncounter, saveEncounter, stale, type EncounterSnapshot } from "@sona-ai/api/routers/encounter";
+import type { EncounterEdit, RecordReview } from "@sona-ai/api/contracts";
+import { applyEdit, applyReview, loadEncounter, saveEncounter, type EncounterSnapshot } from "@sona-ai/api/routers/encounter";
 import { createDb } from "@sona-ai/db";
 import type { DatabaseConfig } from "@sona-ai/db/config";
 import { DurableObject } from "cloudflare:workers";
@@ -24,13 +24,10 @@ export class EncounterState extends DurableObject<DatabaseConfig> {
     return this.commit(hospitalId, current, () => applyEdit(current, edit));
   }
 
-  /** The medication review ran against `revision`; it stays current until the next eligibility or medicine edit. */
-  async recordMedicationReview(hospitalId: string, encounterId: string, revision: number): Promise<EncounterSnapshot> {
-    const current = await this.get(hospitalId, encounterId);
-    return this.commit(hospitalId, current, () => {
-      if (revision !== current.revision) throw stale(encounterId);
-      return { ...current, state: { ...current.state, medicationCheckedRevision: revision, reviewInvalidated: false } };
-    });
+  /** The medication review ran against `expectedRevision`; it stays current until the next eligibility or medicine edit. */
+  async recordReview(hospitalId: string, review: RecordReview): Promise<EncounterSnapshot> {
+    const current = await this.get(hospitalId, review.encounterId);
+    return this.commit(hospitalId, current, () => applyReview(current, review));
   }
 
   private async commit(hospitalId: string, current: EncounterSnapshot, next: () => EncounterSnapshot) {

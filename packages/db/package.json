@@ -13,7 +13,8 @@
     "db:migrate:deploy": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:migrate": "drizzle-kit migrate",
-    "test": "bun test src"
+    "test": "bun test src",
+    "db:seed": "bun src/seed-run.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

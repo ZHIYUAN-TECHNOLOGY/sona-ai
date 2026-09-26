@@ -28,7 +28,7 @@ test("only the health check is open; every clinical route needs a signed-in user
     ["encounter.get", () => api.encounter.get({ encounterId: "visit-1042" })],
     ["encounter.edit", () => api.encounter.edit({ encounterId: "visit-1042", expectedRevision: 1, proposedMedicine: "Paracetamol" })],
     ["discharge.request", () => api.discharge.request({ encounterId: "visit-1042", requestId: "r1", approvedBy: "dr-aisyah" })],
-    ["ward.assignOwner", () => api.ward.assignOwner({ blockerId: "b6-gl", owner: "Billing" })],
+    ["ward.assignOwner", () => api.ward.assignOwner({ blockerId: "adm-1042-gl", owner: "Billing" })],
     ["discharge.update", () => api.discharge.update({ encounterId: "visit-1042", medsConfirmed: true })],
     ["claim.send", () => api.claim.send({ encounterId: "visit-1042", requestId: "c0", approvedBy: "dr-aisyah" })],
     ["claim.status", () => api.claim.status({ encounterId: "visit-1042" })],
@@ -97,17 +97,17 @@ test("with every blocker cleared the discharge is receipted once, and a replay r
 
 test("assigning an owner to a ward blocker creates one blocker-owner task, however often it is sent", async () => {
   const { api } = await signedIn();
-  const first = await api.ward.assignOwner({ blockerId: "b14-pharm", owner: "Pharmacy" });
-  const again = await api.ward.assignOwner({ blockerId: "b14-pharm", owner: "Pharmacy" });
+  const first = await api.ward.assignOwner({ blockerId: "adm-1042-meds", owner: "Pharmacy" });
+  const again = await api.ward.assignOwner({ blockerId: "adm-1042-meds", owner: "Pharmacy" });
   expect(again.id).toBe(first.id);
   const list = await api.tasks.list();
-  expect(list.map(t => [t.kind, t.owner, t.title])).toEqual([["blocker-owner", "Pharmacy", "Bed 14: Take-home analgesia"]]);
+  expect(list.map(t => [t.kind, t.owner, t.title])).toEqual([["blocker-owner", "Pharmacy", "Bed 6: Take-home medicines"]]);
 });
 
 test("reassigning a blocker moves the same task to the new owner; an unknown blocker is refused", async () => {
   const { api } = await signedIn();
-  await api.ward.assignOwner({ blockerId: "b6-gl", owner: "Nurse" });
-  await api.ward.assignOwner({ blockerId: "b6-gl", owner: "Billing" });
+  await api.ward.assignOwner({ blockerId: "adm-1042-gl", owner: "Nurse" });
+  await api.ward.assignOwner({ blockerId: "adm-1042-gl", owner: "Billing" });
   expect((await api.tasks.list()).map(t => [t.owner, t.title])).toEqual([["Billing", "Bed 6: Final guarantee letter"]]);
   const error = await api.ward.assignOwner({ blockerId: "b99-nothing", owner: "Porter" }).catch(e => e);
   expect(error.code).toBe("NOT_FOUND");
@@ -159,7 +159,7 @@ test("the nightly audit raises a lab-only diagnosis once, priced from the casemi
 
 test("a doctor from another hospital cannot see the demo ward's encounters or tasks", async () => {
   const { db, api } = await signedIn();
-  await api.ward.assignOwner({ blockerId: "b6-gl", owner: "Billing" }); // dr-aisyah joins the demo hospital on first use
+  await api.ward.assignOwner({ blockerId: "adm-1042-gl", owner: "Billing" }); // dr-aisyah joins the demo hospital on first use
   await db.insert(hospitals).values({ id: "other", name: "Other Hospital (synthetic)" });
   await db.insert(hospitalMembers).values({ userId: "dr-other", hospitalId: "other" });
   const other = { ...session, user: { ...session.user, id: "dr-other" } } as Session;
@@ -168,4 +168,30 @@ test("a doctor from another hospital cannot see the demo ward's encounters or ta
   expect(error?.code).toBe("NOT_FOUND");
   expect(await theirs.tasks.list()).toEqual([]);
   expect((await api.tasks.list()).length).toBe(1);
+});
+
+test("a doctor cannot approve a discharge or a claim in someone else's name", async () => {
+  const { api } = await signedIn();
+  const asOther = { encounterId: "visit-1042", requestId: "r-other", approvedBy: "dr-someone-else" };
+  const codes = await Promise.all([api.discharge.request(asOther), api.claim.send({ ...asOther, requestId: "c-other" })].map(p => p.then(() => null, (e: { code?: string }) => e.code)));
+  expect(codes).toEqual(["FORBIDDEN", "FORBIDDEN"]);
+});
+
+test("owners attach to the bed's live blockers: once the guarantee letter arrives, its blocker is gone", async () => {
+  const { db, api } = await signedIn();
+  await api.ward.assignOwner({ blockerId: "adm-1042-gl", owner: "Billing" });
+  await db.update(guaranteeLetters).set({ status: "received", receivedAt: new Date() }).where(eq(guaranteeLetters.admissionId, "adm-1042"));
+  const error = await api.ward.assignOwner({ blockerId: "adm-1042-gl", owner: "Nurse" }).then(() => null, (e: { code?: string }) => e.code);
+  expect(error).toBe("NOT_FOUND");
+  await api.discharge.update({ encounterId: "visit-1042", medsConfirmed: true });
+  expect(await api.ward.assignOwner({ blockerId: "adm-1042-meds", owner: "Pharmacy" }).then(() => "ok", (e: { code?: string }) => e.code)).toBe("NOT_FOUND");
+});
+
+test("recording a medication review at the current revision clears the invalidation; a review of an old revision is refused", async () => {
+  const { api } = await signedIn();
+  const edited = await api.encounter.edit({ encounterId: "visit-1042", expectedRevision: 1, prescriptionInputs: inputs });
+  const reviewed = await api.encounter.recordReview({ encounterId: "visit-1042", expectedRevision: edited.revision });
+  expect([reviewed.revision, reviewed.state.medicationCheckedRevision, Boolean(reviewed.state.reviewInvalidated)]).toEqual([edited.revision, edited.revision, false]);
+  const stale = await api.encounter.recordReview({ encounterId: "visit-1042", expectedRevision: 1 }).then(() => null, (e: { code?: string }) => e.code);
+  expect(stale).toBe("CONFLICT");
 });

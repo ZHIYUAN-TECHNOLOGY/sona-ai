@@ -60,6 +60,10 @@
         "^check-types"
       ],
       "cache": false
+    },
+    "db:seed": {
+      "cache": false,
+      "interactive": true
     }
   },
   "globalEnv": [

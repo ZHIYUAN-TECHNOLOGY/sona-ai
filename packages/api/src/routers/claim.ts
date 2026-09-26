@@ -7,6 +7,7 @@ import { z } from "zod";
 import { claimUpdateSchema, approvedCommandSchema } from "../contracts";
 import { clockOf } from "../context";
 import { protectedProcedure } from "../index";
+import { assertApprover } from "./hospital";
 import { loadEncounter } from "./encounter";
 
 /**
@@ -29,6 +30,7 @@ export const claimRouter = {
   }),
 
   send: protectedProcedure.input(approvedCommandSchema).handler(async ({ context, input }) => {
+    assertApprover(context.session.user.id, input.approvedBy);
     const { db, hospitalId } = context;
     const encounter = await loadEncounter(db, hospitalId, input.encounterId);
     const [prior] = await db.select().from(receipts).where(eq(receipts.requestId, input.requestId));

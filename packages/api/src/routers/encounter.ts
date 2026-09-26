@@ -4,7 +4,7 @@ import type { Encounter } from "@sona-ai/domain/types";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
-import { encounterEditSchema, type EncounterEdit } from "../contracts";
+import { encounterEditSchema, recordReviewSchema, type EncounterEdit, type RecordReview } from "../contracts";
 import type { Context } from "../context";
 import { protectedProcedure } from "../index";
 
@@ -39,6 +39,12 @@ export function applyEdit(current: EncounterSnapshot, edit: EncounterEdit): Enco
   };
 }
 
+/** Marks the medication review current at this revision; a review of an older revision is refused. */
+export function applyReview(current: EncounterSnapshot, review: RecordReview): EncounterSnapshot {
+  if (review.expectedRevision !== current.revision) throw stale(current.encounterId);
+  return { ...current, state: { ...current.state, medicationCheckedRevision: current.revision, reviewInvalidated: false } };
+}
+
 /** Writes the snapshot only if Postgres is still at `fromRevision`; otherwise someone else wrote first. */
 export async function saveEncounter(db: Db, hospitalId: string, fromRevision: number, next: EncounterSnapshot) {
   const rows = await db.update(encounters).set({ revision: next.revision, state: next.state, updatedAt: new Date() })
@@ -51,10 +57,17 @@ export async function saveEncounter(db: Db, hospitalId: string, fromRevision: nu
 export const encounterRouter = {
   get: protectedProcedure.input(z.object({ encounterId: z.string().min(1) }))
     .handler(({ context, input }) => loadEncounter(context.db, context.hospitalId, input.encounterId)),
-  // ponytail: writes Postgres directly; route through the EncounterState Durable Object once the agent lives there.
+  // Through the encounter's Durable Object when the Worker provides it, so its live state never goes stale.
   edit: protectedProcedure.input(encounterEditSchema).handler(async ({ context, input }) => {
     const { hospitalId } = context;
+    if (context.encounters) return context.encounters.edit(hospitalId, input);
     const current = await loadEncounter(context.db, hospitalId, input.encounterId);
     return saveEncounter(context.db, hospitalId, current.revision, applyEdit(current, input));
+  }),
+  recordReview: protectedProcedure.input(recordReviewSchema).handler(async ({ context, input }) => {
+    const { hospitalId } = context;
+    if (context.encounters) return context.encounters.recordReview(hospitalId, input);
+    const current = await loadEncounter(context.db, hospitalId, input.encounterId);
+    return saveEncounter(context.db, hospitalId, current.revision, applyReview(current, input));
   }),
 };

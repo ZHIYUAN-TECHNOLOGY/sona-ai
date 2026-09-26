@@ -32,7 +32,7 @@ test("the object starts from the Postgres snapshot and every accepted edit is sn
 
 test("a medicine edit after a recorded review invalidates it; a stale write is refused", async () => {
   const live = objectFor(await seeded());
-  const reviewed = await live.recordMedicationReview(DEMO_HOSPITAL, "visit-1042", 1);
+  const reviewed = await live.recordReview(DEMO_HOSPITAL, { encounterId: "visit-1042", expectedRevision: 1 });
   expect(reviewed).toMatchObject({ revision: 1, state: { medicationCheckedRevision: 1, reviewInvalidated: false } });
 
   const edited = await live.edit(DEMO_HOSPITAL, { encounterId: "visit-1042", expectedRevision: 1, proposedMedicine: "Paracetamol" });
@@ -41,7 +41,7 @@ test("a medicine edit after a recorded review invalidates it; a stale write is r
   expect(edited.state.medicationCheckedRevision).not.toBe(2);
 
   expect((await live.edit(DEMO_HOSPITAL, { encounterId: "visit-1042", expectedRevision: 1, proposedMedicine: "Ibuprofen" }).catch(e => e)).code).toBe("CONFLICT");
-  expect((await live.recordMedicationReview(DEMO_HOSPITAL, "visit-1042", 1).catch(e => e)).code).toBe("CONFLICT");
+  expect((await live.recordReview(DEMO_HOSPITAL, { encounterId: "visit-1042", expectedRevision: 1 }).catch(e => e)).code).toBe("CONFLICT");
   expect(await live.get(DEMO_HOSPITAL, "visit-1042")).toEqual(edited);
 });
 

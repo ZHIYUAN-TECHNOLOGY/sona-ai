@@ -60,3 +60,7 @@ export const encounterEditSchema = z.object({
   proposedMedicine: z.string().optional(),
 }).refine(e => e.prescriptionInputs || e.medicationEntries || e.proposedMedicine !== undefined, "An edit changes eligibility or medicines");
 export type EncounterEdit = z.infer<typeof encounterEditSchema>;
+
+/** A medication review ran against this revision; it stays current until the next eligibility or medicine edit. */
+export const recordReviewSchema = z.object({ encounterId: z.string().min(1), expectedRevision: z.number().int().positive() });
+export type RecordReview = z.infer<typeof recordReviewSchema>;
