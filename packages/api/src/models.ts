@@ -1,0 +1,50 @@
+import type { Code, Sentence } from "@sona-ai/domain/claim";
+import type { Language } from "@sona-ai/domain/discharge";
+import type { Study } from "@sona-ai/domain/evidence";
+import type { Patient } from "@sona-ai/domain/types";
+import { huddle, type Bed, type Owner } from "@sona-ai/domain/ward";
+
+/**
+ * The one seam between the routes and the models (docs/delivery-plan.md, Models and hosting: on
+ * hold). Routes call `context.models`; turning on Baseten means passing a real `Models` from the
+ * Worker's context, nothing else. Every answer says where it came from, so a fixture can never be
+ * shown as a model reading, and a model answer carries the model version for provenance.
+ */
+export type Origin = { source: "fixture" } | { source: "model"; model: string };
+type Answer<T> = Promise<T & Origin>;
+
+export type Models = {
+  /** Brain (Gemma): what to know before seeing the patient. */
+  briefing(input: { patient: Patient }): Answer<{ lines: string[] }>;
+  reasoning(input: { patient: Patient; question: string }): Answer<{ answer: string; sourceIds: string[] }>;
+  /** X-ray box: never a validated read in this demo. */
+  xrayRead(input: { image: Uint8Array; contentType: string }): Answer<{ findings: string[]; validated: false }>;
+  draftDischarge(input: { patient: Patient; language: Language }): Answer<{ summary: string; leaflet: string }>;
+  suggestCodes(input: { sentences: Sentence[] }): Answer<{ codes: Code[] }>;
+  synthesiseEvidence(input: { question: string; studies: Study[] }): Answer<{ answer: string; studyIds: string[] }>;
+  huddleBrief(input: { beds: Bed[]; owners: Record<string, Owner | undefined> }): Answer<{ lines: string[] }>;
+  /** After-discharge check-ins: worse or urgent replies become a flagged task. */
+  classifyReply(input: { text: string; language: Language }): Answer<{ label: "fine" | "worse" | "urgent" }>;
+};
+
+const fixture = <T>(value: T) => Promise.resolve({ ...value, source: "fixture" as const });
+
+/** The app's authored content, served until the models come off hold. Nothing here reads its input the way a model would. */
+export const stubModels: Models = {
+  briefing: ({ patient }) => fixture({ lines: [
+    patient.complaint,
+    patient.allergies ? `Allergy recorded: ${patient.allergies.split(" — ")[0]}.` : "No allergy recorded; confirm before prescribing.",
+    ...(patient.incomplete ? ["History is incomplete: onset, observations, allergies and medicines are still missing."] : []),
+  ] }),
+  reasoning: () => fixture({ answer: "Sample reasoning only: community-acquired pneumonia is the leading working diagnosis; confirm with a chest X-ray and CURB-65.", sourceIds: [] }),
+  xrayRead: () => fixture({ findings: ["Findings unavailable: no model has read this image."], validated: false }),
+  draftDischarge: ({ patient }) => fixture({
+    summary: `${patient.name} was treated for ${patient.complaint.toLowerCase()} Sample discharge summary for review.`,
+    leaflet: "Take your medicines as prescribed and come back if the fever returns or breathing gets harder.",
+  }),
+  suggestCodes: () => fixture({ codes: [{ code: "J18.9", label: "Pneumonia, unspecified organism", kind: "Principal", evidence: "s1" }] }),
+  synthesiseEvidence: ({ studies }) => fixture({ answer: "Sample synthesis: no model has weighed these studies.", studyIds: studies.map(s => s.id) }),
+  huddleBrief: ({ beds, owners }) => fixture({ lines: huddle(beds, owners) }),
+  // ponytail: keyword rule standing in for the classifier; the demo reply is "fever returned".
+  classifyReply: ({ text }) => fixture({ label: /fever|demam|发烧|breath|sesak|pain|sakit/i.test(text) ? "worse" : "fine" }),
+};

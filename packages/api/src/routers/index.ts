@@ -11,6 +11,9 @@ import { claimRouter } from "./claim";
 import { dischargeRouter } from "./discharge";
 import { encounterRouter } from "./encounter";
 import { wardRouter } from "./ward";
+// lane H
+import { handoverRouter } from "./handover";
+import { xrayRouter } from "./xray";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -36,6 +39,9 @@ export const appRouter = {
       return item;
     }),
   },
+  // lane H
+  handover: handoverRouter,
+  xray: xrayRouter,
   tasks: {
     list: protectedProcedure.handler(({ context }) =>
       context.db.select().from(tasks).where(eq(tasks.hospitalId, context.hospitalId)).orderBy(asc(tasks.createdAt))),

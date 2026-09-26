@@ -64,3 +64,13 @@ export type EncounterEdit = z.infer<typeof encounterEditSchema>;
 /** A medication review ran against this revision; it stays current until the next eligibility or medicine edit. */
 export const recordReviewSchema = z.object({ encounterId: z.string().min(1), expectedRevision: z.number().int().positive() });
 export type RecordReview = z.infer<typeof recordReviewSchema>;
+
+// lane H
+/** "Hold to accept handover": the receiving clinician takes these cards; replay-safe by requestId. */
+export const handoverAcceptSchema = z.object({ requestId: z.string().min(1), cardIds: z.array(z.string().min(1)).min(1), toUser: z.string().trim().min(1) });
+export type HandoverAccept = z.infer<typeof handoverAcceptSchema>;
+/** An X-ray for an encounter as base64 (about 10 MB of image at most); only image types are stored. */
+export const xrayUploadSchema = z.object({
+  encounterId: z.string().min(1), contentType: z.string().regex(/^image\/[a-z0-9.+-]+$/i, "Only images can be uploaded"), dataBase64: z.string().min(1).max(14_000_000).regex(/^[A-Za-z0-9+/]+={0,2}$/, "Not base64"),
+});
+export type XrayUpload = z.infer<typeof xrayUploadSchema>;

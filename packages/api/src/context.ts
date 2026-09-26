@@ -2,6 +2,7 @@ import type { Session } from "@sona-ai/auth";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 
 import type { EncounterEdit, RecordReview } from "./contracts";
+import type { Models } from "./models";
 import type { EncounterSnapshot } from "./routers/encounter";
 
 export type EncounterStore = {
@@ -17,6 +18,16 @@ export type Context = {
   encounters?: EncounterStore;
   /** The clock; tests pass a fixed one so time-based rules (the mock insurer) are deterministic. */
   now?: () => Date;
+  /** The model seam; stubModels (fixtures) until the Baseten boxes come off hold. */
+  models?: Models;
+  /** Image storage: the Worker passes its R2 bucket; tests pass an in-memory one. */
+  uploads?: Uploads;
+};
+
+/** The slice of an R2 bucket the routes use. */
+export type Uploads = {
+  put(key: string, value: Uint8Array, options?: { httpMetadata?: { contentType?: string } }): Promise<unknown>;
+  get(key: string): Promise<{ arrayBuffer(): Promise<ArrayBuffer>; httpMetadata?: { contentType?: string } } | null>;
 };
 
 export const clockOf = (context: Pick<Context, "now">) => context.now?.() ?? new Date();

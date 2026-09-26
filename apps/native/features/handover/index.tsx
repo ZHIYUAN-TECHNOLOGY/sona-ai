@@ -13,6 +13,7 @@ import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
+import { useLiveHandover } from "@/features/live/handover-sync";
 import { buildHandover, type HandoverCard } from "./model";
 
 /*
@@ -90,7 +91,10 @@ export function HandoverScreen() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();
-  const [cards] = useState(() => buildHandover(patients, encounters));
+  const [fixtureCards] = useState(() => buildHandover(patients, encounters));
+  // Live backend mode: the server's cards, and the acceptance is written there.
+  const server = useLiveHandover();
+  const cards = server.live ? server.cards ?? [] : fixtureCards;
   const [done, setDone] = useState<{ id: string; decision: Decision }[]>([]);
   const [receiver, setReceiver] = useState("Dr Lim · night registrar");
   const [accepted, setAccepted] = useState<string>();
@@ -126,6 +130,16 @@ export function HandoverScreen() {
   const nextStyle = useAnimatedStyle(() => ({ transform: [{ translateY: interpolate(Math.abs(x.value), [0, 200], [10, 0], "clamp") }, { scale: interpolate(Math.abs(x.value), [0, 200], [0.95, 1], "clamp") }] }));
   const undo = () => { haptic(); setDone(list => list.slice(0, -1)); };
   const handed = done.filter(d => d.decision === "handed").length;
+  const clock = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const accept = () => {
+    if (!server.live) { haptic("success"); setAccepted(clock(new Date())); return; }
+    server.accept(cards.map(c => c.id), receiver).then(at => { haptic("success"); setAccepted(clock(at)); }, () => {});
+  };
+
+  if (server.live && !server.cards) return <View style={{ flex: 1, backgroundColor: palette.canvas, paddingTop: insets.top + 56, paddingHorizontal: 20 }}>
+    <Stack.Screen options={{ title: "Shift handover" }} />
+    <Text accessibilityLiveRegion="polite" style={{ ...type.callout, color: palette.muted }}>{server.error ?? "Loading the handover from the server…"}</Text>
+  </View>;
   const discuss = done.filter(d => d.decision === "discuss");
 
   return <View style={{ flex: 1, backgroundColor: palette.canvas, paddingTop: insets.top + 56, paddingBottom: Math.max(insets.bottom, 16), paddingHorizontal: 20, gap: 14 }}>
@@ -177,8 +191,9 @@ export function HandoverScreen() {
         <Pressable accessibilityRole="button" onPress={() => router.back()} style={{ alignSelf: "flex-start", marginTop: 6, minHeight: 40, paddingHorizontal: 16, borderRadius: 20, justifyContent: "center", backgroundColor: "rgba(255,255,255,0.18)" }}>
           <Text style={{ fontSize: 15, fontWeight: "600", color: palette.white }}>Done</Text>
         </Pressable>
-      </Animated.View> : <HoldToAccept onDone={() => { haptic("success"); const d = new Date(); setAccepted(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`); }} />}
-      <Text style={{ ...type.caption, color: palette.muted }}>Synthetic handover. Ward patients are authored examples; clinic patients come from today’s visits.</Text>
+      </Animated.View> : <HoldToAccept onDone={accept} />}
+      {server.error && !accepted && <Text accessibilityLiveRegion="polite" style={{ ...type.callout, color: palette.amber }}>{server.error}</Text>}
+      <Text style={{ ...type.caption, color: palette.muted }}>{server.live ? "Synthetic handover from the live backend: clinic patients from the server’s records, no authored ward patients." : "Synthetic handover. Ward patients are authored examples; clinic patients come from today’s visits."}</Text>
     </ScrollView>}
   </View>;
 }

@@ -89,6 +89,8 @@ export const appointments = pgTable("appointments", {
 export const handoverAcceptances = pgTable("handover_acceptances", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), fromUser: text("from_user").notNull(), toUser: text("to_user").notNull(),
   cardIds: jsonb("card_ids").$type<string[]>().notNull(), acceptedAt: timestamp("accepted_at").defaultNow().notNull(),
+  /** The app's request ID, so a replayed "hold to accept" returns the one acceptance. */
+  requestId: text("request_id").unique(),
 });
 
 export const auditItems = pgTable("audit_items", {

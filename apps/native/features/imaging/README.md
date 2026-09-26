@@ -1,6 +1,6 @@
 # Imaging UI
 
-`XrayCard` integrates with the response catalogue. `XrayScreen` uses the active encounter and the platform photo picker to open an explicitly selected local image. It does not upload, classify or infer findings. Empty, picker-error, cancelled-picker, loading-image and unreadable-image states are distinct. The original displayed image has no tint, blur, shader or annotations.
+`XrayCard` integrates with the response catalogue. `XrayScreen` uses the active encounter and the platform photo picker to open an explicitly selected local image. It does not classify or infer findings. It uploads only in live backend mode (`features/live/xray-upload.ts`, to the server's `xray.upload`), and the image's provenance line says so. Empty, picker-error, cancelled-picker, loading-image and unreadable-image states are distinct. The original displayed image has no tint, blur, shader or annotations.
 
 The encounter retains the selected URI for the current app session. Reset clears it; the picker cache is not durable clinical storage. Selection results are ignored if the screen unmounts or the active patient changes while the picker is open.
 
