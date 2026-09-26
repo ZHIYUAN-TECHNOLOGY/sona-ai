@@ -117,3 +117,28 @@ test("patients list the hospital's people with their full record and visit, so l
   expect(people[0]!.sources.map(s => s.id)).toContain("history");
   expect(await (await otherHospital(db, as)).patients.list()).toEqual([]);
 });
+
+// lane T2
+test("a doctor's follow-up is saved once for the visit, a replay returns it, and another hospital's visit is not found", async () => {
+  const { db, api, as } = await signedIn();
+  const followUp = { encounterId: "visit-1042", title: "  Review inhaler technique ", owner: " Dr Aisyah ", due: "2026-10-03", requestId: "req-1" };
+  const task = await api.tasks.create(followUp);
+  expect(task).toMatchObject({ encounterId: "visit-1042", kind: "followup", title: "Review inhaler technique", owner: "Dr Aisyah", due: "2026-10-03", completed: false });
+  expect(await api.tasks.create(followUp)).toEqual(task);
+  expect((await api.tasks.list()).map(t => t.id)).toEqual([task.id]);
+
+  expect((await api.tasks.create({ ...followUp, encounterId: "no-such-visit", requestId: "req-2" }).catch(e => e)).code).toBe("NOT_FOUND");
+  const theirs = await otherHospital(db, as);
+  expect((await theirs.tasks.create({ ...followUp, requestId: "req-3" }).catch(e => e)).code).toBe("NOT_FOUND");
+  expect(await theirs.tasks.list()).toEqual([]);
+});
+
+test("a follow-up needs a title, an owner and a real date, and a signed-in doctor", async () => {
+  const { db, api } = await signedIn();
+  const followUp = { encounterId: "visit-1042", title: "Review", owner: "Nurse", requestId: "req-1" };
+  expect((await api.tasks.create(followUp)).due).toBeNull(); // the date is optional
+  for (const bad of [{ title: "  " }, { owner: "" }, { title: "x".repeat(201) }, { owner: "x".repeat(81) }, { due: "3/10/2026" }])
+    expect((await api.tasks.create({ ...followUp, ...bad, requestId: "req-bad" }).catch(e => e)).code).toBe("BAD_REQUEST");
+  const anonymous = createRouterClient(appRouter, { context: { db, session: null } });
+  expect((await anonymous.tasks.create(followUp).catch(e => e)).code).toBe("UNAUTHORIZED");
+});

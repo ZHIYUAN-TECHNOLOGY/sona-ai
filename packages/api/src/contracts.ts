@@ -92,3 +92,9 @@ export type FindingDismiss = z.infer<typeof findingDismissSchema>;
 /** A patient's reply in the simulated inbox (no real messaging in the demo). */
 export const checkInReplySchema = z.object({ checkInId: z.string().min(1), text: z.string().trim().min(1).max(1000) });
 export type CheckInReply = z.infer<typeof checkInReplySchema>;
+// lane T2
+/** A follow-up a doctor writes for a visit; replay-safe by requestId. */
+export const taskCreateSchema = z.object({
+  encounterId: z.string().min(1), title: z.string().trim().min(1).max(200), owner: z.string().trim().min(1).max(80), due: z.iso.date().optional(), requestId: z.string().min(1),
+});
+export type TaskCreate = z.infer<typeof taskCreateSchema>;

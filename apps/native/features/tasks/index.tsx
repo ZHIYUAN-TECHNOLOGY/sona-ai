@@ -15,9 +15,9 @@ import { Section as AnswerSection } from "@/components/sona/sections";
 import { HalftoneGlint } from "@/components/sona/halftone-shimmer";
 import { palette, type } from "@/components/sona/theme";
 import { useEncounter } from "@/features/encounter/store";
-import type { FeatureProps, Task } from "@/features/encounter/types";
-import { useLive } from "@/features/live";
-import { completeServerTask, useServerData, useVisitTasks } from "@/features/live/server-day";
+import type { Encounter, FeatureProps, Task } from "@/features/encounter/types";
+import { errorText, requestId, useLive } from "@/features/live";
+import { completeServerTask, createServerTask, useServerData, useVisitTasks } from "@/features/live/server-day";
 import { createTaskOnce, localDate, mentionQuery, parseDuePhrase, proposedTask, taskDraftErrors, taskProposal, type TaskDraft } from "./state";
 
 /**
@@ -79,7 +79,7 @@ function TaskSummary({ task }: { task: Task }) {
 /** The session/simulation boundary, said once per screen as one quiet line. */
 function SessionNote() {
   const { on: live } = useLive();
-  return <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>{live ? "Live backend · server tasks complete on the server; new follow-ups stay on this device" : "Local simulation · nothing is booked or sent"}</Text>;
+  return <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>{live ? "Live backend · follow-ups are saved and completed on the server" : "Local simulation · nothing is booked or sent"}</Text>;
 }
 
 /** One quiet line: who wrote it, its source at the revision it was taken from, and (with `local`) the simulation note. */
@@ -445,10 +445,13 @@ export function TasksScreen() {
   const { reducedMotion } = useAccessibleEffects();
   const tasksOf = useVisitTasks();
   const server = useServerData();
+  const { on: live } = useLive();
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
   const pendingRef = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // One request ID per draft, so a retry after a lost reply returns the saved task instead of adding another.
+  const serverRequest = useRef<{ operationId: string; requestId: string }>(undefined);
   const activePatient = useRef(patient?.id);
   useEffect(() => { activePatient.current = patient?.id; }, [patient?.id]);
   useEffect(() => { if (error) AccessibilityInfo.announceForAccessibility(error); }, [error]);
@@ -473,12 +476,32 @@ export function TasksScreen() {
     }, 320);
   };
   // Creating hands the composer a fresh blank draft, so the next step can be typed straight away.
+  const blankDraft = (next: Encounter): TaskDraft => ({ ...taskProposal(next, patient), operationId: `task-${patient.encounterId}-${Date.now()}`, title: "", owner: "", due: "", provenance: "clinician" });
+  const added = () => { haptic("done"); AccessibilityInfo.announceForAccessibility("Task added"); };
+  // Live mode: the server keeps the task and the list shows it from there; a refusal keeps the draft.
+  const saveToServer = async (draft: TaskDraft) => {
+    if (pendingRef.current) return;
+    const patientId = patient.id;
+    pendingRef.current = true; setPending(true); setError(undefined);
+    if (serverRequest.current?.operationId !== draft.operationId) serverRequest.current = { operationId: draft.operationId, requestId: requestId() };
+    try {
+      await createServerTask({ encounterId: patient.encounterId, title: draft.title, owner: draft.owner, due: draft.due, requestId: serverRequest.current.requestId });
+      if (activePatient.current !== patientId) return;
+      added();
+      updateEncounter(current => ({ ...current, taskDraft: blankDraft(current) }));
+    } catch (e) {
+      if (activePatient.current === patientId) setError(errorText(e));
+    } finally {
+      if (activePatient.current === patientId) { pendingRef.current = false; setPending(false); }
+    }
+  };
   const save = () => {
     if (!draft || taskDraftErrors(draft).length) return;
-    saveLocally(() => { haptic("done"); AccessibilityInfo.announceForAccessibility("Task added"); updateEncounter(current => {
+    if (live) return void saveToServer(draft);
+    saveLocally(() => { added(); updateEncounter(current => {
       const next = createTaskOnce(current, draft);
       if (next === current) return current;
-      return { ...next, taskDraft: { ...taskProposal(next, patient), operationId: `task-${patient.encounterId}-${Date.now()}`, title: "", owner: "", due: "", provenance: "clinician" } };
+      return { ...next, taskDraft: blankDraft(next) };
     }); });
   };
   const byDue = (a: Task, b: Task) => a.due.localeCompare(b.due);

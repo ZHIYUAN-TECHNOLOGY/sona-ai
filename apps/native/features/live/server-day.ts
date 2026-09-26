@@ -62,6 +62,12 @@ export async function completeServerTask(taskId: string) {
   await refreshServerData();
 }
 
+/** Saves a follow-up on the server; it then shows from the server's list, never as a device copy. */
+export async function createServerTask(input: Parameters<typeof api.tasks.create>[0]) {
+  await api.tasks.create(input);
+  await refreshServerData();
+}
+
 export async function acknowledgeResult(resultId: string) {
   await api.results.acknowledge({ resultId });
   await refreshServerData();

@@ -6,6 +6,7 @@ import { criticalOf } from "@sona-ai/domain/critical";
 import { and, asc, desc, eq, gte, isNull, lt } from "drizzle-orm";
 import { z } from "zod";
 
+import { taskCreateSchema } from "../contracts";
 import { clockOf, type Context } from "../context";
 import { protectedProcedure } from "../index";
 
@@ -14,6 +15,21 @@ export const completeTask = protectedProcedure.input(z.object({ taskId: z.string
   const [task] = await db.update(tasks).set({ completed: true })
     .where(and(eq(tasks.id, input.taskId), eq(tasks.hospitalId, hospitalId))).returning();
   if (!task) throw new ORPCError("NOT_FOUND", { message: `No task ${input.taskId}` });
+  return task;
+});
+
+// lane T2
+/** Saves a doctor's follow-up for one of the hospital's visits; replaying the requestId returns the same task. */
+export const createTask = protectedProcedure.input(taskCreateSchema).handler(async ({ context: { db, hospitalId }, input }) => {
+  const [visit] = await db.select({ id: encounters.id }).from(encounters).where(and(eq(encounters.id, input.encounterId), eq(encounters.hospitalId, hospitalId)));
+  if (!visit) throw new ORPCError("NOT_FOUND", { message: `No encounter ${input.encounterId}` });
+  const idempotencyKey = `followup:${input.requestId}`;
+  await db.insert(tasks).values({
+    id: crypto.randomUUID(), hospitalId, encounterId: visit.id, kind: "followup", title: input.title, owner: input.owner, due: input.due, idempotencyKey,
+  }).onConflictDoNothing();
+  // Scoped to the hospital too: the key is unique across hospitals, and another's task is never returned.
+  const [task] = await db.select().from(tasks).where(and(eq(tasks.idempotencyKey, idempotencyKey), eq(tasks.hospitalId, hospitalId)));
+  if (!task) throw new ORPCError("CONFLICT", { message: "That request ID is already used" });
   return task;
 });
 
