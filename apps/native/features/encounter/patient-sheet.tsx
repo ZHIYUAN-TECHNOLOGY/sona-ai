@@ -1,7 +1,8 @@
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
+import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -74,7 +75,8 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
     <GestureDetector gesture={pan}>
       <Animated.View accessibilityViewIsModal style={[{ position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: box ? box - 72 : height * 0.6, borderTopLeftRadius: 32, borderTopRightRadius: 32, borderCurve: "continuous", backgroundColor: palette.canvas, boxShadow: "0 -8px 30px rgba(24,32,48,0.14)", paddingBottom: Math.max(insets.bottom, 16) }, sheet]}>
         <View style={{ alignSelf: "center", width: 38, height: 5, borderRadius: 3, marginTop: 10, backgroundColor: "rgba(20,28,40,0.18)" }} />
-        <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 18, gap: 18 }} showsVerticalScrollIndicator={false}>
+        {/* Keyboard-aware so the Sona Care reply box stays above the keyboard while the doctor types. */}
+        <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingTop: 18, gap: 18 }} showsVerticalScrollIndicator={false}>
           <Animated.View entering={rise(0)} style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
             <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: patient.incomplete ? "rgba(196,120,20,0.16)" : "rgba(36,91,204,0.14)", alignItems: "center", justifyContent: "center" }}>
               <Text style={{ fontSize: 18, fontWeight: "700", color: patient.incomplete ? palette.amber : palette.blue }}>{patient.initials}</Text>
@@ -129,7 +131,7 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
               <Text style={{ ...type.footnote, color: palette.blue }}>Full history & sources</Text>
             </Pressable>
           </Animated.View>
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </Animated.View>
     </GestureDetector>
   </View>;

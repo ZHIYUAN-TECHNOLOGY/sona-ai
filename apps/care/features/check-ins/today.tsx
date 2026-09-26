@@ -8,6 +8,7 @@ import { useMe } from "@/features/me";
 import { palette, type } from "@/lib/theme";
 import { Button, Card, field } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
+import { useMessageNeeds, useThread } from "@/features/messages/row";
 import { Answer } from "./answer";
 import { answersFor, doneLine, shortDate, todayOf, type ReplyLabel } from "./model";
 
@@ -27,6 +28,8 @@ export function useCheckInNeeds() {
 }
 
 export function TodayCard() {
+  const thread = useThread();
+  const replyWaiting = useMessageNeeds() > 0;
   const { data, isError } = useCheckIns();
   const reduced = useReducedMotion();
   const [done, setDone] = useState<ReplyLabel>();
@@ -91,6 +94,15 @@ export function TodayCard() {
       <Text style={{ ...type.footnote, color: palette.muted }}>For an emergency, call 999.</Text>
     </Animated.View></Card>;
   }
+
+  // Nothing to answer, but the care team replied: that reply is the one thing that needs them now.
+  const lastReply = thread.data?.at(-1);
+  if (replyWaiting && lastReply) return <Card feature>
+    <Text style={{ ...type.overline, color: palette.blue }}>From your care team</Text>
+    <Text numberOfLines={3} style={{ ...type.body, color: palette.ink }}>{lastReply.text}</Text>
+    <Button label="Read and reply" onPress={() => router.push("/messages")} />
+    {history}
+  </Card>;
 
   return <Card feature>
     <Text style={{ ...type.overline, color: palette.blue }}>Today</Text>
