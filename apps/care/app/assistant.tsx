@@ -1,12 +1,14 @@
 import { useMutation } from "@tanstack/react-query";
+import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, Linking, Pressable, ScrollView, View, type ViewStyle } from "react-native";
-import { Text, TextInput, AnimatedText } from "@/lib/text";
+import { AccessibilityInfo, ActivityIndicator, Alert, Linking, Pressable, ScrollView, View, type TextInput as RNTextInput, type ViewStyle } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import Animated, { Easing, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from "react-native-reanimated";
+import Animated, { Easing, FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
-import { NO_ANSWER, suggestions, urgent, type Asked } from "@/features/assistant/answers";
+import { conditionOf, doctorQuestion, NO_ANSWER, reply, spoken, suggestions, type Reply } from "@/features/assistant/answers";
+import { SuggestionRow, VoiceMode } from "@/features/assistant/voice";
+import type { Doctor } from "@/features/doctors/data";
 import { useNextDose, useNow } from "@/features/doses";
 import { errorText } from "@/features/errors";
 import { dayLabel } from "@/features/follow-ups/lines";
@@ -14,31 +16,39 @@ import { useFollowUps } from "@/features/follow-ups/row";
 import { useMe } from "@/features/me";
 import { saveQuestion } from "@/features/questions";
 import { orbPad, SonaOrb } from "@/lib/orb";
-import { palette, type } from "@/lib/theme";
-import { AccentText, ICON, pillStyle } from "@/lib/ui";
+import { AnimatedText, Text, TextInput } from "@/lib/text";
+import { accent, palette, type } from "@/lib/theme";
+import { CircleButton, ICON, pillStyle, surfaceStyle } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 
 /**
- * Ask Sona Care, the orb's sheet (after the Lumi kit's "Ask Nomi"): the orb and "Ask Sona Care" centred,
- * up to three questions from the patient's own plan, and a composer pinned to the bottom. The patient's
- * question sits in a white bubble on the right; the answer is plain text from that plan with where it
- * came from, then the next step (save it for the visit, ask the care team) and the plan's other questions.
- * There is no model yet, so anything typed goes to the care team, with 999 first for urgent words.
+ * AI Chat (Life OS frame 5), a full screen from the orb in the dock. Empty, it is the orb, "Hello, how
+ * can we support your health today?", the plan's own questions (at most three) plus "Find a doctor for
+ * my …" from the plan's condition, and a composer card with voice mode and send. Asked, the patient's
+ * words sit in a white bubble on the right and Sona's reply in a blue bubble on the left, after a status
+ * pill while it reads the plan or searches for a doctor (the orb floods). Answers come only from the
+ * plan (with where from, Save for my visit, Ask my care team); doctor questions show sample doctors;
+ * anything else goes to the care team, with the 999 line first for warning words.
  */
-type Turn = { question: string; answer?: Asked; requestId: string; ready: boolean; saved?: boolean; sent?: boolean };
-const READ_MS = 800;
+type Turn = { question: string; reply: Reply; requestId: string; ready: boolean; saved?: boolean; sent?: boolean };
+const WORK_MS = { plan: 800, doctors: 1100 } as const;
 const SENT = "Sent · they usually reply within a few hours";
 const newRequestId = () => `care-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-// Lucide-style 24-unit paths this sheet needs beyond the shared ICON set.
+const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
+// Lucide-style 24-unit paths this screen needs beyond the shared ICON set.
 const GLYPH = {
-  dose: ICON.alarm, chat: ICON.chat,
-  medicine: "m10.5 20.5l10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7m-2-12l7 7",
-  visit: "M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2",
+  chat: ICON.chat,
   save: "m19 21l-7-4l-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z",
   up: "M12 19V5m-7 7l7-7l7 7",
+  more: "M12 13a1 1 0 1 0 0-2a1 1 0 0 0 0 2M19 13a1 1 0 1 0 0-2a1 1 0 0 0 0 2M5 13a1 1 0 1 0 0-2a1 1 0 0 0 0 2",
+  voice: "M2 10v3M6 6v11M10 3v18M14 8v7M18 5v13M22 10v3",
+  next: "m9 18l6-6l-6-6",
 };
-const bubble: ViewStyle = { alignSelf: "flex-end", maxWidth: "86%", backgroundColor: palette.white, borderRadius: 22, borderBottomRightRadius: 8, borderCurve: "continuous", paddingHorizontal: 16, paddingVertical: 11,
-  borderWidth: 1, borderColor: "rgba(40,24,70,0.05)", boxShadow: "0 8px 20px -14px rgba(60,70,140,0.45)" };
+const mine: ViewStyle = { alignSelf: "flex-end", maxWidth: "86%", backgroundColor: palette.white, borderRadius: 22, borderBottomRightRadius: 8, borderCurve: "continuous", paddingHorizontal: 16, paddingVertical: 11,
+  boxShadow: "0 0 0 0.5px rgba(14,18,27,0.05), 0 10px 22px -16px rgba(14,18,27,0.3)" };
+const sona: ViewStyle = { flexShrink: 1, backgroundColor: palette.blue, borderRadius: 22, borderBottomLeftRadius: 8, borderCurve: "continuous", paddingHorizontal: 16, paddingVertical: 12, gap: 10,
+  boxShadow: "0 12px 24px -16px rgba(51,92,255,0.7)" };
+const AVATAR = 30, INDENT = AVATAR + 10;
 
 export default function Assistant() {
   const still = useReducedMotion();
@@ -46,13 +56,20 @@ export default function Assistant() {
   const { state } = useMe();
   const { plan, dose } = useNextDose(useNow());
   const visit = useFollowUps().data?.[0];
-  const asks = suggestions(plan?.status === "discharged" ? plan : undefined, visit, dose?.name);
+  const discharged = plan?.status === "discharged" ? plan : undefined;
+  const asks = suggestions(discharged, visit, dose?.name);
+  const condition = conditionOf(discharged);
+  const rows = [...asks.map(a => a.question), ...(condition ? [doctorQuestion(condition)] : [])];
   const flood = useSharedValue(0);
   const scroll = useRef<ScrollView>(null);
+  const input = useRef<RNTextInput>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState("");
+  const [voice, setVoice] = useState(false);
+  const [typeNext, setTypeNext] = useState(false);
+  useEffect(() => { if (!voice && typeNext) { input.current?.focus(); setTypeNext(false); } }, [voice, typeNext]);
   const patch = (id: string, p: Partial<Turn>) => setTurns(ts => ts.map(t => t.requestId === id ? { ...t, ...p } : t));
   const send = useMutation({
     mutationFn: (t: Turn) => client.care.messages.send({ text: t.question, requestId: t.requestId }),
@@ -60,79 +77,98 @@ export default function Assistant() {
   });
   const visitDay = visit ? dayLabel(visit.date) : "your next visit";
   const last = turns.at(-1);
-  const reading = last !== undefined && !last.ready;
-  const rest = asks.filter(a => !turns.some(t => t.question === a.question));
+  const working = last !== undefined && !last.ready;
+  const rest = rows.filter(q => !turns.some(t => t.question === q));
 
-  const ask = (a: Asked) => {
+  const ask = (question: string) => {
     clearTimeout(timer.current);
-    const requestId = newRequestId();
-    const done = () => AccessibilityInfo.announceForAccessibility(`${a.answer} ${a.source}`);
-    if (still) { setTurns(ts => [...ts, { question: a.question, answer: a, requestId, ready: true }]); done(); return; }
-    setTurns(ts => [...ts, { question: a.question, answer: a, requestId, ready: false }]);
-    flood.set(withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) }));
+    const r = reply(question, asks, condition), requestId = newRequestId();
+    const say = () => AccessibilityInfo.announceForAccessibility(r.kind === "plan" ? `${spoken(r)} ${r.asked.source}` : spoken(r));
+    // The honest no needs no reading; plan answers and doctor searches show their status pill first.
+    if (still || r.kind === "none") { setTurns(ts => [...ts, { question, reply: r, requestId, ready: true }]); say(); return; }
+    setTurns(ts => [...ts, { question, reply: r, requestId, ready: false }]);
+    flood.set(withTiming(1, { duration: 400, easing: EASE_OUT }));
     timer.current = setTimeout(() => {
-      flood.set(withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) }));
+      flood.set(withTiming(0, { duration: 600, easing: EASE_OUT }));
       patch(requestId, { ready: true });
-      done();
-    }, READ_MS);
+      say();
+    }, WORK_MS[r.kind]);
   };
-  const askFree = () => {
+  /** Voice mode asks the same way, but it reads the answer aloud itself, so the turn is ready at once. */
+  const askAloud = (question: string) => {
+    const r = reply(question, asks, condition);
+    setTurns(ts => [...ts, { question, reply: r, requestId: newRequestId(), ready: true }]);
+    return r;
+  };
+  const askTyped = () => {
     const question = draft.trim();
-    if (!question || reading) return;
+    if (!question || working) return;
     setDraft("");
-    setTurns(ts => [...ts, { question, requestId: newRequestId(), ready: true }]);
-    AccessibilityInfo.announceForAccessibility(urgent(question) ? `Call 999 now. ${NO_ANSWER}` : NO_ANSWER);
+    ask(question);
   };
   const save = (t: Turn) => {
     saveQuestion(t.question);
     patch(t.requestId, { saved: true });
     AccessibilityInfo.announceForAccessibility(`Saved for ${visitDay}`);
   };
-  const enter = (i: number) => still ? undefined : FadeInDown.duration(320).easing(Easing.out(Easing.cubic)).delay(i * 40);
-  const canSend = state === "joined" && !!draft.trim() && !reading;
+  const clear = () => Alert.alert("Clear this chat?", "Questions you saved for your visit stay saved.", [
+    { text: "Cancel", style: "cancel" },
+    { text: "Clear chat", style: "destructive", onPress: () => { clearTimeout(timer.current); flood.set(0); setTurns([]); } },
+  ]);
+  const enter = (i: number) => still ? undefined : FadeInDown.duration(320).easing(EASE_OUT).delay(i * 40);
+  const joined = state === "joined";
+  const canSend = joined && !!draft.trim() && !working;
+
+  if (voice) return <Animated.View entering={still ? undefined : FadeIn.duration(240)} style={{ flex: 1 }}>
+    <VoiceMode questions={rows} answer={askAloud} onChat={() => setVoice(false)} onType={() => { setTypeNext(true); setVoice(false); }} />
+  </Animated.View>;
 
   return <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+    <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 4 }}>
+      <CircleButton d={ICON.back} label="Back" onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }} />
+      <Text accessibilityRole="header" style={{ flex: 1, textAlign: "center", ...type.headline, color: palette.ink }}>AI Chat</Text>
+      <View style={{ opacity: turns.length ? 1 : 0.4 }} pointerEvents={turns.length ? "auto" : "none"}>
+        <CircleButton d={GLYPH.more} label="Clear chat" onPress={clear} />
+      </View>
+    </View>
+
     <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" onContentSizeChange={() => { if (turns.length) scroll.current?.scrollToEnd({ animated: !still }); }}
-      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingTop: 28, paddingBottom: 12, gap: 16 }}>
-      {!turns.length ? <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 8 }}>
-        <View style={{ margin: -orbPad(96), marginBottom: -orbPad(96) + 8 }}><SonaOrb size={96} flood={flood} /></View>
-        <View accessible accessibilityRole="header" accessibilityLabel="Ask Sona Care. Clear answers from your own plan." style={{ alignItems: "center", gap: 4 }}>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center" }}>
-            <Text style={{ ...type.display, fontWeight: "700", color: palette.ink }}>Ask </Text>
-            <AccentText style={{ ...type.display, fontWeight: "700" }}>Sona Care</AccentText>
-          </View>
-          <Text style={{ ...type.body, color: palette.faint, textAlign: "center" }}>Clear answers from your own plan</Text>
-        </View>
+      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 12, gap: 18 }}>
+      {!turns.length ? <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 14, paddingVertical: 8 }}>
+        <Animated.View entering={enter(0)} style={{ marginVertical: -orbPad(150) + 4 }}><SonaOrb size={150} flood={flood} /></Animated.View>
+        <AnimatedText entering={enter(1)} accessibilityRole="header" style={{ fontSize: 30, lineHeight: 37, fontWeight: "300", letterSpacing: -0.8, color: palette.ink, textAlign: "center", paddingHorizontal: 8 }}>
+          Hello, how can we support your health today?
+        </AnimatedText>
       </View>
         : turns.map((t, i) => <TurnView key={t.requestId} t={t} lead={i === turns.length - 1} flood={flood} enter={enter} visitDay={visitDay}
           busy={send.isPending && send.variables?.requestId === t.requestId} error={send.variables?.requestId === t.requestId ? send.error : null}
           onSave={() => save(t)} onSend={() => send.mutate(t)} />)}
 
-      {state === "loading" || (state === "joined" && !plan) ? <ActivityIndicator color={palette.muted} style={{ minHeight: 48 }} />
-        : state !== "joined" ? <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>Join with the code on your discharge paper, and I can answer from your plan.</Text>
-          : !asks.length ? <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>Questions from your plan show here once you're home.</Text>
-            : rest.length > 0 && !reading && <View style={{ gap: 2 }}>
-              {turns.length > 0 && <AnimatedText entering={enter(4)} style={{ ...type.footnote, fontWeight: "600", color: palette.faint, marginBottom: 2 }}>You could also ask</AnimatedText>}
-              {rest.map((a, i) => <Animated.View key={a.question} entering={enter(turns.length ? i + 5 : i)}>
-                <Pressable accessibilityRole="button" accessibilityLabel={a.question} accessibilityHint="Answers from your plan" onPress={() => ask(a)}
-                  style={({ pressed }) => ({ minHeight: 48, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8, opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] })}>
-                  <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: palette.blueWash }}><Glyph d={GLYPH[a.kind]} color={palette.blue} /></View>
-                  <Text style={{ flex: 1, ...type.body, fontWeight: "500", color: palette.ink }}>{a.question}</Text>
-                </Pressable>
-              </Animated.View>)}
+      {state === "loading" || (joined && !plan) ? <ActivityIndicator color={palette.muted} style={{ minHeight: 48 }} />
+        : !joined ? <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>Join with the code on your discharge paper, and I can answer from your plan.</Text>
+          : !rows.length ? <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>Questions from your plan show here once you're home.</Text>
+            : rest.length > 0 && !working && <View style={{ gap: 10 }}>
+              {turns.length > 0 && <AnimatedText entering={enter(4)} style={{ ...type.footnote, fontWeight: "600", color: palette.faint }}>You could also ask</AnimatedText>}
+              {rest.map((q, i) => <Animated.View key={q} entering={enter(turns.length ? i + 5 : i + 2)}><SuggestionRow question={q} onPress={() => ask(q)} /></Animated.View>)}
             </View>}
     </ScrollView>
 
     <View style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 12), gap: 8 }}>
-      {state === "joined" && <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8, minHeight: 56, borderRadius: 28, borderCurve: "continuous", padding: 6, paddingLeft: 18,
-        backgroundColor: palette.mutedWash, borderWidth: 1, borderColor: "rgba(40,24,70,0.05)" }}>
-        <TextInput value={draft} onChangeText={setDraft} placeholder="Ask about your care…" placeholderTextColor={palette.muted} maxLength={1000} multiline
-          returnKeyType="send" submitBehavior="submit" onSubmitEditing={askFree} accessibilityLabel="Ask about your care"
-          style={{ flex: 1, fontSize: 17, lineHeight: 22, color: palette.ink, paddingTop: 11, paddingBottom: 11, maxHeight: 120 }} />
-        <Pressable accessibilityRole="button" accessibilityLabel="Send question" accessibilityState={{ disabled: !canSend }} disabled={!canSend} onPress={askFree}
-          style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: palette.dark, opacity: canSend ? 1 : 0.3, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
-          <Glyph d={GLYPH.up} color={palette.white} size={20} />
-        </Pressable>
+      {joined && <View style={[surfaceStyle, { borderRadius: 26, padding: 10, paddingTop: 4, gap: 6 }]}>
+        <TextInput ref={input} value={draft} onChangeText={setDraft} placeholder="How can we help you today?" placeholderTextColor={palette.faint} maxLength={1000} multiline
+          returnKeyType="send" submitBehavior="submit" onSubmitEditing={askTyped} accessibilityLabel="How can we help you today?"
+          style={{ fontSize: 17, lineHeight: 22, color: palette.ink, paddingHorizontal: 8, paddingTop: 10, paddingBottom: 6, maxHeight: 120 }} />
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Voice mode" accessibilityHint="Sona reads answers aloud" onPress={() => setVoice(true)}
+            style={({ pressed }) => ({ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, borderRadius: 22, backgroundColor: palette.mutedWash, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
+            <Glyph d={GLYPH.voice} color={palette.ink} size={18} />
+            <Text style={{ fontSize: 14, fontWeight: "600", color: palette.ink }}>Voice</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Send question" accessibilityState={{ disabled: !canSend }} disabled={!canSend} onPress={askTyped}
+            style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: palette.blue, opacity: canSend ? 1 : 0.35, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
+            <Glyph d={GLYPH.up} color={palette.white} size={20} />
+          </Pressable>
+        </View>
       </View>}
       <Text style={{ ...type.footnote, fontWeight: "600", color: palette.amber, textAlign: "center" }}>Not for emergencies · call 999</Text>
     </View>
@@ -140,46 +176,67 @@ export default function Assistant() {
 }
 
 /**
- * One question and its answer. The latest answer leads with the small orb, which floods while it reads
- * the plan; earlier ones are plain text, so only one orb draws at a time.
+ * One question and its reply. The latest reply's avatar is the live orb, which floods while it works;
+ * earlier ones are a still accent dot, so only one orb draws at a time.
  */
 function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend }: {
   t: Turn; lead: boolean; flood: SharedValue<number>; enter: (i: number) => FadeInDown | undefined; visitDay: string;
   busy: boolean; error: Error | null; onSave: () => void; onSend: () => void;
 }) {
-  return <View style={{ gap: 12 }}>
-    <Animated.View entering={enter(0)} style={bubble}><Text selectable style={{ ...type.body, color: palette.ink }}>{t.question}</Text></Animated.View>
-    <View style={{ gap: 10 }}>
-      {lead && <Animated.View entering={enter(1)} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <View style={{ margin: -orbPad(28) }}><SonaOrb size={28} flood={flood} lift={false} /></View>
-        {!t.ready && <Reading />}
+  const r = t.reply;
+  return <View style={{ gap: 10 }}>
+    <Animated.View entering={enter(0)} style={mine}><Text selectable style={{ ...type.body, color: palette.ink }}>{t.question}</Text></Animated.View>
+    {r.kind === "none" && r.urgent && <Animated.View entering={enter(1)}><Call999 /></Animated.View>}
+    <Animated.View entering={enter(1)} style={{ flexDirection: "row", alignItems: "flex-end", gap: 10 }}>
+      {lead ? <View style={{ margin: -orbPad(AVATAR) }}><SonaOrb size={AVATAR} flood={flood} lift={false} /></View>
+        : <View style={{ width: AVATAR, height: AVATAR, borderRadius: AVATAR / 2, experimental_backgroundImage: `linear-gradient(135deg, #FFFFFF, ${accent[1]})` } as ViewStyle} />}
+      {!t.ready ? <Working doctors={r.kind === "doctors"} />
+        : <View style={sona}>
+          <Text selectable style={{ ...type.body, color: palette.white }}>{r.kind === "plan" ? r.asked.answer : r.kind === "doctors" ? r.text : NO_ANSWER}</Text>
+          {r.kind === "plan" && <View style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: "rgba(255,255,255,0.2)", paddingHorizontal: 10, paddingVertical: 4 }}>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: palette.white }}>{r.asked.source}</Text>
+          </View>}
+        </View>}
+    </Animated.View>
+    {t.ready && <View style={{ marginLeft: INDENT, gap: 10 }}>
+      {r.kind === "doctors" && <Animated.View entering={enter(2)} style={{ gap: 8 }}>
+        <Text style={{ ...type.overline, color: palette.faint }}>Sample doctors</Text>
+        {r.doctors.map(d => <DoctorCard key={d.id} d={d} />)}
       </Animated.View>}
-      {t.ready && (t.answer ? <>
-        <AnimatedText entering={enter(1)} selectable style={{ ...type.body, color: palette.ink }}>{t.answer.answer}</AnimatedText>
-        <Animated.View entering={enter(2)} style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: palette.blueWash, paddingHorizontal: 10, paddingVertical: 5 }}>
-          <Text style={{ fontSize: 12, fontWeight: "700", color: palette.blue }}>{t.answer.source}</Text>
-        </Animated.View>
-        <Animated.View entering={enter(3)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-          {t.saved ? <Done text={`Saved for ${visitDay}`} /> : <Action d={GLYPH.save} label="Save for my visit" onPress={onSave} />}
-          {t.sent ? <Done text={SENT} /> : <Action d={GLYPH.chat} label="Ask my care team" busy={busy} onPress={onSend} />}
-        </Animated.View>
-      </> : <>
-        {urgent(t.question) && <Animated.View entering={enter(1)}><Call999 /></Animated.View>}
-        <AnimatedText entering={enter(2)} style={{ ...type.body, color: palette.ink }}>{NO_ANSWER}</AnimatedText>
-        <Animated.View entering={enter(3)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {t.sent ? <Done text={SENT} /> : <Action d={GLYPH.chat} label="Send to my care team" busy={busy} ink onPress={onSend} />}
-        </Animated.View>
-      </>)}
+      <Animated.View entering={enter(3)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+        {r.kind === "plan" && (t.saved ? <Done text={`Saved for ${visitDay}`} /> : <Action d={GLYPH.save} label="Save for my visit" onPress={onSave} />)}
+        {t.sent ? <Done text={SENT} /> : r.kind === "none"
+          ? <Action d={GLYPH.chat} label="Send to my care team" busy={busy} ink onPress={onSend} />
+          : <Action d={GLYPH.chat} label="Ask my care team" busy={busy} onPress={onSend} />}
+      </Animated.View>
       {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(error)}</Text>}
-    </View>
+    </View>}
   </View>;
+}
+
+/** A sample doctor inline in a reply: initials, name, specialty and where; tap for their page. */
+function DoctorCard({ d }: { d: Doctor }) {
+  const initials = d.name.replace(/^Dr\.\s*/, "").split(/\s+/).slice(0, 2).map(w => w[0]).join("");
+  return <Pressable accessibilityRole="button" accessibilityLabel={`${d.name}, ${d.specialty}${d.careTeam ? ", your care team" : ""}. Rated ${d.rating}. ${d.room}. Sample doctor.`} accessibilityHint="Opens their page"
+    onPress={() => router.push({ pathname: "/doctor", params: { id: d.id } })}
+    style={({ pressed }) => [surfaceStyle, { minHeight: 72, flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 20, transform: [{ scale: pressed ? 0.97 : 1 }] }]}>
+    <View style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: palette.blueWash }}>
+      <Text style={{ fontSize: 15, fontWeight: "600", color: palette.blue }}>{initials}</Text>
+    </View>
+    <View style={{ flex: 1, gap: 2 }}>
+      <Text style={{ ...type.headline, color: palette.ink }}>{d.name}</Text>
+      <Text style={{ ...type.footnote, color: palette.muted }}>{d.specialty} · ★ {d.rating} · {d.room}</Text>
+      {d.careTeam && <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>Your care team</Text>}
+    </View>
+    <Glyph d={GLYPH.next} color={palette.faint} size={18} />
+  </Pressable>;
 }
 
 function Glyph({ d, color, size = 18 }: { d: string; color: string; size?: number }) {
   return <Svg width={size} height={size} viewBox="0 0 24 24"><Path d={d} fill="none" stroke={color} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
 }
 
-/** A small round-ended action under an answer: an icon and a plain label (older patients read words faster than icons). `ink` for the one that matters. */
+/** A small round-ended action under a reply: an icon and a plain label. `ink` for the one that matters. */
 function Action({ d, label, onPress, busy, ink }: { d: string; label: string; onPress: () => void; busy?: boolean; ink?: boolean }) {
   const fg = ink ? palette.white : palette.ink;
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ busy, disabled: busy }} disabled={busy} onPress={onPress}
@@ -190,18 +247,19 @@ function Action({ d, label, onPress, busy, ink }: { d: string; label: string; on
   </Pressable>;
 }
 
-/** "Reading your plan…" with three dots pulsing in turn (only shown when motion is on). */
-function Reading() {
-  return <View accessible accessibilityLabel="Reading your plan" style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 23 }}>
-    <Text style={{ ...type.footnote, color: palette.muted }}>Reading your plan…</Text>
+/** The status pill while Sona works: "Reading your plan…" or "Searching for a doctor…", three dots pulsing in turn. */
+function Working({ doctors }: { doctors: boolean }) {
+  const label = doctors ? "Searching for a doctor…" : "Reading your plan…";
+  return <View accessible accessibilityLabel={label} accessibilityLiveRegion="polite" style={[pillStyle, { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 36, paddingHorizontal: 14 }]}>
+    <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{label}</Text>
     <View style={{ flexDirection: "row", gap: 4 }}>{[0, 1, 2].map(i => <Dot key={i} i={i} />)}</View>
   </View>;
 }
 function Dot({ i }: { i: number }) {
   const o = useSharedValue(1);
   useEffect(() => { o.set(withDelay(i * 150, withRepeat(withSequence(withTiming(0.25, { duration: 500 }), withTiming(1, { duration: 500 })), -1))); }, [i, o]);
-  const style = useAnimatedStyle(() => ({ opacity: o.value }));
-  return <Animated.View style={[{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#8E7FEA" }, style]} />;
+  const style = useAnimatedStyle(() => ({ opacity: o.get() }));
+  return <Animated.View style={[{ width: 6, height: 6, borderRadius: 3, backgroundColor: palette.blue }, style]} />;
 }
 
 /** The done line that replaces a next-step button once it has happened. */
