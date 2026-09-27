@@ -17,6 +17,20 @@ Updated: 2026-09-22. Planning reference, not an implementation or clinical-valid
 - No clinical reviewer currently available. Present clinical outputs as unvalidated prototype results and evaluate source fidelity and extraction separately from clinical validity.
 - Presentation budget: approximately 10–15 minutes, awaiting official confirmation.
 
+## UX principles (standing rules for every screen)
+
+Added 2026-09-27 at the user's request. These apply to Sona (clinicians, ward and hospital management) and Sona Care (patients), and to every future screen. Each screen exists to make hospital operations and care faster and safer, so it is judged on how quickly someone understands, acts and moves on.
+
+1. **Insight first.** The first thing on a screen answers "where do I stand?" in one line: a count, a state or a change (e.g. "3 discharges blocked", "Day 2 at home · 1 thing needs you"). No one should have to read a list to find out whether anything is wrong.
+2. **Action in place.** The most important thing that needs the person now sits in one feature card, and it can be done right there: approve, acknowledge, answer, send, track. Don't send people to another screen for the main action.
+3. **Highlight what matters.** Colour carries meaning, never decoration: red for must-not-miss (critical results, allergies, worse after discharge), amber for soon or blocked, teal/green for done or safe, blue for the next step. Everything else stays neutral ink and grey.
+4. **Review before deciding.** Consequential actions show what will happen and why (the evidence, the criteria met, what's still open) next to the button, and the result is confirmed afterwards (a receipt, a done line, who was told).
+5. **Suggest the next step.** After an action or an answer, offer the likely next move (e.g. "Call back", "Book in", "Answer and send again", "Read and reply"), so the flow keeps going without hunting.
+6. **Minimal by default.** One lead and at most one feature surface per screen; trimmed copy; detail on demand behind a tap; no duplicate actions; empty states that reassure ("nothing needs you today") rather than blank space.
+7. **Built for operations.** Favour what saves time and prevents harm across the hospital: live state over stale snapshots (updates arrive without refresh), ranked work over flat lists, one tap to hand off or assign an owner, and numbers management can act on (beds freed, hours saved, money at risk).
+
+**Checklist before any screen is called done:** Can someone tell in 3 seconds whether anything needs them? Is the main action on this screen, not one tap away? Is every colour meaningful? Is the next step suggested? Could anything be removed?
+
 ## Visual reference hierarchy
 
 1. **Monogram is the primary interaction and motion reference:** calm conversational canvas, ambient pulse, floating voice/text dock, progressive response reveal, liquid-glass treatment on appropriate controls.
