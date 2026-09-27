@@ -1,88 +1,170 @@
-import { Blur, Canvas, Circle, Group, LinearGradient, Oval, Paint, Path, RadialGradient, Skia, SweepGradient, rect, rrect, useClock, vec } from "@shopify/react-native-skia";
+import { Blur, Canvas, Circle, Fill, FractalNoise, Group, LinearGradient, Oval, Paint, RadialGradient, Rect, Shader, Skia, useClock, vec } from "@shopify/react-native-skia";
 import { useEffect } from "react";
 import { View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { useDerivedValue, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
+import { useDerivedValue, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
 
 /**
- * Sona Care's hero: a liquid-glass orb (after Wabi's "New" glass gradient button). A thin clear shell
- * with fixed reflections (a gradient rim, a top crescent glare, a bottom caustic) holds a soft core
- * whose blurred colour blobs drift on slow linear orbits under a rotating overlay sweep. Drag it and
- * the core tilts inside the fixed glass, then springs back; `roll` changing rolls it once. Still under
- * Reduce Motion. Measurements follow the shot's 82 pt orb, scaled.
+ * Sona Care's hero, the Dawn pearl with a sunbeam tide (orb study round 4, "#5 × Dawn, slow"): a
+ * matte, top-lit pearl, white on top, blushing peach through the middle and settling into sky blue,
+ * with fine grain. A halftone "sunbeam" enters from the top-left, where the light comes from, and
+ * the glass gives way to dots under it. It rises from 8 % to 70 % of the sphere on a 16 s tide and
+ * holds at its peak; a step change floods it (to 55 % off the options, to the whole sphere for a
+ * moment when the code is sent). Drag tilts the core and the light. Still under Reduce Motion.
+ * Measurements are the prototype's 148 pt orb, scaled.
  */
 const BACK = { duration: 700, dampingRatio: 0.55 } as const;
-// Sona's palette on the shot's four orbits: [colour, radius, orbit (fraction of size), speed rad/s, phase]
-const blobs: [string, number, number, number, number][] = [
-  ["rgba(36,91,204,1)", 24, 0.22, 0.7, 0], // deep blue
-  ["rgba(40,190,176,0.95)", 20, 0.2, -0.5, 1.8], // teal
-  ["rgba(128,90,236,0.9)", 24, 0.2, 0.4, 3.5], // lilac
-  ["rgba(236,130,196,0.85)", 16, 0.17, -0.8, 0.5], // blush shimmer
+// Dawn body blobs: [colour, width, height, centre x, centre y (fractions), orbit (pt at 148), speed rad/s, phase]
+const blobs: [string, number, number, number, number, number, number, number][] = [
+  ["#FFFFFF", 120, 90, 0.5, 0.16, 16, 0.35, 0],
+  ["#F6B3CF", 96, 88, 0.3, 0.56, 18, -0.28, 1.8],
+  ["#FFD2B5", 92, 80, 0.7, 0.48, 16, 0.22, 3.5],
+  ["#6F8FEA", 112, 96, 0.55, 0.9, 14, -0.4, 0.5],
 ];
 
-function Blob({ spec, clock, s, k, still }: { spec: (typeof blobs)[number]; clock: SharedValue<number>; s: number; k: number; still: boolean }) {
-  const [color, r, orbit, speed, phase] = spec;
-  const c = useDerivedValue(() => {
-    const t = still ? 0 : clock.value / 1000;
-    const a = t * speed + phase;
-    return vec(s / 2 + Math.cos(a) * orbit * s - Math.sin(t * 0.5) * 6 * k, s / 2 + Math.sin(a * 0.9) * orbit * s + Math.cos(t * 0.4) * 6 * k);
-  });
-  return <Circle c={c} r={r * k} color={color} />;
+// The sunbeam: a 3 pt dot grid over the sphere. Dots appear where the diagonal tide line (top-left
+// first) has passed, streaked along that line like aurora, sized and coloured by how lit the sphere
+// is there (deep blue in shadow, peach in the highlight).
+const sunbeam = Skia.RuntimeEffect.Make(`
+uniform float size;
+uniform float t;
+uniform float ratio;
+uniform float2 tilt;
+uniform float pitch;
+
+half3 ramp(float h, half3 a, half3 b, half3 c, half3 d, half3 e) {
+  float f = clamp(h, 0.0, 0.999) * 4.0;
+  if (f < 1.0) { return mix(a, b, f); }
+  if (f < 2.0) { return mix(b, c, f - 1.0); }
+  if (f < 3.0) { return mix(c, d, f - 2.0); }
+  return mix(d, e, f - 3.0);
 }
 
-export function HeroOrb({ size = 148, roll }: { size?: number; roll?: unknown }) {
+float shade(float2 n) {
+  float nz = sqrt(max(0.0, 1.0 - dot(n, n)));
+  float lam = max(0.0, (-0.42 - tilt.x * 0.3) * n.x + (-0.55 - tilt.y * 0.3) * n.y + 0.72 * nz);
+  float2 c1 = float2(-0.3 + 0.25 * cos(0.35 * t), -0.45 + 0.15 * sin(0.3 * t));
+  float2 c2 = float2(0.35 * cos(0.22 * t + 2.0), 0.2 + 0.2 * sin(0.28 * t));
+  float cl = exp(-dot(n - c1, n - c1) / 0.12) + 0.7 * exp(-dot(n - c2, n - c2) / 0.2);
+  return clamp(0.12 + 0.62 * lam + 0.3 * cl - 0.2 * max(0.0, n.y), 0.0, 1.0);
+}
+
+half4 main(float2 q) {
+  float half_ = size * 0.5;
+  float2 cell = (floor(q / pitch) + 0.5) * pitch;
+  float2 n = (cell - half_) / half_;
+  float r = length(n);
+  if (r > 1.0) { return half4(0.0); }
+  float f = (n.x + n.y) / 2.83 + 0.5 + 0.04 * sin(((n.y - n.x) / 2.83) * 9.0 + t * 0.5);
+  float k = ratio >= 0.995 ? 1.0 : (ratio - f) / 0.12;
+  if (k <= 0.0) { return half4(0.0); }
+  float m = min(1.0, k);
+  float u = (n.x + 1.0) * 0.5;
+  float streak = 0.5 + 0.5 * sin(u * 19.0 + n.y * 7.0 + t * 0.24 + sin(t * 0.3 + u * 3.0));
+  float I = pow(m, 1.2) * (m < 1.0 ? 0.3 + 0.7 * streak : 1.0) * min(1.0, (1.0 - r) / 0.08);
+  if (I < 0.06) { return half4(0.0); }
+  float v = shade(n);
+  half3 cool = ramp(v, half3(0.247, 0.416, 0.847), half3(0.435, 0.561, 0.918), half3(0.561, 0.651, 0.961), half3(0.498, 0.765, 0.894), half3(0.624, 0.890, 0.839));
+  half3 lit = ramp(v, half3(0.353, 0.490, 0.902), half3(0.561, 0.651, 0.961), half3(0.765, 0.659, 0.949), half3(0.957, 0.639, 0.769), half3(1.0, 0.812, 0.690));
+  half3 col = mix(cool, lit, 0.8);
+  float rad = ((0.45 + (1.0 - v) * 0.95) * (0.55 + 0.45 * I) + 0.15) * pitch / 3.0;
+  float d = length(q - cell);
+  float dotShape = 1.0 - smoothstep(rad - 0.25, rad + 0.15, d);
+  float a = dotShape * (0.45 + 0.55 * I);
+  return half4(col * a, a);
+}`)!;
+
+function Blob({ spec, clock, s, k, still, tx, ty }: { spec: (typeof blobs)[number]; clock: SharedValue<number>; s: number; k: number; still: boolean; tx: SharedValue<number>; ty: SharedValue<number> }) {
+  const [color, w, h, bx, by, orbit, speed, phase] = spec;
+  const at = useDerivedValue(() => {
+    const t = still ? 0 : clock.value / 1000;
+    const a = t * speed + phase;
+    return [
+      { translateX: bx * s + Math.cos(a) * orbit * k + tx.value * 18 * k },
+      { translateY: by * s + Math.sin(a * 0.9) * orbit * k + ty.value * 18 * k },
+    ];
+  });
+  return <Group transform={at}><Oval x={-w * k / 2} y={-h * k / 2} width={w * k} height={h * k} color={color} /></Group>;
+}
+
+// The 16 s tide, 8 % to 70 %: rise over 35 %, hold at the peak for 20 %, recede over 45 %.
+function tide(t: number) {
+  "worklet";
+  const p = (t % 16) / 16;
+  const rise = (1 - Math.cos(Math.PI * Math.min(1, p / 0.35))) / 2;
+  const fall = (1 - Math.cos(Math.PI * Math.max(0, (p - 0.55) / 0.45))) / 2;
+  return 0.08 + 0.62 * (p < 0.35 ? rise : p < 0.55 ? 1 : 1 - fall);
+}
+
+type Step = "options" | "phone" | "code" | "email";
+
+export function HeroOrb({ size = 148, roll }: { size?: number; roll?: Step }) {
   const clock = useClock();
   const still = useReducedMotion();
   const tx = useSharedValue(0), ty = useSharedValue(0);
+  const flood = useSharedValue(0);
 
+  // Each step floods the sunbeam: part-way off the options, the whole sphere for a moment when the code is sent.
   useEffect(() => {
-    if (still || roll === undefined) return;
-    tx.set(withSequence(withTiming(0.7, { duration: 220 }), withSpring(0, BACK)));
-    ty.set(withSequence(withTiming(-0.35, { duration: 220 }), withSpring(0, BACK)));
-  }, [roll, still, tx, ty]);
+    const rest = roll === undefined || roll === "options" ? 0 : 0.55;
+    if (still) { flood.set(rest); return; }
+    if (roll === "code") flood.set(withSequence(withTiming(1, { duration: 500 }), withDelay(900, withTiming(rest, { duration: 2500 }))));
+    else flood.set(withTiming(rest, { duration: rest > flood.get() ? 600 : 2500 }));
+  }, [roll, still, flood]);
 
   const drag = Gesture.Pan().enabled(!still)
     .onChange(e => { tx.set(Math.max(-1, Math.min(1, e.translationX / 90))); ty.set(Math.max(-1, Math.min(1, e.translationY / 90))); })
     .onFinalize(() => { tx.set(withSpring(0, BACK)); ty.set(withSpring(0, BACK)); });
 
-  const s = size, k = s / 82, pad = 14 * k, W = s + pad * 2, center = vec(s / 2, s / 2);
-  const core = useDerivedValue(() => [{ translateX: tx.value * s * 0.12 }, { translateY: ty.value * s * 0.12 }]);
-  const sweep = useDerivedValue(() => [{ rotate: still ? 0 : (clock.value / 1000) * 0.4 }]);
-  const caustic = Skia.Path.Make();
-  caustic.addArc(rect(1, 1, s - 2, s - 2), 54, 83); // SwiftUI trim 0.15–0.38: bottom right round to bottom left
+  const s = size, k = s / 148, pad = s * 0.17, W = s + pad * 2, center = vec(s / 2, s / 2);
+  const time = useDerivedValue(() => still ? 0 : clock.value / 1000);
+  const ratio = useDerivedValue(() => Math.min(1, Math.max(tide(time.value), flood.value)));
+  const uniforms = useDerivedValue(() => ({ size: s, t: time.value, ratio: ratio.value, tilt: [tx.value, ty.value], pitch: 3 * k }));
+  // The glass body fades out under the tide line (same diagonal, flattened), down to a faint 8 %.
+  const fade = useDerivedValue(() => {
+    const R = ratio.value;
+    if (R >= 0.995) return [0, 0.5, 0.99, 1];
+    const a = Math.min(0.97, Math.max(0, R - 0.08));
+    return [0, a, Math.min(1, Math.max(a + 0.02, R + 0.08)), 1];
+  });
+  const breathe = useDerivedValue(() => [{ scale: 1 + 0.02 * (1 - Math.cos(time.value * Math.PI / 4)) / 2 }]);
+  const tiltCore = useDerivedValue(() => [{ translateX: tx.value * 8 * k }, { translateY: ty.value * 8 * k }]);
 
   return <GestureDetector gesture={drag}>
     <View accessible accessibilityRole="image" accessibilityLabel="Sona Care" style={{ width: W, height: W }}>
       <Canvas style={{ width: W, height: W }}>
         <Group transform={[{ translateX: pad }, { translateY: pad }]}>
-          {/* Soft volumetric shadow under the sphere. */}
-          <Circle c={vec(s / 2, s / 2 + 6 * k)} r={s * 0.46} color="rgba(96,110,190,0.22)"><Blur blur={12 * k} /></Circle>
+          <Group origin={center} transform={breathe}>
+            {/* Soft lift under the pearl. */}
+            <Circle c={vec(s / 2, s / 2 + 10 * k)} r={s * 0.44} color="rgba(120,100,210,0.34)"><Blur blur={14 * k} /></Circle>
 
-          <Group clip={rrect(rect(0, 0, s, s), s / 2, s / 2)}>
-            {/* The liquid core: a light fill, blurred drifting blobs, an overlay sweep turning slowly. */}
-            <Circle c={center} r={s / 2}><RadialGradient c={center} r={s / 2} colors={["#F7F9FE", "#E6EAF6"]} /></Circle>
-            <Group transform={core} layer={<Paint><Blur blur={8 * k} /></Paint>}>
-              {blobs.map((b, i) => <Blob key={i} spec={b} clock={clock} s={s} k={k} still={still} />)}
+            <Group clip={Skia.RRectXY(Skia.XYWHRect(0, 0, s, s), s / 2, s / 2)} transform={tiltCore}>
+              {/* The glass body, fading out where the sunbeam has passed. */}
+              <Group layer>
+                <Circle c={center} r={s / 2}><RadialGradient c={vec(s * 0.34, s * 0.26)} r={s * 0.82} colors={["#FFFFFF", "#FFEFF3", "#C5CFF6"]} positions={[0, 0.42, 1]} /></Circle>
+                <Group layer={<Paint><Blur blur={18 * k} /></Paint>}>
+                  {blobs.map((b, i) => <Blob key={i} spec={b} clock={clock} s={s} k={k} still={still} tx={tx} ty={ty} />)}
+                </Group>
+                <Fill blendMode="overlay" opacity={0.14}><FractalNoise freqX={0.9} freqY={0.9} octaves={2} /></Fill>
+                {/* Inner shading: darker toward the lower right, away from the light. */}
+                <Circle c={center} r={s / 2}><RadialGradient c={vec(s * 0.4, s * 0.36)} r={s * 0.66} colors={["rgba(60,60,160,0)", "rgba(60,60,160,0)", "rgba(60,60,160,0.2)"]} positions={[0, 0.7, 1]} /></Circle>
+                {/* dstIn keeps the body only where the gradient is opaque: faint under the sunbeam, full elsewhere. */}
+                <Rect x={0} y={0} width={s} height={s} blendMode="dstIn">
+                  <LinearGradient start={vec(0, 0)} end={vec(s, s)} positions={fade} colors={["rgba(255,255,255,0.08)", "rgba(255,255,255,0.08)", "white", "white"]} />
+                </Rect>
+              </Group>
+              {/* The sunbeam dots. */}
+              <Fill><Shader source={sunbeam} uniforms={uniforms} /></Fill>
             </Group>
-            <Group blendMode="overlay" layer={<Paint><Blur blur={8 * k} /></Paint>}>
-              <Circle c={center} r={s / 2}>
-                <SweepGradient c={center} origin={center} transform={sweep} colors={["rgba(36,91,204,0.5)", "rgba(64,196,180,0.3)", "rgba(139,104,240,0.4)", "rgba(36,91,204,0.5)"]} />
-              </Circle>
-            </Group>
-          </Group>
 
-          {/* The fixed glass shell. */}
-          <Circle c={center} r={s / 2 - 0.75 * k} style="stroke" strokeWidth={1.5 * k}>
-            <LinearGradient start={vec(0, 0)} end={vec(s, s)} colors={["rgba(255,255,255,0.85)", "rgba(255,255,255,0.2)", "rgba(0,0,0,0.12)", "rgba(255,255,255,0.5)"]} />
-          </Circle>
-          <Group clip={rrect(rect(0, 0, s, s), s / 2, s / 2)} layer={<Paint><Blur blur={1.5 * k} /></Paint>}>
-            <Oval x={s / 2 - 29 * k} y={2 * k} width={58 * k} height={30 * k}>
-              <LinearGradient start={vec(0, 2 * k)} end={vec(0, 32 * k)} colors={["rgba(255,255,255,0.95)", "rgba(255,255,255,0.25)", "rgba(255,255,255,0)"]} />
-            </Oval>
+            {/* Fixed glass: a soft glare at the top left, a bright rim and a faint blue catch along the bottom. */}
+            <Group clip={Skia.RRectXY(Skia.XYWHRect(0, 0, s, s), s / 2, s / 2)} layer={<Paint><Blur blur={6 * k} /></Paint>}>
+              <Oval x={s * 0.12} y={s * 0.06} width={s * 0.5} height={s * 0.26} color="rgba(255,255,255,0.72)" />
+            </Group>
+            <Circle c={center} r={s / 2 - 0.5} style="stroke" strokeWidth={1}>
+              <LinearGradient start={vec(0, 0)} end={vec(0, s)} colors={["rgba(255,255,255,0.85)", "rgba(255,255,255,0.5)", "rgba(36,91,204,0.22)"]} />
+            </Circle>
           </Group>
-          <Path path={caustic} style="stroke" strokeWidth={2 * k} strokeCap="round">
-            <LinearGradient start={vec(0, s)} end={vec(0, s * 0.6)} colors={["rgba(255,255,255,0.9)", "rgba(255,255,255,0)"]} />
-          </Path>
         </Group>
       </Canvas>
     </View>
