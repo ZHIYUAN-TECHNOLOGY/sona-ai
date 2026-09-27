@@ -17,8 +17,9 @@ test("three questions from the plan: the next dose, the new medicine, the next v
   expect(miss.question).toBe("What if I miss a dose of Cetirizine?");
   expect(miss.answer).toBe("Your plan doesn't say what to do if you miss a dose of Cetirizine, so ask your care team. Never take two doses at once to make up for one. Your usual dose: 1 tablet at night, at 9:00 PM.");
   expect(miss.source).toBe("From your Cetirizine instructions");
-  expect(fresh).toEqual({ question: "What is Paracetamol for?", answer: "Your plan says: For pain or fever: 1 g every 6 hours if you need it, no more than 4 g a day.", source: "From your Paracetamol instructions" });
-  expect(next).toEqual({ question: "When is my next visit?", answer: "Clinic review, Sun 11 Oct (in 14 days). To see how you're doing after your pneumonia.", source: "From your discharge plan" });
+  expect(miss.kind).toBe("dose");
+  expect(fresh).toEqual({ question: "What is Paracetamol for?", answer: "Your plan says: For pain or fever: 1 g every 6 hours if you need it, no more than 4 g a day.", source: "From your Paracetamol instructions", kind: "medicine" });
+  expect(next).toEqual({ question: "When is my next visit?", answer: "Clinic review, Sun 11 Oct (in 14 days). To see how you're doing after your pneumonia.", source: "From your discharge plan", kind: "visit" });
 });
 
 test("the missed-dose answer follows the plan's own wording when it has one, and still says never two at once", () => {
@@ -31,7 +32,7 @@ test("the missed-dose answer follows the plan's own wording when it has one, and
 
 test("with no new medicine it asks what changed; with nothing planned it offers nothing", () => {
   const [, changed] = suggestions({ medicines: { ...medicines, new: [] }, leaflets }, undefined, "Azithromycin");
-  expect(changed).toEqual({ question: "What changed with Azithromycin?", answer: "Your plan says: Now a tablet once a day, for 2 more days.", source: "From your Azithromycin instructions" });
+  expect(changed).toEqual({ question: "What changed with Azithromycin?", answer: "Your plan says: Now a tablet once a day, for 2 more days.", source: "From your Azithromycin instructions", kind: "medicine" });
   expect(suggestions(undefined, undefined)).toEqual([]);
   expect(suggestions({ medicines: { new: [], changed: [], stopped: [], continue: [] }, leaflets }, undefined)).toEqual([]);
 });

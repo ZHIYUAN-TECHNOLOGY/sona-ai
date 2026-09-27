@@ -9,7 +9,8 @@ import { away, dayLabel } from "../follow-ups/lines";
  */
 export type PlanLike = Pick<Discharged, "medicines" | "leaflets">;
 export type Visit = { title: string; date: Date | string; why?: string; inDays?: number };
-export type Asked = { question: string; answer: string; source: string };
+/** `kind` picks the suggestion row's icon: a missed dose, a medicine, a visit. */
+export type Asked = { question: string; answer: string; source: string; kind: "dose" | "medicine" | "visit" };
 
 const PLAN = "From your discharge plan";
 const time = (hhmm: string) => {
@@ -32,7 +33,7 @@ function missed(plan: PlanLike, name: string): Asked | undefined {
   const answer = said.length
     ? `Your plan says: ${said.join(" ")} Never take two doses at once to make up for one.`
     : `Your plan doesn't say what to do if you miss a dose of ${med.name}, so ask your care team. Never take two doses at once to make up for one.${usual ? ` Your usual dose: ${usual}.` : ""}`;
-  return { question: `What if I miss a dose of ${med.name}?`, answer, source: said.length ? PLAN : `From your ${med.name} instructions` };
+  return { question: `What if I miss a dose of ${med.name}?`, answer, source: said.length ? PLAN : `From your ${med.name} instructions`, kind: "dose" };
 }
 
 /**
@@ -47,12 +48,12 @@ export function suggestions(plan: PlanLike | undefined, visit: Visit | undefined
     const scheduled = nextMed ?? [...m.new, ...m.changed, ...m.continue].find(x => x.at?.length)?.name;
     if (scheduled) out.push(missed(plan, scheduled));
     const fresh = m.new[0], changed = m.changed[0];
-    if (fresh) out.push({ question: `What is ${fresh.name} for?`, answer: `Your plan says: ${end(fresh.line)}${fresh.take ? ` Take ${end(fresh.take)}` : ""}`, source: `From your ${fresh.name} instructions` });
-    else if (changed) out.push({ question: `What changed with ${changed.name}?`, answer: `Your plan says: ${end(changed.line)}`, source: `From your ${changed.name} instructions` });
+    if (fresh) out.push({ question: `What is ${fresh.name} for?`, answer: `Your plan says: ${end(fresh.line)}${fresh.take ? ` Take ${end(fresh.take)}` : ""}`, source: `From your ${fresh.name} instructions`, kind: "medicine" });
+    else if (changed) out.push({ question: `What changed with ${changed.name}?`, answer: `Your plan says: ${end(changed.line)}`, source: `From your ${changed.name} instructions`, kind: "medicine" });
   }
   if (visit) {
     const when = `${dayLabel(visit.date)}${visit.inDays === undefined ? "" : ` (${away(visit.inDays)})`}`;
-    out.push({ question: "When is my next visit?", answer: `${visit.title}, ${when}.${visit.why ? ` ${end(visit.why)}` : ""}`, source: PLAN });
+    out.push({ question: "When is my next visit?", answer: `${visit.title}, ${when}.${visit.why ? ` ${end(visit.why)}` : ""}`, source: PLAN, kind: "visit" });
   }
   return out.filter((a): a is Asked => Boolean(a)).slice(0, 3);
 }
