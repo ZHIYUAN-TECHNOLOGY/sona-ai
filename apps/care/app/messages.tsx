@@ -11,7 +11,7 @@ import { useMe } from "@/features/me";
 import { clockOf, type Message, REPLY_TIME, suggestions, whileYouWait, withDays } from "@/features/messages/model";
 import { markRead, useThread } from "@/features/messages/row";
 import { accent, palette, type } from "@/lib/theme";
-import { Card, field, pillStyle, surfaceStyle, Title } from "@/lib/ui";
+import { BackButton, Card, field, pillStyle, surfaceStyle, Title } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 
 /**
@@ -66,6 +66,7 @@ export default function Messages() {
   return <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
     <ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" keyboardDismissMode="interactive" onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })}
       contentContainerStyle={{ padding: 20, gap: 12 }}>
+      <BackButton />
       <Title overline={me?.hospital} line={REPLY_TIME}>Your care team</Title>
       {!data ? (error ? <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(error)}</Text> : <ActivityIndicator color={palette.muted} />)
         // Messages there on opening appear still; only what arrives while the screen is open moves.

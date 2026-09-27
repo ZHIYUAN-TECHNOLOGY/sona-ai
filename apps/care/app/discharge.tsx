@@ -4,14 +4,14 @@ import { ActivityIndicator, Pressable, Text, useWindowDimensions, View } from "r
 import Animated, { Easing, FadeIn, FadeInDown, LinearTransition, useAnimatedRef, useReducedMotion, useScrollOffset } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { errorText } from "@/features/errors";
-import { CHANGE, changeSummary, homeLine, scheduleLine, type Discharged, type Group, type Med } from "@/features/discharge/lines";
+import { CHANGE, changeSummary, homeLine, scheduleLine, takeLine, type Discharged, type Group, type Med } from "@/features/discharge/lines";
 import { useDischarge } from "@/features/discharge/row";
-import { Pill, tintOf } from "@/features/doses";
+import { Pill } from "@/features/doses";
 import { dayLabel } from "@/features/follow-ups/lines";
 import { daysHome } from "@/features/home";
 import { DOCK_SPACE } from "@/lib/dock";
 import { palette, type } from "@/lib/theme";
-import { Card, Row, Section, surfaceStyle, Title } from "@/lib/ui";
+import { Card, Row, surfaceStyle, Title } from "@/lib/ui";
 
 /** Sections rise in on a 40 ms ease-out stagger the first time; still under Reduce Motion. */
 const rise = (reduced: boolean, i: number) => reduced ? undefined : FadeInDown.duration(360).easing(Easing.out(Easing.cubic)).delay(i * 40);
@@ -38,16 +38,16 @@ export default function DischargeScreen() {
   const offset = useScrollOffset(scroll);
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  /** Scrolls just enough to bring a view clear of the header and the dock (scrollIntoView "nearest"). */
+  /** Scrolls just enough to bring a view clear of the status bar and the dock (scrollIntoView "nearest"). */
   const reveal = (node: View | null | undefined) => node?.measureInWindow((_x, y, _w, h) => {
-    const top = insets.top + 56, bottom = height - DOCK_SPACE;
+    const top = insets.top + 12, bottom = height - DOCK_SPACE;
     const shift = y + h > bottom ? Math.min(y + h - bottom, y - top) : y < top ? y - top : 0;
     if (shift) scroll.current?.scrollTo({ y: offset.get() + shift, animated: !reduced });
   });
   return <Animated.ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: DOCK_SPACE, gap: 16 }}>
     <Animated.View entering={rise(reduced, 0)}>
       {data?.status === "discharged"
-        ? <Title greeting="Your plan from" accent={dayLabel(data.dischargedAt).replace(" ", ", ")} line={homeLine(daysHome(data.dischargedAt))} />
+        ? <Title greeting={`Your plan from ${dayLabel(data.dischargedAt).replace(" ", ", ")}`} accent="Medicines" line={takeLine(data.medicines, homeLine(daysHome(data.dischargedAt)))} />
         : <Title>My medicines</Title>}
     </Animated.View>
     {isLoading && <ActivityIndicator color={palette.muted} />}
@@ -81,7 +81,6 @@ function Plan({ plan, reveal }: { plan: Discharged; reveal: (node: View | null |
 
   return <>
     <Animated.View entering={rise(reduced, 1)} layout={layout} style={{ gap: 12 }}>
-      <Section light="Your" bold="medicines" />
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
         {changeSummary(plan.medicines).map(s => <Pressable key={s.group} accessibilityRole="button" accessibilityLabel={`${s.label}: ${plan.medicines[s.group].map(m => m.name).join(", ")}`} onPress={() => jump(s)}
           style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 22, justifyContent: "center", backgroundColor: TAGS[s.group].bg, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
@@ -138,27 +137,28 @@ function Plan({ plan, reveal }: { plan: Discharged; reveal: (node: View | null |
 }
 
 /**
- * One medicine in the grid (after the Lumi medicines grid): the drawn pill on its tint, name, schedule
- * and what the stay did to it. Opens in place to full width with its full line and how to take it.
+ * One medicine in the grid (after the Lumi medicines grid): a tall white card with the medicine drawn
+ * large as a soft 3D pair of pills, its name and plain schedule, and a small tag for what the stay did
+ * to it. Opens in place to full width (pill beside the words) with its full line and how to take it.
  */
 function MedCard({ med, open, layout, reduced, onPress, ref }: { med: Med & { group: Exclude<Group, "stopped"> }; open: boolean; layout: ReturnType<typeof reflow>; reduced: boolean; onPress: () => void; ref: Ref<View> }) {
   const tag = TAGS[med.group], schedule = scheduleLine(med);
   const details = [med.line, med.take && `How to take: ${med.take}`, CHANGE[med.group]].filter(Boolean);
+  const name = <View style={{ gap: 3, flexShrink: 1 }}>
+    <Text style={{ fontSize: 18, lineHeight: 22, fontWeight: "700", letterSpacing: -0.4, color: palette.ink }}>{med.name}</Text>
+    <Text style={{ ...type.footnote, color: palette.muted }}>{schedule}</Text>
+  </View>;
   return <Animated.View layout={layout} style={{ width: open ? "100%" : "48%" }}>
     <Pressable ref={ref} accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={onPress}
       accessibilityLabel={[med.name, schedule, tag.label, ...(open ? details : [])].join(". ")} accessibilityHint={open ? undefined : "Shows how to take it"}
-      style={({ pressed }) => [surfaceStyle, { minHeight: open ? 0 : 176, padding: 16, gap: 6, transform: [{ scale: pressed ? 0.97 : 1 }] }]}>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: 6, marginBottom: 4 }}>
-        <View style={{ width: 64, height: 64, borderRadius: 22, borderCurve: "continuous", backgroundColor: tintOf(med.name), alignItems: "center", justifyContent: "center" }}>
-          <Pill name={med.name} size={52} />
-        </View>
-        <View style={{ borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: tag.bg }}>
-          <Text style={{ fontSize: 10.5, fontWeight: "800", letterSpacing: 0.6, textTransform: "uppercase", color: tag.fg }}>{tag.label}</Text>
-        </View>
+      style={({ pressed }) => [surfaceStyle, { minHeight: open ? 0 : 214, padding: 16, gap: 10, justifyContent: "space-between", transform: [{ scale: pressed ? 0.97 : 1 }] }]}>
+      <View style={{ position: "absolute", top: 14, right: 14, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: tag.bg }}>
+        <Text style={{ fontSize: 10.5, fontWeight: "800", letterSpacing: 0.6, textTransform: "uppercase", color: tag.fg }}>{tag.label}</Text>
       </View>
-      <Text style={{ fontSize: 15.5, lineHeight: 20, fontWeight: "700", letterSpacing: -0.3, color: palette.ink }}>{med.name}</Text>
-      <Text style={{ ...type.footnote, color: palette.muted }}>{schedule}</Text>
-      {open && <Animated.View entering={reduced ? undefined : FadeIn.duration(240).delay(120)} style={{ gap: 6, paddingTop: 10, marginTop: 4, borderTopWidth: 1, borderColor: "rgba(40,24,70,0.06)" }}>
+      {open
+        ? <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingRight: 64 }}><Pill name={med.name} size={84} />{name}</View>
+        : <><View style={{ alignSelf: "center", marginTop: 8 }}><Pill name={med.name} size={104} /></View>{name}</>}
+      {open && <Animated.View entering={reduced ? undefined : FadeIn.duration(240).delay(120)} style={{ gap: 6, paddingTop: 10, borderTopWidth: 1, borderColor: "rgba(20,26,46,0.06)" }}>
         <Text style={{ ...type.body, color: palette.ink }}>{med.line}</Text>
         {med.take && <Text style={{ ...type.body, color: palette.ink }}><Text style={{ fontWeight: "600" }}>How to take: </Text>{med.take}</Text>}
         <Text style={{ ...type.footnote, fontWeight: "600", color: tag.fg }}>{CHANGE[med.group]}</Text>

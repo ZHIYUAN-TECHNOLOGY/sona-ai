@@ -1,5 +1,7 @@
 import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
+import { router } from "expo-router";
+import Svg, { Path } from "react-native-svg";
 import { useState, type ReactNode } from "react";
 import { AccessibilityInfo, ActivityIndicator, Pressable, Text, View, type TextStyle, type ViewStyle } from "react-native";
 import Animated, { cancelAnimation, Easing, LinearTransition, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
@@ -86,6 +88,14 @@ export function HoldButton({ label, doneLabel, onDone, done = false, hold = 800,
       {!done && <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 0, bottom: 0, experimental_backgroundImage: `linear-gradient(135deg, ${accent[0]}, ${accent[1]} 50%, ${accent[2]})` } as ViewStyle, fill]} />}
       <Text style={{ fontSize: compact ? 13 : 16, fontWeight: "700", color: done ? palette.green : holding && quiet ? palette.white : ink }}>{done ? `✓  ${doneLabel}` : holding ? "Keep holding…" : label}</Text>
     </Animated.View>
+  </Pressable>;
+}
+
+/** The glass back button for screens off the dock (no header band): back, or home if opened directly. */
+export function BackButton({ label = "Back" }: { label?: string }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} hitSlop={6} onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }}
+    style={({ pressed }) => [pillStyle, { width: 44, height: 44, alignItems: "center", justifyContent: "center", alignSelf: "flex-start", transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
+    <Svg width={20} height={20} viewBox="0 0 24 24"><Path d="m15 18l-6-6l6-6" fill="none" stroke={palette.ink} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></Svg>
   </Pressable>;
 }
 

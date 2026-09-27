@@ -8,7 +8,7 @@ import { foodOf, strip } from "@/features/doses/strip";
 import { dayLabel } from "@/features/follow-ups/lines";
 import { Sunbeam } from "@/lib/halftone";
 import { palette, type } from "@/lib/theme";
-import { Button, Card, HoldButton, pillStyle, Title } from "@/lib/ui";
+import { BackButton, Button, Card, HoldButton, pillStyle, Title } from "@/lib/ui";
 
 /**
  * One dose, one decision (care-v2 prototype): today's doses at a glance, the medicine drawn big, how
@@ -33,6 +33,7 @@ export default function DoseScreen() {
   };
 
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 48, gap: 16 }}>
+      <BackButton />
     {took ? <Title overline={dayLabel(now)} accent="Taken">, thank you</Title>
       : <Title overline={dayLabel(now)} greeting={soon ? "Time to take" : "Next"} accent="your medicine" />}
     {!plan && <ActivityIndicator color={palette.muted} />}

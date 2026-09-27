@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { changeSummary, dischargeLine, homeLine, scheduleLine } from "./lines";
+import { changeSummary, dischargeLine, homeLine, scheduleLine, takeLine } from "./lines";
 
 const med = name => ({ name, line: "" });
 const medicines = { new: [med("Paracetamol")], changed: [med("Azithromycin")], stopped: [med("Salbutamol nebuliser")], continue: [med("Cetirizine")] };
@@ -32,4 +32,10 @@ test("the title line counts days at home", () => {
   expect(homeLine(0)).toBe("Home since today");
   expect(homeLine(1)).toBe("Home since yesterday");
   expect(homeLine(3)).toBe("Home for 3 days");
+});
+
+test("the medicines title line says how many to take, what changed and how long home", () => {
+  const meds = { new: [{ name: "A" }], changed: [{ name: "B" }], continue: [{ name: "C" }], stopped: [{ name: "D" }] };
+  expect(takeLine(meds, "Home since today")).toBe("3 to take · 1 new · 1 changed · Home since today");
+  expect(takeLine({ new: [], changed: [], continue: [], stopped: [] }, "Home for 3 days")).toBe("Nothing to take · Home for 3 days");
 });

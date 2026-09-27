@@ -40,3 +40,9 @@ export const CHANGE = { new: "Started in hospital", changed: "Changed in hospita
 
 /** The title's line: how long the patient has been home. */
 export const homeLine = (days: number | undefined) => days === undefined || days <= 0 ? "Home since today" : days === 1 ? "Home since yesterday" : `Home for ${days} days`;
+
+/** The medicines title's insight line: how many to take at home and what changed, then how long home ("3 to take · 1 new · 1 changed"). */
+export function takeLine(meds: Discharged["medicines"], home: string) {
+  const taking = meds.new.length + meds.changed.length + meds.continue.length;
+  return [taking ? `${taking} to take` : "Nothing to take", meds.new.length && `${meds.new.length} new`, meds.changed.length && `${meds.changed.length} changed`, home].filter(Boolean).join(" · ");
+}

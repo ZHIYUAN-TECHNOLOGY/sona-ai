@@ -17,8 +17,9 @@ export default function RootLayout() {
     <CalmCanvas />
     {/* The navigation theme's own background (#F2F2F2) would cover the canvas; make it clear. */}
     <ThemeProvider value={{ ...DefaultTheme, colors: { ...DefaultTheme.colors, background: "transparent" } }}>
-    <Stack screenOptions={{ headerTransparent: true, headerBlurEffect: "systemUltraThinMaterialLight", headerShadowVisible: false, headerTitle: "", headerBackButtonDisplayMode: "minimal", headerTintColor: palette.ink, contentStyle: { backgroundColor: "transparent" } }}>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+    {/* No header band: every screen runs to the top like home; screens off the dock carry their own glass back button. */}
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" } }}>
+      <Stack.Screen name="index" />
       <Stack.Screen name="join" options={{ presentation: "modal", headerShown: false }} />
       <Stack.Screen name="assistant" options={{ presentation: "formSheet", headerShown: false, sheetAllowedDetents: [0.62, 0.95], sheetGrabberVisible: true, sheetCornerRadius: 36, contentStyle: { backgroundColor: "#FDFBFD" } }} />
     </Stack>

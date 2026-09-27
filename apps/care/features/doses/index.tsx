@@ -3,7 +3,7 @@ import * as SecureStore from "expo-secure-store";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Pressable, Text, type TextStyle, useWindowDimensions, View, type ViewStyle } from "react-native";
 import Animated, { FadeIn, useReducedMotion, withSpring, withTiming } from "react-native-reanimated";
-import Svg, { Circle, Defs, Ellipse, G, Line, LinearGradient, Path, Rect, Stop } from "react-native-svg";
+import Svg, { Circle, Path } from "react-native-svg";
 import { useDischarge } from "@/features/discharge/row";
 import { countdown, weekLine } from "@/features/home";
 import { Sunbeam } from "@/lib/halftone";
@@ -156,36 +156,4 @@ export function WeekCard({ also }: { also?: string }) {
   </>;
 }
 
-// Illustrative dosage forms (not a brand's pack or imprint), after the clinician app's medicine thumbnails.
-const LOOKS: Record<string, { form: "tablet" | "caplet"; body: string; accent: string; tint: string }> = {
-  Azithromycin: { form: "caplet", body: "#DCE8FB", accent: "#A9C2EC", tint: "rgba(36,91,204,0.10)" },
-  Cetirizine: { form: "tablet", body: "#FFFFFF", accent: "#D7D2EE", tint: "rgba(110,80,210,0.10)" },
-  Paracetamol: { form: "caplet", body: "#FFFFFF", accent: "#CDE3DF", tint: "rgba(20,140,130,0.10)" },
-};
-const fallback = LOOKS.Cetirizine!;
-export const tintOf = (name: string) => (LOOKS[name] ?? fallback).tint;
-
-/** A soft drawn pill: a shadow under a lit body with a score line. */
-export function Pill({ name, size }: { name: string; size: number }) {
-  const look = LOOKS[name] ?? fallback;
-  return <Svg width={size} height={size} viewBox="0 0 44 44" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-    <Defs>
-      <LinearGradient id="lit" x1="0" y1="0" x2="0.3" y2="1">
-        <Stop offset="0" stopColor="#FFFFFF" />
-        <Stop offset="1" stopColor={look.body} />
-      </LinearGradient>
-    </Defs>
-    <Ellipse cx={22} cy={38} rx={11} ry={2.2} fill="rgba(40,70,140,0.12)" />
-    {look.form === "tablet"
-      ? <G>
-        <Ellipse cx={22} cy={24} rx={13} ry={11} fill={look.accent} />
-        <Ellipse cx={22} cy={21.5} rx={13} ry={10.5} fill="url(#lit)" stroke="rgba(20,28,40,0.08)" strokeWidth={0.6} />
-        <Line x1={22} y1={14} x2={22} y2={29} stroke={look.accent} strokeWidth={1.2} strokeLinecap="round" />
-      </G>
-      : <G rotation={-28} origin="22, 22">
-        <Rect x={6} y={18} width={32} height={13} rx={6.5} fill={look.accent} />
-        <Rect x={6} y={15} width={32} height={13} rx={6.5} fill="url(#lit)" stroke="rgba(20,28,40,0.08)" strokeWidth={0.6} />
-        <Line x1={22} y1={17.5} x2={22} y2={25.5} stroke={look.accent} strokeWidth={1.2} strokeLinecap="round" />
-      </G>}
-  </Svg>;
-}
+export { Pill, tintOf } from "./pill";

@@ -3,7 +3,7 @@ import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import { historyLine, shortDate, statusOf, type CheckIn } from "@/features/check-ins/model";
 import { useCheckIns } from "@/features/check-ins/today";
 import { palette, type } from "@/lib/theme";
-import { Button, Card, Section, Title } from "@/lib/ui";
+import { BackButton, Button, Card, Section, Title } from "@/lib/ui";
 
 /**
  * Past check-ins to review: the insight line (how many answered, what's next), then what we asked,
@@ -26,6 +26,7 @@ export default function Screen() {
     })}
   </Card>;
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 48, gap: 16 }}>
+      <BackButton />
     <Title accent="Check-ins" line={data ? historyLine(data, now) : undefined} />
     {!data ? <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} /> : <>
       {asked.length > 0 && <><Section light="Asked" bold="so far" />{list(asked)}</>}
