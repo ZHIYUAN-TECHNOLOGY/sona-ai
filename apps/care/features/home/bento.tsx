@@ -115,8 +115,11 @@ const SPARKLE = "M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2Z";
 /** Latest update (short): a face or chat icon in a white circle and one sparkle line; tap goes to it. */
 export function LatestTile({ index, still, onCheckIn }: { index: number; still: boolean; onCheckIn: () => void }) {
   // A visit the doctor booked from her check-in (keyed "book-in:"), still ahead.
-  const booked = useFollowUps().data?.find(f => f.id.startsWith("book-in:") && f.status !== "overdue");
-  const u = latestUpdate(useCheckIns().data, useMessageNeeds() > 0, useNow(), booked && `${away(booked.inDays)} ${timeLabel(booked) ?? ""}`.trim());
+  const visits = useFollowUps().data;
+  const booked = visits?.find(f => f.id.startsWith("book-in:") && f.status !== "overdue");
+  // A test from her X-ray the doctor put on the same visit ("CT added to your visit").
+  const test = booked && visits?.find(f => f.id.startsWith("recall:") && new Date(f.date).getTime() === new Date(booked.date).getTime());
+  const u = latestUpdate(useCheckIns().data, useMessageNeeds() > 0, useNow(), booked && `${away(booked.inDays)} ${timeLabel(booked) ?? ""}`.trim(), test?.short);
   const go = () => u.to === "check-in" ? onCheckIn() : router.push(u.to === "messages" ? "/messages" : u.to === "follow-ups" ? "/follow-ups" : "/check-ins");
   return <Tile index={index} still={still} dither={{ pattern: "pixels", corner: "top-right" }} label={`Latest update. ${u.line}`} onPress={go}>
     <Kicker>Latest update</Kicker>

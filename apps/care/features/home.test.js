@@ -74,6 +74,7 @@ test("the latest update: a waiting reply, then today's check-in, else nothing ne
   expect(latestUpdate(answered("fine"), true, now).line).toBe("Care team replied");
   expect(latestUpdate(answered("fine"), false, now)).toEqual({ line: "Check-in done · all fine", tone: "green", face: "smile", to: "check-ins" });
   expect(latestUpdate(answered("worse"), false, now, "tomorrow 9:00 AM")).toEqual({ line: "Your doctor booked you in · tomorrow 9:00 AM", tone: "blue", face: "smile", to: "follow-ups" });
+  expect(latestUpdate(answered("worse"), false, now, "tomorrow 9:00 AM", "CT scan").line).toBe("Your doctor booked you in · tomorrow 9:00 AM, with a CT scan");
   expect(latestUpdate(answered("worse"), false, now).tone).toBe("amber");
   expect(latestUpdate([{ dueAt: due, sentAt: due, replies: [] }], false, now).to).toBe("check-in");
   expect(latestUpdate([{ dueAt: new Date("2026-09-28T02:00:00Z"), sentAt: null, replies: [{ label: "fine", receivedAt: new Date("2026-09-28T15:00:00Z") }] }], false, now).line).toBe("Nothing new today");

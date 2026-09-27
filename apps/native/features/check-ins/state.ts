@@ -54,9 +54,16 @@ export async function resolveFlag(taskId: string, live: boolean) {
  * Book in (live mode): the server books the patient's clinic review for tomorrow 09:00, closes the
  * flag and tells her Sona Care; the result says when. Off live mode it is simulated like Call back.
  */
-export async function bookIn(taskId: string, live: boolean): Promise<Date | undefined> {
+export async function bookIn(taskId: string, live: boolean) {
   if (!live) { await resolveFlag(taskId, false); return undefined; }
   const booked = await api.checkIns.bookIn({ taskId });
   await Promise.all([refreshCheckIns(), refreshServerData()]);
-  return new Date(booked.startsAt);
+  return booked;
+}
+
+/** Puts a finding's follow-up test on the visit just booked (same trip); her Sona Care shows it at once. */
+export async function addToVisit(findingId: string, appointmentId: string) {
+  const added = await api.findings.addToVisit({ findingId, appointmentId });
+  await refreshServerData();
+  return added;
 }

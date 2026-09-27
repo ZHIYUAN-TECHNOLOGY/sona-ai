@@ -9,6 +9,7 @@ import { clockOf, type Context } from "../context";
 import { checkInReplySchema, type CheckInReply } from "../contracts";
 import { protectedProcedure } from "../index";
 import { stubModels } from "../models";
+import { followUpsToAdd } from "./findings";
 
 /**
  * Demo flow 7: after-discharge check-ins through a simulated inbox (no real message leaves). A
@@ -58,7 +59,8 @@ export const checkInsRouter = {
   /**
    * "Book in" on a flagged reply: books the patient's clinic review for tomorrow 09:00 (Kuala Lumpur),
    * closes the flag, and tells her Sona Care, whose Schedule and home then show it. Replaying it
-   * returns the same booking (the appointment is keyed by the task).
+   * returns the same booking (the appointment is keyed by the task). `toAdd` lists her X-ray findings
+   * that still need a follow-up, so the doctor can put the test on the same trip.
    */
   bookIn: protectedProcedure.input(z.object({ taskId: z.string().min(1) })).handler(async ({ context, input }) => {
     const { db, hospitalId } = context;
@@ -73,7 +75,9 @@ export const checkInsRouter = {
     const [booked] = await db.select().from(appointments).where(eq(appointments.id, id));
     // The hospital hears "checkIns" from the middleware; her own app hears it here, by name.
     await context.announce?.(hospitalId, { topic: "checkIns", patientId: row.patientId }).catch(() => {});
-    return { appointmentId: booked!.id, startsAt: booked!.startsAt, kind: booked!.kind, patientId: row.patientId };
+    // Anything from her X-ray still needing a follow-up can ride on the same visit (findings.addToVisit).
+    const toAdd = await followUpsToAdd(context, hospitalId, row.patientId, booked!.startsAt);
+    return { appointmentId: booked!.id, startsAt: booked!.startsAt, kind: booked!.kind, patientId: row.patientId, toAdd };
   }),
 };
 

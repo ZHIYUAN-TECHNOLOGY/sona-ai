@@ -46,3 +46,35 @@ test("Book in on Amelia's flagged reply books tomorrow 09:00, closes the flag, a
   // Only a check-in flag can be booked this way, and only the hospital's own.
   expect((await doctor.checkIns.bookIn({ taskId: "nope" }).catch(e => e)).code).toBe("NOT_FOUND");
 });
+
+test("Book in offers her untracked X-ray findings; adding one puts its test on the same visit and her Sona Care shows it", async () => {
+  const now = new Date("2026-09-28T10:05:00+08:00");
+  const db = await createTestDb();
+  await seedDemo(db, new Date("2026-09-26T15:40:00+08:00"));
+  await addClinician(db, "dr-aisyah");
+  await db.update(guaranteeLetters).set({ status: "received", receivedAt: now }).where(eq(guaranteeLetters.id, "gl-1042"));
+  await db.update(encounters).set({ state: { discharge: { glReceived: true, medsConfirmed: true, followUp: "2w", language: "ms" } } }).where(eq(encounters.id, "visit-1042"));
+  const heard: Change[] = [];
+  const as = (id: string) => createRouterClient(appRouter, { context: { db, session: user(id), now: () => now, announce: async (_h, c) => { heard.push(c); } } });
+  const doctor = as("dr-aisyah"), amelia = as("amelia-account");
+  await doctor.discharge.request({ encounterId: "visit-1042", requestId: "req-d1", approvedBy: "dr-aisyah" });
+  await amelia.care.join({ code: (await doctor.care.code({ encounterId: "visit-1042" })).code });
+  const detected = await doctor.findings.detect({ encounterId: "visit-1042" });
+  const flagged = (await amelia.care.checkIns.reply({ checkInId: "check-in:visit-1042:2", text: "demam balik" })).replies[0]!.task!;
+
+  const booked = await doctor.checkIns.bookIn({ taskId: flagged.id });
+  const nodule = detected.find(f => f.kind === "nodule")!;
+  expect(booked.toAdd.map(f => f.id)).toContain(nodule.id);
+  expect(booked.toAdd.find(f => f.id === nodule.id)?.test).toBe("CT chest");
+
+  const added = await doctor.findings.addToVisit({ findingId: nodule.id, appointmentId: booked.appointmentId });
+  expect(added).toMatchObject({ test: "CT chest", startsAt: booked.startsAt });
+  expect(heard).toContainEqual({ topic: "findings", patientId: "SYN-1042" });
+  // On her phone: the CT scan on the same morning as the review.
+  const same = (await amelia.care.followUps()).filter(f => new Date(f.date).getTime() === new Date(booked.startsAt).getTime()).map(f => f.title);
+  expect(same).toEqual(expect.arrayContaining(["Clinic review · fever returned", "CT scan of your chest"]));
+  // Booking in again no longer offers it; adding it again changes nothing.
+  expect((await doctor.checkIns.bookIn({ taskId: flagged.id })).toAdd.map(f => f.id)).not.toContain(nodule.id);
+  expect((await doctor.findings.addToVisit({ findingId: nodule.id, appointmentId: booked.appointmentId })).recallId).toBe(added.recallId);
+  expect((await doctor.findings.addToVisit({ findingId: nodule.id, appointmentId: "nope" }).catch(e => e)).code).toBe("NOT_FOUND");
+});
