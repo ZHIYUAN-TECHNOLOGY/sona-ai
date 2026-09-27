@@ -22,9 +22,8 @@ const reviewDate = (d: DischargeState & { dischargedAt: string }) => {
   return days === undefined ? undefined : new Date(new Date(d.dischargedAt).getTime() + days * 86400_000);
 };
 
-/** Sona Care's read of the patient's own plan: what they take home and what comes next. */
-export const carePlanRouter = {
-  discharge: patientProcedure.handler(async ({ context }) => {
+/** The patient's own plan as Sona Care shows it (and as care.ask grounds its answers), or in-hospital. */
+export async function patientPlan(context: Context & { hospitalId: string; patientId: string }) {
     const d = await lastDischarge(context.db, context.hospitalId, context.patientId);
     if (!d) return { status: "in-hospital" as const };
     // ponytail: planFor ignores the patient (one authored plan for the demo).
@@ -38,7 +37,25 @@ export const carePlanRouter = {
       followUp: date ? { title: "Clinic review", date } : null,
       checkIns: checkInSchedule(new Date(d.dischargedAt)).map(c => ({ day: c.day as number, date: c.dueAt })),
     };
-  }),
+}
+
+/** The plan as plain text for the model: only what the patient's own app already shows them. */
+export function planText(plan: Extract<Awaited<ReturnType<typeof patientPlan>>, { status: "discharged" }>) {
+  const meds = Object.entries(plan.medicines).flatMap(([group, list]) => list.map(m => `- ${m.name} (${group}): ${m.line}${m.take ? `; ${m.take}` : ""}`));
+  const leaflet = plan.leaflets.find(l => l.language === plan.language) ?? plan.leaflets[0];
+  return [
+    `Discharged: ${plan.dischargedAt}`,
+    "Medicines:", ...meds,
+    "Come back or call if:", ...plan.warningSigns.map(w => `- ${w}`),
+    plan.followUp ? `Follow-up: ${plan.followUp.title} on ${new Date(plan.followUp.date).toDateString()}` : "Follow-up: none booked",
+    `Check-ins: day ${plan.checkIns.map(c => c.day).join(" and ")} after discharge`,
+    `Leaflet (${leaflet?.label ?? ""}):`, leaflet?.text ?? "",
+  ].join("\n");
+}
+
+/** Sona Care's read of the patient's own plan: what they take home and what comes next. */
+export const carePlanRouter = {
+  discharge: patientProcedure.handler(({ context }) => patientPlan(context)),
 
   /**
    * What is coming up, earliest first: booked appointments (clinic visits and finding recalls), the

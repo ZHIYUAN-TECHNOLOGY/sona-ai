@@ -27,8 +27,16 @@ export type Models = {
   suggestCodes(input: { sentences: Sentence[] }): Answer<{ codes: Code[] }>;
   synthesiseEvidence(input: { question: string; studies: Study[] }): Answer<{ answer: string; studyIds: string[] }>;
   huddleBrief(input: { beds: Bed[]; owners: Record<string, Owner | undefined> }): Answer<{ lines: string[] }>;
-  /** After-discharge check-ins: worse or urgent replies become a flagged task. */
-  classifyReply(input: { text: string; language: Language }): Answer<{ label: "fine" | "worse" | "urgent" }>;
+  /** Sona Care: the patient's speech as text (Malay, English, Chinese or mixed). The stub has no ears: it returns no text. */
+  transcribe(input: { audio: Uint8Array; language?: Language }): Answer<{ text: string; language?: string }>;
+  /**
+   * Sona Care: an answer to the patient's question from their own discharge plan only. `grounded` false
+   * means the plan does not answer it (the app offers the care team); `urgent` puts the 999 line first.
+   * The stub answers nothing, so the app's authored plan answers stay in charge.
+   */
+  answerFromPlan(input: { question: string; plan: string; language: Language }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string }>;
+  /** After-discharge check-ins: worse or urgent replies become a flagged task (with the model's short symptom, when it read one). */
+  classifyReply(input: { text: string; language: Language }): Answer<{ label: "fine" | "worse" | "urgent"; symptom?: string }>;
 };
 
 const fixture = <T>(value: T) => Promise.resolve({ ...value, source: "fixture" as const });
@@ -56,4 +64,6 @@ export const stubModels: Models = {
   huddleBrief: ({ beds, owners }) => fixture({ lines: huddle(beds, owners) }),
   // ponytail: keyword rule standing in for the classifier; the demo reply is "fever returned".
   classifyReply: ({ text }) => fixture({ label: readReply(text) }),
+  transcribe: () => fixture({ text: "" }),
+  answerFromPlan: () => fixture({ answer: "", grounded: false, urgent: false }),
 };

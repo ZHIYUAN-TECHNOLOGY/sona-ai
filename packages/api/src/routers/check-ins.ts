@@ -70,7 +70,7 @@ export async function replyToCheckIn(context: Context, hospitalId: string, input
   await db.update(checkIns).set({ sentAt: at }).where(and(eq(checkIns.id, row.checkIn.id), isNull(checkIns.sentAt)));
   const read = await (context.models ?? stubModels).classifyReply({ text: input.text, language: row.checkIn.language });
   const id = crypto.randomUUID();
-  const flag = replyFlag(row.name.split(" ")[0]!, read.label, input.text);
+  const flag = replyFlag(row.name.split(" ")[0]!, read.label, input.text, read.symptom);
   if (flag) await db.insert(tasks).values({
     id, hospitalId, encounterId: row.checkIn.encounterId, kind: "check-in", title: flag.title, owner: "Attending doctor", due: "Today",
     sourceId: id, idempotencyKey: `check-in:${id}`,

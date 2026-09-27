@@ -11,6 +11,8 @@ import Svg, { Path } from "react-native-svg";
 import { spoken, type Asked, type Reply } from "@/features/assistant/answers";
 import { Glyph } from "@/features/assistant/composer";
 import { pickVoices, preview, type SonaVoice } from "@/features/assistant/voices";
+import { useListen } from "@/lib/listen";
+import { MIC } from "./mic";
 import { orbPad, SonaOrb } from "@/lib/orb";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
@@ -21,8 +23,10 @@ import { Button, CircleButton, ICON } from "@/lib/ui";
  * back; the orb in the middle with one honest line under it ("Tap to hear it", "Reading aloud…"); the
  * answer large and centred, the words already read in ink and the rest faint (karaoke on the phone's
  * word boundaries; all ink where the phone sends none); the plan's questions under it; and a bottom
- * row of the voice picker, the main round button (read / stop) and the keyboard back to text. There is
- * no speech-to-text, so it never claims to listen: tap a question and Sona reads the answer aloud.
+ * row of the voice picker, the mic (talk / stop) and the keyboard back to text. Talking is a hands-free
+ * conversation, turn by turn: the patient speaks, the turn ends when they pause, Sona answers aloud,
+ * then listens again, until they tap stop or go quiet. It only says it is listening while the mic is on,
+ * and with no speech model switched on it says so plainly; tapping a question still reads its answer.
  * The first time, "Choose Sona's voice" (after Gemini's picker): swipe between the phone's English
  * voices; each says hello. Reduce Motion: no sliding, and the orb holds still.
  */
@@ -42,7 +46,7 @@ export const SUGGEST_ICON: Record<Asked["kind"] | "doctor", string> = {
   doctor: "M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3M8 15v1a6 6 0 0 0 6 6a6 6 0 0 0 6-6v-4M20 10a2 2 0 1 0 0 4a2 2 0 0 0 0-4",
 };
 
-export function VoiceMode({ questions, answer, first, onChat, onType }: { questions: Suggestion[]; answer: (question: string) => Reply; first?: string; onChat: () => void; onType: () => void }) {
+export function VoiceMode({ questions, answer, first, language, onChat, onType }: { questions: Suggestion[]; answer: (question: string) => Reply | Promise<Reply>; first?: string; language?: "en" | "ms" | "zh"; onChat: () => void; onType: () => void }) {
   const still = useReducedMotion();
   const insets = useSafeAreaInsets();
   const [voices, setVoices] = useState<SonaVoice[]>();
@@ -56,6 +60,14 @@ export function VoiceMode({ questions, answer, first, onChat, onType }: { questi
   const talk = useSharedValue(0);
   // Each utterance gets a number, so a stopped one's late callback can't touch the next one.
   const turn = useRef(0);
+  // In a conversation: after each answer is read, the mic opens again by itself.
+  const [talking, setTalking] = useState(false);
+  const [heard, setHeard] = useState<string>();
+  const listen = useListen({ language, onHeard: q => { setHeard(q); void ask(q); } });
+  const again = useRef(() => {});
+  again.current = () => { if (talking && listen.state === "idle") listen.toggle(); };
+  // A turn with nothing said, or an error (no speech model yet), ends the conversation.
+  useEffect(() => { if (listen.state === "error") setTalking(false); }, [listen.state]);
 
   useEffect(() => {
     let live = true;
@@ -79,7 +91,7 @@ export function VoiceMode({ questions, answer, first, onChat, onType }: { questi
     setUpto(undefined);
     Speech.speak(text, { voice: v.voice, language: v.language, rate: v.rate, pitch: v.pitch,
       onBoundary: follow ? (e: { charIndex: number; charLength: number }) => { if (id === turn.current) setUpto(e.charIndex + e.charLength); } : undefined,
-      onStart: () => on(id, true), onDone: () => on(id, false), onStopped: () => on(id, false), onError: () => on(id, false) });
+      onStart: () => on(id, true), onDone: () => { on(id, false); if (id === turn.current) again.current(); }, onStopped: () => on(id, false), onError: () => on(id, false) });
   };
   const stop = () => { turn.current++; void Speech.stop(); setSpeaking(false); setUpto(undefined); talk.set(still ? 0 : withTiming(0, { duration: 600, easing: EASE_OUT })); };
   const read = (text: string, v = voice) => { if (!v) return; setSaid(text); speak(text, v, true); };
@@ -90,11 +102,18 @@ export function VoiceMode({ questions, answer, first, onChat, onType }: { questi
     if (said) read(said, v);
     else speak("I'm ready. Tap a question and I'll read the answer aloud.", v);
   };
-  const ask = (q: string) => read(spoken(answer(q)));
-  const main = () => { if (speaking) stop(); else if (said) read(said); };
-  const leave = (then: () => void) => { stop(); then(); };
+  const ask = async (q: string) => read(spoken(await answer(q)));
+  const replay = () => { if (speaking) stop(); else if (said) read(said); };
+  /** The mic: start a conversation, send the turn now, or (while Sona talks) stop and end it. */
+  const main = () => {
+    if (speaking) { setTalking(false); stop(); return; }
+    if (listen.state === "listening") { listen.toggle(); return; }
+    setTalking(true); setHeard(undefined); listen.toggle();
+  };
+  const leave = (then: () => void) => { setTalking(false); listen.cancel(); stop(); then(); };
   const lit = upto === undefined ? said?.length ?? 0 : upto;
-  const status = speaking ? "Reading aloud…" : said ? "Tap to hear it" : "Tap a question below";
+  const status = listen.state === "listening" ? "Listening…" : listen.state === "reading" ? "Thinking…" : speaking ? "Reading aloud…"
+    : listen.error ?? (said ? "Tap the mic to talk, or the orb to hear it again" : "Tap the mic and ask, or pick a question");
 
   if (!voices) return <ActivityIndicator color={palette.muted} style={{ flex: 1 }} />;
   if (picking || !voice) return <Picker voices={voices} initial={Math.max(0, voices.findIndex(v => v.id === voice?.id))} onPreview={v => speak(preview(v), v)} onStart={start} onClose={() => leave(voice ? () => setPicking(false) : onChat)} />;
@@ -106,11 +125,12 @@ export function VoiceMode({ questions, answer, first, onChat, onType }: { questi
       <View style={{ width: 48 }} />
     </View>
     <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 24, paddingVertical: 16, gap: 14 }}>
-      <Pressable accessibilityRole="button" accessibilityLabel={speaking ? "Stop reading" : said ? "Hear the answer" : "Nothing to read yet"} accessibilityState={{ disabled: !said }} disabled={!said} onPress={main}
+      <Pressable accessibilityRole="button" accessibilityLabel={speaking ? "Stop reading" : said ? "Hear the answer" : "Nothing to read yet"} accessibilityState={{ disabled: !said }} disabled={!said} onPress={replay}
         style={({ pressed }) => ({ margin: -orbPad(150) + 8, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
         <SonaOrb size={150} flood={talk} />
       </Pressable>
-      <Text accessibilityLiveRegion="polite" style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: palette.ink, textAlign: "center" }}>{status}</Text>
+      <Text accessibilityLiveRegion="polite" style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: listen.error && !speaking && listen.state === "error" ? palette.amber : palette.ink, textAlign: "center" }}>{status}</Text>
+      {heard && <Text selectable accessibilityLabel={`You said: ${heard}`} style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>“{heard}”</Text>}
       {said && <Text accessibilityLiveRegion="polite" selectable style={{ fontSize: 24, lineHeight: 32, fontWeight: "600", letterSpacing: -0.6, color: palette.ink, textAlign: "center", marginTop: 4 }}>
         {said.slice(0, lit)}<Text style={{ fontWeight: "600", color: palette.faint }}>{said.slice(lit)}</Text>
       </Text>}
@@ -121,11 +141,14 @@ export function VoiceMode({ questions, answer, first, onChat, onType }: { questi
     <Animated.View entering={still ? undefined : FadeIn.duration(260).delay(160)}
       style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 36, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 16) }}>
       <CircleButton d={GLYPH.person} size={56} label={`Voice: ${voice.name}. Choose another voice`} onPress={() => { stop(); setPicking(true); }} />
-      <Pressable accessibilityRole="button" accessibilityLabel={speaking ? "Stop reading" : "Read the answer aloud"} accessibilityState={{ disabled: !said && !speaking }} disabled={!said && !speaking} onPress={main}
-        style={({ pressed }) => ({ width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line,
-          opacity: said || speaking ? 1 : 0.45, boxShadow: "0 14px 28px -14px rgba(37,99,235,0.45)", transform: [{ scale: pressed ? 0.94 : 1 }] })}>
+      <Pressable accessibilityRole="button" accessibilityLabel={speaking ? "Stop" : listen.state === "listening" ? "Send what I said" : "Talk to Sona"}
+        accessibilityHint={speaking || listen.state === "listening" ? undefined : "Speak in Malay, English or Chinese; Sona answers aloud and listens again"}
+        accessibilityState={{ busy: listen.state === "reading" }} disabled={listen.state === "reading"} onPress={main}
+        style={({ pressed }) => ({ width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: listen.state === "listening" ? palette.blue : palette.white, borderWidth: 1, borderColor: listen.state === "listening" ? palette.blue : palette.line,
+          boxShadow: "0 14px 28px -14px rgba(37,99,235,0.45)", transform: [{ scale: pressed ? 0.94 : 1 }] })}>
         {speaking ? <View style={{ width: 20, height: 20, borderRadius: 5, backgroundColor: palette.blue }} />
-          : <Svg width={24} height={24} viewBox="0 0 24 24"><Path d="M7 4.5v15l12.5-7.5z" fill={palette.blue} stroke={palette.blue} strokeWidth={1.5} strokeLinejoin="round" /></Svg>}
+          : listen.state === "reading" ? <ActivityIndicator color={palette.blue} />
+            : <Glyph d={MIC} color={listen.state === "listening" ? palette.white : palette.blue} size={28} />}
       </Pressable>
       <CircleButton d={GLYPH.keyboard} size={56} label="Type a question" onPress={() => leave(onType)} />
     </Animated.View>

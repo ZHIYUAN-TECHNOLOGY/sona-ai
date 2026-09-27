@@ -49,6 +49,12 @@
         {
           "cameraPermission": "Sona Care uses the camera to scan the QR code on your discharge paper."
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Sona Care uses the microphone so you can speak your question or check-in reply instead of typing."
+        }
       ]
     ],
     "experiments": {

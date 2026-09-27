@@ -1,6 +1,8 @@
 import type { Language } from "@sona-ai/domain/discharge";
 import { useState } from "react";
 import { AccessibilityInfo, ActivityIndicator, Pressable, View, type ViewStyle } from "react-native";
+import { MicButton } from "@/features/assistant/mic";
+import { useListen } from "@/lib/listen";
 import { Text, TextInput } from "@/lib/text";
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, withDelay, withSpring, withTiming } from "react-native-reanimated";
 import Svg, { Circle, Path } from "react-native-svg";
@@ -78,6 +80,8 @@ function FollowUp({ language, text, feeling: f, busy, onSend }: { language: Lang
   const [review, setReview] = useState<string>();
   const [writing, setWriting] = useState(false);
   const [words, setWords] = useState("");
+  // Speaking fills the box with her words (added to anything typed); she reads them before sending.
+  const listen = useListen({ language, onHeard: t => setWords(w => w.trim() ? `${w.trim()} ${t}` : t) });
   const copy = answersFor(language), follow = copy.follow[f];
   const enter = (i: number) => still ? undefined : rise(80 + i * 50);
   const quick = (q?: string) => {
@@ -100,8 +104,13 @@ function FollowUp({ language, text, feeling: f, busy, onSend }: { language: Lang
       </View>
     </Animated.View>
     : writing ? <Animated.View entering={enter(0)} style={{ gap: 10 }}>
-      <TextInput value={words} onChangeText={setWords} placeholder={copy.placeholder} placeholderTextColor={palette.muted} multiline autoFocus maxLength={900}
-        accessibilityLabel={copy.more} style={{ ...field, backgroundColor: palette.white, minHeight: 96, paddingTop: 12, textAlignVertical: "top" }} />
+      <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8 }}>
+        <TextInput value={words} onChangeText={setWords} placeholder={copy.placeholder} placeholderTextColor={palette.muted} multiline autoFocus maxLength={900}
+          accessibilityLabel={copy.more} style={{ ...field, flex: 1, backgroundColor: palette.white, minHeight: 96, paddingTop: 12, textAlignVertical: "top" }} />
+        <MicButton listen={listen} label="Say it instead" />
+      </View>
+      {listen.state === "listening" ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>Listening… say it your way</Text>
+        : listen.error ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber }}>{listen.error}</Text> : null}
       <Button label={copy.send} busy={busy} disabled={!words.trim()} onPress={() => onSend(replyText(text, words))} />
     </Animated.View>
     : <>

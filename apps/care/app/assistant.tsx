@@ -7,7 +7,9 @@ import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion, useSharedValue,
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { conditionOf, doctorQuestion, leadOf, NO_ANSWER, reply, spoken, suggestions, type Reply } from "@/features/assistant/answers";
 import { Composer, Glyph, GLYPH as COMPOSE } from "@/features/assistant/composer";
+import { MicButton } from "@/features/assistant/mic";
 import { SUGGEST_ICON, SuggestionRow, VoiceMode, type Suggestion } from "@/features/assistant/voice";
+import { useListen } from "@/lib/listen";
 import { DoctorAvatar } from "@/features/doctors/avatar";
 import type { Doctor } from "@/features/doctors/data";
 import { useNextDose, useNow } from "@/features/doses";
@@ -88,23 +90,37 @@ export default function Assistant() {
   const ask = (question: string) => {
     clearTimeout(timer.current);
     const r = reply(question, asks, condition), requestId = newRequestId();
-    const say = () => AccessibilityInfo.announceForAccessibility(r.kind === "plan" ? `${spoken(r)} ${r.asked.source}` : spoken(r));
-    // The honest no needs no reading; plan answers and doctor searches show their status line first.
-    if (still || r.kind === "none") { setTurns(ts => [...ts, { question, reply: r, requestId, ready: true }]); say(); return; }
+    const say = (r: Reply) => AccessibilityInfo.announceForAccessibility(r.kind === "plan" ? `${spoken(r)} ${r.asked.source}` : spoken(r));
+    // Anything the authored answers don't cover goes to the model, grounded in the plan (care.ask); with
+    // no model switched on it answers nothing, and the honest "ask your care team" stays.
+    if (r.kind === "none" && !r.urgent) {
+      setTurns(ts => [...ts, { question, reply: r, requestId, ready: false }]);
+      if (!still) flood.set(withTiming(1, { duration: 400, easing: EASE_OUT }));
+      void client.care.ask({ question }).then(fromModel, () => r).then(next => {
+        flood.set(withTiming(0, { duration: 600, easing: EASE_OUT }));
+        patch(requestId, { reply: next, ready: true });
+        say(next);
+      });
+      return;
+    }
+    // The urgent no needs no reading; plan answers and doctor searches show their status line first.
+    if (still || r.kind === "none") { setTurns(ts => [...ts, { question, reply: r, requestId, ready: true }]); say(r); return; }
     setTurns(ts => [...ts, { question, reply: r, requestId, ready: false }]);
     flood.set(withTiming(1, { duration: 400, easing: EASE_OUT }));
     timer.current = setTimeout(() => {
       flood.set(withTiming(0, { duration: 600, easing: EASE_OUT }));
       patch(requestId, { ready: true });
-      say();
+      say(r);
     }, WORK_MS[r.kind]);
   };
-  /** Voice mode asks the same way, but it reads the answer aloud itself, so the turn is ready at once. */
-  const askAloud = (question: string) => {
-    const r = reply(question, asks, condition);
+  /** Voice mode asks the same way (the model for anything the plan's own answers don't cover), and reads the answer aloud itself. */
+  const askAloud = async (question: string) => {
+    const r0 = reply(question, asks, condition);
+    const r = r0.kind === "none" && !r0.urgent ? await client.care.ask({ question }).then(fromModel, () => r0) : r0;
     setTurns(ts => [...ts, { question, reply: r, requestId: newRequestId(), ready: true }]);
     return r;
   };
+  const listen = useListen({ language: discharged?.language as "en" | "ms" | "zh" | undefined, onHeard: q => { if (!working) ask(q); } });
   const askTyped = () => {
     const question = draft.trim();
     if (!question || working) return;
@@ -131,7 +147,7 @@ export default function Assistant() {
   const lastAnswer = [...turns].reverse().find(t => t.ready);
 
   if (voice) return <Animated.View entering={still ? undefined : FadeIn.duration(240)} style={{ flex: 1 }}>
-    <VoiceMode questions={rows} answer={askAloud} first={lastAnswer && spoken(lastAnswer.reply)} onChat={() => setVoice(false)} onType={() => { setTypeNext(true); setVoice(false); }} />
+    <VoiceMode questions={rows} answer={askAloud} language={discharged?.language as "en" | "ms" | "zh" | undefined} first={lastAnswer && spoken(lastAnswer.reply)} onChat={() => setVoice(false)} onType={() => { setTypeNext(true); setVoice(false); }} />
   </Animated.View>;
 
   return <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
@@ -166,10 +182,16 @@ export default function Assistant() {
 
     <View style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 12), gap: 8 }}>
       {joined && <Composer inputRef={input} value={draft} onChangeText={setDraft} placeholder="Ask about your recovery…" label="Ask about your recovery" onSend={askTyped} canSend={canSend}
-        idle={<Pressable accessibilityRole="button" accessibilityLabel="Voice mode" accessibilityHint="Sona reads answers aloud" onPress={() => setVoice(true)}
-          style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.mutedWash, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
-          <Glyph d={COMPOSE.voice} color={palette.ink} size={20} />
-        </Pressable>} />}
+        idle={<View style={{ flexDirection: "row", gap: 6 }}>
+          <MicButton listen={listen} label="Speak your question" />
+          <Pressable accessibilityRole="button" accessibilityLabel="Voice mode" accessibilityHint="Talk with Sona hands-free; it answers aloud" onPress={() => { listen.cancel(); setVoice(true); }}
+            style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.mutedWash, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
+            <Glyph d={COMPOSE.voice} color={palette.ink} size={20} />
+          </Pressable>
+        </View>} />}
+      {listen.state === "listening" ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, fontWeight: "600", color: palette.blue, textAlign: "center" }}>Listening… speak in Malay, English or Chinese</Text>
+        : listen.state === "reading" ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>Reading what you said…</Text>
+          : listen.error ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber, textAlign: "center" }}>{listen.error}</Text> : null}
       <Text style={{ ...type.footnote, fontWeight: "600", color: palette.amber, textAlign: "center" }}>Not for emergencies · call 999</Text>
     </View>
   </KeyboardAvoidingView>;
@@ -218,6 +240,13 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
         {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(error)}</Text>}
       </Animated.View>}
   </View>;
+}
+
+/** A care.ask answer as a reply: grounded in the plan (with where from), or the honest no (urgent when the model heard a warning sign). */
+function fromModel(a: Awaited<ReturnType<typeof client.care.ask>>): Reply {
+  if (a.source !== "model" || !a.answer) return { kind: "none", urgent: false };
+  if (!a.grounded) return { kind: "none", urgent: a.urgent };
+  return { kind: "plan", asked: { question: "", answer: a.answer, source: `From your discharge plan${a.from ? ` · ${a.from}` : ""}`, kind: "medicine" } };
 }
 
 /** A sample doctor inline in an answer: their initials disc, name, specialty and where; tap for their page. */

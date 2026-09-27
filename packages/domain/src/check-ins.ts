@@ -47,10 +47,13 @@ export function readReply(text: string): ReplyLabel {
 const SYMPTOMS: [RegExp, string][] = [
   [/chest pain|sakit dada|胸痛/i, "chest pain"], [/fever|demam|发烧/i, "fever returned"], [/breath|nafas|呼吸/i, "breathing worse"],
 ];
-/** Worse and urgent replies become a flagged task named by what the patient said; urgent ranks above worse. Fine replies are only logged. */
-export function replyFlag(firstName: string, label: ReplyLabel, text: string): { title: string; label: "worse" | "urgent"; score: number } | undefined {
+/**
+ * Worse and urgent replies become a flagged task named by what the patient said (the model's short
+ * symptom when it gave one, else a keyword match); urgent ranks above worse. Fine replies are only logged.
+ */
+export function replyFlag(firstName: string, label: ReplyLabel, text: string, read?: string): { title: string; label: "worse" | "urgent"; score: number } | undefined {
   if (label === "fine") return undefined;
-  const symptom = SYMPTOMS.find(([pattern]) => pattern.test(text))?.[1] ?? "feeling worse";
+  const symptom = read?.trim().toLowerCase().replace(/[.!]+$/, "") || (SYMPTOMS.find(([pattern]) => pattern.test(text))?.[1] ?? "feeling worse");
   // Above an unacknowledged lab result (100): a patient at home who is getting worse comes first.
   return { title: `${firstName}: ${symptom} after discharge`, label, score: label === "urgent" ? 120 : 105 };
 }
