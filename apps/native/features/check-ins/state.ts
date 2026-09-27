@@ -49,3 +49,14 @@ export async function resolveFlag(taskId: string, live: boolean) {
   }
   set({ replies: Object.fromEntries(Object.entries(store.replies).map(([id, list]) => [id, list.map(r => (r.task?.id === taskId ? { ...r, task: { ...r.task, completed: true } } : r))])) });
 }
+
+/**
+ * Book in (live mode): the server books the patient's clinic review for tomorrow 09:00, closes the
+ * flag and tells her Sona Care; the result says when. Off live mode it is simulated like Call back.
+ */
+export async function bookIn(taskId: string, live: boolean): Promise<Date | undefined> {
+  if (!live) { await resolveFlag(taskId, false); return undefined; }
+  const booked = await api.checkIns.bookIn({ taskId });
+  await Promise.all([refreshCheckIns(), refreshServerData()]);
+  return new Date(booked.startsAt);
+}

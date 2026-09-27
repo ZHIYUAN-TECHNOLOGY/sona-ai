@@ -28,6 +28,8 @@ export async function resetDemo(db: AnyDb, now = new Date()) {
   await db.delete(handoverAcceptances).where(eq(handoverAcceptances.hospitalId, DEMO_HOSPITAL));
   await db.delete(auditItems).where(eq(auditItems.hospitalId, DEMO_HOSPITAL));
   await db.delete(appointments).where(and(eq(appointments.hospitalId, DEMO_HOSPITAL), like(appointments.kind, "recall%")));
+  // Visits a doctor booked from a flagged check-in ("Book in") go too.
+  await db.delete(appointments).where(and(eq(appointments.hospitalId, DEMO_HOSPITAL), like(appointments.id, "book-in:%")));
   if (visits.length) {
     await db.delete(receipts).where(inArray(receipts.encounterId, visits));
     await db.delete(claims).where(inArray(claims.encounterId, visits));

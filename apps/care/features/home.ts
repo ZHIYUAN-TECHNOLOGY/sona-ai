@@ -72,14 +72,16 @@ export function headerDate(now: Date) {
   return `${part({ weekday: "short" })}, ${part({ day: "numeric" })} ${part({ month: "short" })}`;
 }
 
-export type Update = { line: string; tone: "green" | "amber" | "blue" | "muted"; face: "smile" | "calm" | "chat"; to: "messages" | "check-in" | "check-ins" };
+export type Update = { line: string; tone: "green" | "amber" | "blue" | "muted"; face: "smile" | "calm" | "chat"; to: "messages" | "check-in" | "check-ins" | "follow-ups" };
 
 /**
  * Home's Latest update tile, the newest thing about the patient's recovery: a care-team reply waiting,
  * today's check-in answered (all fine, or the team told) or waiting, else nothing new.
  */
-export function latestUpdate(checkIns: Pick<CheckIn, "dueAt" | "sentAt" | "replies">[] | undefined, replyWaiting: boolean, now: Date): Update {
+export function latestUpdate(checkIns: Pick<CheckIn, "dueAt" | "sentAt" | "replies">[] | undefined, replyWaiting: boolean, now: Date, bookedIn?: string): Update {
   if (replyWaiting) return { line: "Care team replied", tone: "blue", face: "chat", to: "messages" };
+  // The doctor answered her check-in by booking her in: that is the news, ahead of "they'll call you".
+  if (bookedIn) return { line: `Your doctor booked you in · ${bookedIn}`, tone: "blue", face: "smile", to: "follow-ups" };
   const today = checkIns?.flatMap(c => c.replies).filter(r => dayOf(new Date(r.receivedAt)) === dayOf(now)).at(-1);
   if (today) return today.label === "fine"
     ? { line: "Check-in done · all fine", tone: "green", face: "smile", to: "check-ins" }

@@ -12,7 +12,7 @@ import { useEncounter } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
 import { errorText, useLive } from "@/features/live";
 import { shortDate, type ReplyLabel } from "./model";
-import { resolveFlag, simulateReply, useCheckIns } from "./state";
+import { bookIn, resolveFlag, simulateReply, useCheckIns } from "./state";
 
 /*
  * Check-ins on the patient sheet: each sent message and the patient's reply as a short thread.
@@ -61,26 +61,40 @@ export function CheckInThread({ patient, entering }: { patient: Patient; enterin
   </Animated.View>;
 }
 
-/** My Day's one tap on a flagged reply: call back or book in. Both are simulated and close the flag. */
+/**
+ * My Day's one tap on a flagged reply: call back (simulated) or book in. In live mode Book in is real:
+ * the server books tomorrow 09:00, closes the flag and the patient's Sona Care shows the visit at once.
+ */
 export function FlagActions({ item }: { item: DayItem }) {
   const { on: live } = useLive();
   const { reducedMotion } = useAccessibleEffects();
   const [doing, setDoing] = useState<string>();
   const [error, setError] = useState<string>();
   const taskId = item.id.replace(/^check-in-/, "");
+  const first = item.title.split(":")[0];
   const act = (label: string) => {
-    haptic("select"); setDoing(label); setError(undefined);
+    haptic("select"); setError(undefined);
+    if (label === "Booked in" && live) {
+      setDoing("Booking…");
+      bookIn(taskId, true).then(at => {
+        const when = at ? at.toLocaleString("en-GB", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" }) : "tomorrow";
+        setDoing(`Booked in ${when} · ${first}'s app updated`);
+        AccessibilityInfo.announceForAccessibility(`Booked in ${when}. ${first}'s Sona Care shows it now.`);
+      }, e => { setError(errorText(e)); setDoing(undefined); });
+      return;
+    }
+    setDoing(label);
     AccessibilityInfo.announceForAccessibility(`${label}, simulated`);
     // A beat to read the confirmation before the row leaves.
     setTimeout(() => { resolveFlag(taskId, live).catch(e => { setError(errorText(e)); setDoing(undefined); }); }, reducedMotion ? 0 : 1200);
   };
   if (doing) return <Animated.View entering={FadeIn.duration(180)} style={{ flexDirection: "row", alignItems: "center", gap: 6, minHeight: 34 }}>
     <Icon name="checkmark.circle.fill" size={13} color={palette.green} />
-    <Text style={{ ...type.footnote, fontWeight: "600", color: palette.green }}>{doing} · simulated</Text>
+    <Text style={{ ...type.footnote, fontWeight: "600", color: palette.green }}>{doing}{doing.startsWith("Booked in ") || doing === "Booking…" ? "" : " · simulated"}</Text>
   </Animated.View>;
   return <View style={{ gap: 6 }}>
     <View style={{ flexDirection: "row", gap: 8 }}>
-      {([["Call back", "phone.fill"], ["Book in", "calendar.badge.plus"]] as const).map(([label, icon], i) => <Pressable key={label} accessibilityRole="button" accessibilityLabel={`${label} ${item.title.split(":")[0]}`} onPress={() => act(label === "Call back" ? "Called back" : "Booked in")}
+      {([["Call back", "phone.fill"], [live ? "Book in tomorrow 9:00" : "Book in", "calendar.badge.plus"]] as const).map(([label, icon], i) => <Pressable key={label} accessibilityRole="button" accessibilityLabel={`${label} ${first}`} onPress={() => act(i ? "Booked in" : "Called back")}
         style={({ pressed }) => ({ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: i ? "rgba(20,28,40,0.06)" : palette.ink, opacity: pressed ? 0.8 : 1 })}>
         <Icon name={icon} size={12} color={i ? palette.ink : palette.white} />
         <Text style={{ fontSize: 14, fontWeight: "600", color: i ? palette.ink : palette.white }}>{label}</Text>

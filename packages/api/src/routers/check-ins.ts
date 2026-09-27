@@ -1,5 +1,5 @@
 import { ORPCError } from "@orpc/server";
-import { checkInReplies, checkIns, patients, tasks } from "@sona-ai/db/schema/clinical";
+import { appointments, checkInReplies, checkIns, encounters, patients, tasks } from "@sona-ai/db/schema/clinical";
 import { checkInMessage, checkInSchedule, replyFlag, type CheckIn } from "@sona-ai/domain/check-ins";
 import type { Language } from "@sona-ai/domain/discharge";
 import { and, asc, eq, inArray, isNull, lte } from "drizzle-orm";
@@ -55,7 +55,36 @@ export const checkInsRouter = {
   tick: protectedProcedure.handler(({ context }) => sendDueCheckIns(context.db, context.hospitalId, clockOf(context))),
   /** The simulated patient reply. Replying to an unsent check-in sends it first, since the demo jumps two days. */
   reply: protectedProcedure.input(checkInReplySchema).handler(({ context, input }) => replyToCheckIn(context, context.hospitalId, input)),
+  /**
+   * "Book in" on a flagged reply: books the patient's clinic review for tomorrow 09:00 (Kuala Lumpur),
+   * closes the flag, and tells her Sona Care, whose Schedule and home then show it. Replaying it
+   * returns the same booking (the appointment is keyed by the task).
+   */
+  bookIn: protectedProcedure.input(z.object({ taskId: z.string().min(1) })).handler(async ({ context, input }) => {
+    const { db, hospitalId } = context;
+    const [row] = await db.select({ task: tasks, patientId: encounters.patientId }).from(tasks).innerJoin(encounters, eq(encounters.id, tasks.encounterId))
+      .where(and(eq(tasks.id, input.taskId), eq(tasks.hospitalId, hospitalId), eq(tasks.kind, "check-in")));
+    if (!row) throw new ORPCError("NOT_FOUND", { message: "That flagged reply is no longer open" });
+    const startsAt = tomorrowNine(clockOf(context));
+    const id = `book-in:${row.task.id}`;
+    const kind = `Clinic review · ${reasonOf(row.task.title)}`;
+    await db.insert(appointments).values({ id, patientId: row.patientId, hospitalId, startsAt, kind }).onConflictDoNothing();
+    await db.update(tasks).set({ completed: true }).where(eq(tasks.id, row.task.id));
+    const [booked] = await db.select().from(appointments).where(eq(appointments.id, id));
+    // The hospital hears "checkIns" from the middleware; her own app hears it here, by name.
+    await context.announce?.(hospitalId, { topic: "checkIns", patientId: row.patientId }).catch(() => {});
+    return { appointmentId: booked!.id, startsAt: booked!.startsAt, kind: booked!.kind, patientId: row.patientId };
+  }),
 };
+
+/** 09:00 tomorrow in Kuala Lumpur (UTC+8), from `now`. */
+export function tomorrowNine(now: Date) {
+  const local = new Date(now.getTime() + 8 * 3600_000);
+  return new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + 1, 1));
+}
+
+/** What the booking is for, in the patient's words: "Amelia: fever returned after discharge" → "fever returned". */
+export const reasonOf = (title: string) => title.replace(/^[^:]+:\s*/, "").replace(/\s*after discharge$/i, "") || "follow-up";
 
 /**
  * A reply as the model reads it; worse or urgent flags one task for the attending doctor. Sona Care
