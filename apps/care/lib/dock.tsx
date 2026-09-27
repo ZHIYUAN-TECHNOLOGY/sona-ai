@@ -32,8 +32,8 @@ export function Dock() {
       {TABS.map(t => {
         const on = t.path === path;
         return <Pressable key={t.path} accessibilityRole="tab" accessibilityLabel={t.label} accessibilityState={{ selected: on }} onPress={() => { if (!on) router.navigate(t.path); }}
-          style={({ pressed }) => ({ width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.dark : "transparent", transform: [{ scale: pressed ? 0.94 : 1 }] })}>
-          <Svg width={21} height={21} viewBox="0 0 24 24" fill="none" stroke={on ? palette.white : palette.muted} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+          style={({ pressed }) => ({ width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.white : "transparent", boxShadow: on ? "0 6px 14px -8px rgba(40,50,110,0.45)" : undefined, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
+          <Svg width={21} height={21} viewBox="0 0 24 24" fill="none" stroke={on ? palette.ink : palette.muted} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
             {t.path === "/follow-ups" && <Rect x={3} y={4} width={18} height={18} rx={3} />}
             <Path d={t.d} />
           </Svg>

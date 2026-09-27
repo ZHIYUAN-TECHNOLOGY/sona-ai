@@ -4,7 +4,7 @@
  * Red, amber and green keep their meaning (must-not-miss, soon, done); emergency text is never tinted.
  */
 export const palette = {
-  canvas: "#F6F7FB", surface: "#FFFFFF", ink: "#141A2E", muted: "#5E6478", faint: "#9197AB",
+  canvas: "#FCFCFD", surface: "#FFFFFF", ink: "#141A2E", muted: "#5E6478", faint: "#9197AB",
   blue: "#3D5AF1", blueWash: "#EAEEFF", line: "#E6E8F0", white: "#FFFFFF",
   green: "#2E7D5B", amber: "#8B5518", red: "#A23E3E", dark: "#111318",
   amberWash: "#FFF1E0", amberEdge: "#F5DDC3", mutedWash: "#F0F2F7",

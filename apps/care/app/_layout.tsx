@@ -21,6 +21,7 @@ export default function RootLayout() {
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" } }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="join" options={{ presentation: "modal", headerShown: false }} />
+      <Stack.Screen name="medicine" options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 40, contentStyle: { backgroundColor: "#FFFFFF" } }} />
       <Stack.Screen name="assistant" options={{ presentation: "formSheet", headerShown: false, sheetAllowedDetents: [0.62, 0.95], sheetGrabberVisible: true, sheetCornerRadius: 36, contentStyle: { backgroundColor: "#FDFBFD" } }} />
     </Stack>
     <Dock />

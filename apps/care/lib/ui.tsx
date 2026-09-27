@@ -11,17 +11,17 @@ import { accent, palette, type } from "./theme";
 
 /**
  * Sona's design system for Sona Care, Clean (mirrors apps/native/components/sona/ui.tsx):
- * white cards on hairline edges over a cool misty canvas; one `feature` card per screen for
+ * soft near-white cards on hairline edges over the aurora canvas (after the Lumi kit); one `feature` card for
  * the thing that needs the patient now (a soft blue lift, a faint blue-to-lilac halftone glint); an
  * ink primary pill with a dotted glint, quiet glass for everything else. Press feedback is a 0.96 scale.
  * ponytail: mirrored, not shared; move both apps' copies to a shared UI package once they settle.
  */
-const glassFill = "linear-gradient(170deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.82) 100%)";
-const glassEdge = "0 0 0 0.5px rgba(20,26,46,0.07), 0 18px 36px -24px rgba(40,60,120,0.22), 0 1px 3px rgba(20,26,46,0.04), inset 0 1px 0 rgba(255,255,255,1)";
-export const surfaceStyle: ViewStyle = { borderRadius: 28, borderCurve: "continuous", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", backgroundColor: "transparent", experimental_backgroundImage: glassFill, boxShadow: glassEdge } as ViewStyle;
+// Cards after the Lumi kit: a soft near-white fill on a hairline white edge, barely lifted, so the
+// canvas's aurora shows around them and the one feature card (white, a soft blue lift) stands out.
+export const surfaceStyle: ViewStyle = { borderRadius: 30, borderCurve: "continuous", borderWidth: 1.5, borderColor: "rgba(255,255,255,0.95)", backgroundColor: "rgba(245,245,248,0.9)", boxShadow: "0 1px 2px rgba(20,26,46,0.03)" } as ViewStyle;
 /** A small glass capsule for a value or label (a time, a status, a chip). */
 export const pillStyle: ViewStyle = { borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", backgroundColor: "rgba(255,255,255,0.72)", boxShadow: "0 0 0 0.5px rgba(40,24,70,0.06), 0 8px 18px -10px rgba(80,60,140,0.35)" } as ViewStyle;
-const featureStyle: ViewStyle = { experimental_backgroundImage: "linear-gradient(170deg, #FFFFFF 0%, rgba(250,251,255,0.96) 100%)", boxShadow: "0 0 0 0.5px rgba(61,90,241,0.12), 0 22px 40px -22px rgba(61,90,241,0.26), 0 1px 3px rgba(20,26,46,0.04), inset 0 1px 0 #FFFFFF" } as ViewStyle;
+const featureStyle: ViewStyle = { backgroundColor: "#FFFFFF", boxShadow: "0 0 0 0.5px rgba(61,90,241,0.10), 0 24px 44px -24px rgba(61,90,241,0.28), 0 1px 3px rgba(20,26,46,0.04)" } as ViewStyle;
 
 /** Cards resize on the layout spring (no bounce), so a card that grows in place (a check-in opening) springs rather than jumps. */
 const CARD_LAYOUT = LinearTransition.springify().duration(380).dampingRatio(1);
@@ -93,10 +93,7 @@ export function HoldButton({ label, doneLabel, onDone, done = false, hold = 800,
 
 /** The glass back button for screens off the dock (no header band): back, or home if opened directly. */
 export function BackButton({ label = "Back" }: { label?: string }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} hitSlop={6} onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }}
-    style={({ pressed }) => [pillStyle, { width: 44, height: 44, alignItems: "center", justifyContent: "center", alignSelf: "flex-start", transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
-    <Svg width={20} height={20} viewBox="0 0 24 24"><Path d="m15 18l-6-6l6-6" fill="none" stroke={palette.ink} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></Svg>
-  </Pressable>;
+  return <View style={{ alignSelf: "flex-start" }}><CircleButton d={ICON.back} label={label} onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }} /></View>;
 }
 
 /** A tappable row inside a card: what it is, one line of state, and where it goes. */
@@ -139,13 +136,33 @@ export function Title({ overline, greeting, accent, children, line, lineTone = "
   </View>;
 }
 
-/** A two-line section head (reference kit): a light first line over a bold second ("Up / next"). */
-export function Section({ light, bold }: { light: string; bold: string }) {
-  return <View accessible accessibilityRole="header" accessibilityLabel={`${light} ${bold}`} style={{ marginTop: 4 }}>
-    <Text style={{ fontSize: 17, lineHeight: 21, fontWeight: "300", color: palette.faint, letterSpacing: -0.3 }}>{light}</Text>
-    <Text style={{ fontSize: 21, lineHeight: 26, fontWeight: "700", color: palette.ink, letterSpacing: -0.6 }}>{bold}</Text>
+/** A two-line section head (Lumi kit): a light first line over a bold second ("Today's / updates"), with an optional round action on the right. */
+export function Section({ light, bold, action }: { light: string; bold: string; action?: ReactNode }) {
+  return <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: 12, marginTop: 4 }}>
+    <View accessible accessibilityRole="header" accessibilityLabel={`${light} ${bold}`} style={{ flexShrink: 1 }}>
+      <Text style={{ fontSize: 18, lineHeight: 22, fontWeight: "300", color: palette.faint, letterSpacing: -0.3 }}>{light}</Text>
+      <Text style={{ fontSize: 24, lineHeight: 29, fontWeight: "600", color: palette.ink, letterSpacing: -0.7 }}>{bold}</Text>
+    </View>
+    {action}
   </View>;
 }
+
+/** A round glass icon button (44 pt): back, close, add, bell, call. `d` is a 24-unit SVG path. */
+export function CircleButton({ d, label, onPress, dot, tint = palette.ink, size = 44 }: { d: string; label: string; onPress: () => void; dot?: boolean; tint?: string; size?: number }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} hitSlop={Math.max(0, (44 - size) / 2)} onPress={onPress}
+    style={({ pressed }) => ({ width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.86)", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", boxShadow: "0 6px 16px -10px rgba(40,50,110,0.35)", transform: [{ scale: pressed ? 0.94 : 1 }] })}>
+    <Svg width={size * 0.45} height={size * 0.45} viewBox="0 0 24 24"><Path d={d} fill="none" stroke={tint} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+    {dot && <View style={{ position: "absolute", top: size * 0.22, right: size * 0.24, width: 8, height: 8, borderRadius: 4, backgroundColor: palette.blue, borderWidth: 1.5, borderColor: palette.white }} />}
+  </Pressable>;
+}
+
+/** Icon paths shared across screens (Lucide-style, 24 units). */
+export const ICON = {
+  back: "m15 18l-6-6l6-6", close: "M18 6L6 18M6 6l12 12", plus: "M12 5v14M5 12h14",
+  bell: "M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0",
+  phone: "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z",
+  chat: "M7.9 20A9 9 0 1 0 4 16.1L2 22Z", pin: "M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0ZM12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6", alarm: "M12 21a8 8 0 1 0 0-16a8 8 0 0 0 0 16M12 9v4l2 2M5 3L2 6M22 6l-3-3",
+} as const;
 
 /** A small glass chip that does one thing (a quick reply, a needs shortcut, a filter). */
 export function Chip({ label, onPress, dot, tone, accessibilityLabel }: { label: string; onPress: () => void; dot?: string; tone?: { bg: string; fg: string }; accessibilityLabel?: string }) {
