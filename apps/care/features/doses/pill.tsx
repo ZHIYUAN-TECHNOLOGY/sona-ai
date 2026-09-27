@@ -20,7 +20,8 @@ const SPARE: Look[] = [
   { form: "caplet", light: "#EAF6FF", base: "#B8DAF4", side: "#8AB9DF", tint: "#EEF6FC" },
   { form: "tablet", light: "#FFF8E8", base: "#F3DDA6", side: "#D9BD76", tint: "#FCF7EA" },
 ];
-const lookOf = (name: string) => LOOKS[name] ?? SPARE[[...name].reduce((h, c) => h + c.charCodeAt(0), 0) % SPARE.length]!;
+// Matched on the first word too, so "Salbutamol nebuliser" draws as Salbutamol.
+const lookOf = (name: string) => LOOKS[name] ?? LOOKS[name.split(" ")[0]!] ?? SPARE[[...name].reduce((h, c) => h + c.charCodeAt(0), 0) % SPARE.length]!;
 export const tintOf = (name: string) => lookOf(name).tint;
 
 function One({ look, x, y, angle, scale, id }: { look: Look; x: number; y: number; angle: number; scale: number; id: string }) {
