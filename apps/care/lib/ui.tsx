@@ -43,14 +43,16 @@ export function Button({ label, onPress, busy, disabled, quiet }: { label: strin
  * Hold to confirm (after Opal's hold-to-commit): the ink pill fills with the Dawn gradient over
  * `hold` ms while pressed and drains back if let go early, so a stray tap can't log a dose. On
  * completion it settles into a white pill with a check. VoiceOver's activate confirms at once
- * (holding is a visual gesture, not the only way in).
+ * (holding is a visual gesture, not the only way in). `quiet`: a glass pill for a secondary hold
+ * (a dose taken early). Every finish is announced.
  */
-export function HoldButton({ label, doneLabel, onDone, done = false, hold = 800, compact = false }: { label: string; doneLabel: string; onDone: () => void; done?: boolean; hold?: number; compact?: boolean }) {
+export function HoldButton({ label, doneLabel, onDone, done = false, hold = 800, compact = false, quiet = false }: { label: string; doneLabel: string; onDone: () => void; done?: boolean; hold?: number; compact?: boolean; quiet?: boolean }) {
   const still = useReducedMotion();
   const p = useSharedValue(done ? 1 : 0);
   const [holding, setHolding] = useState(false);
   const finish = () => {
     if (process.env.EXPO_OS === "ios") void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    AccessibilityInfo.announceForAccessibility(doneLabel);
     onDone();
   };
   const start = () => {
@@ -67,14 +69,16 @@ export function HoldButton({ label, doneLabel, onDone, done = false, hold = 800,
   };
   const fill = useAnimatedStyle(() => ({ width: `${p.value * 100}%` }));
   const settle = useAnimatedStyle(() => ({ transform: [{ scale: done ? withSpring(1, { duration: 380, dampingRatio: 0.72 }) : withTiming(holding && !still ? 0.98 : 1, { duration: 120 }) }] }));
-  const h = compact ? 42 : 56;
+  const h = compact ? 44 : 56;
+  const ink = quiet ? palette.ink : palette.white;
   return <Pressable accessibilityRole="button" accessibilityLabel={done ? doneLabel : label} accessibilityHint={done ? undefined : "Press and hold to confirm"} accessibilityState={{ disabled: done }}
     onPressIn={start} onPressOut={stop} disabled={done}
-    onAccessibilityTap={() => { if (!done) { AccessibilityInfo.announceForAccessibility(doneLabel); finish(); } }}>
+    onAccessibilityTap={() => { if (!done) finish(); }}>
     <Animated.View style={[{ minHeight: h, borderRadius: h / 2, overflow: "hidden", alignItems: "center", justifyContent: "center", paddingHorizontal: compact ? 12 : 20,
-      backgroundColor: done ? palette.white : palette.dark, boxShadow: done ? "0 0 0 1px rgba(30,20,40,0.08), 0 12px 22px -12px rgba(80,60,120,0.45)" : "0 10px 20px -12px rgba(33,30,51,0.6)" }, settle]}>
+      backgroundColor: done ? palette.white : quiet ? "rgba(255,255,255,0.72)" : palette.dark, borderWidth: quiet && !done ? 1 : 0, borderColor: "rgba(255,255,255,0.95)",
+      boxShadow: done ? "0 0 0 1px rgba(30,20,40,0.08), 0 12px 22px -12px rgba(80,60,120,0.45)" : quiet ? "0 8px 18px -12px rgba(80,60,140,0.45)" : "0 10px 20px -12px rgba(33,30,51,0.6)" }, settle]}>
       {!done && <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 0, bottom: 0, experimental_backgroundImage: `linear-gradient(135deg, #FFB38A, ${dawn[0]} 45%, ${dawn[1]})` } as ViewStyle, fill]} />}
-      <Text style={{ fontSize: compact ? 13 : 16, fontWeight: "700", color: done ? palette.green : palette.white }}>{done ? `✓  ${doneLabel}` : holding ? "Keep holding…" : label}</Text>
+      <Text style={{ fontSize: compact ? 13 : 16, fontWeight: "700", color: done ? palette.green : holding && quiet ? palette.white : ink }}>{done ? `✓  ${doneLabel}` : holding ? "Keep holding…" : label}</Text>
     </Animated.View>
   </Pressable>;
 }
