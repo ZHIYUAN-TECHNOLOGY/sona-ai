@@ -10,7 +10,8 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "ai.zhiyuantech.sona.care",
-      "appleTeamId": "LTF2YZMF2D"
+      "appleTeamId": "LTF2YZMF2D",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
