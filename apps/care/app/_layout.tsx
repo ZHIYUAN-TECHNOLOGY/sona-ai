@@ -14,7 +14,7 @@ import { FONTS } from "@/lib/text";
 import { palette } from "@/lib/theme";
 import { queryClient } from "@/utils/orpc";
 
-// Hold the splash until Outfit has loaded, so no screen draws in the system font first.
+// Hold the splash until Plus Jakarta Sans has loaded, so no screen draws in the system font first.
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 /** Sona Care: the patient's side of their care (check-ins, discharge, follow-ups, messages to the care team). */

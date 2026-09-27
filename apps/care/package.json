@@ -16,6 +16,7 @@
   "dependencies": {
     "@better-auth/expo": "catalog:",
     "@expo-google-fonts/outfit": "^0.4.3",
+    "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
     "@orpc/client": "catalog:",
     "@orpc/tanstack-query": "^1.15.0",
     "@react-native-masked-view/masked-view": "0.3.2",

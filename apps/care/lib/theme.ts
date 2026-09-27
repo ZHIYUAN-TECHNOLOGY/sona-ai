@@ -1,29 +1,35 @@
 /**
- * Sona Care's tokens (after the Life OS style guide, AlignUI tokens, 27 Sep 2026): white and cool-grey
- * surfaces under a blue liquid hero, near-black ink (#0E121B), a sub grey (#525866), a soft grey
- * (#99A0AE), Life OS blue (#335CFF) for actions and the next step. State colours keep their meaning:
- * the bright bases fill dots, bars and badges; darker shades carry text so it stays readable.
+ * Sona Care's tokens (the AI Health Companion kit's style guide, 27 Sep 2026): a #FAFAFA canvas under
+ * a lilac and mint aurora, near-white cards on a #F5F5F5 hairline, content in three greys (#1F1F1F,
+ * #4E4E4E, #979795), the kit's blue for the next step, and its green and orange for done and soon.
+ * State colours keep their meaning: bright bases (500) fill dots, bars and badges; darker shades (700)
+ * carry text so it stays readable. Red stays for "call the hospital now".
  */
 export const palette = {
-  canvas: "#F5F7FB", surface: "#FFFFFF", ink: "#0E121B", muted: "#525866", faint: "#99A0AE",
-  blue: "#335CFF", blueWash: "#EBF1FF", line: "#E1E4EA", white: "#FFFFFF",
-  green: "#15803D", amber: "#B45309", red: "#C81E2E", dark: "#0E121B",
-  amberWash: "#FFF1EB", amberEdge: "#FFD5C0", mutedWash: "#F2F5F8",
-  // Fills (dots, bars, badges), never text: AlignUI state bases.
-  success: "#1FC16B", warning: "#FF8447", error: "#FB3748", feature: "#7D52F4", info: "#335CFF", away: "#F6B51E",
+  canvas: "#FAFAFA", surface: "#FFFFFF", card: "#FAFAFA", ink: "#1F1F1F", muted: "#4E4E4E", faint: "#979795",
+  blue: "#2563EB", blueWash: "#EFF6FF", line: "#F5F5F5", white: "#FFFFFF",
+  green: "#15803D", amber: "#C2410C", red: "#C81E2E", dark: "#1F1F1F",
+  amberWash: "#FFF7ED", amberEdge: "#FED7AA", mutedWash: "#F5F5F5", greenWash: "#F0FDF4",
+  teal: "#067D61", violet: "#AC12E9",
+  // Fills (dots, bars, badges), never text: the kit's 500 shades.
+  success: "#22C55E", warning: "#F97316", error: "#EF4444", feature: "#A855F7", info: "#3B82F6", away: "#FB923C",
 };
 
-/** The accent: Life OS blue easing to violet, on one word per screen (the part to glance at). */
-export const accent = ["#335CFF", "#5A5EF7", "#7D52F4"] as const;
-/** Halftone glint on feature cards and the primary pill: blue to lilac, kept faint. */
+/** The kit's headline gradient: ink easing through teal into violet across the bold line. */
+export const accent = ["#1F1F1F", "#067D61", "#AC12E9"] as const;
+/** Halftone glint on the feature card: blue to lilac, kept faint. */
 export const glint = { from: [0.36, 0.48, 0.96], to: [0.7, 0.62, 0.97] } as const;
 
+// Type after the kit (Header/Medium 28/32 −7 %, Body/xl 18/26…), with body kept at 17 pt for patients.
 export const type = {
-  display: { fontSize: 32, lineHeight: 38, letterSpacing: -1 },
-  greeting: { fontSize: 24, lineHeight: 30, letterSpacing: -0.5, fontWeight: "300" },
-  title: { fontSize: 22, lineHeight: 28, letterSpacing: -0.5 },
-  headline: { fontSize: 17, lineHeight: 23, letterSpacing: -0.2, fontWeight: "600" },
-  body: { fontSize: 16, lineHeight: 23 },
-  footnote: { fontSize: 13, lineHeight: 18 },
-  overline: { fontSize: 12, lineHeight: 16, letterSpacing: 0.9, fontWeight: "700", textTransform: "uppercase" },
+  display: { fontSize: 28, lineHeight: 34, letterSpacing: -1.6, fontWeight: "600" },
+  greeting: { fontSize: 20, lineHeight: 28, letterSpacing: -0.6, fontWeight: "400" },
+  title: { fontSize: 24, lineHeight: 28, letterSpacing: -1 },
+  headline: { fontSize: 17, lineHeight: 23, letterSpacing: -0.4, fontWeight: "600" },
+  body: { fontSize: 17, lineHeight: 24, letterSpacing: -0.3 },
+  footnote: { fontSize: 14, lineHeight: 19, letterSpacing: -0.2 },
+  overline: { fontSize: 12, lineHeight: 16, letterSpacing: 0.6, fontWeight: "600", textTransform: "uppercase" },
 } as const;
+
+/** Motion shared by every screen: the layout spring (no bounce) and the kit's gentle press. */
+export const motion = { spring: { duration: 380, dampingRatio: 1 }, pop: { duration: 380, dampingRatio: 0.72 }, stagger: 40, press: 0.96 } as const;
