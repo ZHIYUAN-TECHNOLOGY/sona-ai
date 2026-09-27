@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, useWindowDimensions, View, type ViewStyle } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, useWindowDimensions, View, type ViewStyle } from "react-native";
+import { Text } from "@/lib/text";
 import Animated, { Easing, FadeInDown, useReducedMotion } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 import { errorText } from "@/features/errors";

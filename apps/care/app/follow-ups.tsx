@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
+import { Text, TextInput, AnimatedText } from "@/lib/text";
 import Animated, { Easing, FadeIn, FadeInDown, LinearTransition, useReducedMotion } from "react-native-reanimated";
 import { errorText } from "@/features/errors";
 import { away, bringLine, dotTone, pillLine, visitsLine, type FollowUp } from "@/features/follow-ups/lines";
@@ -75,7 +76,7 @@ function Stop({ f, next, last, open, onToggle, entering, still }: { f: FollowUp;
             <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink, fontVariant: ["tabular-nums"] }}>{pillLine(f)}</Text>
           </View>
           <Text style={{ ...type.footnote, flex: 1, fontWeight: f.status === "upcoming" ? "400" : "600", color: tone }}>{f.status === "overdue" ? "Overdue" : away(f.inDays)}</Text>
-          <Animated.Text style={{ fontSize: 20, color: palette.faint, transform: [{ rotate: open ? "90deg" : "0deg" }], transitionProperty: "transform", transitionDuration: still ? 0 : 380, transitionTimingFunction: "ease-out" }}>›</Animated.Text>
+          <AnimatedText style={{ fontSize: 20, color: palette.faint, transform: [{ rotate: open ? "90deg" : "0deg" }], transitionProperty: "transform", transitionDuration: still ? 0 : 380, transitionTimingFunction: "ease-out" }}>›</AnimatedText>
         </View>
         <Text style={next ? { ...type.title, fontWeight: "700", color: palette.ink } : { ...type.headline, color: palette.ink }}>{f.title}</Text>
         <Text numberOfLines={open ? undefined : 1} style={{ ...type.body, color: palette.muted }}>{f.why}</Text>

@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, ScrollView, Text, View, type ViewStyle } from "react-native";
+import { ActivityIndicator, ScrollView, View, type ViewStyle } from "react-native";
+import { Text } from "@/lib/text";
 import Animated, { Easing, FadeIn, useReducedMotion, withSpring, withTiming } from "react-native-reanimated";
 import { markTaken, useNextDose, useNow } from "@/features/doses";
 import { clock, dosesToday, dueNow, early, untilLine, whenWords, type Dose } from "@/features/doses/model";

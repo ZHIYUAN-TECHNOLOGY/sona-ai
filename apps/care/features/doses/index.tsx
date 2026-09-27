@@ -1,7 +1,8 @@
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { Pressable, Text, type TextStyle, View } from "react-native";
+import { Pressable, type TextStyle, View } from "react-native";
+import { Text } from "@/lib/text";
 import Animated, { Easing, FadeInDown, useReducedMotion, withSpring, withTiming } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 import { useDischarge } from "@/features/discharge/row";

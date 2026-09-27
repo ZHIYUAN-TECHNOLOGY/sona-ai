@@ -1,5 +1,6 @@
 import { router } from "expo-router";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, View } from "react-native";
+import { Text } from "@/lib/text";
 import { historyLine, shortDate, statusOf, type CheckIn } from "@/features/check-ins/model";
 import { useCheckIns } from "@/features/check-ins/today";
 import { palette, type } from "@/lib/theme";

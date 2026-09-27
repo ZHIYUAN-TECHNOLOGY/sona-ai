@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Text } from "@/lib/text";
 import { useMe } from "@/features/me";
 import { Tile } from "@/features/doses";
 import { palette } from "@/lib/theme";

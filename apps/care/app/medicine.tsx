@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
+import { Text } from "@/lib/text";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { accentSplit, CHANGE, takeSentence, type Group } from "@/features/discharge/lines";
 import { useDischarge } from "@/features/discharge/row";

@@ -1,7 +1,8 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { ScrollView, Text, TextInput, View } from "react-native";
+import { ScrollView, View } from "react-native";
+import { Text, TextInput } from "@/lib/text";
 import { errorText } from "@/features/errors";
 import { authClient } from "@/lib/auth-client";
 import { palette, type } from "@/lib/theme";

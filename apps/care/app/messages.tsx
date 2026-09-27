@@ -1,7 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, Pressable, ScrollView, Text, TextInput, View, type ViewStyle } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Pressable, ScrollView, View, type ViewStyle } from "react-native";
+import { Text, TextInput } from "@/lib/text";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { FadeIn, LayoutAnimationConfig, useReducedMotion, withDelay, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

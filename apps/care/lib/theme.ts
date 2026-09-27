@@ -1,17 +1,20 @@
 /**
- * Sona Care's tokens, Clean (after the Life OS kit, 27 Sep 2026): a near-white canvas under a cool
- * mist, white cards on hairline edges, navy type, black primary pills and one royal-blue accent.
- * Red, amber and green keep their meaning (must-not-miss, soon, done); emergency text is never tinted.
+ * Sona Care's tokens (after the Life OS style guide, AlignUI tokens, 27 Sep 2026): white and cool-grey
+ * surfaces under a blue liquid hero, near-black ink (#0E121B), a sub grey (#525866), a soft grey
+ * (#99A0AE), Life OS blue (#335CFF) for actions and the next step. State colours keep their meaning:
+ * the bright bases fill dots, bars and badges; darker shades carry text so it stays readable.
  */
 export const palette = {
-  canvas: "#FCFCFD", surface: "#FFFFFF", ink: "#141A2E", muted: "#5E6478", faint: "#9197AB",
-  blue: "#3D5AF1", blueWash: "#EAEEFF", line: "#E6E8F0", white: "#FFFFFF",
-  green: "#2E7D5B", amber: "#8B5518", red: "#A23E3E", dark: "#111318",
-  amberWash: "#FFF1E0", amberEdge: "#F5DDC3", mutedWash: "#F0F2F7",
+  canvas: "#F5F7FB", surface: "#FFFFFF", ink: "#0E121B", muted: "#525866", faint: "#99A0AE",
+  blue: "#335CFF", blueWash: "#EBF1FF", line: "#E1E4EA", white: "#FFFFFF",
+  green: "#15803D", amber: "#B45309", red: "#C81E2E", dark: "#0E121B",
+  amberWash: "#FFF1EB", amberEdge: "#FFD5C0", mutedWash: "#F2F5F8",
+  // Fills (dots, bars, badges), never text: AlignUI state bases.
+  success: "#1FC16B", warning: "#FF8447", error: "#FB3748", feature: "#7D52F4", info: "#335CFF", away: "#F6B51E",
 };
 
-/** The accent: royal blue easing to periwinkle, on one word per screen (the part to glance at). */
-export const accent = ["#3D5AF1", "#5F73F3", "#8C8FF4"] as const;
+/** The accent: Life OS blue easing to violet, on one word per screen (the part to glance at). */
+export const accent = ["#335CFF", "#5A5EF7", "#7D52F4"] as const;
 /** Halftone glint on feature cards and the primary pill: blue to lilac, kept faint. */
 export const glint = { from: [0.36, 0.48, 0.96], to: [0.7, 0.62, 0.97] } as const;
 

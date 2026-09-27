@@ -1,6 +1,7 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
+import { Text, TextInput } from "@/lib/text";
 import Animated, { FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useReducedMotion, withSpring } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
@@ -189,7 +190,7 @@ function PhoneStep({ phone, setPhone, onSent }: { phone: string; setPhone: (v: s
 
 /** Six boxes over one hidden field, so iOS can fill the code from the SMS; it signs in as soon as all six are in. */
 function CodeStep({ phone, onDone, onChangeNumber }: { phone: string; onDone: () => void; onChangeNumber: () => void }) {
-  const input = useRef<TextInput>(null);
+  const input = useRef<import("react-native").TextInput>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();

@@ -1,30 +1,42 @@
-import { Canvas, Circle, RadialGradient, Rect, useClock, vec } from "@shopify/react-native-skia";
+import { Blur, Canvas, Circle, Group, Paint, Path, RadialGradient, Rect, Skia, useClock, vec } from "@shopify/react-native-skia";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
 import { useDerivedValue, useReducedMotion, type SharedValue } from "react-native-reanimated";
 
 /**
- * The calm canvas behind every screen (after mymind's Serendipity background and the Lumi care kit):
- * a Lumi-style aurora: lilac and mint waves at the top, a pink and lilac glow at the bottom, white between drifting slowly over a pale ground, with a
- * white pool behind the content so text stays crisp. Each field wanders on its own slow orbit
- * (19–31 s), on the UI thread; with Reduce Motion the fields hold still.
+ * The canvas behind every screen (after the Life OS dashboard's hero): a cool near-white ground with a
+ * blue liquid hero across the top: soft blue pools under glossy white and blue ribbons that drift
+ * slowly (each on its own 19–31 s cycle, on the UI thread), fading into white before the content.
+ * A faint blue pool sits at the bottom behind the dock. With Reduce Motion everything holds still.
  */
-type Field = { x: number; y: number; r: number; color: string; dx: number; dy: number; period: number; phase: number };
-const fields: Field[] = [
-  { x: 0.2, y: 0.02, r: 0.55, color: "rgba(214,206,252,0.9)", dx: 0.12, dy: 0.04, period: 23, phase: 0 }, // lilac, top
-  { x: 0.85, y: 0.1, r: 0.45, color: "rgba(206,240,228,0.8)", dx: 0.1, dy: 0.05, period: 29, phase: 1.7 }, // mint band, top right
-  { x: 0.55, y: 0.14, r: 0.38, color: "rgba(226,222,252,0.7)", dx: 0.14, dy: 0.04, period: 31, phase: 3.1 }, // lavender wave
-  { x: 0.25, y: 1.02, r: 0.5, color: "rgba(244,212,236,0.75)", dx: 0.1, dy: 0.03, period: 26, phase: 5.2 }, // pink glow, bottom left
-  { x: 0.8, y: 1.04, r: 0.5, color: "rgba(212,210,252,0.8)", dx: 0.1, dy: 0.03, period: 19, phase: 4.4 }, // lilac glow, bottom right
-  { x: 0.5, y: 0.5, r: 0.62, color: "rgba(255,255,255,0.95)", dx: 0.04, dy: 0.06, period: 27, phase: 2.3 }, // white body behind content
+type Pool = { x: number; y: number; r: number; color: string };
+const pools: Pool[] = [
+  { x: 0.15, y: 0.02, r: 0.55, color: "rgba(186,205,245,0.95)" }, // deep blue, top left
+  { x: 0.85, y: 0.06, r: 0.5, color: "rgba(206,221,250,0.95)" }, // sky, top right
+  { x: 0.5, y: 0.2, r: 0.42, color: "rgba(226,234,252,0.9)" }, // pale blue, under the ribbons
+  { x: 0.5, y: 1.05, r: 0.5, color: "rgba(214,224,250,0.7)" }, // blue behind the dock
+];
+// Ribbons: [centre y (fraction), amplitude (fraction of height), wavelength (fraction of width), stroke width, colour, period s, phase]
+const ribbons: [number, number, number, number, string, number, number][] = [
+  [0.1, 0.05, 1.3, 90, "rgba(255,255,255,0.75)", 23, 0],
+  [0.19, 0.045, 1.1, 60, "rgba(160,186,244,0.55)", 29, 1.7],
+  [0.26, 0.035, 1.5, 110, "rgba(255,255,255,0.85)", 31, 3.1],
+  [0.05, 0.03, 0.9, 40, "rgba(125,160,240,0.45)", 19, 4.4],
 ];
 
-function Glow({ field: f, clock, width, height, still }: { field: Field; clock: SharedValue<number>; width: number; height: number; still: boolean }) {
-  const r = f.r * Math.max(width, height) * 0.62;
-  const c = useDerivedValue(() => {
-    const t = still ? 0 : (clock.value / 1000) * (2 * Math.PI) / f.period + f.phase;
-    return vec((f.x + f.dx * Math.sin(t)) * width, (f.y + f.dy * Math.cos(t * 0.8)) * height);
+function Ribbon({ spec, clock, width, height, still }: { spec: (typeof ribbons)[number]; clock: SharedValue<number>; width: number; height: number; still: boolean }) {
+  const [cy, amp, wave, stroke, color, period, phase] = spec;
+  const path = useDerivedValue(() => {
+    const t = still ? phase : (clock.value / 1000) * (2 * Math.PI) / period + phase;
+    const p = Skia.Path.Make();
+    const steps = 24, k = (2 * Math.PI) / (wave * width);
+    for (let i = 0; i <= steps; i++) {
+      const x = -width * 0.2 + (width * 1.4 * i) / steps;
+      const y = cy * height + Math.sin(x * k + t) * amp * height + Math.sin(x * k * 0.5 - t * 0.6) * amp * 0.4 * height;
+      if (i === 0) p.moveTo(x, y); else p.lineTo(x, y);
+    }
+    return p;
   });
-  return <Circle c={c} r={r}><RadialGradient c={c} r={r} colors={[f.color, "rgba(255,255,255,0)"]} /></Circle>;
+  return <Path path={path} style="stroke" strokeWidth={stroke} strokeCap="round" color={color} />;
 }
 
 export function CalmCanvas() {
@@ -33,8 +45,18 @@ export function CalmCanvas() {
   const clock = useClock();
   return <View pointerEvents="none" style={StyleSheet.absoluteFill}>
     <Canvas style={StyleSheet.absoluteFill}>
-      <Rect x={0} y={0} width={width} height={height} color="#FCFCFD" />
-      {fields.map((f, i) => <Glow key={i} field={f} clock={clock} width={width} height={height} still={still} />)}
+      <Rect x={0} y={0} width={width} height={height} color="#F5F7FB" />
+      {pools.map((p, i) => {
+        const r = p.r * Math.max(width, height) * 0.62, c = vec(p.x * width, p.y * height);
+        return <Circle key={i} c={c} r={r}><RadialGradient c={c} r={r} colors={[p.color, "rgba(245,247,251,0)"]} /></Circle>;
+      })}
+      <Group layer={<Paint><Blur blur={22} /></Paint>}>
+        {ribbons.map((r, i) => <Ribbon key={i} spec={r} clock={clock} width={width} height={height} still={still} />)}
+      </Group>
+      {/* The hero fades into the white body of the page before the content cards. */}
+      <Rect x={0} y={height * 0.3} width={width} height={height * 0.7}>
+        <RadialGradient c={vec(width / 2, height * 0.62)} r={height * 0.55} colors={["rgba(250,251,254,0.96)", "rgba(250,251,254,0.9)", "rgba(250,251,254,0)"]} positions={[0, 0.55, 1]} />
+      </Rect>
     </Canvas>
   </View>;
 }

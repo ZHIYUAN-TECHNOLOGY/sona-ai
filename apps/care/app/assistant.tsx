@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, Linking, Pressable, ScrollView, Text, TextInput, View, type ViewStyle } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Linking, Pressable, ScrollView, View, type ViewStyle } from "react-native";
+import { Text, TextInput, AnimatedText } from "@/lib/text";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { Easing, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -111,7 +112,7 @@ export default function Assistant() {
         : state !== "joined" ? <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>Join with the code on your discharge paper, and I can answer from your plan.</Text>
           : !asks.length ? <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>Questions from your plan show here once you're home.</Text>
             : rest.length > 0 && !reading && <View style={{ gap: 2 }}>
-              {turns.length > 0 && <Animated.Text entering={enter(4)} style={{ ...type.footnote, fontWeight: "600", color: palette.faint, marginBottom: 2 }}>You could also ask</Animated.Text>}
+              {turns.length > 0 && <AnimatedText entering={enter(4)} style={{ ...type.footnote, fontWeight: "600", color: palette.faint, marginBottom: 2 }}>You could also ask</AnimatedText>}
               {rest.map((a, i) => <Animated.View key={a.question} entering={enter(turns.length ? i + 5 : i)}>
                 <Pressable accessibilityRole="button" accessibilityLabel={a.question} accessibilityHint="Answers from your plan" onPress={() => ask(a)}
                   style={({ pressed }) => ({ minHeight: 48, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8, opacity: pressed ? 0.6 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] })}>
@@ -154,7 +155,7 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
         {!t.ready && <Reading />}
       </Animated.View>}
       {t.ready && (t.answer ? <>
-        <Animated.Text entering={enter(1)} selectable style={{ ...type.body, color: palette.ink }}>{t.answer.answer}</Animated.Text>
+        <AnimatedText entering={enter(1)} selectable style={{ ...type.body, color: palette.ink }}>{t.answer.answer}</AnimatedText>
         <Animated.View entering={enter(2)} style={{ alignSelf: "flex-start", borderRadius: 999, backgroundColor: palette.blueWash, paddingHorizontal: 10, paddingVertical: 5 }}>
           <Text style={{ fontSize: 12, fontWeight: "700", color: palette.blue }}>{t.answer.source}</Text>
         </Animated.View>
@@ -164,7 +165,7 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
         </Animated.View>
       </> : <>
         {urgent(t.question) && <Animated.View entering={enter(1)}><Call999 /></Animated.View>}
-        <Animated.Text entering={enter(2)} style={{ ...type.body, color: palette.ink }}>{NO_ANSWER}</Animated.Text>
+        <AnimatedText entering={enter(2)} style={{ ...type.body, color: palette.ink }}>{NO_ANSWER}</AnimatedText>
         <Animated.View entering={enter(3)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
           {t.sent ? <Done text={SENT} /> : <Action d={GLYPH.chat} label="Send to my care team" busy={busy} ink onPress={onSend} />}
         </Animated.View>

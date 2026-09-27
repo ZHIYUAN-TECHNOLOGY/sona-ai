@@ -1,6 +1,7 @@
 import type { Language } from "@sona-ai/domain/discharge";
 import { useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, Pressable, Text, TextInput, View } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Pressable, View } from "react-native";
+import { Text, TextInput } from "@/lib/text";
 import Animated, { Easing, LinearTransition, useReducedMotion, withDelay, withTiming } from "react-native-reanimated";
 import Svg, { Circle, Path } from "react-native-svg";
 import { palette, type } from "@/lib/theme";
