@@ -123,7 +123,7 @@ export function AccentText({ children, style }: { children: string; style: TextS
  * the bold title with its accent (the part to glance at) in the accent gradient, and one line of insight
  * under it. The accent comes first, as in "Day 3 at home".
  */
-export function Title({ overline, greeting, accent, children, line, lineTone = "muted" }: { overline?: string; greeting?: string; accent?: string; children?: string; line?: string; lineTone?: "muted" | "amber" | "green" }) {
+export function Title({ overline, greeting, accent, children, line, lineTone = "muted" }: { overline?: string; greeting?: string; accent?: string; children?: string; line?: string; lineTone?: "muted" | "amber" | "green" | "red" }) {
   const big = { ...type.display, fontWeight: "700" as const, color: palette.ink };
   return <View style={{ gap: 4 }} accessible accessibilityRole="header" accessibilityLabel={[greeting, `${accent ?? ""}${children ?? ""}`, line].filter(Boolean).join(". ")}>
     {overline && <Text style={{ ...type.overline, color: palette.blue }}>{overline}</Text>}
