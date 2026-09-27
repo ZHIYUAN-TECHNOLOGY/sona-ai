@@ -1,5 +1,13 @@
 import { expect, test } from "bun:test";
-import { followUpNeeds, nextVisit, whenLine } from "./lines";
+import { bringLine, followUpNeeds, nextVisit, pillLine, whenLine } from "./lines";
+
+test("the pill gives a booked visit its Malaysian time; a recall or the discharge review only its day", () => {
+  expect(pillLine({ id: "appt-SYN-1042", date: new Date("2026-10-02T02:30:00Z") })).toMatch(/^Fri 2 Oct · 10:30\sAM$/);
+  expect(pillLine({ id: "recall:f1", date: new Date("2026-12-25T02:00:00Z") })).toBe("Fri 25 Dec");
+  expect(pillLine({ id: "discharge-review", date: new Date("2026-12-25T02:00:00Z") })).toBe("Fri 25 Dec");
+  expect(bringLine({ id: "discharge-review" })).toContain("discharge letter");
+  expect(bringLine({ id: "appt-SYN-1042" })).not.toContain("discharge letter");
+});
 
 const item = (short, date, inDays, status) => ({ short, date: new Date(date), inDays, status });
 test("when reads the day in Malaysia and how far away it is", () => {
