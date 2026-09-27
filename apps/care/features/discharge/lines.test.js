@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { changeSummary, dischargeLine, homeLine, scheduleLine, takeLine } from "./lines";
+import { accentSplit, changeSummary, dischargeLine, homeLine, scheduleLine, takeLine, takeSentence } from "./lines";
 
 const med = name => ({ name, line: "" });
 const medicines = { new: [med("Paracetamol")], changed: [med("Azithromycin")], stopped: [med("Salbutamol nebuliser")], continue: [med("Cetirizine")] };
@@ -38,4 +38,17 @@ test("the medicines title line says how many to take, what changed and how long 
   const meds = { new: [{ name: "A" }], changed: [{ name: "B" }], continue: [{ name: "C" }], stopped: [{ name: "D" }] };
   expect(takeLine(meds, "Home since today")).toBe("3 to take · 1 new · 1 changed · Home since today");
   expect(takeLine({ new: [], changed: [], continue: [], stopped: [] }, "Home for 3 days")).toBe("Nothing to take · Home for 3 days");
+});
+
+test("the sheet's accent falls on the last word of a longer name, else the second half", () => {
+  expect(accentSplit("Paracetamol")).toEqual(["Parace", "tamol"]);
+  expect(accentSplit("Salbutamol nebuliser")).toEqual(["Salbutamol ", "nebuliser"]);
+});
+
+test("the sheet's sentence bolds the dose and when, and falls back to the plan line without a schedule", () => {
+  const text = runs => runs.map(r => r.bold ? `**${r.text}**` : r.text).join("");
+  expect(text(takeSentence({ line: "x", take: "1 tablet, with or without food", at: ["08:00"] }))).toBe("You have to take **1 tablet**, **once a day at 8 AM**, with or without food.");
+  expect(text(takeSentence({ line: "x", take: "1 tablet at night", at: ["21:00"] }))).toBe("You have to take **1 tablet at night**, **once a day at 9 PM**.");
+  expect(text(takeSentence({ line: "x", at: ["08:00", "20:00"] }))).toBe("Take it **twice a day at 8 AM and 8 PM**.");
+  expect(takeSentence({ line: "For pain or fever, if you need it" })).toEqual([{ text: "For pain or fever, if you need it" }]);
 });
