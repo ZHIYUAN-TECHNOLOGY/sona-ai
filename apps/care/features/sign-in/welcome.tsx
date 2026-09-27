@@ -35,7 +35,7 @@ export function Welcome() {
   const small = step !== "options";
   const heroStyle = useAnimatedStyle(() => {
     const to = (v: number) => reduced ? v : withSpring(v, SPRING);
-    return { height: to(small ? 90 : 172), marginTop: to(small ? 0 : 40), transform: [{ scale: to(small ? 0.5 : 1) }] };
+    return { height: to(small ? 100 : 200), marginTop: to(small ? -8 : 28), transform: [{ scale: to(small ? 0.5 : 1) }] };
   });
   const enter = (i: number) => reduced ? FadeIn.duration(160) : FadeInDown.springify().duration(420).dampingRatio(0.9).delay(60 + i * 40);
   const leave = FadeOut.duration(120);

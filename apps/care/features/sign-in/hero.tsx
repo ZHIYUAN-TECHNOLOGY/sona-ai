@@ -1,31 +1,33 @@
-import { Blur, Canvas, Circle, Group, Oval, RadialGradient, Rect, rect, rrect, useClock, vec } from "@shopify/react-native-skia";
+import { Blur, Canvas, Circle, Group, LinearGradient, Oval, Paint, Path, RadialGradient, Skia, SweepGradient, rect, rrect, useClock, vec } from "@shopify/react-native-skia";
 import { useEffect } from "react";
 import { View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useDerivedValue, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
 
 /**
- * Sona Care's hero: a glass marble, free of any card (after Wabi's animated glass icons). Inside, the
- * aurora swirls slowly; the marble has a refracting rim, a specular arc top left, bounce light at the
- * bottom and a soft contact shadow. Drag it and the inside tilts against the glass, then springs back;
- * `roll` changing (a step change) rolls it once. Still under Reduce Motion.
+ * Sona Care's hero: a liquid-glass orb (after Wabi's "New" glass gradient button). A thin clear shell
+ * with fixed reflections (a gradient rim, a top crescent glare, a bottom caustic) holds a soft core
+ * whose blurred colour blobs drift on slow linear orbits under a rotating overlay sweep. Drag it and
+ * the core tilts inside the fixed glass, then springs back; `roll` changing rolls it once. Still under
+ * Reduce Motion. Measurements follow the shot's 82 pt orb, scaled.
  */
-const blobs = [
-  { color: "rgba(36,91,204,1)", orbit: 0.26, period: 7, phase: 0 },
-  { color: "rgba(139,104,240,1)", orbit: 0.3, period: 9, phase: 2.1 },
-  { color: "rgba(64,196,180,1)", orbit: 0.28, period: 11, phase: 4.2 },
-  { color: "rgba(236,120,196,0.95)", orbit: 0.24, period: 13, phase: 1.1 },
-  { color: "rgba(214,236,255,0.9)", orbit: 0.2, period: 17, phase: 3.3 }, // a pale current, so it reads as light, not paint
+const BACK = { duration: 700, dampingRatio: 0.55 } as const;
+// Sona's palette on the shot's four orbits: [colour, radius, orbit (fraction of size), speed rad/s, phase]
+const blobs: [string, number, number, number, number][] = [
+  ["rgba(36,91,204,1)", 24, 0.22, 0.7, 0], // deep blue
+  ["rgba(40,190,176,0.95)", 20, 0.2, -0.5, 1.8], // teal
+  ["rgba(128,90,236,0.9)", 24, 0.2, 0.4, 3.5], // lilac
+  ["rgba(236,130,196,0.85)", 16, 0.17, -0.8, 0.5], // blush shimmer
 ];
-const BACK = { duration: 700, dampingRatio: 0.55 } as const; // a subtle overshoot as the inside settles
 
-function Blob({ b, clock, size, still }: { b: (typeof blobs)[number]; clock: SharedValue<number>; size: number; still: boolean }) {
-  const r = size * 0.46;
+function Blob({ spec, clock, s, k, still }: { spec: (typeof blobs)[number]; clock: SharedValue<number>; s: number; k: number; still: boolean }) {
+  const [color, r, orbit, speed, phase] = spec;
   const c = useDerivedValue(() => {
-    const t = still ? b.phase : (clock.value / 1000) * (2 * Math.PI) / b.period + b.phase;
-    return vec(size / 2 + Math.cos(t) * b.orbit * size, size / 2 + Math.sin(t * 1.3) * b.orbit * size);
+    const t = still ? 0 : clock.value / 1000;
+    const a = t * speed + phase;
+    return vec(s / 2 + Math.cos(a) * orbit * s - Math.sin(t * 0.5) * 6 * k, s / 2 + Math.sin(a * 0.9) * orbit * s + Math.cos(t * 0.4) * 6 * k);
   });
-  return <Circle c={c} r={r}><RadialGradient c={c} r={r} colors={[b.color, b.color.replace(/[\d.]+\)$/, "0)")]} /></Circle>;
+  return <Circle c={c} r={r * k} color={color} />;
 }
 
 export function HeroOrb({ size = 148, roll }: { size?: number; roll?: unknown }) {
@@ -43,37 +45,45 @@ export function HeroOrb({ size = 148, roll }: { size?: number; roll?: unknown })
     .onChange(e => { tx.set(Math.max(-1, Math.min(1, e.translationX / 90))); ty.set(Math.max(-1, Math.min(1, e.translationY / 90))); })
     .onFinalize(() => { tx.set(withSpring(0, BACK)); ty.set(withSpring(0, BACK)); });
 
-  // The inside moves with the tilt and turns slowly; the highlight slides the other way, selling the depth.
-  const inside = useDerivedValue(() => [
-    { translateX: tx.value * size * 0.14 }, { translateY: ty.value * size * 0.14 },
-    { rotate: (still ? 0 : clock.value / 9000) + tx.value * 0.5 },
-  ]);
-  const shine = useDerivedValue(() => [{ translateX: -tx.value * size * 0.05 }, { translateY: -ty.value * size * 0.05 }]);
+  const s = size, k = s / 82, pad = 14 * k, W = s + pad * 2, center = vec(s / 2, s / 2);
+  const core = useDerivedValue(() => [{ translateX: tx.value * s * 0.12 }, { translateY: ty.value * s * 0.12 }]);
+  const sweep = useDerivedValue(() => [{ rotate: still ? 0 : (clock.value / 1000) * 0.4 }]);
+  const caustic = Skia.Path.Make();
+  caustic.addArc(rect(1, 1, s - 2, s - 2), 54, 83); // SwiftUI trim 0.15–0.38: bottom right round to bottom left
 
-  const s = size, h = size * 1.14, center = vec(s / 2, s / 2);
   return <GestureDetector gesture={drag}>
-    <View accessible accessibilityRole="image" accessibilityLabel="Sona Care" style={{ width: s, height: h }}>
-      <Canvas style={{ width: s, height: h }}>
-        <Oval x={s * 0.2} y={s * 1.0} width={s * 0.6} height={s * 0.09} color="rgba(40,70,160,0.3)"><Blur blur={7} /></Oval>
-        <Group clip={rrect(rect(0, 0, s, s), s / 2, s / 2)}>
-          <Rect x={0} y={0} width={s} height={s} color="#5F86E6" />
-          <Group transform={inside} origin={center}>
-            {blobs.map((b, i) => <Blob key={i} b={b} clock={clock} size={s} still={still} />)}
+    <View accessible accessibilityRole="image" accessibilityLabel="Sona Care" style={{ width: W, height: W }}>
+      <Canvas style={{ width: W, height: W }}>
+        <Group transform={[{ translateX: pad }, { translateY: pad }]}>
+          {/* Soft volumetric shadow under the sphere. */}
+          <Circle c={vec(s / 2, s / 2 + 6 * k)} r={s * 0.46} color="rgba(96,110,190,0.22)"><Blur blur={12 * k} /></Circle>
+
+          <Group clip={rrect(rect(0, 0, s, s), s / 2, s / 2)}>
+            {/* The liquid core: a light fill, blurred drifting blobs, an overlay sweep turning slowly. */}
+            <Circle c={center} r={s / 2}><RadialGradient c={center} r={s / 2} colors={["#F7F9FE", "#E6EAF6"]} /></Circle>
+            <Group transform={core} layer={<Paint><Blur blur={8 * k} /></Paint>}>
+              {blobs.map((b, i) => <Blob key={i} spec={b} clock={clock} s={s} k={k} still={still} />)}
+            </Group>
+            <Group blendMode="overlay" layer={<Paint><Blur blur={8 * k} /></Paint>}>
+              <Circle c={center} r={s / 2}>
+                <SweepGradient c={center} origin={center} transform={sweep} colors={["rgba(36,91,204,0.5)", "rgba(64,196,180,0.3)", "rgba(139,104,240,0.4)", "rgba(36,91,204,0.5)"]} />
+              </Circle>
+            </Group>
           </Group>
-          {/* Refraction: the glass thickens toward the rim, darkening, then catches a bright edge. */}
-          <Circle c={center} r={s / 2}>
-            <RadialGradient c={center} r={s / 2} colors={["rgba(255,255,255,0)", "rgba(255,255,255,0)", "rgba(20,36,96,0.3)", "rgba(255,255,255,0.8)"]} positions={[0, 0.62, 0.9, 1]} />
+
+          {/* The fixed glass shell. */}
+          <Circle c={center} r={s / 2 - 0.75 * k} style="stroke" strokeWidth={1.5 * k}>
+            <LinearGradient start={vec(0, 0)} end={vec(s, s)} colors={["rgba(255,255,255,0.85)", "rgba(255,255,255,0.2)", "rgba(0,0,0,0.12)", "rgba(255,255,255,0.5)"]} />
           </Circle>
-          {/* Bounce light off the bottom inside of the glass. */}
-          <Circle c={vec(s / 2, s * 1.02)} r={s * 0.5}>
-            <RadialGradient c={vec(s / 2, s * 1.02)} r={s * 0.5} colors={["rgba(255,255,255,0.38)", "rgba(255,255,255,0)"]} />
-          </Circle>
-          <Group transform={shine}>
-            <Oval x={s * 0.18} y={s * 0.08} width={s * 0.46} height={s * 0.24} color="rgba(255,255,255,0.55)"><Blur blur={5} /></Oval>
-            <Oval x={s * 0.26} y={s * 0.12} width={s * 0.16} height={s * 0.07} color="rgba(255,255,255,0.95)"><Blur blur={1.5} /></Oval>
+          <Group clip={rrect(rect(0, 0, s, s), s / 2, s / 2)} layer={<Paint><Blur blur={1.5 * k} /></Paint>}>
+            <Oval x={s / 2 - 29 * k} y={2 * k} width={58 * k} height={30 * k}>
+              <LinearGradient start={vec(0, 2 * k)} end={vec(0, 32 * k)} colors={["rgba(255,255,255,0.95)", "rgba(255,255,255,0.25)", "rgba(255,255,255,0)"]} />
+            </Oval>
           </Group>
+          <Path path={caustic} style="stroke" strokeWidth={2 * k} strokeCap="round">
+            <LinearGradient start={vec(0, s)} end={vec(0, s * 0.6)} colors={["rgba(255,255,255,0.9)", "rgba(255,255,255,0)"]} />
+          </Path>
         </Group>
-        <Circle c={center} r={s / 2 - 0.5} style="stroke" strokeWidth={1} color="rgba(255,255,255,0.8)" />
       </Canvas>
     </View>
   </GestureDetector>;
