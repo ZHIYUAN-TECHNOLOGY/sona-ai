@@ -9,11 +9,23 @@ import { clockOf, type Context } from "../context";
 import { patientProcedure } from "../index";
 
 /** The patient's latest discharge, or none while they are still in hospital. */
-async function lastDischarge(db: Context["db"], hospitalId: string, patientId: string) {
+export async function lastDischarge(db: Context["db"], hospitalId: string, patientId: string) {
   const rows = await db.select({ state: encounters.state }).from(encounters).where(and(eq(encounters.patientId, patientId), eq(encounters.hospitalId, hospitalId)));
   return rows.map(r => (r.state as { discharge?: DischargeState }).discharge)
     .filter((d): d is DischargeState & { dischargedAt: string } => Boolean(d?.dischargedAt))
     .sort((a, b) => b.dischargedAt.localeCompare(a.dischargedAt))[0];
+}
+
+/**
+ * The patient's take-home dose schedule (new, changed and continuing medicines with their times) and
+ * when they left, or undefined while in hospital. Sona Care builds the same list from care.discharge.
+ */
+export async function doseScheduleOf(db: Context["db"], hospitalId: string, patientId: string) {
+  const d = await lastDischarge(db, hospitalId, patientId);
+  if (!d) return undefined;
+  // ponytail: planFor ignores the patient (one authored plan for the demo).
+  const m = patientMeds(planFor({ id: patientId } as Patient));
+  return { dischargedAt: d.dischargedAt, meds: [...m.new, ...m.changed, ...m.continue] };
 }
 
 /** The clinic review booked at discharge, counted from the day they left. */

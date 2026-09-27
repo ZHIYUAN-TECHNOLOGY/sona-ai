@@ -16,6 +16,8 @@ const BY_TOPIC: Record<string, Reread[]> = {
   handover: ["handover"],
   // Sona Care: a patient's message is a task on My Day; either side's message re-reads the thread.
   messages: ["day", "messages"],
+  // Sona Care: a dose marked taken changes what My Day's flagged rows say was missed.
+  doses: ["day"],
   // The demo clock moved: everything time-based may have changed.
   demo: ALL,
 };

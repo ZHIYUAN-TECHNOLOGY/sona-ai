@@ -1,25 +1,10 @@
-/** A take-home medicine as the plan gives it: how to take one dose, daily times (Malaysia, "HH:MM") and, for a course, how many doses are left. */
-export type ScheduledMed = { name: string; line: string; take?: string; at?: string[]; doses?: number };
+import { doseKey, doseSlots as slots, MISSED_AFTER as GRACE, type ScheduledMed } from "@sona-ai/domain/doses";
+
+// The schedule itself (slots, keys, the missed window) is shared with the server in @sona-ai/domain/doses.
+export { doseKey, type ScheduledMed };
 export type Dose = { name: string; line: string; dueAt: Date; key: string };
 
 const MYT = 8 * 3600_000, DAY = 86_400_000;
-/** A missed dose stays the next one for this long, then the one after takes over. */
-const GRACE = 6 * 3600_000;
-
-/** Every dose of one medicine after the patient left hospital, up to `until`. */
-function slots(med: ScheduledMed, out: Date, until: Date): Date[] {
-  const all: Date[] = [];
-  const first = Math.floor((out.getTime() + MYT) / DAY) * DAY - MYT; // midnight of discharge day, Malaysia time
-  for (let day = first; day <= until.getTime(); day += DAY)
-    for (const hhmm of med.at ?? []) {
-      const [h, m] = hhmm.split(":").map(Number);
-      const due = new Date(day + (h! * 60 + m!) * 60_000);
-      if (due > out && due <= until) all.push(due);
-    }
-  return med.doses === undefined ? all : all.slice(0, med.doses);
-}
-
-export const doseKey = (name: string, dueAt: Date) => `${name}@${dueAt.toISOString()}`;
 
 /** The dose to take next: the earliest one not yet taken, a missed one only while it is a few hours late. */
 export function nextDose(meds: ScheduledMed[], dischargedAt: string | undefined, taken: string[], now: Date): Dose | undefined {

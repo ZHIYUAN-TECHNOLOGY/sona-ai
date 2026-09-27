@@ -13,11 +13,13 @@ import { HoldButton, surfaceStyle } from "@/lib/ui";
 import { clock, dueNow, early, nextDose, weekOf } from "./model";
 import { Pill, tintOf } from "./pill";
 import { now as clockNow, useClockOffset } from "@/lib/clock";
+import { client } from "@/utils/orpc";
 
 /**
- * Doses taken, kept on this phone (the dose key: medicine and due time), read through
- * useSyncExternalStore so React Compiler never caches a stale module read.
- * ponytail: phone-only and not per account; a server log lets the care team see adherence later.
+ * Doses taken (the dose key: medicine and due time), kept on this phone so hold to take is instant
+ * offline, and sent to the server (care.doses) so the care team sees adherence; the server's list is
+ * merged back on join and after each live change. Read through useSyncExternalStore so React
+ * Compiler never caches a stale module read.
  */
 const KEY = "sona-care.doses.taken";
 let taken: string[] = [];
@@ -25,11 +27,26 @@ const listeners = new Set<() => void>();
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 SecureStore.getItemAsync(KEY).then(v => { if (v) { taken = [...new Set([...JSON.parse(v) as string[], ...taken])]; listeners.forEach(l => l()); } }).catch(() => {});
 
-export function markTaken(key: string) {
-  if (taken.includes(key)) return;
-  taken = [...taken, key].slice(-40);
+function keep(next: string[]) {
+  taken = next.slice(-80);
   listeners.forEach(l => l());
   SecureStore.setItemAsync(KEY, JSON.stringify(taken)).catch(() => {});
+}
+
+export function markTaken(key: string) {
+  if (taken.includes(key)) return;
+  keep([...taken, key]);
+  // ponytail: a dose taken offline stays on the phone until the next sync re-sends what the server lacks.
+  void client.care.doses.take({ key }).catch(() => {});
+}
+
+/** Merges the server's record into this phone's, and sends anything the server is missing (taken while offline). */
+export async function syncTaken() {
+  const server = await client.care.doses.list();
+  const missing = taken.filter(k => !server.includes(k));
+  await Promise.all(missing.map(key => client.care.doses.take({ key }).catch(() => {})));
+  const merged = [...new Set([...taken, ...server])];
+  if (merged.length !== taken.length) keep(merged);
 }
 
 /**

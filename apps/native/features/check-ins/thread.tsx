@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AccessibilityInfo, Pressable, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { MarkedText } from "@/components/sona/marked-text";
@@ -10,7 +10,8 @@ import { haptic } from "@/features/clinical/medication-parts";
 import type { DayItem } from "@/features/day/model";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
-import { errorText, useLive } from "@/features/live";
+import { api, errorText, useLive } from "@/features/live";
+import { useLiveChanges } from "@/features/live/channel";
 import { shortDate, type ReplyLabel } from "./model";
 import { bookIn, resolveFlag, simulateReply, useCheckIns } from "./state";
 
@@ -93,6 +94,7 @@ export function FlagActions({ item }: { item: DayItem }) {
     <Text style={{ ...type.footnote, fontWeight: "600", color: palette.green }}>{doing}{doing.startsWith("Booked in ") || doing === "Booking…" ? "" : " · simulated"}</Text>
   </Animated.View>;
   return <View style={{ gap: 6 }}>
+    {live && item.patientId && <DoseLine patientId={item.patientId} />}
     <View style={{ flexDirection: "row", gap: 8 }}>
       {([["Call back", "phone.fill"], [live ? "Book in tomorrow 9:00" : "Book in", "calendar.badge.plus"]] as const).map(([label, icon], i) => <Pressable key={label} accessibilityRole="button" accessibilityLabel={`${label} ${first}`} onPress={() => act(i ? "Booked in" : "Called back")}
         style={({ pressed }) => ({ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: i ? "rgba(20,28,40,0.06)" : palette.ink, opacity: pressed ? 0.8 : 1 })}>
@@ -101,5 +103,23 @@ export function FlagActions({ item }: { item: DayItem }) {
       </Pressable>)}
     </View>
     {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
+  </View>;
+}
+
+/**
+ * Live mode: what the patient's own dose log says, next to a flagged reply, so the doctor sees at a
+ * glance whether "fever returned" came with missed antibiotics. Re-read when she marks a dose.
+ */
+function DoseLine({ patientId }: { patientId: string }) {
+  const [line, setLine] = useState<{ text: string; missed: boolean }>();
+  const read = useCallback(() => {
+    void api.adherence.get({ patientId }).then(a => setLine(a.line ? { text: a.line, missed: true } : a.due ? { text: `All ${a.taken} doses taken so far`, missed: false } : undefined), () => {});
+  }, [patientId]);
+  useEffect(read, [read]);
+  useLiveChanges(["day"], read);
+  if (!line) return null;
+  return <View accessible accessibilityLabel={`Doses: ${line.text}`} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+    <Icon name={line.missed ? "pills.fill" : "checkmark.circle.fill"} size={12} color={line.missed ? palette.amber : palette.green} />
+    <Text style={{ ...type.footnote, fontWeight: "600", color: line.missed ? palette.amber : palette.green }}>{line.text}</Text>
   </View>;
 }

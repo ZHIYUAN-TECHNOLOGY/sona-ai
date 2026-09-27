@@ -91,6 +91,15 @@ export const labResults = pgTable("lab_results", {
   acknowledgedBy: text("acknowledged_by"), acknowledgedAt: timestamp("acknowledged_at"),
 });
 
+/**
+ * Doses a Sona Care patient marked taken (hold to take), so the care team sees adherence. One row per
+ * dose: `key` is the medicine and due time (@sona-ai/domain/doses), so marking it twice changes nothing.
+ */
+export const doseLogs = pgTable("dose_logs", {
+  id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull().references(() => patients.id),
+  key: text("key").notNull(), takenAt: timestamp("taken_at").notNull(), createdAt: created(),
+}, t => [index("dose_logs_patient").on(t.hospitalId, t.patientId)]);
+
 export const appointments = pgTable("appointments", {
   id: text("id").primaryKey(), patientId: text("patient_id").notNull(), hospitalId: text("hospital_id").notNull(),
   startsAt: timestamp("starts_at").notNull(), kind: text("kind").notNull(),

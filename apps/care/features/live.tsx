@@ -3,6 +3,7 @@ import { authClient } from "@/lib/auth-client";
 import { setClockOffset } from "@/lib/clock";
 import { client, queryClient } from "@/utils/orpc";
 import { ENV } from "../src/env";
+import { syncTaken } from "./doses";
 import { useMe } from "./me";
 
 /**
@@ -23,11 +24,12 @@ export function LiveUpdates() {
   useEffect(() => {
     if (!joined) { setClockOffset(0); return; }
     void readClock();
+    void syncTaken().catch(() => {});
     let socket: WebSocket | undefined, ping: ReturnType<typeof setInterval> | undefined, retry: ReturnType<typeof setTimeout> | undefined;
     let stopped = false, attempt = 0, opened = false;
     const reread = async (demo: boolean) => {
       if (demo) await readClock();
-      await queryClient.invalidateQueries();
+      await Promise.all([queryClient.invalidateQueries(), syncTaken().catch(() => {})]);
     };
     const connect = async () => {
       const cookie = await authClient.getCookie();

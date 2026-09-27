@@ -11,6 +11,7 @@ import { clockOffsetOf } from "../clock";
 import { stubModels } from "../models";
 import { patientPlan, planText } from "./care-plan";
 import { loadEncounter } from "./encounter";
+import { careDosesRouter } from "./doses";
 import { careMessagesRouter } from "./messages";
 
 /**
@@ -112,6 +113,9 @@ export const careRouter = {
 
   /** Patient: the hospital's demo clock offset (0 is real time), so the app's "now" matches the server's. */
   clock: patientProcedure.handler(async ({ context }) => ({ offsetMs: await clockOffsetOf(context.db, context.hospitalId) })),
+
+  /** Patient: doses they marked taken (hold to take), so the care team sees adherence. */
+  doses: careDosesRouter,
 
   /** Patient: their own check-ins after discharge, each with their reply and how it was read. */
   checkIns: {
