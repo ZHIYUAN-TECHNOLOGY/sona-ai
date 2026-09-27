@@ -1,5 +1,13 @@
 import { expect, test } from "bun:test";
-import { bringLine, followUpNeeds, nextVisit, pillLine, whenLine } from "./lines";
+import { bringLine, dotTone, followUpNeeds, nextVisit, pillLine, visitsLine, whenLine } from "./lines";
+
+test("my visits says what is next and how far off, and colours the timeline dots", () => {
+  expect(visitsLine([{ short: "Clinic review", status: "due-soon", inDays: 7 }])).toEqual({ line: "Next: Clinic review in 7 days", tone: "amber" });
+  expect(visitsLine([{ short: "CT scan", status: "upcoming", inDays: 81 }])).toEqual({ line: "Next: CT scan in 81 days", tone: "muted" });
+  expect(visitsLine([{ short: "CT scan", status: "overdue", inDays: -3 }])).toEqual({ line: "Overdue: CT scan, due 3 days ago", tone: "red" });
+  expect(visitsLine([])).toBeUndefined();
+  expect([dotTone({ status: "due-soon" }, true), dotTone({ status: "upcoming" }, false), dotTone({ status: "overdue" }, false)]).toEqual(["blue", "faint", "red"]);
+});
 
 test("the pill gives a booked visit its Malaysian time; a recall or the discharge review only its day", () => {
   expect(pillLine({ id: "appt-SYN-1042", date: new Date("2026-10-02T02:30:00Z") })).toMatch(/^Fri 2 Oct · 10:30\sAM$/);
