@@ -14,5 +14,5 @@ export const type = {
   headline: { fontSize: 17, lineHeight: 23, letterSpacing: -0.2, fontWeight: "600" },
   body: { fontSize: 16, lineHeight: 24 },
   footnote: { fontSize: 13, lineHeight: 18 },
-  overline: { fontSize: 11, lineHeight: 14, letterSpacing: 0.8, fontWeight: "700", textTransform: "uppercase" },
+  overline: { fontSize: 12, lineHeight: 16, letterSpacing: 0.9, fontWeight: "700", textTransform: "uppercase" },
 } as const;

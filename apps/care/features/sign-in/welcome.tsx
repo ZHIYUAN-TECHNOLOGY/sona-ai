@@ -35,7 +35,7 @@ export function Welcome() {
   const small = step !== "options";
   const heroStyle = useAnimatedStyle(() => {
     const to = (v: number) => reduced ? v : withSpring(v, SPRING);
-    return { height: to(small ? 76 : 150), marginTop: to(small ? 8 : 56), transform: [{ scale: to(small ? 0.5 : 1) }] };
+    return { height: to(small ? 90 : 172), marginTop: to(small ? 0 : 40), transform: [{ scale: to(small ? 0.5 : 1) }] };
   });
   const enter = (i: number) => reduced ? FadeIn.duration(160) : FadeInDown.springify().duration(420).dampingRatio(0.9).delay(60 + i * 40);
   const leave = FadeOut.duration(120);
@@ -50,13 +50,13 @@ export function Welcome() {
         </Pressable>
       </Animated.View>}
     </View>
-    <Animated.View style={[{ alignItems: "center", justifyContent: "center" }, heroStyle]}><HeroOrb /></Animated.View>
+    <Animated.View style={[{ alignItems: "center", justifyContent: "center" }, heroStyle]}><HeroOrb roll={step} /></Animated.View>
 
     {step === "options" && <Animated.View key="options" exiting={leave} style={{ flex: 1, justifyContent: "space-between", gap: 24 }}>
-      <Animated.View entering={enter(0)} style={{ alignItems: "center", gap: 8, paddingTop: 20 }}>
-        <Text style={{ ...type.overline, color: palette.blue }}>Sona Care</Text>
-        <Text accessibilityRole="header" style={{ ...type.display, fontWeight: "600", color: palette.ink, textAlign: "center" }}>Your care, between visits</Text>
-        <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>Check-ins, your discharge plan and your care team, from your hospital.</Text>
+      <Animated.View entering={enter(0)} style={{ alignItems: "center", gap: 8, paddingTop: 12 }}>
+        <Text style={{ fontSize: 17, lineHeight: 22, fontWeight: "600", letterSpacing: -0.2, color: palette.ink }}>Sona <Text style={{ color: palette.blue }}>Care</Text></Text>
+        <Text accessibilityRole="header" lineBreakStrategyIOS="standard" style={{ ...type.display, fontWeight: "600", color: palette.ink, textAlign: "center" }}>Your care, between visits</Text>
+        <Text lineBreakStrategyIOS="standard" style={{ ...type.body, color: palette.muted, textAlign: "center" }}>Check-ins, your discharge plan and your care team, from your hospital.</Text>
       </Animated.View>
       <View style={{ gap: 10 }}>
         <Animated.View entering={enter(1)}><AppleChoice onDone={signedIn} onError={setError} /></Animated.View>
