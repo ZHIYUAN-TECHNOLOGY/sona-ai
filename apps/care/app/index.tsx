@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, useWindowDimensions, View, type LayoutChangeEvent } from "react-native";
 import { Text } from "@/lib/text";
 import Animated, { FadeIn, FadeOut, LinearTransition, useReducedMotion, withSpring, withTiming } from "react-native-reanimated";
+import { KeyboardAwareScrollView, type KeyboardAwareScrollViewRef } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { todayOf } from "@/features/check-ins/model";
 import { TodayCard, useCheckIns } from "@/features/check-ins/today";
@@ -64,7 +65,7 @@ export default function Home() {
   const reduced = useReducedMotion();
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<KeyboardAwareScrollViewRef>(null);
   const spots = useRef({ cards: 0, today: 0 });
   const [adding, setAdding] = useState(false);
   const [still] = useState(() => seen);
@@ -81,7 +82,8 @@ export default function Home() {
   const insight = day !== undefined ? `Day ${day} at home · ${needsLine(needs).replace(/^All/, "all")}` : needsLine(needs);
   const stack = fontScale >= 1.35;
   const calm = still || reduced;
-  return <ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
+  // Keyboard-aware: typing a check-in reply keeps the box and its Send button above the keyboard (bottomOffset covers the button under the box).
+  return <KeyboardAwareScrollView ref={scroll} bottomOffset={140} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     {state === "joined" && me
       ? <>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
@@ -139,5 +141,5 @@ export default function Home() {
     {state !== "loading" && <Pressable accessibilityRole="button" onPress={() => { void authClient.signOut(); }} style={{ alignSelf: "center", minHeight: 48, minWidth: 48, justifyContent: "center" }}>
       <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>Sign out</Text>
     </Pressable>}
-  </ScrollView>;
+  </KeyboardAwareScrollView>;
 }

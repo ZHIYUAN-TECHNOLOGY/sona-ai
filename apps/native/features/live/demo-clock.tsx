@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { View } from "react-native";
+import { ActionSheetIOS, Alert, Pressable, View } from "react-native";
 import { Action, Body, Card, Notice } from "@/components/sona/ui";
 import { api, errorText, useLive } from ".";
 import { useLiveChanges } from "./channel";
@@ -45,20 +45,33 @@ export function DemoClockCard() {
 }
 
 /**
- * My Day's demo-time line: while the demo clock is moved, the doctor sees the same day and time as the
- * patient's phone ("Demo time · Tue 29 Sep, 10:01 · day 2 after discharge"), so both screens tell one
- * story. Real clinic appointments stay on today's list. Hidden at real time and off live mode.
+ * My Day's demo clock, one tap away: a small pill with the time both apps are on ("Demo time · Wed
+ * 30 Sep at 10:02 · day 2 after discharge", or "Demo clock · real time"), which opens the jumps as an
+ * action sheet. Live mode only; real clinic appointments stay on today's list.
  */
 export function DemoTimeLine() {
   const { on } = useLive();
   const [status, setStatus] = useState<Status>();
+  const [error, setError] = useState<string>();
   const read = useCallback(() => { void api.demo.status().then(setStatus, () => {}); }, []);
   useEffect(() => { if (on) read(); }, [on, read]);
   useLiveChanges(["day"], read);
-  if (!on || !status?.offsetMs) return null;
+  if (!on || !status) return null;
   const days = status.dischargedAt ? calendarDays(status.dischargedAt, status.now) : undefined;
-  return <View accessible accessibilityLabel={`Demo time, ${when(status.now)}${days !== undefined ? `, day ${days} after discharge` : ""}`}
-    style={{ alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: "rgba(125,82,244,0.1)" }}>
-    <Body>{`Demo time · ${when(status.now)}${days !== undefined ? ` · day ${days} after discharge` : ""}`}</Body>
+  const label = status.offsetMs ? `Demo time · ${when(status.now)}${days !== undefined ? ` · day ${days} after discharge` : ""}` : "Demo clock · real time";
+  const choices = JUMPS.filter(([to]) => status.available.includes(to));
+  const jump = (to: (typeof JUMPS)[number][0]) => { setError(undefined); void api.demo.jump({ to }).then(setStatus, e => setError(errorText(e))); };
+  const open = () => {
+    if (process.env.EXPO_OS === "ios") ActionSheetIOS.showActionSheetWithOptions(
+      { title: "Demo clock", message: "Moves the demo hospital's time; Sona Care follows at once.", options: [...choices.map(([, l]) => l), "Cancel"], cancelButtonIndex: choices.length },
+      i => { if (i < choices.length) jump(choices[i]![0]); });
+    else Alert.alert("Demo clock", undefined, [...choices.map(([to, l]) => ({ text: l, onPress: () => jump(to) })), { text: "Cancel", style: "cancel" as const }]);
+  };
+  return <View style={{ gap: 4 }}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${label}. Change the demo clock`} onPress={open}
+      style={({ pressed }) => ({ alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: status.offsetMs ? "rgba(125,82,244,0.12)" : "rgba(20,28,40,0.05)", opacity: pressed ? 0.7 : 1 })}>
+      <Body>{`${label}  ›`}</Body>
+    </Pressable>
+    {error && <Notice warning>{error}</Notice>}
   </View>;
 }

@@ -9,8 +9,9 @@ import { fixtureCheckIns, fixtureReply, type CheckIn } from "./model";
  * from this device's discharges plus the replies simulated here. One store, read through
  * useSyncExternalStore, so React Compiler never caches a stale module read.
  */
-type Store = { replies: Record<string, CheckIn["replies"]>; server?: CheckIn[] };
-let store: Store = { replies: {} };
+// `kept`: flags just booked in whose row stays on My Day while it offers same-visit follow-ups.
+type Store = { replies: Record<string, CheckIn["replies"]>; server?: CheckIn[]; kept: string[] };
+let store: Store = { replies: {}, kept: [] };
 const listeners = new Set<() => void>();
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 const set = (patch: Partial<Store>) => { store = { ...store, ...patch }; listeners.forEach(l => l()); };
@@ -57,6 +58,8 @@ export async function resolveFlag(taskId: string, live: boolean) {
 export async function bookIn(taskId: string, live: boolean) {
   if (!live) { await resolveFlag(taskId, false); return undefined; }
   const booked = await api.checkIns.bookIn({ taskId });
+  // The flag is closed on the server; its row stays while it offers the X-ray follow-ups for the same visit.
+  if (booked.toAdd.length) set({ kept: [...store.kept, taskId] });
   await Promise.all([refreshCheckIns(), refreshServerData()]);
   return booked;
 }
@@ -67,3 +70,7 @@ export async function addToVisit(findingId: string, appointmentId: string) {
   await refreshServerData();
   return added;
 }
+
+/** Flags kept on My Day after Book in (see bookIn); the row leaves once the doctor is done with it. */
+export const useKeptFlags = () => useSyncExternalStore(subscribe, () => store.kept);
+export function releaseFlag(taskId: string) { set({ kept: store.kept.filter(id => id !== taskId) }); }

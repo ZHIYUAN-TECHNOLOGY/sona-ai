@@ -40,10 +40,13 @@ export const scheduleLine = (dischargedAt: Date) => checkInSchedule(dischargedAt
 /** Tasks already shown as a flagged check-in row, so My Day does not list them twice. */
 export const flaggedTaskIds = (checkIns: CheckIn[]) => checkIns.flatMap(c => c.replies.flatMap(r => (r.task ? [r.task.id] : [])));
 
-/** My Day's red rows: every worse or urgent reply whose task is still open; the row's ID carries the task's. */
-export function flaggedItems(checkIns: CheckIn[]): DayItem[] {
+/**
+ * My Day's red rows: every worse or urgent reply whose task is still open, plus any in `keep` (just
+ * booked in, still offering its same-visit follow-ups); the row's ID carries the task's.
+ */
+export function flaggedItems(checkIns: CheckIn[], keep: string[] = []): DayItem[] {
   return checkIns.flatMap(c => c.replies.flatMap(r => {
-    const flag = r.task && !r.task.completed ? replyFlag(r.task.title.split(":")[0]!, r.label, r.text) : undefined;
+    const flag = r.task && (!r.task.completed || keep.includes(r.task.id)) ? replyFlag(r.task.title.split(":")[0]!, r.label, r.text) : undefined;
     return flag ? [{
       id: `check-in-${r.task!.id}`, kind: "check-in" as const, title: r.task!.title, detail: `“${r.text}” · day ${c.day} check-in`,
       reason: `${r.label === "urgent" ? "Urgent" : "Worse"} after discharge · replied ${clock(new Date(r.receivedAt))}`, tone: "urgent" as const, score: flag.score, patientId: c.patientId, open: {},

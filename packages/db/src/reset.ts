@@ -1,7 +1,7 @@
 import { and, eq, inArray, like, notInArray } from "drizzle-orm";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 
-import { admissions, appointments, auditItems, careCodes, careLinks, careMessages, checkInReplies, checkIns, claims, doseLogs, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, patients, provenance, receipts, tasks } from "./schema";
+import { admissions, appointments, hospitals, auditItems, careCodes, careLinks, careMessages, checkInReplies, checkIns, claims, doseLogs, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, patients, provenance, receipts, tasks } from "./schema";
 import { DEMO_HOSPITAL, SEED_LAB_IDS, seedDemo } from "./seed";
 
 type AnyDb = PgAsyncDatabase<any, any>;
@@ -46,5 +46,7 @@ export async function resetDemo(db: AnyDb, now = new Date()) {
   const beds = (await db.select({ id: admissions.id }).from(admissions).where(eq(admissions.hospitalId, DEMO_HOSPITAL))).map(a => a.id);
   await db.update(admissions).set({ dischargedAt: null, fitAt: null }).where(eq(admissions.hospitalId, DEMO_HOSPITAL));
   if (beds.length) await db.update(guaranteeLetters).set({ status: "requested", receivedAt: null }).where(inArray(guaranteeLetters.admissionId, beds));
+  // The demo clock goes back to real time.
+  await db.update(hospitals).set({ clockOffsetMs: 0 }).where(eq(hospitals.id, DEMO_HOSPITAL));
   await seedDemo(db, now);
 }

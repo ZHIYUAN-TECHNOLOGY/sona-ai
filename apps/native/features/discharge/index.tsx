@@ -14,6 +14,7 @@ import { useEncounter } from "@/features/encounter/store";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { useServerEncounter } from "@/features/live/sync";
 import { CareInvite } from "@/features/care-invite";
+import { refreshServerData } from "@/features/live/server-day";
 import { scheduleLine } from "@/features/check-ins/model";
 import { refreshCheckIns } from "@/features/check-ins/state";
 import { useFindings } from "@/features/live/findings-sync";
@@ -171,7 +172,8 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
     if (live && user) {
       // The server decides: it refuses while anything blocks, and receipts once per request.
       api.discharge.request({ encounterId: patient.encounterId, requestId: requestId(), approvedBy: user.id })
-        .then(receipt => { updateEncounter(value => discharge(value, patient, fitAt, new Date(receipt.createdAt))); haptic("success"); void refreshCheckIns().catch(() => {}); })
+        // The server made the follow-up tasks; keeping the device's copies too would list each twice on My Day.
+        .then(receipt => { updateEncounter(value => ({ ...discharge(value, patient, fitAt, new Date(receipt.createdAt)), tasks: value.tasks })); haptic("success"); void refreshCheckIns().catch(() => {}); void refreshServerData().catch(() => {}); })
         .catch(e => { setServerError(errorText(e)); void refresh(true).catch(() => {}); })
         .finally(() => setBusy(false));
       return;

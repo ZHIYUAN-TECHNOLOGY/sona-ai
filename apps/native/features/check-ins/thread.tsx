@@ -13,7 +13,7 @@ import type { Patient } from "@/features/encounter/types";
 import { api, errorText, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { shortDate, type ReplyLabel } from "./model";
-import { addToVisit, bookIn, resolveFlag, simulateReply, useCheckIns } from "./state";
+import { addToVisit, bookIn, releaseFlag, resolveFlag, simulateReply, useCheckIns } from "./state";
 
 /*
  * Check-ins on the patient sheet: each sent message and the patient's reply as a short thread.
@@ -120,6 +120,10 @@ export function FlagActions({ item }: { item: DayItem }) {
           <Text style={{ fontSize: 14, fontWeight: "600", color: palette.white }}>Add {f.test} to this visit</Text>
         </Pressable>
       </View>)}
+    {visit && visit.toAdd.length > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Done with this flag" onPress={() => releaseFlag(taskId)}
+      style={({ pressed }) => ({ alignSelf: "flex-start", minHeight: 34, justifyContent: "center", paddingHorizontal: 12, borderRadius: 17, backgroundColor: "rgba(20,28,40,0.06)", opacity: pressed ? 0.7 : 1 })}>
+      <Text style={{ fontSize: 14, fontWeight: "600", color: palette.ink }}>Done</Text>
+    </Pressable>}
     {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
   </Animated.View>;
   return <View style={{ gap: 6 }}>
