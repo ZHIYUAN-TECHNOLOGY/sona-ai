@@ -13,7 +13,7 @@ const requireAuth = o.middleware(async ({ context, next, path }, input) => {
     throw new ORPCError("UNAUTHORIZED");
   }
   // Every clinical read and write below is scoped to this hospital (a Sona Care account is refused there).
-  const hospitalId = await hospitalOf(context.db, context.session.user.id);
+  const hospitalId = await hospitalOf(context.db, context.session.user);
   const result = await next({
     context: {
       session: context.session,

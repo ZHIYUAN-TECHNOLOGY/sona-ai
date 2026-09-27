@@ -2,7 +2,7 @@ import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { appointments, hospitalMembers, hospitals } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
-import { createTestDb } from "@sona-ai/db/testing";
+import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 
 import { appRouter } from "./index";
@@ -17,6 +17,7 @@ async function signedIn() {
   const clock = { now: new Date("2026-09-26T10:00:00+08:00") };
   const db = await createTestDb();
   await seedDemo(db, clock.now);
+  await addClinician(db, "dr-aisyah");
   const as = (id: string) => createRouterClient(appRouter, { context: { db, session: user(id), now: () => clock.now } });
   return { db, clock, api: as("dr-aisyah"), as };
 }
@@ -60,6 +61,7 @@ test("acknowledging a result records who and when, once, and takes it out of the
   const acked = await api.results.acknowledge({ resultId: "lab-1086-potassium" });
   expect([acked.acknowledgedBy, acked.acknowledgedAt?.toISOString()]).toEqual(["dr-aisyah", "2026-09-26T02:00:00.000Z"]);
   clock.now = new Date("2026-09-26T11:00:00+08:00");
+  await addClinician(db, "dr-colleague");
   expect(await as("dr-colleague").results.acknowledge({ resultId: "lab-1086-potassium" })).toEqual(acked); // the first acknowledgement stands
   expect(await unacknowledged()).toEqual(["lab-hb-1086"]);
   expect((await api.results.list()).filter(r => r.flag !== "pending").map(r => [r.id, r.acknowledgedBy])).toEqual([["lab-1086-potassium", "dr-aisyah"], ["lab-hb-1086", null]]);

@@ -2,7 +2,7 @@ import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { encounters, guaranteeLetters, hospitalMembers, hospitals } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
-import { createTestDb } from "@sona-ai/db/testing";
+import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
@@ -19,6 +19,7 @@ async function discharged(language = "ms") {
   const clock = { now: new Date("2026-09-26T15:40:00+08:00") };
   const db = await createTestDb();
   await seedDemo(db, clock.now);
+  await addClinician(db, "dr-aisyah");
   await db.update(guaranteeLetters).set({ status: "received", receivedAt: clock.now }).where(eq(guaranteeLetters.id, "gl-1042"));
   await db.update(encounters).set({ state: { discharge: { glReceived: true, medsConfirmed: true, followUp: "2w", language } } }).where(eq(encounters.id, "visit-1042"));
   const as = (id: string | null) => createRouterClient(appRouter, { context: { db, session: id ? user(id) : null, now: () => clock.now } });

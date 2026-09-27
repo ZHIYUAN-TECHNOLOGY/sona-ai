@@ -2,7 +2,7 @@ import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { admissions, hospitalMembers, hospitals } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
-import { createTestDb } from "@sona-ai/db/testing";
+import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { wardSummary } from "@sona-ai/domain/ward";
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
@@ -18,6 +18,7 @@ const as = (id: string, signed = true) => ({
 async function signedIn(signed = true) {
   const db = await createTestDb();
   await seedDemo(db, new Date("2026-09-26T09:00:00+08:00"));
+  await addClinician(db, "dr-aisyah");
   const client = (id: string) => createRouterClient(appRouter, { context: { db, session: signed ? as(id) as unknown as Session : null } });
   return { db, api: client("dr-aisyah"), client };
 }

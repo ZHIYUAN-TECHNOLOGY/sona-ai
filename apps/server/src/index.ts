@@ -104,7 +104,7 @@ app.get("/live", async (c) => {
   const session = await (await createAuth(db)).api.getSession({ headers: c.req.raw.headers });
   if (!session?.user) return c.text("Sign in first", 401);
   // A Sona Care (patient) account has no clinician channel; hospitalOf refuses it.
-  const hospitalId = await hospitalOf(db, session.user.id).catch(() => undefined);
+  const hospitalId = await hospitalOf(db, session.user).catch(() => undefined);
   if (!hospitalId) return c.text("Not a clinician account", 403);
   const env = c.env as Env;
   return env.CHANNELS.get(env.CHANNELS.idFromName(hospitalId)).fetch(c.req.raw);

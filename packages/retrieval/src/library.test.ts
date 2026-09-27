@@ -2,7 +2,7 @@ import { createRouterClient } from "@orpc/server";
 import { appRouter } from "@sona-ai/api/routers/index";
 import { hospitalMembers, hospitals, provenance } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
-import { createTestDb } from "@sona-ai/db/testing";
+import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { ingest, search, stubEmbedder } from "./retrieval";
 
@@ -18,6 +18,7 @@ const offline = (async () => { throw new Error("network unreachable"); }) as unk
 async function signedIn() {
   const db = await createTestDb();
   await seedDemo(db, new Date("2026-09-26T09:00:00+08:00"));
+  await addClinician(db, "dr-aisyah");
   await db.insert(hospitals).values({ id: "other", name: "Other Hospital (synthetic)" });
   await db.insert(hospitalMembers).values({ userId: "dr-other", hospitalId: "other" });
   const library = { ingest: (doc: Parameters<typeof ingest>[1], text: string) => ingest(db, doc, text, stubEmbedder), search: (input: Parameters<typeof search>[1]) => search(db, input, stubEmbedder) };

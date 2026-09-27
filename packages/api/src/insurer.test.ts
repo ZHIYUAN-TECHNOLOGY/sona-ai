@@ -2,7 +2,7 @@ import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { guaranteeLetters } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
-import { createTestDb } from "@sona-ai/db/testing";
+import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
@@ -22,6 +22,7 @@ async function sentClaim(extra: Partial<Context> = {}) {
   sent.length = 0;
   const db = await createTestDb();
   await seedDemo(db);
+  await addClinician(db, "dr-aisyah");
   const clock = { now: new Date("2026-09-26T10:00:00+08:00") };
   const api = createRouterClient(appRouter, { context: { db, session, now: () => clock.now, publicUrl: "https://sona.test", ...extra } });
   await api.claim.update({ encounterId: "visit-1042", organismConfirmed: true, ivReasonAdded: true });

@@ -2,7 +2,7 @@ import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { careLinks, hospitalMembers, hospitals } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
-import { createTestDb } from "@sona-ai/db/testing";
+import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 
 import type { Change } from "../events";
@@ -20,6 +20,7 @@ async function world() {
   const db = await createTestDb();
   const clock = { now: new Date("2026-09-26T10:00:00+08:00") };
   await seedDemo(db, clock.now);
+  await addClinician(db, "dr-aisyah");
   const heard: [string, Change][] = [];
   const as = (session: Session | null) => createRouterClient(appRouter, { context: { db, session, now: () => clock.now, announce: async (h: string, c: Change) => { heard.push([h, c]); } } });
   return { db, clock, heard, doctor: as(user("dr-aisyah")), amelia: as(user("amelia-account", "Amelia Tan")), anyone: as(null), as };
@@ -70,7 +71,7 @@ test("a Sona Care account is never made a clinician, whichever door it tries (th
   const { doctor, amelia, db } = await world();
   const { code } = await doctor.care.code({ encounterId: "visit-1042" });
   await amelia.care.join({ code });
-  expect((await hospitalOf(db, "amelia-account").catch(e => e)).code).toBe("FORBIDDEN");
+  expect((await hospitalOf(db, { id: "amelia-account", email: "amelia-account@demo.test" }).catch(e => e)).code).toBe("FORBIDDEN");
   expect(await db.select().from(hospitalMembers)).toHaveLength(1);
 });
 
