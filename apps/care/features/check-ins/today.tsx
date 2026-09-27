@@ -72,14 +72,14 @@ export function TodayCard() {
   // Sent: who was told and when they will call, then the next check-in. The sunbeam only for a calm answer.
   if (done) {
     const line = doneLine(done.label, done.about), after = data.find(c => !c.replies.length && c.id !== done.checkInId);
-    const calm = line.tone === "muted";
+    const calm = line.tone === "muted", said = answersFor(data.find(c => c.id === done.checkInId)?.language ?? "en");
     return <Card feature>
       {done.feeling && <Glow feeling={done.feeling} />}
       <Animated.View entering={reduced ? undefined : FadeIn.duration(240)} style={{ gap: 8 }}>
         {overline(`Day ${done.day} check-in · done`)}
         <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "700", color: palette.ink }}>{line.title}</Text>
         <Text style={{ ...type.body, fontWeight: calm ? "400" : "600", color: calm ? palette.muted : palette.amber }}>{line.text}</Text>
-        {!calm && <Text style={{ ...type.footnote, fontWeight: "700", color: palette.red }}>Severe chest pain or can't breathe? Call 999 now.</Text>}
+        {!calm && <Text style={{ ...type.footnote, fontWeight: "700", color: palette.red }}>{said.urgent}</Text>}
         <Text style={{ ...type.footnote, color: palette.muted }}>{after ? `Next check-in ${shortDate(after.dueAt)}.` : "That was your last check-in. Message your care team any time."}</Text>
         {link("Past check-ins", "/check-ins")}
       </Animated.View>
@@ -100,7 +100,7 @@ export function TodayCard() {
         <Answer language={ask.language} feeling={feeling} onChoose={setFeeling} busy={reply.isPending}
           onSend={(text, about) => reply.mutate({ checkInId: ask.id, day: ask.day, feeling, text, about })} />
         {reply.error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(reply.error)}</Text>}
-        {feeling !== "worse" && <Text style={{ ...type.footnote, color: palette.muted }}>For an emergency, call 999.</Text>}
+        {feeling !== "worse" && <Text style={{ ...type.footnote, color: palette.muted }}>{copy.emergency}</Text>}
       </Animated.View>
     </Card>;
   }

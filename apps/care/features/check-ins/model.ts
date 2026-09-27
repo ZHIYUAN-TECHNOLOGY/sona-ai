@@ -19,7 +19,9 @@ export function todayOf(checkIns: CheckIn[], now: Date): { ask?: CheckIn; next?:
 
 /** After an answer: the line that follows it, a prompt, and quick replies (`none` sends the answer alone). */
 type FollowUp = { line: string; prompt: string; quick: string[]; none?: string };
-type Copy = { question: string; answers: [string, Feeling][]; follow: Record<Feeling, FollowUp>; more: string; placeholder: string; send: string };
+type Copy = { question: string; answers: [string, Feeling][]; follow: Record<Feeling, FollowUp>; more: string; placeholder: string; send: string;
+  /** Review before a worse answer is sent, and the emergency lines (never tinted, always in the patient's language). */
+  review: string; sendNow: string; change: string; urgent: string; emergency: string };
 
 // Short and plain; the English line under a Malay or Chinese question helps a family member reading along.
 // Quick replies are sent in the patient's language so the care team (and the reader) see their own words.
@@ -32,6 +34,7 @@ const COPY: Record<Language, Copy> = {
       worse: { line: "We're sorry. Your care team will call you today.", prompt: "What's worse?", quick: ["Chest pain", "Breathless", "Dizzy", "Something else"] },
     },
     more: "Tell us in your own words", placeholder: "How are you feeling?", send: "Send",
+    review: "We will send your care team", sendNow: "Send now", change: "Change", urgent: "Severe chest pain or can't breathe? Call 999 now.", emergency: "For an emergency, call 999.",
   },
   ms: {
     question: "Macam mana hari ini?", answers: [["Lebih baik", "better"], ["Sama", "same"], ["Lebih teruk", "worse"]],
@@ -41,6 +44,7 @@ const COPY: Record<Language, Copy> = {
       worse: { line: "Maaf mendengarnya. Pasukan penjagaan anda akan menelefon hari ini.", prompt: "Apa yang lebih teruk?", quick: ["Sakit dada", "Sesak nafas", "Pening", "Lain-lain"] },
     },
     more: "Tulis dengan kata-kata sendiri", placeholder: "Tulis di sini", send: "Hantar",
+    review: "Kami akan hantar kepada pasukan penjagaan anda", sendNow: "Hantar sekarang", change: "Tukar", urgent: "Sakit dada teruk atau tidak boleh bernafas? Hubungi 999 sekarang.", emergency: "Untuk kecemasan, hubungi 999.",
   },
   zh: {
     question: "今天感觉怎么样？", answers: [["好一些", "better"], ["差不多", "same"], ["更差", "worse"]],
@@ -50,6 +54,7 @@ const COPY: Record<Language, Copy> = {
       worse: { line: "很抱歉。医护团队今天会给您打电话。", prompt: "哪里更差了？", quick: ["胸痛", "喘不过气", "头晕", "其他"] },
     },
     more: "用自己的话告诉我们", placeholder: "在这里写", send: "发送",
+    review: "我们会发送给您的医护团队", sendNow: "立即发送", change: "修改", urgent: "严重胸痛或无法呼吸？请立即拨打 999。", emergency: "紧急情况请拨打 999。",
   },
 };
 

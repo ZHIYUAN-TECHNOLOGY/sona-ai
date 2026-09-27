@@ -57,7 +57,7 @@ export function Answer({ language, feeling, onChoose, busy, onSend }: { language
         if (busy) return;
         if (f !== "worse") return onSend(replyText(text, q), q);
         setReview(q);
-        AccessibilityInfo.announceForAccessibility(`We will send your care team: ${replyText(text, q)}`);
+        AccessibilityInfo.announceForAccessibility(`${copy.review}: ${replyText(text, q)}`);
       };
       return <Pill key={f} layout={layout} exiting={still ? undefined : shrink}
         accessible={!open} accessibilityRole={open ? undefined : "button"} accessibilityLabel={open ? undefined : text} disabled={open}
@@ -71,12 +71,12 @@ export function Answer({ language, feeling, onChoose, busy, onSend }: { language
           <Animated.View entering={enter(0)}><Text style={{ ...type.body, fontWeight: "700", color: TINT[f].line }}>{follow.line}</Text></Animated.View>
           {review ? <Animated.View entering={enter(0)} style={{ gap: 10 }}>
             <View accessible style={{ gap: 2 }}>
-              <Text style={{ ...type.footnote, fontWeight: "700", color: palette.muted }}>We will send your care team</Text>
+              <Text style={{ ...type.footnote, fontWeight: "700", color: palette.muted }}>{copy.review}</Text>
               <Text style={{ ...type.headline, color: palette.ink }}>{replyText(text, review)}</Text>
             </View>
             <View style={{ flexDirection: "row", gap: 10 }}>
-              <View style={{ flex: 1 }}><Button label="Send now" busy={busy} onPress={() => onSend(replyText(text, review), review)} /></View>
-              <View style={{ flex: 1 }}><Button quiet label="Change" disabled={busy} onPress={() => setReview(undefined)} /></View>
+              <View style={{ flex: 1 }}><Button label={copy.sendNow} busy={busy} onPress={() => onSend(replyText(text, review), review)} /></View>
+              <View style={{ flex: 1 }}><Button quiet label={copy.change} disabled={busy} onPress={() => setReview(undefined)} /></View>
             </View>
           </Animated.View>
           : writing ? <Animated.View entering={enter(0)} style={{ gap: 10 }}>
@@ -97,7 +97,7 @@ export function Answer({ language, feeling, onChoose, busy, onSend }: { language
             </Animated.View>
             {busy && <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} />}
           </>}
-          {f === "worse" && <Text style={{ ...type.footnote, fontWeight: "700", color: palette.red }}>Severe chest pain or can't breathe? Call 999 now.</Text>}
+          {f === "worse" && <Text style={{ ...type.footnote, fontWeight: "700", color: palette.red }}>{copy.urgent}</Text>}
         </> : <>
           <Face feeling={f} />
           <Text style={{ fontSize: 15, lineHeight: 19, fontWeight: "700", color: palette.ink, textAlign: "center" }}>{text}</Text>

@@ -64,3 +64,12 @@ test("each past check-in says how the answer was read and what happened, in plai
   expect(statusOf({ ...day2, replies: [reply("worse")] }, now)).toEqual({ line: "Your care team was told", tone: "amber" });
   expect(statusOf({ ...day2, replies: [{ ...reply("urgent"), task: { id: "t", title: "x", completed: true } }] }, now)).toEqual({ line: "Your care team followed up", tone: "green" });
 });
+
+test("the review and emergency lines exist in every language, and the urgent line always names 999", () => {
+  for (const language of ["en", "ms", "zh"]) {
+    const copy = answersFor(language);
+    for (const key of ["review", "sendNow", "change", "urgent", "emergency"]) expect(copy[key].length).toBeGreaterThan(1);
+    expect(copy.urgent).toContain("999");
+    expect(copy.emergency).toContain("999");
+  }
+});
