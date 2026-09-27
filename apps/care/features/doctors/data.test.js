@@ -1,5 +1,23 @@
 import { expect, test } from "bun:test";
-import { bookingText, DOCTORS, doctorById, listFor, matchDoctors, slots } from "./data";
+import { bookingText, dayParts, DOCTORS, doctorById, initials, listFor, matchDoctors, nameLines, searchDoctors, slots } from "./data";
+
+test("search matches name or specialty in any case; empty keeps the list", () => {
+  expect(searchDoctors(DOCTORS, "cardio").map(d => d.id)).toEqual(["aisyah"]);
+  expect(searchDoctors(DOCTORS, " lim ").map(d => d.id)).toEqual(["lim"]);
+  expect(searchDoctors(DOCTORS, "")).toHaveLength(DOCTORS.length);
+  expect(searchDoctors(DOCTORS, "zzz")).toEqual([]);
+});
+
+test("initials and the two-line name leave the title out of the avatar", () => {
+  expect(initials("Dr. Lim Wei Jie")).toBe("LW");
+  expect(initials("Dr. Aisyah Rahman")).toBe("AR");
+  expect(nameLines("Dr. Lim Wei Jie")).toEqual(["Dr. Lim", "Wei Jie"]);
+  expect(nameLines("Dr. Aisyah Rahman")).toEqual(["Dr. Aisyah", "Rahman"]);
+});
+
+test("a day chip reads the Malaysia date", () => {
+  expect(dayParts(new Date("2026-09-28T04:00:00Z"))).toEqual({ weekday: "Mon", date: "28", spoken: "Monday 28 September" });
+});
 
 test("pneumonia finds the respiratory doctor first; heart finds cardiology", () => {
   expect(matchDoctors("After my pneumonia I still cough")[0].id).toBe("lim");

@@ -64,3 +64,25 @@ export function bookingText(doctor: Doctor, slot: Date, reason?: string) {
   const when = `${day}, ${slot.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" })}`;
   return `Booking request: ${doctor.name} (${doctor.specialty}), ${when}.${reason?.trim() ? ` Reason: ${reason.trim()}.` : ""} Please confirm.`;
 }
+
+/** Doctors whose name or specialty contains the query (any case); the whole list for an empty query. */
+export function searchDoctors(list: Doctor[], query: string) {
+  const q = query.trim().toLowerCase();
+  return q ? list.filter(d => d.name.toLowerCase().includes(q) || d.specialty.toLowerCase().includes(q)) : list;
+}
+
+/** The avatar's initials, title left out: "Dr. Lim Wei Jie" → "LW". */
+export const initials = (name: string) => name.replace(/^Dr\.?\s+/i, "").split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() ?? "").join("");
+
+/** The name on two lines after the kit ("Dr. Marc / lee"): title and first name, then the rest. */
+export function nameLines(name: string): [string, string] {
+  const words = name.split(" ");
+  const cut = /^Dr\.?$/i.test(words[0] ?? "") ? 2 : 1;
+  return [words.slice(0, cut).join(" "), words.slice(cut).join(" ")];
+}
+
+/** A clinic day's chip in Malaysia time: "Mon" over "28", and the spoken "Monday 28 September". */
+export function dayParts(day: Date) {
+  const f = (o: Intl.DateTimeFormatOptions) => day.toLocaleDateString("en-GB", { ...o, timeZone: "Asia/Kuala_Lumpur" });
+  return { weekday: f({ weekday: "short" }), date: f({ day: "numeric" }), spoken: f({ weekday: "long", day: "numeric", month: "long" }).replace(",", "") };
+}
