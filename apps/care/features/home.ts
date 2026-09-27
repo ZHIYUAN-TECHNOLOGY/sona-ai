@@ -1,24 +1,23 @@
-import { clock, dosesToday, untilLine, whenWords, type ScheduledMed } from "./doses/model";
-import { REPLY_TIME, type Message } from "./messages/model";
+import { todayOf, type CheckIn } from "./check-ins/model";
+import { clock, dosesToday, dueNow, untilLine, whenWords, type ScheduledMed, type WeekDay } from "./doses/model";
+import { away } from "./follow-ups/lines";
+
+const MYT = 8 * 3600_000, DAY = 86_400_000;
+const dayOf = (d: Date) => Math.floor((d.getTime() + MYT) / DAY);
 
 /** Days since the patient left hospital, counted on calendar days in the hospital's time zone (discharge day is day 0). */
 export function daysHome(dischargedAt: string | undefined, now = new Date()) {
   if (!dischargedAt) return undefined;
-  const day = (d: Date) => Math.floor((d.getTime() + 8 * 3600_000) / 86_400_000);
-  return day(now) - day(new Date(dischargedAt));
+  return dayOf(now) - dayOf(new Date(dischargedAt));
 }
 
-/** The header's date, "Sun, 27 Sep", in the hospital's time whatever the phone says. */
-export const headerDate = (now: Date) =>
-  now.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kuala_Lumpur" }).replace(",", "").replace(" ", ", ");
-
-/** One open thing on home, shown as a chip under the title. */
-export type Need = { kind: "dose" | "check-in" | "reply" | "visit"; label: string };
+/** One open thing on home, shown as a chip under the headline; a dose carries its medicine, a visit how far off it is. */
+export type Need = { kind: "dose" | "check-in" | "reply" | "visit"; label: string; name?: string; inDays?: number; overdue?: boolean };
 
 // Rough seconds each takes, so the line can say how long "needs you" really is.
 const SECONDS: Record<Need["kind"], number> = { dose: 15, "check-in": 15, reply: 60, visit: 30 };
 
-/** The line under the title: how many things need the patient and about how long; zero reads as reassurance. */
+/** How many things need the patient and about how long (the bell's spoken label); zero reads as reassurance. */
 export function needsLine(needs: Pick<Need, "kind">[]) {
   if (!needs.length) return "All done for today";
   const mins = Math.max(1, Math.round(needs.reduce((s, n) => s + SECONDS[n.kind], 0) / 60));
@@ -26,21 +25,27 @@ export function needsLine(needs: Pick<Need, "kind">[]) {
 }
 
 /**
- * The medicine card's kicker and big value: a live mm:ss while under an hour away ("ticking"), the
- * clock time when further off, and amber "Due now" / "20 min late" once it is due.
+ * Home's big status line: the most urgent open thing in words (a dose due, an overdue visit, today's
+ * check-in, a waiting reply, a visit coming up), else "Positive today".
  */
-export function countdown(dueAt: Date, now: Date): { kicker: string; value: string; due: boolean; ticking: boolean } {
-  const ms = dueAt.getTime() - now.getTime();
-  if (ms <= 0) {
-    const late = untilLine(dueAt, now);
-    return { kicker: late === "now" ? "Due now" : late[0]!.toUpperCase() + late.slice(1), value: clock(dueAt), due: true, ticking: false };
-  }
-  if (ms < 3600_000) {
-    const s = Math.ceil(ms / 1000);
-    return { kicker: "Next medicine in", value: `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`, due: ms <= 30 * 60_000, ticking: true };
-  }
-  const day = whenWords(dueAt, now).replace(` ${clock(dueAt)}`, "");
-  return { kicker: day === "today" ? "Next medicine at" : `Next medicine ${day}`, value: clock(dueAt), due: false, ticking: false };
+export function headline(needs: Omit<Need, "label">[]) {
+  const dose = needs.find(n => n.kind === "dose");
+  if (dose) return `Time for ${dose.name}`;
+  if (needs.some(n => n.kind === "visit" && n.overdue)) return "Visit overdue";
+  if (needs.some(n => n.kind === "check-in")) return "Check in today";
+  if (needs.some(n => n.kind === "reply")) return "Care team replied";
+  const visit = needs.find(n => n.kind === "visit");
+  return visit ? `Visit ${away(visit.inDays ?? 0)}` : "Positive today";
+}
+
+const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1);
+
+/** The next-dose card's line under its time: "In 2 h 10 min", "Tomorrow", amber "Due in 18 min", "Due now" or "20 min late". */
+export function doseStatus(dueAt: Date, now: Date): { text: string; tone: "amber" | "muted" } {
+  const until = untilLine(dueAt, now), day = whenWords(dueAt, now).replace(` ${clock(dueAt)}`, "");
+  if (dueAt <= now || until === "now") return { text: until === "now" ? "Due now" : cap(until), tone: "amber" };
+  if (dueNow(dueAt, now)) return { text: `Due ${until}`, tone: "amber" };
+  return { text: day === "today" ? cap(until) : cap(day), tone: "muted" };
 }
 
 /** A dose counts as missed once it is 6 h late, when it stops being the next dose. */
@@ -57,28 +62,43 @@ export function weekLine(meds: ScheduledMed[], dischargedAt: string | undefined,
   return { text: days.length === 1 ? `${n} on ${days[0]}` : `${n} this week`, tone: "amber" };
 }
 
-/** The medicine card's pill: "Next in 18:34" in the last hour, "Next 9:00 PM", "Tomorrow 8:00 AM", or "Due now · 9:00 PM" (amber) once due. */
-export function nextLine(dueAt: Date, now: Date): { text: string; due: boolean; ticking: boolean } {
-  const c = countdown(dueAt, now);
-  const late = dueAt.getTime() <= now.getTime();
-  return { text: late ? `${c.kicker} · ${c.value}` : c.kicker.startsWith("Next medicine tomorrow") ? `Tomorrow ${c.value}` : `${c.kicker.replace(/^Next medicine( at)?/, "Next")} ${c.value}`, due: c.due, ticking: c.ticking };
+/** Today's check-in: "done" once one was answered today, "pending" while one waits, else none today. */
+export function checkInToday(checkIns: Pick<CheckIn, "dueAt" | "sentAt" | "replies">[], now: Date): "done" | "pending" | undefined {
+  if (todayOf(checkIns as CheckIn[], now).ask) return "pending";
+  return checkIns.some(c => c.replies.some(r => dayOf(new Date(r.receivedAt)) === dayOf(now))) ? "done" : undefined;
 }
+
+export const GLASSES = 8;
+export type Part = { key: "medicines" | "check-in" | "water" | "visits"; label: string; share?: number; note: string };
 
 /**
- * Consistency: the share of doses taken, of those due over the same days as the week bars (discharge
- * day, or at most the last 7). A dose counts once taken or 6 h late; undefined while nothing is due yet.
- * ponytail: 7 days, not all since discharge, as the phone keeps only the last 40 taken doses; widen with a server log.
+ * "Recovery today": four parts from the patient's own data only (doses taken of today's, today's
+ * check-in, glasses logged of 8, the next visit booked and not overdue). A part with nothing today has
+ * no share and is left out of the %. `next` is the part furthest behind, where a tap on the card goes.
  */
-export function consistency(meds: ScheduledMed[], dischargedAt: string | undefined, taken: string[], now: Date) {
-  const due = Array.from({ length: 7 }, (_, i) => dosesToday(meds, dischargedAt, taken, new Date(now.getTime() - i * 86_400_000))).flat()
-    .filter(d => d.taken || d.dueAt.getTime() < now.getTime() - GRACE);
-  return due.length ? Math.round(due.filter(d => d.taken).length / due.length * 100) : undefined;
+export function recovery({ doses, checkIn, glasses, visit }: { doses: { taken: boolean }[]; checkIn?: "done" | "pending"; glasses: number; visit?: { inDays: number; overdue: boolean } }) {
+  const taken = doses.filter(d => d.taken).length, cups = Math.min(glasses, GLASSES);
+  const parts: Part[] = [
+    doses.length ? { key: "medicines", label: "Medicines", share: taken / doses.length, note: `${taken} of ${doses.length} taken` } : { key: "medicines", label: "Medicines", note: "None due today" },
+    checkIn ? { key: "check-in", label: "Check-in", share: checkIn === "done" ? 1 : 0, note: checkIn === "done" ? "Done" : "Waiting" } : { key: "check-in", label: "Check-in", note: "None today" },
+    { key: "water", label: "Water", share: cups / GLASSES, note: `${cups} of ${GLASSES} glasses` },
+    visit ? { key: "visits", label: "Visits", share: visit.overdue ? 0 : 1, note: visit.overdue ? "Overdue" : `Booked · ${away(visit.inDays)}` } : { key: "visits", label: "Visits", note: "None booked" },
+  ];
+  const counted = parts.filter(p => p.share !== undefined);
+  const pct = Math.round(counted.reduce((s, p) => s + p.share!, 0) / counted.length * 100);
+  const next = counted.filter(p => p.share! < 1).sort((a, b) => a.share! - b.share!)[0]?.key;
+  return { parts, pct, next };
 }
 
-/** "Latest update": a waiting reply's words first, then a sent message's status, else reassurance (green). */
-export function latestLine(messages: Pick<Message, "from" | "text">[] | undefined, unread: boolean, calm: boolean): { lead?: string; text: string; tone: "ink" | "muted" | "green" } {
-  const last = messages?.at(-1);
-  if (unread && last) return { lead: "Care team replied", text: last.text, tone: "ink" };
-  if (last?.from === "patient") return { lead: "Message sent", text: REPLY_TIME, tone: "muted" };
-  return { text: calm ? "✦ Nothing needs you" : "✦ No new messages", tone: "green" };
+// A day's dose state as a height on the sparkline; still to come or nothing due leaves no point.
+const LEVEL: Partial<Record<WeekDay["state"], number>> = { all: 1, some: 0.5, none: 0 };
+
+/** The next-dose card's 7-day sparkline as an SVG path through the days that had doses due, or undefined under two points. */
+export function sparkPath(week: WeekDay[], width: number, height: number, pad = 3) {
+  const step = week.length > 1 ? (width - pad * 2) / (week.length - 1) : 0;
+  const pts = week.flatMap((d, i) => {
+    const level = LEVEL[d.state];
+    return level === undefined ? [] : [`${+(pad + i * step).toFixed(1)} ${+(pad + (1 - level) * (height - pad * 2)).toFixed(1)}`];
+  });
+  return pts.length < 2 ? undefined : `M${pts.join(" L")}`;
 }
