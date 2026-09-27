@@ -170,7 +170,7 @@ Once speech-to-text → Gemma → text-to-speech works end to end, evaluate one 
 - **Candidates, ranked:** (1) MiniCPM-o 4.5 (9B, Apache-2.0, full-duplex, English and Mandarin speech, fits one L4 at int4, text prompt plus transcript, LoRA via LLaMA-Factory for listening and reasoning); (2) Qwen3-Omni-30B-A3B (best grounding and hears Malay, text before speech so a safety check can run, turn-based, needs an H100); (3) Moshi family / PersonaPlex (best interruption, 0.24 s to stop, fits an L4, English only, short context).
 - **Fine-tuning reality:** LoRA can adapt listening and reasoning to Manglish and after-discharge dialogue in about a week on 1×H100; teaching a model to *speak* Malay is not supported by any primary source at that budget.
 - **Evaluation:** a 60-turn fictional Manglish and medical test set; missing any of the 10 red-flag turns fails outright; a pass must still beat the cascade on latency or naturalness.
-- **Choice:** pending the user's pick.
+- **Choice (user, 28 Sep): MiniCPM-o 4.5, with VoxCPM2 speaking Malay.** It needs both Malay/Manglish understanding (tunable) and interruption mid-conversation (native full-duplex). MiniCPM-o listens (Whisper encoder + Manglish LoRA), thinks (Qwen3-8B + after-discharge LoRA, the patient's plan in the prompt) and decides when to talk; its reply text passes the plan and red-flag check before speech; English and Mandarin replies use its own voice, Malay replies go to VoxCPM2 (box ②). One extra L4 (int4 or llama.cpp-omni). Unverified until the 60-turn test: Manglish data hours needed, int4 quality, and Malay latency through VoxCPM2. Visual: https://claude.ai/artifact/9WBm27DdU2mdoVb5Vf4FMe
 
 ## Production path (after the competition)
 
