@@ -13,7 +13,7 @@ import { REPLY_TIME } from "@/features/messages/model";
 import { DOCK_SPACE } from "@/lib/dock";
 import { Sunbeam } from "@/lib/halftone";
 import { Text } from "@/lib/text";
-import { motion, palette, type } from "@/lib/theme";
+import { motion, palette, space, type } from "@/lib/theme";
 import { Button, Card, CircleButton, HoldButton, ICON, pillStyle, Section, surfaceStyle, Title } from "@/lib/ui";
 
 const CHECK = "M20 6 9 17l-5-5";
@@ -42,7 +42,7 @@ export default function DoseScreen() {
   const today = dosesToday(meds, out, taken, now);
   const line = out ? insight(today, now) : undefined;
 
-  return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingTop: 8, paddingBottom: DOCK_SPACE, gap: 16 }}>
+  return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     <Animated.View entering={enter(0)} style={{ gap: 14 }}>
       <Title greeting="Today's" accent="Medicines" line={line?.text} lineTone={line?.tone} />
       {out && meds.some(m => m.at?.length) && <Week days={weekStrip(weekOf(meds, out, taken, now), now)} />}

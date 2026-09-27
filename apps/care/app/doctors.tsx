@@ -10,7 +10,7 @@ import { dayParts, listFor, nameLines, searchDoctors, slots, type Doctor, type F
 import { dayLabel } from "@/features/follow-ups/lines";
 import { DOCK_SPACE } from "@/lib/dock";
 import { Text, TextInput } from "@/lib/text";
-import { palette, type } from "@/lib/theme";
+import { palette, space, type } from "@/lib/theme";
 import { Card, CircleButton, field, ICON, pillStyle, Section, surfaceStyle, Title } from "@/lib/ui";
 
 const TABS: { id: Filter; label: string }[] = [
@@ -47,9 +47,9 @@ export default function Doctors() {
   const enter = (i: number) => still || touched ? undefined : rise(i);
 
   return <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
-    contentContainerStyle={{ padding: 20, paddingBottom: DOCK_SPACE, gap: 16 }}>
+    contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     <Animated.View entering={enter(0)} style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
-      <View style={{ flex: 1 }}><Title greeting="Find a" line="Sample doctors for this demo">doctor</Title></View>
+      <View style={{ flex: 1 }}><Title greeting="Find a" line="Sample doctors for this demo">Doctor</Title></View>
       <CircleButton d={searching ? ICON.close : SEARCH} label={searching ? "Close search" : "Search doctors"}
         onPress={() => { setSearching(s => !s); setQuery(""); setTouched(true); }} />
     </Animated.View>

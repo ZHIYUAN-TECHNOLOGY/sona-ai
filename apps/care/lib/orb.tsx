@@ -2,20 +2,20 @@ import { Blur, Canvas, Circle, Fill, FractalNoise, Group, LinearGradient, Oval, 
 import { useDerivedValue, useReducedMotion, useSharedValue, type SharedValue } from "react-native-reanimated";
 
 /**
- * The Sona orb, a lilac-blue pearl with a sunbeam tide (orb study round 4, "#5 × Dawn, slow"): a matte,
- * top-lit pearl, white on top, lilac with a hint of pink through the middle, settling into periwinkle, with
- * fine grain. A halftone "sunbeam" enters from the top-left, where the light comes from, and the glass
+ * The Sona orb, an azure-violet pearl with a sunbeam tide (orb study round 4, "#5 × Dawn, slow"; recoloured
+ * to Sona Care's azure → violet on 27 Sep): a matte, top-lit pearl, white on top, pale azure with a violet
+ * blush through the middle, settling into azure, with fine grain. A halftone "sunbeam" enters from the top-left, where the light comes from, and the glass
  * gives way to dots under it. It rises from 8 % to 70 % of the sphere on a 16 s tide and holds at its
  * peak; `flood` (0–1) pushes it further while Sona is working or a step changes. `tx`/`ty` (−1…1)
  * tilt the core and the light. Still under Reduce Motion. The same orb is the sign-in hero and the
  * assistant button in the dock. Measurements are the prototype's 148 pt orb, scaled.
  */
-// Body blobs (white, lilac, a touch of pink, periwinkle): [colour, width, height, centre x, centre y (fractions), orbit (pt at 148), speed rad/s, phase]
+// Body blobs (white, pale azure, a violet blush, azure): [colour, width, height, centre x, centre y (fractions), orbit (pt at 148), speed rad/s, phase]
 const blobs: [string, number, number, number, number, number, number, number][] = [
   ["#FFFFFF", 120, 90, 0.5, 0.16, 16, 0.35, 0],
-  ["#C9B8F8", 96, 88, 0.3, 0.56, 18, -0.28, 1.8],
-  ["#F3C9E8", 80, 70, 0.7, 0.48, 16, 0.22, 3.5],
-  ["#6F8FEA", 112, 96, 0.55, 0.9, 14, -0.4, 0.5],
+  ["#C2D3F9", 96, 88, 0.3, 0.56, 18, -0.28, 1.8],
+  ["#E1C6F9", 80, 70, 0.7, 0.48, 16, 0.22, 3.5],
+  ["#5C8AF0", 112, 96, 0.55, 0.9, 14, -0.4, 0.5],
 ];
 
 // The sunbeam: a 3 pt dot grid over the sphere. Dots appear where the diagonal tide line (top-left
@@ -60,8 +60,8 @@ half4 main(float2 q) {
   float I = pow(m, 1.2) * (m < 1.0 ? 0.3 + 0.7 * streak : 1.0) * min(1.0, (1.0 - r) / 0.08);
   if (I < 0.06) { return half4(0.0); }
   float v = shade(n);
-  half3 cool = ramp(v, half3(0.247, 0.416, 0.847), half3(0.435, 0.561, 0.918), half3(0.561, 0.651, 0.961), half3(0.498, 0.765, 0.894), half3(0.624, 0.890, 0.839));
-  half3 lit = ramp(v, half3(0.353, 0.490, 0.902), half3(0.561, 0.651, 0.961), half3(0.765, 0.659, 0.949), half3(0.86, 0.72, 0.97), half3(0.96, 0.82, 0.93));
+  half3 cool = ramp(v, half3(0.145, 0.388, 0.922), half3(0.361, 0.541, 0.941), half3(0.502, 0.620, 0.965), half3(0.620, 0.520, 0.945), half3(0.780, 0.680, 0.975));
+  half3 lit = ramp(v, half3(0.361, 0.541, 0.941), half3(0.561, 0.651, 0.961), half3(0.690, 0.600, 0.960), half3(0.860, 0.760, 0.980), half3(0.950, 0.900, 0.995));
   half3 col = mix(cool, lit, 0.8);
   float rad = ((0.45 + (1.0 - v) * 0.95) * (0.55 + 0.45 * I) + 0.15) * pitch / 3.0;
   float d = length(q - cell);
@@ -116,7 +116,7 @@ export function SonaOrb({ size = 148, flood, tx, ty, lift = true }: { size?: num
         <Group transform={[{ translateX: pad }, { translateY: pad }]}>
           <Group origin={center} transform={breathe}>
             {/* Soft lift under the pearl. */}
-            {lift && <Circle c={vec(s / 2, s / 2 + 10 * k)} r={s * 0.44} color="rgba(120,100,210,0.34)"><Blur blur={14 * k} /></Circle>}
+            {lift && <Circle c={vec(s / 2, s / 2 + 10 * k)} r={s * 0.44} color="rgba(70,90,220,0.3)"><Blur blur={14 * k} /></Circle>}
 
             <Group clip={Skia.RRectXY(Skia.XYWHRect(0, 0, s, s), s / 2, s / 2)} transform={tiltCore}>
               {/* The glass body, fading out where the sunbeam has passed. */}

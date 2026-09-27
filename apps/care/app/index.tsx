@@ -19,7 +19,7 @@ import { useMessageNeeds } from "@/features/messages/row";
 import { Welcome } from "@/features/sign-in/welcome";
 import { authClient } from "@/lib/auth-client";
 import { DOCK_SPACE } from "@/lib/dock";
-import { palette, type } from "@/lib/theme";
+import { palette, space, type } from "@/lib/theme";
 import { Button, Card, Chip, CircleButton, ICON, Section, Title } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
@@ -81,7 +81,7 @@ export default function Home() {
   const insight = day !== undefined ? `Day ${day} at home · ${needsLine(needs).replace(/^All/, "all")}` : needsLine(needs);
   const stack = fontScale >= 1.35;
   const calm = still || reduced;
-  return <ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 16, paddingTop: 8, paddingBottom: DOCK_SPACE, gap: 16 }}>
+  return <ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     {state === "joined" && me
       ? <>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
@@ -100,9 +100,7 @@ export default function Home() {
             </Animated.View>}
           </View>
         </View>
-        {/* The kit's air under the aurora before the first section. */}
-        <View style={{ height: 56 }} />
-        <View style={{ gap: 10 }}>
+        <View style={{ gap: 10, marginTop: space.section - space.stack }}>
           <Section light="Today's" bold="Latest updates" action={<CircleButton d={ICON.plus} label="Add: ask, message, book or log water" onPress={() => setAdding(true)} />} />
           <Text style={{ ...type.body, color: needs.length ? palette.muted : palette.green, fontWeight: needs.length ? "400" : "600" }}>{insight}</Text>
           {needs.length > 0 && <Animated.View layout={layout} exiting={FadeOut.duration(200)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>

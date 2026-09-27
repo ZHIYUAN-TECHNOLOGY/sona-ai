@@ -5,9 +5,10 @@ import { Easing, useDerivedValue, useReducedMotion, useSharedValue, withTiming }
 import { glint as tones } from "./theme";
 
 /**
- * The brand's dithering, kept to an accent: a still patch of halftone dots, densest at `origin` and
- * thinning out over `reach`, like light catching the edge of glass. Drawn once; nothing animates.
- * Blue at the origin side, lilac across, by default.
+ * The brand's dithering, kept to an accent: a still halftone patch, densest at `origin` and thinning
+ * out over `reach`, like light catching the edge of glass. Drawn once; nothing animates. Azure at the
+ * origin side, violet across, by default. `pattern` picks the screen: dots (the default), diagonal
+ * lines or square pixels, so neighbouring cards don't repeat.
  * ponytail: mirrors apps/native/components/sona/halftone-shimmer.tsx; move both to a shared UI package.
  */
 const glint = Skia.RuntimeEffect.Make(`
@@ -19,11 +20,21 @@ uniform half3 tint;
 uniform half3 tintTo;
 uniform float hueShift;
 uniform float2 res;
+uniform float pattern;
 half4 main(float2 q) {
   float a = strength * (1.0 - clamp(length((q - origin) / reach), 0.0, 1.0));
   float r = 0.46 * sqrt(a);
   if (r < 0.06) { return half4(0.0); }
-  float dotShape = 1.0 - smoothstep(r - 0.08, r + 0.04, length(fract(q / pitch) - 0.5));
+  float dotShape;
+  if (pattern < 0.5) {
+    dotShape = 1.0 - smoothstep(r - 0.08, r + 0.04, length(fract(q / pitch) - 0.5));
+  } else if (pattern < 1.5) {
+    float f = fract((q.x - q.y) / (pitch * 1.25));
+    dotShape = 1.0 - smoothstep(r * 0.45 - 0.05, r * 0.45 + 0.04, abs(f - 0.5));
+  } else {
+    float2 g = abs(fract(q / pitch) - 0.5);
+    dotShape = 1.0 - smoothstep(r * 0.9 - 0.05, r * 0.9 + 0.03, max(g.x, g.y));
+  }
   half3 hue = mix(tint, tintTo, hueShift * q.x / res.x);
   float alpha = dotShape * 0.4;
   return half4(hue * alpha, alpha);
@@ -31,14 +42,17 @@ half4 main(float2 q) {
 
 type RGB = readonly [number, number, number];
 
-export function HalftoneGlint({ width, height, origin, reach, pitch = 4, strength = 1, tint = tones.from, tintTo = tones.to, hueShift = 1, style }: { width: number; height: number; origin: [number, number]; reach: [number, number]; pitch?: number; strength?: number; tint?: RGB; tintTo?: RGB; hueShift?: number; style?: object }) {
+const PATTERN = { dots: 0, lines: 1, pixels: 2 } as const;
+export type Pattern = keyof typeof PATTERN;
+
+export function HalftoneGlint({ width, height, origin, reach, pitch = 4, strength = 1, tint = tones.from, tintTo = tones.to, hueShift = 1, pattern = "dots", style }: { width: number; height: number; origin: [number, number]; reach: [number, number]; pitch?: number; strength?: number; tint?: RGB; tintTo?: RGB; hueShift?: number; pattern?: Pattern; style?: object }) {
   return <Canvas pointerEvents="none" style={[{ position: "absolute", width, height }, style]}>
-    <Fill><Shader source={glint} uniforms={{ origin, reach, pitch, strength, tint: [...tint], tintTo: [...tintTo], hueShift, res: [width, height] }} /></Fill>
+    <Fill><Shader source={glint} uniforms={{ origin, reach, pitch, strength, tint: [...tint], tintTo: [...tintTo], hueShift, res: [width, height], pattern: PATTERN[pattern] }} /></Fill>
   </Canvas>;
 }
 
 /**
- * The sunbeam: a band of halftone dots (blue to lilac) that sweeps once across a card from the
+ * The sunbeam: a band of halftone dots (azure to violet) that sweeps once across a card from the
  * top-left, the only dithering that moves, kept for a finished task (a dose taken, a check-in sent).
  * Plays each time `play` changes to a new truthy value; nothing under Reduce Motion.
  */
@@ -54,7 +68,7 @@ half4 main(float2 q) {
   if (band < 0.02) { return half4(0.0); }
   float r = 0.42 * sqrt(band);
   float dotShape = 1.0 - smoothstep(r - 0.08, r + 0.04, length(fract(q / pitch) - 0.5));
-  half3 hue = mix(half3(0.3, 0.42, 0.95), half3(0.72, 0.64, 0.98), clamp(d, 0.0, 1.0));
+  half3 hue = mix(half3(0.145, 0.388, 0.922), half3(0.576, 0.2, 0.918), clamp(d, 0.0, 1.0));
   float alpha = dotShape * 0.55 * sin(3.14159 * p);
   return half4(hue * alpha, alpha);
 }`)!;

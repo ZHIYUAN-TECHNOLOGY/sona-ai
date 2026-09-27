@@ -11,18 +11,35 @@ import { useFollowUps } from "@/features/follow-ups/row";
 import { consistency, latestUpdate, nextCapsule, type Update } from "@/features/home";
 import { useMessageNeeds } from "@/features/messages/row";
 import { Text } from "@/lib/text";
-import { palette } from "@/lib/theme";
-import { HoldButton, ICON, pillStyle, surfaceStyle } from "@/lib/ui";
+import { HalftoneGlint, type Pattern } from "@/lib/halftone";
+import { accent, palette } from "@/lib/theme";
+import { CARD_RADIUS, HoldButton, ICON, pillStyle, surfaceStyle } from "@/lib/ui";
 
 /**
- * Home's bento (the kit's "Child Home"): four #FAFAFA tiles in two columns, each one labelled button
- * (a `footer` control, the hold or Book, stays its own element). `still` skips the 40 ms rise (Reduce
- * Motion, or home was shown before); `grow` lets a tall tile fill its column so both columns end level.
+ * Home's bento (the kit's "Child Home" on Sona's glass): four glass tiles in two columns, each one labelled
+ * button (a `footer` control, the hold or Book, stays its own element), each with its own faint halftone
+ * accent tucked into one corner so neighbours never repeat: dots for medicines, lines for consistency,
+ * pixels for the latest update and dots again (diagonal from medicines) for the visit, each in the corner
+ * its content leaves empty. Kept small and faint (the 10 %). `still` skips the 40 ms rise
+ * (Reduce Motion, or home was shown before); `grow` lets a tall tile fill its column so both end level.
  */
-function Tile({ label, onPress, index, still, grow, footer, children }: { label: string; onPress: () => void; index: number; still: boolean; grow?: boolean; footer?: ReactNode; children: ReactNode }) {
+type Dither = { pattern: Pattern; corner: "top-right" | "bottom-right" };
+const GLINT = 110;
+// Each screen at its own weight so all four read as the same faint accent.
+const STRENGTH: Record<Pattern, number> = { dots: 0.34, lines: 0.26, pixels: 0.3 };
+function Grain({ pattern, corner }: Dither) {
+  const top = corner === "top-right";
+  return <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: CARD_RADIUS, overflow: "hidden" }}>
+    <HalftoneGlint width={GLINT} height={GLINT} pattern={pattern} pitch={4} strength={STRENGTH[pattern]}
+      origin={[GLINT, top ? 0 : GLINT]} reach={[GLINT * 0.9, GLINT * 0.7]}
+      style={{ right: 0, [top ? "top" : "bottom"]: 0 }} />
+  </View>;
+}
+function Tile({ label, onPress, index, still, grow, footer, dither, children }: { label: string; onPress: () => void; index: number; still: boolean; grow?: boolean; footer?: ReactNode; dither: Dither; children: ReactNode }) {
   return <Animated.View entering={rise(still, index)} style={grow && { flexGrow: 1 }}>
     <Pressable accessible={false} onPress={onPress}
       style={({ pressed }) => [surfaceStyle, { flexGrow: 1, padding: 20, gap: 14, transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
+      <Grain {...dither} />
       <View accessible accessibilityRole="button" accessibilityLabel={label} onAccessibilityTap={onPress} style={{ flexGrow: 1, gap: 14 }}>{children}</View>
       {footer}
     </Pressable>
@@ -49,12 +66,12 @@ export function MedicinesTile({ index, still }: { index: number; still: boolean 
   const hold = dose && !early(dose.dueAt, now);
   const when = dose && !hold ? nextCapsule(dose.dueAt, now) : undefined;
   const summary = today.length ? `${done} of ${today.length} doses taken` : out ? "Nothing due today" : "Shows once you're home";
-  return <Tile index={index} still={still} grow label={`Today's medicines. ${summary}.${hold ? ` ${dose.name} is due.` : when ? ` ${when}.` : ""} Open medicines`}
+  return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={`Today's medicines. ${summary}.${hold ? ` ${dose.name} is due.` : when ? ` ${when}.` : ""} Open medicines`}
     onPress={() => router.push(out ? "/dose" : "/discharge")}
     footer={hold && <HoldButton key={dose.key} compact label={`Hold · ${dose.name}`} doneLabel={`${dose.name} taken`} onDone={() => markTaken(dose.key)} />}>
     <Kicker>Today&apos;s medicines</Kicker>
     {today.length > 0 && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-      {today.map(d => <View key={d.key} style={{ width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: d.taken ? palette.success : "#F0F0F0" }}>
+      {today.map(d => <View key={d.key} style={{ width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: d.taken ? palette.success : "rgba(255,255,255,0.7)", borderWidth: d.taken ? 0 : 1.5, borderColor: "rgba(31,31,31,0.12)", borderStyle: "dashed" }}>
         {d.taken && <Icon d="M6 12.5l4 4L18 8" size={18} color={palette.white} />}
       </View>)}
     </View>}
@@ -65,7 +82,7 @@ export function MedicinesTile({ index, still }: { index: number; still: boolean 
   </Tile>;
 }
 
-// A day's bar: blue when every dose was taken, grey otherwise; its height says how much was taken.
+// A day's bar: azure into violet when every dose was taken, grey otherwise; its height says how much was taken.
 const BAR: Record<WeekDay["state"], number> = { all: 1, some: 0.6, none: 0.3, ahead: 0.45, free: 0.15 };
 
 /** Consistency (short): the share of the week's doses taken, big, over a bar per day since discharge (at most 7). */
@@ -74,7 +91,7 @@ export function ConsistencyTile({ index, still }: { index: number; still: boolea
   const { plan, taken, meds } = useNextDose(now);
   const out = plan?.status === "discharged" ? plan.dischargedAt : undefined;
   const pct = consistency(meds, out, taken, now), week = weekOf(meds, out, taken, now);
-  return <Tile index={index} still={still} label={`Consistency. ${pct === undefined ? "Shows once a dose is due" : `${pct}% of this week's doses taken`}. Open medicines`}
+  return <Tile index={index} still={still} dither={{ pattern: "lines", corner: "bottom-right" }} label={`Consistency. ${pct === undefined ? "Shows once a dose is due" : `${pct}% of this week's doses taken`}. Open medicines`}
     onPress={() => router.push(out ? "/dose" : "/discharge")}>
     <Kicker>Consistency</Kicker>
     {pct === undefined
@@ -82,7 +99,7 @@ export function ConsistencyTile({ index, still }: { index: number; still: boolea
       : <>
         <Text style={{ fontSize: 28, lineHeight: 32, fontWeight: "500", letterSpacing: -1.2, color: palette.ink, fontVariant: ["tabular-nums"] }}>{pct}<Text style={{ fontSize: 14, fontWeight: "400", color: palette.faint }}> %</Text></Text>
         <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 6, height: 32 }}>
-          {week.map((d, i) => <View key={i} style={{ width: 7, height: `${BAR[d.state] * 100}%`, borderRadius: 4, backgroundColor: d.state === "all" ? palette.info : "rgba(31,31,31,0.17)" } as ViewStyle} />)}
+          {week.map((d, i) => <View key={i} style={{ width: 7, height: `${BAR[d.state] * 100}%`, borderRadius: 4, backgroundColor: d.state === "all" ? accent[1] : "rgba(31,31,31,0.12)", experimental_backgroundImage: d.state === "all" ? `linear-gradient(180deg, ${accent[2]}, ${accent[1]})` : undefined } as ViewStyle} />)}
         </View>
       </>}
   </Tile>;
@@ -99,9 +116,9 @@ const SPARKLE = "M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2Z";
 export function LatestTile({ index, still, onCheckIn }: { index: number; still: boolean; onCheckIn: () => void }) {
   const u = latestUpdate(useCheckIns().data, useMessageNeeds() > 0, useNow());
   const go = () => u.to === "check-in" ? onCheckIn() : router.push(u.to === "messages" ? "/messages" : "/check-ins");
-  return <Tile index={index} still={still} label={`Latest update. ${u.line}`} onPress={go}>
+  return <Tile index={index} still={still} dither={{ pattern: "pixels", corner: "top-right" }} label={`Latest update. ${u.line}`} onPress={go}>
     <Kicker>Latest update</Kicker>
-    <View style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: palette.white }}>
+    <View style={[pillStyle, { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" }]}>
       <Svg width={26} height={26} viewBox="0 0 24 24">
         {u.face === "chat" ? <Path d={ICON.chat} fill="none" stroke={palette.ink} strokeWidth={1.8} strokeLinejoin="round" />
           : <><Circle cx={12} cy={12} r={10} fill="none" stroke={palette.ink} strokeWidth={1.8} /><Path d={FACE[u.face]} fill="none" stroke={palette.ink} strokeWidth={2} strokeLinecap="round" /></>}
@@ -124,7 +141,7 @@ const PENCIL = "M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32
 export function VisitTile({ index, still, hospital }: { index: number; still: boolean; hospital?: string }) {
   const { data } = useFollowUps();
   const next = data?.[0];
-  if (!next) return <Tile index={index} still={still} grow label={data ? "No visit booked" : "Your visits show here"} onPress={() => router.push(data ? "/doctors" : "/follow-ups")}
+  if (!next) return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={data ? "No visit booked" : "Your visits show here"} onPress={() => router.push(data ? "/doctors" : "/follow-ups")}
     footer={data && <Pressable accessibilityRole="button" accessibilityLabel="Book a visit" onPress={() => router.push("/doctors")}
       style={({ pressed }) => ({ minHeight: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.dark, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
       <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>Book</Text>
@@ -136,7 +153,7 @@ export function VisitTile({ index, still, hospital }: { index: number; still: bo
   // The capsule carries the time, or the day when there is no time; the line under it never repeats the day.
   const time = timeLabel(next), far = next.status === "overdue" ? "overdue" : away(next.inDays);
   const when = time ? `${dayLabel(next.date)} · ${far}` : far[0]!.toUpperCase() + far.slice(1);
-  return <Tile index={index} still={still} grow label={`Next visit. ${next.title}, ${time ?? dayLabel(next.date)}, ${when}.${hospital ? ` ${hospital}.` : ""} Open my visits`} onPress={() => router.push("/follow-ups")}>
+  return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={`Next visit. ${next.title}, ${time ?? dayLabel(next.date)}, ${when}.${hospital ? ` ${hospital}.` : ""} Open my visits`} onPress={() => router.push("/follow-ups")}>
     <Capsule>{time ?? dayLabel(next.date)}</Capsule>
     <View style={{ flexGrow: 1, gap: 4 }}>
       <Text numberOfLines={3} style={{ fontSize: 24, lineHeight: 28, fontWeight: "600", letterSpacing: -1, color: palette.ink }}>{next.title}</Text>

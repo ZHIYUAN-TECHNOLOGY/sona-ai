@@ -3,24 +3,24 @@ import { StyleSheet, useWindowDimensions, View } from "react-native";
 import { useDerivedValue, useReducedMotion, type SharedValue } from "react-native-reanimated";
 
 /**
- * The canvas behind every screen (the AI Health Companion kit's aurora): a #FAFAFA ground with lilac
- * pools and soft lilac, mint and white ribbons across the top, a white body behind the content, and a
- * pink-lilac glow at the bottom behind the dock. Pools and ribbons drift on their own 19–31 s cycles on
+ * The canvas behind every screen (the kit's aurora in Sona Care's azure and violet): a #FAFAFA ground with
+ * azure pools and soft azure, violet and white ribbons across the top, a white body behind the content,
+ * and a violet-azure glow at the bottom behind the dock. Pools and ribbons drift on their own 19–31 s cycles on
  * the UI thread; with Reduce Motion everything holds still.
  */
 type Pool = { x: number; y: number; r: number; color: string; dx: number; period: number; phase: number };
 const pools: Pool[] = [
-  { x: 0.2, y: 0.0, r: 0.5, color: "rgba(206,196,250,0.95)", dx: 0.1, period: 23, phase: 0 }, // lilac, top left
-  { x: 0.85, y: 0.04, r: 0.46, color: "rgba(214,206,252,0.9)", dx: 0.08, period: 29, phase: 1.7 }, // lavender, top right
-  { x: 0.3, y: 1.02, r: 0.48, color: "rgba(246,206,232,0.8)", dx: 0.1, period: 26, phase: 5.2 }, // pink glow, bottom left
-  { x: 0.78, y: 1.04, r: 0.5, color: "rgba(204,200,250,0.85)", dx: 0.08, period: 19, phase: 4.4 }, // lilac glow, bottom right
+  { x: 0.2, y: 0.0, r: 0.5, color: "rgba(211,224,251,0.95)", dx: 0.1, period: 23, phase: 0 }, // azure, top left
+  { x: 0.85, y: 0.04, r: 0.46, color: "rgba(220,230,252,0.9)", dx: 0.08, period: 29, phase: 1.7 }, // pale azure, top right
+  { x: 0.3, y: 1.02, r: 0.48, color: "rgba(238,222,252,0.85)", dx: 0.1, period: 26, phase: 5.2 }, // violet glow, bottom left
+  { x: 0.78, y: 1.04, r: 0.5, color: "rgba(211,224,251,0.85)", dx: 0.08, period: 19, phase: 4.4 }, // azure glow, bottom right
 ];
 // Ribbons: [centre y (fraction), amplitude (fraction of height), wavelength (fraction of width), stroke width, colour, period s, phase]
 const ribbons: [number, number, number, number, string, number, number][] = [
   [0.1, 0.035, 1.3, 70, "rgba(255,255,255,0.8)", 23, 0],
-  [0.15, 0.03, 1.1, 46, "rgba(178,236,214,0.75)", 29, 1.7], // the kit's mint band
+  [0.15, 0.03, 1.1, 46, "rgba(194,211,249,0.8)", 29, 1.7], // the azure band
   [0.2, 0.03, 1.5, 90, "rgba(255,255,255,0.9)", 31, 3.1],
-  [0.05, 0.025, 0.9, 44, "rgba(196,184,248,0.6)", 19, 4.4],
+  [0.05, 0.025, 0.9, 44, "rgba(233,214,251,0.7)", 19, 4.4],
 ];
 
 function Glow({ pool: p, clock, width, height, still }: { pool: Pool; clock: SharedValue<number>; width: number; height: number; still: boolean }) {
@@ -59,9 +59,9 @@ export function CalmCanvas() {
       <Group layer={<Paint><Blur blur={24} /></Paint>}>
         {ribbons.map((r, i) => <Ribbon key={i} spec={r} clock={clock} width={width} height={height} still={still} />)}
       </Group>
-      {/* The aurora fades into the white body of the page before the content, and back out at the bottom glow. */}
+      {/* The aurora fades into a faintly tinted body (never pure white, so glass cards keep an edge), and back out at the bottom glow. */}
       <Rect x={0} y={0} width={width} height={height}>
-        <LinearGradient start={vec(0, 0)} end={vec(0, height)} colors={["rgba(252,252,252,0)", "rgba(252,252,252,0.96)", "rgba(252,252,252,0.9)", "rgba(252,252,252,0)"]} positions={[0.12, 0.34, 0.78, 0.96]} />
+        <LinearGradient start={vec(0, 0)} end={vec(0, height)} colors={["rgba(250,251,255,0)", "rgba(250,251,255,0.8)", "rgba(248,249,255,0.7)", "rgba(250,251,255,0)"]} positions={[0.12, 0.34, 0.78, 0.96]} />
       </Rect>
     </Canvas>
   </View>;

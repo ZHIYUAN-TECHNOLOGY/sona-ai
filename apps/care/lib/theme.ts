@@ -10,15 +10,15 @@ export const palette = {
   blue: "#2563EB", blueWash: "#EFF6FF", line: "#F5F5F5", white: "#FFFFFF",
   green: "#15803D", amber: "#C2410C", red: "#C81E2E", dark: "#1F1F1F",
   amberWash: "#FFF7ED", amberEdge: "#FED7AA", mutedWash: "#F5F5F5", greenWash: "#F0FDF4",
-  teal: "#067D61", violet: "#AC12E9",
+  azure: "#2563EB", violet: "#9333EA",
   // Fills (dots, bars, badges), never text: the kit's 500 shades.
   success: "#22C55E", warning: "#F97316", error: "#EF4444", feature: "#A855F7", info: "#3B82F6", away: "#FB923C",
 };
 
-/** The kit's headline gradient: ink easing through teal into violet across the bold line. */
-export const accent = ["#1F1F1F", "#067D61", "#AC12E9"] as const;
-/** Halftone glint on the feature card: blue to lilac, kept faint. */
-export const glint = { from: [0.36, 0.48, 0.96], to: [0.7, 0.62, 0.97] } as const;
+/** Sona Care's headline gradient (the user's pick, 27 Sep): ink easing through azure into violet across the bold line. */
+export const accent = ["#1F1F1F", "#2563EB", "#9333EA"] as const;
+/** Halftone glint (cards, the feature card): azure to violet, kept faint. */
+export const glint = { from: [0.145, 0.388, 0.922], to: [0.576, 0.2, 0.918] } as const;
 
 // Type after the kit (Header/Medium 28/32 −7 %, Body/xl 18/26…), with body kept at 17 pt for patients.
 export const type = {
@@ -30,6 +30,12 @@ export const type = {
   footnote: { fontSize: 14, lineHeight: 19, letterSpacing: -0.2 },
   overline: { fontSize: 12, lineHeight: 16, letterSpacing: 0.6, fontWeight: "600", textTransform: "uppercase" },
 } as const;
+
+/**
+ * Spacing on a 4 pt grid: `edge` screen sides, `top` above the first row, `stack` between blocks on a
+ * screen, `section` from a header row to the first section head (stack + 8, so a head reads as new).
+ */
+export const space = { edge: 20, top: 8, stack: 16, section: 24 } as const;
 
 /** Motion shared by every screen: the layout spring (no bounce) and the kit's gentle press. */
 export const motion = { spring: { duration: 380, dampingRatio: 1 }, pop: { duration: 380, dampingRatio: 0.72 }, stagger: 40, press: 0.96 } as const;

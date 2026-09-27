@@ -12,16 +12,21 @@ import { accent, palette, type } from "./theme";
 
 /**
  * Sona's design system for Sona Care, after the AI Health Companion kit (mirrors apps/native/components/sona/ui.tsx):
- * near-white cards (#FAFAFA) on a #F5F5F5 hairline with 32 pt corners and no shadow, over the aurora
- * canvas; white capsules for values (a time, "Next in 3:00"); one `feature` card for the thing that
+ * liquid-glass cards with 32 pt corners over the aurora canvas; glass capsules for values (a time, "Next in 3:00"); one `feature` card for the thing that
  * needs the patient now (white, a soft blue lift, a faint halftone glint); a near-black primary pill and
  * round glass buttons. Press feedback is a 0.96 scale.
  * ponytail: mirrored, not shared; move both apps' copies to a shared UI package once they settle.
  */
-// Kit cards: #FAFAFA, 32 pt corners, a #F5F5F5 hairline, flat; the one feature card is white and lifts in blue.
-export const surfaceStyle: ViewStyle = { borderRadius: 32, borderCurve: "continuous", backgroundColor: palette.card, borderWidth: 1, borderColor: palette.line } as ViewStyle;
-/** A white capsule for a value or label (a time, a status, a chip), on the kit's hairline. */
-export const pillStyle: ViewStyle = { borderRadius: 999, borderWidth: 1, borderColor: palette.line, backgroundColor: palette.white } as ViewStyle;
+// Liquid glass (Sona's design system, as in apps/native): a translucent fill, bright at the top and cooler
+// toward the bottom, a white rim with a defined outer edge so it never melts into the white canvas, a
+// sheen along the top, an azure catch along the bottom and a soft azure lift; 24 pt continuous corners.
+// No live blur, so long lists stay cheap; real blur is kept for chrome (the bar).
+export const CARD_RADIUS = 24;
+const glassFill = "linear-gradient(165deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.46) 48%, rgba(228,237,255,0.5) 100%)";
+export const surfaceStyle: ViewStyle = { borderRadius: CARD_RADIUS, borderCurve: "continuous", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", backgroundColor: "transparent", experimental_backgroundImage: glassFill,
+  boxShadow: "0 0 0 0.75px rgba(30,50,110,0.10), 0 1px 2px rgba(30,50,110,0.06), 0 16px 32px -18px rgba(37,70,170,0.32), inset 0 1px 0 #FFFFFF, inset 0 12px 20px -14px rgba(255,255,255,1), inset 0 -14px 24px -16px rgba(37,99,235,0.2)" } as ViewStyle;
+/** A glass capsule for a value or label (a time, a status, a chip). */
+export const pillStyle: ViewStyle = { borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", backgroundColor: "rgba(255,255,255,0.78)", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.05), 0 4px 12px -6px rgba(40,70,140,0.18), inset 0 1px 0 #FFFFFF" } as ViewStyle;
 const featureStyle: ViewStyle = { backgroundColor: palette.white, borderColor: "rgba(37,99,235,0.10)", boxShadow: "0 18px 36px -20px rgba(37,99,235,0.35)" } as ViewStyle;
 
 /** Cards resize on the layout spring (no bounce), so a card that grows in place (a check-in opening) springs rather than jumps. */
@@ -30,7 +35,7 @@ const CARD_LAYOUT = LinearTransition.springify().duration(380).dampingRatio(1);
 export function Card({ children, feature = false, style }: { children: ReactNode; feature?: boolean; style?: ViewStyle }) {
   const still = useReducedMotion();
   return <Animated.View layout={still ? undefined : CARD_LAYOUT} style={[surfaceStyle, feature && featureStyle, { padding: 22, gap: 14 }, style]}>
-    {feature && <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: 32, overflow: "hidden" }}><HalftoneGlint width={170} height={96} origin={[170, 0]} reach={[160, 90]} strength={0.4} style={{ top: 0, right: 0 }} /></View>}
+    {feature && <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: CARD_RADIUS, overflow: "hidden" }}><HalftoneGlint width={170} height={96} origin={[170, 0]} reach={[160, 90]} strength={0.4} style={{ top: 0, right: 0 }} /></View>}
     {children}
   </Animated.View>;
 }
@@ -82,7 +87,7 @@ export function HoldButton({ label, doneLabel, onDone, done = false, hold = 800,
     onAccessibilityTap={() => { if (!done) finish(); }}>
     <Animated.View style={[{ minHeight: h, borderRadius: h / 2, overflow: "hidden", alignItems: "center", justifyContent: "center", paddingHorizontal: compact ? 12 : 20,
       backgroundColor: done ? palette.white : quiet ? palette.white : palette.dark, borderWidth: 1, borderColor: done || quiet ? "#EDEDED" : palette.dark }, settle]}>
-      {!done && <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 0, bottom: 0, experimental_backgroundImage: `linear-gradient(135deg, ${palette.info}, #7C8CF8 55%, ${palette.feature})` } as ViewStyle, fill]} />}
+      {!done && <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 0, bottom: 0, experimental_backgroundImage: `linear-gradient(135deg, ${accent[1]}, ${accent[2]})` } as ViewStyle, fill]} />}
       <Text style={{ fontSize: compact ? 13 : 16, fontWeight: "700", color: done ? palette.green : holding && quiet ? palette.white : ink }}>{done ? `✓  ${doneLabel}` : holding ? "Keep holding…" : label}</Text>
     </Animated.View>
   </Pressable>;
@@ -106,10 +111,10 @@ export function Row({ title, line, tone = "muted", onPress, first }: { title: st
   </Pressable>;
 }
 
-/** Text in the kit's headline gradient (ink, then teal into violet), for the one bold line on a screen. */
+/** Text in the headline gradient (ink, then azure into violet), for the one bold line on a screen. */
 export function AccentText({ children, style }: { children: string; style: TextStyle }) {
-  return <MaskedView accessible={false} style={{ alignSelf: "flex-start", maxWidth: "100%" }} maskElement={<Text style={style}>{children}</Text>}>
-    <View style={{ experimental_backgroundImage: `linear-gradient(100deg, ${accent[0]} 0%, ${accent[0]} 38%, ${accent[1]} 68%, ${accent[2]} 100%)` } as ViewStyle}>
+  return <MaskedView accessible={false} style={{ alignSelf: style.textAlign === "center" ? "center" : "flex-start", maxWidth: "100%" }} maskElement={<Text style={style}>{children}</Text>}>
+    <View style={{ experimental_backgroundImage: `linear-gradient(100deg, ${accent[0]} 0%, ${accent[0]} 28%, ${accent[1]} 56%, ${accent[2]} 100%)` } as ViewStyle}>
       <Text style={[style, { opacity: 0 }]}>{children}</Text>
     </View>
   </MaskedView>;

@@ -73,7 +73,7 @@ export default function Join() {
 
       {!who ? <>
         <Head light="Please scan" bold="your code" />
-        <View style={{ borderRadius: 32, borderCurve: "continuous", backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, padding: 16, gap: 12 }}>
+        <View style={{ borderRadius: 24, borderCurve: "continuous", backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, padding: 16, gap: 12 }}>
           {scanning && permission?.granted
             ? <View style={{ height: 280, borderRadius: 24, borderCurve: "continuous", overflow: "hidden" }}>
               <CameraView style={{ flex: 1 }} barcodeScannerSettings={{ barcodeTypes: ["qr"] }} onBarcodeScanned={e => { setScanning(false); const c = codeFrom(e.data); setCode(c); void check(c); }} />
@@ -104,7 +104,7 @@ export default function Join() {
           <Text style={{ ...type.footnote, fontWeight: "600", color: palette.green }}>Code found</Text>
         </Animated.View>
         <Animated.View entering={still ? undefined : SPRING_IN.delay(40)}
-          style={{ borderRadius: 32, borderCurve: "continuous", backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, padding: 22, gap: 12, alignItems: "center" }}>
+          style={{ borderRadius: 24, borderCurve: "continuous", backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, padding: 22, gap: 12, alignItems: "center" }}>
           <View accessible={false} style={{ width: 88, height: 88, borderRadius: 44, alignItems: "center", justifyContent: "center", borderWidth: 3, borderColor: palette.white,
             experimental_backgroundImage: "linear-gradient(145deg, #EBF1FF, #D8CBFF)", boxShadow: "0 10px 22px -12px rgba(51,92,255,0.45)" } as ViewStyle}>
             <Text allowFontScaling={false} style={{ fontSize: 32, fontWeight: "500", color: palette.blue }}>{who.firstName[0]?.toUpperCase()}</Text>

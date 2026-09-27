@@ -51,7 +51,7 @@ export function Dock() {
           const on = i === at;
           return <Pressable key={t.path} accessibilityRole="tab" accessibilityLabel={t.label} accessibilityState={{ selected: on }} onPress={() => { if (!on) router.navigate(t.path); }}
             style={({ pressed }) => ({ width: TAB, height: TAB, alignItems: "center", justifyContent: "center", transform: [{ scale: pressed ? 0.92 : 1 }] })}>
-            <Svg width={22} height={22} viewBox="0 0 24 24" fill={on && i === 0 ? palette.ink : "none"} stroke={on ? palette.ink : palette.faint} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round"><Path d={t.d} /></Svg>
+            <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={on ? palette.ink : palette.faint} strokeWidth={on ? 2.4 : 1.7} strokeLinecap="round" strokeLinejoin="round"><Path d={t.d} /></Svg>
           </Pressable>;
         })}
       </BlurView>

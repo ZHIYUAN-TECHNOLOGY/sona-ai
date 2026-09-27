@@ -15,7 +15,7 @@ import { Capsule, Stop, STOP_TITLE, Timeline } from "@/features/follow-ups/timel
 import { removeQuestion, saveQuestion, useQuestions } from "@/features/questions";
 import { DOCK_SPACE } from "@/lib/dock";
 import { AnimatedText, Text, TextInput } from "@/lib/text";
-import { palette, type } from "@/lib/theme";
+import { palette, space, type } from "@/lib/theme";
 import { Button, Card, Chip, CircleButton, field, ICON, surfaceStyle, Title } from "@/lib/ui";
 
 // Motion: the screen rises in on a 40 ms ease-out stagger, and the timeline's stops rise again the
@@ -53,7 +53,7 @@ export default function ScheduleScreen() {
   const insight = data && scheduleLine(todayItems, visits);
 
   return <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
-    contentContainerStyle={{ padding: 20, paddingBottom: DOCK_SPACE, gap: 18 }}>
+    contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     <Animated.View entering={rise(still, 0)} style={{ gap: 8 }}>
       <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
         <CircleButton d={ICON.plus} label="Book a visit" onPress={() => router.push("/doctors")} />

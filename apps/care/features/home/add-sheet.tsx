@@ -60,7 +60,7 @@ export function AddSheet({ open, onClose }: { open: boolean; onClose: () => void
       <View style={{ alignSelf: "center", width: 36, height: 5, borderRadius: 3, backgroundColor: "#E5E5E5" }} />
       <View accessible accessibilityRole="header" accessibilityLabel="What are you planning to add" style={{ alignItems: "center", paddingTop: 18, paddingBottom: 10 }}>
         <Text style={{ fontSize: 24, lineHeight: 30, letterSpacing: -1, color: palette.muted }}>What are you</Text>
-        <AccentText style={{ fontSize: 28, lineHeight: 34, fontWeight: "600", letterSpacing: -1.9, color: palette.ink }}>planning to add</AccentText>
+        <AccentText style={{ fontSize: 28, lineHeight: 34, fontWeight: "600", letterSpacing: -1.9, color: palette.ink, textAlign: "center" }}>planning to add</AccentText>
       </View>
       {rows.map((r, i) => <Animated.View key={r.label} entering={reduced ? undefined : FadeInDown.duration(260).delay(140 + i * 40).easing(EASE_OUT)}>
         <Pressable accessibilityRole="button" accessibilityLabel={r.note ? `${r.label}. ${r.note} today` : r.label} onPress={r.go}

@@ -66,7 +66,7 @@ export function BookingSheet({ doctor, slot, onClose }: { doctor: Doctor; slot: 
       </> : <>
         <View accessible accessibilityRole="header" accessibilityLabel="Request this visit" style={{ alignItems: "center" }}>
           <Text style={{ fontSize: 20, lineHeight: 26, letterSpacing: -0.6, color: palette.faint }}>Request</Text>
-          <AccentText style={{ fontSize: 28, lineHeight: 34, fontWeight: "600", letterSpacing: -1.9, color: palette.ink }}>this visit</AccentText>
+          <AccentText style={{ fontSize: 28, lineHeight: 34, fontWeight: "600", letterSpacing: -1.9, color: palette.ink, textAlign: "center" }}>this visit</AccentText>
         </View>
         <View accessible accessibilityLabel={`${doctor.name}, ${doctor.specialty}. ${day.spoken} at ${slot.label}. ${doctor.room}`}
           style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 24, borderCurve: "continuous", backgroundColor: palette.card, borderWidth: 1, borderColor: palette.line }}>
