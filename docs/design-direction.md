@@ -58,6 +58,30 @@ Inspection status: Figma is configured locally but unavailable in the active MCP
 - Use an original product identity and clinical copy. The reference's Oria logo, upgrade promotion, and generic image/programming shortcuts are not product requirements.
 - Keep Monogram's motion as the primary reference and use Arc's selected transitions within this blue/grey visual system.
 
+## Sona Care visual references (2026-09-27)
+
+The user supplied two patient-app UI kits as inspiration for Sona Care. Both use the direction Sona already has (a white canvas with a lilac, teal and pink aurora, glass cards, charcoal type and an ink primary pill), so they refine Sona Care rather than replace the design system. The UX principles above and the glass-first rules below still govern: one lead, at most one feature card, halftone only as an accent.
+
+- [Lumi home](references/care-lumi-home-reference.jpg), [Lumi medicine focus](references/care-lumi-medicine-focus-reference.jpg), [Lumi screens](references/care-lumi-screens-reference.jpg), [Lumi kit overview](references/care-lumi-kit-overview-reference.jpg)
+- [Life OS kit overview](references/care-life-os-kit-overview-reference.jpg)
+
+**Take, mapped to Sona Care:**
+
+| Pattern in the references | Use in Sona Care |
+| --- | --- |
+| Greeting and date as the page title, with one accent word in a blue-to-teal gradient ("Hello! Helen / Sunday, Oct 24") | Home title: the insight line (e.g. "Day 2 at home") with the accent on the part that matters. The gradient goes on one word per screen, never on body copy |
+| Two glance tiles side by side ("Next medicine in 09:34", "Visiting your doctor 3:00 PM · Dr. Aris · call") | Home: next dose countdown and next follow-up, each with its one action (mark taken, call or directions). These are content surfaces; the Today card stays the only feature surface |
+| One task per screen: date, "Time to take medicines", a large object, a two-line instruction and one ink "Mark as taken" pill, with a Before/After toggle | The check-in answer and dose reminder screens: one question or one dose, a large glanceable subject, one primary pill, and "Before / after food" as a glass segmented pill |
+| Medicines grid: soft 3D pill renders, name and "3 times daily" | Discharge medicines: reuse Sona's medicine thumbnails, a two-column grid, name plus plain-language schedule; tap for the leaflet |
+| One field per onboarding screen, two-line header with an accent word ("Let's start by / Add your name"), ink Next pill above the keyboard | Join flow: code entry as boxed characters (Life OS OTP style), then name, then done. One field, one pill, keyboard-aware |
+| Assistant greeting with orb ("How can we support your health today?"), suggestion rows with a small arrow, voice and text dock | A future "Ask Sona Care" screen: the blue orb, at most three suggested questions from the patient's own discharge plan, the glass dock |
+| Care-team chat: patient bubbles, doctor bubbles with avatar and time, an inline status line while something is found ("Searching for a doctor…") | Care-team thread: keep the bubbles, time and avatar; show "Sent · Dr. Lim usually replies within 4 h" as the status line so the patient knows what happens next |
+| Bottom dock: a glass pill with home and the orb | If Sona Care grows past one screen of tabs, a floating glass dock with at most three destinations |
+
+**Leave out:** stock photography and model faces (use initials and illustrations), the source brands and copy, the doctor marketplace (price per session, ratings, "All doctors" search, maps of clinics; a Sona Care patient is linked to their own care team), step and activity charts, social login, italic display type, and more than one feature card per screen.
+
+**Patient-specific rules:** patients are often older, unwell or reading in a second language, so Sona Care uses larger body text (17 pt minimum, Dynamic Type respected), 48 pt or larger tap targets, plain words over clinical terms, and room for Malay and Chinese strings that run longer than English. Red is kept for "call the hospital now"; everything else stays calm.
+
 ## UI review feedback: Monogram generative-UI direction (2026-09-23)
 
 User review of the implemented home screen: **too crowded**. Redesign around Monogram's concept, tailored to a clinician healthcare assistant. Not yet implemented.
