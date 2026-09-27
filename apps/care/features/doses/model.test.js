@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { clock, dueNow, early, nextDose, untilLine, whenWords } from "./model";
+import { clock, dosesToday, dueNow, early, nextDose, untilLine, weekOf, whenWords } from "./model";
 
 // Discharged 10:00 Malaysia time (02:00Z) on 27 Sep; azithromycin 08:00 for 2 more doses, cetirizine nightly at 21:00.
 const out = "2026-09-27T02:00:00Z";
@@ -62,4 +62,24 @@ test("the next dose after taking one reads as a day word and a time", () => {
   expect(whenWords(at("2026-09-27T14:00:00Z"), now)).toBe("today 10:00 PM");
   expect(whenWords(at("2026-09-28T00:00:00Z"), now)).toBe("tomorrow 8:00 AM");
   expect(whenWords(at("2026-09-29T00:00:00Z"), now)).toBe("Tue 29 Sep 8:00 AM");
+});
+
+test("today's doses are the ones due on this Malaysia day, marked taken or not", () => {
+  const now = at("2026-09-28T02:00:00Z"); // 10:00 on 28 Sep
+  const day = dosesToday(meds, out, [], now);
+  expect(day.map(d => d.name)).toEqual(["Azithromycin", "Cetirizine"]); // 08:00 and 21:00; paracetamol has no times
+  const taken = dosesToday(meds, out, [day[0].key], now);
+  expect(taken.map(d => d.taken)).toEqual([true, false]);
+  expect(dosesToday(meds, undefined, [], now)).toEqual([]);
+});
+
+test("the week shows each day since discharge: all taken, some, none, still ahead, or nothing due", () => {
+  const now = at("2026-09-29T02:00:00Z"); // 10:00 on 29 Sep; discharged 27 Sep
+  const d27 = nextDose(meds, out, [], at("2026-09-27T05:00:00Z")); // cetirizine 21:00 on 27 Sep
+  const d28 = dosesToday(meds, out, [], at("2026-09-28T02:00:00Z"));
+  const week = weekOf(meds, out, [d27.key, d28[0].key], now);
+  expect(week.map(d => d.state)).toEqual(["all", "some", "none"]); // 27 all; 28 missed cetirizine; 29 azithro 08:00 is past and not taken
+  expect(week).toHaveLength(3);
+  const fresh = weekOf(meds, out, [d27.key, ...d28.map(d => d.key)], at("2026-09-29T23:00:00Z"));
+  expect(fresh.at(-1).state).toBe("ahead"); // 07:00 on 30 Sep: the azithromycin course has ended, cetirizine is due at 21:00
 });

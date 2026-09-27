@@ -104,7 +104,7 @@ function Choice({ icon, title, line, ink, busy, onPress }: { icon: ReactNode; ti
   return <Pressable accessibilityRole="button" accessibilityLabel={`${title}. ${line}`} accessibilityState={{ busy }} disabled={busy} onPress={onPress}
     style={({ pressed }) => [ink ? { backgroundColor: palette.dark, borderRadius: 22, borderCurve: "continuous", overflow: "hidden" } : [surfaceStyle, { borderRadius: 22 }],
       { minHeight: 66, flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 18, paddingVertical: 12, opacity: busy ? 0.7 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
-    {ink && <HalftoneGlint width={90} height={66} origin={[12, 2]} reach={[80, 56]} pitch={3} strength={0.6} tint={[0.62, 0.78, 1]} hueShift={0.6} style={{ top: 0, left: 0 }} />}
+    {ink && <HalftoneGlint width={90} height={66} origin={[12, 2]} reach={[80, 56]} pitch={3} strength={0.6} hueShift={0.6} style={{ top: 0, left: 0 }} />}
     <View style={{ width: 24, alignItems: "center" }}>{icon}</View>
     <View style={{ flex: 1, gap: 1 }}>
       <Text style={{ ...type.headline, color: fg }}>{title}</Text>

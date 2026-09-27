@@ -23,6 +23,7 @@
         "@better-auth/expo": "catalog:",
         "@orpc/client": "catalog:",
         "@orpc/tanstack-query": "^1.15.0",
+        "@react-native-masked-view/masked-view": "0.3.2",
         "@shopify/react-native-skia": "2.6.2",
         "@sona-ai/api": "workspace:*",
         "@sona-ai/domain": "workspace:*",

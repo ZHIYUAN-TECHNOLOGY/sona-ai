@@ -57,3 +57,35 @@ export function whenWords(dueAt: Date, now: Date) {
     : dueAt.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kuala_Lumpur" }).replace(",", "");
   return `${date} ${clock(dueAt)}`;
 }
+
+export type DayDose = Dose & { taken: boolean };
+const dayOf = (d: Date) => Math.floor((d.getTime() + MYT) / DAY);
+
+/** Every scheduled dose on the same Malaysia day as `now`, earliest first, each marked taken or not (the medicine screen's today strip). */
+export function dosesToday(meds: ScheduledMed[], dischargedAt: string | undefined, taken: string[], now: Date): DayDose[] {
+  if (!dischargedAt) return [];
+  const out = new Date(dischargedAt), today = dayOf(now), end = new Date((today + 1) * DAY - MYT - 1);
+  return meds.flatMap(med => slots(med, out, end).filter(d => dayOf(d) === today)
+    .map(dueAt => ({ name: med.name, line: med.take ?? med.line, dueAt, key: doseKey(med.name, dueAt), taken: taken.includes(doseKey(med.name, dueAt)) })))
+    .sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime());
+}
+
+export type WeekDay = { label: string; state: "all" | "some" | "none" | "ahead" | "free" };
+
+/**
+ * Home's "this week" review: one entry per day from discharge day (at most the last 7), whether every
+ * dose that was due that day is marked taken. "ahead": doses still to come today and none missed yet;
+ * "free": nothing scheduled that day.
+ */
+export function weekOf(meds: ScheduledMed[], dischargedAt: string | undefined, taken: string[], now: Date): WeekDay[] {
+  if (!dischargedAt) return [];
+  const out = new Date(dischargedAt), today = dayOf(now), first = Math.max(dayOf(out), today - 6);
+  const all = meds.flatMap(med => slots(med, out, new Date((today + 1) * DAY - MYT - 1)).map(dueAt => ({ day: dayOf(dueAt), dueAt, key: doseKey(med.name, dueAt) })));
+  return Array.from({ length: today - first + 1 }, (_, i) => {
+    const day = first + i, due = all.filter(d => d.day === day), done = due.filter(d => taken.includes(d.key)).length;
+    const label = new Date(day * DAY - MYT + 12 * 3600_000).toLocaleDateString("en-GB", { weekday: "narrow", timeZone: "Asia/Kuala_Lumpur" });
+    const pastDue = due.filter(d => d.dueAt <= now && !taken.includes(d.key)).length;
+    const state = !due.length ? "free" : done === due.length ? "all" : day === today && !pastDue ? (done ? "some" : "ahead") : done ? "some" : "none";
+    return { label, state };
+  });
+}

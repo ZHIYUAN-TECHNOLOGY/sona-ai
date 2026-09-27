@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { CalmCanvas } from "@/lib/canvas";
+import { Dock } from "@/lib/dock";
 import { palette } from "@/lib/theme";
 import { queryClient } from "@/utils/orpc";
 
@@ -19,7 +20,9 @@ export default function RootLayout() {
     <Stack screenOptions={{ headerTransparent: true, headerBlurEffect: "systemUltraThinMaterialLight", headerShadowVisible: false, headerTitle: "", headerBackButtonDisplayMode: "minimal", headerTintColor: palette.ink, contentStyle: { backgroundColor: "transparent" } }}>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="join" options={{ presentation: "modal", headerShown: false }} />
+      <Stack.Screen name="assistant" options={{ presentation: "formSheet", headerShown: false, sheetAllowedDetents: [0.62, 0.95], sheetGrabberVisible: true, sheetCornerRadius: 36, contentStyle: { backgroundColor: "#FDFBFD" } }} />
     </Stack>
+    <Dock />
     </ThemeProvider>
   </QueryClientProvider></SafeAreaProvider></KeyboardProvider></GestureHandlerRootView>;
 }
