@@ -3,7 +3,7 @@ import { authClient } from "@/lib/auth-client";
 import { setClockOffset } from "@/lib/clock";
 import { client, queryClient } from "@/utils/orpc";
 import { ENV } from "../src/env";
-import { syncTaken } from "./doses";
+import { clearTaken, syncTaken } from "./doses";
 import { useMe } from "./me";
 
 /**
@@ -21,6 +21,8 @@ async function readClock() {
 export function LiveUpdates() {
   const { state } = useMe();
   const joined = state === "joined";
+  // Not linked to any record: doses remembered on this phone belong to no plan, so they go.
+  useEffect(() => { if (state === "not-joined") clearTaken(); }, [state]);
   useEffect(() => {
     if (!joined) { setClockOffset(0); return; }
     void readClock();

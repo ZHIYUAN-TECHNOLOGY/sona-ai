@@ -40,6 +40,9 @@ export function markTaken(key: string) {
   void client.care.doses.take({ key }).catch(() => {});
 }
 
+/** Forgets this phone's taken doses (the account is not linked to a record, e.g. after the demo reset). */
+export function clearTaken() { if (taken.length) keep([]); }
+
 /** Merges the server's record into this phone's, and sends anything the server is missing (taken while offline). */
 export async function syncTaken() {
   const server = await client.care.doses.list();
