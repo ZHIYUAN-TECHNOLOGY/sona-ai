@@ -99,10 +99,10 @@ const badgeIn = () => {
   return { initialValues: { opacity: 0, transform: [{ scale: 0.6 }] }, animations: { opacity: withTiming(1, { duration: 160 }), transform: [{ scale: withSpring(1, { duration: 380, dampingRatio: 0.72 }) }] } };
 };
 
-/** The medicine drawn large on a soft Dawn disc; once taken, a check badge springs on. */
+/** The medicine drawn large on a soft blue disc; once taken, a check badge springs on. */
 function Art({ name, done, reduced }: { name: string; done: boolean; reduced: boolean }) {
   return <View style={{ width: 210, height: 210, borderRadius: 105, alignItems: "center", justifyContent: "center",
-    experimental_backgroundImage: "radial-gradient(circle at 40% 35%, #FFFFFF, #FFE9DE 55%, #F7D2E2 100%)", boxShadow: "0 30px 50px -26px rgba(200,110,150,0.6), inset -8px -14px 30px rgba(200,120,170,0.18)" } as ViewStyle}>
+    experimental_backgroundImage: "radial-gradient(circle at 40% 35%, #FFFFFF, #EEF1FF 55%, #DCE2FB 100%)", boxShadow: "0 30px 50px -26px rgba(61,90,241,0.4), inset -8px -14px 30px rgba(61,90,241,0.12)" } as ViewStyle}>
     <Pill name={name} size={120} />
     {done && <Animated.View entering={reduced ? FadeIn.duration(160) : badgeIn}
       style={{ position: "absolute", right: 16, bottom: 18, width: 44, height: 44, borderRadius: 22, borderWidth: 4, borderColor: palette.white, backgroundColor: palette.green, alignItems: "center", justifyContent: "center" }}>

@@ -38,7 +38,7 @@ export default function FollowUpsScreen() {
     {data && <Animated.View entering={enter(0)}>
       {!next ? <Title greeting="Your next visit" line="When your doctor books a visit or a test, it shows here.">Nothing booked yet</Title>
         : next.status === "overdue"
-          // Overdue reads in red, not the Dawn gradient: red keeps its meaning.
+          // Overdue reads in red, not the accent gradient: red keeps its meaning.
           ? <View accessible accessibilityRole="header" accessibilityLabel="Your next visit. Overdue" style={{ gap: 4 }}>
             <Text style={{ ...type.greeting, color: palette.faint }}>Your next visit</Text>
             <Text style={{ ...type.display, fontWeight: "700", color: palette.red }}>overdue</Text>

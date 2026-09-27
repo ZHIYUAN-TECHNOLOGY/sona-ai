@@ -1,19 +1,19 @@
 /**
- * Sona Care's tokens, Dawn (reviewed 27 Sep 2026): the clinician app's system (glass, ink type, one
- * accent word) in the Dawn pearl's colours, for a warmer, more hopeful feel. Red, amber and green keep
- * their meaning (must-not-miss, soon, done); emergency text never takes the sunrise tint.
+ * Sona Care's tokens, Clean (after the Life OS kit, 27 Sep 2026): a near-white canvas under a cool
+ * mist, white cards on hairline edges, navy type, black primary pills and one royal-blue accent.
+ * Red, amber and green keep their meaning (must-not-miss, soon, done); emergency text is never tinted.
  */
 export const palette = {
-  canvas: "#FBF8F7", surface: "#FFFFFF", ink: "#1B1A26", muted: "#5F5A6E", faint: "#8A8698",
-  blue: "#3E5FD8", blueWash: "#ECE7FF", line: "#E4E0EA", white: "#FFFFFF",
-  green: "#2E7D5B", amber: "#8B5518", red: "#A23E3E", dark: "#211E33",
-  amberWash: "#FFF0DE", amberEdge: "#F6DCC2", mutedWash: "#F1EFF5",
+  canvas: "#F6F7FB", surface: "#FFFFFF", ink: "#141A2E", muted: "#5E6478", faint: "#9197AB",
+  blue: "#3D5AF1", blueWash: "#EAEEFF", line: "#E6E8F0", white: "#FFFFFF",
+  green: "#2E7D5B", amber: "#8B5518", red: "#A23E3E", dark: "#111318",
+  amberWash: "#FFF1E0", amberEdge: "#F5DDC3", mutedWash: "#F0F2F7",
 };
 
-/** The Dawn accent: rose to violet to blue, on one word per screen (the part to glance at). */
-export const dawn = ["#EE8FB2", "#8E7FEA", "#5B7FEA"] as const;
-/** Halftone glint on feature cards and the primary pill: peach, rose, violet. */
-export const glint = { from: [1, 0.7, 0.54], to: [0.56, 0.56, 0.94] } as const;
+/** The accent: royal blue easing to periwinkle, on one word per screen (the part to glance at). */
+export const accent = ["#3D5AF1", "#5F73F3", "#8C8FF4"] as const;
+/** Halftone glint on feature cards and the primary pill: blue to lilac, kept faint. */
+export const glint = { from: [0.36, 0.48, 0.96], to: [0.7, 0.62, 0.97] } as const;
 
 export const type = {
   display: { fontSize: 32, lineHeight: 38, letterSpacing: -1 },

@@ -37,7 +37,7 @@ export function useMessageNeeds() {
   return data && unreadReply(data, read) ? 1 : 0;
 }
 
-/** Home's row for the thread (Dawn glass row): a waiting reply with its opening words, a sent message's status, or the emergency line. */
+/** Home's row for the thread (glass row): a waiting reply with its opening words, a sent message's status, or the emergency line. */
 export function CareTeamRow({ first }: { first?: boolean }) {
   const { data } = useThread();
   const read = useSyncExternalStore(subscribe, () => lastRead);

@@ -10,7 +10,7 @@ import { errorText } from "@/features/errors";
 import { useMe } from "@/features/me";
 import { clockOf, type Message, REPLY_TIME, suggestions, whileYouWait, withDays } from "@/features/messages/model";
 import { markRead, useThread } from "@/features/messages/row";
-import { dawn, palette, type } from "@/lib/theme";
+import { accent, palette, type } from "@/lib/theme";
 import { Card, field, pillStyle, surfaceStyle, Title } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 
@@ -132,9 +132,9 @@ function Bubble({ m, sending, reduced }: { m: Message; sending: boolean; reduced
   </Animated.View>;
 }
 
-/** The care team's mark: a heart on the Dawn gradient (the thread names no one, so no initials). */
+/** The care team's mark: a heart on the accent gradient (the thread names no one, so no initials). */
 function Avatar() {
-  return <View style={{ width: 30, height: 30, borderRadius: 15, marginBottom: 19, alignItems: "center", justifyContent: "center", experimental_backgroundImage: `linear-gradient(135deg, ${dawn[0]}, ${dawn[1]} 55%, ${dawn[2]})` } as ViewStyle}>
+  return <View style={{ width: 30, height: 30, borderRadius: 15, marginBottom: 19, alignItems: "center", justifyContent: "center", experimental_backgroundImage: `linear-gradient(135deg, ${accent[0]}, ${accent[1]} 55%, ${accent[2]})` } as ViewStyle}>
     <Svg width={15} height={15} viewBox="0 0 24 24" fill={palette.white}><Path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></Svg>
   </View>;
 }
