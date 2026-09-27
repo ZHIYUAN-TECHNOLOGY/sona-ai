@@ -50,8 +50,8 @@ export default function DoseScreen() {
         <Text style={{ ...type.title, fontWeight: "600", color: palette.ink, textAlign: "center" }}>{shown.name}</Text>
         <Text style={{ ...type.body, color: palette.ink, textAlign: "center" }}>{shown.line}</Text>
         {plain && plain !== shown.line && <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>{plain}</Text>}
-        {took ? <Text style={{ ...type.footnote, fontWeight: "600", color: palette.green }}>Taken at {clock(took.at)}</Text>
-          : <Text style={{ ...type.footnote, fontWeight: soon ? "600" : "400", color: soon ? palette.amber : palette.muted }}>{dueLine(shown.dueAt, now)}</Text>}
+        {/* Once taken, the settled button says when; the line would repeat it. */}
+        {!took && <Text style={{ ...type.footnote, fontWeight: soon ? "600" : "400", color: soon ? palette.amber : palette.muted }}>{dueLine(shown.dueAt, now)}</Text>}
       </View>
       {!took && <Food line={shown.line} />}
       <View style={{ alignSelf: "stretch", paddingTop: 4 }}>

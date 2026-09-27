@@ -9,7 +9,7 @@ import { countdown, weekLine } from "@/features/home";
 import { Sunbeam } from "@/lib/halftone";
 import { palette, type } from "@/lib/theme";
 import { Card, HoldButton, Section, surfaceStyle } from "@/lib/ui";
-import { clock, dueNow, nextDose, weekOf, whenWords, type WeekDay } from "./model";
+import { clock, dueNow, early, nextDose, weekOf, whenWords, type WeekDay } from "./model";
 
 /**
  * Doses taken, kept on this phone (the dose key: medicine and due time), read through
@@ -82,7 +82,8 @@ export function DoseTile() {
     : dose ? `${dose.name} · ${dose.line}` : plan?.status === "discharged" ? "As needed · nothing on a timer" : "Once you're home";
   const label = done ? `${done.name} taken at ${clock(done.at)}. ${line}` : dose && c ? `Next medicine, ${dose.name} at ${clock(dose.dueAt)}. ${c.kicker}. ${dose.line}` : `Next medicine. ${line}`;
   return <Tile label={`${label}. Open details`} onPress={() => router.push(dose || done ? "/dose" : "/discharge")}
-    footer={dose && !done && <HoldButton compact label="Hold · Taken" doneLabel={`${dose.name} taken`} onDone={take} />}
+    // Taking it from home only once it is close (within 2 h); earlier, the card opens the dose screen, which asks quietly.
+    footer={dose && !done && !early(dose.dueAt, now) && <HoldButton compact label="Hold · Taken" doneLabel={`${dose.name} taken`} onDone={take} />}
     overlay={done && <Sunbeam play={done.at.getTime()} radius={28} />}>
     {done
       ? <Animated.View entering={reduced ? FadeIn.duration(160) : badgeIn} style={{ width: 38, height: 38, borderRadius: 14, borderCurve: "continuous", backgroundColor: palette.green, alignItems: "center", justifyContent: "center" }}>

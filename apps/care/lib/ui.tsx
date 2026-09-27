@@ -2,7 +2,7 @@ import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
 import { useState, type ReactNode } from "react";
 import { AccessibilityInfo, ActivityIndicator, Pressable, Text, View, type TextStyle, type ViewStyle } from "react-native";
-import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { cancelAnimation, Easing, LinearTransition, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { HalftoneGlint } from "./halftone";
 import { dawn, palette, type } from "./theme";
@@ -21,11 +21,15 @@ export const surfaceStyle: ViewStyle = { borderRadius: 28, borderCurve: "continu
 export const pillStyle: ViewStyle = { borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", backgroundColor: "rgba(255,255,255,0.72)", boxShadow: "0 0 0 0.5px rgba(40,24,70,0.06), 0 8px 18px -10px rgba(80,60,140,0.35)" } as ViewStyle;
 const featureStyle: ViewStyle = { experimental_backgroundImage: "linear-gradient(160deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.66) 55%, rgba(255,240,246,0.56) 100%)", boxShadow: "0 0 0 0.5px rgba(90,60,140,0.10), 0 24px 44px -20px rgba(200,120,170,0.30), inset 0 1px 0 #FFFFFF, inset 0 12px 20px -14px rgba(255,255,255,1), inset 0 -14px 24px -14px rgba(240,143,182,0.28)" } as ViewStyle;
 
+/** Cards resize on the layout spring (no bounce), so a card that grows in place (a check-in opening) springs rather than jumps. */
+const CARD_LAYOUT = LinearTransition.springify().duration(380).dampingRatio(1);
+
 export function Card({ children, feature = false, style }: { children: ReactNode; feature?: boolean; style?: ViewStyle }) {
-  return <View style={[surfaceStyle, feature && featureStyle, { padding: 18, gap: 12 }, style]}>
+  const still = useReducedMotion();
+  return <Animated.View layout={still ? undefined : CARD_LAYOUT} style={[surfaceStyle, feature && featureStyle, { padding: 18, gap: 12 }, style]}>
     {feature && <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: 27, overflow: "hidden" }}><HalftoneGlint width={170} height={96} origin={[170, 0]} reach={[160, 90]} strength={0.55} style={{ top: 0, right: 0 }} /></View>}
     {children}
-  </View>;
+  </Animated.View>;
 }
 
 /** Primary: ink capsule with a dotted glint (only the action that matters). `quiet`: a glass capsule. */
