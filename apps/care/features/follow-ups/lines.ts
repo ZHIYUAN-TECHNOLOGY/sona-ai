@@ -27,3 +27,14 @@ export function nextVisit(items: Pick<FollowUp, "short" | "date" | "status" | "i
 
 /** How many follow-ups need the patient now (due soon or overdue); counts toward home's insight line. */
 export const followUpNeeds = (items: Pick<FollowUp, "status">[] | undefined) => items?.filter(f => f.status !== "upcoming").length ?? 0;
+
+/** My visits' insight under the title: "Next: Clinic review in 7 days", amber when due soon, red once overdue. */
+export function visitsLine(items: Pick<FollowUp, "short" | "status" | "inDays">[]): { line: string; tone: "muted" | "amber" | "red" } | undefined {
+  const next = items[0];
+  if (!next) return undefined;
+  return next.status === "overdue" ? { line: `Overdue: ${next.short}, due ${away(next.inDays)}`, tone: "red" }
+    : { line: `Next: ${next.short} ${away(next.inDays)}`, tone: next.status === "due-soon" ? "amber" : "muted" };
+}
+
+/** A timeline dot: red when overdue, blue for the next one, grey for later. */
+export const dotTone = (f: Pick<FollowUp, "status">, next: boolean) => f.status === "overdue" ? "red" : next ? "blue" : "faint";
