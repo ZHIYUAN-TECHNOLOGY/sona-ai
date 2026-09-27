@@ -103,6 +103,8 @@ export const doseLogs = pgTable("dose_logs", {
 export const appointments = pgTable("appointments", {
   id: text("id").primaryKey(), patientId: text("patient_id").notNull(), hospitalId: text("hospital_id").notNull(),
   startsAt: timestamp("starts_at").notNull(), kind: text("kind").notNull(),
+  /** When a doctor booked it from a flagged check-in (Book in), for the ops counter's flag-to-booked time. */
+  bookedAt: timestamp("booked_at"),
 });
 
 export const handoverAcceptances = pgTable("handover_acceptances", {

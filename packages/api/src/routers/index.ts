@@ -11,6 +11,7 @@ import { claimRouter } from "./claim";
 import { completeTask, createTask, dayRouter, patientsRouter, resultsRouter } from "./day"; // lane T, T2
 import { demoRouter } from "./demo";
 import { adherenceRouter } from "./doses";
+import { opsRouter } from "./ops";
 import { dischargeRouter } from "./discharge";
 import { careRouter } from "./care";
 import { carePlanRouter } from "./care-plan";
@@ -46,6 +47,8 @@ export const appRouter = {
   demo: demoRouter,
   // Sona Care doses taken, read by the care team (flagged rows on My Day say what was missed).
   adherence: adherenceRouter,
+  // Management: this week's numbers from the loops' own rows (the ops counter on the ward view).
+  ops: opsRouter,
   // Sona Care, the patient app; `messages` is the care team's side of its thread (announced as "messages")
   care: { ...careRouter, ...carePlanRouter },
   messages: messagesRouter,

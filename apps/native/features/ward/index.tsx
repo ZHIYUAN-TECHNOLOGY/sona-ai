@@ -17,6 +17,7 @@ import { FollowUpList } from "@/features/findings";
 import { useFindings } from "@/features/live/findings-sync";
 import { useServerEncounter } from "@/features/live/sync";
 import { useServerBeds } from "@/features/live/ward-sync";
+import { OpsStrip } from "./ops";
 import { DEMO_PATIENT, OWNERS, SUGGESTED, huddle, wardBeds, wardSummary, type Bed, type Owner } from "./model";
 
 /*
@@ -102,6 +103,8 @@ export function WardScreen() {
               <Text style={{ ...type.caption, color: palette.muted }}>{label}</Text>
             </View>)}
         </View>
+
+        <OpsStrip />
 
         <Surface feature style={{ padding: 14, gap: 10 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>

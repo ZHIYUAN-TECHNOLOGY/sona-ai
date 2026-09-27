@@ -70,7 +70,7 @@ export const checkInsRouter = {
     const startsAt = tomorrowNine(clockOf(context));
     const id = `book-in:${row.task.id}`;
     const kind = `Clinic review · ${reasonOf(row.task.title)}`;
-    await db.insert(appointments).values({ id, patientId: row.patientId, hospitalId, startsAt, kind }).onConflictDoNothing();
+    await db.insert(appointments).values({ id, patientId: row.patientId, hospitalId, startsAt, kind, bookedAt: clockOf(context) }).onConflictDoNothing();
     await db.update(tasks).set({ completed: true }).where(eq(tasks.id, row.task.id));
     const [booked] = await db.select().from(appointments).where(eq(appointments.id, id));
     // The hospital hears "checkIns" from the middleware; her own app hears it here, by name.
