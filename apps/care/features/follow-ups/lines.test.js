@@ -1,5 +1,38 @@
 import { expect, test } from "bun:test";
-import { bringLine, dotTone, followUpNeeds, nextVisit, pillLine, visitsLine, whenLine } from "./lines";
+import { bringLine, dateOf, dayA11y, dayOf, dotTone, emptyLine, followUpNeeds, marksByDay, monthGrid, monthLabel, monthOf, nextUp, nextVisit, pillLine, shiftMonth, visitsLine, whenLine } from "./lines";
+
+const D = (iso) => Date.UTC(...iso.split("-").map((n, i) => Number(n) - (i === 1 ? 1 : 0))) / 86_400_000; // "2026-09-27" → day number
+test("the calendar reads days in Malaysia and lays months out Monday first", () => {
+  expect(dayOf("2026-09-26T16:30:00Z")).toBe(D("2026-09-27")); // 12:30 AM Sunday in Malaysia
+  expect(dayOf("2026-09-26T15:59:00Z")).toBe(D("2026-09-26"));
+  const sep = monthGrid({ year: 2026, month: 8 });
+  expect(sep.length).toBe(5);
+  expect(sep[0].slice(0, 2)).toEqual([null, D("2026-09-01")]); // 1 Sep 2026 is a Tuesday
+  expect(sep[4].filter(Boolean).map(dateOf)).toEqual([28, 29, 30]);
+  expect(monthGrid({ year: 2026, month: 10 }).length).toBe(6); // Nov starts on a Sunday
+  expect(shiftMonth({ year: 2026, month: 11 }, 1)).toEqual({ year: 2027, month: 0 });
+  expect(shiftMonth({ year: 2026, month: 0 }, -1)).toEqual({ year: 2025, month: 11 });
+  expect(monthOf(D("2026-10-04"))).toEqual({ year: 2026, month: 9 });
+  expect(monthLabel({ year: 2026, month: 8 }, D("2026-09-27"))).toBe("Sep");
+  expect(monthLabel({ year: 2027, month: 0 }, D("2026-09-27"))).toBe("Jan 2027");
+});
+
+test("dots mark visits, check-ins and this week's doses; empty days point to what is next", () => {
+  const today = D("2026-09-27");
+  const visits = [{ short: "Clinic review", date: new Date("2026-10-04T02:00:00Z"), status: "due-soon" }, { short: "CT scan", date: new Date("2026-09-20T02:00:00Z"), status: "overdue" }];
+  const checkIns = [{ day: 7, dueAt: new Date("2026-10-01T01:00:00Z") }];
+  const week = [{ state: "all" }, { state: "some" }, { state: "free" }, { state: "ahead" }]; // 24–27 Sep
+  const marks = marksByDay(today, visits, checkIns, week);
+  expect(marks[D("2026-10-04")]).toEqual({ visit: "due" });
+  expect(marks[D("2026-09-20")]).toEqual({ visit: "overdue" });
+  expect(marks[D("2026-10-01")]).toEqual({ checkIn: true });
+  expect([marks[D("2026-09-24")], marks[D("2026-09-25")], marks[D("2026-09-26")], marks[today]]).toEqual([{ doses: "taken" }, { doses: "missed" }, undefined, undefined]);
+  expect(dayA11y(D("2026-10-04"), today, visits, checkIns)).toBe("Sunday 4 October, Clinic review");
+  expect(dayA11y(D("2026-09-25"), D("2026-09-25"), visits, checkIns, marks[D("2026-09-25")])).toBe("Friday 25 September, today, some doses missed");
+  expect(nextUp(today, visits, checkIns)).toEqual({ day: D("2026-10-01"), title: "Day 7 check-in" });
+  expect(emptyLine(today, today, { day: D("2026-10-04"), title: "Clinic review" })).toBe("Nothing today · Next: Clinic review in 7 days");
+  expect(emptyLine(D("2026-10-05"), today, undefined)).toBe("Nothing this day");
+});
 
 test("my visits says what is next and how far off, and colours the timeline dots", () => {
   expect(visitsLine([{ short: "Clinic review", status: "due-soon", inDays: 7 }])).toEqual({ line: "Next: Clinic review in 7 days", tone: "amber" });
