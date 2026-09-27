@@ -1,4 +1,5 @@
 import { clock, dosesToday, untilLine, whenWords, type ScheduledMed } from "./doses/model";
+import { REPLY_TIME, type Message } from "./messages/model";
 
 /** Days since the patient left hospital, counted on calendar days in the hospital's time zone (discharge day is day 0). */
 export function daysHome(dischargedAt: string | undefined, now = new Date()) {
@@ -7,10 +8,9 @@ export function daysHome(dischargedAt: string | undefined, now = new Date()) {
   return day(now) - day(new Date(dischargedAt));
 }
 
-/** The home title: where the patient is, with the part to glance at (the accent) first. */
-export function whereWords(days: number | undefined): [accent: string, rest: string] {
-  return days === undefined ? ["Your care", " between visits"] : days === 0 ? ["Home", " today"] : [`Day ${days}`, " at home"];
-}
+/** The header's date, "Sun, 27 Sep", in the hospital's time whatever the phone says. */
+export const headerDate = (now: Date) =>
+  now.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kuala_Lumpur" }).replace(",", "").replace(" ", ", ");
 
 /** One open thing on home, shown as a chip under the title. */
 export type Need = { kind: "dose" | "check-in" | "reply" | "visit"; label: string };
@@ -57,6 +57,28 @@ export function weekLine(meds: ScheduledMed[], dischargedAt: string | undefined,
   return { text: days.length === 1 ? `${n} on ${days[0]}` : `${n} this week`, tone: "amber" };
 }
 
-/** "Check-ins: 1 of 2 answered", or nothing before any check-in exists. */
-export const checkInsLine = (checkIns: { replies: unknown[] }[] | undefined) =>
-  checkIns?.length ? `Check-ins: ${checkIns.filter(c => c.replies.length).length} of ${checkIns.length} answered` : undefined;
+/** The medicine card's pill: "Next in 18:34" in the last hour, "Next 9:00 PM", "Next tomorrow 8:00 AM", or "Due now · 9:00 PM" (amber) once due. */
+export function nextLine(dueAt: Date, now: Date): { text: string; due: boolean; ticking: boolean } {
+  const c = countdown(dueAt, now);
+  const late = dueAt.getTime() <= now.getTime();
+  return { text: late ? `${c.kicker} · ${c.value}` : `${c.kicker.replace(/^Next medicine( at)?/, "Next")} ${c.value}`, due: c.due, ticking: c.ticking };
+}
+
+/**
+ * Consistency: the share of doses taken, of those due over the same days as the week bars (discharge
+ * day, or at most the last 7). A dose counts once taken or 6 h late; undefined while nothing is due yet.
+ * ponytail: 7 days, not all since discharge, as the phone keeps only the last 40 taken doses; widen with a server log.
+ */
+export function consistency(meds: ScheduledMed[], dischargedAt: string | undefined, taken: string[], now: Date) {
+  const due = Array.from({ length: 7 }, (_, i) => dosesToday(meds, dischargedAt, taken, new Date(now.getTime() - i * 86_400_000))).flat()
+    .filter(d => d.taken || d.dueAt.getTime() < now.getTime() - GRACE);
+  return due.length ? Math.round(due.filter(d => d.taken).length / due.length * 100) : undefined;
+}
+
+/** "Latest update": a waiting reply's words first, then a sent message's status, else reassurance (green). */
+export function latestLine(messages: Pick<Message, "from" | "text">[] | undefined, unread: boolean, calm: boolean): { lead?: string; text: string; tone: "ink" | "muted" | "green" } {
+  const last = messages?.at(-1);
+  if (unread && last) return { lead: "Care team replied", text: last.text, tone: "ink" };
+  if (last?.from === "patient") return { lead: "Message sent", text: REPLY_TIME, tone: "muted" };
+  return { text: calm ? "✦ Nothing needs you" : "✦ No new messages", tone: "green" };
+}

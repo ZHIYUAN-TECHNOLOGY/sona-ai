@@ -1,15 +1,15 @@
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { Pressable, Text, type TextStyle, useWindowDimensions, View, type ViewStyle } from "react-native";
-import Animated, { FadeIn, useReducedMotion, withSpring, withTiming } from "react-native-reanimated";
-import Svg, { Circle, Path } from "react-native-svg";
+import { Pressable, Text, type TextStyle, View } from "react-native";
+import Animated, { Easing, FadeInDown, useReducedMotion, withSpring, withTiming } from "react-native-reanimated";
+import Svg, { Path } from "react-native-svg";
 import { useDischarge } from "@/features/discharge/row";
-import { countdown, weekLine } from "@/features/home";
+import { consistency, nextLine, weekLine } from "@/features/home";
 import { Sunbeam } from "@/lib/halftone";
-import { palette, type } from "@/lib/theme";
-import { Card, HoldButton, Section, surfaceStyle } from "@/lib/ui";
-import { clock, dueNow, early, nextDose, weekOf, whenWords, type WeekDay } from "./model";
+import { palette } from "@/lib/theme";
+import { HoldButton, pillStyle, surfaceStyle } from "@/lib/ui";
+import { dosesToday, dueNow, early, nextDose, weekOf, type WeekDay } from "./model";
 
 /**
  * Doses taken, kept on this phone (the dose key: medicine and due time), read through
@@ -51,109 +51,116 @@ export function useDoseNeeds() {
   return dose && dueNow(dose.dueAt, now) ? 1 : 0;
 }
 
-/** The check badge springs in from 0.6 with a slight overshoot (the confirm spring), never from nothing. */
+/** A card's small grey title ("Today's medicines", "Consistency"). */
+export const KICKER: TextStyle = { fontSize: 13, lineHeight: 18, fontWeight: "600", color: palette.muted };
+const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
+
+/**
+ * A soft grey bento card on home (Lumi kit): the whole card is one labelled button, while a `footer`
+ * control (the hold button) stays its own accessible element and `overlay` sits on top (the sunbeam).
+ * `tall` cards grow to fill their column. It rises in `index` × 40 ms after the first; still under Reduce Motion.
+ */
+export function Tile({ label, onPress, children, footer, overlay, tall = false, index = 0 }: { label: string; onPress: () => void; children: React.ReactNode; footer?: React.ReactNode; overlay?: React.ReactNode; tall?: boolean; index?: number }) {
+  const reduced = useReducedMotion();
+  return <Animated.View entering={reduced ? undefined : FadeInDown.duration(320).delay(index * 40).easing(EASE_OUT)} style={{ flexGrow: tall ? 1 : 0 }}>
+    <Pressable accessible={false} onPress={onPress}
+      style={({ pressed }) => [surfaceStyle, { flexGrow: 1, minHeight: tall ? 220 : 150, padding: 16, gap: 12, transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
+      <View accessible accessibilityRole="button" accessibilityLabel={label} onAccessibilityTap={onPress} style={{ flexGrow: 1, justifyContent: "space-between", gap: 12 }}>{children}</View>
+      {footer}
+      {overlay}
+    </Pressable>
+  </Animated.View>;
+}
+
+/** The check springs in from 0.6 with a slight overshoot (the confirm spring), never from nothing. */
 const badgeIn = () => {
   "worklet";
   return { initialValues: { opacity: 0, transform: [{ scale: 0.6 }] }, animations: { opacity: withTiming(1, { duration: 160 }), transform: [{ scale: withSpring(1, { duration: 380, dampingRatio: 0.72 }) }] } };
 };
 
-/** The last hour's mm:ss on its own one-second clock, so only this text re-renders each tick. */
-function Ticking({ dueAt, style }: { dueAt: Date; style: TextStyle }) {
-  const now = useNow(1000);
-  return <Text style={style}>{countdown(dueAt, now).value}</Text>;
+/** One of today's doses: green with a white check once taken, grey until then. `pop` springs the check in (the one just logged). */
+function DoseDot({ done, pop }: { done: boolean; pop: boolean }) {
+  const box = { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" } as const;
+  return done
+    ? <Animated.View entering={pop ? badgeIn : undefined} style={[box, { backgroundColor: palette.green }]}>
+      <Svg width={14} height={14} viewBox="0 0 24 24"><Path d="M20 6 9 17l-5-5" fill="none" stroke={palette.white} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+    </Animated.View>
+    : <View style={[box, { backgroundColor: "#E4E6EE" }]} />;
+}
+
+/** The next dose as a white pill, on a one-second clock only in its last hour, so only this pill re-renders each tick. */
+function NextPill({ dueAt, ticking }: { dueAt: Date; ticking: boolean }) {
+  const now = useNow(ticking ? 1000 : 30_000);
+  const n = nextLine(dueAt, now);
+  return <View style={[pillStyle, { alignSelf: "flex-start", minHeight: 30, paddingHorizontal: 11, paddingVertical: 5, justifyContent: "center", backgroundColor: palette.white }]}>
+    <Text style={{ fontSize: 12.5, lineHeight: 17, fontWeight: n.due ? "700" : "600", color: n.due ? palette.amber : palette.ink, fontVariant: ["tabular-nums"] }}>{n.text}</Text>
+  </View>;
 }
 
 /**
- * Home's medicine card (reference kit): how long until the next dose, what it is and how to take it,
- * and a compact hold-to-confirm that logs it without leaving home. Once taken: a check, the time struck
- * through, when it was taken and the next dose named, with the sunbeam passing once. Tap opens /dose.
+ * Home's tall medicine card (Lumi kit frame 1): a circle per dose today, how many are taken, and the
+ * next one in a pill (a live countdown in its last hour). Once a dose is within 2 h, a compact hold
+ * logs it in place; its circle springs green and the sunbeam passes once. Tap opens /dose.
  */
-export function DoseTile() {
+export function MedsCard({ index }: { index: number }) {
   const now = useNow();
-  const { plan, dose } = useNextDose(now);
+  const { plan, dose, taken: done, meds } = useNextDose(now);
   const reduced = useReducedMotion();
-  const [took, setTook] = useState<{ name: string; dueAt: Date; at: Date }>();
-  // The taken state holds until the next dose is itself due.
-  const done = took && !(dose && dueNow(dose.dueAt, now)) ? took : undefined;
-  const take = () => { if (!dose) return; markTaken(dose.key); setTook({ name: dose.name, dueAt: dose.dueAt, at: new Date() }); };
-  const c = dose && countdown(dose.dueAt, now);
-  const big: TextStyle = { fontSize: 32, lineHeight: 38, fontWeight: "700", letterSpacing: -1.2, color: palette.ink, fontVariant: ["tabular-nums"] };
-  const line = done ? (dose ? `Next: ${dose.name} · ${whenWords(dose.dueAt, now)}` : "Nothing else on a timer")
-    : dose ? `${dose.name} · ${dose.line}` : plan?.status === "discharged" ? "As needed · nothing on a timer" : "Once you're home";
-  const label = done ? `${done.name} taken at ${clock(done.at)}. ${line}` : dose && c ? `Next medicine, ${dose.name} at ${clock(dose.dueAt)}. ${c.kicker}. ${dose.line}` : `Next medicine. ${line}`;
-  return <Tile label={`${label}. Open details`} onPress={() => router.push(dose || done ? "/dose" : "/discharge")}
-    // Taking it from home only once it is close (within 2 h); earlier, the card opens the dose screen, which asks quietly.
-    footer={dose && !done && !early(dose.dueAt, now) && <HoldButton compact label="Hold · Taken" doneLabel={`${dose.name} taken`} onDone={take} />}
-    overlay={done && <Sunbeam play={done.at.getTime()} radius={28} />}>
-    {done
-      ? <Animated.View entering={reduced ? FadeIn.duration(160) : badgeIn} style={{ width: 38, height: 38, borderRadius: 14, borderCurve: "continuous", backgroundColor: palette.green, alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ color: palette.white, fontSize: 17, fontWeight: "700" }}>✓</Text>
-      </Animated.View>
-      : <View style={{ width: 38, height: 38, borderRadius: 14, borderCurve: "continuous", backgroundColor: palette.blueWash, alignItems: "center", justifyContent: "center" }}>
-        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={palette.blue} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <Circle cx={12} cy={13} r={8} /><Path d="M12 9v4l2 2M5 3 2 6M22 6l-3-3M6.38 18.7 4 21M17.64 18.67 20 21" />
-        </Svg>
+  const [took, setTook] = useState<{ key: string; name: string; at: Date }>();
+  const today = plan?.status === "discharged" ? dosesToday(meds, plan.dischargedAt, done, now) : [];
+  const count = today.filter(d => d.taken).length;
+  // Just logged: the hold hides and the sunbeam holds until the next dose is itself due.
+  const logged = took && !(dose && dueNow(dose.dueAt, now)) ? took : undefined;
+  const take = () => { if (!dose) return; markTaken(dose.key); setTook({ key: dose.key, name: dose.name, at: new Date() }); };
+  const next = dose && nextLine(dose.dueAt, now);
+  const head = today.length ? `${count} of ${today.length} doses taken` : plan?.status === "discharged" ? "Nothing on a timer today" : "Once you're home";
+  const all = today.length > 0 && count === today.length;
+  return <Tile tall index={index} label={`Today's medicines. ${head}.${dose && next ? ` ${dose.name}, ${next.text}.` : ""} Open details`}
+    onPress={() => router.push(dose || today.length ? "/dose" : "/discharge")}
+    footer={dose && !logged && !early(dose.dueAt, now) && <HoldButton compact label="Hold · Taken" doneLabel={`${dose.name} taken`} onDone={take} />}
+    overlay={logged && <Sunbeam play={logged.at.getTime()} radius={30} />}>
+    <View style={{ gap: 12 }}>
+      <Text style={KICKER}>Today's medicines</Text>
+      {today.length > 0 && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+        {today.map(d => <DoseDot key={d.key} done={d.taken} pop={!reduced && d.key === took?.key} />)}
       </View>}
-    <View style={{ gap: 2 }}>
-      <Text style={{ fontSize: 12.5, lineHeight: 17, fontWeight: done || c?.due ? "700" : "500", color: done ? palette.green : c?.due ? palette.amber : palette.muted }}>{done ? `Taken at ${clock(done.at)}` : c ? c.kicker : "Next medicine"}</Text>
-      {done ? <Text numberOfLines={1} adjustsFontSizeToFit style={{ ...big, color: palette.muted, textDecorationLine: "line-through" }}>{clock(done.dueAt)}</Text>
-        : dose && c?.ticking ? <Ticking dueAt={dose.dueAt} style={big} />
-          : <Text numberOfLines={1} adjustsFontSizeToFit style={big}>{c ? c.value : "—"}</Text>}
-      <Text numberOfLines={3} style={{ ...type.footnote, color: palette.muted }}>{line}</Text>
+    </View>
+    <View style={{ gap: 10 }}>
+      <Text style={{ fontSize: 22, lineHeight: 27, fontWeight: "700", letterSpacing: -0.6, color: all ? palette.green : palette.ink }}>{head}</Text>
+      {dose && next && <NextPill dueAt={dose.dueAt} ticking={next.ticking} />}
     </View>
   </Tile>;
 }
 
-/**
- * A tall glass card for home's "Up next" pair: tapping anywhere opens it, while a `footer` control (the
- * hold button) stays its own accessible element; `overlay` sits on top (the sunbeam). It grows with
- * text, and at large Dynamic Type the pair wraps to one per row (the basis scales with the font).
- */
-export function Tile({ label, onPress, children, footer, overlay }: { label: string; onPress: () => void; children: React.ReactNode; footer?: React.ReactNode; overlay?: React.ReactNode }) {
-  const { fontScale } = useWindowDimensions();
-  return <Pressable accessible={false} onPress={onPress}
-    style={({ pressed }) => [surfaceStyle, { flexGrow: 1, flexBasis: 150 * fontScale, minHeight: 200, padding: 16, gap: 12, transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
-    <View accessible accessibilityRole="button" accessibilityLabel={label} onAccessibilityTap={onPress} style={{ flexGrow: 1, justifyContent: "space-between", gap: 12 }}>{children}</View>
-    {footer}
-    {overlay}
-  </Pressable>;
-}
-
-const DOT: Record<WeekDay["state"], ViewStyle> = {
-  all: { experimental_backgroundImage: "linear-gradient(135deg, #6FD0A8, #2E9C6E)" } as ViewStyle,
-  some: { experimental_backgroundImage: `linear-gradient(90deg, ${palette.green} 50%, #EDEAF4 50%)` } as ViewStyle,
-  none: { borderWidth: 2, borderColor: palette.amber },
-  ahead: { borderWidth: 1.5, borderColor: "#CFCADC" },
-  free: { backgroundColor: "#EDEAF4", opacity: 0.6 },
-};
+const BAR: Record<WeekDay["state"], string> = { all: palette.blue, some: "#A9B6F9", none: "#E4E6EE", ahead: "#E4E6EE", free: "#E4E6EE" };
 const SAYS: Record<WeekDay["state"], string> = { all: "all taken", some: "some taken", none: "missed", ahead: "still to come", free: "nothing due" };
 
 /**
- * Home's quick review of the week: a dot per day since discharge (green all taken, half some, amber ring
- * missed, empty ring still to come) and one line. Hidden when nothing is on a timer.
+ * Home's short consistency card (Lumi kit's "rate"): the share of due doses taken this week, big, and a
+ * thin bar per day since discharge (blue all taken, lighter some, grey none or not due). A missed dose
+ * adds one amber line naming when. Tap opens /dose.
  */
-export function WeekCard({ also }: { also?: string }) {
+export function ConsistencyCard({ index }: { index: number }) {
   const now = useNow();
   const { plan, taken: done, meds } = useNextDose(now);
-  if (plan?.status !== "discharged") return null;
-  const week = weekOf(meds, plan.dischargedAt, done, now);
-  if (week.every(d => d.state === "free")) return null;
-  const line = weekLine(meds, plan.dischargedAt, done, now);
-  return <>
-    <Section light="This" bold="week" />
-    <Card style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 14, paddingVertical: 16 }}>
-      <View accessible accessibilityLabel={`Doses by day: ${week.map((d, i) => `${i === week.length - 1 ? "today" : d.label} ${SAYS[d.state]}`).join(", ")}`} style={{ flexDirection: "row", gap: 6 }}>
-        {week.map((d, i) => <View key={i} style={{ alignItems: "center", gap: 5 }}>
-          <View style={[{ width: 18, height: 18, borderRadius: 9 }, DOT[d.state]]} />
-          <Text style={{ fontSize: 10.5, fontWeight: "700", color: palette.muted }}>{d.label}</Text>
-        </View>)}
-      </View>
-      <View style={{ flex: 1, minWidth: 140, gap: 2 }}>
-        <Text style={{ ...type.body, fontWeight: "700", color: line.tone === "muted" ? palette.ink : palette[line.tone] }}>{line.text}</Text>
-        {also && <Text style={{ ...type.footnote, color: palette.muted }}>{also}</Text>}
-      </View>
-    </Card>
-  </>;
+  const out = plan?.status === "discharged" ? plan.dischargedAt : undefined;
+  const pct = consistency(meds, out, done, now);
+  const week = weekOf(meds, out, done, now);
+  const line = weekLine(meds, out, done, now);
+  const days = week.map((d, i) => `${i === week.length - 1 ? "today" : d.label} ${SAYS[d.state]}`).join(", ");
+  return <Tile index={index} label={`Consistency. ${pct === undefined ? "Nothing due yet" : `${pct}% of doses taken this week. ${line.text}`}.${days ? ` By day: ${days}.` : ""} Open medicines`}
+    onPress={() => router.push(out ? "/dose" : "/discharge")}>
+    <Text style={KICKER}>Consistency</Text>
+    <View style={{ gap: 8 }}>
+      <Text style={{ fontSize: 32, lineHeight: 38, fontWeight: "700", letterSpacing: -1.2, color: palette.ink, fontVariant: ["tabular-nums"] }}>
+        {pct ?? "—"}{pct !== undefined && <Text style={{ fontSize: 17, fontWeight: "600", color: palette.muted }}> %</Text>}
+      </Text>
+      {line.tone === "amber" && <Text style={{ fontSize: 13, lineHeight: 18, fontWeight: "600", color: palette.amber }}>{line.text}</Text>}
+      {week.length > 0 && <View style={{ flexDirection: "row", gap: 5, height: 26 }}>
+        {week.map((d, i) => <View key={i} style={{ flex: 1, maxWidth: 8, borderRadius: 4, backgroundColor: BAR[d.state] }} />)}
+      </View>}
+    </View>
+  </Tile>;
 }
 
 export { Pill, tintOf } from "./pill";
