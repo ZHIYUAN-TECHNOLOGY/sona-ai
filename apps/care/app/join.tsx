@@ -66,7 +66,7 @@ export default function Join() {
     {who && <Card>
       <Text style={{ ...type.body, color: palette.ink }}>This code is for <Text style={{ fontWeight: "700" }}>{who.firstName}</Text> at {who.hospital}.</Text>
       {session?.user
-        ? <Text style={{ ...type.footnote, color: palette.muted }}>It will be linked to {session.user.email}.</Text>
+        ? <Text style={{ ...type.footnote, color: palette.muted }}>It will be linked to {accountName(session.user)}.</Text>
         : <>
           <TextInput key="name" value={name} onChangeText={setName} placeholder="Your full name" placeholderTextColor={palette.muted} autoComplete="name" style={field} />
           <TextInput value={email} onChangeText={setEmail} placeholder="Email" placeholderTextColor={palette.muted} autoCapitalize="none" autoComplete="email" keyboardType="email-address" style={field} />
@@ -77,4 +77,9 @@ export default function Join() {
     </Card>}
     {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
   </ScrollView>;
+}
+
+/** How the patient knows their account: the phone number they signed in with, else their email (a phone account's email is a placeholder). */
+function accountName(user: { email: string; phoneNumber?: string | null }) {
+  return user.phoneNumber ?? user.email;
 }
