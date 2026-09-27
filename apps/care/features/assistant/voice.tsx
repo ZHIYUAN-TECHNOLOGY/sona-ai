@@ -1,50 +1,60 @@
-import { Canvas, Fill, Shader, Skia, useClock } from "@shopify/react-native-skia";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import * as Speech from "expo-speech";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { Easing, FadeIn, useAnimatedStyle, useDerivedValue, useReducedMotion, useSharedValue, withDelay, withTiming, type SharedValue } from "react-native-reanimated";
+import Animated, { Easing, FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import Svg, { Path } from "react-native-svg";
-import { spoken, type Reply } from "@/features/assistant/answers";
+import { spoken, type Asked, type Reply } from "@/features/assistant/answers";
+import { Glyph } from "@/features/assistant/composer";
 import { pickVoices, preview, type SonaVoice } from "@/features/assistant/voices";
 import { orbPad, SonaOrb } from "@/lib/orb";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { Button, CircleButton, ICON, pillStyle, surfaceStyle } from "@/lib/ui";
+import { Button, CircleButton, ICON } from "@/lib/ui";
 
 /**
- * Voice mode (Life OS voice chat, after Gemini's voice picker). The first time, "Choose Sona's voice":
- * swipe between the phone's English voices; the name and its line slide out and fade while the next
- * slides in from the other side (fast ease-out, the line 40 ms behind the name), the page dots stretch
- * into a pill for the current one, and each voice says hello. Then the live session: the orb, the
- * plan's questions as big rows, and a blue-violet wave along the bottom that breathes and swells while
- * Sona reads. There is no speech-to-text, so Sona says so: tap a question and it reads the answer aloud.
- * Reduce Motion: no sliding, and the wave holds still.
+ * Voice mode, after the AI Health Companion kit's voice screens: "Sona Care" centred at the top with
+ * back; the orb in the middle with one honest line under it ("Tap to hear it", "Reading aloud…"); the
+ * answer large and centred, the words already read in ink and the rest faint (karaoke on the phone's
+ * word boundaries; all ink where the phone sends none); the plan's questions under it; and a bottom
+ * row of the voice picker, the main round button (read / stop) and the keyboard back to text. There is
+ * no speech-to-text, so it never claims to listen: tap a question and Sona reads the answer aloud.
+ * The first time, "Choose Sona's voice" (after Gemini's picker): swipe between the phone's English
+ * voices; each says hello. Reduce Motion: no sliding, and the orb holds still.
  */
 const KEY = "sona-care.voice";
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
 const GLYPH = {
   next: "m9 18l6-6l-6-6",
-  history: "M3 12a9 9 0 1 0 9-9a9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5M12 7v5l4 2",
   keyboard: "M10 8h.01M12 12h.01M14 8h.01M16 12h.01M18 8h.01M6 8h.01M7 16h10M8 12h.01M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2",
-  out: "M7 17L17 7M7 7h10v10",
+  person: "M18 20a6 6 0 0 0-12 0M12 14a4 4 0 1 0 0-8a4 4 0 0 0 0 8",
+};
+/** A question to offer and its small line icon (a missed dose, a medicine, a visit, a doctor). */
+export type Suggestion = { question: string; d: string };
+export const SUGGEST_ICON: Record<Asked["kind"] | "doctor", string> = {
+  dose: ICON.alarm,
+  medicine: "m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7ZM8.5 8.5l7 7",
+  visit: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2",
+  doctor: "M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3M8 15v1a6 6 0 0 0 6 6a6 6 0 0 0 6-6v-4M20 10a2 2 0 1 0 0 4a2 2 0 0 0 0-4",
 };
 
-export function VoiceMode({ questions, answer, onChat, onType }: { questions: string[]; answer: (question: string) => Reply; onChat: () => void; onType: () => void }) {
+export function VoiceMode({ questions, answer, first, onChat, onType }: { questions: Suggestion[]; answer: (question: string) => Reply; first?: string; onChat: () => void; onType: () => void }) {
   const still = useReducedMotion();
   const insets = useSafeAreaInsets();
   const [voices, setVoices] = useState<SonaVoice[]>();
   const [voice, setVoice] = useState<SonaVoice>();
   const [picking, setPicking] = useState(false);
-  const [said, setSaid] = useState<string>();
+  // The answer on show (the chat's last one on arrival) and how far into it the voice has read.
+  const [said, setSaid] = useState(first);
+  const [upto, setUpto] = useState<number>();
   const [speaking, setSpeaking] = useState(false);
-  // 0 quiet, 1 speaking: swells the wave and floods the orb.
+  // 0 quiet, 1 speaking: floods the orb.
   const talk = useSharedValue(0);
-  // Each utterance gets a number, so a stopped one's late callback can't mark the next one as done.
+  // Each utterance gets a number, so a stopped one's late callback can't touch the next one.
   const turn = useRef(0);
 
   useEffect(() => {
@@ -60,65 +70,65 @@ export function VoiceMode({ questions, answer, onChat, onType }: { questions: st
   const on = (id: number, now: boolean) => {
     if (id !== turn.current) return;
     setSpeaking(now);
+    if (!now) setUpto(undefined);
     talk.set(still ? 0 : withTiming(now ? 1 : 0, { duration: now ? 500 : 900, easing: EASE_OUT }));
   };
-  const speak = (text: string, v: SonaVoice) => {
+  const speak = (text: string, v: SonaVoice, follow = false) => {
     const id = ++turn.current;
     void Speech.stop();
+    setUpto(undefined);
     Speech.speak(text, { voice: v.voice, language: v.language, rate: v.rate, pitch: v.pitch,
+      onBoundary: follow ? (e: { charIndex: number; charLength: number }) => { if (id === turn.current) setUpto(e.charIndex + e.charLength); } : undefined,
       onStart: () => on(id, true), onDone: () => on(id, false), onStopped: () => on(id, false), onError: () => on(id, false) });
   };
-  const stop = () => { turn.current++; void Speech.stop(); setSpeaking(false); talk.set(still ? 0 : withTiming(0, { duration: 600, easing: EASE_OUT })); };
+  const stop = () => { turn.current++; void Speech.stop(); setSpeaking(false); setUpto(undefined); talk.set(still ? 0 : withTiming(0, { duration: 600, easing: EASE_OUT })); };
+  const read = (text: string, v = voice) => { if (!v) return; setSaid(text); speak(text, v, true); };
 
   const start = (v: SonaVoice) => {
     void SecureStore.setItemAsync(KEY, v.id).catch(() => {});
     setVoice(v); setPicking(false);
-    speak("I'm ready. Tap a question and I'll read the answer aloud.", v);
+    if (said) read(said, v);
+    else speak("I'm ready. Tap a question and I'll read the answer aloud.", v);
   };
-  const ask = (q: string) => {
-    if (!voice) return;
-    const text = spoken(answer(q));
-    setSaid(text);
-    speak(text, voice);
-  };
+  const ask = (q: string) => read(spoken(answer(q)));
+  const main = () => { if (speaking) stop(); else if (said) read(said); };
   const leave = (then: () => void) => { stop(); then(); };
+  const lit = upto === undefined ? said?.length ?? 0 : upto;
+  const status = speaking ? "Reading aloud…" : said ? "Tap to hear it" : "Tap a question below";
 
-  return <View style={{ flex: 1 }}>
-    <Wave energy={talk} />
-    {!voices ? <ActivityIndicator color={palette.muted} style={{ flex: 1 }} />
-      : picking || !voice ? <Picker voices={voices} initial={Math.max(0, voices.findIndex(v => v.id === voice?.id))} onPreview={v => speak(preview(v), v)} onStart={start} onClose={() => leave(voice ? () => setPicking(false) : onChat)} />
-        : <View style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 24, gap: 18 }}>
-            <Animated.View entering={still ? undefined : FadeIn.duration(240)} style={{ alignItems: "center" }}>
-              <Pressable accessibilityRole="button" accessibilityLabel={`Voice: ${voice.name}`} accessibilityHint="Choose another voice" onPress={() => { stop(); setPicking(true); }}
-                style={({ pressed }) => [pillStyle, { minHeight: 44, paddingHorizontal: 16, justifyContent: "center", transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
-                <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>Voice · {voice.name}</Text>
-              </Pressable>
-            </Animated.View>
-            <View accessible={false} style={{ alignSelf: "center", marginVertical: -orbPad(170) + 8 }}><SonaOrb size={170} flood={talk} /></View>
-            <Text accessibilityLiveRegion="polite" selectable style={{ fontSize: said ? 20 : 26, lineHeight: said ? 28 : 33, fontWeight: "300", letterSpacing: -0.4, color: palette.ink, textAlign: "center" }}>
-              {said ?? "Hello, how can we support your health today?"}
-            </Text>
-            <View style={{ alignSelf: "center", ...pillStyle, paddingHorizontal: 14, paddingVertical: 8 }}>
-              <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted, textAlign: "center" }}>Tap a question — I'll read the answer aloud</Text>
-            </View>
-            <View style={{ gap: 10 }}>
-              {questions.map((q, i) => <Animated.View key={q} entering={still ? undefined : FadeIn.duration(260).easing(EASE_OUT).delay(120 + i * 40)}>
-                <SuggestionRow question={q} big onPress={() => ask(q)} />
-              </Animated.View>)}
-            </View>
-          </ScrollView>
-          <Animated.View entering={still ? undefined : FadeIn.duration(260).delay(200)}
-            style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 28, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 16) }}>
-            <CircleButton d={GLYPH.history} size={56} label="Back to the chat" onPress={() => leave(onChat)} />
-            <Pressable accessibilityRole="button" accessibilityLabel={speaking ? "Stop reading" : "Nothing is being read"} accessibilityState={{ disabled: !speaking }} disabled={!speaking} onPress={stop}
-              style={({ pressed }) => ({ width: 80, height: 80, borderRadius: 40, alignItems: "center", justifyContent: "center", backgroundColor: palette.dark, opacity: speaking ? 1 : 0.35,
-                boxShadow: "0 14px 28px -14px rgba(14,18,27,0.6)", transform: [{ scale: pressed ? 0.94 : 1 }] })}>
-              <View style={{ width: 22, height: 22, borderRadius: 5, backgroundColor: palette.white }} />
-            </Pressable>
-            <CircleButton d={GLYPH.keyboard} size={56} label="Type a question" onPress={() => leave(onType)} />
-          </Animated.View>
-        </View>}
+  if (!voices) return <ActivityIndicator color={palette.muted} style={{ flex: 1 }} />;
+  if (picking || !voice) return <Picker voices={voices} initial={Math.max(0, voices.findIndex(v => v.id === voice?.id))} onPreview={v => speak(preview(v), v)} onStart={start} onClose={() => leave(voice ? () => setPicking(false) : onChat)} />;
+
+  return <View style={{ flex: 1, paddingTop: insets.top + 8 }}>
+    <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16 }}>
+      <CircleButton d={ICON.back} label="Back to the chat" onPress={() => leave(onChat)} />
+      <Text accessibilityRole="header" style={{ flex: 1, textAlign: "center", fontSize: 20, lineHeight: 26, fontWeight: "600", letterSpacing: -0.6, color: palette.ink }}>Sona Care</Text>
+      <View style={{ width: 48 }} />
+    </View>
+    <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 24, paddingVertical: 16, gap: 14 }}>
+      <Pressable accessibilityRole="button" accessibilityLabel={speaking ? "Stop reading" : said ? "Hear the answer" : "Nothing to read yet"} accessibilityState={{ disabled: !said }} disabled={!said} onPress={main}
+        style={({ pressed }) => ({ margin: -orbPad(150) + 8, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+        <SonaOrb size={150} flood={talk} />
+      </Pressable>
+      <Text accessibilityLiveRegion="polite" style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: palette.ink, textAlign: "center" }}>{status}</Text>
+      {said && <Text accessibilityLiveRegion="polite" selectable style={{ fontSize: 24, lineHeight: 32, fontWeight: "600", letterSpacing: -0.6, color: palette.ink, textAlign: "center", marginTop: 4 }}>
+        {said.slice(0, lit)}<Text style={{ fontWeight: "600", color: palette.faint }}>{said.slice(lit)}</Text>
+      </Text>}
+      <View style={{ alignSelf: "stretch", marginTop: 8 }}>
+        {questions.map(s => <SuggestionRow key={s.question} s={s} aloud onPress={() => ask(s.question)} />)}
+      </View>
+    </ScrollView>
+    <Animated.View entering={still ? undefined : FadeIn.duration(260).delay(160)}
+      style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 36, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 16) }}>
+      <CircleButton d={GLYPH.person} size={56} label={`Voice: ${voice.name}. Choose another voice`} onPress={() => { stop(); setPicking(true); }} />
+      <Pressable accessibilityRole="button" accessibilityLabel={speaking ? "Stop reading" : "Read the answer aloud"} accessibilityState={{ disabled: !said && !speaking }} disabled={!said && !speaking} onPress={main}
+        style={({ pressed }) => ({ width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line,
+          opacity: said || speaking ? 1 : 0.45, boxShadow: "0 14px 28px -14px rgba(37,99,235,0.45)", transform: [{ scale: pressed ? 0.94 : 1 }] })}>
+        {speaking ? <View style={{ width: 20, height: 20, borderRadius: 5, backgroundColor: palette.blue }} />
+          : <Svg width={24} height={24} viewBox="0 0 24 24"><Path d="M7 4.5v15l12.5-7.5z" fill={palette.blue} stroke={palette.blue} strokeWidth={1.5} strokeLinejoin="round" /></Svg>}
+      </Pressable>
+      <CircleButton d={GLYPH.keyboard} size={56} label="Type a question" onPress={() => leave(onType)} />
+    </Animated.View>
   </View>;
 }
 
@@ -222,62 +232,15 @@ function PageDot({ i, pos }: { i: number; pos: SharedValue<number> }) {
     const near = Math.max(0, 1 - Math.abs(i - pos.get()));
     return { width: 8 + 18 * near, opacity: 0.3 + 0.7 * near };
   });
-  return <Animated.View style={[{ height: 8, borderRadius: 4, backgroundColor: palette.blue }, style]} />;
+  return <Animated.View style={[{ height: 8, borderRadius: 4, backgroundColor: palette.ink }, style]} />;
 }
 
-/** A suggested question as a white row with a ↗ circle (Life OS AI chat); `big` for the voice session. */
-export function SuggestionRow({ question, onPress, big }: { question: string; onPress: () => void; big?: boolean }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={question} accessibilityHint={big ? "Reads the answer aloud" : undefined} onPress={onPress}
-    style={({ pressed }) => [surfaceStyle, { minHeight: big ? 64 : 56, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, paddingLeft: 18, paddingRight: 10, borderRadius: big ? 24 : 20, transform: [{ scale: pressed ? 0.97 : 1 }] }]}>
-    <Text style={{ flex: 1, fontSize: big ? 18 : 16, lineHeight: big ? 24 : 22, fontWeight: "500", color: palette.ink }}>{question}</Text>
-    <View style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: palette.blueWash }}>
-      <Svg width={16} height={16} viewBox="0 0 24 24"><Path d={GLYPH.out} fill="none" stroke={palette.blue} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></Svg>
-    </View>
+
+/** A suggested question (the kit's Ask Nomi rows): a small line icon and the words, no card, 48 pt tall. `aloud` in voice mode. */
+export function SuggestionRow({ s, onPress, aloud }: { s: Suggestion; onPress: () => void; aloud?: boolean }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={s.question} accessibilityHint={aloud ? "Reads the answer aloud" : undefined} onPress={onPress}
+    style={({ pressed }) => ({ minHeight: 48, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8, paddingHorizontal: 4, opacity: pressed ? 0.55 : 1 })}>
+    <Glyph d={s.d} color={palette.muted} size={16} width={1.8} />
+    <Text style={{ flex: 1, fontSize: 15, lineHeight: 21, fontWeight: "500", color: palette.ink }}>{s.question}</Text>
   </Pressable>;
-}
-
-// The ambient wave: three soft ribbons of light near the bottom, blue easing to violet across the
-// screen, a fill of glow under them. `breathe` is a slow 7 s swell; `energy` (0–1, while Sona speaks)
-// lifts the ribbons, widens and quickens them.
-const wave = Skia.RuntimeEffect.Make(`
-uniform float2 size;
-uniform float t;
-uniform float energy;
-
-half4 main(float2 p) {
-  float2 uv = p / size;
-  float breathe = 0.5 + 0.5 * sin(t * 0.9);
-  float lift = 0.05 * breathe + 0.14 * energy;
-  float3 sum = float3(0.0);
-  float g = 0.0;
-  for (int i = 0; i < 3; i++) {
-    float f = float(i);
-    float amp = (0.03 + 0.02 * breathe + 0.08 * energy) * (1.0 - 0.25 * f);
-    float speed = 0.3 + 1.5 * energy;
-    float y = 0.62 - lift + 0.08 * f
-      + amp * sin(uv.x * (4.2 + 1.6 * f) + t * speed * (1.0 + 0.35 * f) + 2.1 * f)
-      + amp * 0.45 * sin(uv.x * (9.0 - f) - t * speed * 0.7);
-    float d = uv.y - y;
-    float w = 0.045 + 0.035 * energy + 0.012 * breathe;
-    float band = exp(-(d * d) / (w * w));
-    float body = smoothstep(-0.03, 0.35, d) * 0.5;
-    float k = (band + body) * (1.0 - 0.2 * f);
-    float3 c = mix(mix(float3(0.20, 0.36, 1.0), float3(0.49, 0.32, 0.96), uv.x), float3(0.55, 0.76, 1.0), 0.3 * f);
-    sum += c * k;
-    g += k;
-  }
-  float a = clamp(g * (0.26 + 0.16 * energy), 0.0, 0.8) * smoothstep(0.1, 0.55, uv.y);
-  float3 col = sum / max(g, 0.0001);
-  return half4(half3(col * a), half(a));
-}`)!;
-
-function Wave({ energy }: { energy: SharedValue<number> }) {
-  const still = useReducedMotion();
-  const clock = useClock();
-  const { width, height } = useWindowDimensions();
-  const h = Math.round(height * 0.42);
-  const uniforms = useDerivedValue(() => ({ size: [width, h], t: still ? 0 : clock.value / 1000, energy: still ? 0 : energy.get() }));
-  return <Canvas pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: h }}>
-    <Fill><Shader source={wave} uniforms={uniforms} /></Fill>
-  </Canvas>;
 }

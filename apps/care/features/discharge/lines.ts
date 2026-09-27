@@ -15,14 +15,6 @@ export function dischargeLine(plan: Plan | undefined) {
 export type Group = keyof Discharged["medicines"];
 export type Med = Discharged["medicines"][Group][number];
 
-/**
- * The page's quick insight: what the stay changed, one chip per group that has any ("1 new",
- * "1 changed", "1 stopped"), with the medicine a tap opens (the group's first).
- */
-export function changeSummary(meds: Discharged["medicines"]) {
-  return (["new", "changed", "stopped"] as const).filter(g => meds[g].length).map(g => ({ group: g, label: `${meds[g].length} ${g}`, first: meds[g][0]!.name }));
-}
-
 /** "9 PM", "8:30 AM" from the plan's "HH:MM" (already Malaysia time). */
 const hour = (hhmm: string) => {
   const [h = 0, m = 0] = hhmm.split(":").map(Number);
@@ -37,13 +29,6 @@ export function scheduleLine({ at = [] }: Pick<Med, "at">) {
 
 /** What the stay did to a medicine, in the patient's words (the sheet's grey line). */
 export const CHANGE = { new: "Started in hospital", changed: "Changed in hospital", continue: "Same as before your stay", stopped: "Stopped in hospital" } as const;
-
-/** The sheet's title split for the accent (after the kit's "Medi|cines"): the last word of a longer name, else the second half. */
-export function accentSplit(name: string): [string, string] {
-  const space = name.lastIndexOf(" ");
-  const cut = space > 0 ? space + 1 : Math.ceil(name.length / 2);
-  return [name.slice(0, cut), name.slice(cut)];
-}
 
 /**
  * The sheet's sentence as runs of plain and bold text: "You have to take **1 tablet**, **once a day at

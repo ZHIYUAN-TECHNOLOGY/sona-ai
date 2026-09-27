@@ -10,14 +10,14 @@ import { useMe } from "@/features/me";
 import { useMessageNeeds, useThread } from "@/features/messages/row";
 import { Sunbeam } from "@/lib/halftone";
 import { palette, type } from "@/lib/theme";
-import { Button, Card } from "@/lib/ui";
+import { Button, Card, pillStyle } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 import { Answer, TINT } from "./answer";
 import { answersFor, doneLine, shortDate, todayOf, type Feeling, type ReplyLabel } from "./model";
 
 /**
- * Home's feature card: the check-in waiting for the patient, answered in place (a tinted pill opens
- * into quick replies, or their own words), then a done line saying who was told and when they call.
+ * Home's feature card: the check-in waiting for the patient, answered in place (the kit's five faces;
+ * the chosen one opens into quick replies, or their own words), then a done line saying who was told and when they call.
  * Otherwise the care team's waiting reply, or the next check-in, calmly. `useCheckInNeeds` counts
  * toward the home's insight line.
  */
@@ -57,9 +57,13 @@ export function TodayCard() {
     },
   });
   const layout = reduced ? undefined : LinearTransition.springify().duration(380).dampingRatio(1);
-  const overline = (text: string) => <Text style={{ ...type.overline, color: palette.blue }}>{text}</Text>;
-  const link = (label: string, to: "/check-ins" | "/messages") => <Pressable accessibilityRole="link" onPress={() => router.push(to)} style={{ minHeight: 44, justifyContent: "center", alignSelf: "flex-start" }}>
-    <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{label} ›</Text>
+  // The kit's white capsule for what this is and when ("Day 2 check-in · 10 seconds").
+  const overline = (text: string) => <View style={[pillStyle, { alignSelf: "flex-start", minHeight: 28, paddingHorizontal: 11, justifyContent: "center" }]}>
+    <Text maxFontSizeMultiplier={1.4} style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{text}</Text>
+  </View>;
+  const head = { fontSize: 24, lineHeight: 30, letterSpacing: -1, fontWeight: "600", color: palette.ink } as const;
+  const link = (label: string, to: "/check-ins" | "/messages") => <Pressable accessibilityRole="link" onPress={() => router.push(to)} style={{ minHeight: 48, justifyContent: "center", alignSelf: "flex-start" }}>
+    <Text style={{ ...type.body, fontWeight: "600", color: palette.blue }}>{label}</Text>
   </Pressable>;
 
   if (!data) return <Card feature>
@@ -78,7 +82,7 @@ export function TodayCard() {
       {done.feeling && <Glow feeling={done.feeling} />}
       <Animated.View entering={reduced ? undefined : FadeIn.duration(240)} style={{ gap: 8 }}>
         {overline(`Day ${done.day} check-in · done`)}
-        <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "700", color: palette.ink }}>{line.title}</Text>
+        <Text accessibilityRole="header" style={head}>{line.title}</Text>
         <Text style={{ ...type.body, fontWeight: calm ? "400" : "600", color: calm ? palette.muted : palette.amber }}>{line.text}</Text>
         {!calm && <Text style={{ ...type.footnote, fontWeight: "700", color: palette.red }}>{said.urgent}</Text>}
         <Text style={{ ...type.footnote, color: palette.muted }}>{after ? `Next check-in ${shortDate(after.dueAt)}.` : "That was your last check-in. Message your care team any time."}</Text>
@@ -93,9 +97,9 @@ export function TodayCard() {
     return <Card feature>
       {feeling && <Glow feeling={feeling} />}
       <Animated.View layout={layout} style={{ gap: 12 }}>
-        {overline(`Day ${ask.day} check-in · takes 10 seconds`)}
+        {overline(`Day ${ask.day} check-in · 10 seconds`)}
         <View style={{ gap: 2 }}>
-          <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "700", color: palette.ink }}>{copy.question}</Text>
+          <Text accessibilityRole="header" style={head}>{copy.question}</Text>
           {copy.english && <Text style={{ ...type.footnote, color: palette.muted }}>{copy.english}</Text>}
         </View>
         <Answer language={ask.language} feeling={feeling} onChoose={setFeeling} busy={reply.isPending}
@@ -117,7 +121,7 @@ export function TodayCard() {
 
   return <Card feature>
     {overline("Today")}
-    <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "700", color: palette.ink }}>You're all set</Text>
+    <Text accessibilityRole="header" style={head}>You're all set</Text>
     <Text style={{ ...type.body, color: palette.muted }}>
       {next ? `Next check-in ${shortDate(next.dueAt)}. We'll ask how you're feeling.`
         : data.length ? "Your check-ins are done. Message your care team any time."

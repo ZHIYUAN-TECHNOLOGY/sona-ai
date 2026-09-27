@@ -31,6 +31,17 @@ export function markTaken(key: string) {
   SecureStore.setItemAsync(KEY, JSON.stringify(taken)).catch(() => {});
 }
 
+/**
+ * "Remind me later": the dose card steps aside until `until` (ms), in this app only (no notification
+ * is scheduled, so the screen says it shows here again). Kept beside the taken log so every screen agrees.
+ */
+let snoozed: { key: string; until: number } | undefined;
+export function snooze(next: typeof snoozed) {
+  snoozed = next;
+  listeners.forEach(l => l());
+}
+export const useSnooze = () => useSyncExternalStore(subscribe, () => snoozed);
+
 /** The clock, ticking every 30 seconds by default, so countdowns and "due now" move on their own. */
 export function useNow(every = 30_000) {
   const [now, setNow] = useState(() => new Date());

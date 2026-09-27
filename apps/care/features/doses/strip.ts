@@ -1,4 +1,4 @@
-import { clock, early, type DayDose, type ScheduledMed, type WeekDay } from "./model";
+import { clock, early, untilLine, type DayDose, type WeekDay } from "./model";
 
 const MYT = 8 * 3600_000, DAY = 86_400_000;
 /** A dose counts as missed once it is 6 h late (as on home), and it is no longer offered to log. */
@@ -8,8 +8,8 @@ const dayOf = (d: Date) => Math.floor((d.getTime() + MYT) / DAY);
 export type StripDay = { key: number; weekday: string; date: string; today: boolean; mark?: "green" | "amber" };
 
 /**
- * The medicine screen's 7-day strip (Life OS): up to 3 days back since discharge, today, then the days
- * ahead. Days so far carry a dot from `weekOf`: green when every dose was taken, amber when one was missed.
+ * The medicine screen's 7-day strip: up to 3 days back since discharge, today, then the days ahead.
+ * Days so far carry a dot from `weekOf`: green when every dose was taken, amber when one was missed.
  */
 export function weekStrip(week: WeekDay[], now: Date): StripDay[] {
   const today = dayOf(now), past = Math.min(Math.max(week.length - 1, 0), 3);
@@ -22,33 +22,26 @@ export function weekStrip(week: WeekDay[], now: Date): StripDay[] {
   });
 }
 
-/** A checklist row's check: taken; `now` (within 2 h or late, so a hold logs it); `later`; `missed` (6 h late, never offered, so no double dose). */
+/** A dose's state: taken; `now` (within 2 h or late, so a hold logs it); `later`; `missed` (6 h late, never offered, so no double dose). */
 export function checkState(d: DayDose, now: Date): "taken" | "now" | "later" | "missed" {
   if (d.taken) return "taken";
   if (d.dueAt.getTime() < now.getTime() - GRACE) return "missed";
   return early(d.dueAt, now) ? "later" : "now";
 }
 
-/** "1 tablet at 9:00 PM", with "· after food" when the take line says so; "At 9:00 PM" when it names no amount. */
-export function doseLine(line: string, dueAt: Date) {
-  const amount = /^\d+(\.\d+)?\s*(tablets?|capsules?|puffs?|drops?|ml|mg|g)\b/i.exec(line)?.[0];
-  const food = foodOf(line);
-  return `${amount ? `${amount} at` : "At"} ${clock(dueAt)}${food ? ` · ${food} food` : ""}`;
-}
-
-export type Prescription = { name: string; line: string; badge: string; tone: "amber" | "green" | "muted" };
-
 /**
- * "Active prescriptions": each medicine on a timer, with what is left of a course (the plan's count less
- * the doses logged), or "Ongoing" when the plan gives no count.
- * ponytail: counts the phone's taken log, which keeps the last 40 doses; a server log keeps them all.
+ * The Medicine tab's one-line insight on today: a late dose first (amber), then "All taken today"
+ * (green), else how many are taken, any missed, and the next time today.
  */
-export function prescriptions(meds: ScheduledMed[], taken: string[]): Prescription[] {
-  return meds.filter(m => m.at?.length).map(m => {
-    if (m.doses === undefined) return { name: m.name, line: m.line, badge: "Ongoing", tone: "muted" };
-    const left = Math.max(0, m.doses - taken.filter(k => k.startsWith(`${m.name}@`)).length);
-    return { name: m.name, line: m.line, badge: left ? `${left} left` : "Course done", tone: left ? "amber" : "green" };
-  });
+export function insight(today: DayDose[], now: Date): { text: string; tone: "muted" | "amber" | "green" } {
+  if (!today.length) return { text: "Nothing due today", tone: "muted" };
+  const state = today.map(d => checkState(d, now));
+  const at = state.findIndex(s => s === "now" || s === "later"), up = today[at];
+  const late = up && state[at] === "now" ? untilLine(up.dueAt, now) : undefined;
+  if (up && late?.endsWith("late")) return { text: `${up.name} is ${late}`, tone: "amber" };
+  const count = state.filter(s => s === "taken").length, missed = state.filter(s => s === "missed").length;
+  if (count === today.length) return { text: "All taken today", tone: "green" };
+  return { text: [`${count} of ${today.length} taken`, missed && `${missed} missed`, up && `next ${clock(up.dueAt)}`].filter(Boolean).join(" · "), tone: missed ? "amber" : "muted" };
 }
 
 /** "before" or "after" when the take line says so ("1 tablet after food"); "with or without food" says neither. */

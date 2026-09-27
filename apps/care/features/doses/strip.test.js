@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { checkState, doseLine, foodOf, prescriptions, weekStrip } from "./strip";
+import { checkState, foodOf, insight, weekStrip } from "./strip";
 
 const now = new Date("2026-09-27T04:00:00Z"); // Sun 27 Sep, noon in Malaysia
 const dose = (iso, taken = false) => ({ name: "Cetirizine", line: "", dueAt: new Date(iso), key: `Cetirizine@${iso}`, taken });
@@ -21,20 +21,12 @@ test("a dose is holdable from 2 h before until 6 h late; later ones wait, missed
   expect(checkState(dose("2026-09-26T21:00:00Z", true), now)).toBe("taken");
 });
 
-test("the row line gives the amount and time, and food only when the plan says", () => {
-  expect(doseLine("1 tablet, with or without food", new Date("2026-09-27T13:00:00Z"))).toBe("1 tablet at 9:00 PM");
-  expect(doseLine("1 tablet after food", new Date("2026-09-27T00:00:00Z"))).toBe("1 tablet at 8:00 AM · after food");
-  expect(doseLine("Use as directed", new Date("2026-09-27T00:00:00Z"))).toBe("At 8:00 AM");
-});
-
-test("prescriptions: courses count down with doses taken; ongoing medicines say so; as-needed ones are left out", () => {
-  const meds = [
-    { name: "Azithromycin", line: "For 2 more days", at: ["08:00"], doses: 2 },
-    { name: "Cetirizine", line: "Keep taking it", at: ["21:00"] },
-    { name: "Paracetamol", line: "If you need it" },
-  ];
-  expect(prescriptions(meds, []).map(p => [p.name, p.badge, p.tone])).toEqual([["Azithromycin", "2 left", "amber"], ["Cetirizine", "Ongoing", "muted"]]);
-  expect(prescriptions(meds, ["Azithromycin@a", "Azithromycin@b"])[0]).toMatchObject({ badge: "Course done", tone: "green" });
+test("the insight names a late dose first, then all taken, else the count, missed and next time", () => {
+  expect(insight([], now)).toEqual({ text: "Nothing due today", tone: "muted" });
+  expect(insight([dose("2026-09-27T00:00:00Z", true), dose("2026-09-27T03:40:00Z")], now)).toEqual({ text: "Cetirizine is 20 min late", tone: "amber" });
+  expect(insight([dose("2026-09-27T00:00:00Z", true), dose("2026-09-27T13:00:00Z", true)], now)).toEqual({ text: "All taken today", tone: "green" });
+  expect(insight([dose("2026-09-27T00:00:00Z", true), dose("2026-09-27T13:00:00Z")], now)).toEqual({ text: "1 of 2 taken · next 9:00 PM", tone: "muted" });
+  expect(insight([dose("2026-09-26T21:00:00Z"), dose("2026-09-27T13:00:00Z")], now)).toEqual({ text: "0 of 2 taken · 1 missed · next 9:00 PM", tone: "amber" });
 });
 
 test("food timing only when the take line names before or after", () => {

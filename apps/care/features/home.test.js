@@ -1,44 +1,11 @@
 import { expect, test } from "bun:test";
 import { doseKey } from "./doses/model";
-import { checkInToday, daysHome, doseStatus, headline, needsLine, recovery, sparkPath, weekLine } from "./home";
+import { consistency, daysHome, doseStatus, headerDate, latestUpdate, needsLine, nextCapsule, sparkPath, weekLine } from "./home";
 
 test("days at home count calendar days in Malaysia, from the discharge day", () => {
   expect(daysHome("2026-09-26T15:30:00Z", new Date("2026-09-26T16:30:00Z"))).toBe(1); // 23:30 → 00:30 +08:00 is the next day
   expect(daysHome("2026-09-26T02:00:00Z", new Date("2026-09-28T01:00:00Z"))).toBe(2);
   expect(daysHome(undefined)).toBeUndefined();
-});
-
-test("the headline names the most urgent open thing, else reads as positive", () => {
-  expect(headline([])).toBe("Positive today");
-  expect(headline([{ kind: "check-in" }, { kind: "dose", name: "Cetirizine" }])).toBe("Time for Cetirizine");
-  expect(headline([{ kind: "visit", inDays: -2, overdue: true }, { kind: "check-in" }])).toBe("Visit overdue");
-  expect(headline([{ kind: "reply" }, { kind: "check-in" }])).toBe("Check in today");
-  expect(headline([{ kind: "visit", inDays: 1 }, { kind: "reply" }])).toBe("Care team replied");
-  expect(headline([{ kind: "visit", inDays: 1 }])).toBe("Visit tomorrow");
-  expect(headline([{ kind: "visit", inDays: 3 }])).toBe("Visit in 3 days");
-});
-
-test("today's check-in is pending while one waits, done once answered today, else none", () => {
-  const now = new Date("2026-09-29T05:00:00Z"); // 1 PM Tue, Malaysia
-  const due = new Date("2026-09-29T02:00:00Z");
-  expect(checkInToday([{ dueAt: due, sentAt: due, replies: [] }], now)).toBe("pending");
-  expect(checkInToday([{ dueAt: due, sentAt: due, replies: [{ receivedAt: new Date("2026-09-29T03:00:00Z") }] }], now)).toBe("done");
-  expect(checkInToday([{ dueAt: new Date("2026-09-28T02:00:00Z"), sentAt: null, replies: [{ receivedAt: new Date("2026-09-28T15:00:00Z") }] }], now)).toBeUndefined(); // answered yesterday, 11 PM
-  expect(checkInToday([{ dueAt: new Date("2026-10-04T02:00:00Z"), sentAt: null, replies: [] }], now)).toBeUndefined(); // the next one isn't due
-});
-
-test("recovery today: each part from real data, parts with nothing today left out, the furthest behind next", () => {
-  const r = recovery({ doses: [{ taken: true }, { taken: false }], checkIn: "done", glasses: 2, visit: { inDays: 7, overdue: false } });
-  expect(r.parts.map(p => [p.key, p.share, p.note])).toEqual([
-    ["medicines", 0.5, "1 of 2 taken"], ["check-in", 1, "Done"], ["water", 0.25, "2 of 8 glasses"], ["visits", 1, "Booked · in 7 days"],
-  ]);
-  expect(r.pct).toBe(69);
-  expect(r.next).toBe("water");
-  const quiet = recovery({ doses: [], glasses: 12 });
-  expect(quiet.parts.map(p => p.note)).toEqual(["None due today", "None today", "8 of 8 glasses", "None booked"]);
-  expect([quiet.pct, quiet.next]).toEqual([100, undefined]);
-  const late = recovery({ doses: [{ taken: true }], checkIn: "pending", glasses: 8, visit: { inDays: -3, overdue: true } });
-  expect([late.pct, late.next, late.parts[3].note]).toEqual([50, "check-in", "Overdue"]);
 });
 
 test("the dose sparkline runs through days with doses due, skipping days still to come or free", () => {
@@ -80,4 +47,34 @@ test("this week's line: every dose taken, or how many were missed and when", () 
   expect(weekLine(meds, out, [all[0]], wed)).toEqual({ text: "2 doses missed this week", tone: "amber" });
   // Within 6 h of 9 PM it is still the next dose, not missed.
   expect(weekLine(meds, out, all, new Date("2026-09-30T14:00:00Z")).text).toBe("Every dose taken");
+});
+
+test("consistency: the share of the week's doses taken, counting only those taken or missed", () => {
+  expect(consistency(meds, out, [], new Date("2026-09-27T05:00:00Z"))).toBeUndefined(); // tonight's dose is still to come
+  expect(consistency(meds, out, all, wed)).toBe(100);
+  expect(consistency(meds, out, [all[0], all[2]], wed)).toBe(67);
+  expect(consistency(meds, out, [all[0]], new Date("2026-09-28T14:00:00Z"))).toBe(100); // Monday's is late, not missed yet
+  expect(consistency([], out, [], wed)).toBeUndefined();
+});
+
+test("the medicines capsule says when the next dose is, plainly", () => {
+  const due = new Date("2026-09-27T13:00:00Z"); // 9:00 PM Sun, Malaysia
+  expect(nextCapsule(due, new Date("2026-09-27T05:00:00Z"))).toBe("Next at 9:00 PM");
+  expect(nextCapsule(due, new Date("2026-09-26T13:30:00Z"))).toBe("Tomorrow 9:00 PM");
+  expect(nextCapsule(due, new Date("2026-09-25T05:00:00Z"))).toBe("Sun 27 Sep 9:00 PM");
+});
+
+test("the header date reads in Malaysia time", () => {
+  expect(headerDate(new Date("2026-09-26T16:30:00Z"))).toBe("Sun, 27 Sep");
+});
+
+test("the latest update: a waiting reply, then today's check-in, else nothing new", () => {
+  const now = new Date("2026-09-29T05:00:00Z"), due = new Date("2026-09-29T02:00:00Z");
+  const answered = label => [{ dueAt: due, sentAt: due, replies: [{ label, receivedAt: new Date("2026-09-29T03:00:00Z") }] }];
+  expect(latestUpdate(answered("fine"), true, now).line).toBe("Care team replied");
+  expect(latestUpdate(answered("fine"), false, now)).toEqual({ line: "Check-in done · all fine", tone: "green", face: "smile", to: "check-ins" });
+  expect(latestUpdate(answered("worse"), false, now).tone).toBe("amber");
+  expect(latestUpdate([{ dueAt: due, sentAt: due, replies: [] }], false, now).to).toBe("check-in");
+  expect(latestUpdate([{ dueAt: new Date("2026-09-28T02:00:00Z"), sentAt: null, replies: [{ label: "fine", receivedAt: new Date("2026-09-28T15:00:00Z") }] }], false, now).line).toBe("Nothing new today");
+  expect(latestUpdate(undefined, false, now).line).toBe("Nothing new today");
 });

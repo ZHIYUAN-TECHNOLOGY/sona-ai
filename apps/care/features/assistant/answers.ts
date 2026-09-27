@@ -102,6 +102,12 @@ export function reply(question: string, asks: Asked[], condition?: string): Repl
   return { kind: "doctors", doctors, text: `${lead} who may help${about ? ` with your ${about}` : ""}. Ask your care team before you book.` };
 }
 
+/** An answer split into its lead sentence (shown bold) and the rest; "Dr." never ends a sentence. */
+export function leadOf(text: string): [string, string] {
+  const m = /^(.*?(?<!\bDr)[.!?])\s+(?=\S)/.exec(text);
+  return m ? [m[1]!, text.slice(m[0].length)] : [text, ""];
+}
+
 /** The words to read aloud (and show) for a reply: the answer, the doctors by name, or the honest no. */
 export function spoken(r: Reply) {
   if (r.kind === "plan") return r.asked.answer;

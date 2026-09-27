@@ -1,26 +1,27 @@
 import { useMutation } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, Pressable, ScrollView, View, type ViewStyle } from "react-native";
-import { Text, TextInput } from "@/lib/text";
+import { AccessibilityInfo, ActivityIndicator, ScrollView, View, type ViewStyle } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { FadeIn, LayoutAnimationConfig, useReducedMotion, withDelay, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Path } from "react-native-svg";
+import { Composer } from "@/features/assistant/composer";
 import { errorText } from "@/features/errors";
 import { useMe } from "@/features/me";
 import { clockOf, type Message, REPLY_TIME, suggestions, whileYouWait, withDays } from "@/features/messages/model";
 import { markRead, useThread } from "@/features/messages/row";
-import { accent, palette, type } from "@/lib/theme";
-import { BackButton, Card, field, pillStyle, surfaceStyle, Title } from "@/lib/ui";
+import { Text } from "@/lib/text";
+import { palette, type } from "@/lib/theme";
+import { BackButton, Card, Chip, pillStyle, surfaceStyle } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 
 /**
- * The thread with the care team (after the Honk chat): the care team on the left with its avatar, the
- * patient on the right in ink, a day pill per day. A sent message springs up from the composer and is
- * followed by what happens next ("Sent · usually replies within a few hours"); a warning sign in it
- * adds what to do while waiting. Up to three likely replies sit over the composer and send in one tap.
- * The emergency line never leaves the screen. Re-read every 15 s while open.
+ * The thread with the care team, after the AI Health Companion kit: back, "Care team" centred with the
+ * reply time faint under it; the care team on the left in flat kit cards with their initials and the
+ * time, the patient on the right in ink; a white day capsule per day. A sent message springs up from
+ * the composer and is followed by what happens next ("Sent · usually replies within a few hours"); a
+ * warning sign in it adds what to do while waiting. Up to three likely replies sit over the composer as
+ * chips and send in one tap. The emergency line never leaves the screen. Re-read every 15 s while open.
  */
 const REFETCH_MS = 15_000;
 const newRequestId = () => `care-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -65,13 +66,20 @@ export default function Messages() {
   useEffect(() => { if (lastId) markRead(lastId); }, [lastId]);
 
   return <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-    <ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" keyboardDismissMode="interactive" onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })}
-      contentContainerStyle={{ padding: 20, gap: 12 }}>
+    <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 4 }}>
       <BackButton />
-      <Title overline={me?.hospital} line={REPLY_TIME}>Your care team</Title>
+      <View accessible accessibilityRole="header" accessibilityLabel={`Care team${me?.hospital ? `, ${me.hospital}` : ""}. ${REPLY_TIME}`} style={{ flex: 1, alignItems: "center" }}>
+        <Text style={{ fontSize: 20, lineHeight: 26, fontWeight: "600", letterSpacing: -0.6, color: palette.ink }}>Care team</Text>
+        <Text style={{ ...type.footnote, color: palette.faint, textAlign: "center" }}>{REPLY_TIME}</Text>
+      </View>
+      <View style={{ width: 48 }} />
+    </View>
+
+    <ScrollView ref={scroll} keyboardDismissMode="interactive" onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })}
+      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16, gap: 14 }}>
       {!data ? (error ? <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(error)}</Text> : <ActivityIndicator color={palette.muted} />)
         // Messages there on opening appear still; only what arrives while the screen is open moves.
-        : <LayoutAnimationConfig skipEntering><View style={{ gap: 14, paddingTop: 8 }}>
+        : <LayoutAnimationConfig skipEntering><View style={{ gap: 14 }}>
           {!thread.length && <Card><Text style={{ ...type.body, color: palette.muted }}>Ask anything about your recovery. Your care team will reply here.</Text></Card>}
           {withDays(thread, new Date()).map(item => "day" in item
             ? <Pill key={`day-${item.day}`} label={item.day} />
@@ -80,7 +88,7 @@ export default function Messages() {
             <Pill label={last.id === sending?.id ? "Sending…" : `Sent · ${REPLY_TIME.toLowerCase()}`} />
           </Animated.View>}
           {wait && <Animated.View key={`wait-${last!.id}`} entering={reduced ? FadeIn.duration(200) : rise(400)} accessible accessibilityLabel={`While you wait. ${wait} If you faint or have chest pain, call 999.`}
-            style={{ borderRadius: 20, borderCurve: "continuous", padding: 14, gap: 6, backgroundColor: "#FFF3E7", borderWidth: 1, borderColor: palette.amberEdge }}>
+            style={{ borderRadius: 24, borderCurve: "continuous", padding: 18, gap: 6, backgroundColor: palette.amberWash, borderWidth: 1, borderColor: palette.amberEdge }}>
             <Text style={{ ...type.headline, color: palette.amber }}>While you wait</Text>
             <Text style={{ ...type.body, color: palette.ink }}>{wait}</Text>
             <Text style={{ ...type.body, fontWeight: "700", color: palette.red }}>If you faint or have chest pain, call 999.</Text>
@@ -88,33 +96,21 @@ export default function Messages() {
         </View></LayoutAnimationConfig>}
     </ScrollView>
 
-    <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 12), gap: 8 }}>
-      {data && picks.length > 0 && <Animated.View key={picks.join("|")} entering={FadeIn.duration(220)} style={{ gap: 6 }}>
-        {picks.map(p => <Pressable key={p} accessibilityRole="button" accessibilityLabel={p} accessibilityHint="Sends this to your care team" onPress={() => go(p)}
-          style={({ pressed }) => [pillStyle, { minHeight: 44, borderRadius: 16, borderCurve: "continuous", paddingHorizontal: 14, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 10, transform: [{ scale: pressed ? 0.97 : 1 }] }]}>
-          <Text style={{ flex: 1, fontSize: 14, lineHeight: 19, fontWeight: "600", color: palette.ink }}>{p}</Text>
-          <Text style={{ fontSize: 15, color: palette.muted }}>↗</Text>
-        </Pressable>)}
+    <View style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 12), gap: 8 }}>
+      {data && picks.length > 0 && <Animated.View key={picks.join("|")} entering={FadeIn.duration(220)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+        {picks.map(p => <Chip key={p} label={p} accessibilityLabel={`${p}. Sends this to your care team`} onPress={() => go(p)} />)}
       </Animated.View>}
       {send.error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(send.error)}</Text>}
-      <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8 }}>
-        <TextInput value={text} onChangeText={setText} placeholder="Write to your care team" placeholderTextColor={palette.muted} multiline maxLength={1000}
-          accessibilityLabel="Message to your care team" style={{ ...field, flex: 1, minHeight: 48, maxHeight: 140, borderRadius: 24, paddingTop: 13, paddingBottom: 13 }} />
-        <Pressable accessibilityRole="button" accessibilityLabel="Send" accessibilityState={{ disabled: !text.trim(), busy: send.isPending }} disabled={!text.trim() || send.isPending} onPress={() => go(text)}
-          style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.dark, opacity: text.trim() ? 1 : 0.45, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
-          {send.isPending ? <ActivityIndicator color={palette.white} />
-            : <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={palette.white} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 19V5M5 12l7-7 7 7" /></Svg>}
-        </Pressable>
-      </View>
+      <Composer value={text} onChangeText={setText} placeholder="Write to your care team…" label="Message to your care team" onSend={() => go(text)} canSend={!!text.trim() && !send.isPending} busy={send.isPending} />
       <Text style={{ ...type.footnote, fontWeight: "600", color: palette.amber, textAlign: "center" }}>Not for emergencies · call 999</Text>
     </View>
   </KeyboardAvoidingView>;
 }
 
-/** A small glass capsule in the thread: a day, or what happens next. */
+/** A white capsule in the thread: a day, or what happens next. */
 function Pill({ label }: { label: string }) {
-  return <View style={[pillStyle, { alignSelf: "center", paddingHorizontal: 12, paddingVertical: 5 }]}>
-    <Text style={{ ...type.footnote, fontSize: 12, color: palette.muted }}>{label}</Text>
+  return <View style={[pillStyle, { alignSelf: "center", paddingHorizontal: 14, paddingVertical: 6 }]}>
+    <Text style={{ ...type.footnote, fontSize: 13, fontWeight: "500", color: palette.muted }}>{label}</Text>
   </View>;
 }
 
@@ -124,20 +120,21 @@ function Bubble({ m, sending, reduced }: { m: Message; sending: boolean; reduced
   const tail: ViewStyle = mine ? { borderBottomRightRadius: 8 } : { borderBottomLeftRadius: 8 };
   return <Animated.View entering={reduced ? FadeIn.duration(200) : mine ? springIn : FadeIn.duration(240)} accessible accessibilityLabel={`${who}, ${sending ? "sending" : clockOf(m.createdAt)}: ${m.text}`}
     style={{ alignSelf: mine ? "flex-end" : "flex-start", maxWidth: "86%", flexDirection: "row", alignItems: "flex-end", gap: 8, transformOrigin: "right bottom" }}>
-    {!mine && <Avatar />}
+    {!mine && <Initials />}
     <View style={{ flexShrink: 1, gap: 4, alignItems: mine ? "flex-end" : "flex-start" }}>
-      <View style={[mine ? { backgroundColor: palette.dark, borderRadius: 22, borderCurve: "continuous" } : { ...surfaceStyle, borderRadius: 22 }, tail, { paddingHorizontal: 14, paddingVertical: 11 }]}>
+      <View style={[mine ? { backgroundColor: palette.dark, borderRadius: 24, borderCurve: "continuous" } : { ...surfaceStyle, borderRadius: 24 }, tail, { paddingHorizontal: 16, paddingVertical: 12 }]}>
         <Text selectable style={{ ...type.body, color: mine ? palette.white : palette.ink }}>{m.text}</Text>
       </View>
-      <Text style={{ fontSize: 11, lineHeight: 15, color: palette.muted }}>{who} · {sending ? "Sending…" : clockOf(m.createdAt)}</Text>
+      <Text style={{ fontSize: 12, lineHeight: 16, color: palette.faint, paddingHorizontal: 4 }}>{mine ? "" : "Care team · "}{sending ? "Sending…" : clockOf(m.createdAt)}</Text>
     </View>
   </Animated.View>;
 }
 
-/** The care team's mark: a heart on the accent gradient (the thread names no one, so no initials). */
-function Avatar() {
-  return <View style={{ width: 30, height: 30, borderRadius: 15, marginBottom: 19, alignItems: "center", justifyContent: "center", experimental_backgroundImage: `linear-gradient(135deg, ${accent[0]}, ${accent[1]} 55%, ${accent[2]})` } as ViewStyle}>
-    <Svg width={15} height={15} viewBox="0 0 24 24" fill={palette.white}><Path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></Svg>
+/** The care team's mark: "CT" on a soft wash with a white rim (the thread names no one, so no person's initials). */
+function Initials() {
+  return <View style={{ width: 34, height: 34, borderRadius: 17, marginBottom: 20, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: palette.white,
+    experimental_backgroundImage: "linear-gradient(145deg, #EBF1FF, #C9D5FF)", boxShadow: "0 6px 14px -8px rgba(37,99,235,0.45)" } as ViewStyle}>
+    <Text allowFontScaling={false} style={{ fontSize: 12, fontWeight: "600", color: palette.blue }}>CT</Text>
   </View>;
 }
 

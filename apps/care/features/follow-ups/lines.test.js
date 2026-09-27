@@ -1,20 +1,13 @@
 import { expect, test } from "bun:test";
-import { bringLine, dateOf, dayA11y, dayOf, dotTone, emptyLine, followUpNeeds, marksByDay, monthGrid, monthLabel, monthOf, nextUp, nextVisit, pillLine, shiftMonth, visitsLine, whenLine } from "./lines";
+import { agendaOf, bringLine, dateOf, dayA11y, dayOf, emptyLine, followUpNeeds, marksByDay, nextUp, nextVisit, pillLine, scheduleLine, weekAround, weekLabel, whenLine } from "./lines";
 
 const D = (iso) => Date.UTC(...iso.split("-").map((n, i) => Number(n) - (i === 1 ? 1 : 0))) / 86_400_000; // "2026-09-27" → day number
-test("the calendar reads days in Malaysia and lays months out Monday first", () => {
+test("the strip reads days in Malaysia and shows the Monday-first week around the chosen day", () => {
   expect(dayOf("2026-09-26T16:30:00Z")).toBe(D("2026-09-27")); // 12:30 AM Sunday in Malaysia
   expect(dayOf("2026-09-26T15:59:00Z")).toBe(D("2026-09-26"));
-  const sep = monthGrid({ year: 2026, month: 8 });
-  expect(sep.length).toBe(5);
-  expect(sep[0].slice(0, 2)).toEqual([null, D("2026-09-01")]); // 1 Sep 2026 is a Tuesday
-  expect(sep[4].filter(Boolean).map(dateOf)).toEqual([28, 29, 30]);
-  expect(monthGrid({ year: 2026, month: 10 }).length).toBe(6); // Nov starts on a Sunday
-  expect(shiftMonth({ year: 2026, month: 11 }, 1)).toEqual({ year: 2027, month: 0 });
-  expect(shiftMonth({ year: 2026, month: 0 }, -1)).toEqual({ year: 2025, month: 11 });
-  expect(monthOf(D("2026-10-04"))).toEqual({ year: 2026, month: 9 });
-  expect(monthLabel({ year: 2026, month: 8 }, D("2026-09-27"))).toBe("Sep");
-  expect(monthLabel({ year: 2027, month: 0 }, D("2026-09-27"))).toBe("Jan 2027");
+  expect(weekAround(D("2026-09-27")).map(dateOf)).toEqual([21, 22, 23, 24, 25, 26, 27]); // a Sunday ends its week
+  expect(weekAround(D("2026-09-28"))[0]).toBe(D("2026-09-28"));
+  expect(weekLabel(weekAround(D("2026-10-01")))).toBe("28 Sep – 4 Oct");
 });
 
 test("dots mark visits, check-ins and this week's doses; empty days point to what is next", () => {
@@ -34,12 +27,39 @@ test("dots mark visits, check-ins and this week's doses; empty days point to wha
   expect(emptyLine(D("2026-10-05"), today, undefined)).toBe("Nothing this day");
 });
 
-test("my visits says what is next and how far off, and colours the timeline dots", () => {
-  expect(visitsLine([{ short: "Clinic review", status: "due-soon", inDays: 7 }])).toEqual({ line: "Next: Clinic review in 7 days", tone: "amber" });
-  expect(visitsLine([{ short: "CT scan", status: "upcoming", inDays: 81 }])).toEqual({ line: "Next: CT scan in 81 days", tone: "muted" });
-  expect(visitsLine([{ short: "CT scan", status: "overdue", inDays: -3 }])).toEqual({ line: "Overdue: CT scan, due 3 days ago", tone: "red" });
-  expect(visitsLine([])).toBeUndefined();
-  expect([dotTone({ status: "due-soon" }, true), dotTone({ status: "upcoming" }, false), dotTone({ status: "overdue" }, false)]).toEqual(["blue", "faint", "red"]);
+const dose = (name, iso, taken = false) => ({ name, line: "1 tablet", dueAt: new Date(iso), key: `${name}@${iso}`, taken });
+const ask = (day, iso, extra = {}) => ({ id: `c${day}`, day, language: "en", message: "", dueAt: new Date(iso), sentAt: null, replies: [], ...extra });
+const visit = (extra = {}) => ({ id: "appt-1", title: "Cardiology clinic", short: "Cardiology clinic", why: "Your booked appointment", date: new Date("2026-09-30T02:30:00Z"), inDays: 3, status: "due-soon", ...extra });
+
+test("a day's timeline groups doses by time, orders by time, and offers one action where it is due", () => {
+  const now = new Date("2026-09-27T01:00:00Z"); // 9:00 AM in Malaysia
+  const items = agendaOf(now, {
+    visits: [], checkIns: [ask(3, "2026-09-27T01:30:00Z", { sentAt: new Date("2026-09-27T00:00:00Z") })],
+    doses: [dose("Amlodipine", "2026-09-27T00:30:00Z"), dose("Metformin", "2026-09-27T00:30:00Z", true), dose("Metformin", "2026-09-27T12:00:00Z")],
+  });
+  expect(items.map(i => [i.title, i.action, i.done])).toEqual([["Morning medicines", "take", false], ["Day 3 check-in", "answer", false], ["Evening medicines", undefined, false]]);
+  expect(items[0]).toMatchObject({ line: "30 min late · Amlodipine, Metformin", tone: "amber", soon: "morning medicines 30 min late" });
+  expect(items[2].soon).toMatch(/^evening medicines at 8:00\sPM$/);
+  const done = agendaOf(now, { visits: [], checkIns: [], doses: [dose("Amlodipine", "2026-09-27T00:30:00Z", true)] })[0];
+  expect(done).toMatchObject({ done: true, tone: "green", line: "Taken · Amlodipine", action: undefined });
+});
+
+test("visits read before you go; an all-day visit or a past day's doses come first", () => {
+  const now = new Date("2026-09-27T01:00:00Z");
+  const items = agendaOf(now, { visits: [visit({ id: "recall:f1", title: "CT scan", status: "overdue", inDays: -2 })], checkIns: [], doses: [], doseMark: "missed" });
+  expect(items.map(i => [i.title, i.line, i.tone, i.action])).toEqual([["CT scan", "Overdue, due 2 days ago", "amber", "prepare"], ["Medicines", "Some doses missed", "amber", undefined]]);
+  expect(items[0].at).toBeUndefined();
+});
+
+test("the insight line says what is next today and when the next visit is, amber when late or overdue", () => {
+  const now = new Date("2026-09-27T00:00:00Z"); // 8:00 AM
+  const today = agendaOf(now, { visits: [], checkIns: [ask(3, "2026-09-27T01:00:00Z")], doses: [] });
+  expect(scheduleLine(today, [visit()])).toEqual({ line: expect.stringMatching(/^Next: check-in at 9:00\sAM · visit in 3 days$/), tone: "muted" });
+  expect(scheduleLine([], [visit({ status: "overdue", inDays: -1 })])).toEqual({ line: "Visit overdue", tone: "amber" });
+  expect(scheduleLine(agendaOf(now, { visits: [], checkIns: [ask(3, "2026-09-27T01:00:00Z", { replies: [{}] })], doses: [] }), [])).toEqual({ line: "All done today", tone: "muted" });
+  expect(scheduleLine([], [])).toEqual({ line: "Nothing booked yet", tone: "muted" });
+  const visitToday = agendaOf(now, { visits: [visit({ inDays: 0, date: new Date("2026-09-27T02:30:00Z") })], checkIns: [], doses: [] });
+  expect(scheduleLine(visitToday, [visitToday[0].visit]).line).toMatch(/^Next: visit at 10:30\sAM$/);
 });
 
 test("the pill gives a booked visit its Malaysian time; a recall or the discharge review only its day", () => {

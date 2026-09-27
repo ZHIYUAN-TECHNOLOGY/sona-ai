@@ -1,5 +1,7 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import { shortDate } from "@sona-ai/domain/findings";
+import { statusOf, type CheckIn } from "../check-ins/model";
+import { clock, dueNow, untilLine, type DayDose } from "../doses/model";
 
 export type FollowUp = Awaited<ReturnType<AppRouterClient["care"]["followUps"]>>[number];
 
@@ -28,22 +30,10 @@ export function nextVisit(items: Pick<FollowUp, "short" | "date" | "status" | "i
 /** How many follow-ups need the patient now (due soon or overdue); counts toward home's insight line. */
 export const followUpNeeds = (items: Pick<FollowUp, "status">[] | undefined) => items?.filter(f => f.status !== "upcoming").length ?? 0;
 
-/** My visits' insight under the title: "Next: Clinic review in 7 days", amber when due soon, red once overdue. */
-export function visitsLine(items: Pick<FollowUp, "short" | "status" | "inDays">[]): { line: string; tone: "muted" | "amber" | "red" } | undefined {
-  const next = items[0];
-  if (!next) return undefined;
-  return next.status === "overdue" ? { line: `Overdue: ${next.short}, due ${away(next.inDays)}`, tone: "red" }
-    : { line: `Next: ${next.short} ${away(next.inDays)}`, tone: next.status === "due-soon" ? "amber" : "muted" };
-}
-
-/** A timeline dot: red when overdue, blue for the next one, grey for later. */
-export const dotTone = (f: Pick<FollowUp, "status">, next: boolean) => f.status === "overdue" ? "red" : next ? "blue" : "faint";
-
-// The Schedule calendar. A day is a whole number: days since 1 Jan 1970 in Malaysia (the hospital's
+// The Schedule strip. A day is a whole number: days since 1 Jan 1970 in Malaysia (the hospital's
 // time), so a day number times DAY is that date's midnight in UTC and reads back with getUTC*.
 const MYT = 8 * 3600_000, DAY = 86_400_000;
 const civil = (day: number) => new Date(day * DAY);
-export type Month = { year: number; month: number };
 type Visit = Pick<FollowUp, "date" | "short">;
 type Ask = { dueAt: Date | string; day: number };
 
@@ -51,27 +41,18 @@ type Ask = { dueAt: Date | string; day: number };
 export const dayOf = (at: Date | string) => Math.floor((new Date(at).getTime() + MYT) / DAY);
 /** The day of the month (1–31). */
 export const dateOf = (day: number) => civil(day).getUTCDate();
-export const monthOf = (day: number): Month => ({ year: civil(day).getUTCFullYear(), month: civil(day).getUTCMonth() });
-export function shiftMonth({ year, month }: Month, by: number): Month {
-  const d = new Date(Date.UTC(year, month + by, 1));
-  return { year: d.getUTCFullYear(), month: d.getUTCMonth() };
-}
-/** The month pill: "Sep", or "Jan 2027" outside this year. */
-export const monthLabel = ({ year, month }: Month, today: number) =>
-  new Date(Date.UTC(year, month, 1)).toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }) + (year === monthOf(today).year ? "" : ` ${year}`);
 /** "Sunday 4 October", for VoiceOver. */
 export const longDay = (day: number) => civil(day).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).replace(",", "");
-
-/** The month as weeks of day numbers, Monday first; null pads before the 1st and after the last. */
-export function monthGrid({ year, month }: Month): (number | null)[][] {
-  const first = Date.UTC(year, month, 1) / DAY, count = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-  const cells: (number | null)[] = [...Array<null>((civil(first).getUTCDay() + 6) % 7).fill(null), ...Array.from({ length: count }, (_, i) => first + i)];
-  while (cells.length % 7) cells.push(null);
-  return Array.from({ length: cells.length / 7 }, (_, w) => cells.slice(w * 7, w * 7 + 7));
+/** The Monday-first week holding a day, as seven day numbers. */
+export function weekAround(day: number): number[] {
+  const monday = day - (civil(day).getUTCDay() + 6) % 7;
+  return Array.from({ length: 7 }, (_, i) => monday + i);
 }
+/** The week strip's head: "28 Sep – 4 Oct". */
+export const weekLabel = (week: number[]) => [week[0]!, week[6]!].map(d => civil(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })).join(" – ");
 
 /**
- * The dots under a day: a visit (red once overdue), a check-in, and for past days of this week whether
+ * The dots under a day: a visit (overdue kept apart), a check-in, and for past days of this week whether
  * every dose was marked taken. `week` is `weekOf`'s review, which ends today.
  */
 export type DayMarks = { visit?: "due" | "overdue"; checkIn?: true; doses?: "taken" | "missed" };
@@ -103,3 +84,50 @@ export function nextUp(after: number, visits: Visit[], checkIns: Ask[]): { day: 
 /** An empty day's line: "Nothing today · Next: Clinic review in 7 days". */
 export const emptyLine = (day: number, today: number, next?: { day: number; title: string }) =>
   [day === today ? "Nothing today" : "Nothing this day", next && `Next: ${next.title} ${away(next.day - today)}`].filter(Boolean).join(" · ");
+
+export type Tone = "muted" | "blue" | "amber" | "green";
+/**
+ * One stop on a day's timeline: its time (none for an all-day item), title, one line of state, whether
+ * it is done, and at most one inline action: take the doses, answer the check-in, or read before the visit.
+ * `soon` is how the insight line names it when it is next ("check-in at 9:00 AM").
+ */
+export type AgendaItem = { key: string; at?: Date; title: string; line: string; tone: Tone; done: boolean; action?: "take" | "answer" | "prepare"; soon: string; visit?: FollowUp };
+
+const partOf = (at: Date) => { const h = new Date(at.getTime() + MYT).getUTCHours(); return h < 12 ? "Morning" : h < 17 ? "Afternoon" : "Evening"; };
+
+/**
+ * A day's timeline, all-day items first, then by time: doses grouped by their time ("Morning medicines"),
+ * check-ins, visits, and for a past day whether every dose was taken.
+ */
+export function agendaOf(now: Date, { visits, checkIns, doses, doseMark }: { visits: FollowUp[]; checkIns: CheckIn[]; doses: DayDose[]; doseMark?: DayMarks["doses"] }): AgendaItem[] {
+  const slots = new Map<number, DayDose[]>();
+  for (const d of doses) slots.set(d.dueAt.getTime(), [...slots.get(d.dueAt.getTime()) ?? [], d]);
+  const items: AgendaItem[] = [
+    ...[...slots].map(([t, group]): AgendaItem => {
+      const at = new Date(t), done = group.every(d => d.taken), until = untilLine(at, now), late = !done && until.endsWith("late");
+      const title = `${partOf(at)} medicines`, names = group.map(d => d.name).join(", ");
+      return { key: `doses@${t}`, at, title, done, line: done ? `Taken · ${names}` : late ? `${until} · ${names}` : names, tone: done ? "green" : late ? "amber" : "muted",
+        action: !done && dueNow(at, now) ? "take" : undefined, soon: `${title.toLowerCase()} ${late ? until : `at ${clock(at)}`}` };
+    }),
+    ...checkIns.map((c): AgendaItem => {
+      const s = statusOf(c, now), at = new Date(c.dueAt), done = c.replies.length > 0, waiting = !done && s.tone === "blue";
+      return { key: c.id, at, title: `Day ${c.day} check-in`, line: s.line, tone: s.tone, done, action: waiting ? "answer" : undefined, soon: waiting ? "check-in, waiting for you" : `check-in at ${clock(at)}` };
+    }),
+    ...visits.map((f): AgendaItem => {
+      const time = timeLabel(f), overdue = f.status === "overdue";
+      return { key: f.id, at: time ? new Date(f.date) : undefined, title: f.title, line: overdue ? `Overdue, due ${away(f.inDays)}` : f.why, tone: overdue ? "amber" : "muted", done: false,
+        action: "prepare", soon: overdue ? "visit overdue" : `visit ${time && f.inDays === 0 ? `at ${time}` : away(f.inDays)}`, visit: f };
+    }),
+  ];
+  if (doseMark) items.push({ key: "doses", title: "Medicines", line: doseMark === "taken" ? "All doses taken" : "Some doses missed", tone: doseMark === "taken" ? "green" : "amber", done: doseMark === "taken", soon: "medicines" });
+  return items.sort((a, b) => (a.at?.getTime() ?? 0) - (b.at?.getTime() ?? 0));
+}
+
+/** Schedule's insight under the title: "Next: check-in at 9:00 AM · visit in 3 days", amber when late or overdue. */
+export function scheduleLine(today: AgendaItem[], visits: Pick<FollowUp, "id" | "status" | "inDays">[]): { line: string; tone: "muted" | "amber" } {
+  const next = today.find(i => !i.done), visit = visits[0];
+  const parts = [next ? `Next: ${next.soon}` : today.length ? "All done today" : undefined,
+    visit && visit.id !== next?.key && (visit.status === "overdue" ? "visit overdue" : `visit ${away(visit.inDays)}`)].filter(Boolean) as string[];
+  const line = parts.join(" · ").replace(/^./, c => c.toUpperCase()) || "Nothing booked yet";
+  return { line, tone: next?.tone === "amber" || visit?.status === "overdue" ? "amber" : "muted" };
+}

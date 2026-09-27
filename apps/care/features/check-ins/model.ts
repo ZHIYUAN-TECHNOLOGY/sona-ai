@@ -1,7 +1,10 @@
 import type { CheckIn, ReplyLabel } from "@sona-ai/domain/check-ins";
 import type { Language } from "@sona-ai/domain/discharge";
 
-/** How the patient says they feel; the answer control hands this to `onAnswer` with the words it sends. */
+/**
+ * How the patient says they feel. The five faces (the kit's "How are you feeling today?") read as three
+ * feelings: the two happiest are better, the two saddest worse, and the face's own words are sent.
+ */
 export type Feeling = "better" | "same" | "worse";
 export type { CheckIn, ReplyLabel };
 
@@ -27,7 +30,7 @@ type Copy = { question: string; answers: [string, Feeling][]; follow: Record<Fee
 // Quick replies are sent in the patient's language so the care team (and the reader) see their own words.
 const COPY: Record<Language, Copy> = {
   en: {
-    question: "How are you feeling today?", answers: [["Better", "better"], ["About the same", "same"], ["Worse", "worse"]],
+    question: "How are you feeling today?", answers: [["Much better", "better"], ["Better", "better"], ["Same", "same"], ["Worse", "worse"], ["Much worse", "worse"]],
     follow: {
       better: { line: "Glad to hear it", prompt: "Anything else for your care team?", quick: ["Walked today", "Sleeping better"], none: "No, that's all" },
       same: { line: "Thanks for telling us", prompt: "Anything you'd like them to know?", quick: ["Still tired", "Some pain"], none: "No, that's all" },
@@ -37,7 +40,7 @@ const COPY: Record<Language, Copy> = {
     review: "We will send your care team", sendNow: "Send now", change: "Change", urgent: "Severe chest pain or can't breathe? Call 999 now.", emergency: "For an emergency, call 999.",
   },
   ms: {
-    question: "Macam mana hari ini?", answers: [["Lebih baik", "better"], ["Sama", "same"], ["Lebih teruk", "worse"]],
+    question: "Macam mana hari ini?", answers: [["Jauh lebih baik", "better"], ["Lebih baik", "better"], ["Sama", "same"], ["Lebih teruk", "worse"], ["Jauh lebih teruk", "worse"]],
     follow: {
       better: { line: "Baguslah", prompt: "Ada apa-apa lagi untuk pasukan penjagaan anda?", quick: ["Berjalan hari ini", "Tidur lebih lena"], none: "Tidak, itu sahaja" },
       same: { line: "Terima kasih kerana memberitahu", prompt: "Ada apa-apa yang mereka perlu tahu?", quick: ["Masih letih", "Sakit sedikit"], none: "Tidak, itu sahaja" },
@@ -47,7 +50,7 @@ const COPY: Record<Language, Copy> = {
     review: "Kami akan hantar kepada pasukan penjagaan anda", sendNow: "Hantar sekarang", change: "Tukar", urgent: "Sakit dada teruk atau tidak boleh bernafas? Hubungi 999 sekarang.", emergency: "Untuk kecemasan, hubungi 999.",
   },
   zh: {
-    question: "今天感觉怎么样？", answers: [["好一些", "better"], ["差不多", "same"], ["更差", "worse"]],
+    question: "今天感觉怎么样？", answers: [["好多了", "better"], ["好一些", "better"], ["差不多", "same"], ["更差", "worse"], ["明显更差", "worse"]],
     follow: {
       better: { line: "太好了", prompt: "还有什么想告诉医护团队的吗？", quick: ["今天走了路", "睡得更好"], none: "没有了" },
       same: { line: "谢谢告诉我们", prompt: "有什么想让他们知道的吗？", quick: ["还是很累", "有点痛"], none: "没有了" },

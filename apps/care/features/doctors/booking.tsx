@@ -10,7 +10,7 @@ import Svg, { Path } from "react-native-svg";
 import { errorText } from "@/features/errors";
 import { Text, TextInput } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { Button, field, surfaceStyle } from "@/lib/ui";
+import { AccentText, Button, field } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 import { DoctorAvatar } from "./avatar";
 import { bookingText, dayParts, type Doctor, type Slot } from "./data";
@@ -18,7 +18,8 @@ import { bookingText, dayParts, type Doctor, type Slot } from "./data";
 const newRequestId = () => `care-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 /**
- * Review before sending (in-screen, over Doctor details): the doctor, the day and time, an optional
+ * Review before sending (the kit's white sheet: 40 pt corners, a grabber, a centred light-then-gradient
+ * title; springs up after Canopi), over Doctor details: the doctor, the day and time, an optional
  * reason, and what will happen. "Send request" messages the care team (it is a request, not a
  * booking); then a check springs in with "Request sent" and the way back to the doctors. A failed send
  * stays on the card with the error and can be sent again under the same request ID (no double send).
@@ -51,20 +52,24 @@ export function BookingSheet({ doctor, slot, onClose }: { doctor: Doctor; slot: 
       <Pressable accessibilityLabel="Close" style={{ flex: 1 }} disabled={send.isPending} onPress={onClose} />
     </Animated.View>
     <Animated.View accessibilityViewIsModal entering={still ? FadeIn.duration(180) : SlideInDown.springify().duration(380).dampingRatio(1)} exiting={still ? FadeOut.duration(160) : SlideOutDown.duration(220)}
-      style={[surfaceStyle, { margin: 12, marginBottom: Math.max(insets.bottom, 12), borderRadius: 30, padding: 20, gap: 14 }]}>
+      style={{ margin: 8, marginBottom: Math.max(insets.bottom, 8), borderRadius: 40, borderCurve: "continuous", backgroundColor: palette.white, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20, gap: 14 }}>
+      <View style={{ alignSelf: "center", width: 36, height: 5, borderRadius: 3, backgroundColor: "#E5E5E5" }} />
       {done ? <>
         <Animated.View entering={still ? FadeIn.duration(200) : pop} style={{ alignSelf: "center", width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center", backgroundColor: palette.success }}>
           <Svg width={30} height={30} viewBox="0 0 24 24" fill="none" stroke={palette.white} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><Path d="M20 6L9 17l-5-5" /></Svg>
         </Animated.View>
         <View accessible accessibilityRole="header" style={{ alignItems: "center", gap: 4 }}>
-          <Text style={{ fontSize: 24, lineHeight: 30, fontWeight: "500", letterSpacing: -0.5, color: palette.ink }}>Request sent</Text>
+          <Text style={{ fontSize: 24, lineHeight: 30, fontWeight: "600", letterSpacing: -1, color: palette.ink }}>Request sent</Text>
           <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>The clinic will confirm by message. It isn't booked until they do.</Text>
         </View>
         <Button label="Back to doctors" onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/doctors"); }} />
       </> : <>
-        <Text accessibilityRole="header" style={{ fontSize: 22, lineHeight: 28, fontWeight: "500", letterSpacing: -0.5, color: palette.ink }}>Request this visit</Text>
+        <View accessible accessibilityRole="header" accessibilityLabel="Request this visit" style={{ alignItems: "center" }}>
+          <Text style={{ fontSize: 20, lineHeight: 26, letterSpacing: -0.6, color: palette.faint }}>Request</Text>
+          <AccentText style={{ fontSize: 28, lineHeight: 34, fontWeight: "600", letterSpacing: -1.9, color: palette.ink }}>this visit</AccentText>
+        </View>
         <View accessible accessibilityLabel={`${doctor.name}, ${doctor.specialty}. ${day.spoken} at ${slot.label}. ${doctor.room}`}
-          style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 20, borderCurve: "continuous", backgroundColor: palette.mutedWash }}>
+          style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 24, borderCurve: "continuous", backgroundColor: palette.card, borderWidth: 1, borderColor: palette.line }}>
           <DoctorAvatar doctor={doctor} size={48} />
           <View style={{ flex: 1, gap: 1 }}>
             <Text style={{ ...type.headline, color: palette.ink }}>{doctor.name}</Text>
@@ -73,7 +78,7 @@ export function BookingSheet({ doctor, slot, onClose }: { doctor: Doctor; slot: 
           </View>
         </View>
         <TextInput value={reason} onChangeText={setReason} placeholder="Reason (optional), e.g. still coughing" placeholderTextColor={palette.muted} maxLength={200}
-          editable={!send.isPending} returnKeyType="done" accessibilityLabel="Reason for the visit, optional" style={{ ...field, backgroundColor: palette.white, borderColor: palette.line }} />
+          editable={!send.isPending} returnKeyType="done" accessibilityLabel="Reason for the visit, optional" style={field} />
         <Text style={{ ...type.footnote, color: palette.muted }}>This sends a request to your care team. The clinic confirms the time by message.</Text>
         {send.error && <Text selectable accessibilityLiveRegion="polite" style={{ ...type.footnote, fontWeight: "600", color: palette.red }}>{errorText(send.error)} Your request wasn't sent.</Text>}
         <Button label={send.error ? "Try again" : "Send request"} busy={send.isPending} onPress={go} />

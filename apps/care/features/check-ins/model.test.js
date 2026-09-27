@@ -19,9 +19,9 @@ test("a check-in waits for the patient once it is due or sent, until they answer
 });
 
 test("the question and quick answers are in the check-in's language, with a small English line when it is not English", () => {
-  expect(answersFor("ms")).toMatchObject({ question: "Macam mana hari ini?", english: "How are you today?", answers: [["Lebih baik", "better"], ["Sama", "same"], ["Lebih teruk", "worse"]] });
-  expect(answersFor("en")).toMatchObject({ question: "How are you feeling today?", english: undefined, answers: [["Better", "better"], ["About the same", "same"], ["Worse", "worse"]] });
-  expect(answersFor("zh").answers.map(([, label]) => label)).toEqual(["better", "same", "worse"]);
+  expect(answersFor("ms")).toMatchObject({ question: "Macam mana hari ini?", english: "How are you today?", answers: [["Jauh lebih baik", "better"], ["Lebih baik", "better"], ["Sama", "same"], ["Lebih teruk", "worse"], ["Jauh lebih teruk", "worse"]] });
+  expect(answersFor("en")).toMatchObject({ question: "How are you feeling today?", english: undefined, answers: [["Much better", "better"], ["Better", "better"], ["Same", "same"], ["Worse", "worse"], ["Much worse", "worse"]] });
+  expect(answersFor("zh").answers.map(([, label]) => label)).toEqual(["better", "better", "same", "worse", "worse"]);
 });
 
 test("after answering, worse or urgent says who was told and when they will call; fine only thanks them", () => {
@@ -46,6 +46,8 @@ test("every Worse quick reply, in every language, reaches the care team as worse
     const [better] = copy.answers[0];
     expect(readReply(replyText(better, copy.follow.better.quick[0]))).toBe("fine");
     expect(copy.follow.better.none && copy.follow.same.none && !copy.follow.worse.none).toBeTruthy();
+    // Each face alone reaches the care team as it means: the two saddest as worse, the rest as fine.
+    for (const [face, feeling] of copy.answers) expect(readReply(face)).toBe(feeling === "worse" ? "worse" : "fine");
   }
 });
 

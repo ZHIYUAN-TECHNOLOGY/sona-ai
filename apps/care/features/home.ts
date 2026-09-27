@@ -1,6 +1,5 @@
 import { todayOf, type CheckIn } from "./check-ins/model";
 import { clock, dosesToday, dueNow, untilLine, whenWords, type ScheduledMed, type WeekDay } from "./doses/model";
-import { away } from "./follow-ups/lines";
 
 const MYT = 8 * 3600_000, DAY = 86_400_000;
 const dayOf = (d: Date) => Math.floor((d.getTime() + MYT) / DAY);
@@ -24,20 +23,6 @@ export function needsLine(needs: Pick<Need, "kind">[]) {
   return `${needs.length} ${needs.length === 1 ? "thing needs" : "things need"} you · about ${mins} min`;
 }
 
-/**
- * Home's big status line: the most urgent open thing in words (a dose due, an overdue visit, today's
- * check-in, a waiting reply, a visit coming up), else "Positive today".
- */
-export function headline(needs: Omit<Need, "label">[]) {
-  const dose = needs.find(n => n.kind === "dose");
-  if (dose) return `Time for ${dose.name}`;
-  if (needs.some(n => n.kind === "visit" && n.overdue)) return "Visit overdue";
-  if (needs.some(n => n.kind === "check-in")) return "Check in today";
-  if (needs.some(n => n.kind === "reply")) return "Care team replied";
-  const visit = needs.find(n => n.kind === "visit");
-  return visit ? `Visit ${away(visit.inDays ?? 0)}` : "Positive today";
-}
-
 const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1);
 
 /** The next-dose card's line under its time: "In 2 h 10 min", "Tomorrow", amber "Due in 18 min", "Due now" or "20 min late". */
@@ -52,43 +37,58 @@ export function doseStatus(dueAt: Date, now: Date): { text: string; tone: "amber
 const GRACE = 6 * 3600_000;
 const weekday = (d: Date) => d.toLocaleDateString("en-GB", { weekday: "short", timeZone: "Asia/Kuala_Lumpur" });
 
+const lastWeek = (meds: ScheduledMed[], dischargedAt: string | undefined, taken: string[], now: Date) =>
+  Array.from({ length: 7 }, (_, i) => dosesToday(meds, dischargedAt, taken, new Date(now.getTime() - i * DAY))).flat();
+const missedBy = (d: { taken: boolean; dueAt: Date }, now: Date) => !d.taken && d.dueAt.getTime() < now.getTime() - GRACE;
+
 /** "This week"'s one line: every dose taken, or how many were missed and when (the last 7 days since discharge). */
 export function weekLine(meds: ScheduledMed[], dischargedAt: string | undefined, taken: string[], now: Date): { text: string; tone: "green" | "amber" | "muted" } {
-  const doses = Array.from({ length: 7 }, (_, i) => dosesToday(meds, dischargedAt, taken, new Date(now.getTime() - i * 86_400_000))).flat();
-  const missed = doses.filter(d => !d.taken && d.dueAt.getTime() < now.getTime() - GRACE);
+  const doses = lastWeek(meds, dischargedAt, taken, now), missed = doses.filter(d => missedBy(d, now));
   if (!missed.length) return doses.some(d => d.dueAt <= now) ? { text: "Every dose taken", tone: "green" } : { text: doses.length ? "Nothing missed so far" : "Nothing on a timer this week", tone: "muted" };
   const days = [...new Set(missed.map(d => weekday(d.dueAt)))];
   const n = `${missed.length} ${missed.length === 1 ? "dose" : "doses"} missed`;
   return { text: days.length === 1 ? `${n} on ${days[0]}` : `${n} this week`, tone: "amber" };
 }
 
-/** Today's check-in: "done" once one was answered today, "pending" while one waits, else none today. */
-export function checkInToday(checkIns: Pick<CheckIn, "dueAt" | "sentAt" | "replies">[], now: Date): "done" | "pending" | undefined {
-  if (todayOf(checkIns as CheckIn[], now).ask) return "pending";
-  return checkIns.some(c => c.replies.some(r => dayOf(new Date(r.receivedAt)) === dayOf(now))) ? "done" : undefined;
+/**
+ * Home's Consistency tile: the share of the last 7 days' doses taken, counting only doses taken or
+ * missed (6 h late), so one still to come never lowers it. Undefined until a dose has counted.
+ */
+export function consistency(meds: ScheduledMed[], dischargedAt: string | undefined, taken: string[], now: Date) {
+  const doses = lastWeek(meds, dischargedAt, taken, now), done = doses.filter(d => d.taken).length, missed = doses.filter(d => missedBy(d, now)).length;
+  return done + missed ? Math.round(done / (done + missed) * 100) : undefined;
 }
 
-export const GLASSES = 8;
-export type Part = { key: "medicines" | "check-in" | "water" | "visits"; label: string; share?: number; note: string };
+/** The medicines tile's capsule while the next dose is over 2 h off: "Next at 9:00 PM", "Tomorrow 8:00 AM", "Tue 29 Sep 8:00 AM". */
+export function nextCapsule(dueAt: Date, now: Date) {
+  const when = whenWords(dueAt, now);
+  return when.startsWith("today ") ? `Next at ${clock(dueAt)}` : cap(when);
+}
+
+/** Home's header date, "Sun, 27 Sep", in the hospital's time. */
+export function headerDate(now: Date) {
+  const part = (o: Intl.DateTimeFormatOptions) => now.toLocaleDateString("en-GB", { ...o, timeZone: "Asia/Kuala_Lumpur" });
+  return `${part({ weekday: "short" })}, ${part({ day: "numeric" })} ${part({ month: "short" })}`;
+}
+
+export type Update = { line: string; tone: "green" | "amber" | "blue" | "muted"; face: "smile" | "calm" | "chat"; to: "messages" | "check-in" | "check-ins" };
 
 /**
- * "Recovery today": four parts from the patient's own data only (doses taken of today's, today's
- * check-in, glasses logged of 8, the next visit booked and not overdue). A part with nothing today has
- * no share and is left out of the %. `next` is the part furthest behind, where a tap on the card goes.
+ * Home's Latest update tile, the newest thing about the patient's recovery: a care-team reply waiting,
+ * today's check-in answered (all fine, or the team told) or waiting, else nothing new.
  */
-export function recovery({ doses, checkIn, glasses, visit }: { doses: { taken: boolean }[]; checkIn?: "done" | "pending"; glasses: number; visit?: { inDays: number; overdue: boolean } }) {
-  const taken = doses.filter(d => d.taken).length, cups = Math.min(glasses, GLASSES);
-  const parts: Part[] = [
-    doses.length ? { key: "medicines", label: "Medicines", share: taken / doses.length, note: `${taken} of ${doses.length} taken` } : { key: "medicines", label: "Medicines", note: "None due today" },
-    checkIn ? { key: "check-in", label: "Check-in", share: checkIn === "done" ? 1 : 0, note: checkIn === "done" ? "Done" : "Waiting" } : { key: "check-in", label: "Check-in", note: "None today" },
-    { key: "water", label: "Water", share: cups / GLASSES, note: `${cups} of ${GLASSES} glasses` },
-    visit ? { key: "visits", label: "Visits", share: visit.overdue ? 0 : 1, note: visit.overdue ? "Overdue" : `Booked · ${away(visit.inDays)}` } : { key: "visits", label: "Visits", note: "None booked" },
-  ];
-  const counted = parts.filter(p => p.share !== undefined);
-  const pct = Math.round(counted.reduce((s, p) => s + p.share!, 0) / counted.length * 100);
-  const next = counted.filter(p => p.share! < 1).sort((a, b) => a.share! - b.share!)[0]?.key;
-  return { parts, pct, next };
+export function latestUpdate(checkIns: Pick<CheckIn, "dueAt" | "sentAt" | "replies">[] | undefined, replyWaiting: boolean, now: Date): Update {
+  if (replyWaiting) return { line: "Care team replied", tone: "blue", face: "chat", to: "messages" };
+  const today = checkIns?.flatMap(c => c.replies).filter(r => dayOf(new Date(r.receivedAt)) === dayOf(now)).at(-1);
+  if (today) return today.label === "fine"
+    ? { line: "Check-in done · all fine", tone: "green", face: "smile", to: "check-ins" }
+    : { line: "Check-in sent · they'll call you", tone: "amber", face: "calm", to: "check-ins" };
+  if (checkIns && todayOf(checkIns as CheckIn[], now).ask) return { line: "Your check-in is waiting", tone: "blue", face: "calm", to: "check-in" };
+  return { line: "Nothing new today", tone: "muted", face: "smile", to: "messages" };
 }
+
+/** The water log's daily goal (logged from the + sheet on home). */
+export const GLASSES = 8;
 
 // A day's dose state as a height on the sparkline; still to come or nothing due leaves no point.
 const LEVEL: Partial<Record<WeekDay["state"], number>> = { all: 1, some: 0.5, none: 0 };

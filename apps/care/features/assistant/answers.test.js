@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { conditionOf, doctorQuestion, NO_ANSWER, reply, spoken, suggestions, urgent, wantsDoctor } from "./answers";
+import { conditionOf, doctorQuestion, leadOf, NO_ANSWER, reply, spoken, suggestions, urgent, wantsDoctor } from "./answers";
 
 const medicines = {
   new: [{ name: "Paracetamol", line: "For pain or fever: 1 g every 6 hours if you need it, no more than 4 g a day" }],
@@ -80,4 +80,10 @@ test("doctor questions return 1–3 sample doctors: by the question's words, els
 test("urgent words win: the 999 line, even when asking for a doctor", () => {
   expect(reply("I have chest pain, find me a doctor", [], "chest infection")).toEqual({ kind: "none", urgent: true });
   expect(spoken({ kind: "none", urgent: true })).toBe(`If this is happening now, call 999. ${NO_ANSWER}`);
+});
+
+test("an answer's lead sentence is split from the rest, never at Dr.", () => {
+  expect(leadOf("Your plan says: take it at night. Never take two.")).toEqual(["Your plan says: take it at night.", "Never take two."]);
+  expect(leadOf("See Dr. Tan first. Then rest.")).toEqual(["See Dr. Tan first.", "Then rest."]);
+  expect(leadOf("One sentence only.")).toEqual(["One sentence only.", ""]);
 });
