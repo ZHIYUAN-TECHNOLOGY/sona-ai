@@ -9,6 +9,14 @@ export const dayLabel = (date: Date | string) => new Date(date).toLocaleDateStri
 /** "Fri 25 Dec · in 90 days". */
 export const whenLine = (f: Pick<FollowUp, "date" | "inDays">) => `${dayLabel(f.date)} · ${away(f.inDays)}`;
 
+/** "10:30 AM" in Malaysia for a booked visit; a recall or the discharge review has a due day, not a time. */
+export const timeLabel = (f: Pick<FollowUp, "id" | "date">) => f.id.startsWith("recall:") || f.id === "discharge-review" ? undefined
+  : new Date(f.date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" });
+/** The visit card's pill: "Fri 25 Dec · 10:30 AM", or just the day. */
+export const pillLine = (f: Pick<FollowUp, "id" | "date">) => [dayLabel(f.date), timeLabel(f)].filter(Boolean).join(" · ");
+/** What to bring: paperwork only, since the data holds no preparation steps for a visit or test. */
+export const bringLine = (f: Pick<FollowUp, "id">) => f.id === "discharge-review" ? "Bring your IC, your discharge letter and your medicines." : "Bring your IC and your medicines, or a list of them.";
+
 /** Home's tile: the next one's date, what it is and how far off, amber when due within a week, red once overdue. */
 export function nextVisit(items: Pick<FollowUp, "short" | "date" | "status" | "inDays">[]): { value: string; line: string; tone: "muted" | "amber" | "red" } {
   const next = items[0];
