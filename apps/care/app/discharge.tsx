@@ -1,54 +1,41 @@
 import { router } from "expo-router";
-import { useRef, useState, type Ref } from "react";
-import { ActivityIndicator, Pressable, Text, useWindowDimensions, View } from "react-native";
-import Animated, { Easing, FadeIn, FadeInDown, LinearTransition, useAnimatedRef, useReducedMotion, useScrollOffset } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView, Text, useWindowDimensions, View, type ViewStyle } from "react-native";
+import Animated, { Easing, FadeInDown, useReducedMotion } from "react-native-reanimated";
+import Svg, { Path } from "react-native-svg";
 import { errorText } from "@/features/errors";
-import { CHANGE, changeSummary, homeLine, scheduleLine, takeLine, type Discharged, type Group, type Med } from "@/features/discharge/lines";
+import { changeSummary, homeLine, scheduleLine, takeLine, type Discharged, type Group, type Med } from "@/features/discharge/lines";
 import { useDischarge } from "@/features/discharge/row";
 import { Pill } from "@/features/doses";
 import { dayLabel } from "@/features/follow-ups/lines";
 import { daysHome } from "@/features/home";
+import { useMe } from "@/features/me";
 import { DOCK_SPACE } from "@/lib/dock";
-import { palette, type } from "@/lib/theme";
-import { Card, Row, surfaceStyle, Title } from "@/lib/ui";
+import { accent, palette, type } from "@/lib/theme";
+import { Card, Chip, CircleButton, ICON, Row, surfaceStyle, Title } from "@/lib/ui";
 
-/** Sections rise in on a 40 ms ease-out stagger the first time; still under Reduce Motion. */
+/** Sections and cards rise in on a 40 ms ease-out stagger the first time; still under Reduce Motion. */
 const rise = (reduced: boolean, i: number) => reduced ? undefined : FadeInDown.duration(360).easing(Easing.out(Easing.cubic)).delay(i * 40);
-/** The layout spring (380 ms, no bounce) for a card opening in place and everything after it reflowing. */
-const reflow = (reduced: boolean) => reduced ? undefined : LinearTransition.springify().duration(380).dampingRatio(1);
 
 const TAGS = {
   new: { label: "New", bg: palette.blueWash, fg: palette.blue },
   changed: { label: "Changed", bg: palette.amberWash, fg: palette.amber },
-  continue: { label: "Same", bg: palette.mutedWash, fg: palette.muted },
   stopped: { label: "Stopped", bg: palette.mutedWash, fg: palette.muted },
 } as const;
 
+const open = (name: string) => router.push({ pathname: "/medicine", params: { name } });
+
 /**
- * My medicines: the plan from the discharge day. What changed comes first (a chip per change, each
- * opening that medicine), then a grid of the medicines to take, each opening in place to its full line
- * and how to take it; stopped ones as one quiet line. Then the leaflet in their language, the warning
- * signs, and what comes next.
+ * My medicines (Lumi kit, "Your Medicines"): the insight line, the care team one tap away, what the
+ * stay changed as chips, then a grid of the medicines to take, each opening its sheet; stopped ones as
+ * one quiet line. Then the leaflet in their language, the warning signs, and what comes next.
  */
 export default function DischargeScreen() {
   const { data, error, isLoading } = useDischarge();
   const reduced = useReducedMotion();
-  const scroll = useAnimatedRef<Animated.ScrollView>();
-  const offset = useScrollOffset(scroll);
-  const { height } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-  /** Scrolls just enough to bring a view clear of the status bar and the dock (scrollIntoView "nearest"). */
-  const reveal = (node: View | null | undefined) => node?.measureInWindow((_x, y, _w, h) => {
-    const top = insets.top + 12, bottom = height - DOCK_SPACE;
-    const shift = y + h > bottom ? Math.min(y + h - bottom, y - top) : y < top ? y - top : 0;
-    if (shift) scroll.current?.scrollTo({ y: offset.get() + shift, animated: !reduced });
-  });
-  return <Animated.ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: DOCK_SPACE, gap: 16 }}>
+  return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: DOCK_SPACE, gap: 16 }}>
     <Animated.View entering={rise(reduced, 0)}>
-      {data?.status === "discharged"
-        ? <Title greeting={`Your plan from ${dayLabel(data.dischargedAt).replace(" ", ", ")}`} accent="Medicines" line={takeLine(data.medicines, homeLine(daysHome(data.dischargedAt)))} />
-        : <Title>My medicines</Title>}
+      <Title greeting="Your" accent="Medicines" line={data?.status === "discharged" ? takeLine(data.medicines, homeLine(daysHome(data.dischargedAt))) : undefined} />
     </Animated.View>
     {isLoading && <ActivityIndicator color={palette.muted} />}
     {error && <Text style={{ ...type.body, color: palette.red }}>{errorText(error)}</Text>}
@@ -56,63 +43,49 @@ export default function DischargeScreen() {
       <Text style={{ ...type.headline, color: palette.ink }}>You're still in hospital</Text>
       <Text style={{ ...type.body, color: palette.muted }}>Your medicines, leaflet and warning signs show here once you go home.</Text>
     </Card>}
-    {data?.status === "discharged" && <Plan plan={data} reveal={reveal} />}
-  </Animated.ScrollView>;
+    {data?.status === "discharged" && <Plan plan={data} reduced={reduced} />}
+  </ScrollView>;
 }
 
-function Plan({ plan, reveal }: { plan: Discharged; reveal: (node: View | null | undefined) => void }) {
-  const reduced = useReducedMotion(), layout = reflow(reduced);
+function Plan({ plan, reduced }: { plan: Discharged; reduced: boolean }) {
+  const { fontScale } = useWindowDimensions();
   const [picked, setPicked] = useState<string>();
-  const [open, setOpen] = useState<string>();
-  const [flash, setFlash] = useState(false);
-  const cards = useRef(new Map<string, View>());
-  const stoppedRef = useRef<View>(null);
   const leaflet = plan.leaflets.find(l => l.language === (picked ?? plan.language)) ?? plan.leaflets[0]!;
   const meds = (["new", "changed", "continue"] as const).flatMap(group => plan.medicines[group].map(m => ({ ...m, group })));
-  const { stopped } = plan.medicines;
-
-  const show = (name: string) => { setOpen(name); requestAnimationFrame(() => reveal(cards.current.get(name))); };
-  const jump = ({ group, first }: ReturnType<typeof changeSummary>[number]) => {
-    if (group !== "stopped") return show(first);
-    reveal(stoppedRef.current);
-    setFlash(true);
-    setTimeout(() => setFlash(false), 1200);
-  };
+  const { stopped } = plan.medicines, changes = changeSummary(plan.medicines);
+  let i = 1; // stagger order
 
   return <>
-    <Animated.View entering={rise(reduced, 1)} layout={layout} style={{ gap: 12 }}>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-        {changeSummary(plan.medicines).map(s => <Pressable key={s.group} accessibilityRole="button" accessibilityLabel={`${s.label}: ${plan.medicines[s.group].map(m => m.name).join(", ")}`} onPress={() => jump(s)}
-          style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, borderRadius: 22, justifyContent: "center", backgroundColor: TAGS[s.group].bg, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
-          <Text style={{ fontSize: 13, fontWeight: "800", color: TAGS[s.group].fg }}>{s.label}</Text>
-        </Pressable>)}
-      </View>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 12 }}>
-        {meds.map(m => <MedCard key={m.name} med={m} open={open === m.name} layout={layout} reduced={reduced}
-          ref={node => { if (node) cards.current.set(m.name, node); }}
-          onPress={() => open === m.name ? setOpen(undefined) : show(m.name)} />)}
-      </View>
-      {!meds.length && <Text style={{ ...type.body, color: palette.muted }}>Nothing to take at home.</Text>}
-      {stopped.length > 0 && <Animated.View layout={layout}>
-        <View ref={stoppedRef} accessible accessibilityLabel={`Stopped: ${stopped.map(m => `${m.name}. ${m.line}`).join(". ")}`}
-          style={{ paddingHorizontal: 6, paddingVertical: 8, borderRadius: 12, backgroundColor: flash ? TAGS.stopped.bg : "transparent" }}>
-          <Text style={{ ...type.footnote, color: palette.muted }}>
-            <Text style={{ fontWeight: "700", color: palette.ink }}>Stopped: </Text>
-            {stopped.map((m, i) => <Text key={m.name}>{i ? " · " : ""}<Text style={{ textDecorationLine: "line-through" }}>{m.name}</Text> · {m.line}</Text>)}
-          </Text>
-        </View>
-      </Animated.View>}
-    </Animated.View>
+    <Animated.View entering={rise(reduced, i++)}><CareTeam /></Animated.View>
 
-    <Animated.View entering={rise(reduced, 2)} layout={layout}>
+    {changes.length > 0 && <Animated.View entering={rise(reduced, i++)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+      {changes.map(s => <Chip key={s.group} label={s.label} tone={TAGS[s.group]} onPress={() => open(s.first)}
+        accessibilityLabel={`${s.label}: ${plan.medicines[s.group].map(m => m.name).join(", ")}. Opens ${s.first}`} />)}
+    </Animated.View>}
+
+    {/* Two columns; at large Dynamic Type, one card per row so names never squeeze. */}
+    <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 12 }}>
+      {meds.map(m => <Animated.View key={m.name} entering={rise(reduced, i++)} style={{ width: fontScale > 1.3 ? "100%" : "48.2%" }}>
+        <MedCard med={m} />
+      </Animated.View>)}
+    </View>
+    {!meds.length && <Text style={{ ...type.body, color: palette.muted }}>Nothing to take at home.</Text>}
+    {stopped.length > 0 && <Animated.View entering={rise(reduced, i++)} accessible accessibilityLabel={`Stopped: ${stopped.map(m => `${m.name}. ${m.line}`).join(". ")}`} style={{ paddingHorizontal: 6 }}>
+      <Text style={{ ...type.footnote, color: palette.muted }}>
+        <Text style={{ fontWeight: "700", color: palette.ink }}>Stopped: </Text>
+        {stopped.map((m, n) => <Text key={m.name}>{n ? " · " : ""}<Text style={{ textDecorationLine: "line-through" }}>{m.name}</Text> · {m.line}</Text>)}
+      </Text>
+    </Animated.View>}
+
+    <Animated.View entering={rise(reduced, i++)}>
       <Card>
         <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>Your leaflet</Text>
-        <View style={{ flexDirection: "row", gap: 8 }}>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
           {plan.leaflets.map(l => {
             const on = l.language === leaflet.language;
             return <Pressable key={l.language} accessibilityRole="button" accessibilityLabel={l.name} accessibilityState={{ selected: on }} onPress={() => setPicked(l.language)}
-              style={({ pressed }) => ({ minHeight: 44, minWidth: 56, paddingHorizontal: 16, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.blueWash : "rgba(20,28,40,0.05)", opacity: pressed ? 0.6 : 1 })}>
-              <Text style={{ ...type.footnote, fontWeight: "600", color: on ? palette.blue : palette.ink }}>{l.label}</Text>
+              style={({ pressed }) => ({ minHeight: 44, minWidth: 56, paddingHorizontal: 16, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.dark : "rgba(255,255,255,0.86)", transform: [{ scale: pressed ? 0.96 : 1 }] })}>
+              <Text style={{ ...type.footnote, fontWeight: "600", color: on ? palette.white : palette.ink }}>{l.label}</Text>
             </Pressable>;
           })}
         </View>
@@ -120,14 +93,14 @@ function Plan({ plan, reveal }: { plan: Discharged; reveal: (node: View | null |
       </Card>
     </Animated.View>
 
-    <Animated.View entering={rise(reduced, 3)} layout={layout}>
+    <Animated.View entering={rise(reduced, i++)}>
       <Card>
         <Text accessibilityRole="header" style={{ ...type.headline, color: palette.red }}>Call 999 or go to the emergency department if</Text>
         {plan.warningSigns.map(sign => <Text key={sign} style={{ ...type.body, color: palette.ink }}>•  {sign}</Text>)}
       </Card>
     </Animated.View>
 
-    <Animated.View entering={rise(reduced, 4)} layout={layout}>
+    <Animated.View entering={rise(reduced, i++)}>
       <Card style={{ paddingVertical: 6 }}>
         {plan.followUp && <Row first title={plan.followUp.title} line={dayLabel(plan.followUp.date)} onPress={() => router.push("/follow-ups")} />}
         <Row first={!plan.followUp} title="Check-ins" line={`We'll message you ${plan.checkIns.map(c => dayLabel(c.date)).join(" and ")}`} onPress={() => router.push("/check-ins")} />
@@ -136,33 +109,31 @@ function Plan({ plan, reveal }: { plan: Discharged; reveal: (node: View | null |
   </>;
 }
 
-/**
- * One medicine in the grid (after the Lumi medicines grid): a tall white card with the medicine drawn
- * large as a soft 3D pair of pills, its name and plain schedule, and a small tag for what the stay did
- * to it. Opens in place to full width (pill beside the words) with its full line and how to take it.
- */
-function MedCard({ med, open, layout, reduced, onPress, ref }: { med: Med & { group: Exclude<Group, "stopped"> }; open: boolean; layout: ReturnType<typeof reflow>; reduced: boolean; onPress: () => void; ref: Ref<View> }) {
-  const tag = TAGS[med.group], schedule = scheduleLine(med);
-  const details = [med.line, med.take && `How to take: ${med.take}`, CHANGE[med.group]].filter(Boolean);
-  const name = <View style={{ gap: 3, flexShrink: 1 }}>
-    <Text style={{ fontSize: 18, lineHeight: 22, fontWeight: "700", letterSpacing: -0.4, color: palette.ink }}>{med.name}</Text>
-    <Text style={{ ...type.footnote, color: palette.muted }}>{schedule}</Text>
-  </View>;
-  return <Animated.View layout={layout} style={{ width: open ? "100%" : "48%" }}>
-    <Pressable ref={ref} accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={onPress}
-      accessibilityLabel={[med.name, schedule, tag.label, ...(open ? details : [])].join(". ")} accessibilityHint={open ? undefined : "Shows how to take it"}
-      style={({ pressed }) => [surfaceStyle, { minHeight: open ? 0 : 214, padding: 16, gap: 10, justifyContent: "space-between", transform: [{ scale: pressed ? 0.97 : 1 }] }]}>
-      <View style={{ position: "absolute", top: 14, right: 14, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: tag.bg }}>
-        <Text style={{ fontSize: 10.5, fontWeight: "800", letterSpacing: 0.6, textTransform: "uppercase", color: tag.fg }}>{tag.label}</Text>
-      </View>
-      {open
-        ? <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingRight: 64 }}><Pill name={med.name} size={84} />{name}</View>
-        : <><View style={{ alignSelf: "center", marginTop: 8 }}><Pill name={med.name} size={104} /></View>{name}</>}
-      {open && <Animated.View entering={reduced ? undefined : FadeIn.duration(240).delay(120)} style={{ gap: 6, paddingTop: 10, borderTopWidth: 1, borderColor: "rgba(20,26,46,0.06)" }}>
-        <Text style={{ ...type.body, color: palette.ink }}>{med.line}</Text>
-        {med.take && <Text style={{ ...type.body, color: palette.ink }}><Text style={{ fontWeight: "600" }}>How to take: </Text>{med.take}</Text>}
-        <Text style={{ ...type.footnote, fontWeight: "600", color: tag.fg }}>{CHANGE[med.group]}</Text>
-      </Animated.View>}
-    </Pressable>
-  </Animated.View>;
+/** The kit's contact row: the care team (a heart on the accent) and a round chat button, the quick way to ask about a medicine. */
+function CareTeam() {
+  const { me } = useMe();
+  return <Card style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, paddingHorizontal: 12 }}>
+    <View style={{ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", experimental_backgroundImage: `linear-gradient(135deg, ${accent[0]}, ${accent[2]})` } as ViewStyle}>
+      <Svg width={22} height={22} viewBox="0 0 24 24"><Path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" fill={palette.white} /></Svg>
+    </View>
+    <View accessible style={{ flex: 1, gap: 1 }}>
+      <Text style={{ ...type.headline, color: palette.ink }}>Your care team</Text>
+      {me?.hospital && <Text numberOfLines={2} style={{ ...type.footnote, color: palette.muted }}>{me.hospital}</Text>}
+    </View>
+    <CircleButton d={ICON.chat} label="Message your care team" onPress={() => router.push("/messages")} />
+  </Card>;
+}
+
+/** One medicine in the grid (Lumi kit): a tall grey card, the medicine drawn big, its name and plain schedule centred, and a tag for what the stay did (same needs none). */
+function MedCard({ med }: { med: Med & { group: Exclude<Group, "stopped"> } }) {
+  const tag = med.group === "continue" ? undefined : TAGS[med.group], schedule = scheduleLine(med);
+  return <Pressable accessibilityRole="button" accessibilityLabel={[med.name, schedule, tag?.label].filter(Boolean).join(". ")} accessibilityHint="Opens how to take it" onPress={() => open(med.name)}
+    style={({ pressed }) => [surfaceStyle, { flexGrow: 1, minHeight: 220, padding: 14, paddingBottom: 18, alignItems: "center", gap: 4, transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
+    <Pill name={med.name} size={110} />
+    <Text style={{ fontSize: 17, lineHeight: 22, fontWeight: "600", letterSpacing: -0.3, color: palette.ink, textAlign: "center" }}>{med.name}</Text>
+    <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{schedule}</Text>
+    {tag && <View style={{ marginTop: 6, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, backgroundColor: tag.bg }}>
+      <Text style={{ fontSize: 11, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase", color: tag.fg }}>{tag.label}</Text>
+    </View>}
+  </Pressable>;
 }

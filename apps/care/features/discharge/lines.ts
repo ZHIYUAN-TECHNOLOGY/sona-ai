@@ -28,15 +28,34 @@ const hour = (hhmm: string) => {
   const [h = 0, m = 0] = hhmm.split(":").map(Number);
   return `${h % 12 || 12}${m ? `:${String(m).padStart(2, "0")}` : ""} ${h < 12 ? "AM" : "PM"}`;
 };
+const times = (at: string[]) => at.map(hour).join(", ").replace(/, ([^,]*)$/, " and $1");
+const often = (n: number) => ["Once", "Twice"][n - 1] ?? `${n} times`;
 /** A card's plain-language schedule: "Once a day, 8 AM", "Twice a day, 8 AM and 8 PM", "When you need it". */
 export function scheduleLine({ at = [] }: Pick<Med, "at">) {
-  if (!at.length) return "When you need it";
-  const times = at.map(hour).join(", ").replace(/, ([^,]*)$/, " and $1");
-  return `${["Once", "Twice"][at.length - 1] ?? `${at.length} times`} a day, ${times}`;
+  return at.length ? `${often(at.length)} a day, ${times(at)}` : "When you need it";
 }
 
-/** What the stay did to a medicine, in the patient's words (the open card's last line). */
-export const CHANGE = { new: "Started in hospital", changed: "Changed in hospital", continue: "Same as before your stay" } as const;
+/** What the stay did to a medicine, in the patient's words (the sheet's grey line). */
+export const CHANGE = { new: "Started in hospital", changed: "Changed in hospital", continue: "Same as before your stay", stopped: "Stopped in hospital" } as const;
+
+/** The sheet's title split for the accent (after the kit's "Medi|cines"): the last word of a longer name, else the second half. */
+export function accentSplit(name: string): [string, string] {
+  const space = name.lastIndexOf(" ");
+  const cut = space > 0 ? space + 1 : Math.ceil(name.length / 2);
+  return [name.slice(0, cut), name.slice(cut)];
+}
+
+/**
+ * The sheet's sentence as runs of plain and bold text: "You have to take **1 tablet**, **once a day at
+ * 8 AM**, with or without food." from how to take one dose and its times; without a schedule, the plan line.
+ */
+export function takeSentence({ line, take, at = [] }: Pick<Med, "line" | "take" | "at">): { text: string; bold?: boolean }[] {
+  if (!at.length) return [{ text: line }];
+  const when = { text: `${often(at.length).toLowerCase()} a day at ${times(at)}`, bold: true };
+  if (!take) return [{ text: "Take it " }, when, { text: "." }];
+  const [dose = take, ...rest] = take.split(", ");
+  return [{ text: "You have to take " }, { text: dose, bold: true }, { text: ", " }, when, { text: rest.length ? `, ${rest.join(", ")}.` : "." }];
+}
 
 /** The title's line: how long the patient has been home. */
 export const homeLine = (days: number | undefined) => days === undefined || days <= 0 ? "Home since today" : days === 1 ? "Home since yesterday" : `Home for ${days} days`;
