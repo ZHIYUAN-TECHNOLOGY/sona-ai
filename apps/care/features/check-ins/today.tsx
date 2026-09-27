@@ -14,6 +14,7 @@ import { Button, Card, pillStyle } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 import { Answer, TINT } from "./answer";
 import { answersFor, doneLine, shortDate, todayOf, type Feeling, type ReplyLabel } from "./model";
+import { now as clockNow } from "@/lib/clock";
 
 /**
  * Home's feature card: the check-in waiting for the patient, answered in place (the kit's five faces;
@@ -28,7 +29,7 @@ export function useCheckIns() {
 
 export function useCheckInNeeds() {
   const { data } = useCheckIns();
-  return data && todayOf(data, new Date()).ask ? 1 : 0;
+  return data && todayOf(data, clockNow()).ask ? 1 : 0;
 }
 
 /** The card's ambient light, tinted to the chosen answer and rising from the bottom edge. */
@@ -71,7 +72,7 @@ export function TodayCard() {
     {isError ? <Text style={{ ...type.body, color: palette.muted }}>Your check-ins could not load. Try again in a moment.</Text> : <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} />}
   </Card>;
 
-  const { ask, next } = todayOf(data, new Date());
+  const { ask, next } = todayOf(data, clockNow());
   const history = data.some(c => c.replies.length) && link("Past check-ins", "/check-ins");
 
   // Sent: who was told and when they will call, then the next check-in. The sunbeam only for a calm answer.

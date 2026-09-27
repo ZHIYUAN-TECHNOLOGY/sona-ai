@@ -27,8 +27,8 @@ export async function scheduleCheckIns(db: Context["db"], hospitalId: string, pa
 /** The Worker's hourly cron (and checkIns.tick): every due, unsent check-in is marked sent to the simulated inbox. */
 export async function sendDueCheckIns(db: Context["db"], hospitalId: string, now: Date) {
   const sent = await db.update(checkIns).set({ sentAt: now })
-    .where(and(eq(checkIns.hospitalId, hospitalId), isNull(checkIns.sentAt), lte(checkIns.dueAt, now))).returning({ id: checkIns.id });
-  return { sent: sent.length };
+    .where(and(eq(checkIns.hospitalId, hospitalId), isNull(checkIns.sentAt), lte(checkIns.dueAt, now))).returning({ id: checkIns.id, patientId: checkIns.patientId });
+  return { sent: sent.length, patientIds: [...new Set(sent.map(s => s.patientId))] };
 }
 
 /** A hospital's check-ins with their replies, for one visit or (Sona Care) one patient when given. */

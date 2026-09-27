@@ -1,11 +1,12 @@
 import { todayOf, type CheckIn } from "./check-ins/model";
 import { clock, dosesToday, dueNow, untilLine, whenWords, type ScheduledMed, type WeekDay } from "./doses/model";
+import { now as clockNow } from "@/lib/clock";
 
 const MYT = 8 * 3600_000, DAY = 86_400_000;
 const dayOf = (d: Date) => Math.floor((d.getTime() + MYT) / DAY);
 
 /** Days since the patient left hospital, counted on calendar days in the hospital's time zone (discharge day is day 0). */
-export function daysHome(dischargedAt: string | undefined, now = new Date()) {
+export function daysHome(dischargedAt: string | undefined, now = clockNow()) {
   if (!dischargedAt) return undefined;
   return dayOf(now) - dayOf(new Date(dischargedAt));
 }

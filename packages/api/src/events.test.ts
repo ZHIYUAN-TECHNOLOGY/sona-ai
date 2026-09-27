@@ -30,7 +30,7 @@ test("every successful write through the API is announced to the caller's hospit
   await api.results.receive({ patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L" });
   await api.claim.status({ encounterId: "visit-1042" });
   await api.claim.send({ encounterId: "visit-1042", requestId: "c1", approvedBy: "dr-aisyah" }).catch(() => {}); // refused: a criterion is still open
-  expect(heard).toEqual([["demo", { topic: "claim", encounterId: "visit-1042" }], ["demo", { topic: "results" }]]);
+  expect(heard).toEqual([["demo", { topic: "claim", encounterId: "visit-1042" }], ["demo", { topic: "results", patientId: "SYN-1086" }]]);
 });
 
 test("a failed announcement never fails the write", async () => {

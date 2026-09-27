@@ -14,6 +14,7 @@ import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
 import { BackButton, Card, Chip, pillStyle, surfaceStyle } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
+import { now as clockNow } from "@/lib/clock";
 
 /**
  * The thread with the care team, after the AI Health Companion kit: back, "Care team" centred with the
@@ -53,7 +54,7 @@ export default function Messages() {
     const requestId = t === attempt.text ? attempt.requestId : newRequestId();
     setAttempt({ text: t, requestId });
     if (process.env.EXPO_OS === "ios") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    send.mutate({ text: t, requestId, at: new Date() });
+    send.mutate({ text: t, requestId, at: clockNow() });
   };
 
   // While sending, the message shows under the ID the server will give it (see care.messages.send).
@@ -81,7 +82,7 @@ export default function Messages() {
         // Messages there on opening appear still; only what arrives while the screen is open moves.
         : <LayoutAnimationConfig skipEntering><View style={{ gap: 14 }}>
           {!thread.length && <Card><Text style={{ ...type.body, color: palette.muted }}>Ask anything about your recovery. Your care team will reply here.</Text></Card>}
-          {withDays(thread, new Date()).map(item => "day" in item
+          {withDays(thread, clockNow()).map(item => "day" in item
             ? <Pill key={`day-${item.day}`} label={item.day} />
             : <Bubble key={item.message.id} m={item.message} sending={item.message.id === sending?.id} reduced={reduced} />)}
           {last?.from === "patient" && <Animated.View key={`status-${last.id}`} entering={reduced ? FadeIn.duration(200) : rise(250)} style={{ alignSelf: "center" }}>

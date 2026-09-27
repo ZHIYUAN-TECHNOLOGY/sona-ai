@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { LiveUpdates } from "@/features/live";
 import { CalmCanvas } from "@/lib/canvas";
 import { Dock } from "@/lib/dock";
 import { FONTS } from "@/lib/text";
@@ -36,6 +37,7 @@ export default function RootLayout() {
       <Stack.Screen name="assistant" />
     </Stack>
     <Dock />
+    <LiveUpdates />
     </ThemeProvider>
   </QueryClientProvider></SafeAreaProvider></KeyboardProvider></GestureHandlerRootView>;
 }

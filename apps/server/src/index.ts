@@ -8,14 +8,14 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
-import { announcer, createContext } from "./context";
+import { announcer, createContext, patientChannel } from "./context";
 import { ENV } from "./env.server";
 import { createAuth, getDb } from "./services";
 import { runNightlyAudit } from "@sona-ai/api/audit-job";
 import { decideReview, renderReviewPage, reviewPacket } from "@sona-ai/api/insurer";
 import { sendDueCheckIns } from "@sona-ai/api/routers/check-ins";
 import { hospitals } from "@sona-ai/db/schema/clinical";
-import { hospitalOf } from "@sona-ai/api/routers/hospital";
+import { careLinkOf, hospitalOf } from "@sona-ai/api/routers/hospital";
 
 const app = new Hono();
 
@@ -97,17 +97,18 @@ app.post("/insurer/:token", async (c) => {
   return c.html(renderReviewPage(packet, result.reason), 400, { "cache-control": "no-store" });
 });
 
-// Live updates: a signed-in app opens one WebSocket here and joins its hospital's channel.
+// Live updates: a signed-in app opens one WebSocket here. A clinician joins their hospital's channel;
+// a Sona Care patient joins their own, which only hears changes about them (see announcer).
 app.get("/live", async (c) => {
   if (c.req.header("upgrade")?.toLowerCase() !== "websocket") return c.text("Expected a WebSocket", 426);
   const db = await getDb();
   const session = await (await createAuth(db)).api.getSession({ headers: c.req.raw.headers });
   if (!session?.user) return c.text("Sign in first", 401);
-  // A Sona Care (patient) account has no clinician channel; hospitalOf refuses it.
-  const hospitalId = await hospitalOf(db, session.user).catch(() => undefined);
-  if (!hospitalId) return c.text("Not a clinician account", 403);
+  const link = await careLinkOf(db, session.user.id);
+  const channel = link ? patientChannel(link.patientId) : await hospitalOf(db, session.user).catch(() => undefined);
+  if (!channel) return c.text("Not a clinician or Sona Care account", 403);
   const env = c.env as Env;
-  return env.CHANNELS.get(env.CHANNELS.idFromName(hospitalId)).fetch(c.req.raw);
+  return env.CHANNELS.get(env.CHANNELS.idFromName(channel)).fetch(c.req.raw);
 });
 
 app.get("/", (c) => {
@@ -124,12 +125,16 @@ export default {
   fetch: app.fetch,
   // ponytail: the nightly coding audit (flow 5) plugs in here; until then the cron only logs that it fired.
   /** For every hospital: the hourly check-in send (flow 7), else the nightly coding audit (see packages/api/src/audit-job.ts). */
-  async scheduled(controller) {
+  async scheduled(controller, env) {
     const db = await getDb();
-    const at = new Date(controller.scheduledTime);
-    for (const { id } of await db.select({ id: hospitals.id }).from(hospitals)) {
+    const announce = announcer(env);
+    // Each hospital on its own clock (the demo clock's offset; 0 is real time).
+    for (const { id, offset } of await db.select({ id: hospitals.id, offset: hospitals.clockOffsetMs }).from(hospitals)) {
+      const at = new Date(controller.scheduledTime + offset);
       if (controller.cron === CHECK_IN_CRON) {
-        const { sent } = await sendDueCheckIns(db, id, at);
+        const { sent, patientIds } = await sendDueCheckIns(db, id, at);
+        // Patients whose check-in just arrived see it without reopening the app.
+        await Promise.all(patientIds.map(patientId => announce?.(id, { topic: "checkIns", patientId }).catch(() => {})));
         console.log(`check-ins ${controller.cron}: ${id} sent ${sent}`);
         continue;
       }

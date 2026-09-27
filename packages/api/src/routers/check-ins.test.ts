@@ -39,13 +39,13 @@ test("a discharge schedules the day 2 and day 7 check-ins at 10:00 in the leafle
 
 test("the hourly send marks only due check-ins sent, once, for its own hospital; tick sends now from the app", async () => {
   const { db, clock, api } = await discharged();
-  expect(await sendDueCheckIns(db, "demo", clock.now)).toEqual({ sent: 0 });
-  expect(await sendDueCheckIns(db, "other", new Date("2026-10-10T00:00:00Z"))).toEqual({ sent: 0 });
+  expect(await sendDueCheckIns(db, "demo", clock.now)).toEqual({ sent: 0, patientIds: [] });
+  expect(await sendDueCheckIns(db, "other", new Date("2026-10-10T00:00:00Z"))).toEqual({ sent: 0, patientIds: [] });
   const monday = new Date("2026-09-28T10:00:00+08:00");
-  expect(await sendDueCheckIns(db, "demo", monday)).toEqual({ sent: 1 });
-  expect(await sendDueCheckIns(db, "demo", new Date("2026-09-28T11:00:00+08:00"))).toEqual({ sent: 0 });
+  expect(await sendDueCheckIns(db, "demo", monday)).toEqual({ sent: 1, patientIds: ["SYN-1042"] });
+  expect(await sendDueCheckIns(db, "demo", new Date("2026-09-28T11:00:00+08:00"))).toEqual({ sent: 0, patientIds: [] });
   clock.now = new Date("2026-10-03T10:30:00+08:00");
-  expect(await api.checkIns.tick()).toEqual({ sent: 1 });
+  expect(await api.checkIns.tick()).toEqual({ sent: 1, patientIds: ["SYN-1042"] });
   expect((await api.checkIns.list()).map(c => [c.day, c.sentAt?.toISOString()])).toEqual([[2, monday.toISOString()], [7, clock.now.toISOString()]]);
 });
 

@@ -7,6 +7,7 @@ import { Capsule, Stop, STOP_TITLE, Timeline } from "@/features/follow-ups/timel
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
 import { BackButton, Button, surfaceStyle, Title } from "@/lib/ui";
+import { now as clockNow } from "@/lib/clock";
 
 const TONE = { muted: palette.muted, blue: palette.blue, amber: palette.amber, green: palette.green } as const;
 
@@ -18,7 +19,7 @@ const TONE = { muted: palette.muted, blue: palette.blue, amber: palette.amber, g
 export default function Screen() {
   const { data } = useCheckIns();
   const still = useReducedMotion();
-  const now = new Date();
+  const now = clockNow();
   const items = [...data ?? []].sort((a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime());
   const lead = items.findIndex(c => !c.replies.length);
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 48, gap: 18 }}>

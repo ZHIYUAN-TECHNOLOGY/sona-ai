@@ -10,6 +10,7 @@ import { dayParts, doctorById, nameLines, slots, type Doctor } from "@/features/
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
 import { AccentText, BackButton, Card, ICON, pillStyle, surfaceStyle } from "@/lib/ui";
+import { now as clockNow } from "@/lib/clock";
 
 const STAR = "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21L12 17.77L5.82 21L7 14.14l-5-4.87l6.91-1.01z";
 const AWARD = "M12 15a7 7 0 1 0 0-14a7 7 0 0 0 0 14M8.21 13.89L7 23l5-3l5 3l-1.21-9.12";
@@ -37,7 +38,7 @@ export default function DoctorScreen() {
 function Details({ doctor: d }: { doctor: Doctor }) {
   const still = useReducedMotion();
   const insets = useSafeAreaInsets();
-  const [now] = useState(() => new Date());
+  const [now] = useState(clockNow);
   const days = slots(d, now);
   const [dayAt, setDayAt] = useState(0);
   const [time, setTime] = useState<number>();

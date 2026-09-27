@@ -2,6 +2,7 @@ import { ORPCError, os } from "@orpc/server";
 
 import type { Context } from "./context";
 import { changeFor } from "./events";
+import { clockOffsetOf, shifted } from "./clock";
 import { careLinkOf, hospitalOf } from "./routers/hospital";
 
 export const o = os.$context<Context>();
@@ -18,6 +19,8 @@ const requireAuth = o.middleware(async ({ context, next, path }, input) => {
     context: {
       session: context.session,
       hospitalId,
+      // The hospital's demo clock (0 is real time), so every route's clockOf agrees.
+      now: shifted(context.now, await clockOffsetOf(context.db, hospitalId)),
     },
   });
   // A write that succeeded is announced to the hospital's connected apps; a failed announcement never fails the write.
@@ -43,8 +46,9 @@ export const patientProcedure = publicProcedure.use(async ({ context, next, path
   if (!context.session?.user) throw new ORPCError("UNAUTHORIZED");
   const link = await careLinkOf(context.db, context.session.user.id);
   if (!link) throw new ORPCError("FORBIDDEN", { message: "Join with the code on your discharge paper first" });
-  const result = await next({ context: { session: context.session, hospitalId: link.hospitalId, patientId: link.patientId } });
+  const now = shifted(context.now, await clockOffsetOf(context.db, link.hospitalId));
+  const result = await next({ context: { session: context.session, hospitalId: link.hospitalId, patientId: link.patientId, now } });
   const change = changeFor(path.slice(1), input);
-  if (change && context.announce) await context.announce(link.hospitalId, change).catch(() => {});
+  if (change && context.announce) await context.announce(link.hospitalId, { ...change, patientId: link.patientId }).catch(() => {});
   return result;
 });

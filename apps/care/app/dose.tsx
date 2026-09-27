@@ -15,6 +15,7 @@ import { Sunbeam } from "@/lib/halftone";
 import { Text } from "@/lib/text";
 import { motion, palette, space, type } from "@/lib/theme";
 import { Button, Card, CircleButton, HoldButton, ICON, pillStyle, Section, surfaceStyle, Title } from "@/lib/ui";
+import { now as clockNow } from "@/lib/clock";
 
 const CHECK = "M20 6 9 17l-5-5";
 const SNOOZE = 15 * 60_000, EARLY = 2 * 3600_000;
@@ -55,7 +56,7 @@ export default function DoseScreen() {
       </Card>
       : <>
         <Animated.View entering={enter(1)}>
-          <NextCard dose={dose} now={now} took={took} onTook={d => setTook({ dose: d, at: new Date() })} />
+          <NextCard dose={dose} now={now} took={took} onTook={d => setTook({ dose: d, at: clockNow() })} />
         </Animated.View>
 
         <Animated.View entering={enter(2)} style={{ gap: 12 }}>
@@ -131,7 +132,7 @@ function NextCard({ dose, now, took, onTook }: { dose?: Dose; now: Date; took?: 
         <Text style={{ fontSize: 16, fontWeight: "500", color: palette.muted }}>Remind me later</Text>
       </Pressable>
       <RemindSheet visible={asking} name={due.name} onClose={() => setAsking(false)} onRemind={() => {
-        const until = Date.now() + SNOOZE;
+        const until = clockNow().getTime() + SNOOZE;
         snooze({ key: due.key, until });
         setAsking(false);
         AccessibilityInfo.announceForAccessibility(`We'll show ${due.name} here again at ${clock(new Date(until))}`);

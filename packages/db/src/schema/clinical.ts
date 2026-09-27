@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, customType, index, integer, jsonb, pgTable, real, text, timestamp, uniqueIndex, vector } from "drizzle-orm/pg-core";
+import { bigint, boolean, customType, index, integer, jsonb, pgTable, real, text, timestamp, uniqueIndex, vector } from "drizzle-orm/pg-core";
 
 /**
  * Clinical tables behind the built UI (see docs/delivery-plan.md). Every table that holds hospital
@@ -9,7 +9,11 @@ import { boolean, customType, index, integer, jsonb, pgTable, real, text, timest
 const tsvector = customType<{ data: string }>({ dataType: () => "tsvector" });
 const created = () => timestamp("created_at").defaultNow().notNull();
 
-export const hospitals = pgTable("hospitals", { id: text("id").primaryKey(), name: text("name").notNull() });
+/**
+ * `clockOffsetMs` is the demo clock: every route reads time as now + offset for this hospital (see
+ * clockOf), so a demo can jump to day 2 after discharge without waiting. 0 is real time.
+ */
+export const hospitals = pgTable("hospitals", { id: text("id").primaryKey(), name: text("name").notNull(), clockOffsetMs: bigint("clock_offset_ms", { mode: "number" }).notNull().default(0) });
 
 /** Which hospital a signed-in user works for; every clinical read and write is scoped by it. */
 export const hospitalMembers = pgTable("hospital_members", {

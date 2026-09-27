@@ -9,6 +9,7 @@ import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
 import { claimRouter } from "./claim";
 import { completeTask, createTask, dayRouter, patientsRouter, resultsRouter } from "./day"; // lane T, T2
+import { demoRouter } from "./demo";
 import { dischargeRouter } from "./discharge";
 import { careRouter } from "./care";
 import { carePlanRouter } from "./care-plan";
@@ -40,6 +41,8 @@ export const appRouter = {
     };
   }),
   encounter: encounterRouter,
+  // The demo clock (synthetic demo hospital only): jump to day 2, day 7 or the review, and back.
+  demo: demoRouter,
   // Sona Care, the patient app; `messages` is the care team's side of its thread (announced as "messages")
   care: { ...careRouter, ...carePlanRouter },
   messages: messagesRouter,

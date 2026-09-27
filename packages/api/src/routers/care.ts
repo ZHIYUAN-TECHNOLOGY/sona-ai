@@ -7,6 +7,7 @@ import { clockOf, type Context } from "../context";
 import { patientProcedure, protectedProcedure, publicProcedure, signedInProcedure } from "../index";
 import { checkInReplySchema } from "../contracts";
 import { listCheckIns, replyToCheckIn } from "./check-ins";
+import { clockOffsetOf } from "../clock";
 import { loadEncounter } from "./encounter";
 import { careMessagesRouter } from "./messages";
 
@@ -80,6 +81,9 @@ export const careRouter = {
     const dischargedAt = (row.state as { discharge?: { dischargedAt?: string } } | null)?.discharge?.dischargedAt;
     return { patientId: row.patient.id, name: row.patient.name, firstName: firstName(row.patient.name), hospital: row.hospital, encounterId: row.encounterId ?? undefined, dischargedAt };
   }),
+
+  /** Patient: the hospital's demo clock offset (0 is real time), so the app's "now" matches the server's. */
+  clock: patientProcedure.handler(async ({ context }) => ({ offsetMs: await clockOffsetOf(context.db, context.hospitalId) })),
 
   /** Patient: their own check-ins after discharge, each with their reply and how it was read. */
   checkIns: {

@@ -12,6 +12,7 @@ import { palette } from "@/lib/theme";
 import { HoldButton, surfaceStyle } from "@/lib/ui";
 import { clock, dueNow, early, nextDose, weekOf } from "./model";
 import { Pill, tintOf } from "./pill";
+import { now as clockNow, useClockOffset } from "@/lib/clock";
 
 /**
  * Doses taken, kept on this phone (the dose key: medicine and due time), read through
@@ -43,9 +44,11 @@ export function snooze(next: typeof snoozed) {
 export const useSnooze = () => useSyncExternalStore(subscribe, () => snoozed);
 
 /** The clock, ticking every 30 seconds by default, so countdowns and "due now" move on their own. */
+/** The current time on the demo clock (see lib/clock), ticking every `every` ms and whenever the clock jumps. */
 export function useNow(every = 30_000) {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => { const id = setInterval(() => setNow(new Date()), every); return () => clearInterval(id); }, [every]);
+  const offset = useClockOffset();
+  const [now, setNow] = useState(clockNow);
+  useEffect(() => { setNow(clockNow()); const id = setInterval(() => setNow(clockNow()), every); return () => clearInterval(id); }, [every, offset]);
   return now;
 }
 
@@ -107,7 +110,7 @@ export function DoseCard({ index }: { index: number }) {
   const [took, setTook] = useState<{ name: string; at: Date }>();
   // Just logged: the hold hides and the done line holds until the next dose is itself due.
   const logged = took && !(dose && dueNow(dose.dueAt, now)) ? took : undefined;
-  const take = () => { if (!dose) return; markTaken(dose.key); setTook({ name: dose.name, at: new Date() }); };
+  const take = () => { if (!dose) return; markTaken(dose.key); setTook({ name: dose.name, at: clockNow() }); };
   const out = plan?.status === "discharged" ? plan.dischargedAt : undefined;
   const week = weekOf(meds, out, done, now), missed = weekLine(meds, out, done, now);
   const spark = sparkPath(week, SPARK.width, SPARK.height);

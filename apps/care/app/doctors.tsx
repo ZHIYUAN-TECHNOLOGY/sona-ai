@@ -12,6 +12,7 @@ import { DOCK_SPACE } from "@/lib/dock";
 import { Text, TextInput } from "@/lib/text";
 import { palette, space, type } from "@/lib/theme";
 import { Card, CircleButton, field, ICON, pillStyle, Section, surfaceStyle, Title } from "@/lib/ui";
+import { now as clockNow } from "@/lib/clock";
 
 const TABS: { id: Filter; label: string }[] = [
   { id: "all", label: "All" }, { id: "care-team", label: "Care team" }, { id: "top-rated", label: "Top rated" }, { id: "for-you", label: "For you" },
@@ -35,7 +36,7 @@ export default function Doctors() {
   const still = useReducedMotion();
   const { fontScale } = useWindowDimensions();
   const plan = useDischarge().data;
-  const [now] = useState(() => new Date());
+  const [now] = useState(clockNow);
   const [tab, setTab] = useState<Filter>("all");
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");

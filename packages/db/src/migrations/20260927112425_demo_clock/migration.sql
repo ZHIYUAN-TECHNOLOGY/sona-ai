@@ -1,0 +1,1 @@
+ALTER TABLE "hospitals" ADD COLUMN "clock_offset_ms" bigint DEFAULT 0 NOT NULL;

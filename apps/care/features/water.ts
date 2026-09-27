@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import { useSyncExternalStore } from "react";
 import { GLASSES } from "./home";
+import { now as clockNow } from "@/lib/clock";
 
 /**
  * Glasses of water the patient logs today (Life OS water card), kept on this phone per Malaysia day and
@@ -24,7 +25,7 @@ export const glassesOn = (l: Log, now: Date) => l.day === waterDay(now) ? l.glas
 /** A tap on cup `i` (0-based): an empty cup fills up to it, the last filled cup empties (an undo). */
 export const tapCup = (glasses: number, i: number) => Math.max(0, Math.min(GLASSES, i === glasses - 1 ? i : i + 1));
 
-export function setGlasses(glasses: number, now = new Date()) {
+export function setGlasses(glasses: number, now = clockNow()) {
   log = { day: waterDay(now), glasses: Math.max(0, Math.min(GLASSES, glasses)) };
   listeners.forEach(l => l());
   SecureStore.setItemAsync(KEY, JSON.stringify(log)).catch(() => {});
