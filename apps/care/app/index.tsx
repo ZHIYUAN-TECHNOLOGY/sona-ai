@@ -4,8 +4,9 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-nati
 import { SignIn } from "@/components/sign-in";
 import { TodayCard, useCheckInNeeds } from "@/features/check-ins/today";
 import { DischargeRow } from "@/features/discharge/row";
-import { FollowUpRow, useFollowUpNeeds } from "@/features/follow-ups/row";
-import { daysHome, insightLine } from "@/features/home";
+import { DoseTile, useDoseNeeds } from "@/features/doses";
+import { useFollowUpNeeds, VisitTile } from "@/features/follow-ups/row";
+import { daysHome, needsLine, whereWords } from "@/features/home";
 import { useMe } from "@/features/me";
 import { CareTeamRow, useMessageNeeds } from "@/features/messages/row";
 import { authClient } from "@/lib/auth-client";
@@ -14,17 +15,18 @@ import { Button, Card, Title } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
 /**
- * Sona Care's home answers three questions in order: where am I (the insight line), what needs me
- * now (one feature card, acted on in place), and what's coming (compact rows with their state).
+ * Sona Care's home answers three questions in order: where am I and does anything need me (the title
+ * and its line), what's next (two glance tiles: the next dose and the next visit), and what needs me
+ * now (one feature card, acted on in place), then the plan and the care team as rows.
  */
 export default function Home() {
   const { state, me } = useMe();
-  const needs = useCheckInNeeds() + useFollowUpNeeds() + useMessageNeeds();
+  const needs = useCheckInNeeds() + useDoseNeeds() + useFollowUpNeeds() + useMessageNeeds();
   const health = useQuery(orpc.healthCheck.queryOptions());
   const offline = health.isError || (health.data !== undefined && health.data !== "OK");
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingTop: 72, paddingBottom: 48, gap: 16 }}>
     {state === "joined" && me
-      ? <Title overline="Sona Care" line={insightLine(daysHome(me.dischargedAt), needs)}>Hi, {me.firstName}</Title>
+      ? <Title greeting={`Hi, ${me.firstName}`} accent={whereWords(daysHome(me.dischargedAt))[0]} line={needsLine(needs)} lineTone={needs ? "amber" : "muted"}>{whereWords(daysHome(me.dischargedAt))[1]}</Title>
       : <Title overline="Sona Care" line="Check-ins, your discharge plan and follow-ups, from your hospital.">Your care, between visits</Title>}
     {offline && <Text style={{ ...type.footnote, color: palette.amber }}>Offline · showing what was last saved</Text>}
     {state === "loading" && <ActivityIndicator color={palette.muted} />}
@@ -42,10 +44,13 @@ export default function Home() {
       <Button label="Enter my discharge code" onPress={() => router.push("/join")} />
     </Card>}
     {state === "joined" && <>
+      <View style={{ flexDirection: "row", gap: 12 }}>
+        <DoseTile />
+        <VisitTile />
+      </View>
       <TodayCard />
       <Card style={{ paddingVertical: 6 }}>
-        <FollowUpRow first />
-        <DischargeRow />
+        <DischargeRow first />
         <CareTeamRow />
       </Card>
     </>}

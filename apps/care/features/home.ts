@@ -5,8 +5,10 @@ export function daysHome(dischargedAt: string | undefined, now = new Date()) {
   return day(now) - day(new Date(dischargedAt));
 }
 
-/** The one line under the greeting: where they are, and how many things need them (zero reads as reassurance). */
-export function insightLine(days: number | undefined, needs: number) {
-  const where = days === undefined ? "Your care, between visits" : days === 0 ? "Home today" : `Day ${days} at home`;
-  return `${where} · ${needs ? `${needs} ${needs === 1 ? "thing needs" : "things need"} you` : "nothing needs you today"}`;
+/** The home title: where the patient is, with the part to glance at (the accent) first. */
+export function whereWords(days: number | undefined): [accent: string, rest: string] {
+  return days === undefined ? ["Your care", " between visits"] : days === 0 ? ["Home", " today"] : [`Day ${days}`, " at home"];
 }
+
+/** The line under the title: how many things need the patient (zero reads as reassurance). */
+export const needsLine = (needs: number) => needs ? `${needs} ${needs === 1 ? "thing needs" : "things need"} you` : "Nothing needs you today";

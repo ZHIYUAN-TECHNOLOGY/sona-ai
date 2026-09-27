@@ -6,13 +6,14 @@ import type { FindingKind } from "./findings";
  * ponytail: authored for the one demo plan (pneumonia on asthma); a model writes them per plan later.
  */
 export type MedGroup = "new" | "changed" | "stopped" | "continue";
-export type PatientMed = { name: string; line: string };
+/** `take`: how to take one dose; `at`: daily times in Malaysia ("HH:MM"); `doses`: how many are left of a course (none = ongoing). As-needed medicines have no times. */
+export type PatientMed = { name: string; line: string; take?: string; at?: string[]; doses?: number };
 
-const MEDS: Record<string, { name?: string; line: string }> = {
-  Azithromycin: { line: "Now a tablet once a day, for 2 more days" },
+const MEDS: Record<string, { name?: string; line: string; take?: string; at?: string[]; doses?: number }> = {
+  Azithromycin: { line: "Now a tablet once a day, for 2 more days", take: "1 tablet, with or without food", at: ["08:00"], doses: 2 },
   Paracetamol: { line: "For pain or fever: 1 g every 6 hours if you need it, no more than 4 g a day" },
   "Nebulised salbutamol": { name: "Salbutamol nebuliser", line: "Use your own inhaler instead, when you need it" },
-  Cetirizine: { line: "Keep taking it as before" },
+  Cetirizine: { line: "Keep taking it as before", take: "1 tablet at night", at: ["21:00"] },
 };
 
 /** Take-home medicines grouped the way a patient reads a change: new, changed, stopped, carry on. */
@@ -20,7 +21,7 @@ export function patientMeds(plan: DischargePlan): Record<MedGroup, PatientMed[]>
   const groups: Record<MedGroup, PatientMed[]> = { new: [], changed: [], stopped: [], continue: [] };
   for (const med of plan.meds) {
     const plain = MEDS[med.name];
-    groups[med.change === "unchanged" ? "continue" : med.change].push({ name: plain?.name ?? med.name, line: plain?.line ?? med.detail });
+    groups[med.change === "unchanged" ? "continue" : med.change].push({ name: plain?.name ?? med.name, line: plain?.line ?? med.detail, take: plain?.take, at: plain?.at, doses: plain?.doses });
   }
   return groups;
 }

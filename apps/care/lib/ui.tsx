@@ -13,6 +13,8 @@ import { palette, type } from "./theme";
 const glassFill = "linear-gradient(160deg, rgba(255,255,255,0.66) 0%, rgba(255,255,255,0.36) 50%, rgba(238,244,255,0.28) 100%)";
 const glassEdge = "0 0 0 0.5px rgba(20,28,40,0.06), 0 12px 32px rgba(40,70,140,0.10), inset 0 1px 0 rgba(255,255,255,1), inset 0 10px 18px -12px rgba(255,255,255,0.95), inset 0 -12px 22px -14px rgba(90,130,220,0.18)";
 export const surfaceStyle: ViewStyle = { borderRadius: 24, borderCurve: "continuous", borderWidth: 1, borderColor: "rgba(255,255,255,0.9)", backgroundColor: "transparent", experimental_backgroundImage: glassFill, boxShadow: glassEdge } as ViewStyle;
+/** A small glass capsule for a value or label (a time, a status). */
+export const pillStyle: ViewStyle = { borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.9)", backgroundColor: "rgba(255,255,255,0.6)", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 4px 12px rgba(40,70,140,0.08)" } as ViewStyle;
 const featureStyle: ViewStyle = { experimental_backgroundImage: "linear-gradient(160deg, rgba(255,255,255,0.82) 0%, rgba(255,255,255,0.5) 50%, rgba(226,236,255,0.44) 100%)", boxShadow: "0 0 0 0.5px rgba(36,91,204,0.10), 0 16px 38px rgba(36,91,204,0.16), inset 0 1px 0 #FFFFFF, inset 0 12px 20px -14px rgba(255,255,255,1), inset 0 -14px 24px -14px rgba(90,130,220,0.24)" } as ViewStyle;
 
 export function Card({ children, feature = false, style }: { children: ReactNode; feature?: boolean; style?: ViewStyle }) {
@@ -46,11 +48,15 @@ export function Row({ title, line, tone = "muted", onPress, first }: { title: st
   </Pressable>;
 }
 
-export function Title({ overline, children, line }: { overline?: string; children: ReactNode; line?: string }) {
+/** A screen title: an optional overline or greeting above, an accent word in blue (the part to glance at), one line under. */
+export function Title({ overline, greeting, accent, children, line, lineTone = "muted" }: { overline?: string; greeting?: string; accent?: string; children?: ReactNode; line?: string; lineTone?: "muted" | "amber" }) {
   return <View style={{ gap: 6 }}>
     {overline && <Text style={{ ...type.overline, color: palette.blue }}>{overline}</Text>}
-    <Text accessibilityRole="header" style={{ ...type.display, fontWeight: "600", color: palette.ink }}>{children}</Text>
-    {line && <Text style={{ ...type.body, color: palette.muted }}>{line}</Text>}
+    {greeting && <Text style={{ ...type.body, color: palette.muted }}>{greeting}</Text>}
+    <Text accessibilityRole="header" style={{ ...type.display, fontWeight: "600", color: palette.ink }}>
+      {accent && <Text style={{ color: palette.blue }}>{accent}</Text>}{children}
+    </Text>
+    {line && <Text style={{ ...type.body, fontWeight: lineTone === "muted" ? "400" : "600", color: palette[lineTone] }}>{line}</Text>}
   </View>;
 }
 
