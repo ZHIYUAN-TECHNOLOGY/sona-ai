@@ -20,9 +20,9 @@ const reflow = (reduced: boolean) => reduced ? undefined : LinearTransition.spri
 
 const TAGS = {
   new: { label: "New", bg: palette.blueWash, fg: palette.blue },
-  changed: { label: "Changed", bg: "#FFF0DE", fg: palette.amber },
-  continue: { label: "Same", bg: "#F1EFF5", fg: palette.muted },
-  stopped: { label: "Stopped", bg: "#F1EFF5", fg: palette.muted },
+  changed: { label: "Changed", bg: palette.amberWash, fg: palette.amber },
+  continue: { label: "Same", bg: palette.mutedWash, fg: palette.muted },
+  stopped: { label: "Stopped", bg: palette.mutedWash, fg: palette.muted },
 } as const;
 
 /**

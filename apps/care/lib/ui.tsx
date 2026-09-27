@@ -132,9 +132,9 @@ export function Section({ light, bold }: { light: string; bold: string }) {
 }
 
 /** A small glass chip that does one thing (a quick reply, a needs shortcut, a filter). */
-export function Chip({ label, onPress, dot, tone }: { label: string; onPress: () => void; dot?: string; tone?: { bg: string; fg: string } }) {
-  return <Pressable accessibilityRole="button" onPress={onPress}
-    style={({ pressed }) => [pillStyle, { minHeight: 40, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 7, transform: [{ scale: pressed ? 0.96 : 1 }] }, tone && { backgroundColor: tone.bg, borderColor: tone.bg }]}>
+export function Chip({ label, onPress, dot, tone, accessibilityLabel }: { label: string; onPress: () => void; dot?: string; tone?: { bg: string; fg: string }; accessibilityLabel?: string }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} onPress={onPress}
+    style={({ pressed }) => [pillStyle, { minHeight: 44, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 7, transform: [{ scale: pressed ? 0.96 : 1 }] }, tone && { backgroundColor: tone.bg, borderColor: tone.bg }]}>
     {dot && <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: dot }} />}
     <Text style={{ fontSize: 13.5, fontWeight: "700", color: tone?.fg ?? palette.ink }}>{label}</Text>
   </Pressable>;

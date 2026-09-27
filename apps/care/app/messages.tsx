@@ -78,7 +78,7 @@ export default function Messages() {
             <Pill label={last.id === sending?.id ? "Sending…" : `Sent · ${REPLY_TIME.toLowerCase()}`} />
           </Animated.View>}
           {wait && <Animated.View key={`wait-${last!.id}`} entering={reduced ? FadeIn.duration(200) : rise(400)} accessible accessibilityLabel={`While you wait. ${wait} If you faint or have chest pain, call 999.`}
-            style={{ borderRadius: 20, borderCurve: "continuous", padding: 14, gap: 6, backgroundColor: "#FFF3E7", borderWidth: 1, borderColor: "#F6DCC2" }}>
+            style={{ borderRadius: 20, borderCurve: "continuous", padding: 14, gap: 6, backgroundColor: "#FFF3E7", borderWidth: 1, borderColor: palette.amberEdge }}>
             <Text style={{ ...type.headline, color: palette.amber }}>While you wait</Text>
             <Text style={{ ...type.body, color: palette.ink }}>{wait}</Text>
             <Text style={{ ...type.body, fontWeight: "700", color: palette.red }}>If you faint or have chest pain, call 999.</Text>

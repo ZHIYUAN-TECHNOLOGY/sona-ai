@@ -7,6 +7,7 @@ export const palette = {
   canvas: "#FBF8F7", surface: "#FFFFFF", ink: "#1B1A26", muted: "#5F5A6E", faint: "#8A8698",
   blue: "#3E5FD8", blueWash: "#ECE7FF", line: "#E4E0EA", white: "#FFFFFF",
   green: "#2E7D5B", amber: "#8B5518", red: "#A23E3E", dark: "#211E33",
+  amberWash: "#FFF0DE", amberEdge: "#F6DCC2", mutedWash: "#F1EFF5",
 };
 
 /** The Dawn accent: rose to violet to blue, on one word per screen (the part to glance at). */
