@@ -162,6 +162,16 @@ Estimates in USD at list prices (Baseten L4 $0.85/h; boxes ①+② warm cost $1.
 
 Production figures assume AWS Malaysia `g6` on-demand pricing ($1.23/h for 2xlarge, $1.01/h for xlarge) plus Kubernetes, database, storage and networking. They assume about five concurrent clinicians per box set; larger hospitals need two to four times the ① and ② replicas.
 
+## After the cascade: open speech-to-speech (added 27 Sep, optional)
+
+Once speech-to-text → Gemma → text-to-speech works end to end, evaluate one self-hosted open speech-to-speech model as a possible faster, more natural voice. It stays out of the competition cut order; the cascade is the demo path. Research, sources and the evaluation plan: [s2s-models](research/s2s-models.md).
+
+- **Finding:** no open, self-hostable speech-to-speech model speaks Malay yet, and none publishes Manglish results, so none can replace the cascade for Malay replies in 2026. Qwen3-Omni can listen to Malay but not speak it.
+- **Candidates, ranked:** (1) MiniCPM-o 4.5 (9B, Apache-2.0, full-duplex, English and Mandarin speech, fits one L4 at int4, text prompt plus transcript, LoRA via LLaMA-Factory for listening and reasoning); (2) Qwen3-Omni-30B-A3B (best grounding and hears Malay, text before speech so a safety check can run, turn-based, needs an H100); (3) Moshi family / PersonaPlex (best interruption, 0.24 s to stop, fits an L4, English only, short context).
+- **Fine-tuning reality:** LoRA can adapt listening and reasoning to Manglish and after-discharge dialogue in about a week on 1×H100; teaching a model to *speak* Malay is not supported by any primary source at that budget.
+- **Evaluation:** a 60-turn fictional Manglish and medical test set; missing any of the 10 red-flag turns fails outright; a pass must still beat the cascade on latency or naturalness.
+- **Choice:** pending the user's pick.
+
 ## Production path (after the competition)
 
 The residency rule for real patient data is **Malaysia or Singapore**, decided on 25 September. Options:
