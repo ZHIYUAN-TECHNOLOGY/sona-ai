@@ -1,4 +1,5 @@
 import type { Discharged } from "../discharge/lines";
+import { DOCTORS, matchDoctors, type Doctor } from "../doctors/data";
 import { away, dayLabel } from "../follow-ups/lines";
 
 /**
@@ -64,3 +65,46 @@ export const urgent = (text: string) => URGENT.test(text);
 
 /** The one honest reply to free text while there is no model. */
 export const NO_ANSWER = "I can't answer that yet. Send it to your care team?";
+
+/** What the plan says the patient was treated for ("chest infection"), from the English leaflet's "treated for …". */
+export function conditionOf(plan: PlanLike | undefined) {
+  const text = plan?.leaflets.find(l => l.language === "en")?.text ?? "";
+  return /treated for (?:an? )?([^.,;]+)/i.exec(text)?.[1]?.trim().toLowerCase() || undefined;
+}
+
+/** The suggestion row that finds a doctor for the plan's condition. */
+export const doctorQuestion = (condition: string) => `Find a doctor for my ${condition}`;
+
+/** "Find me a doctor", "best heart specialist", "which doctor should I see": a question asking for a doctor. */
+const DOCTOR = /\b(doctors?|specialists?|dr)\b/i, ASKING = /\b(find|best|good|recommend|which|who|see|book|need|looking|suggest)\b/i;
+export const wantsDoctor = (text: string) => DOCTOR.test(text) && ASKING.test(text);
+
+/**
+ * What Sona says to a question: the plan's answer when it is one of the plan's own questions; 1–3 sample
+ * doctors for a doctor question (matched on its words, else the plan's condition, else the care team);
+ * the one honest "send it to your care team" for anything else. Urgent words win over everything.
+ */
+export type Reply =
+  | { kind: "plan"; asked: Asked }
+  | { kind: "doctors"; doctors: Doctor[]; text: string }
+  | { kind: "none"; urgent: boolean };
+
+export function reply(question: string, asks: Asked[], condition?: string): Reply {
+  const q = question.trim(), lower = q.toLowerCase();
+  if (urgent(q)) return { kind: "none", urgent: true };
+  const asked = asks.find(a => a.question.toLowerCase() === lower);
+  if (asked) return { kind: "plan", asked };
+  if (!wantsDoctor(q)) return { kind: "none", urgent: false };
+  const own = matchDoctors(q), planned = condition ? matchDoctors(condition) : [];
+  const about = condition && (!own.length || lower.includes(condition)) && planned.length ? condition : undefined;
+  const doctors = (own.length ? own : planned.length ? planned : DOCTORS.filter(d => d.careTeam)).slice(0, 3);
+  const lead = doctors.length === 1 ? "Here is a sample doctor" : "Here are sample doctors";
+  return { kind: "doctors", doctors, text: `${lead} who may help${about ? ` with your ${about}` : ""}. Ask your care team before you book.` };
+}
+
+/** The words to read aloud (and show) for a reply: the answer, the doctors by name, or the honest no. */
+export function spoken(r: Reply) {
+  if (r.kind === "plan") return r.asked.answer;
+  if (r.kind === "doctors") return `${r.text} ${list(r.doctors.map(d => `${d.name} (${d.specialty})`))}.`;
+  return r.urgent ? `If this is happening now, call 999. ${NO_ANSWER}` : NO_ANSWER;
+}

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { suggestions, urgent } from "./answers";
+import { conditionOf, doctorQuestion, NO_ANSWER, reply, spoken, suggestions, urgent, wantsDoctor } from "./answers";
 
 const medicines = {
   new: [{ name: "Paracetamol", line: "For pain or fever: 1 g every 6 hours if you need it, no more than 4 g a day" }],
@@ -42,4 +42,42 @@ test("urgent words put the 999 line first; everyday questions do not", () => {
     expect(urgent(t)).toBe(true);
   for (const t of ["Can I drink coffee?", "What is my blood pressure target?", "When can I drive again?", "Can I take it with food?"])
     expect(urgent(t)).toBe(false);
+});
+
+test("the plan's condition comes from the leaflet's 'treated for', and names the find-a-doctor row", () => {
+  expect(conditionOf(plan)).toBe("chest infection");
+  expect(doctorQuestion(conditionOf(plan))).toBe("Find a doctor for my chest infection");
+  expect(conditionOf({ medicines, leaflets: [] })).toBeUndefined();
+  expect(conditionOf(undefined)).toBeUndefined();
+});
+
+test("a plan question gets the plan's answer; anything else the honest no", () => {
+  const asks = suggestions(plan, visit, "Cetirizine");
+  expect(reply("when is my next visit?", asks, "chest infection")).toEqual({ kind: "plan", asked: asks[2] });
+  expect(reply("Can I drink coffee?", asks, "chest infection")).toEqual({ kind: "none", urgent: false });
+  expect(spoken(reply("Can I drink coffee?", asks))).toBe(NO_ANSWER);
+});
+
+test("doctor questions return 1–3 sample doctors: by the question's words, else the plan's condition, else the care team", () => {
+  expect(wantsDoctor("Find a doctor for my chest infection")).toBe(true);
+  expect(wantsDoctor("Who is the best heart specialist?")).toBe(true);
+  expect(wantsDoctor("My doctor said rest")).toBe(false);
+
+  const forPlan = reply(doctorQuestion("chest infection"), [], "chest infection");
+  expect(forPlan.kind).toBe("doctors");
+  expect(forPlan.doctors.map(d => d.id)).toEqual(["lim", "aisyah"]);
+  expect(forPlan.text).toBe("Here are sample doctors who may help with your chest infection. Ask your care team before you book.");
+  expect(spoken(forPlan)).toBe("Here are sample doctors who may help with your chest infection. Ask your care team before you book. Dr. Lim Wei Jie (Respiratory) and Dr. Aisyah Rahman (Cardiology).");
+
+  const heart = reply("Who is the best heart specialist?", [], "chest infection");
+  expect(heart.doctors.map(d => d.id)).toEqual(["aisyah"]);
+  expect(heart.text).toBe("Here is a sample doctor who may help. Ask your care team before you book.");
+
+  expect(reply("Can you find me a doctor?", [], "chest infection").doctors.map(d => d.id)).toEqual(["lim", "aisyah"]);
+  expect(reply("Can you find me a doctor?", []).doctors.every(d => d.careTeam)).toBe(true);
+});
+
+test("urgent words win: the 999 line, even when asking for a doctor", () => {
+  expect(reply("I have chest pain, find me a doctor", [], "chest infection")).toEqual({ kind: "none", urgent: true });
+  expect(spoken({ kind: "none", urgent: true })).toBe(`If this is happening now, call 999. ${NO_ANSWER}`);
 });
