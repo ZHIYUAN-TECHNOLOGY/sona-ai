@@ -100,6 +100,8 @@ export const findingsRouter = {
     if (!visit || !found || found.patientId !== visit.patientId) throw new ORPCError("NOT_FOUND", { message: "That visit or finding is not this patient's" });
     const finding = await trackFinding(context, hospitalId, found.id, undefined, visit.startsAt);
     await db.update(appointments).set({ startsAt: visit.startsAt }).where(eq(appointments.id, `recall:${finding.id}`));
+    // The follow-up is now due at that visit, so the ward's list and My Day show the same date.
+    await db.update(findings).set({ dueAt: visit.startsAt }).where(eq(findings.id, finding.id));
     if (finding.taskId) await db.update(tasks).set({ due: visit.startsAt.toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" }) }).where(eq(tasks.id, finding.taskId));
     await context.announce?.(hospitalId, { topic: "findings", patientId: visit.patientId }).catch(() => {});
     return { findingId: finding.id, recallId: `recall:${finding.id}`, startsAt: visit.startsAt, test: testOf(finding.action) };

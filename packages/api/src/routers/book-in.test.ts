@@ -70,6 +70,7 @@ test("Book in offers her untracked X-ray findings; adding one puts its test on t
   const added = await doctor.findings.addToVisit({ findingId: nodule.id, appointmentId: booked.appointmentId });
   expect(added).toMatchObject({ test: "CT chest", startsAt: booked.startsAt });
   expect(heard).toContainEqual({ topic: "findings", patientId: "SYN-1042" });
+  expect((await doctor.findings.list({ encounterId: "visit-1042" })).find(f => f.id === nodule.id)?.dueAt).toEqual(new Date(booked.startsAt));
   // On her phone: the CT scan on the same morning as the review.
   const same = (await amelia.care.followUps()).filter(f => new Date(f.date).getTime() === new Date(booked.startsAt).getTime()).map(f => f.title);
   expect(same).toEqual(expect.arrayContaining(["Clinic review · fever returned", "CT scan of your chest"]));

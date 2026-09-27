@@ -20,6 +20,7 @@ import { localDate } from "@/features/tasks/state";
 import { flaggedItems, flaggedTaskIds } from "@/features/check-ins/model";
 import { useCheckIns } from "@/features/check-ins/state";
 import { FlagActions } from "@/features/check-ins/thread";
+import { DemoTimeLine } from "@/features/live/demo-clock";
 import { dayOf, groupVisits, rankDay, rankOtherDay, scheduleFor, type DayItem, type DayTone, type ScheduleVisit } from "./model";
 
 /*
@@ -269,6 +270,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
             </View>
             <Text style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{offset === 0 ? `${need} need you · ` : offset < 0 ? "Looking back · " : "Coming up · "}{schedule.length} {schedule.length === 1 ? "visit" : "visits"}</Text>
           </Pressable>
+          <DemoTimeLine />
         </View>
         {offset !== 0 ? <Pressable accessibilityRole="button" accessibilityLabel="Back to today" onPress={() => pick(0)} hitSlop={8}
           style={{ minHeight: 38, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, borderRadius: 19, backgroundColor: palette.blueWash, marginTop: 4 }}>
