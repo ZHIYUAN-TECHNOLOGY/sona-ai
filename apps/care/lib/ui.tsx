@@ -17,12 +17,11 @@ import { accent, palette, type } from "./theme";
  * ink primary pill with a dotted glint, quiet glass for everything else. Press feedback is a 0.96 scale.
  * ponytail: mirrored, not shared; move both apps' copies to a shared UI package once they settle.
  */
-// Cards after the Lumi kit: a soft near-white fill on a hairline white edge, barely lifted, so the
-// canvas's aurora shows around them and the one feature card (white, a soft blue lift) stands out.
-export const surfaceStyle: ViewStyle = { borderRadius: 30, borderCurve: "continuous", borderWidth: 1.5, borderColor: "rgba(255,255,255,0.95)", backgroundColor: "rgba(245,245,248,0.9)", boxShadow: "0 1px 2px rgba(20,26,46,0.03)" } as ViewStyle;
+// Cards after Life OS: white, 22 pt corners, a hairline and a soft lift; the one feature card adds a blue ring and a blue lift.
+export const surfaceStyle: ViewStyle = { borderRadius: 22, borderCurve: "continuous", backgroundColor: "#FFFFFF", boxShadow: "0 0 0 0.5px rgba(14,18,27,0.05), 0 1px 2px rgba(14,18,27,0.04), 0 12px 26px -16px rgba(14,18,27,0.18)" } as ViewStyle;
 /** A small glass capsule for a value or label (a time, a status, a chip). */
 export const pillStyle: ViewStyle = { borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", backgroundColor: "rgba(255,255,255,0.72)", boxShadow: "0 0 0 0.5px rgba(40,24,70,0.06), 0 8px 18px -10px rgba(80,60,140,0.35)" } as ViewStyle;
-const featureStyle: ViewStyle = { backgroundColor: "#FFFFFF", boxShadow: "0 0 0 0.5px rgba(61,90,241,0.10), 0 24px 44px -24px rgba(61,90,241,0.28), 0 1px 3px rgba(20,26,46,0.04)" } as ViewStyle;
+const featureStyle: ViewStyle = { boxShadow: "0 0 0 1px rgba(51,92,255,0.14), 0 18px 36px -18px rgba(51,92,255,0.35)" } as ViewStyle;
 
 /** Cards resize on the layout spring (no bounce), so a card that grows in place (a check-in opening) springs rather than jumps. */
 const CARD_LAYOUT = LinearTransition.springify().duration(380).dampingRatio(1);
@@ -30,7 +29,7 @@ const CARD_LAYOUT = LinearTransition.springify().duration(380).dampingRatio(1);
 export function Card({ children, feature = false, style }: { children: ReactNode; feature?: boolean; style?: ViewStyle }) {
   const still = useReducedMotion();
   return <Animated.View layout={still ? undefined : CARD_LAYOUT} style={[surfaceStyle, feature && featureStyle, { padding: 18, gap: 12 }, style]}>
-    {feature && <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: 27, overflow: "hidden" }}><HalftoneGlint width={170} height={96} origin={[170, 0]} reach={[160, 90]} strength={0.4} style={{ top: 0, right: 0 }} /></View>}
+    {feature && <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: 22, overflow: "hidden" }}><HalftoneGlint width={170} height={96} origin={[170, 0]} reach={[160, 90]} strength={0.4} style={{ top: 0, right: 0 }} /></View>}
     {children}
   </Animated.View>;
 }
