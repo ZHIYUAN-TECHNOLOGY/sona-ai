@@ -104,7 +104,7 @@ const badgeIn = () => {
 function Art({ name, done, reduced }: { name: string; done: boolean; reduced: boolean }) {
   return <View style={{ width: 210, height: 210, borderRadius: 105, alignItems: "center", justifyContent: "center",
     experimental_backgroundImage: "radial-gradient(circle at 40% 35%, #FFFFFF, #EEF1FF 55%, #DCE2FB 100%)", boxShadow: "0 30px 50px -26px rgba(61,90,241,0.4), inset -8px -14px 30px rgba(61,90,241,0.12)" } as ViewStyle}>
-    <Pill name={name} size={120} />
+    <Pill name={name} size={168} />
     {done && <Animated.View entering={reduced ? FadeIn.duration(160) : badgeIn}
       style={{ position: "absolute", right: 16, bottom: 18, width: 44, height: 44, borderRadius: 22, borderWidth: 4, borderColor: palette.white, backgroundColor: palette.green, alignItems: "center", justifyContent: "center" }}>
       <Text style={{ color: palette.white, fontSize: 18, fontWeight: "800" }}>✓</Text>
