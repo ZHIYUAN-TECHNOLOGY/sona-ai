@@ -37,7 +37,9 @@ export function Button({ label, onPress, busy, disabled, quiet }: { label: strin
   const off = disabled || busy;
   return <Pressable accessibilityRole="button" accessibilityState={{ disabled: off, busy }} disabled={off} onPress={onPress}
     style={({ pressed }) => ({ minHeight: 50, borderRadius: 25, paddingHorizontal: 20, overflow: "hidden", alignItems: "center", justifyContent: "center", borderWidth: 1,
-      borderColor: quiet ? "rgba(255,255,255,0.95)" : palette.dark, backgroundColor: quiet ? "rgba(255,255,255,0.72)" : palette.dark, opacity: disabled ? 0.45 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
+      borderColor: quiet ? "rgba(255,255,255,0.95)" : palette.dark, backgroundColor: quiet ? "rgba(255,255,255,0.72)" : palette.dark, opacity: disabled ? 0.45 : 1, transform: [{ scale: pressed ? 0.96 : 1 }],
+      // A quiet pill still reads as a button on a white sheet: a hairline edge and a soft lift.
+      boxShadow: quiet ? "0 0 0 0.5px rgba(40,24,70,0.12), 0 8px 18px -12px rgba(80,60,140,0.45)" : undefined })}>
     {!quiet && !disabled && <HalftoneGlint width={76} height={50} origin={[10, 2]} reach={[68, 42]} pitch={3} strength={0.75} hueShift={0.6} style={{ top: 0, left: 0 }} />}
     {busy ? <ActivityIndicator color={quiet ? palette.ink : palette.white} /> : <Text style={{ fontSize: 16, fontWeight: "600", color: quiet ? palette.ink : palette.white }}>{label}</Text>}
   </Pressable>;
