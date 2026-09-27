@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react";
 import { useMe } from "@/features/me";
 import { Row } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
-import { unreadReply } from "./model";
+import { rowLine, unreadReply } from "./model";
 
 /**
  * The care team thread's home row: says when a reply is waiting. What this phone has read is kept
@@ -37,8 +37,10 @@ export function useMessageNeeds() {
   return data && unreadReply(data, read) ? 1 : 0;
 }
 
+/** Home's row for the thread (Dawn glass row): a waiting reply with its opening words, a sent message's status, or the emergency line. */
 export function CareTeamRow({ first }: { first?: boolean }) {
-  const waiting = useMessageNeeds();
-  return <Row first={first} title="Message my care team" line={waiting ? "New reply from your care team" : "Not for emergencies · call 999"} tone={waiting ? "green" : "muted"}
-    onPress={() => router.push("/messages")} />;
+  const { data } = useThread();
+  const read = useSyncExternalStore(subscribe, () => lastRead);
+  const { line, tone } = rowLine(data, read);
+  return <Row first={first} title="Message my care team" line={line} tone={tone} onPress={() => router.push("/messages")} />;
 }
