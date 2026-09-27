@@ -113,7 +113,7 @@ export function MedsCard({ index }: { index: number }) {
   const logged = took && !(dose && dueNow(dose.dueAt, now)) ? took : undefined;
   const take = () => { if (!dose) return; markTaken(dose.key); setTook({ key: dose.key, name: dose.name, at: new Date() }); };
   const next = dose && nextLine(dose.dueAt, now);
-  const head = today.length ? `${count} of ${today.length} doses taken` : plan?.status === "discharged" ? "Nothing on a timer today" : "Once you're home";
+  const head = today.length ? `${count} of ${today.length} ${today.length === 1 ? "dose" : "doses"} taken` : plan?.status === "discharged" ? "Nothing on a timer today" : "Once you're home";
   const all = today.length > 0 && count === today.length;
   return <Tile tall index={index} label={`Today's medicines. ${head}.${dose && next ? ` ${dose.name}, ${next.text}.` : ""} Open details`}
     onPress={() => router.push(dose || today.length ? "/dose" : "/discharge")}

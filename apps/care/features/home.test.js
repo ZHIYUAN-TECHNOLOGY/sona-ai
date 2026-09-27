@@ -34,7 +34,7 @@ test("the medicine pill: a countdown in the last hour, the time further off, amb
   const due = new Date("2026-09-27T13:00:00Z");
   expect(nextLine(due, new Date("2026-09-27T12:41:26Z"))).toEqual({ text: "Next in 18:34", due: true, ticking: true });
   expect(nextLine(due, new Date("2026-09-27T05:00:00Z"))).toEqual({ text: "Next 9:00 PM", due: false, ticking: false });
-  expect(nextLine(due, new Date("2026-09-26T13:30:00Z")).text).toBe("Next tomorrow 9:00 PM");
+  expect(nextLine(due, new Date("2026-09-26T13:30:00Z")).text).toBe("Tomorrow 9:00 PM");
   expect(nextLine(due, new Date("2026-09-27T13:02:00Z"))).toEqual({ text: "Due now · 9:00 PM", due: true, ticking: false });
   expect(nextLine(due, new Date("2026-09-27T13:20:00Z")).text).toBe("20 min late · 9:00 PM");
 });

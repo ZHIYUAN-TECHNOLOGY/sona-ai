@@ -57,11 +57,11 @@ export function weekLine(meds: ScheduledMed[], dischargedAt: string | undefined,
   return { text: days.length === 1 ? `${n} on ${days[0]}` : `${n} this week`, tone: "amber" };
 }
 
-/** The medicine card's pill: "Next in 18:34" in the last hour, "Next 9:00 PM", "Next tomorrow 8:00 AM", or "Due now · 9:00 PM" (amber) once due. */
+/** The medicine card's pill: "Next in 18:34" in the last hour, "Next 9:00 PM", "Tomorrow 8:00 AM", or "Due now · 9:00 PM" (amber) once due. */
 export function nextLine(dueAt: Date, now: Date): { text: string; due: boolean; ticking: boolean } {
   const c = countdown(dueAt, now);
   const late = dueAt.getTime() <= now.getTime();
-  return { text: late ? `${c.kicker} · ${c.value}` : `${c.kicker.replace(/^Next medicine( at)?/, "Next")} ${c.value}`, due: c.due, ticking: c.ticking };
+  return { text: late ? `${c.kicker} · ${c.value}` : c.kicker.startsWith("Next medicine tomorrow") ? `Tomorrow ${c.value}` : `${c.kicker.replace(/^Next medicine( at)?/, "Next")} ${c.value}`, due: c.due, ticking: c.ticking };
 }
 
 /**
