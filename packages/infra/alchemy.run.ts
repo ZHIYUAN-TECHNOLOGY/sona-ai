@@ -2,6 +2,7 @@ import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
+import * as Redacted from "effect/Redacted";
 import "varlock/auto-load";
 
 import type { EncounterState } from "../../apps/server/src/encounter-state";
@@ -29,6 +30,12 @@ export const server = Cloudflare.Worker("server", {
     EMAIL: Cloudflare.Email.SendEmail("EMAIL"),
     EMAIL_FROM: Config.String("EMAIL_FROM").pipe(Config.withDefault("")),
     INSURER_EMAIL: Config.String("INSURER_EMAIL").pipe(Config.withDefault("")),
+    // Sona Care sign-in with Apple and Google; each stays off until its values are set.
+    APPLE_CLIENT_ID: Config.String("APPLE_CLIENT_ID").pipe(Config.withDefault("")),
+    APPLE_CLIENT_SECRET: Config.Redacted("APPLE_CLIENT_SECRET").pipe(Config.withDefault(Redacted.make(""))),
+    APPLE_APP_BUNDLE_IDENTIFIER: Config.String("APPLE_APP_BUNDLE_IDENTIFIER").pipe(Config.withDefault("")),
+    GOOGLE_CLIENT_ID: Config.String("GOOGLE_CLIENT_ID").pipe(Config.withDefault("")),
+    GOOGLE_CLIENT_SECRET: Config.Redacted("GOOGLE_CLIENT_SECRET").pipe(Config.withDefault(Redacted.make(""))),
   },
   // Nightly coding audit (flow 5), 02:00 Malaysia time; after-discharge check-ins (flow 7) go out hourly.
   crons: ["0 18 * * *", "0 * * * *"],
