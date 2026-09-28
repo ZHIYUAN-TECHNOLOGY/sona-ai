@@ -23,9 +23,15 @@ const SAID: Record<string, string> = {
   "That isn't one of your doses": "notYourDose",
 };
 const squash = (s: string) => s.replace(/[-_\s]/g, "").toLowerCase();
+// The server's codes whose words here have another name.
+const ALIAS: Record<string, string> = {
+  CLINICIAN_ACCOUNT: "clinician", NOT_JOINED: "joinFirst", RECORD_MISSING: "noRecord", SPEECH_OFF: "voiceOff",
+  DOCTOR_UNKNOWN: "noDoctor", DOSE_UNKNOWN: "notYourDose", CHECK_IN_UNKNOWN: "noRecord",
+};
 
 function keyOf(code: unknown) {
   if (typeof code !== "string") return undefined;
+  if (ALIAS[code]) return `err.${ALIAS[code]}`;
   return Object.keys(registered().en).find(k => k.startsWith("err.") && squash(k.slice(4)) === squash(code));
 }
 

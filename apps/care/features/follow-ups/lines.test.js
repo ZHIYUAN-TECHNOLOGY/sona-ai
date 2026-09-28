@@ -12,12 +12,12 @@ test("the strip reads days in Malaysia and shows the Monday-first week around th
 
 test("dots mark visits, check-ins and this week's doses; empty days point to what is next", () => {
   const today = D("2026-09-27");
-  const visits = [{ short: "Clinic review", date: new Date("2026-10-04T02:00:00Z"), status: "due-soon" }, { short: "CT scan", date: new Date("2026-09-20T02:00:00Z"), status: "overdue" }];
+  const visits = [{ short: "Clinic review", date: new Date("2026-10-04T02:00:00Z"), status: "due-soon" }, { short: "CT scan", date: new Date("2026-09-20T02:00:00Z"), status: "missed" }];
   const checkIns = [{ day: 7, dueAt: new Date("2026-10-01T01:00:00Z") }];
   const week = [{ state: "all" }, { state: "some" }, { state: "free" }, { state: "ahead" }]; // 24–27 Sep
   const marks = marksByDay(today, visits, checkIns, week);
   expect(marks[D("2026-10-04")]).toEqual({ visit: "due" });
-  expect(marks[D("2026-09-20")]).toEqual({ visit: "overdue" });
+  expect(marks[D("2026-09-20")]).toEqual({ visit: "missed" });
   expect(marks[D("2026-10-01")]).toEqual({ checkIn: true });
   expect([marks[D("2026-09-24")], marks[D("2026-09-25")], marks[D("2026-09-26")], marks[today]]).toEqual([{ doses: "taken" }, { doses: "missed" }, undefined, undefined]);
   expect(dayA11y(D("2026-10-04"), today, visits, checkIns)).toBe("Sunday 4 October, Clinic review");
@@ -46,16 +46,16 @@ test("a day's timeline groups doses by time, orders by time, and offers one acti
 
 test("visits read before you go; an all-day visit or a past day's doses come first", () => {
   const now = new Date("2026-09-27T01:00:00Z");
-  const items = agendaOf(now, { visits: [visit({ id: "recall:f1", title: "CT scan", status: "overdue", inDays: -2 })], checkIns: [], doses: [], doseMark: "missed" });
-  expect(items.map(i => [i.title, i.line, i.tone, i.action])).toEqual([["CT scan", "Overdue, due 2 days ago", "amber", "prepare"], ["Medicines", "Some doses missed", "amber", undefined]]);
+  const items = agendaOf(now, { visits: [visit({ id: "recall:f1", title: "CT scan", status: "missed", inDays: -2 })], checkIns: [], doses: [], doseMark: "missed" });
+  expect(items.map(i => [i.title, i.line, i.tone, i.action])).toEqual([["CT scan", "Missed, was 2 days ago", "amber", "prepare"], ["Medicines", "Some doses missed", "amber", undefined]]);
   expect(items[0].at).toBeUndefined();
 });
 
-test("the insight line says what is next today and when the next visit is, amber when late or overdue", () => {
+test("the insight line says what is next today and when the next visit is, amber when late or missed", () => {
   const now = new Date("2026-09-27T00:00:00Z"); // 8:00 AM
   const today = agendaOf(now, { visits: [], checkIns: [ask(3, "2026-09-27T01:00:00Z")], doses: [] });
   expect(scheduleLine(today, [visit()])).toEqual({ line: expect.stringMatching(/^Next: check-in at 9:00\sAM · visit in 3 days$/), tone: "muted" });
-  expect(scheduleLine([], [visit({ status: "overdue", inDays: -1 })])).toEqual({ line: "Visit overdue", tone: "amber" });
+  expect(scheduleLine([], [visit({ status: "missed", inDays: -1 })])).toEqual({ line: "Visit missed", tone: "amber" });
   expect(scheduleLine(agendaOf(now, { visits: [], checkIns: [ask(3, "2026-09-27T01:00:00Z", { replies: [{}] })], doses: [] }), [])).toEqual({ line: "All done today", tone: "muted" });
   expect(scheduleLine([], [])).toEqual({ line: "Nothing booked yet", tone: "muted" });
   const visitToday = agendaOf(now, { visits: [visit({ inDays: 0, date: new Date("2026-09-27T02:30:00Z") })], checkIns: [], doses: [] });
@@ -80,7 +80,7 @@ test("when reads the day in Malaysia and how far away it is", () => {
 
 test("counts the follow-ups that need the patient", () => {
   const items = [item("CT scan", "2026-12-25T02:00:00Z", 5, "due-soon"), item("Clinic review", "2027-01-10T02:00:00Z", 21, "upcoming")];
-  expect(followUpNeeds([{ ...items[0], status: "overdue" }, ...items])).toBe(2);
+  expect(followUpNeeds([{ ...items[0], status: "missed" }, ...items])).toBe(2);
   expect(followUpNeeds(undefined)).toBe(0);
 });
 
@@ -98,4 +98,9 @@ test("the Schedule shows waiting requests and a declined one until she asks that
   // Asking Dr. Arjun again replaces the declined one.
   const again = req("again", { doctorId: "arjun", createdAt: new Date("2026-09-28T01:30:00Z") });
   expect(openRequests([...list, again], now).map(r => r.id)).not.toContain("declined");
+});
+
+test("a visit she already had needs nothing and never leads the insight line", () => {
+  expect(followUpNeeds([visit({ status: "attended", inDays: -1 }), visit({ status: "upcoming", inDays: 9 })])).toBe(0);
+  expect(scheduleLine([], [visit({ status: "attended", inDays: -1 }), visit({ status: "due-soon", inDays: 3 })]).line).toBe("Visit in 3 days");
 });

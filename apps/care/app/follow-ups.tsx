@@ -106,7 +106,7 @@ function WeekStrip({ day, today, marks, still, onPick, a11y }: {
 }
 
 function DayChip({ d, weekday, today, selected, marks, label, onPress }: { d: number; weekday: string; today: boolean; selected: boolean; marks?: DayMarks; label: string; onPress: () => void }) {
-  const dots = [marks?.visit && (marks.visit === "overdue" ? palette.warning : palette.info), marks?.checkIn && palette.feature,
+  const dots = [marks?.visit && (marks.visit === "missed" ? palette.warning : palette.info), marks?.checkIn && palette.feature,
     marks?.doses && (marks.doses === "taken" ? palette.success : palette.warning)].filter((c): c is string => !!c);
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected }} onPress={onPress}
     style={({ pressed }) => ({ flex: 1, minHeight: 76, alignItems: "center", justifyContent: "center", gap: 4, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
@@ -161,7 +161,7 @@ function Entry({ item, expanded, onToggle, still }: { item: AgendaItem; expanded
     </View>
     {expanded && item.visit && <Animated.View entering={still ? undefined : FadeIn.duration(220).delay(60)} style={{ gap: 10 }}>
       <Text style={{ ...type.body, color: palette.ink }}>{bringLine(item.visit, lang)}</Text>
-      {item.visit.status === "overdue" && <Missed quiet />}
+      {item.visit.status === "missed" && <Missed quiet />}
     </Animated.View>}
     {act && <Pressable accessibilityRole="button" accessibilityState={item.action === "prepare" ? { expanded } : undefined} onPress={act.onPress}
       style={({ pressed }) => ({ minHeight: 48, justifyContent: "center", alignSelf: "flex-start", marginBottom: -10, opacity: pressed ? 0.6 : 1 })}>
@@ -173,17 +173,17 @@ function Entry({ item, expanded, onToggle, still }: { item: AgendaItem; expanded
 /** The next visit, the screen's one feature card: when, what, why, then the quick review before going. */
 function VisitCard({ f, still }: { f: FollowUp; still: boolean }) {
   const lang = useLang(), t = tFor(lang);
-  const tone = f.status === "overdue" ? palette.amber : f.status === "due-soon" ? palette.blue : palette.muted;
+  const tone = f.status === "missed" ? palette.amber : f.status === "due-soon" ? palette.blue : palette.muted;
   return <Card feature>
-    <View accessible accessibilityLabel={t("fu.visitA11y", { title: f.title, when: pillLine(f, lang), away: f.status === "overdue" ? t("fu.overdueA11y", { when: away(f.inDays, lang) }) : away(f.inDays, lang), why: f.why })} style={{ gap: 8 }}>
+    <View accessible accessibilityLabel={t("fu.visitA11y", { title: f.title, when: pillLine(f, lang), away: f.status === "missed" ? t("fu.overdueA11y", { when: away(f.inDays, lang) }) : away(f.inDays, lang), why: f.why })} style={{ gap: 8 }}>
       <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
         <Capsule>{pillLine(f, lang)}</Capsule>
-        <Text style={{ ...type.footnote, flexShrink: 1, fontWeight: f.status === "upcoming" ? "400" : "600", color: tone }}>{f.status === "overdue" ? t("fu.overdue") : away(f.inDays, lang)}</Text>
+        <Text style={{ ...type.footnote, flexShrink: 1, fontWeight: f.status === "upcoming" ? "400" : "600", color: tone }}>{f.status === "missed" ? t("fu.overdue") : f.status === "attended" ? t("fu.attended") : away(f.inDays, lang)}</Text>
       </View>
       <Text style={{ fontSize: 22, lineHeight: 28, letterSpacing: -0.8, fontWeight: "600", color: palette.ink }}>{f.title}</Text>
       <Text style={{ ...type.body, color: palette.muted }}>{f.why}</Text>
     </View>
-    {f.status === "overdue" && <Missed />}
+    {f.status === "missed" && <Missed />}
     <Review f={f} still={still} />
   </Card>;
 }
@@ -234,7 +234,7 @@ function RequestCard({ r }: { r: BookingRequest }) {
   </View>;
 }
 
-/** An overdue visit: missed or already done cannot be told apart here, so the care team is asked. */
+/** A missed visit: nobody saw her that day, so the care team is asked. */
 function Missed({ quiet }: { quiet?: boolean }) {
   const t = tFor(useLang());
   return <>

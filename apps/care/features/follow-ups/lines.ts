@@ -23,8 +23,8 @@ export const pillLine = (f: Pick<FollowUp, "id" | "date">, lang: Lang = "en") =>
 /** What to bring: paperwork only, since the data holds no preparation steps for a visit or test. */
 export const bringLine = (f: Pick<FollowUp, "id">, lang: Lang = "en") => tFor(lang)(f.id === "discharge-review" ? "fu.bringReview" : "fu.bring");
 
-/** How many follow-ups need the patient now (due soon or overdue); counts toward home's insight line. */
-export const followUpNeeds = (items: Pick<FollowUp, "status">[] | undefined) => items?.filter(f => f.status !== "upcoming").length ?? 0;
+/** How many follow-ups need the patient now (due soon or missed); counts toward home's insight line. */
+export const followUpNeeds = (items: Pick<FollowUp, "status">[] | undefined) => items?.filter(f => f.status === "due-soon" || f.status === "missed").length ?? 0;
 
 // The Schedule strip. A day is a whole number: days since 1 Jan 1970 in Malaysia (the hospital's
 // time), so a day number times DAY is that date's midnight in UTC and reads back with getUTC*.
@@ -50,14 +50,14 @@ export function weekAround(day: number): number[] {
 export const weekLabel = (week: number[], lang: Lang = "en") => [week[0]!, week[6]!].map(d => formatDate(lang, civil(d), "dayMonth")).join(" – ");
 
 /**
- * The dots under a day: a visit (overdue kept apart), a check-in, and for past days of this week whether
+ * The dots under a day: a visit (missed kept apart), a check-in, and for past days of this week whether
  * every dose was marked taken. `week` is `weekOf`'s review, which ends today.
  */
-export type DayMarks = { visit?: "due" | "overdue"; checkIn?: true; doses?: "taken" | "missed" };
+export type DayMarks = { visit?: "due" | "missed"; checkIn?: true; doses?: "taken" | "missed" };
 export function marksByDay(today: number, visits: Pick<FollowUp, "date" | "status">[], checkIns: Ask[], week: { state: string }[]) {
   const marks: Record<number, DayMarks> = {};
   const at = (day: number) => (marks[day] ??= {});
-  for (const v of visits) { const m = at(dayOf(v.date)); if (m.visit !== "overdue") m.visit = v.status === "overdue" ? "overdue" : "due"; }
+  for (const v of visits) { const m = at(dayOf(v.date)); if (m.visit !== "missed") m.visit = v.status === "missed" ? "missed" : "due"; }
   for (const c of checkIns) at(dayOf(c.dueAt)).checkIn = true;
   week.forEach(({ state }, i) => {
     const day = today - (week.length - 1 - i);
@@ -117,7 +117,7 @@ export function agendaOf(now: Date, { visits, checkIns, doses, doseMark }: { vis
       return { key: c.id, at, title: tr("checkin.title", { day: c.day }), line: s.line, tone: s.tone, done, action: waiting ? "answer" : undefined, soon: waiting ? tr("fu.soonCheckInWaiting") : tr("fu.soonCheckInAt", { time: clock(at, lang) }) };
     }),
     ...visits.map((f): AgendaItem => {
-      const time = timeLabel(f, lang), overdue = f.status === "overdue";
+      const time = timeLabel(f, lang), overdue = f.status === "missed";
       return { key: f.id, at: time ? new Date(f.date) : undefined, title: f.title, line: overdue ? tr("fu.overdueDue", { when: away(f.inDays, lang) }) : f.why, tone: overdue ? "amber" : "muted", done: false,
         action: "prepare", soon: overdue ? tr("fu.soonVisitOverdue") : time && f.inDays === 0 ? tr("fu.soonVisitAt", { time }) : tr("fu.soonVisitWhen", { when: away(f.inDays, lang) }), visit: f };
     }),
@@ -128,11 +128,11 @@ export function agendaOf(now: Date, { visits, checkIns, doses, doseMark }: { vis
 
 /** Schedule's insight under the title: "Next: check-in at 9:00 AM · visit in 3 days", amber when late or overdue. */
 export function scheduleLine(today: AgendaItem[], visits: Pick<FollowUp, "id" | "status" | "inDays">[], lang: Lang = "en"): { line: string; tone: "muted" | "amber" } {
-  const t = tFor(lang), next = today.find(i => !i.done), visit = visits[0];
+  const t = tFor(lang), next = today.find(i => !i.done), visit = visits.find(v => v.status !== "attended");
   const parts = [next ? t("fu.next", { what: next.soon }) : today.length ? t("fu.allDoneToday") : undefined,
-    visit && visit.id !== next?.key && (visit.status === "overdue" ? t("fu.soonVisitOverdue") : t("fu.soonVisitWhen", { when: away(visit.inDays, lang) }))].filter(Boolean) as string[];
+    visit && visit.id !== next?.key && (visit.status === "missed" ? t("fu.soonVisitOverdue") : t("fu.soonVisitWhen", { when: away(visit.inDays, lang) }))].filter(Boolean) as string[];
   const line = parts.join(" · ").replace(/^./, c => c.toUpperCase()) || t("fu.nothingBooked");
-  return { line, tone: next?.tone === "amber" || visit?.status === "overdue" ? "amber" : "muted" };
+  return { line, tone: next?.tone === "amber" || visit?.status === "missed" ? "amber" : "muted" };
 }
 
 /** A booking request the patient sent (care.bookings.list). */

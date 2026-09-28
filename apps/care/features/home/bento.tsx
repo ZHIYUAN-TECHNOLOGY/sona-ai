@@ -125,7 +125,7 @@ const SPARKLE = "M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2Z";
 export function LatestTile({ index, still, onCheckIn }: { index: number; still: boolean; onCheckIn: () => void }) {
   // A visit the doctor booked from her check-in (keyed "book-in:"), still ahead.
   const visits = useFollowUps().data;
-  const booked = visits?.find(f => f.id.startsWith("book-in:") && f.status !== "overdue");
+  const booked = visits?.find(f => f.id.startsWith("book-in:") && f.status !== "missed");
   // A test from her X-ray the doctor put on the same visit ("CT added to your visit").
   const test = booked && visits?.find(f => f.id.startsWith("recall:") && new Date(f.date).getTime() === new Date(booked.date).getTime());
   const lang = useLang(), t = tFor(lang);
@@ -156,7 +156,8 @@ const PENCIL = "M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32
 export function VisitTile({ index, still, hospital }: { index: number; still: boolean; hospital?: string }) {
   const lang = useLang(), t = tFor(lang);
   const { data } = useFollowUps();
-  const next = data?.[0];
+  // A visit she already had is done; the tile shows the next one still to come or missed.
+  const next = data?.find(f => f.status !== "attended");
   if (!next) return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={t(data ? "home.noVisit" : "home.visitsHere")} onPress={() => router.push(data ? "/doctors" : "/follow-ups")}
     footer={data && <Pressable accessibilityRole="button" accessibilityLabel={t("home.bookVisit")} onPress={() => router.push("/doctors")}
       style={({ pressed }) => ({ minHeight: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.dark, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
@@ -167,7 +168,7 @@ export function VisitTile({ index, still, hospital }: { index: number; still: bo
   </Tile>;
   const soon = next.status !== "upcoming";
   // The capsule carries the time, or the day when there is no time; the line under it never repeats the day.
-  const time = timeLabel(next, lang), far = next.status === "overdue" ? t("home.visitOverdue") : away(next.inDays, lang);
+  const time = timeLabel(next, lang), far = next.status === "missed" ? t("home.visitOverdue") : away(next.inDays, lang);
   const when = time ? `${dayLabel(next.date, lang)} · ${far}` : far[0]!.toUpperCase() + far.slice(1);
   return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={t("home.visitA11y", { title: next.title, time: time ?? dayLabel(next.date, lang), when, hospital: hospital ? ` ${hospital}.` : "" })} onPress={() => router.push("/follow-ups")}>
     <Capsule>{time ?? dayLabel(next.date, lang)}</Capsule>

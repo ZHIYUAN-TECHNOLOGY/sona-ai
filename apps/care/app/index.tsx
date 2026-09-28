@@ -35,12 +35,12 @@ function useNeeds(): (Need & { dot: string })[] {
   const checkIns = useCheckIns();
   const ask = checkIns.data && todayOf(checkIns.data, now).ask;
   const reply = useMessageNeeds();
-  const visits = useFollowUps().data?.filter(f => f.status !== "upcoming") ?? [];
+  const visits = useFollowUps().data?.filter(f => f.status === "due-soon" || f.status === "missed") ?? [];
   return [
     ...(dose && dueNow(dose.dueAt, now) ? [{ kind: "dose" as const, name: dose.name, label: t("home.chip", { what: dose.name, when: clock(dose.dueAt, lang) }), dot: palette.warning }] : []),
     ...(ask ? [{ kind: "check-in" as const, label: t("checkin.title", { day: ask.day }), dot: palette.warning }] : []),
     ...(reply ? [{ kind: "reply" as const, label: t("home.teamReplied"), dot: palette.info }] : []),
-    ...visits.map(f => ({ kind: "visit" as const, inDays: f.inDays, overdue: f.status === "overdue", label: t("home.chip", { what: f.short, when: f.status === "overdue" ? t("home.visitOverdue") : away(f.inDays, lang) }), dot: f.status === "overdue" ? palette.error : palette.warning })),
+    ...visits.map(f => ({ kind: "visit" as const, inDays: f.inDays, overdue: f.status === "missed", label: t("home.chip", { what: f.short, when: f.status === "missed" ? t("home.visitOverdue") : away(f.inDays, lang) }), dot: f.status === "missed" ? palette.error : palette.warning })),
   ];
 }
 
