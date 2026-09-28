@@ -1,7 +1,16 @@
 import { expect, test } from "bun:test";
 import { newEncounter, patients } from "@/features/encounter/fixtures";
 import { EMPTY_DISCHARGE } from "@/features/discharge/model";
-import { huddle, wardBeds, wardSummary } from "./model";
+import { bedBar, huddle, wardBeds, wardSummary } from "./model";
+
+test("the bed bar has one segment per bed, blocked first, and a legend that adds up", () => {
+  const bar = bedBar(wardBeds(patients, {}));
+  expect(bar.segments).toEqual(["blocked", "blocked", "blocked", "fit", "watch", "watch", "other", "other"]);
+  expect(bar.legend.map(l => [l.label, l.count])).toEqual([["blocked", 3], ["fit to go", 1], ["watch", 2], ["other", 2]]);
+  expect(bar.label).toBe("8 beds: 3 blocked, 1 fit to go, 2 watch, 2 other");
+  // A freed bed is "other"; empty groups drop out of the legend.
+  expect(bedBar([{ bed: "Bed 6", status: "free", predicted: "", blockers: [] }]).legend).toEqual([{ kind: "other", label: "other", count: 1 }]);
+});
 
 test("fit beds lead and the demo bed carries its live blockers", () => {
   const beds = wardBeds(patients, {});
