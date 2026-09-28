@@ -74,7 +74,7 @@ iPhone (Expo)
 - **Sona Care, the patient app (`apps/care`, base only):** patients chat with or contact their doctor there, including replies to after-discharge check-ins. It shares this backend (same Worker, auth and API) and the clinician app stays clinician-only. Before real patients use it, the API needs patient and clinician roles: today any account joins the demo hospital with clinical access.
 - **Push notifications (optional):** "result arrived" and "guarantee letter approved" through Expo push.
 - **Privacy step:** OpenMed PII Small removes names, IC numbers and phone numbers before text reaches Gemma or MedGemma, and before any retrieval query. Its 38 languages include Indonesian but not Malay, so Malaysian names and IC numbers need added rules.
-- **Excluded:** closed models (Qwen-Audio-3.1, Gemini 3.8 TTS, hosted JEV), MERaLiON, Scicom, and any second inference host, including Cloudflare Workers AI and AI Search. Also excluded: a separate vector database, real insurer or FHIR integration, and model-based length-of-stay prediction.
+- **Excluded from serving:** closed models (Qwen-Audio-3.1, Gemini 3.8 TTS, hosted JEV), MERaLiON, Scicom, and any second inference host, including Cloudflare Workers AI and AI Search. Also excluded: a separate vector database, real insurer or FHIR integration, and model-based length-of-stay prediction. Generating offline training data with open models (including Scicom) is allowed; see the [ASR training plan](asr-training-plan.md).
 
 ## Models and hosting
 
@@ -103,7 +103,7 @@ Train a model only if it fails its day 1–3 baseline. Because Manglish is the p
 
 | Priority | Model | Where | Method | Data | GPU time |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Qwen3-ASR-1.7B | Baseten Training Jobs, 1×H100 | TRL/Transformers on the `-hf` checkpoint | 2–3 h of fictional consultations with exact code-switched transcripts and speaker labels; 20% held out | ~2–6 h |
+| 1 | Qwen3-ASR-1.7B | Baseten Training Jobs, 1×H100 | Baseten's `qwen3-asr-transformers` recipe | ~30 h synthetic Manglish consultations plus ~30 h licensed real speech; see the [ASR training plan](asr-training-plan.md) | ~2–6 h per run |
 | 2 | VoxCPM2 | Baseten Training Jobs, 1×H100 | Official LoRA | 1–3 h of one voice actor reading Manglish scripts | ~2–5 h |
 | 3 | Laya | Kaggle free T4 | Laya notebook plus calibration | Synthetic composition decisions from the catalogue and fixtures | Free |
 | Conditional | Gemma 4 (Unsloth), Nemotron | Baseten Training Jobs | Only if the baseline fails | — | — |
@@ -111,7 +111,7 @@ Train a model only if it fails its day 1–3 baseline. Because Manglish is the p
 
 - **Serving:** checkpoints load into the boxes through `bt://<project>@<job>/<checkpoint>`. Each fine-tune ships as a new box version, and rollback means promoting the previous version.
 - **Region:** Training Jobs cannot pick a region. Train only on fictional or synthetic data.
-- **Bottleneck:** people, not GPUs. Transcription takes about 5–10× the audio length, or 15–30 person-hours. Have base Qwen3-ASR write a first draft, then correct it by hand.
+- **Bottleneck:** people, not GPUs. For Qwen3-ASR this is now script review (27 Sep): its training audio is synthetic plus licensed public speech with exact transcripts, so no recordings or transcription are needed. See the [ASR training plan](asr-training-plan.md).
 
 **Baseline pass bars** (suggested):
 
@@ -125,8 +125,8 @@ Train a model only if it fails its day 1–3 baseline. Because Manglish is the p
 
 | Days | Backend work | People work |
 | --- | --- | --- |
-| 1–2 | Deploy boxes ①②③; Agent skeleton; Laya data generator and Kaggle training | Start Manglish recordings; book the voice actor |
-| 1–3 | Baselines: Gemma routing and specs, STT, TTS, INT4 vs FP8, memory and WebSocket checks | Transcription (ASR draft, then human fix) |
+| 1–2 | Deploy boxes ①②③; Agent skeleton; Laya data generator and Kaggle training; ASR Stage 0 engine check | Listen to Stage 0 samples |
+| 1–3 | Baselines: Gemma routing and specs, STT, TTS, INT4 vs FP8, memory and WebSocket checks; Manglish scripts and synthetic audio | Review 30 Manglish scripts |
 | 3–5 | Encounter state; tools (including discharge drafting, medicine reconciliation and code suggestion), drug table, ICD-10 table, discharge and claim tables, mock insurer, patient isolation, JEV composition, scribe pipeline | Voice-actor session |
 | 4–6 | Retrieval ingestion and hybrid search; evidence capability; ward view and blocker owners; coding audit cron; 30-question retrieval test set | Write and check the retrieval questions |
 | 5–7 | Qwen3-ASR fine-tune and evaluation; VoxCPM2 LoRA if needed | Held-out scoring |
@@ -177,7 +177,7 @@ For real data, the Agent, the database and object storage must also move into th
 
 1. **Baseten email:** ask about credits, Loops early access, and a future Enterprise quote for Singapore or Malaysia.
 2. **MOH formulary email:** ask cpfor@moh.gov.my whether FUKKM entries may be reused.
-3. **Manglish data:** record consultations, book the voice actor, and set up transcription.
+3. **Manglish data:** replaced on 27 Sep by synthetic audio and licensed speech (see the [ASR training plan](asr-training-plan.md)). Email Alibaba about Qwen TTS output for training and the Scicom authors about a licence.
 4. **AWS quota (optional hedge):** request a G-instance quota in `ap-southeast-5`.
 5. **Licences:** confirm reuse terms for WHO ICD-10, the MOH clinical practice guidelines and any casemix weights before they enter the library.
 6. **Evidence rating:** confirm that the ATS/IDSA 2019 guideline rates "no routine corticosteroids in non-severe pneumonia" as a strong recommendation on high-quality evidence; the evidence answer says "High certainty".
