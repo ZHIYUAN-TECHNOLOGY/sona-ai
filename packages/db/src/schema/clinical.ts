@@ -289,7 +289,7 @@ export const trainingConsents = pgTable("training_consents", {
  */
 export const trainingSamples = pgTable("training_samples", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull(),
-  source: text("source", { enum: ["note-edit", "check-in-reply", "transcript"] }).notNull(), sourceRef: text("source_ref").notNull(),
+  source: text("source", { enum: ["note-edit", "check-in-reply", "transcript", "handwritten-scan"] }).notNull(), sourceRef: text("source_ref").notNull(),
   input: text("input").notNull(), output: text("output").notNull(),
   replacements: jsonb("replacements").$type<{ kind: "name" | "ic" | "phone" | "email" | "mrn"; placeholder: string }[]>().notNull(),
   /** "rules" for the stub, or the model that de-identified it. */

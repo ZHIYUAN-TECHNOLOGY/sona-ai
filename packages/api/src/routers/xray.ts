@@ -9,7 +9,7 @@ import { stubModels } from "../models";
 import { protectedProcedure } from "../index";
 import { loadEncounter } from "./encounter";
 
-const bucket = (context: Context) => {
+export const bucket = (context: Pick<Context, "uploads">) => {
   if (!context.uploads) throw new ORPCError("SERVICE_UNAVAILABLE", { message: "Image storage is not configured" });
   return context.uploads;
 };

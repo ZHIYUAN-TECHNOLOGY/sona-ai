@@ -7,6 +7,7 @@ import { openSession } from "./navigation";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { useServerData } from "@/features/live/server-day";
+import { useRole } from "@/features/live/roles";
 import { useInboxSummary } from "@/features/inbox";
 import { useEncounter } from "./store";
 import { SweptLead, wordCount } from "@/components/sona/marked-text";
@@ -174,6 +175,7 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
   const { encounters } = useEncounter();
   const server = useServerData(); // live mode: the quick keys follow the server's tasks and results
   const homeKeys = useHomeActions(patients, encounters);
+  const canScan = useRole().can("scan.read");
   const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 80 + i * 70, distance: 14, duration: 460 });
   const lead = { ...type.display, color: palette.ink } as const;
   // Reading order top-down: greeting under the top bar, then the next section at a fixed rhythm.
@@ -190,7 +192,7 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
         </Text> : null}
       </Animated.View>
       <Animated.View entering={rise(2)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {patient ? <QuickActions actions={visitActions(patient, encounters[patient.id], server, kind => onPick(suggestionFor(kind, patient)))} /> : null}
+        {patient ? <QuickActions actions={visitActions(patient, encounters[patient.id], server, kind => kind === "scan" ? router.push("/scan") : onPick(suggestionFor(kind, patient)), canScan)} /> : null}
       </Animated.View>
     </View>
   </View>;

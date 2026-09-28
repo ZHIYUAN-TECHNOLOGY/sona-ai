@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { clockOf, type Context } from "../context";
 import { patientProcedure, protectedProcedure, publicProcedure, signedInProcedure } from "../index";
-import { checkInReplySchema } from "../contracts";
+import { checkInReplySchema, xrayUploadSchema } from "../contracts";
 import { listCheckIns, replyToCheckIn } from "./check-ins";
 import { clockOffsetOf } from "../clock";
 import { stubModels } from "../models";
@@ -121,6 +121,23 @@ export const careRouter = {
     const plan = await patientPlan(context);
     if (plan.status !== "discharged") return { answer: "", grounded: false, urgent: false, source: "fixture" as const };
     return (context.models ?? stubModels).answerFromPlan({ question: input.question, plan: planText(plan), language: plan.language });
+  }),
+
+  /**
+   * Patient: a photo of a medicine box or letter read as one medicine, for them to check and send to
+   * their care team. The photo is kept under the patient's own prefix (when storage is configured) so
+   * the message can point at it; nothing joins their medicines until the care team confirms it.
+   * No photo means the app's bundled sample box.
+   */
+  readMedicinePhoto: patientProcedure.input(z.object({ photo: xrayUploadSchema.pick({ contentType: true, dataBase64: true }).optional() })).handler(async ({ context, input }) => {
+    const image = input.photo && Uint8Array.from(atob(input.photo.dataBase64), c => c.charCodeAt(0));
+    let key: string | undefined;
+    if (image && context.uploads) {
+      key = `care-photos/${context.hospitalId}/${context.patientId}/${crypto.randomUUID()}.${input.photo!.contentType === "image/png" ? "png" : "jpg"}`;
+      await context.uploads.put(key, image, { httpMetadata: { contentType: input.photo!.contentType } });
+    }
+    const reading = await (image ? context.models ?? stubModels : stubModels).readMedicinePhoto({ image, contentType: input.photo?.contentType });
+    return { ...reading, key };
   }),
 
   /** Patient: the hospital's demo clock offset (0 is real time), so the app's "now" matches the server's. */

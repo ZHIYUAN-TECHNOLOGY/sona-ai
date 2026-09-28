@@ -92,8 +92,12 @@ export function homeActions(patients: Patient[], encounters: Record<string, Enco
   ];
 }
 
-/** Inside a visit (or its patient sheet): the four things asked most, badged from this patient's state. */
-export function visitActions(patient: Patient, encounter: Encounter | undefined, server: ServerData, go: (target: "briefing" | "recording" | "medication" | "xray") => void): QuickAction[] {
+/**
+ * Inside a visit (or its patient sheet): the four things asked most, badged from this patient's state,
+ * and for doctors "Scan note" (a handwritten ward-round note, drug chart or letter into the record).
+ */
+export type VisitTarget = "briefing" | "recording" | "medication" | "xray" | "scan";
+export function visitActions(patient: Patient, encounter: Encounter | undefined, server: ServerData, go: (target: VisitTarget) => void, scan = false): QuickAction[] {
   const unconfirmed = patient.incomplete ? 0 : (encounter?.medicationEntries ?? defaultMedications(patient)).filter(m => !m.confirmed).length;
   const resultHere = pendingResult(server)?.patientId === patient.id;
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
@@ -103,5 +107,6 @@ export function visitActions(patient: Patient, encounter: Encounter | undefined,
     { key: "consult", label: "Consultation", icon: "waveform", status: recording ? "Recording now" : lines ? `${lines} lines captured` : "Not started", tone: recording ? "caution" : "calm", onPress: () => go("recording") },
     { key: "meds", label: "Medicines", icon: "pills", status: patient.incomplete ? "Ingredient unknown" : unconfirmed ? `${unconfirmed} unconfirmed` : "All confirmed", tone: patient.incomplete || unconfirmed ? "caution" : "calm", badge: unconfirmed, onPress: () => go("medication") },
     { key: "xray", label: "X-ray", icon: "photo", status: encounter?.imagingAttachment ? "Image attached" : patient.incomplete ? "No image" : "Chest film on file", onPress: () => go("xray") },
+    ...scan ? [{ key: "scan", label: "Scan note", icon: "doc.viewfinder", status: "Handwritten notes into the record", onPress: () => go("scan") }] : [],
   ];
 }

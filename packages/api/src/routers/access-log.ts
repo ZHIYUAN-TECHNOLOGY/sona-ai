@@ -20,6 +20,7 @@ const SEEN_AS: Record<string, string> = {
   "claim.status": "checked the claim", "claim.update": "changed the claim", "claim.send": "sent the claim",
   "prescribing.review": "ran a prescribing check", "prescribing.simulate": "prescribed",
   "xray.read": "viewed the X-ray", "xray.upload": "added an X-ray", "findings.list": "viewed findings", "findings.detect": "read the X-ray for findings",
+  "scan.upload": "scanned a handwritten note", "scan.read": "read a scanned note", "scan.apply": "added a scanned note to the record",
   "messages.list": "read care messages", "messages.thread": "read care messages", "messages.reply": "replied to a care message",
   "messages.draft": "drafted a reply to a care message", "messages.handle": "marked care messages handled", "adherence.get": "viewed doses taken",
   "checkIns.list": "viewed check-ins", "evidence.ask": "asked for evidence", "tasks.create": "created a task",

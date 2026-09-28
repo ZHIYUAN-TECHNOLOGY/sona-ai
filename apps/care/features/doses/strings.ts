@@ -73,3 +73,46 @@ addStrings({
     "dose.notInPlan": "{name}不在您的计划里。", "dose.thisNotInPlan": "这个药不在您的计划里。", "dose.askIfUnsure": "不确定的话，请问医护团队。",
   },
 });
+
+/** Add a medicine from a photo: read, checked by the patient, sent to the care team, waiting until they confirm. */
+addStrings({
+  en: {
+    "photo.add": "Add from a photo", "photo.addLine": "A medicine box or a letter · your care team checks it",
+    "photo.title": "Add a medicine from a photo", "photo.intro": "Photograph the medicine box or the letter. We read it, you check it, and your care team confirms it.",
+    "photo.camera": "Take photo", "photo.library": "Choose a photo", "photo.sample": "Use the sample photo",
+    "photo.reading": "Reading your photo…", "photo.weRead": "We read", "photo.sampleNote": "Sample reading: the photo reader isn't switched on yet.",
+    "photo.name": "Medicine", "photo.dose": "Dose", "photo.how": "How to take it", "photo.edit": "Edit",
+    "photo.send": "Send to my care team to check", "photo.notYet": "It isn't added to your medicines until your care team checks it.",
+    "photo.sent": "Sent to your care team", "photo.sentLine": "{med} is in your medicines as waiting. You'll see their reply in Messages.",
+    "photo.waiting": "Waiting for your care team", "photo.openMessages": "Opens your messages",
+    "photo.message": "Please check a medicine I added from a photo: {med}. Photo: {ref}", "photo.onPhone": "kept on my phone",
+    "photo.noCamera": "No camera here. Choose a photo or use the sample.", "photo.failed": "We couldn't read that photo. Try again or use the sample.",
+    "photo.sendFailed": "Not sent. Check your connection and try again.",
+  },
+  ms: {
+    "photo.add": "Tambah dari gambar", "photo.addLine": "Kotak ubat atau surat · pasukan penjagaan anda menyemaknya",
+    "photo.title": "Tambah ubat dari gambar", "photo.intro": "Ambil gambar kotak ubat atau surat. Kami membacanya, anda menyemaknya, dan pasukan penjagaan anda mengesahkannya.",
+    "photo.camera": "Ambil gambar", "photo.library": "Pilih gambar", "photo.sample": "Guna gambar contoh",
+    "photo.reading": "Membaca gambar anda…", "photo.weRead": "Kami baca", "photo.sampleNote": "Bacaan contoh: pembaca gambar belum dihidupkan.",
+    "photo.name": "Ubat", "photo.dose": "Dos", "photo.how": "Cara mengambilnya", "photo.edit": "Ubah",
+    "photo.send": "Hantar kepada pasukan penjagaan untuk disemak", "photo.notYet": "Ia tidak ditambah ke ubat anda sehingga pasukan penjagaan menyemaknya.",
+    "photo.sent": "Dihantar kepada pasukan penjagaan", "photo.sentLine": "{med} ada dalam ubat anda sebagai menunggu. Balasan mereka akan muncul dalam Mesej.",
+    "photo.waiting": "Menunggu pasukan penjagaan", "photo.openMessages": "Buka mesej anda",
+    "photo.message": "Tolong semak ubat yang saya tambah dari gambar: {med}. Gambar: {ref}", "photo.onPhone": "disimpan dalam telefon saya",
+    "photo.noCamera": "Tiada kamera di sini. Pilih gambar atau guna contoh.", "photo.failed": "Kami tidak dapat membaca gambar itu. Cuba lagi atau guna contoh.",
+    "photo.sendFailed": "Tidak dihantar. Semak sambungan anda dan cuba lagi.",
+  },
+  zh: {
+    "photo.add": "拍照添加", "photo.addLine": "药盒或信件 · 由医护团队核对",
+    "photo.title": "拍照添加药物", "photo.intro": "给药盒或信件拍照。我们读取内容，您核对，再由医护团队确认。",
+    "photo.camera": "拍照", "photo.library": "选择照片", "photo.sample": "使用示例照片",
+    "photo.reading": "正在读取照片…", "photo.weRead": "我们读到", "photo.sampleNote": "示例读取：照片识别尚未开启。",
+    "photo.name": "药物", "photo.dose": "剂量", "photo.how": "怎么吃", "photo.edit": "修改",
+    "photo.send": "发送给医护团队核对", "photo.notYet": "医护团队核对之前，不会加入您的药物。",
+    "photo.sent": "已发送给医护团队", "photo.sentLine": "{med}已在您的药物中，状态为等待确认。回复会显示在留言里。",
+    "photo.waiting": "等待医护团队确认", "photo.openMessages": "打开留言",
+    "photo.message": "请帮我核对从照片添加的药物：{med}。照片：{ref}", "photo.onPhone": "保存在我的手机上",
+    "photo.noCamera": "这里没有相机。请选择照片或使用示例。", "photo.failed": "无法读取这张照片。请重试或使用示例。",
+    "photo.sendFailed": "未发送。请检查网络后重试。",
+  },
+});

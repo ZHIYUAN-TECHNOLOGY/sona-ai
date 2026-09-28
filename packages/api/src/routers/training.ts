@@ -16,7 +16,7 @@ import { stubModels } from "../models";
  * stays in its own table. It is captured only when the hospital contributes AND the patient consented.
  */
 type Db = Context["db"];
-type Source = "note-edit" | "check-in-reply" | "transcript";
+type Source = "note-edit" | "check-in-reply" | "transcript" | "handwritten-scan";
 export const SAMPLE_STATUSES = ["pending", "approved", "blocked", "excluded", "withdrawn"] as const;
 
 /** The patient's own identifiers, as the de-identifier and the gate need them: name, IC (when the record has one), phone (their Sona Care account's), MRN. */

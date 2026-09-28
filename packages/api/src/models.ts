@@ -5,6 +5,7 @@ import { planFor, type Language } from "@sona-ai/domain/discharge";
 import type { Study } from "@sona-ai/domain/evidence";
 import type { DetectedFinding } from "@sona-ai/domain/findings";
 import { deidentifyByRules, type KnownIdentity, type Replacement } from "@sona-ai/domain/training";
+import { SAMPLE_NOTE, type HandwrittenNote } from "@sona-ai/domain/scan";
 import type { Patient } from "@sona-ai/domain/types";
 import { huddle, type Bed, type Owner } from "@sona-ai/domain/ward";
 
@@ -51,6 +52,14 @@ export type Models = {
    * [PHONE], [EMAIL], [MRN]). The leak gate re-checks whatever comes back, whoever wrote it.
    */
   deidentify(input: { text: string; known: KnownIdentity }): Answer<{ text: string; replacements: Replacement[] }>;
+  /**
+   * Scan a handwritten note: a photo of a ward-round note, drug chart or referral letter as text, the
+   * note's sections, medicine changes, tasks and follow-up. Never applied by itself: the doctor reviews
+   * every item (scan.apply). `patient` is de-identified by the route before a real model sees it.
+   */
+  readHandwrittenNote(input: { image: Uint8Array; contentType: string; patient: { name: string; knownMedicines: string[] } }): Answer<HandwrittenNote>;
+  /** Sona Care: a photo of a medicine box or letter read as one medicine, for the care team to check. */
+  readMedicinePhoto(input: { image?: Uint8Array; contentType?: string }): Answer<{ name: string; dose?: string; frequency?: string }>;
 };
 
 const fixture = <T>(value: T) => Promise.resolve({ ...value, source: "fixture" as const });
@@ -92,4 +101,9 @@ export const stubModels: Models = {
   // ponytail: full names, IC, phone, email and MRN by rule (packages/domain/training); OpenMed's clinical PII model replaces it, and catches first names too.
   deidentify: ({ text, known }) => fixture(deidentifyByRules(text, known)),
   answerFromPlan: () => fixture({ answer: "", grounded: false, urgent: false }),
+  // ponytail: the stub has no eyes; it returns what the sample note says, whatever the photo. Gemma 4 vision
+  // or MedGemma replaces it through the Baseten adapter (docs/delivery-plan.md), with the same shape.
+  readHandwrittenNote: () => fixture(structuredClone(SAMPLE_NOTE)),
+  // ponytail: the sample box's words (a synthetic reading); the same vision model reads real photos.
+  readMedicinePhoto: () => fixture({ name: "Cetirizine", dose: "10 mg", frequency: "once at night" }),
 };

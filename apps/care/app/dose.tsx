@@ -10,6 +10,7 @@ import { markTaken, Pill, rise, snooze, useNextDose, useNow, useSnooze } from "@
 import { clock, dosesToday, early, isLate, untilLine, weekOf, whenWords, type DayDose, type Dose, type ScheduledMed } from "@/features/doses/model";
 import { foodOf, insight, weekStrip } from "@/features/doses/strip";
 import "@/features/doses/strings";
+import { PhotoMedicines } from "@/features/doses/photo";
 import { useMe } from "@/features/me";
 import "@/features/messages/strings";
 import { DOCK_SPACE } from "@/lib/dock";
@@ -76,6 +77,8 @@ export default function DoseScreen() {
           </Animated.View>)}
         </View>
         {!meds.length && <Text style={{ ...type.body, color: palette.muted }}>{t("dose.nothingAtHome")}</Text>}
+        {/* A medicine from a photo waits here for the care team; the entry to add one sits under the cards. */}
+        <Animated.View entering={enter(3 + meds.length)}><PhotoMedicines /></Animated.View>
 
         <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("dose.missedTip")}</Text>
       </>}

@@ -85,16 +85,17 @@ export async function saveEncounter(db: Db, hospitalId: string, fromRevision: nu
   return next;
 }
 
+/** Through the encounter's Durable Object when the Worker provides it, so its live state never goes stale. */
+export async function editEncounter(context: Pick<Context, "db" | "encounters">, hospitalId: string, edit: EncounterEdit) {
+  if (context.encounters) return context.encounters.edit(hospitalId, edit);
+  const current = await loadEncounter(context.db, hospitalId, edit.encounterId);
+  return saveEncounter(context.db, hospitalId, current.revision, applyEdit(current, edit));
+}
+
 export const encounterRouter = {
   get: protectedProcedure.input(z.object({ encounterId: z.string().min(1) }))
     .handler(({ context, input }) => loadEncounter(context.db, context.hospitalId, input.encounterId)),
-  // Through the encounter's Durable Object when the Worker provides it, so its live state never goes stale.
-  edit: protectedProcedure.input(encounterEditSchema).handler(async ({ context, input }) => {
-    const { hospitalId } = context;
-    if (context.encounters) return context.encounters.edit(hospitalId, input);
-    const current = await loadEncounter(context.db, hospitalId, input.encounterId);
-    return saveEncounter(context.db, hospitalId, current.revision, applyEdit(current, input));
-  }),
+  edit: protectedProcedure.input(encounterEditSchema).handler(({ context, input }) => editEncounter(context, context.hospitalId, input)),
   recordReview: protectedProcedure.input(recordReviewSchema).handler(async ({ context, input }) => {
     const { hospitalId } = context;
     if (context.encounters) return context.encounters.recordReview(hospitalId, input);
