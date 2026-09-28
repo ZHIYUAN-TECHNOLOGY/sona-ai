@@ -1,23 +1,28 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import { shortDate } from "@sona-ai/domain/findings";
+import { formatDate, tFor, type Lang } from "@/lib/i18n";
 import { statusOf, type CheckIn } from "../check-ins/model";
-import { clock, dueNow, untilLine, type DayDose } from "../doses/model";
+import { clock, dueNow, isLate, untilLine, type DayDose } from "../doses/model";
+import "./strings";
 
 export type FollowUp = Awaited<ReturnType<AppRouterClient["care"]["followUps"]>>[number];
 
-export const away = (n: number) => n === 0 ? "today" : n === 1 ? "tomorrow" : n === -1 ? "yesterday" : n > 0 ? `in ${n} days` : `${-n} days ago`;
+export const away = (n: number, lang: Lang = "en") => {
+  const t = tFor(lang);
+  return n === 0 ? t("when.today") : n === 1 ? t("when.tomorrow") : n === -1 ? t("when.yesterday") : n > 0 ? t("when.inDays", { n }) : t("when.daysAgo", { n: -n });
+};
 /** "Fri 25 Dec", the day in the hospital's time (Malaysia) whatever the phone says. */
-export const dayLabel = (date: Date | string) => new Date(date).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kuala_Lumpur" }).replace(",", "");
+export const dayLabel = (date: Date | string, lang: Lang = "en") => formatDate(lang, date, "day");
 /** "Fri 25 Dec · in 90 days". */
-export const whenLine = (f: Pick<FollowUp, "date" | "inDays">) => `${dayLabel(f.date)} · ${away(f.inDays)}`;
+export const whenLine = (f: Pick<FollowUp, "date" | "inDays">, lang: Lang = "en") => `${dayLabel(f.date, lang)} · ${away(f.inDays, lang)}`;
 
 /** "10:30 AM" in Malaysia for a booked visit; a recall or the discharge review has a due day, not a time. */
-export const timeLabel = (f: Pick<FollowUp, "id" | "date">) => f.id.startsWith("recall:") || f.id === "discharge-review" ? undefined
-  : new Date(f.date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" });
+export const timeLabel = (f: Pick<FollowUp, "id" | "date">, lang: Lang = "en") => f.id.startsWith("recall:") || f.id === "discharge-review" ? undefined
+  : formatDate(lang, f.date, "time");
 /** The visit card's pill: "Fri 25 Dec · 10:30 AM", or just the day. */
-export const pillLine = (f: Pick<FollowUp, "id" | "date">) => [dayLabel(f.date), timeLabel(f)].filter(Boolean).join(" · ");
+export const pillLine = (f: Pick<FollowUp, "id" | "date">, lang: Lang = "en") => [dayLabel(f.date, lang), timeLabel(f, lang)].filter(Boolean).join(" · ");
 /** What to bring: paperwork only, since the data holds no preparation steps for a visit or test. */
-export const bringLine = (f: Pick<FollowUp, "id">) => f.id === "discharge-review" ? "Bring your IC, your discharge letter and your medicines." : "Bring your IC and your medicines, or a list of them.";
+export const bringLine = (f: Pick<FollowUp, "id">, lang: Lang = "en") => tFor(lang)(f.id === "discharge-review" ? "fu.bringReview" : "fu.bring");
 
 /** Home's tile: the next one's date, what it is and how far off, amber when due within a week, red once overdue. */
 export function nextVisit(items: Pick<FollowUp, "short" | "date" | "status" | "inDays">[]): { value: string; line: string; tone: "muted" | "amber" | "red" } {
@@ -42,14 +47,16 @@ export const dayOf = (at: Date | string) => Math.floor((new Date(at).getTime() +
 /** The day of the month (1–31). */
 export const dateOf = (day: number) => civil(day).getUTCDate();
 /** "Sunday 4 October", for VoiceOver. */
-export const longDay = (day: number) => civil(day).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).replace(",", "");
+export const longDay = (day: number, lang: Lang = "en") => formatDate(lang, civil(day), "long");
+/** "Mon", "Isn", "周一" for a day number. */
+export const weekdayOf = (day: number, lang: Lang = "en") => formatDate(lang, civil(day), "weekday");
 /** The Monday-first week holding a day, as seven day numbers. */
 export function weekAround(day: number): number[] {
   const monday = day - (civil(day).getUTCDay() + 6) % 7;
   return Array.from({ length: 7 }, (_, i) => monday + i);
 }
 /** The week strip's head: "28 Sep – 4 Oct". */
-export const weekLabel = (week: number[]) => [week[0]!, week[6]!].map(d => civil(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })).join(" – ");
+export const weekLabel = (week: number[], lang: Lang = "en") => [week[0]!, week[6]!].map(d => formatDate(lang, civil(d), "dayMonth")).join(" – ");
 
 /**
  * The dots under a day: a visit (overdue kept apart), a check-in, and for past days of this week whether
@@ -69,21 +76,25 @@ export function marksByDay(today: number, visits: Pick<FollowUp, "date" | "statu
 }
 
 /** A day chip's VoiceOver label: "Sunday 4 October, today, Clinic review, Day 7 check-in". */
-export function dayA11y(day: number, today: number, visits: Visit[], checkIns: Ask[], marks: DayMarks = {}) {
-  return [longDay(day), day === today && "today", ...visits.filter(v => dayOf(v.date) === day).map(v => v.short),
-    ...checkIns.filter(c => dayOf(c.dueAt) === day).map(c => `Day ${c.day} check-in`),
-    marks.doses && (marks.doses === "taken" ? "all doses taken" : "some doses missed")].filter(Boolean).join(", ");
+export function dayA11y(day: number, today: number, visits: Visit[], checkIns: Ask[], marks: DayMarks = {}, lang: Lang = "en") {
+  const t = tFor(lang);
+  return [longDay(day, lang), day === today && t("fu.a11yToday"), ...visits.filter(v => dayOf(v.date) === day).map(v => v.short),
+    ...checkIns.filter(c => dayOf(c.dueAt) === day).map(c => t("checkin.title", { day: c.day })),
+    marks.doses && (marks.doses === "taken" ? t("fu.a11yAllTaken") : t("fu.a11ySomeMissed"))].filter(Boolean).join(", ");
 }
 
 /** The next visit or check-in after a day, for an empty day's jump. */
-export function nextUp(after: number, visits: Visit[], checkIns: Ask[]): { day: number; title: string } | undefined {
-  return [...visits.map(v => ({ day: dayOf(v.date), title: v.short })), ...checkIns.map(c => ({ day: dayOf(c.dueAt), title: `Day ${c.day} check-in` }))]
+export function nextUp(after: number, visits: Visit[], checkIns: Ask[], lang: Lang = "en"): { day: number; title: string } | undefined {
+  const t = tFor(lang);
+  return [...visits.map(v => ({ day: dayOf(v.date), title: v.short })), ...checkIns.map(c => ({ day: dayOf(c.dueAt), title: t("checkin.title", { day: c.day }) }))]
     .filter(e => e.day > after).sort((a, b) => a.day - b.day)[0];
 }
 
 /** An empty day's line: "Nothing today · Next: Clinic review in 7 days". */
-export const emptyLine = (day: number, today: number, next?: { day: number; title: string }) =>
-  [day === today ? "Nothing today" : "Nothing this day", next && `Next: ${next.title} ${away(next.day - today)}`].filter(Boolean).join(" · ");
+export const emptyLine = (day: number, today: number, next?: { day: number; title: string }, lang: Lang = "en") => {
+  const t = tFor(lang);
+  return [day === today ? t("fu.nothingToday") : t("fu.nothingThisDay"), next && t("fu.nextAway", { title: next.title, when: away(next.day - today, lang) })].filter(Boolean).join(" · ");
+};
 
 export type Tone = "muted" | "blue" | "amber" | "green";
 /**
@@ -93,42 +104,43 @@ export type Tone = "muted" | "blue" | "amber" | "green";
  */
 export type AgendaItem = { key: string; at?: Date; title: string; line: string; tone: Tone; done: boolean; action?: "take" | "answer" | "prepare"; soon: string; visit?: FollowUp };
 
-const partOf = (at: Date) => { const h = new Date(at.getTime() + MYT).getUTCHours(); return h < 12 ? "Morning" : h < 17 ? "Afternoon" : "Evening"; };
+const partOf = (at: Date) => { const h = new Date(at.getTime() + MYT).getUTCHours(); return h < 12 ? "morning" : h < 17 ? "afternoon" : "evening"; };
 
 /**
  * A day's timeline, all-day items first, then by time: doses grouped by their time ("Morning medicines"),
  * check-ins, visits, and for a past day whether every dose was taken.
  */
-export function agendaOf(now: Date, { visits, checkIns, doses, doseMark }: { visits: FollowUp[]; checkIns: CheckIn[]; doses: DayDose[]; doseMark?: DayMarks["doses"] }): AgendaItem[] {
+export function agendaOf(now: Date, { visits, checkIns, doses, doseMark }: { visits: FollowUp[]; checkIns: CheckIn[]; doses: DayDose[]; doseMark?: DayMarks["doses"] }, lang: Lang = "en"): AgendaItem[] {
+  const tr = tFor(lang);
   const slots = new Map<number, DayDose[]>();
   for (const d of doses) slots.set(d.dueAt.getTime(), [...slots.get(d.dueAt.getTime()) ?? [], d]);
   const items: AgendaItem[] = [
     ...[...slots].map(([t, group]): AgendaItem => {
-      const at = new Date(t), done = group.every(d => d.taken), until = untilLine(at, now), late = !done && until.endsWith("late");
-      const title = `${partOf(at)} medicines`, names = group.map(d => d.name).join(", ");
-      return { key: `doses@${t}`, at, title, done, line: done ? `Taken · ${names}` : late ? `${until} · ${names}` : names, tone: done ? "green" : late ? "amber" : "muted",
-        action: !done && dueNow(at, now) ? "take" : undefined, soon: `${title.toLowerCase()} ${late ? until : `at ${clock(at)}`}` };
+      const at = new Date(t), done = group.every(d => d.taken), until = untilLine(at, now, lang), late = !done && isLate(at, now);
+      const title = tr(`fu.meds.${partOf(at)}`), names = group.map(d => d.name).join(", "), what = title.toLowerCase();
+      return { key: `doses@${t}`, at, title, done, line: done ? tr("fu.taken", { names }) : late ? `${until} · ${names}` : names, tone: done ? "green" : late ? "amber" : "muted",
+        action: !done && dueNow(at, now) ? "take" : undefined, soon: late ? tr("fu.soonLate", { what, late: until }) : tr("fu.soonAt", { what, time: clock(at, lang) }) };
     }),
     ...checkIns.map((c): AgendaItem => {
-      const s = statusOf(c, now), at = new Date(c.dueAt), done = c.replies.length > 0, waiting = !done && s.tone === "blue";
-      return { key: c.id, at, title: `Day ${c.day} check-in`, line: s.line, tone: s.tone, done, action: waiting ? "answer" : undefined, soon: waiting ? "check-in, waiting for you" : `check-in at ${clock(at)}` };
+      const s = statusOf(c, now, lang), at = new Date(c.dueAt), done = c.replies.length > 0, waiting = !done && s.tone === "blue";
+      return { key: c.id, at, title: tr("checkin.title", { day: c.day }), line: s.line, tone: s.tone, done, action: waiting ? "answer" : undefined, soon: waiting ? tr("fu.soonCheckInWaiting") : tr("fu.soonCheckInAt", { time: clock(at, lang) }) };
     }),
     ...visits.map((f): AgendaItem => {
-      const time = timeLabel(f), overdue = f.status === "overdue";
-      return { key: f.id, at: time ? new Date(f.date) : undefined, title: f.title, line: overdue ? `Overdue, due ${away(f.inDays)}` : f.why, tone: overdue ? "amber" : "muted", done: false,
-        action: "prepare", soon: overdue ? "visit overdue" : `visit ${time && f.inDays === 0 ? `at ${time}` : away(f.inDays)}`, visit: f };
+      const time = timeLabel(f, lang), overdue = f.status === "overdue";
+      return { key: f.id, at: time ? new Date(f.date) : undefined, title: f.title, line: overdue ? tr("fu.overdueDue", { when: away(f.inDays, lang) }) : f.why, tone: overdue ? "amber" : "muted", done: false,
+        action: "prepare", soon: overdue ? tr("fu.soonVisitOverdue") : time && f.inDays === 0 ? tr("fu.soonVisitAt", { time }) : tr("fu.soonVisitWhen", { when: away(f.inDays, lang) }), visit: f };
     }),
   ];
-  if (doseMark) items.push({ key: "doses", title: "Medicines", line: doseMark === "taken" ? "All doses taken" : "Some doses missed", tone: doseMark === "taken" ? "green" : "amber", done: doseMark === "taken", soon: "medicines" });
+  if (doseMark) items.push({ key: "doses", title: tr("fu.meds"), line: doseMark === "taken" ? tr("fu.allDosesTaken") : tr("fu.someMissed"), tone: doseMark === "taken" ? "green" : "amber", done: doseMark === "taken", soon: tr("fu.soonMeds") });
   return items.sort((a, b) => (a.at?.getTime() ?? 0) - (b.at?.getTime() ?? 0));
 }
 
 /** Schedule's insight under the title: "Next: check-in at 9:00 AM · visit in 3 days", amber when late or overdue. */
-export function scheduleLine(today: AgendaItem[], visits: Pick<FollowUp, "id" | "status" | "inDays">[]): { line: string; tone: "muted" | "amber" } {
-  const next = today.find(i => !i.done), visit = visits[0];
-  const parts = [next ? `Next: ${next.soon}` : today.length ? "All done today" : undefined,
-    visit && visit.id !== next?.key && (visit.status === "overdue" ? "visit overdue" : `visit ${away(visit.inDays)}`)].filter(Boolean) as string[];
-  const line = parts.join(" · ").replace(/^./, c => c.toUpperCase()) || "Nothing booked yet";
+export function scheduleLine(today: AgendaItem[], visits: Pick<FollowUp, "id" | "status" | "inDays">[], lang: Lang = "en"): { line: string; tone: "muted" | "amber" } {
+  const t = tFor(lang), next = today.find(i => !i.done), visit = visits[0];
+  const parts = [next ? t("fu.next", { what: next.soon }) : today.length ? t("fu.allDoneToday") : undefined,
+    visit && visit.id !== next?.key && (visit.status === "overdue" ? t("fu.soonVisitOverdue") : t("fu.soonVisitWhen", { when: away(visit.inDays, lang) }))].filter(Boolean) as string[];
+  const line = parts.join(" · ").replace(/^./, c => c.toUpperCase()) || t("fu.nothingBooked");
   return { line, tone: next?.tone === "amber" || visit?.status === "overdue" ? "amber" : "muted" };
 }
 

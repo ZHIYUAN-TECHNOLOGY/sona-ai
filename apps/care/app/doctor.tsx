@@ -9,6 +9,8 @@ import { DoctorAvatar } from "@/features/doctors/avatar";
 import { BookingSheet } from "@/features/doctors/booking";
 import { dayParts, nameLines, slotOf, type ListedDoctor, type Slot } from "@/features/doctors/data";
 import { errorText } from "@/features/errors";
+import { listOf } from "@/features/discharge/lines";
+import { tFor, useLang } from "@/lib/i18n";
 import { useMe } from "@/features/me";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
@@ -32,12 +34,13 @@ const BAR = 56 + 8 + 48;
 export default function DoctorScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { state } = useMe();
+  const lang = useLang(), t = tFor(lang);
   // The doctor and their free slots from the hospital's directory; a live change (a slot taken) re-reads it.
   const { data: doctor, error, isLoading } = useQuery({ ...orpc.care.doctors.get.queryOptions({ input: { id: id ?? "" } }), enabled: state === "joined" && Boolean(id) });
   if (!doctor) return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, gap: 16 }}>
     <BackButton />
     {isLoading ? <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} />
-      : <Card><Text selectable style={{ ...type.body, color: palette.muted }}>{error ? errorText(error) : "We couldn't find that doctor."} Go back to the list and pick again.</Text></Card>}
+      : <Card><Text selectable style={{ ...type.body, color: palette.muted }}>{error ? errorText(error, lang) : t("doc.notFound")} {t("doc.pickAgain")}</Text></Card>}
   </ScrollView>;
   return <Details key={doctor.id} doctor={doctor} />;
 }
@@ -45,7 +48,8 @@ export default function DoctorScreen() {
 function Details({ doctor: d }: { doctor: ListedDoctor }) {
   const still = useReducedMotion();
   const insets = useSafeAreaInsets();
-  const days = d.nextSlots.map(x => ({ day: x.day, times: x.times.map(slotOf) }));
+  const lang = useLang(), t = tFor(lang);
+  const days = d.nextSlots.map(x => ({ day: x.day, times: x.times.map(at => slotOf(at, lang)) }));
   const [dayAt, setDayAt] = useState(0);
   const [time, setTime] = useState<number>();
   // The slot under review, held so a re-read of the free slots (live) cannot pull it from under the sheet.
@@ -54,7 +58,7 @@ function Details({ doctor: d }: { doctor: ListedDoctor }) {
   const day = days[dayAt];
   // The picked time by its moment, so a re-read that drops another slot never shifts the pick.
   const slot = day?.times.find(t => t.date.getTime() === time);
-  const next = days[0] && dayParts(days[0].day);
+  const next = days[0] && dayParts(days[0].day, lang);
   const enter = (i: number) => still ? undefined : rise(i);
 
   return <View style={{ flex: 1 }}>
@@ -62,57 +66,57 @@ function Details({ doctor: d }: { doctor: ListedDoctor }) {
       <BackButton />
 
       <Animated.View entering={enter(0)} accessible accessibilityRole="header"
-        accessibilityLabel={[d.name, d.specialty, d.careTeam && "In your care team", next && `Next clinic ${next.spoken}`].filter(Boolean).join(". ")}
+        accessibilityLabel={[d.name, d.specialty, d.careTeam && t("doc.inTeamCap"), next && t("doc.nextClinicCap", { day: next.spoken })].filter(Boolean).join(". ")}
         style={{ gap: 14 }}>
         <DoctorAvatar doctor={d} size={88} />
         <View style={{ gap: 6 }}>
           <AccentText style={{ fontSize: 34, lineHeight: 40, letterSpacing: -2, fontWeight: "600", color: palette.ink }}>{`${first}\n${rest}`}</AccentText>
           <Text style={{ ...type.body, color: palette.muted }}>
-            {d.specialty}{d.careTeam && <Text style={{ fontWeight: "600", color: palette.blue }}> · Your care team</Text>}
+            {d.specialty}{d.careTeam && <Text style={{ fontWeight: "600", color: palette.blue }}>{t("doc.yourTeam")}</Text>}
           </Text>
         </View>
       </Animated.View>
 
       <Animated.View entering={enter(1)} style={[surfaceStyle, { paddingHorizontal: 18, paddingVertical: 4 }]}>
-        <Fact first icon={STAR} label="Rating" value={`${d.rating} · ${d.reviews} reviews`} spoken={`Rated ${d.rating} of 5 from ${d.reviews} reviews`} />
-        <Fact icon={AWARD} label="Experience" value={`${d.years} years`} spoken={`${d.years} years of practice`} />
-        <Fact icon={ICON.pin} label="Clinic" value={d.room} spoken={`Clinic: ${d.room}`} />
-        <Fact icon={ICON.chat} label="Speaks" value={d.languages.join(", ")} spoken={`Speaks ${d.languages.join(", ").replace(/, ([^,]*)$/, " and $1")}`} />
+        <Fact first icon={STAR} label={t("doc.rating")} value={t("doc.ratingValue", { rating: d.rating, n: d.reviews })} spoken={t("doc.ratingA11y", { rating: d.rating, n: d.reviews })} />
+        <Fact icon={AWARD} label={t("doc.experience")} value={t("doc.years", { n: d.years })} spoken={t("doc.yearsA11y", { n: d.years })} />
+        <Fact icon={ICON.pin} label={t("doc.clinic")} value={d.room} spoken={t("doc.clinicA11y", { room: d.room })} />
+        <Fact icon={ICON.chat} label={t("doc.speaks")} value={d.languages.join(", ")} spoken={t("doc.speaksA11y", { langs: listOf(d.languages, lang) })} />
       </Animated.View>
 
       <Animated.View entering={enter(2)} style={{ gap: 12 }}>
-        <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>Clinic days</Text>
+        <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>{t("doc.clinicDays")}</Text>
         {days.length ? <>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
             {days.map((x, i) => {
-              const p = dayParts(x.day), on = i === dayAt;
+              const p = dayParts(x.day, lang), on = i === dayAt;
               return <Capsule key={new Date(x.day).toISOString()} on={on} label={`${p.weekday} ${p.date}`} spoken={p.spoken} onPress={() => { setDayAt(i); setTime(undefined); }} />;
             })}
           </ScrollView>
           {/* Times crossfade when the day changes (60fps Canopi Date Picker: the content morphs in place). */}
           <Animated.View key={dayAt} entering={still ? undefined : FadeIn.duration(220)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-            {day?.times.map(t => <Capsule key={t.label} on={t.date.getTime() === time} label={t.label} spoken={`${t.label}, ${dayParts(t.date).spoken}`} onPress={() => setTime(t.date.getTime())} />)}
+            {day?.times.map(s => <Capsule key={s.label} on={s.date.getTime() === time} label={s.label} spoken={t("doc.timeA11y", { time: s.label, day: dayParts(s.date, lang).spoken })} onPress={() => setTime(s.date.getTime())} />)}
           </Animated.View>
-          {!slot && <Text style={{ ...type.footnote, color: palette.muted }}>Pick a time, then send a request.</Text>}
-        </> : <Text style={{ ...type.body, color: palette.muted }}>No free clinic time in the next two weeks. Ask your care team.</Text>}
+          {!slot && <Text style={{ ...type.footnote, color: palette.muted }}>{t("doc.pickTime")}</Text>}
+        </> : <Text style={{ ...type.body, color: palette.muted }}>{t("doc.noTime")}</Text>}
       </Animated.View>
 
       <Animated.View entering={enter(3)} style={{ gap: 4 }}>
-        <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>About</Text>
+        <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>{t("doc.about")}</Text>
         <Text style={{ ...type.body, color: palette.muted }}>{d.about}</Text>
       </Animated.View>
-      <Text style={{ ...type.footnote, color: palette.faint, textAlign: "center" }}>Sample doctor · Demo General Hospital (synthetic)</Text>
+      <Text style={{ ...type.footnote, color: palette.faint, textAlign: "center" }}>{t("doc.sampleFooter")}</Text>
     </ScrollView>
 
     <View style={{ position: "absolute", left: 20, right: 20, bottom: Math.max(insets.bottom, 12), gap: 8 }}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Request appointment" accessibilityHint={slot ? "Review and send a request to your care team" : "Pick a time first"} accessibilityState={{ disabled: !slot }}
+      <Pressable accessibilityRole="button" accessibilityLabel={t("doc.request")} accessibilityHint={slot ? t("doc.requestHint") : t("doc.pickFirst")} accessibilityState={{ disabled: !slot }}
         disabled={!slot} onPress={() => setBooking(slot)}
         style={({ pressed }) => ({ minHeight: 56, borderRadius: 28, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, backgroundColor: palette.dark, opacity: slot ? 1 : 0.45, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
-        <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>Request appointment</Text>
+        <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>{t("doc.request")}</Text>
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="Message care team" onPress={() => router.push("/messages")}
+      <Pressable accessibilityRole="button" accessibilityLabel={t("doc.messageTeam")} onPress={() => router.push("/messages")}
         style={({ pressed }) => ({ minHeight: 48, alignSelf: "center", justifyContent: "center", paddingHorizontal: 16, opacity: pressed ? 0.6 : 1 })}>
-        <Text style={{ ...type.body, fontWeight: "600", color: palette.muted }}>Message care team</Text>
+        <Text style={{ ...type.body, fontWeight: "600", color: palette.muted }}>{t("doc.messageTeam")}</Text>
       </Pressable>
     </View>
 

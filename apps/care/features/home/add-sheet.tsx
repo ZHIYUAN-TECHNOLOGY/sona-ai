@@ -6,6 +6,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { EASE_OUT } from "@/features/doses";
 import { Text } from "@/lib/text";
+import { useT } from "@/lib/i18n";
+import "./strings";
 import { palette } from "@/lib/theme";
 import { AccentText, ICON } from "@/lib/ui";
 
@@ -30,10 +32,11 @@ export function AddSheet({ open, onClose }: { open: boolean; onClose: () => void
     setLeaving(true);
     setTimeout(() => { setLeaving(false); onClose(); then?.(); }, reduced ? 0 : OUT_MS);
   };
+  const t = useT();
   const rows: { label: string; d: string; note?: string; go: () => void }[] = [
-    { label: "Ask Sona Care", d: SPARKLES, go: () => close(() => router.push("/assistant")) },
-    { label: "Message my care team", d: ICON.chat, go: () => close(() => router.push("/messages")) },
-    { label: "Book a visit", d: CALENDAR, go: () => close(() => router.push("/doctors")) },
+    { label: t("home.addAsk"), d: SPARKLES, go: () => close(() => router.push("/assistant")) },
+    { label: t("home.addMessage"), d: ICON.chat, go: () => close(() => router.push("/messages")) },
+    { label: t("home.addBook"), d: CALENDAR, go: () => close(() => router.push("/doctors")) },
   ];
   const shown = open && !leaving;
   return <Modal visible={open} transparent animationType="none" statusBarTranslucent onRequestClose={() => close()}>
@@ -45,9 +48,9 @@ export function AddSheet({ open, onClose }: { open: boolean; onClose: () => void
       exiting={reduced ? FadeOut.duration(150) : SlideOutDown.duration(OUT_MS).easing(EASE_OUT)}
       style={{ position: "absolute", left: 8, right: 8, bottom: Math.max(insets.bottom, 8), borderRadius: 40, borderCurve: "continuous", backgroundColor: palette.white, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 16, gap: 6 }}>
       <View style={{ alignSelf: "center", width: 36, height: 5, borderRadius: 3, backgroundColor: "#E5E5E5" }} />
-      <View accessible accessibilityRole="header" accessibilityLabel="What are you planning to add" style={{ alignItems: "center", paddingTop: 18, paddingBottom: 10 }}>
-        <Text style={{ fontSize: 24, lineHeight: 30, letterSpacing: -1, color: palette.muted }}>What are you</Text>
-        <AccentText style={{ fontSize: 28, lineHeight: 34, fontWeight: "600", letterSpacing: -1.9, color: palette.ink, textAlign: "center" }}>planning to add</AccentText>
+      <View accessible accessibilityRole="header" accessibilityLabel={t("home.addA11y")} style={{ alignItems: "center", paddingTop: 18, paddingBottom: 10 }}>
+        <Text style={{ fontSize: 24, lineHeight: 30, letterSpacing: -1, color: palette.muted }}>{t("home.addLight")}</Text>
+        <AccentText style={{ fontSize: 28, lineHeight: 34, fontWeight: "600", letterSpacing: -1.9, color: palette.ink, textAlign: "center" }}>{t("home.addBold")}</AccentText>
       </View>
       {rows.map((r, i) => <Animated.View key={r.label} entering={reduced ? undefined : FadeInDown.duration(260).delay(140 + i * 40).easing(EASE_OUT)}>
         <Pressable accessibilityRole="button" accessibilityLabel={r.note ? `${r.label}. ${r.note} today` : r.label} onPress={r.go}
@@ -60,7 +63,7 @@ export function AddSheet({ open, onClose }: { open: boolean; onClose: () => void
       </Animated.View>)}
       <Pressable accessibilityRole="button" onPress={() => close()}
         style={({ pressed }) => ({ marginTop: 10, minHeight: 56, borderRadius: 28, alignItems: "center", justifyContent: "center", backgroundColor: palette.mutedWash, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
-        <Text style={{ fontSize: 16, fontWeight: "600", color: palette.ink }}>Close</Text>
+        <Text style={{ fontSize: 16, fontWeight: "600", color: palette.ink }}>{t("common.close")}</Text>
       </Pressable>
     </Animated.View>}
   </Modal>;

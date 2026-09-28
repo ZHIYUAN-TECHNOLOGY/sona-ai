@@ -1,4 +1,6 @@
 import { doseKey, doseSlots as slots, MISSED_AFTER as GRACE, type ScheduledMed } from "@sona-ai/domain/doses";
+import { formatDate, tFor, type Lang } from "@/lib/i18n";
+import "@/lib/strings";
 
 // The schedule itself (slots, keys, the missed window) is shared with the server in @sona-ai/domain/doses.
 export { doseKey, type ScheduledMed };
@@ -21,30 +23,36 @@ export const early = (dueAt: Date, now: Date) => dueAt.getTime() - now.getTime()
 /** Due within half an hour, or late: it counts toward the home's "needs you". */
 export const dueNow = (dueAt: Date, now: Date) => dueAt.getTime() - now.getTime() <= 30 * 60_000;
 
-/** "9:00 PM", in the hospital's time whatever the phone says. */
-export const clock = (date: Date) => date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" }).replace(/\s/g, " "); // Hermes uses a narrow space
+/** "9:00 PM" ("9:00 PTG", "晚上9:00"), in the hospital's time whatever the phone says. */
+export const clock = (date: Date, lang: Lang = "en") => formatDate(lang, date, "time");
 
-const span = (ms: number) => {
-  const mins = Math.round(ms / 60_000), h = Math.floor(mins / 60), m = mins % 60;
-  return [h && `${h} h`, m && `${m} min`].filter(Boolean).join(" ");
+const span = (ms: number, lang: Lang) => {
+  const t = tFor(lang), mins = Math.round(ms / 60_000), h = Math.floor(mins / 60), m = mins % 60;
+  return [h && t("time.h", { n: h }), m && t("time.min", { n: m })].filter(Boolean).join(lang === "zh" ? "" : " ");
 };
+/** Within 5 minutes either side of the due time. */
+export const isNow = (dueAt: Date, now: Date) => Math.abs(dueAt.getTime() - now.getTime()) < 5 * 60_000;
+/** 5 minutes or more past the due time. */
+export const isLate = (dueAt: Date, now: Date) => now.getTime() - dueAt.getTime() >= 5 * 60_000;
 /** "in 2 h 10 min", "now" (within 5 minutes either side), "1 h 30 min late". */
-export function untilLine(dueAt: Date, now: Date) {
-  const ms = dueAt.getTime() - now.getTime();
-  return Math.abs(ms) < 5 * 60_000 ? "now" : ms > 0 ? `in ${span(ms)}` : `${span(-ms)} late`;
-}
-
-/** "today 10:00 PM", "tomorrow 8:00 AM", else "Tue 29 Sep 8:00 AM", in Malaysia time. */
-export function whenWords(dueAt: Date, now: Date) {
-  const day = (d: Date) => Math.floor((d.getTime() + MYT) / DAY);
-  const ahead = day(dueAt) - day(now);
-  const date = ahead === 0 ? "today" : ahead === 1 ? "tomorrow"
-    : dueAt.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kuala_Lumpur" }).replace(",", "");
-  return `${date} ${clock(dueAt)}`;
+export function untilLine(dueAt: Date, now: Date, lang: Lang = "en") {
+  const ms = dueAt.getTime() - now.getTime(), t = tFor(lang);
+  return isNow(dueAt, now) ? t("time.now") : ms > 0 ? t("time.in", { span: span(ms, lang) }) : t("time.late", { span: span(-ms, lang) });
 }
 
 export type DayDose = Dose & { taken: boolean };
 const dayOf = (d: Date) => Math.floor((d.getTime() + MYT) / DAY);
+
+/** "today", "tomorrow", else "Tue 29 Sep", in Malaysia time. */
+export function dayWord(dueAt: Date, now: Date, lang: Lang = "en") {
+  const ahead = dayOf(dueAt) - dayOf(now), t = tFor(lang);
+  return ahead === 0 ? t("when.today") : ahead === 1 ? t("when.tomorrow") : formatDate(lang, dueAt, "day");
+}
+/** "today 10:00 PM", "tomorrow 8:00 AM", else "Tue 29 Sep 8:00 AM", in Malaysia time. */
+export function whenWords(dueAt: Date, now: Date, lang: Lang = "en") {
+  const ahead = dayOf(dueAt) - dayOf(now), t = tFor(lang), time = clock(dueAt, lang);
+  return ahead === 0 ? t("when.todayAt", { time }) : ahead === 1 ? t("when.tomorrowAt", { time }) : formatDate(lang, dueAt, "dayTime");
+}
 
 /** Every scheduled dose on the same Malaysia day as `now`, earliest first, each marked taken or not (the medicine screen's today strip). */
 export function dosesToday(meds: ScheduledMed[], dischargedAt: string | undefined, taken: string[], now: Date): DayDose[] {

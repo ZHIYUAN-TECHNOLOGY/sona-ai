@@ -5,7 +5,8 @@ import { AccessibilityInfo, ActivityIndicator, Alert, Linking, Pressable, Scroll
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion, useSharedValue, withTiming, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { conditionOf, doctorQuestion, leadOf, NO_ANSWER, reply, spoken, suggestions, type Reply } from "@/features/assistant/answers";
+import { conditionOf, doctorQuestion, leadOf, noAnswer, reply, spoken, suggestions, type Reply } from "@/features/assistant/answers";
+import { tFor, translate, useLang, useT, type Lang } from "@/lib/i18n";
 import { Composer, Glyph, GLYPH as COMPOSE } from "@/features/assistant/composer";
 import { MicButton } from "@/features/assistant/mic";
 import { SUGGEST_ICON, SuggestionRow, VoiceMode, type Suggestion } from "@/features/assistant/voice";
@@ -37,7 +38,6 @@ import { client, orpc, queryClient } from "@/utils/orpc";
  */
 type Turn = { question: string; reply: Reply; requestId: string; ready: boolean; saved?: boolean; sent?: boolean; rated?: "up" | "down" };
 const WORK_MS = { plan: 800, doctors: 1100 } as const;
-const SENT = "Sent · they usually reply within a few hours";
 const newRequestId = () => `care-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
 // Lucide-style 24-unit paths this screen needs beyond the shared ICON set.
@@ -62,10 +62,11 @@ export default function Assistant() {
   const { state } = useMe();
   const { plan, dose } = useNextDose(useNow());
   const visit = useFollowUps().data?.[0];
+  const lang = useLang(), t = tFor(lang);
   const discharged = plan?.status === "discharged" ? plan : undefined;
-  const asks = suggestions(discharged, visit, dose?.name);
+  const asks = suggestions(discharged, visit, dose?.name, lang);
   const condition = conditionOf(discharged);
-  const rows: Suggestion[] = [...asks.map(a => ({ question: a.question, d: SUGGEST_ICON[a.kind] })), ...(condition ? [{ question: doctorQuestion(condition), d: SUGGEST_ICON.doctor }] : [])];
+  const rows: Suggestion[] = [...asks.map(a => ({ question: a.question, d: SUGGEST_ICON[a.kind] })), ...(condition ? [{ question: doctorQuestion(condition, lang), d: SUGGEST_ICON.doctor }] : [])];
   const flood = useSharedValue(0);
   const scroll = useRef<ScrollView>(null);
   const input = useRef<RNTextInput>(null);
@@ -80,23 +81,23 @@ export default function Assistant() {
   const patch = (id: string, p: Partial<Turn>) => setTurns(ts => ts.map(t => t.requestId === id ? { ...t, ...p } : t));
   const send = useMutation({
     mutationFn: (t: Turn) => client.care.messages.send({ text: t.question, requestId: t.requestId }),
-    onSuccess: (_, t) => { patch(t.requestId, { sent: true }); AccessibilityInfo.announceForAccessibility("Sent to your care team"); void queryClient.invalidateQueries({ queryKey: orpc.care.messages.key() }); },
+    onSuccess: (_, turn) => { patch(turn.requestId, { sent: true }); AccessibilityInfo.announceForAccessibility(t("ask.sentA11y")); void queryClient.invalidateQueries({ queryKey: orpc.care.messages.key() }); },
   });
-  const visitDay = visit ? dayLabel(visit.date) : "your next visit";
+  const visitDay = visit ? dayLabel(visit.date, lang) : t("ask.yourNextVisit");
   const last = turns.at(-1);
   const working = last !== undefined && !last.ready;
   const rest = rows.filter(s => !turns.some(t => t.question === s.question));
 
   const ask = (question: string) => {
     clearTimeout(timer.current);
-    const r = reply(question, asks, condition), requestId = newRequestId();
-    const say = (r: Reply) => AccessibilityInfo.announceForAccessibility(r.kind === "plan" ? `${spoken(r)} ${r.asked.source}` : spoken(r));
+    const r = reply(question, asks, condition, lang), requestId = newRequestId();
+    const say = (r: Reply) => AccessibilityInfo.announceForAccessibility(r.kind === "plan" ? `${spoken(r, lang)} ${r.asked.source}` : spoken(r, lang));
     // Anything the authored answers don't cover goes to the model, grounded in the plan (care.ask); with
     // no model switched on it answers nothing, and the honest "ask your care team" stays.
     if (r.kind === "none" && !r.urgent) {
       setTurns(ts => [...ts, { question, reply: r, requestId, ready: false }]);
       if (!still) flood.set(withTiming(1, { duration: 400, easing: EASE_OUT }));
-      void client.care.ask({ question }).then(fromModel, () => r).then(next => {
+      void client.care.ask({ question }).then(a => fromModel(a, lang), () => r).then(next => {
         flood.set(withTiming(0, { duration: 600, easing: EASE_OUT }));
         patch(requestId, { reply: next, ready: true });
         say(next);
@@ -115,31 +116,31 @@ export default function Assistant() {
   };
   /** Voice mode asks the same way (the model for anything the plan's own answers don't cover), and reads the answer aloud itself. */
   const askAloud = async (question: string) => {
-    const r0 = reply(question, asks, condition);
-    const r = r0.kind === "none" && !r0.urgent ? await client.care.ask({ question }).then(fromModel, () => r0) : r0;
+    const r0 = reply(question, asks, condition, lang);
+    const r = r0.kind === "none" && !r0.urgent ? await client.care.ask({ question }).then(a => fromModel(a, lang), () => r0) : r0;
     setTurns(ts => [...ts, { question, reply: r, requestId: newRequestId(), ready: true }]);
     return r;
   };
-  const listen = useListen({ language: discharged?.language as "en" | "ms" | "zh" | undefined, onHeard: q => { if (!working) ask(q); } });
+  const listen = useListen({ language: lang, onHeard: q => { if (!working) ask(q); } });
   const askTyped = () => {
     const question = draft.trim();
     if (!question || working) return;
     setDraft("");
     ask(question);
   };
-  const save = (t: Turn) => {
-    saveQuestion(t.question);
-    patch(t.requestId, { saved: true });
-    AccessibilityInfo.announceForAccessibility(`Saved for ${visitDay}`);
+  const save = (turn: Turn) => {
+    saveQuestion(turn.question);
+    patch(turn.requestId, { saved: true });
+    AccessibilityInfo.announceForAccessibility(t("ask.savedFor", { day: visitDay }));
   };
-  const rate = (t: Turn, r: "up" | "down") => {
-    patch(t.requestId, { rated: t.rated === r ? undefined : r });
-    if (t.rated !== r) AccessibilityInfo.announceForAccessibility("Thanks. Noted on this phone.");
+  const rate = (turn: Turn, r: "up" | "down") => {
+    patch(turn.requestId, { rated: turn.rated === r ? undefined : r });
+    if (turn.rated !== r) AccessibilityInfo.announceForAccessibility(t("ask.thanks"));
   };
   const fresh = () => { clearTimeout(timer.current); flood.set(0); setTurns([]); setChat(c => c + 1); };
-  const newChat = () => Alert.alert("Start a new chat?", "Questions you saved for your visit stay saved.", [
-    { text: "Cancel", style: "cancel" },
-    { text: "New chat", onPress: fresh },
+  const newChat = () => Alert.alert(t("ask.newChatTitle"), t("ask.newChatLine"), [
+    { text: t("common.cancel"), style: "cancel" },
+    { text: t("ask.newChat"), onPress: fresh },
   ]);
   const enter = (i: number) => still ? undefined : FadeInDown.duration(320).easing(EASE_OUT).delay(i * 40);
   const joined = state === "joined";
@@ -147,14 +148,14 @@ export default function Assistant() {
   const lastAnswer = [...turns].reverse().find(t => t.ready);
 
   if (voice) return <Animated.View entering={still ? undefined : FadeIn.duration(240)} style={{ flex: 1 }}>
-    <VoiceMode questions={rows} answer={askAloud} language={discharged?.language as "en" | "ms" | "zh" | undefined} first={lastAnswer && spoken(lastAnswer.reply)} onChat={() => setVoice(false)} onType={() => { setTypeNext(true); setVoice(false); }} />
+    <VoiceMode questions={rows} answer={askAloud} language={lang} first={lastAnswer && spoken(lastAnswer.reply, lang)} onChat={() => setVoice(false)} onType={() => { setTypeNext(true); setVoice(false); }} />
   </Animated.View>;
 
   return <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 4 }}>
-      <CircleButton d={ICON.back} label="Back" onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }} />
+      <CircleButton d={ICON.back} label={t("common.back")} onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }} />
       <View style={{ opacity: turns.length ? 1 : 0.4 }} pointerEvents={turns.length ? "auto" : "none"}>
-        <CircleButton d={ICON.plus} label="New chat" onPress={newChat} />
+        <CircleButton d={ICON.plus} label={t("ask.newChat")} onPress={newChat} />
       </View>
     </View>
 
@@ -162,37 +163,37 @@ export default function Assistant() {
       contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 12, gap: 20 }}>
       {!turns.length ? <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 8 }}>
         <Animated.View entering={enter(0)} style={{ margin: -orbPad(120) + 6 }}><SonaOrb size={120} flood={flood} /></Animated.View>
-        <Animated.View entering={enter(1)} accessible accessibilityRole="header" accessibilityLabel="Ask Sona Care. Clear answers from your discharge plan" style={{ alignItems: "center", gap: 4, marginTop: 8 }}>
-          <AccentText style={{ ...type.display, color: palette.ink, textAlign: "center" }}>Ask Sona Care</AccentText>
-          <Text style={{ ...type.body, color: palette.faint, textAlign: "center" }}>Clear answers from your discharge plan</Text>
+        <Animated.View entering={enter(1)} accessible accessibilityRole="header" accessibilityLabel={t("ask.titleA11y")} style={{ alignItems: "center", gap: 4, marginTop: 8 }}>
+          <AccentText style={{ ...type.display, color: palette.ink, textAlign: "center" }}>{t("ask.title")}</AccentText>
+          <Text style={{ ...type.body, color: palette.faint, textAlign: "center" }}>{t("ask.subtitle")}</Text>
         </Animated.View>
       </View>
-        : turns.map((t, i) => <TurnView key={t.requestId} t={t} lead={i === turns.length - 1} flood={flood} enter={enter} visitDay={visitDay}
-          busy={send.isPending && send.variables?.requestId === t.requestId} error={send.variables?.requestId === t.requestId ? send.error : null}
-          onSave={() => save(t)} onSend={() => send.mutate(t)} onRate={r => rate(t, r)} />)}
+        : turns.map((turn, i) => <TurnView key={turn.requestId} t={turn} lead={i === turns.length - 1} flood={flood} enter={enter} visitDay={visitDay}
+          busy={send.isPending && send.variables?.requestId === turn.requestId} error={send.variables?.requestId === turn.requestId ? send.error : null}
+          onSave={() => save(turn)} onSend={() => send.mutate(turn)} onRate={r => rate(turn, r)} />)}
 
       {state === "loading" || (joined && !plan) ? <ActivityIndicator color={palette.muted} style={{ minHeight: 48 }} />
-        : !joined ? <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>Join with the code on your discharge paper, and I can answer from your plan.</Text>
-          : !rows.length ? <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>Questions from your plan show here once you're home.</Text>
+        : !joined ? <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>{t("ask.join")}</Text>
+          : !rows.length ? <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>{t("ask.onceHome")}</Text>
             : rest.length > 0 && !working && <Animated.View key={`${chat}:${rest.map(s => s.question).join("|")}`} entering={still ? undefined : drop}>
-              {turns.length > 0 && <Text style={{ ...type.footnote, fontWeight: "600", color: palette.faint, marginBottom: 2 }}>You could also ask</Text>}
+              {turns.length > 0 && <Text style={{ ...type.footnote, fontWeight: "600", color: palette.faint, marginBottom: 2 }}>{t("ask.alsoAsk")}</Text>}
               {rest.map(s => <SuggestionRow key={s.question} s={s} onPress={() => ask(s.question)} />)}
             </Animated.View>}
     </ScrollView>
 
     <View style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 12), gap: 8 }}>
-      {joined && <Composer inputRef={input} value={draft} onChangeText={setDraft} placeholder="Ask about your recovery…" label="Ask about your recovery" onSend={askTyped} canSend={canSend}
+      {joined && <Composer inputRef={input} value={draft} onChangeText={setDraft} placeholder={t("ask.placeholder")} label={t("ask.label")} onSend={askTyped} canSend={canSend}
         idle={<View style={{ flexDirection: "row", gap: 6 }}>
-          <MicButton listen={listen} label="Speak your question" />
-          <Pressable accessibilityRole="button" accessibilityLabel="Voice mode" accessibilityHint="Talk with Sona hands-free; it answers aloud" onPress={() => { listen.cancel(); setVoice(true); }}
+          <MicButton listen={listen} label={t("ask.speak")} />
+          <Pressable accessibilityRole="button" accessibilityLabel={t("ask.voiceMode")} accessibilityHint={t("ask.voiceHint")}onPress={() => { listen.cancel(); setVoice(true); }}
             style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.mutedWash, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
             <Glyph d={COMPOSE.voice} color={palette.ink} size={20} />
           </Pressable>
         </View>} />}
-      {listen.state === "listening" ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, fontWeight: "600", color: palette.blue, textAlign: "center" }}>Listening… speak in Malay, English or Chinese</Text>
-        : listen.state === "reading" ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>Reading what you said…</Text>
+      {listen.state === "listening" ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, fontWeight: "600", color: palette.blue, textAlign: "center" }}>{t("ask.listening")}</Text>
+        : listen.state === "reading" ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("ask.reading")}</Text>
           : listen.error ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber, textAlign: "center" }}>{listen.error}</Text> : null}
-      <Text style={{ ...type.footnote, fontWeight: "600", color: palette.amber, textAlign: "center" }}>Not for emergencies · call 999</Text>
+      <Text style={{ ...type.footnote, fontWeight: "600", color: palette.amber, textAlign: "center" }}>{t("common.emergency")}</Text>
     </View>
   </KeyboardAvoidingView>;
 }
@@ -205,8 +206,9 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
   t: Turn; lead: boolean; flood: SharedValue<number>; enter: (i: number) => FadeInDown | undefined; visitDay: string;
   busy: boolean; error: Error | null; onSave: () => void; onSend: () => void; onRate: (r: "up" | "down") => void;
 }) {
+  const lang = useLang(), tr = tFor(lang);
   const r = t.reply;
-  const text = r.kind === "plan" ? r.asked.answer : r.kind === "doctors" ? r.text : NO_ANSWER;
+  const text = r.kind === "plan" ? r.asked.answer : r.kind === "doctors" ? r.text : noAnswer(lang);
   const [bold, more] = leadOf(text);
   return <View style={{ gap: 12 }}>
     <Animated.View entering={enter(0)} style={{ alignSelf: "flex-end", maxWidth: "86%", backgroundColor: palette.white, borderRadius: 22, borderCurve: "continuous", borderWidth: 1, borderColor: palette.line, paddingHorizontal: 16, paddingVertical: 11 }}>
@@ -216,49 +218,50 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
     {!t.ready ? (lead && <Working doctors={r.kind === "doctors"} flood={flood} />)
       : <Animated.View entering={enter(1)} style={{ gap: 12 }}>
         <Text selectable style={{ fontSize: 17, lineHeight: 26, letterSpacing: -0.3, color: palette.ink }}>
-          <Text style={{ fontWeight: "700" }}>{bold}</Text>{more ? ` ${more}` : ""}
+          <Text style={{ fontWeight: "700" }}>{bold}</Text>{more ? `${lang === "zh" ? "" : " "}${more}` : ""}
         </Text>
         {r.kind === "plan" && <View accessible accessibilityLabel={r.asked.source} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Glyph d={GLYPH.source} color={palette.faint} size={14} />
           <Text style={{ ...type.footnote, color: palette.faint }}>{r.asked.source}</Text>
         </View>}
         {r.kind === "doctors" && <View style={{ gap: 8 }}>
-          <Text style={{ ...type.overline, color: palette.faint }}>Sample doctors</Text>
+          <Text style={{ ...type.overline, color: palette.faint }}>{tr("ask.sampleDoctors")}</Text>
           {r.doctors.map(d => <DoctorCard key={d.id} d={d} />)}
         </View>}
         <View style={{ flexDirection: "row", marginLeft: -12 }}>
-          <IconAction d={GLYPH.copy} label="Copy or share this answer" onPress={() => void Share.share({ message: spoken(r) })} />
-          <IconAction d={GLYPH.up} label="Helpful" on={t.rated === "up"} onPress={() => onRate("up")} />
-          <IconAction d={GLYPH.down} label="Not helpful" on={t.rated === "down"} onPress={() => onRate("down")} />
+          <IconAction d={GLYPH.copy} label={tr("ask.copy")} onPress={() => void Share.share({ message: spoken(r, lang) })} />
+          <IconAction d={GLYPH.up} label={tr("ask.helpful")} on={t.rated === "up"} onPress={() => onRate("up")} />
+          <IconAction d={GLYPH.down} label={tr("ask.notHelpful")} on={t.rated === "down"} onPress={() => onRate("down")} />
         </View>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-          {r.kind === "plan" && (t.saved ? <Done text={`Saved for ${visitDay}`} /> : <Action d={GLYPH.save} label="Save for my visit" onPress={onSave} />)}
-          {t.sent ? <Done text={SENT} /> : r.kind === "none"
-            ? <Action d={ICON.chat} label="Send to my care team" busy={busy} ink onPress={onSend} />
-            : <Action d={ICON.chat} label="Ask my care team" busy={busy} onPress={onSend} />}
+          {r.kind === "plan" && (t.saved ? <Done text={tr("ask.savedFor", { day: visitDay })} /> : <Action d={GLYPH.save} label={tr("ask.save")} onPress={onSave} />)}
+          {t.sent ? <Done text={tr("ask.sent")} /> : r.kind === "none"
+            ? <Action d={ICON.chat} label={tr("ask.sendTeam")} busy={busy} ink onPress={onSend} />
+            : <Action d={ICON.chat} label={tr("ask.askTeam")} busy={busy} onPress={onSend} />}
         </View>
-        {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(error)}</Text>}
+        {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(error, lang)}</Text>}
       </Animated.View>}
   </View>;
 }
 
 /** A care.ask answer as a reply: grounded in the plan (with where from), or the honest no (urgent when the model heard a warning sign). */
-function fromModel(a: Awaited<ReturnType<typeof client.care.ask>>): Reply {
+function fromModel(a: Awaited<ReturnType<typeof client.care.ask>>, lang: Lang): Reply {
   if (a.source !== "model" || !a.answer) return { kind: "none", urgent: false };
   if (!a.grounded) return { kind: "none", urgent: a.urgent };
-  return { kind: "plan", asked: { question: "", answer: a.answer, source: `From your discharge plan${a.from ? ` · ${a.from}` : ""}`, kind: "medicine" } };
+  return { kind: "plan", asked: { question: "", answer: a.answer, source: a.from ? translate(lang, "ask.fromModel", { from: a.from }) : translate(lang, "ask.plan"), kind: "medicine" } };
 }
 
 /** A sample doctor inline in an answer: their initials disc, name, specialty and where; tap for their page. */
 function DoctorCard({ d }: { d: Doctor }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={`${d.name}, ${d.specialty}${d.careTeam ? ", your care team" : ""}. Rated ${d.rating}. ${d.room}. Sample doctor.`} accessibilityHint="Opens their page"
+  const t = useT();
+  return <Pressable accessibilityRole="button" accessibilityLabel={t("ask.doctorA11y", { name: d.name, specialty: d.specialty, team: d.careTeam ? t("ask.yourTeamA11y") : "", rating: d.rating, room: d.room })} accessibilityHint={t("ask.openPage")}
     onPress={() => router.push({ pathname: "/doctor", params: { id: d.id } })}
     style={({ pressed }) => [surfaceStyle, { minHeight: 76, flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 24, transform: [{ scale: pressed ? 0.97 : 1 }] }]}>
     <DoctorAvatar doctor={d} size={48} />
     <View style={{ flex: 1, gap: 2 }}>
       <Text style={{ ...type.headline, color: palette.ink }}>{d.name}</Text>
       <Text style={{ ...type.footnote, color: palette.muted }}>{d.specialty} · ★ {d.rating} · {d.room}</Text>
-      {d.careTeam && <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>Your care team</Text>}
+      {d.careTeam && <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{t("ask.yourTeam")}</Text>}
     </View>
     <Glyph d={GLYPH.next} color={palette.faint} size={18} />
   </Pressable>;
@@ -276,16 +279,17 @@ function IconAction({ d, label, onPress, on }: { d: string; label: string; onPre
 function Action({ d, label, onPress, busy, ink }: { d: string; label: string; onPress: () => void; busy?: boolean; ink?: boolean }) {
   const fg = ink ? palette.white : palette.ink;
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ busy, disabled: busy }} disabled={busy} onPress={onPress}
-    style={({ pressed }) => [pillStyle, { minHeight: 48, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", gap: 7, transform: [{ scale: pressed ? 0.96 : 1 }] },
+    style={({ pressed }) => [pillStyle, { maxWidth: "100%", minHeight: 48, paddingHorizontal: 16, paddingVertical: 6, flexDirection: "row", alignItems: "center", gap: 7, transform: [{ scale: pressed ? 0.96 : 1 }] },
       ink && { backgroundColor: palette.dark, borderColor: palette.dark }]}>
     {busy ? <ActivityIndicator color={fg} /> : <Glyph d={d} color={fg} size={16} />}
-    <Text style={{ fontSize: 15, fontWeight: "600", color: fg }}>{label}</Text>
+    <Text style={{ flexShrink: 1, fontSize: 15, fontWeight: "600", color: fg }}>{label}</Text>
   </Pressable>;
 }
 
 /** The status line while Sona works, next to the small live orb (flooding): "Reading your plan…" or "Searching for a doctor…". */
 function Working({ doctors, flood }: { doctors: boolean; flood: SharedValue<number> }) {
-  const label = doctors ? "Searching for a doctor…" : "Reading your plan…";
+  const t = useT();
+  const label = doctors ? t("ask.searching") : t("ask.readingPlan");
   return <View accessible accessibilityLabel={label} accessibilityLiveRegion="polite" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
     <View style={{ margin: -orbPad(28) }}><SonaOrb size={28} flood={flood} lift={false} /></View>
     <AnimatedText entering={FadeIn.duration(200)} style={{ ...type.body, color: palette.faint }}>{label}</AnimatedText>
@@ -299,9 +303,10 @@ function Done({ text }: { text: string }) {
 
 /** Urgent words: the call comes before anything else. */
 function Call999() {
-  return <Pressable accessibilityRole="button" accessibilityLabel="Call 999 now" accessibilityHint="Chest pain, breathing trouble, fainting or bleeding can't wait for a reply" onPress={() => void Linking.openURL("tel:999")}
+  const t = useT();
+  return <Pressable accessibilityRole="button" accessibilityLabel={t("ask.call999")} accessibilityHint={t("ask.call999Hint")} onPress={() => void Linking.openURL("tel:999")}
     style={({ pressed }) => ({ minHeight: 48, borderRadius: 20, borderCurve: "continuous", paddingHorizontal: 16, paddingVertical: 12, gap: 2, justifyContent: "center", backgroundColor: "#FDECEC", transform: [{ scale: pressed ? 0.96 : 1 }] })}>
-    <Text style={{ ...type.headline, color: palette.red }}>Call 999 now</Text>
-    <Text style={{ ...type.footnote, color: palette.red }}>This can't wait for a reply from your care team.</Text>
+    <Text style={{ ...type.headline, color: palette.red }}>{t("ask.call999")}</Text>
+    <Text style={{ ...type.footnote, color: palette.red }}>{t("ask.call999Line")}</Text>
   </Pressable>;
 }

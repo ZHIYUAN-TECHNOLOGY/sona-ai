@@ -14,6 +14,8 @@ import { away } from "@/features/follow-ups/lines";
 import { useFollowUps } from "@/features/follow-ups/row";
 import { daysHome, headerDate, needsLine, type Need } from "@/features/home";
 import { AddSheet } from "@/features/home/add-sheet";
+import { LanguageRow } from "@/features/language/picker";
+import { tFor, useLang } from "@/lib/i18n";
 import { ConsistencyTile, LatestTile, MedicinesTile, VisitTile } from "@/features/home/bento";
 import { useMe } from "@/features/me";
 import { useMessageNeeds } from "@/features/messages/row";
@@ -28,16 +30,17 @@ import { orpc } from "@/utils/orpc";
 /** Every open thing on home, most urgent first; each chip jumps to or opens its thing. */
 function useNeeds(): (Need & { dot: string })[] {
   const now = useNow();
+  const lang = useLang(), t = tFor(lang);
   const { dose } = useNextDose(now);
   const checkIns = useCheckIns();
   const ask = checkIns.data && todayOf(checkIns.data, now).ask;
   const reply = useMessageNeeds();
   const visits = useFollowUps().data?.filter(f => f.status !== "upcoming") ?? [];
   return [
-    ...(dose && dueNow(dose.dueAt, now) ? [{ kind: "dose" as const, name: dose.name, label: `${dose.name} · ${clock(dose.dueAt)}`, dot: palette.warning }] : []),
-    ...(ask ? [{ kind: "check-in" as const, label: `Day ${ask.day} check-in`, dot: palette.warning }] : []),
-    ...(reply ? [{ kind: "reply" as const, label: "Care team replied", dot: palette.info }] : []),
-    ...visits.map(f => ({ kind: "visit" as const, inDays: f.inDays, overdue: f.status === "overdue", label: `${f.short} · ${f.status === "overdue" ? "overdue" : away(f.inDays)}`, dot: f.status === "overdue" ? palette.error : palette.warning })),
+    ...(dose && dueNow(dose.dueAt, now) ? [{ kind: "dose" as const, name: dose.name, label: t("home.chip", { what: dose.name, when: clock(dose.dueAt, lang) }), dot: palette.warning }] : []),
+    ...(ask ? [{ kind: "check-in" as const, label: t("checkin.title", { day: ask.day }), dot: palette.warning }] : []),
+    ...(reply ? [{ kind: "reply" as const, label: t("home.teamReplied"), dot: palette.info }] : []),
+    ...visits.map(f => ({ kind: "visit" as const, inDays: f.inDays, overdue: f.status === "overdue", label: t("home.chip", { what: f.short, when: f.status === "overdue" ? t("home.visitOverdue") : away(f.inDays, lang) }), dot: f.status === "overdue" ? palette.error : palette.warning })),
   ];
 }
 
@@ -62,6 +65,7 @@ export default function Home() {
   const { state, me } = useMe();
   const needs = useNeeds();
   const now = useNow();
+  const lang = useLang(), t = tFor(lang);
   const reply = useMessageNeeds() > 0;
   const reduced = useReducedMotion();
   const insets = useSafeAreaInsets();
@@ -80,7 +84,7 @@ export default function Home() {
   const go = (kind: Need["kind"]) => kind === "dose" ? jump("cards") : kind === "check-in" ? jump("today") : router.push(kind === "reply" ? "/messages" : "/follow-ups");
   const bell = () => reply || !needs[0] ? router.push("/messages") : go(needs[0].kind);
   const day = daysHome(me?.dischargedAt, now);
-  const insight = day !== undefined ? `Day ${day} at home · ${needsLine(needs).replace(/^All/, "all")}` : needsLine(needs);
+  const insight = day === undefined ? needsLine(needs, lang) : needs.length ? t("home.dayAt", { day, needs: needsLine(needs, lang) }) : t("home.dayAtDone", { day });
   const stack = fontScale >= 1.35;
   const calm = still || reduced;
   // Keyboard-aware: typing a check-in reply keeps the box and its Send button above the keyboard (bottomOffset covers the button under the box).
@@ -92,11 +96,11 @@ export default function Home() {
             <Text maxFontSizeMultiplier={1.3} style={{ fontSize: 16, fontWeight: "600", color: palette.blue }}>{me.name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()}</Text>
           </View>
           <View accessible accessibilityRole="header" style={{ flex: 1, alignItems: "center" }}>
-            <Text numberOfLines={1} style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>Hello! {me.firstName}</Text>
-            <Text numberOfLines={1} style={{ fontSize: 18, lineHeight: 24, fontWeight: "500", letterSpacing: -0.4, color: palette.ink }}>{headerDate(now)}</Text>
+            <Text numberOfLines={1} style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{t("home.hello", { name: me.firstName })}</Text>
+            <Text numberOfLines={1} style={{ fontSize: 18, lineHeight: 24, fontWeight: "500", letterSpacing: -0.4, color: palette.ink }}>{headerDate(now, lang)}</Text>
           </View>
           <View>
-            <CircleButton d={ICON.bell} label={`Notifications. ${needsLine(needs)}`} onPress={bell} />
+            <CircleButton d={ICON.bell} label={t("home.bell", { needs: needsLine(needs, lang) })} onPress={bell} />
             {needs.length > 0 && <Animated.View key={needs.length} entering={reduced ? undefined : pop} pointerEvents="none"
               style={{ position: "absolute", top: -4, right: -4, minWidth: 20, minHeight: 20, paddingHorizontal: 5, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: palette.blue, borderWidth: 2, borderColor: palette.white }}>
               <Text maxFontSizeMultiplier={1.3} style={{ fontSize: 11, lineHeight: 14, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{needs.length}</Text>
@@ -104,7 +108,7 @@ export default function Home() {
           </View>
         </View>
         <View style={{ gap: 10, marginTop: space.section - space.stack }}>
-          <Section light="Today's" bold="Latest updates" action={<CircleButton d={ICON.plus} label="Add: ask, message or book" onPress={() => setAdding(true)} />} />
+          <Section light={t("home.updatesLight")} bold={t("home.updatesBold")} action={<CircleButton d={ICON.plus} label={t("home.add")} onPress={() => setAdding(true)} />} />
           <Text style={{ ...type.body, color: needs.length ? palette.muted : palette.green, fontWeight: needs.length ? "400" : "600" }}>{insight}</Text>
           {needs.length > 0 && <Animated.View layout={layout} exiting={FadeOut.duration(200)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {needs.map(n => <Animated.View key={`${n.kind}:${n.label}`} layout={layout} entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)}>
@@ -115,13 +119,13 @@ export default function Home() {
         {/* Asked once, after joining: never at launch, and only before the patient chooses. */}
         <NudgeCard />
       </>
-      : <Title overline="Sona Care" line="Check-ins, your discharge plan and follow-ups, from your hospital.">Your care, between visits</Title>}
-    {offline && <Text style={{ ...type.footnote, color: palette.amber }}>Offline · showing what was last saved</Text>}
+      : <Title overline="Sona Care" line={t("home.signedOutLine")}>{t("home.signedOutTitle")}</Title>}
+    {offline && <Text style={{ ...type.footnote, color: palette.amber }}>{t("home.offline")}</Text>}
     {state === "loading" && <ActivityIndicator color={palette.muted} />}
     {state === "not-joined" && <Card feature>
-      <Text style={{ ...type.headline, color: palette.ink }}>Link your hospital record</Text>
-      <Text style={{ ...type.body, color: palette.muted }}>Use the code on your discharge paper so Sona Care shows your own care.</Text>
-      <Button label="Enter my discharge code" onPress={() => router.push("/join")} />
+      <Text style={{ ...type.headline, color: palette.ink }}>{t("home.linkTitle")}</Text>
+      <Text style={{ ...type.body, color: palette.muted }}>{t("home.linkLine")}</Text>
+      <Button label={t("home.linkButton")} onPress={() => router.push("/join")} />
     </Card>}
     {state === "joined" && <>
       <View onLayout={spot("cards")} style={{ flexDirection: stack ? "column" : "row", gap: 8 }}>
@@ -135,14 +139,18 @@ export default function Home() {
         </View>
       </View>
       <Animated.View entering={rise(calm, 4)} onLayout={spot("today")} style={{ gap: 12 }}>
-        <Section light="Today's" bold="check-in" />
+        <Section light={t("home.checkInLight")} bold={t("home.checkInBold")} />
         <TodayCard />
       </Animated.View>
-      <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>Not for emergencies · call 999</Text>
+      <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("common.emergency")}</Text>
       <AddSheet open={adding} onClose={() => setAdding(false)} />
     </>}
-    {state !== "loading" && <Pressable accessibilityRole="button" onPress={() => { void forgetPhone().finally(() => authClient.signOut()); }} style={{ alignSelf: "center", minHeight: 48, minWidth: 48, justifyContent: "center" }}>
-      <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>Sign out</Text>
-    </Pressable>}
+    {/* The language row and sign out close the page: settings a patient needs rarely, kept out of the way. */}
+    {state !== "loading" && <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", columnGap: 16 }}>
+      <LanguageRow />
+      <Pressable accessibilityRole="button" onPress={() => { void forgetPhone().finally(() => authClient.signOut()); }} style={{ minHeight: 48, minWidth: 48, justifyContent: "center" }}>
+        <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{t("home.signOut")}</Text>
+      </Pressable>
+    </View>}
   </KeyboardAwareScrollView>;
 }

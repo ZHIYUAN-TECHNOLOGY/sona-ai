@@ -8,7 +8,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Composer } from "@/features/assistant/composer";
 import { errorText } from "@/features/errors";
 import { useMe } from "@/features/me";
-import { clockOf, type Message, REPLY_TIME, suggestions, whileYouWait, withDays } from "@/features/messages/model";
+import { clockOf, type Message, suggestions, whileYouWait, withDays } from "@/features/messages/model";
+import { tFor, useLang, useT } from "@/lib/i18n";
 import { markRead, useThread } from "@/features/messages/row";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
@@ -31,6 +32,7 @@ type Draft = { text: string; requestId: string; at: Date };
 export default function Messages() {
   const { data, error } = useThread(REFETCH_MS);
   const { me } = useMe();
+  const lang = useLang(), t = tFor(lang);
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
   const scroll = useRef<ScrollView>(null);
@@ -45,7 +47,7 @@ export default function Messages() {
       // Show the stored message at once (same key as the sending bubble, so it doesn't spring twice), then re-read.
       queryClient.setQueryData(orpc.care.messages.list.queryKey(), old => old && !old.some(m => m.id === sent.id) ? [...old, sent] : old);
       void queryClient.invalidateQueries({ queryKey: orpc.care.messages.key() });
-      AccessibilityInfo.announceForAccessibility(`Sent. ${REPLY_TIME}.`);
+      AccessibilityInfo.announceForAccessibility(t("msg.sentA11y", { reply: t("msg.replyTime") }));
     },
   });
   const go = (words: string) => {
@@ -61,49 +63,49 @@ export default function Messages() {
   const sending = send.isPending && send.variables && me ? { id: `message:${me.patientId}:${send.variables.requestId}`, from: "patient" as const, text: send.variables.text, createdAt: send.variables.at } : undefined;
   const thread: Message[] = data ? (sending && !data.some(m => m.id === sending.id) ? [...data, sending] : data) : [];
   const last = thread.at(-1);
-  const wait = whileYouWait(thread);
-  const picks = text.trim() || send.isPending ? [] : suggestions(thread);
+  const wait = whileYouWait(thread, lang);
+  const picks = text.trim() || send.isPending ? [] : suggestions(thread, lang);
   const lastId = data?.at(-1)?.id;
   useEffect(() => { if (lastId) markRead(lastId); }, [lastId]);
 
   return <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
     <View style={{ flexDirection: "row", alignItems: "center", paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 4 }}>
       <BackButton />
-      <View accessible accessibilityRole="header" accessibilityLabel={`Care team${me?.hospital ? `, ${me.hospital}` : ""}. ${REPLY_TIME}`} style={{ flex: 1, alignItems: "center" }}>
-        <Text style={{ fontSize: 20, lineHeight: 26, fontWeight: "600", letterSpacing: -0.6, color: palette.ink }}>Care team</Text>
-        <Text style={{ ...type.footnote, color: palette.faint, textAlign: "center" }}>{REPLY_TIME}</Text>
+      <View accessible accessibilityRole="header" accessibilityLabel={t("msg.headerA11y", { hospital: me?.hospital ? `, ${me.hospital}` : "", reply: t("msg.replyTime") })} style={{ flex: 1, alignItems: "center" }}>
+        <Text style={{ fontSize: 20, lineHeight: 26, fontWeight: "600", letterSpacing: -0.6, color: palette.ink, textAlign: "center" }}>{t("msg.title")}</Text>
+        <Text style={{ ...type.footnote, color: palette.faint, textAlign: "center" }}>{t("msg.replyTime")}</Text>
       </View>
       <View style={{ width: 48 }} />
     </View>
 
     <ScrollView ref={scroll} keyboardDismissMode="interactive" onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })}
       contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16, gap: 14 }}>
-      {!data ? (error ? <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(error)}</Text> : <ActivityIndicator color={palette.muted} />)
+      {!data ? (error ? <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(error, lang)}</Text> : <ActivityIndicator color={palette.muted} />)
         // Messages there on opening appear still; only what arrives while the screen is open moves.
         : <LayoutAnimationConfig skipEntering><View style={{ gap: 14 }}>
-          {!thread.length && <Card><Text style={{ ...type.body, color: palette.muted }}>Ask anything about your recovery. Your care team will reply here.</Text></Card>}
-          {withDays(thread, clockNow()).map(item => "day" in item
+          {!thread.length && <Card><Text style={{ ...type.body, color: palette.muted }}>{t("msg.empty")}</Text></Card>}
+          {withDays(thread, clockNow(), lang).map(item => "day" in item
             ? <Pill key={`day-${item.day}`} label={item.day} />
             : <Bubble key={item.message.id} m={item.message} sending={item.message.id === sending?.id} reduced={reduced} />)}
           {last?.from === "patient" && <Animated.View key={`status-${last.id}`} entering={reduced ? FadeIn.duration(200) : rise(250)} style={{ alignSelf: "center" }}>
-            <Pill label={last.id === sending?.id ? "Sending…" : `Sent · ${REPLY_TIME.toLowerCase()}`} />
+            <Pill label={last.id === sending?.id ? t("msg.sending") : t("msg.sent", { reply: t("msg.replyTimeShort") })} />
           </Animated.View>}
-          {wait && <Animated.View key={`wait-${last!.id}`} entering={reduced ? FadeIn.duration(200) : rise(400)} accessible accessibilityLabel={`While you wait. ${wait} If you faint or have chest pain, call 999.`}
+          {wait && <Animated.View key={`wait-${last!.id}`} entering={reduced ? FadeIn.duration(200) : rise(400)} accessible accessibilityLabel={t("msg.waitA11y", { wait, call: t("msg.wait999") })}
             style={{ borderRadius: 24, borderCurve: "continuous", padding: 18, gap: 6, backgroundColor: palette.amberWash, borderWidth: 1, borderColor: palette.amberEdge }}>
-            <Text style={{ ...type.headline, color: palette.amber }}>While you wait</Text>
+            <Text style={{ ...type.headline, color: palette.amber }}>{t("msg.waitTitle")}</Text>
             <Text style={{ ...type.body, color: palette.ink }}>{wait}</Text>
-            <Text style={{ ...type.body, fontWeight: "700", color: palette.red }}>If you faint or have chest pain, call 999.</Text>
+            <Text style={{ ...type.body, fontWeight: "700", color: palette.red }}>{t("msg.wait999")}</Text>
           </Animated.View>}
         </View></LayoutAnimationConfig>}
     </ScrollView>
 
     <View style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 12), gap: 8 }}>
       {data && picks.length > 0 && <Animated.View key={picks.join("|")} entering={FadeIn.duration(220)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {picks.map(p => <Chip key={p} label={p} accessibilityLabel={`${p}. Sends this to your care team`} onPress={() => go(p)} />)}
+        {picks.map(p => <Chip key={p} label={p} accessibilityLabel={t("msg.chipA11y", { p })} onPress={() => go(p)} />)}
       </Animated.View>}
-      {send.error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(send.error)}</Text>}
-      <Composer value={text} onChangeText={setText} placeholder="Write to your care team…" label="Message to your care team" onSend={() => go(text)} canSend={!!text.trim() && !send.isPending} busy={send.isPending} />
-      <Text style={{ ...type.footnote, fontWeight: "600", color: palette.amber, textAlign: "center" }}>Not for emergencies · call 999</Text>
+      {send.error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(send.error, lang)}</Text>}
+      <Composer value={text} onChangeText={setText} placeholder={t("msg.placeholder")} label={t("msg.label")} onSend={() => go(text)} canSend={!!text.trim() && !send.isPending} busy={send.isPending} />
+      <Text style={{ ...type.footnote, fontWeight: "600", color: palette.amber, textAlign: "center" }}>{t("common.emergency")}</Text>
     </View>
   </KeyboardAvoidingView>;
 }
@@ -116,26 +118,28 @@ function Pill({ label }: { label: string }) {
 }
 
 function Bubble({ m, sending, reduced }: { m: Message; sending: boolean; reduced: boolean }) {
+  const t = useT();
   const mine = m.from === "patient";
-  const who = mine ? "You" : "Care team";
+  const who = mine ? t("msg.you") : t("msg.title");
   const tail: ViewStyle = mine ? { borderBottomRightRadius: 8 } : { borderBottomLeftRadius: 8 };
-  return <Animated.View entering={reduced ? FadeIn.duration(200) : mine ? springIn : FadeIn.duration(240)} accessible accessibilityLabel={`${who}, ${sending ? "sending" : clockOf(m.createdAt)}: ${m.text}`}
+  return <Animated.View entering={reduced ? FadeIn.duration(200) : mine ? springIn : FadeIn.duration(240)} accessible accessibilityLabel={`${who}, ${sending ? t("msg.sendingA11y") : clockOf(m.createdAt)}: ${m.text}`}
     style={{ alignSelf: mine ? "flex-end" : "flex-start", maxWidth: "86%", flexDirection: "row", alignItems: "flex-end", gap: 8, transformOrigin: "right bottom" }}>
     {!mine && <Initials />}
     <View style={{ flexShrink: 1, gap: 4, alignItems: mine ? "flex-end" : "flex-start" }}>
       <View style={[mine ? { backgroundColor: palette.dark, borderRadius: 24, borderCurve: "continuous" } : { ...surfaceStyle, borderRadius: 24 }, tail, { paddingHorizontal: 16, paddingVertical: 12 }]}>
         <Text selectable style={{ ...type.body, color: mine ? palette.white : palette.ink }}>{m.text}</Text>
       </View>
-      <Text style={{ fontSize: 12, lineHeight: 16, color: palette.faint, paddingHorizontal: 4 }}>{mine ? "" : "Care team · "}{sending ? "Sending…" : clockOf(m.createdAt)}</Text>
+      <Text style={{ fontSize: 12, lineHeight: 16, color: palette.faint, paddingHorizontal: 4 }}>{mine ? "" : t("msg.teamAt")}{sending ? t("msg.sending") : clockOf(m.createdAt)}</Text>
     </View>
   </Animated.View>;
 }
 
 /** The care team's mark: "CT" on a soft wash with a white rim (the thread names no one, so no person's initials). */
 function Initials() {
+  const t = useT();
   return <View style={{ width: 34, height: 34, borderRadius: 17, marginBottom: 20, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: palette.white,
     experimental_backgroundImage: "linear-gradient(145deg, #EBF1FF, #C9D5FF)", boxShadow: "0 6px 14px -8px rgba(37,99,235,0.45)" } as ViewStyle}>
-    <Text allowFontScaling={false} style={{ fontSize: 12, fontWeight: "600", color: palette.blue }}>CT</Text>
+    <Text allowFontScaling={false} style={{ fontSize: 11, fontWeight: "600", color: palette.blue }}>{t("msg.initials")}</Text>
   </View>;
 }
 

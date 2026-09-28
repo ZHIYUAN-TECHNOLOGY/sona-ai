@@ -11,7 +11,9 @@ import { Text } from "@/lib/text";
 import { accent, palette, type } from "@/lib/theme";
 import { Button, Card, ICON, pillStyle } from "@/lib/ui";
 import { client } from "@/utils/orpc";
+import { formatDate, tFor, useLang } from "@/lib/i18n";
 import { asksForNudges, routeOf, type NudgeChoice, type Permission } from "./model";
+import "./strings";
 
 /**
  * Sona Care push notifications (sent by packages/api/src/push.ts): check-ins, bookings, tests added to a
@@ -67,11 +69,13 @@ export function PushSetup() {
 }
 
 type Step = "ask" | "busy" | "on" | "blocked" | "needs-app";
-const LINE: Record<Exclude<Step, "ask" | "busy">, { text: string; color: string }> = {
-  on: { text: "Nudges are on. We'll only send what needs you.", color: palette.green },
-  blocked: { text: "Notifications are off for Sona Care in Settings.", color: palette.amber },
-  "needs-app": { text: "Notifications need the installed app. You'll still see everything here.", color: palette.muted },
+const LINE: Record<Exclude<Step, "ask" | "busy">, { key: string; color: string }> = {
+  on: { key: "nudge.on", color: palette.green },
+  blocked: { key: "nudge.blocked", color: palette.amber },
+  "needs-app": { key: "nudge.needsApp", color: palette.muted },
 };
+/** The sample notification's time: Thu 1 Oct, 9:00 AM in Malaysia. */
+const SAMPLE_AT = "2026-10-01T01:00:00Z";
 
 // Motion after 60fps "The Outsiders Allow Notifications Animation" (https://60fps.design/shots/the-outsiders-allow-notifications-animation):
 // the card fades in, a sample notification slides down into it, then the actions rise, staggered, all
@@ -89,6 +93,7 @@ const arrive = (delay: number, from: number, still: boolean) => () => {
  */
 export function NudgeCard() {
   const still = useReducedMotion();
+  const lang = useLang(), t = tFor(lang);
   const [choice, setChoice] = useState<NudgeChoice | null>(null);
   const [permission, setPermission] = useState<Permission>();
   const [step, setStep] = useState<Step>("ask");
@@ -97,7 +102,7 @@ export function NudgeCard() {
     void Notifications.getPermissionsAsync().then(p => setPermission(p.status as Permission)).catch(() => {});
   }, []);
   const remember = (c: Exclude<NudgeChoice, undefined>) => { void SecureStore.setItemAsync(KEY, c).catch(() => {}); };
-  const settle = (next: Step) => { setStep(next); if (next !== "ask" && next !== "busy") AccessibilityInfo.announceForAccessibility(LINE[next].text); };
+  const settle = (next: Step) => { setStep(next); if (next !== "ask" && next !== "busy") AccessibilityInfo.announceForAccessibility(t(LINE[next].key)); };
   const turnOn = async () => {
     setStep("busy");
     const asked = await Notifications.requestPermissionsAsync().catch(() => undefined);
@@ -108,33 +113,34 @@ export function NudgeCard() {
   // Asked this session: stay to show how it went, until the patient leaves home.
   if (step === "ask" && (choice === null || !asksForNudges(choice, permission))) return null;
   const done = step !== "ask" && step !== "busy";
+  const example = t("nudge.example", { when: formatDate(lang, SAMPLE_AT, "dayTime") });
   return <Animated.View entering={arrive(0, 8, still)} exiting={FadeOut.duration(200)}>
     <Card>
-      <Animated.View entering={arrive(160, -12, still)} accessible accessibilityLabel="Example: Your doctor booked you in, Thursday 1 October, 9 AM"
+      <Animated.View entering={arrive(160, -12, still)} accessible accessibilityLabel={t("nudge.exampleA11y", { text: example })}
         style={[pillStyle, { borderRadius: 18, padding: 10, flexDirection: "row", alignItems: "center", gap: 10 }]}>
         <View style={{ width: 32, height: 32, borderRadius: 9, alignItems: "center", justifyContent: "center", experimental_backgroundImage: `linear-gradient(135deg, ${accent[1]}, ${accent[2]})` } as ViewStyle}>
           <Svg width={16} height={16} viewBox="0 0 24 24"><Path d={ICON.bell} fill="none" stroke={palette.white} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></Svg>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>Sona Care <Text style={{ fontWeight: "400", color: palette.faint }}>· now</Text></Text>
-          <Text numberOfLines={2} style={{ ...type.footnote, color: palette.muted }}>Your doctor booked you in · Thu 1 Oct, 9:00 AM</Text>
+          <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>Sona Care <Text style={{ fontWeight: "400", color: palette.faint }}>{t("nudge.now")}</Text></Text>
+          <Text numberOfLines={2} style={{ ...type.footnote, color: palette.muted }}>{example}</Text>
         </View>
       </Animated.View>
       <View style={{ gap: 4 }}>
-        <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>Get a nudge</Text>
-        <Text style={{ ...type.body, color: palette.muted }}>When your care team books you in or a check-in is ready.</Text>
+        <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>{t("nudge.title")}</Text>
+        <Text style={{ ...type.body, color: palette.muted }}>{t("nudge.line")}</Text>
       </View>
       {done
         ? <Animated.View key={step} entering={arrive(0, 6, still)} style={{ gap: 12 }}>
-          <Text style={{ ...type.footnote, fontWeight: "600", color: LINE[step].color }}>{LINE[step].text}</Text>
+          <Text style={{ ...type.footnote, fontWeight: "600", color: LINE[step].color }}>{t(LINE[step].key)}</Text>
           {step === "blocked" && <View style={{ flexDirection: "row", gap: 8 }}>
-            <View style={{ flex: 1 }}><Button label="Open Settings" onPress={() => { void Linking.openSettings(); }} /></View>
-            <View style={{ flex: 1 }}><Button quiet label="Not now" onPress={later} /></View>
+            <View style={{ flex: 1 }}><Button label={t("nudge.settings")} onPress={() => { void Linking.openSettings(); }} /></View>
+            <View style={{ flex: 1 }}><Button quiet label={t("nudge.later")} onPress={later} /></View>
           </View>}
         </Animated.View>
         : <View style={{ flexDirection: "row", gap: 8 }}>
-          <Animated.View entering={arrive(280, 8, still)} style={{ flex: 1 }}><Button label="Turn on" busy={step === "busy"} onPress={() => { void turnOn(); }} /></Animated.View>
-          <Animated.View entering={arrive(360, 8, still)} style={{ flex: 1 }}><Button quiet label="Not now" disabled={step === "busy"} onPress={later} /></Animated.View>
+          <Animated.View entering={arrive(280, 8, still)} style={{ flex: 1 }}><Button label={t("nudge.turnOn")} busy={step === "busy"} onPress={() => { void turnOn(); }} /></Animated.View>
+          <Animated.View entering={arrive(360, 8, still)} style={{ flex: 1 }}><Button quiet label={t("nudge.later")} disabled={step === "busy"} onPress={later} /></Animated.View>
         </View>}
     </Card>
   </Animated.View>;

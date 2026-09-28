@@ -1,6 +1,8 @@
-import type { Discharged } from "../discharge/lines";
+import { formatDate, tFor, type Lang } from "@/lib/i18n";
+import { listOf, type Discharged } from "../discharge/lines";
 import { DOCTORS, matchDoctors, type Doctor } from "../doctors/data";
 import { away, dayLabel } from "../follow-ups/lines";
+import "./strings";
 
 /**
  * Ask Sona Care without a model: up to three questions drawn from the patient's own plan, each with
@@ -13,58 +15,62 @@ export type Visit = { title: string; date: Date | string; why?: string; inDays?:
 /** `kind` picks the suggestion row's icon: a missed dose, a medicine, a visit. */
 export type Asked = { question: string; answer: string; source: string; kind: "dose" | "medicine" | "visit" };
 
-const PLAN = "From your discharge plan";
-const time = (hhmm: string) => {
-  const [h, m] = hhmm.split(":").map(Number);
-  return `${h! % 12 || 12}:${String(m).padStart(2, "0")} ${h! < 12 ? "AM" : "PM"}`;
+const MYT = 8 * 3600_000;
+/** "8:00 AM" ("8:00 PG", "上午8:00") from the plan's "HH:MM" (already Malaysia time). */
+const time = (hhmm: string, lang: Lang) => {
+  const [h = 0, m = 0] = hhmm.split(":").map(Number);
+  return formatDate(lang, Date.UTC(2000, 0, 1, h, m) - MYT, "time");
 };
+/** Sentences run on with a space, or none in Chinese. */
+const sp = (lang: Lang) => lang === "zh" ? "" : " ";
 /** Ends a plan line as a sentence. */
-const end = (s: string) => /[.!?]$/.test(s) ? s : `${s}.`;
-const list = (xs: string[]) => xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`;
-/** The English leaflet's sentences that mention a missed dose, if the plan has any. */
-const missWords = (plan: PlanLike) => (plan.leaflets.find(l => l.language === "en")?.text ?? "")
-  .split(/(?<=[.!?])\s+/).filter(s => /\b(miss|missed|forget|forgot)\b/i.test(s));
+const end = (s: string, lang: Lang = "en") => /[.!?。！？]$/.test(s) ? s : `${s}${lang === "zh" ? "。" : "."}`;
+/** The leaflet's sentences that mention a missed dose (in the patient's language, else English), if the plan has any. */
+const missWords = (plan: PlanLike, lang: Lang) => ((plan.leaflets.find(l => l.language === lang) ?? plan.leaflets.find(l => l.language === "en"))?.text ?? "")
+  .split(/(?<=[.!?])\s+|(?<=[。！？])/).map(s => s.trim()).filter(s => /\b(miss|missed|forget|forgot|terlupa|tertinggal|terlepas)\b|忘|漏/i.test(s));
 
-function missed(plan: PlanLike, name: string): Asked | undefined {
-  const { medicines: m } = plan;
+function missed(plan: PlanLike, name: string, lang: Lang): Asked | undefined {
+  const t = tFor(lang), { medicines: m } = plan;
   const med = [...m.new, ...m.changed, ...m.continue].find(x => x.name === name);
   if (!med) return undefined;
-  const said = missWords(plan);
-  const usual = [med.take, med.at?.length && `at ${list(med.at.map(time))}`].filter(Boolean).join(", ");
+  const said = missWords(plan, lang);
+  const usual = [med.take, med.at?.length && t("ask.at", { times: listOf(med.at.map(a => time(a, lang)), lang) })].filter(Boolean).join(t("dis.comma"));
   const answer = said.length
-    ? `Your plan says: ${said.join(" ")} Never take two doses at once to make up for one.`
-    : `Your plan doesn't say what to do if you miss a dose of ${med.name}, so ask your care team. Never take two doses at once to make up for one.${usual ? ` Your usual dose: ${usual}.` : ""}`;
-  return { question: `What if I miss a dose of ${med.name}?`, answer, source: said.length ? PLAN : `From your ${med.name} instructions`, kind: "dose" };
+    ? `${t("ask.planSays", { text: said.join(sp(lang)) })}${sp(lang)}${t("ask.never")}`
+    : `${t("ask.noMissInfo", { name: med.name })}${sp(lang)}${t("ask.never")}${usual ? `${sp(lang)}${t("ask.usual", { usual })}` : ""}`;
+  return { question: t("ask.qMiss", { name: med.name }), answer, source: said.length ? t("ask.plan") : t("ask.from", { name: med.name }), kind: "dose" };
 }
 
 /**
  * The questions to offer (at most three), in order: a missed dose of the next scheduled medicine (or
  * the first one on a schedule), what a new medicine is for (or what changed with a changed one), and
- * when the next visit is.
+ * when the next visit is. The fixed words are in the patient's language; the plan's own lines as written.
  */
-export function suggestions(plan: PlanLike | undefined, visit: Visit | undefined, nextMed?: string): Asked[] {
-  const out: (Asked | undefined)[] = [];
+export function suggestions(plan: PlanLike | undefined, visit: Visit | undefined, nextMed?: string, lang: Lang = "en"): Asked[] {
+  const t = tFor(lang), out: (Asked | undefined)[] = [];
   if (plan) {
     const { medicines: m } = plan;
     const scheduled = nextMed ?? [...m.new, ...m.changed, ...m.continue].find(x => x.at?.length)?.name;
-    if (scheduled) out.push(missed(plan, scheduled));
+    if (scheduled) out.push(missed(plan, scheduled, lang));
     const fresh = m.new[0], changed = m.changed[0];
-    if (fresh) out.push({ question: `What is ${fresh.name} for?`, answer: `Your plan says: ${end(fresh.line)}${fresh.take ? ` Take ${end(fresh.take)}` : ""}`, source: `From your ${fresh.name} instructions`, kind: "medicine" });
-    else if (changed) out.push({ question: `What changed with ${changed.name}?`, answer: `Your plan says: ${end(changed.line)}`, source: `From your ${changed.name} instructions`, kind: "medicine" });
+    if (fresh) out.push({ question: t("ask.qFor", { name: fresh.name }), answer: `${t("ask.planSays", { text: end(fresh.line, lang) })}${fresh.take ? `${sp(lang)}${t("ask.take", { take: end(fresh.take, lang) })}` : ""}`, source: t("ask.from", { name: fresh.name }), kind: "medicine" });
+    else if (changed) out.push({ question: t("ask.qChanged", { name: changed.name }), answer: t("ask.planSays", { text: end(changed.line, lang) }), source: t("ask.from", { name: changed.name }), kind: "medicine" });
   }
   if (visit) {
-    const when = `${dayLabel(visit.date)}${visit.inDays === undefined ? "" : ` (${away(visit.inDays)})`}`;
-    out.push({ question: "When is my next visit?", answer: `${visit.title}, ${when}.${visit.why ? ` ${end(visit.why)}` : ""}`, source: PLAN, kind: "visit" });
+    const when = `${dayLabel(visit.date, lang)}${visit.inDays === undefined ? "" : ` (${away(visit.inDays, lang)})`}`;
+    out.push({ question: t("ask.qVisit"), answer: `${visit.title}${t("dis.comma")}${end(when, lang)}${visit.why ? `${sp(lang)}${end(visit.why, lang)}` : ""}`, source: t("ask.plan"), kind: "visit" });
   }
   return out.filter((a): a is Asked => Boolean(a)).slice(0, 3);
 }
 
-/** Words that mean call 999 now, not wait for a reply: chest pain, breathing, fainting, bleeding and the like. */
+/** Words that mean call 999 now, not wait for a reply: chest pain, breathing, fainting, bleeding and the like (English, Malay, Chinese). */
 const URGENT = /chest\b.{0,20}\b(pain|hurt|tight|pressure)|(pain|tight\w*|pressure) in (my )?chest|breath|faint|pass(ed|ing)?\s*out|collaps|unconscious|bleed|blood(?!\s*(pressure|sugar|tests?|results?))|lips?\b.{0,20}\bblue|blue\b.{0,20}\blips?|seizure|stroke|suicid|kill myself|end my life/i;
-export const urgent = (text: string) => URGENT.test(text);
+const URGENT_MS_ZH = /sakit dada|dada (sakit|sesak|ketat)|sesak nafas|susah (nak )?bernafas|tak boleh bernafas|tidak boleh bernafas|pengsan|pitam|tidak sedarkan diri|berdarah|pendarahan|bibir biru|sawan|strok|angin ahmar|bunuh diri|胸痛|胸口痛|胸闷|呼吸困难|喘不过气|晕倒|昏倒|昏迷|出血|流血|嘴唇发紫|抽搐|中风|自杀|不想活/i;
+export const urgent = (text: string) => URGENT.test(text) || URGENT_MS_ZH.test(text);
 
 /** The one honest reply to free text while there is no model. */
 export const NO_ANSWER = "I can't answer that yet. Send it to your care team?";
+export const noAnswer = (lang: Lang = "en") => tFor(lang)("ask.noAnswer");
 
 /** What the plan says the patient was treated for ("chest infection"), from the English leaflet's "treated for …". */
 export function conditionOf(plan: PlanLike | undefined) {
@@ -73,10 +79,10 @@ export function conditionOf(plan: PlanLike | undefined) {
 }
 
 /** The suggestion row that finds a doctor for the plan's condition. */
-export const doctorQuestion = (condition: string) => `Find a doctor for my ${condition}`;
+export const doctorQuestion = (condition: string, lang: Lang = "en") => tFor(lang)("ask.findDoctor", { condition });
 
-/** "Find me a doctor", "best heart specialist", "which doctor should I see": a question asking for a doctor. */
-const DOCTOR = /\b(doctors?|specialists?|dr)\b/i, ASKING = /\b(find|best|good|recommend|which|who|see|book|need|looking|suggest)\b/i;
+/** "Find me a doctor", "best heart specialist", "which doctor should I see" (or "cari doktor", "找医生"): a question asking for a doctor. */
+const DOCTOR = /\b(doctors?|specialists?|dr|doktor|pakar)\b|医生|专科/i, ASKING = /\b(find|best|good|recommend|which|who|see|book|need|looking|suggest|cari|terbaik|siapa|jumpa|perlu|cadang|tempah)\b|找|推荐|哪|看|需要|预约/i;
 export const wantsDoctor = (text: string) => DOCTOR.test(text) && ASKING.test(text);
 
 /**
@@ -89,7 +95,7 @@ export type Reply =
   | { kind: "doctors"; doctors: Doctor[]; text: string }
   | { kind: "none"; urgent: boolean };
 
-export function reply(question: string, asks: Asked[], condition?: string): Reply {
+export function reply(question: string, asks: Asked[], condition?: string, lang: Lang = "en"): Reply {
   const q = question.trim(), lower = q.toLowerCase();
   if (urgent(q)) return { kind: "none", urgent: true };
   const asked = asks.find(a => a.question.toLowerCase() === lower);
@@ -98,19 +104,20 @@ export function reply(question: string, asks: Asked[], condition?: string): Repl
   const own = matchDoctors(DOCTORS, q), planned = condition ? matchDoctors(DOCTORS, condition) : [];
   const about = condition && (!own.length || lower.includes(condition)) && planned.length ? condition : undefined;
   const doctors = (own.length ? own : planned.length ? planned : DOCTORS.filter(d => d.careTeam)).slice(0, 3);
-  const lead = doctors.length === 1 ? "Here is a sample doctor" : "Here are sample doctors";
-  return { kind: "doctors", doctors, text: `${lead} who may help${about ? ` with your ${about}` : ""}. Ask your care team before you book.` };
+  const key = `ask.doctors${doctors.length === 1 ? "1" : "N"}${about ? "About" : ""}`;
+  return { kind: "doctors", doctors, text: tFor(lang)(key, { about: about ?? "" }) };
 }
 
 /** An answer split into its lead sentence (shown bold) and the rest; "Dr." never ends a sentence. */
 export function leadOf(text: string): [string, string] {
-  const m = /^(.*?(?<!\bDr)[.!?])\s+(?=\S)/.exec(text);
+  // A Chinese full stop ends a sentence with no space after it.
+  const m = /^(.*?(?:(?<!\bDr)[.!?](?=\s+\S)|[。！？](?=\S)))\s*/.exec(text);
   return m ? [m[1]!, text.slice(m[0].length)] : [text, ""];
 }
 
 /** The words to read aloud (and show) for a reply: the answer, the doctors by name, or the honest no. */
-export function spoken(r: Reply) {
+export function spoken(r: Reply, lang: Lang = "en") {
   if (r.kind === "plan") return r.asked.answer;
-  if (r.kind === "doctors") return `${r.text} ${list(r.doctors.map(d => `${d.name} (${d.specialty})`))}.`;
-  return r.urgent ? `If this is happening now, call 999. ${NO_ANSWER}` : NO_ANSWER;
+  if (r.kind === "doctors") return `${r.text}${sp(lang)}${end(listOf(r.doctors.map(d => `${d.name} (${d.specialty})`), lang), lang)}`;
+  return r.urgent ? `${tFor(lang)("ask.call999First")}${sp(lang)}${noAnswer(lang)}` : noAnswer(lang);
 }

@@ -9,6 +9,8 @@ import Svg, { Path } from "react-native-svg";
 import { Text, TextInput } from "@/lib/text";
 import { errorText } from "@/features/errors";
 import { Head, Label } from "@/features/sign-in/head";
+import "@/features/sign-in/strings";
+import { tFor, useLang } from "@/lib/i18n";
 import { authClient } from "@/lib/auth-client";
 import { palette, type } from "@/lib/theme";
 import { BackButton, Button, field, pillStyle } from "@/lib/ui";
@@ -28,6 +30,7 @@ const SPRING_IN = FadeInDown.springify().duration(380).dampingRatio(1);
 export default function Join() {
   const still = useReducedMotion();
   const insets = useSafeAreaInsets();
+  const lang = useLang(), t = tFor(lang);
   const params = useLocalSearchParams<{ code?: string }>();
   const { data: session } = authClient.useSession();
   const [code, setCode] = useState(params.code ?? "");
@@ -43,7 +46,7 @@ export default function Join() {
 
   const check = async (value = code) => {
     setBusy(true); setError(undefined);
-    try { setWho(await client.care.preview({ code: value })); } catch (e) { setError(errorText(e)); }
+    try { setWho(await client.care.preview({ code: value })); } catch (e) { setError(errorText(e, lang)); }
     setBusy(false);
   };
   // A code from the QR's link is checked straight away.
@@ -54,12 +57,12 @@ export default function Join() {
     try {
       if (!session?.user) {
         const signedUp = await authClient.signUp.email({ name: name.trim(), email: email.trim(), password });
-        if (signedUp.error) throw new Error(signedUp.error.message ?? "Could not create the account");
+        if (signedUp.error) throw new Error(signedUp.error.message ?? t("join.accountFailed"));
       }
       await client.care.join({ code });
       await queryClient.refetchQueries();
       router.replace("/");
-    } catch (e) { setError(errorText(e)); }
+    } catch (e) { setError(errorText(e, lang)); }
     setBusy(false);
   };
   const scan = () => { void (permission?.granted ? Promise.resolve() : askPermission()).then(() => setScanning(true)); };
@@ -69,39 +72,39 @@ export default function Join() {
 
   return <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, padding: 20, paddingTop: 16, paddingBottom: Math.max(insets.bottom, 16) + 8, gap: 20 }}>
-      <BackButton label="Close" />
+      <BackButton label={t("common.close")} />
 
       {!who ? <>
-        <Head light="Please scan" bold="your code" />
+        <Head light={t("join.scanLight")} bold={t("join.scanBold")} />
         <View style={{ borderRadius: 24, borderCurve: "continuous", backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, padding: 16, gap: 12 }}>
           {scanning && permission?.granted
             ? <View style={{ height: 280, borderRadius: 24, borderCurve: "continuous", overflow: "hidden" }}>
               <CameraView style={{ flex: 1 }} barcodeScannerSettings={{ barcodeTypes: ["qr"] }} onBarcodeScanned={e => { setScanning(false); const c = codeFrom(e.data); setCode(c); void check(c); }} />
             </View>
-            : <Pressable accessibilityRole="button" accessibilityLabel="Scan the QR code" accessibilityHint="Opens the camera to read the code on your discharge paper" onPress={scan}
+            : <Pressable accessibilityRole="button" accessibilityLabel={t("join.scan")} accessibilityHint={t("join.scanHint")} onPress={scan}
               style={({ pressed }) => ({ height: 280, borderRadius: 24, borderCurve: "continuous", alignItems: "center", justifyContent: "center", gap: 14, backgroundColor: palette.card, transform: [{ scale: pressed ? 0.98 : 1 }] })}>
               <Svg width={96} height={96} viewBox="0 0 24 24"><Path d={QR} fill="none" stroke={palette.ink} strokeWidth={1.4} strokeLinejoin="round" /></Svg>
-              <Text style={{ ...type.body, fontWeight: "600", color: palette.ink }}>Tap to scan</Text>
+              <Text style={{ ...type.body, fontWeight: "600", color: palette.ink }}>{t("join.tap")}</Text>
             </Pressable>}
-          <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{cameraOff ? "The camera is off for Sona Care. Type the code instead." : "It's on your discharge paper, with a code printed under it."}</Text>
+          <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{cameraOff ? t("join.cameraOff") : t("join.where")}</Text>
         </View>
 
         {showField ? <Animated.View entering={still ? undefined : FadeIn.duration(180)} style={{ gap: 8 }}>
-          <Label>Code under the QR</Label>
+          <Label>{t("join.codeLabel")}</Label>
           <TextInput autoFocus={typing} value={code} onChangeText={setCode} placeholder="ABCD-2345" placeholderTextColor={palette.muted} autoCapitalize="characters" autoCorrect={false}
-            accessibilityLabel="Code under the QR" style={{ ...field, fontSize: 20, letterSpacing: 2, textAlign: "center" }} />
+            accessibilityLabel={t("join.codeLabel")}style={{ ...field, fontSize: 20, letterSpacing: 2, textAlign: "center" }} />
         </Animated.View>
           : <Pressable accessibilityRole="button" onPress={() => setTyping(true)} style={{ minHeight: 48, alignSelf: "center", justifyContent: "center", paddingHorizontal: 12 }}>
-            <Text style={{ ...type.body, fontWeight: "600", color: palette.ink, textDecorationLine: "underline" }}>Type the code instead</Text>
+            <Text style={{ ...type.body, fontWeight: "600", color: palette.ink, textDecorationLine: "underline" }}>{t("join.type")}</Text>
           </Pressable>}
         {error && <Text selectable accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.red, textAlign: "center" }}>{error}</Text>}
         <View style={{ flex: 1 }} />
-        <Button label="Continue" busy={busy} disabled={code.replace(/[^A-Za-z0-9]/g, "").length < 8} onPress={() => { void check(); }} />
+        <Button label={t("join.continue")} busy={busy}disabled={code.replace(/[^A-Za-z0-9]/g, "").length < 8} onPress={() => { void check(); }} />
       </> : <>
-        <Head light="Hello! I'm Sona Care, your" bold="health assistant" />
+        <Head light={t("join.helloLight")} bold={t("join.helloBold")} />
         <Animated.View entering={still ? undefined : SPRING_IN} style={[pillStyle, { alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, minHeight: 30, backgroundColor: palette.greenWash, borderColor: palette.greenWash }]}>
           <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: palette.success }} />
-          <Text style={{ ...type.footnote, fontWeight: "600", color: palette.green }}>Code found</Text>
+          <Text style={{ ...type.footnote, fontWeight: "600", color: palette.green }}>{t("join.found")}</Text>
         </Animated.View>
         <Animated.View entering={still ? undefined : SPRING_IN.delay(40)}
           style={{ borderRadius: 24, borderCurve: "continuous", backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, padding: 22, gap: 12, alignItems: "center" }}>
@@ -114,23 +117,23 @@ export default function Join() {
             <Text style={{ ...type.footnote, color: palette.faint }}>{who.hospital}</Text>
           </View>
           <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>
-            {session?.user ? `Your discharge plan, medicines and visits will be linked to ${accountName(session.user)}.` : "Create your account and your discharge plan, medicines and visits come with it."}
+            {session?.user ? t("join.linked", { account: accountName(session.user) }) : t("join.create")}
           </Text>
           {!session?.user && <View style={{ alignSelf: "stretch", gap: 8 }}>
-            <Label>Your full name</Label>
-            <TextInput value={name} onChangeText={setName} placeholder="As on your IC" placeholderTextColor={palette.muted} autoComplete="name" accessibilityLabel="Your full name" style={field} />
-            <Label>Email</Label>
-            <TextInput value={email} onChangeText={setEmail} placeholder="you@example.com" placeholderTextColor={palette.muted} autoCapitalize="none" autoComplete="email" keyboardType="email-address" accessibilityLabel="Email" style={field} />
-            <Label>Password</Label>
-            <TextInput value={password} onChangeText={setPassword} placeholder="8 characters or more" placeholderTextColor={palette.muted} secureTextEntry autoComplete="new-password" accessibilityLabel="Password" style={field} />
+            <Label>{t("join.name")}</Label>
+            <TextInput value={name} onChangeText={setName} placeholder={t("join.nameHint")} placeholderTextColor={palette.muted} autoComplete="name" accessibilityLabel={t("join.name")} style={field} />
+            <Label>{t("in.emailLabel")}</Label>
+            <TextInput value={email} onChangeText={setEmail} placeholder="you@example.com" placeholderTextColor={palette.muted} autoCapitalize="none" autoComplete="email" keyboardType="email-address" accessibilityLabel={t("in.emailLabel")} style={field} />
+            <Label>{t("in.password")}</Label>
+            <TextInput value={password} onChangeText={setPassword} placeholder={t("in.passwordHint")} placeholderTextColor={palette.muted} secureTextEntry autoComplete="new-password" accessibilityLabel={t("in.password")} style={field} />
           </View>}
         </Animated.View>
         {error && <Text selectable accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.red, textAlign: "center" }}>{error}</Text>}
         <View style={{ flex: 1 }} />
         <View style={{ gap: 4 }}>
-          <Button label={session?.user ? "Let's start" : "Create account and start"} busy={busy} disabled={!accountReady} onPress={() => { void join(); }} />
+          <Button label={session?.user ? t("join.start") : t("join.createStart")} busy={busy}disabled={!accountReady} onPress={() => { void join(); }} />
           <Pressable accessibilityRole="button" disabled={busy} onPress={() => { setWho(undefined); setCode(""); setTyping(false); }} style={{ minHeight: 48, alignSelf: "center", justifyContent: "center", paddingHorizontal: 12 }}>
-            <Text style={{ ...type.body, fontWeight: "600", color: palette.muted }}>Not me</Text>
+            <Text style={{ ...type.body, fontWeight: "600", color: palette.muted }}>{t("join.notMe")}</Text>
           </Pressable>
         </View>
       </>}

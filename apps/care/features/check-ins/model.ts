@@ -1,5 +1,7 @@
 import type { CheckIn, ReplyLabel } from "@sona-ai/domain/check-ins";
 import type { Language } from "@sona-ai/domain/discharge";
+import { formatDate, tFor, type Lang } from "@/lib/i18n";
+import "./strings";
 
 /**
  * How the patient says they feel. The five faces (the kit's "How are you feeling today?") read as three
@@ -72,27 +74,28 @@ export function answersFor(language: Language) {
 export const replyText = (answer: string, added?: string) => added?.trim() ? `${answer} · ${added.trim()}` : answer;
 
 /** The card's done state, from how the care team's side read the answer (never from the button alone). */
-export function doneLine(label: ReplyLabel, about?: string): { title: string; text: string; tone: "muted" | "amber" } {
+export function doneLine(label: ReplyLabel, about?: string, lang: Lang = "en"): { title: string; text: string; tone: "muted" | "amber" } {
+  const t = tFor(lang);
   return label === "fine"
-    ? { title: "Thank you", text: "Your care team will see this today.", tone: "muted" }
-    : { title: "Your care team has been told", text: about ? `They will call you today about: ${about.toLowerCase()}.` : "They will call you today.", tone: "amber" };
+    ? { title: t("ci.thanks"), text: t("ci.willSee"), tone: "muted" }
+    : { title: t("ci.told"), text: about ? t("ci.callAbout", { about: about.toLowerCase() }) : t("ci.call"), tone: "amber" };
 }
 
 /** A past check-in's one line of state: how the answer was read and whether the care team has acted. */
-export function statusOf(checkIn: CheckIn, now: Date): { line: string; tone: "muted" | "blue" | "amber" | "green" } {
-  const reply = checkIn.replies.at(-1);
-  if (!reply) return checkIn.sentAt || checkIn.dueAt <= now ? { line: "Waiting for your answer", tone: "blue" } : { line: `Coming ${shortDate(checkIn.dueAt)}`, tone: "muted" };
-  if (reply.label === "fine") return { line: "All fine · your care team can see it", tone: "muted" };
-  return reply.task?.completed ? { line: "Your care team followed up", tone: "green" } : { line: "Your care team was told", tone: "amber" };
+export function statusOf(checkIn: CheckIn, now: Date, lang: Lang = "en"): { line: string; tone: "muted" | "blue" | "amber" | "green" } {
+  const t = tFor(lang), reply = checkIn.replies.at(-1);
+  if (!reply) return checkIn.sentAt || checkIn.dueAt <= now ? { line: t("ci.waiting"), tone: "blue" } : { line: t("ci.coming", { day: shortDate(checkIn.dueAt, lang) }), tone: "muted" };
+  if (reply.label === "fine") return { line: t("ci.allFine"), tone: "muted" };
+  return reply.task?.completed ? { line: t("ci.followedUp"), tone: "green" } : { line: t("ci.wasTold"), tone: "amber" };
 }
 
 /** The history screen's insight line: how many are answered and when the next one comes. */
-export function historyLine(checkIns: CheckIn[], now: Date): string {
-  if (!checkIns.length) return "None yet. We'll ask on day 2 and day 7 after you go home.";
+export function historyLine(checkIns: CheckIn[], now: Date, lang: Lang = "en"): string {
+  const t = tFor(lang);
+  if (!checkIns.length) return t("ci.noneYet");
   const answered = checkIns.filter(c => c.replies.length).length, next = todayOf(checkIns, now);
-  return `${answered} of ${checkIns.length} answered${next.ask ? " · one waiting for you" : next.next ? ` · next ${shortDate(next.next.dueAt)}` : ""}`;
+  return `${t("ci.answered", { n: answered, of: checkIns.length })}${next.ask ? t("ci.oneWaiting") : next.next ? t("ci.nextOn", { day: shortDate(next.next.dueAt, lang) }) : ""}`;
 }
 
 /** "Mon 28 Sep" in the hospital's time zone. */
-export const shortDate = (at: Date) =>
-  new Date(at).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Asia/Kuala_Lumpur" });
+export const shortDate = (at: Date, lang: Lang = "en") => formatDate(lang, at, "day");

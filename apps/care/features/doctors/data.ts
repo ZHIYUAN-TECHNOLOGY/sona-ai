@@ -1,5 +1,7 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import { DOCTORS, type Doctor } from "@sona-ai/domain/doctors";
+import { formatDate, type Lang } from "@/lib/i18n";
+import "./strings";
 
 /**
  * Doctors at the patient's hospital, for Find a doctor and booking (after the Life OS Doctors screens).
@@ -30,9 +32,9 @@ export function matchDoctors<T extends Doctor>(list: T[], words: string) {
 
 export type Slot = { date: Date; label: string };
 /** A free time as a slot: its moment and "9:00 AM" in Malaysia time. */
-export const slotOf = (at: Date | string): Slot => {
+export const slotOf = (at: Date | string, lang: Lang = "en"): Slot => {
   const date = new Date(at);
-  return { date, label: date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" }) };
+  return { date, label: formatDate(lang, date, "time") };
 };
 
 /** Doctors whose name or specialty contains the query (any case); the whole list for an empty query. */
@@ -52,7 +54,7 @@ export function nameLines(name: string): [string, string] {
 }
 
 /** A clinic day's chip in Malaysia time: "Mon" over "28", and the spoken "Monday 28 September". */
-export function dayParts(day: Date | string) {
-  const f = (o: Intl.DateTimeFormatOptions) => new Date(day).toLocaleDateString("en-GB", { ...o, timeZone: "Asia/Kuala_Lumpur" });
-  return { weekday: f({ weekday: "short" }), date: f({ day: "numeric" }), spoken: f({ weekday: "long", day: "numeric", month: "long" }).replace(",", "") };
+export function dayParts(day: Date | string, lang: Lang = "en") {
+  const date = String(new Date(new Date(day).getTime() + 8 * 3600_000).getUTCDate());
+  return { weekday: formatDate(lang, day, "weekday"), date, spoken: formatDate(lang, day, "long") };
 }

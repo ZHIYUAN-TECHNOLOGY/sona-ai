@@ -11,6 +11,9 @@ import { useFollowUps } from "@/features/follow-ups/row";
 import { consistency, latestUpdate, nextCapsule, type Update } from "@/features/home";
 import { useMessageNeeds } from "@/features/messages/row";
 import { Text } from "@/lib/text";
+import "@/features/doses/strings";
+import { tFor, useLang, useT } from "@/lib/i18n";
+import "./strings";
 import { HalftoneGlint, type Pattern } from "@/lib/halftone";
 import { accent, palette } from "@/lib/theme";
 import { CARD_RADIUS, HoldButton, ICON, pillStyle, surfaceStyle } from "@/lib/ui";
@@ -47,8 +50,9 @@ function Tile({ label, onPress, index, still, grow, footer, dither, children }: 
 }
 
 const Kicker = ({ children }: { children: string }) => <Text style={{ fontSize: 14, lineHeight: 19, color: palette.faint }}>{children}</Text>;
-const Capsule = ({ children }: { children: string }) => <View style={[pillStyle, { alignSelf: "flex-start", minHeight: 32, paddingHorizontal: 12, justifyContent: "center" }]}>
-  <Text numberOfLines={1} style={{ fontSize: 14, lineHeight: 19, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>{children}</Text>
+// Two lines at most: a Malay date and time ("Sel 29 Sep, 8:00 PG") can outgrow a half-width tile.
+const Capsule = ({ children }: { children: string }) => <View style={[pillStyle, { alignSelf: "flex-start", maxWidth: "100%", minHeight: 32, paddingHorizontal: 12, paddingVertical: 5, justifyContent: "center", borderRadius: 16 }]}>
+  <Text numberOfLines={2}style={{ fontSize: 14, lineHeight: 19, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>{children}</Text>
 </View>;
 const Icon = ({ d, size = 20, color = palette.ink }: { d: string; size?: number; color?: string }) =>
   <Svg width={size} height={size} viewBox="0 0 24 24"><Path d={d} fill="none" stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
@@ -60,23 +64,27 @@ const Icon = ({ d, size = 20, color = palette.ink }: { d: string; size?: number;
  */
 export function MedicinesTile({ index, still }: { index: number; still: boolean }) {
   const now = useNow();
+  const lang = useLang(), t = tFor(lang);
   const { plan, dose, taken, meds } = useNextDose(now);
   const out = plan?.status === "discharged" ? plan.dischargedAt : undefined;
   const today = dosesToday(meds, out, taken, now), done = today.filter(d => d.taken).length;
   const hold = dose && !early(dose.dueAt, now);
-  const when = dose && !hold ? nextCapsule(dose.dueAt, now) : undefined;
-  const summary = today.length ? `${done} of ${today.length} doses taken` : out ? "Nothing due today" : "Shows once you're home";
-  return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={`Today's medicines. ${summary}.${hold ? ` ${dose.name} is due.` : when ? ` ${when}.` : ""} Open medicines`}
+  const when = dose && !hold ? nextCapsule(dose.dueAt, now, lang) : undefined;
+  const count = t("home.countOf", { done, n: today.length });
+  const summary = today.length ? t("home.dosesTaken", { count }) : out ? t("home.nothingDue") : t("home.onceHome");
+  // The count in ink, the rest faint, in whatever order the language puts them.
+  const [before = "", after = ""] = t("home.dosesTaken").split("{count}");
+  return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={t("home.medsA11y", { summary, extra: hold ? t("home.isDue", { name: dose.name }) : when ? ` ${when}.` : "" })}
     onPress={() => router.push(out ? "/dose" : "/discharge")}
-    footer={hold && <HoldButton key={dose.key} compact label={`Hold · ${dose.name}`} doneLabel={`${dose.name} taken`} onDone={() => markTaken(dose.key)} />}>
-    <Kicker>Today&apos;s medicines</Kicker>
+    footer={hold && <HoldButton key={dose.key} compact label={t("home.holdName", { name: dose.name })} doneLabel={t("dose.taken", { name: dose.name })} onDone={() => markTaken(dose.key)} />}>
+    <Kicker>{t("home.meds")}</Kicker>
     {today.length > 0 && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
       {today.map(d => <View key={d.key} style={{ width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: d.taken ? palette.success : "rgba(255,255,255,0.7)", borderWidth: d.taken ? 0 : 1.5, borderColor: "rgba(31,31,31,0.12)", borderStyle: "dashed" }}>
         {d.taken && <Icon d="M6 12.5l4 4L18 8" size={18} color={palette.white} />}
       </View>)}
     </View>}
     <Text style={{ flexGrow: 1, fontSize: 20, lineHeight: 26, fontWeight: "500", letterSpacing: -0.6, color: palette.faint }}>
-      {today.length ? <><Text style={{ color: palette.ink }}>{done} of {today.length}</Text> doses taken</> : summary}
+      {today.length ? <>{before}<Text style={{ color: palette.ink }}>{count}</Text>{after}</> : summary}
     </Text>
     {when && <Capsule>{when}</Capsule>}
   </Tile>;
@@ -90,12 +98,13 @@ export function ConsistencyTile({ index, still }: { index: number; still: boolea
   const now = useNow();
   const { plan, taken, meds } = useNextDose(now);
   const out = plan?.status === "discharged" ? plan.dischargedAt : undefined;
+  const t = useT();
   const pct = consistency(meds, out, taken, now), week = weekOf(meds, out, taken, now);
-  return <Tile index={index} still={still} dither={{ pattern: "lines", corner: "bottom-right" }} label={`Consistency. ${pct === undefined ? "Shows once a dose is due" : `${pct}% of this week's doses taken`}. Open medicines`}
+  return <Tile index={index} still={still} dither={{ pattern: "lines", corner: "bottom-right" }} label={t("home.consistencyA11y", { line: pct === undefined ? t("home.consistencyWait") : t("home.pctTaken", { pct }) })}
     onPress={() => router.push(out ? "/dose" : "/discharge")}>
-    <Kicker>Consistency</Kicker>
+    <Kicker>{t("home.consistency")}</Kicker>
     {pct === undefined
-      ? <Text style={{ fontSize: 17, lineHeight: 23, color: palette.muted }}>Shows once a dose is due</Text>
+      ? <Text style={{ fontSize: 17, lineHeight: 23, color: palette.muted }}>{t("home.consistencyWait")}</Text>
       : <>
         <Text style={{ fontSize: 28, lineHeight: 32, fontWeight: "500", letterSpacing: -1.2, color: palette.ink, fontVariant: ["tabular-nums"] }}>{pct}<Text style={{ fontSize: 14, fontWeight: "400", color: palette.faint }}> %</Text></Text>
         <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 6, height: 32 }}>
@@ -119,10 +128,11 @@ export function LatestTile({ index, still, onCheckIn }: { index: number; still: 
   const booked = visits?.find(f => f.id.startsWith("book-in:") && f.status !== "overdue");
   // A test from her X-ray the doctor put on the same visit ("CT added to your visit").
   const test = booked && visits?.find(f => f.id.startsWith("recall:") && new Date(f.date).getTime() === new Date(booked.date).getTime());
-  const u = latestUpdate(useCheckIns().data, useMessageNeeds() > 0, useNow(), booked && `${away(booked.inDays)} ${timeLabel(booked) ?? ""}`.trim(), test?.short);
+  const lang = useLang(), t = tFor(lang);
+  const u = latestUpdate(useCheckIns().data, useMessageNeeds() > 0, useNow(), booked && `${away(booked.inDays, lang)} ${timeLabel(booked, lang) ?? ""}`.trim(), test?.short, lang);
   const go = () => u.to === "check-in" ? onCheckIn() : router.push(u.to === "messages" ? "/messages" : u.to === "follow-ups" ? "/follow-ups" : "/check-ins");
-  return <Tile index={index} still={still} dither={{ pattern: "pixels", corner: "top-right" }} label={`Latest update. ${u.line}`} onPress={go}>
-    <Kicker>Latest update</Kicker>
+  return <Tile index={index} still={still} dither={{ pattern: "pixels", corner: "top-right" }} label={t("home.latestA11y", { line: u.line })} onPress={go}>
+    <Kicker>{t("home.latest")}</Kicker>
     <View style={[pillStyle, { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" }]}>
       <Svg width={26} height={26} viewBox="0 0 24 24">
         {u.face === "chat" ? <Path d={ICON.chat} fill="none" stroke={palette.ink} strokeWidth={1.8} strokeLinejoin="round" />
@@ -144,22 +154,23 @@ const PENCIL = "M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32
  * booked: says so, with Book to find a doctor. The data has no doctor or room yet, so neither is shown.
  */
 export function VisitTile({ index, still, hospital }: { index: number; still: boolean; hospital?: string }) {
+  const lang = useLang(), t = tFor(lang);
   const { data } = useFollowUps();
   const next = data?.[0];
-  if (!next) return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={data ? "No visit booked" : "Your visits show here"} onPress={() => router.push(data ? "/doctors" : "/follow-ups")}
-    footer={data && <Pressable accessibilityRole="button" accessibilityLabel="Book a visit" onPress={() => router.push("/doctors")}
+  if (!next) return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={t(data ? "home.noVisit" : "home.visitsHere")} onPress={() => router.push(data ? "/doctors" : "/follow-ups")}
+    footer={data && <Pressable accessibilityRole="button" accessibilityLabel={t("home.bookVisit")} onPress={() => router.push("/doctors")}
       style={({ pressed }) => ({ minHeight: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.dark, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
-      <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>Book</Text>
+      <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>{t("home.book")}</Text>
     </Pressable>}>
-    <Kicker>Next visit</Kicker>
-    <Text style={{ flexGrow: 1, fontSize: 24, lineHeight: 28, fontWeight: "600", letterSpacing: -1, color: palette.ink }}>{data ? "No visit booked" : "Your visits show here"}</Text>
+    <Kicker>{t("home.nextVisit")}</Kicker>
+    <Text style={{ flexGrow: 1, fontSize: 24, lineHeight: 28, fontWeight: "600", letterSpacing: -1, color: palette.ink }}>{t(data ? "home.noVisit" : "home.visitsHere")}</Text>
   </Tile>;
   const soon = next.status !== "upcoming";
   // The capsule carries the time, or the day when there is no time; the line under it never repeats the day.
-  const time = timeLabel(next), far = next.status === "overdue" ? "overdue" : away(next.inDays);
-  const when = time ? `${dayLabel(next.date)} · ${far}` : far[0]!.toUpperCase() + far.slice(1);
-  return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={`Next visit. ${next.title}, ${time ?? dayLabel(next.date)}, ${when}.${hospital ? ` ${hospital}.` : ""} Open my visits`} onPress={() => router.push("/follow-ups")}>
-    <Capsule>{time ?? dayLabel(next.date)}</Capsule>
+  const time = timeLabel(next, lang), far = next.status === "overdue" ? t("home.visitOverdue") : away(next.inDays, lang);
+  const when = time ? `${dayLabel(next.date, lang)} · ${far}` : far[0]!.toUpperCase() + far.slice(1);
+  return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={t("home.visitA11y", { title: next.title, time: time ?? dayLabel(next.date, lang), when, hospital: hospital ? ` ${hospital}.` : "" })} onPress={() => router.push("/follow-ups")}>
+    <Capsule>{time ?? dayLabel(next.date, lang)}</Capsule>
     <View style={{ flexGrow: 1, gap: 4 }}>
       <Text numberOfLines={3} style={{ fontSize: 24, lineHeight: 28, fontWeight: "600", letterSpacing: -1, color: palette.ink }}>{next.title}</Text>
       {hospital && <Text numberOfLines={2} style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{hospital}</Text>}

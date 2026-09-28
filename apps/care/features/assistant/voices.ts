@@ -1,4 +1,6 @@
 import type { Voice } from "expo-speech";
+import { tFor, type Lang, type T } from "@/lib/i18n";
+import "./strings";
 
 /**
  * The voices Sona can read answers in (after Gemini's voice picker): up to four English voices from the
@@ -11,10 +13,7 @@ import type { Voice } from "expo-speech";
 export type SonaVoice = { id: string; name: string; line: string; voice?: string; language: string; rate: number; pitch: number };
 
 const NAMES = ["Mira", "Arin", "Suri", "Kai"];
-const ACCENT: Record<string, string> = {
-  "en-GB": "British English", "en-US": "American English", "en-AU": "Australian English", "en-IE": "Irish English",
-  "en-IN": "Indian English", "en-ZA": "South African English", "en-SG": "Singapore English", "en-NZ": "New Zealand English",
-};
+const ACCENTS = ["en-GB", "en-US", "en-AU", "en-IE", "en-IN", "en-ZA", "en-SG", "en-NZ"];
 // Malaysia learns British English first; the rest in the order people here hear them most.
 const ORDER = ["en-GB", "en-US", "en-AU", "en-SG", "en-IN", "en-IE", "en-NZ", "en-ZA"];
 const locale = (l: string) => l.replace("_", "-");
@@ -28,10 +27,10 @@ const LANGS = [
 ] as const;
 
 /** The phone's best voice for one of Sona Care's other languages, or undefined if it has none. */
-function languageVoice(voices: Voice[], lang: (typeof LANGS)[number]): SonaVoice | undefined {
+function languageVoice(voices: Voice[], lang: (typeof LANGS)[number], t: T): SonaVoice | undefined {
   const v = voices.filter(x => lang.test.test(x.language) && !NOVELTY.test(x.identifier))
     .sort((a, b) => Number(b.quality === "Enhanced") - Number(a.quality === "Enhanced"))[0];
-  return v && { id: v.identifier, name: lang.name, voice: v.identifier, language: locale(v.language), rate: 1, pitch: 1, line: `${lang.line}${v.quality === "Enhanced" ? " · clearest quality" : ""}` };
+  return v && { id: v.identifier, name: lang.name, voice: v.identifier, language: locale(v.language), rate: 1, pitch: 1, line: `${lang.line}${v.quality === "Enhanced" ? t("voice.clearest") : ""}` };
 }
 
 /** The language an answer is written in: Chinese by its characters, Malay by its common words, else English. */
@@ -49,7 +48,8 @@ export function voiceFor(text: string, picked: SonaVoice, all: SonaVoice[]): Son
   return all.find(v => v.language.toLowerCase().startsWith(lang)) ?? picked;
 }
 
-export function pickVoices(voices: Voice[]): SonaVoice[] {
+export function pickVoices(voices: Voice[], lang: Lang = "en"): SonaVoice[] {
+  const t = tFor(lang);
   const en = voices.filter(v => /^en([-_]|$)/i.test(v.language) && !NOVELTY.test(v.identifier))
     .sort((a, b) => Number(b.quality === "Enhanced") - Number(a.quality === "Enhanced") || rank(a.language) - rank(b.language));
   // One per accent first (in the order above), then the next best of any accent.
@@ -59,15 +59,15 @@ export function pickVoices(voices: Voice[]): SonaVoice[] {
   const picked = [...spread, ...en.filter(v => !spread.includes(v))].slice(0, 4);
   const out: SonaVoice[] = picked.map((v, i) => ({
     id: v.identifier, name: NAMES[i]!, voice: v.identifier, language: locale(v.language), rate: 1, pitch: 1,
-    line: `${ACCENT[locale(v.language)] ?? "English"}${v.quality === "Enhanced" ? " · clearest quality" : ""}`,
+    line: `${ACCENTS.includes(locale(v.language)) ? t(`voice.${locale(v.language)}`) : t("voice.english")}${v.quality === "Enhanced" ? t("voice.clearest") : ""}`,
   }));
   const fill: SonaVoice[] = [
-    { id: "phone", name: "Your phone", line: "Your phone's own voice", language: "en-GB", rate: 1, pitch: 1 },
-    { id: "phone-slow", name: "Slow", line: "Your phone's voice, a little slower", language: "en-GB", rate: 0.8, pitch: 1 },
-    { id: "phone-low", name: "Low", line: "Your phone's voice, a little lower", language: "en-GB", rate: 0.95, pitch: 0.8 },
+    { id: "phone", name: t("voice.phone"), line: t("voice.phoneLine"), language: "en-GB", rate: 1, pitch: 1 },
+    { id: "phone-slow", name: t("voice.slow"), line: t("voice.slowLine"), language: "en-GB", rate: 0.8, pitch: 1 },
+    { id: "phone-low", name: t("voice.low"), line: t("voice.lowLine"), language: "en-GB", rate: 0.95, pitch: 0.8 },
   ];
   const english = out.length >= 3 ? out : [...out, ...fill].slice(0, Math.max(3, out.length));
-  return [...english, ...LANGS.flatMap(l => languageVoice(voices, l) ?? [])];
+  return [...english, ...LANGS.flatMap(l => languageVoice(voices, l, t) ?? [])];
 }
 
 /** The line each voice says when the patient swipes to it. */
