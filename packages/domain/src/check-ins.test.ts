@@ -31,3 +31,7 @@ test("Sona Care's quick answers read as the patient meant them, in each language
   expect(["Worse", "Lebih teruk", "更差"].map(readReply)).toEqual(["worse", "worse", "worse"]);
   expect(["Better", "About the same", "Lebih baik", "Sama", "好一些", "差不多"].map(readReply)).toEqual(["fine", "fine", "fine", "fine", "fine", "fine"]);
 });
+
+test("a Malay reply saying the chest hurts, in either word order, is urgent", () => {
+  expect(replyFlag("Amelia", "urgent", "Dada saya sakit sejak pagi")).toMatchObject({ title: "Amelia: chest pain after discharge", label: "urgent" });
+});

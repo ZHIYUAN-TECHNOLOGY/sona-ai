@@ -39,13 +39,13 @@ export function checkInMessage(firstName: string, language: Language): string {
  * ponytail: a keyword rule standing in for Gemma; it cannot read negation ("no fever").
  */
 export function readReply(text: string): ReplyLabel {
-  if (/chest pain|sakit dada|cannot breathe|can't breathe|tak boleh bernafas|sesak nafas teruk|pengsan|faint|胸痛|呼吸困难|晕倒/i.test(text)) return "urgent";
+  if (/chest pain|pain in (my )?chest|sakit(\s+\S+){0,2}\s+dada|dada(\s+\S+){0,2}\s+(sakit|sesak|ketat)|cannot breathe|can't breathe|tak boleh bernafas|sesak nafas teruk|pengsan|faint|胸痛|呼吸困难|晕倒/i.test(text)) return "urgent";
   // "worse", "teruk" and "更差" cover Sona Care's quick "Worse" answer in each language.
   return /fever|demam|发烧|breath|sesak|pain|sakit|worse|teruk|更差/i.test(text) ? "worse" : "fine";
 }
 
 const SYMPTOMS: [RegExp, string][] = [
-  [/chest pain|sakit dada|胸痛/i, "chest pain"], [/fever|demam|发烧/i, "fever returned"], [/breath|nafas|呼吸/i, "breathing worse"],
+  [/chest pain|pain in (my )?chest|sakit(\s+\S+){0,2}\s+dada|dada(\s+\S+){0,2}\s+(sakit|sesak|ketat)|胸痛/i, "chest pain"], [/fever|demam|发烧/i, "fever returned"], [/breath|nafas|呼吸/i, "breathing worse"],
 ];
 /**
  * Worse and urgent replies become a flagged task named by what the patient said (the model's short

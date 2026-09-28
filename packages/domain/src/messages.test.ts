@@ -36,3 +36,8 @@ test("urgent drafts send the patient to 999 now in their language, and every dra
   const long = { medicines: [{ name: "Paracetamol", line: "x".repeat(400) }] };
   expect(draftByRules({ text: "paracetamol?", label: "clinical", patientFirstName: "Amelia", plan: long, language: "en" }).length).toBe(DRAFT_MAX);
 });
+
+test("Malay chest pain is urgent in any common word order, and chest scans are not", () => {
+  for (const text of ["Dada saya sakit sejak pagi", "dada sakit", "sakit di dada", "dada rasa ketat", "pain in my chest"]) expect(triageByRules(text).label).toBe("urgent");
+  expect(triageByRules("Bila CT dada saya?").label).not.toBe("urgent");
+});

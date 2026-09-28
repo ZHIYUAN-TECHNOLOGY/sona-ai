@@ -12,7 +12,8 @@ export type MessageLabel = "urgent" | "clinical" | "admin";
 export const LABEL_RANK: Record<MessageLabel, number> = { urgent: 3, clinical: 2, admin: 1 };
 
 // The check-in urgent words (readReply) plus breathlessness, which in a message waits for no one.
-const URGENT = /chest pain|sakit dada|breathless|short(ness)? of breath|can'?t breathe|cannot breathe|sesak nafas|susah bernafas|tak boleh bernafas|pengsan|faint|coughing blood|batuk darah|胸痛|呼吸困难|气促|气短|喘不过气|晕倒|咳血/i;
+// Malay word order varies ("sakit dada", "dada saya sakit", "dada rasa sakit"), so allow up to two words between.
+const URGENT = /chest pain|pain in (my )?chest|chest (is )?(hurting|tight)|sakit(\s+\S+){0,2}\s+dada|dada(\s+\S+){0,2}\s+(sakit|sesak|ketat)|breathless|short(ness)? of breath|can'?t breathe|cannot breathe|sesak nafas|susah bernafas|tak boleh bernafas|pengsan|faint|coughing blood|batuk darah|胸痛|呼吸困难|气促|气短|喘不过气|晕倒|咳血/i;
 const CLINICAL = /medicine|medication|tablet|pill|dose|antibiotic|inhaler|side effect|fever|cough|pain|rash|vomit|dizzy|swollen|ubat|\bpil\b|\bdos\b|antibiotik|demam|batuk|sakit|ruam|muntah|pening|bengkak|药|剂量|抗生素|发烧|咳嗽|痛|皮疹|呕吐|头晕|肿/i;
 const ADMIN = /visit|appointment|\bbook|reschedul|\bbill|invoice|payment|letter|medical certificate|sick leave|insurance|claim|temu ?janji|lawatan|\bbil\b|bayaran|surat|sijil|cuti sakit|insurans|复诊|预约|账单|付款|证明信|信件|病假|证明|保险/i;
 // "Cuti sakit" (sick leave) is admin, not a pain.
