@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, Pressable, View } from "react-native";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { AccessibilityInfo, Linking, Pressable, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { FadeIn, FadeOut, interpolate, interpolateColor, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
@@ -10,12 +10,15 @@ import { EASE_OUT, fold, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Caption, ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Expand, glass, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
-import { api, errorText, useLive } from "@/features/live";
+import { Chip, Expand, glass, Icon, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { DoneLine } from "@/features/bookings/parts";
+import { callBackNote, WARD_PHONE } from "@/features/check-ins/model";
+import type { DayItem } from "@/features/day/model";
+import { api, errorText, requestId, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { useRole } from "@/features/live/roles";
 import { refreshServerData } from "@/features/live/server-day";
-import { clock, insight, LABEL_STYLE, sections, waited, type Inbox, type InboxThread, type Label } from "./state";
+import { clock, insight, LABEL_STYLE, sections, summary, waited, type Inbox, type InboxThread, type Label } from "./state";
 
 /**
  * The care team's inbox for Sona Care messages, ranked by triage so nothing urgent is buried: the
@@ -31,17 +34,38 @@ import { clock, insight, LABEL_STYLE, sections, waited, type Inbox, type InboxTh
  * dips, changes and springs back. Reduce Motion: the row fades and the count cross-fades.
  */
 
+/*
+ * One inbox read shared by every entry point (top bar, sidebar, home tile, My Day, this screen), so
+ * they always agree; reads asked for while one is in flight share it, so a change costs one request.
+ */
+let shared: { userId?: string; inbox?: Inbox; error?: string } = {};
+let inflight: Promise<void> | undefined;
+const subscribers = new Set<() => void>();
+const subscribe = (l: () => void) => { subscribers.add(l); return () => { subscribers.delete(l); }; };
+function loadInbox(userId: string | undefined) {
+  inflight ??= api.messages.inbox().then(inbox => ({ userId, inbox }), e => ({ ...shared, error: errorText(e) }))
+    .then(next => { shared = next; inflight = undefined; subscribers.forEach(s => s()); });
+  return inflight;
+}
+
 /** The inbox for this role, re-read on every Sona Care messages change. `on` false: fixture mode or a role that cannot read it. */
 export function useInbox() {
-  const { on: live } = useLive();
+  const { on: live, user } = useLive();
   const role = useRole();
   const on = live && role.can("messages.inbox");
-  const [inbox, setInbox] = useState<Inbox>();
-  const [error, setError] = useState<string>();
-  const load = useCallback(() => api.messages.inbox().then(i => { setInbox(i); setError(undefined); }, e => setError(errorText(e))), []);
+  const state = useSyncExternalStore(subscribe, () => shared);
+  const userId = user?.id;
+  const load = useCallback(() => loadInbox(userId), [userId]);
   useEffect(() => { if (on) void load(); }, [on, load]);
   useLiveChanges(["messages"], () => { if (on) void load(); });
-  return { on, inbox, error, load };
+  // Another account's inbox is never shown, even for the moment before this one's arrives.
+  return { on, inbox: on && state.userId === userId ? state.inbox : undefined, error: on ? state.error : undefined, load };
+}
+
+/** Threads waiting, urgent and the longest wait, the same numbers wherever messages are reached. */
+export function useInboxSummary() {
+  const { on, inbox } = useInbox();
+  return { on, ...summary(inbox?.threads, inbox?.now) };
 }
 
 const SWIPE = 88;
@@ -194,4 +218,48 @@ function InboxRow({ thread: t, now, first, canHandle, onHandle }: { thread: Inbo
       </Animated.View>
     </GestureDetector>
   </Animated.View>;
+}
+
+/**
+ * My Day's urgent message, answered in place: Reply opens the thread with Sona's drafted reply; Call
+ * back dials (the ward line, as for a flagged check-in), then logs the call in the patient's Sona Care
+ * thread, which answers the message, so the row leaves. Call back shows only for a role that can reply.
+ */
+export function MessageActions({ item }: { item: DayItem }) {
+  const { user } = useLive();
+  const canCall = useRole().can("messages.reply");
+  const [dialled, setDialled] = useState(false);
+  const [logging, setLogging] = useState(false);
+  const [logged, setLogged] = useState<string>();
+  const [error, setError] = useState<string>();
+  const [noteId] = useState(requestId); // one note however often the log is retried
+  const patientId = item.patientId!;
+  const first = item.title.split(":")[0]!;
+  const call = () => {
+    haptic("select"); setError(undefined); setDialled(true);
+    Linking.openURL(`tel:${WARD_PHONE.tel}`).catch(() => setError(`This device can't place calls. Dial ${WARD_PHONE.display} from a phone, then log it.`));
+  };
+  const log = async () => {
+    haptic("select"); setError(undefined); setLogging(true);
+    try {
+      await api.messages.reply({ patientId, text: callBackNote(user?.name), requestId: noteId });
+      const done = `Called back · noted in ${first}'s Sona Care`;
+      setLogged(done); haptic("done"); AccessibilityInfo.announceForAccessibility(done);
+    } catch (e) { setError(`Not logged: ${errorText(e)}`); } finally { setLogging(false); }
+  };
+  if (logged) return <DoneLine text={logged} />;
+  return <View style={{ gap: 6 }}>
+    {dialled && <Text selectable style={{ ...type.footnote, color: palette.muted }}>Dialled the ward line, {WARD_PHONE.display} (no patient number on file). Log the call when you're done.</Text>}
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+      {dialled ? <>
+        <Chip selected label={logging ? "Logging…" : "Log call-back"} accessibilityLabel={`Log call-back to ${first}`} icon={<Icon name="checkmark" size={12} color={palette.white} />} onPress={() => { if (!logging) void log(); }} />
+        <Chip label="Not now" onPress={() => { setDialled(false); setError(undefined); }} />
+      </> : <>
+        <Chip selected label="Reply" accessibilityLabel={`Reply to ${first}`} icon={<Icon name="arrowshape.turn.up.left.fill" size={12} color={palette.white} />}
+          onPress={() => { haptic("select"); router.push({ pathname: "/inbox/[patientId]", params: { patientId } }); }} />
+        {canCall && <Chip label="Call back" accessibilityLabel={`Call back ${first}`} icon={<Icon name="phone.fill" size={12} color={palette.ink} />} onPress={call} />}
+      </>}
+    </View>
+    {error && <ErrorLine text={error} onRetry={error.startsWith("Not logged") ? () => { void log(); } : undefined} />}
+  </View>;
 }

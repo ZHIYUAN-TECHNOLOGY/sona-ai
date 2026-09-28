@@ -28,19 +28,24 @@ export const clock = (at: Date | string) => new Date(at).toLocaleTimeString("en-
 
 /** Insight first: "3 waiting · 1 urgent · longest 2 h", or that nobody is waiting. */
 export function insight(threads: InboxThread[], now: Date | string) {
-  const open = threads.filter(t => !t.handled);
-  if (!open.length) return "All caught up";
-  const urgent = open.filter(t => t.label === "urgent").length;
-  const oldest = open.reduce<Date | undefined>((min, t) => t.waitingSince && (!min || new Date(t.waitingSince) < min) ? new Date(t.waitingSince) : min, undefined);
-  return [`${open.length} waiting`, urgent ? `${urgent} urgent` : "", oldest ? `longest ${waited(oldest, now)}` : ""].filter(Boolean).join(" · ");
+  const { waiting, urgent, longest, line } = summary(threads, now);
+  return waiting ? [`${waiting} waiting`, urgent ? `${urgent} urgent` : "", longest ? `longest ${longest}` : ""].filter(Boolean).join(" · ") : line;
 }
 
 /** Waiting threads by triage, only the sections that have any (the server already ranks within each). */
 export const sections = (threads: InboxThread[]) =>
   LABELS.map(label => ({ label, rows: threads.filter(t => !t.handled && t.label === label) })).filter(s => s.rows.length);
 
-/** The top bar's badge: threads waiting, red when any is urgent. */
-export function badge(threads: InboxThread[] | undefined) {
+/**
+ * One count for the top bar, the sidebar and the home tile, so they agree: threads waiting, how many
+ * are urgent, the longest wait, and their line ("1 urgent · 3 waiting", "All caught up").
+ */
+export function summary(threads: InboxThread[] | undefined, now?: Date | string) {
   const open = threads?.filter(t => !t.handled) ?? [];
-  return { count: open.length, urgent: open.some(t => t.label === "urgent") };
+  const urgent = open.filter(t => t.label === "urgent").length;
+  const oldest = open.reduce<Date | undefined>((min, t) => t.waitingSince && (!min || new Date(t.waitingSince) < min) ? new Date(t.waitingSince) : min, undefined);
+  return {
+    waiting: open.length, urgent, longest: oldest && now ? waited(oldest, now) : undefined,
+    line: open.length ? [urgent ? `${urgent} urgent` : "", `${open.length} waiting`].filter(Boolean).join(" · ") : "All caught up",
+  };
 }

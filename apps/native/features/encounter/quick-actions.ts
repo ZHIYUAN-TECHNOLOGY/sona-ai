@@ -4,6 +4,7 @@ import { PENDING_RESULT, testInSentence } from "@/features/day/model";
 import { newestResult, serverDayPatients } from "@/features/live/day";
 import { useRole } from "@/features/live/roles";
 import { openItems, shortRM, totalRisk, useSent } from "@/features/audit/model";
+import { useInboxSummary } from "@/features/inbox";
 import { useTrainingStatus } from "@/features/training";
 import { trainingLine } from "@/features/training/model";
 import { acknowledgeResult, useAckFailed, useServerData, useServerDay, type ServerData } from "@/features/live/server-day";
@@ -22,20 +23,35 @@ function pendingResult(server: ServerData) {
   return server ? newestResult(server.results) : PENDING_RESULT;
 }
 
+/** Today's visits: in live mode at the server's appointment times, else the fixtures. */
+export function useDayPatients(patients: Patient[]) {
+  const server = useServerData();
+  const today = useServerDay(server ? localDate(new Date()) : undefined);
+  return today ? serverDayPatients(patients, today) : patients;
+}
+
+/** The lines the home keys and the sidebar share, so both say the same thing. */
+export const wardLine = (ward: { blocked: number; fit: number }) => ward.blocked ? `${ward.blocked} discharges blocked` : `${ward.fit} fit to go`;
+export const auditLine = (audit: { count: number; risk: string }) => audit.count ? `${audit.count} notes · ${audit.risk} at risk` : "All queries sent";
+export const auditOf = (items: ReturnType<typeof openItems>) => ({ count: items.length, risk: shortRM(totalRisk(items)) });
+
+/** The care inbox as the home key needs it: `on` in live mode, `allowed` for a role that reads it. */
+type Messages = { on: boolean; allowed: boolean; waiting: number; urgent: number; line: string };
+
 /** Home's quick keys; in live mode today's visits come at the server's appointment times. */
 export function useHomeActions(patients: Patient[], encounters: Record<string, Encounter | undefined>) {
   const server = useServerData();
-  const today = useServerDay(server ? localDate(new Date()) : undefined);
+  const day = useDayPatients(patients);
   // The ward key counts bed 6 from Amelia's encounter, so it needs the server's record of it too.
   useServerEncounter(patients.find(p => p.id === DEMO_PATIENT));
   const role = useRole();
   const ack = { allowed: role.can("results.acknowledge"), failed: useAckFailed() };
   const audit = openItems(encounters, useSent());
   const training = useTrainingStatus();
-  const day = today ? serverDayPatients(patients, today) : patients;
+  const messages = { ...useInboxSummary(), allowed: role.can("messages.inbox") };
   // Management's home leads with the ward card, so its keys are its own jobs, not clinical ones.
-  if (role.role === "management") return managementActions(day, encounters, { count: audit.length, risk: shortRM(totalRisk(audit)) }, training.status ? trainingLine(training.status.counts) : undefined, training.status?.counts.blocked ?? 0);
-  return homeActions(day, encounters, server, ack);
+  if (role.role === "management") return managementActions(day, encounters, auditOf(audit), training.status ? trainingLine(training.status.counts) : undefined, training.status?.counts.blocked ?? 0);
+  return homeActions(day, encounters, server, ack, messages);
 }
 
 /** Management's home keys: beds ready to go, the handover to read, money at risk in coding, and the training queue. */
@@ -46,7 +62,7 @@ export function managementActions(patients: Patient[], encounters: Record<string
   return [
     { key: "fit", label: "Fit to go", icon: "checkmark.circle", status: ready ? `${ready} ready to discharge` : "None ready yet", tone: ready ? "good" : "calm", badge: ready, onPress: () => router.push({ pathname: "/ward", params: { filter: "fit" } }) },
     { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: `${patients.length} patients · read only`, onPress: () => router.push("/handover") },
-    { key: "audit", label: "Coding audit", icon: "doc.text.magnifyingglass", status: audit.count ? `${audit.count} notes · ${audit.risk} at risk` : "All queries sent", tone: audit.count ? "caution" : "calm", badge: audit.count, onPress: () => router.push("/audit") },
+    { key: "audit", label: "Coding audit", icon: "doc.text.magnifyingglass", status: auditLine(audit), tone: audit.count ? "caution" : "calm", badge: audit.count, onPress: () => router.push("/audit") },
     { key: "training", label: "Training data", icon: "shield.lefthalf.filled", status: training ?? "De-identified samples", tone: trainingBlocked ? "urgent" : "calm", badge: trainingBlocked, onPress: () => router.push("/training") },
   ];
 }
@@ -54,7 +70,8 @@ export function managementActions(patients: Patient[], encounters: Record<string
 type Ack = { allowed: boolean; failed?: { id: string; error: string } };
 
 /** Home: where a clinician's day is, each tile with its live status. */
-export function homeActions(patients: Patient[], encounters: Record<string, Encounter | undefined>, server: ServerData, ack: Ack = { allowed: true }): QuickAction[] {
+export function homeActions(patients: Patient[], encounters: Record<string, Encounter | undefined>, server: ServerData, ack: Ack = { allowed: true },
+  messages: Messages = { on: false, allowed: true, waiting: 0, urgent: 0, line: "" }): QuickAction[] {
   const next = [...patients].sort((a, b) => a.time.localeCompare(b.time)).find(p => !encounters[p.id]?.requests.length);
   const ward = wardSummary(wardBeds(patients, encounters));
   const result = pendingResult(server);
@@ -66,9 +83,12 @@ export function homeActions(patients: Patient[], encounters: Record<string, Enco
   return [
     { key: "patients", label: "Patients", icon: "person.2", status: next ? `Next ${next.name.split(" ")[0]} · ${next.time}` : `${patients.length} today`, badge: patients.length, onPress: () => router.push("/patients") },
     { key: "results", label: "Results", icon: "testtube.2", status: ackFailed ? "Not acknowledged · tap to retry" : result && resultFor ? `${result.flag} ${testInSentence(result.test)} · ${resultFor.name.split(" ")[0]}` : "Nothing new", tone: resultFor ? "urgent" : "calm", badge: resultFor ? 1 : 0, onPress: openResult },
-    { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: `${patients.length + (server ? 0 : 3)} patients to hand over`, onPress: () => router.push("/handover") },
+    // Patients' messages from Sona Care; hand over stays in the sidebar. A role that can't read them keeps Hand over here.
+    messages.allowed
+      ? { key: "messages", label: "Messages", icon: "bubble.left.and.bubble.right", status: messages.on ? messages.line : "From Sona Care", tone: messages.urgent ? "urgent" : messages.waiting ? "caution" : "calm", badge: messages.waiting, onPress: () => router.push("/inbox") }
+      : { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: `${patients.length + (server ? 0 : 3)} patients to hand over`, onPress: () => router.push("/handover") },
     // Tasks live in the top bar; the ward view is the one place to see every bed's blockers.
-    { key: "ward", label: "Ward", icon: "bed.double", status: ward.blocked ? `${ward.blocked} discharges blocked` : `${ward.fit} fit to go`, tone: ward.blocked ? "caution" : "calm", badge: ward.blocked, onPress: () => router.push("/ward") },
+    { key: "ward", label: "Ward", icon: "bed.double", status: wardLine(ward), tone: ward.blocked ? "caution" : "calm", badge: ward.blocked, onPress: () => router.push("/ward") },
   ];
 }
 

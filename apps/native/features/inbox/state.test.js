@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { badge, insight, sections, waited } from "./state";
+import { insight, sections, summary, waited } from "./state";
 
 const now = "2026-09-26T04:00:00.000Z";
 const row = (name, label, waitingSince, handled = false) => ({ patientId: name, name, label: handled ? null : label, waitingSince: handled ? null : waitingSince, handled });
@@ -17,9 +17,9 @@ test("the insight line says who is waiting, how many are urgent and the longest 
   expect([waited("2026-09-26T03:59:40.000Z", now), waited("2026-09-26T03:48:00.000Z", now), waited("2026-09-23T04:00:00.000Z", now)]).toEqual(["just now", "12 min", "3 d"]);
 });
 
-test("sections are only the non-empty triage groups of waiting threads; the badge counts them, red when any is urgent", () => {
+test("sections are only the non-empty triage groups of waiting threads; one summary counts them for every entry point", () => {
   expect(sections(threads).map(s => [s.label, s.rows.map(r => r.name)])).toEqual([["urgent", ["Amelia"]], ["clinical", ["Daniel", "Farid"]]]);
-  expect(badge(threads)).toEqual({ count: 3, urgent: true });
-  expect(badge(threads.slice(1))).toEqual({ count: 2, urgent: false });
-  expect(badge(undefined)).toEqual({ count: 0, urgent: false });
+  expect(summary(threads, now)).toEqual({ waiting: 3, urgent: 1, longest: "2 h", line: "1 urgent · 3 waiting" });
+  expect(summary(threads.slice(1), now).line).toBe("2 waiting");
+  expect(summary(undefined)).toEqual({ waiting: 0, urgent: 0, longest: undefined, line: "All caught up" });
 });
