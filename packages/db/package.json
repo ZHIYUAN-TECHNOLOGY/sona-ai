@@ -20,6 +20,7 @@
   "dependencies": {
     "@sona-ai/domain": "workspace:*",
     "@neondatabase/serverless": "^1.1.0",
+    "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
     "zod": "catalog:",
     "@electric-sql/pglite": "0.3.15"

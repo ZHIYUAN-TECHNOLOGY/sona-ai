@@ -125,7 +125,7 @@ export async function replyToCheckIn(context: Context, hospitalId: string, input
   const { db } = context;
   const [row] = await db.select({ checkIn: checkIns, name: patients.name }).from(checkIns).innerJoin(patients, eq(patients.id, checkIns.patientId))
     .where(and(eq(checkIns.id, input.checkInId), eq(checkIns.hospitalId, hospitalId), patientId ? eq(checkIns.patientId, patientId) : undefined));
-  if (!row) throw new ORPCError("NOT_FOUND", { message: `No check-in ${input.checkInId}` });
+  if (!row) throw new ORPCError("NOT_FOUND", { message: `No check-in ${input.checkInId}`, data: { code: "CHECK_IN_UNKNOWN" } });
   const at = clockOf(context);
   await db.update(checkIns).set({ sentAt: at }).where(and(eq(checkIns.id, row.checkIn.id), isNull(checkIns.sentAt)));
   const read = await (context.models ?? stubModels).classifyReply({ text: input.text, language: row.checkIn.language });

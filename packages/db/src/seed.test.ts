@@ -1,9 +1,20 @@
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
-import { admissions, appointments, casemixWeights, encounters, followUpRules, guaranteeLetters, insurerCriteria, labResults, observations, patients } from "./schema";
+import { account, admissions, appointments, careLinks, casemixWeights, encounters, followUpRules, guaranteeLetters, insurerCriteria, labResults, observations, patients, user } from "./schema";
 import { DEMO_CLINICIANS } from "./demo";
-import { DEMO_HOSPITAL, seedDemo, TEST_BED_MANAGER, TEST_DOCTOR, TEST_MANAGER, TEST_NURSE } from "./seed";
+import { DEMO_HOSPITAL, seedDemo, seedTestPatient, TEST_BED_MANAGER, TEST_DOCTOR, TEST_MANAGER, TEST_NURSE, TEST_PATIENT } from "./seed";
 import { createTestDb } from "./testing";
+
+test("the Sona Care test patient is seeded signed up and linked to Amelia, rerun-safe, and takes the demo phone back from a stray account", async () => {
+  const db = await createTestDb();
+  await seedDemo(db);
+  await db.insert(user).values({ id: "stray", name: "stray", email: "stray@phone.sona.invalid", phoneNumber: TEST_PATIENT.phone, phoneNumberVerified: true });
+  const id = await seedTestPatient(db);
+  expect(await seedTestPatient(db)).toBe(id);
+  expect((await db.select().from(user).where(eq(user.phoneNumber, TEST_PATIENT.phone))).map(u => [u.id, u.email, u.phoneNumberVerified])).toEqual([[id, TEST_PATIENT.email, true]]);
+  expect((await db.select().from(account).where(eq(account.userId, id))).map(a => a.providerId)).toEqual(["credential"]);
+  expect(await db.select().from(careLinks).where(eq(careLinks.userId, id))).toMatchObject([{ hospitalId: DEMO_HOSPITAL, patientId: "SYN-1042" }]);
+});
 
 test("each synthetic test clinician joins the demo hospital with its own role", () => {
   expect([TEST_DOCTOR, TEST_NURSE, TEST_BED_MANAGER, TEST_MANAGER].map(a => DEMO_CLINICIANS[a.email])).toEqual(["doctor", "nurse", "bed-manager", "management"]);

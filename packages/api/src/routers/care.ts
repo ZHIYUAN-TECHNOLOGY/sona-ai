@@ -1,4 +1,5 @@
 import { ORPCError } from "@orpc/server";
+import { DEMO_PATIENT_PHONE, DEMO_SIGN_IN_CODE } from "@sona-ai/db/demo";
 import { careCodes, careLinks, encounters, hospitalMembers, hospitals, patients } from "@sona-ai/db/schema/clinical";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -16,6 +17,9 @@ import { careMessagesRouter } from "./messages";
 import { registerPushToken, unregisterPushToken } from "../push";
 
 /**
+ * Errors a patient can see carry a stable `data.code` (CODE_UNKNOWN, SPEECH_OFF, …) so Sona Care can
+ * say them in the patient's language; the English message stays as the fallback.
+ *
  * Sona Care, the patient app. A doctor issues a one-time code for a visit (printed as a QR on the
  * discharge paper); the patient previews it, signs up, and redeems it, which links their account
  * to that patient record only. Codes use an alphabet without look-alikes (no 0/O, 1/I/L).
@@ -38,7 +42,7 @@ async function codeRow(db: Context["db"], code: string) {
   const [row] = await db.select({ code: careCodes, patient: patients.name, hospital: hospitals.name }).from(careCodes)
     .innerJoin(patients, eq(patients.id, careCodes.patientId)).innerJoin(hospitals, eq(hospitals.id, careCodes.hospitalId))
     .where(eq(careCodes.code, normalise(code)));
-  if (!row) throw new ORPCError("NOT_FOUND", { message: "That code was not recognised. Check it against your discharge paper." });
+  if (!row) throw new ORPCError("NOT_FOUND", { message: "That code was not recognised. Check it against your discharge paper.", data: { code: "CODE_UNKNOWN" } });
   return row;
 }
 
@@ -65,15 +69,21 @@ export const careRouter = {
     return { firstName: firstName(row.patient), hospital: row.hospital };
   }),
 
+  /**
+   * Anyone: on staging with DEMO_SIGN_IN=1, the seeded synthetic demo phone and its fixed code, so the
+   * sign-in screen can show them ("Demo code: 123456"); null everywhere else.
+   */
+  demoSignIn: publicProcedure.handler(({ context }) => context.demoSignIn ? { phone: DEMO_PATIENT_PHONE, code: DEMO_SIGN_IN_CODE } : null),
+
   /** A signed-in account redeems a code once; a clinician account cannot become a patient account. */
   join: signedInProcedure.input(codeInput).handler(async ({ context, input }) => {
     const { db } = context, userId = context.session.user.id;
     const row = await codeRow(db, input.code);
     const [member] = await db.select().from(hospitalMembers).where(eq(hospitalMembers.userId, userId));
-    if (member) throw new ORPCError("FORBIDDEN", { message: "This is a clinician account. Create a separate account for Sona Care." });
+    if (member) throw new ORPCError("FORBIDDEN", { message: "This is a clinician account. Create a separate account for Sona Care.", data: { code: "CLINICIAN_ACCOUNT" } });
     if (row.code.redeemedBy === userId) return { firstName: firstName(row.patient) };
-    if (row.code.redeemedBy) throw new ORPCError("CONFLICT", { message: "This code has already been used. Ask the ward for a new one." });
-    if (row.code.expiresAt < clockOf(context)) throw new ORPCError("PRECONDITION_FAILED", { message: "This code has expired. Ask the ward for a new one." });
+    if (row.code.redeemedBy) throw new ORPCError("CONFLICT", { message: "This code has already been used. Ask the ward for a new one.", data: { code: "CODE_USED" } });
+    if (row.code.expiresAt < clockOf(context)) throw new ORPCError("PRECONDITION_FAILED", { message: "This code has expired. Ask the ward for a new one.", data: { code: "CODE_EXPIRED" } });
     await db.insert(careLinks).values({ userId, hospitalId: row.code.hospitalId, patientId: row.code.patientId }).onConflictDoNothing();
     await db.update(careCodes).set({ redeemedBy: userId, redeemedAt: clockOf(context) }).where(eq(careCodes.code, row.code.code));
     return { firstName: firstName(row.patient) };
@@ -84,7 +94,7 @@ export const careRouter = {
     const [row] = await context.db.select({ patient: patients, hospital: hospitals.name, encounterId: encounters.id, state: encounters.state }).from(patients)
       .innerJoin(hospitals, eq(hospitals.id, patients.hospitalId)).leftJoin(encounters, eq(encounters.patientId, patients.id))
       .where(eq(patients.id, context.patientId));
-    if (!row) throw new ORPCError("NOT_FOUND", { message: "Your record was not found" });
+    if (!row) throw new ORPCError("NOT_FOUND", { message: "Your record was not found", data: { code: "RECORD_MISSING" } });
     const dischargedAt = (row.state as { discharge?: { dischargedAt?: string } } | null)?.discharge?.dischargedAt;
     return { patientId: row.patient.id, name: row.patient.name, firstName: firstName(row.patient.name), hospital: row.hospital, encounterId: row.encounterId ?? undefined, dischargedAt };
   }),
@@ -97,7 +107,7 @@ export const careRouter = {
   transcribe: patientProcedure.input(z.object({ audio: z.string().min(16).max(MAX_AUDIO_BASE64), language: z.enum(["en", "ms", "zh"]).optional() }))
     .handler(async ({ context, input }) => {
       const heard = await (context.models ?? stubModels).transcribe({ audio: Uint8Array.from(atob(input.audio), c => c.charCodeAt(0)), language: input.language });
-      if (heard.source === "fixture") throw new ORPCError("PRECONDITION_FAILED", { message: "Speaking to Sona Care isn't switched on yet. Please type instead." });
+      if (heard.source === "fixture") throw new ORPCError("PRECONDITION_FAILED", { message: "Speaking to Sona Care isn't switched on yet. Please type instead.", data: { code: "SPEECH_OFF" } });
       return heard;
     }),
 

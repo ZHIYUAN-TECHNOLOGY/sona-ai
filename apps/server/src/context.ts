@@ -32,6 +32,8 @@ export async function createContext({ context }: CreateContextOptions): Promise<
     announce: announcer(context.env as Env),
     // ponytail: hashed bag-of-words vectors until EmbeddingGemma runs in box ②; swap stubEmbedder for it then (and re-ingest).
     library: { ingest: (doc, text) => ingest(db, doc, text, stubEmbedder), search: input => search(db, input, stubEmbedder) },
+    // Staging only: Sona Care's sign-in shows the seeded demo phone and its fixed code.
+    demoSignIn: ENV.DEMO_SIGN_IN === "1",
   };
 }
 

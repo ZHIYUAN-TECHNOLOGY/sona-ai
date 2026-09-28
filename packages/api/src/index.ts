@@ -49,7 +49,7 @@ export const signedInProcedure = publicProcedure.use(async ({ context, next }) =
 export const patientProcedure = publicProcedure.use(async ({ context, next, path }, input) => {
   if (!context.session?.user) throw new ORPCError("UNAUTHORIZED");
   const link = await careLinkOf(context.db, context.session.user.id);
-  if (!link) throw new ORPCError("FORBIDDEN", { message: "Join with the code on your discharge paper first" });
+  if (!link) throw new ORPCError("FORBIDDEN", { message: "Join with the code on your discharge paper first", data: { code: "NOT_JOINED" } });
   const now = shifted(context.now, await clockOffsetOf(context.db, link.hospitalId));
   const result = await next({ context: { session: context.session, hospitalId: link.hospitalId, patientId: link.patientId, now } });
   const change = changeFor(path.slice(1), input);

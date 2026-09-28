@@ -61,7 +61,7 @@ export const careDoctorsRouter = {
   list: patientProcedure.handler(async ({ context }) => withSlots(context.db, context.hospitalId, await doctorsAt(context.db, context.hospitalId), clockOf(context))),
   get: patientProcedure.input(z.object({ id: z.string().min(1) })).handler(async ({ context, input }) => {
     const [doctor] = await withSlots(context.db, context.hospitalId, await doctorsAt(context.db, context.hospitalId, eq(doctors.id, input.id)), clockOf(context));
-    if (!doctor) throw new ORPCError("NOT_FOUND", { message: "We couldn't find that doctor" });
+    if (!doctor) throw new ORPCError("NOT_FOUND", { message: "We couldn't find that doctor", data: { code: "DOCTOR_UNKNOWN" } });
     return doctor;
   }),
 };
@@ -75,12 +75,12 @@ export const careBookingsRouter = {
   request: patientProcedure.input(requestInput).handler(async ({ context, input }) => {
     const { db, hospitalId, patientId } = context, now = clockOf(context);
     const [doctor] = await withSlots(db, hospitalId, await doctorsAt(db, hospitalId, eq(doctors.id, input.doctorId)), now);
-    if (!doctor) throw new ORPCError("NOT_FOUND", { message: "We couldn't find that doctor" });
+    if (!doctor) throw new ORPCError("NOT_FOUND", { message: "We couldn't find that doctor", data: { code: "DOCTOR_UNKNOWN" } });
     const id = `booking:${patientId}:${doctor.id}:${input.startsAt.getTime()}`;
     const [existing] = await db.select({ id: bookingRequests.id }).from(bookingRequests).where(eq(bookingRequests.id, id));
     if (!existing) {
       if (!doctor.nextSlots.some(d => d.times.some(t => t.getTime() === input.startsAt.getTime())))
-        throw new ORPCError("CONFLICT", { message: "That time is no longer free. Please choose another." });
+        throw new ORPCError("CONFLICT", { message: "That time is no longer free. Please choose another.", data: { code: "SLOT_TAKEN" } });
       const [patient] = await db.select({ name: patients.name, encounterId: encounters.id }).from(patients)
         .leftJoin(encounters, eq(encounters.patientId, patients.id)).where(eq(patients.id, patientId)).orderBy(desc(encounters.updatedAt)).limit(1);
       const words = slotWords(input.startsAt);

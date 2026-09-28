@@ -13,3 +13,11 @@ export const DEMO_CLINICIANS: Record<string, "doctor" | "nurse" | "bed-manager" 
   "beds.test@sona.test": "bed-manager",
   "manager.test@sona.test": "management",
 };
+
+/**
+ * The seeded Sona Care demo patient's phone (TEST_PATIENT, Amelia): synthetic, never sent an SMS. With
+ * DEMO_SIGN_IN=1 (staging only) its sign-in code is always DEMO_SIGN_IN_CODE, and the sign-in screen
+ * shows both, so judges can sign in without a phone. No other number is ever affected.
+ */
+export const DEMO_PATIENT_PHONE = "+601100000000";
+export const DEMO_SIGN_IN_CODE = "123456";
