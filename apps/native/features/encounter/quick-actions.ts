@@ -3,6 +3,9 @@ import type { QuickAction } from "@/components/sona/quick-actions";
 import { PENDING_RESULT, testInSentence } from "@/features/day/model";
 import { newestResult, serverDayPatients } from "@/features/live/day";
 import { useRole } from "@/features/live/roles";
+import { openItems, shortRM, totalRisk, useSent } from "@/features/audit/model";
+import { useTrainingStatus } from "@/features/training";
+import { trainingLine } from "@/features/training/model";
 import { acknowledgeResult, useAckFailed, useServerData, useServerDay, type ServerData } from "@/features/live/server-day";
 import { localDate } from "@/features/tasks/state";
 import { useServerEncounter } from "@/features/live/sync";
@@ -25,8 +28,27 @@ export function useHomeActions(patients: Patient[], encounters: Record<string, E
   const today = useServerDay(server ? localDate(new Date()) : undefined);
   // The ward key counts bed 6 from Amelia's encounter, so it needs the server's record of it too.
   useServerEncounter(patients.find(p => p.id === DEMO_PATIENT));
-  const ack = { allowed: useRole().can("results.acknowledge"), failed: useAckFailed() };
-  return homeActions(today ? serverDayPatients(patients, today) : patients, encounters, server, ack);
+  const role = useRole();
+  const ack = { allowed: role.can("results.acknowledge"), failed: useAckFailed() };
+  const audit = openItems(encounters, useSent());
+  const training = useTrainingStatus();
+  const day = today ? serverDayPatients(patients, today) : patients;
+  // Management's home leads with the ward card, so its keys are its own jobs, not clinical ones.
+  if (role.role === "management") return managementActions(day, encounters, { count: audit.length, risk: shortRM(totalRisk(audit)) }, training.status ? trainingLine(training.status.counts) : undefined, training.status?.counts.blocked ?? 0);
+  return homeActions(day, encounters, server, ack);
+}
+
+/** Management's home keys: beds ready to go, the handover to read, money at risk in coding, and the training queue. */
+export function managementActions(patients: Patient[], encounters: Record<string, Encounter | undefined>, audit: { count: number; risk: string }, training: string | undefined, trainingBlocked: number): QuickAction[] {
+  const ward = wardSummary(wardBeds(patients, encounters));
+  // Fit to go with nothing holding them: the blocked ones already lead the ward card above.
+  const ready = Math.max(0, ward.fit - ward.blocked);
+  return [
+    { key: "fit", label: "Fit to go", icon: "checkmark.circle", status: ready ? `${ready} ready to discharge` : "None ready yet", badge: ready, onPress: () => router.push({ pathname: "/ward", params: { filter: "fit" } }) },
+    { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: `${patients.length} patients · read only`, onPress: () => router.push("/handover") },
+    { key: "audit", label: "Coding audit", icon: "doc.text.magnifyingglass", status: audit.count ? `${audit.count} notes · ${audit.risk} at risk` : "All queries sent", tone: audit.count ? "caution" : "calm", badge: audit.count, onPress: () => router.push("/audit") },
+    { key: "training", label: "Training data", icon: "shield.lefthalf.filled", status: training ?? "De-identified samples", tone: trainingBlocked ? "urgent" : "calm", badge: trainingBlocked, onPress: () => router.push("/training") },
+  ];
 }
 
 type Ack = { allowed: boolean; failed?: { id: string; error: string } };
