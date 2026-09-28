@@ -7,8 +7,7 @@ import { openSession } from "./navigation";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { useServerData } from "@/features/live/server-day";
-import { useInbox } from "@/features/inbox";
-import { badge } from "@/features/inbox/state";
+import { useInboxSummary } from "@/features/inbox";
 import { useEncounter } from "./store";
 import { SweptLead, wordCount } from "@/components/sona/marked-text";
 import { Icon, pillStyle, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
@@ -157,10 +156,9 @@ export function TopBar({ patient, inEncounter, openTasks, faded, onMenu, onBack,
 
 /** Patient messages (Sona Care): the count is threads waiting for a reply, red when any is urgent. Live mode, for roles that read them. */
 function InboxButton() {
-  const { on, inbox } = useInbox();
+  const { on, waiting: count, urgent, line } = useInboxSummary();
   if (!on) return null;
-  const { count, urgent } = badge(inbox?.threads);
-  return <Round label={count ? `Patient messages, ${count} waiting${urgent ? ", urgent" : ""}` : "Patient messages"} onPress={() => router.push("/inbox")}>
+  return <Round label={count ? `Patient messages, ${line}` : "Patient messages"} onPress={() => router.push("/inbox")}>
     <View style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}><BrandIcon name="feedback" size={22} /></View>
     {count > 0 && <View accessibilityElementsHidden style={{ position: "absolute", top: -3, right: -3, minWidth: 19, height: 19, borderRadius: 10, paddingHorizontal: 5, backgroundColor: urgent ? palette.red : palette.blue, borderWidth: 2, borderColor: palette.white, alignItems: "center", justifyContent: "center" }}>
       <Text style={{ fontSize: 10, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{count}</Text>

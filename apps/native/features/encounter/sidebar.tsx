@@ -1,6 +1,14 @@
 import { BrandIcon, type BrandIconName } from "@/components/sona/brand-icon";
 import { Text } from "@/components/sona/text";
 import { palette } from "@/components/sona/theme";
+import { Icon } from "@/components/sona/ui";
+import { openItems, useSent } from "@/features/audit/model";
+import { useInboxSummary } from "@/features/inbox";
+import { useRole } from "@/features/live/roles";
+import { useTrainingStatus } from "@/features/training";
+import { trainingLine } from "@/features/training/model";
+import { wardBeds, wardSummary } from "@/features/ward/model";
+import { auditLine, auditOf, useDayPatients, wardLine } from "./quick-actions";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
@@ -11,16 +19,22 @@ import { openSession } from "./navigation";
 
 export const SIDEBAR_WIDTH = 300;
 
-type Item = { label: string; icon: BrandIconName; onPress: () => void; active?: boolean; detail?: string };
+/** `icon` is a brand glyph, `sf` an SF Symbol where the brand set has none (the same glyphs as the home keys). */
+type Item = { label: string; icon?: BrandIconName; sf?: string; onPress: () => void; active?: boolean; detail?: string; badge?: { count: number; urgent: boolean }; show?: boolean };
 
 function Row({ item }: { item: Item }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={item.detail ? `${item.label}, ${item.detail}` : item.label} accessibilityState={{ selected: item.active }} onPress={item.onPress}
+  const badge = item.badge?.count ? item.badge : undefined;
+  return <Pressable accessibilityRole="button" accessibilityLabel={[item.label, item.detail].filter(Boolean).join(", ")} accessibilityState={{ selected: item.active }} onPress={item.onPress}
     style={({ pressed }) => ({ minHeight: 50, flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 14, borderRadius: 16, borderCurve: "continuous", backgroundColor: item.active ? "rgba(20,28,40,0.07)" : pressed ? "rgba(20,28,40,0.04)" : "transparent", transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 120 } as never)}>
-    <BrandIcon name={item.icon} size={23} color={palette.ink} strokeWidth={item.active ? 1.9 : 1.5} />
+    <View style={{ width: 23, alignItems: "center" }}>{item.sf ? <Icon name={item.sf} size={20} color={palette.ink} /> : <BrandIcon name={item.icon!} size={23} color={palette.ink} strokeWidth={item.active ? 1.9 : 1.5} />}</View>
     <View style={{ flex: 1 }}>
       <Text numberOfLines={1} style={{ fontSize: 17, color: palette.ink, fontWeight: item.active ? "600" : "400" }}>{item.label}</Text>
       {item.detail && <Text numberOfLines={1} style={{ fontSize: 13, color: palette.muted, marginTop: 1 }}>{item.detail}</Text>}
     </View>
+    {/* Red only when something must not wait; the detail line already says it, so VoiceOver skips the badge. */}
+    {badge && <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, backgroundColor: badge.urgent ? palette.red : palette.blue, alignItems: "center", justifyContent: "center" }}>
+      <Text style={{ fontSize: 12, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{badge.count}</Text>
+    </View>}
   </Pressable>;
 }
 
@@ -36,15 +50,27 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
   // Close first, then navigate, so the page is back in place when the next screen presents.
   const go = (to: () => void) => () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); onClose(); setTimeout(to, 120); };
   const recent = patients.filter(p => encounters[p.id]?.requests.length);
+  // Each destination shows only for a role whose screen the server would open, with the same live line as its home key.
+  const { can } = useRole();
+  const inbox = useInboxSummary();
+  const ward = wardSummary(wardBeds(useDayPatients(patients), encounters));
+  const audit = auditOf(openItems(encounters, useSent()));
+  const training = useTrainingStatus();
 
-  const primary: Item[] = [
+  const items: Item[] = [
     { label: "Home", icon: "home", active: true, onPress: onClose },
-    { label: "Patients", icon: "patients", detail: `${patients.length} visits today`, onPress: go(() => router.push("/patients")) },
-    { label: "Consultation", icon: "stethoscope", detail: patient ? `Record with ${patient.name.split(" ")[0]}` : "Pick a visit first", onPress: go(() => router.push(patient ? "/recording" : { pathname: "/patients", params: { view: "recording" } })) },
-    { label: "Notes", icon: "note", onPress: go(() => router.push(patient ? "/note" : { pathname: "/patients", params: { view: "note" } })) },
-    { label: "Follow-up tasks", icon: "tasks", onPress: go(() => router.push("/tasks")) },
-    { label: "Shift handover", icon: "user", detail: `${patients.length + 3} patients`, onPress: go(() => router.push("/handover")) },
+    { label: "Patients", icon: "patients", detail: `${patients.length} visits today`, show: can("patients.list"), onPress: go(() => router.push("/patients")) },
+    // Fixture mode has no inbox: the item still opens it, without a count.
+    { label: "Messages", icon: "feedback", detail: inbox.on ? inbox.line : undefined, badge: inbox.on ? { count: inbox.waiting, urgent: inbox.urgent > 0 } : undefined, show: can("messages.inbox"), onPress: go(() => router.push("/inbox")) },
+    { label: "Consultation", icon: "stethoscope", detail: patient ? `Record with ${patient.name.split(" ")[0]}` : "Pick a visit first", show: can("encounter.edit"), onPress: go(() => router.push(patient ? "/recording" : { pathname: "/patients", params: { view: "recording" } })) },
+    { label: "Notes", icon: "note", show: can("note.get"), onPress: go(() => router.push(patient ? "/note" : { pathname: "/patients", params: { view: "note" } })) },
+    { label: "Follow-up tasks", icon: "tasks", show: can("tasks.list"), onPress: go(() => router.push("/tasks")) },
+    { label: "Shift handover", icon: "user", detail: `${patients.length + 3} patients`, show: can("handover.list"), onPress: go(() => router.push("/handover")) },
+    { label: "Ward", sf: "bed.double", detail: wardLine(ward), show: can("ward.beds"), onPress: go(() => router.push("/ward")) },
+    { label: "Coding audit", sf: "doc.text.magnifyingglass", detail: auditLine(audit), show: can("audit.list"), onPress: go(() => router.push("/audit")) },
+    { label: "Training data", sf: "shield.lefthalf.filled", detail: training.status ? trainingLine(training.status.counts) : undefined, show: can("training.status"), onPress: go(() => router.push("/training")) },
   ];
+  const primary = items.filter(item => item.show !== false);
 
   // Content drifts in from slightly left and fades up, following the page as it slides away.
   const contentStyle = useAnimatedStyle(() => ({

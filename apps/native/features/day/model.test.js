@@ -74,3 +74,16 @@ test("a result reads naturally mid-sentence: names lower-cased, abbreviations ke
   expect(testInSentence("Hb")).toBe("Hb");
   expect(testInSentence("HbA1c")).toBe("HbA1c");
 });
+
+test("an urgent unanswered message is a red row in the patient's words; against a worse check-in the newer leads, an urgent one still first", () => {
+  const { byUrgency, messageItems } = require("./model");
+  const thread = { patientId: "SYN-1042", name: "Amelia Tan", label: "urgent", reason: "Breathless on walking", lastText: "sesak nafas bila jalan sikit dari pagi tadi", lastAt: "2026-09-28T03:00:00Z", waitingSince: "2026-09-28T02:40:00Z", handled: false };
+  const [message, ...others] = messageItems([thread, { ...thread, patientId: "SYN-1", label: "clinical" }, { ...thread, patientId: "SYN-2", handled: true }], new Date("2026-09-28T03:10:00Z"));
+  expect(others).toEqual([]);
+  expect(message).toMatchObject({ id: "message-SYN-1042", kind: "message", title: "Amelia: sesak nafas bila jalan sikit dari…", detail: "Breathless on walking", reason: "Urgent message · no reply for 30 min", tone: "urgent" });
+  const flag = (score, at) => ({ id: `check-in-${at}`, kind: "check-in", score, at: new Date(at).getTime() });
+  const result = { id: "result", kind: "result", score: 100 };
+  expect([result, flag(105, "2026-09-28T02:00:00Z"), message].sort(byUrgency).map(i => i.kind)).toEqual(["message", "check-in", "result"]);
+  expect([message, flag(105, "2026-09-28T04:00:00Z")].sort(byUrgency).map(i => i.kind)).toEqual(["check-in", "message"]);
+  expect([message, flag(120, "2026-09-28T01:00:00Z")].sort(byUrgency).map(i => i.kind)).toEqual(["check-in", "message"]);
+});

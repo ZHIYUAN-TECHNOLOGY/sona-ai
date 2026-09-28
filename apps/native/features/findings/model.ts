@@ -1,6 +1,6 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import { dueDate, findingLine, isOverdue, ruleFor, type DetectedFinding, type FollowUpRule } from "@sona-ai/domain/findings";
-import type { DayItem } from "@/features/day/model";
+import { byUrgency, type DayItem } from "@/features/day/model";
 import type { Task } from "@/features/encounter/types";
 import { localDate } from "@/features/tasks/state";
 
@@ -65,5 +65,5 @@ export function withFindings(items: DayItem[], findings: Finding[], now = new Da
       tone: overdue ? "urgent" : open ? "soon" : "routine", score: overdue ? 95 : open ? 55 : 30, patientId: f.patientId, open: { view: "xray" },
     };
   });
-  return [...items.filter(i => !tasks.has(i.id)), ...rows].sort((a, b) => b.score - a.score);
+  return [...items.filter(i => !tasks.has(i.id)), ...rows].sort(byUrgency);
 }

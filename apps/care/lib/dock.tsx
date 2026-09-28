@@ -6,14 +6,15 @@ import Animated, { FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useShare
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { useMe } from "@/features/me";
+import { useMessageNeeds } from "@/features/messages/row";
 import { useT } from "./i18n";
 import { orbPad, SonaOrb } from "./orb";
 import "./strings";
 import { palette } from "./theme";
 
 /**
- * The bottom bar (the AI Health Companion kit's navbar): a frosted glass pill with the four places a
- * patient goes (home, schedule, medicine, doctors) and, apart from it on the right, the Sona orb, which
+ * The bottom bar (the AI Health Companion kit's navbar): a frosted glass pill with the places a
+ * patient goes (home, schedule, medicine, doctors, messages) and, apart from it on the right, the Sona orb, which
  * opens Ask Sona Care. The white glass circle behind the current tab slides to a new tab on a spring and
  * stretches as it travels (after Kann's tab indicator), settling round. Shown on those four screens once
  * the patient has linked their record; screens under it keep `DOCK_SPACE` of bottom padding.
@@ -25,7 +26,10 @@ const TABS = [
   { path: "/dose", label: "dock.medicine", d:"m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7ZM8.5 8.5l7 7" },
   { path: "/doctors", label: "dock.doctors", d:"M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3M8 15v1a6 6 0 0 0 6 6a6 6 0 0 0 6-6v-4M20 10a2 2 0 1 0 0 4a2 2 0 0 0 0-4" },
 ] as const;
-const TAB = 56, PAD = 4, ORB = 56;
+// Messages sits last in the pill but opens the thread over the dock (its composer needs the bottom edge), so it is never the current tab.
+const MESSAGES = "M7.9 20A9 9 0 1 0 4 16.1L2 22Z";
+// Five 50 pt keys + pad (260) and the 66 pt orb fit 335 pt, the narrowest phone less its 20 pt gutters; every key stays over 44 pt.
+const TAB = 50, PAD = 4, ORB = 56;
 
 export function Dock() {
   const path = usePathname();
@@ -33,6 +37,7 @@ export function Dock() {
   const still = useReducedMotion();
   const { state } = useMe();
   const tr = useT();
+  const unread = useMessageNeeds() > 0;
   const at = TABS.findIndex(t => t.path === path);
   const x = useSharedValue(Math.max(0, at) * TAB);
   const stretch = useSharedValue(1);
@@ -57,6 +62,13 @@ export function Dock() {
             <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={on ? palette.ink : palette.faint} strokeWidth={on ? 2.4 : 1.7} strokeLinecap="round" strokeLinejoin="round"><Path d={t.d} /></Svg>
           </Pressable>;
         })}
+        {/* A small blue dot while the care team's reply is unopened; VoiceOver says it in the label. */}
+        <Pressable accessibilityRole="button" accessibilityLabel={tr(unread ? "dock.messagesNew" : "dock.messages")} onPress={() => router.push("/messages")}
+          style={({ pressed }) => ({ width: TAB, height: TAB, alignItems: "center", justifyContent: "center", transform: [{ scale: pressed ? 0.92 : 1 }] })}>
+          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={palette.faint} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round"><Path d={MESSAGES} /></Svg>
+          {unread && <Animated.View entering={still ? undefined : FadeIn.duration(200)} pointerEvents="none"
+            style={{ position: "absolute", top: 12, right: 11, width: 10, height: 10, borderRadius: 5, backgroundColor: palette.info, borderWidth: 2, borderColor: palette.white }} />}
+        </Pressable>
       </BlurView>
     </View>
     <Pressable accessibilityRole="button" accessibilityLabel={tr("dock.ask")} accessibilityHint={tr("dock.askHint")} onPress={() => router.push("/assistant")}

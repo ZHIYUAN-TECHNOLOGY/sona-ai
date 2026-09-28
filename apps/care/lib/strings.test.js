@@ -39,6 +39,11 @@ test("emergency lines keep 999 in every language", () => {
   }
 });
 
+test("the dock names Messages in every language, and says when the care team has replied", () => {
+  expect(["en", "ms", "zh"].map(l => translate(l, "dock.messages"))).toEqual(["Messages", "Mesej", "消息"]);
+  for (const dict of [en, ms, zh]) expect(dict["dock.messagesNew"]).toStartWith(dict["dock.messages"]);
+});
+
 test("dates and times read in Malaysia time, in each language's own words", () => {
   const at = new Date("2026-09-28T13:00:00Z"); // Mon 28 Sep, 9:00 PM in Malaysia
   const morning = new Date("2026-09-28T01:00:00Z"); // 9:00 AM
