@@ -1,13 +1,14 @@
 import { ORPCError } from "@orpc/server";
 import { appointments, encounters, findings, followUpRules, patients, provenance, tasks } from "@sona-ai/db/schema/clinical";
 import { dueDate, findingLine, isOverdue, ruleFor } from "@sona-ai/domain/findings";
-import { and, asc, eq, inArray, sql, type SQL } from "drizzle-orm";
+import { and, asc, eq, ne, inArray, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 
 import { findingDismissSchema, findingTrackSchema } from "../contracts";
 import { clockOf, type Context } from "../context";
 import { stubModels } from "../models";
 import { protectedProcedure } from "../index";
+import { tellPatient } from "../push";
 
 /**
  * Demo flow 6: findings beyond the question an X-ray was taken for. The model only says what and
@@ -23,6 +24,40 @@ export async function listFindings(db: Context["db"], hospitalId: string, at: Da
   return rows.map(({ finding, ...rest }) => ({ ...finding, ...rest, overdue: isOverdue(finding, at), validated: false as const }));
 }
 export type FindingRow = Awaited<ReturnType<typeof listFindings>>[number];
+
+/** "CT chest at 3 months, PET-CT or tissue sampling" → "CT chest": what gets booked. */
+export const testOf = (action: string | null | undefined) => action?.split(/,| at /)[0]?.trim() || "follow-up test";
+
+/**
+ * One task and one recall (at `recallAt`, else the rule's due date), then the finding is tracked. Both
+ * are keyed on the finding, so tracking it again returns the same follow-up.
+ */
+export async function trackFinding(context: Context, hospitalId: string, findingId: string, owner?: string, recallAt?: Date) {
+  const { db } = context;
+  const at = clockOf(context);
+  const [finding] = await listFindings(db, hospitalId, at, eq(findings.id, findingId));
+  if (!finding) throw new ORPCError("NOT_FOUND", { message: `No finding ${findingId}` });
+  if (finding.status === "tracked") return finding;
+  if (!finding.dueAt) throw new ORPCError("PRECONDITION_FAILED", { message: "No routine follow-up needed" });
+  const due = recallAt ?? finding.dueAt;
+  await db.insert(tasks).values({
+    id: crypto.randomUUID(), hospitalId, encounterId: finding.encounterId, kind: "finding", title: findingLine({ label: finding.label, action: finding.action }),
+    owner: owner ?? "Attending doctor", due: due.toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" }), sourceId: finding.id, idempotencyKey: `finding:${finding.id}`,
+  }).onConflictDoNothing();
+  const [task] = await db.select({ id: tasks.id }).from(tasks).where(eq(tasks.idempotencyKey, `finding:${finding.id}`));
+  // "CT chest at 3 months, PET-CT or tissue sampling" is booked as "recall: CT chest".
+  await db.insert(appointments).values({ id: `recall:${finding.id}`, patientId: finding.patientId, hospitalId, startsAt: due, kind: `recall: ${testOf(finding.action)}` }).onConflictDoNothing();
+  await db.update(findings).set({ status: "tracked", taskId: task!.id }).where(eq(findings.id, finding.id));
+  return (await listFindings(db, hospitalId, at, eq(findings.id, finding.id)))[0]!;
+}
+
+/** A patient's findings that still need a routine follow-up and are not yet on the visit at `visitAt`: what "Book in" offers to add. */
+export async function followUpsToAdd(context: Context, hospitalId: string, patientId: string, visitAt: Date) {
+  const rows = await listFindings(context.db, hospitalId, clockOf(context), and(eq(findings.patientId, patientId), ne(findings.status, "dismissed")));
+  const recalls = await context.db.select({ id: appointments.id, startsAt: appointments.startsAt }).from(appointments).where(and(eq(appointments.patientId, patientId), eq(appointments.hospitalId, hospitalId)));
+  const sameTrip = new Set(recalls.filter(r => r.startsAt.getTime() === visitAt.getTime()).map(r => r.id));
+  return rows.filter(f => f.dueAt && !sameTrip.has(`recall:${f.id}`)).map(f => ({ id: f.id, label: f.label, test: testOf(f.action), tracked: f.status === "tracked", dueAt: f.dueAt! }));
+}
 
 export const findingsRouter = {
   /** Runs the image reader for the encounter's patient and stores one row per kind; a rerun changes nothing. */
@@ -53,22 +88,25 @@ export const findingsRouter = {
    * One task and one recall at the due date, then the finding is tracked. Both are keyed on the
    * finding, so a replay (any requestId) or tracking it again returns the same follow-up.
    */
-  track: protectedProcedure.input(findingTrackSchema).handler(async ({ context, input }) => {
+  track: protectedProcedure.input(findingTrackSchema).handler(({ context, input }) => trackFinding(context, context.hospitalId, input.findingId, input.owner)),
+  /**
+   * Same trip: moves a finding's follow-up onto a visit the patient already has (the "Book in" from a
+   * flagged check-in), tracking it first if it was open. Her Sona Care then shows the test on that
+   * visit. Only her own visit at this hospital; a replay changes nothing.
+   */
+  addToVisit: protectedProcedure.input(z.object({ findingId: z.string().min(1), appointmentId: z.string().min(1) })).handler(async ({ context, input }) => {
     const { db, hospitalId } = context;
-    const at = clockOf(context);
-    const [finding] = await listFindings(db, hospitalId, at, eq(findings.id, input.findingId));
-    if (!finding) throw new ORPCError("NOT_FOUND", { message: `No finding ${input.findingId}` });
-    if (finding.status === "tracked") return finding;
-    if (!finding.dueAt) throw new ORPCError("PRECONDITION_FAILED", { message: "No routine follow-up needed" });
-    await db.insert(tasks).values({
-      id: crypto.randomUUID(), hospitalId, encounterId: finding.encounterId, kind: "finding", title: findingLine({ label: finding.label, action: finding.action }),
-      owner: input.owner ?? "Attending doctor", due: finding.dueAt.toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" }), sourceId: finding.id, idempotencyKey: `finding:${finding.id}`,
-    }).onConflictDoNothing();
-    const [task] = await db.select({ id: tasks.id }).from(tasks).where(eq(tasks.idempotencyKey, `finding:${finding.id}`));
-    // "CT chest at 3 months, PET-CT or tissue sampling" is booked as "recall: CT chest".
-    await db.insert(appointments).values({ id: `recall:${finding.id}`, patientId: finding.patientId, hospitalId, startsAt: finding.dueAt, kind: `recall: ${finding.action!.split(/,| at /)[0]}` }).onConflictDoNothing();
-    await db.update(findings).set({ status: "tracked", taskId: task!.id }).where(eq(findings.id, finding.id));
-    return (await listFindings(db, hospitalId, at, eq(findings.id, finding.id)))[0]!;
+    const [visit] = await db.select().from(appointments).where(and(eq(appointments.id, input.appointmentId), eq(appointments.hospitalId, hospitalId)));
+    const [found] = await listFindings(db, hospitalId, clockOf(context), eq(findings.id, input.findingId));
+    if (!visit || !found || found.patientId !== visit.patientId) throw new ORPCError("NOT_FOUND", { message: "That visit or finding is not this patient's" });
+    const finding = await trackFinding(context, hospitalId, found.id, undefined, visit.startsAt);
+    await db.update(appointments).set({ startsAt: visit.startsAt }).where(eq(appointments.id, `recall:${finding.id}`));
+    // The follow-up is now due at that visit, so the ward's list and My Day show the same date.
+    await db.update(findings).set({ dueAt: visit.startsAt }).where(eq(findings.id, finding.id));
+    if (finding.taskId) await db.update(tasks).set({ due: visit.startsAt.toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" }) }).where(eq(tasks.id, finding.taskId));
+    await context.announce?.(hospitalId, { topic: "findings", patientId: visit.patientId }).catch(() => {});
+    await tellPatient(context, hospitalId, visit.patientId, { kind: "added", test: testOf(finding.action), at: visit.startsAt });
+    return { findingId: finding.id, recallId: `recall:${finding.id}`, startsAt: visit.startsAt, test: testOf(finding.action) };
   }),
   /**
    * Keeps the row, marked dismissed. Who and why go in provenance (a decision on a model output),

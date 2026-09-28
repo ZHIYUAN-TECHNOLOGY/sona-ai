@@ -1,7 +1,7 @@
 import { and, eq, inArray, like, notInArray } from "drizzle-orm";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 
-import { admissions, appointments, auditItems, careCodes, careLinks, careMessages, checkInReplies, checkIns, claims, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, patients, provenance, receipts, tasks } from "./schema";
+import { admissions, appointments, bookingRequests, hospitals, pushTokens, auditItems, careCodes, careLinks, careMessages, checkInReplies, checkIns, claims, doseLogs, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, patients, provenance, receipts, tasks } from "./schema";
 import { DEMO_HOSPITAL, SEED_LAB_IDS, seedDemo } from "./seed";
 
 type AnyDb = PgAsyncDatabase<any, any>;
@@ -21,6 +21,10 @@ export async function resetDemo(db: AnyDb, now = new Date()) {
   await db.delete(checkIns).where(eq(checkIns.hospitalId, DEMO_HOSPITAL));
   // Sona Care: codes, messages and account links go, so a demo starts with the patient joining again.
   await db.delete(careMessages).where(eq(careMessages.hospitalId, DEMO_HOSPITAL));
+  await db.delete(doseLogs).where(eq(doseLogs.hospitalId, DEMO_HOSPITAL));
+  await db.delete(bookingRequests).where(eq(bookingRequests.hospitalId, DEMO_HOSPITAL));
+  // Phones are re-registered when the patient joins again.
+  await db.delete(pushTokens).where(eq(pushTokens.hospitalId, DEMO_HOSPITAL));
   await db.delete(careLinks).where(eq(careLinks.hospitalId, DEMO_HOSPITAL));
   await db.delete(careCodes).where(eq(careCodes.hospitalId, DEMO_HOSPITAL));
   await db.delete(findings).where(eq(findings.hospitalId, DEMO_HOSPITAL));
@@ -28,6 +32,8 @@ export async function resetDemo(db: AnyDb, now = new Date()) {
   await db.delete(handoverAcceptances).where(eq(handoverAcceptances.hospitalId, DEMO_HOSPITAL));
   await db.delete(auditItems).where(eq(auditItems.hospitalId, DEMO_HOSPITAL));
   await db.delete(appointments).where(and(eq(appointments.hospitalId, DEMO_HOSPITAL), like(appointments.kind, "recall%")));
+  // Visits a doctor booked from a flagged check-in ("Book in") go too.
+  await db.delete(appointments).where(and(eq(appointments.hospitalId, DEMO_HOSPITAL), like(appointments.id, "book-in:%")));
   if (visits.length) {
     await db.delete(receipts).where(inArray(receipts.encounterId, visits));
     await db.delete(claims).where(inArray(claims.encounterId, visits));
@@ -43,5 +49,7 @@ export async function resetDemo(db: AnyDb, now = new Date()) {
   const beds = (await db.select({ id: admissions.id }).from(admissions).where(eq(admissions.hospitalId, DEMO_HOSPITAL))).map(a => a.id);
   await db.update(admissions).set({ dischargedAt: null, fitAt: null }).where(eq(admissions.hospitalId, DEMO_HOSPITAL));
   if (beds.length) await db.update(guaranteeLetters).set({ status: "requested", receivedAt: null }).where(inArray(guaranteeLetters.admissionId, beds));
+  // The demo clock goes back to real time.
+  await db.update(hospitals).set({ clockOffsetMs: 0 }).where(eq(hospitals.id, DEMO_HOSPITAL));
   await seedDemo(db, now);
 }

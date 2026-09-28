@@ -10,7 +10,8 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "ai.zhiyuantech.sona.care",
-      "appleTeamId": "LTF2YZMF2D"
+      "appleTeamId": "LTF2YZMF2D",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -47,6 +48,13 @@
         "expo-camera",
         {
           "cameraPermission": "Sona Care uses the camera to scan the QR code on your discharge paper."
+        }
+      ],
+      "expo-notifications",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Sona Care uses the microphone so you can speak your question or check-in reply instead of typing."
         }
       ]
     ],

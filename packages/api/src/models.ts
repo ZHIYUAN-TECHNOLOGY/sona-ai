@@ -1,6 +1,6 @@
 import { readReply } from "@sona-ai/domain/check-ins";
-import type { Code, Sentence } from "@sona-ai/domain/claim";
-import type { Language } from "@sona-ai/domain/discharge";
+import { CODES, type Code, type Sentence } from "@sona-ai/domain/claim";
+import { planFor, type Language } from "@sona-ai/domain/discharge";
 import type { Study } from "@sona-ai/domain/evidence";
 import type { DetectedFinding } from "@sona-ai/domain/findings";
 import type { Patient } from "@sona-ai/domain/types";
@@ -27,11 +27,24 @@ export type Models = {
   suggestCodes(input: { sentences: Sentence[] }): Answer<{ codes: Code[] }>;
   synthesiseEvidence(input: { question: string; studies: Study[] }): Answer<{ answer: string; studyIds: string[] }>;
   huddleBrief(input: { beds: Bed[]; owners: Record<string, Owner | undefined> }): Answer<{ lines: string[] }>;
-  /** After-discharge check-ins: worse or urgent replies become a flagged task. */
-  classifyReply(input: { text: string; language: Language }): Answer<{ label: "fine" | "worse" | "urgent" }>;
+  /** Sona Care: the patient's speech as text (Malay, English, Chinese or mixed). The stub has no ears: it returns no text. */
+  transcribe(input: { audio: Uint8Array; language?: Language }): Answer<{ text: string; language?: string }>;
+  /**
+   * Sona Care: an answer to the patient's question from their own discharge plan only. `grounded` false
+   * means the plan does not answer it (the app offers the care team); `urgent` puts the 999 line first.
+   * The stub answers nothing, so the app's authored plan answers stay in charge.
+   */
+  answerFromPlan(input: { question: string; plan: string; language: Language }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string }>;
+  /** After-discharge check-ins: worse or urgent replies become a flagged task (with the model's short symptom, when it read one). */
+  classifyReply(input: { text: string; language: Language }): Answer<{ label: "fine" | "worse" | "urgent"; symptom?: string }>;
 };
 
 const fixture = <T>(value: T) => Promise.resolve({ ...value, source: "fixture" as const });
+
+/** The authored claim codes, each found by the words that justify it (Amelia's note yields exactly CODES). */
+const CODE_RULES: [RegExp, Omit<Code, "evidence">][] = [
+  [/pneumonia/i, CODES[0]!], [/asthma/i, CODES[1]!], [/penicillin/i, CODES[2]!], [/chest (film|x-?ray)/i, CODES[3]!],
+];
 
 /** The app's authored content, served until the models come off hold. Nothing here reads its input the way a model would. */
 export const stubModels: Models = {
@@ -47,13 +60,17 @@ export const stubModels: Models = {
     { kind: "nodule", label: "9 mm nodule, right upper zone", sizeMm: 9, location: { x: 0.34, y: 0.3, zone: "right upper zone", box: [0.26, 0.29, 0.34, 0.39] } },
     { kind: "cardiomegaly", label: "Borderline heart size", location: { x: 0.56, y: 0.62, zone: "cardiac silhouette", box: [0.45, 0.39, 0.79, 0.73] } },
   ] : [] }),
-  draftDischarge: ({ patient }) => fixture({
-    summary: `${patient.name} was treated for ${patient.complaint.toLowerCase()} Sample discharge summary for review.`,
-    leaflet: "Take your medicines as prescribed and come back if the fever returns or breathing gets harder.",
-  }),
-  suggestCodes: () => fixture({ codes: [{ code: "J18.9", label: "Pneumonia, unspecified organism", kind: "Principal", evidence: "s1" }] }),
+  // The patient's own plan (authored for Amelia, rule-built from the record for anyone else), as a model would draft it.
+  draftDischarge: ({ patient, language }) => { const plan = planFor(patient); return fixture({ summary: plan.full, leaflet: plan.leaflet[language] }); },
+  // ponytail: keyword rules stand in for OpenMed extraction; each code cites the first sentence that names it, and a note naming none gets none.
+  suggestCodes: ({ sentences }) => fixture({ codes: CODE_RULES.flatMap(([re, code]) => {
+    const evidence = sentences.find(s => re.test(s.text))?.id;
+    return evidence ? [{ ...code, evidence }] : [];
+  }) }),
   synthesiseEvidence: ({ studies }) => fixture({ answer: "Sample synthesis: no model has weighed these studies.", studyIds: studies.map(s => s.id) }),
   huddleBrief: ({ beds, owners }) => fixture({ lines: huddle(beds, owners) }),
   // ponytail: keyword rule standing in for the classifier; the demo reply is "fever returned".
   classifyReply: ({ text }) => fixture({ label: readReply(text) }),
+  transcribe: () => fixture({ text: "" }),
+  answerFromPlan: () => fixture({ answer: "", grounded: false, urgent: false }),
 };

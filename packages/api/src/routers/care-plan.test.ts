@@ -2,7 +2,7 @@ import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { appointments, encounters } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
-import { createTestDb } from "@sona-ai/db/testing";
+import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
@@ -18,6 +18,7 @@ async function world() {
   const db = await createTestDb();
   const clock = { now: new Date("2026-09-26T10:00:00+08:00") };
   await seedDemo(db, clock.now);
+  await addClinician(db, "dr-aisyah");
   const as = (id: string) => createRouterClient(appRouter, { context: { db, session: user(id), now: () => clock.now } });
   const doctor = as("dr-aisyah"), amelia = as("amelia-account");
   await amelia.care.join({ code: (await doctor.care.code({ encounterId: "visit-1042" })).code });

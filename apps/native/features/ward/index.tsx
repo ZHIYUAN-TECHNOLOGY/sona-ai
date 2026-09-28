@@ -17,6 +17,10 @@ import { FollowUpList } from "@/features/findings";
 import { useFindings } from "@/features/live/findings-sync";
 import { useServerEncounter } from "@/features/live/sync";
 import { useServerBeds } from "@/features/live/ward-sync";
+import { Drafting, SampleLabel } from "@/components/sona/model-answer";
+import { useLiveHuddle } from "@/features/live/model-sync";
+import { useLiveChanges } from "@/features/live/channel";
+import { OpsStrip, WardTiles } from "./ops";
 import { DEMO_PATIENT, OWNERS, SUGGESTED, huddle, wardBeds, wardSummary, type Bed, type Owner } from "./model";
 
 /*
@@ -88,26 +92,28 @@ export function WardScreen() {
   }, [live]);
 
   const gridStyle = useAnimatedStyle(() => ({ opacity: interpolate(p.value, [0, 1], [1, 0.2]), transform: [{ scale: interpolate(p.value, [0, 1], [1, 0.97]) }] }));
-  const lines = huddle(beds, owners);
+  // Live mode: once opened, the brief is the server's over its own ward and owners; the local rule stays the fallback (and the collapsed preview).
+  const [wardVersion, setWardVersion] = useState(0);
+  useLiveChanges(["ward"], () => setWardVersion(v => v + 1));
+  // Keyed on the beds and on the server's own ward announcements (an owner saved there), so it never briefs before a write lands.
+  const server = useLiveHuddle(briefed && Boolean(serverBeds), `${beds.map(b => `${b.bed}:${b.blockers.map(x => x.id).join(",")}`).join("|")}#${wardVersion}`);
+  const local = huddle(beds, owners);
+  const lines = server.data?.lines ?? local;
   const audit = openItems(encounters, useSent());
   const current = open && beds.find(b => b.bed === open.bed);
 
   return <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas }}>
     <Animated.View style={[{ flex: 1 }, gridStyle]} pointerEvents={open ? "none" : "auto"}>
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 32, gap: 16 }}>
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          {([[`${summary.beds}`, "beds"], [`${summary.fit}`, "fit to go"], [`${summary.blocked}`, "blocked"], [`~${summary.bedHours}`, "bed-hours"]] as const).map(([n, label], i) =>
-            <View key={label} style={{ flex: 1, paddingVertical: 10, borderRadius: 16, borderCurve: "continuous", alignItems: "center", backgroundColor: i === 2 && summary.blocked ? "rgba(196,120,20,0.1)" : "rgba(20,28,40,0.04)" }}>
-              <Text style={{ fontSize: 20, fontWeight: "700", color: i === 2 && summary.blocked ? palette.amber : palette.ink, fontVariant: ["tabular-nums"] }}>{n}</Text>
-              <Text style={{ ...type.caption, color: palette.muted }}>{label}</Text>
-            </View>)}
-        </View>
+        <WardTiles summary={summary} />
+
+        <OpsStrip />
 
         <Surface feature style={{ padding: 14, gap: 10 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ ...type.overline, color: palette.blue }}>Huddle brief</Text>
-              <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{briefed ? "30 seconds for the team" : lines[1]}</Text>
+              <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{briefed ? "30 seconds for the team" : local[1]}</Text>
             </View>
             <Pressable accessibilityRole="button" accessibilityState={{ expanded: briefed }} onPress={() => { haptic("select"); setBriefed(v => !v); }}
               style={{ height: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: briefed ? "rgba(20,28,40,0.06)" : palette.blue }}>
@@ -115,10 +121,13 @@ export function WardScreen() {
               <Text style={{ fontSize: 14, fontWeight: "600", color: briefed ? palette.ink : palette.white }}>{briefed ? "Hide" : "Brief me"}</Text>
             </Pressable>
           </View>
-          {briefed && lines.map((line, i) => <Animated.View key={i} entering={reducedMotion ? undefined : riseIn({ delay: i * 60, distance: 8, duration: 300 })} style={{ flexDirection: "row", gap: 10 }}>
+          {briefed && server.loading && <Drafting label="Briefing the ward…" />}
+          {briefed && !server.loading && lines.map((line, i) => <Animated.View key={i} entering={reducedMotion ? undefined : riseIn({ delay: i * 60, distance: 8, duration: 300 })} style={{ flexDirection: "row", gap: 10 }}>
             <Text style={{ ...type.footnote, fontWeight: "700", color: palette.blue, width: 14 }}>{i + 1}</Text>
             <MarkedText text={line} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
           </Animated.View>)}
+          {briefed && <SampleLabel source={server.data?.source} />}
+          {briefed && server.error && <Text style={{ ...type.caption, color: palette.red }}>{server.error} · showing the ward's own count</Text>}
         </Surface>
 
         {/* Coding audit: the notes whose vague wording puts money at risk, one tap from the ward. */}

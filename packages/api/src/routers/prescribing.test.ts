@@ -1,7 +1,7 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { seedDemo } from "@sona-ai/db/seed";
-import { createTestDb } from "@sona-ai/db/testing";
+import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 
 import { appRouter } from "./index";
@@ -14,6 +14,7 @@ const session = {
 async function signedIn(signed = true) {
   const db = await createTestDb();
   await seedDemo(db);
+  await addClinician(db, "dr-aisyah");
   return createRouterClient(appRouter, { context: { db, session: signed ? session : null, now: () => new Date("2026-09-26T10:00:00+08:00") } });
 }
 const code = (p: Promise<unknown>) => p.then(() => null, (e: { code?: string }) => e.code);

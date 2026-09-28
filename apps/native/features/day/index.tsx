@@ -18,9 +18,13 @@ import { newestResult, serverDayPatients, serverVisit } from "@/features/live/da
 import { acknowledgeResult, serverDayCount, useServerData, useServerDay, useVisitTasks } from "@/features/live/server-day";
 import { localDate } from "@/features/tasks/state";
 import { flaggedItems, flaggedTaskIds } from "@/features/check-ins/model";
-import { useCheckIns } from "@/features/check-ins/state";
+import { useCheckIns, useKeptFlags } from "@/features/check-ins/state";
 import { FlagActions } from "@/features/check-ins/thread";
-import { dayOf, groupVisits, rankDay, rankOtherDay, scheduleFor, type DayItem, type DayTone, type ScheduleVisit } from "./model";
+import { BookingActions, useKeptBookings } from "@/features/bookings/parts";
+import { DemoTimeLine } from "@/features/live/demo-clock";
+import { useRole } from "@/features/live/roles";
+import { WardGlance } from "@/features/ward/ops";
+import { bookingItems, dayOf, groupVisits, rankDay, rankOtherDay, scheduleFor, type DayItem, type DayTone, type ScheduleVisit } from "./model";
 
 /*
  * My day, ranked (after Superlist's AI list making): on first open a small "Sorting your day…"
@@ -33,7 +37,7 @@ const TONE: Record<DayTone, { dot: string; ink: string; wash: string }> = {
   soon: { dot: "#C47814", ink: palette.amber, wash: "rgba(196,120,20,0.13)" },
   routine: { dot: "rgba(36,91,204,0.5)", ink: palette.blue, wash: "rgba(36,91,204,0.08)" },
 };
-const ICON: Record<DayItem["kind"], string> = { result: "testtube.2", blocker: "pills", visit: "calendar", task: "checklist", "check-in": "exclamationmark.bubble" };
+const ICON: Record<DayItem["kind"], string> = { result: "testtube.2", blocker: "pills", visit: "calendar", task: "checklist", "check-in": "exclamationmark.bubble", booking: "calendar.badge.clock" };
 let sortedOnce = false;
 
 const nowMinutes = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
@@ -158,6 +162,7 @@ function Row({ item, first, index, animate, pinned, onOpen, onPin, onSnooze }: {
           style={{ width: 36, height: 44, alignItems: "center", justifyContent: "center" }}><Icon name="ellipsis" size={15} color={palette.muted} /></Pressable>
       </View>
       {item.kind === "check-in" && <View style={{ paddingLeft: 62, paddingBottom: 12 }}><FlagActions item={item} /></View>}
+      {item.kind === "booking" && <View style={{ paddingLeft: 62, paddingRight: 14, paddingBottom: 12 }}><BookingActions item={item} /></View>}
       {menu && <Expand style={{ flexDirection: "row", gap: 8, paddingLeft: 62, paddingBottom: 12 }}>
         {[[pinned ? "Unpin" : "Pin to top", "pin", onPin], ["Snooze 1 h", "moon.zzz", onSnooze]].map(([label, icon, act]) => <Pressable key={label as string} accessibilityRole="button" accessibilityLabel={label as string}
           onPress={() => { haptic(); setMenu(false); (act as () => void)(); }} style={{ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: "rgba(20,28,40,0.06)" }}>
@@ -217,9 +222,13 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const [offset, setOffset] = useState(0);
   // Live backend mode: the day's appointments, results and tasks come from the server (fixtures otherwise).
   const { on: live } = useLive();
+  const { role } = useRole();
+  const managing = live && role === "management";
   const server = useServerData();
   const tasksOf = useVisitTasks();
   const checkIns = useCheckIns();
+  const kept = useKeptFlags();
+  const keptBookings = useKeptBookings();
   const { findings } = useFindings(); // lane F6: overdue follow-ups rank red
   const today = useServerDay(live ? localDate(new Date()) : undefined);
   const otherDay = useServerDay(live && offset !== 0 ? localDate(dayOf(offset)) : undefined);
@@ -246,7 +255,10 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
 
   const schedule = live && offset !== 0 ? (otherDay ?? []).map(a => serverVisit(a, fixturePatients.map(p => p.id))) : scheduleFor(offset, patients);
   // Flagged check-in replies rank in red above the rest; their tasks are not listed twice. Findings follow-ups join the same ranking.
-  const ranked = offset === 0 ? withFindings([...flaggedItems(checkIns), ...rankDay(patients, encounters, now, undefined, live ? { result, tasksOf: p => tasksOf(p).filter(t => !flaggedTaskIds(checkIns).includes(t.id)) } : undefined)], findings) : rankOtherDay(offset, schedule);
+  // Sona Care booking requests are amber rows with Confirm / Decline (their tasks are not listed twice); one just decided stays a beat.
+  const requests = bookingItems(server?.bookings ?? []);
+  const bookings = [...requests, ...keptBookings.filter(k => !requests.some(r => r.id === k.id))];
+  const ranked = offset === 0 ? withFindings([...flaggedItems(checkIns, kept), ...bookings, ...rankDay(patients, encounters, now, undefined, live ? { result, tasksOf: p => tasksOf(p).filter(t => !flaggedTaskIds(checkIns).includes(t.id) && !t.id.startsWith("booking:")) } : undefined)], findings) : rankOtherDay(offset, schedule);
   const need = ranked.filter(item => item.tone !== "routine").length;
   const date = dayOf(offset);
   const [switched, setSwitched] = useState(false);
@@ -269,6 +281,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
             </View>
             <Text style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{offset === 0 ? `${need} need you · ` : offset < 0 ? "Looking back · " : "Coming up · "}{schedule.length} {schedule.length === 1 ? "visit" : "visits"}</Text>
           </Pressable>
+          <DemoTimeLine />
         </View>
         {offset !== 0 ? <Pressable accessibilityRole="button" accessibilityLabel="Back to today" onPress={() => pick(0)} hitSlop={8}
           style={{ minHeight: 38, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, borderRadius: 19, backgroundColor: palette.blueWash, marginTop: 4 }}>
@@ -277,9 +290,11 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
       </View>
       {calendar && <MonthCard offset={offset} counts={o => live ? serverDayCount(localDate(dayOf(o))) : scheduleFor(o, patients).length} onPick={o => { setCalendar(false); pick(o); }} onClose={() => setCalendar(false)} />}
     </View>
-    <TimeBar key={offset} schedule={schedule} now={offset === 0 ? now : undefined} onOpen={id => onOpen(id, {})} />
-    {offset === 0 && actions}
-    {sorting ? <Sorting /> : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
+    {/* Management's day leads with the ward and this week's numbers, not clinical tasks. */}
+    {managing ? <WardGlance /> : <TimeBar key={offset} schedule={schedule} now={offset === 0 ? now : undefined} onOpen={id => onOpen(id, {})} />}
+    {/* A patient at home getting worse leads: their card (and its Call back / Book in) goes above the shortcuts. */}
+    {offset === 0 && (managing || top?.kind !== "check-in") && actions}
+    {managing ? null : sorting ? <Sorting /> : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
       {top && <Animated.View key={`top-${run}`} layout={LAYOUT} entering={animate ? riseIn({ distance: 14, scale: 0.97, duration: 450 }) : undefined}>
         <Pressable accessibilityRole="button" accessibilityLabel={`Most urgent: ${top.title}. ${top.reason}`} accessibilityHint="Opens the visit" onPress={() => onOpen(top.patientId, top.open)}
           style={({ pressed }) => ({ transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
@@ -297,9 +312,11 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
               {top.patientId && <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: palette.ink, alignItems: "center", justifyContent: "center" }}><Icon name="arrow.right" size={14} color={palette.white} /></View>}
             </View>
             {top.kind === "check-in" && <FlagActions item={top} />}
+            {top.kind === "booking" && <BookingActions item={top} />}
           </Surface>
         </Pressable>
       </Animated.View>}
+      {offset === 0 && top?.kind === "check-in" && actions}
       {rest.length > 0 && <Surface layout={LAYOUT} style={{ paddingVertical: 2 }}>
         {rest.map((item, i) => <Row key={`${run}-${item.id}`} item={item} first={i === 0} index={i + 1} animate={animate} pinned={pins.includes(item.id)} onOpen={() => onOpen(item.patientId, item.open)}
           onPin={() => setPins(list => list.includes(item.id) ? list.filter(id => id !== item.id) : [item.id, ...list])}

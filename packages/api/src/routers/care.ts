@@ -7,8 +7,13 @@ import { clockOf, type Context } from "../context";
 import { patientProcedure, protectedProcedure, publicProcedure, signedInProcedure } from "../index";
 import { checkInReplySchema } from "../contracts";
 import { listCheckIns, replyToCheckIn } from "./check-ins";
+import { clockOffsetOf } from "../clock";
+import { stubModels } from "../models";
+import { patientPlan, planText } from "./care-plan";
 import { loadEncounter } from "./encounter";
+import { careDosesRouter } from "./doses";
 import { careMessagesRouter } from "./messages";
+import { registerPushToken, unregisterPushToken } from "../push";
 
 /**
  * Sona Care, the patient app. A doctor issues a one-time code for a visit (printed as a QR on the
@@ -36,6 +41,9 @@ async function codeRow(db: Context["db"], code: string) {
   if (!row) throw new ORPCError("NOT_FOUND", { message: "That code was not recognised. Check it against your discharge paper." });
   return row;
 }
+
+// About 40 seconds of 16 kHz mono WAV, base64: a spoken question or reply, not a recording session.
+const MAX_AUDIO_BASE64 = 1_800_000;
 
 export const careRouter = {
   /** Clinician: the visit's code and link for the QR, issued once per visit (reissued only once it has expired). */
@@ -81,6 +89,35 @@ export const careRouter = {
     return { patientId: row.patient.id, name: row.patient.name, firstName: firstName(row.patient.name), hospital: row.hospital, encounterId: row.encounterId ?? undefined, dischargedAt };
   }),
 
+  /**
+   * Patient: their speech as text (Malay, English, Chinese or mixed), so they can speak a question or a
+   * check-in reply instead of typing it; the app shows the words before sending. Audio is read and
+   * dropped, never stored. Refused while no speech model is switched on (the stub has no ears).
+   */
+  transcribe: patientProcedure.input(z.object({ audio: z.string().min(16).max(MAX_AUDIO_BASE64), language: z.enum(["en", "ms", "zh"]).optional() }))
+    .handler(async ({ context, input }) => {
+      const heard = await (context.models ?? stubModels).transcribe({ audio: Uint8Array.from(atob(input.audio), c => c.charCodeAt(0)), language: input.language });
+      if (heard.source === "fixture") throw new ORPCError("PRECONDITION_FAILED", { message: "Speaking to Sona Care isn't switched on yet. Please type instead." });
+      return heard;
+    }),
+
+  /**
+   * Patient: a question answered from their own discharge plan only. `grounded` false means the plan
+   * does not say, so the app offers their care team; the stub answers nothing (source "fixture") and
+   * the app keeps its authored plan answers.
+   */
+  ask: patientProcedure.input(z.object({ question: z.string().trim().min(2).max(500) })).handler(async ({ context, input }) => {
+    const plan = await patientPlan(context);
+    if (plan.status !== "discharged") return { answer: "", grounded: false, urgent: false, source: "fixture" as const };
+    return (context.models ?? stubModels).answerFromPlan({ question: input.question, plan: planText(plan), language: plan.language });
+  }),
+
+  /** Patient: the hospital's demo clock offset (0 is real time), so the app's "now" matches the server's. */
+  clock: patientProcedure.handler(async ({ context }) => ({ offsetMs: await clockOffsetOf(context.db, context.hospitalId) })),
+
+  /** Patient: doses they marked taken (hold to take), so the care team sees adherence. */
+  doses: careDosesRouter,
+
   /** Patient: their own check-ins after discharge, each with their reply and how it was read. */
   checkIns: {
     list: patientProcedure.handler(({ context }) => listCheckIns(context.db, context.hospitalId, { patientId: context.patientId })),
@@ -89,4 +126,14 @@ export const careRouter = {
   },
   /** Patient: their thread with the care team. */
   messages: careMessagesRouter,
+  /** Patient: this phone's Expo push token, so check-ins, bookings and replies reach it (see ../push). */
+  push: {
+    register: patientProcedure.input(z.object({ token: z.string().trim().min(1).max(200), platform: z.enum(["ios", "android"]) }))
+      .handler(async ({ context, input }) => {
+        await registerPushToken(context.db, { ...input, userId: context.session.user.id, hospitalId: context.hospitalId, patientId: context.patientId });
+        return { registered: true };
+      }),
+    unregister: patientProcedure.input(z.object({ token: z.string().trim().min(1).max(200) }))
+      .handler(async ({ context, input }) => { await unregisterPushToken(context.db, input.token, context.session.user.id); return { registered: false }; }),
+  },
 };

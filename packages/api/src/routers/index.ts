@@ -7,9 +7,14 @@ import { clockOf } from "../context";
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
+import { accessLogRouter, clinicianRouter } from "./access-log";
 import { claimRouter } from "./claim";
 import { completeTask, createTask, dayRouter, patientsRouter, resultsRouter } from "./day"; // lane T, T2
+import { demoRouter } from "./demo";
+import { adherenceRouter } from "./doses";
+import { opsRouter } from "./ops";
 import { dischargeRouter } from "./discharge";
+import { bookingsRouter, careBookingsRouter, careDoctorsRouter } from "./bookings";
 import { careRouter } from "./care";
 import { carePlanRouter } from "./care-plan";
 import { messagesRouter } from "./messages";
@@ -39,9 +44,20 @@ export const appRouter = {
       user: context.session?.user,
     };
   }),
+  // Roles and the PDPA access trail: who is signed in as what, and who opened a patient's record.
+  clinician: clinicianRouter,
+  accessLog: accessLogRouter,
   encounter: encounterRouter,
+  // The demo clock (synthetic demo hospital only): jump to day 2, day 7 or the review, and back.
+  demo: demoRouter,
+  // Sona Care doses taken, read by the care team (flagged rows on My Day say what was missed).
+  adherence: adherenceRouter,
+  // Management: this week's numbers from the loops' own rows (the ops counter on the ward view).
+  ops: opsRouter,
   // Sona Care, the patient app; `messages` is the care team's side of its thread (announced as "messages")
-  care: { ...careRouter, ...carePlanRouter },
+  care: { ...careRouter, ...carePlanRouter, doctors: careDoctorsRouter, bookings: careBookingsRouter },
+  // Booking requests from Sona Care (confirm or decline on My Day) and free slots for Book in.
+  bookings: bookingsRouter,
   messages: messagesRouter,
   evidence: evidenceRouter,
   discharge: dischargeRouter,

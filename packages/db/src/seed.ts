@@ -1,11 +1,12 @@
 import { sql } from "drizzle-orm";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 import { DEMO_PATIENTS } from "@sona-ai/domain/demo-patients";
+import { DOCTORS } from "@sona-ai/domain/doctors";
 import { DEMO_WARD, WARD_FIXTURE, type BlockerKind } from "@sona-ai/domain/ward";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { admissions, appointments, casemixWeights, drugs, encounters, followUpRules, guaranteeLetters, hospitals, icd10Codes, insurerCriteria, labResults, notes, observations, patients } from "./schema";
+import { admissions, appointments, casemixWeights, doctors, drugs, encounters, followUpRules, guaranteeLetters, hospitals, icd10Codes, insurerCriteria, labResults, notes, observations, patients } from "./schema";
 
 /**
  * The demo ward's starting state, matching the app's fixtures (synthetic people only). Idempotent,
@@ -33,6 +34,13 @@ const WARD = WARD_FIXTURE.filter(b => b.name).map(b => {
 export const SEED_LAB_IDS = ["lab-1086-potassium", "lab-hb-1086", ...WARD.flatMap(w => w.labs.map(l => l.id))];
 /** The synthetic test doctor for local and staging end-to-end runs (never a real person or account). */
 export const TEST_DOCTOR = { name: "Dr Test Aisyah", email: "dr.test@sona.test", password: "Sona-7rcVayfxIuzr" };
+/**
+ * Synthetic test accounts for the other clinician roles (never real people). Sign up in the app with
+ * these; the first sign-in joins the demo hospital with the role in DEMO_CLINICIANS (demo.ts).
+ */
+export const TEST_NURSE = { name: "Nurse Test Mei Ling", email: "nurse.test@sona.test", password: "Sona-DqqMailMAYIgh" };
+export const TEST_BED_MANAGER = { name: "Test Bed Manager Hafiz", email: "beds.test@sona.test", password: "Sona-xcEhUim76L7g" };
+export const TEST_MANAGER = { name: "Test Manager Farah", email: "manager.test@sona.test", password: "Sona-A6lR268CDTts" };
 /** The synthetic test patient for Sona Care runs: signs up in the app and joins with the discharge code (never a real person). */
 export const TEST_PATIENT = { name: "Amelia Tan", email: "amelia.test@sona.test", password: "Care-MGnI1hY8BWoR" };
 // Any drizzle Postgres database: Neon in staging, PGlite in tests.
@@ -40,6 +48,9 @@ type AnyDb = PgAsyncDatabase<any, any>;
 
 export async function seedDemo(db: AnyDb, now = new Date()) {
   await db.insert(hospitals).values({ id: DEMO_HOSPITAL, name: "Demo General Hospital (synthetic)" }).onConflictDoNothing();
+  // The synthetic doctor directory Sona Care's Find a doctor reads.
+  await db.insert(doctors).values(DOCTORS.map(d => ({ ...d, careTeam: d.careTeam ?? false, hospitalId: DEMO_HOSPITAL })))
+    .onConflictDoUpdate({ target: doctors.id, set: { days: sql`excluded.days`, times: sql`excluded.times`, room: sql`excluded.room` } });
   // The same records the app's fixtures show; the rest of each record (history, medicines, vitals, sources) is kept whole in `record`.
   // The ward's own view of each admitted patient (status, SBAR, predicted time) is kept in `record.ward`.
   await db.insert(patients).values([

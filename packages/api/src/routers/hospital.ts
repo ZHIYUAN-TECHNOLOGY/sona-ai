@@ -1,23 +1,27 @@
 import { ORPCError } from "@orpc/server";
 import { careLinks, hospitalMembers } from "@sona-ai/db/schema/clinical";
-import { DEMO_HOSPITAL } from "@sona-ai/db/demo";
+import { DEMO_CLINICIANS, DEMO_HOSPITAL } from "@sona-ai/db/demo";
 import { eq } from "drizzle-orm";
 
 import type { Context } from "../context";
 
 /**
- * The hospital a signed-in user works for, from their membership row.
- * ponytail: a user with no membership joins the demo hospital on first use, which is only right
- * while every hospital holds synthetic data; production assigns members through an admin step.
+ * The hospital a signed-in clinician works for, and their role, from their membership row. Nobody
+ * becomes a clinician by signing in: only an existing member, or a seeded demo account on first use
+ * (with its role from DEMO_CLINICIANS). Everyone else (a Sona Care patient, a phone or Apple sign-up
+ * that never joined) is refused, whichever route or socket asks.
  */
-export async function hospitalOf(db: Context["db"], userId: string) {
-  const [member] = await db.select({ hospitalId: hospitalMembers.hospitalId }).from(hospitalMembers).where(eq(hospitalMembers.userId, userId));
-  if (member) return member.hospitalId;
-  // A Sona Care (patient) account never becomes a clinician, whichever route or socket asks.
-  if (await careLinkOf(db, userId)) throw new ORPCError("FORBIDDEN", { message: "This is a Sona Care account" });
-  await db.insert(hospitalMembers).values({ userId, hospitalId: DEMO_HOSPITAL }).onConflictDoNothing();
-  return DEMO_HOSPITAL;
+export async function memberOf(db: Context["db"], user: { id: string; email: string }) {
+  const [member] = await db.select({ hospitalId: hospitalMembers.hospitalId, role: hospitalMembers.role }).from(hospitalMembers).where(eq(hospitalMembers.userId, user.id));
+  if (member) return member;
+  if (await careLinkOf(db, user.id)) throw new ORPCError("FORBIDDEN", { message: "This is a Sona Care account" });
+  const role = DEMO_CLINICIANS[user.email.toLowerCase()];
+  if (!role) throw new ORPCError("FORBIDDEN", { message: "This account is not a clinician at any hospital" });
+  await db.insert(hospitalMembers).values({ userId: user.id, hospitalId: DEMO_HOSPITAL, role }).onConflictDoNothing();
+  return { hospitalId: DEMO_HOSPITAL, role };
 }
+
+export const hospitalOf = async (db: Context["db"], user: { id: string; email: string }) => (await memberOf(db, user)).hospitalId;
 
 /** An approval names the signed-in doctor or nobody; a blank name is left for the domain guard to refuse. */
 export function assertApprover(userId: string, approvedBy: string) {

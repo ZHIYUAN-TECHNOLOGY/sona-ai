@@ -1,6 +1,14 @@
 import { expect, test } from "bun:test";
 import { patients } from "@/features/encounter/fixtures";
-import { rankDay, testInSentence } from "./model";
+import { bookingItems, rankDay, testInSentence } from "./model";
+
+test("a booking request is an amber row that says who asks for whom, and why it is there", () => {
+  const request = { id: "booking:SYN-1042:lim:1", patientId: "SYN-1042", doctorName: "Dr. Lim Wei Jie", specialty: "Respiratory", title: "Amelia asks to see Dr. Lim · Thu 10:30", reason: "still coughing", createdAt: new Date("2026-09-28T02:00:00Z") };
+  const [item] = bookingItems([request], new Date("2026-09-28T02:25:00Z"));
+  expect(item).toMatchObject({ id: "booking-booking:SYN-1042:lim:1", kind: "booking", title: "Amelia asks to see Dr. Lim · Thu 10:30", tone: "soon", patientId: "SYN-1042", detail: "“still coughing” · Respiratory" });
+  expect(item.reason).toBe("Asked in Sona Care 25 min ago · confirm or decline");
+  expect(bookingItems([{ ...request, reason: null, title: null }], new Date("2026-09-28T05:00:00Z"))[0]).toMatchObject({ detail: "Dr. Lim Wei Jie · Respiratory", title: "Booking request · Dr. Lim Wei Jie" });
+});
 
 // Demo visits follow the clock; test from 30 minutes before the first one.
 const [h, m] = patients[0].time.split(":").map(Number);

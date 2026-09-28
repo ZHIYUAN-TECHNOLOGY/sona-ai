@@ -1,19 +1,36 @@
-import { appointments, encounters, findings, followUpRules } from "@sona-ai/db/schema/clinical";
+import { appointments, encounters, findings, followUpRules, patients } from "@sona-ai/db/schema/clinical";
 import { WARNING_SIGNS, appointmentWords, followUpTiming, patientMeds } from "@sona-ai/domain/care";
 import { checkInSchedule } from "@sona-ai/domain/check-ins";
 import { FOLLOW_UPS, LANGUAGES, planFor, type DischargeState } from "@sona-ai/domain/discharge";
-import type { Patient } from "@sona-ai/domain/types";
 import { and, eq } from "drizzle-orm";
 
 import { clockOf, type Context } from "../context";
 import { patientProcedure } from "../index";
+import { recordOf } from "./encounter";
+
+/** The patient's own discharge plan, built from their record in this hospital. */
+export async function planOf(db: Context["db"], hospitalId: string, patientId: string) {
+  const [row] = await db.select().from(patients).where(and(eq(patients.id, patientId), eq(patients.hospitalId, hospitalId)));
+  return planFor(row ? recordOf(row) : { id: patientId });
+}
 
 /** The patient's latest discharge, or none while they are still in hospital. */
-async function lastDischarge(db: Context["db"], hospitalId: string, patientId: string) {
+export async function lastDischarge(db: Context["db"], hospitalId: string, patientId: string) {
   const rows = await db.select({ state: encounters.state }).from(encounters).where(and(eq(encounters.patientId, patientId), eq(encounters.hospitalId, hospitalId)));
   return rows.map(r => (r.state as { discharge?: DischargeState }).discharge)
     .filter((d): d is DischargeState & { dischargedAt: string } => Boolean(d?.dischargedAt))
     .sort((a, b) => b.dischargedAt.localeCompare(a.dischargedAt))[0];
+}
+
+/**
+ * The patient's take-home dose schedule (new, changed and continuing medicines with their times) and
+ * when they left, or undefined while in hospital. Sona Care builds the same list from care.discharge.
+ */
+export async function doseScheduleOf(db: Context["db"], hospitalId: string, patientId: string) {
+  const d = await lastDischarge(db, hospitalId, patientId);
+  if (!d) return undefined;
+  const m = patientMeds(await planOf(db, hospitalId, patientId));
+  return { dischargedAt: d.dischargedAt, meds: [...m.new, ...m.changed, ...m.continue] };
 }
 
 /** The clinic review booked at discharge, counted from the day they left. */
@@ -22,13 +39,11 @@ const reviewDate = (d: DischargeState & { dischargedAt: string }) => {
   return days === undefined ? undefined : new Date(new Date(d.dischargedAt).getTime() + days * 86400_000);
 };
 
-/** Sona Care's read of the patient's own plan: what they take home and what comes next. */
-export const carePlanRouter = {
-  discharge: patientProcedure.handler(async ({ context }) => {
+/** The patient's own plan as Sona Care shows it (and as care.ask grounds its answers), or in-hospital. */
+export async function patientPlan(context: Context & { hospitalId: string; patientId: string }) {
     const d = await lastDischarge(context.db, context.hospitalId, context.patientId);
     if (!d) return { status: "in-hospital" as const };
-    // ponytail: planFor ignores the patient (one authored plan for the demo).
-    const plan = planFor({ id: context.patientId } as Patient);
+    const plan = await planOf(context.db, context.hospitalId, context.patientId);
     const date = reviewDate(d);
     return {
       status: "discharged" as const, dischargedAt: d.dischargedAt, language: d.language,
@@ -38,7 +53,25 @@ export const carePlanRouter = {
       followUp: date ? { title: "Clinic review", date } : null,
       checkIns: checkInSchedule(new Date(d.dischargedAt)).map(c => ({ day: c.day as number, date: c.dueAt })),
     };
-  }),
+}
+
+/** The plan as plain text for the model: only what the patient's own app already shows them. */
+export function planText(plan: Extract<Awaited<ReturnType<typeof patientPlan>>, { status: "discharged" }>) {
+  const meds = Object.entries(plan.medicines).flatMap(([group, list]) => list.map(m => `- ${m.name} (${group}): ${m.line}${m.take ? `; ${m.take}` : ""}`));
+  const leaflet = plan.leaflets.find(l => l.language === plan.language) ?? plan.leaflets[0];
+  return [
+    `Discharged: ${plan.dischargedAt}`,
+    "Medicines:", ...meds,
+    "Come back or call if:", ...plan.warningSigns.map(w => `- ${w}`),
+    plan.followUp ? `Follow-up: ${plan.followUp.title} on ${new Date(plan.followUp.date).toDateString()}` : "Follow-up: none booked",
+    `Check-ins: day ${plan.checkIns.map(c => c.day).join(" and ")} after discharge`,
+    `Leaflet (${leaflet?.label ?? ""}):`, leaflet?.text ?? "",
+  ].join("\n");
+}
+
+/** Sona Care's read of the patient's own plan: what they take home and what comes next. */
+export const carePlanRouter = {
+  discharge: patientProcedure.handler(({ context }) => patientPlan(context)),
 
   /**
    * What is coming up, earliest first: booked appointments (clinic visits and finding recalls), the

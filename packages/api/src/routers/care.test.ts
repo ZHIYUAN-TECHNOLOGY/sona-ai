@@ -2,7 +2,7 @@ import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { careLinks, hospitalMembers, hospitals } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
-import { createTestDb } from "@sona-ai/db/testing";
+import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 
 import type { Change } from "../events";
@@ -20,6 +20,7 @@ async function world() {
   const db = await createTestDb();
   const clock = { now: new Date("2026-09-26T10:00:00+08:00") };
   await seedDemo(db, clock.now);
+  await addClinician(db, "dr-aisyah");
   const heard: [string, Change][] = [];
   const as = (session: Session | null) => createRouterClient(appRouter, { context: { db, session, now: () => clock.now, announce: async (h: string, c: Change) => { heard.push([h, c]); } } });
   return { db, clock, heard, doctor: as(user("dr-aisyah")), amelia: as(user("amelia-account", "Amelia Tan")), anyone: as(null), as };
@@ -70,7 +71,7 @@ test("a Sona Care account is never made a clinician, whichever door it tries (th
   const { doctor, amelia, db } = await world();
   const { code } = await doctor.care.code({ encounterId: "visit-1042" });
   await amelia.care.join({ code });
-  expect((await hospitalOf(db, "amelia-account").catch(e => e)).code).toBe("FORBIDDEN");
+  expect((await hospitalOf(db, { id: "amelia-account", email: "amelia-account@demo.test" }).catch(e => e)).code).toBe("FORBIDDEN");
   expect(await db.select().from(hospitalMembers)).toHaveLength(1);
 });
 
@@ -98,8 +99,8 @@ test("Amelia's \"demam balik\" two days later sends her check-in and flags one t
   expect(day2.sentAt?.toISOString()).toBe(clock.now.toISOString());
   expect(day2.replies).toMatchObject([{ text: "demam balik", label: "worse", task: { title: "Amelia: fever returned after discharge", completed: false } }]);
   expect((await doctor.tasks.list()).filter(t => t.kind === "check-in").map(t => [t.title, t.owner, t.encounterId])).toEqual([["Amelia: fever returned after discharge", "Attending doctor", "visit-1042"]]);
-  // The doctor's app re-reads check-ins and My Day.
-  expect(heard).toEqual([["demo", { topic: "checkIns" }]]);
+  // The doctor's app re-reads check-ins and My Day; naming Amelia lets her own app re-read too.
+  expect(heard).toEqual([["demo", { topic: "checkIns", patientId: "SYN-1042" }]]);
 
   const day7 = await amelia.care.checkIns.reply({ checkInId: "check-in:visit-1042:7", text: "Sudah sihat, terima kasih" });
   expect(day7.replies).toMatchObject([{ label: "fine", task: null }]);
@@ -126,7 +127,7 @@ test("Amelia's message reaches her care team as one task for the attending docto
   expect((await amelia.care.messages.list()).map(m => [m.from, m.text])).toEqual([["patient", text]]);
   expect((await doctor.tasks.list()).filter(t => t.kind === "message").map(t => [t.title, t.owner, t.due, t.encounterId, t.completed]))
     .toEqual([["Amelia: Can I take paracetamol with the antibiotics you gave me? The…", "Attending doctor", "Today", "visit-1042", false]]);
-  expect(heard).toContainEqual(["demo", { topic: "messages" }]);
+  expect(heard).toContainEqual(["demo", { topic: "messages", patientId: "SYN-1042" }]);
 });
 
 test("the doctor reads Amelia's thread and answers once; the answer closes her message task, and only her own thread is hers", async () => {

@@ -1,12 +1,14 @@
 import { ORPCError } from "@orpc/server";
 import { DEMO_HOSPITAL } from "@sona-ai/db/demo";
 import { admissions, claims, encounters, findings, guaranteeLetters, labResults, patients, tasks } from "@sona-ai/db/schema/clinical";
-import { admittedBed, bedBlockers, byUrgency, freedBed, WARD_FIXTURE, type Bed, type WardRecord } from "@sona-ai/domain/ward";
+import { admittedBed, bedBlockers, byUrgency, freedBed, WARD_FIXTURE, type Bed, type Owner, type WardRecord } from "@sona-ai/domain/ward";
 import { and, asc, eq } from "drizzle-orm";
 
 import { assignOwnerSchema } from "../contracts";
 import type { Context } from "../context";
 import { protectedProcedure } from "../index";
+import { stubModels } from "../models";
+import { logAnswer } from "./encounter";
 
 /**
  * Every bed on the hospital's ward, in the shape the app draws: each admitted patient's ward record with
@@ -52,4 +54,13 @@ export const wardRouter = {
     return task!;
   }),
   beds: protectedProcedure.handler(({ context: { db, hospitalId } }) => liveBeds(db, hospitalId)),
+  /** The three-line huddle brief over the live ward and its owners (the app keeps its local rule as a fallback). */
+  huddle: protectedProcedure.handler(async ({ context }) => {
+    const { db, hospitalId } = context;
+    const beds = await liveBeds(db, hospitalId);
+    const owned = await db.select({ sourceId: tasks.sourceId, owner: tasks.owner }).from(tasks).where(and(eq(tasks.hospitalId, hospitalId), eq(tasks.kind, "blocker-owner")));
+    const owners = Object.fromEntries(owned.filter(t => t.sourceId).map(t => [t.sourceId!, t.owner as Owner]));
+    const answer = await (context.models ?? stubModels).huddleBrief({ beds, owners });
+    return logAnswer(db, null, "huddle-brief", answer, beds.flatMap(b => b.blockers.map(x => x.id)));
+  }),
 };

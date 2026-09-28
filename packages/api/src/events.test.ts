@@ -1,7 +1,7 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { seedDemo } from "@sona-ai/db/seed";
-import { createTestDb } from "@sona-ai/db/testing";
+import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 
 import { changeFor, type Change } from "./events";
@@ -23,18 +23,20 @@ test("a write names its topic and visit; a read announces nothing", () => {
 test("every successful write through the API is announced to the caller's hospital; refused writes and reads are not", async () => {
   const db = await createTestDb();
   await seedDemo(db);
+  await addClinician(db, "dr-aisyah");
   const heard: [string, Change][] = [];
   const api = createRouterClient(appRouter, { context: { db, session, announce: async (hospitalId: string, change: Change) => { heard.push([hospitalId, change]); } } });
   await api.claim.update({ encounterId: "visit-1042", organismConfirmed: true });
   await api.results.receive({ patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L" });
   await api.claim.status({ encounterId: "visit-1042" });
   await api.claim.send({ encounterId: "visit-1042", requestId: "c1", approvedBy: "dr-aisyah" }).catch(() => {}); // refused: a criterion is still open
-  expect(heard).toEqual([["demo", { topic: "claim", encounterId: "visit-1042" }], ["demo", { topic: "results" }]]);
+  expect(heard).toEqual([["demo", { topic: "claim", encounterId: "visit-1042" }], ["demo", { topic: "results", patientId: "SYN-1086" }]]);
 });
 
 test("a failed announcement never fails the write", async () => {
   const db = await createTestDb();
   await seedDemo(db);
+  await addClinician(db, "dr-aisyah");
   const api = createRouterClient(appRouter, { context: { db, session, announce: async () => { throw new Error("channel down"); } } });
   expect(await api.tasks.create({ encounterId: "visit-1042", title: "Repeat chest X-ray", owner: "Nurse", requestId: "t1" })).toMatchObject({ title: "Repeat chest X-ray" });
 });

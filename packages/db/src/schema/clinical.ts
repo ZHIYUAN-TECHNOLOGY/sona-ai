@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, customType, index, integer, jsonb, pgTable, real, text, timestamp, uniqueIndex, vector } from "drizzle-orm/pg-core";
+import { bigint, boolean, customType, index, integer, jsonb, pgTable, real, text, timestamp, uniqueIndex, vector } from "drizzle-orm/pg-core";
 
 /**
  * Clinical tables behind the built UI (see docs/delivery-plan.md). Every table that holds hospital
@@ -9,12 +9,56 @@ import { boolean, customType, index, integer, jsonb, pgTable, real, text, timest
 const tsvector = customType<{ data: string }>({ dataType: () => "tsvector" });
 const created = () => timestamp("created_at").defaultNow().notNull();
 
-export const hospitals = pgTable("hospitals", { id: text("id").primaryKey(), name: text("name").notNull() });
+/**
+ * `clockOffsetMs` is the demo clock: every route reads time as now + offset for this hospital (see
+ * clockOf), so a demo can jump to day 2 after discharge without waiting. 0 is real time.
+ */
+export const hospitals = pgTable("hospitals", { id: text("id").primaryKey(), name: text("name").notNull(), clockOffsetMs: bigint("clock_offset_ms", { mode: "number" }).notNull().default(0) });
 
 /** Which hospital a signed-in user works for; every clinical read and write is scoped by it. */
 export const hospitalMembers = pgTable("hospital_members", {
   userId: text("user_id").primaryKey(), hospitalId: text("hospital_id").notNull().references(() => hospitals.id), createdAt: created(),
+  /** What this clinician may see and do (see packages/api roles): doctor (default), nurse, bed manager, management. */
+  role: text("role", { enum: ["doctor", "nurse", "bed-manager", "management"] }).default("doctor").notNull(),
 });
+
+/**
+ * Who opened which patient's record, when and through which route (PDPA access trail). Written by
+ * the API for every clinician read or write that names a patient or visit; never for Sona Care's own.
+ */
+export const accessLogs = pgTable("access_logs", {
+  id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), userId: text("user_id").notNull(),
+  patientId: text("patient_id"), encounterId: text("encounter_id"), route: text("route").notNull(), at: timestamp("at").defaultNow().notNull(),
+}, t => [index("access_logs_patient").on(t.hospitalId, t.patientId, t.at)]);
+
+/** A phone that receives Sona Care push notifications (Expo push token), per signed-in patient account. */
+export const pushTokens = pgTable("push_tokens", {
+  token: text("token").primaryKey(), userId: text("user_id").notNull(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull(),
+  platform: text("platform").notNull(), updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, t => [index("push_tokens_patient").on(t.patientId)]);
+
+/**
+ * The hospital's clinicians as patients see them in Find a doctor (SYNTHETIC in the demo): specialty,
+ * room, languages, and weekly clinic sessions (weekday 0 Sun … 6 Sat, "HH:MM" Malaysia time).
+ */
+export const doctors = pgTable("doctors", {
+  id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull().references(() => hospitals.id),
+  name: text("name").notNull(), specialty: text("specialty").notNull(), years: integer("years").notNull(), rating: real("rating").notNull(), reviews: integer("reviews").notNull(),
+  room: text("room").notNull(), languages: jsonb("languages").$type<string[]>().notNull(), about: text("about").notNull(), tags: jsonb("tags").$type<string[]>().notNull(),
+  days: jsonb("days").$type<number[]>().notNull(), times: jsonb("times").$type<string[]>().notNull(),
+  /** On the demo ward's care team (the doctors a discharged patient's plan names). */
+  careTeam: boolean("care_team").default(false).notNull(),
+});
+
+/**
+ * A patient's request for a clinic slot with a doctor: the care team confirms (it becomes an
+ * appointment) or offers another time. One request per patient, doctor and slot.
+ */
+export const bookingRequests = pgTable("booking_requests", {
+  id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull(), doctorId: text("doctor_id").notNull().references(() => doctors.id),
+  startsAt: timestamp("starts_at").notNull(), reason: text("reason"), status: text("status", { enum: ["requested", "confirmed", "declined"] }).default("requested").notNull(),
+  taskId: text("task_id"), appointmentId: text("appointment_id"), createdAt: created(), decidedAt: timestamp("decided_at"),
+}, t => [uniqueIndex("booking_requests_slot").on(t.patientId, t.doctorId, t.startsAt)]);
 
 export const patients = pgTable("patients", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull().references(() => hospitals.id),
@@ -38,7 +82,7 @@ export const notes = pgTable("notes", {
 /** Follow-ups, blocker owners and coding queries are all tasks; idempotency_key makes creation replay-safe. */
 export const tasks = pgTable("tasks", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), encounterId: text("encounter_id"),
-  kind: text("kind", { enum: ["followup", "blocker-owner", "coding-query", "discharge", "finding", "check-in", "message"] }).notNull(),
+  kind: text("kind", { enum: ["followup", "blocker-owner", "coding-query", "discharge", "finding", "check-in", "message", "booking"] }).notNull(),
   title: text("title").notNull(), owner: text("owner").notNull(), due: text("due"), completed: boolean("completed").default(false).notNull(),
   sourceId: text("source_id"), idempotencyKey: text("idempotency_key").unique(), createdAt: created(),
 });
@@ -87,9 +131,20 @@ export const labResults = pgTable("lab_results", {
   acknowledgedBy: text("acknowledged_by"), acknowledgedAt: timestamp("acknowledged_at"),
 });
 
+/**
+ * Doses a Sona Care patient marked taken (hold to take), so the care team sees adherence. One row per
+ * dose: `key` is the medicine and due time (@sona-ai/domain/doses), so marking it twice changes nothing.
+ */
+export const doseLogs = pgTable("dose_logs", {
+  id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull().references(() => patients.id),
+  key: text("key").notNull(), takenAt: timestamp("taken_at").notNull(), createdAt: created(),
+}, t => [index("dose_logs_patient").on(t.hospitalId, t.patientId)]);
+
 export const appointments = pgTable("appointments", {
   id: text("id").primaryKey(), patientId: text("patient_id").notNull(), hospitalId: text("hospital_id").notNull(),
   startsAt: timestamp("starts_at").notNull(), kind: text("kind").notNull(),
+  /** When a doctor booked it from a flagged check-in (Book in), for the ops counter's flag-to-booked time. */
+  bookedAt: timestamp("booked_at"),
 });
 
 export const handoverAcceptances = pgTable("handover_acceptances", {

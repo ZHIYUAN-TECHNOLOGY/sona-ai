@@ -1,15 +1,16 @@
 import { ORPCError } from "@orpc/server";
-import { claims, encounters, patients, receipts } from "@sona-ai/db/schema/clinical";
-import { CODES, EMPTY_CLAIM, ESTIMATE, INSURER, decideClaimSend, type ClaimState } from "@sona-ai/domain/claim";
-import { and, eq, ne, sql } from "drizzle-orm";
+import { claims, encounters, icd10Codes, notes, patients, receipts } from "@sona-ai/db/schema/clinical";
+import { CODES, EMPTY_CLAIM, ESTIMATE, INSURER, decideClaimSend, noteFor, type ClaimState, type Sentence } from "@sona-ai/domain/claim";
+import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { claimUpdateSchema, approvedCommandSchema } from "../contracts";
 import { newReviewToken, reviewUrl } from "../insurer";
 import { clockOf } from "../context";
 import { protectedProcedure } from "../index";
+import { stubModels } from "../models";
 import { assertApprover } from "./hospital";
-import { loadEncounter } from "./encounter";
+import { loadEncounter, logAnswer, visitOf } from "./encounter";
 
 /**
  * Final guarantee letter: refused while an insurer criterion is open or nobody approved it, sent
@@ -66,6 +67,28 @@ export const claimRouter = {
     }).onConflictDoNothing();
     const [receipt] = await db.select().from(receipts).where(and(eq(receipts.kind, "claim"), eq(receipts.encounterId, input.encounterId)));
     return receipt!;
+  }),
+
+  /**
+   * Codes for the letter, suggested over the note's sentences: the latest saved note (with any fix the
+   * claim added), or the claim's own note excerpt when none is saved. A code must cite one of those
+   * sentences or it is dropped; each diagnosis code is looked up in the WHO ICD-10 table, and one the
+   * table lacks is kept but flagged, never silently trusted.
+   */
+  suggestCodes: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(async ({ context, input }) => {
+    const { db, hospitalId } = context;
+    const { state } = await visitOf(db, hospitalId, input.encounterId);
+    const claim: ClaimState = { ...EMPTY_CLAIM, ...(state.claim ?? {}) };
+    const [saved] = await db.select({ sentences: notes.sentences }).from(notes).where(eq(notes.encounterId, input.encounterId)).orderBy(desc(notes.revision)).limit(1);
+    const excerpt = noteFor(claim);
+    const sentences: Sentence[] = saved?.sentences.length ? [...saved.sentences, ...excerpt.filter(s => s.id === "organism" || s.id === "iv")] : excerpt;
+    const answer = await (context.models ?? stubModels).suggestCodes({ sentences });
+    const grounded = answer.codes.filter(c => sentences.some(s => s.id === c.evidence));
+    const diagnoses = grounded.filter(c => c.kind !== "Procedure").map(c => c.code);
+    const known = new Set(diagnoses.length ? (await db.select({ code: icd10Codes.code }).from(icd10Codes).where(inArray(icd10Codes.code, diagnoses))).map(r => r.code) : []);
+    // Procedures are not ICD-10 codes, so the table does not judge them (undefined).
+    const codes = grounded.map(c => ({ ...c, inTable: c.kind === "Procedure" ? undefined : known.has(c.code) }));
+    return logAnswer(db, input.encounterId, "claim-codes", { ...answer, codes, sentences }, codes.map(c => c.evidence));
   }),
 
   /** Polled by the app: the insurer's decision, the review link while it is with them, and their question if they queried. */

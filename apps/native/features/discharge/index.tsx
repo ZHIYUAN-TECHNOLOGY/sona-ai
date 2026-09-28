@@ -11,9 +11,13 @@ import { BlockerRow, useSettling, Pill, Ring } from "@/features/clinical/prescri
 import { Seal, haptic } from "@/features/clinical/medication-parts";
 import { capabilityLabels } from "@/features/encounter/conversation";
 import { useEncounter } from "@/features/encounter/store";
+import { LockedAction, useRole } from "@/features/live/roles";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { useServerEncounter } from "@/features/live/sync";
+import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
+import { useLiveDraft } from "@/features/live/model-sync";
 import { CareInvite } from "@/features/care-invite";
+import { refreshServerData } from "@/features/live/server-day";
 import { scheduleLine } from "@/features/check-ins/model";
 import { refreshCheckIns } from "@/features/check-ins/state";
 import { useFindings } from "@/features/live/findings-sync";
@@ -153,9 +157,14 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
   const { live, refresh } = useServerEncounter(patient);
   const { user } = useLive();
   const [serverError, setServerError] = useState<string>();
+  const role = useRole();
+  // Live mode: the full summary and the leaflet in the chosen language are drafted by the server from this patient's record.
+  const draft = useLiveDraft(patient.encounterId, state.language);
 
   if (!encounter) return null;
   const set = (change: Partial<DischargeState>) => {
+    // A role that cannot change the plan is told why, and nothing changes on this phone either.
+    if (live && !role.can("discharge.update")) { haptic("select"); setServerError(role.why("discharge.update")); return; }
     updateEncounter(value => ({ ...value, discharge: { ...(value.discharge ?? EMPTY_DISCHARGE), ...change } }));
     if (live) void api.discharge.update({ encounterId: patient.encounterId, ...change }).catch(e => setServerError(errorText(e)));
   };
@@ -171,7 +180,8 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
     if (live && user) {
       // The server decides: it refuses while anything blocks, and receipts once per request.
       api.discharge.request({ encounterId: patient.encounterId, requestId: requestId(), approvedBy: user.id })
-        .then(receipt => { updateEncounter(value => discharge(value, patient, fitAt, new Date(receipt.createdAt))); haptic("success"); void refreshCheckIns().catch(() => {}); })
+        // The server made the follow-up tasks; keeping the device's copies too would list each twice on My Day.
+        .then(receipt => { updateEncounter(value => ({ ...discharge(value, patient, fitAt, new Date(receipt.createdAt)), tasks: value.tasks })); haptic("success"); void refreshCheckIns().catch(() => {}); void refreshServerData().catch(() => {}); })
         .catch(e => { setServerError(errorText(e)); void refresh(true).catch(() => {}); })
         .finally(() => setBusy(false));
       return;
@@ -227,7 +237,7 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
           <Text style={{ ...type.overline, width: 72, paddingTop: 3, color: palette.muted }}>{label}</Text>
           <MarkedText text={value} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
         </Animated.View>)}
-        {full && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)}><MarkedText text={plan.full} style={{ ...type.footnote, color: palette.muted }} /></Animated.View>}
+        {full && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)}><MarkedText text={draft.data?.summary ?? plan.full} style={{ ...type.footnote, color: palette.muted }} /></Animated.View>}
         <Pressable accessibilityRole="button" accessibilityState={{ expanded: full }} onPress={() => setFull(v => !v)} hitSlop={6} style={{ alignSelf: "flex-start", minHeight: 32, flexDirection: "row", alignItems: "center", gap: 4 }}>
           <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{full ? "Show less" : "Read full"}</Text>
           <Icon name={full ? "chevron.up" : "chevron.right"} size={10} color={palette.blue} />
@@ -250,8 +260,11 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
             {LANGUAGES.map(l => <Pill key={l.id} label={l.label} on={state.language === l.id} onPress={() => set({ language: l.id })} />)}
           </View>
         </View>
-        <Animated.View key={state.language} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ padding: 12, borderRadius: 16, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" }}>
-          <Text selectable style={{ ...type.subhead, color: palette.ink }}>{plan.leaflet[state.language]}</Text>
+        <Animated.View key={state.language} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ padding: 12, gap: 6, borderRadius: 16, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" }}>
+          {draft.loading ? <Drafting label={`Drafting the leaflet in ${language.name}…`} lines={2} />
+            : <Arrive animate={Boolean(draft.data)}><Text selectable style={{ ...type.subhead, color: palette.ink }}>{draft.data?.leaflet ?? plan.leaflet[state.language]}</Text></Arrive>}
+          <SampleLabel source={draft.data?.source} />
+          {draft.error && <Text style={{ ...type.caption, color: palette.red }}>{draft.error} · showing the authored leaflet</Text>}
         </Animated.View>
       </Animated.View>}
 
@@ -275,6 +288,7 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
           <Chip label="Done" onPress={() => router.back()} />
         </View>
       </Animated.View>
+        : live && !role.can("discharge.request") ? <LockedAction label="Needs a doctor's approval" path="discharge.request" />
         : <Pressable accessibilityRole="button" accessibilityState={{ disabled: blocked.length > 0 || busy }} disabled={blocked.length > 0 || busy} onPress={go}
           style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: blocked.length ? "rgba(20,28,40,0.08)" : palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 200 } as never)}>
           {!blocked.length && <Icon name={busy ? "hourglass" : "bed.double"} size={15} color={palette.white} />}

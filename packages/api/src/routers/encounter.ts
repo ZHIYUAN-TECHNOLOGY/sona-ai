@@ -1,12 +1,14 @@
 import { ORPCError } from "@orpc/server";
-import { encounters } from "@sona-ai/db/schema/clinical";
-import type { Encounter } from "@sona-ai/domain/types";
+import { encounters, patients, provenance } from "@sona-ai/db/schema/clinical";
+import type { Encounter, Patient } from "@sona-ai/domain/types";
+import type { WardRecord } from "@sona-ai/domain/ward";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { encounterEditSchema, recordReviewSchema, type EncounterEdit, type RecordReview } from "../contracts";
 import type { Context } from "../context";
 import { protectedProcedure } from "../index";
+import { stubModels, type Origin } from "../models";
 
 /**
  * Encounter state on the server. Postgres holds the snapshot and is the arbiter of revisions: every
@@ -19,6 +21,35 @@ export type EncounterSnapshot = { encounterId: string; revision: number; state: 
 type Db = Context["db"];
 
 
+
+/** A patient row with its record spread back over it: what the models and planFor read. */
+export type PatientRecord = Patient & { ward?: WardRecord };
+export const recordOf = (row: typeof patients.$inferSelect, encounterId = ""): PatientRecord => ({
+  ...(row.record as Omit<PatientRecord, "id">), id: row.id, encounterId, time: "", name: row.name, initials: row.initials, age: row.age, sex: row.sex,
+  complaint: row.complaint, allergies: row.allergies, incomplete: row.incomplete,
+  history: (row.record as { history?: string[] }).history ?? [], medicines: (row.record as { medicines?: string[] }).medicines ?? [],
+});
+
+/** The patient's own record and transcript sources (not the reference library or teaching images): what a drafted answer cites. */
+export const recordSources = (patient: PatientRecord) => (patient.sources ?? []).filter(s => s.kind === "record" || s.kind === "transcript").map(s => s.id);
+
+/** The visit and its patient's whole record, only in the caller's hospital (another hospital's visit is not found). */
+export async function visitOf(db: Db, hospitalId: string, encounterId: string) {
+  const [row] = await db.select({ patient: patients, state: encounters.state }).from(encounters).innerJoin(patients, eq(patients.id, encounters.patientId))
+    .where(and(eq(encounters.id, encounterId), eq(encounters.hospitalId, hospitalId)));
+  if (!row) throw new ORPCError("NOT_FOUND", { message: `No encounter ${encounterId}` });
+  return { patient: recordOf(row.patient, encounterId), state: row.state as EncounterState };
+}
+
+/**
+ * Logs a model answer (or the fixture standing in for one) with the sources it drew on, as every AI
+ * output is (delivery plan, provenance), and returns where it came from so the app can label it.
+ */
+export async function logAnswer<T extends Origin>(db: Db, encounterId: string | null, kind: string, answer: T, sourceIds: string[]) {
+  const { source: _, model: __, ...output } = answer as T & { model?: string };
+  await db.insert(provenance).values({ id: crypto.randomUUID(), encounterId, kind, output, sourceIds, model: answer.source === "model" ? answer.model : "fixture", approvedBy: null });
+  return answer;
+}
 
 export const stale = (encounterId: string) => new ORPCError("CONFLICT", { message: `Encounter ${encounterId} has moved on; reload and retry` });
 
@@ -69,5 +100,16 @@ export const encounterRouter = {
     if (context.encounters) return context.encounters.recordReview(hospitalId, input);
     const current = await loadEncounter(context.db, hospitalId, input.encounterId);
     return saveEncounter(context.db, hospitalId, current.revision, applyReview(current, input));
+  }),
+  /** What to know before seeing the patient, read from their own record (a labelled fixture until Gemma is on). */
+  briefing: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(async ({ context, input }) => {
+    const { patient } = await visitOf(context.db, context.hospitalId, input.encounterId);
+    const answer = await (context.models ?? stubModels).briefing({ patient });
+    return logAnswer(context.db, input.encounterId, "briefing", answer, recordSources(patient));
+  }),
+  reasoning: protectedProcedure.input(z.object({ encounterId: z.string().min(1), question: z.string().trim().min(1).max(500) })).handler(async ({ context, input }) => {
+    const { patient } = await visitOf(context.db, context.hospitalId, input.encounterId);
+    const answer = await (context.models ?? stubModels).reasoning({ patient, question: input.question });
+    return logAnswer(context.db, input.encounterId, "reasoning", answer, answer.sourceIds);
   }),
 };

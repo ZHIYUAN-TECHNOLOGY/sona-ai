@@ -4,7 +4,7 @@ import { encounters, guaranteeLetters, hospitalMembers, hospitals } from "@sona-
 import { runNightlyAudit } from "../audit-job";
 import { decideReview, reviewTokenOf } from "../insurer";
 import { seedDemo } from "@sona-ai/db/seed";
-import { createTestDb } from "@sona-ai/db/testing";
+import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
@@ -18,6 +18,7 @@ const session = {
 async function signedIn(signed = true, clock = { now: new Date("2026-09-26T10:00:00+08:00") }) {
   const db = await createTestDb();
   await seedDemo(db);
+  await addClinician(db, "dr-aisyah");
   return { db, clock, api: createRouterClient(appRouter, { context: { db, session: signed ? session : null, now: () => clock.now } }) };
 }
 

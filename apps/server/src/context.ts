@@ -1,4 +1,6 @@
 import type { Context as ApiContext } from "@sona-ai/api/context";
+import type { Change } from "@sona-ai/api/events";
+import { patientsFor } from "@sona-ai/api/audience";
 import type { Context as HonoContext } from "hono";
 
 import type { EncounterStore } from "@sona-ai/api/context";
@@ -35,9 +37,21 @@ export async function createContext({ context }: CreateContextOptions): Promise<
 
 export type Context = Awaited<ReturnType<typeof createContext>>;
 
-/** Changes go to the hospital's channel, which pushes them to its connected apps. */
+/** The channel a Sona Care patient's app listens on (one per patient, so a change never reaches another patient). */
+export const patientChannel = (patientId: string) => `patient:${patientId}`;
+
+/**
+ * Changes go to the hospital's channel (its clinicians), and to the Sona Care app of each patient the
+ * change is about: the one named in it, the patient of its visit, or, for the demo clock, every
+ * patient linked at that hospital. A patient's channel only ever hears changes about them.
+ */
 export function announcer(env: Env): ApiContext["announce"] {
-  return (hospitalId, change) => env.CHANNELS.get(env.CHANNELS.idFromName(hospitalId)).announce(change);
+  const send = (name: string, change: Change) => env.CHANNELS.get(env.CHANNELS.idFromName(name)).announce(change);
+  return async (hospitalId, change) => {
+    await send(hospitalId, change);
+    const patients = await patientsFor(await getDb(), hospitalId, change).catch(() => []);
+    await Promise.all(patients.map(id => send(patientChannel(id), { topic: change.topic })));
+  };
 }
 
 /** Email only once a sender and the insurer's inbox are configured (see packages/infra/alchemy.run.ts). */
