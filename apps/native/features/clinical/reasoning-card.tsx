@@ -12,6 +12,8 @@ import type { FeatureProps, HistoryFact, Patient } from "@/features/encounter/ty
 import { Anchor, Takeaways, type Takeaway } from "@/components/sona/answer-kit";
 import { HistoryEditor } from "./history-editor";
 import { Caption, Disclosure } from "./reasoning-parts";
+import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
+import { useLiveReasoning } from "@/features/live/model-sync";
 
 type Evidence = { context: string; supports: string; conflicts: string; needed: string };
 type Possibility = { id: string; icon: string; title: string; summary: string; evidence: Evidence; sources: { label: string; id: string; kind: SourceKind }[]; xray?: boolean };
@@ -82,7 +84,16 @@ export function ReasoningCard({ patient, result, onSource, onOpen, onRequest }: 
   const takeaways: Takeaway[] = patient.incomplete
     ? [{ tone: "caution", text: "Not enough history yet to weigh possibilities" }, { tone: "info", text: "Collect onset, observations and background first" }, { tone: "caution", text: "Allergy and medicines are unknown" }]
     : [{ tone: "info", text: "Two unranked possibilities: pneumonia and an asthma contribution" }, { tone: "caution", text: "Chest examination and imaging are still needed" }, { tone: "good", text: "Long history of asthma; current control needs review" }];
+  // Live mode: the server answers the question asked, above the authored possibilities it does not replace.
+  const question = encounters[patient.id]?.requests.find(r => r.id === result?.requestId)?.prompt || "What could explain these symptoms?";
+  const server = useLiveReasoning(patient.encounterId, result?.requestId, question);
   return <View style={{ gap: 20 }}>
+    {server.live && <Surface feature style={{ padding: 16, gap: 10 }}>
+      {server.loading ? <Drafting label="Weighing the record…" /> : server.data ? <>
+        <Arrive><Text selectable style={{ fontSize: 16, lineHeight: 24, color: palette.ink }}>{server.data.answer}</Text></Arrive>
+        <Arrive index={1}><SampleLabel source={server.data.source} /></Arrive>
+      </> : <Text style={{ fontSize: 13, lineHeight: 18, color: palette.red }}>{server.error}</Text>}
+    </Surface>}
     <Takeaways items={takeaways} />
     <Anchor id="possibilities" title={patient.incomplete ? "Gaps" : "Possibilities"}>
     <Section icon={patient.incomplete ? "checklist" : "lightbulb"} tone={patient.incomplete ? "amber" : "violet"} title={patient.incomplete ? "What to collect first" : "Possibilities to explore"}>

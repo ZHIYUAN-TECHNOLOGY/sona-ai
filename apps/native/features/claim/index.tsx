@@ -15,7 +15,9 @@ import { useEncounter } from "@/features/encounter/store";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { useServerEncounter } from "@/features/live/sync";
 import type { PrescriptionCheck } from "@/features/encounter/types";
-import { CODES, EMPTY_CLAIM, ESTIMATE, INSURER, approveClaim, claimChecks, noteFor, type ClaimState, type Sentence } from "./model";
+import { CODES, EMPTY_CLAIM, ESTIMATE, INSURER, approveClaim, claimChecks, noteFor, type ClaimState, type Code, type Sentence } from "./model";
+import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
+import { useLiveCodes } from "@/features/live/model-sync";
 
 /*
  * Final guarantee letter request, one card. The note sits above its codes; tapping a code glides a
@@ -43,6 +45,8 @@ export function ClaimScreen() {
   const { live, refresh } = useServerEncounter(patient);
   const { user } = useLive();
   const [serverError, setServerError] = useState<string>();
+  // Live mode: the codes (and the note sentences they cite) come from the server; a fix to the note codes it again.
+  const server = useLiveCodes(patient?.encounterId ?? "", `${state.organismConfirmed}:${state.ivReasonAdded}`);
 
   if (!patient || !encounter) return null;
   const set = (change: Partial<ClaimState>) => {
@@ -50,7 +54,10 @@ export function ClaimScreen() {
     const { organismConfirmed, ivReasonAdded } = change;
     if (live && (organismConfirmed !== undefined || ivReasonAdded !== undefined)) void api.claim.update({ encounterId: patient.encounterId, organismConfirmed, ivReasonAdded }).catch(e => setServerError(errorText(e)));
   };
-  const note = noteFor(state);
+  const note: Sentence[] = server.data?.sentences ?? noteFor(state);
+  const codes: (Code & { inTable?: boolean })[] = server.data?.codes ?? CODES;
+  // The highlight follows a code that is still listed, else the first one.
+  const cited = codes.some(c => c.evidence === active) || note.some(s => s.id === active) ? active : codes[0]?.evidence ?? "";
   const rows = checks.filter(c => c.status === "blocked" || resolving.has(c.id));
   const passed = checks.filter(c => c.status === "passed" && !resolving.has(c.id));
   const approved = state.status === "approved";
@@ -117,19 +124,23 @@ export function ClaimScreen() {
 
       <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
         <Text style={{ ...type.overline, color: palette.muted }}>Evidence in the note</Text>
-        <Evidence note={note} active={active} />
+        <Evidence note={note} active={cited} />
       </Animated.View>
 
       <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 2 }}>
         <Text style={{ ...type.overline, color: palette.muted, paddingBottom: 6 }}>Codes · tap to see why</Text>
-        {CODES.map(c => { const on = c.evidence === active; return <Pressable key={c.code} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${c.code}, ${c.label}, ${c.kind}`}
+        {server.loading && <Drafting label="Coding the note…" style={{ paddingVertical: 6 }} />}
+        {server.data && !codes.length && <Text style={{ ...type.footnote, color: palette.amber }}>No codable diagnosis in the note yet</Text>}
+        {server.error && <Text style={{ ...type.footnote, color: palette.red }}>{server.error} · showing the authored codes</Text>}
+        {!server.loading && codes.map((c, i) => { const on = c.evidence === cited; return <Arrive key={c.code} index={i} animate={Boolean(server.data)}><Pressable accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${c.code}, ${c.label}, ${c.kind}${c.inTable === false ? ", not in the ICD-10 table" : ""}`}
           onPress={() => { haptic("select"); setActive(c.evidence); }} style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 44 }}>
           <View style={{ width: 58, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.blue : "rgba(20,28,40,0.06)", transitionProperty: "backgroundColor", transitionDuration: 180 } as never}>
             <Text style={{ fontSize: 13, fontWeight: "700", color: on ? palette.white : palette.ink, fontVariant: ["tabular-nums"], transitionProperty: "color", transitionDuration: 180 } as never}>{c.code}</Text>
           </View>
           <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.ink }}>{c.label}</Text>
-          <Text style={{ ...type.caption, color: palette.muted }}>{c.kind}</Text>
-        </Pressable>; })}
+          <Text style={{ ...type.caption, color: c.inTable === false ? palette.amber : palette.muted }}>{c.inTable === false ? "Not in ICD-10 table" : c.kind}</Text>
+        </Pressable></Arrive>; })}
+        <SampleLabel source={server.data?.source} />
       </Animated.View>
 
       {!approved && !sending && !sent && rows.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT}>

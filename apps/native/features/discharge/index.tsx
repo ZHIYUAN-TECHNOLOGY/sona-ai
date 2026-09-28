@@ -13,6 +13,8 @@ import { capabilityLabels } from "@/features/encounter/conversation";
 import { useEncounter } from "@/features/encounter/store";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { useServerEncounter } from "@/features/live/sync";
+import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
+import { useLiveDraft } from "@/features/live/model-sync";
 import { CareInvite } from "@/features/care-invite";
 import { refreshServerData } from "@/features/live/server-day";
 import { scheduleLine } from "@/features/check-ins/model";
@@ -154,6 +156,8 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
   const { live, refresh } = useServerEncounter(patient);
   const { user } = useLive();
   const [serverError, setServerError] = useState<string>();
+  // Live mode: the full summary and the leaflet in the chosen language are drafted by the server from this patient's record.
+  const draft = useLiveDraft(patient.encounterId, state.language);
 
   if (!encounter) return null;
   const set = (change: Partial<DischargeState>) => {
@@ -229,7 +233,7 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
           <Text style={{ ...type.overline, width: 72, paddingTop: 3, color: palette.muted }}>{label}</Text>
           <MarkedText text={value} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
         </Animated.View>)}
-        {full && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)}><MarkedText text={plan.full} style={{ ...type.footnote, color: palette.muted }} /></Animated.View>}
+        {full && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)}><MarkedText text={draft.data?.summary ?? plan.full} style={{ ...type.footnote, color: palette.muted }} /></Animated.View>}
         <Pressable accessibilityRole="button" accessibilityState={{ expanded: full }} onPress={() => setFull(v => !v)} hitSlop={6} style={{ alignSelf: "flex-start", minHeight: 32, flexDirection: "row", alignItems: "center", gap: 4 }}>
           <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{full ? "Show less" : "Read full"}</Text>
           <Icon name={full ? "chevron.up" : "chevron.right"} size={10} color={palette.blue} />
@@ -252,8 +256,11 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
             {LANGUAGES.map(l => <Pill key={l.id} label={l.label} on={state.language === l.id} onPress={() => set({ language: l.id })} />)}
           </View>
         </View>
-        <Animated.View key={state.language} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ padding: 12, borderRadius: 16, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" }}>
-          <Text selectable style={{ ...type.subhead, color: palette.ink }}>{plan.leaflet[state.language]}</Text>
+        <Animated.View key={state.language} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ padding: 12, gap: 6, borderRadius: 16, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" }}>
+          {draft.loading ? <Drafting label={`Drafting the leaflet in ${language.name}…`} lines={2} />
+            : <Arrive animate={Boolean(draft.data)}><Text selectable style={{ ...type.subhead, color: palette.ink }}>{draft.data?.leaflet ?? plan.leaflet[state.language]}</Text></Arrive>}
+          <SampleLabel source={draft.data?.source} />
+          {draft.error && <Text style={{ ...type.caption, color: palette.red }}>{draft.error} · showing the authored leaflet</Text>}
         </Animated.View>
       </Animated.View>}
 

@@ -1,15 +1,16 @@
 import { ORPCError } from "@orpc/server";
 import { admissions, encounters, findings, guaranteeLetters, patients, receipts, tasks } from "@sona-ai/db/schema/clinical";
 import { EMPTY_DISCHARGE, TYPICAL_WAIT_MINUTES, decideDischarge, dischargeChecks, dischargeTasks, planFor, type DischargeState } from "@sona-ai/domain/discharge";
-import type { Patient } from "@sona-ai/domain/types";
 import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
+import { z } from "zod";
 
 import { clockOf } from "../context";
 import { approvedCommandSchema, dischargeUpdateSchema } from "../contracts";
 import { protectedProcedure } from "../index";
+import { stubModels } from "../models";
 import { listFindings } from "./findings";
 import { assertApprover } from "./hospital";
-import { loadEncounter } from "./encounter";
+import { loadEncounter, logAnswer, recordOf, recordSources, visitOf } from "./encounter";
 import { scheduleCheckIns } from "./check-ins";
 
 /**
@@ -18,6 +19,12 @@ import { scheduleCheckIns } from "./check-ins";
  * for the same encounter returns the one receipt. No transaction: Neon's HTTP driver has none.
  */
 export const dischargeRouter = {
+  /** The summary and the leaflet in the chosen language, drafted from the patient's own record (a labelled fixture until Gemma is on). */
+  draft: protectedProcedure.input(z.object({ encounterId: z.string().min(1), language: z.enum(["ms", "en", "zh"]) })).handler(async ({ context, input }) => {
+    const { patient } = await visitOf(context.db, context.hospitalId, input.encounterId);
+    const answer = await (context.models ?? stubModels).draftDischarge({ patient, language: input.language });
+    return logAnswer(context.db, input.encounterId, "discharge-draft", { ...answer, language: input.language }, recordSources(patient));
+  }),
   /** Inline fixes on the discharge card. They do not touch prescribing, so the revision stays put. */
   update: protectedProcedure.input(dischargeUpdateSchema).handler(async ({ context: { db, hospitalId }, input }) => {
     const { encounterId, ...patch } = input;
@@ -43,9 +50,9 @@ export const dischargeRouter = {
     if (!row) throw new ORPCError("PRECONDITION_FAILED", { message: "The patient is not admitted" });
     const [gl] = await db.select().from(guaranteeLetters).where(eq(guaranteeLetters.admissionId, row.admission.id));
 
-    // ponytail: planFor ignores the patient beyond its name (one authored plan per demo).
-    const person = { id: row.patient.id, name: row.patient.name } as Patient;
-    const plan = planFor(person);
+    // The patient's own plan: its blockers, follow-up and take-home list are what the server checks.
+    const person = recordOf(row.patient, input.encounterId);
+    const plan = planFor({ ...person, bed: row.admission.bed });
     const state: DischargeState = { ...EMPTY_DISCHARGE, ...encounter.state.discharge, glReceived: !gl || gl.status === "received" };
     // The context's clock, so the check-in schedule follows a test's (or the demo's) day, not the wall clock.
     const at = clockOf(context);

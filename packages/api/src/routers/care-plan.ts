@@ -1,12 +1,18 @@
-import { appointments, encounters, findings, followUpRules } from "@sona-ai/db/schema/clinical";
+import { appointments, encounters, findings, followUpRules, patients } from "@sona-ai/db/schema/clinical";
 import { WARNING_SIGNS, appointmentWords, followUpTiming, patientMeds } from "@sona-ai/domain/care";
 import { checkInSchedule } from "@sona-ai/domain/check-ins";
 import { FOLLOW_UPS, LANGUAGES, planFor, type DischargeState } from "@sona-ai/domain/discharge";
-import type { Patient } from "@sona-ai/domain/types";
 import { and, eq } from "drizzle-orm";
 
 import { clockOf, type Context } from "../context";
 import { patientProcedure } from "../index";
+import { recordOf } from "./encounter";
+
+/** The patient's own discharge plan, built from their record in this hospital. */
+export async function planOf(db: Context["db"], hospitalId: string, patientId: string) {
+  const [row] = await db.select().from(patients).where(and(eq(patients.id, patientId), eq(patients.hospitalId, hospitalId)));
+  return planFor(row ? recordOf(row) : { id: patientId });
+}
 
 /** The patient's latest discharge, or none while they are still in hospital. */
 export async function lastDischarge(db: Context["db"], hospitalId: string, patientId: string) {
@@ -23,8 +29,7 @@ export async function lastDischarge(db: Context["db"], hospitalId: string, patie
 export async function doseScheduleOf(db: Context["db"], hospitalId: string, patientId: string) {
   const d = await lastDischarge(db, hospitalId, patientId);
   if (!d) return undefined;
-  // ponytail: planFor ignores the patient (one authored plan for the demo).
-  const m = patientMeds(planFor({ id: patientId } as Patient));
+  const m = patientMeds(await planOf(db, hospitalId, patientId));
   return { dischargedAt: d.dischargedAt, meds: [...m.new, ...m.changed, ...m.continue] };
 }
 
@@ -38,8 +43,7 @@ const reviewDate = (d: DischargeState & { dischargedAt: string }) => {
 export async function patientPlan(context: Context & { hospitalId: string; patientId: string }) {
     const d = await lastDischarge(context.db, context.hospitalId, context.patientId);
     if (!d) return { status: "in-hospital" as const };
-    // ponytail: planFor ignores the patient (one authored plan for the demo).
-    const plan = planFor({ id: context.patientId } as Patient);
+    const plan = await planOf(context.db, context.hospitalId, context.patientId);
     const date = reviewDate(d);
     return {
       status: "discharged" as const, dischargedAt: d.dischargedAt, language: d.language,
