@@ -17,9 +17,20 @@ import { Glass, Icon, useAccessibleEffects } from "./ui";
  * overshoot, 0.32 s at damping 0.55), with a soft glow and one haptic. `QuickRow` is the shelf
  * flattened into a slim glass capsule of glyphs and counts, sticky once the shelf scrolls away.
  */
-export type QuickTone = "urgent" | "caution" | "calm";
+export type QuickTone = "urgent" | "caution" | "good" | "calm";
 export type QuickAction = { key: string; label: string; icon: string; status: string; tone?: QuickTone; badge?: number; onPress: () => void };
-const INK: Record<QuickTone, string> = { urgent: palette.red, caution: palette.amber, calm: palette.muted };
+const INK: Record<QuickTone, string> = { urgent: palette.red, caution: palette.amber, good: "#0F6E66", calm: palette.muted };
+// The glyph's disc says the key's state, the same colours as everywhere else: red act now, amber needs
+// attention, teal ready, blue nothing pending. Colour always means something, so calm keys stay brand blue.
+const DISC: Record<QuickTone, { fill: string; glow: string; tint: [number, number, number] }> = {
+  urgent: { fill: palette.red, glow: "rgba(162,62,62,0.3)", tint: [0.86, 0.42, 0.42] },
+  caution: { fill: "#B7741E", glow: "rgba(183,116,30,0.3)", tint: [0.92, 0.66, 0.34] },
+  good: { fill: "#0F6E66", glow: "rgba(15,110,102,0.3)", tint: [0.36, 0.74, 0.68] },
+  calm: { fill: palette.blue, glow: "rgba(36,91,204,0.3)", tint: [0.42, 0.62, 0.95] },
+};
+// Each key keeps its own dither corner and grain (fixed by position, never random per render), so the
+// shelf reads as four distinct keys under one material; the grain takes the key's state colour.
+const DITHER: { corner: "tr" | "bl" | "tl" | "br"; pitch: number }[] = [{ corner: "tr", pitch: 3.5 }, { corner: "bl", pitch: 3 }, { corner: "tl", pitch: 4 }, { corner: "br", pitch: 3.2 }];
 const tap = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); };
 
 /*
@@ -37,6 +48,7 @@ function Key({ a, index, shimmer }: { a: QuickAction; index: number; shimmer: bo
   const down = useSharedValue(0), pulse = useSharedValue(1), sweep = useSharedValue(0);
   useEffect(() => { if (shimmer && !reducedMotion) sweep.set(withDelay(500 + index * 120, withTiming(1, { duration: 1100, easing: EASE_IN_OUT }))); }, [shimmer, reducedMotion, index, sweep]);
   const urgent = a.tone === "urgent";
+  const disc = DISC[a.tone ?? "calm"], dither = DITHER[index % DITHER.length]!;
   const key = useAnimatedStyle(() => ({ transform: [{ translateY: down.value * 2 }], boxShadow: `0 ${2 - down.value * 2}px 0 rgba(40,70,140,${0.14 - down.value * 0.1}), 0 ${8 - down.value * 6}px ${18 - down.value * 10}px rgba(40,70,140,0.10)` }));
   const glyph = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
   return <Animated.View style={[{ width: keyW, borderRadius: 24, borderCurve: "continuous" }, key]}>
@@ -48,15 +60,17 @@ function Key({ a, index, shimmer }: { a: QuickAction; index: number; shimmer: bo
         {/* The key's lit top edge. */}
         <View pointerEvents="none" style={{ position: "absolute", left: 10, right: 10, top: 0, height: 1.5, borderRadius: 1, backgroundColor: "rgba(255,255,255,0.95)" }} />
         {!reducedMotion && <View pointerEvents="none" style={{ position: "absolute", inset: 0, overflow: "hidden", borderRadius: 24 }}><HalftoneShimmer width={keyW} height={104} progress={sweep} /></View>}
-        {urgent && <View pointerEvents="none" style={{ position: "absolute", top: 0, right: 0, width: 90, height: 60 }}><HalftoneGlint width={90} height={60} origin={[90, 0]} reach={[84, 56]} pitch={3.5} strength={0.5} tint={[0.86, 0.42, 0.42]} hueShift={0} style={{ top: 0, left: 0 }} /></View>}
+        <View pointerEvents="none" style={{ position: "absolute", width: 96, height: 62, [dither.corner[0] === "t" ? "top" : "bottom"]: 0, [dither.corner[1] === "r" ? "right" : "left"]: 0, overflow: "hidden", borderRadius: 24 }}>
+          <HalftoneGlint width={96} height={62} origin={[dither.corner[1] === "r" ? 96 : 0, dither.corner[0] === "t" ? 0 : 62]} reach={[88, 58]} pitch={dither.pitch} strength={urgent ? 0.5 : 0.32} tint={disc.tint} hueShift={0} style={{ top: 0, left: 0 }} />
+        </View>
         <View style={{ minHeight: 104, padding: 14, justifyContent: "space-between", gap: 10 }}>
           <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
-            <Animated.View style={[{ width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", backgroundColor: urgent ? palette.red : palette.blue, boxShadow: `0 3px 8px ${urgent ? "rgba(162,62,62,0.3)" : "rgba(36,91,204,0.3)"}` }, glyph]}>
+            <Animated.View style={[{ width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", backgroundColor: disc.fill, boxShadow: `0 3px 8px ${disc.glow}` }, glyph]}>
               <Icon name={a.icon} size={17} color={palette.white} />
             </Animated.View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              {!!a.badge && <View style={{ minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: urgent ? palette.red : a.tone === "caution" ? palette.amber : "rgba(20,28,40,0.08)" }}>
-                <Text style={{ fontSize: 11, fontWeight: "700", color: urgent || a.tone === "caution" ? palette.white : palette.ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text>
+              {!!a.badge && <View style={{ minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: urgent ? palette.red : a.tone === "caution" ? palette.amber : a.tone === "good" ? "#0F6E66" : "rgba(20,28,40,0.08)" }}>
+                <Text style={{ fontSize: 11, fontWeight: "700", color: urgent || a.tone === "caution" || a.tone === "good" ? palette.white : palette.ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text>
               </View>}
               <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}><Icon name="arrow.up.right" size={10} color={palette.ink} /></View>
             </View>
@@ -97,7 +111,7 @@ export function QuickRow({ actions, scroll, from, top }: { actions: QuickAction[
       <View style={{ flexDirection: "row", paddingHorizontal: 6, paddingVertical: 5, gap: 2 }}>
         {actions.map(a => { const urgent = a.tone === "urgent"; return <Pressable key={a.key} accessibilityRole="button" accessibilityLabel={`${a.label}. ${a.status}`} onPress={() => { tap(); a.onPress(); }}
           style={({ pressed }) => ({ height: 34, minWidth: 52, paddingHorizontal: 12, borderRadius: 17, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, backgroundColor: pressed ? "rgba(255,255,255,0.5)" : "transparent" })}>
-          <Icon name={a.icon} size={15} color={urgent ? palette.red : palette.blue} />
+          <Icon name={a.icon} size={15} color={DISC[a.tone ?? "calm"].fill} />
           {!!a.badge && <Text style={{ fontSize: 13, fontWeight: "700", color: urgent ? palette.red : palette.ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text>}
         </Pressable>; })}
       </View>

@@ -44,7 +44,7 @@ export function managementActions(patients: Patient[], encounters: Record<string
   // Fit to go with nothing holding them: the blocked ones already lead the ward card above.
   const ready = Math.max(0, ward.fit - ward.blocked);
   return [
-    { key: "fit", label: "Fit to go", icon: "checkmark.circle", status: ready ? `${ready} ready to discharge` : "None ready yet", badge: ready, onPress: () => router.push({ pathname: "/ward", params: { filter: "fit" } }) },
+    { key: "fit", label: "Fit to go", icon: "checkmark.circle", status: ready ? `${ready} ready to discharge` : "None ready yet", tone: ready ? "good" : "calm", badge: ready, onPress: () => router.push({ pathname: "/ward", params: { filter: "fit" } }) },
     { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: `${patients.length} patients · read only`, onPress: () => router.push("/handover") },
     { key: "audit", label: "Coding audit", icon: "doc.text.magnifyingglass", status: audit.count ? `${audit.count} notes · ${audit.risk} at risk` : "All queries sent", tone: audit.count ? "caution" : "calm", badge: audit.count, onPress: () => router.push("/audit") },
     { key: "training", label: "Training data", icon: "shield.lefthalf.filled", status: training ?? "De-identified samples", tone: trainingBlocked ? "urgent" : "calm", badge: trainingBlocked, onPress: () => router.push("/training") },

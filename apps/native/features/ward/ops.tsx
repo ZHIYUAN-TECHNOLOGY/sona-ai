@@ -143,6 +143,6 @@ export function WardGlance() {
     </View>
     <BedBar beds={beds} />
     <ThisWeek />
-    <Action secondary label="Open the ward" icon="bed.double" onPress={() => router.push("/ward")} />
+    <Action label="Open the ward" icon="bed.double" onPress={() => router.push("/ward")} />
   </Surface>;
 }
