@@ -30,7 +30,7 @@ const newRequestId = () => `care-${Date.now()}-${Math.random().toString(36).slic
 type Draft = { text: string; requestId: string; at: Date };
 
 export default function Messages() {
-  const thread0 = useThread(REFETCH_MS), { data, error } = thread0;
+  const threadQuery = useThread(REFETCH_MS), { data, error } = threadQuery;
   const { me } = useMe();
   const lang = useLang(), t = tFor(lang);
   const insets = useSafeAreaInsets();
@@ -80,7 +80,7 @@ export default function Messages() {
 
     <ScrollView ref={scroll} keyboardDismissMode="interactive" onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })}
       contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16, gap: 14 }}>
-      {!data ? (error ? <LoadError query={thread0} /> : <ActivityIndicator color={palette.muted} />)
+      {!data ? (error ? <LoadError query={threadQuery} /> : <ActivityIndicator color={palette.muted} />)
         // Messages there on opening appear still; only what arrives while the screen is open moves.
         : <LayoutAnimationConfig skipEntering><View style={{ gap: 14 }}>
           {!thread.length && <Card><Text style={{ ...type.body, color: palette.muted }}>{t("msg.empty")}</Text></Card>}
