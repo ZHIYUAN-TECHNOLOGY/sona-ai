@@ -66,7 +66,7 @@ test("the scribe's draft names Amelia by first name: the rules miss it, the gate
   expect(note.patientLabel).toBe("Patient in Bed 6");
   expect(JSON.stringify(samples)).not.toMatch(/Amelia|SYN-1042/);
   expect(samples[0]).toMatchObject({ input: "demam balik", output: "worse" });
-  expect(await manager.training.status()).toEqual({ contributes: true, counts: { pending: 1, approved: 0, blocked: 1, excluded: 0, withdrawn: 0 }, lastDataset: null, deidentifier: "rules" });
+  expect(await manager.training.status()).toEqual({ contributes: true, counts: { pending: 1, approved: 0, blocked: 1, excluded: 0, withdrawn: 0 }, ready: 0, lastDataset: null, deidentifier: "rules" });
   // A blocked sample cannot be approved; it can be excluded. excludeFromTraining on a save keeps the note out too.
   expect(await codeOf(manager.training.decide({ id: note.id, decision: "approve" }))).toBe("SAMPLE_BLOCKED");
   expect((await manager.training.decide({ id: note.id, decision: "exclude" })).status).toBe("excluded");
@@ -81,9 +81,11 @@ test("export writes approved samples as JSONL, stamps the version, and the next 
   await amelia.care.checkIns.reply({ checkInId: "check-in:visit-1042:7", text: "Saya sihat, terima kasih" });
   const [second, first] = await manager.training.samples({ status: "pending" });
   await manager.training.decide({ id: first!.id, decision: "approve" });
+  expect((await manager.training.status()).ready).toBe(1);
   expect(await manager.training.export()).toEqual({ version: 1, rows: 1, key: `training/${DEMO_HOSPITAL}/v1.jsonl` });
   expect(new TextDecoder().decode(bucket.get(`training/${DEMO_HOSPITAL}/v1.jsonl`))).toBe(`{"source":"check-in-reply","input":"demam balik","output":"worse"}\n`);
   expect(await codeOf(manager.training.decide({ id: first!.id, decision: "exclude" }))).toBe("SAMPLE_EXPORTED");
+  expect((await manager.training.status()).ready).toBe(0);
   expect(await codeOf(manager.training.export())).toBe("NOTHING_TO_EXPORT");
   // An approved sample the gate now finds identity in aborts the whole export and is blocked.
   await manager.training.decide({ id: second!.id, decision: "approve" });

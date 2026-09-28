@@ -103,7 +103,7 @@ export function TrainingScreen() {
 
   const queue = samples?.filter(s => s.status === "pending" || s.status === "blocked" || decided.has(s.id)) ?? [];
   const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 40 * Math.min(i, 6), distance: 8, duration: 320 });
-  const approved = status?.counts.approved ?? 0;
+  const ready = status?.ready ?? 0, next = (status?.lastDataset?.version ?? 0) + 1;
 
   return <Screen>
     <View accessible accessibilityRole="header" style={{ gap: 6 }}>
@@ -124,10 +124,10 @@ export function TrainingScreen() {
     </Animated.View>)}
 
     {status && <Card feature label="Dataset">
-      <Text style={{ ...type.subhead, color: palette.ink }}>{status.lastDataset
-        ? `Approved samples not yet in v${status.lastDataset.version} export as v${status.lastDataset.version + 1}, after a fresh leak check.`
-        : `${approved} approved ${approved === 1 ? "row" : "rows"} will export as v1, after a fresh leak check.`}</Text>
-      <Action label={exporting ? "Exporting…" : "Export dataset"} icon="square.and.arrow.up" disabled={exporting || !approved} onPress={runExport} />
+      <Text style={{ ...type.subhead, color: palette.ink }}>{ready
+        ? `${ready} approved ${ready === 1 ? "row" : "rows"} will export as v${next}, after a fresh leak check.`
+        : status.lastDataset ? `Everything approved is in v${status.lastDataset.version}.` : "Approve samples to build the first dataset."}</Text>
+      <Action label={exporting ? "Exporting…" : "Export dataset"} icon="square.and.arrow.up" disabled={exporting || !ready} onPress={runExport} />
       {receipt && <View accessible accessibilityLiveRegion="polite" style={{ gap: 2 }}>
         <Text style={{ ...type.subhead, fontWeight: "600", color: TEAL }}>{exported(receipt)}</Text>
         <Text selectable style={{ ...type.caption, color: palette.muted }}>{receipt.key}</Text>

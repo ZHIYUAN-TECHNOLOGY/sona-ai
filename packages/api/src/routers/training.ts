@@ -131,10 +131,13 @@ export const trainingRouter = {
     const [hospital] = await db.select({ contributes: hospitals.contributesTraining }).from(hospitals).where(eq(hospitals.id, hospitalId));
     const grouped = await db.select({ status: trainingSamples.status, n: sql<number>`count(*)::int` }).from(trainingSamples).where(eq(trainingSamples.hospitalId, hospitalId)).groupBy(trainingSamples.status);
     const counts = Object.fromEntries(SAMPLE_STATUSES.map(s => [s, grouped.find(g => g.status === s)?.n ?? 0])) as Record<(typeof SAMPLE_STATUSES)[number], number>;
+    // Approved but in no dataset yet: what the next export takes.
+    const [ready] = await db.select({ n: sql<number>`count(*)::int` }).from(trainingSamples)
+      .where(and(eq(trainingSamples.hospitalId, hospitalId), eq(trainingSamples.status, "approved"), isNull(trainingSamples.datasetVersion)));
     const [last] = await db.select().from(trainingDatasets).where(eq(trainingDatasets.hospitalId, hospitalId)).orderBy(desc(trainingDatasets.version)).limit(1);
     const [latest] = await db.select({ deidentifier: trainingSamples.deidentifier }).from(trainingSamples).where(eq(trainingSamples.hospitalId, hospitalId)).orderBy(desc(trainingSamples.createdAt)).limit(1);
     return {
-      contributes: hospital?.contributes ?? false, counts,
+      contributes: hospital?.contributes ?? false, counts, ready: ready?.n ?? 0,
       lastDataset: last ? { version: last.version, rows: last.rows, exportedAt: last.exportedAt } : null,
       deidentifier: latest?.deidentifier ?? "rules",
     };
