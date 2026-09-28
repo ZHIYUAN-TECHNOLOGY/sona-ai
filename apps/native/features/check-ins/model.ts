@@ -5,6 +5,15 @@ import type { Patient } from "@/features/encounter/types";
 
 export * from "@sona-ai/domain/check-ins";
 
+/**
+ * Where "Call back" dials. The synthetic records hold no patient phone numbers, so it rings the
+ * ward's line (a placeholder number, not a working one) for the clinician to put the call through.
+ * ponytail: dial the patient's own number once the record carries one.
+ */
+export const WARD_PHONE = { display: "+60 3-0000 0000", tel: "+60300000000" };
+/** What the patient's Sona Care thread shows after a call-back is logged. */
+export const callBackNote = (clinician?: string | null) => `Called back by ${clinician?.trim() || "your care team"}.`;
+
 const first = (name: string) => name.split(" ")[0]!;
 const clock = (at: Date) => `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
 /** "Mon 28 Sep", as the day picker writes dates. */

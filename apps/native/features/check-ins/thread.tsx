@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, Pressable, View } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Linking, Pressable, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { MarkedText } from "@/components/sona/marked-text";
 import { LAYOUT, type riseIn } from "@/components/sona/motion";
+import { ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Chip, Icon, useAccessibleEffects } from "@/components/sona/ui";
@@ -11,9 +12,10 @@ import { haptic } from "@/features/clinical/medication-parts";
 import type { DayItem } from "@/features/day/model";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
-import { api, errorText, useLive } from "@/features/live";
+import { api, errorText, requestId, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
-import { shortDate, type ReplyLabel } from "./model";
+import { useRole } from "@/features/live/roles";
+import { callBackNote, shortDate, WARD_PHONE, type ReplyLabel } from "./model";
 import { addToVisit, bookIn, releaseFlag, resolveFlag, simulateReply, useCheckIns } from "./state";
 
 /*
@@ -64,12 +66,17 @@ export function CheckInThread({ patient, entering }: { patient: Patient; enterin
 }
 
 /**
- * My Day's one tap on a flagged reply: call back (simulated) or book in. Book in opens the slot picker
- * in place (the care-team doctor preselected); in live mode the booking is real: the server books the
- * slot, closes the flag and the patient's Sona Care shows the visit at once.
+ * My Day's one tap on a flagged reply: call back or book in. Call back opens the phone's dialer, then
+ * asks to log the call: the flag's task is done and, live, the patient's Sona Care thread says who
+ * called. Book in opens the slot picker in place (the care-team doctor preselected); in live mode the
+ * booking is real: the server books the slot, closes the flag and the patient's Sona Care shows the
+ * visit at once. Each action shows only for a role the server lets do it.
  */
 export function FlagActions({ item }: { item: DayItem }) {
-  const { on: live } = useLive();
+  const { on: live, user } = useLive();
+  const role = useRole();
+  const canCall = role.can("tasks.complete") && (!live || role.can("messages.reply"));
+  const canBook = role.can("checkIns.bookIn");
   const { reducedMotion } = useAccessibleEffects();
   const [doing, setDoing] = useState<string>();
   // After a live Book in: the visit, and her X-ray findings that could ride on it.
@@ -77,12 +84,17 @@ export function FlagActions({ item }: { item: DayItem }) {
   const [added, setAdded] = useState<string[]>([]);
   const [error, setError] = useState<string>();
   const [picking, setPicking] = useState(false);
+  // Dialled and waiting to be logged; `logging` while the note goes to the server.
+  const [dialled, setDialled] = useState(false);
+  const [logging, setLogging] = useState(false);
+  // One ID per flag, so a retried log stores one note.
+  const [noteId] = useState(requestId);
   const taskId = item.id.replace(/^check-in-/, "");
   const first = item.title.split(":")[0];
   // Book in at the slot picked in place: live, the server books it and her Sona Care shows it at once.
   const book = (slot: PickedSlot) => {
     haptic("select"); setError(undefined); setPicking(false);
-    if (!live) { act(`Booked in ${slotLine(slot.startsAt)}`); return; }
+    if (!live) { done(`Booked in ${slotLine(slot.startsAt)} · simulated`); return; }
     setDoing("Booking…");
     bookIn(taskId, true, slot).then(booked => {
       if (booked) setVisit({ id: booked.appointmentId, toAdd: booked.toAdd });
@@ -91,12 +103,26 @@ export function FlagActions({ item }: { item: DayItem }) {
       AccessibilityInfo.announceForAccessibility(`Booked in ${when}. ${first}'s Sona Care shows it now.`);
     }, e => { setError(errorText(e)); setDoing(undefined); });
   };
-  const act = (label: string) => {
-    haptic("select"); setError(undefined);
+  // The confirmation, a beat to read it, then the flag's task is closed and the row leaves.
+  const done = (label: string) => {
     setDoing(label);
-    AccessibilityInfo.announceForAccessibility(`${label}, simulated`);
-    // A beat to read the confirmation before the row leaves.
+    AccessibilityInfo.announceForAccessibility(label);
     setTimeout(() => { resolveFlag(taskId, live).catch(e => { setError(errorText(e)); setDoing(undefined); }); }, reducedMotion ? 0 : 1200);
+  };
+  const call = () => {
+    haptic("select"); setError(undefined); setPicking(false); setDialled(true);
+    Linking.openURL(`tel:${WARD_PHONE.tel}`).catch(() => setError(`This device can't place calls. Dial ${WARD_PHONE.display} from a phone, then log it.`));
+  };
+  // Live: the note lands in her Sona Care thread first; only then is the call shown as logged.
+  const logCall = async () => {
+    haptic("select"); setError(undefined);
+    if (live && item.patientId) {
+      setLogging(true);
+      try { await api.messages.reply({ patientId: item.patientId, text: callBackNote(user?.name), requestId: noteId }); }
+      catch (e) { setError(`Not logged: ${errorText(e)}`); return; }
+      finally { setLogging(false); }
+    }
+    done(live && item.patientId ? `Called back · noted in ${first}'s Sona Care` : "Called back · logged");
   };
   const add = (f: { id: string; test: string }) => {
     if (!visit) return;
@@ -110,7 +136,7 @@ export function FlagActions({ item }: { item: DayItem }) {
     {doing === "Booking…" ? <View style={{ flexDirection: "row", alignItems: "center", gap: 6, minHeight: 34 }}>
       <ActivityIndicator size="small" color={palette.muted} />
       <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>Booking…</Text>
-    </View> : <DoneLine text={`${doing}${live && doing.startsWith("Booked in ") ? "" : " · simulated"}`} />}
+    </View> : <DoneLine text={doing} />}
     {visit?.toAdd.map(f => added.includes(f.id)
       ? <View key={f.id} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         <Icon name="checkmark.circle.fill" size={13} color={palette.green} />
@@ -132,18 +158,25 @@ export function FlagActions({ item }: { item: DayItem }) {
     </Pressable>}
     {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
   </Animated.View>;
+  if (!canCall && !canBook) return live && item.patientId ? <DoseLine patientId={item.patientId} /> : null;
+  const pill = (label: string, icon: string, primary: boolean, onPress: () => void, extra?: { expanded?: boolean; busy?: boolean; a11y?: string }) =>
+    <Pressable key={label} accessibilityRole="button" accessibilityLabel={extra?.a11y ?? label} accessibilityState={{ expanded: extra?.expanded, busy: extra?.busy }} disabled={extra?.busy} onPress={onPress}
+      style={({ pressed }) => ({ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: primary ? palette.ink : extra?.expanded ? "rgba(36,91,204,0.12)" : "rgba(20,28,40,0.06)", opacity: pressed || extra?.busy ? 0.7 : 1 })}>
+      <Icon name={icon} size={12} color={primary ? palette.white : extra?.expanded ? palette.blue : palette.ink} />
+      <Text style={{ fontSize: 14, fontWeight: "600", color: primary ? palette.white : extra?.expanded ? palette.blue : palette.ink }}>{label}</Text>
+    </Pressable>;
   return <View style={{ gap: 6 }}>
     {live && item.patientId && <DoseLine patientId={item.patientId} />}
-    <View style={{ flexDirection: "row", gap: 8 }}>
-      {([["Call back", "phone.fill"], ["Book in", "calendar.badge.plus"]] as const).map(([label, icon], i) => <Pressable key={label} accessibilityRole="button" accessibilityLabel={`${label} ${first}`}
-        accessibilityState={i ? { expanded: picking } : undefined} onPress={() => { if (!i) act("Called back"); else { haptic("select"); setPicking(p => !p); } }}
-        style={({ pressed }) => ({ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: i ? (picking ? "rgba(36,91,204,0.12)" : "rgba(20,28,40,0.06)") : palette.ink, opacity: pressed ? 0.8 : 1 })}>
-        <Icon name={icon} size={12} color={i ? (picking ? palette.blue : palette.ink) : palette.white} />
-        <Text style={{ fontSize: 14, fontWeight: "600", color: i ? (picking ? palette.blue : palette.ink) : palette.white }}>{label}</Text>
-      </Pressable>)}
+    {dialled && <Text selectable style={{ ...type.footnote, color: palette.muted }}>Dialled the ward line, {WARD_PHONE.display} (no patient number on file). Log the call when you're done.</Text>}
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+      {dialled
+        ? [pill(logging ? "Logging…" : "Log call-back", "checkmark", true, () => { void logCall(); }, { busy: logging, a11y: `Log call-back to ${first}` }),
+          pill("Not now", "xmark", false, () => { setDialled(false); setError(undefined); })]
+        : [canCall && pill("Call back", "phone.fill", true, call, { a11y: `Call back ${first}` }),
+          canBook && pill("Book in", "calendar.badge.plus", false, () => { haptic("select"); setPicking(p => !p); }, { expanded: picking, a11y: `Book in ${first}` })]}
     </View>
     {picking && <SlotPicker live={live} onPick={book} onCancel={() => setPicking(false)} />}
-    {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
+    {error && (dialled ? <ErrorLine text={error} onRetry={error.startsWith("Not logged") ? () => { void logCall(); } : undefined} /> : <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>)}
   </View>;
 }
 
