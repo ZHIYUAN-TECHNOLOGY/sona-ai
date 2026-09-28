@@ -11,7 +11,7 @@
     "web": "expo start --web",
     "check-types": "tsc -b ../../packages/api && tsc --noEmit",
     "env:generate": "varlock codegen",
-    "test": "bun test features"
+    "test": "bun test features lib"
   },
   "dependencies": {
     "@better-auth/expo": "catalog:",
