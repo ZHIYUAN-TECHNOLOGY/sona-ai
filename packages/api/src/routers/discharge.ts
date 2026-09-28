@@ -1,6 +1,6 @@
 import { ORPCError } from "@orpc/server";
-import { admissions, encounters, findings, guaranteeLetters, patients, receipts, tasks } from "@sona-ai/db/schema/clinical";
-import { EMPTY_DISCHARGE, TYPICAL_WAIT_MINUTES, decideDischarge, dischargeChecks, dischargeTasks, planFor, type DischargeState } from "@sona-ai/domain/discharge";
+import { admissions, encounters, findings, guaranteeLetters, labResults, patients, receipts, tasks } from "@sona-ai/db/schema/clinical";
+import { EMPTY_DISCHARGE, TYPICAL_WAIT_MINUTES, decideDischarge, dischargeChecks, dischargeTasks, planFor, type DischargeState, type Wait } from "@sona-ai/domain/discharge";
 import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
@@ -58,11 +58,18 @@ export const dischargeRouter = {
     const at = clockOf(context);
     const fitAt = row.admission.fitAt ?? new Date(at.getTime() - plan.fitMinutesAgo * 60000);
     const openFindings = await listFindings(db, hospitalId, at, and(eq(findings.encounterId, input.encounterId), eq(findings.status, "open"))); // lane F6
+    // The rest of what the ward shows as blocking this bed (ward.ts, bedBlockers): pending results and a ride still to arrange.
+    const pending = await db.select({ id: labResults.id, test: labResults.test }).from(labResults).where(and(eq(labResults.patientId, row.patient.id), eq(labResults.flag, "pending")));
+    const transport = (encounter.state as { transport?: { label: string; detail: string } }).transport;
+    const waits: Wait[] = [
+      ...pending.map(r => ({ id: `result-${r.id}`, label: r.test, detail: "Pending" })),
+      ...(transport ? [{ id: "transport", ...transport }] : []),
+    ];
     // The domain guard decides; the refusal carries the blocked checks so the app can show them.
-    const decision = decideDischarge(state, plan, input, fitAt, at, openFindings);
+    const decision = decideDischarge(state, plan, input, fitAt, at, openFindings, waits);
     if (decision.status === "refused") throw new ORPCError("PRECONDITION_FAILED", {
       message: decision.reason === "unapproved" ? "Discharge needs a named approver" : "Discharge is blocked",
-      data: { reason: decision.reason, blockers: dischargeChecks(state, plan, openFindings).filter(c => c.status === "blocked") },
+      data: { reason: decision.reason, blockers: dischargeChecks(state, plan, openFindings, waits).filter(c => c.status === "blocked") },
     });
     const { savedMinutes } = decision;
     const followUps = dischargeTasks(person, state, plan, at);

@@ -62,13 +62,14 @@ test("the discharge draft is the patient's own plan in the chosen language: Amel
 
 test("a discharge is checked against the patient's own plan: Nurul's take-home list and her bed", async () => {
   const { db, api } = await world();
-  // Nurul's letter arrived and her medicines are confirmed; only her own follow-up blocks, worded for her infection.
+  // Her medicines are confirmed; her letter, her own follow-up (worded for her infection) and the pending sensitivities block, as her ward bed shows.
   await db.update(encounters).set({ state: { discharge: { medsConfirmed: true } } }).where(eq(encounters.id, "visit-2002"));
   const refused = await api.discharge.request({ encounterId: "visit-2002", requestId: "d-1", approvedBy: "dr-aisyah" }).catch(e => e);
   expect(refused.code).toBe("PRECONDITION_FAILED");
   expect(refused.data.blockers.map((b: { label: string; detail: string }) => [b.label, b.detail])).toEqual([
     ["Final guarantee letter", "Synthetic insurer · requested today"],
     ["Follow-up booked", "Clinic review · 1–2 weeks, with the urine culture result"],
+    ["Urine culture sensitivities", "Pending"],
   ]);
 });
 

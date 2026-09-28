@@ -158,8 +158,11 @@ export const planFor = (record: PlanRecord): DischargePlan =>
 /** An incidental finding nobody has tracked or dismissed yet (demo flow 6); it travels with the patient. */
 export type OpenFinding = { id: string; label: string; action: string | null; dueAt?: Date | string | null };
 
+/** Something the ward is still waiting on (a pending result, a ride home), a blocker exactly as the ward shows it. */
+export type Wait = { id: string; label: string; detail: string };
+
 /** What still stands between the patient and the door, in the prescribe card's check shape. */
-export function dischargeChecks(state: DischargeState, plan: DischargePlan, findings: OpenFinding[] = []): PrescriptionCheck[] {
+export function dischargeChecks(state: DischargeState, plan: DischargePlan, findings: OpenFinding[] = [], waits: Wait[] = []): PrescriptionCheck[] {
   const changes = plan.meds.filter(m => m.change !== "unchanged");
   const count = (c: MedChange["change"]) => changes.filter(m => m.change === c).length;
   return [
@@ -169,6 +172,7 @@ export function dischargeChecks(state: DischargeState, plan: DischargePlan, find
     { id: "meds", label: "Take-home medicines", status: state.medsConfirmed ? "passed" : "blocked", detail: [count("changed") && `${count("changed")} changed`, count("new") && `${count("new")} new`, count("stopped") && `${count("stopped")} stopped`].filter(Boolean).join(" · ") },
     { id: "followup", label: "Follow-up booked", status: state.followUp ? "passed" : "blocked", detail: plan.followUp },
     ...findings.map(f => ({ id: `finding-${f.id}`, label: f.label, status: "blocked" as const, detail: followUpLine(f) })),
+    ...waits.map(w => ({ ...w, status: "blocked" as const })),
   ];
 }
 
@@ -202,9 +206,9 @@ export type DischargeReceipt = { status: "discharged"; encounterId: string; requ
 export const openLabels = (checks: PrescriptionCheck[]) => checks.filter(c => c.status === "blocked").map(c => c.label);
 
 /** Server rule: no discharge without a named approver or while any blocker is open, whatever the app shows. */
-export function decideDischarge(state: DischargeState, plan: DischargePlan, command: Approval, fitAt: Date, at: Date, findings: OpenFinding[] = []): Refusal | DischargeReceipt {
+export function decideDischarge(state: DischargeState, plan: DischargePlan, command: Approval, fitAt: Date, at: Date, findings: OpenFinding[] = [], waits: Wait[] = []): Refusal | DischargeReceipt {
   if (!command.approvedBy.trim()) return { status: "refused", reason: "unapproved", open: [] };
-  const open = openLabels(dischargeChecks(state, plan, findings));
+  const open = openLabels(dischargeChecks(state, plan, findings, waits));
   if (open.length) return { status: "refused", reason: "blocked", open };
   const { encounterId, requestId, approvedBy } = command;
   return { status: "discharged", encounterId, requestId, approvedBy, dischargedAt: at.toISOString(), savedMinutes: minutesSaved(fitAt, at) };
