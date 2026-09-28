@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 import { admissions, appointments, auditItems, careCodes, careLinks, careMessages, patients, checkInReplies, checkIns, claims, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, hospitals, notes, provenance, receipts, tasks, trainingConsents, trainingDatasets, trainingSamples } from "./schema";
 import { resetDemo } from "./reset";
-import { DEMO_HOSPITAL, seedDemo } from "./seed";
+import { DEMO_HOSPITAL, seedDemo, seedTestPatient, TEST_PATIENT } from "./seed";
 import { createTestDb } from "./testing";
 
 type Db = Awaited<ReturnType<typeof createTestDb>>;
@@ -58,4 +58,12 @@ test("a demo reset undoes a whole run (discharge, claim, receipts, tasks, findin
   expect((await db.select().from(patients)).map(p => p.allergies).sort()).toEqual(["Penicillin — reported rash; details need confirmation", ...Array(7).fill(null)]);
   expect((await db.select().from(notes)).map(n => n.revision)).toEqual([1]);
   expect((await db.select().from(appointments)).map(a => a.id).sort()).toEqual(["appt-SYN-1042", "appt-SYN-1086"]);
+});
+
+test("a demo reset keeps the demo patient's Sona Care account linked to Amelia", async () => {
+  const db = await createTestDb();
+  await seedDemo(db);
+  const id = await seedTestPatient(db);
+  await resetDemo(db);
+  expect(await db.select({ userId: careLinks.userId, patientId: careLinks.patientId }).from(careLinks)).toEqual([{ userId: id, patientId: TEST_PATIENT.patientId }]);
 });

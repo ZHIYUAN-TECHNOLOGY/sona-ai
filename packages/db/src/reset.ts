@@ -1,8 +1,8 @@
 import { and, eq, inArray, like, notInArray } from "drizzle-orm";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 
-import { admissions, appointments, bookingRequests, hospitals, pushTokens, auditItems, careCodes, careLinks, careMessages, checkInReplies, checkIns, claims, doseLogs, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, patients, provenance, receipts, tasks, trainingConsents, trainingDatasets, trainingSamples } from "./schema";
-import { DEMO_HOSPITAL, SEED_LAB_IDS, seedDemo } from "./seed";
+import { admissions, appointments, bookingRequests, hospitals, pushTokens, auditItems, careCodes, careLinks, careMessages, checkInReplies, checkIns, claims, doseLogs, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, patients, provenance, receipts, tasks, trainingConsents, trainingDatasets, trainingSamples, user } from "./schema";
+import { DEMO_HOSPITAL, SEED_LAB_IDS, seedDemo, TEST_PATIENT } from "./seed";
 
 type AnyDb = PgAsyncDatabase<any, any>;
 
@@ -56,4 +56,7 @@ export async function resetDemo(db: AnyDb, now = new Date()) {
   // The demo clock goes back to real time.
   await db.update(hospitals).set({ clockOffsetMs: 0, contributesTraining: false }).where(eq(hospitals.id, DEMO_HOSPITAL));
   await seedDemo(db, now);
+  // The demo patient's Sona Care account stays linked to Amelia, so the phone is ready after a reset.
+  const [demo] = await db.select({ id: user.id }).from(user).where(eq(user.email, TEST_PATIENT.email));
+  if (demo) await db.insert(careLinks).values({ userId: demo.id, hospitalId: DEMO_HOSPITAL, patientId: TEST_PATIENT.patientId }).onConflictDoNothing();
 }
