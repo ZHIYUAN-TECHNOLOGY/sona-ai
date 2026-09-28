@@ -1,11 +1,11 @@
 import { clinicSlots, DOCTORS, slotWords } from "@sona-ai/domain/doctors";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { type ReactNode, useEffect, useState, useSyncExternalStore } from "react";
 import { AccessibilityInfo, ActivityIndicator, Pressable, ScrollView, TextInput, View } from "react-native";
 import Animated, { FadeIn, withSpring, withTiming } from "react-native-reanimated";
-import { riseIn } from "@/components/sona/motion";
+import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Chip, Expand, Icon, useAccessibleEffects } from "@/components/sona/ui";
+import { Chip, Expand, glass, Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import type { DayItem } from "@/features/day/model";
 import { api, errorText } from "@/features/live";
@@ -15,9 +15,11 @@ import { decideBooking } from "@/features/live/server-day";
  * Booking on the clinician side, in place (never a new screen): the slot picker Book in opens under a
  * flagged reply, and Confirm / Decline on a Sona Care booking request row.
  *
- * Motion, after 60fps "Canopi Date Picker" (https://60fps.design/shots/canopi-date-picker): the picker
- * unfolds from the row on the layout spring (fast, subtle, no bounce) and the times crossfade when the
- * day changes, so the doctor never leaves the row. The confirmation, after 60fps "Finma Demo Account
+ * Picker, after 60fps "Crouton Pick Meal Type Menu" (https://60fps.design/shots/crouton-pick-meal-type-menu):
+ * an inset panel unfolds under the row on the layout spring (fast, subtle, no bounce) with three short
+ * sections (who, day, time) and one full-width confirm that always says what it will book. Choosing a
+ * doctor or day re-lays the panel on the same spring, and the day's times rise in just behind it, so the
+ * doctor never leaves the row. The confirmation, after 60fps "Finma Demo Account
  * Setup Check Animation" (https://60fps.design/shots/finma-demo-account-setup-check-animation): the
  * check pops in on a subtle spring from 0.6 and the line rises in just behind it. Reduce Motion: the
  * picker fades, the check and line appear still.
@@ -55,35 +57,90 @@ export function SlotPicker({ live, onPick, onCancel }: { live: boolean; onPick: 
   const days = slots?.days.slice(0, DAYS_SHOWN) ?? [];
   const day = days[dayAt];
   const choose = (next: () => void) => { haptic("select"); next(); };
+  const layout = reducedMotion ? undefined : LAYOUT;
 
-  return <Expand style={{ gap: 10 }}>
-    {!slots ? (error ? <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text> : <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start", minHeight: 40 }} />) : <>
-      {slots.careTeam.length > 1 && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-        {slots.careTeam.map(d => <Chip key={d.id} label={`${d.name.split(" ").slice(0, 2).join(" ")} · ${d.specialty}`} selected={d.id === slots.doctor.id}
-          accessibilityLabel={`With ${d.name}, ${d.specialty}`} onPress={() => choose(() => setDoctorId(d.id))} />)}
-      </View>}
-      {days.length ? <>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }} contentContainerStyle={{ gap: 6, paddingHorizontal: 4 }}>
-          {days.map((d, i) => { const w = slotWords(d.day); return <Chip key={w.day} label={w.day.replace(/ \S+$/, "")} selected={i === dayAt} accessibilityLabel={w.day}
-            onPress={() => choose(() => { setDayAt(i); setAt(new Date(d.times[0]!).getTime()); })} />; })}
-        </ScrollView>
-        <Animated.View key={`${slots.doctor.id}-${dayAt}`} entering={reducedMotion ? undefined : FadeIn.duration(200)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          {day?.times.map(t => { const ms = new Date(t).getTime(); return <Chip key={ms} label={slotWords(t).time} selected={ms === at} accessibilityLabel={slotLine(t)} onPress={() => choose(() => setAt(ms))} />; })}
-        </Animated.View>
-      </> : <Text style={{ ...type.footnote, color: palette.muted }}>No free clinic time in the next two weeks. Call the clinic to fit them in.</Text>}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        {at !== undefined && <Pressable accessibilityRole="button" accessibilityLabel={`Book in ${slotLine(new Date(at))} with ${slots.doctor.name}`}
-          onPress={() => onPick({ startsAt: new Date(at), doctorId: slots.doctor.id })}
-          style={({ pressed }) => ({ minHeight: 40, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, borderRadius: 20, backgroundColor: palette.ink, opacity: pressed ? 0.8 : 1 })}>
-          <Icon name="calendar.badge.checkmark" size={13} color={palette.white} />
-          <Text style={{ fontSize: 14, fontWeight: "600", color: palette.white }}>Book {slotLine(new Date(at))}</Text>
-        </Pressable>}
-        <Pressable accessibilityRole="button" accessibilityLabel="Cancel booking" onPress={onCancel} hitSlop={6} style={{ minHeight: 40, justifyContent: "center", paddingHorizontal: 8 }}>
-          <Text style={{ fontSize: 14, fontWeight: "600", color: palette.muted }}>Cancel</Text>
-        </Pressable>
-      </View>
-    </>}
+  // A gap from the Call back / Book in row, then the panel sits inset inside the card.
+  return <Expand style={{ marginTop: 10 }}>
+    <Animated.View layout={layout} style={{ gap: 16, padding: 14, borderRadius: 22, borderCurve: "continuous", borderWidth: 1, borderColor: glass.hairline, backgroundColor: "rgba(20,28,40,0.035)" }}>
+      {!slots ? (error ? <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text> : <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start", minHeight: 40 }} />) : <>
+        {slots.careTeam.length > 1 && <Section label="With">
+          <View style={{ gap: 6 }}>
+            {slots.careTeam.map(d => <DoctorRow key={d.id} name={d.name} specialty={d.specialty} selected={d.id === slots.doctor.id} onPress={() => choose(() => setDoctorId(d.id))} />)}
+          </View>
+        </Section>}
+        {days.length ? <>
+          <Section label="Day">
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -14 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 14 }}>
+              {days.map((d, i) => { const w = slotWords(d.day); const [weekday, date] = w.day.split(" ");
+                return <DayTile key={w.day} weekday={weekday!} date={date!} label={w.day} selected={i === dayAt} onPress={() => choose(() => { setDayAt(i); setAt(new Date(d.times[0]!).getTime()); })} />; })}
+            </ScrollView>
+          </Section>
+          <Section label="Time">
+            <Animated.View key={`${slots.doctor.id}-${dayAt}`} entering={reducedMotion ? undefined : riseIn({ distance: 6, duration: 260 })} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {day?.times.map(t => { const ms = new Date(t).getTime(); return <Chip key={ms} label={slotWords(t).time} selected={ms === at} accessibilityLabel={slotLine(t)} onPress={() => choose(() => setAt(ms))} />; })}
+            </Animated.View>
+          </Section>
+        </> : <Text style={{ ...type.footnote, color: palette.muted }}>No free clinic time in the next two weeks. Call the clinic to fit them in.</Text>}
+        <View style={{ gap: 4 }}>
+          {at !== undefined && <Pressable accessibilityRole="button" accessibilityLabel={`Book in ${slotLine(new Date(at))} with ${slots.doctor.name}`}
+            onPress={() => onPick({ startsAt: new Date(at), doctorId: slots.doctor.id })}>
+            {({ pressed }) => <Animated.View style={{ minHeight: 50, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 16, borderRadius: 25, borderCurve: "continuous", backgroundColor: palette.ink, transform: [{ scale: pressed ? 0.97 : 1 }], transitionProperty: "transform", transitionDuration: 140 } as never}>
+              <Icon name="calendar.badge.checkmark" size={14} color={palette.white} />
+              {/* The label crossfades as the choice changes, so it always says what will be booked. */}
+              <Animated.Text key={`${slots.doctor.id}-${at}`} entering={reducedMotion ? undefined : FadeIn.duration(160)} numberOfLines={1} style={{ flexShrink: 1, fontSize: 16, fontWeight: "600", color: palette.white }}>
+                Book {slotLine(new Date(at))} · {shortName(slots.doctor.name)}
+              </Animated.Text>
+            </Animated.View>}
+          </Pressable>}
+          <Pressable accessibilityRole="button" accessibilityLabel="Cancel booking" onPress={onCancel} hitSlop={6} style={{ minHeight: 40, alignItems: "center", justifyContent: "center" }}>
+            <Text style={{ fontSize: 15, fontWeight: "600", color: palette.muted }}>Cancel</Text>
+          </Pressable>
+        </View>
+      </>}
+    </Animated.View>
   </Expand>;
+}
+
+const shortName = (name: string) => name.split(" ").slice(0, 2).join(" ");
+const initials = (name: string) => name.replace(/^Dr\.?\s*/, "").split(" ").slice(0, 2).map(w => w[0]).join("");
+
+function Section({ label, children }: { label: string; children: ReactNode }) {
+  return <View style={{ gap: 8 }}>
+    <Text style={{ fontSize: 12, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", color: palette.muted }}>{label}</Text>
+    {children}
+  </View>;
+}
+
+/** One care-team doctor: initials, name and specialty; the chosen one lifts to white with a check. */
+function DoctorRow({ name, specialty, selected, onPress }: { name: string; specialty: string; selected: boolean; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={`With ${name}, ${specialty}`} accessibilityState={{ selected }} onPress={onPress}>
+    {({ pressed }) => <Animated.View style={{ minHeight: 52, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 10, borderRadius: 16, borderCurve: "continuous", borderWidth: 1,
+      borderColor: selected ? glass.hairline : "transparent", backgroundColor: selected ? palette.white : "transparent", boxShadow: selected ? "0 6px 16px -10px rgba(20,28,40,0.35)" : undefined,
+      transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: ["transform", "backgroundColor", "borderColor"], transitionDuration: 180 } as never}>
+      <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: selected ? palette.blue : "rgba(36,91,204,0.12)" }}>
+        <Text style={{ fontSize: 13, fontWeight: "700", color: selected ? palette.white : palette.blue }}>{initials(name)}</Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>{shortName(name)}</Text>
+        <Text numberOfLines={1} style={{ ...type.footnote, color: palette.muted }}>{specialty}</Text>
+      </View>
+      <Animated.View style={{ opacity: selected ? 1 : 0, transform: [{ scale: selected ? 1 : 0.6 }], transitionProperty: ["opacity", "transform"], transitionDuration: 180 } as never}>
+        <Icon name="checkmark.circle.fill" size={18} color={palette.blue} />
+      </Animated.View>
+    </Animated.View>}
+  </Pressable>;
+}
+
+/** A clinic day as a small calendar tile: weekday over the date; the chosen one fills ink. */
+function DayTile({ weekday, date, label, selected, onPress }: { weekday: string; date: string; label: string; selected: boolean; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected }} onPress={onPress}>
+    {({ pressed }) => <Animated.View style={{ width: 54, height: 62, alignItems: "center", justifyContent: "center", gap: 2, borderRadius: 16, borderCurve: "continuous", borderWidth: 1,
+      borderColor: selected ? palette.ink : glass.hairline, backgroundColor: selected ? palette.ink : "rgba(255,255,255,0.8)",
+      transform: [{ scale: pressed ? 0.95 : 1 }], transitionProperty: ["transform", "backgroundColor", "borderColor"], transitionDuration: 160 } as never}>
+      <Text style={{ fontSize: 12, fontWeight: "600", color: selected ? "rgba(255,255,255,0.7)" : palette.muted }}>{weekday}</Text>
+      <Text style={{ fontSize: 19, fontWeight: "700", color: selected ? palette.white : palette.ink }}>{date}</Text>
+    </Animated.View>}
+  </Pressable>;
 }
 
 /** The check lands on a subtle spring from 0.6 (Finma). */
