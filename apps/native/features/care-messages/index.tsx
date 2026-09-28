@@ -5,7 +5,9 @@ import Animated from "react-native-reanimated";
 import type { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { ErrorLine } from "@/components/sona/parts";
+import { ErrorLine, TextLink } from "@/components/sona/parts";
+import { router } from "expo-router";
+import { ThreadBubble } from "@/features/inbox/thread";
 import { Icon } from "@/components/sona/ui";
 import type { Patient } from "@/features/encounter/types";
 import { api, errorText, requestId, useLive } from "@/features/live";
@@ -17,9 +19,11 @@ import { refreshServerData } from "@/features/live/server-day";
  * Sona Care messages on the patient sheet, under the check-ins: the patient's thread with the care
  * team and a one-line reply (which closes their message tasks on My Day). Live mode only, for roles
  * that may read them; a quiet line while loading, when empty, or when the read failed (with Retry).
+ * Bubbles match the inbox thread (who wrote it and when); "Open thread" goes there for the rest.
  * Only a doctor or a nurse replies (messages.reply); management reads.
  */
 type Message = Awaited<ReturnType<AppRouterClient["messages"]["list"]>>[number];
+const SHOWN = 4;
 
 export function CareMessages({ patient, entering }: { patient: Patient; entering?: ReturnType<typeof riseIn> }) {
   const role = useRole();
@@ -54,13 +58,10 @@ export function CareMessages({ patient, entering }: { patient: Patient; entering
     <Text style={{ ...type.overline, color: palette.muted }}>Sona Care messages</Text>
     {!thread ? (loadError ? <ErrorLine text={`Messages didn't load: ${loadError}`} onRetry={() => { void load(); }} /> : quiet("Loading messages…"))
       : !thread.length ? quiet(`No messages from ${first} yet.`)
-      : <View style={{ borderRadius: 22, borderCurve: "continuous", backgroundColor: palette.white, padding: 14, gap: 10 }}>
-      {thread.map(m => {
-        const team = m.from === "care-team";
-        return <View key={m.id} style={{ alignSelf: team ? "flex-end" : "flex-start", maxWidth: "85%", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, borderCurve: "continuous", backgroundColor: team ? "rgba(20,28,40,0.05)" : "rgba(36,91,204,0.07)" }}>
-          <Text selectable style={{ ...type.subhead, color: palette.ink }}>{m.text}</Text>
-        </View>;
-      })}
+      : <View style={{ borderRadius: 22, borderCurve: "continuous", backgroundColor: "rgba(255,255,255,0.55)", padding: 14, gap: 10 }}>
+      {/* The latest few; the whole thread and Sona's drafted reply are one tap away. */}
+      {thread.slice(-SHOWN).map(m => <ThreadBubble key={m.id} message={m} reduced />)}
+      <TextLink label={thread.length > SHOWN ? `Open thread · ${thread.length} messages` : "Open thread"} onPress={() => router.push(`/inbox/${patient.id}`)} />
       {canReply && <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <TextInput value={text} onChangeText={setText} placeholder={`Reply to ${first}`} placeholderTextColor="#A2A8B1" maxLength={1000} editable={!busy} returnKeyType="send"
           onSubmitEditing={() => { if (text.trim()) void reply(); }} accessibilityLabel={`Reply to ${first} in Sona Care`}
