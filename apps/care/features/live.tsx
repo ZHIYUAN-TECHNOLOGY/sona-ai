@@ -1,16 +1,20 @@
 import { useEffect } from "react";
+import { AppState } from "react-native";
 import { authClient } from "@/lib/auth-client";
 import { setClockOffset } from "@/lib/clock";
 import { client, queryClient } from "@/utils/orpc";
 import { ENV } from "../src/env";
 import { clearTaken, syncTaken } from "./doses";
 import { useMe } from "./me";
+import { sendQuestions } from "./questions";
 
 /**
  * Live updates for Sona Care: one WebSocket to the patient's own channel (it only hears changes about
  * them, never patient data). Any change re-reads what the app shows; a "demo" change (the demo clock
  * moved) first re-reads the clock, so doses, days home and check-ins jump with it. After a reconnect
- * everything re-reads, since changes may have been missed. Mounted once at the root.
+ * everything re-reads, since changes may have been missed. What this phone kept while offline (doses
+ * taken, questions for the doctor) is sent on joining, whenever the socket opens and whenever the app
+ * returns to the foreground. Mounted once at the root.
  */
 const PING_MS = 25_000, MAX_BACKOFF_MS = 30_000;
 
@@ -25,13 +29,16 @@ export function LiveUpdates() {
   useEffect(() => { if (state === "not-joined") clearTaken(); }, [state]);
   useEffect(() => {
     if (!joined) { setClockOffset(0); return; }
+    // Sends what the server is missing; each part swallows its own failure and runs again on the next open or foreground.
+    const catchUp = () => Promise.all([syncTaken().catch(() => {}), sendQuestions()]);
     void readClock();
-    void syncTaken().catch(() => {});
+    void catchUp();
+    const foreground = AppState.addEventListener("change", s => { if (s === "active") void catchUp(); });
     let socket: WebSocket | undefined, ping: ReturnType<typeof setInterval> | undefined, retry: ReturnType<typeof setTimeout> | undefined;
     let stopped = false, attempt = 0, opened = false;
     const reread = async (demo: boolean) => {
       if (demo) await readClock();
-      await Promise.all([queryClient.invalidateQueries(), syncTaken().catch(() => {})]);
+      await Promise.all([queryClient.invalidateQueries(), catchUp()]);
     };
     const connect = async () => {
       const cookie = await authClient.getCookie();
@@ -43,7 +50,7 @@ export function LiveUpdates() {
       ws.onopen = () => {
         attempt = 0;
         ping = setInterval(() => { try { ws.send("ping"); } catch { /* reconnect handles it */ } }, PING_MS);
-        if (opened) void reread(true);
+        void (opened ? reread(true) : catchUp());
         opened = true;
       };
       ws.onmessage = e => {
@@ -58,7 +65,7 @@ export function LiveUpdates() {
       ws.onerror = () => { /* onclose follows and schedules the retry */ };
     };
     void connect();
-    return () => { stopped = true; clearInterval(ping); clearTimeout(retry); socket?.close(); };
+    return () => { stopped = true; foreground.remove(); clearInterval(ping); clearTimeout(retry); socket?.close(); };
   }, [joined]);
   return null;
 }

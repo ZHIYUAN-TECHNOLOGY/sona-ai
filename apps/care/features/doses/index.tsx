@@ -36,7 +36,7 @@ function keep(next: string[]) {
 export function markTaken(key: string) {
   if (taken.includes(key)) return;
   keep([...taken, key]);
-  // ponytail: a dose taken offline stays on the phone until the next sync re-sends what the server lacks.
+  // Offline, it stays on the phone; syncTaken sends it when the app returns to the foreground or the live socket opens (features/live).
   void client.care.doses.take({ key }).catch(() => {});
 }
 
