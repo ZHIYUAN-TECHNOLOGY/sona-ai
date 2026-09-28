@@ -1,0 +1,784 @@
+[
+ {
+  "id": "resp_011",
+  "split": "train",
+  "condition": "Community-acquired pneumonia",
+  "source": "Pneumonia",
+  "patient_persona": {
+   "description": "Mr. Khoo Beng Huat, 78, male, retired goldsmith in George Town, Penang; day 3 in the medical ward on IV antibiotics. Weak, raspy voice, Penang Mandarin with Hokkien words and a little Malay.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Teoh Pei Shan, Malaysian Chinese woman in her 30s, medical registrar at Hospital Pulau Pinang, on the morning ward round. Kind but brisk; Mandarin with English ward terms.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "早安，Khoo 伯伯。今天第三天了，感觉怎样？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "比较好了，医生。昨晚没有发烧，咳嗽也少一点，但是还是 lembik，没什么力。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你的 temperature 从昨天早上到现在都 normal，oxygen 96 percent on room air，已经不用 nasal prong 了。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那我几时可以 balik rumah？我的孙子礼拜天生日。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你的 blood culture 没有长细菌，CRP 从 180 降到 60，这个是好的 sign。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "如果今天吃东西 okay，明天我们可以把 IV ceftriaxone 换成吃的 antibiotic。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "吃什么药？我吃太多药会胃痛。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Amoxicillin-clavulanate 625mg，一天两次，饭后吃，再吃五天。Azithromycin 已经吃够三天了，可以停。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好。医生，我吞东西的时候有时候会呛到，喝水特别容易，especially 喝热茶。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个很重要，谢谢你讲。有时候肺炎是因为东西呛进肺里面。我请 speech therapist 今天来看你吞东西。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "要做手术吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "不用，只是看看怎样吃比较安全，可能喝水要加一点 thickener。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "哦，这样。那我明天可以 discharge 吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "先看 speech therapist 的 assessment，还有你今天走路的情况。Physio 会带你走一走。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好啦，我会乖乖走路。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "很好。有什么不舒服，按铃叫护士。"
+   }
+  ]
+ },
+ {
+  "id": "resp_012",
+  "split": "train",
+  "condition": "Community-acquired pneumonia",
+  "source": "Pneumonia",
+  "patient_persona": {
+   "description": "Ganesan a/l Subramaniam, 45, male, forklift operator at a Port Klang warehouse; smokes 20 cigarettes a day. Gravelly voice, fast Malaysian Indian English with Malay words, coughs between sentences.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Hafiz Rosli, Malay man in his 40s, family physician at a Klang polyclinic. Firm, friendly; English mixed with Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Ganesan, your chest X-ray dah keluar. Come, see here, this white patch at the right bottom. That's pneumonia."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aiyo, pneumonia? I thought just batuk biasa, doc. One week already cannot sleep."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your temperature is 38.4 and oxygen 95 percent. Your CURB-65 score rendah, so you can go home with oral antibiotics."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, good, because esok night shift. Can work or not?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak boleh. Forklift and fever is not a good combination. I give you MC one week."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Amoxicillin-clavulanate 625mg, twice a day, after food, for seven days. Tambah doxycycline 100mg, twice a day, also seven days."
+   },
+   {
+    "speaker": "Patient",
+    "text": "The doxy one, got any pantang? My wife say some antibiotic cannot take with milk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Correct. Doxycycline jangan makan dengan susu or antacid, take with a full glass of water and don't lie down for thirty minutes."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, faham. Anything else, doc?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "The smoking. Twenty batang a day, your lungs are having a very hard time. This is a good time to stop."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Hmm, susah lah doc. Twenty years already, since zaman estate."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I know. We have a quit smoking clinic here every Rabu, free. Can I put your name down?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, try lah. My daughter also bising every day."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. Datang balik in two days for review, and repeat X-ray in six weeks. If sesak nafas or chest pain, go straight to Hospital Tengku Ampuan Rahimah."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay doc, thank you."
+   }
+  ]
+ },
+ {
+  "id": "resp_013",
+  "split": "train",
+  "condition": "Community-acquired pneumonia",
+  "source": "Pneumonia",
+  "patient_persona": {
+   "description": "Puan Wan Zaleha binti Wan Ahmad, 60, female, retired nurse from Kuala Terengganu; type 2 diabetes on insulin; day 4 in ward. Clear, knowledgeable, Terengganu Malay, uses English medical terms from her nursing years.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lim Jun Hao, Malaysian Chinese man in his 30s, medical officer at Hospital Sultanah Nur Zahirah, ward round. Polite, systematic; Malay with English terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Selamat pagi, Puan Zaleha. Macam mana hari ni? Batuk dah kurang?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Pagi, doktor. Batuk dah kurang, kahak pun dah tak kuning macam dulu. Tapi sugar saya tinggi sangat semalam."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, saya nampak dalam chart, pukul sepuluh malam 18. Sebab infection pun boleh naikkan gula."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saya faham. Masa saya nurse dulu, selalu jumpa pesakit macam ni. Insulin kena naikkan ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, kita naikkan insulin basal dari 14 unit ke 16 unit malam ni, dan teruskan sliding scale."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sputum culture dah keluar, Streptococcus pneumoniae, sensitive kepada penicillin."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Jadi boleh tukar kepada oral antibiotic?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Betul. Demam dah hilang 48 jam, jadi kita tukar IV ke oral amoxicillin 1 gram, tiga kali sehari, tiga hari lagi."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Bila saya boleh discharge? Suami saya kat rumah sorang-sorang."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau gula stabil malam ni, insya-Allah esok boleh discharge. Klinik diabetes akan follow up minggu depan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oxygen saya berapa hari ni?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "97 percent, room air. Paru-paru dah lebih bersih, cuma sikit crackles kat bawah kiri."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alhamdulillah. Vaksin pneumonia tu, saya patut ambil tak?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Patut, puan. Dengan diabetes dan umur 60, pneumococcal vaccine sangat disyorkan. Kita boleh bagi masa follow up nanti."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Terima kasih."
+   }
+  ]
+ },
+ {
+  "id": "resp_014",
+  "split": "train",
+  "condition": "Community-acquired pneumonia",
+  "source": "Pneumonia",
+  "patient_persona": {
+   "description": "Puan Nor Azlina binti Hashim, 29, female, factory operator in Alor Setar, Kedah, bringing her son Aqil, 3, with fever and fast breathing. Worried, quick Kedah Malay.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Sharmila Devi, Malaysian Indian woman in her 30s, medical officer in the paediatric clinic at Hospital Sultanah Bahiyah. Calm and warm; Malay with English terms.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doktor, anak saya demam tiga hari, batuk teruk. Malam tadi nafas dia laju sangat, breathing macam tercungap-cungap, saya takut."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kita tengok dulu. Aqil makan minum macam mana? Ada vomit?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Susu minum sikit je, nasi tak nak langsung. Muntah sekali lepas batuk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Respiratory rate dia 44, oxygen 95 percent. Ada crackles dekat paru-paru kanan. X-ray tunjuk pneumonia, jangkitan paru-paru."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ya Allah. Kena admit ke, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Buat masa ni oxygen dia okay, dia tak dehydrated, dada dia tak tertarik ke dalam. So boleh rawat kat rumah, tapi kena ikut betul-betul."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Berat Aqil 14kg. Saya bagi amoxicillin syrup 250mg per 5ml, 7ml tiga kali sehari, lima hari."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Tujuh ml, tiga kali sehari. Kena habiskan semua ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, habiskan lima hari walaupun dia dah okay. Paracetamol syrup 7ml bila demam, setiap enam jam."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Boleh bagi cough syrup tak? Batuk dia kuat sangat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ubat batuk tak digalakkan untuk budak bawah enam tahun. Batuk tu membantu keluarkan kahak. Bagi minum air sikit-sikit tapi kerap, small sips."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Bila kena bawa balik untuk review?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Datang balik dalam 48 jam untuk review. Tapi kalau nafas makin laju, bibir biru, atau dia sangat lembik, terus pergi emergency."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Terima kasih banyak."
+   }
+  ]
+ },
+ {
+  "id": "resp_015",
+  "split": "train",
+  "condition": "Mycoplasma pneumonia follow-up",
+  "source": "Pneumonia",
+  "patient_persona": {
+   "description": "Chong Jia Hui, 30, female, marketing executive in Petaling Jaya; two-week cough, follow-up after starting doxycycline. Lively, fast, KL Mandarin heavily mixed with English.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Raymond Lau, Malaysian Chinese man in his 40s, GP at a PJ clinic. Relaxed, clear; mixes English and Mandarin.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Jia Hui，上次的 X-ray 和 blood test 都出来了。你那个是 atypical pneumonia，很可能是 mycoplasma。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Mycoplasma？那个是什么东西？会传染给我 office 的人吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "是一种细菌，叫 walking pneumonia，因为很多人还可以照常走来走去。会传染，但是没有 COVID 那么厉害。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "难怪我 cough 了两个礼拜都不好。Doxycycline 我吃了三天，现在好很多了。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good。你现在还有发烧吗？晚上睡得着吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "没有发烧了，但是晚上还是会 cough，especially 躺下来的时候。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个 cough 可能会拖几个礼拜，因为 airway 还在 recover。Doxycycline 继续吃完七天，100mg 一天两次。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "对了，我吃了之后去晒太阳，手臂变得很红很痒。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Doxycycline 会让皮肤对太阳 sensitive。出去的时候涂 sunblock，穿长袖，尽量避开中午的太阳。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "哦，原来是这样。我周末要去 Port Dickson 海边，那我还可以去吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "可以，但是要做好 sun protection，还有不要跟 antacid 或者牛奶一起吃药。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay noted。我下个礼拜需要回来吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "两个礼拜后回来 review。四到六个礼拜后我们再照一次 X-ray，确定肺部 clear 了。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，谢谢 doctor。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "如果 cough 越来越严重，或者喘不过气，就早点回来，不用等。"
+   }
+  ]
+ },
+ {
+  "id": "resp_016",
+  "split": "train",
+  "condition": "COVID-19",
+  "source": "COVID-19",
+  "patient_persona": {
+   "description": "Pak Cik Che Mat bin Yusof, 65, male, retired padi farmer in Pasir Mas, Kelantan; hypertension and high cholesterol on amlodipine and simvastatin. Slow, deep Kelantan Malay.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Farah Nadia Abdul Karim, Malay woman in her 30s, medical officer at a klinik kesihatan in Pasir Mas. Gentle, thorough; Malay with English drug names.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Pak cik, test COVID pagi tadi positif. Bila mula tak sihat?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Semalam, doktor. Tekak gatal, badan lenguh, demam sikit. Cucu saya dari KL balik rumah minggu lepas, dia pun batuk, tapi tak test."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Pak cik umur 65 dan ada darah tinggi, jadi pak cik dalam kumpulan risiko tinggi. Kita akan bagi ubat antiviral, nama dia Paxlovid."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Paxlovid? Ubat baru ke tu? Saya dah makan banyak ubat, doktor, pressure, cholesterol."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ubat ni kena makan lima hari. Tapi ada satu masalah, dia tak boleh makan sama dengan simvastatin."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Habis tu simvastatin saya macam mana?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Stop simvastatin selama lima hari makan Paxlovid, dan tiga hari lepas tu. Lepas tu mula balik macam biasa. Amlodipine teruskan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, berhenti sekejap je. Paxlovid tu makan macam mana?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Satu pek ada tiga biji. Pagi tiga biji, malam tiga biji, lima hari. Telan terus, jangan kunyah, jangan break."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Rasa ubat tu pahit ke? Kawan saya kata lidah rasa pelik."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, ada yang rasa pahit atau macam besi dalam mulut. Itu biasa, akan hilang lepas habis course ubat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Oxygen pak cik 97 percent, paru-paru okay. Duduk dalam bilik asing, pakai mask bila jumpa orang rumah."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Isteri saya pun dah tua, 62. Dia kena test juga?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau dia ada simptom, suruh dia buat RTK-Ag. Kalau pak cik sesak nafas atau oxygen bawah 95, terus pergi Hospital Pasir Mas."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Terima kasih."
+   }
+  ]
+ },
+ {
+  "id": "resp_017",
+  "split": "train",
+  "condition": "COVID-19",
+  "source": "COVID-19",
+  "patient_persona": {
+   "description": "Marcus Tan, 27, male, software developer in Bangsar South, Kuala Lumpur; fully vaccinated, no medical problems. Casual Malaysian English, some Mandarin and Malay filler.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nadia Zulkifli, Malay woman in her 30s, telemedicine GP based in Kuala Lumpur. Upbeat, efficient; English with bits of Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Hi Marcus, I can see your test photo. Two lines, so yes, COVID positive. How are you feeling?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Not too bad lah. Throat quite sore, a bit panas last night, 37.9. Just very tired, badan lemah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Any breathlessness, chest pain, or feeling dizzy when you stand?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "No, none of that. Mostly I'm worried about kerja. We have a product launch minggu depan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "You're young and fully vaccinated, so this is likely mild. You don't need antiviral pills."
+   },
+   {
+    "speaker": "Patient",
+    "text": "So just Panadol can already, doc?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes. Paracetamol 1 gram, every six hours kalau perlu. Strepsils or warm salt water for the throat."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. How many days I need to isolate? My housemate also takut."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Stay home until you're fever-free for 24 hours and feeling better, usually about five hari. Pakai mask around your housemate."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Can I still work from home? Macam laptop in bed like that."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "You can, if you feel okay. But I'm giving you a five-day MC, so no pressure to log in."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Haha, my boss confirm WhatsApp me anyway."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Then mute Slack sekejap. Rest is what gets you better faster."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, noted. Anything I need to watch out for?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "If you get breathless, chest pain, or your fever goes on past five days, call us or go to the nearest hospital."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alright, thanks doc."
+   }
+  ]
+ },
+ {
+  "id": "resp_018",
+  "split": "train",
+  "condition": "Post-COVID cough and fatigue",
+  "source": "COVID-19",
+  "patient_persona": {
+   "description": "Mdm. Goh Ah Moi, 70, female, retired sundry-shop owner in Kluang, Johor; had COVID six weeks ago. Soft, slow voice, Mandarin with Hokkien words and a little Malay.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Mohd Azlan Kamarudin, Malay man in his 40s, family medicine specialist at a Kluang health clinic who speaks Mandarin learnt from school friends. Patient and gentle; Mandarin with English and Malay terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Goh 阿姨，COVID 已经六个礼拜了，现在还有什么不舒服？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "医生，咳嗽还没好，干干的。走路去 pasar 一下就很累，要坐下来休息。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "晚上睡觉的时候会不会喘？躺平可以吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "躺平可以。就是喉咙痒，一痒就咳，咳到想吐。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我刚才看你的 oxygen，坐着 97，走六分钟以后 95，这个 okay。你的 X-ray 也 clear。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那为什么我还是那么累？我以前每天都去 senam 的。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个叫 post-COVID syndrome，有些人会累好几个月，但是慢慢会好起来。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "运动不要一下子做太多。先走十分钟，觉得 okay 了，每个礼拜加一点。累的话隔天就 rest。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "咳嗽有什么药可以吃？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "咳嗽可能是 airway 还很敏感。我开 budesonide inhaler 给你试，早晚各一下，喷完要漱口。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "喷的药我不会用，以前没用过。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "没关系，药剂师会教你，用 spacer 会比较容易。还有，你的血也要验一下，看有没有贫血或者 thyroid 问题。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好。那我还可以帮忙带孙子吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "可以，但是不要抱太重。如果 chest pain、心跳很快、或者脚肿，就要早点回来。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好的，谢谢医生，terima kasih ya。"
+   }
+  ]
+ },
+ {
+  "id": "resp_019",
+  "split": "train",
+  "condition": "COVID-19 in pregnancy",
+  "source": "COVID-19",
+  "patient_persona": {
+   "description": "Mrs. Kalaivani a/p Suppiah, 32, female, primary school teacher in Seremban, 24 weeks pregnant with her first baby. Anxious, soft-spoken Malaysian Indian English with some Malay.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Wong Mei Kuan, Malaysian Chinese woman in her 40s, O&G medical officer at Hospital Tuanku Ja'afar antenatal clinic. Reassuring, clear; English with Malay for instructions.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doctor, my RTK came positive pagi tadi. I'm so scared for the baby."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I understand. Let's go through it slowly. What symptoms do you have?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Sore throat, hidung berair, a bit demam last night, 38.1. Not much batuk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Any sesak nafas, chest pain, bleeding or leaking water from below?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "No, nothing like that. Baby still menendang, quite active this morning."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. Your oxygen is 98 percent, BP 112 over 70. Baby's heartbeat on the doppler is 148, very nice, sangat bagus."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Can I take Panadol? I read online tak boleh makan ubat when pregnant."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Paracetamol is safe in pregnancy. One gram up to four times a day. Tapi jangan ambil ibuprofen or any Nurofen, those are not suitable now."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Will the baby get infected?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "It's rare for the baby to be affected in mild cases like yours. Your vaccines dulu help protect you both."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Rest at home, minum air banyak. Wear a mask around your husband and mother-in-law."
+   },
+   {
+    "speaker": "Patient",
+    "text": "My mother-in-law says must eat certain herbs, jamu and all that. Is it okay?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Please avoid any herbal or ubat tradisional for now, kita tak tahu apa dalam tu. Normal food is best."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Bila I should come back?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Keep your antenatal appointment in two weeks. But if you feel sesak nafas, baby moves less, or fever above 39, come straight to the labour room."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Thank you, doctor. I feel a bit lega now."
+   }
+  ]
+ },
+ {
+  "id": "resp_020",
+  "split": "test",
+  "condition": "COVID-19 pneumonia",
+  "source": "COVID-19",
+  "patient_persona": {
+   "description": "Mr. Ting Kah Ming, 50, male, Foochow timber-yard manager in Sibu, Sarawak; obese, type 2 diabetes; day 5 in the COVID ward on oxygen. Tired, breathy voice, Sarawak Mandarin with English and Malay words.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Sim Hock Leong, Malaysian Chinese man in his 40s, physician at Hospital Sibu, on the ward round. Steady, reassuring; Mandarin with English clinical terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Ting 先生，早。今天呼吸怎样？比较不喘吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好一点了，医生。昨天去 toilet 回来喘到不行，今天比较 okay。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你现在 oxygen 用两升 nasal prong，saturation 95。昨天是四升，所以有进步。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那几时可以拿掉这个管子？我好想回家了。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我们每天慢慢降。如果降到 room air 还有 94 以上，就可以考虑回家。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dexamethasone 6mg 每天一次，今天是第五天，要吃满十天，或者你出院就停。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那个药让我的血糖很高，护士一直来打针。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "对，steroid 会让糖升高，所以我们用 insulin sliding scale。出院以后糖就会慢慢降回来。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我肚子每天打的那一针是什么？很痛。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "那是 enoxaparin 60mg，防止血栓。COVID 的人很容易血管里面有 blood clot，所以要打。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "哦，原来是这样。我老婆也可以来看我吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这里是 COVID ward，现在还不能探病。你可以用 video call，护士可以帮你。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好啦。医生，我的肺会完全好吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "大部分人会慢慢恢复。出院后六到八个礼拜我们再照 X-ray，看 lung 有没有 scarring。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，谢谢医生，我会继续做呼吸运动。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "很好，那个 incentive spirometer 一个钟头吹十次，physio 也会来帮你。"
+   }
+  ]
+ }
+]

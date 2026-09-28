@@ -1,0 +1,776 @@
+[
+ {
+  "id": "cardio_081",
+  "split": "train",
+  "condition": "Prediabetes on screening",
+  "source": "Prediabetes",
+  "patient_persona": {
+   "description": "Encik Muhammad Hafizuddin bin Roslan, 35, male, factory technician in Nilai, Negeri Sembilan; HbA1c flagged at a company health check. Easy-going, young voice, Malay with casual English.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Yeoh Pei Ling, Malaysian Chinese woman in her 30s, GP at a Nilai clinic. Friendly, motivating; English-leaning, fluent Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Hafiz, HbA1c encik 6.1 percent. Fasting sugar 6.4. Ini prediabetes, belum diabetes, tapi dah on the way."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Prediabetes? Maksudnya saya dah separuh kencing manis la, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh cakap macam tu. The good news, pada tahap ni, boleh reverse. Kalau tak buat apa-apa, many people progress to diabetes dalam lima tahun."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saya muda lagi, doktor. Tiga puluh lima je."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sebab tu la kita tangkap awal. Berat encik 84 kilo, waist 98 cm. Kerja shift ke?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ya, shift pusing. Malam makan maggi, minum Nescafe tin tiga, empat tin sehari untuk stay awake."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tin coffee tu satu tin ada lebih kurang empat, lima sudu gula. Four cans, that's almost twenty teaspoons of sugar a day."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Serius? Saya tak pernah kira pun."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "First step, tukar ke kopi O kosong atau kurang manis. Air tin tu cut down to one a day, then zero."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kedua, cuba turun lima hingga tujuh percent berat, maksudnya dalam lima, enam kilo. That alone cuts the diabetes risk by more than half."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kena pergi gym ke? Saya tak ada masa, doktor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak semestinya gym. Brisk walking tiga puluh minit, lima hari seminggu. Park jauh sikit dari kilang, naik tangga instead of lift."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, itu boleh. Tak perlu makan ubat?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Not now. Kita check HbA1c semula enam bulan lagi. If still going up, baru kita consider metformin."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Saya try. Kawan-kawan shift pun ramai yang perut boroi macam saya."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ajak diorang sekali. Easier bila ada geng."
+   }
+  ]
+ },
+ {
+  "id": "cardio_082",
+  "split": "train",
+  "condition": "Prediabetes in a perimenopausal woman",
+  "source": "Prediabetes",
+  "patient_persona": {
+   "description": "Madam Chin Siew Lan, 50, female, Hakka bakery owner in Kota Kinabalu, Sabah; impaired fasting glucose, perimenopausal. Warm, animated, heavy Mandarin-English mixing with Sabah Malay words.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Rizal bin Mohd Amin, Sabahan Malay man in his 30s, medical officer at a Kota Kinabalu health clinic. Relaxed, clear; English with Malay and a few Mandarin words.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Madam Chin, your fasting sugar is 6.4, 两次都是. HbA1c 6.2. This is prediabetes."
+   },
+   {
+    "speaker": "Patient",
+    "text": "哎呀, 我开 bakery 的, 每天试面包, 试蛋糕, 难怪 lah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "The tasting adds up. Also menopause changes the body, 肚子比较容易胖, and insulin works less well."
+   },
+   {
+    "speaker": "Patient",
+    "text": "对, 这两年肚子一直大, 我都没有吃特别多. My period 也乱乱来."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's quite typical at fifty. So, two things we focus on: the tasting, and exercise."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "When you test a cake, one small bite, 一小口, not half a slice. And stop the sweet drinks at the shop."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我每天早上喝 teh C 加糖, 两杯. 这个要 stop 吗?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Change to teh C kosong, or half sugar first. Your tongue will adjust in two weeks."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK can. 运动呢? 我早上四点就开店了, 没时间."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "After the lunch rush, walk thirty minutes around Tanjung Aru or the market. Even ten minutes after each meal helps."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我老公可以陪我去. 那要不要吃 metformin? 我姐姐有吃."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "For now, not needed. If after six months your HbA1c goes to 6.3 or above, we can talk about metformin."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好, 我努力. 下次再验血是几时?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Six months. Also, cholesterol and blood pressure we check at the same time."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, terima kasih doktor. 我会少吃一点蛋挞."
+   }
+  ]
+ },
+ {
+  "id": "cardio_083",
+  "split": "train",
+  "condition": "Prediabetes with strong family history, metformin question",
+  "source": "Prediabetes",
+  "patient_persona": {
+   "description": "Mr. Vikneswaran a/l Sivanathan, 44, male, IT project manager in Sentul, Kuala Lumpur, Malaysian Indian; both parents diabetic, wants to start medication early. Analytical, fast, Manglish with Malay words.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Norhafizah binti Abd Ghani, Malay woman in her 40s, family medicine specialist at a Kuala Lumpur clinic. Direct, evidence-based; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Vikneswaran, HbA1c 6.3, fasting 6.8. Solid prediabetes. You mentioned wanting metformin straight away?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Yes, doctor. Both my parents diabetic, my elder brother also got it at forty. I read metformin can prevent it, kan?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "You've done your homework. Studies show metformin reduces progression by about a third. But lifestyle changes reduce it by more than half."
+   },
+   {
+    "speaker": "Patient",
+    "text": "That's more than the pill? Serius?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Seriously. In the big diabetes prevention trial, the lifestyle group did better than metformin."
+   },
+   {
+    "speaker": "Patient",
+    "text": "But my work is crazy, doctor. Sit sixteen hours sometimes, meetings back to back, makan pun at the desk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Then let's think about what's realistic for you. Standing desk? Walking meetings? Anything can count."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Walking meeting boleh. My team also need to move lah, all of us sitting like potatoes."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. And with your high risk, I think metformin is reasonable too. Start 500mg with dinner, then twice a day after two weeks."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Any long-term side effects I should know?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Mainly stomach upset at the start. Long term, it can lower vitamin B12, so we'll check B12 every year."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Also, your BMI is 27, and for Asians, above 23 is already overweight. Aim for five kilos down in six months."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, challenge accepted. I'll track with my smartwatch."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Great. HbA1c and B12 again in six months. Bring your step counts, I'm curious."
+   }
+  ]
+ },
+ {
+  "id": "cardio_084",
+  "split": "train",
+  "condition": "Prediabetes in an adolescent, parent consultation",
+  "source": "Type 2 diabetes in children",
+  "patient_persona": {
+   "description": "Puan Rosnani binti Ibrahim, 44, female, mother of 15-year-old Aisyah, runs a small kedai runcit in Kota Bharu, Kelantan; daughter found to have high sugar at a school screening. Concerned, talkative, Kelantan dialect words.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lim Hui Yee, Malaysian Chinese woman in her 30s, paediatric endocrinologist at a Kota Bharu hospital. Kind, direct; English-leaning, good Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Puan Rosnani, HbA1c Aisyah 6.2, fasting sugar 6.1. Ini prediabetes. Belum diabetes, but her body is already struggling with insulin."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Budak lagi pun boleh kena ke, doktor? Saya ingat orang tua je."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dulu jarang, tapi sekarang makin ramai remaja kena, sebab berat dan kurang bergerak. Aisyah berat 78 kilo, BMI 32."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dia memang suka makan, doktor. Kedai saya ada semua jajan, air tin. Dia ambil je, saya tak larang."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I understand, susah bila makanan sentiasa depan mata. Boleh tak jajan dan air manis tu tak dibawa masuk ke rumah?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Boleh cuba. Tapi dia marah la nanti. Remaja, doktor tahu la."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Betul. That's why kita ajak Aisyah buat plan sendiri. Bila dia yang pilih, dia lebih ikut. Satu family ubah sama-sama."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dia ada sukan kat sekolah, tapi dia malu, kawan-kawan ejek."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Maybe cari aktiviti yang dia suka, macam badminton dengan sepupu, atau jalan petang dengan mak. Target satu jam sehari."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ubat perlu tak, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Buat masa ni tak. Enam bulan lagi check balik. If her sugar reaches diabetes level, we'll start metformin."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kulit leher dia hitam-hitam tu, ada kaitan ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, itu acanthosis, tanda insulin resistance. Bila berat turun, dia akan pudar sendiri."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Balik ni saya cakap elok-elok dengan dia."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Next visit bawa Aisyah sekali, saya nak cakap dengan dia terus, dengan dietitian juga."
+   }
+  ]
+ },
+ {
+  "id": "cardio_085",
+  "split": "train",
+  "condition": "Prediabetes reversed, six-month review",
+  "source": "Prediabetes",
+  "patient_persona": {
+   "description": "Mr. Tan Ah Huat, 60, male, retired lorry transport owner in Batu Pahat, Johor; prediabetes six months ago, took up cycling. Proud, cheerful, Hokkien-flavoured Mandarin with some English.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Kalpana a/p Ramalingam, Malaysian Indian woman in her 40s, family physician at a Batu Pahat clinic. Warm, encouraging; English with Malay and simple Mandarin.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Tan, good news! HbA1c 5.6 percent, fasting 5.3. 你现在是 normal 了."
+   },
+   {
+    "speaker": "Patient",
+    "text": "真的吗? 半年前是 6.2 咧! 我太太一定很高兴."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Really well done. What did you change?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我每天早上骑脚车, 去 jeti 那边来回十公里. 晚上不吃白饭, 吃 brown rice 一小碗."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your weight also down, from 79 to 73 kilos. 六公斤, excellent."
+   },
+   {
+    "speaker": "Patient",
+    "text": "以前的裤子现在都太大了, 要去改. 哈哈."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your blood pressure also improved, 128 over 80. Before it was 142."
+   },
+   {
+    "speaker": "Patient",
+    "text": "那我可以停 amlodipine 吗?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Not yet. Let's keep amlodipine 5mg for now. If your home readings stay below 125 for three months, we can try to reduce."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好. 那我现在可以吃回以前的东西吗? 我很想吃 mee rebus 和 kuih."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "偶尔可以, once a week, small portion. If you go back to old habits, the sugar will go back too."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我懂. 骑脚车现在是我的 hobby 了, 不会停."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Just remember to drink enough water and use a helmet. The roads here got many lorries."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我以前自己就是开 lorry 的, 最懂了. 一年后再来验吗?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, one year. Keep it up, Mr. Tan. 你是我今天最好的 patient."
+   }
+  ]
+ },
+ {
+  "id": "cardio_086",
+  "split": "train",
+  "condition": "Polypharmacy brown-bag medication review",
+  "source": "Hypertension",
+  "patient_persona": {
+   "description": "Pak Cik Yusof bin Hamzah, 70, male, retired religious teacher from Pasir Puteh, Kelantan; diabetes, hypertension, heart disease, eleven medicines from several clinics. Slow, polite, Kelantanese dialect words.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Shamini a/p Arumugam, Malaysian Indian woman in her 40s, family medicine specialist at a Kelantan health clinic. Patient, systematic; English-leaning, fluent Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Pak cik, terima kasih bawa semua ubat dalam beg ni. Kita tengok satu-satu, OK?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Boleh, doktor. Pak cik sendiri pun dah keliru. Ada dari klinik, ada dari hospital, ada dari farmasi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ni amlodipine dari klinik, dan ni Norvasc dari hospital. Actually both are the same drug, amlodipine. Pak cik makan dua-dua?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ya, dua-dua. Pagi satu, petang satu. Ingat lain-lain."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's a double dose. Patut la pak cik selalu pening dan kaki bengkak. Kita buang yang Norvasc, teruskan satu je."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ni pulak aspirin dari klinik, dan cardiprin dari hospital. Juga sama, aspirin. Kita keep satu je."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Masya-Allah. Lama dah pak cik makan dua-dua."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak apa, bukan salah pak cik. Ubat ni nama brand lain-lain, memang mengelirukan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Omeprazole ni untuk gastrik. Masih sakit perut ke? Kalau tak, we can slowly stop it."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dah lama tak sakit perut. Dulu je, masa makan ubat sakit lutut."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Then kita kurangkan dulu, lepas sebulan stop. Now from eleven, tinggal tujuh ubat je."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alhamdulillah. Boleh doktor tulis jadual? Anak pak cik kat KL, tak ada siapa tolong."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Pharmacist akan buat jadual bergambar, and pack ubat dalam pill box mingguan. Every refill, kita buat semua dari satu tempat."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Senang sikit la macam tu. Pak cik malu nak tanya sebelum ni."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Jangan malu. Next time, bila doktor lain bagi ubat baru, bawa beg ni, tunjuk semua ubat."
+   }
+  ]
+ },
+ {
+  "id": "cardio_087",
+  "split": "train",
+  "condition": "Statin stopped after social media videos",
+  "source": "High cholesterol",
+  "patient_persona": {
+   "description": "Madam Lee Ah Lian, 65, female, retired school canteen operator in Klang, Selangor; post-stroke, stopped atorvastatin after watching videos. Chatty, a bit stubborn, heavy Mandarin-English mixing with Malay.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Chong Wai Keat, Malaysian Chinese man in his 40s, family medicine specialist at a Klang clinic. Patient, respectful; Mandarin with English terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "李阿姨, 你的 LDL 从 1.9 升到 3.8. 你是不是停了 atorvastatin?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "对啦医生. Facebook 那些 video 说 statin 会 damage liver, 会 memory loss. 我很怕, 所以停了."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "谢谢你讲真话. 那些 video 很多是卖产品的, 他们要你买他们的 supplement."
+   },
+   {
+    "speaker": "Patient",
+    "text": "那个 video 是说要吃他们的 enzyme, 我有买一瓶, RM180."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你看, 就是这样. 你去年 stroke, statin 是保护你的脑, 让你不要再 stroke 一次."
+   },
+   {
+    "speaker": "Patient",
+    "text": "可是我的 memory 真的比较差了."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "研究显示 statin 不会伤 memory. 反而 stroke 会伤 memory. 你的 liver test 也一直 normal."
+   },
+   {
+    "speaker": "Patient",
+    "text": "那中药呢? 我朋友介绍一个 herbal 的, 说可以降胆固醇."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "有些中药会跟你的 clopidogrel 互相影响, 增加出血. 如果要吃, 先拿来给我看."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好啦. 可是我还是有点担心 side effect."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我们可以从小一点的 dose 开始, atorvastatin 20mg, 六个星期后验 LDL 和 liver."
+   },
+   {
+    "speaker": "Patient",
+    "text": "20mg 可以. 如果有 muscle pain 呢?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "告诉我, 我们可以换另外一种, 比如 rosuvastatin. 不要自己停, OK?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, 医生. 那个 enzyme 我还要吃吗?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "那个没有用, 省点钱吧. 买些新鲜的 buah 和 sayur 更好."
+   }
+  ]
+ },
+ {
+  "id": "cardio_088",
+  "split": "train",
+  "condition": "Missed refills due to cost and shift work",
+  "source": "Hypertension",
+  "patient_persona": {
+   "description": "Mr. Kumar a/l Palanisamy, 52, male, factory security guard on rotating shifts in Prai, Penang, Malaysian Indian; diabetes and hypertension, often runs out of medicine. Tired, frank, Manglish with Malay.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Ooi Chee Keong, Malaysian Chinese man in his 40s, GP at a Prai clinic. Non-judgemental, practical; English with Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Kumar, your BP today is 168 over 100, HbA1c 9.4. Both quite high. How's the medicine going?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Honestly doctor, I finished the tablets last month. Tak sempat come back for refill, shift always change."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Thanks for being honest. How many days did you go without?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "About three weeks lah. Also the klinik swasta near my house charge RM90 each time, tak mampu every month."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's a real problem. Have you considered getting your medicine from the government klinik kesihatan? It's only RM1 registration."
+   },
+   {
+    "speaker": "Patient",
+    "text": "The waiting very lama, doctor. Morning I sleep after night shift."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Many klinik kesihatan now have an appointment system and medicine by post, or drive-through pickup. I'll write a referral with your full list."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Also, I want to simplify your pills. Now you take seven tablets a day, at four different times."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Yes, confusing. Night shift, day shift, I tak tahu which one is morning."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Let's make it once a day, when you wake up, whatever time that is. Combination tablet perindopril-amlodipine, and metformin XR."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Once a day, that one I can do. Any alarm app?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sure, set one on your phone for your wake-up time. And the empty strip in the box, when two strips left, go get refill."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, boleh. Sorry doctor, I know I'm a lousy patient."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Not lousy, just a hard schedule. We fix the system, not blame you."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih. Come back one month?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, one month. If headache teruk or chest pain before that, go to the hospital straight away."
+   }
+  ]
+ },
+ {
+  "id": "cardio_089",
+  "split": "train",
+  "condition": "Pre-Ramadan medication review, diabetes and hypertension",
+  "source": "Diabetes, type 2",
+  "patient_persona": {
+   "description": "Puan Salmiah binti Mohd Tahir, 58, female, retired nurse from Johor Bahru; type 2 diabetes on gliclazide and metformin, hypertensive, plans to fast. Clear, organised, mixes medical English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lee Jia Hao, Malaysian Chinese man in his 30s, medical officer at a Johor Bahru health clinic. Respectful, precise; English-leaning, fluent Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Puan Salmiah, dua minggu lagi Ramadan. Puan nak puasa penuh tahun ni?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Insya-Allah, doktor. Tahun lepas saya pengsan hari kelima, gula 2.8. Tahun ni saya nak plan betul-betul."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good that you came early. Your HbA1c is 7.3, controlled. Kita adjust ubat supaya selamat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Gliclazide 80mg yang pagi tu, kita pindah ke waktu berbuka. The sahur dose we stop, sebab tahun lepas gula puan jatuh masa siang."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Metformin pula? Sekarang 1 gram pagi dan malam."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Metformin 1 gram masa berbuka, and 500mg masa sahur. Metformin jarang buat gula rendah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ubat darah tinggi, amlodipine, makan masa berbuka. Hydrochlorothiazide kita stop sepanjang Ramadan, supaya tak kering air."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saya kena check gula bila, doktor? Tak batal puasa ke cucuk jari?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak batal, menurut majlis fatwa. Check masa sahur, tengah hari, sebelum berbuka, and anytime you feel unwell."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau gula bawah 3.9, atau atas 16.7, mesti buka puasa terus. That's the rule."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Faham. Sahur saya selalu makan kurma dengan roti je."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sahur lambat sikit, dekat waktu imsak. Ambil karbohidrat kompleks, oat atau nasi perang, dengan telur atau ikan. Kurangkan kurma masa berbuka, tiga biji cukup."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Air tebu Ramadan bazaar tu..."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Hehe, satu cawan kecil sekali-sekala. Minum air kosong banyak antara berbuka dan sahur."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih, doktor. Tahun ni saya harap tak pengsan lagi."
+   }
+  ]
+ },
+ {
+  "id": "cardio_090",
+  "split": "test",
+  "condition": "Forgetfulness and medication adherence in an elderly man",
+  "source": "Diabetes, type 2",
+  "patient_persona": {
+   "description": "Mr. Kho Teck Seng, 67, male, retired goldsmith in Kuching, Sarawak; diabetes, hypertension and AF on apixaban, recently forgetting doses. Soft, slightly hesitant voice, Hokkien-accented Mandarin with English.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nur Aqilah binti Abdullah, Sarawakian Malay woman in her 30s, family medicine specialist at a Kuching clinic. Warm, patient; English with Malay and simple Mandarin.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Kho, your daughter said you've been forgetting your medicine. 最近有没有漏吃?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有啦, 有时候早上吃了没有, 我自己都不记得. 然后怕漏, 又吃一次."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That can be dangerous, especially apixaban. 吃两次, bleeding risk 会增加."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我也知道, 可是我现在记性真的很差. 老了 lah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "We'll check your memory properly another day. For now, let's make the medicine simpler."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'll ask the pharmacy to give you blister packs. 每一格写日期和早上, 晚上. 吃了就空了, 你一看就知道."
+   },
+   {
+    "speaker": "Patient",
+    "text": "这个好, 一看就知道吃了没有. 以前那个药盒我常常忘记装."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Also, can we move your medicines to the same time as something you do every day? Like after breakfast."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我每天早上七点喝 kopi-O, 看报纸. 可以那时候吃."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Perfect. Put the blister pack next to your newspaper. Apixaban 晚上那粒 after dinner, with the TV news."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好. 如果我还是忘记, 想不起吃了没有呢?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "If you're not sure, 不要再吃. Missing one dose is safer than taking double."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your daughter can also set a phone reminder for you. 每天早上七点和晚上七点."
+   },
+   {
+    "speaker": "Patient",
+    "text": "她在 Miri 工作, 可以远远打电话提醒我."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's a good plan. Datang balik one month, and we'll also do a memory test."
+   }
+  ]
+ }
+]

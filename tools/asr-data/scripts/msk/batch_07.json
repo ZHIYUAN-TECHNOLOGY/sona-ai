@@ -1,0 +1,776 @@
+[
+  {
+    "id": "msk_061",
+    "split": "train",
+    "condition": "Alzheimer's disease, diagnosis with a caregiver",
+    "source": "Alzheimer's disease",
+    "patient_persona": {
+      "description": "Madam Tay Bee Hoon, 72, female, retired bank officer in Seremban, speaking as caregiver for her husband Mr. Low Chee Meng, 76, retired geography teacher with 18 months of memory loss who has been taking an over-the-counter sleeping pill. Results review. Composed but tired Malaysian Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Syed Azhar bin Syed Ali, Malay man in his 50s, geriatrician at a Seremban hospital. Gentle, unhurried; English-leaning, speaks Mandarin phrases and plain English with families.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "刘太太，刘老师，谢谢你们来。今天我们一起看 memory test 和 brain scan 的结果。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。Doctor，他今天精神不错，可是昨天又问了我十几次，女儿什么时候回来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个很常见。他的 MMSE 是 19 分，满分 30。MRI 看到记忆的部分，hippocampus，有萎缩。加上这一年半的变化，这是 Alzheimer's disease。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我其实有 mental preparation……但是听到还是很难过。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我明白，这是很大的消息。你已经照顾得很好，才会这么早带他来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "另外，你提到他每晚吃一粒睡觉的药，是在 pharmacy 买的？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，蓝色的，好像叫 diphenhydramine。他说不吃睡不着。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这种药对老人家的 memory 不好，会让他更 confused。我们慢慢停，改成白天多活动，晚上固定时间睡。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我会开 donepezil 5mg，每天晚上一粒。It won't cure it, 但是可以让 memory 和 daily function 维持得比较久。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有什么 side effect？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可能有点恶心、拉肚子、做梦比较多。Heart rate 可能会慢，如果他头晕或者差点晕倒，要告诉我。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "他还在 drive 去巴刹，我很担心。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我的建议是现在 stop driving。上个月他已经迷路一次，对他和别人都危险。我会写一封 letter，由医生来讲，你不用做坏人。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "谢谢你，这个帮我很多。我一个人照顾他，有时候真的很 penat。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "照顾者也要休息，caregiver burnout 很常见。我会 refer 社工，还有 caregiver support group。三个月后再见，有问题随时打电话来 clinic。"
+      }
+    ]
+  },
+  {
+    "id": "msk_062",
+    "split": "train",
+    "condition": "Vascular dementia with night confusion, caregiver strain",
+    "source": "Vascular dementia",
+    "patient_persona": {
+      "description": "Norazlin binti Yahya, 48, female, secondary school clerk in Shah Alam, caregiver for her mother Hajah Fatimah, 80, with vascular dementia after two strokes; mother wanders at night. Follow-up. Tired, soft-spoken Klang Valley Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chong Li Fern, Malaysian Chinese woman in her 40s, family medicine specialist at a Shah Alam health clinic. Compassionate, practical; English-leaning, fluent Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Norazlin, macam mana mak sebulan ni? Any changes?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Makin teruk waktu malam, doktor. Pukul dua pagi dia bangun, nak balik kampung katanya. Minggu lepas dia buka pintu pagar, jalan sampai simpang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya Allah, bahaya tu. Siang dia macam mana? Banyak tidur, drowsy?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Siang dia tidur je depan TV, dari lepas zohor sampai asar. Malam segar pula."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tidur siang lama tu buat malam dia jaga. Try some light activity in the afternoon, lipat kain, siram pokok, jalan kat laman."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya kerja, doktor, office hours. Adik saya yang jaga siang, tapi dia pun ada anak kecil."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Faham, puan. Tapi dia ada kencing lebih kerap, demam, atau sakit mana-mana baru-baru ni? A urine infection can also cause night confusion."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada demam. Kencing macam biasa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Untuk safety, kunci pagar dan pintu dengan mangga yang dia tak biasa, dan letak loceng kat pintu bilik. Pakaikan gelang nama dengan nombor telefon puan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doktor boleh bagi ubat tidur untuk dia? Sleeping pill ke? Saya pun dah tak tidur berbulan-bulan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sleeping pills for elderly with dementia boleh buat jatuh dan lagi keliru. Kita cuba cara tadi dulu. Kalau dia agresif atau bahaya, we'll discuss other medicine."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Puan sendiri macam mana? Puan nampak sangat penat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kadang-kadang saya menangis dalam kereta sebelum masuk rumah. Saya rasa bersalah sebab marah mak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Terima kasih puan berkongsi. Penat dan marah tu normal bagi penjaga, bukan tanda puan anak yang tak baik. Puan pernah rasa putus asa sangat, sampai nak cederakan diri?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak, doktor. Penat je. Saya cuma perlukan rehat, a break."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita boleh atur day care di pusat jagaan warga emas dua kali seminggu. Saya refer welfare officer. Datang jumpa saya juga, for your own health, bukan untuk mak je."
+      }
+    ]
+  },
+  {
+    "id": "msk_063",
+    "split": "train",
+    "condition": "Alzheimer's disease on donepezil, caregiver follow-up",
+    "source": "Alzheimer's disease",
+    "patient_persona": {
+      "description": "Mr. Suresh a/l Govindasamy, 50, male, IT support executive in Brickfields, Kuala Lumpur, caregiver for his father Mr. Govindasamy, 78, retired railway clerk with Alzheimer's on donepezil 10mg. Follow-up. Earnest, slightly worried Malaysian Indian English.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Sze Wei, Malaysian Chinese woman in her 40s, geriatrician in Kuala Lumpur. Careful, compassionate; English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mr. Suresh, how has your father been since we increased donepezil to 10mg?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Memory about the same, doctor. But two times last month he almost pengsan, once in the toilet. And he says he sees dreams very clear, then wakes up shouting."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me check his pulse... it's 52, quite slow. Donepezil can slow the heart, which may explain the near-fainting."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh. I didn't know ubat memory can affect the heart."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's not common, but it happens. Let's do an ECG today. Meanwhile, we'll go back down to 5mg, and give it in the morning instead of night."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Morning will stop the bad dreams? Mimpi buruk tu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Often it helps, yes. Now, you mentioned last time he got agitated in the evenings. Still happening?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, around six, seven, he gets restless, keeps asking nak balik rumah, padahal dia kat rumah. Kadang-kadang he tolak my wife."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's called sundowning. Does it get worse when the house is noisy, or the TV is loud?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Actually yes. My kids are home, TV on, bising sangat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Try keeping evenings calm, lights on before it gets dark, and a familiar routine, maybe his old Tamil songs. Avoid arguing, just reassure and redirect."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can give him something to calm him down? Jiran cakap bapak dia makan satu biji pil, terus tenang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sedating medicines increase falls and stroke risk in dementia. We use them only if he's a danger to himself or others, and at the lowest dose."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Understood. We'll try the routine first, slowly-slowly."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. And please take care of yourselves too. See you in six weeks with the ECG result."
+      }
+    ]
+  },
+  {
+    "id": "msk_064",
+    "split": "train",
+    "condition": "Mild cognitive impairment, patient attending alone",
+    "source": "Dementia",
+    "patient_persona": {
+      "description": "Cikgu Rosmawati binti Bujang, 70, female, retired primary school teacher in Kuching, Sarawak; notices forgetting names and misplacing keys, worried about dementia like her late mother. First visit. Clear, articulate Sarawak Malay with English.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Wong Yee Ling, Sarawakian Chinese woman in her 30s, family medicine specialist at a Kuching health clinic. Warm, attentive; English-leaning, speaks Sarawak Malay with patients.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, kamek risau. Sejak setahun ni, kamek selalu lupa nama bekas murid, lupa letak kunci. Arwah mak kamek dulu dementia, kamek takut kena juga."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Terima kasih cikgu datang awal. Selain nama dan kunci, ada lupa benda lain? For example, paying bills, cooking, finding your way home?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bil kamek masih bayar sendiri, guna online banking. Masak pun OK. Jalan tak pernah sesat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada orang lain perasan perubahan? Anak, kawan? Family ada cakap apa-apa?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Anak kata kamek ulang cerita sama dua kali. Kamek sendiri tak perasan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mood cikgu macam mana? Tidur? Ada rasa sedih, down, atau hilang minat buat benda yang dulu suka?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sejak suami meninggal dua tahun lalu, kamek selalu sunyi. Tidur pun tak lena."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sedih dan kurang tidur boleh buat memory jadi lemah juga. Kita buat ujian ingatan ringkas sekarang, a short test, lebih kurang sepuluh minit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Skor cikgu 26 daripada 30. Sedikit rendah dalam ingatan jangka pendek, tapi bahagian lain OK. Ini mungkin mild cognitive impairment, belum dementia."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Maksudnya kamek masih boleh hidup sendiri? Independent?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, boleh. Kita check darah dulu, vitamin B12, tiroid, gula, dan buat CT scan otak untuk pastikan tiada sebab lain."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada ubat untuk elakkan jadi teruk? Any medicine?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Buat masa ni, cara paling baik: jalan kaki setiap hari, kawal tekanan darah, aktif bersosial, dan belajar benda baru. Cikgu suka apa?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kamek suka menyanyi di gereja, choir, tapi dah lama berhenti."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Teruskan balik, itu sangat bagus untuk otak dan hati. Kita ulang ujian dalam enam bulan."
+      }
+    ]
+  },
+  {
+    "id": "msk_065",
+    "split": "train",
+    "condition": "Lewy body dementia, ward round after an antipsychotic reaction",
+    "source": "Lewy body dementia",
+    "patient_persona": {
+      "description": "Kelly Ng Siew Ping, 45, female, property agent in Johor Bahru, caregiver for her father Mr. Ng Ah Huat, 74, admitted rigid and drowsy after another clinic gave haloperidol for hallucinations. Ward round, day two. Anxious, fast Malaysian Mandarin with English and some Malay.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Iqbal bin Hashim, Malay man in his 40s, geriatrician at a Johor Bahru hospital. Calm, clear; English-leaning, speaks functional Mandarin and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Kelly，你爸爸今天比昨天清醒多了，more alert。你觉得呢？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，今天早上他认得我了，还叫我的名字。昨天全身 stiff，叫也叫不醒，我 takut 死了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我们停了 haloperidol 以后，他慢慢好转。他之前会看到东西，对吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，他说房间里有小孩子和猫，其实没有。那个 GP 就开了 haloperidol，吃了两天就变这样。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "看到清楚的人和动物，memory 时好时坏，走路慢、手抖，加上晚上做梦会打人，这些都像 Lewy body dementia。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lewy body？跟 Alzheimer 不一样吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不一样。这种 dementia 对 antipsychotic 特别敏感，像 haloperidol，会严重僵硬，甚至危险。以后看任何医生，都要讲他对这个药 allergic。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我会记住。我要写在他的身份证后面吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好主意。我们也会在 discharge letter 写清楚。他的 hallucination 我们用 rivastigmine patch，一天贴一片，比较安全。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "他看到小孩子的时候很害怕，我们要怎样 respond？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "如果他不害怕，可以不用纠正他。如果他害怕，就陪他，开灯，change topic。跟他 argue 会让他更乱。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白了。他明天可以 discharge 吗？我妈妈一个人在家很 risau。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "如果他今天可以自己吃饭，physio 看他走路 OK，明天可以 discharge。回家以后，我们 memory clinic two weeks 后再见。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "谢谢医生。你们解释得很清楚，terima kasih banyak。"
+      }
+    ]
+  },
+  {
+    "id": "msk_066",
+    "split": "train",
+    "condition": "Bell's palsy, first presentation",
+    "source": "Bell's palsy",
+    "patient_persona": {
+      "description": "Imran bin Kassim, 41, male, chartered accountant in Mont Kiara, Kuala Lumpur; prediabetes; woke with right face drooping after two days of pain behind the ear. First visit. Controlled, worried, English-dominant with Malay.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Pang Wei Ling, Malaysian Chinese woman in her 30s, GP in Kuala Lumpur. Efficient, reassuring; English-leaning, some Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, I woke up this morning and the right side of my face was drooping, senget. When I brushed my teeth, air keluar tepi mulut. Is this a stroke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let's check carefully. Can you raise both eyebrows for me? Now close your eyes tight... and smile."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Like this? My right eyebrow tak boleh gerak, right?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Right, the whole right side including the forehead is weak. In a stroke, the forehead is usually spared. Your arms, legs and speech are all normal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, lega. But what is it then?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "This is Bell's palsy, inflammation of the facial nerve. Any pain behind the ear before this?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, two days of sakit belakang telinga. I took ibuprofen, tak bagitahu sesiapa pun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That fits. Any rash or blisters in the ear? Let me look... no blisters, good. Taste changes, or sounds very loud?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Food tastes a bit metallic, pelik. And my phone ringtone sounds super kuat on the right."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Both are common in Bell's palsy. The good news, around seventy to eighty percent recover fully, mostly within three months."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Start prednisolone 60mg every morning for five days, then reduce over five days. Starting within seventy-two hours gives the best chance."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Steroid, with my prediabetes? My HbA1c was 6.2, borderline."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It may push your sugar up for a while. Check your sugar at the pharmacy or a glucometer. Your eye is the other big thing."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Since your right eye can't close fully, use artificial tears every two hours, gel at night, and tape the eye shut when sleeping."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. Can I still go to work? Ada audit meetings minggu ni."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll give you three days MC. Come back in one week, or earlier if new weakness in the arm or leg, or the eye gets red and painful."
+      }
+    ]
+  },
+  {
+    "id": "msk_067",
+    "split": "train",
+    "condition": "Bell's palsy in a breastfeeding mother",
+    "source": "Bell's palsy",
+    "patient_persona": {
+      "description": "Tan Hui Shan, 29, female, kindergarten teacher in Bukit Mertajam, Penang, four weeks postpartum and breastfeeding; left facial weakness since last night. First visit. Tearful, anxious Malaysian Mandarin with Hokkien.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kalaiselvi a/p Arumugam, Malaysian Indian woman in her 40s, GP in Bukit Mertajam. Warm, steady; English-leaning, speaks simple Mandarin phrases.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor，我昨天晚上开始，左边的脸不能动了。眼睛闭不起来，嘴巴歪。我是不是 stroke 了？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me check first. 眉毛抬起来……好，左边的额头也不动。手脚都有力，讲话清楚。This is not a stroke, it's Bell's palsy."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bell's palsy 是什么？会不会好？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "是脸的 nerve 发炎。大部分人会完全好，通常几个礼拜到三个月。怀孕和生完 baby 的时候比较常见。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我妈妈说我坐月子的时候吹风扇，所以才中风。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不是因为风扇，也不是你做错什么。是神经发炎，可能跟病毒有关。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我在 breastfeed，可以吃药吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以。Prednisolone 60mg 每天早上吃，five days 后慢慢减。这个药进 breast milk 的量很少，可以继续喂。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "真的吗？我不想停 breastfeeding。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "真的，可以继续。如果你 worry，可以吃药后四个钟头再喂，量就更少。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "眼睛最重要。左眼闭不紧，要滴 artificial tears，一天六次，晚上涂 eye ointment，用 tape 贴起来。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好……我照顾孩子很忙，会不会忘记？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "请家人提醒你，放一瓶在喂奶的地方，每次喂奶就滴一次。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你看起来很累，也有点 sad。Sleep 和心情怎样？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "晚上 baby 要喝奶，只睡三四个钟头。今天照镜子，我一直哭。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这很正常，脸变化很吓人。一个礼拜后回来看我，也让我们看看你的心情，好吗？"
+      }
+    ]
+  },
+  {
+    "id": "msk_068",
+    "split": "train",
+    "condition": "Bell's palsy follow-up with incomplete recovery",
+    "source": "Bell's palsy",
+    "patient_persona": {
+      "description": "Wan Norhafizah binti Wan Ismail, 45, female, owns a small tailoring shop in Kota Bharu, Kelantan; Bell's palsy six weeks ago, stopped prednisolone early and saw a traditional healer. Follow-up. Frank, expressive Kelantanese Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Faridah binti Hamzah, Malay woman in her 50s, family medicine specialist at a Kota Bharu health clinic. Direct, kind; speaks Kelantanese Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Kak Hafizah, dah enam minggu. Muka macam mana sekarang? Ada improvement?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dah baik sikit, doktor. Mulut dah tak berapa senget. Tapi mata kanan ni pedih, berair, macam ada pasir."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cuba pejam mata kuat-kuat... masih ada celah sikit kat mata kanan. Ubat titis mata ada guna?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kadang-kadang je. Saya lupa, busy sangat jahit baju raya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mata yang tak tutup penuh tu senang kering dan luka. Saya nampak merah sikit kat bahagian bawah, maybe corneal abrasion. Kita kena jaga betul-betul."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ubat steroid hari tu, akak habiskan tak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak, doktor. Makan tiga hari je, lepas tu mak ajak pergi bomoh, dia jampi dengan urut muka."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Terima kasih bagi tahu. Urut muka lembut-lembut tak apa, tapi steroid works best in the first week. Sekarang dah lewat untuk sambung."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Habis tu muka saya tak boleh pulih penuh ke? Permanent ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Masih boleh baik lagi, ramai yang pulih dalam tiga sampai enam bulan. Kita buat senaman muka depan cermin, angkat kening, senyum, tiup pipi, sepuluh kali setiap satu, tiga kali sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Senaman tu saya boleh buat, senang je. Mata saya macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Titis artificial tears setiap dua jam, bukan kadang-kadang. Malam sapu gel mata dan tampal plaster. Pakai cermin mata hitam bila keluar."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya juga refer ke eye clinic minggu ni, sebab the redness might be a small scratch on the cornea."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Nanti anak saya bawa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau mata jadi sakit sangat, kabur, atau silau teruk, terus pergi emergency, jangan tunggu."
+      }
+    ]
+  },
+  {
+    "id": "msk_069",
+    "split": "train",
+    "condition": "Bell's palsy in a diabetic patient on steroids",
+    "source": "Bell's palsy",
+    "patient_persona": {
+      "description": "Balakrishnan a/l Nadesan, 60, male, retired lorry transport supervisor in Klang; type 2 diabetes on metformin and gliclazide. One-week follow-up on prednisolone. Jovial, loud Malaysian Indian English with Malay and a Tamil exclamation or two.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ahmad Firdaus bin Rahim, Malay man in his 30s, family medicine specialist at a Klang health clinic. Friendly, firm; English-leaning, mixes Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Uncle Bala, one week already. Muka macam mana?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doctor, a bit better I think. I can close my eye a little more. But my gula ah, aiyo, very high. Morning reading 14, 15."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's the prednisolone. Steroid naikkan gula quite a lot. Any very thirsty, kencing banyak, blur vision?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dahaga yes, drinking water nonstop. Night I go toilet four, five times."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your finger-prick today is 18.2, quite high. You've got two more days of the reducing dose. Let's control your sugar until then."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For now, increase gliclazide to 80mg twice a day. Check sugar before breakfast and before dinner. Once the steroid finishes, we go back to the old dose."
+      },
+      {
+        "speaker": "Patient",
+        "text": "After stopping the steroid, gula will turun by itself?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Usually within a few days, yes. If it's above twenty or you feel very drowsy, go to emergency straight away."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, okay. My wife also marah me, I eat too much thosai."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kurangkan nasi dan thosai minggu ni, banyakkan sayur. Your eye, masih guna ubat titis?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, every two hours. Night I tape it, my wife tolong. She says I look like a pirate."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good, keep it up. Blinking better on the right now. Any new ear pain, rash, or problem with hearing?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, nothing. Only the taste still a bit funny."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Taste usually comes back as the nerve recovers. See you in three weeks, and bring your sugar diary."
+      }
+    ]
+  },
+  {
+    "id": "msk_070",
+    "split": "train",
+    "condition": "Bell's palsy in a young man fearing a stroke",
+    "source": "Bell's palsy",
+    "patient_persona": {
+      "description": "Jefferey Majinbon, 19, male, Kadazan college student and part-time barista in Kota Kinabalu, Sabah; woke with left face weakness, very frightened. Emergency department. Shaky, fast Sabah Malay with English.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Hafizah binti Jumadil, Sabahan Malay woman in her 30s, emergency physician in Kota Kinabalu. Calm, confident; English-leaning, speaks Sabah Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, muka saya sebelah kiri tak boleh gerak. Saya takut saya stroke bah. Umur saya baru sembilan belas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jefferey, tarik nafas dulu. Kita check sama-sama. Angkat kening... senyum... tutup mata kuat-kuat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Macam mana, doktor? Teruk ka? Serious ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sebelah kiri lemah, termasuk dahi. Tangan kaki kuat, cakap pun jelas, jalan pun OK. This is not a stroke. This is Bell's palsy."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Betul ka bukan stroke? Kawan saya cakap muka senget tu stroke."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Stroke biasanya tak kena dahi, dan ada lemah tangan atau kaki. Bell's palsy ni saraf muka yang bengkak, selalunya lepas jangkitan virus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Minggu lepas saya memang selesema, flu. Kerja night shift, tidur pun kurang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itu mungkin pencetusnya. Kebanyakan orang muda baik penuh dalam beberapa minggu sampai tiga bulan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya bagi prednisolone 60mg sehari, lima hari, then we reduce slowly. Take it in the morning lepas sarapan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau saya kerja kat kafe, orang tengok muka saya macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Faham, mesti rasa malu. Kalau perlu, saya bagi MC tiga hari. Yang penting, mata kiri kena jaga, pakai ubat titis mata selalu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Mata saya kering sudah, pedih bila kena angin kipas, especially dekat café."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Titis mata tiap dua jam. Malam sapu gel, tampal mata. Wear glasses or a visor masa naik motor."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, doktor. Thank you, saya ingat hidup saya habis sudah tadi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tidak, bah. Datang klinik kesihatan seminggu lagi. Kalau ada lemah tangan kaki atau sakit kepala teruk, datang balik terus."
+      }
+    ]
+  }
+]

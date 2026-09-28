@@ -1,0 +1,804 @@
+[
+ {
+  "id": "resp_021",
+  "split": "train",
+  "condition": "Uncontrolled asthma",
+  "source": "Asthma",
+  "patient_persona": {
+   "description": "Khairul Anuar bin Salleh, 38, male, e-hailing driver in Subang Jaya, Selangor; asthma since childhood, only uses a salbutamol inhaler. Friendly, chatty Selangor Malay with plenty of English.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Chan Yee Ling, Malaysian Chinese woman in her 30s, GP at a Subang Jaya clinic. Direct, practical; mixes English and Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Khairul, what brings you in today?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doktor, asthma saya teruk sikit bulan ni. Malam-malam terbangun sebab batuk, then kena sedut Ventolin."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Berapa kali seminggu you bangun malam macam tu?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Almost every night lah, maybe four, five kali seminggu. Siang pun sesak bila hujan or bila aircond kuat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "One Ventolin inhaler, berapa lama baru habis?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dulu two months baru habis. Sekarang dua minggu dah habis satu, doktor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That tells me your asthma is not controlled. Ventolin only opens the airway sekejap, dia tak rawat the swelling inside."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Habis tu, kena tukar ubat lain ke? Stronger punya?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya bagi Symbicort 160/4.5. One puff morning, one puff night, and bila sesak, ambil satu puff extra instead of Ventolin."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Satu inhaler for everything? Senang lah macam tu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, but maximum twelve puffs sehari. Lepas guna, kumur mulut, supaya tak dapat fungal infection kat tekak."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Saya drive whole day, kadang-kadang bawa passenger yang merokok. Ada kaitan ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Definitely. Cigarette smoke is a big trigger. Letak sign no smoking dalam kereta, you're allowed."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Betul jugak, my car my rules. Bila nak datang balik?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "One month. Bawa inhaler, saya nak tengok cara you guna. If Symbicort pun tak cukup, or tak boleh cakap habis ayat, pergi emergency terus."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Thank you."
+   }
+  ]
+ },
+ {
+  "id": "resp_022",
+  "split": "train",
+  "condition": "Asthma review and inhaler technique",
+  "source": "Asthma",
+  "patient_persona": {
+   "description": "Mrs. Latha a/p Krishnan, 50, female, secondary school English teacher in Butterworth, Penang; asthma for 20 years, comes for her inhaler refill. Talkative, Malaysian Indian English sprinkled with Malay.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Azman Shukor, Malay man in his 50s, family medicine specialist at a Butterworth health clinic. Warm, slightly teasing; English with Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Cikgu Latha, refill day again. Macam mana, asthma okay tak these three months?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "So-so lah, doctor. Mostly okay, but when the haze came last month, susah nak bernafas a few days."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Did you need any prednisolone or pergi emergency during the haze?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "No, no emergency. I just guna Ventolin more, maybe three times a day for one week."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Okay. Tunjuk saya macam mana you guna your Seretide Accuhaler, just like at home."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Like this, open, click, then I sedut quickly, then I terus breathe out."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Almost correct. Before you sedut, breathe out fully first, away from the device. Then sedut kuat dan dalam, tahan nafas ten seconds."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aiyoh, twenty years I never tahan nafas. Nobody told me also, doctor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's why we check. Peak flow hari ni 380, your best is 420, so about ninety percent. Not bad, cikgu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doctor, ada tak stronger medicine for the jerebu season? The newspaper says haze coming back."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Same Seretide 250, one puff twice a day. During haze, stay indoors, pakai N95 mask kalau keluar, and air purifier kalau ada."
+   },
+   {
+    "speaker": "Patient",
+    "text": "My school got outdoor assembly every Isnin. Can I skip it?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'll write a surat to your principal during haze days. If API above 100, you stay indoors, okay?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Thank you, doctor, you're the best. Next refill tiga bulan lagi?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, three months. And kumur mulut after every Seretide, jangan lupa."
+   }
+  ]
+ },
+ {
+  "id": "resp_023",
+  "split": "train",
+  "condition": "Acute asthma exacerbation",
+  "source": "Asthma attack",
+  "patient_persona": {
+   "description": "Mr. Lau Chee Keong, 45, male, hardware shop owner in Kuching, Sarawak; asthma, ran out of his preventer a month ago. Breathless at first, Kuching Mandarin with English and a bit of Malay.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Jessica Chai, Malaysian Chinese woman in her 30s, emergency medical officer at Sarawak General Hospital. Calm, efficient; Mandarin with English terms.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Lau 先生，现在 nebuliser 做了第三次，感觉怎样？可以讲完一句话吗？Take your time。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "可以了……比刚进来的时候好很多。刚才真的吓死我。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Oxygen 现在 97 percent，peak flow 从 150 上到 310。你的 preventer 是什么时候没有用的？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "一个月前用完了，那时候店里很忙，没空去 klinik 拿药。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个就是问题。Preventer 不能停，停了 airway 慢慢又发炎，所以这次才那么严重。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我以为不喘就不用喷了嘛。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "很多人都这样想。你那个 Seretide 250，要每天早晚各一下，就算没有症状也要喷。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "今天我给你 prednisolone 40mg，每天早上吃，吃五天，要饭后吃，不然胃会痛。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "这个是 steroid 吗？我听说会胖。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "吃五天而已，不会胖的。Short term 可能会睡不好，胃口比较好，这个 normal。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那我今天可以回家吗？明天要开店。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我们再观察一个钟头，如果 peak flow 还是 okay，就可以回家。明天开店可以，但不要搬重的东西。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好。药拿了，我这次一定每天喷。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "两三天内去 klinik kesihatan follow up。如果 Ventolin 四个钟头不够，或者又讲不完句子，马上回来急诊。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "明白了。谢谢医生，terima kasih。"
+   }
+  ]
+ },
+ {
+  "id": "resp_024",
+  "split": "train",
+  "condition": "Exercise-induced asthma",
+  "source": "Exercise-induced asthma",
+  "patient_persona": {
+   "description": "Nurul Izzati binti Kamal, 20, female, sports science student and netball player at a university in Shah Alam. Energetic, fast, Malay mixed with lots of English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Suresh Nair, Malaysian Indian man in his 30s, sports medicine doctor at a university health clinic in Shah Alam. Upbeat, encouraging; English mixed with Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doktor, every time training netball, lepas lima belas minit dada saya ketat, then batuk tak berhenti."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Does it happen masa rehat, or only during training?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Only masa training, especially pagi-pagi bila sejuk. Rest dua puluh minit, okay balik."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Any asthma masa kecil? Or eczema, selsema alahan?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Masa sekolah rendah ada asthma sikit, lepas tu hilang. Hidung selalu tersumbat pagi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I did the spirometry tadi. Resting normal, tapi lepas exercise test, your FEV1 turun 18 percent. That's exercise-induced bronchoconstriction."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Maksudnya asthma balik lah?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "A form of asthma, yes, triggered by exercise. Good news, senang dirawat, and you can still main netball."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Take Symbicort, one puff about fifteen minutes before training. Lepas tu warm up properly, at least ten minutes."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Symbicort tu steroid kan? Nanti kena doping test ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Budesonide dan formoterol dibenarkan under WADA rules at normal doses. Just declare dalam athlete form you."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh okay, lega. Kalau masa game pun sesak?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Take one more puff, rest a bit. If still teruk, stop playing. Your health comes first, not the trophy."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Coach saya mesti tak suka dengar tu. Haha."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bawa coach you jumpa saya if needed. Datang balik in six weeks, kita repeat the test."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Thank you!"
+   }
+  ]
+ },
+ {
+  "id": "resp_025",
+  "split": "train",
+  "condition": "Occupational asthma",
+  "source": "Occupational asthma",
+  "patient_persona": {
+   "description": "Ravi a/l Sinnasamy, 42, male, car spray painter at a workshop in Rawang, Selangor; wheeze for eight months. Mellow voice, Malaysian Indian English with Malay and Tamil-accented rhythm.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Siti Rahmah Yusoff, Malay woman in her 40s, occupational health physician at a Selangor hospital clinic. Thorough, calm; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Ravi, you've been recording your peak flow at work and at home for three minggu. Can I see the chart?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Here, doctor. My daughter help me draw the graph. Workday quite low, weekend naik balik."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "This is very clear. Hari kerja around 350, weekends about 470. Bila jauh dari cat, your lungs improve."
+   },
+   {
+    "speaker": "Patient",
+    "text": "So the paint is the problem? I work there twelve years already, never kena before."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Car spray paint contains isocyanates. It can take years to become sensitised, then suddenly asthma starts."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aiyo. What mask I should pakai? We only use the normal cloth mask, yang murah punya."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Cloth mask tak protect you at all. Spray painters need a proper respirator, ideally an air-fed hood, and a spray booth with ventilation."
+   },
+   {
+    "speaker": "Patient",
+    "text": "My boss sure say expensive. Workshop small only, lima orang."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Under DOSH rules, majikan wajib provide proper protection. I'll write a report to your employer, stating occupational asthma."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Will I lose my job ah, doctor? Got two kids in sekolah, one in Form Five."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's a real worry, saya faham. The best outcome is moving you away from spraying, maybe to panel beating or kaunter depan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Meanwhile, Budesonide-formoterol, two puffs twice a day, and extra one puff bila sesak."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. And if tak boleh tukar kerja?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Then kita kena bincang lagi. Continued exposure can make asthma permanent, even after you stop. Early action penting."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alright, doctor. I'll cakap dengan boss this week."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. Come back in one month, bawa report and your peak flow chart."
+   }
+  ]
+ },
+ {
+  "id": "resp_026",
+  "split": "train",
+  "condition": "Childhood asthma, new diagnosis",
+  "source": "Childhood asthma",
+  "patient_persona": {
+   "description": "Puan Rosmawati binti Ismail, 35, female, school canteen operator in Kuantan, Pahang, bringing her son Danish, 8, with night cough. Talkative Pahang Malay, some English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Tengku Amir Tengku Ismail, Malay man in his 30s, paediatric medical officer at Hospital Tengku Ampuan Afzan clinic. Kind, clear; Malay with English terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doktor, Danish ni batuk malam-malam dah sebulan. Siang okay, main bola pun okay, tapi malam batuk kering."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Batuk dia ada bunyi wheezing, macam siul? Especially waktu malam?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada kadang-kadang, bila dia tidur. Masa kecil selalu gatal kulit, eczema."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dalam family ada yang asthma atau alergi?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ayah dia ada resdung. Adik saya pun asthma."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tadi kita buat peak flow sebelum dan lepas Ventolin. Bacaan naik lebih dua puluh percent. That supports asthma."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Asthma? Tapi dia tak pernah sesak teruk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Asthma kanak-kanak kadang-kadang cuma batuk malam je. Tak semestinya sesak teruk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya bagi preventer, beclomethasone 100 microgram, dua puff pagi dan dua puff malam, guna spacer."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Spacer tu apa, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tiub plastik ni. Letak inhaler kat hujung, Danish tarik nafas lima kali, perlahan-lahan. Ubat lebih banyak masuk paru-paru."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ventolin pun guna spacer ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya. Ventolin empat puff kalau batuk atau sesak. Kalau perlu lebih dari tiga kali seminggu, bagitahu saya."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ubat steroid tu tak bantut dia membesar ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dos kecil ni sangat selamat. Kita check tinggi dia setiap kali datang. Asthma yang tak terkawal lagi bahaya."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, faham. Bila kena datang balik untuk follow up?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Enam minggu. And jangan bagi sesiapa merokok dalam rumah ya, puan, even ayah dia."
+   }
+  ]
+ },
+ {
+  "id": "resp_027",
+  "split": "train",
+  "condition": "Childhood asthma follow-up",
+  "source": "Asthma, childhood",
+  "patient_persona": {
+   "description": "Mr. Chee Wai Keong, 39, male, lorry company clerk in Ipoh, bringing his daughter Zi Qing, 5, for follow-up; grandmother looks after her. Gentle, slightly unsure, Ipoh Mandarin with Cantonese-flavoured words and some English.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Liew Siew Mei, Malaysian Chinese woman in her 40s, paediatrician at an Ipoh private clinic. Warm, patient; Mandarin with English drug names.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "子晴爸爸，上次开始吃 montelukast 到现在，一个月了，how is she？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "晚上咳嗽少很多了，一个礼拜可能一两次而已。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "很好。Montelukast 4mg 是每天晚上吃一粒，chewable 那种，她都有吃吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "平时我太太给，都有吃。但是上个礼拜住在嫲嫲那边，好像 miss 了三天。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "那几天有没有咳多一点？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有，那几天又咳了，嫲嫲还煮了一些草药汤给她喝。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "草药汤最好先不要，我们不知道里面有什么，有些会跟药有 interaction。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我也是这样讲，但是老人家嘛，你知道的。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我明白。你可以写一张纸给嫲嫲，写清楚每天晚上一粒药，贴在 peti ais 上面。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好主意。医生，这个药要吃多久？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "先吃三个月。如果一直 stable，我们再看要不要慢慢停。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我在 Facebook 看到有人说这个药会让小孩子做噩梦，是真的吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "少数小朋友会有睡不好、做噩梦、mood 变化。如果你们看到这些，就停药回来找我。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "目前好像没有，她还是很开心。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "那就好。Ventolin 带在书包里，学校老师也要知道她有 asthma。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好的，谢谢医生，我回去跟嫲嫲讲。"
+   }
+  ]
+ },
+ {
+  "id": "resp_028",
+  "split": "train",
+  "condition": "Childhood asthma, spirometry review and action plan",
+  "source": "Asthma, childhood",
+  "patient_persona": {
+   "description": "Mrs. Deepa a/p Kumar, 38, female, pharmacist assistant in Klang, bringing her son Kavin, 10, who wants to join the school football team. Organised, articulate Malaysian Indian English with Malay.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Ahmad Fikri Rahman, Malay man in his 30s, paediatrician at a Klang hospital clinic. Friendly, encouraging; English with Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Hi Kavin, hi mummy. The spirometry results dah keluar. Kavin, you blew very well today, pandai."
+   },
+   {
+    "speaker": "Patient",
+    "text": "So how is it, doctor? He's so excited, the football selection is minggu depan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "His lung function is normal now, FEV1 ninety-two percent predicted. Ubat preventer tu memang berkesan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Thank God. So he can stop the Qvar already, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Not yet. Bacaan normal sebab Qvar tu. Keep 100 micrograms, one puff pagi dan malam for now."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. But during football, what if he gets sesak in the field?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's why I want to give you an asthma action plan. Hijau, kuning, merah zones, very simple."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Green, he's well, just the usual Qvar. Yellow, batuk or wheezing, take Ventolin four puffs with spacer, ulang after twenty minutes if needed."
+   },
+   {
+    "speaker": "Patient",
+    "text": "And red?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Red is when Ventolin doesn't help, he can't talk in full sentences, or lips turn blue. Terus call ambulance, 999, and keep giving Ventolin while waiting."
+   },
+   {
+    "speaker": "Patient",
+    "text": "I'll give a copy to his coach also. Should he ambil Ventolin before training?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, two puffs about fifteen minutes before training helps. Pastikan dia warm up dulu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "One more thing, doctor, my husband hisap rokok, but only outside the house."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good that it's outside. Tapi asap tu melekat on clothes and hands, so ask him basuh tangan and tukar baju before hugging Kavin."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, I'll tell him tonight. Kavin, say thank you to doctor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good luck for the selection, Kavin. Kita review in three months."
+   }
+  ]
+ },
+ {
+  "id": "resp_029",
+  "split": "train",
+  "condition": "Acute asthma in a child",
+  "source": "Asthma, childhood",
+  "patient_persona": {
+   "description": "Puan Salmah binti Hassan, 31, female, Bajau fish-market seller in Semporna, Sabah, bringing her daughter Aishah, 7, after a night nebuliser in the emergency department. Tired, straightforward Sabah Malay.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Grace Lo Mei Fong, Malaysian Chinese woman in her 30s, medical officer at Hospital Semporna emergency department. Warm, clear; Malay with English terms.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Puan Salmah, Aishah dah okay sikit sekarang. Oxygen dia 97 percent lepas tiga kali nebuliser."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Syukur, doktor. Malam tadi dia sesak teruk, bunyi berdesing, wheezing kuat. Saya takut sangat bah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sebelum ni pernah jadi macam ni?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Pernah dua kali, tapi tak seteruk ni. Klinik bagi ubat sirap je, salbutamol syrup."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Aishah ada asthma. Lepas ni dia perlu ubat sedut, bukan sirap."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ubat sedut? Inhaler? Dia kecil lagi, boleh ke guna?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh, pakai spacer. Saya ajar sekarang. Letak mask kat muka, tekan inhaler sekali, biar dia bernafas enam kali."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, macam tu. Senang juga."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Hari ni saya bagi prednisolone 20mg, sekali sehari lepas makan, tiga hari. Ventolin empat puff setiap empat jam, satu hari."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Rumah kami atas air, jauh sikit dari hospital. Kalau malam jadi lagi, emergency macam mana?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau Ventolin tak membantu, atau dia tak boleh bercakap, terus bawa ke sini. Jangan tunggu pagi."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kat rumah kami masak guna kayu api. Ada kaitan ke dengan asthma dia?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, asap kayu api boleh trigger asthma. Kalau boleh masak jauh dari tempat dia tidur, buka tingkap."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, saya cuba. Lepas ni kena follow up dengan siapa?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Pergi klinik kesihatan dalam tiga hari. Dia orang akan mula preventer untuk jangka panjang."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Terima kasih banyak-banyak."
+   }
+  ]
+ },
+ {
+  "id": "resp_030",
+  "split": "train",
+  "condition": "Adolescent asthma, poor adherence",
+  "source": "Childhood asthma",
+  "patient_persona": {
+   "description": "Mrs. Joanne Lee, 44, female, property agent in Mont Kiara, Kuala Lumpur, with her son Ethan, 13, whose preventer inhaler keeps coming home unused. Brisk, KL English with Mandarin and Malay words.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Harith Ibrahim, Malay man in his 40s, paediatric respiratory consultant at a KL private hospital. Relaxed, speaks directly to the teenager; English with a little Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doctor, I'm so frustrated. Every month his Seretide still full, but he says he takes. 你说我怎么办？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ethan, I'm not here to marah you. Honestly, how many days a week do you actually use it?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "He says maybe two, three days. Then when got PE, he pinjam his friend's Ventolin."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Borrowing inhalers tak elok. Ethan, what gets in the way? Forgetting, or you don't like it?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "He says he forgets, and he's malu to use at school. Sorry, he's shy to talk, so I answer."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's fine. The Seretide is only pagi and malam, so no need at school. Let's attach it to something he does every day."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Keep it next to your toothbrush. Gosok gigi, two puffs, kumur. Done in one minute."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Can set phone alarm also? 他整天都在玩 phone 的。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good idea. Ethan, set it for 7am and 10pm. Mummy, jangan bising sangat, just check once a week."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, I'll try not to 啰嗦. Doctor, one more thing. His friends vape. I saw in his bag once."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ethan, vaping with asthma is really bahaya. It inflames the airway, and some kids end up in ICU."
+   },
+   {
+    "speaker": "Patient",
+    "text": "He says it was his friend's, bukan dia punya."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'll take that. Just know that if you ever feel pressured, the answer is still no. Your lungs, your call."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Thank you, doctor. He listens to you more than me, honestly. 我讲的他都不听。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Review in two months, and bawa inhaler tu. The counter tells me the truth."
+   }
+  ]
+ }
+]

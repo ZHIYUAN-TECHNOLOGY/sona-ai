@@ -1,0 +1,812 @@
+[
+ {
+  "id": "resp_041",
+  "split": "train",
+  "condition": "RSV bronchiolitis, ward round",
+  "source": "Bronchiolitis",
+  "patient_persona": {
+   "description": "Puan Aina Syuhada binti Rosli, 26, female, clinic receptionist in Sentul, Kuala Lumpur; her son Rayyan, 5 months, is on day 3 in the paediatric ward. Tired, soft voice, KL Malay with English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Jonathan Tan Kah Wai, Malaysian Chinese man in his 30s, paediatric registrar at Hospital Kuala Lumpur, morning ward round. Gentle, clear; Malay mixed with English.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Morning, puan. Rayyan macam mana malam tadi? Tidur okay?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Lebih okay dari semalam, doktor. Tapi still ada bunyi grr-grr dalam dada, and dia cough sampai vomit sekali."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's normal for bronchiolitis, day three to five biasanya paling teruk. Lepas tu slowly improve."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "High flow tadi kita dah stop pukul enam pagi. Now dia on nasal prong, satu liter, oxygen 96 percent."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, alhamdulillah. Susu dia macam mana? Tiub kat hidung tu bila boleh buang?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Nasogastric tube tu kita keep dulu, sebab dia penat nak menyusu. Hari ni try breastfeed sikit-sikit, then top up guna tube."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Doktor, ubat apa yang dia dapat? Saya tengok takde antibiotic pun."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Betul, sebab bronchiolitis ni virus, RSV. Antibiotic tak membantu. Nebuliser pun tak banyak kesan untuk baby, so kita fokus oxygen dan susu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Tapi kakak saya kata anak dia dulu dapat Ventolin."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Some older guidelines guna, tapi research shows tak membantu untuk bronchiolitis. Suction hidung lagi berguna, especially sebelum menyusu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saya faham. Bila agaknya boleh balik?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bila dia tak perlu oxygen and boleh minum at least two-thirds of his usual milk, biasanya dalam dua tiga hari lagi."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kat rumah ada kakak dia, umur tiga tahun. Nanti dia berjangkit ke? She always nak cium adik."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh berjangkit. Basuh tangan selalu, and kalau kakak selsema, keep her away from baby for a while."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, doktor. Terima kasih sangat-sangat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sama-sama. Kalau ada apa-apa, panggil nurse ya."
+   }
+  ]
+ },
+ {
+  "id": "resp_042",
+  "split": "train",
+  "condition": "Bronchiolitis, mild, home care",
+  "source": "Bronchiolitis",
+  "patient_persona": {
+   "description": "Mdm. Koh Pei Wen, 30, female, bank teller in Johor Bahru, bringing her daughter Le Xuan, 8 months, with runny nose and cough for three days. Worried, fast Johor Mandarin with lots of English.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Muhammad Irfan Zakaria, Malay man in his 30s, GP at a Johor Bahru family clinic who studied in a Chinese primary school. Friendly, patient; Mandarin mixed with English.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我的 baby 流鼻涕三天了，昨晚开始咳嗽，呼吸有 wheezing sound，我很 worried。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "她有发烧吗？喝奶的量跟平时比怎样？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有一点烧，37.8。喝奶少一点，平时 150ml，现在大概 100ml，但是 diaper 还是湿的。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Diaper 一天换几片？湿湿重重的那种？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "大概六片，都蛮湿的。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "好，这个表示她没有 dehydrated。她的 oxygen 是 97 percent，呼吸 40 一分钟，胸口没有 retraction。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个是 bronchiolitis，通常是 RSV virus。她是 mild，可以在家里照顾。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "不用 nebuliser 吗？我朋友的 baby 都有做 neb。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bronchiolitis 做 salbutamol neb 通常没有帮助。最重要的是 saline drops 洗鼻子，还有少量多次喝奶。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saline drops 怎样用？每次都会哭。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "喝奶前每边滴两三滴，然后用 nasal aspirator 吸一下。鼻子通了，她喝奶就比较容易。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那 paracetamol 可以给吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "可以，她 8 公斤，paracetamol syrup 120mg per 5ml，给 5ml，六个钟头一次，发烧才给。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好。要多久才会好？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "咳嗽可能要两三个礼拜，第三到第五天最严重。如果呼吸很快、胸口凹进去、奶喝不到一半，就马上去 emergency。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "明白了，thank you doctor。我今晚会一直看着她。"
+   }
+  ]
+ },
+ {
+  "id": "resp_043",
+  "split": "train",
+  "condition": "Bronchiolitis with poor feeding, admission",
+  "source": "Bronchiolitis",
+  "patient_persona": {
+   "description": "Mr. Prakash a/l Ravindran, 31, male, logistics coordinator in Seremban, bringing his son Aadhav, 3 months, born at 35 weeks, to the emergency department. Anxious, fast Malaysian Indian English with some Malay.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Aishah Kamaruddin, Malay woman in her 30s, paediatric medical officer at Hospital Tuanku Ja'afar emergency department. Calm, methodical; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doctor, since pagi he's not drinking properly. Every time suck sikit then stop, then breathing laju-laju."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Okay, we're watching him now. Berapa lampin basah since this morning?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Only two, doctor. Biasanya dah six, seven by this time."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "His oxygen is 91 percent, breathing 62 per minute, and I can see dada dia tertarik ke dalam under the ribs."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Is that bahaya? My wife is coming, she's parking the car."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "It means he's working hard to breathe. He was born premature and baru three months, so I'd like to admit him to the wad."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Admit? Okay, okay. What will you do for him?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "We'll give oxygen through the nose, and a small feeding tube so he gets milk without getting tired. Nanti nurse will do suction also."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Need any drip or antibiotic?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Usually no antibiotic, this looks like RSV. Kalau dia tak boleh terima tube feeds, then we'll put a drip."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aiyo, he's so small. How long in hospital?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Most babies stay three to five hari. The first few days usually paling teruk, then slowly better."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Can my wife stay with him? She's still menyusu badan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, one parent boleh teman. She can pam susu and we'll use it for the tube feeds. That's best for him."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, thank you doctor. I'll go tell her."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tarik nafas dulu, Mr. Prakash. He's in the right place now."
+   }
+  ]
+ },
+ {
+  "id": "resp_044",
+  "split": "train",
+  "condition": "Bronchiolitis, post-discharge follow-up",
+  "source": "Bronchiolitis",
+  "patient_persona": {
+   "description": "Encik Awang Faizal bin Awang Ali, 34, male, Sarawak Malay technician in Kuching, bringing his daughter Nur Alya, 10 months, a week after discharge. Relaxed, Sarawak Malay ('kamek', 'sik', 'kitak').",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Doris Ling Hui Ming, Malaysian Chinese woman in her 30s, medical officer at a Kuching health clinic. Friendly, direct; Malay with English.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Awang, Alya macam mana lepas discharge minggu lepas?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dah okay, doktor. Kamek rasa batuk still ada, but less already. Susu dah minum macam biasa, full bottle."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. Nafas laju lagi tak? Ada bunyi berdesing?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Sik ada dah. Cuma pagi-pagi batuk sikit, hidung berair."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya check tadi, oxygen 98 percent, dada clear. Berat dia naik 200 gram since discharge. Bagus."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doktor, batuk ni sampai bila? Bini kamek risau, dia Google macam-macam."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Lepas bronchiolitis, batuk boleh sampai tiga, empat minggu. That's normal, selagi dia makan dan main okay."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kamek ada dengar, lepas kena bronchiolitis, nanti jadi asthma. Betul ka, doctor? Kamek worried."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sebahagian baby memang lebih senang wheezing bila selsema lepas ni. But it doesn't mean confirm jadi asthma."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada cara nak elak?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yang paling penting, no cigarette smoke dalam rumah or dalam kereta. Encik atau family ada yang merokok?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kamek merokok, tapi di luar rumah jak. Ayah kamek pun sama, dah forty years."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bagus dah di luar. Tapi lepas merokok, basuh tangan dan tukar baju sebelum dukung Alya. Better lagi kalau boleh berhenti."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, kamek cuba. Vaksin dia kena teruskan macam biasa?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, teruskan jadual vaksin. Next is the MMR at twelve months. Datang balik kalau demam tinggi atau susah bernafas."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih, doktor."
+   }
+  ]
+ },
+ {
+  "id": "resp_045",
+  "split": "train",
+  "condition": "Bronchiolitis, grandmother caregiver",
+  "source": "Bronchiolitis",
+  "patient_persona": {
+   "description": "Mdm. Ong Geok Lian, 62, female, retired seamstress in Bayan Lepas, Penang, bringing her grandson Jun Hao, 6 months, while his parents work. Chatty, Penang Mandarin with Hokkien words and some Malay.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nithya Sivakumar, Malaysian Indian woman in her 30s, GP at a Bayan Lepas clinic who speaks basic Mandarin and switches to English and Malay. Patient, kind; simple Mandarin with English and Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我孙子咳嗽三天了，鼻涕很多，昨晚睡觉呼吸很大声，我整晚没睡。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "阿嬷，他喝奶怎样？有没有 muntah？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "喝奶比较少，喝一下就停，然后又哭。没有吐。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Oxygen 95 percent，呼吸有一点快，50。胸口有一点凹进去，但是不多。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那是什么病？是不是 pneumonia？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我看是 bronchiolitis，小 baby 的呼吸道 virus infection。现在是 mild to moderate。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "要不要去 hospital？他爸爸妈妈在 factory 做工，要晚上才回来。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我想你打电话给他妈妈，今天带去 Hospital Pulau Pinang 给 paediatric 看，因为他喝奶少，呼吸也快。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那么严重啊？我以为只是普通咳嗽。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "现在还不算危险，但是 baby 六个月，可能会变严重，给医院观察比较安全。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，好。我在家可以做什么？他外婆说要给他喝一点药油。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "不要给他喝药油，也不要涂太多在鼻子旁边。Baby 用这些会有危险。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "哦，好险，我还没给。那我等下怎样去 hospital？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你叫 Grab，或者叫他妈妈直接过来。路上如果他嘴唇变蓝或者停止呼吸，马上 call 999。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，谢谢医生，terima kasih。我现在打电话。"
+   }
+  ]
+ },
+ {
+  "id": "resp_046",
+  "split": "train",
+  "condition": "Allergic rhinitis, new diagnosis",
+  "source": "Allergic rhinitis",
+  "patient_persona": {
+   "description": "Muhammad Haziq bin Rosdi, 25, male, administrative officer at a ministry in Putrajaya; sneezing every morning for a year. Polite, soft-spoken, Malay with office English.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Ong Sue Lin, Malaysian Chinese woman in her 30s, medical officer at a Putrajaya health clinic. Efficient, friendly; Malay mixed with English.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Haziq, apa masalah hari ni?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doktor, dah setahun setiap pagi saya bersin banyak kali, hidung berair, gatal. Orang kata resdung."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bersin lebih teruk bila? Masa kemas rumah, kena habuk, or dalam office with the aircond?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Bila kemas bilik dan tukar cadar, confirm bersin berpuluh kali, non-stop. Mata pun itchy."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ada asthma, eczema, or keluarga ada alergi?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Mak saya ada resdung juga. Saya masa kecil ada eczema, gatal-gatal kulit."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I tengok dalam hidung, bengkak dan pucat, tak ada polyp. This looks like allergic rhinitis, most likely sebab dust mite."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dust mite tu apa, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Hama habuk. Hidup dalam tilam, bantal, karpet. Tak nampak dengan mata, tapi very common allergen."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya bagi mometasone nasal spray, dua spray setiap lubang hidung, sekali sehari. Kena guna setiap hari, not just bila bersin."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Spray tu steroid ke? Selamat ke guna lama?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dos dia rendah dan kebanyakan kekal dalam hidung, so safe for long-term use. Full effect ambil masa one to two weeks."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Untuk bersin teruk, loratadine 10mg sekali sehari bila perlu. It's non-drowsy, tak buat mengantuk."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Ada apa lagi saya boleh buat kat rumah?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Basuh cadar dengan air panas once a week, jemur tilam under the sun, and kurangkan soft toys dalam bilik."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Haha, saya takde patung beruang, doktor. Terima kasih."
+   }
+  ]
+ },
+ {
+  "id": "resp_047",
+  "split": "train",
+  "condition": "Allergic rhinitis, antihistamine drowsiness",
+  "source": "Allergic rhinitis",
+  "patient_persona": {
+   "description": "Ms. Khor Li Ting, 33, female, graphic designer in Jelutong, Penang; takes cetirizine daily and feels sleepy at work. Casual, fast Penang Mandarin heavily mixed with English.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Andrew Goh Chin Keat, Malaysian Chinese man in his 40s, GP at a Penang family clinic. Easy-going, practical; English and Mandarin mixed.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doctor，我的 sinus 一直有问题，每天都 sneeze，我在 Watsons 买 cetirizine 每天吃，但是吃了整天都很 sleepy。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你每天吃多少？什么时候吃？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "10mg，早上一粒。吃完到了 office，整个 afternoon 像 zombie 一样。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Cetirizine 对一些人会 drowsy。你可以换 fexofenadine 180mg，这个比较不会 sleepy。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那个效果一样好吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "差不多。不过其实你每天都有症状，antihistamine 只是控制 sneezing。你需要 steroid nasal spray 才能 treat 鼻子里面的 inflammation。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Steroid 我有点怕，会不会 addicted？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "不会 addicted 的。Nasal steroid 跟那种 decongestant spray 不一样。你有没有用 Otrivin 那种？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有啊！鼻塞的时候喷，很快就通了，我一天喷好几次。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "用了多久了？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "嗯……可能两个月了吧。不喷就完全塞住，晚上睡不着。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个叫 rebound congestion，用太久鼻子会依赖它。我们要慢慢停掉 Otrivin，改用 mometasone spray，每天两下每边。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Stop 了会不会整晚塞住？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "头几天会比较辛苦。你可以先停一边，另一边继续一个礼拜，然后两边都停。Mometasone 一起开始用。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay，这个方法可以 try。Thank you doctor，我终于知道为什么越喷越塞。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "四个礼拜后回来 review，如果还是不好，我们 refer ENT 看看。"
+   }
+  ]
+ },
+ {
+  "id": "resp_048",
+  "split": "train",
+  "condition": "Rhinitis medicamentosa and allergic rhinitis",
+  "source": "Allergic rhinitis",
+  "patient_persona": {
+   "description": "Mr. Arun Kumar a/l Shanmugam, 29, male, software tester in Cyberjaya; blocked nose for months, uses a decongestant spray many times a day. Fast, casual Malaysian Indian English with Malay slang.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Zuraidah Mohd Noor, Malay woman in her 40s, ENT specialist at a private hospital in Putrajaya. Straightforward, dry humour; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Arun, your GP referred you for hidung tersumbat. Tell me the story."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doctor, three months my nose tersumbat both sides. I use the Otrivin spray, then boleh bernafas for a few hours, then block again."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "How many times a day are you using it now?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Honestly, maybe eight, ten times sehari. I carry it in my pocket, like my handphone."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I looked inside your nose with the scope. The lining sangat merah and bengkak, typical of overuse of decongestant spray. We call it rhinitis medicamentosa."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Medi-what? So the spray is the one causing?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Partly, yes. You started sebab alergi, but now the nose depends on the spray. Every time ubat habis kesan, it swells more."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aiyo. So macam mana nak stop? Without it I cannot tidur at all."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "We stop it completely. I'll give you prednisolone 20mg for five days to kurangkan bengkak, plus fluticasone nasal spray, two sprays each side daily."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Five days only then okay?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "The first week tough sikit, hidung akan tersumbat. After two weeks, most people feel much better. Tidur with head a bit tinggi helps."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Can I still use saline rinse? My colleague kat office guna."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, saline rinse is great, once or twice a day. Guna air masak yang dah sejuk, or distilled water."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alright. If still block after this?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Then we look at your septum and buat allergy testing. But I'm quite confident this will work."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Thank you, doctor. I'll buang the Otrivin today."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good man. See you in one month."
+   }
+  ]
+ },
+ {
+  "id": "resp_049",
+  "split": "train",
+  "condition": "Allergic rhinitis with snoring in a child",
+  "source": "Allergic rhinitis",
+  "patient_persona": {
+   "description": "Mr. Tee Chun Hong, 41, male, contractor in Puchong, Selangor, bringing his son Yi Xiang, 9, who snores and sneezes; teacher says he sleeps in class. Direct, practical, Selangor Mandarin with English and Malay.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lim Hui Qi, Malaysian Chinese woman in her 30s, paediatrician at a Puchong private clinic. Warm, clear; Mandarin with English terms.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我儿子晚上打呼很大声，早上一起来就一直打喷嚏，老师说他上课常常睡觉。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "他打呼的时候，有没有停止呼吸一下，然后突然喘一口气？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好像没有，就是一直很大声，嘴巴张开睡。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我看他鼻子里面，turbinates 很肿，颜色是白白的，扁桃腺不大。这个比较像 allergic rhinitis。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "是 allergy 啊？我们家里有养猫。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "猫毛和 dust mite 都有可能。我们可以做 skin prick test 看清楚。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那个测试会痛吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "只是在手上刺几下，像蚊子咬一样，十五分钟就知道结果。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我先开 fluticasone furoate nasal spray，每天早上每边一下。要每天用，大约两个礼拜才有效果。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "他九岁，用 steroid 会不会影响长高？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个 dose 很低，研究显示对小孩子长高没有影响。我们每次 follow up 也会量身高。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好。那猫要送走吗？孩子很爱那只猫。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "先不用。如果 test 显示猫 allergy，至少不要让猫进他的房间，床单每个礼拜用热水洗。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好的。学校的问题会好吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "鼻子通了，睡得好，上课就会比较精神。六个礼拜后回来，我们看打呼有没有改善。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "明白，谢谢医生。"
+   }
+  ]
+ },
+ {
+  "id": "resp_050",
+  "split": "train",
+  "condition": "Allergic rhinitis with asthma, refill",
+  "source": "Allergic rhinitis",
+  "patient_persona": {
+   "description": "Puan Rosnah binti Che Hassan, 45, female, government school clerk in Kota Bharu, Kelantan; allergic rhinitis and mild asthma, here for her three-monthly refill. Cheerful, Kelantan Malay with some English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Gopinath a/l Ramasamy, Malaysian Indian man in his 40s, family medicine specialist at a Kota Bharu health clinic. Warm, a little formal; Malay with English terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Puan Rosnah, sihat? Datang ambil ubat ya hari ni?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Sihat, doktor. Ya, ubat hidung dengan inhaler dah nak habis."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tiga bulan ni, hidung macam mana? Bersin masih teruk?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dah kurang banyak. Cuma bila musim tengkujuh, sejuk, hidung tersumbat sikit, especially pagi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Asthma pula? Berapa kali guna Ventolin seminggu?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Jarang dah, doktor. Sebulan mungkin sekali dua je."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bagus. Hidung dan paru-paru ni satu sistem. When the nose is controlled, asthma pun usually better."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, ada kaitan ye? Saya ingat lain-lain penyakit."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, kita panggil united airway. So teruskan mometasone spray sehari sekali dan budesonide inhaler pagi malam."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Montelukast tu doktor, perlu ambil lagi ke? Saya selalu lupa, especially waktu malam."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Since you're stable, kita boleh stop montelukast. Kurang satu ubat, senang sikit."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alhamdulillah. Satu lagi, doktor. Kawan kata spray hidung tu boleh buat hidung berdarah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kadang-kadang boleh, kalau spray terus ke septum, the middle part. Hala sikit ke arah telinga. Right hand untuk lubang kiri."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, macam tu. Selama ni saya spray lurus je."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Cuba cara baru ni. Datang balik tiga bulan lagi untuk refill."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Terima kasih."
+   }
+  ]
+ }
+]

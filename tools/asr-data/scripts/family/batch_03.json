@@ -1,0 +1,852 @@
+[
+  {
+    "id": "family_021",
+    "split": "train",
+    "condition": "Polycystic ovary syndrome with irregular periods",
+    "source": "Polycystic ovary syndrome (PCOS)",
+    "patient_persona": {
+      "description": "Nur Amira binti Zakaria, 23, female, fresh graduate working in a Cyberjaya call centre, irregular periods since university. Chatty, self-conscious about weight and acne, Malay-English Manglish.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ong Li Ting, Malaysian Chinese woman in her 30s, family medicine doctor at a Putrajaya clinic. Friendly and clear; English with Malay words.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hi Amira, what brings you in today?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doctor, my period very tak menentu. Sometimes three months tak datang, then bila datang, banyak sangat. Last one was in June."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay. Any other changes? Berat badan, jerawat, bulu tumbuh on the face or tummy?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Weight naik almost ten kilo since uni. Jerawat pun teruk, and ada bulu halus kat dagu, I kena pluck every week. So malu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Thank you for telling me. Any chance mengandung? Just need to ask, okay."
+      },
+      {
+        "speaker": "Patient",
+        "text": "No lah, doctor, I'm single. Tak pernah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay. Your BMI is 29, blood pressure 124 over 78. I see some darker skin at the back of the neck, which can go with insulin resistance."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, that one I thought daki, saya gosok kuat-kuat pun tak hilang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's acanthosis, bukan kotoran. All together, this sounds like PCOS, polycystic ovary syndrome. We'll confirm with blood tests and an ultrasound."
+      },
+      {
+        "speaker": "Patient",
+        "text": "PCOS? My cousin also got. She said susah nak mengandung. Is that true?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It can make it harder, but ramai perempuan with PCOS get pregnant, kadang-kadang with a bit of help. Bukan mandul, okay?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll check hormones, sugar, cholesterol and thyroid. Untuk haid dan jerawat, pil macam Diane-35 boleh bantu. Also metformin 500mg if your sugar is borderline."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pill tu makan hari-hari ke? Will I gain more weight?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "One tablet daily for 21 days, then rehat seven days. Most people tak naik berat much. Weight loss of even five percent can bring periods back."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Five percent means around four kilo? Okay, that one I can try. I'll start jogging dekat tasik Presint."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's a good start. Kurangkan air manis and nasi, more protein and vegetables. See you in two weeks with the results."
+      }
+    ]
+  },
+  {
+    "id": "family_022",
+    "split": "train",
+    "condition": "Primary dysmenorrhoea in a teenager",
+    "source": "Dysmenorrhea",
+    "patient_persona": {
+      "description": "Lee Xin Yi, 16, female, Form 4 student in Kajang, accompanied by her mother who waits outside. Shy, speaks softly, sometimes looks at the floor.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tay Siew Ching, Malaysian Chinese woman in her 30s, GP at a Kajang family clinic. Gentle, relaxed; Mandarin with English and school-slang Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Xin Yi，妈妈说你每个月 period 来的时候，痛到要请假，对吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对……第一天和第二天最痛，痛到在床上滚，还会想 muntah。上个月在学校还 pengsan。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "痛的地方是下面的肚子，还是腰也会痛？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "下面肚子，还有腰。有时候痛到 thigh 这边。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Period 是几岁开始的？每个月准时吗？Flow 多不多？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "十二岁开始。很准时，二十八天左右。量普通，第一天要换 pad 比较多。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你平时痛的时候吃什么 medicine？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "妈妈给我吃 Panadol，可是没有什么用。还有喝红糖姜茶。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "姜茶可以继续喝，没有坏处。这种痛叫 primary dysmenorrhoea，very common in teenagers，通常不是什么严重的问题。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "可是我 classmates 都没有那么痛，为什么我这么严重？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "每个人的 prostaglandin 不一样，有些人比较多，就会比较痛。我给你 mefenamic acid 500mg，就是 Ponstan。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "最重要的是，start the tablet 一开始就吃，或者前一天就吃。一天三次，饭后吃，最多吃三天。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "饭后吃……那如果早上来不及吃 breakfast 呢？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "至少吃几片 biskut 或者喝 Milo 才吃药，不然胃会痛。热水袋放在肚子上也有帮助。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。那 PE 课可以上吗？Cikgu 每次都叫我跑步。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "轻松的 exercise 其实会帮助减轻痛。如果还是很痛，我可以写 letter 给学校。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，谢谢医生。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "吃了三个月还是一样痛，或者 flow getting heavier，就要回来，我们做 ultrasound 看看。"
+      }
+    ]
+  },
+  {
+    "id": "family_023",
+    "split": "train",
+    "condition": "Menorrhagia with iron deficiency",
+    "source": "Menorrhagia",
+    "patient_persona": {
+      "description": "Hasnah binti Mat Isa, 45, female, canteen operator at a secondary school in Pasir Mas, Kelantan. Frank, energetic but tired lately, Kelantanese Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lim Boon Kiat, Malaysian Chinese man in his 40s, medical officer at a Kelantan district hospital gynae clinic. Calm; speaks fluent Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Hasnah, dalam referral letter dari klinik kesihatan, haid puan banyak sangat. Boleh cerita sikit?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doktor, dah enam bulan dah. Every period more than one week. Hari kedua ketiga, pad kena tukar setiap satu jam, pakai dua lapis."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada keluar ketulan darah? Besar macam mana?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada, macam hati ayam. Kadang-kadang sampai bocor ke kain masa kerja kat kantin. Malu betul."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Puan rasa penat, pening, atau sesak nafas bila naik tangga? Letih sangat?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Penat sangat, doktor. Dulu saya boleh angkat periuk besar, sekarang sekejap je dah tercungap-cungap."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hemoglobin puan 8.1. Normal untuk perempuan atas 12. So puan ada anaemia sebab banyak hilang darah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Patutlah muka pucat, anak saya pun tegur."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ultrasound tadi ada satu fibroid kecil, tiga sentimeter, in the wall of the womb. Mungkin itu sebab haid banyak."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Fibroid tu barah ke, doktor? Saya takut."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bukan barah. Fibroid ni ketulan otot, sangat biasa pada umur macam puan. Tapi kita akan buat biopsy lapisan rahim sekali, sebab puan dah lebih 40, just to be safe."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Masa haid, makan tranexamic acid 1 gram, three times a day, maximum four days. Dia kurangkan darah haid."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kena makan hari-hari ke, doktor? Every day?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Masa haid je. Untuk darah, ferrous fumarate 200mg dua kali sehari, sekurang-kurangnya tiga bulan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat besi tu buat saya sembelit dulu. Constipation teruk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Makan lepas makan, minum air banyak, makan betik. Kalau sembelit sangat, beritahu saya, kita bagi stool softener."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau ubat tak jalan, kena operation ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada pilihan lain dulu, macam Mirena, alat dalam rahim yang ada hormone. Kita bincang lagi lepas keputusan biopsy, dalam dua minggu."
+      }
+    ]
+  },
+  {
+    "id": "family_024",
+    "split": "train",
+    "condition": "Endometriosis with painful periods and subfertility",
+    "source": "Endometriosis",
+    "patient_persona": {
+      "description": "Rachel Fernandez, 32, female, Eurasian, hotel sales manager in Melaka, trying to conceive for eighteen months. Articulate, frustrated, a little tearful.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Suresh Nair, Malaysian Indian man in his 50s, O&G consultant at a Melaka private hospital. Measured, kind; English with a few Malay words.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Rachel, I've read your GP's letter. Painful periods for years, pain during intercourse, and eighteen months trying for a baby. Betul?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, doctor. The pain started when I was a teenager, but the last three years dah jadi teruk sangat. Even Ponstan tak jalan anymore."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any pain when opening your bowels during your period?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, actually. I never told anyone because malu sangat. It's like a stabbing pain, macam kena tikam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's an important clue. On examination, there's tenderness behind the uterus, and the ultrasound shows a 4 cm cyst on the left ovary, what we call an endometrioma."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Is it cancer? My aunt had ovarian cancer."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The appearance is typical for endometriosis, which is not cancer. We'll check a blood marker, CA-125, but it's often mildly raised in endometriosis anyway."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So endometriosis is why I tak boleh mengandung?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's a common reason. The tissue causes inflammation and scarring around the tubes and ovaries. Your husband's semen test was normal, which helps."
+      },
+      {
+        "speaker": "Patient",
+        "text": "What can we do? I don't want to wait anymore, doctor. Everyone at family gatherings keeps asking, bila nak ada baby, bila nak ada anak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'd recommend a laparoscopy, keyhole surgery. We remove the cyst and the endometriosis spots, and check whether the tubes are open with dye."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Will surgery affect my eggs? Saya dah 32, doctor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "There's some risk to the egg reserve, so we'll check your AMH level first. If it's already low, we may go straight to IVF instead."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. And for the sakit in the meantime?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Naproxen 500mg twice a day during your period. Since you're trying to conceive, we won't use hormones now."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Thank you for explaining properly. Other doctors just cakap period pain is normal, tahan je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Severe pain isn't normal, and you did right to push. Come back in one week with the blood results, and bring your husband."
+      }
+    ]
+  },
+  {
+    "id": "family_025",
+    "split": "train",
+    "condition": "Uterine fibroids with pressure symptoms",
+    "source": "Fibroids, uterine",
+    "patient_persona": {
+      "description": "Wong Siew Fong, 48, female, runs a family hardware shop in Taiping, Perak. Straightforward, busy, Cantonese-flavoured Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Norhafizah binti Ghazali, Malay woman in her 40s, gynaecologist at a Taiping hospital. Efficient, kind; English with Mandarin and Malay phrases.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Auntie Wong, your scan shows several fibroids. The biggest one is about 9 cm. 很大哦."
+      },
+      {
+        "speaker": "Patient",
+        "text": "九公分？难怪我的肚子这么大，人家还以为我 pregnant。晚上也要起来 urine 三四次。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, the fibroid is pressing on your bladder, 压到膀胱, so you feel like urinating often. Any constipation?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有啊，常常便秘。还有月经很多，最近 blood test 说我 anaemia, hemoglobin low."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your hemoglobin is 9.4. Fibroids are not cancer, 不是癌症, but at this size with these symptoms, we should treat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "要开刀吗？我 kedai 走不开，我老公一个人顾不了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "There are a few options. Since you're 48, and menopause usually comes around 50 to 52, some women just wait with medicine, 等 menopause."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "But because of the size and the bleeding, most would choose surgery. Either buang fibroid sahaja, or remove the whole womb, hysterectomy."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我不要再生孩子了，两个儿子都大了。拿掉子宫会不会很快老，会不会像我姐姐那样很热很烦？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If we keep the ovaries, 保留卵巢, your hormones continue normally. Menopause comes at its natural time."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那 operation 要住院多久？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Open surgery, about three to four days in ward, and six weeks rest from heavy lifting. Tak boleh angkat barang berat, okay?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "六个礼拜不能搬东西……我的 kedai 都是搬 cement 和 paint 的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your husband or a worker will need to help. Before surgery, I'll give iron tablets to raise your blood, ferrous fumarate 200mg twice a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好吧，我回去和老公 discuss 一下，next week I give you the answer。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay. If the bleeding becomes very heavy, with giddiness, go to emergency, 不要等."
+      }
+    ]
+  },
+  {
+    "id": "family_026",
+    "split": "train",
+    "condition": "Menopause with hot flushes and sleep disturbance",
+    "source": "Menopause",
+    "patient_persona": {
+      "description": "Rohani binti Said, 52, female, government office clerk in Kuala Lumpur, periods stopped fourteen months ago. Warm, a little flustered, laughs at herself.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Jasmine Kaur, Malaysian Punjabi woman in her 40s, family medicine specialist at a KL health clinic. Friendly, direct; speaks Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Rohani, apa masalah hari ni?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doktor, saya ni panas je sepanjang masa. Kat ofis orang lain pakai sweater, saya berpeluh sampai tudung basah. Malam pun terjaga sebab berpeluh."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sehari berapa kali rasa panas tu datang? How many times?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak terkira, doktor. Sepuluh kali kot. Malam paling teruk, tidur pun tak lena, esok pagi mengantuk kat ofis."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Haid last bila?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dah lebih setahun tak datang. Saya ingat lega lah, tak payah beli pad, rupanya datang masalah lain pulak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ini hot flushes, very common menopause symptom. Ada rasa sakit masa hubungan suami isteri, atau kering di bahagian bawah?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada juga, kering. Suami pun dah perasan. Malu nak cakap sebenarnya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak apa, ni semua perkara biasa. Mood macam mana? Cepat marah, sedih?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Cepat marah! Anak-anak kata mak sekarang garang macam singa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada pilihan rawatan. Hormone replacement therapy, HRT, paling berkesan untuk hot flushes. Tapi saya kena check dulu risiko puan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kakak saya kata HRT tu boleh sebabkan kanser payudara. Betul ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Risikonya kecil, especially if used less than five years. Tapi kita check mammogram dulu, dan pastikan tak ada sejarah darah beku atau strok."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya tak pernah buat mammogram. Tak ada sejarah strok."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK, saya rujuk mammogram dulu. Lepas tu kita mula tibolone 2.5mg sekali sehari, atau HRT combined. Untuk kering tu, krim estrogen faraj dua kali seminggu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sementara tunggu, ada apa-apa saya boleh buat? Any tips?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pakai baju kapas nipis, kipas kecil kat meja, kurangkan kopi dan makanan pedas. Senaman ringan pun membantu tidur."
+      }
+    ]
+  },
+  {
+    "id": "family_027",
+    "split": "train",
+    "condition": "Perimenopause with irregular bleeding and mood changes",
+    "source": "Perimenopause",
+    "patient_persona": {
+      "description": "Shanti a/p Govindasamy, 47, female, secondary school English teacher in Klang. Expressive, speaks in long sentences, Malaysian Indian English with Tamil-influenced rhythm.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Hafiz bin Rahmat, Malay man in his 40s, family physician at a Klang private clinic. Patient, good listener; English with some Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, I don't know what's happening to me. My period come every two weeks sometimes, then skip two months. And I cry at small things, even in class, depan students."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That sounds really tough, Shanti. How long has this been going on?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "About one year already. At first I thought stress, because of SPM students. But now also got night sweats, berpeluh satu badan, and I cannot tidur properly."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "At 47, these changes fit perimenopause, the years before periods stop completely. Hormone naik turun, jadi haid dan mood susah nak jangka."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So it's normal? I'm not gila lah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "You're definitely not going crazy. But because the bleeding is irregular, saya nak pastikan tak ada benda lain, like polyps or thickened lining."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "When you bleed, is it heavy? Any bleeding after intercourse?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sometimes heavy, with clots, ketul-ketul. After intercourse no."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll arrange a pelvic ultrasound and blood tests, full blood count and thyroid. Your last Pap smear?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Five years ago, I think. Masa my daughter's wedding time."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We'll do one today. About the mood, do you still enjoy things, or feel hopeless most days?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Not hopeless. Just very emotional, and my husband says I'm always marah-marah. Tapi I still enjoy my gardening, tanam bunga."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's good. Regular exercise, sleep routine, less caffeine will help. If the flushes are bad, low-dose hormones can smooth things out."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can I take evening primrose oil? My ipar swears by it, dia kata very good."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The evidence is weak, but it's generally harmless. Don't spend too much on it. Let's see the scan first."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, doctor. Terima kasih for listening. I feel better already just talking."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Come back in two weeks with results. Kalau darah banyak sangat, tukar pad setiap jam, terus pergi emergency."
+      }
+    ]
+  },
+  {
+    "id": "family_028",
+    "split": "train",
+    "condition": "Postmenopausal osteoporosis after a wrist fracture",
+    "source": "Osteoporosis",
+    "patient_persona": {
+      "description": "Chua Ah Moi, 64, female, retired tailor in Batu Pahat, Johor; fractured her wrist two months ago slipping in the kitchen. Talkative, Hokkien-flavoured Mandarin, worries about costs.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kenneth Yeo Chee Hong, Malaysian Chinese man in his 40s, orthopaedic medical officer at a Batu Pahat hospital. Patient; Mandarin with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "阿姨，你的 bone density，就是骨质密度的报告出来了。T-score 是负三点一。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "负三点一是什么意思？很 serious 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "负二点五以下就是 osteoporosis，骨质疏松。That's why a small slip caused a fracture，因为骨头已经很脆了。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我妈妈以前也是这样，后来弯腰驼背，走路要拿 tongkat。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "骨质疏松会遗传。你停经是几岁？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "四十五岁左右，比较 early。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "早停经也是一个原因。我给你开 alendronate 70mg，一个礼拜吃一次。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "一个礼拜一次？那很方便。要怎么吃？Before or after food？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个药吃法很重要。早上起床空肚子，配一大杯白开水，然后坐着或站着，三十分钟不能躺下，也不能吃东西。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "为什么不能躺？会 choke 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "如果躺下，药会停在食道，会伤到食道，很痛。还有不能配 kopi 或牛奶一起吃。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白。那钙片要吃吗？我在 pharmacy 看到很多种，很贵。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "要吃。Calcium carbonate 加 vitamin D，每天一粒，和 alendronate 分开时间吃，比如晚上吃。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "这个药要吃多久？Government hospital 有没有给？我不想买太贵的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "医院会给，你只要付挂号费。Usually five years，然后再 check 骨密度。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我在家要注意什么？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "厨房地板要干，bathroom 放防滑垫。每天走路晒太阳半个钟，多吃 tauhu、ikan bilis 这些含钙的东西。"
+      }
+    ]
+  },
+  {
+    "id": "family_029",
+    "split": "train",
+    "condition": "Genitourinary syndrome of menopause with recurrent urinary symptoms",
+    "source": "Atrophic vaginitis",
+    "patient_persona": {
+      "description": "Maimunah binti Harun, 61, female, retired kindergarten teacher in Kuala Kangsar, Perak. Polite, soft-spoken, embarrassed about the topic.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kamala Devi a/p Rajoo, Malaysian Indian woman in her 50s, family medicine specialist at an Ipoh clinic. Warm, unhurried; fluent Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Cikgu Maimunah, apa khabar? Saya tengok dalam rekod, tahun ni dah tiga kali dapat jangkitan kencing."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Betul, doktor. Setiap kali makan antibiotic, baik sekejap, lepas tu datang balik. Pedih masa kencing, selalu nak ke tandas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Selain tu, ada rasa kering atau gatal kat bahagian faraj?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada... kering sangat. Kadang-kadang pedih walaupun tak buat apa-apa. Nak cakap pun segan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak perlu segan, cikgu. Ini sangat biasa lepas menopaus. The estrogen level drops, kulit kat bahagian tu jadi nipis dan kering."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tapi saya dah menopause lebih sepuluh tahun. Kenapa baru sekarang?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dia memang makin teruk dengan masa. Kulit nipis tu buat kuman senang masuk saluran kencing, sebab tu jangkitan berulang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya periksa sekejap ya. Memang nampak nipis, merah sikit, tapi tak ada ketulan atau luka yang mencurigakan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah. Jadi treatment dia macam mana, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya bagi krim estrogen, estriol, sapu kat dalam. Every night for two weeks, lepas tu dua kali seminggu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hormone? Tak bahaya ke, doktor? Kawan saya kata boleh dapat kanser."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Krim ni dos sangat rendah, kerja setempat je, sangat sedikit masuk darah. Dia selamat untuk kebanyakan wanita."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau macam tu, saya cuba. Ada benda lain saya patut buat?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Minum air sekurang-kurangnya lapan gelas sehari. Jangan tahan kencing lama. Guna sabun lembut, jangan guna pencuci wangi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Air kencing hari ni pun rasa pedih sikit. Kena makan antibiotic lagi ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ujian urine hari ni nitrite positif. Saya bagi nitrofurantoin 50mg, empat kali sehari, lima hari. Lepas tu kita harap krim ni kurangkan jangkitan."
+      }
+    ]
+  },
+  {
+    "id": "family_030",
+    "split": "train",
+    "condition": "Menopause counselling, deciding on HRT",
+    "source": "Menopause",
+    "patient_persona": {
+      "description": "Catherine Lau Mei Fong, 51, female, accountant in Georgetown, Penang, periods stopped nine months ago. Precise, has researched online, a bit sceptical.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Azura binti Mohd Salleh, Malay woman in her 40s, O&G specialist at a Penang private hospital. Evidence-focused, calm; English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, I've done my reading. I have hot flushes, brain fog at work, and my joints ache. I want to know if HRT is worth the risk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good that you've read up, Catherine. Let's go through your own risk profile, because that's what matters, bukan statistics semua orang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any history of breast cancer in the family, blood clots, stroke, or heart disease?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "My mother had breast cancer at 68. No clots, no stroke. My father had a heart attack at 70."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Do you smoke? Blood pressure today is 132 over 84, and your BMI is 24. Mammogram last year was normal?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Never smoked. Mammogram last year clear, BIRADS 1. Semua okay."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. For women under 60, or within ten years of menopause, benefits usually outweigh risks when symptoms are troublesome."
+      },
+      {
+        "speaker": "Patient",
+        "text": "But my mother's breast cancer, doesn't that change things? 我有点担心."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It raises your baseline risk a little. Combined HRT adds a small extra risk, about one extra case per thousand women per year of use."
+      },
+      {
+        "speaker": "Patient",
+        "text": "That's smaller than I expected. What about clots? Darah beku?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "With a patch or gel, estrogen through the skin, the clot risk is not increased like with tablets. That's what I'd suggest for you."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. And I still have my uterus, so I need progesterone also, right? Two hormones."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Correct. Micronised progesterone 100mg at night, every night. It protects the lining."
+      },
+      {
+        "speaker": "Patient",
+        "text": "How long can I stay on it? Selamanya?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We review every year. Many women use it for five years, then taper. We'll keep yearly mammograms."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alright, I'm willing to try. If I get bleeding, macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Some spotting in the first three to six months is common. Bleeding after that needs a scan, so let me know."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Fair enough. Terima kasih for giving me numbers, not just \"it's safe\" or \"it's dangerous\"."
+      }
+    ]
+  }
+]

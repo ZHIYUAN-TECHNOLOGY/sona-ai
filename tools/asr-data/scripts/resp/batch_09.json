@@ -1,0 +1,812 @@
+[
+ {
+  "id": "resp_081",
+  "split": "train",
+  "condition": "Suspected obstructive sleep apnoea in a lorry driver",
+  "source": "Obstructive sleep apnea",
+  "patient_persona": {
+   "description": "Encik Roslan bin Mat Nor, 48, male, long-haul lorry driver based in Kuantan, Pahang; loud snorer, nearly fell asleep at the wheel last week. Deep, husky voice, Pahang Malay with English road terms.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lim Sze Ying, Malaysian Chinese woman in her 30s, GP at a Kuantan clinic. Direct, caring; Malay mixed with English.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Roslan, isteri encik yang suruh datang, kan? Apa complaint dia?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dia kata saya berdengkur kuat sangat, doktor, macam lori naik bukit. Sometimes I stop breathing, then tersedak bangun."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Siang macam mana? Rasa mengantuk sangat tak?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Mengantuk teruk. Minggu lepas masa drive kat highway Karak, hampir terlelap. Nasib baik rumble strip bunyi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's very dangerous, untuk encik dan other road users. Berapa jam tidur sehari?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Tidur tujuh jam, tapi bangun rasa macam tak tidur langsung. Pagi-pagi headache."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Berat encik 105kg, leher 45cm, darah tinggi 150 over 95. Semua ni risk factors untuk obstructive sleep apnoea."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Sleep apnoea tu apa, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Masa tidur, airway di tekak tertutup, oxygen turun, otak kejutkan encik banyak kali. So sleep quality teruk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya nak refer encik untuk sleep study di Hospital Tengku Ampuan Afzan. Tidur satu malam dengan sensor."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Sementara tunggu tu, boleh drive lagi ke? Itu periuk nasi saya."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Honestly, saya tak galakkan drive jauh sampai dirawat. Kalau mengantuk, berhenti di R&R, tidur sekejap. Jangan paksa."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Susah juga, doktor. Tapi saya faham, bahaya."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya boleh tulis surat untuk majikan, minta kerja lokal sementara. Rawatan dia, CPAP, sangat berkesan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, doktor. Kalau turun berat pun membantu?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sangat membantu. Kurangkan nasi, air manis, and jangan minum kopi banyak-banyak untuk tahan mengantuk. See you after the sleep study."
+   }
+  ]
+ },
+ {
+  "id": "resp_082",
+  "split": "train",
+  "condition": "Obstructive sleep apnoea, CPAP troubleshooting",
+  "source": "Obstructive sleep apnea",
+  "patient_persona": {
+   "description": "Ms. Chow Wen Jing, 46, female, certified accountant in Georgetown, Penang; severe OSA started on auto-CPAP four months ago, still sleepy, nodded off at a red light. Precise, frustrated Penang Mandarin mixed with English.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Goh Teik Hin, Malaysian Chinese man in his 50s, respiratory physician at a Penang private hospital. Calm, methodical; Mandarin with English technical terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我用 CPAP 四个月了，还是很累。上个礼拜在红绿灯差点睡着，吓死我。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个很严重，谢谢你告诉我。我们先看你的 CPAP data。你一个晚上平均用几个钟头？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "应该有六七个钟头吧，我每晚都有戴。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Data 显示平均三个钟头二十分钟，而且 mask leak 很高。很多晚上两三点就没有了。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "啊？可能我半夜睡着的时候自己拿掉了，我不记得。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "很常见。Leak 高的话，空气从旁边漏出来，会吵醒你，口也很干，所以你不自觉拿掉。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "对，早上起来嘴巴很干，喉咙痛。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你睡觉的时候嘴巴会张开，现在的 nasal mask 不适合。我们换 full-face mask，再加 heated humidifier。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Full-face 会不会很闷？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "刚开始会不习惯。白天看电视的时候先戴三十分钟，让自己适应。Mask fitting 我们今天就做。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那开车的问题呢？我每天都要开车上班。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "在 CPAP 用得够之前，至少每晚四个钟头以上，我建议不要开车，或者尽量短途。可以用 Grab。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "明白。我还在吃 cetirizine 治鼻敏感，会不会让我更累？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "有可能，cetirizine 对一些人会 drowsy。换 fexofenadine，或者用 nasal spray，鼻子通了 CPAP 也比较舒服。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，我试试。Thank you doctor。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "一个月后回来看 data。目标是每晚至少四个钟头，最好整个晚上。"
+   }
+  ]
+ },
+ {
+  "id": "resp_083",
+  "split": "train",
+  "condition": "Obstructive sleep apnoea, sleep study results",
+  "source": "Sleep apnea, obstructive",
+  "patient_persona": {
+   "description": "Mr. Rajendran a/l Pillai, 52, male, school headmaster in Ipoh, Perak; hypertension; did a home sleep study last month. Formal, measured Malaysian Indian English with some Malay.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nurul Izzah Mohd Salleh, Malay woman in her 40s, respiratory physician at Hospital Raja Permaisuri Bainun. Clear, friendly; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Rajendran, your sleep study results dah keluar. Shall we go through them?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Please, doctor. My wife asyik tanya every day. She says the snoring can wake up the whole taman."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your AHI is 24. Maksudnya, the number of times per hour your breathing berhenti or becomes shallow. 24 falls in moderate obstructive sleep apnoea."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Twenty-four times an hour? Patutlah I feel like a zombie in school assembly."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your oxygen also turun to 82 percent at the lowest. That strains your jantung, and it may be why your blood pressure susah nak control."
+   },
+   {
+    "speaker": "Patient",
+    "text": "My BP is always 150, even with two ubat. So this is connected?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Very likely. Treating the sleep apnoea often helps the blood pressure too."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Best treatment is CPAP, a small machine with a mask, blowing air to keep your throat open during sleep."
+   },
+   {
+    "speaker": "Patient",
+    "text": "How much does the machine cost? Kerajaan provide or not?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Usually two to four thousand ringgit to buy. Sometimes can get bantuan through Perkeso or your employer. Boleh sewa dulu also."
+   },
+   {
+    "speaker": "Patient",
+    "text": "I'll ask the Jabatan Pendidikan. Must wear every night?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, every malam, the whole night if possible. Most people feel much better within two weeks."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Any other things I can do?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Weight loss helps, even five to ten percent. Elakkan alcohol and sleeping pills. Try tidur mengiring."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alright, doctor. I'll start with sewa dulu and see."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. Our CPAP nurse will do the mask fitting today. Kita review lagi dalam enam minggu."
+   }
+  ]
+ },
+ {
+  "id": "resp_084",
+  "split": "train",
+  "condition": "Obstructive sleep apnoea in a child",
+  "source": "Obstructive sleep apnea in children",
+  "patient_persona": {
+   "description": "Puan Zawiyah binti Othman, 34, female, school clerk in Alor Setar, Kedah, bringing her son Harith, 5, who snores and stops breathing in his sleep. Concerned, Kedah Malay with some English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lee Chong Wei Ming, Malaysian Chinese man in his 40s, ENT specialist at Hospital Sultanah Bahiyah. Gentle, clear; Malay mixed with English.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doktor, Harith ni berdengkur tiap malam. Kadang-kadang saya tengok dia berhenti bernafas, then tersentak bangun. Saya takut sangat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Siang dia macam mana? Sleepy, or hyperactive, tak boleh duduk diam?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Hyperactive, doktor. Cikgu tadika kata dia tak fokus, suka marah. Kencing malam pun masih ada."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Semua tu boleh jadi sebab poor sleep quality. I tengok tekak dia, tonsil dia besar, almost touching in the middle."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Besar sangat ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Grade four, paling besar. Lateral neck X-ray pun tunjuk adenoid besar, blocking belakang hidung."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Overnight oximetry minggu lepas pun tunjuk oxygen turun banyak kali. This is obstructive sleep apnoea in children."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Macam mana nak rawat, doktor? Kena operation ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, main treatment ialah buang tonsil dan adenoid, adenotonsillectomy. Most kids jadi jauh lebih baik lepas tu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Bius penuh ke? Dia kecil lagi, saya risau."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, general anaesthesia. Operation lebih kurang sejam, and dia kena tinggal wad satu atau dua malam untuk monitor."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Lepas operation sakit tak? Boleh makan?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sakit tekak about seven to ten days. Kita bagi paracetamol dan ibuprofen. Makanan lembut, aiskrim, air sejuk."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, doktor. Bila boleh buat?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya letak dalam waiting list, dalam dua tiga bulan. Kalau dia selsema dekat tarikh tu, kita postpone sikit."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Terima kasih."
+   }
+  ]
+ },
+ {
+  "id": "resp_085",
+  "split": "train",
+  "condition": "Positional obstructive sleep apnoea with alcohol use",
+  "source": "Sleep apnea",
+  "patient_persona": {
+   "description": "Mr. Ting Siew Hock, 40, male, Foochow car dealer in Kuching, Sarawak; mild OSA on sleep study; entertains clients with beer most nights. Jovial, loud, Sarawak Mandarin with plenty of English and Malay.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Chai Lee Fong, Malaysian Chinese woman in her 30s, GP with a sleep interest at a Kuching clinic. Friendly, frank; Mandarin mixed with English.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "陈先生，你的 sleep study 出来了。AHI 是 11，是 mild sleep apnoea，而且大部分是在你 sleep on your back 的时候。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Mild 啊？那还好嘛。我以为很严重，我老婆讲我打呼像 motorbike。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Mild 可是也会让你白天累。你说你下午在 showroom 常常想睡觉？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "对，especially 吃完午餐。Customer 讲话我都会 blur 掉。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你一个礼拜喝酒几天？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "做 sales 嘛，entertain customer，差不多四五个晚上，每次 maybe 五六罐 beer。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "酒精会让喉咙的肌肉放松，睡觉的时候 airway 更容易塞住。喝酒的晚上，打呼会特别严重。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "难怪，我老婆说我喝酒回来那晚最吵。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "所以第一步，睡前四个钟头不要喝酒，一个礼拜最多两天。第二，sleep on your side。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "侧睡要怎样？我睡着了就翻回去。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "有一个 trick，在睡衣背后缝一个网球，或者用 positional device。你翻过来会不舒服，就会侧回去。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "网球？Haha，好 creative。Okay，这个我可以 try。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你的体重也可以降一点，BMI 是 29。降五公斤，AHI 可能就正常了。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，我开始去 gym。那 CPAP 需要吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "先 try 这些 lifestyle changes 三个月。如果还是很累，我们再 repeat sleep study，考虑 CPAP 或者 mandibular device。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay lah, doktor，谢谢。我今晚 entertain 少喝一点。"
+   }
+  ]
+ },
+ {
+  "id": "resp_086",
+  "split": "train",
+  "condition": "Pertussis in a young infant, ward round",
+  "source": "Pertussis",
+  "patient_persona": {
+   "description": "Puan Nik Nur Ain binti Nik Hassan, 24, female, first-time mother in Kota Bharu, Kelantan; her daughter Maryam, 7 weeks old, is admitted with whooping cough. Exhausted, emotional Kelantan Malay.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Harvinder Singh a/l Gurdev Singh, Malaysian Punjabi man in his 30s, paediatric medical officer at Hospital Raja Perempuan Zainab II, ward round. Gentle, patient; Malay with English terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Puan Ain, macam mana Maryam malam tadi?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Batuk dia berderet-deret, doktor, sampai muka merah, biru. Lepas tu dia vomit. Saya tak tidur langsung."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya tahu, penat sangat. Nurse report dia ada tiga episod oxygen turun malam tadi, tapi cepat naik balik dengan suction."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doktor, betul ke ni batuk kokol? Orang tua-tua panggil batuk seratus hari."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, PCR swab confirm pertussis, batuk kokol. Untuk baby bawah tiga bulan, ia boleh bahaya, sebab tu kita tahan wad."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dia dah mula azithromycin, 10mg per kilo once a day, five days. Hari ni hari ketiga."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Antibiotik tu boleh hentikan batuk?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Antibiotik bunuh kuman dan kurangkan jangkitan pada orang lain. Tapi batuk tu sendiri akan lama, maybe a few weeks."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ya Allah. Macam mana dia boleh dapat? Dia tak keluar rumah pun."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Biasanya dari orang dewasa di rumah yang batuk lama. Ada sesiapa kat rumah batuk more than two weeks?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Abang ipar saya, dah sebulan batuk. Dia selalu dukung Maryam."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Semua orang dalam rumah perlu makan antibiotik pencegahan, azithromycin lima hari, walaupun tak batuk."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Masa mengandung, saya tak ambil suntikan Tdap tu. Saya tak tahu penting."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Jangan salahkan diri. Untuk kehamilan akan datang, ambil Tdap sekitar 28 minggu, untuk lindungi baby awal-awal."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Terima kasih jaga Maryam."
+   }
+  ]
+ },
+ {
+  "id": "resp_087",
+  "split": "train",
+  "condition": "Pertussis in an adult on warfarin",
+  "source": "Whooping cough",
+  "patient_persona": {
+   "description": "Mdm. Yong Mei Ling, 41, female, home-care nurse aide in Petaling Jaya who visits elderly clients; on warfarin 5mg after a pulmonary embolism; day 18 of coughing fits. Hoarse, tired, KL Mandarin with English and Malay.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Mohd Imran Zulkifli, Malay man in his 30s, GP at a Petaling Jaya clinic who speaks conversational Mandarin. Methodical, kind; Mandarin with English and Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我咳了快三个礼拜，一咳就停不下来，咳到吐，吸气的时候还有“呼”的声音。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "咳完之后，你觉得人还 okay 吗？没有咳的时候舒服吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "对，不咳的时候完全正常。但是一咳起来，眼泪都出来，昨晚还咳到 kencing 出来。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个很像 pertussis，百日咳。我们做 PCR swab 确认。你的工作是照顾老人家对吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "对，我每天去三个 client 家里。有一个 client 的孙子刚出生。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "那要特别小心。Pertussis 对 baby 和老人会很危险。结果出来之前，请你先不要上班。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好。要吃 antibiotic 吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "要，azithromycin。但是你在吃 warfarin，这个 antibiotic 会让你的 INR 升高，出血的 risk 会增加。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "啊，那怎么办？我上次 embolism 很可怕。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我们还是用 azithromycin，第一天 500mg，然后 250mg 四天。第三天和第七天要验 INR。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好。要注意什么出血的 sign？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "牙龈出血、尿有血、大便黑色、或者身上很多瘀青，就马上回来。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我的 client 需要吃药吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "有接触的高 risk 的人，特别是 baby，需要 prophylaxis。我会写一封信给他们的医生。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，谢谢医生。我咳到肋骨都痛了。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "可以吃 paracetamol。不要吃 ibuprofen，因为你有 warfarin。MC 五天，吃完 antibiotic 才上班。"
+   }
+  ]
+ },
+ {
+  "id": "resp_088",
+  "split": "train",
+  "condition": "Pertussis in a teenager",
+  "source": "Pertussis",
+  "patient_persona": {
+   "description": "Mr. Suresh a/l Kannan, 44, male, factory supervisor in Nilai, Negeri Sembilan, bringing his son Dinesh, 15, with a three-week cough. Practical, fast Malaysian Indian English with Malay.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Jasmine Ooi Hui Wen, Malaysian Chinese woman in her 30s, GP at a Nilai clinic. Friendly, efficient; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doctor, my son cough three weeks already. Night time very teruk, cough until vomit. I already bagi two bottle cough syrup, not working."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dinesh, bila you batuk, is it a lot of coughs in a row, then you can't catch your breath?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "He says yes, like cannot stop, then when tarik nafas got sound. Between coughing, he's normal, main phone like usual."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Anyone else sick at home or in school?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "His school kawan also got long cough. Dalam kelas ada a few budak like that."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "This sounds like pertussis, batuk kokol. Teenagers often get it because the childhood vaccine protection wears off."
+   },
+   {
+    "speaker": "Patient",
+    "text": "But he got all his vaccines as a baby. Buku pink all complete, doctor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, but protection fades after about ten years. That's why some countries give a booster for teenagers."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'll do a nose swab to confirm. Since batuk dah lebih three weeks, antibiotics won't shorten it much, but still useful if tested early."
+   },
+   {
+    "speaker": "Patient",
+    "text": "So no medicine can help? He has SPM trial bulan depan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "The cough will slowly improve, but can take weeks. Ubat batuk tak banyak bantu. Madu dalam air suam, and small frequent meals if he vomits."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Can he go to school?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "If he's more than three weeks, usually dah tak berjangkit. But I'll check with the swab result, and notify Pejabat Kesihatan Daerah."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Health office? Will they come to the school?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "They may check his classmates, especially yang ada adik baby. It's routine, jangan risau."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, understood. Thank you, doctor."
+   }
+  ]
+ },
+ {
+  "id": "resp_089",
+  "split": "train",
+  "condition": "Pertussis results and household prophylaxis",
+  "source": "Whooping cough",
+  "patient_persona": {
+   "description": "Encik Mohd Firdaus bin Yahya, 35, male, school teacher in Pasir Puteh, Kelantan; month-long cough with rib pain, newborn son at home. Worried, soft Kelantan Malay with English.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Siti Hajar Mohd Daud, Malay woman in her 30s, medical officer at a Pasir Puteh health clinic. Calm, thorough; Malay mixed with English.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Firdaus, keputusan blood test pertussis serology dah keluar. Positif. So batuk sebulan tu memang batuk kokol."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Patutlah, doktor. Batuk sampai sakit rusuk, macam patah. Malam tak boleh tidur, sleep terganggu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sakit rusuk tu dari otot yang tegang sebab batuk kuat. Kadang-kadang boleh retak rusuk, but X-ray you normal."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alhamdulillah. Tapi doktor, anak saya baru dua minggu lahir. Saya risau sangat, he's so small."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's why I called you. Baby sangat berisiko. Baby ada batuk, susah bernafas, or muka biru bila menyusu?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Takde, doktor. Dia sihat, menyusu okay."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bagus. Semua orang dalam rumah, termasuk baby, kena ambil preventive antibiotic sekarang, even without symptoms."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Untuk baby, azithromycin syrup ikut berat, sekali sehari, lima hari. Isteri encik dan encik sendiri, azithromycin 500mg hari pertama, then 250mg empat hari."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baby kecil macam tu boleh makan antibiotic?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh, azithromycin paling selamat untuk bayi. Kita akan monitor, especially vomiting selepas menyusu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saya kena duduk jauh dari baby ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "First five days makan ubat, cuba elakkan dukung baby, pakai mask, basuh tangan frequently."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Isteri saya ambil vaksin Tdap masa mengandung. Membantu ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sangat membantu! Antibodies dari ibu dah ada dalam baby. That's good protection for now."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Syukur. Terima kasih, doktor, sebab bagitahu awal."
+   }
+  ]
+ },
+ {
+  "id": "resp_090",
+  "split": "test",
+  "condition": "Pertussis prevention in pregnancy",
+  "source": "Pertussis",
+  "patient_persona": {
+   "description": "Mrs. Tan Hui Xin, 30, female, primary school teacher in Kluang, Johor, 27 weeks pregnant; her niece was recently hospitalised with whooping cough. Earnest, careful Johor Mandarin mixed with English and some Malay.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Norhafizah Abu Bakar, Malay woman in her 40s, family medicine specialist at a Kluang health clinic antenatal unit who speaks basic Mandarin. Warm, reassuring; mixes Malay, English and simple Mandarin.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我姐姐的女儿上个礼拜因为百日咳住院，两个月大而已，我很担心我的 baby。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya faham. Your niece okay sekarang?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "现在好一点了，还在 ward。我姐姐说如果她怀孕的时候有打针就好了。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Betul. Vaksin Tdap masa mengandung protect baby for the first few months, sebelum baby boleh dapat vaksin sendiri."
+   },
+   {
+    "speaker": "Patient",
+    "text": "那我现在二十七个礼拜，可以打吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh, the best timing is between 27 and 36 weeks. Hari ni pun boleh bagi."
+   },
+   {
+    "speaker": "Patient",
+    "text": "打针对 baby 安全吗？会不会有 side effect？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Very safe. 很多国家的孕妇都打。Maybe lengan sakit sikit, sedikit demam, satu dua hari."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我上个礼拜有去看我侄女，我会不会已经被传染？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Awak ada batuk, demam, or selsema since then?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "没有，我都很好。只是有抱她一下。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your niece dah makan antibiotic dan ada dalam hospital. If takde symptoms selepas tiga minggu, risk you rendah. Tapi, kalau batuk lebih seminggu, datang terus."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好。还有，我先生和我婆婆也要打吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Orang yang akan jaga baby selalu, macam suami and nenek, boleh ambil Tdap booster juga di private clinic. Cocooning, kita panggil."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Cocooning，好听。多少钱？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Around RM80 to RM120, depends on the clinic. Yang for pregnant mothers, kami bagi free di sini."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，那今天我先打。谢谢医生，terima kasih banyak。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sama-sama. Lepas suntik, tunggu fifteen minutes dulu ya, sebelum balik."
+   }
+  ]
+ }
+]

@@ -1,0 +1,768 @@
+[
+ {
+  "id": "cardio_061",
+  "split": "train",
+  "condition": "Hypothyroidism, new diagnosis",
+  "source": "Hypothyroidism (underactive thyroid)",
+  "patient_persona": {
+   "description": "Puan Halimah binti Othman, 45, female, tadika teacher from Alor Gajah, Melaka; tired for months, gaining weight. Slow, tired voice, Melaka Malay with some English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Tan Kok Wei, Malaysian Chinese man in his 30s, medical officer at an Alor Gajah health clinic. Friendly, explains simply; English-leaning, fluent Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Puan Halimah, result blood test dah ada. TSH puan 18, normal bawah 4.5. And free T4 rendah. Ini hypothyroidism, thyroid kurang aktif."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Patut la, doktor. Saya asyik letih, sejuk je walaupun cuaca panas. Rambut gugur, berat naik enam kilo."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, semua tu classic symptoms. Sembelit pun ada? Kulit kering?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada, dua-dua. Saya ingat sebab umur, dah nak menopause."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Some overlap, betul. But in your case, thyroid ni punca utama. Kita boleh rawat dengan tablet hormone, levothyroxine."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Start 50 micrograms, sekali sehari, pagi-pagi masa perut kosong, tiga puluh minit sebelum sarapan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kenapa kena perut kosong?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sebab makanan, kopi, susu, and calcium or iron pills boleh block absorption. Kalau puan makan ubat besi, jarakkan empat jam."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saya ada makan calcium, doktor. Waktu pagi jugak."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tukar calcium tu ke waktu malam. Levothyroxine seorang diri waktu pagi."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Berapa lama nak rasa baik?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dua ke tiga minggu mula rasa kurang letih. Six weeks later, kita check TSH semula and adjust dose."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ubat ni kena makan sampai bila?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Most likely seumur hidup. Tapi dia hormone yang sama macam badan buat sendiri, so side effect sangat sikit if the dose is right."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alhamdulillah, ada jawapan juga akhirnya. Terima kasih, doktor."
+   }
+  ]
+ },
+ {
+  "id": "cardio_062",
+  "split": "train",
+  "condition": "Hypothyroidism, suppressed TSH from self-adjusted dose",
+  "source": "Hypothyroidism (underactive thyroid)",
+  "patient_persona": {
+   "description": "Madam Yong Mei Fong, 62, female, retired accountant in Sri Petaling, Kuala Lumpur; hypothyroid for ten years, recently feeling jittery. Precise, a little defensive, mixes English into Mandarin.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Siti Mariam binti Idris, Malay woman in her 40s, family medicine specialist at a Kuala Lumpur clinic. Calm, direct; English with Mandarin she picked up, and Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Madam Yong, your TSH this time is 0.05, very low. That means too much thyroxine. 最近有没有心跳快, 手抖?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有, 这两个月心跳常常很快, 晚上也睡不好. 我以为是 stress."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "How are you taking the levothyroxine now? The prescription is 100 micrograms daily."
+   },
+   {
+    "speaker": "Patient",
+    "text": "老实说, 我看 YouTube 说多吃一点会瘦, so 我自己加到 150. 我想减肥."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I see. Thank you for being honest. 太多 thyroxine 会伤心脏, and at your age it also weakens the bones, osteoporosis."
+   },
+   {
+    "speaker": "Patient",
+    "text": "伤骨头? 我不知道咧. 我只是想瘦三四公斤."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Thyroxine is not a weight loss pill. Extra dose burns muscle and bone, 不只是 fat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Please go back to 100 micrograms, once every morning. 我们六个星期后再验 TSH."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, 我回去 100. 那心跳会不会有问题?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your ECG today is normal sinus rhythm, heart rate 96. It should settle when the dose is correct."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "如果心跳不规则, chest pain, 或者很喘, come in straight away."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好. 那减肥我应该怎样做? 我退休后都在家里坐."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Walking every morning thirty minutes, and weight training twice a week. That also protects your bones."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我可以去 taman 那边跟 aunty 们跳 line dance 吗?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Excellent idea, 很好的运动. See you in six weeks."
+   }
+  ]
+ },
+ {
+  "id": "cardio_063",
+  "split": "train",
+  "condition": "Hypothyroidism in early pregnancy",
+  "source": "Hypothyroidism (underactive thyroid)",
+  "patient_persona": {
+   "description": "Mrs. Priyanka a/p Selvakumar, 31, female, secondary school English teacher in Seremban, Malaysian Indian; on levothyroxine, eight weeks pregnant. Excited but anxious, articulate English with some Malay.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lee Yan Ting, Malaysian Chinese woman in her 30s, obstetric medicine specialist at a Seremban hospital. Warm and precise; English with a little Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Congratulations, Mrs. Priyanka! Eight weeks today. How are you feeling?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Thank you, doctor! Very happy, but also risau about the thyroid. Will it affect the baby?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's why I'm glad you came early. In the first trimester, the baby depends completely on your thyroid hormone for brain development."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your TSH this morning is 3.8. For pregnancy, we want it below 2.5. So we need to increase your dose."
+   },
+   {
+    "speaker": "Patient",
+    "text": "I'm on 75 micrograms now. How much more?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Take 100 micrograms daily from tomorrow. A simple way, some doctors say take two extra tablets a week, but a daily dose is easier to remember."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, 100 every day. Still perut kosong, right?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes. And very important, keep it four hours apart from your iron and calcium pills. Those block absorption."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh no. I've been taking my folic acid and iron together with it in the morning, sebab senang."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Folic acid alone is fine. Just move the iron to lunch or dinner."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Got it. And morning sickness? Kadang-kadang I vomit in the morning."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "If you vomit within thirty minutes of taking it, take another tablet. If later than that, no need."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "We'll check TSH every four weeks until twenty weeks, then once each trimester."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Will the baby also have thyroid problem?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Usually not. All babies get a heel-prick or cord blood thyroid test at birth anyway. Your job is just to take the medicine properly."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, I'll set an alarm. Thank you, doctor, rasa lega sangat."
+   }
+  ]
+ },
+ {
+  "id": "cardio_064",
+  "split": "train",
+  "condition": "Hypothyroidism after radioactive iodine for Graves' disease",
+  "source": "Hypothyroidism (underactive thyroid)",
+  "patient_persona": {
+   "description": "Encik Mohd Azizul bin Jamaludin, 50, male, palm oil mill supervisor from Sandakan, Sabah; had radioactive iodine for Graves' disease six months ago. Steady, practical voice, Sabah Malay with work English.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Chan Siew Mei, Sabahan Chinese woman in her 40s, endocrinologist at a Sandakan hospital. Clear, friendly; English-leaning, fluent Sabah Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Azizul, six months after RAI, TSH encik sekarang 32, free T4 rendah. So your thyroid dah jadi underactive."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doktor dulu memang dah cakap mungkin jadi macam ni, kan? Saya ingat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Betul. That's the expected outcome for most patients. Better underactive, sebab senang kawal dengan tablet, daripada overactive."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Patut la dua bulan ni saya rasa lembab, kerja pun slow. Mill manager pun tegur."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Itu kesan hypothyroid. Kita start levothyroxine 100 micrograms, sekali sehari, pagi sebelum makan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Carbimazole yang dulu tu masih kena makan?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak, stop carbimazole terus. Now we're replacing the hormone, bukan menekan dia."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Mata encik macam mana? Still rasa berpasir atau double vision?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Mata dah OK sikit. Kadang-kadang berair bila kena angin di mill."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. Keep using the eye drops, and pakai spek gelap bila kat luar. Rokok masih?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dah berhenti, doktor, tiga bulan dah. Susah, tapi saya dengar cakap doktor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tahniah! Merokok memang buat penyakit mata thyroid lagi teruk. That's a big achievement."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau dos ni tak cukup, macam mana saya tahu?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kita check TSH every six weeks sampai stabil. Kalau masih letih, sejuk, kulit kering, beritahu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Enam minggu lagi saya datang."
+   }
+  ]
+ },
+ {
+  "id": "cardio_065",
+  "split": "train",
+  "condition": "Hypothyroidism in an elderly man with heart disease",
+  "source": "Hypothyroidism (underactive thyroid)",
+  "patient_persona": {
+   "description": "Mr. Ling Tiong Hock, 80, male, retired rubber smallholder in Sitiawan, Perak; Foochow, has angina, slow and forgetful lately. Slow, soft voice, Foochow-accented Mandarin.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Hafiz bin Kamaruddin, Malay man in his 40s, physician at a Perak district hospital. Patient, gentle; English with simple Mandarin, uses Malay occasionally.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "林伯, 你的 blood test 显示 thyroid 不够, TSH 是 14. 这个会让人很累, 反应慢, 怕冷."
+   },
+   {
+    "speaker": "Patient",
+    "text": "难怪我最近什么都懒, 儿子说我讲话都慢了. 我以为是老了."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "有一部分是老, 可是 thyroid 也有关系. 大便怎样? 会不会便秘?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "便秘很严重, 三四天才一次. 我吃很多木瓜也没用."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "那也是 thyroid 的 symptom. Your heart rate is also slow, 52. 我们会开始补 thyroid hormone."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我有心脏病, 那个药会不会影响心脏?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你问得很好. Because of your angina, I will start very low, levothyroxine 25 micrograms, 一天一次."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "如果一开始给太多, 心跳会加快, 可能引起 chest pain. So we go slowly."
+   },
+   {
+    "speaker": "Patient",
+    "text": "那要吃多久才会好?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "每六到八个星期验血, 慢慢加. 可能要几个月才到对的 dose."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "如果吃了以后 chest pain 比较多, 或者心跳很快, 马上告诉我或者去 emergency."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好. 我儿子会帮我记. 早上吃还是晚上?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "早上起床空肚子吃, 半个钟头后才吃早餐和喝咖啡. 你的 aspirin 可以早餐后吃."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我明白了. 谢谢医生, 你讲华语讲得很好."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "哈哈, sikit-sikit saja. 两个月后再见, 林伯."
+   }
+  ]
+ },
+ {
+  "id": "cardio_066",
+  "split": "train",
+  "condition": "Graves' disease, new diagnosis",
+  "source": "Graves' disease",
+  "patient_persona": {
+   "description": "Cik Nurul Izzati binti Rahman, 28, female, retail assistant in Wangsa Maju, Kuala Lumpur; palpitations, weight loss, shaky hands. Quick, anxious voice, KL Malay with English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Ho Mei Lin, Malaysian Chinese woman in her 30s, endocrinology registrar at a Kuala Lumpur hospital. Calm and reassuring; English-leaning, good Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Cik Izzati, blood test confirm thyroid cik overactive. TSH suppressed, free T4 very high, 48. And the TRAb antibody positive, so this is Graves' disease."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Graves tu apa, doktor? Kanser ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bukan kanser. It's an autoimmune condition, sistem imun badan sendiri stimulate thyroid terlalu kuat."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Patut la saya turun lapan kilo walaupun makan banyak. Tangan pun menggeletar, susah nak lipat baju kat kedai."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Mata cik pun nampak bulging sikit. Ada rasa berpasir, pedih, or double vision?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Berpasir tu ada, terutama pagi. Double vision tak ada."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "OK. Untuk thyroid, kita start carbimazole 30mg sekali sehari. For the palpitations and tremor, propranolol 40mg, twice a day."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "One very important warning. Kalau cik dapat sakit tekak atau demam, stop carbimazole terus dan buat blood test urgent hari yang sama."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kenapa, doktor? Sakit tekak biasa je kan?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Rarely, carbimazole boleh turunkan white cells, sel darah putih yang lawan kuman. That can become a serious infection very quickly."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, saya ingat. Sakit tekak, demam, terus stop dan datang."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Betul. Also, if you are planning pregnancy, beritahu saya dulu, sebab kita mungkin tukar ubat."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Belum lagi, doktor. Kahwin pun belum. Berapa lama kena makan ubat ni?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Biasanya dua belas hingga lapan belas bulan, then we see if it goes into remission. Check blood every four to six weeks."
+   }
+  ]
+ },
+ {
+  "id": "cardio_067",
+  "split": "train",
+  "condition": "Graves' disease, planning pregnancy",
+  "source": "Hyperthyroidism (overactive thyroid)",
+  "patient_persona": {
+   "description": "Mrs. Cheong Wai Yee, 34, female, dental clinic receptionist in Butterworth, Penang; Graves' on carbimazole, wants to conceive. Gentle, careful, heavy English-Mandarin mixing.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Arun a/l Balasubramaniam, Malaysian Indian man in his 40s, endocrinologist at a Penang hospital. Measured, reassuring; English with some Mandarin words.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mrs. Cheong, your thyroid is now well controlled. Free T4 is 14, normal. 你说你们想要 baby, right?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "对, 我先生和我想明年开始 try. 可是我在吃 carbimazole, 会不会 affect baby?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good that you ask before getting pregnant. Carbimazole in the first trimester has a small risk of birth defects."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "So the usual plan, 在你 try 怀孕之前, switch to propylthiouracil, PTU, and continue it during the first trimester."
+   },
+   {
+    "speaker": "Patient",
+    "text": "PTU 是另外一种药? 它 safe 吗?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Safer for the baby in the first three months. But PTU can rarely affect the liver, so we check liver function regularly."
+   },
+   {
+    "speaker": "Patient",
+    "text": "那 after 三个月呢? 一直吃 PTU 吗?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "After the first trimester, many doctors switch back to carbimazole, because it's gentler on the liver."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好复杂哦. 有没有其他 option, 不用吃药的?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes. Some women choose radioactive iodine or surgery before pregnancy. But after RAI, you must wait at least six months before trying."
+   },
+   {
+    "speaker": "Patient",
+    "text": "六个月... 我已经 34 岁了, 不想等太久."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Understandable. Then switching to PTU is reasonable. Also take folic acid 5mg daily from now."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK. 什么时候换药?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "When you're ready to start trying, 告诉我. We'll switch, check blood after four weeks, and keep the TSH in range."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好, 我回去跟我先生讲. Thank you doctor, 讲得很清楚."
+   }
+  ]
+ },
+ {
+  "id": "cardio_068",
+  "split": "train",
+  "condition": "Thyrotoxicosis with atrial fibrillation, treatment options",
+  "source": "Hyperthyroidism (overactive thyroid)",
+  "patient_persona": {
+   "description": "Mr. Suresh Kumar a/l Nagalingam, 42, male, construction project manager in Johor Bahru, Malaysian Indian; smoker, new irregular heartbeat. Energetic, impatient, Manglish.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nurhidayah binti Ismail, Malay woman in her 40s, physician at a Johor Bahru hospital. Firm, clear; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Suresh, your ECG shows atrial fibrillation, heart rate 132. And your thyroid is very overactive. The thyroid is driving the irregular heartbeat."
+   },
+   {
+    "speaker": "Patient",
+    "text": "So is it heart problem or thyroid problem? I'm confused lah, doctor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Mainly thyroid. When we control the thyroid, the AF often goes back to normal rhythm by itself."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "For now, propranolol 40mg three times a day to slow the heart, and carbimazole 30mg daily for the thyroid."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. How long before I can go back to site? Project deadline minggu depan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Give it one to two weeks for the heart rate to settle. Avoid heavy lifting and climbing scaffolding until then."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "While in AF, you also need a blood thinner for a while. Apixaban 5mg twice a day."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Wah, so many medicines. Long term I must makan all this?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Not necessarily. For Graves', long-term options are medicine for eighteen months, radioactive iodine, or surgery."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Which one is fastest? I don't want to be on pills for years."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Radioactive iodine is a good option for men your age. But your eyes are a bit prominent, and smoking makes eye disease worse after RAI."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Smoking also related? Aiyo, semua pun smoking."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, smokers get much worse thyroid eye disease. If you want RAI, stopping smoking first is important."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, okay. I'll try the quit smoking clinic. Kawan saya pun stop last year."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. We'll review in four weeks with repeat thyroid tests and ECG."
+   }
+  ]
+ },
+ {
+  "id": "cardio_069",
+  "split": "train",
+  "condition": "Toxic multinodular goitre, surgery versus RAI",
+  "source": "Hyperthyroidism (overactive thyroid)",
+  "patient_persona": {
+   "description": "Mak Cik Rohani binti Yaacob, 60, female, batik seller from Pasir Mas, Kelantan; neck lump for years, now palpitations. Cheerful, chatty, Kelantan dialect words.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Kamal Arif bin Zulkefli, Malay man in his 40s, endocrine surgeon at a Kota Bharu hospital. Friendly, patient; English-leaning with Kelantan Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mak cik, scan dan blood test dah siap. Thyroid mak cik ada banyak nodul, and some of them produce too much hormone. Kita panggil toxic multinodular goitre."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Benjol ni dah dua puluh tahun, doktor. Tak pernah sakit. Baru-baru ni jantung berdebar."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Nodul tu makin lama makin aktif. That's why sekarang baru ada symptom. Ada susah telan atau sesak nafas masa baring?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada sikit bila telan nasi, rasa tersekat. Baring terlentang pun rasa sesak."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Scan shows the goitre pressing on the trachea, salur pernafasan. Because of that, surgery is the better option for mak cik."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Operation kat leher? Takut la, doktor. Suara boleh hilang ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ada risiko kecil, about one to two percent, saraf suara terjejas. Kami guna nerve monitor masa operation untuk kurangkan risiko tu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Lepas buang semua thyroid, mak cik kena makan levothyroxine seumur hidup."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau tak mahu operation?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Option lain is radioactive iodine. Tapi untuk goitre besar macam mak cik, dia kecilkan sikit je, and pressure symptoms may continue."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sebelum operation, kita kawal hormone dulu dengan carbimazole 20mg sehari dan propranolol untuk jantung berdebar."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Lama ke nak tunggu operation?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dalam enam hingga lapan minggu, bila thyroid dah normal. Surgery tak selamat kalau hormone masih tinggi."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik la, doktor. Anak mak cik pun cakap buat je, supaya tak sesak."
+   }
+  ]
+ },
+ {
+  "id": "cardio_070",
+  "split": "train",
+  "condition": "Carbimazole-induced neutropenia, admission",
+  "source": "Hyperthyroidism (overactive thyroid)",
+  "patient_persona": {
+   "description": "Mr. Voon Kah Seng, 45, male, Hakka seafood wholesaler in Kuching, Sarawak; on carbimazole for two months, came with fever and sore throat. Hoarse, worried, heavy English-Mandarin mixing.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Dayang Siti Hajar binti Awang, Sarawakian Malay woman in her 30s, medical registrar at a Kuching hospital. Calm and quick; English with Malay and some Mandarin.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Voon, your neutrophil count is 0.3. That's very low. 你的白血球里面对抗细菌的那种几乎没有了."
+   },
+   {
+    "speaker": "Patient",
+    "text": "为什么会这样? 我只是 sore throat 和发烧两天."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "It's a rare side effect of carbimazole, called agranulocytosis. That's why we told you, sore throat or fever, 马上停药来验血."
+   },
+   {
+    "speaker": "Patient",
+    "text": "对对, 那个 nurse 有讲. 所以我昨天就停了, 今天来."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "You did exactly the right thing. Because of the low white cells, 我们要 admit 你, give IV antibiotics."
+   },
+   {
+    "speaker": "Patient",
+    "text": "要住多久? 我的 business 没人管咧."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Usually until the neutrophils recover, maybe a few days to a week. Some patients need an injection to boost white cells, called G-CSF."
+   },
+   {
+    "speaker": "Patient",
+    "text": "那我的 thyroid 怎么办? 不吃药会不会又心跳很快?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Propranolol continue, for the heart rate. Carbimazole never again, and PTU also not safe, because they are similar."
+   },
+   {
+    "speaker": "Patient",
+    "text": "那以后怎样治疗?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "After you recover, the options are radioactive iodine or surgery. 这两个都可以 cure 你的 thyroid."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我比较想 RAI, 不想开刀."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's reasonable. 这次出院之后, we'll discuss with the endocrine team."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Meanwhile, you'll be in an isolation room. 探病的人要戴 mask, 洗手, no fresh flowers or raw food."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好, 我叫我太太带 mask 来. 谢谢医生."
+   }
+  ]
+ }
+]

@@ -1,0 +1,784 @@
+[
+  {
+    "id": "gi_061",
+    "split": "train",
+    "condition": "Urinary tract infection",
+    "source": "Cystitis",
+    "patient_persona": {
+      "description": "Siti Khadijah binti Omar, 28, female, kindergarten teacher in Kota Bharu, Kelantan; newly married, penicillin allergy. Soft voice, Kelantanese accent, a bit shy.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nurul Huda Ismail, Malay woman in her 30s, GP at a Kota Bharu clinic. Gentle; mostly Malay with English medical terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Assalamualaikum, puan. Duduk dulu. Ada masalah apa hari ni?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Waalaikumsalam, doktor. Dah tiga hari kencing rasa pedih, macam burning. Asyik nak pergi toilet, tapi keluar sikit je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada demam tak? Sakit belakang pinggang, atau muntah?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak demam. Pinggang tak sakit, cuma bawah perut rasa heavy. Urine pun bau kuat sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada nampak darah dalam kencing? Period terakhir bila?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Semalam macam merah jambu sikit. Period habis dua minggu lepas. Saya baru kahwin bulan lepas, doktor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Faham. This is actually quite common lepas kahwin. Kita buat urine test dulu, ya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Urine dipstick positif nitrite dengan leukocytes. Ini jangkitan pundi kencing, cystitis. Tak ada tanda kena buah pinggang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kena makan antibiotic ke, doktor? Saya alergi penicillin, dulu badan naik ruam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Terima kasih beritahu. Saya bagi nitrofurantoin 100mg, sehari dua kali, lima hari. Makan lepas makan, sebab boleh rasa loya."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kencing nanti warna lain ke? Kawan saya kata ubat ni buat kencing jadi gelap."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, kadang-kadang jadi kuning gelap atau coklat, itu tak apa. Minum air banyak, dua liter sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Macam mana nak elak kena lagi, doktor? Malu nak datang selalu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pass urine lepas bersama suami, jangan tahan kencing, and cuci dari depan ke belakang. Kalau demam or back pain, datang terus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Terima kasih banyak."
+      }
+    ]
+  },
+  {
+    "id": "gi_062",
+    "split": "train",
+    "condition": "Urinary tract infection",
+    "source": "Urinary tract infection (UTI)",
+    "patient_persona": {
+      "description": "Lim Ah Choo, 71, female, retired hawker from Air Itam, Penang; type 2 diabetes on metformin and empagliflozin. Loud, chatty, Hokkien-flavoured Malaysian Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ooi Beng Hock, Malaysian Chinese man in his 50s, family physician at a Penang clinic. Patient, English-leaning, switches to Mandarin with English medical terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "阿姨，上个礼拜的 urine culture 报告出来了。你现在小便还痛吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "还是痛啊医生，那个 ciprofloxacin 吃了三天，好一点点而已。晚上还要起来四五次。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "报告讲是 E. coli，对 ciprofloxacin 是 resistant，所以效果不好。我们换 cefuroxime。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "换药就会好了是吗？我还有一点 fever，昨晚 37.8。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "腰这边会痛吗？有没有发冷发抖？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "腰不痛，也没有发冷。就是没 appetite，人很累。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Temperature 今天 37.6，blood pressure 138/80，腰部按下去不痛。还是 bladder infection，不是 kidney。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cefuroxime 250mg，一天两次，吃七天，饭后吃。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。医生，我两个月前开始吃那个新的糖尿病药，Jardiance，跟这个有关系吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有可能。Empagliflozin 会让糖从小便出去，比较容易感染。你的 HbA1c 是 7.2，控制得不错。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那要停吗？我女儿说这个药对心脏好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "先暂停，等 infection 好了再决定。这几天 metformin 照吃，sugar 自己在家 check。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我每天喝两杯 kopi O，水很少喝，因为怕晚上一直起来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "白天多喝水，大概 1.5 litre，晚上七点以后少喝。One week 后回来 check urine。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好啦好啦，我记得了。谢谢医生。"
+      }
+    ]
+  },
+  {
+    "id": "gi_063",
+    "split": "train",
+    "condition": "Urinary tract infection",
+    "source": "Urinary tract infection (UTI)",
+    "patient_persona": {
+      "description": "Priya a/p Ramasamy, 33, female, logistics clerk in Klang, speaking for her 4-year-old daughter Kavya (16 kg). Fast Malaysian Indian English with some Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lee Mei Fong, Malaysian Chinese woman in her 30s, paediatric medical officer at a Klang paediatric clinic. Warm, clear; English with this parent.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hello, come in. So this is Kavya? What's been happening with her?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes doctor. Since Saturday she got demam, up to 39.2. Yesterday she cried when pee, say sakit sakit. Then she wet the bed also, usually she don't."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any vomiting, diarrhoea, cough or runny nose?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Vomit once this morning. No cough, no selsema. She's not eating much, only drinking Milo."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How much paracetamol are you giving, and how often?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "The Uphamol syrup, 5ml, every four hours. My mother-in-law also gave her air barley."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Barley water is fine. For 16 kilo, she needs 7.5ml of paracetamol every six hours, not every four."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Her urine test shows nitrite and white cells. This looks like kuman in the bladder, a urinary tract infection. We'll send the urine for culture."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo, UTI at four years old? I thought only orang dewasa get. Is it because she tak cebok properly?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's quite common in little girls. Wiping front to back helps, and don't let her hold her pee too long at tadika."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll start cephalexin syrup 125mg, that's 5ml, four times a day for seven days. Habiskan semua, even if the fever goes."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay doctor. Need to admit or not? Tomorrow I kena kerja."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "She's drinking and active, so home is fine. Tapi kalau dia muntah semua, very lethargic, or fever still there after 48 hours, bawa pergi emergency terus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. Need to datang balik for anything?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Come back in three days for the culture result. Since this is her first UTI with fever, we'll also arrange a kidney ultrasound."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay doctor, terima kasih. Come Kavya, say bye-bye to doctor."
+      }
+    ]
+  },
+  {
+    "id": "gi_064",
+    "split": "train",
+    "condition": "Urinary tract infection",
+    "source": "Urinary tract infection (UTI)",
+    "patient_persona": {
+      "description": "Farah Nadia binti Yusof, 26, female, hypermarket cashier in Johor Bahru; 22 weeks pregnant with her first child. Cheerful, fast speaker, Johor Malay with English words.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ravindran a/l Subramaniam, Malaysian Indian man in his 40s, family medicine specialist at a Johor Bahru klinik kesihatan. Calm; fluent Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Farah, keputusan urine culture minggu lepas dah sampai. Ada kuman E. coli, lebih seratus ribu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Eh, tapi saya tak rasa apa-apa pun, doktor. Tak pain masa kencing, tak demam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itu dipanggil asymptomatic bacteriuria. Masa mengandung, walaupun tak ada simptom, kita kena rawat juga."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kenapa pula? Saya takut makan ubat, nanti ada kesan pada baby."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau tak rawat, kuman boleh naik ke kidney, and the risk of premature delivery lebih tinggi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ubat ni selamat untuk baby. Cephalexin 500mg, sehari tiga kali, tujuh hari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK lah kalau macam tu. Saya ada makan folic acid dengan ubat besi, boleh makan sekali?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh. Cuma ubat besi tu makan jarak dua jam dari susu atau teh."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya kerja cashier, susah nak pergi tandas. Selalu tahan sampai waktu rehat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itu salah satu sebab. Try minta your boss bagi rehat sekejap every two hours. Pregnant memang kena selalu kencing."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Nanti saya cakap dengan supervisor. Lepas habis ubat, kena buat test lagi ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, seminggu lepas habis antibiotic, kita ulang urine culture. Nak pastikan betul-betul bersih."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau tiba-tiba demam atau sakit pinggang?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Terus pergi hospital, jangan tunggu appointment. Kalau perut rasa mengeras berulang kali, pergi labour room."
+      }
+    ]
+  },
+  {
+    "id": "gi_065",
+    "split": "train",
+    "condition": "Urinary tract infection",
+    "source": "Urinary tract infection (UTI)",
+    "patient_persona": {
+      "description": "Chong Kim Hock, 58, male, owner of a hardware shop in Kuching, Sarawak; hypertension on amlodipine. Low, gruff voice, Sarawak Mandarin with Malay and English loanwords.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ting Hui Ling, Malaysian Chinese woman in her 40s, GP in Kuching. Brisk; English-leaning, switches to Mandarin with English medical terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我这两天发烧，小便很痛，好像刀割那样。下面那边也胀胀的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Fever 多高？有没有发冷？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "昨晚三十九度，全身发抖，盖两张被。今天早上吃了两粒 Panadol。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "小便有没有困难？要等很久才出来，或者出不来？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有，要等，出来很细。以前晚上起来一次，这两天五六次，sleep 都不好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你以前有没有 prostate 的问题？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有 check 过。我太太一直叫我去看，我说没空，店要开。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Temperature 38.4，heart rate 104。我等下要做 rectal examination，检查 prostate，会有一点不舒服。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Prostate 很软又很痛，urine test 有很多 white cells。这个是 acute prostatitis，前列腺发炎。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "严重吗？要不要开刀？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不用开刀，但是抗生素要吃比较久。Ciprofloxacin 500mg，一天两次，吃两个礼拜。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "今天我们抽血，也送 urine culture。Drink more water，不要喝酒，辣的也少吃。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "两个礼拜这么久？我星期五还要去 Sibu 拿货。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以去，但是 antibiotic 一定要带着，不要停。如果 urine 完全出不来，或者一直 high fever，马上去 emergency。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我知道了。那 prostate 以后还要检查吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "要。好了以后六个礼拜回来，我们再检查，也验 PSA。"
+      }
+    ]
+  },
+  {
+    "id": "gi_066",
+    "split": "train",
+    "condition": "Kidney stones",
+    "source": "Kidney stones",
+    "patient_persona": {
+      "description": "Muthu a/l Krishnan, 42, male, construction site supervisor in Seremban; works outdoors, drinks little water, father had stones. Loud, strained with pain, Malaysian Indian English with Malay words.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Farid Hakimi bin Azman, Malay man in his 30s, emergency physician at a Seremban hospital. Steady, efficient; mostly English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, very sakit here, right side back, coming like waves. Cannot sit, cannot lie down. Since five o'clock pagi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay, I'll get you something for the pain first. Any vomiting? Is the pain going down to the groin?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, muntah two times already. The pain go down to the front. Urine also a bit pink."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any fever? Have you had this before?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No fever. Three years back I pass a small batu, like pasir, never go see doctor. My father also got kidney stone."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any allergies? Any stomach ulcer or kidney problem that you know of?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No allergy. Only gastric sometimes, I makan omeprazole when need."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll give diclofenac 75mg injection into the muscle now. That works best for stone pain."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your urine shows blood, no infection. The CT shows a 5mm stone in the right ureter, the tube from kidney to bladder. The kidney is only mildly swollen."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Five mm, besar ke tak? Need operation?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Small. Most stones this size pass on their own within a few weeks. I'll give tamsulosin 0.4mg once a day to help it come down."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My work is outside, bawah panas terik. Whole day I only minum maybe one bottle of air lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's likely the main reason. Aim for three litres a day, so your urine is pale. Kurangkan teh tarik and salty food."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For pain, diclofenac 50mg tablet, three times a day lepas makan, maximum five days, together with your omeprazole."
+      },
+      {
+        "speaker": "Patient",
+        "text": "If the sakit come back very teruk again, macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Datang balik terus if you get fever, keep vomiting or can't pass urine. Otherwise, urology clinic in two weeks with an X-ray."
+      }
+    ]
+  },
+  {
+    "id": "gi_067",
+    "split": "train",
+    "condition": "Kidney stones",
+    "source": "Kidney stones",
+    "patient_persona": {
+      "description": "Mohd Hafiz bin Rahim, 38, male, fishing boat mechanic in Kuantan, Pahang; second stone episode. Relaxed, East Coast Malay, laughs a lot.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chan Wai Leng, Malaysian Chinese woman in her 40s, urologist at a Kuantan hospital clinic. Precise; speaks Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Hafiz, apa khabar? Batu tu dah keluar ke?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah, dah keluar minggu lepas, doktor. Saya tapis macam doktor suruh, dapat batu kecil warna coklat. Saya bawa sini."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Keputusan batu yang pertama dulu pun dah ada. Calcium oxalate, jenis paling biasa."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Calcium? Maksudnya saya kena kurangkan minum susu ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak, jangan kurangkan susu. Kalsium dalam makanan sebenarnya bantu ikat oxalate dalam usus."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Urine 24 jam encik cuma 1.1 liter, dan citrate pun rendah. That's the main problem, encik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Memang saya kurang minum. Kat bot panas, saya minum air tebu dengan teh o ais je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Target kencing lebih dua liter sehari, jadi minum dalam tiga liter air kosong. Air limau pun bagus, ada citrate."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Makanan pula macam mana? Saya suka makan ikan masin, budu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Salt tinggi naikkan calcium dalam urine. Kurangkan budu dan ikan masin. Spinach and nuts pun jangan terlalu banyak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya bagi potassium citrate, satu sachet, sehari dua kali, lepas makan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat ni kena makan sampai bila, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paling kurang enam bulan. Lepas tu kita ulang ujian air kencing dan ultrasound buah pinggang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, doktor. Tak nak dah rasa sakit macam tu. Lagi teruk dari kena sengat ikan pari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ramai cakap macam tu. See you in six months, ya."
+      }
+    ]
+  },
+  {
+    "id": "gi_068",
+    "split": "train",
+    "condition": "Kidney stones",
+    "source": "Kidney stones",
+    "patient_persona": {
+      "description": "Goh Siew Peng, 50, female, accounts clerk at a Johor Bahru trading company; occasional right loin ache, on aspirin from her cardiologist. Quiet, careful, Johor Mandarin with Cantonese words.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kenneth Yap, Malaysian Chinese man in his 40s, urologist at a Johor Bahru private hospital. Measured; Mandarin with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "吴太太，你的 CT scan 报告出来了。右边肾脏里面有一粒石头，大概 12mm。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "十二 mm？这么大吗？我只是有时候腰酸酸而已。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个 size 自己排出来的机会很低。现在还没有 block，但是以后可能会卡住，引起 infection。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那要怎样处理？一定要开刀吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有两个方法。第一个是 ESWL，就是 shock wave，从外面打碎，不用全身麻醉，门诊可以做。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "第二个是 RIRS，用很细的 scope 从尿道进去，用 laser 打碎，要 general anaesthesia，住院一晚。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "哪个比较好？Cost 差很多吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的石头比较硬，CT 的 density 很高，shock wave 可能要打两三次。Laser 一次成功的机会比较高。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我有在吃 aspirin，一天一粒，心脏科医生开的。做之前要停吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "要，operation 前五到七天停。但是我会先写 letter 问你的 cardiologist，确定可以停。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。那做完以后会不会很痛？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "通常会放一条 DJ stent 两个礼拜，小便会比较频，有时有一点血，那是正常的。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我想先跟我先生商量，下个礼拜再答复你，可以吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以。这期间如果 fever，或者腰痛得很厉害，马上去 emergency，don't wait。"
+      }
+    ]
+  },
+  {
+    "id": "gi_069",
+    "split": "train",
+    "condition": "Kidney stones",
+    "source": "Kidney stones",
+    "patient_persona": {
+      "description": "Jason Lau Wei Jie, 30, male, software engineer in Cyberjaya; English-speaking Malaysian Chinese, first stone, heavy bubble tea drinker. Casual, slightly anxious, English with Cantonese particles.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Siti Aminah binti Kassim, Malay woman in her 40s, urology specialist at a Kuala Lumpur hospital. Friendly; English with this patient.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Morning Jason. How was the night after the surgery?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Morning doc. Okay lah, tidur sikit. But every time I pee, got this pulling pain at the side, and the urine is pinkish."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's expected. We put in a DJ stent, a thin tube from kidney to bladder. When you pee, some urine goes back up, so you feel the pull."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, so it's normal? I got scared, ingat something went wrong."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Totally normal. The ureteroscopy went well. The 7mm stone was broken with laser and the pieces removed."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Nurse charted 37.2 overnight, no fever, and your blood pressure is fine."
+      },
+      {
+        "speaker": "Patient",
+        "text": "No fever. Just the bladder rasa macam always want to pee."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll give you tamsulosin 0.4mg at night, it helps with stent discomfort. Paracetamol 1 gram four times a day if needed."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can I go back to work? I mostly kerja dari rumah, coding."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Desk work is fine. Jangan gym and running while the stent is in. Minum around three litres a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "How long this stent stay inside? Very tak selesa leh."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Two weeks. We'll remove it in clinic with a small camera. It takes five minutes under local anaesthetic."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. The batu is what type ah? I minum banyak bubble tea, is that why?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We sent it for analysis. Air manis and makanan masin do raise the risk, so kurangkan the boba. We'll go through diet at the stent removal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Got it, doc. Boleh discharge hari ni?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, lepas lunch once you boleh kencing well. I'll write you MC for five days."
+      }
+    ]
+  },
+  {
+    "id": "gi_070",
+    "split": "train",
+    "condition": "Kidney stones",
+    "source": "Kidney stones",
+    "patient_persona": {
+      "description": "Norhayati binti Jumat, 45, female, primary school clerk in Penampang, Sabah; type 2 diabetes on metformin. Tired, feverish, Sabah Malay with 'bah'.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Joanne Chin Mei Yee, Sabahan Chinese woman in her 30s, emergency physician in Kota Kinabalu. Direct; switches to Sabah Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, sudah tiga hari sakit pinggang kiri. Semalam start demam, menggigil bah. Sekarang rasa weak betul."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada muntah? Kencing macam mana, pedih ke?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Muntah tiga kali pagi ni. Kencing sikit saja, cloudy, bau busuk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Puan ada diabetes kan? Ubat apa yang puan makan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Metformin 1 gram, pagi dengan malam. Dua hari ni tak makan sebab tak ada selera."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Temperature 39.1, blood pressure 96/60, heart rate 118. Ini agak serius, puan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "CT scan tunjuk batu 8mm tersangkut di ureter kiri, buah pinggang bengkak. Dengan demam, ini jangkitan di belakang batu yang tersumbat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bahaya kah, doktor? Anak saya masih di sekolah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ini kena rawat cepat. Kita masukkan drip, ambil blood culture, dan mula IV ceftriaxone 2 gram sekarang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Urology team akan pasang tiub, sama ada DJ stent atau nephrostomy, untuk keluarkan air kencing yang berjangkit. Malam ni juga."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Batu tu tak buang sekali?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not today. Once the infection settles, dalam two or three weeks, baru kita pecahkan batu tu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Metformin saya macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Stop dulu, sebab buah pinggang tengah terjejas. Dalam wad kita cek gula dan guna insulin."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay doktor. Saya call suami suruh ambil anak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Baik. Nurse akan tolong puan sekarang. Jangan makan atau minum dulu, sebab mungkin masuk dewan bedah."
+      }
+    ]
+  }
+]

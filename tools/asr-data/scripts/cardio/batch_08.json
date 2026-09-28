@@ -1,0 +1,760 @@
+[
+ {
+  "id": "cardio_071",
+  "split": "train",
+  "condition": "Diabetic kidney disease, starting an SGLT2 inhibitor",
+  "source": "Diabetic nephropathy (kidney disease)",
+  "patient_persona": {
+   "description": "Encik Abdul Rahman bin Yusoff, 63, male, retired port clerk from Klang, Selangor; diabetic for fifteen years, hypertensive. Calm, methodical, jots notes on a small book.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lim Sze Ying, Malaysian Chinese woman in her 40s, family medicine specialist at a Klang health clinic. Clear, structured; English-leaning, fluent Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Rahman, result buah pinggang dah keluar. eGFR encik 38, and urine protein pun tinggi, ACR 65. Ini diabetic kidney disease, stage 3b."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Stage 3b tu teruk ke, doktor? Kena dialysis ke nanti?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Belum lagi. Tapi kalau kita tak kawal, dia boleh progress. Our goal is to slow it down as much as possible."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya nak tambah dapagliflozin 10mg, sekali sehari pagi. Ubat ni protect buah pinggang and heart, bukan untuk gula je."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ubat metformin saya macam mana? Sekarang 1 gram dua kali sehari."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "With eGFR 38, kita kena kurangkan metformin jadi 500mg twice a day. Below 30, kita stop terus."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada kesan sampingan ubat baru tu?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kencing lebih sikit, and risk of genital infection. Kalau muntah, cirit-birit, atau tak boleh makan, stop dapagliflozin that day."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Encik ada makan painkiller macam Ponstan, atau ubat herba?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada, doktor. Kawan surau bagi akar kayu untuk kencing manis. Minum air rebusan tiap pagi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Please stop that. Kita tak tahu apa kandungan dia, and some herbs are toxic to the kidneys."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, saya stop. Tekanan darah saya OK tak hari ni?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "142 over 86. Target untuk encik below 130. So I'll increase your perindopril from 4 to 8mg."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Makan pula, kena kurang protein ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Protein sederhana, jangan terlalu banyak. Kurangkan garam paling penting. Dietitian will give you a proper plan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih, doktor. Saya tulis semua ni dalam buku saya."
+   }
+  ]
+ },
+ {
+  "id": "cardio_072",
+  "split": "train",
+  "condition": "Advanced diabetic kidney disease, dialysis planning",
+  "source": "Chronic kidney disease",
+  "patient_persona": {
+   "description": "Madam Ng Poh Choo, 67, female, retired hawker in Jelutong, Penang; eGFR 22, anaemic, lives with her son. Quiet, resigned voice, Hokkien-accented Mandarin.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Teoh Chin Aik, Malaysian Chinese man in his 50s, nephrologist at a Penang hospital. Gentle, honest; Mandarin with English medical terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "黄婆婆, 你的肾功能现在剩大概百分之二十二. 我们叫 CKD stage 4."
+   },
+   {
+    "speaker": "Patient",
+    "text": "医生, 是不是很快就要洗肾了?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "不一定很快, 可能一两年. But we need to start preparing now, 所以今天要跟你讲清楚."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我很怕洗肾. 我邻居洗了以后, 人很瘦, 很辛苦."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我明白. 洗肾有两种, haemodialysis 是去中心, 一个星期三次, 每次四个钟头. 另一种是 peritoneal dialysis, 在家里做."
+   },
+   {
+    "speaker": "Patient",
+    "text": "在家里做? 可以吗? 我不会弄那些机器."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "护士会教你和你的儿子. 很多老人家在家做得很好. 也可以选择 conservative care, 就是不洗肾, 用药控制症状."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我要跟我儿子商量. 他是做 Grab 的, 时间比较 flexible."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "好, 下次带他一起来. 另外, 你的 haemoglobin 只有 8.9, 所以你常常觉得累."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我们会开始打 erythropoietin 针, 一个星期一次, 帮你身体做红血球. 也要吃 iron."
+   },
+   {
+    "speaker": "Patient",
+    "text": "打针在哪里打? 会痛吗?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "在手臂或者肚皮, 很小的针. 护士可以教你儿子帮你打."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "另外, 你的 potassium 有一点高, 5.4. 香蕉, 榴莲, 橙少吃."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好的. 那我现在吃的糖尿病药要不要换?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "要. 你的 metformin 要停, 我们换 linagliptin 5mg, 这个对肾比较 safe."
+   }
+  ]
+ },
+ {
+  "id": "cardio_073",
+  "split": "train",
+  "condition": "Diabetic kidney disease with hyperkalaemia",
+  "source": "Diabetic nephropathy (kidney disease)",
+  "patient_persona": {
+   "description": "Mr. Rajendran a/l Maniam, 58, male, taxi driver in Brickfields, Kuala Lumpur, Malaysian Indian; diabetic kidney disease on ramipril and spironolactone. Talkative, jokey, strong Manglish.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Aina Sofea binti Kamal, Malay woman in her 30s, medical officer at a Kuala Lumpur hospital renal clinic. Friendly, efficient; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Rajendran, your potassium this morning is 6.1. That's high enough to affect your heart rhythm. Any palpitations or weakness?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Legs a bit lemah lah, doctor, but I thought because I sit whole day in the taxi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your ECG shows some changes, peaked T waves. So we'll give you some treatment here first, then adjust your medicines."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aiyo, serious ah? I rasa okay only."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "High potassium often has no symptoms until it's dangerous. That's why we check."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tell me about your food. Do you use any salt substitute, or eat a lot of fruit?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "My wife buys low-sodium salt, the doctor last time said reduce salt mah. And every day I drink coconut water, very good for kidney, kan?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Both are high in potassium. The low-sodium salt replaces sodium with potassium. Coconut water also full of potassium."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alamak. I thought I'm being healthy, doctor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "You were trying, which is good. Just the wrong things. Please stop both. Use a little normal salt, and plain water instead."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'm stopping your spironolactone for now. Ramipril continue, and I'll start a potassium binder sachet, once a day."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Other fruits? I suka banana with my breakfast."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Apple, pear, papaya in small amounts are better. Avoid banana, durian, orange juice and dried fruits."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "We're keeping you here for a few hours to repeat the potassium and ECG, then you can go home if it's coming down."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, doctor. I'll call my wife tell her to buang the fancy salt."
+   }
+  ]
+ },
+ {
+  "id": "cardio_074",
+  "split": "train",
+  "condition": "Acute kidney injury on diabetic CKD, ward round",
+  "source": "Chronic kidney disease",
+  "patient_persona": {
+   "description": "Puan Zaharah binti Mohd Said, 55, female, cafeteria cook from Kuala Kangsar, Perak; admitted after three days of diarrhoea and vomiting. Weak voice, polite, Perak Malay.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Goh Jian Hui, Malaysian Chinese man in his 30s, medical officer at a Perak hospital, on the morning ward round. Kind, efficient; English-leaning, clear Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Selamat pagi, Puan Zaharah. Hari ni rasa macam mana? Masih cirit-birit?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Pagi, doktor. Dah kurang. Semalam dua kali je. Muntah dah berhenti."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. Masa masuk, creatinine puan naik jadi 280, biasanya around 130. That's acute kidney injury, sebab badan kering air."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Hari ni dah turun ke 190 dengan drip. Buah pinggang tengah recover."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Syukur. Ubat-ubat saya semua nurse tak bagi. Kenapa, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sebab ada ubat yang bahaya bila badan kering. Metformin, dapagliflozin, perindopril, dan ubat kencing furosemide. Kita hold dulu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kat rumah pun saya makan semua masa cirit-birit. Tak tahu kena berhenti."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ramai tak tahu. That's why I want to teach you sick day rules. Kalau muntah, cirit-birit, atau demam tak boleh makan, stop ubat-ubat ni sementara."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya bagi kad ni, nama semua ubat yang kena stop masa sakit. Simpan dalam dompet."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Bila boleh mula balik?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bila dah boleh makan dan minum normal selama 24 hingga 48 jam. Kalau tak pasti, call klinik dulu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Gula saya masa tak makan ubat ni macam mana?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sementara dalam wad, we're using insulin sliding scale. Semalam gula antara 8 hingga 11, OK."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Bila boleh balik, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau creatinine terus turun esok, and you can eat properly, mungkin esok petang boleh discharge."
+   }
+  ]
+ },
+ {
+  "id": "cardio_075",
+  "split": "train",
+  "condition": "Pre-dialysis counselling and AV fistula",
+  "source": "End stage kidney failure",
+  "patient_persona": {
+   "description": "Puan Veronica Gimbang, 60, female, Kadazan-Dusun vegetable farmer from Keningau, Sabah; diabetic, eGFR 12. Soft-spoken, hesitant, Sabah Malay with \"bah\".",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Jeffrey Mojuntin, Kadazan man in his 40s, nephrologist at a Sabah hospital. Gentle, unhurried; English-leaning, fluent Sabah Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Puan Veronica, eGFR puan sekarang 12. Buah pinggang tinggal lebih kurang sepuluh percent. We need to prepare for dialysis soon."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saya takut, doktor. Kampung saya jauh dari pusat dialysis. Tiga kali seminggu, siapa mau hantar?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Faham. Itu masalah biasa untuk orang kampung. One option is peritoneal dialysis, buat sendiri di rumah, tak perlu pergi pusat."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Buat sendiri di rumah? Macam mana, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kita masukkan satu tiub kecil dalam perut. Setiap hari, tukar cecair empat kali. Nurse akan latih puan dengan anak."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau saya pilih mesin di hospital?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Untuk haemodialysis, kita kena buat AV fistula dulu, sambung salur darah di lengan. Ambil masa dua hingga tiga bulan untuk matang."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "So even kalau belum decide, lebih baik buat fistula awal. Jangan tunggu sampai emergency."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Anak saya cakap ada ubat kampung boleh bagi buah pinggang baik balik. Betul ka, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya faham harapan tu. Tapi tak ada ubat herba yang boleh pulihkan buah pinggang. Some can even make it worse, sebab tu bahaya."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau saya tak mau dialysis langsung?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Itu pilihan puan juga, conservative management. Kita kawal simptom dengan ubat, tapi hayat mungkin lebih pendek."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saya kena bincang dengan keluarga dulu bah. Suami dan anak-anak."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Of course. Bawa mereka next visit, dua minggu lagi. Kita bincang sama-sama, tak ada tekanan."
+   }
+  ]
+ },
+ {
+  "id": "cardio_076",
+  "split": "train",
+  "condition": "Gestational diabetes, OGTT results and diet",
+  "source": "Gestational diabetes",
+  "patient_persona": {
+   "description": "Puan Nur Amirah binti Hisham, 30, female, admin executive in Shah Alam, first pregnancy at 26 weeks. Bright, curious, KL Malay with office English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Kong Pui Yee, Malaysian Chinese woman in her 30s, medical officer at a Shah Alam maternal and child health clinic. Upbeat and clear; English-leaning, fluent Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Puan Amirah, result OGTT minggu lepas. Fasting 5.4, and two-hour 8.9. Both above the cut-off, so ini gestational diabetes."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ya Allah, kencing manis? Tapi saya tak ada family history pun, doktor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "GDM ni lain sikit. Hormone dari uri buat badan resist insulin masa mengandung. Very common in Malaysia, about one in five pregnancies."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baby saya OK ke? Saya risau baby jadi besar sangat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau gula kawal baik, risiko pada baby sangat rendah. That's our main job for the next three months."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Untuk sekarang, kita cuba diet dulu. Nasi separuh pinggan, tukar ke nasi perang kalau boleh. Air manis dan kuih stop."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Air kotak susu coklat tu boleh? Saya selalu minum untuk baby."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tukar ke susu tanpa gula, plain. Buah boleh, tapi satu hidangan setiap kali, bukan sepinggan penuh."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Lepas makan, jalan kaki sepuluh hingga lima belas minit. It really helps bring down the sugar."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, doktor. Macam mana saya nak tahu gula dah OK?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Nurse akan ajar puan guna glucometer. Check four times a day: fasting, and one or two hours after each main meal."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Target fasting below 5.3, and two hours after meal below 6.7. Tulis dalam buku ni, bawa setiap appointment."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau diet tak cukup?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Then we start metformin or insulin. Both are safe untuk baby. Jumpa dua minggu lagi dengan buku gula."
+   }
+  ]
+ },
+ {
+  "id": "cardio_077",
+  "split": "train",
+  "condition": "Gestational diabetes, starting insulin",
+  "source": "Diabetes, gestational",
+  "patient_persona": {
+   "description": "Mrs. Serene Chew Mei Xuan, 33, female, marketing executive in Mont Kiara, Kuala Lumpur; second pregnancy, 30 weeks, sugar high despite diet. Articulate, a bit anxious, heavy English-Mandarin mixing.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Harvinder Singh a/l Jaswant Singh, Malaysian Sikh man in his 40s, obstetrician at a Kuala Lumpur hospital. Warm, methodical; English with a few Mandarin words.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mrs. Chew, let's look at your sugar diary. Fasting readings mostly 5.8 to 6.2, even with the diet. Target is below 5.3."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我真的很努力 control 了. No rice at night, 只吃菜和鱼. Why still high?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Fasting sugar is controlled by hormones overnight, not so much by what you eat. Diet alone often can't fix fasting readings."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I recommend starting insulin at bedtime, Insulatard 6 units. We increase slowly until the morning reading is on target."
+   },
+   {
+    "speaker": "Patient",
+    "text": "打针? 对 baby 会不会有 side effect?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Insulin doesn't cross the placenta. 对 baby 来说是最 safe 的 option. High sugar is actually riskier for the baby."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK... 可是我很怕针. 第一胎我没有这个问题."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "The needle is very fine, 很细. The diabetes nurse will teach you today. Most patients say it's less painful than the finger prick."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好吧. 如果我晚上打了, 半夜会不会 low sugar?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "At this small dose, unlikely. But keep some biscuits by the bed. If you feel shaky or sweaty, check sugar and eat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Every three days, if fasting still above 5.3, add 2 units. Send me your readings on the clinic app."
+   },
+   {
+    "speaker": "Patient",
+    "text": "那我可以 normal delivery 吗? 我第一胎是 normal 的."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, if baby's size is normal and your sugar is good. We'll do a growth scan at 34 weeks."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, noted. 谢谢 doctor, 你讲了我比较不怕了."
+   }
+  ]
+ },
+ {
+  "id": "cardio_078",
+  "split": "train",
+  "condition": "Gestational diabetes on metformin, large baby on scan",
+  "source": "Gestational diabetes",
+  "patient_persona": {
+   "description": "Mrs. Nithya a/p Raman, 36, female, bank officer in Ipoh, Malaysian Indian; third pregnancy at 36 weeks, GDM on metformin. Tired, practical, Malaysian English with Tamil-Malay words.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Rozita binti Abdul Rahim, Malay woman in her 40s, obstetrician at an Ipoh hospital. Calm, direct; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mrs. Nithya, today's scan shows the baby's estimated weight is 3.7 kilos at 36 weeks. That's above the 90th percentile."
+   },
+   {
+    "speaker": "Patient",
+    "text": "So besar already? My first two were only 3.1, 3.2. Is it because of the sugar?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Possibly. Your after-meal readings have been creeping up, 7.5 to 8 the last two weeks. The baby stores the extra sugar as fat."
+   },
+   {
+    "speaker": "Patient",
+    "text": "I admit, Deepavali last week, lots of murukku and sweets at home. Hard to say no."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Understandable, festival season is tough. But now we need tighter control. I'll add insulin before dinner, 4 units of Actrapid."
+   },
+   {
+    "speaker": "Patient",
+    "text": "On top of the metformin? Now dua benda."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, metformin 1 gram twice a day continue. The insulin covers dinner, which is your highest reading."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Because baby is big, I'd like to plan induction at 38 weeks, rather than waiting until 40."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Induction? Why not just tunggu? My mother says baby will come on its own."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "A big baby increases the risk of shoulder difficulty during delivery, and stillbirth risk also goes up near term with GDM."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Can I still deliver normally, or kena caesarean?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Normal delivery is still reasonable at this size. If the baby grows above 4.5 kilos, we'd discuss caesarean."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, doctor. I'll stop the murukku, promise."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "After delivery, we stop all diabetes medicine, and check your sugar at six weeks. Jumpa minggu depan."
+   }
+  ]
+ },
+ {
+  "id": "cardio_079",
+  "split": "train",
+  "condition": "Postpartum review after gestational diabetes",
+  "source": "Diabetes, gestational",
+  "patient_persona": {
+   "description": "Puan Dayang Nurfarah binti Abang Rosli, 29, female, primary school teacher in Kuching, Sarawak; six weeks after delivery, had GDM on insulin. Cheerful, sleep-deprived, Sarawak Malay.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lau Hock Seng, Sarawakian Chinese man in his 30s, medical officer at a Kuching maternal and child health clinic. Friendly, practical; English-leaning, Sarawak Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Puan Nurfarah, tahniah atas baby. Macam mana, baby sihat? Menyusu OK?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alhamdulillah, sihat bah. Menyusu penuh. Cuma saya ni kurang tidur, macam zombie."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Normal la tu, six weeks. Hari ni kita buat OGTT untuk check gula lepas bersalin."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kena minum air manis tu lagi? Tak sedap, doktor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, sekali lagi. Tapi penting, sebab lepas GDM, risiko jadi type 2 diabetes dalam sepuluh tahun sangat tinggi, maybe up to half."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Separuh? Banyak tu, doktor. Tapi gula saya dah normal kan lepas bersalin?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Biasanya normal balik. Tapi we need to confirm. And even if normal, kena check setiap tahun."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Menyusu badan pun bantu, it lowers your diabetes risk. Teruskan selagi boleh."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Berat saya belum turun lagi, doktor. Masih lebih lapan kilo dari sebelum mengandung."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Jangan diet ketat masa menyusu. Tapi elakkan air manis dan kuih, and bawa baby jalan-jalan dalam stroller petang-petang."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau saya nak anak lagi, GDM datang balik ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kemungkinan besar, lebih separuh. Before next pregnancy, jumpa doktor dulu, check gula, and start folic acid."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, noted. Bila result OGTT keluar?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Hari ni juga, dalam dua jam. Kalau normal, next check setahun lagi."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik. Saya tunggu, sambil susukan baby."
+   }
+  ]
+ },
+ {
+  "id": "cardio_080",
+  "split": "test",
+  "condition": "Gestational diabetes on insulin with hypoglycaemia",
+  "source": "Gestational diabetes",
+  "patient_persona": {
+   "description": "Mrs. Chiam Siew Wei, 38, female, kindergarten owner in Kajang, Selangor; 32 weeks, GDM on basal-bolus insulin, recent shaky episodes. Warm, fast-talking, mixes Mandarin, English and some Malay.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Umairah binti Zulkarnain, Malay woman in her 30s, maternal medicine specialist at a Kajang hospital. Calm, reassuring; English with Malay and simple Mandarin.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mrs. Chiam, you called the clinic about feeling shaky. Tell me what happened."
+   },
+   {
+    "speaker": "Patient",
+    "text": "前天下午在 tadika, 突然手抖, 出汗, 很晕. 我 check 了 sugar 是 3.1."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's a hypo, low sugar. What did you do?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我喝了半杯 Ribena, 过了十五分钟 check 是 5.2, 就好了."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Perfect, exactly right. When did you last eat before that?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "中午 11 点吃了饭, 打了 NovoRapid 10 units. 然后下午很忙, 小朋友 concert rehearsal, 没吃 tea break."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's the reason. Lunch insulin works for about four hours, and you skipped the snack."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Let's reduce the lunch NovoRapid from 10 to 8 units. And always have a small snack mid-afternoon, like crackers or fruit."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好. 那 Insulatard 晚上的呢? 早上 fasting 都 4.5 左右."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Fasting 4.5 is fine. Keep the bedtime Insulatard at 16 units."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我担心 low sugar 对 baby 有 affect. 会不会伤到 baby?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "A brief, quickly treated hypo like that is unlikely to harm the baby. But frequent ones we want to avoid."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Keep glucose tablets in your handbag and at the tadika. 也告诉你的 staff, kalau you look pucat, they should give you something sweet."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, 我的 cikgu 们都很乖, 她们会帮我. Thank you, doktor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "See you in one week. Bring your glucose diary, and baby's kick chart too."
+   }
+  ]
+ }
+]

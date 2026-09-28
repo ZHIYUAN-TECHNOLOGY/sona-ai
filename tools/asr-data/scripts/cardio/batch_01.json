@@ -1,0 +1,784 @@
+[
+ {
+  "id": "cardio_001",
+  "split": "train",
+  "condition": "Hypertension, new diagnosis",
+  "source": "High blood pressure (hypertension)",
+  "patient_persona": {
+   "description": "Encik Rosli bin Hassan, 52, male, e-hailing driver from Shah Alam; blood pressure found high at a pharmacy check. Husky voice, speaks quickly, a bit defensive.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lim Wei Jie, Malaysian Chinese man in his 30s, medical officer at a government health clinic in Shah Alam. Patient and steady; English-leaning, speaks plain Malay with Malay patients.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Selamat pagi, encik. Saya tengok nota farmasi ni, bacaan tekanan darah encik 168 over 102. Bila encik check tu?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Minggu lepas, doktor. Saya pergi beli ubat selsema, budak farmasi tu suruh check. Dia terkejut, terus suruh saya datang klinik."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ada rasa pening, sakit kepala, atau dada sakit sebelum ni?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Sakit kepala belakang tu selalu jugak, terutama petang. Saya ingat sebab penat bawa kereta seharian."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Hari ni nurse ukur dua kali, 162 over 100 dan 158 over 98. Memang tinggi, konsisten dengan hypertension."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Tapi saya rasa sihat je, doktor. Takkan terus kena makan ubat seumur hidup?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Faham, ramai rasa macam tu. High blood pressure usually has no symptoms, tapi lama-lama dia rosakkan jantung, buah pinggang dan otak."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Encik merokok? Makan luar selalu?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Rokok sehari setengah kotak. Makan memang kat kedai mamak, nasi lemak pagi, malam roti canai. Air teh tarik tiga, empat gelas sehari."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "OK. Kita buat blood test dulu, check gula, kolesterol, buah pinggang, dengan ECG sekali hari ni."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya mulakan amlodipine 5mg, sekali sehari waktu pagi. Garam kurangkan, teh tarik tu cuba kurang manis, dan rokok kita bincang cara nak berhenti."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ubat ni ada kesan sampingan tak? Saya bawa kereta, takut mengantuk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Amlodipine biasanya tak buat mengantuk. Kadang-kadang kaki bengkak sikit atau muka rasa panas. Kalau ada, beritahu saya."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Nak kena datang balik bila?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Dua minggu lagi, bawa keputusan darah. Kalau boleh, beli BP set kat rumah dan catat bacaan pagi dan malam."
+   }
+  ]
+ },
+ {
+  "id": "cardio_002",
+  "split": "train",
+  "condition": "Hypertension follow-up with ankle swelling",
+  "source": "Hypertension",
+  "patient_persona": {
+   "description": "Madam Ooi Siew Kheng, 63, female, char kway teow hawker in Air Itam, Penang; on amlodipine for three years. Loud, cheerful voice, Penang Hokkien-flavoured Mandarin.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Chan Pei Wen, Malaysian Chinese woman in her 40s, family medicine specialist at a Penang clinic. Warm and brisk; English-leaning, speaks Malaysian Mandarin with older Chinese patients.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "黄太太，早。今天来拿药，还是有什么问题？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "医生，拿药也要，可是我的脚肿到鞋子都穿不进去，下午最厉害，早上起来又比较好。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我看一下。嗯，两边脚踝都有一点肿，按下去会凹。你现在吃 amlodipine 几多 mg？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "上次那个医生加到 10mg，一天一粒。之后大概一个月，脚就开始肿了。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个很常见，amlodipine 越高 dose 越容易脚肿，不是心脏的问题。你在家有量血压吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有啦，我孙子教我用那个机器。早上大概 138 over 86，有时候 145。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "还可以，但是还没到我们的 target，一百三十以下比较好。你还有站一整天炒粿条吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "当然啦，早上六点站到下午两点。不站怎样赚钱？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "站久了脚也会肿。我的建议是 amlodipine 减回 5mg，另外加 perindopril 4mg，早上一起吃。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "两种药？会不会伤肾？我邻居说吃太多西药肾会坏掉。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "其实 perindopril 反而会保护肾。不过我们两个星期后要验血，看 kidney function 和 potassium。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "如果有干咳, 喉咙痒痒一直咳, 就要告诉我. This medicine sometimes causes a dry cough."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，好。那个炒粿条我自己也常吃，是不是太咸？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你自己炒的你最清楚，酱油和盐加很多。自己吃的那份少放一点，汤也不要喝完。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "哈哈，好啦，我试试看。两个礼拜后我再来验血。"
+   }
+  ]
+ },
+ {
+  "id": "cardio_003",
+  "split": "train",
+  "condition": "Young-onset hypertension, secondary causes screen",
+  "source": "Secondary hypertension",
+  "patient_persona": {
+   "description": "Mr. Darren Selvaraj, 38, male, logistics supervisor in Klang, Malaysian Indian; heavy snorer, recent weight gain. Deep voice, relaxed, Malaysian English with some Malay.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nurul Huda Kamarudin, Malay woman in her 30s, medical officer at a Klang clinic. Clear and methodical; mostly English with this patient.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Darren, your company health screening showed 158 over 104. Today we got 154 over 100. You're quite young for this, so I want to look for a cause."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ya, the HR also shocked. My father only got pressure after sixty. I'm not even forty yet."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Do you snore a lot? Does anyone tell you that you stop breathing at night?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Wah, my wife always complain. She say I snore like lorry, then suddenly senyap, then I wake up gasping."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Do you feel sleepy in the day? Like falling asleep at meetings or while driving?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Actually yes lah. After lunch I really cannot, eyes close by themselves. Kadang-kadang at traffic light also."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That sounds like obstructive sleep apnoea, and it's a common cause of high blood pressure. It also makes driving dangerous."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Are you taking anything else? Ubat sakit belakang, flu tablets, energy drinks?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Every day I take two cans of energy drink for night shift. And kadang-kadang ponstan for my back."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Both can push your pressure up. The ponstan is an NSAID, it also strains the kidneys. For your back, use paracetamol instead."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, noted. So what tests I kena buat?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Blood test for kidney, potassium, sugar and cholesterol, urine test, and ECG. I'll also refer you for a sleep study at the hospital."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Meanwhile, start amlodipine 5mg once a day. Cut the energy drinks, and jangan drive when you're sleepy."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Fair enough. If the sleep thing is treated, boleh stop the pressure medicine tak?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Possibly reduce it. Let's see the results first. Come back in four weeks."
+   }
+  ]
+ },
+ {
+  "id": "cardio_004",
+  "split": "train",
+  "condition": "Hypertension with postural dizziness in an elderly patient",
+  "source": "Hypertension",
+  "patient_persona": {
+   "description": "Mak Cik Wan Zaleha binti Wan Ismail, 71, female, retired kuih seller from Kota Bharu, Kelantan; lives with her daughter. Soft, slow voice with a Kelantan accent.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Faizal bin Abdullah, Malay man in his 40s, family medicine specialist at a Kota Bharu health clinic. Gentle, unhurried; speaks Malay with a light Kelantan touch.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Assalamualaikum, mak cik. Anak mak cik cakap mak cik jatuh minggu lepas. Macam mana jadi?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Waalaikumsalam. Mak cik bangun dari tidur, nak pergi bilik air, tiba-tiba gelap mata, terus terduduk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ada pengsan betul-betul? Kepala terhantuk tak?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Tak pengsan, doktor. Siku je lebam sikit. Tapi selalu jugak rasa berpusing bila bangun cepat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bulan lepas doktor tambah ubat hydrochlorothiazide 25mg, kan? Mula pening lepas tu ke?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ha, betul. Lepas tambah ubat tu la. Kencing pun banyak, malam bangun tiga, empat kali."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Mak cik baring tadi, tekanan darah 142 over 80. Bila berdiri, turun ke 112 over 68. Itu postural hypotension, tekanan jatuh bila bangun."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Jadi ubat tu terlalu kuat ke untuk mak cik?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, untuk umur mak cik, kita tak perlu tekanan terlalu rendah. Hydrochlorothiazide tu saya berhentikan dulu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Amlodipine 5mg pagi teruskan macam biasa. Ubat kencing tu stop mulai hari ni."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik. Mak cik minum air sikit je sebab takut kencing malam."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Minum cukup, tapi banyakkan waktu siang. Lepas Asar kurangkan sikit."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bila bangun tidur, duduk dulu tepi katil seminit, lepas tu baru berdiri perlahan-lahan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Insya-Allah. Anak mak cik pun dah pasang lampu kecil dalam bilik."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bagus. Dua minggu lagi datang, kita check darah sodium dengan tekanan duduk dan berdiri sekali."
+   }
+  ]
+ },
+ {
+  "id": "cardio_005",
+  "split": "train",
+  "condition": "Hypertension results review, target organ damage",
+  "source": "High blood pressure (hypertension)",
+  "patient_persona": {
+   "description": "Mr. Ting Kok Hua, 55, male, timber company clerk in Sibu, Sarawak; Foochow family, BP diagnosed six months ago. Calm, low voice, careful questions.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Wong Jun Hao, Malaysian Chinese man in his 30s, medical officer at a Sibu hospital outpatient clinic. Friendly and precise; switches between English and Mandarin.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "陈先生，你上次的 blood test 和 ECG 报告出来了，我们一起看看。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，医生。我太太一直问，是不是很严重。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "先讲好消息，sugar 和 cholesterol 都 normal。可是 ECG 显示心脏的左边有一点厚，我们叫 left ventricular hypertrophy。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "心脏厚？是不是心脏病？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "不是心脏病发作. It's from long-standing high pressure, 心脏用力泵血, 肌肉变厚了. 控制好血压, 可以慢慢改善."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "另外 urine test 有一点 protein，microalbumin 是 45。表示肾也开始受到压力。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我吃 amlodipine 5mg 已经半年了，每天都有吃，还是不够吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你家里量的读数多少？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "大概 145 over 92，有时 150。星期天去教堂回来会比较低。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "还是偏高。我想加 losartan 50mg，一天一次。它对肾的蛋白质有帮助，也保护心脏。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那 amlodipine 继续吃吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "继续，两种一起吃。两个星期后验血，看 creatinine 和 potassium。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我们福州人煮菜很喜欢用红酒和酱油，这个要不要改？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "酱油和盐要减少。红糟没问题，但是酒少喝。每天走路三十分钟也有帮助。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "明白了。我三个月后再来复诊吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "两个礼拜先验血，三个月再做 urine test 看 protein 有没有下降。"
+   }
+  ]
+ },
+ {
+  "id": "cardio_006",
+  "split": "train",
+  "condition": "Type 2 diabetes, new diagnosis",
+  "source": "Diabetes, type 2",
+  "patient_persona": {
+   "description": "Puan Siti Rohana binti Jaafar, 44, female, primary school teacher in Johor Bahru; mother and elder brother have diabetes. Clear teacher's voice, organised, slightly anxious.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Priya a/p Ramasamy, Malaysian Indian woman in her 30s, medical officer at a Johor Bahru health clinic. Warm and structured; English-leaning, comfortable in Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Puan Siti, keputusan darah dah keluar. Fasting sugar 9.4, HbA1c 8.2 percent. Ini memang diabetes, type 2."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ya Allah. Saya dah agak dah, sebab mak dengan abang pun kencing manis. Tapi saya tak sangka secepat ni."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Puan ada rasa dahaga, kencing banyak, atau berat turun tanpa sebab?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dahaga tu ada. Dalam kelas pun saya asyik minum air. Malam bangun kencing dua kali."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Itu tanda gula tinggi. The good news is we caught it early, jadi banyak boleh buat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya mula metformin 500mg, sekali sehari lepas makan malam. Seminggu kemudian naik jadi dua kali sehari."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Metformin ni ada kesan pada perut ke? Mak saya dulu cirit-birit teruk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh jadi, sebab tu kita mula dos rendah dan makan lepas makan. Biasanya dalam dua minggu badan dah biasa."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Makan pula macam mana, doktor? Saya suka nasi, sehari tiga kali."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Nasi boleh, tapi kurangkan. Guna suku pinggan nasi, separuh sayur, suku lauk protein. Air manis dan kuih petang tu yang paling perlu kurang."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kuih petang tu susah sikit, cikgu-cikgu selalu bawa ke bilik guru."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ambil satu, bukan tiga. And try brisk walking thirty minutes, lima hari seminggu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya juga rujuk puan ke dietitian, dan kita buat check mata dengan kaki dalam masa terdekat."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Tiga bulan lagi check HbA1c semula ya?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Betul. Target kita bawah tujuh percent. Puan boleh buat ni."
+   }
+  ]
+ },
+ {
+  "id": "cardio_007",
+  "split": "train",
+  "condition": "Poorly controlled type 2 diabetes, insulin discussion",
+  "source": "Diabetes, type 2",
+  "patient_persona": {
+   "description": "Mr. Lau Chee Keong, 58, male, renovation contractor in Cheras, Kuala Lumpur; diabetic for nine years, busy and eats out. Gruff, fast voice, Cantonese-tinged Mandarin.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Sharon Yap, Malaysian Chinese woman in her 40s, family physician at a Cheras clinic. Direct but kind; English-leaning with Mandarin for older Chinese patients.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "刘先生，你这次 HbA1c 是 9.1，比上次 8.4 还高。最近怎样？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "医生，我很忙啦，工地跑来跑去，吃饭都是随便买。药有时候中午忘记吃。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你现在是 metformin 1 gram 一天两次，gliclazide 80mg 早上两粒，对吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "对，早上一定吃。晚上那粒 metformin 常常忘记，太累了回家就睡。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我老实讲，现在的药加起来已经很高 dose 了。我建议开始打 insulin，晚上一针就好。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "打针？不要啦医生。我爸爸也是打 insulin，后来脚就被切掉了。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我明白你的担心。可是你爸爸的脚，是因为糖太高太久，不是因为 insulin。Insulin 是保护你的。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "真的吗？我一直以为打针就是最后一步了。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "不是最后一步, it's just another tool. 现在的针很细, 打肚皮, 几乎不痛."
+   },
+   {
+    "speaker": "Patient",
+    "text": "可是我在工地，不方便带。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "所以我建议晚上睡前打一次，basal insulin，叫 insulatard，从 10 units 开始。白天不用带。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "如果我先努力吃好一点，三个月再看，可以吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "可以给你一个机会，但我同时加 empagliflozin 10mg，早上一粒。三个月后如果还是高过 8，就开始 insulin，好吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，一言为定。那个新药有什么要注意？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "小便会比较多糖分，要多喝水，下面保持干净。工地很热，一定要喝够水。"
+   }
+  ]
+ },
+ {
+  "id": "cardio_008",
+  "split": "train",
+  "condition": "Type 2 diabetes on dapagliflozin with genital thrush",
+  "source": "Diabetes, type 2",
+  "patient_persona": {
+   "description": "Mrs. Kalaivani a/p Subramaniam, 50, female, bank officer in Ipoh, Malaysian Indian; started dapagliflozin two months ago. Polite, a little embarrassed, Malaysian English.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Tan Hui Min, Malaysian Chinese woman in her 30s, GP at an Ipoh clinic. Calm and matter-of-fact; English with some Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Good afternoon, Mrs. Kalaivani. You're here for your diabetes refill. Anything bothering you with the new medicine?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Actually, doctor, a bit malu to say. Since last month I got itchiness down there, and some white discharge."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "No need to be shy, it's quite common with this medicine. Dapagliflozin makes you pass sugar in the urine, and yeast likes sugar."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, like that ah. I thought I kena something. I bought some cream from the farmasi but not much better."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Any pain when passing urine, fever, or back pain?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "No fever. Just a bit pedih when I pee, because the skin is sore."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's likely a yeast infection, candidiasis. I'll give you one fluconazole 150mg tablet, and clotrimazole cream twice a day for a week."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your HbA1c this time is 7.1, down from 8.0. So the medicine is working well."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Wah, really? Then I tak nak stop it lah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "No need to stop. Just keep the area clean and dry, wash with plain water after the toilet, and wear cotton underwear."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. My husband also kencing manis, but he's on different medicine. Can he get this also?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "He'd need to see his own doctor. Everyone's kidneys and other medicines are different."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Understood. Anything else I should watch for?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Minum air cukup, especially in this hot weather. If you vomit, can't eat, or feel very unwell, skip the dapagliflozin that day and see a doctor."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, doctor. Terima kasih, I feel much better knowing it's normal."
+   }
+  ]
+ },
+ {
+  "id": "cardio_009",
+  "split": "train",
+  "condition": "Type 2 diabetes, starting basal insulin",
+  "source": "Diabetes, type 2",
+  "patient_persona": {
+   "description": "Encik Justin Majinbon, 62, male, retired government driver from Penampang, Sabah; Kadazan, speaks Sabah Malay. Relaxed, cheerful voice, uses \"bah\" often.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Aileen Chong, Sabahan Chinese woman in her 40s, family medicine specialist at a Kota Kinabalu clinic. Friendly and practical; English-leaning, fluent Sabah Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Justin, hari ni kita mula insulin macam kita bincang bulan lepas. Masih OK dengan plan ni?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK bah, doktor. Anak saya pun cakap cuba saja lah. Saya takut sakit jarum saja."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Jarum dia sangat halus. Nanti nurse tunjuk, encik cuba sendiri depan kami."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Insulin ni namanya Insulatard. Encik suntik sekali sehari, waktu malam sebelum tidur, 10 units."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Cucuk kat mana, doktor? Tangan ka?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Di perut, dua jari jauh dari pusat. Tukar-tukar tempat setiap malam supaya kulit tak jadi keras."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau saya lupa satu malam, esok pagi cucuk dua kali ka?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Jangan. Kalau lupa, langkau saja. Jangan gandakan dos, nanti gula jatuh terlalu rendah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Encik kena check gula pagi sebelum makan setiap hari. Tulis dalam buku ni."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Sasaran berapa, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Antara 4.4 hingga 7. Kalau tiga hari berturut-turut atas 7, tambah 2 units."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau gula rendah, macam mana saya tau?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tangan menggigil, berpeluh, rasa lapar sangat, berdebar. Straight away drink half a glass of sweet drink, atau tiga biji gula-gula."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Faham bah. Metformin saya teruskan ka?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Teruskan metformin 1 gram dua kali sehari. Gliclazide kita kurangkan jadi satu biji pagi saja."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, doktor. Dua minggu lagi saya datang bawa buku gula."
+   }
+  ]
+ },
+ {
+  "id": "cardio_010",
+  "split": "train",
+  "condition": "Type 2 diabetes in a young woman, metformin intolerance",
+  "source": "Diabetes, type 2",
+  "patient_persona": {
+   "description": "Ms. Chloe Ng Jia Xin, 32, female, graphic designer in Seremban; PCOS, diagnosed with type 2 diabetes last year. Quick, lively voice, English-dominant Chinese Malaysian.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Harith bin Zulkifli, Malay man in his 30s, GP at a Seremban clinic. Relaxed and encouraging; mostly English.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Hi Chloe, how's it going with the metformin since last time?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Honestly, not great. My stomach is always cramping, and I have to run to the toilet after lunch. Some days I just skip it, malas."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "How much are you taking now, and when?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "500mg, two tablets in the morning, two at night. Usually I take it before eating because I rush out, tak sempat breakfast."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Taking it on an empty stomach makes the gut side effects much worse. Always take it with or right after food."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "There's also an extended-release version, metformin XR. It's gentler on the stomach, and you can take it once a day with dinner."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, that sounds better. Is it the same strength?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "We'll start at 1000mg with dinner, then go up to 1500mg after two weeks if you're okay."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. And my HbA1c? I did the test last week."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "7.4 percent. Not bad, but we want it under 6.5 for someone your age, to protect your eyes and kidneys long term."
+   },
+   {
+    "speaker": "Patient",
+    "text": "I've been trying to lose weight also. The PCOS makes it so susah, I'm stuck at 84 kilos."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's frustrating, I know. Even five percent weight loss improves both PCOS and your sugar. The dietitian here does a good plan for women with PCOS."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Can refer me? I tried keto before but I give up after two weeks, tak tahan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sure, I'll refer you. Extreme diets are hard to keep up. Small, steady changes are better."
+   },
+   {
+    "speaker": "Patient",
+    "text": "And if I want to get pregnant next year, is metformin safe?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good question. Let me know before you plan, because we'll need tighter sugar control and folic acid three months before."
+   }
+  ]
+ }
+]

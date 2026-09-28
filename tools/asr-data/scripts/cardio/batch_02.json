@@ -1,0 +1,796 @@
+[
+ {
+  "id": "cardio_011",
+  "split": "train",
+  "condition": "Hypoglycaemia on gliclazide after a missed meal",
+  "source": "Diabetic hypoglycemia",
+  "patient_persona": {
+   "description": "Pak Cik Ahmad Kamil bin Saad, 67, male, retired padi farmer from Alor Setar, Kedah; collapsed at the surau after skipping lunch. Slow, raspy voice with a Kedah accent.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Shalini a/p Krishnan, Malaysian Indian woman in her 30s, emergency physician at an Alor Setar hospital. Brisk but kind; English-leaning, switches to Malay with older patients.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Pak cik, dah rasa lebih baik? Tadi masa sampai, gula pak cik 2.1 je. Kami dah bagi dextrose drip."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dah OK sikit, doktor. Tadi masa sembahyang Zohor, tiba-tiba berpeluh, tangan menggigil, lepas tu tak ingat apa."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Pagi tadi pak cik makan apa? And ubat kencing manis makan pukul berapa?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Pagi minum kopi O je. Ubat makan lepas Subuh macam biasa, dua biji gliclazide. Tengah hari tak lapar, jadi tak makan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's the problem, pak cik. Gliclazide ni paksa badan keluarkan insulin, walaupun perut kosong. So gula jatuh."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Selama ni tak pernah jadi macam ni. Dah sepuluh tahun makan ubat yang sama."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sekarang umur dah naik, buah pinggang pun slow sikit. Your kidney function drop sikit, eGFR 48, so ubat tu stay dalam badan lebih lama."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Habis tu, kena tukar ubat ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya. Gliclazide saya kurangkan jadi 40mg sekali sehari, dan mesti makan sarapan dulu sebelum telan ubat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau tak lalu makan satu hari, contohnya demam atau puasa, skip gliclazide hari tu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Bulan puasa nanti macam mana, doktor? Pak cik nak puasa penuh."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Before Ramadan, datang jumpa doktor klinik dulu. Kita adjust ubat, maybe tukar yang lebih selamat macam linagliptin."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Pak cik ada meter gula kat rumah? Kalau rasa berpeluh dan menggigil lagi, check dulu, kalau bawah 4, minum air manis terus."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Meter ada, tapi anak saya yang pandai guna. Nanti saya suruh dia ajar."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bagus. Malam ni kita tahan pak cik dalam wad dulu, sebab gliclazide boleh buat gula turun lagi sampai esok."
+   }
+  ]
+ },
+ {
+  "id": "cardio_012",
+  "split": "train",
+  "condition": "Nocturnal hypoglycaemia on premixed insulin",
+  "source": "Hypoglycemia, diabetic",
+  "patient_persona": {
+   "description": "Madam Leong Ah Moi, 74, female, retired seamstress in Ipoh; lives alone, eats little since her husband died. Thin, quiet voice, Cantonese-flavoured Mandarin.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Kevin Chew, Malaysian Chinese man in his 40s, family physician at an Ipoh clinic. Gentle and patient; English-leaning, Mandarin with Cantonese words for elderly patients.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "梁婆婆，你女儿打电话说你半夜出很多汗，还做恶梦，是不是？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "是啊医生，差不多一个星期三次，半夜醒来整件衣服湿透，心跳很快，很怕。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "那时候有没有 check 糖？你家里有那个 glucometer 吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有一次我女儿叫我验，是 3.2。我吃了两块饼干就好一点。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "3.2 是 low sugar，我们叫 hypoglycaemia。你现在打 Mixtard 几多 units？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "早上 24，晚上 20。以前医生开的，一直没有改。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你现在晚餐吃什么？吃多少？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我老公走了以后，没什么胃口。晚上就吃一碗粥，有时候一点点面包。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "明白。你吃得比以前少很多，可是 insulin 还是一样，所以半夜糖就掉下来了。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我们先把晚上的 Mixtard 减到 14 units，早上的暂时保持 24。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "减那么多，糖会不会太高？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你这个年纪，糖稍微高一点比 low 好。我们的 target 是 HbA1c 七点五到八，不用太紧。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "这样我就放心一点。我一个人住，半夜晕倒没有人知道。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "所以更要小心。睡前吃一点东西，比如两片 wholemeal 面包或者一杯 Milo 少糖。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "另外我想介绍你去找 dietitian，还有 community nurse 每星期来家访一次，好吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，谢谢医生。我女儿在 KL，她也会比较安心。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "两个星期后回来, bring your sugar diary with you, 我们再调整."
+   }
+  ]
+ },
+ {
+  "id": "cardio_013",
+  "split": "train",
+  "condition": "Hypoglycaemia after alcohol on insulin",
+  "source": "Hypoglycemia",
+  "patient_persona": {
+   "description": "Mr. Ganesh a/l Rajendran, 45, male, sales manager in Petaling Jaya, Malaysian Indian; type 2 diabetes on basal-bolus insulin. Confident, talkative, Manglish.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Mohd Irfan bin Yusof, Malay man in his 30s, medical officer at a PJ hospital emergency department. Calm, a little dry humour; English with Malay phrases.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Ganesh, your wife says she found you confused at home this morning. Sugar was 2.4 when the ambulance came. Do you remember what happened?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Honestly, doctor, a bit blur. Last night got my cousin's wedding. I minum quite a bit, whisky, maybe five, six glasses."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Did you eat properly at the dinner? And what insulin did you take?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Not much, just some mee goreng and the cake lah. Before dinner I took my NovoRapid 12 units, then before bed my Lantus 30 units as usual."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Okay, that explains it. Alcohol blocks the liver from releasing sugar, especially overnight. With insulin on top, very dangerous."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Serious ah? I always drink at functions, tak pernah jadi like this before."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sometimes you're lucky. This time your wife found you. If she didn't, it could have been much worse."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aiyo. Okay, point taken. So I tak boleh minum langsung?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Best to avoid, but if you do, limit to one or two drinks, always with food. Never skip the meal."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "If you've been drinking, reduce the bedtime Lantus a bit, maybe by 20 percent, and check your sugar before sleeping."
+   },
+   {
+    "speaker": "Patient",
+    "text": "I also drive home after these functions. That one also tak boleh, right?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak boleh, definitely not. Low sugar while driving is like drunk driving, twice over. Always check before driving, must be above 5."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, understood, doctor. My wife will be very happy you said that."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Also carry glucose tablets or a few sweets in the car and your pocket. Kami akan observe you a few hours more before discharge."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih, doctor. Sorry to susahkan everyone."
+   }
+  ]
+ },
+ {
+  "id": "cardio_014",
+  "split": "train",
+  "condition": "Prolonged hypoglycaemia on glibenclamide with CKD, ward round",
+  "source": "Hypoglycemia, diabetic",
+  "patient_persona": {
+   "description": "Mak Cik Rokiah binti Mamat, 55, female, housewife from Kuala Terengganu; chronic kidney disease, admitted overnight with recurrent low sugar. Tired, soft voice, Terengganu accent.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Ong Kah Wai, Malaysian Chinese man in his 30s, medical registrar at a Kuala Terengganu hospital, on the morning ward round. Efficient but warm; English with Malay for patients.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Selamat pagi, mak cik. Macam mana malam tadi? Nurse kata gula jatuh lagi pukul tiga pagi."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Pagi, doktor. Ha, malam tadi saya berpeluh lagi, rasa lemah sangat. Nurse bagi air gula dengan drip."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ubat glibenclamide yang mak cik makan kat rumah tu, siapa yang bagi?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Klinik swasta dekat rumah, doktor. Dah lama dah, lima tahun lebih. Sehari dua kali, 5mg."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Masalahnya, glibenclamide ni long-acting, and your kidneys are weak. So ubat tu kumpul dalam darah, tak keluar."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Maksudnya, ubat tu yang buat gula rendah?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Betul. Your creatinine is 210, eGFR around 22. Pada tahap ni, glibenclamide memang tak sesuai langsung."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Habis tu, kencing manis saya nak kawal pakai apa?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kita stop glibenclamide terus. Sampai gula stabil, we'll continue the dextrose drip and check sugar setiap dua jam."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bila dah stabil, saya mula linagliptin 5mg sekali sehari. Ubat ni selamat untuk buah pinggang dan jarang buat gula rendah."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Berapa lama lagi saya kena duduk wad ni?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Maybe dua, tiga hari lagi. Glibenclamide ni boleh bertahan dalam badan sampai 72 jam."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Anak saya risau. Dia tanya boleh tak makan biasa kat hospital ni."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh, makan macam biasa, jangan skip. Kalau tak habis makanan, beritahu nurse, kami boleh bagi snek tambahan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya juga akan refer mak cik ke klinik nephrology untuk follow-up buah pinggang."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih, doktor. Nanti anak saya datang, doktor tolong terangkan pada dia sekali."
+   }
+  ]
+ },
+ {
+  "id": "cardio_015",
+  "split": "train",
+  "condition": "Recurrent daytime hypoglycaemia at work",
+  "source": "Hypoglycemia",
+  "patient_persona": {
+   "description": "Encik Jimbun anak Ngelai, 49, male, Iban scaffolding worker from Kuching, Sarawak; on gliclazide, works long outdoor shifts. Deep voice, straightforward, Sarawak Malay touches.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Melissa Ling, Sarawakian Chinese woman in her 30s, medical officer at a Kuching health clinic. Practical and friendly; English-leaning, speaks Sarawak-flavoured Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Jimbun, apa khabar? Surat supervisor encik kata encik hampir jatuh dari scaffolding minggu lepas. Apa jadi?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Masa tengah hari, doktor. Panas gilak. Tiba-tiba tangan menggeletar, pandangan kabur, peluh banyak. Kawan tarik saya turun."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Waktu tu dah makan tengah hari ka belum?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Belum. Kami kerja dari tujuh pagi, makan pukul satu. Pagi makan roti sekeping saja dengan kopi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Gliclazide encik makan bila?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Pagi sebelum pergi kerja, 80mg dua biji. Doktor dulu suruh makan pagi dan malam, tapi saya makan terus dua biji pagi, senang."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ah, itu masalahnya. Two tablets sekaligus in the morning, then kerja berat, panas, tak makan. Gula memang jatuh."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Sik tahu pula, doktor. Saya ingat sama saja asal cukup dua biji."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak sama. Saya nak tukar, gliclazide MR 30mg sekali sehari, dengan sarapan yang betul. Nasi, roti dengan telur, apa-apa yang ada protein."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bila kerja atas scaffolding, bawa gula-gula atau air kotak manis dalam poket. Kalau rasa pelik, turun dulu, makan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Boleh doktor bagi surat untuk majikan? Supaya dia bagi saya rehat sekejap makan pagi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh, saya tulis surat. Saya juga bagi glucometer loan dari klinik, check gula sebelum naik scaffolding."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih, doktor. Kerja tinggi ni memang bahaya kalau pening."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Betul. Dua minggu lagi datang, bring your sugar records. Kalau ada lagi gula rendah, terus datang."
+   }
+  ]
+ },
+ {
+  "id": "cardio_016",
+  "split": "train",
+  "condition": "Diabetic foot ulcer, first presentation",
+  "source": "Diabetes mellitus",
+  "patient_persona": {
+   "description": "Encik Zainal bin Osman, 60, male, rubber tapper from Muar, Johor; diabetic for twelve years, poor follow-up. Rough, loud voice, plainspoken Johor Malay.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Chong Mei Yee, Malaysian Chinese woman in her 30s, medical officer at a Muar health clinic. Firm but caring; English-leaning, fluent Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Zainal, cuba buka stokin tu. Isteri encik cakap ada luka kat ibu jari kaki dah dua minggu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Luka kecik je, doktor. Kasut getah saya sempit, gesel. Tak sakit pun, tu yang saya biar."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak rasa sakit langsung? Itu yang bahaya. Saya nampak luka dalam, ada nanah, dan kulit sekeliling merah."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada bau sikit. Isteri saya letak minyak gamat dengan daun sirih."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya check sensation dengan monofilament ni. Rasa tak saya sentuh kat sini? Sini?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Tak rasa apa, doktor. Dua-dua kaki kebas dah lama, macam pakai stokin tebal."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's diabetic neuropathy, saraf dah rosak. Sebab tu luka tak rasa sakit. Your pulses at the foot pun lemah sikit."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Teruk ke, doktor? Kena potong ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kita cuba elak. Tapi luka dah infected, jadi saya refer ke hospital hari ni untuk X-ray, check tulang, dan antibiotic."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Gula tadi 16.8. HbA1c terakhir encik bila? Rekod kata dua tahun lepas."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Lama dah tak datang klinik. Ubat pun kadang-kadang makan, kadang-kadang tak."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Luka kaki diabetik ni boleh jadi teruk dengan cepat. From now on, you must take your medicine every day, tanpa tinggal."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Jangan pakai kasut getah sempit tu lagi, dan jangan letak ubat kampung kat luka."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Hospital Muar ya? Saya pergi dengan anak saya petang ni."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Pergi sekarang juga, saya dah tulis surat. Jangan tunggu petang."
+   }
+  ]
+ },
+ {
+  "id": "cardio_017",
+  "split": "train",
+  "condition": "Infected diabetic foot after a hot-water soak burn",
+  "source": "Diabetes, type 2",
+  "patient_persona": {
+   "description": "Mr. Goh Ah Seng, 68, male, retired sundry-shop owner in Klang; soaks his feet in hot water nightly for \"blood circulation\". Gravelly voice, stubborn, Hokkien-tinged Mandarin.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Arvind a/l Muthu, Malaysian Indian man in his 40s, orthopaedic specialist at a Klang hospital, seeing him on admission. Direct, kind; English with simple Mandarin and Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Goh, 你的脚怎么会烫到？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我每天晚上用热水泡脚，加姜，老人家说血液循环好。那天水太热，我不知道。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "因为你的脚 numb 了，感觉不到热。That's diabetic neuropathy. 水泡破了以后就 infected 了。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "医生，现在很肿，还有点黑黑的，我很怕。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我们照了 X-ray，看到骨头也有一点 infection，叫 osteomyelitis。所以要住院打 IV antibiotic。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "要打多久？我家里还有狗要喂。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "至少一个星期打针，之后 oral antibiotic 可能六个星期。狗叫你儿子帮忙喂吧。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "会不会要切脚趾？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "那个小脚趾已经黑了，可能要 remove。我们会尽量保留其他的。明天 surgery team 会再看。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "唉，早知道就不要泡脚了。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "从今以后不要用热水泡脚. Use warm water only, test it with your elbow first. 洗完擦干, 特别是脚趾中间."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你的糖也很高，今天是 18。住院期间我们会用 insulin 控制，伤口才会好。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "打 insulin？出院以后也要吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "看情况。先把 infection 控制，糖稳定了，再和 medical team 决定。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好吧，听医生的。可以叫我儿子今天来吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "可以，下午探病时间来，我跟他讲清楚。"
+   }
+  ]
+ },
+ {
+  "id": "cardio_018",
+  "split": "train",
+  "condition": "Annual diabetic foot screening, high-risk foot",
+  "source": "Diabetes, type 2",
+  "patient_persona": {
+   "description": "Mrs. Rani a/p Velu, 58, female, school canteen operator in Butterworth, Penang, Malaysian Indian; diabetic for eight years. Chatty, warm, Manglish with Tamil-inflected rhythm.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Farah Nadia binti Rosli, Malay woman in her 30s, family medicine specialist at a Butterworth health clinic. Friendly, thorough; English with light Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mrs. Rani, today we do your yearly foot check. Please take off both slippers and sit up here."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay doctor. My feet very ugly lah, don't mind ah. Standing whole day in the canteen."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "No problem. I see thick hard skin here under the ball of your foot, a callus. Does it hurt?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Sometimes feel like walking on batu kecil. I use a razor blade to shave it off at home."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Please don't do that. With diabetes, one small cut can turn into an ulcer. Let the podiatrist here trim it properly."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Now close your eyes, tell me when you feel this touch. Here? And here?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Yes... yes... that one tak rasa. Ah, that one also cannot feel."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "You've lost some sensation on the tips of your toes. Kaki you dah mula kebas. That puts your foot in the high-risk group."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aiyo. My mother also had this, then she got luka, very slow to heal."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's why we check early. Your foot pulses are still good, so blood flow is okay."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Most important is the right shoes. Your slippers are thin and open. At the canteen, wear covered shoes with soft insoles."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Covered shoes very panas lah, doctor. But okay, I'll try."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Check your feet every night, even between the toes. If you can't bend, use a mirror or ask your daughter."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Can I still use the foot spa at the mall? My anak perempuan likes to bring me."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Better avoid foot spas and pedicures, especially cutting of cuticles. Your HbA1c is 7.8, so a bit more sugar control will help the nerves too."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, I'll be good. Next check bila?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Every three months now, since you're high risk. The nurse will book the podiatrist for you."
+   }
+  ]
+ },
+ {
+  "id": "cardio_019",
+  "split": "train",
+  "condition": "Ward round after toe amputation",
+  "source": "Diabetes mellitus",
+  "patient_persona": {
+   "description": "Puan Hasnah binti Ali, 64, female, retired canteen worker from Seremban, Negeri Sembilan; day three after right second toe amputation. Weary but chatty, Negeri Sembilan accent.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Tan Chee Meng, Malaysian Chinese man in his 30s, orthopaedic medical officer at a Seremban hospital, on the morning ward round. Upbeat and clear; English with plain Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Selamat pagi, Puan Hasnah. Hari ketiga lepas operation. Sakit lagi tak?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Pagi, doktor. Sakit dah kurang. Tapi masa nurse cuci luka tadi, pedih sikit."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya tengok dressing tadi, luka nampak bersih, tak ada nanah. Kulit sekeliling pun tak merah macam sebelum operation."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alhamdulillah. Bila saya boleh balik, doktor? Cucu saya nak kahwin hujung bulan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kita tengok lagi dua, tiga hari. Antibiotic IV kena habis dulu, lepas tu tukar ke oral."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Gula puan semalam masih tinggi, antara 12 dan 15. Kita dah naikkan insulin malam jadi 16 units."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kat rumah saya tak pernah cucuk insulin. Ubat makan je."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Untuk sementara, lepas balik rumah, puan kena teruskan insulin sekali sehari. Nurse akan ajar puan dan anak."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Susah la, doktor. Saya takut jarum."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Faham. Tapi luka nak sembuh, gula mesti bawah 10. Insulin paling cepat dan selamat untuk itu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Lepas ni, jangan pijak kaki kanan terus. Guna walking frame dulu, pijak dengan tumit saja."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Boleh pergi majlis kahwin cucu nanti?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh, tapi duduk banyak, jangan berdiri lama, and keep the dressing dry."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Terima kasih, semua staf sini baik-baik."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sama-sama. Nanti physiotherapist datang ajar puan jalan dengan frame."
+   }
+  ]
+ },
+ {
+  "id": "cardio_020",
+  "split": "test",
+  "condition": "Diabetic heel ulcer, dressing clinic follow-up",
+  "source": "Diabetes, type 2",
+  "patient_persona": {
+   "description": "Madam Chua Bee Lian, 52, female, clothing stall helper at a night market in Johor Bahru; walks barefoot at home. Energetic, fast-talking, Johor Mandarin with some Malay.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nadia binti Hamzah, Malay woman in her 30s, medical officer at a Johor Bahru hospital wound clinic. Encouraging and precise; English-leaning, conversational Mandarin.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "蔡太太，今天是第四个星期了。我先看你的 wound。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好啊医生。护士说比上次好很多，我自己看也觉得小了。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "对，本来三公分，现在剩一点五公分。里面红红的是 good tissue，表示在愈合。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那可以不用穿这个大鞋子了吗？好丑，去 pasar malam 大家都看。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "还不可以。这个 offloading shoe 帮你的脚跟不受压力。你一脱掉，伤口就会裂开。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "其实在家里我都没穿，家里习惯赤脚走。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个一定要改。在家也要穿，至少穿 slipper，不能赤脚，尤其是你的脚已经没有感觉了。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好啦，我会穿。糖尿病的药我有乖乖吃。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "看得出来。你的 HbA1c 从 9.6 降到 8.1，很好。Metformin 和 insulin 继续。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "真的吗？我女儿帮我煮饭，少饭多菜，她很严格的。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你女儿做得很好。糖控制好，伤口好得快。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你晚上去 pasar malam 摆摊，要站几个钟头？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "大概五个钟头。老板给我一张椅子，可是客人多就没空坐。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "尽量坐着做. Every hour, sit down at least ten minutes, 把脚抬高一点."
+   },
+   {
+    "speaker": "Patient",
+    "text": "我知道了。下次什么时候回来？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "一个星期后，继续 dressing。如果伤口有臭味、发烧，或者红肿扩大，马上回来急诊。"
+   }
+  ]
+ }
+]

@@ -1,0 +1,792 @@
+[
+  {
+    "id": "gi_031",
+    "split": "train",
+    "condition": "Haemorrhoids",
+    "source": "Hemorrhoids",
+    "patient_persona": {
+      "description": "Encik Rosli bin Kamarudin, 45, male, e-hailing driver in Shah Alam who sits ten hours a day; first visit. Medium-pitched, a bit embarrassed, speaks quickly.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lim Wei Jie, Malaysian Chinese man in his 30s, GP at a Shah Alam clinic. Relaxed, matter-of-fact; English-leaning, comfortable colloquial Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Rosli, apa masalah hari ni?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doktor, malu sikit nak cakap. Dah two weeks, bila buang air besar ada darah merah. Kadang-kadang ada benda terkeluar kat dubur."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak payah malu, this is very common. Darah tu menitik dalam mangkuk tandas, atau bercampur dengan najis?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Menitik je, merah terang. Lepas tu kat tisu pun ada. Tak sakit sangat, cuma rasa tak selesa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Benda yang terkeluar tu, dia masuk balik sendiri, or you need to push it back?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kadang masuk sendiri, kadang saya tolak dengan jari. Saya bawa Grab, duduk dari pagi sampai malam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Buang air besar macam mana? Keras? Kena teran lama?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Keras, doktor. Tiga hari sekali je. Saya jarang minum air sebab malas nak berhenti cari tandas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any weight loss, selera makan kurang? Family history of colon cancer ada?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada, berat sama je. Keluarga pun tak ada setahu saya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK, saya check sekejap. Dari pemeriksaan, ini buasir dalam, grade two. Tak ada tanda bahaya lain."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya bagi Daflon 500mg, dua biji dua kali sehari, empat hari dulu, lepas tu satu biji dua kali sehari. Tambah Proctosedyl cream, sapu pagi dan malam."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Cream tu sapu kat luar je ke, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Luar dan sikit ke dalam, ada applicator dalam kotak. Yang paling penting, minum air dua liter sehari, makan sayur dan buah, dan jangan duduk lama dalam tandas main phone."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hah, itu memang saya buat. Kena rehat juga ke dari drive?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Setiap dua jam, berhenti, jalan sikit. Kalau lepas dua minggu masih berdarah, atau darah banyak sampai pening, datang balik, kita refer untuk banding."
+      }
+    ]
+  },
+  {
+    "id": "gi_032",
+    "split": "train",
+    "condition": "Haemorrhoids",
+    "source": "Hemorrhoids",
+    "patient_persona": {
+      "description": "Chong Ai Lian, 52, female, char kway teow hawker in George Town, Penang; painful lump for four days after a long bus trip to Hat Yai. Loud, animated voice, Penang Hokkien-accented Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Goh Pei Shan, Malaysian Chinese woman in her 40s, general surgeon at a Penang private hospital clinic. Brisk but kind; Mandarin with English medical terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我屁股这里肿了一粒，很痛，坐都不能坐。四天前从合艾坐巴士回来就开始了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "坐车坐很久之后才出来的？Pain 是 constant，还是大便的时候才痛？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "一直痛啊，走路也痛。大便的时候更加惨，我都不敢去厕所。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "以前有没有流血？就是大便后纸巾上有红色的血。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有啦，大概半年了，有时候一点点，我以为是热气，喝凉茶就算了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我看一下。这个是 thrombosed external haemorrhoid，外痔里面有血块，所以那么痛。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要开刀吗？我档口不能关太久，很多熟客的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "已经四天了，usually after day three 痛会慢慢减少，所以不用 operation，conservative treatment 就可以。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你现在有吃什么药？Panadol 或者别的止痛药？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我吃了我老公的 Ponstan，一天三粒。还有我有吃 aspirin，因为以前中风过一次，很小的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Aspirin 不要自己停，但是 Ponstan 和 aspirin 一起吃，胃会伤，也更容易流血。Ponstan 先停。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我开 paracetamol 1 gram，一天四次。每天坐温水盆两三次，每次十五分钟。还有 Fybogel，一包一天两次，大便软一点。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "温水坐盆是要放盐吗？我妈妈说要放盐。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "普通温水就好，不用放盐。那个流血半年的问题，你五十二岁了，我要安排 colonoscopy 检查肠。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "哎呀，要照肠啊？好啦好啦，我怕的是别的病。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，所以要 check 清楚。Two weeks 后回来 follow up，如果发烧或者肿得更大，马上回来。"
+      }
+    ]
+  },
+  {
+    "id": "gi_033",
+    "split": "train",
+    "condition": "Haemorrhoids",
+    "source": "Hemorrhoids",
+    "patient_persona": {
+      "description": "Priya a/p Rajendran, 29, female, bank officer in Johor Bahru, five months postpartum and breastfeeding; follow-up for haemorrhoids since pregnancy. Soft-spoken, Malaysian Indian English with Malay words.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nurul Huda Yusof, Malay woman in her 30s, family medicine specialist at a JB health clinic. Warm, reassuring; mostly English with this patient.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hi Priya, last month we started you on the cream and fibre. How has it been?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Better doctor, the bleeding almost stopped. But still got itching, especially at night."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay. And the stools, lembut sikit now? Still kena teran?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Softer lah, but I forget the fibre sometimes. With the baby, morning very busy."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Understandable. Are you still using the Anusol cream every day?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Actually I used the one my sister gave, got hydrocortisone. Every day for almost four weeks."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ah, that one we shouldn't use more than one week. Long-term steroid makes the skin thin, and that can cause more itching."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alamak, I didn't know. Is it safe for my baby? I'm still breastfeeding."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Very little goes into the milk from a cream, so baby is fine. But stop the steroid one, use only the plain Anusol, after each bowel opening."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For the stool, lactulose 15ml sekali sehari, it's safe while breastfeeding. Boleh campur dengan jus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. Doctor, boleh tak saya mula exercise class dah? Kawan saya kata nanti jadi teruk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Light exercise is good, walking, yoga. Avoid heavy lifting and straining for now. Drink at least two litres, because breastfeeding also takes a lot of water."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Two litres, okay. Mak mentua saya asyik bagi sup herba, that one counts or not?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Counts, but plain water is still best. Let's see you in six weeks. If the lump comes out and cannot go back, or very painful, come earlier."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay doctor, thank you. Terima kasih banyak."
+      }
+    ]
+  },
+  {
+    "id": "gi_034",
+    "split": "train",
+    "condition": "Haemorrhoids",
+    "source": "Hemorrhoids",
+    "patient_persona": {
+      "description": "Wan Zainab binti Wan Ismail, 63, female, retired kindergarten teacher in Kota Bharu, Kelantan; on aspirin, follow-up two weeks after rubber band ligation. Gentle, slow, Kelantanese-tinged Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Faizal Che Hassan, Malay man in his 40s, colorectal surgeon at a Kota Bharu hospital. Soft-spoken, patient; Malay-leaning with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Assalamualaikum mak cik. Dua minggu lepas kita buat banding. Macam mana sekarang?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Waalaikumsalam. Dua tiga hari pertama sakit sikit, rasa nak buang air je. Sekarang dah lega."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada darah lagi tak? Day seven to ten biasanya ada sikit bila rubber band tu tertanggal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada sekali, hari Selasa. Darah dalam satu sudu teh, lepas tu berhenti. Saya takut juga."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itu normal, mak cik. Mak cik masih makan aspirin 100mg setiap pagi?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada, doktor. Tapi saya stop three days before procedure macam cardiologist pesan, lepas tu sambung balik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus, betul tu. Sekarang teruskan aspirin, jangan berhenti sendiri sebab jantung lebih penting."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Buang air besar sekarang lembut? Masih makan Fybogel?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lembut, sehari sekali. Fybogel tu rasa macam oren, saya makan malam. Tapi sayur saya kurang sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tambah sayur kampung pun boleh, pucuk ubi, kangkung. Dan kurangkan budu sikit, too salty for your blood pressure."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Budu tu susah, doktor. Orang Kelantan makan nasi mesti ada budu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sikit-sikit boleh, jangan setiap kali makan. Saya nak periksa sekejap ya, mak cik baring ke kiri."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK, dah shrink nicely. No need banding lagi buat masa ni. Kita jumpa three months lagi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah. Kalau berdarah banyak macam mana, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau darah lebih dari satu cawan, atau ada ketulan, atau pening, terus pergi kecemasan hospital Kota Bharu. Jangan tunggu."
+      }
+    ]
+  },
+  {
+    "id": "gi_035",
+    "split": "train",
+    "condition": "Haemorrhoids",
+    "source": "Hemorrhoids",
+    "patient_persona": {
+      "description": "Kenneth Yap Chee Hoong, 38, male, IT support executive in Kuching, Sarawak; results review after blood test showed anaemia. Casual, mid-pitched, Malaysian English with Mandarin and Malay bits.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ahmad Syukri Bujang, Sarawakian Malay man in his 40s, GP at a Kuching clinic. Friendly, straightforward; English-leaning with Sarawak Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Kenneth, your blood results are back. Haemoglobin is 10.2, a bit low. Normal for men is above 13."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, that's why I've been so tired lah. Climbing stairs at the office also pancit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your iron level is low too, ferritin only 8. Most likely from the piles bleeding over many months."
+      },
+      {
+        "speaker": "Patient",
+        "text": "But the bleeding is only a bit, doc. Just some on the tissue, almost every day."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "A bit every day for a year adds up. Any change in bowel habit, black stools, weight loss?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No black. Weight actually naik, because WFH. My father got colon cancer at 55 though, I forgot to tell you last time."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's important. Ada family history, so kita kena buat colonoscopy sekarang, bukan salahkan buasir je."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Must do ah? I heard the preparation very jialat, keep going toilet."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "One day of discomfort, but it can rule out something serious. I'll refer you to Sarawak General Hospital, or a private centre if you prefer faster."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Private how much ah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Roughly fifteen hundred to two thousand ringgit. Check with your company insurance first."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Meanwhile, ferrous fumarate 200mg once a day, with orange juice, not with coffee or teh. Stool will turn black, that's normal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Black sebab iron, okay. Boleh makan sekali dengan the fibre sachet?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, tapi jarak dua jam. Iron boleh buat sembelit, so the fibre helps. Recheck blood in six weeks."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay doc, nanti saya call insurance hari ni."
+      }
+    ]
+  },
+  {
+    "id": "gi_036",
+    "split": "train",
+    "condition": "Irritable bowel syndrome",
+    "source": "Irritable bowel syndrome",
+    "patient_persona": {
+      "description": "Wong Jia Hui, 27, female, audit associate in Kuala Lumpur; ten months of cramps and loose stools since a bad stomach bug in Bangkok. Quick, anxious voice, Malaysian Mandarin with English work words.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chan Kok Wai, Malaysian Chinese man in his 50s, gastroenterologist at a KL private hospital. Calm, methodical; Mandarin with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "黄小姐，你的 GP 说你肚子痛、拉肚子差不多一年了，对吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "十个月。去年去曼谷玩，食物中毒，好了以后就一直这样。早上起来就要跑厕所，一天三四次。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "痛在哪里？Lower abdomen？After you pass motion 会不会比较舒服？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "下面这里，绞绞的痛。拉完就会好一点。可是 audit season 的时候最严重，开会开到一半要冲出去。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "晚上睡觉的时候会不会痛醒？Any blood in the stool？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "晚上没有。血也没有。体重也没有跌，反而胖了两公斤。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的血检报告都正常，没有贫血，CRP 正常，celiac 检查也是阴性。大便检查也没有细菌。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我到底是什么病？我 colleague 说可能是 colon cancer，我吓到睡不着。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你二十七岁，没有 red flag，这个比较符合 irritable bowel syndrome，腹泻型的。肠没有坏掉，是肠太敏感。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那要吃什么药？我之前自己买了 Imodium，一天吃四五粒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Loperamide 可以在要开会之前吃一粒 2mg，不要每天吃那么多，会便秘和胀气。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我开 mebeverine 135mg，一天三次，饭前二十分钟吃，帮助肠子不要抽筋。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "吃东西呢？我很喜欢喝奶茶，还有 bubble tea。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你可以试 low FODMAP diet，少一点牛奶、洋葱、大蒜。我帮你转介营养师，她会教你怎样试。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，那我 bubble tea 先戒一下。多久要回来？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Six weeks 后回来。如果 blood in stool、晚上痛醒，或者 weight 一直掉，就提早回来。"
+      }
+    ]
+  },
+  {
+    "id": "gi_037",
+    "split": "train",
+    "condition": "Irritable bowel syndrome",
+    "source": "Irritable bowel syndrome",
+    "patient_persona": {
+      "description": "Muhammad Hafiz bin Rahman, 33, male, site engineer at a Pasir Gudang plant, Johor; follow-up for IBS with diarrhoea, often on site with limited toilets. Firm, practical voice, Malay with English work terms.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ong Li Ting, Malaysian Chinese woman in her 30s, GP at a Johor Bahru clinic. Direct, friendly; English-leaning, fluent Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hafiz, dah sebulan makan mebeverine. Macam mana perut?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sakit memulas tu dah kurang, doktor. Tapi cirit-birit masih ada, terutama pagi masa kat site."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Seminggu berapa hari jadi macam tu?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tiga empat hari. Kat plant tu tandas jauh, kena naik turun tangga. Kadang-kadang tak sempat, doktor. Malu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Faham. Pagi tu encik minum kopi ke?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kopi O dua cawan, lepas tu nasi lemak sambal. Rutin setiap hari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kopi dan sambal pedas tu boleh trigger. Cuba kurangkan jadi satu cawan dulu, tengok ada beza tak."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Satu cawan boleh lah. Ada ubat lain tak, doktor, yang boleh bawa pergi site?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh. Loperamide 2mg, makan satu biji sebelum keluar ke site pada hari yang encik rasa risau. Jangan lebih dari empat biji sehari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dan saya nak tambah amitriptyline 10mg, satu biji malam. Dos kecil, untuk tenangkan saraf usus, bukan sebab encik gila atau depress."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat depression ke tu? Isteri saya mesti tanya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dos depression tu sepuluh kali ganda. Yang ni sikit je, untuk usus. Mungkin rasa mengantuk sikit pagi, dan mulut kering."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya kena drive jauh juga. Mengantuk tu bahaya tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Makan pukul lapan malam, jangan lewat. Minggu pertama kalau pagi rasa blur, jangan drive dan beritahu saya."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK doktor. Bila kena datang balik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Empat minggu. Bawa diary, tulis apa makan dan bila cirit-birit. Senang kita nampak pattern."
+      }
+    ]
+  },
+  {
+    "id": "gi_038",
+    "split": "train",
+    "condition": "Irritable bowel syndrome",
+    "source": "Irritable bowel syndrome",
+    "patient_persona": {
+      "description": "Deepa a/p Subramaniam, 41, female, secondary school teacher in Ipoh; IBS with constipation, back to review a normal colonoscopy. Articulate, slightly worried, Malaysian Indian English.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Rashid Othman, Malay man in his 50s, gastroenterologist at an Ipoh hospital. Warm, unhurried; English with this patient.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Good morning Deepa. Your colonoscopy last week was completely normal. No polyps, no inflammation."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Thank God. I was so risau, doctor. But then why still kembung every afternoon?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That fits irritable bowel syndrome, the constipation type. The bowel is structurally fine, but it moves slowly and feels pain more easily."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So it's all in my head? Suami saya kata saya stress sangat pasal exam sekolah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not in your head. Stress does make it worse, through the gut-brain connection, but the symptoms are real."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How often are you opening your bowels now?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Twice a week, kadang-kadang less. Keras macam tahi kambing. I take senna from the farmasi almost every night."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Every night for how long?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Maybe eight months. Kalau tak makan, langsung tak keluar."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let's switch. Senna every day can cause cramping. I'll give you macrogol, Forlax, one sachet in a glass of water every morning."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Is it the same thing? Won't I get addicted?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It works differently, it just holds water in the stool, so it's gentler. You can adjust, half sachet or two sachets depending on the stool."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Also add psyllium slowly, and walk thirty minutes after dinner. For the bloating, peppermint oil capsules, one capsule three times a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Peppermint I can get at Guardian, right? And the thosai and chapati, boleh makan lagi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, eat normally. Just note which foods make the bloating worse. Come back in two months and we'll review."
+      }
+    ]
+  },
+  {
+    "id": "gi_039",
+    "split": "train",
+    "condition": "Irritable bowel syndrome",
+    "source": "Irritable bowel syndrome",
+    "patient_persona": {
+      "description": "Nur Syafiqah binti Abdullah, 22, female, university student in Kota Kinabalu, Sabah; first visit for alternating constipation and diarrhoea around exams. Shy, soft, fast Sabahan Malay with some English.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Veronica Majinbon, Kadazan woman in her 30s, doctor at a university health centre in Kota Kinabalu. Gentle, encouraging; switches easily between Malay and English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Syafiqah, cerita sikit apa yang kau rasa."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Perut saya selalu kembung, doktor. Kadang-kadang three days tak buang air, lepas tu tiba-tiba diarrhoea pula."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sudah berapa lama begini? Few weeks or months?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sejak semester lepas. Masa final exam paling teruk. Sekarang midterm, mula balik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada darah dalam najis? Fever? Weight loss?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tiada blood. Weight macam biasa. Cuma kadang-kadang rasa nausea in the morning."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Period kau macam mana, teratur? Sakit perut ni ada kaitan dengan period?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Teratur. Tak rasa ada kaitan, doktor. Lebih kepada bila stress."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Perut kau lembut, tak ada benjolan. Saya rasa ini IBS, irritable bowel syndrome, jenis bercampur. Usus sensitif bila stress."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bahaya ke, doktor? Kena operation ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak bahaya, dan tak perlu operation. Tapi dia boleh datang dan pergi, jadi kita kena urus."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya bagi hyoscine butylbromide, Buscopan 10mg, bila perut memulas, sampai tiga kali sehari. Untuk sembelit, Fybogel satu paket setiap malam."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Makanan kat cafe tu banyak fried and spicy food. Itu pun trigger ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh jadi trigger. Cuba makan ikut waktu, jangan skip breakfast, dan kurangkan minuman bergas. Tidur cukup juga penting."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Susah tidur cukup masa exam, doktor. Tapi saya cuba."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau stress rasa berat, kaunselor universiti ada, free. Datang balik sebulan lagi, OK?"
+      }
+    ]
+  },
+  {
+    "id": "gi_040",
+    "split": "test",
+    "condition": "Irritable bowel syndrome",
+    "source": "Irritable bowel syndrome",
+    "patient_persona": {
+      "description": "Lau Chee Ming, 45, male, timber trading company manager in Sibu, Sarawak; follow-up and refill for diarrhoea-predominant IBS, frequent business dinners. Deep, relaxed voice, Malaysian Mandarin mixed with English and some Malay.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ting Huong Ling, Foochow Malaysian woman in her 40s, GP at a Sibu clinic. Practical, a little teasing; mixes Mandarin, English and Malay freely.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "刘先生，今天是来拿药的 kan？上次的 mebeverine 吃了怎样？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有好一点。Pain 少了很多，但是应酬完 next day 早上还是拉，一个早上三次。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "应酬的时候喝什么？啤酒还是 whisky？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "都有啦，生意 kena 陪客人。一个礼拜大概三次，每次半瓶 whisky 那样。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "半瓶 is a lot. 酒精会刺激肠子，IBS 会更严重，而且你的肝指数上次有一点高。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "ALT 高一点而已嘛。医生，有没有药吃了不会拉？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "药可以帮忙，但是如果每个礼拜喝那么多，没有药 can fix it。至少减到一个礼拜一次，一两杯就好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好啦，我试试看 lah。叫客人喝茶也可以 kot。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我继续开 mebeverine 135mg，一天三次，饭前吃。Loperamide 2mg 给你十粒，只是早上要开会或者出门的时候吃。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那个 probiotic 呢？我太太在 farmasi 买了一瓶给我，要吃吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以吃，some people 有帮助，不会伤身体。Try one month，没有效就不用继续浪费钱。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "大概多少钱一瓶？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Around sixty to eighty ringgit. 你自己看。另外今天顺便抽血 check 肝功能 and full blood count。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要不要空肚？我早上吃了 kampua 面。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个不用空肚。三个月后回来，report 我们一起看。如果大便有血，马上回来 jangan tunggu。"
+      }
+    ]
+  }
+]

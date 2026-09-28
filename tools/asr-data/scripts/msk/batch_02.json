@@ -1,0 +1,792 @@
+[
+  {
+    "id": "msk_011",
+    "split": "train",
+    "condition": "Frozen shoulder on warfarin",
+    "source": "Frozen shoulder",
+    "patient_persona": {
+      "description": "Norhayati binti Mansor, 53, female, school librarian in Subang Jaya; type 2 diabetes on metformin and a mechanical heart valve on warfarin. First visit. Clear, measured voice, English-dominant Malay who mixes in Malay words.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Daniel Chew Wei Liang, Malaysian Chinese man in his 40s, family medicine specialist at a Subang Jaya clinic. Thorough, soft-spoken; English-leaning, mirrors her Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, my left shoulder has been stiff for five months already. Now I can't even tie my tudung properly, cannot reach behind."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Did it start after a fall or injury, or on its own? Ada terjatuh ke?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "On its own. First it was sakit waktu malam, now it's more stiff than painful. Tak boleh baring on that side langsung."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me move it for you. Try lift your arm to the side... okay, stops around here. And rotating outwards, very limited."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "This looks like frozen shoulder, adhesive capsulitis. It's more common in people with diabetes, especially women your age."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Frozen shoulder? My friend said nanti baik sendiri."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It does improve, but it can take one to two years. We can make it faster and less painful."
+      },
+      {
+        "speaker": "Patient",
+        "text": "The farmasi gave me Voltaren tablets. I took them for one week, then my gusi started bleeding."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's important. Diclofenac with warfarin boleh naikkan risiko berdarah. Please stop the Voltaren, and we'll check your INR today."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, dah stop. So what can I take untuk sakit?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol 1 gram up to four times a day is safe with warfarin. Guna hot pack sebelum buat senaman, it helps loosen the shoulder."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My cousin had an injection for the same thing, dia kata terus lega. Can I have that?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "A steroid injection into the joint can help a lot in this painful stage. With warfarin it can still be done, but your INR must be in range, and it will raise your sugar for a few days."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, I'm fine with that asalkan selamat. My HbA1c last time was 7.8, tak berapa baik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Then we check your INR first, and I'll refer you to physio. Every day do the pendulum and wall-climbing exercises, sikit-sikit, don't force through sharp pain."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Thank you, doctor. I really miss tidur mengiring on my left side."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Come back next week with the INR result, and we'll book the injection."
+      }
+    ]
+  },
+  {
+    "id": "msk_012",
+    "split": "train",
+    "condition": "Frozen shoulder follow-up after injection",
+    "source": "Frozen shoulder",
+    "patient_persona": {
+      "description": "Chua Kim Seng, 58, male, runs a hardware shop in Kajang, lifts paint tins and pipes; type 2 diabetes. Follow-up six weeks after a shoulder injection. Loud, blunt Malaysian Mandarin with Hokkien words.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Loh Siew Peng, Malaysian Chinese woman in her 40s, sports medicine physician at a Kajang hospital. Lively, direct; English-leaning, speaks Mandarin with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "蔡先生，打针到现在六个礼拜了，肩膀怎样？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "痛是少了很多，晚上可以睡了。但是手还是举不高，拿上面架子的东西还是要叫工人。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我看看。手举起来……现在一百一十度，上次是八十度，有进步。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "进步是有啦，但是我以为打了 injection 就会全好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那个针是止痛和消炎，给你机会做 exercise。真正让它松开的，是每天拉筋。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "老实说，我在店里很忙，一天只做一次，有时候 lupa。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "最好一天三次，每次五分钟。你可以用店里的 door frame，手慢慢爬上去，爬到有点紧就停十秒。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "这个可以。我的 sugar 打针以后高了两个礼拜，十二、十三那样。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Steroid 会这样，现在应该回来了。你今天的 HbA1c 是 7.5，还可以。糖控制好，肩膀也会好得比较快。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我可以再打一针吗？Boleh ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以，但是不急。Three months 内不要打超过一次。如果 physio 做了三个月都没 improvement，我们可以考虑 hydrodilatation。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "什么东西来的？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "就是用 ultrasound 看着，打很多 saline 进去把关节撑开。不用开刀，门诊就可以做。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，先继续拉。那我可以搬 cat 桶吗？Paint 很重的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "重的先用右手，或者叫 worker 搬。两个月后回来，我们再 measure 角度。"
+      }
+    ]
+  },
+  {
+    "id": "msk_013",
+    "split": "train",
+    "condition": "Frozen shoulder, first visit after traditional massage",
+    "source": "Frozen shoulder",
+    "patient_persona": {
+      "description": "Zaleha binti Harun, 49, female, primary school teacher in Kuantan, Pahang; hypothyroidism on thyroxine. First visit. Gentle, slightly anxious voice, east coast Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kevin Ong Jia Hao, Malaysian Chinese man in his 30s, GP at a Kuantan clinic. Calm, explanatory; English-leaning but speaks mostly Malay with Malay patients.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, bahu kanan saya ni dah empat bulan sakit. Nak sikat rambut pun susah, nak tulis kat papan hitam pun tak sampai atas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada jatuh atau terhentak sebelum ni? Any injury?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada. Mak saya kata angin masuk, dah pergi urut dua kali. Lepas urut lagi teruk, tiga hari tak boleh angkat tangan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Urut kuat-kuat kat bahu yang tengah inflamed memang boleh jadi lagi sakit. Sekarang sakit waktu malam?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Malam paling teruk, doktor. Tidur mengiring kanan terus terjaga."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Puan ada sakit tiroid, kan? Masih makan thyroxine?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya, thyroxine 100 microgram setiap pagi. Tapi dah lama tak check darah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Masalah tiroid dan kencing manis memang kaitan dengan frozen shoulder. Hari ni kita check TSH dan gula sekali."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dari pemeriksaan, bahu puan keras semua arah. Ini frozen shoulder, bukan angin. The muscle is not torn, tapi joint capsule dah jadi tebal dan ketat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh baik ke, doktor? Saya risau tak boleh mengajar, SPM dah dekat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh baik, cuma ambil masa. Saya bagi naproxen 500mg dua kali sehari lepas makan, dua minggu, dan refer physio."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kat rumah, buat exercise pendulum: bongkok sikit, biar tangan tergantung, pusing kecil-kecil, sepuluh kali, tiga kali sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Urut boleh teruskan tak? Mak saya mesti tanya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Urut kuat tak payah dulu. Kalau nak, sapu minyak dan tuam air suam je, lembut-lembut."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Nanti result darah macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya call puan kalau result tak normal. Datang balik tiga minggu, we'll review your progress and the blood test."
+      }
+    ]
+  },
+  {
+    "id": "msk_014",
+    "split": "train",
+    "condition": "Frozen shoulder, physio review and referral",
+    "source": "Frozen shoulder",
+    "patient_persona": {
+      "description": "Juliana Gimbang, 56, female, Kadazan church choir member and retired government clerk in Penampang, Sabah; diabetes. Follow-up after three months of physio. Warm, lilting Sabahan Malay with English words.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Syafiq bin Abdullah, Sabahan Malay man in his 30s, medical officer at a Kota Kinabalu health clinic. Friendly, relaxed; English-leaning, speaks Sabah-style Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Selamat pagi, Puan Juliana. Macam mana bahu kiri, any improvement?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Selamat pagi, doktor. Sakit tu kurang sudah bah, tapi keras masih ada. Physio pun kata tak banyak beza."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Report physio kata abduction still 90 degrees, same as last month. Exercise di rumah buat hari-hari?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hari-hari, doktor. Pagi dengan malam. Anak saya pun tolong tarik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus, tapi jangan suruh anak tarik kuat-kuat, nanti tercedera. Let the shoulder move by itself, perlahan-lahan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, begitu. Saya ingat lagi kuat tarik lagi cepat baik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Gula puan macam mana? HbA1c bulan lepas 9.2, tinggi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Itulah, doktor. Masa Krismas saya banyak makan kek, lupa diri sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Faham, puan. Tapi gula tinggi buat frozen shoulder lambat baik. Kita naikkan metformin ke 1 gram dua kali sehari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sebab physio tak banyak progress, saya nak refer ke orthopaedic di hospital KK for hydrodilatation. They inject fluid under ultrasound to stretch the joint."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kena tidur hospital ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak payah, daycare je. Masuk pagi, petang boleh balik. Lepas tu terus physio."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay lah, doktor. Choir saya nak buat konsert bulan Jun, saya mau angkat tangan konduktor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita cuba sampai sebelum Jun. Appointment ortho mungkin dalam enam minggu. Teruskan exercise, dan jaga gula."
+      }
+    ]
+  },
+  {
+    "id": "msk_015",
+    "split": "train",
+    "condition": "Shoulder pain, ultrasound results review",
+    "source": "Frozen shoulder",
+    "patient_persona": {
+      "description": "Lau Siew Kuan, 61, female, retired primary school teacher in Kluang, Johor, who dances line dance at the community hall; prediabetes. Results review. Gentle, articulate Malaysian Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Yeo Chin Hong, Malaysian Chinese man in his 50s, GP in Kluang. Warm, unhurried; English-leaning, fluent Mandarin with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "刘老师，你的 shoulder ultrasound 报告出来了。Rotator cuff 没有断，只是 capsule 比较厚。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那就是说，是五十肩？Frozen shoulder 就是五十肩？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，就是 frozen shoulder，我们华人叫五十肩。好消息是不用开刀。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我朋友去做针灸和推拿，说很有效。我可以去吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "针灸可以试，有些人觉得止痛有帮助。推拿不要太大力，关节在 inflamed 的时候，用力扭会更痛。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "上个礼拜去推拿，师傅很大力，回来三天手都不能动。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那就是太大力了。你现在的 pain score，零到十，大概几分？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "白天四分，晚上会到七分，常常痛醒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "晚上痛那么多，我建议打一针 steroid 进关节，可以帮你睡觉，也让 physio 做得下去。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "打针会不会让我的糖升高？我是 prediabetes。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "会高几天，所以那几天少吃甜的，不用太担心。打完之后，每天在家做 stretching exercise，very important。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那 line dance 呢？我们下个月有表演。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "手不要举过头，其他动作可以跳。其实 exercise 对 shoulder 好，只要不痛到受不了。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，那就打吧。打针痛吗？我很怕针的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "会有一点胀，我们会先打 local anaesthetic。今天就可以做，做完 ice pack 十五分钟。"
+      }
+    ]
+  },
+  {
+    "id": "msk_016",
+    "split": "train",
+    "condition": "Acute ankle sprain",
+    "source": "Ankle sprain",
+    "patient_persona": {
+      "description": "Muhammad Irfan bin Zulkarnain, 22, male, engineering student at a university in Shah Alam who plays futsal; asthma. First visit, day two after injury. Young, casual, fast English with lots of Malay.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chan Mun Yee, Malaysian Chinese woman in her 30s, GP at a Shah Alam clinic. Upbeat, quick; English-leaning, relaxed Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, I twisted my ankle playing futsal two nights ago. Kaki masuk dalam, then got a pop sound. Now it's swollen like a bun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Could you walk right after it happened, or kawan kena angkat you keluar?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "I could limp to the car, like four steps lah. But next morning totally cannot put weight."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me press a few spots. Sakit sini? Yang ni, tulang belakang buku lali, sakit tak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sini sakit, the front part. The bone part not really."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. The bones aren't tender, and you could take four steps after the injury. Based on the Ottawa rules, we don't need an X-ray."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "This is a lateral ligament sprain, grade two I think. Ligamen tu terkoyak sikit, but it heals well with the right care."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. I've been taking ibuprofen, 800mg, like four times a day. My housemate cakap makan banyak, cepat baik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's too much, and you have asthma, right? Ibuprofen can sometimes trigger wheezing. Any chest tight?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Actually semalam dada ketat sikit, I puffed Ventolin two times."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Then stop the ibuprofen. Tukar paracetamol 1 gram, empat kali sehari. Kalau semput makin teruk, datang balik terus."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For the ankle: ice fifteen minutes every two hours, compression bandage, and angkat kaki tinggi sikit when you rest."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Crutches need or not? Kelas saya on the third floor, tak ada lift."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll lend you crutches for a few days. Start putting weight as the pain allows, don't keep it totally still."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bila boleh main futsal balik, doctor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Around four to six weeks. Do the balance exercises first, stand on one leg. Kalau main terlalu awal, you'll sprain it again."
+      }
+    ]
+  },
+  {
+    "id": "msk_017",
+    "split": "train",
+    "condition": "Ankle sprain after a fall at the market",
+    "source": "Ankle sprain",
+    "patient_persona": {
+      "description": "Dayang Norazlina binti Awang, 35, female, sells kek lapis at the Satok weekend market in Kuching, Sarawak; slipped on a wet floor. First visit after an emergency department X-ray. Bright, fast Sarawak Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Alvin Wong Tze Ming, Sarawakian Chinese man in his 30s, GP at a Kuching clinic. Calm, friendly; English-leaning, speaks Sarawak-flavoured Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, kamek jatuh kat pasar hari Sabtu. Lantai basah, kaki kiri terpelecok. Hospital dah buat X-ray, katanya tak patah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada bawa report X-ray? Oh ada, OK. Tak ada fracture, betul. Sekarang sakit macam mana?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bengkak masih ada, biru-biru sampai tapak kaki. Jalan boleh, tapi terhencot-hencot."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lebam turun ke tapak kaki tu biasa lepas sprain, the blood follows gravity. Don't worry, jangan risau."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hospital bagi crepe bandage. Kamek pakai sampai tidur malam, betul ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Waktu tidur buka dulu, biar darah jalan elok. Siang pakai balik, jangan ikat ketat sangat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, patutlah pagi jari kaki kebas sikit. I ingat ada problem saraf."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, sebab ketat sangat. Ubat apa yang hospital bagi?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Paracetamol dengan krim. Tapi makcik kamek suruh tuam dengan minyak panas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Minggu pertama ni tuam ais dulu, bukan panas. Panas buat lagi bengkak. Lepas seminggu baru boleh air suam."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kamek kena berdiri jual kek hari Sabtu ni. Boleh ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh berdiri, tapi pakai kasut yang ada support, jangan selipar. Take a chair, sit down every hour or so."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya tambah etoricoxib 90mg sekali sehari, lima hari je, lepas makan. Gastrik ada?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada gastrik. Terima kasih, doktor. Thank you ya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau dua minggu masih tak boleh jalan elok, datang balik, kita refer physio."
+      }
+    ]
+  },
+  {
+    "id": "msk_018",
+    "split": "train",
+    "condition": "Ankle sprain in a teenager, parent attending",
+    "source": "Ankle sprain",
+    "patient_persona": {
+      "description": "Mrs. Tan Pei Wen, 42, female, accountant in Bayan Lepas, Penang, speaking for her 14-year-old son Jun Hao, who injured his ankle at school basketball. First visit. Anxious, quick Malaysian Mandarin; the boy answers a little.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lim Chee Keong, Malaysian Chinese man in his 40s, GP in Bayan Lepas. Easy-going, reassuring; English-leaning, speaks Mandarin to the family.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我儿子昨天在学校打篮球，跳下来踩到别人的脚，脚踝扭到了。肿得很大。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "俊豪，你当时可以自己走吗？Can walk or not?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "他说是同学扶着走到 canteen 的。回到家就一直喊痛，晚上都没睡好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我按一下哦。这里痛吗？这边骨头呢？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "他说骨头那边也很痛，脚掌外面这里也痛。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "外面这块骨头按下去痛，要照 X-ray。小孩子的 growth plate 还没 close，有时候看起来是 sprain，其实是 fracture。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "骨头裂？Crack？那很严重吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "先不要紧张，我们照了 X-ray 才知道。就算有小 crack，打石膏几个礼拜就会好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好的。我昨晚给他擦了 minyak angin，还用热毛巾敷。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "头两天不要热敷，会更肿。用冰，用毛巾包着，一次十五分钟。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "知道了。他下个礼拜有 competition，还可以打吗？他是 school team 的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "下个礼拜肯定不行。就算只是扭伤，也要三到四个礼拜。太早打，以后很容易再扭。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "痛的话，paracetamol 500mg，一天四次。他体重五十公斤，这个剂量可以。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "X-ray 在哪里照？今天可以吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我们 clinic 就可以照，大概二十分钟。等 report 出来，我再跟你们讲。"
+      }
+    ]
+  },
+  {
+    "id": "msk_019",
+    "split": "train",
+    "condition": "Ankle sprain in a technician on high-dose painkillers",
+    "source": "Ankle sprain",
+    "patient_persona": {
+      "description": "Kong Wai Loon, 38, male, air-conditioning technician in Seremban who climbs ladders daily; hypertension on perindopril, self-started aspirin. First visit, day two after a futsal injury. Brisk, slightly defensive Malaysian Mandarin mixed with Malay.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Norazura binti Kassim, Malay woman in her 40s, GP in Seremban. Direct, kind; English-leaning, speaks English and Malay, and some simple Mandarin.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor，我前天踢 futsal 扭到脚，右边。现在还是很肿，但是我明天一定要开工，kerja tak boleh tunggu。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay, Encik Kong. Your job involves climbing ladders, right? Aircond on the wall?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，每天都要爬 tangga，有时候上屋顶。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ligament tu dah koyak sikit, but no fracture on the X-ray. Standing on a ladder with this ankle is dangerous."
+      },
+      {
+        "speaker": "Patient",
+        "text": "可是我不做工就没有钱。我自己 part-time 的，没有 MC 这回事。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I understand. Apa ubat you dah ambil since the injury?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Nurofen，一次两粒，一天四五次。还有我每天吃的 aspirin，一粒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Aspirin tu siapa bagi? Doctor prescribe?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有，我自己在 farmasi 买的。朋友说吃了可以防 heart attack。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay. Aspirin plus high-dose ibuprofen, dengan darah tinggi you, boleh rosakkan perut dan buah pinggang, and makes the bruising worse. Stop both for now."
+      },
+      {
+        "speaker": "Patient",
+        "text": "哦……难怪我的脚那么紫，biru-biru。那痛怎么办？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol 1 gram, empat kali sehari. Ice and elevate. For the aspirin, we'll discuss your heart risk properly next visit, don't simply take it."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kerja ground level only for two weeks. Tak boleh naik tangga, tak boleh panjat bumbung. Saya tulis surat untuk majikan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "两个礼拜……好啦，我叫我的 partner 爬，我在下面做 wiring。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's a good plan, bagus. Pakai ankle brace masa kerja, and come back in ten days."
+      }
+    ]
+  },
+  {
+    "id": "msk_020",
+    "split": "test",
+    "condition": "Recurrent ankle sprain with instability",
+    "source": "Ankle sprain",
+    "patient_persona": {
+      "description": "Thivya a/p Rajendran, 29, female, Zumba and fitness instructor in Ipoh; third sprain of the same ankle in a year. Follow-up. Energetic, clear Malaysian Indian English with some Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ahmad Zulkifli bin Hassan, Malay man in his 40s, sports medicine physician at an Ipoh hospital. Encouraging, precise; English-leaning, occasional Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hi Thivya. So this is the third time the right ankle went, correct?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes doctor, third time this year. Last week just turun stage during class, it rolled again. Very malu in front of my aunties."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Between sprains, does the ankle feel wobbly, like it might give way on uneven ground?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, especially on the rumput or walking over the longkang cover. I don't trust it anymore."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your drawer test today shows more laxity on the right than the left. The ligaments have healed long, not tight."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Means what, the ligament dah longgar?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, more or less. We call it chronic ankle instability. Good news dia, kebanyakan orang baik dengan physio, tak perlu operation."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Last two times I just rehat, then went back to teaching after one week."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's likely why it keeps happening. Rest heals the pain, but the balance sensors in the ankle need retraining."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Physio will do proprioception and peroneal strengthening for about six to eight weeks. Wobble board, single-leg balance, resistance band."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can I still teach Zumba during that time? Kalau tak, no income lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Low-impact classes with an ankle brace, yes. No jumping or quick side steps for the first month."
+      },
+      {
+        "speaker": "Patient",
+        "text": "What about an MRI? Nak tahu ada koyak ke tak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If after eight weeks of physio it's still giving way, we'll do an MRI and see an orthopaedic surgeon about repair."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, fair. Ada ubat I need to take?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not much now. Paracetamol if sore after class. The key is doing the exercises every day, sikit pun tak apa, but daily."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alright doctor, I'll be disciplined this time. Promise."
+      }
+    ]
+  }
+]

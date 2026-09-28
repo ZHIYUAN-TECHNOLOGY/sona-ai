@@ -1,0 +1,804 @@
+[
+  {
+    "id": "msk_081",
+    "split": "train",
+    "condition": "Panic disorder after a normal cardiac workup",
+    "source": "Panic attacks and panic disorder",
+    "patient_persona": {
+      "description": "Mohd Khairul bin Anuar, 31, male, instrument technician at a petrochemical plant in Kerteh, Terengganu; emergency visit three weeks ago for chest tightness with normal heart tests; now four to five attacks a week, avoiding driving. First visit. Tense, fast speech, Malay mixed with English.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Jasmine Yeoh Pei Ling, Malaysian Chinese woman in her 30s, family medicine specialist in Kerteh. Calm, validating; English-leaning, fluent Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, saya takut sangat. Tiba-tiba dada ketat, jantung laju gila, tangan kebas, rasa macam nak mati. Tapi hospital kata jantung saya OK."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "ECG, blood test dan treadmill semua normal, betul. Serangan tu datang bila? Ada pencetus?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak tentu. Pertama kali masa drive balik dari plant. Sekarang saya takut nak drive, isteri yang hantar."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Berapa lama satu serangan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dalam sepuluh, lima belas minit. Paling teruk kat awal, lepas tu perlahan-lahan reda. Lepas tu badan penat gila."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada minum banyak kopi, energy drink, atau ambil apa-apa ubat?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kerja shift, saya minum Red Bull dua tin sehari. Kawan pula bagi Xanax dia, saya makan dua kali."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Energy drink tu boleh cetuskan serangan. Xanax kawan tu, please don't take it again. It's addictive, dan tak betulkan masalah asal."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Apa yang encik alami ni panic disorder. It really feels like a heart attack, tapi sebenarnya sistem amaran badan yang terlalu sensitif."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Jadi bukan saya gila, kan? Saya takut orang kata saya lemah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bukan gila, bukan lemah. Ini sangat biasa dan boleh dirawat. Rawatan terbaik ialah CBT dengan psychologist, dan ubat seperti sertraline."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau serangan datang masa saya kat loji, macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cuba pernafasan perlahan: tarik empat saat, tahan dua, hembus enam saat. Ingatkan diri, ini panic, ia akan reda, jantung saya dah diperiksa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya mulakan sertraline 25mg sehari, seminggu, then increase to 50mg. First week mungkin rasa gelisah sikit, that's normal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bila saya boleh drive balik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mula dengan jarak dekat, isteri duduk sebelah. Kurangkan Red Bull perlahan-lahan. Jumpa saya dua minggu lagi."
+      }
+    ]
+  },
+  {
+    "id": "msk_082",
+    "split": "train",
+    "condition": "Generalised anxiety disorder with bruxism",
+    "source": "Generalized anxiety disorder",
+    "patient_persona": {
+      "description": "Chew Kah Loong, 41, male, operations supervisor at a freight warehouse in Shah Alam; fourteen months of constant worry after a company merger; jaw tension, cracked molar, poor sleep; drinks beer nightly to sleep. First visit, at his wife's urging. Tense, fast Malaysian Mandarin with English workplace terms.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Haslinda binti Mohd Ali, Malay woman in her 40s, family medicine specialist in Shah Alam. Grounded, empathic; English-leaning, speaks functional Mandarin.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mr. Chew，你太太叫你来，那你自己觉得怎样？Honestly。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我自己也知道有问题。一整天都在担心，公司 merger 以后怕被裁员，担心钱，担心孩子，停不下来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这样多久了？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "一年多了。晚上躺下，脑子一直转。Dentist 说我咬牙咬到牙齿 crack 了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "除了担心，身体有没有其他感觉？肩膀紧，palpitation，拉肚子？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "肩膀和下巴一直很 tight。脾气也变差，常常对孩子大声，marah-marah。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你太太说你晚上喝 beer 帮助睡觉，大概多少？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "两三罐，有时候四罐。不喝睡不着 lah。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我明白你想 relax。但是 alcohol 会让 sleep 变浅，第二天更 anxious，变成一个 vicious cycle。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的 GAD-7 是 16，这是 generalised anxiety disorder。持续的担心，影响睡眠、工作和家庭。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我以为是男人正常的 stress。我爸爸以前也这样，从来不看 doctor。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Stress 是正常的，但是一年多停不下来，就需要 treatment。好消息是，效果很好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我建议 escitalopram 10mg，每天早上。加上 CBT，学习处理担心的方法。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "吃这个药可以喝酒吗？周末一两罐也不行？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "最好不要。至少先减到一罐，慢慢 stop。睡前半小时不要看公司的 WhatsApp group，jangan tengok phone。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "这个很难，老板半夜也会发 message。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以试着设一个时间，十点后手机放客厅。牙齿的问题，请牙医做一个 night guard。四个礼拜后回来。"
+      }
+    ]
+  },
+  {
+    "id": "msk_083",
+    "split": "train",
+    "condition": "Social anxiety disorder in a new graduate",
+    "source": "Social anxiety disorder (social phobia)",
+    "patient_persona": {
+      "description": "Nisha a/p Balakrishnan, 24, female, accounting graduate in Kuala Lumpur, unemployed eight months; freezes and blanks out in interviews and group settings. First visit. Soft, hesitant Malaysian Indian English with some Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Benjamin Lim Zhi Hao, Malaysian Chinese man in his 30s, psychiatrist at a Kuala Lumpur hospital clinic. Gentle, patient; English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Nisha, thanks for coming. Take your time. What made you decide to come today?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "I've failed eleven job interviews, doctor. Every time, muka jadi merah, my voice shakes, I forget everything. My amma thinks I'm not trying."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That sounds exhausting. Is it only interviews, or other situations too?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Also presentations in uni, makan depan orang, even ordering at the mamak. I let my friends order for me."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "What goes through your mind before these situations?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "That they will see I'm nervous and think I'm bodoh. I replay it for days after."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How long has this been going on?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Since sekolah menengah. But after graduation it's become worse, because I can't avoid it anymore."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "What you're describing sounds like social anxiety disorder. It's more than shyness, and it's very treatable."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Really? I thought memang dari lahir I'm like this."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Many people feel that way. The most effective treatment is CBT, where you learn to challenge the fears and gradually face situations step by step."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We can also add a medicine, sertraline, starting 25mg daily and increasing. It usually takes four to six weeks to help."
+      },
+      {
+        "speaker": "Patient",
+        "text": "For the interviews, ada ubat to stop the shaking?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Propranolol 10mg, one hour before an interview, can reduce shaking and a racing heart. It doesn't treat the fear itself, but some people find it helpful. Let's check your asthma history first."
+      },
+      {
+        "speaker": "Patient",
+        "text": "No asthma. Okay, I want to try both. Can the CBT be in Tamil? Bila nervous, my English jadi blank."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll ask our psychology team, and boleh juga guna Bahasa Melayu. See you in four weeks."
+      }
+    ]
+  },
+  {
+    "id": "msk_084",
+    "split": "train",
+    "condition": "Panic disorder follow-up, stopping alprazolam",
+    "source": "Panic attacks and panic disorder",
+    "patient_persona": {
+      "description": "Ang Pei Shan, 36, female, bank branch officer in Johor Bahru who commutes across the Causeway; panic disorder on sertraline 50mg for four weeks; a private clinic gave alprazolam which she now takes daily. Follow-up. Fast, anxious Malaysian Mandarin mixed with Malay and English.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Zaki bin Hussin, Malay man in his 40s, psychiatrist at a Johor Bahru hospital. Calm, clear; English-leaning, speaks Mandarin phrases and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Pei Shan，sertraline 吃了四个礼拜，panic attack 有少一点吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "少一点，以前一个礼拜五次，现在两三次。但是过 Causeway 塞车的时候，一定会来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "塞在桥上，出不去，这种地方最容易触发。你现在 alprazolam 还在吃吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "每天都吃，早上一粒，晚上一粒。没有它我不敢出门 lah，doktor。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我明白，它很快有效，所以很依赖。但是每天吃，会 tolerance，越吃越需要，而且 stop 的时候 anxiety 会 rebound。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "可是我怕没有它，在桥上 attack 怎么办？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我们不会马上停。先把 sertraline 加到 100mg，它才是真正 treat panic 的。然后 alprazolam every two weeks 减一点。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要减多久？几个月？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "大概两三个月。慢慢减比较 safe，太快可能会晕，睡不着，甚至 seizure。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "塞车的时候，你可以做 breathing，或者听 podcast，转移注意力。CBT 也会教你面对这种情况。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "CBT 我有 appointment 下个月。医生，我老板问我为什么常常请假。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你不需要讲细节。我可以给你一封信，只写 medical condition under treatment。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，谢谢。其实我很怕同事知道我看 psychiatry。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这是你的 privacy，我们会保密。很多 professional 都在看我们，你一点都不孤单。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "听你这样讲，我安心一点。Terima kasih, doctor."
+      }
+    ]
+  },
+  {
+    "id": "msk_085",
+    "split": "train",
+    "condition": "Anxiety with palpitations, thyroid results review",
+    "source": "Anxiety disorders",
+    "patient_persona": {
+      "description": "Rahmah binti Yusof, 50, female, government office clerk in Alor Setar, Kedah; perimenopausal; palpitations and constant worry for five months; afraid of heart disease. Results review. Nervous, fast northern Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Beng Lee, Malaysian Chinese man in his 50s, GP in Alor Setar for many years. Grandfatherly, reassuring; speaks fluent northern Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Rahmah, keputusan darah dah keluar. Tiroid normal, darah tak kurang, gula pun normal. ECG dan Holter 24 jam pun normal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Betul ke, doktor? Tapi jantung saya berdebar-debar hampir setiap hari. Saya takut ada sakit jantung macam arwah abang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Holter tu rekod jantung sepanjang hari, termasuk masa puan rasa berdebar. At that time, your heart was a bit fast but normal rhythm."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau jantung OK, kenapa saya rasa macam ni? Tak faham saya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Puan pernah cakap puan risau banyak benda. Masih macam tu? Worry sangat?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya, doktor. Risau anak kat universiti, risau kerja, risau duit. Malam fikir, tak boleh tidur. Kadang-kadang peluh, badan panas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Haid macam mana sekarang? Masih datang teratur?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak tentu dah, dua tiga bulan sekali, irregular. Kawan kata saya dah nak menopaus."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Menopause can cause hot flushes, sweating and palpitations, dan buat anxiety lebih teruk. Dua-dua ni berkait."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dari soal selidik tadi, score GAD-7 puan 13. Ini generalised anxiety, tahap sederhana. Boleh dirawat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kena makan ubat ke? Saya tak nak ketagih."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita boleh mula dengan kaunseling dan teknik relaksasi. Kalau tak cukup, ada ubat yang tak ketagih, macam sertraline."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya cuba kaunseling dulu, doktor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Baik. Kurangkan kopi petang, jalan kaki pagi. Kalau hot flushes dan berpeluh teruk sangat, kita boleh bincang HRT, rawatan menopaus. Datang balik sebulan."
+      }
+    ]
+  },
+  {
+    "id": "msk_086",
+    "split": "train",
+    "condition": "Chronic insomnia after bereavement in perimenopause",
+    "source": "Insomnia",
+    "patient_persona": {
+      "description": "Evelyn Chua Siew Hong, 47, female, secondary school English teacher in Petaling Jaya; eighteen months of poor sleep since her mother died; night sweats; drives 35 minutes to school. First visit. Articulate, weary Malaysian Chinese English.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Arif Hakim bin Zulkifli, Malay man in his 40s, family medicine specialist with a sleep interest in Petaling Jaya. Thoughtful, methodical; English-leaning.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, I haven't slept properly for a year and a half. I take an hour to fall asleep, then terjaga at two or three, hot and heart racing, and I'm up for good by four thirty."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "When did this start?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "After my mother passed away. I jaga her for months. Lepas pengebumian, I just couldn't switch off."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'm sorry for your loss. How are you during the day? Sleepy while driving?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Exhausted, but not sleepy exactly. Once I tertidur at a traffic light, that scared me."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's important for safety. Any snoring, or stopping breathing at night?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "My husband says tak berdengkur. But I wake up drenched, and my periods are irregular now."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Night sweats and irregular periods suggest perimenopause, which can disturb sleep. Grief too. And then worry about sleep keeps it going."
+      },
+      {
+        "speaker": "Patient",
+        "text": "A friend gave me zolpidem, I took it maybe five times. Senang, should I just take that?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Short-term it can help, but long-term it loses effect and can cause dependence and next-day drowsiness, not good before driving."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The best evidence is for CBT for insomnia. It includes a sleep schedule, getting out of bed if awake more than twenty minutes, and no clock-watching."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Get out of bed? I thought I should just baring there and rest."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lying awake trains your brain to link bed with being awake. Keep bed for sleep only. Fixed wake time, even weekends."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For the night sweats, we can discuss hormone therapy. And would you like a referral to talk about your mother? Grief counselling helps."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, I think I need that. I never really had time to grieve, 一直在忙."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Keep a sleep diary for two weeks, and don't drive when you feel drowsy. Come back and we'll plan the next step."
+      }
+    ]
+  },
+  {
+    "id": "msk_087",
+    "split": "train",
+    "condition": "Insomnia in a shift worker using antihistamines",
+    "source": "Insomnia",
+    "patient_persona": {
+      "description": "Shahrul Nizam bin Ahmad, 40, male, production line leader at a factory in Kulim, Kedah, on rotating shifts; takes chlorpheniramine from the pharmacy to sleep. First visit. Rough, direct northern Malay with English work words.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Loo Pei Kee, Malaysian Chinese woman in her 30s, GP in Kulim. Practical, brisk; English-leaning, fluent northern Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, saya tak boleh tidur dah berbulan. Shift pusing setiap minggu, pagi, petang, malam. Badan dah tak tahu bila nak tidur."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lepas shift malam, balik rumah tidur pukul berapa?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Balik pukul lapan pagi, tidur pukul sembilan. Tapi pukul dua belas dah terjaga, bising anak, bising traffic."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Selama ni ada ambil apa-apa untuk tidur? Sleeping pill?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Beli ubat selesema yang kuning tu, chlorpheniramine. Makan dua biji, baru boleh lelap. Dah enam bulan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ubat tu memang buat mengantuk, tapi lama-lama badan dah biasa, kesan kurang. Esok pagi rasa berat kepala tak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya, macam mamai. Masa jaga mesin, kadang-kadang lambat nak react."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itu bahaya kat kilang, encik. Ubat tu kita stop. For shift workers, the most important thing is the bedroom."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bilik gelap, guna langsir tebal atau penutup mata. Pakai earplug. Beritahu keluarga, pukul sembilan sampai tiga petang tu masa tidur."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Anak kecil, doktor. Susah nak senyap."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Faham. Mungkin isteri boleh bawa anak keluar sekejap waktu pagi. Jangan minum kopi lepas pukul empat pagi masa shift malam."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kopi tu yang buat saya segar masa shift!"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Minum awal shift, bukan hujung. Balik kerja, wear sunglasses, kurangkan cahaya pagi supaya badan tak ingat dah siang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh minta tukar shift tak, doktor? Saya dah tak larat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya boleh tulis surat cadangkan shift rotate ke depan, pagi ke petang ke malam, dan tak tukar terlalu cepat. Datang balik tiga minggu."
+      }
+    ]
+  },
+  {
+    "id": "msk_088",
+    "split": "train",
+    "condition": "Insomnia with long-term hypnotic use and falls",
+    "source": "Insomnia",
+    "patient_persona": {
+      "description": "Foo Ah Seng, 78, male, retired goldsmith in Ipoh; on lorazepam 1mg nightly for twelve years from a private clinic; one fall last month. Refill visit. Stubborn, slow Cantonese-coloured Malaysian Mandarin.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ong Kah Yee, Malaysian Chinese woman in her 30s, family medicine specialist at an Ipoh health clinic. Gentle, persistent; English-leaning, fluent Mandarin and some Cantonese.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我来拿睡觉的药，lorazepam。吃了十二年，不吃睡不着。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "符伯，我看到你上个月跌倒了，是晚上起来的时候吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，半夜去 toilet，脚软软的，跌在走廊。还好只是手瘀。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个药会让老人家晚上站不稳，早上也会比较 blur，fall risk 高很多，jatuh sekali nanti patah tulang。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "可是吃了那么多年，都没事啊，doctor。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "年轻的时候身体处理得快。七十几岁，药在身体里留得比较久。上个月的跌倒，可能就是这个原因。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那你要我马上停？我一定睡不着。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不是马上停。突然停很危险。我们用两三个月，慢慢减少，每两个礼拜减四分之一粒。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "减少了，睡不着怎么办？Insomnia 怎么办？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "刚开始可能睡得少一点，这是正常的。老人家本来就睡五六个钟头，不需要睡八个钟头。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你白天做什么？会不会在椅子上睡很久？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "下午看 TV，常常睡两三个钟头。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那晚上当然睡不着。下午 nap 不要超过半小时，早上去 taman 散步，晒太阳。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "以前我会跟朋友去 kopitiam 喝早茶，现在他们很多都不在了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那可以试试 community centre 的活动，也可以认识新朋友。有朋友聊天，晚上也会比较好睡。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好吧，我试试。但是你不要一下子全部拿掉。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我答应你，慢慢来。两个礼拜后回来，我们一起看怎样。"
+      }
+    ]
+  },
+  {
+    "id": "msk_089",
+    "split": "train",
+    "condition": "Insomnia with anxiety in a young adult",
+    "source": "Insomnia",
+    "patient_persona": {
+      "description": "Nur Atiqah binti Jaafar, 26, female, junior executive at a tour agency in Kota Kinabalu, Sabah; can't fall asleep, scrolls her phone until 3 a.m.; worried about job contract renewal. First visit. Soft, quick Sabah Malay with English.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Wilfred Sipaun, Kadazan man in his 40s, GP in Kota Kinabalu. Friendly, down-to-earth; English-leaning, speaks Sabah Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, saya susah mau tidur. Baring pukul sebelas, tapi pukul tiga pagi baru lelap. Pagi pula kena bangun pukul enam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Masa baring tu, apa yang Atiqah buat? Fikir apa? Any worries?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Main phone lah, scroll TikTok. Kalau letak phone, fikir pasal kontrak kerja, takut tak disambung."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kontrak tu bila habis?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dua bulan lagi. Bos belum cakap apa-apa. Saya risau, family harap saya bantu duit rumah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Faham, memang berat, stressful. Siang pula, minum kopi atau teh berapa kali?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kopi pagi, teh tarik petang, kadang-kadang Milo ais malam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Teh tarik petang tu ada caffeine, it can stay in your body until night. Cuba stop lepas pukul dua petang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Phone tu, cahaya skrin buat otak rasa masih siang. Satu jam sebelum tidur, letak phone jauh dari katil, charge kat luar bilik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Susah bah, doktor. Tapi saya cuba."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau dah dua puluh minit tak lelap, bangun, duduk kat luar, baca buku atau dengar muzik perlahan. Bila mengantuk, baru masuk bilik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh bagi ubat tidur sikit, doktor? Kawan saya makan melatonin."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Melatonin 2mg boleh cuba short-term, one hour before bed. Tapi yang penting tabiat tidur tadi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Risau pasal kerja tu, kalau makin teruk, sampai berdebar atau tak lalu makan, datang jumpa saya lagi. Kita boleh refer kaunselor."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, doktor. Thank you sebab tak cakap saya manja."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak manja langsung. Datang balik tiga minggu, bawa diari tidur."
+      }
+    ]
+  },
+  {
+    "id": "msk_090",
+    "split": "test",
+    "condition": "Insomnia with suspected obstructive sleep apnoea",
+    "source": "Insomnia",
+    "patient_persona": {
+      "description": "Yap Chee Keong, 58, male, e-hailing driver in Kuantan, Pahang, driving ten hours a day; wakes many times at night, loud snoring, sleepy at the wheel; hypertension. Results review of sleep diary. Talkative, hoarse Malaysian Mandarin mixed with Malay and English.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Norhafizah binti Rahim, Malay woman in her 40s, family medicine specialist at a Kuantan clinic. Direct, caring; English-leaning, speaks simple Mandarin and fluent Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "叶先生，你的 sleep diary 我看了。你一个晚上醒来五六次，对吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，每次醒来都好像喘不过气，要坐起来。老婆说我打呼很大声，像 lori 一样。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "她有没有看到你睡觉的时候 stop breathing？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有，她说我会停一下，然后突然很大声吸气。她很怕，常常摇醒我。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "白天开车的时候，会不会想睡？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "会 lah，doktor。下午等客的时候常常睡着。有一次等红灯，后面的车 hon 我才醒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个很危险，对你和乘客都是。你的 neck 很粗，BMI 是 31，血压也难控制。这些都指向 obstructive sleep apnoea。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sleep apnoea？不是失眠吗？我以为要吃安眠药。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sleeping pills 会让 apnoea 更严重，千万不要吃。你睡不好，是因为 breathing 一直停，brain 被叫醒。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那要怎样医？Ada ubat 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "先做 sleep study，在医院睡一个晚上。如果确认，最有效是 CPAP machine，睡觉时戴一个面罩。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那个 machine 很贵吧？我每天要 drive 赚钱的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有几种价钱，hospital 也可以帮忙 apply subsidy。减重也会帮很多，lose five to ten kilos 就不一样。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "在 sleep study 之前，如果开车觉得困，一定要停下来，jangan paksa。不要喝酒，侧睡，床头高一点。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我会注意。我太太会很高兴，她终于可以 tidur lena 了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我现在写 referral。两个礼拜内会有 appointment。血压的药继续吃。"
+      }
+    ]
+  }
+]

@@ -1,0 +1,824 @@
+[
+ {
+  "id": "resp_071",
+  "split": "train",
+  "condition": "Chronic cough from ACE inhibitor",
+  "source": "Chronic cough",
+  "patient_persona": {
+   "description": "Mdm. Liew Sook Fun, 52, female, tuition teacher in Taman Connaught, Kuala Lumpur; hypertension on perindopril; dry cough for three months. Precise, slightly exasperated KL Mandarin with English.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Kenneth Ho Yik Leong, Malaysian Chinese man in his 40s, family physician at a Cheras clinic. Thoughtful, explains well; Mandarin mixed with English.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我咳嗽三个月了，干咳，没有痰。吃了很多 cough syrup 都没有用，上课讲到一半就咳。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "有没有发烧，体重下降，或者咳出血？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "都没有。就是喉咙痒痒的，一直想咳。晚上躺下来也会咳。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你的 blood pressure 药是什么？什么时候开始吃的？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Perindopril 4mg，四个月前换的。之前是 amlodipine，但是脚会肿。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个很重要。Perindopril 是一种 ACE inhibitor，大概十个人里面有一个会有干咳的 side effect。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "真的吗？之前的医生没有讲。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "时间也很吻合，吃了一个月之后开始咳。我建议换成 losartan 50mg，每天早上一粒，同一类的效果，但是不会咳。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "换了之后多久会好？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "一般一到四个礼拜会慢慢减少，有的人要到三个月。你要有耐心。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那我需要照 X-ray 吗？我有点担心。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "为了安全，我们照一个 chest X-ray。你没有抽烟，没有其他 red flags，我觉得是药的问题比较大。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好。Cough syrup 还要继续喝吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "可以停了，那个对这种 cough 没用。喉咙痒的时候喝温水，或者含 lozenge。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "血压换药会不会不稳？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "两个礼拜后回来量血压，也看咳嗽有没有好一点。你在家有 BP machine 吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有，我每天早上量。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "很好，记录下来带给我看。"
+   }
+  ]
+ },
+ {
+  "id": "resp_072",
+  "split": "train",
+  "condition": "Chronic cough from reflux",
+  "source": "Cough, chronic",
+  "patient_persona": {
+   "description": "Encik Azmi bin Hassan, 45, male, government driver in Shah Alam; chronic cough for four months, likes late-night teh tarik and nasi lemak. Friendly, talkative Selangor Malay with English.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lavanya Subramaniam, Malaysian Indian woman in her 30s, family medicine specialist at a Shah Alam health clinic. Upbeat, clear; Malay mixed with English.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Azmi, dah lapan minggu makan omeprazole. Batuk macam mana sekarang?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alhamdulillah, doktor, dah kurang banyak. Dulu batuk tiap malam, sekarang seminggu sekali dua je."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bagus! Rasa pedih ulu hati, masam naik ke tekak, macam mana?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Itu pun dah kurang. Tapi bila makan malam lewat, still rasa sikit."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "So this confirms the cough is related to reflux. Stomach acid naik ke tekak and irritate the airway."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, sebab tu lah. Saya ingat paru-paru ada problem."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "X-ray dan spirometry dulu semua normal. So now kita fokus pada lifestyle, supaya tak perlu ubat lama sangat."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Lifestyle macam mana, doktor? Saya driver, makan tak tentu masa."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Paling penting, jangan makan dalam three hours sebelum tidur. Kurangkan teh tarik, kopi, oily and spicy food."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Teh tarik tu susah sikit, doktor. Every night lepak mamak dengan kawan-kawan, it's our routine."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tukar ke teh o suam, less sugar. Tinggikan kepala katil sikit, about six inches, letak blok bawah kaki katil."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, boleh try. Berat badan saya ada kaitan juga?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya. Berat 92kg, perut besar tekan stomach, acid senang naik. Lose five kilos pun dah banyak bantu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Faham. Omeprazole ni nak makan sampai bila?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Teruskan omeprazole 20mg sekali sehari sebelum sarapan, sebulan lagi. Lepas tu kita cuba kurangkan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Terima kasih."
+   }
+  ]
+ },
+ {
+  "id": "resp_073",
+  "split": "train",
+  "condition": "Upper airway cough syndrome",
+  "source": "Chronic cough",
+  "patient_persona": {
+   "description": "Ms. Janani a/p Murugan, 38, female, hotel front-office manager in Taiping, Perak; ten-week cough, always clearing her throat. Polished, polite Malaysian Indian English with some Malay and Tamil rhythm.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nik Faris Nik Hassan, Malay man in his 30s, GP at a Taiping clinic. Easy-going, clear; English with Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Ms. Janani, how can I help today?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doctor, I've been coughing for ten minggu. Always rasa something stuck in my throat, keep clearing. At work quite malu when talking to guests."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Is it worse in the morning? Do you rasa hingus dripping down the back of your throat?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Yes, exactly! Morning worst. Like hingus flowing down, then I cough cough."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Any sneezing, blocked nose, itchy eyes?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Nose selalu blocked, especially in the hotel aircond. Sneeze also, but I thought normal."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Looking inside your nose, it's swollen and pale, with mucus at the back of your throat. This is upper airway cough syndrome, dulu dipanggil postnasal drip."
+   },
+   {
+    "speaker": "Patient",
+    "text": "So the cough is from the nose, not the lungs?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, mucus from the nose turun and irritates the throat. Treat the nose, batuk pun improve."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Mometasone nasal spray, two sprays each side sekali sehari. Saline rinse every night. Loratadine 10mg pagi for four weeks."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Loratadine will make me mengantuk? I do night shift twice a week."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Loratadine is non-drowsy for most people. The older ones like chlorpheniramine are the sleepy type."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Should I do X-ray?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "You're a non-smoker, no weight loss, tak ada darah. Let's treat first for four weeks. If still batuk, then X-ray and further tests."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alright. Thank you, doctor, I really harap this works."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Give the spray two weeks to kick in, sabar sikit. Kita jumpa lagi in one month."
+   }
+  ]
+ },
+ {
+  "id": "resp_074",
+  "split": "train",
+  "condition": "Cough-variant asthma",
+  "source": "Chronic cough",
+  "patient_persona": {
+   "description": "Puan Wan Rokiah binti Wan Ismail, 60, female, retired school teacher in Kota Bharu, Kelantan; night cough for three months, spirometry done last week. Precise, careful Kelantan Malay with some English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Ahmad Syukri Mohd Nor, Malay man in his 40s, family medicine specialist at a Kota Bharu health clinic. Calm, respectful; Malay mixed with English.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Assalamualaikum, cikgu. Keputusan spirometry minggu lepas dah ada. Boleh kita bincang?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Waalaikumsalam. Boleh, doktor. Saya harap takde benda teruk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Takde benda teruk, insya-Allah. Baseline agak rendah sikit, tapi lepas ambil Ventolin, bacaan naik lebih 12 percent."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Maksudnya apa tu, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Maksudnya saluran nafas cikgu sempit, tapi boleh terbuka dengan ubat. Dengan batuk malam yang lama, ini paling sesuai dengan cough-variant asthma."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Asthma? Tapi saya tak pernah sesak nafas, tak pernah berbunyi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Betul, cough-variant asthma ni jenis yang main symptom cuma batuk. No wheezing, takde sesak."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, macam tu rupanya. Umur 60 baru dapat asthma?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh berlaku pada mana-mana umur, even at sixty. Cikgu ada allergic rhinitis juga kan, selalu bersin pagi?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada, bila sapu rumah mesti bersin."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya mulakan budesonide-formoterol, Symbicort 160, one puff pagi dan one puff malam. Rinse your mouth lepas guna."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Berapa lama sampai batuk berkurang?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Biasanya dalam dua hingga empat minggu dah nampak perbezaan. If batuk hilang, it supports the diagnosis."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Boleh ke saya berhenti bila dah baik?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kita review dalam enam minggu. Kalau stable, kita boleh step down slowly. Jangan stop sendiri ya, cikgu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Terima kasih atas penerangan."
+   }
+  ]
+ },
+ {
+  "id": "resp_075",
+  "split": "train",
+  "condition": "Chronic cough with red flags in a smoker",
+  "source": "Chronic cough",
+  "patient_persona": {
+   "description": "Mr. Chong Fui Min, 64, male, Hakka retired pepper farmer in Serian, Sarawak; 45 years of smoking; cough for three months with weight loss. Quiet, stoic, Mandarin with Hakka words and Sarawak Malay.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lucy Ngu Siew Ting, Malaysian Chinese woman in her 30s, medical officer at a Serian health clinic. Careful, gentle; Mandarin with English and Malay terms.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "钟伯，你的咳嗽三个月了，今天带了 X-ray 结果吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "带了，医生。那边的 klinik 叫我拿来给你看。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我看到右边肺的中间有一个 shadow，大概三公分。加上你体重掉了七公斤，还有咳到有血丝，我很担心。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "你是说……cancer 吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "现在还不能确定。可能是 TB，也可能是 infection，但是 lung cancer 一定要排除。你抽烟四十五年，这个 risk 比较高。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我也有想过。我哥哥也是这样走的。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "对不起听到这个。所以我们要快一点做检查。我会 urgent refer 你去 Sarawak General Hospital 的 respiratory clinic。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "要做什么检查？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "先做 CT scan，看清楚那个 shadow。可能也要做 bronchoscopy，用一条小管从嘴巴进去拿一点组织。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "痛不痛？我年纪大了，怕。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "会给你镇静的药，大部分人都 okay。另外 sputum 也要验 TB。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "要等多久？去古晋很远。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我标 urgent，大概一到两个礼拜。你孩子可以载你去吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我女儿在古晋做工，可以住她那边。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "很好。在等的时候，如果咳很多血，或者喘得厉害，马上去 Hospital Serian emergency。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，谢谢医生，我明白了。"
+   }
+  ]
+ },
+ {
+  "id": "resp_076",
+  "split": "train",
+  "condition": "Smoking and vaping cessation, starting varenicline",
+  "source": "Nicotine dependence",
+  "patient_persona": {
+   "description": "Mohd Syafiq bin Kamarul, 32, male, car mechanic in Seremban; smokes 15 cigarettes a day and vapes at work; newborn at home. Casual, fast Negeri Sembilan Malay with English slang.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Chin Pei Fen, Malaysian Chinese woman in her 30s, medical officer running the quit smoking clinic at a Seremban health clinic. Warm, non-judgemental; Malay mixed with English.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Syafiq, welcome to the quit clinic. Apa yang buat encik nak berhenti sekarang?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Anak saya baru lahir, doktor, dua bulan. Wife kata kalau tak berhenti, tidur luar. Haha."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's a strong reason. Sehari berapa batang, and vape berapa banyak?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Rokok lima belas batang. Vape pula kat bengkel, sebab bos tak bagi smoke dalam. Satu pod habis in two days."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bangun pagi, berapa lama baru hisap rokok first stick?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Lima minit lepas bangun, confirm. Sebelum mandi pun."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Itu tanda nicotine addiction yang agak tinggi. Tak apa, kita ada ubat yang boleh bantu banyak."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya cadangkan varenicline, nama brand Champix. Minggu pertama dos rendah, then 1mg dua kali sehari, total dua belas minggu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ubat tu ada side effect tak? Kawan kata mimpi pelik-pelik."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Betul, some people dapat mimpi yang vivid, and rasa loya. Makan lepas makan, dengan segelas air, kurang loya."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Vape tu pun kena stop sekali ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, both. Vape pun ada nikotin, dia akan kekalkan ketagihan. Set satu quit date, maybe hari ke lapan lepas mula ubat."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, hari Isnin depan. Saya buang semua pod hari tu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bagus. Kenal pasti your triggers, macam lepas makan or masa break dengan kawan. Plan apa nak buat masa tu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Lepas makan tu paling susah. Mungkin kunyah gula-gula getah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good idea. Datang balik dua minggu lagi. Kita check carbon monoxide level, and tengok progress."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih, doktor. Doakan saya."
+   }
+  ]
+ },
+ {
+  "id": "resp_077",
+  "split": "train",
+  "condition": "Smoking cessation follow-up with a lapse",
+  "source": "Nicotine dependence",
+  "patient_persona": {
+   "description": "Mr. Wong Kok Leong, 45, male, coffee shop owner in Ipoh Old Town; four weeks into quitting with nicotine patch and gum. Sheepish, Ipoh Mandarin with Cantonese-flavoured words and English.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Ahmad Nazri Osman, Malay man in his 40s, family medicine specialist at an Ipoh quit clinic who speaks conversational Mandarin. Encouraging, humorous; Mandarin with English and Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "黄老板，四个礼拜了，怎样？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "医生，老实讲，上个礼拜六我抽了三支。朋友结婚，喝了酒，就忍不住。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "谢谢你讲实话。一次 lapse 不是 failure。之后你有继续抽吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "没有，第二天我很后悔，又贴回 patch。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "很好！这个就是正确的做法。今天的 carbon monoxide 是 5 ppm，跟不抽烟的人一样。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "真的吗？那我的肺已经在变好了？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "对。四个礼拜，你的呼吸、味觉都会慢慢好。你有没有觉得吃东西比较有味道？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有！咖啡的味道比较香了。体重也重了两公斤。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "体重增加很常见，因为胃口好。你可以用 sugar-free gum，多走路。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "现在 patch 21mg 用了四个礼拜，下个礼拜换去 14mg，再四个礼拜换 7mg。Gum 想抽的时候继续用。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那个 gum 我咬了太快，喉咙会辣辣的。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Gum 要 chew and park。咬几下，有辣辣的味道，就把它放在脸颊和牙齿中间，等味道没了再咬。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "原来是这样用。我一直像口香糖一样一直咬。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "很多人都这样。还有，下次有喝酒的场合，你要先 plan 好，或者早一点回家。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，下个月还有一个 wedding，我会小心。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你已经做得很好了。两个礼拜后见。"
+   }
+  ]
+ },
+ {
+  "id": "resp_078",
+  "split": "train",
+  "condition": "Smoking cessation after myocardial infarction",
+  "source": "Nicotine addiction",
+  "patient_persona": {
+   "description": "Mr. Anthony a/l Joseph, 55, male, Malaysian Indian insurance agent in Klang; day 3 in the cardiac ward after a heart attack and stent. Subdued, reflective Malaysian English with some Malay.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Siti Nur Aisyah Kamal, Malay woman in her 30s, cardiology medical officer at Hospital Tengku Ampuan Rahimah, ward round. Kind but firm; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Good morning, Mr. Anthony. How's the dada today? Ada sakit lagi?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "No more pain, doctor. Just penat. Still can't believe I had a heart attack. I thought I'm still muda."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "At 55, with thirty years of smoking, the risk was quite tinggi. Smoking is one of the biggest causes of blocked heart arteries."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Yes, my wife asyik cakap. Twenty batang a day, since I was a teenager."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "The good news is, stopping now halves your risk of another heart attack. It's the single most powerful thing you can do."
+   },
+   {
+    "speaker": "Patient",
+    "text": "I really want to stop. But in the wad, the craving is terrible. I feel very gelisah, tak senang duduk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's nicotine withdrawal. We can start a nicotine patch today, 21mg, satu patch sehari. It's safe after a heart attack."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Patch is safe with my jantung? I thought nicotine is bad for the heart."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Cigarettes have thousands of chemicals and carbon monoxide. The patch gives clean nicotine at a steady dose, much safer."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'll also refer you to the quit clinic at the cardiac rehab. Dia orang will follow you for three months."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. My colleagues all hisap rokok at the kopitiam after work. How to elak?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tell them you had a heart attack, doctor's orders. Sit at the non-smoking side, or change your lepak spot for a while."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Haha, they sure tease me. But okay, I'll try."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Also your other ubat, aspirin, ticagrelor, atorvastatin, bisoprolol, all very important. Jangan miss."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Understood. Thank you, doctor. This is my wake-up call, betul-betul."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "It truly is. Kita plan discharge esok if all is stable."
+   }
+  ]
+ },
+ {
+  "id": "resp_079",
+  "split": "train",
+  "condition": "Vaping cessation in early pregnancy",
+  "source": "Nicotine dependence",
+  "patient_persona": {
+   "description": "Cik Nur Balqis binti Azhar, 26, female, customer service executive in Wangsa Maju, Kuala Lumpur; eight weeks pregnant, vapes daily. Nervous, soft KL Malay with plenty of English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Priya Dharshini a/p Raman, Malaysian Indian woman in her 30s, medical officer at a Kuala Lumpur maternal and child health clinic. Gentle, non-judgemental; Malay mixed with English.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Cik Balqis, dalam borang ni tulis you vape setiap hari. Boleh cerita sikit?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ya, doktor. Saya malu nak cakap. Dah three years vape, sekarang dah pregnant, saya takut effect pada baby."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Terima kasih sebab jujur. Ramai tak berani cakap. Sehari berapa banyak you guna?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Satu pod sehari, kadang-kadang lebih bila stress kat office. Nicotine 20mg."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Nikotin dalam vape boleh sempitkan salur darah ke uri, and affect pertumbuhan baby. So the best is to stop sepenuhnya."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saya dah cuba stop minggu lepas, tapi rasa marah-marah, tak boleh fokus kerja."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's withdrawal. Kita boleh guna nicotine replacement, macam gum or lozenge, lebih selamat daripada vape masa mengandung."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Pregnant pun boleh guna gum tu?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh, kalau tak mampu berhenti tanpa bantuan. Dos terkawal, takde bahan kimia lain. Tapi ubat varenicline tak boleh masa pregnant."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Nicotine gum 2mg, bila crave nak vape, kunyah perlahan-lahan. Maximum around ten pieces sehari."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Suami saya pun vape. Susah kalau dia vape depan saya, the smell tu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ajak dia berhenti sekali. Paling kurang, dia jangan vape dalam rumah or kereta."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saya akan cakap dengan dia malam ni. Baby saya okay tak setakat ni?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Scan tadi okay, heartbeat baby bagus. Start folic acid ya, dan kita jumpa lagi dua minggu untuk tengok progress."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih, doktor. Saya rasa lega sikit."
+   }
+  ]
+ },
+ {
+  "id": "resp_080",
+  "split": "test",
+  "condition": "Smoking cessation, varenicline side effects",
+  "source": "Nicotine dependence",
+  "patient_persona": {
+   "description": "Mr. Voo Ah Kiong, 67, male, retired Hakka carpenter in Kota Kinabalu, Sabah; smoked hand-rolled tobacco for fifty years; two weeks on varenicline. Rough, cheerful voice, Mandarin with Hakka words and plenty of Sabah Malay.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Mohd Hairul Izwan Sulaiman, Malay man in his 30s, medical officer at the Kota Kinabalu quit clinic who grew up in a Chinese neighbourhood. Relaxed, humorous; mixes Mandarin, Malay and English.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "巫伯，两个礼拜了，Champix 吃得怎样？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "医生，烟是少了很多，一天两三支而已。但是那个药吃了会想吐，早上特别 mual。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你是空肚子吃，还是吃饱才吃？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "早上起来就吃了，还没吃早餐。Kopi O 一杯就吞下去。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个就是原因。要吃完早餐才吃药，配一大杯水。Loya 会少很多。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "哦，原来这样。还有晚上做梦很奇怪，梦到我还在做木工，被 boss 骂。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个 vivid dreams 是常见的 side effect。你晚上那粒药可以早一点吃，晚餐的时候吃，不要睡前。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，我试试看。心情方面没有问题，老婆说我脾气比较好了，haha。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "很好。如果有很 down，或者想伤害自己，一定要马上告诉我们，这个很少，但是要注意。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "没有没有，我很开心，钱也省了。一个月省差不多两百块。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "两百 ringgit，可以带孙子去吃 buffet 了。你的 quit date 是哪一天？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "上个礼拜说是今天，但是我还有两三支……"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "没关系，我们今天重新 set，这个礼拜天。你家里还有 tembakau 吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "还有一包在 laci 里面。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "今天回去就把它丢掉，打火机也丢掉。想抽的时候，出去走走，或者喝水。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay lah, doktor. 我试看，巫伯说到做到。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "好，两个礼拜后回来，我们测 carbon monoxide。"
+   }
+  ]
+ }
+]

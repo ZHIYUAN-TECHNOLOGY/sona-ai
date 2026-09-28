@@ -1,0 +1,800 @@
+[
+ {
+  "id": "resp_061",
+  "split": "train",
+  "condition": "Acute otitis media in a toddler",
+  "source": "Otitis media",
+  "patient_persona": {
+   "description": "Puan Nurul Ashikin binti Razak, 27, female, online seller in Shah Alam, Selangor, bringing her son Umar, 2, who has been pulling his ear and crying at night. Worried, quick Selangor Malay with plenty of English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Daniel Yap Choon Kiat, Malaysian Chinese man in his 30s, GP at a Shah Alam family clinic. Gentle, reassuring; Malay mixed with English.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doktor, Umar ni dah dua malam tak tidur, menangis sambil tarik telinga kanan. Demam pun ada, last night 38.8."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sebelum ni dia ada selsema? Runny nose, batuk?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada, minggu lepas selsema. Baru nak baik, then jadi macam ni pula."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Okay, biasanya ear infection datang lepas selsema. Let me check dengan otoscope. Pegang dia sikit ya, puan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Gegendang telinga kanan dia merah dan membonjol, ada nanah di belakang. This is acute otitis media, jangkitan telinga tengah."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Teruk ke, doktor? Kena antibiotic?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Umar bawah dua tahun, demam tinggi, and sakit teruk, so yes, antibiotic is recommended for him."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Berat dia 12kg. Amoxicillin syrup 250mg per 5ml, 10ml, twice a day, five days. Habiskan walaupun dia dah okay."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Sepuluh ml, pagi dan malam. Okay. Untuk sakit dia?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Paracetamol syrup 250mg per 5ml, 5ml setiap enam jam. If still sakit, boleh tambah ibuprofen syrup 5ml, tiga kali sehari lepas makan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Boleh ke dia mandi? Kena elak air masuk telinga, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Gegendang dia belum pecah, so mandi macam biasa, no problem. Tapi kalau ada discharge, air atau nanah keluar from the ear, bagitahu saya."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau dah pecah macam mana? Pekak ke nanti?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Biasanya sembuh sendiri dalam beberapa minggu. Kita akan check balik dalam dua minggu to make sure okay."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Terima kasih banyak."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau dia sangat lemah, vomit banyak, or bengkak belakang telinga, bawa ke emergency terus, don't wait."
+   }
+  ]
+ },
+ {
+  "id": "resp_062",
+  "split": "train",
+  "condition": "Acute otitis media, watchful waiting",
+  "source": "Otitis media",
+  "patient_persona": {
+   "description": "Mr. Khoo Wei Liang, 37, male, IT support engineer in Bayan Baru, Penang, bringing his daughter Yu Tong, 4, with ear pain since this morning. Calm, analytical Penang Mandarin mixed with English.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Ch'ng Siew Hoon, Malaysian Chinese woman in her 40s, GP at a Bayan Baru clinic. Matter-of-fact, kind; Mandarin with English terms.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我女儿今天早上说耳朵痛，左边。昨天开始有一点流鼻涕，发烧 37.9。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "她晚上睡得怎样？有没有很痛到一直哭？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "昨晚还 okay，今天早上起来才讲痛。吃了 Panadol 之后比较好，现在还在玩 iPad。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我看一下耳朵。左边的 eardrum 有一点红，有一点 fluid，但是没有 bulging。这个是 mild acute otitis media。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "需要 antibiotic 吗？我同事说一定要吃。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "她四岁以上，症状 mild，发烧不高，才一天。Guideline 说这种情况可以先 watchful waiting 四十八小时。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Watchful waiting 意思是什么都不做？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "不是什么都不做。止痛很重要，paracetamol 和 ibuprofen 按时给。大部分小朋友两三天自己会好。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我会给你一张 delayed prescription。如果 forty-eight hours 后还发烧、还痛，或者更严重，你就去 pharmacy 拿 amoxicillin。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "这样很合理。Amoxicillin 的 dose 是多少？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "她 17 公斤，amoxicillin 250mg per 5ml，每次 15ml，一天两次，吃五天。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay，我记下来了。如果耳朵流水出来呢？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "那表示 eardrum 可能破了一个小洞，要马上回来给我看。通常会自己愈合。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "她可以去游泳课吗？礼拜六有。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这个礼拜先不要。等好了，我们再看耳朵才去。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "明白，谢谢医生。"
+   }
+  ]
+ },
+ {
+  "id": "resp_063",
+  "split": "train",
+  "condition": "Otitis media with effusion, hearing test review",
+  "source": "Otitis media",
+  "patient_persona": {
+   "description": "Mrs. Revathi a/p Palaniappan, 36, female, nurse at a private hospital in Ipoh, bringing her son Nithin, 6, whose teacher says he doesn't respond in class. Knowledgeable, calm Malaysian Indian English with some Malay.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Yusri Abdul Hamid, Malay man in his 40s, ENT specialist at Hospital Raja Permaisuri Bainun, Ipoh. Methodical, friendly; English with Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mrs. Revathi, the hearing test and tympanogram results dah ada. Let's go through them."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Yes please, doctor. Since the ear infection three months ago, he asyik suruh kami ulang."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "The tympanogram is flat both sides. Maksudnya, fluid is still sitting behind both eardrums. We call it otitis media with effusion, or glue ear."
+   },
+   {
+    "speaker": "Patient",
+    "text": "So the fluid never cleared since the infection?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's right. His hearing test shows a mild hearing loss, about 30 decibels both ears. That fits with what cikgu dia report."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aiyo, poor boy. I thought he was just ignoring us, I even marah him."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Very common, don't feel bad. Glue ear biasanya clear sendiri, but his has lasted three months and affects school."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Options are tunggu another three months, or put in grommets, tiny tubes in the eardrum to drain the fluid."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Grommets need general anaesthetic, right? How long is the surgery?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, GA, about fifteen minutes, daycase. He goes home hari yang sama. Hearing usually improves immediately."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Any medicine instead? Like antibiotic or nasal spray?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Antibiotics and decongestants tak membantu glue ear. Antihistamines also no benefit, unless he has alergi."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. His adenoids also besar? He berdengkur quite a lot."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good point. If adenoids are big, we can remove them at the same time. I'll check with a scope today."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alright, doctor. I'll bincang with my husband and let you know."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Meanwhile, minta cikgu letak dia duduk depan, and face him when talking. Kita jumpa lagi in four weeks."
+   }
+  ]
+ },
+ {
+  "id": "resp_064",
+  "split": "train",
+  "condition": "Acute otitis media with perforation in an adult",
+  "source": "Otitis media",
+  "patient_persona": {
+   "description": "Encik Syed Hafiz bin Syed Abdullah, 35, male, bank officer in Kuantan, Pahang; ear pain after a cold, then sudden discharge this morning. Articulate, Pahang Malay with plenty of English.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Kamala Devi a/p Nadarajah, Malaysian Indian woman in her 40s, GP at a Kuantan clinic. Warm, clear; Malay mixed with English.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doktor, dua hari telinga kiri sakit gila, berdenyut-denyut. Pagi tadi tiba-tiba keluar air kuning, then sakit terus kurang."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Keluar air tu banyak ke sikit? Ada darah?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada sikit darah, basah bantal. Pendengaran pun rasa macam underwater, muffled."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Let me look. Ya, ada lubang kecil kat gegendang telinga, and discharge. Tekanan nanah tadi yang pecahkan gegendang tu, that's why sakit kurang."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Pecah? Nanti pekak tak, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Biasanya lubang kecil ni sembuh sendiri dalam dua hingga enam minggu. Pendengaran akan balik normal lepas tu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya bagi amoxicillin 1 gram, tiga kali sehari, tujuh hari. Plus ciprofloxacin ear drops, empat titik, dua kali sehari."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Titik telinga tu safe ke kalau gegendang dah pecah?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good question. Ciprofloxacin drops selamat untuk perforation. Jangan guna ubat titik lain yang ada gentamicin tanpa tanya doktor."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Boleh berenang tak? Saya selalu swimming hujung minggu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak boleh, until gegendang sembuh. Masa mandi, plug your ear dengan kapas yang disapu Vaseline, so that water tak masuk."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Faham. Kerja okay tak? Saya ada meeting esok."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh kerja. Just avoid flying for now, sebab tekanan boleh buat sakit."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alright. Kena datang balik?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Six weeks, saya nak tengok gegendang dah tutup. If it's not closed by then, kita refer ENT."
+   }
+  ]
+ },
+ {
+  "id": "resp_065",
+  "split": "train",
+  "condition": "Recurrent acute otitis media in daycare",
+  "source": "Otitis media",
+  "patient_persona": {
+   "description": "Mdm. Lau Pei Yee, 32, female, pharmacy assistant in Melaka, bringing her son Zhi Hao, 18 months, with his fourth ear infection in six months. Frustrated, quick Melaka Mandarin with English and some Malay.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Mohd Firdaus Hashim, Malay man in his 30s, paediatrician at a Melaka private hospital who speaks basic Mandarin. Kind, structured; English and Malay with some Mandarin.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，他又耳朵发炎了，六个月第四次了。每次 antibiotic 吃完没多久又来。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我知道，very tiring for you. 他有去 daycare 吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有，从一岁开始去 taska，因为我跟老公都要上班。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Daycare 里面 virus 很多，每次 selsema 之后就容易 ear infection。这个是最常见的原因。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那我要不要让他停 taska？但是没有人帮我看孩子。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "不一定要停。我们看其他 risk factors。他还有用 puting，pacifier 吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有，睡觉的时候一定要吸，不然不睡。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Pacifier 会增加 ear infection 的 risk。可以慢慢减少，先白天不要用，只是睡觉用。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，我试试。他躺着喝奶瓶，会有关系吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "会哦。躺平喝奶，奶会流到耳朵的管子。喂的时候让他坐高一点。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "原来是这样，我都是让他躺着喝的。那 vaccine 呢？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "他的 pneumococcal vaccine 有打完吗？这个可以减少一部分 ear infection。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有，是 government 那个 schedule 打的。Flu vaccine 需要吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Influenza vaccine 每年一次，对 daycare 的孩子有帮助。如果之后三个月还是一直发作，我们再 refer ENT 看要不要 grommets。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，谢谢医生，terima kasih。"
+   }
+  ]
+ },
+ {
+  "id": "resp_066",
+  "split": "train",
+  "condition": "Otitis externa in a swimming instructor with diabetes",
+  "source": "Otitis externa",
+  "patient_persona": {
+   "description": "Mr. Balakrishnan a/l Nadesan, 47, male, swimming coach at a public pool in Cheras, Kuala Lumpur; type 2 diabetes on metformin and gliclazide. Loud, cheerful Malaysian Indian English with Malay.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Chang Mei Yee, Malaysian Chinese woman in her 30s, GP at a Cheras clinic. Precise, a bit brisk; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doctor, my right ear very itchy for one week, now sakit gila. Even when I chew, pain. Can't sleep on that side."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Do you swim every day? Use earplugs?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Every day lah, doctor. Coaching budak-budak pagi and petang. Earplugs, no. Then malam I guna cotton bud to dry."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Let me check. When I pull your ear, sakit?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aduh, yes! Very sakit."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "The ear canal merah and bengkak, with some white discharge. Eardrum looks okay. This is otitis externa, swimmer's ear."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Swimmer's ear, okay, patutlah. What drops ah?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ciprofloxacin with dexamethasone drops, four drops twice a day, for seven days. Baring mengiring for five minutes after putting in."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Because you have diabetes, I want to check your gula. Last HbA1c berapa, ingat tak?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Last time 8.5. This month quite busy, tak sempat check."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Diabetes makes ear infections susah baik, and rarely it can spread to the bone. If sakit teruk waktu malam, muka lemah, or discharge tak berhenti, come back terus."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Wah, serious also. Okay. Can I still coach from tepi kolam?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Coach from the poolside, yes, but no swimming for one week. Masa mandi, keep water out, cotton with Vaseline."
+   },
+   {
+    "speaker": "Patient",
+    "text": "And the cotton bud?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Stop using it. It calar the skin and tolak wax inside. Just lap the outer ear with a towel, or hairdryer on cool."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, doctor, I'll buang all the cotton buds. Terima kasih."
+   }
+  ]
+ },
+ {
+  "id": "resp_067",
+  "split": "train",
+  "condition": "Otitis externa from cotton bud use",
+  "source": "Otitis externa",
+  "patient_persona": {
+   "description": "Cik Nur Aqilah binti Shamsudin, 22, female, nursing student in Johor Bahru; habitually cleans her ears with cotton buds every day. Shy, soft voice, Johor Malay with English.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Tan Chee Meng, Malaysian Chinese man in his 40s, GP at a Johor Bahru clinic. Friendly, practical; Malay with English terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Cik Aqilah, apa yang tak selesa?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Telinga kiri gatal, doktor, dah tiga hari. Semalam mula sakit and ada air sikit keluar."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Selalu korek telinga guna cotton bud ke?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Hari-hari, doktor. Lepas mandi mesti korek. Rasa tak bersih kalau tak buat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya tengok, ear canal you merah, bengkak, and ada calar sikit. Eardrum okay. Ini otitis externa, jangkitan kulit saluran telinga."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, sebab cotton bud ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, salah satu sebab besar. Cotton bud gores kulit, buang wax yang sebenarnya melindungi telinga."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Tapi saya ingat wax tu kotor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Wax tu natural protection. Telinga ada cara sendiri untuk buang wax. Just lap bahagian luar dengan tuala lepas mandi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya bagi ubat titik, ciprofloxacin-dexamethasone, empat titik dua kali sehari, tujuh hari."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Macam mana nak letak titik dengan betul?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Baring mengiring, telinga sakit ke atas. Pull the earlobe up and back, titik, then tekan sikit depan telinga. Tunggu five minutes."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Boleh pakai earphone tak? Saya study guna earphone."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Elakkan earphone masuk dalam telinga for one week. Guna headphone luar or speaker."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Terima kasih."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau sakit bertambah, bengkak sampai ke muka, or demam, datang semula."
+   }
+  ]
+ },
+ {
+  "id": "resp_068",
+  "split": "train",
+  "condition": "Fungal otitis externa",
+  "source": "External otitis",
+  "patient_persona": {
+   "description": "Mr. Heng Chee Seng, 50, male, durian stall owner in Balik Pulau, Penang; has been using leftover antibiotic ear drops for weeks. Blunt, Penang Mandarin with Hokkien words and Malay.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lai Pei Ling, Malaysian Chinese woman in her 30s, ENT medical officer at Hospital Pulau Pinang clinic. Straightforward, patient; Mandarin with English terms.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我的耳朵痒了一个多月，塞塞的，好像有东西在里面。我自己滴药水，越滴越痒。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你滴的是什么药水？哪里来的？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "上次我老婆耳朵发炎剩下的，那个 antibiotic drops。我滴了三四个礼拜了。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我用 microscope 看一下。你的耳朵里面有很多白色和黑色的东西，像棉花一样，这个是 fungus，真菌。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "真菌？耳朵也会长菌？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "会的。Antibiotic drops 用太久，把好的细菌杀掉，fungus 就长起来。加上槟城天气热又湿。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "啊，难怪越滴越痒。那怎么办？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我现在先帮你用 suction 把这些清干净，不会很痛，只是有一点吵。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "清完之后，用 clotrimazole ear drops，每天三次，每次四滴，用两个礼拜。那个 antibiotic drops 停掉，丢掉。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好。你刚才说热，我在档口一整天都流汗。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "对，耳朵湿湿的更容易长菌。洗澡后用吹风机冷风吹干耳朵，不要用 cotton bud 挖。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我有 diabetes，有关系吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "有关系，糖尿病的人比较容易感染，也比较难好。你的糖控制得怎样？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "上次医生说 HbA1c 七点几，还可以。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "好。两个礼拜后回来，我再 suction 一次，看有没有 clear。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，谢谢医生，terima kasih。"
+   }
+  ]
+ },
+ {
+  "id": "resp_069",
+  "split": "train",
+  "condition": "Otitis externa in a commercial diver",
+  "source": "Otitis externa",
+  "patient_persona": {
+   "description": "Encik Mohd Aizat bin Jumat, 38, male, Brunei-Malay commercial diver based in Labuan; ear pain after a week of offshore diving. Relaxed, Labuan Malay with English work terms.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Jennifer Liew Siaw Fung, Malaysian Chinese woman in her 30s, GP at a Labuan clinic that does diver medicals. Direct, practical; Malay mixed with English.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Aizat, baru balik dari offshore ke?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ya doktor, semalam balik. Seminggu diving kat platform, deep dive. Telinga kanan sakit since day four."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sakit bila tekan depan telinga or tarik cuping?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ya, sakit bila tarik. Rasa penuh, pendengaran kurang sikit."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saluran telinga bengkak, ada debris. Gegendang intact, takde tanda barotrauma. Ini otitis externa, common untuk diver."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Selalu kawan-kawan kena. Diaorang kata guna vinegar."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Vinegar dengan alcohol drops tu boleh guna untuk prevention, lepas setiap dive. Tapi sekarang dah infected, kena guna antibiotic drops."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ofloxacin ear drops, sepuluh titik, sekali sehari, tujuh hari. Paracetamol atau ibuprofen for pain."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Bila boleh dive balik? Next trip dua minggu lagi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak boleh dive until fully sembuh dan saya check semula. Kalau dive dengan telinga bengkak, risiko barotrauma tinggi."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Company perlukan fit-to-dive letter."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Datang review sepuluh hari lagi. If the ear is clear, saya bagi fit-to-dive letter."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada cara nak elak lepas ni?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Lepas dive, bilas telinga dengan air bersih, then acetic acid drops, keringkan. Custom earplug untuk surface swimming pun boleh bantu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, noted. Terima kasih, doktor."
+   }
+  ]
+ },
+ {
+  "id": "resp_070",
+  "split": "train",
+  "condition": "Otitis externa from earbuds",
+  "source": "Ear infection, outer ear",
+  "patient_persona": {
+   "description": "Ms. Tan Jia Wen, 28, female, content creator in Sri Petaling, Kuala Lumpur; wears earbuds most of the day for editing and calls. Chatty, KL Mandarin very heavily mixed with English.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Amirul Hakim Rashid, Malay man in his 30s, GP at a Sri Petaling clinic who speaks English and some Mandarin. Relaxed, friendly; English with Mandarin and Malay words.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doctor，我的 left ear 很痛，已经三天了。昨天开始有一点 discharge，黄黄的，好 disgusting。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Okay. Do you use earbuds a lot? 耳机？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "超多的！Editing video 一整天都戴，然后 meeting 也戴，maybe 十个钟头一天。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's a lot. 你有没有 share 耳机给别人？或者 clean 耳机？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Clean？呃……很少 clean 的。偶尔男朋友也用。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Let me check. The ear canal is swollen and red, with some discharge. Eardrum okay. 这个是 otitis externa, outer ear infection."
+   },
+   {
+    "speaker": "Patient",
+    "text": "是耳机 cause 的吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Earbuds trap heat and moisture, and can calar the skin, so bacteria grow easily. Kotor punya earbuds make it worse."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'll give you ciprofloxacin-dexamethasone drops, 四滴, twice a day, seven days. Paracetamol for pain."
+   },
+   {
+    "speaker": "Patient",
+    "text": "那我可以用耳机吗？I got deadline this week."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Not in the left ear for a week. 你可以用 over-ear headphones，或者 speaker，okay？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay，那 right ear 可以戴吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Right ear can, but clean the earbud with alcohol wipe every day. And jangan share lah."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Haha okay, I tell my boyfriend buy his own."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good idea. If the pain gets worse, swelling spreads to the face, or fever, come back. Otherwise no need follow up."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay，thank you doctor，terima kasih!"
+   }
+  ]
+ }
+]

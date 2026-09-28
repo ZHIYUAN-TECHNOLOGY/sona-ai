@@ -1,0 +1,768 @@
+[
+  {
+    "id": "msk_021",
+    "split": "train",
+    "condition": "Wrist fracture, fracture clinic follow-up on warfarin",
+    "source": "Wrist fracture",
+    "patient_persona": {
+      "description": "Abdul Rahim bin Othman, 66, male, owns a small bakery in Muar, Johor, still kneads dough and carries flour sacks; atrial fibrillation on warfarin. Fracture clinic, day six after a fall on wet steps. Hearty, loud voice, Johor Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Sarah Tan Hui Wen, Malaysian Chinese woman in her 30s, orthopaedic medical officer at a Muar hospital. Brisk, warm; English-leaning, mixes Malay freely.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Pak cik Rahim, how's the tangan? Sakit lagi dalam simen ni?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sakit tu dah kurang sikit, doktor. Tapi jari-jari ni swollen, bengkak, cincin pun tak boleh tanggal."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cuba gerakkan jari, buka tutup... boleh. Jari rasa kebas atau cucuk-cucuk?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kebas sikit waktu malam. Bila angkat tangan atas bantal, OK sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good, teruskan angkat tinggi. The swelling is expected, but kalau jari jadi sejuk, pucat, atau sakit makin teruk, terus datang emergency."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cincin tu kita potong hari ni, pak cik. Nanti jari makin bengkak, cincin jadi macam tali, block darah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alamak, cincin kahwin tu. Tak apalah, nyawa lagi penting."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Check X-ray hari ni, the fracture position still OK. Tulang tak lari. So no operation needed for now."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah. Doktor, ubat warfarin saya macam mana? Ada lebam besar kat lengan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your INR today is 3.4, a bit high. Pak cik ada makan painkiller lain selain Panadol?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada... anak bagi ubat sapu yang panas tu, dengan satu biji painkiller kuning, tak ingat nama."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau ubat kuning tu jenis NSAID, dengan warfarin boleh berdarah. Jangan makan dulu, just Panadol 1 gram three times a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kedai roti saya pula, siapa nak uli tepung? Tangan kanan ni tangan kerja."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Enam minggu dalam simen, pak cik, lepas tu physio. No lifting flour sacks. Let your son handle it for now."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Susahlah, tapi takpa, saya jadi boss, duduk counter je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Datang balik minggu depan untuk X-ray, dan klinik warfarin check INR in three days."
+      }
+    ]
+  },
+  {
+    "id": "msk_022",
+    "split": "train",
+    "condition": "Hip fracture, post-operative ward round",
+    "source": "Hip fracture",
+    "patient_persona": {
+      "description": "Cheah Poh Lian, 81, female, widowed retired school clerk living alone in a two-storey house in George Town, Penang; day two after hip fixation. Knee osteoarthritis, took naproxen and aspirin on her own. Ward round. Frail, soft Penang Mandarin with Hokkien.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Hazwan bin Rosli, Malay man in his 30s, orthopaedic registrar at a Penang hospital. Patient, respectful; English-leaning, speaks simple Mandarin with elderly Chinese patients and switches to English for terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "谢阿嬷，good morning。今天感觉怎样？伤口痛吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doctor 早。痛是有一点，昨晚 nurse 给我打了针，睡得比较好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. 我是 Dr. Hazwan。你的 operation 很顺利，我们用了钢钉固定。今天 physio 会来叫你站起来。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "今天就站？我还以为要躺一个月 bed rest。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不用躺那么久。越早站起来，越不会有 pneumonia 和血块。Physio 会扶你，你用 walking frame。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我试试看。Doctor，我在家都是一个人，楼上楼下，以后怎么办？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个我们会一起计划。Occupational therapist 会问你家里的情况。刚回去的时候，可能要先睡楼下。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我女儿在 KL，她说可以回来陪我两个礼拜。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那很好。还有，你之前在家吃 naproxen 和 aspirin，是谁开的？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有人开，是我自己在药房买的。膝盖痛就吃 naproxen，aspirin 是看电视说对心脏好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这两粒药一起吃，胃容易出血，你的 haemoglobin 也有点低。现在先停，痛就吃 paracetamol。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "知道了，以后不自己乱买药了，jadi pengajaran。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "另外，老人家跌一次就断骨，表示 bones 比较疏松。Before discharge 我们会开 osteoporosis 的药，还有 calcium 和 vitamin D。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "骨质疏松？Osteoporosis？难怪我这几年矮了一点。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，这就是原因之一。今天先跟 physio 站起来，我下午再来看你。"
+      }
+    ]
+  },
+  {
+    "id": "msk_023",
+    "split": "train",
+    "condition": "Forearm fracture in a child, cast review",
+    "source": "Arm fracture",
+    "patient_persona": {
+      "description": "Puan Farah Wahida binti Mazlan, 34, female, civil servant in Putrajaya, speaking for her 8-year-old son Aqil, who fell from the monkey bars at school. Cast review at two weeks. Worried but composed, standard Malay with English words.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ong Jia Ying, Malaysian Chinese woman in her 30s, medical officer at a paediatric orthopaedic clinic in Putrajaya. Gentle with children, clear with parents; English-leaning, speaks Malay with the family.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hai Aqil, macam mana tangan? Masih sakit tak dalam simen ni?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dia kata dah tak sakit sangat, doktor. Cuma gatal. Semalam saya nampak dia masukkan pembaris dalam simen nak garu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Oh, jangan masukkan apa-apa ya, Aqil. Skin can get cut, germs go in, then you get an infection bawah simen."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Habis tu macam mana nak hilangkan gatal? Ada cream ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh guna hair dryer, setting sejuk, tiup dalam simen. Atau ketuk-ketuk simen perlahan kat luar."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, OK. Simen ni pun dah ada bau sikit, doktor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya tengok dan hidu sekejap... Bau biasa je, no pus, tak ada cecair keluar. Jari-jari pun colour OK, warm."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "X-ray hari ni, tulang dah mula bersambung, healing well. Posisi pun elok. Kids memang heal fast."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah. Berapa lama lagi kena pakai cast ni?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lagi dua minggu, total empat minggu. Lepas buka, tangan akan nampak kurus dan keras sikit, itu normal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dia nak pergi swimming class hari Sabtu, kawan-kawan dia semua pergi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak boleh berenang dengan simen ni, basah nanti lembik. Mandi pun balut dengan plastik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Faham. Ubat tahan sakit masih perlu tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau dia tak mengadu, tak perlu. Kalau sakit, paracetamol syrup 10ml, sampai empat kali sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih, doktor. Aqil, cakap terima kasih kat doktor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sama-sama. Lepas buka simen nanti, main monkey bar slow-slow dulu ya, Aqil."
+      }
+    ]
+  },
+  {
+    "id": "msk_024",
+    "split": "train",
+    "condition": "Ankle fracture after surgery, wound review",
+    "source": "Ankle fracture",
+    "patient_persona": {
+      "description": "Ganesh a/l Selvaraj, 34, male, security guard at a factory in Klang who smokes 15 cigarettes a day; three weeks after ankle plating. Follow-up. Friendly, mumbling Malaysian Indian English with Malay.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Faizah binti Rahman, Malay woman in her 40s, orthopaedic surgeon at a Klang hospital. Direct, dry humour; English-leaning, uses Malay casually.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hi Ganesh. Let me see the wound. Hmm, dah kering, stitches can come off today."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Good, doctor. The skin very gatal already under the bandage."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itchy is a healing sign, tanda nak baik. Any pain in the calf, betis sakit, or kaki bengkak satu kaki?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Calf no pain. Only the ankle bengkak by the evening, after I sit long."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's normal for a few months. Angkat kaki bila duduk, ya. Still smoking?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo doctor... dah kurang, from one pack to ten a day."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Better, but smoking slows bone healing and increases infection risk. The plate holds the bone, but the bone still has to join itself."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Serious ah? My friend also hisap rokok, his leg okay je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Some people okay, some not. Nicotine patches from the klinik can help, kalau you nak cuba."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, I'll try the patch. Doctor, bila boleh jalan without the crutches?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Another three weeks non-weight bearing, then we'll X-ray. If the bone is healing, you can start putting weight with a boot."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My boss asking when I can come back. Night shift, a lot of walking, ronda keliling kilang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Six more weeks MC at least. I can write a surat for light duty, like duduk at the guardhouse."
+      },
+      {
+        "speaker": "Patient",
+        "text": "That one okay, I can sit and watch the CCTV."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. Remember, sakit betis tiba-tiba or sesak nafas, go to emergency immediately. See you in three weeks."
+      }
+    ]
+  },
+  {
+    "id": "msk_025",
+    "split": "train",
+    "condition": "Metatarsal stress fracture in a runner",
+    "source": "Stress fractures",
+    "patient_persona": {
+      "description": "Chong Xin Yi, 23, female, junior auditor in Kuala Lumpur training for her first full marathon; low body weight, periods stopped for eight months. Results review after MRI. Soft-spoken, precise Malaysian Mandarin with English.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ravindran a/l Maniam, Malaysian Indian man in his 50s, sports medicine physician in Kuala Lumpur. Calm, non-judgemental; English with some basic Mandarin words.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Xin Yi, your MRI shows a stress fracture in the second metatarsal, 脚中间的骨头。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Stress fracture？我没有跌倒啊，只是每天跑。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Exactly, it's from repeated loading. How many kilometres a week were you running? 一个礼拜几公里？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "最近差不多七十公里。Marathon 是下个月，我不想放弃。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'm sorry, but running on it now can turn a small crack into a full fracture. You need a boot and no running for six to eight weeks."
+      },
+      {
+        "speaker": "Patient",
+        "text": "六个礼拜……那我这几个月的 training 都白费了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I know it's disappointing. There's another thing I want to ask gently. You mentioned your periods stopped. How long?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "八个月了。我以为是因为跑步，很多跑友都这样。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's common, but it's not normal. When the body doesn't get enough energy for the training, hormones drop and the bones get weaker."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我是有控制吃东西……因为跑友说 weight 轻一点会跑比较快。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Thank you for telling me honestly. I'd like you to see a sports dietitian, and we'll check your hormones and a bone density scan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "要看 dietitian 吗？我不觉得我有问题。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's not about blame. 你很有 discipline, that's good. We just want that discipline to 保护你的骨头 too."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好吧……那我可以做什么 exercise？不动我会很 anxious。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Swimming and cycling are fine if there's no pain. Next marathon, you'll run it stronger. Come back in four weeks."
+      }
+    ]
+  },
+  {
+    "id": "msk_026",
+    "split": "train",
+    "condition": "Steroid-induced osteoporosis after a vertebral fracture",
+    "source": "Osteoporosis",
+    "patient_persona": {
+      "description": "Leung Wai Kit, 71, male, retired land surveyor in Petaling Jaya who gardens with heavy pots; polymyalgia rheumatica on prednisolone for 14 months; mother fractured her hip. First visit after a T12 compression fracture. Measured, precise Malaysian Mandarin with Cantonese colouring.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Amirah binti Zainal, Malay woman in her 40s, rheumatologist at a Petaling Jaya hospital. Methodical, kind; English-leaning, speaks functional Mandarin with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "梁先生，你的 X-ray 看到 T12，就是背中间那一节，压扁了。那天搬花盆的时候痛起来，对吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，一个陶瓷花盆，大概十公斤。突然好像被人打了一拳。现在好很多了，but 还是有点酸。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "正常的骨头，搬十公斤不会断。你的 DEXA 是 minus 3.1，这是 osteoporosis。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我以为 osteoporosis 是女人才有的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "男人也会，特别是吃 prednisolone 很久的人。Long-term steroid 会让 bone density 流失很快。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我可以停 prednisolone 吗？我现在还吃 7.5mg。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不可以自己突然停，身体会出问题。我们会慢慢减，但是 PMR 也要控制。所以骨头要另外保护。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我开 alendronate 70mg，一个礼拜吃一次。早上起来空肚子，一大杯白开水吞下去。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "为什么那么多 rules？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "吃了以后三十分钟不可以躺下，不能吃东西喝 kopi。不然药会刺激食道，也 absorb 不到。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，礼拜天早上吃，比较好记。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "另外每天 calcium 1000mg 加 vitamin D 800 unit。你有看牙医吗？有没有要拔牙？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "下个月要拔一颗牙，dentist 已经 book 了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那先去拔，伤口好了再开始 alendronate，比较 safe。以后搬花盆，蹲下去用脚力，don't bend your back。"
+      }
+    ]
+  },
+  {
+    "id": "msk_027",
+    "split": "train",
+    "condition": "Osteoporosis, bone density results review",
+    "source": "Osteoporosis",
+    "patient_persona": {
+      "description": "Hasnah binti Mohd Yunus, 64, female, retired nurse in Seremban; early menopause at 44, low vitamin D. Results review. Knowledgeable, soft Negeri Sembilan Malay mixed with English medical terms.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kumaresan a/l Pillai, Malaysian Indian man in his 50s, family medicine specialist at a Seremban health clinic. Warm, thorough; English-leaning, fluent Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Hasnah, result DEXA scan dah keluar. T-score kat tulang belakang minus 2.8. That's osteoporosis."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya dah agak dah, doktor. Masa kerja wad dulu, ramai patient macam saya, especially yang dah menopause."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Vitamin D puan pun rendah, 32 nmol per litre. Puan selalu keluar kena matahari?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Jarang. Pakai tudung, baju lengan panjang, keluar pun naik kereta."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak apa, kita bagi supplement. Vitamin D 1000 unit setiap hari, dengan calcium 1000mg."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sebab early menopause umur 44, tulang puan lebih cepat nipis. We'll start alendronate 70mg once a week."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kawan saya kata ubat ni boleh buat tulang rahang rosak. Betul ke, doktor? Jaw bone tu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Risiko tu sangat jarang, lebih kurang one in ten thousand. Yang penting, jaga gigi dan beritahu dentist puan makan ubat ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, gigi saya OK. Satu lagi, saya ada gastrik kadang-kadang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau gastrik teruk, alendronate boleh buat pedih. Kalau tak tahan, there's a yearly injection, zoledronic acid, masuk drip setahun sekali."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya cuba yang oral dulu lah, lagi senang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Selain ubat, jalan kaki pagi tiga puluh minit, dan periksa rumah, jangan ada karpet licin."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bilik air rumah saya memang licin. Nanti suruh anak pasang pemegang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Kita ulang DEXA dalam dua tahun."
+      }
+    ]
+  },
+  {
+    "id": "msk_028",
+    "split": "train",
+    "condition": "Osteoporosis, long-term bisphosphonate review",
+    "source": "Osteoporosis",
+    "patient_persona": {
+      "description": "Mrs. Rukmani a/p Krishnan, 72, female, retired primary school headmistress in Butterworth, Penang; five years on alendronate, occasional heartburn. Follow-up. Crisp, formal Malaysian Indian English with Malay words.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Heng Soo Ling, Malaysian Chinese woman in her 50s, family medicine specialist in Butterworth. Thoughtful, precise; English-leaning.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mrs. Rukmani, you've been on alendronate for five years now. Your repeat DEXA is minus 2.1, improved from minus 2.7."
+      },
+      {
+        "speaker": "Patient",
+        "text": "That's very good news. So boleh stop the medicine now or not?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's what I wanted to discuss. After five years, for someone with no fractures and a better score, we can consider a drug holiday."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Drug holiday? Meaning I stop completely?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Stop for two to three years, then recheck. The medicine stays in the bone and keeps working for a while."
+      },
+      {
+        "speaker": "Patient",
+        "text": "But if I stop, the bone will become nipis again, right? My sister broke her hip at seventy-five."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's a fair worry. With your family history, we'll recheck your DEXA in two years, and restart if it drops."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Also doctor, the heartburn. Every Monday after the tablet, dada rasa pedih sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Are you staying upright for thirty minutes after taking it? And drinking a full glass of water?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Honestly, sometimes I go back to bed after taking it. Monday morning, mengantuk sangat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That could be why. Lying down lets the tablet irritate the oesophagus. Another reason the holiday is good timing."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, I'm convinced. Calcium I continue ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, continue calcium and vitamin D daily. And keep your morning walks at the taman."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Every morning, doctor, with my neighbours. Dua pusingan je, then teh tarik kurang manis at the mamak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Perfect. See you in six months, and kalau ada new back pain or jatuh, see me earlier."
+      }
+    ]
+  },
+  {
+    "id": "msk_029",
+    "split": "train",
+    "condition": "Osteoporosis on denosumab, six-monthly injection",
+    "source": "Osteoporosis",
+    "patient_persona": {
+      "description": "Wong Siew Fong, 78, female, retired dim sum restaurant cook in Ipoh with chronic kidney disease stage 4; on denosumab. Six-monthly injection visit, slightly overdue. Cheerful, loud Cantonese-coloured Malaysian Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nicholas Yap Kok Wai, Malaysian Chinese man in his 40s, geriatrician at an Ipoh hospital. Warm, a little teasing; English-leaning, fluent Mandarin.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "黄婆婆，你好。今天是来打 Prolia 的，对吗？上次是几时打的？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doctor 好！上次是二月，现在九月了，迟了一点。我去 Singapore 看孙子，lupa 了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "七个月，迟了一个月。这个针不可以迟太久，最多几个礼拜。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "为什么？Lambat sikit 有什么关系？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Prolia 停了或者迟了，骨头会很快流失，有时候会突然 multiple vertebral fractures。所以一定要 on time。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "哎哟，这么严重。以后我叫我女儿在手机设提醒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好主意。你的肾功能不好，所以我们用 Prolia，不用那种吃的药。打之前要验 calcium。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "上个礼拜验了，nurse 说 normal。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，calcium 是 2.25，normal。Vitamin D 也 OK。那我们今天打，打在 lengan。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我每天有吃 calcium 一粒，可以继续吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以，继续吃。如果嘴巴周围麻麻的，或者手脚抽筋，要马上告诉我们，可能是 calcium 太低。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "知道了。还有，我最近晚上起来小便，差点跌倒两次，jatuh 在走廊。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个很重要。晚上房间要开小夜灯，床边放一个便盆。起床先坐一分钟，才站起来。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我叫女儿买夜灯。Doctor，next appointment 是几时？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "三月初，我已经写在 card 上了。不要再去新加坡 lupa 啰。"
+      }
+    ]
+  },
+  {
+    "id": "msk_030",
+    "split": "train",
+    "condition": "Osteoporosis screening, first visit",
+    "source": "Osteoporosis",
+    "patient_persona": {
+      "description": "Lanyau anak Jimbun, 60, female, Iban retired rubber tapper in Sri Aman, Sarawak, low milk intake, two falls last year; referred after a pharmacy heel scan. First visit. Quiet, shy, Sarawak Malay with some Iban words.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tiong Siew Ting, Sarawakian Chinese woman in her 30s, medical officer at a Sri Aman health clinic. Gentle, encouraging; English-leaning, speaks Sarawak Malay with patients.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Selamat pagi, Mak Lanyau. Farmasi kata tulang tumit mak rendah. Mak ada bawa kertas tu?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada, doktor. Diorang kata tulang kamek nipis, low bone density. Kamek takut, tak tahu apa maksudnya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak apa, kita bincang pelan-pelan. Mesin kat farmasi tu screening je, belum tentu. Kita kena buat DEXA scan untuk confirm."
+      },
+      {
+        "speaker": "Patient",
+        "text": "DEXA tu sakit ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak sakit langsung, baring sepuluh minit je, like an X-ray. Kena pergi hospital Kuching, saya buat referral letter."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mak pernah jatuh tahun ni? Any fall?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dua kali. Sekali kat tangga rumah panjang, sekali kat kebun getah. Tapi tak patah, cuma lebam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mak ada pening, atau mata kabur waktu jatuh tu?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Mata memang kabur sikit, rabun. Tak ada cermin mata."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Nanti kita refer check mata sekali. Jatuh dengan tulang nipis tu yang bahaya, boleh patah pinggul."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Makan apa bagus untuk tulang, doktor? Kamek tak minum susu, perut tak tahan, lactose katanya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak minum susu tak apa. Makan ikan bilis, tauhu, sayur hijau, dan ikan kecil dengan tulang. Saya bagi calcium dengan vitamin D sekali sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih, doktor. Anak kamek bawa ke Kuching nanti."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Lepas dapat result DEXA, datang balik, we'll decide if you need other medicine."
+      }
+    ]
+  }
+]

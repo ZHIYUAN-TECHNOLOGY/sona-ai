@@ -1,0 +1,816 @@
+[
+  {
+    "id": "msk_041",
+    "split": "train",
+    "condition": "Migraine with aura on the combined pill",
+    "source": "Migraine with aura",
+    "patient_persona": {
+      "description": "Nur Syafiqah binti Azmi, 27, female, call centre team leader in Cyberjaya; on the combined oral contraceptive pill for two years. First visit. Lively, quick Klang Valley Malay with a lot of English.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Jonathan Lau Kok Meng, Malaysian Chinese man in his 30s, GP in Cyberjaya. Friendly, careful; English-leaning, comfortable in Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, saya selalu sakit kepala sebelah, berdenyut-denyut. Tapi yang buat saya takut, sebelum sakit tu mata nampak lampu zig-zag."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lampu zig-zag tu berapa lama, and then the headache comes after?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dalam dua puluh minit, then hilang, lepas tu kepala mula sakit. Kadang-kadang vomit, and I can't stand bright light."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pernah ada tangan kebas sebelah, atau susah nak bercakap masa tu? Like slurred speech?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Once, jari kiri kebas sikit. Lepas tu OK balik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "This sounds like migraine with aura. Aura tu gangguan sementara dalam otak, biasanya harmless by itself."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tapi saya nampak dalam rekod, you makan pil perancang, the combined one. Betul?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya, dah dua tahun. Kenapa, doktor? Ada problem ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For women with migraine with aura, pil kombinasi ni naikkan risiko stroke. So kita kena stop dan tukar method."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Strok? Saya baru dua puluh tujuh! Habis, nak guna apa?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Risikonya masih kecil, tapi tak perlu ambil risiko. Options: progestogen-only pill, implant, or IUD. Semua tu selamat untuk migraine."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, saya discuss dengan suami. Untuk sakit kepala, boleh makan apa?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Waktu mula sakit, naproxen 500mg, and metoclopramide 10mg kalau loya. If still not enough, next visit we can try sumatriptan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kerja saya depan skrin lapan jam, headset pun bising."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Try rehat mata setiap jam, minum air cukup, tidur ikut masa. Buat headache diary, catat hari dan pencetus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Pil tu saya stop terus hari ni?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Stop lepas habis pek ni, tapi guna kondom sampai method baru start. Datang balik dua minggu."
+      }
+    ]
+  },
+  {
+    "id": "msk_042",
+    "split": "train",
+    "condition": "Menstrual migraine, preventive review",
+    "source": "Migraine",
+    "patient_persona": {
+      "description": "Khor Siew Lin, 42, female, insurance agent in Georgetown, Penang; menstrual migraine; mild asthma. Follow-up after three months of flunarizine. Chatty, animated Penang Mandarin with Hokkien and English.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ng Boon Keat, Malaysian Chinese man in his 40s, neurologist at a Penang hospital. Measured, thorough; English-leaning, speaks Mandarin with English medical terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "许小姐，flunarizine 吃了三个月，头痛有减少吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有啦，以前一个月十天，现在大概五六天。可是我胖了五公斤，dress 都穿不下！"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个是 flunarizine 常见的 side effect，会让人胃口好。心情怎样？有没有比较 down？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "心情还好，就是看到体重很 down。可以换别的吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以。本来 propranolol 是很好的选择，但是你有 asthma，propranolol 会让你喘，所以不适合。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，我还有带 Ventolin。那还有什么？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以用 amitriptyline 10mg，晚上吃。也 help sleep，但是 morning 可能有点 drowsy，嘴巴干。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我的头痛都是月经前两天开始，这个有什么办法？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有。你的 period 很准时，所以我们可以用 mini-prophylaxis：period 前两天开始吃 naproxen 500mg，一天两次，吃五天。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那 attack 的时候，sumatriptan 还可以用吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以，50mg，头痛一开始就吃。两个钟头没好 boleh 再吃一次，一天 maximum 两次。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。那 flunarizine 马上停吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以停，不用慢慢减。Amitriptyline 从今晚开始，两个礼拜后如果没什么 side effect，可以加到 20mg。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "体重会不会也 naik？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有一些人会，但是比较少。多 exercise，也有助减少头痛。三个月后带 headache diary 回来。"
+      }
+    ]
+  },
+  {
+    "id": "msk_043",
+    "split": "train",
+    "condition": "Childhood migraine, parent attending",
+    "source": "Migraine",
+    "patient_persona": {
+      "description": "Mr. Arul a/l Subramaniam, 44, male, engineer in Klang, speaking for his 11-year-old daughter Kavya, who has recurrent headaches. First visit. Calm, detail-oriented Malaysian Indian English.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Siti Zubaidah binti Omar, Malay woman in her 40s, paediatrician at a Klang hospital. Warm with children, direct with parents; English-leaning, some Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, Kavya has been getting headaches almost every week for three months. Kadang-kadang muntah, and she has to come home from school."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kavya, can you show me where it hurts? Both sides of the forehead? And does it throb, like a heartbeat?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "She says yes, berdenyut, and she wants to lie in a dark room. After she sleeps, she's fine."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any headaches that wake her from sleep, or vomiting first thing in the morning?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, never at night. Usually afternoon, especially after tuition."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Does she skip breakfast or lunch? How much screen time?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Honestly, breakfast she doesn't eat, rushing to sekolah. And tablet games at night, maybe two hours."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any family history of migraine?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "My wife, and her mother also. Teruk punya migraine."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Her neurological exam, eye check and blood pressure are all normal. This looks like childhood migraine, which often runs in families."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So no need for a brain scan? My wife quite risau."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "With a normal exam and no warning signs, a scan won't help. If anything changes, we'll scan straight away."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "When a headache starts, give ibuprofen 300mg straight away with water, then rehat in a quiet room. Can alternate with paracetamol."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Should she avoid anything? Chocolate, maybe? Dia suka sangat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Regular meals are more important, jangan skip sarapan. Tidur cukup, kurang screen time waktu malam, minum air banyak. Keep a simple headache diary."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, we'll try. Bila kami patut datang balik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "In two months with the diary. Come earlier if she has weakness, confusion, or a very sudden severe headache."
+      }
+    ]
+  },
+  {
+    "id": "msk_044",
+    "split": "train",
+    "condition": "Prolonged migraine attack, emergency department",
+    "source": "Migraine",
+    "patient_persona": {
+      "description": "Mohd Amran bin Juhin, 35, male, Bajau fisherman's son now working as a hotel maintenance technician in Kota Kinabalu, Sabah; three days of migraine. Emergency department. Low, exhausted voice, Sabah Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Stephanie Chong Mei Fong, Sabahan Chinese woman in her 30s, emergency physician in Kota Kinabalu. Efficient, empathetic; English-leaning, speaks Sabah Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Amran, saya Dr. Stephanie, emergency doctor. Sakit kepala ni dah tiga hari tak berhenti?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tiga hari, doktor. Kepala kanan macam dipukul. Muntah sudah banyak kali, makan pun tak masuk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pernah sakit kepala macam ni sebelum ni? Any history?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pernah, migraine sejak muda. Tapi selalu one day sudah hilang. This time lain, too long already."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sakit tu datang tiba-tiba macam kena tembak, atau perlahan-lahan naik?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Perlahan-lahan, macam biasa. Cuma tak hilang-hilang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada demam, leher keras, lemah tangan kaki, atau double vision?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada semua tu. Cuma sensitif cahaya, mata pedih bila lampu terang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your neuro exam is normal, tiada demam, leher tak keras. This is status migrainosus, migraine yang lebih dari 72 jam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita pasang drip dulu sebab you dehydrated. Saya bagi metoclopramide 10mg dalam drip, dengan ketorolac untuk sakit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat Panadol sudah makan banyak, tak jalan bah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Berapa banyak dalam tiga hari? How many tablets?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dua biji, empat kali sehari. Lepas tu tambah lagi dua malam tadi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itu dah lebih 4 gram sehari, bahaya untuk hati. Kita check liver function sekali. Selepas ni, jangan lebih lapan biji sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Sorry, saya tak tahu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak apa. Kalau sakit reda, boleh balik petang ni. Follow-up klinik untuk ubat pencegahan, sebab dah kerap sangat."
+      }
+    ]
+  },
+  {
+    "id": "msk_045",
+    "split": "train",
+    "condition": "Migraine refill with coronary artery disease",
+    "source": "Migraine",
+    "patient_persona": {
+      "description": "Choo Kah Meng, 57, male, owns a hardware and paint shop in Ipoh; long-standing migraine on sumatriptan; had a coronary stent six months ago in KL, and his usual GP did not know. Refill visit. Brusque, fast Malaysian Mandarin with Cantonese colouring.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chandran a/l Muthu, Malaysian Indian man in his 50s, GP in Ipoh for twenty years. Unflappable, friendly; English-leaning, speaks conversational Mandarin and Cantonese words.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor，老样子，我要拿 sumatriptan，两盒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay, Mr. Choo. Before that, any new medicine since last visit? 我看你的 file 很久没更新了。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "哦，有啦。六个月前我在 KL 做了 stent，心脏的血管塞了。现在吃 aspirin 和 clopidogrel，还有 statin。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ah, that's very important. Sumatriptan 会让血管收缩，including the heart ones. 放了 stent 以后，we cannot use it anymore."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我头痛怎么办？这个药最有效。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I understand. Attack 的时候，naproxen is also risky with your aspirin and clopidogrel, 胃会出血。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那 Panadol 呢？我以前觉得没什么用。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol 1 gram 加 metoclopramide 10mg 一起吃, works better than paracetamol alone. 头痛一开始就吃。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How often are the attacks now? 比去年多还是少？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "比较多，一个月七八次。自从心脏的事以后，睡不好，很 worry。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "With that frequency, 需要 preventive。Candesartan 8mg is a good choice. 它是 BP 的药，对心脏也 safe。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我血压不高喔，吃了会不会 pening？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We start low, 两个礼拜后 check 你的 BP。If you feel dizzy standing up, 告诉我。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好啦。那 cardiologist 那边要讲吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, 我会写 letter 给你在 KL 的 cardiologist。Next time, bring all your medicine boxes."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK，谢谢 doctor，还好你有问。"
+      }
+    ]
+  },
+  {
+    "id": "msk_046",
+    "split": "train",
+    "condition": "Chronic tension-type headache with medication overuse",
+    "source": "Headache, tension",
+    "patient_persona": {
+      "description": "Janice Ho Mei Yee, 38, female, senior tax accountant in Kuala Lumpur, near-daily headaches through tax season; takes Panadol Extra most days. First visit. Fast, clipped Malaysian Chinese English with some Cantonese.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Farhana binti Abdul Razak, Malay woman in her 30s, family medicine specialist in Kuala Lumpur. Warm, practical; English-leaning, some Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, I've had headaches almost every day for five months. Both sides, like a tight band around my head. By evening, 好辛苦."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Is it throbbing, or pressing? Any vomiting, or sensitivity to light?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pressing, not throbbing. No vomiting. I can still work, just very tak selesa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "What have you been taking for it?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Panadol Extra. Two in the morning, two lepas lunch, sometimes two at night. Almost every day."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Panadol Extra has caffeine too. Taking painkillers more than fifteen days a month can itself cause daily headaches. We call it medication overuse headache."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So the medicine is making it worse? Oh no."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Partly, yes. The other part is tension type headache. How's your sleep, and your work hours?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tax season, doctor. Office until eleven, then emails in bed. Leher and bahu always stiff."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your shoulders are very tight when I press. How's your mood? Feeling down or anxious lately?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Stressed, yes. Not depressed, I think. Just penat all the time."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Plan: stop Panadol Extra. The first one to two weeks might be worse, but it will improve. Start amitriptyline 10mg at night as a preventive."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Amitriptyline, isn't that an antidepressant? Ubat for depression?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "At this low dose, it's used for headache and sleep, not depression. It may cause some morning grogginess and dry mouth."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. What else can I do?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Neck stretches every hour, laptop at eye level, and stop checking emails in bed. See you in six weeks with a headache diary."
+      }
+    ]
+  },
+  {
+    "id": "msk_047",
+    "split": "train",
+    "condition": "Tension-type headache, worried about a brain tumour",
+    "source": "Headache, tension",
+    "patient_persona": {
+      "description": "Kamarul Ariffin bin Saleh, 45, male, logistics supervisor at a port in Pasir Gudang, Johor; his cousin recently died of a brain tumour. First visit. Anxious, fast Johor Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Wong Pui San, Malaysian Chinese woman in her 40s, GP in Pasir Gudang. Calm, validating; English-leaning, fluent Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, saya nak buat CT scan kepala. Dah sebulan sakit kepala, saya takut ada ketumbuhan. Sepupu saya baru meninggal sebab tumor otak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Takziah, encik. Tentu encik risau sangat. Boleh cerita macam mana sakit kepala tu?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Macam kepala kena ikat, dua-dua belah. Petang lagi teruk, lepas balik kerja, especially bila jem."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada muntah, sakit sampai terjaga malam, atau lemah tangan kaki? Any weakness?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada muntah. Tidur pun... sebenarnya saya susah nak tidur, fikir pasal sepupu saya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Penglihatan kabur, blurred vision, atau sawan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada. Mata OK je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya dah check mata, saraf, kekuatan, refleks. Semua normal. Tekanan darah 128 over 80, pun normal."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sakit kepala encik ni macam tension type headache. Selalunya berkait dengan stress, kurang tidur dan otot leher tegang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tapi doktor, macam mana nak confirm bukan tumor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tumor otak biasanya ada tanda lain, macam weakness, morning vomiting, atau perubahan kelakuan. Encik tak ada semua ni. CT scan tak perlu sekarang, radiation pun ada."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya masih takut juga, doktor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Faham. Macam ni, kalau dalam empat minggu tak berkurang, atau ada tanda yang saya sebut, kita buat scan terus. Setuju?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, setuju. Ubat apa saya boleh makan? Ubat tahan sakit biasa boleh?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol 1 gram bila perlu, not more than ten days a month. Dan cuba bercakap dengan kaunselor tentang kehilangan sepupu, kita ada di klinik ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih, doktor. Lega sikit rasa hati."
+      }
+    ]
+  },
+  {
+    "id": "msk_048",
+    "split": "train",
+    "condition": "Tension-type headache in a university student",
+    "source": "Headache, tension",
+    "patient_persona": {
+      "description": "Lim Jia En, 19, female, first-year accounting student at a private university in Kampar, Perak, living in a hostel; drinks two bubble teas and coffee daily. First visit. Soft, hesitant Malaysian Mandarin with English.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Faiz bin Ramli, Malay man in his 30s, doctor at the university health clinic. Friendly, big-brother manner; English-leaning, speaks basic Mandarin phrases with students.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hi Jia En. Headache 多久了？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "差不多三个礼拜，从 midterm 开始。整个头都紧紧的，好像戴了一顶很紧的帽子。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Every day? Morning 还是 evening 比较严重？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "几乎每天，晚上比较严重。我 study 到三点。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How much coffee or bubble tea a day? 一天几杯？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "早上一杯 coffee，下午两杯 bubble tea……有时候晚上再一杯 Nescafé。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's a lot of caffeine. 你太晚喝，sleep becomes bad，第二天就头痛。It's a cycle, 一直重复。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "可是不喝的话，我温书会想睡觉，assignment 做不完。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I know. Cut down slowly, not suddenly, 不然 caffeine withdrawal 也会头痛。One less drink every few days."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Are you eating properly? Any vomiting or blurred vision?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有呕吐。吃饭……有时候只吃一餐，因为很赶上课。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Skipping meals also triggers headaches. 你的 exam 是 normal，so this is tension type headache, not something dangerous."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我可以吃 Panadol 吗？我室友给我吃了几次。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Can, paracetamol 1 gram when needed, but not more than two or three days a week. Otherwise it causes rebound headache."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好的。我是不是 stress 太大？我家人期望很高。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That may be part of it. 学校的 counselling centre 是免费的。Want me to book you an appointment? No pressure."
+      },
+      {
+        "speaker": "Patient",
+        "text": "嗯……好，试一试。谢谢医生。"
+      }
+    ]
+  },
+  {
+    "id": "msk_049",
+    "split": "train",
+    "condition": "Tension-type headache on amitriptyline, follow-up",
+    "source": "Headache, tension",
+    "patient_persona": {
+      "description": "Joseph a/l Arokiasamy, 52, male, senior clerk at a bus company depot in Sentul, Kuala Lumpur; wife recently had surgery. Follow-up after two months of amitriptyline. Warm, slow Malaysian Indian English with Malay words.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lee Soo Min, Malaysian Chinese woman in her 40s, family medicine specialist in Sentul. Attentive, gentle; English-leaning.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mr. Joseph, how are the headaches after two months of amitriptyline?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Much better, doctor. Last time almost every day, now maybe once or twice a week. Tak teruk macam dulu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's good progress. Any side effects? Dry mouth, constipation, feeling sleepy in the morning?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Mouth a bit dry, I minum more water. Morning a bit blur for the first two weeks, now okay already."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How's your sleep now?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sleep better also. Before this I keep waking up, thinking about my wife."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How is your wife recovering from her operation?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Slowly, doctor. Hip replacement. I help her with everything, mandi, masak. Sometimes I feel very tired, very down."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's a lot to carry. Have you had times recently where you felt hopeless, or that life is not worth living?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, no, not like that. Just penat. My children datang on weekends to help."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'm glad you have them. If those feelings ever get heavier, please tell me. There's also a caregiver support group at the hospital."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Thank you, doctor. Maybe my daughter can tolong find out about it."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let's continue amitriptyline 10mg at night for another four months, then we'll try slowly stopping."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can I take Panadol kalau sakit kepala datang?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, paracetamol 1 gram, but keep it under ten days a month. Keep doing the neck exercises, and remember to rest too."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I will. Terima kasih, doctor."
+      }
+    ]
+  },
+  {
+    "id": "msk_050",
+    "split": "train",
+    "condition": "New headache in an older adult, suspected giant cell arteritis",
+    "source": "Headache, tension",
+    "patient_persona": {
+      "description": "Soh Ah Kow, 72, male, retired lorry driver in Melaka; three weeks of new headache, scalp tenderness, jaw pain while chewing, feels feverish; thought it was stress headache. First visit. Gruff, slow Malaysian Mandarin with Hokkien.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nurul Ain binti Hashim, Malay woman in her 30s, GP in Melaka. Sharp, careful; English-leaning, speaks simple Mandarin with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我头痛三个礼拜了。我儿子说是压力大，tension headache，叫我吃 Panadol 就好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Uncle 以前常常头痛吗？还是最近才 start？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "以前很少。这次是新的，右边太阳穴这里，sikat 头发的时候皮都会痛。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "吃东西的时候，下巴会不会累，或者痛？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "会！吃 ayam 咬一咬，下巴就酸，要停下来 rest。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "眼睛有没有看东西模糊，或者突然一边看不到？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "前天早上，右眼好像有一片黑黑的，几分钟就 OK 了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Uncle，这个很重要。我摸一下太阳穴……这里的血管很硬，而且痛。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你七十多岁，新的头痛，头皮痛，吃东西下巴痛，眼睛也有问题。我担心是 giant cell arteritis，血管发炎。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "血管发炎？严不严重？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "如果不治疗，可能会突然 blind。所以今天就要验血，ESR 和 CRP，then start prednisolone immediately。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "今天就吃 steroid？不用等报告？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，不能等。Prednisolone 60mg 今天开始。我也会写信，叫你明天去医院的 rheumatology 和眼科。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，好。我叫我儿子 drive 我去。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "如果眼睛再黑，或者看不到，马上去 emergency，不要等明天。"
+      }
+    ]
+  }
+]

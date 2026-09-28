@@ -1,0 +1,884 @@
+[
+  {
+    "id": "family_071",
+    "split": "train",
+    "condition": "Pharmacy counter counselling on warfarin",
+    "source": "original",
+    "patient_persona": {
+      "description": "Encik Yusri bin Kamal, 63, male, retired technician in Kuantan, newly started on warfarin after a mechanical heart valve. Attentive, asks many questions.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Pn. Lee Siew Ting, Malaysian Chinese woman in her 30s, pharmacist at a Kuantan hospital outpatient pharmacy counter. Clear, friendly; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Yusri, ini ubat warfarin encik. Saya nak terangkan sikit sebab ubat ni sangat penting dan perlu hati-hati."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, puan. Doktor cakap sebab injap jantung saya yang baru tu, the mechanical valve, kan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Betul. Warfarin cegah darah beku kat injap. Encik makan 5mg, iaitu satu biji warna pink, sekali sehari, waktu yang sama setiap petang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau terlupa satu hari, macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau ingat hari yang sama, makan. Kalau dah esok, langkau je, jangan makan dua biji sekaligus. Catat dalam buku warfarin ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Makanan pula ada pantang ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sayur hijau macam bayam, kangkung, pucuk paku ada vitamin K. Tak perlu elak, tapi makan jumlah yang konsisten, jangan tiba-tiba banyak sangat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya suka minum jus limau dan makan ulam-ulaman. Still can ah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, dalam jumlah biasa. Yang perlu elak, ubat tradisional, jamu, dan suplemen tanpa tanya doktor. Banyak berinteraksi dengan warfarin."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Panadol boleh makan kalau sakit kepala?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol boleh, dos biasa. Tapi ubat tahan sakit macam ibuprofen, diclofenac, atau aspirin, jangan makan. Bahaya berdarah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tanda berdarah macam mana, puan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Gusi berdarah lama, lebam besar tanpa sebab, kencing merah, najis hitam, atau muntah darah. Kalau ada, terus ke hospital."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya kena check darah selalu ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, ujian INR. Minggu pertama dua kali, lepas stabil sebulan sekali, kat klinik warfarin. Target encik dua setengah ke tiga setengah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau pergi klinik gigi, perlu beritahu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mesti beritahu, dan tunjuk kad warfarin ni. Simpan dalam dompet. Ada soalan lain, encik?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada, puan. Thank you, very clear."
+      }
+    ]
+  },
+  {
+    "id": "family_072",
+    "split": "train",
+    "condition": "Pharmacy counselling on insulin pen technique",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mdm. Chew Ah Lan, 67, female, retired market vendor in Kluang, Johor, newly prescribed insulin; daughter accompanies. Nervous, worried about needles, Hokkien-flavoured Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Mr. Muhammad Aiman bin Rosli, Malay man in his 20s, pharmacist at a Kluang klinik kesihatan. Patient, cheerful; English with Mandarin and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Auntie Chew, 你好. This is your insulin pen. Today I teach you how to inject, okay? 不用怕."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我很怕打针。医生说一定要打，tablet 不够了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The needle is very small, very thin. 很多人说比 finger prick 还不痛. Let me show you first."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "First, wash hands. 拿这个 pen, remove the cap. Put a new needle, screw it on like this."
+      },
+      {
+        "speaker": "Patient",
+        "text": "每次都要换新的 needle 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, every time new needle. 旧的针会钝, more pain and can cause infection."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Next, turn the dial to 2 units, point up, press to see a drop at the tip. This is the priming, to remove air."
+      },
+      {
+        "speaker": "Patient",
+        "text": "看到一滴出来了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. Now turn to your dose, 10 units. 捏起肚子的皮, two fingers away from belly button."
+      },
+      {
+        "speaker": "Patient",
+        "text": "肚子这边？不会很 pain 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tummy fat is best, less pain. Push the needle straight in, press the button fully, 慢慢数到十, then pull out."
+      },
+      {
+        "speaker": "Patient",
+        "text": "一、二、三……十。咦，真的不太痛。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "See, auntie very brave! 每天换地方, left side, right side, so no lumps form."
+      },
+      {
+        "speaker": "Patient",
+        "text": "这个 insulin 要放冰箱吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "New pens, in the fridge, not freezer. 正在用的那支, keep at room temperature, up to 28 days. Don't leave in the car."
+      },
+      {
+        "speaker": "Patient",
+        "text": "如果太低，那个 hypo，要怎么办？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If shaking, sweating, very hungry, take three sweets or half glass of juice. Then check sugar after fifteen minutes. 你女儿也要知道."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我女儿有在听。Terima kasih, 年轻人。"
+      }
+    ]
+  },
+  {
+    "id": "family_073",
+    "split": "train",
+    "condition": "Pharmacy counselling on metered-dose inhaler and spacer",
+    "source": "Asthma",
+    "patient_persona": {
+      "description": "Mr. Rajkumar a/l Subramaniam, 45, male, factory supervisor in Prai, Penang, newly diagnosed with adult-onset asthma. Practical, a bit impatient, Manglish.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Pn. Nur Syafiqah binti Azmi, Malay woman in her 30s, pharmacist at a Penang hospital outpatient pharmacy. Friendly, thorough; English with Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mr. Rajkumar, the doctor gave you two inhalers today. Saya terangkan which one is for what."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, but quick ah, I need to go back to factory. Parking also nak habis."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll be quick. The brown one is budesonide-formoterol, Symbicort. That's your preventer, guna setiap hari, two puffs pagi dan malam."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Every day even when I'm not sesak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, every day. It reduces swelling in your airways. Kalau guna masa sakit je, attacks will keep coming."
+      },
+      {
+        "speaker": "Patient",
+        "text": "And the blue one?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Blue one, salbutamol, Ventolin, only when you're wheezy or sesak nafas. Two puffs. If you need it more than twice a week, jumpa doktor."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, brown every day, blue when sesak. Got it."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Now show me how you use the blue one. Cuba tunjuk, here's a placebo."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Like this, shake, press and breathe in."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Almost. You pressed before breathing in. Banyak ubat melekat kat tekak je. Let's use the spacer, easier."
+      },
+      {
+        "speaker": "Patient",
+        "text": "The tube thing? Must bring everywhere ah? Bit leceh lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "At home and office, the spacer is best. Goncang, attach, tekan sekali, then breathe in and out slowly five times."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, this one feels more masuk in the chest."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Exactly. For Symbicort, it's a Turbuhaler, tak payah goncang. Twist until click, breathe out away from it, then breathe in fast and deep."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Fast for brown, slow for blue. Okay, I remember."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "And after the brown one, kumur mulut dan buang. Otherwise can get fungal infection in the mouth."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Thank you, cik. Actually good you checked, I would've done it wrong."
+      }
+    ]
+  },
+  {
+    "id": "family_074",
+    "split": "train",
+    "condition": "Pharmacy counselling on antibiotic course and oral contraceptive interaction query",
+    "source": "original",
+    "patient_persona": {
+      "description": "Cik Nur Farahin binti Azmi, 24, female, university student in Shah Alam, prescribed amoxicillin for tonsillitis; on a combined pill. Friendly, a bit shy, Malay-English.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Mr. Ong Kah Wai, Malaysian Chinese man in his 30s, community pharmacist at a Shah Alam pharmacy. Relaxed, clear; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Cik Farahin, ini ubat dari klinik. Amoxicillin 500mg, one capsule three times a day, for seven days. Makan sampai habis ya."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau dah tak sakit tekak lepas tiga hari, boleh stop tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jangan stop. Kalau stop awal, kuman tak mati semua, boleh datang balik, dan jadi resistant kepada antibiotic."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Faham. Boleh makan sebelum atau selepas makan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Amoxicillin boleh dua-dua. Tapi kalau perut tak selesa, take it after food. Jarakkan lebih kurang lapan jam."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Encik, saya nak tanya sikit. Saya makan pil perancang. Antibiotic ni kurangkan kesan pil ke? Kawan saya kata macam tu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Soalan bagus. Untuk amoxicillin, kajian terkini tunjuk tak kurangkan kesan pil. Yang betul-betul berinteraksi, rifampicin, untuk TB."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, lega sikit saya dengar."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tapi kalau cik muntah dalam tiga jam lepas makan pil, atau severe diarrhoea, pil tu mungkin tak diserap. Masa tu guna kondom tujuh hari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada kesan sampingan amoxicillin?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kadang-kadang cirit-birit sikit, atau loya. Kalau keluar ruam gatal, bengkak bibir, atau susah bernafas, stop dan pergi klinik segera. Itu alahan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya tak pernah alahan ubat. Dulu pernah makan antibiotic OK je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Untuk sakit tekak, boleh makan paracetamol 1 gram, sampai empat kali sehari, dan kumur air garam suam."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lozenges boleh ambil tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh. Saya ada yang ada ubat bius sikit, bantu kurangkan sakit bila telan. One lozenge every three hours."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, saya ambil satu kotak. Thank you, encik."
+      }
+    ]
+  },
+  {
+    "id": "family_075",
+    "split": "train",
+    "condition": "Pharmacy counselling on weekly methotrexate for rheumatoid arthritis",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mrs. Grace Chin Mei Lin, 52, female, secondary school principal in Kuching, Sarawak, newly started on methotrexate. Precise, attentive, takes notes.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Mr. Ahmad Nazri bin Abdullah, Malay man in his 40s, senior pharmacist at a Kuching hospital. Careful, calm; English with Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mrs. Chin, this is methotrexate 2.5mg tablets. Your dose is 10mg, which is four tablets, taken once a week only. Not every day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Once a week. Which day is best?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Choose a fixed day. Many people choose Sunday. Let's write it on the box: \"Sunday only\". Kalau termakan setiap hari, very dangerous."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sunday only. I'll set a reminder on my phone."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. This is folic acid 5mg. Take one tablet once a week, but not on the same day as methotrexate. Maybe Wednesday."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Why folic acid?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It reduces side effects like mouth ulcers and nausea, without affecting how methotrexate works on your joints."
+      },
+      {
+        "speaker": "Patient",
+        "text": "What side effects should I watch for?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mild nausea, tiredness the day after. More serious: demam, sakit tekak, ulser mulut, lebam tanpa sebab, or cough and breathlessness. Then stop and call the clinic."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I have a school trip next month, lawatan ke Semenanjung. Can I take my usual flu vaccine before that?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The flu injection is fine. Avoid live vaccines like yellow fever or oral typhoid. Always tell doctors you're on methotrexate."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Any alcohol restriction? I sometimes have wine at dinners, majlis rasmi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Best to avoid, or very minimal, sebab dua-dua beri kesan pada hati. You'll have blood tests every two to four weeks at first, for liver and blood counts."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Are there medicines I should avoid?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Avoid trimethoprim or Bactrim antibiotics, and be careful with anti-inflammatory painkillers. Beli apa-apa ubat, always tell the pharmacist."
+      },
+      {
+        "speaker": "Patient",
+        "text": "And pregnancy? Not planning, just asking."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Methotrexate harms a developing baby, so reliable contraception is needed. Anyway, you mentioned you're menopausal, so less of a concern."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih. This is very clear, better than the leaflet."
+      }
+    ]
+  },
+  {
+    "id": "family_076",
+    "split": "train",
+    "condition": "Pre-operative consent for laparoscopic cholecystectomy",
+    "source": "original",
+    "patient_persona": {
+      "description": "Puan Rosnani binti Ahmad, 49, female, primary school teacher in Kuala Lumpur with recurrent gallstone attacks. Anxious, asks about recovery time and fasting.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chandran a/l Muniandy, Malaysian Indian man in his 40s, general surgeon at a KL hospital. Clear, reassuring; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Rosnani, esok pagi puan dijadualkan untuk pembedahan buang pundi hempedu, laparoscopic cholecystectomy. Saya nak terangkan sebelum puan tandatangan borang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Saya dah tiga kali masuk emergency sebab sakit perut kanan atas, lepas makan berminyak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Betul. Gallstones dalam pundi hempedu sebabkan sakit tu. Kalau tak buang, boleh jadi jangkitan, atau pankreas radang, pancreatitis."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Macam mana pembedahan tu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita buat empat lubang kecil kat perut, masukkan kamera, dan keluarkan pundi hempedu. Puan akan tidur penuh, general anaesthesia."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tanpa pundi hempedu, saya boleh hidup normal ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh. Hati tetap buat hempedu. Ada sesetengah orang cirit-birit sikit after fatty meals, usually settles in a few weeks."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Risiko apa yang ada, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Risiko biasa: pendarahan, jangkitan luka, dan sakit bahu sebab gas. Risiko jarang, kecederaan saluran hempedu, lebih kurang satu dalam lima ratus."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kadang-kadang, kalau keadaan dalam perut sukar, we have to convert to open surgery, luka besar sikit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau tukar ke luka besar, lama lah baru baik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, mungkin duduk wad tiga ke lima hari. Kalau laparoscopy biasa, satu atau dua hari je."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Puasa dari pukul berapa?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Nil by mouth after midnight ni. Air kosong boleh minum sampai pukul enam pagi. Ubat darah tinggi pagi esok, makan dengan sikit air."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya ada makan aspirin, doktor klinik bagi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Anaesthetist dah semak, aspirin puan untuk pencegahan je, dah stop seminggu lepas. Bagus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Berapa lama cuti sakit? MC berapa hari?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dua minggu MC. Tak boleh angkat berat empat minggu. Kalau tak ada soalan lain, you can sign here."
+      }
+    ]
+  },
+  {
+    "id": "family_077",
+    "split": "train",
+    "condition": "Pre-operative consent for cataract surgery",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mr. Loh Kim Seng, 71, male, retired goldsmith in Kampar, Perak, with a dense cataract in the right eye. Hard of hearing, sceptical of surgery, speaks Cantonese-flavoured Mandarin.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ain Nabila binti Rosli, Malay woman in her 30s, ophthalmology medical officer at an Ipoh hospital. Patient, speaks loudly and slowly; English with Mandarin and Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Uncle Loh, 你的右眼 cataract, 白内障, is already very thick. You're scheduled for surgery next Tuesday."
+      },
+      {
+        "speaker": "Patient",
+        "text": "医生，我看报纸看不到，开车晚上也看不清楚。可是我怕 operation 以后会瞎掉。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Very understandable. 这个手术很普遍, more than 95 percent get better vision. Serious complications are rare."
+      },
+      {
+        "speaker": "Patient",
+        "text": "要怎么做？会痛吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We use eye drops and a small injection to numb the eye. 你是醒着的, but no pain. We make a small cut, remove the cloudy lens, and put a new plastic lens."
+      },
+      {
+        "speaker": "Patient",
+        "text": "要多久？要 admit 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "About twenty to thirty minutes. Day care, 早上来, go home the same day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "有什么 risk？我朋友说有人开完以后眼睛 infection。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Risks include infection, 大概一千个人一个, bleeding, raised eye pressure, or needing a second operation. Very rarely, loss of vision."
+      },
+      {
+        "speaker": "Patient",
+        "text": "一千个里面一个……好啦，那还可以。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Some people get a cloudy membrane months later, 用 laser 就可以. And you'll still need reading glasses after."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我有吃 aspirin，还有降血压的药。要停吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No need to stop aspirin for cataract surgery. 降血压的药照常吃, on the morning of the surgery."
+      },
+      {
+        "speaker": "Patient",
+        "text": "做完以后要注意什么？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Eye drops four times a day for one month. 晚上戴 eye shield 一个礼拜. Don't rub the eye, no swimming, avoid dust."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我可以洗头吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Can, but ask your family to help, 头向后仰, so no water goes into the eye. First week, better be careful."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我明白了。那个 form 我现在签，我儿子会先读给我听。"
+      }
+    ]
+  },
+  {
+    "id": "family_078",
+    "split": "train",
+    "condition": "Pre-operative consent for total knee replacement",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mrs. Parvathy a/p Nadarajan, 68, female, retired nurse in Seremban, severe osteoarthritis of the left knee. Experienced with hospitals, direct questions, some Malay and Tamil-accented English.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chia Wei Hong, Malaysian Chinese man in his 40s, orthopaedic surgeon at a Seremban hospital. Frank, confident; English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mrs. Parvathy, you're booked for a left total knee replacement next week. Let's go through the consent properly, even though you know hospitals well."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Please, doctor. Working in the ward lain, being the patient lain. I'm a bit nervous, takut juga."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Understandable. We'll replace the worn joint surfaces with metal and plastic parts. You'll have a spinal anaesthetic, numb from the waist down, with sedation."
+      },
+      {
+        "speaker": "Patient",
+        "text": "How long will the new knee last?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "About ninety percent still working well after fifteen to twenty years. Weight control helps it last longer."
+      },
+      {
+        "speaker": "Patient",
+        "text": "What are the main risks?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Infection, around one percent, which may need more surgery. Blood clots in the legs, which is why you'll get blood thinner injections. Stiffness, and some ongoing pain in about one in ten."
+      },
+      {
+        "speaker": "Patient",
+        "text": "One in ten still got pain? Hmm, that's quite a lot, banyak juga tu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, but most of those are still better than before surgery. I want you to have realistic expectations."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My sugar tak berapa baik, HbA1c 8.1. Is that a problem?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It raises infection risk, risiko jangkitan naik. Your physician agreed to adjust your insulin. We'd prefer below 8, but 8.1 is acceptable. Jaga gula betul-betul minggu ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. After surgery, berapa lama duduk wad?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Usually three to five days. Physio will get you standing the next day. Walking frame for about six weeks, then a stick."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My house got stairs, and a squatting toilet at the back, tandas cangkung."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Can you sleep downstairs for a while? And please get a commode chair or toilet seat raiser. Jangan mencangkung sekurang-kurangnya tiga bulan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, my son will arrange. Bila boleh drive?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Left knee and automatic car, maybe four to six weeks. Any other questions before you sign?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, you've been very clear. Terima kasih, doktor."
+      }
+    ]
+  },
+  {
+    "id": "family_079",
+    "split": "train",
+    "condition": "Pre-operative consent for elective inguinal hernia repair",
+    "source": "original",
+    "patient_persona": {
+      "description": "Encik Zulkifli bin Hamzah, 55, male, fisherman from Kuala Besut, Terengganu, with a right inguinal hernia for two years. Jovial, worried about time off work, strong Terengganu accent softened.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Xin Yi, Malaysian Chinese woman in her 30s, surgical medical officer at a Terengganu hospital. Friendly, straightforward; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Zulkifli, esok encik akan buat pembedahan hernia sebelah kanan. Saya nak terangkan dulu sebelum tandatangan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Benda ni dah dua tahun, makin besar, especially when I pull the net, angkat pukat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita akan tolak balik usus ke dalam, dan letak mesh, jaring khas, untuk kuatkan dinding perut. Buat melalui satu luka kat pangkal peha."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Jaring tu kekal dalam badan ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, kekal. Badan akan tumbuh tisu di sekelilingnya. Ia kurangkan risiko hernia datang balik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kena tidur penuh ke, doktor? General anaesthesia?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh bius separuh badan, spinal, atau bius penuh. Anaesthetist akan bincang dengan encik petang ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Risikonya apa?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sakit dan lebam kat kawasan luka, jangkitan, kebas kulit sekitar luka. Kadang-kadang sakit berpanjangan. Hernia berulang, lebih kurang satu hingga lima peratus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau tak buat, apa jadi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hernia boleh tersepit, usus tersekat. Itu kecemasan, lebih bahaya. Sebab tu lebih baik buat secara terancang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bila saya boleh pergi laut balik? Musim ikan dah nak mula."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Light work after two weeks. Kerja berat macam angkat pukat, tunggu enam minggu. Sorry, encik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Enam minggu? Aduh, anak saya kena ganti lah ni, dia kena turun laut."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lebih baik sembuh betul-betul daripada hernia datang balik. Malam ni lepas pukul dua belas jangan makan dan minum."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Rokok pun tak boleh ke? Saya hisap sebatang dua."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Best to stop, sekurang-kurangnya sampai luka baik. Smoking slows healing and increases infection risk."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baiklah doktor, saya cuba. Mana nak tandatangan?"
+      }
+    ]
+  },
+  {
+    "id": "family_080",
+    "split": "test",
+    "condition": "Pre-operative consent for appendicectomy in a teenager, parent consenting",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mdm. Kok Mei Ling, 42, female, mother of Kok Jun Wei, 14, who has acute appendicitis; bakery owner in Sandakan, Sabah. Anxious, fast-speaking, asks many questions.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Hafizuddin bin Jalil, Malay man in his 30s, surgical medical officer at a Sandakan hospital. Calm, direct; English with Mandarin and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Kok, Jun Wei's scan confirms appendicitis, 盲肠炎. He needs surgery tonight. Since he's under eighteen, we need your consent."
+      },
+      {
+        "speaker": "Patient",
+        "text": "今天晚上就要 operation？不能吃药就好吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For some mild cases, antibiotics alone can work. But his appendix is swollen with a stone inside, 很可能会爆. Surgery is safer."
+      },
+      {
+        "speaker": "Patient",
+        "text": "如果 burst 了会怎样？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Infection spreads in the whole tummy, peritonitis, 腹膜炎. More serious, longer hospital stay, sometimes need second surgery."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好……那要怎样开？大伤口吗？Big wound?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Keyhole, laparoscopic. 三个小伤口, one at the belly button. Full general anaesthesia, he'll be asleep throughout."
+      },
+      {
+        "speaker": "Patient",
+        "text": "麻醉对小孩子 safe 吗？他以前没有开过刀。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Very safe for a healthy fourteen-year-old. The anaesthetist will see him before surgery and ask about allergies."
+      },
+      {
+        "speaker": "Patient",
+        "text": "有什么风险？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Wound infection, bleeding, and an abscess inside the tummy, 尤其是发炎很严重的话. Rarely, injury to the bowel."
+      },
+      {
+        "speaker": "Patient",
+        "text": "要住院多少天？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If no burst, 一到两天. If burst, maybe five to seven days, with antibiotic drip."
+      },
+      {
+        "speaker": "Patient",
+        "text": "他下个礼拜有 exam，可以去吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If all goes well, he can go to school after one week, but no sports or PJ 两到四个礼拜."
+      },
+      {
+        "speaker": "Patient",
+        "text": "他现在还可以吃东西吗？他说很饿。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No, nothing to eat or drink from now, 现在开始不能吃. We'll give drip for fluids, and painkiller through the vein."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我签。医生，请好好照顾他。"
+      }
+    ]
+  }
+]

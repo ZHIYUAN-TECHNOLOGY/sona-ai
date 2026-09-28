@@ -1,0 +1,752 @@
+[
+  {
+    "id": "gi_071",
+    "split": "train",
+    "condition": "Benign prostatic hyperplasia (BPH)",
+    "source": "Benign prostatic hyperplasia (BPH)",
+    "patient_persona": {
+      "description": "Leong Kok Wah, 68, male, retired tin-mine fitter from Ipoh; hypertension on amlodipine. Slow, gravelly Malaysian Mandarin with Cantonese colour.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Loh Chee Keong, Malaysian Chinese man in his 50s, GP in Ipoh. Friendly; Mandarin with English medical terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "梁先生，今天来是什么问题？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "医生，我这一两年小便越来越 slow，要站很久才出来。晚上要起身三四次，睡不好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "小便完了，会不会觉得还没有完，还想再去？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "会啊，常常刚出来又要回去。有时候还会滴到裤子，很尴尬。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有没有看到 blood？或者小便痛？Weight 有没有减少？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有血，也不痛。体重差不多，七十公斤。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你有吃什么药吗？感冒药、药材、supplement 都算。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "血压药 amlodipine 5mg，早上一粒。晚上睡不着，有时候吃 allergy 药。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这种 allergy 药是 antihistamine，会让 urine 更难出来，尽量不要吃。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "刚才做了 rectal exam，prostate 大，但是摸起来 smooth，没有硬块。像是 benign prostate enlargement，前列腺肥大。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "会不会是癌症？我有个朋友是 prostate cancer。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我们会验血看 PSA，也做 urine test 和 kidney function test。Report 出来我再跟你解释。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "现在先开 tamsulosin 0.4mg，每天晚上睡前一粒。刚开始可能会 dizzy，起身要 slowly，don't rush。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "晚上起来那么多次，有什么办法吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "晚上七点以后少喝水，不要喝茶和 coffee。Two weeks 后回来看 report。"
+      }
+    ]
+  },
+  {
+    "id": "gi_072",
+    "split": "train",
+    "condition": "Benign prostatic hyperplasia (BPH)",
+    "source": "Benign prostatic hyperplasia (BPH)",
+    "patient_persona": {
+      "description": "Haji Abdul Razak bin Mat Saad, 72, male, retired padi farmer from Alor Setar, Kedah; on Duodart and perindopril. Soft, slow Kedah Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Anis Sofea binti Hashim, Malay woman in her 30s, medical officer at a Kedah health clinic. Respectful; Malay with some English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Assalamualaikum, pak haji. Macam mana urine flow sekarang, lepas makan ubat tiga bulan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Waalaikumsalam. Kencing lebih laju sikit, doktor. Malam bangun dua kali saja, dulu empat lima kali."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Alhamdulillah, bagus tu. Ada side effect tak? Pening ke?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada. Pagi-pagi bila bangun dari katil, kepala pusing. Minggu lepas hampir jatuh dalam bilik air."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Blood pressure pak haji masa duduk 128/76, standing turun jadi 102/64. That's postural hypotension, pak haji."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Duodart tu ada tamsulosin, boleh turunkan tekanan darah. Pak haji ada makan ubat darah tinggi lain?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada, perindopril 8mg pagi. Anak saya beli juga ubat herba untuk prostat dari pasar malam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ubat herba tu nama apa? Boleh bawa tunjuk minggu depan? Ada yang dicampur ubat lain."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Nanti saya suruh anak ambil gambar. Saya makan dua biji sehari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Buat masa ni stop herba tu dulu. Perindopril saya reduce to 4mg. Duodart continue, one tablet at night, lepas makan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau bangun malam nak kencing, macam mana nak elak pening?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Duduk tepi katil dulu one minute, baru bangun. Pasang lampu kecil dalam toilet."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. PSA saya bulan lepas macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "PSA 1.4. Duodart turunkan PSA separuh, jadi kita kira macam 2.8. Masih normal."
+      }
+    ]
+  },
+  {
+    "id": "gi_073",
+    "split": "train",
+    "condition": "Benign prostatic hyperplasia (BPH)",
+    "source": "Benign prostatic hyperplasia (BPH)",
+    "patient_persona": {
+      "description": "Joseph a/l Anthony, 65, male, retired schoolteacher from Butterworth, Penang; on tamsulosin for a year; brother had prostate cancer. Articulate, precise Malaysian Indian English.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Boon Chye, Malaysian Chinese man in his 50s, urologist at a Penang hospital. Measured; English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mr Joseph, good to see you. We have your ultrasound and blood results today."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes doctor. The tamsulosin helped at first, but these last few months the stream lemah again."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your prostate volume is 55ml, about three times normal. After you pass urine, 90ml still stays in the bladder."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Is that a lot? Should I be risau?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's moderately raised, not dangerous yet. Your kidney function is normal, creatinine 88."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your PSA is 3.1. For your age and prostate size that fits BPH, and the rectal exam was smooth."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My brother had prostate cancer at seventy. That's always at the back of my mind."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Faham, encik. With that family history, kita ulang PSA dalam six months. Kalau naik cepat, we'll do an MRI."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Since the prostate is large, I'll add dutasteride 0.5mg once a day. It shrinks the prostate slowly, about a quarter over six months."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Six months? Lama juga tu. Any side effects I should know about?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Some men get lower libido or less semen. It also halves your PSA reading, so always tell any doctor you're on it."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alright. And kalau ubat tak jalan, then operation?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Then we'd discuss TURP or newer options like Rezum. But let's give dutasteride a fair chance first."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih, doctor. I'll continue the tamsulosin as usual then."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, both at night. Jumpa lagi in six months with a repeat PSA and bladder scan."
+      }
+    ]
+  },
+  {
+    "id": "gi_074",
+    "split": "train",
+    "condition": "Benign prostatic hyperplasia (BPH)",
+    "source": "Benign prostatic hyperplasia (BPH)",
+    "patient_persona": {
+      "description": "Pak Wan Ismail bin Wan Ali, 78, male, retired fisherman from Kuala Terengganu; admitted with urinary retention after cold medicine. Hard of hearing, loud Terengganu Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lim Jia Hui, Malaysian Chinese woman in her 30s, surgical medical officer at a Terengganu hospital. Patient; speaks slow, clear Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Selamat pagi, pak cik. Saya doktor surgery. Macam mana hari ni? Masih sakit perut bawah?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hah? Oh, dah tak sakit dah, doktor. Semalam macam nak pecah perut, urine tak keluar langsung."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Semalam kita pasang catheter, keluar 1.2 liter air kencing. Pundi kencing pak cik penuh sangat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Banyak tu. Never jadi macam ni. Selalu kencing lambat je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sebelum ni, ada makan ubat selsema atau cough mixture?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada. Anak bagi ubat selsema dari farmasi, sebab hidung tersumbat. Makan tiga hari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ubat tu ada pseudoephedrine. Untuk orang yang prostat besar, ubat tu boleh buat kencing tersekat terus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Laa, ubat selsema pun boleh jadi macam ni?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, pak cik. Next time beritahu pharmacist yang pak cik ada masalah prostate."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Creatinine semalam 140, hari ni dah turun 110. Kidney function is okay, no damage."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya start tamsulosin 0.4mg, one tablet at night. Lusa kita remove catheter, tengok boleh kencing sendiri ke tak."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau tak boleh kencing juga, macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita pasang balik catheter, pak cik bawa balik rumah, dan kita bincang pembedahan TURP."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pembedahan? Saya dah tua, takut."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak apa, kita tengok dulu lusa. Ramai boleh kencing sendiri lepas berhenti ubat selsema dan makan tamsulosin."
+      }
+    ]
+  },
+  {
+    "id": "gi_075",
+    "split": "train",
+    "condition": "Benign prostatic hyperplasia (BPH)",
+    "source": "Benign prostatic hyperplasia (BPH)",
+    "patient_persona": {
+      "description": "Tay Ah Seng, 70, male, retired goldsmith in Melaka; BPH on tamsulosin and finasteride, type 2 diabetes on metformin. Cheerful, jokes, Melaka Mandarin with Hokkien words.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chua Li Ting, Malaysian Chinese woman in her 40s, family medicine specialist in Melaka. Warm; Mandarin with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我来拿药。Tamsulosin 跟 finasteride 都快吃完了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好。最近 urine flow 怎样？白天和晚上都跟我讲一下。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "白天还好，出得比较顺。可是晚上还是起来三次，我太太都被我吵醒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "上次给你的 bladder diary，有记录吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有，我孙女帮我写的。你看，晚上的量比白天还多。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你晚上的小便占了一天的四成多。这个叫 nocturnal polyuria，不完全是 prostate 的 problem。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那是什么引起的？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可能是晚上 drink too much，或者脚肿，躺下水分就回流。你 dinner 后喝什么？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "饭后一定喝一壶中国茶，然后看电视吃西瓜。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "茶和西瓜都改到 afternoon 吧。晚上六点以后少喝，傍晚把脚抬高半个钟。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的血糖也要看。HbA1c 这次 8.1，比上次高。血糖高也会多尿。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "最近华人新年，吃太多年饼了，哈哈。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "过年难免。Metformin 照吃，我帮你转介 dietitian。两种 prostate 药继续，开三个月。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，谢谢医生。Three months 后再见。"
+      }
+    ]
+  },
+  {
+    "id": "gi_076",
+    "split": "train",
+    "condition": "Chronic kidney disease",
+    "source": "Chronic kidney disease",
+    "patient_persona": {
+      "description": "Saraswathy a/p Govindasamy, 58, female, school canteen operator in Klang; type 2 diabetes for 14 years, hypertension on losartan. Warm, talkative Malaysian Indian English with Malay words.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Faizal bin Ahmad, Malay man in his 40s, nephrologist at a Klang Valley hospital. Precise, calm; English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Good morning, Mrs Saraswathy. Your GP referred you because your kidney numbers went up. Let's go through it."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Morning doctor. Yes, the klinik called me, said potassium high, must see specialist quickly. I was so scared."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your potassium is 5.8, normal is up to 5.0. Your eGFR, the kidney filter, is 38. Three months ago it was 46."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Why it drop so fast? Every day I makan all my ubat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let's check. Any pain killers recently? Even from the pharmacy?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "My knee very sakit, so the kedai ubat gave me diclofenac. Sehari dua biji, dah sebulan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's likely a big part of it. Diclofenac can damage the kidneys, especially together with losartan. Please stop it today."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Then for my lutut sakit what can I take?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol 1 gram up to three times a day is safe. We'll ask physio to see your knee."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For potassium, kurangkan pisang, air kelapa and potatoes. Also, do you use a salt substitute?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo, yes. My daughter bought the low sodium garam, I use for masak in the canteen."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That salt is mostly potassium chloride. Switch back to normal salt, just use less of it."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'm also starting dapagliflozin 10mg once a day. It protects the kidney and helps your diabetes."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay doctor. Bila kena datang balik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Two weeks, for a repeat potassium and kidney test. Kalau rasa lemah sangat or jantung berdebar, terus pergi emergency."
+      }
+    ]
+  },
+  {
+    "id": "gi_077",
+    "split": "train",
+    "condition": "Chronic kidney disease",
+    "source": "Chronic kidney disease",
+    "patient_persona": {
+      "description": "Encik Zainal Abidin bin Yahya, 63, male, retired postman from Kampung Baru, Kuala Lumpur; diabetic kidney disease; his late brother was on dialysis. Worried, deliberate KL Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Wong Pei Shan, Malaysian Chinese woman in her 40s, nephrologist in Kuala Lumpur. Gentle; speaks Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Zainal, keputusan darah bulan ni dah ada. eGFR sekarang 18, bulan lepas 21."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Makin turun lah ye, doktor. Saya dah jaga makan, kurang salt."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Encik dah buat yang terbaik. But the kidney is already stage 4, so kita kena mula bincang dialysis preparation."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dialysis? Saya takut, doktor. Arwah abang saya dulu cuci darah, susah sangat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Faham. Bukan mula sekarang, tapi kena bersedia. Biasanya bila eGFR bawah 10, atau ada simptom."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "First step, buat fistula di tangan kiri. Kena buat early, because it takes two to three months to mature."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tangan kiri tu tak boleh ambil darah lagi ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Betul. Mulai hari ni, jangan ambil darah atau pasang drip di tangan kiri. Beritahu nurse."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hemoglobin encik 9.1, that's why cepat penat. Kita start erythropoietin injection, once a week."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh inject sendiri kat rumah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, nurse akan ajar. Bicarbonate darah pun rendah, jadi saya bagi sodium bicarbonate 1 gram, sehari tiga kali."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada pilihan lain selain cuci darah kat hospital?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada, peritoneal dialysis yang buat sendiri kat rumah, atau pemindahan buah pinggang. Minggu depan nurse akan terangkan semua."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih, doktor. Minggu depan saya bawa isteri sekali."
+      }
+    ]
+  },
+  {
+    "id": "gi_078",
+    "split": "train",
+    "condition": "Chronic kidney disease",
+    "source": "Chronic kidney disease",
+    "patient_persona": {
+      "description": "Wong Siew Hua, 66, female, retired rubber smallholder in Sibu, Sarawak; hypertension and CKD. Soft Foochow-accented Mandarin, polite but stubborn.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lau Kah Ming, Malaysian Chinese man in his 40s, physician at a Sibu hospital clinic. Patient, direct; Mandarin with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "黄阿姨，这次验血的 creatinine 是 190，上次是 140。肾功能差了不少。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "怎么会这样？我每天都有吃 blood pressure 药。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "最近有没有吃其他东西？中药、supplement、slimming tea 都算。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我邻居介绍一个中药，说是补肾的，一包一包煮来喝。喝了两个月。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有带来吗？有些中药含有会伤肾的 chemical，还有 heavy metal。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有，我拍了照片。你看，包装上面都是中文。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "上面没有卫生部的 registration number，ingredients 也不清楚。我建议你马上 stop，不要再喝了。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "可是我喝了觉得精神比较好，晚上也比较少起来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我明白，但是 risk 很大。你的 kidney 只剩下差不多三成 function，要好好保护。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "血压今天 156/92，有点高。Amlodipine 从 5mg 加到 10mg，早上一粒。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要不要吃什么药补肾？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "没有补肾的药。最重要是 control blood pressure，少盐，不要乱吃 painkiller 和药材。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好吧，我听你的。那几包我拿去丢掉。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "很好。Six weeks 后再验血，看 creatinine 会不会回升一点。"
+      }
+    ]
+  },
+  {
+    "id": "gi_079",
+    "split": "train",
+    "condition": "Chronic kidney disease",
+    "source": "Chronic kidney disease",
+    "patient_persona": {
+      "description": "Rosmah binti Hassan, 55, female, runs a kuih stall in Muar, Johor; hypertension, gout and CKD stage 3a. Quick, cheerful Johor Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Arjun a/l Ramesh, Malaysian Indian man in his 30s, medical officer at a Muar health clinic. Friendly; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, saya nak ambil ubat bulanan. Ubat darah tinggi dengan ubat gout."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, puan. Gout ada serang lagi tak bulan ni?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada sekali, ibu jari kaki bengkak. Saya makan colchicine tiga biji sehari, empat hari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "With your kidney, colchicine 0.5mg maximum two tablets a day, tiga hari saja. Lebih dari tu boleh cirit-birit teruk."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, patutlah perut saya meragam hari tu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Uric acid puan 520, masih tinggi. Kidney function, eGFR 52, stable macam dulu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Allopurinol saya naikkan dari 100mg ke 200mg sehari. Naik pelan-pelan, supaya tak cetuskan gout."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Makanan pula, doktor? Saya jual kuih, selalu makan kuih sendiri, minum air manis."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Air manis dan air bergas boleh naikkan uric acid. Kurangkan jeroan, ikan bilis dan kerang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Susah sikit, suami suka sangat kerang rebus. Jamu boleh makan tak? Kawan jual jamu untuk sendi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tolong elak jamu, puan. Ada jamu dicampur steroid atau ubat tahan sakit, bahaya untuk buah pinggang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik lah. Ubat darah tinggi sama macam dulu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Blood pressure 132/80, good. Losartan 50mg continue. Tiga bulan lagi kita cek darah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih, doktor."
+      }
+    ]
+  },
+  {
+    "id": "gi_080",
+    "split": "test",
+    "condition": "Chronic kidney disease",
+    "source": "Chronic kidney disease",
+    "patient_persona": {
+      "description": "Benedict Gumpil, 60, male, Kadazan retired land surveyor from Penampang, Sabah; type 2 diabetes and hypertension. Easygoing Sabahan English with Sabah Malay ('bah', 'kan').",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nicole Tan Hui Wen, Malaysian Chinese woman in her 40s, nephrologist in Kota Kinabalu. Clear; English with some Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Morning Mr Benedict. Your doctor sent you because of protein in the urine. How are you feeling generally?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Morning doctor. I feel okay bah. Only my ankles a bit bengkak in the evening."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your urine albumin to creatinine ratio is 85, normal is below 3. So a lot of protein is leaking."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Is that very bad? The klinik said my eGFR still okay kan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your eGFR is 58, stage 3a. Tapi protein ni lebih bahaya. Maknanya kencing manis dan darah tinggi dah strain the kidney."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "What medicines are you on now?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Metformin 1 gram twice daily, gliclazide 80mg pagi, and losartan 50mg. Kadang-kadang I lupa the evening metformin lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your blood pressure today is 148/88. I want it below 130. So losartan goes up to 100mg once a day."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'm also adding dapagliflozin 10mg in the morning. It reduces the protein leak and slows kidney decline."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Any side effect for that one, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "You'll pass more urine, and ada sikit risiko jangkitan kulat. Keep the area bersih dan kering."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I also drink lihing and tapai at Kaamatan and weddings, and some beer on weekends. Must stop?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Occasionally is fine, one or two drinks maximum. More important is less salt, especially ikan masin and instant noodles."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay doctor, saya cuba. When to come back?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "One month, check potassium and kidney after the losartan increase. Bawa your home BP readings, ya."
+      }
+    ]
+  }
+]

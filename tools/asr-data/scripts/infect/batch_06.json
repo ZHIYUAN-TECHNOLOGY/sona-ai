@@ -1,0 +1,820 @@
+[
+  {
+    "id": "infect_051",
+    "split": "train",
+    "condition": "Moderate acne vulgaris in a teenager",
+    "source": "Acne",
+    "patient_persona": {
+      "description": "Nur Iman binti Faisal, 17, female, SPM candidate in Kuala Terengganu; picks at her spots before school. Shy, soft, Terengganu Malay with English words.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chong Wai Mun, Malaysian Chinese woman in her 30s, medical officer at a Kuala Terengganu health clinic. Friendly, big-sister manner; fluent Malay with English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, jerawat saya makin banyak. Dahi, pipi, dagu. Ada yang besar, sakit. Saya malu nak pergi sekolah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Iman, saya faham. Boleh saya tengok? Ada blackhead, whitehead, dan jerawat merah bernanah. Ni acne tahap sederhana, moderate."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya dah try macam-macam cleanser dari TikTok Shop. Ada yang pedih."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Banyak produk online tu terlalu kuat, buat kulit kering dan merah. Kita guna yang simple, yang ada bukti."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Apa dia, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Malam, sapu adapalene 0.1% gel, nipis, satu muka, bukan titik je. Pagi, benzoyl peroxide 5% wash, basuh muka."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Satu muka? Tak cuma kat jerawat?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, sebab dia cegah jerawat baru di bawah kulit. Mula-mula dua minggu mungkin kering, merah sikit, macam makin teruk. Jangan give up."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yang besar sakit tu macam mana?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Untuk yang meradang, saya tambah doxycycline 100mg, sekali sehari, lepas makan, tiga bulan. Jangan baring terus lepas makan ubat, nanti pedih tekak."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tiga bulan? Lama nya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Acne ambil masa. Nampak hasil lepas enam sampai lapan minggu. Dan doxycycline ni buat kulit sensitif pada matahari, pakai sunscreen."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya memang suka picit. Tak boleh ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jangan picit. Itu yang tinggalkan parut dan tompok hitam. Tangan jauh dari muka, especially masa study."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Makan coklat dan susu buat jerawat ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada sikit kaitan dengan makanan manis dan susu, tapi bukan punca utama. Kurangkan air manis, tapi tak payah pantang semua. Jumpa lagi dua bulan."
+      }
+    ]
+  },
+  {
+    "id": "infect_052",
+    "split": "train",
+    "condition": "Severe nodular acne on isotretinoin, results review",
+    "source": "Acne",
+    "patient_persona": {
+      "description": "Tan Zhi Hao, 22, male, marketing intern in Georgetown, Penang; severe nodular acne, started isotretinoin a month ago. Relaxed, a bit cocky, Malaysian Mandarin with lots of English.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ho Siew Lin, Penang Chinese woman in her 40s, dermatologist at a Penang private hospital. Clear, careful; Mandarin with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Zhi Hao，你吃 isotretinoin 一个月了。今天的 blood test 我看了。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "怎样？我这几天嘴唇超干，都裂开了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "嘴唇干是很正常的 side effect，一天擦很多次 lip balm。Blood test 方面，liver function 正常，triglyceride 是 2.4，有一点高。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "高很危险吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "还可以接受。只要不超过 4 或 5，我们继续同样 dose，20mg 一天一次。不过你要少喝酒，少吃甜的、炸的。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "喝酒……周末跟 colleague 去 Gurney 那边会喝几杯。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "吃这个药期间最好不要喝，因为 liver 和 triglyceride 都会受影响。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK lah，我尽量。脸上好像比之前更多痘，正常吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "第一个月有些人会 flare，之后会慢慢好。通常两三个月才看到明显的效果。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我朋友说吃这个会 depression，是真的吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有 report，虽然很少。所以我每次都会问你：心情怎样？有没有很低落、睡不着，或者有伤害自己的念头？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有，心情还 OK。就是 office 工作有点 stress。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好。如果心情有变化，马上停药打电话给我。还有，不要做 waxing、laser，皮肤现在很薄。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "可以去 gym 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以，不过有些人会肌肉酸痛。太激烈的话，blood test 的 CK 会升高。适量就好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白。下次几时来？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "一个月后，再验一次 lipid 和 liver。记得出门擦 sunscreen，Penang 太阳很猛。"
+      }
+    ]
+  },
+  {
+    "id": "infect_053",
+    "split": "train",
+    "condition": "Hormonal acne with polycystic ovary syndrome",
+    "source": "Acne",
+    "patient_persona": {
+      "description": "Ms. Anusha a/p Rajendran, 27, female, pharmacy assistant in Johor Bahru; irregular periods and jawline acne. Chatty, informed, Malaysian Indian English with Malay words.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nur Syafiqah binti Abdullah, Malay woman in her 30s, family medicine specialist at a JB clinic. Warm, direct; English with Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, my acne mostly at the jawline and chin, deep and sakit. Every month before period, jadi worse."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How are your periods? Regular or not?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Very irregular. Sometimes two months tak datang. And I've been gaining weight, and some hair on my chin also."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Acne on the jawline, irregular periods, extra hair. That makes me think of PCOS, polycystic ovary syndrome. Your hormone test from last week is back."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Apa result dia?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Testosterone slightly high, 2.8. LH to FSH ratio also raised. The ultrasound showed many small follicles. So yes, this fits PCOS."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh. Can I still have children? I'm getting kahwin next year."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Most women with PCOS can, sometimes with a bit of help. Good weight control improves ovulation a lot. We'll plan properly when you're ready."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, lega. So for the acne, what can I take?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The combined pill helps both periods and acne. Something like ethinylestradiol with drospirenone, one tablet daily. Any migraine with aura, smoking, or clots in the family?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "None of that. I don't smoke. My mum got kencing manis though."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "PCOS increases diabetes risk too, so we'll check your HbA1c and cholesterol. Also continue a topical, adapalene with benzoyl peroxide gel at night."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Berapa lama before I see a difference?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Give it three months. If still not enough, we can add spironolactone. But that one must not be taken when trying to get pregnant."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Noted. And weight, I'll try, but susah lah with shift work."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Even five percent weight loss helps. Small steps. I'll refer you to our dietitian, free at the klinik."
+      }
+    ]
+  },
+  {
+    "id": "infect_054",
+    "split": "train",
+    "condition": "Inflammatory acne with scarring, follow-up",
+    "source": "Acne",
+    "patient_persona": {
+      "description": "Brandon Jugah, 20, male, Iban technical college student in Miri, Sarawak; bought whitening cream online. Laid-back, casual, Sarawak Malay mixed with English.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Stephanie Ting, Sarawakian Chinese woman in her 30s, GP at a Miri clinic. Direct, a little stern; English and Sarawak Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Brandon, dah enam minggu makan doxycycline dan sapu gel. Macam mana?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Jerawat merah dah kurang, doktor. Tapi parut dan tompok hitam masih banyak. Muka saya macam bulan, banyak lubang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me see. Active pimples memang dah kurang separuh. Bagus. Ada icepick scars dan rolling scars kat pipi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sebenarnya saya ada beli whitening cream online, untuk hilangkan tompok hitam. Kawan recommend."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada nama? Ada nombor notifikasi KKM kat kotak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada, bah. Dalam balang kecil je, tulisan Thailand. Muka rasa licin lepas sapu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Stop terus. Cream tanpa label macam tu selalu ada mercury atau steroid. Mercury boleh rosakkan buah pinggang, dan steroid buat jerawat makin teruk."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alamak. Dah dua minggu saya sapu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dua minggu, biasanya tak apa. Stop sekarang, bawa balang tu ke sini, kita hantar ke pharmacy enforcement."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK. Tompok hitam tu boleh hilang ke tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tompok hitam akan pudar perlahan, tiga sampai enam bulan. Adapalene pun bantu. Paling penting sunscreen setiap hari, SPF 30."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Parut lubang tu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Parut lubang tak hilang dengan cream. Lepas acne betul-betul terkawal, boleh buat laser atau microneedling di klinik dermatology."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Mahal tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Di private, ya, beberapa ratus ringgit satu sesi. Di hospital kerajaan lebih murah tapi kena tunggu. Sekarang fokus kawal acne dulu. Teruskan doxycycline enam minggu lagi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK doktor. Saya buang cream tu."
+      }
+    ]
+  },
+  {
+    "id": "infect_055",
+    "split": "train",
+    "condition": "Acne in pregnancy",
+    "source": "Acne",
+    "patient_persona": {
+      "description": "Wong Pei Shan, 31, female, UX designer in Mont Kiara, Kuala Lumpur, 14 weeks pregnant; had been using a tretinoin cream. Careful, detail-oriented, Malaysian Mandarin with English.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kong Mei Ling, Malaysian Chinese woman in her 40s, GP at a Mont Kiara family clinic. Reassuring, precise; Mandarin and English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我怀孕十四个礼拜，最近痘痘爆得很厉害。我之前一直用 tretinoin cream，现在很担心。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你知道怀孕的时候 tretinoin 要停吗？现在还有用吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "验到怀孕那天就停了，大概第五个礼拜。之前还有擦。会不会影响 baby？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Topical tretinoin 吸收到身体很少，risk 很低。你已经停了，这是对的。第二十个礼拜的 detailed scan，医生会仔细看。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我可以放心一点。那现在痘痘怎样处理？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "怀孕 acne 很常见，是 hormone 变化。安全的选择是 azelaic acid 15% gel，一天两次，擦全脸。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Azelaic acid 安全吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，怀孕期间可以用。红的痘痘也可以加 topical clindamycin 加 benzoyl peroxide 的 gel。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "口服的药呢？我之前吃过 doxycycline。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Doxycycline 怀孕不能吃，会影响 baby 的牙齿和骨头。Isotretinoin 更加绝对不能。如果真的很严重，可以考虑 erythromycin。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白了。我也有用 vitamin C serum 和 niacinamide，可以继续吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这两个都没问题。Salicylic acid 高浓度的 peel 暂时不要做。洗面奶用温和的就好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "生完之后，痘痘会自己好吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "很多人生完就好。如果你喂母乳，还是要选择安全的药，到时候再看。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，谢谢医生。我顺便问 gynae 那边要不要知道这些？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "要的。我写一张 note 给你的 O&G，说明你用过 tretinoin 到第五个礼拜，现在换成 azelaic acid。"
+      }
+    ]
+  },
+  {
+    "id": "infect_056",
+    "split": "train",
+    "condition": "Acute urticaria after seafood",
+    "source": "Urticaria",
+    "patient_persona": {
+      "description": "Encik Hairul Nizam bin Jamaluddin, 35, male, fishmonger at a Kuala Selangor market; ate grilled prawns at a kenduri last night. Loud, restless, Selangor Malay with English words.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Cheng Yi Xuan, Malaysian Chinese man in his 30s, GP at a Kuala Selangor clinic. Calm, efficient; English and fluent Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, satu badan saya naik bintat, gatal sangat. Mula malam tadi lepas makan udang bakar kat kenduri."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bibir bengkak tak? Tekak rasa ketat, susah nak telan, susah bernafas?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bibir bengkak sikit malam tadi, pagi ni dah surut. Nafas OK."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK. BP 128 over 80, oxygen 99 percent. Chest clear. Ni urticaria, alergi kulit, dengan sikit angioedema kat bibir."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pelik, doktor. Saya jual ikan udang hari-hari, tak pernah kena pun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pegang udang lain, makan lain. Kadang-kadang udang tu tak segar, atau ada sos lain. Malam tu makan apa lagi?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Udang bakar, sotong, rendang daging. Lepas tu sakit kepala, saya makan ubat Ponstan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ha, Ponstan tu pun boleh trigger urticaria. Ubat tahan sakit jenis NSAID. Kita tak pasti sebab udang atau sebab ubat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Macam mana nak tahu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau berulang, saya refer ke klinik alergi untuk skin prick test. Buat masa ni, elak udang dan elak Ponstan, ibuprofen."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat gatal ni?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cetirizine 10mg, sekali sehari, lima hari. Kalau masih gatal teruk, boleh makan dua biji sehari. Mungkin rasa mengantuk sikit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Mengantuk? Saya bawa van pagi-pagi pergi pasar."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Makan malam je. Kalau still mengantuk pagi, tukar ke fexofenadine, yang kurang mengantuk."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bila kena pergi hospital?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau lidah atau tekak bengkak, suara serak, susah nafas, atau rasa nak pitam, terus pergi emergency. Call 999, jangan drive sendiri."
+      }
+    ]
+  },
+  {
+    "id": "infect_057",
+    "split": "train",
+    "condition": "Chronic spontaneous urticaria",
+    "source": "Chronic hives",
+    "patient_persona": {
+      "description": "Madam Lee Soo Fun, 40, female, insurance agent in Seremban; hives almost daily for four months. Talkative, exasperated, Malaysian Mandarin with English and a little Cantonese flavour.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Kok Wei, Malaysian Chinese man in his 50s, physician with an allergy interest at a Seremban private hospital. Patient, methodical; Mandarin and English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我的风疹块已经四个月了，几乎每天都有。每天吃一粒 Zyrtec，还是一直出来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "一粒一粒出来，几个钟头就消，然后别的地方又出来，是吗？会不会留下黑色的印？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，几个钟头就不见了，没有印。晚上最多，痒到睡不着。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "超过六个礼拜，叫 chronic spontaneous urticaria。大部分人找不到特别的原因，不是食物 allergy。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我已经不吃海鲜、不吃鸡蛋了，还是一样。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，所以不用戒那么多东西。我们上次验血，full blood count 正常，thyroid 的 antibody 有一点高。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Thyroid？跟风疹块有关系？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有一些 chronic urticaria 的人有 autoimmune thyroid。你的 TSH 还是正常的，我们每年 check 就好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那药怎么办？Zyrtec 好像没效。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Guideline 是可以加到四倍。你试 cetirizine 10mg，一天两次，两个礼拜。不够就加到早两粒、晚两粒。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "四粒？会不会太多？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个是 guideline 允许的，很多人吃了很安全。有一点想睡的话，可以换 fexofenadine 或者 bilastine。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "如果四倍都没效呢？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那就考虑 omalizumab 打针，一个月一次，效果很好，不过比较贵。我们一步一步来。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要避免什么吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "避免 aspirin、ibuprofen、Ponstan 这类止痛药，会让它更严重。还有太热、太紧的衣服，stress 也会。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Stress 我就没办法了，做 insurance 的。好，我先试两个礼拜。"
+      }
+    ]
+  },
+  {
+    "id": "infect_058",
+    "split": "train",
+    "condition": "Urticaria with angioedema after an NSAID",
+    "source": "Angioedema and hives",
+    "patient_persona": {
+      "description": "Mrs. Mala a/p Karuppiah, 50, female, tailor in Butterworth, Penang; took diclofenac for knee pain. Anxious, voice slightly thick from lip swelling, Malaysian Indian English with Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kamal bin Yusoff, Malay man in his 40s, emergency physician at Hospital Seberang Jaya. Calm, fast; English and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, my lips and eyes suddenly swollen, and my whole body got itchy bintat. About one hour ago."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any difficulty breathing, tightness in the throat, voice changing? Rasa nak pitam?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Throat feel a bit tight, but I can breathe. Tak pitam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me look inside your mouth. Tongue not swollen, no stridor. BP 132 over 84, oxygen 98. What did you take or eat today?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "For my knee pain, the klinik gave diclofenac this morning. I took one tablet after breakfast."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Have you taken diclofenac or other painkillers like ibuprofen before?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Last year I took Ponstan, my face also swell a little, but I thought it's sebab panas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's an important clue. You likely react to NSAIDs, this group of painkillers. We're giving you IV hydrocortisone and chlorpheniramine now."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bahaya ke, doctor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Right now you're stable, but swelling near the throat needs watching. We keep you here for observation for at least six hours. Adrenaline is ready if needed."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK. So what painkiller can I use for my lutut?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol is safe for you. Topical gels also avoid, just in case. We can try physiotherapy for the knee."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Should I carry something, like that EpiPen?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If you avoid NSAIDs, the risk is low, but I'll give you an allergy card. Show it at every klinik and pharmacy before they give ubat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, I'll keep in my purse. My anak perempuan coming to fetch me later."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. Before discharge, you'll go home with cetirizine 10mg daily for five days, and prednisolone 30mg for three days."
+      }
+    ]
+  },
+  {
+    "id": "infect_059",
+    "split": "train",
+    "condition": "Acute urticaria in a child after a viral illness",
+    "source": "Urticaria",
+    "patient_persona": {
+      "description": "Mrs. Evelyn Sipaun, 34, female, Kadazan government clerk in Donggongon, Sabah, speaking for her son Ryan, 5. Calm, friendly, Sabahan English with Malay and 'bah'.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Liew Chee Yong, Sabahan Hakka man in his 40s, GP at a Donggongon clinic. Easygoing, playful with kids; English and Sabahan Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, Ryan got big red itchy patches since yesterday. Like map bah. They move around, one place go away, another place come out."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any fever or selesema recently?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya, last week he got flu and cough, demam two days. Already better. Then yesterday start these patches."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Did he take any new ubat, or eat anything new?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Only the cough syrup from last week, finished already. Food, nothing new, makanan biasa je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me see. Ryan, buka baju sikit. Wheals, raised and pale in the middle. Lips OK, breathing OK. This is urticaria, hives."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alergi to what, doctor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "In small kids, most common trigger is actually the viral infection itself, not food. The immune system still excited after the flu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, so bukan the syrup?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Possible but less likely. What syrup was it? Just note the name, in case it happens again."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I think the brown bottle, promethazine something. Nanti I check at home."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK. For the itch, cetirizine syrup, 5mg once a day, which is 5ml. Give for five to seven days."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can he go to tadika?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, it's not contagious. Cool clothes, don't bathe with very hot water. Calamine also can help."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Berapa lama it will last?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Usually few days to two weeks. If lips or eyes swell, breathing noisy, or vomiting, bawa terus ke Queen Elizabeth emergency."
+      }
+    ]
+  },
+  {
+    "id": "infect_060",
+    "split": "test",
+    "condition": "Generalised urticaria and anaphylaxis after a hornet sting",
+    "source": "Hives and angioedema",
+    "patient_persona": {
+      "description": "Mr. Chan Kok Seng, 45, male, vegetable farmer in Cameron Highlands, Pahang; stung by a hornet while clearing a shed. Shaken, breathless at first, Malaysian Mandarin with Cantonese flavour and some English.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kavin a/l Selvam, Malaysian Indian man in his 30s, medical officer in the emergency department of Hospital Sultanah Hajjah Kalsom, Cameron Highlands. Brisk, steady; English with basic Mandarin and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "陈先生，现在呼吸比较好了吗？刚才我们打了 adrenaline 在你的大腿。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好一点了……刚才真的喘不过气，全身痒，头很晕，以为要死了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你来的时候 BP 只有 80 over 50，全身 hives，还有 wheezing。这个是 anaphylaxis，严重的过敏反应。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "只是被 tebuan 叮一下，以前也被叮过，没有这样。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "很多人第一次没事，第二次身体已经 sensitised，反应就很大。现在 BP 118 over 76，oxygen 98 percent。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那现在可以回家吗？农场还有工人在等。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不行。Anaphylaxis 之后可能几个钟头后再发作，叫 biphasic reaction。你要留院观察至少十二个钟头。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "十二个钟头……好吧，我打电话给我太太。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我们也给了你 IV hydrocortisone 和 chlorpheniramine。痒现在怎样？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没那么痒了，红的也退了一些。那个针头的地方有一点痛。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Normal。回家以后，我会开 EpiPen 给你，一支 0.3mg。以后被叮，有喘、头晕、嘴唇肿，马上打大腿外侧。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我自己打？我不会。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "护士会教你，用 trainer 练习。打完还是要马上来医院，不能只靠 EpiPen。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "农场很多 tebuan 窝，怎么办？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "叫 Bomba 来处理蜂窝，不要自己弄。我也会 refer 你去 allergy clinic，看看可不可以做 venom immunotherapy。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白了。谢谢你，医生，刚才真的吓坏了。"
+      }
+    ]
+  }
+]

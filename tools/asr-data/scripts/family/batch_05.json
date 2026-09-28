@@ -1,0 +1,820 @@
+[
+  {
+    "id": "family_041",
+    "split": "train",
+    "condition": "Neonatal jaundice, day 4, breastfed baby",
+    "source": "Infant jaundice",
+    "patient_persona": {
+      "description": "Puan Nadiah binti Azhar, 26, female, mother of a 4-day-old boy, first baby born at 38 weeks; admin assistant from Klang. Tired, worried, still sore after delivery.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Premala a/p Sivalingam, Malaysian Indian woman in her 30s, medical officer at a Klang klinik kesihatan maternal and child health unit. Gentle, efficient; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, jururawat yang datang rumah semalam kata baby saya kuning. Sekarang saya tengok mata dia pun kuning, sampai perut."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK, terima kasih bawa dia cepat. Baby lahir hari apa, pukul berapa?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hari Isnin, pukul sepuluh pagi. Normal delivery, berat 2.9 kilo."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dia menyusu macam mana? Susu badan je, atau campur formula?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Susu badan je, exclusive breastfeeding. Tapi dia banyak tidur, kadang-kadang saya kena kejut untuk susukan. Sehari mungkin enam tujuh kali."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lampin basah berapa kali sehari? Warna najis dia macam mana?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lampin basah empat lima kali. Najis kuning, macam biji sawi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Warna tu bagus. Kalau najis pucat macam kapur, itu yang kita risau. Saya ambil darah sikit dari tumit untuk check bilirubin ya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Keputusan serum bilirubin 285 micromol per litre. Untuk umur empat hari, dia dah dekat paras untuk phototherapy."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Phototherapy tu apa, doktor? Kena masuk wad ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Rawatan dengan lampu biru, dia pecahkan kuning dalam kulit. Ya, kena masuk wad pediatric hari ni, biasanya satu dua hari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Mak saya suruh jemur dia bawah matahari pagi je, morning sun. Tak cukup ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Matahari tak cukup kuat dan boleh buat kulit baby terbakar. Lampu kat hospital lebih selamat dan berkesan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Masa lahir, nurse ada kata G6PD dia normal. Ada kena mengena tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus, G6PD normal. Kuning dia mungkin sebab penyusuan belum lancar. Dalam wad, susukan setiap dua hingga tiga jam, kejut dia kalau perlu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya boleh temankan dia dalam wad?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, ibu boleh tinggal dan susukan terus. Nurse akan bawa puan ke wad sekarang."
+      }
+    ]
+  },
+  {
+    "id": "family_042",
+    "split": "train",
+    "condition": "Neonatal jaundice with G6PD deficiency",
+    "source": "Infant jaundice",
+    "patient_persona": {
+      "description": "Mr. Soh Kian Wee, 31, male, father of a 3-day-old girl; mechanic in Muar, Johor. Worried, direct, grandparents at home holding strong views.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Siti Aminah binti Kassim, Malay woman in her 40s, paediatric medical officer at a Muar hospital. Calm, firm; English with Mandarin and Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我女儿昨天出院的时候，nurse 说她是 G6PD deficiency。今天整个脸黄黄的，我老婆很担心。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Thank you for coming early. G6PD deficient babies boleh jadi kuning lebih cepat dan lebih tinggi, so early check is important."
+      },
+      {
+        "speaker": "Patient",
+        "text": "G6PD 到底是什么？我阿嬷说是 blood 有问题。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's an enzyme in the red blood cells. Without enough, the cells break down easily, especially with certain triggers. The broken cells make bilirubin, 就是黄疸."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Her serum bilirubin today is 260, at 60 hours old. G6PD 的宝宝我们会比较早开始 phototherapy. So she needs admission today."
+      },
+      {
+        "speaker": "Patient",
+        "text": "住院？她才三天大……要住多久？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Usually two to three days under the blue light. We check her blood every few hours to make sure the level comes down."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我妈妈在家准备了黄连水，说喝了可以退黄。Can give her or not？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No, jangan. Traditional herbs like 黄连 can trigger severe red cell breakdown in G6PD babies. Very dangerous."
+      },
+      {
+        "speaker": "Patient",
+        "text": "啊？那还有什么不可以的？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No mothballs, 樟脑丸, in the house or clothes cupboard. Avoid some medicines, like aspirin and certain antibiotics. I'll give you a card with the list."
+      },
+      {
+        "speaker": "Patient",
+        "text": "樟脑丸……我们家衣柜里全都是。I will throw away tonight."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. Also, breastmilk is fine. But mum should avoid fava beans, kacang parang, 蚕豆, while breastfeeding."
+      },
+      {
+        "speaker": "Patient",
+        "text": "她长大以后会一直生病吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Most G6PD children live normally, just avoid the triggers. 以后看任何医生, always tell them she has G6PD."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我明白了。我先打电话给我老婆和我妈。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay. The nurse will bring her to the special care nursery. 你和你太太 can visit and breastfeed anytime."
+      }
+    ]
+  },
+  {
+    "id": "family_043",
+    "split": "train",
+    "condition": "Prolonged neonatal jaundice with pale stools, referral",
+    "source": "Infant jaundice",
+    "patient_persona": {
+      "description": "Mrs. Jennifer Ling, 30, female, mother of Ethan, 3 weeks old; church administrator in Sibu, Sarawak. Articulate, a little apologetic, Sarawakian English with some Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ahmad Farid bin Mazlan, Malay man in his 30s, family medicine doctor at a Sibu klinik kesihatan. Serious but kind; English with Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, Ethan still kuning. Three weeks already. My mother says breastfed babies take longer, so I just waited."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sometimes that's true, breastmilk jaundice can last a few weeks. But I need to ask a few things. What colour is his stool?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hmm, recently quite pale. Like light cream colour. I thought maybe sebab makanan saya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Can you compare with this stool colour card? Which one looks most like his?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "This one, number two. Very pale, putih macam kapur."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "And his urine? Is it clear, or dark yellow staining the diaper?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Quite dark, the diaper got yellow stain, kuning pekat. Is that bad?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pale stools and dark urine mean the bile is not flowing from the liver into the gut. We must rule out biliary atresia, a blockage of the bile ducts."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Biliary atresia? Is that serious?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's serious, but treatable with surgery. Masa tu sangat penting. Surgery done before 60 days old gives the best result, so we cannot wait."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh my God. I should have come earlier. Saya rasa bersalah sangat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Don't blame yourself. You came at three weeks, that's still in time. The blood test today will check conjugated bilirubin and liver function."
+      },
+      {
+        "speaker": "Patient",
+        "text": "What happens next?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'm referring Ethan to the paediatric team at Sibu Hospital today, dan mereka mungkin rujuk cepat ke surgical team in Kuching."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Today? Okay, my husband can drive us. Perlu bawa apa-apa?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bring his pink book, the stool card, and a nappy with fresh stool if possible. Continue breastfeeding."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Thank you, doctor. Saya takut, but at least we know what to do."
+      }
+    ]
+  },
+  {
+    "id": "family_044",
+    "split": "train",
+    "condition": "Neonatal jaundice follow-up after phototherapy",
+    "source": "Infant jaundice",
+    "patient_persona": {
+      "description": "Puan Hanisah binti Mohd Nor, 37, female, mother of 7-day-old twins, fourth pregnancy; teacher in Kota Bharu. Experienced mother, calm, humorous.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Syed Mohd Arif bin Syed Hussein, Malay man in his 30s, medical officer at a Kota Bharu klinik kesihatan. Friendly; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Assalamualaikum, puan. Kembar dua ni baru keluar wad dua hari lepas, kan? Phototherapy satu hari?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Waalaikumussalam. Ya, doktor. Yang abang satu hari, yang adik dua hari. Hari ni nurse suruh datang check balik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Macam mana penyusuan? Susu badan cukup untuk dua orang?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Cukup, alhamdulillah. Anak-anak dulu pun saya susukan sampai dua tahun. Cuma sekarang penat sikit lah, two babies at the same time."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tahniah, puan memang pakar. Kuning dia pada mata puan, makin kurang atau makin banyak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Rasa makin kurang. Tapi yang adik ni kulit masih kuning sikit kat muka."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya check bilirubin dua-dua. Abang 150, adik 190. Dua-dua jauh bawah paras phototherapy dan menurun. Good."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Jadi tak perlu masuk wad lagi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak perlu. Tapi kalau kuning makin teruk, sampai tapak tangan dan tapak kaki, atau dia malas menyusu, come back immediately."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Najis dia kuning, kencing pun jernih. Semua OK kan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Semua tanda baik. Berat pun naik, abang 2.6 kilo, adik 2.4 kilo."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Emak saya nak mandikan dengan air rebusan daun, dia kata buang kuning. Boleh ke? Herbal bath?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mandi air biasa je, puan. Air daun tu tak terbukti, dan kalau daun tertentu boleh bahaya pada kulit baby."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baiklah, saya bagitahu emak. Dia degil sikit tapi saya cuba, I'll try my best."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita jumpa lagi masa dua minggu, sekali untuk timbang dan check kuning. Nurse KK pun akan datang rumah."
+      }
+    ]
+  },
+  {
+    "id": "family_045",
+    "split": "train",
+    "condition": "Neonatal jaundice in the first 24 hours, ABO incompatibility",
+    "source": "Infant jaundice",
+    "patient_persona": {
+      "description": "Mr. Prakash a/l Rajendran, 34, male, father of a 20-hour-old baby girl; secondary school maths teacher in Seremban. Anxious, precise, asks for numbers.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Lay Hoon, Malaysian Chinese woman in her 40s, paediatrician at a Seremban hospital postnatal ward. Clear, direct; English with Malay words.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mr. Prakash, I want to update you about your daughter. Nurse nampak kulit dia kuning this morning, at only 20 hours of life."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, my wife saw it also. Is it normal? My first son also kuning, but at day three."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jaundice in the first 24 hours is never considered normal. We check more carefully. Her serum bilirubin is 180 micromol per litre, which is high for her age."
+      },
+      {
+        "speaker": "Patient",
+        "text": "180. What is the cutoff? I want to understand."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "At 20 hours, the phototherapy line is lower than at day three. She's above it, so we're starting phototherapy right now."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Why is this happening so early?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your wife's blood group is O positive, and your daughter is A positive. Mum's antibodies can cross the placenta and break down baby's red cells. We call it ABO incompatibility."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So it's my wife's fault? Kesian dia, she will feel very bad."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Nobody's fault, bukan salah sesiapa. It's quite common, and usually mild. The Coombs test is positive, which confirms it. Her haemoglobin is still okay at 15."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Will she need blood transfusion?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Most don't. Intensive phototherapy usually works. Kalau paras naik cepat, we may need an exchange transfusion, but that's uncommon."
+      },
+      {
+        "speaker": "Patient",
+        "text": "How often will you check?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Every four to six hours at first. Your wife can continue breastfeeding, we'll bring her to the nursery every three hours."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, thank you, doctor. Can I stay with her?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, one parent can stay. Please keep her eyes covered under the light, the nurse will show you. Jangan risau sangat, we'll keep you updated."
+      }
+    ]
+  },
+  {
+    "id": "family_046",
+    "split": "train",
+    "condition": "Childhood asthma with poor control, inhaler technique",
+    "source": "Childhood asthma",
+    "patient_persona": {
+      "description": "Puan Zuraidah binti Kamal, 38, female, mother of Haziq, 7 years old, 22 kg; nurse's aide in Alor Gajah, Melaka. Frazzled, frequent visits, blames the weather.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Leong Wai Kit, Malaysian Chinese man in his 40s, family medicine specialist at a Melaka klinik kesihatan. Methodical, friendly with kids; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, Haziq ni lelah lagi. Bulan ni dah dua kali pergi emergency kena neb. Cuaca jerebu ni teruk sangat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jerebu memang boleh trigger. Selain tu, malam dia batuk tak? Sampai terjaga?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hampir setiap malam batuk, lebih-lebih lagi pukul tiga empat pagi. Sekolah pun dia selalu penat, no energy."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ubat pencegah, inhaler oren tu, dia guna setiap hari ke?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yang oren tu bila dia sakit je saya bagi. Kalau dah OK, saya stop, takut steroid banyak sangat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ha, itu masalah dia. Inhaler oren, budesonide, ni ubat pencegah. Kena guna setiap hari walaupun dia sihat, pagi dan malam."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tapi steroid tu tak bahaya ke untuk budak? Nanti tak tinggi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dos dalam inhaler sangat kecil, dia terus ke paru-paru. Kesan pada ketinggian sangat sikit. Lelah yang tak terkawal lebih bahaya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Haziq, cuba tunjuk doktor macam mana guna inhaler biru ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dia sedut terus dari mulut, tak pakai spacer. Spacer tu dah pecah bulan lepas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tanpa spacer, kebanyakan ubat melekat kat tekak je. Saya bagi spacer baru. Goncang inhaler, sambung ke spacer, tekan satu kali, tarik nafas lima kali."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, lima kali tarik nafas. Selama ni saya tak tahu, nobody taught me."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Budesonide 200mcg, dua kali sehari, pagi dan malam, lepas tu kumur mulut. Salbutamol biru tu bila lelah, dua hingga empat puff dengan spacer."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada kucing kat rumah, doktor. Ada kaitan tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mungkin. Jangan bagi kucing masuk bilik tidur dia. Saya bagi asthma action plan ni, dan jumpa lagi sebulan."
+      }
+    ]
+  },
+  {
+    "id": "family_047",
+    "split": "train",
+    "condition": "Acute asthma attack in a preschooler, nebuliser in clinic",
+    "source": "Asthma, childhood",
+    "patient_persona": {
+      "description": "Ho Siew Yin, 35, female, mother of Jayden, 4 years old, 16 kg; accounts clerk in Klang. Frightened, speaks rapidly, English terms mixed in.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Izzat bin Kamarul, Malay man in his 30s, GP at a Klang 24-hour clinic. Calm under pressure; English with Mandarin and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，快点看他！他从昨晚开始 wheezing，今天早上喘到讲不到话，一直 cough。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay, I see him. His chest is pulling in, oxygen 91 percent. We start nebuliser now, salbutamol. 妈妈你抱着他。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "家里的 Ventolin 我给了，可是他不肯用 spacer，一直哭。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Very common at this age. After the neb we'll try a mask with the spacer, 小孩子比较容易用."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How many puffs did you give at home, 几点给的?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "早上六点给了两下，八点再两下，好像 no effect."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For an attack, you can give up to six puffs for his age, 每二十分钟 for the first hour. 两下太少了."
+      },
+      {
+        "speaker": "Patient",
+        "text": "六下？我以为太多会 overdose。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Salbutamol is quite safe. Side effects are just shaky hands and fast heartbeat. 不用怕."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "After first neb, oxygen 95, 呼吸好一点了. We give second neb, plus prednisolone 16mg, one mg per kilo, orally."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那个 steroid 要吃几天？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Three days, 一天一次，早上饭后吃. If he's okay after one more hour, you can go home."
+      },
+      {
+        "speaker": "Patient",
+        "text": "他以前医生都说是 bronchitis，没有人说 asthma。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "At this age we sometimes call it preschool wheeze. 他常常发作又有 eczema, asthma is likely. We'll review in one week."
+      },
+      {
+        "speaker": "Patient",
+        "text": "回家以后要怎么办？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ventolin with mask spacer, four puffs every four hours for two days. If he can't talk, ribs pulling, or lips blue, call 999 or go to emergency terus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我明白了。谢谢医生，我真的吓死了。"
+      }
+    ]
+  },
+  {
+    "id": "family_048",
+    "split": "train",
+    "condition": "Exercise-induced asthma in an adolescent athlete",
+    "source": "Exercise-induced asthma",
+    "patient_persona": {
+      "description": "Muhammad Irfan bin Ruslan, 15, male, school football player in Johor Bahru, attending with his father who stays quiet. Energetic, casual teen Manglish.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Priyanka a/p Mahendran, Malaysian Indian woman in her 30s, sports medicine doctor at a JB private clinic. Upbeat, direct; English with Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hi Irfan. Your father says you get sesak nafas during football. Tell me what happens."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doc, like after ten, fifteen minutes running, my chest rasa ketat, then I start batuk and wheezing. Must stop and rest."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How long does it take to recover?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "About twenty, thirty minutes. Coach thinks I'm lazy, but really cannot breathe, bukan malas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any cough or wheeze at night, malam-malam, or when you're not exercising?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No lah, only during training. Especially evening training kat padang, and masa jerebu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any eczema, hay fever, family history of asthma?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "My mum got asthma. I had bersin-bersin every morning since small."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your lung function at rest is normal. After the treadmill test, it dropped by 18 percent, then improved after inhaler. That fits exercise-induced bronchoconstriction."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So I can still main bola? Next month got MSSD tournament, confirm tak boleh miss."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Definitely boleh. Many top athletes have it. Use salbutamol, two puffs, fifteen minutes before training. Warm-up sepuluh minit pun membantu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Inhaler before every training? Is it allowed in competition? Nanti kena doping test."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Salbutamol by inhaler at normal doses is permitted. I'll write a letter with the diagnosis, just in case."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, nice. What if I still rasa dada ketat during the game?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Stop, take two more puffs. If it's used more than twice a week, or you get night symptoms, come back. You may need a daily preventer."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Got it. Can Dad keep the inhaler also, simpan dalam kereta?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good idea. Carry one in your kit bag, one at home. And bring the spacer to school if you can."
+      }
+    ]
+  },
+  {
+    "id": "family_049",
+    "split": "train",
+    "condition": "Childhood asthma review, adding montelukast",
+    "source": "Childhood asthma",
+    "patient_persona": {
+      "description": "Puan Azlina binti Ramli, 32, female, mother of Aisyah, 5 years old, 18 kg; online kuih seller in Kuantan. Chatty, organised, keeps a symptom diary.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chew Mei Chin, Malaysian Chinese woman in her 40s, paediatrician at a Kuantan hospital clinic. Warm, methodical; Malay with English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Assalamualaikum, puan. Aisyah, cantiknya tudung. Macam mana asma dia tiga bulan ni?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Waalaikumussalam, doktor. Better sikit sejak guna inhaler oren setiap hari. Tapi bila selsema, mesti lelah. Saya ada catat dalam buku ni."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus, puan catat. Saya tengok, bulan lepas tiga kali guna Ventolin sebab selsema. Ada admission?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada. Tapi satu kali pergi klinik untuk neb. Malam pun batuk-batuk bila selsema."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Teknik inhaler dengan spacer, boleh tunjuk?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aisyah, tunjuk kat doktor. Goncang dulu, pasang spacer, pakai mask, tekan, kira sampai sepuluh."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pandai! Teknik betul, very good technique. Jadi ubat dia dah betul, tapi masih ada attack bila selsema. Kita boleh tambah ubat lain."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat apa, doktor? Steroid lagi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bukan steroid. Montelukast 4mg, satu sachet granule, makan setiap malam. Dia kurangkan radang dalam saluran nafas."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada side effect tak? Saya dengar ada budak jadi mimpi ngeri, nightmares."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Betul, jarang-jarang ada budak mimpi buruk atau perubahan mood. Kalau nampak macam tu, stop dan beritahu kami."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK. Budesonide tu teruskan dos sama?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Teruskan 200mcg dua kali sehari. Kalau tiga bulan ni stable, we can try to step down."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doktor, saya ada bela kucing, tapi dah keluarkan dari rumah. Anything else I can do?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cuci cadar dengan air panas seminggu sekali, dan elak asap rokok. Pastikan vaccine influenza tahunan pun diambil."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik doktor. Terima kasih banyak."
+      }
+    ]
+  },
+  {
+    "id": "family_050",
+    "split": "train",
+    "condition": "Asthma action plan for a school-age child with frequent school absence",
+    "source": "Asthma, childhood",
+    "patient_persona": {
+      "description": "Mr. Tee Chun Wai, 44, male, father of Jia Hao, 10 years old, 30 kg; durian seller in Raub, Pahang. Blunt, sceptical of long-term medicine, speaks Mandarin with Hakka rhythm.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kavita a/p Ramasamy, Malaysian Indian woman in her 40s, family medicine specialist at a Raub klinik kesihatan. Patient, persuasive; English with Mandarin and Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mr. Tee, school sent a letter. Jia Hao missed twelve days this term because of asthma. 很多."
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，每次喘就要请假。可是那个每天的 inhaler 我没有给，我觉得小孩子不要每天吃药。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I understand your worry. But asthma is inflammation in the airways every day, even when he looks fine. 气管一直在发炎."
+      },
+      {
+        "speaker": "Patient",
+        "text": "可是他没有喘的时候，看起来好好的，还跟朋友踢 football。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's good. But the attacks come because the inflammation is not controlled. 预防的药 fluticasone, reduces attacks by a lot."
+      },
+      {
+        "speaker": "Patient",
+        "text": "里面有 steroid，我怕他以后长不高。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Inhaled steroid is a very small dose, 分量很少. Studies show only about one centimetre difference at most. 常常请假 is a bigger problem."
+      },
+      {
+        "speaker": "Patient",
+        "text": "一公分……好啦，那还可以接受。要怎样用？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Fluticasone 125mcg, 早上两下，晚上两下, with spacer. Rinse mouth after."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll give you this asthma action plan. Green zone, 没有症状, use preventer only. Yellow zone, cough or wheeze, add Ventolin four puffs every four hours."
+      },
+      {
+        "speaker": "Patient",
+        "text": "红色的呢？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Red zone, very breathless, cannot talk, Ventolin not helping. Give ten puffs and go to hospital immediately. 不要等."
+      },
+      {
+        "speaker": "Patient",
+        "text": "这张纸我贴在冰箱上。School also need one copy?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, give one copy to his class teacher. 书包里也要放 Ventolin and spacer."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。果园那边榴莲季节很多灰尘，也有关系吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dust can trigger. 喷农药的时候, keep him away. Come back in one month, we'll see how many days he misses."
+      }
+    ]
+  }
+]

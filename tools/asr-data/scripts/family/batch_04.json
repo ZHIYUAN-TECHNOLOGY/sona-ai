@@ -1,0 +1,844 @@
+[
+  {
+    "id": "family_031",
+    "split": "train",
+    "condition": "Viral fever in a toddler, mother asking about dosing",
+    "source": "Fever",
+    "patient_persona": {
+      "description": "Puan Norazlin binti Jamal, 29, female, mother of Adam, 18 months, 11 kg; online seller from Bangi. Worried, speaks fast, holds the child on her lap.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Chee Keong, Malaysian Chinese man in his 30s, GP at a Bangi family clinic. Calm, playful with children; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, Adam ni demam since Monday. Temperature naik sampai 39, bagi Panadol turun kejap, then naik balik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK, dah tiga hari lah. Selain demam, ada batuk, selsema, muntah, cirit-birit?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Selsema sikit, hingus jernih. Tak muntah. Tapi makan kurang, dia nak susu je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kencing macam mana? Dalam sehari, lampin basah berapa kali?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Masih basah, lebih kurang lima kali sehari. Tapi malam tadi dia menggigil, shivering the whole body, saya panik terus."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Menggigil tu biasa masa suhu naik, it's the fever going up. Ada ruam? Ada kejang atau tak sedar diri?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Takde ruam, takde kejang. Cuma dia lembik sikit masa demam tinggi, bila demam turun dia main balik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itu tanda baik. Kalau demam turun dia aktif balik, biasanya jangkitan virus. Saya check telinga, tekak dan dada dia dulu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tekak merah sikit, telinga OK, dada clear. Ini viral fever, jangkitan virus biasa. Antibiotic tak perlu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Panadol tu berapa banyak, doktor? Saya bagi satu sudu teh je, takut overdose."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Adam 11 kilo, so paracetamol syrup 120mg per 5ml, bagi 7.5ml, every six hours bila demam. Maksimum empat kali sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, selama ni saya bagi kurang lah. Kalau demam masih tinggi, boleh bagi ubat lain?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh tambah ibuprofen syrup 100mg per 5ml, 5ml, every eight hours, lepas makan. Tapi jangan bagi kalau dia tak minum langsung."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Mak mentua suruh tuam dengan air sejuk dan selimut tebal. Betul ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lap badan dengan air suam je, bukan air sejuk. Don't wrap him too thick, pakai baju nipis."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bila saya kena bawa balik jumpa doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau demam lebih lima hari, ada ruam, sawan, susah bernafas, atau lampin kering lebih lapan jam, datang terus. Kita check darah dengue kalau perlu."
+      }
+    ]
+  },
+  {
+    "id": "family_032",
+    "split": "train",
+    "condition": "Simple febrile seizure in a toddler",
+    "source": "Febrile seizure",
+    "patient_persona": {
+      "description": "Lau Pei Yi, 30, female, mother of Ethan, 2 years old, 12 kg; bank officer in Butterworth, Penang. Shaken, speaks fast, voice trembling at first.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nur Hidayah binti Rahim, Malay woman in her 30s, paediatric medical officer at a Penang hospital emergency department. Calm, steady; English with Mandarin and Malay words.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，他刚才在家里突然 fit，眼睛翻上去，手脚一直抖，我以为他要死了！"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I understand, very frightening. Ethan is awake now and breathing well. 你先深呼吸。How long did the shaking last?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我不知道……可能两三分钟？我老公有 record 时间，他说一分半钟。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay, less than five minutes. Before the fit, did he have fever?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有，今天早上开始 fever，38.9，我还没给药，想说等下午看医生。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "After the fit, how long before he was back to normal, recognising you?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "大概十五分钟，他很 sleepy，然后哭着找妈妈。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's reassuring. Any family history of fits? Like you or your husband when small?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我老公说他小时候也有过一次，发烧的时候。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "This is a simple febrile seizure, 热性惊厥. It's common between six months and five years, and usually doesn't cause brain damage."
+      },
+      {
+        "speaker": "Patient",
+        "text": "真的吗？不是 epilepsy 吗？要不要做 brain scan？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For a simple febrile seizure, no scan needed. 他的喉咙红红的, so it's probably a viral infection causing the fever."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那以后还会不会再发生？我好怕。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "About one in three children may have another one with future fevers. 大部分五岁以后就没有了."
+      },
+      {
+        "speaker": "Patient",
+        "text": "如果再发生，我在家要怎样做？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Put him on his side, jauh dari benda keras. Nothing in his mouth, don't hold him down. If more than five minutes, or he turns blue, call 999."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好……那发烧的时候要一直给 paracetamol 吗？这样就不会 fit？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol helps him feel comfortable, but it doesn't prevent fits. 发烧的时候给 180mg, that's 7.5ml, every six hours."
+      }
+    ]
+  },
+  {
+    "id": "family_033",
+    "split": "train",
+    "condition": "Dengue fever in a school-age child",
+    "source": "Dengue fever",
+    "patient_persona": {
+      "description": "Mr. Arumugam a/l Veerasamy, 41, male, father of Kishen, 9 years old, 28 kg; lorry supervisor in Sentul, Kuala Lumpur. Anxious, speaks Manglish with Tamil-flavoured rhythm.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lim Su Ann, Malaysian Chinese woman in her 30s, medical officer at a KL klinik kesihatan. Brisk but kind; English with Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, my son Kishen fever four days already. Yesterday fever turun, but today he's very lemah, cannot even sit properly. Also sakit perut."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay. Any vomiting? How many times today?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Muntah three times since morning. He also cannot eat anything, only drink a bit of 100 Plus."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Last time he passed urine was when?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Morning, around seven. Now already two o'clock, still tak kencing."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dalam taman you all, any dengue cases? Any fogging recently?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Got, got. Last week two houses in our lorong got dengue. Majlis came and did fogging."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "His NS1 test is positive. Platelet 68,000, and hematocrit is high, 46 percent. Sakit perut, muntah, kurang kencing, these are warning signs."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Warning signs? So what does that mean, doctor? Dia akan okay ke tak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "He needs admission today, kena masuk wad. The day the fever goes down is the critical phase, bila salur darah boleh bocor."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo. My wife kerja kat Shah Alam, I have to call her first."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Please call her. Meanwhile, I'll start a drip here and call the ambulance to Hospital Kuala Lumpur."
+      },
+      {
+        "speaker": "Patient",
+        "text": "At home I gave him Panadol and also Nurofen. Is that okay?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol is fine. But no more Nurofen, ibuprofen, or aspirin in dengue. Ubat macam tu boleh buat berdarah."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, stop already. My neighbour says drink papaya leaf juice can naik platelet. Can?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "There's no strong proof, and it can upset his tummy. The main treatment is fluids and close monitoring in hospital."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, doctor. I trust you. Tolong jaga dia baik-baik, he's our only son."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We will. The ward team will check his blood every few hours. Jangan risau sangat, most children recover well."
+      }
+    ]
+  },
+  {
+    "id": "family_034",
+    "split": "train",
+    "condition": "Hand, foot and mouth disease in a preschooler",
+    "source": "Hand-foot-and-mouth disease",
+    "patient_persona": {
+      "description": "Puan Salmah binti Idris, 34, female, mother of Aqilah, 3 years old, 14 kg; kindergarten canteen helper in Kota Kinabalu, Sabah. Talkative, practical, Sabah Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Benedict Majinbon, Kadazan man in his 30s, medical officer at a Kota Kinabalu klinik kesihatan. Friendly, easy-going; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, anak saya ni demam dua hari, then semalam ada bintik-bintik merah kat tapak tangan, kaki dan punggung. Mulut pun ada ulser, dia tak mahu makan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh saya tengok? Buka mulut, adik, aaah. Ada ulcer kecil kat lidah dan belakang tekak. Tapak tangan ada blister kecil."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ini cacar air ke, doktor? Kakak dia pernah kena dulu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bukan cacar air. Ini HFMD, hand, foot and mouth disease, penyakit tangan, kaki dan mulut. Ada kawan tadika dia kena juga?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada! Minggu lepas cikgu hantar WhatsApp, dua budak kelas dia kena. Patutlah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ini jangkitan virus, a viral infection that gets better on its own in seven to ten days. Yang penting dia cukup minum."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tapi mulut dia sakit sangat, air pun dia menangis bila minum."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagi air sejuk, susu sejuk, aiskrim pun boleh. Avoid sour or spicy food, macam oren dan sambal."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol syrup 120mg per 5ml, bagi 10ml setiap enam jam bila demam atau sakit. Ada gel untuk ulcer, sapu sebelum makan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dia boleh pergi tadika tak? Saya kerja kat kantin tadika tu juga."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak boleh, sampai semua blister kering, biasanya seminggu. Saya bagi surat untuk tadika. Kita pun kena notify ke pejabat kesihatan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Adik dia baru enam bulan. Macam mana nak elak berjangkit?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Basuh tangan dengan sabun selepas tukar lampin dan sebelum pegang baby. Asingkan cawan, sudu dan tuala."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bila saya kena risau dan bawa dia balik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau dia tak kencing lebih enam jam, muntah berterusan, lembik, tersentak-sentak masa tidur, atau sawan, bawa terus ke hospital. Itu tanda jarang tapi serius."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, doktor. Terima kasih banyak, saya faham sekarang."
+      }
+    ]
+  },
+  {
+    "id": "family_035",
+    "split": "train",
+    "condition": "Roseola infantum, high fever then rash",
+    "source": "Roseola",
+    "patient_persona": {
+      "description": "Mr. Kho Jun Hao, 35, male, father of Chloe, 11 months old, 9 kg; engineer in Kuching, Sarawak; first-time father. Methodical, has a notebook of temperatures, Mandarin with English terms.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Yvonne Ting Mei Lan, Malaysian Chinese woman from Sibu in her 40s, paediatrician at a Kuching private clinic. Warm, reassuring; Mandarin with English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，她 fever 了三天，每天最高都 39.5 以上。今天早上 fever 退了，可是全身起了 rash，我很担心是 measles。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你带了 temperature record，很好。她 fever 的时候精神怎样？还会玩吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Fever 高的时候比较 cranky，退烧了还是会爬来爬去，奶也有喝。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我看一下 rash。很多小小的粉红色点，主要在身体和脖子，压下去会变白。痒吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好像不会痒，她没有一直抓。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "三天高烧，退烧以后才出 rash，孩子精神又好，这个很典型，是 roseola，玫瑰疹。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Roseola？我第一次听到。是很严重的病吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不严重，是 human herpesvirus 6 引起的 viral infection。一岁左右的宝宝很常见。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那 rash 会传染给别人吗？我们家还有一个老人家。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "出 rash 的时候，传染性已经很低了。老人家一般都不会有问题，不过还是要洗手。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "需要吃 antibiotic 吗？还是要涂什么 cream？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不需要 antibiotic，rash 两三天自己会退，不用涂东西。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那 measles 呢？她的 MMR 还没打。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Measles 的孩子通常很不舒服，有咳嗽、红眼睛，而且 rash 是在发烧的时候出，不是退烧以后。Chloe 不像。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "下个月十二个月，记得去 klinik kesihatan 打 MMR，照 schedule 打就可以。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好的。那现在还要给 paracetamol 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "已经不发烧了，不用给。如果她不肯喝奶、尿布很少，或者 rash 变成紫色压不白，要马上带来。"
+      }
+    ]
+  },
+  {
+    "id": "family_036",
+    "split": "train",
+    "condition": "Two-month vaccination visit, parent concerns",
+    "source": "original",
+    "patient_persona": {
+      "description": "Puan Farhana binti Rosdi, 27, female, first-time mother of Aisy, 2 months old; nursery teacher in Seri Kembangan. Nervous, lots of questions, has read social media posts.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kalaivani a/p Sundram, Malaysian Indian woman in her 40s, family medicine specialist at a Selangor klinik kesihatan. Patient, reassuring; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Selamat pagi, Puan Farhana. Hari ni Aisy genap dua bulan, jadi masa untuk vaccine dia yang pertama kat klinik ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pagi, doktor. Sebenarnya saya ragu-ragu sikit. Saya baca kat Facebook, vaccine banyak sangat untuk baby kecil."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Terima kasih sebab jujur. Apa yang paling puan risaukan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Takut dia demam teruk, dan ada orang kata vaccine boleh sebabkan autism. Betul ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kajian besar yang melibatkan berjuta-juta kanak-kanak dah buktikan vaccine tak sebabkan autism. Artikel asal tu pun dah ditarik balik sebab data palsu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, macam tu. Hari ni dia dapat berapa cucuk, doktor? Berapa injection?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Satu cucuk je hari ni, 6-in-1, untuk difteria, tetanus, batuk kokol, polio, Hib dan hepatitis B. Pneumococcal vaccine nanti umur empat bulan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Enam penyakit dalam satu cucuk? Tak terlalu banyak ke untuk badan dia, doktor? Too much for her?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sistem imun baby berdepan dengan beribu kuman setiap hari. Vaccine ni sangat kecil berbanding tu. Sebab tu gabung, supaya kurang cucuk."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lepas cucuk, apa side effect yang biasa?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mungkin demam sikit, meragam, dan kaki bengkak merah kat tempat cucuk, satu dua hari. Itu normal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh bagi Panadol? Berapa banyak?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Aisy 5 kilo. Paracetamol drops 100mg per ml, bagi 0.6ml, setiap enam jam bila demam. Susukan lebih kerap."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bila saya kena risau? Bila kena bawa ke emergency?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau demam lebih 39, menangis tak berhenti lebih tiga jam, lembik, atau sawan, bawa terus ke klinik atau hospital."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, saya setuju. Lepas ni bila datang lagi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bulan depan, tiga bulan, untuk 6-in-1 dos kedua. Nurse akan tulis dalam buku rekod kesihatan kanak-kanak. Saya pegang kaki dia ya, puan susukan terus lepas cucuk."
+      }
+    ]
+  },
+  {
+    "id": "family_037",
+    "split": "train",
+    "condition": "MMR vaccination at 12 months with egg allergy question",
+    "source": "Measles",
+    "patient_persona": {
+      "description": "Mr. Daniel Wong Kah Hoe, 33, male, father of Sophie, 12 months old; IT consultant in Petaling Jaya. Polite, researched, slightly worried about allergy.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nadia binti Abdul Karim, Malay woman in her 30s, paediatrician at a PJ private clinic. Clear, friendly; English with Malay words.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Hi doctor. Sophie is due for her MMR booster today. But last month she had a rash after eating scrambled egg. My wife is worried the vaccine has egg inside."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good question, and thanks for telling me. What happened exactly when she ate the egg? Swelling of lips, difficulty breathing, muntah?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Just red rash around her mouth and cheeks, about half an hour. No breathing problem. Went away on its own."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That sounds like a mild egg allergy, or just skin irritation. The MMR vaccine is safe even for children with egg allergy, including severe ones."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Really? I read MMR is grown in egg."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's grown in chick cell culture, but the amount of egg protein sangat sikit, it doesn't cause reactions. Guidelines worldwide say no special precautions."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, that's reassuring. She got her first MMR at nine months, right? This is the second?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, first dose at nine months, second at twelve months. Dua dos, so she'll be well protected."
+      },
+      {
+        "speaker": "Patient",
+        "text": "With the measles outbreak news in Sabah, my mother-in-law also asked if we should tangguh dulu. I told her tak boleh lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "You're right. Measles sangat mudah berjangkit and can cause pneumonia or brain inflammation. Delaying puts her at risk."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Any side effects we should expect?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "About one week to ten days after, some kids get fever and a light rash, demam sikit and ruam, for a day or two. Paracetamol is fine."
+      },
+      {
+        "speaker": "Patient",
+        "text": "How much Paracetamol? She's 9.5 kilo."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol syrup 120mg per 5ml, 6ml, every six hours if needed. The pneumococcal booster comes later, at fifteen months."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, only one injection today ah? Good, senang sikit. I'll hold her."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Great. After this, next one at 18 months, the 6-in-1 booster. Tunggu fifteen minutes in the waiting area before going home, okay?"
+      }
+    ]
+  },
+  {
+    "id": "family_038",
+    "split": "train",
+    "condition": "Catch-up vaccination for a child with missed doses",
+    "source": "original",
+    "patient_persona": {
+      "description": "Ng Mei Kuan, 38, female, mother of Jia Le, 4 years old; runs a vegetable stall in Kuala Lipis, Pahang. Busy, apologetic, speaks direct Mandarin with some Malay.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Amirul Hakim bin Othman, Malay man in his 30s, medical officer at a Pahang klinik kesihatan. Non-judgemental, practical; English and Malay with simple Mandarin.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hello Puan Ng. I looked at Jia Le's buku kesihatan. Seems like he missed some vaccines after one year old. Boleh cerita?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "医生，对不起啦。那时候我老公生病，我一个人顾菜摊，really no time to bring him."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak apa, puan. Yang penting sekarang datang. We can do catch-up, 补打."
+      },
+      {
+        "speaker": "Patient",
+        "text": "他现在四岁，还来得及打吗？会不会太迟？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not too late, 不会太迟. He missed the MMR second dose, and the 18-month booster for 6-in-1. Today we can give both."
+      },
+      {
+        "speaker": "Patient",
+        "text": "两针一起打？他很怕针，上次打完哭到整个 klinik 都听到。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Two injections, one in each arm. It's safe to give together, and fewer visits for you. 你抱着他，it helps."
+      },
+      {
+        "speaker": "Patient",
+        "text": "有没有什么副作用？我明天还要早上四点去 pasar 批菜。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "He may have fever or sore arm for a day or two. MMR sometimes gives fever and rash after one week. Paracetamol boleh bagi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "他十六公斤，paracetamol 要给多少？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Syrup 250mg per 5ml, 给 5ml, 发烧的时候 every six hours. Maximum 一天四次."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。还有什么要打的吗？他明年要上 tadika 了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "At seven years old in Standard One, the school team will give MR and DT booster. You'll get a letter from school."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我要怎样记住？我真的很容易忘记。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll write the dates in his book, 你可以拍照. MySejahtera also can show some records."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，谢谢医生，没有骂我。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No need to scold, puan. You're doing your best. Hold him on your lap, face to your chest, okay?"
+      }
+    ]
+  },
+  {
+    "id": "family_039",
+    "split": "train",
+    "condition": "HPV vaccination counselling for a teenage girl",
+    "source": "original",
+    "patient_persona": {
+      "description": "Puan Rahimah binti Jaafar, 42, female, mother of Nur Iman, 13, Form 1 student; tailor in Sungai Petani, Kedah. Conservative, cautious, polite.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ain Syahirah Mohd Yusri, Malay woman in her 30s, school health team doctor based at a Kedah klinik kesihatan. Respectful, gentle; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Assalamualaikum, puan. Terima kasih datang. Saya faham puan belum tandatangan borang persetujuan HPV vaccine untuk Iman."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Waalaikumussalam. Ya, doktor. Saya tak faham kenapa budak tiga belas tahun kena cucuk vaccine untuk penyakit kelamin."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Soalan yang baik. HPV ni virus yang sebabkan kanser pangkal rahim, cervical cancer. Vaccine paling berkesan bila diberi sebelum terdedah, sebab tu umur muda."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tapi anak saya baik budaknya, bukan macam tu. Nanti orang kata apa pula."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya faham, puan. Vaccine ni bukan tentang tingkah laku dia sekarang. Ia melindungi dia untuk masa depan, termasuk selepas berkahwin."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kanser pangkal rahim tu banyak ke kat Malaysia?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ia antara kanser yang paling biasa dalam wanita Malaysia. Ramai datang lambat, bila dah teruk. Vaccine ni boleh cegah kebanyakan kes."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Selamat ke? Ada kesan sampingan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sangat selamat, dah diberi kepada ratusan juta perempuan. Biasanya lengan sakit, sometimes dizzy or faint for a while lepas cucuk."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pitam? Iman ni memang takut jarum."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sebab tu kami suruh budak duduk lima belas minit selepas cucuk, and make sure she eats breakfast first. Puan boleh teman dia."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Vaccine ni halal ke, doktor? Itu yang saya paling risau."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Soalan penting. Majlis fatwa kebangsaan dah putuskan vaccine HPV harus digunakan, untuk cegah penyakit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah, lega saya dengar. Berapa kali kena cucuk?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ikut jadual program sekolah, nurse akan beritahu kalau ada dos kedua. Saya boleh bagi borang, puan bincang dengan suami dulu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak apa, doktor. Saya tandatangan sekarang. Saya nak Iman terlindung."
+      }
+    ]
+  },
+  {
+    "id": "family_040",
+    "split": "test",
+    "condition": "Delayed vaccination after a febrile illness, rescheduling",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mr. Harvinder Singh a/l Gurdev Singh, 36, male, father of Arjan, 5 months old, 7 kg; logistics manager in Ipoh. Direct, a bit impatient, Manglish with Punjabi-accented English.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chan Kok Leong, Malaysian Chinese man in his 50s, GP at an Ipoh family clinic that runs a vaccine clinic. Practical, dry humour; English with Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, Arjan is due for his five-month jab today. But he had fever two days ago, 38.2. Now okay already. Can still give or not?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good that you asked. Is he feeding well now? Any fever since yesterday?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Feeding okay, drinking milk as usual. No fever since yesterday morning. Just a bit selesema, runny nose."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me check him. Temperature 36.9, chest clear, ears okay. Just a mild cold."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "A mild cold without fever is not a reason to delay. Kita tangguh only if he's quite unwell, or demam tinggi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, I thought must wait one week after sick. My wife said so, she read somewhere."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Many parents think that, tapi tangguh means he's unprotected longer. Today is the third 6-in-1 dose, completing the primary series."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Only one injection today, right? Last time two."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Just one today. The pneumococcal one was at four months, next at six months."
+      },
+      {
+        "speaker": "Patient",
+        "text": "If he gets demam lagi after the jab, macam mana nak tahu it's the vaccine or the cold?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Vaccine fever usually comes within 24 hours and settles in one to two days. Kalau lebih dua hari or above 39, bawa dia balik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. Paracetamol dose for seven kilo?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol drops 100mg per ml, 1ml, every six hours if needed. Don't exceed four doses a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alright, let's do it. I don't want to come back again, traffic at Jalan Sultan Azlan Shah very jam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ha, I understand. Hold him on your lap, keep his leg steady. Siap, done. Good boy, Arjan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "That was fast. He didn't even cry much. Thank you, doc."
+      }
+    ]
+  }
+]

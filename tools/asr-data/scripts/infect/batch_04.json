@@ -1,0 +1,808 @@
+[
+  {
+    "id": "infect_031",
+    "split": "train",
+    "condition": "Cellulitis of the leg in a diabetic",
+    "source": "Cellulitis",
+    "patient_persona": {
+      "description": "Pak Cik Zainal bin Awang, 58, male, durian and rubber smallholder near Kuantan, Pahang; type 2 diabetes for 10 years. Rough voice, stoic, East Coast Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Wan Farhana binti Wan Ahmad, Malay woman in her 30s, medical officer at a Kuantan health clinic. Friendly, efficient; Malay with English clinical words.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Pak cik, kaki kanan ni bengkak sejak bila?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tiga hari, doktor. Mula-mula merah sikit dekat buku lali, sekarang dah naik sampai betis. Panas, sakit bila jalan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada luka tak sebelum tu? Kena duri, kena cangkul?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Celah jari kaki ni memang dah lama gatal, pecah-pecah. Saya pakai but getah masa ke kebun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ha, celah jari tu ada kulat. Kulit pecah, kuman masuk, jadi cellulitis. Jangkitan kulit dan lapisan bawah kulit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Teruk ke? Kena potong ke? Kawan saya kencing manis kena potong jari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak, pak cik. Ni belum sampai tahap tu. Temperature 37.8, sugar 13.2. Tak ada nanah, tak ada kulit hitam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya lukis garisan pen kat tepi merah ni. Esok kalau merah dah lepas garisan, maksudnya tak menjadi, kena datang balik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, macam tu. Ubat apa?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cloxacillin 500mg, empat kali sehari, tujuh hari. Makan masa perut kosong, sejam sebelum makan. Paracetamol untuk sakit."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Empat kali sehari, perut kosong. Susah sikit tu, tapi saya cuba."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kaki ni kena angkat tinggi masa duduk dan tidur, letak atas bantal. Bengkak cepat surut."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kerja kebun macam mana? Durian tengah gugur ni."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Rehat tiga hari dulu, saya bagi MC. Celah jari tu, saya bagi clotrimazole cream, sapu dua kali sehari, jaga kering."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat kencing manis saya, metformin, teruskan ya?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Teruskan. Check gula kat rumah pagi petang. Kalau demam tinggi, menggigil, atau gula lebih 20, pergi Hospital Tengku Ampuan Afzan terus."
+      }
+    ]
+  },
+  {
+    "id": "infect_032",
+    "split": "train",
+    "condition": "Cellulitis on IV antibiotics, ward round",
+    "source": "Cellulitis",
+    "patient_persona": {
+      "description": "Mr. Tay Ah Huat, 66, male, retired taxi driver in Klang; hypertension, overweight. Grumpy but cooperative, Hokkien-flavoured Malaysian Mandarin with English and Malay words.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ng Kai Xuan, Malaysian Chinese man in his 30s, medical officer on the morning ward round at Hospital Tengku Ampuan Rahimah, Klang. Easygoing, quick; Mandarin and English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Uncle，早。今天第三天了，脚怎样？还痛吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好一点了。昨天晚上终于睡得着。红的地方好像没那么大了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，我看 line 画的地方，红色已经退了两三公分。Swelling 也少了。Temperature 36.9，没有 fever 了。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我可以回家了吗？躺在这里很闷。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "差不多了。今天的 blood test，white cell 从 16 降到 10，CRP 也下来了。我们今天把 IV cloxacillin 换成 tablet。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "换 tablet 就可以回家？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "如果今天 tablet 吃了没问题，明天早上可以 discharge。回家继续吃 cloxacillin 500mg，一天四次，再吃七天。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "一天四次那么多？可以一天两次的吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cloxacillin 就是要四次，因为药效很快就没了。空肚子吃，饭前一个钟头。你设 alarm 就不会忘记。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好啦。医生，为什么我会得这个？我又没有受伤。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的脚趾缝有 fungal infection，皮肤破了，细菌就进去。还有你的脚本来就有一点 swelling，血液循环不好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那会不会再来？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有可能 recur。所以脚趾缝要擦 antifungal cream，保持干燥。脚肿的话，坐的时候把脚抬高。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我的 blood pressure 药要继续吃吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "继续吃 amlodipine 10mg。你的 sugar 这几天有点高，出院前我们做 HbA1c，看看是不是 diabetes。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "糖尿病？唉，又多一样。好啦，你们验吧。"
+      }
+    ]
+  },
+  {
+    "id": "infect_033",
+    "split": "train",
+    "condition": "Cellulitis not improving, penicillin allergy",
+    "source": "Cellulitis",
+    "patient_persona": {
+      "description": "Mrs. Shanti a/p Govindasamy, 47, female, school administrative assistant in Seremban; penicillin allergy (rash as a teenager). Articulate, a bit impatient, Malaysian Indian English with Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Hafiz bin Omar, Malay man in his 40s, family physician at a Seremban clinic. Methodical, apologetic when needed; English with Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, I came three days ago for this arm. The antibiotic, erythromycin, I've been taking, but it's still red and makin sakit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me see. Hmm, the redness has gone past the pen line we drew. About two centimetres further. Any fever?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Last night 38.3. And the arm very tight, macam nak pecah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The erythromycin is not working well enough. Some skin bacteria are resistant to it. We need to switch."
+      },
+      {
+        "speaker": "Patient",
+        "text": "But I'm allergic to penicillin, remember? That's why you gave the erythromycin."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, I have it in your record. What exactly happened with the penicillin last time?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "When I was sixteen, rash all over, itchy. No breathing problem. My mother brought me to klinik, they gave injection."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK. To be safe, we avoid penicillin and cephalosporins. I'll switch you to clindamycin 300mg, four times a day, for seven days."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Any kesan sampingan I must know?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The main one is diarrhoea. If you get watery stools many times a day, or blood, stop and call us. Mild loose stool is common."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK. Should I go hospital instead? Honestly I'm risau."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Right now your BP is 124 over 78, pulse 92. You're stable. But I want to see you again in 48 hours, Thursday morning."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Khamis I can come before kerja."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If the red spreads fast, you get a blister, the skin turns dark, or pain is much worse than it looks, go to Hospital Tuanku Ja'afar terus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK. And the scratch from my jiran's cat, is that the cause?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Possibly, cat scratches carry bacteria. Keep the arm raised on a pillow, and wear something loose. Jangan pakai gelang or tight sleeves."
+      }
+    ]
+  },
+  {
+    "id": "infect_034",
+    "split": "train",
+    "condition": "Cellulitis after infected insect bites",
+    "source": "Cellulitis",
+    "patient_persona": {
+      "description": "Rosalinda binti Juslie, 19, female, Murut college student in Tawau, Sabah, recently back from a jungle trek. Bubbly, fast, Sabahan Malay mixed heavily with English.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Fung Kah Mun, Sabahan Chinese man in his 30s, GP at a Tawau clinic. Relaxed, teasing; English with Sabahan Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, lepas trekking kat Tawau Hills, kaki saya kena gigit nyamuk banyak. Saya garu, now dah bengkak and merah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Show me. Oh, this one on the shin, merah besar, warm. Ada nanah sikit kat tengah. Since when?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Since Saturday. First just small bite je, then Monday jadi besar. Semalam demam sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ini cellulitis, jangkitan kuman sebab you garu sampai luka. Temperature now 37.6. Ada rasa menggigil?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Menggigil tak ada. Cuma rasa panas and berdenyut, especially malam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The pus in the middle, I'll clean and drain a bit. Sakit sikit ya. Then I send swab for culture."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aduh. OK, doktor, I tahan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Done. Antibiotic, cephalexin 500mg, four times a day, seven days. Can take with food, tak payah perut kosong."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Four times? OK. Ada cream juga ke? Kawan saya pakai Bactroban."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For this size, cream alone tak cukup. You can put fusidic acid cream on the other small scratches, twice a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya ada exam minggu depan. Boleh pergi kelas?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, but angkat kaki bila duduk. Tomorrow and Friday, pergi klinik kesihatan for dressing. I write a referral."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK. Saya takut ada parut nanti. My legs dah banyak bekas gigitan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Stop scratching lah, that's the main thing. Next time trekking, pakai seluar panjang and repellent. For itch, cetirizine at night."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hehe, OK doktor. Noted. Thank you!"
+      }
+    ]
+  },
+  {
+    "id": "infect_035",
+    "split": "train",
+    "condition": "Preseptal (periorbital) cellulitis in a child",
+    "source": "Cellulitis",
+    "patient_persona": {
+      "description": "Mr. Chia Wei Ming, 38, male, electrical contractor in Kajang, Selangor, speaking for his son Jayden, 6. Worried, direct, Malaysian Mandarin with English.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Aida binti Rosli, Malay woman in her 30s, paediatric medical officer at a Kajang hospital emergency department. Calm; English-leaning, speaks functional Mandarin mixed with English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor，我儿子的左眼肿起来，昨天开始，今天早上几乎张不开。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有没有被蚊子咬，或者受伤？有发烧吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "前几天眼皮有一个 mosquito bite，他一直抓。昨晚 fever 38.5。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jayden，看我的手指，眼睛跟着动。Good。转来这边，会痛吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "他说不会痛。眼睛看东西也清楚。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "很好。眼睛可以正常转动，不痛，看得清楚，眼球也没有突出来。所以这个是 preseptal cellulitis，感染在眼皮，不在眼眶里面。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "如果在里面就很严重吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，那个叫 orbital cellulitis，要住院打 IV antibiotic，有时候要做 CT scan。现在他是比较轻的那种。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那可以回家吃药吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以。我开 amoxicillin-clavulanate，Augmentin syrup，他 20 公斤，一天两次，每次 8ml，吃七天。跟食物一起吃。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "一天两次，8ml。好，我记下来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol 也可以给他退烧。明天要回来 review，我要看肿有没有退。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要注意什么情况马上回来？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "眼睛转动会痛、转不动、看东西 double vision、眼球凸出来，或者很想睡、头很痛，马上来 emergency，不要等。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白了。他明天可以上学吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个不传染，可是他还发烧，先休息两天。我写 letter 给学校。"
+      }
+    ]
+  },
+  {
+    "id": "infect_036",
+    "split": "train",
+    "condition": "Tinea cruris worsened by topical steroid",
+    "source": "Tinea cruris",
+    "patient_persona": {
+      "description": "Lans Koperal Azlan bin Mat Isa, 30, male, traffic policeman in Kuala Lumpur; rides a motorbike in thick uniform all day. Embarrassed, low voice, KL Malay with English.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kevin Tan, Malaysian Chinese man in his 30s, GP at a Kuala Lumpur clinic near a police quarters. Casual, matter-of-fact; Malay and English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, saya ada gatal kat celah peha. Dah dua bulan. Makin lama makin besar."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh saya tengok? Hmm, merah, tepi dia naik, bentuk macam cincin, merebak ke punggung. Ada sapu apa-apa krim?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada, beli kat farmasi, Betnovate. Mula-mula sapu, OK, hilang gatal. Tapi berhenti je, datang balik lagi teruk."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ha, itulah masalahnya. Betnovate tu steroid cream. Dia hilangkan gatal sekejap, tapi kulat tu makin membiak. Kita panggil tinea incognito."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kulat? Saya ingat alergi sebab seluar."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ni kurap, fungal infection, tinea cruris. Biasa sangat untuk orang yang berpeluh banyak, pakai seluar tebal, naik motor panas-panas."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Memang, saya jaga trafik kat Jalan Tun Razak, panas sepanjang hari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Stop Betnovate terus. Saya bagi clotrimazole cream, sapu dua kali sehari, sampai dua minggu lepas kulit dah nampak bersih. Biasanya total empat minggu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Empat minggu? Lamanya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau berhenti awal, dia datang balik. Kulat ni degil. Kaki awak pun saya nak tengok. Celah jari kaki gatal tak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada juga, sikit. Sebab pakai kasut but sepanjang hari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ha, selalunya kulat dari kaki pindah ke celah peha. Pakai stoking dulu, baru seluar dalam, supaya tak berjangkit ke atas."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, macam tu. Tuala boleh kongsi dengan isteri?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jangan. Tuala asing. Lepas mandi, lap kering betul-betul celah peha. Seluar dalam kapas, tukar dua kali sehari kalau berpeluh."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK doktor. Kalau tak baik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Datang balik lepas tiga minggu. Kalau tak berkesan, mungkin kena makan tablet terbinafine. Tapi saya rasa krim ni cukup."
+      }
+    ]
+  },
+  {
+    "id": "infect_037",
+    "split": "train",
+    "condition": "Pityriasis (tinea) versicolor",
+    "source": "Tinea versicolor",
+    "patient_persona": {
+      "description": "Khor Jun Wei, 19, male, first-year engineering student and competitive swimmer in Penang. Relaxed, a bit sheepish, Malaysian Mandarin with English slang.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lee Mun Yee, Penang Chinese woman in her 40s, GP at a university health centre. Friendly, practical; Mandarin with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我背上和胸口有很多白白的 patch，朋友说是 panau，是真的吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我看看。嗯，一块一块白色的，有一点点 scale，刮一下会掉皮屑。会痒吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有时候痒，尤其是训练完流很多汗。去年也有，后来自己好了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，这个是 pityriasis versicolor，就是 panau。是皮肤上本来就有的 yeast 长太多，热天出汗就更容易。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "会传染给队友吗？我们都用同一个 changing room。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不会传染的。每个人皮肤上都有这个 yeast，只是有些人比较容易 overgrow。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那要怎么治疗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "用 ketoconazole 2% shampoo，不是洗头，是洗身体。擦在 patch 上，留五分钟再冲掉，每天一次，洗五天。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Shampoo 擦身体？好特别。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，因为 shampoo 容易擦大面积。之后每个月用一次预防，尤其是比赛季节。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那白色的 patch 多久会不见？我下个月有 competition，穿 swimsuit 很明显。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yeast 一两个礼拜就死了，可是颜色要恢复，可能要几个月。要晒太阳，颜色才会慢慢平均。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "几个月？那没办法快一点吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "没有什么神奇的方法。不要乱用 whitening cream。游完泳马上洗澡，换干的衣服，就不容易复发。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好吧。谢谢医生，至少知道不是什么大病。"
+      }
+    ]
+  },
+  {
+    "id": "infect_038",
+    "split": "train",
+    "condition": "Tinea pedis",
+    "source": "Tinea pedis",
+    "patient_persona": {
+      "description": "Ms. Deepa a/p Arumugam, 36, female, staff nurse in Klang who wears closed shoes for 12-hour shifts. Brisk, knows medical terms, Malaysian Indian English with Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Syed Amir bin Syed Hussein, Malay man in his 40s, GP at a Klang clinic. Relaxed, collegial; English with Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, my feet, between the toes so itchy and the skin peeling, white and soggy. Macam dah lama rendam air."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How long already? Which toes?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "About two months. Mostly between the fourth and fifth toes, both feet. Now got small cracks, pedih bila mandi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me see. Yes, macerated white skin, peeling, cracks. Typical athlete's foot, tinea pedis. The nails look OK?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Nails OK, I checked. I'm a nurse, 12-hour shifts, feet always berpeluh inside the shoes."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's the main cause. Warm, wet, closed shoes. Fungus loves it. Have you used anything?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "I tried some cream from the ward, I think it was hydrocortisone. Tak jalan pun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Steroid cream won't kill fungus, sometimes makes it worse. I'll give terbinafine 1% cream, apply once or twice a day, for two weeks."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Only two weeks? Clotrimazole last time took lama sangat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Terbinafine works faster for feet. But apply one to two centimetres around the area too, not only the itchy part."
+      },
+      {
+        "speaker": "Patient",
+        "text": "And the cracks? Takut kena infection."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good thinking. The cracks can let bacteria in, that's how cellulitis starts. Keep them dry. If red and swollen, come back."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Any tips for work? Tak boleh change shoes during shift."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cotton socks, change halfway through shift if you can. Alternate two pairs of shoes, let each dry for a day. Antifungal powder inside."
+      },
+      {
+        "speaker": "Patient",
+        "text": "And at home? My suami also sometimes gatal kaki."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Then he should treat too. Don't share towels or slippers, and dry between the toes after bath. Pakai selipar in the bathroom."
+      }
+    ]
+  },
+  {
+    "id": "infect_039",
+    "split": "train",
+    "condition": "Tinea capitis in a child, results review",
+    "source": "Tinea capitis",
+    "patient_persona": {
+      "description": "Puan Julia binti Ambo, 33, female, Bajau market trader in Kota Belud, Sabah, speaking for her son Fikri, 7. Warm, direct, Sabahan Malay with a few English words.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Jennifer Lo, Sabahan Chinese woman in her 30s, family medicine specialist at a Kota Belud health clinic. Patient, clear; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan, result kerokan kulit kepala Fikri dah sampai dari makmal. Memang ada kulat, fungus. Kita panggil tinea capitis."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, kulat. Patutlah rambut dia gugur bulat-bulat, ada sisik putih."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya. Kulat ni masuk sampai ke akar rambut. Sebab tu cream saja tak cukup. Kena makan ubat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat makan? Berapa lama?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya bagi terbinafine tablet. Fikri 25 kilo, jadi 125mg, setengah biji, sekali sehari, empat minggu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Empat minggu. Ada kesan sampingan ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kadang sakit perut sikit atau rasa makanan lain. Jarang sangat, boleh kena hati. Kalau dia kuning mata atau kencing gelap, stop dan datang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik. Sekolah macam mana? Cikgu suruh dia duduk rumah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bila dah mula ubat, dia boleh ke sekolah. Tapi jangan kongsi sikat, topi, atau bantal dengan kawan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Adik-beradik dia pun tidur satu bantal. Kena check juga?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, bawa adik-beradik datang, saya nak tengok kepala mereka. Kucing di rumah ada?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada dua ekor kucing. Satu tu bulu dia pun gugur sikit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kemungkinan dari kucing tu. Bawa kucing jumpa doktor haiwan. Kalau tak, Fikri boleh kena balik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Shampoo biasa boleh guna?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya bagi ketoconazole shampoo, cuci rambut dua kali seminggu. Ini kurangkan kulat merebak kepada orang lain."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Nanti rambut dia tumbuh balik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Biasanya tumbuh balik lepas rawatan habis. Kita jumpa lagi empat minggu, check kulit kepala dan ulang kerokan."
+      }
+    ]
+  },
+  {
+    "id": "infect_040",
+    "split": "test",
+    "condition": "Extensive tinea corporis",
+    "source": "Tinea corporis",
+    "patient_persona": {
+      "description": "Encik Jimmy Ngelai, 44, male, Iban oil palm plantation harvester near Bintulu, Sarawak; lives in estate quarters with his family. Deep, easy-going, Sarawak Malay with English words.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chai Yee Ling, Sarawakian Chinese woman in her 30s, medical officer at a Bintulu health clinic. Direct, friendly; English with Sarawak Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, badan saya banyak kurap. Pinggang, belakang, peha. Dah tiga bulan. Saya sapu macam-macam, tak baik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Apa yang encik sapu?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat kurap dari kedai runcit, yang botol hijau tu. Pastu kawan bagi cream putih, lepas sapu kulit rasa licin."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cream putih tu mungkin steroid. Tengok sini, the rash is big, merah dengan tepi bersisik, and some areas thin skin. That's steroid effect."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh. Saya tak tahu, bah. Saya ingat semua cream sama."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak apa. Sekarang kurap dah terlalu luas untuk cream saja. Kita guna tablet terbinafine 250mg, satu biji sehari, dua minggu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tablet ni selamat? Saya ada minum tuak kadang-kadang, hujung minggu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good you told me. Terbinafine diproses di hati. So sebelum mula, kita check liver function. Masa makan ubat, stop tuak dulu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dua minggu tak minum? OK lah, boleh tahan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Result liver test biasanya siap esok. Kalau normal, saya call, encik datang ambil ubat."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kerja saya panas, peluh banyak. Itu sebab kurap ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, peluh dan baju basah lama. Tukar baju kering bila rehat, mandi terus lepas kerja, lap kering betul-betul."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Anak saya dua orang pun ada gatal-gatal. Berjangkit ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh berjangkit through towel, katil, baju. Bawa anak-anak datang, I check them. Jangan kongsi tuala."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik. Cream putih tu saya buang?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Buang, or bagi saya tengok dulu. Jangan guna lagi untuk kurap. Kita jumpa dua minggu lagi, see how the skin is."
+      }
+    ]
+  }
+]

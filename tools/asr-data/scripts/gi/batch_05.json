@@ -1,0 +1,792 @@
+[
+  {
+    "id": "gi_041",
+    "split": "train",
+    "condition": "Gallstones",
+    "source": "Gallstones",
+    "patient_persona": {
+      "description": "Rohana binti Md Yusof, 44, female, runs a kuih business from home in Seremban, Negeri Sembilan; mother of three, BMI 33; arrives at the emergency department at night with right upper abdominal pain. Breathy, pained, Negeri Sembilan Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Arvind Pillai, Malaysian Indian man in his 30s, surgical medical officer at a Seremban hospital. Calm, efficient; English-leaning, good Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Rohana, pain kat mana? Tunjuk dengan tangan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sini, bawah rusuk kanan. Tembus sampai ke belakang, bahu kanan. Mula lepas makan kenduri, pukul lapan tadi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kenduri tu makan apa?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Rendang daging, gulai lemak, kuih pun banyak. Sakit ni datang sekali-sekala sebelum ni, tapi hilang dalam sejam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kali ni dah berapa jam? Any fever or chills? Kulit atau mata kuning?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dah three hours lebih, tak hilang. Muntah dua kali. Demam tak rasa, kuning tak perasan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Temperature 37.2, normal. Tapi bila saya tekan sini dan puan tarik nafas, puan terhenti. Itu Murphy's sign positive."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ultrasound tadi tunjuk banyak batu dalam pundi hempedu. Dinding dia belum tebal, jadi ini biliary colic, belum jangkitan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Batu karang ke doktor? Kena operation ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Batu hempedu, bukan batu karang buah pinggang. Sebab dah berulang, cara terbaik ialah buang pundi hempedu, laparoscopic cholecystectomy, lubang kecil saja."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tanpa pundi hempedu boleh hidup ke? After surgery makan macam mana, got any pantang?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, the liver still makes bile. Mula-mula kurangkan makanan berlemak, lama-lama back to normal."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sekarang saya bagi injection diclofenac 75mg untuk sakit, dan Buscopan. Blood test untuk liver function dan amylase dah ambil."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya ada alahan ubat apa-apa tak ada. Tapi saya ambil pil perancang, Yasmin."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Terima kasih beritahu, pil tu kita catat, tak ganggu ubat sakit ni. Kalau blood test OK, esok pagi puan boleh balik, dan kita bagi tarikh clinic surgery."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau demam, kuning, atau sakit tak berhenti lebih enam jam, datang balik emergency terus."
+      }
+    ]
+  },
+  {
+    "id": "gi_042",
+    "split": "train",
+    "condition": "Gallstones",
+    "source": "Cholecystitis",
+    "patient_persona": {
+      "description": "Lim Siew Eng, 58, female, retired tailor in Ipoh, Perak; type 2 diabetes; ward round on day two of admission for acute cholecystitis. Tired but talkative, Ipoh Cantonese-accented Malaysian Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Yeoh Chun Hao, Malaysian Chinese man in his 40s, general surgeon at an Ipoh government hospital. Brisk on rounds, reassuring; Mandarin with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "林阿姨，早安。今天肚子还痛吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好很多了医生。昨天痛到叫，今天只是按下去才痛。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "昨晚发烧还有没有？Nurse 说你的 temperature 37.4，compared to 38.9 on admission 好很多。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有发冷了。可是我肚子饿啊，两天没吃饭了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的白血球从十八降到十二，CRP 也下来了，说明 antibiotic 有效。今天可以开始喝水和吃粥。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那胆什么时候要割？我女儿说 one shot 割了比较好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你女儿讲得对。我们建议这次住院就做 laparoscopic cholecystectomy，最好在发病一个礼拜内做。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我有糖尿病，开刀会不会危险？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你的 HbA1c 是 7.8，还可以接受。手术前一天晚上 metformin 要停，我们会用 insulin 控制血糖。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我平时吃 metformin 500mg 一天两次，还有 gliclazide 早上一粒。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Gliclazide 在医院这几天先停，因为你吃得少，会血糖太低。Nurse 会一天四次 check 你的糖。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Antibiotic 继续 IV ceftriaxone 2 gram 一天一次，加 metronidazole 500mg 一天三次。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "开完刀要住多久？我孙子 Saturday 生日。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "如果顺利，after surgery one or two days 就可以回家。我们排礼拜四，应该赶得上生日。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好好，谢谢医生。那我现在可以吃粥了吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以，白粥，少油。今晚十二点以后就要 fasting，准备明天的 anaesthetist 看你。"
+      }
+    ]
+  },
+  {
+    "id": "gi_043",
+    "split": "train",
+    "condition": "Gallstones",
+    "source": "Gallstones",
+    "patient_persona": {
+      "description": "Anand a/l Krishnan, 50, male, logistics supervisor at Port Klang; results review after ultrasound for recurring post-meal pain. Deep voice, direct, Malaysian Indian English.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Farah Liyana Kamal, Malay woman in her 30s, family medicine specialist at a Klang health clinic. Clear, organised; English with a little Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mr. Anand, your ultrasound shows several gallstones, the biggest about 1.5 centimetres. The bile duct is not dilated, which is good."
+      },
+      {
+        "speaker": "Patient",
+        "text": "So that's the sakit after makan banana leaf. Banyak kali saya ingat gastrik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Very common mix-up. How many episodes in the last three months?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Maybe five or six. Setiap kali satu dua jam, then it goes. Last time I muntah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "And the liver blood test is normal, bilirubin 12, ALP normal. So no blockage of the duct at the moment."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Can dissolve the stones with medicine? My cousin took some tablet."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "There's ursodeoxycholic acid, but it only works for small cholesterol stones and takes many months. Stones often come back when you stop."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Since you have repeated attacks, the recommended treatment is removing the gallbladder by keyhole surgery. I'll refer you to the Klang hospital surgical clinic."
+      },
+      {
+        "speaker": "Patient",
+        "text": "How long is the waiting? Sekarang tak boleh ambil cuti lama, peak season at the port."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Usually a few months for elective cases. If you have fever or jaundice, they'll do it sooner. After surgery, about one week MC."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. Meanwhile what can I take for the sakit?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Buscopan 10mg three times a day when needed, and paracetamol 1 gram. Avoid heavy oily meals, mutton curry, fried chicken."
+      },
+      {
+        "speaker": "Patient",
+        "text": "That's all my favourite food, doctor. Susah lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Just until the surgery. Kalau sakit lebih enam jam, atau mata jadi kuning, go to emergency straight away."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Understood. I'll bring the referral letter myself, terima kasih."
+      }
+    ]
+  },
+  {
+    "id": "gi_044",
+    "split": "train",
+    "condition": "Gallstones",
+    "source": "Gallstones",
+    "patient_persona": {
+      "description": "Jainal bin Gumpil, 39, male, Kadazan-Dusun tour van driver in Kota Kinabalu, Sabah; two weeks after laparoscopic cholecystectomy. Easygoing, cheerful, Sabah Malay with English.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chin Mei Fong, Sabahan Chinese woman in her 40s, general surgeon at a Kota Kinabalu hospital. Efficient, friendly; English-leaning, relaxed Sabah Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Jainal, dua minggu sudah lepas operation. Macam mana luka?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bagus, doktor. Yang kat pusat tu sakit sikit bila ketawa, yang lain sudah kering."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me see. Hmm, clean, no pus. Yang kat pusat biasa lambat sikit, sebab di situ kami keluarkan gallbladder."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bila saya boleh drive van balik? Bos sudah tanya. Musim pelancong ni, doktor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau sudah tak makan ubat tahan sakit yang kuat, dan boleh brek kecemasan tanpa sakit, minggu depan boleh mula drive."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat sakit saya sudah stop. Tinggal Panadol kadang-kadang malam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. Makan macam mana? Any diarrhoea after oily food?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada sikit, doktor. Hari tu makan mee goreng basah, terus lari tandas. Normal ka tu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Normal pada sesetengah orang, sebab hempedu sekarang terus masuk usus. Biasanya baik dalam beberapa minggu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Buat masa ni, makan sikit-sikit tapi kerap, kurangkan minyak. Kalau teruk, saya boleh bagi cholestyramine, tapi selalunya tak perlu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Report batu tu sudah keluar ka, doktor? Saya takut ada kanser."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sudah. Histopathology tunjuk chronic cholecystitis dengan batu, tiada kanser. Semua OK."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Syukur. Angkat beg pelancong boleh ka? Kadang-kadang dua puluh kilo."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tunggu sampai enam minggu lepas operation untuk angkat berat, supaya tak jadi hernia. Minta kawan tolong dulu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK doktor. Perlu datang follow up lagi ka?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak perlu, kami discharge dari clinic. Kalau demam, kuning, atau luka bengkak merah, datang semula."
+      }
+    ]
+  },
+  {
+    "id": "gi_045",
+    "split": "train",
+    "condition": "Gallstones",
+    "source": "Gallstones",
+    "patient_persona": {
+      "description": "Jessica Ong Hui Min, 35, female, marketing executive in Melaka, four months postpartum and breastfeeding; first surgical clinic visit for recurrent biliary colic. Articulate, mixes Malaysian English and Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kelvin Tay Boon Keat, Malaysian Chinese man in his 40s, general surgeon at a Melaka private hospital. Patient explainer; switches between Mandarin and English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "王小姐，你的 GP 说你生完孩子后胆痛了三次，对吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对，怀孕的时候就有一次，以为是胃痛。生了以后痛了三次，最后一次痛了四个小时。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "怀孕的时候荷尔蒙会让胆汁比较浓，所以很多妈妈会长 gallstones。你的 ultrasound 看到很多小石头。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "小石头是不是比较 dangerous？我在网上看说小的会跑出去。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你看得没错，小的石头比较容易掉进胆管，会引起 jaundice 或者 pancreatitis。所以我建议切胆。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "可是我还在喂母乳，baby 才四个月。开刀的话还可以喂吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "可以。麻醉药很快就代谢掉，醒来精神好了就可以喂。你可以先挤一些奶放冰箱备用。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "手术后吃的 painkiller 呢？Will it go into the breast milk？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol 和 ibuprofen 都是 breastfeeding safe 的，只有一点点进母乳。强的止痛药我们尽量少用。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要住院多久？我老公要上班，家里没人帮忙带 baby。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "通常是 day surgery 或者住一晚。回家后两个礼拜不要抱太重的东西，baby 没问题，but no heavy lifting like the stroller。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "费用大概多少？我要问 insurance。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "大概一万到一万两千 ringgit，包括住院。我的 clinic assistant 会帮你拿 guarantee letter。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "等开刀的这段时间，if the pain comes back 怎样？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "吃 paracetamol 1 gram，加 Buscopan 10mg。如果痛超过六小时，发烧，或者眼睛黄，马上去急诊。"
+      }
+    ]
+  },
+  {
+    "id": "gi_046",
+    "split": "train",
+    "condition": "Suspected appendicitis",
+    "source": "Appendicitis",
+    "patient_persona": {
+      "description": "Azlina binti Harun, 42, female, mother of Adam, 14, a secondary school student in Kuantan, Pahang; brings him to the emergency department with abdominal pain since last night. Worried, quick Malay; Adam answers briefly.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Jun Ming, Malaysian Chinese man in his 30s, emergency physician at a Kuantan hospital. Calm, reassuring with children; Malay-leaning with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, anak saya Adam sakit perut dari malam tadi. Mula-mula kat pusat, sekarang dia kata pindah ke kanan bawah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Adam, sakit tu sekarang kat mana? Tunjuk dengan satu jari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Adam tunjuk sini, doktor. Dia kata bila jalan, sakit sangat. Dari rumah ke kereta dia bongkok."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any vomiting? Appetite macam mana, still eating?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Muntah sekali pagi tadi. Tak nak makan langsung, roti canai pun dia tolak. Selalunya dia makan dua keping."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Demam 37.9. Bila saya tekan sini dan lepas tiba-tiba, dia sakit lebih. Ini tanda rebound tenderness."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Appendix ke doktor? Pakcik dia dulu kena pecah, lama duduk wad."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kemungkinan besar, ya. Blood test tunjuk white cell 15, tinggi. Kita buat ultrasound perut untuk sahkan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Semalam saya bagi dia Panadol dua biji dan ubat angin. Salah ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tak salah, puan. Panadol selamat. Cuma lepas ni jangan bagi makan atau minum apa-apa dulu, kalau-kalau perlu operation."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Adam berat 50 kilo. Saya bagi IV paracetamol 750mg untuk sakit, dan drip air sebab dia kurang minum."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau betul appendix, bila operation? Suami saya kerja offshore, balik minggu depan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau ultrasound sahkan, team surgery akan buat hari ni juga, dengan laparoscopy. Puan boleh tandatangan consent sebagai ibu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Saya call suami dulu beritahu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh. Antibiotic kita mula sekarang, cefuroxime dan metronidazole. Nurse akan bawa Adam ke ultrasound sekejap lagi."
+      }
+    ]
+  },
+  {
+    "id": "gi_047",
+    "split": "train",
+    "condition": "Suspected appendicitis",
+    "source": "Appendicitis",
+    "patient_persona": {
+      "description": "Chong Wei Jie, 19, male, diploma student living in a hostel in Kajang, Selangor; emergency department visit for 12 hours of abdominal pain. Young, nervous, Malaysian Mandarin with English slang.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lee Shu Fen, Malaysian Chinese woman in her 30s, emergency medical officer at a Kajang hospital. Warm, efficient; Mandarin with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "伟杰，你的肚子什么时候开始痛的？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "昨晚十点左右，在肚脐这边，闷闷的。我以为吃了 mamak 的东西坏肚子。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "现在呢？还是在中间吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "今天早上跑到右边下面了，咳嗽都会痛。宿舍的朋友叫 Grab 送我来的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有没有 diarrhoea、小便痛，或者 blood in the urine？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有 diarrhoea，小便正常。就是很想吐，吐了一次。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你右下腹这里按下去很痛，还有 guarding。Alvarado score 大概八分，很像 appendicitis。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要开刀吗？我下个礼拜有 final exam。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "很可能要。我们先做 CT scan 确认，因为你的 ultrasound 看不清楚。今天开始不要吃东西，也不要喝水。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我可以喝一口水吗？好渴。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我们给你 drip，不会渴那么久。Any drug allergy？有没有吃什么药？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "盘尼西林过敏，小时候吃了全身起红点。其他没有。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个很重要，谢谢你讲。我们就不用 amoxicillin 类的，改用 ciprofloxacin 加 metronidazole。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "医生，要不要 inform 我爸妈？他们在新山。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你十九岁，自己可以签 consent，但是最好打个电话给他们，让他们安心。开完刀大概两三天可以出院。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那 exam 呢？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我会给你 medical certificate 和 memo，你可以跟学校申请 defer exam。"
+      }
+    ]
+  },
+  {
+    "id": "gi_048",
+    "split": "train",
+    "condition": "Suspected appendicitis",
+    "source": "Appendicitis",
+    "patient_persona": {
+      "description": "Meena a/p Ganesan, 26, female, retail store supervisor in Seremban; right lower abdominal pain for 11 hours, initially hides taking a friend's tramadol. Tense, speaks fast, Malaysian Indian English with Tamil-accented Malay words.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Hafizah Ismail, Malay woman in her 30s, surgical medical officer at a Seremban hospital emergency department. Steady, non-judgemental; English with this patient.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Meena, I'm from the surgical team. Tell me about the pain from the start."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Last night around midnight, around the belly button. Now it's here, right side, very sharp. Cannot even stand straight."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "When was your last period? Any chance you could be pregnant?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Two weeks ago, normal. Saya ada boyfriend tapi kami guna protection."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We'll still do a urine pregnancy test, standard for every woman with this pain. Any vaginal discharge, pain during urination?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, nothing like that. Cuma loya, and tak ada selera nak makan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your pregnancy test is negative. White cells 14, temperature 38. The ultrasound shows a swollen appendix, 9 millimetres, ovaries look normal."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Before I give you morphine, have you taken any painkillers or other medicine since last night?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Just Panadol. Dua biji."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay. You seem a bit drowsy. I need an honest answer for safety, no one is going to get you in trouble."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Actually my housemate gave me two tramadol at 4am. Her dentist gave her. Sorry, I was scared to say."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Thank you for telling me. Tramadol plus morphine can slow your breathing, so I'll give a smaller dose, morphine 2mg, and watch your oxygen."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Is the operation today? Manager asyik call, hari Sabtu ada sale besar."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, laparoscopic appendicectomy this afternoon. IV ceftriaxone 1 gram and metronidazole 500mg start now. You'll get two weeks MC."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Two weeks? Okay lah, nanti I tell her. Thank you doctor."
+      }
+    ]
+  },
+  {
+    "id": "gi_049",
+    "split": "train",
+    "condition": "Suspected appendicitis",
+    "source": "Appendicitis",
+    "patient_persona": {
+      "description": "Mohd Amirul bin Che Mat, 31, male, fisherman from Tumpat, Kelantan; day one after open appendicectomy for a perforated appendix. Rough, cheerful voice, strong Kelantanese Malay.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nik Hafiz Nik Yusoff, Kelantanese Malay man in his 40s, general surgeon at a Kota Bharu hospital. Relaxed, uses Kelantan dialect with local patients, English with the team.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Amirul, pagi. Tidur baik ke malam tadi?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak berapa, doktor. Luka ni sakit bila nak pusing badan. Tapi dah kurang dari semalam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Semalam appendix tu dah pecah, ada nanah sikit dalam perut. Sebab tu luka lebih panjang dan ada tiub drain ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya ingat angin je, doktor. Tiga hari saya tahan, pergi laut juga."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lain kali jangan tahan lama. Sekarang dah pass gas? Ada rasa lapar?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kentut ada sekali pagi tadi. Lapar sikit, tapi perut rasa kembung."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's a good sign, the bowel is starting to work. Hari ni boleh minum air sikit-sikit, petang cuba teh atau susu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Drain keluar 40ml semalam, warna jernih. Kalau esok kurang dari 20ml, kita cabut."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat drip ni lama lagi ke, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Antibiotic IV, ceftriaxone dan metronidazole, sekurang-kurangnya tiga hari. Lepas tu tukar ke tablet, augmentin 625mg dua kali sehari, cukupkan seminggu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bila boleh balik ke laut? Musim ikan ni, doktor. Tak turun laut, tak ada duit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya faham. Tapi luka perut tak boleh tarik jaring berat sekurang-kurangnya enam minggu. Kalau tak, boleh jadi hernia."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Enam minggu lama tu, doktor. Adik saya boleh ganti lah kot."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. Hari ni cuba bangun duduk kerusi dan jalan sikit dengan nurse, supaya paru-paru tak jadi jangkitan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, doktor. Terima kasih banyak-banyak."
+      }
+    ]
+  },
+  {
+    "id": "gi_050",
+    "split": "train",
+    "condition": "Suspected appendicitis",
+    "source": "Appendicitis",
+    "patient_persona": {
+      "description": "Ravi a/l Muthusamy, 68, male, retired postman in Bukit Mertajam, Penang; three days of vague lower abdominal pain and poor appetite, brought by his daughter. Slow, hoarse voice, Malaysian Indian English with Malay.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Khoo Seng Huat, Malaysian Chinese man in his 50s, emergency physician at a Penang hospital. Measured, thorough; English with Malay for older patients.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Uncle Ravi, your daughter says your stomach has been painful for three days?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes doctor, the pain is not so strong, just lower side, both sides also. But I cannot eat, no appetite at all."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any fever at home? Constipation or diarrhoea?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Last night a bit hot. Motion also not open for two days. I thought just angin."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "What medicines do you take every day?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "For pressure, amlodipine 10mg. For diabetes, metformin 1 gram twice. And my knee, sometimes I take Voltaren."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your temperature now is 38.1, and when I press here on the right lower side, you flinch more."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "In older people appendicitis doesn't always look typical, and it can burst earlier. Blood sugar is 16 and white cells 13."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Appendix at my age also can get meh? Saya ingat only young people."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Can happen at any age. I'm sending you for a CT scan now, to check the appendix and also the colon."
+      },
+      {
+        "speaker": "Patient",
+        "text": "The CT, got the dye? Buah pinggang saya ada masalah sikit, last time doctor said."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good point. Your creatinine today is 110, acceptable. We'll hold metformin for 48 hours after the contrast and give you drip."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Also no more Voltaren, it's not good for your kidneys and stomach. For pain we'll use IV paracetamol."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay doctor. Anak saya akan teman, dia boleh sign apa-apa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. Nothing to eat or drink from now. The surgeon will see you once the CT is out, about one hour."
+      }
+    ]
+  }
+]

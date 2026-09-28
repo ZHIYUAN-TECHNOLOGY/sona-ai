@@ -1,0 +1,820 @@
+[
+  {
+    "id": "family_001",
+    "split": "train",
+    "condition": "Gestational diabetes at antenatal check",
+    "source": "Diabetes, gestational",
+    "patient_persona": {
+      "description": "Nurul Izzati binti Rosli, 31, female, second pregnancy at 27 weeks, school clerk in Kuantan; mother has diabetes on insulin. Soft voice, a little anxious, speaks quickly.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Siti Hajar Mansor, Malay woman in her 30s, medical officer at a klinik kesihatan antenatal clinic in Kuantan. Warm, patient; speaks Malay with English medical terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Assalamualaikum, puan. Duduk dulu. Hari ni kita tengok keputusan ujian gula yang puan buat minggu lepas, OGTT tu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Waalaikumussalam, doktor. Saya risau sikit sebab nurse telefon suruh datang awal. Ada masalah ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Gula puasa 5.6, lepas dua jam 8.9. Both are above the cut-off. Maksudnya puan ada kencing manis semasa mengandung, gestational diabetes."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya Allah. Mak saya pun kencing manis, sekarang cucuk insulin. Anak saya nanti kena juga ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bukan semestinya. If we control the sugar well, risiko pada baby jauh kurang. Anak pertama dulu lahir berapa kilo?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Empat kilo lebih, doktor. Masa tu bidan kata besar, tapi tak ada orang cakap pasal gula pun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Baby besar tu satu tanda juga. Sekarang puan biasa makan macam mana? Nasi banyak ke, minum air manis?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Breakfast nasi lemak dengan teh tarik. Lunch nasi campur, petang kuih. Malam kadang-kadang roti canai dengan suami."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK, kita kena ubah sikit. Nasi separuh pinggan je, tambah sayur. Teh tarik tukar teh kosong, less sugar. Kuih petang tukar buah, macam epal atau jambu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Teh tarik tu susah sikit lah, doktor. Tapi saya cuba untuk baby."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya bagi puan glucometer. Check gula empat kali sehari: pagi sebelum makan, dan dua jam lepas sarapan, lunch dan dinner."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Berapa reading yang elok, doktor? Saya takut salah baca."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Before meals, below 5.3. Two hours after meals, below 6.7. Tulis dalam buku pink ni, bawa masa datang nanti."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau sugar masih tinggi walaupun saya dah control makan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kalau dalam dua minggu masih tinggi, we'll start metformin 500mg, atau insulin kalau perlu. Dua-dua selamat untuk baby."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Next appointment bila?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dua minggu lagi, hari Khamis. We'll do a growth scan sekali. Kalau baby kurang bergerak, terus datang, jangan tunggu."
+      }
+    ]
+  },
+  {
+    "id": "family_002",
+    "split": "train",
+    "condition": "Iron deficiency anaemia in pregnancy at antenatal check",
+    "source": "Anemia, iron deficiency",
+    "patient_persona": {
+      "description": "Lim Pei Shan, 26, female, first pregnancy at 22 weeks, hair salon assistant in Seremban. Quiet, soft-spoken, often answers briefly.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chong Wei Jie, Malaysian Chinese man in his 30s, GP at a private clinic in Seremban who follows up antenatal mothers. Gentle; Mandarin with English medical terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Pei Shan，你上次的血报告出来了。Hemoglobin 是 9.2，孕妇我们希望在 11 以上。你最近会不会很累？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "会，很容易累。在 salon 站久了会头晕，上楼梯也会喘。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个就是贫血，iron deficiency anaemia。During pregnancy the baby uses a lot of iron，所以很常见。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我以为是怀孕正常的累。那对宝宝有没有影响？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "现在发现得早，没有问题。可是如果不治疗，宝宝可能比较小，delivery 的时候 bleeding 也会比较危险。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我之前拿的 vitamin，有时候吃有时候不吃，因为吃了胃不舒服，大便也黑黑的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "黑色大便是 iron 的正常反应，不用怕。If your stomach is upset，你可以饭后吃，或者晚上睡前吃。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我给你 ferrous fumarate 200mg，一天两次。Folic acid 5mg 一天一次，继续吃。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "可以和我妈煮的汤一起吃吗？她每天都煮当归汤给我喝。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "汤可以喝，可是吃 iron 的时候不要配 teh 或者 kopi，会减少吸收。配一点 orange juice 更好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我每天早上都喝 kopi O，那我改到中午喝。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好。饮食方面多吃 red meat、鸡蛋、绿色蔬菜。如果 constipation，多喝水，吃多一点水果。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要吃多久？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "先吃一个月，然后我们再验血。If the hemoglobin doesn't go up，可能要打铁针，iron drip。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好的，医生。下个月我老公会陪我来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "好。如果头晕到快 pengsan，或者心跳很快，就不要等，马上来看我。"
+      }
+    ]
+  },
+  {
+    "id": "family_003",
+    "split": "train",
+    "condition": "Pregnancy-related hypertension at antenatal check",
+    "source": "Hypertension, pregnancy-related",
+    "patient_persona": {
+      "description": "Priya a/p Ravichandran, 36, female, primary school teacher in Ipoh, first pregnancy at 30 weeks after IVF. Clear, articulate, Malaysian Indian English with a few Malay words.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Hui Min, Malaysian Chinese woman in her 40s, obstetrician at an Ipoh hospital antenatal clinic. Crisp, reassuring; mostly English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Good morning, Priya. Your blood pressure today is 148 over 96. We checked it twice, fifteen minutes apart. Last visit it was 128 over 80."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo, that's high. I was rushing from school, maybe that's why? Traffic at Jalan Sultan Idris was terrible."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's why we rechecked after you rested. Still tinggi. Ada sakit kepala, pandangan kabur, or pain under your ribs on the right side?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Headache a bit since yesterday, but I thought because of marking exam papers, you know, penat sikit. No blur vision, no pain."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Any swelling of the face or hands? Cincin getting tight?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "My feet are bengkak by evening, but my face okay. My ring still can go in."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. The urine dipstick shows protein one plus. With the blood pressure, I'm worried about early pre-eclampsia."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pre-eclampsia? My cousin had that, dia kena bersalin awal. Is my baby in danger?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The baby's heartbeat is good and growth was normal on the scan. But we need blood tests today: full blood count, liver function, kidney function, and a urine protein ratio."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. Will I need ubat? I'm scared of taking too many things in pregnancy."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, I'll start labetalol 100mg twice a day. It's safe in pregnancy and commonly used. Continue the aspirin 150mg at night that you've been taking."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, labetalol twice a day. Can I still go to work? Next week got sports day, sekolah very busy."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'd rather you take one week MC and rest. I also want you to check BP at home every morning and evening."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I have a BP machine at rumah, my father punya lama. Is that okay?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's fine. If it's 160 over 110 or higher, or you get bad headache, vision changes, or upper tummy pain, come straight to labour room. Don't wait."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay doctor, faham. I'll tell my husband tonight."
+      }
+    ]
+  },
+  {
+    "id": "family_004",
+    "split": "train",
+    "condition": "Pre-eclampsia screening, late antenatal visit",
+    "source": "Preeclampsia",
+    "patient_persona": {
+      "description": "Rozita binti Abdullah, 40, female, fourth pregnancy at 34 weeks, runs a small kuih stall in Kota Bharu. Loud, cheerful, heavy Kelantanese accent softened for the doctor.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Faiz Zainal, Malay man in his 30s, medical officer at a Kota Bharu hospital antenatal clinic. Direct, calm; speaks Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Rozita, saya dah tengok buku antenatal. Tekanan darah pagi tadi 152 atas 100. Ujian air kencing ada protein dua plus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tinggi sangat ke tu, doktor? Tiga anak dulu tak ada masalah macam ni pun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tinggi. Umur empat puluh dan jarak lapan tahun, so the risk of pre-eclampsia is higher. Ada sakit kepala?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada, dua hari dah. Makan Panadol pun tak hilang. Mata pun rasa berpinar sikit bila bangun pagi."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kaki dan muka bengkak tak? Swelling?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kaki bengkak, muka pun suami kata tembam. Saya ingat sebab banyak makan garam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tanda-tanda ni saya tak senang hati. Hari ni saya nak puan masuk wad, kita pantau tekanan darah dan baby."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Masuk wad? Habis gerai kuih saya macam mana, doktor? Anak-anak pula siapa nak jaga? Alamak, susahnya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya faham, puan. But pre-eclampsia can get worse very quickly, sampai sawan. Keselamatan puan dan baby paling penting."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sawan? Ya Allah. Okay lah, nanti saya call suami suruh adik dia jaga budak-budak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dalam wad kita bagi ubat darah tinggi, nifedipine. Kita juga cucuk steroid dua kali untuk kuatkan paru-paru baby, sebab mungkin kena bersalin awal."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bersalin awal? Baru tiga puluh empat minggu. Anak boleh hidup ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pada usia ni, baby biasanya boleh bernafas dengan baik, especially after the steroid injections. Pakar sakit puan akan jumpa puan petang ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK doktor. Saya ikut je apa doktor cakap."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Terima kasih, puan. Jururawat akan bawa puan ke wad bersalin sekarang, naik kerusi roda."
+      }
+    ]
+  },
+  {
+    "id": "family_005",
+    "split": "train",
+    "condition": "Routine antenatal booking visit",
+    "source": "original",
+    "patient_persona": {
+      "description": "Ooi Siew Lan, 29, female, office accountant in Bayan Lepas, Penang, first pregnancy at 9 weeks. Bright, curious, asks many questions; Penang Hokkien-flavoured Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nurul Ain Hashim, Malay woman in her 30s, family medicine doctor at a Penang clinic. Friendly; speaks English and simple Mandarin phrases, mixes with Malay words.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Congratulations, Siew Lan! Urine pregnancy test positive. Last period 你记得是几号吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "七月十号。我算了应该是九个 weeks 左右。我老公很开心，可是我有点紧张。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "九个礼拜，okay. Today we open your pink book, 就是 antenatal book. We check blood pressure, weight, urine, and take blood."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Blood test 是验什么？要空肚子吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "No need fasting. We check hemoglobin, blood group, 还有 HIV, syphilis, hepatitis B. 这些是每个孕妇都要做的 screening."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。我有没有需要注意什么东西不能吃？我很喜欢吃 sushi, 生鱼片那些。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sashimi 这段时间先不要吃。Also no half-boiled eggs，和没有 pasteurised 的 cheese."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那咖啡呢？我每天两杯 white coffee."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Satu cawan sehari okay, 一杯就好。两杯 太多了。Also no alcohol, no smoking."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我现在有吃 folic acid，是 pharmacy 买的 0.4mg，is that enough 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good. 继续吃到十二个礼拜。I'll also give you a first scan appointment to confirm the dating."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Scan 可以看到宝宝的心跳吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, 九个礼拜 usually can see the heartbeat already. 你老公可以一起进来看。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "太好了！那 next appointment 是什么时候？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Every four weeks until 28 weeks, then more often. If bleeding or very bad tummy pain, come straight away, 不要等到 appointment 那天."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好的，thank you doctor. 我回去就告诉我妈妈。"
+      }
+    ]
+  },
+  {
+    "id": "family_006",
+    "split": "train",
+    "condition": "Morning sickness, early pregnancy",
+    "source": "Morning sickness",
+    "patient_persona": {
+      "description": "Aisyah binti Kamarudin, 24, female, first pregnancy at 8 weeks, bank teller in Shah Alam. Tired, soft voice, a little teary.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lee Mei Yee, Malaysian Chinese woman in her 30s, GP at a Shah Alam clinic. Kind and practical; English-leaning, speaks decent Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Selamat petang, Aisyah. Saya dengar awak muntah-muntah teruk. Dah berapa lama?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dah seminggu, doktor. Pagi-pagi bangun terus muntah. Bau nasi pun saya tak tahan, smell apa pun loya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sehari muntah berapa kali? Air boleh minum tak? Can keep down?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tiga empat kali. Air boleh minum sikit-sikit, tapi kadang keluar balik juga."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Urine macam mana? Warna kuning pekat ke, atau jernih?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kuning sikit, tapi masih kencing macam biasa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK, bagus. Berat badan pun turun sikit je, satu kilo. This is typical morning sickness, bukan yang teruk."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kenapa orang panggil morning sickness, saya muntah sampai malam pun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Betul, nama je morning, boleh jadi bila-bila masa. Biasanya dia reda lepas dua belas sampai empat belas minggu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cuba makan small meals tapi kerap. Biskut kering sebelum bangun dari katil pun membantu. Elakkan makanan berminyak, oily food."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya ada dengar air halia boleh tolong. Betul ke, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, halia boleh. Saya bagi juga pyridoxine 25mg, vitamin B6, three times a day. Dan metoclopramide 10mg kalau muntah teruk, sampai tiga kali sehari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat muntah tu selamat ke untuk kandungan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Selamat, banyak ibu mengandung guna. Tapi ambil bila perlu je, as needed."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya kerja kaunter bank, susah nak lari ke tandas."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya bagi MC dua hari untuk rehat. If you can't drink at all, kencing sangat sikit, atau pening nak pitam, terus datang, mungkin perlu drip."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Terima kasih banyak."
+      }
+    ]
+  },
+  {
+    "id": "family_007",
+    "split": "train",
+    "condition": "Hyperemesis gravidarum with dehydration",
+    "source": "Morning sickness",
+    "patient_persona": {
+      "description": "Chan Yee Ling, 32, female, second pregnancy at 10 weeks, kindergarten teacher in Johor Bahru. Weak voice, pauses often; husband nearby.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Rajesh Kumar a/l Subramaniam, Malaysian Indian man in his 40s, emergency physician at a Johor Bahru hospital. Calm; English with some Mandarin words he picked up.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hello, Yee Ling. Your husband said you cannot keep anything down since Saturday, 礼拜六开始. Is that right?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "对……什么都吐，连水也吐。This morning got some blood 丝。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Blood streaks usually from the throat, because of too much vomiting. How many times today?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我数不清了，可能十次。昨天晚上一整晚都没睡，very tired."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your urine test shows ketones three plus, and your heart rate is 118. You're quite dehydrated, 很缺水."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我要 admit 吗？My son is only three，没有人带。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I think yes, at least one or two days. We give you drip, normal saline with potassium, 还有 medicine through the vein."
+      },
+      {
+        "speaker": "Patient",
+        "text": "第一胎的时候也吐，but not so serious。上次吃 pyridoxine 就好了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "This time it's hyperemesis, the severe type. I'll give ondansetron 4mg through the drip first, 然后看情况。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那个 ubat 对宝宝安全吗？我在网上看到有人说不好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "After ten weeks, the risk is very low. Not treating the dehydration is more dangerous for you and the baby."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好吧……那我要 puasa 吗？不能吃东西？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Once the vomiting settles, you can try small sips of water, then plain crackers, 慢慢来."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我老公问，要不要停工作？学校那边 need to apply leave。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll give MC for one week after discharge. We'll also check thyroid and do a scan to see if it's twins, 双胞胎."
+      },
+      {
+        "speaker": "Patient",
+        "text": "双胞胎？天啊，我没有 think about this."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Twins can make vomiting worse, so we just check. Nurse will set the drip now, okay?"
+      }
+    ]
+  },
+  {
+    "id": "family_008",
+    "split": "train",
+    "condition": "Morning sickness, second trimester follow-up",
+    "source": "Morning sickness",
+    "patient_persona": {
+      "description": "Grace Lim Ai Ling, 34, female, second pregnancy at 15 weeks, marketing executive in Petaling Jaya. Brisk, practical, Malaysian English with the odd Hokkien particle.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Farah Nadia Ismail, Malay woman in her 30s, O&G specialist at a PJ private hospital. Friendly, efficient; English with this patient.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Hi Grace, how's the nausea now? Last time you were on pyridoxine and the occasional metoclopramide."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Better, but not gone. I still vomit once in the morning. The office pantry smell of Maggi mee makes me want to die, you know."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's quite common, smells are a big trigger. Are you able to eat proper meals?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lunch and dinner okay. Breakfast tak boleh lah. I just makan biskut kosong and some Milo."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your weight is up half a kilo since last visit, so that's reassuring. Urine is clear, no ketones."
+      },
+      {
+        "speaker": "Patient",
+        "text": "That's good. But I'm worried the baby tak cukup zat, tak dapat nutrients."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "At this stage the baby takes what it needs from your stores. Are you still taking the folic acid and the multivitamin?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Folic acid yes. The multivitamin makes me muntah, so I stopped after one week."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's fine for now. Try taking it at night before sleeping, with food. If you still can't tolerate it, we switch to a smaller chewable one."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. Also, I read online that air halia can help. Is it safe to drink every day?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ginger is fine, one or two cups a day. Continue pyridoxine 25mg three times a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "When will this nausea end? First pregnancy dia stop at twelve weeks."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Most people improve by sixteen to twenty weeks. A few carry on longer, but it usually gets milder."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alright. Anything I should watch for, doc?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If you can't keep fluids down for a day, lose weight, or pening when standing, come in earlier. Otherwise see you at 20 weeks for the detailed scan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, thanks doctor. I'll bring my husband for the scan."
+      }
+    ]
+  },
+  {
+    "id": "family_009",
+    "split": "train",
+    "condition": "Morning sickness with heartburn in pregnancy",
+    "source": "Morning sickness",
+    "patient_persona": {
+      "description": "Norhayati binti Ahmad, 28, female, first pregnancy at 11 weeks, nursery assistant in Kuching, Sarawak. Chatty, cheerful even when unwell; Sarawak Malay flavour.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Jonathan Liew, Malaysian Chinese man from Kuching in his 30s, GP at a Kuching clinic. Easy-going; switches between English and Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Selamat pagi, Hayati. Apa khabar? Loya masih teruk ke?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Pagi, doktor. Loya kurang sikit, tapi sekarang dada pedih. Macam burning, lebih-lebih lagi lepas makan malam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Rasa masam naik ke tekak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya, betul. Kadang-kadang sampai batuk malam. Saya tidur pun kena tinggi bantal, two pillows."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's heartburn, pedih ulu hati. Hormone mengandung buat injap perut jadi longgar, jadi asid naik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, patutlah. Saya ingat saya ada sakit gastrik macam dulu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Awak makan malam pukul berapa biasanya?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lambat, doktor. Pukul sembilan lebih, lepas suami balik kerja. Lepas makan terus baring tengok TV, watch drama."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cuba dinner awal sikit, sekurang-kurangnya two hours sebelum baring. Kurangkan makanan pedas dan kopi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aduh, sambal belacan pun kena kurang ke? Itu yang saya teringin sangat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kurangkan je, tak payah stop terus. I'll give you an antacid, Gaviscon, 10ml lepas makan dan sebelum tidur."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat tu boleh makan sama dengan vitamin saya?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jarakkan dua jam dari ubat besi, because antacid reduces iron absorption."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, doktor. Loya pun masih ada, pyridoxine tu nak teruskan ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Teruskan pyridoxine 25mg, tiga kali sehari. If the heartburn doesn't settle in a week, datang balik, kita tukar ubat lain."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Thank you, doktor. Nanti saya bagitahu mak mentua saya pasal sambal tu."
+      }
+    ]
+  },
+  {
+    "id": "family_010",
+    "split": "train",
+    "condition": "Morning sickness in a working mother, anxiety about medication",
+    "source": "Morning sickness",
+    "patient_persona": {
+      "description": "Kavitha a/p Selvam, 30, female, second pregnancy at 7 weeks, nurse at a Klang Valley hospital working night shifts. Fast talker, knowledgeable, worried.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Wan Nur Aisyah Wan Ahmad, Malay woman in her 40s, family medicine specialist in Klang. Calm, reassuring; English with a few Malay words.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, I'm a nurse, so I know this is normal, but I'm vomiting five, six times a day, especially after night shift."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay Kavitha, let's take it step by step. Are you still passing urine normally?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Less than usual. Dark yellow. And I feel pening when I stand up quickly in the ward."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your blood pressure is 100 over 62, pulse 104. The urine shows ketones two plus. So you're a bit dry, but not severe."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Should I get drip? We have drip in the ward, but I don't want to use my own ward lah, malu nanti kawan-kawan nampak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We can give one pint of normal saline here in the treatment room, about two hours. Then oral medicine."
+      },
+      {
+        "speaker": "Patient",
+        "text": "What ubat? I'm scared of anything with ondansetron. I read about the cleft lip thing."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Understandable. At seven weeks, I'd start with pyridoxine 25mg three times a day, plus promethazine 25mg at night. Both have long safety records."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Promethazine will make me mengantuk, right? I have night shift tomorrow."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, it can. That's why at night only. I'll give you three days MC, and I think you should ask for day shift for a few weeks."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My sister in charge sure tak happy. But okay, I'll ask."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll write a letter for her. Night shift makes the nausea worse because of irregular sleep and meals."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. Anything else I can do at rumah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Small frequent meals, air sejuk easier than hot drinks. Letak biskut tepi katil. Avoid baring flat right after eating."
+      },
+      {
+        "speaker": "Patient",
+        "text": "If still cannot tahan after three days?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Then come back. We can admit for IV fluids and consider other medicines. Jangan tunggu sampai terlalu lemah."
+      }
+    ]
+  }
+]

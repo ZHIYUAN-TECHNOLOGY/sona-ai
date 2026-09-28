@@ -1,0 +1,768 @@
+[
+  {
+    "id": "gi_021",
+    "split": "train",
+    "condition": "Functional dyspepsia",
+    "source": "Functional dyspepsia",
+    "patient_persona": {
+      "description": "Lin Yu Qing, 34, female, software QA engineer in Bayan Lepas, Penang; symptoms began after a bout of gastroenteritis a year ago. Soft-spoken, precise Penang Mandarin with tech English words.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Yap Chee Keong, Malaysian Chinese man in his 50s, gastroenterologist at a Penang hospital. Patient explainer; Mandarin with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "林小姐，你的 gastroscopy 和 biopsy 都正常，没有溃疡，也没有 H. pylori。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那为什么我吃几口就饱，肚子上面一直胀，还会烧？已经一年多了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个叫 functional dyspepsia。胃的 structure 没问题，但是 stomach 的 sensation 和 motility 变得太 sensitive。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "去年我在 Bangkok 拉肚子一个星期，之后就开始这样了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，post-infection 出现这种问题很常见。有没有 weight loss，或者吐？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "体重掉了两公斤，因为吃不下。没有吐。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "两公斤还可以接受。你之前吃的 esomeprazole 有帮助吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "烧的感觉好一点，但是 bloating 还是一样。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那我加 domperidone 10mg，饭前十五分钟吃，一天三次。它帮助 gastric emptying，try 四个星期看看。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "听说 domperidone 对心脏不好，是真的吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "高剂量或者有心脏病才比较危险。你年轻，ECG 正常，用低剂量、短时间是安全的。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "如果还是没有用呢？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "下一步可以用 amitriptyline 10mg，晚上吃。Low dose 是用来降低胃的 sensitivity，不是当 antidepressant 用。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我工作压力很大，常常加班，会不会有关系？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "有关系，stress 会放大肠胃的感觉。Small frequent meals，少油，dinner 不要吃太饱，这些都会 help。"
+      }
+    ]
+  },
+  {
+    "id": "gi_022",
+    "split": "train",
+    "condition": "Functional dyspepsia",
+    "source": "Functional dyspepsia",
+    "patient_persona": {
+      "description": "Muhammad Hafiz bin Rosli, 29, male, e-hailing driver in Subang Jaya, Selangor; eats irregularly, drinks a lot of kopi. Casual, youthful KL Malay with English slang.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lim Pei Shan, Malaysian Chinese woman in her 30s, GP at a Subang Jaya clinic. Straightforward, friendly; fluent Malay mixed with English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, saya selalu rasa kembung dengan pedih ulu hati. Dah dua tiga bulan macam ni, on and off."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pedih tu bila? Lepas makan atau masa perut kosong?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dua-dua. Kadang lepas makan rasa penuh sangat, macam nak pecah perut."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hafiz makan pukul berapa biasanya? Minum kopi banyak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak tentu, doktor. Kerja Grab, kadang pukul tiga petang baru makan. Kopi ais sehari tiga cawan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada muntah, black stool, susah telan, atau berat turun?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada semua tu. Berat sama je, 70 kilo."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK, tak ada alarm features. Dalam family ada sesiapa kanser perut?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada setahu saya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya nak buat stool test untuk H. pylori dulu. If positive, kita treat dengan antibiotics, two weeks."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sementara tu, omeprazole 20mg sekali sehari sebelum sarapan, empat minggu. Tapi stop dua minggu sebelum buat stool test."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, kena buat test dulu baru makan ubat lah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Betul, lebih accurate macam tu. Today ambil container, hantar stool sample esok pagi, then baru start omeprazole."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kopi kena stop terus ke? Susah sikit, nanti mengantuk drive."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kurangkan to one cup, jangan minum on an empty stomach. Makan ikut masa, walaupun sikit, bawa roti dalam kereta."
+      }
+    ]
+  },
+  {
+    "id": "gi_023",
+    "split": "train",
+    "condition": "Functional dyspepsia",
+    "source": "Functional dyspepsia",
+    "patient_persona": {
+      "description": "Mrs. Kamala a/p Govindasamy, 48, female, tuition centre owner in Ipoh, Perak; follow-up after starting amitriptyline. Expressive, animated Malaysian Indian English.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ahmad Firdaus Kamal, Malay man in his 40s, family medicine specialist in Ipoh. Warm, unhurried; English with light Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mrs. Kamala, it's been six weeks on the amitriptyline. How is the stomach?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doctor, honestly much better. The kembung after lunch is maybe half now. I can finish a thosai already."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's good progress. Any side effects? Dry mouth, drowsy in the morning, constipation?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Mouth a bit kering, and first week I was very mengantuk in the morning. Now okay."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "You're taking 10mg at night, around nine o'clock?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, after dinner. But doctor, my sister said this is ubat depression. Betul ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "At high doses it's used for depression. At 10mg we use it to calm the nerves of the gut, so the stomach is less sensitive."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay, I was worried people will think I'm gila or something."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not at all. This is a very common treatment for functional dyspepsia. How is your sleep and stress lately?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sleep better now. Stress still there, SPM students all panic, parents call me every night, tak habis-habis."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Cuba ambil masa rehat sikit waktu malam. Stress and gut symptoms go together, memang berkait."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Should I continue the pantoprazole also?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Since the burning dah hilang, you can stop pantoprazole. Continue amitriptyline 10mg for another three months, then we'll try to reduce."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alright doctor. Can I naikkan sendiri if the bloating comes back?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jangan adjust sendiri. If symptoms return, come see me, we might go up to 25mg."
+      }
+    ]
+  },
+  {
+    "id": "gi_024",
+    "split": "train",
+    "condition": "Functional dyspepsia",
+    "source": "Nonulcer dyspepsia",
+    "patient_persona": {
+      "description": "Puan Rosnah binti Abdul Latif, 36, female, Bajau kindergarten teacher in Kota Belud, Sabah; coming for a refill before Ramadan. Cheerful, Sabah Malay with 'bah' and 'kah'.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Stephanie Liew, Sabahan Chinese woman in her 30s, medical officer at a Kota Belud klinik kesihatan. Friendly; Malay with English medical words.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, saya mau sambung ubat gastrik. Minggu depan sudah mula puasa."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Puan dah makan ubat ni tiga bulan. Macam mana, bloating dan pedih sudah kurang?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sudah kurang bah. Cuma kadang-kadang lepas makan masih rasa penuh."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tahun lepas masa puasa, macam mana perut puan? Ada flare up?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Teruk juga, doktor. Masa berbuka makan banyak, terus sakit perut, susah tidur."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ramai macam tu. Berbuka dengan kurma dan air dulu, then solat, after that baru makan nasi, slowly."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat omeprazole tu, macam mana mau makan masa puasa?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Makan omeprazole 20mg before sahur, thirty minutes before food. Sekali sehari cukup."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat kembung yang lain tu, domperidone, boleh sambung?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Domperidone 10mg boleh makan sebelum berbuka dan sebelum sahur, dua kali sehari je masa puasa."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Goreng-goreng di bazar Ramadan tu boleh makan kah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh sikit, jangan banyak. Makanan berminyak dan pedas buat gastric emptying lambat, jadi lagi kembung."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK doktor. Saya ambil untuk dua bulan terus boleh? Klinik jauh dari kampung, kena naik van."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, saya bagi two months supply. Tapi kalau vomiting berterusan atau black stool, jangan tunggu, terus datang."
+      }
+    ]
+  },
+  {
+    "id": "gi_025",
+    "split": "train",
+    "condition": "Functional dyspepsia",
+    "source": "Dyspepsia",
+    "patient_persona": {
+      "description": "Mr. Tan Chee Meng, 62, male, retired bank manager in Melaka; new upper abdominal discomfort. English-dominant Straits Chinese, formal, measured.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Suriya Devi Nair, Malaysian Indian woman in her 40s, GP at a Melaka clinic. Thorough, calm; English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, I've had this dull discomfort under my ribs for about two months. Indigestion, I suppose."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Does it come with makan, or anytime?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Mostly after meals. I get full very quickly. I used to finish a plate of chicken rice, now only separuh."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Have you lost weight?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Actually yes. My seluar are loose. I weighed 71 kilos in June, now 66."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Five kilos in three months, tanpa diet. Any vomiting, black stools, trouble swallowing?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No black stools. Occasionally I feel food sits there, but no vomiting."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mr. Tan, at your age, new symptoms with weight loss are what we call alarm features. I don't want to just call it indigestion."
+      },
+      {
+        "speaker": "Patient",
+        "text": "You're thinking of something serious?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's most likely an ulcer or gastritis, tapi kita kena rule out cancer. You need a gastroscopy within two weeks."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I see. Can it be done at Hospital Melaka, or should I go private?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll send an urgent referral to Hospital Melaka today. If you prefer private, it can usually be done within a week."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Meanwhile, saya hantar juga full blood count dan liver function test. Haemoglobin tu akan tunjuk kalau ada pendarahan tersembunyi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Should I take any ubat for now?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hold off on acid tablets until the scope, as they can mask findings. Paracetamol if needed, and avoid aspirin or ibuprofen."
+      }
+    ]
+  },
+  {
+    "id": "gi_026",
+    "split": "train",
+    "condition": "Constipation",
+    "source": "Constipation in children",
+    "patient_persona": {
+      "description": "Puan Farhana binti Kamarudin, 33, female, civil servant in Putrajaya, mother of 5-year-old Aisyah who withholds stools at kindergarten. Organised, worried, standard Malay with English.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Jason Teh Wei Ming, Malaysian Chinese man in his 30s, paediatrician at a Putrajaya clinic. Playful with children, clear with parents; Malay and English.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, Aisyah ni susah berak. Kadang seminggu sekali je, keras macam batu, dia menangis bila nak keluar."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dah berapa lama jadi macam ni, puan? Since when?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sejak mula masuk tadika, dalam tiga bulan. Dia tak nak guna tandas sekolah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada darah atas najis, atau seluar dalam kotor dengan stool sikit-sikit? Itu we call soiling."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada darah sikit sekali dua. Seluar dalam pun selalu kotor, saya ingat dia malas cebok."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tu sebenarnya overflow, najis lembut yang bocor keliling najis keras. Bukan salah dia, puan."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Perut dia saya rasa ada najis keras dekat bawah kiri. Tapi pertumbuhan dia normal, tak ada tanda penyakit lain."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kena bagi ubat ke, doktor? Saya takut dia bergantung pada ubat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lactulose ni safe for children, not addictive. Bagi 10ml, dua kali sehari, sampai najis lembut setiap hari."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Berapa lama kena makan? One month enough?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Usually a few months. Kalau stop too early, dia takut sakit lagi dan tahan berak semula."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lepas makan, suruh dia duduk tandas lima minit, kaki letak atas bangku kecil. Bagi sticker kalau dia cuba."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Makanan pula, dia suka nugget dan susu je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Susu kurangkan ke dua cawan sehari. Tambah buah macam betik, pear, dan minum air kosong lebih banyak."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik doktor, saya cuba. Bila perlu datang semula?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Datang six weeks lagi. Kalau perut dia buncit, muntah, atau tak berak langsung seminggu, datang lebih awal."
+      }
+    ]
+  },
+  {
+    "id": "gi_027",
+    "split": "train",
+    "condition": "Constipation",
+    "source": "Constipation",
+    "patient_persona": {
+      "description": "Chong Ah Seng, 58, male, long-distance lorry driver based in Seremban, Negeri Sembilan; initially hides his senna use. Gruff, few words, Malaysian Mandarin with Malay road words.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Emily Ho Wai San, Malaysian Chinese woman in her 40s, family physician in Seremban. Patient, gently probing; Mandarin with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "医生，我大便很难出，三四天才一次，很硬，要用很大力。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这样多久了？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "一年多了。开始跑长途以后，一天坐在 lori 上十几个钟头。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "大便有没有血？Weight 有没有掉？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有时候纸上有一点红色，体重没有掉。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你有没有自己吃什么药，laxative 那种？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有啦……好啦，其实有。每晚吃两粒 senna，在 farmasi 买的，差不多半年了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "谢谢你讲。Senna 短时间可以，但是天天吃久了，肠会变懒。我们换成比较温和的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我开 macrogol 给你，one sachet 冲 125ml 水，once a day。Senna 慢慢 taper，先减到一粒。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我在路上没什么时间喝水，怕一直要停车去 toilet。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "水不够，stool 一定硬。一天 at least two litres，放一个大 bottle 在 lorry 上。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "吃的方面呢？我们在 R&R 都是吃饭加鸡。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "多加青菜，还有水果像木瓜、火龙果。你五十八岁，从来没有做过 colonoscopy 吧？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有做过。那个是什么 test？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "用镜子看大肠。你有流血，年龄也到了，我会 refer 你去做，确定没有 polyp 或者肿瘤。"
+      }
+    ]
+  },
+  {
+    "id": "gi_028",
+    "split": "train",
+    "condition": "Constipation",
+    "source": "Constipation",
+    "patient_persona": {
+      "description": "Mrs. Saraswathy a/p Arumugam, 73, female, retired nurse living with her son in Brickfields, Kuala Lumpur; on ferrous fumarate and calcium carbonate. Gentle, articulate Malaysian Indian English with nursing vocabulary.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ong Jia Hui, Malaysian Chinese woman in her 30s, geriatric medical officer at a KL hospital clinic. Respectful, careful; English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, after they started me on the iron tablets, my bowels have been terrible. Four hari sekali only."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Which iron tablet are you taking, and how many?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ferrous fumarate 200mg, three times a day. And calcium carbonate for my bones, twice a day."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Both of those cause constipation, especially together. Any pain for your knees? Some painkillers also do it."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sometimes I take the tablet with codeine, the one my son beli from farmasi. Maybe three times a week."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Codeine is a big culprit. Let's switch that to plain paracetamol, 1 gram up to four times a day."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your last haemoglobin was 11.8, up from 9.9. So we can reduce the iron to once a day, it works just as well."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Once a day cukup ke? The nurse in me always thinks more is better."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Newer studies show once daily or even alternate days absorbs better with fewer stomach problems."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. And for now, something to soften the stool? I'm teran-teran a lot."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lactulose 15ml at night, sebelum tidur. Kalau dua hari still nothing, add senna 7.5mg at night for a short time."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I don't minum much water, because takut kena bangun at night for the toilet."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Drink more in the morning and afternoon, kurang after six. Aim for about six gelas a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "That I can manage. Terima kasih doctor, very clear."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We'll check your darah again in two months. If you see blood in stool or perut bengkak, come earlier."
+      }
+    ]
+  },
+  {
+    "id": "gi_029",
+    "split": "train",
+    "condition": "Constipation",
+    "source": "Constipation",
+    "patient_persona": {
+      "description": "Nurul Syafiqah binti Hassan, 27, female, eight weeks postpartum, clerk from Kuala Terengganu; follow-up for constipation and a small tear. Shy, quiet, Terengganu Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nor Hidayah Mat Zain, Malay woman in her 30s, medical officer at a Kuala Terengganu klinik kesihatan. Gentle, discreet; Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Syafiqah, macam mana dah dua minggu lepas kita bagi stool softener?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dah lebih baik, doktor. Sekarang dua hari sekali, tak keras macam dulu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Masih sakit atau ada bleeding masa buang air besar?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sakit sikit je, darah dah tak ada. Jahitan pun dah tak pedih."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Alhamdulillah. Lactulose tu Syafiqah makan berapa banyak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "15ml malam. Tapi kadang perut kembung, berangin."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bloating tu common side effect lactulose. Kalau dah lembut, boleh reduce ke 10ml."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat ni tak masuk susu ke? Saya takut baby kena cirit-birit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lactulose tak masuk dalam breast milk, safe untuk baby. Pil zat besi pula, sambung ke tak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya berhenti dah, sebab bila makan zat besi terus sembelit."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Haemoglobin after delivery 9.5, still low. Cuba makan zat besi selang sehari, dengan air oren."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baiklah doktor. Pantang makan pun mak saya tak bagi makan sayur banyak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sayur dan buah bagus untuk bowel dan untuk breast milk. Bincang dengan mak, bayam, labu, semua boleh."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Nanti saya cuba pujuk mak. Terima kasih doktor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sama-sama. Jumpa lagi masa six-week check baby, kita repeat blood test sekali."
+      }
+    ]
+  },
+  {
+    "id": "gi_030",
+    "split": "train",
+    "condition": "Constipation",
+    "source": "Constipation",
+    "patient_persona": {
+      "description": "Madam Ting Siew Hua, 66, female, retired Foochow shopkeeper from Sibu, Sarawak; back for colonoscopy results. Brisk, talkative Sibu Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lau Kiong Hui, Sarawakian Chinese man in his 50s, general surgeon in Sibu. Cheerful, reassuring; Mandarin with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Ting 安娣，你的 colonoscopy 报告很好，大肠干干净净，没有 polyp，也没有肿瘤。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "哎哟，太好了！我这几个星期都睡不好，怕是癌。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "没有癌，放心。你的便秘就是 chronic functional constipation，很多老人家都有。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "可是我还是四五天才去一次，肚子胀胀的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你每天吃多少青菜水果？水喝多少 glass？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "青菜有吃，水不多，一天三四杯而已，喝多了晚上要起来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "至少六到八杯，下午前喝多一点。再加 psyllium，就是那种 fibre powder，一天一次，mix 一杯水。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我以前买过那个 Fybogel，喝了反而更胀。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "开始的时候会 bloated，一两个星期就会 get used to。如果真的受不了，就换 macrogol，一天一包。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我也有吃 amlodipine 血压药，会不会有关系？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Amlodipine 偶尔会让 bowel movement 比较慢，但是 effect 不大，no need 换。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那我以后还要再做 colonoscopy 吗？那个 bowel prep 真的很辛苦。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这次 normal 的话，ten years 内都不用再做，除非有 bleeding 或者 weight loss。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好好，谢谢医生，我回去跟我女儿讲。"
+      }
+    ]
+  }
+]

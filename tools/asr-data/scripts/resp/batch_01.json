@@ -1,0 +1,792 @@
+[
+ {
+  "id": "resp_001",
+  "split": "train",
+  "condition": "Upper respiratory tract infection",
+  "source": "Common cold",
+  "patient_persona": {
+   "description": "Nur Syafiqah binti Zainal, 28, female, primary school teacher in Kota Bharu, Kelantan; three days of runny nose and sore throat, worried about losing her voice before exams week. Soft voice, slightly nasal, Kelantan lilt.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Mohd Faiz Ismail, Malay man in his 30s, medical officer at a klinik kesihatan in Kota Bharu. Relaxed and friendly; speaks mostly Malay with English medical terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Assalamualaikum, cikgu. Duduk dulu. So, apa masalah hari ni?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Waalaikumsalam, doktor. Dah tiga hari hidung berair, tekak sakit. Voice pun dah serak, esok saya kena mengajar."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Murid-murid dalam kelas ramai yang selsema minggu lepas. Mungkin saya berjangkit dari dia orang lah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Mungkin juga. Ada fever tak? Batuk ada kahak?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Demam sikit malam pertama je. Batuk ada, kahak putih, not yellow. Tak ada sesak nafas."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "OK. Suhu hari ni 37.2, normal. Saya tengok tekak cikgu merah sikit, tapi tak ada nanah dekat tonsil."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ini selsema biasa, jangkitan virus. Antibiotic tak membantu untuk virus, jadi kita tak perlu bagi."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, tak payah antibiotik ye. Habis tu nak makan ubat apa, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya bagi paracetamol 1 gram, sehari tiga kali kalau sakit atau demam. Untuk hidung, chlorpheniramine 4mg waktu malam, sebab dia boleh buat mengantuk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Untuk tekak, kumur air garam suam, sehari tiga empat kali. Drink plenty of water, and rehatkan suara."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau esok kena mengajar macam mana? Suara saya tak keluar sangat, nanti budak-budak tak dengar."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya bagi MC dua hari. Cikgu rehat, cakap sikit je. Usually within seven to ten days, dia baik sendiri."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Kalau tak baik lepas seminggu?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau demam tinggi balik, sakit telinga, atau sesak nafas, datang semula. Don't wait, okay?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih, doktor."
+   }
+  ]
+ },
+ {
+  "id": "resp_002",
+  "split": "train",
+  "condition": "Upper respiratory tract infection",
+  "source": "Common cold",
+  "patient_persona": {
+   "description": "Lim Ah Kow, 58, male, char kway teow hawker in Air Itam, Penang; hypertension on amlodipine. Hoarse, loud voice, impatient, Penang Mandarin with Hokkien-flavoured phrasing.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Ooi Siew Lan, Malaysian Chinese woman in her 40s, GP at a Penang private clinic. Patient and warm; switches to Mandarin with English drug names.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我感冒四天了，喉咙痛，鼻子一直流。你给我打一针，再开 antibiotic，我明天要开档。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "好，我先看一下。有没有发烧？咳嗽有痰吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "第一天有一点烧，现在没有了。咳嗽有，痰是 yellow 的，早上比较多。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "早上黄痰其实很常见，不代表一定是 bacteria。你的 blood pressure 药还有在吃吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有啊，amlodipine 5mg，每天早上一粒。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "好。你现在有吃什么感冒药吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我去药房买那种红色的 cold tablet，一天吃三次。那个里面好像有 pseudoephedrine。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "对，pseudoephedrine 会让血压升高。你今天血压 158 over 96，比平时高。这个药先停掉。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "哦，难怪我这两天头有点晕。那鼻塞怎么办？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我给你 saline nasal spray，一天喷三到四次，不会影响血压。喉咙痛就吃 Panadol，一次两粒，一天最多四次。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那 antibiotic 真的不用吗？以前的医生都有给。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这是病毒感冒，antibiotic 没有用，还可能拉肚子。一般七到十天会好。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好啦，听你的。我可以照常开档吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "可以，但是戴 mask，多喝水。如果发烧超过三天，或者喘不过气，就要回来 klinik。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，谢谢医生。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "两个礼拜后回来量一下血压。"
+   }
+  ]
+ },
+ {
+  "id": "resp_003",
+  "split": "train",
+  "condition": "Upper respiratory tract infection",
+  "source": "Common cold",
+  "patient_persona": {
+   "description": "Mrs. Priya a/p Rajendran, 34, female, bank officer in Johor Bahru, bringing her son Arjun, 6, who has had a cold for four days. Brisk, articulate Malaysian Indian English, occasional Malay.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Chong Wei Jie, Malaysian Chinese man in his 30s, GP at a family clinic in Johor Bahru. Calm, practical; speaks English with this mother.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Hi Arjun, hello mummy. What's been happening?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doctor, since Saturday he got runny nose, batuk, and last night fever 38.5. He's not eating much also, nasi pun tak nak."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Is he drinking okay? How many times did he pass urine today?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Drinking okay, mostly Milo and air kosong. Urine maybe four times already."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good, that's reassuring. Any ear pain, rashes, or fast breathing at night?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "No ear pain. Breathing okay, just the batuk keeps him awake. My mother-in-law says give him the adult cough syrup, half dose."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Please don't. Adult cough and cold syrups aren't safe for young children, and they don't really help the cough anyway."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "His chest is clear, ears are normal, throat merah sikit. This is a viral cold, same thing his classmates probably have."
+   },
+   {
+    "speaker": "Patient",
+    "text": "So no antibiotic? He got school trip on Friday, pergi Legoland."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "No antibiotic needed. For fever, paracetamol syrup, 250mg per 5ml, give 5ml every six hours if needed. His weight is 20kg, so that's the right dose."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Five ml every six hours. Okay. Can give madu for the cough?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, at his age a teaspoon of honey before tidur is fine. Saline drops for the nose also help."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alright. When should I bring him back?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "If the demam lasts more than three days, he breathes fast, or he's too tired to drink, come back terus. Otherwise the Friday trip should be fine."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, thank you doctor. Say thank you, Arjun."
+   }
+  ]
+ },
+ {
+  "id": "resp_004",
+  "split": "train",
+  "condition": "Upper respiratory tract infection",
+  "source": "Common cold",
+  "patient_persona": {
+   "description": "Brandon Anak Jugah, 22, male, Iban engineering student at a university in Kuching, Sarawak; exam next week, drinks a lot of coffee. Casual, fast Malaysian English with Malay and Sarawak slang.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Siti Aminah Othman, Malay woman in her 30s, medical officer at a university health centre in Kuching. Straightforward, light humour; mixes English and Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "Doc, I need MC lah. Nose blocked, throat sakit, then the whole body lenguh. Tomorrow got lab."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Okay, slowly, slowly. Since bila? Demam or not?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Since Sunday. Last night a bit panas, I didn't check with thermometer. Roommate also sick, same thing."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Temperature now 37.6, low grade. Throat merah sikit, lymph nodes okay, lungs clear."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Looks like a common cold, viral. Tak perlu antibiotic."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aiyo, my friend always get antibiotic from the klinik near Satok. Faster recover what."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Faster recover because seven days pass anyway. Antibiotic tak bunuh virus, it just gives you side effects."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay okay. So what ubat I take?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Paracetamol 500mg, two tablets, up to four times a day. Loratadine 10mg sekali sehari for the runny nose, it won't make you sleepy for studying."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kurangkan kopi sikit, sleep properly, drink plenty of water. How many cups a day now?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Maybe five cup. Exam season lah, doc, kena stay up."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Cut to two. Too much caffeine, you tak boleh tidur, then your body takes longer to recover."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Fair enough. The MC can give or not?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Two days MC. If lepas seminggu still fever, or you cough blood or sesak nafas, come back."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Thanks, doc. Good luck to me for the exam."
+   }
+  ]
+ },
+ {
+  "id": "resp_005",
+  "split": "train",
+  "condition": "Upper respiratory tract infection",
+  "source": "Common cold",
+  "patient_persona": {
+   "description": "Mak Cik Rohani binti Abdullah, 72, female, retired kuih seller in Shah Alam; type 2 diabetes on metformin. Slow, gentle voice, slightly hoarse, speaks only Malay.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Kavitha Menon, Malaysian Indian woman in her 40s, family medicine specialist at a Shah Alam clinic. Warm and patient; speaks Malay with elderly patients, English for numbers.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mak cik Rohani, apa khabar? Selsema ke hari ni?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ya, doktor. Seminggu dah batuk dengan hidung tersumbat. Anak saya belikan cough syrup dekat farmasi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ubat batuk tu mak cik ada bawa? Boleh saya tengok?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada, dalam beg ni. Saya minum satu sudu besar, sehari tiga kali."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ubat ni ada gula yang banyak. Mak cik ada kencing manis, jadi gula boleh naik. Pagi tadi check gula berapa?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Pagi tadi dua belas, doktor. Biasanya tujuh, lapan je. Saya check guna meter kat rumah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ya, 12 tu tinggi. Mungkin sebab selsema dan sirap ni. Kita tukar kepada ubat batuk sugar-free."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, ada ubat tak ada gula? Saya tak tahu pun."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ada. Saya bagi sugar-free cough syrup, dua sudu kecil sehari tiga kali. Metformin teruskan macam biasa."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Paru-paru mak cik bersih, tak ada kahak dalam dada. Suhu normal. Ini selsema virus, tak perlu antibiotik."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alhamdulillah. Tapi kenapa lama sangat tak baik-baik?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Orang yang lebih berumur memang lambat sikit sembuh, boleh sampai two weeks. Minum air suam banyak-banyak, makan macam biasa."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau gula masih tinggi macam mana, doktor? Kena tambah insulin ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Check gula pagi dan malam. Kalau lebih 15 dua kali, atau mak cik rasa lemah sangat, datang balik terus."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, doktor. Terima kasih banyak."
+   }
+  ]
+ },
+ {
+  "id": "resp_006",
+  "split": "train",
+  "condition": "Influenza",
+  "source": "Influenza (flu)",
+  "patient_persona": {
+   "description": "Chan Hui Min, 41, female, accounts executive in Cheras, Kuala Lumpur; two children at home. Tired, croaky voice, Malaysian Mandarin with English office words.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lee Kok Hwa, Malaysian Chinese man in his 50s, GP at a Cheras clinic. Efficient, reassuring; Mandarin with English medical terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我昨天下午突然发高烧，39 度，全身骨头都痛，head 也很痛。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "突然开始的是吗？有没有咳嗽，喉咙痛？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有，dry cough，喉咙也痛。Office 上个礼拜好几个人都请 MC。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我们做一个 influenza rapid test，鼻子里面拿个 swab，十五分钟就有结果。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "结果出来了，Influenza A positive。你是流感，不是普通感冒。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那严重吗？我家里有两个孩子，一个三岁。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你本身没有长期病，一般五到七天会好。症状开始不到四十八小时，所以可以吃 oseltamivir。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Oseltamivir 75mg，一天两次，吃五天，饭后吃比较不会想吐。发烧就吃 paracetamol 1g，六个钟头一次。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我还在喂小的吃奶，可以吃吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "可以，oseltamivir 喂奶期间是安全的。不过抱孩子的时候戴口罩，常洗手。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那孩子要不要也吃药？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "现在不用。如果他们发烧、咳嗽，就马上带来 clinic，小孩子要早点看。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好。我要请几天假？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我给你 MC 五天。退烧二十四小时以后才回去上班。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "如果还是很辛苦呢？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "如果喘不过气、chest pain、或者烧了五天还不退，就要直接去医院 emergency。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "明白了，谢谢医生。"
+   }
+  ]
+ },
+ {
+  "id": "resp_007",
+  "split": "train",
+  "condition": "Influenza",
+  "source": "Influenza (flu)",
+  "patient_persona": {
+   "description": "Encik Rahim bin Osman, 54, male, lorry dispatcher in Batu Pahat, Johor; type 2 diabetes and hypertension. Deep, tired voice, Johor Malay, a few English words.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Arvind Pillai, Malaysian Indian man in his 40s, medical officer at Hospital Batu Pahat emergency department. Direct, kind; speaks Malay with English terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Rahim, dah berapa hari demam?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Tiga hari, doktor. Menggigil, body ache semua, batuk kering. Isteri saya pun demam juga."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Encik ada kencing manis dan darah tinggi kan? Makan ubat apa sekarang? Ada bawa list?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Metformin 1 gram dua kali sehari, dengan perindopril 4mg pagi. Tapi dua hari ni tak lalu makan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Gula darah sekarang 16.8, tinggi. Oxygen 95 percent, suhu 38.9. Swab tadi positif influenza A."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Influenza? Macam mana nak buat ni, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sebab encik ada diabetes, encik dalam kumpulan berisiko tinggi. Jadi walaupun dah tiga hari, kita tetap bagi oseltamivir."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Oseltamivir 75mg, sehari dua kali, lima hari. Paracetamol 1 gram bila demam, maksimum empat kali sehari."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Metformin tu nak berhenti ke? Saya tak makan sangat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau encik boleh makan sikit dan minum, teruskan metformin. Kalau muntah-muntah atau tak boleh minum langsung, berhenti dulu dan datang balik."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik. Saya kena admit hospital tak?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Buat masa ni tak perlu. Paru-paru bunyi okay, chest X-ray pun clear. Tapi check gula pagi dan malam."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Isteri saya pun kena makan ubat ni ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bawa dia datang esok. Kalau dia tak ada penyakit lain, mungkin cukup rehat dan air, tak perlu antiviral."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau sesak nafas, sakit dada, atau keliru, terus datang emergency. Saya bagi MC lima hari."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih, doktor."
+   }
+  ]
+ },
+ {
+  "id": "resp_008",
+  "split": "train",
+  "condition": "Influenza",
+  "source": "Influenza (flu)",
+  "patient_persona": {
+   "description": "Mrs. Saraswathy a/p Muthu, 67, female, retired school clerk in Ipoh; asthma on budesonide inhaler. Precise, polite Malaysian Indian English, occasional Tamil-flavoured phrasing, some Malay.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Tan Li Ying, Malaysian Chinese woman in her 30s, family medicine trainee at a klinik kesihatan in Ipoh. Clear and methodical; English with a few Malay words.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Good morning, Aunty Saraswathy. This is your review after the flu last week, right?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Yes, doctor. The demam went down on day four. But this batuk still there, and my wheezing came back a bit."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Did you finish the oseltamivir, twice a day for five days?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Finished all ten capsules. Only a bit loya the first day."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Good. How many times a day are you using your Ventolin now?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "About three times a day. Before the flu, maybe once a week only, kadang-kadang tak guna langsung."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your oxygen is 97 percent, and I can hear a mild wheeze. Peak flow today is 260, your best was 320."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "The flu has irritated your airways. Let's step up your budesonide to 400 micrograms, pagi dan malam, for four weeks, then we come back down."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay. Should I take the prednisolone tablets again like last time?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Not needed now, your peak flow is still above 70 percent. Tapi kalau it drops below 200, or the Ventolin tak tahan four hours, come back terus."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alright. Doctor, my daughter says I should take the flu jab every tahun. Is it true?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Yes, at your age with asthma, it's strongly recommended. Once a year, we can give it after you fully recover, maybe in two weeks."
+   },
+   {
+    "speaker": "Patient",
+    "text": "How much is it at the private clinic? Here ada or not?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Here it's usually about eighty to a hundred ringgit, bergantung pada stock. I'll put your name down."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Thank you, doctor. You explain very nicely, terima kasih."
+   }
+  ]
+ },
+ {
+  "id": "resp_009",
+  "split": "train",
+  "condition": "Influenza",
+  "source": "Influenza (flu)",
+  "patient_persona": {
+   "description": "Jeffry bin Gumpil, 35, male, Kadazan construction supervisor in Penampang, Sabah. Hearty voice, Sabah Malay ('bah', 'sia'), some English site words.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nurul Huda Hassan, Malay woman in her 30s, medical officer at a klinik kesihatan in Penampang. Brisk, friendly; Malay with English medical terms.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Jeffry, masuk. Apa cerita?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doktor, sia demam sudah dua hari bah. Kepala sakit, badan macam kena pukul, dry cough."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kawan-kawan dekat site ada yang sakit juga?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada, tiga orang worker demam minggu ni. Satu sudah pergi hospital."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Suhu 39.1, heart rate 108. Encik minum air cukup tak? Kencing warna apa?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kurang minum bah, sebab tekak sakit. Kencing kuning pekat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Encik agak dehydrated. Test swab positif influenza. Encik muda dan sihat, jadi biasanya boleh baik sendiri."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tapi sebab masih dalam empat puluh lapan jam, saya boleh bagi oseltamivir 75mg dua kali sehari, lima hari, supaya cepat sikit sembuh."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, bagi saja. Sia mau cepat balik kerja, projek kena siap bulan depan, deadline sudah dekat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Paracetamol 1 gram bila demam. Minum sekurang-kurangnya dua liter sehari, ORS pun boleh."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Boleh sia pergi site esok? Sia supervisor, kalau tak ada nanti kelam-kabut."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak boleh bah. Nanti semua pekerja kena. MC lima hari, dan suruh worker lain yang demam datang klinik."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Haha, doktor pun sudah cakap bah. Okay, faham."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau sesak nafas, batuk darah, atau muntah tak berhenti, terus pergi Hospital Queen Elizabeth."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, terima kasih doktor."
+   }
+  ]
+ },
+ {
+  "id": "resp_010",
+  "split": "train",
+  "condition": "Influenza",
+  "source": "Influenza (flu)",
+  "patient_persona": {
+   "description": "Mdm. Yap Shu Fen, 36, female, kindergarten assistant in Seremban, bringing her daughter Xin Yi, 4, feverish for one day. Anxious, quick Mandarin, some Cantonese-flavoured words and English.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Ng Boon Hock, Malaysian Chinese man in his 40s, paediatrician at a Seremban private hospital. Gentle, unhurried; Mandarin with English drug and dose terms.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Patient",
+    "text": "医生，我女儿昨晚开始烧，最高 39.8，吃了 paracetamol 还是一直烧回来。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "除了发烧，还有没有咳嗽、流鼻涕？有没有抽筋？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "有咳嗽，流鼻涕。没有 fits，就是一直喊脚痛，不肯走路。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "流感的小朋友常常会 muscle pain。她今天有喝水吗？还用 diaper 还是自己上厕所？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "自己上厕所，今天去了三次。水喝得比较少，就喝一点 Milo。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我刚才做了 swab，是 Influenza A。她的肺听起来是干净的，耳朵也没事。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "她十六公斤，我开 oseltamivir syrup，45mg，一天两次，吃五天。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "这个药有副作用吗？我在网上看有的小孩吃了会怪怪的。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "最常见是想吐，饭后吃会好一点。很少数会有 behaviour change，如果看到她很奇怪、乱讲话，就停药马上回来。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好。那退烧药呢？我现在给 paracetamol 5ml。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "她的体重可以用 paracetamol 250mg per 5ml，每次 5ml，每六个钟头一次，一天不超过四次。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "可以跟 ibuprofen 一起吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "如果还是很难受，可以加 ibuprofen 100mg per 5ml，每次 5ml，一天三次，要饭后。但是不要两个都一直轮流喂。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "明白。她几时可以回幼儿园？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "退烧二十四小时以后才去。如果她呼吸很快、嘴唇发紫、或者叫不醒，马上去 emergency。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好的，谢谢医生。"
+   }
+  ]
+ }
+]

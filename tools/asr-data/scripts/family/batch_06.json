@@ -1,0 +1,820 @@
+[
+  {
+    "id": "family_051",
+    "split": "train",
+    "condition": "Recurrent falls in an elderly woman on antihypertensives",
+    "source": "original",
+    "patient_persona": {
+      "description": "Hajah Kalsom binti Awang, 78, female, widow living with her daughter in Kuala Terengganu; hypertension and diabetes. Slow, soft voice, a little hard of hearing; daughter adds details.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Wong Jun Ming, Malaysian Chinese man in his 30s, family medicine doctor at a Terengganu klinik kesihatan geriatric clinic. Patient, speaks loudly and clearly; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mak Hajah, saya dengar mak jatuh lagi minggu lepas. Jatuh kat mana?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Dalam bilik air, doktor. Pagi-pagi bangun nak ambil wuduk, tiba-tiba gelap mata, terus jatuh. Lutut lebam, bruise besar."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Masa jatuh tu, mak pengsan ke, atau sedar je?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sedar. Cuma rasa pening berpusing sekejap bila bangun dari katil, like spinning. Anak saya yang angkat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tahun ni dah berapa kali jatuh, mak?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tiga kali, doktor. Anak saya kata empat, saya pun dah lupa, memory tak berapa baik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya check tekanan darah baring dan berdiri ya. Baring 148 atas 80, berdiri turun ke 118 atas 70. Turun banyak bila berdiri, postural hypotension."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tekanan darah saya kan tinggi? Kenapa pula rendah?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Masa baring tinggi, tapi bila bangun dia jatuh mendadak. Ubat darah tinggi mak ada tiga jenis, amlodipine, perindopril, dan hydrochlorothiazide."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya nak stop hydrochlorothiazide, sebab dia buat kencing banyak dan tekanan darah jatuh. Yang lain teruskan dulu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat gula saya pula, glibenclamide, kadang-kadang saya rasa menggeletar, berpeluh petang-petang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itu tanda gula rendah, hypoglycaemia. Pada umur mak, glibenclamide tak sesuai. Saya tukar kepada gliclazide 40mg, sekali pagi."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Mata saya pun kabur, doktor. Cermin mata dah lama tak tukar."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mata kabur pun sebab jatuh. Saya refer ke eye clinic. Bila bangun tidur, sit at the edge of the bed for one minute, baru berdiri perlahan-lahan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Bilik air rumah kami licin, doktor. Lantai jubin."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Pasang pemegang kat dinding bilik air, letak tikar getah, dan lampu malam. Saya rujuk physiotherapist untuk latihan imbangan. Jumpa lagi dua minggu, check tekanan darah."
+      }
+    ]
+  },
+  {
+    "id": "family_052",
+    "split": "train",
+    "condition": "Hip fracture after a fall, pre-discharge rehabilitation talk",
+    "source": "Hip fracture",
+    "patient_persona": {
+      "description": "Mr. Lee Ah Kow, 82, male, retired coffee shop owner in Ipoh; fractured left hip, had a hemiarthroplasty five days ago. Stubborn, humorous, Cantonese-flavoured Mandarin.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nurul Huda binti Azman, Malay woman in her 30s, orthopaedic medical officer at an Ipoh hospital. Encouraging, firm; English with Mandarin and Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Uncle Lee, 早安. How's the pain today? Scale zero to ten?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "早安医生。今天好一点，大概四分。可是那个 physio 每天叫我走路，好辛苦。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I know it's tiring, uncle. But walking early is the most important thing after hip surgery. It prevents clots and pneumonia, 肺炎."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我八十二岁了，走不走都一样啦。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不一样, uncle. Those who walk early go home faster and are more independent. You want to go back to your kopitiam friends, right?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "哈哈，对啊，每天早上都要去喝 kopi O 看报纸。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Then must walk with the frame first. Physio 说你昨天走了二十米. Good progress."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我什么时候可以回家？My son is in KL，家里只有我和我太太。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Maybe two or three more days. But at home, need some changes. 你家的厕所是蹲的还是坐的?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "蹲的。楼上还有房间，我们睡楼上。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Squatting is not allowed for now, the new hip can dislocate. Need a commode chair, 便盆椅, and please sleep downstairs for at least six weeks."
+      },
+      {
+        "speaker": "Patient",
+        "text": "这么麻烦……那我太太一个人照顾我吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll ask the social worker to talk to your son. Maybe a maid or day care for a few weeks."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Also, your fall was because of weak bones, 骨头很脆. We'll start calcium and vitamin D, and a yearly zoledronic acid drip to strengthen the bones."
+      },
+      {
+        "speaker": "Patient",
+        "text": "一年打一次针？那还好。以前我 fall down 都没事的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Because the bones are thin now, 骨质疏松. When you go home, no loose rugs, good lighting, use the walking frame always."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好啦好啦，我听你的。"
+      }
+    ]
+  },
+  {
+    "id": "family_053",
+    "split": "train",
+    "condition": "Fall with head injury in an elderly man on warfarin",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mrs. Mary Thomas, 58, female, daughter and caregiver of Mr. George Thomas, 84, who has atrial fibrillation on warfarin; retired nurse from Petaling Jaya. Knowledgeable, concerned, speaks crisp Malaysian English with some Malay.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohd Rizal bin Hashim, Malay man in his 40s, emergency physician at a Selangor hospital. Focused, clear; English with Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, Daddy fell in the hall last night around eleven. He hit his head on the side table. Dia kata okay, but he's on warfarin, so I brought him in."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "You did the right thing. Mr. Thomas, do you remember the fall? Any loss of consciousness?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "He says he remembers everything, but he seems a bit slower this morning, lambat sikit. Repeating the same question twice."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That change is important. Any vomiting, headache, weakness on one side?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Headache yes, he took Panadol. Muntah sekali pagi tadi. No weakness that I can see."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "His INR today is 3.6, higher than the target of two to three. Dos warfarin ada ubah baru-baru ni?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "The clinic increased it two weeks ago, from 3mg to 4mg daily. And he's been minum teh herba dari kawan dia, tongkat ali or something."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Herbal products can interfere with warfarin. Kecederaan kepala, umur lebih 65, and anticoagulation, he needs a CT brain now."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Please. Masa saya kerja dulu, I've seen many cases like this in the ward."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "CT shows a small subdural haematoma, a thin bleed on the right side. No midline shift. I've called the neurosurgery team."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh God. Will he need surgery?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not at this size, maybe. First we reverse the warfarin with vitamin K and prothrombin complex concentrate. Lepas tu repeat CT in six hours."
+      },
+      {
+        "speaker": "Patient",
+        "text": "What about his AF? If we stop warfarin, won't he get a stroke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's the balance. For now bleeding risk is higher. Neurosurgery and cardiology will decide when to restart, maybe in a few weeks."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. I'll stay with him. Should I call my brother in Singapore?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, please inform family. He'll be in the high dependency ward. We'll update you after the next scan. Teh herba tu stop dulu, okay?"
+      }
+    ]
+  },
+  {
+    "id": "family_054",
+    "split": "train",
+    "condition": "Fear of falling and deconditioning after a fall",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mdm. Tan Gek Hoon, 76, female, retired hawker living alone in a flat in Bukit Mertajam, Penang; fell at a wet market three months ago. Anxious, soft-spoken, Hokkien-flavoured Mandarin.",
+      "gender": "female",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Sharifah Nabilah binti Syed Omar, Malay woman in her 40s, family medicine specialist at a Penang klinik kesihatan. Gentle; English and Malay with simple Mandarin.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Auntie Tan, 你好. Since the fall three months ago, how are you managing at home?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "医生，我现在都不敢出门了。怕又 fall down。每天都在家里坐着看 TV。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I understand. After a fall, many elderly become afraid. But sitting all day makes the legs weaker, 脚会越来越没力."
+      },
+      {
+        "speaker": "Patient",
+        "text": "对啊，我现在上楼梯都要拉着扶手，以前我每天走去 pasar 的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let me test. 不用手，从椅子站起来五次. Okay, you took 18 seconds. That shows weak leg muscles."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那怎么办？我一个人住，女儿在 Singapore 工作。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "The best treatment is exercise. I'll refer you to physio for a strength and balance programme, twice a week, at this klinik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我怎么来？我不会开车，搭 bas 又怕。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your neighbour's daughter brought you today, right? Maybe she can help. Also boleh guna community transport for elderly, I'll ask our nurse."
+      },
+      {
+        "speaker": "Patient",
+        "text": "在家里可以做什么运动吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes. 扶着厨房的桌子, stand on your toes ten times. Sit to stand from a chair ten times, 早上和晚上."
+      },
+      {
+        "speaker": "Patient",
+        "text": "这个我可以做。那我脚底有时候麻麻的, numb numb, 会不会是这个原因跌倒？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Could be. Your sugar is high, HbA1c 8.6. 糖尿病会让脚麻. I'll check your feet sensation now."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sensation reduced on both feet. So wear shoes with good grip, 在家里也要穿. No slippers that slide off."
+      },
+      {
+        "speaker": "Patient",
+        "text": "我在家都穿 selipar……好，我叫女儿买一双鞋子给我。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Also, we'll get you a personal alarm, 跌倒的时候可以按. Come back in one month, tell me how many times you went out."
+      }
+    ]
+  },
+  {
+    "id": "family_055",
+    "split": "train",
+    "condition": "Fall at night in an elderly man with nocturia and sleeping pills",
+    "source": "original",
+    "patient_persona": {
+      "description": "Encik Osman bin Daud, 80, male, retired rubber estate worker in Kuala Pilah, Negeri Sembilan; enlarged prostate. Talkative, proud, dislikes being fussed over.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chan Yoke Lin, Malaysian Chinese woman in her 50s, family medicine specialist at a Seremban clinic. Straight-talking, warm; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Pak Osman, anak pak cik telefon saya, kata pak cik jatuh tengah malam minggu lepas."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alah, sikit je, doktor. Saya bangun nak kencing, gelap, tersadung selipar. No problem one."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Malam bangun kencing berapa kali?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tiga empat kali. Prostat saya kan besar. Kalau tak bangun, basah katil."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada makan ubat tidur? Ubat tenang?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada, anak saya beli dari farmasi, kata ubat tidur. Satu biji sebelum tidur. Kalau tak, saya tak lena."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh tunjuk botol dia? Ini diphenhydramine. It makes you drowsy and confused at night, dan boleh buat susah kencing."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh, patutlah saya rasa berat kepala, heavy head, bila bangun malam."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya nak pak cik stop ubat ni. Untuk tidur, kita cuba cara lain. Jangan tidur siang lama-lama, kurangkan kopi petang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kopi O petang tu dah jadi kebiasaan, doktor. Tapi kalau kena kurang, saya cuba lah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Untuk prostat, pak cik makan tamsulosin 0.4mg sekarang, kan? Minum air banyak sebelum Maghrib, lepas Isyak kurangkan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kurang minum malam? Nanti kering tekak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Hirup sikit-sikit je. Letak lampu tidur dari bilik ke tandas, dan urinal botol tepi katil kalau perlu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Guna botol tu macam orang sakit pulak. Saya malu, doktor, embarrassing."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lebih baik guna botol daripada patah pinggul, pak cik. A hip fracture at eighty, susah nak jalan balik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Betul juga. Kawan saya dulu patah pinggul, lepas tu terus terlantar. Baiklah, saya dengar cakap doktor."
+      }
+    ]
+  },
+  {
+    "id": "family_056",
+    "split": "train",
+    "condition": "Polypharmacy medication review in an elderly diabetic",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mr. Goh Seng Huat, 74, male, retired lorry driver in Klang; diabetes, hypertension, heart disease, knee pain; brings a plastic bag of medicines. Cheerful, slightly confused about drug names.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ruhana binti Abdul Latif, Malay woman in her 40s, family medicine specialist running a medication review clinic in Klang. Organised, patient; English with Mandarin and Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Uncle Goh, today we check all your medicines, 所有的药. You brought them all?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "带来了，这一袋都是。有些是医院的，有些是 private 诊所的，有些是 pharmacy 买的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Okay, let's lay them out. Metformin, amlodipine, perindopril, atorvastatin, aspirin, omeprazole, and this one, diclofenac. Who gave diclofenac?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "这个是 private 诊所给的，脚痛吃的。一天两次。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Diclofenac with your kidneys is not good. Your creatinine went up this year, eGFR 48. 跟 aspirin 一起吃, stomach bleeding risk."
+      },
+      {
+        "speaker": "Patient",
+        "text": "那脚痛怎么办？不吃会痛到走不动。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Paracetamol 1 gram, three times a day is safer. And diclofenac gel on the knee. 涂的，不是吃的."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。那这个 Chinese medicine 呢？我儿子从 Taiwan 带回来的，说对 diabetes 好。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Please stop that one first, 先停. Some herbal products can affect sugar and kidneys. 我们不知道里面有什么."
+      },
+      {
+        "speaker": "Patient",
+        "text": "还有这个，我每天吃两粒 metformin，早上一粒，晚上一粒。可是医院又开了这盒，我不知道是一样的。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Aiyo, this box is also metformin, just different brand. So you've been taking double dose, four tablets a day."
+      },
+      {
+        "speaker": "Patient",
+        "text": "真的吗？难怪我常常肚子不舒服，拉肚子。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's probably why. From now, metformin 500mg twice a day only, from one box. Throw the other away, or give back to pharmacy."
+      },
+      {
+        "speaker": "Patient",
+        "text": "药这么多，我常常搞乱。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I'll ask the pharmacist to prepare a pill box, 药盒, with morning and night sections. Your daughter can fill it weekly."
+      },
+      {
+        "speaker": "Patient",
+        "text": "好啊，这样方便多了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Also bring all medicines every visit, 包括 private 诊所的药. So total now seven, down from ten. Next month we check sugar and kidney again."
+      }
+    ]
+  },
+  {
+    "id": "family_057",
+    "split": "train",
+    "condition": "Medication review with anticholinergic burden and constipation",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mrs. Saraswathy a/p Kandasamy, 72, female, retired kindergarten teacher in Taiping, Perak; on multiple medicines from different specialists. Polite, organised, keeps a medication list.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lim Kah Hock, Malaysian Chinese man in his 50s, geriatrician at a Taiping hospital. Thoughtful, slow-paced; English with some Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mrs. Saraswathy, I see you're seeing four clinics: cardiology, urology, psychiatry and the klinik kesihatan. Can we go through your list together?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes, doctor. I wrote everything here. Fourteen types of medicine. Morning seven, night five, and two for when needed."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Very organised. You mentioned constipation, mulut kering and feeling blur. Since when?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Since last year. Every morning mouth kering like sandpaper. Constipation also, sometimes five days tak buang air besar."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Some of your medicines have anticholinergic effects: oxybutynin untuk pundi kencing, amitriptyline for sleep, and chlorpheniramine you take for itch."
+      },
+      {
+        "speaker": "Patient",
+        "text": "The oxybutynin is from urology, for my frequent urine. Amitriptyline from psychiatry for my mood and sleep."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Together, these can cause dry mouth, constipation, and even confusion or falls in older people, orang tua."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh dear. My daughter says I'm quite pelupa recently. I thought it's just old age."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It could be partly the medicines. I'd like to switch oxybutynin to mirabegron 25mg, which doesn't have that effect."
+      },
+      {
+        "speaker": "Patient",
+        "text": "And the amitriptyline? Without it I cannot sleep at all, tak boleh tidur langsung."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We can taper it slowly, perlahan-lahan, and I'll discuss with your psychiatrist about sertraline instead, which is gentler. Jangan stop tiba-tiba."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. The chlorpheniramine I take because of itchy skin at night."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Your skin is very dry, kulit kering sangat. Use emollient cream twice daily, and if needed, cetirizine 10mg instead, less drowsy."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Fourteen medicines, doctor, sometimes I feel like I'm makan ubat for breakfast."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "I understand. After this we'll be at eleven, and hopefully fewer later. I'll write one clear letter to all your doctors."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Thank you, doctor. Nobody ever looked at everything together like this."
+      }
+    ]
+  },
+  {
+    "id": "family_058",
+    "split": "train",
+    "condition": "Polypharmacy with over-the-counter supplements and warfarin",
+    "source": "original",
+    "patient_persona": {
+      "description": "Encik Ramli bin Yaakob, 69, male, retired police officer in Alor Setar, Kedah; atrial fibrillation on warfarin, gout, hypertension. Talkative, confident, likes \"natural\" products.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Siew Ling, Malaysian Chinese woman in her 30s, clinical pharmacist-trained family medicine doctor in Alor Setar. Friendly, detail-oriented; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Ramli, INR encik bulan ni 4.2, tinggi. Target kita dua ke tiga. Ada perubahan apa-apa sejak bulan lepas?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Tak ada ubah ubat, doktor. Cuma saya ada makan supplement sikit, the natural ones. Fish oil, habbatus sauda, dan kunyit kapsul."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Suplemen tu dah berapa lama?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kunyit tu baru sebulan. Kawan surau cakap bagus untuk joint. Minyak ikan dah lama."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kunyit dan minyak ikan dua-dua boleh tambah kesan warfarin, darah jadi lebih cair. Ada gusi berdarah, lebam, atau kencing merah?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Gusi ada berdarah sikit masa gosok gigi. Lebam kat lengan pun ada, bruises, saya ingat terlanggar pintu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Itu tanda warfarin terlalu kuat. Malam ni skip satu dos warfarin, esok sambung 3mg macam biasa, dan stop kunyit kapsul."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kunyit dalam masakan pun kena stop ke? Isteri saya masak gulai setiap hari."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kunyit dalam masakan tak apa, jumlah dia sikit. The problem is the high-dose capsule."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Satu lagi, colchicine untuk gout, encik makan hari-hari ke?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hari-hari, dua biji. Dari klinik swasta, dah setahun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Colchicine setiap hari pada dos tu, dengan buah pinggang encik, boleh buat lemah otot dan cirit-birit. Untuk cegah gout jangka panjang, allopurinol lebih sesuai."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya memang selalu cirit-birit, doktor. Saya ingat sebab food poisoning."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Mungkin sebab colchicine. Saya mula allopurinol 100mg sehari, colchicine turun ke satu biji sehari untuk tiga bulan je, lepas tu stop."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Banyak betul ubat nak ingat. Boleh tulis?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya print jadual ubat baru. Datang semula seminggu untuk check INR. Setiap kali nak makan apa-apa suplemen, tanya kami dulu."
+      }
+    ]
+  },
+  {
+    "id": "family_059",
+    "split": "train",
+    "condition": "Deprescribing in a frail elderly woman with dementia",
+    "source": "original",
+    "patient_persona": {
+      "description": "Mr. Kenny Chong Wai Mun, 50, male, son and caregiver of Mdm. Chong Siew Lan, 88, who has moderate dementia and lives with him in Cheras; logistics manager. Tired, frank, English with Cantonese particles and Malay.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Aishah binti Mohd Shukri, Malay woman in her 40s, geriatrician at a KL hospital. Compassionate, unhurried; English with Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Mr. Chong, thanks for coming. Your mother is on eleven medicines. As her dementia progresses, some may not help her anymore. Boleh kita bincang?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Please, doctor. She hates swallowing pills. Every morning is a fight, she spits them out. The maid also struggling, kesian dia."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Let's look at what matters most now. Her goals are comfort, eating well, sleeping well, not falling. Do you agree?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Yes. She's 88 already. Saya tak nak seksa dia with so many tablets."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Atorvastatin for cholesterol is for long-term heart protection over years. Pada tahap ni, benefit is very small. We can stop it."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Okay. What about the diabetes medicine? Her sugar is quite okay now, she makan sikit je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Her HbA1c is 6.1, too tight for her age. Low sugar is more dangerous, can cause falls and confusion. Let's stop gliclazide, keep only metformin at a lower dose."
+      },
+      {
+        "speaker": "Patient",
+        "text": "She also takes donepezil. Is it still useful? Some days dia tak kenal saya pun."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Donepezil gives modest benefit. Some families continue, some stop. Since she's losing weight and has poor appetite, it may be worth a trial off."
+      },
+      {
+        "speaker": "Patient",
+        "text": "If we stop and she becomes worse?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Watch for more agitation or confusion in the first two weeks. If so, we restart. It's reversible."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alright. And the calcium tablet, so big, she always tercekik."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We can stop it, or change to a chewable or liquid form. Her aspirin, she had no heart attack or stroke before, right?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No, the GP just started it because of her age, I think. Takde sebab lain."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Then aspirin can stop too, less bleeding risk. So from eleven, down to six. Jauh lebih senang."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Wah, thank you doctor. It feels like we're finally thinking about what she wants."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That's exactly the point. Come back in one month, and call us earlier kalau ada apa-apa yang risau."
+      }
+    ]
+  },
+  {
+    "id": "family_060",
+    "split": "test",
+    "condition": "Medication review for a stroke survivor with swallowing difficulty",
+    "source": "original",
+    "patient_persona": {
+      "description": "Puan Rosmah binti Harun, 45, female, daughter and caregiver of Encik Harun bin Said, 76, who had a stroke six months ago with swallowing problems; nursery owner in Taiping, Perak. Tired, organised, emotional.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Mohan a/l Pillai, Malaysian Indian man in his 50s, rehabilitation physician at a Perak hospital. Kind, patient; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Puan Rosmah, macam mana ayah sekarang? Makan ubat macam mana?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Susah, doktor. Ayah choke bila telan biji ubat. Saya hancurkan semua, campur dengan bubur. Tapi dia kata pahit sangat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada ubat yang tak boleh dihancurkan, cannot crush. Boleh saya tengok senarai?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ini senarai dia. Aspirin, clopidogrel, atorvastatin, amlodipine, metformin, nifedipine SR, omeprazole, dan vitamin B."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Nifedipine SR ni slow release. Kalau dihancurkan, semua ubat keluar sekaligus, tekanan darah boleh jatuh mendadak. Itu bahaya."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ya Allah, saya tak tahu. Patutlah ayah kadang-kadang pening lepas makan ubat pagi, blood pressure drop."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kita boleh stop nifedipine. Dia dah ada amlodipine, dua ubat sama jenis. Tekanan darah dia sekarang 128 atas 76, cukup baik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aspirin dan clopidogrel, kena dua-dua ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Lepas stroke, dua-dua biasanya untuk tiga minggu pertama je. Dah enam bulan, cukup satu, clopidogrel 75mg."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah, kurang dua biji. Metformin tu besar sangat, doktor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada bentuk sirap metformin atau tablet kecil dos rendah. Gula dia pun dah OK, HbA1c 6.8."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Speech therapist ada kata ayah kena guna air pekat, thickened. Ubat boleh campur dengan air pekat ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh, kebanyakan ubat boleh campur dengan jelly atau thickener. Pharmacist akan tunjuk macam mana. Duduk tegak masa telan, dan tiga puluh minit selepas makan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih, doktor. Saya selalu rasa bersalah, takut buat silap."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Puan dah jaga ayah dengan sangat baik. Soalan macam ni penting. Jumpa lagi sebulan, and please take care of yourself too."
+      }
+    ]
+  }
+]

@@ -1,0 +1,812 @@
+[
+  {
+    "id": "infect_071",
+    "split": "train",
+    "condition": "Urethral discharge, presumed gonorrhoea",
+    "source": "Gonorrhea",
+    "patient_persona": {
+      "description": "Mohd Syafiq bin Rahman, 26, male, lorry driver based in Johor Bahru who does runs to Singapore. Embarrassed, mumbles at first, Johor Malay with English words.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ahmad Kamil bin Zakaria, Malay man in his 40s, medical officer at a JB health clinic with an STI service. Non-judgemental, matter-of-fact; Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doktor, saya... kencing pedih, dah tiga hari. Pagi-pagi ada keluar cecair kuning kat hujung."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK, terima kasih bagitahu. Semua yang kita cakap kat sini confidential. Dalam sebulan ni, ada hubungan seks dengan sesiapa?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada, doktor. Seminggu lepas, dengan perempuan yang saya kenal kat app. Tak pakai kondom."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ada partner tetap? Isteri, girlfriend?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ada girlfriend. Tapi dah dua minggu tak jumpa, dia kerja kat KL."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK. Saya nak periksa dan ambil swab dari hujung zakar, sikit pedih. Kita tengok bawah microscope terus."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Result slide tunjuk kuman gram-negative diplococci. Ni kemungkinan besar gonorrhoea, kencing nanah. Swab kita hantar untuk culture juga."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Teruk ke? Boleh baik?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh baik. Hari ni saya bagi injection ceftriaxone 1 gram kat punggung, sekali je. Tambah doxycycline 100mg dua kali sehari, tujuh hari, untuk chlamydia."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kenapa kena makan ubat chlamydia juga?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sebab selalu datang bersama, dan chlamydia tak semestinya ada simptom. Kita juga check darah untuk HIV, syphilis dan hepatitis B hari ni."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Girlfriend saya macam mana, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dia kena check dan dirawat juga. Kalau tak, kuman ni pindah balik. Saya bagi surat untuk dia bawa ke mana-mana klinik."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Susah nak cakap dengan dia. Tapi saya faham."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Jangan ada hubungan seks sampai tujuh hari lepas habis ubat, dan kedua-dua dah dirawat. Lepas ni, pakai kondom setiap kali."
+      }
+    ]
+  },
+  {
+    "id": "infect_072",
+    "split": "train",
+    "condition": "Secondary syphilis, results review",
+    "source": "Syphilis",
+    "patient_persona": {
+      "description": "Andy Lee Jun Kit, 34, male, restaurant manager in Bukit Bintang, Kuala Lumpur; rash on palms and soles for two weeks. Worried, quiet, Malaysian Mandarin with English.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Cheah Wei Ling, Malaysian Chinese woman in her 30s, sexual health physician at a KL hospital genitourinary clinic. Calm, factual; Mandarin with English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Andy，你上个礼拜验的血，结果出来了。Syphilis 的两个 test 都是 positive，VDRL 是 1 比 32，TPPA 也 reactive。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "梅毒？我手掌和脚底的红点，就是因为这个？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对。这个叫 secondary syphilis。你之前有没有在生殖器或者嘴巴附近，有一个不痛的伤口？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "大概两个月前，下面有一个小伤口，不痛，过几个礼拜就自己好了。我以为是摩擦到。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "那个很可能是 primary chancre。好消息是，梅毒可以完全治好。HIV test 是 negative。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "还好，HIV 没有。治疗要多久？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "打一针 benzathine penicillin，2.4 million unit，分两边屁股打。你对 penicillin 有没有过敏？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "没有，小时候打过没事。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "打完之后几个钟头，可能会发烧、发冷、全身酸痛，叫 Jarisch-Herxheimer reaction。是细菌死掉的反应，吃 paracetamol 就好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。那之后还需要做什么？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "三个月、六个月、十二个月再验 VDRL，要看它下降四倍以上，才算治疗成功。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我的 partner 需要检查吗？我们在一起一年了。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "需要。过去三个月到一年的 sexual partner 都应该验。你需要我帮你写一封 letter 给他吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "要，谢谢。他应该会愿意来。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "治疗后两个礼拜内不要有 sexual contact。另外，你符合 PrEP 的条件，可以预防 HIV，有兴趣的话下次我们谈。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我考虑一下。先打针吧。"
+      }
+    ]
+  },
+  {
+    "id": "infect_073",
+    "split": "train",
+    "condition": "Syphilis detected on antenatal screening",
+    "source": "Syphilis",
+    "patient_persona": {
+      "description": "Puan Nur Farhana binti Yusri, 24, female, factory operator in Kota Bharu, Kelantan, 16 weeks pregnant with her first child. Shocked, tearful, Kelantanese Malay.",
+      "gender": "female",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Suraya binti Che Mat, Kelantanese Malay woman in her 40s, family medicine specialist running the antenatal clinic at a Kota Bharu health clinic. Gentle, reassuring; Malay with English terms.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Farhana, saya nak bincang result darah ujian antenatal hari tu. Ujian syphilis, VDRL dan TPHA, dua-dua positif."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sifilis? Doktor, saya tak pernah dengan lelaki lain selain suami saya."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Saya percaya. Saya tak tanya untuk salahkan sesiapa. Yang penting sekarang, rawat puan dan lindungi baby."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baby saya macam mana? Boleh kena ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh berjangkit kepada baby kalau tak dirawat. Tapi kalau rawat awal, sebelum 28 minggu, risiko sangat rendah. Puan baru 16 minggu."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah. Ubatnya apa?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Suntikan benzathine penicillin, 2.4 juta unit, seminggu sekali, tiga minggu. Ubat ni selamat untuk mengandung."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Sakit ke suntikan tu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sakit sikit kat punggung, sebab ubat pekat. Lepas suntik pertama, kalau rasa demam, sakit badan, atau perut mengeras, terus datang labour room untuk check."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Suami saya macam mana, doktor? Saya tak tahu nak cakap."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dia kena check dan rawat juga, kalau tak puan boleh kena balik. Saya boleh cakap dengan dia sama-sama, kalau puan nak."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Boleh tak doktor yang terangkan? Saya takut dia marah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Boleh. Bawa dia minggu depan masa suntikan kedua. Saya terangkan sebagai isu kesihatan keluarga."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lepas bersalin, baby kena check juga?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, pakar kanak-kanak akan check darah baby masa lahir. Kita juga ulang VDRL puan setiap trimester, untuk pastikan ubat berkesan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baik, doktor. Terima kasih sebab tak marah saya."
+      }
+    ]
+  },
+  {
+    "id": "infect_074",
+    "split": "train",
+    "condition": "Genital chlamydia, results review",
+    "source": "Chlamydia",
+    "patient_persona": {
+      "description": "Ms. Shalini a/p Murugan, 22, female, final-year biotech student in Semenyih, Selangor; mild discharge and bleeding after sex. Nervous, polite, Malaysian Indian English with Malay words.",
+      "gender": "female",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Tan Hui Min, Malaysian Chinese woman in her 30s, doctor at a university health centre. Relaxed, frank; English with Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Shalini, your swab result from last week is back. The chlamydia PCR is positive. Gonorrhoea is negative."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Chlamydia? I've only been with my boyfriend je. We've been together one year."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Chlamydia often has no symptoms for months, even years. It may have been there before you two met, from either side. It's very common in young adults."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Oh. I was so scared you'd tell me something worse. Is it serius, doktor?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's easily treated. But if left alone, it can cause pelvic inflammatory disease and affect fertility later. So good that we caught it."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ubat apa?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Doxycycline 100mg twice a day for seven days. Take with plenty of water, and don't lie down straight after. Avoid too much sun, you'll burn easily."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I'm on the pill. Will the antibiotic kacau it?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Doxycycline doesn't reduce the pill's effect. But no sex until both of you finish treatment and one week after."
+      },
+      {
+        "speaker": "Patient",
+        "text": "My boyfriend also kena makan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, even if he feels fine. He can come here, or see any GP with this letter. Otherwise you'll just pass it back and forth."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK. How do I tell him tanpa gaduh besar?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Say it's a common infection, found on routine test, and both need treatment. No blaming. Most couples handle it fine."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kena test lagi after?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, repeat in three months, because reinfection is common. Your HIV and syphilis tests were negative, by the way."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Thank you, doctor. Lega sikit."
+      }
+    ]
+  },
+  {
+    "id": "infect_075",
+    "split": "train",
+    "condition": "STI screening after condomless sex",
+    "source": "Chlamydia trachomatis",
+    "patient_persona": {
+      "description": "Mr. Aldrin Gumpil, 30, male, Kadazan tour guide in Kota Kinabalu, Sabah; worried after a one-night encounter while travelling. Friendly, a bit anxious, Sabahan English with Malay and 'bah'.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Rahimah binti Hassan, Sabahan Malay woman in her 40s, GP at a Kota Kinabalu clinic offering sexual health screening. Warm, direct; English with Sabahan Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Patient",
+        "text": "Doctor, I want to do full check-up for sexual disease. Ten days ago, I had sex with someone in Bangkok, no condom. Now I'm very worried bah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Thanks for coming in. Any symptoms? Pain when urinating, discharge, sores, rash, fever?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "No symptoms. But I read online, some diseases no symptoms. That's why I takut."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Correct. Today we can test urine for chlamydia and gonorrhoea, and blood for HIV, syphilis, hepatitis B and C."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Ten days, is it terlalu awal for HIV?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Our test detects both antibody and antigen. At ten days it may still miss it. So today is a baseline, then repeat HIV at six weeks, and syphilis at three months."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Aiyo, so must wait. Can I take that PEP thing?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "PEP must start within 72 hours. At ten days, too late already. Next time, if anything happens, go to hospital immediately, don't wait."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, noted. Meanwhile, I have a girlfriend back here. Kena bagitahu dia ke?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Until your results are clear, please use condoms with her, or avoid sex. If anything positive, she'll need testing too."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hepatitis B, I had the vaccine or not ah, tak ingat."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "We'll check your antibody level. If low, we'll give you a booster series. It's cheap and protects you for life."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Berapa lama for results?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "HIV and syphilis rapid, today in 20 minutes. Urine PCR about one week. I'll call you, don't worry."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK doctor. And the PrEP, is it for orang macam saya?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If you think you'll have more partners without condoms, yes, you could qualify. Let's talk once your HIV result is clear."
+      }
+    ]
+  },
+  {
+    "id": "infect_076",
+    "split": "train",
+    "condition": "HIV PrEP three-monthly follow-up",
+    "source": "AIDS/HIV",
+    "patient_persona": {
+      "description": "Kenneth Yap, 29, male, graphic designer in Petaling Jaya; on daily PrEP for a year. Relaxed, open, Malaysian Mandarin with plenty of English.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Lim Shu Yi, Malaysian Chinese woman in her 30s, doctor at a PJ sexual health clinic running the PrEP programme. Friendly, efficient; Mandarin and English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Kenneth，三个月的 PrEP follow-up。最近怎样？药有每天吃吗？"
+      },
+      {
+        "speaker": "Patient",
+        "text": "有啊，每天早上跟 coffee 一起吃。这三个月大概只漏了两次。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "很好。一个礼拜至少吃四次，protection 就已经很高了。你今天的 HIV test 是 non-reactive。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，每次等 result 还是会紧张。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "这个是正常的。Creatinine 是 88，eGFR 超过 90，kidney 很好。Syphilis test 也是 negative。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "那 urine 和 swab 呢？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Throat 和 rectal swab 的 PCR 要一个礼拜。Urine 的也是。有 positive 的话我会打电话给你。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK。我想问一下，如果我去 Bangkok 旅行一个礼拜，药要带多少？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "我今天给你三个月的药，九十粒，够你带去。记得放在手提行李，不要放 check-in 的。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "如果时差，吃药时间乱了，没关系吧？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "泰国只差一个小时，没问题。就算晚几个钟头吃，也没关系，不要一天吃两粒就好。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "明白。还有，PrEP 不能预防其他 STI，对吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对，只预防 HIV。Gonorrhoea、syphilis、chlamydia 还是要靠 condom。所以我们每三个月都 screen。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我的朋友也想开始 PrEP，他要怎样 register？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "叫他直接来，或者网上 book appointment。第一次要验 HIV、hepatitis B、kidney，一个礼拜后就可以开始。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好，我告诉他。谢谢医生。"
+      }
+    ]
+  },
+  {
+    "id": "infect_077",
+    "split": "train",
+    "condition": "HIV PrEP in a serodiscordant couple",
+    "source": "AIDS/HIV",
+    "patient_persona": {
+      "description": "Encik Firdaus bin Haron, 33, male, technician in Kluang, Johor; wife is HIV-positive on treatment, the couple want a baby. Earnest, careful, Johor Malay with English words.",
+      "gender": "male",
+      "dominant_language": "Malay"
+    },
+    "doctor_persona": {
+      "description": "Dr. Ong Kah Hui, Malaysian Chinese man in his 40s, infectious diseases physician at Hospital Enche' Besar Hajjah Khalsom, Kluang. Kind, clear; fluent Malay with English terms.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Encik Firdaus, dah tiga bulan makan PrEP. Hari ni follow-up. Ada kesan sampingan?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Minggu pertama loya sikit, doktor. Lepas tu OK. Saya makan setiap malam lepas isyak."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bagus. HIV test hari ni negatif. Creatinine 91, normal. Hepatitis B antibody encik pun dah protective."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alhamdulillah. Isteri saya pun baru check minggu lepas, viral load undetectable."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, saya dah tengok dalam sistem. Viral load undetectable lebih enam bulan. Itu sangat penting untuk encik dan untuk baby nanti."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Doktor, kami memang nak cuba anak tahun ni. Selamat ke untuk saya?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Bila isteri undetectable secara konsisten, risiko jangkitan kepada encik hampir kosong. Kita panggil U equals U, undetectable equals untransmittable."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Jadi PrEP ni masih perlu?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Banyak pasangan pilih teruskan PrEP masa cuba mengandung, untuk extra keyakinan. Kalau encik rasa lebih tenang, teruskan."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Saya teruskan lah. Isteri pun lebih tenang macam tu."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "OK. Isteri pula kena teruskan ubat ART setiap hari tanpa miss. Masa mengandung, dia akan follow-up rapat dengan pakar O&G dan kami."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Baby nanti boleh kena HIV?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Dengan ubat yang betul, risiko kepada baby kurang dari satu peratus. Baby pun akan dapat ubat pencegahan beberapa minggu lepas lahir."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Lega saya dengar. Keluarga kami tak tahu pasal status isteri. Rahsia ni selamat kan?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Ya, semua rekod sulit. Kami tak bagitahu sesiapa tanpa kebenaran encik dan isteri."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Terima kasih, doktor. Tiga bulan lagi saya datang."
+      }
+    ]
+  },
+  {
+    "id": "infect_078",
+    "split": "train",
+    "condition": "HIV PrEP follow-up with rectal gonorrhoea",
+    "source": "Gonorrhea",
+    "patient_persona": {
+      "description": "Mr. Ashwin a/l Prakash, 38, male, flight attendant based in Penang; on PrEP but struggles with daily doses on irregular rosters. Easy-going, candid, Malaysian Indian English with Malay words.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Chan Wai Kin, Penang Chinese man in his 40s, sexual health physician at a Penang private clinic. Relaxed, frank; English with some Malay.",
+      "gender": "male"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Ashwin, your HIV test is negative, good. But the rectal swab from your last visit came back positive for gonorrhoea."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Seriously? I don't have any symptoms at all. Tak sakit, nothing."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Rectal and throat gonorrhoea are usually silent. That's why we swab everyone on PrEP every three months."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, what's the treatment? Cucuk again, like last year?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, ceftriaxone 1 gram, one injection today. Any recent partners should get tested and treated too."
+      },
+      {
+        "speaker": "Patient",
+        "text": "There were two in the last month. One I can message, the other one, dah tak contact already."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Message whoever you can. We have an anonymous notification option too, if that's easier."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK. Doctor, honestly, the daily PrEP, I keep missing. My rosters change every week, different time zones."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "How many doses a week, roughly?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Maybe three, sometimes four. Some weeks kurang."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "For men who have sex with men, there's on-demand PrEP, the 2-1-1 method. Two tablets two to 24 hours before sex, then one at 24 hours, one at 48 hours."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Senang sikit macam tu. But I must plan ahead, right?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, at least two hours before. If you're unsure of plans, daily is still safer. Maybe set an alarm on your home time zone."
+      },
+      {
+        "speaker": "Patient",
+        "text": "I think I'll try harder with daily first. If tak boleh, then switch."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Good plan. And condoms still help against gonorrhoea and syphilis. We'll repeat the swab in three months to make sure it's cleared."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, doc. Let's do the injection. Hopefully not too sakit."
+      }
+    ]
+  },
+  {
+    "id": "infect_079",
+    "split": "train",
+    "condition": "Starting HIV PrEP, baseline results review",
+    "source": "AIDS/HIV",
+    "patient_persona": {
+      "description": "Chen Jia Le, 24, male, university student in Kampar, Perak; first time seeking PrEP after reading about it online. Shy, hesitant, Malaysian Mandarin with English terms.",
+      "gender": "male",
+      "dominant_language": "Mandarin (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Nurul Ashikin binti Rahim, Malay woman in her 30s, medical officer at an Ipoh health clinic PrEP service. Warm, non-judgemental; English-leaning, speaks functional Mandarin with English.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Jia Le，你上个礼拜的 baseline test 出来了。HIV 是 negative，可以开始 PrEP。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "太好了。其他的呢？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Kidney function 正常，creatinine 76。Syphilis negative。不过 hepatitis B surface antibody 是零，表示你没有 immunity。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我小时候没有打过 hepatitis B vaccine 吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "你应该有打，可是 antibody 过了二十年会下降。我们今天给你打第一针，一个月和六个月后再打。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "好。那 PrEP 要怎么吃？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Tenofovir 加 emtricitabine，一天一粒，每天差不多同一个时间。吃满七天，才有足够的 protection。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "七天之前，要用 condom 对吗？"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "对。而且 condom 还是可以预防其他 STI，最好继续用。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "会有什么 side effect？我有看网上说伤骨头和 kidney。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "少数人刚开始会恶心、肚子不舒服，一两个礼拜就好。Kidney 我们每三个月都会 check。骨头的影响很小。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "这个药要钱吗？我还是学生。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "在我们 klinik 的 program，只需要付很少的费用。你每三个月来验血和拿药。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "我家人会知道吗？我还没有 come out。"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "不会。你的 record 是 confidential 的。药的包装也没有写什么，你可以放心。"
+      },
+      {
+        "speaker": "Patient",
+        "text": "谢谢你，医生。我本来很怕来这里。"
+      }
+    ]
+  },
+  {
+    "id": "infect_080",
+    "split": "test",
+    "condition": "HIV PrEP follow-up with a small drop in kidney function",
+    "source": "AIDS/HIV",
+    "patient_persona": {
+      "description": "Mr. Justin Nyambong, 35, male, Bidayuh bank officer in Kuching, Sarawak; on PrEP for two years, takes ibuprofen often for back pain. Calm, polite, Sarawakian English mixed with Malay.",
+      "gender": "male",
+      "dominant_language": "English (Malaysian)"
+    },
+    "doctor_persona": {
+      "description": "Dr. Kueh Siew Ping, Sarawakian Chinese woman in her 40s, physician at a Kuching hospital infectious diseases clinic. Precise, gentle; English with Sarawak Malay.",
+      "gender": "female"
+    },
+    "turns": [
+      {
+        "speaker": "Doctor",
+        "text": "Justin, HIV test negative again. But your creatinine went up, from 95 last time to 128 today. eGFR dropped from 88 to 62."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Is that bad, doctor? I rasa normal je."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "It's not dangerous yet, but we need to find out why. Tenofovir in PrEP can affect the kidney in a small number of people. Are you taking any other ubat?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Hmm, for my back pain, ibuprofen. Almost every day this month, because I'm renovating my rumah."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "That could be a big part of it. Ibuprofen and tenofovir together can stress the kidneys. How many tablets a day?"
+      },
+      {
+        "speaker": "Patient",
+        "text": "Usually two, 400mg each, morning and night. Kadang-kadang three."
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Please stop the ibuprofen. Use paracetamol 1 gram up to four times a day for pain instead. And drink more air."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK, can. And the PrEP, stop also?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Not yet. eGFR above 60 is still OK for tenofovir disoproxil. We repeat the creatinine and a urine test in two weeks, after you stop ibuprofen."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Kalau still high?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "If it drops below 60, we may switch to another option, or pause PrEP and discuss. There's tenofovir alafenamide, gentler on the kidney, but not in our program yet."
+      },
+      {
+        "speaker": "Patient",
+        "text": "OK. Also my belakang, can doctor refer physio?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Sure, I'll refer to physiotherapy here. Better for the long run than painkillers."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Blood pressure also you check tadi?"
+      },
+      {
+        "speaker": "Doctor",
+        "text": "Yes, 126 over 80, normal. Urine dipstick shows a little protein, we'll send a proper urine test today."
+      },
+      {
+        "speaker": "Patient",
+        "text": "Alright. Two weeks, I'll come back. Terima kasih, doctor."
+      }
+    ]
+  }
+]

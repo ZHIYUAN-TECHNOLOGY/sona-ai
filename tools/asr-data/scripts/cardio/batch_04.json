@@ -1,0 +1,792 @@
+[
+ {
+  "id": "cardio_031",
+  "split": "train",
+  "condition": "Post-MI follow-up, ticagrelor breathlessness",
+  "source": "Myocardial infarction",
+  "patient_persona": {
+   "description": "Encik Mohd Faizal bin Rahim, 54, male, car mechanic in Setapak, Kuala Lumpur; six weeks after a heart attack and a stent. Energetic, restless, keen to go back to work.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Evelyn Tan Li Ping, Malaysian Chinese woman in her 40s, cardiologist at a Kuala Lumpur hospital clinic. Clear and firm; English-leaning with everyday Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Encik Faizal, dah enam minggu lepas stent. How are you feeling overall?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alhamdulillah, OK, doktor. Cuma kadang-kadang rasa macam tak cukup nafas, tapi bukan sakit dada."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bila rasa tu datang? Masa buat kerja, atau masa duduk rehat pun ada?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Masa duduk pun ada. Macam nak tarik nafas panjang, tapi tak puas. Saya takut stent tu tersumbat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Saya rasa ni side effect ticagrelor, ubat cair darah yang baru tu. About one in seven patients dapat rasa sesak macam ni, tapi tak bahaya."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Oh, ubat rupanya. Boleh saya stop ubat tu?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Jangan stop sendiri. Stent tu baru, kalau stop antiplatelet, dia boleh block balik dan jadi heart attack lagi."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau sesak ni mengganggu sangat, I can switch to clopidogrel 75mg. Tapi jangan ada gap satu hari pun."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau boleh tukar, saya nak tukar la. Malam susah nak tidur."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "OK, kita tukar. Esok pagi mula clopidogrel, and stop the ticagrelor. Aspirin 100mg teruskan."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Bila saya boleh kerja balik kat bengkel? Angkat enjin tu berat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kerja ringan boleh mula minggu depan, macam check dan servis. Angkat benda berat above 20 kilo, tunggu lepas cardiac rehab."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Program cardiac rehab tu encik dah pergi?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Belum, doktor. Diorang call, tapi saya sibuk."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Please go. Rehab tu ajar encik exercise yang selamat, dan kurangkan risiko heart attack kedua by almost a third."
+   },
+   {
+    "speaker": "Patient",
+    "text": "OK, doktor, saya janji minggu ni saya pergi."
+   }
+  ]
+ },
+ {
+  "id": "cardio_032",
+  "split": "train",
+  "condition": "Ward round after STEMI, smoking cessation",
+  "source": "Myocardial infarction",
+  "patient_persona": {
+   "description": "Mr. Lim Ah Kow, 61, male, durian orchard owner from Bukit Mertajam, Penang; day three after STEMI and primary PCI. Hoarse, stubborn, Hokkien-flavoured Mandarin with Malay and English words.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Muhammad Aiman bin Rosli, Malay man in his 30s, cardiology medical officer at a Penang hospital, on the morning ward round. Upbeat and direct; English with simple Mandarin and Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Uncle Lim, good morning. 今天觉得怎样？Chest pain ada lagi tak?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "不痛了，医生。只是很累，走去 toilet 都喘。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's normal after a heart attack. 你的心脏有一部分受伤了，echo 显示 pumping 大概百分之四十五。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "四十五？那是不是很差？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "不算很差。Normal 是五十五以上。With the right medicine, sometimes 会慢慢好一点。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "现在我们给你 aspirin、ticagrelor、atorvastatin 80mg、bisoprolol，还有 ramipril。每一种都很重要。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那么多药，我以前一粒药都不吃的。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我明白，uncle。可是这些药保护你的心脏，stent 不会 block。 出院后不能自己停。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Another important thing, rokok. 你一天抽几包？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "一包多一点，四十年了。在园里做工，没有烟不行。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "这次 heart attack，最大的 cause 就是烟。Continue smoking, 下一次可能没那么好运。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "唉，我知道啦。我孙子昨天也哭，叫我不要抽了。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "那就为了孙子。We have a quit smoking clinic, 可以给你 nicotine patch，帮你减少那个 craving。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，试试看。什么时候可以回家？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "如果今天走路 OK，没有 chest pain，明天 discharge。Durian season 不要自己爬上去收 durian 哦。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "哈哈，不会啦，叫我儿子去。"
+   }
+  ]
+ },
+ {
+  "id": "cardio_033",
+  "split": "train",
+  "condition": "Post-MI follow-up with low mood",
+  "source": "Myocardial infarction",
+  "patient_persona": {
+   "description": "Mrs. Saraswathy a/p Govindasamy, 59, female, retired nurse in Klang, Malaysian Indian; three months after a heart attack, diabetic. Soft voice, articulate, often trails off.",
+   "gender": "female",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Andrew Teoh Boon Hock, Malaysian Chinese man in his 40s, family medicine specialist at a Klang clinic. Gentle, unhurried; English with some Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mrs. Saraswathy, how have things been since your last visit? Your daughter mentioned you've been quite down."
+   },
+   {
+    "speaker": "Patient",
+    "text": "I don't know, doctor. Everything also feel heavy. I used to be so active, now I just sit at home, takut nak buat apa-apa."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Are you sleeping okay? And appetite?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Wake up at three, four in the morning, then cannot sleep. Appetite also tak ada. Lost three kilos."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Do you still enjoy the things you used to, like temple activities or your grandchildren?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Not really. Even when the grandchildren come, I feel tired, want them to go home. Then I feel guilty lah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Thank you for telling me. Depression after a heart attack is very common, almost one in three people. It's not weakness."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Have you had any thoughts that life is not worth living, or of harming yourself?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "No, no, doctor. Sometimes I think what's the point, but I won't do anything. My husband needs me, dia tak boleh jaga diri."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'm glad. If those thoughts get stronger, please tell your daughter or come straight here."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your medicines, bisoprolol, ramipril, atorvastatin, aspirin and clopidogrel, are you taking them all?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Mostly. Kadang-kadang I skip the atorvastatin, because I feel all these tablets make me feel worse."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Understandable. Depression itself makes people skip medicines. Treating the mood will help with the rest."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'd like to start sertraline 25mg once a day. It's safe with your heart medicines, and I'll refer you to our counsellor too."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, I'm willing to try. As a nurse I always told patients, now it's my turn, kan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Exactly. And please join cardiac rehab. Exercise helps the heart and the mood, both."
+   }
+  ]
+ },
+ {
+  "id": "cardio_034",
+  "split": "train",
+  "condition": "Post-MI echo results, driving and rehab",
+  "source": "Myocardial infarction",
+  "patient_persona": {
+   "description": "Puan Kamariah binti Hussin, 63, female, retired clerk from Kuala Lipis, Pahang; two months after an NSTEMI. Gentle, careful, asks many practical questions.",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Selvam a/l Perumal, Malaysian Indian man in his 50s, physician at a Pahang district hospital. Calm, fatherly; English-leaning, fluent Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Puan Kamariah, keputusan echo jantung dah sampai. Ejection fraction puan 40 percent, maksudnya pam jantung lemah sikit."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Lemah tu boleh jadi kuat balik ke, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kadang-kadang improve dengan ubat dan exercise. Sebab tu kita tambah dapagliflozin 10mg, and teruskan ramipril dan bisoprolol."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ubat baru lagi? Dah tujuh jenis dah, doktor. Pening saya nak ingat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Faham. Nurse akan buat jadual dengan warna, pagi dan malam. And bring all your medicine bottles next visit, kita semak sama-sama."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Doktor, saya boleh bawa kereta tak? Saya selalu hantar cucu ke sekolah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Untuk kereta biasa, after four weeks, if no chest pain dan tak pening, boleh. Puan dah lepas tempoh tu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Alhamdulillah. Bawa jauh, balik kampung ke Kuantan, boleh?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh, tapi berhenti rehat setiap satu jam, minum air, dan jangan drive seorang diri dulu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Program cardiac rehab kat Hospital Temerloh, puan dah register?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Jauh sangat, doktor. Anak saya kerja, tak ada orang hantar."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Tak apa. Ada home-based rehab. Physio akan bagi program jalan kaki, and they'll call you every week."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Macam tu senang sikit. Jalan kaki keliling rumah pun boleh ke?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Boleh. Mula sepuluh minit, dua kali sehari. Naikkan perlahan-lahan sampai tiga puluh minit."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Terima kasih, doktor. Saya rasa lega sikit hari ni."
+   }
+  ]
+ },
+ {
+  "id": "cardio_035",
+  "split": "train",
+  "condition": "Young MI follow-up, vaping and return to sport",
+  "source": "Myocardial infarction",
+  "patient_persona": {
+   "description": "Mr. Jonathan Wong Kai Ming, 38, male, software engineer in Kuching, Sarawak; heart attack four months ago, vapes, plays badminton. Fast, casual English, Sarawak Malay and Mandarin fillers.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Siti Aisyah binti Abang Zainal, Sarawakian Malay woman in her 40s, cardiologist at a Kuching hospital. Friendly, frank; English-leaning with Sarawak Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Jonathan, four months since your MI. Last time you said you switched from cigarettes to vape. How's that going?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Honestly, vaping more than I smoked lah. The vape is always in my pocket, so I puff the whole day."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Vape bukan safe alternative for your heart. Nicotine still raises your heart rate and blood pressure, and damages the vessels."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aiyo, I thought vape is like, the healthy version. Everyone at the office uses."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Common misconception. Target kita zero nicotine. We can use nicotine patch 21mg first, then taper down over eight to ten weeks."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, I'll try the patch. And doctor, badminton boleh main balik? My kaki-kaki badminton keep asking."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your stress test last month was good, no ischaemia, and your EF is normal. So boleh, but start slowly."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Play doubles first, warm up properly, and stop immediately if you get chest pain, pening, or palpitations."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Can. Actually I'm a bit takut also. Last time it happened right after a game."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "That's normal to feel. The rehab team can do a supervised session with you first, so you know your limits."
+   },
+   {
+    "speaker": "Patient",
+    "text": "And my cholesterol? My bapa also had high cholesterol."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your LDL is now 1.5, on atorvastatin 80mg. Target below 1.4, so we add ezetimibe 10mg."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Another pill ah. Okay lah, if it keeps me hidup."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "It will help. And please get your brother and sister to check their cholesterol too."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Will do, doctor. Terima kasih banyak-banyak."
+   }
+  ]
+ },
+ {
+  "id": "cardio_036",
+  "split": "train",
+  "condition": "Acute decompensated heart failure, ward round",
+  "source": "Congestive heart failure",
+  "patient_persona": {
+   "description": "Pak Cik Ismail bin Hamid, 72, male, retired fisherman from Kuala Selangor; admitted with swollen legs and breathlessness. Rough, breathy voice, short sentences.",
+   "gender": "male",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lee Mei Chin, Malaysian Chinese woman in her 30s, medical registrar at a Selangor hospital, on the morning ward round. Warm and efficient; English with simple Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Pak cik, selamat pagi. Malam tadi boleh tidur baring, atau masih kena duduk?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Dah boleh baring guna dua bantal, doktor. Semalam kena duduk atas kerusi sepanjang malam."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bagus. Since admission, pak cik dah kencing banyak, berat turun 3 kilo. Kaki pun kurang bengkak."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ubat suntik tu kuat betul, doktor. Asyik ke bilik air je."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Itu furosemide, ubat buang air. Hari ni kita teruskan dulu IV, esok tukar ke tablet."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Pak cik, sebelum masuk wad, ada makan ikan masin, budu, atau makanan masin?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ada, doktor. Ikan masin tiap hari, dengan nasi. Orang laut memang makan macam tu."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Garam tu yang buat air naik dalam badan. Your heart is weak, so dia tak boleh buang air lebih."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Lepas balik, garam kena kurang betul-betul, and drink not more than 1.5 litre a day, termasuk kopi dan kuah."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Satu setengah liter? Sikit tu, doktor. Pak cik selalu dahaga."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Cuba hisap ais kecil atau kunyah gula-gula tanpa gula, tu boleh kurangkan dahaga."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kami juga nak pak cik timbang berat setiap pagi. Kalau naik lebih 2 kilo dalam tiga hari, datang klinik."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kat rumah tak ada penimbang, doktor."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Anak pak cik boleh beli, tak mahal, dalam RM40. It's very important untuk jantung pak cik."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik, nanti pak cik suruh anak beli."
+   }
+  ]
+ },
+ {
+  "id": "cardio_037",
+  "split": "train",
+  "condition": "HFrEF clinic, switching to sacubitril/valsartan",
+  "source": "Heart failure",
+  "patient_persona": {
+   "description": "Madam Loh Siew Peng, 69, female, retired kindergarten teacher in Seremban; heart failure for two years, on perindopril. Clear, careful, asks about cost.",
+   "gender": "female",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Kenneth Yong, Malaysian Chinese man in his 40s, cardiologist at a Seremban hospital heart failure clinic. Methodical and kind; Mandarin with English drug names and numbers.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "罗老师，你的 echo 还是显示 EF 百分之三十。虽然你感觉还可以，我想换一种更好的药。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "是什么药？我现在吃的 perindopril 不好吗？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Perindopril 有帮助，但是有一个新的药叫 sacubitril/valsartan，就是 Entresto，研究显示可以再减少住院和死亡。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那很好啊。可是贵不贵？我是退休老师，靠 pension 的。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "在政府医院，如果符合 criteria，是免费给的。你符合，所以不用担心钱。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "换药的时候要注意。Perindopril 最后一粒吃完之后，要等 36 个小时，才可以开始 Entresto。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "为什么要等那么久？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "两个一起吃，会增加嘴唇和舌头肿的风险，叫 angioedema。等 36 小时比较安全。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "那我今天早上已经吃了 perindopril。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "那就今天开始停。后天晚上开始 Entresto 24/26mg，一天两次。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "两个星期后要回来验血，看 kidney 和 potassium，还有量血压，因为有时候会头晕。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "如果头晕怎么办？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "站起来慢慢站。如果收缩压低过 100，或者很晕，打电话来 clinic。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，我写下来。36 小时，后天晚上开始，一天两次。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "对，写得很清楚。其他的药，bisoprolol、spironolactone、dapagliflozin，照常吃。"
+   }
+  ]
+ },
+ {
+  "id": "cardio_038",
+  "split": "train",
+  "condition": "Heart failure worsened by NSAIDs",
+  "source": "Heart failure",
+  "patient_persona": {
+   "description": "Mr. Muthusamy a/l Karuppiah, 66, male, retired estate supervisor from Sungai Siput, Perak, Malaysian Indian; heart failure, knee osteoarthritis. Slow, deep voice, Manglish with Tamil-English rhythm.",
+   "gender": "male",
+   "dominant_language": "English (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Nor Azura binti Hashim, Malay woman in her 40s, family medicine specialist at a Perak health clinic. Direct and caring; English with Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Mr. Muthusamy, your weight is up 4 kilos since last month, and your legs are very swollen. Nafas macam mana?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Getting worse, doctor. Last three nights I had to sleep sitting on the chair. Walk to the kedai also tak larat."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Has anything changed? New medicines, more salt, missed your water pill?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "No change lah. Oh, only my lutut very painful, so the farmasi gave me some pain pills. Very good, the pain gone."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Can I see the pills? Ah, diclofenac 50mg. How many do you take?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Three times a day, doctor. Hampir three weeks already."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "This is likely the reason. Diclofenac makes the body keep salt and water, and it's bad for the kidneys and the heart."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Aiyo, the farmasi never tell me. I thought ubat sakit all the same."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Not all the same. Please stop the diclofenac today. For the knee, use paracetamol 1 gram up to four times a day, and a topical gel."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'll increase your furosemide from 40mg to 80mg in the morning for five days, then back to 40mg."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Your kidney test also came back a bit worse, creatinine 160. We'll recheck in one week."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Okay, doctor. The knee really painful though. Walking to temple also susah."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "I'll refer you to physio, and we can consider a knee injection later. Whatever it is, no more NSAIDs, okay?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Faham. I'll tell my son to buang the tablets."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "If you feel breathless even when resting, or can't lie down at all, go straight to the hospital, don't wait."
+   }
+  ]
+ },
+ {
+  "id": "cardio_039",
+  "split": "train",
+  "condition": "Heart failure, hyperkalaemia on spironolactone",
+  "source": "Congestive heart failure",
+  "patient_persona": {
+   "description": "Puan Dayang Norlia binti Awang, 58, female, market trader from Tawau, Sabah; heart failure after a viral myocarditis. Cheerful, fast, Sabah Malay with \"bah\".",
+   "gender": "female",
+   "dominant_language": "Malay"
+  },
+  "doctor_persona": {
+   "description": "Dr. Lau Kian Ming, Sabahan Chinese man in his 30s, medical officer at a Tawau hospital clinic. Relaxed, careful; English-leaning, fluent Sabah Malay.",
+   "gender": "male"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Puan Dayang, blood test minggu lepas, potassium puan tinggi, 5.8. Normal bawah 5."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Potassium tu apa, doktor? Bahaya ka?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Potassium tu garam dalam darah. Kalau terlalu tinggi, boleh ganggu rentak jantung. Tapi kita cepat tangkap, so tak apa."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Saya ada makan banyak pisang bah, doktor. Orang cakap pisang bagus untuk jantung."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Pisang memang tinggi potassium. Puan makan berapa sehari?"
+   },
+   {
+    "speaker": "Patient",
+    "text": "Tiga, empat biji. Saya jual pisang di tamu, jadi selalu makan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Ha, itu salah satu sebab. Another cause is spironolactone, ubat yang tahan potassium dalam badan."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kita stop spironolactone buat sementara. Pisang kurangkan jadi satu biji sehari, and avoid durian dan air kelapa banyak-banyak."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Air kelapa pun tak boleh? Aduh, panas-panas di Tawau ni."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Sikit boleh, jangan satu biji penuh setiap hari. Garam pengganti low-sodium salt pun jangan guna, sebab ada potassium."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Ubat lain teruskan ka, doktor?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Teruskan perindopril, bisoprolol, dan dapagliflozin. Furosemide pagi macam biasa."
+   },
+   {
+    "speaker": "Doctor",
+    "text": "We'll repeat the potassium in one week. Kalau dah normal, mungkin kita start balik spironolactone dengan dos kecil."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Kalau rasa berdebar-debar atau lemah, macam mana?"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Kalau jantung berdebar kuat, lemah sangat, atau nak pitam, terus pergi emergency."
+   },
+   {
+    "speaker": "Patient",
+    "text": "Baik bah, doktor. Minggu depan saya datang."
+   }
+  ]
+ },
+ {
+  "id": "cardio_040",
+  "split": "test",
+  "condition": "Heart failure follow-up, orthopnoea and fluid restriction",
+  "source": "Heart failure",
+  "patient_persona": {
+   "description": "Mr. Wong Yoke Fatt, 77, male, retired tin-mine worker in Taiping, Perak; heart failure, lives with his daughter. Slow, raspy voice, Cantonese-tinged Mandarin with Malay words.",
+   "gender": "male",
+   "dominant_language": "Mandarin (Malaysian)"
+  },
+  "doctor_persona": {
+   "description": "Dr. Kavitha a/p Shanmugam, Malaysian Indian woman in her 40s, physician at a Taiping hospital clinic. Warm, clear; English with simple Mandarin and Malay.",
+   "gender": "female"
+  },
+  "turns": [
+   {
+    "speaker": "Doctor",
+    "text": "Uncle Wong, 最近呼吸怎样？晚上睡觉躺得平吗？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "不行啊医生。躺平就喘，要垫三个枕头，有时候半夜醒来要坐起来。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "那个叫 orthopnoea，表示肺里面有水。脚肿不肿？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "肿，鞋子穿不下。我女儿说我的肚子也大了。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "你每天喝多少水？包括茶、汤、粥？"
+   },
+   {
+    "speaker": "Patient",
+    "text": "我很爱喝中国茶，一天可能五六杯。晚上还有汤。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "太多了，uncle。你的心脏 lemah，喝太多水，心脏排不掉，水就积在肺和脚。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "一天的水, 包括汤和茶, 最多一点五公升. Fill one big bottle every morning, 喝完就不能再喝."
+   },
+   {
+    "speaker": "Patient",
+    "text": "一点五公升……好吧，我让女儿帮我量。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Furosemide 我帮你从 40mg 加到 80mg，早上吃。中午以后不要吃，不然晚上一直起来小便。"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "Bisoprolol 现在 2.5mg，你的心跳 88，血压 132。我帮你加到 5mg。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "药越来越多，会不会伤肾？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "我们会看。今天验血，看 kidney 和 potassium。一个星期后再验一次。"
+   },
+   {
+    "speaker": "Patient",
+    "text": "如果还是喘呢？"
+   },
+   {
+    "speaker": "Doctor",
+    "text": "每天早上称体重。三天内重两公斤，或者坐着也喘，马上来 hospital，jangan tunggu."
+   },
+   {
+    "speaker": "Patient",
+    "text": "好，我听医生的。谢谢你那么耐心。"
+   }
+  ]
+ }
+]
