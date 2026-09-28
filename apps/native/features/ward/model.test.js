@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { newEncounter, patients } from "@/features/encounter/fixtures";
 import { EMPTY_DISCHARGE } from "@/features/discharge/model";
-import { bedBar, huddle, wardBeds, wardSummary } from "./model";
+import { asFilter, bedBar, bedRow, defaultFilter, emptyLine, filterBeds, filterSegments, huddle, wardBeds, wardSummary } from "./model";
 
 test("the bed bar has one segment per bed, blocked first, and a legend that adds up", () => {
   const bar = bedBar(wardBeds(patients, {}));
@@ -27,6 +27,26 @@ test("resolving the discharge clears bed 6, and discharging frees it", () => {
   const beds = wardBeds(patients, { "SYN-1042": gone });
   expect(beds.find(b => b.bed === "Bed 6").status).toBe("free");
   expect(wardSummary(beds).fit).toBe(3);
+});
+
+test("the filter opens on blocked, lists only its beds, and says something calm when empty", () => {
+  const beds = wardBeds(patients, {});
+  expect(defaultFilter(beds)).toBe("blocked");
+  expect(filterSegments(beds, "blocked").map(s => `${s.label} ${s.count}`)).toEqual(["All 8", "Blocked 3", "Fit to go 1", "Watch 2"]);
+  expect(filterBeds(beds, "blocked").map(b => b.bed)).toEqual(["Bed 6", "Bed 2", "Bed 14"]);
+  expect(filterBeds(beds, "all").map(b => bedRow(b).kind)).toEqual(["blocked", "blocked", "blocked", "fit", "watch", "watch", "other", "other"]);
+  expect(bedRow(beds.find(b => b.bed === "Bed 2"))).toEqual({ kind: "blocked", title: "Bed 2 · Nurul", when: "Out 11:00", flag: "2 blockers" });
+  expect(bedRow(beds.find(b => b.bed === "Bed 10")).title).toBe("Bed 10 · No patient");
+
+  // Nothing blocked: all is the default, the blocked segment hides unless picked, and its empty line points at the fit bed.
+  const clear = beds.map(b => ({ ...b, blockers: b.status === "fit" ? [] : b.blockers }));
+  expect(defaultFilter(clear)).toBe("all");
+  expect(filterSegments(clear, "all").map(s => s.key)).toEqual(["all", "fit", "watch"]);
+  expect(filterSegments(clear, "blocked").map(s => s.key)).toEqual(["all", "blocked", "fit", "watch"]);
+  expect(filterBeds(clear, "blocked")).toEqual([]);
+  expect(emptyLine(clear, "blocked")).toBe("Nothing blocked. 4 beds are fit to go.");
+  expect(emptyLine(beds.filter(b => b.bed !== "Bed 2" && b.bed !== "Bed 14" && b.bed !== "Bed 6"), "blocked")).toBe("Nothing blocked. 1 bed is fit to go.");
+  expect([asFilter("watch"), asFilter("other"), asFilter("nope"), asFilter(undefined)]).toEqual(["watch", "all", undefined, undefined]);
 });
 
 test("the huddle counts blockers without an owner", () => {
