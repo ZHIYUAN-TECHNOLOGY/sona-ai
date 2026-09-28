@@ -12,7 +12,7 @@ import {
 import { tFor, useLang, type Lang } from "@/lib/i18n";
 import { useBookingRequests, useFollowUps } from "@/features/follow-ups/row";
 import { Capsule, Stop, STOP_TITLE, Timeline } from "@/features/follow-ups/timeline";
-import { removeQuestion, saveQuestion, useQuestions } from "@/features/questions";
+import { removeQuestion, saveQuestion, useQuestions, useSentQuestions } from "@/features/questions";
 import { DOCK_SPACE } from "@/lib/dock";
 import { AnimatedText, Text, TextInput } from "@/lib/text";
 import { palette, space, type } from "@/lib/theme";
@@ -191,14 +191,19 @@ function VisitCard({ f, still }: { f: FollowUp; still: boolean }) {
 /** The quick review before the next visit: what to bring, and the questions saved for the doctor. */
 function Review({ f, still }: { f: FollowUp; still: boolean }) {
   const lang = useLang(), t = tFor(lang);
-  const questions = useQuestions();
+  const questions = useQuestions(), sent = useSentQuestions();
   const [draft, setDraft] = useState("");
   return <View style={{ gap: 8, padding: 16, borderRadius: 24, borderCurve: "continuous", backgroundColor: palette.card, borderWidth: 1, borderColor: palette.line }}>
     <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>{t("fu.beforeYouGo")}</Text>
     <Text style={{ ...type.body, color: palette.muted }}>{bringLine(f, lang)}</Text>
     <Text style={{ ...type.body, fontWeight: "600", color: palette.ink, marginTop: 4 }}>{t("fu.questions")}{questions.length ? t("fu.saved", { n: questions.length }) : ""}</Text>
     {questions.map(q => <Animated.View key={q} entering={still ? undefined : FadeIn.duration(200)} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-      <Text style={{ ...type.body, flex: 1, color: palette.muted }}>“{q}”</Text>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={{ ...type.body, color: palette.muted }}>“{q}”</Text>
+        {sent.includes(q) && <Animated.View entering={still ? undefined : FadeIn.duration(200)}>
+          <Text style={{ ...type.footnote, fontWeight: "600", color: palette.green }}>{t("fu.sentTeam")}</Text>
+        </Animated.View>}
+      </View>
       <Pressable accessibilityRole="button" accessibilityLabel={t("fu.removeQ", { q })} onPress={() => removeQuestion(q)}
         style={({ pressed }) => ({ width: 48, height: 48, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.5 : 1 })}>
         <Text style={{ fontSize: 15, color: palette.faint }}>✕</Text>
