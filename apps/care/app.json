@@ -47,7 +47,14 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Sona Care uses the camera to scan the QR code on your discharge paper."
+          "cameraPermission": "Sona Care uses the camera to scan the QR code on your discharge paper and to photograph a medicine for your care team."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Sona Care opens your photos so you can send a picture of a medicine or letter to your care team.",
+          "cameraPermission": "Sona Care uses the camera to scan the QR code on your discharge paper and to photograph a medicine for your care team."
         }
       ],
       "expo-notifications",
