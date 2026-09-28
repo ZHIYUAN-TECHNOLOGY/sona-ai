@@ -3,6 +3,7 @@ import { CODES, type Code, type Sentence } from "@sona-ai/domain/claim";
 import { planFor, type Language } from "@sona-ai/domain/discharge";
 import type { Study } from "@sona-ai/domain/evidence";
 import type { DetectedFinding } from "@sona-ai/domain/findings";
+import { deidentifyByRules, type KnownIdentity, type Replacement } from "@sona-ai/domain/training";
 import type { Patient } from "@sona-ai/domain/types";
 import { huddle, type Bed, type Owner } from "@sona-ai/domain/ward";
 
@@ -37,6 +38,11 @@ export type Models = {
   answerFromPlan(input: { question: string; plan: string; language: Language }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string }>;
   /** After-discharge check-ins: worse or urgent replies become a flagged task (with the model's short symptom, when it read one). */
   classifyReply(input: { text: string; language: Language }): Answer<{ label: "fine" | "worse" | "urgent"; symptom?: string }>;
+  /**
+   * Continuous training: the text with the patient's identifiers replaced by placeholders ([NAME], [IC],
+   * [PHONE], [EMAIL], [MRN]). The leak gate re-checks whatever comes back, whoever wrote it.
+   */
+  deidentify(input: { text: string; known: KnownIdentity }): Answer<{ text: string; replacements: Replacement[] }>;
 };
 
 const fixture = <T>(value: T) => Promise.resolve({ ...value, source: "fixture" as const });
@@ -72,5 +78,7 @@ export const stubModels: Models = {
   // ponytail: keyword rule standing in for the classifier; the demo reply is "fever returned".
   classifyReply: ({ text }) => fixture({ label: readReply(text) }),
   transcribe: () => fixture({ text: "" }),
+  // ponytail: full names, IC, phone, email and MRN by rule (packages/domain/training); OpenMed's clinical PII model replaces it, and catches first names too.
+  deidentify: ({ text, known }) => fixture(deidentifyByRules(text, known)),
   answerFromPlan: () => fixture({ answer: "", grounded: false, urgent: false }),
 };

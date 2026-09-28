@@ -80,6 +80,8 @@ export type RecordReview = z.infer<typeof recordReviewSchema>;
 export const noteSaveSchema = z.object({
   encounterId: z.string().min(1), expectedRevision: z.number().int().min(0),
   sentences: z.array(z.object({ id: z.string().min(1), text: z.string() })),
+  /** The doctor keeps this visit's note out of the de-identified training samples. */
+  excludeFromTraining: z.boolean().optional(),
 });
 export type NoteSave = z.infer<typeof noteSaveSchema>;
 // lane H

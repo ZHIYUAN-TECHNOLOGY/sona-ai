@@ -15,6 +15,7 @@ import { useFollowUps } from "@/features/follow-ups/row";
 import { daysHome, headerDate, needsLine, type Need } from "@/features/home";
 import { AddSheet } from "@/features/home/add-sheet";
 import { LanguageRow } from "@/features/language/picker";
+import { TrainingRow } from "@/features/training/consent";
 import { tFor, useLang } from "@/lib/i18n";
 import { ConsistencyTile, LatestTile, MedicinesTile, VisitTile } from "@/features/home/bento";
 import { useMe } from "@/features/me";
@@ -145,9 +146,10 @@ export default function Home() {
       <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("common.emergency")}</Text>
       <AddSheet open={adding} onClose={() => setAdding(false)} />
     </>}
-    {/* The language row and sign out close the page: settings a patient needs rarely, kept out of the way. */}
+    {/* The language row, the training consent and sign out close the page: settings a patient needs rarely, kept out of the way. */}
     {state !== "loading" && <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", columnGap: 16 }}>
       <LanguageRow />
+      {state === "joined" && <TrainingRow />}
       <Pressable accessibilityRole="button" onPress={() => { void forgetPhone().finally(() => authClient.signOut()); }} style={{ minHeight: 48, minWidth: 48, justifyContent: "center" }}>
         <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{t("home.signOut")}</Text>
       </Pressable>
