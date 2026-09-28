@@ -10,6 +10,7 @@ import { checkInReplySchema, type CheckInReply } from "../contracts";
 import { protectedProcedure } from "../index";
 import { stubModels } from "../models";
 import { followUpsToAdd } from "./findings";
+import { tellPatient } from "../push";
 
 /**
  * Demo flow 7: after-discharge check-ins through a simulated inbox (no real message leaves). A
@@ -25,11 +26,18 @@ export async function scheduleCheckIns(db: Context["db"], hospitalId: string, pa
   }))).onConflictDoNothing();
 }
 
-/** The Worker's hourly cron (and checkIns.tick): every due, unsent check-in is marked sent to the simulated inbox. */
-export async function sendDueCheckIns(db: Context["db"], hospitalId: string, now: Date) {
+/**
+ * The Worker's hourly cron (and checkIns.tick, demo.jump): every due, unsent check-in is marked sent to
+ * the simulated inbox, and each patient's phones get one push for their latest day. `fetch` is the
+ * push's outbound HTTP (tests pass a fake; the cron uses the global one).
+ */
+export async function sendDueCheckIns(db: Context["db"], hospitalId: string, now: Date, fetch?: Context["fetch"]) {
   const sent = await db.update(checkIns).set({ sentAt: now })
-    .where(and(eq(checkIns.hospitalId, hospitalId), isNull(checkIns.sentAt), lte(checkIns.dueAt, now))).returning({ id: checkIns.id, patientId: checkIns.patientId });
-  return { sent: sent.length, patientIds: [...new Set(sent.map(s => s.patientId))] };
+    .where(and(eq(checkIns.hospitalId, hospitalId), isNull(checkIns.sentAt), lte(checkIns.dueAt, now))).returning({ id: checkIns.id, patientId: checkIns.patientId, day: checkIns.day });
+  const latest = new Map<string, number>();
+  for (const s of sent) latest.set(s.patientId, Math.max(s.day, latest.get(s.patientId) ?? 0));
+  await Promise.all([...latest].map(([patientId, day]) => tellPatient({ db, fetch }, hospitalId, patientId, { kind: "check-in", day })));
+  return { sent: sent.length, patientIds: [...latest.keys()] };
 }
 
 /** A hospital's check-ins with their replies, for one visit or (Sona Care) one patient when given. */
@@ -53,7 +61,7 @@ export const checkInsRouter = {
   list: protectedProcedure.input(z.object({ encounterId: z.string().min(1).optional() }).optional())
     .handler(({ context: { db, hospitalId }, input }) => listCheckIns(db, hospitalId, { encounterId: input?.encounterId })),
   /** Sends what is due now (the demo does not wait for the hourly cron). */
-  tick: protectedProcedure.handler(({ context }) => sendDueCheckIns(context.db, context.hospitalId, clockOf(context))),
+  tick: protectedProcedure.handler(({ context }) => sendDueCheckIns(context.db, context.hospitalId, clockOf(context), context.fetch)),
   /** The simulated patient reply. Replying to an unsent check-in sends it first, since the demo jumps two days. */
   reply: protectedProcedure.input(checkInReplySchema).handler(({ context, input }) => replyToCheckIn(context, context.hospitalId, input)),
   /**
@@ -75,6 +83,7 @@ export const checkInsRouter = {
     const [booked] = await db.select().from(appointments).where(eq(appointments.id, id));
     // The hospital hears "checkIns" from the middleware; her own app hears it here, by name.
     await context.announce?.(hospitalId, { topic: "checkIns", patientId: row.patientId }).catch(() => {});
+    await tellPatient(context, hospitalId, row.patientId, { kind: "booked", at: booked!.startsAt });
     // Anything from her X-ray still needing a follow-up can ride on the same visit (findings.addToVisit).
     const toAdd = await followUpsToAdd(context, hospitalId, row.patientId, booked!.startsAt);
     return { appointmentId: booked!.id, startsAt: booked!.startsAt, kind: booked!.kind, patientId: row.patientId, toAdd };

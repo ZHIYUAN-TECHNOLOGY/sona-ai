@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { clockOf, type Context } from "../context";
 import { patientProcedure, protectedProcedure } from "../index";
+import { tellPatient } from "../push";
 
 /**
  * Sona Care messages: a plain thread between a patient and their care team. Each patient message is
@@ -63,6 +64,7 @@ export const messagesRouter = {
     const asked = await db.select({ taskId: careMessages.taskId }).from(careMessages).where(and(eq(careMessages.patientId, input.patientId), eq(careMessages.from, "patient")));
     const ids = asked.flatMap(m => (m.taskId ? [m.taskId] : []));
     if (ids.length) await db.update(tasks).set({ completed: true }).where(and(inArray(tasks.id, ids), eq(tasks.completed, false)));
+    await tellPatient(context, hospitalId, input.patientId, { kind: "reply" });
     return stored(db, id);
   }),
 };

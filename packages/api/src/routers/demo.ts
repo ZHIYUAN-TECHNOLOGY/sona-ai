@@ -72,7 +72,7 @@ export const demoRouter = {
     }
     await db.update(hospitals).set({ clockOffsetMs: offset }).where(eq(hospitals.id, hospitalId));
     const now = new Date(real + offset);
-    await sendDueCheckIns(db, hospitalId, now);
+    await sendDueCheckIns(db, hospitalId, now, context.fetch);
     return status(db, hospitalId, now);
   }),
 };

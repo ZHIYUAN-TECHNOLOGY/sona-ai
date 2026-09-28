@@ -50,6 +50,7 @@
           "cameraPermission": "Sona Care uses the camera to scan the QR code on your discharge paper."
         }
       ],
+      "expo-notifications",
       [
         "expo-audio",
         {

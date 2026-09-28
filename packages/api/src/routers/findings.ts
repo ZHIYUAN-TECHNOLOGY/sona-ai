@@ -8,6 +8,7 @@ import { findingDismissSchema, findingTrackSchema } from "../contracts";
 import { clockOf, type Context } from "../context";
 import { stubModels } from "../models";
 import { protectedProcedure } from "../index";
+import { tellPatient } from "../push";
 
 /**
  * Demo flow 6: findings beyond the question an X-ray was taken for. The model only says what and
@@ -104,6 +105,7 @@ export const findingsRouter = {
     await db.update(findings).set({ dueAt: visit.startsAt }).where(eq(findings.id, finding.id));
     if (finding.taskId) await db.update(tasks).set({ due: visit.startsAt.toLocaleDateString("en-CA", { timeZone: "Asia/Kuala_Lumpur" }) }).where(eq(tasks.id, finding.taskId));
     await context.announce?.(hospitalId, { topic: "findings", patientId: visit.patientId }).catch(() => {});
+    await tellPatient(context, hospitalId, visit.patientId, { kind: "added", test: testOf(finding.action), at: visit.startsAt });
     return { findingId: finding.id, recallId: `recall:${finding.id}`, startsAt: visit.startsAt, test: testOf(finding.action) };
   }),
   /**
