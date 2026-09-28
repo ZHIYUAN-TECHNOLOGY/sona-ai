@@ -1,16 +1,19 @@
+import { useQuery } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
-import Animated, { Easing, FadeInDown, useReducedMotion } from "react-native-reanimated";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
+import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { DoctorAvatar } from "@/features/doctors/avatar";
 import { BookingSheet } from "@/features/doctors/booking";
-import { dayParts, doctorById, nameLines, slots, type Doctor } from "@/features/doctors/data";
+import { dayParts, nameLines, slotOf, type ListedDoctor, type Slot } from "@/features/doctors/data";
+import { errorText } from "@/features/errors";
+import { useMe } from "@/features/me";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
 import { AccentText, BackButton, Card, ICON, pillStyle, surfaceStyle } from "@/lib/ui";
-import { now as clockNow } from "@/lib/clock";
+import { orpc } from "@/utils/orpc";
 
 const STAR = "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21L12 17.77L5.82 21L7 14.14l-5-4.87l6.91-1.01z";
 const AWARD = "M12 15a7 7 0 1 0 0-14a7 7 0 0 0 0 14M8.21 13.89L7 23l5-3l5 3l-1.21-9.12";
@@ -21,31 +24,36 @@ const BAR = 56 + 8 + 48;
 /**
  * Doctor details (the AI Health Companion kit): back; the initials avatar, the name large on two lines
  * in the headline gradient and the specialty; one card of kit form rows (rating, experience, clinic,
- * languages); the next clinic days and that day's times as capsules (selected in ink); a line about
+ * languages); the next clinic days and that day's free times (from the hospital's directory, so a
+ * time already requested or booked is gone) as capsules (selected in ink); a line about
  * them. At the bottom the black "Request appointment", live once a time is picked, opens the review
  * card (a request the care team confirms), with a quiet "Message care team" under it.
  */
 export default function DoctorScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const doctor = doctorById(id);
+  const { state } = useMe();
+  // The doctor and their free slots from the hospital's directory; a live change (a slot taken) re-reads it.
+  const { data: doctor, error, isLoading } = useQuery({ ...orpc.care.doctors.get.queryOptions({ input: { id: id ?? "" } }), enabled: state === "joined" && Boolean(id) });
   if (!doctor) return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, gap: 16 }}>
     <BackButton />
-    <Card><Text style={{ ...type.body, color: palette.muted }}>We couldn't find that doctor. Go back to the list and pick again.</Text></Card>
+    {isLoading ? <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} />
+      : <Card><Text selectable style={{ ...type.body, color: palette.muted }}>{error ? errorText(error) : "We couldn't find that doctor."} Go back to the list and pick again.</Text></Card>}
   </ScrollView>;
   return <Details key={doctor.id} doctor={doctor} />;
 }
 
-function Details({ doctor: d }: { doctor: Doctor }) {
+function Details({ doctor: d }: { doctor: ListedDoctor }) {
   const still = useReducedMotion();
   const insets = useSafeAreaInsets();
-  const [now] = useState(clockNow);
-  const days = slots(d, now);
+  const days = d.nextSlots.map(x => ({ day: x.day, times: x.times.map(slotOf) }));
   const [dayAt, setDayAt] = useState(0);
   const [time, setTime] = useState<number>();
-  const [booking, setBooking] = useState(false);
+  // The slot under review, held so a re-read of the free slots (live) cannot pull it from under the sheet.
+  const [booking, setBooking] = useState<Slot>();
   const [first, rest] = nameLines(d.name);
   const day = days[dayAt];
-  const slot = time === undefined ? undefined : day?.times[time];
+  // The picked time by its moment, so a re-read that drops another slot never shifts the pick.
+  const slot = day?.times.find(t => t.date.getTime() === time);
   const next = days[0] && dayParts(days[0].day);
   const enter = (i: number) => still ? undefined : rise(i);
 
@@ -78,14 +86,15 @@ function Details({ doctor: d }: { doctor: Doctor }) {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
             {days.map((x, i) => {
               const p = dayParts(x.day), on = i === dayAt;
-              return <Capsule key={x.day.toISOString()} on={on} label={`${p.weekday} ${p.date}`} spoken={p.spoken} onPress={() => { setDayAt(i); setTime(undefined); }} />;
+              return <Capsule key={new Date(x.day).toISOString()} on={on} label={`${p.weekday} ${p.date}`} spoken={p.spoken} onPress={() => { setDayAt(i); setTime(undefined); }} />;
             })}
           </ScrollView>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-            {day?.times.map((t, i) => <Capsule key={t.label} on={i === time} label={t.label} spoken={`${t.label}, ${dayParts(t.date).spoken}`} onPress={() => setTime(i)} />)}
-          </View>
+          {/* Times crossfade when the day changes (60fps Canopi Date Picker: the content morphs in place). */}
+          <Animated.View key={dayAt} entering={still ? undefined : FadeIn.duration(220)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {day?.times.map(t => <Capsule key={t.label} on={t.date.getTime() === time} label={t.label} spoken={`${t.label}, ${dayParts(t.date).spoken}`} onPress={() => setTime(t.date.getTime())} />)}
+          </Animated.View>
           {!slot && <Text style={{ ...type.footnote, color: palette.muted }}>Pick a time, then send a request.</Text>}
-        </> : <Text style={{ ...type.body, color: palette.muted }}>No clinic in the next two weeks. Ask your care team.</Text>}
+        </> : <Text style={{ ...type.body, color: palette.muted }}>No free clinic time in the next two weeks. Ask your care team.</Text>}
       </Animated.View>
 
       <Animated.View entering={enter(3)} style={{ gap: 4 }}>
@@ -97,7 +106,7 @@ function Details({ doctor: d }: { doctor: Doctor }) {
 
     <View style={{ position: "absolute", left: 20, right: 20, bottom: Math.max(insets.bottom, 12), gap: 8 }}>
       <Pressable accessibilityRole="button" accessibilityLabel="Request appointment" accessibilityHint={slot ? "Review and send a request to your care team" : "Pick a time first"} accessibilityState={{ disabled: !slot }}
-        disabled={!slot} onPress={() => setBooking(true)}
+        disabled={!slot} onPress={() => setBooking(slot)}
         style={({ pressed }) => ({ minHeight: 56, borderRadius: 28, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, backgroundColor: palette.dark, opacity: slot ? 1 : 0.45, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
         <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>Request appointment</Text>
       </Pressable>
@@ -107,7 +116,7 @@ function Details({ doctor: d }: { doctor: Doctor }) {
       </Pressable>
     </View>
 
-    {booking && slot && <BookingSheet doctor={d} slot={slot} onClose={() => setBooking(false)} />}
+    {booking && <BookingSheet doctor={d} slot={booking} onClose={() => setBooking(undefined)} />}
   </View>;
 }
 

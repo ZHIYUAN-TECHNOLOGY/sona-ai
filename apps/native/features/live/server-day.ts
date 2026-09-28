@@ -9,7 +9,9 @@ import { serverTasks, type ServerAppointment, type ServerResult, type ServerTask
  * Screens subscribe with the hooks; plain functions (the home quick actions) read the snapshot.
  * Undefined whenever live mode is off, so callers fall back to the fixtures.
  */
-type Snapshot = { tasks: ServerTask[]; results: ServerResult[] };
+// `bookings`: Sona Care booking requests waiting for the care team (My Day's amber rows).
+type Snapshot = { tasks: ServerTask[]; results: ServerResult[]; bookings: ServerBooking[] };
+export type ServerBooking = Awaited<ReturnType<typeof api.bookings.list>>[number];
 export type ServerData = Snapshot | undefined;
 let snapshot: Snapshot | undefined;
 // ponytail: appointments cached per date for the session; the month view counts only dates already opened.
@@ -22,8 +24,9 @@ export const serverSnapshot = () => snapshot;
 export const serverDayCount = (date: string) => days.get(date)?.length ?? 0;
 
 export async function refreshServerData() {
-  const [tasks, results] = await Promise.all([api.tasks.list(), api.results.list()]);
-  snapshot = { tasks, results };
+  // A server without booking yet still serves My Day.
+  const [tasks, results, bookings] = await Promise.all([api.tasks.list(), api.results.list(), api.bookings.list().catch(() => [])]);
+  snapshot = { tasks, results, bookings };
   notify();
 }
 
@@ -66,6 +69,13 @@ export async function completeServerTask(taskId: string) {
 export async function createServerTask(input: Parameters<typeof api.tasks.create>[0]) {
   await api.tasks.create(input);
   await refreshServerData();
+}
+
+/** Confirms (a visit on the patient's Schedule) or declines (the note goes to their thread) a Sona Care booking request. */
+export async function decideBooking(input: Parameters<typeof api.bookings.decide>[0]) {
+  const decided = await api.bookings.decide(input);
+  await refreshServerData();
+  return decided;
 }
 
 export async function acknowledgeResult(resultId: string) {

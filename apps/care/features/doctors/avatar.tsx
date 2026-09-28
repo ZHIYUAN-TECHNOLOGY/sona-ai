@@ -10,8 +10,8 @@ const WASH = [["#EBF1FF", "#C9D5FF"], ["#F2ECFF", "#D8CBFF"], ["#E6F4FF", "#BFDD
  * A doctor's face stand-in (never a photo, stock or real): their initials on a soft gradient disc
  * with a white rim. Decorative; the card or header around it carries the name for VoiceOver.
  */
-export function DoctorAvatar({ doctor, size = 48 }: { doctor: Doctor; size?: number }) {
-  const [from, to] = WASH[Math.max(0, DOCTORS.indexOf(doctor)) % WASH.length]!;
+export function DoctorAvatar({ doctor, size = 48 }: { doctor: Pick<Doctor, "id" | "name">; size?: number }) {
+  const [from, to] = WASH[Math.max(0, DOCTORS.findIndex(d => d.id === doctor.id)) % WASH.length]!;
   return <View accessible={false} importantForAccessibility="no-hide-descendants"
     style={{ width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center", borderWidth: Math.max(2, size / 28), borderColor: palette.white,
       experimental_backgroundImage: `linear-gradient(145deg, ${from}, ${to})`, boxShadow: "0 8px 18px -10px rgba(51,92,255,0.45)" } as ViewStyle}>

@@ -13,7 +13,7 @@ import type { Encounter, Patient, Task } from "@/features/encounter/types";
  */
 export type DayTone = "urgent" | "soon" | "routine";
 export type DayItem = {
-  id: string; kind: "result" | "blocker" | "visit" | "task" | "check-in"; title: string; detail: string; reason: string; tone: DayTone; score: number;
+  id: string; kind: "result" | "blocker" | "visit" | "task" | "check-in" | "booking"; title: string; detail: string; reason: string; tone: DayTone; score: number;
   patientId?: string; open: { next?: string; view?: string };
 };
 
@@ -61,6 +61,25 @@ export function rankDay(patients: Patient[], encounters: Record<string, Encounte
     });
   }
   return items.sort((a, b) => b.score - a.score);
+}
+
+/** A patient's booking request from Sona Care, as the server lists it (see bookings.list). */
+export type BookingRequest = { id: string; patientId: string; doctorName: string; specialty: string; title: string | null; reason: string | null; createdAt: Date | string };
+
+/**
+ * Sona Care booking requests waiting for the care team: amber rows ("Amelia asks to see Dr. Lim ·
+ * Thu 10:30") that rank above blockers but below a patient getting worse at home; the row's ID carries
+ * the request's, so Confirm and Decline act on it in place.
+ */
+export function bookingItems(requests: BookingRequest[], now = new Date()): DayItem[] {
+  return requests.map(r => {
+    const mins = Math.max(0, Math.round((now.getTime() - new Date(r.createdAt).getTime()) / 60_000));
+    const asked = mins < 60 ? `${mins} min ago` : mins < 1440 ? `${Math.floor(mins / 60)} h ago` : `${Math.floor(mins / 1440)} d ago`;
+    return {
+      id: `booking-${r.id}`, kind: "booking" as const, title: r.title ?? `Booking request · ${r.doctorName}`, detail: r.reason ? `“${r.reason}” · ${r.specialty}` : `${r.doctorName} · ${r.specialty}`,
+      reason: `Asked in Sona Care ${asked} · confirm or decline`, tone: "soon" as const, score: 75, patientId: r.patientId, open: {},
+    };
+  });
 }
 
 /**

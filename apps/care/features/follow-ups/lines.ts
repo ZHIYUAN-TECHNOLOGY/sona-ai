@@ -131,3 +131,16 @@ export function scheduleLine(today: AgendaItem[], visits: Pick<FollowUp, "id" | 
   const line = parts.join(" · ").replace(/^./, c => c.toUpperCase()) || "Nothing booked yet";
   return { line, tone: next?.tone === "amber" || visit?.status === "overdue" ? "amber" : "muted" };
 }
+
+/** A booking request the patient sent (care.bookings.list). */
+export type BookingRequest = Awaited<ReturnType<AppRouterClient["care"]["bookings"]["list"]>>[number];
+/**
+ * The requests the Schedule shows, soonest first: ones still waiting for the care team, and declined
+ * ones (with the care team's note) until the patient asks the same doctor again. Only times still
+ * ahead; a confirmed one is already a visit.
+ */
+export function openRequests<T extends Pick<BookingRequest, "doctorId" | "startsAt" | "status" | "createdAt">>(list: T[], now: Date): T[] {
+  return list.filter(r => new Date(r.startsAt) > now && (r.status === "requested"
+    || (r.status === "declined" && !list.some(o => o.doctorId === r.doctorId && new Date(o.createdAt) > new Date(r.createdAt)))))
+    .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+}

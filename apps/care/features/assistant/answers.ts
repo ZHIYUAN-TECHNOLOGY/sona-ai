@@ -95,7 +95,7 @@ export function reply(question: string, asks: Asked[], condition?: string): Repl
   const asked = asks.find(a => a.question.toLowerCase() === lower);
   if (asked) return { kind: "plan", asked };
   if (!wantsDoctor(q)) return { kind: "none", urgent: false };
-  const own = matchDoctors(q), planned = condition ? matchDoctors(condition) : [];
+  const own = matchDoctors(DOCTORS, q), planned = condition ? matchDoctors(DOCTORS, condition) : [];
   const about = condition && (!own.length || lower.includes(condition)) && planned.length ? condition : undefined;
   const doctors = (own.length ? own : planned.length ? planned : DOCTORS.filter(d => d.careTeam)).slice(0, 3);
   const lead = doctors.length === 1 ? "Here is a sample doctor" : "Here are sample doctors";

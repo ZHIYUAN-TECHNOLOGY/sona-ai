@@ -15,6 +15,11 @@ export function useFollowUps() {
   const { state } = useMe();
   return useQuery({ ...orpc.care.followUps.queryOptions(), enabled: state === "joined" });
 }
+/** The booking requests the patient sent (waiting, confirmed or declined), once they have joined. */
+export function useBookingRequests() {
+  const { state } = useMe();
+  return useQuery({ ...orpc.care.bookings.list.queryOptions(), enabled: state === "joined" });
+}
 export function useFollowUpNeeds() {
   const { data } = useFollowUps();
   return followUpNeeds(data);

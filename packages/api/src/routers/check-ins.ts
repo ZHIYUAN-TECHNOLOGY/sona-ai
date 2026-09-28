@@ -1,8 +1,9 @@
 import { ORPCError } from "@orpc/server";
-import { appointments, checkInReplies, checkIns, encounters, patients, tasks } from "@sona-ai/db/schema/clinical";
+import { appointments, checkInReplies, checkIns, doctors, encounters, findings, patients, tasks } from "@sona-ai/db/schema/clinical";
 import { checkInMessage, checkInSchedule, replyFlag, type CheckIn } from "@sona-ai/domain/check-ins";
 import type { Language } from "@sona-ai/domain/discharge";
-import { and, asc, eq, inArray, isNull, lte } from "drizzle-orm";
+import { shortName } from "@sona-ai/domain/doctors";
+import { and, asc, eq, inArray, isNull, like, lte } from "drizzle-orm";
 import { z } from "zod";
 
 import { clockOf, type Context } from "../context";
@@ -57,20 +58,35 @@ export const checkInsRouter = {
   /** The simulated patient reply. Replying to an unsent check-in sends it first, since the demo jumps two days. */
   reply: protectedProcedure.input(checkInReplySchema).handler(({ context, input }) => replyToCheckIn(context, context.hospitalId, input)),
   /**
-   * "Book in" on a flagged reply: books the patient's clinic review for tomorrow 09:00 (Kuala Lumpur),
-   * closes the flag, and tells her Sona Care, whose Schedule and home then show it. Replaying it
-   * returns the same booking (the appointment is keyed by the task). `toAdd` lists her X-ray findings
-   * that still need a follow-up, so the doctor can put the test on the same trip.
+   * "Book in" on a flagged reply: books the patient's clinic review at `startsAt` (a slot the doctor
+   * picked, in the next 30 days; tomorrow 09:00 Kuala Lumpur by default) with `doctorId` when given,
+   * closes the flag, and tells her Sona Care, whose Schedule and home then show it. The appointment is
+   * keyed by the task: replaying returns the same booking, a new time moves it (and any test already
+   * put on the same trip moves with it). `toAdd` lists her X-ray findings that still need a follow-up,
+   * so the doctor can put the test on the same trip.
    */
-  bookIn: protectedProcedure.input(z.object({ taskId: z.string().min(1) })).handler(async ({ context, input }) => {
-    const { db, hospitalId } = context;
+  bookIn: protectedProcedure.input(z.object({ taskId: z.string().min(1), startsAt: z.coerce.date().optional(), doctorId: z.string().min(1).optional() })).handler(async ({ context, input }) => {
+    const { db, hospitalId } = context, now = clockOf(context);
     const [row] = await db.select({ task: tasks, patientId: encounters.patientId }).from(tasks).innerJoin(encounters, eq(encounters.id, tasks.encounterId))
       .where(and(eq(tasks.id, input.taskId), eq(tasks.hospitalId, hospitalId), eq(tasks.kind, "check-in")));
     if (!row) throw new ORPCError("NOT_FOUND", { message: "That flagged reply is no longer open" });
-    const startsAt = tomorrowNine(clockOf(context));
+    if (input.startsAt && (input.startsAt <= now || input.startsAt.getTime() > now.getTime() + 30 * 86_400_000))
+      throw new ORPCError("BAD_REQUEST", { message: "Choose a time in the next 30 days" });
+    const [doctor] = input.doctorId ? await db.select({ name: doctors.name }).from(doctors).where(and(eq(doctors.id, input.doctorId), eq(doctors.hospitalId, hospitalId))) : [];
+    if (input.doctorId && !doctor) throw new ORPCError("NOT_FOUND", { message: "No such doctor at this hospital" });
     const id = `book-in:${row.task.id}`;
-    const kind = `Clinic review · ${reasonOf(row.task.title)}`;
-    await db.insert(appointments).values({ id, patientId: row.patientId, hospitalId, startsAt, kind, bookedAt: clockOf(context) }).onConflictDoNothing();
+    const [before] = await db.select({ startsAt: appointments.startsAt, kind: appointments.kind }).from(appointments).where(eq(appointments.id, id));
+    const kind = doctor ? `Clinic review · ${reasonOf(row.task.title)} · ${shortName(doctor.name)}` : before?.kind ?? `Clinic review · ${reasonOf(row.task.title)}`;
+    const startsAt = input.startsAt ?? before?.startsAt ?? tomorrowNine(now);
+    await db.insert(appointments).values({ id, patientId: row.patientId, hospitalId, startsAt, kind, bookedAt: now })
+      .onConflictDoUpdate({ target: appointments.id, set: { startsAt, kind } });
+    // Moved: tests put on the same trip (their recalls at the old time) move with it.
+    if (before && before.startsAt.getTime() !== startsAt.getTime()) {
+      const riders = await db.update(appointments).set({ startsAt })
+        .where(and(eq(appointments.patientId, row.patientId), eq(appointments.hospitalId, hospitalId), eq(appointments.startsAt, before.startsAt), like(appointments.id, "recall:%")))
+        .returning({ id: appointments.id });
+      if (riders.length) await db.update(findings).set({ dueAt: startsAt }).where(inArray(findings.id, riders.map(r => r.id.replace(/^recall:/, ""))));
+    }
     await db.update(tasks).set({ completed: true }).where(eq(tasks.id, row.task.id));
     const [booked] = await db.select().from(appointments).where(eq(appointments.id, id));
     // The hospital hears "checkIns" from the middleware; her own app hears it here, by name.

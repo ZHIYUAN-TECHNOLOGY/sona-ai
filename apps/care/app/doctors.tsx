@@ -1,18 +1,21 @@
+import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
 import Animated, { Easing, FadeIn, FadeInDown, FadeOut, LinearTransition, useReducedMotion } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 import { takeLine } from "@/features/discharge/lines";
 import { useDischarge } from "@/features/discharge/row";
 import { DoctorAvatar } from "@/features/doctors/avatar";
-import { dayParts, listFor, nameLines, searchDoctors, slots, type Doctor, type Filter } from "@/features/doctors/data";
+import { dayParts, listFor, nameLines, searchDoctors, type Filter, type ListedDoctor } from "@/features/doctors/data";
+import { errorText } from "@/features/errors";
+import { useMe } from "@/features/me";
 import { dayLabel } from "@/features/follow-ups/lines";
 import { DOCK_SPACE } from "@/lib/dock";
 import { Text, TextInput } from "@/lib/text";
 import { palette, space, type } from "@/lib/theme";
 import { Card, CircleButton, field, ICON, pillStyle, Section, surfaceStyle, Title } from "@/lib/ui";
-import { now as clockNow } from "@/lib/clock";
+import { orpc } from "@/utils/orpc";
 
 const TABS: { id: Filter; label: string }[] = [
   { id: "all", label: "All" }, { id: "care-team", label: "Care team" }, { id: "top-rated", label: "Top rated" }, { id: "for-you", label: "For you" },
@@ -36,7 +39,9 @@ export default function Doctors() {
   const still = useReducedMotion();
   const { fontScale } = useWindowDimensions();
   const plan = useDischarge().data;
-  const [now] = useState(clockNow);
+  // The hospital's directory with each doctor's free slots (SYNTHETIC doctors in the demo).
+  const { state } = useMe();
+  const doctors = useQuery({ ...orpc.care.doctors.list.queryOptions(), enabled: state === "joined" });
   const [tab, setTab] = useState<Filter>("all");
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
@@ -44,7 +49,7 @@ export default function Doctors() {
   const [touched, setTouched] = useState(false);
   // "For you" reads the English leaflet (the doctors' tags are English words), e.g. "chest infection … breathing".
   const words = plan?.status === "discharged" ? plan.leaflets.find(l => l.language === "en")?.text ?? "" : "";
-  const list = searchDoctors(listFor(tab, words), searching ? query : "");
+  const list = searchDoctors(listFor(doctors.data ?? [], tab, words), searching ? query : "");
   const enter = (i: number) => still || touched ? undefined : rise(i);
 
   return <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
@@ -65,10 +70,12 @@ export default function Doctors() {
 
     <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 12 }}>
       {list.map((d, i) => <Animated.View key={d.id} entering={enter(2 + i)} style={{ width: fontScale > 1.3 ? "100%" : "48.2%" }}>
-        <DoctorCard doctor={d} now={now} />
+        <DoctorCard doctor={d} />
       </Animated.View>)}
     </View>
-    {!list.length && <Card>
+    {doctors.isLoading && <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} />}
+    {doctors.error && <Text selectable style={{ ...type.body, color: palette.red }}>{errorText(doctors.error)}</Text>}
+    {doctors.data && !list.length && <Card>
       <Text style={{ ...type.body, color: palette.muted }}>
         {searching && query.trim() ? `No doctor matches “${query.trim()}”.` : tab === "for-you" ? "Nothing in your plan to match yet. Your care team can suggest who to see." : "No doctors here."}
       </Text>
@@ -111,9 +118,9 @@ function Tabs({ tab, still, onPick }: { tab: Filter; still: boolean; onPick: (t:
 }
 
 /** A doctor in the grid (kit card): the initials avatar, the name on two lines, the specialty, then rating and next clinic in a white capsule. */
-function DoctorCard({ doctor: d, now }: { doctor: Doctor; now: Date }) {
+function DoctorCard({ doctor: d }: { doctor: ListedDoctor }) {
   const [first, rest] = nameLines(d.name);
-  const next = slots(d, now)[0];
+  const next = d.nextSlots[0];
   const day = next && dayParts(next.day);
   return <Pressable accessibilityRole="button" accessibilityHint="Opens the doctor's details and clinic times"
     accessibilityLabel={[d.name, d.specialty, `rated ${d.rating} of 5`, d.careTeam && "in your care team", day && `next clinic ${day.spoken}`].filter(Boolean).join(", ")}

@@ -7,7 +7,7 @@
 export type Change = { topic: string; encounterId?: string; patientId?: string };
 
 // Calls that only read; everything else behind a login is a write.
-const READS = new Set(["list", "get", "status", "beds", "ask", "read"]);
+const READS = new Set(["list", "get", "status", "beds", "ask", "read", "slots"]);
 
 export function changeFor(path: readonly string[], input: unknown): Change | undefined {
   const [topic, verb] = path;
