@@ -11,6 +11,7 @@ import { BlockerRow, useSettling, Pill, Ring } from "@/features/clinical/prescri
 import { Seal, haptic } from "@/features/clinical/medication-parts";
 import { capabilityLabels } from "@/features/encounter/conversation";
 import { useEncounter } from "@/features/encounter/store";
+import { LockedAction, useRole } from "@/features/live/roles";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { useServerEncounter } from "@/features/live/sync";
 import { CareInvite } from "@/features/care-invite";
@@ -154,9 +155,12 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
   const { live, refresh } = useServerEncounter(patient);
   const { user } = useLive();
   const [serverError, setServerError] = useState<string>();
+  const role = useRole();
 
   if (!encounter) return null;
   const set = (change: Partial<DischargeState>) => {
+    // A role that cannot change the plan is told why, and nothing changes on this phone either.
+    if (live && !role.can("discharge.update")) { haptic("select"); setServerError(role.why("discharge.update")); return; }
     updateEncounter(value => ({ ...value, discharge: { ...(value.discharge ?? EMPTY_DISCHARGE), ...change } }));
     if (live) void api.discharge.update({ encounterId: patient.encounterId, ...change }).catch(e => setServerError(errorText(e)));
   };
@@ -277,6 +281,7 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
           <Chip label="Done" onPress={() => router.back()} />
         </View>
       </Animated.View>
+        : live && !role.can("discharge.request") ? <LockedAction label="Needs a doctor's approval" path="discharge.request" />
         : <Pressable accessibilityRole="button" accessibilityState={{ disabled: blocked.length > 0 || busy }} disabled={blocked.length > 0 || busy} onPress={go}
           style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: blocked.length ? "rgba(20,28,40,0.08)" : palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 200 } as never)}>
           {!blocked.length && <Icon name={busy ? "hourglass" : "bed.double"} size={15} color={palette.white} />}

@@ -12,6 +12,7 @@ import { BlockerRow, useSettling, Ring } from "@/features/clinical/prescribe-car
 import { Seal, haptic } from "@/features/clinical/medication-parts";
 import { Chip } from "@/features/discharge";
 import { useEncounter } from "@/features/encounter/store";
+import { LockedAction, useRole } from "@/features/live/roles";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { useServerEncounter } from "@/features/live/sync";
 import type { PrescriptionCheck } from "@/features/encounter/types";
@@ -43,11 +44,14 @@ export function ClaimScreen() {
   const { live, refresh } = useServerEncounter(patient);
   const { user } = useLive();
   const [serverError, setServerError] = useState<string>();
+  const role = useRole();
 
   if (!patient || !encounter) return null;
   const set = (change: Partial<ClaimState>) => {
-    updateEncounter(value => ({ ...value, claim: { ...(value.claim ?? EMPTY_CLAIM), ...change } }));
     const { organismConfirmed, ivReasonAdded } = change;
+    // Only a doctor changes the claim; anyone else is told why and nothing changes here either.
+    if (live && (organismConfirmed !== undefined || ivReasonAdded !== undefined) && !role.can("claim.update")) { setServerError(role.why("claim.update")); return; }
+    updateEncounter(value => ({ ...value, claim: { ...(value.claim ?? EMPTY_CLAIM), ...change } }));
     if (live && (organismConfirmed !== undefined || ivReasonAdded !== undefined)) void api.claim.update({ encounterId: patient.encounterId, organismConfirmed, ivReasonAdded }).catch(e => setServerError(errorText(e)));
   };
   const note = noteFor(state);
@@ -166,6 +170,7 @@ export function ClaimScreen() {
         </View>
         <Chip label="Back to discharge" icon="chevron.left" onPress={() => router.back()} />
       </Animated.View>
+        : live && !sent && !role.can("claim.send") ? <LockedAction label="Needs a doctor to send" path="claim.send" />
         : <Pressable accessibilityRole="button" accessibilityState={{ disabled: blocked.length > 0 || sending || sent }} disabled={blocked.length > 0 || sending || sent} onPress={send}
           style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: blocked.length || sent ? "rgba(20,28,40,0.08)" : palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 200 } as never)}>
           {!blocked.length && <Icon name={sent ? "hourglass" : "paperplane"} size={15} color={sent ? palette.muted : palette.white} />}

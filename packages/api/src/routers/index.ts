@@ -7,6 +7,7 @@ import { clockOf } from "../context";
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
+import { accessLogRouter, clinicianRouter } from "./access-log";
 import { claimRouter } from "./claim";
 import { completeTask, createTask, dayRouter, patientsRouter, resultsRouter } from "./day"; // lane T, T2
 import { demoRouter } from "./demo";
@@ -42,6 +43,9 @@ export const appRouter = {
       user: context.session?.user,
     };
   }),
+  // Roles and the PDPA access trail: who is signed in as what, and who opened a patient's record.
+  clinician: clinicianRouter,
+  accessLog: accessLogRouter,
   encounter: encounterRouter,
   // The demo clock (synthetic demo hospital only): jump to day 2, day 7 or the review, and back.
   demo: demoRouter,

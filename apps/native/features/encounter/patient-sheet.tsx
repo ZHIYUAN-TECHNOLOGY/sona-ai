@@ -15,6 +15,7 @@ import { CareMessages } from "@/features/care-messages";
 import { CheckInThread } from "@/features/check-ins/thread";
 import { PENDING_RESULT, testInSentence } from "@/features/day/model";
 import { useServerData } from "@/features/live/server-day";
+import { AccessTrail } from "@/features/live/roles";
 import { useServerEncounter } from "@/features/live/sync";
 import { defaultMedications } from "./clinical-state";
 import { QuickActions } from "@/components/sona/quick-actions";
@@ -131,6 +132,9 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
               <Text style={{ ...type.footnote, color: palette.blue }}>Full history & sources</Text>
             </Pressable>
           </Animated.View>
+
+          {/* PDPA: who opened this record (doctors and management, live mode). */}
+          <AccessTrail patientId={patient.id} encounterId={patient.encounterId} entering={rise(4)} />
         </KeyboardAwareScrollView>
       </Animated.View>
     </GestureDetector>

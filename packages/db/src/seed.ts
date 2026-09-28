@@ -34,6 +34,13 @@ const WARD = WARD_FIXTURE.filter(b => b.name).map(b => {
 export const SEED_LAB_IDS = ["lab-1086-potassium", "lab-hb-1086", ...WARD.flatMap(w => w.labs.map(l => l.id))];
 /** The synthetic test doctor for local and staging end-to-end runs (never a real person or account). */
 export const TEST_DOCTOR = { name: "Dr Test Aisyah", email: "dr.test@sona.test", password: "Sona-7rcVayfxIuzr" };
+/**
+ * Synthetic test accounts for the other clinician roles (never real people). Sign up in the app with
+ * these; the first sign-in joins the demo hospital with the role in DEMO_CLINICIANS (demo.ts).
+ */
+export const TEST_NURSE = { name: "Nurse Test Mei Ling", email: "nurse.test@sona.test", password: "Sona-DqqMailMAYIgh" };
+export const TEST_BED_MANAGER = { name: "Test Bed Manager Hafiz", email: "beds.test@sona.test", password: "Sona-xcEhUim76L7g" };
+export const TEST_MANAGER = { name: "Test Manager Farah", email: "manager.test@sona.test", password: "Sona-A6lR268CDTts" };
 /** The synthetic test patient for Sona Care runs: signs up in the app and joins with the discharge code (never a real person). */
 export const TEST_PATIENT = { name: "Amelia Tan", email: "amelia.test@sona.test", password: "Care-MGnI1hY8BWoR" };
 // Any drizzle Postgres database: Neon in staging, PGlite in tests.

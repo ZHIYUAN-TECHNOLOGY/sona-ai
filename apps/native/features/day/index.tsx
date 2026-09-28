@@ -21,6 +21,8 @@ import { flaggedItems, flaggedTaskIds } from "@/features/check-ins/model";
 import { useCheckIns, useKeptFlags } from "@/features/check-ins/state";
 import { FlagActions } from "@/features/check-ins/thread";
 import { DemoTimeLine } from "@/features/live/demo-clock";
+import { useRole } from "@/features/live/roles";
+import { WardGlance } from "@/features/ward/ops";
 import { dayOf, groupVisits, rankDay, rankOtherDay, scheduleFor, type DayItem, type DayTone, type ScheduleVisit } from "./model";
 
 /*
@@ -218,6 +220,8 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const [offset, setOffset] = useState(0);
   // Live backend mode: the day's appointments, results and tasks come from the server (fixtures otherwise).
   const { on: live } = useLive();
+  const { role } = useRole();
+  const managing = live && role === "management";
   const server = useServerData();
   const tasksOf = useVisitTasks();
   const checkIns = useCheckIns();
@@ -280,10 +284,11 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
       </View>
       {calendar && <MonthCard offset={offset} counts={o => live ? serverDayCount(localDate(dayOf(o))) : scheduleFor(o, patients).length} onPick={o => { setCalendar(false); pick(o); }} onClose={() => setCalendar(false)} />}
     </View>
-    <TimeBar key={offset} schedule={schedule} now={offset === 0 ? now : undefined} onOpen={id => onOpen(id, {})} />
+    {/* Management's day leads with the ward and this week's numbers, not clinical tasks. */}
+    {managing ? <WardGlance /> : <TimeBar key={offset} schedule={schedule} now={offset === 0 ? now : undefined} onOpen={id => onOpen(id, {})} />}
     {/* A patient at home getting worse leads: their card (and its Call back / Book in) goes above the shortcuts. */}
-    {offset === 0 && top?.kind !== "check-in" && actions}
-    {sorting ? <Sorting /> : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
+    {offset === 0 && (managing || top?.kind !== "check-in") && actions}
+    {managing ? null : sorting ? <Sorting /> : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
       {top && <Animated.View key={`top-${run}`} layout={LAYOUT} entering={animate ? riseIn({ distance: 14, scale: 0.97, duration: 450 }) : undefined}>
         <Pressable accessibilityRole="button" accessibilityLabel={`Most urgent: ${top.title}. ${top.reason}`} accessibilityHint="Opens the visit" onPress={() => onOpen(top.patientId, top.open)}
           style={({ pressed }) => ({ transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>

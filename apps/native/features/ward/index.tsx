@@ -17,7 +17,7 @@ import { FollowUpList } from "@/features/findings";
 import { useFindings } from "@/features/live/findings-sync";
 import { useServerEncounter } from "@/features/live/sync";
 import { useServerBeds } from "@/features/live/ward-sync";
-import { OpsStrip } from "./ops";
+import { OpsStrip, WardTiles } from "./ops";
 import { DEMO_PATIENT, OWNERS, SUGGESTED, huddle, wardBeds, wardSummary, type Bed, type Owner } from "./model";
 
 /*
@@ -96,13 +96,7 @@ export function WardScreen() {
   return <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas }}>
     <Animated.View style={[{ flex: 1 }, gridStyle]} pointerEvents={open ? "none" : "auto"}>
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 32, gap: 16 }}>
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          {([[`${summary.beds}`, "beds"], [`${summary.fit}`, "fit to go"], [`${summary.blocked}`, "blocked"], [`~${summary.bedHours}`, "bed-hours"]] as const).map(([n, label], i) =>
-            <View key={label} style={{ flex: 1, paddingVertical: 10, borderRadius: 16, borderCurve: "continuous", alignItems: "center", backgroundColor: i === 2 && summary.blocked ? "rgba(196,120,20,0.1)" : "rgba(20,28,40,0.04)" }}>
-              <Text style={{ fontSize: 20, fontWeight: "700", color: i === 2 && summary.blocked ? palette.amber : palette.ink, fontVariant: ["tabular-nums"] }}>{n}</Text>
-              <Text style={{ ...type.caption, color: palette.muted }}>{label}</Text>
-            </View>)}
-        </View>
+        <WardTiles summary={summary} />
 
         <OpsStrip />
 

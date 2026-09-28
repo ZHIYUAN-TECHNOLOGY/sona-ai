@@ -12,6 +12,7 @@ import { useEncounter } from "@/features/encounter/store";
 import type { Patient, PrescriptionCheck, PrescriptionInputs } from "@/features/encounter/types";
 import { errorText, useLive } from "@/features/live";
 import { pushAndReview, simulateOnServer } from "@/features/live/prescribing-sync";
+import { LockedAction, useRole } from "@/features/live/roles";
 import { Seal, haptic } from "./medication-parts";
 
 /*
@@ -119,6 +120,7 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
   const resolving = useSettling(checks.filter(c => c.status === "blocked").map(c => c.id));
   const { on: live, user } = useLive();
   const [serverError, setServerError] = useState<string>();
+  const role = useRole();
 
   if (!encounter) return null;
   // Live: the server records the review and re-checks everything before it writes the receipt; otherwise the local fixture runs.
@@ -201,6 +203,7 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
         <Text style={{ ...type.caption, color: palette.muted }}>All {checks.length} checks passed · {new Date(prescription.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · immutable receipt, no dispensing</Text>
       </View>
     </Animated.View>
+      : live && !role.can("prescribing.simulate") ? <LockedAction label="Needs a doctor to prescribe" path="prescribing.simulate" />
       : <Pressable accessibilityRole="button" accessibilityState={{ disabled: blocked.length > 0 || working !== undefined }} disabled={blocked.length > 0 || working !== undefined}
         onPress={() => { haptic("select"); run("prescription"); }}
         style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: blocked.length ? "rgba(20,28,40,0.08)" : palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 200 } as never)}>

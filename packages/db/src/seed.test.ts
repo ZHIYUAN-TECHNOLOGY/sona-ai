@@ -1,8 +1,13 @@
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 import { admissions, appointments, casemixWeights, encounters, followUpRules, guaranteeLetters, insurerCriteria, labResults, observations, patients } from "./schema";
-import { DEMO_HOSPITAL, seedDemo } from "./seed";
+import { DEMO_CLINICIANS } from "./demo";
+import { DEMO_HOSPITAL, seedDemo, TEST_BED_MANAGER, TEST_DOCTOR, TEST_MANAGER, TEST_NURSE } from "./seed";
 import { createTestDb } from "./testing";
+
+test("each synthetic test clinician joins the demo hospital with its own role", () => {
+  expect([TEST_DOCTOR, TEST_NURSE, TEST_BED_MANAGER, TEST_MANAGER].map(a => DEMO_CLINICIANS[a.email])).toEqual(["doctor", "nurse", "bed-manager", "management"]);
+});
 
 test("the demo seed has the two visit patients and Amelia in bed 6 awaiting her final GL", async () => {
   const db = await createTestDb();
