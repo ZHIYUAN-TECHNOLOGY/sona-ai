@@ -21,7 +21,7 @@ import { now as clockNow } from "@/lib/clock";
  * The thread with the care team, after the AI Health Companion kit: back, "Care team" centred with the
  * reply time faint under it; the care team on the left in flat kit cards with their initials and the
  * time, the patient on the right in ink; a white day capsule per day. A sent message springs up from
- * the composer and is followed by what happens next ("Sent · usually replies within a few hours"); a
+ * the composer and is followed by its status ("Sent · 12:01", then "Seen by care team · 12:04"); a
  * warning sign in it adds what to do while waiting. Up to three likely replies sit over the composer as
  * chips and send in one tap. The emergency line never leaves the screen. Re-read every 15 s while open.
  */
@@ -60,7 +60,7 @@ export default function Messages() {
   };
 
   // While sending, the message shows under the ID the server will give it (see care.messages.send).
-  const sending = send.isPending && send.variables && me ? { id: `message:${me.patientId}:${send.variables.requestId}`, from: "patient" as const, text: send.variables.text, createdAt: send.variables.at } : undefined;
+  const sending = send.isPending && send.variables && me ? { id: `message:${me.patientId}:${send.variables.requestId}`, from: "patient" as const, text: send.variables.text, createdAt: send.variables.at, seenAt: null } : undefined;
   const thread: Message[] = data ? (sending && !data.some(m => m.id === sending.id) ? [...data, sending] : data) : [];
   const last = thread.at(-1);
   const wait = whileYouWait(thread, lang);
@@ -87,8 +87,9 @@ export default function Messages() {
           {withDays(thread, clockNow(), lang).map(item => "day" in item
             ? <Pill key={`day-${item.day}`} label={item.day} />
             : <Bubble key={item.message.id} m={item.message} sending={item.message.id === sending?.id} reduced={reduced} />)}
-          {last?.from === "patient" && <Animated.View key={`status-${last.id}`} entering={reduced ? FadeIn.duration(200) : rise(250)} style={{ alignSelf: "center" }}>
-            <Pill label={last.id === sending?.id ? t("msg.sending") : t("msg.sent", { reply: t("msg.replyTimeShort") })} />
+          {/* Sent, then "Seen by care team" once a nurse or doctor opens the thread (it fades in over the sent line). */}
+          {last?.from === "patient" && <Animated.View key={`status-${last.id}-${last.seenAt ? "seen" : "sent"}`} entering={reduced || last.seenAt ? FadeIn.duration(300) : rise(250)} style={{ alignSelf: "center" }}>
+            <Pill label={last.id === sending?.id ? t("msg.sending") : last.seenAt ? t("msg.seen", { time: clockOf(last.seenAt) }) : t("msg.sent", { time: clockOf(last.createdAt) })} />
           </Animated.View>}
           {wait && <Animated.View key={`wait-${last!.id}`} entering={reduced ? FadeIn.duration(200) : rise(400)} accessible accessibilityLabel={t("msg.waitA11y", { wait, call: t("msg.wait999") })}
             style={{ borderRadius: 24, borderCurve: "continuous", padding: 18, gap: 6, backgroundColor: palette.amberWash, borderWidth: 1, borderColor: palette.amberEdge }}>
