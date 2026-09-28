@@ -50,7 +50,7 @@ async function articlesFor(db: Context["db"], fetcher: typeof fetch, question: s
  * ponytail: the nearest passages come back with no relevance floor; add a reranker score floor when bge-reranker is on.
  */
 async function passagesFor(context: Context, hospitalId: string, question: string) {
-  const hits = context.library ? await context.library.search({ query: question, hospitalId, k: 3 }) : [];
+  const hits = context.library ? await context.library.search({ query: question, hospitalId, userId: context.session?.user.id, k: 3 }) : [];
   if (!hits.length) return [];
   const docs = await context.db.select({ id: documents.id, title: documents.title }).from(documents).where(inArray(documents.id, hits.map(h => h.documentId)));
   const title = new Map(docs.map(d => [d.id, d.title]));

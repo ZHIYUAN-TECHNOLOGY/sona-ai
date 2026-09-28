@@ -8,7 +8,7 @@ export const icdCodeSchema = z.object({ code: z.string().regex(/^[A-Z]\d{2}(\.\d
 export type IcdCode = z.infer<typeof icdCodeSchema>;
 
 /** Retrieval is always scoped to the caller's hospital (row-level security enforces it underneath). */
-export const searchInputSchema = z.object({ query: z.string().trim().min(1).max(500), hospitalId: z.string().min(1), k: z.number().int().min(1).max(20).default(5) });
+export const searchInputSchema = z.object({ query: z.string().trim().min(1).max(500), hospitalId: z.string().min(1), userId: z.string().min(1).optional(), k: z.number().int().min(1).max(20).default(5) });
 export type SearchInput = z.infer<typeof searchInputSchema>;
 
 /** A consequential action (discharge, sending a claim): replay-safe by requestId, and never without an approver. */
