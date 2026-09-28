@@ -2,7 +2,9 @@ import type { ReactNode } from "react";
 import { View } from "react-native";
 import { AnswerDeck, Takeaways, type Takeaway } from "@/components/sona/answer-kit";
 import { MarkedText } from "@/components/sona/marked-text";
+import { Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { SourceScope, SourcesPill } from "@/components/sona/sources";
+import { useLiveBriefing } from "@/features/live/model-sync";
 import { Action, Notice, SourceLink, Surface } from "@/components/sona/ui";
 import { IconRow } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
@@ -35,9 +37,18 @@ export function BriefingCard({ patient, result, onSource, onOpen, onRequest }: F
     : [{ tone: "caution", text: `Temperature ${patient.vitals.find(v => v.label === "Temp")?.value ?? ""} is the only raised vital` }, { tone: "good", text: "Long history of asthma, no admissions on record" }, { tone: "caution", text: `${patient.allergies?.split(" — ")[0] ?? "Allergy"} allergy still needs confirming` }];
   // Each page gathers its sources into one pill at the bottom instead of links under every row.
   const card = (children: ReactNode) => <SourceScope>{sources => <Surface style={{ padding: 16, gap: 14 }}>{children}{sources.length > 0 && <View style={{ alignItems: "flex-end" }}><SourcesPill sources={sources} /></View>}</Surface>}</SourceScope>;
+  // Live mode: the digest is the server's briefing of this patient's record (allergy and gaps stay amber); authored otherwise.
+  const server = useLiveBriefing(patient.encounterId);
+  const digest: Takeaway[] = server.data ? server.data.lines.map(text => ({ tone: /allerg|incomplete|missing/i.test(text) ? "caution" : "info", text })) : takeaways;
   // Digest first, then the detail as swipeable pages (briefing is a glance before the visit).
   return <View style={{ gap: 20 }}>
-    <Takeaways items={takeaways} />
+    {server.loading ? <Surface feature style={{ padding: 16 }}><Drafting label="Reading the record…" /></Surface> : <View style={{ gap: 6 }}>
+      <Takeaways items={digest} />
+      <View style={{ paddingHorizontal: 4 }}>
+        <SampleLabel source={server.data?.source} />
+        {server.error && <Text style={{ ...type.caption, color: palette.red }}>{server.error} · showing the authored briefing</Text>}
+      </View>
+    </View>}
     {sections >= 2 && <AnswerDeck pages={[
       { title: "Vitals", content: patient.incomplete ? card(<Notice warning>Not recorded yet. Missing information is not a negative finding.</Notice>) : <VitalsCard vitals={patient.vitals} allergy={patient.allergies} onSource={() => onSource("vitals")} /> },
       { title: "Timeline", content: card(<>

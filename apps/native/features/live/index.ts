@@ -7,7 +7,8 @@ import { client } from "@/utils/orpc";
  * "Live backend" mode: discharge, guarantee letter, ward owners, coding audit, tasks, results, My Day,
  * prescribing checks, the consultation note, handover, X-ray upload and incidental findings read and write the server
  * (EXPO_PUBLIC_SERVER_URL) instead of the in-memory fixtures. Off by default; switched on in Settings
- * with a signed-in doctor. Answers that need a model (briefing, reasoning, evidence) stay authored.
+ * with a signed-in doctor. Answers that need a model (briefing, reasoning, discharge draft, claim codes,
+ * huddle brief, evidence) come from the server's model routes (./model-sync), labelled while they are samples.
  */
 // Remembered across reloads, so a reload mid-flow comes back to the server's state, not the fixtures.
 const KEY = "sona.liveBackend";
