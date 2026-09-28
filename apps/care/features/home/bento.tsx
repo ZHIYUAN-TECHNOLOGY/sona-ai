@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, View, type ViewStyle } from "react-native";
 import Animated from "react-native-reanimated";
 import Svg, { Circle, Path } from "react-native-svg";
@@ -69,6 +69,15 @@ export function MedicinesTile({ index, still }: { index: number; still: boolean 
   const out = plan?.status === "discharged" ? plan.dischargedAt : undefined;
   const today = dosesToday(meds, out, taken, now), done = today.filter(d => d.taken).length;
   const hold = dose && !early(dose.dueAt, now);
+  // The dose just taken keeps its (now done) button a moment: the finger is still down, and a button
+  // that vanished under it would hand the release to whatever tile slid beneath.
+  const [justTook, setJustTook] = useState<{ key: string; name: string }>();
+  useEffect(() => {
+    if (!justTook) return;
+    const id = setTimeout(() => setJustTook(undefined), 1500);
+    return () => clearTimeout(id);
+  }, [justTook]);
+  const shown = justTook ?? (hold ? dose : undefined);
   const when = dose && !hold ? nextCapsule(dose.dueAt, now, lang) : undefined;
   const count = t("home.countOf", { done, n: today.length });
   const summary = today.length ? t("home.dosesTaken", { count }) : out ? t("home.nothingDue") : t("home.onceHome");
@@ -76,7 +85,8 @@ export function MedicinesTile({ index, still }: { index: number; still: boolean 
   const [before = "", after = ""] = t("home.dosesTaken").split("{count}");
   return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={t("home.medsA11y", { summary, extra: hold ? t("home.isDue", { name: dose.name }) : when ? ` ${when}.` : "" })}
     onPress={() => router.push(out ? "/dose" : "/discharge")}
-    footer={hold && <HoldButton key={dose.key} compact label={t("home.holdName", { name: dose.name })} doneLabel={t("dose.taken", { name: dose.name })} onDone={() => markTaken(dose.key)} />}>
+    footer={shown && <HoldButton key={shown.key} compact label={t("home.holdName", { name: shown.name })} doneLabel={t("dose.taken", { name: shown.name })}
+      onDone={() => { setJustTook({ key: shown.key, name: shown.name }); markTaken(shown.key); }} />}>
     <Kicker>{t("home.meds")}</Kicker>
     {today.length > 0 && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
       {today.map(d => <View key={d.key} style={{ width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: d.taken ? palette.success : "rgba(255,255,255,0.7)", borderWidth: d.taken ? 0 : 1.5, borderColor: "rgba(31,31,31,0.12)", borderStyle: "dashed" }}>

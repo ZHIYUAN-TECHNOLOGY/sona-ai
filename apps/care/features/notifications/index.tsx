@@ -56,7 +56,11 @@ export function PushSetup() {
       const to = routeOf(response?.notification.request.content.data?.url);
       if (to) router.push(to);
     };
-    open(Notifications.getLastNotificationResponse());
+    // Only a tap that just launched the app: Expo Go (and iOS) can hand back a stale response on later
+    // launches, which would reopen that screen every time.
+    const last = Notifications.getLastNotificationResponse();
+    const at = last && (last.notification.date < 1e12 ? last.notification.date * 1000 : last.notification.date); // seconds on some iOS builds
+    if (last && at && Date.now() - at < 60_000) open(last);
     Notifications.clearLastNotificationResponse();
     const sub = Notifications.addNotificationResponseReceivedListener(open);
     return () => sub.remove();
