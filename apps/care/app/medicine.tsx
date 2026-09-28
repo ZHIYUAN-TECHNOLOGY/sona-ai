@@ -3,10 +3,12 @@ import { useState, type ReactNode } from "react";
 import { ActivityIndicator, View } from "react-native";
 import Animated, { FadeInDown, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CHANGE, takeSentence, type Group } from "@/features/discharge/lines";
+import { changeOf, takeSentence, type Group } from "@/features/discharge/lines";
 import { Tag, useDischarge } from "@/features/discharge/row";
 import { markTaken, Pill, useNextDose, useNow } from "@/features/doses";
 import { dueNow } from "@/features/doses/model";
+import "@/features/doses/strings";
+import { tFor, useLang } from "@/lib/i18n";
 import { Text } from "@/lib/text";
 import { motion, palette, type } from "@/lib/theme";
 import { AccentText, Button, HoldButton } from "@/lib/ui";
@@ -24,6 +26,7 @@ export default function Medicine() {
   const { name } = useLocalSearchParams<{ name: string }>();
   const { data, isLoading } = useDischarge();
   const now = useNow();
+  const lang = useLang(), t = tFor(lang);
   const { dose } = useNextDose(now);
   const [took, setTook] = useState<string>();
   const insets = useSafeAreaInsets();
@@ -32,7 +35,7 @@ export default function Medicine() {
   const group = plan && GROUPS.find(g => plan.medicines[g].some(m => m.name === name));
   const med = group && plan.medicines[group].find(m => m.name === name);
   const due = dose && dose.name === name && dueNow(dose.dueAt, now) ? dose : undefined;
-  const close = <View style={{ alignSelf: "stretch", marginTop: 6 }}><Button label="Close" onPress={() => router.back()} /></View>;
+  const close = <View style={{ alignSelf: "stretch", marginTop: 6 }}><Button label={t("common.close")}onPress={() => router.back()} /></View>;
   const pad = { padding: 24, paddingTop: 28, paddingBottom: Math.max(insets.bottom, 16) + 8, gap: 14 } as const;
   const rows = (items: ReactNode[]) => <View style={pad}>
     {/* Keyed by position (empty slots kept), so the hold appearing doesn't remount and replay Close. */}
@@ -42,7 +45,7 @@ export default function Medicine() {
 
   if (!med) return rows([
     isLoading ? <ActivityIndicator color={palette.muted} />
-      : <Text accessibilityRole="header" style={{ ...type.body, color: palette.muted, textAlign: "center" }}>{name ? `${name} isn't in your plan.` : "This medicine isn't in your plan."} Ask your care team if you're unsure.</Text>,
+      : <Text accessibilityRole="header" style={{ ...type.body, color: palette.muted, textAlign: "center" }}>{name ? t("dose.notInPlan", { name }) : t("dose.thisNotInPlan")} {t("dose.askIfUnsure")}</Text>,
     close,
   ]);
 
@@ -55,11 +58,11 @@ export default function Medicine() {
     </View>,
     <View style={{ alignSelf: "stretch", height: 1, backgroundColor: palette.line }} />,
     <Text style={{ fontSize: 20, lineHeight: 28, letterSpacing: -0.5, color: palette.faint, textAlign: "center" }}>
-      {takeSentence(med).map((r, i) => <Text key={i} style={r.bold ? { fontWeight: "600", color: palette.ink } : undefined}>{r.text}</Text>)}
+      {takeSentence(med, lang).map((r, i) => <Text key={i} style={r.bold ? { fontWeight: "600", color: palette.ink } : undefined}>{r.text}</Text>)}
     </Text>,
-    <Tag group={group} label={CHANGE[group]} />,
+    <Tag group={group} label={changeOf(group, lang)} />,
     (due || took) && <View style={{ alignSelf: "stretch", marginTop: 6 }}>
-      <HoldButton key={due?.key ?? took} done={!!took} label="Hold to mark as taken" doneLabel={`${med.name} taken`}
+      <HoldButton key={due?.key ?? took} done={!!took} label={t("dose.hold")} doneLabel={t("dose.taken", { name: med.name })}
         onDone={() => { if (!due) return; markTaken(due.key); setTook(due.key); }} />
     </View>,
     close,

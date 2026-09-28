@@ -8,7 +8,9 @@ import Animated, { Easing, useAnimatedStyle, useReducedMotion, withDelay, withSp
 import Svg, { Circle, Path } from "react-native-svg";
 import { motion, palette, type } from "@/lib/theme";
 import { Button, Chip, field } from "@/lib/ui";
+import { useT } from "@/lib/i18n";
 import { answersFor, replyText, type Feeling } from "./model";
+import "./strings";
 
 /** Each feeling's soft tint (after Moods' pills). Tints only: the meaning stays in the words. */
 export const TINT: Record<Feeling, { fill: string; face: string; glow: string; line: string }> = {
@@ -45,7 +47,8 @@ function Face({ index, label, feeling, chosen, dim, disabled, onPress }: { index
         <Circle cx={12} cy={12} r={10} /><Path d={MOUTHS[index]!} /><Path d="M9 9.5h.01M15 9.5h.01" strokeWidth={2.6} />
       </Svg>
     </Animated.View>
-    <Text numberOfLines={2} maxFontSizeMultiplier={1.4} style={{ fontSize: 13, lineHeight: 17, fontWeight: chosen ? "700" : "500", color: chosen ? palette.ink : palette.muted, textAlign: "center" }}>{label}</Text>
+    {/* Three lines: "Jauh lebih teruk" needs them under a 57 pt face. */}
+    <Text numberOfLines={3} maxFontSizeMultiplier={1.4} style={{ fontSize: 13, lineHeight: 17, fontWeight: chosen ? "700" : "500", color: chosen ? palette.ink : palette.muted, textAlign: "center" }}>{label}</Text>
   </Pressable>;
 }
 
@@ -77,6 +80,7 @@ export function Answer({ language, feeling, onChoose, busy, onSend }: { language
 /** The chosen face's follow-up, opened in place in its tint: a line, then quick replies or their own words, or the review for worse. */
 function FollowUp({ language, text, feeling: f, busy, onSend }: { language: Language; text: string; feeling: Feeling; busy: boolean; onSend: (text: string, about?: string) => void }) {
   const still = useReducedMotion();
+  const t = useT();
   const [review, setReview] = useState<string>();
   const [writing, setWriting] = useState(false);
   const [words, setWords] = useState("");
@@ -107,9 +111,9 @@ function FollowUp({ language, text, feeling: f, busy, onSend }: { language: Lang
       <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8 }}>
         <TextInput value={words} onChangeText={setWords} placeholder={copy.placeholder} placeholderTextColor={palette.muted} multiline autoFocus maxLength={900}
           accessibilityLabel={copy.more} style={{ ...field, flex: 1, backgroundColor: palette.white, minHeight: 96, paddingTop: 12, textAlignVertical: "top" }} />
-        <MicButton listen={listen} label="Say it instead" />
+        <MicButton listen={listen} label={t("ci.sayIt")} />
       </View>
-      {listen.state === "listening" ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>Listening… say it your way</Text>
+      {listen.state === "listening" ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{t("ci.listening")}</Text>
         : listen.error ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber }}>{listen.error}</Text> : null}
       <Button label={copy.send} busy={busy} disabled={!words.trim()} onPress={() => onSend(replyText(text, words))} />
     </Animated.View>

@@ -8,12 +8,14 @@ import Animated, { Easing, FadeIn, FadeInDown, FadeOut, SlideInDown, SlideOutDow
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { errorText } from "@/features/errors";
+import { formatDate, tFor, useLang } from "@/lib/i18n";
 import { Text, TextInput } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
 import { AccentText, Button, field } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 import { DoctorAvatar } from "./avatar";
 import { dayParts, type Doctor, type Slot } from "./data";
+import "./strings";
 
 /**
  * Review before sending (the kit's white sheet: 40 pt corners, a grabber, a centred light-then-gradient
@@ -30,6 +32,7 @@ import { dayParts, type Doctor, type Slot } from "./data";
  */
 export function BookingSheet({ doctor, slot, onClose }: { doctor: Doctor; slot: Slot; onClose: () => void }) {
   const still = useReducedMotion();
+  const lang = useLang(), t = tFor(lang);
   const insets = useSafeAreaInsets();
   const [reason, setReason] = useState("");
   const send = useMutation({
@@ -38,16 +41,16 @@ export function BookingSheet({ doctor, slot, onClose }: { doctor: Doctor; slot: 
       void queryClient.invalidateQueries({ queryKey: orpc.care.bookings.key() });
       void queryClient.invalidateQueries({ queryKey: orpc.care.doctors.key() });
       if (process.env.EXPO_OS === "ios") void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      AccessibilityInfo.announceForAccessibility("Request sent. Your care team will confirm the time.");
+      AccessibilityInfo.announceForAccessibility(t("book.sentA11y"));
     },
   });
   const go = () => send.mutate();
-  const day = dayParts(slot.date);
+  const day = dayParts(slot.date, lang), when = formatDate(lang, slot.date, "dayTime");
   const done = send.isSuccess;
 
   return <KeyboardAvoidingView behavior="padding" style={{ position: "absolute", inset: 0, justifyContent: "flex-end" }}>
     <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(160)} style={{ position: "absolute", inset: 0, backgroundColor: "rgba(14,18,27,0.28)" }}>
-      <Pressable accessibilityLabel="Close" style={{ flex: 1 }} disabled={send.isPending} onPress={onClose} />
+      <Pressable accessibilityLabel={t("common.close")}style={{ flex: 1 }} disabled={send.isPending} onPress={onClose} />
     </Animated.View>
     <Animated.View accessibilityViewIsModal entering={still ? FadeIn.duration(180) : SlideInDown.springify().duration(380).dampingRatio(1)} exiting={still ? FadeOut.duration(160) : SlideOutDown.duration(220)}
       style={{ margin: 8, marginBottom: Math.max(insets.bottom, 8), borderRadius: 40, borderCurve: "continuous", backgroundColor: palette.white, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20, gap: 14 }}>
@@ -57,43 +60,43 @@ export function BookingSheet({ doctor, slot, onClose }: { doctor: Doctor; slot: 
           <DrawnCheck still={still} />
         </Animated.View>
         <Animated.View entering={still ? undefined : after(0)} accessible accessibilityRole="header" style={{ alignItems: "center", gap: 4 }}>
-          <Text style={{ fontSize: 24, lineHeight: 30, fontWeight: "600", letterSpacing: -1, color: palette.ink }}>Request sent</Text>
-          <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>Your care team will confirm the time. Until then it shows on your Schedule as requested.</Text>
+          <Text style={{ fontSize: 24, lineHeight: 30, fontWeight: "600", letterSpacing: -1, color: palette.ink, textAlign: "center" }}>{t("book.sent")}</Text>
+          <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>{t("book.sentLine")}</Text>
         </Animated.View>
-        <Animated.View entering={still ? undefined : after(1)} accessible accessibilityLabel={`Requested: ${doctor.name}, ${day.spoken} at ${slot.label}`}
+        <Animated.View entering={still ? undefined : after(1)} accessible accessibilityLabel={t("book.requestedA11y", { name: doctor.name, day: day.spoken, time: slot.label })}
           style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 24, borderCurve: "continuous", backgroundColor: palette.card, borderWidth: 1, borderColor: palette.line }}>
           <DoctorAvatar doctor={doctor} size={40} />
           <View style={{ flex: 1, gap: 1 }}>
             <Text style={{ ...type.headline, color: palette.ink }}>{doctor.name}</Text>
-            <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{day.weekday} {day.date} · {slot.label} · requested</Text>
+            <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{when} · {t("book.requested")}</Text>
           </View>
         </Animated.View>
         <Animated.View entering={still ? undefined : after(2)} style={{ gap: 8 }}>
-          <Button label="See my schedule" onPress={() => router.replace("/follow-ups")} />
-          <Button quiet label="Back to doctors" onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/doctors"); }} />
+          <Button label={t("book.schedule")} onPress={() => router.replace("/follow-ups")} />
+          <Button quiet label={t("book.back")} onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/doctors"); }} />
         </Animated.View>
       </> : <>
-        <View accessible accessibilityRole="header" accessibilityLabel="Request this visit" style={{ alignItems: "center" }}>
-          <Text style={{ fontSize: 20, lineHeight: 26, letterSpacing: -0.6, color: palette.faint }}>Request</Text>
-          <AccentText style={{ fontSize: 28, lineHeight: 34, fontWeight: "600", letterSpacing: -1.9, color: palette.ink, textAlign: "center" }}>this visit</AccentText>
+        <View accessible accessibilityRole="header" accessibilityLabel={t("book.titleA11y")} style={{ alignItems: "center" }}>
+          <Text style={{ fontSize: 20, lineHeight: 26, letterSpacing: -0.6, color: palette.faint }}>{t("book.light")}</Text>
+          <AccentText style={{ fontSize: 28, lineHeight: 34, fontWeight: "600", letterSpacing: -1.9, color: palette.ink, textAlign: "center" }}>{t("book.bold")}</AccentText>
         </View>
-        <View accessible accessibilityLabel={`${doctor.name}, ${doctor.specialty}. ${day.spoken} at ${slot.label}. ${doctor.room}`}
+        <View accessible accessibilityLabel={t("book.cardA11y", { name: doctor.name, specialty: doctor.specialty, day: day.spoken, time: slot.label, room: doctor.room })}
           style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 24, borderCurve: "continuous", backgroundColor: palette.card, borderWidth: 1, borderColor: palette.line }}>
           <DoctorAvatar doctor={doctor} size={48} />
           <View style={{ flex: 1, gap: 1 }}>
             <Text style={{ ...type.headline, color: palette.ink }}>{doctor.name}</Text>
-            <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{day.weekday} {day.date} · {slot.label}</Text>
+            <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{when}</Text>
             <Text style={{ ...type.footnote, color: palette.muted }}>{doctor.room}</Text>
           </View>
         </View>
-        <TextInput value={reason} onChangeText={setReason} placeholder="Reason (optional), e.g. still coughing" placeholderTextColor={palette.muted} maxLength={200}
-          editable={!send.isPending} returnKeyType="done" accessibilityLabel="Reason for the visit, optional" style={field} />
-        <Text style={{ ...type.footnote, color: palette.muted }}>This asks your care team for this time. It is booked once they confirm; you will see it on your Schedule.</Text>
-        {send.error && <Text selectable accessibilityLiveRegion="polite" style={{ ...type.footnote, fontWeight: "600", color: palette.red }}>{errorText(send.error)} Your request wasn't sent.</Text>}
+        <TextInput value={reason} onChangeText={setReason} placeholder={t("book.reason")} placeholderTextColor={palette.muted} maxLength={200}
+          editable={!send.isPending} returnKeyType="done" accessibilityLabel={t("book.reasonLabel")} style={field} />
+        <Text style={{ ...type.footnote, color: palette.muted }}>{t("book.line")}</Text>
+        {send.error && <Text selectable accessibilityLiveRegion="polite" style={{ ...type.footnote, fontWeight: "600", color: palette.red }}>{errorText(send.error, lang)} {t("book.notSent")}</Text>}
         {/* Someone took the time meanwhile: retrying cannot help, so the next step is another time. */}
-        {(send.error as { code?: string } | null)?.code === "CONFLICT" ? <Button label="Choose another time" onPress={onClose} />
-          : <Button label={send.error ? "Try again" : "Send request"} busy={send.isPending} onPress={go} />}
-        <Button quiet label="Cancel" disabled={send.isPending} onPress={onClose} />
+        {(send.error as { code?: string } | null)?.code === "CONFLICT" ? <Button label={t("book.otherTime")} onPress={onClose} />
+          : <Button label={send.error ? t("book.retry") : t("book.send")} busy={send.isPending} onPress={go} />}
+        <Button quiet label={t("common.cancel")} disabled={send.isPending} onPress={onClose} />
       </>}
     </Animated.View>
   </KeyboardAvoidingView>;

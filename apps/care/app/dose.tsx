@@ -6,12 +6,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { scheduleLine } from "@/features/discharge/lines";
 import { markTaken, Pill, rise, snooze, useNextDose, useNow, useSnooze } from "@/features/doses";
-import { clock, dosesToday, early, untilLine, weekOf, whenWords, type DayDose, type Dose, type ScheduledMed } from "@/features/doses/model";
+import { clock, dosesToday, early, isLate, untilLine, weekOf, whenWords, type DayDose, type Dose, type ScheduledMed } from "@/features/doses/model";
 import { foodOf, insight, weekStrip } from "@/features/doses/strip";
+import "@/features/doses/strings";
 import { useMe } from "@/features/me";
-import { REPLY_TIME } from "@/features/messages/model";
+import "@/features/messages/strings";
 import { DOCK_SPACE } from "@/lib/dock";
 import { Sunbeam } from "@/lib/halftone";
+import { tFor, useLang } from "@/lib/i18n";
 import { Text } from "@/lib/text";
 import { motion, palette, space, type } from "@/lib/theme";
 import { Button, Card, CircleButton, HoldButton, ICON, pillStyle, Section, surfaceStyle, Title } from "@/lib/ui";
@@ -32,6 +34,7 @@ let shown = false;
  */
 export default function DoseScreen() {
   const now = useNow();
+  const lang = useLang(), t = tFor(lang);
   const { plan, dose, taken = [], meds } = useNextDose(now);
   const reduced = useReducedMotion();
   const { fontScale } = useWindowDimensions();
@@ -41,18 +44,18 @@ export default function DoseScreen() {
   const [took, setTook] = useState<{ dose: Dose; at: Date }>();
   const out = plan?.status === "discharged" ? plan.dischargedAt : undefined;
   const today = dosesToday(meds, out, taken, now);
-  const line = out ? insight(today, now) : undefined;
+  const line = out ? insight(today, now, lang) : undefined;
 
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     <Animated.View entering={enter(0)} style={{ gap: 14 }}>
-      <Title greeting="Today's" accent="Medicines" line={line?.text} lineTone={line?.tone} />
-      {out && meds.some(m => m.at?.length) && <Week days={weekStrip(weekOf(meds, out, taken, now), now)} />}
+      <Title greeting={t("dose.titleLight")} accent={t("dose.titleBold")} line={line?.text} lineTone={line?.tone} />
+      {out && meds.some(m => m.at?.length) && <Week days={weekStrip(weekOf(meds, out, taken, now), now, lang)} />}
     </Animated.View>
 
     {!plan ? <ActivityIndicator color={palette.muted} />
       : !out ? <Card>
-        <Text style={{ ...type.headline, color: palette.ink }}>Once you go home</Text>
-        <Text style={{ ...type.body, color: palette.muted }}>Your medicines show here once you're discharged.</Text>
+        <Text style={{ ...type.headline, color: palette.ink }}>{t("dose.notHomeTitle")}</Text>
+        <Text style={{ ...type.body, color: palette.muted }}>{t("dose.notHomeLine")}</Text>
       </Card>
       : <>
         <Animated.View entering={enter(1)}>
@@ -60,7 +63,7 @@ export default function DoseScreen() {
         </Animated.View>
 
         <Animated.View entering={enter(2)} style={{ gap: 12 }}>
-          <Section light="Your" bold="medicines" action={<FullPlan />} />
+          <Section light={t("dose.yourLight")} bold={t("dose.yourBold")} action={<FullPlan />} />
           <CareTeam />
         </Animated.View>
 
@@ -70,17 +73,18 @@ export default function DoseScreen() {
             <MedCard med={m} today={today.filter(d => d.name === m.name)} pop={took?.dose.name === m.name} />
           </Animated.View>)}
         </View>
-        {!meds.length && <Text style={{ ...type.body, color: palette.muted }}>Nothing to take at home.</Text>}
+        {!meds.length && <Text style={{ ...type.body, color: palette.muted }}>{t("dose.nothingAtHome")}</Text>}
 
-        <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>Missed one? Don't take two at once. Take the next one at its usual time.</Text>
+        <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("dose.missedTip")}</Text>
       </>}
   </ScrollView>;
 }
 
 /** The week as seven small dots under the insight: green all taken, amber one missed, today ringed in blue. Read out as one line. */
 function Week({ days }: { days: ReturnType<typeof weekStrip> }) {
-  const said = days.filter(d => d.mark || d.today).map(d => `${d.today ? "Today" : `${d.weekday} ${d.date}`}${d.mark === "green" ? ", all taken" : d.mark === "amber" ? ", a dose missed" : ""}`).join("; ");
-  return <View accessible accessibilityLabel={`This week. ${said}`} style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 4 }}>
+  const t = tFor(useLang());
+  const said = days.filter(d => d.mark || d.today).map(d => `${d.today ? t("dose.weekToday") : `${d.weekday} ${d.date}`}${d.mark === "green" ? t("dose.weekAll") : d.mark === "amber" ? t("dose.weekMissed") : ""}`).join("; ");
+  return <View accessible accessibilityLabel={t("dose.week", { days: said })} style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 4 }}>
     {days.map(d => <View key={d.key} style={{ alignItems: "center", gap: 6, minWidth: 32 }}>
       <Text maxFontSizeMultiplier={1.3} style={{ fontSize: 12, lineHeight: 16, fontWeight: d.today ? "700" : "500", color: d.today ? palette.blue : palette.faint }}>{d.weekday.slice(0, 2)}</Text>
       <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: d.mark === "green" ? palette.success : d.mark === "amber" ? palette.warning : palette.line,
@@ -92,7 +96,7 @@ function Week({ days }: { days: ReturnType<typeof weekStrip> }) {
 /** A white capsule for a value (the dose time), amber when the dose is late. */
 function Capsule({ children, tone }: { children: string; tone?: "amber" }) {
   return <View style={[pillStyle, { alignSelf: "center", paddingHorizontal: 14, paddingVertical: 6 }, tone && { backgroundColor: palette.amberWash, borderColor: palette.amberEdge }]}>
-    <Text style={{ fontSize: 15, lineHeight: 20, fontWeight: "600", color: tone ? palette.amber : palette.ink, fontVariant: ["tabular-nums"] }}>{children}</Text>
+    <Text style={{ fontSize: 15, lineHeight: 20, fontWeight: "600", color: tone ? palette.amber : palette.ink, fontVariant: ["tabular-nums"], textAlign: "center" }}>{children}</Text>
   </View>;
 }
 
@@ -105,6 +109,7 @@ const centred = { ...type.body, color: palette.muted, textAlign: "center" } as c
  * Early: what is next and from when it can be marked. Nothing on a timer: says so.
  */
 function NextCard({ dose, now, took, onTook }: { dose?: Dose; now: Date; took?: { dose: Dose; at: Date }; onTook: (d: Dose) => void }) {
+  const lang = useLang(), t = tFor(lang);
   const snoozed = useSnooze();
   const [asking, setAsking] = useState(false);
   const due = dose && !early(dose.dueAt, now) ? dose : undefined;
@@ -113,49 +118,49 @@ function NextCard({ dose, now, took, onTook }: { dose?: Dose; now: Date; took?: 
   const logged = took && !due ? took : undefined;
 
   if (due && !resting) {
-    const late = untilLine(due.dueAt, now).endsWith("late") ? untilLine(due.dueAt, now) : undefined;
+    const late = isLate(due.dueAt, now) ? untilLine(due.dueAt, now, lang) : undefined;
     const food = foodOf(due.line);
     return <Card feature style={{ alignItems: "center", gap: 12 }}>
-      <View accessible accessibilityLabel={`Time to take ${due.name}, ${clock(due.dueAt)}${late ? `, ${late}` : ""}. ${due.line}`} style={{ alignItems: "center", gap: 10, alignSelf: "stretch" }}>
-        <Text style={{ ...type.footnote, fontWeight: "500", color: palette.faint }}>Time to take</Text>
-        <Capsule tone={late ? "amber" : undefined}>{late ? `${clock(due.dueAt)} · ${late}` : clock(due.dueAt)}</Capsule>
+      <View accessible accessibilityLabel={t("dose.timeToTakeA11y", { name: due.name, time: clock(due.dueAt, lang), late: late ? `, ${late}` : "", line: due.line })} style={{ alignItems: "center", gap: 10, alignSelf: "stretch" }}>
+        <Text style={{ ...type.footnote, fontWeight: "500", color: palette.faint }}>{t("dose.timeToTake")}</Text>
+        <Capsule tone={late ? "amber" : undefined}>{late ? `${clock(due.dueAt, lang)} · ${late}` : clock(due.dueAt, lang)}</Capsule>
         <Pill name={due.name} size={132} />
         <Text style={nameStyle}>{due.name}</Text>
         <Text style={centred}>{sentenceCase(due.line)}</Text>
         {food && <Food when={food} />}
       </View>
       <View style={{ alignSelf: "stretch", marginTop: 4 }}>
-        <HoldButton key={due.key} label="Hold to mark as taken" doneLabel={`${due.name} taken`} onDone={() => { markTaken(due.key); onTook(due); }} />
+        <HoldButton key={due.key} label={t("dose.hold")} doneLabel={t("dose.taken", { name: due.name })} onDone={() => { markTaken(due.key); onTook(due); }} />
       </View>
-      <Pressable accessibilityRole="button" accessibilityHint="Shows this again in 15 minutes" onPress={() => setAsking(true)}
+      <Pressable accessibilityRole="button" accessibilityHint={t("dose.laterHint")} onPress={() => setAsking(true)}
         style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 16, justifyContent: "center", opacity: pressed ? 0.6 : 1 })}>
-        <Text style={{ fontSize: 16, fontWeight: "500", color: palette.muted }}>Remind me later</Text>
+        <Text style={{ fontSize: 16, fontWeight: "500", color: palette.muted }}>{t("dose.later")}</Text>
       </Pressable>
       <RemindSheet visible={asking} name={due.name} onClose={() => setAsking(false)} onRemind={() => {
         const until = clockNow().getTime() + SNOOZE;
         snooze({ key: due.key, until });
         setAsking(false);
-        AccessibilityInfo.announceForAccessibility(`We'll show ${due.name} here again at ${clock(new Date(until))}`);
+        AccessibilityInfo.announceForAccessibility(t("dose.showAgainAt", { name: due.name, time: clock(new Date(until), lang) }));
       }} />
     </Card>;
   }
 
   if (resting && due) return <Card style={{ alignItems: "center", gap: 10 }}>
     <View accessible style={{ alignItems: "center", gap: 8 }}>
-      <Capsule>{`Back at ${clock(new Date(resting.until))}`}</Capsule>
+      <Capsule>{t("dose.backAt", { time: clock(new Date(resting.until), lang) })}</Capsule>
       <Pill name={due.name} size={84} />
       <Text style={nameStyle}>{due.name}</Text>
-      <Text style={centred}>We'll show it here again at {clock(new Date(resting.until))}.</Text>
+      <Text style={centred}>{t("dose.againAt", { time: clock(new Date(resting.until), lang) })}</Text>
     </View>
-    <View style={{ alignSelf: "stretch" }}><Button quiet label="Show it now" onPress={() => snooze(undefined)} /></View>
+    <View style={{ alignSelf: "stretch" }}><Button quiet label={t("dose.showNow")} onPress={() => snooze(undefined)} /></View>
   </Card>;
 
-  const next = dose ? `Next: ${dose.name}, ${whenWords(dose.dueAt, now)}` : "Nothing else due on a timer";
+  const next = dose ? t("dose.next", { name: dose.name, when: whenWords(dose.dueAt, now, lang) }) : t("dose.nothingElse");
   if (logged) return <Card style={{ alignItems: "center", gap: 10 }}>
-    <View accessible accessibilityLabel={`${logged.dose.name} taken at ${clock(logged.at)}. ${next}`} style={{ alignItems: "center", gap: 8 }}>
+    <View accessible accessibilityLabel={t("dose.takenAtA11y", { name: logged.dose.name, time: clock(logged.at, lang), next })} style={{ alignItems: "center", gap: 8 }}>
       <Check size={56} pop />
-      <Text style={nameStyle}>{logged.dose.name} taken</Text>
-      <Text style={centred}>Logged at {clock(logged.at)}</Text>
+      <Text style={nameStyle}>{t("dose.taken", { name: logged.dose.name })}</Text>
+      <Text style={centred}>{t("dose.loggedAt", { time: clock(logged.at, lang) })}</Text>
       <View style={{ alignSelf: "stretch", height: 1, backgroundColor: palette.line, marginVertical: 4 }} />
       <Text style={{ ...type.body, color: palette.ink, textAlign: "center" }}>{next}</Text>
     </View>
@@ -164,18 +169,18 @@ function NextCard({ dose, now, took, onTook }: { dose?: Dose; now: Date; took?: 
 
   if (dose) return <Card style={{ alignItems: "center", gap: 10 }}>
     <View accessible style={{ alignItems: "center", gap: 8 }}>
-      <Text style={{ ...type.footnote, fontWeight: "500", color: palette.faint }}>Next up</Text>
-      <Capsule>{whenWords(dose.dueAt, now)}</Capsule>
+      <Text style={{ ...type.footnote, fontWeight: "500", color: palette.faint }}>{t("dose.nextUp")}</Text>
+      <Capsule>{whenWords(dose.dueAt, now, lang)}</Capsule>
       <Pill name={dose.name} size={96} />
       <Text style={nameStyle}>{dose.name}</Text>
       <Text style={centred}>{sentenceCase(dose.line)}</Text>
-      <Text style={{ ...type.footnote, color: palette.faint, textAlign: "center" }}>You can mark it taken here from {clock(new Date(dose.dueAt.getTime() - EARLY))}.</Text>
+      <Text style={{ ...type.footnote, color: palette.faint, textAlign: "center" }}>{t("dose.markFrom", { time: clock(new Date(dose.dueAt.getTime() - EARLY), lang) })}</Text>
     </View>
   </Card>;
 
   return <Card>
-    <Text style={{ ...type.headline, color: palette.ink }}>Nothing on a timer</Text>
-    <Text style={{ ...type.body, color: palette.muted }}>Your medicines are taken when you need them. Tap one below to see how.</Text>
+    <Text style={{ ...type.headline, color: palette.ink }}>{t("dose.noTimer")}</Text>
+    <Text style={{ ...type.body, color: palette.muted }}>{t("dose.noTimerLine")}</Text>
   </Card>;
 }
 
@@ -183,9 +188,10 @@ const sentenceCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** The kit's Before / After food segmented pill, showing what the plan says (read-only). */
 function Food({ when }: { when: "before" | "after" }) {
-  return <View accessible accessibilityLabel={`Take it ${when} food`} style={[pillStyle, { flexDirection: "row", padding: 3, alignSelf: "center" }]}>
+  const t = tFor(useLang());
+  return <View accessible accessibilityLabel={t(`dose.foodA11y.${when}`)} style={[pillStyle, { flexDirection: "row", padding: 3, alignSelf: "center" }]}>
     {(["before", "after"] as const).map(w => <View key={w} style={{ paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999, backgroundColor: w === when ? palette.dark : "transparent" }}>
-      <Text style={{ fontSize: 14, fontWeight: "600", color: w === when ? palette.white : palette.faint }}>{w === "before" ? "Before food" : "After food"}</Text>
+      <Text style={{ fontSize: 14, fontWeight: "600", color: w === when ? palette.white : palette.faint }}>{t(`dose.food.${w}`)}</Text>
     </View>)}
   </View>;
 }
@@ -195,11 +201,12 @@ function Food({ when }: { when: "before" | "after" }) {
  * (after Canopi's sheet); an orange ! badge, one honest line, black "Remind in 15 min", Cancel.
  */
 function RemindSheet({ visible, name, onRemind, onClose }: { visible: boolean; name: string; onRemind: () => void; onClose: () => void }) {
+  const t = tFor(useLang());
   const reduced = useReducedMotion();
   const insets = useSafeAreaInsets();
   const row = (i: number) => reduced ? undefined : FadeInDown.springify().duration(motion.spring.duration).dampingRatio(1).delay(80 + i * motion.stagger);
   return <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
-    <Pressable accessibilityRole="button" accessibilityLabel="Cancel" onPress={onClose} style={{ flex: 1, backgroundColor: "rgba(31,31,31,0.28)" }} />
+    <Pressable accessibilityRole="button" accessibilityLabel={t("common.cancel")} onPress={onClose} style={{ flex: 1, backgroundColor: "rgba(31,31,31,0.28)" }} />
     <Animated.View accessibilityViewIsModal entering={reduced ? undefined : SlideInDown.springify().duration(420).dampingRatio(0.86)}
       style={{ position: "absolute", left: 10, right: 10, bottom: Math.max(insets.bottom, 10), borderRadius: 40, borderCurve: "continuous", backgroundColor: palette.white, padding: 24, paddingTop: 28, gap: 12, alignItems: "center" } as ViewStyle}>
       <Animated.View entering={row(0)} style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: palette.amberWash, alignItems: "center", justifyContent: "center" }}>
@@ -207,17 +214,17 @@ function RemindSheet({ visible, name, onRemind, onClose }: { visible: boolean; n
         <Text style={{ position: "absolute", fontSize: 20, lineHeight: 24, fontWeight: "700", color: palette.white }}>!</Text>
       </Animated.View>
       <Animated.View entering={row(1)} accessible accessibilityRole="header">
-        <Text style={{ ...nameStyle }}>Remind me later?</Text>
+        <Text style={{ ...nameStyle }}>{t("dose.remindTitle")}</Text>
       </Animated.View>
       <Animated.View entering={row(2)}>
-        <Text style={centred}>We'll show {name} here again in 15 minutes, while Sona Care is open.</Text>
+        <Text style={centred}>{t("dose.remindLine", { name })}</Text>
       </Animated.View>
       <Animated.View entering={row(3)} style={{ alignSelf: "stretch", marginTop: 6 }}>
-        <Button label="Remind in 15 min" onPress={onRemind} />
+        <Button label={t("dose.remind")} onPress={onRemind} />
       </Animated.View>
       <Animated.View entering={row(4)}>
         <Pressable accessibilityRole="button" onPress={onClose} style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 24, justifyContent: "center", opacity: pressed ? 0.6 : 1 })}>
-          <Text style={{ fontSize: 16, fontWeight: "600", color: palette.ink }}>Cancel</Text>
+          <Text style={{ fontSize: 16, fontWeight: "600", color: palette.ink }}>{t("common.cancel")}</Text>
         </Pressable>
       </Animated.View>
     </Animated.View>
@@ -240,32 +247,35 @@ function Check({ size, pop, style }: { size: number; pop?: boolean; style?: View
 
 /** "Full plan": the whole discharge plan (leaflet, warning signs, what's next), as a white capsule. */
 function FullPlan() {
-  return <Pressable accessibilityRole="button" accessibilityLabel="Full plan" accessibilityHint="Your discharge plan: leaflet, warning signs and what's next" onPress={() => router.push("/discharge")}
+  const t = tFor(useLang());
+  return <Pressable accessibilityRole="button" accessibilityLabel={t("dose.fullPlan")} accessibilityHint={t("dose.fullPlanHint")} onPress={() => router.push("/discharge")}
     style={({ pressed }) => [pillStyle, { minHeight: 48, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", gap: 6, transform: [{ scale: pressed ? motion.press : 1 }] }]}>
-    <Text style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>Full plan</Text>
+    <Text style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>{t("dose.fullPlan")}</Text>
     <Text style={{ fontSize: 18, color: palette.muted }}>›</Text>
   </Pressable>;
 }
 
 /** The kit's contact row: the care team's initials, where they are and how soon they reply, and a round button to message them. */
 function CareTeam() {
+  const t = tFor(useLang());
   const { me } = useMe();
   return <View style={[surfaceStyle, { flexDirection: "row", alignItems: "center", gap: 12, padding: 10, paddingLeft: 12 }]}>
     <View style={{ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.blueWash }}>
-      <Text style={{ fontSize: 16, fontWeight: "700", color: palette.blue }}>CT</Text>
+      <Text maxFontSizeMultiplier={1.2} style={{ fontSize: 16, fontWeight: "700", color: palette.blue }}>{t("dose.careTeamInitials")}</Text>
     </View>
     <View accessible style={{ flex: 1, gap: 1 }}>
-      <Text style={{ ...type.headline, color: palette.ink }}>Care team</Text>
-      <Text numberOfLines={2} style={{ ...type.footnote, color: palette.faint }}>{[me?.hospital, REPLY_TIME.toLowerCase()].filter(Boolean).join(" · ")}</Text>
+      <Text style={{ ...type.headline, color: palette.ink }}>{t("dose.careTeam")}</Text>
+      <Text numberOfLines={2} style={{ ...type.footnote, color: palette.faint }}>{[me?.hospital, t("msg.replyTimeShort")].filter(Boolean).join(" · ")}</Text>
     </View>
-    <CircleButton d={ICON.chat} label="Message your care team" onPress={() => router.push("/messages")} />
+    <CircleButton d={ICON.chat} label={t("dose.messageTeam")} onPress={() => router.push("/messages")} />
   </View>;
 }
 
 /** One medicine in the grid (the kit's big pill card): the medicine drawn big, its name and schedule; a green check once today's doses of it are taken. */
 function MedCard({ med, today, pop }: { med: ScheduledMed; today: DayDose[]; pop: boolean }) {
-  const done = today.length > 0 && today.every(d => d.taken), schedule = scheduleLine(med);
-  return <Pressable accessibilityRole="button" accessibilityLabel={[med.name, schedule, done && "Today's doses taken"].filter(Boolean).join(". ")} accessibilityHint="Opens how to take it" onPress={() => open(med.name)}
+  const lang = useLang(), t = tFor(lang);
+  const done = today.length > 0 && today.every(d => d.taken), schedule = scheduleLine(med, lang);
+  return <Pressable accessibilityRole="button" accessibilityLabel={[med.name, schedule, done && t("dose.todayTaken")].filter(Boolean).join(". ")} accessibilityHint={t("dose.openHint")} onPress={() => open(med.name)}
     style={({ pressed }) => [surfaceStyle, { flexGrow: 1, minHeight: 196, padding: 16, paddingTop: 20, alignItems: "center", gap: 6, transform: [{ scale: pressed ? motion.press : 1 }] }]}>
     <Pill name={med.name} size={88} />
     <Text style={{ fontSize: 18, lineHeight: 23, fontWeight: "500", letterSpacing: -0.4, color: palette.ink, textAlign: "center" }}>{med.name}</Text>

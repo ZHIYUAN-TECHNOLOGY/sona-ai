@@ -3,6 +3,8 @@ import { File } from "expo-file-system";
 import { useEffect, useRef, useState } from "react";
 import { errorText } from "@/features/errors";
 import { client } from "@/utils/orpc";
+import { currentLang, translate } from "./i18n";
+import "./strings";
 
 /**
  * Speaking to Sona Care: record the patient's voice, stop by itself once they go quiet, and turn it
@@ -48,9 +50,9 @@ export function useListen({ language, onHeard }: { language?: "en" | "ms" | "zh"
       const { text } = await client.care.transcribe({ audio: await file.base64(), language });
       setState("idle");
       if (text.trim()) heard.current(text.trim());
-      else { setError("I didn't catch that. Please try again, or type."); setState("error"); }
+      else { setError(translate(currentLang(), "listen.missed")); setState("error"); }
     } catch (e) {
-      setError(errorText(e)); setState("error");
+      setError(errorText(e, currentLang())); setState("error");
     } finally {
       try { file.delete(); } catch { /* already gone */ }
     }
@@ -59,7 +61,7 @@ export function useListen({ language, onHeard }: { language?: "en" | "ms" | "zh"
   const start = async () => {
     setError(undefined);
     const permission = await AudioModule.requestRecordingPermissionsAsync();
-    if (!permission.granted) { setError("Allow the microphone in Settings to speak to Sona Care."); setState("error"); return; }
+    if (!permission.granted) { setError(translate(currentLang(), "listen.mic")); setState("error"); return; }
     await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
     await recorder.prepareToRecordAsync();
     recorder.record();

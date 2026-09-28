@@ -6,7 +6,9 @@ import Animated, { FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useShare
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { useMe } from "@/features/me";
+import { useT } from "./i18n";
 import { orbPad, SonaOrb } from "./orb";
+import "./strings";
 import { palette } from "./theme";
 
 /**
@@ -18,10 +20,10 @@ import { palette } from "./theme";
  */
 export const DOCK_SPACE = 120;
 const TABS = [
-  { path: "/", label: "Home", d: "m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10" },
-  { path: "/follow-ups", label: "Schedule", d: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2" },
-  { path: "/dose", label: "Medicine", d: "m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7ZM8.5 8.5l7 7" },
-  { path: "/doctors", label: "Doctors", d: "M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3M8 15v1a6 6 0 0 0 6 6a6 6 0 0 0 6-6v-4M20 10a2 2 0 1 0 0 4a2 2 0 0 0 0-4" },
+  { path: "/", label: "dock.home", d:"m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10" },
+  { path: "/follow-ups", label: "dock.schedule", d:"M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2" },
+  { path: "/dose", label: "dock.medicine", d:"m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7ZM8.5 8.5l7 7" },
+  { path: "/doctors", label: "dock.doctors", d:"M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3M8 15v1a6 6 0 0 0 6 6a6 6 0 0 0 6-6v-4M20 10a2 2 0 1 0 0 4a2 2 0 0 0 0-4" },
 ] as const;
 const TAB = 56, PAD = 4, ORB = 56;
 
@@ -30,6 +32,7 @@ export function Dock() {
   const insets = useSafeAreaInsets();
   const still = useReducedMotion();
   const { state } = useMe();
+  const tr = useT();
   const at = TABS.findIndex(t => t.path === path);
   const x = useSharedValue(Math.max(0, at) * TAB);
   const stretch = useSharedValue(1);
@@ -49,14 +52,14 @@ export function Dock() {
         <Animated.View pointerEvents="none" style={[{ position: "absolute", left: PAD, top: PAD, width: TAB, height: TAB, borderRadius: TAB / 2, backgroundColor: palette.white, boxShadow: "0 6px 14px -8px rgba(40,50,110,0.4)" }, indicator]} />
         {TABS.map((t, i) => {
           const on = i === at;
-          return <Pressable key={t.path} accessibilityRole="tab" accessibilityLabel={t.label} accessibilityState={{ selected: on }} onPress={() => { if (!on) router.navigate(t.path); }}
+          return <Pressable key={t.path} accessibilityRole="tab" accessibilityLabel={tr(t.label)} accessibilityState={{ selected: on }} onPress={() => { if (!on) router.navigate(t.path); }}
             style={({ pressed }) => ({ width: TAB, height: TAB, alignItems: "center", justifyContent: "center", transform: [{ scale: pressed ? 0.92 : 1 }] })}>
             <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={on ? palette.ink : palette.faint} strokeWidth={on ? 2.4 : 1.7} strokeLinecap="round" strokeLinejoin="round"><Path d={t.d} /></Svg>
           </Pressable>;
         })}
       </BlurView>
     </View>
-    <Pressable accessibilityRole="button" accessibilityLabel="Ask Sona Care" accessibilityHint="Quick answers from your discharge plan" onPress={() => router.push("/assistant")}
+    <Pressable accessibilityRole="button" accessibilityLabel={tr("dock.ask")} accessibilityHint={tr("dock.askHint")} onPress={() => router.push("/assistant")}
       style={({ pressed }) => ({ width: ORB + 10, height: ORB + 10, borderRadius: (ORB + 10) / 2, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.6)", borderWidth: 1, borderColor: "rgba(255,255,255,0.9)", transform: [{ scale: pressed ? 0.94 : 1 }] })}>
       <View pointerEvents="none" style={{ margin: -orbPad(ORB) }}><SonaOrb size={ORB} lift={false} /></View>
     </Pressable>

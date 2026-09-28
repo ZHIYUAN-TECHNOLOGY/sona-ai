@@ -9,6 +9,8 @@ import Animated, { cancelAnimation, Easing, LinearTransition, useAnimatedStyle, 
 import { scheduleOnRN } from "react-native-worklets";
 import { HalftoneGlint } from "./halftone";
 import { accent, palette, type } from "./theme";
+import { useT } from "./i18n";
+import "./strings";
 
 /**
  * Sona's design system for Sona Care, after the AI Health Companion kit (mirrors apps/native/components/sona/ui.tsx):
@@ -58,6 +60,7 @@ export function Button({ label, onPress, busy, disabled, quiet }: { label: strin
  * (a dose taken early). Every finish is announced.
  */
 export function HoldButton({ label, doneLabel, onDone, done = false, hold = 800, compact = false, quiet = false }: { label: string; doneLabel: string; onDone: () => void; done?: boolean; hold?: number; compact?: boolean; quiet?: boolean }) {
+  const t = useT();
   const still = useReducedMotion();
   const p = useSharedValue(done ? 1 : 0);
   const [holding, setHolding] = useState(false);
@@ -82,20 +85,21 @@ export function HoldButton({ label, doneLabel, onDone, done = false, hold = 800,
   const settle = useAnimatedStyle(() => ({ transform: [{ scale: done ? withSpring(1, { duration: 380, dampingRatio: 0.72 }) : withTiming(holding && !still ? 0.98 : 1, { duration: 120 }) }] }));
   const h = compact ? 44 : 56;
   const ink = quiet ? palette.ink : palette.white;
-  return <Pressable accessibilityRole="button" accessibilityLabel={done ? doneLabel : label} accessibilityHint={done ? undefined : "Press and hold to confirm"} accessibilityState={{ disabled: done }}
+  return <Pressable accessibilityRole="button" accessibilityLabel={done ? doneLabel : label} accessibilityHint={done ? undefined : t("common.holdHint")} accessibilityState={{ disabled: done }}
     onPressIn={start} onPressOut={stop} disabled={done}
     onAccessibilityTap={() => { if (!done) finish(); }}>
     <Animated.View style={[{ minHeight: h, borderRadius: h / 2, overflow: "hidden", alignItems: "center", justifyContent: "center", paddingHorizontal: compact ? 12 : 20,
       backgroundColor: done ? palette.white : quiet ? palette.white : palette.dark, borderWidth: 1, borderColor: done || quiet ? "#EDEDED" : palette.dark }, settle]}>
       {!done && <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 0, bottom: 0, experimental_backgroundImage: `linear-gradient(135deg, ${accent[1]}, ${accent[2]})` } as ViewStyle, fill]} />}
-      <Text style={{ fontSize: compact ? 13 : 16, fontWeight: "700", color: done ? palette.green : holding && quiet ? palette.white : ink }}>{done ? `✓  ${doneLabel}` : holding ? "Keep holding…" : label}</Text>
+      <Text numberOfLines={2} style={{ fontSize: compact ? 13 : 16, fontWeight: "700", textAlign: "center", color: done ? palette.green : holding && quiet ? palette.white : ink }}>{done ? `✓  ${doneLabel}` : holding ? t("common.keepHolding") : label}</Text>
     </Animated.View>
   </Pressable>;
 }
 
 /** The glass back button for screens off the dock (no header band): back, or home if opened directly. */
-export function BackButton({ label = "Back" }: { label?: string }) {
-  return <View style={{ alignSelf: "flex-start" }}><CircleButton d={ICON.back} label={label} onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }} /></View>;
+export function BackButton({ label }: { label?: string }) {
+  const t = useT();
+  return <View style={{ alignSelf: "flex-start" }}><CircleButton d={ICON.back} label={label ?? t("common.back")}onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }} /></View>;
 }
 
 /** A tappable row inside a card: what it is, one line of state, and where it goes. */
@@ -105,7 +109,7 @@ export function Row({ title, line, tone = "muted", onPress, first }: { title: st
     style={({ pressed }) => ({ minHeight: 56, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderTopWidth: first ? 0 : 1, borderColor: "rgba(40,24,70,0.06)", opacity: pressed ? 0.6 : 1 })}>
     <View style={{ flex: 1, gap: 2 }}>
       <Text style={{ ...type.headline, color: palette.ink }}>{title}</Text>
-      <Text numberOfLines={1} style={{ ...type.footnote, fontWeight: tone === "muted" ? "400" : "600", color }}>{line}</Text>
+      <Text numberOfLines={2} style={{ ...type.footnote, fontWeight: tone === "muted" ? "400" : "600", color }}>{line}</Text>
     </View>
     <Text style={{ fontSize: 20, color: palette.muted }}>›</Text>
   </Pressable>;
@@ -166,9 +170,10 @@ export const ICON = {
 /** A small white chip that does one thing (a quick reply, a needs shortcut, a filter). */
 export function Chip({ label, onPress, dot, tone, accessibilityLabel }: { label: string; onPress: () => void; dot?: string; tone?: { bg: string; fg: string }; accessibilityLabel?: string }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} onPress={onPress}
-    style={({ pressed }) => [pillStyle, { minHeight: 44, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 7, transform: [{ scale: pressed ? 0.96 : 1 }] }, tone && { backgroundColor: tone.bg, borderColor: tone.bg }]}>
+    style={({ pressed }) => [pillStyle, { maxWidth: "100%", minHeight: 44, paddingHorizontal: 14, paddingVertical: 6, flexDirection: "row", alignItems: "center", gap: 7, transform: [{ scale: pressed ? 0.96 : 1 }] }, tone && { backgroundColor: tone.bg, borderColor: tone.bg }]}>
     {dot && <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: dot }} />}
-    <Text style={{ fontSize: 14, fontWeight: "500", color: tone?.fg ?? palette.ink }}>{label}</Text>
+    {/* Malay and Chinese run longer: a chip wraps to a second line rather than clipping. */}
+    <Text style={{ flexShrink: 1, fontSize: 14, fontWeight: "500", color: tone?.fg ?? palette.ink }}>{label}</Text>
   </Pressable>;
 }
 

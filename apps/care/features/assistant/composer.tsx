@@ -2,6 +2,8 @@ import type { ReactNode, Ref } from "react";
 import { ActivityIndicator, Pressable, View, type TextInput as RNTextInput } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { TextInput } from "@/lib/text";
+import { useT } from "@/lib/i18n";
+import "@/lib/strings";
 import { palette } from "@/lib/theme";
 
 /**
@@ -17,6 +19,7 @@ export const GLYPH = {
 export function Composer({ value, onChangeText, placeholder, label, onSend, canSend, busy, idle, inputRef }: {
   value: string; onChangeText: (t: string) => void; placeholder: string; label: string; onSend: () => void; canSend: boolean; busy?: boolean; idle?: ReactNode; inputRef?: Ref<RNTextInput>;
 }) {
+  const t = useT();
   const typed = !!value.trim();
   return <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8, borderRadius: 24, borderCurve: "continuous", padding: 6, paddingLeft: 16,
     backgroundColor: "rgba(255,255,255,0.88)", borderWidth: 1, borderColor: palette.line, boxShadow: "0 12px 28px -20px rgba(40,30,90,0.35)" }}>
@@ -24,7 +27,7 @@ export function Composer({ value, onChangeText, placeholder, label, onSend, canS
       returnKeyType="send" submitBehavior="submit" onSubmitEditing={onSend} accessibilityLabel={label}
       style={{ flex: 1, fontSize: 17, lineHeight: 22, color: palette.ink, paddingTop: 13, paddingBottom: 13, maxHeight: 140 }} />
     {typed || !idle
-      ? <Pressable accessibilityRole="button" accessibilityLabel="Send" accessibilityState={{ disabled: !canSend, busy }} disabled={!canSend} onPress={onSend}
+      ? <Pressable accessibilityRole="button" accessibilityLabel={t("common.send")}accessibilityState={{ disabled: !canSend, busy }} disabled={!canSend} onPress={onSend}
         style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.dark, opacity: canSend ? 1 : 0.35, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
         {busy ? <ActivityIndicator color={palette.white} /> : <Glyph d={GLYPH.up} color={palette.white} size={20} />}
       </Pressable>
