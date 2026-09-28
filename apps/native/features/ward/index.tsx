@@ -198,7 +198,7 @@ function TileFace({ bed }: { bed: Bed }) {
     </View> : <Text style={{ ...type.subhead, color: palette.muted }}>No patient</Text>}
     <View style={{ gap: 2 }}>
       <Text numberOfLines={1} style={{ ...type.caption, color: palette.muted }}>{bed.status === "fit" ? `Out ${bed.predicted.toLowerCase()}` : bed.predicted}</Text>
-      {bed.status === "fit" && <Text style={{ ...type.caption, fontWeight: "700", color: bed.blockers.length ? palette.amber : TEAL }}>{bed.blockers.length ? `${bed.blockers.length} ${bed.blockers.length === 1 ? "blocker" : "blockers"}` : "Ready"}</Text>}
+      {bed.status === "fit" && <Text style={{ ...type.caption, fontWeight: "700", color: bed.blockers.length ? palette.red : TEAL }}>{bed.blockers.length ? `${bed.blockers.length} ${bed.blockers.length === 1 ? "blocker" : "blockers"}` : "Ready"}</Text>}
     </View>
   </View>;
 }
@@ -241,7 +241,7 @@ function BedCard({ bed, from, to, p, owners, onAssign, assignError, onClose, onD
         </View>
 
         <View style={{ gap: 4 }}>
-          <Text style={{ ...type.overline, color: bed.blockers.length ? palette.amber : TEAL }}>{bed.blockers.length ? `${bed.blockers.length} holding the discharge` : "Nothing holding the discharge"}</Text>
+          <Text style={{ ...type.overline, color: bed.blockers.length ? palette.red : TEAL }}>{bed.blockers.length ? `${bed.blockers.length} holding the discharge` : "Nothing holding the discharge"}</Text>
           {bed.blockers.map(b => { const owner = owners[b.id]; return <View key={b.id} style={{ gap: 10, paddingVertical: 12, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <View style={{ flex: 1, gap: 2 }}>

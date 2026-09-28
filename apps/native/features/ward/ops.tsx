@@ -24,7 +24,8 @@ import { bedBar, wardBeds, wardSummary, type Bed, type BedKind } from "./model";
  */
 type Ops = Awaited<ReturnType<typeof api.ops.get>>;
 const TEAL = "#0F6E66";
-const KIND: Record<BedKind, string> = { blocked: palette.amber, fit: TEAL, watch: "#D9AE72", other: "#CDD2D9" };
+// Blocked is the one to act on, so it alone reads red; watch stays a quiet amber.
+const KIND: Record<BedKind, string> = { blocked: palette.red, fit: TEAL, watch: "#D9AE72", other: "#CDD2D9" };
 
 export const hoursMinutes = (mins: number) => {
   const h = Math.floor(mins / 60), m = Math.round(mins % 60);
@@ -100,8 +101,8 @@ export function WardGlance() {
   const summary = wardSummary(beds);
   return <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 14 }}>
     <View style={{ gap: 4 }}>
-      <Text style={{ ...type.overline, color: summary.blocked ? palette.amber : palette.blue }}>Ward now</Text>
-      <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{summary.blocked ? `${summary.blocked} discharge${summary.blocked === 1 ? "" : "s"} blocked · ~${summary.bedHours} bed-hours waiting` : `${summary.fit} fit to go · nothing blocked`}</Text>
+      <Text style={{ ...type.overline, color: summary.blocked ? palette.red : palette.blue }}>Ward now</Text>
+      <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{summary.blocked ? `${summary.blocked} discharge${summary.blocked === 1 ? "" : "s"} blocked · ~${summary.bedHours} bed‑hours waiting` : `${summary.fit} fit to go · nothing blocked`}</Text>
     </View>
     <BedBar beds={beds} />
     <ThisWeek />
