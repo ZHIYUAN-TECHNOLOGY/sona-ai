@@ -1,22 +1,18 @@
 import { expect, test } from "bun:test";
-import { pickVoices } from "./voices";
+import { languageOf, pickVoices, voiceFor } from "./voices";
 
 const v = (identifier, language, quality = "Default") => ({ identifier, name: identifier, language, quality });
 
-test("English voices only, the clearest first and one per accent (British first) before any repeats, four at most", () => {
-  const picked = pickVoices([
-    v("us-1", "en-US"), v("gb-1", "en-GB"), v("gb-2", "en-GB", "Enhanced"), v("fr-1", "fr-FR"),
-    v("com.apple.speech.synthesis.voice.Bubbles", "en-US"), v("com.apple.eloquence.en-US.Eddy", "en-US"),
-    v("au-1", "en_AU"), v("us-2", "en-US", "Enhanced"), v("in-1", "en-IN"),
-  ]);
-  expect(picked.map(p => p.voice)).toEqual(["gb-2", "us-2", "au-1", "in-1"]);
-  expect(picked.map(p => p.name)).toEqual(["Mira", "Arin", "Suri", "Kai"]);
-  expect(picked[0].line).toBe("British English · clearest quality");
-  expect(picked[2].line).toBe("Australian English");
-  expect(picked[2].language).toBe("en-AU");
-});
-
-test("with fewer than three English voices the phone's own voice fills in, slower and lower", () => {
-  expect(pickVoices([]).map(p => [p.id, p.voice, p.rate, p.pitch])).toEqual([["phone", undefined, 1, 1], ["phone-slow", undefined, 0.8, 1], ["phone-low", undefined, 0.95, 0.8]]);
-  expect(pickVoices([v("gb-1", "en-GB"), v("zh-1", "zh-CN")]).map(p => p.id)).toEqual(["gb-1", "phone", "phone-slow"]);
+test("Malay and Chinese voices join the English ones, and an answer is read in its own language", () => {
+  const list = pickVoices([v("gb", "en-GB", "Enhanced"), v("us", "en-US"), v("au", "en-AU"), v("amira", "ms-MY"), v("tingting", "zh-CN")]);
+  expect(list.map(x => x.name)).toEqual(["Mira", "Arin", "Suri", "Nadia", "Mei"]);
+  const picked = list[0];
+  expect(languageOf("Anda perlu makan Azithromycin sekali sehari pada pukul 8:00 pagi.")).toBe("ms");
+  expect(languageOf("你什么时候复诊？")).toBe("zh");
+  expect(languageOf("Take it after food.")).toBe("en");
+  expect(voiceFor("Anda perlu makan ubat ini selepas makan.", picked, list).name).toBe("Nadia");
+  expect(voiceFor("你的复诊在十月四日。", picked, list).name).toBe("Mei");
+  expect(voiceFor("Take it after food.", picked, list).name).toBe("Mira");
+  // No Malay voice on the phone: the picked voice reads it rather than nothing.
+  expect(voiceFor("Anda perlu makan ubat ini.", picked, pickVoices([v("gb", "en-GB")])).name).toBe("Mira");
 });

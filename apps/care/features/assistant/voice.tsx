@@ -10,7 +10,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import Svg, { Path } from "react-native-svg";
 import { spoken, type Asked, type Reply } from "@/features/assistant/answers";
 import { Glyph } from "@/features/assistant/composer";
-import { pickVoices, preview, type SonaVoice } from "@/features/assistant/voices";
+import { pickVoices, preview, voiceFor, type SonaVoice } from "@/features/assistant/voices";
 import { useListen } from "@/lib/listen";
 import { MIC } from "./mic";
 import { orbPad, SonaOrb } from "@/lib/orb";
@@ -94,7 +94,8 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
       onStart: () => on(id, true), onDone: () => { on(id, false); if (id === turn.current) again.current(); }, onStopped: () => on(id, false), onError: () => on(id, false) });
   };
   const stop = () => { turn.current++; void Speech.stop(); setSpeaking(false); setUpto(undefined); talk.set(still ? 0 : withTiming(0, { duration: 600, easing: EASE_OUT })); };
-  const read = (text: string, v = voice) => { if (!v) return; setSaid(text); speak(text, v, true); };
+  // A Malay or Chinese answer is read in that language's voice, whichever voice was picked.
+  const read = (text: string, v = voice) => { if (!v) return; setSaid(text); speak(text, voiceFor(text, v, voices ?? []), true); };
 
   const start = (v: SonaVoice) => {
     void SecureStore.setItemAsync(KEY, v.id).catch(() => {});

@@ -3,8 +3,10 @@ import type { Voice } from "expo-speech";
 /**
  * The voices Sona can read answers in (after Gemini's voice picker): up to four English voices from the
  * phone, the clearest first and one per accent before any repeats, each with a friendly name and one
- * honest line (its accent, whether it is the phone's enhanced quality). With fewer than three, the
- * phone's own voice fills in at a slower pace and a lower pitch, so there is always a choice.
+ * honest line (its accent, whether it is the phone's enhanced quality), then the phone's Malay and
+ * Chinese voices when it has them. With fewer than three, the phone's own voice fills in at a slower
+ * pace and a lower pitch, so there is always a choice. An answer in Malay or Chinese is read in that
+ * language's voice whichever voice is picked (see voiceFor), so it never comes out in an English accent.
  */
 export type SonaVoice = { id: string; name: string; line: string; voice?: string; language: string; rate: number; pitch: number };
 
@@ -19,6 +21,33 @@ const locale = (l: string) => l.replace("_", "-");
 const rank = (l: string) => { const i = ORDER.indexOf(locale(l)); return i < 0 ? ORDER.length : i; };
 /** iOS novelty voices (Bells, Bubbles, Zarvox…) and the old Eloquence set: not for reading a care plan. */
 const NOVELTY = /speech\.synthesis\.voice|eloquence/i;
+
+const LANGS = [
+  { code: "ms", test: /^ms([-_]|$)/i, name: "Nadia", line: "Bahasa Melayu" },
+  { code: "zh", test: /^zh[-_](CN|Hans)/i, name: "Mei", line: "中文 · Mandarin" },
+] as const;
+
+/** The phone's best voice for one of Sona Care's other languages, or undefined if it has none. */
+function languageVoice(voices: Voice[], lang: (typeof LANGS)[number]): SonaVoice | undefined {
+  const v = voices.filter(x => lang.test.test(x.language) && !NOVELTY.test(x.identifier))
+    .sort((a, b) => Number(b.quality === "Enhanced") - Number(a.quality === "Enhanced"))[0];
+  return v && { id: v.identifier, name: lang.name, voice: v.identifier, language: locale(v.language), rate: 1, pitch: 1, line: `${lang.line}${v.quality === "Enhanced" ? " · clearest quality" : ""}` };
+}
+
+/** The language an answer is written in: Chinese by its characters, Malay by its common words, else English. */
+export function languageOf(text: string): "zh" | "ms" | "en" {
+  if (/[\u4e00-\u9fff]/.test(text)) return "zh";
+  const words = text.toLowerCase().match(/[a-z]+/g) ?? [];
+  const malay = words.filter(w => /^(anda|dan|yang|untuk|ubat|hari|jika|sila|dengan|tidak|boleh|makan|selepas|sebelum|awak|saya|ini|itu|pada|akan|kali|sekali|lagi|datang|segera)$/.test(w)).length;
+  return words.length && malay / words.length >= 0.15 ? "ms" : "en";
+}
+
+/** The voice to read `text` in: the picked one for English, else the phone's voice for that language (if any). */
+export function voiceFor(text: string, picked: SonaVoice, all: SonaVoice[]): SonaVoice {
+  const lang = languageOf(text);
+  if (lang === "en" || picked.language.toLowerCase().startsWith(lang)) return picked;
+  return all.find(v => v.language.toLowerCase().startsWith(lang)) ?? picked;
+}
 
 export function pickVoices(voices: Voice[]): SonaVoice[] {
   const en = voices.filter(v => /^en([-_]|$)/i.test(v.language) && !NOVELTY.test(v.identifier))
@@ -37,8 +66,10 @@ export function pickVoices(voices: Voice[]): SonaVoice[] {
     { id: "phone-slow", name: "Slow", line: "Your phone's voice, a little slower", language: "en-GB", rate: 0.8, pitch: 1 },
     { id: "phone-low", name: "Low", line: "Your phone's voice, a little lower", language: "en-GB", rate: 0.95, pitch: 0.8 },
   ];
-  return out.length >= 3 ? out : [...out, ...fill].slice(0, Math.max(3, out.length));
+  const english = out.length >= 3 ? out : [...out, ...fill].slice(0, Math.max(3, out.length));
+  return [...english, ...LANGS.flatMap(l => languageVoice(voices, l) ?? [])];
 }
 
 /** The line each voice says when the patient swipes to it. */
-export const preview = (v: SonaVoice) => `Hi, I'm ${v.name}. I'll read your answers aloud.`;
+export const preview = (v: SonaVoice) => v.language.startsWith("ms") ? `Hai, saya ${v.name}. Saya akan bacakan jawapan anda.`
+  : v.language.startsWith("zh") ? `你好，我是${v.name}。我会为你朗读答案。` : `Hi, I'm ${v.name}. I'll read your answers aloud.`;
