@@ -24,6 +24,8 @@ export default function RootLayout() {
     <Stack.Screen name="note" options={{ title: "Consultation note" }} />
     <Stack.Screen name="xray" options={{ title: "Chest X-ray", presentation: "modal" }} />
     <Stack.Screen name="tasks" options={{ title: "Follow-up tasks" }} />
+    <Stack.Screen name="inbox/index" options={{ title: "Patient messages" }} />
+    <Stack.Screen name="inbox/[patientId]" options={{ title: "" }} />
     <Stack.Screen name="handover" options={{ title: "Shift handover" }} />
     <Stack.Screen name="ward" options={{ title: "Ward" }} />
     <Stack.Screen name="audit" options={{ title: "Coding audit" }} />

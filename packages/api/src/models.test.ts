@@ -18,6 +18,8 @@ test("until the models are switched on, every capability answers with authored c
     stubModels.synthesiseEvidence({ question: "Oral switch after 48 h?", studies: [] }),
     stubModels.huddleBrief({ beds: [], owners: {} }),
     stubModels.classifyReply({ text: "Demam datang balik", language: "ms" }),
+    stubModels.triageMessage({ text: "Bila temu janji saya?" }),
+    stubModels.draftReply({ text: "Bila temu janji saya?", label: "admin", patientFirstName: "Amelia", language: "ms" }),
   ]);
   for (const answer of answers) expect(answer.source).toBe("fixture");
   expect((await stubModels.xrayRead({ image: new Uint8Array([1]), contentType: "image/png" })).validated).toBe(false);

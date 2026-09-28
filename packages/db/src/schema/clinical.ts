@@ -268,6 +268,10 @@ export const careMessages = pgTable("care_messages", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull(),
   from: text("from", { enum: ["patient", "care-team"] }).notNull(), authorId: text("author_id").notNull(), text: text("text").notNull(),
   taskId: text("task_id"), createdAt: created(),
+  /** Patient messages only: when the care team first opened the thread after it arrived (Sona Care shows "Seen"). */
+  seenAt: timestamp("seen_at"),
+  /** Patient messages only: the inbox triage (urgent, clinical, admin) and the words that decided it; empty if triage failed. */
+  triage: text("triage", { enum: ["urgent", "clinical", "admin"] }), triageReason: text("triage_reason"),
 }, t => [index("care_messages_patient").on(t.patientId, t.createdAt)]);
 
 /**

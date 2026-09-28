@@ -1,5 +1,6 @@
 import { readReply } from "@sona-ai/domain/check-ins";
 import type { Language } from "@sona-ai/domain/discharge";
+import { triageByRules } from "@sona-ai/domain/messages";
 
 import { stubModels, type Models } from "./models";
 
@@ -66,6 +67,14 @@ Rules:
 - If they describe an emergency sign (chest pain, severe breathlessness, confusion, fainting, coughing blood), set "urgent" to true and tell them to call 999 now.
 Answer with JSON only: {"answer": "<text>", "grounded": true|false, "urgent": true|false, "from": "<which part of the plan: medicines, leaflet, warning signs or follow-up; empty if not grounded>"}.`;
 
+const INBOX = `You triage a patient's message to their hospital care team so the most urgent is read first.
+The message may be in Malay, English, Chinese or a mix. Judge only what the patient says.
+Answer with JSON only: {"label": "urgent" | "clinical" | "admin", "reason": "<3-8 English words: why>"}.
+- urgent: a possible emergency (chest pain, breathless, fainting, confusion, coughing blood, severe bleeding).
+- clinical: medicines, doses, symptoms, wounds, side effects, or anything a nurse or doctor should answer.
+- admin: visits, bookings, bills, letters, medical certificates, insurance.
+If unsure, choose the more serious label.`;
+
 export function workersModels(ai: WorkersAi, fallback: Models = stubModels): Models {
   return {
     ...fallback,
@@ -93,6 +102,21 @@ export function workersModels(ai: WorkersAi, fallback: Models = stubModels): Mod
         }
       } catch { /* the stub below answers, labelled fixture */ }
       return fallback.classifyReply(input);
+    },
+
+    async triageMessage(input) {
+      try {
+        const read = await chat(ai, INBOX, `Message: """${input.text}"""`);
+        const label = read?.label;
+        if (label === "urgent" || label === "clinical" || label === "admin") {
+          // Safety floor: the rule's urgent words always win over a milder model reading.
+          const rule = triageByRules(input.text);
+          if (rule.label === "urgent") return { ...rule, source: "model", model: TEXT_MODEL };
+          const reason = typeof read?.reason === "string" && read.reason.trim() ? read.reason.trim().slice(0, 80) : rule.reason;
+          return { label, reason, source: "model", model: TEXT_MODEL };
+        }
+      } catch { /* the stub below answers, labelled fixture */ }
+      return fallback.triageMessage(input);
     },
 
     async answerFromPlan(input) {
