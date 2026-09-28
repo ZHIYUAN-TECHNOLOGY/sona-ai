@@ -1,0 +1,294 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sona infrastructure",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1200,
+      580
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Phone app"
+        },
+        "backend": {
+          "label": "Server"
+        },
+        "database": {
+          "label": "Storage"
+        },
+        "messagebus": {
+          "label": "Live state"
+        },
+        "cloud": {
+          "label": "Model box (planned)"
+        },
+        "external": {
+          "label": "Outside service"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "clinician",
+      "type": "frontend",
+      "label": "Sona AI Assistant",
+      "sublabel": "clinician iPhone app",
+      "pos": [
+        40,
+        190
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "care",
+      "type": "frontend",
+      "label": "Sona Care",
+      "sublabel": "patient phone app",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Sona server",
+      "sublabel": "Worker \u00b7 Hono + oRPC",
+      "tag": "auth, roles, audit, crons",
+      "pos": [
+        380,
+        260
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "live",
+      "type": "messagebus",
+      "label": "Durable Objects",
+      "sublabel": "live sockets + encounters",
+      "pos": [
+        250,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "uploads",
+      "type": "database",
+      "label": "R2 uploads",
+      "sublabel": "audio + X-rays",
+      "pos": [
+        450,
+        60
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "push",
+      "type": "external",
+      "label": "Expo Push",
+      "sublabel": "alerts to Sona Care",
+      "pos": [
+        630,
+        60
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Neon Postgres",
+      "sublabel": "Singapore \u00b7 clinical data",
+      "pos": [
+        380,
+        440
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "brain",
+      "type": "cloud",
+      "label": "\u2460 Brain box",
+      "sublabel": "Gemma 4 + Laya",
+      "pos": [
+        980,
+        150
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "voice",
+      "type": "cloud",
+      "label": "\u2461 Voice box",
+      "sublabel": "ASR, TTS, OpenMed",
+      "pos": [
+        980,
+        290
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "xray",
+      "type": "cloud",
+      "label": "\u2462 X-ray box",
+      "sublabel": "MedGemma, wakes on use",
+      "pos": [
+        980,
+        430
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cloudflare \u00b7 deployed by Alchemy",
+      "wraps": [
+        "worker",
+        "live",
+        "uploads"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Baseten GPUs \u00b7 not hosted yet",
+      "wraps": [
+        "brain",
+        "voice",
+        "xray"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "clinician-api",
+      "from": "clinician",
+      "to": "worker",
+      "label": "HTTPS + socket",
+      "variant": "emphasis"
+    },
+    {
+      "id": "care-api",
+      "from": "care",
+      "to": "worker",
+      "label": "HTTPS + socket",
+      "variant": "emphasis"
+    },
+    {
+      "id": "worker-live",
+      "from": "worker",
+      "to": "live",
+      "label": "fan-out",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "worker-uploads",
+      "from": "worker",
+      "to": "uploads",
+      "label": "presign",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "worker-push",
+      "from": "worker",
+      "to": "push",
+      "label": "notify",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "worker-db",
+      "from": "worker",
+      "to": "db",
+      "label": "SQL",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "worker-brain",
+      "from": "worker",
+      "to": "brain",
+      "label": "model seam",
+      "variant": "dashed"
+    },
+    {
+      "id": "worker-voice",
+      "from": "worker",
+      "to": "voice",
+      "variant": "dashed"
+    },
+    {
+      "id": "worker-xray",
+      "from": "worker",
+      "to": "xray",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Runs today",
+      "items": [
+        "Worker, Durable Objects and R2 on Cloudflare",
+        "Neon Postgres in Singapore, synthetic data only",
+        "Models answer from authored fixtures"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Sona server owns",
+      "items": [
+        "Sign-in, roles and the access log",
+        "Demo clock, live updates, crons",
+        "Check-ins, bookings, discharge, claims"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Next on Baseten",
+      "items": [
+        "Three GPU boxes behind one model seam",
+        "OpenMed strips identity before any model"
+      ]
+    }
+  ]
+}

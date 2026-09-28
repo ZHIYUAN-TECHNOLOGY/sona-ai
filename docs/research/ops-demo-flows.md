@@ -144,7 +144,7 @@ Added 26 September 2026 after reviewing https://www.qure.ai/ (qXR, lung nodule m
 | Drafting discharge summaries, guarantee letters and appeals | Gemma 4 with json-render, already planned. No new model. |
 | Evidence answers | PubMed E-utilities, an embedding model (EmbeddingGemma or MedCPT) and a reranker. Gemma 4 synthesizes; the grade comes from rules on study type. |
 | Coding | MedGemma or Gemma 4 plus a terminology lookup. Use WHO ICD-10 and Malaysian casemix (MY-DRG), not ICD-10-CM or HCC. SNOMED is optional. |
-| De-identification before any cloud call | openmed de-identification models. Their 38 languages include Indonesian (`id`) but not Malay (`ms`), so Malaysian names and IC numbers need fine-tuning or added rules. |
+| De-identification before any cloud call | openmed de-identification models. As of 28 Sep 2026 they cover 42 languages including Chinese (`zh`) and Indonesian (`id`) but not Malay (`ms`); Malaysian IC numbers need our own validator and surrogate generator (see the [delivery plan](../delivery-plan.md)). |
 | Calculators and insurer criteria | Deterministic code, with criteria stored as data taken from panel insurer documents. No model. |
 
 ### Skip

@@ -216,7 +216,7 @@ iPhone ──(Better Auth session)──▶ Worker (Hono/oRPC)
   - VoxCPM2: 2.29B
   - Nemotron-3-Diarization: 99M (F32)
   - laya-multilingual: 322M (F16)
-  - OpenMed PII comes in 44M (SuperClinical-Small) through 434M (SuperClinical-Large).
+  - OpenMed PII: each language has a default model (`get_default_pii_model`); English runs the `privacy-filter` family, Chinese needs `OpenMed-PII-Chinese-BigMed-Large-560M` (560M). Checked against the OpenMed manifest on 28 Sep 2026.
 - **Gemma 4 quantised checkpoints on Hugging Face:**
   - Google's official QAT Q4_0: `google/gemma-4-26B-A4B-it-qat-q4_0-unquantized` and a GGUF build
   - `cyankiwi/gemma-4-26B-A4B-it-qat-AWQ-INT4` (AWQ, for vLLM)
@@ -235,7 +235,7 @@ iPhone ──(Better Auth session)──▶ Worker (Hono/oRPC)
   | ForcedAligner | BF16 | ~2.5 GB |
   | Nemotron diarization | F32 | ~1 GB |
   | Laya | F16 | ~1 GB |
-  | OpenMed Small | — | <0.5 GB |
+  | OpenMed PII (English + Chinese) | FP16 | ~1.5 GB (estimate: 560M Chinese model plus the English default) |
 
 - **Why not the T4:** Turing has no BF16 or FP8. Gemma-family models are prone to FP16 overflow, so the T4 is avoided for vLLM models.
 - **Why the L4:** it is Ada Lovelace and supports FP8.

@@ -69,7 +69,7 @@ Agreed request path (25 September 2026): iPhone, then a Cloudflare Agent (Agents
 | STT | Qwen3-ASR-1.7B plus Qwen3-ForcedAligner-0.6B, box ② | Manglish error rate, drug names, chunking |
 | Speaker attribution | Nemotron-3-Diarization, merged by word timestamps; Gemma labels doctor or patient | Speaker attribution on real Manglish recordings |
 | Voice output | VoxCPM2 (Apache 2.0, lists Malay and Mandarin) | Real-time speed on L4; code-switched pronunciation |
-| De-identification | OpenMed PII Small before any text reaches Gemma or MedGemma | Coverage of Malaysian identifiers (IC numbers use a rule-based validator) |
+| De-identification | OpenMed PII (the language's default model) before any text reaches Gemma or MedGemma, and before any row enters a training dataset | Malay has no OpenMed model; Malaysian IC numbers use our own validator and surrogate generator. A recall test that fails on any leaked identifier gates each release |
 | Drug evidence | A cited table of about 20–30 drugs (openFDA, RxNorm, FUKKM); anything outside it is "not covered" | FUKKM reuse permission |
 | Prescribing simulation | Bounded formulary, indication-specific regimen evidence and explicit prerequisite checks | Regimen completeness and missing-data handling |
 | Motion | Reanimated and Skia where appropriate | Performance on the demo iPhone |
