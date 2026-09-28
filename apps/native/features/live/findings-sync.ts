@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { useEncounter } from "@/features/encounter/store";
 import { fixtureFindings, followUpTask, type Finding } from "@/features/findings/model";
 import { api, errorText, requestId, useLive } from ".";
+import { useRole } from "./roles";
 import { refreshServerData } from "./server-day";
 
 /**
@@ -29,6 +30,7 @@ export function useFindings() {
   const fixtureRows = useSyncExternalStore(subscribe, () => fixture);
   const serverRows = useSyncExternalStore(subscribe, () => server);
   const [error, setError] = useState<string>();
+  const { can } = useRole();
   useEffect(() => {
     if (on) void refreshFindings().catch(e => setError(errorText(e)));
     else if (!wanted && server) { server = undefined; notify(); }
@@ -60,7 +62,7 @@ export function useFindings() {
     fixture = fixture.map(x => (x.id === f.id ? { ...x, status: "dismissed" as const } : x));
     notify();
   };
-  /** Live mode: reads the encounter's image for findings (the X-ray screen calls it on open). */
-  const detect = (encounterId: string) => { if (on) void refreshFindings(encounterId).catch(e => setError(errorText(e))); };
+  /** Live mode: reads the encounter's image for findings (the X-ray screen calls it on open); a role that may not only re-reads. */
+  const detect = (encounterId: string) => { if (on) void refreshFindings(can("findings.detect") ? encounterId : undefined).catch(e => setError(errorText(e))); };
   return { live: on, findings: on ? serverRows ?? [] : fixtureRows, error, track, dismiss, detect };
 }

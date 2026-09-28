@@ -11,7 +11,9 @@ import { palette, type } from "@/components/sona/theme";
 import { Icon, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
-import { api, useLive } from "@/features/live";
+import { ErrorLine } from "@/components/sona/parts";
+import { api, errorText, useLive } from "@/features/live";
+import { useRole } from "@/features/live/roles";
 import { openItems, shortRM, totalRisk, useSent } from "@/features/audit/model";
 import { FollowUpList } from "@/features/findings";
 import { useFindings } from "@/features/live/findings-sync";
@@ -77,10 +79,14 @@ export function WardScreen() {
     p.set(reducedMotion ? withTiming(0, { duration: 160 }, fin => { if (fin) scheduleOnRN(done); }) : withSpring(0, CLOSE, fin => { if (fin) scheduleOnRN(done); }));
   };
   const { on: live } = useLive();
+  const { can } = useRole();
+  const [assignError, setAssignError] = useState<{ id: string; owner: Owner; text: string }>();
   // Live: server beds carry the server's blocker IDs, so each owner is a real task on the server.
+  // A refusal puts the previous owner back and says why under the blocker, with Retry.
   const assign = (id: string, owner: Owner) => {
-    haptic("select"); setOwners(o => ({ ...o, [id]: o[id] === owner ? undefined : owner }));
-    if (serverBeds) void api.ward.assignOwner({ blockerId: id, owner }).catch(() => setOwners(o => ({ ...o, [id]: undefined })));
+    const before = owners[id];
+    haptic("select"); setAssignError(undefined); setOwners(o => ({ ...o, [id]: before === owner ? undefined : owner }));
+    if (serverBeds) void api.ward.assignOwner({ blockerId: id, owner }).catch(e => { setOwners(o => ({ ...o, [id]: before })); setAssignError({ id, owner, text: `Not assigned: ${errorText(e)}` }); });
   };
   // Live: owners already on the server (they are blocker-owner tasks) show on open, so a reload keeps them.
   useEffect(() => {
@@ -130,8 +136,8 @@ export function WardScreen() {
           {briefed && server.error && <Text style={{ ...type.caption, color: palette.red }}>{server.error} · showing the ward's own count</Text>}
         </Surface>
 
-        {/* Coding audit: the notes whose vague wording puts money at risk, one tap from the ward. */}
-        <Pressable accessibilityRole="button" accessibilityLabel={`Coding audit, ${audit.length} notes, ${shortRM(totalRisk(audit))} at risk`} onPress={() => router.push("/audit")}
+        {/* Coding audit: the notes whose vague wording puts money at risk, one tap from the ward (doctors and management). */}
+        {can("audit.list") && <Pressable accessibilityRole="button" accessibilityLabel={`Coding audit, ${audit.length} notes, ${shortRM(totalRisk(audit))} at risk`} onPress={() => router.push("/audit")}
           style={({ pressed }) => ({ ...surfaceStyle, padding: 14, flexDirection: "row", alignItems: "center", gap: 12, transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
           <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: audit.length ? "rgba(196,120,20,0.12)" : "rgba(15,110,102,0.1)" }}>
             <Icon name="doc.text.magnifyingglass" size={15} color={audit.length ? palette.amber : TEAL} />
@@ -141,7 +147,7 @@ export function WardScreen() {
             <Text style={{ ...type.caption, color: audit.length ? palette.amber : TEAL }}>{audit.length ? `${audit.length} notes · ${shortRM(totalRisk(audit))} at risk` : "All queries sent"}</Text>
           </View>
           <Icon name="chevron.right" size={12} color={palette.muted} />
-        </Pressable>
+        </Pressable>}
         <FollowUpList findings={findings} />
 
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
@@ -154,7 +160,7 @@ export function WardScreen() {
       </ScrollView>
     </Animated.View>
 
-    {open && current && <BedCard bed={current} from={open.from} to={{ x: 12, y: insets.top + 52, w: width - 24, h: height - insets.top - 52 - insets.bottom - 12 }} p={p} owners={owners} onAssign={assign} onClose={close}
+    {open && current && <BedCard bed={current} from={open.from} to={{ x: 12, y: insets.top + 52, w: width - 24, h: height - insets.top - 52 - insets.bottom - 12 }} p={p} owners={owners} onAssign={can("ward.assignOwner") ? assign : undefined} assignError={assignError} onClose={close}
       // The card closes behind the discharge screen, so coming back shows the ward (and the bed it freed), not a stale card.
       // Only a patient the app holds a visit for (Amelia) has a discharge screen to open.
       onDischarge={patients.some(x => x.id === current.patientId) ? () => { selectPatient(current.patientId!); router.push("/discharge"); p.set(0); setOpen(undefined); } : undefined} />}
@@ -183,9 +189,10 @@ function TileFace({ bed }: { bed: Bed }) {
   </View>;
 }
 
-function BedCard({ bed, from, to, p, owners, onAssign, onClose, onDischarge }: {
+function BedCard({ bed, from, to, p, owners, onAssign, assignError, onClose, onDischarge }: {
   bed: Bed; from: Rect; to: Rect; p: ReturnType<typeof useSharedValue<number>>; owners: Record<string, Owner | undefined>;
-  onAssign: (id: string, owner: Owner) => void; onClose: () => void; onDischarge?: () => void;
+  // Without onAssign (a role the server refuses) the owners read only.
+  onAssign?: (id: string, owner: Owner) => void; assignError?: { id: string; owner: Owner; text: string }; onClose: () => void; onDischarge?: () => void;
 }) {
   const { reducedMotion } = useAccessibleEffects();
   const frame = useAnimatedStyle(() => {
@@ -232,12 +239,13 @@ function BedCard({ bed, from, to, p, owners, onAssign, onClose, onDischarge }: {
                 <Text style={{ fontSize: 12, fontWeight: "700", color: palette.white }}>{owner}</Text>
               </Animated.View>}
             </View>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+            {onAssign && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
               {OWNERS.map(o => { const on = owner === o, suggested = !owner && SUGGESTED[b.kind] === o; return <Pressable key={o} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`Assign ${b.label} to ${o}`} onPress={() => onAssign(b.id, o)} hitSlop={4}
                 style={{ height: 32, paddingHorizontal: 12, borderRadius: 16, justifyContent: "center", borderWidth: 1, borderColor: suggested ? "rgba(36,91,204,0.35)" : "transparent", backgroundColor: on ? palette.blue : "rgba(20,28,40,0.05)" }}>
                 <Text style={{ fontSize: 13, fontWeight: "600", color: on ? palette.white : suggested ? palette.blue : palette.ink }}>{o}</Text>
               </Pressable>; })}
-            </View>
+            </View>}
+            {onAssign && assignError?.id === b.id && <ErrorLine text={assignError.text} onRetry={() => onAssign(b.id, assignError.owner)} />}
           </View>; })}
         </View>
 

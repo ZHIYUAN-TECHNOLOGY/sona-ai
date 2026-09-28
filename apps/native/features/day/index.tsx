@@ -15,7 +15,7 @@ import { useLive } from "@/features/live";
 import { withFindings } from "@/features/findings/model";
 import { useFindings } from "@/features/live/findings-sync";
 import { newestResult, serverDayPatients, serverVisit } from "@/features/live/day";
-import { acknowledgeResult, serverDayCount, useServerData, useServerDay, useVisitTasks } from "@/features/live/server-day";
+import { acknowledgeResult, serverDayCount, useAckFailed, useServerData, useServerDay, useVisitTasks } from "@/features/live/server-day";
 import { localDate } from "@/features/tasks/state";
 import { flaggedItems, flaggedTaskIds } from "@/features/check-ins/model";
 import { useCheckIns, useKeptFlags } from "@/features/check-ins/state";
@@ -222,8 +222,9 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const [offset, setOffset] = useState(0);
   // Live backend mode: the day's appointments, results and tasks come from the server (fixtures otherwise).
   const { on: live } = useLive();
-  const { role } = useRole();
+  const { role, can } = useRole();
   const managing = live && role === "management";
+  const ackFailed = useAckFailed();
   const server = useServerData();
   const tasksOf = useVisitTasks();
   const checkIns = useCheckIns();
@@ -234,10 +235,11 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const otherDay = useServerDay(live && offset !== 0 ? localDate(dayOf(offset)) : undefined);
   const patients = live ? serverDayPatients(fixturePatients, today ?? []) : fixturePatients;
   const result = live ? newestResult(server?.results ?? []) : undefined;
-  // Only real visits open; the authored schedule on other days is read-only. Opening a live result acknowledges it.
+  // Only real visits open; the authored schedule on other days is read-only. Opening a live result acknowledges it
+  // (doctors only); a refusal keeps the row, saying why (useAckFailed), and opening it again retries.
   const onOpen = (id: string | undefined, target: DayItem["open"]) => {
     if (!id) return;
-    if (result?.id && target.next === "briefing" && id === result.patientId) void acknowledgeResult(result.id).catch(() => {});
+    if (result?.id && can("results.acknowledge") && target.next === "briefing" && id === result.patientId) void acknowledgeResult(result.id).catch(() => {});
     open(id, target);
   };
   const { encounters } = useEncounter();
@@ -258,7 +260,8 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   // Sona Care booking requests are amber rows with Confirm / Decline (their tasks are not listed twice); one just decided stays a beat.
   const requests = bookingItems(server?.bookings ?? []);
   const bookings = [...requests, ...keptBookings.filter(k => !requests.some(r => r.id === k.id))];
-  const ranked = offset === 0 ? withFindings([...flaggedItems(checkIns, kept), ...bookings, ...rankDay(patients, encounters, now, undefined, live ? { result, tasksOf: p => tasksOf(p).filter(t => !flaggedTaskIds(checkIns).includes(t.id) && !t.id.startsWith("booking:")) } : undefined)], findings) : rankOtherDay(offset, schedule);
+  const ranked = offset === 0 ? withFindings([...flaggedItems(checkIns, kept), ...bookings, ...rankDay(patients, encounters, now, undefined, live ? { result, tasksOf: p => tasksOf(p).filter(t => !flaggedTaskIds(checkIns).includes(t.id) && !t.id.startsWith("booking:")) } : undefined)], findings)
+    .map(item => item.id === "result" && ackFailed && ackFailed.id === result?.id ? { ...item, reason: `Not acknowledged: ${ackFailed.error} · open to retry` } : item) : rankOtherDay(offset, schedule);
   const need = ranked.filter(item => item.tone !== "routine").length;
   const date = dayOf(offset);
   const [switched, setSwitched] = useState(false);
@@ -279,7 +282,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
               <Text style={{ fontSize: 17, fontWeight: "600", color: offset === 0 ? palette.blue : palette.ink }}>{offset === 0 ? "Today, " : ""}{date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}</Text>
               <View style={{ transform: [{ rotate: calendar ? "180deg" : "0deg" }], transitionProperty: "transform", transitionDuration: reducedMotion ? 0 : 240 } as never}><Icon name="chevron.down" size={12} color={offset === 0 ? palette.blue : palette.ink} /></View>
             </View>
-            <Text style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{offset === 0 ? `${need} need you · ` : offset < 0 ? "Looking back · " : "Coming up · "}{schedule.length} {schedule.length === 1 ? "visit" : "visits"}</Text>
+            <Text style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{offset === 0 ? (managing ? "" : `${need} need you · `) : offset < 0 ? "Looking back · " : "Coming up · "}{schedule.length} {schedule.length === 1 ? "visit" : "visits"}</Text>
           </Pressable>
           <DemoTimeLine />
         </View>

@@ -45,14 +45,14 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
         const state = editing ? "Editing this medicine" : entry.confirmed ? "Confirmed in simulation" : "Needs confirmation";
         return <Animated.View key={entry.id} layout={layout}>
           {index > 0 && <Hairline inset={74} />}
-          <Press disabled={Boolean(draft)} onPress={() => updateEncounter(value => ({ ...value, medicationDraft: { ...entry } }))}
-            accessibilityLabel={`${entry.name}. ${identity}. ${state}`} accessibilityHint={draft ? undefined : entry.confirmed ? "Correct this medicine" : "Confirm ingredient and formulation"} style={[row, draft && !editing && { opacity: 0.5 }]}>
+          <Press disabled={Boolean(draft) || !edit.allowed} onPress={() => updateEncounter(value => ({ ...value, medicationDraft: { ...entry } }))}
+            accessibilityLabel={`${entry.name}. ${identity}. ${state}`} accessibilityHint={draft || !edit.allowed ? undefined : entry.confirmed ? "Correct this medicine" : "Confirm ingredient and formulation"} style={[row, draft && !editing && { opacity: 0.5 }]}>
             <MedicineThumb look={resolveMedicine(entry.ingredient, entry.formulation)} confirmed={entry.confirmed} />
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: palette.ink }}>{entry.name}</Text>
               <Text style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{identity}</Text>
             </View>
-            {!draft && <Text style={{ fontSize: 14, fontWeight: "500", color: palette.blue }}>{entry.confirmed ? "Correct" : "Confirm"}</Text>}
+            {!draft && edit.allowed && <Text style={{ fontSize: 14, fontWeight: "500", color: palette.blue }}>{entry.confirmed ? "Correct" : "Confirm"}</Text>}
           </Press>
           {editing && draft && <FormReveal style={{ paddingHorizontal: 16, paddingBottom: 16, gap: 12 }}>
             <ClinicalField label="Recorded medicine name" value={draft.name} onChange={name => editDraft({ name })} />
@@ -69,14 +69,14 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
 
       <Animated.View layout={layout}>
         <Hairline />
-        <Press disabled={editProposed} onPress={() => updateEncounter(value => ({ ...value, proposedMedicineDraft: value.proposedMedicine ?? "Paracetamol" }))}
-          accessibilityLabel={`Proposed medicine, ${encounter?.proposedMedicine ?? "Paracetamol"}`} accessibilityHint={editProposed ? undefined : "Change proposed medicine"} style={row}>
+        <Press disabled={editProposed || !edit.allowed} onPress={() => updateEncounter(value => ({ ...value, proposedMedicineDraft: value.proposedMedicine ?? "Paracetamol" }))}
+          accessibilityLabel={`Proposed medicine, ${encounter?.proposedMedicine ?? "Paracetamol"}`} accessibilityHint={editProposed || !edit.allowed ? undefined : "Change proposed medicine"} style={row}>
           <MedicineThumb look={resolveMedicine(encounter?.proposedMedicine ?? "Paracetamol", "tablet")} confirmed badge={false} />
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={{ fontSize: 12, lineHeight: 17, fontWeight: "600", color: palette.muted }}>Proposed medicine</Text>
             <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: palette.ink }}>{encounter?.proposedMedicine ?? "Paracetamol"}</Text>
           </View>
-          {!editProposed && <Text style={{ fontSize: 14, fontWeight: "500", color: palette.blue }}>Change</Text>}
+          {!editProposed && edit.allowed && <Text style={{ fontSize: 14, fontWeight: "500", color: palette.blue }}>Change</Text>}
         </Press>
         {editProposed && <FormReveal style={{ paddingHorizontal: 16, paddingBottom: 16, gap: 12 }}>
           <ClinicalField label="Proposed medication" value={proposed} onChange={proposedMedicineDraft => updateEncounter(value => ({ ...value, proposedMedicineDraft }))} />

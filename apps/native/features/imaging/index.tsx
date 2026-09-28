@@ -17,6 +17,7 @@ import { useEncounter } from "@/features/encounter/store";
 import type { Encounter, FeatureProps } from "@/features/encounter/types";
 import { FindingsCard } from "@/features/findings";
 import { useFindings } from "@/features/live/findings-sync";
+import { useRole } from "@/features/live/roles";
 import { useXrayUpload } from "@/features/live/xray-upload";
 import { teachingImage, type TeachingImage } from "./fixture";
 import { ImageEdge, OriginalImageViewer, VIEWING } from "./viewer";
@@ -193,6 +194,7 @@ export function XrayScreen() {
   const server = useXrayUpload();
   // Demo flow 6: findings beyond the question asked, marked on the image and listed under it.
   const found = useFindings();
+  const role = useRole();
   const findings = found.findings.filter(f => f.encounterId === patient?.encounterId);
   const markers = useMemo(() => findings.filter(f => f.status !== "dismissed").map(f => ({ id: f.id, n: findings.indexOf(f) + 1, x: f.location.x, y: f.location.y, label: f.label, box: f.location.box })), [findings.map(f => `${f.id}:${f.status}`).join()]); // eslint-disable-line react-hooks/exhaustive-deps
   // The finding under the torch; one tap on a marker or its row, and a dismissed finding lets go of it.
@@ -237,7 +239,7 @@ export function XrayScreen() {
     <Identity>{`${patient.name} · saved revision ${savedCard?.revision} · ${attachment ? "local image, no model inference" : "reference example, not this patient"}`}</Identity>
     {/* The visit's findings travel with its film, so a saved answer shows the same marks as the live view. */}
     {image ? <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} /> : <Notice>No image was attached when this response was created.</Notice>}
-    {image && <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={f => void found.track(f)} onDismiss={(f, reason) => void found.dismiss(f, reason)} />}
+    {image && <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={role.can("findings.track") ? f => void found.track(f) : undefined} onDismiss={role.can("findings.dismiss") ? (f, reason) => void found.dismiss(f, reason) : undefined} />}
     <AnalysisDetails snapshot={savedCard?.imagingSnapshot} />
   </ViewerPage>;
 
@@ -269,7 +271,7 @@ export function XrayScreen() {
     <Identity>{attachment ? `${patient.name} · local teaching image` : "Reference example · not this patient"}</Identity>
     {pickerError && <Notice warning>{pickerError}</Notice>}
     <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} />
-    <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={f => void found.track(f)} onDismiss={(f, reason) => void found.dismiss(f, reason)} />
+    <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={role.can("findings.track") ? f => void found.track(f) : undefined} onDismiss={role.can("findings.dismiss") ? (f, reason) => void found.dismiss(f, reason) : undefined} />
     {/* The latest analysis sits right under the image: one page, no separate details screen. */}
     <AnalysisDetails snapshot={encounter?.cards.findLast(card => card.kind === "xray" && card.imagingSnapshot)?.imagingSnapshot} />
 

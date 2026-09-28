@@ -7,12 +7,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import { scheduleOnRN } from "react-native-worklets";
 import { LAYOUT } from "@/components/sona/motion";
+import { ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Icon, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
-import { api, useLive } from "@/features/live";
+import { api, errorText, useLive } from "@/features/live";
+import { useRole } from "@/features/live/roles";
 import { formatRM, markSent, openItems, totalRisk, useSent, type AuditItem } from "./model";
 
 /*
@@ -32,20 +34,28 @@ export function AuditScreen() {
   const insets = useSafeAreaInsets();
   const sent = useSent();
   const { on: live } = useLive();
+  const role = useRole();
+  // Doctors and management only (audit.list); other roles are told why instead of seeing RM 0.
+  const refused = live && !role.can("audit.list") ? role.why("audit.list") : undefined;
   const [serverItems, setServerItems] = useState<AuditItem[]>();
+  const [loadError, setLoadError] = useState<string>();
+  const [attempt, setAttempt] = useState(0);
+  // A failed query send, per item: the row stays with the reason and Retry, never "sent".
+  const [failed, setFailed] = useState<Record<string, string>>({});
   // Live: run the audit now and read the server's open items (lab-only gaps until the coding model lands).
   // Once per visit to the screen (the patient list is only read for names, so it is not a dependency).
   const nameOf = useRef((id: string) => patients.find(p => p.id === id)?.name ?? id);
   nameOf.current = id => patients.find(p => p.id === id)?.name ?? id;
   useEffect(() => {
-    if (!live) { setServerItems(undefined); return; }
+    if (!live || refused) { setServerItems(undefined); return; }
     let alive = true;
+    setLoadError(undefined);
     api.audit.run().then(() => api.audit.list()).then(rows => alive && setServerItems(rows.map(r => ({
       id: r.id, bed: "", patient: nameOf.current(r.patientId), doctor: r.doctor, gap: r.gap,
       from: r.fromCode ?? "—", to: r.toCode, risk: Math.round(r.riskCents / 100), query: r.query,
-    })))).catch(() => alive && setServerItems([]));
+    })))).catch(e => alive && setLoadError(errorText(e)));
     return () => { alive = false; };
-  }, [live]);
+  }, [live, refused, attempt]);
   // Live never shows the authored list: empty until the server answers.
   const items = live ? (serverItems ?? []).filter(i => !sent.has(i.id)) : openItems(encounters, sent);
   const [sending, setSending] = useState<string[]>([]);
@@ -54,14 +64,22 @@ export function AuditScreen() {
   const risk = totalRisk(items.filter(i => !sending.includes(i.id)));
   const sentCount = sent.size + sending.length;
 
-  const send = (item: AuditItem) => {
-    if (sending.includes(item.id)) return;
+  const [asking, setAsking] = useState<string[]>([]);
+  // The row says who it went to, then folds away; live, only once the server has taken the query.
+  const confirmSent = (item: AuditItem) => {
     haptic("success");
     setSending(list => [...list, item.id]);
     if (!reducedMotion) badge.set(withSequence(withTiming(0.75, { duration: 80 }), withSpring(1.25, { duration: 140, dampingRatio: 0.5 }), withSpring(1, { duration: 120, dampingRatio: 1 })));
-    if (live) void api.audit.query({ itemId: item.id }).catch(() => {});
-    // The row says who it went to, then folds away.
     setTimeout(() => { markSent(item.id); setSending(list => list.filter(id => id !== item.id)); }, reducedMotion ? 0 : 650);
+  };
+  const send = (item: AuditItem) => {
+    if (sending.includes(item.id) || asking.includes(item.id)) return;
+    setFailed(({ [item.id]: _, ...rest }) => rest);
+    if (!live) { confirmSent(item); return; }
+    setAsking(list => [...list, item.id]);
+    api.audit.query({ itemId: item.id })
+      .then(() => confirmSent(item), e => { haptic("warning"); setFailed(f => ({ ...f, [item.id]: `Not sent: ${errorText(e)}` })); })
+      .finally(() => setAsking(list => list.filter(id => id !== item.id)));
   };
   const badgeStyle = useAnimatedStyle(() => ({ transform: [{ scale: badge.value }] }));
 
@@ -74,14 +92,16 @@ export function AuditScreen() {
           <Text style={{ fontSize: 12, fontWeight: "700", color: sentCount ? TEAL : palette.muted, fontVariant: ["tabular-nums"] }}>Queries sent · {sentCount}</Text>
         </Animated.View>
       </View>
-      <Ticker text={formatRM(risk)} />
-      <Text style={{ ...type.subhead, color: palette.muted }}>{live && !serverItems ? "Running the audit on the server…" : items.length ? `at risk across ${items.length - sending.length} under-specified ${items.length - sending.length === 1 ? "note" : "notes"}` : "Nothing left at risk. Every query is out."}</Text>
+      {refused ? <Text style={{ ...type.subhead, color: palette.muted }}>{refused}</Text>
+        : loadError ? <ErrorLine text={`The audit didn't run: ${loadError}`} onRetry={() => setAttempt(a => a + 1)} />
+        : <><Ticker text={formatRM(risk)} />
+      <Text style={{ ...type.subhead, color: palette.muted }}>{live && !serverItems ? "Running the audit on the server…" : items.length ? `at risk across ${items.length - sending.length} under-specified ${items.length - sending.length === 1 ? "note" : "notes"}` : "Nothing left at risk. Every query is out."}</Text></>}
     </Surface>
 
     {items.length > 0 && <Text style={{ ...type.caption, color: palette.muted }}>Swipe right to send the drafted query, or tap to read it first.</Text>}
     <View style={{ gap: 10 }}>
       {items.map(item => <Animated.View key={item.id} layout={reducedMotion ? undefined : LAYOUT} exiting={reducedMotion ? undefined : FadeOut.duration(160)}>
-        <Row item={item} sending={sending.includes(item.id)} open={open === item.id} onToggle={() => setOpen(o => (o === item.id ? undefined : item.id))} onSend={() => send(item)} />
+        <Row item={item} sending={sending.includes(item.id)} asking={asking.includes(item.id)} error={failed[item.id]} open={open === item.id} onToggle={() => setOpen(o => (o === item.id ? undefined : item.id))} onSend={() => send(item)} />
       </Animated.View>)}
     </View>
   </ScrollView>;
@@ -106,10 +126,12 @@ function Digit({ d }: { d: number }) {
   </View>;
 }
 
-function Row({ item, sending, open, onToggle, onSend }: { item: AuditItem; sending: boolean; open: boolean; onToggle: () => void; onSend: () => void }) {
+function Row({ item, sending, asking, error, open, onToggle, onSend }: { item: AuditItem; sending: boolean; asking: boolean; error?: string; open: boolean; onToggle: () => void; onSend: () => void }) {
   const { reducedMotion } = useAccessibleEffects();
   const x = useSharedValue(0);
-  const pan = Gesture.Pan().activeOffsetX(10).failOffsetX(-10).failOffsetY([-12, 12]).enabled(!sending)
+  // A refused send slides the row back, so it can be swiped again.
+  useEffect(() => { if (error) x.set(withSpring(0, { duration: 300, dampingRatio: 0.7 })); }, [error, x]);
+  const pan = Gesture.Pan().activeOffsetX(10).failOffsetX(-10).failOffsetY([-12, 12]).enabled(!sending && !asking)
     .onUpdate(e => { x.set(Math.max(0, e.translationX)); })
     .onEnd(() => {
       if (x.value > THRESHOLD) { x.set(withSpring(THRESHOLD + 20, { duration: 200, dampingRatio: 0.8 })); scheduleOnRN(onSend); }
@@ -126,7 +148,7 @@ function Row({ item, sending, open, onToggle, onSend }: { item: AuditItem; sendi
     </Animated.View>
     <GestureDetector gesture={pan}>
       <Animated.View style={slide}>
-        <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={`${item.bed}, ${item.patient}. ${item.gap}. ${formatRM(item.risk)} at risk.`}
+        <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={`${item.bed}, ${item.patient}. ${item.gap}. ${formatRM(item.risk)} at risk.${error ? ` ${error}.` : ""}`}
           accessibilityActions={[{ name: "activate" }, { name: "send", label: `Send query to ${item.doctor}` }]} onAccessibilityAction={e => (e.nativeEvent.actionName === "send" ? onSend() : onToggle())}
           onPress={onToggle} style={{ ...surfaceStyle, borderRadius: 22, padding: 14, gap: 10 }}>
           <View style={{ flexDirection: "row", gap: 12 }}>
@@ -145,9 +167,10 @@ function Row({ item, sending, open, onToggle, onSend }: { item: AuditItem; sendi
                 <Text style={{ ...type.footnote, fontWeight: "700", color: palette.amber, fontVariant: ["tabular-nums"] }}>{formatRM(item.risk)}</Text>
               </View>
               <MarkedText selectable={false} text={item.gap} style={{ ...type.footnote, color: palette.ink }} />
-              <Text style={{ ...type.caption, color: palette.muted }}>{sending ? `Sent to ${item.doctor}` : [item.bed, item.doctor, `${item.from} → ${item.to}`].filter(Boolean).join(" · ")}</Text>
+              <Text style={{ ...type.caption, color: palette.muted }}>{sending ? `Sent to ${item.doctor}` : asking ? `Sending to ${item.doctor}…` : [item.bed, item.doctor, `${item.from} → ${item.to}`].filter(Boolean).join(" · ")}</Text>
             </View>
           </View>
+          {error && <View style={{ paddingLeft: 38 }}><ErrorLine text={error} onRetry={onSend} /></View>}
           {open && !sending && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ gap: 10, paddingLeft: 38 }}>
             <Text selectable style={{ ...type.footnote, color: palette.ink, padding: 10, borderRadius: 14, overflow: "hidden", backgroundColor: "rgba(20,28,40,0.04)" }}>{item.query}</Text>
             <Pressable accessibilityRole="button" accessibilityLabel={`Send query to ${item.doctor}`} onPress={onSend}

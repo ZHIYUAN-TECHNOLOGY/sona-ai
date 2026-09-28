@@ -89,6 +89,16 @@ export function TextLink({ label, onPress, disabled = false }: { label: string; 
   </View>;
 }
 
+/** A failed write or read, said plainly in red, with Retry beside it. Never paired with a success line. */
+export function ErrorLine({ text, onRetry, retryLabel = "Retry" }: { text: string; onRetry?: () => void; retryLabel?: string }) {
+  return <View accessibilityLiveRegion="polite" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+    <Text selectable style={{ flex: 1, fontSize: 13, lineHeight: 18, color: palette.red }}>{text}</Text>
+    {onRetry && <Press onPress={onRetry} accessibilityLabel={`${retryLabel}. ${text}`} scale={0.96} style={{ minHeight: 44, justifyContent: "center" }}>
+      <Text style={{ fontSize: 15, fontWeight: "600", color: palette.blue }}>{retryLabel}</Text>
+    </Press>}
+  </View>;
+}
+
 /** Leading glyph for an interaction pair: amber triangle for a sourced alert, muted for no conclusion. */
 export function PairGlyph({ status }: { status: "alert" | "unresolved" | "uncovered" }) {
   const alert = status === "alert";

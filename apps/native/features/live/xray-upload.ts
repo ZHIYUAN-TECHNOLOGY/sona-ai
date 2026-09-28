@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api, errorText, useLive } from ".";
+import { useRole } from "./roles";
 
 export type XrayUpload = { uri: string; state: "uploading" | "uploaded" | "failed"; key?: string; error?: string };
 
@@ -9,6 +10,7 @@ export type XrayUpload = { uri: string; state: "uploading" | "uploaded" | "faile
  */
 export function useXrayUpload() {
   const { on } = useLive();
+  const { can } = useRole();
   const [upload, setUpload] = useState<XrayUpload>();
   const send = async (encounterId: string, asset: { uri: string; base64?: string | null; mimeType?: string | null }) => {
     if (!asset.base64) { setUpload({ uri: asset.uri, state: "failed", error: "The image could not be read for upload" }); return; }
@@ -18,5 +20,6 @@ export function useXrayUpload() {
       setUpload({ uri: asset.uri, state: "uploaded", key });
     } catch (e) { setUpload({ uri: asset.uri, state: "failed", error: errorText(e) }); }
   };
-  return { live: on, upload, send };
+  // A role the server refuses keeps the image on this device, as fixture mode does.
+  return { live: on && can("xray.upload"), upload, send };
 }

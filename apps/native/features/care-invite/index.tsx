@@ -5,6 +5,7 @@ import Svg, { Path } from "react-native-svg";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { api, errorText, useLive } from "@/features/live";
+import { useRole } from "@/features/live/roles";
 
 /**
  * The Sona Care invite on the discharge receipt: a QR of the patient's one-time join link and the
@@ -12,7 +13,10 @@ import { api, errorText, useLive } from "@/features/live";
  * Live mode only; the code lives on the server.
  */
 export function CareInvite({ encounterId }: { encounterId: string }) {
-  const { on } = useLive();
+  // Only a doctor or a nurse gives a code (care.code); other roles see no invite.
+  const { on: live } = useLive();
+  const role = useRole();
+  const on = live && role.can("care.code");
   const [invite, setInvite] = useState<{ code: string; link: string; joined: boolean }>();
   const [error, setError] = useState<string>();
   useEffect(() => {
