@@ -25,11 +25,13 @@ function fakeExpo(tickets: (messages: { to: string }[]) => unknown[] = m => m.ma
   return { sent, fetch };
 }
 
-test("times read as Kuala Lumpur, in English or Malay", () => {
+test("times read as Kuala Lumpur, in English, Malay or Chinese", () => {
   const at = new Date("2026-10-01T09:00:00+08:00");
   expect(when(at, "en")).toBe("Thu 1 Oct, 9:00 AM");
   expect(when(at, "ms")).toBe("Kha 1 Okt, 9:00 PG");
+  expect(when(new Date("2026-10-01T14:30:00+08:00"), "zh")).toBe("10月1日（周四）下午2:30");
   expect(pushFor({ kind: "reply" }, "en")).toEqual({ title: "Messages", body: "Your care team replied", data: { url: "sona-care:///messages" } });
+  expect(pushFor({ kind: "booked", at }, "zh")).toEqual({ title: "已预约", body: "医生为您预约了复诊 · 10月1日（周四）上午9:00", data: { url: "sona-care:///follow-ups" } });
 });
 
 test("notifyPatient sends one batch to the patient's phones, forgets unregistered ones and never throws", async () => {

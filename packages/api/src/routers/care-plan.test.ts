@@ -51,7 +51,41 @@ test("after discharge Amelia reads her plan in plain words, the leaflet first in
   expect(plan.checkIns).toEqual([{ day: 2, date: new Date("2026-09-28T10:00:00+08:00") }, { day: 7, date: new Date("2026-10-03T10:00:00+08:00") }]);
 });
 
-test("follow-ups list Amelia's own, earliest first, once each, and turn due soon then overdue as the days pass", async () => {
+test("the plan and follow-ups come in the language Sona Care asks for, English per string where a word is missing", async () => {
+  const { amelia, discharge } = await world();
+  await discharge("visit-1042", { followUp: "2w", language: "ms", dischargedAt: "2026-09-26T07:40:00.000Z" });
+  const plan = await amelia.care.discharge({ lang: "zh" });
+  if (plan.status !== "discharged") throw new Error("expected a discharged plan");
+  expect(plan.followUp?.title).toBe("门诊复诊");
+  expect(plan.warningSigns).toContain("嘴唇或指尖发紫");
+  expect(plan.medicines.changed[0]).toMatchObject({ name: "Azithromycin", line: "现在改为每天一片，再服两天", take: "每次一片，饭前饭后都可以" });
+  expect((await amelia.care.followUps({ lang: "ms" })).map(f => [f.title, f.why])).toEqual([
+    ["Lawatan klinik", "Temu janji yang telah ditempah"], ["Semakan klinik", "Untuk melihat keadaan anda selepas radang paru-paru"],
+  ]);
+  // No input keeps the English words existing callers read.
+  expect((await amelia.care.followUps()).map(f => f.title)).toEqual(["Clinic visit", "Clinic review"]);
+});
+
+test("a visit a doctor saw the patient on reads attended the next day; one nobody saw reads missed, never before its day ends", async () => {
+  const { db, clock, amelia, as, discharge } = await world();
+  await addClinician(db, "nurse-mei", undefined, "nurse");
+  await discharge("visit-1042", { followUp: "2w", language: "en", dischargedAt: "2026-09-26T07:40:00.000Z" });
+  const status = async () => Object.fromEntries((await amelia.care.followUps()).map(f => [f.short, f.status]));
+  const at = (iso: string) => { clock.now = new Date(iso); };
+  at("2026-10-10T09:00:00+08:00"); // the review day: a nurse opens her visit, which is not the review
+  await as("nurse-mei").encounter.get({ encounterId: "visit-1042" });
+  at("2026-10-10T23:30:00+08:00");
+  expect(await status()).toEqual({ "Clinic review": "due-soon" });
+  at("2026-10-11T08:00:00+08:00"); // the day has ended; the clinic visit on her discharge day, before she left, is gone
+  expect(await status()).toEqual({ "Clinic review": "missed" });
+  at("2026-10-10T10:00:00+08:00"); // the doctor sees her on the day
+  await as("dr-aisyah").encounter.get({ encounterId: "visit-1042" });
+  expect(await status()).toEqual({ "Clinic review": "due-soon" });
+  at("2026-10-11T08:00:00+08:00");
+  expect(await status()).toEqual({ "Clinic review": "attended" });
+});
+
+test("follow-ups list Amelia's own, earliest first, once each, and turn due soon then missed as the days pass", async () => {
   const { db, clock, doctor, amelia, discharge } = await world();
   await discharge("visit-1042", { followUp: "2w", language: "ms", dischargedAt: "2026-09-26T07:40:00.000Z" });
   const [nodule] = await doctor.findings.detect({ encounterId: "visit-1042" }); // the heart-size finding stays open, so it is not the patient's yet
@@ -65,10 +99,10 @@ test("follow-ups list Amelia's own, earliest first, once each, and turn due soon
   // A tracked finding whose recall is missing still shows, from its due date.
   await db.delete(appointments).where(eq(appointments.id, `recall:${nodule!.id}`));
   expect((await view()).map(f => f[0])).toEqual(["Clinic visit", "Clinic review", "CT scan"]);
-  clock.now = new Date("2026-10-05T09:00:00+08:00"); // the clinic visit has happened
+  clock.now = new Date("2026-10-05T09:00:00+08:00"); // the clinic visit was before she went home, so it is gone
   expect((await view()).map(f => [f[0], f[4], f[5]])).toEqual([["Clinic review", 5, "due-soon"], ["CT scan", 81, "upcoming"]]);
-  clock.now = new Date("2026-12-26T09:00:00+08:00");
-  expect((await view()).map(f => [f[0], f[4], f[5]])).toEqual([["Clinic review", -77, "overdue"], ["CT scan", -1, "overdue"]]);
+  clock.now = new Date("2026-12-26T09:00:00+08:00"); // no doctor opened her visit on either day
+  expect((await view()).map(f => [f[0], f[4], f[5]])).toEqual([["Clinic review", -77, "missed"], ["CT scan", -1, "missed"]]);
 });
 
 test("a clinician or an unlinked account cannot read a patient's plan", async () => {

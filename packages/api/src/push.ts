@@ -51,14 +51,16 @@ export type PatientNews =
   | { kind: "reply" }
   | { kind: "confirmed"; doctor: string; at: Date }
   | { kind: "declined"; doctor: string; at: Date };
-type Lang = "en" | "ms";
+type Lang = "en" | "ms" | "zh";
 
 const DAYS = { en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], ms: ["Ahd", "Isn", "Sel", "Rab", "Kha", "Jum", "Sab"] };
 const MONTHS = { en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], ms: ["Jan", "Feb", "Mac", "Apr", "Mei", "Jun", "Jul", "Ogo", "Sep", "Okt", "Nov", "Dis"] };
-/** "Thu 1 Oct, 9:00 AM" in Kuala Lumpur, spelled out rather than via Intl (Worker and Bun ICU differ). */
+const ZH_DAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+/** "Thu 1 Oct, 9:00 AM" ("10月1日（周四）上午9:00") in Kuala Lumpur, spelled out rather than via Intl (Worker and Bun ICU differ). */
 export function when(at: Date, lang: Lang) {
   const t = new Date(at.getTime() + 8 * 3600_000);
   const h = t.getUTCHours(), m = String(t.getUTCMinutes()).padStart(2, "0");
+  if (lang === "zh") return `${t.getUTCMonth() + 1}月${t.getUTCDate()}日（${ZH_DAYS[t.getUTCDay()]}）${h < 12 ? "上午" : "下午"}${h % 12 || 12}:${m}`;
   const half = lang === "ms" ? (h < 12 ? "PG" : "PTG") : h < 12 ? "AM" : "PM";
   return `${DAYS[lang][t.getUTCDay()]} ${t.getUTCDate()} ${MONTHS[lang][t.getUTCMonth()]}, ${h % 12 || 12}:${m} ${half}`;
 }
@@ -80,6 +82,14 @@ const COPY: Record<Lang, { [K in PatientNews["kind"]]: (n: Extract<PatientNews, 
     confirmed: n => ({ title: "Lawatan disahkan", body: `${n.doctor} akan berjumpa anda · ${when(n.at, "ms")}` }),
     declined: n => ({ title: "Pilih masa lain", body: `${n.doctor} tidak dapat berjumpa anda ${when(n.at, "ms")}. Pilih masa lain dalam Sona Care` }),
   },
+  zh: {
+    "check-in": n => ({ title: "回访", body: `今天感觉怎么样？您第${n.day}天的回访已经准备好了` }),
+    booked: n => ({ title: "已预约", body: `医生为您预约了复诊 · ${when(n.at, "zh")}` }),
+    added: n => ({ title: "您的就诊", body: `您的就诊加了一项${n.test} · ${when(n.at, "zh")}` }),
+    reply: () => ({ title: "消息", body: "医护团队回复了您" }),
+    confirmed: n => ({ title: "就诊已确认", body: `${n.doctor}会为您看诊 · ${when(n.at, "zh")}` }),
+    declined: n => ({ title: "请另选时间", body: `${n.doctor} ${when(n.at, "zh")}无法为您看诊。请在 Sona Care 另选时间` }),
+  },
 };
 const URL_OF: Record<PatientNews["kind"], string> = { "check-in": "sona-care:///check-ins", booked: "sona-care:///follow-ups", added: "sona-care:///follow-ups", reply: "sona-care:///messages", confirmed: "sona-care:///follow-ups", declined: "sona-care:///follow-ups" };
 
@@ -87,11 +97,11 @@ export function pushFor(news: PatientNews, lang: Lang): Push {
   return { ...(COPY[lang][news.kind] as (n: PatientNews) => Omit<Push, "data">)(news), data: { url: URL_OF[news.kind] } };
 }
 
-/** Tells the patient's phones, in their discharge language (Malay if chosen, else English). Never throws. */
+/** Tells the patient's phones, in their discharge language (English until they are discharged). Never throws. */
 export async function tellPatient(context: PushContext, hospitalId: string, patientId: string, news: PatientNews) {
   try {
-    const lang = (await lastDischarge(context.db, hospitalId, patientId))?.language === "ms" ? "ms" : "en";
-    await notifyPatient(context, hospitalId, patientId, pushFor(news.kind === "added" ? { ...news, test: appointmentWords(news.test).short } : news, lang));
+    const lang = (await lastDischarge(context.db, hospitalId, patientId))?.language ?? "en";
+    await notifyPatient(context, hospitalId, patientId, pushFor(news.kind === "added" ? { ...news, test: appointmentWords(news.test, undefined, lang).short } : news, lang));
   } catch (error) {
     console.error("push failed", error);
   }
