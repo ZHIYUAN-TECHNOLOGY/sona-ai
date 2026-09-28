@@ -8,13 +8,12 @@ import Svg, { Path } from "react-native-svg";
 import { DoctorAvatar } from "@/features/doctors/avatar";
 import { BookingSheet } from "@/features/doctors/booking";
 import { dayParts, nameLines, slotOf, type ListedDoctor, type Slot } from "@/features/doctors/data";
-import { errorText } from "@/features/errors";
 import { listOf } from "@/features/discharge/lines";
 import { tFor, useLang } from "@/lib/i18n";
 import { useMe } from "@/features/me";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { AccentText, BackButton, Card, ICON, pillStyle, surfaceStyle } from "@/lib/ui";
+import { AccentText, BackButton, Card, ICON, pillStyle, surfaceStyle, LoadError } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
 const STAR = "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21L12 17.77L5.82 21L7 14.14l-5-4.87l6.91-1.01z";
@@ -36,11 +35,13 @@ export default function DoctorScreen() {
   const { state } = useMe();
   const lang = useLang(), t = tFor(lang);
   // The doctor and their free slots from the hospital's directory; a live change (a slot taken) re-reads it.
-  const { data: doctor, error, isLoading } = useQuery({ ...orpc.care.doctors.get.queryOptions({ input: { id: id ?? "" } }), enabled: state === "joined" && Boolean(id) });
+  const query = useQuery({ ...orpc.care.doctors.get.queryOptions({ input: { id: id ?? "" } }), enabled: state === "joined" && Boolean(id) });
+  const { data: doctor, error, isLoading } = query;
   if (!doctor) return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, gap: 16 }}>
     <BackButton />
     {isLoading ? <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} />
-      : <Card><Text selectable style={{ ...type.body, color: palette.muted }}>{error ? errorText(error, lang) : t("doc.notFound")} {t("doc.pickAgain")}</Text></Card>}
+      : error ? <LoadError query={query} />
+      : <Card><Text selectable style={{ ...type.body, color: palette.muted }}>{t("doc.notFound")} {t("doc.pickAgain")}</Text></Card>}
   </ScrollView>;
   return <Details key={doctor.id} doctor={doctor} />;
 }

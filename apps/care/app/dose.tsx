@@ -5,6 +5,7 @@ import Animated, { FadeInDown, SlideInDown, useReducedMotion, withSpring, withTi
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { scheduleLine } from "@/features/discharge/lines";
+import { useDischarge } from "@/features/discharge/row";
 import { markTaken, Pill, rise, snooze, useNextDose, useNow, useSnooze } from "@/features/doses";
 import { clock, dosesToday, early, isLate, untilLine, weekOf, whenWords, type DayDose, type Dose, type ScheduledMed } from "@/features/doses/model";
 import { foodOf, insight, weekStrip } from "@/features/doses/strip";
@@ -16,7 +17,7 @@ import { Sunbeam } from "@/lib/halftone";
 import { tFor, useLang } from "@/lib/i18n";
 import { Text } from "@/lib/text";
 import { motion, palette, space, type } from "@/lib/theme";
-import { Button, Card, CircleButton, HoldButton, ICON, pillStyle, Section, surfaceStyle, Title } from "@/lib/ui";
+import { Button, Card, CircleButton, HoldButton, ICON, LoadError, pillStyle, Section, surfaceStyle, Title } from "@/lib/ui";
 import { now as clockNow } from "@/lib/clock";
 
 const CHECK = "M20 6 9 17l-5-5";
@@ -36,6 +37,7 @@ export default function DoseScreen() {
   const now = useNow();
   const lang = useLang(), t = tFor(lang);
   const { plan, dose, taken = [], meds } = useNextDose(now);
+  const discharge = useDischarge();
   const reduced = useReducedMotion();
   const { fontScale } = useWindowDimensions();
   const [first] = useState(() => !shown);
@@ -52,7 +54,7 @@ export default function DoseScreen() {
       {out && meds.some(m => m.at?.length) && <Week days={weekStrip(weekOf(meds, out, taken, now), now, lang)} />}
     </Animated.View>
 
-    {!plan ? <ActivityIndicator color={palette.muted} />
+    {!plan ? (discharge.error ? <LoadError query={discharge} /> : <ActivityIndicator color={palette.muted} />)
       : !out ? <Card>
         <Text style={{ ...type.headline, color: palette.ink }}>{t("dose.notHomeTitle")}</Text>
         <Text style={{ ...type.body, color: palette.muted }}>{t("dose.notHomeLine")}</Text>

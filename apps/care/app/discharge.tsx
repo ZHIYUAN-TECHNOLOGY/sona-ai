@@ -2,7 +2,6 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import Animated, { useReducedMotion } from "react-native-reanimated";
-import { errorText } from "@/features/errors";
 import { changeOf, homeLine, listOf, scheduleLine, takeLine, type Discharged, type Group, type Med } from "@/features/discharge/lines";
 import "@/features/doses/strings";
 import { tFor, useLang } from "@/lib/i18n";
@@ -12,7 +11,7 @@ import { dayLabel } from "@/features/follow-ups/lines";
 import { daysHome } from "@/features/home";
 import { Text } from "@/lib/text";
 import { motion, palette, type } from "@/lib/theme";
-import { BackButton, Card, pillStyle, Row, Section, surfaceStyle, Title } from "@/lib/ui";
+import { BackButton, Card, pillStyle, Row, Section, surfaceStyle, Title, LoadError } from "@/lib/ui";
 
 const GROUPS: Group[] = ["new", "changed", "continue", "stopped"];
 const open = (name: string) => router.push({ pathname: "/medicine", params: { name } });
@@ -24,7 +23,7 @@ const open = (name: string) => router.push({ pathname: "/medicine", params: { na
  * 40 ms ease-out stagger; still under Reduce Motion.
  */
 export default function DischargeScreen() {
-  const { data, error, isLoading } = useDischarge();
+  const query = useDischarge(), { data, error, isLoading } = query;
   const reduced = useReducedMotion();
   const lang = useLang(), t = tFor(lang);
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingTop: 8, paddingBottom: 48, gap: 16 }}>
@@ -33,7 +32,7 @@ export default function DischargeScreen() {
       <Title greeting={t("dis.titleLight")} accent={t("dis.titleBold")} line={data?.status === "discharged" ? takeLine(data.medicines, homeLine(daysHome(data.dischargedAt), lang), lang) : undefined} />
     </Animated.View>
     {isLoading && <ActivityIndicator color={palette.muted} />}
-    {error && <Text style={{ ...type.body, color: palette.red }}>{errorText(error, lang)}</Text>}
+    {!data && error && <LoadError query={query} />}
     {data?.status === "in-hospital" && <Card feature>
       <Text style={{ ...type.headline, color: palette.ink }}>{t("dis.inHospital")}</Text>
       <Text style={{ ...type.body, color: palette.muted }}>{t("dis.inHospitalLine")}</Text>

@@ -1,5 +1,4 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
-import { shortDate } from "@sona-ai/domain/findings";
 import { formatDate, tFor, type Lang } from "@/lib/i18n";
 import { statusOf, type CheckIn } from "../check-ins/model";
 import { clock, dueNow, isLate, untilLine, type DayDose } from "../doses/model";
@@ -23,14 +22,6 @@ export const timeLabel = (f: Pick<FollowUp, "id" | "date">, lang: Lang = "en") =
 export const pillLine = (f: Pick<FollowUp, "id" | "date">, lang: Lang = "en") => [dayLabel(f.date, lang), timeLabel(f, lang)].filter(Boolean).join(" · ");
 /** What to bring: paperwork only, since the data holds no preparation steps for a visit or test. */
 export const bringLine = (f: Pick<FollowUp, "id">, lang: Lang = "en") => tFor(lang)(f.id === "discharge-review" ? "fu.bringReview" : "fu.bring");
-
-/** Home's tile: the next one's date, what it is and how far off, amber when due within a week, red once overdue. */
-export function nextVisit(items: Pick<FollowUp, "short" | "date" | "status" | "inDays">[]): { value: string; line: string; tone: "muted" | "amber" | "red" } {
-  const next = items[0];
-  if (!next) return { value: "—", line: "Nothing booked yet", tone: "muted" };
-  const value = shortDate(next.date), line = `${next.short} · ${away(next.inDays)}`;
-  return next.status === "overdue" ? { value, line: `${next.short} · overdue`, tone: "red" } : { value, line, tone: next.status === "due-soon" ? "amber" : "muted" };
-}
 
 /** How many follow-ups need the patient now (due soon or overdue); counts toward home's insight line. */
 export const followUpNeeds = (items: Pick<FollowUp, "status">[] | undefined) => items?.filter(f => f.status !== "upcoming").length ?? 0;

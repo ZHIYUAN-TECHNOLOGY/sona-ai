@@ -13,7 +13,7 @@ import { tFor, useLang, useT } from "@/lib/i18n";
 import { markRead, useThread } from "@/features/messages/row";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { BackButton, Card, Chip, pillStyle, surfaceStyle } from "@/lib/ui";
+import { BackButton, Card, Chip, pillStyle, surfaceStyle, LoadError } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 import { now as clockNow } from "@/lib/clock";
 
@@ -30,7 +30,7 @@ const newRequestId = () => `care-${Date.now()}-${Math.random().toString(36).slic
 type Draft = { text: string; requestId: string; at: Date };
 
 export default function Messages() {
-  const { data, error } = useThread(REFETCH_MS);
+  const threadQuery = useThread(REFETCH_MS), { data, error } = threadQuery;
   const { me } = useMe();
   const lang = useLang(), t = tFor(lang);
   const insets = useSafeAreaInsets();
@@ -80,7 +80,7 @@ export default function Messages() {
 
     <ScrollView ref={scroll} keyboardDismissMode="interactive" onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })}
       contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16, gap: 14 }}>
-      {!data ? (error ? <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(error, lang)}</Text> : <ActivityIndicator color={palette.muted} />)
+      {!data ? (error ? <LoadError query={threadQuery} /> : <ActivityIndicator color={palette.muted} />)
         // Messages there on opening appear still; only what arrives while the screen is open moves.
         : <LayoutAnimationConfig skipEntering><View style={{ gap: 14 }}>
           {!thread.length && <Card><Text style={{ ...type.body, color: palette.muted }}>{t("msg.empty")}</Text></Card>}

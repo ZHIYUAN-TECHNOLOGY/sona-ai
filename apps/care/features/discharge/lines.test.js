@@ -1,16 +1,8 @@
 import { expect, test } from "bun:test";
-import { dischargeLine, homeLine, scheduleLine, takeLine, takeSentence } from "./lines";
+import { homeLine, scheduleLine, takeLine, takeSentence } from "./lines";
 
 const med = name => ({ name, line: "" });
 const medicines = { new: [med("Paracetamol")], changed: [med("Azithromycin")], stopped: [med("Salbutamol nebuliser")], continue: [med("Cetirizine")] };
-test("the home row sums up the plan in one line: medicines to take, what is new, the leaflet's language", () => {
-  const plan = { status: "discharged", language: "ms", leaflets: [{ language: "ms", name: "Bahasa Melayu" }, { language: "en", name: "English" }], medicines };
-  expect(dischargeLine(plan)).toBe("3 medicines · 1 new · leaflet in Bahasa Melayu");
-  expect(dischargeLine({ ...plan, medicines: { new: [], changed: [med("A")], stopped: [], continue: [] } })).toBe("1 medicine · leaflet in Bahasa Melayu");
-  expect(dischargeLine({ status: "in-hospital" })).toBe("Ready for you when you go home");
-  expect(dischargeLine(undefined)).toBe("Your leaflet, medicines and warning signs");
-});
-
 test("the schedule reads as a patient would say it", () => {
   expect(scheduleLine({ at: ["08:00"] })).toBe("Once a day, 8 AM");
   expect(scheduleLine({ at: ["08:00", "20:30"] })).toBe("Twice a day, 8 AM and 8:30 PM");

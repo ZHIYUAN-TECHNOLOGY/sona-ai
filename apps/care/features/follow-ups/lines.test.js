@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { agendaOf, bringLine, dateOf, dayA11y, dayOf, emptyLine, followUpNeeds, marksByDay, nextUp, nextVisit, openRequests, pillLine, scheduleLine, weekAround, weekLabel, whenLine } from "./lines";
+import { agendaOf, bringLine, dateOf, dayA11y, dayOf, emptyLine, followUpNeeds, marksByDay, nextUp, openRequests, pillLine, scheduleLine, weekAround, weekLabel, whenLine } from "./lines";
 
 const D = (iso) => Date.UTC(...iso.split("-").map((n, i) => Number(n) - (i === 1 ? 1 : 0))) / 86_400_000; // "2026-09-27" → day number
 test("the strip reads days in Malaysia and shows the Monday-first week around the chosen day", () => {
@@ -78,12 +78,8 @@ test("when reads the day in Malaysia and how far away it is", () => {
   expect(whenLine(item("CT scan", "2026-12-25T02:00:00Z", -3))).toBe("Fri 25 Dec · 3 days ago");
 });
 
-test("the home tile dates the next one with its tone, and counts what needs the patient", () => {
+test("counts the follow-ups that need the patient", () => {
   const items = [item("CT scan", "2026-12-25T02:00:00Z", 5, "due-soon"), item("Clinic review", "2027-01-10T02:00:00Z", 21, "upcoming")];
-  expect(nextVisit(items)).toEqual({ value: "25 Dec", line: "CT scan · in 5 days", tone: "amber" });
-  expect(nextVisit([{ ...items[0], status: "overdue" }])).toEqual({ value: "25 Dec", line: "CT scan · overdue", tone: "red" });
-  expect(nextVisit([items[1]])).toEqual({ value: "10 Jan", line: "Clinic review · in 21 days", tone: "muted" });
-  expect(nextVisit([])).toEqual({ value: "—", line: "Nothing booked yet", tone: "muted" });
   expect(followUpNeeds([{ ...items[0], status: "overdue" }, ...items])).toBe(2);
   expect(followUpNeeds(undefined)).toBe(0);
 });

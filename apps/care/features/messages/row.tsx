@@ -1,14 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useSyncExternalStore } from "react";
 import { useMe } from "@/features/me";
-import { Row } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
-import { rowLine, unreadReply } from "./model";
+import { unreadReply } from "./model";
 
 /**
- * The care team thread's home row: says when a reply is waiting. What this phone has read is kept
+ * The care team thread and whether a reply is waiting. What this phone has read is kept
  * on the phone (the last message shown), read through useSyncExternalStore so React Compiler never
  * caches a stale module read.
  */
@@ -35,12 +33,4 @@ export function useMessageNeeds() {
   const { data } = useThread();
   const read = useSyncExternalStore(subscribe, () => lastRead);
   return data && unreadReply(data, read) ? 1 : 0;
-}
-
-/** Home's row for the thread (glass row): a waiting reply with its opening words, a sent message's status, or the emergency line. */
-export function CareTeamRow({ first }: { first?: boolean }) {
-  const { data } = useThread();
-  const read = useSyncExternalStore(subscribe, () => lastRead);
-  const { line, tone } = rowLine(data, read);
-  return <Row first={first} title="Message my care team" line={line} tone={tone} onPress={() => router.push("/messages")} />;
 }

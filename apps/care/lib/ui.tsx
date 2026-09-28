@@ -9,7 +9,8 @@ import Animated, { cancelAnimation, Easing, LinearTransition, useAnimatedStyle, 
 import { scheduleOnRN } from "react-native-worklets";
 import { HalftoneGlint } from "./halftone";
 import { accent, palette, type } from "./theme";
-import { useT } from "./i18n";
+import { errorText } from "@/features/errors";
+import { tFor, useLang, useT } from "./i18n";
 import "./strings";
 
 /**
@@ -100,6 +101,18 @@ export function HoldButton({ label, doneLabel, onDone, done = false, hold = 800,
 export function BackButton({ label }: { label?: string }) {
   const t = useT();
   return <View style={{ alignSelf: "flex-start" }}><CircleButton d={ICON.back} label={label ?? t("common.back")}onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }} /></View>;
+}
+
+/**
+ * What stands in when something could not load (never an endless spinner): one calm line in the
+ * patient's words (the server's own refusal, or "check your connection") and one way to try again.
+ */
+export function LoadError({ query, style }: { query: { error: unknown; isFetching: boolean; refetch: () => unknown }; style?: ViewStyle }) {
+  const lang = useLang(), t = tFor(lang);
+  return <Card style={style}>
+    <Text selectable accessibilityLiveRegion="polite" style={{ ...type.body, color: palette.muted }}>{errorText(query.error, lang, "common.loadError")}</Text>
+    <Button quiet label={t("common.retry")} busy={query.isFetching} onPress={() => { void query.refetch(); }} />
+  </Card>;
 }
 
 /** A tappable row inside a card: what it is, one line of state, and where it goes. */

@@ -7,7 +7,7 @@ import { Capsule, Stop, STOP_TITLE, Timeline } from "@/features/follow-ups/timel
 import { tFor, useLang } from "@/lib/i18n";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { BackButton, Button, surfaceStyle, Title } from "@/lib/ui";
+import { BackButton, Button, LoadError, surfaceStyle, Title } from "@/lib/ui";
 import { now as clockNow } from "@/lib/clock";
 
 const TONE = { muted: palette.muted, blue: palette.blue, amber: palette.amber, green: palette.green } as const;
@@ -18,7 +18,7 @@ const TONE = { muted: palette.muted, blue: palette.blue, amber: palette.amber, g
  * what they said and what happened. The one waiting links to the home card, where it is answered.
  */
 export default function Screen() {
-  const { data } = useCheckIns();
+  const query = useCheckIns(), { data } = query;
   const lang = useLang(), t = tFor(lang);
   const still = useReducedMotion();
   const now = clockNow();
@@ -27,7 +27,7 @@ export default function Screen() {
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 48, gap: 18 }}>
     <BackButton />
     <Title accent={t("ci.title")} line={data ? historyLine(data, now, lang) : undefined} />
-    {!data ? <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} /> : <>
+    {!data ? (query.error ? <LoadError query={query} /> : <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} />) : <>
       {items.length > 0 && <Timeline line={items.length > 1}>
         {items.map((c, i) => {
           const status = statusOf(c, now, lang), reply = c.replies.at(-1), waiting = !reply && status.tone === "blue";

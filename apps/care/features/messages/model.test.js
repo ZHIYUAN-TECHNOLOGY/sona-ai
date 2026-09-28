@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { rowLine, suggestions, unreadReply, whileYouWait, withDays } from "./model";
+import { suggestions, unreadReply, whileYouWait, withDays } from "./model";
 
 const m = (id, from, text = id, createdAt = new Date()) => ({ id, from, text, createdAt });
 
@@ -8,13 +8,6 @@ test("a reply waits for the patient only when the care team spoke last and it ha
   expect(unreadReply([m("a", "patient"), m("b", "care-team")], "b")).toBe(false);
   expect(unreadReply([m("b", "care-team"), m("c", "patient")], "a")).toBe(false);
   expect(unreadReply([], undefined)).toBe(false);
-});
-
-test("home's row names a waiting reply, then a sent message, else the emergency line", () => {
-  expect(rowLine([m("a", "care-team", "Keep taking it")], undefined)).toEqual({ line: "New reply · Keep taking it", tone: "green" });
-  expect(rowLine([m("a", "care-team", "Keep taking it")], "a").line).toBe("Not for emergencies · call 999");
-  expect(rowLine([m("a", "patient")], undefined).line).toBe("Sent · usually replies within a few hours");
-  expect(rowLine(undefined, undefined).line).toBe("Not for emergencies · call 999");
 });
 
 test("a day pill opens each Malaysian day, named Today and Yesterday when close", () => {

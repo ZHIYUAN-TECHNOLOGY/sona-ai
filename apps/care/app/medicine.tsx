@@ -11,7 +11,7 @@ import "@/features/doses/strings";
 import { tFor, useLang } from "@/lib/i18n";
 import { Text } from "@/lib/text";
 import { motion, palette, type } from "@/lib/theme";
-import { AccentText, Button, HoldButton } from "@/lib/ui";
+import { AccentText, Button, HoldButton, LoadError } from "@/lib/ui";
 
 const GROUPS: Group[] = ["new", "changed", "continue", "stopped"];
 const big = { fontSize: 32, lineHeight: 38, fontWeight: "600", letterSpacing: -1.6, color: palette.ink, textAlign: "center" } as const;
@@ -24,7 +24,7 @@ const big = { fontSize: 32, lineHeight: 38, fontWeight: "600", letterSpacing: -1
  */
 export default function Medicine() {
   const { name } = useLocalSearchParams<{ name: string }>();
-  const { data, isLoading } = useDischarge();
+  const discharge = useDischarge(), { data, isLoading } = discharge;
   const now = useNow();
   const lang = useLang(), t = tFor(lang);
   const { dose } = useNextDose(now);
@@ -45,6 +45,7 @@ export default function Medicine() {
 
   if (!med) return rows([
     isLoading ? <ActivityIndicator color={palette.muted} />
+      : !data && discharge.error ? <LoadError query={discharge} style={{ alignSelf: "stretch" }} />
       : <Text accessibilityRole="header" style={{ ...type.body, color: palette.muted, textAlign: "center" }}>{name ? t("dose.notInPlan", { name }) : t("dose.thisNotInPlan")} {t("dose.askIfUnsure")}</Text>,
     close,
   ]);

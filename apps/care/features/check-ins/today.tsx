@@ -45,7 +45,7 @@ type Done = { checkInId: string; day: number; label: ReplyLabel; feeling?: Feeli
 export function TodayCard() {
   const thread = useThread();
   const replyWaiting = useMessageNeeds() > 0;
-  const { data, isError } = useCheckIns();
+  const { data, isError, isFetching, refetch } = useCheckIns();
   const lang = useLang(), t = tFor(lang);
   const reduced = useReducedMotion();
   const [feeling, setFeeling] = useState<Feeling>();
@@ -72,7 +72,10 @@ export function TodayCard() {
 
   if (!data) return <Card feature>
     {overline(t("ci.today"))}
-    {isError ? <Text style={{ ...type.body, color: palette.muted }}>{t("ci.couldNotLoad")}</Text> : <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} />}
+    {isError ? <>
+      <Text style={{ ...type.body, color: palette.muted }}>{t("ci.couldNotLoad")}</Text>
+      <Button quiet label={t("common.retry")} busy={isFetching} onPress={() => { void refetch(); }} />
+    </> : <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} />}
   </Card>;
 
   const { ask, next } = todayOf(data, clockNow());

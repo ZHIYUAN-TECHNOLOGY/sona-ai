@@ -9,13 +9,12 @@ import { tFor, useLang, useT } from "@/lib/i18n";
 import { useDischarge } from "@/features/discharge/row";
 import { DoctorAvatar } from "@/features/doctors/avatar";
 import { dayParts, listFor, nameLines, searchDoctors, type Filter, type ListedDoctor } from "@/features/doctors/data";
-import { errorText } from "@/features/errors";
 import { useMe } from "@/features/me";
 import { dayLabel } from "@/features/follow-ups/lines";
 import { DOCK_SPACE } from "@/lib/dock";
 import { Text, TextInput } from "@/lib/text";
 import { palette, space, type } from "@/lib/theme";
-import { Card, CircleButton, field, ICON, pillStyle, Section, surfaceStyle, Title } from "@/lib/ui";
+import { Card, CircleButton, field, ICON, pillStyle, Section, surfaceStyle, Title, LoadError } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
 const TABS: { id: Filter; label: string }[] = [
@@ -76,7 +75,7 @@ export default function Doctors() {
       </Animated.View>)}
     </View>
     {doctors.isLoading && <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} />}
-    {doctors.error && <Text selectable style={{ ...type.body, color: palette.red }}>{errorText(doctors.error, lang)}</Text>}
+    {!doctors.data && doctors.error && <LoadError query={doctors} />}
     {doctors.data && !list.length && <Card>
       <Text style={{ ...type.body, color: palette.muted }}>
         {searching && query.trim() ? t("doc.noMatch", { q: query.trim() }) : tab === "for-you" ? t("doc.nothingForYou") : t("doc.none")}

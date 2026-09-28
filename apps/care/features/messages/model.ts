@@ -5,21 +5,10 @@ import "./strings";
 export type Message = Awaited<ReturnType<AppRouterClient["care"]["messages"]["list"]>>[number];
 type Said = Pick<Message, "from" | "text">;
 
-/** What the care team's reply time looks like to the patient (no named person or promised hour: the data has neither). */
-export const REPLY_TIME = "Usually replies within a few hours";
-
 /** A reply waits when the care team spoke last and this phone has not shown that message yet. */
 export function unreadReply(messages: Pick<Message, "id" | "from">[], lastReadId: string | undefined) {
   const last = messages.at(-1);
   return last?.from === "care-team" && last.id !== lastReadId;
-}
-
-/** Home's row line: a waiting reply first (with its opening words), then a sent message's status, else the emergency line. */
-export function rowLine(messages: (Said & Pick<Message, "id">)[] | undefined, lastReadId: string | undefined): { line: string; tone: "muted" | "green" } {
-  const last = messages?.at(-1);
-  if (messages && unreadReply(messages, lastReadId)) return { line: `New reply · ${last!.text}`, tone: "green" };
-  if (last?.from === "patient") return { line: `Sent · ${REPLY_TIME.toLowerCase()}`, tone: "muted" };
-  return { line: "Not for emergencies · call 999", tone: "muted" };
 }
 
 /** The day a message falls on in the hospital's time (Malaysia), whatever the phone says. */
