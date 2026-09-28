@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { appointments, bookingRequests, careMessages, doctors, encounters, patients, tasks } from "@sona-ai/db/schema/clinical";
 import { clinicSlots, shortName, slotWords } from "@sona-ai/domain/doctors";
-import { and, asc, desc, eq, gte, inArray, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, type SQL } from "drizzle-orm";
 import { z } from "zod";
 
 import { clockOf, type Context } from "../context";
@@ -12,8 +12,8 @@ import { tellPatient } from "../push";
  * Real booking. Patients find a doctor (the hospital's directory, SYNTHETIC in the demo) and request a
  * clinic slot; the request is one task for the care team on My Day, who confirm it (it becomes an
  * appointment on the patient's Schedule) or decline it with a note (sent to the patient's thread).
- * A slot is free when no appointment at the hospital starts then and no open or confirmed request
- * holds it for that doctor.
+ * A slot is free when none of that doctor's appointments starts then and no open or confirmed request
+ * holds it for them; another doctor's appointment at the same time does not block it.
  */
 type Db = Context["db"];
 type DoctorRow = typeof doctors.$inferSelect;
@@ -23,16 +23,16 @@ const doctorsAt = (db: Db, hospitalId: string, where?: SQL) =>
 
 /** Each doctor with their free slots over the next two weeks, grouped by clinic day (days with none left are dropped). */
 export async function withSlots(db: Db, hospitalId: string, list: DoctorRow[], now: Date) {
-  // ponytail: appointments carry no doctor, so any appointment at that instant blocks every doctor's slot; add appointments.doctor_id to split them.
+  // An appointment with no doctor (a recall, a seeded clinic visit) holds nobody's slot.
   const [booked, held] = await Promise.all([
-    db.select({ at: appointments.startsAt }).from(appointments).where(and(eq(appointments.hospitalId, hospitalId), gte(appointments.startsAt, now))),
+    db.select({ doctorId: appointments.doctorId, at: appointments.startsAt }).from(appointments)
+      .where(and(eq(appointments.hospitalId, hospitalId), gte(appointments.startsAt, now), isNotNull(appointments.doctorId))),
     db.select({ doctorId: bookingRequests.doctorId, at: bookingRequests.startsAt }).from(bookingRequests)
       .where(and(eq(bookingRequests.hospitalId, hospitalId), inArray(bookingRequests.status, ["requested", "confirmed"]), gte(bookingRequests.startsAt, now))),
   ]);
-  const taken = new Set(booked.map(b => b.at.getTime()));
   return list.map(d => {
-    const mine = new Set(held.filter(h => h.doctorId === d.id).map(h => h.at.getTime()));
-    const nextSlots = clinicSlots(d, now).map(day => ({ day: day.day, times: day.times.filter(t => !taken.has(t.getTime()) && !mine.has(t.getTime())) }))
+    const mine = new Set([...booked, ...held].filter(h => h.doctorId === d.id).map(h => h.at.getTime()));
+    const nextSlots = clinicSlots(d, now).map(day => ({ day: day.day, times: day.times.filter(t => !mine.has(t.getTime())) }))
       .filter(day => day.times.length);
     return { ...d, nextSlots };
   });
@@ -120,7 +120,7 @@ export const bookingsRouter = {
         const open = and(eq(bookingRequests.id, row.id), eq(bookingRequests.status, "requested"));
         if (input.decision === "confirm") {
           const appointmentId = `visit:${row.id}`;
-          await db.insert(appointments).values({ id: appointmentId, patientId: row.patientId, hospitalId, startsAt: row.startsAt, kind: `Visit: ${shortName(row.doctorName)}, ${row.specialty}` })
+          await db.insert(appointments).values({ id: appointmentId, patientId: row.patientId, hospitalId, doctorId: row.doctorId, startsAt: row.startsAt, kind: `Visit: ${shortName(row.doctorName)}, ${row.specialty}` })
             .onConflictDoNothing();
           await db.update(bookingRequests).set({ status: "confirmed", appointmentId, decidedAt: now }).where(open);
         } else {

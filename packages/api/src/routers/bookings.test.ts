@@ -52,6 +52,22 @@ test("slots: a care-team doctor's clinic times from tomorrow for two weeks, minu
   expect((await amelia.care.doctors.list()).map(d => d.id).sort()).toEqual(DOCTORS.map(d => d.id).sort());
 });
 
+test("an appointment holds only its own doctor's slot: Book in with Dr. Lim leaves Dr. Priya free at the same time", async () => {
+  const { db, doctor, amelia } = await setup();
+  const WED_0900 = new Date("2026-09-30T09:00:00+08:00"); // Wednesday 09:00, once Dr. Priya holds clinic then too
+  const free = async (id: string) => (await amelia.care.doctors.get({ id })).nextSlots.flatMap(d => d.times).map(t => t.getTime());
+  await db.update(doctors).set({ days: [1, 2, 3, 4, 5], times: ["09:00"] }).where(eq(doctors.id, "priya"));
+  expect(await free("priya")).toContain(WED_0900.getTime());
+  expect(await free("lim")).toContain(WED_0900.getTime());
+  const flagged = (await amelia.care.checkIns.reply({ checkInId: "check-in:visit-1042:2", text: "demam balik" })).replies[0]!.task!;
+  await doctor.checkIns.bookIn({ taskId: flagged.id, startsAt: WED_0900, doctorId: "lim" });
+  expect(await free("lim")).not.toContain(WED_0900.getTime());
+  expect(await free("priya")).toContain(WED_0900.getTime());
+  // A replay without a doctor keeps Dr. Lim's hold.
+  await doctor.checkIns.bookIn({ taskId: flagged.id });
+  expect(await free("lim")).not.toContain(WED_0900.getTime());
+});
+
 test("Book in at a chosen slot with a doctor; it must be in the next 30 days; a new time moves the same visit", async () => {
   const { doctor, amelia } = await setup();
   const flagged = (await amelia.care.checkIns.reply({ checkInId: "check-in:visit-1042:2", text: "demam balik" })).replies[0]!.task!;
