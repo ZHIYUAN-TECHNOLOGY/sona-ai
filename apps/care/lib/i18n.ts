@@ -1,9 +1,9 @@
 import { useSyncExternalStore } from "react";
 
 /**
- * Sona Care's own words in the patient's language: English, Bahasa Melayu or 中文. The language is the
- * one chosen at discharge (the leaflet's), until the patient picks another in the app; the choice is
- * kept on the phone. Screens call `useT()` and write `t("home.hello", { name })`; a key missing in
+ * Sona Care's own words in the patient's language: English, Bahasa Melayu or 中文. English until the
+ * patient picks another in the app (the leaflet still opens in the plan's language); the choice is kept
+ * on the phone. Screens call `useT()` and write `t("home.hello", { name })`; a key missing in
  * Malay or Chinese falls back to English, never to the key itself. Clinical words the care team wrote
  * (medicine names, the leaflet) are shown as written. Pure helpers (words, dates) take a `lang`, so
  * bun can test them and React Compiler re-renders when the language changes.
@@ -26,19 +26,14 @@ let store: Store | undefined;
 try { store = require("expo-secure-store") as Store; } catch { /* tests: nothing kept */ }
 
 const KEY = "sona-care.language";
-let chosen: Lang | undefined, fromPlan: Lang | undefined;
+let chosen: Lang | undefined;
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach(l => l());
 store?.getItemAsync(KEY).then(v => { if (v === "en" || v === "ms" || v === "zh") { chosen = v; notify(); } }).catch(() => {});
 
 /** The patient's pick in the app (kept on the phone). */
 export function setLang(lang: Lang) { chosen = lang; notify(); store?.setItemAsync(KEY, lang).catch(() => {}); }
-/** The discharge plan's language, used until the patient picks one. */
-export function setPlanLang(lang: string | undefined) {
-  const l = lang === "ms" || lang === "zh" || lang === "en" ? lang : undefined;
-  if (l !== fromPlan) { fromPlan = l; notify(); }
-}
-export const currentLang = (): Lang => chosen ?? fromPlan ?? "en";
+export const currentLang = (): Lang => chosen ?? "en";
 
 type Vars = Record<string, string | number>;
 /** `{name}` placeholders filled from `vars`. */

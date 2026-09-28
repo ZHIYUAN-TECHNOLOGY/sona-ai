@@ -1,8 +1,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { View } from "react-native";
 import { useMe } from "@/features/me";
-import { useEffect } from "react";
-import { setPlanLang, useLang, useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
 import "./strings";
 import { Text } from "@/lib/text";
 import { palette } from "@/lib/theme";
@@ -11,15 +10,12 @@ import type { Group } from "./lines";
 
 /**
  * The patient's discharge plan in the language Sona Care speaks, fetched once they have joined (re-read
- * when the language changes, keeping the last plan on screen meanwhile); the plan's own language leads
- * Sona Care's words until the patient picks one.
+ * when the language changes, keeping the last plan on screen meanwhile).
  */
 export function useDischarge() {
   const { state } = useMe();
   const lang = useLang();
   const query = useQuery({ ...orpc.care.discharge.queryOptions({ input: { lang } }), enabled: state === "joined", placeholderData: keepPreviousData });
-  const language = query.data?.status === "discharged" ? query.data.language : undefined;
-  useEffect(() => { if (language) setPlanLang(language); }, [language]);
   return query;
 }
 
