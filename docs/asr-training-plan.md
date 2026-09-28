@@ -106,6 +106,26 @@ If every engine fails, train on the real licensed audio only.
 | Training, 2 runs | ~$26–78 |
 | Evaluation | ~$5 |
 
+## Status and next steps (28 Sep 2026)
+
+Start here when continuing this work.
+
+**Done**
+- 540 scripts in `tools/asr-data/scripts/`; the user approved a sample.
+- 8,000 of 8,480 turns voiced (29.2 h) in `~/zyt/data/sona-asr/audio/`. The last 480 were never voiced because the Gemini monthly spend cap (RM130) was reached; the user chose to train without them.
+- The Baseten secret `hf_access_token` holds a Hugging Face write token for user `zyt-ngchwanlii`; the same token is at `~/.cache/huggingface/token_write`.
+
+**Known problem, being fixed:** at full scale most clips contain the voicing instruction read aloud ("Say this as a Malaysian doctor…"). The first check missed it because it only transcribed unusually long clips. `tools/asr-data/trim.py` transcribes every clip, cuts the instruction off with Qwen3-ForcedAligner and writes the clips it cannot fix to `~/zyt/data/sona-asr/bad.txt`. It runs detached (log: `~/zyt/data/sona-asr/trim.log`) and resumes where it stopped if rerun. The dataset built before this fix (`~/zyt/data/sona-asr/dataset/`) is contaminated; rebuild it.
+
+**Next**
+1. Wait for `trim.py` to finish (its last log line gives clips, leaked, trimmed and still bad), or rerun it.
+2. Send the user three trimmed clips to confirm they sound clean.
+3. Rebuild the dataset: `python build_dataset.py`, then score the base model with `python baseline.py`. The earlier 101% mixed error rate came from the leaked instructions and is not a valid baseline.
+4. Upload the dataset as a private Hugging Face dataset (columns `audio`, `text`) and run Baseten's `ml-cookbook/examples/qwen3-asr-transformers` recipe with `HF_TOKEN_SECRET_NAME=hf_access_token` and `LANGUAGE=` (mixed-language targets), 1×H100.
+5. Score the fine-tuned checkpoint with `python baseline.py <checkpoint>` against the pass bar.
+
+**Tidy up afterwards:** delete the chat-shared Hugging Face and Gemini tokens and create fresh ones; delete the Cloudflare `sona-stage0-review` Worker and R2 bucket.
+
 ## Side actions
 
 - Email Alibaba asking for written permission to use Qwen TTS output for ASR training. A bonus, not a dependency.
