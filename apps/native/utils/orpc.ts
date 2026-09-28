@@ -3,6 +3,7 @@ import { RPCLink } from "@orpc/client/fetch";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
+import { fetch as nativeFetch } from "expo/fetch";
 import { Platform } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
@@ -17,10 +18,9 @@ export const queryClient = new QueryClient({
   }),
 });
 
+// A static import: a dynamic `import("expo/fetch")` never resolves in a minified production bundle.
 async function expoFetch(request: Request, init?: RequestInit) {
-  const { fetch } = await import("expo/fetch");
-
-  return fetch(request.url, {
+  return nativeFetch(request.url, {
     body: await request.blob(),
     headers: request.headers,
     method: request.method,
