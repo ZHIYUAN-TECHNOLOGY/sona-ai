@@ -65,7 +65,7 @@ export const encounterEditSchema = z.object({
   encounterId: z.string().min(1),
   expectedRevision: z.number().int().positive(),
   prescriptionInputs: z.object({ weightKg: z.string(), liverDisease: unknownYesNo, kidneyDisease: unknownYesNo, alcoholRisk: unknownYesNo, paracetamolAllergy: unknownYesNo }).optional(),
-  medicationEntries: z.array(z.object({ id: z.string().min(1), name: z.string().min(1), ingredient: z.string(), formulation: z.string(), confirmed: z.boolean() })).optional(),
+  medicationEntries: z.array(z.object({ id: z.string().min(1), name: z.string().min(1), ingredient: z.string(), formulation: z.string(), confirmed: z.boolean(), change: z.enum(["new", "changed", "stopped"]).optional(), from: z.string().optional() })).optional(),
   proposedMedicine: z.string().optional(),
   historyFacts: z.array(historyFactSchema).optional(),
 }).refine(e => e.prescriptionInputs || e.medicationEntries || e.proposedMedicine !== undefined || e.historyFacts, "An edit changes eligibility, medicines or history");
@@ -93,6 +93,23 @@ export const xrayUploadSchema = z.object({
   encounterId: z.string().min(1), contentType: z.string().regex(/^image\/[a-z0-9.+-]+$/i, "Only images can be uploaded"), dataBase64: z.string().min(1).max(14_000_000).regex(/^[A-Za-z0-9+/]+={0,2}$/, "Not base64"),
 });
 export type XrayUpload = z.infer<typeof xrayUploadSchema>;
+/** A photo of a handwritten note, same shape as an X-ray upload. */
+export const scanUploadSchema = xrayUploadSchema;
+/** The sample note bundled with the app: read by the fixture, never uploaded. */
+export const SAMPLE_SCAN_KEY = "sample";
+const text = z.string().trim().max(4000);
+/** What the doctor kept from a scanned note after review; only these are written. Replay-safe by requestId. */
+export const scanApplySchema = z.object({
+  encounterId: z.string().min(1), key: z.string().min(1), requestId: z.string().min(1),
+  sections: z.object({ history: text, examination: text, assessment: text, plan: text }).partial().optional(),
+  medicines: z.array(z.object({
+    name: z.string().trim().min(1).max(120), dose: z.string().trim().max(80).optional(), frequency: z.string().trim().max(80).optional(),
+    change: z.enum(["new", "changed", "stopped", "continue"]), confidence: z.enum(["high", "low"]),
+  })).max(20).optional(),
+  tasks: z.array(z.object({ title: z.string().trim().min(1).max(200), due: z.string().trim().max(40).optional(), owner: z.string().trim().max(60).optional() })).max(20).optional(),
+  followUp: z.object({ in: z.string().trim().min(1).max(40) }).optional(),
+});
+export type ScanApply = z.infer<typeof scanApplySchema>;
 // Demo flow 6
 /** Turning a finding into a tracked follow-up (a task and a recall); replay-safe by requestId. */
 export const findingTrackSchema = z.object({ findingId: z.string().min(1), requestId: z.string().min(1), owner: z.string().trim().min(1).optional() });

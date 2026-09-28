@@ -27,6 +27,7 @@ import { prescribingRouter } from "./prescribing";
 // lane H
 import { handoverRouter } from "./handover";
 import { xrayRouter } from "./xray";
+import { scanRouter } from "./scan";
 // lane F7
 import { checkInsRouter } from "./check-ins";
 // lane F6
@@ -84,6 +85,8 @@ export const appRouter = {
   // lane H
   handover: handoverRouter,
   xray: xrayRouter,
+  // Scan a handwritten note: photo → reading (a proposal) → the doctor's reviewed items into the record.
+  scan: scanRouter,
   tasks: {
     list: protectedProcedure.handler(({ context }) =>
       context.db.select().from(tasks).where(eq(tasks.hospitalId, context.hospitalId)).orderBy(asc(tasks.createdAt))),

@@ -1,5 +1,4 @@
 import type { Encounter } from "@/features/encounter/types";
-import { sectionKeys, type NoteSections } from "@/features/scribe/model";
 import { api, requestId } from ".";
 
 /**
@@ -19,14 +18,5 @@ export async function pushAndReview(encounterId: string, local: Encounter) {
 
 export const simulateOnServer = (encounterId: string, approvedBy: string) => api.prescribing.simulate({ encounterId, requestId: requestId(), approvedBy });
 
-/** One sentence per written note section, keyed by the section, so a code or claim can cite it. */
-export const noteSentences = (sections: NoteSections) => sectionKeys.filter(key => sections[key].trim()).map(key => ({ id: key, text: sections[key].trim() }));
-/** Sentences the app did not write (the seeded note) are kept in the subjective section. */
-export function noteSections(sentences: { id: string; text: string }[]): NoteSections {
-  const sections: NoteSections = { subjective: "", objective: "", assessment: "", plan: "" };
-  for (const s of sentences) {
-    const key = sectionKeys.find(k => k === s.id) ?? "subjective";
-    sections[key] = [sections[key], s.text].filter(Boolean).join(key === s.id ? "\n" : " ");
-  }
-  return sections;
-}
+/** Note sections as the server's sentences and back (shared with the server's scan.apply). */
+export { noteSections, noteSentences } from "@sona-ai/domain/scan";

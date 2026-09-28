@@ -12,7 +12,7 @@ import { captureNoteEdit } from "./training";
  * The consultation note as revisions: nothing is overwritten, so an addendum or fix stays visible as
  * evidence. The unique (encounter, revision) index decides a race; the loser is told to reload.
  */
-async function latestNote(db: Context["db"], hospitalId: string, encounterId: string) {
+export async function latestNote(db: Context["db"], hospitalId: string, encounterId: string) {
   await loadEncounter(db, hospitalId, encounterId); // scopes the note to the caller's hospital
   const [row] = await db.select({ revision: notes.revision, sentences: notes.sentences }).from(notes)
     .where(eq(notes.encounterId, encounterId)).orderBy(desc(notes.revision)).limit(1);

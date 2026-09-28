@@ -12,7 +12,8 @@ export type Patient = {
 };
 export type TranscriptLine = { id: string; speaker: string; original: string; english: string; corrected?: boolean; englishReviewed?: boolean };
 export type HistoryFact = { id: string; category: "medical" | "family" | "social" | "allergy" | "presenting"; value: string; source: string; date: string; revision: number };
-export type MedicationEntry = { id: string; name: string; ingredient: string; formulation: string; confirmed: boolean };
+/** `change` and `from` mark a proposal read from a scanned note (./scan), waiting for the doctor to confirm it. */
+export type MedicationEntry = { id: string; name: string; ingredient: string; formulation: string; confirmed: boolean; change?: "new" | "changed" | "stopped"; from?: string };
 export type PrescriptionInputs = { weightKg: string; liverDisease: "unknown" | "no" | "yes"; kidneyDisease: "unknown" | "no" | "yes"; alcoholRisk: "unknown" | "no" | "yes"; paracetamolAllergy: "unknown" | "no" | "yes" };
 export type PrescriptionCheck = { id: string; label: string; status: "passed" | "blocked"; detail: string };
 export type Regimen = { medication: string; formulation: string; dose: string; unit: string; route: string; frequency: string; duration: string; indication: string; sourceId: string; sourceVersion: string };
