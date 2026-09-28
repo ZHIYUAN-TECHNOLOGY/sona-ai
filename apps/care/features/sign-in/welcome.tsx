@@ -120,7 +120,8 @@ function Way({ icon, label, hint, glass, busy, onPress, accessibilityLabel }: { 
   return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} accessibilityHint={hint} accessibilityState={{ busy }} disabled={busy} onPress={onPress}
     style={({ pressed }) => [{ minHeight: 56, borderRadius: 28, borderCurve: "continuous", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingHorizontal: 18, borderWidth: 1,
       transform: [{ scale: pressed ? 0.96 : 1 }] },
-      glass ? { flex: 1, backgroundColor: "rgba(255,255,255,0.6)", borderColor: "rgba(255,255,255,0.9)" } : { backgroundColor: palette.white, borderColor: palette.line, boxShadow: "0 12px 26px -16px rgba(40,50,110,0.35)" }]}>
+      // Every way in reads as a button: solid white with the same lift; the pair just shares a row.
+      { backgroundColor: palette.white, borderColor: "rgba(30,40,90,0.08)", boxShadow: "0 1px 2px rgba(30,40,90,0.06), 0 10px 24px -12px rgba(40,50,110,0.38)" }, glass && { flex: 1 }]}>
     {busy ? <ActivityIndicator color={palette.ink} /> : <>{icon}<Text style={{ flexShrink: 1, fontSize: 16, fontWeight: "600", color: palette.ink, textAlign: "center" }}>{label}</Text></>}
   </Pressable>;
 }
