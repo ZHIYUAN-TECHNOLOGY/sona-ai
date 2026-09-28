@@ -22,6 +22,8 @@ import { useServerBeds } from "@/features/live/ward-sync";
 import { Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveHuddle } from "@/features/live/model-sync";
 import { useLiveChanges } from "@/features/live/channel";
+import { useTrainingStatus } from "@/features/training";
+import { trainingLine } from "@/features/training/model";
 import { OpsStrip, WardTiles } from "./ops";
 import { DEMO_PATIENT, OWNERS, SUGGESTED, huddle, wardBeds, wardSummary, type Bed, type Owner } from "./model";
 
@@ -80,6 +82,7 @@ export function WardScreen() {
   };
   const { on: live } = useLive();
   const { can } = useRole();
+  const training = useTrainingStatus();
   const [assignError, setAssignError] = useState<{ id: string; owner: Owner; text: string }>();
   // Live: server beds carry the server's blocker IDs, so each owner is a real task on the server.
   // A refusal puts the previous owner back and says why under the blocker, with Retry.
@@ -145,6 +148,18 @@ export function WardScreen() {
           <View style={{ flex: 1 }}>
             <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>Coding audit</Text>
             <Text style={{ ...type.caption, color: audit.length ? palette.amber : TEAL }}>{audit.length ? `${audit.length} notes · ${shortRM(totalRisk(audit))} at risk` : "All queries sent"}</Text>
+          </View>
+          <Icon name="chevron.right" size={12} color={palette.muted} />
+        </Pressable>}
+        {/* Training data: management's review queue for the continuous-training loop (live only). */}
+        {training.allowed && <Pressable accessibilityRole="button" accessibilityLabel={`Training data${training.status ? `, ${trainingLine(training.status.counts)}` : ""}`} onPress={() => router.push("/training")}
+          style={({ pressed }) => ({ ...surfaceStyle, padding: 14, flexDirection: "row", alignItems: "center", gap: 12, transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+          <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: training.status?.counts.blocked ? "rgba(162,62,62,0.1)" : "rgba(36,91,204,0.1)" }}>
+            <Icon name="shield.lefthalf.filled" size={15} color={training.status?.counts.blocked ? palette.red : palette.blue} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>Training data</Text>
+            <Text style={{ ...type.caption, color: palette.muted }}>{training.status ? trainingLine(training.status.counts) : "De-identified samples to review"}</Text>
           </View>
           <Icon name="chevron.right" size={12} color={palette.muted} />
         </Pressable>}

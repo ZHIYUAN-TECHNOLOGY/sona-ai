@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Keyboard, KeyboardAvoidingView, Pressable, TextInput, View } from "react-native";
+import { Keyboard, KeyboardAvoidingView, Pressable, Switch, TextInput, View } from "react-native";
 import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
@@ -86,6 +86,8 @@ export function NoteScreen() {
   const [prototype, setPrototype] = useState(false);
   const [focused, setFocused] = useState<keyof NoteSections>();
   const [info, setInfo] = useState<keyof NoteSections>();
+  // Live: the doctor can keep this visit's note out of training (draft vs saved is otherwise a sample, if the patient consented).
+  const [excludeFromTraining, setExcludeFromTraining] = useState(false);
   const failSave = useRef(false);
   // Live: the note is read from and saved to the server as revisions; a save against an older one is refused.
   const { on: live } = useLive();
@@ -108,7 +110,7 @@ export function NoteScreen() {
     if (live && encounterId) {
       setServerError(undefined);
       const sections = encounter.noteSectionDraft ?? encounter.noteSections ?? readNoteSections(encounter.note);
-      api.note.save({ encounterId, sentences: noteSentences(sections), expectedRevision: noteRevision.current })
+      api.note.save({ encounterId, sentences: noteSentences(sections), expectedRevision: noteRevision.current, excludeFromTraining })
         .then(({ revision }) => { noteRevision.current = revision; updateEncounter(current => ({ ...current, noteSections: sections, noteSectionDraft: current.noteSectionDraft === sections ? undefined : current.noteSectionDraft, noteSaveStatus: "saved" })); })
         .catch(e => { setServerError(errorText(e)); updateEncounter(current => ({ ...current, noteSaveStatus: "failed" })); });
       return;
@@ -205,7 +207,7 @@ export function NoteScreen() {
           <Action label={failNextSave ? "Next save will fail · cancel simulation" : "Simulate failure on next save"} secondary disabled={saving} onPress={() => setFailNextSave(value => !value)} />
         </Expand>}
       </Animated.View>}
-      <View style={{ height: BAR_SPACE }} />
+      <View style={{ height: BAR_SPACE + (live && canWrite ? 54 : 0) }} />
     </Screen>
 
     {/* One floating glass bar: the save state inline, then the two note actions. */}
@@ -223,6 +225,11 @@ export function NoteScreen() {
           <View style={{ flex: 1 }}><Action label={saving ? "Saving…" : status === "failed" ? "Retry save" : "Save draft"} accessibilityLabel={status === "failed" ? "Retry saving draft" : undefined} icon="checkmark" disabled={!hasContent || saving} onPress={save} /></View>
           <View style={{ flex: 1 }}><Action label={encounter.noteReviewed ? "Reviewed" : "Mark reviewed"} accessibilityLabel={encounter.noteReviewed ? "Marked reviewed" : "Mark note reviewed"} secondary disabled={!hasContent || encounter.noteReviewed || saving || status !== "saved"} onPress={() => { Keyboard.dismiss(); haptic("done"); updateEncounter(current => ({ ...current, noteReviewed: true })); }} /></View>
         </View>
+        {live && <Pressable accessibilityRole="switch" accessibilityLabel="Exclude this note from training" accessibilityHint="When on, saving keeps this visit's note out of the de-identified training data" accessibilityState={{ checked: excludeFromTraining }}
+          onPress={() => setExcludeFromTraining(v => !v)} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 4 }}>
+          <Text style={{ flex: 1, fontSize: 13, lineHeight: 18, color: palette.muted }}>Exclude from training</Text>
+          <Switch value={excludeFromTraining} onValueChange={setExcludeFromTraining} trackColor={{ true: palette.blue }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
+        </Pressable>}
       </Glass>}
     </Animated.View>
   </KeyboardAvoidingView>;

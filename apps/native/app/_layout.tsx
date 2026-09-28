@@ -27,6 +27,7 @@ export default function RootLayout() {
     <Stack.Screen name="handover" options={{ title: "Shift handover" }} />
     <Stack.Screen name="ward" options={{ title: "Ward" }} />
     <Stack.Screen name="audit" options={{ title: "Coding audit" }} />
+    <Stack.Screen name="training" options={{ title: "Training data" }} />
     <Stack.Screen name="discharge" options={{ headerShown: false, presentation: "modal" }} />
     <Stack.Screen name="claim" options={{ headerShown: false, presentation: "modal" }} />
     <Stack.Screen name="history" options={{ title: "Your workspace", presentation: "modal" }} />
