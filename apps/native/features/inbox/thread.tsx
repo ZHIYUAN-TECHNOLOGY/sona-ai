@@ -1,7 +1,7 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import { router, Stack } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, ScrollView, TextInput, View, type ViewStyle } from "react-native";
+import { AccessibilityInfo, ScrollView, TextInput, View, type TextStyle, type ViewStyle } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -157,7 +157,7 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
         {sendError && <ErrorLine text={`Not sent: ${sendError}`} onRetry={() => { void send(); }} />}
         {canReply ? <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8 }}>
           <TextInput ref={input} value={text} onChangeText={setText} placeholder={`Reply to ${first}`} placeholderTextColor="#A2A8B1" maxLength={1000} editable={!busy} multiline
-            accessibilityLabel={`Reply to ${first} in Sona Care`} style={{ ...surfaceStyle, flex: 1, fontSize: 16, lineHeight: 21, color: palette.ink, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, minHeight: 46, maxHeight: 132, borderRadius: 23 } as ViewStyle} />
+            accessibilityLabel={`Reply to ${first} in Sona Care`} style={{ ...surfaceStyle, flex: 1, fontSize: 16, lineHeight: 21, color: palette.ink, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, minHeight: 46, maxHeight: 132, borderRadius: 23 } as TextStyle} />
           <RoundAction icon="send" size={46} label={busy ? "Sending" : "Send reply"} ready={!busy && Boolean(text.trim())} onPress={() => { void send(); }} />
         </View> : <Caption>{role.why("messages.reply") ?? "Only a doctor or a nurse replies."}</Caption>}
       </View>}

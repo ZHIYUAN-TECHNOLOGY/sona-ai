@@ -11,6 +11,9 @@ import type { Encounter, Patient, Task } from "@/features/encounter/types";
  * imminent visits > tasks). A model-ranked list replaces `score` when the backend exists; the
  * reason line stays mandatory so a ranking is never unexplained.
  */
+// Under a minute reads as just now, never "0 min".
+const waitedLine = (waited: string) => /^0\b/.test(waited) ? "Urgent message · just now" : `Urgent message · no reply for ${waited}`;
+
 export type DayTone = "urgent" | "soon" | "routine";
 export type DayItem = {
   id: string; kind: "result" | "blocker" | "visit" | "task" | "check-in" | "booking" | "message"; title: string; detail: string; reason: string; tone: DayTone; score: number;
@@ -104,7 +107,7 @@ export function messageItems(threads: MessageThread[], now = new Date()): DayIte
     const words = t.lastText.trim().split(/\s+/);
     return {
       id: `message-${t.patientId}`, kind: "message" as const, title: `${t.name.split(" ")[0]}: ${words.slice(0, WORDS).join(" ")}${words.length > WORDS ? "…" : ""}`,
-      detail: t.reason ?? "Triaged urgent", reason: `Urgent message · no reply for ${since(t.waitingSince ?? t.lastAt, now)}`, tone: "urgent" as const, score: 105, at: new Date(t.lastAt).getTime(), patientId: t.patientId, open: { view: "messages" },
+      detail: t.reason ?? "Triaged urgent", reason: waitedLine(since(t.waitingSince ?? t.lastAt, now)), tone: "urgent" as const, score: 105, at: new Date(t.lastAt).getTime(), patientId: t.patientId, open: { view: "messages" },
     };
   });
 }
