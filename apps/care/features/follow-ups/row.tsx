@@ -1,19 +1,21 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { Text } from "@/lib/text";
 import { useMe } from "@/features/me";
+import { useLang } from "@/lib/i18n";
 import { IconTile, KICKER, Tile } from "@/features/doses";
 import { palette } from "@/lib/theme";
 import { orpc } from "@/utils/orpc";
 import { away, followUpNeeds, pillLine } from "./lines";
 import { Capsule } from "./timeline";
 
-/** The patient's follow-ups, earliest first, fetched once they have joined. */
+/** The patient's follow-ups, earliest first, in the language Sona Care speaks, fetched once they have joined. */
 export function useFollowUps() {
   const { state } = useMe();
-  return useQuery({ ...orpc.care.followUps.queryOptions(), enabled: state === "joined" });
+  const lang = useLang();
+  return useQuery({ ...orpc.care.followUps.queryOptions({ input: { lang } }), enabled: state === "joined", placeholderData: keepPreviousData });
 }
 /** The booking requests the patient sent (waiting, confirmed or declined), once they have joined. */
 export function useBookingRequests() {
