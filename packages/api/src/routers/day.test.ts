@@ -99,6 +99,18 @@ test("a result from the (simulated) lab feed past a call-now limit arrives flagg
   expect((await (await otherHospital(db, as)).results.receive({ patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L" }).catch(e => e)).code).toBe("NOT_FOUND");
 });
 
+test("a result for a sample the lab was still running fills that pending row, so the ward and the discharge stop waiting on it", async () => {
+  const { api } = await signedIn();
+  const blockersOf = async () => (await api.ward.beds()).find(b => b.bed === "Bed 2")!.blockers.map(b => b.kind);
+  expect(await blockersOf()).toContain("result");
+  const arrived = await api.results.receive({ patientId: "SYN-2002", test: "urine culture sensitivities ", value: "E. coli, sensitive to cefalexin" });
+  expect(arrived).toMatchObject({ id: "lab-2002-b2-result", test: "Urine culture sensitivities", value: "E. coli, sensitive to cefalexin", flag: null });
+  expect(await blockersOf()).not.toContain("result");
+  expect((await api.results.list()).some(r => r.id === "lab-2002-b2-result")).toBe(true);
+  // With no sample left pending, a repeat test is a new result.
+  expect((await api.results.receive({ patientId: "SYN-2002", test: "Urine culture sensitivities", value: "No growth" })).id).not.toBe("lab-2002-b2-result");
+});
+
 test("handover says who acknowledged a critical result and how long it took; an acknowledged ordinary result is no longer 'act on'", async () => {
   const { api, clock } = await signedIn();
   const critical = await api.results.receive({ patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L" });

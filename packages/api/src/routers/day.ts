@@ -3,7 +3,7 @@ import { user } from "@sona-ai/db/schema/auth";
 import { appointments, encounters, labResults, patients, tasks } from "@sona-ai/db/schema/clinical";
 import type { DemoPatient } from "@sona-ai/domain/demo-patients";
 import { criticalOf } from "@sona-ai/domain/critical";
-import { and, asc, desc, eq, gte, isNull, lt } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNull, lt, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { taskCreateSchema } from "../contracts";
@@ -55,8 +55,13 @@ export const resultsRouter = {
       const { db, hospitalId } = context;
       const [patient] = await db.select({ id: patients.id }).from(patients).where(and(eq(patients.id, input.patientId), eq(patients.hospitalId, hospitalId)));
       if (!patient) throw new ORPCError("NOT_FOUND", { message: `No patient ${input.patientId}` });
-      const id = `lab-${crypto.randomUUID()}`;
-      await db.insert(labResults).values({ id, patientId: input.patientId, test: input.test, value: input.value, unit: input.unit, flag: criticalOf(input) ?? null, sourceId: id, receivedAt: clockOf(context) });
+      // A sample the lab was still running (a ward and discharge blocker) is filled in place, keeping its ID; anything else is a new result.
+      const [pending] = await db.select({ id: labResults.id }).from(labResults)
+        .where(and(eq(labResults.patientId, input.patientId), eq(labResults.flag, "pending"), sql`lower(${labResults.test}) = lower(${input.test})`)).orderBy(asc(labResults.receivedAt)).limit(1);
+      const id = pending?.id ?? `lab-${crypto.randomUUID()}`;
+      const values = { value: input.value, unit: input.unit, flag: criticalOf(input) ?? null, receivedAt: clockOf(context) };
+      if (pending) await db.update(labResults).set(values).where(eq(labResults.id, id));
+      else await db.insert(labResults).values({ id, patientId: input.patientId, test: input.test, sourceId: id, ...values });
       const [result] = await listResults(db, hospitalId, eq(labResults.id, id));
       return result!;
     }),
