@@ -1,7 +1,7 @@
 import { and, eq, inArray, like, notInArray } from "drizzle-orm";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 
-import { admissions, appointments, hospitals, auditItems, careCodes, careLinks, careMessages, checkInReplies, checkIns, claims, doseLogs, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, patients, provenance, receipts, tasks } from "./schema";
+import { admissions, appointments, bookingRequests, hospitals, pushTokens, auditItems, careCodes, careLinks, careMessages, checkInReplies, checkIns, claims, doseLogs, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, patients, provenance, receipts, tasks } from "./schema";
 import { DEMO_HOSPITAL, SEED_LAB_IDS, seedDemo } from "./seed";
 
 type AnyDb = PgAsyncDatabase<any, any>;
@@ -22,6 +22,9 @@ export async function resetDemo(db: AnyDb, now = new Date()) {
   // Sona Care: codes, messages and account links go, so a demo starts with the patient joining again.
   await db.delete(careMessages).where(eq(careMessages.hospitalId, DEMO_HOSPITAL));
   await db.delete(doseLogs).where(eq(doseLogs.hospitalId, DEMO_HOSPITAL));
+  await db.delete(bookingRequests).where(eq(bookingRequests.hospitalId, DEMO_HOSPITAL));
+  // Phones are re-registered when the patient joins again.
+  await db.delete(pushTokens).where(eq(pushTokens.hospitalId, DEMO_HOSPITAL));
   await db.delete(careLinks).where(eq(careLinks.hospitalId, DEMO_HOSPITAL));
   await db.delete(careCodes).where(eq(careCodes.hospitalId, DEMO_HOSPITAL));
   await db.delete(findings).where(eq(findings.hospitalId, DEMO_HOSPITAL));
