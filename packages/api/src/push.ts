@@ -48,7 +48,9 @@ export type PatientNews =
   | { kind: "check-in"; day: number }
   | { kind: "booked"; at: Date }
   | { kind: "added"; test: string; at: Date }
-  | { kind: "reply" };
+  | { kind: "reply" }
+  | { kind: "confirmed"; doctor: string; at: Date }
+  | { kind: "declined"; doctor: string; at: Date };
 type Lang = "en" | "ms";
 
 const DAYS = { en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], ms: ["Ahd", "Isn", "Sel", "Rab", "Kha", "Jum", "Sab"] };
@@ -67,15 +69,19 @@ const COPY: Record<Lang, { [K in PatientNews["kind"]]: (n: Extract<PatientNews, 
     booked: n => ({ title: "Booked in", body: `Your doctor booked you in · ${when(n.at, "en")}` }),
     added: n => ({ title: "Your visit", body: `A ${n.test.replace(/^[A-Z](?=[a-z])/, c => c.toLowerCase())} was added to your visit · ${when(n.at, "en")}` }),
     reply: () => ({ title: "Messages", body: "Your care team replied" }),
+    confirmed: n => ({ title: "Visit confirmed", body: `${n.doctor} will see you · ${when(n.at, "en")}` }),
+    declined: n => ({ title: "Choose another time", body: `${n.doctor} can't see you ${when(n.at, "en")}. Pick another time in Sona Care` }),
   },
   ms: {
     "check-in": n => ({ title: "Semakan", body: `Apa khabar hari ini? Semakan hari ke-${n.day} anda sudah sedia` }),
     booked: n => ({ title: "Temu janji", body: `Doktor anda telah membuat temu janji · ${when(n.at, "ms")}` }),
     added: n => ({ title: "Lawatan anda", body: `${n.test} ditambah pada lawatan anda · ${when(n.at, "ms")}` }),
     reply: () => ({ title: "Mesej", body: "Pasukan penjagaan anda telah membalas" }),
+    confirmed: n => ({ title: "Lawatan disahkan", body: `${n.doctor} akan berjumpa anda · ${when(n.at, "ms")}` }),
+    declined: n => ({ title: "Pilih masa lain", body: `${n.doctor} tidak dapat berjumpa anda ${when(n.at, "ms")}. Pilih masa lain dalam Sona Care` }),
   },
 };
-const URL_OF: Record<PatientNews["kind"], string> = { "check-in": "sona-care:///check-ins", booked: "sona-care:///follow-ups", added: "sona-care:///follow-ups", reply: "sona-care:///messages" };
+const URL_OF: Record<PatientNews["kind"], string> = { "check-in": "sona-care:///check-ins", booked: "sona-care:///follow-ups", added: "sona-care:///follow-ups", reply: "sona-care:///messages", confirmed: "sona-care:///follow-ups", declined: "sona-care:///follow-ups" };
 
 export function pushFor(news: PatientNews, lang: Lang): Push {
   return { ...(COPY[lang][news.kind] as (n: PatientNews) => Omit<Push, "data">)(news), data: { url: URL_OF[news.kind] } };

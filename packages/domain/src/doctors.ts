@@ -24,3 +24,25 @@ export const DOCTORS: Doctor[] = [
     about: "Everyday health for you and your family, close to home.", tags: ["family", "child", "general", "vaccine"], days: [1, 3, 5, 6], times: ["08:30", "10:00", "14:00"] },
 ];
 
+
+const MYT = 8 * 3600_000, DAY = 86_400_000;
+
+/** A doctor's clinic sessions on the next `days` days from tomorrow (Malaysia time): each clinic day at noon, with its session times. */
+export function clinicSlots(doctor: Pick<Doctor, "days" | "times">, now: Date, days = 14): { day: Date; times: Date[] }[] {
+  const today = Math.floor((now.getTime() + MYT) / DAY);
+  return Array.from({ length: days }, (_, i) => today + 1 + i)
+    .filter(d => doctor.days.includes(new Date(d * DAY).getUTCDay()))
+    .map(d => ({ day: new Date(d * DAY - MYT + 12 * 3600_000), times: doctor.times.map(t => {
+      const [h, m] = t.split(":").map(Number);
+      return new Date(d * DAY - MYT + (h! * 60 + m!) * 60_000);
+    }) }));
+}
+
+/** "Dr. Lim Wei Jie" → "Dr. Lim", as a task or a confirmation names them. */
+export const shortName = (name: string) => name.split(" ").slice(0, 2).join(" ");
+
+/** A slot as people say it, in Malaysia time: weekday "Thu", day "Thu 1 Oct", time "10:30". */
+export function slotWords(at: Date | string) {
+  const d = new Date(at), f = (o: Intl.DateTimeFormatOptions) => d.toLocaleString("en-GB", { ...o, timeZone: "Asia/Kuala_Lumpur" });
+  return { weekday: f({ weekday: "short" }), day: f({ weekday: "short", day: "numeric", month: "short" }).replace(",", ""), time: f({ hour: "2-digit", minute: "2-digit" }) };
+}

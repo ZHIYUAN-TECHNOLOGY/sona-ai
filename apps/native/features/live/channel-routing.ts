@@ -18,6 +18,8 @@ const BY_TOPIC: Record<string, Reread[]> = {
   messages: ["day", "messages"],
   // Sona Care: a dose marked taken changes what My Day's flagged rows say was missed.
   doses: ["day"],
+  // Sona Care: a booking request (or a colleague's decision on one) is a row on My Day.
+  bookings: ["day"],
   // The demo clock moved: everything time-based may have changed.
   demo: ALL,
 };

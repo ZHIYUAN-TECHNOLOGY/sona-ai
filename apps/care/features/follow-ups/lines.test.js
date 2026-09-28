@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { agendaOf, bringLine, dateOf, dayA11y, dayOf, emptyLine, followUpNeeds, marksByDay, nextUp, nextVisit, pillLine, scheduleLine, weekAround, weekLabel, whenLine } from "./lines";
+import { agendaOf, bringLine, dateOf, dayA11y, dayOf, emptyLine, followUpNeeds, marksByDay, nextUp, nextVisit, openRequests, pillLine, scheduleLine, weekAround, weekLabel, whenLine } from "./lines";
 
 const D = (iso) => Date.UTC(...iso.split("-").map((n, i) => Number(n) - (i === 1 ? 1 : 0))) / 86_400_000; // "2026-09-27" → day number
 test("the strip reads days in Malaysia and shows the Monday-first week around the chosen day", () => {
@@ -86,4 +86,20 @@ test("the home tile dates the next one with its tone, and counts what needs the 
   expect(nextVisit([])).toEqual({ value: "—", line: "Nothing booked yet", tone: "muted" });
   expect(followUpNeeds([{ ...items[0], status: "overdue" }, ...items])).toBe(2);
   expect(followUpNeeds(undefined)).toBe(0);
+});
+
+test("the Schedule shows waiting requests and a declined one until she asks that doctor again; confirmed and past ones are not requests", () => {
+  const now = new Date("2026-09-28T02:00:00Z");
+  const req = (id, over = {}) => ({ id, doctorId: "lim", startsAt: new Date("2026-10-01T02:30:00Z"), status: "requested", createdAt: new Date("2026-09-28T01:00:00Z"), ...over });
+  const list = [
+    req("later", { startsAt: new Date("2026-10-05T01:00:00Z") }),
+    req("soon", { doctorId: "priya", startsAt: new Date("2026-09-29T01:30:00Z") }),
+    req("declined", { doctorId: "arjun", status: "declined" }),
+    req("confirmed", { doctorId: "tan", status: "confirmed" }),
+    req("past", { doctorId: "farah", startsAt: new Date("2026-09-27T01:00:00Z") }),
+  ];
+  expect(openRequests(list, now).map(r => r.id)).toEqual(["soon", "declined", "later"]);
+  // Asking Dr. Arjun again replaces the declined one.
+  const again = req("again", { doctorId: "arjun", createdAt: new Date("2026-09-28T01:30:00Z") });
+  expect(openRequests([...list, again], now).map(r => r.id)).not.toContain("declined");
 });

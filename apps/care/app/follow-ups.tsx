@@ -7,10 +7,10 @@ import { EASE_OUT, rise, useNextDose, useNow } from "@/features/doses";
 import { clock, dosesToday, weekOf } from "@/features/doses/model";
 import { errorText } from "@/features/errors";
 import {
-  agendaOf, away, bringLine, dateOf, dayA11y, dayLabel, dayOf, emptyLine, marksByDay, nextUp, pillLine, scheduleLine, weekAround, weekLabel,
-  type AgendaItem, type DayMarks, type FollowUp,
+  agendaOf, away, bringLine, dateOf, dayA11y, dayLabel, dayOf, emptyLine, marksByDay, nextUp, openRequests, pillLine, scheduleLine, weekAround, weekLabel,
+  type AgendaItem, type BookingRequest, type DayMarks, type FollowUp,
 } from "@/features/follow-ups/lines";
-import { useFollowUps } from "@/features/follow-ups/row";
+import { useBookingRequests, useFollowUps } from "@/features/follow-ups/row";
 import { Capsule, Stop, STOP_TITLE, Timeline } from "@/features/follow-ups/timeline";
 import { removeQuestion, saveQuestion, useQuestions } from "@/features/questions";
 import { DOCK_SPACE } from "@/lib/dock";
@@ -32,6 +32,7 @@ const labelOf = (day: number) => dayLabel(new Date(day * 86_400_000)); // "Sun 4
  * kit's timeline: a hairline with a dot per stop (blue for the next, grey after, a green check once done),
  * each stop a card with its time capsule, title, one line and at most one inline action. The next visit
  * is the one feature card (Before you go, questions for the doctor), on its day, else under the timeline.
+ * Visits asked for in Find a doctor sit under the strip as Requests until the care team decides.
  */
 export default function ScheduleScreen() {
   const { data, error, isLoading } = useFollowUps();
@@ -39,6 +40,7 @@ export default function ScheduleScreen() {
   const now = useNow();
   const { plan, meds, taken } = useNextDose(now);
   const still = useReducedMotion();
+  const requests = openRequests(useBookingRequests().data ?? [], now);
 
   const today = dayOf(now);
   const [picked, setPicked] = useState<number>();
@@ -66,6 +68,11 @@ export default function ScheduleScreen() {
     <Animated.View entering={rise(still, 1)}>
       <WeekStrip day={day} today={today} marks={marks} still={still} onPick={setPicked} a11y={d => dayA11y(d, today, visits, checkIns, marks[d])} />
     </Animated.View>
+
+    {requests.length > 0 && <Animated.View entering={rise(still, 2)} style={{ gap: 10 }}>
+      <Text accessibilityRole="header" style={{ ...type.overline, color: palette.faint }}>Requests</Text>
+      {requests.map(r => <RequestCard key={r.id} r={r} />)}
+    </Animated.View>}
 
     <Agenda key={day} day={day} today={today} still={still} items={items} next={next} onJump={setPicked} upNext={nextUp(day, visits, checkIns)} />
 
@@ -195,6 +202,24 @@ function Review({ f, still }: { f: FollowUp; still: boolean }) {
     <TextInput value={draft} onChangeText={setDraft} onSubmitEditing={() => { saveQuestion(draft); setDraft(""); }}
       placeholder="Add a question" placeholderTextColor={palette.faint} returnKeyType="done" submitBehavior="blurAndSubmit"
       accessibilityLabel="Add a question for your doctor" accessibilityHint="Saved on this phone for your visit" style={{ ...field, backgroundColor: palette.white }} />
+  </View>;
+}
+
+/**
+ * A visit asked for in Find a doctor: waiting for the care team, or declined with their note and the
+ * way to choose another time (the doctor's free times). A confirmed one shows as a normal visit.
+ */
+function RequestCard({ r }: { r: BookingRequest }) {
+  const declined = r.status === "declined";
+  const line = declined ? "Not booked · the care team can't make this time" : "Requested · waiting for the care team";
+  return <View style={[surfaceStyle, { padding: 18, gap: 8 }]}>
+    <View accessible accessibilityLabel={`${pillLine({ id: r.id, date: r.startsAt })}. ${r.doctorName}, ${r.specialty}. ${line}.${declined && r.note ? ` ${r.note}` : ""}`} style={{ gap: 8 }}>
+      <Capsule>{pillLine({ id: r.id, date: r.startsAt })}</Capsule>
+      <Text style={STOP_TITLE}>{r.doctorName} · {r.specialty}</Text>
+      <Text style={{ ...type.body, fontWeight: "600", color: declined ? palette.amber : palette.blue }}>{line}</Text>
+      {declined && r.note && <Text selectable style={{ ...type.body, color: palette.muted }}>“{r.note}”</Text>}
+    </View>
+    {declined && <Button label="Choose another time" onPress={() => router.push({ pathname: "/doctor", params: { id: r.doctorId } })} />}
   </View>;
 }
 

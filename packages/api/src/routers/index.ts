@@ -14,6 +14,7 @@ import { demoRouter } from "./demo";
 import { adherenceRouter } from "./doses";
 import { opsRouter } from "./ops";
 import { dischargeRouter } from "./discharge";
+import { bookingsRouter, careBookingsRouter, careDoctorsRouter } from "./bookings";
 import { careRouter } from "./care";
 import { carePlanRouter } from "./care-plan";
 import { messagesRouter } from "./messages";
@@ -54,7 +55,9 @@ export const appRouter = {
   // Management: this week's numbers from the loops' own rows (the ops counter on the ward view).
   ops: opsRouter,
   // Sona Care, the patient app; `messages` is the care team's side of its thread (announced as "messages")
-  care: { ...careRouter, ...carePlanRouter },
+  care: { ...careRouter, ...carePlanRouter, doctors: careDoctorsRouter, bookings: careBookingsRouter },
+  // Booking requests from Sona Care (confirm or decline on My Day) and free slots for Book in.
+  bookings: bookingsRouter,
   messages: messagesRouter,
   evidence: evidenceRouter,
   discharge: dischargeRouter,

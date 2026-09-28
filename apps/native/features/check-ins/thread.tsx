@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { AccessibilityInfo, Pressable, View } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Pressable, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { MarkedText } from "@/components/sona/marked-text";
 import { LAYOUT, type riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Chip, Icon, useAccessibleEffects } from "@/components/sona/ui";
+import { DoneLine, slotLine, SlotPicker, type PickedSlot } from "@/features/bookings/parts";
 import { haptic } from "@/features/clinical/medication-parts";
 import type { DayItem } from "@/features/day/model";
 import { useEncounter } from "@/features/encounter/store";
@@ -63,8 +64,9 @@ export function CheckInThread({ patient, entering }: { patient: Patient; enterin
 }
 
 /**
- * My Day's one tap on a flagged reply: call back (simulated) or book in. In live mode Book in is real:
- * the server books tomorrow 09:00, closes the flag and the patient's Sona Care shows the visit at once.
+ * My Day's one tap on a flagged reply: call back (simulated) or book in. Book in opens the slot picker
+ * in place (the care-team doctor preselected); in live mode the booking is real: the server books the
+ * slot, closes the flag and the patient's Sona Care shows the visit at once.
  */
 export function FlagActions({ item }: { item: DayItem }) {
   const { on: live } = useLive();
@@ -74,21 +76,23 @@ export function FlagActions({ item }: { item: DayItem }) {
   const [visit, setVisit] = useState<{ id: string; toAdd: { id: string; label: string; test: string; tracked: boolean; dueAt: Date | string }[] }>();
   const [added, setAdded] = useState<string[]>([]);
   const [error, setError] = useState<string>();
+  const [picking, setPicking] = useState(false);
   const taskId = item.id.replace(/^check-in-/, "");
   const first = item.title.split(":")[0];
+  // Book in at the slot picked in place: live, the server books it and her Sona Care shows it at once.
+  const book = (slot: PickedSlot) => {
+    haptic("select"); setError(undefined); setPicking(false);
+    if (!live) { act(`Booked in ${slotLine(slot.startsAt)}`); return; }
+    setDoing("Booking…");
+    bookIn(taskId, true, slot).then(booked => {
+      if (booked) setVisit({ id: booked.appointmentId, toAdd: booked.toAdd });
+      const when = slotLine(booked?.startsAt ?? slot.startsAt);
+      setDoing(`Booked in ${when} · ${first}'s app updated`);
+      AccessibilityInfo.announceForAccessibility(`Booked in ${when}. ${first}'s Sona Care shows it now.`);
+    }, e => { setError(errorText(e)); setDoing(undefined); });
+  };
   const act = (label: string) => {
     haptic("select"); setError(undefined);
-    if (label === "Booked in" && live) {
-      setDoing("Booking…");
-      bookIn(taskId, true).then(booked => {
-        const at = booked && new Date(booked.startsAt);
-        if (booked) setVisit({ id: booked.appointmentId, toAdd: booked.toAdd });
-        const when = at ? at.toLocaleString("en-GB", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" }) : "tomorrow";
-        setDoing(`Booked in ${when} · ${first}'s app updated`);
-        AccessibilityInfo.announceForAccessibility(`Booked in ${when}. ${first}'s Sona Care shows it now.`);
-      }, e => { setError(errorText(e)); setDoing(undefined); });
-      return;
-    }
     setDoing(label);
     AccessibilityInfo.announceForAccessibility(`${label}, simulated`);
     // A beat to read the confirmation before the row leaves.
@@ -103,10 +107,10 @@ export function FlagActions({ item }: { item: DayItem }) {
     }, e => setError(errorText(e)));
   };
   if (doing) return <Animated.View entering={FadeIn.duration(180)} style={{ gap: 8 }}>
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, minHeight: 34 }}>
-      <Icon name="checkmark.circle.fill" size={13} color={palette.green} />
-      <Text style={{ ...type.footnote, fontWeight: "600", color: palette.green }}>{doing}{doing.startsWith("Booked in ") || doing === "Booking…" ? "" : " · simulated"}</Text>
-    </View>
+    {doing === "Booking…" ? <View style={{ flexDirection: "row", alignItems: "center", gap: 6, minHeight: 34 }}>
+      <ActivityIndicator size="small" color={palette.muted} />
+      <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>Booking…</Text>
+    </View> : <DoneLine text={`${doing}${live && doing.startsWith("Booked in ") ? "" : " · simulated"}`} />}
     {visit?.toAdd.map(f => added.includes(f.id)
       ? <View key={f.id} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         <Icon name="checkmark.circle.fill" size={13} color={palette.green} />
@@ -131,12 +135,14 @@ export function FlagActions({ item }: { item: DayItem }) {
   return <View style={{ gap: 6 }}>
     {live && item.patientId && <DoseLine patientId={item.patientId} />}
     <View style={{ flexDirection: "row", gap: 8 }}>
-      {([["Call back", "phone.fill"], [live ? "Book in tomorrow 9:00" : "Book in", "calendar.badge.plus"]] as const).map(([label, icon], i) => <Pressable key={label} accessibilityRole="button" accessibilityLabel={`${label} ${first}`} onPress={() => act(i ? "Booked in" : "Called back")}
-        style={({ pressed }) => ({ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: i ? "rgba(20,28,40,0.06)" : palette.ink, opacity: pressed ? 0.8 : 1 })}>
-        <Icon name={icon} size={12} color={i ? palette.ink : palette.white} />
-        <Text style={{ fontSize: 14, fontWeight: "600", color: i ? palette.ink : palette.white }}>{label}</Text>
+      {([["Call back", "phone.fill"], ["Book in", "calendar.badge.plus"]] as const).map(([label, icon], i) => <Pressable key={label} accessibilityRole="button" accessibilityLabel={`${label} ${first}`}
+        accessibilityState={i ? { expanded: picking } : undefined} onPress={() => { if (!i) act("Called back"); else { haptic("select"); setPicking(p => !p); } }}
+        style={({ pressed }) => ({ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: i ? (picking ? "rgba(36,91,204,0.12)" : "rgba(20,28,40,0.06)") : palette.ink, opacity: pressed ? 0.8 : 1 })}>
+        <Icon name={icon} size={12} color={i ? (picking ? palette.blue : palette.ink) : palette.white} />
+        <Text style={{ fontSize: 14, fontWeight: "600", color: i ? (picking ? palette.blue : palette.ink) : palette.white }}>{label}</Text>
       </Pressable>)}
     </View>
+    {picking && <SlotPicker live={live} onPick={book} onCancel={() => setPicking(false)} />}
     {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
   </View>;
 }

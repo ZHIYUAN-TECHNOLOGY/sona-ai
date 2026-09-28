@@ -108,3 +108,9 @@ test("a due check-in pushes once per patient, from the demo clock's jump too", a
   await doctor.demo.jump({ to: "day-2" });
   expect(expo.sent.flatMap(s => s.messages.map(m => m.body))).toEqual(["How are you feeling today? Your day-2 check-in is ready"]);
 });
+
+test("a booking decision reads as the patient's words, in Malay when her plan is", () => {
+  const at = new Date("2026-10-01T02:30:00Z");
+  expect(pushFor({ kind: "confirmed", doctor: "Dr. Lim", at }, "en")).toEqual({ title: "Visit confirmed", body: "Dr. Lim will see you · Thu 1 Oct, 10:30 AM", data: { url: "sona-care:///follow-ups" } });
+  expect(pushFor({ kind: "declined", doctor: "Dr. Lim", at }, "ms").body).toBe("Dr. Lim tidak dapat berjumpa anda Kha 1 Okt, 10:30 PG. Pilih masa lain dalam Sona Care");
+});
