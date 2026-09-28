@@ -90,8 +90,6 @@ export function latestUpdate(checkIns: Pick<CheckIn, "dueAt" | "sentAt" | "repli
   return { line: "Nothing new today", tone: "muted", face: "smile", to: "messages" };
 }
 
-/** The water log's daily goal (logged from the + sheet on home). */
-export const GLASSES = 8;
 
 // A day's dose state as a height on the sparkline; still to come or nothing due leaves no point.
 const LEVEL: Partial<Record<WeekDay["state"], number>> = { all: 1, some: 0.5, none: 0 };

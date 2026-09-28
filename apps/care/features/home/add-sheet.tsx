@@ -1,20 +1,16 @@
-import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { useState } from "react";
-import { AccessibilityInfo, Modal, Pressable, View } from "react-native";
+import { Modal, Pressable, View } from "react-native";
 import Animated, { FadeIn, FadeInDown, FadeOut, SlideInDown, SlideOutDown, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
-import { EASE_OUT, useNow } from "@/features/doses";
-import { GLASSES } from "@/features/home";
-import { setGlasses, useWater } from "@/features/water";
+import { EASE_OUT } from "@/features/doses";
 import { Text } from "@/lib/text";
 import { palette } from "@/lib/theme";
 import { AccentText, ICON } from "@/lib/ui";
 
 const SPARKLES = "M9.9 15.5a2 2 0 0 0-1.4-1.4l-6.1-1.6a.5.5 0 0 1 0-1l6.1-1.6a2 2 0 0 0 1.4-1.4l1.6-6.1a.5.5 0 0 1 1 0l1.6 6.1a2 2 0 0 0 1.4 1.4l6.1 1.6a.5.5 0 0 1 0 1l-6.1 1.6a2 2 0 0 0-1.4 1.4l-1.6 6.1a.5.5 0 0 1-1 0Z";
 const CALENDAR = "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2";
-const DROP = "M12 2.7c3.7 4.3 6.5 7.8 6.5 11.3a6.5 6.5 0 0 1-13 0c0-3.5 2.8-7 6.5-11.3Z";
 const CHEVRON = "m9 18 6-6-6-6";
 // Held long enough for the sheet's exit to finish before the modal goes.
 const OUT_MS = 220;
@@ -22,31 +18,22 @@ const OUT_MS = 220;
 /**
  * The home "+" (the kit's "What are you / planning to add"): a white sheet (40 pt corners, a grabber,
  * the centred light-then-gradient title) with plain rows and a grey Close. Ask, message and book open
- * their screens; water logs a glass right here and says the new count. It springs up with a slight
+ * their screens. It springs up with a slight
  * overshoot over a dim, the rows rising 40 ms apart (after 60fps "Canopi create collection sheet");
  * Reduce Motion fades only. The backdrop, Close and the back gesture close it.
  */
 export function AddSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const reduced = useReducedMotion();
   const insets = useSafeAreaInsets();
-  const glasses = useWater(useNow());
   const [leaving, setLeaving] = useState(false);
   const close = (then?: () => void) => {
     setLeaving(true);
     setTimeout(() => { setLeaving(false); onClose(); then?.(); }, reduced ? 0 : OUT_MS);
   };
-  const water = () => {
-    const n = Math.min(GLASSES, glasses + 1);
-    setGlasses(n);
-    if (process.env.EXPO_OS === "ios") void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    AccessibilityInfo.announceForAccessibility(`Glass logged. ${n} of ${GLASSES} today`);
-    close();
-  };
   const rows: { label: string; d: string; note?: string; go: () => void }[] = [
     { label: "Ask Sona Care", d: SPARKLES, go: () => close(() => router.push("/assistant")) },
     { label: "Message my care team", d: ICON.chat, go: () => close(() => router.push("/messages")) },
     { label: "Book a visit", d: CALENDAR, go: () => close(() => router.push("/doctors")) },
-    { label: "Log a glass of water", d: DROP, note: `${glasses} of ${GLASSES}`, go: water },
   ];
   const shown = open && !leaving;
   return <Modal visible={open} transparent animationType="none" statusBarTranslucent onRequestClose={() => close()}>

@@ -52,7 +52,7 @@ let seen = false;
 /**
  * Sona Care's home (the kit's "Child Home", the patient watching their own recovery): initials, "Hello!
  * Amelia" over the date, and the bell with its count; then "Today's / Latest updates" with a + for
- * adding (ask, message, book, log water), one insight line (day at home, what needs you and how long)
+ * adding (ask, message, book), one insight line (day at home, what needs you and how long)
  * and a chip per open thing; a two-column bento (today's medicines with a hold to take the due dose in
  * place, consistency, the latest update, the next visit); and the one feature card, today's check-in.
  * At large Dynamic Type the bento stacks to one column.
@@ -103,7 +103,7 @@ export default function Home() {
           </View>
         </View>
         <View style={{ gap: 10, marginTop: space.section - space.stack }}>
-          <Section light="Today's" bold="Latest updates" action={<CircleButton d={ICON.plus} label="Add: ask, message, book or log water" onPress={() => setAdding(true)} />} />
+          <Section light="Today's" bold="Latest updates" action={<CircleButton d={ICON.plus} label="Add: ask, message or book" onPress={() => setAdding(true)} />} />
           <Text style={{ ...type.body, color: needs.length ? palette.muted : palette.green, fontWeight: needs.length ? "400" : "600" }}>{insight}</Text>
           {needs.length > 0 && <Animated.View layout={layout} exiting={FadeOut.duration(200)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {needs.map(n => <Animated.View key={`${n.kind}:${n.label}`} layout={layout} entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)}>
