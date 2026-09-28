@@ -35,18 +35,19 @@ export const hoursMinutes = (mins: number) => {
 
 /**
  * One segment per bed, coloured by what it needs; the segments grow in on mount (static under Reduce Motion).
- * With `onFilter` (the ward screen) the legend is the filter; elsewhere each legend count opens the ward filtered to it.
+ * With `onFilter` (the ward screen) only the filter shows, carrying the same colours; elsewhere each legend count opens the ward filtered to it.
  */
 export function BedBar({ beds, filter, onFilter }: { beds: Bed[]; filter?: WardFilter; onFilter?: (f: WardFilter) => void }) {
   const { reducedMotion } = useAccessibleEffects();
   const { segments, legend, label } = bedBar(beds);
   return <View style={{ gap: 10 }}>
-    <View accessible accessibilityRole="image" accessibilityLabel={label} style={{ flexDirection: "row", gap: 3, height: 11 }}>
+    {/* On the ward screen the filter carries the colours, so the bar is left out there. */}
+    {!onFilter && <View accessible accessibilityRole="image" accessibilityLabel={label} style={{ flexDirection: "row", gap: 3, height: 11 }}>
       {segments.map((k, i) => <Animated.View key={i} entering={reducedMotion ? undefined : riseIn({ delay: i * 35, distance: 4, scale: 0.5, duration: 320 })} style={{ flex: 1 }}>
         {/* A picked status dims the others, so the bar and the filter read as one control. */}
         <Animated.View style={{ flex: 1, borderRadius: 5.5, borderCurve: "continuous", backgroundColor: KIND[k], opacity: filter && filter !== "all" && k !== filter ? 0.25 : 1, transitionProperty: "opacity", transitionDuration: 240 } as never} />
       </Animated.View>)}
-    </View>
+    </View>}
     {onFilter && filter ? <Segmented beds={beds} value={filter} onChange={onFilter} /> : <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: 14 }}>
       {legend.map(l => <Pressable key={l.kind} accessibilityRole="button" accessibilityLabel={`Show ${l.count} ${l.label} bed${l.count === 1 ? "" : "s"}`}
         onPress={() => router.push({ pathname: "/ward", params: { filter: l.kind } })} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 6 }}>
