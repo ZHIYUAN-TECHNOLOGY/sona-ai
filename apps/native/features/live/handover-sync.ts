@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { HandoverCard } from "@/features/handover/model";
 import { api, errorText, requestId, useLive } from ".";
 import { useLiveChanges } from "./channel";
+import { useRole } from "./roles";
 
 /**
  * In live mode the handover stack is the server's cards (its patients only, no authored ward), and
@@ -10,6 +11,8 @@ import { useLiveChanges } from "./channel";
  */
 export function useLiveHandover() {
   const { on } = useLive();
+  // Bed managers may not read the handover; the screen says so instead of asking.
+  const readable = useRole().can("handover.list");
   const [cards, setCards] = useState<HandoverCard[]>();
   const [error, setError] = useState<string>();
   const [id] = useState(requestId);
@@ -17,16 +20,17 @@ export function useLiveHandover() {
   const [version, setVersion] = useState(0);
   useLiveChanges(["handover", "day", "findings"], () => setVersion(v => v + 1));
   useEffect(() => {
-    if (!on) return;
+    if (!on || !readable) return;
     let current = true;
-    api.handover.list().then(list => { if (current) setCards(list); }, e => { if (current) setError(errorText(e)); });
+    api.handover.list().then(list => { if (current) { setCards(list); setError(undefined); } }, e => { if (current) setError(errorText(e)); });
     return () => { current = false; };
-  }, [on, version]);
+  }, [on, readable, version]);
   /** Resolves to the server's acceptance time, or throws its refusal as readable text. */
   const accept = async (cardIds: string[], toUser: string) => {
     setError(undefined);
     try { return new Date((await api.handover.accept({ requestId: id, cardIds, toUser })).acceptedAt); }
     catch (e) { setError(errorText(e)); throw e; }
   };
-  return { live: on, cards, error, accept };
+  const retry = () => { setError(undefined); setVersion(v => v + 1); };
+  return { live: on, cards, error, accept, retry };
 }

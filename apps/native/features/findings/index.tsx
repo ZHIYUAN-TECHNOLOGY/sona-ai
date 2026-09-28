@@ -26,7 +26,7 @@ const BAND: Record<RiskBand, { label: string; ink: string; fill: string }> = {
 /** Where the findings came from, honestly: authored fixtures are never presented as a reading. */
 const provenance = (f: Finding) => f.source === "fixture" ? "Unvalidated · synthetic demo findings, not read from this image" : `Unvalidated · from ${f.source}`;
 
-export function FindingsCard({ findings, error, focus, onFocus, onTrack, onDismiss }: { findings: Finding[]; error?: string; focus?: string; onFocus?: (id: string) => void; onTrack: (f: Finding) => void; onDismiss: (f: Finding, reason: string) => void }) {
+export function FindingsCard({ findings, error, focus, onFocus, onTrack, onDismiss }: { findings: Finding[]; error?: string; focus?: string; onFocus?: (id: string) => void; onTrack?: (f: Finding) => void; onDismiss?: (f: Finding, reason: string) => void }) {
   const { reducedMotion } = useAccessibleEffects();
   const shown = findings.filter(f => f.status !== "dismissed");
   if (!shown.length) return null;
@@ -35,12 +35,12 @@ export function FindingsCard({ findings, error, focus, onFocus, onTrack, onDismi
       <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>Incidental findings</Text>
       <Text selectable style={{ ...type.caption, color: palette.muted }}>{provenance(shown[0]!)}</Text>
     </View>
-    {shown.map(f => <FindingRow key={f.id} n={findings.indexOf(f) + 1} finding={f} focused={focus === f.id} onFocus={onFocus && (() => onFocus(f.id))} onTrack={() => onTrack(f)} onDismiss={reason => onDismiss(f, reason)} />)}
+    {shown.map(f => <FindingRow key={f.id} n={findings.indexOf(f) + 1} finding={f} focused={focus === f.id} onFocus={onFocus && (() => onFocus(f.id))} onTrack={onTrack && (() => onTrack(f))} onDismiss={onDismiss && (reason => onDismiss(f, reason))} />)}
     {error && <Text selectable style={{ ...type.footnote, color: palette.red, paddingTop: 6 }}>{error}</Text>}
   </Surface>;
 }
 
-function FindingRow({ n, finding: f, focused, onFocus, onTrack, onDismiss }: { n: number; finding: Finding; focused: boolean; onFocus?: () => void; onTrack: () => void; onDismiss: (reason: string) => void }) {
+function FindingRow({ n, finding: f, focused, onFocus, onTrack, onDismiss }: { n: number; finding: Finding; focused: boolean; onFocus?: () => void; onTrack?: () => void; onDismiss?: (reason: string) => void }) {
   const [dismissing, setDismissing] = useState(false);
   const [reason, setReason] = useState("");
   const band = BAND[f.riskBand];
@@ -64,7 +64,8 @@ function FindingRow({ n, finding: f, focused, onFocus, onTrack, onDismiss }: { n
         <Icon name="checkmark.circle.fill" size={13} color={TEAL} />
         <Text selectable style={{ ...type.footnote, fontWeight: "600", color: TEAL }}>Tracked · {f.owner ?? "Attending doctor"}{f.dueAt ? ` · due ${shortDate(f.dueAt)}` : ""}</Text>
       </View>
-      : <View style={{ gap: 10, paddingLeft: 32 }}>
+      // Without the callbacks (a role the server would refuse) the row reads only.
+      : onTrack && onDismiss && <View style={{ gap: 10, paddingLeft: 32 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
           {f.intervalDays ? <Action label="Track follow-up" icon="calendar.badge.plus" secondary onPress={() => { haptic("select"); onTrack(); }} /> : null}
           <Pressable accessibilityRole="button" accessibilityState={{ expanded: dismissing }} accessibilityLabel={`Dismiss ${f.label}`} hitSlop={8} onPress={() => setDismissing(v => !v)} style={{ minHeight: 44, justifyContent: "center" }}>

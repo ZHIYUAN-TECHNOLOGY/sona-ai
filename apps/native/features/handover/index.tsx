@@ -11,10 +11,13 @@ import { riseIn } from "@/components/sona/motion";
 import { SourcesPill } from "@/components/sona/sources";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
+import { ErrorLine } from "@/components/sona/parts";
 import { Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import { useFindings } from "@/features/live/findings-sync";
+import { errorText } from "@/features/live";
 import { useLiveHandover } from "@/features/live/handover-sync";
+import { LockedAction, useRole } from "@/features/live/roles";
 import { buildHandover, type HandoverCard } from "./model";
 
 /*
@@ -96,10 +99,12 @@ export function HandoverScreen() {
   const [fixtureCards] = useState(() => buildHandover(patients, encounters, findings));
   // Live backend mode: the server's cards, and the acceptance is written there.
   const server = useLiveHandover();
+  const role = useRole();
   const cards = server.live ? server.cards ?? [] : fixtureCards;
   const [done, setDone] = useState<{ id: string; decision: Decision }[]>([]);
   const [receiver, setReceiver] = useState("Dr Lim · night registrar");
   const [accepted, setAccepted] = useState<string>();
+  const [acceptError, setAcceptError] = useState<string>();
   const remaining = cards.filter(card => !done.some(d => d.id === card.id));
   const [top, next] = remaining;
   const x = useSharedValue(0), y = useSharedValue(0), busy = useSharedValue(false);
@@ -135,12 +140,22 @@ export function HandoverScreen() {
   const clock = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   const accept = () => {
     if (!server.live) { haptic("success"); setAccepted(clock(new Date())); return; }
-    server.accept(cards.map(c => c.id), receiver).then(at => { haptic("success"); setAccepted(clock(at)); }, () => {});
+    // A refusal shows under the hold button with Retry; nothing is stamped until the server accepts.
+    setAcceptError(undefined);
+    server.accept(cards.map(c => c.id), receiver).then(at => { haptic("success"); setAccepted(clock(at)); }, e => setAcceptError(`Not accepted: ${errorText(e)}`));
   };
 
-  if (server.live && !server.cards) return <View style={{ flex: 1, backgroundColor: palette.canvas, paddingTop: insets.top + 56, paddingHorizontal: 20 }}>
+  // Live: not readable for this role, still loading, failed, or nothing to hand over. One calm line each.
+  const blocked = server.live && !role.can("handover.list") ? role.why("handover.list") : undefined;
+  if (server.live && (blocked || !server.cards || !server.cards.length)) return <View style={{ flex: 1, backgroundColor: palette.canvas, paddingTop: insets.top + 56, paddingHorizontal: 20, gap: 12 }}>
     <Stack.Screen options={{ title: "Shift handover" }} />
-    <Text accessibilityLiveRegion="polite" style={{ ...type.callout, color: palette.muted }}>{server.error ?? "Loading the handover from the server…"}</Text>
+    {blocked ? <Text accessibilityLiveRegion="polite" style={{ ...type.callout, color: palette.muted }}>{blocked}</Text>
+      : server.error ? <ErrorLine text={`The handover didn't load: ${server.error}`} onRetry={server.retry} />
+      : !server.cards ? <Text accessibilityLiveRegion="polite" style={{ ...type.callout, color: palette.muted }}>Loading the handover…</Text>
+      : <Animated.View entering={reducedMotion ? FadeIn : riseIn({ distance: 12, duration: 380 })} style={{ borderRadius: 28, borderCurve: "continuous", backgroundColor: palette.white, padding: 20, gap: 6 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}><Icon name="checkmark.circle.fill" size={18} color="#0F6E66" /><Text style={{ ...type.heading, color: palette.ink }}>Nothing to hand over</Text></View>
+        <Text style={{ ...type.callout, color: palette.muted }}>No patients on your list this shift. New admissions and results will appear here.</Text>
+      </Animated.View>}
   </View>;
   const discuss = done.filter(d => d.decision === "discuss");
 
@@ -193,8 +208,8 @@ export function HandoverScreen() {
         <Pressable accessibilityRole="button" onPress={() => router.back()} style={{ alignSelf: "flex-start", marginTop: 6, minHeight: 40, paddingHorizontal: 16, borderRadius: 20, justifyContent: "center", backgroundColor: "rgba(255,255,255,0.18)" }}>
           <Text style={{ fontSize: 15, fontWeight: "600", color: palette.white }}>Done</Text>
         </Pressable>
-      </Animated.View> : <HoldToAccept onDone={accept} />}
-      {server.error && !accepted && <Text accessibilityLiveRegion="polite" style={{ ...type.callout, color: palette.amber }}>{server.error}</Text>}
+      </Animated.View> : server.live && !role.can("handover.accept") ? <LockedAction label="Needs a doctor or a nurse to accept" path="handover.accept" height={56} /> : <HoldToAccept onDone={accept} />}
+      {acceptError && !accepted && <ErrorLine text={acceptError} onRetry={accept} />}
       <Text style={{ ...type.caption, color: palette.muted }}>{server.live ? "Synthetic handover from the live backend: clinic patients from the server’s records, no authored ward patients." : "Synthetic handover. Ward patients are authored examples; clinic patients come from today’s visits."}</Text>
     </ScrollView>}
   </View>;

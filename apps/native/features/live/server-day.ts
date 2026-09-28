@@ -1,7 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient, Task } from "@/features/encounter/types";
-import { api, useLive } from ".";
+import { api, errorText, useLive } from ".";
 import { serverTasks, type ServerAppointment, type ServerResult, type ServerTask } from "./day";
 
 /**
@@ -78,7 +78,15 @@ export async function decideBooking(input: Parameters<typeof api.bookings.decide
   return decided;
 }
 
+/**
+ * A result acknowledgement the server refused or never answered: the result stays unacknowledged,
+ * and the Results key and My Day say so (with the reason) until a retry lands.
+ */
+let ackFailed: { id: string; error: string } | undefined;
+export const useAckFailed = () => useSyncExternalStore(subscribe, () => ackFailed);
 export async function acknowledgeResult(resultId: string) {
-  await api.results.acknowledge({ resultId });
+  try { await api.results.acknowledge({ resultId }); }
+  catch (e) { ackFailed = { id: resultId, error: errorText(e) }; notify(); throw e; }
+  if (ackFailed) { ackFailed = undefined; notify(); }
   await refreshServerData();
 }

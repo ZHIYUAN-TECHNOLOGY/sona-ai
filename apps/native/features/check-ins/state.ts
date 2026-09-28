@@ -41,7 +41,7 @@ export async function simulateReply(checkIn: CheckIn, patientName: string, text:
   set({ replies: { ...store.replies, [checkIn.id]: [...(store.replies[checkIn.id] ?? []), fixtureReply(patientName, text, new Date())] } });
 }
 
-/** Called back or booked in (both simulated): the flagged task is done, so the row leaves My Day. */
+/** Called back (and logged) or booked in: the flagged task is done, so the row leaves My Day. */
 export async function resolveFlag(taskId: string, live: boolean) {
   if (live) {
     await completeServerTask(taskId);

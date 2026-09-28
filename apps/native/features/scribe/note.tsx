@@ -14,6 +14,7 @@ import { buildDraft, readNoteSections, sectionKeys, serializeNoteSections, type 
 import { haptic, noteMeta, StateLine } from "./parts";
 import { api, errorText, useLive } from "@/features/live";
 import { noteSections, noteSentences } from "@/features/live/prescribing-sync";
+import { LockedAction, useRole } from "@/features/live/roles";
 
 const clip = (value: string, length = 140) => value.length > length ? `${value.slice(0, length).trimEnd()}…` : value;
 const emptyDetail: Record<keyof NoteSections, string> = {
@@ -88,6 +89,8 @@ export function NoteScreen() {
   const failSave = useRef(false);
   // Live: the note is read from and saved to the server as revisions; a save against an older one is refused.
   const { on: live } = useLive();
+  // Only a doctor writes the note (note.save); other roles read it.
+  const canWrite = useRole().can("note.save");
   const noteRevision = useRef(0);
   const [serverError, setServerError] = useState<string>();
   const encounterId = patient?.encounterId;
@@ -175,13 +178,13 @@ export function NoteScreen() {
           {sources[key] && <SourceLink label={key === "subjective" ? "Review consultation / history source" : "Review observation source"} onPress={() => router.push({ pathname: "/source", params: { id: sources[key]!, patientId: patient.id } })} />}
         </Expand>}
         <Surface style={{ paddingHorizontal: 16, paddingVertical: 14, borderRadius: 20, borderColor: focused === key ? FOCUS : glass.rim, transitionProperty: "borderColor", transitionDuration: 160 } as never}>
-          <TextInput accessibilityLabel={`Clinical note ${key}`} value={sections[key]} onChangeText={value => editSection(key, value)} onFocus={() => setFocused(key)} onBlur={() => setFocused(current => current === key ? undefined : current)} multiline placeholder={placeholders[key]} placeholderTextColor="#A2A8B1" textAlignVertical="top"
+          <TextInput accessibilityLabel={`Clinical note ${key}`} editable={canWrite} value={sections[key]} onChangeText={value => editSection(key, value)} onFocus={() => setFocused(key)} onBlur={() => setFocused(current => current === key ? undefined : current)} multiline placeholder={placeholders[key]} placeholderTextColor="#A2A8B1" textAlignVertical="top"
             style={{ minHeight: key === "subjective" ? 150 : 96, padding: 0, fontSize: 16, lineHeight: 25, color: palette.ink }} />
         </Surface>
       </Animated.View>)}
 
       <Animated.View entering={rise(5)} layout={layout} style={{ gap: 10 }}>
-        {suggestionBlocked ? <StateLine>{suggestionBlocked}</StateLine>
+        {!canWrite ? null : suggestionBlocked ? <StateLine>{suggestionBlocked}</StateLine>
           : !suggestion && <QuietLink label="Fresh draft from transcript" icon="doc.text.magnifyingglass" onPress={() => { haptic("tap"); setSuggestion(readNoteSections(buildDraft(encounter.transcript))); }} />}
         {suggestion && <Expand key="suggestion">
           <Surface style={{ padding: 18, gap: 14 }}>
@@ -207,7 +210,7 @@ export function NoteScreen() {
 
     {/* One floating glass bar: the save state inline, then the two note actions. */}
     <Animated.View entering={rise(4)} style={{ position: "absolute", left: 16, right: 16, bottom: Math.max(insets.bottom, 12) }}>
-      <Glass style={{ padding: 12, gap: 10 }}>
+      {!canWrite ? <Glass style={{ padding: 12 }}><LockedAction label="Needs a doctor to write the note" path="note.save" height={48} /></Glass> : <Glass style={{ padding: 12, gap: 10 }}>
         <View accessible accessibilityLiveRegion="polite" accessibilityLabel={state.title} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 4 }}>
           <Animated.View key={state.title} entering={reducedMotion ? undefined : riseIn({ distance: 0, scale: 0.8, duration: 240 })}>
             <Animated.View style={{ animationName: saving && !reducedMotion ? SPIN : undefined, animationDuration: 1000, animationIterationCount: "infinite", animationTimingFunction: "linear" }}>
@@ -220,7 +223,7 @@ export function NoteScreen() {
           <View style={{ flex: 1 }}><Action label={saving ? "Saving…" : status === "failed" ? "Retry save" : "Save draft"} accessibilityLabel={status === "failed" ? "Retry saving draft" : undefined} icon="checkmark" disabled={!hasContent || saving} onPress={save} /></View>
           <View style={{ flex: 1 }}><Action label={encounter.noteReviewed ? "Reviewed" : "Mark reviewed"} accessibilityLabel={encounter.noteReviewed ? "Marked reviewed" : "Mark note reviewed"} secondary disabled={!hasContent || encounter.noteReviewed || saving || status !== "saved"} onPress={() => { Keyboard.dismiss(); haptic("done"); updateEncounter(current => ({ ...current, noteReviewed: true })); }} /></View>
         </View>
-      </Glass>
+      </Glass>}
     </Animated.View>
   </KeyboardAvoidingView>;
 }

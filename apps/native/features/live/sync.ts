@@ -5,6 +5,7 @@ import type { Encounter, Patient } from "@/features/encounter/types";
 import { api, errorText, useLive } from ".";
 import { useLiveChanges } from "./channel";
 import { mergeServerState, type ServerVisitState } from "./day";
+import { useRole } from "./roles";
 
 /**
  * In live mode, pulls the server's record of a visit into the app's encounter so every screen renders
@@ -67,6 +68,8 @@ const mergeEdited = (value: Encounter, state: unknown) =>
  */
 export function useEncounterEdit(patient: Patient) {
   const { on } = useLive();
+  // Only a doctor edits the visit record (encounter.edit); screens hide their edit controls otherwise.
+  const allowed = useRole().can("encounter.edit");
   const { updateEncounter } = useEncounter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
@@ -83,5 +86,5 @@ export function useEncounterEdit(patient: Patient) {
       })
       .finally(() => setSaving(false));
   };
-  return { saving, error, save };
+  return { allowed, saving, error, save };
 }

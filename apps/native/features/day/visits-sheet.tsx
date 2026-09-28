@@ -16,6 +16,14 @@ export function VisitsSheet() {
   const { reducedMotion } = useAccessibleEffects();
   const list = (ids ?? "").split(",").map(id => patients.find(p => p.id === id)).filter(p => p !== undefined).sort((a, b) => a.time.localeCompare(b.time));
   const pick = (id: string) => { router.back(); setTimeout(() => openSession(id), 350); };
+  // The ruler's group can outlive its visits (a live day re-read, a stale link): say so calmly.
+  if (!list.length) return <View style={{ paddingTop: 36, paddingBottom: 34, paddingHorizontal: 20, gap: 12 }}>
+    <Text accessibilityRole="header" style={{ ...type.heading, color: palette.ink }}>No visits here now</Text>
+    <Text style={{ ...type.callout, color: palette.muted }}>These visits have moved or finished. Today's list on My Day is current.</Text>
+    <Pressable accessibilityRole="button" onPress={() => router.back()} style={({ pressed }) => ({ alignSelf: "flex-start", minHeight: 44, paddingHorizontal: 18, borderRadius: 22, justifyContent: "center", backgroundColor: palette.ink, opacity: pressed ? 0.8 : 1 })}>
+      <Text style={{ fontSize: 15, fontWeight: "600", color: palette.white }}>Back to My Day</Text>
+    </Pressable>
+  </View>;
   return <View style={{ paddingTop: 36, paddingBottom: 34, gap: 18 }}>
     <Text accessibilityRole="header" style={{ paddingHorizontal: 20, ...type.heading, color: palette.ink }}>{list.length} patients <Text style={{ color: palette.muted, fontWeight: "500" }}>· {list[0]?.time}{list.length > 1 && list.at(-1)!.time !== list[0]!.time ? `–${list.at(-1)!.time}` : ""}</Text></Text>
     <ScrollView style={{ maxHeight: height * 0.6, flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 20 }}>

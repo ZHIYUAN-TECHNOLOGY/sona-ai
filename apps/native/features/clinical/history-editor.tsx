@@ -66,7 +66,7 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
   const discard = () => { updateEncounter(value => ({ ...value, historyDraft: undefined })); setOpen(false); };
   const ready = Boolean(draft?.value.trim() && draft.source.trim());
   const count = facts.length ? `${facts.length} ${facts.length === 1 ? "change" : "changes"} in this result` : undefined;
-  const title = current ? "Update history" : "History used";
+  const title = current && edit.allowed ? "Update history" : "History used";
 
   return <Animated.View layout={layout} style={{ gap: 12 }}>
     {/* Under a section header every change registers up front, so the pill counts them while this stays collapsed. */}
@@ -87,7 +87,7 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
     {shown && <Expand style={{ gap: 12 }}>
       {!current && <Caption>This result retains the history available at revision {result?.revision}. Open the latest response to add a correction.</Caption>}
       {!last && <Caption>No earlier visit record to compare. This reflects the encounter’s intake.</Caption>}
-      {(last || current || facts.length > 0) && <Surface layout={layout} style={{ paddingHorizontal: 16 }}>
+      {(last || (current && edit.allowed) || facts.length > 0) && <Surface layout={layout} style={{ paddingHorizontal: 16 }}>
         {last && <View style={{ flexDirection: "row", gap: 12, paddingVertical: 16 }}>
           <IconDisc icon={categoryOf(last.category).icon} />
           <View style={{ flex: 1, gap: 3, paddingTop: 1 }}>
@@ -97,7 +97,7 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
           </View>
         </View>}
 
-        {current && <Disclosure first={!last} icon="pencil" title={!open && draft ? "Continue history draft" : "Add or correct history"} detail="Saving refreshes this answer. Earlier results stay as they were."
+        {current && edit.allowed && <Disclosure first={!last} icon="pencil" title={!open && draft ? "Continue history draft" : "Add or correct history"} detail="Saving refreshes this answer. Earlier results stay as they were."
           accessibilityLabel={open ? "Hide history form" : draft ? "Continue history draft" : "Add or correct history"} open={open && !!draft} onToggle={() => open && draft ? setOpen(false) : start()}>
           {draft && <>
             <View style={{ gap: 8 }}>
@@ -129,7 +129,7 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
           </>}
         </Disclosure>}
 
-        {facts.length > 0 && <Disclosure first={!last && !current} icon="clock.arrow.circlepath" title="History versions" detail={`${facts.length} recorded ${facts.length === 1 ? "change" : "changes"} in this result`}
+        {facts.length > 0 && <Disclosure first={!last && !(current && edit.allowed)} icon="clock.arrow.circlepath" title="History versions" detail={`${facts.length} recorded ${facts.length === 1 ? "change" : "changes"} in this result`}
           accessibilityLabel={versions ? "Hide history versions" : "Inspect history versions"} open={versions} onToggle={() => setVersions(value => !value)}>
           {/* A trail: the current fact for each category is a filled dot, superseded ones hollow. */}
           <View>{facts.map((fact, index) => {

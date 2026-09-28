@@ -8,7 +8,8 @@ import { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { useAccessibleEffects } from "@/components/sona/ui";
-import { api, useLive } from "@/features/live";
+import { api, errorText, useLive } from "@/features/live";
+import { LockedAction, useRole } from "@/features/live/roles";
 import { acknowledgeResult, refreshServerData, useServerData } from "@/features/live/server-day";
 
 /*
@@ -54,6 +55,8 @@ export function CriticalAlert() {
   const [now, setNow] = useState(() => new Date());
   const [done, setDone] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const canAck = useRole().can("results.acknowledge");
   useEffect(() => {
     if (!waiting) return;
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -71,13 +74,13 @@ export function CriticalAlert() {
 
   const acknowledge = async () => {
     if (!waiting || busy) return;
-    setBusy(true);
+    setBusy(true); setError(undefined);
     const took = elapsed(waiting.receivedAt, new Date());
     try {
       if (live) await acknowledgeResult(waiting.id); else setLocal(undefined);
       if (process.env.EXPO_OS === "ios") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       setDone(`Acknowledged after ${took} · recorded in handover`);
-    } catch { setDone("Not acknowledged: the server did not answer. Try again."); }
+    } catch (e) { setError(`Not acknowledged: ${errorText(e)}`); }
     finally { setBusy(false); }
   };
 
@@ -93,10 +96,11 @@ export function CriticalAlert() {
         <Text accessibilityLabel={`Waiting ${elapsed(waiting.receivedAt, now)}`} style={{ fontSize: 15, fontWeight: "700", color: palette.red, fontVariant: ["tabular-nums"] }}>{elapsed(waiting.receivedAt, now)}</Text>
       </View>
       <Text selectable style={{ ...type.headline, color: palette.ink }}>{waiting.test} {waiting.value}{waiting.unit ? ` ${waiting.unit}` : ""} · {waiting.patientName}</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Acknowledge ${waiting.test} for ${waiting.patientName}`} disabled={busy} onPress={acknowledge}
+      {!canAck ? <LockedAction label="Needs a doctor to acknowledge" path="results.acknowledge" height={44} /> : <Pressable accessibilityRole="button" accessibilityLabel={error ? `Retry acknowledging ${waiting.test} for ${waiting.patientName}` : `Acknowledge ${waiting.test} for ${waiting.patientName}`} disabled={busy} onPress={acknowledge}
         style={({ pressed }) => ({ minHeight: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: palette.red, opacity: busy ? 0.6 : 1, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "opacity"], transitionDuration: 120 } as never)}>
-        <Text style={{ fontSize: 15, fontWeight: "600", color: palette.white }}>{busy ? "Acknowledging…" : "Acknowledge"}</Text>
-      </Pressable>
-    </> : <Text selectable style={{ ...type.subhead, fontWeight: "600", color: done?.startsWith("Not") ? palette.red : "#0F6E66" }}>{done}</Text>}
+        <Text style={{ fontSize: 15, fontWeight: "600", color: palette.white }}>{busy ? "Acknowledging…" : error ? "Retry acknowledge" : "Acknowledge"}</Text>
+      </Pressable>}
+      {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
+    </> : <Text selectable style={{ ...type.subhead, fontWeight: "600", color: "#0F6E66" }}>{done}</Text>}
   </Animated.View>;
 }
