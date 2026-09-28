@@ -1,5 +1,6 @@
 import { readReply } from "@sona-ai/domain/check-ins";
 import { CODES, type Code, type Sentence } from "@sona-ai/domain/claim";
+import { draftByRules, triageByRules, type DraftPlan, type MessageLabel } from "@sona-ai/domain/messages";
 import { planFor, type Language } from "@sona-ai/domain/discharge";
 import type { Study } from "@sona-ai/domain/evidence";
 import type { DetectedFinding } from "@sona-ai/domain/findings";
@@ -38,6 +39,13 @@ export type Models = {
   answerFromPlan(input: { question: string; plan: string; language: Language }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string }>;
   /** After-discharge check-ins: worse or urgent replies become a flagged task (with the model's short symptom, when it read one). */
   classifyReply(input: { text: string; language: Language }): Answer<{ label: "fine" | "worse" | "urgent"; symptom?: string }>;
+  /** The care team's inbox: how soon a patient message needs a clinician (urgent, clinical, admin) and why, in a few words. */
+  triageMessage(input: { text: string; language?: Language }): Answer<{ label: MessageLabel; reason: string }>;
+  /**
+   * The inbox's suggested reply to a patient message, for a person to check before sending: short and kind,
+   * in the patient's language, never advice beyond their own plan (their medicines' lines and next visit).
+   */
+  draftReply(input: { text: string; label: MessageLabel; patientFirstName: string; plan?: DraftPlan; language: Language }): Answer<{ text: string }>;
   /**
    * Continuous training: the text with the patient's identifiers replaced by placeholders ([NAME], [IC],
    * [PHONE], [EMAIL], [MRN]). The leak gate re-checks whatever comes back, whoever wrote it.
@@ -78,6 +86,9 @@ export const stubModels: Models = {
   // ponytail: keyword rule standing in for the classifier; the demo reply is "fever returned".
   classifyReply: ({ text }) => fixture({ label: readReply(text) }),
   transcribe: () => fixture({ text: "" }),
+  // ponytail: keyword rules and templates (packages/domain/messages) until a model triages and drafts.
+  triageMessage: ({ text }) => fixture(triageByRules(text)),
+  draftReply: input => fixture({ text: draftByRules(input) }),
   // ponytail: full names, IC, phone, email and MRN by rule (packages/domain/training); OpenMed's clinical PII model replaces it, and catches first names too.
   deidentify: ({ text, known }) => fixture(deidentifyByRules(text, known)),
   answerFromPlan: () => fixture({ answer: "", grounded: false, urgent: false }),
