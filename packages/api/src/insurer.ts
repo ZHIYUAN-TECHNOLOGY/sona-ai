@@ -1,6 +1,6 @@
 import { admissions, claims, encounters, guaranteeLetters, patients } from "@sona-ai/db/schema/clinical";
 import { CODES, EMPTY_CLAIM, claimChecks, noteFor, type ClaimState } from "@sona-ai/domain/claim";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 import type { Context } from "./context";
 
@@ -47,15 +47,18 @@ export async function reviewPacket(db: Db, token: string, now: Date) {
   return {
     token, patient: row.patient, insurer: row.claim.insurer, estimate: ringgit(row.claim.estimateCents), status: row.claim.status,
     sentAt: row.claim.sentAt, decidedAt: row.claim.decidedAt, query: row.claim.insurerNote, expired: expired(row.claim.sentAt, now),
-    codes: row.claim.codes.map(c => ({ ...c, label: CODES.find(k => k.code === c.code)?.label ?? c.code, kind: CODES.find(k => k.code === c.code)?.kind ?? "Secondary", evidence: note.find(s => s.id === c.evidence)?.text ?? "" })),
+    // Letters sent before codes were frozen with their label and sentence fall back to the authored ones.
+    codes: row.claim.codes.map(({ code, label, kind, evidence, text }) => ({ code,
+      label: label ?? CODES.find(k => k.code === code)?.label ?? code, kind: kind ?? CODES.find(k => k.code === code)?.kind ?? "Secondary",
+      evidence: text ?? note.find(s => s.id === evidence)?.text ?? "" })),
     criteria: claimChecks(state),
   };
 }
 
-/** Approval closes the claim and marks the admission's guarantee letter received, which the discharge checks. */
+/** Approval closes the claim and marks the current admission's guarantee letter received, which the discharge checks; earlier stays keep theirs. */
 export async function approveClaimRows(db: Db, claimId: string, patientId: string, at: Date) {
   await db.update(claims).set({ status: "approved", approvedAt: at, decidedAt: at }).where(eq(claims.id, claimId));
-  const admitted = await db.select({ id: admissions.id }).from(admissions).where(eq(admissions.patientId, patientId));
+  const admitted = await db.select({ id: admissions.id }).from(admissions).where(and(eq(admissions.patientId, patientId), isNull(admissions.dischargedAt)));
   for (const a of admitted) await db.update(guaranteeLetters).set({ status: "received", receivedAt: at }).where(eq(guaranteeLetters.admissionId, a.id));
 }
 

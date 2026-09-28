@@ -1,12 +1,13 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
-import { guaranteeLetters } from "@sona-ai/db/schema/clinical";
+import { admissions, claims, guaranteeLetters } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
 import type { Context, Mail } from "./context";
+import { stubModels, type Models } from "./models";
 import { decideReview, renderReviewPage, reviewPacket, reviewTokenOf } from "./insurer";
 import { appRouter } from "./routers/index";
 
@@ -84,4 +85,39 @@ test("the review page escapes what it shows and offers approve and query only wh
   const decided = renderReviewPage((await reviewPacket(db, token, clock.now))!);
   expect(decided).not.toContain('value="approve"');
   expect(decided).toContain("Approved");
+});
+
+test("the letter carries the codes the doctor reviewed for this patient, not the demo patient's authored ones", async () => {
+  const models: Models = { ...stubModels, suggestCodes: async () => ({ source: "model", model: "test", codes: [{ code: "J15.9", label: "Bacterial pneumonia, unspecified", kind: "Principal", evidence: "diagnosis" }] }) };
+  const db = await createTestDb();
+  await seedDemo(db);
+  await addClinician(db, "dr-aisyah");
+  const clock = { now: new Date("2026-09-26T10:00:00+08:00") };
+  const api = createRouterClient(appRouter, { context: { db, session, now: () => clock.now, models } });
+  await api.claim.update({ encounterId: "visit-1042", organismConfirmed: true, ivReasonAdded: true });
+  await api.claim.suggestCodes({ encounterId: "visit-1042" });
+  await api.claim.send({ encounterId: "visit-1042", requestId: "c-own", approvedBy: "dr-aisyah" });
+
+  expect((await db.select().from(claims))[0]!.codes.map(c => c.code)).toEqual(["J15.9"]);
+  const packet = (await reviewPacket(db, await reviewTokenOf(db, "visit-1042"), clock.now))!;
+  expect(packet.codes).toEqual([{ code: "J15.9", label: "Bacterial pneumonia, unspecified", kind: "Principal", evidence: "Community-acquired pneumonia, CURB-65 0." }]);
+});
+
+test("a send after the insurer approved returns the one receipt: no second email, and the link stays the same", async () => {
+  const { db, api, clock, token } = await sentClaim({ mail: mail() });
+  const [first] = await db.select().from(claims);
+  await decideReview(db, token, "approve", "", clock.now);
+  const again = await api.claim.send({ encounterId: "visit-1042", requestId: "c-late", approvedBy: "dr-aisyah" });
+  expect(again.requestId).toBe("c1");
+  expect(sent).toHaveLength(1);
+  expect((await db.select().from(claims))[0]).toMatchObject({ status: "approved", reviewToken: first!.reviewToken });
+});
+
+test("approval marks only the current admission's guarantee letter received, not an earlier stay's", async () => {
+  const { db, clock, token } = await sentClaim();
+  await db.insert(admissions).values({ id: "adm-1042-earlier", patientId: "SYN-1042", hospitalId: "demo", bed: "Bed 2", dischargedAt: new Date("2026-03-01") });
+  await db.insert(guaranteeLetters).values({ id: "gl-1042-earlier", admissionId: "adm-1042-earlier", insurer: "Synthetic insurer", status: "requested", requestedAt: new Date("2026-02-27") });
+  await decideReview(db, token, "approve", "", clock.now);
+  const letters = Object.fromEntries((await db.select().from(guaranteeLetters)).map(g => [g.id, g.status]));
+  expect([letters["gl-1042"], letters["gl-1042-earlier"]]).toEqual(["received", "requested"]);
 });

@@ -1,6 +1,6 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
-import { encounters, guaranteeLetters, hospitalMembers, hospitals } from "@sona-ai/db/schema/clinical";
+import { encounters, guaranteeLetters, hospitalMembers, hospitals, labResults } from "@sona-ai/db/schema/clinical";
 import { runNightlyAudit } from "../audit-job";
 import { decideReview, reviewTokenOf } from "../insurer";
 import { seedDemo } from "@sona-ai/db/seed";
@@ -107,6 +107,19 @@ test("with every blocker cleared the discharge is receipted once, and a replay r
 
   const reused = await api.discharge.request({ ...dischargeAmelia, encounterId: "visit-1086" }).catch(e => e);
   expect(reused.code).toBe("CONFLICT");
+});
+
+test("a pending result or an unarranged ride home blocks the discharge, as the ward shows it", async () => {
+  const { api, db } = await signedIn();
+  await db.update(guaranteeLetters).set({ status: "received", receivedAt: new Date() }).where(eq(guaranteeLetters.id, "gl-1042"));
+  await db.update(encounters).set({ state: { discharge: { glReceived: true, medsConfirmed: true, followUp: "2w", language: "ms" }, transport: { label: "Ride home", detail: "Family free after 17:00" } } }).where(eq(encounters.id, "visit-1042"));
+  await db.insert(labResults).values({ id: "lab-1042-crp", patientId: "SYN-1042", test: "CRP", value: "", flag: "pending", sourceId: "lab-1042-crp", receivedAt: new Date() });
+
+  const ward = (await api.ward.beds()).find(b => b.bed === "Bed 6")!;
+  const refusal = await api.discharge.request(dischargeAmelia).then(() => null, (e: { code?: string; data?: { blockers?: { id: string; label: string }[] } }) => e);
+  expect(refusal?.code).toBe("PRECONDITION_FAILED");
+  expect(refusal?.data?.blockers?.map(b => b.label).sort()).toEqual(ward.blockers.map(b => b.label).sort());
+  expect(refusal?.data?.blockers?.map(b => b.label).sort()).toEqual(["CRP", "Ride home"]);
 });
 
 test("assigning an owner to a ward blocker creates one blocker-owner task, however often it is sent", async () => {
