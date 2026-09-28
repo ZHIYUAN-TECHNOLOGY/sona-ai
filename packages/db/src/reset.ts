@@ -1,7 +1,7 @@
 import { and, eq, inArray, like, notInArray } from "drizzle-orm";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 
-import { admissions, appointments, bookingRequests, hospitals, pushTokens, auditItems, careCodes, careLinks, careMessages, checkInReplies, checkIns, claims, doseLogs, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, patients, provenance, receipts, tasks } from "./schema";
+import { admissions, appointments, bookingRequests, hospitals, pushTokens, auditItems, careCodes, careLinks, careMessages, checkInReplies, checkIns, claims, doseLogs, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, patients, provenance, receipts, tasks, trainingConsents, trainingDatasets, trainingSamples } from "./schema";
 import { DEMO_HOSPITAL, SEED_LAB_IDS, seedDemo } from "./seed";
 
 type AnyDb = PgAsyncDatabase<any, any>;
@@ -49,7 +49,11 @@ export async function resetDemo(db: AnyDb, now = new Date()) {
   const beds = (await db.select({ id: admissions.id }).from(admissions).where(eq(admissions.hospitalId, DEMO_HOSPITAL))).map(a => a.id);
   await db.update(admissions).set({ dischargedAt: null, fitAt: null }).where(eq(admissions.hospitalId, DEMO_HOSPITAL));
   if (beds.length) await db.update(guaranteeLetters).set({ status: "requested", receivedAt: null }).where(inArray(guaranteeLetters.admissionId, beds));
+  // Training data: samples, exports and patients' consents go, and the hospital stops contributing (the demo turns both on).
+  await db.delete(trainingSamples).where(eq(trainingSamples.hospitalId, DEMO_HOSPITAL));
+  await db.delete(trainingDatasets).where(eq(trainingDatasets.hospitalId, DEMO_HOSPITAL));
+  await db.delete(trainingConsents).where(eq(trainingConsents.hospitalId, DEMO_HOSPITAL));
   // The demo clock goes back to real time.
-  await db.update(hospitals).set({ clockOffsetMs: 0 }).where(eq(hospitals.id, DEMO_HOSPITAL));
+  await db.update(hospitals).set({ clockOffsetMs: 0, contributesTraining: false }).where(eq(hospitals.id, DEMO_HOSPITAL));
   await seedDemo(db, now);
 }

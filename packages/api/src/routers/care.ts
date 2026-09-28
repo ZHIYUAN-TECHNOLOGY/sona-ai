@@ -15,6 +15,7 @@ import { loadEncounter } from "./encounter";
 import { careDosesRouter } from "./doses";
 import { careMessagesRouter } from "./messages";
 import { registerPushToken, unregisterPushToken } from "../push";
+import { setTrainingConsent, trainingConsentOf } from "./training";
 
 /**
  * Errors a patient can see carry a stable `data.code` (CODE_UNKNOWN, SPEECH_OFF, …) so Sona Care can
@@ -134,6 +135,11 @@ export const careRouter = {
     /** The same reading and flagging as the clinician's simulated reply, for their own check-in only. */
     reply: patientProcedure.input(checkInReplySchema).handler(({ context, input }) => replyToCheckIn(context, context.hospitalId, input, context.patientId)),
   },
+  /** Patient: whether they help improve Sona Care with de-identified replies and notes (off until they switch it on). */
+  trainingConsent: patientProcedure.handler(({ context }) => trainingConsentOf(context.db, context.hospitalId, context.patientId)),
+  /** Patient: switch it on, or withdraw (samples not yet exported are withdrawn with it). */
+  setTrainingConsent: patientProcedure.input(z.object({ consented: z.boolean() }))
+    .handler(({ context, input }) => setTrainingConsent(context, context.hospitalId, context.patientId, input.consented)),
   /** Patient: their thread with the care team. */
   messages: careMessagesRouter,
   /** Patient: this phone's Expo push token, so check-ins, bookings and replies reach it (see ../push). */

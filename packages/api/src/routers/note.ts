@@ -6,6 +6,7 @@ import { noteSaveSchema } from "../contracts";
 import type { Context } from "../context";
 import { protectedProcedure } from "../index";
 import { loadEncounter, stale } from "./encounter";
+import { captureNoteEdit } from "./training";
 
 /**
  * The consultation note as revisions: nothing is overwritten, so an addendum or fix stays visible as
@@ -21,7 +22,8 @@ async function latestNote(db: Context["db"], hospitalId: string, encounterId: st
 export const noteRouter = {
   get: protectedProcedure.input(z.object({ encounterId: z.string().min(1) }))
     .handler(({ context, input }) => latestNote(context.db, context.hospitalId, input.encounterId)),
-  save: protectedProcedure.input(noteSaveSchema).handler(async ({ context: { db, hospitalId }, input }) => {
+  save: protectedProcedure.input(noteSaveSchema).handler(async ({ context, input }) => {
+    const { db, hospitalId } = context;
     const { encounterId, sentences, expectedRevision } = input;
     const current = await latestNote(db, hospitalId, encounterId);
     if (current.revision !== expectedRevision) throw stale(encounterId);
@@ -29,6 +31,8 @@ export const noteRouter = {
     const rows = await db.insert(notes).values({ id: `note-${encounterId}-${revision}`, encounterId, revision, sentences })
       .onConflictDoNothing().returning({ id: notes.id });
     if (!rows.length) throw stale(encounterId);
+    // The scribe's draft and the saved note become a de-identified training sample (if consented); never fails the save.
+    await captureNoteEdit(context, hospitalId, encounterId, sentences.map(s => s.text).join("\n"), input.excludeFromTraining);
     return { encounterId, revision, sentences };
   }),
 };

@@ -23,6 +23,7 @@ const SEEN_AS: Record<string, string> = {
   "messages.list": "read care messages", "messages.reply": "replied to a care message", "adherence.get": "viewed doses taken",
   "checkIns.list": "viewed check-ins", "evidence.ask": "asked for evidence", "tasks.create": "created a task",
   "results.receive": "recorded a result", "care.code": "gave a Sona Care code",
+  "training.samples": "reviewed training samples", "training.decide": "decided a training sample", "training.export": "exported a training dataset",
 };
 
 export const accessLogRouter = {

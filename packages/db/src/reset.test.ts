@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
-import { admissions, appointments, auditItems, careCodes, careLinks, careMessages, patients, checkInReplies, checkIns, claims, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, notes, provenance, receipts, tasks } from "./schema";
+import { admissions, appointments, auditItems, careCodes, careLinks, careMessages, patients, checkInReplies, checkIns, claims, encounters, findings, guaranteeLetters, handoverAcceptances, labResults, hospitals, notes, provenance, receipts, tasks, trainingConsents, trainingDatasets, trainingSamples } from "./schema";
 import { resetDemo } from "./reset";
 import { DEMO_HOSPITAL, seedDemo } from "./seed";
 import { createTestDb } from "./testing";
@@ -34,10 +34,15 @@ test("a demo reset undoes a whole run (discharge, claim, receipts, tasks, findin
   await db.insert(careLinks).values({ userId: "amelia", hospitalId: DEMO_HOSPITAL, patientId: "SYN-1042" });
   await db.insert(careMessages).values({ id: "m1", hospitalId: DEMO_HOSPITAL, patientId: "SYN-1042", from: "patient", authorId: "amelia", text: "Can I shower?" });
   await db.insert(provenance).values({ id: "p1", encounterId: "visit-1042", kind: "finding-dismissed", output: {}, sourceIds: [], model: "fixture" });
+  await db.update(hospitals).set({ contributesTraining: true });
+  await db.insert(trainingConsents).values({ hospitalId: DEMO_HOSPITAL, patientId: "SYN-1042", consentedAt: now });
+  await db.insert(trainingSamples).values({ id: "ts1", hospitalId: DEMO_HOSPITAL, patientId: "SYN-1042", source: "check-in-reply", sourceRef: "ci1", input: "demam balik", output: "worse", replacements: [], deidentifier: "rules", datasetVersion: 1 });
+  await db.insert(trainingDatasets).values({ hospitalId: DEMO_HOSPITAL, version: 1, rows: 1, r2Key: "training/demo/v1.jsonl" });
 
   await resetDemo(db, now);
 
-  for (const table of [claims, receipts, tasks, findings, checkIns, checkInReplies, handoverAcceptances, auditItems, provenance, careCodes, careLinks, careMessages]) expect(await count(db, table)).toBe(0);
+  for (const table of [claims, receipts, tasks, findings, checkIns, checkInReplies, handoverAcceptances, auditItems, provenance, careCodes, careLinks, careMessages, trainingSamples, trainingDatasets, trainingConsents]) expect(await count(db, table)).toBe(0);
+  expect((await db.select().from(hospitals)).map(h => h.contributesTraining)).toEqual([false]);
   const visits = await db.select().from(encounters);
   expect(visits.filter(e => e.id.startsWith("visit-10")).map(e => [e.id, e.revision, e.state]).sort()).toEqual([["visit-1042", 1, {}], ["visit-1086", 1, {}]]);
   // The rest of the ward comes back as seeded: every bed occupied, its visit state and fit time restored.

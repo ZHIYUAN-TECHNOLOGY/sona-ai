@@ -33,6 +33,7 @@ import { checkInsRouter } from "./check-ins";
 import { findingsRouter } from "./findings";
 // lane U
 import { libraryRouter } from "./library";
+import { trainingRouter } from "./training";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -95,6 +96,8 @@ export const appRouter = {
   findings: findingsRouter,
   // lane U
   library: libraryRouter,
+  // Continuous training: de-identified samples, steward review and versioned exports (management only).
+  training: trainingRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

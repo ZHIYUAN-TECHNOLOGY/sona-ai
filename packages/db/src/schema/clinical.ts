@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { bigint, boolean, customType, index, integer, jsonb, pgTable, real, text, timestamp, uniqueIndex, vector } from "drizzle-orm/pg-core";
+import { bigint, boolean, customType, index, integer, jsonb, pgTable, primaryKey, real, text, timestamp, uniqueIndex, vector } from "drizzle-orm/pg-core";
 
 /**
  * Clinical tables behind the built UI (see docs/delivery-plan.md). Every table that holds hospital
@@ -12,8 +12,12 @@ const created = () => timestamp("created_at").defaultNow().notNull();
 /**
  * `clockOffsetMs` is the demo clock: every route reads time as now + offset for this hospital (see
  * clockOf), so a demo can jump to day 2 after discharge without waiting. 0 is real time.
+ * `contributesTraining`: management opted the hospital into de-identified training samples (off by default).
  */
-export const hospitals = pgTable("hospitals", { id: text("id").primaryKey(), name: text("name").notNull(), clockOffsetMs: bigint("clock_offset_ms", { mode: "number" }).notNull().default(0) });
+export const hospitals = pgTable("hospitals", {
+  id: text("id").primaryKey(), name: text("name").notNull(), clockOffsetMs: bigint("clock_offset_ms", { mode: "number" }).notNull().default(0),
+  contributesTraining: boolean("contributes_training").default(false).notNull(),
+});
 
 /** Which hospital a signed-in user works for; every clinical read and write is scoped by it. */
 export const hospitalMembers = pgTable("hospital_members", {
@@ -265,3 +269,35 @@ export const careMessages = pgTable("care_messages", {
   from: text("from", { enum: ["patient", "care-team"] }).notNull(), authorId: text("author_id").notNull(), text: text("text").notNull(),
   taskId: text("task_id"), createdAt: created(),
 }, t => [index("care_messages_patient").on(t.patientId, t.createdAt)]);
+
+/**
+ * Continuous training (packages/api training.ts): a patient's own opt-in from Sona Care. Consented while
+ * consented_at is set and withdrawn_at is empty; withdrawing keeps the row so the choice is on record.
+ */
+export const trainingConsents = pgTable("training_consents", {
+  patientId: text("patient_id").notNull(), hospitalId: text("hospital_id").notNull(),
+  consentedAt: timestamp("consented_at"), withdrawnAt: timestamp("withdrawn_at"),
+}, t => [primaryKey({ columns: [t.patientId, t.hospitalId] })]);
+
+/**
+ * One de-identified training example. Only de-identified text lives here: the raw note or reply stays in
+ * its own table (source_ref points at it). `leak` is what the gate found, as kinds only, never the value.
+ */
+export const trainingSamples = pgTable("training_samples", {
+  id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), patientId: text("patient_id").notNull(),
+  source: text("source", { enum: ["note-edit", "check-in-reply", "transcript"] }).notNull(), sourceRef: text("source_ref").notNull(),
+  input: text("input").notNull(), output: text("output").notNull(),
+  replacements: jsonb("replacements").$type<{ kind: "name" | "ic" | "phone" | "email" | "mrn"; placeholder: string }[]>().notNull(),
+  /** "rules" for the stub, or the model that de-identified it. */
+  deidentifier: text("deidentifier").notNull(),
+  status: text("status", { enum: ["pending", "approved", "blocked", "excluded", "withdrawn"] }).default("pending").notNull(),
+  leak: jsonb("leak").$type<("name" | "ic" | "phone" | "email" | "mrn")[]>(),
+  /** The export this sample went out in; empty until then. */
+  datasetVersion: integer("dataset_version"), createdAt: created(),
+}, t => [index("training_samples_hospital").on(t.hospitalId, t.status)]);
+
+/** A versioned JSONL export of approved samples, written to R2 at r2_key. */
+export const trainingDatasets = pgTable("training_datasets", {
+  hospitalId: text("hospital_id").notNull(), version: integer("version").notNull(), rows: integer("rows").notNull(),
+  r2Key: text("r2_key").notNull(), exportedAt: timestamp("exported_at").defaultNow().notNull(),
+}, t => [primaryKey({ columns: [t.hospitalId, t.version] })]);

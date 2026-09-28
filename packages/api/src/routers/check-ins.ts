@@ -12,6 +12,7 @@ import { protectedProcedure } from "../index";
 import { stubModels } from "../models";
 import { followUpsToAdd } from "./findings";
 import { tellPatient } from "../push";
+import { captureSample } from "./training";
 
 /**
  * Demo flow 7: after-discharge check-ins through a simulated inbox (no real message leaves). A
@@ -138,5 +139,7 @@ export async function replyToCheckIn(context: Context, hospitalId: string, input
   await db.insert(checkInReplies).values({
     id, checkInId: row.checkIn.id, text: input.text, label: read.label, source: read.source === "model" ? read.model : "fixture", taskId: flag ? id : null, receivedAt: at,
   });
+  // The reply and how it was read become a de-identified training sample (if consented); never fails the reply.
+  await captureSample(context, { id: `check-in-reply:${id}`, hospitalId, patientId: row.checkIn.patientId, source: "check-in-reply", sourceRef: row.checkIn.id, input: input.text, output: read.label });
   return (await listCheckIns(db, hospitalId, { encounterId: row.checkIn.encounterId })).find(c => c.id === row.checkIn.id)!;
 }

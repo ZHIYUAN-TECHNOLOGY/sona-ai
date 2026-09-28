@@ -21,6 +21,7 @@ const CARE = ["doctor", "nurse"] as const; // hands-on care
 const CLINICAL_READ = ["doctor", "nurse", "management"] as const; // clinical detail, read only for management
 const WARD = ["doctor", "nurse", "bed-manager"] as const; // bed flow: blocker owners
 const OVERSIGHT = ["doctor", "management"] as const; // coding audit, access trail, hospital library
+const MANAGEMENT = ["management"] as const; // the hospital's data stewardship (training data)
 
 /** Route path ("discharge.request") → who may call it, and what it does (for the refusal). */
 export const PERMISSIONS: Record<string, readonly [readonly Role[], string]> = {
@@ -84,6 +85,11 @@ export const PERMISSIONS: Record<string, readonly [readonly Role[], string]> = {
   "library.list": [ALL, "see the library"],
   "library.add": [OVERSIGHT, "add to the library"],
   "library.remove": [OVERSIGHT, "remove from the library"],
+  "training.status": [MANAGEMENT, "see the training data"],
+  "training.setContributes": [MANAGEMENT, "change whether the hospital contributes training data"],
+  "training.samples": [MANAGEMENT, "review training samples"],
+  "training.decide": [MANAGEMENT, "approve or exclude a training sample"],
+  "training.export": [MANAGEMENT, "export a training dataset"],
 };
 
 export const can = (role: Role, path: string) => PERMISSIONS[path]?.[0].includes(role) ?? false;
