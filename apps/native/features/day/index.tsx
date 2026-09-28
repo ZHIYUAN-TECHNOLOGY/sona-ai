@@ -281,7 +281,8 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
       {calendar && <MonthCard offset={offset} counts={o => live ? serverDayCount(localDate(dayOf(o))) : scheduleFor(o, patients).length} onPick={o => { setCalendar(false); pick(o); }} onClose={() => setCalendar(false)} />}
     </View>
     <TimeBar key={offset} schedule={schedule} now={offset === 0 ? now : undefined} onOpen={id => onOpen(id, {})} />
-    {offset === 0 && actions}
+    {/* A patient at home getting worse leads: their card (and its Call back / Book in) goes above the shortcuts. */}
+    {offset === 0 && top?.kind !== "check-in" && actions}
     {sorting ? <Sorting /> : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
       {top && <Animated.View key={`top-${run}`} layout={LAYOUT} entering={animate ? riseIn({ distance: 14, scale: 0.97, duration: 450 }) : undefined}>
         <Pressable accessibilityRole="button" accessibilityLabel={`Most urgent: ${top.title}. ${top.reason}`} accessibilityHint="Opens the visit" onPress={() => onOpen(top.patientId, top.open)}
@@ -303,6 +304,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
           </Surface>
         </Pressable>
       </Animated.View>}
+      {offset === 0 && top?.kind === "check-in" && actions}
       {rest.length > 0 && <Surface layout={LAYOUT} style={{ paddingVertical: 2 }}>
         {rest.map((item, i) => <Row key={`${run}-${item.id}`} item={item} first={i === 0} index={i + 1} animate={animate} pinned={pins.includes(item.id)} onOpen={() => onOpen(item.patientId, item.open)}
           onPin={() => setPins(list => list.includes(item.id) ? list.filter(id => id !== item.id) : [item.id, ...list])}

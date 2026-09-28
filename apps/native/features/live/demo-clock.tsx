@@ -10,7 +10,7 @@ import { useLiveChanges } from "./channel";
  * real time. Every connected app re-reads, so the patient's Sona Care shows the check-in as it lands.
  */
 type Status = Awaited<ReturnType<typeof api.demo.status>>;
-const JUMPS = [["now", "Real time"], ["day-2", "Day 2 check-in"], ["day-7", "Day 7 check-in"], ["visit", "Clinic review day"]] as const;
+const JUMPS = [["now", "Real time"], ["day-1", "Day 1 morning dose"], ["day-2", "Day 2 check-in"], ["day-7", "Day 7 check-in"], ["visit", "Clinic review day"]] as const;
 const when = (d: Date) => new Date(d).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" });
 const DAY = 86_400_000;
 /** Days since discharge counted on calendar days in Kuala Lumpur (discharge day is day 0), as Sona Care and the check-ins count them. */

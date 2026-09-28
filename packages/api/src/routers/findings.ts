@@ -55,7 +55,7 @@ export async function followUpsToAdd(context: Context, hospitalId: string, patie
   const rows = await listFindings(context.db, hospitalId, clockOf(context), and(eq(findings.patientId, patientId), ne(findings.status, "dismissed")));
   const recalls = await context.db.select({ id: appointments.id, startsAt: appointments.startsAt }).from(appointments).where(and(eq(appointments.patientId, patientId), eq(appointments.hospitalId, hospitalId)));
   const sameTrip = new Set(recalls.filter(r => r.startsAt.getTime() === visitAt.getTime()).map(r => r.id));
-  return rows.filter(f => f.dueAt && !sameTrip.has(`recall:${f.id}`)).map(f => ({ id: f.id, label: f.label, test: testOf(f.action) }));
+  return rows.filter(f => f.dueAt && !sameTrip.has(`recall:${f.id}`)).map(f => ({ id: f.id, label: f.label, test: testOf(f.action), tracked: f.status === "tracked", dueAt: f.dueAt! }));
 }
 
 export const findingsRouter = {

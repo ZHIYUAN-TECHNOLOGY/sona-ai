@@ -83,7 +83,7 @@ export default function Home() {
   const stack = fontScale >= 1.35;
   const calm = still || reduced;
   // Keyboard-aware: typing a check-in reply keeps the box and its Send button above the keyboard (bottomOffset covers the button under the box).
-  return <KeyboardAwareScrollView ref={scroll} bottomOffset={140} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
+  return <KeyboardAwareScrollView ref={scroll} bottomOffset={140} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     {state === "joined" && me
       ? <>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>

@@ -42,7 +42,9 @@ test("jumping to day 2 moves every route's clock, sends the check-in to Amelia a
   await doctor.discharge.request({ encounterId: "visit-1042", requestId: "req-d1", approvedBy: "dr-aisyah" });
   const { code } = await doctor.care.code({ encounterId: "visit-1042" });
   await amelia.care.join({ code });
-  expect((await doctor.demo.status()).available).toEqual(["now", "day-2", "day-7", "visit"]);
+  expect((await doctor.demo.status()).available).toEqual(["now", "day-1", "day-2", "day-7", "visit"]);
+  // Day 1 is the morning after discharge at 08:05, when the first 08:00 dose is due.
+  expect((await doctor.demo.jump({ to: "day-1" })).now.toISOString()).toBe(new Date("2026-09-27T08:05:00+08:00").toISOString());
 
   const day2 = await doctor.demo.jump({ to: "day-2" });
   const at = new Date("2026-09-28T10:01:00+08:00");

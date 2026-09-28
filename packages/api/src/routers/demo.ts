@@ -16,7 +16,7 @@ import { sendDueCheckIns } from "./check-ins";
  * review, and back to real time. The clock itself (the offset every route reads) is in ../clock.
  */
 const MINUTE = 60_000;
-export const JUMPS = ["now", "day-2", "day-7", "visit"] as const;
+export const JUMPS = ["now", "day-1", "day-2", "day-7", "visit"] as const;
 export type Jump = (typeof JUMPS)[number];
 
 /** Where each jump lands, from the hospital's latest discharge: just after each check-in is due, and 09:00 on the review day. */
@@ -31,8 +31,11 @@ export async function jumpTargets(db: Context["db"], hospitalId: string) {
   const days = FOLLOW_UPS.find(f => f.id === last.followUp)?.days;
   // 09:00 in Kuala Lumpur (01:00 UTC) on the review day.
   const visit = days === undefined ? undefined : new Date(Date.UTC(out.getUTCFullYear(), out.getUTCMonth(), out.getUTCDate() + days, 1));
+  // Day 1 at 08:05 in Kuala Lumpur (00:05 UTC): the morning dose is due, so the patient can take it on screen.
+  const day1 = new Date(Date.UTC(out.getUTCFullYear(), out.getUTCMonth(), out.getUTCDate() + (out.getUTCHours() >= 16 ? 2 : 1), 0, 5));
   return {
     dischargedAt: out,
+    "day-1": day1,
     "day-2": due[2] && new Date(due[2].getTime() + MINUTE),
     "day-7": due[7] && new Date(due[7].getTime() + MINUTE),
     visit,

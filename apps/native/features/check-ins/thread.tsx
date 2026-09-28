@@ -71,7 +71,7 @@ export function FlagActions({ item }: { item: DayItem }) {
   const { reducedMotion } = useAccessibleEffects();
   const [doing, setDoing] = useState<string>();
   // After a live Book in: the visit, and her X-ray findings that could ride on it.
-  const [visit, setVisit] = useState<{ id: string; toAdd: { id: string; label: string; test: string }[] }>();
+  const [visit, setVisit] = useState<{ id: string; toAdd: { id: string; label: string; test: string; tracked: boolean; dueAt: Date | string }[] }>();
   const [added, setAdded] = useState<string[]>([]);
   const [error, setError] = useState<string>();
   const taskId = item.id.replace(/^check-in-/, "");
@@ -113,7 +113,9 @@ export function FlagActions({ item }: { item: DayItem }) {
         <Text style={{ ...type.footnote, fontWeight: "600", color: palette.green }}>{f.test} added to the same visit</Text>
       </View>
       : <View key={f.id} style={{ gap: 6 }}>
-        <Text style={{ ...type.footnote, color: palette.ink }}>Her {f.label.toLowerCase()} has no follow-up yet.</Text>
+        <Text style={{ ...type.footnote, color: palette.ink }}>{f.tracked
+          ? `Her ${f.test} (${f.label.toLowerCase()}) is due ${new Date(f.dueAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Asia/Kuala_Lumpur" })}. Same trip?`
+          : `Her ${f.label.toLowerCase()} has no follow-up yet.`}</Text>
         <Pressable accessibilityRole="button" accessibilityLabel={`Add ${f.test} to the same visit`} onPress={() => add(f)}
           style={({ pressed }) => ({ alignSelf: "flex-start", minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: palette.ink, opacity: pressed ? 0.8 : 1 })}>
           <Icon name="plus" size={12} color={palette.white} />
