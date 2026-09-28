@@ -6,19 +6,22 @@ import { eq } from "drizzle-orm";
 import type { Context } from "../context";
 
 /**
- * The hospital a signed-in clinician works for, from their membership row. Nobody becomes a clinician
- * by signing in: only an existing member, or the seeded demo clinician on first use. Everyone else
- * (a Sona Care patient, a phone or Apple sign-up that never joined) is refused, whichever route or
- * socket asks.
+ * The hospital a signed-in clinician works for, and their role, from their membership row. Nobody
+ * becomes a clinician by signing in: only an existing member, or a seeded demo account on first use
+ * (with its role from DEMO_CLINICIANS). Everyone else (a Sona Care patient, a phone or Apple sign-up
+ * that never joined) is refused, whichever route or socket asks.
  */
-export async function hospitalOf(db: Context["db"], user: { id: string; email: string }) {
-  const [member] = await db.select({ hospitalId: hospitalMembers.hospitalId }).from(hospitalMembers).where(eq(hospitalMembers.userId, user.id));
-  if (member) return member.hospitalId;
+export async function memberOf(db: Context["db"], user: { id: string; email: string }) {
+  const [member] = await db.select({ hospitalId: hospitalMembers.hospitalId, role: hospitalMembers.role }).from(hospitalMembers).where(eq(hospitalMembers.userId, user.id));
+  if (member) return member;
   if (await careLinkOf(db, user.id)) throw new ORPCError("FORBIDDEN", { message: "This is a Sona Care account" });
-  if (!DEMO_CLINICIANS.includes(user.email.toLowerCase())) throw new ORPCError("FORBIDDEN", { message: "This account is not a clinician at any hospital" });
-  await db.insert(hospitalMembers).values({ userId: user.id, hospitalId: DEMO_HOSPITAL }).onConflictDoNothing();
-  return DEMO_HOSPITAL;
+  const role = DEMO_CLINICIANS[user.email.toLowerCase()];
+  if (!role) throw new ORPCError("FORBIDDEN", { message: "This account is not a clinician at any hospital" });
+  await db.insert(hospitalMembers).values({ userId: user.id, hospitalId: DEMO_HOSPITAL, role }).onConflictDoNothing();
+  return { hospitalId: DEMO_HOSPITAL, role };
 }
+
+export const hospitalOf = async (db: Context["db"], user: { id: string; email: string }) => (await memberOf(db, user)).hospitalId;
 
 /** An approval names the signed-in doctor or nobody; a blank name is left for the domain guard to refuse. */
 export function assertApprover(userId: string, approvedBy: string) {
