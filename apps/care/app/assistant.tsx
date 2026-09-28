@@ -22,7 +22,8 @@ import { saveQuestion } from "@/features/questions";
 import { orbPad, SonaOrb } from "@/lib/orb";
 import { AnimatedText, Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { AccentText, CircleButton, ICON, pillStyle, surfaceStyle } from "@/lib/ui";
+import { AccentText, CircleButton, ICON, LoadError, pillStyle, surfaceStyle } from "@/lib/ui";
+import { useDischarge } from "@/features/discharge/row";
 import { client, orpc, queryClient } from "@/utils/orpc";
 
 /**
@@ -61,6 +62,7 @@ export default function Assistant() {
   const insets = useSafeAreaInsets();
   const { state } = useMe();
   const { plan, dose } = useNextDose(useNow());
+  const discharge = useDischarge();
   const visit = useFollowUps().data?.[0];
   const lang = useLang(), t = tFor(lang);
   const discharged = plan?.status === "discharged" ? plan : undefined;
@@ -172,7 +174,8 @@ export default function Assistant() {
           busy={send.isPending && send.variables?.requestId === turn.requestId} error={send.variables?.requestId === turn.requestId ? send.error : null}
           onSave={() => save(turn)} onSend={() => send.mutate(turn)} onRate={r => rate(turn, r)} />)}
 
-      {state === "loading" || (joined && !plan) ? <ActivityIndicator color={palette.muted} style={{ minHeight: 48 }} />
+      {joined && !plan && discharge.error ? <LoadError query={discharge} />
+        : state === "loading" || (joined && !plan) ? <ActivityIndicator color={palette.muted} style={{ minHeight: 48 }} />
         : !joined ? <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>{t("ask.join")}</Text>
           : !rows.length ? <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>{t("ask.onceHome")}</Text>
             : rest.length > 0 && !working && <Animated.View key={`${chat}:${rest.map(s => s.question).join("|")}`} entering={still ? undefined : drop}>

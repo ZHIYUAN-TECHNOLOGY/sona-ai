@@ -5,7 +5,6 @@ import Animated, { FadeIn, useReducedMotion } from "react-native-reanimated";
 import { useCheckIns } from "@/features/check-ins/today";
 import { EASE_OUT, rise, useNextDose, useNow } from "@/features/doses";
 import { clock, dosesToday, weekOf } from "@/features/doses/model";
-import { errorText } from "@/features/errors";
 import {
   agendaOf, away, bringLine, dateOf, dayA11y, dayLabel, dayOf, emptyLine, marksByDay, nextUp, openRequests, pillLine, scheduleLine, weekAround, weekdayOf, weekLabel,
   type AgendaItem, type BookingRequest, type DayMarks, type FollowUp,
@@ -17,7 +16,7 @@ import { removeQuestion, saveQuestion, useQuestions } from "@/features/questions
 import { DOCK_SPACE } from "@/lib/dock";
 import { AnimatedText, Text, TextInput } from "@/lib/text";
 import { palette, space, type } from "@/lib/theme";
-import { Button, Card, Chip, CircleButton, field, ICON, surfaceStyle, Title } from "@/lib/ui";
+import { Button, Card, Chip, CircleButton, field, ICON, surfaceStyle, Title, LoadError } from "@/lib/ui";
 
 // Motion: the screen rises in on a 40 ms ease-out stagger, and the timeline's stops rise again the
 // same way whenever the chosen day changes (after 60fps' Vakitler list fade-in). Still under Reduce Motion.
@@ -35,7 +34,7 @@ const labelOf = (day: number, lang: Lang) => dayLabel(new Date(day * 86_400_000)
  * Visits asked for in Find a doctor sit under the strip as Requests until the care team decides.
  */
 export default function ScheduleScreen() {
-  const { data, error, isLoading } = useFollowUps();
+  const query = useFollowUps(), { data, error, isLoading } = query;
   const checkIns = useCheckIns().data ?? [];
   const now = useNow();
   const { plan, meds, taken } = useNextDose(now);
@@ -63,7 +62,7 @@ export default function ScheduleScreen() {
       </View>
       <Title accent={t("fu.title")} line={insight?.line} lineTone={insight?.tone} />
       {isLoading && <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} />}
-      {error && <Text selectable style={{ ...type.body, color: palette.red }}>{errorText(error, lang)}</Text>}
+      {!data && error && <LoadError query={query} />}
     </Animated.View>
 
     <Animated.View entering={rise(still, 1)}>
