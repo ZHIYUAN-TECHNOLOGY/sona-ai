@@ -67,7 +67,6 @@ export default function Home() {
   const needs = useNeeds();
   const now = useNow();
   const lang = useLang(), t = tFor(lang);
-  const reply = useMessageNeeds() > 0;
   const reduced = useReducedMotion();
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
@@ -83,7 +82,8 @@ export default function Home() {
   const spot = (to: keyof typeof spots.current) => (e: LayoutChangeEvent) => { spots.current[to] = e.nativeEvent.layout.y; };
   const jump = (to: keyof typeof spots.current) => scroll.current?.scrollTo({ y: Math.max(0, spots.current[to] - insets.top - 12), animated: !reduced });
   const go = (kind: Need["kind"]) => kind === "dose" ? jump("cards") : kind === "check-in" ? jump("today") : router.push(kind === "reply" ? "/messages" : "/follow-ups");
-  const bell = () => reply || !needs[0] ? router.push("/messages") : go(needs[0].kind);
+  // The bell means "what needs you now" (Messages has its own tab); with nothing open it still opens the thread.
+  const bell = () => needs[0] ? go(needs[0].kind) : router.push("/messages");
   const day = daysHome(me?.dischargedAt, now);
   const insight = day === undefined ? needsLine(needs, lang) : needs.length ? t("home.dayAt", { day, needs: needsLine(needs, lang) }) : t("home.dayAtDone", { day });
   const stack = fontScale >= 1.35;
