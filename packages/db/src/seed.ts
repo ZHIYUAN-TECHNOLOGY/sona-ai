@@ -1,4 +1,5 @@
-import { sql } from "drizzle-orm";
+import { hashPassword } from "better-auth/crypto";
+import { and, eq, ne, sql } from "drizzle-orm";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 import { DEMO_PATIENTS } from "@sona-ai/domain/demo-patients";
 import { DOCTORS } from "@sona-ai/domain/doctors";
@@ -6,7 +7,7 @@ import { DEMO_WARD, WARD_FIXTURE, type BlockerKind } from "@sona-ai/domain/ward"
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { admissions, appointments, casemixWeights, doctors, drugs, encounters, followUpRules, guaranteeLetters, hospitals, icd10Codes, insurerCriteria, labResults, notes, observations, patients } from "./schema";
+import { account, admissions, appointments, careLinks, casemixWeights, doctors, drugs, encounters, followUpRules, guaranteeLetters, hospitals, icd10Codes, insurerCriteria, labResults, notes, observations, patients, user } from "./schema";
 
 /**
  * The demo ward's starting state, matching the app's fixtures (synthetic people only). Idempotent,
@@ -14,7 +15,7 @@ import { admissions, appointments, casemixWeights, doctors, drugs, encounters, f
  * from the repo's data/ folder and are upserted, so a corrected file reaches a seeded database.
  * Reads files from disk: run it from Bun/Node (tests, a seed script), not inside the Worker.
  */
-import { DEMO_HOSPITAL } from "./demo";
+import { DEMO_HOSPITAL, DEMO_PATIENT_PHONE } from "./demo";
 export { DEMO_HOSPITAL };
 /**
  * The rest of the ward, read off the fixture beds so live mode draws the same ward: bed N holds SYN-20NN
@@ -41,8 +42,12 @@ export const TEST_DOCTOR = { name: "Dr Test Aisyah", email: "dr.test@sona.test",
 export const TEST_NURSE = { name: "Nurse Test Mei Ling", email: "nurse.test@sona.test", password: "Sona-DqqMailMAYIgh" };
 export const TEST_BED_MANAGER = { name: "Test Bed Manager Hafiz", email: "beds.test@sona.test", password: "Sona-xcEhUim76L7g" };
 export const TEST_MANAGER = { name: "Test Manager Farah", email: "manager.test@sona.test", password: "Sona-A6lR268CDTts" };
-/** The synthetic test patient for Sona Care runs: signs up in the app and joins with the discharge code (never a real person). */
-export const TEST_PATIENT = { name: "Amelia Tan", email: "amelia.test@sona.test", password: "Care-MGnI1hY8BWoR" };
+/**
+ * The synthetic test patient for Sona Care runs (never a real person): seeded as a signed-up account
+ * already linked to Amelia (SYN-1042) by seedTestPatient, so it signs in with this email and password,
+ * or with the demo phone (DEMO_PATIENT_PHONE), without a doctor issuing a code.
+ */
+export const TEST_PATIENT = { name: "Amelia Tan", email: "amelia.test@sona.test", password: "Care-MGnI1hY8BWoR", phone: DEMO_PATIENT_PHONE, patientId: "SYN-1042" };
 // Any drizzle Postgres database: Neon in staging, PGlite in tests.
 type AnyDb = PgAsyncDatabase<any, any>;
 
@@ -118,6 +123,23 @@ export async function seedDemo(db: AnyDb, now = new Date()) {
     id: r.id!, kind: r.kind as "nodule", riskBand: r.risk_band as "low", minMm: num(r.min_mm), maxMm: num(r.max_mm),
     intervalDays: num(r.interval_days), action: r.action!, source: r.source!,
   }))).onConflictDoUpdate({ target: followUpRules.id, set: { intervalDays: sql`excluded.interval_days`, action: sql`excluded.action`, source: sql`excluded.source`, minMm: sql`excluded.min_mm`, maxMm: sql`excluded.max_mm` } });
+}
+
+/**
+ * TEST_PATIENT as a real Sona Care account: the user (email verified, the demo phone verified), an
+ * email-and-password login, and the link to Amelia's record. Safe to rerun: an account that already
+ * exists (even one signed up in the app) is reused, and a stray account holding the demo phone gives it up.
+ */
+export async function seedTestPatient(db: AnyDb) {
+  const { email, name, password, phone, patientId } = TEST_PATIENT;
+  await db.insert(user).values({ id: "test-patient-amelia", name, email, emailVerified: true }).onConflictDoNothing();
+  const [{ id }] = await db.select({ id: user.id }).from(user).where(eq(user.email, email)) as [{ id: string }];
+  await db.update(user).set({ phoneNumber: null, phoneNumberVerified: null }).where(and(eq(user.phoneNumber, phone), ne(user.id, id)));
+  await db.update(user).set({ phoneNumber: phone, phoneNumberVerified: true }).where(eq(user.id, id));
+  const [login] = await db.select({ id: account.id }).from(account).where(and(eq(account.userId, id), eq(account.providerId, "credential")));
+  if (!login) await db.insert(account).values({ id: `credential-${id}`, accountId: id, providerId: "credential", userId: id, password: await hashPassword(password) });
+  await db.insert(careLinks).values({ userId: id, hospitalId: DEMO_HOSPITAL, patientId }).onConflictDoNothing();
+  return id;
 }
 
 /** Rows of a reference file in the repo's data/ folder; `#` lines are provenance notes, quoted fields may hold commas. */

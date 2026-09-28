@@ -36,6 +36,13 @@ test("the doctor issues Amelia's code once per visit; anyone can preview it, and
   expect((await anyone.care.preview({ code: "ZZZZ-ZZZZ" }).catch(e => e)).code).toBe("NOT_FOUND");
 });
 
+test("the demo sign-in shows the seeded demo phone and its code only when the Worker switches it on", async () => {
+  const { db, anyone } = await world();
+  expect(await anyone.care.demoSignIn()).toBeNull();
+  const demo = createRouterClient(appRouter, { context: { db, session: null, demoSignIn: true } });
+  expect(await demo.care.demoSignIn()).toEqual({ phone: "+601100000000", code: "123456" });
+});
+
 test("redeeming links the account to Amelia only: it reads her own record, and never opens a clinical route", async () => {
   const { doctor, amelia, db } = await world();
   const { code } = await doctor.care.code({ encounterId: "visit-1042" });
@@ -53,11 +60,12 @@ test("a code redeems once; an expired code, a clinician account and a signed-out
   const { doctor, amelia, clock, as } = await world();
   const { code } = await doctor.care.code({ encounterId: "visit-1042" });
   await amelia.care.join({ code });
-  expect((await as(user("someone-else")).care.join({ code }).catch(e => e)).code).toBe("CONFLICT");
-  expect((await doctor.care.join({ code }).catch(e => e)).code).toBe("FORBIDDEN");
+  // Each refusal carries a stable code Sona Care translates.
+  expect((await as(user("someone-else")).care.join({ code }).catch(e => e)).data).toEqual({ code: "CODE_USED" });
+  expect((await doctor.care.join({ code }).catch(e => e)).data).toEqual({ code: "CLINICIAN_ACCOUNT" });
   const other = await doctor.care.code({ encounterId: "visit-1086" });
   clock.now = new Date(clock.now.getTime() + 15 * 24 * 3600_000);
-  expect((await as(user("late")).care.join({ code: other.code }).catch(e => e)).code).toBe("PRECONDITION_FAILED");
+  expect((await as(user("late")).care.join({ code: other.code }).catch(e => e)).data).toEqual({ code: "CODE_EXPIRED" });
   expect((await as(null).care.join({ code: other.code }).catch(e => e)).code).toBe("UNAUTHORIZED");
 });
 

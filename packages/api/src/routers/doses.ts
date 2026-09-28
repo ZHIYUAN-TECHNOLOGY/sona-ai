@@ -32,7 +32,7 @@ export const careDosesRouter = {
     const schedule = await doseScheduleOf(context.db, context.hospitalId, context.patientId);
     const med = dose && schedule?.meds.find(m => m.name === dose.name);
     const real = med && doseSlots(med, new Date(schedule!.dischargedAt), new Date(dose!.dueAt.getTime() + 1)).some(d => d.getTime() === dose!.dueAt.getTime());
-    if (!real) throw new ORPCError("BAD_REQUEST", { message: "That isn't one of your doses" });
+    if (!real) throw new ORPCError("BAD_REQUEST", { message: "That isn't one of your doses", data: { code: "DOSE_UNKNOWN" } });
     await context.db.insert(doseLogs).values({ id: `${context.patientId}|${input.key}`, hospitalId: context.hospitalId, patientId: context.patientId, key: input.key, takenAt: clockOf(context) })
       .onConflictDoNothing();
     return { key: input.key };

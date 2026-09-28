@@ -83,11 +83,13 @@ export const checkInsRouter = {
     const [doctor] = input.doctorId ? await db.select({ name: doctors.name }).from(doctors).where(and(eq(doctors.id, input.doctorId), eq(doctors.hospitalId, hospitalId))) : [];
     if (input.doctorId && !doctor) throw new ORPCError("NOT_FOUND", { message: "No such doctor at this hospital" });
     const id = `book-in:${row.task.id}`;
-    const [before] = await db.select({ startsAt: appointments.startsAt, kind: appointments.kind }).from(appointments).where(eq(appointments.id, id));
+    const [before] = await db.select({ startsAt: appointments.startsAt, kind: appointments.kind, doctorId: appointments.doctorId }).from(appointments).where(eq(appointments.id, id));
     const kind = doctor ? `Clinic review · ${reasonOf(row.task.title)} · ${shortName(doctor.name)}` : before?.kind ?? `Clinic review · ${reasonOf(row.task.title)}`;
     const startsAt = input.startsAt ?? before?.startsAt ?? tomorrowNine(now);
-    await db.insert(appointments).values({ id, patientId: row.patientId, hospitalId, startsAt, kind, bookedAt: now })
-      .onConflictDoUpdate({ target: appointments.id, set: { startsAt, kind } });
+    // The doctor holds the slot (bookings.withSlots); a replay without one keeps the doctor it had.
+    const doctorId = input.doctorId ?? before?.doctorId ?? null;
+    await db.insert(appointments).values({ id, patientId: row.patientId, hospitalId, doctorId, startsAt, kind, bookedAt: now })
+      .onConflictDoUpdate({ target: appointments.id, set: { startsAt, kind, doctorId } });
     // Moved: tests put on the same trip (their recalls at the old time) move with it.
     if (before && before.startsAt.getTime() !== startsAt.getTime()) {
       const riders = await db.update(appointments).set({ startsAt })
@@ -123,7 +125,7 @@ export async function replyToCheckIn(context: Context, hospitalId: string, input
   const { db } = context;
   const [row] = await db.select({ checkIn: checkIns, name: patients.name }).from(checkIns).innerJoin(patients, eq(patients.id, checkIns.patientId))
     .where(and(eq(checkIns.id, input.checkInId), eq(checkIns.hospitalId, hospitalId), patientId ? eq(checkIns.patientId, patientId) : undefined));
-  if (!row) throw new ORPCError("NOT_FOUND", { message: `No check-in ${input.checkInId}` });
+  if (!row) throw new ORPCError("NOT_FOUND", { message: `No check-in ${input.checkInId}`, data: { code: "CHECK_IN_UNKNOWN" } });
   const at = clockOf(context);
   await db.update(checkIns).set({ sentAt: at }).where(and(eq(checkIns.id, row.checkIn.id), isNull(checkIns.sentAt)));
   const read = await (context.models ?? stubModels).classifyReply({ text: input.text, language: row.checkIn.language });

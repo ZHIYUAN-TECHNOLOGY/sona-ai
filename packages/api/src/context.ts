@@ -33,6 +33,8 @@ export type Context = {
   announce?: (hospitalId: string, change: Change) => Promise<void>;
   /** The retrieval library: the Worker passes packages/retrieval's ingest and search, which import this package, so they come in here. */
   library?: Library;
+  /** DEMO_SIGN_IN=1 (staging only): Sona Care's sign-in shows the seeded demo phone and its fixed code (care.demoSignIn). */
+  demoSignIn?: boolean;
 };
 
 /** Email as the routes use it: who sends, the insurer's inbox, and the send itself. */

@@ -20,6 +20,8 @@ export type DischargePlan = {
   meds: MedChange[]; leaflet: Record<Language, string>;
   /** The follow-up the discharge check asks for, and why. */
   followUp: string;
+  /** The condition rule the plan came from ("pneumonia"), so Sona Care words the review and warning signs for it; none when no rule matched. */
+  condition?: string;
 };
 
 export const LANGUAGES: { id: Language; label: string; name: string }[] = [
@@ -50,7 +52,7 @@ const PLAN: DischargePlan = {
     en: "You were treated for a chest infection. Take azithromycin once a day for 2 more days. Come back straight away if breathing gets harder, your lips turn blue, or the fever returns.",
     zh: "您因肺部感染接受了治疗。请每天服用一次阿奇霉素，再服两天。如呼吸更困难、嘴唇发紫或再次发烧，请立即回院。",
   },
-  followUp: "Clinic review · 2 weeks is usual after pneumonia",
+  followUp: "Clinic review · 2 weeks is usual after pneumonia", condition: "pneumonia",
 };
 
 /**
@@ -61,14 +63,14 @@ const PLAN: DischargePlan = {
 export type PlanRecord = Partial<Pick<Patient, "id" | "name" | "complaint" | "history" | "medicines" | "allergies">> & {
   bed?: string; ward?: { waitingHours?: number; sbar?: { s: string; b: string; a: string; r: string } };
 };
-type Condition = { match: RegExp; diagnosis: string; plan: string; followUp: string; meds: (record: PlanRecord) => MedChange[]; leaflet: Record<Language, string> };
+type Condition = { id: string; match: RegExp; diagnosis: string; plan: string; followUp: string; meds: (record: PlanRecord) => MedChange[]; leaflet: Record<Language, string> };
 const PARACETAMOL: MedChange = { name: "Paracetamol", change: "new", detail: "1 g every 6 h as needed, max 4 g a day" };
 const penicillinAllergy = (r: PlanRecord) => /penicillin/i.test(r.allergies ?? "");
 
 // ponytail: condition rules over the record's own words stand in for draft_discharge + reconcile_medicines
 // (delivery plan, Discharge) until Gemma is hosted. Synthetic regimens for a demo, not advice.
 const CONDITIONS: Condition[] = [
-  { match: /pyelonephritis|kidney infection/i, diagnosis: "Acute pyelonephritis", plan: "Oral antibiotic to finish 10 days, guided by the urine culture; clinic review with the result.",
+  { id: "pyelonephritis", match: /pyelonephritis|kidney infection/i, diagnosis: "Acute pyelonephritis", plan: "Oral antibiotic to finish 10 days, guided by the urine culture; clinic review with the result.",
     followUp: "Clinic review · 1–2 weeks, with the urine culture result",
     meds: () => [{ name: "Cefuroxime", change: "changed", detail: "IV to oral 500 mg twice daily, to finish 10 days (check against sensitivities)" }, PARACETAMOL],
     leaflet: {
@@ -76,7 +78,7 @@ const CONDITIONS: Condition[] = [
       en: "You were treated for a kidney infection. Finish every antibiotic tablet, even when you feel better, and drink plenty of water. Come back straight away if the fever returns, you have back pain or you keep vomiting.",
       zh: "您因肾脏感染接受了治疗。即使感觉好转，也请吃完所有抗生素，并多喝水。如再次发烧、腰背疼痛或持续呕吐，请立即回院。",
     } },
-  { match: /appendic/i, diagnosis: "Acute appendicitis, laparoscopic appendicectomy", plan: "Simple pain relief at home, wound care, no heavy lifting for 2 weeks; surgical clinic review.",
+  { id: "appendicitis", match: /appendic/i, diagnosis: "Acute appendicitis, laparoscopic appendicectomy", plan: "Simple pain relief at home, wound care, no heavy lifting for 2 weeks; surgical clinic review.",
     followUp: "Surgical clinic · wound check in 1–2 weeks",
     meds: () => [PARACETAMOL, { name: "Ibuprofen", change: "new", detail: "400 mg every 8 h with food, for 3 days" }, { name: "Morphine", change: "stopped", detail: "Ward-only pain relief, not needed at home" }],
     leaflet: {
@@ -84,7 +86,7 @@ const CONDITIONS: Condition[] = [
       en: "You had keyhole surgery to remove your appendix. Take paracetamol and ibuprofen for pain, keep the wounds dry for 2 days and avoid heavy lifting for 2 weeks. Come back straight away if you have a fever, worsening tummy pain or a red, leaking wound.",
       zh: "您接受了腹腔镜阑尾切除手术。疼痛时服用扑热息痛和布洛芬，伤口保持干燥两天，两周内避免提重物。如发烧、腹痛加剧或伤口红肿渗液，请立即回院。",
     } },
-  { match: /cellulitis/i, diagnosis: "Cellulitis of the leg", plan: "Oral antibiotic 5 more days, leg raised at rest; wound clinic in a week.",
+  { id: "cellulitis", match: /cellulitis/i, diagnosis: "Cellulitis of the leg", plan: "Oral antibiotic 5 more days, leg raised at rest; wound clinic in a week.",
     followUp: "Wound clinic · in 1 week",
     meds: r => [penicillinAllergy(r) ? { name: "Clindamycin", change: "changed", detail: "IV to oral 300 mg four times daily, 5 more days" } : { name: "Flucloxacillin", change: "changed", detail: "IV to oral 500 mg four times daily, 5 more days" }, PARACETAMOL],
     leaflet: {
@@ -92,7 +94,7 @@ const CONDITIONS: Condition[] = [
       en: "You were treated for a skin infection of your leg. Take the antibiotic four times a day for 5 more days and keep your leg raised when resting. Come back straight away if the redness spreads, you get a fever or the leg becomes very painful.",
       zh: "您因腿部皮肤感染接受了治疗。请每天服用四次抗生素，再服五天，休息时把腿抬高。如红肿扩散、发烧或腿部剧痛，请立即回院。",
     } },
-  { match: /pneumonia|chest infection/i, diagnosis: "Community-acquired pneumonia", plan: "Oral antibiotic to complete 5 days; clinic review.",
+  { id: "pneumonia", match: /pneumonia|chest infection/i, diagnosis: "Community-acquired pneumonia", plan: "Oral antibiotic to complete 5 days; clinic review.",
     followUp: "Clinic review · 2 weeks is usual after pneumonia",
     meds: r => [penicillinAllergy(r) ? { name: "Azithromycin", change: "changed", detail: "IV to oral 500 mg daily, to complete 5 days" } : { name: "Amoxicillin", change: "changed", detail: "IV to oral 1 g three times daily, to complete 5 days" }, PARACETAMOL],
     leaflet: {
@@ -100,7 +102,7 @@ const CONDITIONS: Condition[] = [
       en: "You were treated for a chest infection. Finish your antibiotic course as prescribed. Come back straight away if breathing gets harder, your lips turn blue, or the fever returns.",
       zh: "您因肺部感染接受了治疗。请按医嘱服完抗生素。如呼吸更困难、嘴唇发紫或再次发烧，请立即回院。",
     } },
-  { match: /heart failure/i, diagnosis: "Acute decompensated heart failure", plan: "Oral diuretic, daily weights and a fluid limit; heart failure clinic with renal function.",
+  { id: "heart-failure", match: /heart failure/i, diagnosis: "Acute decompensated heart failure", plan: "Oral diuretic, daily weights and a fluid limit; heart failure clinic with renal function.",
     followUp: "Heart failure clinic · 1–2 weeks, with renal function",
     meds: () => [{ name: "Furosemide", change: "changed", detail: "IV to oral 40 mg each morning; weigh daily" }],
     leaflet: {
@@ -108,7 +110,7 @@ const CONDITIONS: Condition[] = [
       en: "You were treated for heart failure (fluid on the lungs). Take your water tablet every morning, weigh yourself daily and keep to your fluid limit. Come back straight away if your weight goes up by 2 kg in 3 days, your ankles swell or you are breathless lying flat.",
       zh: "您因心力衰竭（肺部积液）接受了治疗。请每天早上服用利尿药，每天称体重，并遵守饮水限制。如三天内体重增加两公斤、脚踝肿胀或平躺时气喘，请立即回院。",
     } },
-  { match: /stroke/i, diagnosis: "Ischaemic stroke, medically stable", plan: "Secondary prevention; transfer for inpatient rehabilitation; stroke clinic.",
+  { id: "stroke", match: /stroke/i, diagnosis: "Ischaemic stroke, medically stable", plan: "Secondary prevention; transfer for inpatient rehabilitation; stroke clinic.",
     followUp: "Stroke clinic · 4 weeks, after rehabilitation starts",
     meds: () => [{ name: "Apixaban", change: "new", detail: "5 mg twice daily, for atrial fibrillation (start as the stroke team planned)" }, { name: "Atorvastatin", change: "new", detail: "40 mg at night" }],
     leaflet: {
@@ -144,7 +146,7 @@ function derivedPlan(record: PlanRecord): DischargePlan {
     bed: record.bed ?? "Ward bed", fitMinutesAgo: Math.round((record.ward?.waitingHours ?? 0) * 60), insurer: "Synthetic insurer", glRequestedAt: "today",
     summary: { diagnosis, course, plan }, full: `${diagnosis} ${course} ${plan} Synthetic record, not a real patient.`,
     meds: [...drafted, ...own.map(name => ({ name, change: "unchanged" as const, detail: "Continue as before" }))],
-    leaflet: condition?.leaflet ?? GENERIC_LEAFLET, followUp: condition?.followUp ?? "Clinic review · timing to confirm",
+    leaflet: condition?.leaflet ?? GENERIC_LEAFLET, followUp: condition?.followUp ?? "Clinic review · timing to confirm", condition: condition?.id,
   };
 }
 

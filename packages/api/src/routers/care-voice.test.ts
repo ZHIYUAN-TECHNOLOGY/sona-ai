@@ -33,7 +33,7 @@ async function world(models?: Models) {
 test("without a speech model, speaking is refused plainly and asking answers nothing (the app keeps its own answers)", async () => {
   const { amelia } = await world();
   const e = await amelia.care.transcribe({ audio: btoa("RIFF-some-audio-bytes") }).catch(e => e);
-  expect([e.code, e.message]).toEqual(["PRECONDITION_FAILED", "Speaking to Sona Care isn't switched on yet. Please type instead."]);
+  expect([e.code, e.data?.code, e.message]).toEqual(["PRECONDITION_FAILED", "SPEECH_OFF", "Speaking to Sona Care isn't switched on yet. Please type instead."]);
   expect(await amelia.care.ask({ question: "Bila saya makan ubat?" })).toEqual({ answer: "", grounded: false, urgent: false, source: "fixture" });
 });
 

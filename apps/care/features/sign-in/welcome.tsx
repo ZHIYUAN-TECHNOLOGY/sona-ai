@@ -9,7 +9,8 @@ import Svg, { Path } from "react-native-svg";
 import { authClient } from "@/lib/auth-client";
 import { palette, type } from "@/lib/theme";
 import { Button, CircleButton, field, ICON } from "@/lib/ui";
-import { queryClient } from "@/utils/orpc";
+import { orpc, queryClient } from "@/utils/orpc";
+import { useQuery } from "@tanstack/react-query";
 import { LanguageRow } from "@/features/language/picker";
 import { tFor, translate, useLang, useT, type Lang } from "@/lib/i18n";
 import { Head, Label } from "./head";
@@ -38,6 +39,8 @@ export function Welcome() {
   const [phone, setPhone] = useState("");
   const go = (next: Step) => { setError(undefined); setStep(next); };
   const signedIn = () => { void queryClient.refetchQueries(); };
+  // Staging only (DEMO_SIGN_IN): the seeded synthetic demo patient's number and fixed code, shown so judges can sign in.
+  const demo = useQuery({ ...orpc.care.demoSignIn.queryOptions(), staleTime: Infinity }).data ?? undefined;
 
   // The hero is the shared element: large over the options, a small mark above the forms.
   const small = step !== "options";
@@ -90,7 +93,7 @@ export function Welcome() {
           <Head light={t("in.phoneLight")} bold={t("in.phoneBold")} />
           <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>{t("in.phoneLine")}</Text>
         </Animated.View>
-        <Animated.View entering={enter(1)} style={{ flex: 1 }}><PhoneStep phone={phone} setPhone={setPhone} onSent={() => go("code")} /></Animated.View>
+        <Animated.View entering={enter(1)} style={{ flex: 1 }}><PhoneStep phone={phone} setPhone={setPhone} onSent={() => go("code")} demo={demo} /></Animated.View>
       </Animated.View>}
 
       {step === "code" && <Animated.View key="code" exiting={leave} style={{ flex: 1, gap: 24, paddingTop: 12 }}>
@@ -98,7 +101,7 @@ export function Welcome() {
           <Head light={t("in.codeLight")} bold={t("in.codeBold")} />
           <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>{t("in.codeLine", { phone: toE164(phone) ?? "" })}</Text>
         </Animated.View>
-        <Animated.View entering={enter(1)}><CodeStep phone={toE164(phone)!} onDone={signedIn} onChangeNumber={() => go("phone")} /></Animated.View>
+        <Animated.View entering={enter(1)}><CodeStep phone={toE164(phone)!} onDone={signedIn} onChangeNumber={() => go("phone")} demoCode={demo && toE164(phone) === demo.phone ? demo.code : undefined} /></Animated.View>
       </Animated.View>}
 
       {step === "email" && <Animated.View key="email" exiting={leave} style={{ flex: 1, gap: 24, paddingTop: 12 }}>
@@ -176,7 +179,16 @@ function providerError(name: string, error: { code?: string; message?: string },
 }
 
 /** The kit's one field per screen: the labelled number, and the black capsule at the bottom, riding above the keyboard. */
-function PhoneStep({ phone, setPhone, onSent }: { phone: string; setPhone: (v: string) => void; onSent: () => void }) {
+type Demo = { phone: string; code: string };
+
+/** The staging demo hint: a quiet blue line that fills in the demo number or code. */
+function DemoHint({ label, onPress }: { label: string; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" onPress={onPress} style={{ minHeight: 44, justifyContent: "center", alignSelf: "center" }}>
+    <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue, textAlign: "center" }}>{label}</Text>
+  </Pressable>;
+}
+
+function PhoneStep({ phone, setPhone, onSent, demo }: { phone: string; setPhone: (v: string) => void; onSent: () => void; demo?: Demo }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const t = useT();
@@ -196,13 +208,14 @@ function PhoneStep({ phone, setPhone, onSent }: { phone: string; setPhone: (v: s
         autoFocus accessibilityLabel={t("in.mobile")}onSubmitEditing={() => { void send(); }} style={[field, { flex: 1, fontSize: 17, fontVariant: ["tabular-nums"] }]} />
     </View>
     {error && <Text selectable accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
+    {demo && <DemoHint label={t("in.demo", { phone: `0${demo.phone.slice(3)}` })} onPress={() => setPhone(demo.phone.slice(3))} />}
     <View style={{ flex: 1, minHeight: 24 }} />
     <Button label={t("in.sendCode")} busy={busy}disabled={!number} onPress={() => { void send(); }} />
   </View>;
 }
 
 /** Six boxes over one hidden field, so iOS can fill the code from the SMS; it signs in as soon as all six are in. */
-function CodeStep({ phone, onDone, onChangeNumber }: { phone: string; onDone: () => void; onChangeNumber: () => void }) {
+function CodeStep({ phone, onDone, onChangeNumber, demoCode }: { phone: string; onDone: () => void; onChangeNumber: () => void; demoCode?: string }) {
   const input = useRef<import("react-native").TextInput>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -233,6 +246,7 @@ function CodeStep({ phone, onDone, onChangeNumber }: { phone: string; onDone: ()
       <TextInput ref={input} value={code} onChangeText={type6} autoFocus keyboardType="number-pad" textContentType="oneTimeCode" autoComplete="sms-otp" maxLength={6}
         editable={!busy} accessibilityLabel={t("in.sixDigits")}style={{ position: "absolute", opacity: 0.01, width: 1, height: 1 }} />
     </Pressable>
+    {demoCode && !busy && <DemoHint label={t("in.demoCode", { code: demoCode })} onPress={() => type6(demoCode)} />}
     {busy && <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("in.checking")}</Text>}
     {error && <Text selectable accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.red, textAlign: "center" }}>{error}</Text>}
     <View style={{ flexDirection: "row", justifyContent: "center", gap: 20 }}>

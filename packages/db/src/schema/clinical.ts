@@ -145,6 +145,8 @@ export const appointments = pgTable("appointments", {
   startsAt: timestamp("starts_at").notNull(), kind: text("kind").notNull(),
   /** When a doctor booked it from a flagged check-in (Book in), for the ops counter's flag-to-booked time. */
   bookedAt: timestamp("booked_at"),
+  /** The directory doctor it is with (Book in with a doctor, a confirmed booking), so it holds only that doctor's slot. */
+  doctorId: text("doctor_id"),
 });
 
 export const handoverAcceptances = pgTable("handover_acceptances", {

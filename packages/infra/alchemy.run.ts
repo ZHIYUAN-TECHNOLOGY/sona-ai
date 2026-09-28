@@ -36,6 +36,8 @@ export const server = Cloudflare.Worker("server", {
     APPLE_APP_BUNDLE_IDENTIFIER: Config.String("APPLE_APP_BUNDLE_IDENTIFIER").pipe(Config.withDefault("")),
     GOOGLE_CLIENT_ID: Config.String("GOOGLE_CLIENT_ID").pipe(Config.withDefault("")),
     GOOGLE_CLIENT_SECRET: Config.Redacted("GOOGLE_CLIENT_SECRET").pipe(Config.withDefault(Redacted.make(""))),
+    // "1" on staging for judges: the seeded synthetic demo phone signs in with a fixed code the app shows. Off by default.
+    DEMO_SIGN_IN: Config.String("DEMO_SIGN_IN").pipe(Config.withDefault("")),
   },
   // Nightly coding audit (flow 5), 02:00 Malaysia time; after-discharge check-ins (flow 7) go out hourly.
   crons: ["0 18 * * *", "0 * * * *"],
