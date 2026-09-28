@@ -13,9 +13,14 @@ import type { Encounter, Patient, Task } from "@/features/encounter/types";
  */
 export type DayTone = "urgent" | "soon" | "routine";
 export type DayItem = {
-  id: string; kind: "result" | "blocker" | "visit" | "task" | "check-in" | "booking"; title: string; detail: string; reason: string; tone: DayTone; score: number;
+  id: string; kind: "result" | "blocker" | "visit" | "task" | "check-in" | "booking" | "message"; title: string; detail: string; reason: string; tone: DayTone; score: number;
+  /** When it happened (ms), for items that tie on score: the newer one leads. */
+  at?: number;
   patientId?: string; open: { next?: string; view?: string };
 };
+
+/** The ranking rule: higher score first; on a tie the newer event leads (undated items keep their order after dated ones). */
+export const byUrgency = (a: DayItem, b: DayItem) => b.score - a.score || (b.at ?? 0) - (a.at ?? 0);
 
 // A synthetic lab result that arrived after Daniel's intake and has not been acted on.
 export type PendingResult = { id?: string; patientId: string; test: string; value: string; flag: string; receivedAt: string };
@@ -60,7 +65,7 @@ export function rankDay(patients: Patient[], encounters: Record<string, Encounte
       reason: task.due ? `Due ${task.due}` : "No due date", tone: "routine", score: 30, patientId: patient.id, open: { view: "tasks" },
     });
   }
-  return items.sort((a, b) => b.score - a.score);
+  return items.sort(byUrgency);
 }
 
 /** A patient's booking request from Sona Care, as the server lists it (see bookings.list). */
@@ -72,12 +77,34 @@ export type BookingRequest = { id: string; patientId: string; doctorName: string
  * the request's, so Confirm and Decline act on it in place.
  */
 export function bookingItems(requests: BookingRequest[], now = new Date()): DayItem[] {
-  return requests.map(r => {
-    const mins = Math.max(0, Math.round((now.getTime() - new Date(r.createdAt).getTime()) / 60_000));
-    const asked = mins < 60 ? `${mins} min ago` : mins < 1440 ? `${Math.floor(mins / 60)} h ago` : `${Math.floor(mins / 1440)} d ago`;
+  return requests.map(r => ({
+    id: `booking-${r.id}`, kind: "booking" as const, title: r.title ?? `Booking request · ${r.doctorName}`, detail: r.reason ? `“${r.reason}” · ${r.specialty}` : `${r.doctorName} · ${r.specialty}`,
+    reason: `Asked in Sona Care ${since(r.createdAt, now)} ago · confirm or decline`, tone: "soon" as const, score: 75, patientId: r.patientId, open: {},
+  }));
+}
+
+/** "25 min", "2 h", "3 d" from a moment to now. */
+function since(at: Date | string, now: Date) {
+  const mins = Math.max(0, Math.round((now.getTime() - new Date(at).getTime()) / 60_000));
+  return mins < 60 ? `${mins} min` : mins < 1440 ? `${Math.floor(mins / 60)} h` : `${Math.floor(mins / 1440)} d`;
+}
+
+/** A patient's thread as the care inbox lists it (see messages.inbox). */
+export type MessageThread = { patientId: string; name: string; label: "urgent" | "clinical" | "admin" | null; reason: string | null; lastText: string; lastAt: Date | string; waitingSince: Date | string | null; handled: boolean };
+const WORDS = 6;
+
+/**
+ * An urgent Sona Care message nobody has answered: a red row titled with the patient's own first
+ * words ("Amelia: sesak nafas bila jalan sikit"), the triage's reason beneath. It scores level with a
+ * patient reported worse after discharge (105), so between those two the newer leads (byUrgency);
+ * an urgent check-in reply (120) still comes first, and it outranks an unacknowledged result (100).
+ */
+export function messageItems(threads: MessageThread[], now = new Date()): DayItem[] {
+  return threads.filter(t => !t.handled && t.label === "urgent").map(t => {
+    const words = t.lastText.trim().split(/\s+/);
     return {
-      id: `booking-${r.id}`, kind: "booking" as const, title: r.title ?? `Booking request · ${r.doctorName}`, detail: r.reason ? `“${r.reason}” · ${r.specialty}` : `${r.doctorName} · ${r.specialty}`,
-      reason: `Asked in Sona Care ${asked} · confirm or decline`, tone: "soon" as const, score: 75, patientId: r.patientId, open: {},
+      id: `message-${t.patientId}`, kind: "message" as const, title: `${t.name.split(" ")[0]}: ${words.slice(0, WORDS).join(" ")}${words.length > WORDS ? "…" : ""}`,
+      detail: t.reason ?? "Triaged urgent", reason: `Urgent message · no reply for ${since(t.waitingSince ?? t.lastAt, now)}`, tone: "urgent" as const, score: 105, at: new Date(t.lastAt).getTime(), patientId: t.patientId, open: { view: "messages" },
     };
   });
 }

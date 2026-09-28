@@ -58,7 +58,7 @@ export function flaggedItems(checkIns: CheckIn[], keep: string[] = []): DayItem[
     const flag = r.task && (!r.task.completed || keep.includes(r.task.id)) ? replyFlag(r.task.title.split(":")[0]!, r.label, r.text) : undefined;
     return flag ? [{
       id: `check-in-${r.task!.id}`, kind: "check-in" as const, title: r.task!.title, detail: `“${r.text}” · day ${c.day} check-in`,
-      reason: `${r.label === "urgent" ? "Urgent" : "Worse"} after discharge · replied ${clock(new Date(r.receivedAt))}`, tone: "urgent" as const, score: flag.score, patientId: c.patientId, open: {},
+      reason: `${r.label === "urgent" ? "Urgent" : "Worse"} after discharge · replied ${clock(new Date(r.receivedAt))}`, tone: "urgent" as const, score: flag.score, at: new Date(r.receivedAt).getTime(), patientId: c.patientId, open: {},
     }] : [];
   }));
 }

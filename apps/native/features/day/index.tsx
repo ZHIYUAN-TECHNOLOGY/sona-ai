@@ -24,7 +24,8 @@ import { BookingActions, useKeptBookings } from "@/features/bookings/parts";
 import { DemoTimeLine } from "@/features/live/demo-clock";
 import { useRole } from "@/features/live/roles";
 import { WardGlance } from "@/features/ward/ops";
-import { bookingItems, dayOf, groupVisits, rankDay, rankOtherDay, scheduleFor, type DayItem, type DayTone, type ScheduleVisit } from "./model";
+import { MessageActions, useInbox } from "@/features/inbox";
+import { bookingItems, dayOf, groupVisits, messageItems, rankDay, rankOtherDay, scheduleFor, type DayItem, type DayTone, type ScheduleVisit } from "./model";
 
 /*
  * My day, ranked (after Superlist's AI list making): on first open a small "Sorting your day…"
@@ -37,7 +38,8 @@ const TONE: Record<DayTone, { dot: string; ink: string; wash: string }> = {
   soon: { dot: "#C47814", ink: palette.amber, wash: "rgba(196,120,20,0.13)" },
   routine: { dot: "rgba(36,91,204,0.5)", ink: palette.blue, wash: "rgba(36,91,204,0.08)" },
 };
-const ICON: Record<DayItem["kind"], string> = { result: "testtube.2", blocker: "pills", visit: "calendar", task: "checklist", "check-in": "exclamationmark.bubble", booking: "calendar.badge.clock" };
+const ICON: Record<DayItem["kind"], string> = { result: "testtube.2", blocker: "pills", visit: "calendar", task: "checklist", "check-in": "exclamationmark.bubble", booking: "calendar.badge.clock", message: "bubble.left.and.bubble.right" };
+const HINT = (item: DayItem) => item.kind === "message" ? "Opens the messages" : "Opens the visit";
 let sortedOnce = false;
 
 const nowMinutes = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
@@ -148,7 +150,7 @@ function Row({ item, first, index, animate, pinned, onOpen, onPin, onSnooze }: {
   return <Animated.View layout={LAYOUT} entering={animate ? riseIn({ delay: index * 90, distance: 14, duration: 450 }) : undefined}>
     <View style={{ borderTopWidth: first ? 0 : 1, borderColor: "rgba(20,28,40,0.06)" }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingLeft: 14, paddingRight: 6, paddingVertical: 12 }}>
-        <Pressable accessibilityRole="button" accessibilityLabel={`${item.title}. ${item.reason}${pinned ? ". Pinned" : ""}`} accessibilityHint="Opens the visit" onPress={onOpen} style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`${item.title}. ${item.reason}${pinned ? ". Pinned" : ""}`} accessibilityHint={HINT(item)} onPress={onOpen} style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 12 }}>
           <View style={{ width: 36, height: 36, borderRadius: 11, borderCurve: "continuous", backgroundColor: tone.wash, alignItems: "center", justifyContent: "center" }}><Icon name={ICON[item.kind]} size={16} color={tone.ink} /></View>
           <View style={{ flex: 1, gap: 3 }}>
             <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{pinned ? "📌 " : ""}{item.title}</Text>
@@ -163,6 +165,7 @@ function Row({ item, first, index, animate, pinned, onOpen, onPin, onSnooze }: {
       </View>
       {item.kind === "check-in" && <View style={{ paddingLeft: 62, paddingBottom: 12 }}><FlagActions item={item} /></View>}
       {item.kind === "booking" && <View style={{ paddingLeft: 62, paddingRight: 14, paddingBottom: 12 }}><BookingActions item={item} /></View>}
+      {item.kind === "message" && <View style={{ paddingLeft: 62, paddingRight: 14, paddingBottom: 12 }}><MessageActions item={item} /></View>}
       {menu && <Expand style={{ flexDirection: "row", gap: 8, paddingLeft: 62, paddingBottom: 12 }}>
         {[[pinned ? "Unpin" : "Pin to top", "pin", onPin], ["Snooze 1 h", "moon.zzz", onSnooze]].map(([label, icon, act]) => <Pressable key={label as string} accessibilityRole="button" accessibilityLabel={label as string}
           onPress={() => { haptic(); setMenu(false); (act as () => void)(); }} style={{ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: "rgba(20,28,40,0.06)" }}>
@@ -227,6 +230,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const ackFailed = useAckFailed();
   const server = useServerData();
   const tasksOf = useVisitTasks();
+  const { inbox } = useInbox();
   const checkIns = useCheckIns();
   const kept = useKeptFlags();
   const keptBookings = useKeptBookings();
@@ -239,6 +243,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   // (doctors only); a refusal keeps the row, saying why (useAckFailed), and opening it again retries.
   const onOpen = (id: string | undefined, target: DayItem["open"]) => {
     if (!id) return;
+    if (target.view === "messages") { router.push({ pathname: "/inbox/[patientId]", params: { patientId: id } }); return; }
     if (result?.id && can("results.acknowledge") && target.next === "briefing" && id === result.patientId) void acknowledgeResult(result.id).catch(() => {});
     open(id, target);
   };
@@ -260,7 +265,10 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   // Sona Care booking requests are amber rows with Confirm / Decline (their tasks are not listed twice); one just decided stays a beat.
   const requests = bookingItems(server?.bookings ?? []);
   const bookings = [...requests, ...keptBookings.filter(k => !requests.some(r => r.id === k.id))];
-  const ranked = offset === 0 ? withFindings([...flaggedItems(checkIns, kept), ...bookings, ...rankDay(patients, encounters, now, undefined, live ? { result, tasksOf: p => tasksOf(p).filter(t => !flaggedTaskIds(checkIns).includes(t.id) && !t.id.startsWith("booking:")) } : undefined)], findings)
+  // An urgent unanswered Sona Care message is a red row with Reply / Call back; its task is not listed twice.
+  const messages = inbox ? messageItems(inbox.threads, new Date(inbox.now)) : [];
+  const messaged = (t: { id: string }, p: Patient) => t.id.startsWith("message:") && messages.some(m => m.patientId === p.id);
+  const ranked = offset === 0 ? withFindings([...flaggedItems(checkIns, kept), ...messages, ...bookings, ...rankDay(patients, encounters, now, undefined, live ? { result, tasksOf: p => tasksOf(p).filter(t => !flaggedTaskIds(checkIns).includes(t.id) && !t.id.startsWith("booking:") && !messaged(t, p)) } : undefined)], findings)
     .map(item => item.id === "result" && ackFailed && ackFailed.id === result?.id ? { ...item, reason: `Not acknowledged: ${ackFailed.error} · open to retry` } : item) : rankOtherDay(offset, schedule);
   const need = ranked.filter(item => item.tone !== "routine").length;
   const date = dayOf(offset);
@@ -270,6 +278,8 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const ordered = [...active.filter(item => pins.includes(item.id)), ...active.filter(item => !pins.includes(item.id))];
   const later = ranked.filter(item => snoozed.includes(item.id));
   const [top, ...rest] = ordered;
+  // A patient getting worse at home, or an urgent message from one, leads above the shortcuts.
+  const leads = top?.kind === "check-in" || top?.kind === "message";
 
   return <View style={{ gap: 14 }}>
     <View style={{ gap: 16, zIndex: 5 }}>
@@ -296,10 +306,10 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
     {/* Management's day leads with the ward and this week's numbers, not clinical tasks. */}
     {managing ? <WardGlance /> : <TimeBar key={offset} schedule={schedule} now={offset === 0 ? now : undefined} onOpen={id => onOpen(id, {})} />}
     {/* A patient at home getting worse leads: their card (and its Call back / Book in) goes above the shortcuts. */}
-    {offset === 0 && (managing || top?.kind !== "check-in") && actions}
+    {offset === 0 && (managing || !leads) && actions}
     {managing ? null : sorting ? <Sorting /> : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
       {top && <Animated.View key={`top-${run}`} layout={LAYOUT} entering={animate ? riseIn({ distance: 14, scale: 0.97, duration: 450 }) : undefined}>
-        <Pressable accessibilityRole="button" accessibilityLabel={`Most urgent: ${top.title}. ${top.reason}`} accessibilityHint="Opens the visit" onPress={() => onOpen(top.patientId, top.open)}
+        <Pressable accessibilityRole="button" accessibilityLabel={`Most urgent: ${top.title}. ${top.reason}`} accessibilityHint={HINT(top)} onPress={() => onOpen(top.patientId, top.open)}
           style={({ pressed }) => ({ transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
           <Surface feature style={{ padding: 18, gap: 12 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
@@ -316,10 +326,11 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
             </View>
             {top.kind === "check-in" && <FlagActions item={top} />}
             {top.kind === "booking" && <BookingActions item={top} />}
+            {top.kind === "message" && <MessageActions item={top} />}
           </Surface>
         </Pressable>
       </Animated.View>}
-      {offset === 0 && top?.kind === "check-in" && actions}
+      {offset === 0 && leads && actions}
       {rest.length > 0 && <Surface layout={LAYOUT} style={{ paddingVertical: 2 }}>
         {rest.map((item, i) => <Row key={`${run}-${item.id}`} item={item} first={i === 0} index={i + 1} animate={animate} pinned={pins.includes(item.id)} onOpen={() => onOpen(item.patientId, item.open)}
           onPin={() => setPins(list => list.includes(item.id) ? list.filter(id => id !== item.id) : [item.id, ...list])}
