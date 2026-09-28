@@ -1,8 +1,7 @@
 import { Text } from "@/components/sona/text";
 import { Host, Switch } from "@expo/ui";
 import { router } from "expo-router";
-import { useState } from "react";
-import { Alert, TextInput, View } from "react-native";
+import { Alert, View } from "react-native";
 import { Action, Body, Card, Label, Notice, Screen } from "@/components/sona/ui";
 import { palette } from "@/components/sona/theme";
 import { TermLegend } from "@/components/sona/marked-text";
@@ -10,7 +9,7 @@ import { simulateCriticalResult } from "@/features/critical";
 import { setLive, useLive } from "@/features/live";
 import { useLiveStatus } from "@/features/live/channel";
 import { DemoClockCard } from "@/features/live/demo-clock";
-import { useLiveLibrary } from "@/features/live/library-sync";
+import { LibraryCard } from "@/features/library/library-card";
 import { RolePill, useRole } from "@/features/live/roles";
 import { useEncounter } from "./store";
 import { openSession } from "./navigation";
@@ -32,28 +31,5 @@ function LiveCard() {
     <Body muted>{user ? `Discharge, guarantee letter, ward owners, coding audit, tasks, results, My Day, prescribing checks, the note, handover and X-ray upload use the server; answers that need a model stay authored.` : "Sign in first; until then every screen stays on fixtures."}</Body>
     {user && wanted && <Body muted>{updates === "connected" ? "Live updates connected: changes on the server appear straight away." : updates === "connecting" ? "Connecting live updates…" : "Live updates off."}</Body>}
     {!user && <Action label="Sign in" secondary onPress={() => router.push("/account")} />}
-  </Card>;
-}
-
-const field = { borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" } as const;
-
-/** Live mode: the hospital's own sources (pasted guideline or reference text), cited beside PubMed in evidence answers. */
-function LibraryCard() {
-  const { live, docs, error, pending, add, remove } = useLiveLibrary();
-  const [title, setTitle] = useState("");
-  const [text, setText] = useState("");
-  if (!live) return null;
-  const submit = () => { void add(title.trim(), text.trim()).then(ok => { if (ok) { setTitle(""); setText(""); } }); };
-  return <Card label="Hospital library" title="Your library">
-    <Body muted>Paste a guideline or reference text. Evidence answers cite its matching sections beside PubMed; only your hospital sees it.</Body>
-    {docs?.map(d => <View key={d.id} style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 6 }}>
-      <View style={{ flex: 1 }}><Text style={{ fontSize: 16, fontWeight: "500", color: palette.ink }}>{d.title}</Text><Body muted>{d.source} · {d.year}</Body></View>
-      <Action label="Remove" secondary disabled={pending} accessibilityLabel={`Remove ${d.title}`} onPress={() => Alert.alert("Remove this source?", `${d.title} will no longer be cited in evidence answers.`, [{ text: "Keep", style: "cancel" }, { text: "Remove", style: "destructive", onPress: () => { void remove(d.id); } }])} />
-    </View>)}
-    {docs && !docs.length && <Body muted>No sources yet.</Body>}
-    <TextInput accessibilityLabel="Source title" value={title} onChangeText={setTitle} placeholder="Title, e.g. Ward CAP protocol" placeholderTextColor="#A2A8B1" maxLength={200} editable={!pending} style={{ ...field, minHeight: 48 }} />
-    <TextInput accessibilityLabel="Source text" value={text} onChangeText={setText} placeholder="Paste the text; # headings become sections" placeholderTextColor="#A2A8B1" multiline maxLength={200_000} editable={!pending} style={{ ...field, minHeight: 120, maxHeight: 240 }} />
-    <Action label={pending ? "Saving…" : "Add to library"} disabled={pending || !title.trim() || !text.trim()} onPress={submit} />
-    {error && <Notice warning>{error}</Notice>}
   </Card>;
 }
