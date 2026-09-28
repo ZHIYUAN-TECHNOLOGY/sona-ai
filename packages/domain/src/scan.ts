@@ -39,7 +39,7 @@ const lines = [
 ];
 
 /**
- * The sample note (apps/native/assets/scan/sample-ward-note.png): a synthetic ward-round note for
+ * The sample note (apps/native/assets/scan/sample-ward-note.jpg): a synthetic ward-round note for
  * Amelia, the demo patient. Clarithromycin, not co-amoxiclav, because her record lists a penicillin rash.
  */
 export const SAMPLE_NOTE: HandwrittenNote = {

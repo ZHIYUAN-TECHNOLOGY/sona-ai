@@ -44,7 +44,9 @@ function Sweep({ width, height, progress }: { width: number; height: number; pro
   </Canvas>;
 }
 
-export function CaptureScan({ source, width, height, suggested = "Chest X-ray", onRetake, onAttach }: { source: number | { uri: string }; suggested?: ImageType; width: number; height: number; onRetake: () => void; onAttach: (kind: ImageType) => void }) {
+/** `confirm` replaces the type question when the caller already knows what the image is (a scanned note). */
+type Confirm = { title: string; line: string; action: string };
+export function CaptureScan({ source, width, height, suggested = "Chest X-ray", confirm, onRetake, onAttach }: { source: number | { uri: string }; suggested?: ImageType; confirm?: Confirm; width: number; height: number; onRetake: () => void; onAttach: (kind: ImageType) => void }) {
   const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();
   const [kind, setKind] = useState<ImageType>(suggested);
@@ -82,23 +84,23 @@ export function CaptureScan({ source, width, height, suggested = "Chest X-ray", 
 
     <Animated.View style={[{ position: "absolute", left: 10, right: 10, bottom: Math.max(insets.bottom, 12), borderRadius: 32, borderCurve: "continuous", backgroundColor: "rgba(250,251,253,0.97)", borderWidth: 1, borderColor: "rgba(255,255,255,0.9)", boxShadow: "0 18px 48px rgba(0,0,0,0.3)", padding: 18, gap: 14 }, sheetStyle]}>
       <View style={{ gap: 2 }}>
-        <Text accessibilityRole="header" style={{ ...type.heading, color: palette.ink }}>What is this image?</Text>
-        <Text style={{ ...type.footnote, color: palette.muted }}>{ready ? "Analysis depends on the type. Suggested from your request; change it if needed." : "Preparing the capture…"}</Text>
+        <Text accessibilityRole="header" style={{ ...type.heading, color: palette.ink }}>{confirm?.title ?? "What is this image?"}</Text>
+        <Text style={{ ...type.footnote, color: palette.muted }}>{!ready ? "Preparing the capture…" : confirm ? confirm.line : "Analysis depends on the type. Suggested from your request; change it if needed."}</Text>
       </View>
-      <View accessibilityRole="radiogroup" style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+      {!confirm && <View accessibilityRole="radiogroup" style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {IMAGE_TYPES.map((item, i) => <Animated.View key={item} entering={reducedMotion ? undefined : FadeIn.delay(900 + i * 40).duration(220)}>
           <Pressable accessibilityRole="radio" accessibilityState={{ selected: item === kind }} onPress={() => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); setKind(item); }} hitSlop={{ top: 4, bottom: 4 }}
             style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: "center", borderWidth: 1, borderColor: item === kind ? palette.ink : "rgba(20,28,40,0.1)", backgroundColor: item === kind ? palette.ink : palette.white, transitionProperty: ["backgroundColor", "borderColor"], transitionDuration: 150 } as never}>
             <Text style={{ fontSize: 15, fontWeight: "500", color: item === kind ? palette.white : palette.ink, transitionProperty: "color", transitionDuration: 150 } as never}>{item}</Text>
           </Pressable>
         </Animated.View>)}
-      </View>
+      </View>}
       <View style={{ flexDirection: "row", gap: 10 }}>
         <Pressable accessibilityRole="button" accessibilityLabel="Retake photo" onPress={onRetake} style={({ pressed }) => ({ flex: 1, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)", opacity: pressed ? 0.8 : 1 })}>
           <Text style={{ fontSize: 16, fontWeight: "600", color: palette.ink }}>Retake</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel={`Attach as ${kind}`} onPress={() => onAttach(kind)} style={({ pressed }) => ({ flex: 2, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", backgroundColor: palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-          <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>Attach as {kind}</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel={confirm?.action ?? `Attach as ${kind}`} onPress={() => onAttach(kind)} style={({ pressed }) => ({ flex: 2, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", backgroundColor: palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+          <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>{confirm?.action ?? `Attach as ${kind}`}</Text>
         </Pressable>
       </View>
     </Animated.View>

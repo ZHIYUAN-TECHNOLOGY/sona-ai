@@ -41,10 +41,11 @@ const tap = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().
  * update-button shimmer: ease-in-out, 1.1 s), so the shelf announces itself without looping.
  */
 const EASE_IN_OUT = Easing.bezier(0.65, 0, 0.35, 1);
-function Key({ a, index, shimmer }: { a: QuickAction; index: number; shimmer: boolean }) {
+/** `wide`: the odd key out spans the row, so the shelf never ends on a half-empty line. */
+function Key({ a, index, shimmer, wide = false }: { a: QuickAction; index: number; shimmer: boolean; wide?: boolean }) {
   const { reducedMotion, reducedTransparency } = useAccessibleEffects();
   const { width } = useWindowDimensions();
-  const keyW = (width - 40 - 10) / 2;
+  const keyW = wide ? width - 40 : (width - 40 - 10) / 2;
   const down = useSharedValue(0), pulse = useSharedValue(1), sweep = useSharedValue(0);
   useEffect(() => { if (shimmer && !reducedMotion) sweep.set(withDelay(500 + index * 120, withTiming(1, { duration: 1100, easing: EASE_IN_OUT }))); }, [shimmer, reducedMotion, index, sweep]);
   const urgent = a.tone === "urgent";
@@ -92,7 +93,7 @@ export function QuickActions({ actions, animate = true }: { actions: QuickAction
   const [shimmer, setShimmer] = useState(false);
   useEffect(() => { if (animate && !shimmered) { shimmered = true; setShimmer(true); } }, [animate]);
   return <Animated.View entering={animate && !reducedMotion ? riseIn({ delay: 60, distance: 10, duration: 380 }) : undefined} style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-    {actions.map((a, i) => <Key key={a.key} a={a} index={i} shimmer={shimmer} />)}
+    {actions.map((a, i) => <Key key={a.key} a={a} index={i} shimmer={shimmer} wide={actions.length % 2 === 1 && i === actions.length - 1} />)}
   </Animated.View>;
 }
 

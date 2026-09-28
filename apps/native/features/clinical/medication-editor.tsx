@@ -23,7 +23,7 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
   const { encounters, updateEncounter } = useEncounter();
   const layout = useLayoutSpring();
   const encounter = encounters[patient.id];
-  const entries = encounter?.medicationEntries ?? defaultMedications(patient);
+  const entries: MedicationEntry[] = encounter?.medicationEntries ?? defaultMedications(patient);
   const draft = encounter?.medicationDraft;
   const proposed = encounter?.proposedMedicineDraft ?? encounter?.proposedMedicine ?? "Paracetamol";
   const editProposed = encounter?.proposedMedicineDraft !== undefined;
@@ -51,6 +51,8 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: palette.ink }}>{entry.name}</Text>
               <Text style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{identity}</Text>
+              {/* A proposal from a scanned handwritten note waits here until the doctor confirms it. */}
+              {entry.change && !entry.confirmed && <Text style={{ fontSize: 13, lineHeight: 18, fontWeight: "600", color: entry.change === "new" ? palette.blue : entry.change === "changed" ? palette.amber : palette.muted }}>{entry.change === "new" ? "New" : entry.change === "changed" ? "Changed" : "Stopped"} · from a scanned note</Text>}
             </View>
             {!draft && edit.allowed && <Text style={{ fontSize: 14, fontWeight: "500", color: palette.blue }}>{entry.confirmed ? "Correct" : "Confirm"}</Text>}
           </Press>

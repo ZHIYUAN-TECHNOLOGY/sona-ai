@@ -15,7 +15,7 @@ import { CareMessages } from "@/features/care-messages";
 import { CheckInThread } from "@/features/check-ins/thread";
 import { PENDING_RESULT, testInSentence } from "@/features/day/model";
 import { useServerData } from "@/features/live/server-day";
-import { AccessTrail } from "@/features/live/roles";
+import { AccessTrail, useRole } from "@/features/live/roles";
 import { useServerEncounter } from "@/features/live/sync";
 import { defaultMedications } from "./clinical-state";
 import { QuickActions } from "@/components/sona/quick-actions";
@@ -53,6 +53,8 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
   const encounter = encounters[patient.id];
   const unconfirmed = (encounter?.medicationEntries ?? defaultMedications(patient)).filter(m => !m.confirmed).length;
   const flags = flagsFor(patient, unconfirmed);
+  // Doctors also get "Scan note" (full width under the grid); it opens the visit with the scan on top.
+  const visit = visitActions(patient, encounter, server, kind => go(kind === "recording" || kind === "scan" ? { view: kind } : { next: kind }), useRole().can("scan.read"));
   const started = Boolean(encounter?.requests.length);
   const [h, m] = patient.time.split(":").map(Number);
   const now = new Date(), minutes = h! * 60 + m! - (now.getHours() * 60 + now.getMinutes());
@@ -126,8 +128,9 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
               style={({ pressed }) => ({ height: 54, borderRadius: 27, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
               <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>{started ? "Continue visit" : "Open visit"}</Text><Icon name="arrow.right" size={13} color={palette.white} />
             </Pressable>
-            <QuickActions animate={false} actions={[...visitActions(patient, encounter, server, kind => go(kind === "recording" ? { view: "recording" } : { next: kind })).slice(0, 3),
-              { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: flags.length ? `${flags.length} open ${flags.length === 1 ? "item" : "items"}` : "Nothing open", onPress: () => go({ to: "/handover" }) }]} />
+            <QuickActions animate={false} actions={[...visit.slice(0, 3),
+              { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: flags.length ? `${flags.length} open ${flags.length === 1 ? "item" : "items"}` : "Nothing open", onPress: () => go({ to: "/handover" }) },
+              ...visit.filter(a => a.key === "scan")]} />
             <Pressable accessibilityRole="link" onPress={() => { onClose(); router.push({ pathname: "/source", params: { id: "history", patientId: patient.id } }); }} hitSlop={8} style={{ alignSelf: "center", minHeight: 36, justifyContent: "center" }}>
               <Text style={{ ...type.footnote, color: palette.blue }}>Full history & sources</Text>
             </Pressable>

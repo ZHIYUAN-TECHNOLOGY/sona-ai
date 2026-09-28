@@ -20,9 +20,9 @@ type Sample = Awaited<ReturnType<AppRouterClient["training"]["samples"]>>[number
 type Exported = Awaited<ReturnType<AppRouterClient["training"]["export"]>>;
 
 const TEAL = "#0F6E66";
-const SOURCE: Record<string, string> = { "note-edit": "Note edit", "check-in-reply": "Check-in reply", transcript: "Transcript" };
+const SOURCE: Record<string, string> = { "note-edit": "Note edit", "check-in-reply": "Check-in reply", transcript: "Transcript", "handwritten-scan": "Scanned note" };
 // Both sides of a sample, named for what they are: the scribe's draft vs the doctor's saved note (the edit is the signal).
-const SIDES: Record<string, [string, string]> = { "note-edit": ["Draft", "Saved"], "check-in-reply": ["Reply", "Read as"], transcript: ["Heard", "Written"] };
+const SIDES: Record<string, [string, string]> = { "note-edit": ["Draft", "Saved"], "check-in-reply": ["Reply", "Read as"], transcript: ["Heard", "Written"], "handwritten-scan": ["Read", "Kept"] };
 const SETTLED: Record<string, [string, string]> = { approved: ["Approved", TEAL], excluded: ["Excluded", palette.muted], withdrawn: ["Withdrawn by patient", palette.muted] };
 const codeOf = (e: unknown) => (e as { data?: { code?: string } } | undefined)?.data?.code;
 
