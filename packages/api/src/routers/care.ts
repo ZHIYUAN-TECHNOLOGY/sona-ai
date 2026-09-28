@@ -13,6 +13,7 @@ import { patientPlan, planText } from "./care-plan";
 import { loadEncounter } from "./encounter";
 import { careDosesRouter } from "./doses";
 import { careMessagesRouter } from "./messages";
+import { registerPushToken, unregisterPushToken } from "../push";
 
 /**
  * Sona Care, the patient app. A doctor issues a one-time code for a visit (printed as a QR on the
@@ -125,4 +126,14 @@ export const careRouter = {
   },
   /** Patient: their thread with the care team. */
   messages: careMessagesRouter,
+  /** Patient: this phone's Expo push token, so check-ins, bookings and replies reach it (see ../push). */
+  push: {
+    register: patientProcedure.input(z.object({ token: z.string().trim().min(1).max(200), platform: z.enum(["ios", "android"]) }))
+      .handler(async ({ context, input }) => {
+        await registerPushToken(context.db, { ...input, userId: context.session.user.id, hospitalId: context.hospitalId, patientId: context.patientId });
+        return { registered: true };
+      }),
+    unregister: patientProcedure.input(z.object({ token: z.string().trim().min(1).max(200) }))
+      .handler(async ({ context, input }) => { await unregisterPushToken(context.db, input.token, context.session.user.id); return { registered: false }; }),
+  },
 };

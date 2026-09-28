@@ -132,6 +132,7 @@ export default {
     for (const { id, offset } of await db.select({ id: hospitals.id, offset: hospitals.clockOffsetMs }).from(hospitals)) {
       const at = new Date(controller.scheduledTime + offset);
       if (controller.cron === CHECK_IN_CRON) {
+        // Also pushes each patient's phones (Expo push, through the Worker's global fetch).
         const { sent, patientIds } = await sendDueCheckIns(db, id, at);
         // Patients whose check-in just arrived see it without reopening the app.
         await Promise.all(patientIds.map(patientId => announce?.(id, { topic: "checkIns", patientId }).catch(() => {})));

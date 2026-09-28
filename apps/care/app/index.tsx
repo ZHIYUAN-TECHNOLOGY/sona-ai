@@ -17,6 +17,7 @@ import { AddSheet } from "@/features/home/add-sheet";
 import { ConsistencyTile, LatestTile, MedicinesTile, VisitTile } from "@/features/home/bento";
 import { useMe } from "@/features/me";
 import { useMessageNeeds } from "@/features/messages/row";
+import { forgetPhone, NudgeCard } from "@/features/notifications";
 import { Welcome } from "@/features/sign-in/welcome";
 import { authClient } from "@/lib/auth-client";
 import { DOCK_SPACE } from "@/lib/dock";
@@ -111,6 +112,8 @@ export default function Home() {
             </Animated.View>)}
           </Animated.View>}
         </View>
+        {/* Asked once, after joining: never at launch, and only before the patient chooses. */}
+        <NudgeCard />
       </>
       : <Title overline="Sona Care" line="Check-ins, your discharge plan and follow-ups, from your hospital.">Your care, between visits</Title>}
     {offline && <Text style={{ ...type.footnote, color: palette.amber }}>Offline · showing what was last saved</Text>}
@@ -138,7 +141,7 @@ export default function Home() {
       <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>Not for emergencies · call 999</Text>
       <AddSheet open={adding} onClose={() => setAdding(false)} />
     </>}
-    {state !== "loading" && <Pressable accessibilityRole="button" onPress={() => { void authClient.signOut(); }} style={{ alignSelf: "center", minHeight: 48, minWidth: 48, justifyContent: "center" }}>
+    {state !== "loading" && <Pressable accessibilityRole="button" onPress={() => { void forgetPhone().finally(() => authClient.signOut()); }} style={{ alignSelf: "center", minHeight: 48, minWidth: 48, justifyContent: "center" }}>
       <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>Sign out</Text>
     </Pressable>}
   </KeyboardAwareScrollView>;
