@@ -24,8 +24,8 @@ import { useLiveHuddle } from "@/features/live/model-sync";
 import { useLiveChanges } from "@/features/live/channel";
 import { useTrainingStatus } from "@/features/training";
 import { trainingLine } from "@/features/training/model";
-import { OpsStrip, WardTiles } from "./ops";
-import { DEMO_PATIENT, OWNERS, SUGGESTED, huddle, wardBeds, wardSummary, type Bed, type Owner } from "./model";
+import { BedBar, ThisWeek } from "./ops";
+import { DEMO_PATIENT, OWNERS, SUGGESTED, huddle, wardBeds, type Bed, type Owner } from "./model";
 
 /*
  * Ward command view (after Trackables' card-to-screen morph): a grid of bed tiles; tapping one
@@ -56,7 +56,6 @@ export function WardScreen() {
   const { findings } = useFindings();
   const serverBeds = useServerBeds(findings);
   const beds = serverBeds ?? wardBeds(patients, encounters);
-  const summary = wardSummary(beds);
   const [owners, setOwners] = useState<Record<string, Owner | undefined>>({});
   const [briefed, setBriefed] = useState(false);
   const [open, setOpen] = useState<{ bed: string; from: Rect }>();
@@ -114,9 +113,9 @@ export function WardScreen() {
   return <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas }}>
     <Animated.View style={[{ flex: 1 }, gridStyle]} pointerEvents={open ? "none" : "auto"}>
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 32, gap: 16 }}>
-        <WardTiles summary={summary} />
+        <BedBar beds={beds} />
 
-        <OpsStrip />
+        <ThisWeek />
 
         <Surface feature style={{ padding: 14, gap: 10 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
