@@ -1,6 +1,7 @@
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
+import { SampleLabel } from "@/components/sona/model-answer";
 import { RoundAction, useAccessibleEffects } from "@/components/sona/ui";
 import { riseIn } from "@/components/sona/motion";
 import { LiquidVeil } from "@/components/sona/liquid-veil";
@@ -235,7 +236,7 @@ export function VoiceDock(props: Props) {
     {holding && <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(140)} pointerEvents="none" style={{ position: "absolute", left: 32, right: 32, bottom: insets.bottom + 132, alignItems: "center" }}>
       <Text accessibilityLiveRegion="polite" style={{ textAlign: "center", ...type.display, fontWeight: "500", color: words ? palette.ink : palette.muted }}>{words ? transcript.slice(0, words).join(" ") : "Listening…"}</Text>
       <Text style={{ marginTop: 10, fontSize: 13, fontWeight: "500", color: palette.ink }}>{handsfree ? "Pause or tap the orb to send" : "Release to send"}</Text>
-      <Text style={{ marginTop: 4, fontSize: 12, color: palette.muted }}>Sample voice command · no audio is recorded</Text>
+      <View style={{ marginTop: 4 }}><SampleLabel source="fixture" what="voice" /></View>
     </Animated.View>}
 
     {mode === "composing" && <Pressable accessibilityRole="button" accessibilityLabel="Close message composer" onPress={closeComposer} style={StyleSheet.absoluteFill} />}

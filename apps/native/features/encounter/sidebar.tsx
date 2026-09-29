@@ -1,4 +1,5 @@
 import { BrandIcon, type BrandIconName } from "@/components/sona/brand-icon";
+import { DataPill } from "@/components/sona/model-answer";
 import { Text } from "@/components/sona/text";
 import { palette } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
@@ -83,9 +84,10 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 12, paddingBottom: insets.bottom + 110 }} showsVerticalScrollIndicator={false}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 14, minHeight: 56 }}>
           <BrandIcon name="user" size={28} color={palette.ink} />
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, gap: 4 }}>
             <Text style={{ fontSize: 17, fontWeight: "600", color: palette.ink }}>Clinician</Text>
-            <Text numberOfLines={1} style={{ fontSize: 13, color: palette.muted }}>Synthetic demo</Text>
+            {/* The one place the clinician app says its data is fictional. */}
+            <DataPill onPress={go(() => router.push("/about-data"))} />
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={go(() => router.push("/history"))} hitSlop={10} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}>
             <BrandIcon name="settings" size={24} color={palette.muted} />

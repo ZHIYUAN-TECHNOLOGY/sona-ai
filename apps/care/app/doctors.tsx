@@ -29,8 +29,8 @@ const rise = (i: number) => FadeInDown.duration(360).easing(Easing.out(Easing.cu
 const SLIDE = LinearTransition.springify().duration(380).dampingRatio(1);
 
 /**
- * Find a doctor (the AI Health Companion kit): "Find a / doctor" with a round glass search and an
- * honest line that these are sample doctors, a row of white filter capsules (All, Care team, Top
+ * Find a doctor (the AI Health Companion kit): "Find a / doctor" with a round glass search (the home
+ * pill says the doctors are fictional), a row of white filter capsules (All, Care team, Top
  * rated, For you from the patient's own plan) with the selected one in ink, a two-column grid of doctor
  * cards opening Doctor details, then "Your / records" as kit form rows (only what the discharge plan
  * really holds). SYNTHETIC doctors; see features/doctors/data.
@@ -56,7 +56,7 @@ export default function Doctors() {
   return <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
     contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     <Animated.View entering={enter(0)} style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
-      <View style={{ flex: 1 }}><Title greeting={t("doc.titleLight")} line={t("doc.sample")}>{t("doc.titleBold")}</Title></View>
+      <View style={{ flex: 1 }}><Title greeting={t("doc.titleLight")}>{t("doc.titleBold")}</Title></View>
       <CircleButton d={searching ? ICON.close : SEARCH} label={searching ? t("doc.closeSearch") : t("doc.search")}
         onPress={() => { setSearching(s => !s); setQuery(""); setTouched(true); }} />
     </Animated.View>

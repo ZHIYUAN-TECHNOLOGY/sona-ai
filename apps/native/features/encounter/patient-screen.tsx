@@ -29,9 +29,9 @@ export function PatientScreen() {
   // One line per patient; tapping opens the patient sheet with what needs attention and the actions.
   const status = (p: typeof patients[number]) => encounters[p.id]?.requests.length ? { label: "In progress", color: palette.blue } : p.incomplete ? { label: "History to complete", color: palette.amber } : { label: p.subtitle, color: palette.muted };
   const chosen = patients.find(p => p.id === open);
-  return <View style={{ flex: 1 }}><Screen><Label>Hospital outpatient · demo records</Label>
+  return <View style={{ flex: 1 }}><Screen><Label>Hospital outpatient</Label>
     <View style={{ borderRadius: 18, backgroundColor: palette.surface, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14 }}><Icon name="magnifyingglass" color={palette.muted} size={18} /><TextInput accessibilityLabel="Search patients" placeholder="Name or patient ID" value={query} onChangeText={setQuery} placeholderTextColor={palette.muted} style={{ flex: 1, minHeight: 52, color: palette.ink, fontSize: 16 }} autoCorrect={false} /></View>
-    {!filtered.length && <Card title={empty ? "No records loaded" : "No matching patients"}><Body muted>{empty ? "The demo records are hidden for this empty-state preview." : "Try a different name or synthetic patient ID."}</Body>{empty && <Action label="Load demo records" secondary onPress={() => setEmpty(false)} />}</Card>}
+    {!filtered.length && <Card title={empty ? "No records loaded" : "No matching patients"}><Body muted>{empty ? "The demo records are hidden for this empty-state preview." : "Try a different name or patient ID."}</Body>{empty && <Action label="Load demo records" secondary onPress={() => setEmpty(false)} />}</Card>}
     {filtered.length > 0 && <View style={{ borderRadius: 22, borderCurve: "continuous", backgroundColor: palette.white, overflow: "hidden" }}>
       {[...filtered].sort((x, y) => x.time.localeCompare(y.time)).map((p, i) => { const s = status(p); return <Animated.View key={p.id} entering={reducedMotion ? undefined : riseIn({ delay: i * 50, distance: 8, duration: 300 })}>
         <Pressable accessibilityRole="button" accessibilityLabel={`${p.name}, ${p.time}, ${s.label}`} accessibilityHint="Shows the patient summary and actions" onPress={() => setOpen(p.id)}

@@ -42,7 +42,7 @@ function ClinicalLeaf({ resultId, kind }: { resultId: string; kind: Capability }
 // Provenance is one quiet line under the answer (minimalist frame); a missing-context warning stays a real notice.
 function ContextNotice({ noticeId }: { noticeId: "missing-context" | "snapshot-provenance" }) {
   if (noticeId === "missing-context") return <Notice warning>This encounter has missing history or medication information. Unknown details remain explicit in the response.</Notice>;
-  return <Text accessibilityLabel="Synthetic encounter snapshot. Linked sources distinguish authored fixtures from published references." style={{ fontSize: 12, color: palette.muted }}>Synthetic snapshot · fixtures and published references are labelled</Text>;
+  return <Text accessibilityLabel="Encounter snapshot. Linked sources distinguish authored examples from published references." style={{ fontSize: 12, color: palette.muted }}>Snapshot · authored and published sources are labelled</Text>;
 }
 
 function ValidatedSource({ sourceId }: { sourceId: string }) {

@@ -35,6 +35,7 @@ export default function RootLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="join" options={{ presentation: "modal", headerShown: false }} />
       <Stack.Screen name="medicine" options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 40, contentStyle: { backgroundColor: "#FFFFFF" } }} />
+      <Stack.Screen name="about-data" options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 40, contentStyle: { backgroundColor: "#FFFFFF" } }} />
       {/* Ask Sona Care is a full screen (Life OS AI chat), opened from the orb in the dock. */}
       <Stack.Screen name="assistant" />
     </Stack>

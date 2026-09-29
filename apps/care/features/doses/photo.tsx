@@ -11,7 +11,7 @@ import Svg, { Path } from "react-native-svg";
 import { tFor, useLang } from "@/lib/i18n";
 import { Text } from "@/lib/text";
 import { motion, palette, type } from "@/lib/theme";
-import { Button, field, ICON, pillStyle, surfaceStyle } from "@/lib/ui";
+import { Button, field, ICON, pillStyle, SampleLabel, surfaceStyle } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 import { Pill } from "./pill";
 import { addWaiting, medLine, messageFor, statusOf, type PhotoMedicine, type PhotoReading } from "./photo-model";
@@ -164,7 +164,7 @@ function PhotoSheet({ onClose }: { onClose: () => void }) {
           </View>
           <Pill name={step.reading.name} size={48} />
         </Animated.View>
-        {step.sample && <Text style={{ ...type.footnote, color: palette.amber }}>{t("photo.sampleNote")}</Text>}
+        <SampleLabel source={step.sample ? "fixture" : undefined} what="photo" />
         {editing ? <Animated.View entering={reduced ? undefined : FadeIn.duration(160)} style={{ gap: 10 }}>
           {([["name", "photo.name"], ["dose", "photo.dose"], ["how", "photo.how"]] as const).map(([k, label]) => <View key={k} style={{ gap: 4 }}>
             <Text style={{ ...type.footnote, color: palette.muted }}>{t(label)}</Text>

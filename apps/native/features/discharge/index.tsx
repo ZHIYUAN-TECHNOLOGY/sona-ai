@@ -267,7 +267,7 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
         <Animated.View key={state.language} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ padding: 12, gap: 6, borderRadius: 16, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" }}>
           {draft.loading ? <Drafting label={`Drafting the leaflet in ${language.name}…`} lines={2} />
             : <Arrive animate={Boolean(draft.data)}><Text selectable style={{ ...type.subhead, color: palette.ink }}>{draft.data?.leaflet ?? plan.leaflet[state.language]}</Text></Arrive>}
-          <SampleLabel source={draft.data?.source} />
+          <SampleLabel source={draft.data?.source} what="discharge" />
           {draft.error && <Text style={{ ...type.caption, color: palette.red }}>{draft.error} · showing the authored leaflet</Text>}
         </Animated.View>
       </Animated.View>}

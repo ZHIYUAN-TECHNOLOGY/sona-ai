@@ -228,7 +228,7 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
           <Text style={{ ...type.footnote, color: palette.faint }}>{r.asked.source}</Text>
         </View>}
         {r.kind === "doctors" && <View style={{ gap: 8 }}>
-          <Text style={{ ...type.overline, color: palette.faint }}>{tr("ask.sampleDoctors")}</Text>
+          <Text style={{ ...type.overline, color: palette.faint }}>{tr("ask.doctorsHead")}</Text>
           {r.doctors.map(d => <DoctorCard key={d.id} d={d} />)}
         </View>}
         <View style={{ flexDirection: "row", marginLeft: -12 }}>

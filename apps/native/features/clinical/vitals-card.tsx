@@ -81,7 +81,7 @@ export function VitalsCard({ vitals, allergy, onSource }: { vitals: { label: str
       </View>
     </Surface>
     <Pressable accessibilityRole="link" accessibilityLabel="Recorded observations source, 22 September, 09:26" onPress={onSource} hitSlop={8} style={{ alignSelf: "flex-start" }}>
-      <Text style={{ ...type.caption, color: palette.muted }}>Synthetic observations · 22 Sep, 09:26 · <Text style={{ color: palette.blue }}>Source ↗</Text></Text>
+      <Text style={{ ...type.caption, color: palette.muted }}>Observations · 22 Sep, 09:26 · <Text style={{ color: palette.blue }}>Source ↗</Text></Text>
     </Pressable>
   </View>;
 }

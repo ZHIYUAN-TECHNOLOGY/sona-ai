@@ -5,6 +5,7 @@ import { Pressable, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { scheduleOnRN } from "react-native-worklets";
 import Animated, { Easing, FadeIn, FadeOut, FadeOutDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import { SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -350,7 +351,8 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
         </Pressable>)}
       </Animated.View>}
       {!ordered.length && <Text style={{ ...type.callout, color: palette.muted, textAlign: "center", paddingVertical: 12 }}>Nothing scheduled this day.</Text>}
-      <Text style={{ ...type.caption, color: palette.muted }}>{live ? "Ranked by urgency from the live backend’s synthetic records." : offset === 0 ? "Ranked by urgency, with the reason on every item. Demo rules over synthetic records." : "Synthetic clinic schedule for other days; open today's visits to act."}</Text>
+      <Text style={{ ...type.caption, color: palette.muted }}>{live || offset === 0 ? "Ranked by urgency, with the reason on every item." : "Clinic schedule for other days; open today's visits to act."}</Text>
+      {(live || offset === 0) && <SampleLabel source="fixture" rule />}
     </Animated.View>}
   </View>;
 }

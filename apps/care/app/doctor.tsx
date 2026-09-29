@@ -106,7 +106,6 @@ function Details({ doctor: d }: { doctor: ListedDoctor }) {
         <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>{t("doc.about")}</Text>
         <Text style={{ ...type.body, color: palette.muted }}>{d.about}</Text>
       </Animated.View>
-      <Text style={{ ...type.footnote, color: palette.faint, textAlign: "center" }}>{t("doc.sampleFooter")}</Text>
     </ScrollView>
 
     <View style={{ position: "absolute", left: 20, right: 20, bottom: Math.max(insets.bottom, 12), gap: 8 }}>

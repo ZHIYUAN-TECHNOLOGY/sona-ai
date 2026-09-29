@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Linking, Pressable, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import Animated, { cancelAnimation, Easing, FadeIn, FadeOut, useSharedValue, withRepeat, withSpring, withTiming } from "react-native-reanimated";
+import { SampleLabel } from "@/components/sona/model-answer";
 import { Caption } from "@/components/sona/parts";
 import { HalftoneShimmer } from "@/components/sona/halftone-shimmer";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
@@ -60,15 +61,10 @@ export function XrayCard({ onOpen, onRequest, result }: FeatureProps) {
     {sections < 2 && <AnalysisStatus interrupted={interrupted} />}
     {sections >= 2 && <Reveal><Findings scenario={scenario} attachment={Boolean(attachment)} summary={referenceImage?.referenceSummary} /></Reveal>}
     {sections === 2 && !interrupted && <Caption icon={null}>Completing provenance and limitations…</Caption>}
-    {sections >= 3 && <Reveal><View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
-      <Icon name="info.circle" size={15} color={palette.muted} />
-      <Caption icon={null}>{attachment || scenario !== "reference"
-        ? "Simulated response: no image-derived conclusion can be made. The original stays available to inspect."
-        : "Describes only the published example, not this encounter, and does not establish model accuracy."}</Caption>
-    </View></Reveal>}
+    {sections >= 3 && <Reveal><Limits sample={Boolean(attachment) || scenario !== "reference"} detail="The original stays available to inspect." /></Reveal>}
     {superseded && <Notice>This response preserves an earlier image and scenario. New requests use the current encounter image.</Notice>}
     {(interrupted || sections >= 3 && scenario !== "reference") && <View style={{ alignSelf: "flex-start" }}>
-      <Action label={superseded ? "Analyse current encounter image" : "Retry simulated analysis"} secondary icon="arrow.clockwise" disabled={busy} onPress={() => onRequest("xray")} />
+      <Action label={superseded ? "Analyse current encounter image" : "Retry analysis"} secondary icon="arrow.clockwise" disabled={busy} onPress={() => onRequest("xray")} />
     </View>}
   </View>;
 }
@@ -103,8 +99,8 @@ function AnalysisStatus({ interrupted }: { interrupted: boolean }) {
   }, [live, sweep]);
   return <View accessibilityLiveRegion="polite" onLayout={e => setSize(e.nativeEvent.layout)} style={[surfaceStyle, { borderRadius: 18, padding: 14, gap: 3 }]}>
     {live && size.width > 0 && <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: 17, overflow: "hidden" }}><HalftoneShimmer width={size.width} height={size.height} progress={sweep} /></View>}
-    <Text style={{ fontSize: 14, fontWeight: "600", color: interrupted ? palette.amber : palette.ink }}>{interrupted ? "Response interrupted" : "Analysing · simulated workflow"}</Text>
-    <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>{interrupted ? "The preview and attachment are kept." : "Preparing the fixture response. No image inference is running."}</Text>
+    <Text style={{ fontSize: 14, fontWeight: "600", color: interrupted ? palette.amber : palette.ink }}>{interrupted ? "Response interrupted" : "Analysing"}</Text>
+    <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>{interrupted ? "The preview and attachment are kept." : "Preparing the sample response. No image inference is running."}</Text>
   </View>;
 }
 
@@ -118,9 +114,17 @@ function AnalysisDetails({ snapshot }: { snapshot?: Pick<Encounter, "imagingAtta
   return <View style={{ gap: 14 }}>
     <Text accessibilityRole="header" style={{ fontSize: 17, fontWeight: "600", letterSpacing: -0.2, color: palette.ink }}>Analysis</Text>
     <Findings scenario={scenario} attachment={attachment} summary={summary} />
+    <Limits sample={attachment || scenario !== "reference"} />
+  </View>;
+}
+
+/** The answer's limits: a sample response is labelled as one (no conclusion from the image); the reference example says what it covers. */
+function Limits({ sample, detail }: { sample: boolean; detail?: string }) {
+  return <View style={{ gap: 4 }}>
+    {sample && <SampleLabel source="fixture" what="X-ray" />}
     <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
       <Icon name="info.circle" size={15} color={palette.muted} />
-      <Caption icon={null}>{attachment || scenario !== "reference" ? "Simulated response: no image-derived conclusion can be made." : "Describes only the published example, not this encounter, and does not establish model accuracy."}</Caption>
+      <Caption icon={null}>{sample ? `No image-derived conclusion can be made.${detail ? ` ${detail}` : ""}` : "Describes only the published example, not this encounter, and does not establish model accuracy."}</Caption>
     </View>
   </View>;
 }
@@ -224,12 +228,12 @@ export function XrayScreen() {
   // A local image has no source page: its provenance line says it stays on this device and is not analysed.
   const upload = attachment && server.upload?.uri === attachment.uri ? server.upload : undefined;
   const kept = !upload ? "Kept on this device · not uploaded or analysed"
-    : upload.state === "uploading" ? "Uploading to the live backend (synthetic) · not analysed"
-    : upload.state === "uploaded" ? "Uploaded to the live backend (synthetic) · not analysed"
+    : upload.state === "uploading" ? "Uploading to the live backend · not analysed"
+    : upload.state === "uploaded" ? "Uploaded to the live backend · not analysed"
     : `Kept on this device · upload failed: ${upload.error} · not analysed`;
   const image: TeachingImage | undefined = attachment ? { id: attachment.uri, source: { uri: attachment.uri }, title: attachment.name, attribution: kept, license: "rights and deidentification not verified", sourceUrl: "" } : referenceImage;
   const analysing = encounter?.requests.some(item => item.kind === "xray" && item.status === "streaming") ?? false;
-  const analyse = () => { if (!image || analysing || historical) return; request("xray", "Analyse X-ray · simulated workflow"); if (router.canGoBack()) router.back(); };
+  const analyse = () => { if (!image || analysing || historical) return; request("xray", "Analyse X-ray"); if (router.canGoBack()) router.back(); };
   const scenario = evidence?.imagingScenario ?? "reference";
   const pickScenario = (value: Scenario) => { if (analysing) return; haptic(); updateEncounter(current => ({ ...current, imagingScenario: value }), true); setShowScenarios(false); };
 
@@ -275,11 +279,11 @@ export function XrayScreen() {
     {/* The latest analysis sits right under the image: one page, no separate details screen. */}
     <AnalysisDetails snapshot={encounter?.cards.findLast(card => card.kind === "xray" && card.imagingSnapshot)?.imagingSnapshot} />
 
-    {/* The one feature surface: the simulated review this screen asks for. */}
+    {/* The one feature surface: the review this screen asks for (a sample response until an X-ray model is on). */}
     <Surface feature layout={layout} style={{ padding: 18, gap: 14 }}>
       <View style={{ gap: 4, paddingRight: 40 }}>
-        <Text accessibilityRole="header" style={{ fontSize: 17, fontWeight: "600", letterSpacing: -0.2, color: palette.ink }}>Simulated review</Text>
-        <Text selectable style={{ fontSize: 14, lineHeight: 20, color: palette.muted }}>Sends a sample response. No model reads or classifies this image.</Text>
+        <Text accessibilityRole="header" style={{ fontSize: 17, fontWeight: "600", letterSpacing: -0.2, color: palette.ink }}>X-ray review</Text>
+        <SampleLabel source="fixture" what="X-ray" />
       </View>
       {showDemoControls && <Animated.View layout={layout} pointerEvents={analysing ? "none" : "auto"} style={{ gap: 10, opacity: analysing ? 0.45 : 1 }}>
         <View style={{ alignSelf: "flex-start" }}>
@@ -290,7 +294,7 @@ export function XrayScreen() {
         </Expand>}
       </Animated.View>}
       <Animated.View layout={layout}>
-        <Action label={analysing ? "Analysing · simulation…" : "Analyse X-ray · simulation"} icon="sparkles" disabled={analysing || picking} onPress={analyse} />
+        <Action label={analysing ? "Analysing…" : "Analyse X-ray"} icon="sparkles" disabled={analysing || picking} onPress={analyse} />
       </Animated.View>
     </Surface>
   </ViewerPage>;

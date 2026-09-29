@@ -155,7 +155,7 @@ export function ClaimScreen() {
           <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.ink }}>{c.label}</Text>
           <Text style={{ ...type.caption, color: c.inTable === false ? palette.amber : palette.muted }}>{c.inTable === false ? "Not in ICD-10 table" : c.kind}</Text>
         </Pressable></Arrive>; })}
-        <SampleLabel source={server.data?.source} />
+        <SampleLabel source={server.data?.source} rule what="coding" />
       </Animated.View>
 
       {!approved && !sending && !sent && rows.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT}>

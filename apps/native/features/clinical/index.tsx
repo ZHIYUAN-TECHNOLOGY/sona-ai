@@ -45,7 +45,7 @@ export function BriefingCard({ patient, result, onSource, onOpen, onRequest }: F
     {server.loading ? <Surface feature style={{ padding: 16 }}><Drafting label="Reading the record…" /></Surface> : <View style={{ gap: 6 }}>
       <Takeaways items={digest} />
       <View style={{ paddingHorizontal: 4 }}>
-        <SampleLabel source={server.data?.source} />
+        <SampleLabel source={server.data?.source} what="briefing" />
         {server.error && <Text style={{ ...type.caption, color: palette.red }}>{server.error} · showing the authored briefing</Text>}
       </View>
     </View>}

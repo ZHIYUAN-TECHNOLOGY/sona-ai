@@ -21,8 +21,8 @@ const scenarios: { value: NonNullable<Encounter["prescriptionScenario"]>; label:
 ];
 /** The receipt rises in as the checks finish and its seal stamps. */
 const STAGGER = 30;
-const REGIMEN_LINE = "Authored synthetic regimen, not an NHS recommendation. No dispensing.";
-const REGIMEN_NOTE = "Authored synthetic regimen, narrower than the NHS adult dose limits. It is not an NHS recommendation for this patient or a validated model decision. No dispensing or pharmacy transmission.";
+const REGIMEN_LINE = "Authored regimen, not an NHS recommendation. No dispensing.";
+const REGIMEN_NOTE = "Authored regimen, narrower than the NHS adult dose limits. It is not an NHS recommendation for this patient or a validated model decision. No dispensing or pharmacy transmission.";
 
 function RegimenRows({ regimen }: { regimen: Regimen }) {
   return <View style={{ gap: 12 }}>
@@ -100,10 +100,10 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
       {created && prescription && <Anchor id="receipt" title="Receipt"><Animated.View layout={layout} entering={fresh && !reduced ? riseIn({ delay: riseDelay, distance: 16, duration: 380 }) : undefined}>
         <Section icon="checkmark.seal" tone="teal" title="Immutable receipt" subtitle="This version never changes; an amendment adds a new one.">
           <Surface feature layout={layout} style={{ padding: 20, gap: 16 }}>
-            <View accessible accessibilityLabel={`Simulated prescription created. ${regimen.medication}, simulation only. Synthetic patient.`} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <View accessible accessibilityLabel={`Simulated prescription created. ${regimen.medication}, simulation only.`} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <Seal stampDelay={fresh ? stampDelay : undefined} />
               <View style={{ flex: 1, gap: 3 }}>
-                <Label muted>Simulated prescription · synthetic</Label>
+                <Label muted>Simulated prescription</Label>
                 <Text style={{ ...type.heading, color: palette.ink }}>{regimen.medication} · {regimen.formulation}</Text>
               </View>
             </View>
@@ -111,7 +111,7 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
             <Detail label="Indication" value={regimen.indication} />
             <RegimenRows regimen={regimen} />
             <Perforation />
-            <Detail label="Synthetic patient" value={`${patient.name} · ${patient.id}`} />
+            <Detail label="Patient" value={`${patient.name} · ${patient.id}`} />
             <Detail label="Created" value={`${new Date(prescription.createdAt).toLocaleString()} · encounter revision ${prescription.revision}`} />
             <Footnote>No clinician approval was requested. {REGIMEN_LINE}</Footnote>
             {prescription.supersedes && <Footnote>Supersedes an earlier simulation, whose receipt stays in the encounter history.</Footnote>}

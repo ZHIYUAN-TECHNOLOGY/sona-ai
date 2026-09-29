@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CaptureScan } from "@/components/sona/capture-scan";
+import { SampleLabel } from "@/components/sona/model-answer";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -210,9 +211,8 @@ function PhotoHeader({ photo, settled, source }: { photo: Photo; settled: boolea
         </Animated.View>
         {settled && <Animated.View entering={reducedMotion ? undefined : riseIn({ distance: 4, duration: 300 })} style={{ flex: 1, gap: 3 }}>
           <Text style={{ ...type.headline, color: palette.ink }}>{photo.sample ? "Sample ward-round note" : "Your photo"}</Text>
-          {source && <Text style={{ ...type.footnote, color: source.source === "fixture" ? palette.amber : palette.muted }}>
-            {source.source === "fixture" ? "Sample reading · handwriting model not switched on yet" : `Read by ${source.model} · check every item`}
-          </Text>}
+          {source?.source === "fixture" ? <SampleLabel source="fixture" what="handwriting" />
+            : source && <Text style={{ ...type.footnote, color: palette.muted }}>Read by {source.model} · check every item</Text>}
           <Text style={{ ...type.caption, color: palette.blue }}>{words ? `${words} ${words === 1 ? "word" : "words"} to check · ` : ""}Tap to compare</Text>
         </Animated.View>}
       </Surface>
@@ -224,7 +224,7 @@ function PhotoHeader({ photo, settled, source }: { photo: Photo; settled: boolea
           <IconButton name="xmark" label="Close photo" onPress={() => setOpen(false)} />
         </View>
         <View style={{ paddingHorizontal: 20 }}>
-          <OriginalImageViewer asset={{ id: "scan", source: photo.source, title: "scanned note", attribution: photo.sample ? "Synthetic sample, not a real patient" : "Your photo", license: "pinch or double-tap to zoom", sourceUrl: "" }} />
+          <OriginalImageViewer asset={{ id: "scan", source: photo.source, title: "scanned note", attribution: photo.sample ? "Sample photo" : "Your photo", license: "pinch or double-tap to zoom", sourceUrl: "" }} />
         </View>
       </GestureHandlerRootView>
     </Modal>

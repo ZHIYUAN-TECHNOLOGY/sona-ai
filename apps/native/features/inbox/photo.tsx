@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { AccessibilityInfo, Modal, Pressable, TextInput, View, type TextStyle } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, { FadeIn } from "react-native-reanimated";
+import { SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { ErrorLine, TextLink } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
@@ -80,8 +81,9 @@ export function PhotoMessage({ messageId, attachment, first }: { messageId: stri
       : <Animated.View entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, duration: 300 })}>
         <Surface style={{ padding: 14, gap: 8, borderRadius: 20 }}>
           <Text style={{ ...type.footnote, color: palette.muted }}>
-            Sona read: <Text style={{ fontWeight: "600", color: palette.ink }}>{line(reading)}</Text>{attachment.sampleReading ? <Text style={{ color: palette.amber }}> · sample reading</Text> : null}
+            Sona read: <Text style={{ fontWeight: "600", color: palette.ink }}>{line(reading)}</Text>
           </Text>
+          <SampleLabel source={attachment.sampleReading ? "fixture" : undefined} what="photo reading" />
           {canDecide ? <>
             {editing ? <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(160)} style={{ gap: 6 }}>
               {([["name", "Medicine"], ["dose", "Dose"], ["frequency", "How often"]] as const).map(([k, label]) =>
@@ -104,7 +106,7 @@ export function PhotoMessage({ messageId, attachment, first }: { messageId: stri
           <IconButton name="xmark" label="Close photo" onPress={() => setOpen(false)} />
         </View>
         {source && <View style={{ paddingHorizontal: 20 }}>
-          <OriginalImageViewer asset={{ id: messageId, source, title: `medicine photo from ${first}`, attribution: attachment.key === SAMPLE_PHOTO_KEY ? "Synthetic sample, not a real patient" : `Sent by ${first} from Sona Care`, license: "pinch or double-tap to zoom", sourceUrl: "" }} />
+          <OriginalImageViewer asset={{ id: messageId, source, title: `medicine photo from ${first}`, attribution: attachment.key === SAMPLE_PHOTO_KEY ? "Sample photo" : `Sent by ${first} from Sona Care`, license: "pinch or double-tap to zoom", sourceUrl: "" }} />
         </View>}
       </GestureHandlerRootView>
     </Modal>

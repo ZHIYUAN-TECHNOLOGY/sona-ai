@@ -48,7 +48,7 @@ export function FollowupCard({ patient, onOpen, onSource }: FeatureProps) {
   }
 
   const owner = draft?.owner, due = draft?.due;
-  return <AnswerSection title="A clear next step" subtitle={proposal?.sourceId === "clinical-note" ? "Taken from the plan you wrote. Give it an owner and a date to make it a task." : "Proposed from this synthetic encounter. Give it an owner and a date to make it a task."}>
+  return <AnswerSection title="A clear next step" subtitle={proposal?.sourceId === "clinical-note" ? "Taken from the plan you wrote. Give it an owner and a date to make it a task." : "Proposed from this encounter. Give it an owner and a date to make it a task."}>
     <Surface feature style={{ padding: 18, gap: 16 }}>
       <Animated.View entering={rise(0)}><Text selectable style={{ ...type.heading, fontWeight: "500", color: palette.ink }}>{proposal?.title ?? proposedTask}</Text></Animated.View>
       <Animated.View entering={rise(1)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -86,7 +86,7 @@ function SessionNote() {
 function TaskOrigin({ value, local = false }: { value: Pick<Task, "sourceId" | "sourceRevision" | "provenance" | "sourceSnapshot"> & { id?: string; operationId?: string }; local?: boolean }) {
   const { patient } = useEncounter();
   const source = value.sourceSnapshot ?? patient?.sources.find(item => item.id === value.sourceId);
-  const origin = value.provenance === "clinician" ? "Clinician-entered details" : value.provenance === "fixture" ? "Authored synthetic proposal" : "Origin not recorded";
+  const origin = value.provenance === "clinician" ? "Clinician-entered details" : value.provenance === "fixture" ? "Authored sample proposal" : "Origin not recorded";
   const label = source ? `${source.title}${value.sourceRevision ? ` · revision ${value.sourceRevision}` : ""}` : "";
   return <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 6 }}>
     <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>{origin} ·</Text>

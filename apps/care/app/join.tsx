@@ -14,6 +14,7 @@ import { tFor, useLang } from "@/lib/i18n";
 import { authClient } from "@/lib/auth-client";
 import { palette, type } from "@/lib/theme";
 import { BackButton, Button, field, pillStyle } from "@/lib/ui";
+import { hospitalName } from "@/features/me";
 import { client, queryClient } from "@/utils/orpc";
 
 /**
@@ -114,7 +115,7 @@ export default function Join() {
           </View>
           <View accessible style={{ alignItems: "center", gap: 2 }}>
             <Text style={{ fontSize: 22, lineHeight: 28, fontWeight: "600", letterSpacing: -0.6, color: palette.ink }}>{who.firstName}</Text>
-            <Text style={{ ...type.footnote, color: palette.faint }}>{who.hospital}</Text>
+            <Text style={{ ...type.footnote, color: palette.faint }}>{hospitalName(who.hospital)}</Text>
           </View>
           <Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>
             {session?.user ? t("join.linked", { account: accountName(session.user) }) : t("join.create")}

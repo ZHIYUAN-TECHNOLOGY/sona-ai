@@ -181,7 +181,7 @@ export function WardScreen() {
                 <Text style={{ ...type.footnote, fontWeight: "700", color: palette.blue, width: 14 }}>{i + 1}</Text>
                 <MarkedText text={line} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
               </Animated.View>)}
-              <SampleLabel source={server.data?.source} />
+              <SampleLabel source={server.data?.source} rule what="briefing" />
               {server.error && <Text style={{ ...type.caption, color: palette.red }}>{server.error} · showing the ward's own count</Text>}
             </Expand>}
           </View>

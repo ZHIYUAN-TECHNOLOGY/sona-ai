@@ -6,6 +6,7 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { FadeIn, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
 import { scheduleOnRN } from "react-native-worklets";
+import { SampleLabel } from "@/components/sona/model-answer";
 import { EASE_OUT } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -58,7 +59,8 @@ export function EvidenceCard({ patient, result }: FeatureProps) {
         <Text style={{ ...type.footnote, fontWeight: "700", color: palette.blue, width: 12 }}>{i + 1}</Text>
         <MarkedText text={line} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
       </View>)}
-      {data && <Text selectable style={{ ...type.caption, color: palette.muted }}>{data.source === "cached" ? "Rehearsed answer, cached" : "Sample synthesis · no model has checked these sources for relevance yet"}{grade.rule ? ` · certainty by rule: ${grade.rule.toLowerCase()}` : ""}</Text>}
+      <SampleLabel source={data?.source} what="evidence" />
+      {data && (data.source !== "fixture" || grade.rule) && <Text selectable style={{ ...type.caption, color: palette.muted }}>{[data.source === "cached" ? "Rehearsed answer, cached" : data.source === "fixture" ? "" : `Synthesised by ${data.source}`, grade.rule ? `certainty by rule: ${grade.rule.toLowerCase()}` : ""].filter(Boolean).join(" · ")}</Text>}
     </Surface>
     {studies.length > 0 && <Studies studies={studies} note={note} />}
     {data && !studies.length && <Text selectable style={{ ...type.footnote, color: palette.amber }}>{note}</Text>}

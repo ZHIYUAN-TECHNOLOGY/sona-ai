@@ -66,12 +66,12 @@ test("doctor questions return 1–3 sample doctors: by the question's words, els
   const forPlan = reply(doctorQuestion("chest infection"), [], "chest infection");
   expect(forPlan.kind).toBe("doctors");
   expect(forPlan.doctors.map(d => d.id)).toEqual(["lim", "aisyah"]);
-  expect(forPlan.text).toBe("Here are sample doctors who may help with your chest infection. Ask your care team before you book.");
-  expect(spoken(forPlan)).toBe("Here are sample doctors who may help with your chest infection. Ask your care team before you book. Dr. Lim Wei Jie (Respiratory) and Dr. Aisyah Rahman (Cardiology).");
+  expect(forPlan.text).toBe("Here are doctors who may help with your chest infection. Ask your care team before you book.");
+  expect(spoken(forPlan)).toBe("Here are doctors who may help with your chest infection. Ask your care team before you book. Dr. Lim Wei Jie (Respiratory) and Dr. Aisyah Rahman (Cardiology).");
 
   const heart = reply("Who is the best heart specialist?", [], "chest infection");
   expect(heart.doctors.map(d => d.id)).toEqual(["aisyah"]);
-  expect(heart.text).toBe("Here is a sample doctor who may help. Ask your care team before you book.");
+  expect(heart.text).toBe("Here is a doctor who may help. Ask your care team before you book.");
 
   expect(reply("Can you find me a doctor?", [], "chest infection").doctors.map(d => d.id)).toEqual(["lim", "aisyah"]);
   expect(reply("Can you find me a doctor?", []).doctors.every(d => d.careTeam)).toBe(true);
