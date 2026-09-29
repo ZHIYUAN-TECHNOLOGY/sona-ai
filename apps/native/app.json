@@ -42,7 +42,14 @@
       ],
       "expo-image",
       "expo-asset",
-      "./plugins/with-scene-lifecycle"
+      "./plugins/with-scene-lifecycle",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Sona uses the camera to scan paper pages, X-rays and wounds you attach to a visit or add to your library.",
+          "recordAudioAndroid": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
