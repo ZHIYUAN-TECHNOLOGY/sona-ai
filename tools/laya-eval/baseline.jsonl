@@ -1,0 +1,50 @@
+{"id":"L01","patient":"SYN-1042","request":"Quick summary for Puan Tan before I masuk bilik.","capability":"briefing","medicine":null}
+{"id":"L02","patient":"SYN-1042","request":"Dia datang for what ah? Give me the background dulu.","capability":"briefing","medicine":null}
+{"id":"L03","patient":"SYN-1086","request":"Encik Rahman ni history apa yang kita ada? 我还没看过他的资料.","capability":"briefing","medicine":null}
+{"id":"L04","patient":"SYN-1042","request":"Ringkaskan pesakit ni, history, allergy, ubat semua.","capability":"briefing","medicine":null}
+{"id":"L05","patient":"SYN-1086","request":"What do we know so far about the breathless uncle?","capability":"briefing","medicine":null}
+{"id":"L06","patient":"SYN-1042","request":"Brief me on this patient, 快点, next one already waiting.","capability":"briefing","medicine":null}
+{"id":"L07","patient":"SYN-1042","request":"Demam dengan batuk lima hari, could this be pneumonia or just asthma flare?","capability":"reasoning","medicine":null}
+{"id":"L08","patient":"SYN-1042","request":"What's the differential ah? 她发烧又咳.","capability":"reasoning","medicine":null}
+{"id":"L09","patient":"SYN-1086","request":"Sesak nafas bila jalan, apa kemungkinan diagnosis?","capability":"reasoning","medicine":null}
+{"id":"L10","patient":"SYN-1042","request":"Kenapa you think ini infection, bukan viral je? Show the reasoning.","capability":"reasoning","medicine":null}
+{"id":"L11","patient":"SYN-1086","request":"Breathless on exertion, 57, what should I rule out first?","capability":"reasoning","medicine":null}
+{"id":"L12","patient":"SYN-1042","request":"Is this more likely LRTI or asthma exacerbation? Walk me through.","capability":"reasoning","medicine":null}
+{"id":"L13","patient":"SYN-1042","request":"Tengok chest X-ray dia, ada consolidation tak?","capability":"xray","medicine":null}
+{"id":"L14","patient":"SYN-1042","request":"CXR 有没有问题? Any patch?","capability":"xray","medicine":null}
+{"id":"L15","patient":"SYN-1042","request":"Read the X-ray for me lah.","capability":"xray","medicine":null}
+{"id":"L16","patient":"SYN-1042","request":"Filem dada tu okay ke? Lung fields clear?","capability":"xray","medicine":null}
+{"id":"L17","patient":"SYN-1042","request":"X-ray just came back, what does it show?","capability":"xray","medicine":null}
+{"id":"L18","patient":"SYN-1042","request":"Salbutamol dia guna tu ada clash dengan ubat lain tak?","capability":"medication","medicine":"salbutamol-inhaler"}
+{"id":"L19","patient":"SYN-1042","request":"Check her current meds, 有没有 interaction?","capability":"medication","medicine":null}
+{"id":"L20","patient":"SYN-1086","request":"Pakcik ni makan pil apa entah, boleh check interaction?","capability":"medication","medicine":null}
+{"id":"L21","patient":"SYN-1042","request":"Cetirizine tu safe ke dengan inhaler dia?","capability":"medication","medicine":"cetirizine-tablet"}
+{"id":"L22","patient":"SYN-1042","request":"Review ubat-ubatan dia before I tambah apa-apa.","capability":"medication","medicine":null}
+{"id":"L23","patient":"SYN-1042","request":"Dia allergic penicillin kan? Current meds any issue?","capability":"medication","medicine":null}
+{"id":"L24","patient":"SYN-1042","request":"Prescribe paracetamol 500mg for the fever lah.","capability":"prescription","medicine":"paracetamol-tablet"}
+{"id":"L25","patient":"SYN-1042","request":"Tulis preskripsi paracetamol, dua biji bila demam.","capability":"prescription","medicine":"paracetamol-tablet"}
+{"id":"L26","patient":"SYN-1042","request":"给她开 salbutamol inhaler refill.","capability":"prescription","medicine":"salbutamol-inhaler"}
+{"id":"L27","patient":"SYN-1042","request":"Can you draft the prescription for cetirizine, once a night?","capability":"prescription","medicine":"cetirizine-tablet"}
+{"id":"L28","patient":"SYN-1042","request":"Buat prescription sekarang, ubat macam yang kita bincang tadi.","capability":"prescription","medicine":null}
+{"id":"L29","patient":"SYN-1042","request":"Start her on paracetamol, check dulu dose okay tak.","capability":"prescription","medicine":"paracetamol-tablet"}
+{"id":"L30","patient":"SYN-1042","request":"Bila dia kena datang balik? Set follow-up.","capability":"followup","medicine":null}
+{"id":"L31","patient":"SYN-1042","request":"Book review in three days, 如果还发烧就回来.","capability":"followup","medicine":null}
+{"id":"L32","patient":"SYN-1086","request":"Create task untuk nurse ambil vitals and complete history.","capability":"followup","medicine":null}
+{"id":"L33","patient":"SYN-1042","request":"What's the follow-up plan? Safety-netting semua.","capability":"followup","medicine":null}
+{"id":"L34","patient":"SYN-1086","request":"Remind me to call him back when the lab comes in.","capability":"followup","medicine":null}
+{"id":"L35","patient":"SYN-1042","request":"Draft the consult note, SOAP format.","capability":"note","medicine":null}
+{"id":"L36","patient":"SYN-1042","request":"Tolong tulis nota konsultasi dari perbualan tadi.","capability":"note","medicine":null}
+{"id":"L37","patient":"SYN-1042","request":"帮我写 note, 我等下 sign.","capability":"note","medicine":null}
+{"id":"L38","patient":"SYN-1042","request":"Summarise what we discussed into the clinic notes.","capability":"note","medicine":null}
+{"id":"L39","patient":"SYN-1086","request":"Write up the visit so far, mark apa yang belum tahu.","capability":"note","medicine":null}
+{"id":"L40","patient":"SYN-1042","request":"Apa evidence untuk antibiotic dalam CAP macam ni?","capability":"evidence","medicine":null}
+{"id":"L41","patient":"SYN-1042","request":"What's her CURB-65? Any guideline support for outpatient?","capability":"evidence","medicine":null}
+{"id":"L42","patient":"SYN-1042","request":"有没有 study 说 steroid 对 pneumonia 有用?","capability":"evidence","medicine":null}
+{"id":"L43","patient":"SYN-1042","request":"Show me the studies on this, graded please.","capability":"evidence","medicine":null}
+{"id":"L44","patient":"SYN-1086","request":"Guideline cakap apa for breathlessness workup at this age?","capability":"evidence","medicine":null}
+{"id":"L45","patient":"SYN-1042","request":"Boleh discharge dia hari ni? Check blockers.","capability":"not-covered","medicine":null}
+{"id":"L46","patient":"SYN-1042","request":"Submit guarantee letter to insurer untuk admission.","capability":"not-covered","medicine":null}
+{"id":"L47","patient":"SYN-1042","request":"Code this visit ICD-10 for casemix.","capability":"not-covered","medicine":null}
+{"id":"L48","patient":"SYN-1086","request":"Refer him to cardio, buat surat rujukan.","capability":"not-covered","medicine":null}
+{"id":"L49","patient":"SYN-1042","request":"Handover to night shift, bed mana still pending?","capability":"not-covered","medicine":null}
+{"id":"L50","patient":"SYN-1042","request":"Which beds can go home before noon?","capability":"not-covered","medicine":null}
