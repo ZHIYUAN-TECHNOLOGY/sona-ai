@@ -123,7 +123,7 @@ export const claimRouter = {
     const withInsurer = claim.status === "sent" || claim.status === "appealed";
     const link = claim.reviewToken && context.publicUrl && withInsurer ? reviewUrl(context.publicUrl, claim.reviewToken) : undefined;
     const denial = claim.denialCode && claim.denialReason && (claim.status === "denied" || claim.status === "appealed")
-      ? { code: claim.denialCode as DenialCode, reason: claim.denialReason, note: claim.status === "denied" ? claim.insurerNote ?? undefined : undefined, at: claim.decidedAt?.toISOString() ?? "" } : undefined;
+      ? { code: claim.denialCode as DenialCode, reason: claim.denialReason, note: claim.status === "denied" ? claim.insurerNote ?? undefined : undefined, at: (claim.deniedAt ?? claim.decidedAt)?.toISOString() ?? "" } : undefined;
     return { status: claim.status, approvedAt: claim.approvedAt?.toISOString(), reviewUrl: link, query: claim.status === "queried" ? claim.insurerNote ?? undefined : undefined, denial, appealedAt: claim.appealedAt?.toISOString() };
   }),
 

@@ -117,7 +117,7 @@ export const claims = pgTable("claims", {
   /** When the insurer approved or queried, and the question they asked with a query. */
   decidedAt: timestamp("decided_at"), insurerNote: text("insurer_note"),
   /** A denial's code and reason (the insurer's free text, if any, is `insurerNote`); kept after an appeal so its history reads. */
-  denialCode: text("denial_code"), denialReason: text("denial_reason"),
+  denialCode: text("denial_code"), denialReason: text("denial_reason"), deniedAt: timestamp("denied_at"),
   /** The appeal the doctor approved, each point frozen with the note sentence it cites, and when it went. */
   appeal: jsonb("appeal").$type<{ opening: string; points: { claim: string; evidenceSentenceId: string; text: string }[]; closing: string }>(), appealedAt: timestamp("appealed_at"),
 });

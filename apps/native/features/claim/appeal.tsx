@@ -26,7 +26,7 @@ import { DENIAL_REASONS, INSURER, appealByRules, noteFor, type AppealLetter, typ
  * sentence it cites, so nothing in the letter is unsourced.
  */
 const RED = palette.red;
-const clock = (at: string) => new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const clock = (at: string) => { const d = new Date(at); return Number.isNaN(d.getTime()) ? "Earlier" : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); };
 
 /** "Denied by Synthetic insurer · <reason>", when, and the insurer's own words if they added any. */
 export function DeniedCard({ denial }: { denial: Denial }) {

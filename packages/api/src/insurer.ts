@@ -76,7 +76,7 @@ export async function decideReview(db: Db, token: string, decision: "approve" | 
   if (decision === "deny") {
     const reason = DENIAL_REASONS.find(d => d.code === denialCode);
     if (!reason) return { ok: false as const, reason: "Choose the reason for the denial" };
-    await db.update(claims).set({ status: "denied", denialCode: reason.code, denialReason: reason.reason, insurerNote: note.trim().slice(0, 1000) || null, decidedAt: now }).where(eq(claims.id, row.claim.id));
+    await db.update(claims).set({ status: "denied", denialCode: reason.code, denialReason: reason.reason, insurerNote: note.trim().slice(0, 1000) || null, decidedAt: now, deniedAt: now }).where(eq(claims.id, row.claim.id));
     return { ok: true as const, status: "denied" as const, hospitalId: row.hospitalId, encounterId: row.claim.encounterId };
   }
   if (decision === "query") {
