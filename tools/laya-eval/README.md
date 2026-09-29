@@ -61,3 +61,7 @@ v3 misses: an extra card added (L05, L06, L38), `unavailable` by mistake (L26, L
 v4 fixed most extra cards (one left, L44) but now drops the card or answers `unavailable` more: missing card (L03, L06), `unavailable` (L26, L31, L42), wrong card (L29). Three of the seven misses are Mandarin-heavy requests. Model at `~/zyt/data/sona-laya/v4`. Two composer-format runs plateau at 84-86%, below the 92% of v2 on the single "which card?" question.
 
 v5 (27,481 questions) did not help: extra follow-up cards came back (L01, L06, L37) and note requests still go to briefing or follow-up (L38, L39). Three composer-format runs sit at 84-86%, so the composer route is dropped for the fixed pages: v2 answers the single "which card?" question (92%) and the app builds the screen. Model at `~/zyt/data/sona-laya/v5`.
+
+## Published (29 Sep 2026)
+
+v2 is a private model repo, [zhiyuantechnology/sona-laya](https://huggingface.co/zhiyuantechnology/sona-laya), with a model card. A fresh download scores the same (46/50 card, 50/50 medicine). `serve.py` loads it by default (needs `HF_TOKEN` with read access to the org); `laya.load("zhiyuantechnology/sona-laya")` works anywhere.
