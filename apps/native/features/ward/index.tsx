@@ -24,7 +24,7 @@ import { useLiveHuddle } from "@/features/live/model-sync";
 import { useLiveChanges } from "@/features/live/channel";
 import { useTrainingStatus } from "@/features/training";
 import { trainingLine } from "@/features/training/model";
-import { BedBar, KIND, ThisWeek } from "./ops";
+import { BedBar, ForecastTimeline, KIND, ThisWeek, useForecast } from "./ops";
 import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedRow, defaultFilter, emptyLine, filterBeds, huddle, wardBeds, type Bed, type Owner, type WardFilter } from "./model";
 
 /*
@@ -60,24 +60,26 @@ export function WardScreen() {
   const beds = serverBeds ?? wardBeds(patients, encounters);
   const [owners, setOwners] = useState<Record<string, Owner | undefined>>({});
   const [briefed, setBriefed] = useState(false);
-  const [open, setOpen] = useState<{ bed: string; from: Rect }>();
+  const [open, setOpen] = useState<{ bed: string; from: Rect; focus?: string }>();
   const root = useRef<View>(null);
+  const scroll = useRef<ScrollView>(null);
+  const scrolledToForecast = useRef(false);
   const tiles = useRef<Record<string, View | null>>({});
   const p = useSharedValue(0);
   // Opened from My Day's legend the ward starts on that status; otherwise on Blocked when anything is.
-  const params = useLocalSearchParams<{ filter?: string }>();
+  const params = useLocalSearchParams<{ filter?: string; at?: string }>();
   const [picked, setPicked] = useState<WardFilter>();
   const filter = picked ?? asFilter(params.filter) ?? defaultFilter(beds);
   const shown = filterBeds(beds, filter);
   const motion = reducedMotion ? undefined : LAYOUT;
   // The page draws under the translucent header, so the open card starts below it.
 
-  const openBed = (bed: Bed) => {
+  const openBed = (bed: Bed, focus?: string) => {
     const tile = tiles.current[bed.bed];
     if (!tile || !root.current) return;
     haptic("select");
     root.current.measureInWindow((rx, ry) => tile.measureInWindow((x, y, w, h) => {
-      setOpen({ bed: bed.bed, from: { x: x - rx, y: y - ry, w, h } });
+      setOpen({ bed: bed.bed, from: { x: x - rx, y: y - ry, w, h }, focus });
       p.set(0);
       p.set(reducedMotion ? withTiming(1, { duration: 200 }) : withSpring(1, OPEN));
     }));
@@ -116,10 +118,19 @@ export function WardScreen() {
   const lines = server.data?.lines ?? local;
   const audit = openItems(encounters, useSent());
   const current = open && beds.find(b => b.bed === open.bed);
+  const forecast = useForecast(beds, findings, owners);
+  // "Frees fastest" opens the bed's card at the blocker; a row the filter hides shows under All first, then opens once mounted.
+  const openAt = (id: string, blockerId: string) => {
+    const bed = beds.find(b => b.bed === id);
+    if (!bed) return;
+    if (tiles.current[id]) return openBed(bed, blockerId);
+    setPicked("all");
+    setTimeout(() => openBed(bed, blockerId), 80);
+  };
 
   return <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas }}>
     <Animated.View style={[{ flex: 1 }, gridStyle]} pointerEvents={open ? "none" : "auto"}>
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 32, gap: 16 }}>
+      <ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 32, gap: 16 }}>
         <BedBar beds={beds} filter={filter} onFilter={setPicked} />
 
         {/* One glass list of the filtered beds; rows fade and slide in and out, the list re-lays on the layout spring. */}
@@ -138,6 +149,15 @@ export function WardScreen() {
             <Text style={{ ...type.subhead, color: palette.muted }}>{emptyLine(beds, filter)}</Text>
           </Animated.View>}
         </Surface>
+
+        {/* When beds free up, after the list; opened from My Day's forecast line, the ward scrolls here once. */}
+        <Animated.View layout={motion} onLayout={e => {
+          if (params.at !== "forecast" || scrolledToForecast.current) return;
+          scrolledToForecast.current = true;
+          scroll.current?.scrollTo({ y: e.nativeEvent.layout.y - insets.top - 52, animated: !reducedMotion });
+        }}>
+          <ForecastTimeline beds={beds} forecast={forecast} onOpen={openAt} />
+        </Animated.View>
 
         {/* The week's proof and the tools sit below the beds and move with the list as it re-lays. */}
         <Animated.View layout={motion} style={{ gap: 12 }}>
@@ -182,7 +202,7 @@ export function WardScreen() {
       </ScrollView>
     </Animated.View>
 
-    {open && current && <BedCard bed={current} from={open.from} to={{ x: 12, y: insets.top + 52, w: width - 24, h: height - insets.top - 52 - insets.bottom - 12 }} p={p} owners={owners} onAssign={can("ward.assignOwner") ? assign : undefined} assignError={assignError} onClose={close}
+    {open && current && <BedCard bed={current} focus={open.focus} from={open.from} to={{ x: 12, y: insets.top + 52, w: width - 24, h: height - insets.top - 52 - insets.bottom - 12 }} p={p} owners={owners} onAssign={can("ward.assignOwner") ? assign : undefined} assignError={assignError} onClose={close}
       // The card closes behind the discharge screen, so coming back shows the ward (and the bed it freed), not a stale card.
       // Only a patient the app holds a visit for (Amelia) has a discharge screen to open.
       onDischarge={patients.some(x => x.id === current.patientId) ? () => { selectPatient(current.patientId!); router.push("/discharge"); p.set(0); setOpen(undefined); } : undefined} />}
@@ -218,8 +238,9 @@ function ToolTile({ icon, tint, fill, title, line, lineColor, label, onPress }: 
   </Pressable>;
 }
 
-function BedCard({ bed, from, to, p, owners, onAssign, assignError, onClose, onDischarge }: {
-  bed: Bed; from: Rect; to: Rect; p: ReturnType<typeof useSharedValue<number>>; owners: Record<string, Owner | undefined>;
+function BedCard({ bed, focus, from, to, p, owners, onAssign, assignError, onClose, onDischarge }: {
+  // `focus`: the blocker it was opened for (the forecast's "Frees fastest"), tinted so the eye lands on it.
+  bed: Bed; focus?: string; from: Rect; to: Rect; p: ReturnType<typeof useSharedValue<number>>; owners: Record<string, Owner | undefined>;
   // Without onAssign (a role the server refuses) the owners read only.
   onAssign?: (id: string, owner: Owner) => void; assignError?: { id: string; owner: Owner; text: string }; onClose: () => void; onDischarge?: () => void;
 }) {
@@ -257,7 +278,7 @@ function BedCard({ bed, from, to, p, owners, onAssign, assignError, onClose, onD
 
         <View style={{ gap: 4 }}>
           <Text style={{ ...type.overline, color: bed.blockers.length ? palette.red : TEAL }}>{bed.blockers.length ? `${bed.blockers.length} holding the discharge` : "Nothing holding the discharge"}</Text>
-          {bed.blockers.map(b => { const owner = owners[b.id]; return <View key={b.id} style={{ gap: 10, paddingVertical: 12, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
+          {bed.blockers.map(b => { const owner = owners[b.id]; return <View key={b.id} style={{ gap: 10, paddingVertical: 12, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)", ...(b.id === focus ? { marginHorizontal: -10, paddingHorizontal: 10, borderRadius: 14, backgroundColor: "rgba(36,91,204,0.07)" } : {}) }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{b.label}</Text>

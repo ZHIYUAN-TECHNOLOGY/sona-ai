@@ -5,24 +5,30 @@ import { api, useLive } from ".";
 import { useLiveChanges } from "./channel";
 
 export type ServerBed = Awaited<ReturnType<AppRouterClient["ward"]["beds"]>>[number];
+export type ServerForecast = Awaited<ReturnType<AppRouterClient["ward"]["forecast"]>>;
 
 /**
- * Live mode's ward: every bed as the server derives it from its rows. Re-read each time the ward
- * comes into view (a discharge or a letter may have cleared a bed) and whenever `key` changes (the
- * findings list: tracking or dismissing one changes a bed's blockers). Undefined until it arrives or
- * when live mode is off, so the ward draws its fixture beds instead.
+ * One live ward read. Re-read each time the ward comes into view (a discharge or a letter may have
+ * cleared a bed), on any ward change (an owner assigned elsewhere, a demo clock jump) and whenever
+ * `key` changes (the findings list: tracking or dismissing one changes a bed's blockers). Undefined
+ * until it arrives or when live mode is off, so the ward draws its fixture instead.
  */
-export function useServerBeds(key?: unknown) {
+function useWardRead<T>(read: () => Promise<T>, key?: unknown) {
   const { on } = useLive();
-  const [beds, setBeds] = useState<ServerBed[]>();
-  // Live updates: a change to any bed (a letter approved, an owner assigned elsewhere) re-reads the ward.
+  const [data, setData] = useState<T>();
   const [version, setVersion] = useState(0);
   useLiveChanges(["ward"], () => setVersion(v => v + 1));
   useFocusEffect(useCallback(() => {
-    if (!on) { setBeds(undefined); return; }
+    if (!on) { setData(undefined); return; }
     let current = true;
-    api.ward.beds().then(rows => { if (current) setBeds(rows); }, () => {});
+    read().then(rows => { if (current) setData(rows); }, () => {});
     return () => { current = false; };
-  }, [on, key, version]));
-  return on ? beds : undefined;
+  }, [on, key, version])); // eslint-disable-line react-hooks/exhaustive-deps
+  return on ? data : undefined;
 }
+
+/** Live mode's ward: every bed as the server derives it from its rows. */
+export const useServerBeds = (key?: unknown) => useWardRead(() => api.ward.beds(), key);
+
+/** Live mode's bed forecast, on the hospital's demo clock with the owners saved on the server. */
+export const useServerForecast = (key?: unknown) => useWardRead(() => api.ward.forecast(), key);
