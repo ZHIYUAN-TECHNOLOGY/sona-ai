@@ -8,7 +8,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Action, Expand, Icon, Insight, Surface, glass, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Expand, Icon, Insight, Surface, canvasImage, glass, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
 import { ErrorLine } from "@/components/sona/parts";
@@ -35,7 +35,6 @@ import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedRow, defaultFilter, empty
  */
 const TEAL = "#0F6E66";
 // Screen's canvas. The ward keeps its own ScrollView because Screen takes no ref and the forecast link scrolls to its section.
-const CANVAS = "radial-gradient(circle at 8% 4%, rgba(150,190,255,0.38) 0%, rgba(150,190,255,0) 42%), radial-gradient(circle at 96% 38%, rgba(196,176,255,0.26) 0%, rgba(196,176,255,0) 40%), radial-gradient(circle at 20% 92%, rgba(150,220,235,0.26) 0%, rgba(150,220,235,0) 45%), linear-gradient(to bottom, #F5F6F8 0%, #EFF2F7 45%, #E3EBF7 100%)";
 const OPEN = { duration: 480, dampingRatio: 0.82 }, CLOSE = { duration: 460, dampingRatio: 0.84 };
 type Rect = { x: number; y: number; w: number; h: number };
 const TONE: Record<Bed["status"], { label: string; ink: string }> = {
@@ -125,7 +124,7 @@ export function WardScreen() {
     setTimeout(() => openBed(bed, blockerId), 80);
   };
 
-  return <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: CANVAS }}>
+  return <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }}>
     <Animated.View style={[{ flex: 1 }, gridStyle]} pointerEvents={open ? "none" : "auto"}>
       <ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 44, gap: 18 }}>
         <Insight eyebrow={`Now · ${beds.length} beds`}>{wardLine(beds)}</Insight>
