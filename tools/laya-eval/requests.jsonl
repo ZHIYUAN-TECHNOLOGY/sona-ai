@@ -2014,3 +2014,771 @@
 {"capability": "note", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Catat consultation note ini."}
 {"capability": "note", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Draft Daniel's consultation note."}
 {"capability": "note", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Tulis nota pesakit."}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 100, "request": "帮我 summarize 一下这个 case 的 past medical history、current meds 还有 drug allergy。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Can you summarize Puan Tan 的 background 吗？看下她的 history、用着的 medication 还有 allergies。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 100, "request": "给我这个 patient 的 profile overview，主要是 medical history、penicillin 那些 allergy 还有 regular medication。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 100, "request": "请问这个病人有什么 background illness 吗？顺便 list 出她的 current medication 和 drug allergies。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Pull out 她的 patient summary，我想看 chronic condition、allergy status 还有现阶段的 meds。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Assistant，麻烦 give me a quick summary of Amelia Tan，看下 baseline medical condition，allergies 和 current treatment。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Eh帮我 check 一下她的 background，平时有 on 什么 medication，有没有 known drug allergies？"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Show me 她的 overall patient profile，除了 cetirizine 还有没有其他 long-term meds，顺便确认 allergy list。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Patient summary please，重点看 past history、allergy list 和 current medications。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 100, "request": "整理一下病人的 case summary，包括 asthma history、平时 salbutamol 使用情况还有 allergies。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 100, "request": "可以 generate 一份 summary 给我吗？我想 double check 这个 patient 的 background history、allergic history 和 ongoing meds。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 100, "request": "快点帮我 recap 一下这个 42 岁 patient 的 history，allergies 跟 maintenance meds 有哪些？"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 100, "request": "App, 帮我 pull out Encik Rahman 的 patient summary 可以吗？我想看他的 past medical history，allergies 跟 current medications。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Patient background summary please, 顺便 check 他有没有 drug allergies 还有 taking 什么 regular meds。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Pakcik 讲他走路会 short of breath，system 里面有他的 past history 吗？Summary 他的 background、allergic history 还有 on 什么 medicine。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Summary profile please. 要看 PMHx, drug allergy, 还有 current medications list。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 100, "request": "他只记得每天吃一粒 white tablet 好像是 Amlodipine，你可以 summarize 一下他的 background history、已知 allergies 还有 active prescriptions 吗？"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我 check 看看这个 57 岁 male 的 background，全部 PMHx、known allergies 跟 ongoing medications 给一个 quick summary。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Can give me a quick summary of Daniel Rahman? 包括 baseline health background, allergies, 和 existing medications。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 100, "request": "我想看完整的 patient summary，尤其是 past medical history、any known drug allergies 还有目前的 regular meds。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Pull his profile summary. 主要是 past medical history, allergy list, 和 long-term medications。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 100, "request": "麻烦 summarize 这个 uncle 的 background，看他以前有什么 chronic illness，有没有 drug allergy，现在具体 on 什么 medication。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我 rundown 一下这个 patient 的 medical background，看他的 allergy status 还有 current drug regimen。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Patient 讲有 on 某种 unknown tablet，系统有没有 record？Summarize 他的 general background, past history, 和 drug allergies。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 0, "request": "帮我整理一下这位病人的基本资料，包括既往病史、药物过敏和目前在吃着的药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 0, "request": "Amelia Tan 的背景摘要给我一下，重点看她的过敏史跟平常的用药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 0, "request": "调一下病人的病历摘要，顺便确认她有没有对青霉素这类药物敏感？还有平常用什么药？"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 0, "request": "请总结患者的背景、既往病史和长期药物，尤其是她哮喘平时用的药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 0, "request": "看一下这病人的资料，病史、敏感和用药总结一下，谢谢。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 0, "request": "Puan Tan 有药物过敏吗？帮我汇总她的病史和现在用着的药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 0, "request": "给我这位42岁病人的背景摘要，查一下她平时的用药，有包含西替利嗪吗？还有过敏记录。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 0, "request": "帮我抓出患者的过敏史、既往病史以及现在的用药清单，给个简短总结。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 0, "request": "麻烦总结这位患者的背景，包括哮喘病史、过敏情况跟沙丁胺醇吸入剂的使用记录。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 0, "request": "查一查陈女士的病史摘要，她目前吃着什么药？有没有药物敏感？"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 0, "request": "快速概述一下这名患者：既往症、过敏史和目前服用的药物。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 0, "request": "患者整体背景和用药概况调出来看一下，包括对什么药过敏。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我查一下这个病人的基本资料、病史、吃着什么药跟有没有药物过敏。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 0, "request": "Encik Rahman的档案调出来看一下，我想了解他的病历、过敏记录还有目前在服用什么药物，他只讲有吞一颗黄色的药丸。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 0, "request": "总结一下病人的病史、过敏和目前的用药清单。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 0, "request": "那个pakcik讲他在吃降血压药，系统里面有没有他的详细背景、过敏史跟全部药物清单？帮我整理一下。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 0, "request": "请提供该患者的综合病历概要，包括过往病史、药物过敏情况以及正在服用的药物。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 0, "request": "调出患者背景、既往症、过敏史和长期服药记录。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 0, "request": "Daniel Rahman的系统记录怎样？他有什么既往病史、过敏还是长期药吗？"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我看下这个安哥之前有什么病，对什么药过敏，还有平时吃什么药，他自己讲不清楚吃着什么白色小药丸。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 0, "request": "病患基本背景、药物过敏史、既往病历及正在服用的药物摘要。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 0, "request": "他讲他走路会喘，先帮我调他的旧病历出来，看之前有什么慢性病、过敏记录和在拿什么药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 0, "request": "麻烦帮我整理这位病人的过敏记录、既往病史还有目前吃着的药物列表，谢谢。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 0, "request": "Encik Rahman的背景资料、病史、用药史和过敏史，全部列出来给我看一下。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 1, "request": "请帮我整理一下陈女士的个人背景、既往病史、正在服用的药物和药物过敏记录。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 1, "request": "这个病人除了沙丁胺醇吸入剂，还有吃什么药？顺便整理她的病史和过敏史给我。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 1, "request": "帮我总结这名病人的基本资料、病史、长期药物和药物过敏。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 1, "request": "调一下病人的资料，总结她的背景、过去病史、目前的用药，还有她是对青霉素过敏吗？"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 1, "request": "麻烦汇报一下Tan女士的完整背景，包括哮喘病史、过敏记录和目前正在吃的药物。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 1, "request": "给我这个病人的概述，包括病史、过敏源，还有西替利嗪以外的日常用药情况。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 1, "request": "总结病人的个人背景、既往病史、现用药物和已知过敏。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 1, "request": "先给我看一下她的基本背景，有什么既往症、过敏史还有现在在用什么药？"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 1, "request": "42岁那位陈女士，帮我快速过一遍她的背景、过去病史、药物过敏和目前用药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 1, "request": "帮我调取病人的档案，列出她的个人基本资料、过去有什么病史、对什么药物过敏，以及目前的长期药物清单。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 1, "request": "帮我看看病人的背景和病历，她有哮喘在用沙丁胺醇对吧？顺便列出她的过敏史和所有正在服用的药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 1, "request": "请提供病人的基本信息、既往病史、现阶段用药以及药物过敏的简要总结。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 1, "request": "调出这个病人的背景资料、既往病史、过敏史和正在服用的药物给我看。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 1, "request": "请帮我整理一份患者摘要，包含基本背景、慢性病史、药物过敏以及现存用药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 1, "request": "拉曼先生的病史还没问完，先帮我查他的基本背景、过敏记录和目前吃着的药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 1, "request": "这位伯伯有点气喘，系统里有没有他的个人背景、病历记录、药物过敏和长期处方？"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 1, "request": "病人背景、既往病史、药物过敏以及目前用药，帮我拉一个总结出来。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 1, "request": "帮我查一下病人的医疗背景、药物过敏史，还有他目前有没有在吃阿司匹林或任何常规药物。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 1, "request": "丹尼尔·拉曼，五十七岁，调一下他的完整背景、既往疾病、过敏史和服药记录。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 1, "request": "查一下患者的基础档案，包括过往病历、对什么药物过敏，以及正在服用什么药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 1, "request": "请提供病人的背景信息、既往病史、过敏反应记录和现阶段的用药清单。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 1, "request": "这位大叔说有吃一种药但讲不出名字，帮我拉出他的既往病历、用药记录和药物过敏总结。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 1, "request": "看一下这个病人的个人背景、过去看诊病史、药物过敏和目前吃着什么药，快点给我过目。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 1, "request": "调出患者的全面概述：既往病史、药物过敏史，以及是否正在服用降压药等长期药物。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 100, "request": "整理一下这位病人的基本背景、病史、药物过敏和正在服用的药物给我。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 100, "request": "请帮我总结一下Puan Tan的病历，包括她的既往病史、过敏记录还有目前的长期用药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 100, "request": "调出病人的背景和用药清单，顺便确认一下她是不是对青霉素过敏。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 100, "request": "这位患者有什么病底？列出她的过敏史和现在吃着的药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 100, "request": "Amelia Tan的背景摘要，重点看既往病史、药物过敏史以及现用药物。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 100, "request": "病人概况总结：病史、过敏和常规用药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮我看一下她平时的病底和用药，她好像有在用沙丁胺醇吸入剂，还有其他药物或过敏吗？"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 100, "request": "麻烦系统拉一下病人的基本资料，包括慢病史、药物过敏反应以及目前的用药情况。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 100, "request": "调一下陈女士的档案，给我一份关于她既往史、药物过敏以及目前药物的总结。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 100, "request": "总结一下这位病人的基本情况，看一下她有什么内科病史、对什么药敏感还有正在吃什么药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 100, "request": "显示患者的背景信息，需要完整的既往病史、药物过敏记录和日常用药明细。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1042", "round": 100, "request": "查一下病人的病历摘要，除了西替利嗪之外她还有吃什么药？过敏史和以前的病底也一并列出来。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我调出这位病人的基本背景、既往病史、药物过敏记录，还有他目前正在服用的药物。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请帮我总结一下丹尼尔拉曼先生的医疗背景，包括过去的病史、药物过敏史以及目前在吃着什么药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 100, "request": "查一下他的个人背景、既往病史跟药物敏感，系统里有记录他平时吃什么药吗？"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 100, "request": "这位五十七岁的大叔走动会喘，先帮我整理他的背景资料、慢性病底、药物过敏和目前的用药清单。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 100, "request": "病人平时有一粒固定在吃的药但不清楚名字，可能是氨氯地平，请调出他的背景、过往病历、过敏史和现阶段用药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 100, "request": "简要总结患者背景：病底、药物敏感史以及正在服用的长期药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 100, "request": "助手，调一下这个病人的病历摘要，我想看他的个人背景、既往病史、有没有对药物敏感，还有目前吃着什么药。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 100, "request": "拉曼先生走动时气喘，还没做详细问诊，请列出他的基本背景、以往病史、药物过敏记录及现在服用的药物。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请汇整病人的整体背景资料，包含过去的病史、已知药物过敏原，以及他系统里记录的用药情况。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请提供病人的基础背景摘要，涵盖过去的疾病史、药物过敏记录，还有目前所有正在服用的药物。"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 100, "request": "麻烦看下他的个人背景、有什么病底、平时吃着什么长期药，还有系统有没有记录他对什么药敏感？"}
+{"capability": "briefing", "style": 6, "patient": "SYN-1086", "round": 100, "request": "汇总患者的基本背景资料：包括既往病史、药物过敏记录和目前服用的药物清单。"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1042", "round": 100, "request": "42岁 female 有 underlying asthma，cough 5天加 fever 1天，主要 differential 应该看 viral bronchitis 还是 early CAP？两者怎么区分？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1042", "round": 100, "request": "请问一下，Puan Tan 42岁，known asthma，这次 cough 5 days 昨天开始 fever，最 likely 的 diagnosis 是 acute exacerbation secondary to LRTI 吗？还要 rule out 什么？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Asthma patient 出现 cough five days, fever since yesterday，what is the top differential diagnosis？Viral 还是 bacterial pneumonia 比较 probable？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1042", "round": 100, "request": "病人平常有吸 salbutamol inhaler，现在 cough 5 天加新发 fever，我们要怎样 rule out pneumonia 和单纯的 mild asthma exacerbation？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Amelia 42岁，cough 5天伴随着 fever 1天，胸口有些 tight。这个 presentation 比较像 atypical pneumonia 还是 viral-triggered asthma？为什么 bacterial infection 可能性高或不高？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1042", "round": 100, "request": "这位 42岁 女病人 cough 5 days, fever 1 day，有 penicillin allergy。针对她的 acute presentation，除了 CAP，还需要 rule out 哪些 life-threatening conditions？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Cough 5天昨天起发热，underlying asthma。主要 DDx 有哪些？Bacterial bronchitis 跟 bronchopneumonia 在目前阶段怎么 differentiate？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1042", "round": 100, "request": "麻烦分析一下，42岁女性，asthma patient，fever 1天伴 cough 5天。为什么考虑 infective exacerbation of asthma 多过 acute pulmonary embolism？有什么 red flags 必须 rule out？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1042", "round": 100, "request": "病史有 asthma，平时拿 cetirizine，这次 cough 5 days plus fever 1 day。Top 3 differentials 是什么？需要 prioritize rule out COVID-19 还是 community-acquired pneumonia？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Asthma patient，cough 5天，昨天开始 spike temperature。听诊有 bilateral wheezing，这算单纯 viral asthma exacerbation 还是 already secondary bacterial pneumonia？根据 onset 怎么判定？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Puan Tan 42岁，asthma，cough 5d fever 1d。Most likely diagnosis 是不是 acute tracheobronchitis 诱发 bronchospasm？还需要 rule out influenza 相关的 complications 吗？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1042", "round": 100, "request": "女，42岁，known asthma。Cough 5天昨天 fever。Differential diagnoses 怎么排序？为什么 viral respiratory infection 会比 atypical pneumonia 更 likely？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1086", "round": 100, "request": "57岁male, exertional dyspnoea, taking one unknown tablet. 最common的differential是什么？要先rule out ACS还是heart failure？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Encik Rahman 57岁, SOBOE progressively worsening. 怎样differentiate到底是COPD exacerbation还是congestive cardiac failure？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Male 57, breathless on exertion only, rest okay, taking unknown white tablet daily. Top 3 most likely diagnoses是什么？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1086", "round": 100, "request": "请问pakcik 57岁，主诉shortness of breath on exertion，目前还没有take full history。第一步需要紧急rule out哪些life-threatening causes？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1086", "round": 100, "request": "57岁uncle, exertional breathlessness，听说他有吃Metformin。这种情况IHD跟pulmonary causes相比，哪一个more likely？为什么？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1086", "round": 100, "request": "57M exertional dyspnea, on unknown pill. Differential diagnosis list please, 尤其是cardiovascular vs respiratory."}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Daniel Rahman 57岁，主诉SOBOE，还没clerk完。请问有哪些critical conditions必须第一时间rule out？PE还是NSTEMI？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1086", "round": 100, "request": "病人57岁，breathless on exertion，只知道每天吃一颗amlodipine。这比较像是fluid overload/heart failure，还是asthma/COPD？为什么？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我看下，57-year-old male with new onset exertional breathlessness, taking unknown chronic medication. Likely differentials有哪些？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1086", "round": 100, "request": "57yo male SOBOE, no prior documented history, on one unknown tablet. 怎么排除silent MI和subacute pulmonary embolism？哪个可能性更高？"}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1086", "round": 100, "request": "57M, exertional SOB, on Bisoprolol. 是rate-related decompensation还是underlying ischemic cardiomyopathy引起的？帮我analyze一下differential."}
+{"capability": "reasoning", "style": 4, "patient": "SYN-1086", "round": 100, "request": "这个pakcik 57岁走几步就breathless，手上只有一颗unknown tablet。除了typical heart failure，还有什么less common但important的causes需要考虑？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 0, "request": "哮喘病人咳了五天，昨天开始发热，最可能的鉴别诊断有哪些？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 0, "request": "请帮我分析一下Puan Tan的病例：42岁女性，有哮喘病史，咳嗽五天且昨天发烧，主要是哮喘急性发作还是继发肺部感染？首要排除什么？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 0, "request": "病人咳了五天加新发热，吸salbutamol感觉效果不理想，初步诊断偏向急性支气管炎还是肺炎？为什么？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 0, "request": "有青霉素过敏史的42岁女性，咳嗽五天伴发热一天，鉴别诊断需要先排除非典型肺炎吗？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 0, "request": "咳了五天昨天发烧，底子有哮喘，除了上呼吸道感染，还有哪些必须排除的下呼吸道严重病因？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 0, "request": "Amelia Tan平时有吃cetirizine，现在咳嗽五天加发热一天，最可能的诊断是什么？为什么细菌感染的可能性比单纯病毒感染高？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 0, "request": "成年哮喘患者咳嗽五天合并急性发烧，鉴别诊断怎么排？为什么更怀疑支原体肺炎而不是普通哮喘恶化？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 0, "request": "发热一天、咳嗽五天，有气喘风险，诊断上最需要排除哪些严重的肺部并发症？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 0, "request": "为什么这种咳了五天后突然发热的哮喘病例，要优先考虑继发性细菌感染，而不是单纯的气道过敏反应？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 0, "request": "麻烦看一下，42岁女病人平时只用salbutamol，现在咳嗽五天加发热，鉴别诊断应先考虑急性支气管炎还是社区获得性肺炎？根据是什么？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 0, "request": "四十二岁女性既往有哮喘，发热一天伴五天咳嗽，鉴别诊断里需要排除病毒性肺炎合并细菌感染吗？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 0, "request": "有哮喘病史，咳嗽5天昨天发热，最可能的诊断和首要排除的鉴别诊断是什么？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 0, "request": "57岁男性，稍微走动就气喘，病史还没问，只懂平时有吃一种不知名的药，最可能的鉴别诊断有哪些？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 0, "request": "活动后气促，要先排除心力衰竭还是慢性阻塞性肺病？哪一个可能性比较大，为什么？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 0, "request": "请问Encik Rahman今年57岁，走动时容易气喘，还没详细问诊，只知道有在吃一颗药丸，需要先排除哪些危急病因？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 0, "request": "病人活动时很喘，平时有吃氨氯地平，这种劳力性呼吸困难会是药物引起的副作用吗，还是心功能不全更像？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我看下，57岁劳累后喘，病史还不清楚，除了肺栓塞还要排查什么？为什么缺血性心脏病会比哮喘更优先考虑？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 0, "request": "这位pakcik走几步路就呼吸困难，平时有吃一颗不明药物，心源性和肺源性病因要怎么先鉴别？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 0, "request": "57岁动一下就喘，手头完全没有病史，要立刻排除哪些致命情况？贫血和心绞痛哪个几率较高？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 0, "request": "劳力性气短，57岁，完全没来得及问病史，只知道吃一种药，最可能的几个诊断是什么，按可能性排一下？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 0, "request": "病人稍微活动就喘，只知道天天吃美托洛尔，这比较像是心力衰竭恶化还是心动过缓？原因是什么？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 0, "request": "为什么57岁劳力性气促要优先考虑冠心病而不是成人发病型哮喘？需要马上排除哪些诊断？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 0, "request": "57岁活动性气喘，平时吃一种未知药片，最主要的鉴别诊断是什么，要先排除什么？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 0, "request": "病人Daniel Rahman，57岁，活动后喘不过气，有吃不知名药片，为什么应该先考虑充血性心力衰竭而不是肺纤维化？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 100, "request": "陈女士42岁，有哮喘病史，咳了五天昨天开始发烧，平时有用沙丁胺醇吸入剂。请问目前最可能的鉴别诊断有哪些？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 100, "request": "咳嗽五天加昨晚发烧，本身有气喘，这情况是急性支气管炎还是肺炎的机会比较大？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 100, "request": "42岁女性，气喘病史，突然咳嗽伴随发烧，需要先排除哪些严重的下呼吸道感染？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 100, "request": "病人有吃西替利嗪，咳了差不多五天，昨天发热，为什么会先怀疑是病毒感染引起的哮喘发作，而不是细菌感染？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 100, "request": "咳嗽5天、发烧1天、既往哮喘。鉴别诊断列出来，按可能性排序。"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 100, "request": "谭女士对青霉素过敏，这次咳嗽五天加发烧，临床上要怎么排除非典型肺炎或肺结核？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 100, "request": "咳了几天昨天才起烧，患者有哮喘，怎样分辨只是单纯呼吸道感染还是已经诱发了哮喘急性发作？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 100, "request": "中年女性，哮喘病史，主诉咳嗽五天伴发烧一天。最可能的原发病因是什么？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮我分析一下，42岁哮喘患者咳嗽五天伴随新发热，主要要排除哪些急性肺部并发症？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 100, "request": "平时有吸沙丁胺醇的42岁女性，发病五天后才出现发热，为什么临床上要考虑继发性细菌感染多过初期病毒感染？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 100, "request": "气喘病人，咳5天加发热1天，除了常见气管炎，还要鉴别什么诊断？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1042", "round": 100, "request": "请问这种病程，发烧在咳嗽五天后才出现，为什么倾向考虑细菌性肺炎多过单纯上呼吸道感染？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 100, "request": "57岁男性，稍微走动就喘，病史还没问完，只知道有吃着一种药丸。最可能的鉴别诊断有哪些？需要先排除心衰还是肺栓塞？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 100, "request": "Encik Rahman 57岁，最近稍微动一下就很喘，病史还没拿完，平时有一粒不知名的药在吃。请问这种case最需要rule out什么严重问题？为什么心源性原因比COPD更有可能？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我看下这个pakcik，57岁，活动后气喘，身上只有一颗未知药丸。可能是什么诊断？为什么不能先当成单纯哮喘来处理？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 100, "request": "57岁男，活动后气促，目前只知道有吃amlodipine。首要排除的致命病因是什么？为什么心肌缺血比肺部感染的可能性更高？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 100, "request": "男，57岁，劳力性呼吸急促，有服药史但药物不明。鉴别诊断请列出来，目前最需要紧急排除什么？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 100, "request": "57岁病人主诉一做工或走路就喘，病史不详，只带了一种药。请分析最可能的病因，并解释为什么这个年纪先考虑心血管疾病而不是焦虑症？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请问57岁男性出现活动性气促，平时吃着一种不清楚的药，最常见的几个鉴别诊断是什么？需要先排除隐匿性心绞痛吗，理由是什么？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 100, "request": "57岁男性走几步路就喘得很厉害，病史还没深入问，有吃不明药物。最危险需要排除的是什么？为什么充血性心力衰竭比严重贫血更符合目前的表现？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 100, "request": "Daniel，57岁，一走动就气喘，有吃一种不知道名字的药。最可能的诊断是什么？为什么要把缺血性心脏病排在呼吸道疾病前面去考虑？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 100, "request": "57岁劳力性气喘，平时有吃metformin，还没来得及细问病史。鉴别诊断有哪些？为什么先排除急性冠脉综合征而不是糖尿病引起的代谢问题？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 100, "request": "男57岁，走两步就喘，手头只有一颗不懂什么药。主要鉴别诊断列一下，为什么优先考虑心脏衰竭而不是肺炎？还要排除什么？"}
+{"capability": "reasoning", "style": 6, "patient": "SYN-1086", "round": 100, "request": "病人57岁，稍微劳累就喘不过气，有长期吃一颗药，详细病史待查。最应该先排除哪些危急病因？为什么心肌梗死等同征会比慢阻肺更需要优先考虑？"}
+{"capability": "xray", "style": 4, "patient": "SYN-1042", "round": 100, "request": "帮我看下 CXR 出了吗？有没有 consolidation？"}
+{"capability": "xray", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Amelia Tan 平时有用 salbutamol inhaler，看一下她刚刚拍的 CXR report，有没有 focal lesion？"}
+{"capability": "xray", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Tolong check 下 CXR，看肺部有没有 pneumonia 的 signs。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Puan Tan 的 chest X-ray 好了没？帮忙 interpret 一下有没有 effusion 或 infiltration。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1042", "round": 100, "request": "CXR view 出来了吗？有没有 hyperinflated lung？"}
+{"capability": "xray", "style": 4, "patient": "SYN-1042", "round": 100, "request": "病人有在吃 cetirizine，现在咳嗽发烧，帮我 read 一下她的 chest X-ray。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Eh 帮我 pull out 这个 patient 的 filem dada，看一下 CXR 有没有 bilateral opacities。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1042", "round": 100, "request": "麻烦 check 一下 CXR result，看有没有 patchy consolidation。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1042", "round": 100, "request": "请帮我查阅一下最新的 chest X-ray 影像，确认一下 costophrenic angles 是否 clear。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Amelia 照了 CXR，系统有 report 了吗？帮我 check 肺部有没有 infection changes。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1042", "round": 100, "request": "这个 asthma case 咳嗽发烧，帮我 screen 一下 CXR 排除 secondary bacterial infection。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1042", "round": 100, "request": "那个 chest X-ray 应该 upload 了，帮我看下 filem dada 有没有 collapse 还是 reticular markings。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1086", "round": 100, "request": "App, 帮我check一下他的CXR有没有cardiomegaly或者pulmonary edema。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Encik Rahman 57岁SOBOE，刚刚做了urgent CXR，麻烦帮忙read一下filem dada有什么abnormalities。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Can you interpret the latest CXR? 病人只讲平时有吃一颗unknown tablet，现在很喘，想rule out heart failure。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1086", "round": 100, "request": "看一下他的CXR出来了没有，帮我screen一下有没有consolidation或者pleural effusion。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我review一下pakcik的CXR，重点看有没有fluid overload的signs。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Please check the chest X-ray，想确认下lung field清不清，在考虑要不要给IV Frusemide。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Read the CXR please，主要看cardiac silhouette跟bilateral lung markings有没有congested。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Daniel Rahman，57岁male，c/o SOB on exertion，麻烦check他的chest X-ray PA view。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1086", "round": 100, "request": "病人拿不出medication list只懂吃着unknown pill，现在SOBOE进来，帮忙看一下CXR有没有congestion。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1086", "round": 100, "request": "CXR帮我read一下，看有没有bat wing appearance还是Kerley B lines。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Tolong check filem dada看看，我想知道是有hyperinflated lungs还是acute pulmonary edema。"}
+{"capability": "xray", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Please review CXR, check一下有没有blunting of costophrenic angles或者是pneumonia patches。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 0, "request": "可以帮我分析一下刚照的胸部X光片吗？看看有没有肺部感染的迹象。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 0, "request": "看Amelia Tan的胸片，肺部纹理怎么样？"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 0, "request": "病人有哮喘平时在用沙丁胺醇吸入剂，咳嗽发烧，帮忙看一下胸部X光片有没有肺炎。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 0, "request": "解读一下最新的胸部X光结果。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 0, "request": "陈女士的胸片出来了，她平时有吃西替利嗪，帮我读一下片子看看有没有异常浸润。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 0, "request": "胸片显示如何？帮我确认下肺部清不清，有没有大片阴影。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 0, "request": "请调出并读取胸部X光片，重点看一下双肺下野。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 0, "request": "Puan Tan的胸部X光报告出来了没有？帮忙分析一下影像。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 0, "request": "看一下胸部X光，她吸了沙丁胺醇喘鸣音还在，看是不是有肺部感染或者肺不张。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 0, "request": "查下最新的肺部X光片，有看到任何实变影吗？"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 0, "request": "帮我看看刚拍的胸部X光，病人咳嗽五天发热一天，有没有下呼吸道感染的征象？"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 0, "request": "胸部X光读片：是否有肺炎或过度通气表现？"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我读一下刚拍的胸部X光片，看有没有肺水肿还是感染。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 0, "request": "系统里面有拉曼先生的胸部X光结果了吗？帮忙看一下片子。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 0, "request": "看一下胸片，病人走路会喘，看心脏有没有肿大。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 0, "request": "麻烦读取最新的胸部X光，确认有没有胸腔积液。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 0, "request": "病人有吃一颗不知名的降压药，先帮我分析他的胸部X光片。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 0, "request": "胸片出了吗？看看双肺纹理，有没有心力衰竭的迹象。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 0, "request": "这位五十七岁大叔的胸部X光照好了没？帮我过目一下报告。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我查一下刚才送去照的胸片，排除一下气胸或者肺炎。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 0, "request": "拉曼先生刚才去照了胸部X光，结果出来的话麻烦立刻帮我解读一下。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 0, "request": "看下胸部X光，注意一下心胸比率还有两边肺门阴影。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 0, "request": "病人平时只吃阿司匹林，你快点帮我看一下他的胸片有没有积水。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 0, "request": "调出今天最新的胸部X光片，帮我读一下双肺野的情况。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 100, "request": "请帮我解读一下最新的胸部X光片，看看有没有肺炎或浸润影。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 100, "request": "陈女士平时有用沙丁胺醇吸入剂，咳嗽五天发烧一天，帮我看下她的胸部X光片有什么异常。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 100, "request": "看一下刚照的胸片，有没有支气管感染还是肺部感染的迹象？"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 100, "request": "病人咳嗽五天昨晚开始发烧，麻烦帮我读一下胸部X光。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮我分析一下刚出来的肺部X光片，患者对青霉素过敏，先看下肺部有没有实变。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 100, "request": "读取胸部X光结果。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 100, "request": "陈女士有哮喘病史，请帮忙解读她的胸片，特别留意有没有合并感染浸润。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 100, "request": "这名正在吃西替利嗪的患者胸片出来了，请帮忙检查双肺野和纹理。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 100, "request": "刚给她照了肺，帮我看下X光片，肺门和周边有没有发炎？"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 100, "request": "胸部X光片里有没有看到气道阻塞引起的过度通气或肺不张？麻烦报告一下。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 100, "request": "沙丁胺醇吸入后还是咳嗽，看一下胸片确认有没有细菌性肺炎表现。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1042", "round": 100, "request": "系统里刚上传了胸部X光片，请协助分析肺野是否有渗出病灶以及肋膈角情况，谢谢。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我看一下这位病人的胸部X光片，肺部有没有进水或者心脏肥大？"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 100, "request": "拉赫曼先生的肺部X光片出了吗？帮我读一下报告。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 100, "request": "看一下刚拍的胸部X光，他走两步就喘，肺里有没有感染阴影？"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 100, "request": "病人有在吃一种不知名的降压药，顺便帮我查一下他今天的胸片结果。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请帮我分析一下最新的胸部X光影像，看看心胸比例有没有偏大。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 100, "request": "这位大叔走动会气喘，麻烦调出他的胸部X光片帮我解读一下。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 100, "request": "查一下胸片，有没有急性肺水肿的表现？"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 100, "request": "他呼吸困难，平时吃的药丸名字还不清楚，帮忙看一下他的胸部X光片有没有异常。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 100, "request": "放射科那边上传胸部X光了吗？帮我看一下报告怎么写。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 100, "request": "丹尼尔先生的肺部X光结果出来了吗？帮我确认一下肺门有没有充血。"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 100, "request": "病人活动后喘得很厉害，麻烦看一下胸部X光，有没有看到气胸或胸腔积液？"}
+{"capability": "xray", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我读一下胸片，看看两边肺野清不清，有没有心衰迹象。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 100, "request": "麻烦帮我check一下Amelia Tan现在吃着的cetirizine，跟她目前的fever会有contraindication吗？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Salbutamol inhaler用着有没有任何safety concern？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Patient有penicillin allergy，请问她原本的medication list里面有没有cross-reactivity risk？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Puan Tan目前长期服用的药，跟这次的acute infection有没有interaction？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Cetirizine长期吃，现在acute cough有complication吗？帮我screen一下。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Check一下patient的salbutamol inhaler，现在symptoms加重下continue safe吗？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 100, "request": "她有documented penicillin allergy，目前on着的meds全部safe吗？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 100, "request": "请review患者现有的regular medications，评估目前clinical status下的safety profile。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Puan Tan的cetirizine需要hold掉还是可以continue？有没有interaction risk？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Current meds有没有drug-drug interaction？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Patient现在fever and cough，继续use salbutamol会不会有adverse effect？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 100, "request": "帮我cross-check现用药物和her allergy history有没有任何clash。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Check 下这个 unknown white tablet 会不会 cause bronchospasm 还是 worsen 他的 SOBOE？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 100, "request": "请帮我 cross-check Encik Rahman 的 record，看他现在吃的 unknown tablet 会不会跟 penicillin 有 allergy clash？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 100, "request": "病人吃的 unknown pill 怀疑是 propranolol，帮我 check 看看会不会 precipitate acute SOB 还有 contraindications。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Pakcik 说他每天吃一颗 round white tablet，系统里面能不能 retrieve 他的 current medications 来 screen drug interaction？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Check this out，如果他现在的 unknown pill 是 amlodipine，会有 fluid retention 导致 breathlessness 的 risk 吗？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我 review 一下他现在 on 著的 medicine，有没有 potential adverse drug reaction 会 explain 他的 exertional dyspnea？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Check patient previous allergy history，看他 currently taken 的 medication 有没有 hit 到任何 documented drug allergy。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Encik Rahman 拿来的 unknown tablet 看起来像 perindopril，请 check 他的 profile 看有没有 ACEi-induced cough or angioedema record。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Eh help me cross-check 这个 unknown tablet 跟他 old chart 里面的 drug-drug interactions，安全吗？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Pakcik Daniel 不记得药名，帮我 check pharmacy dispensing system 看 current active meds 有没有 severe interaction risk。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Current medication list 里面有没有任何 contraindications with acute dyspnea？尤其是那粒 unknown tablet。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我 scan 他 existing treatment 的那粒 unknown tablet，confirm 一下有没有 documented adverse reactions 或者 allergy alert。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 0, "request": "麻烦帮我查一下，陈女士目前在用的沙丁胺醇吸入剂，在她发烧咳嗽的时候继续用安全吗？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 0, "request": "请核对西替利嗪在哮喘急性加重期间继续服用会不会有负面影响。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 0, "request": "帮我看下她现有的长期用药有没有潜在的药物相互作用。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 0, "request": "陈女士平时服用的这些药物，有没有任何成分会和她的严重药物过敏史起冲突？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 0, "request": "查下沙丁胺醇，看她发热期间继续用安不安全。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 0, "request": "请问病人现有的药物清单里，有没有任何药物跟青霉素存在交叉过敏风险？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 0, "request": "西替利嗪现在吃安全吗？会不会让她的咳嗽痰液变黏稠？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 0, "request": "核对目前全部用药安全性。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 0, "request": "哮喘发作伴随发烧，病人手头上的沙丁胺醇吸入剂继续照常用有没有问题？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 0, "request": "系统帮我综合评估一下陈女士正在吃的所有旧药，看一下整体的配伍禁忌。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 0, "request": "查下病人每天吃的西替利嗪，在这个病情下有没有禁忌症？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 0, "request": "麻烦协助复查病患现阶段服用的吸入剂，评估对目前症状是否依然安全合适。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 0, "request": "Encik Rahman平时有吃一颗不懂什么药，帮我查一下系统记录，看有没有allergy clash。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我screen一下他目前的medication list，看那颗药会不会跟NSAID有interaction。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 0, "request": "查一下病人现在吃着的那颗药安不安全，会不会诱发shortness of breath？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 0, "request": "Pakcik Rahman讲他每天有一粒白色的pill要吃，可以cross check他系统里的active medication看有没有contraindications吗？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 0, "request": "Check一下他目前的medication profile，有没有可能引起气喘或bronchospasm的成分？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 0, "request": "查一查他正在服用的降压药，看跟目前气促的症状有没有冲突或不良反应。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 0, "request": "麻烦帮我screen一下现有药物的interactions，看吃着的那颗药有没有安全隐患。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我核对一下他现在吃着的那种药，特别是看有没有跟aspirin冲突。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 0, "request": "他带了一板平时吃的药来，帮我查一下它的安全性和会不会引起喘鸣。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我做一下medication reconciliation，看一下正在服用的这颗药有没有major drug interactions。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 0, "request": "Encik Daniel平时吃的那颗药，帮我确认一下会不会跟他记录里的drug allergy撞到？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 0, "request": "查一下这颗正在服用的tablet，确认一下它的safety profile和常见副作用。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 1, "request": "麻烦查一下病人正在服用的西替利嗪，在这类发烧和咳嗽症状下继续吃安全吗？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 1, "request": "Puan Tan有药物过敏史，请核对她现有的沙丁胺醇吸入剂有没有任何冲突或风险？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 1, "request": "帮我看一下病人目前的长期用药之间有没有药物相互作用？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 1, "request": "请评估患者现有的沙丁胺醇在急性发热发作期间继续使用是否稳妥？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 1, "request": "查一下Amelia Tan现有的药单，看有没有任何药跟她的过敏史起冲突。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 1, "request": "病人发烧咳嗽好几天，原本在吃的西替利嗪还要继续吃吗？帮我分析下安全性。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 1, "request": "确认一下病人目前的常规用药安全性。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 1, "request": "麻烦核实她平时用的沙丁胺醇，对目前有发烧和哮喘的状况有没有禁忌？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 1, "request": "查一下她目前正在用的药互相之间有没有不良反应或者配伍禁忌。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 1, "request": "Puan Tan现在有发热，帮我复查她平时服用的西替利嗪是否安全、需不需要停？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 1, "request": "帮忙筛查一下患者现有药物的安全隐患，特别是过敏排查和相互作用方面。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 1, "request": "查现用药安全性与过敏排查。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 1, "request": "拉曼先生说他每天固定吃一颗药但讲不出名字，帮我查下系统记录看是什么，顺便审查现有用药安不安全。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 1, "request": "查一下病人现有的长期药物，有没有引起活动后气促的副作用？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 1, "request": "帮我核对一下他目前的所有口服药，看看有没有药物过敏或者相互冲突的问题。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 1, "request": "病人现在有吃阿司匹林，帮我审查一下跟系统里他原有的药物会不会有抵触。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 1, "request": "麻烦查下病患现有用药的相互作用。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 1, "request": "丹尼尔拉曼先生说在吃不知名的药丸，帮我看下医院系统里他最近的配药记录，确认这些药会不会冲到。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 1, "request": "核查现有药物安全性。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 1, "request": "病人目前在服用比索洛尔，帮我评估一下以他现在呼吸急促的状况，继续吃这个药是否安全？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 1, "request": "这位五十七岁的大叔说他平时有吃药，请帮我调阅他在各公立医院的用药记录并做个相互作用审查。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 1, "request": "请帮我检查病患目前长期服用的药物，有没有任何已知的过敏风险或不良相互反应？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 1, "request": "病人吃着一种不知名降压药，帮我查查他系统里的用药史，看会不会和气喘有冲突。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 1, "request": "帮我看一下病人正在服用的药物清单，做一次药物相互作用和安全性审查。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 2, "request": "陈女士目前在服用的旧药，麻烦帮我核对一下有没有药物相互作用。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 2, "request": "患者有青霉素过敏史，请确认一下她现有的长期用药是否安全。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 2, "request": "沙丁胺醇目前继续用会有什么安全顾虑吗？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 2, "request": "查一下西替利嗪跟她现在的急性感染症状有没有任何冲突。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 2, "request": "帮我看下她手头上的旧药，成分有没有相冲？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 2, "request": "病人发烧咳嗽几天了，她平时用的沙丁胺醇现在吸入还合适吗？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 2, "request": "请评估陈女士现阶段维持用药的安全性。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 2, "request": "核对一下西替利嗪，看在哮喘发作期间继续吃安不安全。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 2, "request": "现有药物有没有任何青霉素交叉过敏的隐患？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 2, "request": "看下现在的用药清单，有没有药物之间互相影响的问题。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 2, "request": "沙丁胺醇吸入剂跟患者目前的急性病情有没有禁忌？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 2, "request": "查一查她一直吃着的药，发烧期间需要停掉哪一个吗？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 2, "request": "拉曼先生带了一颗不知名的药丸，先帮我调出他过去的药物记录，查一下有没有过敏史。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 2, "request": "帮我查一下病患现有的用药清单，看里面有没有可能引起运动后气喘的药物不良反应。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 2, "request": "这位大叔手上的不明药丸如果是氨氯地平，请帮我评估以他现在的气喘症状吃这个安不安全。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 2, "request": "请核对病人目前记录里的所有长期药物，看看有没有相互冲突或存在配伍禁忌。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 2, "request": "查下他系统里现有的药，会不会跟他对特定药物的过敏记录相冲？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 2, "request": "麻烦帮我看一下这位病人的既往用药历史，重点排查有没有任何会加重心肺负担的药物副作用。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 2, "request": "病人有一颗自己服用的不明药片，帮我检索他过往的处方记录，核对用药安全。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 2, "request": "帮我看下他目前的服药名单里有没有阿司匹林，顺便检查一下安全性。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 2, "request": "丹尼尔先生有活动后呼吸困难的问题，请检查他正在服用的药物是否安全，有无过敏警报。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 2, "request": "调一下他之前的配药记录，看看现有用药之间会不会相冲。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 2, "request": "核对一下他现有的药有没有地高辛，看看有没有潜在的药物不良相互作用。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 2, "request": "系统帮忙查下病患之前的长期用药，有没有药物过敏史或者相克的情况？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 100, "request": "麻烦看下病人目前在吃的药，有没有跟青霉素过敏相冲？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮我查一下沙丁胺醇吸入剂，病患现在咳嗽又发烧，继续用安全吗？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 100, "request": "陈女士现有的用药有没有任何药物相互作用？请帮我审核一遍。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 100, "request": "请核对一下西替利嗪对这位过敏体质的病人是否安全，有没有禁忌？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 100, "request": "病人现在服用的药物之间会不会有排斥反应？查一下。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 100, "request": "请问谭女士目前在用的沙丁胺醇，会跟她的发烧感染症状或过敏史产生冲突吗？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮我过一遍她平时的用药清单，确认成分没有跟盘尼西林交叉反应。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 100, "request": "西替利嗪在这个急性咳嗽发热期继续吃合适吗？麻烦系统做个用药安全评估。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 100, "request": "查下现有药物相互作用。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 100, "request": "这位哮喘病患目前长期使用的药物安全吗？帮我排查一下有没有相冲的风险。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 100, "request": "病人正在吸沙丁胺醇，帮我确认一下有没有药物冲突或安全性隐患。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1042", "round": 100, "request": "系统帮忙核查陈太太现有用药，看有没有药物冲突或是需要注意的配伍禁忌。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 100, "request": "Encik Rahman平时有吃一颗不知名的药丸，现在容易气促，帮我查下看会不会是那颗药的不良反应？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 100, "request": "系统里能调出他之前的配药记录吗？检查一下有没有药物冲突。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 100, "request": "Pakcik讲他每天有一颗固定的药，如果是atenolol的话，会不会加重他现在气喘的问题？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我查一下病人现有的用药清单，确认有没有任何过敏禁忌或冲突。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 100, "request": "查下现有药物相互作用和安全性。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请帮忙调看患者在政府医院的长期用药记录，确认目前吃的药安不安全。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 100, "request": "病人运动后会喘，如果他现有的药物里有perindopril，会不会有相关的不良反应风险？帮我评估一下。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 100, "request": "看下他平时服用的旧药会不会诱发呼吸困难？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 100, "request": "可以核对一下Encik Rahman在诊所拿的旧药吗？检查看有没有药物重叠或安全隐患。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 100, "request": "病人讲不清楚自己在吃什么药，系统能抓取最近的处方来做个用药安全审查吗？"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我分析他现有药物之间的相互作用，看是否安全。"}
+{"capability": "medication", "style": 6, "patient": "SYN-1086", "round": 100, "request": "查一下他正在服用的药物有没有用药禁忌，特别是会影响心肺功能的。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1042", "round": 100, "request": "请帮 Amelia Tan 开 Azithromycin 500mg OD for 3 days，记得注意她的 penicillin allergy。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Start PCM 1g QID prn fever，麻烦 draft 一下 prescription。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1042", "round": 100, "request": "看她 asthma 有点 flare up，帮我 prescribe Prednisolone 30mg daily for 5 days。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Puan Tan 的 inhaler 没了，帮她 refill Ventolin MDI 100mcg 2 puffs PRN。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1042", "round": 100, "request": "咳嗽有点 dry cough，开一个 Tab Dextromethorphan 30mg TDS 给她止咳。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Refill 她的 regular Cetirizine 10mg ON，开一个月的 supply 就可以。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Draft 一下 Clarithromycin 500mg BD for 7 days，谢谢。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1042", "round": 100, "request": "帮我 add on Fluimucil 600mg effervescent tablet OD 化痰。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1042", "round": 100, "request": "病人 wheezing 蛮明显的，order stat Combivent neb 1 ampoule 尽快给。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1042", "round": 100, "request": "因为 penicillin allergy，替她开 Doxycycline 100mg BD for 1 week 治疗 chest infection。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Night symptoms 好像控制得不够好，帮忙 prescribe Montelukast 10mg ON 试试看。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Amelia 想要换 controller，开一支 Symbicort 160/4.5mcg 2 puffs BD。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我开 Encik Rahman 一个 Frusemide 40mg IV stat，他现在 SOBOE 很厉害。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1086", "round": 100, "request": "麻烦 draft 一个 prescription，Salbutamol MDI 2 puffs PRN QID。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮这个 pakcik 写一张 prescription，IV Lasix 20mg stat 给他推。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1086", "round": 100, "request": "请 draft 处方，tablet GTN 0.5mg SL PRN for chest tightness。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Daniel Rahman 这边先 prescribe Atorvastatin 40mg ON，先给两个星期的 supply。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1086", "round": 100, "request": "App，麻烦帮我写 Symbicort 160/4.5mcg 1 puff BD 的 prescription。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1086", "round": 100, "request": "先 order Nebulised Combivent 2.5ml stat 给他做 neb。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我 start Bisoprolol 2.5mg OD，直接写进今天的 medication order 里面。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1086", "round": 100, "request": "可以帮我 draft 一个 Aspirin 100mg OD 的 new prescription 吗？"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Pakcik 的 full history 还没拿齐，不过先帮我 draft 他的 Perindopril 4mg OD。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Prescribe Furosemide 40mg PO OD 给他，先开 5 天供药。"}
+{"capability": "prescription", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮忙在系统里面 write a prescription for Amlodipine 5mg OD，谢谢。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 0, "request": "帮我开扑热息痛 1000毫克，一天四次，发烧或痛的时候才吃。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 0, "request": "Puan Tan要补药，帮她开西替利嗪 10mg，每天晚上吃一粒。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 0, "request": "哮喘有点复发，先开泼尼松龙 30mg 每天早上一次，给五天疗程。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 0, "request": "开沙丁胺醇吸入剂 100微克，气喘发作需要时吸两喷，开一支。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 0, "request": "帮陈女士开阿奇霉素 500mg 每天一次，先开三天，她盘尼西林过敏记得避开抗生素。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 0, "request": "咳嗽蛮多天了，加一个右美沙芬 15毫克，一天三次止咳。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 0, "request": "开普拿疼 500mg，发烧时吃两粒，每六小时一次 prn。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 0, "request": "起草一张溴己新 8毫克，一日三次化痰，先开一个星期的量。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 0, "request": "麻烦开孟鲁司特钠 10mg 睡前一粒，控制气喘用的。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 0, "request": "帮病人续开沙丁胺醇气雾剂，100mcg 每次两喷，气促时使用。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 0, "request": "开五天的口服强的松龙，剂量每天40毫克，早上服用。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 0, "request": "Amelia Tan需要退烧药，帮忙开对乙酰氨基酚 1克，每六小时一次有烧才吃。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮拉曼先生先开一个沙丁胺醇吸入剂，一百微克，有喘的时候吸两喷。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 0, "request": "先拟一份处方，口服呋塞米四十毫克，每天早上一次。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 0, "request": "开比索洛尔二点五毫克，每日一次。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 0, "request": "这位丹尼尔先生走动会喘，先开阿托伐他汀二十毫克，每晚一次。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我开阿司匹林一百毫克，每天吃一次，饭后。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 0, "request": "先给丹尼尔拉曼补开氨氯地平五毫克，每天一次。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 0, "request": "请起草处方，沙丁胺醇雾化吸入溶液二点五毫克，立即用一次。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 0, "request": "系统帮我放二甲双胍五百毫克，每天两次，随餐吃。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 0, "request": "先开培哚普利四毫克，每天早上服用一次。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮这位大叔开个硝酸甘油片零点五毫克，胸闷或喘时舌下含服一颗。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 0, "request": "开胃药泮托拉唑四十毫克，每日一次，早餐前服。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我加一个恩格列净十毫克，每天早上一次。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮我起草扑热息痛 1000毫克 一天四次，发烧时服用，先开五天。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 100, "request": "麻烦为 Puan Tan 补开沙丁胺醇吸入剂，每次 200微克，呼吸急促时吸两喷。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 100, "request": "开一张阿奇霉素 500毫克，每天口服一次，给三天的疗程。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 100, "request": "请帮 Amelia Tan 续开西替利嗪 10毫克，每晚吃一片，开一个月份的量。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 100, "request": "给她开强的松龙 30毫克 每天早上服用一次，连续吃五天控制气喘。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 100, "request": "麻烦起草处方，布地奈德吸入气雾剂 200微克，每天早晚各吸一喷。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 100, "request": "开右美沙芬糖浆 15毫克 每天三次，饭后服用，拿来止咳。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 100, "request": "这位病人需要退烧，帮我开对乙酰氨基酚 650毫克 每六小时一次，发烧才吃。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 100, "request": "请开乙酰半胱氨酸泡腾片 600毫克，每天泡水喝一次，开五天化痰。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 100, "request": "加开克拉霉素 500毫克 每天两次，吃七天，注意她青霉素过敏。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮我下一张单，孟鲁司特钠咀嚼片 10毫克，每晚睡前吃一片，先开两周。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1042", "round": 100, "request": "盐酸溴己新片 8毫克 一天吃三次，麻烦帮我开五天药单。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我开一张呋塞米 40毫克，每天早上一片，先吃一个星期看看。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 100, "request": "给拉曼先生开沙丁胺醇吸入剂，每次两喷，气喘呼吸困难时才吸。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 100, "request": "开比索洛尔 2.5毫克，每天一次，先起草一个月份的药量。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 100, "request": "麻烦开培哚普利 4毫克 每日一次。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 100, "request": "先开阿托伐他汀 20毫克，每天晚上吃一颗。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮拉曼大叔起草硝酸甘油片 0.5毫克，胸口闷痛或气紧时舌下含服一片。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 100, "request": "拟一份处方，开氨氯地平 5毫克 每天早上服用一次。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我续开螺内酯 25毫克 每天一次。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 100, "request": "开单硝酸异山梨酯 20毫克 每日两次，先开两个礼拜。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 100, "request": "给这位病人开阿司匹林 100毫克 每日一次，随餐吃。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 100, "request": "加药，起草达格列净 10毫克 每天早上一片。"}
+{"capability": "prescription", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请帮我开氢氯噻嗪 25毫克 每天一次，记录在处方里。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1042", "round": 100, "request": "帮Amelia Tan记录一下safety-netting advice，要是fever三天不退或者shortness of breath加剧，叫她马上来emergency department。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1042", "round": 100, "request": "TCA two weeks for asthma review，顺便check her peak flow chart。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1042", "round": 100, "request": "记得set reminder to double check penicillin allergy label on her prescription chart。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1042", "round": 100, "request": "请列出warning signs给病人：如果用到salbutamol超过每四小时一次还是喘，或者chest tightness恶化，立刻回来A&E。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1042", "round": 100, "request": "帮我安排15分钟后re-check her SpO2 and vital signs，听听wheezing有没有改善。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Puan Tan这个cough伴随fever的情况，建议几时call her back for review比较safe？三天还是五天？"}
+{"capability": "followup", "style": 4, "patient": "SYN-1042", "round": 100, "request": "交代一下red flags，要是喘到cannot complete sentences或者lips turning blue，叫她不可以拖，直接来casualty。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Set a reminder下午帮我trace her FBC result看有没有bacterial infection sign。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1042", "round": 100, "request": "如果chest x-ray clear，TCA one week later under outpatient clinic review symptom control。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1042", "round": 100, "request": "请帮我generate一份clear safety-netting note，提醒关于cetirizine引起的drowsiness以及fever spikes的注意事项。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1042", "round": 100, "request": "帮我flag一下，next visit一定要assess her inhaler technique and compliance。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1042", "round": 100, "request": "请问这类asthma exacerbation with viral fever usually suggest TCA within how many days for step-down assessment?"}
+{"capability": "followup", "style": 4, "patient": "SYN-1086", "round": 100, "request": "提醒我等下跟pakcik做safety netting，交代他如果突然有severe chest pain或者SOB worsen，一定要马上叫救护车去ED。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我calculate一下，做完basic workup之后大概几时放TCA for review比较appropriate？Two weeks还是one month？"}
+{"capability": "followup", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Set a reminder to identify his unknown tablet，让家人晚点把那个medicine strip拍照whatsapp过来。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1086", "round": 100, "request": "请generate一份SOB on exertion的safety-netting advice，主要是watch out for orthopnoea还有bilateral leg swelling。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Encik Rahman这个case，baseline bloods跟CXR出来之后，建议几时叫他come back看result？"}
+{"capability": "followup", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Reminder for tomorrow: trace baseline investigations including Renal Profile and FBC."}
+{"capability": "followup", "style": 4, "patient": "SYN-1086", "round": 100, "request": "列出适合Encik Daniel Rahman的red flag symptoms，等我take history的时候顺便做patient education。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1086", "round": 100, "request": "等下remind我问清楚他有没有吃着amlodipine或者其他hypertension medication。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1086", "round": 100, "request": "这种unexplained dyspnoea on exertion，如果没有red flags，通常safest follow-up interval是多久？"}
+{"capability": "followup", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我加一个task：before patient leaves clinic，一定要confirm好echocardiogram的appointment slot。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Draft一段bilingual的safety-netting note，如果home resting SOB加重，随时walk in to any nearest hospital ED。"}
+{"capability": "followup", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Set a task to review Encik Rahman's symptom progression tomorrow morning，如果ECG normal就安排1 month time review。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 0, "request": "帮我列一下哮喘病人的危险警讯，几时需要叫她直接去急诊部？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 0, "request": "陈女士这种情况，一般建议几天后回来复诊看肺部情况？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 0, "request": "交代病人回去如果吸了沙丁胺醇还是觉得胸口紧、吸不到气，一定要马上来医院。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 0, "request": "安排两天后复诊，看下咳嗽和发烧有没有好转。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 0, "request": "提醒病人注意，如果发烧持续超过三天或者痰开始带血，几时该立刻回来？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 0, "request": "帮我设个备忘录，提醒陈女士回家后要密切监测体温和呼吸频率。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 0, "request": "像她这样哮喘又咳嗽发烧的，有没有什么居家护理的安全指示需要交代的？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 0, "request": "麻烦列出吃西替利嗪之后需要注意的红旗征象，什么时候病情恶化要回来？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 0, "request": "如果病人发烧退了但是咳嗽反而加剧，应该建议她哪一天回来复查？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 0, "request": "设一个明天的跟进提醒，打电话追踪病人的呼吸状况。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 0, "request": "帮我写几条出院交代，主要是关于气喘恶化、呼吸困难时的应对措施和求医时机。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 0, "request": "五天后要安排回诊听肺音，帮我把这项加进医嘱里。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 0, "request": "记得吩咐他下次复诊一定要把家里吃的那些药丸全部带过来核对。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 0, "request": "如果他突然胸口压痛、冒冷汗或者喘到讲不到话，叫他即刻去最近的急诊部。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我查一下，像这种走路会气喘的情况，照完胸部X光后大概几久要叫他回来复诊？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 0, "request": "安排等下帮Encik Rahman做一张心电图，顺便抽血验一下电解质。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 0, "request": "给病人解释一下红旗警讯，特别是不能平躺睡觉或者脚肿变严重时要马上就医。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 0, "request": "如果先开两个星期的呋塞米，通常建议隔多久再回诊复查肾功能？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 0, "request": "提醒我等下要详细问清楚他以前有没有高血压还是心脏病，病历还没问完。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 0, "request": "交代Pakcik一声，回家如果静静坐着也会喘，或者咳出血丝，千万不要等，直接去急诊。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我设个两周后的门诊回诊预约。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 0, "request": "等下记得量一下两边手臂的血压，顺便测躺着和站着的读数。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 0, "request": "查一下针对五十多岁劳力性气喘的病人，有哪些危险征兆必须特别交代家属留意的？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 0, "request": "抽血报告全部出来之后，大概排几天内让他回来看比较稳妥？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮我设定Puan Tan三天后回来复诊看胸口情况。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 100, "request": "如果这几天salbutamol吸了还是觉得呼吸急促，病人应该什么时候回来？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 100, "request": "请列出哮喘发作的危险征兆，我等下要跟病人做safety netting。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮我mark一个reminder，明天下午跟进她的体温记录。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 100, "request": "像她这种有哮喘又发烧的个案，通常几天后要叫她回来医院做review？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 100, "request": "Amelia Tan如果连续两天高烧不退，可以直接walk-in回来复诊吗？给个建议。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 100, "request": "提醒病人：如果咳到喘不过气或者嘴唇发紫，一定要马上进急诊，千万不要等。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮我记下，等下记得交代她按时吃cetirizine，还有观察会不会发困。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 100, "request": "几时需要安排她再回来验一次血看发炎指数？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 100, "request": "针对Puan Tan写一份重点，交代她如果呼吸困难恶化时该采取什么紧急措施。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 100, "request": "查一下如果病人回家后发烧退了但咳嗽还在，大概几时应该回来follow up。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮我做个提醒，明天早上巡房时再测一次她的血氧。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 100, "request": "提醒患者下星期复诊时，记得把家里吃着的那种不知名白色药丸和包装袋一起带过来核对。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我算一下，Encik Rahman这种情况大概需要隔多久回来验血跟进？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 100, "request": "如果突然觉得胸口剧痛或者坐着也喘不过气，必须立刻去最近的急诊部门，帮我列出要交代的危险征兆。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 100, "request": "记得等下先安排照一张胸部光片，还有测个心电图。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请问活动后气喘初诊但还没完成问诊的病人，一般建议先安排两周后复诊合适吗？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 100, "request": "交代pakcik如果脚肿变严重，或者晚上睡觉平躺会喘醒，就要马上回医院看急症。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 100, "request": "设一个备忘录，待会儿问病史时务必查清楚他目前有没有在吃阿司匹林。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 100, "request": "列出呼吸困难患者的紧急就医警讯清单。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我提醒护士等下先给他测个走动前后的血氧饱和度和血压。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 100, "request": "今天所有基础检查做完后，大概要排几天后回来门诊看报告？"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请在系统备注，下一次见Encik Rahman时一定要优先理清他完整的长期用药清单。"}
+{"capability": "followup", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请草拟一份给病人的安全警示指南，说明出现什么呼吸困难恶化的征兆时必须马上前往医院。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 100, "request": "麻烦帮我 draft 一份 consultation note。Patient 是 Puan Tan，42岁，known case of asthma。Cough 已经五天了，昨天开始发烧，平时有在用 salbutamol inhaler，帮我整理清楚进 system。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 100, "request": "写一下 clinical note：42岁 female，asthma history，cough 5 days plus fever since yesterday，有 penicillin allergy，整理成 standard SOAP format。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 100, "request": "帮我 generate documentation 啦。病人 cough 五天，昨天开始 on and off fever，平时长期吃着 cetirizine，chest examination clear，写得 detailed 一点。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Draft note: 42yo with asthma, cough 5 days, fever 1 day, query URTI or acute exacerbation, please write documentation."}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 100, "request": "请帮我整理 Amelia Tan 的 encounter note。42岁女性，有 asthma 病史。主诉是 cough for 5 days，昨天开始 spike fever，请帮忙 draft 出 assessment 和 management plan。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Tolong draft consultation note kejap。Female 42岁，asthma background，cough 5 days then fever since yesterday，PRN salbutamol，帮我按 format 写好。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 100, "request": "帮我 draft clinic visit note，42岁女性 asthma，cough 5 days with fever yesterday，vitals stable，整理好 SOAP note。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 100, "request": "麻烦生成完整的 medical record note。42-year-old female，known asthma，cough 5天伴随发烧一天，记得 highlight 她的 penicillin allergy。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 100, "request": "可以帮我把刚才 Puan Tan 的 consultation 整理成 formal progress note 吗？主要就是 cough 五天跟昨天的 fever，asthma 病人。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Note drafting please。42岁 female，history of asthma，cough x 5 days, fever x 1 day。Regular on cetirizine。Generate clinical documentation。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 100, "request": "写 consultation note。42yo female, asthma, cough 5 days, fever since yesterday, chest clear，按 outpatient documentation 帮我出 note。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 100, "request": "请帮忙 draft 今天的 outpatient note：42岁 female with bronchial asthma，cough 5 days 加上昨天发热，请根据这些 clinical info 完成 documentation。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我 draft 一份 consultation note：57岁 male，chief complaint 是 breathless on exertion，目前 history 还没详细 take，只知道家里有 on 一颗 unknown tablet。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Please help to draft the clinic note for Encik Daniel Rahman，57岁。主诉 SOBOE，in-depth history not yet taken，平时有吃一颗 unknown white tablet。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 100, "request": "可以帮我 write 一个 preliminary consultation note 吗？Patient 57/M 主诉 exertional dyspnea，history pending，medication 方面他只记得有吃一种 unknown pill 好像是 Amlodipine。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 100, "request": "协助记录这个 pakcik 的 outpatient consultation note：Daniel Rahman, 57岁，主诉 DOE，full clinical history not yet taken，currently on an unknown regular medication。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Draft SOAP note 先，57岁 uncle 走两步就 breathless on exertion，detailed history not taken yet，long-term 拿 unknown tablet，先帮我起个草稿。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我 generate 一份 clerking note 框架，57 y/o male with breathless on exertion，history not yet taken，currently taking an unknown tablet for chronic condition。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 100, "request": "麻烦帮我写一下这次 consultation 的 draft note，57yo male，present with SOBOE，detailed history not yet taken，家里有 on unknown medication。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 100, "request": "写个 initial clinic note，pakcik 来看 breathless on exertion，history 还没正式 take，他不懂自己吃什么 medicine，只说有一颗 unknown pink tablet 可能是 Frusemide。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我 draft consultation note：57岁 male，SOBOE，history not yet taken，currently on unknown tablet。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Can you draft the consultation note for Encik Rahman? 57岁，complaint of breathless on exertion，full history pending clerking，patient reports taking one unknown oral tablet。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 100, "request": "请帮我 prepare 一份 initial consultation note，患者 57 岁男性，presenting complaint 是 breathless on exertion。目前 history not yet taken，medication history 只有 unknown tablet，先列好 note 的 structure。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我 write 一下 today's visit note，57 male，DOE，history not yet taken，on an unknown chronic tablet，先做个 initial documentation。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 0, "request": "写一下门诊记录。病人咳嗽五天，昨天开始发烧，有哮喘病史，对青霉素过敏。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 0, "request": "请帮我为陈女士起草一份看诊记录。42岁女性，主诉咳嗽五天伴发热一天，本身有哮喘底子。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 0, "request": "帮我起草病历：哮喘患者，咳嗽五天昨天发烧，平时有用沙丁胺醇吸入剂，记录这次急性就诊情况。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 0, "request": "记录一下这次就诊。女，四十二岁，咳嗽已经持续五天了，昨天烧起来，有支气管哮喘病史。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 0, "request": "请把刚刚的看诊写成详细记录，病人平时有吃西替利嗪，这次咳嗽五天加发烧一天，需要注意哮喘状况。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 0, "request": "麻烦写一份陈女士的门诊病历草稿，四十二岁，本身有哮喘，咳嗽了五天，昨天开始出现发热。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 0, "request": "生成就诊小结：哮喘病患，发烧一天伴咳嗽五天，确认对青霉素过敏，拟定对症治疗方案。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 0, "request": "帮我撰写这份临床记录。病人咳嗽五天了，昨天开始发烧，本身是个哮喘患者，请整理出检查和医嘱重点。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 0, "request": "麻烦帮我写个看诊记录，女患者，四十二岁有哮喘病史，这几天咳嗽一直不好，昨天还发烧了。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 0, "request": "整理看诊记录：主诉咳嗽五天，昨起发烧，长期用沙丁胺醇控制哮喘，请生成完整的看诊摘要。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 0, "request": "陈女士的病历记录帮我写一下，发热一天伴五天咳嗽，既往有支气管哮喘，评估目前呼吸道感染情况。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 0, "request": "写一份完整的就诊总结。患者哮喘，咳嗽五天加重伴发烧一天，特别注明对青霉素类药物过敏。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 0, "request": "请帮我为五十七岁的丹尼尔拉曼起草一份门诊病历，主诉是活动后呼吸急促，目前吃着一种不知名的药丸，详细病史还没问。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 0, "request": "病人稍微走动一下就喘，自己平时吃的药丸名字也讲不清楚，病史还没来得及问，先帮我写个病历草稿。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 0, "request": "拉曼先生五十七岁，主诉劳力性呼吸困难，还在吃着不知名的药片，病史未详，帮我草拟一份看诊记录。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我做一份病历记录：病人主诉活动后气喘，有在吃一种讲不出名字的药丸，详细病史待查。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 0, "request": "病人走路容易气喘，怀疑有在吃氨氯地平，但具体药名还没确认，还没问病史，请帮我生成这次的看诊记录。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 0, "request": "活动后气促，服药不详，病史未问，帮我整理出完整的就诊笔记。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 0, "request": "麻烦协助撰写一份初步临床记录，五十七岁男性，活动时气短，目前服用的药丸成分不明，病史尚待询问。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 0, "request": "这位伯伯走几步就喘得厉害，详细情况还没问，只知道他每天吞一粒不知名的药，帮我先起草一份看诊记录。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 0, "request": "丹尼尔，五十七岁，活动耐量下降伴气短，服用不明药丸，病史待采集，请帮我拟好这次的会诊记录。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 0, "request": "起草一份门诊记录：主诉劳累后气短，病史未详，自行服用不明药物。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 0, "request": "写一下门诊病历，病人活动后气促，手头上有一种不知名药片可能像是二甲双胍，还没来得及问完整病史。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 0, "request": "麻烦帮我写个看诊记录，病人一用力就喘，平时吃的那颗药丸叫不出名字，等下才去问病史。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 1, "request": "请帮我整理陈女士的看诊记录，42岁女性，有哮喘病史，咳嗽五天且昨天开始发烧，对盘尼西林过敏，请生成完整的门诊病历。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 1, "request": "帮我写一下病历记录，病人咳嗽五天，昨天起发烧，本身有哮喘，正在用沙丁胺醇吸入剂。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 1, "request": "艾米莉亚·陈女士，42岁，主诉咳嗽五天伴随发烧一天，有气喘病史，请协助起草这次的门诊记录。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 1, "request": "记录一下：病人有哮喘，咳嗽五天，昨日开始发热，平时有吃西替利嗪，请整理成标准的看诊记录。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 1, "request": "写个就诊记录，42岁女性，咳嗽五天加昨晚发烧，本身有哮喘问题。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 1, "request": "麻烦帮我起草一份临床记录，病人咳嗽五天发烧一天，注意标明对青霉素过敏。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 1, "request": "帮我写好陈小姐这次看诊的咨询记录，主要问题是咳嗽五天和发烧一天，患者本身有哮喘。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 1, "request": "帮我出一下病历，病人咳嗽五天，昨天发烧，有哮喘史。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 1, "request": "请为这位42岁的女患者撰写看诊摘要，她有哮喘病史并定期使用沙丁胺醇，这次主诉咳嗽五天且从昨天开始发烧。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 1, "request": "帮忙整理一下看诊记录，四十岁出头的女性，哮喘伴随咳嗽五天和发烧一天。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 1, "request": "请生成门诊记录：患者咳嗽五天伴发热一天，有哮喘病史，特别注明患者对青霉素有药物过敏史。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 1, "request": "帮我写下这次的看诊报告，病人有哮喘，咳嗽差不多五天了，昨天开始起烧，谢谢。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 1, "request": "帮我起草一份门诊病历，病人是五十七岁的大叔，主诉走动时容易气喘，病史还没详细问，目前只知道他平时有吃一种不知名的药丸。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 1, "request": "记录一下初诊：活动后气促，病史待查，正在服用一种未知药丸，麻烦整理成规范的看诊记录。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 1, "request": "麻烦帮拉曼先生写一份看诊记录。五十七岁，主诉稍微走动就喘，还没仔细问病史，目前只知道他有吃着一种药片但名字不清楚。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 1, "request": "帮我拟一份这个病例的诊疗记录，病人走动会喘，详细病史还没拿，病人讲他每天吞一粒不知道什么药。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 1, "request": "整理看诊记录：动一下就喘，未详询病史，服用不明药丸。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 1, "request": "请协助生成一份临床病历。病人出现活动后呼吸困难，详细病史暂未采集，自述有一颗长期服用的不明药物，需要进一步跟进。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 1, "request": "帮我写一下病历，这位大叔五十七岁，走两步就喘得厉害，病史还没来得及问完，只知道他有吃着一粒不知名的药。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 1, "request": "麻烦起草门诊笔记：患者申诉活动耐量下降、活动后气喘，病史尚未完整获取，目前自服一种不明药丸，疑似氨氯地平。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 1, "request": "帮我记录这次看诊：气促，走动时明显，详细情况待问，平时有吃一颗不明药片，帮我列出初步诊疗记录。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 1, "request": "请帮我写一份初诊病史记录。病人主诉稍微活动就很喘，因为时间关系病史还没完全问完，家属也讲不出他平时吃的是什么药丸，只说有一颗每天都在吃。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 1, "request": "整理一份看诊记录，主诉活动后气喘，病史未详，服用未知药丸，谢谢。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 1, "request": "帮丹尼尔·拉曼整理一下今天的看诊笔记，五十七岁，活动后喘，详细病史还没拿到，只知道吃着一种未确认的药丸。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 2, "request": "帮我写一下这次看诊记录。病人有哮喘，咳嗽五天昨天开始发烧，平时有用沙丁胺醇吸入剂。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 2, "request": "麻烦整理一份门诊病历。42岁女性，主诉咳嗽五天伴发热一天，本身有哮喘病史。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 2, "request": "请帮Puan Tan起草一份完整的问诊记录，记录她咳嗽发热，另外对盘尼西林过敏。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 2, "request": "写下病历：42岁，气喘病史，咳了五天，昨天发烧。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 2, "request": "协助生成看诊小结。病人这五天咳嗽很厉害，昨天开始发烧，平时有在吃西替利嗪，需要评估哮喘情况。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 2, "request": "帮我草拟下诊疗记录，42岁女性，咳嗽五天加发热一天，有哮喘底子。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 2, "request": "请生成Amelia Tan的就诊记录，主要问题是咳嗽五天加昨晚发烧，本身有哮喘。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 2, "request": "请帮我整理这份看诊总结，病人有气喘，咳嗽五天并且昨天开始发烧，谢谢。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 2, "request": "起草临床笔记，42岁哮喘患者，咳嗽五天昨日起发热，常规使用沙丁胺醇。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 2, "request": "写一下门诊记录，病人有青霉素过敏史，主诉咳嗽五天发热一天，既往哮喘。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 2, "request": "系统请写一份看诊记录，Amelia，42岁女性，哮喘病史，发热一天伴咳嗽五天，帮我做好归纳。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 2, "request": "麻烦出一下今天的门诊病历，42岁女性哮喘病人，咳嗽五天，昨天发烧。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 2, "request": "帮我开一份拉曼先生的就诊记录，57岁，主诉走动时气喘，平时吃着一种不知名的药丸，详细病史还没来得及问，先起草病历。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 2, "request": "整理一下目前的看诊记录：劳力性呼吸困难，病史未详，病人只说有服食一种不知名的白色药片，先帮我拟个初步病历草稿。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 2, "request": "麻烦帮我写这次看诊的记录，病人稍微走动就喘，完整病史还没问完，随身带了一种不清楚名字的药丸，请先草拟好。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 2, "request": "写一下病历：活动后呼吸急促，病史尚未采集完毕，长期吃着不明药片，先帮我生成门诊记录。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 2, "request": "请协助为丹尼尔拉曼先生撰写就诊记录，57岁男性，主诉动一下就容易气促，病史等下才详细问，手头有一颗未知药丸，谢谢。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 2, "request": "帮我起草一份门诊病历，主诉劳作时气喘，还没仔细问病史，平时吃一种不知名的降压药，先拟好记录框架。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 2, "request": "主诉走几步路就喘，病史等下补问，病人只有带一种没有标签的未知药丸，麻烦帮我记录这次看诊。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 2, "request": "帮这位57岁的大叔写份病历草稿，活动后气喘，病史还没问，只知天天吞一颗不知名的药，先拟出来。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 2, "request": "起草看诊记录：病人稍微活动就气短喘促，完整病史待查，目前吃着一种不明药丸，疑似二甲双胍，请生成临床记录。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 2, "request": "协助写一下就诊记录，病人主诉活动后很喘，还没做详细问诊，只讲在吃不知名的药片，先整理好门诊底稿。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 2, "request": "麻烦拟一份看诊总结，主诉用力或走动时呼吸困难，详细病史还没开始问，随身带有不明药丸，先帮我建好病历。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 2, "request": "快点帮我草拟一份病历：活动后急促喘息，详细病史待补，吃着一种不知名药片，先做个记录存底。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮我整理一份门诊病历。42岁女性，有哮喘病史，咳嗽五天，昨天开始发烧，对青霉素过敏。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 100, "request": "请帮 Amelia Tan 起草看诊记录。四十二岁女性，既往有气喘，主诉咳嗽五天且从昨天开始发烧，平时有用沙丁胺醇吸入剂。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 100, "request": "起草病历：42岁女患者，有哮喘底，咳嗽五天伴发热一天，目前有在服用西替利嗪。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 100, "request": "麻烦帮忙写一下会诊记录，病人42岁女的，气喘病史，发烧一天，咳嗽已经五天了。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮 Puan Tan 拟一份完整的看诊记录，42岁女性，主诉咳嗽五天、发烧一天，哮喘病史，对青霉素敏感。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 100, "request": "请为这位42岁的女患者生成看诊记录，有气喘，咳嗽持续了五日，昨日开始发高烧。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 100, "request": "整理一下看诊记录：42岁，女，咳嗽五天昨天发烧，记录一下她有哮喘并且有用沙丁胺醇。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 100, "request": "出一下今天的病历文档。女，42岁，气喘底，咳嗽五天，昨日起发热，无药物过敏。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮陈女士写一份门诊记录。42岁，主诉反复咳嗽五天、发热一天，有哮喘病史。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 100, "request": "麻烦写个完整的诊疗记录，42岁女性，主诉是咳嗽五天加昨天发烧一天，哮喘病史，对青霉素过敏。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮我draft一下这个病人的病历，42岁女患者，有哮喘病史，平时吃西替利嗪，这次咳嗽五天昨天开始发烧。"}
+{"capability": "note", "style": 6, "patient": "SYN-1042", "round": 100, "request": "协助拟定门诊咨询记录：42岁女性，既往哮喘病史，咳嗽五天，昨日出现发热症状。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我起草一份门诊病历，病人主诉走动时容易气促，病史暂时还没详细问，目前只知道有在吃一种不明药丸。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请协助拟定一份看诊记录。57岁的丹尼尔拉曼先生主诉稍微活动就喘，目前还在服用一种未知药片，详细病史稍后再补上。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我写一下这个病人的病历记录，主诉是活动后呼吸急促，既往病史还没完全采集，吃着一种不清楚名字的降压药。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请帮我整理这名病人的初诊记录，主诉走动后气短，病史尚未采集完毕，口服药物种类不详，请先建立好框架。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮那位57岁的拉曼大叔拟一份门诊记录先，他讲用力走动会气喘，病史还没问完，身上有一排不知道是什么的药片。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 100, "request": "起草一下就诊记录，主诉活动后气促，病史未问，自述平时有吃一种不明药片。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请帮我写一篇门诊记录：57岁男性，主诉劳力性呼吸困难，病史待详问，目前只服用一种成分未明的药物。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 100, "request": "麻烦帮我起草这个病人的看诊记录，他走几步就喘，病史还没细问，只知道在吃一种未知药丸。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请协助撰写今天的诊疗记录。病人主诉稍微活动就气喘吁吁，病史还未记录，平时有吃一颗不知名的药片。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮拉曼先生起草看诊病历，57岁，劳累后呼吸急促，详细病史待补，目前服用一种不知名药丸。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 100, "request": "准备一份新的病历记录，患者主要问题是活动时气促，病史尚待询问，目前仅得知正在服用某种未知药物。"}
+{"capability": "note", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我做一份看诊记录，病人一活动就喘，病史还没有拿，只带了一种不知道什么名字的药片过来。"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1042", "round": 100, "request": "帮我算一下CURB-65 score，根据现在Malaysian CPG CAP guideline，cut-off point多少需要direct admission？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Puan Tan有penicillin allergy，如果要prescribe azithromycin，本地CAP studies关于macrolide resistance有怎样的graded evidence？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Acute asthma exacerbation with fever，GINA guideline对mild-to-moderate attack的classification criteria跟systematic review证据是什么？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1042", "round": 100, "request": "麻烦check一下penicillin allergy患者在outpatient CAP使用doxycycline的clinical trial evidence和clinical cure rate。"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1042", "round": 100, "request": "CRB-65 score如果是0分，最新BTS guideline对于safe for outpatient treatment的evidence level多高？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Asthmatic patient合并chest infection，salbutamol MDI high-dose PRN导致hypokalemia的safety studies与evidence grade是什么？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Amelia Tan咳嗽五天发烧一天但vital signs stable，这种情况做routine CXR有没有strong guideline recommendation支持？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1042", "round": 100, "request": "CAP adult patients使用procalcitonin-guided antibiotic therapy，有没有high-quality systematic review证明可以reduce duration？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Severe penicillin allergy患者，MOH guideline关于levofloxacin作为alternative agent的recommendation grade和safety evidence是什么？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Adult asthmatic with mild community-acquired pneumonia，NICE guideline对routine sputum culture的recommendation level是怎样的？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1042", "round": 100, "request": "帮这位42岁female算Pneumonia Severity Index，PORT score的mortality risk class是多少？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Adult asthma infection-induced exacerbation，拉出关于early systemic corticosteroids介入时机的最新Cochrane review evidence summary。"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我看一下Wells score for pulmonary embolism的criteria，急诊SOBOE patient如果D-dimer borderline，YEARS algorithm的graded evidence是怎么说的？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Encik Rahman有breathlessness on exertion，我想rule out heart failure，最新ESC guidelines对于NT-proBNP cut-off points跟diagnostic algorithm有怎样的recommendation？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Can you pull up the British Thoracic Society guidelines for community-acquired pneumonia? 顺便查一下CURB-65 score每个mortality risk group的管理建议。"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Pakcik吃着unknown tablet，怀疑acute decompensated heart failure，如果现在给iv frusemide，有没有high-quality RCT evidence支持ED early diuresis会improve outcomes？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1086", "round": 100, "request": "57岁male shortness of breath，check一下GOLD guideline对于suspected COPD exacerbation的severity grading还有spirometry criteria。"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1086", "round": 100, "request": "HEART score怎么算？把low risk versus intermediate risk的MACE risk percentage还有validation study evidence列给我看。"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1086", "round": 100, "request": "GINA guideline对于acute asthma exacerbation的severity assessment flow是什么？Peak flow drop对admission decision的evidence grade怎样？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Patient exertional dyspnoea，如果blood result出来是severe anaemia，TRICC trial还有AABB guidelines对于restrictive transfusion threshold的evidence level是多少？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我calculate CHA2DS2-VASc score，顺便看一下Malaysian MOH CPG对于new-onset atrial fibrillation initiation of anticoagulation的grade of recommendation。"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Exudative versus transudative pleural effusion的Light's criteria diagnostic accuracy study是哪篇？有meta-analysis的sensitivity and specificity吗？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Encik Rahman的unknown tablet如果查出来是perindopril，acute renal impairment presentation时withhold ACE inhibitor的KDIGO guideline recommendation和evidence base是什么？"}
+{"capability": "evidence", "style": 4, "patient": "SYN-1086", "round": 100, "request": "NEWS2 score大于几分需要immediate escalation to medical registrar？给我NICE guideline的graded recommendation。"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 0, "request": "帮我算一下CURB-65评分，顺便调出社区获得性肺炎门诊和住院分流依据的临床指南推荐等级。"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 0, "request": "Amelia Tan有哮喘病史，这次发热咳嗽急性加重，最新的GINA指南对成人门诊初始控制的证据等级是什么？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 0, "request": "患者有penicillin过敏，根据马来西亚国家抗生素指南，轻症CAP选用阿奇霉素的循证证据等级是多高？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 0, "request": "CRB-65在没有实验室抽血结果的情况下，评估成人下呼吸道感染死亡风险的临床验证研究有哪些？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 0, "request": "针对青霉素过敏的呼吸道感染患者，有多西环素对非典型病原体疗效的最新系统评价或RCT研究吗？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 0, "request": "哮喘急性发作频繁吸入沙丁胺醇的安全性评估，目前的权威临床研究与指南推荐上限是多少？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 0, "request": "对于发热五天伴喘息的成年人，降钙素原指导抗生素停启的Cochrane评价和证据分级如何？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 0, "request": "麻烦查一下Puan Tan这个年龄段的PSI评分分级，门诊治疗低危组的循证安全性数据支持够不够？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 0, "request": "短期口服泼尼松龙治疗成年人哮喘轻中度急性加重的指南推荐级别与系统评价结论是什么？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 0, "request": "请提供GINA指南中关于呼气峰值流速PEF监测判断恶化风险的分级推荐证据。"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 0, "request": "成人急性呼吸道感染门诊测CRP判断细菌感染的NICE指南推荐等级与诊断准确性研究有哪些？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 0, "request": "NEWS2评分在急诊评估哮喘合并发热患者恶化风险方面的循证医学验证文献有哪些？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 0, "request": "拉赫曼大叔活动后气短，如果怀疑心力衰竭，目前临床指南推荐的首选确诊检查是什么？请附上证据等级。"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 0, "request": "评估未明确病因的劳力性呼吸困难，应该参考哪个严重程度评分系统？请提供临床实践指南的推荐级别。"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 0, "request": "这位五十七岁的拉赫曼先生平时有吃不知名的药，如果经验性给予呋塞米，有没有权威指南支持在未明确诊断前的分级证据？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 0, "request": "针对成年人突发性劳力性气促，查一下排除肺栓塞的临床评分标准及其背后的临床研究依据。"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 0, "request": "查一下慢性心力衰竭启动达格列净治疗的最新临床指南推荐等级与标志性临床试验依据。"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 0, "request": "丹尼尔·拉赫曼先生有劳力性气喘，如果要做呼吸困难严重度评估，心脏功能分级和呼吸困难评分的证据支持分别是什么？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 0, "request": "社区获得性肺炎引起呼吸急促时，使用严重度评分系统决定是否收治入院的研究证据和指南依据是什么？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 0, "request": "面对不明病因的气促患者，如果考虑气道疾病而使用沙丁胺醇，临床指南对此给出的推荐等级是几级？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 0, "request": "针对中年男性进行性加重的劳力性呼吸急促，鉴别心源性与肺源性气喘的临床评估路径在最新指南中是如何分级的？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 0, "request": "急诊处理不明原因呼吸困难时，根据心脏学会指南，将脑钠肽列为排除心衰诊断的证据级别是哪一级？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 0, "request": "疑似慢性心功能不全但病史不详的情况下，启动螺内酯治疗有哪些大型随机对照试验支持其获益？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 0, "request": "麻烦帮我看一下，针对拉赫曼大叔这种劳力性气短但病史未明的病例，有没有针对急诊分诊的高级别循证医学指南流程？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮我算一下这名下呼吸道感染病人的CURB-65评分，顺便列出低风险群体的本地CPG指南处理建议。"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 100, "request": "Puan Tan有哮喘病史且咳嗽加重，依照最新GINA指南，加大salbutamol吸入频率的证据等级是多少？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 100, "request": "患者对青霉素过敏伴疑似细菌感染，门诊单用阿奇霉素的循证医学证据充分吗？有没有相关的Meta分析？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 100, "request": "查一下成人轻度CAP用CRB-65评分判断门诊治疗安全性的研究数据和特异度。"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 100, "request": "请问Amelia Tan咳嗽五天微烧，根据现有临床指南，目前是否有足够指征需要做经验性抗菌治疗？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 100, "request": "对于青霉素过敏的非重症肺炎患者，指南推荐改用多西环素的推荐级别和支持研究有哪些？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 100, "request": "我想参考肺炎严重指数PSI评分，请调出针对中年哮喘患者门诊分流的具体分级标准与研究依据。"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 100, "request": "哮喘急性发作合并呼吸道感染时，早期给予口服泼尼松龙的获益有无高质量Cochrane系统评价支持？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 100, "request": "门诊根据CRP或降钙素原指导下呼吸道感染抗生素使用的循证指南与随机对照试验结果如何？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 100, "request": "Puan Tan目前呼吸平稳，依据胸科临床实践指南，成人急性咳嗽发热常规照胸部X光的指征与证据等级是什么？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 100, "request": "评估成人肺炎恶化风险，SMART-COP评分比起CURB-65在重症预测方面的文献准确率对比怎样？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1042", "round": 100, "request": "青霉素过敏患者如果选择克拉霉素治疗非典型肺炎，五天短疗程与传统疗程疗效对比的研究结论是什么？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 100, "request": "57岁男性出现劳力性呼吸困难，在未完成完整病史采集前，评估心功能应优先参考NYHA分级还是mMRC评分？请提供指南依据。"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 100, "request": "Encik Rahman运动后气促，如果要排除肺栓塞，Wells评分和改良Geneva评分哪个在亚裔人群中的循证证据等级更高？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 100, "request": "怀疑早期心衰竭，若后续考虑启动比索洛尔治疗，最新临床实践指南对其适应证和证据级别是如何规定的？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请问针对中老年人劳力性气喘，HEART评分在急诊与门诊分流低危胸痛及呼吸困难患者的循证研究支持度如何？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 100, "request": "这位pakcik主诉活动后喘，如果是社区获得性肺炎引起的，CURB-65评分指导住院或门诊决策的推荐级别是什么？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 100, "request": "未明药物史的劳力性呼吸困难，若拟诊断性试用沙丁胺醇雾化，是否有高质量临床研究或指南支持这种鉴别手段？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 100, "request": "57岁劳力性气促疑为心肌缺血等同症状，马来西亚稳定型冠心病临床指南对优先安排负荷试验的证据推荐等级是哪一级？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 100, "request": "活动耐量下降合并下肢水肿，若怀疑口服未知药为氨氯地平所致，指南对药物性水肿与心源性呼吸困难的鉴别评估流程有什么建议？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 100, "request": "排查早期充血性心力衰竭时，Framingham心衰诊断标准与当前ESC指南标准的敏感度及特异度对比研究有哪些？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 100, "request": "针对Daniel Rahman这种活动后气促的初诊患者，肺栓塞排除标准PERC规则的安全性和漏诊率循证证据如何？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 100, "request": "若体检怀疑心衰失代偿合并气促，静脉使用呋塞米早期干预的临床指南证据级别及给药依据是什么？"}
+{"capability": "evidence", "style": 6, "patient": "SYN-1086", "round": 100, "request": "喘息症状未明，在缺乏肺功能检查的情况下，GOLD指南对根据症状严重度评分经验性启动吸入治疗有何 graded evidence？"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1042", "round": 100, "request": "帮我 generate 一张 3 天的 MC 给 Puan Tan，从今天开始算。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1042", "round": 100, "request": "请问 AIA 的 Guarantee Letter approved 了没有？麻烦 update 一下 insurance status。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Check 一下 female medical ward 现在还有没有 empty bed，急诊要送人上去。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1042", "round": 100, "request": "帮我 draft 一封 referral letter 给 respiratory team，patient 有 asthma exacerbation，目前 on salbutamol。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1042", "round": 100, "request": "查一下 Amelia Tan 还有什么 discharge blocker？如果没有 pending blood test 就可以 plan discharge 了。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1042", "round": 100, "request": "这个 case 的 ICD-10 code 是什么？帮我 key in casemix coding for acute bronchitis with asthma。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1042", "round": 100, "request": "请把这床的 summary 整理进 night shift handover list，note 一下发烧跟 allergy to penicillin。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1042", "round": 100, "request": "Patient 问如果 admit ward 住两晚 roughly 要多少 deposit？麻烦 check billing system 算一下 estimated cost。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1042", "round": 100, "request": "可以帮我 issue admission order 还有 print 出 consent form 吗？我们要 direct admit 进 HDU。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1042", "round": 100, "request": "帮我 contact OT desk，book 一个 emergency slot 做 bronchoscopy，明天早上 first case。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1042", "round": 100, "request": "帮我 finalize discharge summary，顺便把 cetirizine 加进 discharge prescription list。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1042", "round": 100, "request": "请 write 一个 official referral 给 ENT clinic，安排 routine follow-up。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1086", "round": 100, "request": "Check 一下现在 5G 和 6G medical ward 还有没有 empty bed 可以收人？"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮 Encik Rahman issue 3 天的 MC，diagnosis 先放 shortness of breath pending investigation。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我 draft 一封 urgent referral letter 给 Cardiology team，说 57 岁 patient DOE 越来越 severe 需要 early echo。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1086", "round": 100, "request": "系统查得到这位 pakcik 的 insurance GL approved 了没有吗？TPA 到底 approve 了多少？"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮忙 generate 一张 admission slip，patient DOE 蛮 severe，需要 direct admit 上 general ward。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1086", "round": 100, "request": "看一下今天 ward 有什么 discharge blockers，整理一份 pending scan 和 pending family pickup 的 list 给我。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1086", "round": 100, "request": "把这个 case add 进 night shift handover list，交代 on-call team 去 review baseline bloods 和 CXR。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1086", "round": 100, "request": "ADHF unspecified 的 ICD-10 code 是什么？帮我 directly submit 进 casemix billing system。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1086", "round": 100, "request": "查一下 Encik Daniel 的 total hospital bill 已经 run 到多少了，刚才那 dose stat IV frusemide 有 charge 进去吗？"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我 liaise emergency OT 问看傍晚还有没有 slot，顺便 log 进 theatre booking system。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1086", "round": 100, "request": "帮我 reserve 一张 telemetry bed，admission set 印出来，patient 刚才提过家里有在吃 bisoprolol。"}
+{"capability": "not-covered", "style": 4, "patient": "SYN-1086", "round": 100, "request": "可以直接 generate discharge summary 还有 outpatient prescription memo 送去 pharmacy 吗？"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 0, "request": "可以帮我开一张三天的MC吗？诊断写急性支气管炎发作。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 0, "request": "请问Puan Tan的保险GL批准了吗？家属还在急诊柜台等着办手续。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 0, "request": "查一下现在内科普通女病房还有没有空bed，这边准备收病人上去了。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 0, "request": "帮我找一下急性哮喘发作伴随呼吸道感染的ICD-10编码，系统里面我找不到正确的casemix code。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 0, "request": "起草一封转去respi专科的referral letter，记得写上病人平时有在用salbutamol inhaler。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 0, "request": "帮我看一下这位病人还有什么discharge blocker，肺部X光报告出来了没有？"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 0, "request": "今晚的交班记录帮我交待清楚，注明Amelia Tan对penicillin严重过敏，发热期间只服用了cetirizine。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 0, "request": "算一下Amelia Tan这次在黄区吸雾化加上基本检查的总账单大概要多少钱？"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 0, "request": "马上帮忙打印一份入院同意书和admission paperwork，家属同意今天先住进观察病房。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 0, "request": "可以直接帮我向手术室那边book明天早上的紧急OT吗？"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 0, "request": "请帮这位病人整理一份完整的出院摘要，顺便预约两周后回胸腔科门诊复诊的时间。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 0, "request": "查一下全院现在哪个ward还有带氧气端口的空床位，急诊这里已经没有地方放病人了。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我处理一下Encik Rahman的入院登记，顺便把病房同意书打印出来。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 0, "request": "写一张转介信给心脏内科，写病人活动时呼吸急促，目前病史还不明确。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我开两天的病假单给病人，诊断栏先填劳力性气促待查。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 0, "request": "查一下现在全院内科病房还有没有空床？特别是三号男病房。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 0, "request": "请帮这位pakcik联络家属拿公务员保证信，看是要自费还是政府担保。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 0, "request": "帮我查一下劳力性呼吸困难和不明药物反应对应的ICD-10编码。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 0, "request": "把这位病人的初步评估整理一下，直接丢进今晚夜班的交接班清单里。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 0, "request": "麻烦预订明天早上的紧急手术室，排在心导管室的第一台。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 0, "request": "系统里看一下他的出院阻碍解决了吗，家属还没来拿药对不对？"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 0, "request": "算一下病人今天在急诊做的心电图和所有抽血项目的总账单费用。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 0, "request": "替Daniel Rahman出一份转院信给国家心脏中心，备注他正在吃不明来源的降压药。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 0, "request": "直接在系统里帮我开入院单，安排推床送去急救观察区。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 100, "request": "帮我开两天的MC给这位病人，诊断写急性支气管炎。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 100, "request": "请帮Puan Tan查一下AIA的GL有没有下来，如果保险还没批准就先卡住discharge。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 100, "request": "这宗哮喘急性发作合并肺部感染的ICD-10和casemix代码是什么？帮我直接放进系统。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 100, "request": "写一封转介信去胸腔内科，注明病人喘息加剧且近期频繁使用salbutamol，请专科接手。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 100, "request": "现在内科女病房还有空床位吗？查一下整层楼普通床和隔离床的bed status。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 100, "request": "把今晚夜班的交班清单整理好，特别列出待复查血象和体温的观察病例。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 100, "request": "算一下如果收进双人病房观察两天，大概的住院账单费用是多少？家属想了解预算。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 100, "request": "Puan Tan的情况需要收治入院，帮我生成完整的admission表格并打印出来。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 100, "request": "联络麻醉科和手术室，帮我book明早九点急诊支气管镜检查的OT slot。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 100, "request": "把出院总结做出来，口服cetirizine先停掉，顺便看看系统里还有没有未解的discharge blockers。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 100, "request": "跟保险部催一下，问看病人的Initial Guarantee Letter为什么卡着还没发过来？"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1042", "round": 100, "request": "Amelia需要转去耳鼻喉科做详细评估，麻烦帮我起草一份referral letter。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我查一下Encik Rahman的保险担保信批下来了没有？还要确认保险公司有没有要求补交心电图。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 100, "request": "开一张两天的病假单，从今天算起，诊断先写呼吸急促待查。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 100, "request": "内科病房现在还有没有空床位？帮我看一下全院男病房的床位状态。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我出一套入院文件，这位pakcik活动后喘得厉害，需要收进三号病房详细排查。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 100, "request": "麻烦帮我起草一封转诊信给心脏内科，说明病人活动后气促明显，需要安排心脏超声检查。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 100, "request": "查一下劳力性呼吸困难的ICD-10编码是多少，顺便帮我录入casemix系统里。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我整理今天傍晚的交班名单，把待查病史和等待抽血结果的几位病人列进交接记录。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我排一下明天上午的手术室时段，看看紧急手术室有没有空的排期。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 100, "request": "看一下Daniel Rahman的出院阻碍因素处理完了没，如果抽血报告没问题就直接生成出院总结。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 100, "request": "帮我核算一下病人今天的门诊诊费和胸部X光费用，打印最终的账单明细。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 100, "request": "替我写一份转去呼吸科的转介信，病人平时有在吃Amlodipine，但最近走几步路就严重气喘。"}
+{"capability": "not-covered", "style": 6, "patient": "SYN-1086", "round": 100, "request": "请帮我办理出院手续并通知药剂部准备出院带药，把所有出院纸打出来。"}

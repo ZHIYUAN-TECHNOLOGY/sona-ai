@@ -14,7 +14,7 @@ HERE = Path(__file__).parent
 MODEL = "gemini-3.8-flash"
 PER_CALL = 12
 # Extra generation rounds for classes that came out thin (v1 fine-tune missed note, medication and briefing).
-CAP = 250
+CAP = 330
 ROUNDS = {"note": 3, "medication": 3, "briefing": 2}
 
 # What each card is for, with the boundaries the baseline showed are easy to cross.
@@ -36,7 +36,10 @@ STYLES = [
     "Malay or English with a short Mandarin phrase in Chinese characters inside the sentence",
     "Mandarin-dominant (Chinese characters) with English medical terms",
     "a very short voice command of two to five words, any of Malay, English or Mandarin",
+    "Mandarin only, in Simplified Chinese characters, the way a Malaysian Chinese doctor types it",
 ]
+# Mandarin-heavy requests were most of v4's composer misses: one extra round of these styles for every card.
+MANDARIN_STYLES = {4, 6}
 PATIENT_HINTS = {
     "SYN-1042": "Amelia Tan (Puan Tan, she/her), 42, asthma, cough five days with fever since yesterday, uses a salbutamol inhaler and cetirizine, penicillin allergy",
     "SYN-1086": "Daniel Rahman (Encik Rahman, pakcik, he/him), 57, breathless on exertion, history not yet taken, takes an unknown tablet",
@@ -88,8 +91,8 @@ def fill_requests(path):
     done = {(r["capability"], r["style"], r["patient"], r.get("round", 0)) for r in have}
     with path.open("a") as out:
         for capability in CAPABILITY_OPTIONS:
-            for rnd in range(ROUNDS.get(capability, 1)):
-                for style in range(len(STYLES)):
+            for style in range(len(STYLES)):
+                for rnd in [*range(ROUNDS.get(capability, 1)), *([100] if style in MANDARIN_STYLES else [])]:
                     for patient in PATIENTS:
                         if (capability, style, patient, rnd) in done: continue
                         print(f"generating {capability} / round {rnd} / style {style} / {patient}")
