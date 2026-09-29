@@ -7,7 +7,7 @@ import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { GlanceTile, IconRow, Section, Shelf } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Action, Chip, Expand, Glass, glass, Icon, Notice, Screen, SourceLink, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Chip, Expand, Glass, glass, Icon, Insight, Notice, Screen, SourceLink, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
 import { buildDraft, readNoteSections, scriptFor, sectionKeys, serializeNoteSections, type NoteSections } from "./model";
@@ -55,7 +55,9 @@ const framing: Record<keyof NoteSections, string> = {
   plan: "Clinician authored · the next steps you agreed.",
 };
 const placeholders: Record<keyof NoteSections, string> = { subjective: "Captured symptoms and relevant history…", objective: "Document observations with units and dates…", assessment: "Record your clinical assessment…", plan: "Record the agreed next steps…" };
-const FOCUS = "rgba(36,91,204,0.4)";
+/** Section names as the heading counts what's still empty ("Assessment and plan empty"). */
+const shortName: Record<keyof NoteSections, string> = { subjective: "History", objective: "Observations", assessment: "Assessment", plan: "Plan" };
+const FOCUS ="rgba(36,91,204,0.4)";
 const SPIN = { from: { transform: [{ rotate: "0deg" }] }, to: { transform: [{ rotate: "360deg" }] } };
 /** Room under the last section so the floating bar never covers it. */
 const BAR_SPACE = 132;
@@ -136,6 +138,8 @@ export function NoteScreen() {
   if (!patient || !encounter) return <Screen><Notice>Select a patient to open a note.</Notice></Screen>;
   const sections = encounter.noteSectionDraft ?? encounter.noteSections ?? readNoteSections(encounter.note);
   const hasContent = sectionKeys.some(key => sections[key].trim().length > 0);
+  const empty = sectionKeys.filter(key => !sections[key].trim()).map(key => shortName[key]);
+  const emptyLine = empty.length > 2 ? `${empty.length} sections empty` : empty.length ? `${empty.map((name, i) => i ? name.toLowerCase() : name).join(" and ")} empty` : "";
   const status = encounter.noteSaveStatus ?? "idle";
   const saving = status === "saving";
   const editSection = (key: keyof NoteSections, value: string) => {
@@ -160,13 +164,8 @@ export function NoteScreen() {
   return <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}>
     <Screen>
       <Animated.View entering={rise(0)} style={{ gap: 12 }}>
-        <Text selectable accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{patient.name}</Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 11, backgroundColor: encounter.noteReviewed ? "rgba(40,104,80,0.1)" : "#E6EEFC" }}>
-            <Text style={{ fontSize: 12, fontWeight: "600", color: encounter.noteReviewed ? palette.green : palette.blue }}>{encounter.noteReviewed ? "Reviewed" : "Draft"}</Text>
-          </View>
-          <Text selectable style={{ flex: 1, fontSize: 13, lineHeight: 19, color: palette.muted }}>{live ? "Verify drafts against source." : "Verify drafts against source · local session only, no record connected."}</Text>
-        </View>
+        <Insight eyebrow={patient.name}>{encounter.noteReviewed ? <Tone of="good">Reviewed</Tone> : !hasContent ? "Nothing drafted yet" : <>Draft{emptyLine ? <> · <Tone of="soon">{emptyLine}</Tone></> : null} · not reviewed</>}</Insight>
+        <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>{live ? "Verify drafts against source." : "Verify drafts against source · local session only, no record connected."}</Text>
         {/* An empty note pulls in the consultation in one tap (the scripted sample until a visit is captured). */}
         {canWrite && !hasContent && !encounter.transcriptDraft && <View style={{ gap: 6 }}>
           <Action label="Draft from consultation" icon="waveform" onPress={() => { haptic("done"); const draft = readNoteSections(buildDraft(consultation)); updateEncounter(current => ({ ...current, noteSectionDraft: draft, note: serializeNoteSections(draft), noteReviewed: false, noteSaveStatus: "idle", noteFromSample: !current.transcript.length }), true); }} />
