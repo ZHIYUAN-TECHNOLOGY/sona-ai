@@ -14,7 +14,7 @@ import { motion, palette, type } from "@/lib/theme";
 import { Button, field, ICON, pillStyle, SampleLabel, surfaceStyle } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 import { Pill } from "./pill";
-import { addWaiting, medLine, messageFor, statusOf, type PhotoMedicine, type PhotoReading } from "./photo-model";
+import { addWaiting, medLine, messageFor, statusOf, unplanned, type PhotoMedicine, type PhotoReading } from "./photo-model";
 import { useMe } from "../me";
 import "./strings";
 
@@ -48,12 +48,12 @@ const newRequestId = () => `care-photo-${Date.now()}-${Math.random().toString(36
 type Photo = { source: number | { uri: string }; base64?: string | null; mimeType?: string | null };
 type Step = { kind: "choose"; error?: string } | { kind: "reading"; photo: Photo } | { kind: "read"; photo: Photo; reading: PhotoReading; key?: string; sample: boolean } | { kind: "sent"; med: string };
 
-/** The entry (under the medicine cards) and the waiting medicines above it. */
-export function PhotoMedicines() {
+/** The entry (under the medicine list) and the waiting medicines above it, leaving out any the plan (`planned`) already lists. */
+export function PhotoMedicines({ planned }: { planned: string[] }) {
   const t = tFor(useLang());
   const { state } = useMe();
   const thread = useQuery({ ...orpc.care.messages.list.queryOptions(), enabled: state === "joined" }).data;
-  const list = useSyncExternalStore(subscribe, () => waiting).map(m => ({ ...m, status: statusOf(m, thread) })).filter(m => m.status !== "declined");
+  const list = unplanned(useSyncExternalStore(subscribe, () => waiting), planned).map(m => ({ ...m, status: statusOf(m, thread) })).filter(m => m.status !== "declined");
   const [open, setOpen] = useState(false);
   return <View style={{ gap: 12 }}>
     {list.map(m => <Pressable key={m.id} accessibilityRole="button" accessibilityLabel={`${medLine(m)}. ${t(m.status === "added" ? "photo.added" : "photo.waiting")}`} accessibilityHint={t("photo.openMessages")} onPress={() => router.push("/messages")}

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { agendaOf, bringLine, dateOf, dayA11y, dayOf, emptyLine, followUpNeeds, marksByDay, nextUp, openRequests, pillLine, scheduleLine, weekAround, weekLabel, whenLine } from "./lines";
+import { agendaOf, bringLine, dateOf, dayA11y, dayOf, emptyLine, followUpNeeds, marksByDay, nextUp, nextVisit, openRequests, pillLine, scheduleLine, weekAround, weekLabel, whenLine } from "./lines";
 
 const D = (iso) => Date.UTC(...iso.split("-").map((n, i) => Number(n) - (i === 1 ? 1 : 0))) / 86_400_000; // "2026-09-27" → day number
 test("the strip reads days in Malaysia and shows the Monday-first week around the chosen day", () => {
@@ -38,7 +38,7 @@ test("a day's timeline groups doses by time, orders by time, and offers one acti
     doses: [dose("Amlodipine", "2026-09-27T00:30:00Z"), dose("Metformin", "2026-09-27T00:30:00Z", true), dose("Metformin", "2026-09-27T12:00:00Z")],
   });
   expect(items.map(i => [i.title, i.action, i.done])).toEqual([["Morning medicines", "take", false], ["Day 3 check-in", "answer", false], ["Evening medicines", undefined, false]]);
-  expect(items[0]).toMatchObject({ line: "30 min late · Amlodipine, Metformin", tone: "amber", soon: "morning medicines 30 min late" });
+  expect(items[0]).toMatchObject({ line: "30 min late · Amlodipine, Metformin", tone: "amber", soon: "morning medicines" });
   expect(items[2].soon).toMatch(/^evening medicines at 8:00\sPM$/);
   const done = agendaOf(now, { visits: [], checkIns: [], doses: [dose("Amlodipine", "2026-09-27T00:30:00Z", true)] })[0];
   expect(done).toMatchObject({ done: true, tone: "green", line: "Taken · Amlodipine", action: undefined });
@@ -98,6 +98,19 @@ test("the Schedule shows waiting requests and a declined one until she asks that
   // Asking Dr. Arjun again replaces the declined one.
   const again = req("again", { doctorId: "arjun", createdAt: new Date("2026-09-28T01:30:00Z") });
   expect(openRequests([...list, again], now).map(r => r.id)).not.toContain("declined");
+});
+
+test("the next visit is the earliest one not yet attended, never a visit already seen", () => {
+  const seen = visit({ id: "seen", status: "attended", inDays: -1 }), review = visit({ id: "review", status: "upcoming", inDays: 13 });
+  expect(nextVisit([seen, review])).toBe(review);
+  expect(nextVisit([seen])).toBeUndefined();
+  expect(nextVisit(undefined)).toBeUndefined();
+});
+
+test("a late dose leads the insight line plainly; only its row says late", () => {
+  const now = new Date("2026-09-27T01:00:00Z");
+  const today = agendaOf(now, { visits: [], checkIns: [], doses: [dose("Azithromycin", "2026-09-27T00:00:00Z")] });
+  expect(scheduleLine(today, [visit({ status: "upcoming", inDays: 13 })])).toEqual({ line: "Next: morning medicines · visit in 13 days", tone: "muted" });
 });
 
 test("a visit she already had needs nothing and never leads the insight line", () => {

@@ -15,15 +15,13 @@ import { useFollowUps } from "@/features/follow-ups/row";
 import { daysHome, headerDate, needsLine, type Need } from "@/features/home";
 import { AddSheet } from "@/features/home/add-sheet";
 import { LanguageRow } from "@/features/language/picker";
-import { TrainingRow } from "@/features/training/consent";
-import { RemindersRow } from "@/features/doses/remind";
+import { SettingsSheet, SignOutRow } from "@/features/home/settings-sheet";
 import { tFor, useLang } from "@/lib/i18n";
 import { ConsistencyTile, LatestTile, MedicinesTile, VisitTile } from "@/features/home/bento";
 import { useMe } from "@/features/me";
 import { useMessageNeeds } from "@/features/messages/row";
-import { forgetPhone, NudgeCard } from "@/features/notifications";
+import { NudgeCard } from "@/features/notifications";
 import { Welcome } from "@/features/sign-in/welcome";
-import { authClient } from "@/lib/auth-client";
 import { DOCK_SPACE } from "@/lib/dock";
 import { palette, space, type } from "@/lib/theme";
 import { Button, Card, Chip, CircleButton, DataPill, ICON, Section, Title } from "@/lib/ui";
@@ -56,12 +54,13 @@ const pop = () => {
 let seen = false;
 
 /**
- * Sona Care's home (the kit's "Child Home", the patient watching their own recovery): initials, "Hello!
- * Amelia" over the date, and the bell with its count; then "Today's / Latest updates" with a + for
- * adding (ask, message, book), one insight line (day at home, what needs you and how long)
- * and a chip per open thing; a two-column bento (today's medicines with a hold to take the due dose in
- * place, consistency, the latest update, the next visit); and the one feature card, today's check-in.
- * At large Dynamic Type the bento stacks to one column.
+ * Sona Care's home (the kit's "Child Home", the patient watching their own recovery): initials (opening
+ * settings), "Hello! Amelia" over the date, and the bell with its count; then "Today's / Latest updates"
+ * with a + for adding (ask, message, book), one insight line (day at home, what needs you and how long)
+ * and a chip per open thing but the dose (its hold is on the medicines tile); a two-column bento (today's
+ * medicines with a hold to take the due dose in place, consistency once two days count, the latest update
+ * when there is one, the next visit; hidden tiles let the rest reflow); and the one feature card, today's
+ * check-in. At large Dynamic Type the bento stacks to one column.
  */
 export default function Home() {
   const { state, me } = useMe();
@@ -74,6 +73,7 @@ export default function Home() {
   const scroll = useRef<KeyboardAwareScrollViewRef>(null);
   const spots = useRef({ cards: 0, today: 0 });
   const [adding, setAdding] = useState(false);
+  const [settings, setSettings] = useState(false);
   const [still] = useState(() => seen);
   useEffect(() => { if (state === "joined") seen = true; }, [state]);
   const health = useQuery(orpc.healthCheck.queryOptions());
@@ -88,15 +88,18 @@ export default function Home() {
   const day = daysHome(me?.dischargedAt, now);
   const insight = day === undefined ? needsLine(needs, lang) : needs.length ? t("home.dayAt", { day, needs: needsLine(needs, lang) }) : t("home.dayAtDone", { day });
   const stack = fontScale >= 1.35;
+  // The due dose is held in place on the medicines tile, so it gets no chip of its own (it still counts above).
+  const chips = needs.filter(n => n.kind !== "dose");
   const calm = still || reduced;
   // Keyboard-aware: typing a check-in reply keeps the box and its Send button above the keyboard (bottomOffset covers the button under the box).
   return <KeyboardAwareScrollView ref={scroll} bottomOffset={140} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     {state === "joined" && me
       ? <>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <View accessible accessibilityRole="image" accessibilityLabel={me.name} style={{ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.white }}>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("home.settings", { name: me.name })} onPress={() => setSettings(true)}
+            style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.white, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
             <Text maxFontSizeMultiplier={1.3} style={{ fontSize: 16, fontWeight: "600", color: palette.blue }}>{me.name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()}</Text>
-          </View>
+          </Pressable>
           <View accessible accessibilityRole="header" style={{ flex: 1, alignItems: "center" }}>
             <Text numberOfLines={1} style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{t("home.hello", { name: me.firstName })}</Text>
             <Text numberOfLines={1} style={{ fontSize: 18, lineHeight: 24, fontWeight: "500", letterSpacing: -0.4, color: palette.ink }}>{headerDate(now, lang)}</Text>
@@ -112,8 +115,8 @@ export default function Home() {
         <View style={{ gap: 10, marginTop: space.section - space.stack }}>
           <Section light={t("home.updatesLight")} bold={t("home.updatesBold")} action={<CircleButton d={ICON.plus} label={t("home.add")} onPress={() => setAdding(true)} />} />
           <Text style={{ ...type.body, color: needs.length ? palette.muted : palette.green, fontWeight: needs.length ? "400" : "600" }}>{insight}</Text>
-          {needs.length > 0 && <Animated.View layout={layout} exiting={FadeOut.duration(200)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-            {needs.map(n => <Animated.View key={`${n.kind}:${n.label}`} layout={layout} entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)}>
+          {chips.length > 0 && <Animated.View layout={layout} exiting={FadeOut.duration(200)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {chips.map(n => <Animated.View key={`${n.kind}:${n.label}`} layout={layout} entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)}>
               <Chip label={n.label} dot={n.dot} onPress={() => go(n.kind)} />
             </Animated.View>)}
           </Animated.View>}
@@ -146,17 +149,14 @@ export default function Home() {
       </Animated.View>
       <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("common.emergency")}</Text>
       <AddSheet open={adding} onClose={() => setAdding(false)} />
+      <SettingsSheet open={settings} onClose={() => setSettings(false)} />
     </>}
     {/* The one place Sona Care says its data is fictional, by the emergency line; tap for the details. */}
     {state !== "loading" && <DataPill />}
-    {/* The language row, dose reminders, the training consent and sign out close the page: settings a patient needs rarely, kept out of the way. */}
-    {state !== "loading" && <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", columnGap: 16 }}>
+    {/* Once joined, settings live behind the initials; before that, language and sign out close the page. */}
+    {state === "not-joined" && <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", columnGap: 16 }}>
       <LanguageRow />
-      {state === "joined" && <RemindersRow />}
-      {state === "joined" && <TrainingRow />}
-      <Pressable accessibilityRole="button" onPress={() => { void forgetPhone().finally(() => authClient.signOut()); }} style={{ minHeight: 48, minWidth: 48, justifyContent: "center" }}>
-        <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{t("home.signOut")}</Text>
-      </Pressable>
+      <SignOutRow />
     </View>}
   </KeyboardAwareScrollView>;
 }

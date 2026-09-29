@@ -6,7 +6,7 @@ import { useCheckIns } from "@/features/check-ins/today";
 import { EASE_OUT, rise, useNextDose, useNow } from "@/features/doses";
 import { clock, dosesToday, weekOf } from "@/features/doses/model";
 import {
-  agendaOf, away, bringLine, dateOf, dayA11y, dayLabel, dayOf, emptyLine, marksByDay, nextUp, openRequests, pillLine, scheduleLine, weekAround, weekdayOf, weekLabel,
+  agendaOf, away, bringLine, dateOf, dayA11y, dayLabel, dayOf, emptyLine, marksByDay, nextUp, nextVisit, openRequests, pillLine, scheduleLine, weekAround, weekdayOf, weekLabel,
   type AgendaItem, type BookingRequest, type DayMarks, type FollowUp,
 } from "@/features/follow-ups/lines";
 import { tFor, useLang, type Lang } from "@/lib/i18n";
@@ -46,7 +46,7 @@ export default function ScheduleScreen() {
   const [picked, setPicked] = useState<number>();
   const day = picked ?? today;
 
-  const visits = data ?? [], next = data?.[0];
+  const visits = data ?? [], next = nextVisit(data);
   const dischargedAt = plan?.status === "discharged" ? plan.dischargedAt : undefined;
   const marks = marksByDay(today, visits, checkIns, weekOf(meds, dischargedAt, taken, now));
   const on = (d: number) => ({ visits: visits.filter(f => dayOf(f.date) === d), checkIns: checkIns.filter(c => dayOf(c.dueAt) === d) });

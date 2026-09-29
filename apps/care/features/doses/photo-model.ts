@@ -23,3 +23,11 @@ export const statusOf = (m: Pick<PhotoMedicine, "id">, thread: Sent[] | undefine
 export function addWaiting(list: PhotoMedicine[], m: PhotoMedicine) {
   return [...list.filter(x => x.name.toLowerCase() !== m.name.toLowerCase()), m].slice(-20);
 }
+
+/**
+ * The photo medicines not already in the discharge plan: one the plan lists shows once, as the plan's.
+ * ponytail: matches on the first word (the ingredient, "Cetirizine 10 mg" → "cetirizine"); use a drug code once readings carry one.
+ */
+const ingredient = (name: string) => name.trim().split(/\s+/)[0]!.toLowerCase();
+export const unplanned = <T extends Pick<PhotoMedicine, "name">>(list: T[], planned: string[]) =>
+  list.filter(m => !planned.some(n => ingredient(n) === ingredient(m.name)));

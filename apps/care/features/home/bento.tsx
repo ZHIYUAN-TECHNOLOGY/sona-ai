@@ -6,7 +6,7 @@ import Svg, { Circle, Path } from "react-native-svg";
 import { useCheckIns } from "@/features/check-ins/today";
 import { markTaken, rise, useNextDose, useNow } from "@/features/doses";
 import { dosesToday, early, weekOf, type WeekDay } from "@/features/doses/model";
-import { dayLabel, timeLabel, away } from "@/features/follow-ups/lines";
+import { dayLabel, nextVisit, timeLabel, away } from "@/features/follow-ups/lines";
 import { useFollowUps } from "@/features/follow-ups/row";
 import { consistency, latestUpdate, nextCapsule, type Update } from "@/features/home";
 import { useMessageNeeds } from "@/features/messages/row";
@@ -103,24 +103,21 @@ export function MedicinesTile({ index, still }: { index: number; still: boolean 
 // A day's bar: azure into violet when every dose was taken, grey otherwise; its height says how much was taken.
 const BAR: Record<WeekDay["state"], number> = { all: 1, some: 0.6, none: 0.3, ahead: 0.45, free: 0.15 };
 
-/** Consistency (short): the share of the week's doses taken, big, over a bar per day since discharge (at most 7). */
+/** Consistency (short): the share of the week's doses taken, big, over a bar per day since discharge (at most 7). Hidden until two days have counted. */
 export function ConsistencyTile({ index, still }: { index: number; still: boolean }) {
   const now = useNow();
   const { plan, taken, meds } = useNextDose(now);
   const out = plan?.status === "discharged" ? plan.dischargedAt : undefined;
   const t = useT();
   const pct = consistency(meds, out, taken, now), week = weekOf(meds, out, taken, now);
-  return <Tile index={index} still={still} dither={{ pattern: "lines", corner: "bottom-right" }} label={t("home.consistencyA11y", { line: pct === undefined ? t("home.consistencyWait") : t("home.pctTaken", { pct }) })}
+  if (pct === undefined) return null;
+  return <Tile index={index} still={still} dither={{ pattern: "lines", corner: "bottom-right" }} label={t("home.consistencyA11y", { line: t("home.pctTaken", { pct }) })}
     onPress={() => router.push(out ? "/dose" : "/discharge")}>
     <Kicker>{t("home.consistency")}</Kicker>
-    {pct === undefined
-      ? <Text style={{ fontSize: 17, lineHeight: 23, color: palette.muted }}>{t("home.consistencyWait")}</Text>
-      : <>
-        <Text style={{ fontSize: 28, lineHeight: 32, fontWeight: "500", letterSpacing: -1.2, color: palette.ink, fontVariant: ["tabular-nums"] }}>{pct}<Text style={{ fontSize: 14, fontWeight: "400", color: palette.faint }}> %</Text></Text>
-        <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 6, height: 32 }}>
-          {week.map((d, i) => <View key={i} style={{ width: 7, height: `${BAR[d.state] * 100}%`, borderRadius: 4, backgroundColor: d.state === "all" ? accent[1] : "rgba(31,31,31,0.12)", experimental_backgroundImage: d.state === "all" ? `linear-gradient(180deg, ${accent[2]}, ${accent[1]})` : undefined } as ViewStyle} />)}
-        </View>
-      </>}
+    <Text style={{ fontSize: 28, lineHeight: 32, fontWeight: "500", letterSpacing: -1.2, color: palette.ink, fontVariant: ["tabular-nums"] }}>{pct}<Text style={{ fontSize: 14, fontWeight: "400", color: palette.faint }}> %</Text></Text>
+    <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 6, height: 32 }}>
+      {week.map((d, i) => <View key={i} style={{ width: 7, height: `${BAR[d.state] * 100}%`, borderRadius: 4, backgroundColor: d.state === "all" ? accent[1] : "rgba(31,31,31,0.12)", experimental_backgroundImage: d.state === "all" ? `linear-gradient(180deg, ${accent[2]}, ${accent[1]})` : undefined } as ViewStyle} />)}
+    </View>
   </Tile>;
 }
 
@@ -131,7 +128,7 @@ const TONE: Record<Update["tone"], { fill: string; text: string }> = {
 };
 const SPARKLE = "M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2Z";
 
-/** Latest update (short): a face or chat icon in a white circle and one sparkle line; tap goes to it. */
+/** Latest update (short): a face or chat icon in a white circle and one sparkle line; tap goes to it. Hidden when nothing is new. */
 export function LatestTile({ index, still, onCheckIn }: { index: number; still: boolean; onCheckIn: () => void }) {
   // A visit the doctor booked from her check-in (keyed "book-in:"), still ahead.
   const visits = useFollowUps().data;
@@ -140,6 +137,7 @@ export function LatestTile({ index, still, onCheckIn }: { index: number; still: 
   const test = booked && visits?.find(f => f.id.startsWith("recall:") && new Date(f.date).getTime() === new Date(booked.date).getTime());
   const lang = useLang(), t = tFor(lang);
   const u = latestUpdate(useCheckIns().data, useMessageNeeds() > 0, useNow(), booked && `${away(booked.inDays, lang)} ${timeLabel(booked, lang) ?? ""}`.trim(), test?.short, lang);
+  if (!u) return null;
   const go = () => u.to === "check-in" ? onCheckIn() : router.push(u.to === "messages" ? "/messages" : u.to === "follow-ups" ? "/follow-ups" : "/check-ins");
   return <Tile index={index} still={still} dither={{ pattern: "pixels", corner: "top-right" }} label={t("home.latestA11y", { line: u.line })} onPress={go}>
     <Kicker>{t("home.latest")}</Kicker>
@@ -166,8 +164,7 @@ const PENCIL = "M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32
 export function VisitTile({ index, still, hospital }: { index: number; still: boolean; hospital?: string }) {
   const lang = useLang(), t = tFor(lang);
   const { data } = useFollowUps();
-  // A visit she already had is done; the tile shows the next one still to come or missed.
-  const next = data?.find(f => f.status !== "attended");
+  const next = nextVisit(data);
   if (!next) return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={t(data ? "home.noVisit" : "home.visitsHere")} onPress={() => router.push(data ? "/doctors" : "/follow-ups")}
     footer={data && <Pressable accessibilityRole="button" accessibilityLabel={t("home.bookVisit")} onPress={() => router.push("/doctors")}
       style={({ pressed }) => ({ minHeight: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.dark, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
