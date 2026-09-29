@@ -38,3 +38,9 @@ Kaggle notebook `zhiyuantech/sona-laya-finetune` (private), data `zhiyuantech/so
 `generate.py` added extra rounds for note, medication and briefing (`ROUNDS`), asked for at most one medicine per request, and capped each class at 250 (`CAP`): 1,581 requests, 2,846 training items after the calibration hold-out. Kaggle notebook version 3, same score locally. Model at `~/zyt/data/sona-laya/v2` (657 MB). Choice calibration temperature 3.51.
 
 Remaining misses: briefing to not-covered (L01) and to followup (L06), a Mandarin prescription refill to not-covered (L26), note to followup (L39).
+
+## Wiring into json-render (29 Sep 2026)
+
+`packages/api/src/laya.ts` is the evaluator adapter (`layaEvaluator`), tested with a fake server and live against `serve.py` (`LAYA_URL=http://127.0.0.1:8000 bun test src/laya.test.ts`). `serve.py` serves the fine-tuned model over laya-serve's `/v1/systemone`.
+
+Running the real `experimental_composeSpec` with it showed a question mismatch. The composer does not ask "which card?"; it asks a root question (`column` or `unavailable`) and one membership question per candidate (`use:<id>` or `omit`). v2 was trained only on the single "which card?" question, so it picked `use:medication` correctly (0.99) for the salbutamol request but answered `unavailable` at the root, and the composer returned no spec. Either retrain on the composer's own question shapes or call Laya with the trained question and build the spec in app code (the app already has `composeClinicalSpec` for one card plus notice plus source).
