@@ -12,7 +12,7 @@ import { AccessibilityInfo, BackHandler, Keyboard, Pressable, ScrollView, StyleS
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { capabilityLabels, followUpsFor, Home, leadFor, StreamedLead, SuggestionList, suggestionFor, thinkingLabel, TopBar, type Suggestion } from "./conversation";
 import { touch } from "@/features/patients/continue-store";
-import { AskNudge, AskSheet, closed, type AskState } from "@/features/ask";
+import { AskNudge, AskSheet, closed, openTab, type AskState } from "@/features/ask";
 import { matchQuestion } from "@/features/ask/answers";
 import { useTodayAnswers } from "@/features/ask/today";
 import { capabilitySchema, routeInThread } from "./state";
@@ -297,7 +297,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
         {steps && !drawer && <NextStepBar steps={steps} p={next.p} onExpand={next.show} onAct={act} />}
       </>}
     />
-    <AskSheet scope="today" answers={todayAnswers} state={ask} onChange={setAsk} onTab={t => t === "blocked" ? router.push({ pathname: "/ward", params: { filter: "blocked" } }) : router.push({ pathname: "/patients", params: { tab: t } })} />
+    <AskSheet scope="today" answers={todayAnswers} state={ask} onChange={setAsk} onTab={openTab} />
     {steps && next.open && <NextStepSheet steps={steps} p={next.p} onClose={() => next.hide()} onAct={act} />}
     {/* While open, the page is a quiet surface: it fades back and a tap anywhere closes it. */}
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: palette.canvas }, dimStyle]} />

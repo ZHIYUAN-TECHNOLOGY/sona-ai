@@ -15,6 +15,7 @@ import { openSession } from "@/features/encounter/navigation";
 import { useEncounter } from "@/features/encounter/store";
 import { PLACEHOLDER, SCOPE_LABEL, matchQuestion, type Answer, type Scope } from "./answers";
 import { askCatalog, validateAskSpec } from "./catalog";
+import { SAVABLE, isSaved, saveView, useSaved } from "./saved";
 
 /**
  * ✦ is how Sona shows up to ask or suggest (the bar, the review-page button, suggestions, the scope chip).
@@ -73,6 +74,36 @@ export function AskNudge({ answer, onPress }: { answer: Answer; onPress: () => v
   </Animated.View>;
 }
 
+/**
+ * The ops an answer may run, and nothing else: open a visit, go to a page, change the page's tab or
+ * filter, or mark a task done (after the answer's review card). `leave` closes whatever shows the answer first.
+ */
+export function useRunOp(leave: () => void, onTab?: (tab: string) => void) {
+  const { updateEncounter } = useEncounter();
+  return (op: string) => {
+    const [kind, ...rest] = op.split(":");
+    const arg = rest.join(":");
+    if (kind === "open") { leave(); setTimeout(() => openSession(arg), 250); }
+    else if (kind === "go") { leave(); setTimeout(() => router.push(arg as never), 250); }
+    else if (kind === "tab") { leave(); onTab?.(arg); }
+    else if (kind === "task-done") { const [patientId, taskId] = rest; if (patientId && taskId) updateEncounter(current => ({ ...current, tasks: current.tasks.map(t => t.id === taskId ? { ...t, completed: true } : t) }), false, patientId); }
+  };
+}
+
+/** Where a day-wide answer's page action leads: a Patients tab, or the ward filtered. */
+export const openTab = (tab: string) => tab === "blocked" ? router.push({ pathname: "/ward", params: { filter: "blocked" } }) : router.push({ pathname: "/patients", params: { tab } });
+
+/** An answer as a view from the ask catalogue, with its question and its rule-based label; nothing renders if the spec fails the checks. */
+export function AnswerView({ answer, run, question = true }: { answer: Answer; run: (op: string) => void; question?: boolean }) {
+  const spec = validateAskSpec(answer.spec);
+  if (!spec) return null;
+  return <View style={{ gap: 14 }}>
+    {question && <Text style={{ ...type.footnote, color: palette.muted }}>{answer.question}</Text>}
+    <OpsContext value={{ run }}><JSONUIProvider initialState={{}}><Renderer spec={spec} registry={registry} includeStandard={false} /></JSONUIProvider></OpsContext>
+    <SampleLabel source="fixture" rule />
+  </View>;
+}
+
 /** Which answer the sheet shows (or a question it couldn't answer), for a page that opens it itself. */
 export type AskState = { open: boolean; shown?: Answer; missed?: string };
 export const closed: AskState = { open: false };
@@ -82,22 +113,13 @@ export const closed: AskState = { open: false };
  * other questions, and a field that matches a typed question to them. `onTab` lets an answer change the page.
  */
 export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Scope; answers: Answer[]; state: AskState; onChange: (s: AskState) => void; onTab?: (tab: string) => void }) {
-  const { updateEncounter } = useEncounter();
   const insets = useSafeAreaInsets();
   const [text, setText] = useState("");
   const { shown, missed } = state;
   const close = () => onChange(closed);
   const ask = () => { const q = text.trim(); if (!q) return; const a = matchQuestion(q, answers); setText(""); onChange(a ? { open: true, shown: a } : { open: true, missed: q }); };
-  // The ops an answer may run; anything else is ignored.
-  const run = (op: string) => {
-    const [kind, ...rest] = op.split(":");
-    const arg = rest.join(":");
-    if (kind === "open") { close(); setTimeout(() => openSession(arg), 250); }
-    else if (kind === "go") { close(); setTimeout(() => router.push(arg as never), 250); }
-    else if (kind === "tab") { close(); onTab?.(arg); }
-    else if (kind === "task-done") { const [patientId, taskId] = rest; if (patientId && taskId) updateEncounter(current => ({ ...current, tasks: current.tasks.map(t => t.id === taskId ? { ...t, completed: true } : t) }), false, patientId); }
-  };
-  const spec = shown ? validateAskSpec(shown.spec) : null;
+  const run = useRunOp(close, onTab);
+  const saved = useSaved();
   const others = answers.filter(a => a.id !== shown?.id);
 
   return <Modal visible={state.open} animationType="slide" presentationStyle="pageSheet" onRequestClose={close}>
@@ -111,10 +133,13 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
       </View>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         {missed && <Text style={{ ...type.callout, color: palette.amber }}>“{missed}”: Sona answers only these questions here until the model is switched on.</Text>}
-        {spec ? <View style={{ gap: 14 }}>
-          <Text style={{ ...type.footnote, color: palette.muted }}>{shown!.question}</Text>
-          <OpsContext value={{ run }}><JSONUIProvider initialState={{}}><Renderer spec={spec} registry={registry} includeStandard={false} /></JSONUIProvider></OpsContext>
-          <SampleLabel source="fixture" rule />
+        {shown ? <View style={{ gap: 14 }}>
+          <AnswerView answer={shown} run={run} />
+          {/* A day-wide answer can leave the sheet: as its own page, or kept in the sidebar where it stays live. */}
+          {SAVABLE.has(shown.id) && <View style={{ flexDirection: "row", gap: 8 }}>
+            <View style={{ flex: 1 }}><Action label="Open as page" icon="arrow.up.left.and.arrow.down.right" secondary onPress={() => { close(); setTimeout(() => router.push({ pathname: "/view/[id]", params: { id: shown.id } }), 250); }} /></View>
+            <View style={{ flex: 1 }}><Action label={isSaved(saved, shown.id) ? "Saved" : "Save to sidebar"} icon={isSaved(saved, shown.id) ? "checkmark" : "pin"} secondary disabled={isSaved(saved, shown.id)} onPress={() => { tap(); saveView({ id: shown.id, question: shown.question }); }} /></View>
+          </View>}
         </View> : <View style={{ gap: 10 }}>
           <Text style={{ ...type.title, fontWeight: "600", color: palette.ink }}>Ask Sona</Text>
           <Text style={{ ...type.subhead, color: palette.muted }}>Answers are built from this page's own data and can act on it.</Text>

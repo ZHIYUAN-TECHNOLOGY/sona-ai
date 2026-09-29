@@ -18,6 +18,8 @@ import Animated, { interpolate, type SharedValue, useAnimatedStyle } from "react
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CONTINUE_LIMIT } from "@/features/patients/continue";
 import { useContinue } from "@/features/patients/continue-store";
+import { useSaved } from "@/features/ask/saved";
+import { useTodayAnswers } from "@/features/ask/today";
 import { useEncounter } from "./store";
 import { openSession } from "./navigation";
 
@@ -61,6 +63,10 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
   // Continue: where you left off (the open visit, pins, unfinished work under 24 h), capped so the drawer
   // stays the same length at any census; the rest are behind "See all".
   const { entries } = useContinue();
+  // Saved Sona views, rebuilt from today's data, each with its current one-line answer.
+  const saved = useSaved();
+  const today = useTodayAnswers();
+  const leadOf = (id: string) => { const a = today.find(x => x.id === id); const lead = a && Object.values(a.spec.elements).find(e => e.type === "AskLead"); return lead ? String((lead.props as { text: string }).text) : undefined; };
   const openTasks = Object.values(encounters).reduce((sum, e) => sum + (e?.tasks.filter(t => !t.completed).length ?? 0), 0);
   // Each destination shows only for a role whose screen the server would open, with the same live line as its home key.
   const { can, label: role } = useRole();
@@ -93,6 +99,7 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
       { label: "Coding audit", sf: "doc.text.magnifyingglass", detail: auditLine(audit), show: can("audit.list"), onPress: go(() => router.push("/audit")) },
       { label: "Training data", sf: "shield.lefthalf.filled", detail: training.status ? trainingLine(training.status.counts) : undefined, show: can("training.status"), onPress: go(() => router.push("/training")) },
     ] },
+    { title: "Saved views", items: saved.map((v): Item => ({ label: v.question, sf: "sparkles", detail: leadOf(v.id), onPress: go(() => router.push({ pathname: "/view/[id]", params: { id: v.id } })) })) },
   ];
   const groups = all.map(group => ({ ...group, items: group.items.filter(item => item.show !== false) })).filter(group => group.items.length);
 

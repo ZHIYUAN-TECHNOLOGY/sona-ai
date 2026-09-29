@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { blocking, matchQuestion, needsYou, overdue, soonest, toFollowUp, toWatch } from "./answers";
 import { validateAskSpec } from "./catalog";
+import { withSaved } from "./saved";
 
 const parts = answer => Object.values(answer.spec.elements).filter(e => e.type !== "AskColumn");
 
@@ -53,4 +54,11 @@ test("review pages: what blocks the decision comes from the page's own checks, a
   const x = toFollowUp([{ id: "f1", label: "9 mm nodule", status: "open" }, { id: "f2", label: "Heart size", status: "tracked" }, { id: "f3", label: "Old", status: "dismissed" }]);
   expect(parts(x)[1].props.rows.map(r => [r.title, r.tone])).toEqual([["9 mm nodule", "soon"], ["Heart size", "good"]]);
   for (const a of [d, clear, x]) expect(validateAskSpec(a.spec)).not.toBeNull();
+});
+
+test("saved views: newest first, one per answer, three at most", () => {
+  const v = id => ({ id, question: id });
+  const list = ["needs", "overdue", "soonest", "needs"].reduce((l, id) => withSaved(l, v(id)), []);
+  expect(list.map(s => s.id)).toEqual(["needs", "soonest", "overdue"]);
+  expect(withSaved(list, v("extra")).map(s => s.id)).toEqual(["extra", "needs", "soonest"]);
 });
