@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { insight, sections, summary, waited } from "./state";
+import { insight, lastLine, sections, summary, waited } from "./state";
 
 const now = "2026-09-26T04:00:00.000Z";
 const row = (name, label, waitingSince, handled = false) => ({ patientId: name, name, label: handled ? null : label, waitingSince: handled ? null : waitingSince, handled });
@@ -22,4 +22,9 @@ test("sections are only the non-empty triage groups of waiting threads; one summ
   expect(summary(threads, now)).toEqual({ waiting: 3, urgent: 1, longest: "2 h", line: "1 urgent · 3 waiting" });
   expect(summary(threads.slice(1), now).line).toBe("2 waiting");
   expect(summary(undefined)).toEqual({ waiting: 0, urgent: 0, longest: undefined, line: "All caught up" });
+});
+
+test("a medicine photo's row says what was photographed instead of the message words", () => {
+  expect(lastLine({ lastText: "Please check a medicine I added from a photo: Cetirizine 10 mg, once at night.", lastPhoto: "Cetirizine 10 mg" })).toBe("Photo · Cetirizine 10 mg");
+  expect(lastLine({ lastText: "Thank you", lastPhoto: null })).toBe("Thank you");
 });

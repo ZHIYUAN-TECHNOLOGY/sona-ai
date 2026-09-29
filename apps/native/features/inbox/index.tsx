@@ -18,7 +18,7 @@ import { api, errorText, requestId, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { useRole } from "@/features/live/roles";
 import { refreshServerData } from "@/features/live/server-day";
-import { clock, insight, LABEL_STYLE, sections, summary, waited, type Inbox, type InboxThread, type Label } from "./state";
+import { clock, insight, LABEL_STYLE, lastLine, sections, summary, waited, type Inbox, type InboxThread, type Label } from "./state";
 
 /**
  * The care team's inbox for Sona Care messages, ranked by triage so nothing urgent is buried: the
@@ -129,9 +129,11 @@ export function InboxScreen() {
     {handled.length > 0 && <Animated.View layout={layout} style={{ gap: 6, paddingTop: 6 }}>
       <Text accessibilityRole="header" style={{ ...type.overline, color: palette.muted, paddingHorizontal: 4 }}>Handled · last 7 days</Text>
       {handled.map(t => <Animated.View key={t.patientId} layout={layout} entering={FadeIn.duration(220)}>
-        <Pressable accessibilityRole="button" accessibilityLabel={`${t.name}, handled. Last message ${clock(t.lastAt)}: ${t.lastText}`} accessibilityHint="Opens the thread" onPress={() => router.push(`/inbox/${t.patientId}`)}
+        <Pressable accessibilityRole="button" accessibilityLabel={`${t.name}, handled. Last message ${clock(t.lastAt)}: ${lastLine(t)}`} accessibilityHint="Opens the thread" onPress={() => router.push(`/inbox/${t.patientId}`)}
           style={({ pressed }) => ({ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 4, opacity: pressed ? 0.6 : 1 })}>
-          <Text numberOfLines={1} style={{ ...type.subhead, color: palette.muted, flex: 1 }}><Text style={{ fontWeight: "600", color: palette.ink }}>{t.name}</Text>  {t.lastText}</Text>
+          <Text numberOfLines={1} style={{ ...type.subhead, color: palette.muted, flexShrink: 1 }}><Text style={{ fontWeight: "600", color: palette.ink }}>{t.name}</Text>  {!t.lastPhoto && t.lastText}</Text>
+          {t.lastPhoto && <LastPhoto label={t.lastPhoto} color={palette.muted} />}
+          <View style={{ flex: 1 }} />
           <Text style={{ ...type.caption, color: palette.muted, fontVariant: ["tabular-nums"] }}>{clock(t.lastAt)}</Text>
         </Pressable>
       </Animated.View>)}
@@ -185,7 +187,7 @@ function InboxRow({ thread: t, now, first, canHandle, onHandle }: { thread: Inbo
   useAnimatedReaction(() => tx.value >= SWIPE, (over, was) => { if (over && was === false) scheduleOnRN(haptic, "select"); });
   const rowStyle = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }], backgroundColor: interpolateColor(tx.value, [0, 12], ["rgba(252,253,255,0)", "rgba(252,253,255,0.96)"]) }));
   const revealStyle = useAnimatedStyle(() => ({ opacity: interpolate(tx.value, [0, SWIPE], [0, 1], "clamp"), transform: [{ scale: interpolate(tx.value, [0, SWIPE], [0.8, 1], "clamp") }] }));
-  const a11y = `${t.name}${t.bed ? `, ${t.bed}` : ""}. ${style.text}${urgent && t.reason ? `: ${t.reason}` : ""}. Waiting ${wait}${t.unread ? `, ${t.unread} unread` : ""}. ${t.lastFrom === "patient" ? "" : "You: "}${t.lastText}`;
+  const a11y = `${t.name}${t.bed ? `, ${t.bed}` : ""}. ${style.text}${urgent && t.reason ? `: ${t.reason}` : ""}. Waiting ${wait}${t.unread ? `, ${t.unread} unread` : ""}. ${t.lastFrom === "patient" ? "" : "You: "}${lastLine(t)}`;
 
   return <Animated.View layout={reducedMotion ? undefined : LAYOUT} exiting={reducedMotion ? FadeOut.duration(150) : fold} onLayout={e => width.set(e.nativeEvent.layout.width)}
     style={first ? undefined : { borderTopWidth: 1, borderColor: glass.hairline }}>
@@ -210,7 +212,8 @@ function InboxRow({ thread: t, now, first, canHandle, onHandle }: { thread: Inbo
               <Text style={{ ...type.caption, color: urgent ? palette.red : palette.muted, fontWeight: urgent ? "600" : "400", fontVariant: ["tabular-nums"] }}>{wait}</Text>
               {t.unread > 0 && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: palette.blue }} />}
             </View>
-            <Text numberOfLines={1} style={{ ...type.subhead, color: t.unread ? palette.ink : palette.muted }}>{t.lastFrom === "patient" ? "" : "You: "}{t.lastText}</Text>
+            {t.lastPhoto ? <LastPhoto label={t.lastPhoto} color={t.unread ? palette.ink : palette.muted} />
+              : <Text numberOfLines={1} style={{ ...type.subhead, color: t.unread ? palette.ink : palette.muted }}>{t.lastFrom === "patient" ? "" : "You: "}{t.lastText}</Text>}
             {urgent && t.reason && <Text numberOfLines={1} style={{ ...type.caption, fontWeight: "600", color: palette.red }}>{t.reason}</Text>}
             {why && <Expand><Text style={{ ...type.caption, color: style.ink, paddingTop: 2 }}>{style.text} · {t.reason}</Text></Expand>}
           </View>
@@ -261,5 +264,13 @@ export function MessageActions({ item }: { item: DayItem }) {
       </>}
     </View>
     {error && <ErrorLine text={error} onRetry={error.startsWith("Not logged") ? () => { void log(); } : undefined} />}
+  </View>;
+}
+
+/** "[camera] Photo · Cetirizine 10 mg": the last message was a medicine photo. */
+function LastPhoto({ label, color }: { label: string; color: string }) {
+  return <View style={{ flexDirection: "row", alignItems: "center", gap: 5, flexShrink: 1 }}>
+    <Icon name="camera.fill" size={13} color={color} />
+    <Text numberOfLines={1} style={{ ...type.subhead, color, flexShrink: 1 }}>{lastLine({ lastText: "", lastPhoto: label })}</Text>
   </View>;
 }

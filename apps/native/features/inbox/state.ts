@@ -49,3 +49,6 @@ export function summary(threads: InboxThread[] | undefined, now?: Date | string)
     line: open.length ? [urgent ? `${urgent} urgent` : "", `${open.length} waiting`].filter(Boolean).join(" · ") : "All caught up",
   };
 }
+
+/** The row's last-message line: a medicine photo reads "Photo · Cetirizine 10 mg" (the row draws a camera icon, not an emoji). */
+export const lastLine = (t: Pick<InboxThread, "lastText" | "lastPhoto">) => t.lastPhoto ? `Photo · ${t.lastPhoto}` : t.lastText;
