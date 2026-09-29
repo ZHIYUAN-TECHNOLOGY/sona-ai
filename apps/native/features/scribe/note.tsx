@@ -169,9 +169,11 @@ export function NoteScreen() {
         </View>
         {/* An empty note pulls in the consultation in one tap (the scripted sample until a visit is captured). */}
         {canWrite && !hasContent && !encounter.transcriptDraft && <View style={{ gap: 6 }}>
-          <Action label="Draft from consultation" icon="waveform" onPress={() => { haptic("done"); const draft = readNoteSections(buildDraft(consultation)); updateEncounter(current => ({ ...current, noteSectionDraft: draft, note: serializeNoteSections(draft), noteReviewed: false, noteSaveStatus: "idle" }), true); }} />
+          <Action label="Draft from consultation" icon="waveform" onPress={() => { haptic("done"); const draft = readNoteSections(buildDraft(consultation)); updateEncounter(current => ({ ...current, noteSectionDraft: draft, note: serializeNoteSections(draft), noteReviewed: false, noteSaveStatus: "idle", noteFromSample: !current.transcript.length }), true); }} />
           <SampleLabel source={encounter.transcript.length ? undefined : "fixture"} what="scribe" />
         </View>}
+        {/* A note drafted from the scripted sample stays labelled until the clinician marks it reviewed. */}
+        {hasContent && encounter.noteFromSample && !encounter.noteReviewed && <SampleLabel source="fixture" what="scribe" />}
         {encounter.transcript.some(line => line.corrected && !line.englishReviewed) && <StateLine warning>Unreviewed interpretations in the transcript. Check the original dialogue first.</StateLine>}
         {serverError && <StateLine warning>{serverError}</StateLine>}
       </Animated.View>
@@ -203,7 +205,7 @@ export function NoteScreen() {
               <Text style={{ fontSize: 13, fontWeight: "600", color: palette.muted }}>{noteMeta[key].title}</Text>
               <Text selectable style={{ fontSize: 15, lineHeight: 22, color: suggestion[key].trim() ? palette.ink : palette.muted }}>{suggestion[key].trim() || "Left empty for you"}</Text>
             </View>)}
-            <Action label="Replace note with this suggestion" onPress={() => { haptic("done"); updateEncounter(current => ({ ...current, noteSectionDraft: suggestion, note: serializeNoteSections(suggestion), noteReviewed: false, noteSaveStatus: "idle" }), true); setSuggestion(undefined); }} />
+            <Action label="Replace note with this suggestion" onPress={() => { haptic("done"); updateEncounter(current => ({ ...current, noteSectionDraft: suggestion, note: serializeNoteSections(suggestion), noteReviewed: false, noteSaveStatus: "idle", noteFromSample: !current.transcript.length }), true); setSuggestion(undefined); }} />
             <Action label="Keep current note" secondary onPress={() => setSuggestion(undefined)} />
           </Surface>
         </Expand>}

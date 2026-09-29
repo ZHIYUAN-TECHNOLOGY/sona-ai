@@ -31,7 +31,7 @@ export type Encounter = {
   /** A review existed but a later edit invalidated it (so the card can say "rerun", not "run"). */
   reviewInvalidated?: boolean; prescriptionScenario?: "standard" | "unknown-coverage" | "unsupported" | "failed-prerequisite" | "creation-failure"; prescriptionAmendment?: string;
   amendmentOperation?: { id: string; revision: number; phase: "queued-review" | "reviewing" | "queued-issue" | "issuing" | "complete" | "failed" | "cancelled"; requestId?: string; error?: string };
-  noteSections?: NoteSections; noteSectionDraft?: NoteSections; noteSaveStatus?: "idle" | "saving" | "saved" | "failed";
+  noteSections?: NoteSections; noteSectionDraft?: NoteSections; noteSaveStatus?: "idle" | "saving" | "saved" | "failed"; noteFromSample?: boolean;
   imagingScenario?: "reference" | "unsupported" | "no-finding";
   cards: ResponseCard[]; requests: RequestState[]; note: string; noteReviewed: boolean;
   transcript: TranscriptLine[]; recording: "idle" | "recording" | "paused" | "stopped";
