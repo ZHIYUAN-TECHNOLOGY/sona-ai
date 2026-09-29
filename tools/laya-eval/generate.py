@@ -13,6 +13,9 @@ from check import CAPABILITY_OPTIONS, MEDICINE_OPTIONS, PATIENTS, items as basel
 HERE = Path(__file__).parent
 MODEL = "gemini-3.8-flash"
 PER_CALL = 12
+# Extra generation rounds for classes that came out thin (v1 fine-tune missed note, medication and briefing).
+CAP = 250
+ROUNDS = {"note": 3, "medication": 3, "briefing": 2}
 
 # What each card is for, with the boundaries the baseline showed are easy to cross.
 BRIEFS = {
@@ -61,7 +64,7 @@ def prompt_for(capability, style, patient):
             f"while seeing this fictional patient: {PATIENT_HINTS[patient]}.\n"
             f"Every one must be asking for {BRIEFS[capability]}\n"
             f"Language style: {style}.\n"
-            "Vary length, wording and politeness; some mention the patient, most don't. No numbering. "
+            "Vary length, wording and politeness; some mention the patient, most don't. Name at most one medicine per request. No numbering. "
             'Reply with JSON only: {"requests": ["...", ...]}')
 
 
@@ -82,15 +85,16 @@ def medicine_in(text):
 
 def fill_requests(path):
     have = [json.loads(l) for l in path.read_text().splitlines()] if path.exists() else []
-    done = {(r["capability"], r["style"], r["patient"]) for r in have}
+    done = {(r["capability"], r["style"], r["patient"], r.get("round", 0)) for r in have}
     with path.open("a") as out:
         for capability in CAPABILITY_OPTIONS:
-            for style in range(len(STYLES)):
-                for patient in PATIENTS:
-                    if (capability, style, patient) in done: continue
-                    print(f"generating {capability} / style {style} / {patient}")
-                    for text in ask_gemini(prompt_for(capability, STYLES[style], patient)):
-                        out.write(json.dumps({"capability": capability, "style": style, "patient": patient, "request": text.strip()}, ensure_ascii=False) + "\n")
+            for rnd in range(ROUNDS.get(capability, 1)):
+                for style in range(len(STYLES)):
+                    for patient in PATIENTS:
+                        if (capability, style, patient, rnd) in done: continue
+                        print(f"generating {capability} / round {rnd} / style {style} / {patient}")
+                        for text in ask_gemini(prompt_for(capability, STYLES[style], patient)):
+                            out.write(json.dumps({"capability": capability, "style": style, "patient": patient, "round": rnd, "request": text.strip()}, ensure_ascii=False) + "\n")
                     out.flush()
     return [json.loads(l) for l in path.read_text().splitlines()]
 
@@ -139,6 +143,13 @@ def row(i, r, rng):
 if __name__ == "__main__":
     kept = keep(fill_requests(HERE / "requests.jsonl"))
     rng = random.Random(20260929)
+    # Cap each class so the topped-up ones don't tilt the model towards picking them.
+    rng.shuffle(kept)
+    capped, taken = [], {}
+    for r in kept:
+        taken[r["capability"]] = taken.get(r["capability"], 0) + 1
+        if taken[r["capability"]] <= CAP: capped.append(r)
+    kept = capped
     with (HERE / "train.jsonl").open("w") as out:
         for i, r in enumerate(kept):
             out.write(json.dumps(row(i, r, rng), ensure_ascii=False) + "\n")

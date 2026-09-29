@@ -1294,3 +1294,723 @@
 {"capability": "not-covered", "style": 5, "patient": "SYN-1086", "request": "Kira anggaran bil"}
 {"capability": "not-covered", "style": 5, "patient": "SYN-1086", "request": "帮我查病房床位"}
 {"capability": "not-covered", "style": 5, "patient": "SYN-1086", "request": "Check discharge blockers"}
+{"capability": "briefing", "style": 0, "patient": "SYN-1042", "round": 1, "request": "App, summarize Puan Tan's background sat, history with meds and allergies sekali lah."}
+{"capability": "briefing", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Can give quick rundown of this patient's history, allergy and existing meds boleh tak?"}
+{"capability": "briefing", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Eh pull up her background, past history and allergy sat, she on salbutamol je kan?"}
+{"capability": "briefing", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Tolong summarize this patient's case, background, current medication and any drug allergy please."}
+{"capability": "briefing", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Brief summary of history and allergies sat, what meds she taking ah?"}
+{"capability": "briefing", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Amelia Tan ni, can give full profile summary? History, allergies, current meds semua."}
+{"capability": "briefing", "style": 0, "patient": "SYN-1042", "round": 1, "request": "She got penicillin allergy right? Tolong summarize her whole medical history and baseline meds sat."}
+{"capability": "briefing", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Summarize her background and meds please, got any allergies recorded tak?"}
+{"capability": "briefing", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Patient ni on cetirizine ke? Tolong bagi full summary background, history and allergies jap."}
+{"capability": "briefing", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Puan Tan punya background and meds summary please, check allergy list also ah."}
+{"capability": "briefing", "style": 0, "patient": "SYN-1042", "round": 1, "request": "App, bagi quick summary of her background, allergies and current meds lah, nak review jap."}
+{"capability": "briefing", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Can summarize this patient's medical history, past background and regular meds? Any allergy tak?"}
+{"capability": "briefing", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Can give me a quick summary of Encik Rahman ah? Need his background, past medical history, allergies, and current medications."}
+{"capability": "briefing", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Summarize this patient's profile please - PMHx, drug allergies, and current medication list lah, thanks."}
+{"capability": "briefing", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Tolong summarize background pakcik ni jap. Any chronic illness or drug allergies tak? Also check what ubat he is taking."}
+{"capability": "briefing", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Summary please: patient background, past history, allergies, and active meds."}
+{"capability": "briefing", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Eh, can pull out his background and history lah? Ada drug allergy tak, and what regular ubat is he on right now?"}
+{"capability": "briefing", "style": 0, "patient": "SYN-1086", "round": 1, "request": "He mentioned taking one unknown tablet, maybe Metformin ah? Can you summarize his past medical history, allergies, and past medication list?"}
+{"capability": "briefing", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Could you summarize this 57-year-old patient's background, recorded allergies, and current drug regimen for me, please?"}
+{"capability": "briefing", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Bagi summary Daniel Rahman ni jap, want to see his PMx, allergy status, and existing prescription records."}
+{"capability": "briefing", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Can summarize who this patient is ah? Just need background info, past illnesses, allergies, and whatever tablets he's taking je."}
+{"capability": "briefing", "style": 0, "patient": "SYN-1086", "round": 1, "request": "He doesn't know his medication name lah. Can check his record and summarize his background, PMHx, allergies, and current meds list?"}
+{"capability": "briefing", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Quick background check lah, need this patient's medical history, known drug allergies, and current ubat summary."}
+{"capability": "briefing", "style": 0, "patient": "SYN-1086", "round": 1, "request": "App, tolong summarize pesakit ni punya history jap. Background, past history, alahan ubat, and what medications he is currently taking."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Tolong bagi ringkasan profil pesakit ni, termasuk sejarah penyakit, ubat yang dia makan, dengan apa-apa alahan."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Boleh ringkaskan latar belakang Puan Tan tak? Nak tengok history dia, alahan apa, dan ubat sedia ada."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Bagi recap ringkas pesakit ni kejap. Background, komorbid, alahan dan ubat sekarang."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Dia ada ambil salbutamol kan? Cuba summarize balik sejarah kesihatan dia, rekod alahan, dan ubat yang dia tengah on."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Summary pesakit ni please. History dia, alahan, dengan ubat-ubatan terkini."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Boleh sediakan ringkasan ringkas untuk Amelia Tan? Perlukan info pasal sejarah perubatan, rekod alergi, dan ubat semasa dia."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Nak tengok overview pt ni kejap. Latar belakang dia apa, ada alahan ubat tak, dan ubat apa dia tengah makan sekarang?"}
+{"capability": "briefing", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Selain alergi penisilin, pesakit ni ada sejarah apa lagi? Tolong senaraikan latar belakang perubatan dan ubat semasa dia."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Tolong ringkaskan kes pesakit ni untuk saya, nak tahu komorbid lampau, senarai ubat aktif, dan kalau ada alahan apa-apa."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Puan Tan ni ada asthma kan? Tolong recap sejarah perubatan dia, sebarang alahan, dan senarai ubat yang dia tengah guna."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Dia memang ada on cetirizine ke? Minta ringkasan penuh pasal background kesihatan dia, rekod alergi, dengan ubat-ubatan lain."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1042", "round": 1, "request": "App, tolong keluarkan ringkasan pesakit ni. Saya nak semak sejarah penyakit lampau, ubat harian, dan status alahan dia."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Boleh tolong bagi ringkasan pasal pakcik ni? Background penyakit, alahan, dengan ubat apa dia tengah makan sekarang."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Bagi summary background pesakit ni kejap. Ada allergy apa-apa tak, ubat rutin dia apa?"}
+{"capability": "briefing", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Tolong summarize rekod Encik Rahman dulu—past medical history, alahan, ubat-ubatan dia semua."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Ada rekod lama pesakit ni tak? Nak tengok sejarah sakit, ubat dia makan, dengan alahan ubat."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Tolong semak ubat lama dia, kot ada makan amlodipine ke apa, sekali dengan background dan alahan dia."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Summary pesakit ni: history, alahan, senarai ubat aktif."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Boleh bagi ringkasan profil Daniel Rahman? Nak tahu latar belakang kesihatan dia, ada alahan ubat tak, dan ubat apa dia ambil."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Tolong tarik info pesakit ni jap. Sejarah lama, alahan, ubat terkini dia apa ya?"}
+{"capability": "briefing", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Dia kata ada makan satu tablet tapi tak ingat nama. Boleh tolong listkan background dia, alahan, dengan ubat dalam sistem?"}
+{"capability": "briefing", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Minta tolong ringkaskan latar belakang pesakit ni, rekod alahan dan senarai preskripsi lepas."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Bagi overview pesakit ni kejap—past history, alahan ubat, ubat apa dia tengah on sekarang."}
+{"capability": "briefing", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Ringkaskan info pesakit ni: background sakit dia, sebarang alahan, dan ubat semasa."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Pt overview, pmx, current meds and check if pen allergy documented."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Quick pt summary please. Background, allergies, active rx."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Can give me a brief summary on Puan Tan? Just baseline history, meds, and allergies."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Pt profile? Hx, allergies, baseline meds beside salbutamol."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Full summary: PMHx, drug hx, allergies."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Amelia Tan 42F - recap background, current meds and allergy profile."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Give me quick rundown of this case. PMHx, ongoing meds, drug allergies."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Please summarize pt's past medical history and current meds, is cetirizine on the list?"}
+{"capability": "briefing", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Pt background summary. PMHx, regular medications, any known drug allergies."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Puan Tan's baseline summary please. Medical history, meds, allergies."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Summary pls: hx, allergy status, meds on board."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Patient snapshot: background, allergies, regular meds."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Pt summary pls. PMHx, known allergies, baseline meds?"}
+{"capability": "briefing", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Can retrieve Encik Rahman's profile? Need past medical history, drug allergies, current rx."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1086", "round": 1, "request": "PMHx + drug allergy + active meds summary."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1086", "round": 1, "request": "New SOBOE case. Pls pull up background, chronic illnesses, med list and allergies."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Pakcik says taking one small round tablet daily, check dispensing records. Also need full PMHx and allergies."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Summary pls: past history, allergies, regular meds."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Brief profile on Daniel Rahman 57M - background disease, allergy status, long-term meds."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Pull pt background, any HPT/IHD, allergies, current prescriptions."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Give me a quick rundown of this 57yo male. PMHx, allergic to anything, what regular meds is he on?"}
+{"capability": "briefing", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Encik 57yo with exertional dyspnoea, quick summary on past history, meds list, drug allergies."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Check his past clinic records. Any chronic history, allergies, active meds? Claims taking amlodipine only."}
+{"capability": "briefing", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Pt overview needed: PMHx, allergies, chronic meds."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Can you give me a quick patient overview for Puan Tan, 请简要总结 her past history, allergies, and current meds?"}
+{"capability": "briefing", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Tolong keluarkan ringkasan pesakit ni, 我想看一下 background dia, ubat terkini dengan allergy penicillin tu."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Give me a run-down of her profile, medical history, and allergies, especially 她的用药 including her salbutamol inhaler."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1042", "round": 1, "request": "App, boleh bagi background summary untuk Amelia Tan tak? 麻烦你了, nak semak history penyakit, alahan dan ubat-ubatan dia."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Patient summary please, 动作快一点, need medical history, current meds, and drug allergies right now."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Minta ringkasan profil pesakit sekarang ya, 不好意思, nak tengok rekod lama, alahan, dan ubat macam cetirizine tu."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Who are we dealing with here? 帮我总结一下 background, comorbidities, allergies, and regular medications."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Bagi recap ringkas pasal pesakit ni, 看一下病历 background dia, status alahan, dengan apa ubat dia tengah ambil."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Summary for Amelia please, 包括她的过敏 and medical background, also double-check her penicillin alert and active drugs."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Tolong sediakan ringkasan latar belakang pesakit ni, 谢谢, pastikan senarai alahan dan inhaler dia dimasukkan."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Summarise this patient's background, past history, allergies, and existing prescriptions, 马上给我."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Boleh tarikkan profil penuh Puan Amelia Tan? 我需要知道 background dia, past history, apa-apa allergy dengan current medications."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1086", "round": 1, "request": "App, 帮我 summarize this 57-year-old pakcik's background, past medical history, drug allergies, and whatever current medications he is taking."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Tolong 看一下 Encik Daniel Rahman punya previous records, summarize background, chronic illnesses, alahan ubat, dan current medications list."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1086", "round": 1, "request": "麻烦你 pull up a quick summary of the patient's medical background, known allergies, and active long-term meds, maybe metformin?"}
+{"capability": "briefing", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Boleh 快点 bagi full summary pasal background pesakit ni tak, especially past history, drug allergy, dengan ubat yang dia tengah ambil?"}
+{"capability": "briefing", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Can you give me a clean breakdown of the past medical history, allergy status, and active prescriptions for 这个人 Encik Rahman?"}
+{"capability": "briefing", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Sila sediakan ringkasan profil pesakit 57 tahun ni, 有没有 history of chronic illness or drug allergies, plus check current medications in system."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Give me a complete summary covering this patient's background, past admissions, known allergies, and regular medications, 谢谢你."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1086", "round": 1, "request": "等一下, tolong ringkaskan latar belakang kesihatan pakcik ni, alahan ubat, dan apa-apa rekod ubat terkini sebelum I start clerking."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Patient says he takes an unknown tablet but 不清楚 the name—can you summarize his documented medical history, allergies, and past medication list?"}
+{"capability": "briefing", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Boleh 麻烦你 semak dan summarizekan sejarah perubatan lalu, status alergi, dan senarai ubat sedia ada untuk pesakit ni?"}
+{"capability": "briefing", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Quickly 看一下 the system and summarize who this patient is—need his background history, drug allergies, and current medications."}
+{"capability": "briefing", "style": 3, "patient": "SYN-1086", "round": 1, "request": "App, 帮我 check Encik Rahman's medical profile: past history, comorbid conditions, documented allergy records, and regular meds like amlodipine if recorded."}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 1, "request": "可以帮我 summarize 一下 Amelia Tan 的 background 吗？我想知道她的 past medical history、current meds 还有 penicillin allergy 的 record。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 1, "request": "Give me a quick patient summary. Medical history, regular meds 跟 drug allergy 全部列出来。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 1, "request": "帮我 review 一下这位 patient 的 profile，除了 salbutamol 之外她还有吃什么 long-term meds，还有任何 allergy 吗？"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 1, "request": "帮我 pull out Puan Tan 的 background 来看一下，包括 past history、presenting complaint 和已知的 allergies。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 1, "request": "帮我 recap 这个 case 的 overall history、current medications 还有有没有 drug allergy。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 1, "request": "Brief summary of this patient please, background, PMHx, allergies 和 current meds 都要。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 1, "request": "这位病人目前有拿 cetirizine，可以给我完整 summary 吗？包括 underlying disease 跟 drug allergy。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 1, "request": "App，show 一下这个 patient 的 baseline info，看有拿什么 regular medications 跟有什么 allergy 没有。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 1, "request": "Amelia 的 baseline profile 是怎样？帮我 list 出她的 asthma history、current meds 和 allergies。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 1, "request": "可以 summarise 这位病人的 background 吗？需要看 past history、current medication list 还有 allergy status。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 1, "request": "确认一下，这个 case 除了 penicillin allergy，还有什么 underlying illnesses 还是 regular medications 吗？给个 quick summary。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1042", "round": 1, "request": "麻烦 provide 一份 patient summary，涵盖 baseline medical history、现用的 medications 和 allergy status。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 1, "request": "App, 可以帮我 trace 一下 Encik Rahman 的 background 吗？想看一下他的 past medical history，allergies 跟 current medications。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Patient summary please, 主要是 past medical history, drug allergy 和 existing medications。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 1, "request": "帮我看下这位 pakcik 系统里有没有 records？他讲有吃一粒 white tablet 可能是 Amlodipine，顺便 summarize 他的 medical background 和 allergies。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 1, "request": "可以 generate 这个 patient 的 summary 给我吗？包括 previous illnesses、长期吃的 drugs 还有是否有 allergy history。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Patient profile summary，medical history 跟 current treatment list 调出来一下。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 1, "request": "麻烦 check 一下 Daniel Rahman 的 medical record，给我一个 brief summary 关于他的 baseline health、known allergies 和 current medications。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Eh help me pull out patient 的 background boleh? 要看 past history, regular medications 还有 drug allergies。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 1, "request": "这位病人讲他有 on regular tablet 但不懂药名，帮我 pull 出他的 medication list、past history 还有 allergy status。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 1, "request": "显示 Encik Rahman 的 medical summary，重点是 co-morbidities、admission history、allergy profile 还有 active prescriptions。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 1, "request": "系统里面有他的 past history 吗？他只记得好像有吃 Metformin，帮我 check 完他的 background、all medications 跟 allergies。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Summary 这个 patient 的 background，尤其是 chronic diseases、allergies 和现在 on 着什么 medication。"}
+{"capability": "briefing", "style": 4, "patient": "SYN-1086", "round": 1, "request": "帮我 summarize 病人的 background 一下，check 他的 past history, known drug allergy 还有正在吃的 maintenance drugs。"}
+{"capability": "briefing", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Patient overview."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Ringkasan profil Puan Tan."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Summarise history and allergies."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Tolong ringkaskan latar belakang."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Summary, any salbutamol history?"}
+{"capability": "briefing", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Show Amelia's medical background."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Ringkasan pesakit dan ubat."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Patient background profile, please."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Past history and medications."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Tolong semak latar pesakit."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Summarise patient's current profile."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1042", "round": 1, "request": "请简述病人背景。"}
+{"capability": "briefing", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Patient summary, please."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Ringkasan penuh Encik Rahman."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Brief history, allergies, and meds."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Tolong beri profil pesakit."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Patient background and medications."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1086", "round": 1, "request": "总结病史与用药记录。"}
+{"capability": "briefing", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Full medical profile, please."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Check pakcik's background and metformin."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Ringkaskan sejarah dan alahan."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Complete patient overview."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Sejarah perubatan dan ubat."}
+{"capability": "briefing", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Latar belakang Encik Rahman?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Can check her cetirizine tak, safe ke to continue since fever and asthma flare up now?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Tolong review balik Puan Tan punya current medication list, any conflict or not ah?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 1, "request": "App, check her current meds, ada clash with penicillin allergy tak?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Her salbutamol usage right now, any safety concern or contraindication ah?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Eh tolong screen all her existing meds, safe to continue ke tak during this acute infection?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Cetirizine dia tu got any negative effect on her acute cough and asthma tak, please check sat."}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Amelia Tan punya current list tu safe lah kan, takde drug interaction red flags?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Tengok sat, does her salbutamol inhaler interact badly with her current fever state?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Just double check her regular meds, make sure nothing cross-reacting with penicillin allergy ya."}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Current meds dia all clear je kan, no contraindications with her symptoms today?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Puan Tan is taking cetirizine regularly, safe ke to keep taking while having chest symptoms like this?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Check existing meds safety profile lah, make sure no bad interactions inside her current regimen."}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Can check Encik Rahman punya current meds record tak? See if got any drug interactions or contraindications lah."}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Tolong pull out his active meds and screen for allergy clashes kejap."}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Pakcik said he takes one unknown pill, maybe amlodipine from last visit—boleh check safety profile and interactions tak?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Check current meds dia jap, any severe drug-drug interaction or toxic combination ah?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Please review pakcik Daniel punya past prescription history, tengok if got any red flags with his existing meds."}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 1, "request": "He mentioned taking aspirin before, got any recorded allergy clashes for that tak?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 1, "request": "App, current meds he's taking safe ke tak? Tolong flag any major adverse interactions je."}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Eh check tengok if his regular medications got any cross-reactivity with his allergy profile lah."}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 1, "request": "If he's still on bisoprolol, can check whether it's safe or got contraindication with his breathlessness ah?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Check his existing meds list for drug interactions please, takut clash pula."}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Tolong check what pills he took previously and see if safe to continue lah, mana tahu got adverse reaction."}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Can verify if his current long-term meds got allergy warning or dangerous interaction tak?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Tolong check ubat sedia ada pesakit ni, ada apa-apa drug interaction tak?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Cetirizine yang dia tengah ambil sekarang ni selamat ke kalau dia continue?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Check jap, inhaler salbutamol dia tu ada isu ke dengan sejarah alahan dia?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Ada apa-apa clash tak antara ubat-ubat yang dia duk makan sekarang?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Untuk Amelia Tan ni, ubat semasa dia ada kontraindikasi dengan status alahan dia ke?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Cetirizine dia tu ada interaction apa-apa tak dengan keadaan dia sekarang?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Boleh tolong review balik ubat harian dia? Selamat ke untuk diteruskan?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Salbutamol yang dia guna sekarang ni ada clash apa-apa tak?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Ubat-ubat sedia ada pesakit ni okay tak, takde adverse reaction kan?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Tengokkan jap senarai ubat Puan Tan, ada red flag tak antara ubat yang dia tengah makan?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Inhaler dia tu selamat ke nak teruskan waktu tengah batuk demam macam ni?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Cetirizine yang dia makan tu selamat tak memandangkan dia ada history alahan ubat?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Tolong semak balik ubat yang pakcik ni dok makan, selamat ke tak dengan keadaan semput dia sekarang?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Cuba tengokkan interaksi ubat-ubat lama dia dalam sistem, ada yang bahaya ke?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Encik Rahman kata dia ada ambil amlodipine, cuba semak kot ada clash dengan rekod alahan dia."}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Check senarai ubat sedia ada dia jap, ada apa-apa yang kontraindikasi untuk pesakit sesak nafas?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Dia ada makan aspirin pagi tadi, selamat ke nak teruskan tengok pada simptom dia ni?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Tengok jap ada drug interaction ke tak antara ubat-ubat semasa dia."}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Boleh tolong semak ubat yang pakcik bawak ni, takut ada tindak balas alahan ubat."}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Ubat maintenance dia sekarang ni selamat ke? Tolong semak balik profile keselamatan ubat-ubat tu."}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Dalam rekod lama dia ada bisoprolol, selamat ke kalau ubat tu diteruskan waktu tengah semput macam ni?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Boleh tolong review ubat semasa dia tak? Nak pastikan tak ada risiko clash alahan."}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Tolong review ubat-ubatan semasa Encik Daniel Rahman, risau ada yang buat dia makin semput atau bercanggah sesama sendiri."}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Semak balik ubat rutin dia, ada sebarang interaksi merbahaya yang kita kena berhati-hati tak?"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Check interactions between her current regular meds."}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Can Puan Tan safely continue cetirizine with this acute presentation?"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 1, "request": "salbutamol review - any safety concerns with concurrent high fever?"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Any allergy clashes detected in her active medication profile?"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 1, "request": "chk current home meds safe to maintain, acute asthmatic with cough fever"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Cetirizine safety check against documented drug allergies please."}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Review active meds list for contraindications."}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Is Amelia Tan's existing salbutamol regimen safe to carry on?"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 1, "request": "drug safety review on existing meds list please"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 1, "request": "any red flags on active meds given infective picture?"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 1, "request": "cetirizine interaction screen with allergy history"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Check if patient's current maintenance inhaler has any safety issues."}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Pakcik Rahman brought one unidentified cardiac tab, check safety profile and allergy risks for typical CCBs."}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Screen current active meds for any drug-drug interactions or contraindications with new onset DOE."}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Daniel Rahman, 57M - kindly run an allergy clash check on his current chronic medications."}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Pt taking an unknown OD pill, flag if any standard antianginals clash with his recorded allergy list."}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Review existing med list for ADR causing exertional breathlessness."}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Check if his home amlodipine has any documented severe interactions or safety alerts."}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Encik Rahman on unknown antihypertensive, verify if any past adverse drug reactions logged in system."}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Please audit current medications for duplicate therapy or safety warnings."}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Cross-check patient's current prescriptions against G6PD deficiency and known drug allergies."}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Review pt's ongoing aspirin therapy, any contraindication or interaction flagged?"}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Screen existing outpatient meds for potential bronchospasm triggers."}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Any major drug interactions flagged on his current active prescription list?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Can you check if her daily cetirizine has any contraindications with her current febrile illness, 麻烦你?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Tolong 查一下 sama ada ubat sedia ada Puan Tan ada sebarang isu alahan dengan rekod penicillin dia."}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 1, "request": "App, please verify whether using salbutamol at this increased frequency poses any cardiac interaction risks, 帮忙看一下."}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Boleh semak senarai ubat semasa pesakit ni, 没问题吧 with her documented drug allergies?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Any cross-reactivity issues between her current maintenance medications and her allergy profile, 安全吗?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Sila semak safety profile cetirizine yang Amelia Tan tengah ambil sekarang, 谢谢你."}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Please review if her existing salbutamol inhaler is safe to continue with this acute presentation, 确认一下."}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Semak semula rekod alahan penicillin dia dengan ubat rutin yang dia tengah makan, 查一查 takut ada tindak balas silang."}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Could you run a rapid safety audit on her ongoing cetirizine to rule out any adverse drug interactions, 劳驾了?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Salbutamol yang pesakit duk guna ni selamat diteruskan tak, 你帮我看看?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Puan Tan is on routine maintenance meds; does her current regimen show any safety red flags, 有危险吗?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Check current home medication safety profile against acute infection status, 仔细检查."}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Pakcik says he has this mystery round white pill from KK, 麻烦你帮我查一下 if this could clash with his allergy profile or trigger bronchospasm?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Tolong check previous dispensing records Encik Rahman, 不知道是什么 tablet he swallowed this morning, any severe contraindications with his acute dyspnoea?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Can you run a quick safety audit on his active drug profile, 看一下是否有 severe drug-drug interactions between whatever he's currently taking?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 1, "request": "He mentioned he takes amlodipine at home, 麻烦确认一下 whether his current dose is still safe given this new breathlessness on exertion."}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Patient is breathless and taking an unidentified chronic tablet, 可能会过敏 so please cross-check his existing medications against his recorded drug allergies."}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Encik Daniel bawak satu tablet tak bertanda, 帮我看一下 what this chronic medication might be and check if there are known safety warnings."}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Any adverse drug reactions reported for his baseline regimen? 担心有冲突, please review his current regular meds for any respiratory safety alerts."}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Dia ada makan aspirin sebelum ni tapi tak sure dose, 安全起见 please screen his existing home meds for dangerous interactions."}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Could you run an interaction check on whatever baseline therapy he is taking, 查清楚一点 to make sure none of his home meds induce shortness of breath?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Pakcik ni tak ingat nama ubat dia, 真的没办法, can you pull his recent pharmacy refill records to check for any critical drug clashes?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 1, "request": "System check please: if he is taking bisoprolol as claimed, 有没有问题 with his known allergy history or current presentation?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Please do a rapid reconciliation of his current medications, 确认安全 without delay, to rule out any drug-induced toxicity causing this exertional dyspnoea."}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 1, "request": "请问 Puan Tan 现在有 fever 和 cough，继续用她的 salbutamol inhaler 会不会有什么 contraindication？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 1, "request": "病人目前咳了五天，她长期吃着的 cetirizine 在这个 condition 下继续用 safe 吗？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 1, "request": "帮我 screen 一下病人当前的 regular meds，看跟她的 penicillin allergy 有没有 clash 或 cross-reactivity？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 1, "request": "Salbutamol 现在的 dosage 在 acute asthma presentation 下 safe 吗？帮我 check 一下 safety profile。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 1, "request": "Check 一下 cetirizine 对有 fever 的 asthma 病人安不安全，有没有 contraindication？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 1, "request": "Amelia Tan 有 penicillin allergy，想 verify 一下她现有的 medication list 会不会 trigger 任何 allergic reaction？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 1, "request": "病人目前用的 inhaler 会不会加重 tachycardia？她发烧 38 度，帮我 review 一下 safety。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 1, "request": "Review cetirizine，在 acute respiratory infection 期间继续吃会有 adverse effect 吗？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 1, "request": "病人这几天 cough 加剧，继续 regular dose 的 salbutamol safe 吗，有没有 toxicity concern？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 1, "request": "可以帮忙 review 一下患者 current medications 的 overall safety 吗？主要看 asthma 和 allergy 方面。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 1, "request": "Confirm 一下，她现有的 regular medication 里面有没有任何 penicillin cross-reactivity 的 risk？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 1, "request": "Puan Tan 现在的 cough and fever，她自带的 maintenance meds 需不需要 hold 掉？帮我 double check 一下 interactions。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 1, "request": "帮我pull out Encik Rahman在KKM system里面现有的medication list，check一下有没有drug allergy record或者contraindications。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 1, "request": "查一下他目前在吃的药跟Metoprolol有没有drug-drug interaction。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Pakcik有complaint of breathless on exertion，他平时吃着一粒不知名的pill，帮我screen系统看他active prescription有没有可能cause respiratory side effects。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 1, "request": "可以帮我cross-check一下，如果他有在吃Amlodipine，会不会跟他的existing long-term medications有interaction？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Review一下current active meds，看看有没有flag severe drug-allergy clashes。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Patient take unknown tablet, suspect是Aspirin，帮我check系统里的dispensing history看有没有adverse reaction record。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Daniel Rahman, 57-year-old male, 麻烦screen他之前take过的all meds，highlight any high-risk interaction warning。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Bisoprolol跟patient现有的prescriptions有没有interaction risk？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 1, "request": "帮我trace他之前Klinik Kesihatan出过的meds，check safety profile有没有issue。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Check一下Salbutamol会不会clash到他current unknown tablet或者existing meds。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Check his recorded outpatient medications list, 看看有没有known allergies或者duplicated therapy warning。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 1, "request": "看下他现有的med list，配Furosemide安全吗？是否有drug interaction？"}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Salbutamol safe?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Check current interactions."}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Semak ubat Amelia."}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Any cetirizine allergy clash?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Tolong semak ubat Puan Tan."}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Safe to continue cetirizine?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Interaksi ubat semasa?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Can she continue salbutamol?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Cetirizine safe kah?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Penicillin allergy clash check."}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 1, "request": "现有 药物 安全 吗？"}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Semak keselamatan salbutamol."}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Check Encik Rahman's drug interactions."}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Semak alahan ubat pakcik."}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Any contraindications current meds?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Ada drug interaction tak?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Verify Daniel's current tablet."}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 1, "request": "检查现有药物冲突"}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Screen for allergy clashes."}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Aspirin interaction check please."}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Ubat sedia ada selamat?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Tolong check ubat dia."}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Are current pills safe?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Review potential interactions."}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Her current cetirizine okay to continue tak, with this fever and asthma flare?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Tolong double check Puan Tan punya salbutamol, any issues if she's using it more frequent now ah?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Her existing meds got any cross-reactivity with her penicillin allergy or not? Just to be safe lah."}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Cetirizine dia makan tu selamat ke with her current symptoms?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Can check her current routine meds got any clash with this acute presentation?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Salbutamol okay ke for Amelia Tan right now, takde contraindications kan?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Current home meds safe to keep taking ah? Tolong review jap."}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Cetirizine tu can make her cough worse or affect her chest tak? Tolong check please."}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 2, "request": "App, check whether her existing regular medications are completely safe lah given her condition."}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Any adverse risks with her ongoing salbutamol inhaler usage during this febrile episode?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Puan Tan is taking cetirizine daily, any conflict with her present condition ah?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Tolong check jap, all her current home meds cleared from penicillin-related risks kan?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Can check his active med list ah, see if got any potential drug interactions or not?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Pakcik says he takes one white tablet daily but tak ingat the name, can pull up his current meds and check for any allergy clashes?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Tolong screen his existing medications jap, got any severe contraindications or safety red flags?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 2, "request": "If he is already on bisoprolol, got any harmful interactions with whatever other meds he is taking now?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 2, "request": "App, check Encik Rahman's current medication history lah, need to see whether all his regular pills are safe together."}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Any drug-drug interactions between his existing tablets? Takut clash pulak."}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Please review his past prescription list to check if his current meds have any documented drug allergy issues."}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 2, "request": "He is currently taking aspirin kan, can check if it interacts badly with his other maintenance meds?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Scan his current med profile please, want to make sure no unsafe combinations inside."}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Check his active meds list for safety lah, got any allergy alerts or toxic combinations tak?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Pakcik Daniel Rahman brought an unknown pill, can review his dispensary records to verify if his current regimen is safe?"}
+{"capability": "medication", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Just review all his ongoing oral meds for drug interactions and safety, thanks ah."}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Tolong semak ubat sedia ada pesakit ni, ada apa-apa contraindication tak dengan condition dia sekarang?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Check balik cetirizine yang dia tengah ambil ni, selamat ke teruskan masa demam batuk macam ni?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Ubat Puan Tan sekarang ni ada isu cross-reactivity dengan alahan dia tak?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Boleh double check tak inhaler salbutamol dia tu, ada isu ke kalau dia guna masa demam?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Semak interaction antara ubat-ubat biasa dia."}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Amelia Tan ada allergy teruk, tolong pastikan ubat maintenance dia memang betul-betul selamat."}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Cetirizine dia tu okay ke kalau dia ada asthma flare?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Cuba tengok ubat yang dia makan sekarang, ada yang boleh trigger batuk dia ke?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Safe tak salbutamol dia ni kalau tengok history dia balik?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Ada clash tak ubat-ubat current dia dengan rekod alahan penicillin pesakit?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Puan Tan makan ubat biasa dia tu, ada apa-apa side effect bahaya yang kita kena monitor tak?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Tolong review ubat harian dia sekejap, nak confirm takde sebarang interaksi ubat."}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Tolong tengokkan ubat yang pakcik ni tengah makan, ada apa-apa drug interaction tak?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Boleh check kan senarai ubat sedia ada dia? Takut ada kontraindikasi dengan sesak nafas dia sekarang."}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Encik Rahman ni ada rekod allergy dengan ubat-ubat lama dia ke? Cuba semak jap."}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Dia kata ada makan sebiji tablet darah tinggi tapi tak ingat nama, tolong check rekod farmasi lepas selamat ke tak."}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Tolong review ubat dia, ada interaction ke antara tablet yang dia tengah makan tu dengan ubat lain?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Semak kejap list ubat semasa pesakit ni dalam sistem, ada apa-apa isu keselamatan tak?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Daniel Rahman ni ada on bisoprolol ke sebelum ni? Tolong sahkan dan tengok kalau ada adverse effect."}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Cuba check ubat rutin dia, selamat ke nak teruskan tengok pada keadaan dia sekarang?"}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Boleh tolong screen current meds dia dulu? Risau ada clash atau allergy."}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Tolong double check ubat sedia ada pesakit ni, nak make sure takde isu alahan teruk."}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Review jap ubat semasa dia, kot-kot ada ubat yang boleh trigger shortness of breath."}
+{"capability": "medication", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Tolong semak rekod ubat lama pakcik ni, ada interaction profile yang membahayakan tak?"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Check Puan Tan's current cetirizine safety given acute cough and fever"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Any issue with salbutamol and severe penicillin allergy? Please review"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Current meds check, any contraindications with her acute presentation?"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Pls review home meds list for allergy conflicts"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Pt on cetirizine - safe to continue with fever and chest symptoms?"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Salbutamol check, verify if regular dosing safe during infective exacerbation"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Check existing rx safety"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Puan Amelia on salbutamol MDI, confirm no safety red flags with current symptoms"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Review current cetirizine, any contraindication in acute lower respiratory infection?"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Cross-check baseline medications against documented allergy profile"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Can keep regular salbutamol as is? Pls verify safety"}
+{"capability": "medication", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Pls audit active meds for Puan Tan, ensure no drug clashes"}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Can you check Encik Rahman's dispensing records in the system and screen for any contraindicated meds with acute dyspnea?"}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 2, "request": "pt on unknown pink cardiac tab, check allergy alerts against sulfa and penicillin"}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Check if his usual amlodipine causes or worsens shortness of breath"}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Please pull pakcik's past med list and cross-check for drug-induced bronchospasm."}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 2, "request": "review current bisoprolol safety with new onset DOE, any interaction flags?"}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 2, "request": "reconcile current home meds vs allergy profile, flag potential causes of exertional breathlessness"}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Daniel Rahman 57M - verify his current aspirin intake vs reported asthma allergy history"}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 2, "request": "metformin safety check with acute dyspnea suspected metabolic acidosis"}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Identify white round embossed tablet from KK record and check contraindications with acute bronchospasm"}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Pls check if his chronic perindopril could explain the cough and breathlessness, review adverse profile"}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 2, "request": "screen existing med list for pulmonary toxicity or fluid retention risks"}
+{"capability": "medication", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Any high-risk interactions in his active prescriptions that might trigger DOE?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Check her cetirizine record, 帮忙看下 whether there are any interaction risks with her condition."}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Tolong semak salbutamol Puan Tan ni, 有没有冲突 with her acute symptoms?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Known penicillin allergy on file, 请检查 if any of her current baseline meds are contraindicated."}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Cetirizine dia makan sekarang tu selamat tak, 检查一下 interaction risks."}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Could you review her regular salbutamol usage to confirm it is still safe? 谢谢你."}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Boleh tolong screen senarai ubat sedia ada pesakit, 看看有没有 safety issues with this infection?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Amelia Tan is on cetirizine, 不知道会不会 trigger or clash with her allergy profile?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Semak balik ubat sedia ada, 怕有 cross-reactivity or allergy risks we missed."}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Is her baseline salbutamol still safe to continue right now, 麻烦看一下."}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Tolong pastikan ubat sedia ada dia tak bahaya, 安全第一, screen for adverse drug interactions please."}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Patient has penicillin hypersensitivity, 确认一下 whether her current active medications clash with that allergy."}
+{"capability": "medication", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Review current medications dulu, 担心会有 unintended interactions with her fever."}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Can you 查一下 Encik Rahman's dispense history in the system to see if his regular meds have any adverse reactions causing this shortness of breath?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Tolong 看看 senarai ubat lama dia, ada apa-apa contraindication atau allergy risk tak dengan simptom sesak nafas sekarang?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 2, "request": "He's taking some mystery pill, maybe amlodipine from KK, 麻烦你 check if his existing antihypertensives could be worsening his acute dyspnoea."}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Pakcik ni kata telan satu biji ubat tak tahu nama, tolong 确认一下 dalam rekod farmasi ada ubat aktif yang boleh clash dengan alergi dia ke tak."}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Please review his current chronic medications for any drug-drug interactions, we need to 小心一点 before taking the full history."}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Cuba check kalau bisoprolol yang dia duk makan sekarang ni selamat untuk pesakit yang tengah breathless macam ni, 没问题吧?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 2, "request": "App, please 帮我查 Daniel Rahman's active prescriptions on the database to see if any current tablet has known respiratory side effects."}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Tolong semak rekod ubat pesakit ni, kita nak 查查看 sama ada ubat rutin dia ada potensi interaksi bahaya atau alahan."}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 2, "request": "The patient is on long-term metformin according to previous notes, 检查一下 whether his regular regimen is safe given his current breathlessness."}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Boleh tolong 看一下 kalau ubat maintenance yang dia dok makan ada cross-reactivity dengan apa-apa allergy?"}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Run an interaction scan on his current medication profile, 不安全的话 flag it immediately."}
+{"capability": "medication", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Encik Rahman bawak satu tablet putih tak ada label, kalau betul aspirin dari rekod lama dia, 确定一下 is it safe to keep him on it with his breathing difficulty?"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 2, "request": "Amelia Tan 有 severe penicillin allergy，帮我 check 看看她现有的 regular medications 会不会有 cross-reactivity 的 risk？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 2, "request": "她现在有 fever 加上 cough，继续 take cetirizine 还 safe 吗？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 2, "request": "Patient 目前 cough with fever，想 double check 一下她日常用的 salbutamol inhaler 有没有 safety issue？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 2, "request": "请 review 一下 Puan Tan 目前在用的 long-term medications，看跟现在的 acute presentation 有没有 conflict。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 2, "request": "麻烦 check 一下 cetirizine 在这个 acute infection 期间适不适合继续 on 着，会不会影响 recovery？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 2, "request": "病人有 penicillin allergy，她 current list 里面的药有没有任何 allergy clash 的 concern？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 2, "request": "Salbutamol inhaler 针对她现在的 fever 和 chest condition 来看，继续 maintain safe 吗？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 2, "request": "帮我 screen 一下 current medications，看看有没有 any adverse drug interactions 或者 contraindications。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 2, "request": "Puan Tan 每天有吃 cetirizine，在这次 acute respiratory symptoms 出现后需要 withhold 掉还是 continue？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 2, "request": "Current meds review please，主要是 evaluate 有没有 penicillin-related cross-allergy 的 risk。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 2, "request": "她每天用 salbutamol，配合现在的 fever 状态，会不会 trigger 明显的 tachycardia 或其他 safety concern？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1042", "round": 2, "request": "Amelia 目前有 asthma flare-up 的 risk，可以 evaluate 一下她 existing regimen 的 overall drug safety 吗？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 2, "request": "帮我check一下Encik Rahman在system里面现有的medication list，看有没有任何known drug allergy或者interaction records。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 2, "request": "Patient claims currently taking a white tablet regularly，能不能cross-check他之前的dispensing record看是什么，顺便screen一下safety profile？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 2, "request": "病人有SOBOE，目前有一颗unknown tablet在吃，先帮我review他现有的meds有没有可能cause bronchospasm or fluid retention？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 2, "request": "Check一下他现有的Aspirin跟他的allergy profile有没有clash？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 2, "request": "Pakcik说他每天吃一颗不知名的药，帮我pull out他过去六个月在KKM系统的prescriptions，check for any potential toxicity。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 2, "request": "帮我review他目前的long-term meds，看有没有任何adverse drug reaction会导致exertional dyspnea？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 2, "request": "麻烦check一下patient当前的medications有没有任何harmful drug interactions。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 2, "request": "Encik Rahman有breathlessness，他带来的unknown pill会是beta-blocker吗？帮我check他的medication history看安不安全。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 2, "request": "系统里有没有记录他对Metformin过敏？顺便帮我verify一下他目前在吃的所有meds是否safe。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 2, "request": "帮我run一次medication reconciliation，看一下他现在吃着的药有没有major contraindications。"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 2, "request": "病人57岁SOBOE，不确定平时的tablet是什么，可以scan他的EMR active med list并flag出所有high-risk drug interactions吗？"}
+{"capability": "medication", "style": 4, "patient": "SYN-1086", "round": 2, "request": "查一下这名病患的active prescription list，看那颗unknown pill有没有可能clash到他的renal function或造成breathlessness。"}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Check salbutamol interactions."}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Semak ubat sedia ada."}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Any cetirizine allergy clash?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Review Amelia's current medications."}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Cetirizine Puan Tan selamat?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Check current meds safety."}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Ada interaksi salbutamol tak?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Review Puan Tan's inhaler."}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Please review existing medications."}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Semak alahan ubat pesakit."}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Any clash with cetirizine?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Salbutamol selamat untuk Amelia?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Verify current med safety."}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Semak interaksi ubat pakcik."}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Check interactions."}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 2, "request": "检查现有药物冲突。"}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Any amlodipine drug interactions?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Review Encik Rahman's medications."}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Ada kontraindikasi ubat tak?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 2, "request": "查病人药物过敏。"}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Is his metformin safe?"}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Semak alahan ubat."}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Interaction check, please."}
+{"capability": "medication", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Selamat ke ubat dia?"}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 1, "request": "App, tolong draft clinic note jap. 42yo lady with asthma, batuk five days pastu demam start yesterday lah."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Can help me write consultation note for Puan Tan? She has asthma, presenting with fever since semalam and bad cough."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Doc note please. Cough 5 days, fever since yesterday, got penicillin allergy ya. Tolong kemaskan sikit."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Write note for this asthma patient, she's on salbutamol inhaler PRN je, now comes in with 5 days cough and fever. Make it standard SOAP lah."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Eh tolong document this case, female 42 ada asthma, batuk dah 5 hari demam baru start semalam. Thanks ya."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Draft note for Amelia Tan please, 42 years old. Asthma history, cough 5 days plus fever, allergy to penicillin."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Please summarize this visit into clinical note. Patient complaint of cough five days and fever since semalam, background asthma tak settle lagi."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Tolong buatkan SOAP note jap, patient takes cetirizine regularly, now having fever since yesterday and persistent cough for five days."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Need clinical summary now ah. 42-year-old female, asthmatic, batuk dah lima hari and start demam yesterday. Cantikkan format please."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 1, "request": "App, tolong generate note for this consultation lah. 42yo lady, asthmatic on salbutamol, presenting with cough 5 days and acute fever."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Can you draft documentation for Puan Tan ah? Asthmatic lady, cough for 5 days already, yesterday start fever pulak. Penicillin tak boleh ya, allergic."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 1, "request": "Tolong draft visit note cepat sikit, female 42, asthma with cough 5 days and fever since yesterday lah."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 1, "request": "App, tolong start draft consultation note sat, 57yo male with breathless on exertion, history tak sempat korek lagi and he's taking one unknown tablet."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Can you help write the clinic note for Encik Daniel Rahman? Datang with SOBOE, haven't taken the full history yet, claims taking one ubat tak tau nama lah."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Draft note for me please. Complaint SOBOE, history not yet taken ah, got one unknown pill. Just put skeleton first."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Tolong document visit ni. Shortness of breath on exertion, history still pending lah, only know he takes some unknown tablet."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Please write up the initial consultation note for Encik Rahman, 57 years old, sesak nafas on exertion, full history haven't clerk yet and on an unknown tablet."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Can draft the clinical clerking note ah? Breathless on exertion je for now, history not yet taken, takes one mystery pill from GP."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Help me write documentation for this visit. Patient breathless on exertion, history not done yet, consumes one unknown white tablet daily lah."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Tolong draft consultation note, SOBOE chief complaint tapi history not taken yet, dia ada ambik sebiji ubat tapi tak tau nama apa."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Generate consultation note for Pakcik Daniel please, 57yo, breathless on exertion, detailed history pending, currently on an unidentified tablet."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Draft clerking note sat, complain of sesak nafas bila jalan, history tak ambil habis lagi, just on one unknown tablet."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 1, "request": "App, write clinic note can? Breathlessness on exertion, history not yet taken, taking unknown tablet je. Make it brief first ah."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 1, "request": "Tolong siapkan draft consultation note for this pakcik, breathless on exertion, history taking in progress, got one unknown pill only."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Tolong draftkan nota konsultasi untuk Puan Tan, umur 42 tahun. Datang sebab batuk dah lima hari dan ada demam sejak semalam, ada asma serta alahan penisilin."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Buatkan clerking note untuk pesakit ni. Batuk lima hari, demam baru mula semalam, ada sejarah asma."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Boleh tolong tuliskan nota klinikal untuk kes ni? Batuk dah berlarutan lima hari, demam sejak semalam. Dia memang ada asma dan biasa guna inhaler salbutamol."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Sediakan nota rawatan hari ni. Mengadu demam dari semalam dan batuk dah 5 hari dengan background asma."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Tolong siapkan nota dokumentasi Amelia Tan, 42 tahun. Masalah batuk lima hari dan demam semalam, ada asma."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Draft consultation note jap. Pesakit asma umur 42, batuk 5 hari campur demam semalam, memang makan cetirizine."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Boleh tolong generate nota dokumentasi pesakit ni tak? Demam semalam, batuk dah lima hari, ada penyakit asma."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Tulis nota lawatan pesakit sekarang. Batuk lima hari dan demam semalam, sejarah asma."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Tolong buatkan nota konsultasi Puan Tan, kes asma datang dengan batuk lima hari dan demam sejak semalam."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Bantu saya rangka nota klinikal pesakit ni ringkas saja. Batuk 5 hari, demam dari semalam, ada asma."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Tolong draf nota pesakit 42 tahun ni. Batuk lima hari, demam semalam, ada asma dan kena ingat dia alah penisilin."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 1, "request": "Sediakan draf nota rawatan pesakit ni ya. Batuk dah 5 hari lepas tu semalam mula demam, ada asma."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Tolong sediakan draf nota konsultasi untuk Encik Rahman, 57 tahun, datang sebab sesak nafas bila buat kerja berat, ubat sebiji tak tahu nama tu nanti kita semak balik."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Tuliskan clerking note awal ya. Pesakit umur 57 ada shortness of breath on exertion, history penuh belum sempat ambil lagi, ubat cuma tahu ada telan satu tablet tak pasti jenis apa."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Boleh tolong draf nota pesakit ni? Mengadu SOBOE, ada makan sebiji tablet tak tau nama, sejarah terperinci pending."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Sila buatkan rangka nota klinikal pesakit 57 tahun ni ya, aduan utama cepat semput bila berjalan, ubat biasa makan ada sebiji tapi nama tak ingat langsung."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Draf nota kemasukan ringkas untuk kes semput bila exert ni, sejarah belum ambil penuh lagi, pesakit cuma ingat ada telan sebiji ubat warna putih."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Tolong buat dokumentasi lawatan untuk pakcik ni. Mengadu mengah bila buat aktiviti harian, history taking in progress, sekarang makan sebiji tablet tak tahu jenis."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Sediakan documentation untuk kes SOBOE ni kejap, pakcik Daniel Rahman 57 tahun, ada makan sebiji ubat tak kenal, clerking masih ongoing."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Draf nota klinikal untuk pesakit ni, aduan sesak nafas bila exertion, history pending, ambil sebiji tablet tak tahu nama apa."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Bantu saya tulis nota konsultasi awal. Lelaki 57 tahun ada semput on exertion, baru nak start ambil sejarah penyakit, ubat kat rumah cuma tahu ada sebiji tablet."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Tolong rangka nota pesakit ni, aduan utama mengah bila buat kerja, ada makan sebiji ubat mungkin frusemide tapi kena confirm balik, sejarah lanjut belum ambil."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Buatkan clerking note dulu. Pesakit 57 tahun datang sebab penat bila berjalan, ubat regular ada satu tablet tak pasti nama, history penuh belum go through."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 1, "request": "Draf nota rawatan hari ini untuk kes semput bila buat aktiviti, umur 57 tahun, ada ambil sebiji tablet tak tahu nama, anamnesis belum lengkap."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Draft SOAP note: 42F known asthma on PRN salbutamol, c/o cough 5/7, fever 1/7. NKDA except PCN. Mild wheeze bilaterally."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Can you please document the consult note for Puan Tan? 42 yo female with bronchial asthma presenting with productive cough for 5 days and acute fever since yesterday. Allergic to penicillin."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Cln note: 42yo F, BA, c/o cough 5/7, fever 1/7. PCN allergy. Chest clear, vitals stable. Pls draft."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Amelia Tan, 42. Asthma exacerbation secondary to URTI, cough 5d, fever 1d. Regular cetirizine user. Penicillin allergic. Write out the clinic encounter note."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 1, "request": "42yo lady, known BA on salbutamol inhaler. c/o cough x 5/7 + fever x 1/7. Allergic to PCN. Document consult."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Kindly generate the outpatient note: 42 y/o lady with asthma presenting with 5-day cough and fever since yesterday, severe penicillin allergy."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Summarise visit note: 42yo F with underlying asthma, cough x 5/7, fever onset yesterday, penicillin allergy, lung exam mild exp rhonchi."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Write note: 42F asthmatic, taking cetirizine. Cough 5 days, fever 1 day. PCN allergy."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Amelia, 42yo, known BA. C/o cough 5/7, fever yesterday. Allergic to penicillin. Generate documentation."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Pls draft clerking note - 42/F, BA, fever 1/7, cough 5/7, allergic to PCN."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Please write clinical documentation for 42yo asthmatic woman. Cough for 5 days, fever yesterday. Uses salbutamol. Note penicillin allergy."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 1, "request": "Draft consultation entry: 42 yo female, BA, cough x 5/7 with fever since yesterday. Allergy: Penicillin."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Draft clinic note. 57M c/o SOBOE, pending full hx. On 1 unk pill from KK. Template the clerking."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Please start consultation note for 57yo male presenting with exertional dyspnea. Hx incomplete, takes one unlabelled white tablet OD."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Clerk note: 57yo with DOE, detailed history not yet taken. Currently on unknown antihypertensive. Generate consult note format."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Draft outpt note for this 57 yo gent. C/o breathlessness on exertion, clerking in progress. Reports taking Metoprolol."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Doc consultation note pls. Encik Rahman, 57, SOBOE. Full clerking pending, on unk tab daily."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Start clinic clerking sheet. Male 57, SOB on exertion, history yet to be elicited. Unknown meds brought from home."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Generate consult note - 57 yo pakcik c/o SOB on exertion. Hx not taken yet, takes one unknown blue tablet."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Prep encounter note. Pt 57M, exertional breathlessness, clerking not done yet, claims taking Aspirin only."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Write note: 57yo M, SOBOE, HPI pending, taking unverified oral med."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Can you draft initial clinic visit note for Daniel Rahman? 57 y/o with exertional SOB, full history pending, on unknown tablet."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 1, "request": "New clerking note please. 57yo male, SOBOE. Hx pending. On 1 unk cardiac tab."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 1, "request": "Draft documentation for this visit. 57M, exertional SOB, hx taking not done yet, on single unidentified tab."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 1, "request": "App, please draft the clinic note for Puan Tan, she is 42 with acute asthma exacerbation and cough x 5 days, also got allergy to penicillin, 麻烦你了。"}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Tolong siapkan documentation pesakit ni, batuk dah lima hari lepas tu semalam mula 发烧, dada rasa ketat sikit."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Hey, can you help generate consultation note? 42-year-old female, known asthmatic, currently using salbutamol MDI PRN, complaints of cough and fever, 记录一下。"}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Bantu saya tulis SOAP note sekarang, pesakit batuk demam and 喘不过气, need to document respiratory findings properly."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Document visit for Amelia Tan, 42F, coming in with fever since yesterday and worsening productive cough, 辛苦你了。"}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Tolong draftkan nota rawatan, pesakit ada alahan teruk pada penicillin, datang sebab demam dan batuk berpanjangan, 检查一下 lung base."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Write up the consultation summary please, she's taking cetirizine regularly but having fever and cough since yesterday, 咳得很厉害。"}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Mohon sediakan nota klinikal lengkap untuk Puan Tan, umur 42 tahun, ada asma dan demam bermula semalam, 看一下 vitals dia okay ke tak."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Draft the clinical encounter note please, 42yo lady, asthmatic with 5-day cough and new-onset fever, 帮我写好来 ya."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Sila rumuskan nota konsultasi pesakit asma ini, dia guna salbutamol bila sesak, datang mengadu demam semalam, 不舒服 sangat."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Could you quickly summarize and document today's visit? Fever since yesterday plus five days history of cough, 没问题吧?"}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 1, "request": "Generate consultation note ya, 42-year-old female with underlying asthma presenting with URTI symptoms, 等一下 I will sign off."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Tolong draftkan consultation note untuk Encik Rahman, 57 tahun, datang with SOBOE tapi history 还没问, dia on satu ubat biji tak tahu nama."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Draft clinical note for this 57-year-old male, c/o SOB on exertion, full history not taken yet and on an unknown tablet, 帮我写 properly please."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Sila sediakan draft consultation note, pesakit 57 tahun mengadu sesak nafas bila berjalan, ubat lama 不清楚 nama apa, history taking in progress."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Could you generate a clinic note for Pakcik Daniel? 57yo with exertional breathlessness, comprehensive history pending, he only takes one unknown tablet, 麻烦你了."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Tuliskan nota klinik ringkas: male 57, SOBOE, clerking 还没弄清楚, takes one unknown white tablet maybe frusemide."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Please prepare a consultation note for a 57-year-old male presenting with shortness of breath on exertion, on one unidentified pill, 记录一下 while history is still pending."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 1, "request": "App, create consult note please: 57yo, exertional dyspnea, history not yet taken, suspected amlodipine tapi pill unknown, 帮我整理 nicely ya."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Draft outpatient note for this 57-year-old with breathlessness on exertion, history hasn't been taken yet and takes one unknown tablet, 慢慢来 no rush."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Bantu saya rangka nota rawatan pesakit umur 57 tahun ni, aduan sesak nafas bila exertion, ubat sebiji tak tahu nama, 病史还没有问 complete."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Document this clinic visit: 57-year-old male, breathless on exertion, taking one unknown pill daily, clerking incomplete, 马上写 an initial consult note."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Tolong buatkan draft nota pesakit Encik Daniel Rahman, umur 57, semput bila buat aktiviti, history taking belum siap, on unknown tablet, 谢谢你."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 1, "request": "Can you write up the consultation note for a 57-year-old gentleman with exertional dyspnea, on one unknown tablet, clerking pending, 先帮我写 the basic template."}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 1, "request": "帮我write up Puan Tan的consultation note。42岁female，known asthma on Salbutamol inhaler，cough 5 days加fever since yesterday，有drug allergy。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 1, "request": "Can help to generate consultation note for this patient? 42岁女性，asthma background，对penicillin allergy。主诉cough 5 days accompanied by fever since yesterday。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 1, "request": "Amelia Tan，42岁。Asthma patient，cough已5天，昨天开始fever，对penicillin allergic。Doc note draft出来。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 1, "request": "Draft clinical note: 42yo female, asthma on cetirizine, cough x 5/7, fever 1/7, with drug allergy."}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 1, "request": "麻烦帮我整理一份outpatient clinic note。病人42岁female，underlying asthma，cough 5天还有fever since yesterday，有medication allergy。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 1, "request": "Generate SOAP note: 42yo with asthma, allergic to penicillin, presenting with cough for 5 days and fever since yesterday."}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 1, "request": "Please draft documentation for Puan Tan: 42岁女性，known case of asthma，平时有use Salbutamol。目前cough 5 days伴随fever 1 day。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 1, "request": "帮我写今天的consultation note。42yo，asthma，cough 5 days，fever since yesterday，allergic to penicillin。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 1, "request": "App，帮我draft这个case的encounter note。42岁female，underlying asthma regularly taking cetirizine，主诉cough五天，昨天起发烧。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 1, "request": "写一下documentation。Patient 42岁，有asthma，这次主要是cough 5 days和fever since yesterday，有drug allergy。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 1, "request": "可以帮忙format成完整的progress note吗？42岁女性，underlying bronchial asthma，penicillin allergic，cough for 5 days with fever 1 day。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 1, "request": "Draft note: 42/F, known asthma, PC cough 5 days and fever since yesterday, significant penicillin allergy."}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 1, "request": "帮我start draft consultation note for Encik Daniel Rahman, 57岁。Chief complaint是on exertion会breathless，detailed history还没clerk，只知道他有吃一种unknown tablet。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Help me draft a consultation note. Patient有exertional dyspnoea，history not taken yet，currently taking some unknown medication。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 1, "request": "请帮我准备这份clinical note template。57岁male，complain SOBOE，full history pending，on unknown tablet。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Can help me write consultation note ah? Patient走两步就breathless on exertion，history还未take，平时吃着不懂什么tablet，先draft住先。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Tolong draft note for this 57yo pakcik. SOB on exertion，history还没问完，medication history只知道有take one unknown white tablet。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Draft initial documentation: 57M, breathless on exertion, history not yet taken, on unknown pill. 帮我写个clerking note。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 1, "request": "帮我generate consultation note的subjective part。Patient c/o SOBOE，history not yet taken，home med是unknown tablet，连是不是Aspirin都不清楚。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 1, "request": "可以帮忙draft note吗？57岁uncle complain SOB on exertion，history还没detailed clerking，只带了一种unknown tablet过来看。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Please write the consultation note for this visit. 57-year-old gentleman, breathless on exertion, complete history not yet taken, currently on an unknown oral tablet。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 1, "request": "帮我write note。SOBOE，57yo male，history pending clerking，taking unknown tablet。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 1, "request": "Encik Rahman 57岁，complain breathless on exertion，history not yet taken，帮我draft outpatient consultation note，medication暂时put unknown tablet。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 1, "request": "麻烦你draft一份clinic visit note，patient 57岁，present with shortness of breath on exertion，full history还没来得及拿，currently on an unknown tablet。"}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Draft note for Puan Tan."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Tulis nota klinik sekarang."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Please generate consultation note."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 1, "request": "帮我写门诊病历。"}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Draft note, on salbutamol."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Sediakan nota klinikal pesakit."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Write note for Amelia."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Dokumenkan sesi konsultasi ini."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Record note, penicillin allergy."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 1, "request": "整理这单病历。"}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Draft consult note, can?"}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 1, "request": "Tolong sediakan nota konsultasi."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Draft note."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Please draft consultation note."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Tolong tulis nota Encik Rahman."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Start clerking note."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 1, "request": "帮我写 SOAP note."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Tulis nota klinikal."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Sila catat consultation note."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Draf nota pakcik ini."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 1, "request": "请准备 clinic note."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Write note for Daniel."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Document this visit, please."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 1, "request": "Draft note, unknown tablet."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 2, "request": "App, tolong draft consultation note for Puan Tan, 42. Batuk five days, fever started semalam, known asthma. Thanks ya."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Draft note jap. Patient comes in with acute asthma exacerbation plus fever, cough dah 5 hari. Remember allergy to penicillin tau."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Hey, can write clinic note for me? Asthmatic lady 42 yo, cough 5 days and fever since yesterday, using salbutamol MDI PRN. Tolong kemaskan lah."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Tolong tulis note visit ni lah. 42 year old female, complain of cough five days and fever semalam je, chest tight sikit. Buat standard SOAP format eh."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Amelia Tan, 42 years old. Tolong create documentation note for today's encounter ah. On regular cetirizine, presentation is 5 days cough with fever."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Draft clinical note please. 42 yo female asthmatic, batuk dah 5 hari, demam baru start semalam. Fast fast ya."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Can generate consultation note for this patient tak? 42/F, underlying asthma, batuk tak baik-baik five days, semalam ada fever pula. Note down penicillin allergy please."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Tolong siapkan clinic note untuk kes ni. Asthmatic patient, demam sejak semalam, cough dah lima hari. Buat elok-elok k."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Doc note please. Female 42 yo, history of asthma on salbutamol, presenting with productive cough 5 days and fever since yesterday. Tolong summarize clearly."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Hi, please help to write the clinic documentation for Puan Tan. 42 female, complaint of fever since yesterday and persistent cough for five days lah."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Draft pesakit punya clerking note jap. 42 year old woman, asthmatic, cough dah 5 hari pastu fever semalam. Ringkaskan je."}
+{"capability": "note", "style": 0, "patient": "SYN-1042", "round": 2, "request": "Boleh tolong draft SOAP note for this visit? Patient 42 yo, asthma, fever since yesterday with 5-day cough. Alert penicillin allergy tau, jangan lupa."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 2, "request": "App, tolong draft consultation note for Encik Rahman, 57yo with SOBOE, history pending tapi he takes one unknown white tablet daily."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Help me write clinical notes lah, 57 yo male c/o breathless on exertion, tak sempat fully clerking lagi, on one unknown pill je."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Can you help to document this initial clerking note ah? Pakcik comes in with shortness of breath on exertion, full history not taken yet, currently taking some unknown BP medication."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Draft note please: 57M, SOBOE, history not yet taken, compliance to one unknown tablet only."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Eh tolong buatkan clerking note sat, patient complaints of semput bila jalan, history still pending ah, past medical history unconfirmed but got taking one unknown capsule."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Please generate a consultation note for Daniel Rahman, 57-year-old gentleman presenting with dyspnoea on exertion, history incomplete so far, takes an unknown tablet daily lah."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Tolong start the documentation for this new case, 57 y/o male with SOB on exertion, detail history belum ambil lagi, he only remembers taking one small blue tablet."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Can draft the visit note first? Male 57 years old, main issue is breathlessness on exertion, clerking not done yet and med list unconfirmed, just one unknown pill."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 2, "request": "App, write up the consultation note for this 57 yo pakcik, datang sebab semput on exertion, history tak complete lagi, on unknown tablet."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Just create an initial outpatient note lah: 57M with SOBOE, history not yet taken, says he takes one unknown tablet from klinik kesihatan."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Draft consultation note please, 57 yo gentleman, complaint of SOBOE, haven't taken full history yet, takes some unknown antihypertensive tablet kot."}
+{"capability": "note", "style": 0, "patient": "SYN-1086", "round": 2, "request": "Tolong draft clinical note now ah, patient 57, exertional breathlessness, comprehensive history still pending, he brings an unknown tablet je."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Tolong draf clerking note untuk pesakit ni, batuk dah 5 hari dan demam baru start semalam, ada asthma."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Boleh tolong buatkan consultation note untuk Puan Tan? Umur 42, datang batuk dah lima hari lepas tu demam sejak semalam, ada alahan penicillin."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Buat SOAP note jap. Batuk 5 hari, demam semalam, background asthma on salbutamol."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Tulis nota klinik sekarang, kes asthma exacerbation disyaki URTI sebab batuk dengan demam."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Hai, tolong siapkan nota dokumentasi untuk Amelia Tan, 42 tahun. Batuk hari kelima, semalam demam, ada ambil cetirizine."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Tolong rangka progress note untuk akak ni. History asthma, batuk dah lima hari dan mula demam semalam."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Drafkan clinical note cepat sikit, pesakit asthma batuk 5 hari plus demam, rekod alahan penicillin."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Boleh draf nota konsultasi pesakit ni? Demam baru sehari tapi batuk dah lima hari, pesakit memang on salbutamol inhaler."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Tolong karangkan nota pesakit ni jap, ada asthma datang batuk 5 hari dan demam semalam."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Untuk Puan Tan, umur 42, batuk dan demam dengan underlying asthma. Tolong susun SOAP note elok-elok."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Tolong generate dokumentasi rawatan hari ni, batuk dah 5 hari, semalam demam, pesakit asthma yang ada ambil cetirizine."}
+{"capability": "note", "style": 1, "patient": "SYN-1042", "round": 2, "request": "Siapkan nota kes sekarang, asthma dengan batuk lima hari dan demam semalam, alahan ubat penicillin."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Tolong draftkan nota konsultasi untuk Encik Rahman, umur 57 tahun, datang sebab sesak nafas bila buat kerja, ada makan satu ubat tapi tak tahu nama apa."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Boleh tolong tuliskan clerking note tak? Pesakit umur 57 mengadu semput bila berjalan, ubat biasa makan sebiji tapi nama tak ingat, belum ambik history penuh lagi."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Mohon sediakan draf dokumentasi pesakit ni, sesak nafas bila exertional, sejarah penyakit belum sempat gali habis, ada telan ubat sebiji tak tau nama."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Tolong buatkan nota rawatan untuk Pakcik Daniel ni kejap. Umur 57, semput bila buat aktiviti harian, history taking pending, ubat makan sebiji tak pasti ubat apa."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Draf nota klinikal ringkas: pesakit 57 tahun, SOB on exertion, history penuh belum ambil lagi, ada makan ubat sebiji tak diketahui."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Tolong taipkan nota pesakit Encik Rahman, 57 tahun, aduan cepat lelah bila bergerak aktif. History belum semak habis, dia cuma kata ada makan sebiji ubat darah tinggi tapi tak pasti nama."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Buat nota konsultasi hari ni: pesakit lelaki 57 tahun, aduan sesak nafas bila buat kerja berat, sejarah perubatan lengkap belum ambil, cuma ada makan ubat sebiji tak tahu nama."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Boleh draf consultation note untuk kes ni? Umur 57 tahun, semput masa exertional, history belum clarify habis, ada ambil sebiji pil tak tau nama apa."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Tolong tulis nota klinik, pesakit umur 57 mengah bila jalan, ubat satu jenis tak pasti, sejarah kesihatan belum ambil."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Sediakan draf nota pesakit untuk pakcik ni, umur 57, mengadu mengah bila buat kerja, ada ubat sebiji tak tahu apa, belum sempat korek history lagi."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Drafkan dokumentasi lawatan untuk pesakit umur 57 tahun dengan masalah sesak nafas bila bergerak aktif, riwayat penyakit belum diambil sepenuhnya, ubat terkini sebiji tanpa nama."}
+{"capability": "note", "style": 1, "patient": "SYN-1086", "round": 2, "request": "Tolong draf nota konsul Daniel Rahman, umur 57, isu utama semput bila ada aktiviti, history taking masih dalam proses, pesakit ada makan sebiji ubat yang tak dikenal pasti."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Draft clinic note: 42F, BA with cough 5/7, fever 1/7. Currently on salbutamol inhaler."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Pt Amelia Tan, 42yo. Please write up SOAP note - cough 5 days, febrile since yesterday, background bronchial asthma, allergic to penicillin."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Generate consult note. 42yo lady, asthma, cough x5 days, new fever."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Pls document encounter: Puan Tan, 42. Known BA, on cetirizine. Fever 1/7 with cough 5/7."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Write clerking note. 42yo female, asthma, cough day 5, fever since ytd, allergic to penicillin. Needs workup."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 2, "request": "SOAP note draft please. c/o cough 5/7, fever 1/7, underlying BA, uses salbutamol."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Documentation for 42yo female: bronchial asthma, 5d cough, fever x24h. Penicillin allergy. Please draft."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Draft visit note. 42F known asthma. Cough 5 days, fever yesterday. NKDA except penicillin."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Pls prep consult note: cough 5/7, fever 1/7, 42yo asthmatic. On cetirizine."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Can you write up the clinical note for Amelia Tan? 42F, asthma flare post-URTI, cough x5d, fever x1d."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Draft note. 42yo female, BA, cough x 5 days, fever started yesterday. Penicillin allergic."}
+{"capability": "note", "style": 2, "patient": "SYN-1042", "round": 2, "request": "Write out the consultation documentation. 42yo female c/o cough 5/7, fever 1/7, background asthma."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Draft consult note. 57M, DOE. Unclerked. On unk tab."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Please start clerking note for Encik Rahman, 57yo, c/o SOBOE, hx pending, takes 1 unknown pill."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Prep new case note: 57yo male with exertional dyspnoea, pending clerking, on unknown OHA."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Generate review note. 57/M, exertional SOB, full hx not taken yet, only know he takes amlodipine."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Draft clinic documentation for pakcik, 57yo with DOE, yet to clerk, on unknown white tab."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Write up initial consult note - 57yo M, DOE, history incomplete, on unknown medication."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Can you draft outpatient note please? 57M presenting with exertional breathlessness, taking one unidentified tablet, clerking pending."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Daniel Rahman, 57M, SOBOE, hx incomplete, on unknown antihypertensive. Draft clerking sheet."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 2, "request": "New patient note please. 57 male, exertional breathlessness, clerking not done, takes unk tab."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Create encounter note: 57yo gent with SOBOE, on aspirin, detailed history pending."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Draft note: 57 yo M, c/o breathlessness on exertion, hx not taken yet, on 1 unk pill."}
+{"capability": "note", "style": 2, "patient": "SYN-1086", "round": 2, "request": "Please document visit. 57M, DOE, yet to take hx, on unknown daily tablet."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Tolong draft consult note for Puan Tan, she is having an asthma flare with five days cough and fever, currently on salbutamol, 麻烦你了."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Sediakan nota klinikal pesakit ni ya, batuk 5 hari demam sejak semalam, ada alahan penicillin, 谢谢."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Can you write down the clinic note for this 42-year-old female presenting with acute cough and fever? 辛苦你了, make it concise."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Bantu saya dokumentasikan case note pesakit asma ni, she has been taking cetirizine regular tapi semalam mula demam, 请帮我写."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Please generate the documentation for Amelia Tan, 42-year-old asthmatic with cough for five days and fever since yesterday, 快点帮我弄."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Sila drafkan nota konsultasi pesakit umur 42 tahun ini dengan batuk lima hari dan demam, 看一下, include the assessment and plan."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Draft the outpatient note, asthmatic lady with productive cough for 5 days, already used her salbutamol at home, 帮我记录."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 2, "request": "App, tolong buatkan clerking note for this case, batuk dah lima hari and started fever yesterday, 不好意思麻烦你."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Write up the progress note, known case of asthma with penicillin allergy presenting with acute bronchitis symptoms, 没问题吧?"}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Mohon sediakan ringkasan konsultasi untuk Puan Tan, demam sejak kelmarin dan batuk berpanjangan, 太感谢了."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Doc note please, 42-year-old female with asthma exacerbation secondary to upper respiratory tract infection, 尽快处理."}
+{"capability": "note", "style": 3, "patient": "SYN-1042", "round": 2, "request": "Boleh tolong tuliskan nota rawatan pesakit ni, dia cuma ambil cetirizine kat rumah tapi batuk makin teruk lima hari ni, 拜托你了."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Tolong draftkan clerking note dulu, Encik Daniel Rahman ni 57 tahun complaint SOBOE, detail history 还没有问, cuma dia kata ada telan sebiji unknown brown tablet."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Please start the clinic note for this 57-year-old male presenting with breathlessness on exertion, complete history not taken yet, currently on one unidentified pill daily, 麻烦你 draft nicely."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 2, "request": "App, buatkan rangka consultation note untuk pakcik ni, datang sebab sesak nafas bila jalan jauh, history belum sempat korek, currently taking unknown pill, 谢谢你 ya."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Document today's encounter: 57yo with SOBOE, pending full history, currently on an unknown antihypertensive maybe Amlodipine, 帮我写 in full SOAP format please."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Boleh tolong catat initial assessment note tak? Encik Rahman, 57, mengadu semput on exertion, taking one unidentified white tablet, history proper 还没拿."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Draft a quick clerking sheet for a 57-year-old gentleman presenting with dyspnoea on exertion, history yet to be elicited, on one unknown medication, 动作快一点 please."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Sediakan draf consultation note sekarang, patient 57 tahun SOB on exertion, history incomplete, ambil satu tablet tak tau nama, 辛苦你了."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Generate outpatient documentation for this case: SOBOE for clarification, history not yet taken, reports taking one unknown cardiac drug, 听他说 taking only one tablet, make a standard note."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Tolong write up clerking note ringkas, pakcik 57 tahun breathless on exertion, detailed history belum ambil lagi, dia cuma bawa one unknown small tablet, 不好意思 rush sikit."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Need a consultation note drafted for a 57-year-old man presenting with shortness of breath on exertion, full history pending, takes an unknown yellow pill, 请帮我整理 into proper medical format."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Create consultation entry untuk Encik Rahman, 57 tahun, symptom utama sesak nafas bila exertion, history belum sempat record, on one unknown tablet, 马上准备 ya."}
+{"capability": "note", "style": 3, "patient": "SYN-1086", "round": 2, "request": "Please draft the medical records for this 57yo male with new-onset SOBOE, history not yet taken, baseline one unknown tablet maybe Metformin, 拜托你了."}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 2, "request": "帮我 draft 一下 Puan Tan 的 clinical note。42岁，cough 已经 5 days 了，昨晚开始 fever。平时有拿 cetirizine，本身有 asthma，penicillin allergic。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 2, "request": "整理成 SOAP note。42-year-old female，history of asthma，这次 cough 5 天，fever yesterday。平时用着 salbutamol inhaler，要注意 allergic to penicillin。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 2, "request": "Can you please write down the consultation note? 病人 42 岁女性，asthma case，这次 cough 五天，昨天开始发烧，penicillin allergy。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 2, "request": "Amelia Tan，42岁，asthma。Cough x5/7，fever since yesterday。Allergy to penicillin。Draft consultation summary。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 2, "request": "AI，帮我 write documentation。病人 42 岁，known asthma，平时 regular 用 salbutamol。主诉 cough 5 days 加上 fever 1 day，不要开 penicillin 因为 allergy。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 2, "request": "请帮我 generate 一份完整 clinic progress note。42 岁 female，underlying asthma，主诉 cough 5 天伴随 fever 昨天开始，allergic to penicillin。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 2, "request": "Clerk 进去 system：42岁 female，asthma，cough 5 days，fever since yesterday，penicillin allergy。平时有吃 cetirizine，请出 consultation note。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 2, "request": "写一下 consultation note。42岁，rule out asthma exacerbation，cough 5天，fever 1天，penicillin allergic。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 2, "request": "麻烦帮我写 Amelia 的 clerking note。42yo female with asthma，cough 已经五天，yesterday on and off fever，allergic to penicillin。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 2, "request": "帮我 draft clinic note。42 岁，underlying asthma，平时 on salbutamol inhaler PRN。这次 cough 5 days，fever 昨天下半天开始，penicillin allergy 记得 highlight。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 2, "request": "Tolong draft visit note。病人 42 岁女性，known case of asthma，主诉 cough 5 天，昨天开始 fever，allergic to penicillin。"}
+{"capability": "note", "style": 4, "patient": "SYN-1042", "round": 2, "request": "帮忙做一下 outpatient documentation。Female 42 岁，asthma background，cough 5 days，yesterday spike fever，penicillin allergy。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 2, "request": "请帮我 draft 一下 initial consultation note，patient 57岁 male，主要 complaint 是 shortness of breath on exertion，目前只知道有吃一种 unknown tablet，full history pending。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 2, "request": "帮我 open 一份 clerking note for Encik Rahman，57yo，SOBOE，detailed history not yet taken，home med 讲不清只讲有一颗 white tablet。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 2, "request": "Can you please generate the outpatient documentation for Pakcik Daniel Rahman？57岁，c/o dyspnea on exertion，详细 history 还没问，on one unknown regular pill。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 2, "request": "App，写一份 encounter note。57-year-old gentleman present with breathless on exertion，history not yet explored，currently on unknown medication。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 2, "request": "Draft note 先，SOBOE 几个星期，history pending，compliance unknown 只懂每天吃一颗 unidentified pill。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 2, "request": "帮我 start draft 一份 clinical clerking note。Patient complain exertional dyspnea，history 还没 detailed clerking，patient 怀疑自己吃着 Amlodipine 不过 unconfirmed。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 2, "request": "帮我 document 这次 visit：57岁 male，c/o SOBOE，detailed medical history not taken yet，claims to take one unknown oral medication daily。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 2, "request": "请帮我 write 一份 clinic progress note，57yo male，chief complaint 是 exertional breathlessness，history not yet taken，病人只记得吃着一颗 unlabelled tablet。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 2, "request": "Daniel Rahman，57岁，帮我 write documentation。SOBOE，history 还没 complete，medication history 先 put unknown tablet。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 2, "request": "Draft consultation note：57岁，dyspnea on exertion，history not clerking yet，medication history unknown tablet。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 2, "request": "可以帮我 organize 和 draft 一下 initial consultation note 吗？57岁 pakcik，present with progressive breathless on exertion，comorbid 和 full history haven't been taken，takes an unknown tablet at home。"}
+{"capability": "note", "style": 4, "patient": "SYN-1086", "round": 2, "request": "做一份 clerking documentation 先，57yo male，complaint of SOBOE，history 还没问完，currently taking one unidentified tablet。"}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Draft note for Puan Tan."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Tolong buat nota konsultasi."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Generate clinic note please."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Sediakan nota salbutamol pesakit."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Write consult summary."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Draf nota Amelia Tan."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Tolong siapkan clinical note."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 2, "request": "帮我写门诊记录。"}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Document cetirizine in note."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Please draft visit note."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 2, "request": "Tulis nota klinikal pesakit."}
+{"capability": "note", "style": 5, "patient": "SYN-1042", "round": 2, "request": "记录 Tan 太太病历。"}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Draft clinic note, please."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Tolong catat nota pakcik."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Start clerking note."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Sediakan nota Encik Rahman."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Write consultation note."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Draf nota klinikal pesakit."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Generate visit note."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Tolong buka nota konsultasi."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Draft note, query aspirin."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Catat consultation note ini."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Draft Daniel's consultation note."}
+{"capability": "note", "style": 5, "patient": "SYN-1086", "round": 2, "request": "Tulis nota pesakit."}

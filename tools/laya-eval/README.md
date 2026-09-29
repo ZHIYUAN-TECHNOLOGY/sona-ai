@@ -17,6 +17,7 @@ Pass bar (suggested): capability ≥ 90% and medicine ≥ 95% correct. Under tha
 | 29 Sep 2026 | Laya multilingual 0.3.21, untrained, local Mac | 17/50 (34%) | 48/50 (96%) | 59 ms |
 | 29 Sep 2026 | Gemma 4 26B A4B-it, Google AI Studio API (thinking forced on) | 45/50 (90%) | 50/50 (100%) | 9.9 s |
 | 29 Sep 2026 | Laya multilingual, fine-tuned v1 (Kaggle T4 x2, 4 epochs, ~4 min) | 44/50 (88%) | 50/50 (100%) | 40 ms |
+| 29 Sep 2026 | **Laya multilingual, fine-tuned v2** (topped-up note/medication/briefing, cap 250 per class, ~6 min) | **46/50 (92%)** | 50/50 (100%) | 41 ms |
 
 Untrained Laya fails the capability bar. It is not the "None of the above" option: with that option removed, it still scores 16/44 (36%) on the covered requests. It sends most briefing, medication and follow-up requests to the wrong card. Picking a named medicine already passes.
 
@@ -31,3 +32,9 @@ Gemma just meets the capability bar but misses four of the six `not-covered` req
 Kaggle notebook `zhiyuantech/sona-laya-finetune` (private), data `zhiyuantech/sona-laya-composition` (private). Model saved outside the repo at `~/zyt/data/sona-laya/v1` (650 MB); load with `LAYA_MODEL=~/zyt/data/sona-laya/v1 python score.py laya`. Same score on Kaggle and locally. Choice calibration temperature fitted to 4.29.
 
 34% to 88%, two short of the bar. Misses: briefing to not-covered (L01, L05), note to briefing/followup (L38, L39), medication to followup (L21), ICD-10 coding to followup (L47). Note and medication were the thinnest classes in the training data.
+
+## Fine-tune v2 (29 Sep 2026): passes
+
+`generate.py` added extra rounds for note, medication and briefing (`ROUNDS`), asked for at most one medicine per request, and capped each class at 250 (`CAP`): 1,581 requests, 2,846 training items after the calibration hold-out. Kaggle notebook version 3, same score locally. Model at `~/zyt/data/sona-laya/v2` (657 MB). Choice calibration temperature 3.51.
+
+Remaining misses: briefing to not-covered (L01) and to followup (L06), a Mandarin prescription refill to not-covered (L26), note to followup (L39).
