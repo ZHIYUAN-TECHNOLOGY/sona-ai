@@ -154,3 +154,20 @@ export function AskBar({ scope, answers, onTab }: { scope: Scope; answers: Answe
     <AskSheet scope={scope} answers={answers} state={state} onChange={setState} onTab={onTab} />
   </>;
 }
+
+/**
+ * Sona beside a review page's decision button: a round glass button (the page keeps its decision in
+ * view, so no bar competes with it) opening the page-scoped sheet with the page's own answers.
+ */
+export function AskOrb({ scope, answers }: { scope: Scope; answers: Answer[] }) {
+  const [state, setState] = useState<AskState>(closed);
+  const nudge = answers.find(a => a.worth);
+  return <>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Ask Sona about ${SCOPE_LABEL[scope].toLowerCase()}`} accessibilityHint={nudge ? nudge.question : undefined} onPress={() => { tap(); setState({ open: true, shown: nudge ?? answers[0] }); }}
+      style={({ pressed }) => ({ width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.85)", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", boxShadow: "0 4px 12px rgba(36,91,204,0.14)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+      <SonaMark size={20} />
+      {nudge && <View style={{ position: "absolute", top: 3, right: 3, width: 9, height: 9, borderRadius: 5, backgroundColor: palette.blue, borderWidth: 1.5, borderColor: palette.white }} />}
+    </Pressable>
+    <AskSheet scope={scope} answers={answers} state={state} onChange={setState} />
+  </>;
+}

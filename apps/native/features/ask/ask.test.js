@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { matchQuestion, needsYou, overdue, soonest, toWatch } from "./answers";
+import { blocking, matchQuestion, needsYou, overdue, soonest, toFollowUp, toWatch } from "./answers";
 import { validateAskSpec } from "./catalog";
 
 const parts = answer => Object.values(answer.spec.elements).filter(e => e.type !== "AskColumn");
@@ -42,4 +42,15 @@ test("a typed question finds this page's answer by its words", () => {
   expect(matchQuestion("who is most urgent?", answers)?.id).toBe("needs");
   expect(matchQuestion("anything late?", answers)?.id).toBe("overdue");
   expect(matchQuestion("what's the weather", answers)).toBeUndefined();
+});
+
+test("review pages: what blocks the decision comes from the page's own checks, and open findings need a decision", () => {
+  const checks = [{ id: "gl", label: "Guarantee letter", status: "blocked", detail: "Not sent" }, { id: "obs", label: "Observations", status: "passed", detail: "Stable" }];
+  const d = blocking("discharge", "What's still blocking discharge?", "Amelia can go home", checks);
+  expect({ worth: d.worth, lead: parts(d)[0].props.text, rows: parts(d)[1].props.rows.map(r => r.title) }).toEqual({ worth: true, lead: "1 thing left before Amelia can go home; 1 of 2 checks passed.", rows: ["Guarantee letter"] });
+  const clear = blocking("claim", "What's left before sending?", "the letter can go", [checks[1]]);
+  expect({ worth: clear.worth, lead: parts(clear)[0].props.text }).toEqual({ worth: false, lead: "Nothing is blocking: the one check passed." });
+  const x = toFollowUp([{ id: "f1", label: "9 mm nodule", status: "open" }, { id: "f2", label: "Heart size", status: "tracked" }, { id: "f3", label: "Old", status: "dismissed" }]);
+  expect(parts(x)[1].props.rows.map(r => [r.title, r.tone])).toEqual([["9 mm nodule", "soon"], ["Heart size", "good"]]);
+  for (const a of [d, clear, x]) expect(validateAskSpec(a.spec)).not.toBeNull();
 });

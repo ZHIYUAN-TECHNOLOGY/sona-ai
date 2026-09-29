@@ -1,4 +1,6 @@
 import { router } from "expo-router";
+import { AskOrb } from "@/features/ask";
+import { blocking } from "@/features/ask/answers";
 import { MarkedText } from "@/components/sona/marked-text";
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Pressable, View, useWindowDimensions } from "react-native";
@@ -258,8 +260,11 @@ function DischargePage({ patient, answers, drafted, animate }: { patient: Patien
     </View>
   </> : <>
     {error ? <BarLine error>{error}</BarLine> : <BarLine>{`Frees ${plan.bed} · creates 2 follow-up tasks · leaflet in ${language.name}`}</BarLine>}
-    {live && !role.can("discharge.request") ? <LockedAction label="Needs a doctor's approval" path="discharge.request" />
-      : <Decide label={primary} icon={blocked.length ? undefined : busy ? "hourglass" : "bed.double"} muted={blocked.length > 0} disabled={blocked.length > 0 || busy} onPress={go} />}
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <View style={{ flex: 1 }}>{live && !role.can("discharge.request") ? <LockedAction label="Needs a doctor's approval" path="discharge.request" />
+        : <Decide label={primary} icon={blocked.length ? undefined : busy ? "hourglass" : "bed.double"} muted={blocked.length > 0} disabled={blocked.length > 0 || busy} onPress={go} />}</View>
+      <AskOrb scope="discharge" answers={[blocking("discharge", "What's still blocking discharge?", `${patient.name.split(" ")[0]} can go home`, checks)]} />
+    </View>
   </>;
 
   return <Screen bottom={drafted ? bar : undefined}>

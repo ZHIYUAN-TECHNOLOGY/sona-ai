@@ -1,4 +1,6 @@
 import { Text } from "@/components/sona/text";
+import { AskOrb } from "@/features/ask";
+import { toFollowUp } from "@/features/ask/answers";
 import * as Haptics from "expo-haptics";
 import { Image, type ImageSource } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -297,7 +299,10 @@ export function XrayScreen() {
   // The decision stays in view: what analysing does, then the button.
   return <ViewerPage scrollEnabled={!zoomed} bottom={<>
     <Text style={{ fontSize: 13, lineHeight: 18, paddingHorizontal: 4, color: palette.muted }}>Answers in the visit · a sample response, nothing is read from the image</Text>
-    <Action label={analysing ? "Analysing…" : "Analyse X-ray"} icon="sparkles" disabled={analysing || picking} onPress={analyse} />
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <View style={{ flex: 1 }}><Action label={analysing ? "Analysing…" : "Analyse X-ray"} icon="sparkles" disabled={analysing || picking} onPress={analyse} /></View>
+      <AskOrb scope="xray" answers={[toFollowUp(findings)]} />
+    </View>
   </>}>
     {/* Image actions live in the header's right slot, level with the back button. */}
     <Stack.Screen options={{ headerRight: () => <MenuTrigger open={menuOpen} onPress={() => setMenuOpen(value => !value)} /> }} />

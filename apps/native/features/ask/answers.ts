@@ -4,14 +4,14 @@ import type { Spec } from "@json-render/core";
  * Sona's answers on a page, built by rules from the app's own data (no model): each is a small
  * json-render spec from the ask catalogue. Scopes are the pages the ask bar sits on.
  */
-export type Scope = "today" | "patients" | "tasks" | "ward" | "handover";
+export type Scope = "today" | "patients" | "tasks" | "ward" | "handover" | "discharge" | "claim" | "xray";
 export type Tone = "urgent" | "soon" | "good" | "calm";
 export type Row = { id: string; title: string; detail: string; tone: Tone; op?: string };
 /** `worth` is whether the answer has anything to show; only then is it offered as the page's ✦ suggestion. */
 export type Answer = { id: string; question: string; spec: Spec; worth: boolean };
 
-export const SCOPE_LABEL: Record<Scope, string> = { today: "Your day", patients: "Patients", tasks: "Your tasks", ward: "Ward 4B", handover: "Handover" };
-export const PLACEHOLDER: Record<Scope, string> = { today: "Ask about your day…", patients: "Ask about your patients…", tasks: "Ask about your tasks…", ward: "Ask about the ward…", handover: "Ask about the handover…" };
+export const SCOPE_LABEL: Record<Scope, string> = { discharge: "This discharge", claim: "This guarantee letter", xray: "This X-ray", today: "Your day", patients: "Patients", tasks: "Your tasks", ward: "Ward 4B", handover: "Handover" };
+export const PLACEHOLDER: Record<Scope, string> = { discharge: "Ask about this discharge…", claim: "Ask about this letter…", xray: "Ask about this X-ray…", today: "Ask about your day…", patients: "Ask about your patients…", tasks: "Ask about your tasks…", ward: "Ask about the ward…", handover: "Ask about the handover…" };
 
 type Part = { type: "AskLead"; props: { text: string } } | { type: "AskRows"; props: { rows: Row[] } }
   | { type: "AskReview"; props: { title: string; items: string[]; what: string; confirm: string; done: string; op: string } }
@@ -80,4 +80,25 @@ export function matchQuestion(text: string, answers: Answer[]): Answer | undefin
   const t = text.toLowerCase();
   const words: Record<string, RegExp> = { needs: /need|urgent|attention|first|who/, overdue: /overdue|late|due|task/, soonest: /home|discharge|free|bed|soon/, watch: /watch|handover|hand over|sick|worr/ };
   return answers.find(a => words[a.id]?.test(t));
+}
+
+/**
+ * A review page's decision: what still blocks it, each with what it needs, or that nothing does. The
+ * checks are the page's own (`dischargeChecks`, `claimChecks`), so the answer never disagrees with the card.
+ */
+export function blocking(id: "discharge" | "claim", question: string, what: string, checks: { id: string; label: string; status: "passed" | "blocked"; detail: string }[]): Answer {
+  const blocked = checks.filter(c => c.status === "blocked"), passed = checks.length - blocked.length;
+  return { id, question, worth: blocked.length > 0, spec: column(id, [
+    { type: "AskLead", props: { text: blocked.length ? `${plural(blocked.length, "thing")} left before ${what}; ${passed} of ${checks.length} checks passed.` : `Nothing is blocking: ${checks.length === 1 ? "the one check" : `all ${checks.length} checks`} passed.` } },
+    { type: "AskRows", props: { rows: blocked.map(c => ({ id: c.id, title: c.label, detail: c.detail, tone: "soon" as const })) } },
+  ]) };
+}
+
+/** X-ray: findings beyond the question asked that still need a decision (open), and those being tracked. */
+export function toFollowUp(findings: { id: string; label: string; status: "open" | "tracked" | "dismissed" }[]): Answer {
+  const open = findings.filter(f => f.status === "open"), tracked = findings.filter(f => f.status === "tracked");
+  return { id: "findings", question: "What needs following up?", worth: open.length > 0, spec: column("findings", [
+    { type: "AskLead", props: { text: open.length ? `${plural(open.length, "finding")} still ${open.length === 1 ? "needs" : "need"} a decision: track or dismiss ${open.length === 1 ? "it" : "each"}.` : tracked.length ? `All findings are decided; ${tracked.length} being tracked.` : "No findings beyond the question asked." } },
+    { type: "AskRows", props: { rows: [...open.map(f => ({ id: f.id, title: f.label, detail: "Unvalidated · no decision yet", tone: "soon" as const })), ...tracked.map(f => ({ id: f.id, title: f.label, detail: "Tracked as a follow-up", tone: "good" as const }))] } },
+  ]) };
 }
