@@ -41,10 +41,13 @@ async function base64Of(uri: string) {
  */
 export function useAddSource() {
   const [id, setId] = useState(requestId);
-  const run = async (write: (requestId: string) => Promise<Added>): Promise<{ added: Added } | { error: string; retryable: boolean }> => {
+  const run = async (write: (requestId: string) => Promise<Added>): Promise<{ added: Added } | { error: string; retryable: boolean; reason?: string }> => {
     try { const added = await write(id); setId(requestId()); return { added }; }
     // A refusal about the source itself (patient details, a scan) fails the same way again; a dropped or busy server may not.
-    catch (e) { return { error: errorText(e), retryable: !["BAD_REQUEST", "NOT_FOUND", "CONFLICT", "FORBIDDEN"].includes((e as { code?: string }).code ?? "") }; }
+    catch (e) {
+      const { code, data } = e as { code?: string; data?: { reason?: string } };
+      return { error: errorText(e), retryable: !["BAD_REQUEST", "NOT_FOUND", "CONFLICT", "FORBIDDEN"].includes(code ?? ""), reason: data?.reason };
+    }
   };
   return {
     pdf: (scope: LibraryScope, file: { uri: string; name: string }) => run(async requestId =>

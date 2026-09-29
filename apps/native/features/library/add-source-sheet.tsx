@@ -26,7 +26,7 @@ const SCOPES: { key: LibraryScope; label: string; icon: string; detail: string }
   { key: "hospital", label: "My hospital", icon: "building.2.fill", detail: "Every clinician at your hospital can see and cite it." },
 ];
 
-type Status = { state: "working"; label: string } | { state: "done"; added: Added } | { state: "refused"; label: string; error: string; retry?: () => void };
+type Status = { state: "working"; label: string } | { state: "done"; added: Added } | { state: "refused"; label: string; error: string; retry?: () => void; reason?: string };
 
 export function AddSourceSheet() {
   const [scope, setScope] = useState<LibraryScope>("me");
@@ -37,12 +37,15 @@ export function AddSourceSheet() {
   const add = useAddSource();
   const working = status?.state === "working";
 
-  const submit = async (label: string, write: () => Promise<{ added: Added } | { error: string; retryable: boolean }>) => {
+  const submit = async (label: string, write: () => Promise<{ added: Added } | { error: string; retryable: boolean; reason?: string }>) => {
     setStatus({ state: "working", label });
     const result = await write();
     if ("added" in result) { haptic("done"); setOpen(undefined); setStatus({ state: "done", added: result.added }); }
-    else { haptic("warn"); setStatus({ state: "refused", label, error: result.error, retry: result.retryable ? () => void submit(label, write) : undefined }); }
+    else { haptic("warn"); setStatus({ state: "refused", label, error: result.error, retry: result.retryable ? () => void submit(label, write) : undefined, reason: result.reason }); }
   };
+
+  // Sona's camera photographs each page and the doctor crops it straight; "What did you scan?" follows.
+  const scan = () => { haptic("tap"); router.push({ pathname: "/library-scan", params: { scope } }); };
 
   const pickPdf = async () => {
     haptic("tap");
@@ -64,6 +67,15 @@ export function AddSourceSheet() {
       </View>
       <Icon name="chevron.right" size={12} color={palette.muted} />
     </Press>,
+    <Press key="scan" onPress={scan} disabled={working} accessibilityLabel="Scan paper pages" accessibilityHint="Opens the camera to photograph pages for OCR"
+      style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, opacity: working ? 0.45 : 1 }}>
+      <IconDisc icon="doc.viewfinder" />
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "600", color: palette.ink }}>Scan paper pages</Text>
+        <Text style={{ fontSize: 14, lineHeight: 20, color: palette.muted }}>Printed guidelines and protocols. X-rays go on the patient's visit</Text>
+      </View>
+      <Icon name="chevron.right" size={12} color={palette.muted} />
+    </Press>,
     <Disclosure key="pubmed" icon="books.vertical" title="From PubMed" detail="A PMID, DOI or PubMed link" open={open === "pubmed"} onToggle={() => setOpen(open === "pubmed" ? undefined : "pubmed")}>
       <PubMedImport disabled={working} preview={add.preview} onAdd={p => void submit(p.title, () => add.article(scope, p.pmid))} />
     </Disclosure>,
@@ -81,7 +93,7 @@ export function AddSourceSheet() {
     <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ borderRadius: 18, borderCurve: "continuous", backgroundColor: palette.white, paddingHorizontal: 14 }}>
       {rows.map((row, i) => <Animated.View key={i} entering={reducedMotion ? undefined : riseIn({ delay: 60 + i * 45, distance: 8, duration: 280 })} style={i ? { borderTopWidth: 1, borderColor: glass.hairline } : undefined}>{row}</Animated.View>)}
     </Animated.View>
-    {status && <Expand><StatusPanel status={status} onAnother={() => setStatus(undefined)} /></Expand>}
+    {status && <Expand><StatusPanel status={status} scope={scope} onAnother={() => setStatus(undefined)} /></Expand>}
   </ScrollView>;
 }
 
@@ -161,7 +173,9 @@ function PasteText({ disabled, onAdd }: { disabled: boolean; onAdd: (title: stri
 }
 
 /** What the server is doing with the source, then what it added (or why it would not). */
-function StatusPanel({ status, onAnother }: { status: Status; onAnother: () => void }) {
+function StatusPanel({ status, scope, onAnother }: { status: Status; scope: LibraryScope; onAnother: () => void }) {
+  // A scan is not a dead end: it goes to OCR review (the reading itself is a labelled sample until the model is hosted).
+  const scan = status.state === "refused" && status.reason === "no-text";
   const whose = (s: LibraryScope) => s === "me" ? "Only you can cite it." : "Everyone at your hospital can cite it.";
   return <View accessibilityLiveRegion="polite" style={{ gap: 12, padding: 16, borderRadius: 18, borderCurve: "continuous", backgroundColor: palette.white }}>
     <View style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
@@ -170,13 +184,14 @@ function StatusPanel({ status, onAnother }: { status: Status; onAnother: () => v
         <Text numberOfLines={2} style={{ fontSize: 15, lineHeight: 21, fontWeight: "600", color: palette.ink }}>{status.state === "done" ? status.added.title : status.label}</Text>
         {status.state === "working" && <Text style={{ ...type.footnote, color: palette.muted }}>Reading it, checking for patient details, cutting it into sections…</Text>}
         {status.state === "done" && <Text style={{ ...type.footnote, color: palette.muted }}>Added {status.added.sections} section{status.added.sections === 1 ? "" : "s"}{status.added.pages ? ` from ${status.added.pages} page${status.added.pages === 1 ? "" : "s"}` : ""}. {whose(status.added.scope)}</Text>}
-        {status.state === "refused" && <Text selectable style={{ ...type.footnote, color: palette.red }}>{status.error}</Text>}
+        {status.state === "refused" && <Text selectable style={{ ...type.footnote, color: scan ? palette.muted : palette.red }}>{scan ? "This PDF is a scan, so there is no text to read directly. OCR can read the pages for you to review." : status.error}</Text>}
       </View>
     </View>
     {status.state === "done" && <View style={{ flexDirection: "row", gap: 10 }}>
       <View style={{ flex: 1 }}><Action label="Done" onPress={() => router.back()} /></View>
       <View style={{ flex: 1 }}><Action label="Add another" secondary onPress={onAnother} /></View>
     </View>}
+    {scan && <Action label="Read it with OCR" icon="text.viewfinder" onPress={() => router.push({ pathname: "/library-ocr", params: { title: status.label.replace(/\.pdf$/i, ""), scope } })} />}
     {status.state === "refused" && <View style={{ flexDirection: "row", gap: 16 }}>
       {status.retry && <TextLink label="Try again" onPress={status.retry} />}
       <TextLink label="Choose something else" onPress={onAnother} />

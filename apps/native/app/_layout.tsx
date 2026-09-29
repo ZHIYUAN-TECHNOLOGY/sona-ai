@@ -33,6 +33,9 @@ export default function RootLayout() {
     <Stack.Screen name="discharge" options={{ headerShown: false, presentation: "modal" }} />
     <Stack.Screen name="claim" options={{ headerShown: false, presentation: "modal" }} />
     <Stack.Screen name="history" options={{ title: "Your workspace", presentation: "modal" }} />
+    <Stack.Screen name="library-scan" options={{ headerShown: false, presentation: "fullScreenModal", animation: "fade" }} />
+    <Stack.Screen name="library-ocr" options={{ title: "Read with OCR", presentation: "modal" }} />
+    <Stack.Screen name="library-scanned" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
     <Stack.Screen name="library-add" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
     <Stack.Screen name="account" options={{ title: "Account scaffold" }} />
   </Stack><LiveUpdates /><CriticalAlert /></EncounterProvider></SafeAreaProvider></KeyboardProvider></GestureHandlerRootView>;
