@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, useWindowDimensions, View, type LayoutChangeEvent } from "react-native";
 import { Text } from "@/lib/text";
-import Animated, { FadeIn, FadeOut, LinearTransition, useReducedMotion, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { FadeIn, FadeOut, LinearTransition, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { KeyboardAwareScrollView, type KeyboardAwareScrollViewRef } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { todayOf } from "@/features/check-ins/model";
@@ -23,7 +23,7 @@ import { useMessageNeeds } from "@/features/messages/row";
 import { NudgeCard } from "@/features/notifications";
 import { Welcome } from "@/features/sign-in/welcome";
 import { DOCK_SPACE } from "@/lib/dock";
-import { palette, space, type } from "@/lib/theme";
+import { motion, palette, space, type } from "@/lib/theme";
 import { Button, Card, Chip, CircleButton, DataPill, ICON, Section, Title } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
@@ -49,6 +49,21 @@ const pop = () => {
   "worklet";
   return { initialValues: { opacity: 0, transform: [{ scale: 0.6 }] }, animations: { opacity: withTiming(1, { duration: 160 }), transform: [{ scale: withSpring(1, { duration: 380, dampingRatio: 0.72 }) }] } };
 };
+
+/**
+ * The initials opening settings: a soft press (in to 0.94 without bounce, back on the confirm spring's
+ * slight overshoot). Under Reduce Motion Reanimated snaps each spring, so the press stays but doesn't move.
+ */
+function Initials({ name, label, onPress }: { name: string; label: string; onPress: () => void }) {
+  const scale = useSharedValue(1);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress}
+    onPressIn={() => { scale.value = withSpring(0.94, { duration: 160, dampingRatio: 1 }); }} onPressOut={() => { scale.value = withSpring(1, motion.pop); }}>
+    <Animated.View style={[{ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.white }, style]}>
+      <Text maxFontSizeMultiplier={1.3} style={{ fontSize: 16, fontWeight: "600", color: palette.blue }}>{name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()}</Text>
+    </Animated.View>
+  </Pressable>;
+}
 
 /** The bento rises only the first time home appears in a session, not on every return to it. */
 let seen = false;
@@ -96,10 +111,7 @@ export default function Home() {
     {state === "joined" && me
       ? <>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <Pressable accessibilityRole="button" accessibilityLabel={t("home.settings", { name: me.name })} onPress={() => setSettings(true)}
-            style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.white, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
-            <Text maxFontSizeMultiplier={1.3} style={{ fontSize: 16, fontWeight: "600", color: palette.blue }}>{me.name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()}</Text>
-          </Pressable>
+          <Initials name={me.name} label={t("home.settings", { name: me.name })} onPress={() => setSettings(true)} />
           <View accessible accessibilityRole="header" style={{ flex: 1, alignItems: "center" }}>
             <Text numberOfLines={1} style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{t("home.hello", { name: me.firstName })}</Text>
             <Text numberOfLines={1} style={{ fontSize: 18, lineHeight: 24, fontWeight: "500", letterSpacing: -0.4, color: palette.ink }}>{headerDate(now, lang)}</Text>

@@ -1,12 +1,12 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { AccessibilityInfo, ActivityIndicator, Modal, Pressable, ScrollView, View, type ViewStyle } from "react-native";
-import Animated, { FadeInDown, SlideInDown, useReducedMotion, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { FadeInDown, SlideInDown, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming, ZoomOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { scheduleLine } from "@/features/discharge/lines";
 import { useDischarge } from "@/features/discharge/row";
-import { markTaken, Pill, rise, snooze, tintOf, useNextDose, useNow, useSnooze } from "@/features/doses";
+import { EASE_OUT, markTaken, Pill, rise, snooze, tintOf, useNextDose, useNow, useSnooze } from "@/features/doses";
 import { RemindCard } from "@/features/doses/remind";
 import { clock, doseOf, dosesToday, early, isLate, untilLine, weekOf, whenWords, type DayDose, type Dose, type ScheduledMed } from "@/features/doses/model";
 import { foodOf, insight, weekStrip } from "@/features/doses/strip";
@@ -22,7 +22,8 @@ import { motion, palette, space, type } from "@/lib/theme";
 import { Button, Card, CircleButton, HoldButton, ICON, LoadError, pillStyle, Section, surfaceStyle, Title } from "@/lib/ui";
 import { now as clockNow } from "@/lib/clock";
 
-const CHECK = "M20 6 9 17l-5-5";
+/** The tick, drawn from its short stroke (4,12 → 9,17 → 20,6). */
+const CHECK = "M4 12l5 5L20 6";
 const SNOOZE = 15 * 60_000, EARLY = 2 * 3600_000;
 const open = (name: string) => router.push({ pathname: "/medicine", params: { name } });
 // The tab rises in once per launch, not every time the patient comes back to it.
@@ -75,7 +76,7 @@ export default function DoseScreen() {
         <Animated.View entering={enter(2)} style={{ gap: 12 }}>
           <Section light={t("dose.yourLight")} bold={t("dose.yourBold")} action={<FullPlan />} />
           {meds.length ? <View style={[surfaceStyle, { paddingHorizontal: 14 }]}>
-            {meds.map((m, i) => <MedRow key={m.name} med={m} first={i === 0} today={today.filter(d => d.name === m.name)} pop={took?.dose.name === m.name} />)}
+            {meds.map((m, i) => <MedRow key={m.name} med={m} first={i === 0} today={today.filter(d => d.name === m.name)} />)}
           </View> : <Text style={{ ...type.body, color: palette.muted }}>{t("dose.nothingAtHome")}</Text>}
         </Animated.View>
         {/* A medicine from a photo waits here for the care team (unless the plan already lists it); the entry to add one sits under the list. */}
@@ -244,11 +245,21 @@ const checkIn = () => {
   return { initialValues: { opacity: 0, transform: [{ scale: 0.6 }] }, animations: { opacity: withTiming(1, { duration: 160 }), transform: [{ scale: withSpring(1, motion.pop) }] } };
 };
 
-/** A green disc with a white check; `pop` springs it in (the dose just logged), still under Reduce Motion. */
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+/** The tick's stroke length, for drawing it. */
+const CHECK_LENGTH = 23;
+
+/**
+ * A green disc with a white check; `pop` springs it in (the dose just logged) and draws the tick short
+ * stroke first, just behind the disc (60fps particle-news-step-check-animation). Still under Reduce Motion.
+ */
 function Check({ size, pop, style }: { size: number; pop?: boolean; style?: ViewStyle }) {
   const reduced = useReducedMotion();
+  const drawn = useSharedValue(pop && !reduced ? CHECK_LENGTH : 0);
+  useEffect(() => { drawn.value = withDelay(90, withTiming(0, { duration: 260, easing: EASE_OUT })); }, [drawn]);
+  const tick = useAnimatedProps(() => ({ strokeDashoffset: drawn.value }));
   return <Animated.View entering={pop && !reduced ? checkIn : undefined} style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: palette.success, alignItems: "center", justifyContent: "center" }, style]}>
-    <Svg width={size * 0.5} height={size * 0.5} viewBox="0 0 24 24"><Path d={CHECK} fill="none" stroke={palette.white} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+    <Svg width={size * 0.5} height={size * 0.5} viewBox="0 0 24 24"><AnimatedPath d={CHECK} animatedProps={tick} strokeDasharray={CHECK_LENGTH} fill="none" stroke={palette.white} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" /></Svg>
   </Animated.View>;
 }
 
@@ -278,20 +289,32 @@ function CareTeam() {
   </View>;
 }
 
-/** One medicine in the list (My plan's row): its pill on its tint, name and schedule, a green check once today's doses of it are taken; opens its sheet. */
-function MedRow({ med, first, today, pop }: { med: ScheduledMed; first: boolean; today: DayDose[]; pop: boolean }) {
+/**
+ * One medicine in the list (My plan's row): its pill on its tint, name and schedule, a faint ring while
+ * today's doses of it are still open and a green check once they are taken; opens its sheet. When the
+ * last dose is taken here, in its sheet or on home, the ring shrinks away as the check pops and draws, and
+ * the name settles (a 3 pt dip back to rest). Never on mount: a row already done just shows its check.
+ */
+function MedRow({ med, first, today }: { med: ScheduledMed; first: boolean; today: DayDose[] }) {
   const lang = useLang(), t = tFor(lang);
+  const reduced = useReducedMotion();
   const done = today.length > 0 && today.every(d => d.taken), schedule = scheduleLine(med, lang);
+  const [doneAtMount] = useState(done);
+  const pop = done && !doneAtMount;
+  const settle = useSharedValue(0);
+  useEffect(() => { if (pop && !reduced) settle.value = withSequence(withTiming(3, { duration: 120, easing: EASE_OUT }), withSpring(0, motion.pop)); }, [pop, reduced, settle]);
+  const settled = useAnimatedStyle(() => ({ transform: [{ translateY: settle.value }] }));
   return <Pressable accessibilityRole="button" accessibilityLabel={[med.name, schedule, done && t("dose.todayTaken")].filter(Boolean).join(". ")} accessibilityHint={t("dose.openHint")} onPress={() => open(med.name)}
     style={({ pressed }) => ({ minHeight: 72, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderTopWidth: first ? 0 : 1, borderColor: palette.line, opacity: pressed ? 0.6 : 1 })}>
     <View style={{ width: 48, height: 48, borderRadius: 16, borderCurve: "continuous", backgroundColor: tintOf(med.name), alignItems: "center", justifyContent: "center" }}>
       <Pill name={med.name} size={44} />
     </View>
-    <View style={{ flex: 1, gap: 2 }}>
+    <Animated.View style={[{ flex: 1, gap: 2 }, settled]}>
       <Text style={{ ...type.headline, color: palette.ink }}>{med.name}</Text>
       <Text style={{ ...type.footnote, color: palette.faint }}>{schedule}</Text>
-    </View>
-    {done && <Check size={24} pop={pop} />}
+    </Animated.View>
+    {done ? <Check size={24} pop={pop} /> : today.length > 0 && <Animated.View exiting={reduced ? undefined : ZoomOut.duration(160)}
+      style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: "#E5E5E5" }} />}
     <Text style={{ fontSize: 20, color: palette.faint }}>›</Text>
   </Pressable>;
 }

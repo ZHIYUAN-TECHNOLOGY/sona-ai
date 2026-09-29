@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
-import Animated, { Easing, FadeIn, FadeInDown, LinearTransition, useReducedMotion } from "react-native-reanimated";
+import Animated, { Easing, FadeInDown, FadeInUp, FadeOutUp, LinearTransition, useReducedMotion } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 import { listOf, takeLine } from "@/features/discharge/lines";
 import { tFor, useLang, useT } from "@/lib/i18n";
@@ -13,7 +13,7 @@ import { useMe } from "@/features/me";
 import { dayLabel } from "@/features/follow-ups/lines";
 import { DOCK_SPACE } from "@/lib/dock";
 import { Text, TextInput } from "@/lib/text";
-import { palette, space, type } from "@/lib/theme";
+import { motion, palette, space, type } from "@/lib/theme";
 import { Card, field, pillStyle, Section, surfaceStyle, Title, LoadError } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
@@ -27,6 +27,16 @@ const BOOK = "M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20";
 const rise = (i: number) => FadeInDown.duration(360).easing(Easing.out(Easing.cubic)).delay(i * 40);
 /** The selected tab's ink capsule slides on the layout spring (380 ms, no bounce); the list itself doesn't move. */
 const SLIDE = LinearTransition.springify().duration(380).dampingRatio(1);
+/**
+ * The directory opens in place (60fps superlist-onboarding-invite-member-animation, calmer: no bounce,
+ * short travel): search and filters unfold 8 pt down from the row, then the cards rise 12 pt, 40 ms apart (the
+ * first 8; the rest arrive with the eighth). Closing fades it out on a short lift, folding it back up.
+ */
+const UNFOLD = FadeInUp.withInitialValues({ opacity: 0, transform: [{ translateY: -8 }] }).duration(240).easing(Easing.out(Easing.cubic));
+const FOLD = FadeOutUp.duration(200).easing(Easing.out(Easing.cubic));
+const cardIn = (i: number) => FadeInDown.withInitialValues({ opacity: 0, transform: [{ translateY: 12 }] }).springify().duration(motion.spring.duration).dampingRatio(1).delay(120 + Math.min(i, 8) * motion.stagger);
+// Your care team rises in once per launch, not on every return to the tab.
+let seen = false;
 
 /**
  * Doctors (the AI Health Companion kit): the patient's own first. "Your / care team" as the kit's doctor
@@ -48,7 +58,12 @@ export default function Doctors() {
   const [tab, setTab] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   // Once the patient has opened the directory, switched a tab or searched, cards appear in place (no entrance per change).
-  const [touched, setTouched] = useState(false);
+  const [touched, setTouched] = useState(() => seen);
+  useEffect(() => { seen = true; }, []);
+  // The directory's cards stagger in only as it opens; a tab switch or search swaps them in place.
+  const [opening, setOpening] = useState(false);
+  const pick = (to: Filter) => { setTab(to); setOpening(false); };
+  const search = (q: string) => { setQuery(q); setOpening(false); };
   // "For you" reads the English leaflet (the doctors' tags are English words), e.g. "chest infection … breathing".
   const words = plan?.status === "discharged" ? plan.leaflets.find(l => l.language === "en")?.text ?? "" : "";
   const team = listFor(doctors.data ?? [], "care-team");
@@ -82,15 +97,17 @@ export default function Doctors() {
     {/* The directory, one tap away: search and filters live with it. */}
     <Animated.View entering={enter(2 + team.length)} style={{ marginTop: 8 }}>
       <RecordRow icon={SEARCH} title={t("doc.find")} value="" spoken={t("doc.find")} hint={t("doc.findHint")}
-        expanded={finding} onPress={() => { setFinding(f => !f); setTouched(true); }} />
+        expanded={finding} onPress={() => { setOpening(!finding); setFinding(!finding); setTouched(true); }} />
     </Animated.View>
-    {finding && <Animated.View entering={still ? undefined : FadeIn.duration(220)} style={{ gap: space.stack }}>
-      <TextInput value={query} onChangeText={setQuery} placeholder={t("doc.searchPlaceholder")} placeholderTextColor={palette.muted} returnKeyType="search"
+    {finding && <Animated.View exiting={still ? undefined : FOLD} style={{ gap: space.stack }}>
+      <Animated.View entering={still ? undefined : UNFOLD} style={{ gap: space.stack }}>
+      <TextInput value={query} onChangeText={search} placeholder={t("doc.searchPlaceholder")} placeholderTextColor={palette.muted} returnKeyType="search"
         clearButtonMode="while-editing" autoCorrect={false} accessibilityLabel={t("doc.searchLabel")} style={{ ...field, borderRadius: 999, backgroundColor: palette.white }} />
-      <Tabs tab={tab} still={still} onPick={setTab} />
+      <Tabs tab={tab} still={still} onPick={pick} />
+      </Animated.View>
       {tab === "for-you" && words !== "" && <Text style={{ ...type.footnote, color: palette.muted, marginTop: -6 }}>{t("doc.matched")}</Text>}
       <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 12 }}>
-        {list.map(d => <View key={d.id} style={{ width }}><DoctorCard doctor={d} /></View>)}
+        {list.map((d, i) => <Animated.View key={d.id} entering={opening && !still ? cardIn(i) : undefined} style={{ width }}><DoctorCard doctor={d} /></Animated.View>)}
       </View>
       {doctors.data && !list.length && <Card>
         <Text style={{ ...type.body, color: palette.muted }}>
@@ -156,12 +173,13 @@ function DoctorCard({ doctor: d, badge = true }: { doctor: ListedDoctor; badge?:
 /** A kit form row (icon, label, value, chevron): a record opening the plan, or (`onPress`, `expanded`) the directory's toggle. */
 function RecordRow({ icon, title, value, spoken, hint, expanded, onPress }: { icon: string; title: string; value: string; spoken: string; hint?: string; expanded?: boolean; onPress?: () => void }) {
   const t = useT();
+  const still = useReducedMotion();
   return <Pressable accessibilityRole="button" accessibilityLabel={spoken} accessibilityHint={hint ?? t("doc.recordHint")} accessibilityState={expanded === undefined ? undefined : { expanded }}
     onPress={onPress ?? (() => router.push("/discharge"))}
     style={({ pressed }) => [surfaceStyle, { borderRadius: 20, minHeight: 60, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={palette.ink} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><Path d={icon} /></Svg>
     <Text style={{ ...type.body, fontWeight: "500", color: palette.ink }}>{title}</Text>
     <Text numberOfLines={1} style={{ flex: 1, ...type.footnote, color: palette.muted, textAlign: "right" }}>{value}</Text>
-    <Text style={{ fontSize: 20, color: palette.faint, transform: [{ rotate: expanded ? "90deg" : "0deg" }] }}>›</Text>
+    <Animated.Text style={{ fontSize: 20, color: palette.faint, transform: [{ rotate: expanded ? "90deg" : "0deg" }], transitionProperty: "transform", transitionDuration: still ? 0 : 240, transitionTimingFunction: "ease-out" }}>›</Animated.Text>
   </Pressable>;
 }
