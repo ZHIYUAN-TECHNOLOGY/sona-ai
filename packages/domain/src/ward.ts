@@ -126,3 +126,102 @@ export function huddle(beds: Bed[], owners: Record<string, Owner | undefined>): 
     unowned ? `${unowned} ${unowned === 1 ? "blocker has" : "blockers have"} no owner yet.` : "Every blocker has an owner.",
   ];
 }
+
+/*
+ * When will beds free up? A rule-based forecast, not a model: each bed's planned out time (or a ready
+ * time), pushed back by a fixed delay per open blocker, read on the hospital's (demo) clock.
+ * ponytail: flat delays per blocker kind and a fixed Kuala Lumpur clock (UTC+8, no DST); learn the
+ * delays from discharge receipts and take the hospital's zone when a second site joins.
+ */
+export type Confidence = "high" | "medium" | "low";
+export type ForecastEntry = { bed: string; name?: string; at: Date; confidence: Confidence; reasons: string[] };
+/** The one blocker whose clearing frees the most bed-hours, soonest. `owned` false: `owner` is the suggested team. */
+export type Unlock = { bed: string; blockerId: string; label: string; owner: Owner; owned: boolean; hours: number; line: string };
+export type BedForecast = {
+  /** The clock it was read on (the hospital's demo clock on the server) and the midnight that splits today from tomorrow. */
+  now: Date; midnight: Date;
+  today: { count: number; byTime?: string }; tomorrow: { count: number };
+  timeline: ForecastEntry[]; unlock?: Unlock;
+  /** One spoken summary, e.g. "2 beds free by 2 pm: Bed 8 at 1 pm, Bed 14 at 2 pm; 3 tomorrow". */
+  label: string;
+};
+
+/** Hours an open blocker adds to a bed's out time; a blocker nobody owns adds UNOWNED_HOURS more. */
+export const DELAY_HOURS: Record<BlockerKind, number> = { gl: 3, pharmacy: 1.5, result: 2, transport: 1, booking: 0.5 };
+export const UNOWNED_HOURS = 1;
+const HOUR = 3_600_000, DAY = 24 * HOUR, TZ = 8 * HOUR;
+/** A watch bed goes home after tomorrow's round, about 11:00. */
+const WATCH_OUT_HOUR = 11;
+
+const dayStart = (d: Date) => new Date(Math.floor((d.getTime() + TZ) / DAY) * DAY - TZ);
+/** "11:00" (or "ready 12:30") as today on the ward's clock; undefined when the text has no time. */
+const timeToday = (text: string, now: Date) => {
+  const m = /(\d{1,2}):(\d{2})/.exec(text);
+  return m ? new Date(dayStart(now).getTime() + (Number(m[1]) * 60 + Number(m[2])) * 60_000) : undefined;
+};
+const later = (a: Date, b: Date) => (a > b ? a : b);
+const hours = (h: number) => `${h} h`;
+
+/** "1 pm", "12:30 pm" on the ward's clock. */
+export function clockLabel(d: Date) {
+  const local = new Date(d.getTime() + TZ), h = local.getUTCHours(), m = local.getUTCMinutes();
+  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, "0")}` : ""} ${h < 12 ? "am" : "pm"}`;
+}
+
+function forecastBed(b: Bed, now: Date, owners: Record<string, Owner | undefined>): ForecastEntry | undefined {
+  const at = (t: Date, confidence: Confidence, reasons: string[]) => ({ bed: b.bed, name: b.name, at: t, confidence, reasons });
+  if (b.status === "empty" || b.status === "free") {
+    const ready = timeToday(b.predicted, now);
+    return ready && ready > now ? at(ready, "high", [b.predicted]) : at(now, "high", ["Free now"]);
+  }
+  if (b.status === "stable" || !b.name) return undefined;
+  if (b.status === "watch") {
+    if (/in \d+ days/i.test(b.predicted)) return undefined;
+    return at(new Date(dayStart(now).getTime() + DAY + WATCH_OUT_HOUR * HOUR), "low", ["On watch · review on tomorrow's round"]);
+  }
+  const planned = timeToday(b.predicted, now);
+  const base = planned ? later(planned, now) : new Date(now.getTime() + HOUR);
+  const reasons = [planned ? `Planned out ${clockLabel(planned)}` : "No planned time · about 1 h"];
+  let delay = 0;
+  for (const x of b.blockers) {
+    delay += DELAY_HOURS[x.kind];
+    reasons.push(`${x.label} +${hours(DELAY_HOURS[x.kind])}`);
+    if (!owners[x.id]) { delay += UNOWNED_HOURS; reasons.push(`No owner for ${x.label.toLowerCase()} +${hours(UNOWNED_HOURS)}`); }
+  }
+  return at(new Date(base.getTime() + delay * HOUR), b.blockers.length ? "medium" : "high", reasons);
+}
+
+/** When each bed frees up: today's count and the time they are all free by, tomorrow's count, and the one blocker to chase. */
+export function forecastBeds(beds: Bed[], now: Date, owners: Record<string, Owner | undefined> = {}): BedForecast {
+  const timeline = beds.flatMap(b => forecastBed(b, now, owners) ?? []).sort((a, b) => a.at.getTime() - b.at.getTime());
+  const midnight = dayStart(now).getTime() + DAY;
+  const today = timeline.filter(e => e.at.getTime() < midnight);
+  const tomorrow = timeline.filter(e => e.at.getTime() >= midnight && e.at.getTime() < midnight + DAY);
+  const last = today.at(-1)?.at;
+  // "by 2 pm": the last bed's time rounded up to the hour; everything free already reads "now".
+  const byTime = !last ? undefined : last <= now ? "now" : (() => {
+    const hour = Math.ceil(last.getTime() / HOUR) * HOUR;
+    return hour >= midnight ? "by midnight" : `by ${clockLabel(new Date(hour))}`;
+  })();
+
+  let unlock: Unlock | undefined, soonest = Infinity;
+  for (const b of beds) {
+    const entry = timeline.find(e => e.bed === b.bed);
+    if (!entry || b.status !== "fit") continue;
+    for (const x of b.blockers) {
+      const owned = Boolean(owners[x.id]), h = DELAY_HOURS[x.kind] + (owned ? 0 : UNOWNED_HOURS), freed = entry.at.getTime() - h * HOUR;
+      if (unlock && (h < unlock.hours || (h === unlock.hours && freed >= soonest))) continue;
+      soonest = freed;
+      unlock = { bed: b.bed, blockerId: x.id, label: x.label, owner: owners[x.id] ?? SUGGESTED[x.kind], owned, hours: h, line: `Chase ${b.bed}'s ${x.label.toLowerCase()} → frees ~${hours(h)} earlier` };
+    }
+  }
+
+  const nBeds = (n: number) => `${n} bed${n === 1 ? "" : "s"}`;
+  const list = today.map(e => `${e.bed} ${e.at <= now ? "now" : `at ${clockLabel(e.at)}`}`).join(", ");
+  const label = today.length ? `${nBeds(today.length)} free ${byTime}: ${list}; ${tomorrow.length} tomorrow` : `No beds free today; ${tomorrow.length} tomorrow`;
+  return { now, midnight: new Date(midnight), today: { count: today.length, byTime }, tomorrow: { count: tomorrow.length }, timeline, unlock, label };
+}
+
+/** My Day's one line: "Forecast · 2 beds free by 2 pm · 3 tomorrow". */
+export const forecastLine = (f: BedForecast) =>
+  `Forecast · ${f.today.count ? `${f.today.count} bed${f.today.count === 1 ? "" : "s"} free ${f.today.byTime}` : "none free today"} · ${f.tomorrow.count} tomorrow`;

@@ -11,8 +11,8 @@ import { useEncounter } from "@/features/encounter/store";
 import { api, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { useFindings } from "@/features/live/findings-sync";
-import { useServerBeds } from "@/features/live/ward-sync";
-import { bedBar, filterSegments, wardBeds, wardSummary, type Bed, type BedKind, type WardFilter } from "./model";
+import { useServerBeds, useServerForecast } from "@/features/live/ward-sync";
+import { bedBar, bedKind, clockLabel, filterSegments, forecastBeds, forecastLine, wardBeds, wardSummary, type Bed, type BedForecast, type BedKind, type Owner, type WardFilter } from "./model";
 
 /*
  * Ward summary, minimal (after 60fps "Ultrahuman Positive Recovery Text Animation",
@@ -135,14 +135,105 @@ export function WardGlance() {
   const { findings } = useFindings();
   const { reducedMotion } = useAccessibleEffects();
   const beds = useServerBeds(findings) ?? wardBeds(patients, encounters);
+  const forecast = useForecast(beds, findings);
   const summary = wardSummary(beds);
   return <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 14 }}>
     <View style={{ gap: 4 }}>
       <Text style={{ ...type.overline, color: summary.blocked ? palette.red : palette.blue }}>Ward now</Text>
       <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{summary.blocked ? `${summary.blocked} discharge${summary.blocked === 1 ? "" : "s"} blocked · ~${summary.bedHours} bed‑hours waiting` : `${summary.fit} fit to go · nothing blocked`}</Text>
     </View>
-    <BedBar beds={beds} />
+    <View>
+      <BedBar beds={beds} />
+      <Pressable accessibilityRole="button" accessibilityLabel={`Forecast: ${forecast.label}`} accessibilityHint="Opens the ward's forecast"
+        onPress={() => router.push({ pathname: "/ward", params: { at: "forecast" } })} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <Icon name="clock" size={12} color={TEAL} />
+        <Text numberOfLines={1} style={{ ...type.footnote, flex: 1, fontWeight: "600", color: TEAL }}>{forecastLine(forecast)}</Text>
+        <Icon name="chevron.right" size={11} color={TEAL} />
+      </Pressable>
+    </View>
     <ThisWeek />
     <Action label="Open the ward" icon="bed.double" onPress={() => router.push("/ward")} />
+  </Surface>;
+}
+
+/** The bed forecast: the server's in live mode (demo clock, saved owners), else the same rule over the fixture ward on the device clock. */
+export function useForecast(beds: Bed[], key?: unknown, owners: Record<string, Owner | undefined> = {}): BedForecast {
+  return useServerForecast(key) ?? forecastBeds(beds, new Date(), owners);
+}
+
+const WINDOW = 24 * 3_600_000, DOT = 12;
+
+/*
+ * "Next 24 h": one axis from now to +24 h, a dot per bed at its forecast free time (bed-kind colour;
+ * filled high confidence, ringed medium, hollow low), rising in on a short stagger (still under
+ * Reduce Motion). Tap or hold a dot for its bed, time and reasons. Below, the blocker that frees the
+ * most bed-hours, with its owner and one tap into that bed's card.
+ */
+export function ForecastTimeline({ beds, forecast, onOpen }: { beds: Bed[]; forecast: BedForecast; onOpen: (bed: string, blockerId: string) => void }) {
+  const { reducedMotion } = useAccessibleEffects();
+  const [width, setWidth] = useState(0);
+  const [picked, setPicked] = useState<string>();
+  // The axis runs on the forecast's own clock (the server's demo clock in live mode).
+  const now = new Date(forecast.now).getTime();
+  const dots = forecast.timeline.filter(e => new Date(e.at).getTime() - now <= WINDOW);
+  const x = (at: Date) => Math.max(0, Math.min(1, (new Date(at).getTime() - now) / WINDOW)) * (width - DOT);
+  // Beds at the same moment stack upward rather than hide each other.
+  const lift = dots.map((e, i) => dots.slice(0, i).filter(o => Math.abs(x(o.at) - x(e.at)) < DOT).length);
+  const mid = x(forecast.midnight);
+  const selected = dots.find(e => e.bed === picked);
+  const bedOf = (id: string) => beds.find(b => b.bed === id);
+  const u = forecast.unlock;
+  const count = forecast.today.count;
+  return <Surface layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 12 }}>
+    <View style={{ gap: 2 }}>
+      <Text style={{ ...type.overline, color: TEAL }}>Next 24 h</Text>
+      <Text style={{ ...type.subhead, color: palette.muted }}>
+        <Text style={{ fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{count}</Text> bed{count === 1 ? "" : "s"} free {count ? forecast.today.byTime : "today"} · <Text style={{ fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{forecast.tomorrow.count}</Text> tomorrow
+      </Text>
+    </View>
+
+    <View accessible accessibilityRole="image" accessibilityLabel={forecast.label} onLayout={e => setWidth(e.nativeEvent.layout.width)} style={{ height: 64 }}>
+      <View style={{ position: "absolute", left: DOT / 2, right: DOT / 2, bottom: 20, height: 2, borderRadius: 1, backgroundColor: "rgba(20,28,40,0.08)" }} />
+      {width > 0 && <View style={{ position: "absolute", left: mid + DOT / 2, bottom: 14, width: 1, height: 14, backgroundColor: "rgba(20,28,40,0.18)" }} />}
+      {width > 0 && dots.map((e, i) => {
+        const color = KIND[bedOf(e.bed) ? bedKind(bedOf(e.bed)!) : "other"];
+        const on = e.bed === picked;
+        return <Animated.View key={e.bed} entering={reducedMotion ? undefined : riseIn({ delay: i * 45, distance: 8, scale: 0.4, duration: 300 })}
+          style={{ position: "absolute", left: x(e.at) + DOT / 2 - 22, bottom: 21 - 22 + lift[i]! * (DOT + 2) }}>
+          <Pressable onPress={() => { haptic("select"); setPicked(on ? undefined : e.bed); }} onLongPress={() => { haptic("select"); setPicked(e.bed); }}
+            style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}>
+            <View style={{ width: DOT, height: DOT, borderRadius: DOT / 2, borderWidth: 2, borderColor: color, transform: [{ scale: on ? 1.35 : 1 }],
+              backgroundColor: e.confidence === "high" ? color : e.confidence === "medium" ? `${color}66` : palette.white }} />
+          </Pressable>
+        </Animated.View>;
+      })}
+      <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 16 }}>
+        <Text style={{ ...type.caption, position: "absolute", left: 0, color: palette.muted }}>Now</Text>
+        {/* Midnight splits today from tomorrow; its label hides when it would crowd "Now" or "+24 h". */}
+        {width > 0 && mid > 44 && mid < width - 72 && <Text style={{ ...type.caption, position: "absolute", left: mid - 12, color: palette.muted }}>12 am</Text>}
+        <Text style={{ ...type.caption, position: "absolute", right: 0, color: palette.muted }}>+24 h</Text>
+      </View>
+    </View>
+
+    {selected && <Expand>
+      <Text style={{ ...type.footnote, color: palette.muted }}>
+        <Text style={{ fontWeight: "700", color: palette.ink }}>{selected.bed}{selected.name ? ` · ${selected.name.split(" ")[0]}` : ""} · {new Date(selected.at).getTime() <= now ? "now" : clockLabel(new Date(selected.at))}</Text> · {selected.reasons.join(", ")}
+      </Text>
+    </Expand>}
+
+    {u && <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingTop: 10, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={{ ...type.overline, color: palette.blue }}>Frees fastest</Text>
+        <Text style={{ ...type.subhead, color: palette.ink }}>{u.line}</Text>
+        <Text style={{ ...type.caption, color: palette.muted }}>{u.owned ? `Owner · ${u.owner}` : `No owner yet · ${u.owner} suggested`}</Text>
+      </View>
+      <Pressable accessibilityRole="button" accessibilityLabel={`${u.line}. ${u.owned ? `Owner ${u.owner}` : `No owner yet, ${u.owner} suggested`}. Open ${u.bed}`} hitSlop={7}
+        onPress={() => { haptic("select"); onOpen(u.bed, u.blockerId); }}
+        style={{ minHeight: 30, paddingHorizontal: 12, borderRadius: 15, justifyContent: "center", backgroundColor: palette.blue }}>
+        <Text style={{ fontSize: 13, fontWeight: "600", color: palette.white }}>Open {u.bed}</Text>
+      </Pressable>
+    </View>}
+
+    <Text style={{ ...type.caption, color: palette.muted }}>Forecast from today's blockers and planned times · rule-based</Text>
   </Surface>;
 }
