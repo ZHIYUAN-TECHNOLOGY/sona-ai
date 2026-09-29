@@ -6,6 +6,7 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState, type ReactNode } from "react";
 import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn, FadeInDown, FadeOut, type AnimatedStyle, type LayoutAnimationFunction } from "react-native-reanimated";
 import { BrandIcon, type BrandIconName } from "./brand-icon";
 import { HalftoneGlint } from "./halftone-shimmer";
@@ -115,6 +116,42 @@ export function SourceLink({ label = "View source", onPress }: { label?: string;
   return <Pressable accessibilityRole="button" onPress={onPress} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 7 }}><Icon name="doc.text" color={palette.blue} size={15} /><Text style={{ fontSize: 13, color: palette.blue, fontWeight: "500", flexShrink: 1 }}>{label}</Text><Icon name="arrow.up.right" color={palette.blue} size={11} /></Pressable>;
 }
 export function Notice({ children, warning = false }: { children: ReactNode; warning?: boolean }) { return <View style={{ backgroundColor: warning ? "rgba(244,235,221,0.85)" : "rgba(226,235,250,0.75)", borderWidth: 1, borderColor: "rgba(255,255,255,0.8)", borderRadius: 18, borderCurve: "continuous", padding: 14, flexDirection: "row", alignItems: "flex-start", gap: 9 }}><Icon name={warning ? "exclamationmark.circle" : "info.circle"} color={warning ? palette.amber : palette.blue} size={17} /><Text selectable style={{ color: warning ? palette.amber : palette.muted, fontSize: 13, lineHeight: 20, flex: 1 }}>{children}</Text></View>; }
-export function Screen({ children }: { children: ReactNode }) { return <ScrollView style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: "radial-gradient(circle at 8% 4%, rgba(150,190,255,0.38) 0%, rgba(150,190,255,0) 42%), radial-gradient(circle at 96% 38%, rgba(196,176,255,0.26) 0%, rgba(196,176,255,0) 40%), radial-gradient(circle at 20% 92%, rgba(150,220,235,0.26) 0%, rgba(150,220,235,0) 45%), linear-gradient(to bottom, #F5F6F8 0%, #EFF2F7 45%, #E3EBF7 100%)" }} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingBottom: 44, gap: 18 }}>{children}</ScrollView>; }
+/** The page canvas: soft blue, lilac and teal fields over pale grey, so glass has something to show. */
+export const canvasImage = "radial-gradient(circle at 8% 4%, rgba(150,190,255,0.38) 0%, rgba(150,190,255,0) 42%), radial-gradient(circle at 96% 38%, rgba(196,176,255,0.26) 0%, rgba(196,176,255,0) 40%), radial-gradient(circle at 20% 92%, rgba(150,220,235,0.26) 0%, rgba(150,220,235,0) 45%), linear-gradient(to bottom, #F5F6F8 0%, #EFF2F7 45%, #E3EBF7 100%)";
+
+/**
+ * Every page's scroll container: the aurora canvas, 20 pt margins and 18 pt between blocks. `bottom` pins a
+ * glass decision bar above the home indicator (review pages keep their one decision in view); the
+ * content gets matching space at its end so nothing hides under it.
+ */
+export function Screen({ children, bottom }: { children: ReactNode; bottom?: ReactNode }) {
+  const insets = useSafeAreaInsets();
+  const [barHeight, setBarHeight] = useState(0);
+  const scroll = <ScrollView style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingBottom: 44, gap: 18 }}>{children}{bottom ? <View style={{ height: barHeight }} /> : null}</ScrollView>;
+  if (!bottom) return scroll;
+  return <View style={{ flex: 1 }}>
+    {scroll}
+    <View onLayout={e => setBarHeight(e.nativeEvent.layout.height)} style={{ position: "absolute", left: 16, right: 16, bottom: Math.max(insets.bottom, 12) }}>
+      <Glass style={{ padding: 12, gap: 10 }}>{bottom}</Glass>
+    </View>
+  </View>;
+}
+
+/** Meaning colours for an insight: red must not wait, amber soon or blocked, green done or safe, blue the next step. */
+export const tone = { urgent: palette.red, soon: palette.amber, good: palette.green, next: palette.blue } as const;
+/** The part of an insight that matters, in its meaning colour. */
+export function Tone({ of, children }: { of: keyof typeof tone; children: ReactNode }) { return <Text style={{ color: tone[of] }}>{children}</Text>; }
+
+/**
+ * Insight first: the line a page opens with, answering "does anything need me?" in one sentence
+ * ("<Tone of="urgent">2 discharges blocked</Tone> · 14 bed-hours waiting"). The eyebrow gives context above it.
+ * It is the page's heading, so the native title stays a short noun and nothing repeats it.
+ */
+export function Insight({ eyebrow, children }: { eyebrow?: string; children: ReactNode }) {
+  return <View style={{ gap: 4 }}>
+    {eyebrow ? <Text style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{eyebrow}</Text> : null}
+    <Text selectable accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{children}</Text>
+  </View>;
+}
 export function Reveal({ children }: { children: ReactNode }) { const reduced = useReduceMotionPreference(); return <Animated.View entering={reduced ? undefined : FadeInDown.duration(220)} style={{ gap: 14 }}>{children}</Animated.View>; }
 export function CanvasBackground() { return <LinearGradient pointerEvents="none" colors={[palette.canvas, palette.canvas, "#DDE5EF", "#CDDEF5"]} locations={[0, 0.35, 0.72, 1]} style={{ position: "absolute", inset: 0 }} />; }

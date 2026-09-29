@@ -1,16 +1,15 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { MarkedText } from "@/components/sona/marked-text";
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { FadeIn, FadeOut, useAnimatedProps, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import { scheduleOnRN } from "react-native-worklets";
 import { LAYOUT } from "@/components/sona/motion";
 import { ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Icon, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Icon, Screen, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
 import { api, errorText, useLive } from "@/features/live";
@@ -63,7 +62,6 @@ export function useOpenAudit(): AuditItem[] {
 export function AuditScreen() {
   const { patients } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
-  const insets = useSafeAreaInsets();
   const sent = useSent();
   const { on: live } = useLive();
   const role = useRole();
@@ -112,7 +110,7 @@ export function AuditScreen() {
   };
   const badgeStyle = useAnimatedStyle(() => ({ transform: [{ scale: badge.value }] }));
 
-  return <ScrollView style={{ flex: 1, backgroundColor: palette.canvas }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 32, gap: 16 }}>
+  return <Screen>
     <Surface feature style={{ padding: 16, gap: 10 }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
         <Text style={{ ...type.overline, color: palette.muted }}>{live ? "Latest audit" : "Last night’s audit"}</Text>
@@ -127,13 +125,13 @@ export function AuditScreen() {
       <Text style={{ ...type.subhead, color: palette.muted }}>{live && !ran ? "Running the audit…" : items.length ? `at risk across ${items.length - sending.length} under-specified ${items.length - sending.length === 1 ? "note" : "notes"}` : "Nothing left at risk. Every query is out."}</Text></>}
     </Surface>
 
-    {items.length > 0 && <Text style={{ ...type.caption, color: palette.muted }}>Swipe right to send the drafted query, or tap to read it first.</Text>}
+    {items.length > 0 && <Text style={{ ...type.caption, color: palette.muted }}>Swipe right to send, or tap to read first.</Text>}
     <View style={{ gap: 10 }}>
       {items.map(item => <Animated.View key={item.id} layout={reducedMotion ? undefined : LAYOUT} exiting={reducedMotion ? undefined : FadeOut.duration(160)}>
         <Row item={item} sending={sending.includes(item.id)} asking={asking.includes(item.id)} error={failed[item.id]} open={open === item.id} onToggle={() => setOpen(o => (o === item.id ? undefined : item.id))} onSend={() => send(item)} />
       </Animated.View>)}
     </View>
-  </ScrollView>;
+  </Screen>;
 }
 
 /** Money that rolls only the digits that change, like an odometer. */
@@ -202,11 +200,7 @@ function Row({ item, sending, asking, error, open, onToggle, onSend }: { item: A
           {error && <View style={{ paddingLeft: 38 }}><ErrorLine text={error} onRetry={onSend} /></View>}
           {open && !sending && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ gap: 10, paddingLeft: 38 }}>
             <Text selectable style={{ ...type.footnote, color: palette.ink, padding: 10, borderRadius: 14, overflow: "hidden", backgroundColor: "rgba(20,28,40,0.04)" }}>{item.query}</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel={`Send query to ${item.doctor}`} onPress={onSend}
-              style={{ alignSelf: "flex-start", height: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: palette.blue }}>
-              <Icon name="paperplane.fill" size={12} color={palette.white} />
-              <Text style={{ fontSize: 14, fontWeight: "600", color: palette.white }}>Send to {item.doctor}</Text>
-            </Pressable>
+            <View style={{ alignSelf: "flex-start" }}><Action label={`Send to ${item.doctor}`} icon="paperplane.fill" accessibilityLabel={`Send query to ${item.doctor}`} disabled={asking} onPress={onSend} /></View>
           </Animated.View>}
         </Pressable>
       </Animated.View>

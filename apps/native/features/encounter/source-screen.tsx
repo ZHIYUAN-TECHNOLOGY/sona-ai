@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Linking } from "react-native";
-import { Action, Body, Card, Label, Notice, Screen, SourceLink } from "@/components/sona/ui";
+import { Action, Body, Card, Notice, Screen, SourceLink } from "@/components/sona/ui";
 import { useEncounter } from "./store";
 
 export function SourceScreen() {
@@ -16,8 +16,8 @@ export function SourceScreen() {
   const transcript = result?.transcriptSnapshot ?? encounter?.transcript;
   const openOriginal = async () => { if (!source?.url) return; try { await Linking.openURL(source.url); setLinkError(false); } catch { setLinkError(true); } };
   // A note sentence cited by a letter (the guarantee letter's appeal): shown exactly as the note says it.
-  if (quote) return <Screen><Label>Evidence & provenance</Label><Card label="Consultation note" title="From the note"><Body>“{quote}”</Body></Card><Notice>The sentence this point cites, as written in the note.</Notice></Screen>;
-  return <Screen><Label>Evidence & provenance</Label>{loading ? <Card title="Loading source"><Body muted>Opening the recorded source version…</Body></Card> : source ? <>
+  if (quote) return <Screen><Card label="Consultation note" title="From the note"><Body>“{quote}”</Body></Card><Notice>The sentence this point cites, as written in the note.</Notice></Screen>;
+  return <Screen>{loading ? <Card title="Loading source"><Body muted>Opening the recorded source version…</Body></Card> : source ? <>
     {result && result.revision !== encounter?.revision && <Notice>Retained evidence for revision {result.revision}. The current encounter is revision {encounter?.revision}. Later corrections have not overwritten this version.</Notice>}
     <Card label={source.kind} title={source.title}><Body muted>{source.date}</Body><Body>{source.excerpt}</Body>{source.url && <SourceLink label="Open original reference" onPress={openOriginal} />}{linkError && <><Notice warning>The original reference could not be opened. Its recorded excerpt remains available.</Notice><Action label="Retry opening reference" secondary onPress={openOriginal} /></>}</Card>
     {id === "history" && patient && <Card title="Context in this version"><Body>{patient.complaint}</Body><Body>{patient.history.join(". ")}</Body><Body>Family: {patient.family}</Body><Body>Social: {patient.social}</Body><Body>Allergies: {patient.allergies ?? "Unknown"}</Body><Body>{patient.medicines.join("\n")}</Body>{patient.sources.filter(s => (s.id.startsWith("fact-") || s.id.startsWith("history-"))).map(s => <Body key={s.id}>{s.date} · {s.excerpt}</Body>)}</Card>}

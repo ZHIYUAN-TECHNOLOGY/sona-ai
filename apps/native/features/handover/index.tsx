@@ -12,13 +12,13 @@ import { SourcesPill } from "@/components/sona/sources";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { ErrorLine } from "@/components/sona/parts";
-import { Icon, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Icon, Insight, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import { useFindings } from "@/features/live/findings-sync";
 import { errorText } from "@/features/live";
 import { useLiveHandover } from "@/features/live/handover-sync";
 import { LockedAction, useRole } from "@/features/live/roles";
-import { buildHandover, type HandoverCard } from "./model";
+import { buildHandover, type HandoverCard as Sbar } from "./model";
 
 /*
  * Shift handover (after Slack's swipe-to-triage cards): one SBAR card per patient on a stack.
@@ -46,7 +46,7 @@ function Line({ tag, children }: { tag: string; children: React.ReactNode }) {
   </View>;
 }
 
-function Card({ card }: { card: HandoverCard }) {
+function HandoverCard({ card }: { card: Sbar }) {
   const sources = card.patientId ? card.sources.map(id => ({ id, label: { history: "Intake & history", vitals: "Observations", consultation: "Consultation transcript" }[id] ?? id, kind: "record" as const, onPress: () => router.push({ pathname: "/source", params: { id, patientId: card.patientId! } }) })) : [];
   return <View style={{ flex: 1, borderRadius: 28, borderCurve: "continuous", backgroundColor: palette.white, borderWidth: 1, borderColor: "rgba(20,28,40,0.06)", boxShadow: "0 10px 30px rgba(24,32,48,0.10)", padding: 18, gap: 14 }}>
     <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
@@ -158,11 +158,15 @@ export function HandoverScreen() {
       </Animated.View>}
   </View>;
   const discuss = done.filter(d => d.decision === "discuss");
+  // Insight over the whole list (not what's left), so it holds still while the deck moves.
+  const watch = cards.filter(c => c.priority === "watch").length, items = cards.reduce((sum, c) => sum + c.recommendation.length, 0);
+  const insight = [`${cards.length} ${cards.length === 1 ? "patient" : "patients"}`, watch ? <Tone key="watch" of="urgent">{watch} to watch</Tone> : null, items ? `${items} open ${items === 1 ? "item" : "items"}` : null].filter(Boolean);
 
   return <View style={{ flex: 1, backgroundColor: palette.canvas, paddingTop: insets.top + 56, paddingBottom: Math.max(insets.bottom, 16), paddingHorizontal: 20, gap: 14 }}>
     <Stack.Screen options={{ title: "Shift handover" }} />
+    <Insight>{insight.map((part, i) => [i ? " · " : "", part])}</Insight>
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 34 }}>
-      <Text accessibilityLiveRegion="polite" style={{ ...type.headline, color: palette.ink, fontVariant: ["tabular-nums"] }}>{top ? `${remaining.length} of ${cards.length} left` : "All patients reviewed"}</Text>
+      <Text accessibilityLiveRegion="polite" style={{ ...type.subhead, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{top ? `${remaining.length} of ${cards.length} left` : "All patients reviewed"}</Text>
       {done.length > 0 && !accepted && <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(120)}>
         <Pressable accessibilityRole="button" accessibilityLabel="Undo last decision" onPress={undo} hitSlop={8} style={{ minHeight: 32, flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 11, borderRadius: 16, backgroundColor: "rgba(36,91,204,0.1)" }}>
           <Icon name="arrow.uturn.backward" size={11} color={palette.blue} /><Text style={{ fontSize: 13, fontWeight: "600", color: palette.blue }}>Undo</Text>
@@ -172,10 +176,10 @@ export function HandoverScreen() {
 
     {top ? <>
       <View style={{ flex: 1 }}>
-        {next && <Animated.View key={`n-${next.id}`} pointerEvents="none" style={[{ position: "absolute", inset: 0 }, reducedMotion ? { transform: [{ scale: 0.95 }] } : nextStyle]}><Card card={next} /></Animated.View>}
+        {next && <Animated.View key={`n-${next.id}`} pointerEvents="none" style={[{ position: "absolute", inset: 0 }, reducedMotion ? { transform: [{ scale: 0.95 }] } : nextStyle]}><HandoverCard card={next} /></Animated.View>}
         <GestureDetector gesture={pan}>
           <Animated.View key={top.id} entering={reducedMotion ? FadeIn.duration(150) : undefined} style={[{ position: "absolute", inset: 0 }, topStyle]}>
-            <Card card={top} />
+            <HandoverCard card={top} />
             {(["handed", "discuss"] as const).map(decision => <Animated.View key={decision} pointerEvents="none"
               style={[{ position: "absolute", inset: 0, borderRadius: 28, borderCurve: "continuous", backgroundColor: TINT[decision].fill, alignItems: "center", justifyContent: "center", gap: 10 }, decision === "handed" ? handedTint : discussTint]}>
               <Icon name={TINT[decision].icon} size={48} color={palette.white} />
@@ -185,12 +189,8 @@ export function HandoverScreen() {
         </GestureDetector>
       </View>
       <View style={{ flexDirection: "row", gap: 10 }}>
-        <Pressable accessibilityRole="button" accessibilityLabel={`Discuss ${top.name} verbally`} onPress={() => decide("discuss")} style={({ pressed }) => ({ flex: 1, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", backgroundColor: palette.white, borderWidth: 1, borderColor: "rgba(20,28,40,0.1)", opacity: pressed ? 0.8 : 1 })}>
-          <Text style={{ fontSize: 16, fontWeight: "600", color: palette.ink }}>Discuss</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel={`Hand over ${top.name}`} onPress={() => decide("handed")} style={({ pressed }) => ({ flex: 1.4, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", backgroundColor: palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-          <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>Hand over</Text>
-        </Pressable>
+        <View style={{ flex: 1 }}><Action label="Discuss" secondary accessibilityLabel={`Discuss ${top.name} verbally`} onPress={() => decide("discuss")} /></View>
+        <View style={{ flex: 1.4 }}><Action label="Hand over" accessibilityLabel={`Hand over ${top.name}`} onPress={() => decide("handed")} /></View>
       </View>
     </> : <ScrollView contentContainerStyle={{ gap: 14, paddingBottom: 20 }}>
       <Animated.View entering={reducedMotion ? FadeIn : riseIn({ distance: 12, duration: 380 })} style={{ borderRadius: 28, borderCurve: "continuous", backgroundColor: palette.white, padding: 20, gap: 12, boxShadow: "0 10px 30px rgba(24,32,48,0.08)" }}>

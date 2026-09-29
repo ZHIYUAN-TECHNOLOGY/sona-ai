@@ -182,10 +182,13 @@ export function RecordingScreen() {
   return <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}><Screen>
     {/* Minimize is the header's one control; playback keeps running from the encounter shell. */}
     <Stack.Screen options={{ headerLeft: () => <IconButton name="chevron.down" label={minimizeLabel} onPress={() => router.back()} /> }} />
+    {/* Who, then one quiet honesty line: a sample (links to About data) with no microphone or audio. */}
     <View style={{ gap: 4 }}>
-      <Text selectable style={{ fontSize: 13, fontWeight: "600", color: palette.blue }}>{patient.name} · {patient.id}</Text>
-      <SampleLabel source="fixture" what="speech" />
-      <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>No microphone active, no audio recorded.</Text>
+      <Text selectable style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{patient.name} · {patient.id}</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 4 }}>
+        <SampleLabel source="fixture" what="speech" />
+        <Text style={{ ...type.caption, color: palette.muted }}>· no microphone, no audio recorded</Text>
+      </View>
     </View>
 
     {unavailable ? <Section icon="waveform.slash" tone="amber" title="No consultation sample"subtitle="This patient has incomplete history. A dialogue has not been authored for this encounter.">
