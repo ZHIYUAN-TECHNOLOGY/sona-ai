@@ -27,7 +27,9 @@ def gemma_evaluator():
         req = urllib.request.Request(f"{url}/chat/completions", json.dumps(body).encode(),
                                      {"Content-Type": "application/json", "Authorization": f"Bearer {key}"})
         with urllib.request.urlopen(req, timeout=60) as res:
-            return json.loads(json.load(res)["choices"][0]["message"]["content"])
+            content = json.load(res)["choices"][0]["message"]["content"]
+        # Google's endpoint prepends Gemma's <thought> block and can't turn it off.
+        return json.loads(content.rsplit("</thought>", 1)[-1])
     return evaluate
 
 

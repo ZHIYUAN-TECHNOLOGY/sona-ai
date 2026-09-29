@@ -13,5 +13,8 @@ Pass bar (suggested): capability ≥ 90% and medicine ≥ 95% correct. Under tha
 | Date | Evaluator | Capability | Medicine | Median time |
 | --- | --- | --- | --- | --- |
 | 29 Sep 2026 | Laya multilingual 0.3.21, untrained, local Mac | 17/50 (34%) | 48/50 (96%) | 59 ms |
+| 29 Sep 2026 | Gemma 4 26B A4B-it, Google AI Studio API (thinking forced on) | 45/50 (90%) | 50/50 (100%) | 9.9 s |
 
 Untrained Laya fails the capability bar. It is not the "None of the above" option: with that option removed, it still scores 16/44 (36%) on the covered requests. It sends most briefing, medication and follow-up requests to the wrong card. Picking a named medicine already passes.
+
+Gemma just meets the capability bar but misses four of the six `not-covered` requests (discharge, guarantee letter, referral, handover): it forces them onto a card, usually follow-up. Its time is from Google's endpoint, which always thinks first; self-hosted INT4 without thinking on the L4 has not been measured.
