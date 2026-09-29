@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { LiveUpdates } from "@/features/live";
+import { DoseReminders } from "@/features/doses/remind";
 import { PushSetup } from "@/features/notifications";
 import { CalmCanvas } from "@/lib/canvas";
 import { Dock } from "@/lib/dock";
@@ -40,6 +41,7 @@ export default function RootLayout() {
     <Dock />
     <LiveUpdates />
     <PushSetup />
+    <DoseReminders />
     </ThemeProvider>
   </QueryClientProvider></SafeAreaProvider></KeyboardProvider></GestureHandlerRootView>;
 }

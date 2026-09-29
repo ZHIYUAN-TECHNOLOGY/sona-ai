@@ -116,3 +116,28 @@ addStrings({
     "photo.sendFailed": "未发送。请检查网络后重试。",
   },
 });
+
+/** Dose reminders: the lock-screen words (no medicine name), the Medicine screen's ask and home's row. */
+addStrings({
+  en: {
+    "reminders.body": "Time for your medicine", "reminders.title": "Remind me at dose times",
+    "reminders.line": "Works offline. The reminder never shows your medicine's name on the lock screen.",
+    "reminders.on": "On · we'll remind you at each dose time", "reminders.off": "Reminders are off · Turn on in Settings",
+    "reminders.settings": "Open Settings", "reminders.row": "Dose reminders", "reminders.rowOn": "On", "reminders.rowOff": "Off",
+    "reminders.hint": "Turns reminders at dose times on or off",
+  },
+  ms: {
+    "reminders.body": "Masa untuk ubat anda", "reminders.title": "Ingatkan saya pada waktu ubat",
+    "reminders.line": "Berfungsi tanpa internet. Peringatan tidak sekali-kali menunjukkan nama ubat anda di skrin kunci.",
+    "reminders.on": "Hidup · kami akan ingatkan anda pada setiap waktu ubat", "reminders.off": "Peringatan dimatikan · Hidupkan dalam Tetapan",
+    "reminders.settings": "Buka Tetapan", "reminders.row": "Peringatan ubat", "reminders.rowOn": "Hidup", "reminders.rowOff": "Mati",
+    "reminders.hint": "Hidupkan atau matikan peringatan pada waktu ubat",
+  },
+  zh: {
+    "reminders.body": "该吃药了", "reminders.title": "按时提醒我吃药",
+    "reminders.line": "无需联网。锁屏上的提醒不会显示药名。",
+    "reminders.on": "已开启 · 每次服药时间都会提醒您", "reminders.off": "提醒已关闭 · 请在设置中开启",
+    "reminders.settings": "打开设置", "reminders.row": "服药提醒", "reminders.rowOn": "开", "reminders.rowOff": "关",
+    "reminders.hint": "开启或关闭服药时间提醒",
+  },
+});

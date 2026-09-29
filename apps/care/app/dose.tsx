@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { AccessibilityInfo, ActivityIndicator, Modal, Pressable, ScrollView, useWindowDimensions, View, type ViewStyle } from "react-native";
 import Animated, { FadeInDown, SlideInDown, useReducedMotion, withSpring, withTiming } from "react-native-reanimated";
@@ -7,7 +7,8 @@ import Svg, { Path } from "react-native-svg";
 import { scheduleLine } from "@/features/discharge/lines";
 import { useDischarge } from "@/features/discharge/row";
 import { markTaken, Pill, rise, snooze, useNextDose, useNow, useSnooze } from "@/features/doses";
-import { clock, dosesToday, early, isLate, untilLine, weekOf, whenWords, type DayDose, type Dose, type ScheduledMed } from "@/features/doses/model";
+import { RemindCard } from "@/features/doses/remind";
+import { clock, doseOf, dosesToday, early, isLate, untilLine, weekOf, whenWords, type DayDose, type Dose, type ScheduledMed } from "@/features/doses/model";
 import { foodOf, insight, weekStrip } from "@/features/doses/strip";
 import "@/features/doses/strings";
 import { PhotoMedicines } from "@/features/doses/photo";
@@ -33,11 +34,14 @@ let shown = false;
  * the medicine drawn big, how to take it, and a hold to mark it taken, or "Remind me later", which
  * steps the card aside for 15 min in this app. When nothing is due the same card says what is next.
  * Below, the care team one tap away and every medicine to take as a big pill card opening its sheet.
+ * A dose reminder opens this screen with its dose (`key`), so the card holds that dose until it is taken.
  */
 export default function DoseScreen() {
   const now = useNow();
   const lang = useLang(), t = tFor(lang);
-  const { plan, dose, taken = [], meds } = useNextDose(now);
+  const { key } = useLocalSearchParams<{ key?: string }>();
+  const { plan, dose: next, taken = [], meds } = useNextDose(now);
+  const dose = doseOf(meds, key, taken) ?? next;
   const discharge = useDischarge();
   const reduced = useReducedMotion();
   const { fontScale } = useWindowDimensions();
@@ -64,6 +68,9 @@ export default function DoseScreen() {
         <Animated.View entering={enter(1)}>
           <NextCard dose={dose} now={now} took={took} onTook={d => setTook({ dose: d, at: clockNow() })} />
         </Animated.View>
+
+        {/* Asked here, where doses are, and only once. */}
+        {meds.some(m => m.at?.length) && <Animated.View entering={enter(2)}><RemindCard /></Animated.View>}
 
         <Animated.View entering={enter(2)} style={{ gap: 12 }}>
           <Section light={t("dose.yourLight")} bold={t("dose.yourBold")} action={<FullPlan />} />
