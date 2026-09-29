@@ -5,7 +5,7 @@ import "@/lib/strings";
 addStrings({
   en: {
     "doc.all": "All", "doc.careTeam": "Care team", "doc.top": "Top rated", "doc.forYou": "For you",
-    "doc.titleLight": "Find a", "doc.titleBold": "Doctor", "doc.sample": "Sample doctors for this demo",
+    "doc.titleLight": "Find a", "doc.titleBold": "Doctor",
     "doc.closeSearch": "Close search", "doc.search": "Search doctors", "doc.searchPlaceholder": "Name or specialty", "doc.searchLabel": "Search doctors by name or specialty",
     "doc.matched": "Matched to words in your discharge leaflet", "doc.noMatch": "No doctor matches “{q}”.",
     "doc.nothingForYou": "Nothing in your plan to match yet. Your care team can suggest who to see.", "doc.none": "No doctors here.",
@@ -20,7 +20,7 @@ addStrings({
     "doc.experience": "Experience", "doc.years": "{n} years", "doc.yearsA11y": "{n} years of practice",
     "doc.clinic": "Clinic", "doc.clinicA11y": "Clinic: {room}", "doc.speaks": "Speaks", "doc.speaksA11y": "Speaks {langs}",
     "doc.clinicDays": "Clinic days", "doc.pickTime": "Pick a time, then send a request.", "doc.noTime": "No free clinic time in the next two weeks. Ask your care team.",
-    "doc.about": "About", "doc.sampleFooter": "Sample doctor · Demo General Hospital (synthetic)",
+    "doc.about": "About",
     "doc.request": "Request appointment", "doc.requestHint": "Review and send a request to your care team", "doc.pickFirst": "Pick a time first", "doc.messageTeam": "Message care team",
     "doc.timeA11y": "{time}, {day}",
     "book.sentA11y": "Request sent. Your care team will confirm the time.",
@@ -34,7 +34,7 @@ addStrings({
   },
   ms: {
     "doc.all": "Semua", "doc.careTeam": "Pasukan saya", "doc.top": "Terbaik", "doc.forYou": "Untuk anda",
-    "doc.titleLight": "Cari", "doc.titleBold": "Doktor", "doc.sample": "Doktor contoh untuk demo ini",
+    "doc.titleLight": "Cari", "doc.titleBold": "Doktor",
     "doc.closeSearch": "Tutup carian", "doc.search": "Cari doktor", "doc.searchPlaceholder": "Nama atau kepakaran", "doc.searchLabel": "Cari doktor mengikut nama atau kepakaran",
     "doc.matched": "Dipadankan dengan perkataan dalam risalah discaj anda", "doc.noMatch": "Tiada doktor yang sepadan dengan “{q}”.",
     "doc.nothingForYou": "Belum ada apa-apa dalam pelan anda untuk dipadankan. Pasukan penjagaan anda boleh cadangkan siapa perlu dijumpai.", "doc.none": "Tiada doktor di sini.",
@@ -49,7 +49,7 @@ addStrings({
     "doc.experience": "Pengalaman", "doc.years": "{n} tahun", "doc.yearsA11y": "{n} tahun berpengalaman",
     "doc.clinic": "Klinik", "doc.clinicA11y": "Klinik: {room}", "doc.speaks": "Bahasa", "doc.speaksA11y": "Bertutur dalam {langs}",
     "doc.clinicDays": "Hari klinik", "doc.pickTime": "Pilih masa, kemudian hantar permintaan.", "doc.noTime": "Tiada masa klinik kosong dalam dua minggu lagi. Tanya pasukan penjagaan anda.",
-    "doc.about": "Tentang", "doc.sampleFooter": "Doktor contoh · Demo General Hospital (sintetik)",
+    "doc.about": "Tentang",
     "doc.request": "Minta temu janji", "doc.requestHint": "Semak dan hantar permintaan kepada pasukan penjagaan anda", "doc.pickFirst": "Pilih masa dahulu", "doc.messageTeam": "Mesej pasukan penjagaan",
     "doc.timeA11y": "{time}, {day}",
     "book.sentA11y": "Permintaan dihantar. Pasukan penjagaan anda akan mengesahkan masanya.",
@@ -63,7 +63,7 @@ addStrings({
   },
   zh: {
     "doc.all": "全部", "doc.careTeam": "医护团队", "doc.top": "高评分", "doc.forYou": "适合您",
-    "doc.titleLight": "找", "doc.titleBold": "医生", "doc.sample": "本演示使用示例医生",
+    "doc.titleLight": "找", "doc.titleBold": "医生",
     "doc.closeSearch": "关闭搜索", "doc.search": "搜索医生", "doc.searchPlaceholder": "姓名或专科", "doc.searchLabel": "按姓名或专科搜索医生",
     "doc.matched": "根据您出院说明单里的词语匹配", "doc.noMatch": "没有医生符合“{q}”。",
     "doc.nothingForYou": "您的计划里还没有可以匹配的内容。医护团队可以建议看哪位医生。", "doc.none": "这里没有医生。",
@@ -78,7 +78,7 @@ addStrings({
     "doc.experience": "经验", "doc.years": "{n}年", "doc.yearsA11y": "从医{n}年",
     "doc.clinic": "诊室", "doc.clinicA11y": "诊室：{room}", "doc.speaks": "语言", "doc.speaksA11y": "会说{langs}",
     "doc.clinicDays": "门诊日", "doc.pickTime": "选一个时间，然后发送申请。", "doc.noTime": "未来两周没有空的门诊时间。请问医护团队。",
-    "doc.about": "简介", "doc.sampleFooter": "示例医生 · Demo General Hospital（虚构）",
+    "doc.about": "简介",
     "doc.request": "申请预约", "doc.requestHint": "查看并发送预约申请给医护团队", "doc.pickFirst": "请先选时间", "doc.messageTeam": "给医护团队留言",
     "doc.timeA11y": "{day}{time}",
     "book.sentA11y": "申请已发送。医护团队会确认时间。",

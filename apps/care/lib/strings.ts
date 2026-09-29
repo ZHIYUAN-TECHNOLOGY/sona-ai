@@ -28,6 +28,10 @@ addStrings({
     "lang.row": "Language", "lang.title": "Language", "lang.light": "Choose your", "lang.bold": "language",
     "lang.line": "Sona Care's words change right away. Your leaflet and messages from your care team stay as they were written.",
     "lang.hint": "Opens the language choices",
+    "synthetic.pill": "Synthetic data", "synthetic.pillHint": "What is fictional in this demo",
+    "synthetic.fictional": "Every patient, doctor, hospital and insurer in this demo is fictional. No real person's data is used.",
+    "synthetic.sample": "Answers marked \"sample\" come from authored examples until the AI models are switched on.",
+    "sample.model": "Sample · {what} model not switched on", "sample.hint": "Why this is not a model answer", "sample.photo": "photo reading",
   },
   ms: {
     "common.back": "Kembali", "common.close": "Tutup", "common.cancel": "Batal", "common.send": "Hantar", "common.done": "Selesai",
@@ -55,6 +59,10 @@ addStrings({
     "lang.row": "Bahasa", "lang.title": "Bahasa", "lang.light": "Pilih", "lang.bold": "bahasa anda",
     "lang.line": "Perkataan Sona Care bertukar serta-merta. Risalah dan mesej daripada pasukan penjagaan anda kekal seperti asal.",
     "lang.hint": "Buka pilihan bahasa",
+    "synthetic.pill": "Data sintetik", "synthetic.pillHint": "Apa yang rekaan dalam demo ini",
+    "synthetic.fictional": "Setiap pesakit, doktor, hospital dan syarikat insurans dalam demo ini adalah rekaan. Tiada data orang sebenar digunakan.",
+    "synthetic.sample": "Jawapan bertanda \"contoh\" datang daripada contoh yang ditulis, sehingga model AI dihidupkan.",
+    "sample.model": "Contoh · model {what} belum dihidupkan", "sample.hint": "Mengapa ini bukan jawapan model", "sample.photo": "bacaan gambar",
   },
   zh: {
     "common.back": "返回", "common.close": "关闭", "common.cancel": "取消", "common.send": "发送", "common.done": "完成",
@@ -82,5 +90,9 @@ addStrings({
     "lang.row": "语言", "lang.title": "语言", "lang.light": "选择您的", "lang.bold": "语言",
     "lang.line": "Sona Care 的文字会马上更换。您的说明单和医护团队的留言保持原文。",
     "lang.hint": "打开语言选项",
+    "synthetic.pill": "合成数据", "synthetic.pillHint": "本演示中哪些是虚构的",
+    "synthetic.fictional": "本演示中的所有病人、医生、医院和保险公司都是虚构的，没有使用任何真实人物的数据。",
+    "synthetic.sample": "在 AI 模型开启之前，标有“示例”的回答来自预先编写的例子。",
+    "sample.model": "示例 · {what}模型尚未开启", "sample.hint": "为什么这不是模型的回答", "sample.photo": "照片识别",
   },
 });

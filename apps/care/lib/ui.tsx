@@ -191,3 +191,34 @@ export function Chip({ label, onPress, dot, tone, accessibilityLabel }: { label:
 }
 
 export const field = { minHeight: 52, borderRadius: 18, paddingHorizontal: 16, fontSize: 17, color: palette.ink, backgroundColor: palette.card, borderWidth: 1, borderColor: palette.line } as const;
+
+/*
+ * Honesty, two truths, two treatments (mirrors apps/native model-answer). The data is fictional, so
+ * that is said once, on home (DataPill). An answer no model gave is labelled where it appears
+ * (SampleLabel), driven by the server's `source`, so it goes by itself once a model answers. Both open
+ * the same short sheet (app/about-data).
+ */
+const INFO = "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-4M12 8h.01";
+const openAbout = () => router.push("/about-data");
+
+/** The one "Synthetic data" signal: a quiet glass pill with a dotted halftone accent; tap for what is fictional. */
+export function DataPill() {
+  const t = useT();
+  return <Pressable accessibilityRole="button" accessibilityLabel={t("synthetic.pill")} accessibilityHint={t("synthetic.pillHint")} onPress={openAbout} hitSlop={10}
+    style={({ pressed }) => [pillStyle, { alignSelf: "center", minHeight: 30, paddingHorizontal: 12, justifyContent: "center", overflow: "hidden", transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
+    <HalftoneGlint width={40} height={30} origin={[0, 15]} reach={[38, 20]} pitch={3} strength={0.9} style={{ top: 0, left: 0 }} />
+    <Text style={{ fontSize: 13, lineHeight: 17, fontWeight: "600", color: palette.muted }}>{t("synthetic.pill")}</Text>
+  </Pressable>;
+}
+
+/** "Sample · <what> model not switched on" under an answer no model gave (`source` "fixture"); nothing once a model answers. */
+export function SampleLabel({ source, what }: { source?: string; what: "photo" }) {
+  const t = useT();
+  if (source !== "fixture") return null;
+  const text = t("sample.model", { what: t(`sample.${what}`) });
+  return <Pressable accessibilityRole="button" accessibilityLabel={text} accessibilityHint={t("sample.hint")} onPress={openAbout} hitSlop={12}
+    style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 5, opacity: pressed ? 0.6 : 1 })}>
+    <Text style={{ ...type.footnote, flexShrink: 1, color: palette.muted }}>{text}</Text>
+    <Svg width={14} height={14} viewBox="0 0 24 24"><Path d={INFO} fill="none" stroke={palette.muted} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+  </Pressable>;
+}

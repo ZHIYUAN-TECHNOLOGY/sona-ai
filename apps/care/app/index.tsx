@@ -26,7 +26,7 @@ import { Welcome } from "@/features/sign-in/welcome";
 import { authClient } from "@/lib/auth-client";
 import { DOCK_SPACE } from "@/lib/dock";
 import { palette, space, type } from "@/lib/theme";
-import { Button, Card, Chip, CircleButton, ICON, Section, Title } from "@/lib/ui";
+import { Button, Card, Chip, CircleButton, DataPill, ICON, Section, Title } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
 /** Every open thing on home, most urgent first; each chip jumps to or opens its thing. */
@@ -147,6 +147,8 @@ export default function Home() {
       <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("common.emergency")}</Text>
       <AddSheet open={adding} onClose={() => setAdding(false)} />
     </>}
+    {/* The one place Sona Care says its data is fictional, by the emergency line; tap for the details. */}
+    {state !== "loading" && <DataPill />}
     {/* The language row, dose reminders, the training consent and sign out close the page: settings a patient needs rarely, kept out of the way. */}
     {state !== "loading" && <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", columnGap: 16 }}>
       <LanguageRow />
