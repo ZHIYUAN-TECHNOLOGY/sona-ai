@@ -1,12 +1,12 @@
 import { router } from "expo-router";
 import { MarkedText } from "@/components/sona/marked-text";
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, Pressable, ScrollView, View, useWindowDimensions } from "react-native";
+import { AccessibilityInfo, Pressable, View, useWindowDimensions } from "react-native";
 import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, glass, Icon, Insight, Screen, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { BlockerRow, useSettling, Pill, Ring } from "@/features/clinical/prescribe-card";
 import { Seal, haptic } from "@/features/clinical/medication-parts";
 import { capabilityLabels } from "@/features/encounter/conversation";
@@ -31,7 +31,7 @@ import { EMPTY_DISCHARGE, FOLLOW_UPS, LANGUAGES, checkInDaysOf, discharge, disch
  * 0.62 on a spring (0.6 s, damping 0.82), a ±1.2° sway while drafting (calmer than the shot's
  * ±3.2°), then the card rises on a spring (0.8 s, damping 0.85) with its summary lines 40 ms
  * apart. Inside, the prescribe card's pattern: ring, only what blocks, each fixed where it sits,
- * a button that morphs into the discharge, and a receipt that stamps in the same card.
+ * a button (pinned in the decision bar) that morphs into the discharge, and a receipt that stamps in the card.
  */
 const DRAFT_MS = 1700;
 const TEAL = "#0F6E66";
@@ -52,18 +52,34 @@ export function DischargeScreen() {
   const answers = encounters[patient.id]?.requests.map(r => capabilityLabels[r.kind]) ?? [];
 
   return <View style={{ flex: 1, backgroundColor: palette.canvas }}>
-    <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingBottom: 48, gap: 14 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
-        <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>Discharge</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="Close" hitSlop={8} onPress={() => router.back()} style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}>
-          <Icon name="xmark" size={13} color={palette.ink} />
-        </Pressable>
-      </View>
-      {drafted && <VisitChip patient={patient} answers={answers} animate={!reducedMotion && !discharged} />}
-      {drafted && <DischargeCard patient={patient} animate={!reducedMotion && !discharged} />}
-    </ScrollView>
+    <DischargePage patient={patient} answers={answers} drafted={drafted} animate={!reducedMotion && !discharged} />
     {!drafted && <FoldStage patient={patient} answers={answers} />}
   </View>;
+}
+
+/** The modal's own header row (these modals hide the native header): a title and Close. */
+export function ModalHeader({ title }: { title: string }) {
+  return <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
+    <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>{title}</Text>
+    <Pressable accessibilityRole="button" accessibilityLabel="Close" hitSlop={8} onPress={() => router.back()} style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}>
+      <Icon name="xmark" size={13} color={palette.ink} />
+    </Pressable>
+  </View>;
+}
+
+/** The decision bar's one line above its button: what the action will do, or why it just failed. */
+export function BarLine({ children, error = false }: { children: string; error?: boolean }) {
+  return <Text accessibilityLiveRegion={error ? "polite" : undefined} style={{ ...type.footnote, paddingHorizontal: 4, color: error ? palette.red : palette.muted }}>{children}</Text>;
+}
+
+/** The review page's decision: grey and inert while something blocks, ink once it can act; the label crossfades as it morphs. */
+export function Decide({ label, icon, muted = false, disabled = false, onPress }: { label: string; icon?: string; muted?: boolean; disabled?: boolean; onPress: () => void }) {
+  const { reducedMotion } = useAccessibleEffects();
+  return <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={onPress}
+    style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: muted ? "rgba(20,28,40,0.08)" : palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 200 } as never)}>
+    {icon && <Icon name={icon} size={15} color={muted ? palette.muted : palette.white} />}
+    <Animated.Text key={label} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ fontSize: 16, fontWeight: "600", color: muted ? palette.muted : palette.white }}>{label}</Animated.Text>
+  </Pressable>;
 }
 
 /** The visit page, shrinking into a card and swaying while the discharge drafts. */
@@ -131,7 +147,8 @@ const TAG: Record<MedChange["change"], { label: string; ink: string; fill: strin
   unchanged: { label: "Same", ink: palette.muted, fill: "rgba(20,28,40,0.06)" },
 };
 
-export function Chip({ label, icon, onPress, strong = false }: { label: string; icon?: string; onPress: () => void; strong?: boolean }) {
+/** A blocker's inline fix (smaller and bolder than `ui.Chip`, which picks values). */
+export function FixChip({ label, icon, onPress, strong = false }: { label: string; icon?: string; onPress: () => void; strong?: boolean }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={() => { haptic("select"); onPress(); }} hitSlop={6}
     style={{ alignSelf: "flex-start", height: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: strong ? palette.blue : "rgba(20,28,40,0.06)" }}>
     {icon && <Icon name={icon} size={12} color={strong ? palette.white : palette.ink} />}
@@ -139,7 +156,8 @@ export function Chip({ label, icon, onPress, strong = false }: { label: string; 
   </Pressable>;
 }
 
-function DischargeCard({ patient, animate }: { patient: Patient; animate: boolean }) {
+/** The page under the fold: header, the folded visit, the discharge card, and the decision pinned in the bar once drafted. */
+function DischargePage({ patient, answers, drafted, animate }: { patient: Patient; answers: string[]; drafted: boolean; animate: boolean }) {
   const { encounters, updateEncounter } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const encounter = encounters[patient.id];
@@ -165,7 +183,7 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
   // Live mode: the full summary and the leaflet in the chosen language are drafted by the server from this patient's record.
   const draft = useLiveDraft(patient.encounterId, state.language);
 
-  if (!encounter) return null;
+  if (!encounter) return <Screen><ModalHeader title="Discharge" /></Screen>;
   const set = (change: Partial<DischargeState>) => {
     // A role that cannot change the plan is told why, and nothing changes on this phone either.
     if (live && !role.can("discharge.update")) { haptic("select"); setServerError(role.why("discharge.update")); return; }
@@ -198,10 +216,10 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
     if (check.id === "gl") return encounter.claim?.status === "sent" || encounter.claim?.status === "appealed"
       ? <Text style={{ ...type.footnote, color: palette.muted }}>{encounter.claim.status === "appealed" ? "Appeal sent · awaiting insurer" : "Sent · awaiting insurer"}</Text>
       : encounter.claim?.status === "denied"
-        ? <View style={{ gap: 8 }}><Text selectable style={{ ...type.footnote, color: palette.red }}>Denied: {encounter.claim.denial?.reason ?? "see the letter"} · appeal drafted</Text><Chip label="Review appeal and send" icon="doc.text.magnifyingglass" strong onPress={() => router.push("/claim")} /></View>
+        ? <View style={{ gap: 8 }}><Text selectable style={{ ...type.footnote, color: palette.red }}>Denied: {encounter.claim.denial?.reason ?? "see the letter"} · appeal drafted</Text><FixChip label="Review appeal and send" icon="doc.text.magnifyingglass" strong onPress={() => router.push("/claim")} /></View>
       : encounter.claim?.status === "queried"
-        ? <View style={{ gap: 8 }}><Text selectable style={{ ...type.footnote, color: palette.amber }}>Insurer asks: {encounter.claim.query}</Text><Chip label="Answer and send again" icon="doc.text.magnifyingglass" strong onPress={() => router.push("/claim")} /></View>
-        : <Chip label="Review codes and send" icon="doc.text.magnifyingglass" strong onPress={() => router.push("/claim")} />;
+        ? <View style={{ gap: 8 }}><Text selectable style={{ ...type.footnote, color: palette.amber }}>Insurer asks: {encounter.claim.query}</Text><FixChip label="Answer and send again" icon="doc.text.magnifyingglass" strong onPress={() => router.push("/claim")} /></View>
+        : <FixChip label="Review codes and send" icon="doc.text.magnifyingglass" strong onPress={() => router.push("/claim")} />;
     if (check.id === "followup") return <View style={{ flexDirection: "row", gap: 8 }}>
       {FOLLOW_UPS.map(f => <Pill key={f.id} label={f.label} on={state.followUp === f.id} onPress={() => set({ followUp: f.id })} />)}
     </View>;
@@ -216,10 +234,10 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
         </View>
       </View>)}
       <Text style={{ ...type.caption, color: palette.muted }}>{plan.meds.filter(m => m.change === "unchanged").map(m => m.name).join(", ")} unchanged</Text>
-      <Chip label="Confirm take-home list" strong onPress={() => set({ medsConfirmed: true })} />
+      <FixChip label="Confirm take-home list" strong onPress={() => set({ medsConfirmed: true })} />
     </View>;
     const finding = openFindings.find(f => check.id === `finding-${f.id}`);
-    if (finding) return <Chip label="Track follow-up" icon="calendar.badge.plus" strong onPress={() => void found.track(finding)} />;
+    if (finding) return <FixChip label="Track follow-up" icon="calendar.badge.plus" strong onPress={() => void found.track(finding)} />;
     return undefined;
   };
 
@@ -229,14 +247,32 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
   const marked = (text: string) => markTerms(text, [["mild", "finding"], ["moderate", "caution"], ["severe", "alert"],
     ...plan.meds.filter(m => m.change === "changed" || m.change === "new").map((m): [string, "caution"] => [m.name, "caution"])]);
 
-  return <Animated.View entering={animate ? riseCard : undefined}>
+  const time = (d: Date) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const error = serverError ?? found.error;
+  // The decision stays in view: what discharging does, then the button; once done, the next step.
+  const bar = done ? <>
+    {error ? <BarLine error>{error}</BarLine> : <BarLine>{`Sona Care checks in on day ${checkInDaysOf(state, plan).join(", ")} · ${language.name}`}</BarLine>}
+    <View style={{ flexDirection: "row", gap: 10 }}>
+      <View style={{ flex: 1 }}><Action label="View tasks" icon="checklist" secondary onPress={() => { router.back(); setTimeout(() => router.push("/tasks"), 320); }} /></View>
+      <View style={{ flex: 1 }}><Action label="Done" onPress={() => router.back()} /></View>
+    </View>
+  </> : <>
+    {error ? <BarLine error>{error}</BarLine> : <BarLine>{`Frees ${plan.bed} · creates 2 follow-up tasks · leaflet in ${language.name}`}</BarLine>}
+    {live && !role.can("discharge.request") ? <LockedAction label="Needs a doctor's approval" path="discharge.request" />
+      : <Decide label={primary} icon={blocked.length ? undefined : busy ? "hourglass" : "bed.double"} muted={blocked.length > 0} disabled={blocked.length > 0 || busy} onPress={go} />}
+  </>;
+
+  return <Screen bottom={drafted ? bar : undefined}>
+    <ModalHeader title="Discharge" />
+    {drafted && <VisitChip patient={patient} answers={answers} animate={animate} />}
+    {drafted && <Animated.View entering={animate ? riseCard : undefined}>
     <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 14 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
         <Ring done={checks.length - blocked.length} total={checks.length} />
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ ...type.overline, color: done ? TEAL : blocked.length ? palette.amber : palette.blue }}>{done ? "Discharged" : blocked.length ? `${blocked.length} left before discharge` : "Ready to discharge"}</Text>
-          <Text style={{ ...type.headline, color: palette.ink }}>{patient.name} · {plan.bed}</Text>
-          <Text style={{ ...type.caption, color: palette.muted }}>Fit for discharge since {fitAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
+        <View style={{ flex: 1 }}>
+          <Insight eyebrow={`${patient.name} · ${plan.bed} · fit since ${time(fitAt)}`}>
+            {done ? <><Tone of="good">Discharged</Tone> at {time(done)}</> : blocked.length ? <><Tone of="soon">{blocked.length} left</Tone> before {first} can go home</> : <>{first} is <Tone of="next">ready to go home</Tone></>}
+          </Insight>
         </View>
       </View>
 
@@ -246,16 +282,23 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
           <Seal draw stampDelay={fresh ? 120 : undefined} />
           <Animated.View entering={fresh ? riseIn({ delay: 220, distance: 6, duration: 360 }) : undefined} style={{ flex: 1, gap: 2 }}>
             <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{plan.bed} free{saved ? ` · ${saved} earlier` : ""}</Text>
-            <Text style={{ ...type.caption, color: palette.muted }}>2 follow-up tasks created · leaflet ready to print · {done.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
+            <Text style={{ ...type.caption, color: palette.muted }}>2 follow-up tasks created · leaflet ready to print · {time(done)}</Text>
           </Animated.View>
         </View>
         <CareInvite encounterId={patient.encounterId} />
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 4 }}>
-          <Icon name="bubble.left.and.bubble.right" size={13} color={palette.blue} />
-          <Text numberOfLines={1} style={{ ...type.caption, flex: 1, color: palette.muted }}><Text style={{ ...type.caption, fontWeight: "700", color: palette.ink }}>Check-ins</Text> · Day {checkInDaysOf(state, plan).join(" · ")} · {language.name}</Text>
-        </View>
       </Animated.View>}
 
+      {!done && rows.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
+        {rows.map((check, i) => <BlockerRow key={check.id} check={check} n={i + 1} resolved={resolving.has(check.id)}>{fix(check)}</BlockerRow>)}
+      </Animated.View>}
+
+      {!done && passed.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <Icon name="checkmark.circle.fill" size={13} color={TEAL} />
+        <Text style={{ ...type.footnote, fontWeight: "600", color: TEAL }}>{blocked.length ? `${passed.length} checks passed` : `All ${passed.length} checks passed`}</Text>
+      </Animated.View>}
+
+      {/* What the discharge carries: quieter, under what blocks it. */}
+      <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 14, paddingTop: 14, borderTopWidth: 1, borderColor: glass.hairline }}>
       <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
         {(!done || full) && summary.map(([label, value], i) => { const text = marked(value); return <Animated.View key={label} entering={animate ? riseIn({ delay: 180 + i * 40, distance: 10, duration: 320 }) : undefined} style={{ flexDirection: "row", gap: 12 }}>
           <Text style={{ ...type.overline, width: 72, paddingTop: 3, color: palette.muted }}>{label}</Text>
@@ -267,15 +310,6 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
           <Icon name={full ? "chevron.up" : "chevron.right"} size={10} color={palette.blue} />
         </Pressable>
       </Animated.View>
-
-      {!done && rows.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
-        {rows.map((check, i) => <BlockerRow key={check.id} check={check} n={i + 1} resolved={resolving.has(check.id)}>{fix(check)}</BlockerRow>)}
-      </Animated.View>}
-
-      {!done && passed.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-        <Icon name="checkmark.circle.fill" size={13} color={TEAL} />
-        <Text style={{ ...type.footnote, fontWeight: "600", color: TEAL }}>{blocked.length ? `${passed.length} checks passed` : `All ${passed.length} checks passed`}</Text>
-      </Animated.View>}
 
       {!done && <CheckInDays state={state} condition={plan.condition} language={language.name} onChange={checkInDays => set({ checkInDays })} />}
 
@@ -293,24 +327,10 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
           {draft.error && <Text style={{ ...type.caption, color: palette.red }}>{draft.error} · showing the authored leaflet</Text>}
         </Animated.View>
       </Animated.View>}
-
-      {(serverError ?? found.error) && <Text style={{ ...type.footnote, color: palette.red }}>{serverError ?? found.error}</Text>}
-      <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
-      {done ? <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ gap: 12 }}>
-        <View style={{ flexDirection: "row", gap: 10 }}>
-          <Chip label="View tasks" icon="checklist" onPress={() => { router.back(); setTimeout(() => router.push("/tasks"), 320); }} />
-          <Chip label="Done" onPress={() => router.back()} />
-        </View>
-      </Animated.View>
-        : live && !role.can("discharge.request") ? <LockedAction label="Needs a doctor's approval" path="discharge.request" />
-        : <Pressable accessibilityRole="button" accessibilityState={{ disabled: blocked.length > 0 || busy }} disabled={blocked.length > 0 || busy} onPress={go}
-          style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: blocked.length ? "rgba(20,28,40,0.08)" : palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 200 } as never)}>
-          {!blocked.length && <Icon name={busy ? "hourglass" : "bed.double"} size={15} color={palette.white} />}
-          <Animated.Text key={primary} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ fontSize: 16, fontWeight: "600", color: blocked.length ? palette.muted : palette.white }}>{primary}</Animated.Text>
-        </Pressable>}
       </Animated.View>
     </Surface>
-  </Animated.View>;
+    </Animated.View>}
+  </Screen>;
 }
 
 /**

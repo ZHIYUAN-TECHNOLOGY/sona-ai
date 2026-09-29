@@ -1,15 +1,15 @@
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, View } from "react-native";
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
 import { EASE_OUT, LAYOUT } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, glass, Icon, Insight, Screen, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { BlockerRow, useSettling, Ring } from "@/features/clinical/prescribe-card";
 import { Seal, haptic } from "@/features/clinical/medication-parts";
-import { Chip } from "@/features/discharge";
+import { BarLine, Decide, FixChip, ModalHeader } from "@/features/discharge";
 import { useEncounter } from "@/features/encounter/store";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { api, errorText, requestId, useLive } from "@/features/live";
@@ -99,24 +99,28 @@ export function ClaimScreen() {
     wait(2300, () => { updateEncounter(value => approveClaim(value, new Date())); setSending(false); haptic("success"); });
   };
   const fix = (check: PrescriptionCheck) => {
-    if (check.id === "organism") return <Chip label="Confirm unknown" icon="checkmark" onPress={() => { set({ organismConfirmed: true }); setActive("organism"); }} />;
+    if (check.id === "organism") return <FixChip label="Confirm unknown" icon="checkmark" onPress={() => { set({ organismConfirmed: true }); setActive("organism"); }} />;
     if (check.id === "iv") return <View style={{ gap: 8 }}>
       <Text style={{ ...type.footnote, color: palette.ink }}>“IV first: vomiting on arrival, unable to keep oral tablets down.”</Text>
-      <Chip label="Add to note" icon="plus" strong onPress={() => { set({ ivReasonAdded: true }); setActive("iv"); }} />
+      <FixChip label="Add to note" icon="plus" strong onPress={() => { set({ ivReasonAdded: true }); setActive("iv"); }} />
     </View>;
     return undefined;
   };
   const primary = blocked.length ? `Resolve ${blocked.length} to send` : sent ? "Sent · awaiting insurer" : sending ? "Sending…" : queried ? "Send again" : `Send to ${INSURER.toLowerCase()}`;
-  const status = approved ? "Approved" : sent ? "Sent · awaiting insurer" : queried ? "Insurer asked a question" : denied ? "Denied · appeal below" : appealed ? "Appeal sent · awaiting insurer"
-    : blocked.length ? `${blocked.length} left before sending` : "Ready to send";
+  const status = approved ? <>Final GL <Tone of="good">approved</Tone></> : sent ? <><Tone of="next">Sent</Tone>, awaiting the insurer</> : queried ? <><Tone of="soon">The insurer asked</Tone> a question</>
+    : denied ? <><Tone of="urgent">Denied</Tone> · appeal below</> : appealed ? <><Tone of="next">Appeal sent</Tone>, awaiting the insurer</>
+    : blocked.length ? <><Tone of="soon">{blocked.length} left</Tone> before sending</> : <><Tone of="next">Ready</Tone> to send</>;
+  // The decision stays in view. A denied letter's decision is the appeal, which acts in its own review card, so no bar then.
+  const bar = approved ? <><BarLine>The discharge's GL check is cleared</BarLine><Action label="Back to discharge" icon="chevron.left" onPress={() => router.back()} /></>
+    : denied || appealed ? undefined
+    : <>
+      {serverError ? <BarLine error>{serverError}</BarLine> : <BarLine>{sent ? "Approval clears the discharge's GL check" : `Sends the note and ${codes.length} ${codes.length === 1 ? "code" : "codes"} to ${INSURER}`}</BarLine>}
+      {live && !sent && !role.can("claim.send") ? <LockedAction label="Needs a doctor to send" path="claim.send" />
+        : <Decide label={primary} icon={blocked.length ? undefined : sent ? "hourglass" : "paperplane"} muted={blocked.length > 0 || sent} disabled={blocked.length > 0 || sending || sent} onPress={send} />}
+    </>;
 
-  return <ScrollView style={{ flex: 1, backgroundColor: palette.canvas }} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingBottom: 48, gap: 14 }}>
-    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
-      <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>Guarantee letter</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel="Close" hitSlop={8} onPress={() => router.back()} style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}>
-        <Icon name="xmark" size={13} color={palette.ink} />
-      </Pressable>
-    </View>
+  return <Screen bottom={bar}>
+    <ModalHeader title="Guarantee letter" />
 
     {(denied || appealed) && state.denial && <>
       <DeniedCard denial={state.denial} />
@@ -127,34 +131,11 @@ export function ClaimScreen() {
     <Surface feature={!denied && !appealed} layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 16 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
         <Ring done={approved ? checks.length : checks.length - blocked.length} total={checks.length} />
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ ...type.overline, color: approved ? TEAL : denied ? palette.red : blocked.length ? palette.amber : palette.blue }}>{status}</Text>
-          <Text style={{ ...type.headline, color: palette.ink }}>Final guarantee letter</Text>
-          <Text style={{ ...type.caption, color: palette.muted }}>{patient.name} · {INSURER} · estimated {ESTIMATE}</Text>
-          {serverError && <Text style={{ ...type.footnote, color: palette.red }}>{serverError}</Text>}
+        <View style={{ flex: 1, gap: 4 }}>
+          <Insight eyebrow={`${patient.name} · ${INSURER} · estimated ${ESTIMATE}`}>{status}</Insight>
+          {serverError && !bar && <Text style={{ ...type.footnote, color: palette.red }}>{serverError}</Text>}
         </View>
       </View>
-
-      <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
-        <Text style={{ ...type.overline, color: palette.muted }}>Evidence in the note</Text>
-        <Evidence note={note} active={cited} />
-      </Animated.View>
-
-      <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 2 }}>
-        <Text style={{ ...type.overline, color: palette.muted, paddingBottom: 6 }}>Codes · tap to see why</Text>
-        {server.loading && <Drafting label="Coding the note…" style={{ paddingVertical: 6 }} />}
-        {server.data && !codes.length && <Text style={{ ...type.footnote, color: palette.amber }}>No codable diagnosis in the note yet</Text>}
-        {server.error && <Text style={{ ...type.footnote, color: palette.red }}>{server.error} · showing the authored codes</Text>}
-        {!server.loading && codes.map((c, i) => { const on = c.evidence === cited; return <Arrive key={c.code} index={i} animate={Boolean(server.data)}><Pressable accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${c.code}, ${c.label}, ${c.kind}${c.inTable === false ? ", not in the ICD-10 table" : ""}`}
-          onPress={() => { haptic("select"); setActive(c.evidence); }} style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 44 }}>
-          <View style={{ width: 58, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.blue : "rgba(20,28,40,0.06)", transitionProperty: "backgroundColor", transitionDuration: 180 } as never}>
-            <Text style={{ fontSize: 13, fontWeight: "700", color: on ? palette.white : palette.ink, fontVariant: ["tabular-nums"], transitionProperty: "color", transitionDuration: 180 } as never}>{c.code}</Text>
-          </View>
-          <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.ink }}>{c.label}</Text>
-          <Text style={{ ...type.caption, color: c.inTable === false ? palette.amber : palette.muted }}>{c.inTable === false ? "Not in ICD-10 table" : c.kind}</Text>
-        </Pressable></Arrive>; })}
-        <SampleLabel source={server.data?.source} rule what="coding" />
-      </Animated.View>
 
       {!approved && !sending && !sent && rows.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
         {rows.map((check, i) => <BlockerRow key={check.id} check={check} n={i + 1} resolved={resolving.has(check.id)}>{fix(check)}</BlockerRow>)}
@@ -179,27 +160,39 @@ export function ClaimScreen() {
         {checks.map((c, i) => <Criterion key={c.id} label={c.label} index={i} />)}
       </Animated.View>}
 
-      <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
-      {approved ? <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ gap: 12 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 18, borderCurve: "continuous", backgroundColor: "rgba(15,110,102,0.08)" }}>
-          <Seal stampDelay={reducedMotion ? undefined : 120} />
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>Final GL approved · {ESTIMATE}</Text>
-            <Text style={{ ...type.caption, color: palette.muted }}>Discharge no longer waits on the insurer · {new Date(state.approvedAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · {live ? "approved on the insurer's page" : "mock insurer"}</Text>
-          </View>
+      {approved && <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 18, borderCurve: "continuous", backgroundColor: "rgba(15,110,102,0.08)" }}>
+        <Seal stampDelay={reducedMotion ? undefined : 120} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>Final GL approved · {ESTIMATE}</Text>
+          <Text style={{ ...type.caption, color: palette.muted }}>Discharge no longer waits on the insurer · {new Date(state.approvedAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · {live ? "approved on the insurer's page" : "mock insurer"}</Text>
         </View>
-        <Chip label="Back to discharge" icon="chevron.left" onPress={() => router.back()} />
+      </Animated.View>}
+
+      {/* The record behind the letter: quieter, under what blocks it. */}
+      <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 16, paddingTop: 14, borderTopWidth: 1, borderColor: glass.hairline }}>
+      <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
+        <Text style={{ ...type.overline, color: palette.muted }}>Evidence in the note</Text>
+        <Evidence note={note} active={cited} />
       </Animated.View>
-        : denied || appealed ? null
-        : live && !sent && !role.can("claim.send") ? <LockedAction label="Needs a doctor to send" path="claim.send" />
-        : <Pressable accessibilityRole="button" accessibilityState={{ disabled: blocked.length > 0 || sending || sent }} disabled={blocked.length > 0 || sending || sent} onPress={send}
-          style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: blocked.length || sent ? "rgba(20,28,40,0.08)" : palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 200 } as never)}>
-          {!blocked.length && <Icon name={sent ? "hourglass" : "paperplane"} size={15} color={sent ? palette.muted : palette.white} />}
-          <Animated.Text key={primary} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ fontSize: 16, fontWeight: "600", color: blocked.length || sent ? palette.muted : palette.white }}>{primary}</Animated.Text>
-        </Pressable>}
+
+      <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 2 }}>
+        <Text style={{ ...type.overline, color: palette.muted, paddingBottom: 6 }}>Codes · tap to see why</Text>
+        {server.loading && <Drafting label="Coding the note…" style={{ paddingVertical: 6 }} />}
+        {server.data && !codes.length && <Text style={{ ...type.footnote, color: palette.amber }}>No codable diagnosis in the note yet</Text>}
+        {server.error && <Text style={{ ...type.footnote, color: palette.red }}>{server.error} · showing the authored codes</Text>}
+        {!server.loading && codes.map((c, i) => { const on = c.evidence === cited; return <Arrive key={c.code} index={i} animate={Boolean(server.data)}><Pressable accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${c.code}, ${c.label}, ${c.kind}${c.inTable === false ? ", not in the ICD-10 table" : ""}`}
+          onPress={() => { haptic("select"); setActive(c.evidence); }} style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 44 }}>
+          <View style={{ width: 58, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.blue : "rgba(20,28,40,0.06)", transitionProperty: "backgroundColor", transitionDuration: 180 } as never}>
+            <Text style={{ fontSize: 13, fontWeight: "700", color: on ? palette.white : palette.ink, fontVariant: ["tabular-nums"], transitionProperty: "color", transitionDuration: 180 } as never}>{c.code}</Text>
+          </View>
+          <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.ink }}>{c.label}</Text>
+          <Text style={{ ...type.caption, color: c.inTable === false ? palette.amber : palette.muted }}>{c.inTable === false ? "Not in ICD-10 table" : c.kind}</Text>
+        </Pressable></Arrive>; })}
+        <SampleLabel source={server.data?.source} rule what="coding" />
+      </Animated.View>
       </Animated.View>
     </Surface>
-  </ScrollView>;
+  </Screen>;
 }
 
 /** The note as sentences with one soft highlight that glides to the active sentence and stretches to fit it. */
