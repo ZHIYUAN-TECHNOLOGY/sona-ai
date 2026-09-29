@@ -272,7 +272,20 @@ export const careMessages = pgTable("care_messages", {
   seenAt: timestamp("seen_at"),
   /** Patient messages only: the inbox triage (urgent, clinical, admin) and the words that decided it; empty if triage failed. */
   triage: text("triage", { enum: ["urgent", "clinical", "admin"] }), triageReason: text("triage_reason"),
+  /** Patient messages only: what came with it (a medicine photo and its reading), and the care team's decision once made. */
+  attachment: jsonb("attachment").$type<MessageAttachment>(),
 }, t => [index("care_messages_patient").on(t.patientId, t.createdAt)]);
+
+export type MedicineReading = { name: string; dose?: string; frequency?: string };
+/**
+ * A medicine photo from Sona Care: where the photo is (`key`, the bundled sample, or none when it stayed
+ * on the phone), what was read (as the patient checked it) and whether that was the sample reading. The
+ * care team's decision is added once: added to reconciliation (unconfirmed) or declined with a reply.
+ */
+export type MessageAttachment = {
+  kind: "medicine-photo"; key?: string; reading: MedicineReading; sampleReading?: boolean;
+  decision?: { status: "added" | "declined"; reading: MedicineReading; by: string; at: string };
+};
 
 /**
  * Continuous training (packages/api training.ts): a patient's own opt-in from Sona Care. Consented while

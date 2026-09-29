@@ -85,6 +85,8 @@ export const PERMISSIONS: Record<string, readonly [readonly Role[], string]> = {
   "messages.thread": [CLINICAL_READ, "read care messages"],
   "messages.draft": [CARE, "draft a reply to a care message"],
   "messages.handle": [CARE, "mark a care message handled"],
+  "messages.photo": [CARE, "see a patient's medicine photo"],
+  "messages.resolveMedicinePhoto": [CARE, "add or decline a medicine from a patient's photo"],
   "care.code": [CARE, "give a Sona Care code"],
   "audit.list": [OVERSIGHT, "see the coding audit"],
   "audit.run": [OVERSIGHT, "run the coding audit"],

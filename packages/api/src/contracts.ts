@@ -97,6 +97,8 @@ export type XrayUpload = z.infer<typeof xrayUploadSchema>;
 export const scanUploadSchema = xrayUploadSchema;
 /** The sample note bundled with the app: read by the fixture, never uploaded. */
 export const SAMPLE_SCAN_KEY = "sample";
+/** Sona Care's bundled sample medicine box: sent as a photo message's key, never uploaded (both apps bundle the image). */
+export const SAMPLE_PHOTO_KEY = "sample-medicine";
 const text = z.string().trim().max(4000);
 /** What the doctor kept from a scanned note after review; only these are written. Replay-safe by requestId. */
 export const scanApplySchema = z.object({
