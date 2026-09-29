@@ -28,6 +28,6 @@ Gemma just meets the capability bar but misses four of the six `not-covered` req
 
 ## Fine-tune v1 (29 Sep 2026)
 
-Kaggle notebook `zhiyuantech/sona-laya-finetune` (private), data `zhiyuantech/sona-laya-composition` (private). Model saved outside the repo at `~/zyt/data/sona-laya/v1` (1.2 GB); load with `LAYA_MODEL=~/zyt/data/sona-laya/v1 python score.py laya`. Same score on Kaggle and locally. Choice calibration temperature fitted to 4.29.
+Kaggle notebook `zhiyuantech/sona-laya-finetune` (private), data `zhiyuantech/sona-laya-composition` (private). Model saved outside the repo at `~/zyt/data/sona-laya/v1` (650 MB); load with `LAYA_MODEL=~/zyt/data/sona-laya/v1 python score.py laya`. Same score on Kaggle and locally. Choice calibration temperature fitted to 4.29.
 
 34% to 88%, two short of the bar. Misses: briefing to not-covered (L01, L05), note to briefing/followup (L38, L39), medication to followup (L21), ICD-10 coding to followup (L47). Note and medication were the thinnest classes in the training data.
