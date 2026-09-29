@@ -1,9 +1,9 @@
 import * as WebBrowser from "expo-web-browser";
-import { MarkedText } from "@/components/sona/marked-text";
+import { MarkedText, TINT, segments, type Mark } from "@/components/sona/marked-text";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { FadeIn, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
+import Animated, { FadeIn, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
 import { scheduleOnRN } from "react-native-worklets";
 import { SampleLabel } from "@/components/sona/model-answer";
@@ -15,16 +15,18 @@ import { useSeenOnce } from "@/components/sona/use-visible";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
-import { useLiveEvidence, type ServerEvidence } from "@/features/live/evidence-sync";
-import { ANSWER, GRADE, STUDIES, curb65, pubmedUrl, type Study } from "./model";
+import { threadBefore, useLiveEvidence, type ServerEvidence } from "@/features/live/evidence-sync";
+import { authoredAnswer, authoredReferences, curb65, type Claim, type Reference } from "./model";
 
 /*
- * Evidence answer. The studies sit in a swipeable row synced to a small track above it (after
- * Monogram's rich-response carousel): the row follows the finger, and on release it snaps on a
- * spring (0.36 s, damping 0.82) to the next card past 55 pt or a 260 pt/s flick, while the track's
- * pill glides to the matching year. Cards off-centre shrink to 0.93 and dim. The severity score
- * then fills like 1Password's Watchtower meter: the arc sweeps on an ease-out as each factor is
- * checked, and the score settles in the middle.
+ * Evidence answer, OpenEvidence style (docs/evidence-answer-spec.md): short claims, each ending in
+ * numbered citation pills; one numbered source list; follow-up questions under "Related". The
+ * sources sit in a swipeable row synced to a small track above it (after Monogram's rich-response
+ * carousel): the row follows the finger, and on release it snaps on a spring (0.36 s, damping 0.82)
+ * to the next card past 55 pt or a 260 pt/s flick, while the track's pill glides to the matching
+ * year. A citation pill springs the row to its source (0.38 s, damping 0.82) and the card glows
+ * briefly. Cards off-centre shrink to 0.93 and dim. The severity score then fills like 1Password's
+ * Watchtower meter: the arc sweeps on an ease-out as each factor is checked, and the score settles.
  */
 const TEAL = "#0F6E66";
 const SNAP = { duration: 360, dampingRatio: 0.82 }, TAP = { duration: 380, dampingRatio: 0.82 };
@@ -32,51 +34,95 @@ const SNAP = { duration: 360, dampingRatio: 0.82 }, TAP = { duration: 380, dampi
 /** The rehearsed demo question, for an answer opened without its prompt. */
 const REHEARSED_QUESTION = "Steroids for this patient with community-acquired pneumonia?";
 const SOURCES_NOTE: Record<ServerEvidence["pubmed"], string> = { live: "PubMed · conclusions quoted from each abstract", cached: "PubMed, saved copy · offline now", unavailable: "PubMed unreachable · no studies" };
+const DESIGN_WORDS: Record<Reference["design"], string> = { Guideline: "guideline", Review: "systematic review", Trial: "randomised trial", "Narrative review": "narrative review", Study: "study", Library: "your library" };
+const NOT_ENOUGH = "Not enough evidence found to answer this. Sona only says what a source supports.";
 
-export function EvidenceCard({ patient, result }: FeatureProps) {
-  // Live mode asks the server; the authored answer shows otherwise. While the server answers, nothing authored is shown in its place.
+type Shown = { claims: Claim[]; enough: boolean; followUps: string[]; references: Reference[]; source?: string; note: string };
+
+export function EvidenceCard({ patient, result, onRequest }: FeatureProps) {
+  // Live mode asks the server; otherwise the authored answers show, for the rehearsed question and its follow-ups only.
   const { encounters } = useEncounter();
-  const question = encounters[patient.id]?.requests.find(r => r.id === result?.requestId)?.prompt || REHEARSED_QUESTION;
-  const { live, data, error } = useLiveEvidence(patient.encounterId, result?.requestId, question);
+  const requests = encounters[patient.id]?.requests ?? [];
+  const question = requests.find(r => r.id === result?.requestId)?.prompt || REHEARSED_QUESTION;
+  const { live, data, error } = useLiveEvidence(patient.encounterId, result?.requestId, question, threadBefore(requests, result?.requestId));
+  const [focus, setFocus] = useState<{ n: number; at: number }>();
   if (live && !data) return <Surface feature style={{ padding: 16, gap: 8 }}>
     <Text style={{ ...type.subhead, color: error ? palette.red : palette.muted }}>{error ?? "Searching PubMed and your library, checking the chart…"}</Text>
   </Surface>;
-  const grade = data ? data.grade : { ...GRADE, rule: undefined };
-  const answer = data ? data.answer : ANSWER;
-  const studies: Study[] = data ? data.studies : STUDIES;
-  const note = !data ? "Authored summaries · links open PubMed" : data.source === "cached" && data.studies.length ? `${data.pubmed === "live" ? "PubMed records" : "PubMed, saved copy"} · reviewed summaries` : SOURCES_NOTE[data.pubmed];
+  const authored = data ? undefined : authoredAnswer(question);
+  const shown: Shown | undefined = data
+    ? { ...data, note: data.source === "cached" && data.references.some(r => r.kind === "study") ? `${data.pubmed === "live" ? "PubMed records" : "PubMed, saved copy"} · reviewed summaries` : data.references.some(r => r.kind === "library") && data.pubmed !== "live" ? "Your library · PubMed unreachable" : SOURCES_NOTE[data.pubmed] }
+    : authored && { ...authored, enough: true, references: authoredReferences(), source: undefined, note: "Authored summaries · links open PubMed" };
+  const caption = !shown ? "" : !data ? "Rehearsed answer" : data.source === "cached" ? "Rehearsed answer" : data.source === "fixture" ? "Sample: not a model's reading" : `Written by ${data.source}`;
+  const cite = (n: number) => { haptic("select"); setFocus({ n, at: Date.now() }); };
+  const ask = (q: string) => { haptic("select"); onRequest("evidence", q); };
+
   return <View style={{ gap: 14 }}>
     <Surface feature style={{ padding: 16, gap: 12 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <View style={{ height: 24, paddingHorizontal: 10, borderRadius: 12, flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "rgba(15,110,102,0.1)" }}>
-          <Icon name="checkmark.seal.fill" size={11} color={TEAL} />
-          <Text style={{ fontSize: 12, fontWeight: "700", color: TEAL }}>{grade.certainty}</Text>
-        </View>
-        {grade.direction && <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{grade.direction}</Text>}
-        {grade.scope && <Text style={{ ...type.caption, color: palette.muted }}>in {grade.scope}</Text>}
-      </View>
-      {answer.map((line, i) => <View key={i} style={{ flexDirection: "row", gap: 10 }}>
-        <Text style={{ ...type.footnote, fontWeight: "700", color: palette.blue, width: 12 }}>{i + 1}</Text>
-        <MarkedText text={line} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
-      </View>)}
-      <SampleLabel source={data?.source} what="evidence" />
-      {data && (data.source !== "fixture" || grade.rule) && <Text selectable style={{ ...type.caption, color: palette.muted }}>{[data.source === "cached" ? "Rehearsed answer, cached" : data.source === "fixture" ? "" : `Synthesised by ${data.source}`, grade.rule ? `certainty by rule: ${grade.rule.toLowerCase()}` : ""].filter(Boolean).join(" · ")}</Text>}
+      {!shown ? <Text style={{ ...type.callout, color: palette.muted }}>Live mode answers this question from PubMed and your library. Switch it on in Settings.</Text>
+        : shown.enough ? shown.claims.map((c, i) => <ClaimLine key={i} claim={c} references={shown.references} onCite={cite} />)
+        : <Text selectable style={{ ...type.callout, color: palette.amber }}>{NOT_ENOUGH}</Text>}
+      {shown && <View style={{ gap: 4 }}>
+        <SampleLabel source={data?.source} what="evidence" />
+        <Text selectable style={{ ...type.caption, color: palette.muted }}>{caption}</Text>
+      </View>}
     </Surface>
-    {studies.length > 0 && <Studies studies={studies} note={note} />}
-    {data && !studies.length && <Text selectable style={{ ...type.footnote, color: palette.amber }}>{note}</Text>}
-    {data && data.passages.length > 0 && <Passages passages={data.passages} />}
+    {shown && shown.references.length > 0 && <Sources references={shown.references} note={shown.note} focus={focus} />}
+    {data && !data.references.length && <Text selectable style={{ ...type.footnote, color: palette.amber }}>{data.pubmed === "unavailable" ? SOURCES_NOTE.unavailable : "Nothing on this in PubMed or your library"}</Text>}
     <Severity patient={patient} server={data?.curb65} />
+    {shown && shown.followUps.length > 0 && <Related questions={shown.followUps} onAsk={ask} />}
   </View>;
 }
 
-function Studies({ studies: STUDIES, note }: { studies: Study[]; note: string }) {
+/**
+ * One claim laid out word by word so its citation pills are real rounded pills that wrap with the
+ * last words. Key terms keep their tint. VoiceOver reads the claim once, then each citation.
+ */
+function ClaimLine({ claim, references, onCite }: { claim: Claim; references: Reference[]; onCite: (n: number) => void }) {
+  // Words with their tint, and whether a space follows: punctuation after a tinted term ("pneumonia;") stays attached.
+  const words: { word: string; mark?: Mark; space: boolean }[] = [];
+  for (const seg of segments(claim.text)) {
+    if (/^\s/.test(seg.text) && words.length) words[words.length - 1]!.space = true;
+    for (const m of seg.text.matchAll(/(\S+)(\s*)/g)) words.push({ word: m[1]!, mark: seg.mark, space: m[2]!.length > 0 });
+  }
+  return <View>
+    <Text accessible accessibilityLabel={claim.text} style={{ position: "absolute", opacity: 0 }}>{claim.text}</Text>
+    <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", rowGap: 2 }}>
+      {words.map((w, i) => <Text key={i} accessible={false} style={{ ...type.callout, color: palette.ink }}>{w.mark ? <Text style={{ ...TINT[w.mark], fontWeight: "500" }}>{w.word}</Text> : w.word}{w.space ? " " : ""}</Text>)}
+      {claim.cites.map(n => { const r = references.find(x => x.n === n);
+        return <Pressable key={n} accessibilityRole="button" accessibilityLabel={`Source ${n}${r ? `, ${DESIGN_WORDS[r.design]}, ${[r.from, r.year].filter(Boolean).join(" ")}` : ""}`} accessibilityHint="Shows this source below"
+          hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }} onPress={() => onCite(n)}
+          style={({ pressed }) => ({ marginLeft: 4, minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(36,91,204,0.12)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+          <Text style={{ fontSize: 13, fontWeight: "600", color: palette.blue, fontVariant: ["tabular-nums"] }}>{n}</Text>
+        </Pressable>; })}
+    </View>
+  </View>;
+}
+
+/** Up to three follow-up questions; tapping one asks it as the next evidence card in this thread. */
+function Related({ questions, onAsk }: { questions: string[]; onAsk: (q: string) => void }) {
+  return <View style={{ gap: 8 }}>
+    <Text accessibilityRole="header" style={{ ...type.overline, color: palette.muted }}>Related</Text>
+    <Surface style={{ paddingVertical: 4 }}>
+      {questions.map((q, i) => <Pressable key={q} accessibilityRole="button" accessibilityLabel={q} accessibilityHint="Asks this as a follow-up" onPress={() => onAsk(q)}
+        style={({ pressed }) => ({ minHeight: 48, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+        <Text style={{ ...type.callout, flex: 1, color: palette.ink }}>{q}</Text>
+        <Icon name="arrow.up.right" size={12} color={palette.blue} />
+      </Pressable>)}
+    </Surface>
+  </View>;
+}
+
+function Sources({ references, note, focus }: { references: Reference[]; note: string; focus?: { n: number; at: number } }) {
   const { width } = useWindowDimensions();
   const { reducedMotion } = useAccessibleEffects();
-  const area = width - 40, cardW = Math.round(area * 0.84), step = cardW + 12, last = STUDIES.length - 1;
+  const area = width - 40, cardW = Math.round(area * 0.84), step = cardW + 12, last = references.length - 1;
   const pos = useSharedValue(0), start = useSharedValue(0);
   const [active, setActive] = useState(0);
   const land = (i: number) => { setActive(i); haptic("select"); };
   const go = (i: number) => { pos.set(reducedMotion ? i : withSpring(i, TAP)); land(i); };
+  // A citation pill: spring to its source, and flash that card.
+  useEffect(() => { if (!focus) return; const i = references.findIndex(r => r.n === focus.n); if (i < 0) return; pos.set(reducedMotion ? i : withSpring(i, TAP)); setActive(i); }, [focus?.at]); // eslint-disable-line react-hooks/exhaustive-deps
   const pan = Gesture.Pan().activeOffsetX([-10, 10]).failOffsetY([-12, 12])
     .onStart(() => { start.set(pos.value); })
     .onUpdate(e => { pos.set(Math.min(last + 0.15, Math.max(-0.15, start.value - e.translationX / step))); })
@@ -87,79 +133,70 @@ function Studies({ studies: STUDIES, note }: { studies: Study[]; note: string })
       if (target !== from) scheduleOnRN(land, target);
     });
 
-  return <View style={{ gap: 12 }} accessibilityLabel={`${STUDIES.length} sources`}>
-    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+  return <View style={{ gap: 12 }} accessibilityLabel={`${references.length} sources`}>
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
       <Text style={{ ...type.overline, color: palette.muted }}>Sources · swipe</Text>
-      <Text style={{ ...type.caption, color: palette.muted }}>{note}</Text>
+      <Text numberOfLines={1} style={{ ...type.caption, flexShrink: 1, color: palette.muted }}>{note}</Text>
     </View>
-    <Track studies={STUDIES} pos={pos} active={active} onPick={go} />
+    <Track references={references} pos={pos} active={active} onPick={go} />
     <GestureDetector gesture={pan}>
       <View style={{ height: 196, marginHorizontal: -20, overflow: "hidden" }}>
-        {STUDIES.map((s, i) => <StudyCard key={s.id} study={s} index={i} pos={pos} left={20 + (area - cardW) / 2} width={cardW} step={step} />)}
+        {references.map((r, i) => <SourceCard key={r.id} source={r} index={i} pos={pos} left={20 + (area - cardW) / 2} width={cardW} step={step} flash={focus && references[i]?.n === focus.n && !reducedMotion ? focus.at : undefined} />)}
       </View>
     </GestureDetector>
   </View>;
 }
 
-/** The track above the row: one node per study, a pill that glides with the row's position. */
-function Track({ studies: STUDIES, pos, active, onPick }: { studies: Study[]; pos: SharedValue<number>; active: number; onPick: (i: number) => void }) {
+/** The track above the row: one node per source, a pill that glides with the row's position. */
+function Track({ references, pos, active, onPick }: { references: Reference[]; pos: SharedValue<number>; active: number; onPick: (i: number) => void }) {
   const [w, setW] = useState(0);
-  const gap = STUDIES.length > 1 ? w / (STUDIES.length - 1) : 0;
-  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: Math.min(STUDIES.length - 1, Math.max(0, pos.value)) * gap - 12 }] }));
+  const gap = references.length > 1 ? w / (references.length - 1) : 0;
+  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: Math.min(references.length - 1, Math.max(0, pos.value)) * gap - 12 }] }));
   return <View style={{ paddingHorizontal: 28, gap: 6 }}>
     <View onLayout={e => setW(e.nativeEvent.layout.width)} style={{ height: 24, justifyContent: "center" }}>
       <View style={{ height: 1.5, backgroundColor: "rgba(20,28,40,0.1)" }} />
-      {STUDIES.map((s, i) => <Pressable key={s.id} accessibilityRole="button" accessibilityState={{ selected: active === i }} accessibilityLabel={`${s.kind} ${s.year}`} hitSlop={10} onPress={() => onPick(i)}
+      {references.map((r, i) => <Pressable key={r.id} accessibilityRole="button" accessibilityState={{ selected: active === i }} accessibilityLabel={`Source ${r.n}, ${DESIGN_WORDS[r.design]} ${r.year}`} hitSlop={10} onPress={() => onPick(i)}
         style={{ position: "absolute", left: i * gap - 5, width: 10, height: 10, borderRadius: 5, backgroundColor: "rgba(20,28,40,0.14)" }} />)}
       <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: palette.white, boxShadow: "0 1px 4px rgba(20,28,40,0.14)" }, pill]}>
         <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: palette.blue }} />
       </Animated.View>
     </View>
     <View style={{ height: 16 }}>
-      {STUDIES.map((s, i) => { const edge = i === 0 ? "left" : i === STUDIES.length - 1 ? "right" : "center";
-        return <Text key={s.id} style={{ position: "absolute", left: edge === "left" ? -12 : edge === "right" ? i * gap - 68 : i * gap - 40, width: 80, textAlign: edge, fontSize: 12, fontWeight: active === i ? "700" : "500", color: active === i ? palette.ink : palette.muted, fontVariant: ["tabular-nums"] }}>{s.year}</Text>; })}
+      {references.map((r, i) => { const edge = i === 0 ? "left" : i === references.length - 1 ? "right" : "center";
+        return <Text key={r.id} style={{ position: "absolute", left: edge === "left" ? -12 : edge === "right" ? i * gap - 68 : i * gap - 40, width: 80, textAlign: edge, fontSize: 12, fontWeight: active === i ? "700" : "500", color: active === i ? palette.ink : palette.muted, fontVariant: ["tabular-nums"] }}>{r.year}</Text>; })}
     </View>
   </View>;
 }
 
-function StudyCard({ study, index, pos, left, width, step }: { study: Study; index: number; pos: SharedValue<number>; left: number; width: number; step: number }) {
+function SourceCard({ source, index, pos, left, width, step, flash }: { source: Reference; index: number; pos: SharedValue<number>; left: number; width: number; step: number; flash?: number }) {
+  const glow = useSharedValue(0);
+  useEffect(() => { if (flash) glow.set(withSequence(withTiming(1, { duration: 120 }), withTiming(0, { duration: 600, easing: EASE_OUT }))); }, [flash, glow]);
   const style = useAnimatedStyle(() => {
     const d = Math.abs(index - pos.value);
     return { opacity: Math.max(0.55, 1 - d * 0.35), zIndex: Math.round(10 - d), transform: [{ translateX: (index - pos.value) * step }, { scale: Math.max(0.93, 1 - d * 0.07) }] };
   });
+  const ring = useAnimatedStyle(() => ({ opacity: glow.value }));
+  const chip = source.design === "Guideline" ? { bg: "rgba(36,91,204,0.1)", fg: palette.blue } : source.design === "Library" ? { bg: "rgba(15,110,102,0.1)", fg: TEAL } : { bg: "rgba(20,28,40,0.06)", fg: palette.ink };
   return <Animated.View style={[{ position: "absolute", top: 4, left, width }, style]}>
     <Surface style={{ padding: 16, gap: 8, height: 186, borderRadius: 22 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <View style={{ height: 22, paddingHorizontal: 8, borderRadius: 11, justifyContent: "center", backgroundColor: study.kind === "Guideline" ? "rgba(36,91,204,0.1)" : "rgba(20,28,40,0.06)" }}>
-          <Text style={{ fontSize: 11, fontWeight: "700", color: study.kind === "Guideline" ? palette.blue : palette.ink }}>{study.kind}</Text>
+        <View style={{ minWidth: 22, height: 22, paddingHorizontal: 6, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(36,91,204,0.12)" }}>
+          <Text style={{ fontSize: 12, fontWeight: "700", color: palette.blue, fontVariant: ["tabular-nums"] }}>{source.n}</Text>
         </View>
-        <Text numberOfLines={1} style={{ ...type.caption, flex: 1, color: palette.muted, fontVariant: ["tabular-nums"] }}>{study.year}{study.journal ? ` · ${study.journal}` : ""}</Text>
+        <View style={{ height: 22, paddingHorizontal: 8, borderRadius: 11, justifyContent: "center", backgroundColor: chip.bg }}>
+          <Text style={{ fontSize: 11, fontWeight: "700", color: chip.fg }}>{source.design}</Text>
+        </View>
+        <Text numberOfLines={1} style={{ ...type.caption, flex: 1, color: palette.muted, fontVariant: ["tabular-nums"] }}>{source.year}{source.from ? ` · ${source.from}` : ""}</Text>
       </View>
-      <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{study.title}</Text>
-      <MarkedText selectable={false} text={study.finding} style={{ ...type.footnote, flex: 1, color: palette.ink }} />
-      <Pressable accessibilityRole="link" accessibilityLabel={`Open the PubMed abstract for ${study.title}`} hitSlop={8} onPress={() => { void WebBrowser.openBrowserAsync(pubmedUrl(study)).catch(() => {}); }} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+      <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{source.title}</Text>
+      <MarkedText selectable={false} text={source.text} style={{ ...type.footnote, flex: 1, color: palette.ink }} />
+      {source.url ? <Pressable accessibilityRole="link" accessibilityLabel={`Open the PubMed abstract for ${source.title}`} hitSlop={8} onPress={() => { void WebBrowser.openBrowserAsync(source.url!).catch(() => {}); }} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
         <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>Open abstract</Text>
         <Icon name="arrow.up.right" size={10} color={palette.blue} />
-      </Pressable>
+      </Pressable> : source.section ? <Text numberOfLines={1} style={{ ...type.footnote, fontWeight: "600", color: TEAL }}>{source.section}</Text> : null}
     </Surface>
+    <Animated.View pointerEvents="none" style={[{ position: "absolute", inset: 0, borderRadius: 22, borderWidth: 2, borderColor: palette.blue, backgroundColor: "rgba(36,91,204,0.06)" }, ring]} />
   </Animated.View>;
-}
-
-/** Live only: matching sections from the library (the hospital's own sources), each labelled with its title and section. Cited, not graded. */
-function Passages({ passages }: { passages: ServerEvidence["passages"] }) {
-  return <View style={{ gap: 10 }} accessibilityLabel={`${passages.length} library passages`}>
-    <Text style={{ ...type.overline, color: palette.muted }}>From your library · not graded</Text>
-    {passages.map(p => <Surface key={p.id} style={{ padding: 16, gap: 6, borderRadius: 22 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <View style={{ height: 22, paddingHorizontal: 8, borderRadius: 11, justifyContent: "center", backgroundColor: "rgba(15,110,102,0.1)" }}>
-          <Text style={{ fontSize: 11, fontWeight: "700", color: TEAL }}>Library</Text>
-        </View>
-        <Text numberOfLines={1} style={{ ...type.caption, flex: 1, color: palette.muted, fontVariant: ["tabular-nums"] }}>{p.source} · {p.year}</Text>
-      </View>
-      <Text numberOfLines={2} style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{p.title} · {p.section}</Text>
-      <Text selectable numberOfLines={5} style={{ ...type.footnote, color: palette.ink }}>{p.text}</Text>
-    </Surface>)}
-  </View>;
 }
 
 const R = 34, C = 2 * Math.PI * R, SWEEP = 0.75;

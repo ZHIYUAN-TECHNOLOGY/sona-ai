@@ -17,6 +17,10 @@ export function routePrompt(prompt: string): Capability | null {
   if (/brief|history|patient|summary|timeline|review|know before|before i see/i.test(prompt)) return "briefing";
   return null;
 }
+/** A question typed right after an evidence answer continues that thread when no other capability claims it. */
+export function routeInThread(prompt: string, last?: Capability): Capability | null {
+  return routePrompt(prompt) ?? (last === "evidence" ? "evidence" : null);
+}
 export function acceptCard(encounter: Encounter, patient: Patient, payload: unknown): Encounter {
   const parsed = cardSchema.safeParse(payload);
   if (!parsed.success) return encounter;

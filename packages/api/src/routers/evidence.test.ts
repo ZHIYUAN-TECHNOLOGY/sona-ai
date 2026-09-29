@@ -6,8 +6,10 @@ import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 
-import { STUDIES } from "@sona-ai/domain/evidence";
+import { ANSWER, FOLLOW_UPS, STUDIES } from "@sona-ai/domain/evidence";
+import { eq } from "drizzle-orm";
 
+import { stubModels } from "../models";
 import { appRouter } from "./index";
 
 const session = {
@@ -35,51 +37,97 @@ async function signedIn(fetcher: typeof fetch, signed = true) {
   return { db, api: createRouterClient(appRouter, { context: { db, session: signed ? session : null, fetch: fetcher } }) };
 }
 
-test("the rehearsed steroid question: the cached answer, its three PubMed studies with certainty by rule, and Amelia's CURB-65 from her chart", async () => {
+const REHEARSED_Q = "Steroids for this patient with community-acquired pneumonia?";
+
+test("the rehearsed steroid question: cited claims over its three PubMed studies, follow-ups, and Amelia's CURB-65 from her chart", async () => {
   const { fetcher } = pubmed();
   const { api, db } = await signedIn(fetcher);
-  const r = await api.evidence.ask({ encounterId: "visit-1042", question: "Steroids for this patient with community-acquired pneumonia?" });
+  const r = await api.evidence.ask({ encounterId: "visit-1042", question: REHEARSED_Q });
   expect(r.source).toBe("cached");
-  expect(r.answer[0]).toBe("No routine steroids for non-severe community-acquired pneumonia.");
-  expect(r.studies.map(s => [s.pmid, s.kind, s.year, s.journal])).toEqual([["31573350", "Guideline", 2019, "Am J Respir Crit Care Med"], ["25608756", "Trial", 2015, "Lancet"], ["36942789", "Trial", 2023, "N Engl J Med"]]);
+  expect(r.enough).toBe(true);
+  expect(r.claims).toEqual(ANSWER);
+  expect(r.followUps).toEqual(FOLLOW_UPS.map(f => f.question));
+  expect(r.references.map(s => [s.n, s.pmid, s.kind, s.design, s.year, s.from])).toEqual([[1, "31573350", "study", "Guideline", 2019, "Am J Respir Crit Care Med"], [2, "25608756", "study", "Trial", 2015, "Lancet"], [3, "36942789", "study", "Trial", 2023, "N Engl J Med"]]);
   // A guideline abstract rarely states its recommendations, so the rehearsed answer shows its summaries of each study.
-  expect(r.studies.map(s => s.finding)).toEqual([STUDIES[0]!.finding, STUDIES[1]!.finding, STUDIES[2]!.finding]);
-  expect(r.grade).toEqual({ certainty: "High certainty", direction: "Against routine use", scope: "non-severe pneumonia", rule: "Strongest design cited: guideline" });
+  expect(r.references.map(s => s.text)).toEqual([STUDIES[0]!.finding, STUDIES[1]!.finding, STUDIES[2]!.finding]);
+  expect(r.references[0]!.url).toBe("https://pubmed.ncbi.nlm.nih.gov/31573350/");
+  expect(r).not.toHaveProperty("grade");
   expect(r.pubmed).toBe("live");
   expect(r.curb65).toMatchObject({ score: 0, recorded: 5, risk: "Low risk · home treatment is usually suitable" });
   expect(r.curb65.factors.find(f => f.id === "u")!.sources).toEqual(["obs-1042-urea"]);
-  // The answer is logged with the studies it cites.
+  // The answer is logged with its claims and the sources it drew on.
   const [log] = await db.select().from(provenance);
-  expect(log).toMatchObject({ encounterId: "visit-1042", kind: "evidence-answer", sourceIds: ["pmid:31573350", "pmid:25608756", "pmid:36942789"], model: "cached" });
+  expect(log).toMatchObject({ encounterId: "visit-1042", kind: "evidence-answer", output: { question: REHEARSED_Q, claims: ANSWER }, sourceIds: ["pmid:31573350", "pmid:25608756", "pmid:36942789"], model: "cached" });
 });
 
-test("when PubMed is down the studies come from the last fetch; never fetched means no studies and no certainty, said plainly", async () => {
+test("a suggested follow-up answers from its authored claims, offers the other two, and never searches PubMed afresh", async () => {
+  const { state, fetcher } = pubmed();
+  const { api } = await signedIn(fetcher);
+  const follow = FOLLOW_UPS[1]!;
+  const r = await api.evidence.ask({ encounterId: "visit-1042", question: follow.question, thread: [{ question: REHEARSED_Q, answer: ANSWER.map(c => c.text).join(" ") }] });
+  expect({ source: r.source, enough: r.enough }).toEqual({ source: "cached", enough: true });
+  expect(r.claims).toEqual(follow.claims);
+  expect(r.followUps).toEqual([FOLLOW_UPS[0]!.question, FOLLOW_UPS[2]!.question]);
+  expect(state.calls.some(u => u.includes("esearch"))).toBe(false);
+});
+
+test("when PubMed is down the studies come from the last fetch; never fetched means no references, no claims, and not enough evidence", async () => {
   const { state, fetcher } = pubmed();
   const { api, db } = await signedIn(fetcher);
   const question = "Should Amelia get corticosteroids for her pneumonia?";
   state.down = true;
   const cold = await api.evidence.ask({ encounterId: "visit-1042", question });
-  expect(cold).toMatchObject({ pubmed: "unavailable", studies: [], grade: { certainty: "No evidence found" } });
+  expect(cold).toMatchObject({ pubmed: "unavailable", references: [], claims: [], enough: false });
   state.down = false;
   await api.evidence.ask({ encounterId: "visit-1042", question });
   expect(await db.select().from(pubmedArticles)).toHaveLength(3);
   state.down = true;
   const warm = await api.evidence.ask({ encounterId: "visit-1042", question });
   expect(warm.pubmed).toBe("cached");
-  expect(warm.studies.map(s => s.pmid)).toEqual(["31573350", "25608756", "36942789"]);
+  expect(warm.references.map(s => s.pmid)).toEqual(["31573350", "25608756", "36942789"]);
+  expect(warm.claims).toEqual(ANSWER);
 });
 
-test("any other question searches PubMed and never borrows the rehearsed answer: the synthesis is labelled as a fixture", async () => {
+test("a missing study drops the authored claims that cite it, and the rest are renumbered to where their study landed", async () => {
+  const { state, fetcher } = pubmed();
+  const { api, db } = await signedIn(fetcher);
+  await api.evidence.ask({ encounterId: "visit-1042", question: REHEARSED_Q });
+  await db.delete(pubmedArticles).where(eq(pubmedArticles.pmid, "31573350"));
+  state.down = true;
+  const r = await api.evidence.ask({ encounterId: "visit-1042", question: REHEARSED_Q });
+  expect(r.references.map(s => [s.n, s.pmid])).toEqual([[1, "25608756"], [2, "36942789"]]);
+  // [1] (the guideline) is gone: its claim drops; [3] becomes [2]; [2, 1] keeps only the trial, now [1].
+  expect(r.claims).toEqual([{ text: ANSWER[1]!.text, cites: [2] }, { text: ANSWER[2]!.text, cites: [1] }]);
+});
+
+test("any other question searches PubMed, never borrows the authored answer, and shows the mock's cited claims as a sample", async () => {
   const { state, fetcher } = pubmed(["25608756"]);
   const { api } = await signedIn(fetcher);
   const r = await api.evidence.ask({ encounterId: "visit-1086", question: "Does prednisone shorten time to stability?" });
   expect(state.calls.some(u => u.includes("esearch") && u.includes("prednisone"))).toBe(true);
   expect(r.source).toBe("fixture");
-  expect(r.answer.join(" ")).toContain("no model has weighed these studies");
-  expect(r.studies.map(s => [s.pmid, s.finding.slice(0, 32)])).toEqual([["25608756", "Prednisone treatment for 7 days "]]);
-  expect(r.grade).toEqual({ certainty: "Moderate certainty", rule: "Strongest design cited: randomised trial" });
+  expect(r.references.map(s => [s.n, s.pmid, s.text.slice(0, 32)])).toEqual([[1, "25608756", "Prednisone treatment for 7 days "]]);
+  expect(r.claims).toEqual([{ text: expect.stringMatching(/^A randomised trial \(2015\) reports: Prednisone treatment for 7 days/), cites: [1] }]);
+  expect(r.followUps).toEqual(["What do the guidelines recommend?", "What are the main harms?", "Does this change for severe cases?"]);
   // Daniel has no chart readings: only age counts, and the band is withheld.
   expect(r.curb65).toMatchObject({ recorded: 1, risk: undefined });
+});
+
+test("a model's uncited or out-of-range claims are all dropped, leaving not enough evidence; the thread reaches the model", async () => {
+  const { fetcher } = pubmed(["25608756"]);
+  const db = await createTestDb();
+  await seedDemo(db, new Date("2026-09-26T09:00:00+08:00"));
+  await addClinician(db, "dr-aisyah");
+  let seen: unknown;
+  const models = { ...stubModels, synthesiseEvidence: async (input: Parameters<typeof stubModels.synthesiseEvidence>[0]) => {
+    seen = input;
+    return { claims: [{ text: "No citation at all.", cites: [] }, { text: "Cites a source that is not there.", cites: [7] }], followUps: ["a", "b", "c", "d"], source: "model" as const, model: "gemma-test" };
+  } };
+  const api = createRouterClient(appRouter, { context: { db, session, fetch: fetcher, models } });
+  const thread = [{ question: "Is prednisone useful here?", answer: "A randomised trial found stability a day sooner." }];
+  const r = await api.evidence.ask({ encounterId: "visit-1086", question: "What about the harms?", thread });
+  expect({ claims: r.claims, enough: r.enough, source: r.source, followUps: r.followUps }).toEqual({ claims: [], enough: false, source: "gemma-test", followUps: ["a", "b", "c"] });
+  expect(seen).toMatchObject({ question: "What about the harms?", thread, sources: [{ n: 1, design: "Trial", year: 2015 }] });
 });
 
 test("evidence needs a login", async () => {
