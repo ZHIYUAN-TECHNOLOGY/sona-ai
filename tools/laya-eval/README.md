@@ -16,6 +16,7 @@ Pass bar (suggested): capability ≥ 90% and medicine ≥ 95% correct. Under tha
 | --- | --- | --- | --- | --- |
 | 29 Sep 2026 | Laya multilingual 0.3.21, untrained, local Mac | 17/50 (34%) | 48/50 (96%) | 59 ms |
 | 29 Sep 2026 | Gemma 4 26B A4B-it, Google AI Studio API (thinking forced on) | 45/50 (90%) | 50/50 (100%) | 9.9 s |
+| 29 Sep 2026 | Laya multilingual, fine-tuned v1 (Kaggle T4 x2, 4 epochs, ~4 min) | 44/50 (88%) | 50/50 (100%) | 40 ms |
 
 Untrained Laya fails the capability bar. It is not the "None of the above" option: with that option removed, it still scores 16/44 (36%) on the covered requests. It sends most briefing, medication and follow-up requests to the wrong card. Picking a named medicine already passes.
 
@@ -24,3 +25,9 @@ Gemma just meets the capability bar but misses four of the six `not-covered` req
 ## Training data (29 Sep 2026)
 
 1,144 requests kept of 1,296 (149 dropped for medicine ambiguity, 3 duplicates, 0 near the baseline); 2,288 training items, all tokenise, longest 169 tokens. Capability labels after augmentation: not-covered 283, prescription 127, briefing 124, xray 120, evidence 118, followup 116, reasoning 108, note 79, medication 69. Medication and note are thinnest because their requests often name two medicines; top them up if the trained model still misses them.
+
+## Fine-tune v1 (29 Sep 2026)
+
+Kaggle notebook `zhiyuantech/sona-laya-finetune` (private), data `zhiyuantech/sona-laya-composition` (private). Model saved outside the repo at `~/zyt/data/sona-laya/v1` (1.2 GB); load with `LAYA_MODEL=~/zyt/data/sona-laya/v1 python score.py laya`. Same score on Kaggle and locally. Choice calibration temperature fitted to 4.29.
+
+34% to 88%, two short of the bar. Misses: briefing to not-covered (L01, L05), note to briefing/followup (L38, L39), medication to followup (L21), ICD-10 coding to followup (L47). Note and medication were the thinnest classes in the training data.
