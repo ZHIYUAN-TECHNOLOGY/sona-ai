@@ -155,6 +155,9 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
   const [busy, setBusy] = useState(false);
   // The demo patient became fit a little before the card opened, so the saving reads the same at any hour.
   const [fitAt] = useState(() => new Date(Date.now() - plan.fitMinutesAgo * 60000));
+  // The outcome's check draws only when the discharge happens here, not when a discharged visit reopens.
+  const [wasDone] = useState(() => Boolean(state.dischargedAt));
+  const fresh = !wasDone && !reducedMotion;
   const { live, refresh } = useServerEncounter(patient);
   const { user } = useLive();
   const [serverError, setServerError] = useState<string>();
@@ -240,11 +243,11 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
       {/* Discharged: the outcome and the patient's Sona Care code lead; the summary waits behind "Read full". */}
       {done && <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ gap: 12 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 18, borderCurve: "continuous", backgroundColor: "rgba(15,110,102,0.08)" }}>
-          <Seal stampDelay={reducedMotion ? undefined : 120} />
-          <View style={{ flex: 1, gap: 2 }}>
+          <Seal draw stampDelay={fresh ? 120 : undefined} />
+          <Animated.View entering={fresh ? riseIn({ delay: 220, distance: 6, duration: 360 }) : undefined} style={{ flex: 1, gap: 2 }}>
             <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{plan.bed} free{saved ? ` · ${saved} earlier` : ""}</Text>
             <Text style={{ ...type.caption, color: palette.muted }}>2 follow-up tasks created · leaflet ready to print · {done.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
-          </View>
+          </Animated.View>
         </View>
         <CareInvite encounterId={patient.encounterId} />
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 4 }}>

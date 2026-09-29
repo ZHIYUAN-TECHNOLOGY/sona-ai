@@ -28,7 +28,7 @@ import { Sidebar, SIDEBAR_WIDTH } from "./sidebar";
 import { useAccessibleEffects } from "@/components/sona/ui";
 import * as Haptics from "expo-haptics";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import Animated, { interpolate, useAnimatedReaction, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import type { OrbActivity } from "@/components/sona/orb-glyph";
 
@@ -78,6 +78,11 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   // The scroll offset where the grid's bottom meets the capsule's (capsule at top + 62, 44 pt tall), measured from the grid.
   const [shelfFrom, setShelfFrom] = useState(210);
   const [capsule, setCapsule] = useState(false);
+  // The offset lives on the UI thread, so the shelf → capsule hand-off follows the finger every frame;
+  // React only hears about the two booleans below when they flip.
+  const onScroll = useAnimatedScrollHandler(event => { scrollSV.set(event.contentOffset.y); });
+  useAnimatedReaction(() => scrollSV.value > 8, (now, before) => { if (now !== before) scheduleOnRN(setScrolled, now); });
+  useAnimatedReaction(() => scrollSV.value > shelfFrom, (now, before) => { if (now !== before) scheduleOnRN(setCapsule, now); }, [shelfFrom]);
   // Sidebar: the page slides right to reveal it. A finger drives it, so springs carry velocity.
   const { reducedMotion } = useAccessibleEffects();
   const [drawer, setDrawer] = useState(false);
@@ -106,7 +111,6 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const [justDone, setJustDone] = useState(false);
   const scroll = useRef<ScrollView>(null);
   // Section tabs for the latest answer: sections register themselves; the active tab follows scrolling.
-  const scrollY = useRef(0);
   const [sections, setSections] = useState<AnswerSection[]>([]);
   const [activeTab, setActiveTab] = useState(0);
   const TAB_TOP = insets.top + 58, READ_LINE = insets.top + 108;
@@ -124,7 +128,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {});
     section.open?.();
     setActiveTab(index);
-    section.ref.current.measureInWindow((_x, y) => scroll.current?.scrollTo({ y: Math.max(0, scrollY.current + y - READ_LINE), animated: !reducedMotion }));
+    section.ref.current.measureInWindow((_x, y) => scroll.current?.scrollTo({ y: Math.max(0, scrollSV.get() + y - READ_LINE), animated: !reducedMotion }));
   };
   const backdrop = useRef<View>(null);
   const offsets = useRef<Record<string, number>>({});
@@ -200,12 +204,12 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     <Animated.View style={[{ flex: 1, overflow: "hidden", borderCurve: "continuous", backgroundColor: palette.canvas }, pageStyle]}>
     <View ref={backdrop} collapsable={false} accessibilityElementsHidden={drawer} importantForAccessibility={drawer ? "no-hide-descendants" : "auto"} style={{ flex: 1, backgroundColor: palette.canvas }}>
     <AmbientWash quiet={requests.length > 0} thinking={Boolean(thinking)} />
-    <ScrollView ref={scroll} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentInsetAdjustmentBehavior="never" scrollEventThrottle={48}
-      onScroll={event => { scrollY.current = event.nativeEvent.contentOffset.y; scrollSV.set(scrollY.current); const next = scrollY.current > 8; if (next !== scrolled) setScrolled(next); const cap = scrollY.current > shelfFrom; if (cap !== capsule) setCapsule(cap); }}
+    <Animated.ScrollView ref={scroll} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentInsetAdjustmentBehavior="never" scrollEventThrottle={16}
+      onScroll={onScroll}
       onScrollEndDrag={syncTab} onMomentumScrollEnd={syncTab}
       contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + (!home && sections.length >= 2 ? 112 : 72), paddingBottom: insets.bottom + 150 + (steps ? 66 : 0), flexGrow: 1 }}>
       {!requests.length ? <Home patient={patient} patients={patients} onPick={pick} onChoosePatient={() => router.push("/patients")} onSelectPatient={id => openSession(id)}
-        onShelf={bottom => setShelfFrom(Math.max(0, Math.round(bottom + scrollY.current - (insets.top + 106))))} />
+        onShelf={bottom => setShelfFrom(Math.max(0, Math.round(bottom + scrollSV.get() - (insets.top + 106))))} shelfCollapse={{ scroll: scrollSV, from: shelfFrom }} />
       : <View style={{ gap: 44 }}>
         {compactResponses && requests.length > 1 && <Action label={showEarlier ? "Collapse earlier responses" : `Show ${requests.length - 1} earlier responses`} secondary onPress={() => setShowEarlier(value => !value)} />}
         {visible.map(req => {
@@ -243,7 +247,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
           </View>}
         </View>}
       </View>}
-    </ScrollView>
+    </Animated.ScrollView>
 
     {!home && sections.length >= 2 && !active && <View pointerEvents="box-none" style={{ position: "absolute", top: TAB_TOP, left: 0, right: 0, alignItems: "center", zIndex: 2 }}>
       <SectionTabs sections={sections} active={Math.min(activeTab, sections.length - 1)} onPick={jumpTo} />
