@@ -1,12 +1,12 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, Modal, Pressable, ScrollView, useWindowDimensions, View, type ViewStyle } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Modal, Pressable, ScrollView, View, type ViewStyle } from "react-native";
 import Animated, { FadeInDown, SlideInDown, useReducedMotion, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { scheduleLine } from "@/features/discharge/lines";
 import { useDischarge } from "@/features/discharge/row";
-import { markTaken, Pill, rise, snooze, useNextDose, useNow, useSnooze } from "@/features/doses";
+import { markTaken, Pill, rise, snooze, tintOf, useNextDose, useNow, useSnooze } from "@/features/doses";
 import { RemindCard } from "@/features/doses/remind";
 import { clock, doseOf, dosesToday, early, isLate, untilLine, weekOf, whenWords, type DayDose, type Dose, type ScheduledMed } from "@/features/doses/model";
 import { foodOf, insight, weekStrip } from "@/features/doses/strip";
@@ -33,7 +33,7 @@ let shown = false;
  * insight line on today and the week as dots, then the one feature card for the next dose: time,
  * the medicine drawn big, how to take it, and a hold to mark it taken, or "Remind me later", which
  * steps the card aside for 15 min in this app. When nothing is due the same card says what is next.
- * Below, the care team one tap away and every medicine to take as a big pill card opening its sheet.
+ * Below, every medicine to take as one list (rows opening their sheets), photo medicines, then the care team one tap away.
  * A dose reminder opens this screen with its dose (`key`), so the card holds that dose until it is taken.
  */
 export default function DoseScreen() {
@@ -44,7 +44,6 @@ export default function DoseScreen() {
   const dose = doseOf(meds, key, taken) ?? next;
   const discharge = useDischarge();
   const reduced = useReducedMotion();
-  const { fontScale } = useWindowDimensions();
   const [first] = useState(() => !shown);
   useEffect(() => { shown = true; }, []);
   const enter = (i: number) => first ? rise(reduced, i) : undefined;
@@ -72,20 +71,16 @@ export default function DoseScreen() {
         {/* Asked here, where doses are, and only once. */}
         {meds.some(m => m.at?.length) && <Animated.View entering={enter(2)}><RemindCard /></Animated.View>}
 
+        {/* One list, like My plan's, so no card is left alone in a row. */}
         <Animated.View entering={enter(2)} style={{ gap: 12 }}>
           <Section light={t("dose.yourLight")} bold={t("dose.yourBold")} action={<FullPlan />} />
-          <CareTeam />
+          {meds.length ? <View style={[surfaceStyle, { paddingHorizontal: 14 }]}>
+            {meds.map((m, i) => <MedRow key={m.name} med={m} first={i === 0} today={today.filter(d => d.name === m.name)} pop={took?.dose.name === m.name} />)}
+          </View> : <Text style={{ ...type.body, color: palette.muted }}>{t("dose.nothingAtHome")}</Text>}
         </Animated.View>
-
-        {/* Two columns; at large Dynamic Type, one card per row so names never squeeze. */}
-        <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 12 }}>
-          {meds.map((m, i) => <Animated.View key={m.name} entering={enter(3 + i)} style={{ width: fontScale > 1.3 ? "100%" : "48.2%" }}>
-            <MedCard med={m} today={today.filter(d => d.name === m.name)} pop={took?.dose.name === m.name} />
-          </Animated.View>)}
-        </View>
-        {!meds.length && <Text style={{ ...type.body, color: palette.muted }}>{t("dose.nothingAtHome")}</Text>}
-        {/* A medicine from a photo waits here for the care team; the entry to add one sits under the cards. */}
-        <Animated.View entering={enter(3 + meds.length)}><PhotoMedicines /></Animated.View>
+        {/* A medicine from a photo waits here for the care team (unless the plan already lists it); the entry to add one sits under the list. */}
+        <Animated.View entering={enter(3)}><PhotoMedicines planned={meds.map(m => m.name)} /></Animated.View>
+        <Animated.View entering={enter(4)}><CareTeam /></Animated.View>
 
         <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("dose.missedTip")}</Text>
       </>}
@@ -283,15 +278,20 @@ function CareTeam() {
   </View>;
 }
 
-/** One medicine in the grid (the kit's big pill card): the medicine drawn big, its name and schedule; a green check once today's doses of it are taken. */
-function MedCard({ med, today, pop }: { med: ScheduledMed; today: DayDose[]; pop: boolean }) {
+/** One medicine in the list (My plan's row): its pill on its tint, name and schedule, a green check once today's doses of it are taken; opens its sheet. */
+function MedRow({ med, first, today, pop }: { med: ScheduledMed; first: boolean; today: DayDose[]; pop: boolean }) {
   const lang = useLang(), t = tFor(lang);
   const done = today.length > 0 && today.every(d => d.taken), schedule = scheduleLine(med, lang);
   return <Pressable accessibilityRole="button" accessibilityLabel={[med.name, schedule, done && t("dose.todayTaken")].filter(Boolean).join(". ")} accessibilityHint={t("dose.openHint")} onPress={() => open(med.name)}
-    style={({ pressed }) => [surfaceStyle, { flexGrow: 1, minHeight: 196, padding: 16, paddingTop: 20, alignItems: "center", gap: 6, transform: [{ scale: pressed ? motion.press : 1 }] }]}>
-    <Pill name={med.name} size={88} />
-    <Text style={{ fontSize: 18, lineHeight: 23, fontWeight: "500", letterSpacing: -0.4, color: palette.ink, textAlign: "center" }}>{med.name}</Text>
-    <Text style={{ ...type.footnote, color: palette.faint, textAlign: "center" }}>{schedule}</Text>
-    {done && <Check size={28} pop={pop} style={{ position: "absolute", top: 12, right: 12 }} />}
+    style={({ pressed }) => ({ minHeight: 72, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderTopWidth: first ? 0 : 1, borderColor: palette.line, opacity: pressed ? 0.6 : 1 })}>
+    <View style={{ width: 48, height: 48, borderRadius: 16, borderCurve: "continuous", backgroundColor: tintOf(med.name), alignItems: "center", justifyContent: "center" }}>
+      <Pill name={med.name} size={44} />
+    </View>
+    <View style={{ flex: 1, gap: 2 }}>
+      <Text style={{ ...type.headline, color: palette.ink }}>{med.name}</Text>
+      <Text style={{ ...type.footnote, color: palette.faint }}>{schedule}</Text>
+    </View>
+    {done && <Check size={24} pop={pop} />}
+    <Text style={{ fontSize: 20, color: palette.faint }}>›</Text>
   </Pressable>;
 }

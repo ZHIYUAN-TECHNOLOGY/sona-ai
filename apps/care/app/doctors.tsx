@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
-import Animated, { Easing, FadeIn, FadeInDown, FadeOut, LinearTransition, useReducedMotion } from "react-native-reanimated";
+import Animated, { Easing, FadeIn, FadeInDown, LinearTransition, useReducedMotion } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 import { listOf, takeLine } from "@/features/discharge/lines";
 import { tFor, useLang, useT } from "@/lib/i18n";
@@ -14,7 +14,7 @@ import { dayLabel } from "@/features/follow-ups/lines";
 import { DOCK_SPACE } from "@/lib/dock";
 import { Text, TextInput } from "@/lib/text";
 import { palette, space, type } from "@/lib/theme";
-import { Card, CircleButton, field, ICON, pillStyle, Section, surfaceStyle, Title, LoadError } from "@/lib/ui";
+import { Card, field, pillStyle, Section, surfaceStyle, Title, LoadError } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
 const TABS: { id: Filter; label: string }[] = [
@@ -29,11 +29,12 @@ const rise = (i: number) => FadeInDown.duration(360).easing(Easing.out(Easing.cu
 const SLIDE = LinearTransition.springify().duration(380).dampingRatio(1);
 
 /**
- * Find a doctor (the AI Health Companion kit): "Find a / doctor" with a round glass search (the home
- * pill says the doctors are fictional), a row of white filter capsules (All, Care team, Top
- * rated, For you from the patient's own plan) with the selected one in ink, a two-column grid of doctor
+ * Doctors (the AI Health Companion kit): the patient's own first. "Your / care team" as the kit's doctor
  * cards opening Doctor details, then "Your / records" as kit form rows (only what the discharge plan
- * really holds). SYNTHETIC doctors; see features/doctors/data.
+ * really holds), then one compact "Find another doctor" row that opens the hospital's directory in
+ * place: a search field, a row of white filter capsules (All, Care team, Top rated, For you from the
+ * patient's own plan) with the selected one in ink, and a two-column grid of doctor cards. The home pill
+ * says the doctors are fictional. SYNTHETIC doctors; see features/doctors/data.
  */
 export default function Doctors() {
   const still = useReducedMotion();
@@ -43,46 +44,32 @@ export default function Doctors() {
   // The hospital's directory with each doctor's free slots (SYNTHETIC doctors in the demo).
   const { state } = useMe();
   const doctors = useQuery({ ...orpc.care.doctors.list.queryOptions(), enabled: state === "joined" });
+  const [finding, setFinding] = useState(false);
   const [tab, setTab] = useState<Filter>("all");
-  const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
-  // Once the patient has switched a tab or searched, cards appear in place (no entrance per change).
+  // Once the patient has opened the directory, switched a tab or searched, cards appear in place (no entrance per change).
   const [touched, setTouched] = useState(false);
   // "For you" reads the English leaflet (the doctors' tags are English words), e.g. "chest infection … breathing".
   const words = plan?.status === "discharged" ? plan.leaflets.find(l => l.language === "en")?.text ?? "" : "";
-  const list = searchDoctors(listFor(doctors.data ?? [], tab, words), searching ? query : "");
+  const team = listFor(doctors.data ?? [], "care-team");
+  const list = searchDoctors(listFor(doctors.data ?? [], tab, words), query);
   const enter = (i: number) => still || touched ? undefined : rise(i);
+  const width = fontScale > 1.3 ? "100%" : "48.2%";
 
   return <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
     contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
-    <Animated.View entering={enter(0)} style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
-      <View style={{ flex: 1 }}><Title greeting={t("doc.titleLight")}>{t("doc.titleBold")}</Title></View>
-      <CircleButton d={searching ? ICON.close : SEARCH} label={searching ? t("doc.closeSearch") : t("doc.search")}
-        onPress={() => { setSearching(s => !s); setQuery(""); setTouched(true); }} />
-    </Animated.View>
-
-    {searching && <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
-      <TextInput autoFocus value={query} onChangeText={setQuery} placeholder={t("doc.searchPlaceholder")} placeholderTextColor={palette.muted} returnKeyType="search"
-        clearButtonMode="while-editing" autoCorrect={false} accessibilityLabel={t("doc.searchLabel")} style={{ ...field, borderRadius: 999, backgroundColor: palette.white }} />
-    </Animated.View>}
-
-    <Animated.View entering={enter(1)}><Tabs tab={tab} still={still} onPick={t => { setTab(t); setTouched(true); }} /></Animated.View>
-    {tab === "for-you" && words !== "" && <Text style={{ ...type.footnote, color: palette.muted, marginTop: -6 }}>{t("doc.matched")}</Text>}
+    <Animated.View entering={enter(0)}><Title greeting={t("doc.titleLight")}>{t("doc.titleBold")}</Title></Animated.View>
 
     <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 12 }}>
-      {list.map((d, i) => <Animated.View key={d.id} entering={enter(2 + i)} style={{ width: fontScale > 1.3 ? "100%" : "48.2%" }}>
-        <DoctorCard doctor={d} />
+      {team.map((d, i) => <Animated.View key={d.id} entering={enter(1 + i)} style={{ width }}>
+        <DoctorCard doctor={d} badge={false} />
       </Animated.View>)}
     </View>
     {doctors.isLoading && <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} />}
     {!doctors.data && doctors.error && <LoadError query={doctors} />}
-    {doctors.data && !list.length && <Card>
-      <Text style={{ ...type.body, color: palette.muted }}>
-        {searching && query.trim() ? t("doc.noMatch", { q: query.trim() }) : tab === "for-you" ? t("doc.nothingForYou") : t("doc.none")}
-      </Text>
-    </Card>}
+    {doctors.data && !team.length && <Text style={{ ...type.body, color: palette.muted }}>{t("doc.noTeam")}</Text>}
 
-    <Animated.View entering={enter(2 + list.length)} style={{ gap: 10, marginTop: 8 }}>
+    <Animated.View entering={enter(1 + team.length)} style={{ gap: 10, marginTop: 8 }}>
       <Section light={t("doc.recordsLight")} bold={t("doc.recordsBold")} />
       {plan?.status === "discharged" ? <>
         <RecordRow icon={DOC} title={t("doc.plan")} value={dayLabel(plan.dischargedAt, lang)} spoken={t("doc.planA11y", { day: dayLabel(plan.dischargedAt, lang), line: takeLine(plan.medicines, "", lang) })} />
@@ -91,6 +78,26 @@ export default function Doctors() {
       </>
         : <Text style={{ ...type.body, color: palette.muted }}>{plan ? t("doc.papersLater") : t("doc.papers")}</Text>}
     </Animated.View>
+
+    {/* The directory, one tap away: search and filters live with it. */}
+    <Animated.View entering={enter(2 + team.length)} style={{ marginTop: 8 }}>
+      <RecordRow icon={SEARCH} title={t("doc.find")} value="" spoken={t("doc.find")} hint={t("doc.findHint")}
+        expanded={finding} onPress={() => { setFinding(f => !f); setTouched(true); }} />
+    </Animated.View>
+    {finding && <Animated.View entering={still ? undefined : FadeIn.duration(220)} style={{ gap: space.stack }}>
+      <TextInput value={query} onChangeText={setQuery} placeholder={t("doc.searchPlaceholder")} placeholderTextColor={palette.muted} returnKeyType="search"
+        clearButtonMode="while-editing" autoCorrect={false} accessibilityLabel={t("doc.searchLabel")} style={{ ...field, borderRadius: 999, backgroundColor: palette.white }} />
+      <Tabs tab={tab} still={still} onPick={setTab} />
+      {tab === "for-you" && words !== "" && <Text style={{ ...type.footnote, color: palette.muted, marginTop: -6 }}>{t("doc.matched")}</Text>}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 12 }}>
+        {list.map(d => <View key={d.id} style={{ width }}><DoctorCard doctor={d} /></View>)}
+      </View>
+      {doctors.data && !list.length && <Card>
+        <Text style={{ ...type.body, color: palette.muted }}>
+          {query.trim() ? t("doc.noMatch", { q: query.trim() }) : tab === "for-you" ? t("doc.nothingForYou") : t("doc.none")}
+        </Text>
+      </Card>}
+    </Animated.View>}
   </ScrollView>;
 }
 
@@ -120,8 +127,8 @@ function Tabs({ tab, still, onPick }: { tab: Filter; still: boolean; onPick: (t:
   </View>;
 }
 
-/** A doctor in the grid (kit card): the initials avatar, the name on two lines, the specialty, then rating and next clinic in a white capsule. */
-function DoctorCard({ doctor: d }: { doctor: ListedDoctor }) {
+/** A doctor in the grid (kit card): the initials avatar, the name on two lines, the specialty, then rating and next clinic in a white capsule. `badge`: the Care team capsule (off under "Your care team"). */
+function DoctorCard({ doctor: d, badge = true }: { doctor: ListedDoctor; badge?: boolean }) {
   const lang = useLang(), t = tFor(lang);
   const [first, rest] = nameLines(d.name);
   const next = d.nextSlots[0];
@@ -132,7 +139,7 @@ function DoctorCard({ doctor: d }: { doctor: ListedDoctor }) {
     style={({ pressed }) => [surfaceStyle, { minHeight: 200, padding: 16, gap: 10, transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
     <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 6 }}>
       <DoctorAvatar doctor={d} size={56} />
-      {d.careTeam && <View style={{ flexShrink: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: palette.blueWash }}>
+      {badge && d.careTeam && <View style={{ flexShrink: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: palette.blueWash }}>
         <Text style={{ fontSize: 11, lineHeight: 14, fontWeight: "600", color: palette.blue, textAlign: "center" }}>{t("doc.careTeam")}</Text>
       </View>}
     </View>
@@ -146,14 +153,15 @@ function DoctorCard({ doctor: d }: { doctor: ListedDoctor }) {
   </Pressable>;
 }
 
-/** A record as a kit form row (icon, label, value, chevron); opens the plan. */
-function RecordRow({ icon, title, value, spoken }: { icon: string; title: string; value: string; spoken: string }) {
+/** A kit form row (icon, label, value, chevron): a record opening the plan, or (`onPress`, `expanded`) the directory's toggle. */
+function RecordRow({ icon, title, value, spoken, hint, expanded, onPress }: { icon: string; title: string; value: string; spoken: string; hint?: string; expanded?: boolean; onPress?: () => void }) {
   const t = useT();
-  return <Pressable accessibilityRole="button" accessibilityLabel={spoken} accessibilityHint={t("doc.recordHint")} onPress={() => router.push("/discharge")}
+  return <Pressable accessibilityRole="button" accessibilityLabel={spoken} accessibilityHint={hint ?? t("doc.recordHint")} accessibilityState={expanded === undefined ? undefined : { expanded }}
+    onPress={onPress ?? (() => router.push("/discharge"))}
     style={({ pressed }) => [surfaceStyle, { borderRadius: 20, minHeight: 60, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={palette.ink} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><Path d={icon} /></Svg>
     <Text style={{ ...type.body, fontWeight: "500", color: palette.ink }}>{title}</Text>
     <Text numberOfLines={1} style={{ flex: 1, ...type.footnote, color: palette.muted, textAlign: "right" }}>{value}</Text>
-    <Text style={{ fontSize: 20, color: palette.faint }}>›</Text>
+    <Text style={{ fontSize: 20, color: palette.faint, transform: [{ rotate: expanded ? "90deg" : "0deg" }] }}>›</Text>
   </Pressable>;
 }

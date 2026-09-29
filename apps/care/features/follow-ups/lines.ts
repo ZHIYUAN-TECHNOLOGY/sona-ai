@@ -23,6 +23,9 @@ export const pillLine = (f: Pick<FollowUp, "id" | "date">, lang: Lang = "en") =>
 /** What to bring: paperwork only, since the data holds no preparation steps for a visit or test. */
 export const bringLine = (f: Pick<FollowUp, "id">, lang: Lang = "en") => tFor(lang)(f.id === "discharge-review" ? "fu.bringReview" : "fu.bring");
 
+/** The next visit: the earliest not yet attended (upcoming, due soon or missed), from the list earliest first. Home and Schedule both read this. */
+export const nextVisit = <T extends Pick<FollowUp, "status">>(items: T[] | undefined) => items?.find(f => f.status !== "attended");
+
 /** How many follow-ups need the patient now (due soon or missed); counts toward home's insight line. */
 export const followUpNeeds = (items: Pick<FollowUp, "status">[] | undefined) => items?.filter(f => f.status === "due-soon" || f.status === "missed").length ?? 0;
 
@@ -110,7 +113,7 @@ export function agendaOf(now: Date, { visits, checkIns, doses, doseMark }: { vis
       const at = new Date(t), done = group.every(d => d.taken), until = untilLine(at, now, lang), late = !done && isLate(at, now);
       const title = tr(`fu.meds.${partOf(at)}`), names = group.map(d => d.name).join(", "), what = title.toLowerCase();
       return { key: `doses@${t}`, at, title, done, line: done ? tr("fu.taken", { names }) : late ? `${until} · ${names}` : names, tone: done ? "green" : late ? "amber" : "muted",
-        action: !done && dueNow(at, now) ? "take" : undefined, soon: late ? tr("fu.soonLate", { what, late: until }) : tr("fu.soonAt", { what, time: clock(at, lang) }) };
+        action: !done && dueNow(at, now) ? "take" : undefined, soon: late ? what : tr("fu.soonAt", { what, time: clock(at, lang) }) };
     }),
     ...checkIns.map((c): AgendaItem => {
       const s = statusOf(c, now, lang), at = new Date(c.dueAt), done = c.replies.length > 0, waiting = !done && s.tone === "blue";
@@ -126,13 +129,16 @@ export function agendaOf(now: Date, { visits, checkIns, doses, doseMark }: { vis
   return items.sort((a, b) => (a.at?.getTime() ?? 0) - (b.at?.getTime() ?? 0));
 }
 
-/** Schedule's insight under the title: "Next: check-in at 9:00 AM · visit in 3 days", amber when late or overdue. */
+/**
+ * Schedule's insight under the title, one short line: "Next: check-in at 9:00 AM · visit in 3 days". A late dose
+ * is named without its lateness (its row carries the one amber "late" with Take now); amber only for a missed visit.
+ */
 export function scheduleLine(today: AgendaItem[], visits: Pick<FollowUp, "id" | "status" | "inDays">[], lang: Lang = "en"): { line: string; tone: "muted" | "amber" } {
-  const t = tFor(lang), next = today.find(i => !i.done), visit = visits.find(v => v.status !== "attended");
+  const t = tFor(lang), next = today.find(i => !i.done), visit = nextVisit(visits);
   const parts = [next ? t("fu.next", { what: next.soon }) : today.length ? t("fu.allDoneToday") : undefined,
     visit && visit.id !== next?.key && (visit.status === "missed" ? t("fu.soonVisitOverdue") : t("fu.soonVisitWhen", { when: away(visit.inDays, lang) }))].filter(Boolean) as string[];
   const line = parts.join(" · ").replace(/^./, c => c.toUpperCase()) || t("fu.nothingBooked");
-  return { line, tone: next?.tone === "amber" || visit?.status === "missed" ? "amber" : "muted" };
+  return { line, tone: visit?.status === "missed" ? "amber" : "muted" };
 }
 
 /** A booking request the patient sent (care.bookings.list). */

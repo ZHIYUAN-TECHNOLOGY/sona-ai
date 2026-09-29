@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { tFor } from "@/lib/i18n";
 import "./strings";
-import { addWaiting, medLine, messageFor, statusOf } from "./photo-model";
+import { addWaiting, medLine, messageFor, statusOf, unplanned } from "./photo-model";
 
 test("the care message says what was read, in the patient's language", () => {
   const read = { name: "Cetirizine", dose: "10 mg", how: "once at night" };
@@ -23,4 +23,10 @@ test("a waiting medicine follows the care team's decision on its message", () =>
   expect(statusOf(m, [{ id: "message:SYN-1042:care-photo-1", attachment: { kind: "medicine-photo" } }])).toBe("waiting");
   expect(statusOf(m, [{ id: "message:SYN-1042:care-photo-1", attachment: { decision: { status: "added" } } }])).toBe("added");
   expect(statusOf(m, [{ id: "message:SYN-1042:care-photo-12", attachment: { decision: { status: "declined" } } }])).toBe("waiting");
+});
+
+test("a photo medicine the plan already lists isn't shown twice", () => {
+  const cet = { id: "1", name: "Cetirizine", sentAt: "t" }, vit = { id: "2", name: "Vitamin D 1000 IU", sentAt: "t" };
+  expect(unplanned([cet, vit], ["Paracetamol", "cetirizine 10 mg"])).toEqual([vit]);
+  expect(unplanned([cet], [])).toEqual([cet]);
 });

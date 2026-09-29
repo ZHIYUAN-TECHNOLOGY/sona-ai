@@ -6,7 +6,7 @@ addStrings({
   en: {
     "fu.bringReview": "Bring your IC, your discharge letter and your medicines.", "fu.bring": "Bring your IC and your medicines, or a list of them.",
     "fu.meds.morning": "Morning medicines", "fu.meds.afternoon": "Afternoon medicines", "fu.meds.evening": "Evening medicines",
-    "fu.taken": "Taken · {names}", "fu.soonAt": "{what} at {time}", "fu.soonLate": "{what} {late}",
+    "fu.taken": "Taken · {names}", "fu.soonAt": "{what} at {time}",
     "fu.soonCheckInWaiting": "check-in, waiting for you", "fu.soonCheckInAt": "check-in at {time}",
     "fu.overdueDue": "Missed, was {when}", "fu.soonVisitOverdue": "visit missed", "fu.soonVisitAt": "visit at {time}", "fu.soonVisitWhen": "visit {when}",
     "fu.meds": "Medicines", "fu.allDosesTaken": "All doses taken", "fu.someMissed": "Some doses missed", "fu.soonMeds": "medicines",
@@ -27,7 +27,7 @@ addStrings({
   ms: {
     "fu.bringReview": "Bawa IC, surat discaj dan ubat anda.", "fu.bring": "Bawa IC dan ubat anda, atau senarai ubat.",
     "fu.meds.morning": "Ubat pagi", "fu.meds.afternoon": "Ubat petang", "fu.meds.evening": "Ubat malam",
-    "fu.taken": "Sudah diambil · {names}", "fu.soonAt": "{what} pada {time}", "fu.soonLate": "{what} {late}",
+    "fu.taken": "Sudah diambil · {names}", "fu.soonAt": "{what} pada {time}",
     "fu.soonCheckInWaiting": "semakan, menunggu jawapan anda", "fu.soonCheckInAt": "semakan pada {time}",
     "fu.overdueDue": "Terlepas, sepatutnya {when}", "fu.soonVisitOverdue": "lawatan terlepas", "fu.soonVisitAt": "lawatan pada {time}", "fu.soonVisitWhen": "lawatan {when}",
     "fu.meds": "Ubat", "fu.allDosesTaken": "Semua dos diambil", "fu.someMissed": "Ada dos terlepas", "fu.soonMeds": "ubat",
@@ -48,7 +48,7 @@ addStrings({
   zh: {
     "fu.bringReview": "请带上身份证、出院信和您的药。", "fu.bring": "请带上身份证和您的药，或药物清单。",
     "fu.meds.morning": "早上的药", "fu.meds.afternoon": "下午的药", "fu.meds.evening": "晚上的药",
-    "fu.taken": "已吃 · {names}", "fu.soonAt": "{what}（{time}）", "fu.soonLate": "{what}{late}",
+    "fu.taken": "已吃 · {names}", "fu.soonAt": "{what}（{time}）",
     "fu.soonCheckInWaiting": "回访，等您回答", "fu.soonCheckInAt": "{time}回访",
     "fu.overdueDue": "已错过，原定{when}", "fu.soonVisitOverdue": "错过复诊", "fu.soonVisitAt": "{time}复诊", "fu.soonVisitWhen": "{when}复诊",
     "fu.meds": "药物", "fu.allDosesTaken": "药都吃了", "fu.someMissed": "漏吃了一些药", "fu.soonMeds": "吃药",

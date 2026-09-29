@@ -54,11 +54,13 @@ export function weekLine(meds: ScheduledMed[], dischargedAt: string | undefined,
 
 /**
  * Home's Consistency tile: the share of the last 7 days' doses taken, counting only doses taken or
- * missed (6 h late), so one still to come never lowers it. Undefined until a dose has counted.
+ * missed (6 h late), so one still to come never lowers it. Undefined (the tile hides) until doses on
+ * at least `MIN_DAYS` days have counted: a first-day 0 % says nothing and discourages.
  */
+const MIN_DAYS = 2;
 export function consistency(meds: ScheduledMed[], dischargedAt: string | undefined, taken: string[], now: Date) {
-  const doses = lastWeek(meds, dischargedAt, taken, now), done = doses.filter(d => d.taken).length, missed = doses.filter(d => missedBy(d, now)).length;
-  return done + missed ? Math.round(done / (done + missed) * 100) : undefined;
+  const counted = lastWeek(meds, dischargedAt, taken, now).filter(d => d.taken || missedBy(d, now)), done = counted.filter(d => d.taken).length;
+  return new Set(counted.map(d => dayOf(d.dueAt))).size >= MIN_DAYS ? Math.round(done / counted.length * 100) : undefined;
 }
 
 /** The medicines tile's capsule while the next dose is over 2 h off: "Next at 9:00 PM", "Tomorrow 8:00 AM", "Tue 29 Sep 8:00 AM". */
@@ -73,9 +75,9 @@ export type Update = { line: string; tone: "green" | "amber" | "blue" | "muted";
 
 /**
  * Home's Latest update tile, the newest thing about the patient's recovery: a care-team reply waiting,
- * today's check-in answered (all fine, or the team told) or waiting, else nothing new.
+ * today's check-in answered (all fine, or the team told) or waiting; undefined (the tile hides) when nothing is new.
  */
-export function latestUpdate(checkIns: Pick<CheckIn, "dueAt" | "sentAt" | "replies">[] | undefined, replyWaiting: boolean, now: Date, bookedIn?: string, withTest?: string, lang: Lang = "en"): Update {
+export function latestUpdate(checkIns: Pick<CheckIn, "dueAt" | "sentAt" | "replies">[] | undefined, replyWaiting: boolean, now: Date, bookedIn?: string, withTest?: string, lang: Lang = "en"): Update | undefined {
   const t = tFor(lang);
   if (replyWaiting) return { line: t("home.teamReplied"), tone: "blue", face: "chat", to: "messages" };
   // The doctor answered her check-in by booking her in: that is the news, ahead of "they'll call you".
@@ -85,7 +87,7 @@ export function latestUpdate(checkIns: Pick<CheckIn, "dueAt" | "sentAt" | "repli
     ? { line: t("home.checkInFine"), tone: "green", face: "smile", to: "check-ins" }
     : { line: t("home.checkInSent"), tone: "amber", face: "calm", to: "check-ins" };
   if (checkIns && todayOf(checkIns as CheckIn[], now).ask) return { line: t("home.checkInWaiting"), tone: "blue", face: "calm", to: "check-in" };
-  return { line: t("home.nothingNew"), tone: "muted", face: "smile", to: "messages" };
+  return undefined;
 }
 
 

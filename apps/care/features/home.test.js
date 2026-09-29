@@ -49,11 +49,12 @@ test("this week's line: every dose taken, or how many were missed and when", () 
   expect(weekLine(meds, out, all, new Date("2026-09-30T14:00:00Z")).text).toBe("Every dose taken");
 });
 
-test("consistency: the share of the week's doses taken, counting only those taken or missed", () => {
+test("consistency: the share of the week's doses taken, counting only those taken or missed, once two days have counted", () => {
   expect(consistency(meds, out, [], new Date("2026-09-27T05:00:00Z"))).toBeUndefined(); // tonight's dose is still to come
   expect(consistency(meds, out, all, wed)).toBe(100);
   expect(consistency(meds, out, [all[0], all[2]], wed)).toBe(67);
-  expect(consistency(meds, out, [all[0]], new Date("2026-09-28T14:00:00Z"))).toBe(100); // Monday's is late, not missed yet
+  expect(consistency(meds, out, [all[0]], new Date("2026-09-28T14:00:00Z"))).toBeUndefined(); // Monday's is late, not missed yet: one day is too soon to show
+  expect(consistency(meds, out, [all[0]], new Date("2026-09-29T05:00:00Z"))).toBe(50); // two days counted
   expect(consistency([], out, [], wed)).toBeUndefined();
 });
 
@@ -68,7 +69,7 @@ test("the header date reads in Malaysia time", () => {
   expect(headerDate(new Date("2026-09-26T16:30:00Z"))).toBe("Sun, 27 Sep");
 });
 
-test("the latest update: a waiting reply, then today's check-in, else nothing new", () => {
+test("the latest update: a waiting reply, then today's check-in, else nothing (the tile hides)", () => {
   const now = new Date("2026-09-29T05:00:00Z"), due = new Date("2026-09-29T02:00:00Z");
   const answered = label => [{ dueAt: due, sentAt: due, replies: [{ label, receivedAt: new Date("2026-09-29T03:00:00Z") }] }];
   expect(latestUpdate(answered("fine"), true, now).line).toBe("Care team replied");
@@ -77,6 +78,6 @@ test("the latest update: a waiting reply, then today's check-in, else nothing ne
   expect(latestUpdate(answered("worse"), false, now, "tomorrow 9:00 AM", "CT scan").line).toBe("Your doctor booked you in · tomorrow 9:00 AM, with a CT scan");
   expect(latestUpdate(answered("worse"), false, now).tone).toBe("amber");
   expect(latestUpdate([{ dueAt: due, sentAt: due, replies: [] }], false, now).to).toBe("check-in");
-  expect(latestUpdate([{ dueAt: new Date("2026-09-28T02:00:00Z"), sentAt: null, replies: [{ label: "fine", receivedAt: new Date("2026-09-28T15:00:00Z") }] }], false, now).line).toBe("Nothing new today");
-  expect(latestUpdate(undefined, false, now).line).toBe("Nothing new today");
+  expect(latestUpdate([{ dueAt: new Date("2026-09-28T02:00:00Z"), sentAt: null, replies: [{ label: "fine", receivedAt: new Date("2026-09-28T15:00:00Z") }] }], false, now)).toBeUndefined();
+  expect(latestUpdate(undefined, false, now)).toBeUndefined();
 });
