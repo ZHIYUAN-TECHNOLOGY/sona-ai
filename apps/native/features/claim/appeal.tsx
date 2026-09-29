@@ -3,7 +3,7 @@ import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Pressable, TextInput, View, type TextStyle } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
-import { Arrive, Drafting } from "@/components/sona/model-answer";
+import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
@@ -125,7 +125,7 @@ export function AppealCard({ patient, state, onChange, onApproved }: { patient: 
           })}
           <Arrive index={letter.points.length + 1}><Paragraph label="Closing paragraph" value={letter.closing} onChange={closing => edit(l => ({ ...l, closing }))} /></Arrive>
           <Arrive index={letter.points.length + 2} style={{ gap: 10 }}>
-            <Text selectable style={{ ...type.caption, color: palette.muted }}>{draft.source === "fixture" ? "Sample draft · appeal model not switched on yet" : `Drafted by ${draft.model ?? "a model"}`}</Text>
+            {draft.source === "fixture" ? <SampleLabel source="fixture" what="appeal" /> : <Text selectable style={{ ...type.caption, color: palette.muted }}>Drafted by {draft.model ?? "a model"}</Text>}
             <Text style={{ ...type.footnote, color: palette.ink }}>Goes to {INSURER} with a new review link, {letter.points.length} {letter.points.length === 1 ? "point" : "points"} from the note{user?.name ? ` · approved by ${user.name}` : ""}.</Text>
             {error && <Text style={{ ...type.footnote, color: RED }}>Not sent: {error}</Text>}
             {live && !role.can("claim.appeal") ? <LockedAction label="Needs a doctor or management to send" path="claim.appeal" height={46} />

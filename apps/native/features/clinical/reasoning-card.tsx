@@ -79,8 +79,8 @@ export function ReasoningCard({ patient, result, onSource, onOpen, onRequest }: 
   const toggle = (id: string) => setOpen(ids => ids.includes(id) ? ids.filter(value => value !== id) : [...ids, id]);
   // One quiet provenance line replaces the section subtitle, the complaint quote and the sources caption.
   const provenance = patient.incomplete
-    ? "An authored clinical example, not a model diagnosis. Missing findings don’t rule anything in or out."
-    : "Unranked. An authored clinical example, not a model diagnosis. Sources give background, not confirmation.";
+    ? "Missing findings don’t rule anything in or out."
+    : "Unranked. Sources give background, not confirmation.";
   const takeaways: Takeaway[] = patient.incomplete
     ? [{ tone: "caution", text: "Not enough history yet to weigh possibilities" }, { tone: "info", text: "Collect onset, observations and background first" }, { tone: "caution", text: "Allergy and medicines are unknown" }]
     : [{ tone: "info", text: "Two unranked possibilities: pneumonia and an asthma contribution" }, { tone: "caution", text: "Chest examination and imaging are still needed" }, { tone: "good", text: "Long history of asthma; current control needs review" }];
@@ -91,7 +91,7 @@ export function ReasoningCard({ patient, result, onSource, onOpen, onRequest }: 
     {server.live && <Surface feature style={{ padding: 16, gap: 10 }}>
       {server.loading ? <Drafting label="Weighing the record…" /> : server.data ? <>
         <Arrive><Text selectable style={{ fontSize: 16, lineHeight: 24, color: palette.ink }}>{server.data.answer}</Text></Arrive>
-        <Arrive index={1}><SampleLabel source={server.data.source} /></Arrive>
+        <Arrive index={1}><SampleLabel source={server.data.source} what="reasoning" /></Arrive>
       </> : <Text style={{ fontSize: 13, lineHeight: 18, color: palette.red }}>{server.error}</Text>}
     </Surface>}
     <Takeaways items={takeaways} />
@@ -112,6 +112,7 @@ export function ReasoningCard({ patient, result, onSource, onOpen, onRequest }: 
         {GAPS.map((gap, index) => <GapRow key={gap.title} title={gap.title} detail={gap.detail} index={index} reduced={reducedMotion} updates={facts.filter(fact => gap.categories.includes(fact.category)).length} />)}
       </Surface>}
       <Animated.View layout={layout} style={{ gap: 2 }}>
+        <SampleLabel source="fixture" what="reasoning" />
         <Caption>{provenance}</Caption>
         {patient.incomplete && <View style={{ paddingLeft: 22 }}><SourceRef label="Patient context used" kind="record" onPress={() => onSource(presentingSource)} /></View>}
       </Animated.View>

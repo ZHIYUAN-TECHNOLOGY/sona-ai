@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Keyboard, KeyboardAvoidingView, Pressable, TextInput, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
+import { SampleLabel } from "@/components/sona/model-answer";
 import { Section } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -123,8 +124,8 @@ function statusFor(capture: Capture, recording: string | undefined): { label: st
   if (capture === "failed") return { label: "Capture failed · dialogue kept", tone: palette.amber };
   if (capture === "denied") return { label: "Permission unavailable", tone: palette.amber };
   if (capture === "processing") return { label: "Finalizing transcript", tone: palette.blue };
-  if (recording === "recording") return { label: "Playing consultation sample", tone: palette.red };
-  if (recording === "paused") return { label: "Sample paused", tone: palette.amber };
+  if (recording === "recording") return { label: "Playing consultation", tone: palette.red };
+  if (recording === "paused") return { label: "Paused", tone: palette.amber };
   if (recording === "stopped") return { label: "Transcript ready", tone: palette.green };
   return { label: "Ready for consultation", tone: palette.muted };
 }
@@ -183,7 +184,8 @@ export function RecordingScreen() {
     <Stack.Screen options={{ headerLeft: () => <IconButton name="chevron.down" label={minimizeLabel} onPress={() => router.back()} /> }} />
     <View style={{ gap: 4 }}>
       <Text selectable style={{ fontSize: 13, fontWeight: "600", color: palette.blue }}>{patient.name} · {patient.id}</Text>
-      <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>Scripted sample · no microphone active, no audio recorded.</Text>
+      <SampleLabel source="fixture" what="speech" />
+      <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>No microphone active, no audio recorded.</Text>
     </View>
 
     {unavailable ? <Section icon="waveform.slash" tone="amber" title="No consultation sample"subtitle="This patient has incomplete history. A dialogue has not been authored for this encounter.">

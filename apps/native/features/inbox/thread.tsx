@@ -6,7 +6,7 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
-import { Drafting } from "@/components/sona/model-answer";
+import { Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { LinearGradient } from "expo-linear-gradient";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Caption, ErrorLine, TextLink } from "@/components/sona/parts";
@@ -148,7 +148,7 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
               : !show.value ? <Drafting label="Sona is drafting…" lines={2} />
               : <>
                 <View ref={draftText} collapsable={false}><Text selectable style={{ ...type.callout, color: palette.ink }}>{show.value.text}</Text></View>
-                <Text style={{ ...type.caption, color: palette.muted }}>{show.value.source === "fixture" ? "Rule-based draft · model not switched on yet" : `Drafted by ${show.value.model ?? "a model"}`}</Text>
+                {show.value.source === "fixture" ? <SampleLabel source="fixture" rule what="reply" /> : <Text style={{ ...type.caption, color: palette.muted }}>Drafted by {show.value.model ?? "a model"}</Text>}
                 <View style={{ flexDirection: "row", gap: 8 }}>
                   <View style={{ flex: 1 }}><Action label="Use draft" icon="arrow.down" accessibilityLabel="Use draft. Puts Sona's reply in the message box to check and send" onPress={() => { void takeDraft(show.value!); }} /></View>
                   <Action secondary label="Dismiss" onPress={() => setHidden(waiting!.id)} />

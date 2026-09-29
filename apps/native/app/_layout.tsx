@@ -20,6 +20,7 @@ export default function RootLayout() {
     <Stack.Screen name="source" options={{ title: "Source detail", presentation: "formSheet", sheetAllowedDetents: [0.6, 1], sheetGrabberVisible: true }} />
     <Stack.Screen name="visits" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
     <Stack.Screen name="sources" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
+    <Stack.Screen name="about-data" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
     <Stack.Screen name="recording" options={{ title: "Consultation", presentation: "modal" }} />
     <Stack.Screen name="note" options={{ title: "Consultation note" }} />
     <Stack.Screen name="xray" options={{ title: "Chest X-ray", presentation: "modal" }} />

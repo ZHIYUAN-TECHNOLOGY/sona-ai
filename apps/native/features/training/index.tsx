@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import { View } from "react-native";
 import Animated from "react-native-reanimated";
 import { TINT } from "@/components/sona/marked-text";
+import { SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Caption, ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
@@ -136,7 +137,7 @@ export function TrainingScreen() {
     </Card>}
 
     {status && <View style={{ gap: 6 }}>
-      <Caption icon="shield.lefthalf.filled">{status.deidentifier === "rules" ? "Rule-based de-identification · OpenMed when hosted" : `De-identified by ${status.deidentifier}`}</Caption>
+      {status.deidentifier === "rules" ? <SampleLabel source="fixture" rule what="de-identification" /> : <Caption icon="shield.lefthalf.filled">De-identified by {status.deidentifier}</Caption>}
       <Caption icon="info.circle">Export only — fine-tuning on Baseten isn't connected yet</Caption>
     </View>}
   </Screen>;

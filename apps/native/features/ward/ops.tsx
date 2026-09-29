@@ -2,6 +2,7 @@ import { router } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import { SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, LAYOUT_SPRING, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -234,6 +235,7 @@ export function ForecastTimeline({ beds, forecast, onOpen }: { beds: Bed[]; fore
       </Pressable>
     </View>}
 
-    <Text style={{ ...type.caption, color: palette.muted }}>Forecast from today's blockers and planned times · rule-based</Text>
+    <Text style={{ ...type.caption, color: palette.muted }}>Forecast from today's blockers and planned times</Text>
+    <SampleLabel source="fixture" rule />
   </Surface>;
 }

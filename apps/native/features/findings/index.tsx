@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
 import Animated from "react-native-reanimated";
 import { MarkedText } from "@/components/sona/marked-text";
+import { SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -24,7 +25,7 @@ const BAND: Record<RiskBand, { label: string; ink: string; fill: string }> = {
 };
 
 /** Where the findings came from, honestly: authored fixtures are never presented as a reading. */
-const provenance = (f: Finding) => f.source === "fixture" ? "Unvalidated · synthetic demo findings, not read from this image" : `Unvalidated · from ${f.source}`;
+const provenance = (f: Finding) => f.source === "fixture" ? "Unvalidated · not read from this image" : `Unvalidated · from ${f.source}`;
 
 export function FindingsCard({ findings, error, focus, onFocus, onTrack, onDismiss }: { findings: Finding[]; error?: string; focus?: string; onFocus?: (id: string) => void; onTrack?: (f: Finding) => void; onDismiss?: (f: Finding, reason: string) => void }) {
   const { reducedMotion } = useAccessibleEffects();
@@ -33,6 +34,7 @@ export function FindingsCard({ findings, error, focus, onFocus, onTrack, onDismi
   return <Surface layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 18, gap: 4 }}>
     <View style={{ gap: 2, paddingBottom: 6 }}>
       <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>Incidental findings</Text>
+      <SampleLabel source={shown[0]!.source} what="findings" />
       <Text selectable style={{ ...type.caption, color: palette.muted }}>{provenance(shown[0]!)}</Text>
     </View>
     {shown.map(f => <FindingRow key={f.id} n={findings.indexOf(f) + 1} finding={f} focused={focus === f.id} onFocus={onFocus && (() => onFocus(f.id))} onTrack={onTrack && (() => onTrack(f))} onDismiss={onDismiss && (reason => onDismiss(f, reason))} />)}

@@ -1,10 +1,12 @@
+import { router } from "expo-router";
 import { useEffect, type ReactNode } from "react";
-import { View, type StyleProp, type ViewStyle } from "react-native";
+import { Pressable, View, type StyleProp, type ViewStyle } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 import { riseIn } from "./motion";
 import { Text } from "./text";
 import { palette, type } from "./theme";
-import { useAccessibleEffects } from "./ui";
+import { HalftoneGlint } from "./halftone-shimmer";
+import { Icon, pillStyle, useAccessibleEffects } from "./ui";
 
 /*
  * A model answer arriving from the server (live mode). While it drafts, soft bars breathe in place
@@ -44,8 +46,43 @@ export function Arrive({ index = 0, animate = true, children, style }: { index?:
   return <Animated.View entering={reducedMotion || !animate ? undefined : riseIn({ delay: index * 70, distance: 8, duration: 320 })} style={style}>{children}</Animated.View>;
 }
 
-/** Says plainly when the server answered with authored sample content instead of a model; nothing when a model answered. */
-export function SampleLabel({ source }: { source?: "fixture" | "model" }) {
+/*
+ * Honesty: two truths, two treatments. The DATA is synthetic everywhere, so that is said once
+ * (DataPill, in the sidebar header). An answer no model gave is labelled where it appears
+ * (SampleLabel), driven by the server's `source`, so the label goes by itself once a model answers.
+ * Both open the same short sheet (app/about-data).
+ */
+const openAbout = () => router.push("/about-data");
+
+/** The one "Synthetic data" signal: a quiet glass pill with a halftone accent; tap for what is fictional. */
+export function DataPill({ onPress = openAbout }: { onPress?: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel="Synthetic data" accessibilityHint="What is fictional in this demo" onPress={onPress} hitSlop={10}
+    style={({ pressed }) => [pillStyle, { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", minHeight: 24, paddingHorizontal: 10, borderRadius: 12, overflow: "hidden", opacity: pressed ? 0.6 : 1 }]}>
+    <HalftoneGlint width={34} height={24} origin={[0, 12]} reach={[32, 16]} pitch={3} strength={0.9} style={{ top: 0, left: 0 }} />
+    <Text style={{ ...type.caption, fontWeight: "600", color: palette.muted }}>Synthetic data</Text>
+  </Pressable>;
+}
+
+/**
+ * The one label for an answer no model gave: "Sample · <what> model not switched on" (authored) or
+ * "Rule-based" (fixed rules; with `what`, the model that replaces them). Shown only while `source` is
+ * "fixture"; nothing once a model answered. Tap (the info glyph) for the about sheet.
+ */
+export function SampleLabel({ source, what, rule = false }: { source?: string; what?: string; rule?: boolean }) {
   if (source !== "fixture") return null;
-  return <Text selectable accessibilityLabel="Sample answer, not a model reading" style={{ ...type.caption, color: palette.muted }}>Sample · not a model reading</Text>;
+  const text = `${rule ? "Rule-based" : "Sample"}${what ? ` · ${what} model not switched on` : ""}`;
+  return <Pressable accessibilityRole="button" accessibilityLabel={text} accessibilityHint="Why this is not a model answer" onPress={openAbout} hitSlop={8}
+    style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 4, opacity: pressed ? 0.6 : 1 })}>
+    <Text style={{ ...type.caption, color: palette.muted, flexShrink: 1 }}>{text}</Text>
+    <Icon name="info.circle" size={12} color={palette.muted} />
+  </Pressable>;
+}
+
+/** The sheet both open: what is fictional, and what "Sample" and "Rule-based" mean. */
+export function AboutDataSheet() {
+  return <View style={{ paddingTop: 36, paddingBottom: 34, paddingHorizontal: 24, gap: 12 }}>
+    <Text accessibilityRole="header" style={{ ...type.heading, color: palette.ink }}>Synthetic data</Text>
+    <Text selectable style={{ ...type.body, color: palette.ink }}>Every patient, doctor, hospital and insurer in this demo is fictional. No real person's data is used.</Text>
+    <Text selectable style={{ ...type.body, color: palette.muted }}>Answers marked "Sample" come from authored examples until the AI models are switched on. "Rule-based" means fixed rules worked it out, not a model.</Text>
+  </View>;
 }

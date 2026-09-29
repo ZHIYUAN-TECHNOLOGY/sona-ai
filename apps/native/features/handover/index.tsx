@@ -52,7 +52,7 @@ function Card({ card }: { card: HandoverCard }) {
     <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
       <View style={{ flex: 1, gap: 2 }}>
         <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{card.name}</Text>
-        <Text style={{ ...type.footnote, color: palette.muted }}>{card.meta}{card.patientId ? "" : " · synthetic ward"}</Text>
+        <Text style={{ ...type.footnote, color: palette.muted }}>{card.meta}</Text>
       </View>
       <View style={{ paddingHorizontal: 9, paddingVertical: 4, borderRadius: 10, backgroundColor: card.priority === "watch" ? "rgba(196,120,20,0.14)" : "rgba(20,140,130,0.12)" }}>
         <Text style={{ ...type.caption, fontWeight: "700", color: card.priority === "watch" ? palette.amber : "#0F6E66" }}>{card.priority === "watch" ? "Watch" : "Stable"}</Text>
@@ -210,7 +210,7 @@ export function HandoverScreen() {
         </Pressable>
       </Animated.View> : server.live && !role.can("handover.accept") ? <LockedAction label="Needs a doctor or a nurse to accept" path="handover.accept" height={56} /> : <HoldToAccept onDone={accept} />}
       {acceptError && !accepted && <ErrorLine text={acceptError} onRetry={accept} />}
-      <Text style={{ ...type.caption, color: palette.muted }}>{server.live ? "Synthetic handover from the live backend: clinic patients from the server’s records, no authored ward patients." : "Synthetic handover. Ward patients are authored examples; clinic patients come from today’s visits."}</Text>
+      <Text style={{ ...type.caption, color: palette.muted }}>{server.live ? "Clinic patients from the server’s records." : "Clinic patients come from today’s visits; ward patients are examples without a record to open."}</Text>
     </ScrollView>}
   </View>;
 }
