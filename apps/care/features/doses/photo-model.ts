@@ -10,8 +10,14 @@ export type PhotoReading = Pick<PhotoMedicine, "name" | "dose" | "how">;
 /** "Cetirizine 10 mg, once at night". */
 export const medLine = (m: PhotoReading) => [[m.name, m.dose].filter(Boolean).join(" "), m.how].filter(Boolean).join(", ");
 
-/** The care message: what they read, and where the photo is (its storage key, or that it stayed on the phone). */
-export const messageFor = (m: PhotoReading & { key?: string }, t: T) => t("photo.message", { med: medLine(m), ref: m.key ?? t("photo.onPhone") });
+/** The care message's words; the photo and the reading travel with it as its attachment. */
+export const messageFor = (m: PhotoReading, t: T) => t("photo.message", { med: medLine(m) });
+
+/** Where the care team's decision stands, from the thread (the message's ID ends with this medicine's request ID). */
+export type PhotoStatus = "waiting" | "added" | "declined";
+type Sent = { id: string; attachment?: { decision?: { status: "added" | "declined" } } | null };
+export const statusOf = (m: Pick<PhotoMedicine, "id">, thread: Sent[] | undefined): PhotoStatus =>
+  thread?.find(x => x.id.endsWith(`:${m.id}`))?.attachment?.decision?.status ?? "waiting";
 
 /** Adds the sent medicine to the waiting list, newest last; the same name again replaces the older one. */
 export function addWaiting(list: PhotoMedicine[], m: PhotoMedicine) {

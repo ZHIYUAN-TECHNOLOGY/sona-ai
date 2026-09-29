@@ -60,7 +60,7 @@ export default function Messages() {
   };
 
   // While sending, the message shows under the ID the server will give it (see care.messages.send).
-  const sending = send.isPending && send.variables && me ? { id: `message:${me.patientId}:${send.variables.requestId}`, from: "patient" as const, text: send.variables.text, createdAt: send.variables.at, seenAt: null } : undefined;
+  const sending = send.isPending && send.variables && me ? { id: `message:${me.patientId}:${send.variables.requestId}`, from: "patient" as const, text: send.variables.text, createdAt: send.variables.at, seenAt: null, attachment: null } : undefined;
   const thread: Message[] = data ? (sending && !data.some(m => m.id === sending.id) ? [...data, sending] : data) : [];
   const last = thread.at(-1);
   const wait = whileYouWait(thread, lang);
