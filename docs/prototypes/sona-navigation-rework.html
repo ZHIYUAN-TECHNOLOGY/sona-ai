@@ -1,0 +1,1091 @@
+<title>Sona Navigation Rework</title>
+<style>
+:root{
+  --bg:#EEF0F3; --panel:#FFFFFF; --ink:#1D1F23; --muted:#59616B; --soft:#8A919B; --line:#D8DBE0;
+  --blue:#245BCC; --blueWash:#D5E5FC; --green:#286850; --greenWash:#DCEFE6; --amber:#8B5518; --amberWash:#F6E7D2;
+  --red:#A23E3E; --redWash:#F6DCDC; --code:#F3F4F6;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  color-scheme:dark; --bg:#14161A; --panel:#1C1F24; --ink:#ECEEF1; --muted:#A5ACB6; --soft:#7D8591; --line:#2E323A;
+  --blue:#7FA6F0; --blueWash:#1F2E4A; --green:#7CC4A2; --greenWash:#1C3329; --amber:#E0B070; --amberWash:#3A2C18;
+  --red:#EE9090; --redWash:#3D2222; --code:#262A31;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark; --bg:#14161A; --panel:#1C1F24; --ink:#ECEEF1; --muted:#A5ACB6; --soft:#7D8591; --line:#2E323A;
+  --blue:#7FA6F0; --blueWash:#1F2E4A; --green:#7CC4A2; --greenWash:#1C3329; --amber:#E0B070; --amberWash:#3A2C18;
+  --red:#EE9090; --redWash:#3D2222; --code:#262A31;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding-inline:16px;padding-block:0 64px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:72px}
+h1,h2,h3{text-wrap:balance;margin:0;letter-spacing:-.02em}
+h1{font-size:clamp(30px,4.4vw,46px);line-height:1.08;font-weight:700}
+h2{font-size:26px;line-height:1.2;font-weight:700}
+h3{font-size:17px;font-weight:650}
+p{margin:0;max-width:68ch}
+code{font:12.5px/1.4 ui-monospace,"SF Mono",Menlo,monospace;background:var(--code);padding:1px 5px;border-radius:5px}
+.over{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--blue)}
+.lead{font-size:18px;color:var(--muted);max-width:62ch}
+.sec{display:flex;flex-direction:column;gap:22px}
+.sec-head{display:flex;flex-direction:column;gap:8px}
+header.hero{padding-top:56px;display:flex;flex-direction:column;gap:18px}
+.stats{display:flex;flex-wrap:wrap;gap:10px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;min-width:150px;flex:1}
+.stat b{font-size:26px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:13px}
+.stat.bad b{color:var(--red)}
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.finding{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:8px}
+.finding .n{font-size:12px;font-weight:700;color:var(--red)}
+.finding p{color:var(--muted);font-size:14px}
+.finding .ev{font-size:12.5px;color:var(--soft)}
+/* scorecard */
+.tablebox{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:13.5px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--panel);position:sticky;top:0}
+td.c{text-align:center;width:74px}
+tr:last-child td{border-bottom:0}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%}
+.d-y{background:var(--green)} .d-p{background:transparent;border:2.5px solid var(--amber)} .d-n{background:var(--red)} .d-x{background:var(--line);width:8px;height:8px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:13px;align-items:center}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+td .fix{color:var(--muted)}
+/* IA map */
+.ia{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.ia-col{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.ia-col h3{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ia-col h3 small{font-size:12px;color:var(--muted);font-weight:500}
+.ia-col ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.ia-col li{display:flex;justify-content:space-between;gap:8px}
+.ia-col li i{font-style:normal;color:var(--soft);font-size:12.5px;text-align:right}
+.ia-col.inside{border-style:dashed}
+.moved{color:var(--blue);font-weight:600}
+.cut{color:var(--red);text-decoration:line-through}
+/* comparison phones */
+.compare{display:flex;flex-wrap:wrap;gap:36px;justify-content:center;align-items:flex-start}
+.fig{display:flex;flex-direction:column;gap:12px;align-items:center;max-width:100%}
+.fig figcaption{font-size:13px;color:var(--muted);text-align:center;max-width:320px}
+.notes{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;max-width:330px;font-size:13.5px}
+.notes li{display:flex;gap:10px;align-items:flex-start}
+.notes li b{flex:none;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;display:grid;place-items:center;margin-top:1px}
+.notes.good li b{background:var(--green)}
+/* template anatomy */
+.anatomy{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:36px;align-items:start}
+@media (max-width:760px){.anatomy{grid-template-columns:1fr}}
+.layers{display:flex;flex-direction:column;gap:10px;counter-reset:l}
+.layer{display:grid;grid-template-columns:28px 1fr;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.layer::before{counter-increment:l;content:counter(l);width:26px;height:26px;border-radius:50%;background:var(--blueWash);color:var(--blue);font-weight:700;font-size:13px;display:grid;place-items:center}
+.layer p{color:var(--muted);font-size:14px}
+.layer code{font-size:12px}
+/* prototype */
+.proto{display:grid;grid-template-columns:auto minmax(0,1fr);gap:40px;align-items:start}
+@media (max-width:860px){.proto{grid-template-columns:1fr;justify-items:center}}
+.side{display:flex;flex-direction:column;gap:18px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);width:100%}
+@media (max-width:860px){.side{position:static}}
+.roles{display:flex;flex-wrap:wrap;gap:6px}
+.roles button{font:inherit;font-size:13px;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.roles button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.roles button:focus-visible,.jump button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.jump{display:flex;flex-wrap:wrap;gap:6px}
+.jump button{font:inherit;font-size:12.5px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+.jump button[aria-current="true"]{color:var(--blue);border-color:var(--blue);background:var(--blueWash)}
+.changed{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.changed h3 span{color:var(--muted);font-weight:500}
+.changed ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--greenWash);color:var(--green)}
+.hint{font-size:13px;color:var(--muted)}
+/* build order */
+.phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.phase{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.phase .time{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.phase ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:5px}
+.phase .over{color:var(--muted)}
+
+/* ================= PHONE (always the app's light palette) ================= */
+.phone{--p-canvas:#F5F6F8;--p-ink:#1D1F23;--p-muted:#59616B;--p-soft:#8C939C;--p-blue:#245BCC;--p-wash:#D5E5FC;--p-green:#286850;--p-amber:#8B5518;--p-red:#A23E3E;--p-line:rgba(20,28,40,.08);
+  width:360px;max-width:100%;height:740px;border-radius:52px;padding:11px;background:#0E0F12;box-shadow:0 30px 60px -20px rgba(10,20,40,.35),0 0 0 1px rgba(255,255,255,.06) inset;flex:none;color-scheme:light}
+.screen{position:relative;width:100%;height:100%;border-radius:42px;overflow:hidden;background:#F1F2F4;color:var(--p-ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+.island{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:98px;height:28px;border-radius:20px;background:#000;z-index:30}
+.status{position:absolute;top:0;left:0;right:0;height:46px;display:flex;justify-content:space-between;align-items:center;padding:4px 30px 0;font-size:14px;font-weight:600;z-index:25;pointer-events:none}
+.page{position:absolute;inset:0;background:var(--p-canvas);transition:transform .38s cubic-bezier(.2,.8,.2,1),border-radius .38s;overflow:hidden;z-index:5}
+.page::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 60% at 90% -10%,rgba(120,160,240,.30),transparent 60%),radial-gradient(90% 50% at -10% 20%,rgba(190,170,240,.22),transparent 60%),radial-gradient(80% 40% at 50% 110%,rgba(120,200,200,.16),transparent 60%);pointer-events:none}
+.phone.open .page{transform:translateX(278px) scale(.94);border-radius:36px;box-shadow:-10px 0 40px rgba(20,24,32,.18)}
+.scroll{position:absolute;inset:0;overflow-y:auto;padding:54px 16px 120px;display:flex;flex-direction:column;gap:14px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.view{display:none} .view.on{display:block}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px}
+.bar .ttl{font-size:16px;font-weight:600;flex:1;text-align:center}
+.rb{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(30,50,90,.08);position:relative;flex:none;cursor:pointer;color:var(--p-ink)}
+.rb svg{width:19px;height:19px}
+.badge{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;border-radius:9px;background:var(--p-blue);color:#fff;font-size:10.5px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+.badge.r{background:var(--p-red)}
+.chipbar{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:22px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.9);font-size:13.5px;font-weight:600;box-shadow:0 2px 8px rgba(30,50,90,.08)}
+.av{width:28px;height:28px;border-radius:50%;background:#DCE6F7;color:var(--p-blue);font-size:11px;font-weight:700;display:grid;place-items:center;flex:none}
+.eyebrow{font-size:13px;color:var(--p-muted);display:flex;gap:6px;align-items:center}
+.insight{font-size:22px;line-height:1.3;letter-spacing:-.45px;font-weight:600;text-wrap:balance}
+.insight .r{color:var(--p-red)} .insight .a{color:var(--p-amber)} .insight .b{color:var(--p-blue)} .insight .g{color:var(--p-green)}
+.sub{font-size:14px;color:var(--p-muted);line-height:1.4}
+.glass{background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.42));border:1px solid rgba(255,255,255,.95);border-radius:22px;box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 6px 18px rgba(40,70,130,.07),0 0 0 .5px rgba(20,28,40,.06)}
+.feature{position:relative;padding:16px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.6));box-shadow:0 1px 0 #fff inset,0 10px 26px rgba(36,91,204,.14),0 0 0 .5px rgba(20,28,40,.06)}
+.feature::after{content:"";position:absolute;top:0;right:0;width:90px;height:70px;border-top-right-radius:22px;background-image:radial-gradient(rgba(36,91,204,.35) 1px,transparent 1.3px);background-size:6px 6px;-webkit-mask:radial-gradient(circle at 100% 0,#000,transparent 70%);mask:radial-gradient(circle at 100% 0,#000,transparent 70%);pointer-events:none}
+.ovl{font-size:11px;letter-spacing:.8px;text-transform:uppercase;font-weight:700;color:var(--p-blue)}
+.ovl.r{color:var(--p-red)} .ovl.m{color:var(--p-muted)} .ovl.a{color:var(--p-amber)}
+.ft{font-size:17px;font-weight:600;letter-spacing:-.2px;line-height:1.3}
+.reason{display:inline-flex;align-self:flex-start;gap:6px;align-items:center;font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:12px}
+.reason.r{background:#F6DCDC;color:var(--p-red)} .reason.a{background:#F6E7D2;color:var(--p-amber)} .reason.g{background:#DCEFE6;color:var(--p-green)} .reason.b{background:var(--p-wash);color:var(--p-blue)}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:inherit;font-size:15px;font-weight:600;min-height:46px;padding:0 18px;border-radius:23px;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:1;transition:transform .12s}
+.btn:active{transform:scale(.96)}
+.btn.pri{background:#15171B;color:#fff;position:relative;overflow:hidden}
+.btn.pri::before{content:"";position:absolute;left:0;top:0;width:44px;height:28px;background-image:radial-gradient(rgba(255,255,255,.35) .8px,transparent 1.1px);background-size:5px 5px;-webkit-mask:radial-gradient(circle at 0 0,#000,transparent 70%);mask:radial-gradient(circle at 0 0,#000,transparent 70%)}
+.btn.sec{background:rgba(255,255,255,.7);color:var(--p-ink);border:1px solid rgba(20,28,40,.08)}
+.btn.off{background:#C9CDD3;color:#fff}
+.btn.sm{min-height:36px;font-size:13.5px;padding:0 14px;flex:none}
+.keys{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.key{padding:12px;display:flex;flex-direction:column;gap:8px;cursor:pointer;border-bottom:2px solid rgba(20,28,40,.07)}
+.key .g{width:32px;height:32px;border-radius:50%;background:var(--p-blue);color:#fff;display:grid;place-items:center}
+.key .g.r{background:var(--p-red)}
+.key .g svg{width:17px;height:17px}
+.key b{font-size:15px;font-weight:600}
+.key span{font-size:12.5px;color:var(--p-muted);line-height:1.3}
+.list{padding:4px 0}
+.row{display:flex;gap:12px;align-items:center;padding:11px 14px;cursor:default}
+.row + .row{border-top:1px solid var(--p-line)}
+.row .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.row .t{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .d{font-size:12.5px;color:var(--p-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .d.r{color:var(--p-red)} .row .d.a{color:var(--p-amber)} .row .d.g{color:var(--p-green)}
+.row .tm{font-size:12.5px;color:var(--p-muted);font-variant-numeric:tabular-nums}
+.sd{width:9px;height:9px;border-radius:50%;flex:none}
+.sd.r{background:var(--p-red)} .sd.a{background:#C78A3B} .sd.g{background:#3C9170} .sd.b{background:var(--p-blue)} .sd.n{background:#C3C8CF}
+.chk{width:22px;height:22px;border-radius:50%;border:1.8px solid #B9BFC7;flex:none}
+.chk.done{background:#3C9170;border-color:#3C9170}
+.sh{display:flex;justify-content:space-between;align-items:baseline;padding:6px 4px 0}
+.sh b{font-size:13px;font-weight:600;color:var(--p-muted)}
+.sh span{font-size:12.5px;color:var(--p-blue);font-weight:600}
+.fold{display:flex;justify-content:space-between;align-items:center;padding:13px 14px;font-size:14.5px}
+.fold i{font-style:normal;color:var(--p-soft)}
+.cap{font-size:12px;color:var(--p-soft);text-align:center;padding-top:4px}
+.seg{display:flex;padding:3px;border-radius:14px;background:rgba(20,28,40,.06);gap:2px}
+.seg span{flex:1;text-align:center;font-size:12.5px;font-weight:600;padding:7px 4px;border-radius:11px;color:var(--p-muted)}
+.seg span.on{background:#fff;color:var(--p-ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.search{display:flex;gap:8px;align-items:center;padding:10px 14px;border-radius:14px;background:rgba(20,28,40,.055);color:var(--p-soft);font-size:14.5px}
+.search svg{width:16px;height:16px}
+.tools{display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none}
+.tools::-webkit-scrollbar{display:none}
+.tool{flex:none;width:78px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:600;text-align:center;cursor:pointer}
+.tool .g{width:34px;height:34px;border-radius:50%;background:var(--p-wash);color:var(--p-blue);display:grid;place-items:center;position:relative}
+.tool .g svg{width:18px;height:18px}
+.tool .g .badge{top:-4px;right:-6px;background:var(--p-amber)}
+.tool small{font-size:10.5px;font-weight:500;color:var(--p-muted);line-height:1.2}
+.dock{position:absolute;left:12px;right:12px;bottom:22px;display:flex;gap:8px;align-items:center;z-index:8}
+.dock .in{flex:1;height:50px;border-radius:25px;display:flex;align-items:center;padding:0 18px;color:var(--p-soft);font-size:15px;background:rgba(255,255,255,.78);border:1px solid #fff;box-shadow:0 8px 24px rgba(30,50,90,.14);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.dock .mic{width:50px;height:50px;border-radius:50%;background:#15171B;color:#fff;display:grid;place-items:center;box-shadow:0 8px 22px rgba(20,24,32,.25)}
+.dock .mic svg{width:20px;height:20px}
+.sticky{position:absolute;left:0;right:0;bottom:0;padding:12px 16px 26px;background:linear-gradient(180deg,rgba(245,246,248,0),rgba(245,246,248,.94) 26%);z-index:8;display:flex;flex-direction:column;gap:8px}
+.sticky .why{font-size:12.5px;color:var(--p-muted);text-align:center}
+.composer{display:flex;gap:10px;align-items:center;padding:8px 8px 8px 16px;border-radius:26px;background:rgba(255,255,255,.85);border:1px solid #fff;box-shadow:0 8px 24px rgba(30,50,90,.12);font-size:14.5px;color:var(--p-soft)}
+.composer .plus{margin-left:auto;width:36px;height:36px;border-radius:50%;background:#15171B;color:#fff;display:grid;place-items:center;flex:none}
+.sbar{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13px;line-height:1.4}
+.sbar b{color:var(--p-blue);font-weight:700}
+.ring{width:44px;height:44px;flex:none}
+.hrow{display:flex;gap:12px;align-items:center}
+.fixrow{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--p-line)}
+.fixrow .num{width:22px;height:22px;border-radius:50%;background:#F6E7D2;color:var(--p-amber);font-size:11.5px;font-weight:700;display:grid;place-items:center;flex:none}
+.fixrow .mid{flex:1;font-size:14px;line-height:1.35}
+.fixrow .mid small{display:block;color:var(--p-muted);font-size:12px}
+.toggle{width:44px;height:26px;border-radius:13px;background:#3C9170;position:relative;flex:none}
+.toggle::after{content:"";position:absolute;right:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.offt{background:#D3D7DD}.toggle.offt::after{right:auto;left:3px}
+.pill-role{font-size:11px;font-weight:700;color:var(--p-blue);background:var(--p-wash);padding:3px 8px;border-radius:10px}
+.data-pill{font-size:11px;font-weight:600;color:var(--p-amber);background:#F6E7D2;padding:3px 8px;border-radius:10px}
+/* bottom sheet inside phone */
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:20;background:#fff;border-radius:30px 30px 0 0;padding:10px 16px 28px;transform:translateY(105%);transition:transform .42s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;gap:12px;box-shadow:0 -10px 30px rgba(20,24,32,.12)}
+.sheet.up{transform:none}
+.grab{width:38px;height:5px;border-radius:3px;background:#D5D8DD;align-self:center}
+.scrim{position:absolute;inset:0;background:rgba(20,24,32,.22);opacity:0;pointer-events:none;transition:opacity .3s;z-index:19}
+.scrim.on{opacity:1;pointer-events:auto}
+/* sidebar in phone */
+.drawer{position:absolute;inset:0;background:#F1F2F4;z-index:1;padding:52px 12px 110px;overflow-y:auto;scrollbar-width:none}
+.drawer::-webkit-scrollbar{display:none}
+.drawer .inner{width:268px;display:flex;flex-direction:column;gap:2px;opacity:0;transform:translateX(-18px);transition:opacity .3s .05s,transform .38s}
+.phone.open .drawer .inner,.phone.static .drawer .inner{opacity:1;transform:none}
+.who{display:flex;align-items:center;gap:12px;padding:6px 10px 10px}
+.who .nm{font-size:16px;font-weight:600}
+.who .pills{display:flex;gap:6px;margin-top:3px}
+.si{display:flex;align-items:center;gap:13px;min-height:48px;padding:6px 10px;border-radius:15px;cursor:pointer;border:0;background:transparent;font:inherit;color:inherit;text-align:left;width:100%}
+.si:hover{background:rgba(20,28,40,.04)}
+.si.on{background:rgba(20,28,40,.07)}
+.si:focus-visible{outline:2px solid var(--p-blue);outline-offset:-2px}
+.si svg{width:21px;height:21px;flex:none;color:var(--p-ink)}
+.si .mid{flex:1;min-width:0}
+.si .t{font-size:16px;display:block}
+.si.on .t{font-weight:600}
+.si .d{font-size:12.5px;color:var(--p-muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.si .d.r{color:var(--p-red)}
+.si .bd{min-width:21px;height:21px;border-radius:11px;background:var(--p-blue);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 6px}
+.si .bd.r{background:var(--p-red)}
+.si .bd.a{background:#B87A2E}
+.grp{font-size:11px;letter-spacing:.8px;text-transform:uppercase;font-weight:700;color:var(--p-soft);padding:14px 10px 4px}
+.div{height:1px;background:rgba(20,28,40,.08);margin:8px 10px}
+.newv{position:absolute;left:0;width:290px;bottom:24px;display:flex;justify-content:center;z-index:2;opacity:0;transition:opacity .3s}
+.phone.open .newv,.phone.static .newv{opacity:1}
+.newv span{display:inline-flex;gap:8px;align-items:center;min-height:52px;padding:0 24px;border-radius:26px;background:#15171B;color:#fff;font-weight:600;font-size:16px;border:3px solid rgba(255,255,255,.92);box-shadow:0 8px 22px rgba(20,24,32,.22)}
+.mark{position:relative}
+.mark::after{content:attr(data-n);position:absolute;right:-6px;top:50%;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;box-shadow:0 0 0 3px #F1F2F4}
+.phone.static .page{display:none}
+.phone.static .drawer{position:absolute}
+@media (prefers-reduced-motion:reduce){.page,.drawer .inner,.sheet,.scrim{transition:none}}
+/* ===== v2: status fade, ask bar, assistant sheet, scale ===== */
+.sfade{position:absolute;top:0;left:0;right:0;height:52px;background:linear-gradient(#F1F2F4 72%,rgba(241,242,244,0));z-index:3;pointer-events:none}
+.ask{position:absolute;left:12px;right:12px;bottom:20px;z-index:9;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.nudge{font:inherit;font-size:13px;font-weight:600;color:var(--p-blue);background:rgba(255,255,255,.86);border:1px solid #fff;border-radius:16px;padding:7px 12px;box-shadow:0 6px 18px rgba(36,91,204,.14);cursor:pointer;display:inline-flex;gap:6px;align-items:center;max-width:100%;text-align:left;animation:nudgeIn .5s cubic-bezier(.2,.8,.2,1) both .25s}
+@keyframes nudgeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.askrow{display:flex;gap:8px;width:100%}
+.askin{font:inherit;flex:1;height:52px;border-radius:26px;display:flex;align-items:center;gap:10px;padding:0 8px 0 8px;color:var(--p-soft);font-size:15px;background:rgba(255,255,255,.82);border:1px solid #fff;box-shadow:0 8px 24px rgba(30,50,90,.14);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);cursor:text;text-align:left;min-width:0}
+.askin .ph{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.orb{width:34px;height:34px;border-radius:50%;flex:none;background:radial-gradient(circle at 34% 28%,#fff 0 14%,rgba(255,255,255,0) 42%),radial-gradient(circle at 70% 75%,#7B5CF0 0,rgba(123,92,240,0) 55%),radial-gradient(circle at 30% 80%,#36B3C9 0,rgba(54,179,201,0) 55%),#4E7FE8;box-shadow:0 0 0 3px rgba(78,127,232,.14),0 4px 12px rgba(78,127,232,.35);animation:breathe 4s ease-in-out infinite}
+.orb.sm{width:22px;height:22px;box-shadow:0 0 0 2px rgba(78,127,232,.14)}
+@keyframes breathe{50%{transform:scale(1.06)}}
+.mic{font:inherit;width:52px;height:52px;border-radius:50%;border:0;background:#15171B;color:#fff;display:grid;place-items:center;box-shadow:0 8px 22px rgba(20,24,32,.25);flex:none;cursor:pointer}
+.mic svg{width:20px;height:20px}
+.sticky .dec{display:flex;gap:8px;align-items:center}
+.orbbtn{font:inherit;width:46px;height:46px;border-radius:50%;border:1px solid #fff;background:rgba(255,255,255,.85);display:grid;place-items:center;box-shadow:0 6px 16px rgba(30,50,90,.14);cursor:pointer;flex:none}
+/* sheet */
+.ascrim{position:absolute;inset:0;background:rgba(20,24,32,.26);z-index:18}
+.asheet{position:absolute;left:0;right:0;bottom:0;top:84px;z-index:19;background:#F7F8FA;border-radius:30px 30px 0 0;display:flex;flex-direction:column;box-shadow:0 -12px 34px rgba(20,24,32,.16);overflow:hidden}
+.asheet::before{content:"";position:absolute;inset:0 0 auto;height:180px;background:radial-gradient(80% 100% at 80% 0,rgba(120,160,240,.22),transparent 70%),radial-gradient(60% 90% at 10% 0,rgba(190,170,240,.18),transparent 70%);pointer-events:none}
+.asheet.enter{animation:sheetUp .42s cubic-bezier(.2,.8,.2,1)}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+.ahead{position:relative;display:flex;align-items:center;gap:8px;padding:10px 14px 6px}
+.scope{font:inherit;display:inline-flex;gap:6px;align-items:center;font-size:13px;font-weight:600;padding:6px 8px 6px 10px;border-radius:14px;background:var(--p-wash);color:var(--p-blue);border:0;cursor:pointer}
+.scope i{font-style:normal;opacity:.6;font-size:15px;line-height:1}
+.scope.all{background:rgba(20,28,40,.06);color:var(--p-muted)}
+.abody{position:relative;flex:1;overflow-y:auto;padding:6px 16px 16px;display:flex;flex-direction:column;gap:12px;scrollbar-width:none}
+.abody::-webkit-scrollbar{display:none}
+.hello{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:14px 8px 4px}
+.hello .orb{width:58px;height:58px}
+.sugg{font:inherit;display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:12px 14px;border:0;background:transparent;cursor:pointer;font-size:14.5px;color:var(--p-ink)}
+.sugg + .sugg{border-top:1px solid var(--p-line)}
+.sugg svg{width:16px;height:16px;color:var(--p-blue);flex:none}
+.sugg span{flex:1}
+.qb{align-self:flex-end;max-width:84%;background:#fff;border:1px solid rgba(20,28,40,.06);border-radius:18px 18px 6px 18px;padding:9px 13px;font-size:14.5px;box-shadow:0 2px 8px rgba(30,50,90,.06)}
+.skel{display:flex;flex-direction:column;gap:10px}
+.skel .ln{height:12px;border-radius:6px;background:linear-gradient(90deg,rgba(36,91,204,.08),rgba(36,91,204,.2),rgba(36,91,204,.08));background-size:200% 100%;animation:sh 1.1s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+.composing{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--p-blue);font-weight:600}
+.acomp{position:relative;display:flex;gap:8px;align-items:center;padding:10px 12px 24px;border-top:1px solid var(--p-line);background:rgba(255,255,255,.7)}
+.acomp input{font:inherit;flex:1;min-width:0;height:44px;border-radius:22px;border:1px solid rgba(20,28,40,.1);background:#fff;padding:0 16px;font-size:15px;color:var(--p-ink)}
+.acomp input:focus{outline:2px solid rgba(36,91,204,.35);outline-offset:1px}
+.send{font:inherit;width:44px;height:44px;border-radius:50%;border:0;background:#15171B;color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
+.send svg{width:18px;height:18px}
+.gen{display:flex;flex-direction:column;gap:10px;animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+.gen > *{animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+.gen > *:nth-child(2){animation-delay:.06s}.gen > *:nth-child(3){animation-delay:.12s}.gen > *:nth-child(4){animation-delay:.18s}.gen > *:nth-child(5){animation-delay:.24s}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.glead{font-size:17px;line-height:1.38;font-weight:600;letter-spacing:-.2px}
+.take{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.4;padding:9px 12px}
+.take + .take{border-top:1px solid var(--p-line)}
+.take i{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.metric{padding:10px 12px;display:flex;flex-direction:column}
+.metric b{font-size:22px;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.metric span{font-size:12px;color:var(--p-muted)}
+.chipb{font:inherit;font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:13px;border:1px solid rgba(20,28,40,.1);background:#fff;color:var(--p-ink);cursor:pointer;flex:none}
+.review{padding:14px;display:flex;flex-direction:column;gap:10px}
+.review ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+.review .what{font-size:12.5px;color:var(--p-muted)}
+.receipt{padding:14px;display:flex;gap:12px;align-items:center;background:#E3F2EA;border-radius:18px;border:1px solid #CFE7DA}
+.receipt .ck{width:30px;height:30px;border-radius:50%;background:#3C9170;color:#fff;display:grid;place-items:center;flex:none}
+.receipt .ck svg{width:16px;height:16px}
+.receipt div{font-size:14px;line-height:1.4}
+.receipt small{display:block;color:var(--p-muted);font-size:12px}
+.draft{padding:14px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.45}
+.srcs{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:600;color:var(--p-muted);padding:5px 10px;border-radius:12px;background:rgba(20,28,40,.05);align-self:flex-start}
+.compose-line{font-size:11.5px;color:var(--p-soft);display:flex;justify-content:space-between;gap:8px;align-items:center}
+.compose-line button{font:inherit;font-size:11.5px;color:var(--p-blue);background:none;border:0;cursor:pointer;padding:0}
+.spec{font:11px/1.45 ui-monospace,"SF Mono",Menlo,monospace;background:#1B1E24;color:#C9D4E5;border-radius:12px;padding:10px;white-space:pre;overflow-x:auto;margin:0}
+.followups{display:flex;gap:6px;flex-wrap:wrap}
+.toast{position:absolute;top:56px;left:50%;transform:translateX(-50%);z-index:30;background:#15171B;color:#fff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:16px;white-space:nowrap;animation:toast 1.8s ease both;pointer-events:none}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,-6px)}12%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+.sfilter{display:flex;gap:8px;align-items:center;padding:8px 10px 8px 12px;border-radius:14px;background:var(--p-wash);color:var(--p-blue);font-size:13px;font-weight:600}
+.sfilter span{flex:1}
+.sfilter button{font:inherit;border:0;background:rgba(36,91,204,.12);color:var(--p-blue);border-radius:10px;padding:3px 9px;cursor:pointer;font-size:12.5px}
+.views{display:flex;gap:6px;overflow-x:auto;margin:0 -16px;padding:0 16px 2px;scrollbar-width:none}
+.views::-webkit-scrollbar{display:none}
+.views button{font:inherit;flex:none;font-size:13px;font-weight:600;padding:7px 12px;border-radius:15px;border:1px solid rgba(20,28,40,.08);background:rgba(255,255,255,.7);color:var(--p-muted);cursor:pointer}
+.views button b{font-weight:700;color:var(--p-ink);margin-left:4px;font-variant-numeric:tabular-nums}
+.views button.on{background:#15171B;color:#fff;border-color:#15171B}
+.views button.on b{color:#fff}
+.views button.r b{color:var(--p-red)}
+.views button.on.r b{color:#FFB4B4}
+.more{font:inherit;width:100%;border:0;background:transparent;border-top:1px solid var(--p-line);padding:11px 14px;text-align:left;font-size:13.5px;font-weight:600;color:var(--p-blue);cursor:pointer}
+.row.compact{padding:8px 14px}
+.row.compact .av{width:26px;height:26px;font-size:10px}
+.letter{font-size:12px;font-weight:700;color:var(--p-muted);padding:10px 4px 2px}
+.scrub{position:absolute;right:3px;top:150px;bottom:110px;z-index:7;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:4px 2px}
+.scrub button{font:inherit;border:0;background:none;color:var(--p-blue);font-size:10.5px;font-weight:700;line-height:1;padding:1px 3px;cursor:pointer}
+.gtag{display:inline-flex;gap:5px;align-items:center;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--p-blue)}
+/* page-level v2 blocks */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.rule{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:8px}
+.rule p{color:var(--muted);font-size:14px}
+.rule .k{font-size:12px;font-weight:700;color:var(--blue)}
+.flow{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch}
+.flow .st{flex:1 1 150px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:4px;position:relative}
+.flow .st b{font-size:14px}
+.flow .st span{font-size:12.5px;color:var(--muted)}
+.flow .st em{font-style:normal;font-size:11.5px;font-weight:700;color:var(--blue);font-variant-numeric:tabular-nums}
+.guard{background:var(--amberWash);color:var(--ink);border-radius:14px;padding:14px 16px;font-size:14px;display:flex;flex-direction:column;gap:6px}
+.guard b{color:var(--amber)}
+.twocol{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.versus{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.versus ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:6px;color:var(--muted)}
+.versus ul b{color:var(--ink);font-weight:600}
+.try{display:flex;flex-direction:column;gap:6px}
+.try button{font:inherit;font-size:13.5px;text-align:left;padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;display:flex;gap:8px;align-items:center}
+.try button:hover{border-color:var(--blue)}
+.try button::before{content:"✦";color:var(--blue)}
+.scroll{padding-bottom:170px}
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <span class="over">Sona clinician app · UI audit and proposal · round 2 · 29 Sep 2026</span>
+  <h1>Sona on every page, and a sidebar that stays short at 1,000 patients</h1>
+  <p class="lead">Round 2 answers two questions. First, what happens with 100 more patients: the sidebar never lists more than three people, and the Patients page uses urgency groups, saved views and an A–Z index. Second, Sona is now one ask bar in the same place on every page. It knows which page you're on, builds the answer as a view from the json-render catalogue, and can change the page or act for you after you review it.</p>
+  <div class="stats">
+    <div class="stat"><b>108</b><span>synthetic patients in this prototype</span></div>
+    <div class="stat"><b>3</b><span>patient rows in the sidebar at most, at any scale</span></div>
+    <div class="stat"><b>1</b><span>ask bar on every page, scoped to that page</span></div>
+    <div class="stat"><b>25</b><span>scripted questions across 11 pages</span></div>
+  </div>
+</header>
+
+<section class="sec" id="prototype">
+  <div class="sec-head"><span class="over">Interactive prototype</span><h2>Try it: ask from any page</h2><p class="lead">Tap the ✦ suggestion above the ask bar, or open the bar and pick a question. On Patients, ask "Who has K+ below 3.5?" and then "Show only these on the page". On Ward, ask "Who can go home by noon?" and save the answer to the sidebar. In the sidebar, "See all 100" opens the Continue tab. Everything is synthetic fixture data, and the answers are scripted.</p></div>
+  <div class="proto">
+    <div class="phone" id="proto" aria-label="Interactive prototype"><div class="screen">
+      <div class="island"></div><div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="sfade"></div>
+      <div class="drawer" id="drawer"><div class="inner" id="liveSidebar"></div></div>
+      <div class="newv"><span>＋ New visit</span></div>
+      <div class="page" id="page">
+        <div class="scroll" id="scroll"></div>
+        <div id="pageExtra"></div>
+        <div id="sheetHost"></div>
+      </div>
+    </div></div>
+    <div class="side">
+      <div style="display:flex;flex-direction:column;gap:8px"><span class="over" style="color:var(--muted)">Signed in as</span><div class="roles" id="roles"></div><span class="hint">The sidebar, home keys and what Sona offers follow the server's permission table in <code>packages/api/src/roles.ts</code>.</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><span class="over" style="color:var(--muted)">Jump to</span><div class="jump" id="jump"></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><span class="over" style="color:var(--muted)">Ask Sona here</span><div class="try" id="try"></div></div>
+      <div class="changed" id="changed"></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="assistant">
+  <div class="sec-head"><span class="over">Sona on every page</span><h2>One ask bar that knows where you are and changes the page</h2><p class="lead">The goal is fewer trips. Instead of opening the sidebar, finding a page and scanning a list, the clinician asks from wherever they are. The answer comes back as a small view built from the same parts the app uses, with its actions attached.</p></div>
+  <div class="rules">
+    <div class="rule"><span class="k">1 · Same place</span><h3>Always at the bottom, always one tap</h3><p>A glass bar with the Sona orb and a hold-to-talk button, in the same spot on every page. On review pages (Discharge, GL, X-ray) the orb sits beside the decision button, so it never covers the decision.</p></div>
+    <div class="rule"><span class="k">2 · Knows the page</span><h3>A scope chip says what it's looking at</h3><p>"Ward 4B", "Amelia Tan", "Your tasks". Questions are answered against that page's state. Tap × to ask across everything; the sidebar's "Search or ask" starts there.</p></div>
+    <div class="rule"><span class="k">3 · Suggests first</span><h3>One ✦ suggestion per page, from live state</h3><p>Above the bar: "Who can go home by noon?" on the ward, "1 overdue: give it to Nurse Aisyah?" on tasks. It's derived from the same rules as the page's insight line, so the two never disagree.</p></div>
+    <div class="rule"><span class="k">4 · Answers as views</span><h3>Built from the catalogue, not free text</h3><p>Each answer is a json-render spec made of app-owned parts (lead, takeaways, patient rows, metrics, review card). A "Composed from" line shows which parts, and the spec is one tap away for review.</p></div>
+    <div class="rule"><span class="k">5 · Changes the page</span><h3>Apply, open or save the answer</h3><p><b>Show on page</b> filters the page with a removable ✦ chip. <b>Open as page</b> gives the answer a full page. <b>Save to sidebar</b> keeps it as a live view (at most three) that updates without asking again.</p></div>
+    <div class="rule"><span class="k">6 · Acts after review</span><h3>A review card, then a receipt</h3><p>"Give Siti's task to Nurse Aisyah" shows what will change, who is told and what stays the same, next to Confirm. After confirming, a receipt names what happened. Reading and filtering need no confirmation.</p></div>
+  </div>
+  <h3>How a question becomes a view</h3>
+  <div class="flow">
+    <div class="st"><em>0 ms</em><b>Question + page state</b><span>The typed or spoken words, the scope chip, and IDs from the page (patient, beds, tasks).</span></div>
+    <div class="st"><em>~33 ms</em><b>Laya picks the view</b><span><code>experimental_composeSpec</code> asks Laya to choose among app-owned candidates. It picks; it never writes UI or props.</span></div>
+    <div class="st"><em>stream</em><b>Model fills the words</b><span>Gemma or MedGemma writes the lead and takeaways into state. Rows, numbers and IDs come from the app's own data.</span></div>
+    <div class="st"><em>render</em><b>Validate and reveal</b><span>The spec is checked against the catalogue (32 elements, depth 8), then parts rise in on the existing stagger.</span></div>
+    <div class="st"><em>on tap</em><b>App-owned actions</b><span>Apply, open, save and confirm call the app's callbacks, with the same role checks and source records as the page's buttons.</span></div>
+  </div>
+  <div class="guard"><b>Guardrails and honesty</b><span>Laya and the models aren't hosted yet, so the app keeps its fixture answers until then. Patient identity, clinical state, role checks and actions stay app-owned, and every answer shows its sources. Before this ships, Laya needs a fine-tune on our own composition decisions: the research note measures it near chance untuned.</span></div>
+</section>
+
+<section class="sec" id="scale">
+  <div class="sec-head"><span class="over">At 100 or 1,000 patients</span><h2>Nothing lists everyone by default</h2><p class="lead">The round-1 sidebar listed recent patients one by one, which breaks at 100. Now each surface shows a ranked slice with a count, and search or Sona reaches the rest.</p></div>
+  <div class="twocol">
+    <div class="versus"><h3>Sidebar</h3><ul>
+      <li><b>Fixed length.</b> Patients is one row with a count ("108 · 12 need you"). Continue shows 3 rows, then "See all 100 · 12 draft notes".</li>
+      <li><b>Search or ask at the top.</b> A name, bed or MRN jumps straight to the patient; a question opens Sona across everything.</li>
+      <li><b>Saved views.</b> Answers you save ("Home by noon") sit in their own group, at most 3, each with a live count.</li>
+    </ul></div>
+    <div class="versus"><h3>Patients page</h3><ul>
+      <li><b>Views with counts:</b> Needs you 12 · My list 18 · Ward 4B 32 · Clinic today 24 · All 108. It opens on Needs you, not the whole list.</li>
+      <li><b>Urgency groups:</b> Needs you now, Next hour, Waiting, Done today. The top group shows 6 with "Show 6 more"; the big groups start folded with their counts.</li>
+      <li><b>All view:</b> A–Z sections with an index scrubber on the right edge, and compact 44 pt rows.</li>
+      <li><b>Built on <code>@legendapp/list</code>,</b> already installed, so 1,000 rows stay smooth.</li>
+    </ul></div>
+    <div class="versus"><h3>Continue: where you left off</h3><ul>
+      <li><b>Who gets in, in order:</b> the visit you have open, patients you pinned (5 at most), then unfinished work from the last 24 h (a draft note, a paused recording, an open next step).</li>
+      <li><b>Who leaves:</b> a closed visit (note reviewed, discharged or handed over), an unpin, or 24 h without activity. Unsigned notes and unreviewed results become a task or a Today item first.</li>
+      <li><b>At 100:</b> the Continue tab on Patients groups them by what's unfinished, oldest first, and offers to close the ones with nothing left after a review.</li>
+      <li><b>End of shift:</b> "Wrap up" beside Hand over lists draft notes to sign and visits to close, so the list resets each shift.</li>
+    </ul></div>
+    <div class="versus"><h3>Today and queues</h3><ul>
+      <li><b>Today</b> shows the top 4 ranked items and "See all 12 that need you", never the full census.</li>
+      <li><b>Ward and Handover</b> open on the filtered set (Blocked, To watch) with the others behind a segment.</li>
+      <li><b>Any list can be narrowed by Sona.</b> "Who has K+ below 3.5?" turns 108 rows into 3 with a removable chip.</li>
+    </ul></div>
+  </div>
+</section>
+
+<section class="sec" id="findings">
+  <div class="sec-head"><span class="over">What's scattered</span><h2>Five root causes</h2><p class="lead">Each one produces several of the symptoms you noticed. Fix these and most pages improve without being redesigned.</p></div>
+  <div class="findings">
+    <div class="finding"><span class="n">1 · Sidebar</span><h3>One flat list mixing four jobs</h3><p>My work (messages, tasks), patient tools (Consultation, Notes), ward work (Ward, Handover) and admin (Audit, Training) all sit in one ungrouped list. Consultation and Notes need a patient, so they send you through the patient picker first. "Home" does nothing but close the drawer. "Share feedback" opens Settings.</p><span class="ev"><code>features/encounter/sidebar.tsx:61-99</code></span></div>
+    <div class="finding"><span class="n">2 · No page shape</span><h3>Every page opens differently</h3><p>There's no shared header and insight component (Sona Care has one: <code>Title accent line=</code>). Page titles use five different type sizes. Ward, Tasks, Handover, Note, X-ray and Consultation open with no answer to "where do I stand?".</p><span class="ev">Titles in <code>display</code>, <code>title</code>, <code>headline</code>, <code>heading</code> and 13 pt blue</span></div>
+    <div class="finding"><span class="n">3 · Duplication</span><h3>The same thing in up to nine places</h3><p>The patient list appears in 9 places, tasks in 9, and handover has 5 entry points. On the home screen alone, Messages appears as a key and as a top-bar badge. Settings and the sidebar both list recent encounters.</p><span class="ev">Patients, visits, History, Recent encounters, ward, handover, inbox…</span></div>
+    <div class="finding"><span class="n">4 · Buried actions</span><h3>The main action often sits at the bottom</h3><p>Discharge, Guarantee letter, X-ray (Analyse), the patient sheet (Open visit, 4th block) and Training (Export) put the primary button below the review content. On a long page you scroll to act.</p><span class="ev"><code>discharge/index.tsx:306</code>, <code>imaging/index.tsx:283</code>, <code>patient-sheet.tsx:127</code></span></div>
+    <div class="finding"><span class="n">5 · Competing next steps</span><h3>Four "next step" mechanisms in one visit</h3><p>NeedLine, NextStepBar, "You might want to ask" and the Done-with keys all suggest what to do next, each with its own look. Five components render similar "needs attention" state.</p><span class="ev"><code>quick-actions.ts:104</code>, <code>next-steps.ts</code>, <code>workspace-screen.tsx:237-246</code></span></div>
+    <div class="finding"><span class="n">6 · Leftovers</span><h3>Settings is a drawer of everything</h3><p>"Your workspace" holds settings, the demo clock, developer interruption controls, the hospital library and recent encounters on one page of about 9 cards. Sign-in goes through the unstyled Better-T-Stack "Account scaffold".</p><span class="ev"><code>history-screen.tsx</code>, <code>components/legacy-home.tsx</code></span></div>
+  </div>
+</section>
+
+<section class="sec" id="score">
+  <div class="sec-head"><span class="over">Scorecard</span><h2>Every page against the principles</h2></div>
+  <div class="legend"><span><i class="dot d-y"></i>Meets it</span><span><i class="dot d-p"></i>Partly</span><span><i class="dot d-n"></i>Misses it</span><span><i class="dot d-x"></i>Not applicable</span></div>
+  <div class="tablebox"><table id="scoretable"><thead><tr><th>Page</th><th>Insight first</th><th>Action in place</th><th>Highlights</th><th>Review first</th><th>Next step</th><th>Minimal</th><th>Main fix</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<section class="sec" id="structure">
+  <div class="sec-head"><span class="over">Proposed structure</span><h2>Group by job and put patient tools inside the visit</h2><p class="lead">The sidebar answers "what kind of work am I doing?": today, my queue, my patients, the ward. Anything that needs a patient moves into the visit, where the patient is already chosen, so it never needs a picker detour.</p></div>
+  <div class="ia">
+    <div class="ia-col"><h3>Today <small>home</small></h3><ul><li>Ranked day <i>insight + most urgent</i></li><li>Day timeline <i class="moved">folded into date line</i></li></ul></div>
+    <div class="ia-col"><h3>My work <small>queues</small></h3><ul><li>Messages <i>badge = urgent</i></li><li>Follow-up tasks <i class="moved">now grouped by due</i></li><li>Shift handover</li></ul></div>
+    <div class="ia-col"><h3>Patients <small>people</small></h3><ul><li>Patients <i class="moved">Today · Ward · Recent tabs</i></li><li>Recent visits <i>max 3 in sidebar</i></li><li><span class="cut">Visits sheet list</span> <i>shares the row</i></li></ul></div>
+    <div class="ia-col"><h3>Ward &amp; hospital <small>oversight</small></h3><ul><li>Ward <i class="moved">huddle first</i></li><li>Coding audit <i>doctor, management</i></li><li>Training data <i>management</i></li></ul></div>
+    <div class="ia-col inside"><h3>Inside a visit <small>tools</small></h3><ul><li class="moved">Consultation</li><li class="moved">Note</li><li>Medicines · X-ray · Scan</li><li>Tasks · Discharge · GL</li></ul></div>
+    <div class="ia-col"><h3>Footer <small>account</small></h3><ul><li>Settings <i class="moved">split from demo tools</i></li><li><span class="cut">Share feedback</span> <i>was a Settings duplicate</i></li><li><span class="cut">Home</span> <i>renamed Today</i></li></ul></div>
+  </div>
+
+  <div class="compare">
+    <figure class="fig" style="margin:0">
+      <div class="phone static" aria-label="Current sidebar"><div class="screen"><div class="island"></div><div class="status"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="sfade"></div><div class="drawer"><div class="inner" id="beforeSidebar"></div></div>
+        <div class="newv"><span>＋ New visit</span></div></div></div>
+      <figcaption>Now: 10 items in one list, 2 duplicates, 2 detours through the patient picker.</figcaption>
+      <ol class="notes">
+        <li><b>1</b><span>"Home" only closes the drawer.</span></li>
+        <li><b>2</b><span>Consultation and Notes need a patient, so they go through the picker first.</span></li>
+        <li><b>3</b><span>Four kinds of work with no groups; an unreadable scan for a new role.</span></li>
+        <li><b>4</b><span>"Share feedback" opens Settings, the same as the gear.</span></li>
+      </ol>
+    </figure>
+    <figure class="fig" style="margin:0">
+      <div class="phone static" aria-label="Proposed sidebar"><div class="screen"><div class="island"></div><div class="status"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="sfade"></div><div class="drawer"><div class="inner" id="afterSidebar"></div></div>
+        <div class="newv"><span>＋ New visit</span></div></div></div>
+      <figcaption>Proposed: a fixed-length drawer. Patients is one counted row; Continue holds at most 3 people; Search or ask sits at the top.</figcaption>
+      <ol class="notes good">
+        <li><b>1</b><span>"Today" shows how many things need you, so the drawer reads as a summary.</span></li>
+        <li><b>2</b><span>Badge colour follows the colour rules: red only for urgent, amber for overdue.</span></li>
+        <li><b>3</b><span>Visit tools leave the sidebar; the visit's tool row holds them. Saved Sona views appear under their own group.</span></li>
+        <li><b>4</b><span>Role, name and the synthetic-data pill sit in the header, and the gear is the only way to Settings.</span></li>
+      </ol>
+    </figure>
+  </div>
+</section>
+
+<section class="sec" id="template">
+  <div class="sec-head"><span class="over">One page shape</span><h2>Every page is built from the same five layers</h2><p class="lead">A single <code>Page</code> primitive in <code>components/sona/ui.tsx</code> gives every screen the same opening, so the principles hold by construction instead of by review.</p></div>
+  <div class="anatomy">
+    <div class="phone" aria-label="Page template example"><div class="screen"><div class="island"></div><div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="page"><div class="scroll">
+        <div class="bar"><span class="rb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></span><span class="ttl">Ward</span><span style="width:40px"></span></div>
+        <div style="outline:2px dashed #245BCC;outline-offset:4px;border-radius:8px;display:flex;flex-direction:column;gap:4px"><span class="eyebrow">Ward 4B · 12 beds · live</span><div class="insight"><span class="r">2 discharges blocked</span> · 14 bed-hours waiting</div></div>
+        <div class="glass feature" style="outline:2px dashed #245BCC;outline-offset:4px"><span class="ovl">10:00 huddle</span><div class="ft">3 things to settle before the huddle</div><div class="acts"><button class="btn pri sm" style="flex:1" type="button">Assign owners</button></div></div>
+        <div class="glass list" style="outline:2px dashed #8C939C;outline-offset:4px"><div class="row"><i class="sd r"></i><div class="mid"><span class="t">Bed 6 · Amelia Tan</span><span class="d r">GL pending · pharmacy</span></div></div><div class="row"><i class="sd a"></i><div class="mid"><span class="t">Bed 2 · Nurul</span><span class="d a">Waiting on transport</span></div></div></div>
+        <div class="glass fold" style="outline:2px dashed #8C939C;outline-offset:4px"><span>Next 24 hours</span><i>3 beds free ›</i></div>
+        <span class="cap">Synthetic ward · demo clock</span>
+      </div></div></div></div>
+    <div class="layers">
+      <div class="layer"><div><h3>Native title, matching the sidebar label</h3><p>A short noun, the same word as the sidebar ("Messages", not "Patient messages"; "Settings", not "Your workspace"). The body never repeats it as an overline.</p></div></div>
+      <div class="layer"><div><h3>Insight line</h3><p>One eyebrow of context, then one sentence in <code>type.title</code> with the part that matters in its meaning colour. It answers "does anything need me?" in 3 seconds. Empty states reassure: "Nothing needs you on the ward".</p></div></div>
+      <div class="layer"><div><h3>One feature card, with its action</h3><p><code>Surface feature</code> with the halftone glint, holding the single most important thing and its <code>Action</code>. Never more than one.</p></div></div>
+      <div class="layer"><div><h3>Ranked detail</h3><p>Plain glass lists, ranked by urgency, every row with its reason. Secondary blocks fold to one line (<code>Expand</code>) and say what's inside ("3 beds free ›").</p></div></div>
+      <div class="layer"><div><h3>Quiet footer, or a sticky decision bar</h3><p>Browse pages end with one caption (sample and demo labels merged). Review pages (Discharge, GL, Note, X-ray, Scan) pin the primary in a bottom bar with one "what happens" line above it, so the decision is never below the fold.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="order">
+  <div class="sec-head"><span class="over">Build order</span><h2>Five passes, the cheapest and widest first</h2><p class="lead">Estimates assume one agent working in <code>apps/native</code>, with the existing tests and a simulator check after each pass. Pass 5 can run on fixtures now and switch to Laya once the models are hosted.</p></div>
+  <div class="phases">
+    <div class="phase"><span class="over">Pass 1</span><h3>Sidebar and names</h3><span class="time">About 3 hours</span><ul><li>Group into Today / My work / Patients / Ward &amp; hospital</li><li>Patients as one counted row; Continue capped at 3; Search or ask at the top</li><li>Remove Home, Consultation, Notes, Share feedback</li><li>Match native titles to sidebar labels</li></ul></div>
+    <div class="phase"><span class="over">Pass 2</span><h3>Page and insight primitives</h3><span class="time">Half a day</span><ul><li><code>Page</code> with title, eyebrow and insight in <code>ui.tsx</code></li><li>Move ward, audit, handover, discharge, claim and xray onto it</li><li>Add insight lines where they are missing</li><li>Replace the 10 hand-rolled primaries with <code>Action</code></li></ul></div>
+    <div class="phase"><span class="over">Pass 3</span><h3>Patients at scale</h3><span class="time">About 1 day</span><ul><li>Views with counts, urgency groups, A–Z scrubber</li><li><code>LegendList</code> for the rows; one shared <code>PatientRow</code></li><li>Continue: 3 in the sidebar, the full tab, 5-pin cap, 24 h rule, reviewed batch close</li><li>End-of-shift wrap-up beside Hand over</li><li>Seed 100+ synthetic patients to test it</li></ul></div>
+    <div class="phase"><span class="over">Pass 4</span><h3>Visit, review pages, home</h3><span class="time">About 1.5 days</span><ul><li>Visit tool row and one next-step card</li><li>Sticky decision bar with the orb beside it</li><li>Most urgent above the timeline</li><li>Split Settings from Demo tools; delete the account scaffold</li></ul></div>
+    <div class="phase"><span class="over">Pass 5</span><h3>Sona on every page</h3><span class="time">About 2 days on fixtures</span><ul><li>Promote <code>VoiceDock</code> to a global <code>AskBar</code> in the root layout, with a scope from each page</li><li>Ask sheet renders json-render specs with the existing catalogue</li><li>Apply-to-page filters, Open as page, Saved views</li><li>Review card and receipt parts for actions</li></ul></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function(){
+const I = {
+  today:'<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+  users:'<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2c2.4.2 4 1.8 4.5 4.8"/>',
+  home:'<path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>',
+  msg:'<path d="M5 5h14a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-8l-4 3v-3H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/>',
+  steth:'<path d="M6 3v5a4 4 0 0 0 8 0V3"/><path d="M10 12v3a4 4 0 0 0 8 0v-2"/><circle cx="18" cy="11" r="2"/>',
+  note:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7"/>',
+  tasks:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5 2.5-2.5"/><circle cx="5" cy="18" r="1.3"/>',
+  hand:'<path d="M7 12l4-4 3 3 5-5"/><path d="M14 6h5v5"/><path d="M4 20h16"/>',
+  bed:'<path d="M3 18V7M3 13h18v5M21 13v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="10.5" r="1.8"/>',
+  audit:'<path d="M6 3h9l4 4v6"/><path d="M6 3v18h6"/><circle cx="16.5" cy="17" r="3"/><path d="M19 19.5l2 2"/>',
+  shield:'<path d="M12 3l7 3v6c0 4.4-3 7.7-7 9-4-1.3-7-4.6-7-9V6z"/><path d="M12 3v18"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
+  fb:'<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>',
+  clock:'<circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/>',
+  pin:'<path d="M9 4h6l-1 6 3 3H7l3-3z"/><path d="M12 13v7"/>',
+  spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>',
+  menu:'<path d="M4 8h16M4 16h10"/>',
+  back:'<path d="M15 5l-7 7 7 7"/>',
+  close:'<path d="M6 6l12 12M18 6L6 18"/>',
+  search:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',
+  mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  up:'<path d="M12 19V5M6 11l6-6 6 6"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  pill:'<rect x="3" y="8.5" width="18" height="7" rx="3.5" transform="rotate(-35 12 12)"/><path d="M9.2 7.2l5.6 9.6"/>',
+  xray:'<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M12 6v12M9 9c-2 0-2 2-2 3M15 9c2 0 2 2 2 3M9 13c-1.5 0-2 1.5-2 3M15 13c1.5 0 2 1.5 2 3"/>',
+  scan:'<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"/>',
+  brief:'<path d="M12 3l2 5 5 .5-4 3.5 1.2 5L12 14.5 7.8 17l1.2-5-4-3.5L10 8z"/>',
+  door:'<path d="M6 21V4h10v17M4 21h16"/><circle cx="13" cy="12.5" r=".9" fill="currentColor"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  view:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 10h16M10 10v10"/>'
+};
+const svg = (n,sw) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw||1.7}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- scorecard ---------- */
+const S = {y:'d-y',p:'d-p',n:'d-n',x:'d-x'};
+const rows = [
+  ['Today (home)','p','y','y','x','y','n','Most urgent card above the 116 pt ruler; ruler folds into the date line; top 4 items plus "See all"'],
+  ['Visit session','y','y','y','y','p','n','One next-step card replaces NeedLine, "You might want to ask" and the end keys; visit tools in one row'],
+  ['Patients + sheet','n','n','y','x','y','p','Views with counts, urgency groups, A–Z index; Open visit right after the needs'],
+  ['Patient messages','y','y','y','y','y','y','Keep; it is the reference page. Rename the title to "Messages"'],
+  ['Message thread','y','y','y','y','y','y','Keep'],
+  ['Follow-up tasks','n','p','p','x','p','p','Insight "6 open · 1 overdue"; group by due; the ask bar doubles as the task composer'],
+  ['Shift handover','n','y','y','y','y','y','Insight "5 patients · 2 to watch" before the stack'],
+  ['Ward','n','y','y','y','p','n','Insight line; huddle brief as the feature card; remove the Audit and Training tiles'],
+  ['Coding audit','y','y','y','y','y','p','Use Action for "Send to"; largest gap as the feature card'],
+  ['Training data','y','p','y','y','p','p','Export moves to the feature card; drop the repeated overline'],
+  ['Discharge','y','p','y','y','y','p','Sticky decision bar with the orb beside it; secondary blocks fold'],
+  ['Guarantee letter','y','p','y','y','y','p','Shares the Discharge review shell'],
+  ['Consultation note','n','y','p','y','p','y','Insight "Draft · Plan empty · not reviewed"'],
+  ['Consultation','n','y','p','x','y','p','Merge the three honesty lines into one caption'],
+  ['Chest X-ray','n','n','y','y','p','p','Finding summary on top; Analyse in a sticky bar'],
+  ['Scan a note','y','y','y','y','y','y','Keep; the best review flow'],
+  ['Settings ("Your workspace")','n','p','x','x','x','n','Rename; split out Demo tools; restyle sign-in'],
+  ['Account scaffold','n','n','n','x','x','n','Delete; sign-in moves into Settings'],
+  ['Source detail','p','x','n','y','x','p','Drop the duplicate overline; highlight the history version'],
+];
+document.querySelector('#scoretable tbody').innerHTML = rows.map(r=>`<tr><td><b>${r[0]}</b></td>${r.slice(1,7).map(v=>`<td class="c"><i class="dot ${S[v]}" role="img" aria-label="${{y:'meets',p:'partly',n:'misses',x:'not applicable'}[v]}"></i></td>`).join('')}<td class="fix">${r[7]}</td></tr>`).join('');
+
+/* ---------- 108 synthetic patients ---------- */
+let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647; const pick = a => a[Math.floor(rnd() * a.length)];
+const NEEDS = [
+  ['Siti Aminah','Bed 4B-03','Low potassium 2.9 · no action yet','r',{k:2.9}],
+  ['Ravi Kumar','Bed 4B-09','Chest tight · message waiting 2 h','r'],
+  ['Ahmad Faizal','Bed 4B-17','Troponin rising · 2nd result','r'],
+  ['Lee Hui Min','Bed 5A-11','Worse at day-2 check-in','r'],
+  ['Amelia Tan','Clinic 09:30','2 medicines to confirm','a'],
+  ['Wong Kok Leong','Bed 4B-14','K+ 3.2 · repeat due','a',{k:3.2}],
+  ['Kavitha Devi','Bed 5A-02','K+ 3.4 · on furosemide','a',{k:3.4}],
+  ['Tan Mei Ling','Clinic 10:00','Allergy unconfirmed','a'],
+  ['Nurul Huda','Bed 4B-02','Transport at 15:00 holds the bed','a'],
+  ['Suresh Nair','Bed 4B-21','GL denied · appeal due today','a'],
+  ['Goh Chee Keong','Clinic 10:30','History to complete','a'],
+  ['Farah Nadia','Bed 5A-07','Unsigned note from yesterday','a'],
+];
+const NEXT = [['Lim Wei Jie','Clinic 11:00'],['Priya Menon','Clinic 10:15'],['Chong Xin Yi','Clinic 10:20'],['Hafiz Iskandar','Clinic 10:40'],['Mariam Zahra','Clinic 10:45'],['Arjun Raj','Clinic 10:50']];
+const P = []; const used = new Set();
+NEEDS.forEach(([n,w,why,t,x]) => { used.add(n); P.push({n,w,why,t,st:'needs',mine:true,...(x||{})}); });
+NEXT.forEach(([n,w]) => { used.add(n); P.push({n,w,why:'Record complete · ready',t:'g',st:'next',mine:true}); });
+const MG=['Ahmad','Muhammad','Nur','Siti','Aisyah','Hafiz','Zulkifli','Rosli','Azlan','Farah','Hidayah','Izzat','Mariam','Rahim','Syafiq','Nabila','Haziq','Aminah','Khairul','Liyana'], MS=['Hakim','Aina','Izwan','Sofea','Rashid','Amani','Firdaus','Zahra','Iskandar','Balqis','Hanis','Danial'];
+const CS=['Tan','Lim','Lee','Wong','Ng','Chong','Goh','Ong','Teo','Chan','Yap','Low','Koh'], CG=['Wei Ming','Mei Ling','Kok Leong','Hui Min','Jia Hui','Chee Keong','Siew Lan','Boon Hock','Xin Yi','Kah Wai','Pei Shan','Jun Hao'];
+const IF=['Ravi','Priya','Suresh','Kavitha','Arjun','Deepa','Ganesh','Lakshmi','Vijay','Anita','Mohan','Revathi'], IS=['Kumar','Devi','Nair','Pillai','Raj','Menon','Rao'];
+const mk = () => { const r = rnd(); return r < .42 ? `${pick(MG)} ${pick(MS)}` : r < .76 ? `${pick(CS)} ${pick(CG)}` : `${pick(IF)} ${pick(IS)}`; };
+const WAIT = ['Stable · day 3','Awaiting bloods','Physio this afternoon','Stable · day 1','Awaiting imaging','Clinic follow-up'];
+const DONE = ['Seen · note signed','Discharged this morning','Seen · tasks set','Reviewed · stable'];
+const usedB = new Set([2,3,9,14,17,21]); let b4=1, n4=0, b5=12, nc=0, clinicMin = 11*60+15;
+const where = () => { const r = rnd();
+  if (r < .36 && n4 < 26) { while (usedB.has(b4)) b4++; n4++; return `Bed 4B-${String(b4++).padStart(2,'0')}`; }
+  if (r < .6 && nc < 15) { nc++; const h=Math.floor(clinicMin/60), m=clinicMin%60; clinicMin+=20; return `Clinic ${h}:${String(m).padStart(2,'0')}`; }
+  return `Bed 5A-${String(b5++).padStart(2,'0')}`; };
+while (P.length < 108) { let n = mk(); if (used.has(n)) continue; used.add(n); const st = P.length < 18+41 ? 'wait' : 'done'; const w = where(), cl = w.startsWith('Clinic'); P.push({n,w,why: st==='wait'?(cl?pick(['Booked · record complete','Booked · bloods back','Booked · first visit']):pick(WAIT)):(cl?'Seen · note signed':pick(DONE)), t: st==='done'?'g':'', st, mine:false}); }
+const initials = n => n.split(' ').map(s=>s[0]).join('').slice(0,2);
+/* ---------- Continue: unfinished work you started (100) ---------- */
+const CONT = (() => {
+  const pool = P.filter(p => !['Amelia Tan','Siti Aminah'].includes(p.n)); let i = 0;
+  const take = (n, fn) => pool.slice(i, i += n).map(fn);
+  const why = ['next step open','2 answers, no note','note not started','tasks not set'];
+  return {
+    visits: [{n:'Amelia Tan', d:'In visit now · 3 answers', age:0, cur:1}, ...take(39,(p,j)=>({n:p.n, d:`Open visit · ${why[j%4]}`, age: 20-(j%20)})).sort((a,b)=>b.age-a.age)],
+    notes: take(12,(p,j)=>({n:p.n, d: j===0?'Draft note · becomes a task in 1 h':'Draft note · not signed', age: 23-j, t:'a'})),
+    rec: take(3,(p,j)=>({n:p.n, d:'Recording paused', age:[9,5,2][j], t:'a'})),
+    pins: [{n:'Siti Aminah', d:'Pinned · K+ 2.9', age:2}, ...take(4,(p,j)=>({n:p.n, d:'Pinned', age: 24*(j+1)}))],
+    idle: take(40,(p,j)=>({n:p.n, d:'Nothing left · note signed, tasks set', age: 18-(j%16), t:'g'}))
+  };
+})();
+const COUNTS = { needs:12, mine:P.filter(p=>p.mine).length, ward:P.filter(p=>p.w.startsWith('Bed 4B')).length, clinic:P.filter(p=>p.w.startsWith('Clinic')).length, all:P.length };
+
+/* ---------- roles and sidebars ---------- */
+const ROLE = {
+  doctor:{label:'Doctor', name:'Dr Test Doctor', items:['today','messages','tasks','handover','patients','ward','audit']},
+  nurse:{label:'Nurse', name:'Nurse Aisyah', items:['today','messages','tasks','handover','patients','ward']},
+  'bed-manager':{label:'Bed manager', name:'Encik Faizal', items:['today','tasks','patients','ward']},
+  management:{label:'Management', name:'Dr Wong (COO)', items:['today','messages','tasks','handover','patients','ward','audit','training']}
+};
+const ITEMS = {
+  today:{i:'today',t:'Today',d:'3 need you before 10:00'},
+  messages:{i:'msg',t:'Messages',d:'3 waiting · longest 2 h',b:1,bc:'r'},
+  tasks:{i:'tasks',t:'Follow-up tasks',d:'6 open · 1 overdue',b:1,bc:'a'},
+  handover:{i:'hand',t:'Shift handover',d:'5 patients · 2 to watch'},
+  patients:{i:'users',t:'Patients',d:`${COUNTS.all} · 12 need you`},
+  ward:{i:'bed',t:'Ward',d:'2 discharges blocked',dr:1},
+  audit:{i:'audit',t:'Coding audit',d:'RM 18,400 at risk'},
+  training:{i:'shield',t:'Training data',d:'12 samples to review'}
+};
+const siRow = (o) => `<button type="button" class="si${o.on?' on':''}${o.mark?' mark':''}" ${o.mark?`data-n="${o.mark}"`:''} ${o.go?`data-go="${o.go}"`:''}>${svg(o.i)}<span class="mid"><span class="t">${o.t}</span>${o.d?`<span class="d${o.dr?' r':''}">${o.d}</span>`:''}</span>${o.b?`<span class="bd ${o.bc||''}">${o.b}</span>`:''}</button>`;
+document.getElementById('beforeSidebar').innerHTML =
+ `<div class="who">${svg('users')}<div style="flex:1"><div class="nm">Clinician</div><div class="pills"><span class="data-pill">Synthetic data</span></div></div><span class="rb" style="background:none;border:0;box-shadow:none">${svg('gear')}</span></div><div class="div"></div>`+
+ [{i:'home',t:'Home',on:1,mark:1},{i:'users',t:'Patients',d:'4 visits today'},{i:'msg',t:'Messages',d:'3 waiting · 1 urgent',b:3,bc:'r'},{i:'steth',t:'Consultation',d:'Pick a visit first',mark:2},{i:'note',t:'Notes',mark:2},{i:'tasks',t:'Follow-up tasks',mark:3},{i:'hand',t:'Shift handover',d:'7 patients'},{i:'bed',t:'Ward',d:'2 discharges blocked'},{i:'audit',t:'Coding audit',d:'RM 18,400 at risk'}].map(siRow).join('')+
+ `<div class="div"></div>`+siRow({i:'fb',t:'Share feedback',mark:4})+`<div class="div"></div><div class="grp" style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:500">History</div>`+
+ [{i:'clock',t:'Amelia Tan',d:'Wheeze follow-up · 3 requests'},{i:'clock',t:'Siti Aminah',d:'Diabetes review · 1 request'}].map(siRow).join('');
+
+let saved = [];
+let contClosed = false; const contTotal = () => contClosed ? 60 : 100;
+function sidebarHTML(role, active, live){
+  const r = ROLE[role];
+  let h = `<div class="who"><span class="av" style="width:36px;height:36px;font-size:13px">${initials(r.name.replace(/^(Dr|Nurse|Encik) /,''))}</span><div style="flex:1;min-width:0"><div class="nm">${r.name}</div><div class="pills"><span class="pill-role">${r.label}</span><span class="data-pill">Synthetic data</span></div></div><button type="button" class="rb" style="background:none;border:0;box-shadow:none" aria-label="Settings" ${live?'data-go="settings"':''}>${svg('gear')}</button></div>`;
+  h += `<button type="button" class="askin" ${live?'data-askglobal':''} style="height:44px;margin:4px 4px 8px;width:auto;box-shadow:none;border:1px solid rgba(20,28,40,.06);font-size:14.5px"><span class="orb sm"></span><span class="ph">Search or ask Sona</span></button>`;
+  const grp = (g, keys) => { const shown = keys.filter(k=>r.items.includes(k)); if(!shown.length) return ''; return (g?`<div class="grp">${g}</div>`:'') + shown.map(k=>siRow({...ITEMS[k], on:k===active, go:live?k:null})).join(''); };
+  h += grp(null,['today']) + grp('My work',['messages','tasks','handover']) + grp('Patients',['patients']);
+  h += `<div class="grp">Continue</div>` + [{i:'steth',t:'Amelia Tan',d:'In visit · 3 answers',go:live?'visit':null,on:active==='visit'},{i:'pin',t:'Siti Aminah',d:'Pinned · K+ 2.9'},{i:'pin',t:CONT.pins[1].n,d:'Pinned yesterday'}].map(siRow).join('')
+    + siRow({i:'clock',t:`See all ${contTotal()}`,d:'12 draft notes · 3 paused recordings',go:live?'continue':null});
+  h += grp('Ward & hospital',['ward','audit','training']);
+  if (saved.length) h += `<div class="grp">Saved views</div>` + saved.map(s=>siRow({i:'view',t:s.title,d:s.detail,go:live?`gen:${s.id}`:null,on:active===`gen:${s.id}`})).join('');
+  return h;
+}
+document.getElementById('afterSidebar').innerHTML = sidebarHTML('doctor','today',false);
+
+/* ---------- generated answers (json-render style specs) ---------- */
+const A = {
+  first:{q:'What should I do first?', parts:['Lead','RankedRows','ActionRow'], spec:[
+    {t:'lead', text:'Start with Siti’s potassium. It’s the only thing that could harm someone in the next hour.'},
+    {t:'rows', rows:[['r','1 · Siti Aminah · K+ 2.9','On furosemide · no replacement yet','Open','go:visit'],['r','2 · Ravi Kumar replied','“Chest tight” · waiting 2 h','Reply','go:messages'],['a','3 · Amelia Tan at 09:30','2 medicines to confirm','Confirm','go:visit']]},
+    {t:'sources', n:4},
+    {t:'actions', items:[['Pin this order to Today','toast:Pinned to Today',1],['Save to sidebar','pin']]}],
+    follow:['Summarise my day']},
+  day:{q:'Summarise my day', parts:['Metrics','Takeaways'], spec:[
+    {t:'metrics', items:[['24','clinic visits',''],['12','need you','r'],['6','open tasks','']]},
+    {t:'take', items:[['r','Two results can’t wait: Siti’s potassium and Ahmad’s troponin.'],['a','Your 10:00–11:00 clinic has 3 records still incomplete.'],['g','Four discharges are ready once the GL and transport are sorted.']]}],
+    follow:['What should I do first?']},
+  pred:{q:'Is prednisolone safe for her?', parts:['Takeaways','Sources','ActionRow'], spec:[
+    {t:'take', items:[['g','No steroid allergy. Her penicillin allergy is unrelated.'],['a','Glucose was 7.9 yesterday. Recheck on day 3 of the course.'],['g','BP 128/80. No interaction with salbutamol.']]},
+    {t:'sources', n:5},
+    {t:'actions', items:[['Add to the plan','toast:Added to Amelia’s plan',1],['Draft the discharge plan','ask:dc']]}],
+    follow:['Can she go home today?']},
+  dc:{q:'Can she go home today?', parts:['Lead','BlockerRows','ActionRow'], spec:[
+    {t:'lead', text:'Yes, once 2 things are done. Both can be done from here.'},
+    {t:'rows', rows:[['a','Guarantee letter not sent','Codes ready · insurer needs the note excerpt','Review','go:discharge'],['a','Take-home list not confirmed','Salbutamol, prednisolone for 5 days','Confirm','go:discharge']]},
+    {t:'actions', items:[['Open discharge','go:discharge',1]]}],
+    follow:['Is prednisolone safe for her?']},
+  k:{q:'Who has K+ below 3.5?', parts:['Lead','PatientRows','ActionRow'], spec:[
+    {t:'lead', text:'3 of your 108 patients have potassium below 3.5 today. Only Siti has no replacement charted.'},
+    {t:'rows', rows:[['r','Siti Aminah · 2.9','Bed 4B-03 · furosemide · nothing charted','Open','go:visit'],['a','Wong Kok Leong · 3.2','Bed 4B-14 · oral replacement · repeat due 12:00'],['a','Kavitha Devi · 3.4','Bed 5A-02 · furosemide · recheck tomorrow']]},
+    {t:'sources', n:3},
+    {t:'actions', items:[['Show only these on the page','apply:k',1],['Save to sidebar','pin']]}],
+    follow:['Who’s next in my clinic?']},
+  next:{q:'Who’s next in my clinic?', parts:['PatientRows'], spec:[
+    {t:'rows', rows:[['a','Amelia Tan · 09:30','2 medicines to confirm','Open','go:visit'],['a','Tan Mei Ling · 10:00','Allergy unconfirmed'],['g','Priya Menon · 10:15','Record complete']]}],
+    follow:['Who has K+ below 3.5?']},
+  drafts:{q:'Draft replies for the clinical ones', parts:['Draft','ReviewCard'], spec:[
+    {t:'draft', to:'Siti Aminah', text:'Yes, take the new tablet with breakfast. If you feel dizzy or your legs cramp, message us or come in.'},
+    {t:'review', title:'Send 1 reply', items:['To Siti Aminah on Sona Care','Signed as you, from the care team'], what:'She’s told at once; the thread moves to Handled.', confirm:'Send reply', done:'Reply sent to Siti Aminah · 09:14', sub:'She’ll see it in Sona Care.'}],
+    follow:['What should I tell Ravi?']},
+  ravi:{q:'What should I tell Ravi?', parts:['Takeaways','Draft','ActionRow'], spec:[
+    {t:'take', items:[['r','Chest tightness not eased by his inhaler, 3 days after an admission for heart failure. Treat it as urgent.']]},
+    {t:'draft', to:'Ravi Kumar', text:'Please come to the emergency department now, or call 999 if it gets worse. Bring your medicines.'},
+    {t:'actions', items:[['Call him now','toast:Calling Ravi Kumar (demo)',1],['Send this message','toast:Sent to Ravi Kumar']]}],
+    follow:['Draft replies for the clinical ones']},
+  reassign:{q:'Give Siti’s K+ task to Nurse Aisyah', parts:['ReviewCard'], spec:[
+    {t:'lead', text:'This moves one task. You stay on it as a watcher.'},
+    {t:'review', title:'Reassign “Repeat potassium · Siti Aminah”', items:['Owner: you → Nurse Aisyah','Due: today 12:00 (was yesterday)','Source: 14 Sep note, unchanged'], what:'Aisyah sees it in her tasks and gets a message.', confirm:'Reassign', done:'Nurse Aisyah owns the task · due 12:00', sub:'You’ll see when it’s done.'}],
+    follow:['What’s overdue across my patients?']},
+  overdue:{q:'What’s overdue across my patients?', parts:['TaskRows'], spec:[
+    {t:'lead', text:'1 task is overdue and 2 are due today.'},
+    {t:'rows', rows:[['a','Repeat potassium · Siti','Overdue since yesterday · you','Reassign','ask:reassign'],['','Spirometry · Amelia','Today 16:00 · respiratory lab'],['','Call pharmacy about the Bed 6 GL','Today · you']]}],
+    follow:['Give Siti’s K+ task to Nurse Aisyah']},
+  watch:{q:'Write the handover for my 2 watch patients', parts:['SBARRows','ReviewCard'], spec:[
+    {t:'rows', rows:[['r','Siti Aminah · Bed 4B-03','K+ 2.9 on furosemide. Replace, recheck 18:00.'],['r','Ahmad Faizal · Bed 4B-17','Troponin rising. Cardiology aware, repeat ECG 14:00.']]},
+    {t:'review', title:'Send to Dr Wong (night)', items:['2 SBAR cards with sources','Flagged for a verbal handover'], what:'Dr Wong accepts them on the Handover page.', confirm:'Send handover', done:'Sent to Dr Wong · waiting for acceptance', sub:'You’ll get a receipt when accepted.'}],
+    follow:['Who still needs a handover?']},
+  left:{q:'Who still needs a handover?', parts:['PatientRows'], spec:[
+    {t:'lead', text:'3 of 5 are still to hand over. None have open safety items.'},
+    {t:'rows', rows:[['','Amelia Tan · Clinic','Discharging today'],['','Lim Wei Jie · Clinic','Stable, record complete'],['','Nurul Huda · Bed 4B-02','Transport at 15:00']]}],
+    follow:['Write the handover for my 2 watch patients']},
+  noon:{q:'Who can go home by noon?', parts:['Lead','BedRows','ActionRow'], spec:[
+    {t:'lead', text:'2 more beds can free by 12:00 if 2 blockers get an owner now.'},
+    {t:'rows', rows:[['g','Bed 11 · Lim Wei Jie','Fit to go · leaflet sent','Discharge','toast:Discharge opened (demo)'],['a','Bed 6 · Amelia Tan','GL pending · no owner','Assign','toast:Assigned to Encik Faizal'],['a','Bed 2 · Nurul Huda','Transport at 15:00 · 11:00 slot free','Rebook','toast:Transport moved to 11:00']]},
+    {t:'actions', items:[['Show only these on the page','apply:noon',1],['Save to sidebar','pin']]}],
+    follow:['Why is Bed 6 blocked?']},
+  bed6:{q:'Why is Bed 6 blocked?', parts:['Takeaways','ActionRow'], spec:[
+    {t:'take', items:[['a','The insurer asked for the note excerpt that supports J45.51. It’s in the note but hasn’t been sent.'],['a','No one owns the GL, so it has waited 6 hours.']]},
+    {t:'actions', items:[['Assign to Encik Faizal','toast:Assigned to Encik Faizal',1],['Open discharge','go:discharge']]}],
+    follow:['Who can go home by noon?']},
+  send:{q:'Send all queries under RM 5,000', parts:['ReviewCard'], spec:[
+    {t:'review', title:'Send 3 drafted queries · RM 9,300', items:['Siti Aminah · RM 4,100 · to Dr Wong','Ravi Kumar · RM 3,300 · to Dr Lim','Nurul Huda · RM 1,900 · to Dr Lim'], what:'Each doctor gets the query with the note quote. Nothing is recoded until they answer.', confirm:'Send 3 queries', done:'3 queries sent · RM 9,300 now being queried', sub:'Replies land in Coding audit.'}],
+    follow:['What’s the biggest gap?']},
+  gap:{q:'What’s the biggest gap?', parts:['Lead','Sources'], spec:[
+    {t:'lead', text:'Bed 6: “wheeze” was coded J45.9, but the note supports J45.51 (severe persistent asthma). That’s RM 6,200.'},
+    {t:'sources', n:2}],
+    follow:['Send all queries under RM 5,000']},
+  excl:{q:'What was excluded this week?', parts:['Rows'], spec:[
+    {t:'lead', text:'4 samples were excluded, all for names that the de-identifier missed.'},
+    {t:'rows', rows:[['a','Scribe · 2 samples','A nickname in Manglish (“Ah Boy”)'],['a','Notes · 2 samples','A ward nurse’s name in free text']]}],
+    follow:['Export what’s approved']},
+  export:{q:'Export what’s approved', parts:['ReviewCard'], spec:[
+    {t:'review', title:'Export 318 approved samples', items:['De-identified, with the exclusions removed','Signed with today’s policy version'], what:'A dataset file is created for the training run. No patient can be re-identified from it.', confirm:'Export', done:'Dataset exported · 318 samples', sub:'Logged in the access trail.'}],
+    follow:['What was excluded this week?']},
+  block:{q:'What’s still blocking discharge?', parts:['BlockerRows'], spec:[
+    {t:'rows', rows:[['a','Guarantee letter not sent','Insurer needs the note excerpt','Review','toast:Opened the guarantee letter (demo)'],['a','Take-home list not confirmed','2 medicines','Confirm','toast:Take-home list confirmed']]}],
+    follow:['Explain the leaflet to her in Malay']},
+  malay:{q:'Explain the leaflet to her in Malay', parts:['Draft','ActionRow'], spec:[
+    {t:'draft', to:'Amelia Tan (Bahasa Melayu)', text:'Gunakan inhaler biru bila sesak nafas. Ambil prednisolone sebiji sehari selama 5 hari, selepas makan. Datang ke hospital jika bibir menjadi biru.'},
+    {t:'actions', items:[['Add to her leaflet','toast:Added the Malay version',1]]}],
+    follow:['What’s still blocking discharge?']},
+  read:{q:'Turn on read-aloud for answers', parts:['ReviewCard'], spec:[
+    {t:'review', title:'Read answers aloud', items:['Sona reads each answer’s lead once it arrives','Stops when you tap or start talking'], what:'Changes this device only.', confirm:'Turn on', done:'Read-aloud is on', sub:'Turn it off here or in Settings.'}],
+    follow:['Use the live backend']},
+  live:{q:'Use the live backend', parts:['Lead'], spec:[{t:'lead', text:'It’s already on. Discharge, the guarantee letter, ward owners and the coding audit read and write the staging server.'}], follow:['Turn on read-aloud for answers']},
+  find:{q:'Find Siti Aminah', parts:['PatientRows'], spec:[{t:'rows', rows:[['r','Siti Aminah · Bed 4B-03','K+ 2.9 · no action yet · pinned','Open','go:visit']]}], follow:['Who has K+ below 3.5?']},
+  close40:{q:'Close the 40 visits with nothing left', parts:['Lead','ReviewCard'], spec:[
+    {t:'lead', text:'These 40 visits have a signed note and their tasks set. Closing only takes them off your Continue list.'},
+    {t:'review', title:'Close 40 visits', items:['Notes, tasks and answers stay in each record','A visit reopens if a result or message arrives','Continue goes from 100 to 60'], what:'Only your list changes. No one else is told.', confirm:'Close 40 visits', done:'Closed 40 visits · Continue now 60', sub:'Find them under Patients → All.'}],
+    follow:['Which draft notes are from yesterday?']},
+  yday:{q:'Which draft notes are from yesterday?', parts:['Lead','PatientRows'], spec:[
+    {t:'lead', text:'5 draft notes are from yesterday. The oldest becomes a task in 1 hour if it isn’t signed.'},
+    {t:'rows', rows:[['a',`${CONT.notes[0].n} · 23 h`,'Becomes a task at 10:40','Sign','toast:Note opened (demo)'],['a',`${CONT.notes[1].n} · 22 h`,'Plan section empty','Sign','toast:Note opened (demo)'],['a',`${CONT.notes[2].n} · 21 h`,'Ready to sign','Sign','toast:Note signed']]},
+    {t:'actions', items:[['Show only these on the page','go:continue',1]]}],
+    follow:['Close the 40 visits with nothing left']},
+  wrap:{q:'Wrap up my shift', parts:['Metrics','Takeaways','ActionRow'], spec:[
+    {t:'metrics', items:[['12','draft notes to sign',''],['40','visits to close',''],['5','to hand over','']]},
+    {t:'take', items:[['a','Sign the draft notes first. One turns into a task within the hour.'],['g','40 visits have nothing left and can close together.'],['n','Your 5 pins carry over to your next shift.']]},
+    {t:'actions', items:[['Close 40 visits','ask:close40',1],['See draft notes','go:continue'],['Hand over','go:handover']]}],
+    follow:['Write the handover for my 2 watch patients']},
+  fallback:{q:'', parts:['Lead'], spec:[{t:'lead', text:'In this prototype, Sona answers the suggested questions. In the app, Laya picks the view for any question from the catalogue, and the model fills in the words.'}], follow:[]}
+};
+const idOf = q => Object.keys(A).find(k => A[k].q === q);
+const SUGG = {
+  today:['first','day','wrap'], visit:['dc','pred'], patients:['k','next','yday'], messages:['drafts','ravi'], tasks:['reassign','overdue'],
+  handover:['wrap','watch','left'], ward:['noon','bed6'], audit:['send','gap'], training:['excl','export'], discharge:['block','malay'], settings:['read','live'], global:['find','k','first']
+};
+const NUDGE = { today:'first', visit:'dc', patients:'k', messages:'drafts', tasks:['reassign','1 overdue: give it to Nurse Aisyah?'], handover:['wrap','Wrap up: 12 draft notes to sign, 40 visits to close'], ward:'noon', audit:['send','3 small queries ready to send'], training:'excl', discharge:'block', settings:null };
+const SCOPE = { today:'Your day', visit:'Amelia Tan', patients:`${COUNTS.all} patients`, messages:'Messages', tasks:'Your tasks', handover:'Handover', ward:'Ward 4B', audit:'Coding audit', training:'Training data', discharge:'Amelia’s discharge', settings:'Settings' };
+const PH = { today:'Ask about your day…', visit:'Ask about Amelia…', patients:'Search 108 patients or ask…', messages:'Ask about messages…', tasks:'Add a task or ask… “Bloods @nurse in 2 weeks”', handover:'Ask about the handover…', ward:'Ask about Ward 4B…', audit:'Ask about the audit…', training:'Ask about training data…', discharge:'Ask about this discharge…', settings:'Ask or change a setting…' };
+
+function renderSpec(a, st){
+  return `<div class="gen">` + a.spec.map(b => {
+    if (b.t==='lead') return `<div class="glead">${b.text}</div>`;
+    if (b.t==='take') return `<div class="glass">${b.items.map(([t,x])=>`<div class="take"><i class="sd ${t}"></i><span>${x}</span></div>`).join('')}</div>`;
+    if (b.t==='metrics') return `<div class="metrics">${b.items.map(([v,l,t])=>`<div class="glass metric"><b style="${t==='r'?'color:#A23E3E':''}">${v}</b><span>${l}</span></div>`).join('')}</div>`;
+    if (b.t==='rows') return `<div class="glass list">${b.rows.map(([t,ti,d,chip,op])=>`<div class="row"><i class="sd ${t||'n'}"></i><div class="mid"><span class="t">${ti}</span><span class="d ${t}">${d}</span></div>${chip?`<button type="button" class="chipb" data-op="${op}">${chip}</button>`:''}</div>`).join('')}</div>`;
+    if (b.t==='sources') return `<span class="srcs">${svg('note',2)} ${b.n} sources</span>`;
+    if (b.t==='draft') return `<div class="glass draft"><span class="gtag">${svg('spark',2).replace('<svg','<svg width="12" height="12"')} Draft to ${b.to} · check before sending</span><span>${b.text}</span></div>`;
+    if (b.t==='review') return st.confirmed ? `<div class="receipt"><span class="ck">${svg('check',2.4)}</span><div><b>${b.done}</b><small>${b.sub}</small></div></div>`
+      : `<div class="glass feature review"><span class="ovl">Review before confirming</span><div class="ft">${b.title}</div><ul>${b.items.map(x=>`<li>${x}</li>`).join('')}</ul><span class="what">${b.what}</span><div class="acts"><button class="btn pri" type="button" data-op="confirm">${b.confirm}</button><button class="btn sec" type="button" data-op="close">Not now</button></div></div>`;
+    if (b.t==='actions') return `<div class="acts">${b.items.map(([l,op,pri])=>`<button type="button" class="btn ${pri?'pri':'sec'} sm" style="flex:1 1 auto" data-op="${op}">${l}</button>`).join('')}</div>`;
+    return '';
+  }).join('') + `</div>`;
+}
+const specJSON = a => JSON.stringify({ root: 'answer', composedBy: 'laya', elements: Object.fromEntries(a.parts.map((p,i)=>[`e${i}`, { type: p, props: { bind: `$state/answer/${p.toLowerCase()}` } }])) }, null, 2);
+
+/* ---------- prototype pages ---------- */
+const top = (left, title, right) => `<div class="bar">${left}${title?`<span class="ttl">${title}</span>`:'<span style="flex:1"></span>'}${right||'<span style="width:40px"></span>'}</div>`;
+const menuBtn = `<button type="button" class="rb" data-menu aria-label="Open menu">${svg('menu',2)}</button>`;
+const backBtn = to => `<button type="button" class="rb" data-go="${to||'today'}" aria-label="Back">${svg('back',2)}</button>`;
+const closeBtn = to => `<button type="button" class="rb" data-go="${to}" aria-label="Close">${svg('close',2)}</button>`;
+const ring = (done,total,col) => { const c=2*Math.PI*18, f=c*done/total; return `<svg class="ring" viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="rgba(20,28,40,.1)" stroke-width="4"/><circle cx="22" cy="22" r="18" fill="none" stroke="${col||'#245BCC'}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${f} ${c}" transform="rotate(-90 22 22)"/><text x="22" y="26.5" text-anchor="middle" font-size="12" font-weight="700" fill="#1D1F23">${total-done}</text></svg>`; };
+const prow = (p, compact) => `<div class="row${compact?' compact':''}" ${p.n==='Amelia Tan'?'data-sheet':''}><span class="av">${initials(p.n)}</span><div class="mid"><span class="t">${p.n}</span><span class="d ${p.t}">${p.why}</span></div><span class="tm">${p.w.replace('Clinic ','').replace('Bed ','')}</span></div>`;
+
+const st = { role:'doctor', cur:'today', pView:'needs', pFilter:null, wFilter:null, more:{}, sheet:null, gen:null };
+const V = {};
+V.today = role => {
+  const mgmt = role==='management', bm = role==='bed-manager';
+  const keys = mgmt ? [['bed','Fit to go','3 beds today',0,'ward'],['hand','Hand over','5 patients','','handover'],['audit','Coding audit','RM 18,400 at risk',0,'audit'],['shield','Training data','12 to review',0,'training']]
+    : bm ? [['bed','Ward','2 discharges blocked',1,'ward'],['users','Patients',`${COUNTS.all} · 12 need you`,0,'patients'],['tasks','Tasks','3 blocker owners',0,'tasks'],['door','Fit to go','3 beds today',0,'ward']]
+    : [['users','Patients',`${COUNTS.all} · 12 need you`,0,'patients'],['msg','Messages','3 waiting · 1 urgent',1,'messages'],['bed','Ward','2 discharges blocked',0,'ward'],['hand','Hand over','5 patients',0,'handover']];
+  return `${top(menuBtn,'',`<span class="chipbar"><span class="av">${initials(ROLE[role].name.replace(/^(Dr|Nurse|Encik) /,''))}</span>${ROLE[role].label}</span>`)}
+  <span class="eyebrow">Tue 29 Sep ▾ · ${COUNTS.clinic} in clinic · ${COUNTS.ward} on 4B</span>
+  <div class="insight"><span class="r">3 need you</span> before 10:00 · 12 today</div>
+  <div class="glass feature"><span class="ovl r">Most urgent</span><div class="ft">Siti Aminah · potassium 2.9 mmol/L</div><span class="reason r">● Low result · 2 h · no action yet</span><div class="sub">Taking furosemide 40 mg. Last K+ 3.6 on 14 Sep.</div><div class="acts"><button class="btn pri" type="button" data-go="visit">Review result</button><button class="btn sec" type="button" data-op="toast:Snoozed for 1 hour">Snooze 1 h</button></div></div>
+  <div class="keys">${keys.map(k=>`<div class="glass key" data-go="${k[4]}"><span class="g ${k[3]?'r':''}">${svg(k[0],2)}</span><b>${k[1]}</b><span>${k[2]}</span></div>`).join('')}</div>
+  <div class="sh"><b>Up next · ranked</b><span>Re-rank</span></div>
+  <div class="glass list">
+    <div class="row" data-go="messages"><i class="sd r"></i><div class="mid"><span class="t">Ravi Kumar replied</span><span class="d r">“Chest feels tight since morning”</span></div><span class="tm">2 h</span></div>
+    <div class="row" data-go="visit"><i class="sd a"></i><div class="mid"><span class="t">Amelia Tan · 09:30</span><span class="d a">2 medicines to confirm before prescribing</span></div><span class="tm">18 min</span></div>
+    <div class="row" data-go="tasks"><i class="sd a"></i><div class="mid"><span class="t">Repeat potassium · Siti</span><span class="d a">Overdue since yesterday · you</span></div></div>
+    <div class="row"><i class="sd r"></i><div class="mid"><span class="t">Ahmad Faizal · Bed 4B-17</span><span class="d r">Troponin rising · 2nd result</span></div></div>
+    <button type="button" class="more" data-go="patients">See all 12 that need you ›</button>
+  </div>
+  <div class="glass fold"><span>See the day on a timeline</span><i>${COUNTS.clinic} visits ›</i></div>
+  <span class="cap">Ranked by demo rules · synthetic patients</span>`;
+};
+V.visit = () => `${top(backBtn('today'),'',`<span class="chipbar"><span class="av">AT</span>Amelia Tan · 09:30</span>`)}
+  <span class="eyebrow">Wheeze follow-up · 34 F · Clinic</span>
+  <div class="insight">Here for <span class="b">wheeze follow-up</span>. <span class="a">2 things</span> to settle.</div>
+  <div class="glass feature"><span class="ovl a">Next step · 1 of 2</span><div class="hrow">${ring(0,2,'#B87A2E')}<div class="ft" style="flex:1">Confirm 2 medicines before prescribing</div></div><div class="sub">Salbutamol and a reported “blue inhaler” may be the same product.</div><div class="acts"><button class="btn pri" type="button" data-op="toast:Medicines confirmed">Confirm medicines</button><button class="btn sec" type="button" data-ask="pred">Ask Sona</button></div></div>
+  <div class="sh"><b>Visit tools</b></div>
+  <div class="tools">${[['brief','Brief me','new result'],['steth','Consultation','not started'],['note','Note','draft'],['pill','Medicines','2 to confirm',2],['xray','X-ray','film on file'],['scan','Scan note',''],['tasks','Tasks','1 open'],['door','Discharge','2 left']].map(t=>`<div class="glass tool" ${t[0]==='door'?'data-go="discharge"':t[0]==='tasks'?'data-go="tasks"':''}><span class="g">${svg(t[0],1.9)}${t[3]?`<span class="badge">${t[3]}</span>`:''}</span>${t[1]}<small>${t[2]}</small></div>`).join('')}</div>
+  <div class="sh"><b>Earlier in this visit</b></div>
+  <div class="glass list">
+    <div class="row"><i class="sd b"></i><div class="mid"><span class="t">Briefing</span><span class="d">3 takeaways · peak flow down 18%</span></div><span class="tm">09:12</span></div>
+    <div class="row"><i class="sd b"></i><div class="mid"><span class="t">Clinical possibilities</span><span class="d">Asthma exacerbation most likely · 2 gaps</span></div><span class="tm">09:15</span></div>
+  </div>`;
+V.patients = () => {
+  const views = [['needs','Needs you',COUNTS.needs,'r'],['continue','Continue',contTotal()],['mine','My list',COUNTS.mine],['ward','Ward 4B',COUNTS.ward],['clinic','Clinic today',COUNTS.clinic],['all','All',COUNTS.all]];
+  let body = '';
+  if (st.pFilter==='k') {
+    body = `<div class="sfilter">${svg('spark',2).replace('<svg','<svg width="14" height="14"')}<span>K+ below 3.5 · 3 patients</span><button type="button" data-clearfilter>Clear</button></div><div class="glass list">${P.filter(p=>p.k).map(p=>prow(p)).join('')}</div>`;
+  } else if (st.pView==='needs') {
+    const grp = (key,label,list,start) => { const shown = st.more[key] ? list : list.slice(0,start); const rest = list.length - shown.length;
+      return `<div class="sh"><b>${label} · ${list.length}</b></div><div class="glass list">${shown.map(p=>prow(p)).join('')}${rest?`<button type="button" class="more" data-more="${key}">${start?`Show ${rest} more`:`Show ${rest}`}</button>`:''}</div>`; };
+    body = grp('needs','Needs you now',P.filter(p=>p.st==='needs'),6) + grp('next','Next hour',P.filter(p=>p.st==='next'),3) + grp('wait','Waiting',P.filter(p=>p.st==='wait'),0) + grp('done','Done today',P.filter(p=>p.st==='done'),0);
+  } else if (st.pView==='continue') {
+    const ageOf = a => a===0 ? 'now' : a < 24 ? `${a} h` : `${Math.floor(a/24)} d`;
+    const crow = c => `<div class="row"><span class="av">${initials(c.n)}</span><div class="mid"><span class="t">${c.n}${c.cur?' · current':''}</span><span class="d ${c.t||''}">${c.d}</span></div><span class="tm">${ageOf(c.age)}</span></div>`;
+    const cg = (key,label,list,start) => { const shown = st.more[key] ? list : list.slice(0,start); const rest = list.length - shown.length;
+      return `<div class="sh"><b>${label}</b></div><div class="glass list">${shown.map(crow).join('')}${rest?`<button type="button" class="more" data-more="${key}">${start?`Show ${rest} more`:`Show ${rest}`}</button>`:''}</div>`; };
+    body = (contClosed
+      ? `<div class="receipt"><span class="ck">${svg('check',2.4)}</span><div><b>40 visits closed</b><small>Continue went from 100 to 60. They reopen if a result or message arrives.</small></div></div>`
+      : `<div class="glass feature"><span class="ovl">Where you left off</span><div class="ft">40 open visits have nothing left to do</div><div class="sub">Notes signed and tasks set. Closing them clears your list; nothing in the record changes.</div><div class="acts"><button class="btn pri" type="button" data-ask="close40">Review and close 40</button></div></div>`)
+      + cg('cnotes','Draft notes · 12 · oldest first',CONT.notes,4) + cg('crec','Paused recordings · 3',CONT.rec,3)
+      + cg('cvis','Open visits · 40',CONT.visits,4) + cg('cpin','Pinned · 5 of 5',CONT.pins,2)
+      + (contClosed ? '' : cg('cidle','Nothing left · 40',CONT.idle,0))
+      + `<span class="cap">Idle 24 h leaves Continue. Unsigned notes and unreviewed results become a task first.</span>`;
+  } else if (st.pView==='all') {
+    const sorted = [...P].sort((a,b)=>a.n.localeCompare(b.n)); const by = {};
+    sorted.forEach(p => (by[p.n[0]] = by[p.n[0]] || []).push(p));
+    body = Object.entries(by).map(([L,list])=>`<div class="letter" id="L-${L}">${L}</div><div class="glass list">${list.map(p=>prow(p,true)).join('')}</div>`).join('');
+  } else {
+    const f = { mine:p=>p.mine, ward:p=>p.w.startsWith('Bed 4B'), clinic:p=>p.w.startsWith('Clinic') }[st.pView];
+    const order = {needs:0,next:1,wait:2,done:3};
+    body = `<div class="glass list">${P.filter(f).sort((a,b)=>order[a.st]-order[b.st]).map(p=>prow(p)).join('')}</div>`;
+  }
+  return `${top(backBtn('today'),'Patients')}
+  ${st.pView==='continue' && !st.pFilter
+    ? `<div class="insight">${contTotal()} unfinished · <span class="a">12 draft notes</span>${contClosed?'':' · 40 can close'}</div>`
+    : `<div class="insight">${COUNTS.all} patients · <span class="r">12 need you</span> · next <span class="b">Amelia at 09:30</span></div>`}
+  <div class="views">${views.map(([k,l,n,t])=>`<button type="button" data-pview="${k}" class="${st.pView===k&&!st.pFilter?'on':''} ${t||''}">${l}<b>${n}</b></button>`).join('')}</div>
+  ${body}
+  <span class="cap">Tap Amelia for the patient sheet</span>`;
+};
+V.messages = () => `${top(backBtn('today'),'Messages')}
+  <div class="insight">3 waiting · <span class="r">1 urgent</span> · longest 2 h</div>
+  <div class="glass feature"><span class="ovl r">Urgent · Ravi Kumar · Bed 4B-09</span><div class="ft">“Chest feels tight since morning, inhaler not helping”</div><span class="reason r">● Warning words · waited 2 h</span><div class="sub">Sona drafted a reply asking him to come to the ED now.</div><div class="acts"><button class="btn pri" type="button" data-ask="ravi">Review draft</button><button class="btn sec" type="button" data-op="toast:Calling Ravi Kumar (demo)">Call back</button></div></div>
+  <div class="sh"><b>Clinical · 1</b></div>
+  <div class="glass list"><div class="row"><span class="av">SA</span><div class="mid"><span class="t">Siti Aminah</span><span class="d">Can I take the new tablet with food?</span></div><span class="tm">40 min</span></div></div>
+  <div class="sh"><b>Admin · 1</b></div>
+  <div class="glass list"><div class="row"><span class="av">NH</span><div class="mid"><span class="t">Nurul Huda</span><span class="d">Needs an MC for her employer</span></div><span class="tm">1 h</span></div></div>
+  <div class="glass fold"><span>Handled · last 7 days</span><i>14 ›</i></div>`;
+V.tasks = () => `${top(backBtn('today'),'Follow-up tasks')}
+  <div class="insight">6 open · <span class="a">1 overdue</span> · 2 due today</div>
+  <div class="glass feature"><span class="ovl a">Overdue · since yesterday</span><div class="ft">Repeat potassium for Siti Aminah</div><span class="reason a">You · from the 14 Sep note</span><div class="acts"><button class="btn pri" type="button" data-op="toast:Marked done">Mark done</button><button class="btn sec" type="button" data-ask="reassign">Reassign</button></div></div>
+  <div class="sh"><b>Today · 2</b></div>
+  <div class="glass list">
+    <div class="row"><i class="chk"></i><div class="mid"><span class="t">Spirometry for Amelia Tan</span><span class="d">@respiratory lab · 16:00</span></div></div>
+    <div class="row"><i class="chk"></i><div class="mid"><span class="t">Call pharmacy about the Bed 6 GL</span><span class="d">@you · before discharge</span></div></div>
+  </div>
+  <div class="sh"><b>This week · 3</b></div>
+  <div class="glass list">
+    <div class="row"><i class="chk"></i><div class="mid"><span class="t">HbA1c for Lim Wei Jie</span><span class="d">@nurse · Thu 1 Oct</span></div></div>
+    <div class="row"><i class="chk"></i><div class="mid"><span class="t">Wound check for Nurul Huda</span><span class="d">@nurse · Fri 2 Oct</span></div></div>
+    <div class="row"><i class="chk done"></i><div class="mid"><span class="t" style="color:#8C939C;text-decoration:line-through">Book echo for Ravi Kumar</span><span class="d g">Done today · 08:40</span></div></div>
+  </div>`;
+V.handover = () => `${top(backBtn('today'),'Shift handover')}
+  <div class="insight">5 patients · <span class="r">2 to watch</span> · 3 open items</div>
+  <div class="seg"><span class="on">To hand over 5</span><span>Discuss 0</span><span>Done 0</span></div>
+  <div style="position:relative;height:320px">
+    <div class="glass" style="position:absolute;inset:14px 14px 0;transform:scale(.95);opacity:.7"></div>
+    <div class="glass feature" style="position:absolute;inset:0"><div class="hrow"><span class="av">SA</span><div style="flex:1"><div class="ft">Siti Aminah</div><div class="sub">Bed 4B-03 · 58 F · day 2</div></div><span class="reason r">Watch</span></div>
+      <div class="sbar"><b>S</b><span>K+ 2.9, on furosemide, no action yet</span><b>B</b><span>T2DM, CKD 3a, admitted with fluid overload</span><b>A</b><span>Hypokalaemia, likely from the diuretic</span><b>R</b><span>Replace K+, repeat at 18:00, review the diuretic dose</span></div>
+      <span class="sub" style="font-size:12.5px">3 sources · 1 open task</span>
+      <div class="acts" style="margin-top:auto"><button class="btn sec" type="button">Discuss</button><button class="btn pri" type="button" data-op="toast:Handed over · 1 of 5">Hand over</button></div></div>
+  </div>`;
+V.ward = () => {
+  const beds = [['r','Bed 6 · Amelia Tan','Blocked · GL pending · no owner','~6 h',1],['r','Bed 2 · Nurul Huda','Blocked · transport at 15:00','~4 h',1],['g','Bed 11 · Lim Wei Jie','Fit to go · leaflet sent','now',1],['a','Bed 3 · Siti Aminah','Watch · low potassium','',0],['a','Bed 17 · Ahmad Faizal','Watch · troponin rising','',0],['n','Bed 9 · Ravi Kumar','Stable · day 3','',0]];
+  const list = st.wFilter ? beds.filter(b=>b[4]) : beds;
+  return `${top(backBtn('today'),'Ward')}
+  <span class="eyebrow">Ward 4B · 32 beds · live</span>
+  <div class="insight"><span class="r">2 discharges blocked</span> · 14 bed-hours waiting</div>
+  <div class="glass feature"><span class="ovl">10:00 huddle</span><div class="ft">3 things to settle before the huddle</div>
+    <div class="sbar" style="grid-template-columns:18px 1fr"><b>1</b><span>Bed 6: GL pending with the insurer, no owner</span><b>2</b><span>Bed 2: transport booked for 15:00, could be 11:00</span><b>3</b><span>Bed 9: chest-tightness message needs a doctor</span></div>
+    <div class="acts"><button class="btn pri" type="button" data-op="toast:Owners assigned">Assign owners</button></div></div>
+  ${st.wFilter?`<div class="sfilter">${svg('spark',2).replace('<svg','<svg width="14" height="14"')}<span>Can go home by noon · 3 beds</span><button type="button" data-clearward>Clear</button></div>`:`<div class="seg"><span class="on">All 32</span><span>Blocked 2</span><span>Fit 3</span><span>Watch 2</span></div>`}
+  <div class="glass list">${list.map(b=>`<div class="row" ${b[1].includes('Amelia')?'data-go="discharge"':''}><i class="sd ${b[0]}"></i><div class="mid"><span class="t">${b[1]}</span><span class="d ${b[0]==='n'?'':b[0]}">${b[2]}</span></div><span class="tm">${b[3]}</span></div>`).join('')}${st.wFilter?'':`<button type="button" class="more">Show 26 more beds</button>`}</div>
+  <div class="glass fold"><span>Next 24 hours</span><i>3 beds free ›</i></div>`;
+};
+V.audit = () => `${top(backBtn('today'),'Coding audit')}
+  <span class="eyebrow">Last night’s audit · 42 notes</span>
+  <div class="insight"><span class="a">RM 18,400</span> at risk across 6 notes</div>
+  <div class="glass feature"><span class="ovl a">Largest gap · RM 6,200</span><div class="ft">Bed 6: “wheeze” coded J45.9; the note supports J45.51</div><div class="sub">Sona drafted a query to Dr Lim quoting the note.</div><div class="acts"><button class="btn pri" type="button" data-op="toast:Query sent to Dr Lim">Send to Dr Lim</button><button class="btn sec" type="button" data-ask="gap">Read query</button></div></div>
+  <div class="glass list">
+    <div class="row"><i class="sd a"></i><div class="mid"><span class="t">Siti Aminah · RM 4,100</span><span class="d">CKD stage not stated · Dr Wong</span></div></div>
+    <div class="row"><i class="sd a"></i><div class="mid"><span class="t">Ravi Kumar · RM 3,300</span><span class="d">Heart failure type missing · Dr Lim</span></div></div>
+    <div class="row"><i class="sd a"></i><div class="mid"><span class="t">Nurul Huda · RM 1,900</span><span class="d">Procedure not linked · Dr Lim</span></div></div>
+  </div>`;
+V.training = () => `${top(backBtn('today'),'Training data')}
+  <div class="insight"><span class="b">12 samples</span> to review · 318 approved</div>
+  <div class="glass feature"><span class="ovl">Dataset · de-identified</span><div class="ft">318 approved samples ready</div><div class="acts"><button class="btn pri" type="button" data-ask="export">Export dataset</button></div></div>
+  <div class="glass" style="padding:14px;display:flex;flex-direction:column;gap:8px"><span class="reason b">Scribe · Manglish</span><div class="sub">“Doc, dia punya batuk sudah two weeks lah” becomes “Cough for two weeks”</div><div class="acts"><button class="btn sec sm" type="button" style="flex:1">Exclude</button><button class="btn pri sm" type="button" style="flex:1">Approve</button></div></div>`;
+V.discharge = () => `${top(closeBtn('visit'),'Discharge')}
+  <span class="eyebrow">Amelia Tan · Bed 6 · fit since 08:00</span>
+  <div class="hrow">${ring(5,7,'#B87A2E')}<div class="insight" style="flex:1"><span class="a">2 left</span> before Amelia can go home</div></div>
+  <div class="glass" style="padding:4px 14px">
+    <div class="fixrow" style="border-top:0"><span class="num">1</span><div class="mid">Guarantee letter not sent<small>Codes ready · insurer needs the note excerpt</small></div><button class="btn sec sm" type="button">Review</button></div>
+    <div class="fixrow"><span class="num">2</span><div class="mid">Take-home list not confirmed<small>Salbutamol, prednisolone 5 days</small></div><button class="btn sec sm" type="button">Confirm</button></div>
+  </div>
+  <div class="glass fold"><span>5 checks passed</span><i>›</i></div>
+  <div class="glass fold"><span>Summary · diagnosis, course, plan</span><i>Read ›</i></div>
+  <div class="glass fold"><span>Check-ins · day 2, day 7, clinic</span><i>3 ›</i></div>
+  <div class="glass fold"><span>Patient leaflet</span><i>English ›</i></div>`;
+V.settings = () => `${top(backBtn('today'),'Settings')}
+  <div class="insight">Live backend <span class="g">on</span> · signed in as a doctor</div>
+  <div class="glass" style="padding:4px 14px">
+    <div class="fixrow" style="border-top:0"><span class="av">TD</span><div class="mid">Dr Test Doctor<small>test.doctor@sona.demo</small></div><span class="pill-role">Doctor</span></div>
+    <div class="fixrow"><div class="mid">Use the live backend<small>Discharge, GL, ward and audit read the server</small></div><i class="toggle"></i></div>
+  </div>
+  <div class="sh"><b>Answers</b></div>
+  <div class="glass" style="padding:4px 14px">
+    <div class="fixrow" style="border-top:0"><div class="mid">Read answers aloud</div><i class="toggle offt"></i></div>
+    <div class="fixrow"><div class="mid">Colour key<small>Symptoms, medicines, cautions, findings</small></div><span style="color:#8C939C">›</span></div>
+  </div>
+  <div class="glass fold"><span>Demo tools · clock, interruptions, reset</span><i>›</i></div>`;
+V.gen = () => { const a = A[st.gen]; return `${top(backBtn('today'),'Sona view')}
+  <span class="eyebrow">${svg('spark',2).replace('<svg','<svg width="13" height="13" style="color:#245BCC"')} Built from “${a.q}” · updates live</span>
+  ${renderSpec({...a, spec:a.spec.filter(b=>b.t!=='actions')}, {})}
+  <span class="cap">Composed from ${a.parts.join(' · ')}</span>`; };
+V.dischargeExtra = () => `<div class="sticky"><span class="why">Frees Bed 6 · tells pharmacy and Amelia · creates 2 tasks</span><div class="dec"><button class="btn off" type="button">Resolve 2 to discharge</button><button type="button" class="orbbtn" data-openask aria-label="Ask Sona"><span class="orb sm"></span></button></div></div>`;
+
+const NOTES = {
+  today:{t:'Today',s:'was Home / My Day',tags:['Insight first','Suggest the next step'],l:['At 108 patients, Today still shows the top 4 ranked items and “See all 12 that need you”.','The ✦ suggestion reads the same state as the Most urgent card, so it never disagrees.','Ask “What should I do first?” and pin the order, or save it to the sidebar.']},
+  visit:{t:'Visit',s:'session/[patientId]',tags:['Action in place','Suggest the next step'],l:['The ask bar replaces the old voice dock and is scoped to Amelia.','The next-step card’s second button hands the question to Sona instead of opening another page.','Try “Can she go home today?”: the answer lists the blockers with fixes that open Discharge.']},
+  patients:{t:'Patients',s:'built for 100 to 1,000 people',tags:['Insight first','Ranked over flat'],l:['Opens on Needs you, grouped by urgency; Waiting and Done start folded with counts.','Views with counts: My list, Ward 4B, Clinic today, All (with an A–Z index).','The ask bar doubles as search. Ask “Who has K+ below 3.5?”, then “Show only these on the page”.','The Continue tab holds all 100 unfinished patients, grouped by what’s left and oldest first, with a reviewed “close 40” clean-up.','Tap Amelia, then Pin, to see the 5-pin cap.']},
+  messages:{t:'Messages',s:'kept; Sona drafts in place',tags:['Review before deciding'],l:['“Review draft” opens the drafted reply in the ask sheet with the reason beside it.','“Draft replies for the clinical ones” shows a review card, then a sent receipt.']},
+  tasks:{t:'Follow-up tasks',s:'the ask bar is the composer',tags:['Minimal','Action in place'],l:['One bottom bar adds a task (“Bloods @nurse in 2 weeks”) or answers a question, instead of a composer and a dock.','“Reassign” asks Sona and shows exactly what changes before you confirm.']},
+  handover:{t:'Shift handover',s:'insight added',tags:['Insight first','Review before deciding'],l:['Ask Sona to write the handover for your watch patients; it becomes SBAR rows plus a send review.','The stack still works by swipe for one-by-one handover.','The ✦ Wrap up suggestion lists draft notes to sign and visits to close, so Continue resets each shift.']},
+  ward:{t:'Ward',s:'huddle first',tags:['Built for operations'],l:['Ask “Who can go home by noon?”: each bed has its fix (Assign, Rebook, Discharge) in the answer.','“Show only these on the page” filters the ward with a ✦ chip. “Save to sidebar” keeps it as a live view.']},
+  audit:{t:'Coding audit',s:'batch actions through Sona',tags:['Review before deciding'],l:['“Send all queries under RM 5,000” lists all 3 and the total before sending.','Single queries still send from the row.']},
+  training:{t:'Training data',s:'light touch',tags:['Action in place'],l:['Export is the feature card; it confirms through a review card with the policy version.']},
+  discharge:{t:'Discharge',s:'review shell',tags:['Review before deciding'],l:['The orb sits beside the decision button instead of a full ask bar, so the decision stays the focus.','Ask for the leaflet in Malay and add it without leaving the page.']},
+  settings:{t:'Settings',s:'was “Your workspace”',tags:['Minimal'],l:['Settings can be changed by asking (“Turn on read-aloud”), with a review first.','Demo tools sit behind one row.']},
+  gen:{t:'Sona view',s:'an answer opened as a page',tags:['Built for operations'],l:['Saved views live in the sidebar (at most three) and update without asking again.','The page lists the catalogue parts it was composed from.']}
+};
+const ORDER = ['today','visit','patients','messages','tasks','handover','ward','audit','training','discharge','settings'];
+const LABEL = {today:'Today',visit:'Visit',patients:'Patients',messages:'Messages',tasks:'Tasks',handover:'Handover',ward:'Ward',audit:'Coding audit',training:'Training',discharge:'Discharge',settings:'Settings'};
+const phone=document.getElementById('proto'), scroll=document.getElementById('scroll'), extra=document.getElementById('pageExtra'), host=document.getElementById('sheetHost');
+const allowed = v => { if (v.startsWith('gen')) return true; const it=ROLE[st.role].items; if(v==='visit') return st.role!=='bed-manager'; if(['discharge','settings','today'].includes(v)) return true; return it.includes(v); };
+const pageKey = () => st.cur.startsWith('gen') ? 'gen' : st.cur;
+
+function askBar(){
+  const k = pageKey(); if (k==='discharge'||k==='gen') return '';
+  const n = (k==='patients' && st.pView==='continue' && !contClosed) ? ['close40','40 visits can close now'] : NUDGE[k]; const nid = Array.isArray(n)?n[0]:n; const nl = Array.isArray(n)?n[1]:(n&&A[n].q);
+  return `<div class="ask">${nid?`<button type="button" class="nudge" data-ask="${nid}">✦ ${esc(nl)}</button>`:''}<div class="askrow"><button type="button" class="askin" data-openask><span class="orb sm"></span><span class="ph">${PH[k]}</span></button><button type="button" class="mic" aria-label="Hold to talk">${svg('mic',2)}</button></div></div>`;
+}
+function renderSheet(enter){
+  const s = st.sheet; if (!s) { host.innerHTML=''; return; }
+  const scopeLabel = s.global ? 'Everything' : SCOPE[pageKey()] || 'This page';
+  let body='';
+  if (!s.id) {
+    const ids = s.global ? SUGG.global : (SUGG[pageKey()]||SUGG.global);
+    body = `<div class="hello"><span class="orb"></span><div class="insight" style="font-size:20px">Ask Sona</div><div class="sub">Answers are built as views you can act on, show on the page, or save.</div></div><div class="glass">${ids.map(id=>`<button type="button" class="sugg" data-ask="${id}">${svg('spark',2)}<span>${esc(A[id].q)}</span>${svg('up',2).replace('<svg','<svg style="transform:rotate(45deg);color:#8C939C"')}</button>`).join('')}</div>`;
+  } else {
+    const a = A[s.id];
+    body = `<div class="qb">${esc(s.q||a.q)}</div>`;
+    if (s.loading) body += `<div class="composing"><span class="orb sm"></span>Composing a view…</div><div class="skel"><div class="ln" style="width:92%"></div><div class="ln" style="width:70%"></div><div class="glass" style="height:96px"></div><div class="ln" style="width:48%"></div></div>`;
+    else body += renderSpec(a, s) + `<div class="compose-line"><span>Composed from ${a.parts.join(' · ')}</span><button type="button" data-spec>${s.spec?'Hide spec':'View spec'}</button></div>${s.spec?`<pre class="spec">${esc(specJSON(a))}</pre>`:''}${a.follow.length?`<div class="followups">${a.follow.map(q=>`<button type="button" class="chipb" data-ask="${idOf(q)}">✦ ${esc(q)}</button>`).join('')}${a.spec.some(b=>b.t==='rows'||b.t==='take')?`<button type="button" class="chipb" data-op="open">Open as page</button>`:''}</div>`:''}`;
+  }
+  host.innerHTML = `<div class="ascrim" data-op="close"></div><div class="asheet${enter?' enter':''}" role="dialog" aria-label="Ask Sona"><span class="grab" style="margin-top:8px"></span><div class="ahead"><button type="button" class="scope ${s.global?'all':''}" data-scope>${svg('spark',2).replace('<svg','<svg width="13" height="13"')} ${scopeLabel} ${s.global?'':'<i>×</i>'}</button><span style="flex:1"></span><button type="button" class="rb" data-op="close" aria-label="Close">${svg('close',2)}</button></div><div class="abody" id="abody">${body}</div><form class="acomp" id="askForm"><span class="orb sm"></span><input id="askInput" autocomplete="off" placeholder="${s.global?'Search or ask across everything…':esc(PH[pageKey()]||'Ask Sona…')}" aria-label="Ask Sona"><button class="send" type="submit" aria-label="Send">${svg('up',2.2)}</button></form></div>`;
+  const ab = document.getElementById('abody'); if (s.id && !s.loading) ab.scrollTop = 0;
+}
+function ask(id, q){
+  st.sheet = { ...(st.sheet||{}), id, q, loading:true, confirmed:false, spec:false };
+  renderSheet(false);
+  setTimeout(()=>{ if(st.sheet && st.sheet.id===id){ st.sheet.loading=false; renderSheet(false); } }, 850);
+}
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.getElementById('page').appendChild(t); setTimeout(()=>t.remove(),1900); }
+function render(){
+  if(!allowed(st.cur)) st.cur='today';
+  const k = pageKey();
+  scroll.innerHTML = V[k](st.role);
+  const extras = typeof V[k+'Extra']==='function' ? V[k+'Extra']() : '';
+  const scrub = (k==='patients' && st.pView==='all' && !st.pFilter) ? `<div class="scrub">${[...new Set(P.map(p=>p.n[0]))].sort().map(L=>`<button type="button" data-letter="${L}">${L}</button>`).join('')}</div>` : '';
+  extra.innerHTML = askBar() + extras + scrub + (k==='patients'?sheetHTML:'');
+  document.getElementById('liveSidebar').innerHTML = sidebarHTML(st.role, st.cur, true);
+  document.getElementById('jump').innerHTML = ORDER.filter(allowed).map(x=>`<button type="button" data-go="${x}" ${x===st.cur?'aria-current="true"':''}>${LABEL[x]}</button>`).join('');
+  document.getElementById('try').innerHTML = (SUGG[k]||[]).map(id=>`<button type="button" data-ask="${id}">${esc(A[id].q)}</button>`).join('');
+  const n=NOTES[k];
+  document.getElementById('changed').innerHTML = `<h3>${n.t} <span>· ${n.s}</span></h3><div class="tags">${n.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div><ul>${n.l.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+}
+const sheetHTML = `<div class="scrim" data-unsheet></div><div class="sheet" id="sheet"><span class="grab"></span>
+  <div class="hrow"><span class="av" style="width:44px;height:44px;font-size:15px">AT</span><div style="flex:1"><div class="ft">Amelia Tan</div><div class="sub">34 F · MRN 20931 · starts in 18 min</div></div></div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="reason a">2 medicines to confirm</span><span class="reason r">Penicillin allergy</span></div>
+  <div class="acts"><button class="btn pri" type="button" data-go="visit">Open visit</button><button class="btn sec" type="button" data-pin style="flex:none">${svg('pin',2).replace('<svg','<svg width="16" height="16"')} Pin</button></div>
+  <div class="glass" id="pinAsk" hidden style="padding:12px 14px;display:flex;flex-direction:column;gap:8px"><div style="font-size:14px;line-height:1.4">You have 5 pins, the most allowed. Replace your oldest pin, <b>${CONT.pins[4].n}</b> (4 days ago)?</div><div class="acts"><button class="btn sec sm" type="button" data-pincancel style="flex:1">Cancel</button><button class="btn pri sm" type="button" data-pinreplace style="flex:1">Replace</button></div></div>
+  <div class="glass fold"><span>Wheeze follow-up · vitals · history</span><i>›</i></div>
+  <div class="glass fold"><span>Messages and check-ins</span><i>1 ›</i></div></div>`;
+function go(to){ if (to==='continue') { st.pView='continue'; st.pFilter=null; to='patients'; } const wasOpen = phone.classList.contains('open'); phone.classList.remove('open'); st.sheet=null; renderSheet(); st.cur=to; if(wasOpen) setTimeout(()=>{render();scroll.scrollTop=0;},160); else {render();scroll.scrollTop=0;} }
+function op(o){
+  if (o==='close') { st.sheet=null; renderSheet(); return; }
+  if (o==='confirm') { st.sheet.confirmed=true; if (st.sheet.id==='close40') { contClosed=true; const y=scroll.scrollTop; render(); scroll.scrollTop=y; } renderSheet(); return; }
+  if (o==='open') { st.gen = st.sheet.id; go('gen:'+st.gen); return; }
+  if (o==='pin') { const id=st.sheet.id; if(!saved.find(s=>s.id===id)){ saved.unshift({id, title: id==='noon'?'Home by noon':id==='k'?'K+ below 3.5':id==='first'?'Do first':A[id].q, detail: id==='noon'?'3 beds · 2 need owners':id==='k'?'3 patients · live':'Live view'}); saved = saved.slice(0,3);} document.getElementById('liveSidebar').innerHTML = sidebarHTML(st.role, st.cur, true); toast('Saved to the sidebar'); return; }
+  if (o.startsWith('toast:')) { toast(o.slice(6)); return; }
+  if (o.startsWith('go:')) { go(o.slice(3)); return; }
+  if (o.startsWith('ask:')) { ask(o.slice(4)); return; }
+  if (o==='apply:k') { st.pFilter='k'; st.pView='needs'; go('patients'); setTimeout(()=>toast('Showing 3 of 108 patients'),200); return; }
+  if (o==='apply:noon') { st.wFilter='noon'; go('ward'); setTimeout(()=>toast('Showing 3 of 32 beds'),200); return; }
+}
+document.getElementById('roles').innerHTML = Object.entries(ROLE).map(([k,v])=>`<button type="button" data-role="${k}" aria-pressed="${k===st.role}">${v.label}</button>`).join('');
+document.addEventListener('submit', e => { if (e.target.id!=='askForm') return; e.preventDefault(); const q = document.getElementById('askInput').value.trim(); if(!q) return; const l=q.toLowerCase();
+  const id = /k\+|potassium/.test(l)?'k' : /noon|go home/.test(l)?'noon' : /first|priorit/.test(l)?'first' : /overdue/.test(l)?'overdue' : /reassign|aisyah/.test(l)?'reassign' : /repl|draft/.test(l)?'drafts' : /summar/.test(l)?'day' : /siti/.test(l)?'find' : /@|task/.test(l)?null : 'fallback';
+  if (id===null) { st.sheet=null; renderSheet(); toast(`Task added: “${q}”`); return; }
+  A.fallback.q = q; ask(id, q); });
+document.addEventListener('click', e=>{
+  const rb=e.target.closest('[data-role]'); if(rb){ st.role=rb.dataset.role; document.querySelectorAll('[data-role]').forEach(b=>b.setAttribute('aria-pressed', b===rb)); phone.classList.remove('open'); st.sheet=null; renderSheet(); render(); return; }
+  if(!e.target.closest('#proto, #jump, #try')) return;
+  const t = sel => e.target.closest(sel);
+  if (t('[data-menu]')) { phone.classList.add('open'); return; }
+  if (t('[data-askglobal]')) { phone.classList.remove('open'); st.sheet={global:true}; renderSheet(true); return; }
+  if (t('[data-openask]')) { st.sheet={}; renderSheet(true); setTimeout(()=>document.getElementById('askInput')?.focus({preventScroll:true}),420); return; }
+  if (t('[data-scope]')) { st.sheet.global=!st.sheet.global; st.sheet.id=null; renderSheet(); return; }
+  if (t('[data-spec]')) { st.sheet.spec=!st.sheet.spec; renderSheet(); return; }
+  const a = t('[data-ask]'); if (a) { const opening=!st.sheet; if(opening){ st.sheet={}; renderSheet(true);} ask(a.dataset.ask); if(opening) document.querySelector('.asheet').classList.add('enter'); return; }
+  const o = t('[data-op]'); if (o) { op(o.dataset.op); return; }
+  const pv = t('[data-pview]'); if (pv) { st.pView=pv.dataset.pview; st.pFilter=null; render(); return; }
+  const mo = t('[data-more]'); if (mo) { st.more[mo.dataset.more]=true; const y=scroll.scrollTop; render(); scroll.scrollTop=y; return; }
+  if (t('[data-clearfilter]')) { st.pFilter=null; render(); return; }
+  if (t('[data-clearward]')) { st.wFilter=null; render(); return; }
+  const lt = t('[data-letter]'); if (lt) { const el=document.getElementById('L-'+lt.dataset.letter); if(el) scroll.scrollTo({top:el.offsetTop-54, behavior:'smooth'}); return; }
+  if (t('[data-pin]')) { document.getElementById('pinAsk').hidden=false; return; }
+  if (t('[data-pincancel]')) { document.getElementById('pinAsk').hidden=true; return; }
+  if (t('[data-pinreplace]')) { document.getElementById('sheet').classList.remove('up'); document.querySelector('.scrim').classList.remove('on'); toast(`Pinned Amelia · unpinned ${CONT.pins[4].n.split(' ')[0]}`); return; }
+  if (t('[data-sheet]')) { document.getElementById('sheet').classList.add('up'); document.querySelector('.scrim').classList.add('on'); return; }
+  if (t('[data-unsheet]')) { document.getElementById('sheet').classList.remove('up'); document.querySelector('.scrim').classList.remove('on'); return; }
+  const g = t('[data-go]'); if (g) { if (g.dataset.go.startsWith('gen:')) st.gen=g.dataset.go.slice(4); go(g.dataset.go); return; }
+  if (phone.classList.contains('open') && t('#page')) phone.classList.remove('open');
+});
+render();
+})();
+</script>

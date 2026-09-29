@@ -26,7 +26,7 @@ export default function RootLayout() {
     <Stack.Screen name="xray" options={{ title: "Chest X-ray", presentation: "modal" }} />
     <Stack.Screen name="scan" options={{ title: "Scan a note", presentation: "modal" }} />
     <Stack.Screen name="tasks" options={{ title: "Follow-up tasks" }} />
-    <Stack.Screen name="inbox/index" options={{ title: "Patient messages" }} />
+    <Stack.Screen name="inbox/index" options={{ title: "Messages" }} />
     <Stack.Screen name="inbox/[patientId]" options={{ title: "" }} />
     <Stack.Screen name="handover" options={{ title: "Shift handover" }} />
     <Stack.Screen name="ward" options={{ title: "Ward" }} />
@@ -34,7 +34,7 @@ export default function RootLayout() {
     <Stack.Screen name="training" options={{ title: "Training data" }} />
     <Stack.Screen name="discharge" options={{ headerShown: false, presentation: "modal" }} />
     <Stack.Screen name="claim" options={{ headerShown: false, presentation: "modal" }} />
-    <Stack.Screen name="history" options={{ title: "Your workspace", presentation: "modal" }} />
+    <Stack.Screen name="history" options={{ title: "Settings", presentation: "modal" }} />
     <Stack.Screen name="account" options={{ title: "Account scaffold" }} />
   </Stack><LiveUpdates /><CriticalAlert /></EncounterProvider></SafeAreaProvider></KeyboardProvider></GestureHandlerRootView>;
 }

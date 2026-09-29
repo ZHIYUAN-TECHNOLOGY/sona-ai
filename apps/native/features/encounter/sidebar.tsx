@@ -5,7 +5,8 @@ import { palette } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import { useOpenAudit } from "@/features/audit";
 import { useInboxSummary } from "@/features/inbox";
-import { useRole } from "@/features/live/roles";
+import { useLive } from "@/features/live";
+import { RolePill, useRole } from "@/features/live/roles";
 import { useTrainingStatus } from "@/features/training";
 import { trainingLine } from "@/features/training/model";
 import { wardBeds, wardSummary } from "@/features/ward/model";
@@ -39,39 +40,59 @@ function Row({ item }: { item: Item }) {
   </Pressable>;
 }
 
+/** A group's name, only when the group has something to show. */
+const Group = ({ title }: { title: string }) => <Text accessibilityRole="header" style={{ fontSize: 13, color: palette.muted, paddingHorizontal: 14, paddingTop: 14, paddingBottom: 6 }}>{title}</Text>;
+
 const Divider = () => <View style={{ height: 1, marginHorizontal: 14, marginVertical: 10, backgroundColor: "rgba(20,28,40,0.08)" }} />;
+
+/** How many patients Continue lists before "See all": the drawer stays the same length at any census. */
+const CONTINUE_LIMIT = 3;
 
 /**
  * Workspace sidebar, revealed underneath as the page slides right (after the ChatGPT-style
- * drawer): clinician, primary destinations, feedback, then recent encounters as history.
+ * drawer). Grouped by the kind of work: Today, then My work, Patients (with where you left off)
+ * and Ward & hospital. Tools that need a patient (consultation, note) live inside the visit.
  */
 export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; progress: SharedValue<number>; onClose: () => void; onNew: () => void }) {
   const insets = useSafeAreaInsets();
   const { patient, patients, encounters } = useEncounter();
+  const { user } = useLive();
   // Close first, then navigate, so the page is back in place when the next screen presents.
   const go = (to: () => void) => () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); onClose(); setTimeout(to, 120); };
-  const recent = patients.filter(p => encounters[p.id]?.requests.length);
+  // Continue: visits with answers, the one open now first. Capped, with the rest behind "See all".
+  const started = patients.filter(p => encounters[p.id]?.requests.length).sort((a, b) => Number(b.id === patient?.id) - Number(a.id === patient?.id));
+  const recent = started.slice(0, CONTINUE_LIMIT);
+  const openTasks = Object.values(encounters).reduce((sum, e) => sum + (e?.tasks.filter(t => !t.completed).length ?? 0), 0);
   // Each destination shows only for a role whose screen the server would open, with the same live line as its home key.
-  const { can } = useRole();
+  const { can, label: role } = useRole();
   const inbox = useInboxSummary();
   const ward = wardSummary(wardBeds(useDayPatients(patients), encounters));
   const audit = auditOf(useOpenAudit());
   const training = useTrainingStatus();
 
-  const items: Item[] = [
-    { label: "Home", icon: "home", active: true, onPress: onClose },
-    { label: "Patients", icon: "patients", detail: `${patients.length} visits today`, show: can("patients.list"), onPress: go(() => router.push("/patients")) },
-    // Fixture mode has no inbox: the item still opens it, without a count.
-    { label: "Messages", icon: "feedback", detail: inbox.on ? inbox.line : undefined, badge: inbox.on ? { count: inbox.waiting, urgent: inbox.urgent > 0 } : undefined, show: can("messages.inbox"), onPress: go(() => router.push("/inbox")) },
-    { label: "Consultation", icon: "stethoscope", detail: patient ? `Record with ${patient.name.split(" ")[0]}` : "Pick a visit first", show: can("encounter.edit"), onPress: go(() => router.push(patient ? "/recording" : { pathname: "/patients", params: { view: "recording" } })) },
-    { label: "Notes", icon: "note", show: can("note.get"), onPress: go(() => router.push(patient ? "/note" : { pathname: "/patients", params: { view: "note" } })) },
-    { label: "Follow-up tasks", icon: "tasks", show: can("tasks.list"), onPress: go(() => router.push("/tasks")) },
-    { label: "Shift handover", icon: "user", detail: `${patients.length + 3} patients`, show: can("handover.list"), onPress: go(() => router.push("/handover")) },
-    { label: "Ward", sf: "bed.double", detail: wardLine(ward), show: can("ward.beds"), onPress: go(() => router.push("/ward")) },
-    { label: "Coding audit", sf: "doc.text.magnifyingglass", detail: auditLine(audit), show: can("audit.list"), onPress: go(() => router.push("/audit")) },
-    { label: "Training data", sf: "shield.lefthalf.filled", detail: training.status ? trainingLine(training.status.counts) : undefined, show: can("training.status"), onPress: go(() => router.push("/training")) },
+  const all: { title?: string; items: Item[] }[] = [
+    { items: [{ label: "Today", icon: "calendar", active: true, onPress: onClose }] },
+    { title: "My work", items: [
+      // Fixture mode has no inbox: the item still opens it, without a count.
+      { label: "Messages", icon: "feedback", detail: inbox.on ? inbox.line : undefined, badge: inbox.on ? { count: inbox.waiting, urgent: inbox.urgent > 0 } : undefined, show: can("messages.inbox"), onPress: go(() => router.push("/inbox")) },
+      { label: "Follow-up tasks", icon: "tasks", detail: openTasks ? `${openTasks} open` : "Nothing open", show: can("tasks.list"), onPress: go(() => router.push("/tasks")) },
+      // Same count as home's Hand over key: today's visits plus the three synthetic ward examples.
+      { label: "Shift handover", sf: "arrow.left.arrow.right", detail: `${patients.length + 3} patients`, show: can("handover.list"), onPress: go(() => router.push("/handover")) },
+    ] },
+    { title: "Patients", items: [
+      { label: "Patients", icon: "patients", detail: `${patients.length} visits today`, show: can("patients.list"), onPress: go(() => router.push("/patients")) },
+    ] },
+    { title: "Continue", items: [
+      ...recent.map(p => ({ label: p.name, icon: "clock" as const, active: false, detail: `${p.id === patient?.id ? "In visit" : p.subtitle} · ${encounters[p.id]!.requests.length} ${encounters[p.id]!.requests.length === 1 ? "answer" : "answers"}`, onPress: go(() => openSession(p.id)) })),
+      ...(started.length > CONTINUE_LIMIT ? [{ label: `See all ${started.length}`, sf: "ellipsis.circle", onPress: go(() => router.push("/patients")) }] : []),
+    ] },
+    { title: "Ward & hospital", items: [
+      { label: "Ward", sf: "bed.double", detail: wardLine(ward), show: can("ward.beds"), onPress: go(() => router.push("/ward")) },
+      { label: "Coding audit", sf: "doc.text.magnifyingglass", detail: auditLine(audit), show: can("audit.list"), onPress: go(() => router.push("/audit")) },
+      { label: "Training data", sf: "shield.lefthalf.filled", detail: training.status ? trainingLine(training.status.counts) : undefined, show: can("training.status"), onPress: go(() => router.push("/training")) },
+    ] },
   ];
-  const primary = items.filter(item => item.show !== false);
+  const groups = all.map(group => ({ ...group, items: group.items.filter(item => item.show !== false) })).filter(group => group.items.length);
 
   // Content drifts in from slightly left and fades up, following the page as it slides away.
   const contentStyle = useAnimatedStyle(() => ({
@@ -85,24 +106,23 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 14, minHeight: 56 }}>
           <BrandIcon name="user" size={28} color={palette.ink} />
           <View style={{ flex: 1, gap: 4 }}>
-            <Text style={{ fontSize: 17, fontWeight: "600", color: palette.ink }}>Clinician</Text>
-            {/* The one place the clinician app says its data is fictional. */}
-            <DataPill onPress={go(() => router.push("/about-data"))} />
+            <Text numberOfLines={1} style={{ fontSize: 17, fontWeight: "600", color: palette.ink }}>{user?.name ?? "Clinician"}</Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+              <RolePill label={role} />
+              {/* The one place the clinician app says its data is fictional. */}
+              <DataPill onPress={go(() => router.push("/about-data"))} />
+            </View>
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={go(() => router.push("/history"))} hitSlop={10} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}>
             <BrandIcon name="settings" size={24} color={palette.muted} />
           </Pressable>
         </View>
+        {can("patients.list") && <Row item={{ label: "Find a patient", sf: "magnifyingglass", onPress: go(() => router.push("/patients")) }} />}
         <Divider />
-        {primary.map(item => <Row key={item.label} item={item} />)}
-        <Divider />
-        <Row item={{ label: "Share feedback", icon: "feedback", onPress: go(() => router.push("/history")) }} />
-        {/* History shows once there is some; an empty section says nothing worth the space. */}
-        {recent.length > 0 && <>
-          <Divider />
-          <Text accessibilityRole="header" style={{ fontSize: 13, color: palette.muted, paddingHorizontal: 14, paddingTop: 4, paddingBottom: 6 }}>History</Text>
-          {recent.map(p => <Row key={p.id} item={{ label: p.name, icon: "clock", detail: `${p.subtitle} · ${encounters[p.id]!.requests.length} ${encounters[p.id]!.requests.length === 1 ? "request" : "requests"}`, onPress: go(() => openSession(p.id)) }} />)}
-        </>}
+        {groups.map(group => <View key={group.title ?? "today"}>
+          {group.title && <Group title={group.title} />}
+          {group.items.map(item => <Row key={item.label} item={item} />)}
+        </View>)}
       </ScrollView>
     </Animated.View>
 
