@@ -3,6 +3,7 @@ import { Pressable, TextInput, View } from "react-native";
 import Animated, { Easing, FadeIn, FadeOut, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
 import { LAYOUT } from "@/components/sona/motion";
+import { DrawnCheck } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
@@ -34,13 +35,15 @@ export function Ring({ done, total }: { done: number; total: number }) {
   useEffect(() => { p.set(reducedMotion ? done / total : withTiming(done / total, { duration: 520, easing: Easing.bezier(0.23, 1, 0.32, 1) })); }, [done, total, reducedMotion, p]);
   const props = useAnimatedProps(() => ({ strokeDashoffset: RING_C * (1 - p.value) }));
   const left = total - done;
+  // The check draws in once, as the ring closes; a card that opens complete shows it still.
+  const [startedDone] = useState(left === 0);
   return <View style={{ width: 56, height: 56, alignItems: "center", justifyContent: "center" }}>
     <Svg width={56} height={56} style={{ position: "absolute" }}>
       <Circle cx={28} cy={28} r={RING_R} stroke="rgba(20,28,40,0.08)" strokeWidth={5} fill="none" />
       <AnimatedCircle cx={28} cy={28} r={RING_R} stroke={left ? palette.blue : "#0F6E66"} strokeWidth={5} fill="none" strokeLinecap="round" strokeDasharray={RING_C} animatedProps={props} transform="rotate(-90 28 28)" />
     </Svg>
     {left ? <Animated.Text key={left} entering={reducedMotion ? undefined : FadeIn.duration(200)} style={{ fontSize: 17, fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{left}</Animated.Text>
-      : <Icon name="checkmark" size={18} color="#0F6E66" />}
+      : <DrawnCheck size={26} color="#0F6E66" strokeWidth={2.2} delay={360} draw={!startedDone} />}
   </View>;
 }
 

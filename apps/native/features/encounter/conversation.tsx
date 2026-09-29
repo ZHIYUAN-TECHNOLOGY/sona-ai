@@ -1,7 +1,8 @@
-import { router } from "expo-router";
+import { router, useIsFocused } from "expo-router";
+import { DrawnCheck } from "@/components/sona/parts";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { MyDay } from "@/features/day";
-import { QuickActions } from "@/components/sona/quick-actions";
+import { QuickActions, type ShelfCollapse } from "@/components/sona/quick-actions";
 import { useHomeActions, visitActions, visitNeed, type VisitNeed } from "./quick-actions";
 import { openSession } from "./navigation";
 import { Text } from "@/components/sona/text";
@@ -15,8 +16,8 @@ import { Chip, Icon, pillStyle, Surface, surfaceStyle, useAccessibleEffects } fr
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, View } from "react-native";
-import { riseIn } from "@/components/sona/motion";
-import Animated, { cubicBezier, FadeIn } from "react-native-reanimated";
+import { LAYOUT, riseIn } from "@/components/sona/motion";
+import Animated, { cubicBezier, FadeIn, FadeOut, ZoomIn, ZoomOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Capability, Patient } from "./types";
 import { emphasise } from "./emphasis";
@@ -173,7 +174,7 @@ function InboxButton() {
 function greeting() { const hour = new Date().getHours(); return hour < 12 ? "Good morning." : hour < 18 ? "Good afternoon." : "Good evening."; }
 
 /** Idle canvas: one greeting, one line of context, a couple of starting points. */
-export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatient, onShelf }: { patient?: Patient; patients: Patient[]; onPick: (item: Suggestion) => void; onChoosePatient: () => void; onSelectPatient: (id: string) => void; onShelf?: (windowBottom: number) => void }) {
+export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatient, onShelf, shelfCollapse }: { patient?: Patient; patients: Patient[]; onPick: (item: Suggestion) => void; onChoosePatient: () => void; onSelectPatient: (id: string) => void; onShelf?: (windowBottom: number) => void; shelfCollapse?: ShelfCollapse }) {
   const { reducedMotion } = useAccessibleEffects();
   const { encounters } = useEncounter();
   const server = useServerData(); // live mode: the quick keys follow the server's tasks and results
@@ -185,7 +186,7 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
   // Nothing is centred or pinned to the bottom, so the gap never stretches with screen height.
   // Without a visit, the greeting and the ranked day are one section: MyDay owns the header.
   if (!patient) return <View style={{ paddingTop: 20 }}><MyDay patients={patients} greeting={greeting().replace(/\.$/, "")} onOpen={(id, open) => openSession(id, open)}
-    actions={homeKeys} onShelf={onShelf} /></View>;
+    actions={homeKeys} onShelf={onShelf} shelfCollapse={shelfCollapse} /></View>;
   // Insight first: the one thing that needs the doctor, with its action, above the tiles.
   const need = visitNeed(patient, encounters[patient.id], server);
   const go = (target: VisitNeed["target"]) => target === "scan" || target === "discharge" || target === "claim" ? router.push(`/${target}`) : onPick(suggestionFor(target, patient));
@@ -197,8 +198,8 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
           <Text style={{ fontWeight: "600" }}>{patient.name}</Text> is here for a {patient.subtitle.toLowerCase()} {patient.incomplete ? "🫁" : "🩺"} at <Text style={{ fontWeight: "600" }}>{patient.time}</Text>.{"\n"}<Text style={{ color: palette.muted }}>Ask me anything.</Text>
         </Text> : null}
       </Animated.View>
-      {need && <Animated.View entering={rise(2)}><NeedLine need={need} onPress={() => go(need.target)} /></Animated.View>}
-      <Animated.View entering={rise(3)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+      <NeedLine need={need} entering={rise(2)} onPress={shown => go(shown.target)} />
+      <Animated.View entering={rise(3)} layout={reducedMotion ? undefined : LAYOUT} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {patient ? <QuickActions actions={visitActions(patient, encounters[patient.id], server, go, canScan)} /> : null}
       </Animated.View>
     </View>
@@ -206,11 +207,38 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
 }
 
 const NEED_INK: Record<VisitNeed["tone"], string> = { urgent: palette.red, caution: palette.amber, calm: palette.blue };
-/** One line, no card: a state dot, what needs doing and the action that does it. */
-function NeedLine({ need, onPress }: { need: VisitNeed; onPress: () => void }) {
-  return <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: NEED_INK[need.tone] }} />
-    <Text style={{ flex: 1, ...type.subhead, fontWeight: "500", color: palette.ink }}>{need.text}</Text>
-    <Chip label={need.action} filled accessibilityLabel={`${need.action}. ${need.text}`} onPress={onPress} />
-  </View>;
+const RESOLVED_MS = 720, TEAL = "#0F6E66";
+/**
+ * One line, no card: a state dot, what needs doing and the action that does it. When the need is met
+ * (after Google's to-do check: the dot shrinks away, a teal check springs in and draws), the line holds
+ * a beat, then crossfades to the next need, or leaves and the tiles below close the gap on the layout
+ * spring. A change that lands while another screen covers this one waits until it is visible again.
+ */
+function NeedLine({ need, entering, onPress }: { need?: VisitNeed; entering?: ReturnType<typeof riseIn>; onPress: (need: VisitNeed) => void }) {
+  const { reducedMotion } = useAccessibleEffects();
+  const focused = useIsFocused();
+  const [shown, setShown] = useState(need);
+  const [resolved, setResolved] = useState(false);
+  const [first, setFirst] = useState(true);
+  useEffect(() => {
+    if (need?.text === shown?.text || !focused) return;
+    setFirst(false);
+    // Met, not merely preempted: it went away, or the next need is a different job that isn't more urgent.
+    const met = shown && (!need || (need.target !== shown.target && need.tone !== "urgent"));
+    if (!met || reducedMotion) { setShown(need); return; }
+    setResolved(true);
+    const timer = setTimeout(() => { setResolved(false); setShown(need); }, RESOLVED_MS);
+    return () => clearTimeout(timer);
+  }, [need?.text, shown?.text, focused, reducedMotion]); // eslint-disable-line react-hooks/exhaustive-deps -- `need` is rebuilt every render; its text is its identity
+  if (!shown) return null;
+  return <Animated.View key={shown.text} entering={reducedMotion ? undefined : first ? entering : riseIn({ distance: 8, duration: 380 })} exiting={reducedMotion ? undefined : FadeOut.duration(160)}
+    style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+    <View style={{ width: 8, height: 8, alignItems: "center", justifyContent: "center" }}>
+      {resolved ? <Animated.View entering={ZoomIn.springify().duration(320).dampingRatio(0.72)} style={{ position: "absolute", width: 20, height: 20 }}>
+        <DrawnCheck size={20} color={TEAL} strokeWidth={2.6} delay={60} />
+      </Animated.View> : <Animated.View exiting={reducedMotion ? undefined : ZoomOut.duration(140)} style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: NEED_INK[shown.tone] }} />}
+    </View>
+    <Text style={{ flex: 1, ...type.subhead, fontWeight: "500", color: resolved ? palette.muted : palette.ink, transitionProperty: "color", transitionDuration: 200 } as never}>{shown.text}</Text>
+    <Chip label={shown.action} filled accessibilityLabel={`${shown.action}. ${shown.text}`} onPress={() => onPress(shown)} />
+  </Animated.View>;
 }

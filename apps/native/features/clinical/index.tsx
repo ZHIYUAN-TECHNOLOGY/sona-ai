@@ -5,7 +5,9 @@ import { MarkedText } from "@/components/sona/marked-text";
 import { Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { SourceScope, SourcesPill } from "@/components/sona/sources";
 import { useLiveBriefing } from "@/features/live/model-sync";
-import { Chip, Notice, SourceLink, Surface } from "@/components/sona/ui";
+import { Chip, Notice, SourceLink, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { riseIn } from "@/components/sona/motion";
+import Animated, { FadeOut } from "react-native-reanimated";
 import { IconRow } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -22,6 +24,7 @@ export { MedicationCard } from "./medication-card";
 
 export function BriefingCard({ patient, result, onSource, onOpen, onRequest }: FeatureProps) {
   const { encounters } = useEncounter();
+  const { reducedMotion } = useAccessibleEffects();
   const facts = (encounters[patient.id]?.historyFacts ?? []).filter(fact => !result || fact.revision <= result.revision);
   const sourceFor = (category: string) => facts.findLast(fact => fact.category === category)?.id ?? "history";
   const sections = result?.sections ?? 3;
@@ -51,10 +54,11 @@ export function BriefingCard({ patient, result, onSource, onOpen, onRequest }: F
     : { text: "Medicines confirmed. Start the consultation.", label: "Start consultation", go: () => onOpen("recording") };
   // Next step, digest, then the detail as swipeable pages (briefing is a glance before the visit).
   return <View style={{ gap: 20 }}>
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 4 }}>
+    {/* Leads the stagger (the digest rows follow 80 ms on); a new next step crossfades in over the old one. */}
+    <Animated.View key={next.text} entering={reducedMotion ? undefined : riseIn({ distance: 10, duration: 420 })} exiting={reducedMotion ? undefined : FadeOut.duration(160)} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 4 }}>
       <Text style={{ flex: 1, ...type.subhead, color: palette.ink }}><Text style={{ fontWeight: "600", color: palette.blue }}>Next · </Text>{next.text}</Text>
       <Chip label={next.label} filled accessibilityLabel={`${next.label}. ${next.text}`} onPress={next.go} />
-    </View>
+    </Animated.View>
     {server.loading ? <Surface feature style={{ padding: 16 }}><Drafting label="Reading the record…" /></Surface> : <View style={{ gap: 6 }}>
       {digest.length > 0 && <Takeaways items={digest} />}
       <View style={{ paddingHorizontal: 4 }}>

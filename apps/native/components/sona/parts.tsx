@@ -1,10 +1,11 @@
 import * as Haptics from "expo-haptics";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Pressable, View, type AccessibilityRole, type StyleProp, type ViewStyle } from "react-native";
-import Animated, { cubicBezier } from "react-native-reanimated";
+import Animated, { cubicBezier, useAnimatedProps, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
+import Svg, { Path } from "react-native-svg";
 import { useReduceMotionPreference } from "./accessibility";
 import { BrandIcon } from "./brand-icon";
-import { LAYOUT } from "./motion";
+import { EASE_OUT, LAYOUT } from "./motion";
 import { Text } from "./text";
 import { palette } from "./theme";
 import { Expand, glass, Icon, useAccessibleEffects } from "./ui";
@@ -45,6 +46,25 @@ export function Mark({ state, delay = 0, size = 24 }: { state: MarkState; delay?
     <Animated.View style={inner(blocked) as never}><Text style={{ fontSize: size * 0.54, lineHeight: size * 0.66, fontWeight: "700", color: palette.amber }}>!</Text></Animated.View>
     {state === "pending" && <Animated.View style={{ width: size / 3, height: size / 3, borderRadius: size / 6, backgroundColor: palette.blue, opacity: reduced ? 0.5 : undefined, animationName: reduced ? undefined : PULSE, animationDuration: 640, animationDelay: delay, animationDirection: "alternate", animationIterationCount: "infinite", animationTimingFunction: "ease-in-out" }} />}
   </Animated.View>;
+}
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+/** Length of the brand check stroke (M5 12.5 L9.5 17 L19 7 in a 24 pt box). */
+const CHECK_LENGTH = 20.2;
+/**
+ * The brand check drawn in as a stroke (after CRED's paid check): waits `delay` ms, then draws on the
+ * strong ease-out in 380 ms. Draws once, on mount; static when `draw` is off or under Reduce Motion.
+ */
+export function DrawnCheck({ size = 18, color = palette.white, strokeWidth = 2.4, delay = 0, draw = true }: { size?: number; color?: string; strokeWidth?: number; delay?: number; draw?: boolean }) {
+  const reduced = useReduceMotionPreference();
+  const still = !draw || reduced;
+  const p = useSharedValue(still ? 1 : 0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- plays once when the check first appears
+  useEffect(() => { if (!still) p.set(withDelay(delay, withTiming(1, { duration: 380, easing: EASE_OUT }))); }, []);
+  const props = useAnimatedProps(() => ({ strokeDashoffset: CHECK_LENGTH * (1 - p.value) }));
+  return <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityElementsHidden importantForAccessibility="no">
+    <AnimatedPath d="M5 12.5L9.5 17L19 7" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={CHECK_LENGTH} animatedProps={props} />
+  </Svg>;
 }
 
 /** Mark + text, for a short status inside a surface. */
