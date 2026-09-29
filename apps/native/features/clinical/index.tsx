@@ -5,7 +5,7 @@ import { MarkedText } from "@/components/sona/marked-text";
 import { Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { SourceScope, SourcesPill } from "@/components/sona/sources";
 import { useLiveBriefing } from "@/features/live/model-sync";
-import { Action, Notice, SourceLink, Surface } from "@/components/sona/ui";
+import { Chip, Notice, SourceLink, Surface } from "@/components/sona/ui";
 import { IconRow } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -14,6 +14,8 @@ import type { TimelineItem } from "@/components/sona/timeline-carousel";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
 import { HistoryEditor } from "./history-editor";
+import { defaultMedications } from "@/features/encounter/clinical-state";
+import { emphasise } from "@/features/encounter/emphasis";
 export { PrescriptionPanel as PrescriptionCard } from "./prescription-panel";
 export { ReasoningCard } from "./reasoning-card";
 export { MedicationCard } from "./medication-card";
@@ -34,23 +36,34 @@ export function BriefingCard({ patient, result, onSource, onOpen, onRequest }: F
   ];
   const takeaways: Takeaway[] = patient.incomplete
     ? [{ tone: "caution", text: "Onset, observations and background are missing" }, { tone: "info", text: "Breathlessness on exertion is the only recorded complaint" }, { tone: "caution", text: "Medicines and allergies are unknown" }]
-    : [{ tone: "caution", text: `Temperature ${patient.vitals.find(v => v.label === "Temp")?.value ?? ""} is the only raised vital` }, { tone: "good", text: "Long history of asthma, no admissions on record" }, { tone: "caution", text: `${patient.allergies?.split(" — ")[0] ?? "Allergy"} allergy still needs confirming` }];
+    : [{ tone: "caution", text: `Temperature ${patient.vitals.find(v => v.label === "Temp")?.value ?? ""} is the only raised vital` }, { tone: "caution", text: `${patient.allergies?.split(" — ")[0] ?? "Allergy"} allergy still needs confirming` }];
   // Each page gathers its sources into one pill at the bottom instead of links under every row.
   const card = (children: ReactNode) => <SourceScope>{sources => <Surface style={{ padding: 16, gap: 14 }}>{children}{sources.length > 0 && <View style={{ alignItems: "flex-end" }}><SourcesPill sources={sources} /></View>}</Surface>}</SourceScope>;
   // Live mode: the digest is the server's briefing of this patient's record (allergy and gaps stay amber); authored otherwise.
   const server = useLiveBriefing(patient.encounterId);
-  const digest: Takeaway[] = server.data ? server.data.lines.map(text => ({ tone: /allerg|incomplete|missing/i.test(text) ? "caution" : "info", text })) : takeaways;
-  // Digest first, then the detail as swipeable pages (briefing is a glance before the visit).
+  // The callout holds only what the headline doesn't already say, coloured only where abnormal.
+  const digest: Takeaway[] = (server.data ? server.data.lines.map((text): Takeaway => ({ tone: /allerg|incomplete|missing/i.test(text) ? "caution" : "info", text })) : takeaways)
+    .filter(item => !patient.complaint.includes(item.text)).map(item => ({ ...item, text: emphasise(item.text, patient) }));
+  // The suggested next step sits under the headline with its action, rather than as a last page.
+  const unconfirmed = (encounters[patient.id]?.medicationEntries ?? defaultMedications(patient)).some(m => !m.confirmed);
+  const next = patient.incomplete ? { text: "Complete medicines, allergies and history before any treatment.", label: "Start consultation", go: () => onOpen("recording") }
+    : unconfirmed ? { text: "Confirm medicines and the allergy, then start the consultation.", label: "Confirm", go: () => onRequest("medication") }
+    : { text: "Medicines confirmed. Start the consultation.", label: "Start consultation", go: () => onOpen("recording") };
+  // Next step, digest, then the detail as swipeable pages (briefing is a glance before the visit).
   return <View style={{ gap: 20 }}>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 4 }}>
+      <Text style={{ flex: 1, ...type.subhead, color: palette.ink }}><Text style={{ fontWeight: "600", color: palette.blue }}>Next · </Text>{next.text}</Text>
+      <Chip label={next.label} filled accessibilityLabel={`${next.label}. ${next.text}`} onPress={next.go} />
+    </View>
     {server.loading ? <Surface feature style={{ padding: 16 }}><Drafting label="Reading the record…" /></Surface> : <View style={{ gap: 6 }}>
-      <Takeaways items={digest} />
+      {digest.length > 0 && <Takeaways items={digest} />}
       <View style={{ paddingHorizontal: 4 }}>
         <SampleLabel source={server.data?.source} what="briefing" />
         {server.error && <Text style={{ ...type.caption, color: palette.red }}>{server.error} · showing the authored briefing</Text>}
       </View>
     </View>}
     {sections >= 2 && <AnswerDeck pages={[
-      { title: "Vitals", content: patient.incomplete ? card(<Notice warning>Not recorded yet. Missing information is not a negative finding.</Notice>) : <VitalsCard vitals={patient.vitals} allergy={patient.allergies} onSource={() => onSource("vitals")} /> },
+      { title: "Vitals", content: patient.incomplete ? card(<Notice warning>Not recorded yet. Missing information is not a negative finding.</Notice>) : <VitalsCard vitals={patient.vitals} allergy={patient.allergies} /> },
       { title: "Timeline", content: card(<>
         {timeline.map(item => <View key={item.id} style={{ flexDirection: "row", gap: 12 }}>
           <Text style={{ width: 78, ...type.footnote, color: palette.muted }}>{item.label}</Text>
@@ -64,11 +77,6 @@ export function BriefingCard({ patient, result, onSource, onOpen, onRequest }: F
         <IconRow icon="figure.2.and.child.holdinghands" title="Family" detail={patient.family} sourceLabel="Family history source" onSource={() => onSource(sourceFor("family"))} />
         <IconRow icon="house" title="Social" detail={patient.social} sourceLabel="Social history source" onSource={() => onSource(sourceFor("social"))} />
       </>) },
-      { title: "Next", content: <Surface feature style={{ padding: 16, gap: 14 }}>
-        <Text style={{ ...type.callout, color: palette.ink }}>{patient.incomplete ? "Complete medicines, allergies and family/social history before any treatment simulation." : "Confirm medicines and the reported allergy, then start the consultation."}</Text>
-        <Action label="Start the consultation" icon="waveform" onPress={() => onOpen("recording")} />
-        <Action label="Explore clinical questions" icon="magnifyingglass" secondary onPress={() => onRequest("reasoning")} />
-      </Surface> },
     ]} />}
     {sections >= 3 && <HistoryEditor patient={patient} result={result} onSource={onSource} onRequest={onRequest} refresh="briefing" />}
   </View>;

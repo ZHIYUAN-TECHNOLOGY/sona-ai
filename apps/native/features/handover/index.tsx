@@ -210,7 +210,7 @@ export function HandoverScreen() {
         </Pressable>
       </Animated.View> : server.live && !role.can("handover.accept") ? <LockedAction label="Needs a doctor or a nurse to accept" path="handover.accept" height={56} /> : <HoldToAccept onDone={accept} />}
       {acceptError && !accepted && <ErrorLine text={acceptError} onRetry={accept} />}
-      <Text style={{ ...type.caption, color: palette.muted }}>{server.live ? "Clinic patients from the server’s records." : "Clinic patients come from today’s visits; ward patients are examples without a record to open."}</Text>
+      <Text style={{ ...type.caption, color: palette.muted }}>{server.live ? "Clinic patients from today’s records." : "Clinic patients come from today’s visits; ward patients are examples without a record to open."}</Text>
     </ScrollView>}
   </View>;
 }

@@ -22,6 +22,11 @@ test("explicit markup from a model response overrides the dictionary", () => {
   expect(marks("Give [[co-amoxiclav|medicine]] unless [[anaphylaxis|alert]].")).toEqual([["co-amoxiclav", "medicine"], ["anaphylaxis", "alert"]]);
 });
 
+test("text with explicit markup colours only those terms, not dictionary words around them", () => {
+  expect(marks("Cough for five days, with [[fever|caution]] since yesterday.")).toEqual([["fever", "caution"]]);
+  expect(segments("Cough, [[fever|caution]].").map(s => s.text).join("")).toBe("Cough, fever.");
+});
+
 test("low risk, high certainty and non-severe disease never turn red", () => {
   expect(marks("Low risk, high certainty, for non-severe community-acquired pneumonia."))
     .toEqual([["community-acquired pneumonia", "finding"]]);

@@ -167,7 +167,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       const image = pending.find(item => item.kind === "image");
       const files = pending.filter(item => item.kind === "file");
       setPending([]);
-      const fileNote = files.length ? `${files.map(f => f.name).join(", ")} kept for reference. Document review arrives with the backend.` : undefined;
+      const fileNote = files.length ? `${files.map(f => f.name).join(", ")} kept for reference. Document review is not switched on yet.` : undefined;
       if (image) { updateEncounter(current => image.uri === "teaching" ? { ...current, imagingAttachment: undefined, hideTeachingImage: false } : { ...current, imagingAttachment: { uri: image.uri, name: image.name } }, true); run("xray", prompt); if (fileNote) setNotice(fileNote); return; }
       if (fileNote) setNotice(fileNote);
     } const kind = routePrompt(prompt); if (!kind) { setNotice("Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan. Demo routing uses supported phrases."); return; } setInput(""); run(kind, prompt); };

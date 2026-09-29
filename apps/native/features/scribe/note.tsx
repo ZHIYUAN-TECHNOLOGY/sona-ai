@@ -10,7 +10,8 @@ import { palette, type } from "@/components/sona/theme";
 import { Action, Chip, Expand, Glass, glass, Icon, Notice, Screen, SourceLink, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
-import { buildDraft, readNoteSections, sectionKeys, serializeNoteSections, type NoteSections } from "./model";
+import { buildDraft, readNoteSections, scriptFor, sectionKeys, serializeNoteSections, type NoteSections } from "./model";
+import { SampleLabel } from "@/components/sona/model-answer";
 import { haptic, noteMeta, StateLine } from "./parts";
 import { api, errorText, useLive } from "@/features/live";
 import { noteSections, noteSentences } from "@/features/live/prescribing-sync";
@@ -152,7 +153,9 @@ export function NoteScreen() {
   const layout = reducedMotion ? undefined : LAYOUT;
   // Sections arrive together with a short 40 ms stagger, once, when the note opens.
   const rise = (index: number) => reducedMotion ? undefined : riseIn({ delay: 40 * index, distance: 8, duration: 320 });
-  const suggestionBlocked = !encounter.transcript.length ? "No transcript captured for this encounter." : encounter.transcriptDraft ? "Finish the pending transcript correction before a fresh draft." : undefined;
+  // No visit captured yet: drafts come from the scripted sample consultation, labelled as a sample.
+  const consultation = encounter.transcript.length ? encounter.transcript : scriptFor(encounter.language);
+  const suggestionBlocked = encounter.transcriptDraft ? "Finish the pending transcript correction before a fresh draft." : undefined;
 
   return <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}>
     <Screen>
@@ -162,8 +165,13 @@ export function NoteScreen() {
           <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 11, backgroundColor: encounter.noteReviewed ? "rgba(40,104,80,0.1)" : "#E6EEFC" }}>
             <Text style={{ fontSize: 12, fontWeight: "600", color: encounter.noteReviewed ? palette.green : palette.blue }}>{encounter.noteReviewed ? "Reviewed" : "Draft"}</Text>
           </View>
-          <Text selectable style={{ flex: 1, fontSize: 13, lineHeight: 19, color: palette.muted }}>{live ? "Verify drafts against source · live: each save is a new note revision on the server." : "Verify drafts against source · local session only, no record connected."}</Text>
+          <Text selectable style={{ flex: 1, fontSize: 13, lineHeight: 19, color: palette.muted }}>{live ? "Verify drafts against source." : "Verify drafts against source · local session only, no record connected."}</Text>
         </View>
+        {/* An empty note pulls in the consultation in one tap (the scripted sample until a visit is captured). */}
+        {canWrite && !hasContent && !encounter.transcriptDraft && <View style={{ gap: 6 }}>
+          <Action label="Draft from consultation" icon="waveform" onPress={() => { haptic("done"); const draft = readNoteSections(buildDraft(consultation)); updateEncounter(current => ({ ...current, noteSectionDraft: draft, note: serializeNoteSections(draft), noteReviewed: false, noteSaveStatus: "idle" }), true); }} />
+          <SampleLabel source={encounter.transcript.length ? undefined : "fixture"} what="scribe" />
+        </View>}
         {encounter.transcript.some(line => line.corrected && !line.englishReviewed) && <StateLine warning>Unreviewed interpretations in the transcript. Check the original dialogue first.</StateLine>}
         {serverError && <StateLine warning>{serverError}</StateLine>}
       </Animated.View>
@@ -187,7 +195,7 @@ export function NoteScreen() {
 
       <Animated.View entering={rise(5)} layout={layout} style={{ gap: 10 }}>
         {!canWrite ? null : suggestionBlocked ? <StateLine>{suggestionBlocked}</StateLine>
-          : !suggestion && <QuietLink label="Fresh draft from transcript" icon="doc.text.magnifyingglass" onPress={() => { haptic("tap"); setSuggestion(readNoteSections(buildDraft(encounter.transcript))); }} />}
+          : !suggestion && hasContent && <QuietLink label="Fresh draft from consultation" icon="doc.text.magnifyingglass" onPress={() => { haptic("tap"); setSuggestion(readNoteSections(buildDraft(consultation))); }} />}
         {suggestion && <Expand key="suggestion">
           <Surface style={{ padding: 18, gap: 14 }}>
             <Text style={{ fontSize: 12, fontWeight: "600", letterSpacing: 0.3, color: palette.blue }}>New suggestion · not applied · your note stays until you replace it</Text>
@@ -207,7 +215,7 @@ export function NoteScreen() {
           <Action label={failNextSave ? "Next save will fail · cancel simulation" : "Simulate failure on next save"} secondary disabled={saving} onPress={() => setFailNextSave(value => !value)} />
         </Expand>}
       </Animated.View>}
-      <View style={{ height: BAR_SPACE + (live && canWrite ? 54 : 0) }} />
+      <View style={{ height: BAR_SPACE + Math.max(insets.bottom, 12) + (live && canWrite ? 54 : 0) }} />
     </Screen>
 
     {/* One floating glass bar: the save state inline, then the two note actions. */}

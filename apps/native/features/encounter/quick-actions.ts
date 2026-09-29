@@ -97,6 +97,21 @@ export function homeActions(patients: Patient[], encounters: Record<string, Enco
  * and for doctors "Scan note" (a handwritten ward-round note, drug chart or letter into the record).
  */
 export type VisitTarget = "briefing" | "recording" | "medication" | "xray" | "scan";
+
+/** The one thing in this visit that needs the doctor now, with its action; nothing when nothing does. */
+export type VisitNeed = { tone: "urgent" | "caution" | "calm"; text: string; action: string; target: VisitTarget | "discharge" | "claim" };
+export function visitNeed(patient: Patient, encounter: Encounter | undefined, server: ServerData): VisitNeed | undefined {
+  if (pendingResult(server)?.patientId === patient.id) return { tone: "urgent", text: "New result to review", action: "Brief me", target: "briefing" };
+  if (patient.incomplete) return { tone: "caution", text: "History incomplete · medicines and allergies unknown", action: "Brief me", target: "briefing" };
+  const claim = encounter?.claim?.status;
+  if (claim === "queried" || claim === "denied") return { tone: "caution", text: claim === "queried" ? "Insurer asked about the guarantee letter" : "Guarantee letter denied · appeal drafted", action: "Answer", target: "claim" };
+  const unconfirmed = (encounter?.medicationEntries ?? defaultMedications(patient)).filter(m => !m.confirmed).length;
+  const allergy = patient.allergies ? `${patient.allergies.split(" — ")[0]} allergy` : undefined;
+  if (unconfirmed) return { tone: "caution", text: [`${unconfirmed} ${unconfirmed === 1 ? "medicine" : "medicines"} to confirm`, allergy].filter(Boolean).join(" · "), action: "Confirm", target: "medication" };
+  // Once the medicines are settled the visit can close: discharge is the next move until it is done.
+  if (!encounter?.discharge?.dischargedAt && encounter?.requests.length) return { tone: "calm", text: "Medicines confirmed · ready to draft the discharge", action: "Discharge", target: "discharge" };
+  return undefined;
+}
 export function visitActions(patient: Patient, encounter: Encounter | undefined, server: ServerData, go: (target: VisitTarget) => void, scan = false): QuickAction[] {
   const unconfirmed = patient.incomplete ? 0 : (encounter?.medicationEntries ?? defaultMedications(patient)).filter(m => !m.confirmed).length;
   const resultHere = pendingResult(server)?.patientId === patient.id;

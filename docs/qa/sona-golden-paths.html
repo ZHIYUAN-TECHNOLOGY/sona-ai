@@ -183,9 +183,9 @@
 <li><span class="s"></span><span class="do">Tap another row, then <b>Send to …</b>.<span class="exp">The drafted query shows first; sending clears the row the same way.</span></span></li>
 </ol></section>
 
-<section><h2><span class="n">19</span>Live backend mode</h2><p class="where">Settings (sidebar › Your workspace) › Live backend · needs the local Worker (<code>cd packages/infra && bun run dev</code>) or staging, and the test doctor from <code>packages/db/src/seed.ts</code></p><ol>
-<li><span class="s"></span><span class="do">Tap <b>Sign in</b>, sign in as the test doctor, go back and switch <b>Use the live backend</b> on.<span class="exp">“Signed in as dr.test@sona.test”. The switch stays on after a reload.</span></span></li>
-<li><span class="s"></span><span class="do">Run paths 14 and 15.<span class="exp">Cards show “Live · checked by the server”. After Send the letter reads “Sent · awaiting insurer · answers in about a minute”; the server’s mock insurer approves and the discharge card clears on its own.</span></span></li>
+<section><h2><span class="n">19</span>Live backend mode</h2><p class="where">Settings (sidebar › Your workspace) › Hospital record · needs the local Worker (<code>cd packages/infra && bun run dev</code>) or staging, and the test doctor from <code>packages/db/src/seed.ts</code></p><ol>
+<li><span class="s"></span><span class="do">Tap <b>Sign in</b>, sign in as the test doctor, go back and switch <b>Connect to the hospital record</b> on.<span class="exp">“Signed in as dr.test@sona.test”. The switch stays on after a reload.</span></span></li>
+<li><span class="s"></span><span class="do">Run paths 14 and 15.<span class="exp">After Send the letter reads “Sent · awaiting insurer · answers in about a minute”; the server’s mock insurer approves and the discharge card clears on its own.</span></span></li>
 <li><span class="s"></span><span class="do">Reload the app while the insurer is deciding, then reopen the discharge.<span class="exp">The card rebuilds from the server: fixes kept, “Sent · awaiting insurer”.</span></span></li>
 <li><span class="s"></span><span class="do">Open the coding audit.<span class="exp">“Live audit · from the server”: Daniel’s anaemia, RM 630. Swiping sends the query as a task.</span></span></li>
 <li><span class="s"></span><span class="do">Assign a Bed 6 owner in the ward, reload, reopen Bed 6.<span class="exp">The owner badge is still there (read back from the server).</span></span></li>

@@ -181,7 +181,7 @@ function Start({ patientName, live, busy, error, onCamera, onLibrary, onSample }
         <Action label="Use sample note" icon="doc.text" secondary disabled={busy} onPress={onSample} />
         {error && <Notice warning>{error}</Notice>}
         <Text selectable style={{ ...type.footnote, color: palette.muted }}>{live
-          ? "Live: the photo is uploaded to your hospital’s storage and read on the server."
+          ? "The photo stays in your hospital’s storage."
           : "The photo stays on this device. Until the handwriting model is switched on, the reading is a sample."}</Text>
       </Surface>
     </Animated.View>

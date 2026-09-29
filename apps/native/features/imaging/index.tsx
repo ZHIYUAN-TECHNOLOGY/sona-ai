@@ -228,8 +228,8 @@ export function XrayScreen() {
   // A local image has no source page: its provenance line says it stays on this device and is not analysed.
   const upload = attachment && server.upload?.uri === attachment.uri ? server.upload : undefined;
   const kept = !upload ? "Kept on this device · not uploaded or analysed"
-    : upload.state === "uploading" ? "Uploading to the live backend · not analysed"
-    : upload.state === "uploaded" ? "Uploaded to the live backend · not analysed"
+    : upload.state === "uploading" ? "Saving to your hospital’s storage · not analysed"
+    : upload.state === "uploaded" ? "In your hospital’s storage · not analysed"
     : `Kept on this device · upload failed: ${upload.error} · not analysed`;
   const image: TeachingImage | undefined = attachment ? { id: attachment.uri, source: { uri: attachment.uri }, title: attachment.name, attribution: kept, license: "rights and deidentification not verified", sourceUrl: "" } : referenceImage;
   const analysing = encounter?.requests.some(item => item.kind === "xray" && item.status === "streaming") ?? false;
@@ -258,7 +258,7 @@ export function XrayScreen() {
       <Notice>There is no image analysis result to interpret. This empty state does not indicate a normal chest X-ray.</Notice>
     </Section>
     <Surface feature style={{ padding: 18, gap: 14 }}>
-      <Text selectable style={{ fontSize: 15, lineHeight: 21, color: palette.muted, paddingRight: 40 }}>{`Choose a deidentified teaching image you have permission to use. ${server.live ? "Live backend mode uploads it to the server; it" : "It stays on this device and"} is not analysed.`}</Text>
+      <Text selectable style={{ fontSize: 15, lineHeight: 21, color: palette.muted, paddingRight: 40 }}>{`Choose a deidentified teaching image you have permission to use. ${server.live ? "It stays in your hospital’s storage and" : "It stays on this device and"} is not analysed.`}</Text>
       <Action label={picking ? "Opening photo library…" : "Choose teaching image"} icon="photo.badge.plus" disabled={picking} onPress={pickImage} />
       {pickerError && <Notice warning>{pickerError}</Notice>}
     </Surface>

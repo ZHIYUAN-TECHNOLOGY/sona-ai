@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { MyDay } from "@/features/day";
 import { QuickActions } from "@/components/sona/quick-actions";
-import { useHomeActions, visitActions } from "./quick-actions";
+import { useHomeActions, visitActions, visitNeed, type VisitNeed } from "./quick-actions";
 import { openSession } from "./navigation";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -11,7 +11,7 @@ import { useRole } from "@/features/live/roles";
 import { useInboxSummary } from "@/features/inbox";
 import { useEncounter } from "./store";
 import { SweptLead, wordCount } from "@/components/sona/marked-text";
-import { Icon, pillStyle, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { Chip, Icon, pillStyle, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, View } from "react-native";
@@ -19,6 +19,7 @@ import { riseIn } from "@/components/sona/motion";
 import Animated, { cubicBezier, FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Capability, Patient } from "./types";
+import { emphasise } from "./emphasis";
 
 const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
 export type Suggestion = { text: string; kind: Capability | "recording"; emoji: string };
@@ -66,7 +67,8 @@ export function leadFor(kind: Capability, patient: Patient) {
     if (gaps[kind]) return gaps[kind]!;
   }
   const leads: Record<Capability, string> = {
-    briefing: `${name} is ${patient.age} and here for a ${patient.subtitle.toLowerCase()}. ${patient.complaint}`,
+    // Only the abnormal is coloured (fever with a raised temperature), not every noun.
+    briefing: emphasise(`${name} is ${patient.age} and here for a ${patient.subtitle.toLowerCase()}. ${patient.complaint}`, patient),
     reasoning: "Two possibilities are worth exploring. The record doesn’t confirm either of them.",
     xray: "Here’s the reference chest radiograph with its uploader’s description. It isn’t a model reading.",
     medication: `${name} reports ${patient.medicines.length} ${patient.medicines.length === 1 ? "medicine" : "medicines"}. Nothing can be cleared until each one is confirmed.`,
@@ -183,6 +185,9 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
   // Without a visit, the greeting and the ranked day are one section: MyDay owns the header.
   if (!patient) return <View style={{ paddingTop: 20 }}><MyDay patients={patients} greeting={greeting().replace(/\.$/, "")} onOpen={(id, open) => openSession(id, open)}
     actions={<QuickActions actions={homeKeys} />} /></View>;
+  // Insight first: the one thing that needs the doctor, with its action, above the tiles.
+  const need = visitNeed(patient, encounters[patient.id], server);
+  const go = (target: VisitNeed["target"]) => target === "scan" || target === "discharge" || target === "claim" ? router.push(`/${target}`) : onPick(suggestionFor(target, patient));
   return <View style={{ gap: 44, paddingTop: 20 }}>
     <View style={{ gap: 18 }}>
       <Animated.View entering={rise(0)}><Text accessibilityRole="header" style={lead}>{greeting()}</Text></Animated.View>
@@ -191,10 +196,20 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
           <Text style={{ fontWeight: "600" }}>{patient.name}</Text> is here for a {patient.subtitle.toLowerCase()} {patient.incomplete ? "🫁" : "🩺"} at <Text style={{ fontWeight: "600" }}>{patient.time}</Text>.{"\n"}<Text style={{ color: palette.muted }}>Ask me anything.</Text>
         </Text> : null}
       </Animated.View>
-      <Animated.View entering={rise(2)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {patient ? <QuickActions actions={visitActions(patient, encounters[patient.id], server, kind => kind === "scan" ? router.push("/scan") : onPick(suggestionFor(kind, patient)), canScan)} /> : null}
+      {need && <Animated.View entering={rise(2)}><NeedLine need={need} onPress={() => go(need.target)} /></Animated.View>}
+      <Animated.View entering={rise(3)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+        {patient ? <QuickActions actions={visitActions(patient, encounters[patient.id], server, go, canScan)} /> : null}
       </Animated.View>
     </View>
   </View>;
 }
 
+const NEED_INK: Record<VisitNeed["tone"], string> = { urgent: palette.red, caution: palette.amber, calm: palette.blue };
+/** One line, no card: a state dot, what needs doing and the action that does it. */
+function NeedLine({ need, onPress }: { need: VisitNeed; onPress: () => void }) {
+  return <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: NEED_INK[need.tone] }} />
+    <Text style={{ flex: 1, ...type.subhead, fontWeight: "500", color: palette.ink }}>{need.text}</Text>
+    <Chip label={need.action} filled accessibilityLabel={`${need.action}. ${need.text}`} onPress={onPress} />
+  </View>;
+}
