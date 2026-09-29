@@ -181,10 +181,14 @@ export const drugs = pgTable("drugs", {
   dose: text("dose").notNull(), sourceId: text("source_id").notNull(), formulary: boolean("formulary").default(false).notNull(),
 });
 
-/** Retrieval library. hospital_id empty = the shared public library; set = one hospital's own documents. */
+/**
+ * Retrieval library. hospital_id empty = the shared public library; set = one hospital's own documents.
+ * owner_id set = one doctor's private source (only they see or cite it); empty = the whole hospital's.
+ */
 export const documents = pgTable("documents", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id"), title: text("title").notNull(), source: text("source").notNull(),
   year: integer("year").notNull(), license: text("license"), uploadedBy: text("uploaded_by"), createdAt: created(),
+  ownerId: text("owner_id"), kind: text("kind", { enum: ["text", "pdf", "pubmed"] }).default("text").notNull(),
 });
 
 export const chunks = pgTable("chunks", {

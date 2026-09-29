@@ -160,7 +160,8 @@ export function ScanScreen() {
       </>}
       onApply={(note, off) => apply(note, off, phase.key, phase.photo)} />}
 
-    {phase.kind === "confirm" && box.width > 0 && <CaptureScan source={phase.photo.source} width={box.width} height={box.height} suggested="Document"
+    {/* No crop here: the reading uploads the original photo's base64. */}
+    {phase.kind === "confirm" && box.width > 0 && <CaptureScan source={phase.photo.source} width={box.width} height={box.height} suggested="Document" crop={false}
       confirm={{ title: "Read this note?", line: "Sona reads it, then you review every item. Nothing is added until you do.", action: "Read note" }}
       onRetake={() => setPhase({ kind: "start" })} onAttach={() => { setReady(undefined); void start(phase.photo); }} />}
   </View>;

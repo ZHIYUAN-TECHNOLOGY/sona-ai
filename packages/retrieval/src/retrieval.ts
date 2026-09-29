@@ -12,7 +12,7 @@ export type Embedder = (texts: string[]) => Promise<number[][]>;
 /** Relevance score per passage for the query, higher is better (bge-reranker-v2-m3 in box ②). */
 export type Reranker = (query: string, passages: string[]) => Promise<number[]>;
 
-export type LibraryDocument = { id: string; hospitalId: string | null; title: string; source: string; year: number; license?: string | null; uploadedBy?: string | null };
+export type LibraryDocument = { id: string; hospitalId: string | null; title: string; source: string; year: number; license?: string | null; uploadedBy?: string | null; ownerId?: string | null; kind?: "text" | "pdf" | "pubmed" };
 
 const DIMS = 768;
 
@@ -46,8 +46,8 @@ function sections(text: string) {
   return out;
 }
 
-/** Stores a document and one chunk per section, each tagged and embedded; re-ingesting replaces its chunks. */
-export async function ingest(db: AnyDb, doc: LibraryDocument, text: string, embedder: Embedder) {
+/** Stores a document and one chunk per section, each tagged and embedded; re-ingesting replaces its chunks. Returns the section count. */
+export async function ingest(db: AnyDb, doc: LibraryDocument, text: string, embedder: Embedder): Promise<number> {
   const parts = sections(text);
   // Index each chunk with its document title and heading, so a section that never names its topic is still found.
   const indexed = parts.map(p => `${doc.title}\n${p.section}\n${p.text}`);
@@ -55,7 +55,7 @@ export async function ingest(db: AnyDb, doc: LibraryDocument, text: string, embe
   // ponytail: not one transaction (neon-http has none), so a search mid-re-ingest can see the document without chunks; use db.batch or a pooled driver if re-ingests go live.
   await db.insert(documents).values(doc).onConflictDoUpdate({ target: documents.id, set: { ...doc, id: undefined } });
   await db.delete(chunks).where(eq(chunks.documentId, doc.id));
-  if (!parts.length) return;
+  if (!parts.length) return 0;
   const seen = new Map<string, number>();
   await db.insert(chunks).values(parts.map((p, i) => {
     const s = slug(p.section), n = (seen.get(s) ?? 0) + 1;
@@ -66,6 +66,7 @@ export async function ingest(db: AnyDb, doc: LibraryDocument, text: string, embe
       embedding: vectors[i]!, search: sql`to_tsvector('english', ${indexed[i]!})`,
     };
   }));
+  return parts.length;
 }
 
 const RRF_K = 60;
@@ -76,11 +77,12 @@ type Row = { id: string; document_id: string; source_id: string; section: string
 
 /** Hybrid search: full-text and cosine vector search fused by reciprocal rank, then optionally reranked. */
 export async function search(db: AnyDb, input: z.input<typeof searchInputSchema>, embedder: Embedder, reranker?: Reranker): Promise<RetrievalHit[]> {
-  const { query, hospitalId, k } = searchInputSchema.parse(input);
+  const { query, hospitalId, userId, k } = searchInputSchema.parse(input);
   const [qv] = await embedder([query]);
   const cols = sql`c.id, c.document_id, c.source_id, c.section, c.text, d.source, d.year`;
   // ponytail: scoped in the query, not by row-level security; add RLS policies when the Worker sets a per-request hospital.
-  const from = sql`chunks c join documents d on d.id = c.document_id where (c.hospital_id is null or c.hospital_id = ${hospitalId})`;
+  // A doctor's private sources are searched for that doctor only; with no caller, only shared ones.
+  const from = sql`chunks c join documents d on d.id = c.document_id where (c.hospital_id is null or c.hospital_id = ${hospitalId}) and (d.owner_id is null or d.owner_id = ${userId ?? null})`;
   // OR the query's lexemes so a natural question matches any of its terms.
   const tsq = sql`replace(plainto_tsquery('english', ${query})::text, '&', '|')::tsquery`;
   const keyword = await db.execute(sql`select ${cols} from ${from} and c.search @@ ${tsq} order by ts_rank(c.search, ${tsq}) desc limit ${POOL}`);

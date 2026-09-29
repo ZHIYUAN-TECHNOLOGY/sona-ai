@@ -53,5 +53,8 @@
   "packageManager": "bun@1.4.0",
   "patchedDependencies": {
     "expo-backdrop@0.1.1": "patches/expo-backdrop@0.1.1.patch"
-  }
+  },
+  "trustedDependencies": [
+    "@shopify/react-native-skia"
+  ]
 }

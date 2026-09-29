@@ -15,14 +15,15 @@ const user = (id: string) => ({
 /** PubMed unreachable, so every answer rests on the library alone. */
 const offline = (async () => { throw new Error("network unreachable"); }) as unknown as typeof fetch;
 
-async function signedIn() {
+async function signedIn(fetcher: typeof fetch = offline) {
   const db = await createTestDb();
   await seedDemo(db, new Date("2026-09-26T09:00:00+08:00"));
   await addClinician(db, "dr-aisyah");
+  await addClinician(db, "dr-bala");
   await db.insert(hospitals).values({ id: "other", name: "Other Hospital (synthetic)" });
   await db.insert(hospitalMembers).values({ userId: "dr-other", hospitalId: "other" });
   const library = { ingest: (doc: Parameters<typeof ingest>[1], text: string) => ingest(db, doc, text, stubEmbedder), search: (input: Parameters<typeof search>[1]) => search(db, input, stubEmbedder) };
-  const as = (id: string | null) => createRouterClient(appRouter, { context: { db, session: id ? user(id) : null, library, fetch: offline } });
+  const as = (id: string | null) => createRouterClient(appRouter, { context: { db, session: id ? user(id) : null, library, fetch: fetcher } });
   return { db, as, api: as("dr-aisyah") };
 }
 
@@ -33,7 +34,7 @@ const protocol = {
 
 test("a doctor adds a source to their hospital's library and it is listed there, never for another hospital", async () => {
   const { api, as } = await signedIn();
-  const added = await api.library.add(protocol);
+  const added = await api.library.add({ ...protocol, scope: "hospital" });
   expect(added).toMatchObject({ title: protocol.title, source: "Hospital pharmacy", year: 2026 });
   expect((await api.library.list()).map(d => [d.id, d.title, d.uploadedBy])).toEqual([[added.id, protocol.title, "dr-aisyah"]]);
   expect(await as("dr-other").library.list()).toEqual([]);
@@ -69,4 +70,86 @@ test("the library needs a login", async () => {
   const { as } = await signedIn();
   await expect(as(null).library.list()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   await expect(as(null).library.add(protocol)).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+});
+
+/** A real PDF with one text line per entry on each page (Helvetica, no compression), as a clinic's export would be. */
+function tinyPdf(pages: string[][]) {
+  const streams = pages.map(lines => `BT /F1 12 Tf 72 720 Td 14 TL ${lines.map(l => `(${l}) Tj T*`).join(" ")} ET`);
+  const objs = ["<< /Type /Catalog /Pages 2 0 R >>", `<< /Type /Pages /Kids [${streams.map((_, i) => `${4 + i * 2} 0 R`).join(" ")}] /Count ${streams.length} >>`, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"];
+  streams.forEach((c, i) => objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents ${5 + i * 2} 0 R >>`, `<< /Length ${c.length} >>\nstream\n${c}\nendstream`));
+  let out = "%PDF-1.4\n";
+  const offsets = objs.map((o, i) => { const at = out.length; out += `${i + 1} 0 obj\n${o}\nendobj\n`; return at; });
+  const xref = out.length;
+  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n${offsets.map(o => `${String(o).padStart(10, "0")} 00000 n \n`).join("")}trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  return btoa(out);
+}
+
+test("a source is the doctor's own by default: a colleague neither lists, cites nor removes it; a shared one they do", async () => {
+  const { api, as } = await signedIn();
+  const mine = await api.library.add(protocol);
+  expect(mine).toMatchObject({ scope: "me", kind: "text", sections: 2 });
+  const shared = await api.library.add({ ...protocol, requestId: "req-2", title: "Ward sepsis bundle (synthetic)", text: "# Fluids\nThirty millilitres per kilogram within three hours." , scope: "hospital" });
+  const bala = as("dr-bala");
+  expect((await api.library.list()).map(d => [d.title, d.scope, d.sections])).toEqual([[shared.title, "hospital", 1], [protocol.title, "me", 2]]);
+  expect((await bala.library.list()).map(d => d.id)).toEqual([shared.id]);
+  const question = { encounterId: "visit-1086", question: "What amoxicillin dose does the ward use?" };
+  expect((await api.evidence.ask(question)).passages.map(p => p.documentId)).toContain(mine.id);
+  expect((await bala.evidence.ask(question)).passages.map(p => p.documentId)).not.toContain(mine.id);
+  await expect(bala.library.remove({ documentId: mine.id })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  // Nor can a colleague overwrite it by replaying its request ID.
+  await expect(bala.library.add({ ...protocol, title: "Replaced" })).rejects.toMatchObject({ code: "CONFLICT" });
+  expect(await bala.library.remove({ documentId: shared.id })).toEqual({ id: shared.id });
+});
+
+test("text holding a patient's name, IC or record number is refused before it is stored; authors' emails are fine", async () => {
+  const { api } = await signedIn();
+  const refused = (text: string) => api.library.add({ ...protocol, text }).then(() => { throw new Error("stored"); }, (e: { code: string; data: { kinds: string[] } }) => [e.code, e.data.kinds.sort()]);
+  expect(await refused("# Case\nAmelia Tan, 34, improved on amoxicillin.")).toEqual(["BAD_REQUEST", ["name"]]);
+  expect(await refused("# Case\nIC 900101-14-5678, seen for SYN-1042.")).toEqual(["BAD_REQUEST", ["ic", "mrn"]]);
+  expect(await api.library.list()).toEqual([]);
+  expect(await api.library.add({ ...protocol, text: "# Correspondence\nDr Lim, lim@um.edu.my\n\n# Antibiotics\nAmoxicillin 1 g." })).toMatchObject({ sections: 2 });
+});
+
+test("a PDF is read into one section per page, split again at numbered headings, and cited like any source", async () => {
+  const { api } = await signedIn();
+  const pdf = tinyPdf([["Ward CAP protocol", "For adults on the medical wards."], ["2. Antibiotics", "Amoxicillin 1 g three times daily for five days."]]);
+  const added = await api.library.addPdf({ requestId: "pdf-1", title: "Ward CAP protocol.pdf", dataBase64: pdf });
+  expect(added).toMatchObject({ kind: "pdf", scope: "me", pages: 2, sections: 2, source: "PDF, 2 pages" });
+  const { passages } = await api.evidence.ask({ encounterId: "visit-1086", question: "What amoxicillin dose does the ward use?" });
+  expect(passages[0]).toMatchObject({ documentId: added.id, section: "2. Antibiotics" });
+});
+
+test("a PDF that is not one, has no text layer or names a patient is refused with a reason the app can show", async () => {
+  const { api } = await signedIn();
+  const reason = (dataBase64: string) => api.library.addPdf({ requestId: "pdf-x", title: "x.pdf", dataBase64 }).then(() => "stored", (e: { data: { reason: string } }) => e.data.reason);
+  expect(await reason(btoa("GIF89a not a pdf"))).toBe("not-pdf");
+  expect(await reason(tinyPdf([[]]))).toBe("no-text");
+  expect(await reason(tinyPdf([["Discharge letter for Amelia Tan"]]))).toBe("patient-details");
+  expect(await api.library.list()).toEqual([]);
+});
+
+/** PubMed as a fake: a DOI search, and one article whose abstract has labelled parts. */
+const pubmed = (async (url: string) => {
+  if (url.includes("esearch")) return new Response(JSON.stringify({ esearchresult: { idlist: url.includes(encodeURIComponent("10.1056/NEJMoa2215145")) ? ["36942789"] : [] } }));
+  if (url.includes("efetch") && url.includes("id=36942789")) return new Response(`<PubmedArticleSet><PubmedArticle><PMID>36942789</PMID><Journal><Title>The New England journal of medicine</Title><ISOAbbreviation>N Engl J Med</ISOAbbreviation><JournalIssue><PubDate><Year>2023</Year></PubDate></JournalIssue></Journal><ArticleTitle>Hydrocortisone in Severe Community-Acquired Pneumonia.</ArticleTitle><Abstract><AbstractText Label="BACKGROUND">Whether hydrocortisone helps is unclear.</AbstractText><AbstractText Label="CONCLUSIONS">Hydrocortisone lowered mortality at day 28 in severe pneumonia.</AbstractText></Abstract></PubmedArticle></PubmedArticleSet>`);
+  return new Response("<PubmedArticleSet></PubmedArticleSet>");
+}) as unknown as typeof fetch;
+
+test("a DOI, PMID or PubMed link previews the article, and importing adds its abstract part by part", async () => {
+  const { api } = await signedIn(pubmed);
+  const preview = { pmid: "36942789", title: "Hydrocortisone in Severe Community-Acquired Pneumonia", journal: "N Engl J Med", year: 2023, sections: 2, url: "https://pubmed.ncbi.nlm.nih.gov/36942789/" };
+  for (const ref of ["https://doi.org/10.1056/NEJMoa2215145", "PMID: 36942789", "https://pubmed.ncbi.nlm.nih.gov/36942789/"]) expect(await api.library.previewArticle({ ref })).toEqual(preview);
+  await expect(api.library.previewArticle({ ref: "steroids in pneumonia" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await expect(api.library.previewArticle({ ref: "10.9999/unknown" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  const added = await api.library.importArticle({ requestId: "pm-1", pmid: "36942789" });
+  expect(added).toMatchObject({ kind: "pubmed", scope: "me", title: preview.title, source: "N Engl J Med", year: 2023, sections: 2 });
+  const { passages } = await api.evidence.ask({ encounterId: "visit-1086", question: "Does hydrocortisone lower mortality in severe pneumonia?" });
+  expect(passages.map(p => p.section)).toContain("Conclusions");
+});
+
+test("importing while PubMed is down says so, and stores nothing", async () => {
+  const { api } = await signedIn();
+  await expect(api.library.previewArticle({ ref: "36942789" })).rejects.toMatchObject({ code: "SERVICE_UNAVAILABLE" });
+  await expect(api.library.importArticle({ requestId: "pm-1", pmid: "36942789" })).rejects.toMatchObject({ code: "SERVICE_UNAVAILABLE" });
+  expect(await api.library.list()).toEqual([]);
 });

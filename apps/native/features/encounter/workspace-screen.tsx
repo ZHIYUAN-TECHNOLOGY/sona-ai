@@ -170,9 +170,9 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const pick = (item: Suggestion) => item.kind === "recording" ? open("recording") : run(item.kind, item.text);
   const submit = (text: string) => { const prompt = text.trim(); if (!prompt) return; if (!patient) { setNotice("Pick a visit first. Today’s visits are listed above."); return; }
     if (pending.length) {
-      // Images go to the imaging review (the first becomes the encounter's attachment); files are kept for reference.
-      const image = pending.find(item => item.kind === "image");
-      const files = pending.filter(item => item.kind === "file");
+      // Images go to the imaging review (the first becomes the encounter's attachment); files and documents, scanned or photographed, are kept for reference.
+      const image = pending.find(item => item.kind === "image" && item.imageType !== "Document");
+      const files = pending.filter(item => item.kind === "file" || item.imageType === "Document");
       setPending([]);
       const fileNote = files.length ? `${files.map(f => f.name).join(", ")} kept for reference. Document review is not switched on yet.` : undefined;
       if (image) { updateEncounter(current => image.uri === "teaching" ? { ...current, imagingAttachment: undefined, hideTeachingImage: false } : { ...current, imagingAttachment: { uri: image.uri, name: image.name } }, true); run("xray", prompt); if (fileNote) setNotice(fileNote); return; }

@@ -19,6 +19,7 @@
     "@sona-ai/db": "workspace:*",
     "@sona-ai/domain": "workspace:*",
     "drizzle-orm": "catalog:",
+    "unpdf": "^1.8.1",
     "zod": "catalog:"
   },
   "devDependencies": {

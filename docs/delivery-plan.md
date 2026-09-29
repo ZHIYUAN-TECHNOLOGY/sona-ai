@@ -61,11 +61,18 @@ iPhone (Expo)
 - **Evidence answer** (flow 4, the eighth capability): retrieval over the library below plus live PubMed E-utilities search; Gemma picks three sources and summarises each with its PMID or passage ID. The certainty label comes from rules on study type. CURB-65 is plain code over an observations table read by source ID; an unrecorded factor stays unknown. Answers to the rehearsed demo questions are cached so the stage demo cannot fail on the network.
 - **Coding audit** (flow 5): a nightly Cloudflare Cron Trigger runs the flow 2 coding tool over the day's notes and compares extracted lab facts with the note (for example, anaemia in the labs but not the note). Results go to an `audit_items` table; the money at risk comes from a synthetic casemix weights table; each query to a doctor is a task.
 - **Retrieval library:** one store, pgvector in Neon Singapore, for everything retrieved: Malaysian MOH clinical practice guidelines, ATS/IDSA pneumonia guidance, cached PubMed abstracts and insurer policy text.
-  - Ingestion: text extraction (OpenMed document extraction, with OCR for scans), chunks cut per section and tagged with source, year and section, re-embedded when a document changes.
+  - Ingestion: a PDF with a text layer is read in the Worker (`unpdf`, built 29 Sep); a scan goes through OCR (below); chunks cut per section and tagged with source, year and section, re-embedded when a document changes.
   - Search: hybrid, a keyword search and a vector search fused by rank, then a reranker over the top results. The keyword half and the reranker are never cut; they are what keep quality level with a managed search service.
   - Embeddings: EmbeddingGemma-300M; reranker: bge-reranker-v2-m3 (multilingual). Both run in box ②.
   - Row-level security scopes every search to the caller's hospital, ready for doctor uploads in production.
   - Chosen over Cloudflare AI Search because future doctor uploads are hospital data under the residency rule, need per-hospital access and deletion, and must not leave the single inference host.
+- **Scanned documents (OCR), added 29 Sep:** OpenMed has no OCR model of its own (it wraps Tesseract or PaddleOCR and has no PDF handler), so OCR is its own step before the privacy check and indexing.
+  - Uses, in order: (1) scanned guidelines and protocols a doctor adds to their library (the Worker refuses PDFs with no text today); (2) paper referral letters and outside discharge summaries photographed into the briefing and history; (3) outside lab reports photographed into the Results card; (4) insurer guarantee-letter replies (PDF or fax) read into the claim's status; (5) medicine packets and old prescriptions for reconciliation (printed only: handwriting stays out, since open OCR reads about one handwritten word in three correctly).
+  - Server OCR on box ② is the one path (decided 29 Sep: every phone and the web, not only iPhones): **PaddleOCR-VL-1.6** (0.9B, Apache-2.0, 109+ languages including Malay and Chinese, first on OmniDocBench v1.6 at 96.3), served with vLLM. Runners-up: DeepSeek-OCR 2 for throughput; MinerU2.5-Pro is strongest on hard pages but check its licence first. Scans reach Baseten US, so synthetic only until the residency move. The app's review UI is built first on a labelled sample reading.
+  - Rejected for now: Apple Vision on the phone (iPhone only; Android would need a second, ML Kit, module).
+  - Lab report images: MedGemma 1.5 in box ③ turns them into value, unit and flag (no new model).
+  - Classify before OCR (added 29 Sep): every scan is typed by MedGemma before any OCR. A chest radiograph is not read as text: the app offers "Attach it to a patient's visit" (the X-ray flow, unvalidated). A CT slice photo is "not covered" and can only be attached as a plain image. Only documents continue to OCR and the library; the doctor confirms with one tap when the type is unsure. Every capture uses one camera (Vision Camera): the doctor drags the photo's corners to crop and straighten a page (a perspective warp, no automatic edge detection), and a photo left uncropped, such as a wound, is attached as taken with no enhancement.
+  - Every OCR source is labelled "Read by OCR"; pages below a confidence floor are refused; any dose OCR finds is checked against the drug table, and one outside the known range marks the passage "Check against original" instead of being cited silently.
 - **Reviewer approval and provenance:** sending a claim and discharging a patient each need an explicit approval (draft, approve, final). Every AI output is logged with its source IDs, model version and approver in a `provenance` table.
 - **Clinical tables:** appointments (My Day and the calendar), lab results with flags (the Results card), observations (CURB-65), handover acceptances (hold to accept), and the discharge, claim, ward and audit tables above.
 - **X-ray upload:** images go to R2 through a presigned URL. MedGemma confirms the image type; anything that is not a chest radiograph, such as a CT, is answered "not covered".
@@ -83,12 +90,13 @@ Baseten Cloud, pay-as-you-go (Basic plan), Dedicated deployments in the US regio
 | Box | GPU | Models | State |
 | --- | --- | --- | --- |
 | ① Brain | L4 24 GB | Gemma 4 26B A4B-it, INT4 QAT (`cyankiwi/gemma-4-26B-A4B-it-qat-AWQ-INT4`, vLLM with prefix caching) + Laya multilingual (`laya-serve`) | Warm while working |
-| ② Voice | L4 24 GB | Qwen3-ASR-1.7B, Qwen3-ForcedAligner-0.6B (≤5 min chunks), Nemotron-3-Diarization, VoxCPM2, OpenMed PII Small, OpenMed clinical extraction, EmbeddingGemma-300M, bge-reranker-v2-m3 | Warm while working |
+| ② Voice | L4 24 GB | Qwen3-ASR-1.7B, Qwen3-ForcedAligner-0.6B (≤5 min chunks), Nemotron-3-Diarization, VoxCPM2, OpenMed PII Small, OpenMed clinical extraction, EmbeddingGemma-300M, bge-reranker-v2-m3, PaddleOCR-VL-1.6 | Warm while working |
 | ③ X-ray | L4 24 GB | MedGemma 1.5 4B, FP8 | Scales to zero; the Agent wakes it when an image is attached; pre-warmed before demos |
 
 - **Scribe merge:** each word takes the speaker whose segment covers its timestamp. Gemma then labels the speakers as doctor or patient.
 - **Day-1 checks:**
-  - memory headroom on box ①, and on box ② with the retrieval and extraction models added
+  - memory headroom on box ①, and on box ② with the retrieval, extraction and OCR models added
+  - PaddleOCR-VL-1.6 on the 30-page OCR baseline (below)
   - INT4 quality and speed against FP8 on an H100 MIG
   - WebSockets through a custom Docker server
   - VoxCPM2 real-time speed on an L4
@@ -107,6 +115,7 @@ Train a model only if it fails its day 1–3 baseline. Because Manglish is the p
 | 2 | VoxCPM2 | Baseten Training Jobs, 1×H100 | Official full fine-tune (done 29 Sep; LoRA was too weak) | 4.35 h of one Gemini voice (Kore) reading single-language hospital replies; see [TTS training](tts-training.md) | ~30 min |
 | 3 | Laya | Kaggle free T4 | Laya notebook plus calibration | Synthetic composition decisions from the catalogue and fixtures | Free |
 | Conditional | Gemma 4 (Unsloth), Nemotron | Baseten Training Jobs | Only if the baseline fails | — | — |
+| Conditional | PaddleOCR-VL-1.6 | Baseten Training Jobs, 1×H100 | LoRA via Unsloth (fall back to the official ERNIEKit recipe); only if the OCR baseline fails | Synthetic pages we render ourselves (guidelines, dosing tables, lab reports, Malay and Chinese), so every page's exact text is known | ~1–3 h |
 | Never | MedGemma, ForcedAligner, OpenMed | — | — | — | — |
 
 - **Serving:** checkpoints load into the boxes through `bt://<project>@<job>/<checkpoint>`. Each fine-tune ships as a new box version, and rollback means promoting the previous version.
@@ -120,6 +129,7 @@ Train a model only if it fails its day 1–3 baseline. Because Manglish is the p
 | STT | ≤ ~15% error on mixed sentences and ≥ 90% of drug names correct |
 | TTS | Malaysian listeners rate it ≥ 4/5 |
 | Gemma | ≥ 95% correct routing and ≥ 98% valid specs |
+| OCR | ≤ 2% character error rate on 30 synthetic pages, and 100% of drug doses read correctly |
 
 ## Sequence
 
@@ -142,9 +152,10 @@ Train a model only if it fails its day 1–3 baseline. Because Manglish is the p
 4. VoxCPM2 fine-tune (use it as-is)
 5. Spoken discharge leaflet (keep the written one)
 6. Push notifications
-7. OpenMed clinical extraction (Gemma extracts instead, with lower confidence)
-8. Live PubMed search (keep the cached library)
-9. Barge-in (keep real-time voice without interruption)
+7. OCR model (scanned PDFs stay refused with a clear reason)
+8. OpenMed clinical extraction (Gemma extracts instead, with lower confidence)
+9. Live PubMed search (keep the cached library)
+10. Barge-in (keep real-time voice without interruption)
 
 Manglish STT is never cut. Nor are the keyword half of hybrid search, the reranker, the server-side discharge and claim checks, or reviewer approval.
 

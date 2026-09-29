@@ -48,3 +48,35 @@ export async function fetchArticles(pmids: string[], fetcher: typeof fetch = fet
   });
   return pmids.flatMap(id => articles.filter(a => a.pmid === id));
 }
+
+/**
+ * The PubMed ID a doctor means by what they pasted: a PMID ("31573350", "PMID: 31573350"), a PubMed
+ * link, or a DOI on its own or in a doi.org link (looked up in PubMed). Null when it is none of these,
+ * or PubMed has no article for the DOI.
+ */
+export async function resolveArticle(ref: string, fetcher: typeof fetch = fetch): Promise<string | null> {
+  const s = ref.trim();
+  const pmid = s.match(/^(?:PMID:?\s*)?(\d{1,9})$/i)?.[1] ?? s.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d{1,9})/i)?.[1];
+  if (pmid) return pmid;
+  const doi = s.match(/\b(10\.\d{4,9}\/[^\s?#]+)/)?.[1];
+  if (!doi) return null;
+  const [found] = await searchPubmed(`${decodeURIComponent(doi)}[doi]`, fetcher, 1);
+  return found ?? null;
+}
+
+export type Abstract = { pmid: string; title: string; journal: string; year: number; text: string };
+
+/** One article's abstract for the library, each labelled part (Background, Methods…) as its own section. Null when PubMed has no abstract for it. */
+export async function fetchAbstract(pmid: string, fetcher: typeof fetch = fetch): Promise<Abstract | null> {
+  const article = (await get(`${EUTILS}/efetch.fcgi?db=pubmed&retmode=xml&id=${pmid}`, fetcher)).split(/<PubmedArticle>/)[1];
+  if (!article) return null;
+  const parts = [...article.matchAll(/<AbstractText([^>]*)>([\s\S]*?)<\/AbstractText>/g)]
+    .map(p => ({ label: text(p[1]!.match(/Label="([^"]+)"/)?.[1]) || "Abstract", body: text(p[2]) })).filter(p => p.body);
+  if (!parts.length) return null;
+  const year = Number(first(article, /<PubDate>[\s\S]*?<Year>(\d{4})</) || first(article, /<MedlineDate>(\d{4})/));
+  return {
+    pmid, title: first(article, /<ArticleTitle>([\s\S]*?)<\/ArticleTitle>/).replace(/\.$/, ""), year,
+    journal: first(article, /<ISOAbbreviation>([\s\S]*?)<\/ISOAbbreviation>/) || first(article, /<Title>([\s\S]*?)<\/Title>/),
+    text: parts.map(p => `# ${p.label.charAt(0) + p.label.slice(1).toLowerCase()}\n${p.body}`).join("\n\n"),
+  };
+}

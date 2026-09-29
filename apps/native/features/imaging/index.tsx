@@ -20,6 +20,7 @@ import { FindingsCard } from "@/features/findings";
 import { useFindings } from "@/features/live/findings-sync";
 import { useRole } from "@/features/live/roles";
 import { useXrayUpload } from "@/features/live/xray-upload";
+import { takeXray } from "@/features/library/scan-state";
 import { teachingImage, type TeachingImage } from "./fixture";
 import { ImageEdge, OriginalImageViewer, VIEWING } from "./viewer";
 
@@ -209,6 +210,12 @@ export function XrayScreen() {
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   activePatient.current = patient?.id;
+  // A chest X-ray scanned from Add a source arrives here once its patient is chosen; it stays on this device, like a picked image.
+  useEffect(() => {
+    if (!patient || historical) return;
+    const uri = takeXray();
+    if (uri) updateEncounter(current => ({ ...current, imagingAttachment: { uri, name: "Scanned X-ray" } }), true);
+  }, [patient?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const pickImage = async () => {
     if (picking || historical) return;
     const patientId = patient?.id;

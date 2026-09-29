@@ -44,12 +44,12 @@ export type Mail = {
   send(message: { from: string; to: string; subject: string; text: string; html?: string }): Promise<unknown>;
 };
 
-/** A library document; hospitalId empty is the shared library, set is one hospital's own. */
-export type LibraryDocument = { id: string; hospitalId: string | null; title: string; source: string; year: number; license?: string | null; uploadedBy?: string | null };
+/** A library document; hospitalId empty is the shared library, set is one hospital's own; ownerId set is one doctor's private source. */
+export type LibraryDocument = { id: string; hospitalId: string | null; title: string; source: string; year: number; license?: string | null; uploadedBy?: string | null; ownerId?: string | null; kind?: "text" | "pdf" | "pubmed" };
 export type Library = {
-  /** Stores the document and its sections; re-ingesting the same ID replaces them. */
-  ingest(doc: LibraryDocument, text: string): Promise<void>;
-  /** Hybrid search over the shared library and the caller's hospital. */
+  /** Stores the document and its sections; re-ingesting the same ID replaces them. Returns the section count. */
+  ingest(doc: LibraryDocument, text: string): Promise<number>;
+  /** Hybrid search over the shared library, the caller's hospital and the caller's own private sources. */
   search(input: SearchInput): Promise<RetrievalHit[]>;
 };
 
