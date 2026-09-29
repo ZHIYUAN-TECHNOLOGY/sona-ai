@@ -1,12 +1,13 @@
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Pressable, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { scheduleOnRN } from "react-native-worklets";
-import Animated, { Easing, FadeIn, FadeOut, FadeOutDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { Easing, FadeIn, FadeOut, FadeOutDown, interpolate, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
+import { QuickActions, type QuickAction } from "@/components/sona/quick-actions";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
@@ -74,6 +75,11 @@ const pinMinutes = (group: { p: { name: string; time: string } }[]) => {
   return (avatars + label * 7 + 30) / PX;
 };
 const TONE_PIN = { done: { fill: "rgba(36,91,204,0.14)", ink: palette.blue }, open: { fill: "rgba(196,120,20,0.16)", ink: palette.amber } };
+/** A visit pin fades out as it reaches the ruler's left edge, so no half-cut pill sits against it. */
+function EdgeFade({ x, left, children }: { x: SharedValue<number>; left: number; children: ReactNode }) {
+  const style = useAnimatedStyle(() => ({ opacity: interpolate(x.value + left, [0, 24], [0, 1], "clamp") }));
+  return <Animated.View style={[{ alignItems: "flex-start" }, style]}>{children}</Animated.View>;
+}
 function TimeBar({ schedule, now, onOpen }: { schedule: ScheduleVisit[]; now?: number; onOpen: (patientId: string) => void }) {
   const { width } = useWindowDimensions();
   const { reducedMotion } = useAccessibleEffects();
@@ -123,7 +129,7 @@ function TimeBar({ schedule, now, onOpen }: { schedule: ScheduleVisit[]; now?: n
           const label = single ? `${first.p.name}, ${first.p.time}, ${first.p.subtitle}` : `${group.length} patients from ${first.p.time}: ${group.map(v => v.p.name).join(", ")}`;
           return <Pressable key={first.p.id} accessibilityRole="button" accessibilityLabel={label} accessibilityHint={single ? "Opens the visit" : "Lists these patients"} hitSlop={6}
             onPress={() => { const ids = group.map(v => v.p.patientId).filter(Boolean); if (ids.length !== group.length) return; single ? onOpen(ids[0]!) : router.push({ pathname: "/visits", params: { ids: ids.join(",") } }); }}
-            style={{ position: "absolute", left: xOf(first.at) - 16, top: LANE_PIN, alignItems: "flex-start" }}>
+            style={{ position: "absolute", left: xOf(first.at) - 16, top: LANE_PIN, alignItems: "flex-start" }}><EdgeFade x={x} left={4 + xOf(first.at) - 16}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 2, paddingRight: 10, height: 36, borderRadius: 18, backgroundColor: palette.white, borderWidth: 1, borderColor: "rgba(20,28,40,0.06)", boxShadow: "0 3px 10px rgba(24,32,48,0.08)" }}>
               <View style={{ flexDirection: "row" }}>{group.slice(0, 3).map((v, i) => { const t = TONE_PIN[v.p.incomplete ? "open" : "done"]; return <View key={v.p.id}
                 style={{ width: 30, height: 30, borderRadius: 15, marginLeft: i ? -10 : 0, borderWidth: single ? 0 : 2, borderColor: palette.white, backgroundColor: single ? t.fill : v.p.incomplete ? "#F6E7D3" : "#DCE6F8", alignItems: "center", justifyContent: "center", zIndex: 3 - i }}>
@@ -132,7 +138,7 @@ function TimeBar({ schedule, now, onOpen }: { schedule: ScheduleVisit[]; now?: n
               <Text style={{ fontSize: 13, fontWeight: "600", color: palette.ink }}>{single ? first.p.name.split(" ")[0] : `${group.length} patients`} <Text style={{ fontWeight: "500", color: palette.muted, fontVariant: ["tabular-nums"] }}>· {first.p.time}{!single && group.at(-1)!.p.time !== first.p.time ? `–${group.at(-1)!.p.time}` : ""}</Text></Text>
             </View>
             <View style={{ marginLeft: 15, width: 2, height: 14, borderRadius: 1, backgroundColor: tone.ink, opacity: 0.5 }} />
-          </Pressable>; })}
+          </EdgeFade></Pressable>; })}
       </Animated.View>
     </GestureDetector>
     {!visits.length && <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: LANE_PIN, alignItems: "center" }}><View style={{ height: 32, paddingHorizontal: 14, borderRadius: 16, justifyContent: "center", backgroundColor: "rgba(20,28,40,0.05)" }}><Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>No visits</Text></View></View>}
@@ -223,7 +229,8 @@ function MonthCard({ offset, counts, onPick, onClose }: { offset: number; counts
   </>;
 }
 
-export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: open }: { patients: Patient[]; greeting: string; actions: ReactNode; onOpen: (patientId: string, open: DayItem["open"]) => void }) {
+export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, onOpen: open }: { patients: Patient[]; greeting: string; actions: QuickAction[]; onShelf?: (windowBottom: number) => void; onOpen: (patientId: string, open: DayItem["open"]) => void }) {
+  const shelfRef = useRef<View>(null);
   const [calendar, setCalendar] = useState(false);
   const [offset, setOffset] = useState(0);
   // Live backend mode: the day's appointments, results and tasks come from the server (fixtures otherwise).
@@ -284,8 +291,10 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const ordered = [...active.filter(item => pins.includes(item.id)), ...active.filter(item => !pins.includes(item.id))];
   const later = ranked.filter(item => snoozed.includes(item.id));
   const [top, ...rest] = ordered;
-  // A patient getting worse at home, or an urgent message from one, leads above the shortcuts.
-  const leads = top?.kind === "check-in" || top?.kind === "message";
+  // Insight first: the most urgent item leads, the shortcuts follow, without a key that repeats it.
+  // The shelf reports where it ends, so the collapsed capsule appears only once it has scrolled away.
+  const keys = top?.kind === "result" ? actions.filter(a => a.key !== "results") : actions;
+  const shelf = <View ref={shelfRef} onLayout={() => shelfRef.current?.measureInWindow((_x, y, _w, h) => onShelf?.(y + h))}><QuickActions actions={keys} /></View>;
 
   return <View style={{ gap: 14 }}>
     <View style={{ gap: 16, zIndex: 5 }}>
@@ -300,7 +309,6 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
             </View>
             <Text style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{offset === 0 ? (managing ? "" : `${need} need you · `) : offset < 0 ? "Looking back · " : "Coming up · "}{schedule.length} {schedule.length === 1 ? "visit" : "visits"}</Text>
           </Pressable>
-          <DemoTimeLine />
         </View>
         {offset !== 0 ? <Pressable accessibilityRole="button" accessibilityLabel="Back to today" onPress={() => pick(0)} hitSlop={8}
           style={{ minHeight: 38, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, borderRadius: 19, backgroundColor: palette.blueWash, marginTop: 4 }}>
@@ -311,8 +319,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
     </View>
     {/* Management's day leads with the ward and this week's numbers, not clinical tasks. */}
     {managing ? <WardGlance /> : <TimeBar key={offset} schedule={schedule} now={offset === 0 ? now : undefined} onOpen={id => onOpen(id, {})} />}
-    {/* A patient at home getting worse leads: their card (and its Call back / Book in) goes above the shortcuts. */}
-    {offset === 0 && (managing || !leads) && actions}
+    {offset === 0 && managing && shelf}
     {managing ? null : sorting ? <Sorting /> : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
       {top && <Animated.View key={`top-${run}`} layout={LAYOUT} entering={animate ? riseIn({ distance: 14, scale: 0.97, duration: 450 }) : undefined}>
         <Pressable accessibilityRole="button" accessibilityLabel={`Most urgent: ${top.title}. ${top.reason}`} accessibilityHint={HINT(top)} onPress={() => onOpen(top.patientId, top.open)}
@@ -336,7 +343,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
           </Surface>
         </Pressable>
       </Animated.View>}
-      {offset === 0 && leads && actions}
+      {offset === 0 && shelf}
       {rest.length > 0 && <Surface layout={LAYOUT} style={{ paddingVertical: 2 }}>
         {rest.map((item, i) => <Row key={`${run}-${item.id}`} item={item} first={i === 0} index={i + 1} animate={animate} pinned={pins.includes(item.id)} onOpen={() => onOpen(item.patientId, item.open)}
           onPin={() => setPins(list => list.includes(item.id) ? list.filter(id => id !== item.id) : [item.id, ...list])}
@@ -354,5 +361,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
       <Text style={{ ...type.caption, color: palette.muted }}>{live || offset === 0 ? "Ranked by urgency, with the reason on every item." : "Clinic schedule for other days; open today's visits to act."}</Text>
       {(live || offset === 0) && <SampleLabel source="fixture" rule />}
     </Animated.View>}
+    {/* The demo clock is a presenter's tool: it sits under the day, not above the insight. */}
+    <DemoTimeLine />
   </View>;
 }

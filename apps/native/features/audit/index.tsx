@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { MarkedText } from "@/components/sona/marked-text";
 import { Pressable, ScrollView, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -28,8 +28,40 @@ const THRESHOLD = 75, TEAL = "#0F6E66";
 const RING = 11, RING_C = 2 * Math.PI * RING;
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-export function AuditScreen() {
+// Live: the server's open items, kept once here so this screen, the ward tile, the sidebar and the
+// management home key all count the same notes and the same money.
+let serverItems: AuditItem[] | undefined;
+const serverListeners = new Set<() => void>();
+function loadServerAudit(run: boolean, nameOf: (id: string) => string) {
+  return (run ? api.audit.run() : Promise.resolve()).then(() => api.audit.list()).then(rows => {
+    serverItems = rows.map(r => ({
+      id: r.id, bed: "", patient: nameOf(r.patientId), doctor: r.doctor, gap: r.gap,
+      from: r.fromCode ?? "", to: r.toCode, risk: Math.round(r.riskCents / 100), query: r.query,
+    }));
+    serverListeners.forEach(l => l());
+  });
+}
+
+/**
+ * The open coding-audit items every surface counts: live, the server's (listed once, refreshed when
+ * the audit screen runs it; empty until it answers), else last night's authored audit.
+ */
+export function useOpenAudit(): AuditItem[] {
   const { encounters, patients } = useEncounter();
+  const { on: live } = useLive();
+  const { can } = useRole();
+  const sent = useSent();
+  const server = useSyncExternalStore(l => { serverListeners.add(l); return () => serverListeners.delete(l); }, () => serverItems);
+  const allowed = can("audit.list");
+  useEffect(() => {
+    // The patient list is only read for names, so it is not a dependency.
+    if (live && allowed && !serverItems) void loadServerAudit(false, id => patients.find(p => p.id === id)?.name ?? id).catch(() => {});
+  }, [live, allowed]); // eslint-disable-line react-hooks/exhaustive-deps
+  return live ? (server ?? []).filter(i => !sent.has(i.id)) : openItems(encounters, sent);
+}
+
+export function AuditScreen() {
+  const { patients } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const insets = useSafeAreaInsets();
   const sent = useSent();
@@ -37,7 +69,7 @@ export function AuditScreen() {
   const role = useRole();
   // Doctors and management only (audit.list); other roles are told why instead of seeing RM 0.
   const refused = live && !role.can("audit.list") ? role.why("audit.list") : undefined;
-  const [serverItems, setServerItems] = useState<AuditItem[]>();
+  const [ran, setRan] = useState(false);
   const [loadError, setLoadError] = useState<string>();
   const [attempt, setAttempt] = useState(0);
   // A failed query send, per item: the row stays with the reason and Retry, never "sent".
@@ -47,17 +79,14 @@ export function AuditScreen() {
   const nameOf = useRef((id: string) => patients.find(p => p.id === id)?.name ?? id);
   nameOf.current = id => patients.find(p => p.id === id)?.name ?? id;
   useEffect(() => {
-    if (!live || refused) { setServerItems(undefined); return; }
+    if (!live || refused) return;
     let alive = true;
     setLoadError(undefined);
-    api.audit.run().then(() => api.audit.list()).then(rows => alive && setServerItems(rows.map(r => ({
-      id: r.id, bed: "", patient: nameOf.current(r.patientId), doctor: r.doctor, gap: r.gap,
-      from: r.fromCode ?? "—", to: r.toCode, risk: Math.round(r.riskCents / 100), query: r.query,
-    })))).catch(e => alive && setLoadError(errorText(e)));
+    loadServerAudit(true, id => nameOf.current(id)).then(() => alive && setRan(true), e => alive && setLoadError(errorText(e)));
     return () => { alive = false; };
   }, [live, refused, attempt]);
   // Live never shows the authored list: empty until the server answers.
-  const items = live ? (serverItems ?? []).filter(i => !sent.has(i.id)) : openItems(encounters, sent);
+  const items = useOpenAudit();
   const [sending, setSending] = useState<string[]>([]);
   const [open, setOpen] = useState<string>();
   const badge = useSharedValue(1);
@@ -86,7 +115,7 @@ export function AuditScreen() {
   return <ScrollView style={{ flex: 1, backgroundColor: palette.canvas }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 32, gap: 16 }}>
     <Surface feature style={{ padding: 16, gap: 10 }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <Text style={{ ...type.overline, color: live ? palette.blue : palette.muted }}>{live ? "Live audit · from the server" : "Last night’s audit"}</Text>
+        <Text style={{ ...type.overline, color: palette.muted }}>{live ? "Latest audit" : "Last night’s audit"}</Text>
         <Animated.View style={[{ height: 26, paddingHorizontal: 10, borderRadius: 13, flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: sentCount ? "rgba(15,110,102,0.1)" : "rgba(20,28,40,0.05)" }, badgeStyle]}>
           <Icon name="paperplane.fill" size={10} color={sentCount ? TEAL : palette.muted} />
           <Text style={{ fontSize: 12, fontWeight: "700", color: sentCount ? TEAL : palette.muted, fontVariant: ["tabular-nums"] }}>Queries sent · {sentCount}</Text>
@@ -95,7 +124,7 @@ export function AuditScreen() {
       {refused ? <Text style={{ ...type.subhead, color: palette.muted }}>{refused}</Text>
         : loadError ? <ErrorLine text={`The audit didn't run: ${loadError}`} onRetry={() => setAttempt(a => a + 1)} />
         : <><Ticker text={formatRM(risk)} />
-      <Text style={{ ...type.subhead, color: palette.muted }}>{live && !serverItems ? "Running the audit on the server…" : items.length ? `at risk across ${items.length - sending.length} under-specified ${items.length - sending.length === 1 ? "note" : "notes"}` : "Nothing left at risk. Every query is out."}</Text></>}
+      <Text style={{ ...type.subhead, color: palette.muted }}>{live && !ran ? "Running the audit…" : items.length ? `at risk across ${items.length - sending.length} under-specified ${items.length - sending.length === 1 ? "note" : "notes"}` : "Nothing left at risk. Every query is out."}</Text></>}
     </Surface>
 
     {items.length > 0 && <Text style={{ ...type.caption, color: palette.muted }}>Swipe right to send the drafted query, or tap to read it first.</Text>}
@@ -167,7 +196,7 @@ function Row({ item, sending, asking, error, open, onToggle, onSend }: { item: A
                 <Text style={{ ...type.footnote, fontWeight: "700", color: palette.amber, fontVariant: ["tabular-nums"] }}>{formatRM(item.risk)}</Text>
               </View>
               <MarkedText selectable={false} text={item.gap} style={{ ...type.footnote, color: palette.ink }} />
-              <Text style={{ ...type.caption, color: palette.muted }}>{sending ? `Sent to ${item.doctor}` : asking ? `Sending to ${item.doctor}…` : [item.bed, item.doctor, `${item.from} → ${item.to}`].filter(Boolean).join(" · ")}</Text>
+              <Text style={{ ...type.caption, color: palette.muted }}>{sending ? `Sent to ${item.doctor}` : asking ? `Sending to ${item.doctor}…` : [item.bed, item.doctor, `${item.from || "Not coded"} → ${item.to}`].filter(Boolean).join(" · ")}</Text>
             </View>
           </View>
           {error && <View style={{ paddingLeft: 38 }}><ErrorLine text={error} onRetry={onSend} /></View>}

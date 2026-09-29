@@ -3,6 +3,7 @@ import { GL_DENIED } from "@sona-ai/domain/ward";
 import { defaultMedications } from "@/features/encounter/clinical-state";
 import { demoTime } from "@/features/encounter/fixtures";
 import type { Encounter, Patient, Task } from "@/features/encounter/types";
+import { friendlyDate } from "@/features/tasks/state";
 
 /**
  * "My day, ranked": today's visits, open follow-up tasks, a pending result and blockers found in
@@ -66,7 +67,7 @@ export function rankDay(patients: Patient[], encounters: Record<string, Encounte
     });
     for (const task of (live ? live.tasksOf(patient) : encounter?.tasks ?? []).filter(t => !t.completed)) items.push({
       id: `task-${task.id}`, kind: "task", title: task.title, detail: `${patient.name} · ${task.owner || "Unassigned"}`,
-      reason: task.due ? `Due ${task.due}` : "No due date", tone: "routine", score: 30, patientId: patient.id, open: { view: "tasks" },
+      reason: task.due ? `Due ${friendlyDate(task.due)}` : "No due date", tone: "routine", score: 30, patientId: patient.id, open: { view: "tasks" },
     });
   }
   return items.sort(byUrgency);

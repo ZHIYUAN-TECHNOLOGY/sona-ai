@@ -18,7 +18,7 @@ import { useEncounter } from "@/features/encounter/store";
 import type { Encounter, FeatureProps, Task } from "@/features/encounter/types";
 import { errorText, requestId, useLive } from "@/features/live";
 import { completeServerTask, createServerTask, useServerData, useVisitTasks } from "@/features/live/server-day";
-import { createTaskOnce, localDate, mentionQuery, parseDuePhrase, proposedTask, taskDraftErrors, taskProposal, type TaskDraft } from "./state";
+import { createTaskOnce, dayFromToday, friendlyDate, localDate, longDate, MONTHS, mentionQuery, parseDuePhrase, proposedTask, taskDraftErrors, taskProposal, type TaskDraft } from "./state";
 
 /**
  * Follow-up answer: a generated section in the tasks screen's language. Before any task exists it
@@ -76,10 +76,10 @@ function TaskSummary({ task }: { task: Task }) {
   </View>;
 }
 
-/** The session/simulation boundary, said once per screen as one quiet line. */
+/** The simulation boundary, said once per screen as one quiet line; saved tasks need no note. */
 function SessionNote() {
   const { on: live } = useLive();
-  return <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>{live ? "Live backend · follow-ups are saved and completed on the server" : "Local simulation · nothing is booked or sent"}</Text>;
+  return live ? null : <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>Local simulation · nothing is booked or sent</Text>;
 }
 
 /** One quiet line: who wrote it, its source at the revision it was taken from, and (with `local`) the simulation note. */
@@ -109,22 +109,10 @@ const SWIPE = 88;
 const TICK = 12, YEAR_OF_DAYS = 366;
 /** Review intervals marked under the ruler (tap to jump); yearly anniversaries are added on the fly. */
 const MILESTONES: Record<number, string> = { 0: "Today", 7: "1 wk", 14: "2 wk", 28: "4 wk", 42: "6 wk", 56: "8 wk", 84: "12 wk", 182: "6 mo" };
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function haptic(kind: "select" | "done") {
   if (process.env.EXPO_OS !== "ios") return;
   (kind === "done" ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success) : Haptics.selectionAsync()).catch(() => {});
-}
-function dayFromToday(days: number) { const t = new Date(); return localDate(new Date(t.getFullYear(), t.getMonth(), t.getDate() + days)); }
-/** "Thu 3 Sep", with the year once it is not this year ("Fri 13 Oct 2028"). */
-function longDate(due: string) { const d = new Date(`${due}T12:00:00`); return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}${d.getFullYear() === new Date().getFullYear() ? "" : ` ${d.getFullYear()}`}`; }
-/** "Today", "Tomorrow", else the long date. */
-function friendlyDate(due: string) {
-  if (!due) return "";
-  if (due === dayFromToday(0)) return "Today";
-  if (due === dayFromToday(1)) return "Tomorrow";
-  return longDate(due);
 }
 /** "Pharmacy · Tomorrow"; just the owner when a task (a server one) has no due date. */
 const ownerLine = (task: Task, done = false) => [task.owner, done ? "Done" : friendlyDate(task.due)].filter(Boolean).join(" · ");
@@ -511,7 +499,7 @@ export function TasksScreen() {
   // A server task can only be completed (the server keeps no reopen); a device task toggles locally.
   const toggle = (task: Task) => {
     if (!server?.tasks.some(value => value.id === task.id)) updateEncounter(current => ({ ...current, tasks: current.tasks.map(value => value.id === task.id ? { ...value, completed: !value.completed } : value) }));
-    else if (!task.completed) void completeServerTask(task.id).catch(() => setError("The server did not complete the task. Try again."));
+    else if (!task.completed) void completeServerTask(task.id).catch(() => setError("The task wasn't completed. Try again."));
   };
   const row = (task: Task) => <Animated.View key={task.id} layout={reducedMotion ? undefined : LAYOUT} entering={reducedMotion ? undefined : riseIn({ distance: 10, duration: 320 })} exiting={FadeOut.duration(140)}>
     <TaskRow task={task} disabled={pending} onToggle={() => toggle(task)} />

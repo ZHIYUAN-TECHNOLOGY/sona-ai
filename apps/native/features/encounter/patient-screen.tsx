@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Alert, Pressable, TextInput, View } from "react-native";
 import Animated from "react-native-reanimated";
 import { riseIn } from "@/components/sona/motion";
-import { Action, Body, Card, Icon, Label, Screen, useAccessibleEffects } from "@/components/sona/ui";
+import { Body, Card, Icon, Label, Screen, useAccessibleEffects } from "@/components/sona/ui";
 import { palette, type } from "@/components/sona/theme";
 import { PatientSheet, type Go } from "./patient-sheet";
 import { useEncounter } from "./store";
@@ -15,9 +15,8 @@ export function PatientScreen() {
   const { reducedMotion } = useAccessibleEffects();
   const { next, view, prompt, switch: switching } = useLocalSearchParams<{ next?: string; view?: string; prompt?: string; switch?: string }>();
   const [open, setOpen] = useState<string>();
-  const [empty, setEmpty] = useState(false);
   const [query, setQuery] = useState("");
-  const filtered = (empty ? [] : patients).filter(p => `${p.name} ${p.id}`.toLowerCase().includes(query.toLowerCase()));
+  const filtered = patients.filter(p => `${p.name} ${p.id}`.toLowerCase().includes(query.toLowerCase()));
   const select = (id: string, go: Go = {}) => {
     // Choosing a patient opens their session (switching from a session replaces it); a pending
     // question or tool page is carried along and runs once the visit is open.
@@ -31,7 +30,7 @@ export function PatientScreen() {
   const chosen = patients.find(p => p.id === open);
   return <View style={{ flex: 1 }}><Screen><Label>Hospital outpatient</Label>
     <View style={{ borderRadius: 18, backgroundColor: palette.surface, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14 }}><Icon name="magnifyingglass" color={palette.muted} size={18} /><TextInput accessibilityLabel="Search patients" placeholder="Name or patient ID" value={query} onChangeText={setQuery} placeholderTextColor={palette.muted} style={{ flex: 1, minHeight: 52, color: palette.ink, fontSize: 16 }} autoCorrect={false} /></View>
-    {!filtered.length && <Card title={empty ? "No records loaded" : "No matching patients"}><Body muted>{empty ? "The demo records are hidden for this empty-state preview." : "Try a different name or patient ID."}</Body>{empty && <Action label="Load demo records" secondary onPress={() => setEmpty(false)} />}</Card>}
+    {!filtered.length && <Card title="No matching patients"><Body muted>Try a different name or patient ID.</Body></Card>}
     {filtered.length > 0 && <View style={{ borderRadius: 22, borderCurve: "continuous", backgroundColor: palette.white, overflow: "hidden" }}>
       {[...filtered].sort((x, y) => x.time.localeCompare(y.time)).map((p, i) => { const s = status(p); return <Animated.View key={p.id} entering={reducedMotion ? undefined : riseIn({ delay: i * 50, distance: 8, duration: 300 })}>
         <Pressable accessibilityRole="button" accessibilityLabel={`${p.name}, ${p.time}, ${s.label}`} accessibilityHint="Shows the patient summary and actions" onPress={() => setOpen(p.id)}
@@ -46,7 +45,6 @@ export function PatientScreen() {
         </Pressable>
       </Animated.View>; })}
     </View>}
-    {!empty && <Pressable accessibilityRole="button" onPress={() => setEmpty(true)} style={{ alignSelf: "center", minHeight: 40, justifyContent: "center" }}><Text style={{ ...type.footnote, color: palette.muted }}>Preview empty state</Text></Pressable>}
   </Screen>
   {chosen && <PatientSheet key={chosen.id} patient={chosen} onClose={() => setOpen(undefined)} onGo={go => select(chosen.id, go)} />}
   </View>;

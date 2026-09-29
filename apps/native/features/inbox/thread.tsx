@@ -9,10 +9,10 @@ import { scheduleOnRN } from "react-native-worklets";
 import { Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { LinearGradient } from "expo-linear-gradient";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
-import { Caption, ErrorLine, TextLink } from "@/components/sona/parts";
+import { Caption, ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Action, CanvasBackground, RoundAction, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, CanvasBackground, Icon, IconButton, RoundAction, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { openSession } from "@/features/encounter/navigation";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
@@ -123,14 +123,17 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
         <Text style={{ ...type.headline, color: palette.ink }}>{patient?.name ?? "Messages"}</Text>
         {patient?.bed && <Text style={{ ...type.caption, color: palette.muted }}>{patient.bed}</Text>}
       </View>,
-      headerRight: () => patient ? <TextLink label="Open patient" onPress={() => openSession(patient.id)} /> : null,
+      headerRight: () => patient ? <IconButton name="person.crop.circle" label={`Open ${patient.name}`} onPress={() => openSession(patient.id)} /> : null,
     }} />
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
       <ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled"
         onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })} contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 16, gap: 14 }}>
         {!on ? <Caption>Patient messages arrive from Sona Care in live mode (Settings).</Caption>
           : !data ? (loadError ? <ErrorLine text={`Messages didn't load: ${loadError}`} onRetry={() => { void load(); }} /> : <Caption icon={null}>Loading messages…</Caption>)
-          : !data.messages.length ? <Caption icon={null}>No messages from {first} yet.</Caption>
+          : !data.messages.length ? <View style={{ alignItems: "center", gap: 10, paddingTop: 120 }}>
+            <Icon name="bubble.left.and.bubble.right" size={22} color={palette.muted} />
+            <Text style={{ ...type.subhead, color: palette.muted, textAlign: "center" }}>No messages from {first} yet.</Text>
+          </View>
           : data.messages.map(m => <Bubble key={m.id} message={m} reduced={reducedMotion} />)}
       </ScrollView>
 
