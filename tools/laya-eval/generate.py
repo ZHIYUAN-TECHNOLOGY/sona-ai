@@ -150,6 +150,9 @@ if __name__ == "__main__":
         taken[r["capability"]] = taken.get(r["capability"], 0) + 1
         if taken[r["capability"]] <= CAP: capped.append(r)
     kept = capped
+    # The composer-format data (compose.ts) starts from the same filtered, capped requests.
+    with (HERE / "kept.jsonl").open("w") as out:
+        for r in kept: out.write(json.dumps(r, ensure_ascii=False) + "\n")
     with (HERE / "train.jsonl").open("w") as out:
         for i, r in enumerate(kept):
             out.write(json.dumps(row(i, r, rng), ensure_ascii=False) + "\n")

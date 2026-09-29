@@ -15,17 +15,7 @@ MEDICINES = dict(re.findall(r'id: "([\w-]+)".*?label: "([^"]+)"', read("apps/nat
 PATIENTS = dict(re.findall(r'id: "(SYN-\d+)".*?subtitle: "([^"]+)"', read("packages/domain/src/demo-patients.ts")))
 
 # Kept short: Laya shares one 256-token budget across a question's options.
-CAPABILITY_OPTIONS = {
-    "briefing": "Summary of the patient's background, history, allergies and medicines",
-    "reasoning": "Differential diagnosis and clinical reasoning",
-    "xray": "Chest X-ray reading",
-    "medication": "Review current medicines for interactions or problems",
-    "prescription": "Write or draft a prescription",
-    "followup": "Follow-up visit, safety-netting or a task",
-    "note": "Write the consultation note",
-    "evidence": "Studies, guidelines or severity score behind a decision",
-    "not-covered": "None of the above",
-}
+CAPABILITY_OPTIONS = {**json.loads((Path(__file__).parent / "cards.json").read_text()), "not-covered": "None of the above"}
 MEDICINE_OPTIONS = {**MEDICINES, "none": "No specific medicine named"}
 
 
