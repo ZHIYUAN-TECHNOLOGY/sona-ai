@@ -64,7 +64,7 @@ Agreed request path (25 September 2026): iPhone, then a Cloudflare Agent (Agents
 | --- | --- | --- |
 | Hosting | Baseten Cloud, pay-as-you-go Dedicated deployments (US), on 3×L4 boxes built as Docker images. Development and staging only, with synthetic data. | INT4 quality and speed on L4, memory headroom, WebSockets through a custom Docker server |
 | Routing, tool calls, reasoning, notes | Gemma 4 26B A4B-it, INT4 QAT, in box ① | Routing and spec validity on Manglish phrasing |
-| UI composition | json-render `experimental_composeSpec` (0.21.0, pinned) with Laya as evaluator, fine-tuned on synthetic decisions; Gemma as backup evaluator | Laya accuracy after fine-tuning; options budget of about 20 per question |
+| UI composition | Predefined pages: fine-tuned Laya picks the card (92% on the held-out baseline) and the app builds the screen. Free layouts: json-render `experimental_composeSpec` (0.21.0, pinned) with Laya as evaluator (84–86% whole screens so far). Gemma as backup evaluator | Laya accuracy on real clinician phrasing; options budget of about 20 per question |
 | Chest X-ray | MedGemma 1.5 4B, FP8, box ③, on demand | vLLM compatibility; findings against teaching annotations |
 | STT | Qwen3-ASR-1.7B plus Qwen3-ForcedAligner-0.6B, box ② | Manglish error rate, drug names, chunking |
 | Speaker attribution | Nemotron-3-Diarization, merged by word timestamps; Gemma labels doctor or patient | Speaker attribution on real Manglish recordings |
