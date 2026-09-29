@@ -8,14 +8,12 @@ import { scheduleOnRN } from "react-native-worklets";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Expand, Icon, Surface, glass, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Expand, Icon, Insight, Surface, glass, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
 import { ErrorLine } from "@/components/sona/parts";
 import { api, errorText, useLive } from "@/features/live";
 import { useRole } from "@/features/live/roles";
-import { useOpenAudit } from "@/features/audit";
-import { auditLine, auditOf } from "@/features/encounter/quick-actions";
 import { FollowUpList } from "@/features/findings";
 import { useFindings } from "@/features/live/findings-sync";
 import { useServerEncounter } from "@/features/live/sync";
@@ -23,21 +21,21 @@ import { useServerBeds } from "@/features/live/ward-sync";
 import { Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveHuddle } from "@/features/live/model-sync";
 import { useLiveChanges } from "@/features/live/channel";
-import { useTrainingStatus } from "@/features/training";
-import { trainingLine } from "@/features/training/model";
-import { BedBar, ForecastTimeline, KIND, ThisWeek, useForecast } from "./ops";
+import { BedBar, ForecastTimeline, KIND, ThisWeek, useForecast, wardLine } from "./ops";
 import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedRow, defaultFilter, emptyLine, filterBeds, huddle, wardBeds, type Bed, type Owner, type WardFilter } from "./model";
 
 /*
- * Ward command view: the bed bar, its legend as the filter (Blocked first when anything is), and one
- * glass list of the filtered beds; rows spring in and out in place on a filter change (after 60fps
+ * Ward command view: one insight line on where the ward stands, the huddle brief as the page's one
+ * feature card, the legend as the filter (Blocked first when anything is), and one glass list of the filtered beds; rows spring in and out in place on a filter change (after 60fps
  * "Revolut Number of Transactions Interaction", https://60fps.design/shots/revolut-number-of-transactions-interaction).
  * Tapping a row grows it into the bed's card (after Trackables' card-to-screen morph; spring 0.48 s at
  * damping 0.82) while the list fades back, the row's face crossfades out and the detail fades in
  * 120 ms later. Closing shrinks it back into the row (0.46 s at 0.84). Each blocker takes an owner in
- * one tap; the owner's badge pops onto the row. The week, the huddle and the tools sit below.
+ * one tap; the owner's badge pops onto the row. The forecast and the week sit below.
  */
 const TEAL = "#0F6E66";
+// Screen's canvas. The ward keeps its own ScrollView because Screen takes no ref and the forecast link scrolls to its section.
+const CANVAS = "radial-gradient(circle at 8% 4%, rgba(150,190,255,0.38) 0%, rgba(150,190,255,0) 42%), radial-gradient(circle at 96% 38%, rgba(196,176,255,0.26) 0%, rgba(196,176,255,0) 40%), radial-gradient(circle at 20% 92%, rgba(150,220,235,0.26) 0%, rgba(150,220,235,0) 45%), linear-gradient(to bottom, #F5F6F8 0%, #EFF2F7 45%, #E3EBF7 100%)";
 const OPEN = { duration: 480, dampingRatio: 0.82 }, CLOSE = { duration: 460, dampingRatio: 0.84 };
 type Rect = { x: number; y: number; w: number; h: number };
 const TONE: Record<Bed["status"], { label: string; ink: string }> = {
@@ -91,7 +89,6 @@ export function WardScreen() {
   };
   const { on: live } = useLive();
   const { can } = useRole();
-  const training = useTrainingStatus();
   const [assignError, setAssignError] = useState<{ id: string; owner: Owner; text: string }>();
   // Live: server beds carry the server's blocker IDs, so each owner is a real task on the server.
   // A refusal puts the previous owner back and says why under the blocker, with Retry.
@@ -117,7 +114,6 @@ export function WardScreen() {
   const server = useLiveHuddle(briefed && Boolean(serverBeds), `${beds.map(b => `${b.bed}:${b.blockers.map(x => x.id).join(",")}`).join("|")}#${wardVersion}`);
   const local = huddle(beds, owners);
   const lines = server.data?.lines ?? local;
-  const audit = useOpenAudit();
   const current = open && beds.find(b => b.bed === open.bed);
   const forecast = useForecast(beds, findings, owners);
   // "Frees fastest" opens the bed's card at the blocker; a row the filter hides shows under All first, then opens once mounted.
@@ -129,10 +125,35 @@ export function WardScreen() {
     setTimeout(() => openBed(bed, blockerId), 80);
   };
 
-  return <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas }}>
+  return <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: CANVAS }}>
     <Animated.View style={[{ flex: 1 }, gridStyle]} pointerEvents={open ? "none" : "auto"}>
-      <ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 32, gap: 16 }}>
-        <BedBar beds={beds} filter={filter} onFilter={setPicked} />
+      <ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 44, gap: 18 }}>
+        <Insight eyebrow={`Now · ${beds.length} beds`}>{wardLine(beds)}</Insight>
+
+        {/* Huddle brief, the page's one feature card: one line and a small pill; the brief opens under it and the page below moves with it. */}
+        <Surface feature layout={motion} style={{ padding: 16, gap: 4 }}>
+          <View style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(36,91,204,0.1)" }}>
+              <Icon name="waveform" size={12} color={palette.blue} />
+            </View>
+            <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.muted }}><Text style={{ fontWeight: "600", color: palette.ink }}>Huddle</Text> · {briefed ? "30 seconds for the team" : local[1]}</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel={briefed ? "Hide the huddle brief" : "Brief me for the huddle"} accessibilityState={{ expanded: briefed }} hitSlop={7} onPress={() => { haptic("select"); setBriefed(v => !v); }}
+              style={{ height: 30, paddingHorizontal: 12, borderRadius: 15, justifyContent: "center", backgroundColor: briefed ? "rgba(20,28,40,0.06)" : palette.blue }}>
+              <Text style={{ fontSize: 13, fontWeight: "600", color: briefed ? palette.ink : palette.white }}>{briefed ? "Hide" : "Brief me"}</Text>
+            </Pressable>
+          </View>
+          {briefed && <Expand style={{ gap: 10, paddingLeft: 38, paddingTop: 4 }}>
+            {server.loading && <Drafting label="Briefing the ward…" />}
+            {!server.loading && lines.map((line, i) => <Animated.View key={i} entering={reducedMotion ? undefined : riseIn({ delay: i * 60, distance: 8, duration: 300 })} style={{ flexDirection: "row", gap: 10 }}>
+              <Text style={{ ...type.footnote, fontWeight: "700", color: palette.blue, width: 14 }}>{i + 1}</Text>
+              <MarkedText text={line} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
+            </Animated.View>)}
+            <SampleLabel source={server.data?.source} rule what="briefing" />
+            {server.error && <Text style={{ ...type.caption, color: palette.red }}>{server.error} · showing the ward's own count</Text>}
+          </Expand>}
+        </Surface>
+
+        <Animated.View layout={motion}><BedBar beds={beds} filter={filter} onFilter={setPicked} /></Animated.View>
 
         {/* One glass list of the filtered beds; rows fade and slide in and out, the list re-lays on the layout spring. */}
         <Surface layout={motion} style={{ paddingHorizontal: 4, paddingVertical: 4 }}>
@@ -160,44 +181,9 @@ export function WardScreen() {
           <ForecastTimeline beds={beds} forecast={forecast} onOpen={openAt} />
         </Animated.View>
 
-        {/* The week's proof and the tools sit below the beds and move with the list as it re-lays. */}
+        {/* The week's proof sits below the beds and moves with the list as it re-lays. */}
         <Animated.View layout={motion} style={{ gap: 12 }}>
           <ThisWeek />
-
-          {/* Huddle brief: one line and a small pill; the brief opens under it. */}
-          <View>
-            <View style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(36,91,204,0.1)" }}>
-                <Icon name="waveform" size={12} color={palette.blue} />
-              </View>
-              <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.muted }}><Text style={{ fontWeight: "600", color: palette.ink }}>Huddle</Text> · {briefed ? "30 seconds for the team" : local[1]}</Text>
-              <Pressable accessibilityRole="button" accessibilityLabel={briefed ? "Hide the huddle brief" : "Brief me for the huddle"} accessibilityState={{ expanded: briefed }} hitSlop={7} onPress={() => { haptic("select"); setBriefed(v => !v); }}
-                style={{ height: 30, paddingHorizontal: 12, borderRadius: 15, justifyContent: "center", backgroundColor: briefed ? "rgba(20,28,40,0.06)" : palette.blue }}>
-                <Text style={{ fontSize: 13, fontWeight: "600", color: briefed ? palette.ink : palette.white }}>{briefed ? "Hide" : "Brief me"}</Text>
-              </Pressable>
-            </View>
-            {briefed && <Expand style={{ gap: 10, paddingLeft: 38, paddingTop: 4 }}>
-              {server.loading && <Drafting label="Briefing the ward…" />}
-              {!server.loading && lines.map((line, i) => <Animated.View key={i} entering={reducedMotion ? undefined : riseIn({ delay: i * 60, distance: 8, duration: 300 })} style={{ flexDirection: "row", gap: 10 }}>
-                <Text style={{ ...type.footnote, fontWeight: "700", color: palette.blue, width: 14 }}>{i + 1}</Text>
-                <MarkedText text={line} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
-              </Animated.View>)}
-              <SampleLabel source={server.data?.source} rule what="briefing" />
-              {server.error && <Text style={{ ...type.caption, color: palette.red }}>{server.error} · showing the ward's own count</Text>}
-            </Expand>}
-          </View>
-
-          {/* Tools, side by side (one alone takes the width): coding audit for doctors and management, training data for management (live only). */}
-          {(can("audit.list") || training.allowed) && <View style={{ flexDirection: "row", gap: 12 }}>
-            {can("audit.list") && <ToolTile icon="doc.text.magnifyingglass" title="Coding audit" onPress={() => router.push("/audit")}
-              tint={audit.length ? palette.amber : TEAL} fill={audit.length ? "rgba(196,120,20,0.12)" : "rgba(15,110,102,0.1)"}
-              line={auditLine(auditOf(audit))} lineColor={audit.length ? palette.amber : TEAL}
-              label={`Coding audit, ${auditLine(auditOf(audit))}`} />}
-            {training.allowed && <ToolTile icon="shield.lefthalf.filled" title="Training data" onPress={() => router.push("/training")}
-              tint={training.status?.counts.blocked ? palette.red : palette.blue} fill={training.status?.counts.blocked ? "rgba(162,62,62,0.1)" : "rgba(36,91,204,0.1)"}
-              line={training.status ? trainingLine(training.status.counts) : "De-identified samples to review"} lineColor={palette.muted}
-              label={`Training data${training.status ? `, ${trainingLine(training.status.counts)}` : ""}`} />}
-          </View>}
           <FollowUpList findings={findings} />
         </Animated.View>
       </ScrollView>
@@ -221,22 +207,6 @@ function RowFace({ bed }: { bed: Bed }) {
     </View>
     {bed.name && <Icon name="chevron.right" size={12} color={palette.muted} />}
   </View>;
-}
-
-/** A half-width tool on the ward (full width when alone): icon, title, one line. */
-function ToolTile({ icon, tint, fill, title, line, lineColor, label, onPress }: { icon: string; tint: string; fill: string; title: string; line: string; lineColor: string; label: string; onPress: () => void }) {
-  const { reducedMotion } = useAccessibleEffects();
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress}
-    style={({ pressed }) => ({ ...surfaceStyle, flex: 1, padding: 14, gap: 10, transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-      <View style={{ width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: fill }}><Icon name={icon} size={14} color={tint} /></View>
-      <Icon name="chevron.right" size={11} color={palette.muted} />
-    </View>
-    <View style={{ gap: 1 }}>
-      <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{title}</Text>
-      <Text numberOfLines={2} style={{ ...type.caption, color: lineColor }}>{line}</Text>
-    </View>
-  </Pressable>;
 }
 
 function BedCard({ bed, focus, from, to, p, owners, onAssign, assignError, onClose, onDischarge }: {
@@ -300,11 +270,7 @@ function BedCard({ bed, focus, from, to, p, owners, onAssign, assignError, onClo
           </View>; })}
         </View>
 
-        {onDischarge && <Pressable accessibilityRole="button" onPress={onDischarge}
-          style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-          <Icon name="bed.double" size={15} color={palette.white} />
-          <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>Open discharge</Text>
-        </Pressable>}
+        {onDischarge && <Action label="Open discharge" icon="bed.double" onPress={onDischarge} />}
       </ScrollView>
     </Animated.View>
   </Animated.View>;
