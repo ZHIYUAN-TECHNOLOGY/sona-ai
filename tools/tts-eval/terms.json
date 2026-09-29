@@ -1,0 +1,72 @@
+{
+  "_note": "Medical glossary for spoken replies: the same term in English, Malay and Chinese (Malaysian usage). Gemma uses it to write single-language replies; tts_test.py uses it to check VoxCPM2 pronunciation. Malay drug names follow KKM spelling; Chinese uses terms Malaysian Chinese patients hear (e.g. 扑热息痛, 骨痛热症).",
+  "templates": {
+    "drug": {
+      "en": ["Please take {t} as the doctor prescribed.", "Your doctor has started you on {t}.", "Do not stop {t} without asking the pharmacist."],
+      "ms": ["Sila ambil {t} seperti yang doktor preskripsikan.", "Doktor telah mulakan ubat {t} untuk anda.", "Jangan berhenti makan {t} tanpa tanya ahli farmasi."],
+      "zh": ["请按照医生的指示服用{t}。", "医生已经给您开了{t}。", "没有问过药剂师，请不要停止服用{t}。"]
+    },
+    "disease": {
+      "en": ["The doctor says you have {t}.", "This leaflet explains how to care for {t} at home.", "Come back to the clinic if your {t} gets worse."],
+      "ms": ["Doktor kata anda menghidap {t}.", "Risalah ini menerangkan cara menjaga {t} di rumah.", "Datang semula ke klinik jika {t} anda bertambah teruk."],
+      "zh": ["医生说您患有{t}。", "这份单张说明如何在家照顾{t}。", "如果{t}变得更严重，请回到诊所。"]
+    },
+    "symptom": {
+      "en": ["Tell the nurse straight away if you have {t}.", "Please watch for {t} over the next few days.", "Call the hospital if the {t} does not improve."],
+      "ms": ["Beritahu jururawat segera jika anda ada {t}.", "Sila perhatikan {t} dalam beberapa hari ini.", "Hubungi hospital jika {t} tidak bertambah baik."],
+      "zh": ["如果您有{t}，请马上告诉护士。", "接下来几天请留意{t}。", "如果{t}没有好转，请打电话给医院。"]
+    }
+  },
+  "terms": [
+    {"kind": "drug", "en": "azithromycin", "ms": "azitromisin", "zh": "阿奇霉素"},
+    {"kind": "drug", "en": "paracetamol", "ms": "parasetamol", "zh": "扑热息痛"},
+    {"kind": "drug", "en": "salbutamol", "ms": "salbutamol", "zh": "沙丁胺醇"},
+    {"kind": "drug", "en": "cetirizine", "ms": "setirizin", "zh": "西替利嗪"},
+    {"kind": "drug", "en": "amoxicillin", "ms": "amoksisilin", "zh": "阿莫西林"},
+    {"kind": "drug", "en": "metformin", "ms": "metformin", "zh": "二甲双胍"},
+    {"kind": "drug", "en": "gliclazide", "ms": "gliklazid", "zh": "格列齐特"},
+    {"kind": "drug", "en": "insulin", "ms": "insulin", "zh": "胰岛素"},
+    {"kind": "drug", "en": "amlodipine", "ms": "amlodipin", "zh": "氨氯地平"},
+    {"kind": "drug", "en": "perindopril", "ms": "perindopril", "zh": "培哚普利"},
+    {"kind": "drug", "en": "losartan", "ms": "losartan", "zh": "氯沙坦"},
+    {"kind": "drug", "en": "atorvastatin", "ms": "atorvastatin", "zh": "阿托伐他汀"},
+    {"kind": "drug", "en": "omeprazole", "ms": "omeprazol", "zh": "奥美拉唑"},
+    {"kind": "drug", "en": "prednisolone", "ms": "prednisolon", "zh": "泼尼松龙"},
+    {"kind": "drug", "en": "ibuprofen", "ms": "ibuprofen", "zh": "布洛芬"},
+    {"kind": "drug", "en": "warfarin", "ms": "warfarin", "zh": "华法林"},
+    {"kind": "drug", "en": "doxycycline", "ms": "doksisiklin", "zh": "多西环素"},
+    {"kind": "drug", "en": "oral rehydration salts", "ms": "garam penghidratan oral", "zh": "口服补液盐"},
+    {"kind": "drug", "en": "budesonide", "ms": "budesonid", "zh": "布地奈德"},
+    {"kind": "drug", "en": "clopidogrel", "ms": "klopidogrel", "zh": "氯吡格雷"},
+    {"kind": "disease", "en": "pneumonia", "ms": "radang paru-paru", "zh": "肺炎"},
+    {"kind": "disease", "en": "asthma", "ms": "asma", "zh": "哮喘"},
+    {"kind": "disease", "en": "an upper respiratory tract infection", "ms": "jangkitan saluran pernafasan atas", "zh": "上呼吸道感染"},
+    {"kind": "disease", "en": "gastroenteritis", "ms": "gastroenteritis", "zh": "肠胃炎"},
+    {"kind": "disease", "en": "diabetes", "ms": "kencing manis", "zh": "糖尿病"},
+    {"kind": "disease", "en": "high blood pressure", "ms": "darah tinggi", "zh": "高血压"},
+    {"kind": "disease", "en": "dengue fever", "ms": "demam denggi", "zh": "骨痛热症"},
+    {"kind": "disease", "en": "a urinary tract infection", "ms": "jangkitan saluran kencing", "zh": "尿道感染"},
+    {"kind": "disease", "en": "COPD", "ms": "penyakit paru-paru obstruktif kronik", "zh": "慢性阻塞性肺病"},
+    {"kind": "disease", "en": "heart failure", "ms": "kegagalan jantung", "zh": "心力衰竭"},
+    {"kind": "disease", "en": "a stroke", "ms": "strok", "zh": "中风"},
+    {"kind": "disease", "en": "tuberculosis", "ms": "tibi", "zh": "肺结核"},
+    {"kind": "disease", "en": "bronchitis", "ms": "bronkitis", "zh": "支气管炎"},
+    {"kind": "disease", "en": "sinusitis", "ms": "sinusitis", "zh": "鼻窦炎"},
+    {"kind": "disease", "en": "gout", "ms": "gout", "zh": "痛风"},
+    {"kind": "symptom", "en": "shortness of breath", "ms": "sesak nafas", "zh": "呼吸困难"},
+    {"kind": "symptom", "en": "chest pain", "ms": "sakit dada", "zh": "胸口痛"},
+    {"kind": "symptom", "en": "a high fever", "ms": "demam panas", "zh": "高烧"},
+    {"kind": "symptom", "en": "a cough", "ms": "batuk", "zh": "咳嗽"},
+    {"kind": "symptom", "en": "diarrhoea", "ms": "cirit-birit", "zh": "腹泻"},
+    {"kind": "symptom", "en": "vomiting", "ms": "muntah", "zh": "呕吐"},
+    {"kind": "symptom", "en": "dizziness", "ms": "pening kepala", "zh": "头晕"},
+    {"kind": "symptom", "en": "palpitations", "ms": "jantung berdebar", "zh": "心悸"},
+    {"kind": "symptom", "en": "a rash", "ms": "ruam", "zh": "皮疹"},
+    {"kind": "symptom", "en": "wheezing", "ms": "bunyi berdehit", "zh": "喘鸣"},
+    {"kind": "symptom", "en": "dehydration", "ms": "kekurangan air", "zh": "脱水"},
+    {"kind": "symptom", "en": "swelling in your legs", "ms": "kaki bengkak", "zh": "脚肿"},
+    {"kind": "symptom", "en": "blood in your stool", "ms": "najis berdarah", "zh": "大便带血"},
+    {"kind": "symptom", "en": "confusion", "ms": "keliru", "zh": "神志不清"},
+    {"kind": "symptom", "en": "severe headache", "ms": "sakit kepala teruk", "zh": "剧烈头痛"}
+  ]
+}

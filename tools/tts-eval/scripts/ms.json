@@ -1,0 +1,3602 @@
+[
+ {
+  "id": "ms_0001",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Borang tuntutan insurans untuk Puan Siti dah dihantar, tapi masih menunggu kelulusan."
+ },
+ {
+  "id": "ms_0002",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Jangan tunggu esok kalau suhu anak lebih empat puluh darjah dan tak turun dengan ubat."
+ },
+ {
+  "id": "ms_0003",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat ni makan dengan air kosong sahaja, bukan dengan teh atau kopi."
+ },
+ {
+  "id": "ms_0004",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Sinusitis dengan bengkak di sekeliling mata atau penglihatan berganda perlu dirawat segera."
+ },
+ {
+  "id": "ms_0005",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pesakit katil enam belum makan sejak pagi, sebab loya; doktor dah diberitahu."
+ },
+ {
+  "id": "ms_0006",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Pilih ikan bakar atau kukus berbanding ikan goreng."
+ },
+ {
+  "id": "ms_0007",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Semalam Encik kata sakitnya lapan; sekarang berapa?"
+ },
+ {
+  "id": "ms_0008",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Rasa letih selepas radang paru-paru memang ambil masa untuk hilang, sabar ye."
+ },
+ {
+  "id": "ms_0009",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Letak barang keperluan di sebelah yang Pakcik masih boleh nampak dan capai dengan mudah."
+ },
+ {
+  "id": "ms_0010",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat steroid ini boleh naikkan paras gula, jadi Makcik kena periksa gula lebih kerap minggu ini."
+ },
+ {
+  "id": "ms_0011",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Jumpa di klinik kesihatan dekat rumah dalam tiga hari untuk cuci luka."
+ },
+ {
+  "id": "ms_0012",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Ada rasa sesak bila baring rata semalam?"
+ },
+ {
+  "id": "ms_0013",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Budesonide boleh buat suara serak; kumur mulut selepas guna dapat kurangkan masalah itu."
+ },
+ {
+  "id": "ms_0014",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Insulin malam ni dua puluh unit, suntik pada waktu yang sama setiap malam, sekitar pukul sepuluh."
+ },
+ {
+  "id": "ms_0015",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau mata atau kulit jadi kuning semasa makan ubat TB, datang ke klinik hari itu juga."
+ },
+ {
+  "id": "ms_0016",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Jangan memandu kereta selama dua minggu, sampai doktor benarkan."
+ },
+ {
+  "id": "ms_0017",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Antibiotik ni boleh ganggu keberkesanan pil perancang, jadi guna cara tambahan sepanjang rawatan."
+ },
+ {
+  "id": "ms_0018",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Tolong bawa bekas ubat kosong supaya doktor tahu apa yang Makcik makan."
+ },
+ {
+  "id": "ms_0019",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Selepas dua bulan makan ubat TB, kita buat semula ujian kahak."
+ },
+ {
+  "id": "ms_0020",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Amoxicillin ni 500mg, tiga kali sehari, pagi, petang dan malam selama tujuh hari."
+ },
+ {
+  "id": "ms_0021",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Anak Puan dah mula main dan minum susu, itu tanda dia dah pulih."
+ },
+ {
+  "id": "ms_0022",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Sampel kahak perlu diambil pagi-pagi, sebaik bangun tidur, sebelum gosok gigi."
+ },
+ {
+  "id": "ms_0023",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Lepas sedut inhaler budesonide, kumur mulut dengan air dan ludah, jangan telan."
+ },
+ {
+  "id": "ms_0024",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Bawa buku rekod gula ni setiap kali datang ke klinik, ye."
+ },
+ {
+  "id": "ms_0025",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Datang ke bilik suntikan setiap hari pukul sepuluh pagi, selama lima hari, untuk antibiotik."
+ },
+ {
+  "id": "ms_0026",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Buat latihan nafas dalam sepuluh kali setiap jam semasa berjaga untuk bantu paru-paru kembang."
+ },
+ {
+  "id": "ms_0027",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk sembelit, minum air suam pada waktu pagi dan makan buah betik."
+ },
+ {
+  "id": "ms_0028",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Najis dah jadi lebih keras berbanding semalam?"
+ },
+ {
+  "id": "ms_0029",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Rasa sesak nafas bila berjalan ke tandas, atau hanya bila naik tangga?"
+ },
+ {
+  "id": "ms_0030",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Demam Encik dah turun ke tiga puluh tujuh darjah, itu petanda baik."
+ },
+ {
+  "id": "ms_0031",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Keputusan ujian darah katil sembilan masih belum keluar; makmal jangka dalam sejam."
+ },
+ {
+  "id": "ms_0032",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk tuberkulosis, buka tingkap rumah supaya udara bertukar dan cahaya matahari masuk."
+ },
+ {
+  "id": "ms_0033",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Tekanan darah yang rendah tadi dah naik semula selepas titisan air."
+ },
+ {
+  "id": "ms_0034",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pesakit katil tujuh menolak ubat pagi; saya dah terangkan dan catat dalam nota."
+ },
+ {
+  "id": "ms_0035",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Demam yang datang semula selepas beberapa hari baik, perlu diperiksa sekali lagi."
+ },
+ {
+  "id": "ms_0036",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat tahan gatal ni sapu nipis pada ruam dua kali sehari, tapi jangan pada muka."
+ },
+ {
+  "id": "ms_0037",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Bila label kata tiga kali sehari, cuba jarakkan lebih kurang lapan jam antara setiap dos."
+ },
+ {
+  "id": "ms_0038",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau guna alat penyambung inhaler, tekan satu kali, kemudian tarik nafas biasa lima kali melalui mulut."
+ },
+ {
+  "id": "ms_0039",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Jangan biar anak dekat dengan orang yang merokok, walaupun di luar rumah."
+ },
+ {
+  "id": "ms_0040",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Encik boleh makan paracetamol bersama ubat darah tinggi, tiada masalah."
+ },
+ {
+  "id": "ms_0041",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Ada muntah lagi selepas minum air tadi?"
+ },
+ {
+  "id": "ms_0042",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Timbang berat badan setiap pagi selepas ke tandas, sebelum sarapan."
+ },
+ {
+  "id": "ms_0043",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Pakai baju kapas yang longgar supaya ruam tak bertambah panas dan gatal."
+ },
+ {
+  "id": "ms_0044",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Prednisolone makan waktu pagi selepas sarapan supaya malam tak susah tidur."
+ },
+ {
+  "id": "ms_0045",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Bawa semua ubat dari rumah masa datang klinik, termasuk ubat tradisional dan vitamin."
+ },
+ {
+  "id": "ms_0046",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Kurangkan patung berbulu dan karpet di bilik tidur anak kalau dia ada asma."
+ },
+ {
+  "id": "ms_0047",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Luka kaki kencing manis yang bertukar hitam atau berbau busuk perlu dirawat segera."
+ },
+ {
+  "id": "ms_0048",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Rehatkan sendi yang sakit dan letak tuala sejuk di atasnya selama lima belas minit."
+ },
+ {
+  "id": "ms_0049",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Klinik kencing manis buka setiap Rabu pagi, di blok B, sebelah farmasi."
+ },
+ {
+  "id": "ms_0050",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Nadi Pakcik tujuh puluh lapan seminit, stabil sepanjang malam."
+ },
+ {
+  "id": "ms_0051",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Sampel air kencing ambil dari air kencing pertama waktu pagi, bahagian tengah."
+ },
+ {
+  "id": "ms_0052",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Temujanji klinik strok ialah enam minggu dari tarikh keluar wad."
+ },
+ {
+  "id": "ms_0053",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Minum ORS sedikit-sedikit, seteguk setiap beberapa minit, jangan teguk banyak sekali gus."
+ },
+ {
+  "id": "ms_0054",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Sebelum keluar wad, ahli farmasi akan terangkan semua ubat ni satu per satu kepada Makcik."
+ },
+ {
+  "id": "ms_0055",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Farmasi tanya sama ada katil sembilan masih perlukan antibiotik melalui titisan atau dah tukar ke tablet."
+ },
+ {
+  "id": "ms_0056",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Sebelum saya pasang titisan, saya akan terangkan setiap langkah; beritahu kalau sakit."
+ },
+ {
+  "id": "ms_0057",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Potong kuku kaki lurus, jangan terlalu pendek, dan jangan korek sudut kuku."
+ },
+ {
+  "id": "ms_0058",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Sakit dada lebih lima belas minit yang tak hilang dengan rehat, terus panggil ambulans."
+ },
+ {
+  "id": "ms_0059",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau tempat jarum titisan bengkak, merah dan sakit, tekan loceng dan panggil jururawat."
+ },
+ {
+  "id": "ms_0060",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Ada rasa pening atau loya hari ini?"
+ },
+ {
+  "id": "ms_0061",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Letak bantal di antara lutut bila baring mengiring, supaya kulit tak bergesel."
+ },
+ {
+  "id": "ms_0062",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Jangan minum jus limau gedang semasa makan atorvastatin."
+ },
+ {
+  "id": "ms_0063",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Metformin makan lepas makan nasi, supaya perut tak rasa loya atau kembung."
+ },
+ {
+  "id": "ms_0064",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Kalau ada tuberkulosis, pastikan semua ahli rumah datang untuk saringan."
+ },
+ {
+  "id": "ms_0065",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Surat jaminan insurans untuk katil tujuh dah lulus pagi tadi; pesakit boleh discaj."
+ },
+ {
+  "id": "ms_0066",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat batuk ni makan satu sudu besar, tiga kali sehari, selepas makan."
+ },
+ {
+  "id": "ms_0067",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Titisan air ni masuk seratus ml sejam; kalau tangan bengkak di tempat jarum, tekan loceng."
+ },
+ {
+  "id": "ms_0068",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Kalau rasa lebih teruk sebelum tarikh temujanji, jangan tunggu; datang ke kecemasan."
+ },
+ {
+  "id": "ms_0069",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Klinik asma akan nilai semula dos inhaler bila datang tiga bulan lagi."
+ },
+ {
+  "id": "ms_0070",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Pakcik, rehat cukup minggu ni, tapi cuba jalan sikit di dalam rumah setiap beberapa jam."
+ },
+ {
+  "id": "ms_0071",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Kencing hari ni banyak atau sedikit berbanding biasa?"
+ },
+ {
+  "id": "ms_0072",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Batuk lebih dua minggu, berpeluh malam dan berat badan turun, perlu disaring untuk TB."
+ },
+ {
+  "id": "ms_0073",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Semasa rawatan tuberkulosis, jururawat akan tengok Encik telan ubat setiap hari di klinik."
+ },
+ {
+  "id": "ms_0074",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Amoxicillin ni ada penisilin; Puan pasti tak ada alahan penisilin sebelum ini?"
+ },
+ {
+  "id": "ms_0075",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Minum air secukupnya dan jangan tinggal waktu makan, sebab gula rendah pun boleh buat pening."
+ },
+ {
+  "id": "ms_0076",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Bengkak kelopak mata dan muka bersama kurang kencing perlu diperiksa hari ini."
+ },
+ {
+  "id": "ms_0077",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Katil sepuluh sedang tunggu pengangkutan untuk pindah ke wad pemulihan."
+ },
+ {
+  "id": "ms_0078",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Waktu puasa, metformin biasanya dimakan masa sahur dan berbuka."
+ },
+ {
+  "id": "ms_0079",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Tekanan darah Encik dah terkawal, tapi ubat tetap perlu diteruskan setiap hari."
+ },
+ {
+  "id": "ms_0080",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Rasa sakit tekak tu biasa lepas tiub pernafasan dibuang, akan hilang dalam sehari dua."
+ },
+ {
+  "id": "ms_0081",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Mana-mana tanda ini muncul, jangan tunggu temujanji; datang terus ke jabatan kecemasan."
+ },
+ {
+  "id": "ms_0082",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Sakit perut teruk sampai tak boleh bergerak, dengan perut keras, pergi ke kecemasan."
+ },
+ {
+  "id": "ms_0083",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Temujanji susulan Encik di klinik perubatan pada hari Selasa, dua minggu dari sekarang, pukul sembilan pagi."
+ },
+ {
+  "id": "ms_0084",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau kaki bengkak bertambah dan tak boleh baring rata sebab sesak, jangan tunggu temujanji."
+ },
+ {
+  "id": "ms_0085",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Titisan katil sebelas dah habis; saya dah pasang yang baru, satu liter untuk lapan jam."
+ },
+ {
+  "id": "ms_0086",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Ada rasa sakit bila tarik nafas panjang?"
+ },
+ {
+  "id": "ms_0087",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Kalau luka merah, bengkak atau keluar nanah, datang ke klinik untuk diperiksa."
+ },
+ {
+  "id": "ms_0088",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kad warfarin ni bawa ke mana-mana, dan tunjukkan kepada doktor atau ahli farmasi."
+ },
+ {
+  "id": "ms_0089",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Doxycycline boleh buat kulit mudah terbakar matahari, jadi pakai topi bila keluar tengah hari."
+ },
+ {
+  "id": "ms_0090",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Jangan sapu minyak, ubat tradisional atau serbuk pada luka."
+ },
+ {
+  "id": "ms_0091",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau bayi bawah tiga bulan demam, bawa terus ke hospital, jangan beri ubat dulu."
+ },
+ {
+  "id": "ms_0092",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Makcik, kami ada di sini sepanjang malam; tekan saja loceng kalau perlukan apa-apa."
+ },
+ {
+  "id": "ms_0093",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Makan sedikit tapi kerap, lima atau enam kali sehari, kalau cepat penat bila makan banyak."
+ },
+ {
+  "id": "ms_0094",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pesakit baru dari kecemasan, radang paru-paru, akan naik ke katil sembilan dalam sepuluh minit."
+ },
+ {
+  "id": "ms_0095",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat buang air ni makan pagi, jangan malam, nanti Makcik asyik bangun ke tandas."
+ },
+ {
+  "id": "ms_0096",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Sakit kepala tu berdenyut, atau rasa macam ditekan?"
+ },
+ {
+  "id": "ms_0097",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Kad temujanji ni ada tarikh, masa dan nama klinik, jadi simpan baik-baik."
+ },
+ {
+  "id": "ms_0098",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pesakit katil dua belas ada alahan penisilin; gelang merah dah dipakaikan."
+ },
+ {
+  "id": "ms_0099",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Budesonide ni ubat pencegah, jadi kena sedut setiap hari walaupun tak ada simptom asma."
+ },
+ {
+  "id": "ms_0100",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Kaki yang sakit tu boleh gerakkan jari-jarinya?"
+ },
+ {
+  "id": "ms_0101",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Kalau pening kepala, duduk atau baring dulu sehingga pening hilang sebelum bangun."
+ },
+ {
+  "id": "ms_0102",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Galakkan Makcik buat sendiri apa yang dia mampu, macam sikat rambut atau makan sendiri."
+ },
+ {
+  "id": "ms_0103",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Untuk demam denggi, hanya paracetamol sahaja; jangan ambil ibuprofen atau aspirin."
+ },
+ {
+  "id": "ms_0104",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Rasa macam nak pitam setiap kali berdiri selepas mula ubat baru, hubungi klinik hari ini."
+ },
+ {
+  "id": "ms_0105",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau terlepas dos amlodipine lebih dua belas jam, abaikan saja dan ambil dos seterusnya seperti biasa."
+ },
+ {
+  "id": "ms_0106",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Muntah darah atau muntah warna hitam macam serbuk kopi, terus ke kecemasan."
+ },
+ {
+  "id": "ms_0107",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Luka ni biar kering dan bersih; tukar balutan setiap dua hari di klinik kesihatan."
+ },
+ {
+  "id": "ms_0108",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau rasa menggeletar, berpeluh dan lapar sangat, itu tanda gula rendah; makan tiga biji gula-gula dulu."
+ },
+ {
+  "id": "ms_0109",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Sapu losyen pada kulit kering, tapi jangan pada celah yang lembap."
+ },
+ {
+  "id": "ms_0110",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Muka senget, tangan lemah sebelah atau cakap pelat tiba-tiba, itu tanda strok; pergi hospital sekarang."
+ },
+ {
+  "id": "ms_0111",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Jangan makan ubat zat besi bersama teh; beri jarak sekurang-kurangnya dua jam."
+ },
+ {
+  "id": "ms_0112",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau perlu, farmasi boleh sediakan ubat dalam paket harian untuk Makcik."
+ },
+ {
+  "id": "ms_0113",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau nampak tompok putih dalam mulut selepas guna inhaler steroid, beritahu doktor."
+ },
+ {
+  "id": "ms_0114",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Sebelum suntik, putar pen dua unit dan tekan dulu untuk pastikan tiada udara."
+ },
+ {
+  "id": "ms_0115",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Doktor dah tukar ubat darah tinggi Puan dari amlodipine ke losartan, jadi berhenti makan yang lama."
+ },
+ {
+  "id": "ms_0116",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau terlupa satu dos losartan, makan bila teringat, tapi jangan gandakan dos esoknya."
+ },
+ {
+  "id": "ms_0117",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Doktor akan datang rondaan dalam sejam; saya dah catat soalan Pakcik untuk ditanya."
+ },
+ {
+  "id": "ms_0118",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Buang bekas air bertakung di sekeliling rumah untuk elak nyamuk aedes membiak."
+ },
+ {
+  "id": "ms_0119",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Makcik rasa sakit bila saya tekan di sini?"
+ },
+ {
+  "id": "ms_0120",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Kalau temujanji jatuh pada cuti umum, klinik akan hubungi untuk tarikh baru."
+ },
+ {
+  "id": "ms_0121",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pesakit katil lapan jatuh semalam; laporan insiden dah diisi dan keluarga dimaklumkan."
+ },
+ {
+  "id": "ms_0122",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Ada alahan pada makanan atau ubat yang kami patut tahu?"
+ },
+ {
+  "id": "ms_0123",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Bacaan oksigen dalam darah Encik sembilan puluh enam peratus, itu baik."
+ },
+ {
+  "id": "ms_0124",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau bacaan gula bawah empat, jangan suntik insulin dulu; makan sesuatu yang manis dan telefon klinik."
+ },
+ {
+  "id": "ms_0125",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Kalau cuaca panas, duduk di tempat teduh dan pakai baju longgar."
+ },
+ {
+  "id": "ms_0126",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Krim ini sapu selepas mandi, bila kulit masih lembap sedikit."
+ },
+ {
+  "id": "ms_0127",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Keputusan kultur darah katil dua belas dijangka keluar esok atau lusa."
+ },
+ {
+  "id": "ms_0128",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Nampak darah dalam najis atau najis hitam macam tar? Itu kena diperiksa hari ini juga."
+ },
+ {
+  "id": "ms_0129",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau kaki sejuk, pucat dan sangat sakit tiba-tiba, datang ke kecemasan."
+ },
+ {
+  "id": "ms_0130",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Kalau badan rasa kekurangan air, minum sedikit-sedikit dan kerap, jangan tunggu dahaga."
+ },
+ {
+  "id": "ms_0131",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Perindopril dan losartan tak dimakan bersama, jadi pastikan hanya satu yang ada dalam senarai ubat."
+ },
+ {
+  "id": "ms_0132",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Pakai pelitup muka di rumah kalau ada orang tua atau bayi dalam keluarga."
+ },
+ {
+  "id": "ms_0133",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Puan, ada sakit kepala sejak pagi tadi?"
+ },
+ {
+  "id": "ms_0134",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau ragu-ragu sama ada perlu datang atau tidak, lebih baik datang dan kami periksa."
+ },
+ {
+  "id": "ms_0135",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Untuk ujian tekanan jantung, pakai kasut sukan dan pakaian yang selesa."
+ },
+ {
+  "id": "ms_0136",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Sendi yang bengkak sebab gout tu masih merah, tapi sakitnya dah turun sikit, kan?"
+ },
+ {
+  "id": "ms_0137",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau batuk berkahak lebih tiga minggu walaupun dah habis antibiotik, kita perlu buat ujian TB."
+ },
+ {
+  "id": "ms_0138",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat ni rasa pahit sikit; boleh campur dengan sedikit jus, tapi pastikan habis diminum."
+ },
+ {
+  "id": "ms_0139",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Kita ambil darah sikit saja pagi ni, sekejap sahaja, ye Pakcik."
+ },
+ {
+  "id": "ms_0140",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Adik ni dapat amoxicillin 5ml, dua kali sehari; guna picagari kecil untuk sukat dengan tepat."
+ },
+ {
+  "id": "ms_0141",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Makmal minta ulang sampel darah katil lima sebab sampel beku."
+ },
+ {
+  "id": "ms_0142",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Pakcik ada masalah buah pinggang, jadi elakkan ibuprofen; guna paracetamol sahaja untuk sakit."
+ },
+ {
+  "id": "ms_0143",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Lap celah jari kaki sampai kering selepas mandi."
+ },
+ {
+  "id": "ms_0144",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Luka kaki kencing manis mesti dibersihkan setiap hari dengan air garam, dan ditutup dengan kain kasa."
+ },
+ {
+  "id": "ms_0145",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau Puan rasa sesak dan berdebar selepas suntikan, beritahu jururawat serta-merta."
+ },
+ {
+  "id": "ms_0146",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Angkat kaki atas bantal bila duduk, supaya bengkak kaki berkurang."
+ },
+ {
+  "id": "ms_0147",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Label ubat ni tulis selepas makan, maksudnya dalam masa setengah jam lepas makan."
+ },
+ {
+  "id": "ms_0148",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Suhu katil sembilan naik ke tiga puluh lapan perpuluhan lima; sampel darah dah diambil."
+ },
+ {
+  "id": "ms_0149",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Jangan pindahkan ubat ke botol lain, nanti hilang label dan arahan dos."
+ },
+ {
+  "id": "ms_0150",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Ambil wuduk sambil duduk di kerusi supaya tak terjatuh di bilik air."
+ },
+ {
+  "id": "ms_0151",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau rasa berdebar atau tangan menggeletar selepas ubat wap, itu kesan salbutamol, akan reda dalam sejam."
+ },
+ {
+  "id": "ms_0152",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pesakit katil satu belum ada keputusan ujian darah, jadi discaj ditangguhkan ke esok."
+ },
+ {
+  "id": "ms_0153",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Tidur dengan dua bantal boleh bantu kalau rasa sesak waktu malam."
+ },
+ {
+  "id": "ms_0154",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Sesetengah jamu atau ubat herba boleh berinteraksi dengan warfarin, jadi tanya doktor dulu."
+ },
+ {
+  "id": "ms_0155",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Pasang pemegang di tepi tandas supaya Makcik senang bangun."
+ },
+ {
+  "id": "ms_0156",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Pen insulin yang sedang digunakan boleh disimpan pada suhu bilik sampai empat minggu."
+ },
+ {
+  "id": "ms_0157",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Kalau ada katil kosong di wad perubatan, kecemasan ada tiga pesakit menunggu."
+ },
+ {
+  "id": "ms_0158",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Rasa penuh atau kembung di perut selepas makan tadi?"
+ },
+ {
+  "id": "ms_0159",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Makcik, sirap paracetamol untuk cucu ini 5ml setiap enam jam, guna sudu sukat yang kami beri."
+ },
+ {
+  "id": "ms_0160",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Doxycycline jangan makan bersama susu atau antasid, sebab ubat tak dapat diserap dengan baik."
+ },
+ {
+  "id": "ms_0161",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Cetirizine sepuluh miligram ni sebiji sehari, untuk ruam gatal dan hidung berair."
+ },
+ {
+  "id": "ms_0162",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Selepas pemasangan kateter, pastikan beg air kencing sentiasa lebih rendah daripada pundi kencing."
+ },
+ {
+  "id": "ms_0163",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Bacaan gula lebih dua puluh bersama muntah dan nafas laju perlu dirawat di hospital segera."
+ },
+ {
+  "id": "ms_0164",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Lepas tekan pen insulin, biarkan jarum dalam kulit kira sampai sepuluh, baru tarik keluar."
+ },
+ {
+  "id": "ms_0165",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Bunyi berdehit dah kurang banyak berbanding masa masuk semalam."
+ },
+ {
+  "id": "ms_0166",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Makcik boleh set jam loceng di telefon untuk ingatkan waktu makan ubat."
+ },
+ {
+  "id": "ms_0167",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau Puan nak berpuasa, dos ubat kencing manis kena diubah; jumpa doktor sebelum bulan puasa."
+ },
+ {
+  "id": "ms_0168",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Untuk demam denggi, hari ketiga hingga ketujuh paling bahaya, walaupun demam dah turun."
+ },
+ {
+  "id": "ms_0169",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Pendarahan gusi, bintik merah pada kulit atau haid banyak semasa denggi, itu tanda bahaya."
+ },
+ {
+  "id": "ms_0170",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau kahak bertukar hijau pekat, demam kembali, dan sesak bertambah, datang semula."
+ },
+ {
+  "id": "ms_0171",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Sampai sekurang-kurangnya setengah jam awal untuk daftar di kaunter."
+ },
+ {
+  "id": "ms_0172",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Jangan kongsi inhaler dengan orang lain, walaupun ahli keluarga sendiri."
+ },
+ {
+  "id": "ms_0173",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Tablet omeprazole ni jangan dibelah dua, telan seluruhnya."
+ },
+ {
+  "id": "ms_0174",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk asma, basuh cadar dan sarung bantal dengan air panas seminggu sekali."
+ },
+ {
+  "id": "ms_0175",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Kaki masih rasa bengkak atau ketat bila pakai selipar?"
+ },
+ {
+  "id": "ms_0176",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Sakit kepala teruk yang datang tiba-tiba, paling teruk pernah dirasa, perlu ke kecemasan segera."
+ },
+ {
+  "id": "ms_0177",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Selepas strok, latihan fisioterapi di rumah perlu dibuat setiap hari, walaupun sedikit."
+ },
+ {
+  "id": "ms_0178",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Keputusan biopsi ambil masa dua minggu; doktor akan terangkan masa temujanji."
+ },
+ {
+  "id": "ms_0179",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Keluarga boleh bantu suap makanan perlahan-lahan, dalam keadaan duduk tegak, supaya Pakcik tak tersedak."
+ },
+ {
+  "id": "ms_0180",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau kaki bengkak bertambah walaupun makan ubat, beritahu kami segera."
+ },
+ {
+  "id": "ms_0181",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Azithromycin boleh makan sebelum atau selepas makan, tapi jangan serentak dengan ubat gastrik."
+ },
+ {
+  "id": "ms_0182",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Surat cuti sakit ni untuk lima hari; kalau belum pulih, jumpa doktor klinik untuk sambung."
+ },
+ {
+  "id": "ms_0183",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Pengsan semasa bersenam atau semasa berdiri lama, jangan anggap biasa; perlu diperiksa."
+ },
+ {
+  "id": "ms_0184",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Masa beri susu melalui tiub, pastikan Pakcik duduk tegak dan kekal duduk setengah jam selepas itu."
+ },
+ {
+  "id": "ms_0185",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ibuprofen 400mg ni boleh makan tiga kali sehari selepas makan, maksimum lima hari."
+ },
+ {
+  "id": "ms_0186",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Bawa buku rekod gula dan tekanan darah bila datang temujanji bulan depan."
+ },
+ {
+  "id": "ms_0187",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Tiub kateter jangan ditarik atau dipintal; lekatkan pada peha dengan pita."
+ },
+ {
+  "id": "ms_0188",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau berdebar-debar tak berhenti lebih dari setengah jam, jangan tunggu; datang ke hospital."
+ },
+ {
+  "id": "ms_0189",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Selepas strok, bercakap perlahan dengan Pakcik dan beri masa untuk dia jawab."
+ },
+ {
+  "id": "ms_0190",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Cuci alat penyambung inhaler seminggu sekali dengan air sabun, dan biar kering sendiri tanpa lap."
+ },
+ {
+  "id": "ms_0191",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Tunggu enam minggu selepas serangan jantung sebelum mula memandu semula."
+ },
+ {
+  "id": "ms_0192",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Amoxicillin ini kena habiskan semua, walaupun Puan dah rasa sihat dalam dua tiga hari."
+ },
+ {
+  "id": "ms_0193",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau najis berdarah banyak atau rasa nak pitam, jangan tunggu; datang terus."
+ },
+ {
+  "id": "ms_0194",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Gliclazide mesti makan bersama sarapan; kalau tak makan, gula boleh jatuh terlalu rendah."
+ },
+ {
+  "id": "ms_0195",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Gliclazide ni setengah biji dulu, pagi, dan doktor akan tambah kalau gula masih tinggi."
+ },
+ {
+  "id": "ms_0196",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Ada makan tengah hari tadi? Selera makan dah kembali?"
+ },
+ {
+  "id": "ms_0197",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Pening sampai tak boleh berdiri, bersama muntah dan susah berjalan, perlu dirawat segera."
+ },
+ {
+  "id": "ms_0198",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Keputusan imbasan tak tunjukkan pendarahan dalam otak; doktor akan terangkan lebih lanjut."
+ },
+ {
+  "id": "ms_0199",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Bawa kad temujanji, kad pengenalan dan semua ubat bila datang ke klinik."
+ },
+ {
+  "id": "ms_0200",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Goncang inhaler dulu, hembus nafas habis, kemudian tekan sambil sedut perlahan-lahan dan dalam."
+ },
+ {
+  "id": "ms_0201",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau anak muntahkan ubat serta-merta, boleh beri semula dos yang sama sekali lagi."
+ },
+ {
+  "id": "ms_0202",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Sesak nafas sampai perlu duduk tegak untuk bernafas, datang ke kecemasan."
+ },
+ {
+  "id": "ms_0203",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Lepas suntik pencair darah, jangan gosok tempat suntikan, nanti lebam."
+ },
+ {
+  "id": "ms_0204",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Paracetamol suppositori untuk bayi ni dimasukkan melalui dubur, bila demam tinggi dan tak boleh telan."
+ },
+ {
+  "id": "ms_0205",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau sakit kepala bersama leher kaku dan demam, jangan tunggu; datang ke hospital."
+ },
+ {
+  "id": "ms_0206",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Bila kali terakhir buang air besar, Makcik?"
+ },
+ {
+  "id": "ms_0207",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Pakcik perlu buat ujian darah untuk warfarin setiap minggu sepanjang bulan pertama."
+ },
+ {
+  "id": "ms_0208",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Tiba-tiba tak boleh bercakap atau tak faham apa orang cakap, panggil ambulans."
+ },
+ {
+  "id": "ms_0209",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau cirit-birit, jangan makan ubat tahan cirit sendiri tanpa tanya doktor dulu."
+ },
+ {
+  "id": "ms_0210",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Jangan berjalan kaki ayam, walaupun di dalam rumah, sebab kaki kencing manis mudah luka."
+ },
+ {
+  "id": "ms_0211",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Kalau skala satu hingga sepuluh, sakit Puan sekarang berapa?"
+ },
+ {
+  "id": "ms_0212",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Antibiotik untuk katil lima kehabisan stok di wad; saya dah minta dari farmasi."
+ },
+ {
+  "id": "ms_0213",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Encik ada rasa keliru, atau susah nak ingat perkara semalam?"
+ },
+ {
+  "id": "ms_0214",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Kami dah beri ubat tahan sakit; dalam setengah jam lagi Puan akan rasa lebih lega."
+ },
+ {
+  "id": "ms_0215",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Ada rasa dahaga sangat, atau mulut kering?"
+ },
+ {
+  "id": "ms_0216",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Air kencing warna kuning cair tanda cukup minum; kalau kuning pekat, minum lagi."
+ },
+ {
+  "id": "ms_0217",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Ujian darah untuk purata gula tiga bulan akan dibuat masa temujanji akan datang."
+ },
+ {
+  "id": "ms_0218",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Semua keputusan ujian darah pagi ni dah keluar kecuali katil sepuluh."
+ },
+ {
+  "id": "ms_0219",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Guna ubat nyamuk dan kelambu supaya ahli keluarga lain tak dijangkiti denggi."
+ },
+ {
+  "id": "ms_0220",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Catat berapa kali anak kencing sehari; kalau kurang daripada empat kali, bawa ke hospital."
+ },
+ {
+  "id": "ms_0221",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk gout, kurangkan makanan laut, daging merah, isi perut haiwan dan minuman bergas manis."
+ },
+ {
+  "id": "ms_0222",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Semakan luka dan tekanan darah dibuat serentak masa temujanji Jumaat nanti."
+ },
+ {
+  "id": "ms_0223",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat lama yang dah tak digunakan, bawa ke farmasi untuk dilupuskan, jangan buang dalam sinki."
+ },
+ {
+  "id": "ms_0224",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Paracetamol boleh diberi bila suhu lebih tiga puluh lapan darjah; kalau tak demam, tak perlu."
+ },
+ {
+  "id": "ms_0225",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Esok pagi, cuba makan sarapan ringan dulu, macam roti bakar dan air suam."
+ },
+ {
+  "id": "ms_0226",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kaki sebelah bengkak, merah dan sakit bila berjalan? Mungkin darah beku, perlu diperiksa hari ini."
+ },
+ {
+  "id": "ms_0227",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Suntik insulin di perut, dua jari dari pusat, dan tukar tempat setiap kali suntik."
+ },
+ {
+  "id": "ms_0228",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Periksa tekanan darah di rumah setiap pagi, dan catat dalam buku rekod ni."
+ },
+ {
+  "id": "ms_0229",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Puan, ubat prednisolone untuk asma ni lima hari sahaja, empat biji sekali gus pada waktu pagi."
+ },
+ {
+  "id": "ms_0230",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau sakit masa kencing bersama demam dan sakit pinggang, jangkitan mungkin dah naik ke buah pinggang."
+ },
+ {
+  "id": "ms_0231",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Bunyi berdehit yang tak berkurang selepas Ventolin, datang ke jabatan kecemasan terus."
+ },
+ {
+  "id": "ms_0232",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Paras gula yang naik sikit masa sakit tu memang biasa; kita akan pantau rapat."
+ },
+ {
+  "id": "ms_0233",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Lap badan anak dengan air suam, bukan air sejuk atau air batu."
+ },
+ {
+  "id": "ms_0234",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Tarikh temujanji dah dicatat dalam aplikasi Sona; Encik akan dapat peringatan dua hari sebelum."
+ },
+ {
+  "id": "ms_0235",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Jangan angkat barang berat lebih lima kilo selama enam minggu selepas pembedahan."
+ },
+ {
+  "id": "ms_0236",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Puan boleh tanya apa sahaja; tak ada soalan yang remeh."
+ },
+ {
+  "id": "ms_0237",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk COPD, latih pernafasan bibir muncung: tarik nafas melalui hidung, hembus perlahan melalui mulut."
+ },
+ {
+  "id": "ms_0238",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Dos atorvastatin Encik sekarang dua puluh miligram, sekali sehari waktu malam."
+ },
+ {
+  "id": "ms_0239",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau ubat TB buat muntah berterusan dan kulit kuning, berhenti dan jumpa doktor dengan segera."
+ },
+ {
+  "id": "ms_0240",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Doxycycline ni telan dengan segelas air penuh, lepas tu jangan terus baring selama setengah jam."
+ },
+ {
+  "id": "ms_0241",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Tiba-tiba sesak nafas dengan sakit dada tajam bila tarik nafas, datang ke kecemasan."
+ },
+ {
+  "id": "ms_0242",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Katil empat perlukan pengasingan sebab disyaki tuberkulosis; bilik pengasingan satu dah disediakan."
+ },
+ {
+  "id": "ms_0243",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Boleh makan nasi lemak sekali-sekala, tapi bukan setiap pagi, ye."
+ },
+ {
+  "id": "ms_0244",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Ubat untuk tiga bulan akan dibekalkan secara berperingkat, sebulan sekali."
+ },
+ {
+  "id": "ms_0245",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Encik, esok pagi pukul lapan, datang ke kaunter farmasi untuk ambil ubat ulangan."
+ },
+ {
+  "id": "ms_0246",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Anak Makcik baru telefon; dia akan sampai petang nanti."
+ },
+ {
+  "id": "ms_0247",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Ruam tu nampak dah pudar; ubat alahan sedang berkesan."
+ },
+ {
+  "id": "ms_0248",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Naik tangga dengan kaki yang kuat dulu, dan turun dengan kaki yang sakit dulu."
+ },
+ {
+  "id": "ms_0249",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Datang ke kecemasan terus kalau sesak nafas semakin teruk, walaupun tengah malam."
+ },
+ {
+  "id": "ms_0250",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Untuk ujian kolesterol, puasa dari tengah malam, tapi ubat darah tinggi boleh makan seperti biasa."
+ },
+ {
+  "id": "ms_0251",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Katil tiga perlu pemantauan tanda vital setiap jam sebab tekanan darah rendah."
+ },
+ {
+  "id": "ms_0252",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Jangan garu ruam; potong kuku anak pendek supaya kulit tak luka."
+ },
+ {
+  "id": "ms_0253",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk ubat melalui tiub makan, bilas tiub dengan tiga puluh ml air sebelum dan selepas."
+ },
+ {
+  "id": "ms_0254",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Jangan simpan ubat dalam kereta, sebab panas sangat boleh rosakkan ubat."
+ },
+ {
+  "id": "ms_0255",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Sesak nafas tu makin kurang selepas dapat oksigen, kan?"
+ },
+ {
+  "id": "ms_0256",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk demam panas pada anak, pakaikan baju nipis, jangan balut dengan selimut tebal."
+ },
+ {
+  "id": "ms_0257",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Kurangkan makanan bergoreng dan santan pekat, macam gulai dan rendang, untuk kawal kolesterol."
+ },
+ {
+  "id": "ms_0258",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pesakit katil lima dah sedia untuk discaj, cuma tunggu ubat dari farmasi."
+ },
+ {
+  "id": "ms_0259",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat zat besi ni makan dengan jus oren, supaya lebih mudah diserap badan."
+ },
+ {
+  "id": "ms_0260",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Omeprazole ni ambil selama empat minggu dulu, lepas itu doktor akan nilai semula."
+ },
+ {
+  "id": "ms_0261",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Keputusan ujian darah Pakcik semuanya normal, jadi kita teruskan rawatan yang sama."
+ },
+ {
+  "id": "ms_0262",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat ni boleh buat najis jadi hitam, itu kesan zat besi dan tak berbahaya."
+ },
+ {
+  "id": "ms_0263",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Ada rasa sakit pinggang atau di bahagian bawah perut?"
+ },
+ {
+  "id": "ms_0264",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Doktor mahu ujian darah katil enam diulang pukul enam petang."
+ },
+ {
+  "id": "ms_0265",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Antibiotik untuk jangkitan saluran kencing ni tiga hari, dan minum air lebih banyak ye."
+ },
+ {
+  "id": "ms_0266",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Kaki bengkak tu nampak dah surut sikit berbanding semalam."
+ },
+ {
+  "id": "ms_0267",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Pakcik, amlodipine 5mg ini sekali sehari sahaja, eloknya waktu pagi selepas sarapan."
+ },
+ {
+  "id": "ms_0268",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Dos warfarin minggu ni tiga miligram setiap hari, kecuali Jumaat, dua miligram sahaja."
+ },
+ {
+  "id": "ms_0269",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Kurangkan minuman manis seperti teh tarik, sirap dan air kotak untuk kawal kencing manis."
+ },
+ {
+  "id": "ms_0270",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat kegagalan jantung ini dimulakan dengan dos rendah dan dinaikkan setiap dua minggu."
+ },
+ {
+  "id": "ms_0271",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Rasa mengantuk sangat, atau cuma penat biasa?"
+ },
+ {
+  "id": "ms_0272",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Paras kalium katil lima rendah; doktor dah tulis preskripsi tambahan melalui titisan."
+ },
+ {
+  "id": "ms_0273",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Selepas pembedahan perut, peluk bantal bila batuk atau bersin supaya luka tak sakit."
+ },
+ {
+  "id": "ms_0274",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Bayi tak mahu menyusu langsung, atau muntah hijau, perlu ke hospital segera."
+ },
+ {
+  "id": "ms_0275",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Makcik rasa cukup kuat untuk duduk di kerusi hari ini?"
+ },
+ {
+  "id": "ms_0276",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Pakcik, jangan risau, bunyi mesin tu cuma pemantau jantung; ia berbunyi bila wayar tergerak."
+ },
+ {
+  "id": "ms_0277",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk gastroenteritis, makan makanan lembut dulu seperti bubur nasi, roti dan pisang."
+ },
+ {
+  "id": "ms_0278",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Katil dua belas di wad lelaki dah kosong dan sedang dibersihkan; boleh terima pesakit dalam setengah jam."
+ },
+ {
+  "id": "ms_0279",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau anak ada ruam yang tak pudar bila ditekan dengan gelas, bawa ke hospital segera."
+ },
+ {
+  "id": "ms_0280",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Pakcik, jangan hisap rokok lagi; ubat COPD takkan berkesan kalau masih merokok."
+ },
+ {
+  "id": "ms_0281",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Rawatan susulan untuk kegagalan jantung dibuat setiap bulan selama tiga bulan pertama."
+ },
+ {
+  "id": "ms_0282",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ventolin ni untuk bila sesak nafas atau bunyi berdehit sahaja, bukan untuk ambil setiap hari."
+ },
+ {
+  "id": "ms_0283",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ibuprofen mesti dimakan selepas makan; kalau perut kosong, boleh rasa pedih."
+ },
+ {
+  "id": "ms_0284",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Kulit rasa gatal di mana-mana selepas ubat baru semalam?"
+ },
+ {
+  "id": "ms_0285",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Sirap amoxicillin ni kena simpan dalam peti sejuk selepas dibancuh, dan goncang sebelum guna."
+ },
+ {
+  "id": "ms_0286",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Encik, perindopril ni makan pagi sebelum sarapan, satu biji empat miligram."
+ },
+ {
+  "id": "ms_0287",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Gliclazide ni jangan makan pada waktu malam, sebab gula boleh turun masa tidur."
+ },
+ {
+  "id": "ms_0288",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Tak perlu malu, Encik; ramai pesakit rasa takut sebelum ambil darah."
+ },
+ {
+  "id": "ms_0289",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat tuberkulosis ini kena makan setiap hari selama enam bulan, jangan ada hari yang tertinggal."
+ },
+ {
+  "id": "ms_0290",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Titisan mata ni simpan dalam peti sejuk dan buang selepas empat minggu dibuka."
+ },
+ {
+  "id": "ms_0291",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Surat jaminan insurans untuk Encik Rahman masih pending, pihak insurans belum balas."
+ },
+ {
+  "id": "ms_0292",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Periksa tapak kaki setiap malam; guna cermin kalau susah nak tengok."
+ },
+ {
+  "id": "ms_0293",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kami akan beri antibiotik melalui titisan setiap lapan jam untuk radang paru-paru ini."
+ },
+ {
+  "id": "ms_0294",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Kalau perlukan surat untuk majikan, minta di kaunter selepas jumpa doktor."
+ },
+ {
+  "id": "ms_0295",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau cirit-birit lebih dari tiga hari atau lebih sepuluh kali sehari, datang ke klinik."
+ },
+ {
+  "id": "ms_0296",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk demam denggi, minum banyak air, jus buah dan air isotonik sepanjang hari."
+ },
+ {
+  "id": "ms_0297",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Guna alat latihan nafas ni sepuluh kali, beberapa kali sehari, sampai paru-paru kuat semula."
+ },
+ {
+  "id": "ms_0298",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Jururawat syif malam kurang seorang; ketua wad sedang cari pengganti."
+ },
+ {
+  "id": "ms_0299",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Jahitan nampak kering dan bersih; tak ada tanda jangkitan."
+ },
+ {
+  "id": "ms_0300",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Tekan loceng panggilan dengan segera kalau Pakcik rasa sakit dada atau susah bernafas."
+ },
+ {
+  "id": "ms_0301",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Borang ujian darah ni jangan hilang; serahkan di kaunter makmal."
+ },
+ {
+  "id": "ms_0302",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Encik ada rasa sejuk menggigil sejak tengah hari tadi?"
+ },
+ {
+  "id": "ms_0303",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Makcik, temujanji klinik mata dah ditetapkan pada lapan hari bulan depan."
+ },
+ {
+  "id": "ms_0304",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Stok salbutamol untuk ubat wap di wad tinggal sedikit; saya dah buat pesanan."
+ },
+ {
+  "id": "ms_0305",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Cuba tengok kaunter dos pada inhaler; bila tinggal dua puluh, minta yang baru di farmasi."
+ },
+ {
+  "id": "ms_0306",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Batuk berdarah perlu diperiksa dengan segera, jangan tunggu sampai tarikh temujanji."
+ },
+ {
+  "id": "ms_0307",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau berpeluh sejuk, loya dan sakit dada, itu mungkin serangan jantung."
+ },
+ {
+  "id": "ms_0308",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Rasa kebas atau lemah di mana-mana bahagian badan hari ni?"
+ },
+ {
+  "id": "ms_0309",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Encik, ubat ni kena telan terus, jangan kunyah atau hancurkan."
+ },
+ {
+  "id": "ms_0310",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Rasa gatal di tempat luka tu tanda luka sedang sembuh."
+ },
+ {
+  "id": "ms_0311",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Puan, jangan beri ubat batuk kepada anak bawah dua tahun tanpa nasihat doktor."
+ },
+ {
+  "id": "ms_0312",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk jangkitan saluran kencing, minum air lebih, dan jangan tahan kencing lama-lama."
+ },
+ {
+  "id": "ms_0313",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Tekanan darah lebih 180 over 110 bersama sakit kepala atau penglihatan kabur, datang segera."
+ },
+ {
+  "id": "ms_0314",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Omeprazole diambil setengah jam sebelum sarapan, dengan segelas air kosong."
+ },
+ {
+  "id": "ms_0315",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Pakcik, ubat gout ni jangan makan masa perut kosong; lapik dengan roti dulu."
+ },
+ {
+  "id": "ms_0316",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Keputusan elektrolit semua pesakit dah masuk sistem kecuali dua orang."
+ },
+ {
+  "id": "ms_0317",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Jangan duduk terlalu lama; bangun dan jalan setiap satu jam semasa perjalanan jauh."
+ },
+ {
+  "id": "ms_0318",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Sakit dada tu masih ada, atau dah kurang sejak pagi?"
+ },
+ {
+  "id": "ms_0319",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Batuk masih mengganggu tidur, atau dah boleh tidur lena sikit?"
+ },
+ {
+  "id": "ms_0320",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Insulin yang belum dibuka simpan dalam peti sejuk, tapi jangan letak dalam bahagian beku."
+ },
+ {
+  "id": "ms_0321",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Doktor mahu jumpa Puan semula dalam seminggu untuk semak tekanan darah selepas tukar ubat."
+ },
+ {
+  "id": "ms_0322",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Pakcik jadi lebih mengantuk dan susah dikejutkan selepas strok, itu perlu dinilai dengan segera."
+ },
+ {
+  "id": "ms_0323",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pesakit katil sebelas perlukan pengangkutan hospital sebab tiada keluarga."
+ },
+ {
+  "id": "ms_0324",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Tukar posisi baring Makcik setiap dua jam untuk elak kudis tekanan."
+ },
+ {
+  "id": "ms_0325",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "ORS satu paket dibancuh dengan dua ratus ml air masak yang dah sejuk."
+ },
+ {
+  "id": "ms_0326",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau Makcik jatuh dan tak boleh bangun, jangan angkat dia; panggil ambulans."
+ },
+ {
+  "id": "ms_0327",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Anak tak kencing lebih enam jam, mulut kering dan lemah? Bawa ke hospital sekarang."
+ },
+ {
+  "id": "ms_0328",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Sakit semasa kencing bersama darah dan menggigil, jangan tunggu antibiotik habis; datang semula."
+ },
+ {
+  "id": "ms_0329",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pihak insurans kata surat jaminan hanya boleh dikeluarkan selepas diagnosis akhir."
+ },
+ {
+  "id": "ms_0330",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Duduk rehat lima minit dulu sebelum ambil bacaan tekanan darah."
+ },
+ {
+  "id": "ms_0331",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Muntah setiap kali minum dan tak boleh simpan air langsung, perlu dapat titisan di hospital."
+ },
+ {
+  "id": "ms_0332",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Sirap antibiotik yang dah dibancuh boleh tahan tujuh hari sahaja, lepas tu buang."
+ },
+ {
+  "id": "ms_0333",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Untuk kencing manis, metformin 500mg dua kali sehari, bersama sarapan dan makan malam."
+ },
+ {
+  "id": "ms_0334",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Salbutamol boleh buat tangan menggeletar sikit dan jantung berdebar; itu biasa dan akan hilang."
+ },
+ {
+  "id": "ms_0335",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Basuh tangan dengan sabun sebelum makan dan selepas ke tandas, supaya ahli keluarga tak berjangkit."
+ },
+ {
+  "id": "ms_0336",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Encik yang demam denggi tak boleh makan ubat tahan sakit lain, sebab boleh tambah risiko berdarah."
+ },
+ {
+  "id": "ms_0337",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Temujanji pertama dengan pakar pemakanan ialah pada hari Selasa, pukul sebelas pagi."
+ },
+ {
+  "id": "ms_0338",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Basuh dari depan ke belakang selepas ke tandas untuk elak kuman merebak."
+ },
+ {
+  "id": "ms_0339",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kebas atau lemah sebelah badan walaupun sekejap, jangan abaikan; itu mungkin amaran strok."
+ },
+ {
+  "id": "ms_0340",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Rehat di rumah sekurang-kurangnya seminggu, dan jangan terus ke tempat kerja."
+ },
+ {
+  "id": "ms_0341",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Perindopril kadang-kadang buat batuk kering, jadi beritahu kami kalau batuk itu mengganggu."
+ },
+ {
+  "id": "ms_0342",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau hidung berdarah tak berhenti selepas dua puluh minit ditekan, datang ke hospital."
+ },
+ {
+  "id": "ms_0343",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Selepas pembedahan lutut, letak ais berbalut tuala selama dua puluh minit untuk kurangkan bengkak."
+ },
+ {
+  "id": "ms_0344",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Rasa lenguh-lenguh badan semasa demam denggi tu biasa, tapi beritahu kalau ada sakit perut."
+ },
+ {
+  "id": "ms_0345",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Asingkan tuala dan pinggan mangkuk pesakit selama dia masih cirit-birit."
+ },
+ {
+  "id": "ms_0346",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Demam lebih tiga puluh lapan setengah darjah selepas pembedahan, datang untuk diperiksa."
+ },
+ {
+  "id": "ms_0347",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Guna kotak ubat mingguan ni, isi setiap Ahad malam, senang nak ingat."
+ },
+ {
+  "id": "ms_0348",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Nafas berbunyi kuat dan tak boleh telan air liur? Itu kecemasan."
+ },
+ {
+  "id": "ms_0349",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Temujanji fisioterapi setiap Isnin dan Khamis, bermula minggu depan."
+ },
+ {
+  "id": "ms_0350",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Otot sakit teruk dengan air kencing warna gelap selepas mula atorvastatin, berhenti dan datang ke klinik."
+ },
+ {
+  "id": "ms_0351",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Sedut kuat dan laju untuk inhaler serbuk, tak sama macam Ventolin yang perlu perlahan."
+ },
+ {
+  "id": "ms_0352",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Demam tinggi yang berterusan lebih tiga hari perlu diperiksa semula oleh doktor."
+ },
+ {
+  "id": "ms_0353",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Encik Hafiz, paracetamol 500mg ni makan dua biji setiap enam jam kalau demam atau sakit badan."
+ },
+ {
+  "id": "ms_0354",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Ada rasa sakit atau berdenyut di tempat jarum titisan?"
+ },
+ {
+  "id": "ms_0355",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Pakcik, ada sesiapa yang boleh jaga di rumah bila balik nanti?"
+ },
+ {
+  "id": "ms_0356",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Sepanjang dua minggu pertama rawatan TB, elak berada dalam bilik tertutup dengan orang ramai."
+ },
+ {
+  "id": "ms_0357",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau sesak nafas selepas makan ubat tekanan darah baru, berhenti dan hubungi doktor."
+ },
+ {
+  "id": "ms_0358",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat pencegah gout ni jangan berhenti walaupun kaki dah tak sakit lagi."
+ },
+ {
+  "id": "ms_0359",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Untuk serangan gout, ubat tahan sakit ini makan tiga hari sahaja, lepas itu berhenti."
+ },
+ {
+  "id": "ms_0360",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Temujanji Makcik dah dianjakkan ke Khamis depan sebab doktor pakar bercuti."
+ },
+ {
+  "id": "ms_0361",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Dua katil di wad kanak-kanak kosong, satu dengan tempat tidur untuk ibu."
+ },
+ {
+  "id": "ms_0362",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau Pakcik pengsan atau tak sedarkan diri, jangan tunggu; bawa ke hospital segera."
+ },
+ {
+  "id": "ms_0363",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Botol kahak ni hantar ke makmal sebelum pukul sepuluh pagi."
+ },
+ {
+  "id": "ms_0364",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Makcik boleh bawa seorang ahli keluarga untuk teman masa jumpa doktor."
+ },
+ {
+  "id": "ms_0365",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau mula makan ubat baru dari klinik lain, tunjukkan senarai ubat ni kepada doktor di sana."
+ },
+ {
+  "id": "ms_0366",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau perlu sedut Ventolin lebih kerap daripada setiap empat jam, asma tak terkawal; datang ke hospital."
+ },
+ {
+  "id": "ms_0367",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Minum air sekurang-kurangnya lapan gelas sehari, melainkan doktor suruh hadkan."
+ },
+ {
+  "id": "ms_0368",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Makan buah dan sayur yang berserat untuk elak sembelit, terutama semasa makan ubat tahan sakit."
+ },
+ {
+  "id": "ms_0369",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Encik, ini bekalan ubat untuk sebulan; bila tinggal seminggu, datang ambil ulangan di farmasi."
+ },
+ {
+  "id": "ms_0370",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Air kencing jadi warna oren semasa makan ubat TB tu normal, jangan risau."
+ },
+ {
+  "id": "ms_0371",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Suara Encik dah lebih jelas hari ni berbanding masa mula masuk selepas strok."
+ },
+ {
+  "id": "ms_0372",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Ringkasan discaj katil lapan belum ditandatangani doktor; saya dah ingatkan pegawai perubatan."
+ },
+ {
+  "id": "ms_0373",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Carta ubat katil tujuh dah dikemas kini selepas doktor tukar dos insulin."
+ },
+ {
+  "id": "ms_0374",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pesakit katil sepuluh tunggu keputusan kahak sebelum dikeluarkan dari bilik pengasingan."
+ },
+ {
+  "id": "ms_0375",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Warfarin ni jangan campur dengan ubat tahan sakit seperti ibuprofen, sebab senang berdarah."
+ },
+ {
+  "id": "ms_0376",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Pakai kasut yang selesa dan tak ketat, dengan stokin kapas."
+ },
+ {
+  "id": "ms_0377",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Datang puasa sepuluh jam sebelum ujian darah; boleh minum air kosong sahaja."
+ },
+ {
+  "id": "ms_0378",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Sakit gout bersama demam tinggi dan sendi sangat merah perlu diperiksa, mungkin ada jangkitan."
+ },
+ {
+  "id": "ms_0379",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Luka jahitan ni boleh kena air selepas empat puluh lapan jam; tepuk kering dengan tuala bersih."
+ },
+ {
+  "id": "ms_0380",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau sakit masa kencing tak berkurang selepas habis antibiotik, datang semula ke klinik."
+ },
+ {
+  "id": "ms_0381",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Kalau tak dapat datang, tolong maklumkan kaunter klinik supaya kami boleh tukar tarikh."
+ },
+ {
+  "id": "ms_0382",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Pakcik tak boleh kencing langsung dan perut bawah sakit? Datang ke kecemasan."
+ },
+ {
+  "id": "ms_0383",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk kegagalan jantung, hadkan minum air satu setengah liter sehari, termasuk kuah dan sup."
+ },
+ {
+  "id": "ms_0384",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Macam mana tidur semalam, Makcik? Ada terjaga sebab batuk?"
+ },
+ {
+  "id": "ms_0385",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Anak terlalu mengantuk, susah dikejutkan atau lembik, itu tanda bahaya."
+ },
+ {
+  "id": "ms_0386",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau tercicir sebiji ubat di lantai, ambil yang baru dari papan; yang jatuh tu buang saja."
+ },
+ {
+  "id": "ms_0387",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Bangun dari katil perlahan-lahan: duduk dulu, gantung kaki, baru berdiri."
+ },
+ {
+  "id": "ms_0388",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Minum lima gelas air sejam sebelum imbasan pundi kencing, dan jangan kencing dulu."
+ },
+ {
+  "id": "ms_0389",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Degupan jantung dah kembali normal selepas ubat; tak perlu risau."
+ },
+ {
+  "id": "ms_0390",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pesakit katil tiga boleh balik, bayaran deposit dah dijelaskan di kaunter."
+ },
+ {
+  "id": "ms_0391",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Pernafasan adik nampak lebih tenang, dan dia tak guna otot leher lagi untuk bernafas."
+ },
+ {
+  "id": "ms_0392",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Atorvastatin ni biasanya kita ambil waktu malam, sebelum tidur."
+ },
+ {
+  "id": "ms_0393",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Sebelum suntik insulin, periksa paras gula dulu dan catat bacaannya."
+ },
+ {
+  "id": "ms_0394",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Makcik nampak lebih segar hari ni; muka pun tak pucat macam semalam."
+ },
+ {
+  "id": "ms_0395",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk cirit-birit pada kanak-kanak, teruskan susu ibu dan beri ORS selepas setiap kali buang air."
+ },
+ {
+  "id": "ms_0396",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Surat rujukan ini bawa ke klinik pakar, bersama keputusan ujian darah yang lama."
+ },
+ {
+  "id": "ms_0397",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Clopidogrel ini tujuh puluh lima miligram, sebiji sehari, makan setiap hari tanpa putus."
+ },
+ {
+  "id": "ms_0398",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Untuk bronkitis, azithromycin 500mg hari pertama, kemudian 250mg untuk empat hari lagi."
+ },
+ {
+  "id": "ms_0399",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Periksa paras gula sebelum sarapan dan dua jam selepas makan malam, tiga kali seminggu."
+ },
+ {
+  "id": "ms_0400",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Paracetamol ni tak buat mengantuk, jadi Encik boleh makan sebelum pergi kerja."
+ },
+ {
+  "id": "ms_0401",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Paras gula tadi tujuh perpuluhan lima, jadi tak perlu tambah insulin sekarang."
+ },
+ {
+  "id": "ms_0402",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat titis hidung untuk sinusitis ni, dongak kepala sikit dan titis dua titik setiap lubang."
+ },
+ {
+  "id": "ms_0403",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Pesakit kencing manis boleh kena serangan jantung tanpa sakit dada, cuma rasa penat dan sesak."
+ },
+ {
+  "id": "ms_0404",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Keputusan ujian darah akan dibincangkan oleh doktor semasa temujanji, bukan melalui telefon."
+ },
+ {
+  "id": "ms_0405",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Encik, insulin pagi ni lapan belas unit, suntik lima belas minit sebelum sarapan."
+ },
+ {
+  "id": "ms_0406",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Jangan makan ubat kencing manis pada pagi ujian darah; bawa bersama dan makan selepas darah diambil."
+ },
+ {
+  "id": "ms_0407",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Untuk COPD, inhaler ni guna dua kali sehari, pagi dan malam, walaupun tak sesak."
+ },
+ {
+  "id": "ms_0408",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Jangan memandu sendiri ke hospital kalau sakit dada; minta orang lain hantar atau panggil ambulans."
+ },
+ {
+  "id": "ms_0409",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Keluarga pesakit katil satu dah sampai untuk ambil dia balik."
+ },
+ {
+  "id": "ms_0410",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat muntah ni hisap bawah lidah, tak perlu minum air."
+ },
+ {
+  "id": "ms_0411",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Guna tongkat semasa berjalan sehingga ahli fisioterapi kata boleh berhenti."
+ },
+ {
+  "id": "ms_0412",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Tidur awal dan cukupkan tujuh hingga lapan jam setiap malam supaya badan cepat pulih."
+ },
+ {
+  "id": "ms_0413",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pesakit katil satu dah boleh makan; pesanan diet lembut dah dihantar ke dapur."
+ },
+ {
+  "id": "ms_0414",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Boleh mandi seperti biasa selepas jahitan dibuka, tapi jangan gosok kuat pada parut."
+ },
+ {
+  "id": "ms_0415",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Katil tiga belas boleh terima pesakit, tapi tilam angin belum sampai."
+ },
+ {
+  "id": "ms_0416",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Semasa serangan asma, sedut Ventolin empat kali melalui alat penyambung, setiap satu dengan lima tarikan nafas."
+ },
+ {
+  "id": "ms_0417",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Doktor pakar belum buat rondaan lagi, jadi keputusan discaj katil tiga belum muktamad."
+ },
+ {
+  "id": "ms_0418",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Ringkasnya, empat katil kosong, dua menunggu discaj, satu menunggu surat jaminan insurans."
+ },
+ {
+  "id": "ms_0419",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Klinik pakar tutup pukul empat petang, jadi daftar sebelum pukul tiga."
+ },
+ {
+  "id": "ms_0420",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau Makcik tiba-tiba keliru atau bercakap merepek, bawa ke kecemasan dengan segera."
+ },
+ {
+  "id": "ms_0421",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Uphamol dan Panadol tu sama sahaja isinya, paracetamol, jadi jangan makan dua-dua serentak."
+ },
+ {
+  "id": "ms_0422",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Makcik boleh mandi, tapi pastikan ada orang di rumah sepanjang minggu pertama."
+ },
+ {
+  "id": "ms_0423",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Selepas keluar wad, ambil cuti sakit yang kami beri dan jangan paksa diri bekerja."
+ },
+ {
+  "id": "ms_0424",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Kalau Puan nak ubat dipos ke rumah, isi borang di kaunter farmasi."
+ },
+ {
+  "id": "ms_0425",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Botol insulin ni dah dibuka lebih sebulan, jadi elok buang dan guna yang baru."
+ },
+ {
+  "id": "ms_0426",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Makcik, jangan risau kalau terlupa; saya akan ingatkan waktu ubat setiap kali."
+ },
+ {
+  "id": "ms_0427",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau ada soalan pasal ubat bila di rumah, telefon farmasi hospital pada waktu pejabat."
+ },
+ {
+  "id": "ms_0428",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Tablet ni dah luput tarikh bulan lepas, jadi jangan makan; kami beri yang baru."
+ },
+ {
+  "id": "ms_0429",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Anak sawan atau kejang semasa demam? Baringkan dia mengiring dan bawa ke hospital."
+ },
+ {
+  "id": "ms_0430",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Metformin boleh buat cirit-birit pada minggu pertama, biasanya akan baik sendiri."
+ },
+ {
+  "id": "ms_0431",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat pagi kami letak dalam kotak hijau, ubat malam dalam kotak biru, supaya tak keliru."
+ },
+ {
+  "id": "ms_0432",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau ada ruam atau bibir bengkak selepas makan antibiotik, berhenti dan datang ke hospital segera."
+ },
+ {
+  "id": "ms_0433",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Cirit-birit dah berapa kali sejak semalam, Encik?"
+ },
+ {
+  "id": "ms_0434",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Kiraan platlet akan diulang setiap pagi sehingga bacaannya naik semula."
+ },
+ {
+  "id": "ms_0435",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Ambulans untuk pindahan katil sebelas dijadualkan pukul dua petang."
+ },
+ {
+  "id": "ms_0436",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Mata berair dan bersin tu lebih kepada alahan, bukan jangkitan teruk."
+ },
+ {
+  "id": "ms_0437",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Pakcik, cuba berjalan tiga puluh minit sehari, lima hari seminggu, untuk jantung yang sihat."
+ },
+ {
+  "id": "ms_0438",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Kalau nak makan buah, pilih jambu batu, epal atau betik; durian dan cempedak sedikit sahaja."
+ },
+ {
+  "id": "ms_0439",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Datang bersama anak yang jaga Pakcik, supaya dia pun faham rancangan rawatan."
+ },
+ {
+  "id": "ms_0440",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Mata atau kulit kuning, air kencing gelap macam teh, datang ke klinik segera."
+ },
+ {
+  "id": "ms_0441",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Kerusi roda untuk pesakit katil empat dah sedia di kaunter jururawat."
+ },
+ {
+  "id": "ms_0442",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Jangan makan atau minum enam jam sebelum imbasan perut."
+ },
+ {
+  "id": "ms_0443",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Semasa makan clopidogrel, najis hitam atau muntah darah perlu diperiksa segera."
+ },
+ {
+  "id": "ms_0444",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat jantung ini jangan tertinggal, walaupun Encik rasa dah tak sesak nafas."
+ },
+ {
+  "id": "ms_0445",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Cuci hidung dengan air garam dua kali sehari dapat bantu kurangkan hingus pekat."
+ },
+ {
+  "id": "ms_0446",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Keluarga katil satu minta jumpa doktor petang ni untuk bincang rancangan discaj."
+ },
+ {
+  "id": "ms_0447",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau Encik rasa nak cederakan diri sendiri, tolong beritahu kami atau pergi ke kecemasan sekarang."
+ },
+ {
+  "id": "ms_0448",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Insulin campuran ni guling perlahan antara dua tapak tangan sepuluh kali sampai putih rata."
+ },
+ {
+  "id": "ms_0449",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Selepas guna inhaler, tutup semula penutupnya supaya habuk tak masuk."
+ },
+ {
+  "id": "ms_0450",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Warfarin kena makan pada waktu yang sama setiap hari, dan jangan tukar jenama tanpa beritahu doktor."
+ },
+ {
+  "id": "ms_0451",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Tekanan darah katil dua 150 over 95; doktor dah dimaklumkan dan ubat tambahan diberi."
+ },
+ {
+  "id": "ms_0452",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Clopidogrel ini penting untuk elak strok berulang, jadi jangan berhenti tanpa tanya doktor dulu."
+ },
+ {
+  "id": "ms_0453",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pesakit katil empat dah sedia untuk fisioterapi pukul sebelas pagi."
+ },
+ {
+  "id": "ms_0454",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Anak Puan perlu datang semula dalam dua hari untuk periksa darah denggi."
+ },
+ {
+  "id": "ms_0455",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Makcik, kurangkan garam dalam masakan; elakkan ikan masin, budu dan makanan dalam tin."
+ },
+ {
+  "id": "ms_0456",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau otot rasa sakit teruk atau lemah selepas mula atorvastatin, cepat-cepat beritahu doktor."
+ },
+ {
+  "id": "ms_0457",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Kalau berat naik lebih dua kilo dalam tiga hari, itu tanda air berkumpul; hubungi klinik."
+ },
+ {
+  "id": "ms_0458",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Sebelum cabut gigi atau buat pembedahan, beritahu doktor gigi yang Puan makan clopidogrel."
+ },
+ {
+  "id": "ms_0459",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Rasa sejuk sikit masa ubat masuk melalui titisan tu biasa."
+ },
+ {
+  "id": "ms_0460",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Pakcik, jangan lupa bawa inhaler masa datang supaya doktor boleh tengok cara guna."
+ },
+ {
+  "id": "ms_0461",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Bunyi batuk dah kurang berkahak, tanda paru-paru semakin bersih."
+ },
+ {
+  "id": "ms_0462",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Makcik, kalau tempat suntik jadi keras dan berketul, itu sebab selalu suntik di tempat yang sama."
+ },
+ {
+  "id": "ms_0463",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Luka pembedahan yang terbuka, berbau busuk atau keluar nanah, perlu ke klinik segera."
+ },
+ {
+  "id": "ms_0464",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Tangan menggeletar tu kesan Ventolin, bukan penyakit baru; ia akan berhenti sendiri."
+ },
+ {
+  "id": "ms_0465",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Cetirizine boleh buat mengantuk sikit, jadi eloknya makan waktu malam."
+ },
+ {
+  "id": "ms_0466",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat ni simpan di tempat kering dan sejuk, jauh dari cahaya matahari dan budak-budak."
+ },
+ {
+  "id": "ms_0467",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau sakit perut kanan atas teruk bersama demam, perlu diperiksa hari ini."
+ },
+ {
+  "id": "ms_0468",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Suhu adik tiga puluh tujuh perpuluhan dua; demam dah reda."
+ },
+ {
+  "id": "ms_0469",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Pakcik boleh solat duduk dulu sampai kaki lebih kuat."
+ },
+ {
+  "id": "ms_0470",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pihak insurans perlukan laporan perubatan sebelum keluarkan surat jaminan."
+ },
+ {
+  "id": "ms_0471",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Sakit dada tu datang bila bergerak, atau masa rehat pun ada?"
+ },
+ {
+  "id": "ms_0472",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk bronkitis, rehat, minum air suam dan elakkan asap sampai batuk reda."
+ },
+ {
+  "id": "ms_0473",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Nombor giliran akan dipanggil di skrin, jadi tengok nombor pada tiket ni."
+ },
+ {
+  "id": "ms_0474",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Tahan nafas kira sampai sepuluh selepas sedut Ventolin, baru hembus perlahan."
+ },
+ {
+  "id": "ms_0475",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Rasa pedih atau panas masa kencing masih ada?"
+ },
+ {
+  "id": "ms_0476",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Tangan dan kaki sejuk, nadi laju dan lemah semasa denggi, bawa ke hospital sekarang."
+ },
+ {
+  "id": "ms_0477",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Mulai Isnin, Encik boleh ambil ubat TB di klinik kesihatan dekat rumah."
+ },
+ {
+  "id": "ms_0478",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Selepas mula ubat buang air, timbang berat badan setiap pagi dan catat dalam buku."
+ },
+ {
+  "id": "ms_0479",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Tekanan darah Pakcik pagi ni 130 over 80, dah jauh lebih baik dari semalam."
+ },
+ {
+  "id": "ms_0480",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Budak ni seberat lapan belas kilo, jadi dos paracetamolnya tujuh setengah ml setiap enam jam."
+ },
+ {
+  "id": "ms_0481",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Jarum pen insulin guna sekali sahaja, lepas itu buang dalam botol plastik keras bertutup."
+ },
+ {
+  "id": "ms_0482",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Jahitan akan dibuka pada hari ketujuh; datang terus ke bilik rawatan, tak perlu temujanji."
+ },
+ {
+  "id": "ms_0483",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Kalau baru keluar dari wad, mula bersenam perlahan dan tambah sedikit demi sedikit."
+ },
+ {
+  "id": "ms_0484",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat darah tinggi bukan untuk makan bila pening sahaja; ia kena diambil setiap hari."
+ },
+ {
+  "id": "ms_0485",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat ini boleh buat mengantuk, jadi jangan memandu kereta selepas makan."
+ },
+ {
+  "id": "ms_0486",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Keputusan sinar-X tak tunjukkan tulang patah, cuma lebam; Encik boleh bertenang."
+ },
+ {
+  "id": "ms_0487",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk darah tinggi, cuba kurangkan makanan segera dan mi segera."
+ },
+ {
+  "id": "ms_0488",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Tablet metformin ni boleh dibelah pada garisan tengah kalau terlalu besar."
+ },
+ {
+  "id": "ms_0489",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau keliru bersama demam, terutama pada warga emas, itu mungkin jangkitan teruk."
+ },
+ {
+  "id": "ms_0490",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Ubat discaj katil lima dah sampai, tapi kaunseling farmasi belum dibuat."
+ },
+ {
+  "id": "ms_0491",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat tidur ni setengah biji sahaja, dan hanya bila betul-betul susah tidur."
+ },
+ {
+  "id": "ms_0492",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau berat badan naik tiga kilo dalam seminggu dan sesak bertambah, beritahu doktor jantung hari ini."
+ },
+ {
+  "id": "ms_0493",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat prednisolone ni jangan berhenti sendiri tau, doktor akan turunkan dos perlahan-lahan."
+ },
+ {
+  "id": "ms_0494",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau demam masih tinggi selepas Panadol, lap badan dengan kain basah suam."
+ },
+ {
+  "id": "ms_0495",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Tak apa kalau Pakcik tak lalu makan banyak; cuba beberapa suap dan minum air."
+ },
+ {
+  "id": "ms_0496",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Encik boleh ambil darah di klinik kesihatan berhampiran; keputusan akan dihantar ke sini."
+ },
+ {
+  "id": "ms_0497",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Jangan kurangkan dos sendiri bila bacaan gula dah elok; itu tanda ubat sedang berfungsi."
+ },
+ {
+  "id": "ms_0498",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Jantung berdebar laju bersama pening atau hampir pitam perlu diperiksa segera."
+ },
+ {
+  "id": "ms_0499",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau sakit dada yang menjalar ke lengan kiri atau rahang, panggil ambulans segera."
+ },
+ {
+  "id": "ms_0500",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Hidung tersumbat dan sakit di pipi tu biasa untuk sinusitis; ubat akan bantu dalam beberapa hari."
+ },
+ {
+  "id": "ms_0501",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Mula-mula makan ubat darah tinggi, bangun perlahan dari katil supaya tak pening."
+ },
+ {
+  "id": "ms_0502",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Anak susah bercakap atau tak boleh habiskan ayat sebab sesak nafas? Itu serangan asma teruk."
+ },
+ {
+  "id": "ms_0503",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat asma pencegah ni mungkin ambil dua hingga empat minggu sebelum nampak kesannya."
+ },
+ {
+  "id": "ms_0504",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau gusi berdarah atau ada lebam tanpa sebab, beritahu klinik warfarin dengan segera."
+ },
+ {
+  "id": "ms_0505",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Jangan basahkan balutan semasa mandi selama tiga hari pertama."
+ },
+ {
+  "id": "ms_0506",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Tempat letak kereta di hadapan klinik selalu penuh, jadi datang lebih awal atau guna bangunan letak kereta bertingkat."
+ },
+ {
+  "id": "ms_0507",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Serahan tugas syif pagi akan bermula lima minit lagi di kaunter jururawat."
+ },
+ {
+  "id": "ms_0508",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Imbasan otak katil empat belas dah siap; laporan masih menunggu pakar radiologi."
+ },
+ {
+  "id": "ms_0509",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau anak menangis tanpa air mata dan ubun-ubun cekung, dia kekurangan air yang teruk."
+ },
+ {
+  "id": "ms_0510",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Ruam merebak dengan kulit melepuh atau mengelupas, berhenti ubat dan datang ke hospital."
+ },
+ {
+  "id": "ms_0511",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Puan dah boleh berjalan sendiri ke tandas; itu kemajuan yang bagus."
+ },
+ {
+  "id": "ms_0512",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Katil enam dah dua kali minta ubat sakit; skor sakit tujuh daripada sepuluh."
+ },
+ {
+  "id": "ms_0513",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Paras gula katil enam pagi ni lapan perpuluhan dua, dalam julat yang dikehendaki."
+ },
+ {
+  "id": "ms_0514",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Kalau Makcik tinggal seorang, minta anak atau jiran jenguk setiap hari minggu ini."
+ },
+ {
+  "id": "ms_0515",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Terapi pertuturan akan bermula di klinik pesakit luar selepas Pakcik keluar wad."
+ },
+ {
+  "id": "ms_0516",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Elakkan asap rokok, habuk dan jerebu; tutup tingkap bila jerebu teruk."
+ },
+ {
+  "id": "ms_0517",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Selepas radang paru-paru, badan mungkin rasa lemah beberapa minggu; itu normal."
+ },
+ {
+  "id": "ms_0518",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Tampal senarai ubat dan jadual temujanji di tempat yang senang dilihat, macam pintu peti sejuk."
+ },
+ {
+  "id": "ms_0519",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Sinar-X dada akan diulang enam minggu lagi untuk pastikan radang paru-paru dah bersih."
+ },
+ {
+  "id": "ms_0520",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Jangan risau pasal anak-anak di rumah, Puan; fokus pada rehat dulu."
+ },
+ {
+  "id": "ms_0521",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Losartan boleh makan dengan atau tanpa makanan, yang penting masa yang sama setiap hari."
+ },
+ {
+  "id": "ms_0522",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Encik, ada alahan pada mana-mana ubat? Saya perlu catat sebelum farmasi keluarkan ubat."
+ },
+ {
+  "id": "ms_0523",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat gliclazide dan insulin ni kedua-duanya turunkan gula, jadi jangan tinggal makan tengah hari."
+ },
+ {
+  "id": "ms_0524",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau Pakcik tak lalu makan sebab demam, dos insulin mungkin perlu dikurangkan; bincang dengan doktor dulu."
+ },
+ {
+  "id": "ms_0525",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat TB ni makan pagi masa perut kosong, sejam sebelum sarapan."
+ },
+ {
+  "id": "ms_0526",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Keluarga katil dua minta tukar ke bilik kelas satu kalau ada yang kosong."
+ },
+ {
+  "id": "ms_0527",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Pening tu rasa macam bilik berputar, atau rasa macam nak pitam?"
+ },
+ {
+  "id": "ms_0528",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Puan, kalau muntah dalam masa setengah jam lepas makan ubat, boleh ulang dos itu sekali."
+ },
+ {
+  "id": "ms_0529",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Ikut konsep suku-suku separuh: separuh pinggan sayur dan buah, suku nasi, suku lauk."
+ },
+ {
+  "id": "ms_0530",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Encik, kalau nak minum teh atau kopi, minta kurang manis atau tanpa gula."
+ },
+ {
+  "id": "ms_0531",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Elakkan makanan berminyak, pedas dan susu selama dua tiga hari sampai perut pulih."
+ },
+ {
+  "id": "ms_0532",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Minum air kelapa atau air isotonik boleh bantu ganti garam badan yang hilang."
+ },
+ {
+  "id": "ms_0533",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Jangan meneran kuat masa buang air besar selepas pembedahan."
+ },
+ {
+  "id": "ms_0534",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Darah dalam air kencing atau lebam besar tanpa sebab semasa makan warfarin, hubungi doktor hari ini."
+ },
+ {
+  "id": "ms_0535",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Kita akan lalui ini bersama-sama, Makcik; setiap hari nampak ada perubahan yang baik."
+ },
+ {
+  "id": "ms_0536",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Kalau rasa cemas, cuba tarik nafas perlahan bersama saya: tarik, tahan, hembus."
+ },
+ {
+  "id": "ms_0537",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Wad perempuan penuh sekarang, tapi ada dua pesakit dijangka discaj tengah hari ini."
+ },
+ {
+  "id": "ms_0538",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Batuk mungkin berlarutan dua tiga minggu selepas bronkitis; itu biasa kalau semakin kurang."
+ },
+ {
+  "id": "ms_0539",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk batuk dan selsema, minum air suam, madu sedikit dan rehat secukupnya."
+ },
+ {
+  "id": "ms_0540",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau bacaan tekanan darah sangat tinggi tapi tiada simptom, rehat, ukur semula, dan hubungi klinik hari ini."
+ },
+ {
+  "id": "ms_0541",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Sirap salbutamol untuk anak ni dua setengah ml, tiga kali sehari bila batuk dengan berdehit."
+ },
+ {
+  "id": "ms_0542",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Tidur dalam bilik yang berudara dan jangan pasang penghawa dingin terlalu sejuk bila demam."
+ },
+ {
+  "id": "ms_0543",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau sakit perut teruk, muntah berterusan atau gusi berdarah semasa denggi, datang segera."
+ },
+ {
+  "id": "ms_0544",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau susah telan tablet, beritahu farmasi; mungkin ada bentuk sirap."
+ },
+ {
+  "id": "ms_0545",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Katil empat dah sedia untuk balik, tapi keluarga cuma boleh ambil selepas pukul enam petang."
+ },
+ {
+  "id": "ms_0546",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Loya selepas ubat bius tu biasa, dan biasanya hilang dalam sehari."
+ },
+ {
+  "id": "ms_0547",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau muka, bibir atau lidah bengkak selepas makan ubat, itu alahan teruk; panggil bantuan segera."
+ },
+ {
+  "id": "ms_0548",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Semburan hidung steroid ni guna tiap pagi, halakan sedikit ke tepi, bukan ke tengah hidung."
+ },
+ {
+  "id": "ms_0549",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau insulin nampak berketul atau berubah warna, jangan guna."
+ },
+ {
+  "id": "ms_0550",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pesakit katil lapan puasa dari tengah malam untuk prosedur esok pagi."
+ },
+ {
+  "id": "ms_0551",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Makcik, ubat buang air ni boleh buat kekurangan air, jadi ikut had minum yang doktor beri."
+ },
+ {
+  "id": "ms_0552",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk sinusitis, sedut wap air panas dengan tuala menutup kepala selama sepuluh minit."
+ },
+ {
+  "id": "ms_0553",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Jangan beri air bergas atau jus manis kepada anak yang cirit-birit, nanti lebih teruk."
+ },
+ {
+  "id": "ms_0554",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Pastikan lantai bilik air tak licin; letak tikar getah untuk elak Pakcik terjatuh."
+ },
+ {
+  "id": "ms_0555",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Jangan tambah gula atau garam ke dalam ORS, ikut sukatan pada paket sahaja."
+ },
+ {
+  "id": "ms_0556",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau cirit-birit ada darah atau lendir, bawa anak ke klinik hari ini."
+ },
+ {
+  "id": "ms_0557",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Kosongkan beg air kencing bila sudah separuh penuh, dan basuh tangan sebelum dan selepas."
+ },
+ {
+  "id": "ms_0558",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Tiba-tiba tak nampak sebelah mata atau penglihatan jadi kabur, perlu ke kecemasan."
+ },
+ {
+  "id": "ms_0559",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Pesakit katil dua tak kencing sejak lapan jam; saya dah maklumkan doktor."
+ },
+ {
+  "id": "ms_0560",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Jangan lebih daripada lapan biji Panadol sehari, ye, sebab boleh rosakkan hati."
+ },
+ {
+  "id": "ms_0561",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Imbasan jantung Encik ditetapkan pada dua puluh satu hari bulan, jam dua petang."
+ },
+ {
+  "id": "ms_0562",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Jangan goncang kuat pen insulin, cukup golek perlahan-lahan."
+ },
+ {
+  "id": "ms_0563",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Azithromycin cuma tiga hari sahaja, satu biji sehari, pada masa yang sama."
+ },
+ {
+  "id": "ms_0564",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Tak apa, Pakcik, lambat laun kita akan cari dos ubat yang paling sesuai."
+ },
+ {
+  "id": "ms_0565",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "ORS yang dah dibancuh mesti dibuang selepas dua puluh empat jam."
+ },
+ {
+  "id": "ms_0566",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Untuk ruam gatal, mandi air suam dan guna sabun lembut tanpa wangian."
+ },
+ {
+  "id": "ms_0567",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Pening tu datang bila bangun dari katil, atau sepanjang masa?"
+ },
+ {
+  "id": "ms_0568",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Farmasi kata ubat discaj katil tujuh siap pukul tiga petang."
+ },
+ {
+  "id": "ms_0569",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Encik rasa lebih selesa kalau kepala katil ditinggikan sedikit?"
+ },
+ {
+  "id": "ms_0570",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Saya faham Encik bosan duduk di wad; kalau semuanya stabil, doktor mungkin benarkan balik esok."
+ },
+ {
+  "id": "ms_0571",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Tutup mulut dengan tisu atau lengan bila batuk, dan basuh tangan selepas itu."
+ },
+ {
+  "id": "ms_0572",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau terjatuh dan kepala terhantuk semasa makan warfarin, datang ke hospital walaupun rasa baik sahaja."
+ },
+ {
+  "id": "ms_0573",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Ujian darah pagi esok pukul enam; jururawat akan kejutkan Encik."
+ },
+ {
+  "id": "ms_0574",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Pakcik tiba-tiba tak kenal ahli keluarga atau tak tahu di mana dia berada, bawa ke hospital."
+ },
+ {
+  "id": "ms_0575",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Kalau perlu Ventolin lebih dari tiga kali seminggu, asma belum terkawal; kita perlu semak ubat pencegah."
+ },
+ {
+  "id": "ms_0576",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Tak semua demam perlukan antibiotik; badan Encik sedang lawan jangkitan virus ini sendiri."
+ },
+ {
+  "id": "ms_0577",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Wad ni ada tiga pesakit yang dijangka discaj hari ini dan dua kemasukan baru."
+ },
+ {
+  "id": "ms_0578",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Keliru, mengantuk luar biasa atau bibir biru pada pesakit COPD, bawa ke hospital segera."
+ },
+ {
+  "id": "ms_0579",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Salbutamol melalui wap ni kami beri setiap empat jam sehingga bunyi berdehit berkurang."
+ },
+ {
+  "id": "ms_0580",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Anak Puan boleh guna alat penyambung dengan topeng muka; pastikan topeng rapat pada hidung dan mulut."
+ },
+ {
+  "id": "ms_0581",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau gula bawah empat dan tak naik selepas makan gula-gula, atau Pakcik mengantuk sangat, panggil ambulans."
+ },
+ {
+  "id": "ms_0582",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ujian darah untuk warfarin akan dibuat minggu depan, dan dos mungkin diubah ikut keputusannya."
+ },
+ {
+  "id": "ms_0583",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Bengkak di tempat suntikan tu kecil sahaja, dan akan hilang dalam dua tiga hari."
+ },
+ {
+  "id": "ms_0584",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Kalau nampak kulit merah di punggung atau tumit yang tak hilang, beritahu jururawat komuniti."
+ },
+ {
+  "id": "ms_0585",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Inhaler serbuk ni jangan hembus nafas ke dalamnya, sebab serbuk jadi lembap."
+ },
+ {
+  "id": "ms_0586",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Ubat pencair darah ni disuntik di perut sekali sehari; kami akan ajar Puan cara suntik sendiri."
+ },
+ {
+  "id": "ms_0587",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Jahitan akan dibuka di klinik kesihatan selepas tujuh hari."
+ },
+ {
+  "id": "ms_0588",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Esok, kalau demam dah turun, doktor mungkin tukar antibiotik dari suntikan ke tablet."
+ },
+ {
+  "id": "ms_0589",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Batuk tu ada kahak? Warna apa kahaknya?"
+ },
+ {
+  "id": "ms_0590",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Boleh mula makan seperti biasa esok, tapi mula dengan makanan lembut dulu."
+ },
+ {
+  "id": "ms_0591",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Muntah dan sakit kepala teruk selepas kepala terhantuk, walaupun beberapa jam kemudian, bawa ke hospital."
+ },
+ {
+  "id": "ms_0592",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Bilik kelas satu penuh sehingga Jumaat; saya dah letak nama dalam senarai menunggu."
+ },
+ {
+  "id": "ms_0593",
+  "lang": "ms",
+  "kind": "redflag",
+  "text": "Kalau bibir atau hujung jari jadi kebiruan, itu kecemasan; panggil ambulans."
+ },
+ {
+  "id": "ms_0594",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Klinik akan hantar mesej peringatan sehari sebelum temujanji."
+ },
+ {
+  "id": "ms_0595",
+  "lang": "ms",
+  "kind": "ward",
+  "text": "Kiraan platlet katil dua naik ke lapan puluh ribu pagi ini."
+ },
+ {
+  "id": "ms_0596",
+  "lang": "ms",
+  "kind": "reassure",
+  "text": "Ada rasa berdebar-debar atau jantung macam terlepas degupan?"
+ },
+ {
+  "id": "ms_0597",
+  "lang": "ms",
+  "kind": "homecare",
+  "text": "Periksa suhu setiap empat jam dan catat, supaya doktor boleh tengok coraknya."
+ },
+ {
+  "id": "ms_0598",
+  "lang": "ms",
+  "kind": "medication",
+  "text": "Makan sayur hijau tu boleh, cuma biar jumlahnya sekata setiap hari bila Pakcik makan warfarin."
+ },
+ {
+  "id": "ms_0599",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Kalau ada perubahan alamat atau nombor telefon, kemas kini di kaunter pendaftaran."
+ },
+ {
+  "id": "ms_0600",
+  "lang": "ms",
+  "kind": "appointment",
+  "text": "Ujian darah akan dibuat di makmal tingkat dua, sebelum jumpa doktor."
+ }
+]

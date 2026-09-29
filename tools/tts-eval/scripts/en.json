@@ -1,0 +1,3602 @@
+[
+ {
+  "id": "en_0001",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Auntie, please take one paracetamol 500mg tablet every six hours if you have fever, but not more than eight tablets a day."
+ },
+ {
+  "id": "en_0002",
+  "lang": "en",
+  "kind": "medication",
+  "text": "This amoxicillin is an antibiotic, so finish the whole seven-day course even if you feel better by day three."
+ },
+ {
+  "id": "en_0003",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Uncle, your metformin must be taken after breakfast and after dinner, never on an empty stomach."
+ },
+ {
+  "id": "en_0004",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Shake the Ventolin inhaler first, breathe out fully, then press once while you take a slow, deep breath in."
+ },
+ {
+  "id": "en_0005",
+  "lang": "en",
+  "kind": "medication",
+  "text": "If you forget your amlodipine in the morning, take it when you remember, but don't double up the next day."
+ },
+ {
+  "id": "en_0006",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Once opened, your insulin pen can stay at room temperature for four weeks, but keep the spare pens in the fridge."
+ },
+ {
+  "id": "en_0007",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Some people get a dry, tickly cough with perindopril. If it keeps bothering you, let the doctor know."
+ },
+ {
+  "id": "en_0008",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Take the omeprazole thirty minutes before breakfast with plain water, so it can protect your stomach properly."
+ },
+ {
+  "id": "en_0009",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Prednisolone should be taken in the morning with food. Please don't stop it suddenly without asking us first."
+ },
+ {
+  "id": "en_0010",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Ibuprofen can irritate the stomach lining, so always eat something before you take it."
+ },
+ {
+  "id": "en_0011",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Warfarin is a blood thinner, auntie, so take it at the same time every evening, around six o'clock."
+ },
+ {
+  "id": "en_0012",
+  "lang": "en",
+  "kind": "medication",
+  "text": "With doxycycline, stay upright for at least half an hour after swallowing and drink a full glass of water."
+ },
+ {
+  "id": "en_0013",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Cetirizine may make you a little drowsy, so it's better to take it at night before bed."
+ },
+ {
+  "id": "en_0014",
+  "lang": "en",
+  "kind": "medication",
+  "text": "The azithromycin is only for three days, one tablet a day, and you can take it with or without food."
+ },
+ {
+  "id": "en_0015",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Gliclazide can bring your sugar down too low, so never skip lunch after taking your morning dose."
+ },
+ {
+  "id": "en_0016",
+  "lang": "en",
+  "kind": "medication",
+  "text": "After every puff of the budesonide inhaler, rinse your mouth with water and spit it out."
+ },
+ {
+  "id": "en_0017",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Clopidogrel helps prevent another stroke, so please don't stop it on your own, even for a few days."
+ },
+ {
+  "id": "en_0018",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Mix one sachet of oral rehydration salts into 200ml of clean drinking water and sip it slowly."
+ },
+ {
+  "id": "en_0019",
+  "lang": "en",
+  "kind": "medication",
+  "text": "For your son, the paracetamol syrup is 5ml every six hours whenever his temperature goes above thirty-eight."
+ },
+ {
+  "id": "en_0020",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Losartan is for your blood pressure. One 50mg tablet every morning, at about the same time each day."
+ },
+ {
+  "id": "en_0021",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Atorvastatin works best at night, so take it after dinner, and tell us if you notice any unusual muscle aches."
+ },
+ {
+  "id": "en_0022",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Can you show me how you inject your insulin? I'd like to check your technique before you go home."
+ },
+ {
+  "id": "en_0023",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Rotate your injection sites around the tummy, keeping at least two finger-widths away from the belly button."
+ },
+ {
+  "id": "en_0024",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Your Panadol is only for pain or fever, so there's no need to take it on days you feel fine."
+ },
+ {
+  "id": "en_0025",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Please don't take Uphamol together with cold and flu tablets, because many of them already contain paracetamol."
+ },
+ {
+  "id": "en_0026",
+  "lang": "en",
+  "kind": "medication",
+  "text": "With the spacer, press the inhaler once, then take five slow breaths through the mouthpiece before the next puff."
+ },
+ {
+  "id": "en_0027",
+  "lang": "en",
+  "kind": "medication",
+  "text": "If your daughter vomits within half an hour of the amoxicillin, you can give the same dose again."
+ },
+ {
+  "id": "en_0028",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Keep the salbutamol syrup away from direct sunlight, and discard it one month after opening."
+ },
+ {
+  "id": "en_0029",
+  "lang": "en",
+  "kind": "medication",
+  "text": "The doctor has increased your amlodipine from 5mg to 10mg, so that's now two tablets every morning."
+ },
+ {
+  "id": "en_0030",
+  "lang": "en",
+  "kind": "medication",
+  "text": "This is a new prescription, metformin 500mg twice daily. Some tummy upset in the first week is quite common."
+ },
+ {
+  "id": "en_0031",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Your insulin dose tonight is twelve units before dinner. Please check your sugar first and write it in the book."
+ },
+ {
+  "id": "en_0032",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Don't worry if the ibuprofen doesn't work in ten minutes; give it about an hour to take effect."
+ },
+ {
+  "id": "en_0033",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Uncle, the warfarin tablets come in different colours for different strengths, so always check the colour before taking."
+ },
+ {
+  "id": "en_0034",
+  "lang": "en",
+  "kind": "medication",
+  "text": "While you're on warfarin, avoid taking any traditional or herbal remedies without checking with the pharmacist."
+ },
+ {
+  "id": "en_0035",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Omeprazole is usually for four weeks only. After that, the doctor will decide whether you still need it."
+ },
+ {
+  "id": "en_0036",
+  "lang": "en",
+  "kind": "medication",
+  "text": "If you miss a dose of doxycycline, take it as soon as you remember, unless the next dose is nearly due."
+ },
+ {
+  "id": "en_0037",
+  "lang": "en",
+  "kind": "medication",
+  "text": "These prednisolone tablets are 5mg each. You'll take six tablets every morning for five days, then stop."
+ },
+ {
+  "id": "en_0038",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Your inhaler is almost empty when the counter shows twenty. Please get a refill from the pharmacy before it runs out."
+ },
+ {
+  "id": "en_0039",
+  "lang": "en",
+  "kind": "medication",
+  "text": "The brown inhaler is your preventer, used every morning and night. The blue one is only for when you're breathless."
+ },
+ {
+  "id": "en_0040",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Take gliclazide just before breakfast, and always carry some sweets in case your sugar drops."
+ },
+ {
+  "id": "en_0041",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Losartan may make you feel slightly dizzy for the first few days, so stand up slowly from bed."
+ },
+ {
+  "id": "en_0042",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Uncle, you can stop the cetirizine once the rash has gone, no need to finish the whole strip."
+ },
+ {
+  "id": "en_0043",
+  "lang": "en",
+  "kind": "medication",
+  "text": "For the gout pain, take ibuprofen 400mg three times a day after meals, for up to five days."
+ },
+ {
+  "id": "en_0044",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Perindopril is taken once in the morning. If your lips or face feel puffy, stop it and come in."
+ },
+ {
+  "id": "en_0045",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Please bring all your medicine boxes next visit, so the doctor can check exactly what you're taking."
+ },
+ {
+  "id": "en_0046",
+  "lang": "en",
+  "kind": "medication",
+  "text": "The oral rehydration salts taste a bit salty, but try to finish one glass after each loose stool."
+ },
+ {
+  "id": "en_0047",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Auntie, the clopidogrel may cause easy bruising, which is expected. Just let us know if it's getting worse."
+ },
+ {
+  "id": "en_0048",
+  "lang": "en",
+  "kind": "medication",
+  "text": "You don't need to cut the amlodipine tablet. Just swallow it whole with water."
+ },
+ {
+  "id": "en_0049",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Atorvastatin is for your cholesterol, not your blood pressure, so please take both as prescribed."
+ },
+ {
+  "id": "en_0050",
+  "lang": "en",
+  "kind": "medication",
+  "text": "After a hypo, eat three sweets or drink half a glass of juice, then recheck your sugar in fifteen minutes."
+ },
+ {
+  "id": "en_0051",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Your son can have the cetirizine syrup, 5ml once at night, for the itchy skin."
+ },
+ {
+  "id": "en_0052",
+  "lang": "en",
+  "kind": "medication",
+  "text": "For the TB treatment, take all the tablets together on an empty stomach, one hour before breakfast."
+ },
+ {
+  "id": "en_0053",
+  "lang": "en",
+  "kind": "medication",
+  "text": "TB medicine can turn your urine orange-red. That's normal, so please don't stop the tablets because of it."
+ },
+ {
+  "id": "en_0054",
+  "lang": "en",
+  "kind": "medication",
+  "text": "We'll give you a card to record each TB dose, and the clinic nurse will check it every visit."
+ },
+ {
+  "id": "en_0055",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Put a new needle on the insulin pen every time, and remove it straight after injecting."
+ },
+ {
+  "id": "en_0056",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Hold the insulin pen in place for ten seconds after pressing, so the full dose goes in."
+ },
+ {
+  "id": "en_0057",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Salbutamol can make your hands shake or your heart beat faster for a short while. That's a common side effect."
+ },
+ {
+  "id": "en_0058",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Prednisolone might raise your sugar level a little, so check it more often while you're on the course."
+ },
+ {
+  "id": "en_0059",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Please take the amoxicillin three times a day, roughly every eight hours: morning, afternoon and bedtime."
+ },
+ {
+  "id": "en_0060",
+  "lang": "en",
+  "kind": "medication",
+  "text": "One amoxicillin capsule is 500mg. Swallow it whole, and please don't open the capsule."
+ },
+ {
+  "id": "en_0061",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Paracetamol can be given with ibuprofen if the fever is stubborn, but space them a few hours apart."
+ },
+ {
+  "id": "en_0062",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Your mother's warfarin dose changed to 3mg today. The new instructions are written in the yellow booklet."
+ },
+ {
+  "id": "en_0063",
+  "lang": "en",
+  "kind": "medication",
+  "text": "If you see blood in your urine or black stools while on warfarin, come to the emergency department."
+ },
+ {
+  "id": "en_0064",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Omeprazole capsules can be opened and sprinkled on a spoon of soft food if grandma finds them hard to swallow."
+ },
+ {
+  "id": "en_0065",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Ibuprofen isn't suitable for you because of your kidney function, so please stick to paracetamol only."
+ },
+ {
+  "id": "en_0066",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Losartan and perindopril shouldn't be taken together, so the doctor has stopped the perindopril."
+ },
+ {
+  "id": "en_0067",
+  "lang": "en",
+  "kind": "medication",
+  "text": "For the sinusitis, doxycycline 100mg twice daily for one week. Avoid strong sunlight, because your skin may burn easily."
+ },
+ {
+  "id": "en_0068",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Don't take doxycycline with milk or antacids, because they stop it from being absorbed properly."
+ },
+ {
+  "id": "en_0069",
+  "lang": "en",
+  "kind": "medication",
+  "text": "The budesonide nasal spray is two sprays in each nostril every morning. Aim slightly outward, away from the middle."
+ },
+ {
+  "id": "en_0070",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Clopidogrel and aspirin together increase bleeding risk, so tell any dentist or doctor that you're on both."
+ },
+ {
+  "id": "en_0071",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Uncle, do you know why you take the metformin? It helps your body use sugar better."
+ },
+ {
+  "id": "en_0072",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Before injecting, prime the pen with two units into the air to make sure the needle isn't blocked."
+ },
+ {
+  "id": "en_0073",
+  "lang": "en",
+  "kind": "medication",
+  "text": "If your sugar is below four, don't inject your insulin yet. Have something sweet first and recheck."
+ },
+ {
+  "id": "en_0074",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Ventolin is your reliever. If you need it more than three times a week, your asthma isn't well controlled."
+ },
+ {
+  "id": "en_0075",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Let me write the times on the box for you: morning pill with breakfast, night pill after dinner."
+ },
+ {
+  "id": "en_0076",
+  "lang": "en",
+  "kind": "medication",
+  "text": "This week you're on a reducing dose of prednisolone: four tablets, then three, then two, then one."
+ },
+ {
+  "id": "en_0077",
+  "lang": "en",
+  "kind": "medication",
+  "text": "The azithromycin may give you a bit of diarrhoea. Drink plenty of fluids and it usually settles."
+ },
+ {
+  "id": "en_0078",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Please don't share your antibiotics with family members, even if they have similar symptoms."
+ },
+ {
+  "id": "en_0079",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Gliclazide 80mg, one tablet before breakfast and one before dinner. If you skip a meal, skip that tablet too."
+ },
+ {
+  "id": "en_0080",
+  "lang": "en",
+  "kind": "medication",
+  "text": "The pharmacy has switched your atorvastatin to a different brand, but it's the same medicine and strength."
+ },
+ {
+  "id": "en_0081",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Rub the ibuprofen gel gently on the swollen knee three times a day, then wash your hands."
+ },
+ {
+  "id": "en_0082",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Auntie, you can crush the amlodipine and mix it with a spoon of porridge if the tablet is hard to swallow."
+ },
+ {
+  "id": "en_0083",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Keep your medicines in their original packets, in a cool, dry place out of the children's reach."
+ },
+ {
+  "id": "en_0084",
+  "lang": "en",
+  "kind": "medication",
+  "text": "The metformin extended-release tablet must be swallowed whole. Please don't break or chew it."
+ },
+ {
+  "id": "en_0085",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Your blood pressure is 150 over 95 today, so the doctor has added losartan to your amlodipine."
+ },
+ {
+  "id": "en_0086",
+  "lang": "en",
+  "kind": "medication",
+  "text": "For the urinary tract infection, take the antibiotic for five days and drink at least eight glasses of water daily."
+ },
+ {
+  "id": "en_0087",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Paracetamol for children is based on weight. At fifteen kilos, that's 7.5ml of the syrup each time."
+ },
+ {
+  "id": "en_0088",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Please don't give ibuprofen for dengue fever. Only paracetamol is safe, because of the bleeding risk."
+ },
+ {
+  "id": "en_0089",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Your mealtime insulin should be injected fifteen to thirty minutes before you eat, not after."
+ },
+ {
+  "id": "en_0090",
+  "lang": "en",
+  "kind": "medication",
+  "text": "When travelling, carry your insulin in your hand luggage and never pack it in the checked bag."
+ },
+ {
+  "id": "en_0091",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Uncle, the perindopril is 4mg, once a day. Take it before breakfast."
+ },
+ {
+  "id": "en_0092",
+  "lang": "en",
+  "kind": "medication",
+  "text": "This new tablet is for your heart failure, so you may pass urine more often in the first few hours."
+ },
+ {
+  "id": "en_0093",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Take the water tablet in the morning, so you're not waking up to go to the toilet all night."
+ },
+ {
+  "id": "en_0094",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Weigh yourself every morning while on these heart failure medicines, and write the number down."
+ },
+ {
+  "id": "en_0095",
+  "lang": "en",
+  "kind": "medication",
+  "text": "If you feel very dizzy after the first dose of perindopril, lie down and raise your legs."
+ },
+ {
+  "id": "en_0096",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Here's a spacer for your Ventolin. It helps more medicine reach your lungs, especially during an attack."
+ },
+ {
+  "id": "en_0097",
+  "lang": "en",
+  "kind": "medication",
+  "text": "During an asthma attack, take four puffs of Ventolin through the spacer, one puff at a time."
+ },
+ {
+  "id": "en_0098",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Your COPD inhaler is one puff once a day. Try to use it at the same time every morning."
+ },
+ {
+  "id": "en_0099",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Wash the spacer once a week in warm soapy water and let it air-dry. Don't wipe the inside with a cloth."
+ },
+ {
+  "id": "en_0100",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Omeprazole is fine for gastric pain, but if you need it every day for months, the doctor should review."
+ },
+ {
+  "id": "en_0101",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Okay auntie, for the next three days, take the prednisolone after breakfast, eight tablets at once."
+ },
+ {
+  "id": "en_0102",
+  "lang": "en",
+  "kind": "medication",
+  "text": "The cough syrup is 10ml three times a day. Use the measuring cup, not a kitchen spoon."
+ },
+ {
+  "id": "en_0103",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Avoid alcohol while you're on the antibiotics, as it can make you feel sick and slow your recovery."
+ },
+ {
+  "id": "en_0104",
+  "lang": "en",
+  "kind": "medication",
+  "text": "With metformin, your stomach may feel bloated at first. Taking it in the middle of a meal can help."
+ },
+ {
+  "id": "en_0105",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Your atorvastatin is 20mg now. The dose went up because your cholesterol was still high."
+ },
+ {
+  "id": "en_0106",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Please continue your clopidogrel after discharge. The next supply will come from your usual clinic."
+ },
+ {
+  "id": "en_0107",
+  "lang": "en",
+  "kind": "medication",
+  "text": "The cetirizine is for the itchy nose and sneezing. One tablet a day is enough."
+ },
+ {
+  "id": "en_0108",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Paracetamol is safe alongside your blood pressure tablets, so you don't need to space them apart."
+ },
+ {
+  "id": "en_0109",
+  "lang": "en",
+  "kind": "medication",
+  "text": "If Panadol isn't enough for the headache, don't add more tablets. Come back so we can review."
+ },
+ {
+  "id": "en_0110",
+  "lang": "en",
+  "kind": "medication",
+  "text": "This insulin is the long-acting one, the grey pen, taken once at bedtime."
+ },
+ {
+  "id": "en_0111",
+  "lang": "en",
+  "kind": "medication",
+  "text": "The orange pen is your mealtime insulin. You use it three times a day, before each main meal."
+ },
+ {
+  "id": "en_0112",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Don't mix up the two pens, ya. Grey at night, orange before meals."
+ },
+ {
+  "id": "en_0113",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Leave a new insulin pen out of the fridge for half an hour before injecting, so it stings less."
+ },
+ {
+  "id": "en_0114",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Check the insulin before use. The clear type should always look clear, never cloudy."
+ },
+ {
+  "id": "en_0115",
+  "lang": "en",
+  "kind": "medication",
+  "text": "For the cloudy insulin, roll the pen gently between your palms ten times before injecting."
+ },
+ {
+  "id": "en_0116",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Your sugar reading this morning was fourteen. Increase your night insulin by two units, as the doctor said."
+ },
+ {
+  "id": "en_0117",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Grandma's warfarin must not be taken with ibuprofen. For pain, use paracetamol instead."
+ },
+ {
+  "id": "en_0118",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Green leafy vegetables affect warfarin. You don't need to avoid them, just keep the amount steady from week to week."
+ },
+ {
+  "id": "en_0119",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Please take the azithromycin one hour before food, or two hours after, for better absorption."
+ },
+ {
+  "id": "en_0120",
+  "lang": "en",
+  "kind": "medication",
+  "text": "These tablets are prescribed for thirty days. Make sure you collect next month's supply before they finish."
+ },
+ {
+  "id": "en_0121",
+  "lang": "en",
+  "kind": "medication",
+  "text": "The pharmacy can pack your supply into weekly pill boxes if that makes it easier for you."
+ },
+ {
+  "id": "en_0122",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Uncle, if you feel very tired and your muscles ache badly on atorvastatin, stop it and see the doctor."
+ },
+ {
+  "id": "en_0123",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Amlodipine can cause ankle swelling in some people. It's usually mild, but tell us if it bothers you."
+ },
+ {
+  "id": "en_0124",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Before taking any new medicine from outside, please check with the pharmacist because of your kidney condition."
+ },
+ {
+  "id": "en_0125",
+  "lang": "en",
+  "kind": "medication",
+  "text": "For the bronchitis, the doctor didn't give antibiotics because it's likely viral. Rest and paracetamol are enough."
+ },
+ {
+  "id": "en_0126",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Give the oral rehydration solution in small sips every few minutes if your child keeps vomiting."
+ },
+ {
+  "id": "en_0127",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Don't add sugar or juice to the oral rehydration solution, because it changes the balance of salts."
+ },
+ {
+  "id": "en_0128",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Throw away any mixed rehydration solution after twenty-four hours and make a fresh batch."
+ },
+ {
+  "id": "en_0129",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Budesonide won't help during a sudden attack. It works slowly over weeks to calm the airways."
+ },
+ {
+  "id": "en_0130",
+  "lang": "en",
+  "kind": "medication",
+  "text": "You should feel less wheezy after a couple of weeks on the preventer, so keep using it daily."
+ },
+ {
+  "id": "en_0131",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Prednisolone for your asthma flare is 40mg once a day for five days. No tapering needed."
+ },
+ {
+  "id": "en_0132",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Start the gout tablets as soon as the attack begins. The sooner you take them, the faster it settles."
+ },
+ {
+  "id": "en_0133",
+  "lang": "en",
+  "kind": "medication",
+  "text": "After a heart stent, clopidogrel is usually needed for at least one year. Try not to miss a single dose."
+ },
+ {
+  "id": "en_0134",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Losartan can raise your potassium level, so we'll do a blood test in two weeks."
+ },
+ {
+  "id": "en_0135",
+  "lang": "en",
+  "kind": "medication",
+  "text": "If your home reading is below 100 over 60 and you feel faint, skip that day's dose and call the clinic."
+ },
+ {
+  "id": "en_0136",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Your doctor wants you on paracetamol regularly for three days: two tablets, four times a day."
+ },
+ {
+  "id": "en_0137",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Can you tell me back how you'll take these? I just want to make sure it's clear."
+ },
+ {
+  "id": "en_0138",
+  "lang": "en",
+  "kind": "medication",
+  "text": "This one is omeprazole 20mg, the small pink capsule. The white round one is your amlodipine."
+ },
+ {
+  "id": "en_0139",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Metformin can continue during a mild illness, but stop it if you're vomiting and can't keep fluids down."
+ },
+ {
+  "id": "en_0140",
+  "lang": "en",
+  "kind": "medication",
+  "text": "On sick days, keep checking your sugar every four hours, even if you're not eating much."
+ },
+ {
+  "id": "en_0141",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Please don't stop your insulin when you're sick. You may even need more, so call the clinic for advice."
+ },
+ {
+  "id": "en_0142",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Take the cetirizine for one week, then stop and see whether the rash comes back."
+ },
+ {
+  "id": "en_0143",
+  "lang": "en",
+  "kind": "medication",
+  "text": "For the upper respiratory tract infection, just paracetamol and plenty of warm fluids. Antibiotics won't help a virus."
+ },
+ {
+  "id": "en_0144",
+  "lang": "en",
+  "kind": "medication",
+  "text": "If you're breastfeeding, paracetamol and amoxicillin are both safe for your baby."
+ },
+ {
+  "id": "en_0145",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Shake the azithromycin syrup well, then give 5ml once daily using the syringe provided."
+ },
+ {
+  "id": "en_0146",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Keep the amoxicillin syrup in the fridge after mixing. It's good for seven days."
+ },
+ {
+  "id": "en_0147",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Please take the doxycycline with lunch rather than at bedtime, so it doesn't irritate your throat."
+ },
+ {
+  "id": "en_0148",
+  "lang": "en",
+  "kind": "medication",
+  "text": "You'll need to continue the TB medicine for six months. Stopping early can make the infection come back stronger."
+ },
+ {
+  "id": "en_0149",
+  "lang": "en",
+  "kind": "medication",
+  "text": "If you forget a TB dose, take it later the same day. Never take two doses the next day."
+ },
+ {
+  "id": "en_0150",
+  "lang": "en",
+  "kind": "medication",
+  "text": "After each Ventolin puff, hold your breath for about ten seconds, then breathe out slowly."
+ },
+ {
+  "id": "en_0151",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Your inhaler technique is good, uncle. Just slow down the breath in a little more."
+ },
+ {
+  "id": "en_0152",
+  "lang": "en",
+  "kind": "medication",
+  "text": "For the pneumonia, you'll go home on amoxicillin 1g three times a day to complete ten days."
+ },
+ {
+  "id": "en_0153",
+  "lang": "en",
+  "kind": "medication",
+  "text": "The first antibiotic dose was given here through the drip, so start the tablets tomorrow morning."
+ },
+ {
+  "id": "en_0154",
+  "lang": "en",
+  "kind": "medication",
+  "text": "If you're planning to fast, talk to the doctor first, because the gliclazide dose may need changing."
+ },
+ {
+  "id": "en_0155",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Since you'll be fasting this month, we need to adjust your insulin timing. Let's go through it now."
+ },
+ {
+  "id": "en_0156",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Warfarin needs a regular blood test called INR. Your next one is in one week."
+ },
+ {
+  "id": "en_0157",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Warfarin reacts with some antibiotics, so always mention it whenever a doctor gives you new medicine."
+ },
+ {
+  "id": "en_0158",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Keep your Ventolin with you at all times, especially when you exercise or go outstation."
+ },
+ {
+  "id": "en_0159",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Take the ibuprofen for headache only when needed, and no more than three times a day."
+ },
+ {
+  "id": "en_0160",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Mild nausea with the antibiotic is common. Taking it with food usually helps."
+ },
+ {
+  "id": "en_0161",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Please finish the last two days of amoxicillin, even though the fever is gone."
+ },
+ {
+  "id": "en_0162",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Losartan can be taken with or without food; just be consistent every day."
+ },
+ {
+  "id": "en_0163",
+  "lang": "en",
+  "kind": "medication",
+  "text": "If your lips or tongue swell after starting perindopril, that's serious. Go straight to the emergency department."
+ },
+ {
+  "id": "en_0164",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Atorvastatin is long term. Most people stay on it for life to protect the heart."
+ },
+ {
+  "id": "en_0165",
+  "lang": "en",
+  "kind": "medication",
+  "text": "You can take the amlodipine and atorvastatin together at night if that's easier to remember."
+ },
+ {
+  "id": "en_0166",
+  "lang": "en",
+  "kind": "medication",
+  "text": "There are six insulin pens in this box. Five go into the fridge, and one is for daily use."
+ },
+ {
+  "id": "en_0167",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Insulin that has been frozen should be thrown away, even if it looks normal after thawing."
+ },
+ {
+  "id": "en_0168",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Please do not inject into areas with lumps, because the insulin won't absorb well there."
+ },
+ {
+  "id": "en_0169",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Uphamol 650 is a stronger paracetamol. One tablet up to four times a day, not more."
+ },
+ {
+  "id": "en_0170",
+  "lang": "en",
+  "kind": "medication",
+  "text": "At home, use the salbutamol nebuliser every four hours only if needed, with one full vial each time."
+ },
+ {
+  "id": "en_0171",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Omeprazole may cause a mild headache in the first week. That usually improves on its own."
+ },
+ {
+  "id": "en_0172",
+  "lang": "en",
+  "kind": "medication",
+  "text": "If the prednisolone upsets your stomach, take it with a proper meal and continue the omeprazole."
+ },
+ {
+  "id": "en_0173",
+  "lang": "en",
+  "kind": "medication",
+  "text": "For the itchy rash, apply the cream thinly twice a day and take the cetirizine at night."
+ },
+ {
+  "id": "en_0174",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Auntie, set a phone alarm for your medicines. It really helps with remembering the timing."
+ },
+ {
+  "id": "en_0175",
+  "lang": "en",
+  "kind": "medication",
+  "text": "This clopidogrel is from a new supplier. The packaging looks different, but it's the same medicine."
+ },
+ {
+  "id": "en_0176",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Please let the doctor know about any supplements you take, as some can affect your blood thinner."
+ },
+ {
+  "id": "en_0177",
+  "lang": "en",
+  "kind": "medication",
+  "text": "The azithromycin course is short, but the medicine keeps working in your body for about a week."
+ },
+ {
+  "id": "en_0178",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Metformin 1g after dinner only for now. If your sugar stays high, we'll add a breakfast dose."
+ },
+ {
+  "id": "en_0179",
+  "lang": "en",
+  "kind": "medication",
+  "text": "For the COPD flare, prednisolone 30mg for five days, and use the nebuliser at home if needed."
+ },
+ {
+  "id": "en_0180",
+  "lang": "en",
+  "kind": "medication",
+  "text": "Before using a new inhaler, spray two test puffs into the air to make sure it's working."
+ },
+ {
+  "id": "en_0181",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "For the next two weeks, drink at least eight glasses of water a day, unless the doctor told you to limit fluids."
+ },
+ {
+  "id": "en_0182",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Keep the wound dry for the first forty-eight hours. After that you can shower, but pat it dry gently."
+ },
+ {
+  "id": "en_0183",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Auntie, reduce the salt in your cooking, and go easy on soy sauce, salted fish and instant noodles."
+ },
+ {
+  "id": "en_0184",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "After the gastroenteritis, start with plain porridge, toast or biscuits, then slowly return to your normal diet."
+ },
+ {
+  "id": "en_0185",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Avoid oily and spicy food for a few days while your stomach recovers."
+ },
+ {
+  "id": "en_0186",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "You can walk around the house, but no heavy lifting for at least six weeks after the operation."
+ },
+ {
+  "id": "en_0187",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "With heart failure, limit your fluids to about one and a half litres a day, including soups and drinks."
+ },
+ {
+  "id": "en_0188",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Uncle, you're allowed to shower tomorrow. Just cover the dressing with plastic and tape down the edges."
+ },
+ {
+  "id": "en_0189",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Change the dressing every two days at the nearest clinic, or sooner if it gets wet or soaked through."
+ },
+ {
+  "id": "en_0190",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Rest as much as you need this week. Your body is still recovering from the pneumonia."
+ },
+ {
+  "id": "en_0191",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Please use your MC to rest at home; going back to work too early may set you back."
+ },
+ {
+  "id": "en_0192",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Do the breathing exercises three times a day: breathe in deeply through the nose, hold, then blow out slowly."
+ },
+ {
+  "id": "en_0193",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "While recovering from dengue, keep drinking plenty of fluids like water, isotonic drinks and clear soups."
+ },
+ {
+  "id": "en_0194",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Keep your feet clean and dry, and check them every day for cuts or blisters, since you have diabetes."
+ },
+ {
+  "id": "en_0195",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Wear shoes or slippers at all times, even inside the house, to protect your feet."
+ },
+ {
+  "id": "en_0196",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Avoid sugary drinks like syrup, bubble tea and soft drinks. Plain water or unsweetened tea is better."
+ },
+ {
+  "id": "en_0197",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Half your plate should be vegetables, a quarter protein, and a quarter rice or noodles."
+ },
+ {
+  "id": "en_0198",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "If you smoke, this is a good time to stop. The clinic runs a quit-smoking programme that can help."
+ },
+ {
+  "id": "en_0199",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Stay away from cigarette smoke and open burning, as both can trigger your asthma."
+ },
+ {
+  "id": "en_0200",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "During haze season, keep the windows closed and wear a mask when you go outside."
+ },
+ {
+  "id": "en_0201",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Sleep with your head raised on two pillows if you feel breathless lying flat."
+ },
+ {
+  "id": "en_0202",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Rest your leg on a pillow when you sit down, to help the swelling go down."
+ },
+ {
+  "id": "en_0203",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "For the gout, avoid organ meats and shellfish, and cut down on beer."
+ },
+ {
+  "id": "en_0204",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Drink more water to help flush out the uric acid, at least two litres a day."
+ },
+ {
+  "id": "en_0205",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "After the stroke, your father will need help getting up. Always stay beside him when he walks."
+ },
+ {
+  "id": "en_0206",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Remove loose rugs and put a non-slip mat in the bathroom, so he doesn't fall."
+ },
+ {
+  "id": "en_0207",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Practise the arm and hand exercises the physiotherapist showed you, twice a day, about fifteen minutes each."
+ },
+ {
+  "id": "en_0208",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Feed him slowly with small spoonfuls, and make sure he's sitting upright while eating."
+ },
+ {
+  "id": "en_0209",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Thicken his drinks with the powder we gave you, because thin liquids may go down into the lungs."
+ },
+ {
+  "id": "en_0210",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "For the urinary tract infection, drink plenty of water and don't hold your urine for too long."
+ },
+ {
+  "id": "en_0211",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Wipe from front to back after using the toilet, to reduce the chance of another infection."
+ },
+ {
+  "id": "en_0212",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "For the sinusitis, a saline nasal rinse twice a day can help clear the blocked nose."
+ },
+ {
+  "id": "en_0213",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Steam inhalation over a bowl of hot water may ease the congestion, but be careful not to scald yourself."
+ },
+ {
+  "id": "en_0214",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Warm water with honey can soothe the cough, but don't give honey to babies under one year old."
+ },
+ {
+  "id": "en_0215",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Your child can go back to school once the fever has been gone for twenty-four hours without medicine."
+ },
+ {
+  "id": "en_0216",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Keep the baby's fluids up by breastfeeding more often, even if he takes less each time."
+ },
+ {
+  "id": "en_0217",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Wash your hands with soap before preparing food and after using the toilet, so the diarrhoea doesn't spread."
+ },
+ {
+  "id": "en_0218",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Use separate towels for each family member until the diarrhoea settles."
+ },
+ {
+  "id": "en_0219",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "For TB, open the windows at home to let fresh air in, and cover your mouth when you cough."
+ },
+ {
+  "id": "en_0220",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "During the first two weeks of TB treatment, try to sleep in a separate room if possible."
+ },
+ {
+  "id": "en_0221",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Weigh yourself every morning after the toilet and before breakfast, and write it in the book."
+ },
+ {
+  "id": "en_0222",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Cut down on processed foods like sausages, canned soups and salted eggs, because they're high in salt."
+ },
+ {
+  "id": "en_0223",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Check your blood pressure at home twice a day for a week and bring the readings to clinic."
+ },
+ {
+  "id": "en_0224",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Sit quietly for five minutes before measuring your blood pressure, with your arm resting on the table."
+ },
+ {
+  "id": "en_0225",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Check your sugar level before breakfast and two hours after dinner, and record both in the booklet."
+ },
+ {
+  "id": "en_0226",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Brisk walking for thirty minutes, five days a week, is good for both your sugar and your heart."
+ },
+ {
+  "id": "en_0227",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Start slowly with ten-minute walks, then build up as you feel stronger."
+ },
+ {
+  "id": "en_0228",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "After a chest infection, you may feel tired for a few weeks. That's normal, so pace yourself."
+ },
+ {
+  "id": "en_0229",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "You can return to light office work after one week, but avoid heavy work for a month."
+ },
+ {
+  "id": "en_0230",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "No driving for at least one month after the stroke, until the doctor clears you."
+ },
+ {
+  "id": "en_0231",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Please don't soak the wound in a bathtub or swimming pool until the stitches are out."
+ },
+ {
+  "id": "en_0232",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Mild redness around the stitches is normal, but it should look better each day."
+ },
+ {
+  "id": "en_0233",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "A little clear fluid from the wound on the first day is okay. Just replace the gauze."
+ },
+ {
+  "id": "en_0234",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Keep the cast dry by covering it with a plastic bag when you shower."
+ },
+ {
+  "id": "en_0235",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Put ice wrapped in a towel on the sprain for fifteen minutes, three or four times a day."
+ },
+ {
+  "id": "en_0236",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "For the rash, avoid very hot showers and use a gentle, soap-free cleanser."
+ },
+ {
+  "id": "en_0237",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Cut your child's fingernails short so he doesn't scratch the itchy spots."
+ },
+ {
+  "id": "en_0238",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Wear loose cotton clothes to let the skin breathe while the rash heals."
+ },
+ {
+  "id": "en_0239",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Drink small amounts often rather than a big glass at once, if you're still feeling nauseous."
+ },
+ {
+  "id": "en_0240",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Avoid milk and dairy for a few days after the diarrhoea, as they may upset the stomach again."
+ },
+ {
+  "id": "en_0241",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Your fluid chart matters. Write down every cup you drink and each time you pass urine."
+ },
+ {
+  "id": "en_0242",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "For heart failure, don't add salt at the table, and go easy on sauces and pickles."
+ },
+ {
+  "id": "en_0243",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Eat smaller meals more often if big meals make you breathless."
+ },
+ {
+  "id": "en_0244",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "With COPD, stay active with gentle walks, and use pursed-lip breathing when you feel short of breath."
+ },
+ {
+  "id": "en_0245",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Get your flu vaccine every year, uncle, because chest infections hit COPD patients harder."
+ },
+ {
+  "id": "en_0246",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Use the home oxygen at two litres per minute, and keep it well away from the stove."
+ },
+ {
+  "id": "en_0247",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "No smoking in the house at all while the oxygen is in use. It's a real fire risk."
+ },
+ {
+  "id": "en_0248",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Keep the nasal prongs clean and change the tubing every month."
+ },
+ {
+  "id": "en_0249",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "For the sore throat, gargle with warm salt water three times a day."
+ },
+ {
+  "id": "en_0250",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Try to get at least seven hours of sleep, so your body can recover properly."
+ },
+ {
+  "id": "en_0251",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "After dengue, clear any stagnant water around the house every week to stop mosquitoes breeding."
+ },
+ {
+  "id": "en_0252",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Use mosquito repellent and sleep under a net, so the rest of the family doesn't get dengue too."
+ },
+ {
+  "id": "en_0253",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Try to eat something every few hours, even just biscuits or fruit, to keep your energy up."
+ },
+ {
+  "id": "en_0254",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Take things slowly at home, auntie. The housework can wait until you feel stronger."
+ },
+ {
+  "id": "en_0255",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Ask your children to help with the marketing and cooking for the next two weeks."
+ },
+ {
+  "id": "en_0256",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "If you're on insulin, always keep sweets or a small packet of juice in your bag."
+ },
+ {
+  "id": "en_0257",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Choose brown rice or wholemeal bread instead of white rice when you can."
+ },
+ {
+  "id": "en_0258",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Fruit is healthy, but keep sweet ones like durian, mango and rambutan to small portions."
+ },
+ {
+  "id": "en_0259",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "A light dinner before eight o'clock can help keep your morning sugar down."
+ },
+ {
+  "id": "en_0260",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Please avoid long hot baths for now, as they can make you dizzy."
+ },
+ {
+  "id": "en_0261",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Get up slowly from lying down: sit on the edge of the bed first, then stand."
+ },
+ {
+  "id": "en_0262",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "For the leg swelling, avoid standing for long hours and put your feet up when you rest."
+ },
+ {
+  "id": "en_0263",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Wear the compression stockings during the day and take them off at night."
+ },
+ {
+  "id": "en_0264",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Don't cross your legs when sitting, so the blood can flow freely."
+ },
+ {
+  "id": "en_0265",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "For bronchitis, stay well hydrated. It helps loosen the phlegm so you can cough it out."
+ },
+ {
+  "id": "en_0266",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Turn your father every two hours in bed to prevent pressure sores."
+ },
+ {
+  "id": "en_0267",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Keep his skin clean and dry, especially around the back and hips."
+ },
+ {
+  "id": "en_0268",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "A pillow between his knees when he's lying on his side will make him more comfortable."
+ },
+ {
+  "id": "en_0269",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "At home you can bathe normally, but avoid scrubbing the old drip site on your hand."
+ },
+ {
+  "id": "en_0270",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "The drip site may stay bruised for a few days. A warm compress can help."
+ },
+ {
+  "id": "en_0271",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Chew slowly and choose soft foods while your mouth ulcers are still painful."
+ },
+ {
+  "id": "en_0272",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "For the constipation, add more fruit, vegetables and water to your daily diet."
+ },
+ {
+  "id": "en_0273",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "A short walk after each meal helps your digestion and your sugar level."
+ },
+ {
+  "id": "en_0274",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Keep a small diary of what you eat and how you feel, so we can spot what triggers the gastric pain."
+ },
+ {
+  "id": "en_0275",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Avoid lying down for two hours after meals if you have reflux."
+ },
+ {
+  "id": "en_0276",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Raise the head of your bed slightly to reduce the heartburn at night."
+ },
+ {
+  "id": "en_0277",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Cut down on coffee, fizzy drinks and very spicy food to help with the reflux."
+ },
+ {
+  "id": "en_0278",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Please avoid alcohol completely while your liver recovers."
+ },
+ {
+  "id": "en_0279",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Your mother needs someone at home with her for the first few nights after discharge."
+ },
+ {
+  "id": "en_0280",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Keep a light on in the corridor at night so she doesn't trip on the way to the toilet."
+ },
+ {
+  "id": "en_0281",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Put her medicines in a weekly pill box, and have one family member check it each evening."
+ },
+ {
+  "id": "en_0282",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "For the high fever at home, sponge him with lukewarm water, not cold water."
+ },
+ {
+  "id": "en_0283",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Dress your child in light clothing and keep the room airy while he has a fever."
+ },
+ {
+  "id": "en_0284",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Don't wrap the baby in thick blankets when she's feverish, because it traps the heat."
+ },
+ {
+  "id": "en_0285",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Give fluids in small amounts every fifteen minutes if your child is vomiting."
+ },
+ {
+  "id": "en_0286",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "You can keep breastfeeding throughout the diarrhoea. It actually helps the baby recover."
+ },
+ {
+  "id": "en_0287",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Rest your voice for a few days and avoid shouting or whispering."
+ },
+ {
+  "id": "en_0288",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "After the asthma attack, skip heavy exercise for a few days until the wheeze settles."
+ },
+ {
+  "id": "en_0289",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Wash the bedsheets and pillow covers in hot water weekly to reduce dust mites."
+ },
+ {
+  "id": "en_0290",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Keep the cat out of the bedroom if its fur triggers your son's asthma."
+ },
+ {
+  "id": "en_0291",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Your stitches will come out at the clinic in ten days. Until then, keep the area clean."
+ },
+ {
+  "id": "en_0292",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Apply a thin layer of the antibiotic ointment after cleaning the wound with saline."
+ },
+ {
+  "id": "en_0293",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Use cooled boiled water to clean the wound if you don't have saline at home."
+ },
+ {
+  "id": "en_0294",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "For the first week, sleep on your back so you don't press on the wound."
+ },
+ {
+  "id": "en_0295",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Your appetite may be poor for a while. Small, nutritious snacks are better than forcing big meals."
+ },
+ {
+  "id": "en_0296",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Try to include eggs, fish, chicken or tofu at every meal to help the wound heal."
+ },
+ {
+  "id": "en_0297",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "If you feel low or can't sleep after the stroke, please talk to us. Support is available."
+ },
+ {
+  "id": "en_0298",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Keep the stroke booklet handy. The exercises and warning signs are listed clearly inside."
+ },
+ {
+  "id": "en_0299",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "Take the stairs slowly, uncle, and rest on the landing if you get breathless."
+ },
+ {
+  "id": "en_0300",
+  "lang": "en",
+  "kind": "homecare",
+  "text": "On long car rides, stop and walk around every hour to prevent clots in the legs."
+ },
+ {
+  "id": "en_0301",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If you have chest pain that spreads to your arm or jaw, call an ambulance straight away."
+ },
+ {
+  "id": "en_0302",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Come back immediately if the breathlessness gets worse or you can't finish a sentence."
+ },
+ {
+  "id": "en_0303",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Watch for bleeding gums, nosebleeds or black stools during dengue. Those need urgent attention."
+ },
+ {
+  "id": "en_0304",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If your child is very drowsy, hard to wake, or refusing all drinks, bring him to emergency at once."
+ },
+ {
+  "id": "en_0305",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Sudden weakness on one side of the face or body can mean a stroke. Go to the nearest emergency department."
+ },
+ {
+  "id": "en_0306",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If the fever goes above thirty-nine and won't come down with paracetamol, come back to see us."
+ },
+ {
+  "id": "en_0307",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Vomiting everything, even water, for more than six hours is a warning sign. Please come in."
+ },
+ {
+  "id": "en_0308",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Passing very little urine, or none for eight hours, may mean dehydration. Please return to the clinic."
+ },
+ {
+  "id": "en_0309",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If you see blood in the stool or it turns black, come to emergency immediately."
+ },
+ {
+  "id": "en_0310",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Severe tummy pain with dengue fever is dangerous. Don't wait at home; come straight to hospital."
+ },
+ {
+  "id": "en_0311",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If the Ventolin isn't helping and your chest still feels tight after twenty minutes, call for help."
+ },
+ {
+  "id": "en_0312",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Blue lips or fingertips mean you need oxygen urgently. Call an ambulance."
+ },
+ {
+  "id": "en_0313",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "A sudden severe headache, worse than any you've had before, needs to be checked right away."
+ },
+ {
+  "id": "en_0314",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If your father becomes confused, sleepy or unusually agitated, bring him back immediately."
+ },
+ {
+  "id": "en_0315",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "A sugar reading below four that doesn't improve after sweets is an emergency."
+ },
+ {
+  "id": "en_0316",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If your sugar is above twenty and you're vomiting or breathing fast, go to emergency."
+ },
+ {
+  "id": "en_0317",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Coughing up blood is not normal. Please come in the same day."
+ },
+ {
+  "id": "en_0318",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Leg swelling with pain, redness and warmth in one calf needs urgent review."
+ },
+ {
+  "id": "en_0319",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If you gain more than two kilos in two days, call the heart failure nurse or come in."
+ },
+ {
+  "id": "en_0320",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Palpitations with fainting or chest pain are serious. Don't drive yourself; call for an ambulance."
+ },
+ {
+  "id": "en_0321",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Watch the wound for pus, spreading redness or a bad smell. Those are signs of infection."
+ },
+ {
+  "id": "en_0322",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If you get fever with back pain and shivering during the UTI, come back right away."
+ },
+ {
+  "id": "en_0323",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If your lips, eyes or throat swell after a new medicine, go to emergency immediately."
+ },
+ {
+  "id": "en_0324",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If her breathing becomes noisy or the skin between her ribs sucks in, bring her in straight away."
+ },
+ {
+  "id": "en_0325",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Babies under three months with any fever above thirty-eight must see a doctor the same day."
+ },
+ {
+  "id": "en_0326",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If the diarrhoea has blood or mucus, or lasts more than three days, please come back."
+ },
+ {
+  "id": "en_0327",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If you faint, or you can't stand up without falling, you need to be seen urgently."
+ },
+ {
+  "id": "en_0328",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "A stiff neck with high fever and a severe headache must be checked immediately."
+ },
+ {
+  "id": "en_0329",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If the chest pain comes on at rest and lasts more than ten minutes, don't wait. Call an ambulance."
+ },
+ {
+  "id": "en_0330",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Sudden slurred speech or trouble understanding words is a stroke warning. Every minute counts."
+ },
+ {
+  "id": "en_0331",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Remember FAST: face drooping, arm weakness, speech difficulty, time to call an ambulance."
+ },
+ {
+  "id": "en_0332",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If a cut won't stop bleeding after ten minutes of pressure while you're on warfarin, come to emergency."
+ },
+ {
+  "id": "en_0333",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Uncle, if your urine turns dark like tea and you feel very weak, come in immediately."
+ },
+ {
+  "id": "en_0334",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "When the dengue fever settles, days three to seven are the critical phase, so watch closely for warning signs."
+ },
+ {
+  "id": "en_0335",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Cold, clammy hands and feet during dengue could mean the blood pressure is dropping. Come straight in."
+ },
+ {
+  "id": "en_0336",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If your child hasn't passed urine for six hours, she may be dehydrated. Please bring her back."
+ },
+ {
+  "id": "en_0337",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Sunken eyes, a dry mouth and no tears when crying are signs of dehydration in children."
+ },
+ {
+  "id": "en_0338",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If your heart is racing and it doesn't settle after twenty minutes of rest, come in."
+ },
+ {
+  "id": "en_0339",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Wheezing that wakes you at night more than once a week means we need to review your asthma soon."
+ },
+ {
+  "id": "en_0340",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If your ankles swell up suddenly and you can't lie flat, come to the hospital."
+ },
+ {
+  "id": "en_0341",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Waking up gasping for breath at night is a warning sign that the heart failure is getting worse."
+ },
+ {
+  "id": "en_0342",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If the TB medicine makes your eyes or skin turn yellow, stop and come to the clinic urgently."
+ },
+ {
+  "id": "en_0343",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "New confusion in an elderly person can be a sign of infection. Don't just assume it's old age."
+ },
+ {
+  "id": "en_0344",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Fits or seizures, even a short one, need to be assessed in the emergency department."
+ },
+ {
+  "id": "en_0345",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If the vomit is green or has blood in it, please come to emergency straight away."
+ },
+ {
+  "id": "en_0346",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Severe pain in the big toe with a fever may not be just gout. Come back if you feel unwell."
+ },
+ {
+  "id": "en_0347",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If you feel your throat closing up or you can't swallow your saliva, that's an emergency."
+ },
+ {
+  "id": "en_0348",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Tell us immediately if the drip site becomes swollen, painful or starts leaking."
+ },
+ {
+  "id": "en_0349",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "A high fever that keeps coming back after five days needs another check, even if you feel okay in between."
+ },
+ {
+  "id": "en_0350",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If your cough is getting worse after two weeks, or you're losing weight, please come back for review."
+ },
+ {
+  "id": "en_0351",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Night sweats, weight loss and a long-standing cough may mean TB. Please don't ignore them."
+ },
+ {
+  "id": "en_0352",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If your blood pressure reads 180 over 110 or higher, with headache or blurred vision, come in immediately."
+ },
+ {
+  "id": "en_0353",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Sudden loss of vision in one eye, even for a few minutes, needs urgent assessment."
+ },
+ {
+  "id": "en_0354",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If you fall and hit your head while on clopidogrel or warfarin, come to hospital to be checked."
+ },
+ {
+  "id": "en_0355",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Chest tightness during exercise that eases with rest still needs to be checked by the doctor this week."
+ },
+ {
+  "id": "en_0356",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If your newborn looks yellow, especially on the palms and soles, bring the baby back today."
+ },
+ {
+  "id": "en_0357",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If the sinus pain comes with swelling around the eye or blurred vision, come back straight away."
+ },
+ {
+  "id": "en_0358",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Thick green phlegm with a fever above thirty-eight after three days of antibiotics needs review."
+ },
+ {
+  "id": "en_0359",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "For COPD, if your phlegm changes colour and you're more breathless, start the rescue pack and call us."
+ },
+ {
+  "id": "en_0360",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Pain when passing urine together with blood in the urine should be seen by a doctor within a day."
+ },
+ {
+  "id": "en_0361",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If your leg becomes cold, pale or very painful, that's an emergency. Come in immediately."
+ },
+ {
+  "id": "en_0362",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Please return if you can't keep your tablets down because of vomiting, especially the TB medicine."
+ },
+ {
+  "id": "en_0363",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If the rash turns purple and doesn't fade when you press a glass on it, come to emergency at once."
+ },
+ {
+  "id": "en_0364",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Very fast breathing in your baby, more than sixty breaths a minute, needs urgent review."
+ },
+ {
+  "id": "en_0365",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If he doesn't recognise family members or can't answer simple questions, call for help."
+ },
+ {
+  "id": "en_0366",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Sudden numbness in an arm or leg, even if it goes away, should be checked the same day."
+ },
+ {
+  "id": "en_0367",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If he's sweating, shaking and too drowsy to swallow, don't force food into his mouth. Call an ambulance."
+ },
+ {
+  "id": "en_0368",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Extreme thirst, passing urine very often and feeling drowsy may mean your sugar is dangerously high."
+ },
+ {
+  "id": "en_0369",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If the dizziness comes with double vision or difficulty walking, go to emergency."
+ },
+ {
+  "id": "en_0370",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Any chest pain while you're on your heart medicine, don't wait to see if it passes. Come in."
+ },
+ {
+  "id": "en_0371",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If you notice more bruising than usual or tiny red spots on the skin, get a blood test done quickly."
+ },
+ {
+  "id": "en_0372",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Please call the ward if the wound suddenly opens up or starts bleeding heavily."
+ },
+ {
+  "id": "en_0373",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If your temperature goes above thirty-eight after the operation, contact us straight away."
+ },
+ {
+  "id": "en_0374",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Headache with vomiting and drowsiness after a fall is serious. Bring him to emergency."
+ },
+ {
+  "id": "en_0375",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If you get severe diarrhoea on the antibiotics, more than six times a day, please come back."
+ },
+ {
+  "id": "en_0376",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "A sudden, very painful swollen joint with fever can be an infection. Come back today."
+ },
+ {
+  "id": "en_0377",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Chest pain when you breathe in deeply, together with fever, may be pneumonia. See a doctor soon."
+ },
+ {
+  "id": "en_0378",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If the wheezing gets worse despite using Ventolin every two hours, go to emergency."
+ },
+ {
+  "id": "en_0379",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If you feel faint or your heartbeat is very slow after the new medicine, sit down and call us."
+ },
+ {
+  "id": "en_0380",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If your child's fever comes with a rash and he's very irritable, please don't wait until tomorrow."
+ },
+ {
+  "id": "en_0381",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Black, tarry stools while on ibuprofen may mean stomach bleeding. Stop the tablets and come in."
+ },
+ {
+  "id": "en_0382",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If shortness of breath comes on suddenly with chest pain, especially after a long flight, call an ambulance."
+ },
+ {
+  "id": "en_0383",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Sudden swelling of the tongue or wheezing after eating seafood is an allergy emergency."
+ },
+ {
+  "id": "en_0384",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If auntie becomes unusually quiet, stops eating and isn't herself, bring her in even without a fever."
+ },
+ {
+  "id": "en_0385",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If you notice his face drooping or his speech slurring at home, call an ambulance instead of driving him yourself."
+ },
+ {
+  "id": "en_0386",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If the redness on your leg spreads beyond the line we drew, come back tonight."
+ },
+ {
+  "id": "en_0387",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Increasing pain, swelling or fever around the old drip site after discharge needs a check-up."
+ },
+ {
+  "id": "en_0388",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "If the vomiting continues and you're too weak to stand, please ask someone to bring you in."
+ },
+ {
+  "id": "en_0389",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Trust your instinct, auntie. If something feels very wrong, it's always okay to come back."
+ },
+ {
+  "id": "en_0390",
+  "lang": "en",
+  "kind": "redflag",
+  "text": "Any chest pain, fainting or sudden breathlessness, please don't wait for your next appointment."
+ },
+ {
+  "id": "en_0391",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Your follow-up is at the medical clinic in two weeks, on Tuesday at nine in the morning."
+ },
+ {
+  "id": "en_0392",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Please come fasting for your blood test. No food after ten o'clock the night before, only plain water."
+ },
+ {
+  "id": "en_0393",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Bring your IC, appointment card and all your current medicines when you come."
+ },
+ {
+  "id": "en_0394",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "The blood test for sugar and cholesterol is at eight, then you'll see the doctor at ten."
+ },
+ {
+  "id": "en_0395",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Your stitches can be removed at the health clinic near your house in ten days."
+ },
+ {
+  "id": "en_0396",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "We'll send you a reminder on the app two days before your appointment."
+ },
+ {
+  "id": "en_0397",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "If you can't make it on the fifteenth, please call the clinic to reschedule at least one day before."
+ },
+ {
+  "id": "en_0398",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Uncle, your next INR check is on Monday morning. The result will guide your warfarin dose."
+ },
+ {
+  "id": "en_0399",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "For the eye screening, bring someone to drive you home, because the drops will blur your vision."
+ },
+ {
+  "id": "en_0400",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "The heart scan is scheduled for the twenty-third at two in the afternoon, on level three."
+ },
+ {
+  "id": "en_0401",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Come to the physiotherapy department every Wednesday for the next six weeks."
+ },
+ {
+  "id": "en_0402",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Your chest X-ray is booked for next Thursday. You don't need to fast for this one."
+ },
+ {
+  "id": "en_0403",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Registration opens at seven-thirty. Please come early, as the queue can be long."
+ },
+ {
+  "id": "en_0404",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Take a number at the counter, then wait in the green zone until your name is called."
+ },
+ {
+  "id": "en_0405",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Parking is limited after eight, so you might want to take a taxi or get dropped off."
+ },
+ {
+  "id": "en_0406",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Please bring your blood pressure diary so the doctor can see your readings at home."
+ },
+ {
+  "id": "en_0407",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Your MC is for three days, from today until Friday. Here's the printed copy."
+ },
+ {
+  "id": "en_0408",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "If your employer needs a longer MC, the doctor will review it at your follow-up."
+ },
+ {
+  "id": "en_0409",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "The diabetes education class is on Saturday at ten, in the seminar room on level two."
+ },
+ {
+  "id": "en_0410",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Your daughter's next vaccination is due in one month. Please bring her health booklet."
+ },
+ {
+  "id": "en_0411",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "The stroke rehab team will call you within a week to arrange the first home visit."
+ },
+ {
+  "id": "en_0412",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Your HbA1c blood test is in three months, and the doctor will review your sugar control then."
+ },
+ {
+  "id": "en_0413",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Please get the kidney function blood test done one week before your clinic visit."
+ },
+ {
+  "id": "en_0414",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "We'll repeat the full blood count tomorrow morning to check your platelets."
+ },
+ {
+  "id": "en_0415",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "For dengue, come back every day for a blood test until your platelets start rising."
+ },
+ {
+  "id": "en_0416",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "The TB clinic is open on weekdays from eight to four. Collect your tablets every two weeks."
+ },
+ {
+  "id": "en_0417",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Your echo appointment has been moved to next Friday. Same time, same place."
+ },
+ {
+  "id": "en_0418",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "If you're coming by public transport, the hospital shuttle runs from the train station every twenty minutes."
+ },
+ {
+  "id": "en_0419",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Please bring your insurance card and guarantee letter if you're being admitted for the procedure."
+ },
+ {
+  "id": "en_0420",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "On the day, check in at the day-care counter by seven o'clock, and don't eat after midnight."
+ },
+ {
+  "id": "en_0421",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Your review with the chest specialist is on the second of next month."
+ },
+ {
+  "id": "en_0422",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "The urine sample should be the first one in the morning. Use the bottle we've given you."
+ },
+ {
+  "id": "en_0423",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Drop the stool sample at the lab counter within two hours of collecting it."
+ },
+ {
+  "id": "en_0424",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Your repeat ECG is at the clinic next Monday. Wear a loose top so it's easier."
+ },
+ {
+  "id": "en_0425",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "The dietitian will see you after the doctor on the same morning, so please don't leave early."
+ },
+ {
+  "id": "en_0426",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Please arrive fifteen minutes early so we can take your weight and blood pressure first."
+ },
+ {
+  "id": "en_0427",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Your appointment is in the morning session. If you're late, you'll be moved to the afternoon."
+ },
+ {
+  "id": "en_0428",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Bring your glucose meter to the next visit, so we can go through the readings together."
+ },
+ {
+  "id": "en_0429",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Please continue the medicines until the next clinic visit, then the doctor will decide."
+ },
+ {
+  "id": "en_0430",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "The foot clinic will check your feet in six weeks. Don't forget to bring the shoes you usually wear."
+ },
+ {
+  "id": "en_0431",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "If you need a wheelchair on the day, just let the counter know when you arrive."
+ },
+ {
+  "id": "en_0432",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Your lung function test is at ten. Don't use your Ventolin for four hours before the test."
+ },
+ {
+  "id": "en_0433",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "The CT scan result will be discussed at your next clinic visit, not over the phone."
+ },
+ {
+  "id": "en_0434",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "A family member is welcome to come into the consultation room with you."
+ },
+ {
+  "id": "en_0435",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Your blood test form is inside this envelope. Hand it to the lab counter on level one."
+ },
+ {
+  "id": "en_0436",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "The pharmacy counter closes at five, so collect your medicines before then."
+ },
+ {
+  "id": "en_0437",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Please update your contact number at the counter, so we can reach you about your results."
+ },
+ {
+  "id": "en_0438",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "You're due for your yearly eye check. I'll book it together with your diabetes review."
+ },
+ {
+  "id": "en_0439",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Your next dressing change is on Thursday in the treatment room, any time before noon."
+ },
+ {
+  "id": "en_0440",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "You'll get a text message confirming the date. Please reply to let us know you're coming."
+ },
+ {
+  "id": "en_0441",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Please bring your previous X-ray films and reports from the other hospital."
+ },
+ {
+  "id": "en_0442",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "We'll contact you once the biopsy result is out, usually within ten working days."
+ },
+ {
+  "id": "en_0443",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "For the fasting blood test, take your blood pressure tablet with water, but hold the diabetes medicine until after."
+ },
+ {
+  "id": "en_0444",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Your anticoagulation clinic visit is every four weeks until the INR is stable."
+ },
+ {
+  "id": "en_0445",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "This follow-up is by video call. The link will be sent on the morning of the appointment."
+ },
+ {
+  "id": "en_0446",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "If you're unwell on the appointment day, don't come in. Just call us to rebook."
+ },
+ {
+  "id": "en_0447",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "You'll need a referral letter for the specialist. I'll print it for you now."
+ },
+ {
+  "id": "en_0448",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "The clinic is on level four, block B. Take the lift near the main entrance."
+ },
+ {
+  "id": "en_0449",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Please have your IC ready at registration, so we can pull up your records quickly."
+ },
+ {
+  "id": "en_0450",
+  "lang": "en",
+  "kind": "appointment",
+  "text": "Your son's asthma review is in one month. Bring his inhalers so we can check his technique."
+ },
+ {
+  "id": "en_0451",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Bed twelve is being cleaned now and should be ready for the next admission in about twenty minutes."
+ },
+ {
+  "id": "en_0452",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Mr Tan in bed seven is fit for discharge, but we're still waiting for his take-home medicines from pharmacy."
+ },
+ {
+  "id": "en_0453",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The insurance guarantee letter for Madam Lim is still pending. The counter expects it by three o'clock."
+ },
+ {
+  "id": "en_0454",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Her blood culture results aren't back yet; the lab estimates another twenty-four hours."
+ },
+ {
+  "id": "en_0455",
+  "lang": "en",
+  "kind": "ward",
+  "text": "We have two empty beds in the female ward, beds four and nine, both ready now."
+ },
+ {
+  "id": "en_0456",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Pharmacy has confirmed the warfarin for bed fifteen will be sent up within the hour."
+ },
+ {
+  "id": "en_0457",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Bed three is on hold for a patient coming up from emergency with pneumonia."
+ },
+ {
+  "id": "en_0458",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Mr Ravi's discharge summary is done, but his family can only pick him up after six this evening."
+ },
+ {
+  "id": "en_0459",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The full blood count for bed eleven is back. Platelets are 85, up from 60 yesterday."
+ },
+ {
+  "id": "en_0460",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The drip for bed twenty has about one hour left. Shall I prepare the next bag?"
+ },
+ {
+  "id": "en_0461",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Pharmacy says the budesonide inhaler is out of stock, so they're suggesting an alternative."
+ },
+ {
+  "id": "en_0462",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Doctor, bed eight's blood pressure this morning is 160 over 100, and he has no symptoms."
+ },
+ {
+  "id": "en_0463",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The ward is at full capacity now, and two patients are waiting in emergency for beds."
+ },
+ {
+  "id": "en_0464",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Bed sixteen's guarantee letter was approved at noon, so he can go once the doctor signs."
+ },
+ {
+  "id": "en_0465",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Bed two's sugar level before lunch was 3.8. We've given juice and will recheck in fifteen minutes."
+ },
+ {
+  "id": "en_0466",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Madam Siti's chest X-ray is done, but the report hasn't been uploaded yet."
+ },
+ {
+  "id": "en_0467",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Dr Wong wants bed nine on hourly observations overnight, including oxygen saturation."
+ },
+ {
+  "id": "en_0468",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The isolation room is free, so the suspected TB case can move in after lunch."
+ },
+ {
+  "id": "en_0469",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Physiotherapy has reviewed bed five and cleared him to walk with a frame."
+ },
+ {
+  "id": "en_0470",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Bed fourteen's family has asked for a meeting with the doctor about the discharge plan."
+ },
+ {
+  "id": "en_0471",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Pharmacy will only release the insulin pens after the doctor updates the prescription."
+ },
+ {
+  "id": "en_0472",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Discharge for bed ten is delayed because the insurance company needs one more document."
+ },
+ {
+  "id": "en_0473",
+  "lang": "en",
+  "kind": "ward",
+  "text": "We're still waiting on bed nineteen's potassium level before starting the drip."
+ },
+ {
+  "id": "en_0474",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Bed six's urine culture confirms a urinary tract infection, sensitive to the current antibiotic."
+ },
+ {
+  "id": "en_0475",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Bed seventeen is going down for CT at two. The porter has been informed."
+ },
+ {
+  "id": "en_0476",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Housekeeping has finished beds one and eighteen. Both are ready for admission."
+ },
+ {
+  "id": "en_0477",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The patient in bed twelve refused the evening injection. I've documented it and informed the doctor."
+ },
+ {
+  "id": "en_0478",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Two discharges are confirmed before noon, beds three and thirteen, which frees space for the afternoon admissions."
+ },
+ {
+  "id": "en_0479",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The guarantee letter hasn't come in yet, so the family is asking whether they can pay a deposit instead."
+ },
+ {
+  "id": "en_0480",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Bed twenty-one's troponin is still pending; the lab says about forty minutes."
+ },
+ {
+  "id": "en_0481",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Pharmacy is preparing take-home medicines for three patients. They'll be ready by four."
+ },
+ {
+  "id": "en_0482",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Sister, the new admission is Mr Kumar, sixty-eight, heart failure with leg swelling. He's coming up now."
+ },
+ {
+  "id": "en_0483",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The dengue patient in bed four has a haematocrit of 45, slightly up from this morning."
+ },
+ {
+  "id": "en_0484",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Bed seven's ECG shows no new changes compared to yesterday."
+ },
+ {
+  "id": "en_0485",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The drip for bed eleven has been stopped, since he's drinking well now."
+ },
+ {
+  "id": "en_0486",
+  "lang": "en",
+  "kind": "ward",
+  "text": "We're short one nurse on the night shift. The supervisor is arranging relief."
+ },
+ {
+  "id": "en_0487",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Bed fifteen is ready for discharge, but transport isn't available until tomorrow morning."
+ },
+ {
+  "id": "en_0488",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The patient in bed nine has been nil by mouth since midnight for the scope."
+ },
+ {
+  "id": "en_0489",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Lab results for bed two: haemoglobin is 9.2, down from 10.5 two days ago."
+ },
+ {
+  "id": "en_0490",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Madam Chong's discharge is on hold until the social worker confirms the home care arrangements."
+ },
+ {
+  "id": "en_0491",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The medicine for bed eighteen was sent to the wrong ward. Pharmacy is re-sending it now."
+ },
+ {
+  "id": "en_0492",
+  "lang": "en",
+  "kind": "ward",
+  "text": "All the morning bloods have been collected, and results should start coming in by ten."
+ },
+ {
+  "id": "en_0493",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Bed twenty has spiked a temperature of 38.7. Blood cultures have been taken."
+ },
+ {
+  "id": "en_0494",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The echocardiogram for bed six is scheduled for tomorrow at nine."
+ },
+ {
+  "id": "en_0495",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Insurance has approved three more days of admission for bed sixteen."
+ },
+ {
+  "id": "en_0496",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Beds eight and twelve need the doctor to sign the discharge before pharmacy can dispense."
+ },
+ {
+  "id": "en_0497",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The patient in bed one is asking for his MC and a letter for his employer."
+ },
+ {
+  "id": "en_0498",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The stroke patient in bed ten passed his swallow test, so he can start a soft diet."
+ },
+ {
+  "id": "en_0499",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Bed five's oxygen is down to two litres, with saturation holding at ninety-five percent."
+ },
+ {
+  "id": "en_0500",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The dialysis unit can take bed nineteen at three this afternoon."
+ },
+ {
+  "id": "en_0501",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Doctor, the chest X-ray for bed thirteen is in the system and ready for you to review."
+ },
+ {
+  "id": "en_0502",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Pharmacy is asking whether bed three should continue the omeprazole on discharge."
+ },
+ {
+  "id": "en_0503",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Bed seven's family is here to collect him, and the discharge letter is printed."
+ },
+ {
+  "id": "en_0504",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Bed nine's bedtime sugar level was 18. Do you want to give the correction dose?"
+ },
+ {
+  "id": "en_0505",
+  "lang": "en",
+  "kind": "ward",
+  "text": "We've moved the COPD patient to bed two, closer to the nursing station."
+ },
+ {
+  "id": "en_0506",
+  "lang": "en",
+  "kind": "ward",
+  "text": "The guarantee letter for bed eleven came through, but it only covers part of the bill."
+ },
+ {
+  "id": "en_0507",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Bed fourteen's sodium is still pending, because the lab had to repeat the sample."
+ },
+ {
+  "id": "en_0508",
+  "lang": "en",
+  "kind": "ward",
+  "text": "There are three beds free now, but one is reserved for the post-op case."
+ },
+ {
+  "id": "en_0509",
+  "lang": "en",
+  "kind": "ward",
+  "text": "Madam Aisyah in bed four is ready to go home, and her husband is on the way."
+ },
+ {
+  "id": "en_0510",
+  "lang": "en",
+  "kind": "ward",
+  "text": "For handover, bed sixteen had one episode of chest pain; ECG unchanged and the doctor has reviewed."
+ },
+ {
+  "id": "en_0511",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "It's quite normal to feel tired for a week or two after pneumonia. Your energy will come back gradually."
+ },
+ {
+  "id": "en_0512",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Don't worry, auntie, the bruising around the drip site will fade in a few days."
+ },
+ {
+  "id": "en_0513",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "A mild cough can linger for up to three weeks after a cold. It doesn't mean the infection is getting worse."
+ },
+ {
+  "id": "en_0514",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your blood pressure is 130 over 80 today, which is much better than last time."
+ },
+ {
+  "id": "en_0515",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your sugar reading of eight after lunch is within a reasonable range. You're doing well."
+ },
+ {
+  "id": "en_0516",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Feeling a bit dizzy when you stand up quickly is common with blood pressure tablets. Just take it slowly."
+ },
+ {
+  "id": "en_0517",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The rash from the virus usually fades on its own within a week, and it isn't contagious once the fever is gone."
+ },
+ {
+  "id": "en_0518",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The doctor has checked the ECG, and your heart rhythm is normal, uncle."
+ },
+ {
+  "id": "en_0519",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Palpitations after strong coffee are quite common, and your heart tracing looks fine."
+ },
+ {
+  "id": "en_0520",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Loose stools for a day or two on antibiotics are common and usually settle without treatment."
+ },
+ {
+  "id": "en_0521",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "It's okay to feel anxious about going home. You can message us on the app if you have questions."
+ },
+ {
+  "id": "en_0522",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your chest X-ray is clear now, so the pneumonia has resolved."
+ },
+ {
+  "id": "en_0523",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "A fever that comes and goes in the first three days of a viral infection is expected."
+ },
+ {
+  "id": "en_0524",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Some leg swelling at the end of the day is common. We'll keep an eye on it at your next visit."
+ },
+ {
+  "id": "en_0525",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your haemoglobin has gone up to 11, so the iron tablets are working."
+ },
+ {
+  "id": "en_0526",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Yes, you can still eat rice, uncle. Just a smaller portion, with more vegetables on the side."
+ },
+ {
+  "id": "en_0527",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "It's normal for your stool to look dark while you're taking iron tablets."
+ },
+ {
+  "id": "en_0528",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "A little wheezing when you catch a cold is common with asthma. Using your inhaler properly will help."
+ },
+ {
+  "id": "en_0529",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The headache you're describing sounds like a tension headache. Rest and paracetamol should help."
+ },
+ {
+  "id": "en_0530",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your platelets are rising again, which means you're recovering from the dengue."
+ },
+ {
+  "id": "en_0531",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Many people feel emotional after a stroke. It's part of the recovery, and it does get better."
+ },
+ {
+  "id": "en_0532",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "You're not alone in this. Many of our patients manage diabetes well with small daily changes."
+ },
+ {
+  "id": "en_0533",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The results are all normal, auntie. No sign of infection in the urine this time."
+ },
+ {
+  "id": "en_0534",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your son's fever came down after the paracetamol, and he's drinking again. That's a good sign."
+ },
+ {
+  "id": "en_0535",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Most children with gastroenteritis get better within three to five days."
+ },
+ {
+  "id": "en_0536",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "It's alright to ask questions. Nothing is too small when it comes to your health."
+ },
+ {
+  "id": "en_0537",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "A temperature of 37.6 isn't really a fever. We'll just keep monitoring."
+ },
+ {
+  "id": "en_0538",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The swelling in your big toe should settle within a few days with the medicine."
+ },
+ {
+  "id": "en_0539",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The chest pain you felt is coming from the muscles, not the heart. The tests confirm that."
+ },
+ {
+  "id": "en_0540",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your oxygen level is ninety-eight percent, which is very good."
+ },
+ {
+  "id": "en_0541",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "You may hear a slight whistle in your chest for a few days; it'll ease as the inflammation goes down."
+ },
+ {
+  "id": "en_0542",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "It's common to feel a bit breathless on the stairs after a week in bed."
+ },
+ {
+  "id": "en_0543",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The needle mark will be sore for a day, but it won't leave a scar."
+ },
+ {
+  "id": "en_0544",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "A small lump at the injection site is common and should go away in a couple of days."
+ },
+ {
+  "id": "en_0545",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Don't blame yourself, auntie. Children catch these infections easily, especially at school."
+ },
+ {
+  "id": "en_0546",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The doctor says your heart is pumping better than last month, so the medicines are helping."
+ },
+ {
+  "id": "en_0547",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your mother is comfortable now and sleeping. The pain medicine is working."
+ },
+ {
+  "id": "en_0548",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Some forgetfulness after a long illness is normal, and it usually improves as she regains strength."
+ },
+ {
+  "id": "en_0549",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your sinus pressure should ease in a few days once the swelling goes down."
+ },
+ {
+  "id": "en_0550",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The cough syrup won't cure the cough, but it can help you sleep better at night."
+ },
+ {
+  "id": "en_0551",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "It's safe to hug your family now. After a week, the flu is no longer infectious."
+ },
+ {
+  "id": "en_0552",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "TB is fully curable if you finish the treatment, and you're already two months in. That's great progress."
+ },
+ {
+  "id": "en_0553",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "After two weeks of TB treatment, you're much less likely to spread it to others."
+ },
+ {
+  "id": "en_0554",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "A bit of tummy cramping with the diarrhoea is expected, and it'll ease as things settle."
+ },
+ {
+  "id": "en_0555",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your kidney function is stable, so there's no need to change your medicines."
+ },
+ {
+  "id": "en_0556",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your cholesterol has improved since starting the atorvastatin. Keep it up."
+ },
+ {
+  "id": "en_0557",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The stitches look clean and are healing nicely, with no signs of infection."
+ },
+ {
+  "id": "en_0558",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "It's normal for the scar to feel itchy while it heals. Try not to scratch it."
+ },
+ {
+  "id": "en_0559",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The dizziness should improve in a day or two as you drink more fluids."
+ },
+ {
+  "id": "en_0560",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your heart rate is a little fast because of the fever. It'll slow down once the temperature settles."
+ },
+ {
+  "id": "en_0561",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "You did the right thing by coming in early, uncle."
+ },
+ {
+  "id": "en_0562",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your blood test shows no dengue, so this is most likely a common viral fever."
+ },
+ {
+  "id": "en_0563",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The redness in your eye is from a small burst vessel. It looks worse than it is and clears in about two weeks."
+ },
+ {
+  "id": "en_0564",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Mild nausea in the morning from the new tablet usually wears off after a week."
+ },
+ {
+  "id": "en_0565",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your baby's weight gain is right on track. You're feeding her well."
+ },
+ {
+  "id": "en_0566",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Feeling cold and shivery before a fever spikes is common. It doesn't mean something has gone wrong."
+ },
+ {
+  "id": "en_0567",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your husband's scan shows no bleeding in the brain, which is good news."
+ },
+ {
+  "id": "en_0568",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "A little bleeding from the gums when brushing is common on clopidogrel. Use a soft toothbrush."
+ },
+ {
+  "id": "en_0569",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "It's quite normal to pass urine more often in the morning after the water tablet."
+ },
+ {
+  "id": "en_0570",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your reading today is 138 over 86. That's close to target, and we'll recheck in a month."
+ },
+ {
+  "id": "en_0571",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Don't worry about the orange urine; it's from the TB medicine, not blood."
+ },
+ {
+  "id": "en_0572",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The wheeze has cleared, and your lungs sound much better today."
+ },
+ {
+  "id": "en_0573",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "You're not a burden, auntie. Helping you is exactly why we're here."
+ },
+ {
+  "id": "en_0574",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Mild itching as the rash fades is part of the healing, and the cetirizine will help."
+ },
+ {
+  "id": "en_0575",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The vomiting has stopped for six hours now, so we can start small sips of water."
+ },
+ {
+  "id": "en_0576",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your blood sugar has been steady all week in the ward. That's very encouraging."
+ },
+ {
+  "id": "en_0577",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "It's perfectly fine to take paracetamol with your blood pressure tablets."
+ },
+ {
+  "id": "en_0578",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The confusion yesterday was from the infection. He's much more alert today."
+ },
+ {
+  "id": "en_0579",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "A cold doesn't usually need antibiotics. Your body will fight it off in about a week."
+ },
+ {
+  "id": "en_0580",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The palpitations you felt were extra beats, which are harmless in most people."
+ },
+ {
+  "id": "en_0581",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The results aren't all out yet, but so far everything we've checked has been reassuring."
+ },
+ {
+  "id": "en_0582",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your child's breathing is much calmer after the nebuliser. We'll watch her for another hour."
+ },
+ {
+  "id": "en_0583",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Joint pain after dengue can last a few weeks, but it does go away completely."
+ },
+ {
+  "id": "en_0584",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Some hair shedding a few months after a high fever is common, and it grows back."
+ },
+ {
+  "id": "en_0585",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Starting insulin doesn't mean you've failed. It's just another tool to keep you healthy."
+ },
+ {
+  "id": "en_0586",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your weight is down by one kilo, so the extra fluid is coming off nicely."
+ },
+ {
+  "id": "en_0587",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "A sugar reading of six this morning is exactly where we want it."
+ },
+ {
+  "id": "en_0588",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Coughing up a bit of white phlegm is normal as your chest clears."
+ },
+ {
+  "id": "en_0589",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "We'll take good care of your father overnight. You can go home and get some rest."
+ },
+ {
+  "id": "en_0590",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The mild headache after the scan usually settles within a day, so just drink plenty of water."
+ },
+ {
+  "id": "en_0591",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "It's alright if you can't finish every hospital meal. Just try a few spoons at a time."
+ },
+ {
+  "id": "en_0592",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "You're recovering faster than most people your age, and the physio is very pleased."
+ },
+ {
+  "id": "en_0593",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Your mother's blood pressure is 120 over 70, nicely controlled."
+ },
+ {
+  "id": "en_0594",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "The doctor has gone through the scan, and there's nothing serious to worry about."
+ },
+ {
+  "id": "en_0595",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "A little shortness of breath on the stairs is common while you recover from bronchitis."
+ },
+ {
+  "id": "en_0596",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "His temperature is 37.2 now, down from thirty-nine this morning."
+ },
+ {
+  "id": "en_0597",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Some people notice a metallic taste with the antibiotic. It goes away once you finish the course."
+ },
+ {
+  "id": "en_0598",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "We've checked everything, and your heart is fine. The chest discomfort was from gastric reflux."
+ },
+ {
+  "id": "en_0599",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Feeling low after a long hospital stay is common. We can talk about it whenever you're ready."
+ },
+ {
+  "id": "en_0600",
+  "lang": "en",
+  "kind": "reassure",
+  "text": "Take it one day at a time, uncle. You're making good progress."
+ }
+]

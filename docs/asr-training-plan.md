@@ -115,14 +115,50 @@ Start here when continuing this work.
 - 8,000 of 8,480 turns voiced (29.2 h) in `~/zyt/data/sona-asr/audio/`. The last 480 were never voiced because the Gemini monthly spend cap (RM130) was reached; the user chose to train without them.
 - The Baseten secret `hf_access_token` holds a Hugging Face write token for user `zyt-ngchwanlii`; the same token is at `~/.cache/huggingface/token_write`.
 
-**Known problem, being fixed:** at full scale most clips contain the voicing instruction read aloud ("Say this as a Malaysian doctor…"). The first check missed it because it only transcribed unusually long clips. `tools/asr-data/trim.py` transcribes every clip, cuts the instruction off with Qwen3-ForcedAligner and writes the clips it cannot fix to `~/zyt/data/sona-asr/bad.txt`. It runs detached (log: `~/zyt/data/sona-asr/trim.log`) and resumes where it stopped if rerun. The dataset built before this fix (`~/zyt/data/sona-asr/dataset/`) is contaminated; rebuild it.
+- Instruction leak fixed: 7,968 of 8,000 clips had the voicing instruction read aloud. `tools/asr-data/trim.py` cut it off in 7,964; the 4 it could not fix are in `~/zyt/data/sona-asr/bad.txt`. The user listened to three trimmed clips and confirmed them clean. (`trim.py` now empties the MPS cache per batch; without that it held 30+ GB and swapped.)
+- Dataset rebuilt (`~/zyt/data/sona-asr/dataset/`): 15,102 train rows (7,551 clips, each clean and with one background scene), 445 test, 445 test_noisy. Uploaded by `upload.py` to the private dataset `zhiyuantechnology/sona-manglish-asr`.
+- **Base model baseline** (synthetic held-out test sets):
 
-**Next**
-1. Wait for `trim.py` to finish (its last log line gives clips, leaked, trimmed and still bad), or rerun it.
-2. Send the user three trimmed clips to confirm they sound clean.
-3. Rebuild the dataset: `python build_dataset.py`, then score the base model with `python baseline.py`. The earlier 101% mixed error rate came from the leaked instructions and is not a valid baseline.
-4. Upload the dataset as a private Hugging Face dataset (columns `audio`, `text`) and run Baseten's `ml-cookbook/examples/qwen3-asr-transformers` recipe with `HF_TOKEN_SECRET_NAME=hf_access_token` and `LANGUAGE=` (mixed-language targets), 1×H100.
-5. Score the fine-tuned checkpoint with `python baseline.py <checkpoint>` against the pass bar.
+| Set | Mixed error | Mandarin char error | Drug names |
+| --- | --- | --- | --- |
+| test | 14.4% | 16.1% | 20/31 (65%) |
+| test_noisy | 14.9% | 16.2% | 22/31 (71%) |
+
+The base model already meets the ≤ 15% mixed error bar on synthetic audio; drug names (≥ 90%) are the gap the fine-tune must close. The real test sets (SEAME, Revolab, FLEURS) are not scored yet.
+
+- **Synthetic-only run done** (Baseten project `qzk97kq`, job `q9z26xw`, 2 epochs, 234 steps, 35 min, ~$3.80). Checkpoints downloaded to `~/zyt/data/sona-asr/ckpt/`. Real-speech sets: `real_test.py` builds FLEURS Malay, Mandarin and English tests (300 clips each).
+
+| Set | Base | Epoch 1 (`checkpoint-117`) | Epoch 2 (`checkpoint-234`) |
+| --- | --- | --- | --- |
+| Synthetic test, mixed error | 14.4% | 3.9% | 3.7% |
+| Synthetic test, drug names | 20/31 | 30/31 | 30/31 |
+| Synthetic noisy, mixed error | 14.9% | 4.3% | 4.4% |
+| FLEURS Malay | 10.9% | 11.9% | 12.6% |
+| FLEURS Mandarin | 4.6% | 4.2% | 4.1% |
+| FLEURS English | 4.7% | 5.4% | 5.5% |
+
+Synthetic-only training fixes Manglish and drug names but drifts on real Malay and English, more with the second epoch; it fails the "English no worse than base" bar. Epoch 1 is the better candidate. Per-clip transcripts (`baseline.py` now writes `~/zyt/data/sona-asr/scores/`) show whether the drift is mishearing or formatting.
+
+- **Mixed run done and it is the candidate** (job `qkg4vdw`, 1 epoch over synthetic + FLEURS train, config `mixed` of the HF dataset, built by `mixed_data.py`; 183 steps, ~52 min, ~$5.60; checkpoint at `~/zyt/data/sona-asr/ckpt/mixed-final`, on Baseten as `final`, and published as the private model `zhiyuantechnology/sona-qwen3-asr-manglish`, which box ② loads). Extra real tests from `real_test.py`: Revolab public split without its FLEURS clips (667 clips, real Malaysian speech, eval only) and `real_voice` (the user reading the 15 fictional lines in `real_voice_lines.json`, recorded on a phone, test only).
+
+| Set | Base | Synthetic only, epoch 1 | Mixed |
+| --- | --- | --- | --- |
+| Synthetic test, mixed error | 14.4% | 3.9% | 4.1% |
+| Synthetic test, drug names | 20/31 | 30/31 | 30/31 |
+| FLEURS Malay | 10.9% | 11.9% | 9.8% |
+| FLEURS Mandarin | 4.6% | 4.2% | 3.1% |
+| FLEURS English | 4.7% | 5.4% | 4.6% |
+| Revolab | 19.6% | 19.5% | 17.7% |
+| User's voice, medical Manglish | 21.3% | 11.4% | 10.0% |
+| User's voice, drug names | 8/10 | 10/10 | 10/10 |
+
+The Mixed model passes every bar. FLEURS scores flatter it (it trained on FLEURS train, same read style); Revolab and the user's voice are the fairer checks. Still weak: 咳 heard as 渴, and the HbA1c line fails for every model. The user's voice is one speaker and 15 lines.
+
+**Next:** deploy the Mixed checkpoint as the new box ② version (paid, needs the user's approval), keeping the base model as rollback.
+
+**Earlier steps (kept for the record)**
+1. With the user's manual approval, submit a smoke test on Baseten (`MAX_SAMPLES=200 MAX_STEPS=5`, ~$2), then the full run. The job goes through the Baseten MCP `create_training_job`: image `pytorch/pytorch:2.7.0-cuda12.8-cudnn9-runtime`, weights `hf://Qwen/Qwen3-ASR-1.7B` at `/app/models/Qwen/Qwen3-ASR-1.7B`, start command downloads `basetenlabs/ml-cookbook` at `afe9b86` and runs `examples/qwen3-asr-transformers/training/run.sh`. Set `DATASET_REPO`, `DATASET_SPLIT=train`, `DATASET_CONFIG=default`, `LANGUAGE=None`, `MAX_SAMPLES=100000`, `EVAL_SAMPLES=200` and `HF_TOKEN` (secret `hf_access_token`) directly on the job: the recipe's `config.py` does not forward dataset variables, so `baseten train push` would silently train on LibriSpeech. Never pass an empty value: Baseten drops empty variables and `run.sh` then falls back to its LibriSpeech defaults (`clean`, `English`, 800 samples). The first smoke test (job `wp7g19w`, project `qzk97kq`) failed on exactly this.
+2. Score the fine-tuned checkpoint with `python baseline.py <checkpoint>` against the pass bar, and score base and fine-tuned on the real test sets.
 
 **Tidy up afterwards:** delete the chat-shared Hugging Face and Gemini tokens and create fresh ones; delete the Cloudflare `sona-stage0-review` Worker and R2 bucket.
 

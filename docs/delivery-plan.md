@@ -104,7 +104,7 @@ Train a model only if it fails its day 1–3 baseline. Because Manglish is the p
 | Priority | Model | Where | Method | Data | GPU time |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Qwen3-ASR-1.7B | Baseten Training Jobs, 1×H100 | Baseten's `qwen3-asr-transformers` recipe | ~30 h synthetic Manglish consultations plus ~30 h licensed real speech; see the [ASR training plan](asr-training-plan.md) | ~2–6 h per run |
-| 2 | VoxCPM2 | Baseten Training Jobs, 1×H100 | Official LoRA | 1–3 h of one voice actor reading Manglish scripts | ~2–5 h |
+| 2 | VoxCPM2 | Baseten Training Jobs, 1×H100 | Official full fine-tune (done 29 Sep; LoRA was too weak) | 4.35 h of one Gemini voice (Kore) reading single-language hospital replies; see [TTS training](tts-training.md) | ~30 min |
 | 3 | Laya | Kaggle free T4 | Laya notebook plus calibration | Synthetic composition decisions from the catalogue and fixtures | Free |
 | Conditional | Gemma 4 (Unsloth), Nemotron | Baseten Training Jobs | Only if the baseline fails | — | — |
 | Never | MedGemma, ForcedAligner, OpenMed | — | — | — | — |

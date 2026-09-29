@@ -20,6 +20,7 @@ for i in range(0, len(todo), 16):
     chunk = todo[i:i + 16]
     for p, r in zip(chunk, asr.transcribe([(load16(p), 16000) for p in chunk])):
         p.with_suffix(".asr2").write_text(r.text)
+    torch.mps.empty_cache()  # MPS cache otherwise grows past 30 GB over variable-length batches
     if i % 800 == 0: print("pass 1", i, "/", len(todo), flush=True)
 
 leaked = [p for p in sorted(AUDIO.glob("*.wav")) if LEAK.search(p.with_suffix(".asr2").read_text())]
@@ -37,6 +38,7 @@ for i in range(0, len(leaked), 16):  # batched: one clip at a time takes ~4 s
         if not ends: continue
         start = int((ends[0] + 0.15) * sr); tail = r.text.split("Chinese", 1)[-1].lstrip(" .,")
         sf.write(p, x[start:], sr); p.with_suffix(".asr2").write_text(tail); trimmed += 1
+    torch.mps.empty_cache()
     if i % 800 == 0: print("pass 2", i, "/", len(leaked), flush=True)
 bad = [p.stem for p in sorted(AUDIO.glob("*.wav")) if LEAK.search(t := p.with_suffix(".asr2").read_text()) or repeated(t)]
 (DATA / "bad.txt").write_text("\n".join(bad))
