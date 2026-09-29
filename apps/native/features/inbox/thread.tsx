@@ -7,6 +7,7 @@ import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withDelay,
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { Drafting } from "@/components/sona/model-answer";
+import { LinearGradient } from "expo-linear-gradient";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Caption, ErrorLine, TextLink } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
@@ -163,6 +164,9 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
         </View> : <Caption>{role.why("messages.reply") ?? "Only a doctor or a nurse replies."}</Caption>}
       </View>}
     </KeyboardAvoidingView>
+    {/* The header floats over the thread; a canvas fade keeps scrolled bubbles (dark ones too) from reading through it. */}
+    <LinearGradient pointerEvents="none" colors={[palette.canvas, "rgba(245,246,248,0.94)", "rgba(245,246,248,0)"]} locations={[0, 0.72, 1]}
+      style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top + 78 }} />
     {flight && <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 0, width: flight.width, transformOrigin: "left top" }, flightStyle]}>
       <Text style={{ ...type.callout, color: palette.ink }}>{flight.text}</Text>
     </Animated.View>}
