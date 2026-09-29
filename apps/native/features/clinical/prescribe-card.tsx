@@ -44,9 +44,9 @@ export function Ring({ done, total }: { done: number; total: number }) {
   </View>;
 }
 
-export function Pill({ label, on, tone = "blue", onPress }: { label: string; on: boolean; tone?: "blue" | "amber"; onPress: () => void }) {
+export function Pill({ label, on, tone = "blue", onPress, a11y }: { label: string; on: boolean; tone?: "blue" | "amber"; onPress: () => void; a11y?: string }) {
   const ink = tone === "amber" ? palette.amber : palette.blue;
-  return <Pressable accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={label} onPress={() => { haptic("select"); onPress(); }} hitSlop={6}
+  return <Pressable accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={a11y ?? label} onPress={() => { haptic("select"); onPress(); }} hitSlop={6}
     style={{ minWidth: 52, height: 34, paddingHorizontal: 14, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: on ? ink : "rgba(20,28,40,0.06)" }}>
     <Text style={{ fontSize: 14, fontWeight: "600", color: on ? palette.white : palette.ink }}>{label}</Text>
   </Pressable>;

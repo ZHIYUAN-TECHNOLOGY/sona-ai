@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { clock, dosesToday, dueNow, early, nextDose, untilLine, weekOf, whenWords } from "./model";
+import { clock, doseOf, dosesToday, dueNow, early, nextDose, untilLine, weekOf, whenWords } from "./model";
 
 // Discharged 10:00 Malaysia time (02:00Z) on 27 Sep; azithromycin 08:00 for 2 more doses, cetirizine nightly at 21:00.
 const out = "2026-09-27T02:00:00Z";
@@ -19,6 +19,16 @@ test("the next dose is the earliest one after leaving hospital that is not taken
   expect(second.name).toBe("Azithromycin");
   expect(second.line).toBe("1 tablet, with or without food");
   expect(second.dueAt.toISOString()).toBe("2026-09-28T00:00:00.000Z");
+});
+
+test("a reminder opens its own dose, until it is taken or if it is not in the plan", () => {
+  const key = "Azithromycin@2026-09-28T00:00:00.000Z";
+  expect(doseOf(meds, key, [])).toEqual({ name: "Azithromycin", line: "1 tablet, with or without food", dueAt: new Date("2026-09-28T00:00:00Z"), key });
+  expect(doseOf(meds, key, [key])).toBeUndefined();
+  expect(doseOf(meds, "Warfarin@2026-09-28T00:00:00.000Z", [])).toBeUndefined();
+  expect(doseOf(meds, "Paracetamol@2026-09-28T00:00:00.000Z", [])).toBeUndefined(); // as needed: nothing to remind
+  expect(doseOf(meds, "not a key", [])).toBeUndefined();
+  expect(doseOf(meds, undefined, [])).toBeUndefined();
 });
 
 test("a course stops after its doses; medicines without times never appear", () => {

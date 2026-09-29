@@ -27,7 +27,7 @@ export const shortDate = (at: Date) => at.toLocaleDateString("en-GB", { weekday:
 export function fixtureCheckIns(patient: Patient, discharge: DischargeState | undefined, replies: Record<string, Reply[]>, now: Date): CheckIn[] {
   if (!discharge?.dischargedAt) return [];
   const at = new Date(discharge.dischargedAt);
-  return checkInSchedule(at).map(({ day, dueAt }) => {
+  return checkInSchedule(at, discharge.checkInDays).map(({ day, dueAt }) => {
     const id = `check-in:${patient.encounterId}:${day}`;
     const mine = (replies[id] ?? []).filter(r => r.receivedAt >= at);
     return {
@@ -43,8 +43,8 @@ export function fixtureReply(patientName: string, text: string, at: Date): Reply
   return { id, text, label, source: "fixture", receivedAt: at, task: flag ? { id, title: flag.title, completed: false } : null };
 }
 
-/** The receipt's line: "Day 2 Mon 28 Sep · Day 7 Sat 3 Oct". */
-export const scheduleLine = (dischargedAt: Date) => checkInSchedule(dischargedAt).map(c => `Day ${c.day} ${shortDate(c.dueAt)}`).join(" · ");
+/** The receipt's line for the chosen days: "Day 2 Mon 28 Sep · Day 7 Sat 3 Oct". */
+export const scheduleLine = (dischargedAt: Date, days?: number[]) => checkInSchedule(dischargedAt, days).map(c => `Day ${c.day} ${shortDate(c.dueAt)}`).join(" · ");
 
 /** Tasks already shown as a flagged check-in row, so My Day does not list them twice. */
 export const flaggedTaskIds = (checkIns: CheckIn[]) => checkIns.flatMap(c => c.replies.flatMap(r => (r.task ? [r.task.id] : [])));

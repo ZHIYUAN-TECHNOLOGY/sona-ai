@@ -20,10 +20,10 @@ import { captureSample } from "./training";
  * the model seam; worse or urgent replies become one task for the attending doctor.
  */
 
-/** Called by discharge.request; IDs are per encounter and day, so a replayed discharge schedules nothing new. */
-export async function scheduleCheckIns(db: Context["db"], hospitalId: string, patient: { id: string; name: string }, encounterId: string, language: Language, dischargedAt: Date) {
+/** Called by discharge.request with the chosen days; IDs are per encounter and day, so a replayed discharge schedules nothing new. */
+export async function scheduleCheckIns(db: Context["db"], hospitalId: string, patient: { id: string; name: string }, encounterId: string, language: Language, dischargedAt: Date, days?: number[]) {
   const first = patient.name.split(" ")[0]!;
-  await db.insert(checkIns).values(checkInSchedule(dischargedAt).map(({ day, dueAt }) => ({
+  await db.insert(checkIns).values(checkInSchedule(dischargedAt, days).map(({ day, dueAt }) => ({
     id: `check-in:${encounterId}:${day}`, hospitalId, patientId: patient.id, encounterId, day, language, message: checkInMessage(first, language), dueAt,
   }))).onConflictDoNothing();
 }

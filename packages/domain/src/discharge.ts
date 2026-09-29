@@ -1,3 +1,4 @@
+import { defaultCheckInDays } from "./check-ins";
 import { followUpLine } from "./findings";
 import type { Encounter, Patient, PrescriptionCheck, Task } from "./types";
 
@@ -12,7 +13,8 @@ import type { Encounter, Patient, PrescriptionCheck, Task } from "./types";
  */
 export type Language = "ms" | "en" | "zh";
 export type FollowUp = "1w" | "2w" | "4w";
-export type DischargeState = { glReceived: boolean; medsConfirmed: boolean; followUp?: FollowUp; language: Language; dischargedAt?: string; savedMinutes?: number };
+/** `checkInDays`: the check-in days the doctor chose (sorted); unset until changed, when the condition's suggestion applies (defaultCheckInDays). */
+export type DischargeState = { glReceived: boolean; medsConfirmed: boolean; followUp?: FollowUp; language: Language; checkInDays?: number[]; dischargedAt?: string; savedMinutes?: number };
 export type MedChange = { name: string; change: "changed" | "new" | "stopped" | "unchanged"; detail: string };
 export type DischargePlan = {
   bed: string; fitMinutesAgo: number; insurer: string; glRequestedAt: string;
@@ -214,8 +216,11 @@ export function decideDischarge(state: DischargeState, plan: DischargePlan, comm
   return { status: "discharged", encounterId, requestId, approvedBy, dischargedAt: at.toISOString(), savedMinutes: minutesSaved(fitAt, at) };
 }
 
+/** The check-in days this discharge uses: the doctor's pick, else the plan's condition suggests them. */
+export const checkInDaysOf = (state: DischargeState, plan: DischargePlan) => state.checkInDays?.length ? state.checkInDays : defaultCheckInDays(plan.condition);
+
 export function discharge(encounter: Encounter, patient: Patient, fitAt: Date, at: Date): Encounter {
-  const state = encounter.discharge ?? EMPTY_DISCHARGE;
-  const tasks = dischargeTasks(patient, state, planFor(patient), at).filter(t => !encounter.tasks.some(e => e.id === t.id));
-  return { ...encounter, discharge: { ...state, dischargedAt: at.toISOString(), savedMinutes: minutesSaved(fitAt, at) }, tasks: [...encounter.tasks, ...tasks] };
+  const state = encounter.discharge ?? EMPTY_DISCHARGE, plan = planFor(patient);
+  const tasks = dischargeTasks(patient, state, plan, at).filter(t => !encounter.tasks.some(e => e.id === t.id));
+  return { ...encounter, discharge: { ...state, checkInDays: checkInDaysOf(state, plan), dischargedAt: at.toISOString(), savedMinutes: minutesSaved(fitAt, at) }, tasks: [...encounter.tasks, ...tasks] };
 }

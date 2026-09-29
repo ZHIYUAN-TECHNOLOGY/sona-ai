@@ -1,11 +1,11 @@
 import { ORPCError } from "@orpc/server";
 import { admissions, encounters, findings, guaranteeLetters, labResults, patients, receipts, tasks } from "@sona-ai/db/schema/clinical";
-import { EMPTY_DISCHARGE, TYPICAL_WAIT_MINUTES, decideDischarge, dischargeChecks, dischargeTasks, planFor, type DischargeState, type Wait } from "@sona-ai/domain/discharge";
+import { EMPTY_DISCHARGE, TYPICAL_WAIT_MINUTES, checkInDaysOf, decideDischarge, dischargeChecks, dischargeTasks, planFor, type DischargeState, type Wait } from "@sona-ai/domain/discharge";
 import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { clockOf } from "../context";
-import { approvedCommandSchema, dischargeUpdateSchema } from "../contracts";
+import { dischargeRequestSchema, dischargeUpdateSchema } from "../contracts";
 import { protectedProcedure } from "../index";
 import { stubModels } from "../models";
 import { listFindings } from "./findings";
@@ -34,7 +34,7 @@ export const dischargeRouter = {
       .where(eq(encounters.id, encounterId));
     return loadEncounter(db, hospitalId, encounterId);
   }),
-  request: protectedProcedure.input(approvedCommandSchema).handler(async ({ context, input }) => {
+  request: protectedProcedure.input(dischargeRequestSchema).handler(async ({ context, input }) => {
     const { db, hospitalId, session } = context;
     assertApprover(session.user.id, input.approvedBy);
     const encounter = await loadEncounter(db, hospitalId, input.encounterId);
@@ -53,7 +53,9 @@ export const dischargeRouter = {
     // The patient's own plan: its blockers, follow-up and take-home list are what the server checks.
     const person = recordOf(row.patient, input.encounterId);
     const plan = planFor({ ...person, bed: row.admission.bed });
-    const state: DischargeState = { ...EMPTY_DISCHARGE, ...encounter.state.discharge, glReceived: !gl || gl.status === "received" };
+    const saved: DischargeState = { ...EMPTY_DISCHARGE, ...encounter.state.discharge, glReceived: !gl || gl.status === "received" };
+    // The check-in days go with the discharge: the ones sent now, else the saved pick, else the condition's suggestion.
+    const state: DischargeState = { ...saved, checkInDays: input.checkInDays ?? checkInDaysOf(saved, plan) };
     // The context's clock, so the check-in schedule follows a test's (or the demo's) day, not the wall clock.
     const at = clockOf(context);
     const fitAt = row.admission.fitAt ?? new Date(at.getTime() - plan.fitMinutesAgo * 60000);
@@ -77,7 +79,7 @@ export const dischargeRouter = {
       id: crypto.randomUUID(), hospitalId: hospitalId,encounterId: input.encounterId,
       kind: "discharge" as const, title: t.title, owner: t.owner, due: t.due, idempotencyKey: `discharge:${input.encounterId}:${t.id}`,
     }))).onConflictDoNothing();
-    await scheduleCheckIns(db, hospitalId, row.patient, input.encounterId, state.language, at);
+    await scheduleCheckIns(db, hospitalId, row.patient, input.encounterId, state.language, at, state.checkInDays);
     await db.update(admissions).set({ dischargedAt: at }).where(and(eq(admissions.id, row.admission.id), isNull(admissions.dischargedAt)));
     const discharged = { ...state, dischargedAt: at.toISOString(), savedMinutes };
     // Merged in place so a concurrent edit is neither lost nor needed to bump the revision.

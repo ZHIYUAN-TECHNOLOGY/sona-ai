@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import { newEncounter, patients } from "@/features/encounter/fixtures";
+import { fixtureCheckIns, scheduleLine } from "@/features/check-ins/model";
 import { EMPTY_DISCHARGE, canDischarge, discharge, dischargeChecks, planFor, formatMinutes, minutesSaved } from "./model";
 
 const amelia = patients.find(p => p.id === "SYN-1042");
@@ -28,4 +29,13 @@ test("discharging stamps the time and leaves follow-up tasks once", () => {
   expect(once.tasks.map(t => t.owner)).toEqual(["Clinic clerk", "Billing"]);
   expect(once.tasks[0].due).toBe(new Date(2026, 9, 2).toLocaleDateString([], { day: "numeric", month: "short" }));
   expect(discharge(once, amelia, at, at).tasks).toHaveLength(2);
+});
+
+test("discharging keeps the chosen check-in days, else the condition's, and the fixture check-ins follow them", () => {
+  const at = new Date("2026-09-26T15:40:00+08:00");
+  const encounter = { ...newEncounter(), discharge: { ...EMPTY_DISCHARGE, followUp: "2w" } };
+  expect(discharge(encounter, amelia, at, at).discharge.checkInDays).toEqual([2, 7]);
+  const chosen = discharge({ ...encounter, discharge: { ...encounter.discharge, checkInDays: [1, 3, 14] } }, amelia, at, at);
+  expect(fixtureCheckIns(amelia, chosen.discharge, {}, at).map(c => c.day)).toEqual([1, 3, 14]);
+  expect(scheduleLine(at, [1, 3])).toBe("Day 1 Sun 27 Sep · Day 3 Tue 29 Sep");
 });

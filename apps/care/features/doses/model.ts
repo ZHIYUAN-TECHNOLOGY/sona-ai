@@ -1,4 +1,4 @@
-import { doseKey, doseSlots as slots, MISSED_AFTER as GRACE, type ScheduledMed } from "@sona-ai/domain/doses";
+import { doseKey, doseSlots as slots, MISSED_AFTER as GRACE, parseDoseKey, type ScheduledMed } from "@sona-ai/domain/doses";
 import { formatDate, tFor, type Lang } from "@/lib/i18n";
 import "@/lib/strings";
 
@@ -15,6 +15,13 @@ export function nextDose(meds: ScheduledMed[], dischargedAt: string | undefined,
   return meds.flatMap(med => slots(med, out, until).map(dueAt => ({ name: med.name, line: med.take ?? med.line, dueAt, key: doseKey(med.name, dueAt) })))
     .filter(d => d.dueAt.getTime() > now.getTime() - GRACE && !taken.includes(d.key))
     .sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime())[0];
+}
+
+/** The dose a reminder opened (its key), while it is in the plan and not yet taken; else undefined. */
+export function doseOf(meds: ScheduledMed[], key: string | undefined, taken: string[]): Dose | undefined {
+  const parsed = key && !taken.includes(key) ? parseDoseKey(key) : undefined;
+  const med = parsed && meds.find(m => m.name === parsed.name && m.at?.length);
+  return med && parsed ? { name: med.name, line: med.take ?? med.line, dueAt: parsed.dueAt, key: doseKey(med.name, parsed.dueAt) } : undefined;
 }
 
 /** More than two hours before it is due: taking it now is early, so the screen asks quietly. */

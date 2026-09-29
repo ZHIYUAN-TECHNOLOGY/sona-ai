@@ -10,6 +10,12 @@ test("a push opens only its own screen", () => {
   expect(routeOf(undefined)).toBeUndefined();
 });
 
+test("a dose reminder opens the Medicine screen at its own dose", () => {
+  expect(routeOf("sona-care:///dose?key=Cetirizine%402026-09-27T13%3A00%3A00.000Z")).toBe("/dose?key=Cetirizine%402026-09-27T13%3A00%3A00.000Z");
+  expect(routeOf("sona-care:///dose")).toBe("/dose");
+  expect(routeOf("https://evil.test/dose?key=x")).toBeUndefined();
+});
+
 test("the home card asks once, and not when notifications are already allowed", () => {
   expect(asksForNudges(undefined, "undetermined")).toBe(true);
   expect(asksForNudges(undefined, "denied")).toBe(true);

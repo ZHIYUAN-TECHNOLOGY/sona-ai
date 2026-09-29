@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
-import { checkInMessage, checkInSchedule, readReply, replyFlag } from "./check-ins";
+import { checkInDaysLine, checkInMessage, checkInSchedule, defaultCheckInDays, readReply, replyFlag, toggleCheckInDay } from "./check-ins";
+import { checkInDaysOf, planFor } from "./discharge";
 
 test("check-ins go out on day 2 and day 7 after discharge, at 10:00 Malaysian time", () => {
   // Discharged Saturday 26 Sep at 15:40 (+08:00): Monday 28 Sep and Saturday 3 Oct.
@@ -34,4 +35,43 @@ test("Sona Care's quick answers read as the patient meant them, in each language
 
 test("a Malay reply saying the chest hurts, in either word order, is urgent", () => {
   expect(replyFlag("Amelia", "urgent", "Dada saya sakit sejak pagi")).toMatchObject({ title: "Amelia: chest pain after discharge", label: "urgent" });
+});
+
+test("each discharge condition suggests its own check-in days; anything else gets day 2 and day 7", () => {
+  expect(defaultCheckInDays("pneumonia")).toEqual([2, 7]);
+  expect(defaultCheckInDays("heart-failure")).toEqual([1, 3, 7, 14]);
+  expect(defaultCheckInDays("copd")).toEqual([2, 7, 14]);
+  expect(defaultCheckInDays("appendicitis")).toEqual([1, 3, 7]);
+  expect(defaultCheckInDays("diabetes")).toEqual([1, 3, 7]);
+  expect(defaultCheckInDays("cellulitis")).toEqual([2, 7]);
+  expect(defaultCheckInDays(undefined)).toEqual([2, 7]);
+  // A copy, so a caller cannot change the rule.
+  defaultCheckInDays("pneumonia").push(30);
+  expect(defaultCheckInDays("pneumonia")).toEqual([2, 7]);
+});
+
+test("the chosen days drive the schedule; none stored still means day 2 and day 7", () => {
+  const out = new Date("2026-09-26T15:40:00+08:00");
+  expect(checkInSchedule(out, [1, 3, 14]).map(c => [c.day, c.dueAt.toISOString()])).toEqual([
+    [1, "2026-09-27T02:00:00.000Z"], [3, "2026-09-29T02:00:00.000Z"], [14, "2026-10-10T02:00:00.000Z"],
+  ]);
+  expect(checkInSchedule(out, []).map(c => c.day)).toEqual([2, 7]);
+  expect(checkInSchedule(out, undefined).map(c => c.day)).toEqual([2, 7]);
+});
+
+test("a chip toggles on and off in order, never below one day or above six", () => {
+  expect(toggleCheckInDay([2, 7], 3)).toEqual([2, 3, 7]);
+  expect(toggleCheckInDay([2, 3, 7], 3)).toEqual([2, 7]);
+  expect(toggleCheckInDay([7], 7)).toEqual([7]);
+  expect(toggleCheckInDay([1, 2, 3, 5, 7, 10], 14)).toEqual([1, 2, 3, 5, 7, 10]);
+  expect(checkInDaysLine([2, 7])).toBe("day 2 and day 7");
+  expect(checkInDaysLine([1, 3, 7])).toBe("day 1, day 3 and day 7");
+  expect(checkInDaysLine([5])).toBe("day 5");
+});
+
+test("a discharge uses the doctor's pick, else its condition's suggestion", () => {
+  const heart = planFor({ id: "SYN-9", complaint: "Breathless, known heart failure." });
+  expect(heart.condition).toBe("heart-failure");
+  expect(checkInDaysOf({ glReceived: true, medsConfirmed: true, language: "en" }, heart)).toEqual([1, 3, 7, 14]);
+  expect(checkInDaysOf({ glReceived: true, medsConfirmed: true, language: "en", checkInDays: [5] }, heart)).toEqual([5]);
 });
