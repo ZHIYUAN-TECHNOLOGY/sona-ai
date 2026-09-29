@@ -1,16 +1,24 @@
 import { useIsFocused } from "expo-router";
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useState, useSyncExternalStore, type RefObject } from "react";
 import { AppState, Dimensions, type View } from "react-native";
 
-/** True while this screen is focused and the app is in the foreground; drives pausing idle loops. */
+// Set while a full-screen overlay (the attachments menu and its camera) hides the screen, so the
+// ambient wash, the orb and other idle loops stop redrawing under it.
+let covered = false;
+const coverListeners = new Set<() => void>();
+export function setScreenCovered(on: boolean) { if (covered !== on) { covered = on; coverListeners.forEach(l => l()); } }
+const subscribeCover = (l: () => void) => { coverListeners.add(l); return () => { coverListeners.delete(l); }; };
+
+/** True while this screen is focused, uncovered and the app is in the foreground; drives pausing idle loops. */
 export function useVisible() {
   const focused = useIsFocused();
+  const isCovered = useSyncExternalStore(subscribeCover, () => covered);
   const [foreground, setForeground] = useState(AppState.currentState === "active");
   useEffect(() => {
     const sub = AppState.addEventListener("change", state => setForeground(state === "active"));
     return () => sub.remove();
   }, []);
-  return focused && foreground;
+  return focused && foreground && !isCovered;
 }
 
 /**
