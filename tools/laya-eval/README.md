@@ -53,5 +53,8 @@ Running the real `experimental_composeSpec` with it showed a question mismatch. 
 | --- | --- | --- |
 | v2 (trained on "which card?") | 5/50 (10%) | 197 ms |
 | v3 (composer questions, a third of `omit` answers kept) | 42/50 (84%) | 254 ms |
+| v4 (composer questions, all `omit` answers kept) | 43/50 (86%) | 247 ms |
 
 v3 misses: an extra card added (L05, L06, L38), `unavailable` by mistake (L26, L31), wrong card (L29, L39, L42). Model at `~/zyt/data/sona-laya/v3`.
+
+v4 fixed most extra cards (one left, L44) but now drops the card or answers `unavailable` more: missing card (L03, L06), `unavailable` (L26, L31, L42), wrong card (L29). Three of the seven misses are Mandarin-heavy requests. Model at `~/zyt/data/sona-laya/v4`. Two composer-format runs plateau at 84-86%, below the 92% of v2 on the single "which card?" question.
