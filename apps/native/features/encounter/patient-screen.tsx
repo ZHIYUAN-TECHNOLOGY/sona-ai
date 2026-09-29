@@ -31,7 +31,7 @@ export function PatientScreen() {
   const { next, view, prompt, switch: switching, tab: startTab } = useLocalSearchParams<{ next?: string; view?: string; prompt?: string; switch?: string; tab?: string }>();
   const [open, setOpen] = useState<string>();
   const [query, setQuery] = useState("");
-  const [tab, setTab] = useState<Tab>(startTab === "continue" ? "continue" : "needs");
+  const [tab, setTab] = useState<Tab>(TABS.some(t => t.id === startTab) ? startTab as Tab : "needs");
   const [opened, setOpened] = useState<ReadonlySet<Group>>(new Set());
   const list = useRef<LegendListRef>(null);
   const { census } = useContinueState();

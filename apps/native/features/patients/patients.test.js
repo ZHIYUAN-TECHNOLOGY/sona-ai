@@ -60,3 +60,9 @@ test("what is left on a visit: a paused recording, a note to sign or not started
   expect(whatIsLeft({ answers: 2, hasNote: false, noteReviewed: false, recording: "idle" })).toBe("Note not started");
   expect(whatIsLeft({ answers: 2, hasNote: true, noteReviewed: true, recording: "stopped" })).toBeUndefined();
 });
+
+test("inside a group, red comes before amber whatever the time", () => {
+  const row = (id, tone, where) => ({ id, name: id, initials: "X", where, group: "needs", reason: "", tone, mine: true, ward: false, clinic: true, open: true });
+  const items = listItems([row("amber", "soon", "03:45"), row("red", "urgent", "04:15")], "needs", new Set());
+  expect(items.filter(i => i.kind === "row").map(i => i.row.id)).toEqual(["red", "amber"]);
+});

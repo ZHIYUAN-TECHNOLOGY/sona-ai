@@ -21,7 +21,9 @@ export const GROUPS: { id: Group; title: string; shown: number }[] = [
   { id: "done", title: "Done today", shown: 0 },
 ];
 const RANK: Record<Group, number> = { needs: 0, next: 1, waiting: 2, done: 3 };
-const byUrgency = (a: Row, b: Row) => RANK[a.group] - RANK[b.group] || a.where.localeCompare(b.where);
+const TONE_RANK: Record<Tone, number> = { urgent: 0, soon: 1, good: 2, calm: 3 };
+/** Most urgent group first; inside a group, red before amber, then by time or bed. */
+const byUrgency = (a: Row, b: Row) => RANK[a.group] - RANK[b.group] || TONE_RANK[a.tone] - TONE_RANK[b.tone] || a.where.localeCompare(b.where);
 
 export const inView = (rows: Row[], view: Exclude<View, "continue">) =>
   view === "mine" ? rows.filter(r => r.mine) : view === "ward" ? rows.filter(r => r.ward) : view === "clinic" ? rows.filter(r => r.clinic) : view === "needs" ? rows.filter(r => r.group === "needs") : rows;

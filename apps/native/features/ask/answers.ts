@@ -4,14 +4,14 @@ import type { Spec } from "@json-render/core";
  * Sona's answers on a page, built by rules from the app's own data (no model): each is a small
  * json-render spec from the ask catalogue. Scopes are the pages the ask bar sits on.
  */
-export type Scope = "patients" | "tasks" | "ward" | "handover";
+export type Scope = "today" | "patients" | "tasks" | "ward" | "handover";
 export type Tone = "urgent" | "soon" | "good" | "calm";
 export type Row = { id: string; title: string; detail: string; tone: Tone; op?: string };
 /** `worth` is whether the answer has anything to show; only then is it offered as the page's ✦ suggestion. */
 export type Answer = { id: string; question: string; spec: Spec; worth: boolean };
 
-export const SCOPE_LABEL: Record<Scope, string> = { patients: "Patients", tasks: "Your tasks", ward: "Ward 4B", handover: "Handover" };
-export const PLACEHOLDER: Record<Scope, string> = { patients: "Ask about your patients…", tasks: "Ask about your tasks…", ward: "Ask about the ward…", handover: "Ask about the handover…" };
+export const SCOPE_LABEL: Record<Scope, string> = { today: "Your day", patients: "Patients", tasks: "Your tasks", ward: "Ward 4B", handover: "Handover" };
+export const PLACEHOLDER: Record<Scope, string> = { today: "Ask about your day…", patients: "Ask about your patients…", tasks: "Ask about your tasks…", ward: "Ask about the ward…", handover: "Ask about the handover…" };
 
 type Part = { type: "AskLead"; props: { text: string } } | { type: "AskRows"; props: { rows: Row[] } }
   | { type: "AskReview"; props: { title: string; items: string[]; what: string; confirm: string; done: string; op: string } }

@@ -12,6 +12,9 @@ import { AccessibilityInfo, BackHandler, Keyboard, Pressable, ScrollView, StyleS
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { capabilityLabels, followUpsFor, Home, leadFor, StreamedLead, SuggestionList, suggestionFor, thinkingLabel, TopBar, type Suggestion } from "./conversation";
 import { touch } from "@/features/patients/continue-store";
+import { AskNudge, AskSheet, closed, type AskState } from "@/features/ask";
+import { matchQuestion } from "@/features/ask/answers";
+import { useTodayAnswers } from "@/features/ask/today";
 import { capabilitySchema, routeInThread } from "./state";
 import { openSession } from "./navigation";
 import { useEncounter } from "./store";
@@ -169,7 +172,12 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   // still settle (images, reveals) just after mount, so the landing follows them for a moment.
   const landedAt = useRef<number | undefined>(undefined);
   const pick = (item: Suggestion) => item.kind === "recording" ? open("recording") : run(item.kind, item.text);
-  const submit = (text: string) => { const prompt = text.trim(); if (!prompt) return; if (!patient) { setNotice("Pick a visit first. Today’s visits are listed above."); return; }
+  // Sona on Today: the dock's ✦ suggestion and a typed question the day's rules can answer open the answer sheet; clinical questions still need a visit.
+  const todayAnswers = useTodayAnswers();
+  const [ask, setAsk] = useState<AskState>(closed);
+  const nudge = home ? todayAnswers.find(a => a.worth) : undefined;
+  const submit = (text: string) => { const prompt = text.trim(); if (!prompt) return;
+    if (!patient) { const answer = matchQuestion(prompt, todayAnswers); if (answer) { setInput(""); setAsk({ open: true, shown: answer }); return; } setNotice("Pick a visit first. Today’s visits are listed above."); return; }
     if (pending.length) {
       // Images go to the imaging review (the first becomes the encounter's attachment); files and documents, scanned or photographed, are kept for reference.
       const image = pending.find(item => item.kind === "image" && item.imageType !== "Document");
@@ -285,9 +293,11 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: encounter?.recording === "paused" ? palette.amber : palette.red }} /><Text style={{ fontSize: 13, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>Consultation {encounter?.recording === "paused" ? "paused" : "playing"} · {encounter?.recordingSeconds}s</Text>
         </Pressable>}
         {notice && <Notice>{notice}</Notice>}
+        {nudge && !notice && !drawer && <AskNudge answer={nudge} onPress={() => setAsk({ open: true, shown: nudge })} />}
         {steps && !drawer && <NextStepBar steps={steps} p={next.p} onExpand={next.show} onAct={act} />}
       </>}
     />
+    <AskSheet scope="today" answers={todayAnswers} state={ask} onChange={setAsk} onTab={t => t === "blocked" ? router.push({ pathname: "/ward", params: { filter: "blocked" } }) : router.push({ pathname: "/patients", params: { tab: t } })} />
     {steps && next.open && <NextStepSheet steps={steps} p={next.p} onClose={() => next.hide()} onAct={act} />}
     {/* While open, the page is a quiet surface: it fades back and a tap anywhere closes it. */}
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: palette.canvas }, dimStyle]} />
