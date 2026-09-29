@@ -15,7 +15,7 @@ test("until the models are switched on, every capability answers with authored c
     stubModels.xrayRead({ image: new Uint8Array([1, 2, 3]), contentType: "image/png" }),
     stubModels.draftDischarge({ patient, language: "en" }),
     stubModels.suggestCodes({ sentences: [{ id: "s1", text: "Community-acquired pneumonia." }] }),
-    stubModels.synthesiseEvidence({ question: "Oral switch after 48 h?", studies: [] }),
+    stubModels.synthesiseEvidence({ question: "Oral switch after 48 h?", thread: [], sources: [] }),
     stubModels.huddleBrief({ beds: [], owners: {} }),
     stubModels.classifyReply({ text: "Demam datang balik", language: "ms" }),
     stubModels.triageMessage({ text: "Bila temu janji saya?" }),
@@ -25,4 +25,17 @@ test("until the models are switched on, every capability answers with authored c
   expect((await stubModels.xrayRead({ image: new Uint8Array([1]), contentType: "image/png" })).validated).toBe(false);
   expect((await stubModels.classifyReply({ text: "Demam datang balik", language: "ms" })).label).toBe("worse");
   expect((await stubModels.classifyReply({ text: "Saya sihat, terima kasih", language: "ms" })).label).toBe("fine");
+});
+
+test("the evidence mock quotes one claim per top source, cites it, and never offers the question just asked", async () => {
+  const sources = [1, 2, 3, 4].map(n => ({ n, design: n === 1 ? "Trial" : "Library", year: 2015 + n, title: `Source ${n}`, text: `Finding ${n}. More detail.` }));
+  const r = await stubModels.synthesiseEvidence({ question: "What are the main harms?", thread: [{ question: "Steroids?", answer: "No." }], sources });
+  expect(r.source).toBe("fixture");
+  expect(r.claims).toEqual([
+    { text: "A randomised trial (2016) reports: Finding 1.", cites: [1] },
+    { text: "Your library (2017) reports: Finding 2.", cites: [2] },
+    { text: "Your library (2018) reports: Finding 3.", cites: [3] },
+  ]);
+  expect(r.followUps).toEqual(["What do the guidelines recommend?", "Does this change for severe cases?"]);
+  expect((await stubModels.synthesiseEvidence({ question: "x", thread: [], sources: [] })).claims).toEqual([]);
 });

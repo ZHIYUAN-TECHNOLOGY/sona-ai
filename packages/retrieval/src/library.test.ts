@@ -50,20 +50,23 @@ test("a retried add replaces the same document, and only its own hospital can re
   expect(await api.library.list()).toEqual([]);
 });
 
-test("the evidence answer cites the hospital's own passages beside PubMed, without grading them, and stops once removed", async () => {
+test("the evidence answer lists the hospital's own passages as numbered library references, and stops once removed", async () => {
   const { api, db } = await signedIn();
   const doc = await api.library.add(protocol);
   const ask = () => api.evidence.ask({ encounterId: "visit-1086", question: "What amoxicillin dose does the ward use?" });
   const r = await ask();
-  expect(r.passages[0]).toMatchObject({ id: `${doc.id}#antibiotics`, documentId: doc.id, title: protocol.title, section: "Antibiotics", source: "Hospital pharmacy", year: 2026 });
-  expect(r.passages[0]!.text).toContain("Amoxicillin 1 g");
-  expect(r.passages.length).toBeLessThanOrEqual(3);
-  // PubMed is down here, so no study graded; an uploaded passage does not raise the certainty.
-  expect(r).toMatchObject({ pubmed: "unavailable", studies: [], grade: { certainty: "No evidence found" } });
+  const library = r.references.filter(x => x.kind === "library");
+  expect(library[0]).toMatchObject({ n: 1, id: `${doc.id}#antibiotics`, documentId: doc.id, design: "Library", title: protocol.title, section: "Antibiotics", from: "Hospital pharmacy", year: 2026 });
+  expect(library[0]!.text).toContain("Amoxicillin 1 g");
+  expect(library.length).toBeLessThanOrEqual(3);
+  // PubMed is down here, so the passages are the only sources, numbered from 1; the mock's claim cites the first.
+  expect(r).toMatchObject({ pubmed: "unavailable", enough: true, source: "fixture" });
+  expect(r.references.every(x => x.kind === "library")).toBe(true);
+  expect(r.claims[0]).toMatchObject({ text: expect.stringMatching(/^Your library \(2026\) reports:/), cites: [1] });
   const [log] = await db.select().from(provenance);
   expect(log!.sourceIds).toContain(`${doc.id}#antibiotics`);
   await api.library.remove({ documentId: doc.id });
-  expect((await ask()).passages).toEqual([]);
+  expect(await ask()).toMatchObject({ references: [], claims: [], enough: false });
 });
 
 test("the library needs a login", async () => {
@@ -93,8 +96,8 @@ test("a source is the doctor's own by default: a colleague neither lists, cites 
   expect((await api.library.list()).map(d => [d.title, d.scope, d.sections])).toEqual([[shared.title, "hospital", 1], [protocol.title, "me", 2]]);
   expect((await bala.library.list()).map(d => d.id)).toEqual([shared.id]);
   const question = { encounterId: "visit-1086", question: "What amoxicillin dose does the ward use?" };
-  expect((await api.evidence.ask(question)).passages.map(p => p.documentId)).toContain(mine.id);
-  expect((await bala.evidence.ask(question)).passages.map(p => p.documentId)).not.toContain(mine.id);
+  expect((await api.evidence.ask(question)).references.map(p => p.documentId)).toContain(mine.id);
+  expect((await bala.evidence.ask(question)).references.map(p => p.documentId)).not.toContain(mine.id);
   await expect(bala.library.remove({ documentId: mine.id })).rejects.toMatchObject({ code: "NOT_FOUND" });
   // Nor can a colleague overwrite it by replaying its request ID.
   await expect(bala.library.add({ ...protocol, title: "Replaced" })).rejects.toMatchObject({ code: "CONFLICT" });
@@ -115,8 +118,8 @@ test("a PDF is read into one section per page, split again at numbered headings,
   const pdf = tinyPdf([["Ward CAP protocol", "For adults on the medical wards."], ["2. Antibiotics", "Amoxicillin 1 g three times daily for five days."]]);
   const added = await api.library.addPdf({ requestId: "pdf-1", title: "Ward CAP protocol.pdf", dataBase64: pdf });
   expect(added).toMatchObject({ kind: "pdf", scope: "me", pages: 2, sections: 2, source: "PDF, 2 pages" });
-  const { passages } = await api.evidence.ask({ encounterId: "visit-1086", question: "What amoxicillin dose does the ward use?" });
-  expect(passages[0]).toMatchObject({ documentId: added.id, section: "2. Antibiotics" });
+  const { references } = await api.evidence.ask({ encounterId: "visit-1086", question: "What amoxicillin dose does the ward use?" });
+  expect(references.find(r => r.kind === "library")).toMatchObject({ documentId: added.id, section: "2. Antibiotics" });
 });
 
 test("a PDF that is not one, has no text layer or names a patient is refused with a reason the app can show", async () => {
@@ -143,8 +146,8 @@ test("a DOI, PMID or PubMed link previews the article, and importing adds its ab
   await expect(api.library.previewArticle({ ref: "10.9999/unknown" })).rejects.toMatchObject({ code: "NOT_FOUND" });
   const added = await api.library.importArticle({ requestId: "pm-1", pmid: "36942789" });
   expect(added).toMatchObject({ kind: "pubmed", scope: "me", title: preview.title, source: "N Engl J Med", year: 2023, sections: 2 });
-  const { passages } = await api.evidence.ask({ encounterId: "visit-1086", question: "Does hydrocortisone lower mortality in severe pneumonia?" });
-  expect(passages.map(p => p.section)).toContain("Conclusions");
+  const { references } = await api.evidence.ask({ encounterId: "visit-1086", question: "Does hydrocortisone lower mortality in severe pneumonia?" });
+  expect(references.filter(r => r.kind === "library").map(p => p.section)).toContain("Conclusions");
 });
 
 test("importing while PubMed is down says so, and stores nothing", async () => {

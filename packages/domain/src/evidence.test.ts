@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { certaintyOf, curb65, curb65FromObservations, studyKind } from "./evidence";
+import { ANSWER, FOLLOW_UPS, STUDIES, authoredAnswer, curb65, curb65FromObservations, sourcedClaims, studyKind } from "./evidence";
 import type { Patient } from "./types";
 
 const patient = (over: Partial<Patient>): Patient => ({ id: "X-1", encounterId: "visit-x", name: "Test Patient", initials: "TP", age: 70, sex: "Female", subtitle: "", time: "09:00", complaint: "", history: [], family: "", social: "", allergies: null, medicines: [], vitals: [], sources: [], incomplete: false, ...over });
@@ -43,10 +43,24 @@ test("a study's kind comes from PubMed's publication types, strongest design fir
   expect(studyKind(["Journal Article"])).toBe("Study");
 });
 
-test("certainty is a rule on the strongest design cited, never the model's say", () => {
-  expect(certaintyOf(["Trial", "Guideline", "Trial"])).toBe("High certainty");
-  expect(certaintyOf(["Review", "Study"])).toBe("High certainty");
-  expect(certaintyOf(["Trial", "Narrative review"])).toBe("Moderate certainty");
-  expect(certaintyOf(["Study", "Narrative review"])).toBe("Low certainty");
-  expect(certaintyOf([])).toBe("No evidence found");
+test("no source, no claim: uncited or out-of-range claims are dropped, numbers merged and text trimmed", () => {
+  expect(sourcedClaims([
+    { text: "  Cited twice.  ", cites: [2, 2, 1] },
+    { text: "Uncited.", cites: [] },
+    { text: "Cites a source that is not there.", cites: [4] },
+    { text: "Half right.", cites: [3, 9, 0] },
+    { text: "   ", cites: [1] },
+  ], 3)).toEqual([{ text: "Cited twice.", cites: [2, 1] }, { text: "Half right.", cites: [3] }]);
+  expect(sourcedClaims([{ text: "Anything.", cites: [1] }], 0)).toEqual([]);
+});
+
+test("the authored answers cite only the three rehearsed studies, and every follow-up answers exactly its own question", () => {
+  const all = [...ANSWER, ...FOLLOW_UPS.flatMap(f => f.claims)];
+  expect(all.every(c => c.cites.length > 0 && c.cites.every(n => n >= 1 && n <= STUDIES.length))).toBe(true);
+  expect(sourcedClaims(all, STUDIES.length)).toEqual(all);
+  expect(authoredAnswer("Steroids for this patient with community-acquired pneumonia?")).toEqual({ claims: ANSWER, followUps: FOLLOW_UPS.map(f => f.question) });
+  const harms = authoredAnswer("What harms should I watch for?")!;
+  expect(harms.claims).toBe(FOLLOW_UPS[1]!.claims);
+  expect(harms.followUps).toEqual([FOLLOW_UPS[0]!.question, FOLLOW_UPS[2]!.question]);
+  expect(authoredAnswer("Does amoxicillin need a renal dose?")).toBeUndefined();
 });

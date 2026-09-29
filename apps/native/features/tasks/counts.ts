@@ -11,3 +11,15 @@ export function taskCounts(tasks: Pick<Task, "due" | "completed">[], today = new
     dueToday: open.filter(task => task.due === "Today" || task.due === day).length,
   };
 }
+
+export type DueGroup = "overdue" | "today" | "week" | "later";
+/** Open tasks read by when they're due, the way a clinician plans: overdue, today, the next 7 days, then later (worded dates too). */
+export const DUE_GROUPS: { id: DueGroup; title: string }[] = [{ id: "overdue", title: "Overdue" }, { id: "today", title: "Today" }, { id: "week", title: "This week" }, { id: "later", title: "Later" }];
+export function dueGroup(due: string, today = new Date()): DueGroup {
+  const day = localDate(today);
+  if (due === "Today" || due === day) return "today";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(due)) return "later";
+  if (due < day) return "overdue";
+  const week = localDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7));
+  return due <= week ? "week" : "later";
+}

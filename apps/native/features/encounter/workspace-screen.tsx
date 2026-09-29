@@ -11,7 +11,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, BackHandler, Keyboard, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { capabilityLabels, followUpsFor, Home, leadFor, StreamedLead, SuggestionList, suggestionFor, thinkingLabel, TopBar, type Suggestion } from "./conversation";
-import { capabilitySchema, routePrompt } from "./state";
+import { touch } from "@/features/patients/continue-store";
+import { capabilitySchema, routeInThread } from "./state";
 import { openSession } from "./navigation";
 import { useEncounter } from "./store";
 import type { Capability, FeatureProps, FocusView } from "./types";
@@ -177,9 +178,11 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       const fileNote = files.length ? `${files.map(f => f.name).join(", ")} kept for reference. Document review is not switched on yet.` : undefined;
       if (image) { updateEncounter(current => image.uri === "teaching" ? { ...current, imagingAttachment: undefined, hideTeachingImage: false } : { ...current, imagingAttachment: { uri: image.uri, name: image.name } }, true); run("xray", prompt); if (fileNote) setNotice(fileNote); return; }
       if (fileNote) setNotice(fileNote);
-    } const kind = routePrompt(prompt); if (!kind) { setNotice("Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan. Demo routing uses supported phrases."); return; } setInput(""); run(kind, prompt); };
+    } const kind = routeInThread(prompt, encounter?.requests.at(-1)?.kind); if (!kind) { setNotice("Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan. Demo routing uses supported phrases."); return; } setInput(""); run(kind, prompt); };
 
   useEffect(() => { setShowEarlier(false); setNotice(undefined); setPending([]); if (!patient) setDrafts({}); }, [patient?.id]);
+  // Working on a visit keeps it in Continue ("where you left off") for the next 24 h.
+  useEffect(() => { if (!home && patient) touch(patient.id); }, [home, patient?.id, encounter?.requests.length]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!active) return; setPhase("thinking"); const timer = setTimeout(() => setPhase("working"), 320); return () => clearTimeout(timer); }, [active?.id]);
   useEffect(() => {
     if (latest?.status !== "complete") return;
@@ -224,7 +227,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
             }
           }} style={{ gap: 16, minHeight: req.id === latest?.id && req.status === "streaming" ? 320 : undefined }}>
             <Text selectable accessibilityRole="header" style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{req.prompt || prompts[req.kind]}</Text>
-            {resolved && answerPatient && <StreamedLead text={leadFor(req.kind, answerPatient)} animate={req.status === "streaming"} />}
+            {resolved && answerPatient && <StreamedLead text={leadFor(req.kind, answerPatient, req.prompt)} animate={req.status === "streaming"} />}
             {card && props && <ResponseFrame pending={false} partial={req.status === "streaming"} onCancel={cancel} onSource={() => router.push({ pathname: "/source", params: { id: "history", patientId: patient!.id, cardId: card.id } })}>
               <Reveal>{card.revision !== encounter?.revision && <Notice>Earlier encounter revision {card.revision}. Its original context and sources are retained.</Notice>}{(() => { const body = <ClinicalResponseRenderer kind={card.kind} sections={card.sections} loading={req.status === "streaming"} featureProps={{ ...props, patient: card.patientSnapshot ?? props.patient, result: card, onSource: id => router.push({ pathname: "/source", params: { id, patientId: props.patient.id, cardId: card.id } }) }} />;
                 // Only the latest answer feeds the pinned tabs.
@@ -234,7 +237,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
             {req.status === "cancelled" && <Notice>Response stopped. Completed content and your edits are kept.</Notice>}
           </View>;
         })}
-        {!active && latest && patient && <View style={{ marginHorizontal: -20, paddingHorizontal: 20, paddingTop: 32, paddingBottom: 28, gap: 16, backgroundColor: "rgba(232,235,240,0.55)" }}>
+        {/* An evidence answer offers its own Related questions, so a second list of suggestions would compete. */}
+        {!active && latest && patient && latest.kind !== "evidence" && <View style={{ marginHorizontal: -20, paddingHorizontal: 20, paddingTop: 32, paddingBottom: 28, gap: 16, backgroundColor: "rgba(232,235,240,0.55)" }}>
           <Text accessibilityRole="header" style={{ textAlign: "center", ...type.headline, color: palette.ink, letterSpacing: -0.3 }}>You might want to ask</Text>
           <SuggestionList items={followUpsFor(latest.kind, patient)} onPick={pick} />
           {/* Closing the visit: once the note, follow-up or prescription is done, handing over is one tap away. */}

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { defaultMedications, effectivePatient } from "./clinical-state";
 import { patients, newEncounter } from "./fixtures";
-import { acceptCard, beginRequest, createCard, finishRequest, issueSimulation, reviseEncounter, routePrompt, revealSections, queueAmendment, reconcileAmendment } from "./state";
+import { acceptCard, beginRequest, createCard, finishRequest, issueSimulation, reviseEncounter, routeInThread, routePrompt, revealSections, queueAmendment, reconcileAmendment } from "./state";
 
 const patient = patients[0];
 const eligible = () => ({ ...newEncounter(), medicationCheckedRevision: 1, medicationEntries: defaultMedications(patient).map(m => ({ ...m, confirmed: true })), prescriptionInputs: { weightKg: "62", liverDisease: "no", kidneyDisease: "no", alcoholRisk: "no", paracetamolAllergy: "no" } });
@@ -125,4 +125,11 @@ test("amendment lifecycle survives presentation changes and stops on stale conte
   expect(current.cards[0].prescription.id).toBe("initial");
   const failed = { ...current, requests: [{ ...prescriptionRequest, status: "failed" }] };
   expect(reconcileAmendment(failed, prescriptionRequest.id).amendmentOperation.phase).toBe("failed");
+});
+
+test("a question typed after an evidence answer continues the evidence thread unless another capability claims it", () => {
+  expect(routeInThread("What harms should I watch for?", "evidence")).toBe("evidence");
+  expect(routeInThread("What harms should I watch for?", "briefing")).toBe(null);
+  expect(routeInThread("Review drug interactions", "evidence")).toBe("medication");
+  expect(routeInThread("Steroids for her pneumonia?")).toBe("evidence");
 });

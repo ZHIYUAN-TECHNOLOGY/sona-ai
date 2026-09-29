@@ -232,6 +232,8 @@ function MonthCard({ offset, counts, onPick, onClose }: { offset: number; counts
 export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, shelfCollapse, onOpen: open }: { patients: Patient[]; greeting: string; actions: QuickAction[]; onShelf?: (windowBottom: number) => void; shelfCollapse?: ShelfCollapse; onOpen: (patientId: string, open: DayItem["open"]) => void }) {
   const shelfRef = useRef<View>(null);
   const [calendar, setCalendar] = useState(false);
+  // Insight first: the ranked day leads, and the 24-hour ruler waits behind one row (it is navigation, not the answer).
+  const [timeline, setTimeline] = useState(false);
   const [offset, setOffset] = useState(0);
   // Live backend mode: the day's appointments, results and tasks come from the server (fixtures otherwise).
   const { on: live } = useLive();
@@ -318,7 +320,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, s
       {calendar && <MonthCard offset={offset} counts={o => live ? serverDayCount(localDate(dayOf(o))) : scheduleFor(o, patients).length} onPick={o => { setCalendar(false); pick(o); }} onClose={() => setCalendar(false)} />}
     </View>
     {/* Management's day leads with the ward and this week's numbers, not clinical tasks. */}
-    {managing ? <WardGlance /> : <TimeBar key={offset} schedule={schedule} now={offset === 0 ? now : undefined} onOpen={id => onOpen(id, {})} />}
+    {managing && <WardGlance />}
     {offset === 0 && managing && shelf}
     {managing ? null : sorting ? <Sorting /> : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
       {top && <Animated.View key={`top-${run}`} layout={LAYOUT} entering={animate ? riseIn({ distance: 14, scale: 0.97, duration: 450 }) : undefined}>
@@ -358,6 +360,13 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, s
         </Pressable>)}
       </Animated.View>}
       {!ordered.length && <Text style={{ ...type.callout, color: palette.muted, textAlign: "center", paddingVertical: 12 }}>Nothing scheduled this day.</Text>}
+      {schedule.length > 0 && <Animated.View layout={LAYOUT} style={{ gap: 8 }}>
+        <Pressable accessibilityRole="button" accessibilityState={{ expanded: timeline }} onPress={() => { haptic(); setTimeline(v => !v); }} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <Icon name={timeline ? "chevron.up" : "clock"} size={13} color={palette.blue} />
+          <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{timeline ? "Hide the timeline" : `See the day on a timeline · ${schedule.length} ${schedule.length === 1 ? "visit" : "visits"}`}</Text>
+        </Pressable>
+        {timeline && <Expand><TimeBar key={offset} schedule={schedule} now={offset === 0 ? now : undefined} onOpen={id => onOpen(id, {})} /></Expand>}
+      </Animated.View>}
       <Text style={{ ...type.caption, color: palette.muted }}>{live || offset === 0 ? "Ranked by urgency, with the reason on every item." : "Clinic schedule for other days; open today's visits to act."}</Text>
       {(live || offset === 0) && <SampleLabel source="fixture" rule />}
     </Animated.View>}

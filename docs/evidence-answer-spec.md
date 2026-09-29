@@ -1,6 +1,6 @@
 # Evidence answer, OpenEvidence style: implementation spec
 
-Status: specified 29 Sep 2026, not started. Decisions below were made by the product owner; build them as written.
+Status: specified 29 Sep 2026; built 29 Sep 2026, awaiting the owner's review on the iPhone (screenshots in `verification/evidence-answer/`). Decisions below were made by the product owner; build them as written.
 Read `CLAUDE.md`, [the handoff](handoff.md) and the [UX principles](design-direction.md#ux-principles-standing-rules-for-every-screen) first.
 
 ## 1. Goal

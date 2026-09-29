@@ -48,3 +48,15 @@ Camera scan of paper pages (`scan-flow/`, 29 Sep 2026, iPhone 18 Pro Max simulat
 - `6-review.png`: Read 3 opens OCR review.
 
 Golden path to the scanner (`scan-golden-path/`, 29 Sep 2026, iPhone 18 Pro Max simulator, captured with agent-device): Home, menu, Settings, sign in, Live backend on, Your sources, Add a source, first-run camera prompt, scan screen. `golden-path-to-scan.png` has all nine on one sheet. The Your sources card only appears in live mode with a signed-in clinician.
+
+Evidence answer, OpenEvidence style (29 Sep 2026, iPhone 18 Pro Max simulator, iOS 27.0, Expo Go in production mode; live mode against the local Worker and real PubMed). In `evidence-answer/`, each an exercised interaction:
+
+- `1-rehearsed-cited-answer.png`: the rehearsed steroid question: three claims ending in citation pills, "Rehearsed answer", the numbered source carousel.
+- `2-pill-moves-carousel.png`: after tapping pill 3, the carousel is on source 3 (CAPE COD, 2023).
+- `3-related-follow-ups.png`: Related: the three authored follow-up questions under CURB-65.
+- `4-follow-up-answer.png`: "What harms should I watch for?" asked from Related: a new card with its authored cited claims and the neutral lead.
+- `5-live-other-question-sample.png`: a new question (azithromycin): a real PubMed review as source 1 and the mock's cited claim, labelled as a sample.
+- `6-not-enough-evidence.png`: a question with no PubMed or library sources: "Not enough evidence found…" with Related still offered.
+- `7-offline-rehearsed.png`, `8-offline-other-question.png`: live mode off: the authored answer for the rehearsed question; any other question says live mode answers it. Live mode was switched back on afterwards.
+
+Not yet reviewed by the owner on a physical iPhone. The authored sentences still need a clinician's check before a live demo.

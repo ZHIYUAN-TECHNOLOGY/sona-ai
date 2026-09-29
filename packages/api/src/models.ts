@@ -2,7 +2,7 @@ import { readReply } from "@sona-ai/domain/check-ins";
 import { CODES, appealByRules, type AppealLetter, type Code, type DenialCode, type Sentence } from "@sona-ai/domain/claim";
 import { draftByRules, triageByRules, type DraftPlan, type MessageLabel } from "@sona-ai/domain/messages";
 import { planFor, type Language } from "@sona-ai/domain/discharge";
-import type { Study } from "@sona-ai/domain/evidence";
+import type { Claim } from "@sona-ai/domain/evidence";
 import type { DetectedFinding } from "@sona-ai/domain/findings";
 import { deidentifyByRules, type KnownIdentity, type Replacement } from "@sona-ai/domain/training";
 import { SAMPLE_NOTE, type HandwrittenNote } from "@sona-ai/domain/scan";
@@ -34,7 +34,13 @@ export type Models = {
    * (the route drops any point citing a sentence the note lacks).
    */
   draftAppeal(input: { denialReason: string; denialCode: DenialCode; codes: Code[]; sentences: Sentence[]; patient: { name: string } }): Answer<{ letter: AppealLetter }>;
-  synthesiseEvidence(input: { question: string; studies: Study[] }): Answer<{ answer: string; studyIds: string[] }>;
+  /**
+   * The evidence answer from numbered sources only: 2–4 short claims, each citing at least one source
+   * number, the strength said in words from each source's design (never a dose or number a source
+   * lacks), and up to 3 follow-ups the sources could answer. `thread` is the earlier turns, oldest
+   * first. The route drops any claim citing nothing or a number not in `sources`.
+   */
+  synthesiseEvidence(input: { question: string; thread: { question: string; answer: string }[]; sources: { n: number; design: string; year?: number; title: string; text: string }[] }): Answer<{ claims: Claim[]; followUps: string[] }>;
   huddleBrief(input: { beds: Bed[]; owners: Record<string, Owner | undefined> }): Answer<{ lines: string[] }>;
   /** Sona Care: the patient's speech as text (Malay, English, Chinese or mixed). The stub has no ears: it returns no text. */
   transcribe(input: { audio: Uint8Array; language?: Language }): Answer<{ text: string; language?: string }>;
@@ -75,6 +81,10 @@ const CODE_RULES: [RegExp, Omit<Code, "evidence">][] = [
   [/pneumonia/i, CODES[0]!], [/asthma/i, CODES[1]!], [/penicillin/i, CODES[2]!], [/chest (film|x-?ray)/i, CODES[3]!],
 ];
 
+const DESIGN_WORDS: Record<string, string> = { Guideline: "A guideline", Review: "A systematic review", Trial: "A randomised trial", "Narrative review": "A narrative review", Study: "A study", Library: "Your library" };
+const MOCK_FOLLOW_UPS = ["What do the guidelines recommend?", "What are the main harms?", "Does this change for severe cases?"];
+const firstSentence = (text: string) => text.trim().split(/(?<=[.!?])\s+/)[0] ?? "";
+
 /** The app's authored content, served until the models come off hold. Nothing here reads its input the way a model would. */
 export const stubModels: Models = {
   briefing: ({ patient }) => fixture({ lines: [
@@ -99,7 +109,15 @@ export const stubModels: Models = {
   // ponytail: authored appeal rules over the note's own sentences (packages/domain/claim); Gemma replaces it
   // through the Baseten adapter later (docs/delivery-plan.md), with the same shape.
   draftAppeal: input => fixture({ letter: appealByRules(input) }),
-  synthesiseEvidence: ({ studies }) => fixture({ answer: "Sample synthesis: no model has weighed these studies.", studyIds: studies.map(s => s.id) }),
+  // MOCK, replace with the hosted evidence model: Gemma (box ①) given the question, the thread and the
+  // numbered sources returns JSON { claims: { text: string; cites: number[] }[]; followUps: string[] }:
+  // 2–4 claims from the sources only, each citing at least one number, strength in words from the design,
+  // no dose or number a source lacks, up to 3 follow-ups the sources could answer.
+  // Until then: one claim per top source (max 3) quoting its first sentence, and fixed follow-ups.
+  synthesiseEvidence: ({ question, sources }) => fixture({
+    claims: sources.slice(0, 3).map(s => ({ text: `${DESIGN_WORDS[s.design] ?? "A source"}${s.year ? ` (${s.year})` : ""} reports: ${firstSentence(s.text)}`, cites: [s.n] })),
+    followUps: MOCK_FOLLOW_UPS.filter(f => f.toLowerCase() !== question.trim().toLowerCase()),
+  }),
   huddleBrief: ({ beds, owners }) => fixture({ lines: huddle(beds, owners) }),
   // ponytail: keyword rule standing in for the classifier; the demo reply is "fever returned".
   classifyReply: ({ text }) => fixture({ label: readReply(text) }),

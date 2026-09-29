@@ -45,4 +45,4 @@ export type Encounter = {
   discharge?: DischargeState;
   claim?: ClaimState;
 };
-export type FeatureProps = { patient: Patient; result?: ResponseCard; onSource: (id: string) => void; onOpen: (view: FocusView) => void; onRequest: (kind: Capability) => void };
+export type FeatureProps = { patient: Patient; result?: ResponseCard; onSource: (id: string) => void; onOpen: (view: FocusView) => void; onRequest: (kind: Capability, prompt?: string) => void };

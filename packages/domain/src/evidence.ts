@@ -1,27 +1,79 @@
 import type { Patient } from "./types";
 
 /**
- * Evidence answer: a graded three-line answer, the studies behind it, and the severity score that
- * decides which evidence applies to this patient.
+ * Evidence answer, OpenEvidence style (docs/evidence-answer-spec.md): short claims, each citing
+ * numbered sources; how strong the evidence is is said in the words and shown as each source's
+ * design; one numbered reference list; suggested follow-ups; and the severity score that decides
+ * which evidence applies to this patient.
  *
  * ponytail: authored summaries of real, well-known publications, each linked to its PubMed record
- * (PMIDs checked against PubMed). Retrieval, grading rules and synthesis arrive with the backend (see the plan).
+ * (PMIDs checked against PubMed). Any other question's claims come from the model seam (a mock until
+ * the models are hosted).
  */
 export type StudyKind = "Guideline" | "Review" | "Trial" | "Narrative review" | "Study";
 export type Study = { id: string; kind: StudyKind; year: number; title: string; finding: string; query: string; pmid?: string; journal?: string };
 export type Factor = { id: string; label: string; value?: string; rule: string; point?: boolean };
+/** One sentence of an answer and the 1-based numbers of the references behind it. */
+export type Claim = { text: string; cites: number[] };
+/** One numbered source: PubMed studies first, then library passages. */
+export type Reference = {
+  n: number; id: string; kind: "study" | "library"; design: StudyKind | "Library"; title: string; year: number; from?: string; text: string;
+  url?: string; pmid?: string; documentId?: string; section?: string;
+};
 
-export const GRADE = { certainty: "High certainty", direction: "Against routine use", scope: "non-severe pneumonia" };
-export const ANSWER = [
-  "No routine steroids for non-severe community-acquired pneumonia.",
-  "Consider them only for severe pneumonia, septic shock, or another indication such as an asthma flare.",
-  "They shorten time to stability a little but raise blood glucose; no mortality benefit outside severe cases.",
-];
 export const STUDIES: Study[] = [
   { id: "ats-idsa", pmid: "31573350", kind: "Guideline", year: 2019, title: "ATS/IDSA adult CAP guideline", finding: "Recommends against routine corticosteroids in non-severe pneumonia.", query: "Metlay 2019 community-acquired pneumonia ATS IDSA guideline" },
   { id: "blum", pmid: "25608756", kind: "Trial", year: 2015, title: "Prednisone in CAP (Lancet)", finding: "A week of prednisone reached stability about a day sooner, with more high blood sugar and no mortality difference.", query: "Blum 2015 prednisone community-acquired pneumonia Lancet" },
   { id: "cape-cod", pmid: "36942789", kind: "Trial", year: 2023, title: "Hydrocortisone in severe CAP (NEJM)", finding: "Lower 28-day mortality, but only in severe pneumonia treated in intensive care.", query: "Dequin 2023 hydrocortisone severe community-acquired pneumonia" },
 ];
+
+/** The rehearsed demo question: steroids for community-acquired pneumonia. Cites number the three STUDIES in order. */
+export const isRehearsed = (q: string) => /steroid|prednis|hydrocortisone/i.test(q) && /pneumonia|\bCAP\b/i.test(q);
+// Have a clinician check these sentences before a live demo.
+export const ANSWER: Claim[] = [
+  { text: "Routine corticosteroids are not recommended for non-severe community-acquired pneumonia; the adult guideline advises against them.", cites: [1] },
+  { text: "In severe pneumonia treated in intensive care, a large randomised trial found hydrocortisone lowered 28-day mortality, so steroids can be considered there.", cites: [3] },
+  { text: "Outside severe cases, a randomised trial found a week of prednisone reached stability about a day sooner but raised blood glucose, with no difference in mortality.", cites: [2, 1] },
+];
+/** The rehearsed answer's suggested follow-ups, each with its own authored, cited answer. */
+export const FOLLOW_UPS: { question: string; claims: Claim[] }[] = [
+  { question: "When would steroids be reasonable for her?", claims: [
+    { text: "Only if her pneumonia becomes severe enough for intensive care: that is where the randomised trial found hydrocortisone lowered 28-day mortality.", cites: [3] },
+    { text: "While it stays non-severe, the guideline advises against routine steroids.", cites: [1] },
+  ] },
+  { question: "What harms should I watch for?", claims: [
+    { text: "High blood glucose: patients given prednisone had it more often, sometimes needing insulin.", cites: [2] },
+    { text: "That trial found no difference in mortality, so the harm is not offset by survival outside severe cases.", cites: [2] },
+  ] },
+  { question: "What dose and duration did the trials use?", claims: [
+    { text: "Prednisone 50 mg once daily for 7 days in hospitalised patients.", cites: [2] },
+    { text: "Intravenous hydrocortisone 200 mg a day for 4 days, then tapered, for 8 or 14 days in all, in intensive care.", cites: [3] },
+  ] },
+];
+
+/** The authored answer for the rehearsed question or one of its suggested follow-ups (exact wording); undefined for anything else. */
+export function authoredAnswer(question: string): { claims: Claim[]; followUps: string[] } | undefined {
+  const q = question.trim();
+  const follow = FOLLOW_UPS.find(f => f.question === q);
+  if (follow) return { claims: follow.claims, followUps: FOLLOW_UPS.filter(f => f !== follow).map(f => f.question) };
+  if (isRehearsed(q)) return { claims: ANSWER, followUps: FOLLOW_UPS.map(f => f.question) };
+}
+
+/** The authored studies as numbered references, for the answer shown without the server. */
+export const authoredReferences = (): Reference[] => STUDIES.map((s, i) => ({ n: i + 1, id: `pmid:${s.pmid}`, kind: "study", design: s.kind, title: s.title, year: s.year, from: s.journal, text: s.finding, url: pubmedUrl(s), pmid: s.pmid }));
+
+/**
+ * No source, no claim: keeps a claim only if it cites at least one of the `count` references, with
+ * its numbers deduplicated and any number outside the list dropped, and its text trimmed.
+ */
+export function sourcedClaims(claims: Claim[], count: number): Claim[] {
+  return claims.flatMap(c => {
+    const cites = [...new Set(c.cites)].filter(n => Number.isInteger(n) && n >= 1 && n <= count);
+    const text = c.text.trim();
+    return text && cites.length ? [{ text, cites }] : [];
+  });
+}
+
 /** A retrieved study opens its own abstract; an authored one opens a PubMed search for it. */
 export const pubmedUrl = (s: Pick<Study, "query" | "pmid">) => s.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${s.pmid}/` : `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(s.query)}`;
 
@@ -33,18 +85,6 @@ export function studyKind(publicationTypes: string[]): StudyKind {
   if (has("Randomized Controlled Trial")) return "Trial";
   if (has("Review")) return "Narrative review";
   return "Study";
-}
-
-/**
- * The certainty label, by rule on the strongest design cited (GRADE's starting levels, simplified):
- * a guideline or systematic review is high, a randomised trial moderate, anything else low.
- * ponytail: starting level only; downgrading for bias, inconsistency or indirectness needs a reviewer.
- */
-export function certaintyOf(kinds: StudyKind[]) {
-  if (!kinds.length) return "No evidence found";
-  if (kinds.some(k => k === "Guideline" || k === "Review")) return "High certainty";
-  if (kinds.includes("Trial")) return "Moderate certainty";
-  return "Low certainty";
 }
 
 // ponytail: the ward-chart values for the demo patient; a real chart feeds these by source ID.

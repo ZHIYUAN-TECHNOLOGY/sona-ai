@@ -20,6 +20,8 @@ import { useServerEncounter } from "@/features/live/sync";
 import { defaultMedications } from "./clinical-state";
 import { QuickActions } from "@/components/sona/quick-actions";
 import { visitActions } from "./quick-actions";
+import { PIN_LIMIT } from "@/features/patients/continue";
+import { pin, replaceOldest, unpin, useContinueState } from "@/features/patients/continue-store";
 import { useEncounter } from "./store";
 import type { Patient } from "./types";
 
@@ -107,6 +109,7 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
           </Animated.View>}
           {/* The main action sits right under what needs attention; everything below is context. */}
           <Animated.View entering={rise(1)}><Action label={started ? "Continue visit" : "Open visit"} icon="arrow.right" accessibilityLabel={`${started ? "Continue" : "Open"} visit with ${patient.name}`} onPress={() => go({})} /></Animated.View>
+          <Animated.View entering={rise(1)}><PinControl patient={patient} /></Animated.View>
 
           <CheckInThread patient={patient} entering={rise(2)} />
           <CareMessages patient={patient} entering={rise(2)} />
@@ -140,4 +143,28 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
       </Animated.View>
     </GestureDetector>
   </View>;
+}
+
+/**
+ * Pin to Continue, so this patient stays where you left off until unpinned. Pins are capped at 5: a
+ * sixth shows which pin it would replace, and replaces it only when confirmed.
+ */
+function PinControl({ patient }: { patient: Patient }) {
+  const { pins } = useContinueState();
+  const { patients } = useEncounter();
+  const [replace, setReplace] = useState<{ id: string }>();
+  const pinned = pins.some(p => p.id === patient.id);
+  const nameOf = (id: string) => patients.find(p => p.id === id)?.name ?? id;
+  if (replace) return <View style={{ gap: 10, padding: 12, borderRadius: 18, backgroundColor: "rgba(196,120,20,0.10)" }}>
+    <Text style={{ ...type.subhead, color: palette.ink }}>You have {PIN_LIMIT} pins, the most allowed. Replace your oldest pin, <Text style={{ fontWeight: "700" }}>{nameOf(replace.id)}</Text>, with {patient.name.split(" ")[0]}?</Text>
+    <View style={{ flexDirection: "row", gap: 8 }}>
+      <View style={{ flex: 1 }}><Action label="Cancel" secondary onPress={() => setReplace(undefined)} /></View>
+      <View style={{ flex: 1 }}><Action label="Replace" onPress={() => { replaceOldest(replace.id, patient.id); setReplace(undefined); }} /></View>
+    </View>
+  </View>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={pinned ? `Unpin ${patient.name} from Continue` : `Pin ${patient.name} to Continue`} onPress={() => { if (pinned) unpin(patient.id); else { const oldest = pin(patient.id); if (oldest) setReplace(oldest); } }}
+    style={({ pressed }) => ({ minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, opacity: pressed ? 0.6 : 1 })}>
+    <Icon name={pinned ? "pin.slash" : "pin"} size={14} color={palette.blue} />
+    <Text style={{ ...type.subhead, fontWeight: "600", color: palette.blue }}>{pinned ? "Pinned to Continue · Unpin" : "Pin to Continue"}</Text>
+  </Pressable>;
 }

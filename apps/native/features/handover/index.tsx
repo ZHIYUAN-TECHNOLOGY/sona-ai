@@ -13,6 +13,7 @@ import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { ErrorLine } from "@/components/sona/parts";
 import { Action, Icon, Insight, Tone, useAccessibleEffects } from "@/components/sona/ui";
+import { useContinue } from "@/features/patients/continue-store";
 import { useEncounter } from "@/features/encounter/store";
 import { useFindings } from "@/features/live/findings-sync";
 import { errorText } from "@/features/live";
@@ -165,6 +166,7 @@ export function HandoverScreen() {
   return <View style={{ flex: 1, backgroundColor: palette.canvas, paddingTop: insets.top + 56, paddingBottom: Math.max(insets.bottom, 16), paddingHorizontal: 20, gap: 14 }}>
     <Stack.Screen options={{ title: "Shift handover" }} />
     <Insight>{insight.map((part, i) => [i ? " · " : "", part])}</Insight>
+    <WrapUp />
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 34 }}>
       <Text accessibilityLiveRegion="polite" style={{ ...type.subhead, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{top ? `${remaining.length} of ${cards.length} left` : "All patients reviewed"}</Text>
       {done.length > 0 && !accepted && <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(120)}>
@@ -213,4 +215,21 @@ export function HandoverScreen() {
       <Text style={{ ...type.caption, color: palette.muted }}>{server.live ? "Clinic patients from today’s records." : "Clinic patients come from today’s visits; ward patients are examples without a record to open."}</Text>
     </ScrollView>}
   </View>;
+}
+
+/**
+ * End of shift: what is still yours before you hand over (draft notes to sign, visits left unfinished),
+ * one tap from the Continue list. Hidden when nothing is left.
+ */
+function WrapUp() {
+  const { entries, toSign } = useContinue();
+  const unfinished = entries.filter(e => e.left).length;
+  if (!unfinished) return null;
+  const parts = [toSign ? `${toSign} ${toSign === 1 ? "note" : "notes"} to sign` : "", unfinished - toSign > 0 ? `${unfinished - toSign} ${unfinished - toSign === 1 ? "visit" : "visits"} unfinished` : ""].filter(Boolean).join(", ");
+  return <Pressable accessibilityRole="button" accessibilityLabel={`Wrap up: ${parts}. Opens Continue`} onPress={() => router.push({ pathname: "/patients", params: { tab: "continue" } })}
+    style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 44, paddingHorizontal: 14, borderRadius: 16, backgroundColor: "rgba(196,120,20,0.10)", opacity: pressed ? 0.7 : 1 })}>
+    <Icon name="checklist" size={15} color={palette.amber} />
+    <Text style={{ ...type.subhead, flex: 1, fontWeight: "600", color: palette.amber }}>Wrap up: {parts}</Text>
+    <Icon name="chevron.right" size={11} color={palette.amber} />
+  </Pressable>;
 }

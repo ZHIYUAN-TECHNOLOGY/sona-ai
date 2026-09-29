@@ -16,6 +16,8 @@ import { router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { interpolate, type SharedValue, useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CONTINUE_LIMIT } from "@/features/patients/continue";
+import { useContinue } from "@/features/patients/continue-store";
 import { useEncounter } from "./store";
 import { openSession } from "./navigation";
 
@@ -45,9 +47,6 @@ const Group = ({ title }: { title: string }) => <Text accessibilityRole="header"
 
 const Divider = () => <View style={{ height: 1, marginHorizontal: 14, marginVertical: 10, backgroundColor: "rgba(20,28,40,0.08)" }} />;
 
-/** How many patients Continue lists before "See all": the drawer stays the same length at any census. */
-const CONTINUE_LIMIT = 3;
-
 /**
  * Workspace sidebar, revealed underneath as the page slides right (after the ChatGPT-style
  * drawer). Grouped by the kind of work: Today, then My work, Patients (with where you left off)
@@ -59,9 +58,9 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
   const { user } = useLive();
   // Close first, then navigate, so the page is back in place when the next screen presents.
   const go = (to: () => void) => () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); onClose(); setTimeout(to, 120); };
-  // Continue: visits with answers, the one open now first. Capped, with the rest behind "See all".
-  const started = patients.filter(p => encounters[p.id]?.requests.length).sort((a, b) => Number(b.id === patient?.id) - Number(a.id === patient?.id));
-  const recent = started.slice(0, CONTINUE_LIMIT);
+  // Continue: where you left off (the open visit, pins, unfinished work under 24 h), capped so the drawer
+  // stays the same length at any census; the rest are behind "See all".
+  const { entries } = useContinue();
   const openTasks = Object.values(encounters).reduce((sum, e) => sum + (e?.tasks.filter(t => !t.completed).length ?? 0), 0);
   // Each destination shows only for a role whose screen the server would open, with the same live line as its home key.
   const { can, label: role } = useRole();
@@ -83,8 +82,9 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
       { label: "Patients", icon: "patients", detail: `${patients.length} visits today`, show: can("patients.list"), onPress: go(() => router.push("/patients")) },
     ] },
     { title: "Continue", items: [
-      ...recent.map(p => ({ label: p.name, icon: "clock" as const, active: false, detail: `${p.id === patient?.id ? "In visit" : p.subtitle} · ${encounters[p.id]!.requests.length} ${encounters[p.id]!.requests.length === 1 ? "answer" : "answers"}`, onPress: go(() => openSession(p.id)) })),
-      ...(started.length > CONTINUE_LIMIT ? [{ label: `See all ${started.length}`, sf: "ellipsis.circle", onPress: go(() => router.push("/patients")) }] : []),
+      ...entries.slice(0, CONTINUE_LIMIT).map((e): Item => ({ label: e.patient.name, ...(e.why === "pinned" ? { sf: "pin" } : { icon: e.why === "open" ? "stethoscope" as const : "clock" as const }),
+        detail: [e.why === "open" ? "In visit" : e.why === "pinned" ? "Pinned" : "", e.left].filter(Boolean).join(" · "), onPress: go(() => openSession(e.patient.id)) })),
+      ...(entries.length > CONTINUE_LIMIT ? [{ label: `See all ${entries.length}`, sf: "ellipsis.circle", onPress: go(() => router.push({ pathname: "/patients", params: { tab: "continue" } })) }] : []),
     ] },
     { title: "Ward & hospital", items: [
       { label: "Ward", sf: "bed.double", detail: wardLine(ward), show: can("ward.beds"), onPress: go(() => router.push("/ward")) },
