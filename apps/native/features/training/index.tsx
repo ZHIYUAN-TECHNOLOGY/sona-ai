@@ -10,7 +10,7 @@ import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Caption, ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Action, Body, Card, Label, Notice, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Body, Card, Insight, Notice, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import { api, errorText, useLive } from "@/features/live";
 import { useRole } from "@/features/live/roles";
@@ -44,8 +44,8 @@ export function useTrainingStatus() {
 
 /**
  * Training data (management, live only): the continuous-training review queue. One insight line,
- * the hospital's contribute switch, each de-identified sample with its placeholders marked and
- * Approve / Exclude in place, then the export with its receipt. Re-read whenever the screen focuses.
+ * the export with its receipt (the page's one feature card), the hospital's contribute switch, then
+ * each de-identified sample with its placeholders marked and Approve / Exclude in place. Re-read whenever the screen focuses.
  */
 export function TrainingScreen() {
   const { on: live } = useLive();
@@ -107,23 +107,10 @@ export function TrainingScreen() {
   const ready = status?.ready ?? 0, next = (status?.lastDataset?.version ?? 0) + 1;
 
   return <Screen>
-    <View accessible accessibilityRole="header" style={{ gap: 6 }}>
-      <Label>Training data · live</Label>
-      <Text selectable style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{status ? insight(status) : loadError ? "Training data didn't load" : "Reading training data…"}</Text>
-    </View>
+    <Insight eyebrow="Live">{status ? insight(status) : loadError ? "Training data didn't load" : "Reading training data…"}</Insight>
     {loadError && <ErrorLine text={loadError} onRetry={() => void load()} />}
 
-    {status && <Surface style={{ padding: 16, gap: 8 }}>
-      <Host colorScheme="light" seedColor={palette.blue} style={{ height: 44 }}><Switch label="Contribute de-identified data" value={status.contributes} onValueChange={toggle} /></Host>
-      <Text style={{ ...type.footnote, color: palette.muted }}>Only patients who opted in are captured. Names, IC and phone numbers are replaced before a sample reaches this screen.</Text>
-      {switchError && <ErrorLine text={switchError} />}
-    </Surface>}
-
-    {samples && !queue.length && <Body muted>Nothing to review — samples appear when consented patients reply or doctors save notes.</Body>}
-    {queue.map((s, i) => <Animated.View key={s.id} entering={rise(i)} layout={reducedMotion ? undefined : LAYOUT}>
-      <SampleCard sample={s} busy={busy === s.id} error={cardError[s.id]} onDecide={d => decide(s, d)} />
-    </Animated.View>)}
-
+    {/* The page's one action sits first so it isn't buried under the queue. */}
     {status && <Card feature label="Dataset">
       <Text style={{ ...type.subhead, color: palette.ink }}>{ready
         ? `${ready} approved ${ready === 1 ? "row" : "rows"} will export as v${next}, after a fresh leak check.`
@@ -135,6 +122,17 @@ export function TrainingScreen() {
       </View>}
       {exportNote && <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: exportNote.red ? palette.red : palette.muted }}>{exportNote.text}</Text>}
     </Card>}
+
+    {status && <Surface style={{ padding: 16, gap: 8 }}>
+      <Host colorScheme="light" seedColor={palette.blue} style={{ height: 44 }}><Switch label="Contribute de-identified data" value={status.contributes} onValueChange={toggle} /></Host>
+      <Text style={{ ...type.footnote, color: palette.muted }}>Only patients who opted in are captured. Names, IC and phone numbers are replaced before a sample reaches this screen.</Text>
+      {switchError && <ErrorLine text={switchError} />}
+    </Surface>}
+
+    {samples && !queue.length && <Body muted>Nothing to review — samples appear when consented patients reply or doctors save notes.</Body>}
+    {queue.map((s, i) => <Animated.View key={s.id} entering={rise(i)} layout={reducedMotion ? undefined : LAYOUT}>
+      <SampleCard sample={s} busy={busy === s.id} error={cardError[s.id]} onDecide={d => decide(s, d)} />
+    </Animated.View>)}
 
     {status && <View style={{ gap: 6 }}>
       {status.deidentifier === "rules" ? <SampleLabel source="fixture" rule what="de-identification" /> : <Caption icon="shield.lefthalf.filled">De-identified by {status.deidentifier}</Caption>}

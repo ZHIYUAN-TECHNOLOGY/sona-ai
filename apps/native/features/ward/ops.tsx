@@ -6,7 +6,7 @@ import { SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, LAYOUT_SPRING, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Action, Expand, Icon, Surface, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Expand, Icon, Surface, Tone, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
 import { api, useLive } from "@/features/live";
@@ -127,6 +127,13 @@ export function ThisWeek() {
   </Animated.View>;
 }
 
+/** Where the ward stands, in one line. The ward page opens with it and management's My Day leads with it, so the two never disagree. */
+export function wardLine(beds: Bed[]) {
+  const { blocked, bedHours, fit } = wardSummary(beds);
+  return blocked ? <><Tone of="urgent">{blocked} discharge{blocked === 1 ? "" : "s"} blocked</Tone> · ~{bedHours} bed‑hours waiting</>
+    : <><Tone of="good">Nothing is holding a bed</Tone>{fit ? ` · ${fit} fit to go` : ""}</>;
+}
+
 /**
  * Management's My Day lead (instead of clinical tasks): one line on where the ward stands, the bed
  * bar, this week's number (the rest on demand), and one quiet way into the ward to act on it.
@@ -137,11 +144,11 @@ export function WardGlance() {
   const { reducedMotion } = useAccessibleEffects();
   const beds = useServerBeds(findings) ?? wardBeds(patients, encounters);
   const forecast = useForecast(beds, findings);
-  const summary = wardSummary(beds);
+  const blocked = wardSummary(beds).blocked;
   return <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 14 }}>
     <View style={{ gap: 4 }}>
-      <Text style={{ ...type.overline, color: summary.blocked ? palette.red : palette.blue }}>Ward now</Text>
-      <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{summary.blocked ? `${summary.blocked} discharge${summary.blocked === 1 ? "" : "s"} blocked · ~${summary.bedHours} bed‑hours waiting` : `${summary.fit} fit to go · nothing blocked`}</Text>
+      <Text style={{ ...type.overline, color: blocked ? palette.red : palette.blue }}>Ward now</Text>
+      <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{wardLine(beds)}</Text>
     </View>
     <View>
       <BedBar beds={beds} />
