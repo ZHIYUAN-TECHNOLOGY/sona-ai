@@ -10,7 +10,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Icon, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { CareMessages } from "@/features/care-messages";
 import { CheckInThread } from "@/features/check-ins/thread";
 import { PENDING_RESULT, testInSentence } from "@/features/day/model";
@@ -105,6 +105,8 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
               </Pressable>)}
             </View>
           </Animated.View>}
+          {/* The main action sits right under what needs attention; everything below is context. */}
+          <Animated.View entering={rise(1)}><Action label={started ? "Continue visit" : "Open visit"} icon="arrow.right" accessibilityLabel={`${started ? "Continue" : "Open"} visit with ${patient.name}`} onPress={() => go({})} /></Animated.View>
 
           <CheckInThread patient={patient} entering={rise(2)} />
           <CareMessages patient={patient} entering={rise(2)} />
@@ -124,10 +126,6 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
           </Animated.View>
 
           <Animated.View entering={rise(3)} style={{ gap: 10 }}>
-            <Pressable accessibilityRole="button" accessibilityLabel={`${started ? "Continue" : "Open"} visit with ${patient.name}`} onPress={() => go({})}
-              style={({ pressed }) => ({ height: 54, borderRadius: 27, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-              <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>{started ? "Continue visit" : "Open visit"}</Text><Icon name="arrow.right" size={13} color={palette.white} />
-            </Pressable>
             <QuickActions animate={false} actions={[...visit.slice(0, 3),
               { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: flags.length ? `${flags.length} open ${flags.length === 1 ? "item" : "items"}` : "Nothing open", onPress: () => go({ to: "/handover" }) },
               ...visit.filter(a => a.key === "scan")]} />

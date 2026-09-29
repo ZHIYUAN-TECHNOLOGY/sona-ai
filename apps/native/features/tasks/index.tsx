@@ -10,7 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { scheduleOnRN } from "react-native-worklets";
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
-import { Action, Chip, Expand, glass, Icon, RoundAction, Screen, SourceLink, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Chip, Expand, glass, Icon, Insight, RoundAction, Screen, SourceLink, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { Section as AnswerSection } from "@/components/sona/sections";
 import { HalftoneGlint } from "@/components/sona/halftone-shimmer";
 import { palette, type } from "@/components/sona/theme";
@@ -18,6 +18,7 @@ import { useEncounter } from "@/features/encounter/store";
 import type { Encounter, FeatureProps, Task } from "@/features/encounter/types";
 import { errorText, requestId, useLive } from "@/features/live";
 import { completeServerTask, createServerTask, useServerData, useVisitTasks } from "@/features/live/server-day";
+import { taskCounts } from "./counts";
 import { createTaskOnce, dayFromToday, friendlyDate, localDate, longDate, MONTHS, mentionQuery, parseDuePhrase, proposedTask, taskDraftErrors, taskProposal, type TaskDraft } from "./state";
 
 /**
@@ -410,14 +411,20 @@ function VisitFollowUps({ except }: { except?: string }) {
   })}</>;
 }
 
+/** The page's one-line answer: open, overdue (amber) and due today, zero parts left out. */
+function TasksInsight({ tasks, eyebrow }: { tasks: Task[]; eyebrow?: string }) {
+  const { open, overdue, dueToday } = taskCounts(tasks);
+  const parts = [`${open} open`, overdue ? <Tone key="overdue" of="soon">{overdue} overdue</Tone> : null, dueToday ? `${dueToday} due today` : null].filter(Boolean);
+  return <Insight eyebrow={eyebrow}>{open ? parts.map((part, i) => [i ? " · " : "", part]) : tasks.length ? "All follow-ups done" : "No follow-ups yet"}</Insight>;
+}
+
 /** No visit selected: follow-ups across today's visits, and a one-tap way to add one for a visit. */
 function AllFollowUps() {
   const { patients, selectPatient } = useEncounter();
   const tasksOf = useVisitTasks();
-  const any = patients.some(p => tasksOf(p).length);
   return <Screen>
+    <TasksInsight tasks={patients.flatMap(tasksOf)} />
     <VisitFollowUps />
-    {!any && <Text style={{ fontSize: 15, color: palette.muted, paddingHorizontal: 4 }}>No follow-ups yet.</Text>}
     <View style={{ gap: 10 }}>
       <Text accessibilityRole="header" style={{ fontSize: 13, fontWeight: "600", color: palette.muted, paddingHorizontal: 4 }}>Add a follow-up for</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -506,13 +513,12 @@ export function TasksScreen() {
   </Animated.View>;
 
   return <Screen>
-    <Text accessibilityRole="header" style={{ fontSize: 13, fontWeight: "600", color: palette.blue }}>{patient.name}</Text>
+    <TasksInsight tasks={tasks} eyebrow={patient.name} />
     {draft && <Composer key={draft.operationId} draft={draft} pending={pending} error={error} onChange={change => updateEncounter(current => ({ ...current, taskDraft: { ...current.taskDraft!, ...change } }))} onSave={save} />}
     {/* One keyed list, so a completed row glides into Completed instead of remounting there. */}
     {[
       open.length > 0 && <Section key="open" title="Open" count={open.length} />,
       ...open.map(row),
-      open.length === 0 && done.length > 0 && <Animated.Text key="all-done" layout={reducedMotion ? undefined : LAYOUT} entering={FadeIn.duration(200)} style={{ fontSize: 15, color: palette.muted, paddingHorizontal: 4 }}>All follow-ups are done.</Animated.Text>,
       done.length > 0 && <Section key="done" title="Completed" count={done.length} />,
       ...done.map(row),
     ]}

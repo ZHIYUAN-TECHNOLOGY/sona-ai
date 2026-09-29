@@ -1,12 +1,13 @@
 import { Text } from "@/components/sona/text";
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Alert, Pressable, TextInput, View } from "react-native";
 import Animated from "react-native-reanimated";
 import { riseIn } from "@/components/sona/motion";
-import { Body, Card, Icon, Label, Screen, useAccessibleEffects } from "@/components/sona/ui";
+import { Body, Card, Icon, Insight, Screen, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { palette, type } from "@/components/sona/theme";
-import { PatientSheet, type Go } from "./patient-sheet";
+import { defaultMedications } from "./clinical-state";
+import { flagsFor, PatientSheet, type Go } from "./patient-sheet";
 import { useEncounter } from "./store";
 import { openSession } from "./navigation";
 
@@ -28,7 +29,11 @@ export function PatientScreen() {
   // One line per patient; tapping opens the patient sheet with what needs attention and the actions.
   const status = (p: typeof patients[number]) => encounters[p.id]?.requests.length ? { label: "In progress", color: palette.blue } : p.incomplete ? { label: "History to complete", color: palette.amber } : { label: p.subtitle, color: palette.muted };
   const chosen = patients.find(p => p.id === open);
-  return <View style={{ flex: 1 }}><Screen><Label>Hospital outpatient</Label>
+  // Insight: the same attention flags the sheet shows, and the first visit not yet started.
+  const attention = patients.filter(p => flagsFor(p, (encounters[p.id]?.medicationEntries ?? defaultMedications(p)).filter(m => !m.confirmed).length).length).length;
+  const upNext = [...patients].sort((x, y) => x.time.localeCompare(y.time)).find(p => !encounters[p.id]?.requests.length);
+  const insight = [patients.length ? `${patients.length} ${patients.length === 1 ? "visit" : "visits"} today` : "No visits today", attention ? <Tone key="attention" of="urgent">{attention} {attention === 1 ? "needs" : "need"} attention</Tone> : null, upNext ? <Fragment key="next">next <Tone of="next">{upNext.name.split(" ")[0]} at {upNext.time}</Tone></Fragment> : null].filter(Boolean);
+  return <View style={{ flex: 1 }}><Screen><Insight>{insight.map((part, i) => [i ? " · " : "", part])}</Insight>
     <View style={{ borderRadius: 18, backgroundColor: palette.surface, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14 }}><Icon name="magnifyingglass" color={palette.muted} size={18} /><TextInput accessibilityLabel="Search patients" placeholder="Name or patient ID" value={query} onChangeText={setQuery} placeholderTextColor={palette.muted} style={{ flex: 1, minHeight: 52, color: palette.ink, fontSize: 16 }} autoCorrect={false} /></View>
     {!filtered.length && <Card title="No matching patients"><Body muted>Try a different name or patient ID.</Body></Card>}
     {filtered.length > 0 && <View style={{ borderRadius: 22, borderCurve: "continuous", backgroundColor: palette.white, overflow: "hidden" }}>
