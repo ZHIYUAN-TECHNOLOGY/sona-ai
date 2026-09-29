@@ -18,11 +18,11 @@ import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveDraft } from "@/features/live/model-sync";
 import { CareInvite } from "@/features/care-invite";
 import { refreshServerData } from "@/features/live/server-day";
-import { scheduleLine } from "@/features/check-ins/model";
+import { CHECK_IN_CHOICES, MAX_CHECK_INS, checkInDaysLine, defaultCheckInDays, scheduleLine, toggleCheckInDay } from "@/features/check-ins/model";
 import { refreshCheckIns } from "@/features/check-ins/state";
 import { useFindings } from "@/features/live/findings-sync";
 import type { Patient, PrescriptionCheck } from "@/features/encounter/types";
-import { EMPTY_DISCHARGE, FOLLOW_UPS, LANGUAGES, discharge, dischargeChecks, formatMinutes, planFor, type DischargeState, type MedChange } from "./model";
+import { EMPTY_DISCHARGE, FOLLOW_UPS, LANGUAGES, checkInDaysOf, discharge, dischargeChecks, formatMinutes, planFor, type DischargeState, type MedChange } from "./model";
 
 /*
  * Discharge (after Arc Search's summarize): the visit page folds into a small card, sways gently
@@ -179,7 +179,7 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
     haptic("select"); setBusy(true); setServerError(undefined);
     if (live && user) {
       // The server decides: it refuses while anything blocks, and receipts once per request.
-      api.discharge.request({ encounterId: patient.encounterId, requestId: requestId(), approvedBy: user.id })
+      api.discharge.request({ encounterId: patient.encounterId, requestId: requestId(), approvedBy: user.id, checkInDays: checkInDaysOf(state, plan) })
         // The server made the follow-up tasks; keeping the device's copies too would list each twice on My Day.
         .then(receipt => { updateEncounter(value => ({ ...discharge(value, patient, fitAt, new Date(receipt.createdAt)), tasks: value.tasks })); haptic("success"); void refreshCheckIns().catch(() => {}); void refreshServerData().catch(() => {}); })
         .catch(e => { setServerError(errorText(e)); void refresh(true).catch(() => {}); })
@@ -255,6 +255,8 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
         <Text style={{ ...type.footnote, fontWeight: "600", color: TEAL }}>{blocked.length ? `${passed.length} checks passed` : `All ${passed.length} checks passed`}</Text>
       </Animated.View>}
 
+      {!done && <CheckInDays state={state} condition={plan.condition} language={language.name} onChange={checkInDays => set({ checkInDays })} />}
+
       {!done && <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 10 }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <Text style={{ ...type.overline, color: palette.muted }}>Patient leaflet</Text>
@@ -282,7 +284,7 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 4 }}>
           <Icon name="bubble.left.and.bubble.right" size={13} color={palette.blue} />
-          <Text style={{ ...type.caption, flex: 1, color: palette.muted }}><Text style={{ ...type.caption, fontWeight: "700", color: palette.ink }}>Check-ins</Text> · {scheduleLine(done)} · in {language.name} · simulated inbox</Text>
+          <Text style={{ ...type.caption, flex: 1, color: palette.muted }}><Text style={{ ...type.caption, fontWeight: "700", color: palette.ink }}>Check-ins</Text> · {scheduleLine(done, state.checkInDays)} · in {language.name} · simulated inbox</Text>
         </View>
         <CareInvite encounterId={patient.encounterId} />
         <View style={{ flexDirection: "row", gap: 10 }}>
@@ -299,6 +301,31 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
       </Animated.View>
     </Surface>
   </Animated.View>;
+}
+
+/**
+ * "Check-ins": the days Sona Care messages the patient after discharge, as chips with the condition's
+ * suggestion preselected. A tap toggles a day; at least one and at most six stay on (a tap past either
+ * is refused with a line saying why). The pick is saved with the discharge and drives the check-ins.
+ */
+function CheckInDays({ state, condition, language, onChange }: { state: DischargeState; condition?: string; language: string; onChange: (days: number[]) => void }) {
+  const suggested = defaultCheckInDays(condition);
+  const days = state.checkInDays?.length ? state.checkInDays : suggested;
+  const [refused, setRefused] = useState<string>();
+  const same = days.join() === suggested.join();
+  const toggle = (day: number) => {
+    const next = toggleCheckInDay(days, day);
+    if (next.join() === days.join()) { setRefused(days.length === 1 ? "Keep at least one check-in" : `Up to ${MAX_CHECK_INS} check-ins`); return; }
+    setRefused(undefined); onChange(next);
+  };
+  const why = same ? (condition ? `Suggested for ${condition.replace(/-/g, " ")}` : "The usual days") : `Changed from ${checkInDaysLine(suggested)}`;
+  return <View style={{ gap: 10 }}>
+    <Text accessibilityRole="header" style={{ ...type.overline, color: palette.muted }}>Check-ins</Text>
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+      {CHECK_IN_CHOICES.map((d, i) => <Pill key={d} label={i === 0 ? `Day ${d}` : String(d)} a11y={`Check-in day ${d}`} on={days.includes(d)} onPress={() => toggle(d)} />)}
+    </View>
+    <Text accessibilityLiveRegion="polite" style={{ ...type.caption, color: refused ? palette.amber : palette.muted }}>{refused ?? `${why} · Sona Care asks in ${language}`}</Text>
+  </View>;
 }
 
 /** The discharge card rising from below on a soft spring, as the shot's summary sheet does. */

@@ -12,14 +12,16 @@ import { protectedProcedure } from "../index";
 import { sendDueCheckIns } from "./check-ins";
 
 /**
- * The demo clock's controls: jump the demo hospital to the day-2 check-in, day 7 or the clinic
- * review, and back to real time. The clock itself (the offset every route reads) is in ../clock.
+ * The demo clock's controls: jump the demo hospital to the first or second check-in, the day-1 dose
+ * or the clinic review, and back to real time. The clock itself (the offset every route reads) is in ../clock.
+ * "day-2" and "day-7" keep their names for the apps already calling them, but land on the first and
+ * second check-in days the doctor chose (day 2 and day 7 unless changed); status says which days they are.
  */
 const MINUTE = 60_000;
 export const JUMPS = ["now", "day-1", "day-2", "day-7", "visit"] as const;
 export type Jump = (typeof JUMPS)[number];
 
-/** Where each jump lands, from the hospital's latest discharge: just after each check-in is due, and 09:00 on the review day. */
+/** Where each jump lands, from the hospital's latest discharge: just after the first two check-ins are due, and 09:00 on the review day. */
 export async function jumpTargets(db: Context["db"], hospitalId: string) {
   const rows = await db.select({ state: encounters.state }).from(encounters).where(eq(encounters.hospitalId, hospitalId));
   const last = rows.map(r => (r.state as { discharge?: DischargeState }).discharge)
@@ -27,7 +29,8 @@ export async function jumpTargets(db: Context["db"], hospitalId: string) {
     .sort((a, b) => b.dischargedAt.localeCompare(a.dischargedAt))[0];
   if (!last) return undefined;
   const out = new Date(last.dischargedAt);
-  const due = Object.fromEntries(checkInSchedule(out).map(c => [c.day, c.dueAt]));
+  const checkIns = checkInSchedule(out, last.checkInDays);
+  const after = (i: number) => checkIns[i] && new Date(checkIns[i].dueAt.getTime() + MINUTE);
   const days = FOLLOW_UPS.find(f => f.id === last.followUp)?.days;
   // 09:00 in Kuala Lumpur (01:00 UTC) on the review day.
   const visit = days === undefined ? undefined : new Date(Date.UTC(out.getUTCFullYear(), out.getUTCMonth(), out.getUTCDate() + days, 1));
@@ -36,10 +39,11 @@ export async function jumpTargets(db: Context["db"], hospitalId: string) {
   return {
     dischargedAt: out,
     "day-1": day1,
-    "day-2": due[2] && new Date(due[2].getTime() + MINUTE),
-    "day-7": due[7] && new Date(due[7].getTime() + MINUTE),
+    "day-2": after(0),
+    "day-7": after(1),
     visit,
-  } as { dischargedAt: Date } & Partial<Record<Exclude<Jump, "now">, Date>>;
+    checkInDays: checkIns.map(c => c.day),
+  } as { dischargedAt: Date; checkInDays: number[] } & Partial<Record<Exclude<Jump, "now">, Date>>;
 }
 
 async function status(db: Context["db"], hospitalId: string, now: Date) {
@@ -48,6 +52,8 @@ async function status(db: Context["db"], hospitalId: string, now: Date) {
   return {
     offsetMs, now,
     dischargedAt: targets?.dischargedAt ?? null,
+    // The days behind the "day-2" and "day-7" jumps (the first two chosen), so the app can label them.
+    checkInDays: targets?.checkInDays.slice(0, 2) ?? [2, 7],
     available: JUMPS.filter(j => j === "now" || Boolean(targets?.[j])),
   };
 }

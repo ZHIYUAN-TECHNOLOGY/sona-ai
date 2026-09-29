@@ -52,7 +52,7 @@ export async function patientPlan(context: Context & { hospitalId: string; patie
       leaflets: [...LANGUAGES].sort((a, b) => Number(b.id === d.language) - Number(a.id === d.language)).map(l => ({ language: l.id, label: l.label, name: l.name, text: plan.leaflet[l.id] })),
       medicines: patientMeds(plan, lang), warningSigns: warningSigns(plan, lang),
       followUp: date ? { title: reviewWords(plan, lang).title, date } : null,
-      checkIns: checkInSchedule(new Date(d.dischargedAt)).map(c => ({ day: c.day as number, date: c.dueAt })),
+      checkIns: checkInSchedule(new Date(d.dischargedAt), d.checkInDays).map(c => ({ day: c.day, date: c.dueAt })),
     };
 }
 

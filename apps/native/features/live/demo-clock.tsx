@@ -6,11 +6,16 @@ import { useLiveChanges } from "./channel";
 
 /**
  * The demo clock (live mode, synthetic demo hospital): jumps the server's time for the whole hospital
- * to the day-2 check-in, day 7 or the clinic review, counted from the latest discharge, and back to
+ * to the first or second check-in (day 2 and day 7 unless the doctor chose others) or the clinic review, counted from the latest discharge, and back to
  * real time. Every connected app re-reads, so the patient's Sona Care shows the check-in as it lands.
  */
 type Status = Awaited<ReturnType<typeof api.demo.status>>;
 const JUMPS = [["now", "Real time"], ["day-1", "Day 1 morning dose"], ["day-2", "Day 2 check-in"], ["day-7", "Day 7 check-in"], ["visit", "Clinic review day"]] as const;
+/** "day-2" and "day-7" land on the first and second check-in days chosen at discharge; label them with those days. */
+const labelled = (status?: Status) => JUMPS.map(([to, label]) => {
+  const day = to === "day-2" ? status?.checkInDays[0] : to === "day-7" ? status?.checkInDays[1] : undefined;
+  return [to, day ? `Day ${day} check-in` : label] as const;
+});
 const when = (d: Date) => new Date(d).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" });
 const DAY = 86_400_000;
 /** Days since discharge counted on calendar days in Kuala Lumpur (discharge day is day 0), as Sona Care and the check-ins count them. */
@@ -36,7 +41,7 @@ export function DemoClockCard() {
   return <Card label="Demo" title="Demo clock">
     <Body>{status ? `${when(status.now)}${status.offsetMs ? ` · demo time${days !== undefined ? `, day ${days} after discharge` : ""}` : " · real time"}` : "Reading the clock…"}</Body>
     <View style={{ gap: 8 }}>
-      {JUMPS.map(([to, label]) => <Action key={to} label={busy === to ? "Moving…" : label} secondary={to !== "day-2"}
+      {labelled(status).map(([to, label]) => <Action key={to} label={busy === to ? "Moving…" : label} secondary={to !== "day-2"}
         disabled={Boolean(busy) || !status?.available.includes(to)} onPress={() => jump(to)} />)}
     </View>
     <Body muted>Moves the server's time for the demo hospital only, then sends any check-in now due. Sona Care follows at once. Discharge a patient first; the jumps count from their discharge.</Body>
@@ -59,7 +64,7 @@ export function DemoTimeLine() {
   if (!on || !status) return null;
   const days = status.dischargedAt ? calendarDays(status.dischargedAt, status.now) : undefined;
   const label = status.offsetMs ? `Demo time · ${when(status.now)}${days !== undefined ? ` · day ${days} after discharge` : ""}` : "Demo clock · real time";
-  const choices = JUMPS.filter(([to]) => status.available.includes(to));
+  const choices = labelled(status).filter(([to]) => status.available.includes(to));
   const jump = (to: (typeof JUMPS)[number][0]) => { setError(undefined); void api.demo.jump({ to }).then(setStatus, e => setError(errorText(e))); };
   const open = () => {
     if (process.env.EXPO_OS === "ios") ActionSheetIOS.showActionSheetWithOptions(

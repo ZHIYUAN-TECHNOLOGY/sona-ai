@@ -1,11 +1,35 @@
 import type { Language } from "./discharge";
 
 /**
- * Demo flow 7, after-discharge check-ins (docs/research/ops-demo-flows.md). Messages go out on day 2
- * and day 7 in the leaflet's language through a simulated inbox; no real patient is contacted.
+ * Demo flow 7, after-discharge check-ins (docs/research/ops-demo-flows.md). Messages go out on the days
+ * the doctor chose at discharge (day 2 and day 7 when none were stored) in the leaflet's language
+ * through a simulated inbox; no real patient is contacted.
  */
 export const CHECK_IN_DAYS = [2, 7] as const;
-export type CheckInDay = (typeof CHECK_IN_DAYS)[number];
+export type CheckInDay = number;
+/** The days a doctor can pick on the discharge card: at least one, at most MAX_CHECK_INS. */
+export const CHECK_IN_CHOICES = [1, 2, 3, 5, 7, 10, 14, 21, 30] as const;
+export const MAX_CHECK_INS = 6;
+
+// ponytail: fixed rules per discharge condition (DischargePlan.condition), not a model; the doctor changes them on the card.
+const SUGGESTED: [RegExp, number[]][] = [
+  [/heart-failure/, [1, 3, 7, 14]], [/copd/, [2, 7, 14]], [/appendic|post-op/, [1, 3, 7]], [/diabet|hyperglyc/, [1, 3, 7]], [/pneumonia/, [2, 7]],
+];
+/** The check-in days suggested for a discharge condition ("pneumonia"); day 2 and day 7 for anything else. */
+export const defaultCheckInDays = (condition?: string): number[] =>
+  [...(SUGGESTED.find(([match]) => condition && match.test(condition))?.[1] ?? CHECK_IN_DAYS)];
+
+/** A tapped chip on or off, kept sorted; a tap that would leave none or more than MAX_CHECK_INS is ignored. */
+export function toggleCheckInDay(days: readonly number[], day: number): number[] {
+  const next = days.includes(day) ? days.filter(d => d !== day) : [...days, day].sort((a, b) => a - b);
+  return next.length < 1 || next.length > MAX_CHECK_INS ? [...days] : next;
+}
+
+/** "day 2 and day 7", "day 1, day 3 and day 7". */
+export function checkInDaysLine(days: readonly number[]) {
+  const words = days.map(d => `day ${d}`);
+  return words.length > 1 ? `${words.slice(0, -1).join(", ")} and ${words.at(-1)}` : words[0] ?? "";
+}
 /** How a reply was read: worse or urgent replies become a flagged task on the doctor's day. */
 export type ReplyLabel = "fine" | "worse" | "urgent";
 export type CheckInLanguage = Language;
@@ -17,10 +41,13 @@ export type CheckIn = { id: string; patientId: string; encounterId: string; day:
 // ponytail: every demo hospital keeps Malaysian time; read it from the hospital row once one is elsewhere.
 const OFFSET_HOURS = 8, SEND_HOUR = 10;
 
-/** Day N counts from the discharge's calendar day in Malaysia; each message goes at 10:00 local. */
-export function checkInSchedule(dischargedAt: Date): { day: CheckInDay; dueAt: Date }[] {
+/**
+ * Day N counts from the discharge's calendar day in Malaysia; each message goes at 10:00 local. The
+ * days are the ones chosen at discharge; a discharge that stored none (from before the choice) gets day 2 and day 7.
+ */
+export function checkInSchedule(dischargedAt: Date, days?: readonly number[]): { day: CheckInDay; dueAt: Date }[] {
   const local = new Date(dischargedAt.getTime() + OFFSET_HOURS * 3600_000);
-  return CHECK_IN_DAYS.map(day => ({ day, dueAt: new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + day, SEND_HOUR - OFFSET_HOURS)) }));
+  return (days?.length ? days : CHECK_IN_DAYS).map(day => ({ day, dueAt: new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + day, SEND_HOUR - OFFSET_HOURS)) }));
 }
 
 // ponytail: one demo hospital; the name comes from the hospital row once there are more.

@@ -14,8 +14,8 @@ const user = (id: string) => ({
   session: { id: `s-${id}`, userId: id, token: "t", expiresAt: new Date(Date.now() + 3600_000), createdAt: new Date(), updatedAt: new Date() },
 } as unknown as Session);
 
-/** Amelia discharged with every blocker cleared and her leaflet in `language`; the clock can then jump days. */
-async function discharged(language = "ms") {
+/** Amelia discharged with every blocker cleared and her leaflet in `language`; the clock can then jump days. `pick` runs before the discharge. */
+async function discharged(language = "ms", pick?: (api: ReturnType<typeof createRouterClient<typeof appRouter>>) => Promise<unknown>) {
   const clock = { now: new Date("2026-09-26T15:40:00+08:00") };
   const db = await createTestDb();
   await seedDemo(db, clock.now);
@@ -24,9 +24,48 @@ async function discharged(language = "ms") {
   await db.update(encounters).set({ state: { discharge: { glReceived: true, medsConfirmed: true, followUp: "2w", language } } }).where(eq(encounters.id, "visit-1042"));
   const as = (id: string | null) => createRouterClient(appRouter, { context: { db, session: id ? user(id) : null, now: () => clock.now } });
   const api = as("dr-aisyah");
+  await pick?.(api);
   await api.discharge.request({ encounterId: "visit-1042", requestId: "req-d1", approvedBy: "dr-aisyah" });
   return { db, clock, api, as };
 }
+
+test("the doctor's check-in days go with the discharge: the cron, Sona Care's plan and the demo jumps follow them", async () => {
+  const { db, clock, api, as } = await discharged("en", api => api.discharge.update({ encounterId: "visit-1042", checkInDays: [1, 3, 14] }));
+  const list = await api.checkIns.list({ encounterId: "visit-1042" });
+  expect(list.map(c => [c.day, c.dueAt.toISOString()])).toEqual([
+    [1, "2026-09-27T02:00:00.000Z"], [3, "2026-09-29T02:00:00.000Z"], [14, "2026-10-10T02:00:00.000Z"],
+  ]);
+  const [row] = await db.select({ state: encounters.state }).from(encounters).where(eq(encounters.id, "visit-1042"));
+  expect((row!.state as { discharge: { checkInDays: number[] } }).discharge.checkInDays).toEqual([1, 3, 14]);
+  // The hourly send on day 3 sends day 1 and day 3, not day 14.
+  clock.now = new Date("2026-09-29T10:30:00+08:00");
+  expect((await sendDueCheckIns(db, "demo", clock.now)).sent).toBe(2);
+  // Sona Care's plan lists the same days.
+  const { code } = await api.care.code({ encounterId: "visit-1042" });
+  const amelia = as("amelia-account");
+  await amelia.care.join({ code });
+  const plan = await amelia.care.discharge();
+  expect(plan.status === "discharged" && plan.checkIns.map(c => c.day)).toEqual([1, 3, 14]);
+  // The demo's check-in jumps land on the first two chosen days.
+  clock.now = new Date("2026-09-26T15:40:00+08:00");
+  expect((await api.demo.status()).checkInDays).toEqual([1, 3]);
+  expect((await api.demo.jump({ to: "day-2" })).now.toISOString()).toBe(new Date("2026-09-27T10:01:00+08:00").toISOString());
+  expect((await api.demo.jump({ to: "day-7" })).now.toISOString()).toBe(new Date("2026-09-29T10:01:00+08:00").toISOString());
+});
+
+test("days sent with the discharge win; bad picks are refused; none chosen means the condition's suggestion", async () => {
+  const { api } = await discharged("en", async api => {
+    for (const bad of [[], [0], [31], [7, 2], [2, 2], [1, 2, 3, 5, 7, 10, 14], [2.5]])
+      expect((await api.discharge.update({ encounterId: "visit-1042", checkInDays: bad }).catch(e => e)).code).toBe("BAD_REQUEST");
+    await api.discharge.update({ encounterId: "visit-1042", checkInDays: [5] });
+    expect((await api.discharge.request({ encounterId: "visit-1042", requestId: "req-bad", approvedBy: "dr-aisyah", checkInDays: [3, 1] }).catch(e => e)).code).toBe("BAD_REQUEST");
+    await api.discharge.request({ encounterId: "visit-1042", requestId: "req-days", approvedBy: "dr-aisyah", checkInDays: [2, 10] });
+  });
+  expect((await api.checkIns.list({ encounterId: "visit-1042" })).map(c => c.day)).toEqual([2, 10]);
+  // Amelia's pneumonia suggests day 2 and day 7 when nothing was picked (the fixture above).
+  const plain = await discharged("en");
+  expect((await plain.api.checkIns.list({ encounterId: "visit-1042" })).map(c => c.day)).toEqual([2, 7]);
+});
 
 test("a discharge schedules the day 2 and day 7 check-ins at 10:00 in the leaflet's language, once", async () => {
   const { api } = await discharged("ms");

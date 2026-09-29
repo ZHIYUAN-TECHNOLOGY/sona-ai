@@ -39,12 +39,19 @@ export const observationSchema = z.object({
 });
 export type Observation = z.infer<typeof observationSchema>;
 
-/** The discharge card's inline fixes: take-home medicines, follow-up, leaflet language. */
+/** The check-in days chosen at discharge: 1 to 6 whole days, each from day 1 to day 30, unique and in order. */
+export const checkInDaysSchema = z.array(z.number().int().min(1).max(30)).min(1).max(6)
+  .refine(days => days.every((d, i) => i === 0 || d > days[i - 1]!), { message: "Check-in days must be unique and in order" });
+
+/** The discharge card's inline fixes: take-home medicines, follow-up, leaflet language, check-in days. */
 export const dischargeUpdateSchema = z.object({
   encounterId: z.string().min(1), medsConfirmed: z.boolean().optional(),
   followUp: z.enum(["1w", "2w", "4w"]).optional(), language: z.enum(["ms", "en", "zh"]).optional(),
+  checkInDays: checkInDaysSchema.optional(),
 });
 export type DischargeUpdate = z.infer<typeof dischargeUpdateSchema>;
+/** Discharge itself: the approved command, with the check-in days when the app sends them (else the saved pick, else the condition's). */
+export const dischargeRequestSchema = approvedCommandSchema.extend({ checkInDays: checkInDaysSchema.optional() });
 
 /** The guarantee letter's inline fixes, each adding its sentence to the note. */
 export const claimUpdateSchema = z.object({ encounterId: z.string().min(1), organismConfirmed: z.boolean().optional(), ivReasonAdded: z.boolean().optional() });
