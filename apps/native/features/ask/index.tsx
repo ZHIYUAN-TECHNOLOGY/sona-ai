@@ -3,9 +3,11 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { createContext, use, useState } from "react";
 import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn } from "react-native-reanimated";
+import { List, ListRow } from "@/components/sona/list";
 import { SampleLabel } from "@/components/sona/model-answer";
-import { SonaMark } from "@/components/sona/orb";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Action, Glass, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
@@ -14,9 +16,18 @@ import { useEncounter } from "@/features/encounter/store";
 import { PLACEHOLDER, SCOPE_LABEL, matchQuestion, type Answer, type Scope } from "./answers";
 import { askCatalog, validateAskSpec } from "./catalog";
 
+/**
+ * ✦ is how Sona shows up to ask or suggest (the bar, the review-page button, suggestions, the scope chip).
+ * The waveform stays the brand mark; beside a text field it reads as a microphone.
+ */
+function Spark({ size = 28 }: { size?: number }) {
+  return <View accessibilityElementsHidden style={{ width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center", backgroundColor: palette.blueWash }}>
+    <Text style={{ fontSize: size * 0.5, lineHeight: size * 0.62, color: palette.blue }}>✦</Text>
+  </View>;
+}
+
 /** Space a page leaves at the end of its content so the ask bar never covers it. */
 export const ASK_SPACE = 92;
-const TONE = { urgent: palette.red, soon: palette.amber, good: palette.green, calm: palette.muted } as const;
 const tap = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); };
 
 type Ops = { run: (op: string) => void };
@@ -43,19 +54,9 @@ const { registry } = defineRegistry(askCatalog, {
   components: {
     AskColumn: ({ children }) => <View style={{ gap: 14 }}>{children}</View>,
     AskLead: ({ props }) => <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{props.text}</Text>,
-    AskRows: ({ props }) => { const { run } = use(OpsContext); return <Surface style={{ paddingVertical: 4 }}>
-      {props.rows.map((r, i) => { const content = <>
-        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: TONE[r.tone] }} />
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{r.title}</Text>
-          <Text numberOfLines={2} style={{ ...type.caption, color: r.tone === "calm" ? palette.muted : TONE[r.tone] }}>{r.detail}</Text>
-        </View>
-        {r.op && <Icon name="chevron.right" size={11} color={palette.muted} />}
-      </>;
-        const style = { minHeight: 52, flexDirection: "row" as const, alignItems: "center" as const, gap: 12, paddingHorizontal: 14, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)" };
-        return r.op ? <Pressable key={r.id} accessibilityRole="button" accessibilityLabel={`${r.title}, ${r.detail}`} onPress={() => run(r.op!)} style={({ pressed }) => ({ ...style, opacity: pressed ? 0.6 : 1 })}>{content}</Pressable>
-          : <View key={r.id} accessible accessibilityLabel={`${r.title}, ${r.detail}`} style={style}>{content}</View>; })}
-    </Surface>; },
+    AskRows: ({ props }) => { const { run } = use(OpsContext); return <List>
+      {props.rows.map((r, i) => <ListRow key={r.id} title={r.title} detail={r.detail} tone={r.tone} divider={i > 0} onPress={r.op ? () => run(r.op!) : undefined} />)}
+    </List>; },
     AskReview: ({ props }) => <Review {...props} />,
     AskActions: ({ props }) => { const { run } = use(OpsContext); return <View style={{ gap: 8 }}>{props.items.map(a => <Action key={a.op} label={a.label} secondary={!a.primary} onPress={() => run(a.op)} />)}</View>; },
   },
@@ -82,6 +83,7 @@ export const closed: AskState = { open: false };
  */
 export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Scope; answers: Answer[]; state: AskState; onChange: (s: AskState) => void; onTab?: (tab: string) => void }) {
   const { updateEncounter } = useEncounter();
+  const insets = useSafeAreaInsets();
   const [text, setText] = useState("");
   const { shown, missed } = state;
   const close = () => onChange(closed);
@@ -99,7 +101,7 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
   const others = answers.filter(a => a.id !== shown?.id);
 
   return <Modal visible={state.open} animationType="slide" presentationStyle="pageSheet" onRequestClose={close}>
-    <View style={{ flex: 1, backgroundColor: palette.canvas }}>
+    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: palette.canvas }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, padding: 16, paddingBottom: 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: palette.blueWash }}>
           <Text style={{ fontSize: 12, color: palette.blue }}>✦</Text><Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{SCOPE_LABEL[scope]}</Text>
@@ -107,13 +109,7 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
         <View style={{ flex: 1 }} />
         <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={close} hitSlop={10} style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}><Icon name="xmark" size={14} color={palette.ink} /></Pressable>
       </View>
-      <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 22, backgroundColor: palette.surface, paddingLeft: 14, paddingRight: 6 }}>
-          <TextInput accessibilityLabel="Ask Sona" placeholder={PLACEHOLDER[scope]} value={text} onChangeText={setText} onSubmitEditing={ask} returnKeyType="send" placeholderTextColor={palette.muted} style={{ flex: 1, minHeight: 46, fontSize: 16, color: palette.ink }} />
-          <Pressable accessibilityRole="button" accessibilityLabel="Send" disabled={!text.trim()} onPress={ask} style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: text.trim() ? palette.dark : "rgba(20,28,40,0.1)" }}><Icon name="arrow.up" size={15} color={palette.white} /></Pressable>
-        </View>
-      </View>
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         {missed && <Text style={{ ...type.callout, color: palette.amber }}>“{missed}”: Sona answers only these questions here until the model is switched on.</Text>}
         {spec ? <View style={{ gap: 14 }}>
           <Text style={{ ...type.footnote, color: palette.muted }}>{shown!.question}</Text>
@@ -130,7 +126,15 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
           </Pressable>)}
         </Surface>}
       </ScrollView>
-    </View>
+      {/* The composer sits at the bottom, like every chat, and rides up with the keyboard. */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 12), borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)", backgroundColor: palette.canvas }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 24, backgroundColor: palette.surface, paddingLeft: 10, paddingRight: 6, boxShadow: "0 4px 14px rgba(30,50,90,0.08)" }}>
+          <Spark size={26} />
+          <TextInput accessibilityLabel="Ask Sona" placeholder={PLACEHOLDER[scope]} value={text} onChangeText={setText} onSubmitEditing={ask} returnKeyType="send" placeholderTextColor={palette.muted} style={{ flex: 1, minHeight: 48, fontSize: 16, color: palette.ink }} />
+          <Pressable accessibilityRole="button" accessibilityLabel="Send" disabled={!text.trim()} onPress={ask} style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: text.trim() ? palette.dark : "rgba(20,28,40,0.1)" }}><Icon name="arrow.up" size={15} color={palette.white} /></Pressable>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
   </Modal>;
 }
 
@@ -147,7 +151,7 @@ export function AskBar({ scope, answers, onTab }: { scope: Scope; answers: Answe
       {nudge && <AskNudge answer={nudge} onPress={() => setState({ open: true, shown: nudge })} />}
       <Pressable accessibilityRole="button" accessibilityLabel={`Ask Sona about ${SCOPE_LABEL[scope].toLowerCase()}`} onPress={() => { tap(); setState({ open: true }); }}>
         <Glass style={{ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14 }}>
-          <SonaMark size={22} /><Text style={{ ...type.callout, flex: 1, color: palette.muted }}>{PLACEHOLDER[scope]}</Text>
+          <Spark /><Text style={{ ...type.callout, flex: 1, color: palette.muted }}>{PLACEHOLDER[scope]}</Text>
         </Glass>
       </Pressable>
     </View>
@@ -165,7 +169,7 @@ export function AskOrb({ scope, answers }: { scope: Scope; answers: Answer[] }) 
   return <>
     <Pressable accessibilityRole="button" accessibilityLabel={`Ask Sona about ${SCOPE_LABEL[scope].toLowerCase()}`} accessibilityHint={nudge ? nudge.question : undefined} onPress={() => { tap(); setState({ open: true, shown: nudge ?? answers[0] }); }}
       style={({ pressed }) => ({ width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.85)", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", boxShadow: "0 4px 12px rgba(36,91,204,0.14)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-      <SonaMark size={20} />
+      <Spark size={30} />
       {nudge && <View style={{ position: "absolute", top: 3, right: 3, width: 9, height: 9, borderRadius: 5, backgroundColor: palette.blue, borderWidth: 1.5, borderColor: palette.white }} />}
     </Pressable>
     <AskSheet scope={scope} answers={answers} state={state} onChange={setState} />

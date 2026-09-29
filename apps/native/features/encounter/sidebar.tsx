@@ -65,7 +65,9 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
   // Each destination shows only for a role whose screen the server would open, with the same live line as its home key.
   const { can, label: role } = useRole();
   const inbox = useInboxSummary();
-  const ward = wardSummary(wardBeds(useDayPatients(patients), encounters));
+  // Today's visits from the same schedule as Today and Patients, so the three never disagree.
+  const day = useDayPatients(patients);
+  const ward = wardSummary(wardBeds(day, encounters));
   const audit = auditOf(useOpenAudit());
   const training = useTrainingStatus();
 
@@ -79,7 +81,7 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
       { label: "Shift handover", sf: "arrow.left.arrow.right", detail: `${patients.length + 3} patients`, show: can("handover.list"), onPress: go(() => router.push("/handover")) },
     ] },
     { title: "Patients", items: [
-      { label: "Patients", icon: "patients", detail: `${patients.length} visits today`, show: can("patients.list"), onPress: go(() => router.push("/patients")) },
+      { label: "Patients", icon: "patients", detail: day.length ? `${day.length} ${day.length === 1 ? "visit" : "visits"} today` : "No visits today", show: can("patients.list"), onPress: go(() => router.push("/patients")) },
     ] },
     { title: "Continue", items: [
       ...entries.slice(0, CONTINUE_LIMIT).map((e): Item => ({ label: e.patient.name, ...(e.why === "pinned" ? { sf: "pin" } : { icon: e.why === "open" ? "stethoscope" as const : "clock" as const }),
