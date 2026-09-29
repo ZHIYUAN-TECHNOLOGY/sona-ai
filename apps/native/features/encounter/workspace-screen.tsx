@@ -61,7 +61,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     const next = capabilitySchema.safeParse(params.next);
     if (next.success) request(next.data, params.prompt);
     const view = params.view;
-    if (view === "recording" || view === "note" || view === "xray" || view === "tasks" || view === "scan") setTimeout(() => router.push(`/${view}`), 320);
+    if (view === "recording" || view === "note" || view === "xray" || view === "tasks" || view === "scan" || view === "claim") setTimeout(() => router.push(`/${view}`), 320);
   }, [home, sessionId, leaveVisit, selectPatient, request, params.next, params.prompt, params.view]));
   const insets = useSafeAreaInsets();
   const [drafts, setDrafts] = useState<Record<string, string>>({});

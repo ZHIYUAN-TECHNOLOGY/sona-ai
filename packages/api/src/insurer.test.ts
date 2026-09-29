@@ -113,6 +113,44 @@ test("a send after the insurer approved returns the one receipt: no second email
   expect((await db.select().from(claims))[0]).toMatchObject({ status: "approved", reviewToken: first!.reviewToken });
 });
 
+test("the insurer denies with a listed reason; the doctor appeals with a draft grounded in the note; the insurer approves the appeal", async () => {
+  const { db, api, clock, token } = await sentClaim();
+  expect(await api.claim.appealDraft({ encounterId: "visit-1042" }).catch(e => e.code)).toBe("PRECONDITION_FAILED");
+  expect(await decideReview(db, token, "deny", "", clock.now, "made-up")).toEqual({ ok: false, reason: "Choose the reason for the denial" });
+  expect(await decideReview(db, token, "deny", "Culture result missing.", clock.now, "DOC")).toMatchObject({ ok: true, status: "denied", encounterId: "visit-1042" });
+  expect(renderReviewPage((await reviewPacket(db, token, clock.now))!)).toContain("Denied: Documentation incomplete: organism / severity not stated");
+  expect(await api.claim.status({ encounterId: "visit-1042" })).toMatchObject({ status: "denied", reviewUrl: undefined,
+    denial: { code: "DOC", reason: "Documentation incomplete: organism / severity not stated", note: "Culture result missing.", at: clock.now.toISOString() } });
+
+  // The draft: a labelled sample whose every point cites a sentence of this patient's note.
+  const draft = await api.claim.appealDraft({ encounterId: "visit-1042" });
+  expect(draft.source).toBe("fixture");
+  expect(draft.letter.points.map(p => p.evidenceSentenceId)).toEqual(["organism", "diagnosis", "xray"]);
+  expect(draft.sentences.find(s => s.id === "organism")?.text).toBe("Organism not identified; sputum culture not sent.");
+
+  // A point citing nothing in the note is refused; the doctor's edited letter goes, once per requestId, with a fresh link.
+  const letter = { ...draft.letter, opening: "Edited by the doctor." };
+  const bad = { ...letter, points: [{ claim: "Made up", evidenceSentenceId: "nowhere" }] };
+  expect(await api.claim.appeal({ encounterId: "visit-1042", requestId: "a0", approvedBy: "dr-aisyah", letter: bad }).catch(e => e.code)).toBe("BAD_REQUEST");
+  const receipt = await api.claim.appeal({ encounterId: "visit-1042", requestId: "a1", approvedBy: "dr-aisyah", letter });
+  expect(receipt).toMatchObject({ kind: "appeal", requestId: "a1" });
+  expect((await api.claim.appeal({ encounterId: "visit-1042", requestId: "a1", approvedBy: "dr-aisyah", letter })).id).toBe(receipt.id);
+  expect(await api.claim.appeal({ encounterId: "visit-1042", requestId: "a2", approvedBy: "dr-aisyah", letter }).catch(e => e.code)).toBe("PRECONDITION_FAILED");
+  const fresh = await reviewTokenOf(db, "visit-1042");
+  expect(fresh).not.toBe(token);
+  expect(await api.claim.status({ encounterId: "visit-1042" })).toMatchObject({ status: "appealed", reviewUrl: `https://sona.test/insurer/${fresh}`, appealedAt: clock.now.toISOString(), denial: { code: "DOC" } });
+
+  // The insurer sees the appeal (with the sentences it cites) above the three decisions, and approves.
+  const page = renderReviewPage((await reviewPacket(db, fresh, clock.now))!);
+  expect(page).toContain("Appeal from the hospital");
+  expect(page).toContain("Edited by the doctor.");
+  expect(page).toContain("From the note: “Organism not identified; sputum culture not sent.”");
+  for (const decision of ['value="approve"', 'value="query"', 'value="deny"']) expect(page).toContain(decision);
+  expect(await decideReview(db, token, "approve", "", clock.now)).toEqual({ ok: false, reason: "Unknown link" });
+  expect(await decideReview(db, fresh, "approve", "", clock.now)).toMatchObject({ ok: true, status: "approved" });
+  expect((await db.select().from(guaranteeLetters).where(eq(guaranteeLetters.id, "gl-1042")))[0]).toMatchObject({ status: "received" });
+});
+
 test("approval marks only the current admission's guarantee letter received, not an earlier stay's", async () => {
   const { db, clock, token } = await sentClaim();
   await db.insert(admissions).values({ id: "adm-1042-earlier", patientId: "SYN-1042", hospitalId: "demo", bed: "Bed 2", dischargedAt: new Date("2026-03-01") });

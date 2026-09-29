@@ -1,6 +1,6 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import type { PendingResult, ScheduleVisit } from "@/features/day/model";
-import { EMPTY_CLAIM } from "@sona-ai/domain/claim";
+import { EMPTY_CLAIM, type ClaimState, type Denial } from "@sona-ai/domain/claim";
 import { EMPTY_DISCHARGE } from "@sona-ai/domain/discharge";
 import type { Encounter, Patient, Task } from "@/features/encounter/types";
 
@@ -42,7 +42,8 @@ export function serverVisit(r: ServerAppointment, known: string[]): ScheduleVisi
 
 /** What the server holds for a visit (the encounter row's state), as far as the app reads it. */
 export type ServerVisitState = Partial<Pick<Encounter, "medicationEntries" | "prescriptionInputs" | "proposedMedicine" | "historyFacts">> & { discharge?: object; claim?: object };
-type ClaimStatus = { status: string; approvedAt?: string | Date; reviewUrl?: string; query?: string };
+type ClaimStatus = { status: string; approvedAt?: string | Date; reviewUrl?: string; query?: string; denial?: Denial; appealedAt?: string };
+const STATUSES: ClaimState["status"][] = ["approved", "sent", "queried", "denied", "appealed"];
 
 /**
  * In live mode the server's record of a visit wins over the fixture: its history, medicines and eligibility,
@@ -50,7 +51,7 @@ type ClaimStatus = { status: string; approvedAt?: string | Date; reviewUrl?: str
  * not recorded yet keeps the app's own value; the app's revision counter is left alone.
  */
 export function mergeServerState<T extends Partial<Encounter>>(value: T, server: ServerVisitState, claim: ClaimStatus, glReceived: boolean): T {
-  const status = claim.status === "approved" || claim.status === "sent" || claim.status === "queried" ? claim.status : "draft";
+  const status = STATUSES.find(s => s === claim.status) ?? "draft";
   return {
     ...value,
     ...(server.medicationEntries ? { medicationEntries: server.medicationEntries } : {}),
@@ -58,6 +59,6 @@ export function mergeServerState<T extends Partial<Encounter>>(value: T, server:
     ...(server.proposedMedicine !== undefined ? { proposedMedicine: server.proposedMedicine } : {}),
     ...(server.historyFacts ? { historyFacts: server.historyFacts } : {}),
     discharge: { ...EMPTY_DISCHARGE, ...value.discharge, ...server.discharge, glReceived },
-    claim: { ...EMPTY_CLAIM, ...server.claim, status, approvedAt: claim.approvedAt === undefined ? undefined : String(claim.approvedAt), reviewUrl: claim.reviewUrl, query: claim.query },
+    claim: { ...EMPTY_CLAIM, ...server.claim, status, approvedAt: claim.approvedAt === undefined ? undefined : String(claim.approvedAt), reviewUrl: claim.reviewUrl, query: claim.query, denial: claim.denial, appealedAt: claim.appealedAt },
   };
 }

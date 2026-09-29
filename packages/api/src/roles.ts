@@ -42,6 +42,8 @@ export const PERMISSIONS: Record<string, readonly [readonly Role[], string]> = {
   "claim.status": [ALL, "see the claim status"],
   "claim.update": [DOCTOR, "change the claim"],
   "claim.send": [DOCTOR, "send a claim"],
+  "claim.appealDraft": [OVERSIGHT, "draft an appeal against a denied guarantee letter"],
+  "claim.appeal": [OVERSIGHT, "appeal a denied guarantee letter"],
   "discharge.update": [DOCTOR, "change the discharge plan"],
   "discharge.request": [DOCTOR, "approve a discharge"],
   "encounter.get": [CLINICAL_READ, "open the visit"],

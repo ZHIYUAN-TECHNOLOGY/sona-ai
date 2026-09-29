@@ -45,7 +45,8 @@ export function useServerEncounter(patient: Patient | undefined) {
   useLiveChanges(["visit"], () => { void refresh(true).catch(() => {}); }, encounterId);
   // While the claim is with the insurer, keep checking so the guarantee letter clears on whichever screen is open.
   const { encounters } = useEncounter();
-  const waiting = on && patient ? encounters[patient.id]?.claim?.status === "sent" : false;
+  const status = patient ? encounters[patient.id]?.claim?.status : undefined;
+  const waiting = on && (status === "sent" || status === "appealed");
   useEffect(() => {
     if (!waiting) return;
     // Safety net only: the insurer's decision normally arrives over live updates.

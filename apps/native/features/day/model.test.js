@@ -1,6 +1,19 @@
 import { expect, test } from "bun:test";
 import { patients } from "@/features/encounter/fixtures";
-import { bookingItems, rankDay, testInSentence } from "./model";
+import { newEncounter } from "@/features/encounter/fixtures";
+import { wardBeds } from "@/features/ward/model";
+import { bookingItems, glDeniedItems, rankDay, testInSentence } from "./model";
+
+test("a denied guarantee letter is an amber My Day row that opens the appeal, and it goes once the appeal is sent", () => {
+  const denial = { code: "MED", reason: "Admission not medically necessary", at: "2026-09-26T02:00:00Z" };
+  const claim = status => ({ organismConfirmed: true, ivReasonAdded: true, status, denial });
+  const beds = status => wardBeds(patients, { "SYN-1042": { ...newEncounter(), claim: claim(status) } });
+  expect(beds("denied").find(b => b.patientId === "SYN-1042")?.blockers[0]).toMatchObject({ kind: "gl", label: "Final guarantee letter", detail: "Denied, appeal drafted" });
+  expect(glDeniedItems(beds("denied"))).toEqual([{ id: "gl-denied-SYN-1042", kind: "claim", title: "GL denied · Amelia · appeal ready", detail: "Final guarantee letter",
+    reason: "Insurer denied the final GL · check the appeal and send", tone: "soon", score: 72, patientId: "SYN-1042", open: { view: "claim" } }]);
+  expect(beds("appealed").find(b => b.patientId === "SYN-1042")?.blockers[0].detail).toBe("Appeal sent · awaiting insurer");
+  expect(glDeniedItems(beds("appealed"))).toEqual([]);
+});
 
 test("a booking request is an amber row that says who asks for whom, and why it is there", () => {
   const request = { id: "booking:SYN-1042:lim:1", patientId: "SYN-1042", doctorName: "Dr. Lim Wei Jie", specialty: "Respiratory", title: "Amelia asks to see Dr. Lim · Thu 10:30", reason: "still coughing", createdAt: new Date("2026-09-28T02:00:00Z") };

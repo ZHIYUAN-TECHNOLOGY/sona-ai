@@ -9,11 +9,18 @@ import type { Encounter, PrescriptionCheck } from "./types";
  * ponytail: authored fixture for the demo patient and a timed mock insurer. Codes come from a model
  * plus a terminology lookup later; criteria come from panel insurer documents stored as data.
  */
+export type ClaimStatus = "draft" | "sent" | "approved" | "queried" | "denied" | "appealed";
 export type ClaimState = {
-  organismConfirmed: boolean; ivReasonAdded: boolean; status: "draft" | "sent" | "approved" | "queried"; approvedAt?: string;
+  organismConfirmed: boolean; ivReasonAdded: boolean; status: ClaimStatus; approvedAt?: string;
   /** Live mode: the insurer's review page while the letter is with them, and their question if they queried it. */
   reviewUrl?: string; query?: string;
+  /** The insurer's denial (kept once appealed, so the history reads "denied, then appealed"), and when the appeal went. */
+  denial?: Denial; appealedAt?: string;
 };
+export type DenialCode = "PEC" | "MED" | "DOC" | "COV";
+export type Denial = { code: DenialCode; reason: string; note?: string; at: string };
+/** An appeal letter: every point cites the note sentence behind it, so nothing in it is ungrounded. */
+export type AppealLetter = { opening: string; points: { claim: string; evidenceSentenceId: string }[]; closing: string };
 export type Sentence = { id: string; text: string };
 export type Code = { code: string; label: string; kind: "Principal" | "Secondary" | "Procedure"; evidence: string };
 
@@ -70,6 +77,51 @@ export const INSURER_DELAY_MS = 60_000;
 export function insurerDecision(sentAt: Date, now: Date): { status: "pending"; approvesAt: string } | { status: "approved"; approvedAt: string } {
   const due = new Date(sentAt.getTime() + INSURER_DELAY_MS);
   return now < due ? { status: "pending", approvesAt: due.toISOString() } : { status: "approved", approvedAt: due.toISOString() };
+}
+
+/** The synthetic insurer's denial reasons, as the review page offers them (realistic, fictional). */
+export const DENIAL_REASONS: { code: DenialCode; reason: string }[] = [
+  { code: "PEC", reason: "Pre-existing condition not disclosed" },
+  { code: "MED", reason: "Admission not medically necessary" },
+  { code: "DOC", reason: "Documentation incomplete: organism / severity not stated" },
+  { code: "COV", reason: "Outside policy coverage period" },
+];
+
+/** Per denial: the points worth making, each kept only when a note sentence says it (the first sentence matching). */
+const APPEAL_RULES: Record<DenialCode, { points: [RegExp, string][]; closing: string }> = {
+  PEC: { points: [
+    [/pneumonia/i, "The admission was for community-acquired pneumonia, a new acute infection diagnosed on this admission."],
+    [/cough|fever/i, "The illness was recent: cough for five days and fever since the day before admission."],
+    [/asthma/i, "Asthma is recorded openly in the note as background history; it was not the reason for admission."],
+  ], closing: "The admission treated a new, acute infection, not an undisclosed condition. We ask that the denial be withdrawn and the final guarantee letter approved." },
+  MED: { points: [
+    [/consolidation|chest (film|x-?ray)/i, "The chest film showed right lower zone consolidation, confirming pneumonia."],
+    [/vomiting|oral tablets/i, "She was vomiting on arrival and could not keep oral tablets down, so antibiotics had to start intravenously, which needs admission."],
+    [/penicillin|allergy/i, "A penicillin allergy narrowed the antibiotic choice, so the first doses were given under observation."],
+  ], closing: "Admission was needed to give antibiotics safely. We ask that the denial be withdrawn and the final guarantee letter approved." },
+  DOC: { points: [
+    [/organism/i, "The organism is documented: not identified, with no sputum culture sent. J18.9 is the code for pneumonia with an unidentified organism."],
+    [/CURB-65/i, "Severity is documented: CURB-65 score 0, recorded with the diagnosis."],
+    [/consolidation|chest (film|x-?ray)/i, "The imaging result is documented: right lower zone consolidation on the chest film."],
+  ], closing: "The organism and severity are both in the note. We ask that the claim be reassessed on the documentation attached and the final guarantee letter approved." },
+  COV: { points: [
+    [/cough|fever/i, "The illness began five days before admission, and the admission followed directly from it."],
+    [/pneumonia/i, "Community-acquired pneumonia was diagnosed on this admission, not before it."],
+  ], closing: "Please check the policy dates against the admission date on the note. We ask that the denial be withdrawn and the final guarantee letter approved." },
+};
+
+/**
+ * The appeal as authored rules write it: calm, per denial reason, every point grounded in a real note
+ * sentence (a point whose words the note lacks is left out, never invented).
+ * ponytail: rules over the demo note stand in for the appeal model (see packages/api/src/models.ts).
+ */
+export function appealByRules(input: { denialCode: DenialCode; denialReason: string; sentences: Sentence[]; patient: { name: string } }): AppealLetter {
+  const rules = APPEAL_RULES[input.denialCode];
+  const points = rules.points.flatMap(([re, claim]) => { const s = input.sentences.find(x => re.test(x.text)); return s ? [{ claim, evidenceSentenceId: s.id }] : []; });
+  return {
+    opening: `We ask ${INSURER} to review its denial of the final guarantee letter for ${input.patient.name} (“${input.denialReason}”). The note written during the admission shows:`,
+    points, closing: rules.closing,
+  };
 }
 
 /** The mock insurer's approval: the claim closes and the discharge's guarantee letter resolves. */

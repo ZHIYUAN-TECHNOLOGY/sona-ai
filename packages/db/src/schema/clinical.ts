@@ -103,19 +103,23 @@ export const guaranteeLetters = pgTable("guarantee_letters", {
 
 /** Immutable receipts for consequential actions; request_id is unique so a replay returns the same receipt. */
 export const receipts = pgTable("receipts", {
-  id: text("id").primaryKey(), kind: text("kind", { enum: ["prescription", "discharge", "claim"] }).notNull(),
+  id: text("id").primaryKey(), kind: text("kind", { enum: ["prescription", "discharge", "claim", "appeal"] }).notNull(),
   encounterId: text("encounter_id").notNull(), requestId: text("request_id").notNull().unique(), revision: integer("revision").notNull(),
   approvedBy: text("approved_by").notNull(), payload: jsonb("payload").notNull(), createdAt: created(),
 });
 
 export const claims = pgTable("claims", {
   id: text("id").primaryKey(), encounterId: text("encounter_id").notNull(), insurer: text("insurer").notNull(),
-  status: text("status", { enum: ["draft", "sent", "approved", "queried"] }).notNull(), estimateCents: integer("estimate_cents").notNull(),
+  status: text("status", { enum: ["draft", "sent", "approved", "queried", "denied", "appealed"] }).notNull(), estimateCents: integer("estimate_cents").notNull(),
   codes: jsonb("codes").$type<{ code: string; evidence: string; label?: string; kind?: string; text?: string }[]>().notNull(), sentAt: timestamp("sent_at"), approvedAt: timestamp("approved_at"),
   /** The insurer's review link: an unguessable token, so the page needs no login (it expires a week after sending). */
   reviewToken: text("review_token").unique(),
   /** When the insurer approved or queried, and the question they asked with a query. */
   decidedAt: timestamp("decided_at"), insurerNote: text("insurer_note"),
+  /** A denial's code and reason (the insurer's free text, if any, is `insurerNote`); kept after an appeal so its history reads. */
+  denialCode: text("denial_code"), denialReason: text("denial_reason"),
+  /** The appeal the doctor approved, each point frozen with the note sentence it cites, and when it went. */
+  appeal: jsonb("appeal").$type<{ opening: string; points: { claim: string; evidenceSentenceId: string; text: string }[]; closing: string }>(), appealedAt: timestamp("appealed_at"),
 });
 
 /** Insurer rules as rows so the check is deterministic; the policy text lives in the retrieval library. */

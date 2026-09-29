@@ -1,5 +1,5 @@
 import { admissions, claims, encounters, guaranteeLetters, patients } from "@sona-ai/db/schema/clinical";
-import { CODES, EMPTY_CLAIM, claimChecks, noteFor, type ClaimState } from "@sona-ai/domain/claim";
+import { CODES, DENIAL_REASONS, EMPTY_CLAIM, claimChecks, noteFor, type ClaimState } from "@sona-ai/domain/claim";
 import { and, eq, isNull } from "drizzle-orm";
 
 import type { Context } from "./context";
@@ -52,6 +52,8 @@ export async function reviewPacket(db: Db, token: string, now: Date) {
       label: label ?? CODES.find(k => k.code === code)?.label ?? code, kind: kind ?? CODES.find(k => k.code === code)?.kind ?? "Secondary",
       evidence: text ?? note.find(s => s.id === evidence)?.text ?? "" })),
     criteria: claimChecks(state),
+    denial: row.claim.denialReason ? { reason: row.claim.denialReason, note: row.claim.insurerNote } : undefined,
+    appeal: row.claim.appeal ?? undefined,
   };
 }
 
@@ -62,12 +64,21 @@ export async function approveClaimRows(db: Db, claimId: string, patientId: strin
   for (const a of admitted) await db.update(guaranteeLetters).set({ status: "received", receivedAt: at }).where(eq(guaranteeLetters.admissionId, a.id));
 }
 
-/** The insurer's decision, once per link: approve, or query with the question for the doctor. */
-export async function decideReview(db: Db, token: string, decision: "approve" | "query", note: string, now: Date) {
+/**
+ * The insurer's decision, once per link: approve, query with the question for the doctor, or deny with
+ * one of the listed reasons (`denialCode`) and optional words (`note`). A letter or an appeal is decidable.
+ */
+export async function decideReview(db: Db, token: string, decision: "approve" | "query" | "deny", note: string, now: Date, denialCode?: string) {
   const row = await claimByToken(db, token);
   if (!row) return { ok: false as const, reason: "Unknown link" };
   if (expired(row.claim.sentAt, now)) return { ok: false as const, reason: "This link has expired" };
-  if (row.claim.status !== "sent") return { ok: false as const, reason: `Already decided: ${row.claim.status}` };
+  if (row.claim.status !== "sent" && row.claim.status !== "appealed") return { ok: false as const, reason: `Already decided: ${row.claim.status}` };
+  if (decision === "deny") {
+    const reason = DENIAL_REASONS.find(d => d.code === denialCode);
+    if (!reason) return { ok: false as const, reason: "Choose the reason for the denial" };
+    await db.update(claims).set({ status: "denied", denialCode: reason.code, denialReason: reason.reason, insurerNote: note.trim().slice(0, 1000) || null, decidedAt: now }).where(eq(claims.id, row.claim.id));
+    return { ok: true as const, status: "denied" as const, hospitalId: row.hospitalId, encounterId: row.claim.encounterId };
+  }
   if (decision === "query") {
     const question = note.trim();
     if (!question) return { ok: false as const, reason: "Write the question for the doctor" };
@@ -80,23 +91,30 @@ export async function decideReview(db: Db, token: string, decision: "approve" | 
 
 const escape = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-/** The review page: plain server-rendered HTML with two forms, readable on any phone or laptop. */
+/** The review page: plain server-rendered HTML with three forms (approve, query, deny), readable on any phone or laptop. */
 export function renderReviewPage(p: ReviewPacket, notice?: string) {
-  const decided = p.status !== "sent";
-  const outcome = p.status === "approved" ? `Approved${p.decidedAt ? ` · ${p.decidedAt.toISOString().slice(0, 16).replace("T", " ")} UTC` : ""}` : p.status === "queried" ? `Queried: ${p.query ?? ""}` : "";
+  const decided = p.status !== "sent" && p.status !== "appealed";
+  const when = p.decidedAt ? ` · ${p.decidedAt.toISOString().slice(0, 16).replace("T", " ")} UTC` : "";
+  const outcome = p.status === "approved" ? `Approved${when}` : p.status === "queried" ? `Queried: ${p.query ?? ""}` : p.status === "denied" ? `Denied: ${p.denial?.reason ?? ""}${p.denial?.note ? ` (${p.denial.note})` : ""}${when}` : "";
   const rows = p.codes.map(c => `<tr><td><b>${escape(c.code)}</b></td><td>${escape(c.label)}<div class="muted">${escape(c.kind)} · “${escape(c.evidence)}”</div></td></tr>`).join("");
   const checks = p.criteria.map(c => `<li class="${c.status === "passed" ? "ok" : "no"}">${c.status === "passed" ? "✓" : "✗"} ${escape(c.label)} <span class="muted">${escape(c.detail)}</span></li>`).join("");
-  const actions = p.expired ? `<p class="notice">This link has expired.</p>` : decided ? `<p class="outcome">${escape(outcome)}</p>` : `
+  // An appeal answers the earlier denial: shown first, each point with the note sentence it cites.
+  const appeal = p.status === "appealed" && p.appeal ? `<div class="card"><div class="tag">Appeal from the hospital</div>${p.denial ? `<div class="muted">Against your denial: ${escape(p.denial.reason)}</div>` : ""}
+<p>${escape(p.appeal.opening)}</p><ol>${p.appeal.points.map(x => `<li>${escape(x.claim)}<div class="muted">From the note: “${escape(x.text)}”</div></li>`).join("")}</ol><p>${escape(p.appeal.closing)}</p></div>` : "";
+  const reasons = DENIAL_REASONS.map(d => `<option value="${d.code}">${escape(d.reason)}</option>`).join("");
+  const actions = p.expired ? `<p class="notice">This link has expired.</p>` : decided ? `<p class="outcome${p.status === "denied" ? " no" : ""}">${escape(outcome)}</p>` : `
     <form method="post"><input type="hidden" name="decision" value="approve"><button class="primary">Approve guarantee letter</button></form>
-    <form method="post"><input type="hidden" name="decision" value="query"><textarea name="note" rows="3" placeholder="Question for the doctor"></textarea><button>Send question</button></form>`;
+    <form method="post"><input type="hidden" name="decision" value="query"><textarea name="note" rows="3" placeholder="Question for the doctor"></textarea><button>Send question</button></form>
+    <form method="post"><input type="hidden" name="decision" value="deny"><select name="reason" required aria-label="Reason for the denial"><option value="">Reason for the denial…</option>${reasons}</select><textarea name="note" rows="2" placeholder="Anything to add (optional)"></textarea><button class="deny">Deny guarantee letter</button></form>`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Guarantee letter review · ${escape(p.patient)}</title>
 <style>body{margin:0;background:#F5F6F8;color:#1D1F23;font:16px/1.5 -apple-system,system-ui,sans-serif}main{max-width:640px;margin:0 auto;padding:24px 16px 48px}
 .card{background:#fff;border-radius:22px;padding:20px;margin-top:14px;box-shadow:0 6px 20px rgba(24,32,48,.06)}h1{font-size:24px;margin:4px 0}.muted{color:#59616B;font-size:14px}
 table{width:100%;border-collapse:collapse}td{padding:8px 4px;border-top:1px solid #eef0f3;vertical-align:top}ul{padding:0;list-style:none;margin:0}li{padding:6px 0}.ok{color:#0F6E66}.no{color:#A23E3E}
 button{width:100%;min-height:46px;border-radius:23px;border:1px solid #D8DBE0;background:#E9EEF6;font:600 16px system-ui;margin-top:10px}.primary{background:#1D1F23;color:#fff;border-color:#1D1F23}
-textarea{width:100%;box-sizing:border-box;border-radius:14px;border:1px solid #D8DBE0;padding:12px;font:16px system-ui;margin-top:14px}.outcome{font-weight:600;color:#0F6E66}.notice{color:#A23E3E;font-weight:600}.tag{font:700 11px system-ui;letter-spacing:.8px;text-transform:uppercase;color:#245BCC}</style></head>
+textarea,select{width:100%;box-sizing:border-box;border-radius:14px;border:1px solid #D8DBE0;padding:12px;font:16px system-ui;margin-top:14px;background:#fff}.deny{color:#A23E3E}ol{padding-left:20px}ol li{padding:6px 0}.outcome{font-weight:600;color:#0F6E66}.outcome.no{color:#A23E3E}.notice{color:#A23E3E;font-weight:600}.tag{font:700 11px system-ui;letter-spacing:.8px;text-transform:uppercase;color:#245BCC}</style></head>
 <body><main><div class="tag">Final guarantee letter · synthetic demo</div><h1>${escape(p.patient)}</h1><div class="muted">${escape(p.insurer)} · estimated ${escape(p.estimate)}</div>
 ${notice ? `<p class="notice">${escape(notice)}</p>` : ""}
+${appeal}
 <div class="card"><b>Codes and the note behind each</b><table>${rows}</table></div>
 <div class="card"><b>Insurer criteria</b><ul>${checks}</ul></div>
 <div class="card">${actions}</div>
