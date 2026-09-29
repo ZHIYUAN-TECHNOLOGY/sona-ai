@@ -44,3 +44,14 @@ Remaining misses: briefing to not-covered (L01) and to followup (L06), a Mandari
 `packages/api/src/laya.ts` is the evaluator adapter (`layaEvaluator`), tested with a fake server and live against `serve.py` (`LAYA_URL=http://127.0.0.1:8000 bun test src/laya.test.ts`). `serve.py` serves the fine-tuned model over laya-serve's `/v1/systemone`.
 
 Running the real `experimental_composeSpec` with it showed a question mismatch. The composer does not ask "which card?"; it asks a root question (`column` or `unavailable`) and one membership question per candidate (`use:<id>` or `omit`). v2 was trained only on the single "which card?" question, so it picked `use:medication` correctly (0.99) for the salbutamol request but answered `unavailable` at the root, and the composer returned no spec. Either retrain on the composer's own question shapes or call Laya with the trained question and build the spec in app code (the app already has `composeClinicalSpec` for one card plus notice plus source).
+
+## Composer-format fine-tunes (29 Sep 2026)
+
+`compose.ts` runs the real `experimental_composeSpec` with an answer key (right card, then source; missing-context notice first for an incomplete history; `unavailable` for not-covered) to record training questions, and `bun compose.ts score <url>` checks whole screens on the 50 baseline requests.
+
+| Model | Right screen in the composer | Median per screen |
+| --- | --- | --- |
+| v2 (trained on "which card?") | 5/50 (10%) | 197 ms |
+| v3 (composer questions, a third of `omit` answers kept) | 42/50 (84%) | 254 ms |
+
+v3 misses: an extra card added (L05, L06, L38), `unavailable` by mistake (L26, L31), wrong card (L29, L39, L42). Model at `~/zyt/data/sona-laya/v3`.

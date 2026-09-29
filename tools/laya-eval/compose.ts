@@ -119,8 +119,8 @@ if (mode === "data") {
     const screen = await compose(c, offered, answerKey(want, record));
     if (JSON.stringify(screen) !== JSON.stringify(want)) throw new Error(`answer key composed ${JSON.stringify(screen)}, wanted ${JSON.stringify(want)}`);
     for (const [j, r] of record.entries()) {
-      // Most membership answers are "omit"; keep a third of those so "use" is not drowned out.
-      const ids = Object.keys(r.questions).filter(id => !id.startsWith("select_") || r.answers[id]!.choice !== "omit" || random() < 0.35);
+      // Every question is kept, "omit" answers included: v3 kept only a third of them and learned to add extra cards.
+      const ids = Object.keys(r.questions);
       const questions = Object.fromEntries(ids.map(id => [id, r.questions[id]]));
       const gold = Object.fromEntries(ids.map(id => [id, oneHot(r.answers[id]!.choice, Object.keys(r.questions[id]!.criteria))]));
       items += ids.length;
