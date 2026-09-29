@@ -39,11 +39,11 @@ function LiveCard() {
   const { wanted, user } = useLive();
   const updates = useLiveStatus();
   const role = useRole();
-  return <Card label="Backend" title="Live backend">
-    <Host colorScheme="light" seedColor={palette.blue} style={{ height: 44 }}><Switch label="Use the live backend" value={wanted} onValueChange={setLive} /></Host>
+  return <Card label="Connection" title="Hospital record">
+    <Host colorScheme="light" seedColor={palette.blue} style={{ height: 44 }}><Switch label="Connect to the hospital record" value={wanted} onValueChange={setLive} /></Host>
     {user && <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 }}><Body>Signed in as {user.email}</Body>{role.known && <RolePill label={role.label} />}</View>}
-    <Body muted>{user ? `Discharge, guarantee letter, ward owners, coding audit, tasks, results, My Day, prescribing checks, the note, handover and X-ray upload use the server; answers that need a model stay authored.` : "Sign in first; until then every screen stays on fixtures."}</Body>
-    {user && wanted && <Body muted>{updates === "connected" ? "Live updates connected: changes on the server appear straight away." : updates === "connecting" ? "Connecting live updates…" : "Live updates off."}</Body>}
+    <Body muted>{user ? `Discharge, guarantee letter, ward owners, coding audit, tasks, results, My Day, prescribing checks, the note, handover and X-ray upload use the hospital record; answers that need a model stay authored.` : "Sign in first; until then every screen stays on fixtures."}</Body>
+    {user && wanted && <Body muted>{updates === "connected" ? "Live updates connected: changes appear straight away." : updates === "connecting" ? "Connecting live updates…" : "Live updates off."}</Body>}
     {!user && <Action label="Sign in" secondary onPress={() => router.push("/account")} />}
   </Card>;
 }

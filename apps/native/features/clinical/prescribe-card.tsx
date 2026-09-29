@@ -212,7 +212,6 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
       </Pressable>}
     </Animated.View>
 
-    {live && !created && <Text style={{ ...type.caption, fontWeight: "700", color: palette.blue }}>Live · checked by the server</Text>}
     {serverError && <Text accessibilityLiveRegion="polite" style={{ ...type.caption, color: palette.amber }}>{serverError}</Text>}
 
     {!created && showDemoControls &&<Pressable accessibilityRole="button" onPress={() => updateEncounter(value => ({ ...value, prescriptionInputs: { weightKg: "62", liverDisease: "no", kidneyDisease: "no", alcoholRisk: "no", paracetamolAllergy: "no" } }), true)} style={{ alignSelf: "center", minHeight: 32, justifyContent: "center" }}>

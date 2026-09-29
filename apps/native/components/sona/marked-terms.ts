@@ -3,7 +3,7 @@
  * alert (red) for what must not be missed (allergies, severe or critical findings, abnormal
  * results), medicine (violet), finding (teal) for diagnoses and signs, symptom (blue), and
  * caution (amber) for what is unconfirmed or still open. Terms come from explicit
- * `[[text|kind]]` markup (what a model response would emit) or this dictionary.
+ * `[[text|kind]]` markup (what a model response would emit) or, when a text has none, this dictionary.
  *
  * ponytail: dictionary matching is a stand-in; the backend should emit markup once responses are
  * generated. Longer phrases are listed before the words inside them so they win.
@@ -64,8 +64,11 @@ export function segments(input: string): Segment[] {
     for (const h of hits) { if (h.start > at) out.push({ text: text.slice(at, h.start) }); out.push({ text: text.slice(h.start, h.end), mark: h.mark }); at = h.end; }
     if (at < text.length) out.push({ text: text.slice(at) });
   };
-  for (const m of input.matchAll(markup)) { plain(input.slice(last, m.index)); out.push({ text: m[1]!, mark: m[2] as Mark }); last = m.index! + m[0].length; }
-  plain(input.slice(last));
+  // Text with explicit markup says what matters itself: the dictionary stays off, so only those terms are coloured.
+  const explicit = [...input.matchAll(markup)];
+  const rest = explicit.length ? (text: string) => { if (text) out.push({ text }); } : plain;
+  for (const m of explicit) { rest(input.slice(last, m.index)); out.push({ text: m[1]!, mark: m[2] as Mark }); last = m.index! + m[0].length; }
+  rest(input.slice(last));
   return out;
 }
 

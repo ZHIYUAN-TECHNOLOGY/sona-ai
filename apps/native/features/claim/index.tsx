@@ -1,6 +1,5 @@
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { MarkedText } from "@/components/sona/marked-text";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
@@ -132,7 +131,6 @@ export function ClaimScreen() {
           <Text style={{ ...type.overline, color: approved ? TEAL : denied ? palette.red : blocked.length ? palette.amber : palette.blue }}>{status}</Text>
           <Text style={{ ...type.headline, color: palette.ink }}>Final guarantee letter</Text>
           <Text style={{ ...type.caption, color: palette.muted }}>{patient.name} · {INSURER} · estimated {ESTIMATE}</Text>
-          {live && <Text style={{ ...type.caption, fontWeight: "700", color: palette.blue }}>Live · checked by the server{sent ? " · the insurer reviews it on their link" : ""}</Text>}
           {serverError && <Text style={{ ...type.footnote, color: palette.red }}>{serverError}</Text>}
         </View>
       </View>
@@ -221,7 +219,8 @@ function Evidence({ note, active }: { note: Sentence[]; active: string }) {
   return <View>
     <Animated.View pointerEvents="none" style={[{ position: "absolute", left: -8, right: -8, top: 0, borderRadius: 10, borderCurve: "continuous", backgroundColor: "rgba(36,91,204,0.10)" }, block]} />
     {note.map(s => <Animated.View key={s.id} entering={reducedMotion ? undefined : FadeIn.duration(220)} onLayout={e => { const { y, height: h } = e.nativeEvent.layout; frames.current[s.id] = { y, h }; if (s.id === active) place(false); }} style={{ paddingVertical: 4 }}>
-      <MarkedText text={s.text} style={{ ...type.subhead, color: s.id === active ? palette.ink : palette.muted, transitionProperty: "color", transitionDuration: 200 } as never} />
+      {/* No per-word colour: the highlight on the sentence behind the chosen code is the one that means something. */}
+      <Text selectable style={{ ...type.subhead, color: s.id === active ? palette.ink : palette.muted, transitionProperty: "color", transitionDuration: 200 } as never}>{s.text}</Text>
     </Animated.View>)}
   </View>;
 }

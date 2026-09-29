@@ -18,7 +18,8 @@ import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveDraft } from "@/features/live/model-sync";
 import { CareInvite } from "@/features/care-invite";
 import { refreshServerData } from "@/features/live/server-day";
-import { CHECK_IN_CHOICES, MAX_CHECK_INS, checkInDaysLine, defaultCheckInDays, scheduleLine, toggleCheckInDay } from "@/features/check-ins/model";
+import { CHECK_IN_CHOICES, MAX_CHECK_INS, checkInDaysLine, defaultCheckInDays, toggleCheckInDay } from "@/features/check-ins/model";
+import { markTerms } from "@/features/encounter/emphasis";
 import { refreshCheckIns } from "@/features/check-ins/state";
 import { useFindings } from "@/features/live/findings-sync";
 import type { Patient, PrescriptionCheck } from "@/features/encounter/types";
@@ -221,25 +222,43 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
 
   const primary = busy ? "Freeing the bed…" : blocked.length ? `Resolve ${blocked.length} to discharge` : `Discharge ${first}`;
   const summary: [string, string][] = [["Diagnosis", plan.summary.diagnosis], ["Course", plan.summary.course], ["Plan", plan.summary.plan]];
+  // Colour only what changes the plan: how severe the diagnosis is and the medicines that are new or changed.
+  const marked = (text: string) => markTerms(text, [["mild", "finding"], ["moderate", "caution"], ["severe", "alert"],
+    ...plan.meds.filter(m => m.change === "changed" || m.change === "new").map((m): [string, "caution"] => [m.name, "caution"])]);
 
   return <Animated.View entering={animate ? riseCard : undefined}>
     <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 14 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
         <Ring done={checks.length - blocked.length} total={checks.length} />
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ ...type.overline, color: done ? TEAL : blocked.length ? palette.amber : palette.blue }}>{done ? "Discharged · simulation" : blocked.length ? `${blocked.length} left before discharge` : "Ready to discharge"}</Text>
+          <Text style={{ ...type.overline, color: done ? TEAL : blocked.length ? palette.amber : palette.blue }}>{done ? "Discharged" : blocked.length ? `${blocked.length} left before discharge` : "Ready to discharge"}</Text>
           <Text style={{ ...type.headline, color: palette.ink }}>{patient.name} · {plan.bed}</Text>
           <Text style={{ ...type.caption, color: palette.muted }}>Fit for discharge since {fitAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
-          {live && <Text style={{ ...type.caption, fontWeight: "700", color: palette.blue }}>Live · checked by the server</Text>}
         </View>
       </View>
 
+      {/* Discharged: the outcome and the patient's Sona Care code lead; the summary waits behind "Read full". */}
+      {done && <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ gap: 12 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 18, borderCurve: "continuous", backgroundColor: "rgba(15,110,102,0.08)" }}>
+          <Seal stampDelay={reducedMotion ? undefined : 120} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{plan.bed} free{saved ? ` · ${saved} earlier` : ""}</Text>
+            <Text style={{ ...type.caption, color: palette.muted }}>2 follow-up tasks created · leaflet ready to print · {done.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
+          </View>
+        </View>
+        <CareInvite encounterId={patient.encounterId} />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 4 }}>
+          <Icon name="bubble.left.and.bubble.right" size={13} color={palette.blue} />
+          <Text numberOfLines={1} style={{ ...type.caption, flex: 1, color: palette.muted }}><Text style={{ ...type.caption, fontWeight: "700", color: palette.ink }}>Check-ins</Text> · Day {checkInDaysOf(state, plan).join(" · ")} · {language.name}</Text>
+        </View>
+      </Animated.View>}
+
       <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
-        {summary.map(([label, value], i) => <Animated.View key={label} entering={animate ? riseIn({ delay: 180 + i * 40, distance: 10, duration: 320 }) : undefined} style={{ flexDirection: "row", gap: 12 }}>
+        {(!done || full) && summary.map(([label, value], i) => { const text = marked(value); return <Animated.View key={label} entering={animate ? riseIn({ delay: 180 + i * 40, distance: 10, duration: 320 }) : undefined} style={{ flexDirection: "row", gap: 12 }}>
           <Text style={{ ...type.overline, width: 72, paddingTop: 3, color: palette.muted }}>{label}</Text>
-          <MarkedText text={value} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
-        </Animated.View>)}
-        {full && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)}><MarkedText text={draft.data?.summary ?? plan.full} style={{ ...type.footnote, color: palette.muted }} /></Animated.View>}
+          {text === value ? <Text selectable style={{ ...type.subhead, flex: 1, color: palette.ink }}>{value}</Text> : <MarkedText text={text} style={{ ...type.subhead, flex: 1, color: palette.ink }} />}
+        </Animated.View>; })}
+        {full && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)}><Text selectable style={{ ...type.footnote, color: palette.muted }}>{draft.data?.summary ?? plan.full}</Text></Animated.View>}
         <Pressable accessibilityRole="button" accessibilityState={{ expanded: full }} onPress={() => setFull(v => !v)} hitSlop={6} style={{ alignSelf: "flex-start", minHeight: 32, flexDirection: "row", alignItems: "center", gap: 4 }}>
           <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{full ? "Show less" : "Read full"}</Text>
           <Icon name={full ? "chevron.up" : "chevron.right"} size={10} color={palette.blue} />
@@ -275,18 +294,6 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
       {(serverError ?? found.error) && <Text style={{ ...type.footnote, color: palette.red }}>{serverError ?? found.error}</Text>}
       <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
       {done ? <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ gap: 12 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 18, borderCurve: "continuous", backgroundColor: "rgba(15,110,102,0.08)" }}>
-          <Seal stampDelay={reducedMotion ? undefined : 120} />
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{plan.bed} free{saved ? ` · ${saved} earlier than usual` : ""}</Text>
-            <Text style={{ ...type.caption, color: palette.muted }}>2 follow-up tasks created · leaflet in {language.name} ready to print · {done.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
-          </View>
-        </View>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 4 }}>
-          <Icon name="bubble.left.and.bubble.right" size={13} color={palette.blue} />
-          <Text style={{ ...type.caption, flex: 1, color: palette.muted }}><Text style={{ ...type.caption, fontWeight: "700", color: palette.ink }}>Check-ins</Text> · {scheduleLine(done, state.checkInDays)} · in {language.name} · simulated inbox</Text>
-        </View>
-        <CareInvite encounterId={patient.encounterId} />
         <View style={{ flexDirection: "row", gap: 10 }}>
           <Chip label="View tasks" icon="checklist" onPress={() => { router.back(); setTimeout(() => router.push("/tasks"), 320); }} />
           <Chip label="Done" onPress={() => router.back()} />

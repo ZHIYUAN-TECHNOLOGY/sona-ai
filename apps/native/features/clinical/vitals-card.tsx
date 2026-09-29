@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import Animated, { useAnimatedProps, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 import { EASE_OUT } from "@/components/sona/motion";
@@ -53,9 +53,9 @@ function Status({ tone }: { tone: Tone }) {
 /**
  * Vitals as quiet rows in one glass surface: tinted icon, label, a large value with its unit,
  * a status pill and an illustrative trace. The allergy closes the list as a caution row.
- * Provenance sits once under the card instead of on every tile.
+ * Provenance sits once in the answer's sources line instead of on every tile.
  */
-export function VitalsCard({ vitals, allergy, onSource }: { vitals: { label: string; value: string }[]; allergy: string | null; onSource: () => void }) {
+export function VitalsCard({ vitals, allergy }: { vitals: { label: string; value: string }[]; allergy: string | null }) {
   const rows = vitals.map(v => parse(v.label, v.value)).filter(Boolean) as Vital[];
   return <View style={{ gap: 10 }}>
     <Surface style={{ paddingVertical: 4 }}>
@@ -80,8 +80,5 @@ export function VitalsCard({ vitals, allergy, onSource }: { vitals: { label: str
         <Status tone="caution" />
       </View>
     </Surface>
-    <Pressable accessibilityRole="link" accessibilityLabel="Recorded observations source, 22 September, 09:26" onPress={onSource} hitSlop={8} style={{ alignSelf: "flex-start" }}>
-      <Text style={{ ...type.caption, color: palette.muted }}>Observations · 22 Sep, 09:26 · <Text style={{ color: palette.blue }}>Source ↗</Text></Text>
-    </Pressable>
   </View>;
 }
