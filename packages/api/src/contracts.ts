@@ -50,6 +50,15 @@ export type DischargeUpdate = z.infer<typeof dischargeUpdateSchema>;
 export const claimUpdateSchema = z.object({ encounterId: z.string().min(1), organismConfirmed: z.boolean().optional(), ivReasonAdded: z.boolean().optional() });
 export type ClaimUpdate = z.infer<typeof claimUpdateSchema>;
 
+/** The doctor's appeal against a denied guarantee letter, as they edited it; each point cites a note sentence by id. */
+export const appealSchema = approvedCommandSchema.extend({
+  letter: z.object({
+    opening: z.string().trim().min(1).max(2000),
+    points: z.array(z.object({ claim: z.string().trim().min(1).max(1000), evidenceSentenceId: z.string().min(1) })).min(1).max(12),
+    closing: z.string().trim().min(1).max(2000),
+  }),
+});
+
 const unknownYesNo = z.enum(["unknown", "no", "yes"]);
 /** A patient history fact as the app records it (HistoryFact in the domain types). */
 export const historyFactSchema = z.object({

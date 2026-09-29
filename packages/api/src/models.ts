@@ -1,5 +1,5 @@
 import { readReply } from "@sona-ai/domain/check-ins";
-import { CODES, type Code, type Sentence } from "@sona-ai/domain/claim";
+import { CODES, appealByRules, type AppealLetter, type Code, type DenialCode, type Sentence } from "@sona-ai/domain/claim";
 import { draftByRules, triageByRules, type DraftPlan, type MessageLabel } from "@sona-ai/domain/messages";
 import { planFor, type Language } from "@sona-ai/domain/discharge";
 import type { Study } from "@sona-ai/domain/evidence";
@@ -28,6 +28,12 @@ export type Models = {
   incidentalFindings(input: { patientId: string; image?: Uint8Array; contentType?: string }): Answer<{ findings: DetectedFinding[]; validated: false }>;
   draftDischarge(input: { patient: Patient; language: Language }): Answer<{ summary: string; leaflet: string }>;
   suggestCodes(input: { sentences: Sentence[] }): Answer<{ codes: Code[] }>;
+  /**
+   * An appeal against the insurer's denial of the final guarantee letter, for the doctor to check and edit
+   * before sending: calm, answering the denial reason, each point citing the note sentence behind it
+   * (the route drops any point citing a sentence the note lacks).
+   */
+  draftAppeal(input: { denialReason: string; denialCode: DenialCode; codes: Code[]; sentences: Sentence[]; patient: { name: string } }): Answer<{ letter: AppealLetter }>;
   synthesiseEvidence(input: { question: string; studies: Study[] }): Answer<{ answer: string; studyIds: string[] }>;
   huddleBrief(input: { beds: Bed[]; owners: Record<string, Owner | undefined> }): Answer<{ lines: string[] }>;
   /** Sona Care: the patient's speech as text (Malay, English, Chinese or mixed). The stub has no ears: it returns no text. */
@@ -90,6 +96,9 @@ export const stubModels: Models = {
     const evidence = sentences.find(s => re.test(s.text))?.id;
     return evidence ? [{ ...code, evidence }] : [];
   }) }),
+  // ponytail: authored appeal rules over the note's own sentences (packages/domain/claim); Gemma replaces it
+  // through the Baseten adapter later (docs/delivery-plan.md), with the same shape.
+  draftAppeal: input => fixture({ letter: appealByRules(input) }),
   synthesiseEvidence: ({ studies }) => fixture({ answer: "Sample synthesis: no model has weighed these studies.", studyIds: studies.map(s => s.id) }),
   huddleBrief: ({ beds, owners }) => fixture({ lines: huddle(beds, owners) }),
   // ponytail: keyword rule standing in for the classifier; the demo reply is "fever returned".

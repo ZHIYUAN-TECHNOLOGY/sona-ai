@@ -86,8 +86,8 @@ app.get("/insurer/:token", async (c) => {
 app.post("/insurer/:token", async (c) => {
   const db = await getDb(), token = c.req.param("token");
   const form = await c.req.parseBody();
-  const decision = form.decision === "query" ? "query" : "approve";
-  const result = await decideReview(db, token, decision, typeof form.note === "string" ? form.note : "", new Date());
+  const decision = form.decision === "query" || form.decision === "deny" ? form.decision : "approve";
+  const result = await decideReview(db, token, decision, typeof form.note === "string" ? form.note : "", new Date(), typeof form.reason === "string" ? form.reason : undefined);
   if (result.ok) {
     await announcer(c.env as Env)?.(result.hospitalId, { topic: "claim", encounterId: result.encounterId }).catch(() => {});
     return c.redirect(`/insurer/${token}`, 303);

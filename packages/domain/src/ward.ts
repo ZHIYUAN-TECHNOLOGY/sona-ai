@@ -1,3 +1,4 @@
+import type { ClaimStatus } from "./claim";
 import { EMPTY_DISCHARGE } from "./discharge";
 import type { Encounter, Patient } from "./types";
 
@@ -56,7 +57,7 @@ function demoBed(patient: Patient | undefined, encounter: Encounter | undefined)
   const d = encounter?.discharge ?? EMPTY_DISCHARGE;
   if (d.dischargedAt) return freedBed("Bed 6");
   const blockers: WardBlocker[] = [];
-  if (!d.glReceived) blockers.push({ id: "b6-gl", kind: "gl", label: "Final guarantee letter", detail: encounter?.claim?.status === "sent" ? "Sent · awaiting insurer" : "Codes ready to review" });
+  if (!d.glReceived) blockers.push({ id: "b6-gl", kind: "gl", label: "Final guarantee letter", detail: glDetail(encounter?.claim?.status) });
   if (!d.medsConfirmed) blockers.push({ id: "b6-meds", kind: "pharmacy", label: "Take-home medicines", detail: "1 changed · 1 new · 1 stopped" });
   if (!d.followUp) blockers.push({ id: "b6-followup", kind: "booking", label: "Follow-up booking", detail: "Clinic review, about 2 weeks" });
   return {
@@ -65,9 +66,14 @@ function demoBed(patient: Patient | undefined, encounter: Encounter | undefined)
   };
 }
 
+/** The guarantee-letter blocker's line: where the letter stands with the insurer. */
+export const GL_DENIED = "Denied, appeal drafted";
+export const glDetail = (claim?: ClaimStatus) => claim === "sent" ? "Sent · awaiting insurer" : claim === "queried" ? "Insurer asked a question"
+  : claim === "denied" ? GL_DENIED : claim === "appealed" ? "Appeal sent · awaiting insurer" : "Codes ready to review";
+
 /** One admission's rows, flattened: the server's view of what holds a bed. No `gl` means self-pay. */
 export type BedRows = {
-  admissionId: string; gl?: { status: "requested" | "received"; claimStatus?: "draft" | "sent" | "approved" | "queried" };
+  admissionId: string; gl?: { status: "requested" | "received"; claimStatus?: ClaimStatus };
   medsConfirmed: boolean; followUpBooked: boolean; pendingResults: { id: string; test: string; expected?: string }[];
   /** Incidental findings nobody has tracked or dismissed yet (demo flow 6). */
   openFindings?: { id: string; label: string }[];
@@ -78,7 +84,7 @@ export type BedRows = {
 /** A bed's blockers derived from rows (the server version of demoBed); ids are stable so owners stick. */
 export function bedBlockers(rows: BedRows): WardBlocker[] {
   const id = rows.admissionId, blockers: WardBlocker[] = [];
-  if (rows.gl?.status === "requested") blockers.push({ id: `${id}-gl`, kind: "gl", label: "Final guarantee letter", detail: rows.gl.claimStatus === "sent" ? "Sent · awaiting insurer" : rows.gl.claimStatus === "queried" ? "Insurer asked a question" : "Codes ready to review" });
+  if (rows.gl?.status === "requested") blockers.push({ id: `${id}-gl`, kind: "gl", label: "Final guarantee letter", detail: glDetail(rows.gl.claimStatus) });
   const preparing = rows.fit !== false;
   if (preparing && !rows.medsConfirmed) blockers.push({ id: `${id}-meds`, kind: "pharmacy", label: "Take-home medicines", detail: "Not yet confirmed" });
   if (preparing && !rows.followUpBooked) blockers.push({ id: `${id}-followup`, kind: "booking", label: "Follow-up booking", detail: "Clinic review not booked" });

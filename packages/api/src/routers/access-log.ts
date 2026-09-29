@@ -18,6 +18,7 @@ const SEEN_AS: Record<string, string> = {
   "note.get": "opened the note", "note.save": "saved the note",
   "discharge.update": "changed the discharge plan", "discharge.request": "approved the discharge",
   "claim.status": "checked the claim", "claim.update": "changed the claim", "claim.send": "sent the claim",
+  "claim.appealDraft": "drafted an appeal against the denied claim", "claim.appeal": "sent an appeal against the denied claim",
   "prescribing.review": "ran a prescribing check", "prescribing.simulate": "prescribed",
   "xray.read": "viewed the X-ray", "xray.upload": "added an X-ray", "findings.list": "viewed findings", "findings.detect": "read the X-ray for findings",
   "scan.upload": "scanned a handwritten note", "scan.read": "read a scanned note", "scan.apply": "added a scanned note to the record",

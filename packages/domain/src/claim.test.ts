@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { EMPTY_CLAIM, decideClaimSend, insurerDecision } from "./claim";
+import { DENIAL_REASONS, EMPTY_CLAIM, appealByRules, decideClaimSend, insurerDecision, noteFor } from "./claim";
 
 const command = { encounterId: "visit-1042", requestId: "req-claim-1", approvedBy: "dr.aisyah" };
 const at = new Date("2026-09-26T10:00:00Z");
@@ -21,4 +21,18 @@ test("an approved claim with every criterion met is sent", () => {
 test("the mock insurer approves exactly one minute after sending", () => {
   expect(insurerDecision(at, new Date("2026-09-26T10:00:59Z"))).toEqual({ status: "pending", approvesAt: "2026-09-26T10:01:00.000Z" });
   expect(insurerDecision(at, new Date("2026-09-26T10:05:00Z"))).toEqual({ status: "approved", approvedAt: "2026-09-26T10:01:00.000Z" });
+});
+
+test("each denial gets a calm appeal whose every point cites a real sentence of the note; a point the note cannot back is left out", () => {
+  const note = noteFor({ ...EMPTY_CLAIM, organismConfirmed: true, ivReasonAdded: true });
+  const ids = new Set(note.map(s => s.id));
+  for (const { code, reason } of DENIAL_REASONS) {
+    const letter = appealByRules({ denialCode: code, denialReason: reason, sentences: note, patient: { name: "Amelia Tan" } });
+    expect(letter.opening).toContain(reason);
+    expect(letter.points.length).toBeGreaterThanOrEqual(2);
+    expect(letter.points.every(p => ids.has(p.evidenceSentenceId))).toBe(true);
+  }
+  // Without the organism sentence, the documentation appeal does not claim it.
+  const bare = appealByRules({ denialCode: "DOC", denialReason: "x", sentences: noteFor(EMPTY_CLAIM), patient: { name: "Amelia Tan" } });
+  expect(bare.points.map(p => p.evidenceSentenceId)).toEqual(["diagnosis", "xray"]);
 });
