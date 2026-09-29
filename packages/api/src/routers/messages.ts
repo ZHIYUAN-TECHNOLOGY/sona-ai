@@ -1,16 +1,21 @@
 import { ORPCError } from "@orpc/server";
 import { user } from "@sona-ai/db/schema/auth";
-import { admissions, careMessages, encounters, hospitalMembers, patients, tasks } from "@sona-ai/db/schema/clinical";
+import { admissions, careMessages, encounters, hospitalMembers, patients, tasks, type MedicineReading, type MessageAttachment } from "@sona-ai/db/schema/clinical";
 import { LABEL_RANK, type MessageLabel } from "@sona-ai/domain/messages";
+import { defaultMedications } from "@sona-ai/domain/prescribing";
+import { mergeMedicines } from "@sona-ai/domain/scan";
 import { and, asc, desc, eq, gte, inArray, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 
+import { SAMPLE_PHOTO_KEY } from "../contracts";
 import { clockOf, type Context } from "../context";
 import { patientProcedure, protectedProcedure } from "../index";
 import { stubModels } from "../models";
 import { tellPatient, when } from "../push";
 import type { Role } from "../roles";
 import { lastDischarge, patientPlan } from "./care-plan";
+import { editEncounter, loadEncounter, visitOf } from "./encounter";
+import { bucket } from "./xray";
 
 /**
  * Sona Care messages: a plain thread between a patient and their care team. Each patient message is
@@ -21,13 +26,17 @@ import { lastDischarge, patientPlan } from "./care-plan";
  */
 const text = z.string().trim().min(1).max(1000);
 const sendSchema = z.object({ text, requestId: z.string().min(1).max(100) });
+const readingSchema = z.object({ name: z.string().trim().min(1).max(120), dose: z.string().trim().max(60).optional(), frequency: z.string().trim().max(120).optional() });
+/** What a patient may attach: the photo's key (theirs, or the sample) and the reading they checked. The decision is never theirs to send. */
+const attachmentSchema = z.object({ kind: z.literal("medicine-photo"), key: z.string().min(1).max(300).optional(), reading: readingSchema, sampleReading: z.boolean().optional() });
+const messageInput = z.object({ messageId: z.string().min(1).max(300) });
 const patientInput = z.object({ patientId: z.string().min(1) });
 const TITLE_CHARS = 60;
 /** The inbox keeps a thread for a week after its last message, so a handled one can be found again. */
 const RECENT_DAYS = 7;
 const CARE_TEAM: readonly Role[] = ["doctor", "nurse"];
 
-const own = { id: careMessages.id, from: careMessages.from, text: careMessages.text, createdAt: careMessages.createdAt, seenAt: careMessages.seenAt };
+const own = { id: careMessages.id, from: careMessages.from, text: careMessages.text, createdAt: careMessages.createdAt, seenAt: careMessages.seenAt, attachment: careMessages.attachment };
 const thread = (db: Context["db"], patientId: string) =>
   db.select(own).from(careMessages).where(eq(careMessages.patientId, patientId)).orderBy(asc(careMessages.createdAt), asc(careMessages.id));
 
@@ -39,9 +48,12 @@ async function stored(db: Context["db"], id: string) {
 /** Patient side, under care.messages. `seenAt` on the patient's own messages: when the care team opened them. */
 export const careMessagesRouter = {
   list: patientProcedure.handler(({ context }) => thread(context.db, context.patientId)),
-  send: patientProcedure.input(sendSchema).handler(async ({ context, input }) => {
+  send: patientProcedure.input(sendSchema.extend({ attachment: attachmentSchema.optional() })).handler(async ({ context, input }) => {
     const { db, hospitalId, patientId } = context;
     const id = `message:${patientId}:${input.requestId}`;
+    // A photo key must be one of their own uploads (care.readMedicinePhoto) or the bundled sample.
+    const key = input.attachment?.key;
+    if (key && key !== SAMPLE_PHOTO_KEY && !key.startsWith(`care-photos/${hospitalId}/${patientId}/`)) throw new ORPCError("BAD_REQUEST", { message: "That photo isn't yours" });
     const [patient] = await db.select({ name: patients.name, encounterId: encounters.id }).from(patients)
       .leftJoin(encounters, eq(encounters.patientId, patients.id)).where(eq(patients.id, patientId)).orderBy(desc(encounters.updatedAt)).limit(1);
     const title = `${patient!.name.split(" ")[0]}: ${input.text.length > TITLE_CHARS ? `${input.text.slice(0, TITLE_CHARS).trimEnd()}…` : input.text}`;
@@ -50,7 +62,7 @@ export const careMessagesRouter = {
     // The task shares the message's ID, so a replay inserts neither.
     await db.insert(tasks).values({ id, hospitalId, encounterId: patient!.encounterId, kind: "message", title, owner: "Attending doctor", due: "Today", sourceId: id, idempotencyKey: id })
       .onConflictDoNothing();
-    await db.insert(careMessages).values({ id, hospitalId, patientId, from: "patient", authorId: context.session.user.id, text: input.text, taskId: id, createdAt: clockOf(context), triage: triage?.label, triageReason: triage?.reason })
+    await db.insert(careMessages).values({ id, hospitalId, patientId, from: "patient", authorId: context.session.user.id, text: input.text, taskId: id, createdAt: clockOf(context), triage: triage?.label, triageReason: triage?.reason, attachment: input.attachment })
       .onConflictDoNothing();
     return stored(db, id);
   }),
@@ -96,6 +108,29 @@ async function closeAsked(db: Context["db"], patientId: string) {
 }
 
 const labelOf = (t: string | null): MessageLabel => (t === "urgent" || t === "admin" ? t : "clinical");
+/** "Cetirizine 10 mg": the photo's medicine as the inbox row names it. */
+export const photoLabel = (r: MedicineReading) => [r.name, r.dose].filter(Boolean).join(" ");
+
+/** A patient's medicine-photo message in this hospital, or NOT_FOUND. */
+async function photoMessage(db: Context["db"], hospitalId: string, messageId: string) {
+  const [m] = await db.select({ id: careMessages.id, patientId: careMessages.patientId, taskId: careMessages.taskId, attachment: careMessages.attachment }).from(careMessages)
+    .where(and(eq(careMessages.id, messageId), eq(careMessages.hospitalId, hospitalId), eq(careMessages.from, "patient")));
+  if (m?.attachment?.kind !== "medicine-photo") throw new ORPCError("NOT_FOUND", { message: "No medicine photo in that message" });
+  return { ...m, attachment: m.attachment };
+}
+
+/** The care team's calm reply when a photographed medicine isn't one of the patient's, in their discharge language. */
+const DECLINED = {
+  en: (m: string) => `Thank you for the photo. ${m} isn't one of the medicines we've given you, so please don't take it until you've checked with us.`,
+  ms: (m: string) => `Terima kasih atas gambar itu. ${m} bukan salah satu ubat yang kami berikan kepada anda, jadi jangan ambil sehingga anda bertanya kepada kami dahulu.`,
+  zh: (m: string) => `谢谢您的照片。${m}不是我们给您的药物，请先问过我们再服用。`,
+};
+
+const toBase64 = (bytes: Uint8Array) => {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+};
 
 /** Clinician side: the inbox, a patient's thread, Sona's draft, and the care team's reply. */
 export const messagesRouter = {
@@ -107,7 +142,7 @@ export const messagesRouter = {
   inbox: protectedProcedure.handler(async ({ context }) => {
     const { db, hospitalId } = context, now = clockOf(context);
     const since = new Date(now.getTime() - RECENT_DAYS * 86400_000);
-    const rows = await db.select({ patientId: careMessages.patientId, from: careMessages.from, text: careMessages.text, createdAt: careMessages.createdAt, seenAt: careMessages.seenAt,
+    const rows = await db.select({ patientId: careMessages.patientId, from: careMessages.from, text: careMessages.text, createdAt: careMessages.createdAt, seenAt: careMessages.seenAt, attachment: careMessages.attachment,
       triage: careMessages.triage, triageReason: careMessages.triageReason, taskDone: tasks.completed, name: patients.name, initials: patients.initials })
       .from(careMessages).innerJoin(patients, eq(patients.id, careMessages.patientId)).leftJoin(tasks, eq(tasks.id, careMessages.taskId))
       .where(and(eq(careMessages.hospitalId, hospitalId), or(gte(careMessages.createdAt, since), eq(tasks.completed, false))))
@@ -122,6 +157,8 @@ export const messagesRouter = {
       return {
         patientId, name: last.name, initials: last.initials, bed: beds.find(b => b.patientId === patientId)?.bed ?? null,
         lastText: last.text, lastFrom: last.from, lastAt: last.createdAt,
+        // The last message was a medicine photo: the row says "Photo · Cetirizine 10 mg" instead of its words.
+        lastPhoto: last.attachment?.kind === "medicine-photo" ? photoLabel(last.attachment.reading) : null,
         waitingSince: waiting[0]?.createdAt ?? null, waiting: waiting.length,
         unread: msgs.filter(m => m.from === "patient" && !m.seenAt).length,
         label: top ? labelOf(top.triage) : null, reason: top ? (top.triageReason ?? "Not triaged: read it first") : null,
@@ -188,5 +225,50 @@ export const messagesRouter = {
     await closeAsked(db, input.patientId);
     await tellPatient(context, hospitalId, input.patientId, { kind: "reply" });
     return stored(db, id);
+  }),
+
+  /** A patient's medicine photo, for a doctor or nurse to look at (short-lived: base64 in the answer, never a public link). */
+  photo: protectedProcedure.input(messageInput).handler(async ({ context, input }) => {
+    const { attachment } = await photoMessage(context.db, context.hospitalId, input.messageId);
+    const object = attachment.key && attachment.key !== SAMPLE_PHOTO_KEY ? await bucket(context).get(attachment.key) : null;
+    if (!object) throw new ORPCError("NOT_FOUND", { message: "That photo isn't stored: it is the sample, or it stayed on the patient's phone" });
+    return { contentType: object.httpMetadata?.contentType ?? "image/jpeg", dataBase64: toBase64(new Uint8Array(await object.arrayBuffer())) };
+  }),
+
+  /**
+   * The care team's decision on a medicine photo, once. "add": the medicine joins the visit's reconciliation
+   * unconfirmed (from the patient's photo), for the doctor to confirm; "reject": a calm reply tells the patient
+   * not to take it. Either closes the message's task; Sona Care shows "Added by your care team" or drops it.
+   * Deciding again returns the first decision and changes nothing.
+   */
+  resolveMedicinePhoto: protectedProcedure.input(messageInput.extend({ decision: z.enum(["add", "reject"]), edited: readingSchema.optional() })).handler(async ({ context, input }) => {
+    const { db, hospitalId } = context;
+    const message = await photoMessage(db, hospitalId, input.messageId);
+    if (message.attachment.decision) return message.attachment.decision;
+    const reading = input.edited ?? message.attachment.reading;
+    const [visit] = await db.select({ id: encounters.id }).from(encounters).where(and(eq(encounters.patientId, message.patientId), eq(encounters.hospitalId, hospitalId)))
+      .orderBy(desc(encounters.updatedAt)).limit(1);
+    if (input.decision === "add") {
+      if (!visit) throw new ORPCError("NOT_FOUND", { message: "No visit to add the medicine to" });
+      const { patient } = await visitOf(db, hospitalId, visit.id);
+      const { revision, state } = await loadEncounter(db, hospitalId, visit.id);
+      const from = `From a patient photo in Sona Care${message.attachment.key ? ` (${message.attachment.key})` : ""}`;
+      await editEncounter(context, hospitalId, { encounterId: visit.id, expectedRevision: revision,
+        medicationEntries: mergeMedicines(state.medicationEntries ?? defaultMedications(patient), [{ ...reading, change: "new", confidence: "high" }], from) });
+    } else {
+      const language = (await lastDischarge(db, hospitalId, message.patientId))?.language;
+      const say = DECLINED[language === "ms" || language === "zh" ? language : "en"];
+      await db.insert(careMessages).values({ id: `${message.id}:declined`, hospitalId, patientId: message.patientId, from: "care-team", authorId: context.session.user.id, text: say(photoLabel(reading)), createdAt: clockOf(context) })
+        .onConflictDoNothing();
+      await tellPatient(context, hospitalId, message.patientId, { kind: "reply" });
+    }
+    const decision = { status: input.decision === "add" ? "added" as const : "declined" as const, reading, by: context.session.user.id, at: clockOf(context).toISOString() };
+    await db.update(careMessages).set({ attachment: { ...message.attachment, decision } satisfies MessageAttachment }).where(eq(careMessages.id, message.id));
+    await markSeen(context, message.patientId);
+    if (message.taskId) await db.update(tasks).set({ completed: true }).where(eq(tasks.id, message.taskId));
+    // The middleware announces this write without a patient; Sona Care and the visit hear it here.
+    await context.announce?.(hospitalId, { topic: "messages", patientId: message.patientId }).catch(() => {});
+    if (visit && input.decision === "add") await context.announce?.(hospitalId, { topic: "visit", encounterId: visit.id }).catch(() => {});
+    return decision;
   }),
 };

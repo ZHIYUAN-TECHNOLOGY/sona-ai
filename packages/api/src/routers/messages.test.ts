@@ -7,6 +7,7 @@ import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
+import type { Context } from "../context";
 import type { Change } from "../events";
 import { stubModels, type Models } from "../models";
 import { appRouter } from "./index";
@@ -18,7 +19,7 @@ const session = (id: string) => ({
 } as unknown as Session);
 
 /** A doctor, a nurse and management; Amelia (SYN-1042) and Daniel (SYN-1086) on Sona Care; one clock. */
-async function world(models?: Models) {
+async function world(models?: Models, extra: Partial<Context> = {}) {
   const db = await createTestDb();
   const clock = { now: new Date("2026-09-26T10:00:00+08:00") };
   await seedDemo(db, clock.now);
@@ -27,7 +28,7 @@ async function world(models?: Models) {
   await addClinician(db, "nurse", undefined, "nurse");
   await addClinician(db, "boss", undefined, "management");
   const heard: Change[] = [];
-  const as = (id: string) => createRouterClient(appRouter, { context: { db, session: session(id), now: () => clock.now, models, announce: async (_: string, c: Change) => { heard.push(c); } } });
+  const as = (id: string) => createRouterClient(appRouter, { context: { db, session: session(id), now: () => clock.now, models, ...extra, announce: async (_: string, c: Change) => { heard.push(c); } } });
   const doctor = as("dr"), nurse = as("nurse"), amelia = as("amelia"), farid = as("farid");
   await amelia.care.join({ code: (await doctor.care.code({ encounterId: "visit-1042" })).code });
   await farid.care.join({ code: (await doctor.care.code({ encounterId: "visit-1086" })).code });
@@ -118,4 +119,58 @@ test("Sona's draft answers the latest waiting message from the patient's own pla
   const urgent = await nurse.messages.draft({ patientId: "SYN-1042" });
   expect([urgent!.label, urgent!.text.includes("999"), /[一-鿿]/.test(urgent!.text)]).toEqual(["urgent", true, true]);
   expect((await manager.messages.draft({ patientId: "SYN-1042" }).catch(e => e)).code).toBe("FORBIDDEN");
+});
+
+function memoryBucket() {
+  const objects = new Map<string, { bytes: Uint8Array; contentType?: string }>();
+  return { objects, put: async (key: string, bytes: Uint8Array, o?: { httpMetadata?: { contentType?: string } }) => { objects.set(key, { bytes, contentType: o?.httpMetadata?.contentType }); },
+    get: async (key: string) => { const o = objects.get(key); return o ? { arrayBuffer: async () => o.bytes.slice().buffer, httpMetadata: { contentType: o.contentType } } : null; } };
+}
+const codeOf = (p: Promise<unknown>) => p.then(() => "OK", (e: { code?: string }) => e.code);
+const cetirizine = { name: "Cetirizine", dose: "10 mg", frequency: "once at night" };
+
+test("a medicine photo: only the patient's own key, the inbox names it, and only a doctor or nurse sees it (logged)", async () => {
+  const uploads = memoryBucket();
+  const { amelia, doctor, nurse, manager } = await world(undefined, { uploads });
+  const { key } = await amelia.care.readMedicinePhoto({ photo: { contentType: "image/jpeg", dataBase64: Buffer.from([7, 8, 9]).toString("base64") } });
+  expect(await codeOf(amelia.care.messages.send({ text: "Check this", requestId: "x", attachment: { kind: "medicine-photo", key: "care-photos/demo/SYN-1086/a.jpg", reading: cetirizine } }))).toBe("BAD_REQUEST");
+  const sent = await amelia.care.messages.send({ text: "Please check a medicine I added from a photo: Cetirizine 10 mg, once at night.", requestId: "p1", attachment: { kind: "medicine-photo", key, reading: cetirizine, sampleReading: true } });
+  expect(sent.attachment).toEqual({ kind: "medicine-photo", key, reading: cetirizine, sampleReading: true });
+  expect((await nurse.messages.inbox()).threads[0]).toMatchObject({ patientId: "SYN-1042", lastPhoto: "Cetirizine 10 mg" });
+  expect((await doctor.messages.thread({ patientId: "SYN-1042" })).messages[0]!.attachment?.reading).toEqual(cetirizine);
+
+  expect(await nurse.messages.photo({ messageId: sent.id })).toEqual({ contentType: "image/jpeg", dataBase64: Buffer.from([7, 8, 9]).toString("base64") });
+  expect(await codeOf(manager.messages.photo({ messageId: sent.id }))).toBe("FORBIDDEN");
+  expect((await doctor.accessLog.list({ patientId: "SYN-1042" })).lines.map(l => l.did)).toContain("viewed a medicine photo");
+});
+
+test("adding a photo's medicine proposes it unconfirmed from the patient's photo and closes the task; deciding again changes nothing", async () => {
+  const { amelia, doctor, nurse, heard } = await world();
+  const sent = await amelia.care.messages.send({ text: "Please check", requestId: "p1", attachment: { kind: "medicine-photo", key: "sample-medicine", reading: cetirizine } });
+  const before = await doctor.encounter.get({ encounterId: "visit-1042" });
+  const decision = await nurse.messages.resolveMedicinePhoto({ messageId: sent.id, decision: "add", edited: { ...cetirizine, dose: "5 mg" } });
+  expect(decision).toMatchObject({ status: "added", reading: { name: "Cetirizine", dose: "5 mg" }, by: "nurse" });
+  const after = await doctor.encounter.get({ encounterId: "visit-1042" });
+  expect(after.revision).toBe(before.revision + 1);
+  expect(after.state.medicationEntries?.find(e => e.ingredient === "cetirizine")).toMatchObject({ name: "Cetirizine 5 mg once at night", confirmed: false, change: "new", from: "From a patient photo in Sona Care (sample-medicine)" });
+  expect(heard).toContainEqual({ topic: "messages", patientId: "SYN-1042" });
+  expect((await doctor.messages.inbox()).threads[0]).toMatchObject({ handled: true });
+  expect((await amelia.care.messages.list())[0]!.attachment?.decision?.status).toBe("added");
+
+  expect(await doctor.messages.resolveMedicinePhoto({ messageId: sent.id, decision: "reject" })).toEqual(decision);
+  expect((await doctor.encounter.get({ encounterId: "visit-1042" })).revision).toBe(after.revision);
+  expect((await amelia.care.messages.list())).toHaveLength(1);
+});
+
+test("declining a photo's medicine tells the patient calmly, closes the task, and adds nothing", async () => {
+  const { farid, doctor } = await world();
+  const sent = await farid.care.messages.send({ text: "Please check", requestId: "p1", attachment: { kind: "medicine-photo", reading: { name: "Ibuprofen", dose: "400 mg" } } });
+  const before = await doctor.encounter.get({ encounterId: "visit-1086" });
+  expect(await doctor.messages.resolveMedicinePhoto({ messageId: sent.id, decision: "reject" })).toMatchObject({ status: "declined" });
+  const thread = await farid.care.messages.list();
+  expect(thread.map(m => [m.from, m.attachment?.decision?.status ?? null])).toEqual([["patient", "declined"], ["care-team", null]]);
+  expect(thread[1]!.text).toContain("Ibuprofen 400 mg isn't one of the medicines we've given you");
+  expect((await doctor.encounter.get({ encounterId: "visit-1086" })).revision).toBe(before.revision);
+  expect((await doctor.messages.inbox()).threads[0]).toMatchObject({ handled: true, lastPhoto: null, lastFrom: "care-team" });
+  expect(await codeOf(doctor.messages.resolveMedicinePhoto({ messageId: "message:SYN-1086:nope", decision: "add" }))).toBe("NOT_FOUND");
 });

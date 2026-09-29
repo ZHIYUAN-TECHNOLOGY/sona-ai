@@ -17,6 +17,7 @@ import { api, errorText, requestId, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { useRole } from "@/features/live/roles";
 import { refreshServerData } from "@/features/live/server-day";
+import { PhotoMessage } from "./photo";
 import { clock, LABEL_STYLE, type Label } from "./state";
 
 /**
@@ -61,7 +62,7 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
   const [hidden, setHidden] = useState<string>(); // the message whose draft was dismissed or used
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    if (!on || !canDraft || !waiting) return;
+    if (!on || !canDraft || !waiting || waiting.attachment) return; // a medicine photo is decided on its own card, not answered with a draft
     let current = true;
     setDraft({ for: waiting.id });
     api.messages.draft({ patientId }).then(value => { if (current) setDraft({ for: waiting.id, value: value ?? undefined }); }, e => { if (current) setDraft({ for: waiting.id, error: errorText(e) }); });
@@ -111,7 +112,7 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
 
   const patient = data?.patient;
   const first = patient?.name.split(" ")[0] ?? "the patient";
-  const show = waiting && draft?.for === waiting.id && hidden !== waiting.id ? draft : undefined;
+  const show = waiting && !waiting.attachment && draft?.for === waiting.id && hidden !== waiting.id ? draft : undefined;
   const label: Label = waiting?.triage ?? "clinical";
 
   return <View ref={root} collapsable={false} style={{ flex: 1 }}>
@@ -168,13 +169,21 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
   </View>;
 }
 
-/** Patient on the left in glass, the care team on the right in ink; each with who wrote it and when. */
+/**
+ * Patient on the left in glass, the care team on the right in ink; each with who wrote it and when.
+ * A medicine photo from the patient shows as the photo and Sona's reading with the decision in place.
+ */
 function Bubble({ message: m, reduced }: { message: Thread["messages"][number]; reduced: boolean }) {
   const team = m.from === "care-team";
   const tail: ViewStyle = team ? { borderBottomRightRadius: 8 } : { borderBottomLeftRadius: 8 };
+  const header = <Text style={{ ...type.caption, color: palette.muted, paddingHorizontal: 4 }}><Text style={{ fontWeight: "600", color: palette.ink }}>{m.author}</Text> · {clock(m.createdAt)}</Text>;
+  if (m.attachment?.kind === "medicine-photo") return <Animated.View entering={reduced ? undefined : FadeIn.duration(220)} style={{ alignSelf: "flex-start", maxWidth: "84%", gap: 4 }}>
+    {header}
+    <PhotoMessage messageId={m.id} attachment={m.attachment} first={m.author} />
+  </Animated.View>;
   return <Animated.View entering={reduced ? undefined : FadeIn.duration(220)} accessible accessibilityLabel={`${m.author}, ${clock(m.createdAt)}: ${m.text}`}
     style={{ alignSelf: team ? "flex-end" : "flex-start", maxWidth: "84%", gap: 4, alignItems: team ? "flex-end" : "flex-start" }}>
-    <Text style={{ ...type.caption, color: palette.muted, paddingHorizontal: 4 }}><Text style={{ fontWeight: "600", color: palette.ink }}>{m.author}</Text> · {clock(m.createdAt)}</Text>
+    {header}
     <View style={[team ? { backgroundColor: palette.dark, borderRadius: 20, borderCurve: "continuous" } : { ...surfaceStyle, borderRadius: 20 }, tail, { paddingHorizontal: 14, paddingVertical: 10 }]}>
       <Text selectable style={{ ...type.body, color: team ? palette.white : palette.ink }}>{m.text}</Text>
     </View>

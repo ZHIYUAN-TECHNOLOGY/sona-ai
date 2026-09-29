@@ -1,3 +1,5 @@
+import { SAMPLE_PHOTO_KEY } from "@sona-ai/api/contracts";
+import { useQuery } from "@tanstack/react-query";
 import * as SecureStore from "expo-secure-store";
 import { Image } from "expo-image";
 import { router } from "expo-router";
@@ -12,14 +14,16 @@ import { motion, palette, type } from "@/lib/theme";
 import { Button, field, ICON, pillStyle, surfaceStyle } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 import { Pill } from "./pill";
-import { addWaiting, medLine, messageFor, type PhotoMedicine, type PhotoReading } from "./photo-model";
+import { addWaiting, medLine, messageFor, statusOf, type PhotoMedicine, type PhotoReading } from "./photo-model";
+import { useMe } from "../me";
 import "./strings";
 
 /**
  * "Add from a photo" on the Medicine tab: a photo of a medicine box or letter is read (care.readMedicinePhoto,
  * a labelled sample until the vision model is on), the patient checks and can edit it, and it goes to
- * their care team as a message with the photo's reference. It then sits in their medicines as
- * "Waiting for your care team", never confirmed and with no dose timer, kept on this phone.
+ * their care team as a message with the photo and reading attached. It then sits in their medicines as
+ * "Waiting for your care team", never confirmed and with no dose timer, kept on this phone. When the care
+ * team decides (live, through the thread), it reads "Added by your care team", or leaves with their reply.
  */
 // The picker is a native module: a build without it still opens the sheet and offers the sample photo.
 let picker: typeof import("expo-image-picker") | undefined;
@@ -47,19 +51,22 @@ type Step = { kind: "choose"; error?: string } | { kind: "reading"; photo: Photo
 /** The entry (under the medicine cards) and the waiting medicines above it. */
 export function PhotoMedicines() {
   const t = tFor(useLang());
-  const list = useSyncExternalStore(subscribe, () => waiting);
+  const { state } = useMe();
+  const thread = useQuery({ ...orpc.care.messages.list.queryOptions(), enabled: state === "joined" }).data;
+  const list = useSyncExternalStore(subscribe, () => waiting).map(m => ({ ...m, status: statusOf(m, thread) })).filter(m => m.status !== "declined");
   const [open, setOpen] = useState(false);
   return <View style={{ gap: 12 }}>
-    {list.map(m => <Pressable key={m.id} accessibilityRole="button" accessibilityLabel={`${medLine(m)}. ${t("photo.waiting")}`} accessibilityHint={t("photo.openMessages")} onPress={() => router.push("/messages")}
+    {list.map(m => <Pressable key={m.id} accessibilityRole="button" accessibilityLabel={`${medLine(m)}. ${t(m.status === "added" ? "photo.added" : "photo.waiting")}`} accessibilityHint={t("photo.openMessages")} onPress={() => router.push("/messages")}
       style={({ pressed }) => [surfaceStyle, { flexDirection: "row", alignItems: "center", gap: 12, padding: 12, transform: [{ scale: pressed ? motion.press : 1 }] }]}>
       <Pill name={m.name} size={52} />
       <View style={{ flex: 1, gap: 4 }}>
         <Text style={{ ...type.headline, color: palette.ink }}>{m.name}</Text>
         {(m.dose || m.how) && <Text style={{ ...type.footnote, color: palette.faint }}>{[m.dose, m.how].filter(Boolean).join(", ")}</Text>}
-        <View style={{ alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999, backgroundColor: palette.amberWash }}>
-          <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: palette.warning }} />
-          <Text style={{ fontSize: 13, lineHeight: 18, fontWeight: "600", color: palette.amber }}>{t("photo.waiting")}</Text>
-        </View>
+        {/* Amber while the care team checks it, green once they added it. */}
+        <Animated.View key={m.status} entering={FadeIn.duration(220)} style={{ alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999, backgroundColor: m.status === "added" ? palette.greenWash : palette.amberWash }}>
+          <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: m.status === "added" ? palette.success : palette.warning }} />
+          <Text style={{ fontSize: 13, lineHeight: 18, fontWeight: "600", color: m.status === "added" ? palette.green : palette.amber }}>{t(m.status === "added" ? "photo.added" : "photo.waiting")}</Text>
+        </Animated.View>
       </View>
     </Pressable>)}
     <Pressable accessibilityRole="button" accessibilityLabel={t("photo.add")} accessibilityHint={t("photo.addLine")} onPress={() => setOpen(true)}
@@ -114,7 +121,10 @@ function PhotoSheet({ onClose }: { onClose: () => void }) {
     const reading = { name: step.reading.name.trim(), dose: step.reading.dose?.trim() || undefined, how: step.reading.how?.trim() || undefined };
     setSending(true); setError(undefined);
     try {
-      await client.care.messages.send({ text: messageFor({ ...reading, key: step.key }, t), requestId });
+      // The sample photo is bundled in both apps, so it travels as the sample key; a photo that couldn't be stored has none.
+      const key = step.key ?? (step.photo.source === SAMPLE ? SAMPLE_PHOTO_KEY : undefined);
+      await client.care.messages.send({ text: messageFor(reading, t), requestId,
+        attachment: { kind: "medicine-photo", key, reading: { name: reading.name, dose: reading.dose, frequency: reading.how }, sampleReading: step.sample } });
       void queryClient.invalidateQueries({ queryKey: orpc.care.messages.key() });
       keep({ id: requestId, ...reading, key: step.key, sentAt: new Date().toISOString() });
       AccessibilityInfo.announceForAccessibility(t("photo.sent"));
