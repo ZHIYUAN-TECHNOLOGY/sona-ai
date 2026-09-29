@@ -1,11 +1,11 @@
 import { ORPCError } from "@orpc/server";
 import { DEMO_HOSPITAL } from "@sona-ai/db/demo";
 import { admissions, claims, encounters, findings, guaranteeLetters, labResults, patients, tasks } from "@sona-ai/db/schema/clinical";
-import { admittedBed, bedBlockers, byUrgency, freedBed, WARD_FIXTURE, type Bed, type Owner, type WardRecord } from "@sona-ai/domain/ward";
+import { admittedBed, bedBlockers, byUrgency, forecastBeds, freedBed, WARD_FIXTURE, type Bed, type Owner, type WardRecord } from "@sona-ai/domain/ward";
 import { and, asc, eq } from "drizzle-orm";
 
 import { assignOwnerSchema } from "../contracts";
-import type { Context } from "../context";
+import { clockOf, type Context } from "../context";
 import { protectedProcedure } from "../index";
 import { stubModels } from "../models";
 import { logAnswer } from "./encounter";
@@ -41,6 +41,12 @@ export async function liveBeds(db: Context["db"], hospitalId: string): Promise<(
   return [...new Map([...beds.flat(), ...empty].map(b => [b.bed, b])).values()].sort(byUrgency);
 }
 
+/** Each blocker's owner, from the blocker-owner tasks. */
+async function ownersOf(db: Context["db"], hospitalId: string): Promise<Record<string, Owner>> {
+  const owned = await db.select({ sourceId: tasks.sourceId, owner: tasks.owner }).from(tasks).where(and(eq(tasks.hospitalId, hospitalId), eq(tasks.kind, "blocker-owner")));
+  return Object.fromEntries(owned.filter(t => t.sourceId).map(t => [t.sourceId!, t.owner as Owner]));
+}
+
 export const wardRouter = {
   assignOwner: protectedProcedure.input(assignOwnerSchema).handler(async ({ context: { db, hospitalId }, input }) => {
     const beds = await liveBeds(db, hospitalId);
@@ -54,12 +60,16 @@ export const wardRouter = {
     return task!;
   }),
   beds: protectedProcedure.handler(({ context: { db, hospitalId } }) => liveBeds(db, hospitalId)),
+  /** When beds free up: the rule-based forecast over the live ward and its owners, on the hospital's (demo) clock. */
+  forecast: protectedProcedure.handler(async ({ context }) => {
+    const { db, hospitalId } = context;
+    return forecastBeds(await liveBeds(db, hospitalId), clockOf(context), await ownersOf(db, hospitalId));
+  }),
   /** The three-line huddle brief over the live ward and its owners (the app keeps its local rule as a fallback). */
   huddle: protectedProcedure.handler(async ({ context }) => {
     const { db, hospitalId } = context;
     const beds = await liveBeds(db, hospitalId);
-    const owned = await db.select({ sourceId: tasks.sourceId, owner: tasks.owner }).from(tasks).where(and(eq(tasks.hospitalId, hospitalId), eq(tasks.kind, "blocker-owner")));
-    const owners = Object.fromEntries(owned.filter(t => t.sourceId).map(t => [t.sourceId!, t.owner as Owner]));
+    const owners = await ownersOf(db, hospitalId);
     const answer = await (context.models ?? stubModels).huddleBrief({ beds, owners });
     return logAnswer(db, null, "huddle-brief", answer, beds.flatMap(b => b.blockers.map(x => x.id)));
   }),

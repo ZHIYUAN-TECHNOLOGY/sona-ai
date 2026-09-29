@@ -1,6 +1,7 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { admissions, hospitalMembers, hospitals } from "@sona-ai/db/schema/clinical";
+import { DEMO_HOSPITAL } from "@sona-ai/db/demo";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { wardSummary } from "@sona-ai/domain/ward";
@@ -71,4 +72,19 @@ test("the ward needs a signed-in doctor, and another hospital sees none of the d
   await db.insert(hospitals).values({ id: "other", name: "Other Hospital (synthetic)" });
   await db.insert(hospitalMembers).values({ userId: "dr-other", hospitalId: "other" });
   expect(await client("dr-other").ward.beds()).toEqual([]);
+});
+
+test("the bed forecast reads the live ward, its owners and the hospital's demo clock", async () => {
+  const { db } = await signedIn();
+  const api = createRouterClient(appRouter, { context: { db, session: as("dr-aisyah") as unknown as Session, now: () => new Date("2026-09-26T09:00:00+08:00") } });
+  const f = await api.ward.forecast();
+  expect(f.today).toEqual({ count: 5, byTime: "by 7 pm" });
+  expect(f.tomorrow).toEqual({ count: 1 });
+  expect(f.unlock).toMatchObject({ bed: "Bed 6", blockerId: "adm-1042-gl", owner: "Billing", owned: false, hours: 4 });
+  // An owner on the server takes the unowned hour off, so Bed 2's letter becomes the one to chase.
+  await api.ward.assignOwner({ blockerId: "adm-1042-gl", owner: "Billing" });
+  expect((await api.ward.forecast()).unlock).toMatchObject({ bed: "Bed 2", blockerId: "adm-2002-gl" });
+  // The demo clock jumps to 20:00: only the free beds are left today, the rest move to tomorrow.
+  await db.update(hospitals).set({ clockOffsetMs: 11 * 3600_000 }).where(eq(hospitals.id, DEMO_HOSPITAL));
+  expect(await api.ward.forecast()).toMatchObject({ today: { count: 2, byTime: "now" }, tomorrow: { count: 4 } });
 });
