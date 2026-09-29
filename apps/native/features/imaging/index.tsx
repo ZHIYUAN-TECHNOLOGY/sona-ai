@@ -13,7 +13,8 @@ import { HalftoneShimmer } from "@/components/sona/halftone-shimmer";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { IconRow, Section } from "@/components/sona/sections";
 import { palette } from "@/components/sona/theme";
-import { Action, Chip, Expand, Glass, Icon, Notice, pillStyle, Reveal, Screen, SourceLink, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Chip, Expand, Glass, Icon, Insight, Notice, pillStyle, Reveal, Screen, SourceLink, Surface, surfaceStyle, Tone, useAccessibleEffects } from "@/components/sona/ui";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEncounter } from "@/features/encounter/store";
 import type { Encounter, FeatureProps } from "@/features/encounter/types";
 import { FindingsCard } from "@/features/findings";
@@ -137,16 +138,35 @@ function Findings({ scenario, attachment, summary }: { scenario: Scenario; attac
   return <Notice>No image is attached and no findings have been generated.</Notice>;
 }
 
-/** Focused viewer page: canvas like `Screen`, but a gesture-handler scroll view that stops scrolling while the image is zoomed. */
-function ViewerPage({ children, scrollEnabled = true }: { children: ReactNode; scrollEnabled?: boolean }) {
-  return <ScrollView scrollEnabled={scrollEnabled} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: "linear-gradient(to bottom, #F5F6F8 0%, #EFF2F7 45%, #E3EBF7 100%)" }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 44, gap: 20 }}>{children}</ScrollView>;
-}
-/** The screen's one header line: whose image this is, or that it is not this patient's. */
-function Identity({ children, trailing }: { children: string; trailing?: ReactNode }) {
-  return <View style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 44, zIndex: 2 }}>
-    <Text selectable accessibilityRole="header" style={{ flex: 1, fontSize: 13, lineHeight: 18, fontWeight: "600", color: palette.blue }}>{children}</Text>
-    {trailing}
+/**
+ * Focused viewer page: canvas like `Screen`, but a gesture-handler scroll view that stops scrolling while the image is zoomed
+ * (`Screen` has no scroll lock, so the pinch would fight the scroll). `bottom` pins the decision bar as `Screen` does.
+ */
+function ViewerPage({ children, scrollEnabled = true, bottom }: { children: ReactNode; scrollEnabled?: boolean; bottom?: ReactNode }) {
+  const insets = useSafeAreaInsets();
+  const [barHeight, setBarHeight] = useState(0);
+  const scroll = <ScrollView scrollEnabled={scrollEnabled} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: "linear-gradient(to bottom, #F5F6F8 0%, #EFF2F7 45%, #E3EBF7 100%)" }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 44, gap: 20 }}>{children}{bottom ? <View style={{ height: barHeight }} /> : null}</ScrollView>;
+  if (!bottom) return scroll;
+  // ponytail: copies `Screen`'s bar; fold into the Page primitive once it takes a scroll lock.
+  return <View style={{ flex: 1 }}>
+    {scroll}
+    <View onLayout={e => setBarHeight(e.nativeEvent.layout.height)} style={{ position: "absolute", left: 16, right: 16, bottom: Math.max(insets.bottom, 12) }}>
+      <Glass style={{ padding: 12, gap: 10 }}>{bottom}</Glass>
+    </View>
   </View>;
+}
+/** One line for what an X-ray answer said (the same cases `Findings` spells out), or that there is none yet. */
+function resultLine(snapshot?: Pick<Encounter, "imagingAttachment" | "hideTeachingImage" | "imagingScenario">) {
+  if (!snapshot) return "Not analysed yet";
+  const scenario = snapshot.imagingScenario ?? "reference";
+  if (scenario === "unsupported") return "Unsupported category";
+  if (scenario === "no-finding" || snapshot.imagingAttachment) return "Findings unavailable";
+  if (!snapshot.hideTeachingImage && teachingImage?.referenceSummary) return "Reference description only";
+  return "No findings generated";
+}
+/** The page's insight: whose image this is (or that it is not this patient's), then what the analysis found. */
+function Heading({ identity, result, open = 0 }: { identity: string; result: string; open?: number }) {
+  return <View style={{ zIndex: 2 }}><Insight eyebrow={identity}>{open ? <><Tone of="soon">{open} {open === 1 ? "finding" : "findings"} to follow up</Tone> · </> : null}{result}</Insight></View>;
 }
 
 /** Menu pop (after Edits' discard menu): scales up from the trigger with a subtle spring overshoot while it fades in. */
@@ -246,8 +266,9 @@ export function XrayScreen() {
 
   if (!patient) return <Screen><Notice>Choose a patient before opening an attachment.</Notice></Screen>;
   if (historical && (sourcePatientId !== patient.id || !savedCard?.imagingSnapshot)) return <Screen><Notice warning>This saved image is unavailable in the active patient’s encounter. No current image has been substituted.</Notice><Action label="Return to encounter" secondary onPress={() => (router.canGoBack() ? router.back() : undefined)} /></Screen>;
+  const open = findings.filter(f => f.status === "open").length;
   if (historical) return <ViewerPage scrollEnabled={!zoomed}>
-    <Identity>{`${patient.name} · saved revision ${savedCard?.revision} · ${attachment ? "local image, no model inference" : "reference example, not this patient"}`}</Identity>
+    <Heading identity={`${patient.name} · saved revision ${savedCard?.revision} · ${attachment ? "local image, no model inference" : "reference example, not this patient"}`} result={resultLine(savedCard?.imagingSnapshot)} open={open} />
     {/* The visit's findings travel with its film, so a saved answer shows the same marks as the live view. */}
     {image ? <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} /> : <Notice>No image was attached when this response was created.</Notice>}
     {image && <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={role.can("findings.track") ? f => void found.track(f) : undefined} onDismiss={role.can("findings.dismiss") ? (f, reason) => void found.dismiss(f, reason) : undefined} />}
@@ -255,7 +276,7 @@ export function XrayScreen() {
   </ViewerPage>;
 
   if (!image) return <ViewerPage>
-    <Identity>{`${patient.name} · no image attached`}</Identity>
+    <Heading identity={`${patient.name} · no image attached`} result="No image to analyse yet" />
     <Section icon="photo" tone="blue" title="An original image belongs here" subtitle="Image review will preserve the original pixels, with zoom, pan and reset controls.">
       <View style={[VIEWING, { minHeight: 250, alignItems: "center", justifyContent: "center", gap: 18, padding: 26 }]}>
         <Icon name="photo.badge.exclamationmark" color={palette.line} size={40} />
@@ -272,37 +293,33 @@ export function XrayScreen() {
     <Action label="Restore bundled reference" secondary onPress={() => updateEncounter(current => ({ ...current, hideTeachingImage: false }))} />
   </ViewerPage>;
 
-  return <ViewerPage scrollEnabled={!zoomed}>
+  const latest = encounter?.cards.findLast(card => card.kind === "xray" && card.imagingSnapshot)?.imagingSnapshot;
+  // The decision stays in view: what analysing does, then the button.
+  return <ViewerPage scrollEnabled={!zoomed} bottom={<>
+    <Text style={{ fontSize: 13, lineHeight: 18, paddingHorizontal: 4, color: palette.muted }}>Answers in the visit · a sample response, nothing is read from the image</Text>
+    <Action label={analysing ? "Analysing…" : "Analyse X-ray"} icon="sparkles" disabled={analysing || picking} onPress={analyse} />
+  </>}>
     {/* Image actions live in the header's right slot, level with the back button. */}
     <Stack.Screen options={{ headerRight: () => <MenuTrigger open={menuOpen} onPress={() => setMenuOpen(value => !value)} /> }} />
     {menuOpen && <MenuPanel onClose={() => setMenuOpen(false)} items={[
       { label: picking ? "Opening library…" : "Choose local image", icon: "photo.on.rectangle", disabled: picking || analysing, onPress: pickImage },
       { label: "Remove image", icon: "trash", disabled: analysing, onPress: () => updateEncounter(current => ({ ...current, imagingAttachment: undefined, hideTeachingImage: true }), true) },
     ]} />}
-    <Identity>{attachment ? `${patient.name} · local teaching image` : "Reference example · not this patient"}</Identity>
+    <Heading identity={attachment ? `${patient.name} · local teaching image` : "Reference example · not this patient"} result={analysing ? "Analysing…" : resultLine(latest)} open={open} />
     {pickerError && <Notice warning>{pickerError}</Notice>}
     <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} />
     <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={role.can("findings.track") ? f => void found.track(f) : undefined} onDismiss={role.can("findings.dismiss") ? (f, reason) => void found.dismiss(f, reason) : undefined} />
     {/* The latest analysis sits right under the image: one page, no separate details screen. */}
-    <AnalysisDetails snapshot={encounter?.cards.findLast(card => card.kind === "xray" && card.imagingSnapshot)?.imagingSnapshot} />
+    <AnalysisDetails snapshot={latest} />
 
-    {/* The one feature surface: the review this screen asks for (a sample response until an X-ray model is on). */}
-    <Surface feature layout={layout} style={{ padding: 18, gap: 14 }}>
-      <View style={{ gap: 4, paddingRight: 40 }}>
-        <Text accessibilityRole="header" style={{ fontSize: 17, fontWeight: "600", letterSpacing: -0.2, color: palette.ink }}>X-ray review</Text>
-        <SampleLabel source="fixture" what="X-ray" />
+    {/* Rehearsal only: which sample response the next analysis returns. */}
+    {showDemoControls && <Animated.View layout={layout} pointerEvents={analysing ? "none" : "auto"} style={{ gap: 10, opacity: analysing ? 0.45 : 1 }}>
+      <View style={{ alignSelf: "flex-start" }}>
+        <Chip label={`Demo response: ${SCENARIOS[scenario]}`} filled expanded={showScenarios} onPress={() => { haptic(); setShowScenarios(value => !value); }} accessibilityLabel={`Demo response, ${SCENARIOS[scenario]}. Change`} />
       </View>
-      {showDemoControls && <Animated.View layout={layout} pointerEvents={analysing ? "none" : "auto"} style={{ gap: 10, opacity: analysing ? 0.45 : 1 }}>
-        <View style={{ alignSelf: "flex-start" }}>
-          <Chip label={`Demo response: ${SCENARIOS[scenario]}`} filled expanded={showScenarios} onPress={() => { haptic(); setShowScenarios(value => !value); }} accessibilityLabel={`Demo response, ${SCENARIOS[scenario]}. Change`} />
-        </View>
-        {showScenarios && <Expand key="scenarios" style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {(Object.keys(SCENARIOS) as Scenario[]).map(value => <Chip key={value} label={SCENARIOS[value]} selected={scenario === value} onPress={() => pickScenario(value)} />)}
-        </Expand>}
-      </Animated.View>}
-      <Animated.View layout={layout}>
-        <Action label={analysing ? "Analysing…" : "Analyse X-ray"} icon="sparkles" disabled={analysing || picking} onPress={analyse} />
-      </Animated.View>
-    </Surface>
+      {showScenarios && <Expand key="scenarios" style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+        {(Object.keys(SCENARIOS) as Scenario[]).map(value => <Chip key={value} label={SCENARIOS[value]} selected={scenario === value} onPress={() => pickScenario(value)} />)}
+      </Expand>}
+    </Animated.View>}
   </ViewerPage>;
 }
