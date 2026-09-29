@@ -191,8 +191,10 @@ function DischargeCard({ patient, animate }: { patient: Patient; animate: boolea
   };
 
   const fix = (check: PrescriptionCheck) => {
-    if (check.id === "gl") return encounter.claim?.status === "sent"
-      ? <Text style={{ ...type.footnote, color: palette.muted }}>Sent · awaiting insurer</Text>
+    if (check.id === "gl") return encounter.claim?.status === "sent" || encounter.claim?.status === "appealed"
+      ? <Text style={{ ...type.footnote, color: palette.muted }}>{encounter.claim.status === "appealed" ? "Appeal sent · awaiting insurer" : "Sent · awaiting insurer"}</Text>
+      : encounter.claim?.status === "denied"
+        ? <View style={{ gap: 8 }}><Text selectable style={{ ...type.footnote, color: palette.red }}>Denied: {encounter.claim.denial?.reason ?? "see the letter"} · appeal drafted</Text><Chip label="Review appeal and send" icon="doc.text.magnifyingglass" strong onPress={() => router.push("/claim")} /></View>
       : encounter.claim?.status === "queried"
         ? <View style={{ gap: 8 }}><Text selectable style={{ ...type.footnote, color: palette.amber }}>Insurer asks: {encounter.claim.query}</Text><Chip label="Answer and send again" icon="doc.text.magnifyingglass" strong onPress={() => router.push("/claim")} /></View>
         : <Chip label="Review codes and send" icon="doc.text.magnifyingglass" strong onPress={() => router.push("/claim")} />;

@@ -14,7 +14,8 @@ export type LiveBriefing = Awaited<ReturnType<Client["encounter"]["briefing"]>>;
 export type LiveReasoning = Awaited<ReturnType<Client["encounter"]["reasoning"]>>;
 export type LiveDraft = Awaited<ReturnType<Client["discharge"]["draft"]>>;
 export type LiveCodes = Awaited<ReturnType<Client["claim"]["suggestCodes"]>>;
-export type LiveHuddle = Awaited<ReturnType<Client["ward"]["huddle"]>>;
+export type LiveAppeal = Awaited<ReturnType<Client["claim"]["appealDraft"]>>;
+export type LiveHuddle =Awaited<ReturnType<Client["ward"]["huddle"]>>;
 
 const answered = new Map<string, unknown>();
 
@@ -51,6 +52,10 @@ export const useLiveDraft = (encounterId: string, language: "ms" | "en" | "zh") 
 /** `note` is whatever changes the note being coded (the claim's fixes), so a fix codes the new note. */
 export const useLiveCodes = (encounterId: string, note: string) =>
   useLiveAnswer<LiveCodes>(`codes:${encounterId}:${note}`, Boolean(encounterId), () => api.claim.suggestCodes({ encounterId }), true);
+
+/** The appeal against a denial; `denial` is when it was denied, so a later denial drafts again. */
+export const useLiveAppeal = (encounterId: string, denial: string | undefined) =>
+  useLiveAnswer<LiveAppeal>(`appeal:${encounterId}:${denial}`, Boolean(encounterId && denial), () => api.claim.appealDraft({ encounterId }));
 
 /** Asked only once the brief is opened; `ward` is the ward's state (beds and owners), so a change briefs again. */
 export const useLiveHuddle = (open: boolean, ward: string) =>

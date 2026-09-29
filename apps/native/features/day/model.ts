@@ -1,4 +1,5 @@
 import { testInSentence } from "@sona-ai/domain/handover";
+import { GL_DENIED } from "@sona-ai/domain/ward";
 import { defaultMedications } from "@/features/encounter/clinical-state";
 import { demoTime } from "@/features/encounter/fixtures";
 import type { Encounter, Patient, Task } from "@/features/encounter/types";
@@ -16,7 +17,7 @@ const waitedLine = (waited: string) => /^0\b/.test(waited) ? "Urgent message · 
 
 export type DayTone = "urgent" | "soon" | "routine";
 export type DayItem = {
-  id: string; kind: "result" | "blocker" | "visit" | "task" | "check-in" | "booking" | "message"; title: string; detail: string; reason: string; tone: DayTone; score: number;
+  id: string; kind: "result" | "blocker" | "visit" | "task" | "check-in" | "booking" | "message" | "claim"; title: string; detail: string; reason: string; tone: DayTone; score: number;
   /** When it happened (ms), for items that tie on score: the newer one leads. */
   at?: number;
   patientId?: string; open: { next?: string; view?: string };
@@ -69,6 +70,18 @@ export function rankDay(patients: Patient[], encounters: Record<string, Encounte
     });
   }
   return items.sort(byUrgency);
+}
+
+/**
+ * A final guarantee letter the insurer denied, read off the ward's beds (live or fixture): an amber row
+ * ("GL denied · Amelia · appeal ready") above the medicine blockers, since the bed waits on it; it
+ * opens the letter, where Sona's appeal waits to be checked and sent.
+ */
+export function glDeniedItems(beds: { patientId?: string; name?: string; blockers: { kind: string; detail: string }[] }[]): DayItem[] {
+  return beds.filter(b => b.patientId && b.blockers.some(x => x.kind === "gl" && x.detail === GL_DENIED)).map(b => ({
+    id: `gl-denied-${b.patientId}`, kind: "claim" as const, title: `GL denied · ${(b.name ?? "Patient").split(" ")[0]} · appeal ready`, detail: "Final guarantee letter",
+    reason: "Insurer denied the final GL · check the appeal and send", tone: "soon" as const, score: 72, patientId: b.patientId, open: { view: "claim" },
+  }));
 }
 
 /** A patient's booking request from Sona Care, as the server lists it (see bookings.list). */

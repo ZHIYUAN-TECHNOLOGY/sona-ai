@@ -19,6 +19,7 @@ import type { PrescriptionCheck } from "@/features/encounter/types";
 import { CODES, EMPTY_CLAIM, ESTIMATE, INSURER, approveClaim, claimChecks, noteFor, type ClaimState, type Code, type Sentence } from "./model";
 import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveCodes } from "@/features/live/model-sync";
+import { AppealCard, DeniedCard } from "./appeal";
 
 /*
  * Final guarantee letter request, one card. The note sits above its codes; tapping a code glides a
@@ -68,6 +69,8 @@ export function ClaimScreen() {
   const sent = state.status === "sent";
   // The insurer asked a question: the doctor answers in the note and sends again.
   const queried = state.status === "queried";
+  // The insurer denied it: the denial and Sona's appeal lead, and this card steps back to the record.
+  const denied = state.status === "denied", appealed = state.status === "appealed";
 
   const send = () => {
     haptic("select"); setSending(true); setServerError(undefined);
@@ -80,6 +83,7 @@ export function ClaimScreen() {
           const poll = setInterval(() => {
             api.claim.status({ encounterId: patient.encounterId }).then(r => {
               if (r.status === "queried") { clearInterval(poll); set({ status: "queried", query: r.query }); haptic("warning"); return; }
+              if (r.status === "denied") { clearInterval(poll); set({ status: "denied", denial: r.denial }); haptic("warning"); return; }
               if (r.status !== "approved") return;
               clearInterval(poll); updateEncounter(value => approveClaim(value, new Date(r.approvedAt ?? Date.now()))); haptic("success");
             }).catch(() => {});
@@ -104,9 +108,10 @@ export function ClaimScreen() {
     return undefined;
   };
   const primary = blocked.length ? `Resolve ${blocked.length} to send` : sent ? "Sent · awaiting insurer" : sending ? "Sending…" : queried ? "Send again" : `Send to ${INSURER.toLowerCase()}`;
-  const status = approved ? "Approved" : sent ? "Sent · awaiting insurer" : queried ? "Insurer asked a question" : blocked.length ? `${blocked.length} left before sending` : "Ready to send";
+  const status = approved ? "Approved" : sent ? "Sent · awaiting insurer" : queried ? "Insurer asked a question" : denied ? "Denied · appeal below" : appealed ? "Appeal sent · awaiting insurer"
+    : blocked.length ? `${blocked.length} left before sending` : "Ready to send";
 
-  return <ScrollView style={{ flex: 1, backgroundColor: palette.canvas }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 48, gap: 14 }}>
+  return <ScrollView style={{ flex: 1, backgroundColor: palette.canvas }} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingBottom: 48, gap: 14 }}>
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
       <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>Guarantee letter</Text>
       <Pressable accessibilityRole="button" accessibilityLabel="Close" hitSlop={8} onPress={() => router.back()} style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}>
@@ -114,11 +119,17 @@ export function ClaimScreen() {
       </Pressable>
     </View>
 
-    <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 16 }}>
+    {(denied || appealed) && state.denial && <>
+      <DeniedCard denial={state.denial} />
+      <AppealCard key={state.denial.at} patient={patient} state={{ ...state, denial: state.denial }} onChange={set}
+        onApproved={() => { updateEncounter(value => approveClaim(value, new Date())); haptic("success"); }} />
+    </>}
+
+    <Surface feature={!denied && !appealed} layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 16 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
         <Ring done={approved ? checks.length : checks.length - blocked.length} total={checks.length} />
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ ...type.overline, color: approved ? TEAL : blocked.length ? palette.amber : palette.blue }}>{status}</Text>
+          <Text style={{ ...type.overline, color: approved ? TEAL : denied ? palette.red : blocked.length ? palette.amber : palette.blue }}>{status}</Text>
           <Text style={{ ...type.headline, color: palette.ink }}>Final guarantee letter</Text>
           <Text style={{ ...type.caption, color: palette.muted }}>{patient.name} · {INSURER} · estimated {ESTIMATE}</Text>
           {live && <Text style={{ ...type.caption, fontWeight: "700", color: palette.blue }}>Live · checked by the server{sent ? " · the insurer reviews it on their link" : ""}</Text>}
@@ -181,6 +192,7 @@ export function ClaimScreen() {
         </View>
         <Chip label="Back to discharge" icon="chevron.left" onPress={() => router.back()} />
       </Animated.View>
+        : denied || appealed ? null
         : live && !sent && !role.can("claim.send") ? <LockedAction label="Needs a doctor to send" path="claim.send" />
         : <Pressable accessibilityRole="button" accessibilityState={{ disabled: blocked.length > 0 || sending || sent }} disabled={blocked.length > 0 || sending || sent} onPress={send}
           style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: blocked.length || sent ? "rgba(20,28,40,0.08)" : palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 200 } as never)}>

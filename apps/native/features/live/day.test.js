@@ -71,3 +71,10 @@ test("a claim with the insurer carries its review link; a queried one carries th
   expect(queried.claim).toMatchObject({ status: "queried", query: "Please attach the sputum culture request." });
   expect(queried.discharge.glReceived).toBe(false);
 });
+
+test("a denied claim carries the insurer's reason; an appealed one keeps it, with when the appeal went and the fresh link", () => {
+  const denial = { code: "DOC", reason: "Documentation incomplete: organism / severity not stated", at: "2026-09-26T02:00:00Z" };
+  expect(mergeServerState({ revision: 1 }, {}, { status: "denied", denial }, false).claim).toMatchObject({ status: "denied", denial });
+  const appealed = mergeServerState({ revision: 1 }, {}, { status: "appealed", denial, appealedAt: "2026-09-26T02:05:00Z", reviewUrl: "https://sona.test/insurer/new" }, false);
+  expect(appealed.claim).toMatchObject({ status: "appealed", denial, appealedAt: "2026-09-26T02:05:00Z", reviewUrl: "https://sona.test/insurer/new" });
+});

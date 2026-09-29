@@ -25,7 +25,9 @@ import { DemoTimeLine } from "@/features/live/demo-clock";
 import { useRole } from "@/features/live/roles";
 import { WardGlance } from "@/features/ward/ops";
 import { MessageActions, useInbox } from "@/features/inbox";
-import { bookingItems, dayOf, groupVisits, messageItems, rankDay, rankOtherDay, scheduleFor, type DayItem, type DayTone, type ScheduleVisit } from "./model";
+import { useServerBeds } from "@/features/live/ward-sync";
+import { wardBeds } from "@/features/ward/model";
+import { bookingItems, dayOf, glDeniedItems, groupVisits, messageItems, rankDay, rankOtherDay, scheduleFor, type DayItem, type DayTone, type ScheduleVisit } from "./model";
 
 /*
  * My day, ranked (after Superlist's AI list making): on first open a small "Sorting your day…"
@@ -38,8 +40,8 @@ const TONE: Record<DayTone, { dot: string; ink: string; wash: string }> = {
   soon: { dot: "#C47814", ink: palette.amber, wash: "rgba(196,120,20,0.13)" },
   routine: { dot: "rgba(36,91,204,0.5)", ink: palette.blue, wash: "rgba(36,91,204,0.08)" },
 };
-const ICON: Record<DayItem["kind"], string> = { result: "testtube.2", blocker: "pills", visit: "calendar", task: "checklist", "check-in": "exclamationmark.bubble", booking: "calendar.badge.clock", message: "bubble.left.and.bubble.right" };
-const HINT = (item: DayItem) => item.kind === "message" ? "Opens the messages" : "Opens the visit";
+const ICON: Record<DayItem["kind"], string> = { result: "testtube.2", blocker: "pills", visit: "calendar", task: "checklist", "check-in": "exclamationmark.bubble", booking: "calendar.badge.clock", message: "bubble.left.and.bubble.right", claim: "doc.text.magnifyingglass" };
+const HINT = (item: DayItem) => item.kind === "message" ? "Opens the messages" : item.kind === "claim" ? "Opens the guarantee letter and its appeal" : "Opens the visit";
 let sortedOnce = false;
 
 const nowMinutes = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
@@ -235,6 +237,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const kept = useKeptFlags();
   const keptBookings = useKeptBookings();
   const { findings } = useFindings(); // lane F6: overdue follow-ups rank red
+  const serverBeds = useServerBeds(findings);
   const today = useServerDay(live ? localDate(new Date()) : undefined);
   const otherDay = useServerDay(live && offset !== 0 ? localDate(dayOf(offset)) : undefined);
   const patients = live ? serverDayPatients(fixturePatients, today ?? []) : fixturePatients;
@@ -268,7 +271,9 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   // An urgent unanswered Sona Care message is a red row with Reply / Call back; its task is not listed twice.
   const messages = inbox ? messageItems(inbox.threads, new Date(inbox.now)) : [];
   const messaged = (t: { id: string }, p: Patient) => t.id.startsWith("message:") && messages.some(m => m.patientId === p.id);
-  const ranked = offset === 0 ? withFindings([...flaggedItems(checkIns, kept), ...messages, ...bookings, ...rankDay(patients, encounters, now, undefined, live ? { result, tasksOf: p => tasksOf(p).filter(t => !flaggedTaskIds(checkIns).includes(t.id) && !t.id.startsWith("booking:") && !messaged(t, p)) } : undefined)], findings)
+  // A denied guarantee letter holds a bed: an amber row that opens Sona's appeal.
+  const denials = glDeniedItems(serverBeds ?? wardBeds(fixturePatients, encounters));
+  const ranked = offset === 0 ? withFindings([...flaggedItems(checkIns, kept), ...messages, ...bookings, ...denials, ...rankDay(patients, encounters, now, undefined, live ? { result, tasksOf: p => tasksOf(p).filter(t => !flaggedTaskIds(checkIns).includes(t.id) && !t.id.startsWith("booking:") && !messaged(t, p)) } : undefined)], findings)
     .map(item => item.id === "result" && ackFailed && ackFailed.id === result?.id ? { ...item, reason: `Not acknowledged: ${ackFailed.error} · open to retry` } : item) : rankOtherDay(offset, schedule);
   const need = ranked.filter(item => item.tone !== "routine").length;
   const date = dayOf(offset);
