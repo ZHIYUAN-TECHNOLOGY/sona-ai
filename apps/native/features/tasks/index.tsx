@@ -193,7 +193,7 @@ function DayRuler({ value, onPick }: { value: string; onPick: (due: string) => v
       <View accessible accessibilityRole="adjustable" accessibilityLabel="Due date" accessibilityValue={{ text: unset ? "Not set" : `${longDate(days[shown]!)}, ${relativeDay(shown)}` }} accessibilityHint="Swipe up or down to move a day. Use the date picker to jump further."
         accessibilityActions={[{ name: "increment" }, { name: "decrement" }]} onAccessibilityAction={e => jump(shown + (e.nativeEvent.actionName === "increment" ? 1 : -1))} style={{ flex: 1 }}>
         <Text style={{ ...type.heading, color: unset ? palette.muted : palette.ink, fontVariant: ["tabular-nums"] }}>{longDate(days[shown]!)}</Text>
-        <Text style={{ fontSize: 13, color: palette.muted, fontVariant: ["tabular-nums"] }}>{unset ? "Slide, tap an interval, or pick a date" : relativeDay(shown)}</Text>
+        <Text style={{ ...type.footnote, color: palette.muted, fontVariant: ["tabular-nums"] }}>{unset ? "Slide, tap an interval, or pick a date" : relativeDay(shown)}</Text>
       </View>
       {/* Native compact picker: its calendar popover reaches any month or year in a couple of taps. */}
       <DateTimePicker style={{ width: 124 }} value={pickerDate} mode="date" display="compact" minimumDate={new Date(`${days[0]}T00:00:00`)} themeVariant="light" accentColor={palette.blue}
@@ -248,7 +248,7 @@ function SuggestionRow({ icon, label, index, onPress, reduced }: { icon: "person
     <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={{ top: 2, bottom: 2 }}
       style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 10, borderRadius: 12, flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: pressed ? "rgba(255,255,255,0.12)" : "transparent", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 120 } as never)}>
       <BrandIcon name={icon} size={16} color="rgba(255,255,255,0.8)" />
-      <Text style={{ fontSize: 15, fontWeight: "500", color: palette.white }}>{label}</Text>
+      <Text style={{ ...type.callout, fontWeight: "500", color: palette.white }}>{label}</Text>
     </Pressable>
   </Animated.View>;
 }
@@ -280,7 +280,7 @@ function Composer({ draft, onChange, onSave, pending, error }: { draft: TaskDraf
   return <Surface feature layout={layout} style={{ padding: 18, gap: 16 }}>
     <View style={{ zIndex: 2 }}>
       {/* The phrase being read is tinted blue in place (children instead of value keep the caret). */}
-      <TextInput accessibilityLabel="Task" onChangeText={title => set({ title })} placeholder={'Try “Bloods @nurse in 2 weeks”'} placeholderTextColor="#A2A8B1" multiline maxLength={240} editable={!pending}
+      <TextInput accessibilityLabel="Task" onChangeText={title => set({ title })} placeholder={'Try “Bloods @nurse in 2 weeks”'} placeholderTextColor={palette.placeholder} multiline maxLength={240} editable={!pending}
         style={{ ...type.heading, fontWeight: "500", color: palette.ink, padding: 0 }}>
         {typed ? <>{head}<RNText style={{ color: palette.blue }}>{draft.title.slice(head.length)}</RNText></> : draft.title}
       </TextInput>
@@ -304,7 +304,7 @@ function Composer({ draft, onChange, onSave, pending, error }: { draft: TaskDraf
         {OWNERS.map(owner => <Chip key={owner} label={owner} selected={draft.owner === owner} onPress={() => { haptic("select"); setCustomOwner(false); if (draft.owner === owner) set({ owner: "" }); else { set({ owner }); setOpen(null); } }} />)}
         <Chip label="Someone else" selected={customOwner} onPress={() => { haptic("select"); if (customOwner) { setCustomOwner(false); set({ owner: "" }); return; } setCustomOwner(true); if (OWNERS.includes(draft.owner)) set({ owner: "" }); }} />
       </View>
-      {customOwner && <Expand><TextInput autoFocus accessibilityLabel="Owner name or team" value={draft.owner} onChangeText={owner => set({ owner })} placeholder="Name or team" placeholderTextColor="#A2A8B1" maxLength={100} returnKeyType="done" onSubmitEditing={() => setOpen(null)}
+      {customOwner && <Expand><TextInput autoFocus accessibilityLabel="Owner name or team" value={draft.owner} onChangeText={owner => set({ owner })} placeholder="Name or team" placeholderTextColor={palette.placeholder} maxLength={100} returnKeyType="done" onSubmitEditing={() => setOpen(null)}
         style={{ fontSize: 16, color: palette.ink, paddingHorizontal: 14, paddingVertical: 10, minHeight: 44, borderRadius: 14, backgroundColor: "rgba(20,28,40,0.04)" }} /></Expand>}
     </Expand>}
 
@@ -372,8 +372,8 @@ function TaskRow({ task, disabled, onToggle }: { task: Task; disabled: boolean; 
               <Animated.View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: 11, height: 1.5, borderRadius: 1, backgroundColor: palette.muted, transformOrigin: "left", opacity: done || !reducedMotion ? 1 : 0, transform: [{ scaleX: done || reducedMotion ? 1 : 0 }], transitionProperty: ["transform", "opacity"], transitionDuration: 320, transitionTimingFunction: EASE_OUT }} />
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Text style={{ fontSize: 13, color: palette.muted }}>{ownerLine(task, done)}</Text>
-              {source && <Pressable accessibilityRole="link" accessibilityLabel={`Source, ${source.title}`} onPress={openSource} hitSlop={{ top: 13, bottom: 13, left: 8, right: 8 }}><Text style={{ fontSize: 13, color: palette.blue }}>Source ↗</Text></Pressable>}
+              <Text style={{ ...type.footnote, color: palette.muted }}>{ownerLine(task, done)}</Text>
+              {source && <Pressable accessibilityRole="link" accessibilityLabel={`Source, ${source.title}`} onPress={openSource} hitSlop={{ top: 13, bottom: 13, left: 8, right: 8 }}><Text style={{ ...type.footnote, color: palette.blue }}>Source ↗</Text></Pressable>}
             </View>
           </View>
         </Pressable>
@@ -385,9 +385,9 @@ function TaskRow({ task, disabled, onToggle }: { task: Task; disabled: boolean; 
 function Section({ title, count }: { title: string; count: number }) {
   const { reducedMotion } = useAccessibleEffects();
   return <Animated.View layout={reducedMotion ? undefined : LAYOUT} accessible accessibilityRole="header" accessibilityLabel={`${title}, ${count}`} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingTop: 10, paddingHorizontal: 4 }}>
-    <Text style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>{title}</Text>
+    <Text style={{ ...type.callout, fontWeight: "600", color: palette.ink }}>{title}</Text>
     <View style={{ minWidth: 24, height: 22, paddingHorizontal: 7, borderRadius: 11, backgroundColor: "rgba(20,28,40,0.06)", alignItems: "center", justifyContent: "center" }}>
-      <Animated.Text key={count} entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, scale: 0.9, duration: 220 })} style={{ fontSize: 12, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{count}</Animated.Text>
+      <Animated.Text key={count} entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, scale: 0.9, duration: 220 })} style={{ ...type.caption, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{count}</Animated.Text>
     </View>
   </Animated.View>;
 }
@@ -402,12 +402,12 @@ function VisitFollowUps({ except }: { except?: string }) {
       style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
       <Surface style={{ padding: 16, gap: 12 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#E6EEFC", alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 13, fontWeight: "600", color: palette.blue }}>{p.initials}</Text></View>
-          <Text style={{ flex: 1, fontSize: 16, fontWeight: "600", color: palette.ink }}>{p.name}</Text>
-          <Text style={{ fontSize: 13, color: palette.muted, fontVariant: ["tabular-nums"] }}>{pending.length ? `${pending.length} open` : "All done"}</Text>
+          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#E6EEFC", alignItems: "center", justifyContent: "center" }}><Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{p.initials}</Text></View>
+          <Text style={{ flex: 1, ...type.body, fontWeight: "600", color: palette.ink }}>{p.name}</Text>
+          <Text style={{ ...type.footnote, color: palette.muted, fontVariant: ["tabular-nums"] }}>{pending.length ? `${pending.length} open` : "All done"}</Text>
           <View accessibilityElementsHidden style={{ transform: [{ rotate: "180deg" }] }}><BrandIcon name="back" size={16} color={palette.muted} strokeWidth={1.8} /></View>
         </View>
-        {pending.slice(0, 3).map(task => <Text key={task.id} numberOfLines={1} style={{ fontSize: 14, color: palette.ink }}>{task.title}<Text style={{ color: palette.muted }}>  {ownerLine(task)}</Text></Text>)}
+        {pending.slice(0, 3).map(task => <Text key={task.id} numberOfLines={1} style={{ ...type.subhead, color: palette.ink }}>{task.title}<Text style={{ color: palette.muted }}>  {ownerLine(task)}</Text></Text>)}
       </Surface>
     </Pressable>;
   })}</>;
@@ -428,7 +428,7 @@ function AllFollowUps() {
     <TasksInsight tasks={patients.flatMap(tasksOf)} />
     <VisitFollowUps />
     <View style={{ gap: 10 }}>
-      <Text accessibilityRole="header" style={{ fontSize: 13, fontWeight: "600", color: palette.muted, paddingHorizontal: 4 }}>Add a follow-up for</Text>
+      <Text accessibilityRole="header" style={{ ...type.footnote, fontWeight: "600", color: palette.muted, paddingHorizontal: 4 }}>Add a follow-up for</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {patients.map(p => <Chip key={p.id} label={p.name} onPress={() => { haptic("select"); selectPatient(p.id); }} accessibilityLabel={`Add a follow-up for ${p.name}`} />)}
       </View>
@@ -534,7 +534,7 @@ export function TasksScreen() {
       done.length > 0 && <Section key="done" title="Completed" count={done.length} />,
       ...done.map(row),
     ]}
-    {patients.some(p => p.id !== patient.id && tasksOf(p).length) && <Text accessibilityRole="header" style={{ fontSize: 15, fontWeight: "600", color: palette.ink, paddingTop: 10, paddingHorizontal: 4 }}>Other visits</Text>}
+    {patients.some(p => p.id !== patient.id && tasksOf(p).length) && <Text accessibilityRole="header" style={{ ...type.callout, fontWeight: "600", color: palette.ink, paddingTop: 10, paddingHorizontal: 4 }}>Other visits</Text>}
     <VisitFollowUps except={patient.id} />
     <SessionNote />
     <View style={{ height: ASK_SPACE }} />

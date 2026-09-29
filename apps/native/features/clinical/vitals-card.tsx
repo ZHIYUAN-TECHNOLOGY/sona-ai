@@ -11,9 +11,9 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 type Tone = "normal" | "watch" | "caution";
 const TONE: Record<Tone, { label: string; color: string; wash: string }> = {
-  normal: { label: "Normal", color: "#0F6E66", wash: "rgba(20,140,130,0.12)" },
-  watch: { label: "Raised", color: "#8B5518", wash: "rgba(196,120,20,0.14)" },
-  caution: { label: "To confirm", color: "#8B5518", wash: "rgba(196,120,20,0.14)" },
+  normal: { label: "Normal", color: palette.green, wash: "rgba(20,140,130,0.12)" },
+  watch: { label: "Raised", color: palette.amber, wash: "rgba(196,120,20,0.14)" },
+  caution: { label: "To confirm", color: palette.amber, wash: "rgba(196,120,20,0.14)" },
 };
 type Vital = { label: string; value: string; unit: string; icon: string; tint: string; tone: Tone; trace: string };
 

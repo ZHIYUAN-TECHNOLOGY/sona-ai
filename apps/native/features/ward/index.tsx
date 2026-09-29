@@ -35,7 +35,7 @@ import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedRow, defaultFilter, empty
  * 120 ms later. Closing shrinks it back into the row (0.46 s at 0.84). Each blocker takes an owner in
  * one tap; the owner's badge pops onto the row. The forecast and the week sit below.
  */
-const TEAL = "#0F6E66";
+const TEAL = palette.green;
 // Screen's canvas. The ward keeps its own ScrollView because Screen takes no ref and the forecast link scrolls to its section.
 const OPEN = { duration: 480, dampingRatio: 0.82 }, CLOSE = { duration: 460, dampingRatio: 0.84 };
 type Rect = { x: number; y: number; w: number; h: number };
@@ -140,7 +140,7 @@ export function WardScreen() {
             <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.muted }}><Text style={{ fontWeight: "600", color: palette.ink }}>Huddle</Text> · {briefed ? "30 seconds for the team" : local[1]}</Text>
             <Pressable accessibilityRole="button" accessibilityLabel={briefed ? "Hide the huddle brief" : "Brief me for the huddle"} accessibilityState={{ expanded: briefed }} hitSlop={7} onPress={() => { haptic("select"); setBriefed(v => !v); }}
               style={{ height: 30, paddingHorizontal: 12, borderRadius: 15, justifyContent: "center", backgroundColor: briefed ? "rgba(20,28,40,0.06)" : palette.blue }}>
-              <Text style={{ fontSize: 13, fontWeight: "600", color: briefed ? palette.ink : palette.white }}>{briefed ? "Hide" : "Brief me"}</Text>
+              <Text style={{ ...type.footnote, fontWeight: "600", color: briefed ? palette.ink : palette.white }}>{briefed ? "Hide" : "Brief me"}</Text>
             </Pressable>
           </View>
           {briefed && <Expand style={{ gap: 10, paddingLeft: 38, paddingTop: 4 }}>
@@ -259,13 +259,13 @@ function BedCard({ bed, focus, from, to, p, owners, onAssign, assignError, onClo
               </View>
               {owner && <Animated.View key={owner} entering={reducedMotion ? undefined : ZoomIn.springify().duration(320).dampingRatio(0.6)} style={{ height: 26, paddingHorizontal: 10, borderRadius: 13, flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: palette.ink }}>
                 <Icon name="person.fill" size={10} color={palette.white} />
-                <Text style={{ fontSize: 12, fontWeight: "700", color: palette.white }}>{owner}</Text>
+                <Text style={{ ...type.caption, fontWeight: "700", color: palette.white }}>{owner}</Text>
               </Animated.View>}
             </View>
             {onAssign && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
               {OWNERS.map(o => { const on = owner === o, suggested = !owner && SUGGESTED[b.kind] === o; return <Pressable key={o} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`Assign ${b.label} to ${o}`} onPress={() => onAssign(b.id, o)} hitSlop={4}
                 style={{ height: 32, paddingHorizontal: 12, borderRadius: 16, justifyContent: "center", borderWidth: 1, borderColor: suggested ? "rgba(36,91,204,0.35)" : "transparent", backgroundColor: on ? palette.blue : "rgba(20,28,40,0.05)" }}>
-                <Text style={{ fontSize: 13, fontWeight: "600", color: on ? palette.white : suggested ? palette.blue : palette.ink }}>{o}</Text>
+                <Text style={{ ...type.footnote, fontWeight: "600", color: on ? palette.white : suggested ? palette.blue : palette.ink }}>{o}</Text>
               </Pressable>; })}
             </View>}
             {onAssign && assignError?.id === b.id && <ErrorLine text={assignError.text} onRetry={() => onAssign(b.id, assignError.owner)} />}

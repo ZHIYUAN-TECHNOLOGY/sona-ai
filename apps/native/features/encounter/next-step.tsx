@@ -69,7 +69,7 @@ export function NextStepBar({ steps, p, onExpand, onAct }: { steps: Step[]; p: S
         style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minHeight: 44 }}>
         <Ring done={done} total={steps.length} />
         <View style={{ flex: 1, overflow: "hidden" }}>
-          <Text style={{ ...type.overline, fontSize: 10, color: current ? palette.muted : "#0F6E66" }}>{current ? `Next step · ${done}/${steps.length}` : "All steps done"}</Text>
+          <Text style={{ ...type.overline, fontSize: 10, color: current ? palette.muted : palette.green }}>{current ? `Next step · ${done}/${steps.length}` : "All steps done"}</Text>
           <Animated.View key={current?.id ?? "done"} entering={reducedMotion ? FadeIn.duration(160) : FadeInRight.duration(260)} exiting={reducedMotion ? FadeOut.duration(120) : FadeOutLeft.duration(180)}>
             <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{current?.label ?? "Prescription simulated"}</Text>
           </Animated.View>
@@ -78,7 +78,7 @@ export function NextStepBar({ steps, p, onExpand, onAct }: { steps: Step[]; p: S
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel={`${action.label}: ${current?.label ?? "view receipt"}`} onPress={() => onAct(current ?? last)} hitSlop={6}
         style={({ pressed }) => ({ height: 40, paddingHorizontal: 16, borderRadius: 20, justifyContent: "center", backgroundColor: palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-        <Text style={{ fontSize: 15, fontWeight: "600", color: palette.white }}>{action.label}</Text>
+        <Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>{action.label}</Text>
       </Pressable>
     </Animated.View>
   </GestureDetector>;
@@ -119,7 +119,7 @@ export function NextStepSheet({ steps, p, onClose, onAct }: { steps: Step[]; p: 
             </View>
             {(!step.done || step.action.type === "receipt") && <Pressable accessibilityRole="button" accessibilityLabel={`${step.action.label}: ${step.label}`} onPress={() => onAct(step)} hitSlop={8}
               style={({ pressed }) => ({ minHeight: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: "center", backgroundColor: now ? palette.ink : "rgba(20,28,40,0.06)", opacity: pressed ? 0.8 : 1 })}>
-              <Text style={{ fontSize: 14, fontWeight: "600", color: now ? palette.white : palette.ink }}>{step.action.label}</Text>
+              <Text style={{ ...type.subhead, fontWeight: "600", color: now ? palette.white : palette.ink }}>{step.action.label}</Text>
             </Pressable>}
           </Animated.View>;
         })}

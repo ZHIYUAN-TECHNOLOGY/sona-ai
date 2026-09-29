@@ -87,13 +87,13 @@ export function SlotPicker({ live, onPick, onCancel }: { live: boolean; onPick: 
             {({ pressed }) => <Animated.View style={{ minHeight: 50, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 16, borderRadius: 25, borderCurve: "continuous", backgroundColor: palette.ink, transform: [{ scale: pressed ? 0.97 : 1 }], transitionProperty: "transform", transitionDuration: 140 } as never}>
               <Icon name="calendar.badge.checkmark" size={14} color={palette.white} />
               {/* The label crossfades as the choice changes, so it always says what will be booked. */}
-              <Animated.Text key={`${slots.doctor.id}-${at}`} entering={reducedMotion ? undefined : FadeIn.duration(160)} numberOfLines={1} style={{ flexShrink: 1, fontSize: 16, fontWeight: "600", color: palette.white }}>
+              <Animated.Text key={`${slots.doctor.id}-${at}`} entering={reducedMotion ? undefined : FadeIn.duration(160)} numberOfLines={1} style={{ flexShrink: 1, ...type.body, fontWeight: "600", color: palette.white }}>
                 Book {slotLine(new Date(at))} · {shortName(slots.doctor.name)}
               </Animated.Text>
             </Animated.View>}
           </Pressable>}
           <Pressable accessibilityRole="button" accessibilityLabel="Cancel booking" onPress={onCancel} hitSlop={6} style={{ minHeight: 40, alignItems: "center", justifyContent: "center" }}>
-            <Text style={{ fontSize: 15, fontWeight: "600", color: palette.muted }}>Cancel</Text>
+            <Text style={{ ...type.callout, fontWeight: "600", color: palette.muted }}>Cancel</Text>
           </Pressable>
         </View>
       </>}
@@ -106,7 +106,7 @@ const initials = (name: string) => name.replace(/^Dr\.?\s*/, "").split(" ").slic
 
 function Section({ label, children }: { label: string; children: ReactNode }) {
   return <View style={{ gap: 8 }}>
-    <Text style={{ fontSize: 12, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", color: palette.muted }}>{label}</Text>
+    <Text style={{ ...type.caption, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", color: palette.muted }}>{label}</Text>
     {children}
   </View>;
 }
@@ -118,10 +118,10 @@ function DoctorRow({ name, specialty, selected, onPress }: { name: string; speci
       borderColor: selected ? glass.hairline : "transparent", backgroundColor: selected ? palette.white : "transparent", boxShadow: selected ? "0 6px 16px -10px rgba(20,28,40,0.35)" : undefined,
       transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: ["transform", "backgroundColor", "borderColor"], transitionDuration: 180 } as never}>
       <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: selected ? palette.blue : "rgba(36,91,204,0.12)" }}>
-        <Text style={{ fontSize: 13, fontWeight: "700", color: selected ? palette.white : palette.blue }}>{initials(name)}</Text>
+        <Text style={{ ...type.footnote, fontWeight: "700", color: selected ? palette.white : palette.blue }}>{initials(name)}</Text>
       </View>
       <View style={{ flex: 1 }}>
-        <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>{shortName(name)}</Text>
+        <Text numberOfLines={1} style={{ ...type.callout, fontWeight: "600", color: palette.ink }}>{shortName(name)}</Text>
         <Text numberOfLines={1} style={{ ...type.footnote, color: palette.muted }}>{specialty}</Text>
       </View>
       <Animated.View style={{ opacity: selected ? 1 : 0, transform: [{ scale: selected ? 1 : 0.6 }], transitionProperty: ["opacity", "transform"], transitionDuration: 180 } as never}>
@@ -137,7 +137,7 @@ function DayTile({ weekday, date, label, selected, onPress }: { weekday: string;
     {({ pressed }) => <Animated.View style={{ width: 54, height: 62, alignItems: "center", justifyContent: "center", gap: 2, borderRadius: 16, borderCurve: "continuous", borderWidth: 1,
       borderColor: selected ? palette.ink : glass.hairline, backgroundColor: selected ? palette.ink : "rgba(255,255,255,0.8)",
       transform: [{ scale: pressed ? 0.95 : 1 }], transitionProperty: ["transform", "backgroundColor", "borderColor"], transitionDuration: 160 } as never}>
-      <Text style={{ fontSize: 12, fontWeight: "600", color: selected ? "rgba(255,255,255,0.7)" : palette.muted }}>{weekday}</Text>
+      <Text style={{ ...type.caption, fontWeight: "600", color: selected ? "rgba(255,255,255,0.7)" : palette.muted }}>{weekday}</Text>
       <Text style={{ fontSize: 19, fontWeight: "700", color: selected ? palette.white : palette.ink }}>{date}</Text>
     </Animated.View>}
   </Pressable>;
@@ -191,14 +191,14 @@ export function BookingActions({ item }: { item: DayItem }) {
   const pill = (label: string, icon: string, dark: boolean, onPress: () => void) => <Pressable key={label} accessibilityRole="button" accessibilityLabel={`${label} ${first}'s request`} disabled={busy} onPress={onPress}
     style={({ pressed }) => ({ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: dark ? palette.ink : "rgba(20,28,40,0.06)", opacity: pressed || busy ? 0.7 : 1 })}>
     <Icon name={icon} size={12} color={dark ? palette.white : palette.ink} />
-    <Text style={{ fontSize: 14, fontWeight: "600", color: dark ? palette.white : palette.ink }}>{label}</Text>
+    <Text style={{ ...type.subhead, fontWeight: "600", color: dark ? palette.white : palette.ink }}>{label}</Text>
   </Pressable>;
   return <View style={{ gap: 8 }}>
     {!declining ? <View style={{ flexDirection: "row", gap: 8 }}>
       {pill(busy ? "Confirming…" : "Confirm", "checkmark", true, () => decide("confirm"))}
       {pill("Decline", "xmark", false, () => { haptic("select"); setDeclining(true); })}
     </View> : <Expand style={{ gap: 8 }}>
-      <TextInput value={note} onChangeText={setNote} autoFocus placeholder={`Note for ${first} (optional), e.g. Wednesday 9:00 works`} placeholderTextColor={palette.muted} maxLength={500}
+      <TextInput value={note} onChangeText={setNote} autoFocus placeholder={`Note for ${first} (optional), e.g. Wednesday 9:00 works`} placeholderTextColor={palette.placeholder} maxLength={500}
         accessibilityLabel={`Note for ${first}, optional`} returnKeyType="send" onSubmitEditing={() => decide("decline")}
         style={{ minHeight: 40, borderRadius: 14, borderCurve: "continuous", paddingHorizontal: 12, fontSize: 15, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
       <View style={{ flexDirection: "row", gap: 8 }}>

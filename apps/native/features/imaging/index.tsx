@@ -14,7 +14,7 @@ import { Caption } from "@/components/sona/parts";
 import { HalftoneShimmer } from "@/components/sona/halftone-shimmer";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { IconRow, Section } from "@/components/sona/sections";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { Action, Chip, Expand, Glass, Icon, Insight, Notice, pillStyle, Reveal, Screen, SourceLink, Surface, surfaceStyle, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEncounter } from "@/features/encounter/store";
@@ -81,7 +81,7 @@ function Preview({ source, label, onPress }: { source?: ImageSource | number; la
       style={({ pressed }) => ({ ...VIEWING, aspectRatio: 1.25, transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
       {source
         ? <Image source={source} contentFit="contain" style={{ flex: 1 }} transition={reducedMotion ? 0 : 200} />
-        : <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 10 }}><Icon name="photo" size={32} color={palette.line} /><Text style={{ fontSize: 15, color: palette.line }}>Add a teaching image</Text></View>}
+        : <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 10 }}><Icon name="photo" size={32} color={palette.line} /><Text style={{ ...type.callout, color: palette.line }}>Add a teaching image</Text></View>}
       {source && <View pointerEvents="none" style={{ position: "absolute", right: 12, bottom: 12, width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.12)", borderWidth: 1, borderColor: "rgba(255,255,255,0.16)" }}>
         <Icon name="arrow.up.left.and.arrow.down.right" size={14} color={palette.white} />
       </View>}
@@ -103,7 +103,7 @@ function AnalysisStatus({ interrupted }: { interrupted: boolean }) {
   }, [live, sweep]);
   return <View accessibilityLiveRegion="polite" onLayout={e => setSize(e.nativeEvent.layout)} style={[surfaceStyle, { borderRadius: 18, padding: 14, gap: 3 }]}>
     {live && size.width > 0 && <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: 17, overflow: "hidden" }}><HalftoneShimmer width={size.width} height={size.height} progress={sweep} /></View>}
-    <Text style={{ fontSize: 14, fontWeight: "600", color: interrupted ? palette.amber : palette.ink }}>{interrupted ? "Response interrupted" : "Analysing"}</Text>
+    <Text style={{ ...type.subhead, fontWeight: "600", color: interrupted ? palette.amber : palette.ink }}>{interrupted ? "Response interrupted" : "Analysing"}</Text>
     <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>{interrupted ? "The preview and attachment are kept." : "Preparing the sample response. No image inference is running."}</Text>
   </View>;
 }
@@ -197,7 +197,7 @@ function MenuPanel({ items, onClose }: { items: MenuItem[]; onClose: () => void 
       {items.map(item => <Pressable key={item.label} accessibilityRole="button" accessibilityState={{ disabled: item.disabled }} disabled={item.disabled} onPress={() => { onClose(); item.onPress(); }}
         style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 10, opacity: item.disabled ? 0.4 : 1, backgroundColor: pressed ? "rgba(20,28,40,0.06)" : "transparent" })}>
         <Icon name={item.icon} size={17} />
-        <Text style={{ fontSize: 15, color: palette.ink }}>{item.label}</Text>
+        <Text style={{ ...type.callout, color: palette.ink }}>{item.label}</Text>
       </Pressable>)}
     </Glass>
   </Animated.View>;

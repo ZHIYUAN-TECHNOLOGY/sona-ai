@@ -17,7 +17,7 @@ import { followUpLine, isOverdue, shortDate, toFollowUp, type Finding, type Risk
  * markers on the image), and the ward's "Findings to follow up" list. Every finding is labelled
  * unvalidated; the follow-up comes from the rules table, and one tap tracks it.
  */
-const TEAL = "#0F6E66";
+const TEAL = palette.green;
 const BAND: Record<RiskBand, { label: string; ink: string; fill: string }> = {
   high: { label: "High risk", ink: palette.amber, fill: "rgba(196,120,20,0.13)" },
   intermediate: { label: "Intermediate", ink: palette.blue, fill: "rgba(36,91,204,0.08)" },
@@ -75,7 +75,7 @@ function FindingRow({ n, finding: f, focused, onFocus, onTrack, onDismiss }: { n
           </Pressable>
         </View>
         {dismissing && <Expand style={{ gap: 8 }}>
-          <TextInput value={reason} onChangeText={setReason} placeholder="Why, e.g. known and already followed up" placeholderTextColor={palette.muted} accessibilityLabel="Reason for dismissing"
+          <TextInput value={reason} onChangeText={setReason} placeholder="Why, e.g. known and already followed up" placeholderTextColor={palette.placeholder} accessibilityLabel="Reason for dismissing"
             style={{ minHeight: 44, borderRadius: 14, paddingHorizontal: 14, fontSize: 15, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
           <View style={{ alignSelf: "flex-start" }}><Action label="Dismiss finding" secondary disabled={!reason.trim()} onPress={() => onDismiss(reason.trim())} /></View>
         </Expand>}

@@ -18,7 +18,7 @@ type Capture = "ready" | "permission" | "denied" | "interrupted" | "failed" | "p
 const RAIL = "rgba(20,28,40,0.12)";
 
 function Label({ children }: { children: string }) {
-  return <Text style={{ fontSize: 13, fontWeight: "600", color: palette.muted }}>{children}</Text>;
+  return <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{children}</Text>;
 }
 
 /** Speaker dot on a thin rail that links the dialogue top to bottom. */
@@ -35,8 +35,8 @@ function InterimSegment({ speaker, text, tone, reduced }: { speaker: string; tex
     <Rail tone={tone} last live pulse={!reduced} />
     <View style={{ flex: 1, gap: 6, paddingBottom: 22 }}>
       <View style={{ flexDirection: "row", alignItems: "baseline", gap: 8 }}>
-        <Text style={{ fontSize: 13, fontWeight: "600", color: tone }}>{speaker}</Text>
-        <Text style={{ fontSize: 12, color: palette.muted }}>Interim · not finalized</Text>
+        <Text style={{ ...type.footnote, fontWeight: "600", color: tone }}>{speaker}</Text>
+        <Text style={{ ...type.caption, color: palette.muted }}>Interim · not finalized</Text>
       </View>
       <Text style={{ fontSize: 16, lineHeight: 24, color: palette.muted }}>{text}…</Text>
       <Text style={{ fontSize: 12, lineHeight: 17, color: palette.muted }}>Provisional sample text cannot be used in a note until finalized.</Text>
@@ -103,17 +103,17 @@ function TranscriptSegment({ line, interpretation, tone, last, fresh }: { line: 
     <Rail tone={tone} last={last} />
     <Animated.View entering={fresh ? FadeIn.duration(220) : undefined} style={{ flex: 1, gap: 6, paddingBottom: 22 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <Text style={{ flex: 1, fontSize: 13, fontWeight: "600", color: tone }}>{line.speaker}{line.corrected ? <Text style={{ fontWeight: "400", color: palette.muted }}> · corrected</Text> : null}</Text>
+        <Text style={{ flex: 1, ...type.footnote, fontWeight: "600", color: tone }}>{line.speaker}{line.corrected ? <Text style={{ fontWeight: "400", color: palette.muted }}> · corrected</Text> : null}</Text>
         {!locked && <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
           <Icon name="pencil" size={12} color={palette.blue} />
-          <Text style={{ fontSize: 13, color: palette.blue }}>{interpretation ? "Review" : "Correct"}</Text>
+          <Text style={{ ...type.footnote, color: palette.blue }}>{interpretation ? "Review" : "Correct"}</Text>
         </View>}
       </View>
       <Text style={{ fontSize: 16, lineHeight: 24, color: palette.ink }}>{shown}</Text>
       {line.corrected && !line.englishReviewed && <StateLine warning>Original corrected. The English interpretation shown is a previous draft and needs review.</StateLine>}
       {line.englishReviewed && <StateLine icon="checkmark.circle">English interpretation · clinician confirmed</StateLine>}
       {line.corrected && captured && <View style={{ borderLeftWidth: 2, borderColor: RAIL, paddingLeft: 10, gap: 2 }}>
-        <Text style={{ fontSize: 12, fontWeight: "600", color: palette.muted }}>Captured original · preserved</Text>
+        <Text style={{ ...type.caption, fontWeight: "600", color: palette.muted }}>Captured original · preserved</Text>
         <Text style={{ fontSize: 14, lineHeight: 20, color: palette.muted }}>{captured.speaker}: {captured.original}</Text>
       </View>}
     </Animated.View>
@@ -198,9 +198,9 @@ export function RecordingScreen() {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 9 }}>
           <Dot color={status.tone} pulse={active && !reducedMotion} />
           <Animated.View key={status.label} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ flex: 1 }}>
-            <Text style={{ fontSize: 14, fontWeight: "600", color: palette.ink }}>{status.label}</Text>
+            <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{status.label}</Text>
           </Animated.View>
-          {!idle && <Text style={{ fontSize: 12, color: palette.muted }}>{encounter.language === "manglish" ? "Manglish" : "English"}</Text>}
+          {!idle && <Text style={{ ...type.caption, color: palette.muted }}>{encounter.language === "manglish" ? "Manglish" : "English"}</Text>}
         </View>
         <View style={{ gap: 6 }}>
           <View accessible accessibilityLabel={`Elapsed ${elapsedLabel(encounter.recordingSeconds)} of ${elapsedLabel(total)}`} style={{ flexDirection: "row", alignItems: "baseline", gap: 8 }}>
@@ -221,14 +221,14 @@ export function RecordingScreen() {
         </View>}
 
         {(capture === "permission" || capture === "denied") && <Expand key="permission" style={{ gap: 12 }}>
-          <Text style={{ fontSize: 12, fontWeight: "600", letterSpacing: 0.3, color: palette.blue }}>Synthetic permission state</Text>
+          <Text style={{ ...type.caption, fontWeight: "600", letterSpacing: 0.3, color: palette.blue }}>Synthetic permission state</Text>
           <Text style={{ ...type.headline, color: palette.ink }}>{capture === "denied" ? "Microphone access unavailable" : "Before a real consultation"}</Text>
           <Text selectable style={{ fontSize: 15, lineHeight: 22, color: palette.muted }}>{capture === "denied" ? "This fixture represents denied permission. No operating-system permission was requested. You can grant access in the simulation and continue." : "A connected recorder would request microphone permission and confirm consultation consent here. This prototype plays an authored sample without recording audio."}</Text>
           <Action label="Allow in simulation · play sample" icon="play.fill" onPress={play} />
           {capture === "permission" && <Action label="Simulate denied permission" secondary onPress={() => { haptic("warn"); setCapture("denied"); }} />}
         </Expand>}
         {capture === "failed" && <Expand key="failed" style={{ gap: 12 }}>
-          <Text style={{ fontSize: 12, fontWeight: "600", letterSpacing: 0.3, color: palette.amber }}>Synthetic capture failure</Text>
+          <Text style={{ ...type.caption, fontWeight: "600", letterSpacing: 0.3, color: palette.amber }}>Synthetic capture failure</Text>
           <Text style={{ ...type.headline, color: palette.ink }}>The sample was interrupted</Text>
           <Text selectable style={{ fontSize: 15, lineHeight: 22, color: palette.muted }}>Finalized dialogue and corrections are kept. Retry continues from the last sample position; it does not duplicate captured segments.</Text>
           <Action label="Retry remaining sample" icon="arrow.clockwise" onPress={play} />

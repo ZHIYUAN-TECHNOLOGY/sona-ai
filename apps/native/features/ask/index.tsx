@@ -69,7 +69,7 @@ export function AskNudge({ answer, onPress }: { answer: Answer; onPress: () => v
   return <Animated.View entering={reducedMotion ? undefined : FadeIn.delay(250).duration(300)} style={{ alignSelf: "flex-start" }}>
     <Pressable accessibilityRole="button" accessibilityLabel={`Ask Sona: ${answer.question}`} onPress={() => { tap(); onPress(); }}
       style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, height: 32, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.9)", boxShadow: "0 4px 14px rgba(36,91,204,0.16)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-      <Text style={{ fontSize: 13, color: palette.blue }}>✦</Text><Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{answer.question}</Text>
+      <Text style={{ ...type.footnote, color: palette.blue }}>✦</Text><Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{answer.question}</Text>
     </Pressable>
   </Animated.View>;
 }
@@ -126,7 +126,7 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: palette.canvas }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, padding: 16, paddingBottom: 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: palette.blueWash }}>
-          <Text style={{ fontSize: 12, color: palette.blue }}>✦</Text><Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{SCOPE_LABEL[scope]}</Text>
+          <Text style={{ ...type.caption, color: palette.blue }}>✦</Text><Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{SCOPE_LABEL[scope]}</Text>
         </View>
         <View style={{ flex: 1 }} />
         <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={close} hitSlop={10} style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}><Icon name="xmark" size={14} color={palette.ink} /></Pressable>
@@ -147,7 +147,7 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
         {others.length > 0 && <Surface style={{ paddingVertical: 4 }}>
           {others.map((a, i) => <Pressable key={a.id} accessibilityRole="button" accessibilityLabel={a.question} onPress={() => { tap(); onChange({ open: true, shown: a }); }}
             style={({ pressed }) => ({ minHeight: 48, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)", opacity: pressed ? 0.6 : 1 })}>
-            <Text style={{ fontSize: 13, color: palette.blue }}>✦</Text><Text style={{ ...type.callout, flex: 1, color: palette.ink }}>{a.question}</Text>
+            <Text style={{ ...type.footnote, color: palette.blue }}>✦</Text><Text style={{ ...type.callout, flex: 1, color: palette.ink }}>{a.question}</Text>
           </Pressable>)}
         </Surface>}
       </ScrollView>
@@ -155,7 +155,7 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
       <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 12), borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)", backgroundColor: palette.canvas }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 24, backgroundColor: palette.surface, paddingLeft: 10, paddingRight: 6, boxShadow: "0 4px 14px rgba(30,50,90,0.08)" }}>
           <Spark size={26} />
-          <TextInput accessibilityLabel="Ask Sona" placeholder={PLACEHOLDER[scope]} value={text} onChangeText={setText} onSubmitEditing={ask} returnKeyType="send" placeholderTextColor={palette.muted} style={{ flex: 1, minHeight: 48, fontSize: 16, color: palette.ink }} />
+          <TextInput accessibilityLabel="Ask Sona" placeholder={PLACEHOLDER[scope]} value={text} onChangeText={setText} onSubmitEditing={ask} returnKeyType="send" placeholderTextColor={palette.placeholder} style={{ flex: 1, minHeight: 48, fontSize: 16, color: palette.ink }} />
           <Pressable accessibilityRole="button" accessibilityLabel="Send" disabled={!text.trim()} onPress={ask} style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: text.trim() ? palette.dark : "rgba(20,28,40,0.1)" }}><Icon name="arrow.up" size={15} color={palette.white} /></Pressable>
         </View>
       </View>

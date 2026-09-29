@@ -8,9 +8,9 @@ import { SourceScope, SourcesPill, useCapturedSource, type SourceKind } from "./
 
 /** A generated answer section: bold heading, one-line framing, then its visual block. */
 const TONE = {
-  blue: { wash: "rgba(36,91,204,0.11)", ink: "#245BCC" },
-  teal: { wash: "rgba(20,140,130,0.13)", ink: "#0F6E66" },
-  amber: { wash: "rgba(196,120,20,0.15)", ink: "#8B5518" },
+  blue: { wash: "rgba(36,91,204,0.11)", ink: palette.blue },
+  teal: { wash: "rgba(20,140,130,0.13)", ink: palette.green },
+  amber: { wash: "rgba(196,120,20,0.15)", ink: palette.amber },
   violet: { wash: "rgba(110,80,210,0.12)", ink: "#5A3DB8" },
 } as const;
 
@@ -45,7 +45,7 @@ export function GlanceTile({ value, label, caption, glyph }: { value: string; la
       <Text selectable numberOfLines={1} adjustsFontSizeToFit style={{ ...type.heading, fontSize: 21, color: palette.ink, fontVariant: ["tabular-nums"], paddingHorizontal: 8 }}>{value}</Text>
     </View>
     <View style={{ gap: 1, paddingHorizontal: 2 }}>
-      <Text style={{ fontSize: 13, fontWeight: "600", color: palette.ink }}>{label}</Text>
+      <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>{label}</Text>
       <Text numberOfLines={2} style={{ fontSize: 12, lineHeight: 16, color: palette.muted }}>{caption}</Text>
     </View>
   </View>;
@@ -57,10 +57,10 @@ export function IconRow({ icon, title, detail, sourceLabel, sourceKind, onSource
   return <View style={{ flexDirection: "row", gap: 14 }}>
     <View style={{ width: 24, paddingTop: 1, alignItems: "center" }}><Icon name={icon} size={19} color={palette.ink} /></View>
     <View style={{ flex: 1, gap: 3 }}>
-      <Text style={{ fontSize: 16, fontWeight: "600", color: palette.ink }}>{title}</Text>
+      <Text style={{ ...type.body, fontWeight: "600", color: palette.ink }}>{title}</Text>
       <MarkedText text={detail} style={{ ...type.callout, color: palette.muted }} />
       {onSource && !captured && <Pressable accessibilityRole="button" accessibilityLabel={sourceLabel ?? `${title} source`} onPress={onSource} hitSlop={{ top: 12, bottom: 12, left: 4, right: 24 }} style={{ alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 4, paddingTop: 4 }}>
-        <Text style={{ fontSize: 13, fontWeight: "500", color: palette.blue }}>Source</Text><Icon name="arrow.up.right" size={10} color={palette.blue} />
+        <Text style={{ ...type.footnote, fontWeight: "500", color: palette.blue }}>Source</Text><Icon name="arrow.up.right" size={10} color={palette.blue} />
       </Pressable>}
     </View>
   </View>;

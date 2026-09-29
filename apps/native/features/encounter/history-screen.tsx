@@ -69,8 +69,8 @@ function SignIn() {
   };
   const field = { minHeight: 48, borderRadius: 14, paddingHorizontal: 14, backgroundColor: palette.surface, fontSize: 16, color: palette.ink } as const;
   return <View style={{ gap: 10 }}>
-    <TextInput accessibilityLabel="Email" placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" autoComplete="email" keyboardType="email-address" textContentType="username" placeholderTextColor={palette.muted} style={field} />
-    <TextInput accessibilityLabel="Password" placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry autoComplete="current-password" textContentType="password" returnKeyType="go" onSubmitEditing={submit} placeholderTextColor={palette.muted} style={field} />
+    <TextInput accessibilityLabel="Email" placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" autoComplete="email" keyboardType="email-address" textContentType="username" placeholderTextColor={palette.placeholder} style={field} />
+    <TextInput accessibilityLabel="Password" placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry autoComplete="current-password" textContentType="password" returnKeyType="go" onSubmitEditing={submit} placeholderTextColor={palette.placeholder} style={field} />
     {error && <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
     <Action label={busy ? "Signing in…" : "Sign in"} disabled={!ready} onPress={submit} />
   </View>;

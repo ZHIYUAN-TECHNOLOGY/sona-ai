@@ -19,13 +19,13 @@ import { Glass, Icon, surfaceStyle, useAccessibleEffects } from "./ui";
  */
 export type QuickTone = "urgent" | "caution" | "good" | "calm";
 export type QuickAction = { key: string; label: string; icon: string; status: string; tone?: QuickTone; badge?: number; onPress: () => void };
-const INK: Record<QuickTone, string> = { urgent: palette.red, caution: palette.amber, good: "#0F6E66", calm: palette.muted };
+const INK: Record<QuickTone, string> = { urgent: palette.red, caution: palette.amber, good: palette.green, calm: palette.muted };
 // The glyph's disc says the key's state, the same colours as everywhere else: red act now, amber needs
 // attention, teal ready, blue nothing pending. Colour always means something, so calm keys stay brand blue.
 const DISC: Record<QuickTone, { fill: string; glow: string; tint: [number, number, number] }> = {
   urgent: { fill: palette.red, glow: "rgba(162,62,62,0.3)", tint: [0.86, 0.42, 0.42] },
   caution: { fill: "#B7741E", glow: "rgba(183,116,30,0.3)", tint: [0.92, 0.66, 0.34] },
-  good: { fill: "#0F6E66", glow: "rgba(15,110,102,0.3)", tint: [0.36, 0.74, 0.68] },
+  good: { fill: palette.green, glow: "rgba(15,110,102,0.3)", tint: [0.36, 0.74, 0.68] },
   calm: { fill: palette.blue, glow: "rgba(36,91,204,0.3)", tint: [0.42, 0.62, 0.95] },
 };
 // Each key keeps its own dither corner and grain (fixed by position, never random per render), so the
@@ -70,7 +70,7 @@ function Key({ a, index, shimmer, wide = false }: { a: QuickAction; index: numbe
               <Icon name={a.icon} size={17} color={palette.white} />
             </Animated.View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              {!!a.badge && <View style={{ minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: urgent ? palette.red : a.tone === "caution" ? palette.amber : a.tone === "good" ? "#0F6E66" : "rgba(20,28,40,0.08)" }}>
+              {!!a.badge && <View style={{ minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: urgent ? palette.red : a.tone === "caution" ? palette.amber : a.tone === "good" ? palette.green : "rgba(20,28,40,0.08)" }}>
                 <Text style={{ fontSize: 11, fontWeight: "700", color: urgent || a.tone === "caution" || a.tone === "good" ? palette.white : palette.ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text>
               </View>}
               <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}><Icon name="arrow.up.right" size={10} color={palette.ink} /></View>
@@ -129,7 +129,7 @@ export function QuickRow({ actions, scroll, from, top }: { actions: QuickAction[
         {actions.map(a => { const urgent = a.tone === "urgent"; return <Pressable key={a.key} accessibilityRole="button" accessibilityLabel={`${a.label}. ${a.status}`} onPress={() => { tap(); a.onPress(); }}
           style={({ pressed }) => ({ height: 34, minWidth: 52, paddingHorizontal: 12, borderRadius: 17, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, backgroundColor: pressed ? "rgba(255,255,255,0.5)" : "transparent" })}>
           <Icon name={a.icon} size={15} color={DISC[a.tone ?? "calm"].fill} />
-          {!!a.badge && <Text style={{ fontSize: 13, fontWeight: "700", color: urgent ? palette.red : palette.ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text>}
+          {!!a.badge && <Text style={{ ...type.footnote, fontWeight: "700", color: urgent ? palette.red : palette.ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text>}
         </Pressable>; })}
       </View>
     </Glass>

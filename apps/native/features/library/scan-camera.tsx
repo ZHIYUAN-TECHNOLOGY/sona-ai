@@ -130,8 +130,8 @@ export function ScanCameraScreen() {
         <LightGlass radius={22} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}><Icon name="xmark" size={15} color={palette.ink} /></LightGlass>
       </Pressable>
       <LightGlass radius={20} style={{ height: 40, paddingHorizontal: 14, flexDirection: "row", alignItems: "center" }}>
-        <Text style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>Scan pages</Text>
-        <Text style={{ fontSize: 15, color: palette.muted }}> · {pages.length ? `${pages.length} captured` : "none yet"}</Text>
+        <Text style={{ ...type.callout, fontWeight: "600", color: palette.ink }}>Scan pages</Text>
+        <Text style={{ ...type.callout, color: palette.muted }}> · {pages.length ? `${pages.length} captured` : "none yet"}</Text>
       </LightGlass>
     </Animated.View>
 
@@ -180,11 +180,11 @@ export function ScanCameraScreen() {
         </View>
         <View style={{ flexDirection: "row", gap: 10 }}>
           <Pressable accessibilityRole="button" disabled={straightening} onPress={() => void settle(false)} style={({ pressed }) => ({ flex: 1, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(233,238,246,0.95)", borderWidth: 1, borderColor: palette.white, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
-            <Text style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>Retake</Text>
+            <Text style={{ ...type.callout, fontWeight: "600", color: palette.ink }}>Retake</Text>
           </Pressable>
           <Pressable accessibilityRole="button" disabled={straightening} onPress={() => void settle(true)} style={({ pressed }) => ({ flex: 1.4, height: 46, borderRadius: 23, overflow: "hidden", alignItems: "center", justifyContent: "center", backgroundColor: palette.ink, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
             <HalftoneGlint width={72} height={46} origin={[10, 2]} reach={[64, 40]} pitch={3} strength={0.7} tint={[0.62, 0.78, 1]} hueShift={0.6} style={{ top: 0, left: 0 }} />
-            <Text style={{ fontSize: 15, fontWeight: "600", color: palette.white }}>{straightening ? "Straightening…" : "Next page"}</Text>
+            <Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>{straightening ? "Straightening…" : "Next page"}</Text>
           </Pressable>
         </View>
       </LightGlass>

@@ -7,7 +7,7 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { cancelAnimation, FadeIn, FadeOut, type SharedValue, useAnimatedReaction, useAnimatedStyle, useDerivedValue, useSharedValue, withDecay, withSpring, withTiming, type WithSpringConfig } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { EASE_IN_OUT, EASE_OUT, LAYOUT_SPRING } from "@/components/sona/motion";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { Action, Chip, Icon, pillStyle, SourceLink, useAccessibleEffects } from "@/components/sona/ui";
 import type { TeachingImage } from "./fixture";
 import { clamp, DOUBLE_TAP_ZOOM, fitted, limit, markerAt, markerUnder, MAX_ZOOM, rubberBand, ZOOM_STEP, zoomAround } from "./zoom";
@@ -150,7 +150,7 @@ export function OriginalImageViewer({ asset, onZoomChange, markers = [], focus, 
       </GestureDetector>
       {status !== "ready" && <Animated.View exiting={FadeOut.duration(160)} style={{ position: "absolute", inset: 0, backgroundColor: palette.ink, justifyContent: "center", alignItems: "center", padding: 24, gap: 16 }}>
         {status === "loading"
-          ? <><ActivityIndicator color={palette.line} /><Text style={{ color: palette.line, fontSize: 14 }}>Loading original image…</Text></>
+          ? <><ActivityIndicator color={palette.line} /><Text style={{ color: palette.line, ...type.subhead }}>Loading original image…</Text></>
           : <><Text selectable style={{ color: palette.line, fontSize: 15, lineHeight: 21, textAlign: "center" }}>This attachment could not be opened.</Text><Action label="Retry image" secondary onPress={() => { setStatus("loading"); setAttempt(value => value + 1); }} /></>}
       </Animated.View>}
       {ready && focus && <FocusCaption key={focus} markers={markers} focus={focus} onFocus={onFocus} reducedMotion={reducedMotion} />}
@@ -208,7 +208,7 @@ function StepButton({ icon, label, disabled, onPress }: { icon: string; label: s
 function ZoomReadout({ scale }: { scale: SharedValue<number> }) {
   const [zoom, setZoom] = useState(1);
   useAnimatedReaction(() => Math.round(clamp(scale.get(), 1, MAX_ZOOM) * 10) / 10, (next, prev) => { if (prev !== null && next !== prev) scheduleOnRN(setZoom, next); });
-  return <Text accessibilityElementsHidden importantForAccessibility="no" style={{ minWidth: 40, textAlign: "center", fontSize: 13, fontWeight: "600", color: palette.ink, fontVariant: ["tabular-nums"] }}>{zoom.toFixed(1)}×</Text>;
+  return <Text accessibilityElementsHidden importantForAccessibility="no" style={{ minWidth: 40, textAlign: "center", ...type.footnote, fontWeight: "600", color: palette.ink, fontVariant: ["tabular-nums"] }}>{zoom.toFixed(1)}×</Text>;
 }
 
 /**
@@ -263,7 +263,7 @@ function FocusCaption({ markers, focus, onFocus, reducedMotion }: { markers: Ima
   const next = markers[i + 1];
   return <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200).easing(EASE_OUT)} exiting={reducedMotion ? undefined : FadeOut.duration(150)}
     style={{ position: "absolute", left: 12, right: 12, bottom: 12, minHeight: 44, borderRadius: 22, paddingLeft: 14, paddingRight: 4, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "rgba(20,28,40,0.62)", borderWidth: 1, borderColor: "rgba(255,255,255,0.16)" }}>
-    <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, fontWeight: "600", color: palette.white }}>
+    <Text numberOfLines={1} style={{ flex: 1, ...type.subhead, fontWeight: "600", color: palette.white }}>
       <Text style={{ color: "#9CC0FF", fontVariant: ["tabular-nums"] }}>{marker.n} of {markers.length}  </Text>{marker.label}
     </Text>
     <Pressable accessibilityRole="button" accessibilityLabel={next ? `Next finding: ${next.label}` : "Show the whole film"} hitSlop={4} onPress={() => onFocus?.(next?.id)}

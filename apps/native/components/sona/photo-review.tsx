@@ -45,7 +45,7 @@ export function PhotoReview({ photos, suggested, bottom, onAttach, onBack }: { p
             <Image source={attachmentSource(p)} contentFit="cover" style={{ width: 56, height: 56, borderRadius: 10, backgroundColor: "rgba(120,120,128,0.12)" }} />
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "600", color: types[i] === NOT_ATTACHED ? palette.amber : palette.ink }}>{types[i]}</Text>
-              <Text style={{ fontSize: 13, color: palette.muted }}>{types[i] === NOT_ATTACHED ? "Not attached" : `Image ${i + 1}`}</Text>
+              <Text style={{ ...type.footnote, color: palette.muted }}>{types[i] === NOT_ATTACHED ? "Not attached" : `Image ${i + 1}`}</Text>
             </View>
             <View style={{ transform: [{ rotate: open === i ? "180deg" : "0deg" }], transitionProperty: "transform", transitionDuration: reducedMotion ? 0 : 240 } as never}>
               <Icon name="chevron.down" size={13} color={palette.muted} />
@@ -60,10 +60,10 @@ export function PhotoReview({ photos, suggested, bottom, onAttach, onBack }: { p
 
     <View style={{ position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "row", gap: 10, paddingHorizontal: 20, paddingTop: 12, paddingBottom: bottom, backgroundColor: palette.surface, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
       <Pressable accessibilityRole="button" accessibilityLabel="Back to attachment options" onPress={onBack} style={({ pressed }) => ({ flex: 1, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)", opacity: pressed ? 0.8 : 1 })}>
-        <Text style={{ fontSize: 16, fontWeight: "600", color: palette.ink }}>Back</Text>
+        <Text style={{ ...type.body, fontWeight: "600", color: palette.ink }}>Back</Text>
       </Pressable>
       <Pressable accessibilityRole="button" disabled={!kept.length} onPress={() => onAttach(kept)} style={({ pressed }) => ({ flex: 2, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", backgroundColor: palette.ink, opacity: kept.length ? 1 : 0.35, transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: ["transform", "opacity"], transitionDuration: 120 } as never)}>
-        <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>{!kept.length ? "Not attached" : photos.length === 1 ? `Attach as ${kept[0]!.imageType}` : `Attach ${kept.length} image${kept.length === 1 ? "" : "s"}`}</Text>
+        <Text style={{ ...type.body, fontWeight: "600", color: palette.white }}>{!kept.length ? "Not attached" : photos.length === 1 ? `Attach as ${kept[0]!.imageType}` : `Attach ${kept.length} image${kept.length === 1 ? "" : "s"}`}</Text>
       </Pressable>
     </View>
   </View>;

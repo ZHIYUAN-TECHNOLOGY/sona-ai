@@ -149,12 +149,12 @@ export function FlagActions({ item }: { item: DayItem }) {
         <Pressable accessibilityRole="button" accessibilityLabel={`Add ${f.test} to the same visit`} onPress={() => add(f)}
           style={({ pressed }) => ({ alignSelf: "flex-start", minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: palette.ink, opacity: pressed ? 0.8 : 1 })}>
           <Icon name="plus" size={12} color={palette.white} />
-          <Text style={{ fontSize: 14, fontWeight: "600", color: palette.white }}>Add {f.test} to this visit</Text>
+          <Text style={{ ...type.subhead, fontWeight: "600", color: palette.white }}>Add {f.test} to this visit</Text>
         </Pressable>
       </View>)}
     {visit && visit.toAdd.length > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Done with this flag" onPress={() => releaseFlag(taskId)}
       style={({ pressed }) => ({ alignSelf: "flex-start", minHeight: 34, justifyContent: "center", paddingHorizontal: 12, borderRadius: 17, backgroundColor: "rgba(20,28,40,0.06)", opacity: pressed ? 0.7 : 1 })}>
-      <Text style={{ fontSize: 14, fontWeight: "600", color: palette.ink }}>Done</Text>
+      <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>Done</Text>
     </Pressable>}
     {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
   </Animated.View>;
@@ -163,7 +163,7 @@ export function FlagActions({ item }: { item: DayItem }) {
     <Pressable key={label} accessibilityRole="button" accessibilityLabel={extra?.a11y ?? label} accessibilityState={{ expanded: extra?.expanded, busy: extra?.busy }} disabled={extra?.busy} onPress={onPress}
       style={({ pressed }) => ({ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: primary ? palette.ink : extra?.expanded ? "rgba(36,91,204,0.12)" : "rgba(20,28,40,0.06)", opacity: pressed || extra?.busy ? 0.7 : 1 })}>
       <Icon name={icon} size={12} color={primary ? palette.white : extra?.expanded ? palette.blue : palette.ink} />
-      <Text style={{ fontSize: 14, fontWeight: "600", color: primary ? palette.white : extra?.expanded ? palette.blue : palette.ink }}>{label}</Text>
+      <Text style={{ ...type.subhead, fontWeight: "600", color: primary ? palette.white : extra?.expanded ? palette.blue : palette.ink }}>{label}</Text>
     </Pressable>;
   return <View style={{ gap: 6 }}>
     {live && item.patientId && <DoseLine patientId={item.patientId} />}

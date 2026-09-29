@@ -4,7 +4,7 @@ import { MedicineThumb } from "@/features/clinical/medicine-thumb";
 import { Component, createContext, use, type ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { Text } from "@/components/sona/text";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { Notice } from "@/components/sona/ui";
 import { BriefingCard, MedicationCard, PrescriptionCard, ReasoningCard } from "@/features/clinical";
 import type { Capability, FeatureProps } from "@/features/encounter/types";
@@ -53,11 +53,11 @@ function ValidatedSource({ sourceId }: { sourceId: string }) {
   const vitals = context.kind === "briefing" ? context.featureProps.patient.sources.find(item => item.id === "vitals") : undefined;
   const link = (id: string, label: string) => <Pressable accessibilityRole="link" accessibilityLabel={`Response source, ${label}`} hitSlop={10} onPress={() => {
     if (context.featureProps.patient.sources.some(item => item.id === id)) context.featureProps.onSource(id);
-  }}><Text style={{ fontSize: 12, color: palette.blue }}>{label} ↗</Text></Pressable>;
+  }}><Text style={{ ...type.caption, color: palette.blue }}>{label} ↗</Text></Pressable>;
   return <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
-    <Text style={{ fontSize: 12, color: palette.muted }}>{vitals ? "Sources" : "Source"} ·</Text>
+    <Text style={{ ...type.caption, color: palette.muted }}>{vitals ? "Sources" : "Source"} ·</Text>
     {link(sourceId, source.title)}
-    {vitals && <><Text style={{ fontSize: 12, color: palette.muted }}>·</Text>{link(vitals.id, "Observations")}</>}
+    {vitals && <><Text style={{ ...type.caption, color: palette.muted }}>·</Text>{link(vitals.id, "Observations")}</>}
   </View>;
 }
 

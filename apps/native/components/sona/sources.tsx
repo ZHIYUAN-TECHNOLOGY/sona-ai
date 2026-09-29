@@ -124,8 +124,8 @@ export function SourcesSheet() {
       <Text accessibilityRole="header" style={{ flex: 1, ...type.heading, color: palette.ink }}>Sources <Text style={{ color: palette.muted, fontWeight: "500" }}>{sources.length}</Text></Text>
     </View>
     {sources.length > 6 && <View style={{ paddingHorizontal: 20 }}>
-      <TextInput value={query} onChangeText={setQuery} placeholder="Filter sources" placeholderTextColor="#8A929E" accessibilityLabel="Filter sources" clearButtonMode="while-editing"
-        style={{ height: 40, borderRadius: 12, paddingHorizontal: 12, fontSize: 16, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
+      <TextInput value={query} onChangeText={setQuery} placeholder="Filter sources" placeholderTextColor={palette.placeholder} accessibilityLabel="Filter sources" clearButtonMode="while-editing"
+        style={{ height: 40, borderRadius: 12, paddingHorizontal: 12, ...type.body, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
     </View>}
     <ScrollView style={{ maxHeight: height * 0.6, flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }} keyboardShouldPersistTaps="handled">
       {groups.map(group => <View key={group.title} style={{ gap: 6 }}>

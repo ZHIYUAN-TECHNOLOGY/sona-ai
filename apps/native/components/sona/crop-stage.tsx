@@ -5,6 +5,7 @@ import { View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useDerivedValue, useSharedValue } from "react-native-reanimated";
 import { flatSize, homography, rectQuad, type Point, type Quad } from "./crop";
+import { palette } from "./theme";
 
 /**
  * The photo just taken, fitted into `frame`, with four corners the doctor drags onto the page's
@@ -95,7 +96,7 @@ export function CropStage({ ref, source, frame, editable, children }: {
         {editable && photo && <Canvas style={{ flex: 1 }}>
           <Path path={shade} color="rgba(6,9,14,0.55)" />
           <Path path={outline} style="stroke" strokeWidth={2} color="rgba(255,255,255,0.95)" />
-          <Path path={handles} color="#FFFFFF" />
+          <Path path={handles} color={palette.white} />
           <Path path={handles} style="stroke" strokeWidth={1.5} color="rgba(17,19,24,0.35)" />
         </Canvas>}
       </View>

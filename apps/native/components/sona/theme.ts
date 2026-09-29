@@ -1,7 +1,8 @@
 export const palette = {
   canvas: "#F5F6F8", surface: "#FFFFFF", ink: "#1D1F23", muted: "#59616B",
   blue: "#245BCC", blueWash: "#D5E5FC", line: "#D8DBE0", white: "#FFFFFF",
-  green: "#286850", amber: "#8B5518", red: "#A23E3E", dark: "#282C33",
+  // One green for done, safe and ready (the teal the seals and ticks always used); one grey for placeholder text.
+  green: "#0F6E66", amber: "#8B5518", red: "#A23E3E", dark: "#282C33", placeholder: "#8A929E",
 };
 
 /**

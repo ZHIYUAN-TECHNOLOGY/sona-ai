@@ -63,7 +63,7 @@ export function CareMessages({ patient, entering }: { patient: Patient; entering
       {thread.slice(-SHOWN).map(m => <ThreadBubble key={m.id} message={m} reduced />)}
       <TextLink label={thread.length > SHOWN ? `Open thread · ${thread.length} messages` : "Open thread"} onPress={() => router.push(`/inbox/${patient.id}`)} />
       {canReply && <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <TextInput value={text} onChangeText={setText} placeholder={`Reply to ${first}`} placeholderTextColor="#A2A8B1" maxLength={1000} editable={!busy} returnKeyType="send"
+        <TextInput value={text} onChangeText={setText} placeholder={`Reply to ${first}`} placeholderTextColor={palette.placeholder} maxLength={1000} editable={!busy} returnKeyType="send"
           onSubmitEditing={() => { if (text.trim()) void reply(); }} accessibilityLabel={`Reply to ${first} in Sona Care`}
           style={{ flex: 1, fontSize: 16, color: palette.ink, paddingHorizontal: 14, paddingVertical: 10, minHeight: 44, borderRadius: 14, backgroundColor: "rgba(20,28,40,0.04)" }} />
         <Pressable accessibilityRole="button" accessibilityLabel="Send reply" accessibilityState={{ disabled: busy || !text.trim(), busy }} disabled={busy || !text.trim()} onPress={() => { void reply(); }}

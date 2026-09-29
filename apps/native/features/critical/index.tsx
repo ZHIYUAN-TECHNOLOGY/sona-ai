@@ -93,14 +93,14 @@ export function CriticalAlert() {
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: palette.red }} />
         <Text style={{ ...type.overline, color: palette.red, flex: 1 }}>Critical result · {waiting.flag.replace("critical ", "")}</Text>
-        <Text accessibilityLabel={`Waiting ${elapsed(waiting.receivedAt, now)}`} style={{ fontSize: 15, fontWeight: "700", color: palette.red, fontVariant: ["tabular-nums"] }}>{elapsed(waiting.receivedAt, now)}</Text>
+        <Text accessibilityLabel={`Waiting ${elapsed(waiting.receivedAt, now)}`} style={{ ...type.callout, fontWeight: "700", color: palette.red, fontVariant: ["tabular-nums"] }}>{elapsed(waiting.receivedAt, now)}</Text>
       </View>
       <Text selectable style={{ ...type.headline, color: palette.ink }}>{waiting.test} {waiting.value}{waiting.unit ? ` ${waiting.unit}` : ""} · {waiting.patientName}</Text>
       {!canAck ? <LockedAction label="Needs a doctor to acknowledge" path="results.acknowledge" height={44} /> : <Pressable accessibilityRole="button" accessibilityLabel={error ? `Retry acknowledging ${waiting.test} for ${waiting.patientName}` : `Acknowledge ${waiting.test} for ${waiting.patientName}`} disabled={busy} onPress={acknowledge}
         style={({ pressed }) => ({ minHeight: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: palette.red, opacity: busy ? 0.6 : 1, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "opacity"], transitionDuration: 120 } as never)}>
-        <Text style={{ fontSize: 15, fontWeight: "600", color: palette.white }}>{busy ? "Acknowledging…" : error ? "Retry acknowledge" : "Acknowledge"}</Text>
+        <Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>{busy ? "Acknowledging…" : error ? "Retry acknowledge" : "Acknowledge"}</Text>
       </Pressable>}
       {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
-    </> : <Text selectable style={{ ...type.subhead, fontWeight: "600", color: "#0F6E66" }}>{done}</Text>}
+    </> : <Text selectable style={{ ...type.subhead, fontWeight: "600", color: palette.green }}>{done}</Text>}
   </Animated.View>;
 }

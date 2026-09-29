@@ -57,7 +57,7 @@ function NeedsCamera({ why, onAllow }: { why: string; onAllow: () => void }) {
   return <View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center", padding: 40, gap: 12 }]}>
     <Text style={{ ...type.callout, color: "rgba(255,255,255,0.85)", textAlign: "center" }}>{why}</Text>
     <Pressable accessibilityRole="button" onPress={onAllow} style={{ minHeight: 44, paddingHorizontal: 20, borderRadius: 22, justifyContent: "center", backgroundColor: palette.white }}>
-      <Text style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>Allow camera</Text>
+      <Text style={{ ...type.callout, fontWeight: "600", color: palette.ink }}>Allow camera</Text>
     </Pressable>
   </View>;
 }

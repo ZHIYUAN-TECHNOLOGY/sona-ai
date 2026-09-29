@@ -87,7 +87,7 @@ export function PhotoMessage({ messageId, attachment, first }: { messageId: stri
           {canDecide ? <>
             {editing ? <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(160)} style={{ gap: 6 }}>
               {([["name", "Medicine"], ["dose", "Dose"], ["frequency", "How often"]] as const).map(([k, label]) =>
-                <TextInput key={k} value={reading[k] ?? ""} onChangeText={v => setReading(r => ({ ...r, [k]: v }))} placeholder={label} placeholderTextColor="#A2A8B1" accessibilityLabel={label} editable={!busy}
+                <TextInput key={k} value={reading[k] ?? ""} onChangeText={v => setReading(r => ({ ...r, [k]: v }))} placeholder={label} placeholderTextColor={palette.placeholder} accessibilityLabel={label} editable={!busy}
                   style={{ ...surfaceStyle, borderRadius: 14, minHeight: 44, paddingHorizontal: 12, fontSize: 15, color: palette.ink } as TextStyle} />)}
             </Animated.View> : <TextLink label="Edit" onPress={() => setEditing(true)} />}
             {error && <ErrorLine text={`Not saved: ${error}`} />}

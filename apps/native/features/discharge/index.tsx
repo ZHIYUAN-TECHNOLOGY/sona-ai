@@ -36,7 +36,7 @@ import { EMPTY_DISCHARGE, FOLLOW_UPS, LANGUAGES, checkInDaysOf, discharge, disch
  * a button (pinned in the decision bar) that morphs into the discharge, and a receipt that stamps in the card.
  */
 const DRAFT_MS = 1700;
-const TEAL = "#0F6E66";
+const TEAL = palette.green;
 
 export function DischargeScreen() {
   // The open visit is the one being discharged (updateEncounter writes to it).
@@ -80,7 +80,7 @@ export function Decide({ label, icon, muted = false, disabled = false, onPress }
   return <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={onPress}
     style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: muted ? "rgba(20,28,40,0.08)" : palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 200 } as never)}>
     {icon && <Icon name={icon} size={15} color={muted ? palette.muted : palette.white} />}
-    <Animated.Text key={label} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ fontSize: 16, fontWeight: "600", color: muted ? palette.muted : palette.white }}>{label}</Animated.Text>
+    <Animated.Text key={label} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ ...type.body, fontWeight: "600", color: muted ? palette.muted : palette.white }}>{label}</Animated.Text>
   </Pressable>;
 }
 
@@ -154,7 +154,7 @@ export function FixChip({ label, icon, onPress, strong = false }: { label: strin
   return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={() => { haptic("select"); onPress(); }} hitSlop={6}
     style={{ alignSelf: "flex-start", height: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: strong ? palette.blue : "rgba(20,28,40,0.06)" }}>
     {icon && <Icon name={icon} size={12} color={strong ? palette.white : palette.ink} />}
-    <Text style={{ fontSize: 14, fontWeight: "600", color: strong ? palette.white : palette.ink }}>{label}</Text>
+    <Text style={{ ...type.subhead, fontWeight: "600", color: strong ? palette.white : palette.ink }}>{label}</Text>
   </Pressable>;
 }
 

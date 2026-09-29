@@ -25,7 +25,7 @@ import { bedBar, bedKind, clockLabel, filterSegments, forecastBeds, forecastLine
  * dose changes, so they tick up during the demo. Lost follow-ups turn amber above zero.
  */
 type Ops = Awaited<ReturnType<typeof api.ops.get>>;
-const TEAL = "#0F6E66";
+const TEAL = palette.green;
 // Blocked is the one to act on, so it alone reads red; watch stays a quiet amber.
 export const KIND: Record<BedKind, string> = { blocked: palette.red, fit: TEAL, watch: "#D9AE72", other: "#CDD2D9" };
 
@@ -238,7 +238,7 @@ export function ForecastTimeline({ beds, forecast, onOpen }: { beds: Bed[]; fore
       <Pressable accessibilityRole="button" accessibilityLabel={`${u.line}. ${u.owned ? `Owner ${u.owner}` : `No owner yet, ${u.owner} suggested`}. Open ${u.bed}`} hitSlop={7}
         onPress={() => { haptic("select"); onOpen(u.bed, u.blockerId); }}
         style={{ minHeight: 30, paddingHorizontal: 12, borderRadius: 15, justifyContent: "center", backgroundColor: palette.blue }}>
-        <Text style={{ fontSize: 13, fontWeight: "600", color: palette.white }}>Open {u.bed}</Text>
+        <Text style={{ ...type.footnote, fontWeight: "600", color: palette.white }}>Open {u.bed}</Text>
       </Pressable>
     </View>}
 

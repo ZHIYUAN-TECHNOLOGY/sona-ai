@@ -40,10 +40,10 @@ export function Ring({ done, total }: { done: number; total: number }) {
   return <View style={{ width: 56, height: 56, alignItems: "center", justifyContent: "center" }}>
     <Svg width={56} height={56} style={{ position: "absolute" }}>
       <Circle cx={28} cy={28} r={RING_R} stroke="rgba(20,28,40,0.08)" strokeWidth={5} fill="none" />
-      <AnimatedCircle cx={28} cy={28} r={RING_R} stroke={left ? palette.blue : "#0F6E66"} strokeWidth={5} fill="none" strokeLinecap="round" strokeDasharray={RING_C} animatedProps={props} transform="rotate(-90 28 28)" />
+      <AnimatedCircle cx={28} cy={28} r={RING_R} stroke={left ? palette.blue : palette.green} strokeWidth={5} fill="none" strokeLinecap="round" strokeDasharray={RING_C} animatedProps={props} transform="rotate(-90 28 28)" />
     </Svg>
     {left ? <Animated.Text key={left} entering={reducedMotion ? undefined : FadeIn.duration(200)} style={{ fontSize: 17, fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{left}</Animated.Text>
-      : <DrawnCheck size={26} color="#0F6E66" strokeWidth={2.2} delay={360} draw={!startedDone} />}
+      : <DrawnCheck size={26} color={palette.green} strokeWidth={2.2} delay={360} draw={!startedDone} />}
   </View>;
 }
 
@@ -51,7 +51,7 @@ export function Pill({ label, on, tone = "blue", onPress, a11y }: { label: strin
   const ink = tone === "amber" ? palette.amber : palette.blue;
   return <Pressable accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={a11y ?? label} onPress={() => { haptic("select"); onPress(); }} hitSlop={6}
     style={{ minWidth: 52, height: 34, paddingHorizontal: 14, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: on ? ink : "rgba(20,28,40,0.06)" }}>
-    <Text style={{ fontSize: 14, fontWeight: "600", color: on ? palette.white : palette.ink }}>{label}</Text>
+    <Text style={{ ...type.subhead, fontWeight: "600", color: on ? palette.white : palette.ink }}>{label}</Text>
   </Pressable>;
 }
 
@@ -72,9 +72,9 @@ export function BlockerRow({ check, n, resolved, children }: { check: Prescripti
     style={{ flexDirection: "row", gap: 12, paddingVertical: 12, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
     <View style={{ width: 26, height: 26 }}>
       <Animated.View style={[{ position: "absolute", inset: 0, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(196,120,20,0.14)" }, numberStyle]}>
-        <Text style={{ fontSize: 13, fontWeight: "700", color: palette.amber, fontVariant: ["tabular-nums"] }}>{n}</Text>
+        <Text style={{ ...type.footnote, fontWeight: "700", color: palette.amber, fontVariant: ["tabular-nums"] }}>{n}</Text>
       </Animated.View>
-      <Animated.View style={[{ position: "absolute", inset: 0, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: "#0F6E66" }, checkStyle]}>
+      <Animated.View style={[{ position: "absolute", inset: 0, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: palette.green }, checkStyle]}>
         <Icon name="checkmark" size={12} color={palette.white} />
       </Animated.View>
     </View>
@@ -152,8 +152,8 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
 
   const fix = (check: PrescriptionCheck) => {
     if (check.id === "age-weight") return <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-      <TextInput accessibilityLabel="Weight in kilograms" value={inputs.weightKg} onChangeText={weightKg => set({ weightKg: weightKg.replace(/[^0-9.]/g, "") })} keyboardType="decimal-pad" placeholder="Weight" placeholderTextColor="#8A929E"
-        style={{ width: 96, height: 38, borderRadius: 12, paddingHorizontal: 12, fontSize: 16, fontWeight: "600", color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
+      <TextInput accessibilityLabel="Weight in kilograms" value={inputs.weightKg} onChangeText={weightKg => set({ weightKg: weightKg.replace(/[^0-9.]/g, "") })} keyboardType="decimal-pad" placeholder="Weight" placeholderTextColor={palette.placeholder}
+        style={{ width: 96, height: 38, borderRadius: 12, paddingHorizontal: 12, ...type.body, fontWeight: "600", color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
       <Text style={{ ...type.footnote, color: palette.muted }}>kg · 50 kg or more</Text>
     </View>;
     const key = HISTORY.find(k => k === check.id);
@@ -164,11 +164,11 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
     if (check.id === "review") return <Pressable accessibilityRole="button" accessibilityLabel="Run medication review" disabled={working !== undefined} onPress={() => { haptic("select"); run("medication"); }}
       style={{ alignSelf: "flex-start", height: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: palette.blue, opacity: working ? 0.6 : 1 }}>
       <Icon name={working === "medication" ? "hourglass" : "arrow.clockwise"} size={12} color={palette.white} />
-      <Text style={{ fontSize: 14, fontWeight: "600", color: palette.white }}>{working === "medication" ? "Reviewing…" : reviewStale ? "Rerun review" : "Run review"}</Text>
+      <Text style={{ ...type.subhead, fontWeight: "600", color: palette.white }}>{working === "medication" ? "Reviewing…" : reviewStale ? "Rerun review" : "Run review"}</Text>
     </Pressable>;
     if (check.id === "identity") return <Pressable accessibilityRole="button" onPress={() => { const entry = (encounter.medicationEntries ?? defaultMedications(patient)).find(m => !m.confirmed); if (entry) updateEncounter(value => ({ ...value, medicationDraft: { ...entry } })); }}
       style={{ alignSelf: "flex-start", height: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}>
-      <Text style={{ fontSize: 14, fontWeight: "600", color: palette.ink }}>Confirm next medicine</Text>
+      <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>Confirm next medicine</Text>
     </Pressable>;
     return undefined;
   };
@@ -179,7 +179,7 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
     <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
       <Ring done={checks.length - blocked.length} total={checks.length} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={{ ...type.overline, color: created ? "#0F6E66" : blocked.length ? palette.amber : palette.blue }}>{created ? "Prescribed · simulation" : blocked.length ? `${blocked.length} left before prescribing` : "Ready to prescribe"}</Text>
+        <Text style={{ ...type.overline, color: created ? palette.green : blocked.length ? palette.amber : palette.blue }}>{created ? "Prescribed · simulation" : blocked.length ? `${blocked.length} left before prescribing` : "Ready to prescribe"}</Text>
         <Text style={{ ...type.headline, color: palette.ink }}>{regimen.medication} · {regimen.formulation}</Text>
         <Text numberOfLines={2} style={{ ...type.caption, color: palette.muted }}>{regimen.dose} {regimen.unit} · {regimen.route} · {regimen.frequency}</Text>
       </View>
@@ -191,9 +191,9 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
 
     {!created && passed.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 6 }}>
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: showPassed }} onPress={() => setShowPassed(v => !v)} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 6, minHeight: 32 }}>
-        <Icon name="checkmark.circle.fill" size={13} color="#0F6E66" />
-        <Text style={{ ...type.footnote, fontWeight: "600", color: "#0F6E66" }}>{passed.length} checks passed</Text>
-        <Icon name={showPassed ? "chevron.up" : "chevron.right"} size={10} color="#0F6E66" />
+        <Icon name="checkmark.circle.fill" size={13} color={palette.green} />
+        <Text style={{ ...type.footnote, fontWeight: "600", color: palette.green }}>{passed.length} checks passed</Text>
+        <Icon name={showPassed ? "chevron.up" : "chevron.right"} size={10} color={palette.green} />
       </Pressable>
       {showPassed && <Text style={{ ...type.caption, color: palette.muted, paddingLeft: 19 }}>{passed.map(c => c.label).join(" · ")}</Text>}
     </Animated.View>}
@@ -211,7 +211,7 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
         onPress={() => { haptic("select"); run("prescription"); }}
         style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: blocked.length ? "rgba(20,28,40,0.08)" : palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 200 } as never)}>
         {!blocked.length && <Icon name={working === "prescription" ? "hourglass" : "doc.badge.plus"} size={15} color={palette.white} />}
-        <Animated.Text key={primary} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ fontSize: 16, fontWeight: "600", color: blocked.length ? palette.muted : palette.white }}>{primary}</Animated.Text>
+        <Animated.Text key={primary} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ ...type.body, fontWeight: "600", color: blocked.length ? palette.muted : palette.white }}>{primary}</Animated.Text>
       </Pressable>}
     </Animated.View>
 

@@ -30,7 +30,7 @@ import { AppealCard, DeniedCard } from "./appeal";
  * place, each adding its sentence to the note. Sending turns every "Required" tag into a check,
  * 90 ms apart on a 200 ms ease-out (after Toss's terms check), then the mock insurer's approval stamps in.
  */
-const TEAL = "#0F6E66";
+const TEAL = palette.green;
 const GLIDE = { duration: 250, dampingRatio: 0.72 }, STRETCH = { duration: 320, dampingRatio: 0.8 };
 
 export function ClaimScreen() {
@@ -188,7 +188,7 @@ export function ClaimScreen() {
         {!server.loading && codes.map((c, i) => { const on = c.evidence === cited; return <Arrive key={c.code} index={i} animate={Boolean(server.data)}><Pressable accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${c.code}, ${c.label}, ${c.kind}${c.inTable === false ? ", not in the ICD-10 table" : ""}`}
           onPress={() => { haptic("select"); setActive(c.evidence); }} style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 44 }}>
           <View style={{ width: 58, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.blue : "rgba(20,28,40,0.06)", transitionProperty: "backgroundColor", transitionDuration: 180 } as never}>
-            <Text style={{ fontSize: 13, fontWeight: "700", color: on ? palette.white : palette.ink, fontVariant: ["tabular-nums"], transitionProperty: "color", transitionDuration: 180 } as never}>{c.code}</Text>
+            <Text style={{ ...type.footnote, fontWeight: "700", color: on ? palette.white : palette.ink, fontVariant: ["tabular-nums"], transitionProperty: "color", transitionDuration: 180 } as never}>{c.code}</Text>
           </View>
           <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.ink }}>{c.label}</Text>
           <Text style={{ ...type.caption, color: c.inTable === false ? palette.amber : palette.muted }}>{c.inTable === false ? "Not in ICD-10 table" : c.kind}</Text>

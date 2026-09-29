@@ -235,7 +235,7 @@ export function VoiceDock(props: Props) {
 
     {holding && <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(140)} pointerEvents="none" style={{ position: "absolute", left: 32, right: 32, bottom: insets.bottom + 132, alignItems: "center" }}>
       <Text accessibilityLiveRegion="polite" style={{ textAlign: "center", ...type.display, fontWeight: "500", color: words ? palette.ink : palette.muted }}>{words ? transcript.slice(0, words).join(" ") : "Listening…"}</Text>
-      <Text style={{ marginTop: 10, fontSize: 13, fontWeight: "500", color: palette.ink }}>{handsfree ? "Pause or tap the orb to send" : "Release to send"}</Text>
+      <Text style={{ marginTop: 10, ...type.footnote, fontWeight: "500", color: palette.ink }}>{handsfree ? "Pause or tap the orb to send" : "Release to send"}</Text>
       <View style={{ marginTop: 4 }}><SampleLabel source="fixture" what="voice" /></View>
     </Animated.View>}
 
@@ -273,7 +273,7 @@ export function VoiceDock(props: Props) {
           {!used && !coached && !quiet && !busy && mode === "idle" && !attachments.length && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ delay: 600, distance: 6, scale: 0.96, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="none"
             style={{ position: "absolute", bottom: BAR_H + 8, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 6, paddingRight: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.94)", boxShadow: "0 6px 20px rgba(24,32,48,0.1)", transformOrigin: "bottom" }}>
             <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: "#E4EDFD", alignItems: "center", justifyContent: "center" }}><BrandIcon name="wave" size={14} color={palette.blue} strokeWidth={1.8} /></View>
-            <Text style={{ fontSize: 13, fontWeight: "500", color: palette.ink }}>Tap or hold to talk</Text>
+            <Text style={{ ...type.footnote, fontWeight: "500", color: palette.ink }}>Tap or hold to talk</Text>
           </Animated.View>}
 
           <View pointerEvents="box-none" style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, alignItems: "center", justifyContent: "center" }}>

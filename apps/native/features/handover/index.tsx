@@ -31,8 +31,8 @@ import { buildHandover, type HandoverCard as Sbar } from "./model";
  */
 type Decision = "handed" | "discuss";
 const TINT: Record<Decision, { fill: string; label: string; icon: string }> = {
-  handed: { fill: "#0F6E66", label: "Handed over", icon: "checkmark.circle.fill" },
-  discuss: { fill: "#8B5518", label: "Discuss verbally", icon: "bubble.left.and.bubble.right.fill" },
+  handed: { fill: palette.green, label: "Handed over", icon: "checkmark.circle.fill" },
+  discuss: { fill: palette.amber, label: "Discuss verbally", icon: "bubble.left.and.bubble.right.fill" },
 };
 const FLY = { duration: 380, dampingRatio: 0.72 }, BACK = { duration: 350, dampingRatio: 0.72 };
 const haptic = (kind: "select" | "light" | "success" = "select") => {
@@ -56,7 +56,7 @@ function HandoverCard({ card }: { card: Sbar }) {
         <Text style={{ ...type.footnote, color: palette.muted }}>{card.meta}</Text>
       </View>
       <View style={{ paddingHorizontal: 9, paddingVertical: 4, borderRadius: 10, backgroundColor: card.priority === "watch" ? "rgba(196,120,20,0.14)" : "rgba(20,140,130,0.12)" }}>
-        <Text style={{ ...type.caption, fontWeight: "700", color: card.priority === "watch" ? palette.amber : "#0F6E66" }}>{card.priority === "watch" ? "Watch" : "Stable"}</Text>
+        <Text style={{ ...type.caption, fontWeight: "700", color: card.priority === "watch" ? palette.amber : palette.green }}>{card.priority === "watch" ? "Watch" : "Stable"}</Text>
       </View>
     </View>
     <View style={{ height: 1, backgroundColor: "rgba(20,28,40,0.06)" }} />
@@ -85,8 +85,8 @@ function HoldToAccept({ onDone }: { onDone: () => void }) {
   return <GestureDetector gesture={hold}>
     <Animated.View accessible accessibilityRole="button" accessibilityLabel="Accept handover" accessibilityHint="Press and hold to accept responsibility" accessibilityActions={[{ name: "activate" }]} onAccessibilityAction={onDone}
       style={[{ height: 56, borderRadius: 28, overflow: "hidden", backgroundColor: palette.ink, justifyContent: "center", alignItems: "center" }, press]}>
-      <Animated.View style={[{ position: "absolute", left: 0, top: 0, bottom: 0, right: 0, backgroundColor: "#0F6E66", transformOrigin: "left" }, bar]} />
-      <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>Hold to accept handover</Text>
+      <Animated.View style={[{ position: "absolute", left: 0, top: 0, bottom: 0, right: 0, backgroundColor: palette.green, transformOrigin: "left" }, bar]} />
+      <Text style={{ ...type.body, fontWeight: "600", color: palette.white }}>Hold to accept handover</Text>
     </Animated.View>
   </GestureDetector>;
 }
@@ -154,7 +154,7 @@ export function HandoverScreen() {
       : server.error ? <ErrorLine text={`The handover didn't load: ${server.error}`} onRetry={server.retry} />
       : !server.cards ? <Text accessibilityLiveRegion="polite" style={{ ...type.callout, color: palette.muted }}>Loading the handover…</Text>
       : <Animated.View entering={reducedMotion ? FadeIn : riseIn({ distance: 12, duration: 380 })} style={{ borderRadius: 28, borderCurve: "continuous", backgroundColor: palette.white, padding: 20, gap: 6 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}><Icon name="checkmark.circle.fill" size={18} color="#0F6E66" /><Text style={{ ...type.heading, color: palette.ink }}>Nothing to hand over</Text></View>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}><Icon name="checkmark.circle.fill" size={18} color={palette.green} /><Text style={{ ...type.heading, color: palette.ink }}>Nothing to hand over</Text></View>
         <Text style={{ ...type.callout, color: palette.muted }}>No patients on your list this shift. New admissions and results will appear here.</Text>
       </Animated.View>}
   </View>;
@@ -171,7 +171,7 @@ export function HandoverScreen() {
       <Text accessibilityLiveRegion="polite" style={{ ...type.subhead, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{top ? `${remaining.length} of ${cards.length} left` : "All patients reviewed"}</Text>
       {done.length > 0 && !accepted && <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(120)}>
         <Pressable accessibilityRole="button" accessibilityLabel="Undo last decision" onPress={undo} hitSlop={8} style={{ minHeight: 32, flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 11, borderRadius: 16, backgroundColor: "rgba(36,91,204,0.1)" }}>
-          <Icon name="arrow.uturn.backward" size={11} color={palette.blue} /><Text style={{ fontSize: 13, fontWeight: "600", color: palette.blue }}>Undo</Text>
+          <Icon name="arrow.uturn.backward" size={11} color={palette.blue} /><Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>Undo</Text>
         </Pressable>
       </Animated.View>}
     </View>
@@ -204,11 +204,11 @@ export function HandoverScreen() {
         </View>
       </Animated.View>
       {accepted ? <Animated.View entering={reducedMotion ? FadeIn : ZoomIn.springify().duration(420).dampingRatio(0.72)} accessibilityLiveRegion="polite"
-        style={{ borderRadius: 28, borderCurve: "continuous", backgroundColor: "#0F6E66", padding: 20, gap: 8 }}>
+        style={{ borderRadius: 28, borderCurve: "continuous", backgroundColor: palette.green, padding: 20, gap: 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}><Icon name="checkmark.seal.fill" size={26} color={palette.white} /><Text style={{ ...type.heading, color: palette.white }}>Handover acknowledged</Text></View>
         <Text style={{ ...type.callout, color: "rgba(255,255,255,0.9)" }}>{receiver} accepted {cards.length} patients at {accepted}. Each patient’s open items are on their card.</Text>
         <Pressable accessibilityRole="button" onPress={() => router.back()} style={{ alignSelf: "flex-start", marginTop: 6, minHeight: 40, paddingHorizontal: 16, borderRadius: 20, justifyContent: "center", backgroundColor: "rgba(255,255,255,0.18)" }}>
-          <Text style={{ fontSize: 15, fontWeight: "600", color: palette.white }}>Done</Text>
+          <Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>Done</Text>
         </Pressable>
       </Animated.View> : server.live && !role.can("handover.accept") ? <LockedAction label="Needs a doctor or a nurse to accept" path="handover.accept" height={56} /> : <HoldToAccept onDone={accept} />}
       {acceptError && !accepted && <ErrorLine text={acceptError} onRetry={accept} />}

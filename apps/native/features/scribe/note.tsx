@@ -75,7 +75,7 @@ function saveState(status: "idle" | "saving" | "saved" | "failed", reviewed: boo
 /** A quiet inline link; opens the transcript suggestion in place. */
 function QuietLink({ label, icon, onPress }: { label: string; icon: string; onPress: () => void }) {
   return <Pressable accessibilityRole="button" onPress={onPress} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 7, alignSelf: "flex-start" }}>
-    <Icon name={icon} size={15} color={palette.blue} /><Text style={{ fontSize: 14, fontWeight: "500", color: palette.blue }}>{label}</Text>
+    <Icon name={icon} size={15} color={palette.blue} /><Text style={{ ...type.subhead, fontWeight: "500", color: palette.blue }}>{label}</Text>
   </Pressable>;
 }
 
@@ -189,7 +189,7 @@ export function NoteScreen() {
           {sources[key] && <SourceLink label={key === "subjective" ? "Review consultation / history source" : "Review observation source"} onPress={() => router.push({ pathname: "/source", params: { id: sources[key]!, patientId: patient.id } })} />}
         </Expand>}
         <Surface style={{ paddingHorizontal: 16, paddingVertical: 14, borderRadius: 20, borderColor: focused === key ? FOCUS : glass.rim, transitionProperty: "borderColor", transitionDuration: 160 } as never}>
-          <TextInput accessibilityLabel={`Clinical note ${key}`} editable={canWrite} value={sections[key]} onChangeText={value => editSection(key, value)} onFocus={() => setFocused(key)} onBlur={() => setFocused(current => current === key ? undefined : current)} multiline placeholder={placeholders[key]} placeholderTextColor="#A2A8B1" textAlignVertical="top"
+          <TextInput accessibilityLabel={`Clinical note ${key}`} editable={canWrite} value={sections[key]} onChangeText={value => editSection(key, value)} onFocus={() => setFocused(key)} onBlur={() => setFocused(current => current === key ? undefined : current)} multiline placeholder={placeholders[key]} placeholderTextColor={palette.placeholder} textAlignVertical="top"
             style={{ minHeight: key === "subjective" ? 150 : 96, padding: 0, fontSize: 16, lineHeight: 25, color: palette.ink }} />
         </Surface>
       </Animated.View>)}
@@ -199,9 +199,9 @@ export function NoteScreen() {
           : !suggestion && hasContent && <QuietLink label="Fresh draft from consultation" icon="doc.text.magnifyingglass" onPress={() => { haptic("tap"); setSuggestion(readNoteSections(buildDraft(consultation))); }} />}
         {suggestion && <Expand key="suggestion">
           <Surface style={{ padding: 18, gap: 14 }}>
-            <Text style={{ fontSize: 12, fontWeight: "600", letterSpacing: 0.3, color: palette.blue }}>New suggestion · not applied · your note stays until you replace it</Text>
+            <Text style={{ ...type.caption, fontWeight: "600", letterSpacing: 0.3, color: palette.blue }}>New suggestion · not applied · your note stays until you replace it</Text>
             {sectionKeys.map(key => <View key={key} style={{ gap: 3 }}>
-              <Text style={{ fontSize: 13, fontWeight: "600", color: palette.muted }}>{noteMeta[key].title}</Text>
+              <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{noteMeta[key].title}</Text>
               <Text selectable style={{ fontSize: 15, lineHeight: 22, color: suggestion[key].trim() ? palette.ink : palette.muted }}>{suggestion[key].trim() || "Left empty for you"}</Text>
             </View>)}
             <Action label="Replace note with this suggestion" onPress={() => { haptic("done"); updateEncounter(current => ({ ...current, noteSectionDraft: suggestion, note: serializeNoteSections(suggestion), noteReviewed: false, noteSaveStatus: "idle", noteFromSample: !current.transcript.length }), true); setSuggestion(undefined); }} />

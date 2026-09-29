@@ -96,10 +96,10 @@ export function CaptureScan({ source, width, height, suggested = "Chest X-ray", 
       {!confirm && <TypeChips value={kind} onChange={setKind} enterDelay={reducedMotion ? undefined : 900} />}
       <View style={{ flexDirection: "row", gap: 10 }}>
         <Pressable accessibilityRole="button" accessibilityLabel="Retake photo" onPress={onRetake} style={({ pressed }) => ({ flex: 1, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)", opacity: pressed ? 0.8 : 1 })}>
-          <Text style={{ fontSize: 16, fontWeight: "600", color: palette.ink }}>Retake</Text>
+          <Text style={{ ...type.body, fontWeight: "600", color: palette.ink }}>Retake</Text>
         </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel={confirm?.action ?? `Attach as ${kind}`} disabled={kind === NOT_ATTACHED || busy} onPress={() => void attach()} style={({ pressed }) => ({ flex: 2, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", backgroundColor: palette.ink, opacity: kind === NOT_ATTACHED ? 0.35 : 1, transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: ["transform", "opacity"], transitionDuration: 120 } as never)}>
-          <Text style={{ fontSize: 16, fontWeight: "600", color: palette.white }}>{kind === NOT_ATTACHED ? "Not attached" : busy ? "Straightening…" : confirm?.action ?? `Attach as ${kind}`}</Text>
+          <Text style={{ ...type.body, fontWeight: "600", color: palette.white }}>{kind === NOT_ATTACHED ? "Not attached" : busy ? "Straightening…" : confirm?.action ?? `Attach as ${kind}`}</Text>
         </Pressable>
       </View>
     </Animated.View>
@@ -112,7 +112,7 @@ export function TypeChips({ value, onChange, enterDelay }: { value?: ImageType; 
     {IMAGE_TYPES.map((item, i) => <Animated.View key={item} entering={enterDelay === undefined ? undefined : FadeIn.delay(enterDelay + i * 40).duration(220)}>
       <Pressable accessibilityRole="radio" accessibilityState={{ selected: item === value }} onPress={() => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); onChange(item); }} hitSlop={{ top: 4, bottom: 4 }}
         style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: "center", borderWidth: 1, borderColor: item === value ? palette.ink : "rgba(20,28,40,0.1)", backgroundColor: item === value ? palette.ink : palette.white, transitionProperty: ["backgroundColor", "borderColor"], transitionDuration: 150 } as never}>
-        <Text style={{ fontSize: 15, fontWeight: "500", color: item === value ? palette.white : palette.ink, transitionProperty: "color", transitionDuration: 150 } as never}>{item}</Text>
+        <Text style={{ ...type.callout, fontWeight: "500", color: item === value ? palette.white : palette.ink, transitionProperty: "color", transitionDuration: 150 } as never}>{item}</Text>
       </Pressable>
     </Animated.View>)}
   </View>;

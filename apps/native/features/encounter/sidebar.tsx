@@ -1,7 +1,7 @@
 import { BrandIcon, type BrandIconName } from "@/components/sona/brand-icon";
 import { DataPill } from "@/components/sona/model-answer";
 import { Text } from "@/components/sona/text";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import { useOpenAudit } from "@/features/audit";
 import { useInboxSummary } from "@/features/inbox";
@@ -35,17 +35,17 @@ function Row({ item }: { item: Item }) {
     <View style={{ width: 23, alignItems: "center" }}>{item.sf ? <Icon name={item.sf} size={20} color={palette.ink} /> : <BrandIcon name={item.icon!} size={23} color={palette.ink} strokeWidth={item.active ? 1.9 : 1.5} />}</View>
     <View style={{ flex: 1 }}>
       <Text numberOfLines={1} style={{ fontSize: 17, color: palette.ink, fontWeight: item.active ? "600" : "400" }}>{item.label}</Text>
-      {item.detail && <Text numberOfLines={1} style={{ fontSize: 13, color: palette.muted, marginTop: 1 }}>{item.detail}</Text>}
+      {item.detail && <Text numberOfLines={1} style={{ ...type.footnote, color: palette.muted, marginTop: 1 }}>{item.detail}</Text>}
     </View>
     {/* Red only when something must not wait; the detail line already says it, so VoiceOver skips the badge. */}
     {badge && <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, backgroundColor: badge.urgent ? palette.red : palette.blue, alignItems: "center", justifyContent: "center" }}>
-      <Text style={{ fontSize: 12, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{badge.count}</Text>
+      <Text style={{ ...type.caption, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{badge.count}</Text>
     </View>}
   </Pressable>;
 }
 
 /** A group's name, only when the group has something to show. */
-const Group = ({ title }: { title: string }) => <Text accessibilityRole="header" style={{ fontSize: 13, color: palette.muted, paddingHorizontal: 14, paddingTop: 14, paddingBottom: 6 }}>{title}</Text>;
+const Group = ({ title }: { title: string }) => <Text accessibilityRole="header" style={{ ...type.footnote, color: palette.muted, paddingHorizontal: 14, paddingTop: 14, paddingBottom: 6 }}>{title}</Text>;
 
 const Divider = () => <View style={{ height: 1, marginHorizontal: 14, marginVertical: 10, backgroundColor: "rgba(20,28,40,0.08)" }} />;
 

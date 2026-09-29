@@ -161,7 +161,7 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
         </Animated.View>}
         {sendError && <ErrorLine text={`Not sent: ${sendError}`} onRetry={() => { void send(); }} />}
         {canReply ? <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8 }}>
-          <TextInput ref={input} value={text} onChangeText={setText} placeholder={`Reply to ${first}`} placeholderTextColor="#A2A8B1" maxLength={1000} editable={!busy} multiline
+          <TextInput ref={input} value={text} onChangeText={setText} placeholder={`Reply to ${first}`} placeholderTextColor={palette.placeholder} maxLength={1000} editable={!busy} multiline
             accessibilityLabel={`Reply to ${first} in Sona Care`} style={{ ...surfaceStyle, flex: 1, fontSize: 16, lineHeight: 21, color: palette.ink, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, minHeight: 46, maxHeight: 132, borderRadius: 23 } as TextStyle} />
           <RoundAction icon="send" size={46} label={busy ? "Sending" : "Send reply"} ready={!busy && Boolean(text.trim())} onPress={() => { void send(); }} />
         </View> : <Caption>{role.why("messages.reply") ?? "Only a doctor or a nurse replies."}</Caption>}

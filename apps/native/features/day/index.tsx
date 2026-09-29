@@ -55,7 +55,7 @@ function Sorting() {
   const dots = useAnimatedStyle(() => ({ opacity: pulse.value }));
   return <Animated.View exiting={FadeOut.duration(180)} style={{ alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, height: 44, borderRadius: 22, backgroundColor: palette.ink }}>
     <Animated.View style={[{ flexDirection: "row", gap: 3 }, dots]}>{[0, 1, 2].map(i => <View key={i} style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: palette.white }} />)}</Animated.View>
-    <Text style={{ fontSize: 15, fontWeight: "600", color: palette.white }}>Sorting your day…</Text>
+    <Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>Sorting your day…</Text>
   </Animated.View>;
 }
 
@@ -135,7 +135,7 @@ function TimeBar({ schedule, now, onOpen }: { schedule: ScheduleVisit[]; now?: n
                 style={{ width: 30, height: 30, borderRadius: 15, marginLeft: i ? -10 : 0, borderWidth: single ? 0 : 2, borderColor: palette.white, backgroundColor: single ? t.fill : v.p.incomplete ? "#F6E7D3" : "#DCE6F8", alignItems: "center", justifyContent: "center", zIndex: 3 - i }}>
                 <Text style={{ fontSize: 11, fontWeight: "700", color: t.ink }}>{v.p.initials}</Text>
               </View>; })}{group.length > 3 && <View style={{ height: 30, minWidth: 30, marginLeft: -10, paddingHorizontal: 5, borderRadius: 15, borderWidth: 2, borderColor: palette.white, backgroundColor: palette.ink, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 10, fontWeight: "700", color: palette.white }}>+{group.length - 3}</Text></View>}</View>
-              <Text style={{ fontSize: 13, fontWeight: "600", color: palette.ink }}>{single ? first.p.name.split(" ")[0] : `${group.length} patients`} <Text style={{ fontWeight: "500", color: palette.muted, fontVariant: ["tabular-nums"] }}>· {first.p.time}{!single && group.at(-1)!.p.time !== first.p.time ? `–${group.at(-1)!.p.time}` : ""}</Text></Text>
+              <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>{single ? first.p.name.split(" ")[0] : `${group.length} patients`} <Text style={{ fontWeight: "500", color: palette.muted, fontVariant: ["tabular-nums"] }}>· {first.p.time}{!single && group.at(-1)!.p.time !== first.p.time ? `–${group.at(-1)!.p.time}` : ""}</Text></Text>
             </View>
             <View style={{ marginLeft: 15, width: 2, height: 14, borderRadius: 1, backgroundColor: tone.ink, opacity: 0.5 }} />
           </EdgeFade></Pressable>; })}
@@ -178,7 +178,7 @@ function Row({ item, first, index, animate, pinned, onOpen, onPin, onSnooze }: {
       {menu && <Expand style={{ flexDirection: "row", gap: 8, paddingLeft: 62, paddingBottom: 12 }}>
         {[[pinned ? "Unpin" : "Pin to top", "pin", onPin], ["Snooze 1 h", "moon.zzz", onSnooze]].map(([label, icon, act]) => <Pressable key={label as string} accessibilityRole="button" accessibilityLabel={label as string}
           onPress={() => { haptic(); setMenu(false); (act as () => void)(); }} style={{ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: "rgba(20,28,40,0.06)" }}>
-          <Icon name={icon as string} size={12} color={palette.ink} /><Text style={{ fontSize: 14, fontWeight: "500", color: palette.ink }}>{label as string}</Text>
+          <Icon name={icon as string} size={12} color={palette.ink} /><Text style={{ ...type.subhead, fontWeight: "500", color: palette.ink }}>{label as string}</Text>
         </Pressable>)}
       </Expand>}
     </View>
@@ -217,13 +217,13 @@ function MonthCard({ offset, counts, onPick, onClose }: { offset: number; counts
           return <Pressable key={i} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${isToday ? "Today, " : ""}${d} ${month.toLocaleDateString("en-GB", { month: "long" })}, ${n} ${n === 1 ? "visit" : "visits"}`}
             onPress={() => onPick(o)} style={{ flex: 1, height: 44, alignItems: "center", justifyContent: "center", gap: 2 }}>
             <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.ink : "transparent", borderWidth: isToday && !on ? 1.5 : 0, borderColor: palette.blue }}>
-              <Text style={{ fontSize: 15, fontWeight: on || isToday ? "700" : "500", color: on ? palette.white : isToday ? palette.blue : n ? palette.ink : palette.muted, fontVariant: ["tabular-nums"] }}>{d}</Text>
+              <Text style={{ ...type.callout, fontWeight: on || isToday ? "700" : "500", color: on ? palette.white : isToday ? palette.blue : n ? palette.ink : palette.muted, fontVariant: ["tabular-nums"] }}>{d}</Text>
             </View>
             <View style={{ position: "absolute", bottom: 1, flexDirection: "row", gap: 2 }}>{Array.from({ length: Math.min(3, n) }, (_, k) => <View key={k} style={{ width: 3.5, height: 3.5, borderRadius: 2, backgroundColor: palette.blue, opacity: 0.7 }} />)}</View>
           </Pressable>; })}
       </Animated.View>)}
       {offset !== 0 && <Pressable accessibilityRole="button" onPress={() => onPick(0)} style={{ alignSelf: "center", minHeight: 36, paddingHorizontal: 16, borderRadius: 18, justifyContent: "center", backgroundColor: palette.blueWash }}>
-        <Text style={{ fontSize: 14, fontWeight: "600", color: palette.blue }}>Jump to today</Text>
+        <Text style={{ ...type.subhead, fontWeight: "600", color: palette.blue }}>Jump to today</Text>
       </Pressable>}
     </Animated.View>
   </>;
@@ -314,7 +314,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, s
         </View>
         {offset !== 0 ? <Pressable accessibilityRole="button" accessibilityLabel="Back to today" onPress={() => pick(0)} hitSlop={8}
           style={{ minHeight: 38, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, borderRadius: 19, backgroundColor: palette.blueWash, marginTop: 4 }}>
-          <Icon name="arrow.uturn.backward" size={12} color={palette.blue} /><Text style={{ fontSize: 14, fontWeight: "600", color: palette.blue }}>Today</Text>
+          <Icon name="arrow.uturn.backward" size={12} color={palette.blue} /><Text style={{ ...type.subhead, fontWeight: "600", color: palette.blue }}>Today</Text>
         </Pressable> : null}
       </View>
       {calendar && <MonthCard offset={offset} counts={o => live ? serverDayCount(localDate(dayOf(o))) : scheduleFor(o, patients).length} onPick={o => { setCalendar(false); pick(o); }} onClose={() => setCalendar(false)} />}

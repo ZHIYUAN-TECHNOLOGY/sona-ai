@@ -4,7 +4,7 @@ import { Keyboard, Pressable, TextInput, View, type TextStyle } from "react-nati
 import Animated from "react-native-reanimated";
 import { Text } from "@/components/sona/text";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { SourceRef, useSourceScope, type SourceEntry } from "@/components/sona/sources";
 import { Action, Chip, Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
@@ -26,7 +26,7 @@ function localDate(date: Date) { return `${date.getFullYear()}-${String(date.get
 
 const field: TextStyle = { fontSize: 17, lineHeight: 23, color: palette.ink, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 16, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" };
 const placeholder = "rgba(89,97,107,0.55)";
-function FieldLabel({ children }: { children: string }) { return <Text style={{ fontSize: 13, fontWeight: "600", color: palette.muted }}>{children}</Text>; }
+function FieldLabel({ children }: { children: string }) { return <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{children}</Text>; }
 
 /**
  * History collapses to one quiet row, "Update history ›", that opens in place: the latest recorded
@@ -75,8 +75,8 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
       onPress={() => { haptic(); setShown(value => !value); }}
       style={({ pressed }) => ({ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
       <Icon name="clock.arrow.circlepath" size={15} color={palette.muted} />
-      <Text style={{ fontSize: 15, fontWeight: "500", color: palette.ink }}>{title}</Text>
-      {count && <Text style={{ fontSize: 13, color: palette.muted, fontVariant: ["tabular-nums"] }}>{count}</Text>}
+      <Text style={{ ...type.callout, fontWeight: "500", color: palette.ink }}>{title}</Text>
+      {count && <Text style={{ ...type.footnote, color: palette.muted, fontVariant: ["tabular-nums"] }}>{count}</Text>}
       <Animated.View style={{ transform: [{ rotate: shown ? "90deg" : "0deg" }], transitionProperty: "transform", transitionDuration: reducedMotion ? 0 : 240 }}>
         <Icon name="chevron.right" size={12} color={palette.muted} />
       </Animated.View>

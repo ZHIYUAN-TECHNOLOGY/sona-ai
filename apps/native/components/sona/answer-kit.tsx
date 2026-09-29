@@ -44,8 +44,8 @@ function useRegister(id: string, title: string, open?: () => void) {
 
 export type Takeaway = { tone: "caution" | "good" | "info"; text: string };
 const TONES = {
-  caution: { glyph: "!", color: "#8B5518", wash: "rgba(196,120,20,0.15)" },
-  good: { glyph: "+", color: "#0F6E66", wash: "rgba(20,140,130,0.13)" },
+  caution: { glyph: "!", color: palette.amber, wash: "rgba(196,120,20,0.15)" },
+  good: { glyph: "+", color: palette.green, wash: "rgba(20,140,130,0.13)" },
   info: { glyph: "i", color: palette.blue, wash: "rgba(36,91,204,0.11)" },
 } as const;
 
@@ -55,7 +55,7 @@ export function Takeaways({ items }: { items: Takeaway[] }) {
   return <Surface feature style={{ padding: 16, gap: 12 }}>
     {items.slice(0, 3).map((item, i) => <Animated.View key={item.text} entering={reducedMotion ? undefined : riseIn({ delay: 80 + i * 70, distance: 6, duration: 300 })} style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
       <View style={{ width: 22, height: 22, borderRadius: 11, marginTop: 1, alignItems: "center", justifyContent: "center", backgroundColor: TONES[item.tone].wash }}>
-        <Text style={{ fontSize: 12, fontWeight: "700", color: TONES[item.tone].color }}>{TONES[item.tone].glyph}</Text>
+        <Text style={{ ...type.caption, fontWeight: "700", color: TONES[item.tone].color }}>{TONES[item.tone].glyph}</Text>
       </View>
       <MarkedText text={item.text} style={{ flex: 1, ...type.callout, color: palette.ink }} />
     </Animated.View>)}

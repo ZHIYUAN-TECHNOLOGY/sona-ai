@@ -23,7 +23,7 @@ import { formatRM, markSent, openItems, totalRisk, useSent, type AuditItem } fro
  * risk rolls down digit by digit (after Finma's number flip: only changed digits move, on a light
  * spring). Tapping a row shows the drafted query with a Send button, so swiping is never required.
  */
-const THRESHOLD = 75, TEAL = "#0F6E66";
+const THRESHOLD = 75, TEAL = palette.green;
 const RING = 11, RING_C = 2 * Math.PI * RING;
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -116,7 +116,7 @@ export function AuditScreen() {
         <Text style={{ ...type.overline, color: palette.muted }}>{live ? "Latest audit" : "Last night’s audit"}</Text>
         <Animated.View style={[{ height: 26, paddingHorizontal: 10, borderRadius: 13, flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: sentCount ? "rgba(15,110,102,0.1)" : "rgba(20,28,40,0.05)" }, badgeStyle]}>
           <Icon name="paperplane.fill" size={10} color={sentCount ? TEAL : palette.muted} />
-          <Text style={{ fontSize: 12, fontWeight: "700", color: sentCount ? TEAL : palette.muted, fontVariant: ["tabular-nums"] }}>Queries sent · {sentCount}</Text>
+          <Text style={{ ...type.caption, fontWeight: "700", color: sentCount ? TEAL : palette.muted, fontVariant: ["tabular-nums"] }}>Queries sent · {sentCount}</Text>
         </Animated.View>
       </View>
       {refused ? <Text style={{ ...type.subhead, color: palette.muted }}>{refused}</Text>

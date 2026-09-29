@@ -28,7 +28,7 @@ import { authoredAnswer, authoredReferences, curb65, type Claim, type Reference 
  * briefly. Cards off-centre shrink to 0.93 and dim. The severity score then fills like 1Password's
  * Watchtower meter: the arc sweeps on an ease-out as each factor is checked, and the score settles.
  */
-const TEAL = "#0F6E66";
+const TEAL = palette.green;
 const SNAP = { duration: 360, dampingRatio: 0.82 }, TAP = { duration: 380, dampingRatio: 0.82 };
 
 /** The rehearsed demo question, for an answer opened without its prompt. */
@@ -93,7 +93,7 @@ function ClaimLine({ claim, references, onCite }: { claim: Claim; references: Re
         return <Pressable key={n} accessibilityRole="button" accessibilityLabel={`Source ${n}${r ? `, ${DESIGN_WORDS[r.design]}, ${[r.from, r.year].filter(Boolean).join(" ")}` : ""}`} accessibilityHint="Shows this source below"
           hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }} onPress={() => onCite(n)}
           style={({ pressed }) => ({ marginLeft: 4, minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(36,91,204,0.12)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-          <Text style={{ fontSize: 13, fontWeight: "600", color: palette.blue, fontVariant: ["tabular-nums"] }}>{n}</Text>
+          <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue, fontVariant: ["tabular-nums"] }}>{n}</Text>
         </Pressable>; })}
     </View>
   </View>;
@@ -163,7 +163,7 @@ function Track({ references, pos, active, onPick }: { references: Reference[]; p
     </View>
     <View style={{ height: 16 }}>
       {references.map((r, i) => { const edge = i === 0 ? "left" : i === references.length - 1 ? "right" : "center";
-        return <Text key={r.id} style={{ position: "absolute", left: edge === "left" ? -12 : edge === "right" ? i * gap - 68 : i * gap - 40, width: 80, textAlign: edge, fontSize: 12, fontWeight: active === i ? "700" : "500", color: active === i ? palette.ink : palette.muted, fontVariant: ["tabular-nums"] }}>{r.year}</Text>; })}
+        return <Text key={r.id} style={{ position: "absolute", left: edge === "left" ? -12 : edge === "right" ? i * gap - 68 : i * gap - 40, width: 80, textAlign: edge, ...type.caption, fontWeight: active === i ? "700" : "500", color: active === i ? palette.ink : palette.muted, fontVariant: ["tabular-nums"] }}>{r.year}</Text>; })}
     </View>
   </View>;
 }
@@ -181,7 +181,7 @@ function SourceCard({ source, index, pos, left, width, step, flash }: { source: 
     <Surface style={{ padding: 16, gap: 8, height: 186, borderRadius: 22 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <View style={{ minWidth: 22, height: 22, paddingHorizontal: 6, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(36,91,204,0.12)" }}>
-          <Text style={{ fontSize: 12, fontWeight: "700", color: palette.blue, fontVariant: ["tabular-nums"] }}>{source.n}</Text>
+          <Text style={{ ...type.caption, fontWeight: "700", color: palette.blue, fontVariant: ["tabular-nums"] }}>{source.n}</Text>
         </View>
         <View style={{ height: 22, paddingHorizontal: 8, borderRadius: 11, justifyContent: "center", backgroundColor: chip.bg }}>
           <Text style={{ fontSize: 11, fontWeight: "700", color: chip.fg }}>{source.design}</Text>
@@ -232,7 +232,7 @@ function Severity({ patient, server }: { patient: FeatureProps["patient"]; serve
         {done ? <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)} style={{ alignItems: "center" }}>
           <Text style={{ fontSize: 24, fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{risk ? score : "?"}</Text>
           <Text style={{ fontSize: 11, color: palette.muted }}>of 5</Text>
-        </Animated.View> : <Text style={{ fontSize: 13, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{checked}/5</Text>}
+        </Animated.View> : <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{checked}/5</Text>}
       </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={{ ...type.overline, color: palette.muted }}>CURB-65 · severity</Text>

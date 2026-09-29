@@ -7,7 +7,7 @@ import { useReduceMotionPreference } from "./accessibility";
 import { BrandIcon } from "./brand-icon";
 import { EASE_OUT, LAYOUT } from "./motion";
 import { Text } from "./text";
-import { palette } from "./theme";
+import { palette, type } from "./theme";
 import { Expand, glass, Icon, useAccessibleEffects } from "./ui";
 
 /**
@@ -94,7 +94,7 @@ export const Footnote = Caption;
 export function DisclosureButton({ label, open, onToggle, accessibilityLabel }: { label: string; open: boolean; onToggle: () => void; accessibilityLabel?: string }) {
   return <View style={{ alignSelf: "flex-start" }}>
     <Press onPress={onToggle} accessibilityLabel={accessibilityLabel ?? label} expanded={open} scale={0.96} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 6 }}>
-      <Text style={{ fontSize: 15, fontWeight: "500", color: palette.blue }}>{label}</Text>
+      <Text style={{ ...type.callout, fontWeight: "500", color: palette.blue }}>{label}</Text>
       <Animated.View style={{ transform: [{ rotate: open ? "180deg" : "0deg" }], transitionProperty: "transform", transitionDuration: 200, transitionTimingFunction: EASE }}><Icon name="chevron.down" size={12} color={palette.blue} /></Animated.View>
     </Press>
   </View>;
@@ -104,7 +104,7 @@ export function DisclosureButton({ label, open, onToggle, accessibilityLabel }: 
 export function TextLink({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) {
   return <View style={{ alignSelf: "flex-start" }}>
     <Press onPress={onPress} disabled={disabled} scale={0.96} style={{ minHeight: 44, justifyContent: "center", opacity: disabled ? 0.45 : 1 }}>
-      <Text style={{ fontSize: 15, fontWeight: "500", color: palette.blue }}>{label}</Text>
+      <Text style={{ ...type.callout, fontWeight: "500", color: palette.blue }}>{label}</Text>
     </Press>
   </View>;
 }
@@ -114,7 +114,7 @@ export function ErrorLine({ text, onRetry, retryLabel = "Retry" }: { text: strin
   return <View accessibilityLiveRegion="polite" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
     <Text selectable style={{ flex: 1, fontSize: 13, lineHeight: 18, color: palette.red }}>{text}</Text>
     {onRetry && <Press onPress={onRetry} accessibilityLabel={`${retryLabel}. ${text}`} scale={0.96} style={{ minHeight: 44, justifyContent: "center" }}>
-      <Text style={{ fontSize: 15, fontWeight: "600", color: palette.blue }}>{retryLabel}</Text>
+      <Text style={{ ...type.callout, fontWeight: "600", color: palette.blue }}>{retryLabel}</Text>
     </Press>}
   </View>;
 }
@@ -134,7 +134,7 @@ export function AlertRow({ title, kind, detail, children }: { title: string; kin
     <View style={{ flex: 1, gap: 6 }}>
       <View style={{ gap: 2 }}>
         <Text selectable style={{ fontSize: 16, lineHeight: 22, fontWeight: "600", color: palette.ink }}>{title}</Text>
-        <Text style={{ fontSize: 12, fontWeight: "600", letterSpacing: 0.2, color: palette.amber }}>{kind}</Text>
+        <Text style={{ ...type.caption, fontWeight: "600", letterSpacing: 0.2, color: palette.amber }}>{kind}</Text>
       </View>
       <Text selectable style={{ fontSize: 15, lineHeight: 21, color: palette.ink }}>{detail}</Text>
       {children}

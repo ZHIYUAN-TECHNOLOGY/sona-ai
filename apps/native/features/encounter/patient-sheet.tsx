@@ -102,7 +102,7 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
               {flags.map(flag => <Pressable key={flag.label} accessibilityRole="button" accessibilityLabel={`${flag.label}. Opens the visit to resolve it`} onPress={() => go(flag.go)}
                 style={({ pressed }) => ({ minHeight: 36, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 18, backgroundColor: TONE[flag.tone].wash, opacity: pressed ? 0.7 : 1 })}>
                 <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: TONE[flag.tone].ink }} />
-                <Text style={{ fontSize: 14, fontWeight: "600", color: TONE[flag.tone].ink }}>{flag.label}</Text>
+                <Text style={{ ...type.subhead, fontWeight: "600", color: TONE[flag.tone].ink }}>{flag.label}</Text>
                 <Icon name="chevron.right" size={10} color={TONE[flag.tone].ink} />
               </Pressable>)}
             </View>

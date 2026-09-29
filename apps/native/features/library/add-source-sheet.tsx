@@ -129,7 +129,7 @@ function ScopeToggle({ value, onChange, disabled }: { value: LibraryScope; onCha
   </View>;
 }
 
-const field = { borderRadius: 14, borderCurve: "continuous", paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" } as const;
+const field = { borderRadius: 14, borderCurve: "continuous", paddingHorizontal: 14, paddingVertical: 12, ...type.body, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" } as const;
 
 /** Look the article up first, show what was found, then add: nothing enters the library unseen. */
 function PubMedImport({ disabled, preview, onAdd }: { disabled: boolean; preview: ReturnType<typeof useAddSource>["preview"]; onAdd: (p: ArticlePreview) => void }) {
@@ -146,7 +146,7 @@ function PubMedImport({ disabled, preview, onAdd }: { disabled: boolean; preview
   return <View style={{ gap: 12 }}>
     <View style={{ flexDirection: "row", gap: 8 }}>
       <TextInput accessibilityLabel="PMID, DOI or PubMed link" value={ref} onChangeText={t => { setRef(t); setFound(undefined); setError(undefined); }} onSubmitEditing={() => { if (ref.trim()) void look(); }}
-        placeholder="e.g. 36942789 or 10.1056/…" placeholderTextColor="#A2A8B1" autoCapitalize="none" autoCorrect={false} returnKeyType="search" editable={!disabled && !looking} style={{ ...field, flex: 1, minHeight: 46 }} />
+        placeholder="e.g. 36942789 or 10.1056/…" placeholderTextColor={palette.placeholder} autoCapitalize="none" autoCorrect={false} returnKeyType="search" editable={!disabled && !looking} style={{ ...field, flex: 1, minHeight: 46 }} />
       <Action label={looking ? "Looking…" : "Look up"} secondary disabled={disabled || looking || !ref.trim()} onPress={() => void look()} />
     </View>
     {error && <ErrorLine text={error} />}
@@ -166,8 +166,8 @@ function PasteText({ disabled, onAdd }: { disabled: boolean; onAdd: (title: stri
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   return <View style={{ gap: 10 }}>
-    <TextInput accessibilityLabel="Source title" value={title} onChangeText={setTitle} placeholder="Title, e.g. Ward CAP protocol" placeholderTextColor="#A2A8B1" maxLength={200} editable={!disabled} style={{ ...field, minHeight: 46 }} />
-    <TextInput accessibilityLabel="Source text" value={text} onChangeText={setText} placeholder={"# Antibiotics\nAmoxicillin 1 g three times daily…"} placeholderTextColor="#A2A8B1" multiline maxLength={200_000} editable={!disabled} style={{ ...field, minHeight: 120, maxHeight: 220, textAlignVertical: "top" }} />
+    <TextInput accessibilityLabel="Source title" value={title} onChangeText={setTitle} placeholder="Title, e.g. Ward CAP protocol" placeholderTextColor={palette.placeholder} maxLength={200} editable={!disabled} style={{ ...field, minHeight: 46 }} />
+    <TextInput accessibilityLabel="Source text" value={text} onChangeText={setText} placeholder={"# Antibiotics\nAmoxicillin 1 g three times daily…"} placeholderTextColor={palette.placeholder} multiline maxLength={200_000} editable={!disabled} style={{ ...field, minHeight: 120, maxHeight: 220, textAlignVertical: "top" }} />
     <Action label="Add to library" icon="plus" disabled={disabled || !title.trim() || !text.trim()} onPress={() => onAdd(title.trim(), text.trim())} />
   </View>;
 }

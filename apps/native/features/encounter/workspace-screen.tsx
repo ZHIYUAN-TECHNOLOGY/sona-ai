@@ -218,7 +218,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     <Animated.ScrollView ref={scroll} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentInsetAdjustmentBehavior="never" scrollEventThrottle={16}
       onScroll={onScroll}
       onScrollEndDrag={syncTab} onMomentumScrollEnd={syncTab}
-      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + (!home && sections.length >= 2 ? 112 : 72), paddingBottom: insets.bottom + 150 + (steps ? 66 : 0), flexGrow: 1 }}>
+      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + (!home && sections.length >= 2 ? 112 : 72), paddingBottom: insets.bottom + 150 + (steps ? 66 : 0) + (nudge ? 44 : 0), flexGrow: 1 }}>
       {!requests.length ? <Home patient={patient} patients={patients} onPick={pick} onChoosePatient={() => router.push("/patients")} onSelectPatient={id => openSession(id)}
         onShelf={bottom => setShelfFrom(Math.max(0, Math.round(bottom + scrollSV.get() - (insets.top + 106))))} shelfCollapse={{ scroll: scrollSV, from: shelfFrom }} />
       : <View style={{ gap: 44 }}>
@@ -290,7 +290,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       onNote={() => open("note")}
       above={<>
         {recording && <Pressable accessibilityRole="button" accessibilityLabel={`Consultation ${encounter?.recording === "paused" ? "paused" : "playing"}, ${encounter?.recordingSeconds} seconds`} accessibilityHint="Opens the consultation recorder" hitSlop={{ top: 2, bottom: 2 }} onPress={() => open("recording")} style={{ alignSelf: "center", minHeight: 40, paddingHorizontal: 16, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: palette.white, boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
-          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: encounter?.recording === "paused" ? palette.amber : palette.red }} /><Text style={{ fontSize: 13, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>Consultation {encounter?.recording === "paused" ? "paused" : "playing"} · {encounter?.recordingSeconds}s</Text>
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: encounter?.recording === "paused" ? palette.amber : palette.red }} /><Text style={{ ...type.footnote, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>Consultation {encounter?.recording === "paused" ? "paused" : "playing"} · {encounter?.recordingSeconds}s</Text>
         </Pressable>}
         {notice && <Notice>{notice}</Notice>}
         {nudge && !notice && !drawer && <AskNudge answer={nudge} onPress={() => setAsk({ open: true, shown: nudge })} />}
@@ -313,6 +313,6 @@ function EndKey({ label, icon, hint, primary = false, onPress }: { label: string
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityHint={hint} onPress={onPress}
     style={({ pressed }) => ({ flex: 1, height: 52, borderRadius: 26, borderCurve: "continuous", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, ...(primary ? { backgroundColor: palette.ink } : pillStyle), transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
     <Icon name={icon} size={15} color={primary ? palette.white : palette.ink} />
-    <Text style={{ fontSize: 16, fontWeight: "600", color: primary ? palette.white : palette.ink }}>{label}</Text>
+    <Text style={{ ...type.body, fontWeight: "600", color: primary ? palette.white : palette.ink }}>{label}</Text>
   </Pressable>;
 }

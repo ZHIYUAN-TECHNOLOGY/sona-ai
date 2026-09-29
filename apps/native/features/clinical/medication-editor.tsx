@@ -2,7 +2,7 @@ import { View } from "react-native";
 import Animated from "react-native-reanimated";
 import { Section } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { Action, Surface } from "@/components/sona/ui";
 import { defaultMedications } from "@/features/encounter/clinical-state";
 import { useEncounter } from "@/features/encounter/store";
@@ -54,7 +54,7 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
               {/* A proposal from a scanned handwritten note waits here until the doctor confirms it. */}
               {entry.change && !entry.confirmed && <Text style={{ fontSize: 13, lineHeight: 18, fontWeight: "600", color: entry.change === "new" ? palette.blue : entry.change === "changed" ? palette.amber : palette.muted }}>{entry.change === "new" ? "New" : entry.change === "changed" ? "Changed" : "Stopped"} · from a scanned note</Text>}
             </View>
-            {!draft && edit.allowed && <Text style={{ fontSize: 14, fontWeight: "500", color: palette.blue }}>{entry.confirmed ? "Correct" : "Confirm"}</Text>}
+            {!draft && edit.allowed && <Text style={{ ...type.subhead, fontWeight: "500", color: palette.blue }}>{entry.confirmed ? "Correct" : "Confirm"}</Text>}
           </Press>
           {editing && draft && <FormReveal style={{ paddingHorizontal: 16, paddingBottom: 16, gap: 12 }}>
             <ClinicalField label="Recorded medicine name" value={draft.name} onChange={name => editDraft({ name })} />
@@ -78,7 +78,7 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
             <Text style={{ fontSize: 12, lineHeight: 17, fontWeight: "600", color: palette.muted }}>Proposed medicine</Text>
             <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: palette.ink }}>{encounter?.proposedMedicine ?? "Paracetamol"}</Text>
           </View>
-          {!editProposed && edit.allowed && <Text style={{ fontSize: 14, fontWeight: "500", color: palette.blue }}>Change</Text>}
+          {!editProposed && edit.allowed && <Text style={{ ...type.subhead, fontWeight: "500", color: palette.blue }}>Change</Text>}
         </Press>
         {editProposed && <FormReveal style={{ paddingHorizontal: 16, paddingBottom: 16, gap: 12 }}>
           <ClinicalField label="Proposed medication" value={proposed} onChange={proposedMedicineDraft => updateEncounter(value => ({ ...value, proposedMedicineDraft }))} />

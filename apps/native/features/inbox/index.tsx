@@ -159,9 +159,9 @@ function SectionHead({ label, count }: { label: Label; count: number }) {
   }, [count, pop, reducedMotion]);
   const badgeStyle = useAnimatedStyle(() => reducedMotion ? { opacity: pop.value } : { transform: [{ scale: pop.value }] });
   return <View accessible accessibilityRole="header" accessibilityLabel={`${style.text}, ${count} waiting`} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 4 }}>
-    <Text style={{ fontSize: 15, fontWeight: "600", color: label === "urgent" ? palette.red : palette.ink }}>{style.text}</Text>
+    <Text style={{ ...type.callout, fontWeight: "600", color: label === "urgent" ? palette.red : palette.ink }}>{style.text}</Text>
     <Animated.View style={[{ minWidth: 24, height: 22, paddingHorizontal: 7, borderRadius: 11, backgroundColor: style.wash, alignItems: "center", justifyContent: "center" }, badgeStyle]}>
-      <Text style={{ fontSize: 12, fontWeight: "700", color: style.ink, fontVariant: ["tabular-nums"] }}>{shown}</Text>
+      <Text style={{ ...type.caption, fontWeight: "700", color: style.ink, fontVariant: ["tabular-nums"] }}>{shown}</Text>
     </Animated.View>
   </View>;
 }
@@ -203,11 +203,11 @@ function InboxRow({ thread: t, now, first, canHandle, onHandle }: { thread: Inbo
           onPress={open} onLongPress={() => { if (!urgent && t.reason) { haptic("select"); setWhy(w => !w); } }}
           style={({ pressed }) => ({ flexDirection: "row", gap: 12, paddingHorizontal: 16, paddingVertical: 14, minHeight: 72, opacity: pressed ? 0.7 : 1 })}>
           <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: style.wash, alignItems: "center", justifyContent: "center" }}>
-            <Text style={{ fontSize: 13, fontWeight: "700", color: style.ink }}>{t.initials}</Text>
+            <Text style={{ ...type.footnote, fontWeight: "700", color: style.ink }}>{t.initials}</Text>
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Text numberOfLines={1} style={{ ...type.headline, fontSize: 16, color: palette.ink, flexShrink: 1 }}>{t.name}{t.bed ? <Text style={{ fontWeight: "400", color: palette.muted }}> · {t.bed}</Text> : null}</Text>
+              <Text numberOfLines={1} style={{ ...type.headline, ...type.body, color: palette.ink, flexShrink: 1 }}>{t.name}{t.bed ? <Text style={{ fontWeight: "400", color: palette.muted }}> · {t.bed}</Text> : null}</Text>
               <View style={{ flex: 1 }} />
               <Text style={{ ...type.caption, color: urgent ? palette.red : palette.muted, fontWeight: urgent ? "600" : "400", fontVariant: ["tabular-nums"] }}>{wait}</Text>
               {t.unread > 0 && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: palette.blue }} />}

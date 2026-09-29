@@ -116,7 +116,7 @@ export function SuggestionList({ items, onPick, stagger = true }: { items: Sugge
 export function Pill({ label, emoji: glyph, onPress }: { label: string; emoji?: string; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={{ top: 2, bottom: 2 }}
     style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 15, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 7, ...pillStyle, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-    {glyph && <Text style={{ fontSize: 15 }}>{glyph}</Text>}<Text style={{ fontSize: 14, fontWeight: "500", color: palette.ink }}>{label}</Text>
+    {glyph && <Text style={{ ...type.callout }}>{glyph}</Text>}<Text style={{ ...type.subhead, fontWeight: "500", color: palette.ink }}>{label}</Text>
   </Pressable>;
 }
 
@@ -145,8 +145,8 @@ export function TopBar({ patient, inEncounter, openTasks, faded, tall = false, o
         {patient && inEncounter && <Animated.View entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, scale: 0.96, duration: 240 })}>
           <Round label={`Current patient ${patient.name}, ${patient.id}. Change patient`} onPress={onPatient}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingRight: 10 }}>
-              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: "#DCE7FB", alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 12, fontWeight: "600", color: palette.blue }}>{patient.initials}</Text></View>
-              <Text style={{ fontSize: 14, fontWeight: "600", color: palette.ink }}>{patient.name.split(" ")[0]}</Text>
+              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: "#DCE7FB", alignItems: "center", justifyContent: "center" }}><Text style={{ ...type.caption, fontWeight: "600", color: palette.blue }}>{patient.initials}</Text></View>
+              <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{patient.name.split(" ")[0]}</Text>
             </View>
           </Round>
         </Animated.View>}
@@ -210,7 +210,7 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
 }
 
 const NEED_INK: Record<VisitNeed["tone"], string> = { urgent: palette.red, caution: palette.amber, calm: palette.blue };
-const RESOLVED_MS = 720, TEAL = "#0F6E66";
+const RESOLVED_MS = 720, TEAL = palette.green;
 /**
  * One line, no card: a state dot, what needs doing and the action that does it. When the need is met
  * (after Google's to-do check: the dot shrinks away, a teal check springs in and draws), the line holds

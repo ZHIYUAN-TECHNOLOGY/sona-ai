@@ -20,7 +20,7 @@ import { suggestImageType, type ImageType } from "./image-type";
 import { Icon, useAccessibleEffects } from "./ui";
 import { setScreenCovered } from "./use-visible";
 import { SonaCamera, type CameraHandle } from "./sona-camera";
-import { palette } from "./theme";
+import { palette, type } from "./theme";
 
 /**
  * Attachments menu (after the ChatGPT-style plus morph): the dock's plus button grows into a
@@ -266,7 +266,7 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
         <Icon name="xmark" size={15} color={palette.white} />
       </Pressable>
       {!taken.length && (live || __DEV__) && <View pointerEvents="none" style={{ position: "absolute", alignSelf: "center", bottom: insets.bottom + 124, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, backgroundColor: "rgba(250,251,253,0.92)" }}>
-        <Text style={{ fontSize: 13, fontWeight: "600", color: palette.ink }}>A film, wound, skin or page</Text>
+        <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>A film, wound, skin or page</Text>
       </View>}
       <View style={{ position: "absolute", left: 20, right: 20, bottom: insets.bottom + 24, flexDirection: "row", alignItems: "center" }}>
         {/* What this session attached so far; Done returns to the menu, where the strip shows them all. */}

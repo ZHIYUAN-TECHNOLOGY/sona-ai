@@ -3,6 +3,7 @@ import { View, type StyleProp, type TextStyle } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { segments, type Mark } from "./marked-terms";
 import { Text } from "./text";
+import { palette, type } from "./theme";
 
 export { segments, wordCount, type Mark } from "./marked-terms";
 
@@ -12,11 +13,11 @@ export { segments, wordCount, type Mark } from "./marked-terms";
  * output are unchanged.
  */
 export const TINT: Record<Mark, { color: string; backgroundColor: string }> = {
-  alert: { color: "#A23E3E", backgroundColor: "rgba(162,62,62,0.12)" },
+  alert: { color: palette.red, backgroundColor: "rgba(162,62,62,0.12)" },
   medicine: { color: "#5A3DB8", backgroundColor: "rgba(110,80,210,0.11)" },
-  finding: { color: "#0F6E66", backgroundColor: "rgba(20,140,130,0.12)" },
+  finding: { color: palette.green, backgroundColor: "rgba(20,140,130,0.12)" },
   symptom: { color: "#1E4FB8", backgroundColor: "rgba(36,91,204,0.10)" },
-  caution: { color: "#8B5518", backgroundColor: "rgba(196,120,20,0.14)" },
+  caution: { color: palette.amber, backgroundColor: "rgba(196,120,20,0.14)" },
 };
 
 /**
@@ -118,7 +119,7 @@ export function TermLegend() {
   return <View accessible accessibilityLabel={`Colour key: ${KEY.map(([m, label]) => `${label} ${m === "alert" ? "red" : m === "medicine" ? "violet" : m === "finding" ? "teal" : m === "symptom" ? "blue" : "amber"}`).join(", ")}`}
     style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
     {KEY.map(([mark, label]) => <View key={mark} style={{ paddingHorizontal: 8, height: 24, borderRadius: 8, borderCurve: "continuous", justifyContent: "center", backgroundColor: TINT[mark].backgroundColor }}>
-      <Text style={{ fontSize: 12, fontWeight: "600", color: TINT[mark].color }}>{label}</Text>
+      <Text style={{ ...type.caption, fontWeight: "600", color: TINT[mark].color }}>{label}</Text>
     </View>)}
   </View>;
 }

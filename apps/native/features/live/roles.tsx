@@ -70,7 +70,7 @@ export function LockedAction({ label, path, height = 52 }: { label: string; path
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: true }} accessibilityLabel={`${label}. Locked`} accessibilityHint={reason} onPress={tap}>
       <Animated.View style={[{ height, borderRadius: height / 2, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "rgba(20,28,40,0.06)", borderWidth: 1, borderColor: "rgba(20,28,40,0.06)" }, shake]}>
         <Icon name="lock.fill" size={14} color={palette.muted} />
-        <Text style={{ fontSize: 16, fontWeight: "600", color: palette.muted }}>{label}</Text>
+        <Text style={{ ...type.body, fontWeight: "600", color: palette.muted }}>{label}</Text>
       </Animated.View>
     </Pressable>
     {told && reason && <Animated.Text entering={reducedMotion ? undefined : FadeIn.duration(180)} accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{reason}</Animated.Text>}

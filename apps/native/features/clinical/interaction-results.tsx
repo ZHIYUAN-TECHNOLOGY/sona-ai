@@ -4,7 +4,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { useReduceMotionPreference } from "@/components/sona/accessibility";
 import { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { SourceRef } from "@/components/sona/sources";
 import { Action, Expand, Icon, Notice, Surface } from "@/components/sona/ui";
 import { defaultMedications } from "@/features/encounter/clinical-state";
@@ -69,7 +69,7 @@ export function InteractionResults({ patient, onSource }: Pick<FeatureProps, "pa
               <PairGlyph status={pair.status} />
               <View style={{ flex: 1, gap: 2 }}>
                 <Text selectable style={{ fontSize: 15, lineHeight: 21, color: palette.ink }}>{pair.left} <Text style={{ color: palette.muted }}>+</Text> {pair.right}</Text>
-                <Text style={{ fontSize: 12, fontWeight: "600", color: palette.muted }}>{statusLabel[pair.status]}</Text>
+                <Text style={{ ...type.caption, fontWeight: "600", color: palette.muted }}>{statusLabel[pair.status]}</Text>
               </View>
             </View>
           </View>)}

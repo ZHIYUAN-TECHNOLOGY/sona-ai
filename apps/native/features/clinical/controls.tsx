@@ -2,7 +2,7 @@ import { Collapsible, Column, Host, Picker, Text as NativeText, TextInput, useNa
 import { useEffect, useState, type ReactNode } from "react";
 import { View, type KeyboardTypeOptions } from "react-native";
 import { Card, Label } from "@/components/sona/ui";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 
 export function ClinicalField({ label, value, onChange, multiline = false, keyboardType = "default" }: { label: string; value: string; onChange: (value: string) => void; multiline?: boolean; keyboardType?: KeyboardTypeOptions }) {
   const text = useNativeState(value);
@@ -17,7 +17,7 @@ export function ClinicalChoice<T extends string>({ label, value, options, onChan
 export function EvidenceCard({ title, summary, rows, children }: { title: string; summary: string; rows: { label: string; text: string }[]; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return <Card label="Illustrative possibilities · unranked" title={title}>
-    <Host matchContents colorScheme="light"><Column spacing={12}><NativeText textStyle={{ color: palette.ink, fontSize: 16 }}>{summary}</NativeText><Collapsible label="Evidence & information gaps" isOpen={open} onOpenChange={setOpen} labelStyle={{ color: palette.blue, fontSize: 16 }}><Column spacing={14}>{rows.map(row => <Column key={row.label} spacing={4}><NativeText textStyle={{ color: palette.muted, fontSize: 13, fontWeight: "600" }}>{row.label}</NativeText><NativeText textStyle={{ color: palette.ink, fontSize: 16 }}>{row.text}</NativeText></Column>)}</Column></Collapsible></Column></Host>
+    <Host matchContents colorScheme="light"><Column spacing={12}><NativeText textStyle={{ color: palette.ink, ...type.body }}>{summary}</NativeText><Collapsible label="Evidence & information gaps" isOpen={open} onOpenChange={setOpen} labelStyle={{ color: palette.blue, ...type.body }}><Column spacing={14}>{rows.map(row => <Column key={row.label} spacing={4}><NativeText textStyle={{ color: palette.muted, ...type.footnote, fontWeight: "600" }}>{row.label}</NativeText><NativeText textStyle={{ color: palette.ink, ...type.body }}>{row.text}</NativeText></Column>)}</Column></Collapsible></Column></Host>
     {open && children}
   </Card>;
 }

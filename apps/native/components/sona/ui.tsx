@@ -50,7 +50,7 @@ export function Action({ label, icon, onPress, secondary = false, disabled = fal
   return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress}
    >{({ pressed }) => <Animated.View style={{ minHeight: 46, paddingHorizontal: 18, paddingVertical: 12, borderRadius: 23, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8, borderWidth: 1, borderColor: secondary ? glass.rim : palette.dark, backgroundColor: secondary ? "rgba(233,238,246,0.85)" : palette.dark, boxShadow: secondary ? `inset 0 1px 0 ${palette.white}` : "0 6px 16px rgba(24,32,48,0.16)", opacity: disabled ? 0.45 : 1, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "opacity"], transitionDuration: 120 } as never}>
     {!secondary && !disabled && <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: 22, overflow: "hidden" }}><HalftoneGlint width={72} height={46} origin={[10, 2]} reach={[64, 40]} pitch={3} strength={0.7} tint={[0.62, 0.78, 1]} hueShift={0.6} style={{ top: 0, left: 0 }} /></View>}
-    {icon && <Icon name={icon} size={17} color={secondary ? palette.ink : palette.white} />}<Text style={{ color: secondary ? palette.ink : palette.white, fontSize: 14, fontWeight: "600", flexShrink: 1 }}>{label}</Text>
+    {icon && <Icon name={icon} size={17} color={secondary ? palette.ink : palette.white} />}<Text style={{ color: secondary ? palette.ink : palette.white, ...type.subhead, fontWeight: "600", flexShrink: 1 }}>{label}</Text>
   </Animated.View>}</Pressable>;
 }
 export function IconButton({ name, label, onPress, dark = false }: { name: string; label: string; onPress: () => void; dark?: boolean }) {
@@ -94,7 +94,7 @@ export function RoundAction({ icon, label, ready, onPress, size = 36, hint }: { 
     <Animated.View pointerEvents="none" style={{ position: "absolute", inset: 0, opacity: ready ? 1 : 0, transitionProperty: "opacity", transitionDuration: 200 } as never}>
       <HalftoneGlint width={size} height={size} origin={[size * 0.2, size * 0.14]} reach={[size * 0.72, size * 0.6]} pitch={3} strength={0.8} tint={[0.62, 0.78, 1]} hueShift={0.6} />
     </Animated.View>
-    <BrandIcon name={icon} size={size * 0.47} color={ready ? palette.white : "#8A929E"} strokeWidth={2} />
+    <BrandIcon name={icon} size={size * 0.47} color={ready ? palette.white : palette.placeholder} strokeWidth={2} />
   </Animated.View>}</Pressable>;
 }
 
@@ -103,7 +103,7 @@ export function Chip({ label, icon, filled = false, selected = false, expanded, 
   return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} accessibilityState={{ selected, expanded }} onPress={onPress} hitSlop={{ top: 2, bottom: 2 }}
    >{({ pressed }) => <Animated.View style={{ minHeight: 40, paddingHorizontal: icon ? 13 : 15, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 7, borderWidth: 1, borderColor: expanded ? palette.blue : selected ? palette.ink : filled ? "rgba(36,91,204,0.14)" : glass.hairline, backgroundColor: selected ? palette.ink : filled ? "#E6EEFC" : "rgba(244,246,250,0.9)", boxShadow: selected || filled ? undefined : `inset 0 1px 0 ${palette.white}`, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor", "borderColor"], transitionDuration: 150 } as never}>
     {icon}
-    <Animated.Text key={label} entering={FadeIn.duration(160)} style={{ fontSize: 15, fontWeight: "500", color: selected ? palette.white : filled ? palette.blue : palette.ink }}>{label}</Animated.Text>
+    <Animated.Text key={label} entering={FadeIn.duration(160)} style={{ ...type.callout, fontWeight: "500", color: selected ? palette.white : filled ? palette.blue : palette.ink }}>{label}</Animated.Text>
   </Animated.View>}</Pressable>;
 }
 
@@ -113,7 +113,7 @@ export function Card({ children, label, title, footer, feature = false }: { chil
 export function SourceLink({ label = "View source", onPress }: { label?: string; onPress: () => void }) {
   // Inside a section, sources gather into that section's one pill instead of drawing links.
   if (useCapturedSource({ label, onPress })) return null;
-  return <Pressable accessibilityRole="button" onPress={onPress} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 7 }}><Icon name="doc.text" color={palette.blue} size={15} /><Text style={{ fontSize: 13, color: palette.blue, fontWeight: "500", flexShrink: 1 }}>{label}</Text><Icon name="arrow.up.right" color={palette.blue} size={11} /></Pressable>;
+  return <Pressable accessibilityRole="button" onPress={onPress} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 7 }}><Icon name="doc.text" color={palette.blue} size={15} /><Text style={{ ...type.footnote, color: palette.blue, fontWeight: "500", flexShrink: 1 }}>{label}</Text><Icon name="arrow.up.right" color={palette.blue} size={11} /></Pressable>;
 }
 export function Notice({ children, warning = false }: { children: ReactNode; warning?: boolean }) { return <View style={{ backgroundColor: warning ? "rgba(244,235,221,0.85)" : "rgba(226,235,250,0.75)", borderWidth: 1, borderColor: "rgba(255,255,255,0.8)", borderRadius: 18, borderCurve: "continuous", padding: 14, flexDirection: "row", alignItems: "flex-start", gap: 9 }}><Icon name={warning ? "exclamationmark.circle" : "info.circle"} color={warning ? palette.amber : palette.blue} size={17} /><Text selectable style={{ color: warning ? palette.amber : palette.muted, fontSize: 13, lineHeight: 20, flex: 1 }}>{children}</Text></View>; }
 /** The page canvas: soft blue, lilac and teal fields over pale grey, so glass has something to show. */

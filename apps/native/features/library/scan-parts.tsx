@@ -7,7 +7,7 @@ import Animated, { cancelAnimation, Easing, LinearTransition, useAnimatedStyle, 
 import { HalftoneGlint } from "@/components/sona/halftone-shimmer";
 import { EASE_IN_OUT, EASE_OUT, LAYOUT_SPRING, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { Icon, useAccessibleEffects } from "@/components/sona/ui";
 
 /** The page scanner's shared Sona glass pieces: the camera screen (scan-camera) and the scanned-page rows after it. */
@@ -103,7 +103,7 @@ export function ReviewCapsule({ pages, label, onPress, title = "Review" }: { pag
         </View>)}
       </View>
       <View>
-        <Text style={{ fontSize: 14, fontWeight: "600", color: palette.white }}>{title}</Text>
+        <Text style={{ ...type.subhead, fontWeight: "600", color: palette.white }}>{title}</Text>
         <Text style={{ fontSize: 11, fontWeight: "500", fontVariant: ["tabular-nums"], color: "rgba(255,255,255,0.65)" }}>{label}</Text>
       </View>
       <Icon name="chevron.right" size={11} color="rgba(255,255,255,0.8)" />

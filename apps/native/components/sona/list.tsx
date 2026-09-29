@@ -30,7 +30,7 @@ export function ListRow({ title, detail, tone = "calm", initials, trailing, badg
   const base: ViewStyle = { minHeight: 60, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: divider || (edges && !edges.first) ? 1 : 0, borderColor: HAIRLINE, ...shape };
   const content = <>
     {initials ? <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: tone === "soon" ? "rgba(196,120,20,0.16)" : "rgba(36,91,204,0.14)", alignItems: "center", justifyContent: "center" }}>
-      <Text style={{ fontSize: 12, fontWeight: "700", color: tone === "soon" ? palette.amber : palette.blue }}>{initials}</Text>
+      <Text style={{ ...type.caption, fontWeight: "700", color: tone === "soon" ? palette.amber : palette.blue }}>{initials}</Text>
     </View> : <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: ink }} />}
     <View style={{ flex: 1, gap: 2 }}>
       <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{title}{badge}</Text>

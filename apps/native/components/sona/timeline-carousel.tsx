@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Pressable, View, useWindowDimensions } from "react-native";
 import Animated, { interpolate, interpolateColor, type SharedValue, useAnimatedReaction, useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
-import { palette } from "./theme";
+import { palette, type } from "./theme";
 import { Icon, surfaceStyle } from "./ui";
 
 export type TimelineItem = { id: string; label: string; icon: string; glyph: string; title: string; meta: string; body: string };
@@ -15,7 +15,7 @@ function tick() { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().ca
 function TrackLabel({ item, index, progress, x, onPress }: { item: TimelineItem; index: number; progress: SharedValue<number>; x: number; onPress: () => void }) {
   const style = useAnimatedStyle(() => ({ color: interpolateColor(Math.min(1, Math.abs(progress.value - index)), [0, 1], [palette.ink, "#9AA0A8"]) }));
   return <Pressable accessibilityRole="button" accessibilityLabel={`${item.label}: ${item.title}`} onPress={onPress} hitSlop={10} style={{ position: "absolute", left: x - 45, width: 90, alignItems: "center" }}>
-    <Animated.Text numberOfLines={1} style={[{ fontSize: 12, fontWeight: "600" }, style]}>{item.label}</Animated.Text>
+    <Animated.Text numberOfLines={1} style={[{ ...type.caption, fontWeight: "600" }, style]}>{item.label}</Animated.Text>
   </Pressable>;
 }
 
@@ -36,7 +36,7 @@ function Card({ item, index, progress, width }: { item: TimelineItem; index: num
     <View style={{ flex: 1 }} />
     <View style={{ gap: 2 }}>
       <Text style={{ fontSize: 17, fontWeight: "600", letterSpacing: -0.3, color: palette.ink }}>{item.title}</Text>
-      <Text style={{ fontSize: 13, color: palette.muted }}>{item.meta}</Text>
+      <Text style={{ ...type.footnote, color: palette.muted }}>{item.meta}</Text>
     </View>
     <Text selectable style={{ fontSize: 14, lineHeight: 20, color: "#4A515B" }}>{item.body}</Text>
   </Animated.View>;
