@@ -130,7 +130,7 @@ export function ThisWeek() {
 /** Where the ward stands, in one line. The ward page opens with it and management's My Day leads with it, so the two never disagree. */
 export function wardLine(beds: Bed[]) {
   const { blocked, bedHours, fit } = wardSummary(beds);
-  return blocked ? <><Tone of="urgent">{blocked} discharge{blocked === 1 ? "" : "s"} blocked</Tone> · ~{bedHours} bed‑hours waiting</>
+  return blocked ? <><Tone of="urgent">{blocked} discharge{blocked === 1 ? "" : "s"} blocked</Tone> · {`~${bedHours}\u00A0bed‑hours\u00A0waiting`}</>
     : <><Tone of="good">Nothing is holding a bed</Tone>{fit ? ` · ${fit} fit to go` : ""}</>;
 }
 

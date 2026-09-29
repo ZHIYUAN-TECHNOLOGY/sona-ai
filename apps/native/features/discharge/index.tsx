@@ -268,7 +268,8 @@ function DischargePage({ patient, answers, drafted, animate }: { patient: Patien
     {drafted && <Animated.View entering={animate ? riseCard : undefined}>
     <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 14 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-        <Ring done={checks.length - blocked.length} total={checks.length} />
+        {/* Once discharged the ring reads complete, whatever the checks say now. */}
+        <Ring done={done ? checks.length : checks.length - blocked.length} total={checks.length} />
         <View style={{ flex: 1 }}>
           <Insight eyebrow={`${patient.name} · ${plan.bed} · fit since ${time(fitAt)}`}>
             {done ? <><Tone of="good">Discharged</Tone> at {time(done)}</> : blocked.length ? <><Tone of="soon">{blocked.length} left</Tone> before {first} can go home</> : <>{first} is <Tone of="next">ready to go home</Tone></>}
