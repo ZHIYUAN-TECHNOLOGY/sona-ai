@@ -25,8 +25,20 @@ export function createTaskOnce(encounter: Encounter, draft: TaskDraft): Encounte
 export function localDate(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
-export function readableDate(date: string): string {
-  return date ? new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "Not set";
+export const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+export const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+export function dayFromToday(days: number, today = new Date()) { return localDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + days)); }
+/** "Thu 3 Sep", with the year once it is not this year ("Fri 13 Oct 2028"). */
+export function longDate(due: string) { const d = new Date(`${due}T12:00:00`); return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}${d.getFullYear() === new Date().getFullYear() ? "" : ` ${d.getFullYear()}`}`; }
+/**
+ * A task's due date as people read it. Only the composer writes YYYY-MM-DD; discharge, scan,
+ * messages and check-ins write words ("Today", "13 Oct", "2 weeks"), which read as written.
+ */
+export function friendlyDate(due: string, today = new Date()) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(due)) return due;
+  if (due === dayFromToday(0, today)) return "Today";
+  if (due === dayFromToday(1, today)) return "Tomorrow";
+  return longDate(due);
 }
 
 const WEEKDAY_WORDS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];

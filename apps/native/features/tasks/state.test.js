@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { createTaskOnce, mentionQuery, parseDuePhrase, taskDraftErrors, taskProposal } from "./state";
+import { createTaskOnce, friendlyDate, mentionQuery, parseDuePhrase, taskDraftErrors, taskProposal } from "./state";
 
 const emptyEncounter = () => ({ revision: 1, cards: [], requests: [], note: "", noteReviewed: false, transcript: [], recording: "idle", recordingSeconds: 0, language: "english", tasks: [] });
 const draft = { operationId: "task-operation-1", title: "Follow-up review", owner: "Demo clinician", due: "2026-09-30" };
@@ -78,5 +78,17 @@ describe("inline task parsing", () => {
     expect(mentionQuery("Review bloods @")).toBe("");
     expect(mentionQuery("email@host")).toBeUndefined();
     expect(mentionQuery("Review @nurse today")).toBeUndefined();
+  });
+});
+
+describe("friendlyDate", () => {
+  const today = new Date(2026, 8, 29);
+  it("reads the composer's dates and keeps the words other flows write", () => {
+    expect(friendlyDate("2026-09-29", today)).toBe("Today");
+    expect(friendlyDate("2026-09-30", today)).toBe("Tomorrow");
+    expect(friendlyDate("2026-10-13", today)).toBe("Tue 13 Oct");
+    expect(friendlyDate("13 Oct", today)).toBe("13 Oct");
+    expect(friendlyDate("Today", today)).toBe("Today");
+    expect(friendlyDate("", today)).toBe("");
   });
 });

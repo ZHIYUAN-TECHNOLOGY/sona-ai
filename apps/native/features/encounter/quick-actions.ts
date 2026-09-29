@@ -3,7 +3,8 @@ import type { QuickAction } from "@/components/sona/quick-actions";
 import { PENDING_RESULT, testInSentence } from "@/features/day/model";
 import { newestResult, serverDayPatients } from "@/features/live/day";
 import { useRole } from "@/features/live/roles";
-import { openItems, shortRM, totalRisk, useSent } from "@/features/audit/model";
+import { useOpenAudit } from "@/features/audit";
+import { shortRM, totalRisk, type AuditItem } from "@/features/audit/model";
 import { useInboxSummary } from "@/features/inbox";
 import { useTrainingStatus } from "@/features/training";
 import { trainingLine } from "@/features/training/model";
@@ -32,8 +33,8 @@ export function useDayPatients(patients: Patient[]) {
 
 /** The lines the home keys and the sidebar share, so both say the same thing. */
 export const wardLine = (ward: { blocked: number; fit: number }) => ward.blocked ? `${ward.blocked} discharges blocked` : `${ward.fit} fit to go`;
-export const auditLine = (audit: { count: number; risk: string }) => audit.count ? `${audit.count} notes · ${audit.risk} at risk` : "All queries sent";
-export const auditOf = (items: ReturnType<typeof openItems>) => ({ count: items.length, risk: shortRM(totalRisk(items)) });
+export const auditLine = (audit: { count: number; risk: string }) => audit.count ? `${audit.count} ${audit.count === 1 ? "note" : "notes"} · ${audit.risk} at risk` : "All queries sent";
+export const auditOf = (items: AuditItem[]) => ({ count: items.length, risk: shortRM(totalRisk(items)) });
 
 /** The care inbox as the home key needs it: `on` in live mode, `allowed` for a role that reads it. */
 type Messages = { on: boolean; allowed: boolean; waiting: number; urgent: number; line: string };
@@ -46,7 +47,7 @@ export function useHomeActions(patients: Patient[], encounters: Record<string, E
   useServerEncounter(patients.find(p => p.id === DEMO_PATIENT));
   const role = useRole();
   const ack = { allowed: role.can("results.acknowledge"), failed: useAckFailed() };
-  const audit = openItems(encounters, useSent());
+  const audit = useOpenAudit();
   const training = useTrainingStatus();
   const messages = { ...useInboxSummary(), allowed: role.can("messages.inbox") };
   // Management's home leads with the ward card, so its keys are its own jobs, not clinical ones.

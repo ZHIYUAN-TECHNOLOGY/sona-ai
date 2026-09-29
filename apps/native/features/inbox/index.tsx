@@ -123,7 +123,7 @@ export function InboxScreen() {
     {!groups.length && <Animated.View entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 8, duration: 320 })} layout={layout}>
       <Surface style={{ padding: 20, flexDirection: "row", alignItems: "center", gap: 12 }}>
         <BrandIcon name="check" size={22} color={palette.green} strokeWidth={2} />
-        <Text style={{ ...type.body, color: palette.ink, flex: 1 }}>All caught up — no patient is waiting for a reply.</Text>
+        <Text style={{ ...type.body, color: palette.ink, flex: 1 }}>No patient is waiting for a reply.</Text>
       </Surface>
     </Animated.View>}
     {handled.length > 0 && <Animated.View layout={layout} style={{ gap: 6, paddingTop: 6 }}>

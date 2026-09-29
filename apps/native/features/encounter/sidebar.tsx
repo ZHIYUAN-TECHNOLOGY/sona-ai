@@ -3,7 +3,7 @@ import { DataPill } from "@/components/sona/model-answer";
 import { Text } from "@/components/sona/text";
 import { palette } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
-import { openItems, useSent } from "@/features/audit/model";
+import { useOpenAudit } from "@/features/audit";
 import { useInboxSummary } from "@/features/inbox";
 import { useRole } from "@/features/live/roles";
 import { useTrainingStatus } from "@/features/training";
@@ -55,7 +55,7 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
   const { can } = useRole();
   const inbox = useInboxSummary();
   const ward = wardSummary(wardBeds(useDayPatients(patients), encounters));
-  const audit = auditOf(openItems(encounters, useSent()));
+  const audit = auditOf(useOpenAudit());
   const training = useTrainingStatus();
 
   const items: Item[] = [
@@ -97,10 +97,12 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
         {primary.map(item => <Row key={item.label} item={item} />)}
         <Divider />
         <Row item={{ label: "Share feedback", icon: "feedback", onPress: go(() => router.push("/history")) }} />
-        <Divider />
-        <Text accessibilityRole="header" style={{ fontSize: 13, color: palette.muted, paddingHorizontal: 14, paddingTop: 4, paddingBottom: 6 }}>History</Text>
-        {recent.length ? recent.map(p => <Row key={p.id} item={{ label: p.name, icon: "clock", detail: `${p.subtitle} · ${encounters[p.id]!.requests.length} ${encounters[p.id]!.requests.length === 1 ? "request" : "requests"}`, onPress: go(() => openSession(p.id)) }} />)
-          : <Text style={{ fontSize: 15, color: palette.muted, paddingHorizontal: 14, paddingVertical: 8 }}>Encounters appear here after your first request.</Text>}
+        {/* History shows once there is some; an empty section says nothing worth the space. */}
+        {recent.length > 0 && <>
+          <Divider />
+          <Text accessibilityRole="header" style={{ fontSize: 13, color: palette.muted, paddingHorizontal: 14, paddingTop: 4, paddingBottom: 6 }}>History</Text>
+          {recent.map(p => <Row key={p.id} item={{ label: p.name, icon: "clock", detail: `${p.subtitle} · ${encounters[p.id]!.requests.length} ${encounters[p.id]!.requests.length === 1 ? "request" : "requests"}`, onPress: go(() => openSession(p.id)) }} />)}
+        </>}
       </ScrollView>
     </Animated.View>
 

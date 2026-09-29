@@ -9,6 +9,7 @@ test("twelve notes and about RM 19k at risk before anything is sent", () => {
   expect(totalRisk(items)).toBe(19230);
   expect(formatRM(19230)).toBe("RM 19,230");
   expect(shortRM(19230)).toBe("RM 19k");
+  expect(shortRM(630)).toBe("RM 630");
 });
 
 test("sent queries and the flow 2 organism fix both clear rows", () => {

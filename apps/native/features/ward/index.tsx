@@ -14,7 +14,8 @@ import { useEncounter } from "@/features/encounter/store";
 import { ErrorLine } from "@/components/sona/parts";
 import { api, errorText, useLive } from "@/features/live";
 import { useRole } from "@/features/live/roles";
-import { openItems, shortRM, totalRisk, useSent } from "@/features/audit/model";
+import { useOpenAudit } from "@/features/audit";
+import { auditLine, auditOf } from "@/features/encounter/quick-actions";
 import { FollowUpList } from "@/features/findings";
 import { useFindings } from "@/features/live/findings-sync";
 import { useServerEncounter } from "@/features/live/sync";
@@ -116,7 +117,7 @@ export function WardScreen() {
   const server = useLiveHuddle(briefed && Boolean(serverBeds), `${beds.map(b => `${b.bed}:${b.blockers.map(x => x.id).join(",")}`).join("|")}#${wardVersion}`);
   const local = huddle(beds, owners);
   const lines = server.data?.lines ?? local;
-  const audit = openItems(encounters, useSent());
+  const audit = useOpenAudit();
   const current = open && beds.find(b => b.bed === open.bed);
   const forecast = useForecast(beds, findings, owners);
   // "Frees fastest" opens the bed's card at the blocker; a row the filter hides shows under All first, then opens once mounted.
@@ -190,8 +191,8 @@ export function WardScreen() {
           {(can("audit.list") || training.allowed) && <View style={{ flexDirection: "row", gap: 12 }}>
             {can("audit.list") && <ToolTile icon="doc.text.magnifyingglass" title="Coding audit" onPress={() => router.push("/audit")}
               tint={audit.length ? palette.amber : TEAL} fill={audit.length ? "rgba(196,120,20,0.12)" : "rgba(15,110,102,0.1)"}
-              line={audit.length ? `${audit.length} notes · ${shortRM(totalRisk(audit))} at risk` : "All queries sent"} lineColor={audit.length ? palette.amber : TEAL}
-              label={`Coding audit, ${audit.length} notes, ${shortRM(totalRisk(audit))} at risk`} />}
+              line={auditLine(auditOf(audit))} lineColor={audit.length ? palette.amber : TEAL}
+              label={`Coding audit, ${auditLine(auditOf(audit))}`} />}
             {training.allowed && <ToolTile icon="shield.lefthalf.filled" title="Training data" onPress={() => router.push("/training")}
               tint={training.status?.counts.blocked ? palette.red : palette.blue} fill={training.status?.counts.blocked ? "rgba(162,62,62,0.1)" : "rgba(36,91,204,0.1)"}
               line={training.status ? trainingLine(training.status.counts) : "De-identified samples to review"} lineColor={palette.muted}

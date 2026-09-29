@@ -75,6 +75,9 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const [scrolled, setScrolled] = useState(false);
   // Home: the quick-action grid collapses into a sticky row once it scrolls under the top bar.
   const scrollSV = useSharedValue(0);
+  // The scroll offset where the grid's bottom meets the capsule's (capsule at top + 62, 44 pt tall), measured from the grid.
+  const [shelfFrom, setShelfFrom] = useState(210);
+  const [capsule, setCapsule] = useState(false);
   // Sidebar: the page slides right to reveal it. A finger drives it, so springs carry velocity.
   const { reducedMotion } = useAccessibleEffects();
   const [drawer, setDrawer] = useState(false);
@@ -198,10 +201,11 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     <View ref={backdrop} collapsable={false} accessibilityElementsHidden={drawer} importantForAccessibility={drawer ? "no-hide-descendants" : "auto"} style={{ flex: 1, backgroundColor: palette.canvas }}>
     <AmbientWash quiet={requests.length > 0} thinking={Boolean(thinking)} />
     <ScrollView ref={scroll} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentInsetAdjustmentBehavior="never" scrollEventThrottle={48}
-      onScroll={event => { scrollY.current = event.nativeEvent.contentOffset.y; scrollSV.set(scrollY.current); const next = scrollY.current > 8; if (next !== scrolled) setScrolled(next); }}
+      onScroll={event => { scrollY.current = event.nativeEvent.contentOffset.y; scrollSV.set(scrollY.current); const next = scrollY.current > 8; if (next !== scrolled) setScrolled(next); const cap = scrollY.current > shelfFrom; if (cap !== capsule) setCapsule(cap); }}
       onScrollEndDrag={syncTab} onMomentumScrollEnd={syncTab}
       contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + (!home && sections.length >= 2 ? 112 : 72), paddingBottom: insets.bottom + 150 + (steps ? 66 : 0), flexGrow: 1 }}>
-      {!requests.length ? <Home patient={patient} patients={patients} onPick={pick} onChoosePatient={() => router.push("/patients")} onSelectPatient={id => openSession(id)} />
+      {!requests.length ? <Home patient={patient} patients={patients} onPick={pick} onChoosePatient={() => router.push("/patients")} onSelectPatient={id => openSession(id)}
+        onShelf={bottom => setShelfFrom(Math.max(0, Math.round(bottom + scrollY.current - (insets.top + 106))))} />
       : <View style={{ gap: 44 }}>
         {compactResponses && requests.length > 1 && <Action label={showEarlier ? "Collapse earlier responses" : `Show ${requests.length - 1} earlier responses`} secondary onPress={() => setShowEarlier(value => !value)} />}
         {visible.map(req => {
@@ -244,8 +248,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     {!home && sections.length >= 2 && !active && <View pointerEvents="box-none" style={{ position: "absolute", top: TAB_TOP, left: 0, right: 0, alignItems: "center", zIndex: 2 }}>
       <SectionTabs sections={sections} active={Math.min(activeTab, sections.length - 1)} onPick={jumpTo} />
     </View>}
-    {home && !requests.length && <QuickRow actions={homeKeys} scroll={scrollSV} from={210} top={insets.top + 62} />}
-    <TopBar patient={patient} inEncounter={!home} openTasks={(patient ? [encounter] : Object.values(encounters)).reduce((sum, value) => sum + (value?.tasks.filter(task => !task.completed).length ?? 0), 0)} faded={scrolled || requests.length > 0} onMenu={openDrawer} onBack={home ? undefined : () => router.canGoBack() ? router.back() : router.replace("/")} onPatient={() => router.push({ pathname: "/patients", params: { switch: "1" } })} onTasks={() => router.push("/tasks")} />
+    {home && !requests.length && <QuickRow actions={homeKeys} scroll={scrollSV} from={shelfFrom} top={insets.top + 62} />}
+    <TopBar patient={patient} inEncounter={!home} openTasks={(patient ? [encounter] : Object.values(encounters)).reduce((sum, value) => sum + (value?.tasks.filter(task => !task.completed).length ?? 0), 0)} faded={scrolled || requests.length > 0} tall={home && !requests.length && capsule} onMenu={openDrawer} onBack={home ? undefined : () => router.canGoBack() ? router.back() : router.replace("/")} onPatient={() => router.push({ pathname: "/patients", params: { switch: "1" } })} onTasks={() => router.push("/tasks")} />
     </View>
 
     {/* Everything under the dock blurs progressively, on home and in visits alike. */}
