@@ -15,7 +15,12 @@ MEDICINES = dict(re.findall(r'id: "([\w-]+)".*?label: "([^"]+)"', read("apps/nat
 PATIENTS = dict(re.findall(r'id: "(SYN-\d+)".*?subtitle: "([^"]+)"', read("packages/domain/src/demo-patients.ts")))
 
 # Kept short: Laya shares one 256-token budget across a question's options.
-CAPABILITY_OPTIONS = {**json.loads((Path(__file__).parent / "cards.json").read_text()), "not-covered": "None of the above"}
+# The backend owns the trained wording (packages/api/src/laya.ts); the medicine labels must match the app's catalogue.
+LAYA = read("packages/api/src/laya.ts")
+laya_consts = lambda name: dict(re.findall(r'"?([\w-]+)"?: "([^"]+)"', re.search(rf"export const {name} = \{{(.*?)\}} as const", LAYA, re.S)[1]))
+CARDS = laya_consts("CARDS")
+assert laya_consts("MEDICINES") == MEDICINES, "laya.ts MEDICINES drifted from the app's medicine catalogue"
+CAPABILITY_OPTIONS = {**CARDS, "not-covered": "None of the above"}
 MEDICINE_OPTIONS = {**MEDICINES, "none": "No specific medicine named"}
 
 

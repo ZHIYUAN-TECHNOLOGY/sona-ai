@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
 
-import { layaEvaluator, type ChoiceQuestion } from "./laya";
+import { readFileSync } from "node:fs";
+
+import { layaEvaluator, pickCard, type ChoiceQuestion, type Evaluator } from "./laya";
 
 const capability: ChoiceQuestion = {
   type: "choice",
@@ -32,3 +34,27 @@ test.skipIf(!process.env.LAYA_URL)("the fine-tuned model picks the medication re
   const { answers } = await layaEvaluator({ url: process.env.LAYA_URL! })(request);
   expect(answers.capability!.choice).toBe("medication");
 });
+
+test("pickCard asks the trained question and turns 'none of the above' into no card", async () => {
+  let asked: Parameters<Evaluator>[0] | undefined;
+  const answer = (capability: string, medicine: string): Evaluator => async request => { asked = request; return { answers: { capability: { choice: capability, confidence: 0.9 }, medicine: { choice: medicine } } }; };
+  expect(await pickCard(answer("medication", "salbutamol-inhaler"), { request: "Salbutamol dia ada clash?", patient: "Respiratory review" }))
+    .toEqual({ card: "medication", medicine: "salbutamol-inhaler", confidence: 0.9 });
+  expect(asked!.state).toEqual({ request: "Salbutamol dia ada clash?", patient: "Respiratory review" });
+  expect(Object.keys(asked!.questions.capability!.criteria)).toContain("not-covered");
+  expect(await pickCard(answer("not-covered", "none"), { request: "Refer him to cardio", patient: "History to complete" })).toMatchObject({ card: null, medicine: null });
+});
+
+// The whole held-out baseline through the TypeScript path, against tools/laya-eval/serve.py running v2.
+test.skipIf(!process.env.LAYA_URL)("the fine-tuned model clears the 90% bar on the held-out baseline through pickCard", async () => {
+  const LABELS: Record<string, string> = { "SYN-1042": "Respiratory review", "SYN-1086": "History to complete" }; // demo-patients.ts subtitles
+  const cases = readFileSync(new URL("../../../tools/laya-eval/baseline.jsonl", import.meta.url), "utf8").split("\n").filter(Boolean).map(line => JSON.parse(line));
+  const evaluate = layaEvaluator({ url: process.env.LAYA_URL! });
+  let right = 0;
+  for (const c of cases) {
+    const { card } = await pickCard(evaluate, { request: c.request, patient: LABELS[c.patient]! });
+    if ((card ?? "not-covered") === c.capability) right++;
+  }
+  console.log(`pickCard: ${right}/${cases.length}`);
+  expect(right / cases.length).toBeGreaterThanOrEqual(0.9);
+}, 60_000);

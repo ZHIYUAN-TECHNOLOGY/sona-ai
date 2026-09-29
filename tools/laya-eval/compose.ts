@@ -12,13 +12,13 @@ import { experimental_composeSpec, type Experimental_CompositionEvaluator as Eva
 import { readFileSync, writeFileSync } from "node:fs";
 import { z } from "zod";
 
-import { layaEvaluator } from "../../packages/api/src/laya";
+import { CARDS as TRAINED_CARDS, layaEvaluator } from "../../packages/api/src/laya";
+
+const CARDS: Record<string, string> = TRAINED_CARDS;
 
 const here = (file: string) => new URL(`./${file}`, import.meta.url);
 const lines = (file: string) => readFileSync(here(file), "utf8").split("\n").filter(Boolean).map(line => JSON.parse(line));
 
-// Card descriptions are shared with check.py; the backend must offer the same ones Laya was trained on.
-const CARDS: Record<string, string> = JSON.parse(readFileSync(here("cards.json"), "utf8"));
 const COLUMN = "Vertical clinical response";
 const NOTICE = "Notice listing what the patient's record does not document yet";
 const SOURCE = "Open the source record behind the answer";

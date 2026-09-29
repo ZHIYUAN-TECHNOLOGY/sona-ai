@@ -39,6 +39,7 @@ iPhone (Expo)
 - **Encounter state on the server:** the app currently keeps every visit in memory. Each encounter's state lives in its Durable Object and is snapshotted to Postgres. The server enforces revisions: an eligibility or medicine edit invalidates the medication review, and prescription and discharge receipts are idempotent.
 - **Login:** use the real login screen. Restyling the existing Better Auth sign-in screens is a UI-track task.
 - **UI generation:** json-render's JEV engine, `experimental_composeSpec`, which is exported by the installed `@json-render/core` 0.21.0. Pin that exact version. **Laya** is the evaluator, self-hosted in box ①. Gemma, constrained to the offered keys, is the backup evaluator.
+  - **Decided 29 Sep:** the predefined pages use Laya's direct pick (`pickCard` in `packages/api/src/laya.ts`: one "which card?" question, 92% on the held-out Manglish baseline, about 40 ms), and the app builds the screen around the card. Inside the composer, whose per-card use/omit questions Laya was retrained on three times, whole screens stayed at 84–86%, so the composer is kept for free layouts only. Details in the [Laya baseline](../tools/laya-eval/README.md).
   - Pages are predefined for common hospital work: the eight capabilities (evidence is the eighth), ward round, handover, discharge, guarantee letter, coding audit and referral.
   - Anything those pages don't cover gets a free layout composed from design-system blocks.
   - Candidates own their props. Clinical values arrive only by source ID.
@@ -105,7 +106,7 @@ Train a model only if it fails its day 1–3 baseline. Because Manglish is the p
 | --- | --- | --- | --- | --- | --- |
 | 1 | Qwen3-ASR-1.7B | Baseten Training Jobs, 1×H100 | Baseten's `qwen3-asr-transformers` recipe | ~30 h synthetic Manglish consultations plus ~30 h licensed real speech; see the [ASR training plan](asr-training-plan.md) | ~2–6 h per run |
 | 2 | VoxCPM2 | Baseten Training Jobs, 1×H100 | Official LoRA | 1–3 h of one voice actor reading Manglish scripts | ~2–5 h |
-| 3 | Laya (**done 29 Sep: v2 passes, 92% vs 34% untrained, 41 ms**; see [Laya baseline](../tools/laya-eval/README.md)) | Kaggle free T4 x2 | Laya notebook plus calibration | Synthetic composition decisions from the catalogue and fixtures | Free (~6 min) |
+| 3 | Laya (**done 29 Sep: v2 passes on the direct pick, 92% vs 34% untrained, 41 ms; composer-format v3–v5 84–86%**; see [Laya baseline](../tools/laya-eval/README.md)) | Kaggle free T4 x2 | Laya notebook plus calibration | Synthetic composition decisions from the catalogue and fixtures | Free (~6 min) |
 | Conditional | Gemma 4 (Unsloth), Nemotron | Baseten Training Jobs | Only if the baseline fails | — | — |
 | Never | MedGemma, ForcedAligner, OpenMed | — | — | — | — |
 
