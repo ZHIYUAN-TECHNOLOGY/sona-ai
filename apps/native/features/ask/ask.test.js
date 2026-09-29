@@ -1,0 +1,45 @@
+import { expect, test } from "bun:test";
+import { matchQuestion, needsYou, overdue, soonest, toWatch } from "./answers";
+import { validateAskSpec } from "./catalog";
+
+const parts = answer => Object.values(answer.spec.elements).filter(e => e.type !== "AskColumn");
+
+test("every rule answer is a valid spec from the ask catalogue, empty or full", () => {
+  const answers = [
+    needsYou([]), needsYou([{ id: "SYN-1", title: "Daniel Rahman", detail: "Low potassium", tone: "urgent", op: "open:SYN-1" }]),
+    overdue([]), overdue([{ id: "t1", patientId: "SYN-1", patientName: "Daniel", title: "Repeat K+", owner: "Nurse", due: "2026-09-28", group: "overdue" }]),
+    soonest([]), soonest([{ bed: "Bed 6", name: "Amelia", status: "fit", blockers: [{ label: "GL pending" }], waitingHours: 6 }, { bed: "Bed 11", name: "Lim", status: "fit", blockers: [] }]),
+    toWatch([]), toWatch([{ id: "c1", patientId: "SYN-1", name: "Siti", priority: "watch", situation: "K+ 2.9" }]),
+  ];
+  for (const a of answers) expect(validateAskSpec(a.spec)).not.toBeNull();
+});
+
+test("empty answers say so plainly and offer no rows or actions", () => {
+  expect(parts(needsYou([])).map(p => [p.type, p.props.text])).toEqual([["AskLead", "Nobody needs you right now."]]);
+  expect(parts(overdue([]))[0].props.text).toBe("Nothing is overdue or due today.");
+});
+
+test("the ward answer counts free beds and bed-hours held, and the overdue answer reviews the first overdue task", () => {
+  const ward = soonest([{ bed: "Bed 6", name: "Amelia", status: "fit", blockers: [{ label: "GL pending" }], waitingHours: 6 }, { bed: "Bed 11", name: "Lim", status: "fit", blockers: [] }, { bed: "Bed 3", name: "Siti", status: "watch", blockers: [] }]);
+  expect(parts(ward)[0].props.text).toBe("1 bed can free now; 1 discharge is blocked, about 6 bed-hours waiting.");
+  expect(parts(ward)[1].props.rows.map(r => [r.title, r.tone])).toEqual([["Bed 11 · Lim", "good"], ["Bed 6 · Amelia", "soon"]]);
+  const tasks = overdue([{ id: "t1", patientId: "SYN-1", patientName: "Daniel", title: "Repeat K+", owner: "Nurse", due: "2026-09-28", group: "overdue" }, { id: "t2", patientId: "SYN-2", patientName: "Amelia", title: "Claim", owner: "Billing", due: "Today", group: "today" }]);
+  expect(parts(tasks)[0].props.text).toBe("1 task overdue, 1 due today.");
+  expect(parts(tasks)[2]).toMatchObject({ type: "AskReview", props: { op: "task-done:SYN-1:t1", confirm: "Mark done" } });
+});
+
+test("a spec with an unknown part, a nested part or a code-like action is refused", () => {
+  const ok = needsYou([{ id: "SYN-1", title: "Daniel", detail: "x", tone: "urgent", op: "open:SYN-1" }]).spec;
+  expect(validateAskSpec({ ...ok, elements: { ...ok.elements, "needs-0": { type: "Script", props: {}, children: [] } } })).toBeNull();
+  const bad = structuredClone(ok); bad.elements["needs-1"].props.rows[0].op = "javascript:alert(1)";
+  expect(validateAskSpec(bad)).toBeNull();
+  const nested = structuredClone(ok); nested.elements["needs-0"].children = ["needs-1"];
+  expect(validateAskSpec(nested)).toBeNull();
+});
+
+test("a typed question finds this page's answer by its words", () => {
+  const answers = [needsYou([]), overdue([])];
+  expect(matchQuestion("who is most urgent?", answers)?.id).toBe("needs");
+  expect(matchQuestion("anything late?", answers)?.id).toBe("overdue");
+  expect(matchQuestion("what's the weather", answers)).toBeUndefined();
+});

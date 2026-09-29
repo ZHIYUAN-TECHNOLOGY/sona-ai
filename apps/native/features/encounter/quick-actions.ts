@@ -126,3 +126,19 @@ export function visitActions(patient: Patient, encounter: Encounter | undefined,
     ...scan ? [{ key: "scan", label: "Scan note", icon: "doc.viewfinder", status: "Handwritten notes into the record", onPress: () => go("scan") }] : [],
   ];
 }
+
+/**
+ * The visit's full tool row: the keys above plus the note, its follow-up tasks and discharge (when
+ * this patient has a discharge plan), each with its state. Consultation and Note moved here from the sidebar.
+ */
+export function visitTools(patient: Patient, encounter: Encounter | undefined, server: ServerData, go: (target: VisitTarget) => void, scan: boolean, discharge: boolean): QuickAction[] {
+  const [brief, consult, ...rest] = visitActions(patient, encounter, server, go, scan);
+  const openTasks = encounter?.tasks.filter(t => !t.completed).length ?? 0;
+  const drafted = Boolean(encounter?.note.trim() || encounter?.noteSections);
+  return [brief!, consult!,
+    { key: "note", label: "Note", icon: "doc.text", status: encounter?.noteReviewed ? "Reviewed" : drafted ? "Draft to review" : "Not started", tone: encounter?.noteReviewed ? "good" : drafted ? "caution" : "calm", onPress: () => router.push("/note") },
+    ...rest,
+    { key: "tasks", label: "Tasks", icon: "checklist", status: openTasks ? `${openTasks} open` : "None yet", badge: openTasks, onPress: () => router.push("/tasks") },
+    ...discharge ? [{ key: "discharge", label: "Discharge", icon: "bed.double", status: encounter?.discharge?.dischargedAt ? "Discharged" : "Check what blocks it", tone: encounter?.discharge?.dischargedAt ? "good" as const : "calm" as const, onPress: () => router.push("/discharge") }] : [],
+  ];
+}

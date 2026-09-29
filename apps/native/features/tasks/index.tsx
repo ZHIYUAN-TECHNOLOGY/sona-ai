@@ -18,7 +18,9 @@ import { useEncounter } from "@/features/encounter/store";
 import type { Encounter, FeatureProps, Task } from "@/features/encounter/types";
 import { errorText, requestId, useLive } from "@/features/live";
 import { completeServerTask, createServerTask, useServerData, useVisitTasks } from "@/features/live/server-day";
-import { taskCounts } from "./counts";
+import { DUE_GROUPS, dueGroup, taskCounts } from "./counts";
+import { ASK_SPACE, AskBar } from "@/features/ask";
+import { overdue } from "@/features/ask/answers";
 import { createTaskOnce, dayFromToday, friendlyDate, localDate, longDate, MONTHS, mentionQuery, parseDuePhrase, proposedTask, taskDraftErrors, taskProposal, type TaskDraft } from "./state";
 
 /**
@@ -422,7 +424,7 @@ function TasksInsight({ tasks, eyebrow }: { tasks: Task[]; eyebrow?: string }) {
 function AllFollowUps() {
   const { patients, selectPatient } = useEncounter();
   const tasksOf = useVisitTasks();
-  return <Screen>
+  return <View style={{ flex: 1 }}><Screen>
     <TasksInsight tasks={patients.flatMap(tasksOf)} />
     <VisitFollowUps />
     <View style={{ gap: 10 }}>
@@ -432,7 +434,17 @@ function AllFollowUps() {
       </View>
     </View>
     <SessionNote />
-  </Screen>;
+    <View style={{ height: ASK_SPACE }} />
+  </Screen><TasksAsk /></View>;
+}
+
+/** Sona on the tasks page: what's overdue across today's visits, with the most overdue one to mark done after a review. */
+function TasksAsk() {
+  const { patients } = useEncounter();
+  const tasksOf = useVisitTasks();
+  const { on: live } = useLive();
+  const lines = patients.flatMap(p => tasksOf(p).filter(t => !t.completed).map(t => ({ id: t.id, patientId: p.id, patientName: p.name, title: t.title, owner: t.owner, due: t.due, group: dueGroup(t.due) })));
+  return <AskBar scope="tasks" answers={[overdue(lines, !live)]} />;
 }
 
 export function TasksScreen() {
@@ -512,18 +524,19 @@ export function TasksScreen() {
     <TaskRow task={task} disabled={pending} onToggle={() => toggle(task)} />
   </Animated.View>;
 
-  return <Screen>
+  return <View style={{ flex: 1 }}><Screen>
     <TasksInsight tasks={tasks} eyebrow={patient.name} />
     {draft && <Composer key={draft.operationId} draft={draft} pending={pending} error={error} onChange={change => updateEncounter(current => ({ ...current, taskDraft: { ...current.taskDraft!, ...change } }))} onSave={save} />}
     {/* One keyed list, so a completed row glides into Completed instead of remounting there. */}
     {[
-      open.length > 0 && <Section key="open" title="Open" count={open.length} />,
-      ...open.map(row),
+      // Open tasks by when they're due (overdue first), so the next one to chase leads.
+      ...DUE_GROUPS.flatMap(g => { const group = open.filter(task => dueGroup(task.due) === g.id); return group.length ? [<Section key={g.id} title={g.title} count={group.length} />, ...group.map(row)] : []; }),
       done.length > 0 && <Section key="done" title="Completed" count={done.length} />,
       ...done.map(row),
     ]}
     {patients.some(p => p.id !== patient.id && tasksOf(p).length) && <Text accessibilityRole="header" style={{ fontSize: 15, fontWeight: "600", color: palette.ink, paddingTop: 10, paddingHorizontal: 4 }}>Other visits</Text>}
     <VisitFollowUps except={patient.id} />
     <SessionNote />
-  </Screen>;
+    <View style={{ height: ASK_SPACE }} />
+  </Screen><TasksAsk /></View>;
 }

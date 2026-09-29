@@ -39,6 +39,5 @@ export default function RootLayout() {
     <Stack.Screen name="library-ocr" options={{ title: "Read with OCR", presentation: "modal" }} />
     <Stack.Screen name="library-scanned" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
     <Stack.Screen name="library-add" options={{ headerShown: false, presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 28 }} />
-    <Stack.Screen name="account" options={{ title: "Account scaffold" }} />
   </Stack><LiveUpdates /><CriticalAlert /></EncounterProvider></SafeAreaProvider></KeyboardProvider></GestureHandlerRootView>;
 }

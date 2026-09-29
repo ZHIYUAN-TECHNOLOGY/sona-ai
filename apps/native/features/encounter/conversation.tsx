@@ -1,9 +1,11 @@
+import { isRehearsed } from "@sona-ai/domain/evidence";
 import { router, useIsFocused } from "expo-router";
 import { DrawnCheck } from "@/components/sona/parts";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { MyDay } from "@/features/day";
-import { QuickActions, type ShelfCollapse } from "@/components/sona/quick-actions";
-import { useHomeActions, visitActions, visitNeed, type VisitNeed } from "./quick-actions";
+import { ToolRow, type ShelfCollapse } from "@/components/sona/quick-actions";
+import { canDischarge } from "@/features/discharge/model";
+import { useHomeActions, visitNeed, visitTools, type VisitNeed } from "./quick-actions";
 import { openSession } from "./navigation";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -58,7 +60,7 @@ export function thinkingLabel(kind: Capability, patient: Patient) {
 }
 
 /** Authored one-sentence answers. They describe the fixture honestly; none is model output. */
-export function leadFor(kind: Capability, patient: Patient) {
+export function leadFor(kind: Capability, patient: Patient, prompt = "") {
   const name = first(patient);
   if (patient.incomplete) {
     const gaps: Partial<Record<Capability, string>> = {
@@ -76,7 +78,8 @@ export function leadFor(kind: Capability, patient: Patient) {
     prescription: "Here’s the prescribing simulation, with every check it ran before creating a receipt.",
     followup: "Here’s a follow-up plan you can turn into owned, dated tasks.",
     note: "Here’s the consultation note drafted from the transcript, ready for your edits.",
-    evidence: `The evidence is against routine steroids here. ${name}’s severity score decides which studies apply.`,
+    // The steroid summary belongs to the rehearsed question only; a follow-up or any other question gets a neutral lead.
+    evidence: !prompt || isRehearsed(prompt) ? `The evidence is against routine steroids here. ${name}’s severity score decides which studies apply.` : "Sona answers only from sources it can cite, and says so when there are none.",
   };
   return leads[kind];
 }
@@ -199,8 +202,8 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
         </Text> : null}
       </Animated.View>
       <NeedLine need={need} entering={rise(2)} onPress={shown => go(shown.target)} />
-      <Animated.View entering={rise(3)} layout={reducedMotion ? undefined : LAYOUT} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {patient ? <QuickActions actions={visitActions(patient, encounters[patient.id], server, go, canScan)} /> : null}
+      <Animated.View entering={rise(3)} layout={reducedMotion ? undefined : LAYOUT}>
+        {patient ? <ToolRow actions={visitTools(patient, encounters[patient.id], server, go, canScan, canDischarge(patient))} /> : null}
       </Animated.View>
     </View>
   </View>;

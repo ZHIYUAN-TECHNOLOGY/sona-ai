@@ -1,12 +1,12 @@
 import * as Haptics from "expo-haptics";
 import { useEffect, useState } from "react";
-import { Pressable, View, useWindowDimensions } from "react-native";
+import { Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
 import { HalftoneGlint, HalftoneShimmer } from "./halftone-shimmer";
 import { riseIn } from "./motion";
 import { Text } from "./text";
 import { palette, type } from "./theme";
-import { Glass, Icon, useAccessibleEffects } from "./ui";
+import { Glass, Icon, surfaceStyle, useAccessibleEffects } from "./ui";
 
 /**
  * Quick actions as one liquid-glass shelf: four segments split by hairlines, each a blue glyph, a
@@ -134,4 +134,24 @@ export function QuickRow({ actions, scroll, from, top }: { actions: QuickAction[
       </View>
     </Glass>
   </Animated.View>;
+}
+
+/**
+ * A visit's tools in one horizontal row (docs/design-direction.md, Information architecture): every
+ * tool the visit has, each with its live state in its meaning colour, so tools that need a patient
+ * live here rather than in the sidebar. Compact glass tiles; the row scrolls sideways past four.
+ */
+export function ToolRow({ actions }: { actions: QuickAction[] }) {
+  return <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 20, paddingVertical: 4 }}>
+    {actions.map(a => { const tone = a.tone ?? "calm";
+      return <Pressable key={a.key} accessibilityRole="button" accessibilityLabel={`${a.label}, ${a.status}`} onPress={() => { tap(); a.onPress(); }}
+        style={({ pressed }) => ({ width: 108, minHeight: 104, padding: 10, gap: 6, alignItems: "flex-start", ...surfaceStyle, borderRadius: 20, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: DISC[tone].fill, alignItems: "center", justifyContent: "center" }}>
+          <Icon name={a.icon} size={15} color={palette.white} />
+          {a.badge ? <View style={{ position: "absolute", top: -4, right: -6, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: palette.white, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 10, fontWeight: "700", color: DISC[tone].fill, fontVariant: ["tabular-nums"] }}>{a.badge}</Text></View> : null}
+        </View>
+        <Text numberOfLines={1} style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>{a.label}</Text>
+        <Text numberOfLines={2} style={{ ...type.caption, color: tone === "calm" ? palette.muted : INK[tone] }}>{a.status}</Text>
+      </Pressable>; })}
+  </ScrollView>;
 }
