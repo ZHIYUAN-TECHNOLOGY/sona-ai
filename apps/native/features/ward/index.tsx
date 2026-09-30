@@ -8,7 +8,8 @@ import { scheduleOnRN } from "react-native-worklets";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Action, Expand, Icon, Insight, Surface, canvasImage, glass, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Expand, Icon, Insight, Surface, canvasImage, glass, tone as INK, useAccessibleEffects } from "@/components/sona/ui";
+import { mostUrgent } from "@/components/sona/tone";
 import { ASK_SPACE, WithSona } from "@/features/ask";
 import { soonest } from "@/features/ask/answers";
 import { haptic } from "@/features/clinical/medication-parts";
@@ -25,7 +26,7 @@ import { useLiveHuddle } from "@/features/live/model-sync";
 import { useLiveChanges } from "@/features/live/channel";
 import { BedBar, ForecastTimeline, KIND, ThisWeek, useForecast, wardLine } from "./ops";
 import { withFindingBlockers } from "@/features/day/counts";
-import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedRow, defaultFilter, emptyLine, filterBeds, huddle, ownerReceipt, wardBeds, type Bed, type Owner, type WardFilter } from "./model";
+import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedKind, bedRow, defaultFilter, emptyLine, filterBeds, huddle, ownerReceipt, wardBeds, type Bed, type Owner, type WardFilter } from "./model";
 import { useWardOwners } from "./owners";
 
 /*
@@ -41,13 +42,22 @@ const TEAL = palette.green;
 // Screen's canvas. The ward keeps its own ScrollView because Screen takes no ref and the forecast link scrolls to its section.
 const OPEN = { duration: 480, dampingRatio: 0.82 }, CLOSE = { duration: 460, dampingRatio: 0.84 };
 type Rect = { x: number; y: number; w: number; h: number };
-const TONE: Record<Bed["status"], { label: string; ink: string }> = {
-  fit: { label: "Fit to go", ink: TEAL },
-  watch: { label: "Watch", ink: palette.amber },
-  stable: { label: "Stable", ink: palette.muted },
-  empty: { label: "Empty", ink: palette.muted },
-  free: { label: "Freed", ink: TEAL },
+const TONE: Record<Bed["status"], { label: string; tone: "good" | "soon" | "calm" }> = {
+  fit: { label: "Fit to go", tone: "good" },
+  watch: { label: "Watch", tone: "soon" },
+  stable: { label: "Stable", tone: "calm" },
+  empty: { label: "Empty", tone: "calm" },
+  free: { label: "Freed", tone: "good" },
 };
+/**
+ * A bed's state in one label and colour, the most urgent of its status and what holds it: a fit bed
+ * with a blocker is amber "Blocked · fit to go clinically", never green above its blockers.
+ */
+function bedTone(bed: Bed) {
+  const blocked = bedKind(bed) === "blocked";
+  const t = mostUrgent([TONE[bed.status].tone, ...bed.blockers.map(() => "soon" as const)]);
+  return { label: blocked ? "Blocked · fit to go clinically" : TONE[bed.status].label, ink: t === "calm" ? palette.muted : INK[t] };
+}
 
 export function WardScreen() {
   const { patients, encounters, selectPatient } = useEncounter();
@@ -145,19 +155,22 @@ export function WardScreen() {
 
   return <WithSona scope="ward" hidden={Boolean(open)} answers={[soonest(beds)]} onTab={t => { const f = asFilter(t); if (f) setPicked(f); }}>
   <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }}>
-    <Animated.View style={[{ flex: 1 }, gridStyle]} pointerEvents={open ? "none" : "auto"}>
+    <Animated.View style={[{ flex: 1 }, gridStyle]} pointerEvents={open ? "none" : "auto"} accessibilityElementsHidden={Boolean(open)} importantForAccessibility={open ? "no-hide-descendants" : "auto"}>
       <ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 44 + ASK_SPACE, gap: 18 }}>
         <Insight eyebrow={`Now · ${beds.length} beds`}>{wardLine(beds)}</Insight>
 
         {/* Huddle brief, the page's one feature card: one line and a small pill; the brief opens under it and the page below moves with it. */}
         <Surface feature layout={motion} style={{ padding: 16, gap: 4 }}>
-          <View style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(36,91,204,0.1)" }}>
-              <Icon name="waveform" size={12} color={palette.blue} />
+          {/* The pill wraps below the title when large text leaves no room beside it. */}
+          <View style={{ minHeight: 44, flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 10, rowGap: 8 }}>
+            <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 200, flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(36,91,204,0.1)" }}>
+                <Icon name="waveform" size={12} color={palette.blue} />
+              </View>
+              <Text numberOfLines={2} style={{ ...type.subhead, flex: 1, color: palette.muted }}><Text style={{ fontWeight: "600", color: palette.ink }}>Huddle</Text> · {briefed ? "30 seconds for the team" : local[1]}</Text>
             </View>
-            <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.muted }}><Text style={{ fontWeight: "600", color: palette.ink }}>Huddle</Text> · {briefed ? "30 seconds for the team" : local[1]}</Text>
             <Pressable accessibilityRole="button" accessibilityLabel={briefed ? "Hide the huddle brief" : "Brief me for the huddle"} accessibilityState={{ expanded: briefed }} hitSlop={7} onPress={() => { haptic("select"); setBriefed(v => !v); }}
-              style={{ height: 30, paddingHorizontal: 12, borderRadius: 15, justifyContent: "center", backgroundColor: briefed ? "rgba(20,28,40,0.06)" : palette.blue }}>
+              style={{ minHeight: 30, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 15, justifyContent: "center", backgroundColor: briefed ? "rgba(20,28,40,0.06)" : palette.blue }}>
               <Text style={{ ...type.footnote, fontWeight: "600", color: briefed ? palette.ink : palette.white }}>{briefed ? "Hide" : "Brief me"}</Text>
             </Pressable>
           </View>
@@ -167,7 +180,7 @@ export function WardScreen() {
               <Text style={{ ...type.footnote, fontWeight: "700", color: palette.blue, width: 14 }}>{i + 1}</Text>
               <MarkedText text={line} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
             </Animated.View>)}
-            <SampleLabel source={server.data?.source} rule what="briefing" />
+            <SampleLabel answer={server} rule what="briefing" />
             {server.error && <Text style={{ ...type.caption, color: palette.red }}>{server.error} · showing the ward's own count</Text>}
           </Expand>}
         </Surface>
@@ -180,7 +193,7 @@ export function WardScreen() {
             entering={reducedMotion ? undefined : riseIn({ delay: i * 30, distance: 8, duration: 260 })} exiting={reducedMotion ? undefined : FadeOutUp.duration(150)}
             style={{ borderTopWidth: i ? 1 : 0, borderColor: glass.hairline }}>
             <Pressable ref={v => { tiles.current[bed.bed] = v; }} collapsable={false} accessibilityRole="button" accessibilityState={{ disabled: !bed.name }}
-              accessibilityLabel={`${bed.bed}, ${bed.name ?? "no patient"}, ${TONE[bed.status].label}, ${row.when}${row.flag ? `, ${row.flag}` : ""}`} accessibilityHint={bed.name ? "Opens the bed" : undefined}
+              accessibilityLabel={`${bed.bed}, ${bed.name ?? "no patient"}, ${bedTone(bed).label}, ${row.when}${row.flag ? `, ${row.flag}` : ""}`} accessibilityHint={bed.name ? "Opens the bed" : undefined}
               onPress={() => bed.name && openBed(bed)}
               style={({ pressed }) => ({ opacity: open?.bed === bed.bed ? 0 : 1, transform: [{ scale: pressed && bed.name && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
               <RowFace bed={bed} />
@@ -223,7 +236,7 @@ function RowFace({ bed }: { bed: Bed }) {
     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: KIND[row.kind] }} />
     <View style={{ flex: 1, gap: 1 }}>
       <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{row.title}</Text>
-      <Text numberOfLines={1} style={{ ...type.caption, color: palette.muted }}>{row.when}{row.flag && <>{row.when ? " · " : ""}<Text style={{ fontWeight: "700", color: row.kind === "blocked" ? palette.red : TEAL }}>{row.flag}</Text></>}</Text>
+      <Text numberOfLines={1} style={{ ...type.caption, color: palette.muted }}>{row.when}{row.flag && <>{row.when ? " · " : ""}<Text style={{ fontWeight: "700", color: row.kind === "blocked" ? palette.amber : TEAL }}>{row.flag}</Text></>}</Text>
     </View>
     {bed.name && <Icon name="chevron.right" size={12} color={palette.muted} />}
   </View>;
@@ -242,10 +255,11 @@ function BedCard({ bed, focus, from, to, p, owners, told, onAssign, assignError,
   });
   const face = useAnimatedStyle(() => ({ opacity: interpolate(p.value, [0, 0.3], [1, 0], "clamp") }));
   const detail = useAnimatedStyle(() => ({ opacity: interpolate(p.value, [0.35, 1], [0, 1], "clamp"), transform: [{ translateY: interpolate(p.value, [0.35, 1], [12, 0], "clamp") }] }));
-  const tone = TONE[bed.status];
+  const tone = bedTone(bed);
   const sbar: [string, string][] = bed.sbar ? [["Situation", bed.sbar.s], ["Background", bed.sbar.b], ["Assessment", bed.sbar.a], ["Plan", bed.sbar.r]] : [];
 
-  return <Animated.View style={[{ position: "absolute", overflow: "hidden", borderCurve: "continuous", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", backgroundColor: "rgba(250,251,253,0.98)", boxShadow: "0 18px 48px rgba(40,70,140,0.16)" }, frame]}>
+  // Modal for VoiceOver: the ward behind it is hidden while it is open.
+  return <Animated.View accessibilityViewIsModal style={[{ position: "absolute", overflow: "hidden", borderCurve: "continuous", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", backgroundColor: "rgba(250,251,253,0.98)", boxShadow: "0 18px 48px rgba(40,70,140,0.16)" }, frame]}>
     <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 0, width: from.w }, face]}><RowFace bed={bed} /></Animated.View>
     <Animated.View style={[{ position: "absolute", left: 0, top: 0, width: to.w, height: to.h }, detail]}>
       <ScrollView contentContainerStyle={{ padding: 18, gap: 18 }}>
@@ -268,7 +282,7 @@ function BedCard({ bed, focus, from, to, p, owners, told, onAssign, assignError,
         </View>
 
         <View style={{ gap: 4 }}>
-          <Text style={{ ...type.overline, color: bed.blockers.length ? palette.red : TEAL }}>{bed.blockers.length ? `${bed.blockers.length} holding the discharge` : "Nothing holding the discharge"}</Text>
+          <Text style={{ ...type.overline, color: bed.blockers.length ? palette.amber : TEAL }}>{bed.blockers.length ? `${bed.blockers.length} holding the discharge` : "Nothing holding the discharge"}</Text>
           {bed.blockers.map(b => { const owner = owners[b.id]; return <View key={b.id} style={{ gap: 10, paddingVertical: 12, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)", ...(b.id === focus ? { marginHorizontal: -10, paddingHorizontal: 10, borderRadius: 14, backgroundColor: "rgba(36,91,204,0.07)" } : {}) }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <View style={{ flex: 1, gap: 2 }}>
@@ -280,9 +294,9 @@ function BedCard({ bed, focus, from, to, p, owners, told, onAssign, assignError,
                 <Text style={{ ...type.caption, fontWeight: "700", color: palette.white }}>{owner}</Text>
               </Animated.View>}
             </View>
-            {onAssign && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-              {OWNERS.map(o => { const on = owner === o, suggested = !owner && SUGGESTED[b.kind] === o; return <Pressable key={o} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={on ? `${b.label}, owned by ${o}. Clear owner` : `Assign ${b.label} to ${o}`} onPress={() => onAssign(b.id, o)} hitSlop={4}
-                style={{ height: 32, paddingHorizontal: 12, borderRadius: 16, justifyContent: "center", borderWidth: 1, borderColor: suggested ? "rgba(36,91,204,0.35)" : "transparent", backgroundColor: on ? palette.blue : "rgba(20,28,40,0.05)" }}>
+            {onAssign && <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: 6, rowGap: 8 }}>
+              {OWNERS.map(o => { const on = owner === o, suggested = !owner && SUGGESTED[b.kind] === o; return <Pressable key={o} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={on ? `${b.label}, owned by ${o}. Clear owner` : `Assign ${b.label} to ${o}`} onPress={() => onAssign(b.id, o)} hitSlop={{ top: 4, bottom: 4 }}
+                style={{ minHeight: 36, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 18, justifyContent: "center", borderWidth: 1, borderColor: suggested ? "rgba(36,91,204,0.35)" : "transparent", backgroundColor: on ? palette.blue : "rgba(20,28,40,0.05)" }}>
                 <Text style={{ ...type.footnote, fontWeight: "600", color: on ? palette.white : suggested ? palette.blue : palette.ink }}>{o}</Text>
               </Pressable>; })}
             </View>}

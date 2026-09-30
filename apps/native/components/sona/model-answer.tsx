@@ -64,11 +64,19 @@ export function DataPill({ onPress = openAbout }: { onPress?: () => void }) {
 }
 
 /**
+ * What a live answer's label goes by: the server's `source` once it answered, nothing while it drafts,
+ * and "fixture" otherwise (demo mode, or a failed call), since the screen then shows its authored or rule-based answer.
+ */
+export const answerSource = (answer: { loading: boolean; data?: { source?: string } }) => answer.loading ? undefined : answer.data?.source ?? "fixture";
+
+/**
  * The one label for an answer no model gave: "Sample · <what> model not switched on" (authored) or
  * "Rule-based" (fixed rules; with `what`, the model that replaces them). Shown only while `source` is
- * "fixture"; nothing once a model answered. Tap (the info glyph) for the about sheet.
+ * "fixture"; nothing once a model answered. Tap (the info glyph) for the about sheet. Pass `answer`
+ * (a live-answer hook's result) instead of `source`, so demo mode is labelled as live mode is.
  */
-export function SampleLabel({ source, what, rule = false }: { source?: string; what?: string; rule?: boolean }) {
+export function SampleLabel({ source: given, answer, what, rule = false }: { source?: string; answer?: Parameters<typeof answerSource>[0]; what?: string; rule?: boolean }) {
+  const source = answer ? answerSource(answer) : given;
   if (source !== "fixture") return null;
   const text = `${rule ? "Rule-based" : "Sample"}${what ? ` · ${what} model not switched on` : ""}`;
   return <Pressable accessibilityRole="button" accessibilityLabel={text} accessibilityHint="Why this is not a model answer" onPress={openAbout} hitSlop={8}

@@ -7,12 +7,13 @@ import { SampleLabel } from "@/components/sona/model-answer";
 import { Section } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Action, Chip, Expand, Icon, IconButton, Notice, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Chip, CloseButton, Expand, Icon, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { TranscriptLine } from "@/features/encounter/types";
 import { LiveWaveform } from "./live-waveform";
 import { buildDraft, elapsedLabel, scriptFor } from "./model";
 import { Dot, fieldStyle, haptic, StateLine } from "./parts";
+import { NoVisit } from "@/components/sona/no-visit";
 
 type Capture = "ready" | "permission" | "denied" | "interrupted" | "failed" | "processing";
 const RAIL = "rgba(20,28,40,0.12)";
@@ -155,7 +156,7 @@ export function RecordingScreen() {
   const status = statusFor(capture, encounter?.recording);
   const announced = useRef(status.label);
   useEffect(() => { if (announced.current !== status.label) { announced.current = status.label; AccessibilityInfo.announceForAccessibility(status.label); } }, [status.label]);
-  if (!patient || !encounter) return <Screen><Notice>Select a patient to open a consultation.</Notice></Screen>;
+  if (!patient || !encounter) return <NoVisit view="recording" what="a consultation" />;
 
   const layout = reducedMotion ? undefined : LAYOUT;
   const active = encounter.recording === "recording";
@@ -180,8 +181,8 @@ export function RecordingScreen() {
   const minimizeLabel = active || paused ? "Minimize to encounter" : "Return to encounter";
 
   return <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}><Screen>
-    {/* Minimize is the header's one control; playback keeps running from the encounter shell. */}
-    <Stack.Screen options={{ headerLeft: () => <IconButton name="chevron.down" label={minimizeLabel} onPress={() => router.back()} /> }} />
+    {/* Close (minimize) is the header's one control; playback keeps running from the encounter shell. */}
+    <Stack.Screen options={{ headerRight: () => <CloseButton label={minimizeLabel} /> }} />
     {/* Who, then one quiet honesty line: a sample (links to About data) with no microphone or audio. */}
     <View style={{ gap: 4 }}>
       <Text selectable style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{patient.name} · {patient.id}</Text>

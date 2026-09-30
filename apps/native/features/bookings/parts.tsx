@@ -188,7 +188,7 @@ export function BookingActions({ item }: { item: DayItem }) {
     }, e => { setError(errorText(e)); release(item.id); }).finally(() => setBusy(false));
   };
   if (done) return <DoneLine text={done} />;
-  const pill = (label: string, icon: string, dark: boolean, onPress: () => void) => <Pressable key={label} accessibilityRole="button" accessibilityLabel={`${label} ${first}'s request`} disabled={busy} onPress={onPress}
+  const pill = (label: string, icon: string, dark: boolean, onPress: () => void) => <Pressable key={label} accessibilityRole="button" accessibilityLabel={`${label} ${first}'s request`} disabled={busy} onPress={onPress} hitSlop={{ top: 5, bottom: 5 }}
     style={({ pressed }) => ({ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: dark ? palette.ink : "rgba(20,28,40,0.06)", opacity: pressed || busy ? 0.7 : 1 })}>
     <Icon name={icon} size={12} color={dark ? palette.white : palette.ink} />
     <Text style={{ ...type.subhead, fontWeight: "600", color: dark ? palette.white : palette.ink }}>{label}</Text>

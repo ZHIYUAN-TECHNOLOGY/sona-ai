@@ -26,6 +26,8 @@ import { useXrayUpload } from "@/features/live/xray-upload";
 import { takeXray } from "@/features/library/scan-state";
 import { teachingImage, type TeachingImage } from "./fixture";
 import { ImageEdge, OriginalImageViewer, VIEWING } from "./viewer";
+import { NoVisit } from "@/components/sona/no-visit";
+import { CloseButton } from "@/components/sona/ui";
 
 export { OriginalImageViewer } from "./viewer";
 
@@ -266,7 +268,7 @@ export function XrayScreen() {
   const scenario = evidence?.imagingScenario ?? "reference";
   const pickScenario = (value: Scenario) => { if (analysing) return; haptic(); updateEncounter(current => ({ ...current, imagingScenario: value }), true); setShowScenarios(false); };
 
-  if (!patient) return <Screen><Notice>Choose a patient before opening an attachment.</Notice></Screen>;
+  if (!patient) return <NoVisit view="xray" what="an X-ray" />;
   if (historical && (sourcePatientId !== patient.id || !savedCard?.imagingSnapshot)) return <Screen><Notice warning>This saved image is unavailable in the active patient’s encounter. No current image has been substituted.</Notice><Action label="Return to encounter" secondary onPress={() => (router.canGoBack() ? router.back() : undefined)} /></Screen>;
   const open = findings.filter(f => f.status === "open").length;
   if (historical) return <ViewerPage scrollEnabled={!zoomed}>
@@ -304,8 +306,8 @@ export function XrayScreen() {
       <AskOrb scope="xray" answers={[toFollowUp(findings)]} />
     </View>
   </>}>
-    {/* Image actions live in the header's right slot, level with the back button. */}
-    <Stack.Screen options={{ headerRight: () => <MenuTrigger open={menuOpen} onPress={() => setMenuOpen(value => !value)} /> }} />
+    {/* Image actions live in the header's right slot, before Close. */}
+    <Stack.Screen options={{ headerRight: () => <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><MenuTrigger open={menuOpen} onPress={() => setMenuOpen(value => !value)} /><CloseButton /></View> }} />
     {menuOpen && <MenuPanel onClose={() => setMenuOpen(false)} items={[
       { label: picking ? "Opening library…" : "Choose local image", icon: "photo.on.rectangle", disabled: picking || analysing, onPress: pickImage },
       { label: "Remove image", icon: "trash", disabled: analysing, onPress: () => updateEncounter(current => ({ ...current, imagingAttachment: undefined, hideTeachingImage: true }), true) },

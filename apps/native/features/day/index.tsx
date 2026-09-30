@@ -182,7 +182,7 @@ function Row({ item, first, index, animate, pinned, onOpen, onPin, onSnooze }: {
       {menu && <Expand style={{ flexDirection: "row", gap: 8, paddingLeft: 62, paddingBottom: 12 }}>
         {/* Urgent rows can be pinned, never snoozed. */}
         {[[pinned ? "Unpin" : "Pin to top", "pin", onPin], ...onSnooze ? [["Snooze 1 h", "moon.zzz", onSnooze]] : []].map(([label, icon, act]) => <Pressable key={label as string} accessibilityRole="button" accessibilityLabel={label as string}
-          onPress={() => { haptic(); setMenu(false); (act as () => void)(); }} style={{ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: "rgba(20,28,40,0.06)" }}>
+          onPress={() => { haptic(); setMenu(false); (act as () => void)(); }} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: "rgba(20,28,40,0.06)" }}>
           <Icon name={icon as string} size={12} color={palette.ink} /><Text style={{ ...type.subhead, fontWeight: "500", color: palette.ink }}>{label as string}</Text>
         </Pressable>)}
       </Expand>}
@@ -262,7 +262,7 @@ function MonthCard({ offset, counts, onPick, onClose }: { offset: number; counts
             <View style={{ position: "absolute", bottom: 1, flexDirection: "row", gap: 2 }}>{Array.from({ length: Math.min(3, n) }, (_, k) => <View key={k} style={{ width: 3.5, height: 3.5, borderRadius: 2, backgroundColor: palette.blue, opacity: 0.7 }} />)}</View>
           </Pressable>; })}
       </Animated.View>)}
-      {offset !== 0 && <Pressable accessibilityRole="button" onPress={() => onPick(0)} style={{ alignSelf: "center", minHeight: 36, paddingHorizontal: 16, borderRadius: 18, justifyContent: "center", backgroundColor: palette.blueWash }}>
+      {offset !== 0 && <Pressable accessibilityRole="button" onPress={() => onPick(0)} style={{ alignSelf: "center", minHeight: 44, paddingHorizontal: 16, borderRadius: 18, justifyContent: "center", backgroundColor: palette.blueWash }}>
         <Text style={{ ...type.subhead, fontWeight: "600", color: palette.blue }}>Jump to today</Text>
       </Pressable>}
     </Animated.View>
@@ -367,9 +367,10 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, s
     {offset === 0 && managing && shelf}
     {managing ? null : sorting ? <Sorting /> : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
       {top && <Animated.View key={`top-${run}`} layout={LAYOUT} entering={animate ? riseIn({ distance: 14, scale: 0.97, duration: 450 }) : undefined}>
-        <Pressable accessibilityRole="button" accessibilityLabel={`Most urgent: ${top.title}. ${top.reason}`} accessibilityHint={HINT(top)} onPress={() => onOpen(top.patientId, top.open)}
-          style={({ pressed }) => ({ transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-          <Surface feature style={{ padding: 18, gap: 12 }}>
+        {/* The card opens the item; its inline actions sit beside that button, not inside it, so VoiceOver reaches them. */}
+        <Surface feature style={{ padding: 18, gap: 12 }}>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Most urgent: ${top.title}. ${top.reason}`} accessibilityHint={HINT(top)} onPress={() => onOpen(top.patientId, top.open)}
+            style={({ pressed }) => ({ gap: 12, transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: TONE[top.tone].dot }} />
               <Text style={{ ...type.overline, color: TONE[top.tone].ink }}>{pins.includes(top.id) ? "Pinned" : offset === 0 ? "Most urgent" : offset < 0 ? "First seen" : "First to prepare"}</Text>
@@ -382,11 +383,11 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, s
               <View style={{ flexShrink: 1, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: TONE[top.tone].wash }}><Text style={{ ...type.caption, fontWeight: "600", color: TONE[top.tone].ink }}>{top.reason}</Text></View>
               {top.patientId && <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: palette.ink, alignItems: "center", justifyContent: "center" }}><Icon name="arrow.right" size={14} color={palette.white} /></View>}
             </View>
-            {top.kind === "check-in" && <FlagActions item={top} />}
-            {top.kind === "booking" && <BookingActions item={top} />}
-            {top.kind === "message" && <MessageActions item={top} />}
-          </Surface>
-        </Pressable>
+          </Pressable>
+          {top.kind === "check-in" && <FlagActions item={top} />}
+          {top.kind === "booking" && <BookingActions item={top} />}
+          {top.kind === "message" && <MessageActions item={top} />}
+        </Surface>
       </Animated.View>}
       {offset === 0 && shelf}
       {rest.length > 0 && <Surface layout={LAYOUT} style={{ paddingVertical: 2 }}>

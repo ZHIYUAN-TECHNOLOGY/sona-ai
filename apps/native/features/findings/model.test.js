@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { fixtureFindings, followUpTask, withFindings } from "./model";
+import { detectFixture, fixtureFindings, followUpTask, withFindings } from "./model";
 
 const seen = new Date("2026-09-26T10:00:00+08:00");
 
@@ -24,4 +24,12 @@ test("on My Day an overdue follow-up ranks red at the top and replaces its own t
   const ranked = withFindings(items, [tracked, { ...heart, status: "dismissed" }], new Date("2027-01-02T09:00:00+08:00"));
   expect(ranked.map(i => [i.id, i.tone])).toEqual([["finding-finding:visit-1042:nodule", "urgent"], ["visit-SYN-1042", "soon"]]);
   expect(ranked[0].title).toBe("Follow up 9 mm nodule: CT chest at 3 months · due 25 Dec");
+});
+
+test("fixture findings appear only once the X-ray is opened, once, and only on Amelia's visit", () => {
+  expect(detectFixture([], "visit-2001", seen)).toEqual([]);
+  const read = detectFixture([], "visit-1042", seen);
+  expect(read.map(f => f.kind)).toEqual(["nodule", "cardiomegaly"]);
+  const tracked = [{ ...read[0], status: "tracked" }, read[1]];
+  expect(detectFixture(tracked, "visit-1042", seen)).toBe(tracked);
 });

@@ -3,6 +3,7 @@ import { Text } from "@/components/sona/text";
 import { BlurView } from "expo-blur";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import { Image } from "expo-image";
+import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState, type ReactNode } from "react";
 import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
@@ -55,6 +56,10 @@ export function Action({ label, icon, onPress, secondary = false, disabled = fal
 }
 export function IconButton({ name, label, onPress, dark = false }: { name: string; label: string; onPress: () => void; dark?: boolean }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress}>{({ pressed }) => <Animated.View style={{ minWidth: 46, minHeight: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", backgroundColor: dark ? palette.dark : "transparent", transform: [{ scale: pressed ? 0.94 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never}><Icon name={name} color={dark ? palette.white : palette.ink} /></Animated.View>}</Pressable>;
+}
+/** A modal's or sheet's one close control, on the right (pushed pages get the back chevron on the left). */
+export function CloseButton({ label = "Close" }: { label?: string }) {
+  return <IconButton name="xmark" label={label} onPress={() => router.canGoBack() ? router.back() : router.replace("/")} />;
 }
 
 /**

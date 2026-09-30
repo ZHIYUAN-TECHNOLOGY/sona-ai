@@ -146,7 +146,7 @@ export function TopBar({ patient, inEncounter, openTasks, faded, tall = false, o
     </Animated.View>
     <View pointerEvents="box-none" style={{ paddingTop: insets.top + 6, paddingHorizontal: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
       {/* Home opens the menu; a session goes back to home (swiping from the edge does the same). */}
-      {onBack ? <Round label="Back to home" onPress={onBack}><BrandIcon name="back" size={22} /></Round> : <Round label="History and settings" onPress={onMenu}><BrandIcon name="menu" size={22} /></Round>}
+      {onBack ? <Round label="Back to home" onPress={onBack}><BrandIcon name="back" size={22} /></Round> : <Round label="Menu" onPress={onMenu}><BrandIcon name="menu" size={22} /></Round>}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         {patient && inEncounter && <Animated.View entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, scale: 0.96, duration: 240 })}>
           <Round label={`Current patient ${patient.name}, ${patient.id}. Change patient`} onPress={onPatient}>

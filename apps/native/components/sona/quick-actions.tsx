@@ -9,8 +9,8 @@ import { palette, type, radius } from "./theme";
 import { Glass, Icon, surfaceStyle, useAccessibleEffects } from "./ui";
 
 /**
- * Quick actions as one liquid-glass shelf: four segments split by hairlines, each a blue glyph, a
- * label and a one-line muted status, so the shelf answers "does anything need me?" at a glance.
+ * Quick actions as one liquid-glass shelf: four segments split by hairlines, each a glyph in its state's
+ * disc, a label and a one-line muted status, so the shelf answers "does anything need me?" at a glance.
  * Only urgent segments speak up: a small red count and a faint halftone glint in their corner
  * (the brand's dithering, used as the "look here" cue). A press swells the glyph like a droplet
  * and settles back (after Quartr's liquid glass pulse: dip to 0.9, spring to 1 with a slight
@@ -20,13 +20,14 @@ import { Glass, Icon, surfaceStyle, useAccessibleEffects } from "./ui";
 export type QuickTone = "urgent" | "caution" | "good" | "calm";
 export type QuickAction = { key: string; label: string; icon: string; status: string; tone?: QuickTone; badge?: number; onPress: () => void };
 const INK: Record<QuickTone, string> = { urgent: palette.red, caution: palette.amber, good: palette.green, calm: palette.muted };
-// The glyph's disc says the key's state, the same colours as everywhere else: red act now, amber needs
-// attention, teal ready, blue nothing pending. Colour always means something, so calm keys stay brand blue.
-const DISC: Record<QuickTone, { fill: string; glow: string; tint: [number, number, number] }> = {
-  urgent: { fill: palette.red, glow: "rgba(162,62,62,0.3)", tint: [0.86, 0.42, 0.42] },
-  caution: { fill: "#B7741E", glow: "rgba(183,116,30,0.3)", tint: [0.92, 0.66, 0.34] },
-  good: { fill: palette.green, glow: "rgba(15,110,102,0.3)", tint: [0.36, 0.74, 0.68] },
-  calm: { fill: palette.blue, glow: "rgba(36,91,204,0.3)", tint: [0.42, 0.62, 0.95] },
+// The glyph's disc says the key's state, the same colours as everywhere else (tone.ts): red must not
+// miss, amber soon or blocked, green done. Blue is kept for the one next step, so calm keys sit on a
+// neutral disc with an ink glyph. `ink` is the state's colour on glass (the capsule's glyphs, count badges).
+const DISC: Record<QuickTone, { fill: string; glyph: string; ink: string; glow: string; tint: [number, number, number] }> = {
+  urgent: { fill: palette.red, glyph: palette.white, ink: palette.red, glow: "rgba(162,62,62,0.3)", tint: [0.86, 0.42, 0.42] },
+  caution: { fill: palette.amber, glyph: palette.white, ink: palette.amber, glow: "rgba(139,85,24,0.3)", tint: [0.92, 0.66, 0.34] },
+  good: { fill: palette.green, glyph: palette.white, ink: palette.green, glow: "rgba(15,110,102,0.3)", tint: [0.36, 0.74, 0.68] },
+  calm: { fill: "rgba(20,28,40,0.07)", glyph: palette.ink, ink: palette.ink, glow: "rgba(20,28,40,0.08)", tint: [0.62, 0.66, 0.72] },
 };
 // Each key keeps its own dither corner and grain (fixed by position, never random per render), so the
 // shelf reads as four distinct keys under one material; the grain takes the key's state colour.
@@ -67,7 +68,7 @@ function Key({ a, index, shimmer, wide = false }: { a: QuickAction; index: numbe
         <View style={{ minHeight: 104, padding: 14, justifyContent: "space-between", gap: 10 }}>
           <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
             <Animated.View style={[{ width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", backgroundColor: disc.fill, boxShadow: `0 3px 8px ${disc.glow}` }, glyph]}>
-              <Icon name={a.icon} size={17} color={palette.white} />
+              <Icon name={a.icon} size={17} color={disc.glyph} />
             </Animated.View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               {!!a.badge && <View style={{ minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: urgent ? palette.red : a.tone === "caution" ? palette.amber : a.tone === "good" ? palette.green : "rgba(20,28,40,0.08)" }}>
@@ -128,7 +129,7 @@ export function QuickRow({ actions, scroll, from, top }: { actions: QuickAction[
       <View style={{ flexDirection: "row", paddingHorizontal: 6, paddingVertical: 5, gap: 2 }}>
         {actions.map(a => { const urgent = a.tone === "urgent"; return <Pressable key={a.key} accessibilityRole="button" accessibilityLabel={`${a.label}. ${a.status}`} onPress={() => { tap(); a.onPress(); }}
           style={({ pressed }) => ({ height: 34, minWidth: 52, paddingHorizontal: 12, borderRadius: 17, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, backgroundColor: pressed ? "rgba(255,255,255,0.5)" : "transparent" })}>
-          <Icon name={a.icon} size={15} color={DISC[a.tone ?? "calm"].fill} />
+          <Icon name={a.icon} size={15} color={DISC[a.tone ?? "calm"].ink} />
           {!!a.badge && <Text style={{ ...type.footnote, fontWeight: "700", color: urgent ? palette.red : palette.ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text>}
         </Pressable>; })}
       </View>
@@ -147,8 +148,8 @@ export function ToolRow({ actions }: { actions: QuickAction[] }) {
       return <Pressable key={a.key} accessibilityRole="button" accessibilityLabel={`${a.label}, ${a.status}`} onPress={() => { tap(); a.onPress(); }}
         style={({ pressed }) => ({ width: 108, minHeight: 104, padding: 10, gap: 6, alignItems: "flex-start", ...surfaceStyle, borderRadius: 20, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
         <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: DISC[tone].fill, alignItems: "center", justifyContent: "center" }}>
-          <Icon name={a.icon} size={15} color={palette.white} />
-          {a.badge ? <View style={{ position: "absolute", top: -4, right: -6, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: palette.white, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 10, fontWeight: "700", color: DISC[tone].fill, fontVariant: ["tabular-nums"] }}>{a.badge}</Text></View> : null}
+          <Icon name={a.icon} size={15} color={DISC[tone].glyph} />
+          {a.badge ? <View style={{ position: "absolute", top: -4, right: -6, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: palette.white, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 10, fontWeight: "700", color: DISC[tone].ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text></View> : null}
         </View>
         <Text numberOfLines={1} style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>{a.label}</Text>
         <Text numberOfLines={2} style={{ ...type.caption, color: tone === "calm" ? palette.muted : INK[tone] }}>{a.status}</Text>

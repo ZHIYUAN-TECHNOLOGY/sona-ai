@@ -2,10 +2,10 @@ import { router } from "expo-router";
 import { AskOrb } from "@/features/ask";
 import { blocking } from "@/features/ask/answers";
 import { MarkedText } from "@/components/sona/marked-text";
-import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, Pressable, View, useWindowDimensions } from "react-native";
-import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from "react-native-reanimated";
-import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
+import { useState } from "react";
+import { Pressable, View } from "react-native";
+import Animated, { FadeIn, withSpring, withTiming } from "react-native-reanimated";
+import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, glass, Icon, Insight, Screen, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
@@ -26,36 +26,26 @@ import { refreshCheckIns } from "@/features/check-ins/state";
 import { useFindings } from "@/features/live/findings-sync";
 import type { Patient, PrescriptionCheck } from "@/features/encounter/types";
 import { EMPTY_DISCHARGE, FOLLOW_UPS, LANGUAGES, checkInDaysOf, discharge, dischargeChecks, formatMinutes, planFor, type DischargeState, type MedChange } from "./model";
+import { NoVisit } from "@/components/sona/no-visit";
 
 /*
- * Discharge (after Arc Search's summarize): the visit page folds into a small card, sways gently
- * while Sona drafts, pins at the top, and the discharge card rises from below. Page scale 1 to
- * 0.62 on a spring (0.6 s, damping 0.82), a ±1.2° sway while drafting (calmer than the shot's
- * ±3.2°), then the card rises on a spring (0.8 s, damping 0.85) with its summary lines 40 ms
- * apart. Inside, the prescribe card's pattern: ring, only what blocks, each fixed where it sits,
- * a button (pinned in the decision bar) that morphs into the discharge, and a receipt that stamps in the card.
+ * Discharge: the folded visit pins at the top and the discharge card rises from below on a spring
+ * (0.8 s, damping 0.85) with its summary lines 40 ms apart; no timed "drafting" stands in front of it.
+ * Inside, the prescribe card's pattern: ring, only what blocks, each fixed where it sits, a button
+ * (pinned in the decision bar) that morphs into the discharge, and a receipt that stamps in the card.
  */
-const DRAFT_MS = 1700;
 const TEAL = palette.green;
 
 export function DischargeScreen() {
   // The open visit is the one being discharged (updateEncounter writes to it).
   const { patient, encounters } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
-  const discharged = Boolean(patient && encounters[patient.id]?.discharge?.dischargedAt);
-  // Folding plays once per open; an already discharged patient opens straight on the receipt.
-  const [drafted, setDrafted] = useState(reducedMotion || discharged);
-  useEffect(() => {
-    if (drafted) return;
-    const timer = setTimeout(() => { setDrafted(true); AccessibilityInfo.announceForAccessibility("Discharge drafted"); }, DRAFT_MS);
-    return () => clearTimeout(timer);
-  }, [drafted]);
-  if (!patient) return null;
+  if (!patient) return <NoVisit title="Discharge" view="discharge" what="a discharge" />;
+  const discharged = Boolean(encounters[patient.id]?.discharge?.dischargedAt);
   const answers = encounters[patient.id]?.requests.map(r => capabilityLabels[r.kind]) ?? [];
-
+  // An already discharged patient opens still, on the receipt.
   return <View style={{ flex: 1, backgroundColor: palette.canvas }}>
-    <DischargePage patient={patient} answers={answers} drafted={drafted} animate={!reducedMotion && !discharged} />
-    {!drafted && <FoldStage patient={patient} answers={answers} />}
+    <DischargePage patient={patient} answers={answers} animate={!reducedMotion && !discharged} />
   </View>;
 }
 
@@ -82,45 +72,6 @@ export function Decide({ label, icon, muted = false, disabled = false, onPress }
     {icon && <Icon name={icon} size={15} color={muted ? palette.muted : palette.white} />}
     <Animated.Text key={label} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ ...type.body, fontWeight: "600", color: muted ? palette.muted : palette.white }}>{label}</Animated.Text>
   </Pressable>;
-}
-
-/** The visit page, shrinking into a card and swaying while the discharge drafts. */
-function FoldStage({ patient, answers }: { patient: Patient; answers: string[] }) {
-  const { width } = useWindowDimensions();
-  const scale = useSharedValue(1), tilt = useSharedValue(0), label = useSharedValue(0);
-  useEffect(() => {
-    scale.set(withDelay(150, withSpring(0.62, { duration: 600, dampingRatio: 0.82 })));
-    const sway = (deg: number) => withTiming(deg, { duration: 260, easing: Easing.bezier(0.45, 0, 0.55, 1) });
-    tilt.set(withDelay(700, withSequence(sway(-1.2), sway(1.2), sway(-0.8), sway(0.8), sway(0))));
-    label.set(withDelay(600, withTiming(1, { duration: 260 })));
-    // Lift off just before the card rises, so the page reads as having moved into it.
-    const lift = setTimeout(() => { scale.set(withTiming(0.3, { duration: 240, easing: EASE_OUT })); label.set(withTiming(0, { duration: 160 })); }, DRAFT_MS - 240);
-    return () => clearTimeout(lift);
-  }, [scale, tilt, label]);
-  const page = useAnimatedStyle(() => ({ opacity: scale.value < 0.4 ? (scale.value - 0.3) * 10 : 1, transform: [{ translateY: (1 - scale.value) * -120 }, { scale: scale.value }, { rotate: `${tilt.value}deg` }] }));
-  const drafting = useAnimatedStyle(() => ({ opacity: label.value, transform: [{ translateY: (1 - label.value) * 6 }] }));
-  return <View pointerEvents="none" style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }}>
-    <Animated.View style={[{ width: width - 40 }, page]}>
-      <Surface feature style={{ padding: 20, gap: 14, minHeight: 320 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <Avatar patient={patient} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ ...type.headline, color: palette.ink }}>{patient.name}</Text>
-            <Text style={{ ...type.caption, color: palette.muted }}>{patient.subtitle} · {patient.time}</Text>
-          </View>
-        </View>
-        <Text style={{ ...type.subhead, color: palette.ink }}>{patient.complaint}</Text>
-        {(answers.length ? answers : ["Briefing", "Consultation"]).map((a, i) => <View key={`${a}-${i}`} style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 10, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
-          <Icon name="text.alignleft" size={13} color={palette.blue} />
-          <Text style={{ ...type.subhead, color: palette.ink }}>{a}</Text>
-        </View>)}
-      </Surface>
-    </Animated.View>
-    <Animated.View style={[{ position: "absolute", bottom: "24%", flexDirection: "row", alignItems: "center", gap: 8 }, drafting]}>
-      <Icon name="sparkles" size={14} color={palette.blue} />
-      <Text style={{ ...type.subhead, fontWeight: "500", color: palette.muted }}>Drafting the discharge…</Text>
-    </Animated.View>
-  </View>;
 }
 
 function Avatar({ patient, size = 40 }: { patient: Patient; size?: number }) {
@@ -158,8 +109,8 @@ export function FixChip({ label, icon, onPress, strong = false }: { label: strin
   </Pressable>;
 }
 
-/** The page under the fold: header, the folded visit, the discharge card, and the decision pinned in the bar once drafted. */
-function DischargePage({ patient, answers, drafted, animate }: { patient: Patient; answers: string[]; drafted: boolean; animate: boolean }) {
+/** The page: header, the folded visit, the discharge card, and the decision pinned in the bar. */
+function DischargePage({ patient, answers, animate }: { patient: Patient; answers: string[]; animate: boolean }) {
   const { encounters, updateEncounter } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const encounter = encounters[patient.id];
@@ -267,10 +218,10 @@ function DischargePage({ patient, answers, drafted, animate }: { patient: Patien
     </View>
   </>;
 
-  return <Screen bottom={drafted ? bar : undefined}>
+  return <Screen bottom={bar}>
     <ModalHeader title="Discharge" />
-    {drafted && <VisitChip patient={patient} answers={answers} animate={animate} />}
-    {drafted && <Animated.View entering={animate ? riseCard : undefined}>
+    <VisitChip patient={patient} answers={answers} animate={animate} />
+    <Animated.View entering={animate ? riseCard : undefined}>
     <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 14 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
         {/* Once discharged the ring reads complete, whatever the checks say now. */}
@@ -310,7 +261,10 @@ function DischargePage({ patient, answers, drafted, animate }: { patient: Patien
           <Text style={{ ...type.overline, width: 72, paddingTop: 3, color: palette.muted }}>{label}</Text>
           {text === value ? <Text selectable style={{ ...type.subhead, flex: 1, color: palette.ink }}>{value}</Text> : <MarkedText text={text} style={{ ...type.subhead, flex: 1, color: palette.ink }} />}
         </Animated.View>; })}
-        {full && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)}><Text selectable style={{ ...type.footnote, color: palette.muted }}>{draft.data?.summary ?? plan.full}</Text></Animated.View>}
+        {full && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)} style={{ gap: 6 }}>
+          <Text selectable style={{ ...type.footnote, color: palette.muted }}>{draft.data?.summary ?? plan.full}</Text>
+          <SampleLabel answer={draft} what="discharge" />
+        </Animated.View>}
         <Pressable accessibilityRole="button" accessibilityState={{ expanded: full }} onPress={() => setFull(v => !v)} hitSlop={6} style={{ alignSelf: "flex-start", minHeight: 32, flexDirection: "row", alignItems: "center", gap: 4 }}>
           <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{full ? "Show less" : "Read full"}</Text>
           <Icon name={full ? "chevron.up" : "chevron.right"} size={10} color={palette.blue} />
@@ -329,13 +283,13 @@ function DischargePage({ patient, answers, drafted, animate }: { patient: Patien
         <Animated.View key={state.language} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ padding: 12, gap: 6, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" }}>
           {draft.loading ? <Drafting label={`Drafting the leaflet in ${language.name}…`} lines={2} />
             : <Arrive animate={Boolean(draft.data)}><Text selectable style={{ ...type.subhead, color: palette.ink }}>{draft.data?.leaflet ?? plan.leaflet[state.language]}</Text></Arrive>}
-          <SampleLabel source={draft.data?.source} what="discharge" />
+          <SampleLabel answer={draft} what="discharge" />
           {draft.error && <Text style={{ ...type.caption, color: palette.red }}>{draft.error} · showing the authored leaflet</Text>}
         </Animated.View>
       </Animated.View>}
       </Animated.View>
     </Surface>
-    </Animated.View>}
+    </Animated.View>
   </Screen>;
 }
 

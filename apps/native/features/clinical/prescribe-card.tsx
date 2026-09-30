@@ -155,7 +155,7 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
   const fix = (check: PrescriptionCheck) => {
     if (check.id === "age-weight") return <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
       <TextInput accessibilityLabel="Weight in kilograms" value={inputs.weightKg} onChangeText={weightKg => set({ weightKg: weightKg.replace(/[^0-9.]/g, "") })} keyboardType="decimal-pad" placeholder="Weight" placeholderTextColor={palette.placeholder}
-        style={{ width: 96, height: 38, borderRadius: 12, paddingHorizontal: 12, ...type.body, fontWeight: "600", color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
+        style={{ width: 96, height: 44, borderRadius: 12, paddingHorizontal: 12, ...type.body, fontWeight: "600", color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
       <Text style={{ ...type.footnote, color: palette.muted }}>kg · 50 kg or more</Text>
     </View>;
     const key = HISTORY.find(k => k === check.id);
@@ -163,12 +163,12 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
       <Pill label="No" on={inputs[key] === "no"} onPress={() => set({ [key]: "no" })} />
       <Pill label="Yes" tone="amber" on={inputs[key] === "yes"} onPress={() => set({ [key]: "yes" })} />
     </View>;
-    if (check.id === "review") return <Pressable accessibilityRole="button" accessibilityLabel="Run medication review" disabled={working !== undefined} onPress={() => { haptic("select"); run("medication"); }}
+    if (check.id === "review") return <Pressable accessibilityRole="button" accessibilityLabel="Run medication review" disabled={working !== undefined} onPress={() => { haptic("select"); run("medication"); }} hitSlop={{ top: 5, bottom: 5 }}
       style={{ alignSelf: "flex-start", height: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: palette.blue, opacity: working ? 0.6 : 1 }}>
       <Icon name={working === "medication" ? "hourglass" : "arrow.clockwise"} size={12} color={palette.white} />
       <Text style={{ ...type.subhead, fontWeight: "600", color: palette.white }}>{working === "medication" ? "Reviewing…" : reviewStale ? "Rerun review" : "Run review"}</Text>
     </Pressable>;
-    if (check.id === "identity") return <Pressable accessibilityRole="button" onPress={() => { const entry = (encounter.medicationEntries ?? defaultMedications(patient)).find(m => !m.confirmed); if (entry) updateEncounter(value => ({ ...value, medicationDraft: { ...entry } })); }}
+    if (check.id === "identity") return <Pressable accessibilityRole="button" onPress={() => { const entry = (encounter.medicationEntries ?? defaultMedications(patient)).find(m => !m.confirmed); if (entry) updateEncounter(value => ({ ...value, medicationDraft: { ...entry } })); }} hitSlop={{ top: 5, bottom: 5 }}
       style={{ alignSelf: "flex-start", height: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}>
       <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>Confirm next medicine</Text>
     </Pressable>;

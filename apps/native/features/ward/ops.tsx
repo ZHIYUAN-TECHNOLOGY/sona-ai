@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, LAYOUT_SPRING, riseIn } from "@/components/sona/motion";
@@ -26,8 +26,8 @@ import { bedBar, bedKind, clockLabel, filterSegments, forecastBeds, forecastLine
  */
 type Ops = Awaited<ReturnType<typeof api.ops.get>>;
 const TEAL = palette.green;
-// Blocked is the one to act on, so it alone reads red; watch stays a quiet amber.
-export const KIND: Record<BedKind, string> = { blocked: palette.red, fit: TEAL, watch: "#D9AE72", other: "#CDD2D9" };
+// One colour mapping (components/sona/tone.ts): blocked is amber (soon or blocked), fit green, watch a paler amber, the rest neutral.
+export const KIND: Record<BedKind, string> = { blocked: palette.amber, fit: TEAL, watch: "#D9AE72", other: "#CDD2D9" };
 
 export const hoursMinutes = (mins: number) => {
   const h = Math.floor(mins / 60), m = Math.round(mins % 60);
@@ -63,6 +63,7 @@ export function BedBar({ beds, filter, onFilter }: { beds: Bed[]; filter?: WardF
  * The legend as a segmented filter (after 60fps "Revolut Number of Transactions Interaction",
  * https://60fps.design/shots/revolut-number-of-transactions-interaction): a glass track, one pill that
  * slides to the picked status on the layout spring, and the ward's list springs its rows in and out in place.
+ * At large text the track scrolls sideways, with a fade on the edge while more is off it.
  */
 function Segmented({ beds, value, onChange }: { beds: Bed[]; value: WardFilter; onChange: (f: WardFilter) => void }) {
   const { reducedMotion } = useAccessibleEffects();
@@ -76,7 +77,12 @@ function Segmented({ beds, value, onChange }: { beds: Bed[]; value: WardFilter; 
   };
   useEffect(() => place(true), [value]); // eslint-disable-line react-hooks/exhaustive-deps
   const pill = useAnimatedStyle(() => ({ left: x.value, width: w.value, opacity: w.value ? 1 : 0 }));
-  return <View accessibilityRole="tablist" style={{ ...pillStyle, flexDirection: "row", padding: 3, borderRadius: radius.group, borderCurve: "continuous" }}>
+  const [edge, setEdge] = useState({ view: 0, content: 0, at: 0 });
+  const more = edge.content - edge.view - edge.at > 4;
+  return <View style={{ ...pillStyle, borderRadius: radius.group, borderCurve: "continuous" }}>
+    <ScrollView horizontal accessibilityRole="tablist" showsHorizontalScrollIndicator={false} scrollEventThrottle={32} style={{ borderRadius: radius.group, borderCurve: "continuous" }} contentContainerStyle={{ flexGrow: 1, padding: 3 }}
+      onLayout={e => { const view = e.nativeEvent.layout.width; setEdge(s => ({ ...s, view })); }} onContentSizeChange={content => setEdge(s => ({ ...s, content }))}
+      onScroll={e => { const at = e.nativeEvent.contentOffset.x; setEdge(s => Math.abs(s.at - at) > 2 ? { ...s, at } : s); }}>
     <Animated.View pointerEvents="none" style={[{ position: "absolute", top: 3, bottom: 3, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 2px 8px rgba(40,70,140,0.14)" }, pill]} />
     {filterSegments(beds, value).map(s => { const on = s.key === value; return <Pressable key={s.key} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={`${s.label}, ${s.count} bed${s.count === 1 ? "" : "s"}`}
       hitSlop={{ top: 4, bottom: 4 }} onPress={() => { if (!on) { haptic("select"); onChange(s.key); } }}
@@ -85,6 +91,8 @@ function Segmented({ beds, value, onChange }: { beds: Bed[]; value: WardFilter; 
       {s.key !== "all" && <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: KIND[s.key] }} />}
       <Text numberOfLines={1} style={{ ...type.footnote, fontWeight: on ? "600" : "500", color: on ? palette.ink : palette.muted }}>{s.label} <Text style={{ fontWeight: "700", fontVariant: ["tabular-nums"], color: on ? palette.ink : palette.muted }}>{s.count}</Text></Text>
     </Pressable>; })}
+    </ScrollView>
+    {more && <View pointerEvents="none" style={{ position: "absolute", top: 0, bottom: 0, right: 0, width: 32, borderTopRightRadius: radius.group, borderBottomRightRadius: radius.group, experimental_backgroundImage: "linear-gradient(to right, rgba(245,246,248,0) 0%, rgba(245,246,248,0.96) 100%)" }} />}
   </View>;
 }
 
@@ -130,7 +138,7 @@ export function ThisWeek() {
 /** Where the ward stands, in one line. The ward page opens with it and management's My Day leads with it, so the two never disagree. */
 export function wardLine(beds: Bed[]) {
   const { blocked, bedHours, fit } = wardSummary(beds);
-  return blocked ? <><Tone of="urgent">{blocked} discharge{blocked === 1 ? "" : "s"} blocked</Tone> · {`~${bedHours}\u00A0bed‑hours\u00A0waiting`}</>
+  return blocked ? <><Tone of="soon">{blocked} discharge{blocked === 1 ? "" : "s"} blocked</Tone> · {`~${bedHours}\u00A0bed‑hours\u00A0waiting`}</>
     : <><Tone of="good">Nothing is holding a bed</Tone>{fit ? ` · ${fit} fit to go` : ""}</>;
 }
 
@@ -146,7 +154,7 @@ export function WardGlance() {
   const blocked = wardSummary(beds).blocked;
   return <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 14 }}>
     <View style={{ gap: 4 }}>
-      <Text style={{ ...type.overline, color: blocked ? palette.red : palette.blue }}>Ward now</Text>
+      <Text style={{ ...type.overline, color: blocked ? palette.amber : palette.blue }}>Ward now</Text>
       <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{wardLine(beds)}</Text>
     </View>
     <View>
@@ -199,7 +207,8 @@ export function ForecastTimeline({ beds, forecast, onOpen }: { beds: Bed[]; fore
       </Text>
     </View>
 
-    <View accessible accessibilityRole="image" accessibilityLabel={forecast.label} onLayout={e => setWidth(e.nativeEvent.layout.width)} style={{ height: 64 }}>
+    {/* Each dot is its own VoiceOver stop (bed, time, confidence, reasons); the header above reads the totals. */}
+    <View onLayout={e => setWidth(e.nativeEvent.layout.width)} style={{ height: 64 }}>
       <View style={{ position: "absolute", left: DOT / 2, right: DOT / 2, bottom: 20, height: 2, borderRadius: 1, backgroundColor: "rgba(20,28,40,0.08)" }} />
       {width > 0 && <View style={{ position: "absolute", left: mid + DOT / 2, bottom: 14, width: 1, height: 14, backgroundColor: "rgba(20,28,40,0.18)" }} />}
       {width > 0 && dots.map((e, i) => {
@@ -207,14 +216,15 @@ export function ForecastTimeline({ beds, forecast, onOpen }: { beds: Bed[]; fore
         const on = e.bed === picked;
         return <Animated.View key={e.bed} entering={reducedMotion ? undefined : riseIn({ delay: i * 45, distance: 8, scale: 0.4, duration: 300 })}
           style={{ position: "absolute", left: x(e.at) + DOT / 2 - 22, bottom: 21 - 22 + lift[i]! * (DOT + 2) }}>
-          <Pressable onPress={() => { haptic("select"); setPicked(on ? undefined : e.bed); }} onLongPress={() => { haptic("select"); setPicked(e.bed); }}
+          <Pressable accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${e.bed}${e.name ? `, ${e.name.split(" ")[0]}` : ""}, free ${new Date(e.at).getTime() <= now ? "now" : `at ${clockLabel(new Date(e.at))}`}, ${e.confidence} confidence. ${e.reasons.join(", ")}`}
+            onPress={() => { haptic("select"); setPicked(on ? undefined : e.bed); }} onLongPress={() => { haptic("select"); setPicked(e.bed); }}
             style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}>
             <View style={{ width: DOT, height: DOT, borderRadius: DOT / 2, borderWidth: 2, borderColor: color, transform: [{ scale: on ? 1.35 : 1 }],
               backgroundColor: e.confidence === "high" ? color : e.confidence === "medium" ? `${color}66` : palette.white }} />
           </Pressable>
         </Animated.View>;
       })}
-      <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 16 }}>
+      <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 16 }}>
         <Text style={{ ...type.caption, position: "absolute", left: 0, color: palette.muted }}>Now</Text>
         {/* Midnight splits today from tomorrow; its label hides when it would crowd "Now" or "+24 h". */}
         {width > 0 && mid > 44 && mid < width - 72 && <Text style={{ ...type.caption, position: "absolute", left: mid - 12, color: palette.muted }}>12 am</Text>}

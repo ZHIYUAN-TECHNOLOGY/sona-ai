@@ -21,6 +21,7 @@ import { CODES, EMPTY_CLAIM, ESTIMATE, INSURER, approveClaim, claimChecks, noteF
 import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveCodes } from "@/features/live/model-sync";
 import { AppealCard, DeniedCard } from "./appeal";
+import { NoVisit } from "@/components/sona/no-visit";
 
 /*
  * Final guarantee letter request, one card. The note sits above its codes; tapping a code glides a
@@ -52,7 +53,7 @@ export function ClaimScreen() {
   // Live mode: the codes (and the note sentences they cite) come from the server; a fix to the note codes it again.
   const server = useLiveCodes(patient?.encounterId ?? "", `${state.organismConfirmed}:${state.ivReasonAdded}`);
 
-  if (!patient || !encounter) return null;
+  if (!patient || !encounter) return <NoVisit title="Guarantee letter" view="claim" what="a guarantee letter" />;
   const set = (change: Partial<ClaimState>) => {
     const { organismConfirmed, ivReasonAdded } = change;
     // Only a doctor changes the claim; anyone else is told why and nothing changes here either.
@@ -193,7 +194,7 @@ export function ClaimScreen() {
           <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.ink }}>{c.label}</Text>
           <Text style={{ ...type.caption, color: c.inTable === false ? palette.amber : palette.muted }}>{c.inTable === false ? "Not in ICD-10 table" : c.kind}</Text>
         </Pressable></Arrive>; })}
-        <SampleLabel source={server.data?.source} rule what="coding" />
+        <SampleLabel answer={server} rule what="coding" />
       </Animated.View>
       </Animated.View>
     </Surface>

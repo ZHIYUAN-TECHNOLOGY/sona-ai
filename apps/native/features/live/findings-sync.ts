@@ -1,17 +1,17 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useEncounter } from "@/features/encounter/store";
-import { fixtureFindings, followUpTask, type Finding } from "@/features/findings/model";
+import { detectFixture, followUpTask, type Finding } from "@/features/findings/model";
 import { api, errorText, requestId, useLive } from ".";
 import { useRole } from "./roles";
 import { refreshServerData } from "./server-day";
 
 /**
  * Demo flow 6's findings, held once for the X-ray screen, ward, discharge, handover and My Day.
- * Fixture mode keeps Amelia's two authored findings in memory, and tracking one adds its task to
+ * Fixture mode keeps Amelia's two authored findings in memory once her X-ray is opened, and tracking one adds its task to
  * her encounter; live mode reads and writes api.findings. Screens get the rows from useFindings
  * (the store's value, never a module read: React Compiler caches those).
  */
-let fixture = fixtureFindings(new Date());
+let fixture: Finding[] = [];
 let server: Finding[] | undefined;
 // Every screen counting the ward reads findings on mount (day/counts): one plain re-read in flight serves them all.
 let listing: ReturnType<typeof api.findings.list> | undefined;
@@ -64,7 +64,11 @@ export function useFindings() {
     fixture = fixture.map(x => (x.id === f.id ? { ...x, status: "dismissed" as const } : x));
     notify();
   };
-  /** Live mode: reads the encounter's image for findings (the X-ray screen calls it on open); a role that may not only re-reads. */
-  const detect = (encounterId: string) => { if (on) void refreshFindings(can("findings.detect") ? encounterId : undefined).catch(e => setError(errorText(e))); };
+  /** Reads the encounter's image for findings (the X-ray screen calls it on open); in live mode a role that may not only re-reads. */
+  const detect = (encounterId: string) => {
+    if (on) { void refreshFindings(can("findings.detect") ? encounterId : undefined).catch(e => setError(errorText(e))); return; }
+    const next = detectFixture(fixture, encounterId, new Date());
+    if (next !== fixture) { fixture = next; notify(); }
+  };
   return { live: on, findings: on ? serverRows ?? [] : fixtureRows, error, track, dismiss, detect };
 }

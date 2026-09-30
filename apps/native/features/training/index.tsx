@@ -11,6 +11,8 @@ import { Caption, ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Action, Body, Card, Insight, Notice, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { exportBlockers } from "@/features/ask/answers";
+import { ASK_SPACE, WithSona } from "@/features/ask";
 import { haptic } from "@/features/clinical/medication-parts";
 import { api, errorText, useLive } from "@/features/live";
 import { useRole } from "@/features/live/roles";
@@ -105,8 +107,10 @@ export function TrainingScreen() {
   const queue = samples?.filter(s => s.status === "pending" || s.status === "blocked" || decided.has(s.id)) ?? [];
   const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 40 * Math.min(i, 6), distance: 8, duration: 320 });
   const ready = status?.ready ?? 0, next = (status?.lastDataset?.version ?? 0) + 1;
+  // Sona reads the same queue the page shows: what is still pending or blocked.
+  const open = queue.flatMap(s => s.status === "pending" || s.status === "blocked" ? [{ id: s.id, title: `${SOURCE[s.source] ?? s.source} · ${s.patientLabel}`, status: s.status, leak: leakLine(s.leak) }] : []);
 
-  return <Screen>
+  return <WithSona scope="training" hidden={!status || !samples} answers={[exportBlockers({ ready, next }, open)]}><Screen>
     <Insight eyebrow="Live">{status ? insight(status) : loadError ? "Training data didn't load" : "Reading training data…"}</Insight>
     {loadError && <ErrorLine text={loadError} onRetry={() => void load()} />}
 
@@ -138,7 +142,8 @@ export function TrainingScreen() {
       {status.deidentifier === "rules" ? <SampleLabel source="fixture" rule what="de-identification" /> : <Caption icon="shield.lefthalf.filled">De-identified by {status.deidentifier}</Caption>}
       <Caption icon="info.circle">Export only — fine-tuning on Baseten isn't connected yet</Caption>
     </View>}
-  </Screen>;
+    <View style={{ height: ASK_SPACE }} />
+  </Screen></WithSona>;
 }
 
 /** One sample: where it came from, who (without saying who), both sides with placeholders marked, and the decision in place. */

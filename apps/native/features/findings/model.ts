@@ -40,6 +40,16 @@ export function fixtureFindings(seenAt: Date): Finding[] {
   });
 }
 
+/**
+ * Fixture mode's detection, as the server's: findings exist only once an encounter's X-ray has been read
+ * (opened), and reading it again changes nothing. Only Amelia's visit has authored findings.
+ */
+export function detectFixture(rows: Finding[], encounterId: string, seenAt: Date): Finding[] {
+  if (rows.some(f => f.encounterId === encounterId)) return rows;
+  const found = fixtureFindings(seenAt).filter(f => f.encounterId === encounterId);
+  return found.length ? [...rows, ...found] : rows;
+}
+
 /** Fixture mode's follow-up task, as the server makes it; none when the rule needs no follow-up. */
 export function followUpTask(f: Finding, owner = "Attending doctor"): Task | undefined {
   if (!f.dueAt) return undefined;

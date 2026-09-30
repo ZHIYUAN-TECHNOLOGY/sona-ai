@@ -66,8 +66,9 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
       <Pressable accessibilityRole="button" accessibilityLabel="Close patient" onPress={close} style={StyleSheet.absoluteFill} />
     </Animated.View>
     <GestureDetector gesture={pan}>
-      <Animated.View accessibilityViewIsModal style={[{ position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: box ? box - 72 : height * 0.6, borderTopLeftRadius: 32, borderTopRightRadius: 32, borderCurve: "continuous", backgroundColor: palette.canvas, boxShadow: "0 -8px 30px rgba(24,32,48,0.14)", paddingBottom: Math.max(insets.bottom, 16) }, sheet]}>
-        <View style={{ alignSelf: "center", width: 38, height: 5, borderRadius: 3, marginTop: 10, backgroundColor: "rgba(20,28,40,0.18)" }} />
+      <Animated.View accessibilityViewIsModal onAccessibilityEscape={close} style={[{ position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: box ? box - 72 : height * 0.6, borderTopLeftRadius: 32, borderTopRightRadius: 32, borderCurve: "continuous", backgroundColor: palette.canvas, boxShadow: "0 -8px 30px rgba(24,32,48,0.14)", paddingBottom: Math.max(insets.bottom, 16) }, sheet]}>
+        {/* The grabber is the sheet's Close, so VoiceOver finds it inside the sheet (the backdrop is outside the modal region). */}
+        <Pressable accessibilityRole="button" accessibilityLabel="Close patient" onPress={close} hitSlop={{ top: 10, bottom: 18, left: 40, right: 40 }} style={{ alignSelf: "center", marginTop: 10 }}><View style={{ width: 38, height: 5, borderRadius: 3, backgroundColor: "rgba(20,28,40,0.18)" }} /></Pressable>
         {/* Keyboard-aware so the Sona Care reply box stays above the keyboard while the doctor types. */}
         <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingTop: 18, gap: 18 }} showsVerticalScrollIndicator={false}>
           <Animated.View entering={rise(0)} style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
@@ -87,7 +88,7 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
           {flags.length > 0 && <Animated.View entering={rise(1)} style={{ gap: 8 }}>
             <Text style={{ ...type.overline, color: palette.muted }}>Needs attention</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {flags.map(flag => <Pressable key={flag.label} accessibilityRole="button" accessibilityLabel={`${flag.label}. Opens the visit to resolve it`} onPress={() => go(flag.go)}
+              {flags.map(flag => <Pressable key={flag.label} accessibilityRole="button" accessibilityLabel={`${flag.label}. Opens the visit to resolve it`} onPress={() => go(flag.go)} hitSlop={{ top: 4, bottom: 4 }}
                 style={({ pressed }) => ({ minHeight: 36, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 18, backgroundColor: TONE[flag.tone].wash, opacity: pressed ? 0.7 : 1 })}>
                 <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: TONE[flag.tone].ink }} />
                 <Text style={{ ...type.subhead, fontWeight: "600", color: TONE[flag.tone].ink }}>{flag.label}</Text>

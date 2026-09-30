@@ -67,7 +67,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     const next = capabilitySchema.safeParse(params.next);
     if (next.success) request(next.data, params.prompt);
     const view = params.view;
-    if (view === "recording" || view === "note" || view === "xray" || view === "tasks" || view === "scan" || view === "claim") setTimeout(() => router.push(`/${view}`), 320);
+    if (view === "recording" || view === "note" || view === "xray" || view === "tasks" || view === "scan" || view === "claim" || view === "discharge") setTimeout(() => router.push(`/${view}`), 320);
   }, [home, sessionId, leaveVisit, selectPatient, request, params.next, params.prompt, params.view]));
   const insets = useSafeAreaInsets();
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -173,14 +173,14 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   // still settle (images, reveals) just after mount, so the landing follows them for a moment.
   const landedAt = useRef<number | undefined>(undefined);
   const pick = (item: Suggestion) => item.kind === "recording" ? open("recording") : run(item.kind, item.text);
-  // Sona on Today: the dock's ✦ suggestion and a typed question the day's rules can answer open the answer sheet; clinical questions still need a visit.
+  // Sona on Today: the dock's ✦ suggestion and a typed question the day's rules can answer open the answer sheet; a clinical question opens the patient picker (run) and runs once a visit is chosen.
   const todayAnswers = useTodayAnswers();
   const [ask, setAsk] = useState<AskState>(closed);
   const nudge = home ? suggestion(todayAnswers) : undefined;
   // A notice answers the last input only: it clears on the next keystroke or submit, so it never hides the dock for good.
   const submit = (text: string) => { const prompt = text.trim(); if (!prompt) return; setNotice(undefined);
-    if (!patient) { const answer = matchQuestion(prompt, todayAnswers); if (answer) { setInput(""); setAsk({ open: true, shown: answer }); return; } setNotice("Pick a visit first. Today’s visits are listed above."); return; }
-    if (pending.length) {
+    if (!patient) { const answer = matchQuestion(prompt, todayAnswers); if (answer) { setInput(""); setAsk({ open: true, shown: answer }); return; } }
+    else if (pending.length) {
       // Images go to the imaging review (the first becomes the encounter's attachment); files and documents, scanned or photographed, are kept for reference.
       const image = pending.find(item => item.kind === "image" && item.imageType !== "Document");
       const files = pending.filter(item => item.kind === "file" || item.imageType === "Document");

@@ -11,7 +11,7 @@ import { List, ListRow, QuestionList } from "@/components/sona/list";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, Icon, Notice, Surface } from "@/components/sona/ui";
+import { Action, Icon, Notice, RoundAction, Surface } from "@/components/sona/ui";
 import { GlassOrb } from "@/components/sona/glass-orb";
 import { OrbGlyph } from "@/components/sona/orb-glyph";
 import { VoiceDock } from "@/features/encounter/voice-dock";
@@ -133,7 +133,7 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
       <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 12), borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)", backgroundColor: palette.canvas }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 24, backgroundColor: palette.surface, paddingLeft: 10, paddingRight: 6, boxShadow: "0 4px 14px rgba(30,50,90,0.08)" }}>
           <TextInput accessibilityLabel="Ask Sona" placeholder={PLACEHOLDER[scope]} value={text} onChangeText={setText} onSubmitEditing={ask} returnKeyType="send" placeholderTextColor={palette.placeholder} style={{ flex: 1, minHeight: 48, fontSize: 16, color: palette.ink }} />
-          <Pressable accessibilityRole="button" accessibilityLabel="Send" disabled={!text.trim()} onPress={ask} style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: text.trim() ? palette.dark : "rgba(20,28,40,0.1)" }}><Icon name="arrow.up" size={15} color={palette.white} /></Pressable>
+          <RoundAction icon="send" label="Send" ready={!!text.trim()} onPress={ask} />
         </View>
       </View>
     </KeyboardAvoidingView>

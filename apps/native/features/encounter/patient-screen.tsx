@@ -6,6 +6,7 @@ import { Alert, Pressable, ScrollView, TextInput, View } from "react-native";
 import { ListRow } from "@/components/sona/list";
 import { Chip, Icon, Insight, Tone, canvasImage, useAccessibleEffects } from "@/components/sona/ui";
 import { palette, type, radius } from "@/components/sona/theme";
+import { mostUrgent } from "@/components/sona/tone";
 import { GROUPS, letters, listItems, syntheticCensus, type Group, type Item, type Row, type View as Tab } from "@/features/patients/census";
 import { useContinue, useContinueState } from "@/features/patients/continue-store";
 import { ASK_SPACE, WithSona } from "@/features/ask";
@@ -19,6 +20,9 @@ import { openSession } from "./navigation";
 const TABS: { id: Tab; label: string }[] = [
   { id: "needs", label: "Needs you" }, { id: "continue", label: "Continue" }, { id: "mine", label: "My list" }, { id: "ward", label: "Ward 4B" }, { id: "clinic", label: "Clinic today" }, { id: "all", label: "All" },
 ];
+// The tab and search outlive the screen, so opening a visit and coming back finds Patients as it was left.
+// ponytail: one module-level slot for the session; a per-user store if Patients ever opens twice at once.
+const kept: { tab?: Tab; query: string } = { query: "" };
 const minutes = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); return (h ?? 0) * 60 + (m ?? 0); };
 
 /**
@@ -31,8 +35,10 @@ export function PatientScreen() {
   const { patients, patient, encounter, encounters, updateEncounter } = useEncounter();
   const { next, view, prompt, switch: switching, tab: startTab } = useLocalSearchParams<{ next?: string; view?: string; prompt?: string; switch?: string; tab?: string }>();
   const [open, setOpen] = useState<string>();
-  const [query, setQuery] = useState("");
-  const [tab, setTab] = useState<Tab>(TABS.some(t => t.id === startTab) ? startTab as Tab : "needs");
+  const [query, keepQuery] = useState(kept.query);
+  const [tab, keepTab] = useState<Tab>(TABS.some(t => t.id === startTab) ? startTab as Tab : kept.tab ?? "needs");
+  const setQuery = (q: string) => { kept.query = q; keepQuery(q); };
+  const setTab = (t: Tab) => { kept.tab = t; keepTab(t); };
   const [opened, setOpened] = useState<ReadonlySet<Group>>(new Set());
   const list = useRef<LegendListRef>(null);
   const { census } = useContinueState();
@@ -74,10 +80,12 @@ export function PatientScreen() {
 
   // Insight first: where the list stands, for the tab in view.
   const needs = count("needs");
+  // The count takes its most urgent flag's colour: amber over amber flags, red only when one is red.
+  const needTone = mostUrgent(rows.filter(r => r.group === "needs").map(r => r.tone)) === "urgent" ? "urgent" : "soon";
   const upNext = [...day].sort((x, y) => x.time.localeCompare(y.time)).find(p => !encounters[p.id]?.requests.length);
   const insight: ReactNode[] = tab === "continue"
     ? [entries.length ? `${entries.length} unfinished` : "Nothing unfinished", toSign ? <Tone key="sign" of="soon">{toSign} {toSign === 1 ? "note" : "notes"} to sign</Tone> : null].filter(Boolean)
-    : [rows.length === patients.length ? (day.length ? `${day.length} ${day.length === 1 ? "visit" : "visits"} today` : "No visits today") : `${rows.length} patients`, needs ? <Tone key="needs" of="urgent">{needLine(needs)}</Tone> : null, upNext ? <Fragment key="next">next <Tone of="next">{upNext.name.split(" ")[0]} at {upNext.time}</Tone></Fragment> : null].filter(Boolean);
+    : [rows.length === patients.length ? (day.length ? `${day.length} ${day.length === 1 ? "visit" : "visits"} today` : "No visits today") : `${rows.length} patients`, needs ? <Tone key="needs" of={needTone}>{needLine(needs)}</Tone> : null, upNext ? <Fragment key="next">next <Tone of="next">{upNext.name.split(" ")[0]} at {upNext.time}</Tone></Fragment> : null].filter(Boolean);
 
   const renderItem = useCallback(({ item, index }: { item: Item; index: number }) => {
     if (item.kind === "header") return <Text accessibilityRole="header" style={{ ...type.footnote, fontWeight: "600", color: palette.muted, paddingTop: index ? 18 : 4, paddingBottom: 6, paddingHorizontal: 4 }}>{item.title} · {item.count}</Text>;
@@ -118,19 +126,32 @@ export function PatientScreen() {
   </WithSona>;
 }
 
-/** The A–Z index on the right edge of "All": tapping a letter scrolls to its section. */
+/**
+ * The A–Z index on the right edge of "All", as iOS draws it: one 44 pt-wide strip that a tap or a
+ * drag reads by position (so every letter is reachable, however many there are), and for VoiceOver
+ * one adjustable control (swipe up or down to move a letter).
+ */
 function AtoZ({ rows, items, list }: { rows: Row[]; items: Item[]; list: RefObject<LegendListRef | null> }) {
   const { reducedMotion } = useAccessibleEffects();
-  const jump = (letter: string) => {
-    const index = items.findIndex(i => i.kind === "header" && i.title === letter);
+  const all = letters(rows);
+  const [at, setAt] = useState(0);
+  const strip = useRef<View>(null);
+  const box = useRef({ y: 0, h: 1 });
+  const jump = (i: number) => {
+    const n = Math.max(0, Math.min(all.length - 1, i));
+    const index = items.findIndex(x => x.kind === "header" && x.title === all[n]);
+    setAt(n);
     // The sheet's transparent header covers the top ~64 pt, so the letter lands just below it.
     if (index >= 0) void list.current?.scrollToIndex({ index, animated: !reducedMotion, viewOffset: 64 });
   };
-  return <View pointerEvents="box-none" style={{ position: "absolute", right: 2, top: 210, bottom: 60, justifyContent: "center" }}>
-    <View accessibilityRole="tablist" accessibilityLabel="Jump to a letter" style={{ gap: 2 }}>
-      {letters(rows).map(l => <Pressable key={l} accessibilityRole="button" accessibilityLabel={`Jump to ${l}`} hitSlop={{ left: 12, right: 6 }} onPress={() => jump(l)} style={{ paddingHorizontal: 4, paddingVertical: 1 }}>
-        <Text style={{ fontSize: 11, fontWeight: "700", color: palette.blue }}>{l}</Text>
-      </Pressable>)}
+  const read = (pageY: number) => { const n = Math.floor(((pageY - box.current.y) / box.current.h) * all.length); if (n !== at) jump(n); };
+  return <View pointerEvents="box-none" style={{ position: "absolute", right: 0, top: 210, bottom: 60, justifyContent: "center" }}>
+    <View ref={strip} accessible accessibilityRole="adjustable" accessibilityLabel="Jump to a letter" accessibilityValue={{ text: all[at] ?? "" }}
+      accessibilityActions={[{ name: "increment" }, { name: "decrement" }]} onAccessibilityAction={e => jump(at + (e.nativeEvent.actionName === "increment" ? 1 : -1))}
+      onLayout={() => strip.current?.measureInWindow((_x, y, _w, h) => { box.current = { y, h: h || 1 }; })}
+      onStartShouldSetResponder={() => true} onResponderGrant={e => jump(Math.floor(((e.nativeEvent.pageY - box.current.y) / box.current.h) * all.length))} onResponderMove={e => read(e.nativeEvent.pageY)}
+      style={{ width: 44, alignItems: "center", paddingVertical: 4 }}>
+      {all.map(l => <Text key={l} style={{ fontSize: 11, lineHeight: 15, fontWeight: "700", color: palette.blue }}>{l}</Text>)}
     </View>
   </View>;
 }

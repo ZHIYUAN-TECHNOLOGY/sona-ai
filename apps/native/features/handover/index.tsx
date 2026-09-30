@@ -13,6 +13,8 @@ import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { ErrorLine } from "@/components/sona/parts";
 import { Action, Icon, Insight, Notice, Tone, useAccessibleEffects } from "@/components/sona/ui";
+import { toWatch } from "@/features/ask/answers";
+import { ASK_SPACE, WithSona } from "@/features/ask";
 import { useContinue } from "@/features/patients/continue-store";
 import { useEncounter } from "@/features/encounter/store";
 import { useFindings } from "@/features/live/findings-sync";
@@ -159,21 +161,24 @@ export function HandoverScreen() {
         <Text style={{ ...type.callout, color: palette.muted }}>No patients on your list this shift. New admissions and results will appear here.</Text>
       </Animated.View>}
   </View>;
-  // Insight over the whole list (not what's left), so it holds still while the deck moves.
+  // Insight over the whole list (not what's left), so it holds still while the deck moves. "To watch" takes
+  // the colour of the Watch chips it counts (amber); a card has no priority above watch.
   const watch = cards.filter(c => c.priority === "watch").length, items = cards.reduce((sum, c) => sum + c.recommendation.length, 0);
-  const insight = [`${cards.length} ${cards.length === 1 ? "patient" : "patients"}`, watch ? <Tone key="watch" of="urgent">{watch} to watch</Tone> : null, items ? `${items} open ${items === 1 ? "item" : "items"}` : null].filter(Boolean);
+  const insight = [`${cards.length} ${cards.length === 1 ? "patient" : "patients"}`, watch ? <Tone key="watch" of="soon">{watch} to watch</Tone> : null, items ? `${items} open ${items === 1 ? "item" : "items"}` : null].filter(Boolean);
+  const answers = [toWatch(cards)];
 
   // Read only (management): the cards to read, one under another; no triage and no acceptance.
-  if (server.live && !role.can("handover.accept")) return <View style={{ flex: 1, backgroundColor: palette.canvas, paddingTop: insets.top + 56, paddingHorizontal: 20, gap: 14 }}>
+  if (server.live && !role.can("handover.accept")) return <WithSona scope="handover" answers={answers}><View style={{ flex: 1, backgroundColor: palette.canvas, paddingTop: insets.top + 56, paddingHorizontal: 20, gap: 14 }}>
     <Stack.Screen options={{ title: "Shift handover" }} />
     <Insight>{insight.map((part, i) => [i ? " · " : "", part])}</Insight>
     <Notice>Read only. {role.why("handover.accept")}</Notice>
-    <ScrollView contentContainerStyle={{ gap: 14, paddingBottom: Math.max(insets.bottom, 16) + 20 }} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={{ gap: 14, paddingBottom: ASK_SPACE + 20 }} showsVerticalScrollIndicator={false}>
       {cards.map(card => <View key={card.id} style={{ height: 380 }}><HandoverCard card={card} /></View>)}
     </ScrollView>
-  </View>;
+  </View></WithSona>;
 
-  return <View style={{ flex: 1, backgroundColor: palette.canvas, paddingTop: insets.top + 56, paddingBottom: Math.max(insets.bottom, 16), paddingHorizontal: 20, gap: 14 }}>
+  // The deck and its two buttons end above the dock.
+  return <WithSona scope="handover" answers={answers}><View style={{ flex: 1, backgroundColor: palette.canvas, paddingTop: insets.top + 56, paddingBottom: ASK_SPACE, paddingHorizontal: 20, gap: 14 }}>
     <Stack.Screen options={{ title: "Shift handover" }} />
     <Insight>{insight.map((part, i) => [i ? " · " : "", part])}</Insight>
     <WrapUp />
@@ -225,7 +230,7 @@ export function HandoverScreen() {
       {acceptError && !accepted && <ErrorLine text={acceptError} onRetry={accept} />}
       <Text style={{ ...type.caption, color: palette.muted }}>{server.live ? "Clinic patients from today’s records." : "Clinic patients come from today’s visits; ward patients are examples without a record to open."}</Text>
     </ScrollView>}
-  </View>;
+  </View></WithSona>;
 }
 
 /**

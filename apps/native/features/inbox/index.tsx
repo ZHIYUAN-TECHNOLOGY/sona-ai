@@ -11,6 +11,8 @@ import { Caption, ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Chip, Expand, glass, Icon, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { waitingLongest } from "@/features/ask/answers";
+import { ASK_SPACE, WithSona } from "@/features/ask";
 import { DoneLine } from "@/features/bookings/parts";
 import { callBackNote, WARD_PHONE } from "@/features/check-ins/model";
 import type { DayItem } from "@/features/day/model";
@@ -128,7 +130,7 @@ export function InboxScreen() {
   const last = held.filter(h => !h.sending).at(-1);
   const line = insight(threads, inbox.now);
 
-  return <Screen>
+  return <WithSona scope="inbox" answers={[waitingLongest(threads, inbox.now)]}><Screen>
     <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>
       {line.split(" · ").map((part, i) => <Text key={part} style={{ color: part.endsWith("urgent") ? palette.red : palette.ink }}>{i ? " · " : ""}{part}</Text>)}
     </Text>
@@ -170,7 +172,8 @@ export function InboxScreen() {
         </Pressable>
       </Animated.View>)}
     </Animated.View>}
-  </Screen>;
+    <View style={{ height: ASK_SPACE }} />
+  </Screen></WithSona>;
 }
 
 /** "Urgent 2": the count dips, changes and springs back when a row leaves (Reduce Motion: a cross-fade). */

@@ -114,8 +114,9 @@ export function NextStepSheet({ steps, p, onClose, onAct }: { steps: Step[]; p: 
       <Pressable accessibilityRole="button" accessibilityLabel="Close steps" onPress={onClose} style={StyleSheet.absoluteFill} />
     </Animated.View>
     <GestureDetector gesture={pull}>
-      <Animated.View accessibilityViewIsModal style={[{ position: "absolute", left: 10, right: 10, bottom: Math.max(insets.bottom, 12), borderRadius: radius.sheet, borderCurve: "continuous", borderWidth: 1, borderColor: glass.rim, backgroundColor: "#FAFBFD", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 18px 48px rgba(24,32,48,0.18)", paddingTop: 8, paddingBottom: 14 }, sheet]}>
-        <View style={{ alignSelf: "center", width: 36, height: 5, borderRadius: 3, backgroundColor: "rgba(20,28,40,0.14)" }} />
+      <Animated.View accessibilityViewIsModal onAccessibilityEscape={onClose} style={[{ position: "absolute", left: 10, right: 10, bottom: Math.max(insets.bottom, 12), borderRadius: radius.sheet, borderCurve: "continuous", borderWidth: 1, borderColor: glass.rim, backgroundColor: "#FAFBFD", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 18px 48px rgba(24,32,48,0.18)", paddingTop: 8, paddingBottom: 14 }, sheet]}>
+        {/* The grabber is the sheet's Close, so VoiceOver finds it inside the sheet (the backdrop is outside the modal region). */}
+        <Pressable accessibilityRole="button" accessibilityLabel="Close steps" onPress={onClose} hitSlop={{ top: 12, bottom: 16, left: 40, right: 40 }} style={{ alignSelf: "center" }}><View style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: "rgba(20,28,40,0.14)" }} /></Pressable>
         <View style={{ flexDirection: "row", alignItems: "baseline", paddingHorizontal: 20, paddingTop: 14, paddingBottom: 8 }}>
           <Text accessibilityRole="header" style={{ flex: 1, ...type.heading, color: palette.ink }}>Before prescribing</Text>
           <Text style={{ ...type.footnote, color: palette.muted, fontVariant: ["tabular-nums"] }}>{left ? `${left} left` : "Checks passed"}</Text>

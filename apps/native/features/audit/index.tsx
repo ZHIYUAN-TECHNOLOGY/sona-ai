@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { MarkedText } from "@/components/sona/marked-text";
 import { Pressable, View } from "react-native";
@@ -10,6 +11,8 @@ import { ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, Screen, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { AUDIT_NEXT, mostMoney } from "@/features/ask/answers";
+import { ASK_SPACE, WithSona } from "@/features/ask";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
 import { api, errorText, useLive } from "@/features/live";
@@ -83,8 +86,8 @@ export function AuditScreen() {
     loadServerAudit(true, id => nameOf.current(id)).then(() => alive && setRan(true), e => alive && setLoadError(errorText(e)));
     return () => { alive = false; };
   }, [live, refused, attempt]);
-  // Live never shows the authored list: empty until the server answers.
-  const items = useOpenAudit();
+  // Live never shows the authored list: empty until the server answers. Most money at risk first.
+  const items = [...useOpenAudit()].sort((a, b) => b.risk - a.risk);
   const [sending, setSending] = useState<string[]>([]);
   const [open, setOpen] = useState<string>();
   const badge = useSharedValue(1);
@@ -110,7 +113,9 @@ export function AuditScreen() {
   };
   const badgeStyle = useAnimatedStyle(() => ({ transform: [{ scale: badge.value }] }));
 
-  return <Screen>
+  // Sona answers only once the audit has an answer: not while it runs, fails or is refused.
+  const settled = !refused && !loadError && (!live || ran);
+  return <WithSona scope="audit" hidden={!settled} answers={[mostMoney(items.filter(i => !sending.includes(i.id)), sentCount)]} onTab={setOpen}><Screen>
     <Surface feature style={{ padding: 16, gap: 10 }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
         <Text style={{ ...type.overline, color: palette.muted }}>{live ? "Latest audit" : "Last night’s audit"}</Text>
@@ -123,6 +128,7 @@ export function AuditScreen() {
         : loadError ? <ErrorLine text={`The audit didn't run: ${loadError}`} onRetry={() => setAttempt(a => a + 1)} />
         : <><Ticker text={formatRM(risk)} />
       <Text style={{ ...type.subhead, color: palette.muted }}>{live && !ran ? "Running the audit…" : items.length ? `at risk across ${items.length - sending.length} under-specified ${items.length - sending.length === 1 ? "note" : "notes"}` : "Nothing left at risk. Every query is out."}</Text></>}
+      {settled && !items.length && <Action label={AUDIT_NEXT.label} icon="bed.double" onPress={() => router.push(AUDIT_NEXT.op.slice(3) as never)} />}
     </Surface>
 
     {items.length > 0 && <Text style={{ ...type.caption, color: palette.muted }}>Swipe right to send, or tap to read first.</Text>}
@@ -131,7 +137,8 @@ export function AuditScreen() {
         <Row item={item} sending={sending.includes(item.id)} asking={asking.includes(item.id)} error={failed[item.id]} open={open === item.id} onToggle={() => setOpen(o => (o === item.id ? undefined : item.id))} onSend={() => send(item)} />
       </Animated.View>)}
     </View>
-  </Screen>;
+    <View style={{ height: ASK_SPACE }} />
+  </Screen></WithSona>;
 }
 
 /** Money that rolls only the digits that change, like an odometer. */

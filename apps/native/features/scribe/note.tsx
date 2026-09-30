@@ -2,12 +2,13 @@ import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Keyboard, KeyboardAvoidingView, Pressable, Switch, TextInput, View } from "react-native";
 import Animated from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { GlanceTile, IconRow, Section, Shelf } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Action, Chip, Expand, Glass, glass, Icon, Insight, Notice, Screen, SourceLink, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Chip, Expand, glass, Icon, Insight, Notice, Screen, SourceLink, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
+import { AskOrb } from "@/features/ask";
+import { beforeSigning, noteNext } from "@/features/ask/answers";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
 import { buildDraft, editNote, readNoteSections, scriptFor, sectionKeys, serializeNoteSections, type NoteSections } from "./model";
@@ -16,6 +17,7 @@ import { haptic, noteMeta, StateLine } from "./parts";
 import { api, errorText, useLive } from "@/features/live";
 import { noteSections, noteSentences } from "@/features/live/prescribing-sync";
 import { LockedAction, useRole } from "@/features/live/roles";
+import { NoVisit } from "@/components/sona/no-visit";
 
 const clip = (value: string, length = 140) => value.length > length ? `${value.slice(0, length).trimEnd()}…` : value;
 const emptyDetail: Record<keyof NoteSections, string> = {
@@ -59,8 +61,6 @@ const placeholders: Record<keyof NoteSections, string> = { subjective: "Captured
 const shortName: Record<keyof NoteSections, string> = { subjective: "History", objective: "Observations", assessment: "Assessment", plan: "Plan" };
 const FOCUS ="rgba(36,91,204,0.4)";
 const SPIN = { from: { transform: [{ rotate: "0deg" }] }, to: { transform: [{ rotate: "360deg" }] } };
-/** Room under the last section so the floating bar never covers it. */
-const BAR_SPACE = 132;
 
 /** Save state as one inline line in the action bar. */
 function saveState(status: "idle" | "saving" | "saved" | "failed", reviewed: boolean) {
@@ -83,7 +83,6 @@ function QuietLink({ label, icon, onPress }: { label: string; icon: string; onPr
 export function NoteScreen() {
   const { patient, encounter, updateEncounter, showDemoControls } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
-  const insets = useSafeAreaInsets();
   const [suggestion, setSuggestion] = useState<NoteSections>();
   const [failNextSave, setFailNextSave] = useState(false);
   const [prototype, setPrototype] = useState(false);
@@ -135,7 +134,7 @@ export function NoteScreen() {
     if (previous === "saving" && encounter?.noteSaveStatus === "saved") haptic("done");
     if (previous === "saving" && encounter?.noteSaveStatus === "failed") haptic("warn");
   }, [encounter?.noteSaveStatus]);
-  if (!patient || !encounter) return <Screen><Notice>Select a patient to open a note.</Notice></Screen>;
+  if (!patient || !encounter) return <NoVisit view="note" what="a note" />;
   const sections = encounter.noteSectionDraft ?? encounter.noteSections ?? readNoteSections(encounter.note);
   const hasContent = sectionKeys.some(key => sections[key].trim().length > 0);
   const empty = sectionKeys.filter(key => !sections[key].trim()).map(key => shortName[key]);
@@ -157,9 +156,37 @@ export function NoteScreen() {
   // No visit captured yet: drafts come from the scripted sample consultation, labelled as a sample.
   const consultation = encounter.transcript.length ? encounter.transcript : scriptFor(encounter.language);
   const suggestionBlocked = encounter.transcriptDraft ? "Finish the pending transcript correction before a fresh draft." : undefined;
+  // Sona beside the decision reads the page's own state; once saved, the visit's next step shows under the buttons.
+  const noteState = { drafted: hasContent, saved: status === "saved", reviewed: encounter.noteReviewed, empty, unsureLines: encounter.transcript.filter(line => line.corrected && !line.englishReviewed).length,
+    fromSample: Boolean(encounter.noteFromSample), plan: sections.plan, openTasks: encounter.tasks.filter(t => !t.completed).length };
+  const next = noteNext(noteState);
+  const orb = <AskOrb scope="note" answers={[beforeSigning(noteState)]} />;
+
+  // One glass bar (the page's `Screen bottom`): the save state inline, the two note actions and Sona, then the next step.
+  const bar = !canWrite ? <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}><View style={{ flex: 1 }}><LockedAction label="Needs a doctor to write the note" path="note.save" height={48} /></View>{orb}</View> : <>
+    <View accessible accessibilityLiveRegion="polite" accessibilityLabel={state.title} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 4 }}>
+      <Animated.View key={state.title} entering={reducedMotion ? undefined : riseIn({ distance: 0, scale: 0.8, duration: 240 })}>
+        <Animated.View style={{ animationName: saving && !reducedMotion ? SPIN : undefined, animationDuration: 1000, animationIterationCount: "infinite", animationTimingFunction: "linear" }}>
+          <Icon name={state.icon} size={16} color={state.color} />
+        </Animated.View>
+      </Animated.View>
+      <Text numberOfLines={2} style={{ flex: 1, fontSize: 13, lineHeight: 18, fontWeight: "500", color: status === "failed" ? palette.amber : palette.ink }}>{state.title}</Text>
+    </View>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+      <View style={{ flex: 1 }}><Action label={saving ? "Saving…" : status === "failed" ? "Retry save" : "Save draft"} accessibilityLabel={status === "failed" ? "Retry saving draft" : undefined} icon="checkmark" disabled={!hasContent || saving} onPress={save} /></View>
+      <View style={{ flex: 1 }}><Action label={encounter.noteReviewed ? "Reviewed" : "Mark reviewed"} accessibilityLabel={encounter.noteReviewed ? "Marked reviewed" : "Mark note reviewed"} secondary disabled={!hasContent || encounter.noteReviewed || saving || status !== "saved"} onPress={() => { Keyboard.dismiss(); haptic("done"); updateEncounter(current => ({ ...current, noteReviewed: true })); }} /></View>
+      {orb}
+    </View>
+    {next && <QuietLink label={`Next: ${next.label}`} icon="arrow.right.circle" onPress={() => { haptic("tap"); router.push(next.op.slice(3) as never); }} />}
+    {live && <Pressable accessibilityRole="switch" accessibilityLabel="Exclude this note from training" accessibilityHint="When on, saving keeps this visit's note out of the de-identified training data" accessibilityState={{ checked: excludeFromTraining }}
+      onPress={() => setExcludeFromTraining(v => !v)} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 4 }}>
+      <Text style={{ flex: 1, fontSize: 13, lineHeight: 18, color: palette.muted }}>Exclude from training</Text>
+      <Switch value={excludeFromTraining} onValueChange={setExcludeFromTraining} trackColor={{ true: palette.blue }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
+    </Pressable>}
+  </>;
 
   return <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}>
-    <Screen>
+    <Screen bottom={bar}>
       <Animated.View entering={rise(0)} style={{ gap: 12 }}>
         <Insight eyebrow={patient.name}>{encounter.noteReviewed ? <Tone of="good">Reviewed</Tone> : !hasContent ? "Nothing drafted yet" : <>Draft{emptyLine ? <> · <Tone of="soon">{emptyLine}</Tone></> : null} · not reviewed</>}</Insight>
         <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>{live ? "Verify drafts against source." : "Verify drafts against source · local session only, no record connected."}</Text>
@@ -213,30 +240,6 @@ export function NoteScreen() {
           <Action label={failNextSave ? "Next save will fail · cancel simulation" : "Simulate failure on next save"} secondary disabled={saving} onPress={() => setFailNextSave(value => !value)} />
         </Expand>}
       </Animated.View>}
-      <View style={{ height: BAR_SPACE + Math.max(insets.bottom, 12) + (live && canWrite ? 54 : 0) }} />
     </Screen>
-
-    {/* One floating glass bar: the save state inline, then the two note actions. */}
-    <Animated.View entering={rise(4)} style={{ position: "absolute", left: 16, right: 16, bottom: Math.max(insets.bottom, 12) }}>
-      {!canWrite ? <Glass style={{ padding: 12 }}><LockedAction label="Needs a doctor to write the note" path="note.save" height={48} /></Glass> : <Glass style={{ padding: 12, gap: 10 }}>
-        <View accessible accessibilityLiveRegion="polite" accessibilityLabel={state.title} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 4 }}>
-          <Animated.View key={state.title} entering={reducedMotion ? undefined : riseIn({ distance: 0, scale: 0.8, duration: 240 })}>
-            <Animated.View style={{ animationName: saving && !reducedMotion ? SPIN : undefined, animationDuration: 1000, animationIterationCount: "infinite", animationTimingFunction: "linear" }}>
-              <Icon name={state.icon} size={16} color={state.color} />
-            </Animated.View>
-          </Animated.View>
-          <Text numberOfLines={2} style={{ flex: 1, fontSize: 13, lineHeight: 18, fontWeight: "500", color: status === "failed" ? palette.amber : palette.ink }}>{state.title}</Text>
-        </View>
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          <View style={{ flex: 1 }}><Action label={saving ? "Saving…" : status === "failed" ? "Retry save" : "Save draft"} accessibilityLabel={status === "failed" ? "Retry saving draft" : undefined} icon="checkmark" disabled={!hasContent || saving} onPress={save} /></View>
-          <View style={{ flex: 1 }}><Action label={encounter.noteReviewed ? "Reviewed" : "Mark reviewed"} accessibilityLabel={encounter.noteReviewed ? "Marked reviewed" : "Mark note reviewed"} secondary disabled={!hasContent || encounter.noteReviewed || saving || status !== "saved"} onPress={() => { Keyboard.dismiss(); haptic("done"); updateEncounter(current => ({ ...current, noteReviewed: true })); }} /></View>
-        </View>
-        {live && <Pressable accessibilityRole="switch" accessibilityLabel="Exclude this note from training" accessibilityHint="When on, saving keeps this visit's note out of the de-identified training data" accessibilityState={{ checked: excludeFromTraining }}
-          onPress={() => setExcludeFromTraining(v => !v)} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 4 }}>
-          <Text style={{ flex: 1, fontSize: 13, lineHeight: 18, color: palette.muted }}>Exclude from training</Text>
-          <Switch value={excludeFromTraining} onValueChange={setExcludeFromTraining} trackColor={{ true: palette.blue }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
-        </Pressable>}
-      </Glass>}
-    </Animated.View>
   </KeyboardAvoidingView>;
 }

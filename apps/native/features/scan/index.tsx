@@ -8,19 +8,21 @@ import { useEffect, useState, type ReactNode } from "react";
 import { AccessibilityInfo, Keyboard, Modal, Pressable, TextInput, View, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CaptureScan } from "@/components/sona/capture-scan";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, Expand, Glass, Icon, IconButton, Notice, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Expand, Icon, IconButton, Notice, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { AskOrb } from "@/features/ask";
+import { toCheck } from "@/features/ask/answers";
 import { useEncounter } from "@/features/encounter/store";
 import { OriginalImageViewer } from "@/features/imaging/viewer";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { useServerEncounter } from "@/features/live/sync";
 import { applyLocally, countsOf, itemsOf, keptOf, replaceWord, type ItemKey } from "./model";
+import { NoVisit } from "@/components/sona/no-visit";
 
 /**
  * Scan a handwritten note: photograph a ward-round note, drug chart or referral letter, watch it read,
@@ -73,7 +75,7 @@ export function ScanScreen() {
   // The checklist decides when the review appears (it waits for the reading); see Checklist.
   const [ready, setReady] = useState<{ photo: Photo; key: string; reading: Reading }>();
 
-  if (!patient) return <Screen><Notice>Choose a patient before scanning a note.</Notice></Screen>;
+  if (!patient) return <NoVisit view="scan" what="a scan" />;
   if (!role.can("scan.read")) return <Screen><LockedAction label="Needs a doctor to scan a note" path="scan.read" /></Screen>;
   const { encounterId } = patient;
 
@@ -318,7 +320,6 @@ function Row({ children, last }: { children: ReactNode; last?: boolean }) {
 
 /** Everything read, grouped and ticked; unsure words underlined in amber and fixable in place; one action. */
 function Review({ header, patientFirst, reading, live, busy, onApply }: { header: ReactNode; patientFirst: string; reading: Reading; live: boolean; busy: boolean; onApply: (note: HandwrittenNote, off: ReadonlySet<ItemKey>) => Promise<void> }) {
-  const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();
   const [note, setNote] = useState<HandwrittenNote>(reading);
   const [unsure, setUnsure] = useState(() => unsureWords(reading));
@@ -343,8 +344,23 @@ function Review({ header, patientFirst, reading, live, busy, onApply }: { header
     counts.tasks && `${counts.tasks} ${counts.tasks === 1 ? "task" : "tasks"}`,
   ].filter(Boolean).join(" · ");
   let group = 0;
+  // Sona beside the decision: the unsure words and low-confidence medicines still to check, and what is unticked.
+  const label = (k: ItemKey) => k === "followUp" ? `Follow-up in ${note.followUp?.in ?? ""}` : k.startsWith("section:") ? SECTION_TITLE[k.slice(8) as keyof ScanSections]
+    : k.startsWith("med:") ? medicineLabel(note.medicines[Number(k.slice(4))]!) : note.tasks[Number(k.slice(5))]?.title ?? k;
+  const check = toCheck({ unsure, off: items.filter(k => off.has(k)).map(k => ({ id: k, label: label(k) })),
+    low: note.medicines.flatMap((m, i) => m.confidence === "low" && !off.has(`med:${i}`) ? [{ id: `low-${i}`, label: medicineLabel(m) }] : []) });
 
-  return <View style={{ flex: 1 }}><Screen>
+  // Review before deciding: what will happen sits on the button's bar; nothing is written before the tap.
+  return <Screen bottom={<>
+    <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: error ? palette.amber : palette.muted, paddingHorizontal: 4 }}>
+      {error ?? (any ? `Adds ${preview || "nothing new"} · recorded as from this scanned note` : "Tick at least one item to add")}
+    </Text>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <View style={{ flex: 1 }}><Action label={busy ? "Adding…" : `Add to ${patientFirst}’s record`} icon="plus" disabled={!any || busy}
+        onPress={() => { setError(undefined); onApply(note, off).catch((e: Error) => setError(e.message)); }} /></View>
+      <AskOrb scope="scan" answers={[check]} />
+    </View>
+  </>}>
     {header}
     {/* Insight first: what was found, and how much still needs your eyes. */}
     <Animated.View entering={reducedMotion ? undefined : groupIn(group++)}>
@@ -430,20 +446,7 @@ function Review({ header, patientFirst, reading, live, busy, onApply }: { header
         </View>
       </Row>}
     </Group>}
-
-    <View style={{ height: 110 + insets.bottom }} />
-    </Screen>
-    {/* Review before deciding: what will happen sits on the button's bar; nothing is written before the tap. */}
-    <Animated.View entering={reducedMotion ? undefined : groupIn(group)} style={{ position: "absolute", left: 16, right: 16, bottom: Math.max(insets.bottom, 12) }}>
-      <Glass style={{ padding: 12, gap: 8 }}>
-        <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: error ? palette.amber : palette.muted, paddingHorizontal: 4 }}>
-          {error ?? (any ? `Adds ${preview || "nothing new"} · recorded as from this scanned note` : "Tick at least one item to add")}
-        </Text>
-        <Action label={busy ? "Adding…" : `Add to ${patientFirst}’s record`} icon="plus" disabled={!any || busy}
-          onPress={() => { setError(undefined); onApply(note, off).catch((e: Error) => setError(e.message)); }} />
-      </Glass>
-    </Animated.View>
-  </View>;
+  </Screen>;
 }
 
 /** The receipt, then the likely next move: confirm the medicine, read the note, or scan the next page. */
