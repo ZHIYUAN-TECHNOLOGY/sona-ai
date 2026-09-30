@@ -14,7 +14,7 @@ import { Caption } from "@/components/sona/parts";
 import { HalftoneShimmer } from "@/components/sona/halftone-shimmer";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { IconRow, Section } from "@/components/sona/sections";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Chip, Expand, Glass, Icon, Insight, Notice, pillStyle, Reveal, Screen, SourceLink, Surface, surfaceStyle, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEncounter } from "@/features/encounter/store";
@@ -101,8 +101,8 @@ function AnalysisStatus({ interrupted }: { interrupted: boolean }) {
     sweep.set(withRepeat(withTiming(1, { duration: 1400, easing: Easing.linear }), -1));
     return () => cancelAnimation(sweep);
   }, [live, sweep]);
-  return <View accessibilityLiveRegion="polite" onLayout={e => setSize(e.nativeEvent.layout)} style={[surfaceStyle, { borderRadius: 18, padding: 14, gap: 3 }]}>
-    {live && size.width > 0 && <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: 17, overflow: "hidden" }}><HalftoneShimmer width={size.width} height={size.height} progress={sweep} /></View>}
+  return <View accessibilityLiveRegion="polite" onLayout={e => setSize(e.nativeEvent.layout)} style={[surfaceStyle, { borderRadius: radius.group, padding: 14, gap: 3 }]}>
+    {live && size.width > 0 && <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: radius.control, overflow: "hidden" }}><HalftoneShimmer width={size.width} height={size.height} progress={sweep} /></View>}
     <Text style={{ ...type.subhead, fontWeight: "600", color: interrupted ? palette.amber : palette.ink }}>{interrupted ? "Response interrupted" : "Analysing"}</Text>
     <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>{interrupted ? "The preview and attachment are kept." : "Preparing the sample response. No image inference is running."}</Text>
   </View>;
@@ -192,7 +192,7 @@ function MenuTrigger({ open, onPress }: { open: boolean; onPress: () => void }) 
 /** Secondary image actions: a compact glass menu that springs open from the header's `⋯`. */
 function MenuPanel({ items, onClose }: { items: MenuItem[]; onClose: () => void }) {
   const { reducedMotion } = useAccessibleEffects();
-  return <Animated.View entering={reducedMotion ? FadeIn.duration(120) : menuIn} exiting={FadeOut.duration(120)} style={{ position: "absolute", top: 0, right: 0, width: 224, zIndex: 10, transformOrigin: "top right", boxShadow: "0 12px 32px rgba(24,32,48,0.18)", borderRadius: 18 }}>
+  return <Animated.View entering={reducedMotion ? FadeIn.duration(120) : menuIn} exiting={FadeOut.duration(120)} style={{ position: "absolute", top: 0, right: 0, width: 224, zIndex: 10, transformOrigin: "top right", boxShadow: "0 12px 32px rgba(24,32,48,0.18)", borderRadius: radius.group }}>
     <Glass style={{ borderRadius: 18, paddingVertical: 4 }}>
       {items.map(item => <Pressable key={item.label} accessibilityRole="button" accessibilityState={{ disabled: item.disabled }} disabled={item.disabled} onPress={() => { onClose(); item.onPress(); }}
         style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 10, opacity: item.disabled ? 0.4 : 1, backgroundColor: pressed ? "rgba(20,28,40,0.06)" : "transparent" })}>

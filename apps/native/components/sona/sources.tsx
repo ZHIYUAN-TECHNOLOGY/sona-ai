@@ -5,7 +5,7 @@ import { Pressable, ScrollView, TextInput, View, useWindowDimensions } from "rea
 import Animated, { withSpring, withTiming } from "react-native-reanimated";
 import { EASE_OUT, riseIn } from "./motion";
 import { Text } from "./text";
-import { palette, type } from "./theme";
+import { palette, type, radius } from "./theme";
 import { Icon, SourceLink, glass, useAccessibleEffects } from "./ui";
 
 /**
@@ -130,7 +130,7 @@ export function SourcesSheet() {
     <ScrollView style={{ maxHeight: height * 0.6, flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }} keyboardShouldPersistTaps="handled">
       {groups.map(group => <View key={group.title} style={{ gap: 6 }}>
         {groups.length > 1 && <Text accessibilityRole="header" style={{ ...type.overline, color: palette.muted, paddingHorizontal: 4 }}>{group.title}</Text>}
-        <View style={{ borderRadius: 18, borderCurve: "continuous", backgroundColor: palette.white, overflow: "hidden" }}>
+        <View style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, overflow: "hidden" }}>
           {group.rows.map((source, i) => <Animated.View key={source.id ?? source.label} entering={reducedMotion ? undefined : riseIn({ delay: Math.min(order++, 8) * 30, distance: 8, duration: 280 })}>
             <Pressable accessibilityRole="link" accessibilityLabel={source.detail ? `${source.label}, ${source.detail}` : source.label} onPress={() => pick(source)}
               style={({ pressed }) => ({ minHeight: 52, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 12, borderTopWidth: i ? 1 : 0, borderColor: glass.hairline, backgroundColor: pressed ? "rgba(20,28,40,0.04)" : "transparent" })}>
@@ -144,7 +144,7 @@ export function SourcesSheet() {
           </Animated.View>)}
         </View>
       </View>)}
-      {!shown.length && <View style={{ borderRadius: 18, borderCurve: "continuous", backgroundColor: palette.white }}>
+      {!shown.length && <View style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white }}>
         <Text style={{ padding: 16, ...type.footnote, color: palette.muted }}>{sources.length ? `No source matches “${query}”.` : "No sources."}</Text>
       </View>}
     </ScrollView>

@@ -1,5 +1,5 @@
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { RoundAction, useAccessibleEffects } from "@/components/sona/ui";
@@ -271,14 +271,14 @@ export function VoiceDock(props: Props) {
             <AttachmentStack items={attachments} reduced={reducedMotion} onPress={openMenu} />
           </Animated.View>}
           {!used && !coached && !quiet && !busy && mode === "idle" && !attachments.length && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ delay: 600, distance: 6, scale: 0.96, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="none"
-            style={{ position: "absolute", bottom: BAR_H + 8, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 6, paddingRight: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.94)", boxShadow: "0 6px 20px rgba(24,32,48,0.1)", transformOrigin: "bottom" }}>
+            style={{ position: "absolute", bottom: BAR_H + 8, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 6, paddingRight: 14, paddingVertical: 6, borderRadius: radius.group, backgroundColor: "rgba(255,255,255,0.94)", boxShadow: "0 6px 20px rgba(24,32,48,0.1)", transformOrigin: "bottom" }}>
             <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: "#E4EDFD", alignItems: "center", justifyContent: "center" }}><BrandIcon name="wave" size={14} color={palette.blue} strokeWidth={1.8} /></View>
             <Text style={{ ...type.footnote, fontWeight: "500", color: palette.ink }}>Tap or hold to talk</Text>
           </Animated.View>}
 
           <View pointerEvents="box-none" style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, alignItems: "center", justifyContent: "center" }}>
             {busy && <Animated.View key={thinking} entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, scale: 0.96, duration: 240 })} exiting={FadeOut.duration(120)} pointerEvents="none"
-              style={{ position: "absolute", bottom: BAR_H + 6, flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.9)", boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
+              style={{ position: "absolute", bottom: BAR_H + 6, flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.control, backgroundColor: "rgba(255,255,255,0.9)", boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
               <Icon name="stop.fill" size={9} color={palette.muted} />
               <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: "500", color: palette.ink, animationName: reducedMotion ? undefined : { "0%": { opacity: 1 }, "50%": { opacity: 0.5 }, "100%": { opacity: 1 } }, animationDuration: 1600, animationIterationCount: "infinite" } as never}>{thinking}</Text>
             </Animated.View>}

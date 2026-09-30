@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { api, errorText, useLive } from "@/features/live";
 import { useRole } from "@/features/live/roles";
 
@@ -26,7 +26,7 @@ export function CareInvite({ encounterId }: { encounterId: string }) {
   if (!on) return null;
   if (error) return <Text selectable style={{ ...type.caption, color: palette.red }}>Sona Care invite unavailable: {error}</Text>;
   if (!invite) return null;
-  return <View style={{ flexDirection: "row", alignItems: "center", gap: 14, padding: 12, borderRadius: 18, borderCurve: "continuous", backgroundColor: palette.white }}>
+  return <View style={{ flexDirection: "row", alignItems: "center", gap: 14, padding: 12, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white }}>
     <Qr text={invite.link} size={96} />
     <View style={{ flex: 1, gap: 4 }}>
       <Text style={{ ...type.overline, color: palette.blue }}>Sona Care</Text>

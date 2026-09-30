@@ -4,7 +4,7 @@ import { Keyboard, Pressable, TextInput, View, type TextStyle } from "react-nati
 import Animated from "react-native-reanimated";
 import { Text } from "@/components/sona/text";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { SourceRef, useSourceScope, type SourceEntry } from "@/components/sona/sources";
 import { Action, Chip, Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
@@ -24,7 +24,7 @@ const sourceOf = (fact: HistoryFact, onSource: (id: string) => void): SourceEntr
 });
 function localDate(date: Date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
 
-const field: TextStyle = { fontSize: 17, lineHeight: 23, color: palette.ink, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 16, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" };
+const field: TextStyle = { fontSize: 17, lineHeight: 23, color: palette.ink, paddingHorizontal: 14, paddingVertical: 12, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" };
 const placeholder = "rgba(89,97,107,0.55)";
 function FieldLabel({ children }: { children: string }) { return <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{children}</Text>; }
 

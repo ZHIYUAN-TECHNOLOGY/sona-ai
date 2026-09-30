@@ -7,7 +7,7 @@ import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import type { Patient } from "@/features/encounter/types";
@@ -33,7 +33,7 @@ export function DeniedCard({ denial }: { denial: Denial }) {
   const { reducedMotion } = useAccessibleEffects();
   const title = `Denied by ${INSURER} · ${denial.reason}`;
   return <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(220)} accessible accessibilityLabel={`${title}. ${clock(denial.at)}${denial.note ? `. ${denial.note}` : ""}`}
-    style={{ flexDirection: "row", gap: 12, padding: 14, borderRadius: 20, borderCurve: "continuous", backgroundColor: "rgba(162,62,62,0.09)", borderWidth: 1, borderColor: "rgba(162,62,62,0.14)" }}>
+    style={{ flexDirection: "row", gap: 12, padding: 14, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: "rgba(162,62,62,0.09)", borderWidth: 1, borderColor: "rgba(162,62,62,0.14)" }}>
     <Icon name="xmark.octagon.fill" size={20} color={RED} />
     <View style={{ flex: 1, gap: 3 }}>
       <Text style={{ ...type.subhead, fontWeight: "700", color: RED }}>{title}</Text>

@@ -6,7 +6,7 @@ import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, wi
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { AlertRow, Caption, Mark, type MarkState, TextLink } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Card, Label, Notice, Screen, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/scribe/parts";
 import { lastScan } from "./scan-state";
@@ -134,7 +134,7 @@ function Review({ reading, kept, open, doses, onDose }: { reading: OcrResult; ke
 function DoseCheck({ dose, value, onDose }: { dose: OcrDose; value?: string; onDose: (v: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
-  if (value) return <View style={{ flexDirection: "row", gap: 12, alignItems: "center", padding: 14, borderRadius: 18, borderCurve: "continuous", backgroundColor: "rgba(40,104,80,0.06)" }}>
+  if (value) return <View style={{ flexDirection: "row", gap: 12, alignItems: "center", padding: 14, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: "rgba(40,104,80,0.06)" }}>
     <Mark state="done" size={22} />
     <Text style={{ flex: 1, ...type.callout, color: palette.ink }}>{dose.drug} {value === "confirmed" ? `${dose.dose}, confirmed against the original` : `corrected to ${value}`}</Text>
     <TextLink label="Undo" onPress={() => onDose("")} />

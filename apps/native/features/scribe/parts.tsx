@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { View } from "react-native";
 import Animated from "react-native-reanimated";
 import { Text } from "@/components/sona/text";
-import { palette } from "@/components/sona/theme";
+import { palette, radius } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import type { NoteSections } from "./model";
 
@@ -35,4 +35,4 @@ export const noteMeta: Record<keyof NoteSections, { title: string; icon: string 
   plan: { title: "Plan", icon: "list.bullet.clipboard" },
 };
 
-export const fieldStyle = { backgroundColor: "rgba(20,28,40,0.04)", borderRadius: 14, borderCurve: "continuous", paddingHorizontal: 14, paddingVertical: 12, minHeight: 46, color: palette.ink, fontSize: 16, lineHeight: 24 } as const;
+export const fieldStyle = { backgroundColor: "rgba(20,28,40,0.04)", borderRadius: radius.control, borderCurve: "continuous", paddingHorizontal: 14, paddingVertical: 12, minHeight: 46, color: palette.ink, fontSize: 16, lineHeight: 24 } as const;

@@ -7,7 +7,7 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { cancelAnimation, FadeIn, FadeOut, type SharedValue, useAnimatedReaction, useAnimatedStyle, useDerivedValue, useSharedValue, withDecay, withSpring, withTiming, type WithSpringConfig } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { EASE_IN_OUT, EASE_OUT, LAYOUT_SPRING } from "@/components/sona/motion";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Chip, Icon, pillStyle, SourceLink, useAccessibleEffects } from "@/components/sona/ui";
 import type { TeachingImage } from "./fixture";
 import { clamp, DOUBLE_TAP_ZOOM, fitted, limit, markerAt, markerUnder, MAX_ZOOM, rubberBand, ZOOM_STEP, zoomAround } from "./zoom";
@@ -15,10 +15,10 @@ import { clamp, DOUBLE_TAP_ZOOM, fitted, limit, markerAt, markerUnder, MAX_ZOOM,
 /** A finger let go: settle toward the limit carrying its velocity (a little give, no bounce past it). */
 const SETTLE: WithSpringConfig = { duration: 400, dampingRatio: 0.8 };
 /** Dark viewing surface, shared with the card preview and the empty state. */
-export const VIEWING = { borderRadius: 24, borderCurve: "continuous", overflow: "hidden", backgroundColor: palette.ink } as const;
+export const VIEWING = { borderRadius: radius.card, borderCurve: "continuous", overflow: "hidden", backgroundColor: palette.ink } as const;
 /** 1 pt low-opacity edge over images so the frame reads crisply on any content. */
 export function ImageEdge() {
-  return <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: 24, borderCurve: "continuous", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" }} />;
+  return <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: radius.card, borderCurve: "continuous", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" }} />;
 }
 
 /**

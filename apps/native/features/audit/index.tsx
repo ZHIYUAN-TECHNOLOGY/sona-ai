@@ -8,7 +8,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { LAYOUT } from "@/components/sona/motion";
 import { ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, Screen, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
@@ -169,7 +169,7 @@ function Row({ item, sending, asking, error, open, onToggle, onSend }: { item: A
   const reveal = useAnimatedStyle(() => ({ opacity: Math.min(1, x.value / THRESHOLD) }));
 
   return <View>
-    <Animated.View pointerEvents="none" style={[{ position: "absolute", inset: 0, borderRadius: 22, borderCurve: "continuous", paddingLeft: 18, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "rgba(36,91,204,0.12)" }, reveal]}>
+    <Animated.View pointerEvents="none" style={[{ position: "absolute", inset: 0, borderRadius: radius.group, borderCurve: "continuous", paddingLeft: 18, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "rgba(36,91,204,0.12)" }, reveal]}>
       <Icon name="paperplane.fill" size={14} color={palette.blue} />
       <Text style={{ ...type.footnote, fontWeight: "700", color: palette.blue }}>Send query</Text>
     </Animated.View>
@@ -177,7 +177,7 @@ function Row({ item, sending, asking, error, open, onToggle, onSend }: { item: A
       <Animated.View style={slide}>
         <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={`${item.bed}, ${item.patient}. ${item.gap}. ${formatRM(item.risk)} at risk.${error ? ` ${error}.` : ""}`}
           accessibilityActions={[{ name: "activate" }, { name: "send", label: `Send query to ${item.doctor}` }]} onAccessibilityAction={e => (e.nativeEvent.actionName === "send" ? onSend() : onToggle())}
-          onPress={onToggle} style={{ ...surfaceStyle, borderRadius: 22, padding: 14, gap: 10 }}>
+          onPress={onToggle} style={{ ...surfaceStyle, borderRadius: radius.group, padding: 14, gap: 10 }}>
           <View style={{ flexDirection: "row", gap: 12 }}>
             <View style={{ width: 26, height: 26, marginTop: 2 }}>
               <Svg width={26} height={26} style={{ position: "absolute" }}>
@@ -199,7 +199,7 @@ function Row({ item, sending, asking, error, open, onToggle, onSend }: { item: A
           </View>
           {error && <View style={{ paddingLeft: 38 }}><ErrorLine text={error} onRetry={onSend} /></View>}
           {open && !sending && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ gap: 10, paddingLeft: 38 }}>
-            <Text selectable style={{ ...type.footnote, color: palette.ink, padding: 10, borderRadius: 14, overflow: "hidden", backgroundColor: "rgba(20,28,40,0.04)" }}>{item.query}</Text>
+            <Text selectable style={{ ...type.footnote, color: palette.ink, padding: 10, borderRadius: radius.control, overflow: "hidden", backgroundColor: "rgba(20,28,40,0.04)" }}>{item.query}</Text>
             <View style={{ alignSelf: "flex-start" }}><Action label={`Send to ${item.doctor}`} icon="paperplane.fill" accessibilityLabel={`Send query to ${item.doctor}`} disabled={asking} onPress={onSend} /></View>
           </Animated.View>}
         </Pressable>

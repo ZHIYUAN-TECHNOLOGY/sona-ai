@@ -6,7 +6,7 @@ import { MarkedText } from "./marked-text";
 import { LAYOUT, riseIn } from "./motion";
 import { Section } from "./sections";
 import { Text } from "./text";
-import { palette, type } from "./theme";
+import { palette, type, radius } from "./theme";
 import { Expand, Icon, Surface, glass, pillStyle, useAccessibleEffects } from "./ui";
 
 /**
@@ -105,10 +105,10 @@ export function SectionTabs({ sections, active, onPick }: { sections: AnswerSect
   useEffect(() => { x.set(reducedMotion ? active * tabW : withSpring(active * tabW, { duration: 380, dampingRatio: 1 })); }, [active, tabW, reducedMotion, x]);
   const thumb = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   return <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ distance: -6, duration: 280 })} exiting={FadeOut.duration(140)}
-    style={{ alignSelf: "center", ...pillStyle, experimental_backgroundImage: undefined, backgroundColor: "rgba(247,249,252,0.94)", borderRadius: 18, padding: 4 }}>
+    style={{ alignSelf: "center", ...pillStyle, experimental_backgroundImage: undefined, backgroundColor: "rgba(247,249,252,0.94)", borderRadius: radius.group, padding: 4 }}>
     <ScrollView horizontal scrollEnabled={false} showsHorizontalScrollIndicator={false}>
       <View accessibilityRole="tablist" style={{ flexDirection: "row" }}>
-        <Animated.View pointerEvents="none" style={[{ position: "absolute", top: 0, bottom: 0, width: tabW, borderRadius: 14, backgroundColor: palette.ink }, thumb]} />
+        <Animated.View pointerEvents="none" style={[{ position: "absolute", top: 0, bottom: 0, width: tabW, borderRadius: radius.control, backgroundColor: palette.ink }, thumb]} />
         {sections.map((section, i) => <Pressable key={section.id} accessibilityRole="tab" accessibilityState={{ selected: i === active }} onPress={() => onPick(i)} style={{ width: tabW, height: 32, alignItems: "center", justifyContent: "center" }}>
           <Text numberOfLines={1} style={{ ...type.footnote, fontWeight: "600", color: i === active ? palette.white : palette.muted, transitionProperty: "color", transitionDuration: 180 } as never}>{section.title}</Text>
         </Pressable>)}

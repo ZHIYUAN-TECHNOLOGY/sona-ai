@@ -5,7 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-na
 import { SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, LAYOUT_SPRING, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Expand, Icon, Surface, Tone, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
@@ -76,8 +76,8 @@ function Segmented({ beds, value, onChange }: { beds: Bed[]; value: WardFilter; 
   };
   useEffect(() => place(true), [value]); // eslint-disable-line react-hooks/exhaustive-deps
   const pill = useAnimatedStyle(() => ({ left: x.value, width: w.value, opacity: w.value ? 1 : 0 }));
-  return <View accessibilityRole="tablist" style={{ ...pillStyle, flexDirection: "row", padding: 3, borderRadius: 22, borderCurve: "continuous" }}>
-    <Animated.View pointerEvents="none" style={[{ position: "absolute", top: 3, bottom: 3, borderRadius: 19, borderCurve: "continuous", backgroundColor: palette.white, boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 2px 8px rgba(40,70,140,0.14)" }, pill]} />
+  return <View accessibilityRole="tablist" style={{ ...pillStyle, flexDirection: "row", padding: 3, borderRadius: radius.group, borderCurve: "continuous" }}>
+    <Animated.View pointerEvents="none" style={[{ position: "absolute", top: 3, bottom: 3, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 2px 8px rgba(40,70,140,0.14)" }, pill]} />
     {filterSegments(beds, value).map(s => { const on = s.key === value; return <Pressable key={s.key} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={`${s.label}, ${s.count} bed${s.count === 1 ? "" : "s"}`}
       hitSlop={{ top: 4, bottom: 4 }} onPress={() => { if (!on) { haptic("select"); onChange(s.key); } }}
       onLayout={e => { const first = !spots.current[s.key]; spots.current[s.key] = { x: e.nativeEvent.layout.x, w: e.nativeEvent.layout.width }; if (on) place(!first); }}

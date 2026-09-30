@@ -6,7 +6,7 @@ import Animated, { FadeOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { useAccessibleEffects } from "@/components/sona/ui";
 import { api, errorText, useLive } from "@/features/live";
 import { LockedAction, useRole } from "@/features/live/roles";
@@ -87,7 +87,7 @@ export function CriticalAlert() {
   if (!waiting && !done) return null;
   const top = insets.top + 6;
   return <Animated.View key={waiting?.id ?? "done"} entering={reducedMotion ? undefined : riseIn({ distance: -18, duration: 320 })} exiting={FadeOut.duration(180)}
-    accessibilityLiveRegion="assertive" style={{ position: "absolute", top, left: 12, right: 12, zIndex: 100, borderRadius: 22, borderCurve: "continuous", padding: 14, gap: 10,
+    accessibilityLiveRegion="assertive" style={{ position: "absolute", top, left: 12, right: 12, zIndex: 100, borderRadius: radius.group, borderCurve: "continuous", padding: 14, gap: 10,
       backgroundColor: "rgba(255,255,255,0.97)", borderWidth: 1, borderColor: waiting ? "rgba(162,62,62,0.35)" : "rgba(15,110,102,0.3)", boxShadow: "0 12px 32px rgba(24,32,48,0.18)" }}>
     {waiting ? <>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>

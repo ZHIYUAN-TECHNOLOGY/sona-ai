@@ -6,6 +6,12 @@ export const palette = {
 };
 
 /**
+ * Corner sizes for rectangular blocks: control (inputs, inner tiles), group (lists, inner cards),
+ * card (surfaces, floating glass) and sheet (large panels). Circles and pills use half their height instead.
+ */
+export const radius = { control: 14, group: 20, card: 24, sheet: 28 } as const;
+
+/**
  * Type scale (iOS-sized, named by use). Headings tighten and track slightly negative; body text
  * sits at 1.5; small caps labels track positive. Deviate only for display numerals (timers, clocks).
  */

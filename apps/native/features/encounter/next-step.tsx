@@ -9,7 +9,7 @@ import Svg, { Circle } from "react-native-svg";
 import { EASE_OUT, riseIn } from "@/components/sona/motion";
 import { Mark } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Icon, glass, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
 import type { Step } from "./next-steps";
 
@@ -102,7 +102,7 @@ export function NextStepSheet({ steps, p, onClose, onAct }: { steps: Step[]; p: 
       <Pressable accessibilityRole="button" accessibilityLabel="Close steps" onPress={onClose} style={StyleSheet.absoluteFill} />
     </Animated.View>
     <GestureDetector gesture={pull}>
-      <Animated.View accessibilityViewIsModal style={[{ position: "absolute", left: 10, right: 10, bottom: Math.max(insets.bottom, 12), borderRadius: 34, borderCurve: "continuous", borderWidth: 1, borderColor: glass.rim, backgroundColor: "#FAFBFD", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 18px 48px rgba(24,32,48,0.18)", paddingTop: 8, paddingBottom: 14 }, sheet]}>
+      <Animated.View accessibilityViewIsModal style={[{ position: "absolute", left: 10, right: 10, bottom: Math.max(insets.bottom, 12), borderRadius: radius.sheet, borderCurve: "continuous", borderWidth: 1, borderColor: glass.rim, backgroundColor: "#FAFBFD", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 18px 48px rgba(24,32,48,0.18)", paddingTop: 8, paddingBottom: 14 }, sheet]}>
         <View style={{ alignSelf: "center", width: 36, height: 5, borderRadius: 3, backgroundColor: "rgba(20,28,40,0.14)" }} />
         <View style={{ flexDirection: "row", alignItems: "baseline", paddingHorizontal: 20, paddingTop: 14, paddingBottom: 8 }}>
           <Text accessibilityRole="header" style={{ flex: 1, ...type.heading, color: palette.ink }}>Before prescribing</Text>
@@ -111,7 +111,7 @@ export function NextStepSheet({ steps, p, onClose, onAct }: { steps: Step[]; p: 
         {steps.map((step, i) => {
           const now = step.id === current?.id;
           return <Animated.View key={step.id} entering={reducedMotion ? undefined : riseIn({ delay: 60 + i * 40, distance: 10, duration: 300 })}
-            style={{ flexDirection: "row", alignItems: "center", gap: 12, marginHorizontal: 10, paddingHorizontal: 10, paddingVertical: 11, borderRadius: 18, borderCurve: "continuous", backgroundColor: now ? "rgba(36,91,204,0.07)" : "transparent" }}>
+            style={{ flexDirection: "row", alignItems: "center", gap: 12, marginHorizontal: 10, paddingHorizontal: 10, paddingVertical: 11, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: now ? "rgba(36,91,204,0.07)" : "transparent" }}>
             <Mark state={step.done ? "done" : now ? "pending" : "open"} size={22} />
             <View style={{ flex: 1, gap: 1 }}>
               <Text style={{ ...type.subhead, fontWeight: now ? "600" : "500", color: step.done ? palette.muted : palette.ink, textDecorationLine: step.done ? "line-through" : "none" }}>{step.label}</Text>

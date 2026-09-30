@@ -9,7 +9,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { List, ListRow } from "@/components/sona/list";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Glass, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { openSession } from "@/features/encounter/navigation";
 import { useEncounter } from "@/features/encounter/store";
@@ -38,7 +38,7 @@ const OpsContext = createContext<Ops>({ run: () => {} });
 function Review({ title, items, what, confirm, done, op }: { title: string; items: string[]; what: string; confirm: string; done: string; op: string }) {
   const { run } = use(OpsContext);
   const [confirmed, setConfirmed] = useState(false);
-  if (confirmed) return <Animated.View entering={FadeIn.duration(200)} style={{ flexDirection: "row", gap: 10, alignItems: "center", padding: 14, borderRadius: 18, backgroundColor: "rgba(15,110,102,0.10)" }}>
+  if (confirmed) return <Animated.View entering={FadeIn.duration(200)} style={{ flexDirection: "row", gap: 10, alignItems: "center", padding: 14, borderRadius: radius.group, backgroundColor: "rgba(15,110,102,0.10)" }}>
     <Icon name="checkmark.circle.fill" size={18} color={palette.green} />
     <Text style={{ ...type.subhead, flex: 1, fontWeight: "600", color: palette.ink }}>{done}</Text>
   </Animated.View>;

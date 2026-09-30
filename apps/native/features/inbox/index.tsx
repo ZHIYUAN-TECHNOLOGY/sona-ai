@@ -9,7 +9,7 @@ import { BrandIcon } from "@/components/sona/brand-icon";
 import { EASE_OUT, fold, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Caption, ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Chip, Expand, glass, Icon, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { DoneLine } from "@/features/bookings/parts";
 import { callBackNote, WARD_PHONE } from "@/features/check-ins/model";
@@ -115,7 +115,7 @@ export function InboxScreen() {
       <SectionHead label={group.label} count={group.rows.length} />
       <Surface layout={layout}>
         {/* The clip keeps a swiped row inside the glass. */}
-        <View style={{ borderRadius: 23, overflow: "hidden" }}>
+        <View style={{ borderRadius: radius.group, overflow: "hidden" }}>
           {group.rows.map((t, i) => <InboxRow key={t.patientId} thread={t} now={inbox.now} first={i === 0} canHandle={canHandle} onHandle={() => { void handle(t); }} />)}
         </View>
       </Surface>

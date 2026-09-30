@@ -7,7 +7,7 @@ import { AccessibilityInfo, Pressable, View, useWindowDimensions } from "react-n
 import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, glass, Icon, Insight, Screen, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { BlockerRow, useSettling, Pill, Ring } from "@/features/clinical/prescribe-card";
 import { Seal, haptic } from "@/features/clinical/medication-parts";
@@ -132,7 +132,7 @@ function Avatar({ patient, size = 40 }: { patient: Patient; size?: number }) {
 /** The folded visit, pinned above the discharge card (the shot's page preview). */
 function VisitChip({ patient, answers, animate }: { patient: Patient; answers: string[]; animate: boolean }) {
   return <Animated.View entering={animate ? riseIn({ distance: -8, scale: 0.94, duration: 320 }) : undefined}>
-    <Surface style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 20 }}>
+    <Surface style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: radius.group }}>
       <Avatar patient={patient} size={34} />
       <View style={{ flex: 1 }}>
         <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{patient.name}</Text>
@@ -284,7 +284,7 @@ function DischargePage({ patient, answers, drafted, animate }: { patient: Patien
 
       {/* Discharged: the outcome and the patient's Sona Care code lead; the summary waits behind "Read full". */}
       {done && <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ gap: 12 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 18, borderCurve: "continuous", backgroundColor: "rgba(15,110,102,0.08)" }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: "rgba(15,110,102,0.08)" }}>
           <Seal draw stampDelay={fresh ? 120 : undefined} />
           <Animated.View entering={fresh ? riseIn({ delay: 220, distance: 6, duration: 360 }) : undefined} style={{ flex: 1, gap: 2 }}>
             <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{plan.bed} free{saved ? ` · ${saved} earlier` : ""}</Text>
@@ -326,7 +326,7 @@ function DischargePage({ patient, answers, drafted, animate }: { patient: Patien
             {LANGUAGES.map(l => <Pill key={l.id} label={l.label} on={state.language === l.id} onPress={() => set({ language: l.id })} />)}
           </View>
         </View>
-        <Animated.View key={state.language} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ padding: 12, gap: 6, borderRadius: 16, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" }}>
+        <Animated.View key={state.language} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ padding: 12, gap: 6, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" }}>
           {draft.loading ? <Drafting label={`Drafting the leaflet in ${language.name}…`} lines={2} />
             : <Arrive animate={Boolean(draft.data)}><Text selectable style={{ ...type.subhead, color: palette.ink }}>{draft.data?.leaflet ?? plan.leaflet[state.language]}</Text></Arrive>}
           <SampleLabel source={draft.data?.source} what="discharge" />

@@ -6,7 +6,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-na
 import { LAYOUT, LAYOUT_SPRING, riseIn } from "@/components/sona/motion";
 import { Disclosure, ErrorLine, IconDisc, Mark, Press, TextLink } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Expand, glass, Icon, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { useAddSource, type Added, type ArticlePreview, type LibraryScope } from "@/features/live/library-sync";
 import { haptic } from "@/features/scribe/parts";
@@ -90,7 +90,7 @@ export function AddSourceSheet() {
       <Text style={{ ...type.subhead, color: palette.muted }}>Evidence answers cite it next to PubMed, without grading it.</Text>
     </View>
     <ScopeToggle value={scope} onChange={setScope} disabled={working} />
-    <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ borderRadius: 18, borderCurve: "continuous", backgroundColor: palette.white, paddingHorizontal: 14 }}>
+    <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, paddingHorizontal: 14 }}>
       {rows.map((row, i) => <Animated.View key={i} entering={reducedMotion ? undefined : riseIn({ delay: 60 + i * 45, distance: 8, duration: 280 })} style={i ? { borderTopWidth: 1, borderColor: glass.hairline } : undefined}>{row}</Animated.View>)}
     </Animated.View>
     {status && <Expand><StatusPanel status={status} scope={scope} onAnother={() => setStatus(undefined)} /></Expand>}
@@ -115,8 +115,8 @@ function ScopeToggle({ value, onChange, disabled }: { value: LibraryScope; onCha
   useEffect(() => place(true), [value]); // eslint-disable-line react-hooks/exhaustive-deps
   const pill = useAnimatedStyle(() => ({ left: x.value, width: w.value, opacity: w.value ? 1 : 0 }));
   return <View style={{ gap: 8 }}>
-    <View accessibilityRole="tablist" style={{ ...pillStyle, flexDirection: "row", padding: 3, borderRadius: 22, borderCurve: "continuous", opacity: disabled ? 0.45 : 1 }}>
-      <Animated.View pointerEvents="none" style={[{ position: "absolute", top: 3, bottom: 3, borderRadius: 19, borderCurve: "continuous", backgroundColor: palette.white, boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 2px 8px rgba(40,70,140,0.14)" }, pill]} />
+    <View accessibilityRole="tablist" style={{ ...pillStyle, flexDirection: "row", padding: 3, borderRadius: radius.group, borderCurve: "continuous", opacity: disabled ? 0.45 : 1 }}>
+      <Animated.View pointerEvents="none" style={[{ position: "absolute", top: 3, bottom: 3, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 2px 8px rgba(40,70,140,0.14)" }, pill]} />
       {SCOPES.map(s => { const on = s.key === value; return <Pressable key={s.key} accessibilityRole="tab" accessibilityState={{ selected: on, disabled }} accessibilityLabel={`${s.label}. ${s.detail}`} disabled={disabled}
         onPress={() => { if (!on) { haptic("tap"); onChange(s.key); } }}
         onLayout={e => { const first = !spots.current[s.key]; spots.current[s.key] = { x: e.nativeEvent.layout.x, w: e.nativeEvent.layout.width }; if (on) place(!first); }}
@@ -129,7 +129,7 @@ function ScopeToggle({ value, onChange, disabled }: { value: LibraryScope; onCha
   </View>;
 }
 
-const field = { borderRadius: 14, borderCurve: "continuous", paddingHorizontal: 14, paddingVertical: 12, ...type.body, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" } as const;
+const field = { borderRadius: radius.control, borderCurve: "continuous", paddingHorizontal: 14, paddingVertical: 12, ...type.body, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" } as const;
 
 /** Look the article up first, show what was found, then add: nothing enters the library unseen. */
 function PubMedImport({ disabled, preview, onAdd }: { disabled: boolean; preview: ReturnType<typeof useAddSource>["preview"]; onAdd: (p: ArticlePreview) => void }) {
@@ -151,7 +151,7 @@ function PubMedImport({ disabled, preview, onAdd }: { disabled: boolean; preview
     </View>
     {error && <ErrorLine text={error} />}
     {found && <Expand style={{ gap: 12 }}>
-      <View style={{ gap: 4, padding: 14, borderRadius: 14, borderCurve: "continuous", backgroundColor: palette.canvas }}>
+      <View style={{ gap: 4, padding: 14, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: palette.canvas }}>
         <Text selectable style={{ fontSize: 15, lineHeight: 21, fontWeight: "600", color: palette.ink }}>{found.title}</Text>
         <Text style={{ ...type.footnote, color: palette.muted }}>{[found.journal, found.year, `PMID ${found.pmid}`, `${found.sections} abstract part${found.sections === 1 ? "" : "s"}`].filter(Boolean).join(" · ")}</Text>
         <TextLink label="Open in PubMed" onPress={() => void Linking.openURL(found.url)} />
@@ -177,7 +177,7 @@ function StatusPanel({ status, scope, onAnother }: { status: Status; scope: Libr
   // A scan is not a dead end: it goes to OCR review (the reading itself is a labelled sample until the model is hosted).
   const scan = status.state === "refused" && status.reason === "no-text";
   const whose = (s: LibraryScope) => s === "me" ? "Only you can cite it." : "Everyone at your hospital can cite it.";
-  return <View accessibilityLiveRegion="polite" style={{ gap: 12, padding: 16, borderRadius: 18, borderCurve: "continuous", backgroundColor: palette.white }}>
+  return <View accessibilityLiveRegion="polite" style={{ gap: 12, padding: 16, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white }}>
     <View style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
       <View style={{ paddingTop: 1 }}><Mark state={status.state === "working" ? "pending" : status.state === "done" ? "done" : "blocked"} size={22} /></View>
       <View style={{ flex: 1, gap: 3 }}>

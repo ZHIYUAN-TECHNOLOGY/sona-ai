@@ -10,7 +10,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { riseIn } from "@/components/sona/motion";
 import { SourcesPill } from "@/components/sona/sources";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { ErrorLine } from "@/components/sona/parts";
 import { Action, Icon, Insight, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { useContinue } from "@/features/patients/continue-store";
@@ -49,7 +49,7 @@ function Line({ tag, children }: { tag: string; children: React.ReactNode }) {
 
 function HandoverCard({ card }: { card: Sbar }) {
   const sources = card.patientId ? card.sources.map(id => ({ id, label: { history: "Intake & history", vitals: "Observations", consultation: "Consultation transcript" }[id] ?? id, kind: "record" as const, onPress: () => router.push({ pathname: "/source", params: { id, patientId: card.patientId! } }) })) : [];
-  return <View style={{ flex: 1, borderRadius: 28, borderCurve: "continuous", backgroundColor: palette.white, borderWidth: 1, borderColor: "rgba(20,28,40,0.06)", boxShadow: "0 10px 30px rgba(24,32,48,0.10)", padding: 18, gap: 14 }}>
+  return <View style={{ flex: 1, borderRadius: radius.sheet, borderCurve: "continuous", backgroundColor: palette.white, borderWidth: 1, borderColor: "rgba(20,28,40,0.06)", boxShadow: "0 10px 30px rgba(24,32,48,0.10)", padding: 18, gap: 14 }}>
     <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
       <View style={{ flex: 1, gap: 2 }}>
         <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{card.name}</Text>
@@ -153,7 +153,7 @@ export function HandoverScreen() {
     {blocked ? <Text accessibilityLiveRegion="polite" style={{ ...type.callout, color: palette.muted }}>{blocked}</Text>
       : server.error ? <ErrorLine text={`The handover didn't load: ${server.error}`} onRetry={server.retry} />
       : !server.cards ? <Text accessibilityLiveRegion="polite" style={{ ...type.callout, color: palette.muted }}>Loading the handover…</Text>
-      : <Animated.View entering={reducedMotion ? FadeIn : riseIn({ distance: 12, duration: 380 })} style={{ borderRadius: 28, borderCurve: "continuous", backgroundColor: palette.white, padding: 20, gap: 6 }}>
+      : <Animated.View entering={reducedMotion ? FadeIn : riseIn({ distance: 12, duration: 380 })} style={{ borderRadius: radius.sheet, borderCurve: "continuous", backgroundColor: palette.white, padding: 20, gap: 6 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}><Icon name="checkmark.circle.fill" size={18} color={palette.green} /><Text style={{ ...type.heading, color: palette.ink }}>Nothing to hand over</Text></View>
         <Text style={{ ...type.callout, color: palette.muted }}>No patients on your list this shift. New admissions and results will appear here.</Text>
       </Animated.View>}
@@ -183,7 +183,7 @@ export function HandoverScreen() {
           <Animated.View key={top.id} entering={reducedMotion ? FadeIn.duration(150) : undefined} style={[{ position: "absolute", inset: 0 }, topStyle]}>
             <HandoverCard card={top} />
             {(["handed", "discuss"] as const).map(decision => <Animated.View key={decision} pointerEvents="none"
-              style={[{ position: "absolute", inset: 0, borderRadius: 28, borderCurve: "continuous", backgroundColor: TINT[decision].fill, alignItems: "center", justifyContent: "center", gap: 10 }, decision === "handed" ? handedTint : discussTint]}>
+              style={[{ position: "absolute", inset: 0, borderRadius: radius.sheet, borderCurve: "continuous", backgroundColor: TINT[decision].fill, alignItems: "center", justifyContent: "center", gap: 10 }, decision === "handed" ? handedTint : discussTint]}>
               <Icon name={TINT[decision].icon} size={48} color={palette.white} />
               <Text style={{ fontSize: 18, fontWeight: "700", color: palette.white }}>{TINT[decision].label}</Text>
             </Animated.View>)}
@@ -195,7 +195,7 @@ export function HandoverScreen() {
         <View style={{ flex: 1.4 }}><Action label="Hand over" accessibilityLabel={`Hand over ${top.name}`} onPress={() => decide("handed")} /></View>
       </View>
     </> : <ScrollView contentContainerStyle={{ gap: 14, paddingBottom: 20 }}>
-      <Animated.View entering={reducedMotion ? FadeIn : riseIn({ distance: 12, duration: 380 })} style={{ borderRadius: 28, borderCurve: "continuous", backgroundColor: palette.white, padding: 20, gap: 12, boxShadow: "0 10px 30px rgba(24,32,48,0.08)" }}>
+      <Animated.View entering={reducedMotion ? FadeIn : riseIn({ distance: 12, duration: 380 })} style={{ borderRadius: radius.sheet, borderCurve: "continuous", backgroundColor: palette.white, padding: 20, gap: 12, boxShadow: "0 10px 30px rgba(24,32,48,0.08)" }}>
         <Text style={{ ...type.heading, color: palette.ink }}>{handed} handed over{discuss.length ? ` · ${discuss.length} to discuss` : ""}</Text>
         {discuss.length > 0 && <Text style={{ ...type.callout, color: palette.muted }}>Talk through: {discuss.map(d => cards.find(c => c.id === d.id)?.name).join(", ")}</Text>}
         <View style={{ gap: 6 }}>
@@ -204,7 +204,7 @@ export function HandoverScreen() {
         </View>
       </Animated.View>
       {accepted ? <Animated.View entering={reducedMotion ? FadeIn : ZoomIn.springify().duration(420).dampingRatio(0.72)} accessibilityLiveRegion="polite"
-        style={{ borderRadius: 28, borderCurve: "continuous", backgroundColor: palette.green, padding: 20, gap: 8 }}>
+        style={{ borderRadius: radius.sheet, borderCurve: "continuous", backgroundColor: palette.green, padding: 20, gap: 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}><Icon name="checkmark.seal.fill" size={26} color={palette.white} /><Text style={{ ...type.heading, color: palette.white }}>Handover acknowledged</Text></View>
         <Text style={{ ...type.callout, color: "rgba(255,255,255,0.9)" }}>{receiver} accepted {cards.length} patients at {accepted}. Each patient’s open items are on their card.</Text>
         <Pressable accessibilityRole="button" onPress={() => router.back()} style={{ alignSelf: "flex-start", marginTop: 6, minHeight: 40, paddingHorizontal: 16, borderRadius: 20, justifyContent: "center", backgroundColor: "rgba(255,255,255,0.18)" }}>

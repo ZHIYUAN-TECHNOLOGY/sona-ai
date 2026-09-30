@@ -5,7 +5,7 @@ import Svg, { Circle } from "react-native-svg";
 import { LAYOUT } from "@/components/sona/motion";
 import { DrawnCheck } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { defaultMedications, getPrescriptionChecks, simulatedRegimen } from "@/features/encounter/clinical-state";
 import { issueSimulation } from "@/features/encounter/state";
@@ -199,7 +199,7 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
     </Animated.View>}
 
     <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
-    {created && prescription ? <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 18, backgroundColor: "rgba(15,110,102,0.08)" }}>
+    {created && prescription ? <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: radius.group, backgroundColor: "rgba(15,110,102,0.08)" }}>
       <Seal stampDelay={reducedMotion ? undefined : 120} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>Simulated prescription created</Text>

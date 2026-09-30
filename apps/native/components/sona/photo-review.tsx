@@ -9,7 +9,7 @@ import { TypeChips } from "./capture-scan";
 import { CT_NOTE, NOT_ATTACHED, type ImageType } from "./image-type";
 import { LAYOUT, riseIn } from "./motion";
 import { Text } from "./text";
-import { palette, type } from "./theme";
+import { palette, type, radius } from "./theme";
 import { Expand, Icon, useAccessibleEffects } from "./ui";
 
 /**
@@ -38,7 +38,7 @@ export function PhotoReview({ photos, suggested, bottom, onAttach, onBack }: { p
         {photos.length > 1 && <Text style={{ ...type.caption, fontWeight: "600", color: palette.muted }}>All {photos.length}</Text>}
         <TypeChips value={all} onChange={setAll} />
       </View>
-      {photos.length > 1 && <View style={{ borderRadius: 18, borderCurve: "continuous", backgroundColor: palette.white, paddingHorizontal: 14 }}>
+      {photos.length > 1 && <View style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, paddingHorizontal: 14 }}>
         {photos.map((p, i) => <Animated.View key={p.uri} entering={reducedMotion ? undefined : riseIn({ delay: 60 + i * 40, distance: 8, duration: 280 })} layout={reducedMotion ? undefined : LAYOUT} style={i ? { borderTopWidth: 1, borderColor: "rgba(20,28,40,0.07)" } : undefined}>
           <Pressable accessibilityRole="button" accessibilityLabel={`Image ${i + 1}, ${types[i]}`} accessibilityHint="Changes this image's type" accessibilityState={{ expanded: open === i }} onPress={() => setOpen(o => (o === i ? undefined : i))}
             style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>

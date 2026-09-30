@@ -5,7 +5,7 @@ import { Pressable, ScrollView, View } from "react-native";
 import Animated, { FadeOut, useAnimatedStyle, useSharedValue, withSpring, withTiming, ZoomIn } from "react-native-reanimated";
 import { BrandIcon } from "./brand-icon";
 import { EASE_OUT } from "./motion";
-import { palette } from "./theme";
+import { palette, radius } from "./theme";
 import { Icon } from "./ui";
 import type { Attachment } from "./attachments-menu";
 
@@ -28,7 +28,7 @@ function Thumb({ item, size, radius }: { item: Attachment; size: number; radius:
 export function AttachmentStrip({ items, onRemove, size = 96 }: { items: Attachment[]; onRemove: (item: Attachment) => void; size?: number }) {
   return <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingRight: 8 }}>
     {items.map(item => <Animated.View key={item.uri} entering={ZoomIn.springify().duration(320).dampingRatio(0.8)} exiting={FadeOut.duration(140)}
-      style={{ borderRadius: 16, borderCurve: "continuous", overflow: "hidden", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.1), 0 4px 12px rgba(24,32,48,0.08)" }}>
+      style={{ borderRadius: radius.control, borderCurve: "continuous", overflow: "hidden", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.1), 0 4px 12px rgba(24,32,48,0.08)" }}>
       <Thumb item={item} size={size} radius={16} />
       <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${item.name}`} hitSlop={8} onPress={() => onRemove(item)}
         style={({ pressed }) => ({ position: "absolute", top: 6, right: 6, width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.92)", boxShadow: "0 1px 4px rgba(24,32,48,0.18)", transform: [{ scale: pressed ? 0.9 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>

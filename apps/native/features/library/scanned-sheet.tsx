@@ -5,7 +5,7 @@ import Animated from "react-native-reanimated";
 import { riseIn } from "@/components/sona/motion";
 import { Disclosure, IconDisc, Press } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, glass, Icon, Notice, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/scribe/parts";
 import { ScannedPages } from "./scan-parts";
@@ -53,7 +53,7 @@ export function ScannedSheet() {
       <Text style={{ ...type.subhead, color: palette.muted }}>{n} page{n === 1 ? "" : "s"} scanned and straightened. Sona sends each kind to the right place.</Text>
     </View>
     {n > 0 && <ScannedPages pages={pages} pass="arrive" />}
-    <View style={{ borderRadius: 18, borderCurve: "continuous", backgroundColor: palette.white, paddingHorizontal: 14 }}>
+    <View style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, paddingHorizontal: 14 }}>
       {rows.map((row, i) => <Animated.View key={i} entering={reducedMotion ? undefined : riseIn({ delay: (n ? 560 : 60) + i * 45, distance: 8, duration: 280 })} style={i ? { borderTopWidth: 1, borderColor: glass.hairline } : undefined}>{row}</Animated.View>)}
     </View>
   </ScrollView>;

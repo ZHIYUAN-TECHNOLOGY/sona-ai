@@ -5,7 +5,7 @@ import { Fragment, useCallback, useMemo, useRef, useState, type ReactNode, type 
 import { Alert, Pressable, ScrollView, TextInput, View } from "react-native";
 import { ListRow } from "@/components/sona/list";
 import { Chip, Icon, Insight, Tone, canvasImage, useAccessibleEffects } from "@/components/sona/ui";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { GROUPS, letters, listItems, syntheticCensus, type Group, type Item, type Row, type View as Tab } from "@/features/patients/census";
 import { useContinue, useContinueState } from "@/features/patients/continue-store";
 import { ASK_SPACE, AskBar } from "@/features/ask";
@@ -82,7 +82,7 @@ export function PatientScreen() {
     if (item.kind === "header") return <Text accessibilityRole="header" style={{ ...type.footnote, fontWeight: "600", color: palette.muted, paddingTop: index ? 18 : 4, paddingBottom: 6, paddingHorizontal: 4 }}>{item.title} · {item.count}</Text>;
     const first = index === 0 || items[index - 1]!.kind === "header";
     const last = index === items.length - 1 || items[index + 1]!.kind === "header";
-    const shape = { backgroundColor: palette.white, borderTopLeftRadius: first ? 20 : 0, borderTopRightRadius: first ? 20 : 0, borderBottomLeftRadius: last ? 20 : 0, borderBottomRightRadius: last ? 20 : 0, borderTopWidth: first ? 0 : 1, borderColor: "rgba(20,28,40,0.06)" };
+    const shape = { backgroundColor: palette.white, borderTopLeftRadius: first ? radius.group : 0, borderTopRightRadius: first ? radius.group : 0, borderBottomLeftRadius: last ? radius.group : 0, borderBottomRightRadius: last ? radius.group : 0, borderTopWidth: first ? 0 : 1, borderColor: "rgba(20,28,40,0.06)" };
     if (item.kind === "more") return <Pressable accessibilityRole="button" accessibilityLabel={`Show ${item.hidden} more in ${GROUPS.find(g => g.id === item.group)!.title}`} onPress={() => setOpened(o => new Set([...o, item.group]))}
       style={({ pressed }) => ({ ...shape, minHeight: 48, justifyContent: "center", paddingHorizontal: 16, opacity: pressed ? 0.6 : 1 })}>
       <Text style={{ ...type.subhead, fontWeight: "600", color: palette.blue }}>{GROUPS.find(g => g.id === item.group)!.shown ? `Show ${item.hidden} more` : `Show ${item.hidden}`}</Text>

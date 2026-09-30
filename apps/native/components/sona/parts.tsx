@@ -7,7 +7,7 @@ import { useReduceMotionPreference } from "./accessibility";
 import { BrandIcon } from "./brand-icon";
 import { EASE_OUT, LAYOUT } from "./motion";
 import { Text } from "./text";
-import { palette, type } from "./theme";
+import { palette, type, radius } from "./theme";
 import { Expand, glass, Icon, useAccessibleEffects } from "./ui";
 
 /**
@@ -129,7 +129,7 @@ export function PairGlyph({ status }: { status: "alert" | "unresolved" | "uncove
 
 /** A calm alert row: amber glyph, pair, what the label says, and its source. */
 export function AlertRow({ title, kind, detail, children }: { title: string; kind: string; detail: string; children?: ReactNode }) {
-  return <View accessible={false} style={{ flexDirection: "row", gap: 12, padding: 14, borderRadius: 18, borderCurve: "continuous", backgroundColor: "rgba(139,85,24,0.05)" }}>
+  return <View accessible={false} style={{ flexDirection: "row", gap: 12, padding: 14, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: "rgba(139,85,24,0.05)" }}>
     <PairGlyph status="alert" />
     <View style={{ flex: 1, gap: 6 }}>
       <View style={{ gap: 2 }}>

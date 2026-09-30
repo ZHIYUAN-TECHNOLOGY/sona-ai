@@ -4,7 +4,7 @@ import { Pressable, TextInput, View } from "react-native";
 import Animated from "react-native-reanimated";
 import type { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { ErrorLine, TextLink } from "@/components/sona/parts";
 import { router } from "expo-router";
 import { ThreadBubble } from "@/features/inbox/thread";
@@ -58,7 +58,7 @@ export function CareMessages({ patient, entering }: { patient: Patient; entering
     <Text style={{ ...type.overline, color: palette.muted }}>Sona Care messages</Text>
     {!thread ? (loadError ? <ErrorLine text={`Messages didn't load: ${loadError}`} onRetry={() => { void load(); }} /> : quiet("Loading messages…"))
       : !thread.length ? quiet(`No messages from ${first} yet.`)
-      : <View style={{ borderRadius: 22, borderCurve: "continuous", backgroundColor: "rgba(255,255,255,0.55)", padding: 14, gap: 10 }}>
+      : <View style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: "rgba(255,255,255,0.55)", padding: 14, gap: 10 }}>
       {/* The latest few; the whole thread and Sona's drafted reply are one tap away. */}
       {thread.slice(-SHOWN).map(m => <ThreadBubble key={m.id} message={m} reduced />)}
       <TextLink label={thread.length > SHOWN ? `Open thread · ${thread.length} messages` : "Open thread"} onPress={() => router.push(`/inbox/${patient.id}`)} />

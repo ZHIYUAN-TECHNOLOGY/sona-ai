@@ -9,7 +9,7 @@ import { SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { ErrorLine, TextLink } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, IconButton, pillStyle, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { DoneLine } from "@/features/bookings/parts";
 import { OriginalImageViewer } from "@/features/imaging/viewer";
@@ -63,8 +63,8 @@ export function PhotoMessage({ messageId, attachment, first }: { messageId: stri
   return <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8, width: 248 }}>
     <Pressable accessibilityRole="imagebutton" accessibilityLabel={`Photo from ${first}: ${line(attachment.reading)}`} accessibilityHint={source ? "Opens the photo full screen to zoom" : undefined}
       disabled={!source} onPress={() => setOpen(true)} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}>
-      <View style={{ ...pillStyle, borderRadius: 26, borderCurve: "continuous", padding: 5 }}>
-        <View style={{ height: 180, borderRadius: 21, borderCurve: "continuous", overflow: "hidden", backgroundColor: "rgba(20,28,40,0.05)", alignItems: "center", justifyContent: "center" }}>
+      <View style={{ ...pillStyle, borderRadius: radius.card, borderCurve: "continuous", padding: 5 }}>
+        <View style={{ height: 180, borderRadius: radius.group, borderCurve: "continuous", overflow: "hidden", backgroundColor: "rgba(20,28,40,0.05)", alignItems: "center", justifyContent: "center" }}>
           {source ? <Image source={source} contentFit="cover" transition={reducedMotion ? 0 : 200} style={{ position: "absolute", inset: 0 }} accessibilityIgnoresInvertColors />
             : <View style={{ alignItems: "center", gap: 6, padding: 16 }}>
               <Icon name="camera" size={22} color={palette.muted} />
@@ -79,7 +79,7 @@ export function PhotoMessage({ messageId, attachment, first }: { messageId: stri
 
     {decision ? <DoneLine text={doneText(decision.status, first)} />
       : <Animated.View entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, duration: 300 })}>
-        <Surface style={{ padding: 14, gap: 8, borderRadius: 20 }}>
+        <Surface style={{ padding: 14, gap: 8, borderRadius: radius.group }}>
           <Text style={{ ...type.footnote, color: palette.muted }}>
             Sona read: <Text style={{ fontWeight: "600", color: palette.ink }}>{line(reading)}</Text>
           </Text>

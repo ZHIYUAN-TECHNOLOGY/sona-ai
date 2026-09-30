@@ -5,7 +5,7 @@ import { MarkedText } from "@/components/sona/marked-text";
 import { LAYOUT, type riseIn } from "@/components/sona/motion";
 import { ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Chip, Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { DoneLine, slotLine, SlotPicker, type PickedSlot } from "@/features/bookings/parts";
 import { haptic } from "@/features/clinical/medication-parts";
@@ -47,12 +47,12 @@ export function CheckInThread({ patient, entering }: { patient: Patient; enterin
 
   return <Animated.View entering={entering} layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
     <Text style={{ ...type.overline, color: palette.muted }}>Check-ins</Text>
-    <View style={{ borderRadius: 22, borderCurve: "continuous", backgroundColor: palette.white, padding: 14, gap: 12 }}>
+    <View style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, padding: 14, gap: 12 }}>
       {mine.map(c => <View key={c.id} style={{ gap: 6 }}>
         <Text style={{ ...type.caption, fontWeight: "600", color: palette.muted }}>Day {c.day} · {shortDate(new Date(c.dueAt))}{c.sentAt ? "" : " · scheduled"}</Text>
-        {c.sentAt && <Text numberOfLines={2} selectable style={{ ...type.footnote, color: palette.ink, padding: 10, borderRadius: 14, borderCurve: "continuous", backgroundColor: "rgba(36,91,204,0.07)", overflow: "hidden" }}>{c.message}</Text>}
+        {c.sentAt && <Text numberOfLines={2} selectable style={{ ...type.footnote, color: palette.ink, padding: 10, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: "rgba(36,91,204,0.07)", overflow: "hidden" }}>{c.message}</Text>}
         {c.replies.map(r => <Animated.View key={r.id} entering={reducedMotion ? undefined : FadeIn.duration(220)} style={{ alignSelf: "flex-end", maxWidth: "85%", gap: 4, alignItems: "flex-end" }}>
-          <View style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, borderCurve: "continuous", backgroundColor: LABEL[r.label].wash }}>
+          <View style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: LABEL[r.label].wash }}>
             <MarkedText text={r.text} style={{ ...type.subhead, color: palette.ink }} />
           </View>
           <Text style={{ ...type.caption, fontWeight: "600", color: LABEL[r.label].ink }}>{r.task?.completed ? "Handled" : LABEL[r.label].text}</Text>

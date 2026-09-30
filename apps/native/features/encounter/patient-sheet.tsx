@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { CareMessages } from "@/features/care-messages";
 import { CheckInThread } from "@/features/check-ins/thread";
@@ -114,13 +114,13 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
           <CheckInThread patient={patient} entering={rise(2)} />
           <CareMessages patient={patient} entering={rise(2)} />
 
-          <Animated.View entering={rise(2)} style={{ borderRadius: 22, borderCurve: "continuous", backgroundColor: palette.white, padding: 16, gap: 12 }}>
+          <Animated.View entering={rise(2)} style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, padding: 16, gap: 12 }}>
             <View style={{ gap: 3 }}>
               <Text style={{ ...type.overline, color: palette.muted }}>{patient.subtitle}</Text>
               <Text style={{ ...type.callout, color: palette.ink }}>{patient.complaint}</Text>
             </View>
             {patient.vitals.length > 0 ? <View style={{ flexDirection: "row", gap: 8 }}>
-              {patient.vitals.map(v => { const raised = v.label === "Temp" && parseFloat(v.value) >= 37.8; return <View key={v.label} style={{ flex: 1, borderRadius: 14, padding: 10, gap: 2, backgroundColor: raised ? "rgba(196,120,20,0.10)" : "rgba(20,28,40,0.04)" }}>
+              {patient.vitals.map(v => { const raised = v.label === "Temp" && parseFloat(v.value) >= 37.8; return <View key={v.label} style={{ flex: 1, borderRadius: radius.control, padding: 10, gap: 2, backgroundColor: raised ? "rgba(196,120,20,0.10)" : "rgba(20,28,40,0.04)" }}>
                 <Text style={{ ...type.caption, color: palette.muted }}>{v.label}</Text>
                 <Text style={{ fontSize: 17, fontWeight: "600", color: raised ? palette.amber : palette.ink, fontVariant: ["tabular-nums"] }}>{v.value}</Text>
               </View>; })}
@@ -155,7 +155,7 @@ function PinControl({ patient }: { patient: Patient }) {
   const [replace, setReplace] = useState<{ id: string }>();
   const pinned = pins.some(p => p.id === patient.id);
   const nameOf = (id: string) => patients.find(p => p.id === id)?.name ?? id;
-  if (replace) return <View style={{ gap: 10, padding: 12, borderRadius: 18, backgroundColor: "rgba(196,120,20,0.10)" }}>
+  if (replace) return <View style={{ gap: 10, padding: 12, borderRadius: radius.group, backgroundColor: "rgba(196,120,20,0.10)" }}>
     <Text style={{ ...type.subhead, color: palette.ink }}>You have {PIN_LIMIT} pins, the most allowed. Replace your oldest pin, <Text style={{ fontWeight: "700" }}>{nameOf(replace.id)}</Text>, with {patient.name.split(" ")[0]}?</Text>
     <View style={{ flexDirection: "row", gap: 8 }}>
       <View style={{ flex: 1 }}><Action label="Cancel" secondary onPress={() => setReplace(undefined)} /></View>

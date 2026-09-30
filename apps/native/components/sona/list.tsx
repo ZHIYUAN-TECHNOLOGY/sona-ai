@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Pressable, View, type ViewStyle } from "react-native";
 import { Text } from "./text";
-import { palette, type } from "./theme";
+import { palette, type, radius } from "./theme";
 import { Icon } from "./ui";
 
 /** A row's meaning colour: red must not wait, amber soon or blocked, green done or ready, blue in progress, grey otherwise. */
@@ -11,7 +11,7 @@ const HAIRLINE = "rgba(20,28,40,0.06)";
 
 /** A white grouped list: rows separated by hairlines, corners rounded once. */
 export function List({ children }: { children: ReactNode }) {
-  return <View style={{ borderRadius: 20, borderCurve: "continuous", backgroundColor: palette.white, overflow: "hidden" }}>{children}</View>;
+  return <View style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, overflow: "hidden" }}>{children}</View>;
 }
 
 /**
@@ -26,7 +26,7 @@ export function ListRow({ title, detail, tone = "calm", initials, trailing, badg
   accessibilityLabel?: string; accessibilityHint?: string; divider?: boolean; edges?: { first: boolean; last: boolean };
 }) {
   const ink = INK[tone];
-  const shape: ViewStyle = edges ? { backgroundColor: palette.white, borderTopLeftRadius: edges.first ? 20 : 0, borderTopRightRadius: edges.first ? 20 : 0, borderBottomLeftRadius: edges.last ? 20 : 0, borderBottomRightRadius: edges.last ? 20 : 0, borderCurve: "continuous" } : {};
+  const shape: ViewStyle = edges ? { backgroundColor: palette.white, borderTopLeftRadius: edges.first ? radius.group : 0, borderTopRightRadius: edges.first ? radius.group : 0, borderBottomLeftRadius: edges.last ? radius.group : 0, borderBottomRightRadius: edges.last ? radius.group : 0, borderCurve: "continuous" } : {};
   const base: ViewStyle = { minHeight: 60, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: divider || (edges && !edges.first) ? 1 : 0, borderColor: HAIRLINE, ...shape };
   const content = <>
     {initials ? <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: tone === "soon" ? "rgba(196,120,20,0.16)" : "rgba(36,91,204,0.14)", alignItems: "center", justifyContent: "center" }}>

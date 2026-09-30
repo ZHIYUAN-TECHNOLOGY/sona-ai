@@ -9,7 +9,7 @@ import { SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { QuickActions, type QuickAction, type ShelfCollapse } from "@/components/sona/quick-actions";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
@@ -115,7 +115,7 @@ function TimeBar({ schedule, now, onOpen }: { schedule: ScheduleVisit[]; now?: n
   const leftArrow = useAnimatedStyle(() => ({ opacity: x.value + nowAt < PILL / 2 + 4 ? 1 : 0 }));
   const rightArrow = useAnimatedStyle(() => ({ opacity: x.value + nowAt > view - PILL / 2 ? 1 : 0 }));
   const backToNow = () => { tick(); x.set(reducedMotion ? anchor(home) : withSpring(anchor(home), { duration: 600, dampingRatio: 0.85 })); };
-  return <View accessible={false} style={{ height: 116, overflow: "hidden", marginHorizontal: -4, borderRadius: 16 }}>
+  return <View accessible={false} style={{ height: 116, overflow: "hidden", marginHorizontal: -4, borderRadius: radius.control }}>
     <GestureDetector gesture={pan}>
       <Animated.View style={[{ position: "absolute", left: 4, top: 0, bottom: 0, width: xOf(to) + 1 }, ruler]}>
         {ticks.map(m => { const hour = m % 60 === 0; return <View key={m} style={{ position: "absolute", left: xOf(m), bottom: 18, alignItems: "center", width: 1 }}>
@@ -204,7 +204,7 @@ function MonthCard({ offset, counts, onPick, onClose }: { offset: number; counts
   return <>
     <Pressable accessibilityLabel="Close day picker" onPress={onClose} style={{ position: "absolute", left: -20, right: -20, top: -400, height: 3000, zIndex: 1 }} />
     <Animated.View entering={reducedMotion ? FadeIn.duration(160) : riseIn({ distance: -10, scale: 0.9, duration: 450 })} exiting={FadeOut.duration(140)}
-      style={{ position: "absolute", top: 78, left: 0, right: 0, zIndex: 2, transformOrigin: "top left", borderRadius: 26, borderCurve: "continuous", backgroundColor: "#FBFCFE", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 18px 44px rgba(24,32,48,0.18)", padding: 14, gap: 8 }}>
+      style={{ position: "absolute", top: 78, left: 0, right: 0, zIndex: 2, transformOrigin: "top left", borderRadius: radius.card, borderCurve: "continuous", backgroundColor: "#FBFCFE", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 18px 44px rgba(24,32,48,0.18)", padding: 14, gap: 8 }}>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <Pressable accessibilityRole="button" accessibilityLabel="Previous month" onPress={() => shift(-1)} hitSlop={8} style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}><Icon name="chevron.left" size={13} color={palette.ink} /></Pressable>
         <Text accessibilityRole="header" style={{ flex: 1, textAlign: "center", ...type.headline, color: palette.ink }}>{month.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</Text>

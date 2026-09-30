@@ -7,7 +7,7 @@ import { Pressable, View } from "react-native";
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
 import { EASE_OUT, LAYOUT } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, glass, Icon, Insight, Screen, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { BlockerRow, useSettling, Ring } from "@/features/clinical/prescribe-card";
 import { Seal, haptic } from "@/features/clinical/medication-parts";
@@ -151,7 +151,7 @@ export function ClaimScreen() {
         <Text style={{ ...type.footnote, fontWeight: "600", color: TEAL }}>{blocked.length ? `${passed.length} insurer criteria met` : `All ${passed.length} insurer criteria met`}</Text>
       </Animated.View>}
 
-      {queried && state.query && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)} style={{ gap: 4, padding: 12, borderRadius: 16, borderCurve: "continuous", backgroundColor: "rgba(196,120,20,0.1)" }}>
+      {queried && state.query && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)} style={{ gap: 4, padding: 12, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: "rgba(196,120,20,0.1)" }}>
         <Text style={{ ...type.overline, color: palette.amber }}>The insurer asks</Text>
         <Text selectable style={{ ...type.subhead, color: palette.ink }}>{state.query}</Text>
       </Animated.View>}
@@ -165,7 +165,7 @@ export function ClaimScreen() {
         {checks.map((c, i) => <Criterion key={c.id} label={c.label} index={i} />)}
       </Animated.View>}
 
-      {approved && <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 18, borderCurve: "continuous", backgroundColor: "rgba(15,110,102,0.08)" }}>
+      {approved && <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: "rgba(15,110,102,0.08)" }}>
         <Seal stampDelay={reducedMotion ? undefined : 120} />
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>Final GL approved · {ESTIMATE}</Text>

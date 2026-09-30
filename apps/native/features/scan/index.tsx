@@ -13,7 +13,7 @@ import { CaptureScan } from "@/components/sona/capture-scan";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Expand, Glass, Icon, IconButton, Notice, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import { OriginalImageViewer } from "@/features/imaging/viewer";
@@ -206,7 +206,7 @@ function PhotoHeader({ photo, settled, source }: { photo: Photo; settled: boolea
   const words = source ? unsureWords(source).length : 0;
   return <>
     <Pressable accessibilityRole="imagebutton" accessibilityLabel="Scanned note photo" accessibilityHint="Opens the original to compare with the reading" disabled={!settled} onPress={() => { haptic("tap"); setOpen(true); }}>
-      <Surface layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 10, borderRadius: 24, flexDirection: "row", alignItems: "center", gap: 14 }}>
+      <Surface layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 10, borderRadius: radius.card, flexDirection: "row", alignItems: "center", gap: 14 }}>
         <Animated.View style={[{ overflow: "hidden", borderCurve: "continuous", backgroundColor: palette.dark }, image]}>
           <Image source={photo.source} contentFit="cover" style={{ flex: 1 }} accessibilityIgnoresInvertColors />
         </Animated.View>

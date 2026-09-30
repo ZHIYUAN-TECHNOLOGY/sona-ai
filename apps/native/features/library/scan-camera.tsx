@@ -10,7 +10,7 @@ import { CropStage, type CropHandle } from "@/components/sona/crop-stage";
 import { HalftoneGlint } from "@/components/sona/halftone-shimmer";
 import { canCrop, SonaCamera, type CameraHandle } from "@/components/sona/sona-camera";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/scribe/parts";
 
@@ -121,7 +121,7 @@ export function ScanCameraScreen() {
     {/* The room dims to the guide while a synthetic page is read (development without a camera). */}
     {!shot?.uri && <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderColor: "rgba(10,12,18,0.58)", borderTopWidth: frameTop - 6, borderBottomWidth: H - frameTop - frameH - 6, borderLeftWidth: frameLeft - 6, borderRightWidth: frameLeft - 6 }, dimStyle]} />}
     {!shot?.uri && <View pointerEvents="none" style={{ position: "absolute", left: frameLeft, top: frameTop, width: frameW, height: frameH }}>
-      <View style={{ position: "absolute", inset: 0, borderRadius: 14, overflow: "hidden" }}><Sweep width={frameW} height={frameH} progress={read} /></View>
+      <View style={{ position: "absolute", inset: 0, borderRadius: radius.control, overflow: "hidden" }}><Sweep width={frameW} height={frameH} progress={read} /></View>
       {(["tl", "tr", "bl", "br"] as const).map(c => <Corner key={c} corner={c} locked={locked} />)}
     </View>}
 

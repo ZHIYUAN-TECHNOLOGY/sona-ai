@@ -4,7 +4,7 @@ import { AccessibilityInfo, ActivityIndicator, Pressable, ScrollView, TextInput,
 import Animated, { FadeIn, withSpring, withTiming } from "react-native-reanimated";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Chip, Expand, glass, Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import type { DayItem } from "@/features/day/model";
@@ -61,7 +61,7 @@ export function SlotPicker({ live, onPick, onCancel }: { live: boolean; onPick: 
 
   // A gap from the Call back / Book in row, then the panel sits inset inside the card.
   return <Expand style={{ marginTop: 10 }}>
-    <Animated.View layout={layout} style={{ gap: 16, padding: 14, borderRadius: 22, borderCurve: "continuous", borderWidth: 1, borderColor: glass.hairline, backgroundColor: "rgba(20,28,40,0.035)" }}>
+    <Animated.View layout={layout} style={{ gap: 16, padding: 14, borderRadius: radius.group, borderCurve: "continuous", borderWidth: 1, borderColor: glass.hairline, backgroundColor: "rgba(20,28,40,0.035)" }}>
       {!slots ? (error ? <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text> : <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start", minHeight: 40 }} />) : <>
         {slots.careTeam.length > 1 && <Section label="With">
           <View style={{ gap: 6 }}>
@@ -200,7 +200,7 @@ export function BookingActions({ item }: { item: DayItem }) {
     </View> : <Expand style={{ gap: 8 }}>
       <TextInput value={note} onChangeText={setNote} autoFocus placeholder={`Note for ${first} (optional), e.g. Wednesday 9:00 works`} placeholderTextColor={palette.placeholder} maxLength={500}
         accessibilityLabel={`Note for ${first}, optional`} returnKeyType="send" onSubmitEditing={() => decide("decline")}
-        style={{ minHeight: 40, borderRadius: 14, borderCurve: "continuous", paddingHorizontal: 12, fontSize: 15, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
+        style={{ minHeight: 40, borderRadius: radius.control, borderCurve: "continuous", paddingHorizontal: 12, fontSize: 15, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
       <View style={{ flexDirection: "row", gap: 8 }}>
         {pill(busy ? "Declining…" : "Decline and tell them", "paperplane", true, () => decide("decline"))}
         {pill("Back", "chevron.left", false, () => setDeclining(false))}

@@ -5,7 +5,7 @@ import { Pressable, View } from "react-native";
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { api, useLive } from ".";
 import { ago, trailLine } from "./access";
@@ -97,7 +97,7 @@ export function AccessTrail({ patientId, encounterId, entering }: { patientId: s
   if (!show || !trail) return null;
   return <Animated.View entering={entering} style={{ gap: 8 }}>
     <Text style={{ ...type.overline, color: palette.muted }}>Who opened this record</Text>
-    {trail.lines.length ? <View style={{ borderRadius: 18, borderCurve: "continuous", backgroundColor: palette.white, paddingVertical: 4 }}>
+    {trail.lines.length ? <View style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, paddingVertical: 4 }}>
       {trail.lines.map((line, i) => <Animated.View key={`${line.userId}-${line.route}-${new Date(line.at).getTime()}`} accessible accessibilityLabel={`${trailLine(line)}, ${ago(line.at, trail.now)}`}
         entering={reducedMotion ? undefined : riseIn({ delay: 80 + i * 50, distance: 8, duration: 360 })}
         style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, paddingVertical: 9, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)" }}>

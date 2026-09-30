@@ -6,7 +6,7 @@ import Animated, { Easing, FadeIn, interpolate, useAnimatedStyle, useDerivedValu
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { Text } from "./text";
-import { palette, type } from "./theme";
+import { palette, type, radius } from "./theme";
 import { CT_NOTE, IMAGE_TYPES, NOT_ATTACHED, type ImageType } from "./image-type";
 import { CropStage, type CropHandle } from "./crop-stage";
 import { canCrop } from "./sona-camera";
@@ -84,11 +84,11 @@ export function CaptureScan({ source, width, height, suggested = "Chest X-ray", 
     <CropStage ref={crop} source={typeof source === "number" ? source : source.uri} frame={frame} editable={editable}>
       {rect => !reducedMotion && !ready && <Sweep rect={rect} progress={scan} />}
     </CropStage>
-    {editable && <Animated.View entering={FadeIn.duration(220)} pointerEvents="none" style={{ position: "absolute", top: insets.top + 8, alignSelf: "center", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: "rgba(250,251,253,0.9)" }}>
+    {editable && <Animated.View entering={FadeIn.duration(220)} pointerEvents="none" style={{ position: "absolute", top: insets.top + 8, alignSelf: "center", paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.control, backgroundColor: "rgba(250,251,253,0.9)" }}>
       <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>Drag a corner to crop</Text>
     </Animated.View>}
 
-    <Animated.View onLayout={e => setSheetH(e.nativeEvent.layout.height)} style={[{ position: "absolute", left: 10, right: 10, bottom, borderRadius: 32, borderCurve: "continuous", backgroundColor: "rgba(250,251,253,0.97)", borderWidth: 1, borderColor: "rgba(255,255,255,0.9)", boxShadow: "0 18px 48px rgba(0,0,0,0.3)", padding: 18, gap: 14 }, sheetStyle]}>
+    <Animated.View onLayout={e => setSheetH(e.nativeEvent.layout.height)} style={[{ position: "absolute", left: 10, right: 10, bottom, borderRadius: radius.sheet, borderCurve: "continuous", backgroundColor: "rgba(250,251,253,0.97)", borderWidth: 1, borderColor: "rgba(255,255,255,0.9)", boxShadow: "0 18px 48px rgba(0,0,0,0.3)", padding: 18, gap: 14 }, sheetStyle]}>
       <View style={{ gap: 2 }}>
         <Text accessibilityRole="header" style={{ ...type.heading, color: palette.ink }}>{confirm?.title ?? "What is this image?"}</Text>
         <Text style={{ ...type.footnote, color: kind === NOT_ATTACHED ? palette.amber : palette.muted }}>{kind === NOT_ATTACHED ? CT_NOTE : !ready ? "Preparing the capture…" : confirm ? confirm.line : "Analysis depends on the type. Suggested from your request; change it if needed."}</Text>

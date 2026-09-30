@@ -9,7 +9,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { EASE_OUT } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useSeenOnce } from "@/components/sona/use-visible";
 import { haptic } from "@/features/clinical/medication-parts";
@@ -178,7 +178,7 @@ function SourceCard({ source, index, pos, left, width, step, flash }: { source: 
   const ring = useAnimatedStyle(() => ({ opacity: glow.value }));
   const chip = source.design === "Guideline" ? { bg: "rgba(36,91,204,0.1)", fg: palette.blue } : source.design === "Library" ? { bg: "rgba(15,110,102,0.1)", fg: TEAL } : { bg: "rgba(20,28,40,0.06)", fg: palette.ink };
   return <Animated.View style={[{ position: "absolute", top: 4, left, width }, style]}>
-    <Surface style={{ padding: 16, gap: 8, height: 186, borderRadius: 22 }}>
+    <Surface style={{ padding: 16, gap: 8, height: 186, borderRadius: radius.group }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <View style={{ minWidth: 22, height: 22, paddingHorizontal: 6, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(36,91,204,0.12)" }}>
           <Text style={{ ...type.caption, fontWeight: "700", color: palette.blue, fontVariant: ["tabular-nums"] }}>{source.n}</Text>
@@ -195,7 +195,7 @@ function SourceCard({ source, index, pos, left, width, step, flash }: { source: 
         <Icon name="arrow.up.right" size={10} color={palette.blue} />
       </Pressable> : source.section ? <Text numberOfLines={1} style={{ ...type.footnote, fontWeight: "600", color: TEAL }}>{source.section}</Text> : null}
     </Surface>
-    <Animated.View pointerEvents="none" style={[{ position: "absolute", inset: 0, borderRadius: 22, borderWidth: 2, borderColor: palette.blue, backgroundColor: "rgba(36,91,204,0.06)" }, ring]} />
+    <Animated.View pointerEvents="none" style={[{ position: "absolute", inset: 0, borderRadius: radius.group, borderWidth: 2, borderColor: palette.blue, backgroundColor: "rgba(36,91,204,0.06)" }, ring]} />
   </Animated.View>;
 }
 

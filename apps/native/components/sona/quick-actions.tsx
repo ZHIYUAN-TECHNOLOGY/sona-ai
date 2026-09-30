@@ -5,7 +5,7 @@ import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withDe
 import { HalftoneGlint, HalftoneShimmer } from "./halftone-shimmer";
 import { riseIn } from "./motion";
 import { Text } from "./text";
-import { palette, type } from "./theme";
+import { palette, type, radius } from "./theme";
 import { Glass, Icon, surfaceStyle, useAccessibleEffects } from "./ui";
 
 /**
@@ -52,7 +52,7 @@ function Key({ a, index, shimmer, wide = false }: { a: QuickAction; index: numbe
   const disc = DISC[a.tone ?? "calm"], dither = DITHER[index % DITHER.length]!;
   const key = useAnimatedStyle(() => ({ transform: [{ translateY: down.value * 2 }], boxShadow: `0 ${2 - down.value * 2}px 0 rgba(40,70,140,${0.14 - down.value * 0.1}), 0 ${8 - down.value * 6}px ${18 - down.value * 10}px rgba(40,70,140,0.10)` }));
   const glyph = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
-  return <Animated.View style={[{ width: keyW, borderRadius: 24, borderCurve: "continuous" }, key]}>
+  return <Animated.View style={[{ width: keyW, borderRadius: radius.card, borderCurve: "continuous" }, key]}>
     <Pressable accessibilityRole="button" accessibilityLabel={`${a.label}. ${a.status}`}
       onPressIn={() => { down.set(withTiming(1, { duration: 70 })); if (!reducedMotion) pulse.set(withTiming(0.88, { duration: 90 })); }}
       onPressOut={() => { down.set(withSpring(0, { duration: 260, dampingRatio: 0.6 })); pulse.set(reducedMotion ? 1 : withSpring(1, { duration: 320, dampingRatio: 0.55 })); }}
@@ -60,8 +60,8 @@ function Key({ a, index, shimmer, wide = false }: { a: QuickAction; index: numbe
       <Glass opaque={reducedTransparency} style={{ borderRadius: 24, borderWidth: 1, borderColor: urgent ? "rgba(162,62,62,0.22)" : "rgba(255,255,255,0.95)" }}>
         {/* The key's lit top edge. */}
         <View pointerEvents="none" style={{ position: "absolute", left: 10, right: 10, top: 0, height: 1.5, borderRadius: 1, backgroundColor: "rgba(255,255,255,0.95)" }} />
-        {!reducedMotion && <View pointerEvents="none" style={{ position: "absolute", inset: 0, overflow: "hidden", borderRadius: 24 }}><HalftoneShimmer width={keyW} height={104} progress={sweep} /></View>}
-        <View pointerEvents="none" style={{ position: "absolute", width: 96, height: 62, [dither.corner[0] === "t" ? "top" : "bottom"]: 0, [dither.corner[1] === "r" ? "right" : "left"]: 0, overflow: "hidden", borderRadius: 24 }}>
+        {!reducedMotion && <View pointerEvents="none" style={{ position: "absolute", inset: 0, overflow: "hidden", borderRadius: radius.card }}><HalftoneShimmer width={keyW} height={104} progress={sweep} /></View>}
+        <View pointerEvents="none" style={{ position: "absolute", width: 96, height: 62, [dither.corner[0] === "t" ? "top" : "bottom"]: 0, [dither.corner[1] === "r" ? "right" : "left"]: 0, overflow: "hidden", borderRadius: radius.card }}>
           <HalftoneGlint width={96} height={62} origin={[dither.corner[1] === "r" ? 96 : 0, dither.corner[0] === "t" ? 0 : 62]} reach={[88, 58]} pitch={dither.pitch} strength={urgent ? 0.5 : 0.32} tint={disc.tint} hueShift={0} style={{ top: 0, left: 0 }} />
         </View>
         <View style={{ minHeight: 104, padding: 14, justifyContent: "space-between", gap: 10 }}>

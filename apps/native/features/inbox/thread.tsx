@@ -11,7 +11,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Caption, ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, CanvasBackground, Icon, IconButton, RoundAction, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { openSession } from "@/features/encounter/navigation";
 import { api, errorText, requestId, useLive } from "@/features/live";
@@ -191,7 +191,7 @@ function Bubble({ message: m, reduced }: { message: Thread["messages"][number]; 
   return <Animated.View entering={reduced ? undefined : FadeIn.duration(220)} accessible accessibilityLabel={`${m.author}, ${clock(m.createdAt)}: ${m.text}`}
     style={{ alignSelf: team ? "flex-end" : "flex-start", maxWidth: "84%", gap: 4, alignItems: team ? "flex-end" : "flex-start" }}>
     {header}
-    <View style={[team ? { backgroundColor: palette.dark, borderRadius: 20, borderCurve: "continuous" } : { ...surfaceStyle, borderRadius: 20 }, tail, { paddingHorizontal: 14, paddingVertical: 10 }]}>
+    <View style={[team ? { backgroundColor: palette.dark, borderRadius: radius.group, borderCurve: "continuous" } : { ...surfaceStyle, borderRadius: 20 }, tail, { paddingHorizontal: 14, paddingVertical: 10 }]}>
       <Text selectable style={{ ...type.body, color: team ? palette.white : palette.ink }}>{m.text}</Text>
     </View>
   </Animated.View>;

@@ -20,7 +20,7 @@ import { suggestImageType, type ImageType } from "./image-type";
 import { Icon, useAccessibleEffects } from "./ui";
 import { setScreenCovered } from "./use-visible";
 import { SonaCamera, type CameraHandle } from "./sona-camera";
-import { palette, type } from "./theme";
+import { palette, type, radius } from "./theme";
 
 /**
  * Attachments menu (after the ChatGPT-style plus morph): the dock's plus button grows into a
@@ -265,7 +265,7 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
         style={({ pressed }) => ({ position: "absolute", top: insets.top + 8, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,24,32,0.42)", borderWidth: 1, borderColor: "rgba(255,255,255,0.22)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
         <Icon name="xmark" size={15} color={palette.white} />
       </Pressable>
-      {!taken.length && (live || __DEV__) && <View pointerEvents="none" style={{ position: "absolute", alignSelf: "center", bottom: insets.bottom + 124, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, backgroundColor: "rgba(250,251,253,0.92)" }}>
+      {!taken.length && (live || __DEV__) && <View pointerEvents="none" style={{ position: "absolute", alignSelf: "center", bottom: insets.bottom + 124, paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.control, backgroundColor: "rgba(250,251,253,0.92)" }}>
         <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>A film, wound, skin or page</Text>
       </View>}
       <View style={{ position: "absolute", left: 20, right: 20, bottom: insets.bottom + 24, flexDirection: "row", alignItems: "center" }}>

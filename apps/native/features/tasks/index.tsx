@@ -13,7 +13,7 @@ import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Action, Chip, Expand, glass, Icon, Insight, RoundAction, Screen, SourceLink, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { Section as AnswerSection } from "@/components/sona/sections";
 import { HalftoneGlint } from "@/components/sona/halftone-shimmer";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { useEncounter } from "@/features/encounter/store";
 import type { Encounter, FeatureProps, Task } from "@/features/encounter/types";
 import { errorText, requestId, useLive } from "@/features/live";
@@ -238,7 +238,7 @@ const capitalise = (value: string) => value.charAt(0).toUpperCase() + value.slic
 /** Ink popover under the sentence offering what the typing implies. Nothing applies until tapped. */
 function Suggestions({ children, reduced }: { children: ReactNode; reduced: boolean }) {
   return <Animated.View entering={reduced ? FadeIn.duration(120) : popIn} exiting={FadeOut.duration(120)}
-    style={{ position: "absolute", top: "100%", right: 0, marginTop: 8, minWidth: 190, padding: 6, gap: 2, borderRadius: 18, borderCurve: "continuous", overflow: "hidden", backgroundColor: "rgba(29,31,35,0.95)", boxShadow: "0 12px 30px rgba(20,24,32,0.28)", transformOrigin: "top right" }}>
+    style={{ position: "absolute", top: "100%", right: 0, marginTop: 8, minWidth: 190, padding: 6, gap: 2, borderRadius: radius.group, borderCurve: "continuous", overflow: "hidden", backgroundColor: "rgba(29,31,35,0.95)", boxShadow: "0 12px 30px rgba(20,24,32,0.28)", transformOrigin: "top right" }}>
     <HalftoneGlint width={120} height={40} origin={[0, 0]} reach={[110, 36]} pitch={3} strength={0.5} tint={[0.62, 0.78, 1]} hueShift={0.6} style={{ top: 0, left: 0 }} />
     {children}
   </Animated.View>;
@@ -352,7 +352,7 @@ function TaskRow({ task, disabled, onToggle }: { task: Task; disabled: boolean; 
   const rowStyle = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }] }));
   const revealStyle = useAnimatedStyle(() => ({ opacity: interpolate(tx.value, [0, SWIPE], [0, 1], "clamp"), transform: [{ scale: interpolate(tx.value, [0, SWIPE], [0.8, 1], "clamp") }] }));
   return <View>
-    <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 0, bottom: 0, width: 120, borderRadius: 20, backgroundColor: "#E4EDFD", paddingLeft: 22, justifyContent: "center" }, revealStyle]}>
+    <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 0, bottom: 0, width: 120, borderRadius: radius.group, backgroundColor: "#E4EDFD", paddingLeft: 22, justifyContent: "center" }, revealStyle]}>
       <BrandIcon name={reopens ? "back" : "check"} size={22} color={palette.blue} strokeWidth={2} />
     </Animated.View>
     <GestureDetector gesture={pan}>
