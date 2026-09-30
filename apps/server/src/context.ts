@@ -3,6 +3,7 @@ import type { Change } from "@sona-ai/api/events";
 import { patientsFor } from "@sona-ai/api/audience";
 import type { Context as HonoContext } from "hono";
 
+import { basetenModels, basetenReranker } from "@sona-ai/api/baseten-models";
 import type { EncounterStore } from "@sona-ai/api/context";
 import { ingest, search, stubEmbedder } from "@sona-ai/retrieval/retrieval";
 
@@ -21,17 +22,21 @@ export async function createContext({ context }: CreateContextOptions): Promise<
   ).api.getSession({
     headers: context.req.raw.headers,
   });
+  // The hosted models once a Baseten key is set; without one every model answer stays a labelled fixture.
+  const baseten = ENV.BASETEN_API_KEY ? { apiKey: ENV.BASETEN_API_KEY } : undefined;
+  const reranker = baseten && basetenReranker(baseten);
   return {
     db,
     session,
     encounters: encounterStore(context.env as Env),
-    // X-ray uploads land in the Worker's R2 bucket; models stay on stubModels until Baseten is on.
+    // X-ray uploads land in the Worker's R2 bucket.
     uploads: (context.env as Env).UPLOADS,
+    models: baseten && basetenModels(baseten),
     publicUrl: ENV.BETTER_AUTH_URL,
     mail: mailOf(context.env as Env),
     announce: announcer(context.env as Env),
     // ponytail: hashed bag-of-words vectors until EmbeddingGemma runs in box ②; swap stubEmbedder for it then (and re-ingest).
-    library: { ingest: (doc, text) => ingest(db, doc, text, stubEmbedder), search: input => search(db, input, stubEmbedder) },
+    library: { ingest: (doc, text) => ingest(db, doc, text, stubEmbedder), search: input => search(db, input, stubEmbedder, reranker) },
     // Staging only: Sona Care's sign-in shows the seeded demo phone and its fixed code.
     demoSignIn: ENV.DEMO_SIGN_IN === "1",
   };

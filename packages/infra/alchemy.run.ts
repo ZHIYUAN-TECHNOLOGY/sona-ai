@@ -38,6 +38,8 @@ export const server = Cloudflare.Worker("server", {
     GOOGLE_CLIENT_SECRET: Config.Redacted("GOOGLE_CLIENT_SECRET").pipe(Config.withDefault(Redacted.make(""))),
     // "1" on staging for judges: the seeded synthetic demo phone signs in with a fixed code the app shows. Off by default.
     DEMO_SIGN_IN: Config.String("DEMO_SIGN_IN").pipe(Config.withDefault("")),
+    // The hosted models (packages/infra/baseten). Empty keeps every model answer on the labelled fixtures.
+    BASETEN_API_KEY: Config.Redacted("BASETEN_API_KEY").pipe(Config.withDefault(Redacted.make(""))),
   },
   // Nightly coding audit (flow 5), 02:00 Malaysia time; after-discharge check-ins (flow 7) go out hourly.
   crons: ["0 18 * * *", "0 * * * *"],
