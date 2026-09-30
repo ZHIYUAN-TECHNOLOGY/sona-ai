@@ -5,7 +5,7 @@ import { api, errorText, useLive } from ".";
 /**
  * Live mode's model answers for the visit screens: briefing, reasoning, discharge draft, claim codes
  * and the huddle brief. Each reads its route on the server (models.ts: a labelled fixture until a
- * model is hosted, so `source` says which). Answers are kept per key for the session, so a card
+ * model is hosted, so `source` says which). A model's answers are kept per key for the session, so a card
  * scrolled away and back does not ask again; a key that changes (a new question, another language,
  * a fix added to the note) asks again. A late answer for a key that is no longer shown is dropped.
  */
@@ -15,9 +15,12 @@ export type LiveReasoning = Awaited<ReturnType<Client["encounter"]["reasoning"]>
 export type LiveDraft = Awaited<ReturnType<Client["discharge"]["draft"]>>;
 export type LiveCodes = Awaited<ReturnType<Client["claim"]["suggestCodes"]>>;
 export type LiveAppeal = Awaited<ReturnType<Client["claim"]["appealDraft"]>>;
-export type LiveHuddle =Awaited<ReturnType<Client["ward"]["huddle"]>>;
+export type LiveHuddle = Awaited<ReturnType<Client["ward"]["huddle"]>>;
+export type LiveXray = Awaited<ReturnType<Client["xray"]["read"]>>;
 
 const answered = new Map<string, unknown>();
+// Asks in flight, so two screens reading one answer (a card and its lead) ask once.
+const asking = new Map<string, Promise<unknown>>();
 
 /**
  * One model answer by key; `ask` false (or live mode off) leaves data undefined so the screen shows its
@@ -31,7 +34,14 @@ function useLiveAnswer<T>(key: string, ask: boolean, read: () => Promise<T>, kee
     if (answered.has(key)) { setState(s => ({ key, data: answered.get(key) as T, last: s.data ?? s.last })); return; }
     let current = true;
     setState(s => (s.key === key ? s : { key, last: s.data ?? s.last }));
-    read().then(r => { answered.set(key, r); if (current) setState({ key, data: r }); }, e => { if (current) setState(s => ({ key, error: errorText(e), last: s.last })); });
+    const pending = (asking.get(key) ?? read()) as Promise<T>;
+    asking.set(key, pending);
+    void pending.finally(() => asking.delete(key)).catch(() => {});
+    pending.then(r => {
+      // Only a model's answer is kept: a sample (the model was starting, or failed) is asked again on the next open.
+      if ((r as { source?: string }).source !== "fixture") answered.set(key, r);
+      if (current) setState({ key, data: r });
+    }, e => { if (current) setState(s => ({ key, error: errorText(e), last: s.last })); });
     return () => { current = false; };
   }, [on, ask, key]); // eslint-disable-line react-hooks/exhaustive-deps
   const mine = on && ask && state.key === key;
@@ -60,3 +70,7 @@ export const useLiveAppeal = (encounterId: string, denial: string | undefined) =
 /** Asked only once the brief is opened; `ward` is the ward's state (beds and owners), so a change briefs again. */
 export const useLiveHuddle = (open: boolean, ward: string) =>
   useLiveAnswer<LiveHuddle>(`huddle:${ward}`, open, () => api.ward.huddle(), true);
+
+/** The image model's reading of the visit's uploaded X-ray; `image` is the attachment shown, so a new image reads again. Never a validated read. */
+export const useLiveXray = (encounterId: string, image: string | undefined) =>
+  useLiveAnswer<LiveXray>(`xray:${encounterId}:${image}`, Boolean(encounterId && image), () => api.xray.read({ encounterId }));

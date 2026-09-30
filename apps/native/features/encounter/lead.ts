@@ -12,7 +12,7 @@ export type LeadState = {
   /** The medicines as the card lists them. */
   medicines?: Pick<MedicationEntry, "confirmed" | "ingredient" | "formulation">[];
   /** The X-ray card's image: the reference example, the clinician's own, an unsupported or empty sample, or none at all. */
-  image?: "reference" | "attached" | "unsupported" | "no-finding" | "none";
+  image?: "reference" | "attached" | "read" | "unsupported" | "no-finding" | "none";
   note?: "none" | "draft" | "reviewed";
   prescription?: "created" | "failed" | "blocked" | "outside" | "ready";
   tasks?: { total: number; open: number };
@@ -52,6 +52,7 @@ export function leadFor(kind: Capability, patient: Patient, state: LeadState, pr
     case "xray": return {
       reference: "Here’s a reference chest radiograph, not this patient’s, with its uploader’s description. It isn’t a model reading.",
       attached: "Your image is attached. Nothing has been read from it, so there are no findings.",
+      read: "The image model has described your image. It is unvalidated, so check it against the film.",
       unsupported: "This image is outside chest radiography, so no interpretation is available.",
       "no-finding": "This sample returned no finding result. That doesn’t mean the examination is normal.",
       none: "No image is attached, so there are no findings yet.",

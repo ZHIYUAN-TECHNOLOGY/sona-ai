@@ -6,7 +6,7 @@ export type XrayUpload = { uri: string; state: "uploading" | "uploaded" | "faile
 
 /**
  * In live mode a chosen X-ray is uploaded to the server's image store (R2, under the hospital's own
- * prefix). Nothing reads it: the server's X-ray model is a labelled fixture until the models are on.
+ * prefix). Analysing it asks the server's image model to read it (`useLiveXray`); the reading is never validated.
  */
 export function useXrayUpload() {
   const { on } = useLive();

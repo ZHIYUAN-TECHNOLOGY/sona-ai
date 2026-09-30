@@ -25,6 +25,8 @@ test("the X-ray lead only mentions a reference radiograph when the card shows on
   expect(leadFor("xray", amelia, { image: "reference" })).toMatch(/reference chest radiograph, not this patient’s/);
   for (const image of ["attached", "unsupported", "no-finding", "none"]) expect(leadFor("xray", amelia, { image })).not.toMatch(/reference/);
   expect(leadFor("xray", amelia, { image: "attached" })).toBe("Your image is attached. Nothing has been read from it, so there are no findings.");
+  // Live mode, once the image model read it: says so, and that it is unvalidated; never "nothing has been read".
+  expect(leadFor("xray", amelia, { image: "read" })).toMatch(/image model has described your image.*unvalidated/);
 });
 
 test("the evidence lead never contradicts 'not enough evidence', and is hidden while the card is still searching", () => {

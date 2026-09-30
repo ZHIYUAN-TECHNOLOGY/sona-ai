@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { View } from "react-native";
 import { AnswerDeck, Takeaways, type Takeaway } from "@/components/sona/answer-kit";
 import { MarkedText } from "@/components/sona/marked-text";
-import { Drafting, SampleLabel } from "@/components/sona/model-answer";
+import { Drafting, MODEL_SLOW, SampleLabel } from "@/components/sona/model-answer";
 import { SourceScope, SourcesPill } from "@/components/sona/sources";
 import { useLiveBriefing } from "@/features/live/model-sync";
 import { Action, Notice, SourceLink, Surface } from "@/components/sona/ui";
@@ -88,10 +88,10 @@ export function BriefingCard({ patient, result, onSource, onRequest }: FeaturePr
   // No next step of its own: the end of the visit shows the one next step (visit-next.ts).
   return <View style={{ gap: 20 }}>
     <NewResult patient={patient} />
-    {server.loading ? <Surface feature style={{ padding: 16 }}><Drafting label="Reading the record…" /></Surface> : <View style={{ gap: 6 }}>
+    {server.loading ? <Surface feature style={{ padding: 16 }}><Drafting label="Reading the record…" slow={MODEL_SLOW} /></Surface> : <View style={{ gap: 6 }}>
       {digest.length > 0 && <Takeaways items={digest} />}
       <View style={{ paddingHorizontal: 4 }}>
-        <SampleLabel source={server.data?.source} what="briefing" />
+        <SampleLabel source={server.data?.source} model={server.data && "model" in server.data ? server.data.model : undefined} what="briefing" />
         {server.error && <Text style={{ ...type.caption, color: palette.red }}>{server.error} · showing the authored briefing</Text>}
       </View>
     </View>}

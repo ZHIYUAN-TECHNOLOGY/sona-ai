@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, View, type StyleProp, type ViewStyle } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 import { riseIn } from "./motion";
@@ -33,13 +33,20 @@ function Bar({ index, width, still }: { index: number; width: `${number}%`; stil
 }
 
 /** The placeholder while the server drafts: a few breathing bars and what it is doing, announced once. */
-export function Drafting({ label, lines = 3, style }: { label: string; lines?: number; style?: StyleProp<ViewStyle> }) {
+export function Drafting({ label, lines = 3, style, slow }: { label: string; lines?: number; style?: StyleProp<ViewStyle>; slow?: string }) {
   const { reducedMotion } = useAccessibleEffects();
-  return <View accessible accessibilityRole="progressbar" accessibilityLabel={label} style={[{ gap: 10 }, style]}>
+  // A hosted model answers in seconds when warm, but can take up to its timeout while it starts: after 8 s, say so.
+  const [late, setLate] = useState(false);
+  useEffect(() => { if (!slow) return; const t = setTimeout(() => setLate(true), 8000); return () => clearTimeout(t); }, [slow]);
+  const text = late && slow ? `${label} ${slow}` : label;
+  return <View accessible accessibilityRole="progressbar" accessibilityLabel={text} style={[{ gap: 10 }, style]}>
     {WIDTHS.slice(0, lines).map((w, i) => <Bar key={w} index={i} width={w} still={reducedMotion} />)}
-    <Text style={{ ...type.caption, color: palette.muted }}>{label}</Text>
+    <Text style={{ ...type.caption, color: palette.muted }}>{text}</Text>
   </View>;
 }
+
+/** What a hosted model's answer waits on while its box starts; `Drafting`'s `slow` line for model-backed answers. */
+export const MODEL_SLOW = "Still working · a model that was idle can take up to 30 s to start.";
 
 /** One line of an arrived answer, rising in after the lines before it (`animate` false: already on screen, e.g. the authored fixture). */
 export function Arrive({ index = 0, animate = true, children, style }: { index?: number; animate?: boolean; children: ReactNode; style?: StyleProp<ViewStyle> }) {
@@ -72,14 +79,26 @@ export function DataPill({ onPress = openAbout }: { onPress?: () => void }) {
  */
 export const answerSource = (answer: { loading: boolean; data?: { source?: string } }) => answer.loading ? undefined : answer.data?.source ?? "fixture";
 
+const MODEL_NAMES: [RegExp, string][] = [[/^medgemma/i, "MedGemma"], [/^gemma/i, "Gemma"], [/asr/i, "Sona speech"]];
+/** A hosted model's plain name for its label ("gemma-4-26b-a4b" → "Gemma"). */
+export const modelName = (id?: string) => MODEL_NAMES.find(([re]) => id && re.test(id))?.[1] ?? "a hosted model";
+
 /**
  * The one label for an answer no model gave: "Sample · <what> model not switched on" (authored) or
  * "Rule-based" (fixed rules; with `what`, the model that replaces them). Shown only while `source` is
- * "fixture"; nothing once a model answered. Tap (the info glyph) for the about sheet. Pass `answer`
+ * "fixture"; once a model answered, "AI draft · <model> · check before acting". Tap (the info glyph) for the about sheet. Pass `answer`
  * (a live-answer hook's result) instead of `source`, so demo mode is labelled as live mode is.
  */
-export function SampleLabel({ source: given, answer, what, rule = false }: { source?: string; answer?: Parameters<typeof answerSource>[0]; what?: string; rule?: boolean }) {
+export function SampleLabel({ source: given, model: givenModel, answer, what, rule = false }: { source?: string; model?: string; answer?: { loading: boolean; data?: { source?: string; model?: string } }; what?: string; rule?: boolean }) {
   const source = answer ? answerSource(answer) : given;
+  // A model's answer says which model drafted it and that it is a draft to check, never a finding on its own.
+  if (source === "model") {
+    const text = `AI draft · ${modelName(answer?.data?.model ?? givenModel)} · check before acting`;
+    return <Press accessibilityLabel={text} accessibilityHint="What this label means" onPress={openAbout} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+      <Text style={{ ...type.caption, color: palette.muted, flexShrink: 1 }}>{text}</Text>
+      <Icon name="info.circle" size={12} color={palette.muted} />
+    </Press>;
+  }
   if (source !== "fixture") return null;
   const text = `${rule ? "Rule-based" : "Sample"}${what ? ` · ${what} model not switched on` : ""}`;
   return <Press accessibilityLabel={text} accessibilityHint="Why this is not a model answer" onPress={openAbout} hitSlop={8}

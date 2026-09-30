@@ -8,7 +8,7 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { FadeIn, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
 import { scheduleOnRN } from "react-native-worklets";
-import { SampleLabel } from "@/components/sona/model-answer";
+import { Drafting, MODEL_SLOW, SampleLabel } from "@/components/sona/model-answer";
 import { EASE_OUT } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
@@ -49,13 +49,13 @@ export function EvidenceCard({ patient, result, onRequest }: FeatureProps) {
   const { live, data, error } = useLiveEvidence(patient.encounterId, result?.requestId, question, threadBefore(requests, result?.requestId));
   const [focus, setFocus] = useState<{ n: number; at: number }>();
   if (live && !data) return <Surface feature style={{ padding: 16, gap: 8 }}>
-    <Text style={{ ...type.subhead, color: error ? palette.red : palette.muted }}>{error ?? "Searching PubMed and your library, checking the chart…"}</Text>
+    {error ? <Text style={{ ...type.subhead, color: palette.red }}>{error}</Text> : <Drafting label="Searching PubMed and your library, checking the chart…" slow={MODEL_SLOW} />}
   </Surface>;
   const authored = data ? undefined : authoredAnswer(question);
   const shown: Shown | undefined = data
     ? { ...data, note: data.source === "cached" && data.references.some(r => r.kind === "study") ? `${data.pubmed === "live" ? "PubMed records" : "PubMed, saved copy"} · reviewed summaries` : data.references.some(r => r.kind === "library") && data.pubmed !== "live" ? "Your library · PubMed unreachable" : SOURCES_NOTE[data.pubmed] }
     : authored && { ...authored, enough: true, references: authoredReferences(), source: undefined, note: "Authored summaries · links open PubMed" };
-  const caption = !shown ? "" : !data ? "Rehearsed answer" : data.source === "cached" ? "Rehearsed answer" : data.source === "fixture" ? "Sample: not a model's reading" : `Written by ${data.source}`;
+  const caption = !shown ? "" : !data ? "Rehearsed answer" : data.source === "cached" ? "Rehearsed answer" : "";
   const cite = (n: number) => { haptic("select"); setFocus({ n, at: Date.now() }); };
 
   return <View style={{ gap: 14 }}>
@@ -64,8 +64,8 @@ export function EvidenceCard({ patient, result, onRequest }: FeatureProps) {
         : shown.enough ? shown.claims.map((c, i) => <ClaimLine key={i} claim={c} references={shown.references} onCite={cite} />)
         : <Text selectable style={{ ...type.callout, color: palette.amber }}>{NOT_ENOUGH}</Text>}
       {shown && <View style={{ gap: 4 }}>
-        <SampleLabel source={data?.source} what="evidence" />
-        <Text selectable style={{ ...type.caption, color: palette.muted }}>{caption}</Text>
+        {data && data.references.length > 0 && <SampleLabel source={data.source === "fixture" || data.source === "cached" ? data.source : "model"} model={data.source} what="evidence" />}
+        {caption ? <Text selectable style={{ ...type.caption, color: palette.muted }}>{caption}</Text> : null}
       </View>}
     </Surface>
     {shown && shown.references.length > 0 && <Sources references={shown.references} note={shown.note} focus={focus} />}

@@ -9,7 +9,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Linking, Pressable, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import Animated, { cancelAnimation, Easing, FadeIn, FadeOut, useSharedValue, withRepeat, withSpring, withTiming } from "react-native-reanimated";
-import { SampleLabel } from "@/components/sona/model-answer";
+import { Drafting, MODEL_SLOW, SampleLabel } from "@/components/sona/model-answer";
+import { useLiveXray } from "@/features/live/model-sync";
 import { Caption, PressScale } from "@/components/sona/parts";
 import { HalftoneShimmer } from "@/components/sona/halftone-shimmer";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
@@ -40,7 +41,7 @@ function haptic() { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().
  * The answer in the conversation: the image as hero with one provenance line, what the source says,
  * then the one limit that travels with it. Tap the image to open the original.
  */
-export function XrayCard({ onOpen, onRequest, result }: FeatureProps) {
+export function XrayCard({ patient, onOpen, onRequest, result }: FeatureProps) {
   const { encounter } = useEncounter();
   const evidence = result?.imagingSnapshot ?? encounter;
   const sections = result?.sections ?? 3;
@@ -53,11 +54,14 @@ export function XrayCard({ onOpen, onRequest, result }: FeatureProps) {
   const referenceImage = evidence?.hideTeachingImage ? undefined : teachingImage;
   const [sourceError, setSourceError] = useState(false);
   const imageSource = attachment ? { uri: attachment.uri } : referenceImage?.source;
+  // Live mode: the uploaded image is read by the image model (MedGemma), labelled unvalidated; demo mode keeps the honest sample.
+  const reading = useLiveXray(patient.encounterId, attachment && !superseded ? attachment.uri : undefined);
+  const read = reading.live && Boolean(attachment);
   const openOriginal = () => { if (result && (attachment || referenceImage)) router.push({ pathname: "/xray", params: { recordCardId: result.id, patientId: result.patientId } }); else onOpen("xray"); };
   return <View style={{ gap: 18 }}>
     <View style={{ gap: 8 }}>
       <Preview source={imageSource} label={attachment ? "Selected local teaching image" : referenceImage ? "Reference radiograph, unrelated to this patient" : "Add a teaching image"} onPress={openOriginal} />
-      {attachment && <Caption icon={null}>{attachment.name} · local, not uploaded or analysed</Caption>}
+      {attachment && <Caption icon={null}>{attachment.name} · {read ? "in your hospital’s storage" : "local, not uploaded or analysed"}</Caption>}
       {!attachment && referenceImage && <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         <Caption icon={null}>Reference example, not this patient · {referenceImage.attribution} · {referenceImage.license}</Caption>
         <SourceLink label="Source" onPress={() => { void Linking.openURL(referenceImage.sourceUrl).catch(() => setSourceError(true)); }} />
@@ -65,9 +69,9 @@ export function XrayCard({ onOpen, onRequest, result }: FeatureProps) {
       {sourceError && <Notice warning>The source page could not be opened. Attribution remains available here.</Notice>}
     </View>
     {sections < 2 && <AnalysisStatus interrupted={interrupted} />}
-    {sections >= 2 && <Reveal><Findings scenario={scenario} attachment={Boolean(attachment)} summary={referenceImage?.referenceSummary} /></Reveal>}
+    {sections >= 2 && <Reveal>{read ? <ModelRead reading={reading} /> : <Findings scenario={scenario} attachment={Boolean(attachment)} summary={referenceImage?.referenceSummary} />}</Reveal>}
     {sections === 2 && !interrupted && <Caption icon={null}>Completing provenance and limitations…</Caption>}
-    {sections >= 3 && <Reveal><Limits sample={Boolean(attachment) || scenario !== "reference"} detail="The original stays available to inspect." /></Reveal>}
+    {sections >= 3 && !(read && reading.data?.source === "model") && <Reveal><Limits sample={Boolean(attachment) || scenario !== "reference"} detail="The original stays available to inspect." /></Reveal>}
     {superseded && <Notice>This response preserves an earlier image and scenario. New requests use the current encounter image.</Notice>}
     {(interrupted || sections >= 3 && scenario !== "reference") && <View style={{ alignSelf: "flex-start" }}>
       <Action label={superseded ? "Analyse current encounter image" : "Retry analysis"} secondary icon="arrow.clockwise" disabled={busy} onPress={() => onRequest("xray")} />
@@ -130,6 +134,22 @@ function Limits({ sample, detail }: { sample: boolean; detail?: string }) {
     <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
       <Icon name="info.circle" size={15} color={palette.muted} />
       <Caption icon={null}>{sample ? `No image-derived conclusion can be made.${detail ? ` ${detail}` : ""}` : "Describes only the published example, not this encounter, and does not establish model accuracy."}</Caption>
+    </View>
+  </View>;
+}
+
+/** The image model's reading of the uploaded X-ray: a draft description, never a validated read or a diagnosis. */
+function ModelRead({ reading }: { reading: ReturnType<typeof useLiveXray> }) {
+  if (reading.loading) return <Drafting label="Reading the image…" slow={MODEL_SLOW} />;
+  if (reading.error) return <Notice warning>{`Not read: ${reading.error}. Nothing has been concluded from this image.`}</Notice>;
+  const data = reading.data;
+  if (!data || data.source !== "model") return <IconRow icon="eye.slash" title="Findings unavailable" detail="The image model didn’t answer in time, so nothing has been read from this image. Analyse again in a minute." />;
+  return <View style={{ gap: 10 }}>
+    <Text accessibilityRole="header" style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>What the image model describes</Text>
+    {data.findings.map((f, i) => <Text key={i} selectable style={{ ...type.callout, color: palette.ink }}>{f}</Text>)}
+    <View style={{ gap: 4 }}>
+      <SampleLabel source="model" model={"model" in data ? data.model : undefined} />
+      <Caption icon={null}>Unvalidated: not a radiologist’s report or a diagnosis. Check it against the image.</Caption>
     </View>
   </View>;
 }
@@ -219,7 +239,7 @@ export function XrayScreen() {
   const [zoomed, setZoomed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const activePatient = useRef(patient?.id);
-  // Live backend mode: the chosen image is also uploaded to the server (not analysed there either).
+  // Live backend mode: the chosen image is also uploaded to the server, where Analyse has the image model read it.
   const server = useXrayUpload();
   // Demo flow 6: findings beyond the question asked, marked on the image and listed under it.
   const found = useFindings();
@@ -260,7 +280,7 @@ export function XrayScreen() {
   const upload = attachment && server.upload?.uri === attachment.uri ? server.upload : undefined;
   const kept = !upload ? "Kept on this device · not uploaded or analysed"
     : upload.state === "uploading" ? "Saving to your hospital’s storage · not analysed"
-    : upload.state === "uploaded" ? "In your hospital’s storage · not analysed"
+    : upload.state === "uploaded" ? "In your hospital’s storage · Analyse asks the image model to read it"
     : `Kept on this device · upload failed: ${upload.error} · not analysed`;
   const image: TeachingImage | undefined = attachment ? { id: attachment.uri, source: { uri: attachment.uri }, title: attachment.name, attribution: kept, license: "rights and deidentification not verified", sourceUrl: "" } : referenceImage;
   const analysing = encounter?.requests.some(item => item.kind === "xray" && item.status === "streaming") ?? false;
@@ -300,7 +320,7 @@ export function XrayScreen() {
   const latest = encounter?.cards.findLast(card => card.kind === "xray" && card.imagingSnapshot)?.imagingSnapshot;
   // The decision stays in view: what analysing does, then the button.
   return <ViewerPage scrollEnabled={!zoomed} bottom={<>
-    <Text style={{ ...type.footnote, paddingHorizontal: 4, color: palette.muted }}>Answers in the visit · a sample response, nothing is read from the image</Text>
+    <Text style={{ ...type.footnote, paddingHorizontal: 4, color: palette.muted }}>{upload?.state === "uploaded" ? "Answers in the visit · the image model reads it; unvalidated" : "Answers in the visit · a sample response, nothing is read from the image"}</Text>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
       <View style={{ flex: 1 }}><Action label={analysing ? "Analysing…" : "Analyse X-ray"} icon="sparkles" disabled={analysing || picking} onPress={analyse} /></View>
       <AskOrb scope="xray" answers={[toFollowUp(findings)]} />
