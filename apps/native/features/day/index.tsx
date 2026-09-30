@@ -11,7 +11,7 @@ import { QuickActions, type QuickAction, type ShelfCollapse } from "@/components
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Chip, Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
-import { ErrorLine } from "@/components/sona/parts";
+import { ErrorLine, PressScale } from "@/components/sona/parts";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
 import { useLive } from "@/features/live";
@@ -42,7 +42,7 @@ import { bookingItems, canSnooze, dayOf, glDeniedItems, groupVisits, messageItem
  */
 const TONE: Record<DayTone, { dot: string; ink: string; wash: string }> = {
   urgent: { dot: palette.red, ink: palette.red, wash: "rgba(162,62,62,0.10)" },
-  soon: { dot: "#C47814", ink: palette.amber, wash: "rgba(196,120,20,0.13)" },
+  soon: { dot: palette.amber, ink: palette.amber, wash: "rgba(196,120,20,0.13)" },
   routine: { dot: "rgba(36,91,204,0.5)", ink: palette.blue, wash: "rgba(36,91,204,0.08)" },
 };
 const ICON: Record<DayItem["kind"], string> = { result: "testtube.2", blocker: "pills", visit: "calendar", task: "checklist", "check-in": "exclamationmark.bubble", booking: "calendar.badge.clock", message: "bubble.left.and.bubble.right", claim: "doc.text.magnifyingglass" };
@@ -124,7 +124,7 @@ function TimeBar({ schedule, now, onOpen }: { schedule: ScheduleVisit[]; now?: n
       <Animated.View style={[{ position: "absolute", left: 4, top: 0, bottom: 0, width: xOf(to) + 1 }, ruler]}>
         {ticks.map(m => { const hour = m % 60 === 0; return <View key={m} style={{ position: "absolute", left: xOf(m), bottom: 18, alignItems: "center", width: 1 }}>
           <View style={{ width: 1.5, height: hour ? 16 : m % 15 === 0 ? 10 : 6, borderRadius: 1, backgroundColor: hour ? "rgba(20,28,40,0.3)" : m % 15 === 0 ? "rgba(20,28,40,0.16)" : "rgba(20,28,40,0.08)" }} />
-          {hour && <Text style={{ position: "absolute", top: 20, width: 40, textAlign: "center", fontSize: 10, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{clock(m)}</Text>}
+          {hour && <Text style={{ ...type.caption, position: "absolute", top: 20, width: 40, textAlign: "center", fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{clock(m)}</Text>}
         </View>; })}
         {/* Now: only the line scrolls with the ruler; its time pill lives in its own lane above. */}
         {now !== undefined && <View pointerEvents="none" style={{ position: "absolute", left: xOf(now) - 1, top: LANE_PIN - 4, width: 2, height: 116 - 18 - (LANE_PIN - 4), borderRadius: 1, backgroundColor: palette.blue, opacity: 0.5 }} />}
@@ -137,8 +137,8 @@ function TimeBar({ schedule, now, onOpen }: { schedule: ScheduleVisit[]; now?: n
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 2, paddingRight: 10, height: 36, borderRadius: 18, backgroundColor: palette.white, borderWidth: 1, borderColor: "rgba(20,28,40,0.06)", boxShadow: "0 3px 10px rgba(24,32,48,0.08)" }}>
               <View style={{ flexDirection: "row" }}>{group.slice(0, 3).map((v, i) => { const t = TONE_PIN[v.p.incomplete ? "open" : "done"]; return <View key={v.p.id}
                 style={{ width: 30, height: 30, borderRadius: 15, marginLeft: i ? -10 : 0, borderWidth: single ? 0 : 2, borderColor: palette.white, backgroundColor: single ? t.fill : v.p.incomplete ? "#F6E7D3" : "#DCE6F8", alignItems: "center", justifyContent: "center", zIndex: 3 - i }}>
-                <Text style={{ fontSize: 11, fontWeight: "700", color: t.ink }}>{v.p.initials}</Text>
-              </View>; })}{group.length > 3 && <View style={{ height: 30, minWidth: 30, marginLeft: -10, paddingHorizontal: 5, borderRadius: 15, borderWidth: 2, borderColor: palette.white, backgroundColor: palette.ink, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 10, fontWeight: "700", color: palette.white }}>+{group.length - 3}</Text></View>}</View>
+                <Text style={{ ...type.caption, fontWeight: "700", color: t.ink }}>{v.p.initials}</Text>
+              </View>; })}{group.length > 3 && <View style={{ height: 30, minWidth: 30, marginLeft: -10, paddingHorizontal: 5, borderRadius: 15, borderWidth: 2, borderColor: palette.white, backgroundColor: palette.ink, alignItems: "center", justifyContent: "center" }}><Text style={{ ...type.caption, fontWeight: "700", color: palette.white }}>+{group.length - 3}</Text></View>}</View>
               <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>{single ? first.p.name.split(" ")[0] : `${group.length} patients`} <Text style={{ fontWeight: "500", color: palette.muted, fontVariant: ["tabular-nums"] }}>· {first.p.time}{!single && group.at(-1)!.p.time !== first.p.time ? `–${group.at(-1)!.p.time}` : ""}</Text></Text>
             </View>
             <View style={{ marginLeft: 15, width: 2, height: 14, borderRadius: 1, backgroundColor: tone.ink, opacity: 0.5 }} />
@@ -150,7 +150,7 @@ function TimeBar({ schedule, now, onOpen }: { schedule: ScheduleVisit[]; now?: n
       <Pressable accessibilityRole="button" accessibilityLabel={`Now, ${clock(now!)}. Scroll the timeline back to now`} onPress={backToNow} hitSlop={10}
         style={{ height: 22, paddingHorizontal: 8, borderRadius: 11, flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: palette.blue, boxShadow: "0 2px 6px rgba(36,91,204,0.25)" }}>
         <Animated.View style={[{ position: "absolute", left: -12 }, leftArrow]}><Icon name="chevron.left" size={9} color={palette.blue} /></Animated.View>
-        <Text style={{ fontSize: 11, lineHeight: 13, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"], includeFontPadding: false }}>{clock(now!)}</Text>
+        <Text style={{ ...type.caption, lineHeight: 13, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"], includeFontPadding: false }}>{clock(now!)}</Text>
         <Animated.View style={[{ position: "absolute", right: -12 }, rightArrow]}><Icon name="chevron.right" size={9} color={palette.blue} /></Animated.View>
       </Pressable>
     </Animated.View>}
@@ -159,8 +159,9 @@ function TimeBar({ schedule, now, onOpen }: { schedule: ScheduleVisit[]; now?: n
 
 function Row({ item, first, index, animate, pinned, onOpen, onPin, onSnooze }: { item: DayItem; first: boolean; index: number; animate: boolean; pinned: boolean; onOpen: () => void; onPin: () => void; onSnooze?: () => void }) {
   const [menu, setMenu] = useState(false);
+  const { reducedMotion } = useAccessibleEffects();
   const tone = TONE[item.tone];
-  return <Animated.View layout={LAYOUT} entering={animate ? riseIn({ delay: index * 90, distance: 14, duration: 450 }) : undefined}>
+  return <Animated.View layout={reducedMotion ? undefined : LAYOUT} entering={animate ? riseIn({ delay: index * 90, distance: 14, duration: 450 }) : undefined}>
     <View style={{ borderTopWidth: first ? 0 : 1, borderColor: "rgba(20,28,40,0.06)" }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingLeft: 14, paddingRight: 6, paddingVertical: 12 }}>
         <Pressable accessibilityRole="button" accessibilityLabel={`${item.title}. ${item.reason}${pinned ? ". Pinned" : ""}`} accessibilityHint={HINT(item)} onPress={onOpen} style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 12 }}>
@@ -198,6 +199,7 @@ function UnownedBeds({ beds }: { beds: Bed[] }) {
   const server = useServerData();
   // Assigned here and not yet back from the server's task list: shown owned at once, restored if refused.
   const [assigned, setAssigned] = useState<Record<string, Owner>>({});
+  const { reducedMotion } = useAccessibleEffects();
   const [error, setError] = useState<string>();
   const rows = unownedBlocked(beds, { ...ownersOf(server?.tasks ?? []), ...assigned });
   const assign = (id: string, owner: Owner) => {
@@ -206,9 +208,9 @@ function UnownedBeds({ beds }: { beds: Bed[] }) {
       e => { setAssigned(({ [id]: _, ...rest }) => rest); setError(`Not assigned: ${errorText(e)}`); });
   };
   if (!rows.length) return <Text style={{ ...type.subhead, color: palette.muted }}>Every blocker has an owner.</Text>;
-  return <Surface layout={LAYOUT} style={{ padding: 16, gap: 12 }}>
+  return <Surface layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 12 }}>
     <Text style={{ ...type.overline, color: palette.amber }}>No owner yet · {rows.length} {rows.length === 1 ? "bed" : "beds"}</Text>
-    {rows.map((r, i) => <Animated.View key={r.bed} layout={LAYOUT} style={{ gap: 8, paddingTop: i ? 12 : 0, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)" }}>
+    {rows.map((r, i) => <Animated.View key={r.bed} layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8, paddingTop: i ? 12 : 0, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)" }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{r.bed} · {r.name.split(" ")[0]}</Text>
@@ -244,7 +246,7 @@ function MonthCard({ offset, counts, onPick, onClose }: { offset: number; counts
   return <>
     <Pressable accessibilityLabel="Close day picker" onPress={onClose} style={{ position: "absolute", left: -20, right: -20, top: -400, height: 3000, zIndex: 1 }} />
     <Animated.View entering={reducedMotion ? FadeIn.duration(160) : riseIn({ distance: -10, scale: 0.9, duration: 450 })} exiting={FadeOut.duration(140)}
-      style={{ position: "absolute", top: 78, left: 0, right: 0, zIndex: 2, transformOrigin: "top left", borderRadius: radius.card, borderCurve: "continuous", backgroundColor: "#FBFCFE", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 18px 44px rgba(24,32,48,0.18)", padding: 14, gap: 8 }}>
+      style={{ position: "absolute", top: 78, left: 0, right: 0, zIndex: 2, transformOrigin: "top left", borderRadius: radius.card, borderCurve: "continuous", backgroundColor: palette.surface, borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 18px 44px rgba(24,32,48,0.18)", padding: 14, gap: 8 }}>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <Pressable accessibilityRole="button" accessibilityLabel="Previous month" onPress={() => shift(-1)} hitSlop={8} style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}><Icon name="chevron.left" size={13} color={palette.ink} /></Pressable>
         <Text accessibilityRole="header" style={{ flex: 1, textAlign: "center", ...type.headline, color: palette.ink }}>{month.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</Text>
@@ -308,11 +310,10 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, s
   const [at, setAt] = useState(Date.now);
   useEffect(() => { const timer = setInterval(() => setAt(Date.now()), 60_000); return () => clearInterval(timer); }, []);
   const now = nowMinutes(new Date(at));
-  // First open sorts after the home greeting has settled; "Re-rank" replays it on demand.
+  // First open sorts after the home greeting has settled.
   const [sorting, setSorting] = useState(!sortedOnce && !reducedMotion);
   const [animate, setAnimate] = useState(!sortedOnce && !reducedMotion);
-  const [run, setRun] = useState(0);
-  useEffect(() => { sortedOnce = true; if (!sorting) return; const timer = setTimeout(() => setSorting(false), run ? 1100 : 1700); return () => clearTimeout(timer); }, [sorting, run]);
+  useEffect(() => { sortedOnce = true; if (!sorting) return; const timer = setTimeout(() => setSorting(false), 1700); return () => clearTimeout(timer); }, [sorting]);
   const [pins, setPins] = useState<string[]>([]);
   const [snoozed, setSnoozed] = useState<Snoozed>({});
   const [showSnoozed, setShowSnoozed] = useState(false);
@@ -348,8 +349,8 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, s
           <Pressable accessibilityRole="button" accessibilityLabel={`${offset === 0 ? "Today" : ""} ${date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}. Choose another day`} accessibilityState={{ expanded: calendar }}
             onPress={() => { haptic(); setCalendar(v => !v); }} hitSlop={8} style={{ alignSelf: "flex-start", gap: 2 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <Text style={{ fontSize: 17, fontWeight: "600", color: offset === 0 ? palette.blue : palette.ink }}>{offset === 0 ? "Today, " : ""}{date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}</Text>
-              <View style={{ transform: [{ rotate: calendar ? "180deg" : "0deg" }], transitionProperty: "transform", transitionDuration: reducedMotion ? 0 : 240 } as never}><Icon name="chevron.down" size={12} color={offset === 0 ? palette.blue : palette.ink} /></View>
+              <Text style={{ ...type.headline, fontWeight: "600", color: offset === 0 ? palette.blue : palette.ink }}>{offset === 0 ? "Today, " : ""}{date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}</Text>
+              <Animated.View style={{ transform: [{ rotate: calendar ? "180deg" : "0deg" }], transitionProperty: "transform", transitionDuration: reducedMotion ? 0 : 240 } as never}><Icon name="chevron.down" size={12} color={offset === 0 ? palette.blue : palette.ink} /></Animated.View>
             </View>
             <Text style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{offset === 0 ? (managing ? "" : `${needLine(needs)} · `) : offset < 0 ? "Looking back · " : "Coming up · "}{schedule.length} {schedule.length === 1 ? "visit" : "visits"}</Text>
           </Pressable>
@@ -366,11 +367,10 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, s
     {offset === 0 && bedManager && <UnownedBeds beds={beds} />}
     {offset === 0 && managing && shelf}
     {managing ? null : sorting ? <Sorting /> : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
-      {top && <Animated.View key={`top-${run}`} layout={LAYOUT} entering={animate ? riseIn({ distance: 14, scale: 0.97, duration: 450 }) : undefined}>
+      {top && <Animated.View key="top" layout={reducedMotion ? undefined : LAYOUT} entering={animate ? riseIn({ distance: 14, scale: 0.97, duration: 450 }) : undefined}>
         {/* The card opens the item; its inline actions sit beside that button, not inside it, so VoiceOver reaches them. */}
         <Surface feature style={{ padding: 18, gap: 12 }}>
-          <Pressable accessibilityRole="button" accessibilityLabel={`Most urgent: ${top.title}. ${top.reason}`} accessibilityHint={HINT(top)} onPress={() => onOpen(top.patientId, top.open)}
-            style={({ pressed }) => ({ gap: 12, transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Most urgent: ${top.title}. ${top.reason}`} accessibilityHint={HINT(top)} onPress={() => onOpen(top.patientId, top.open)}>{({ pressed }) => <PressScale pressed={pressed} scale={0.98} style={{ gap: 12 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: TONE[top.tone].dot }} />
               <Text style={{ ...type.overline, color: TONE[top.tone].ink }}>{pins.includes(top.id) ? "Pinned" : offset === 0 ? "Most urgent" : offset < 0 ? "First seen" : "First to prepare"}</Text>
@@ -383,19 +383,19 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, s
               <View style={{ flexShrink: 1, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: TONE[top.tone].wash }}><Text style={{ ...type.caption, fontWeight: "600", color: TONE[top.tone].ink }}>{top.reason}</Text></View>
               {top.patientId && <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: palette.ink, alignItems: "center", justifyContent: "center" }}><Icon name="arrow.right" size={14} color={palette.white} /></View>}
             </View>
-          </Pressable>
+          </PressScale>}</Pressable>
           {top.kind === "check-in" && <FlagActions item={top} />}
           {top.kind === "booking" && <BookingActions item={top} />}
           {top.kind === "message" && <MessageActions item={top} />}
         </Surface>
       </Animated.View>}
       {offset === 0 && shelf}
-      {rest.length > 0 && <Surface layout={LAYOUT} style={{ paddingVertical: 2 }}>
-        {rest.map((item, i) => <Row key={`${run}-${item.id}`} item={item} first={i === 0} index={i + 1} animate={animate} pinned={pins.includes(item.id)} onOpen={() => onOpen(item.patientId, item.open)}
+      {rest.length > 0 && <Surface layout={reducedMotion ? undefined : LAYOUT} style={{ paddingVertical: 2 }}>
+        {rest.map((item, i) => <Row key={item.id} item={item} first={i === 0} index={i + 1} animate={animate} pinned={pins.includes(item.id)} onOpen={() => onOpen(item.patientId, item.open)}
           onPin={() => setPins(list => list.includes(item.id) ? list.filter(id => id !== item.id) : [item.id, ...list])}
           onSnooze={canSnooze(item) ? () => setSnoozed(s => snooze(s, item, Date.now())) : undefined} />)}
       </Surface>}
-      {later.length > 0 && <Animated.View layout={LAYOUT} entering={FadeIn.duration(200)} style={{ gap: 6 }}>
+      {later.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT} entering={FadeIn.duration(200)} style={{ gap: 6 }}>
         <Pressable accessibilityRole="button" accessibilityState={{ expanded: showSnoozed }} onPress={() => setShowSnoozed(v => !v)} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Icon name="moon.zzz" size={13} color={palette.muted} /><Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>Snoozed · {later.length}</Text>
         </Pressable>
@@ -404,7 +404,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, s
         </Pressable>)}
       </Animated.View>}
       {!ordered.length && <Text style={{ ...type.callout, color: palette.muted, textAlign: "center", paddingVertical: 12 }}>Nothing scheduled this day.</Text>}
-      {schedule.length > 0 && <Animated.View layout={LAYOUT} style={{ gap: 8 }}>
+      {schedule.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
         <Pressable accessibilityRole="button" accessibilityState={{ expanded: timeline }} onPress={() => { haptic(); setTimeline(v => !v); }} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 8 }}>
           <Icon name={timeline ? "chevron.up" : "clock"} size={13} color={palette.blue} />
           <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{timeline ? "Hide the timeline" : `See the day on a timeline · ${schedule.length} ${schedule.length === 1 ? "visit" : "visits"}`}</Text>

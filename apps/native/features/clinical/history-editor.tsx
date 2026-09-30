@@ -1,3 +1,4 @@
+import { PressScale } from "@/components/sona/parts";
 import { DateTimePicker } from "@expo/ui/community/datetime-picker";
 import { useEffect, useState } from "react";
 import { Keyboard, Pressable, TextInput, View, type TextStyle } from "react-native";
@@ -24,8 +25,7 @@ const sourceOf = (fact: HistoryFact, onSource: (id: string) => void): SourceEntr
 });
 function localDate(date: Date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
 
-const field: TextStyle = { fontSize: 17, lineHeight: 23, color: palette.ink, paddingHorizontal: 14, paddingVertical: 12, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" };
-const placeholder = "rgba(89,97,107,0.55)";
+const field: TextStyle = { ...type.body, lineHeight: 23, color: palette.ink, paddingHorizontal: 14, paddingVertical: 12, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" };
 function FieldLabel({ children }: { children: string }) { return <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{children}</Text>; }
 
 /**
@@ -73,14 +73,14 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
     {scope && facts.map(fact => <SourceRef key={fact.id} {...sourceOf(fact, onSource)} />)}
     <Pressable accessibilityRole="button" accessibilityLabel={count ? `${title}. ${count}` : title} accessibilityState={{ expanded: shown }}
       onPress={() => { haptic(); setShown(value => !value); }}
-      style={({ pressed }) => ({ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+      style={{ alignSelf: "flex-start" }}>{({ pressed }) => <PressScale pressed={pressed} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 8 }}>
       <Icon name="clock.arrow.circlepath" size={15} color={palette.muted} />
       <Text style={{ ...type.callout, fontWeight: "500", color: palette.ink }}>{title}</Text>
       {count && <Text style={{ ...type.footnote, color: palette.muted, fontVariant: ["tabular-nums"] }}>{count}</Text>}
       <Animated.View style={{ transform: [{ rotate: shown ? "90deg" : "0deg" }], transitionProperty: "transform", transitionDuration: reducedMotion ? 0 : 240 }}>
         <Icon name="chevron.right" size={12} color={palette.muted} />
       </Animated.View>
-    </Pressable>
+    </PressScale>}</Pressable>
     {recorded && <Animated.View entering={reducedMotion ? undefined : riseIn({ distance: 6, duration: 260 })}>
       <Caption icon="checkmark.circle" color={palette.blue}>Recorded at revision {recorded.revision}: {recorded.value}. The refreshed response will reflect this update; the earlier result remains unchanged.</Caption>
     </Animated.View>}
@@ -91,8 +91,8 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
         {last && <View style={{ flexDirection: "row", gap: 12, paddingVertical: 16 }}>
           <IconDisc icon={categoryOf(last.category).icon} />
           <View style={{ flex: 1, gap: 3, paddingTop: 1 }}>
-            <Text selectable style={{ fontSize: 13, lineHeight: 18, color: palette.muted }}>{categoryOf(last.category).label} · {last.date} · revision {last.revision}</Text>
-            <Text selectable style={{ fontSize: 16, lineHeight: 23, color: palette.ink }}>{last.value}</Text>
+            <Text selectable style={{ ...type.footnote, color: palette.muted }}>{categoryOf(last.category).label} · {last.date} · revision {last.revision}</Text>
+            <Text selectable style={{ ...type.body, lineHeight: 23, color: palette.ink }}>{last.value}</Text>
             <SourceRef {...sourceOf(last, onSource)} />
           </View>
         </View>}
@@ -109,12 +109,12 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
             <View style={{ gap: 8 }}>
               <FieldLabel>Recorded fact</FieldLabel>
               <TextInput testID="clinical-recorded-fact" accessibilityLabel="Recorded fact" value={draft.value} onChangeText={value => updateDraft({ value })} multiline maxLength={600}
-                placeholder="What was reported or found" placeholderTextColor={placeholder} style={[field, { minHeight: 88, textAlignVertical: "top" }]} />
+                placeholder="What was reported or found" placeholderTextColor={palette.placeholder} style={[field, { minHeight: 88, textAlignVertical: "top" }]} />
             </View>
             <View style={{ gap: 8 }}>
               <FieldLabel>Source or speaker</FieldLabel>
               <TextInput testID="clinical-source-or-speaker" accessibilityLabel="Source or speaker" value={draft.source} onChangeText={source => updateDraft({ source })} maxLength={120} returnKeyType="done"
-                placeholder="Patient, relative, referral letter…" placeholderTextColor={placeholder} style={[field, { minHeight: 48 }]} />
+                placeholder="Patient, relative, referral letter…" placeholderTextColor={palette.placeholder} style={[field, { minHeight: 48 }]} />
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
               <FieldLabel>Date</FieldLabel>
@@ -140,9 +140,9 @@ export function HistoryEditor({ patient, result, onSource, onRequest, refresh }:
                 {index < facts.length - 1 && <View style={{ flex: 1, width: 1.5, marginTop: 4, borderRadius: 1, backgroundColor: palette.line }} />}
               </View>
               <View style={{ flex: 1, gap: 3, paddingBottom: index < facts.length - 1 ? 16 : 0 }}>
-                <Text selectable style={{ fontSize: 12, lineHeight: 17, color: palette.muted }}>Revision {fact.revision} · {categoryOf(fact.category).label} · {fact.date}</Text>
-                <Text selectable style={{ fontSize: 15, lineHeight: 21, color: superseded ? palette.muted : palette.ink }}>{fact.value}</Text>
-                <Text selectable style={{ fontSize: 13, lineHeight: 18, color: palette.muted }}>Source: {fact.source} · {superseded ? "Superseded in this result" : "Current for this category"}</Text>
+                <Text selectable style={{ ...type.caption, lineHeight: 17, color: palette.muted }}>Revision {fact.revision} · {categoryOf(fact.category).label} · {fact.date}</Text>
+                <Text selectable style={{ ...type.callout, color: superseded ? palette.muted : palette.ink }}>{fact.value}</Text>
+                <Text selectable style={{ ...type.footnote, color: palette.muted }}>Source: {fact.source} · {superseded ? "Superseded in this result" : "Current for this category"}</Text>
                 <SourceRef {...sourceOf(fact, onSource)} />
               </View>
             </View>;

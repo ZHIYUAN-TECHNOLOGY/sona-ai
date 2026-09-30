@@ -211,7 +211,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const visible = compactResponses && !showEarlier ? requests.slice(-1) : requests;
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
 
-  return <View style={{ flex: 1, backgroundColor: "#F1F2F4" }}>
+  return <View style={{ flex: 1, backgroundColor: palette.canvas }}>
     {home && <Sidebar open={drawer} progress={drawerP} onClose={closeDrawer} onNew={() => router.push("/patients")} />}
     <GestureDetector gesture={dragClose}>
     <Animated.View style={[{ flex: 1, overflow: "hidden", borderCurve: "continuous", backgroundColor: palette.canvas }, pageStyle]}>
@@ -235,10 +235,10 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
               scroll.current?.scrollTo({ y: Math.max(0, event.nativeEvent.layout.y + 8), animated: false });
             }
           }} style={{ gap: 16, minHeight: req.id === latest?.id && req.status === "streaming" ? 320 : undefined }}>
-            <Text selectable accessibilityRole="header" style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{req.prompt || prompts[req.kind]}</Text>
+            <Text selectable accessibilityRole="header" style={{ ...type.subhead, lineHeight: 19, color: palette.muted }}>{req.prompt || prompts[req.kind]}</Text>
             {/* The lead summarises the card below, so there is none without a card (failed or stopped). */}
             {card && answerPatient && <VisitLead req={req} card={card} patient={answerPatient} />}
-            {card && props && <ResponseFrame pending={false} partial={req.status === "streaming"} onCancel={cancel} onSource={() => router.push({ pathname: "/source", params: { id: "history", patientId: patient!.id, cardId: card.id } })}>
+            {card && props && <ResponseFrame partial={req.status === "streaming"}>
               <Reveal>{card.revision !== encounter?.revision && <Notice>Earlier encounter revision {card.revision}. Its original context and sources are retained.</Notice>}{(() => { const body = <ClinicalResponseRenderer kind={card.kind} sections={card.sections} loading={req.status === "streaming"} featureProps={{ ...props, patient: card.patientSnapshot ?? props.patient, result: card, onSource: id => router.push({ pathname: "/source", params: { id, patientId: props.patient.id, cardId: card.id } }) }} />;
                 // Only the latest answer feeds the pinned tabs.
                 return req.id === latest?.id ? <AnswerSections key={req.id} onChange={list => { setSections([...list]); setActiveTab(0); }}>{body}</AnswerSections> : body; })()}</Reveal>

@@ -28,7 +28,7 @@ export function LibraryCard() {
         style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderColor: glass.hairline }}>
         <IconDisc icon={KIND_ICON[d.kind]} />
         <View style={{ flex: 1, gap: 3 }}>
-          <Text numberOfLines={2} style={{ fontSize: 15, lineHeight: 21, fontWeight: "600", color: palette.ink }}>{d.title}</Text>
+          <Text numberOfLines={2} style={{ ...type.callout, fontWeight: "600", color: palette.ink }}>{d.title}</Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <ScopeBadge scope={d.scope} />
             <Text numberOfLines={1} style={{ ...type.caption, color: palette.muted, flexShrink: 1 }}>{d.sections} section{d.sections === 1 ? "" : "s"} · {d.source} · {d.year}</Text>

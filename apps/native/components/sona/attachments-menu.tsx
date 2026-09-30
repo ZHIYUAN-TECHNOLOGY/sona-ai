@@ -18,6 +18,7 @@ import { PhotoReview } from "./photo-review";
 import { ReviewCapsule } from "@/features/library/scan-parts";
 import { suggestImageType, type ImageType } from "./image-type";
 import { Icon, useAccessibleEffects } from "./ui";
+import { Press } from "./parts";
 import { setScreenCovered } from "./use-visible";
 import { SonaCamera, type CameraHandle } from "./sona-camera";
 import { palette, type, radius } from "./theme";
@@ -232,11 +233,11 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
       </Animated.View>}
       <Animated.View pointerEvents={extended ? "none" : "auto"} style={[{ position: "absolute", left: 0, bottom: 0, width: 212, height: ITEMS_H, paddingHorizontal: 20, paddingVertical: 16, justifyContent: "space-between", transformOrigin: "left bottom" }, itemsStyle]}>
         {ITEMS.map((item, i) => <Animated.View key={item.label} style={[{ transformOrigin: "bottom left" }, itemStyles[i]]}>
-          <Pressable accessibilityRole="button" accessibilityLabel={item.label} onPress={() => open(item.action)}
-            style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 14, minHeight: 44, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+          <Press accessibilityLabel={item.label} onPress={() => open(item.action)} scale={0.96}
+            style={{ flexDirection: "row", alignItems: "center", gap: 14, minHeight: 44 }}>
             <BrandIcon name={item.icon} size={22} color={palette.ink} />
-            <Text style={{ fontSize: 17, color: palette.ink }}>{item.label}</Text>
-          </Pressable>
+            <Text style={{ ...type.headline, fontWeight: "400", color: palette.ink }}>{item.label}</Text>
+          </Press>
         </Animated.View>)}
       </Animated.View>
 
@@ -261,9 +262,10 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
 
     {extended && surface === "camera" && <StatusBar style="light" />}
     {extended && surface === "camera" && !shot && <Animated.View pointerEvents="box-none" style={[StyleSheet.absoluteFill, controlsStyle]}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Close camera" onPress={backToMenu} hitSlop={8}
-        style={({ pressed }) => ({ position: "absolute", top: insets.top + 8, left: 16, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,24,32,0.42)", borderWidth: 1, borderColor: "rgba(255,255,255,0.22)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-        <Icon name="xmark" size={15} color={palette.white} />
+      <Pressable accessibilityRole="button" accessibilityLabel="Close camera" onPress={backToMenu} hitSlop={8} style={{ position: "absolute", top: insets.top + 8, left: 16 }}>
+        {({ pressed }) => <Animated.View style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,24,32,0.42)", borderWidth: 1, borderColor: "rgba(255,255,255,0.22)", transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 }}>
+          <Icon name="xmark" size={15} color={palette.white} />
+        </Animated.View>}
       </Pressable>
       {!taken.length && (live || __DEV__) && <View pointerEvents="none" style={{ position: "absolute", alignSelf: "center", bottom: insets.bottom + 124, paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.control, backgroundColor: "rgba(250,251,253,0.92)" }}>
         <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>A film, wound, skin or page</Text>
@@ -273,10 +275,10 @@ export function AttachmentsMenu({ visible, progress, extend, anchor, reducedMoti
         <View style={{ flex: 1, alignItems: "flex-start" }}>
           {taken.length > 0 && <ReviewCapsule title="Done" pages={taken.map((a, i) => ({ id: i, uri: a.uri === "teaching" ? undefined : a.uri }))} label={`${taken.length} added`} onPress={backToMenu} />}
         </View>
-        {live || __DEV__ ? <Pressable accessibilityRole="button" accessibilityLabel="Take photo" onPress={capture}
-          style={({ pressed }) => ({ width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: palette.white, alignItems: "center", justifyContent: "center", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+        {live || __DEV__ ? <Press accessibilityLabel="Take photo" onPress={capture} scale={0.96}
+          style={{ width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: palette.white, alignItems: "center", justifyContent: "center" }}>
           <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: palette.white }} />
-        </Pressable> : <View style={{ width: 76 }} />}
+        </Press> : <View style={{ width: 76 }} />}
         <View style={{ flex: 1, alignItems: "flex-end" }}>
           {live && <Pressable accessibilityRole="button" accessibilityLabel={torch ? "Turn light off" : "Turn light on"} onPress={() => { tick(); setTorch(t => !t); }} hitSlop={6}
             style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: torch ? palette.white : "rgba(20,24,32,0.42)", borderWidth: 1, borderColor: "rgba(255,255,255,0.22)" }}>

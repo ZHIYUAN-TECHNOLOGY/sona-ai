@@ -1,3 +1,4 @@
+import { PressScale } from "@/components/sona/parts";
 import * as WebBrowser from "expo-web-browser";
 import { QuestionList } from "@/components/sona/list";
 import { MarkedText, TINT, segments, type Mark } from "@/components/sona/marked-text";
@@ -92,9 +93,9 @@ function ClaimLine({ claim, references, onCite }: { claim: Claim; references: Re
       {claim.cites.map(n => { const r = references.find(x => x.n === n);
         return <Pressable key={n} accessibilityRole="button" accessibilityLabel={`Source ${n}${r ? `, ${DESIGN_WORDS[r.design]}, ${[r.from, r.year].filter(Boolean).join(" ")}` : ""}`} accessibilityHint="Shows this source below"
           hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }} onPress={() => onCite(n)}
-          style={({ pressed }) => ({ marginLeft: 4, minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(36,91,204,0.12)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+          style={{ marginLeft: 4 }}>{({ pressed }) => <PressScale pressed={pressed} style={{ minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(36,91,204,0.12)" }}>
           <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue, fontVariant: ["tabular-nums"] }}>{n}</Text>
-        </Pressable>; })}
+        </PressScale>}</Pressable>; })}
     </View>
   </View>;
 }
@@ -170,7 +171,7 @@ function SourceCard({ source, index, pos, left, width, step, flash }: { source: 
           <Text style={{ ...type.caption, fontWeight: "700", color: palette.blue, fontVariant: ["tabular-nums"] }}>{source.n}</Text>
         </View>
         <View style={{ height: 22, paddingHorizontal: 8, borderRadius: 11, justifyContent: "center", backgroundColor: chip.bg }}>
-          <Text style={{ fontSize: 11, fontWeight: "700", color: chip.fg }}>{source.design}</Text>
+          <Text style={{ ...type.caption, fontWeight: "700", color: chip.fg }}>{source.design}</Text>
         </View>
         <Text numberOfLines={1} style={{ ...type.caption, flex: 1, color: palette.muted, fontVariant: ["tabular-nums"] }}>{source.year}{source.from ? ` · ${source.from}` : ""}</Text>
       </View>
@@ -216,8 +217,8 @@ function Severity({ patient, server }: { patient: FeatureProps["patient"]; serve
           <AnimatedCircle cx={42} cy={42} r={R} stroke={tone} strokeWidth={7} fill="none" strokeLinecap="round" strokeDasharray={`${C} ${C}`} animatedProps={arc} />
         </Svg>
         {done ? <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)} style={{ alignItems: "center" }}>
-          <Text style={{ fontSize: 24, fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{risk ? score : "?"}</Text>
-          <Text style={{ fontSize: 11, color: palette.muted }}>of 5</Text>
+          <Text style={{ fontSize: 24 /* score numeral, between title and display */, fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{risk ? score : "?"}</Text>
+          <Text style={{ ...type.caption, color: palette.muted }}>of 5</Text>
         </Animated.View> : <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted, fontVariant: ["tabular-nums"] }}>{checked}/5</Text>}
       </View>
       <View style={{ flex: 1, gap: 2 }}>
@@ -233,7 +234,7 @@ function Severity({ patient, server }: { patient: FeatureProps["patient"]; serve
           <Text style={{ ...type.caption, color: palette.muted }}>Point if {f.rule}</Text>
         </View>
         {shown && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(160)} style={{ height: 22, paddingHorizontal: 8, borderRadius: 11, justifyContent: "center", backgroundColor: f.point === undefined ? "rgba(196,120,20,0.12)" : f.point ? "rgba(162,62,62,0.1)" : "rgba(15,110,102,0.1)" }}>
-          <Text style={{ fontSize: 11, fontWeight: "700", color: f.point === undefined ? palette.amber : f.point ? palette.red : TEAL }}>{f.point === undefined ? "Not recorded" : f.point ? "+1" : "0"}</Text>
+          <Text style={{ ...type.caption, fontWeight: "700", color: f.point === undefined ? palette.amber : f.point ? palette.red : TEAL }}>{f.point === undefined ? "Not recorded" : f.point ? "+1" : "0"}</Text>
         </Animated.View>}
       </View>; })}
     </View>

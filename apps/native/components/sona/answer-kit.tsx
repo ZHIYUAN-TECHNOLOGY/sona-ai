@@ -4,6 +4,7 @@ import { Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { MarkedText } from "./marked-text";
 import { LAYOUT, riseIn } from "./motion";
+import { Press } from "./parts";
 import { Section } from "./sections";
 import { Text } from "./text";
 import { palette, type, radius } from "./theme";
@@ -70,14 +71,14 @@ export function Fold({ id, title, preview, defaultOpen = false, children }: { id
   const toggle = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); setOpen(value => !value); };
   return <Surface layout={reducedMotion ? undefined : LAYOUT}>
     <View ref={ref} collapsable={false}>
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={`${title}. ${preview}`} onPress={toggle}
-        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingVertical: 14, transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+      <Press expanded={open} accessibilityLabel={`${title}. ${preview}`} onPress={toggle}
+        style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingVertical: 14 }}>
         <View style={{ flex: 1, gap: 2 }}>
           <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>{title}</Text>
           {!open && <Animated.Text entering={FadeIn.duration(160)} exiting={FadeOut.duration(100)} numberOfLines={1} style={{ ...type.footnote, color: palette.muted }}>{preview}</Animated.Text>}
         </View>
-        <View style={{ transform: [{ rotate: open ? "90deg" : "0deg" }], transitionProperty: "transform", transitionDuration: 240 } as never}><Icon name="chevron.right" size={13} color={palette.muted} /></View>
-      </Pressable>
+        <Animated.View style={{ transform: [{ rotate: open ? "90deg" : "0deg" }], transitionProperty: "transform", transitionDuration: reducedMotion ? 0 : 240 }}><Icon name="chevron.right" size={13} color={palette.muted} /></Animated.View>
+      </Press>
     </View>
     {open && <Expand style={{ paddingHorizontal: 16, paddingBottom: 16, gap: 14 }}>{children}</Expand>}
   </Surface>;
@@ -110,7 +111,7 @@ export function SectionTabs({ sections, active, onPick }: { sections: AnswerSect
       <View accessibilityRole="tablist" style={{ flexDirection: "row" }}>
         <Animated.View pointerEvents="none" style={[{ position: "absolute", top: 0, bottom: 0, width: tabW, borderRadius: radius.control, backgroundColor: palette.ink }, thumb]} />
         {sections.map((section, i) => <Pressable key={section.id} accessibilityRole="tab" accessibilityState={{ selected: i === active }} onPress={() => onPick(i)} hitSlop={{ top: 6, bottom: 6 }} style={{ width: tabW, height: 32, alignItems: "center", justifyContent: "center" }}>
-          <Text numberOfLines={1} style={{ ...type.footnote, fontWeight: "600", color: i === active ? palette.white : palette.muted, transitionProperty: "color", transitionDuration: 180 } as never}>{section.title}</Text>
+          <Animated.Text numberOfLines={1} style={{ ...type.footnote, fontWeight: "600", color: i === active ? palette.white : palette.muted, transitionProperty: "color", transitionDuration: 180 }}>{section.title}</Animated.Text>
         </Pressable>)}
       </View>
     </ScrollView>
@@ -134,16 +135,16 @@ export function AnswerDeck({ pages }: { pages: { title: string; content: ReactNo
     <View accessible accessibilityRole="adjustable" accessibilityLabel={`Page ${index + 1} of ${pages.length}, ${pages[index]?.title}`} accessibilityActions={[{ name: "increment" }, { name: "decrement" }]} onAccessibilityAction={e => turn(e.nativeEvent.actionName === "increment" ? 1 : -1)} style={{ flexDirection: "row", gap: 4 }}>
       {pages.map((page, i) => <View key={page.title} style={{ flex: 1, gap: 6 }}>
         <View style={{ height: 3, borderRadius: 2, backgroundColor: "rgba(20,28,40,0.1)", overflow: "hidden" }}>
-          <View style={{ height: 3, backgroundColor: palette.ink, transformOrigin: "left", transform: [{ scaleX: i <= index ? 1 : 0 }], transitionProperty: "transform", transitionDuration: reducedMotion ? 0 : 320 } as never} />
+          <Animated.View style={{ height: 3, backgroundColor: palette.ink, transformOrigin: "left", transform: [{ scaleX: i <= index ? 1 : 0 }], transitionProperty: "transform", transitionDuration: reducedMotion ? 0 : 320 }} />
         </View>
         <Text numberOfLines={1} style={{ ...type.caption, fontWeight: i === index ? "600" : "500", color: i === index ? palette.ink : palette.muted }}>{page.title}</Text>
       </View>)}
     </View>
     <ScrollView ref={deck} horizontal showsHorizontalScrollIndicator={false} decelerationRate="fast" snapToInterval={pageW + gap} snapToAlignment="start"
       onMomentumScrollEnd={e => settle(e.nativeEvent.contentOffset.x)} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap, alignItems: "flex-start" }}>
-      {pages.map((page, i) => <View key={page.title} style={{ width: pageW, opacity: i === index ? 1 : 0.55, transform: [{ scale: i === index || reducedMotion ? 1 : 0.96 }], transitionProperty: ["opacity", "transform"], transitionDuration: 300 } as never}>
+      {pages.map((page, i) => <Animated.View key={page.title} style={{ width: pageW, opacity: i === index ? 1 : 0.55, transform: [{ scale: i === index || reducedMotion ? 1 : 0.96 }], transitionProperty: ["opacity", "transform"], transitionDuration: 300 }}>
         {page.content}
-      </View>)}
+      </Animated.View>)}
     </ScrollView>
   </View>;
 }

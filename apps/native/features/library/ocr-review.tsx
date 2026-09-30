@@ -134,7 +134,7 @@ function Review({ reading, kept, open, doses, onDose }: { reading: OcrResult; ke
 function DoseCheck({ dose, value, onDose }: { dose: OcrDose; value?: string; onDose: (v: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
-  if (value) return <View style={{ flexDirection: "row", gap: 12, alignItems: "center", padding: 14, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: "rgba(40,104,80,0.06)" }}>
+  if (value) return <View style={{ flexDirection: "row", gap: 12, alignItems: "center", padding: 14, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: "rgba(15,110,102,0.06)" }}>
     <Mark state="done" size={22} />
     <Text style={{ flex: 1, ...type.callout, color: palette.ink }}>{dose.drug} {value === "confirmed" ? `${dose.dose}, confirmed against the original` : `corrected to ${value}`}</Text>
     <TextLink label="Undo" onPress={() => onDose("")} />
@@ -142,7 +142,7 @@ function DoseCheck({ dose, value, onDose }: { dose: OcrDose; value?: string; onD
   return <AlertRow title={`${dose.drug} ${dose.dose}`} kind={`PAGE ${dose.page} · POSSIBLY MISREAD`} detail={`Usual dose is ${dose.usual}. Check the original before this page can be cited.`}>
     {editing ? <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
       <TextInput accessibilityLabel={`Correct ${dose.drug} dose`} value={text} onChangeText={setText} autoFocus placeholder={`What the original says (read as ${dose.dose})`} placeholderTextColor={palette.placeholder} autoCapitalize="none" returnKeyType="done" onSubmitEditing={() => { if (text.trim()) onDose(text.trim()); }}
-        style={{ flex: 1, minHeight: 44, borderRadius: 12, paddingHorizontal: 12, fontSize: 16, color: palette.ink, backgroundColor: palette.white }} />
+        style={{ flex: 1, minHeight: 44, borderRadius: radius.control, paddingHorizontal: 12, fontSize: type.body.fontSize, color: palette.ink, backgroundColor: palette.white }} />
       <Action label="Save" disabled={!text.trim() || text.trim() === dose.dose} onPress={() => onDose(text.trim())} />
     </View> : <View style={{ flexDirection: "row", gap: 16 }}>
       <TextLink label="Correct it" onPress={() => setEditing(true)} />

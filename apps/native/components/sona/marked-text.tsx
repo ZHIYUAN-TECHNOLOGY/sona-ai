@@ -103,11 +103,11 @@ export function SweptLead({ text, shown, sweep: sweepProp, style }: { text: stri
       const on = w.mark && i <= lit;
       const fade = { opacity: i < shown ? 1 : 0, transitionProperty: "opacity", transitionDuration: 160 } as never;
       return <View key={i} onLayout={w.mark ? e => { rows.current[i] = e.nativeEvent.layout; } : undefined} style={{ flexDirection: "row" }}>
-        <View onLayout={w.mark ? e => { chips.current[i] = e.nativeEvent.layout; } : undefined}
+        <Animated.View onLayout={w.mark ? e => { chips.current[i] = e.nativeEvent.layout; } : undefined}
           style={[w.mark && { paddingHorizontal: 4, marginHorizontal: -4, borderRadius: 8, borderCurve: "continuous" }, w.mark && { backgroundColor: on ? TINT[w.mark].backgroundColor : "transparent", transitionProperty: "backgroundColor", transitionDuration: 220 } as never]}>
-          <Text style={[style, fade, w.mark && { color: on ? TINT[w.mark].color : style.color, fontWeight: "500", transitionProperty: ["opacity", "color"], transitionDuration: 220 } as never]}>{w.word}</Text>
-        </View>
-        {!!w.tail && <Text style={[style, fade]}>{w.tail}</Text>}
+          <Animated.Text style={[style, fade, w.mark && { color: on ? TINT[w.mark].color : style.color, fontWeight: "500", transitionProperty: ["opacity", "color"], transitionDuration: 220 } as never]}>{w.word}</Animated.Text>
+        </Animated.View>
+        {!!w.tail && <Animated.Text style={[style, fade]}>{w.tail}</Animated.Text>}
       </View>;
     })}
   </View>;

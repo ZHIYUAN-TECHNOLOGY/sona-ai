@@ -151,7 +151,6 @@ const OTHER: [string, string, string, boolean][] = [
   ["Siti Aminah", "SA", "Diabetes review", false], ["Lim Wei Jie", "LW", "Post-op check", false], ["Ravi Kumar", "RK", "Heart failure follow-up", true],
   ["Nur Aisyah", "NA", "Asthma action plan", false], ["Tan Mei Ling", "TM", "Blood pressure review", false], ["Arjun Pillai", "AP", "New referral · history to take", true],
 ];
-export const DAY_OFFSETS = [-3, -2, -1, 0, 1, 2, 3] as const;
 export function dayOf(offset: number, today = new Date()) { const d = new Date(today); d.setDate(d.getDate() + offset); return d; }
 export function scheduleFor(offset: number, patients: Patient[], today = new Date()): ScheduleVisit[] {
   if (offset === 0) return patients.map(p => ({ id: p.id, name: p.name, initials: p.initials, time: p.time, reason: p.subtitle, incomplete: p.incomplete, patientId: p.id }));

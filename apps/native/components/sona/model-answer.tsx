@@ -7,6 +7,7 @@ import { Text } from "./text";
 import { palette, type } from "./theme";
 import { HalftoneGlint } from "./halftone-shimmer";
 import { Icon, pillStyle, useAccessibleEffects } from "./ui";
+import { Press } from "./parts";
 
 /*
  * A model answer arriving from the server (live mode). While it drafts, soft bars breathe in place
@@ -56,10 +57,12 @@ const openAbout = () => router.push("/about-data");
 
 /** The one "Synthetic data" signal: a quiet glass pill with a halftone accent; tap for what is fictional. */
 export function DataPill({ onPress = openAbout }: { onPress?: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel="Synthetic data" accessibilityHint="What is fictional in this demo" onPress={onPress} hitSlop={10}
-    style={({ pressed }) => [pillStyle, { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", minHeight: 24, paddingHorizontal: 10, borderRadius: 12, overflow: "hidden", opacity: pressed ? 0.6 : 1 }]}>
-    <HalftoneGlint width={34} height={24} origin={[0, 12]} reach={[32, 16]} pitch={3} strength={0.9} style={{ top: 0, left: 0 }} />
-    <Text style={{ ...type.caption, fontWeight: "600", color: palette.muted }}>Synthetic data</Text>
+  const { reducedMotion } = useAccessibleEffects();
+  return <Pressable accessibilityRole="button" accessibilityLabel="Synthetic data" accessibilityHint="What is fictional in this demo" onPress={onPress} hitSlop={10} style={{ alignSelf: "flex-start" }}>
+    {({ pressed }) => <Animated.View style={[pillStyle, { flexDirection: "row", alignItems: "center", minHeight: 24, paddingHorizontal: 10, borderRadius: 12, overflow: "hidden", transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 }]}>
+      <HalftoneGlint width={34} height={24} origin={[0, 12]} reach={[32, 16]} pitch={3} strength={0.9} style={{ top: 0, left: 0 }} />
+      <Text style={{ ...type.caption, fontWeight: "600", color: palette.muted }}>Synthetic data</Text>
+    </Animated.View>}
   </Pressable>;
 }
 
@@ -79,11 +82,11 @@ export function SampleLabel({ source: given, answer, what, rule = false }: { sou
   const source = answer ? answerSource(answer) : given;
   if (source !== "fixture") return null;
   const text = `${rule ? "Rule-based" : "Sample"}${what ? ` · ${what} model not switched on` : ""}`;
-  return <Pressable accessibilityRole="button" accessibilityLabel={text} accessibilityHint="Why this is not a model answer" onPress={openAbout} hitSlop={8}
-    style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 4, opacity: pressed ? 0.6 : 1 })}>
+  return <Press accessibilityLabel={text} accessibilityHint="Why this is not a model answer" onPress={openAbout} hitSlop={8}
+    style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
     <Text style={{ ...type.caption, color: palette.muted, flexShrink: 1 }}>{text}</Text>
     <Icon name="info.circle" size={12} color={palette.muted} />
-  </Pressable>;
+  </Press>;
 }
 
 /** The sheet both open: what is fictional, and what "Sample" and "Rule-based" mean. */

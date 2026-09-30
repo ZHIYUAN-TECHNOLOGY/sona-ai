@@ -162,7 +162,7 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
         {sendError && <ErrorLine text={`Not sent: ${sendError}`} onRetry={() => { void send(); }} />}
         {canReply ? <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8 }}>
           <TextInput ref={input} value={text} onChangeText={setText} placeholder={`Reply to ${first}`} placeholderTextColor={palette.placeholder} maxLength={1000} editable={!busy} multiline
-            accessibilityLabel={`Reply to ${first} in Sona Care`} style={{ ...surfaceStyle, flex: 1, fontSize: 16, lineHeight: 21, color: palette.ink, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, minHeight: 46, maxHeight: 132, borderRadius: 23 } as TextStyle} />
+            accessibilityLabel={`Reply to ${first} in Sona Care`} style={{ ...surfaceStyle, flex: 1, fontSize: type.body.fontSize, lineHeight: 21, color: palette.ink, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, minHeight: 46, maxHeight: 132, borderRadius: 23 } as TextStyle} />
           <RoundAction icon="send" size={46} label={busy ? "Sending" : "Send reply"} ready={!busy && Boolean(text.trim())} onPress={() => { void send(); }} />
         </View> : <Caption>{role.why("messages.reply") ?? "Only a doctor or a nurse replies."}</Caption>}
       </View>}
@@ -191,7 +191,7 @@ function Bubble({ message: m, reduced }: { message: Thread["messages"][number]; 
   return <Animated.View entering={reduced ? undefined : FadeIn.duration(220)} accessible accessibilityLabel={`${m.author}, ${clock(m.createdAt)}: ${m.text}`}
     style={{ alignSelf: team ? "flex-end" : "flex-start", maxWidth: "84%", gap: 4, alignItems: team ? "flex-end" : "flex-start" }}>
     {header}
-    <View style={[team ? { backgroundColor: palette.dark, borderRadius: radius.group, borderCurve: "continuous" } : { ...surfaceStyle, borderRadius: 20 }, tail, { paddingHorizontal: 14, paddingVertical: 10 }]}>
+    <View style={[team ? { backgroundColor: palette.dark, borderRadius: radius.group, borderCurve: "continuous" } : { ...surfaceStyle, borderRadius: radius.group }, tail, { paddingHorizontal: 14, paddingVertical: 10 }]}>
       <Text selectable style={{ ...type.body, color: team ? palette.white : palette.ink }}>{m.text}</Text>
     </View>
   </Animated.View>;

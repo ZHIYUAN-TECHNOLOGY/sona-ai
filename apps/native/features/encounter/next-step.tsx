@@ -10,7 +10,7 @@ import { EASE_OUT, riseIn } from "@/components/sona/motion";
 import { DrawnCheck, Mark } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Icon, glass, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Icon, glass, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { LockedAction } from "@/features/live/roles";
 import type { Step } from "./next-steps";
 
@@ -38,7 +38,7 @@ function Ring({ left, total, stop }: { left: number; total: number; stop: boolea
       <Circle cx={16} cy={16} r={r} stroke="rgba(20,28,40,0.1)" strokeWidth={2.5} fill="none" />
       <AnimatedCircle cx={16} cy={16} r={r} stroke={stop ? palette.amber : left ? palette.blue : palette.green} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeDasharray={length} animatedProps={props} transform="rotate(-90 16 16)" />
     </Svg>
-    {left ? <Text style={{ fontSize: 11, fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{left}</Text> : <DrawnCheck size={14} color={palette.green} strokeWidth={2.2} />}
+    {left ? <Text style={{ ...type.overline, color: palette.ink, fontVariant: ["tabular-nums"] }}>{left}</Text> : <DrawnCheck size={14} color={palette.green} strokeWidth={2.2} />}
   </View>;
 }
 
@@ -75,7 +75,7 @@ export function NextStepBar({ steps, p, onExpand, onAct }: { steps: Step[]; p: S
         style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minHeight: 44 }}>
         <Ring left={left} total={checks} stop={stop} />
         <View style={{ flex: 1, overflow: "hidden" }}>
-          <Text numberOfLines={1} style={{ ...type.overline, fontSize: 10, color: !current ? palette.green : stop ? palette.amber : palette.muted }}>{status}</Text>
+          <Text numberOfLines={1} style={{ ...type.overline, color: !current ? palette.green : stop ? palette.amber : palette.muted }}>{status}</Text>
           <Animated.View key={current?.id ?? "done"} entering={reducedMotion ? FadeIn.duration(160) : FadeInRight.duration(260)} exiting={reducedMotion ? FadeOut.duration(120) : FadeOutLeft.duration(180)}>
             <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{current?.label ?? "Prescription simulated"}</Text>
           </Animated.View>
@@ -88,10 +88,7 @@ export function NextStepBar({ steps, p, onExpand, onAct }: { steps: Step[]; p: S
         <Icon name="lock.fill" size={12} color={palette.muted} />
         <Text style={{ ...type.callout, fontWeight: "600", color: palette.muted }}>Needs a doctor</Text>
       </Pressable>
-      : <Pressable accessibilityRole="button" accessibilityLabel={`${action.label}: ${current?.label ?? "view receipt"}`} onPress={() => onAct(current ?? last)} hitSlop={6}
-        style={({ pressed }) => ({ height: 40, paddingHorizontal: 16, borderRadius: 20, justifyContent: "center", backgroundColor: palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-        <Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>{action.label}</Text>
-      </Pressable>}
+      : <Action label={action.label} accessibilityLabel={`${action.label}: ${current?.label ?? "view receipt"}`} onPress={() => onAct(current ?? last)} />}
     </Animated.View>
   </GestureDetector>;
 }
@@ -114,7 +111,7 @@ export function NextStepSheet({ steps, p, onClose, onAct }: { steps: Step[]; p: 
       <Pressable accessibilityRole="button" accessibilityLabel="Close steps" onPress={onClose} style={StyleSheet.absoluteFill} />
     </Animated.View>
     <GestureDetector gesture={pull}>
-      <Animated.View accessibilityViewIsModal onAccessibilityEscape={onClose} style={[{ position: "absolute", left: 10, right: 10, bottom: Math.max(insets.bottom, 12), borderRadius: radius.sheet, borderCurve: "continuous", borderWidth: 1, borderColor: glass.rim, backgroundColor: "#FAFBFD", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 18px 48px rgba(24,32,48,0.18)", paddingTop: 8, paddingBottom: 14 }, sheet]}>
+      <Animated.View accessibilityViewIsModal onAccessibilityEscape={onClose} style={[{ position: "absolute", left: 10, right: 10, bottom: Math.max(insets.bottom, 12), borderRadius: radius.sheet, borderCurve: "continuous", borderWidth: 1, borderColor: glass.rim, backgroundColor: palette.surface, boxShadow: "0 0 0 0.5px rgba(20,28,40,0.06), 0 18px 48px rgba(24,32,48,0.18)", paddingTop: 8, paddingBottom: 14 }, sheet]}>
         {/* The grabber is the sheet's Close, so VoiceOver finds it inside the sheet (the backdrop is outside the modal region). */}
         <Pressable accessibilityRole="button" accessibilityLabel="Close steps" onPress={onClose} hitSlop={{ top: 12, bottom: 16, left: 40, right: 40 }} style={{ alignSelf: "center" }}><View style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: "rgba(20,28,40,0.14)" }} /></Pressable>
         <View style={{ flexDirection: "row", alignItems: "baseline", paddingHorizontal: 20, paddingTop: 14, paddingBottom: 8 }}>
@@ -131,9 +128,11 @@ export function NextStepSheet({ steps, p, onClose, onAct }: { steps: Step[]; p: 
               <Text numberOfLines={1} style={{ ...type.caption, color: palette.muted }}>{step.detail}</Text>
             </View>
             {step.locked ? <LockedAction label="Needs a doctor" path="prescribing.simulate" height={34} />
-            : (!step.done || step.action.type === "receipt") && <Pressable accessibilityRole="button" accessibilityLabel={`${step.action.label}: ${step.label}`} onPress={() => onAct(step)} hitSlop={8}
-              style={({ pressed }) => ({ minHeight: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: "center", backgroundColor: now ? palette.ink : "rgba(20,28,40,0.06)", opacity: pressed ? 0.8 : 1 })}>
-              <Text style={{ ...type.subhead, fontWeight: "600", color: now ? palette.white : palette.ink }}>{step.action.label}</Text>
+            // A compact 34 pt row button: Action is 46 pt and would grow every row.
+            : (!step.done || step.action.type === "receipt") && <Pressable accessibilityRole="button" accessibilityLabel={`${step.action.label}: ${step.label}`} onPress={() => onAct(step)} hitSlop={8}>
+              {({ pressed }) => <Animated.View style={{ minHeight: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: "center", backgroundColor: now ? palette.ink : "rgba(20,28,40,0.06)", transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 }}>
+                <Text style={{ ...type.subhead, fontWeight: "600", color: now ? palette.white : palette.ink }}>{step.action.label}</Text>
+              </Animated.View>}
             </Pressable>}
           </Animated.View>;
         })}

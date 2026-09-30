@@ -7,7 +7,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
-import { ErrorLine, TextLink } from "@/components/sona/parts";
+import { ErrorLine, TextLink, PressScale } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, IconButton, pillStyle, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
@@ -62,7 +62,7 @@ export function PhotoMessage({ messageId, attachment, first }: { messageId: stri
 
   return <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8, width: 248 }}>
     <Pressable accessibilityRole="imagebutton" accessibilityLabel={`Photo from ${first}: ${line(attachment.reading)}`} accessibilityHint={source ? "Opens the photo full screen to zoom" : undefined}
-      disabled={!source} onPress={() => setOpen(true)} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+      disabled={!source} onPress={() => setOpen(true)}>{({ pressed }) => <PressScale pressed={pressed} scale={0.97}>
       <View style={{ ...pillStyle, borderRadius: radius.card, borderCurve: "continuous", padding: 5 }}>
         <View style={{ height: 180, borderRadius: radius.group, borderCurve: "continuous", overflow: "hidden", backgroundColor: "rgba(20,28,40,0.05)", alignItems: "center", justifyContent: "center" }}>
           {source ? <Image source={source} contentFit="cover" transition={reducedMotion ? 0 : 200} style={{ position: "absolute", inset: 0 }} accessibilityIgnoresInvertColors />
@@ -74,7 +74,7 @@ export function PhotoMessage({ messageId, attachment, first }: { messageId: stri
             </View>}
         </View>
       </View>
-    </Pressable>
+    </PressScale>}</Pressable>
     {photoError && <ErrorLine text={`Photo didn't load: ${photoError}`} onRetry={() => { void load(); }} />}
 
     {decision ? <DoneLine text={doneText(decision.status, first)} />
@@ -88,7 +88,7 @@ export function PhotoMessage({ messageId, attachment, first }: { messageId: stri
             {editing ? <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(160)} style={{ gap: 6 }}>
               {([["name", "Medicine"], ["dose", "Dose"], ["frequency", "How often"]] as const).map(([k, label]) =>
                 <TextInput key={k} value={reading[k] ?? ""} onChangeText={v => setReading(r => ({ ...r, [k]: v }))} placeholder={label} placeholderTextColor={palette.placeholder} accessibilityLabel={label} editable={!busy}
-                  style={{ ...surfaceStyle, borderRadius: 14, minHeight: 44, paddingHorizontal: 12, fontSize: 15, color: palette.ink } as TextStyle} />)}
+                  style={{ ...surfaceStyle, borderRadius: radius.control, minHeight: 44, paddingHorizontal: 12, fontSize: type.callout.fontSize, color: palette.ink } as TextStyle} />)}
             </Animated.View> : <TextLink label="Edit" onPress={() => setEditing(true)} />}
             {error && <ErrorLine text={`Not saved: ${error}`} />}
             <Action label={busy === "add" ? "Adding…" : "Add to medicines"} disabled={Boolean(busy) || !reading.name.trim()}

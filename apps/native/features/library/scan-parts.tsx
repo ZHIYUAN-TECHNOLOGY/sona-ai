@@ -1,3 +1,4 @@
+import { PressScale } from "@/components/sona/parts";
 import { Canvas, Fill, Shader, Skia } from "@shopify/react-native-skia";
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
@@ -7,7 +8,7 @@ import Animated, { cancelAnimation, Easing, LinearTransition, useAnimatedStyle, 
 import { HalftoneGlint } from "@/components/sona/halftone-shimmer";
 import { EASE_IN_OUT, EASE_OUT, LAYOUT_SPRING, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Icon, useAccessibleEffects } from "@/components/sona/ui";
 
 /** The page scanner's shared Sona glass pieces: the camera screen (scan-camera) and the scanned-page rows after it. */
@@ -67,7 +68,7 @@ function ScannedPage({ uri, i, n, width, height, pass }: { uri: string; i: numbe
   }, [pass]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => cancelAnimation(read), [read]);
   return <Animated.View entering={pass === "arrive" ? riseIn({ delay: i * 60, distance: 8, scale: 0.96, duration: 320 }) : undefined}
-    style={{ width, height, borderRadius: 12, borderCurve: "continuous", overflow: "hidden", borderWidth: 1, borderColor: palette.line, backgroundColor: palette.white }}>
+    style={{ width, height, borderRadius: radius.control, borderCurve: "continuous", overflow: "hidden", borderWidth: 1, borderColor: palette.line, backgroundColor: palette.white }}>
     <Image source={{ uri }} accessibilityLabel={`Scanned page ${i + 1}`} contentFit="cover" style={StyleSheet.absoluteFill} />
     {i < SWEPT && <Sweep width={width} height={height} progress={read} />}
   </Animated.View>;
@@ -94,8 +95,7 @@ export function ReviewCapsule({ pages, label, onPress, title = "Review" }: { pag
   const popStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
   const shown = pages.slice(-3);
   return <Animated.View layout={reducedMotion ? undefined : LinearTransition.springify().duration(LAYOUT_SPRING.duration).dampingRatio(0.8)} style={[{ transformOrigin: "left center" } as ViewStyle, popStyle]}>
-    <Pressable accessibilityRole="button" accessibilityLabel={`${title}, ${label}`} onPress={onPress}
-      style={({ pressed }) => ({ height: 50, paddingLeft: 8, paddingRight: 14, borderRadius: 25, overflow: "hidden", flexDirection: "row", alignItems: "center", gap: 9, backgroundColor: palette.ink, boxShadow: "0 6px 16px rgba(24,32,48,0.22)", transform: [{ scale: pressed ? 0.96 : 1 }] } as ViewStyle)}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${title}, ${label}`} onPress={onPress}>{({ pressed }) => <PressScale pressed={pressed} style={{ height: 50, paddingLeft: 8, paddingRight: 14, borderRadius: 25, overflow: "hidden", flexDirection: "row", alignItems: "center", gap: 9, backgroundColor: palette.ink, boxShadow: "0 6px 16px rgba(24,32,48,0.22)" }}>
       <HalftoneGlint width={60} height={50} origin={[8, 2]} reach={[54, 44]} pitch={3} strength={0.6} tint={[0.62, 0.78, 1]} hueShift={0.6} style={{ top: 0, left: 0 }} />
       <View style={{ flexDirection: "row" }}>
         {shown.map((p, i) => <View key={p.id} style={{ width: 25, height: 34, marginLeft: i ? -15 : 0, borderRadius: 5, overflow: "hidden", backgroundColor: "#F6F3EC", borderWidth: 1.5, borderColor: palette.white, transform: [{ rotate: `${(i - shown.length + 1) * 6}deg` }] }}>
@@ -104,17 +104,17 @@ export function ReviewCapsule({ pages, label, onPress, title = "Review" }: { pag
       </View>
       <View>
         <Text style={{ ...type.subhead, fontWeight: "600", color: palette.white }}>{title}</Text>
-        <Text style={{ fontSize: 11, fontWeight: "500", fontVariant: ["tabular-nums"], color: "rgba(255,255,255,0.65)" }}>{label}</Text>
+        <Text style={{ ...type.caption, fontWeight: "500", fontVariant: ["tabular-nums"], color: "rgba(255,255,255,0.65)" }}>{label}</Text>
       </View>
       <Icon name="chevron.right" size={11} color="rgba(255,255,255,0.8)" />
-    </Pressable>
+    </PressScale>}</Pressable>
   </Animated.View>;
 }
 
 /** One corner bracket of the page guide: thin white while waiting, teal once a page is locked. */
 export function Corner({ corner, locked }: { corner: "tl" | "tr" | "bl" | "br"; locked: boolean }) {
   const top = corner[0] === "t", left = corner[1] === "l";
-  return <View style={{ position: "absolute", width: 34, height: 34, [top ? "top" : "bottom"]: -6, [left ? "left" : "right"]: -6,
+  return <Animated.View style={{ position: "absolute", width: 34, height: 34, [top ? "top" : "bottom"]: -6, [left ? "left" : "right"]: -6,
     borderColor: locked ? TEAL : "rgba(255,255,255,0.92)", [top ? "borderTopWidth" : "borderBottomWidth"]: 2.5, [left ? "borderLeftWidth" : "borderRightWidth"]: 2.5,
     [`border${top ? "Top" : "Bottom"}${left ? "Left" : "Right"}Radius`]: 14, transitionProperty: "borderColor", transitionDuration: 160 } as never} />;
 }

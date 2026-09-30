@@ -1,3 +1,4 @@
+import { PressScale } from "@/components/sona/parts";
 import { router } from "expo-router";
 import { AskOrb } from "@/features/ask";
 import { blocking } from "@/features/ask/answers";
@@ -67,11 +68,10 @@ export function BarLine({ children, error = false }: { children: string; error?:
 /** The review page's decision: grey and inert while something blocks, ink once it can act; the label crossfades as it morphs. */
 export function Decide({ label, icon, muted = false, disabled = false, onPress }: { label: string; icon?: string; muted?: boolean; disabled?: boolean; onPress: () => void }) {
   const { reducedMotion } = useAccessibleEffects();
-  return <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={onPress}
-    style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: muted ? "rgba(20,28,40,0.08)" : palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 200 } as never)}>
+  return <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={onPress}>{({ pressed }) => <PressScale pressed={pressed} scale={0.97} style={{ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: muted ? "rgba(20,28,40,0.08)" : palette.ink, transitionProperty: ["transform", "backgroundColor"], transitionDuration: [120, 200] }}>
     {icon && <Icon name={icon} size={15} color={muted ? palette.muted : palette.white} />}
     <Animated.Text key={label} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ ...type.body, fontWeight: "600", color: muted ? palette.muted : palette.white }}>{label}</Animated.Text>
-  </Pressable>;
+  </PressScale>}</Pressable>;
 }
 
 function Avatar({ patient, size = 40 }: { patient: Patient; size?: number }) {
@@ -136,7 +136,7 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
   // Live mode: the full summary and the leaflet in the chosen language are drafted by the server from this patient's record.
   const draft = useLiveDraft(patient.encounterId, state.language);
 
-  if (!encounter) return <Screen><ModalHeader title="Discharge" /></Screen>;
+  if (!encounter) return <NoVisit title="Discharge" view="discharge" what="a discharge" />;
   const set = (change: Partial<DischargeState>) => {
     // A role that cannot change the plan is told why, and nothing changes on this phone either.
     if (live && !role.can("discharge.update")) { haptic("select"); setServerError(role.why("discharge.update")); return; }
@@ -179,7 +179,7 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
     if (check.id === "meds") return <View style={{ gap: 10 }}>
       {plan.meds.filter(m => m.change !== "unchanged").map(m => <View key={m.name} style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
         <View style={{ width: 64, height: 20, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: TAG[m.change].fill }}>
-          <Text style={{ fontSize: 11, fontWeight: "700", color: TAG[m.change].ink }}>{TAG[m.change].label}</Text>
+          <Text style={{ ...type.caption, fontWeight: "700", color: TAG[m.change].ink }}>{TAG[m.change].label}</Text>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink, textDecorationLine: m.change === "stopped" ? "line-through" : "none" }}>{m.name}</Text>

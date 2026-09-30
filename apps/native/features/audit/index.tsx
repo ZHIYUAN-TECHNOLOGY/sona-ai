@@ -141,7 +141,7 @@ export function AuditScreen() {
   </Screen></WithSona>;
 }
 
-/** Money that rolls only the digits that change, like an odometer. */
+/** Money that rolls only the digits that change, like an odometer. 32 pt numerals on the 40 pt row they scroll through (off the type scale). */
 function Ticker({ text }: { text: string }) {
   const chars = text.split("");
   return <View accessible accessibilityLabel={text} style={{ flexDirection: "row", height: 40, overflow: "hidden" }}>

@@ -5,7 +5,7 @@ import Animated from "react-native-reanimated";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { GlanceTile, IconRow, Section, Shelf } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Chip, Expand, glass, Icon, Insight, Notice, Screen, SourceLink, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { AskOrb } from "@/features/ask";
 import { beforeSigning, noteNext } from "@/features/ask/answers";
@@ -36,7 +36,7 @@ export function NoteCard({ onOpen, onSource, patient }: FeatureProps) {
     <Section icon="doc.text" tone="blue" title={note ? "Your consultation, captured" : "Room for the conversation"} subtitle={note ? encounter?.noteReviewed ? "Marked reviewed in this local session." : "Draft ready. Add your assessment and plan." : "Play a scripted sample, then draft an editable English note."}>
       {note && sections ? <View style={{ gap: 20 }}>
         {sectionKeys.map(key => <IconRow key={key} icon={noteMeta[key].icon} title={noteMeta[key].title} detail={sections[key].trim() ? clip(sections[key].trim()) : emptyDetail[key]} />)}
-        <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>Dialogue sections are drafts to verify against source. Assessment and plan are clinician authored.</Text>
+        <Text selectable style={{ ...type.footnote, lineHeight: 19, color: palette.muted }}>Dialogue sections are drafts to verify against source. Assessment and plan are clinician authored.</Text>
       </View> : <Shelf>
         <GlanceTile glyph="🎙️" value="1" label="Play the sample" caption="Scripted dialogue · no audio recorded" />
         <GlanceTile glyph="✍️" value="2" label="Correct it" caption="Speakers and text · original kept" />
@@ -170,7 +170,7 @@ export function NoteScreen() {
           <Icon name={state.icon} size={16} color={state.color} />
         </Animated.View>
       </Animated.View>
-      <Text numberOfLines={2} style={{ flex: 1, fontSize: 13, lineHeight: 18, fontWeight: "500", color: status === "failed" ? palette.amber : palette.ink }}>{state.title}</Text>
+      <Text numberOfLines={2} style={{ ...type.footnote, flex: 1, fontWeight: "500", color: status === "failed" ? palette.amber : palette.ink }}>{state.title}</Text>
     </View>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
       <View style={{ flex: 1 }}><Action label={saving ? "Saving…" : status === "failed" ? "Retry save" : "Save draft"} accessibilityLabel={status === "failed" ? "Retry saving draft" : undefined} icon="checkmark" disabled={!hasContent || saving} onPress={save} /></View>
@@ -180,7 +180,7 @@ export function NoteScreen() {
     {next && <QuietLink label={`Next: ${next.label}`} icon="arrow.right.circle" onPress={() => { haptic("tap"); router.push(next.op.slice(3) as never); }} />}
     {live && <Pressable accessibilityRole="switch" accessibilityLabel="Exclude this note from training" accessibilityHint="When on, saving keeps this visit's note out of the de-identified training data" accessibilityState={{ checked: excludeFromTraining }}
       onPress={() => setExcludeFromTraining(v => !v)} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 4 }}>
-      <Text style={{ flex: 1, fontSize: 13, lineHeight: 18, color: palette.muted }}>Exclude from training</Text>
+      <Text style={{ ...type.footnote, flex: 1, color: palette.muted }}>Exclude from training</Text>
       <Switch value={excludeFromTraining} onValueChange={setExcludeFromTraining} trackColor={{ true: palette.blue }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
     </Pressable>}
   </>;
@@ -189,7 +189,7 @@ export function NoteScreen() {
     <Screen bottom={bar}>
       <Animated.View entering={rise(0)} style={{ gap: 12 }}>
         <Insight eyebrow={patient.name}>{encounter.noteReviewed ? <Tone of="good">Reviewed</Tone> : !hasContent ? "Nothing drafted yet" : <>Draft{emptyLine ? <> · <Tone of="soon">{emptyLine}</Tone></> : null} · not reviewed</>}</Insight>
-        <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>{live ? "Verify drafts against source." : "Verify drafts against source · local session only, no record connected."}</Text>
+        <Text selectable style={{ ...type.footnote, lineHeight: 19, color: palette.muted }}>{live ? "Verify drafts against source." : "Verify drafts against source · local session only, no record connected."}</Text>
         {/* An empty note pulls in the consultation in one tap (the scripted sample until a visit is captured). */}
         {canWrite && !hasContent && !encounter.transcriptDraft && <View style={{ gap: 6 }}>
           <Action label="Draft from consultation" icon="waveform" onPress={() => { haptic("done"); const draft = readNoteSections(buildDraft(consultation)); updateEncounter(current => editNote(current, draft, !current.transcript.length)); }} />
@@ -203,18 +203,18 @@ export function NoteScreen() {
 
       {sectionKeys.map((key, index) => <Animated.View key={key} entering={rise(index + 1)} layout={layout} style={{ gap: 10 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <Text accessibilityRole="header" style={{ fontSize: 17, fontWeight: "600", letterSpacing: -0.3, color: palette.ink }}>{noteMeta[key].title}</Text>
+          <Text accessibilityRole="header" style={{ ...type.headline, fontWeight: "600", letterSpacing: -0.3, color: palette.ink }}>{noteMeta[key].title}</Text>
           <Pressable accessibilityRole="button" accessibilityLabel={`About ${noteMeta[key].title}`} accessibilityState={{ expanded: info === key }} hitSlop={14} onPress={() => setInfo(current => current === key ? undefined : key)}>
             <Icon name={info === key ? "info.circle.fill" : "info.circle"} size={15} color={info === key ? palette.blue : palette.muted} />
           </Pressable>
         </View>
         {info === key && <Expand key={`info-${key}`} style={{ gap: 2 }}>
-          <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>{framing[key]}</Text>
+          <Text selectable style={{ ...type.footnote, lineHeight: 19, color: palette.muted }}>{framing[key]}</Text>
           {sources[key] && <SourceLink label={key === "subjective" ? "Review consultation / history source" : "Review observation source"} onPress={() => router.push({ pathname: "/source", params: { id: sources[key]!, patientId: patient.id } })} />}
         </Expand>}
-        <Surface style={{ paddingHorizontal: 16, paddingVertical: 14, borderRadius: 20, borderColor: focused === key ? FOCUS : glass.rim, transitionProperty: "borderColor", transitionDuration: 160 } as never}>
+        <Surface style={{ paddingHorizontal: 16, paddingVertical: 14, borderRadius: radius.group, borderColor: focused === key ? FOCUS : glass.rim, transitionProperty: "borderColor", transitionDuration: 160 } as never}>
           <TextInput accessibilityLabel={`Clinical note ${key}`} editable={canWrite} value={sections[key]} onChangeText={value => editSection(key, value)} onFocus={() => setFocused(key)} onBlur={() => setFocused(current => current === key ? undefined : current)} multiline placeholder={placeholders[key]} placeholderTextColor={palette.placeholder} textAlignVertical="top"
-            style={{ minHeight: key === "subjective" ? 150 : 96, padding: 0, fontSize: 16, lineHeight: 25, color: palette.ink }} />
+            style={{ minHeight: key === "subjective" ? 150 : 96, padding: 0, fontSize: type.body.fontSize, lineHeight: 25, color: palette.ink }} />
         </Surface>
       </Animated.View>)}
 
@@ -226,7 +226,7 @@ export function NoteScreen() {
             <Text style={{ ...type.caption, fontWeight: "600", letterSpacing: 0.3, color: palette.blue }}>New suggestion · not applied · your note stays until you replace it</Text>
             {sectionKeys.map(key => <View key={key} style={{ gap: 3 }}>
               <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{noteMeta[key].title}</Text>
-              <Text selectable style={{ fontSize: 15, lineHeight: 22, color: suggestion[key].trim() ? palette.ink : palette.muted }}>{suggestion[key].trim() || "Left empty for you"}</Text>
+              <Text selectable style={{ ...type.callout, lineHeight: 22, color: suggestion[key].trim() ? palette.ink : palette.muted }}>{suggestion[key].trim() || "Left empty for you"}</Text>
             </View>)}
             <Action label="Replace note with this suggestion" onPress={() => { haptic("done"); updateEncounter(current => editNote(current, suggestion, !current.transcript.length)); setSuggestion(undefined); }} />
             <Action label="Keep current note" secondary onPress={() => setSuggestion(undefined)} />

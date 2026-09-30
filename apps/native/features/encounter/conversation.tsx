@@ -1,6 +1,6 @@
 import { authoredAnswer, isRehearsed } from "@sona-ai/domain/evidence";
 import { router, useIsFocused } from "expo-router";
-import { DrawnCheck } from "@/components/sona/parts";
+import { DrawnCheck, Press } from "@/components/sona/parts";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { MyDay } from "@/features/day";
 import { ToolRow, type ShelfCollapse } from "@/components/sona/quick-actions";
@@ -25,17 +25,15 @@ import { SweptLead, wordCount } from "@/components/sona/marked-text";
 import { Chip, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { useEffect, useState, type ReactNode } from "react";
-import { Pressable, View } from "react-native";
-import { LAYOUT, riseIn } from "@/components/sona/motion";
-import Animated, { cubicBezier, FadeIn, FadeOut, ZoomIn, ZoomOut } from "react-native-reanimated";
+import { View } from "react-native";
+import { EASE_OUT_CSS, LAYOUT, riseIn } from "@/components/sona/motion";
+import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Capability, Encounter, Patient, RequestState, ResponseCard } from "./types";
 
-const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
-export type Suggestion = { text: string; kind: Capability | "recording"; emoji: string };
+export type Suggestion = { text: string; kind: Capability | "recording" };
 
 export const capabilityLabels: Record<Capability, string> = { briefing: "Patient briefing", reasoning: "Clinical reasoning", xray: "Chest X-ray", medication: "Medication review", prescription: "Prescribing simulation", followup: "Follow-up plan", note: "Consultation note", evidence: "Evidence" };
-const emoji: Record<Capability | "recording", string> = { briefing: "🩺", reasoning: "🔎", xray: "🫁", medication: "💊", prescription: "📝", followup: "🗓️", note: "🗒️", evidence: "📚", recording: "🎙️" };
 
 const first = (patient: Patient) => patient.name.split(" ")[0];
 
@@ -52,7 +50,7 @@ export function suggestionFor(kind: Capability | "recording", patient: Patient):
     evidence: `Should ${name} get steroids for this pneumonia?`,
     recording: "Start the consultation",
   };
-  return { text: text[kind], kind, emoji: emoji[kind] };
+  return { text: text[kind], kind };
 }
 
 /** Meets a visit's need: pages it names open directly; anything else is asked in the visit. */
@@ -119,16 +117,9 @@ export function StreamedLead({ text, animate }: { text: string; animate: boolean
   return <SweptLead text={text} shown={shown} sweep={animate && !reducedMotion} style={{ ...type.title, color: palette.ink }} />;
 }
 
-export function Pill({ label, emoji: glyph, onPress }: { label: string; emoji?: string; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={{ top: 2, bottom: 2 }}
-    style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 15, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 7, ...pillStyle, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-    {glyph && <Text style={{ ...type.callout }}>{glyph}</Text>}<Text style={{ ...type.subhead, fontWeight: "500", color: palette.ink }}>{label}</Text>
-  </Pressable>;
-}
-
 function Round({ children, label, onPress }: { children: ReactNode; label: string; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={4}
-    style={({ pressed }) => ({ minHeight: 44, minWidth: 44, borderRadius: 22, paddingHorizontal: 4, alignItems: "center", justifyContent: "center", flexDirection: "row", ...pillStyle, transform: [{ scale: pressed ? 0.95 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>{children}</Pressable>;
+  return <Press accessibilityLabel={label} onPress={onPress} hitSlop={4} scale={0.96}
+    style={{ minHeight: 44, minWidth: 44, borderRadius: 22, paddingHorizontal: 4, alignItems: "center", justifyContent: "center", flexDirection: "row", ...pillStyle }}>{children}</Press>;
 }
 
 /** Floating header: menu on the left, the patient in context on the right. Content scrolls beneath a soft fade. */
@@ -141,7 +132,7 @@ export function TopBar({ patient, inEncounter, openTasks, faded, tall = false, o
   const { reducedMotion } = useAccessibleEffects();
   return <View pointerEvents="box-none" style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
     {/* `tall` while home's collapsed shortcuts show: the fade reaches under the capsule, so no text runs beside it. */}
-    <Animated.View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top + (tall ? 132 : 84), opacity: faded ? 1 : 0, transitionProperty: ["opacity", "height"], transitionDuration: 200, transitionTimingFunction: EASE_OUT }}>
+    <Animated.View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top + (tall ? 132 : 84), opacity: faded ? 1 : 0, transitionProperty: ["opacity", "height"], transitionDuration: 200, transitionTimingFunction: EASE_OUT_CSS }}>
       <EdgeBlur edge="top" style={{ flex: 1 }} />
     </Animated.View>
     <View pointerEvents="box-none" style={{ paddingTop: insets.top + 6, paddingHorizontal: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
@@ -151,7 +142,7 @@ export function TopBar({ patient, inEncounter, openTasks, faded, tall = false, o
         {patient && inEncounter && <Animated.View entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, scale: 0.96, duration: 240 })}>
           <Round label={`Current patient ${patient.name}, ${patient.id}. Change patient`} onPress={onPatient}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingRight: 10 }}>
-              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: "#DCE7FB", alignItems: "center", justifyContent: "center" }}><Text style={{ ...type.caption, fontWeight: "600", color: palette.blue }}>{patient.initials}</Text></View>
+              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: palette.blueWash, alignItems: "center", justifyContent: "center" }}><Text style={{ ...type.caption, fontWeight: "600", color: palette.blue }}>{patient.initials}</Text></View>
               <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{patient.name.split(" ")[0]}</Text>
             </View>
           </Round>
@@ -160,7 +151,7 @@ export function TopBar({ patient, inEncounter, openTasks, faded, tall = false, o
         <Round label={openTasks ? `Follow-up tasks, ${openTasks} open` : "Follow-up tasks"} onPress={onTasks}>
           <View style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}><BrandIcon name="tasks" size={22} /></View>
           {openTasks > 0 && <View accessibilityElementsHidden style={{ position: "absolute", top: -3, right: -3, minWidth: 19, height: 19, borderRadius: 10, paddingHorizontal: 5, backgroundColor: palette.blue, borderWidth: 2, borderColor: palette.white, alignItems: "center", justifyContent: "center" }}>
-            <Text style={{ fontSize: 10, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{openTasks}</Text>
+            <Text style={{ ...type.overline, color: palette.white, fontVariant: ["tabular-nums"] }}>{openTasks}</Text>
           </View>}
         </Round>
       </View>
@@ -175,7 +166,7 @@ function InboxButton() {
   return <Round label={count ? `Patient messages, ${line}` : "Patient messages"} onPress={() => router.push("/inbox")}>
     <View style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}><BrandIcon name="feedback" size={22} /></View>
     {count > 0 && <View accessibilityElementsHidden style={{ position: "absolute", top: -3, right: -3, minWidth: 19, height: 19, borderRadius: 10, paddingHorizontal: 5, backgroundColor: urgent ? palette.red : palette.blue, borderWidth: 2, borderColor: palette.white, alignItems: "center", justifyContent: "center" }}>
-      <Text style={{ fontSize: 10, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{count}</Text>
+      <Text style={{ ...type.overline, color: palette.white, fontVariant: ["tabular-nums"] }}>{count}</Text>
     </View>}
   </Round>;
 }
@@ -247,7 +238,7 @@ export function NeedLine({ need, entering, onPress }: { need?: VisitNeed; enteri
         <DrawnCheck size={20} color={TEAL} strokeWidth={2.6} delay={60} />
       </Animated.View> : <Animated.View exiting={reducedMotion ? undefined : ZoomOut.duration(140)} style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: NEED_INK[shown.tone] }} />}
     </View>
-    <Text style={{ flex: 1, ...type.subhead, fontWeight: "500", color: resolved ? palette.muted : palette.ink, transitionProperty: "color", transitionDuration: 200 } as never}>{shown.text}</Text>
+    <Animated.Text style={{ flex: 1, ...type.subhead, fontWeight: "500", color: resolved ? palette.muted : palette.ink, transitionProperty: "color", transitionDuration: 200 } as never}>{shown.text}</Animated.Text>
     <Chip label={shown.action} filled accessibilityLabel={`${shown.action}. ${shown.text}`} onPress={() => onPress(shown)} />
   </Animated.View>;
 }

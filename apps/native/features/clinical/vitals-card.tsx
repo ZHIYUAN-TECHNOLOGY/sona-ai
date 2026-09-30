@@ -64,11 +64,11 @@ export function VitalsCard({ vitals, allergy }: { vitals: { label: string; value
         <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: v.tint, alignItems: "center", justifyContent: "center" }}><Icon name={v.icon} size={18} color={palette.ink} /></View>
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{v.label}</Text>
-          <Text style={{ fontSize: 26, lineHeight: 30, fontWeight: "600", letterSpacing: -0.6, color: palette.ink, fontVariant: ["tabular-nums"] }}>{v.value}<Text style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{" "}{v.unit}</Text></Text>
+          <Text style={{ ...type.display, lineHeight: 30, fontWeight: "600", letterSpacing: -0.6, color: palette.ink, fontVariant: ["tabular-nums"] }}>{v.value}<Text style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{" "}{v.unit}</Text></Text>
         </View>
         <View style={{ alignItems: "flex-end", gap: 6 }}>
           <Status tone={v.tone} />
-          <Trace d={v.trace} color={v.tone === "normal" ? "#3F7FE0" : "#C47814"} delay={i * 120} />
+          <Trace d={v.trace} color={v.tone === "normal" ? "#3F7FE0" : palette.amber} delay={i * 120} />
         </View>
       </View>)}
       <View accessible accessibilityLabel={`Allergy, ${allergy ?? "not documented"}, to confirm`} style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 14, borderTopWidth: rows.length ? 1 : 0, borderColor: "rgba(20,28,40,0.06)" }}>

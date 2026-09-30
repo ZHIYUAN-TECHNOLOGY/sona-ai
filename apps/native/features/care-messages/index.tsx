@@ -5,7 +5,7 @@ import Animated from "react-native-reanimated";
 import type { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { ErrorLine, TextLink } from "@/components/sona/parts";
+import { ErrorLine, TextLink, PressScale } from "@/components/sona/parts";
 import { router } from "expo-router";
 import { ThreadBubble } from "@/features/inbox/thread";
 import { Icon } from "@/components/sona/ui";
@@ -65,11 +65,11 @@ export function CareMessages({ patient, entering }: { patient: Patient; entering
       {canReply && <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <TextInput value={text} onChangeText={setText} placeholder={`Reply to ${first}`} placeholderTextColor={palette.placeholder} maxLength={1000} editable={!busy} returnKeyType="send"
           onSubmitEditing={() => { if (text.trim()) void reply(); }} accessibilityLabel={`Reply to ${first} in Sona Care`}
-          style={{ flex: 1, fontSize: 16, color: palette.ink, paddingHorizontal: 14, paddingVertical: 10, minHeight: 44, borderRadius: 14, backgroundColor: "rgba(20,28,40,0.04)" }} />
-        <Pressable accessibilityRole="button" accessibilityLabel="Send reply" accessibilityState={{ disabled: busy || !text.trim(), busy }} disabled={busy || !text.trim()} onPress={() => { void reply(); }}
-          style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: palette.ink, opacity: busy || !text.trim() ? 0.4 : pressed ? 0.8 : 1 })}>
+          style={{ flex: 1, fontSize: type.body.fontSize, color: palette.ink, paddingHorizontal: 14, paddingVertical: 10, minHeight: 44, borderRadius: radius.control, backgroundColor: "rgba(20,28,40,0.04)" }} />
+        {/* Not `RoundAction`: it has no disabled or busy state. */}
+        <Pressable accessibilityRole="button" accessibilityLabel="Send reply" accessibilityState={{ disabled: busy || !text.trim(), busy }} disabled={busy || !text.trim()} onPress={() => { void reply(); }}>{({ pressed }) => <PressScale pressed={pressed} style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: palette.ink, opacity: busy || !text.trim() ? 0.4 : 1 }}>
           <Icon name="arrow.up" size={15} color={palette.white} />
-        </Pressable>
+        </PressScale>}</Pressable>
       </View>}
     </View>}
     {error && <ErrorLine text={`Not sent: ${error}`} onRetry={() => { void reply(); }} />}

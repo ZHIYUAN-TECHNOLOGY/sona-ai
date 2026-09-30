@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
+import { Press } from "@/components/sona/parts";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { CareMessages } from "@/features/care-messages";
@@ -66,21 +67,21 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
       <Pressable accessibilityRole="button" accessibilityLabel="Close patient" onPress={close} style={StyleSheet.absoluteFill} />
     </Animated.View>
     <GestureDetector gesture={pan}>
-      <Animated.View accessibilityViewIsModal onAccessibilityEscape={close} style={[{ position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: box ? box - 72 : height * 0.6, borderTopLeftRadius: 32, borderTopRightRadius: 32, borderCurve: "continuous", backgroundColor: palette.canvas, boxShadow: "0 -8px 30px rgba(24,32,48,0.14)", paddingBottom: Math.max(insets.bottom, 16) }, sheet]}>
+      <Animated.View accessibilityViewIsModal onAccessibilityEscape={close} style={[{ position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: box ? box - 72 : height * 0.6, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: "continuous", backgroundColor: palette.canvas, boxShadow: "0 -8px 30px rgba(24,32,48,0.14)", paddingBottom: Math.max(insets.bottom, 16) }, sheet]}>
         {/* The grabber is the sheet's Close, so VoiceOver finds it inside the sheet (the backdrop is outside the modal region). */}
         <Pressable accessibilityRole="button" accessibilityLabel="Close patient" onPress={close} hitSlop={{ top: 10, bottom: 18, left: 40, right: 40 }} style={{ alignSelf: "center", marginTop: 10 }}><View style={{ width: 38, height: 5, borderRadius: 3, backgroundColor: "rgba(20,28,40,0.18)" }} /></Pressable>
         {/* Keyboard-aware so the Sona Care reply box stays above the keyboard while the doctor types. */}
         <KeyboardAwareScrollView bottomOffset={24} keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingTop: 18, gap: 18 }} showsVerticalScrollIndicator={false}>
           <Animated.View entering={rise(0)} style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
             <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: patient.incomplete ? "rgba(196,120,20,0.16)" : "rgba(36,91,204,0.14)", alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ fontSize: 18, fontWeight: "700", color: patient.incomplete ? palette.amber : palette.blue }}>{patient.initials}</Text>
+              <Text style={{ ...type.heading, fontWeight: "700", color: patient.incomplete ? palette.amber : palette.blue }}>{patient.initials}</Text>
             </View>
             <View style={{ flex: 1, gap: 2 }}>
               <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{patient.name}</Text>
               <Text style={{ ...type.footnote, color: palette.muted }}>{patient.age} · {patient.sex} · {patient.id}</Text>
             </View>
             <View style={{ alignItems: "flex-end", gap: 2 }}>
-              <Text style={{ fontSize: 20, fontWeight: "600", color: palette.ink, fontVariant: ["tabular-nums"] }}>{patient.time}</Text>
+              <Text style={{ ...type.heading, color: palette.ink, fontVariant: ["tabular-nums"] }}>{patient.time}</Text>
               <Text style={{ ...type.caption, fontWeight: "600", color: started ? palette.blue : minutes < -10 ? palette.amber : palette.muted }}>{when}</Text>
             </View>
           </Animated.View>
@@ -88,12 +89,12 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
           {flags.length > 0 && <Animated.View entering={rise(1)} style={{ gap: 8 }}>
             <Text style={{ ...type.overline, color: palette.muted }}>Needs attention</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {flags.map(flag => <Pressable key={flag.label} accessibilityRole="button" accessibilityLabel={`${flag.label}. Opens the visit to resolve it`} onPress={() => go(flag.go)} hitSlop={{ top: 4, bottom: 4 }}
-                style={({ pressed }) => ({ minHeight: 36, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 18, backgroundColor: TONE[flag.tone].wash, opacity: pressed ? 0.7 : 1 })}>
+              {flags.map(flag => <Press key={flag.label} accessibilityLabel={`${flag.label}. Opens the visit to resolve it`} onPress={() => go(flag.go)} hitSlop={{ top: 4, bottom: 4 }} scale={0.96}
+                style={{ minHeight: 36, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 18, backgroundColor: TONE[flag.tone].wash }}>
                 <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: TONE[flag.tone].ink }} />
                 <Text style={{ ...type.subhead, fontWeight: "600", color: TONE[flag.tone].ink }}>{flag.label}</Text>
                 <Icon name="chevron.right" size={10} color={TONE[flag.tone].ink} />
-              </Pressable>)}
+              </Press>)}
             </View>
           </Animated.View>}
           {/* The main action sits right under what needs attention; everything below is context. */}
@@ -111,7 +112,7 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
             {patient.vitals.length > 0 ? <View style={{ flexDirection: "row", gap: 8 }}>
               {patient.vitals.map(v => { const raised = v.label === "Temp" && parseFloat(v.value) >= 37.8; return <View key={v.label} style={{ flex: 1, borderRadius: radius.control, padding: 10, gap: 2, backgroundColor: raised ? "rgba(196,120,20,0.10)" : "rgba(20,28,40,0.04)" }}>
                 <Text style={{ ...type.caption, color: palette.muted }}>{v.label}</Text>
-                <Text style={{ fontSize: 17, fontWeight: "600", color: raised ? palette.amber : palette.ink, fontVariant: ["tabular-nums"] }}>{v.value}</Text>
+                <Text style={{ ...type.headline, color: raised ? palette.amber : palette.ink, fontVariant: ["tabular-nums"] }}>{v.value}</Text>
               </View>; })}
             </View> : <Text style={{ ...type.footnote, color: palette.muted }}>No observations recorded yet.</Text>}
             <Text style={{ ...type.footnote, color: palette.muted }}>{patient.history[0]} · Medicines: {patient.medicines.length}</Text>
@@ -151,9 +152,9 @@ function PinControl({ patient }: { patient: Patient }) {
       <View style={{ flex: 1 }}><Action label="Replace" onPress={() => { replaceOldest(replace.id, patient.id); setReplace(undefined); }} /></View>
     </View>
   </View>;
-  return <Pressable accessibilityRole="button" accessibilityLabel={pinned ? `Unpin ${patient.name} from Continue` : `Pin ${patient.name} to Continue`} onPress={() => { if (pinned) unpin(patient.id); else { const oldest = pin(patient.id); if (oldest) setReplace(oldest); } }}
-    style={({ pressed }) => ({ minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, opacity: pressed ? 0.6 : 1 })}>
+  return <Press accessibilityLabel={pinned ? `Unpin ${patient.name} from Continue` : `Pin ${patient.name} to Continue`} onPress={() => { if (pinned) unpin(patient.id); else { const oldest = pin(patient.id); if (oldest) setReplace(oldest); } }}
+    style={{ minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
     <Icon name={pinned ? "pin.slash" : "pin"} size={14} color={palette.blue} />
     <Text style={{ ...type.subhead, fontWeight: "600", color: palette.blue }}>{pinned ? "Pinned to Continue · Unpin" : "Pin to Continue"}</Text>
-  </Pressable>;
+  </Press>;
 }

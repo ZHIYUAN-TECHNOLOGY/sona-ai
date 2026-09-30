@@ -1,3 +1,4 @@
+import { PressScale } from "@/components/sona/parts";
 import { Canvas, Fill, Shader, Skia } from "@shopify/react-native-skia";
 import { Text } from "@/components/sona/text";
 import { Image } from "expo-image";
@@ -151,11 +152,11 @@ export function OriginalImageViewer({ asset, onZoomChange, markers = [], focus, 
       {status !== "ready" && <Animated.View exiting={FadeOut.duration(160)} style={{ position: "absolute", inset: 0, backgroundColor: palette.ink, justifyContent: "center", alignItems: "center", padding: 24, gap: 16 }}>
         {status === "loading"
           ? <><ActivityIndicator color={palette.line} /><Text style={{ color: palette.line, ...type.subhead }}>Loading original image…</Text></>
-          : <><Text selectable style={{ color: palette.line, fontSize: 15, lineHeight: 21, textAlign: "center" }}>This attachment could not be opened.</Text><Action label="Retry image" secondary onPress={() => { setStatus("loading"); setAttempt(value => value + 1); }} /></>}
+          : <><Text selectable style={{ ...type.callout, color: palette.line, textAlign: "center" }}>This attachment could not be opened.</Text><Action label="Retry image" secondary onPress={() => { setStatus("loading"); setAttempt(value => value + 1); }} /></>}
       </Animated.View>}
       {ready && focus && <FocusCaption key={focus} markers={markers} focus={focus} onFocus={onFocus} reducedMotion={reducedMotion} />}
       {ready && markers.length > 0 && <View pointerEvents="none" style={{ position: "absolute", top: 12, left: 12, height: 24, paddingHorizontal: 10, borderRadius: 12, justifyContent: "center", backgroundColor: "rgba(20,28,40,0.6)", borderWidth: 1, borderColor: "rgba(255,255,255,0.16)" }}>
-        <Text style={{ fontSize: 11, fontWeight: "700", letterSpacing: 0.4, color: palette.white }}>Unvalidated</Text>
+        <Text style={{ ...type.caption, fontWeight: "700", letterSpacing: 0.4, color: palette.white }}>Unvalidated</Text>
       </View>}
       <ImageEdge />
     </View>
@@ -173,7 +174,7 @@ export function OriginalImageViewer({ asset, onZoomChange, markers = [], focus, 
 
     {/* Provenance as one line: attribution · licence, with the original source when there is one. */}
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-      <Text selectable style={{ flex: 1, fontSize: 13, lineHeight: 18, color: palette.muted }}>{asset.attribution} · {asset.license}{sourceError && <Text style={{ color: palette.amber }}> · Source unavailable offline</Text>}</Text>
+      <Text selectable style={{ ...type.footnote, flex: 1, color: palette.muted }}>{asset.attribution} · {asset.license}{sourceError && <Text style={{ color: palette.amber }}> · Source unavailable offline</Text>}</Text>
       {asset.sourceUrl.startsWith("https://") && <SourceLink label="Source" onPress={() => { void Linking.openURL(asset.sourceUrl).catch(() => setSourceError(true)); }} />}
     </View>
   </View>;
@@ -193,15 +194,14 @@ function Marker({ marker, viewport, aspect, scale, state }: { marker: ImageMarke
   return <Animated.View pointerEvents="none" style={[{ position: "absolute", width: RING, height: RING, borderRadius: RING / 2, borderWidth: 2, alignItems: "center", justifyContent: "center",
     borderColor: state === "focused" ? palette.white : "#9CC0FF", backgroundColor: state === "focused" ? "rgba(36,91,204,0.75)" : "rgba(36,91,204,0.3)", opacity: state === "dimmed" ? 0.4 : 1,
     transitionProperty: ["opacity", "borderColor", "backgroundColor"], transitionDuration: 200 } as never, place]}>
-    <Text style={{ fontSize: 11, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{marker.n}</Text>
+    <Text style={{ ...type.caption, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{marker.n}</Text>
   </Animated.View>;
 }
 
 function StepButton({ icon, label, disabled, onPress }: { icon: string; label: string; disabled: boolean; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress}
-    style={({ pressed }) => ({ width: 44, height: 44, alignItems: "center", justifyContent: "center", opacity: disabled ? 0.35 : 1, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "opacity"], transitionDuration: 120 } as never)}>
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress}>{({ pressed }) => <PressScale pressed={pressed} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center", opacity: disabled ? 0.35 : 1, transitionProperty: ["transform", "opacity"] }}>
     <Icon name={icon} size={18} />
-  </Pressable>;
+  </PressScale>}</Pressable>;
 }
 
 /** Live zoom (after Tilt's floating readout); crosses to React once per 0.1×, never per frame. */
@@ -266,9 +266,8 @@ function FocusCaption({ markers, focus, onFocus, reducedMotion }: { markers: Ima
     <Text numberOfLines={1} style={{ flex: 1, ...type.subhead, fontWeight: "600", color: palette.white }}>
       <Text style={{ color: "#9CC0FF", fontVariant: ["tabular-nums"] }}>{marker.n} of {markers.length}  </Text>{marker.label}
     </Text>
-    <Pressable accessibilityRole="button" accessibilityLabel={next ? `Next finding: ${next.label}` : "Show the whole film"} hitSlop={4} onPress={() => onFocus?.(next?.id)}
-      style={({ pressed }) => ({ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.14)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+    <Pressable accessibilityRole="button" accessibilityLabel={next ? `Next finding: ${next.label}` : "Show the whole film"} hitSlop={4} onPress={() => onFocus?.(next?.id)}>{({ pressed }) => <PressScale pressed={pressed} style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.14)" }}>
       <Icon name={next ? "chevron.right" : "xmark"} size={14} color={palette.white} />
-    </Pressable>
+    </PressScale>}</Pressable>
   </Animated.View>;
 }

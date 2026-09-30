@@ -1,3 +1,4 @@
+import { PressScale } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { DateTimePicker } from "@expo/ui/community/datetime-picker";
 import { router } from "expo-router";
@@ -73,8 +74,8 @@ function TaskSummary({ task }: { task: Task }) {
       {done && <BrandIcon name="check" size={14} color={palette.white} strokeWidth={2.4} />}
     </View>
     <View style={{ flex: 1, gap: 3 }}>
-      <Text selectable accessibilityLabel={`${task.title}, ${done ? "completed" : "open"}`} style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: done ? palette.muted : palette.ink, textDecorationLine: done ? "line-through" : "none", textDecorationColor: palette.muted }}>{task.title}</Text>
-      <Text selectable style={{ fontSize: 13, lineHeight: 18, color: palette.muted }}>{ownerLine(task, done)}</Text>
+      <Text selectable accessibilityLabel={`${task.title}, ${done ? "completed" : "open"}`} style={{ ...type.body, lineHeight: 22, fontWeight: "500", color: done ? palette.muted : palette.ink, textDecorationLine: done ? "line-through" : "none", textDecorationColor: palette.muted }}>{task.title}</Text>
+      <Text selectable style={{ ...type.footnote, color: palette.muted }}>{ownerLine(task, done)}</Text>
       <TaskOrigin value={task} />
     </View>
   </View>;
@@ -83,7 +84,7 @@ function TaskSummary({ task }: { task: Task }) {
 /** The simulation boundary, said once per screen as one quiet line; saved tasks need no note. */
 function SessionNote() {
   const { on: live } = useLive();
-  return live ? null : <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>Local simulation · nothing is booked or sent</Text>;
+  return live ? null : <Text selectable style={{ ...type.caption, lineHeight: 18, color: palette.muted }}>Local simulation · nothing is booked or sent</Text>;
 }
 
 /** One quiet line: who wrote it, its source at the revision it was taken from, and (with `local`) the simulation note. */
@@ -93,13 +94,13 @@ function TaskOrigin({ value, local = false }: { value: Pick<Task, "sourceId" | "
   const origin = value.provenance === "clinician" ? "Clinician-entered details" : value.provenance === "fixture" ? "Authored sample proposal" : "Origin not recorded";
   const label = source ? `${source.title}${value.sourceRevision ? ` · revision ${value.sourceRevision}` : ""}` : "";
   return <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 6 }}>
-    <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>{origin} ·</Text>
+    <Text selectable style={{ ...type.caption, lineHeight: 18, color: palette.muted }}>{origin} ·</Text>
     {source && patient ? <Pressable accessibilityRole="link" accessibilityLabel={`Source, ${label}`} hitSlop={{ top: 13, bottom: 13, left: 6, right: 12 }}
       onPress={() => router.push({ pathname: "/source", params: { id: source.id, patientId: patient.id, revision: String(value.sourceRevision ?? ""), taskId: value.id ?? value.operationId ?? "" } })}
-      style={({ pressed }) => ({ flexShrink: 1, flexDirection: "row", alignItems: "center", gap: 4, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-      <Text style={{ flexShrink: 1, fontSize: 12, lineHeight: 18, fontWeight: "500", color: palette.blue }}>{label}</Text><Icon name="arrow.up.right" size={10} color={palette.blue} />
-    </Pressable> : <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>No originating source linked</Text>}
-    {local && <Text selectable style={{ fontSize: 12, lineHeight: 18, color: palette.muted }}>· local simulation, nothing sent</Text>}
+      style={{ flexShrink: 1 }}>{({ pressed }) => <PressScale pressed={pressed} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+      <Text style={{ ...type.caption, flexShrink: 1, lineHeight: 18, fontWeight: "500", color: palette.blue }}>{label}</Text><Icon name="arrow.up.right" size={10} color={palette.blue} />
+    </PressScale>}</Pressable> : <Text selectable style={{ ...type.caption, lineHeight: 18, color: palette.muted }}>No originating source linked</Text>}
+    {local && <Text selectable style={{ ...type.caption, lineHeight: 18, color: palette.muted }}>· local simulation, nothing sent</Text>}
   </View>;
 }
 
@@ -176,10 +177,10 @@ function DayRuler({ value, onPick }: { value: string; onPick: (due: string) => v
     const years = d.getFullYear() - t.getFullYear();
     const label = MILESTONES[i] ?? (years > 0 && d.getMonth() === t.getMonth() && d.getDate() === t.getDate() ? `${years} yr` : undefined);
     return <View style={{ width: TICK, height: 74, alignItems: "center" }}>
-      {first && <Text numberOfLines={1} style={{ position: "absolute", top: 0, width: 60, left: (TICK - 60) / 2, textAlign: "center", fontSize: 10, fontWeight: "600", color: d.getMonth() === 0 ? palette.ink : palette.muted }}>{d.getMonth() === 0 ? String(d.getFullYear()) : MONTHS[d.getMonth()]}</Text>}
+      {first && <Text numberOfLines={1} style={{ ...type.caption, position: "absolute", top: 0, width: 60, left: (TICK - 60) / 2, textAlign: "center", fontWeight: "600", color: d.getMonth() === 0 ? palette.ink : palette.muted }}>{d.getMonth() === 0 ? String(d.getFullYear()) : MONTHS[d.getMonth()]}</Text>}
       <View style={{ marginTop: label || first ? 16 : week ? 21 : 25, width: 1.5, height: label || first ? 26 : week ? 21 : 17, borderRadius: 1, backgroundColor: label || first ? "rgba(20,28,40,0.32)" : week ? "rgba(20,28,40,0.2)" : "rgba(20,28,40,0.11)" }} />
       {label && <Pressable accessible={false} hitSlop={10} onPress={() => jumpRef.current(i)} style={{ position: "absolute", top: 54, width: 44, left: (TICK - 44) / 2, alignItems: "center" }}>
-        <Text style={{ fontSize: 11, fontWeight: "500", color: palette.muted }}>{label}</Text>
+        <Text style={{ ...type.caption, fontWeight: "500", color: palette.muted }}>{label}</Text>
       </Pressable>}
     </View>;
   }, []);
@@ -246,11 +247,10 @@ function Suggestions({ children, reduced }: { children: ReactNode; reduced: bool
 }
 function SuggestionRow({ icon, label, index, onPress, reduced }: { icon: "person" | "calendar"; label: string; index: number; onPress: () => void; reduced: boolean }) {
   return <Animated.View entering={reduced ? undefined : riseIn({ delay: 40 * index, distance: 4, duration: 220 })}>
-    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={{ top: 2, bottom: 2 }}
-      style={({ pressed }) => ({ minHeight: 40, paddingHorizontal: 10, borderRadius: 12, flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: pressed ? "rgba(255,255,255,0.12)" : "transparent", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 120 } as never)}>
+    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={{ top: 2, bottom: 2 }}>{({ pressed }) => <PressScale pressed={pressed} style={{ minHeight: 40, paddingHorizontal: 10, borderRadius: radius.control, flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: pressed ? "rgba(255,255,255,0.12)" : "transparent", transitionProperty: ["transform", "backgroundColor"] }}>
       <BrandIcon name={icon} size={16} color="rgba(255,255,255,0.8)" />
       <Text style={{ ...type.callout, fontWeight: "500", color: palette.white }}>{label}</Text>
-    </Pressable>
+    </PressScale>}</Pressable>
   </Animated.View>;
 }
 
@@ -304,7 +304,7 @@ function Composer({ draft, onChange, onSave, pending, error }: { draft: TaskDraf
 
     {/* With a panel open (or an error), a footer row keeps the corner free below it. */}
     {(open || error) && <Animated.View layout={layout} entering={FadeIn.duration(150)} style={{ minHeight: 40, justifyContent: "center", paddingRight: 52 }}>
-      {error && <Text accessibilityLiveRegion="polite" style={{ fontSize: 13, lineHeight: 18, color: palette.amber }}>{error}</Text>}
+      {error && <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber }}>{error}</Text>}
     </Animated.View>}
     <Animated.View layout={layout} style={{ position: "absolute", right: 18, bottom: 18, zIndex: 1 }}>
       <RoundAction icon="add" size={40} label={error ? "Retry adding task" : "Add task"} hint={missing.length ? `Needs ${missing.join(", ")}` : undefined} ready={ready} onPress={onSave} />
@@ -325,7 +325,7 @@ function OwnerPicker({ value, onChange, onDone }: { value: string; onChange: (ow
       <Chip label="Someone else" selected={custom} onPress={() => { haptic("select"); if (custom) { setCustom(false); onChange(""); return; } setCustom(true); if (OWNERS.includes(value)) onChange(""); }} />
     </View>
     {custom && <Expand><TextInput autoFocus accessibilityLabel="Owner name or team" value={value} onChangeText={onChange} placeholder="Name or team" placeholderTextColor={palette.placeholder} maxLength={80} returnKeyType="done" onSubmitEditing={onDone}
-      style={{ fontSize: 16, color: palette.ink, paddingHorizontal: 14, paddingVertical: 10, minHeight: 44, borderRadius: 14, backgroundColor: "rgba(20,28,40,0.04)" }} /></Expand>}
+      style={{ fontSize: type.body.fontSize, color: palette.ink, paddingHorizontal: 14, paddingVertical: 10, minHeight: 44, borderRadius: radius.control, backgroundColor: "rgba(20,28,40,0.04)" }} /></Expand>}
   </View>;
 }
 
@@ -407,31 +407,29 @@ function TaskRow({ task, patient: of, name, disabled, locked = false, reopenable
   const revealStyle = useAnimatedStyle(() => ({ opacity: interpolate(tx.value, [0, SWIPE], [0, 1], "clamp"), transform: [{ scale: interpolate(tx.value, [0, SWIPE], [0.8, 1], "clamp") }] }));
   const edit = (kind: "owner" | "due") => { haptic("select"); if (kind === "owner") { picked.current = task.owner; setOwnerDraft(task.owner); } setEditing(value => value === kind ? null : kind); };
   const dueLabel = task.due ? friendlyDate(task.due) : "No date";
-  const chip = (kind: "owner" | "due", label: string) => <Pressable accessibilityRole="button" accessibilityLabel={kind === "owner" ? `Owner, ${label}. Reassign` : `Due ${label}. Change date`} accessibilityState={{ expanded: editing === kind }} onPress={() => edit(kind)} hitSlop={{ top: 8, bottom: 8 }}
-    style={({ pressed }) => ({ height: 28, paddingHorizontal: 10, borderRadius: 14, flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderColor: editing === kind ? palette.blue : "transparent", backgroundColor: "rgba(20,28,40,0.05)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+  const chip = (kind: "owner" | "due", label: string) => <Pressable accessibilityRole="button" accessibilityLabel={kind === "owner" ? `Owner, ${label}. Reassign` : `Due ${label}. Change date`} accessibilityState={{ expanded: editing === kind }} onPress={() => edit(kind)} hitSlop={{ top: 8, bottom: 8 }}>{({ pressed }) => <PressScale pressed={pressed} style={{ height: 28, paddingHorizontal: 10, borderRadius: 14, flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderColor: editing === kind ? palette.blue : "transparent", backgroundColor: "rgba(20,28,40,0.05)" }}>
     <BrandIcon name={kind === "owner" ? "person" : "calendar"} size={13} color={palette.muted} /><Text style={{ ...type.footnote, color: palette.ink }}>{label}</Text>
-  </Pressable>;
+  </PressScale>}</Pressable>;
   const actions = [...source ? [{ name: "source", label: "Open source" }] : [], ...editable ? [{ name: "owner", label: "Reassign" }, { name: "due", label: "Change due date" }] : []];
   return <View>
     <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 0, bottom: 0, width: 120, borderRadius: radius.group, backgroundColor: "#E4EDFD", paddingLeft: 22, justifyContent: "center" }, revealStyle]}>
       <BrandIcon name={reopens ? "back" : "check"} size={22} color={palette.blue} strokeWidth={2} />
     </Animated.View>
     <GestureDetector gesture={pan}>
-      <Surface style={[{ borderRadius: 20 }, rowStyle]}>
+      <Surface style={[{ borderRadius: radius.group }, rowStyle]}>
         {/* The whole row is the checkbox; only the Source link inside it does something else. */}
         <Pressable accessibilityRole="checkbox" accessibilityLabel={`${name ? `${name}, ` : ""}${task.title}, ${task.owner}${done ? ", done" : task.due ? `, due ${friendlyDate(task.due)}` : ""}`} accessibilityState={{ checked: done, disabled: inert }}
           accessibilityHint={locked ? why("tasks.complete") : inert ? undefined : done ? "Reopens the task" : "Marks the task completed"} onPress={toggle} disabled={inert}
-          accessibilityActions={actions.length ? [{ name: "activate" }, ...actions] : undefined} onAccessibilityAction={e => { const a = e.nativeEvent.actionName; if (a === "source") openSource(); else if (a === "owner" || a === "due") edit(a); else toggle(); }}
-          style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 14, transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+          accessibilityActions={actions.length ? [{ name: "activate" }, ...actions] : undefined} onAccessibilityAction={e => { const a = e.nativeEvent.actionName; if (a === "source") openSource(); else if (a === "owner" || a === "due") edit(a); else toggle(); }}>{({ pressed }) => <PressScale pressed={pressed} scale={0.98} style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 14 }}>
           {locked && !done ? <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}><Icon name="lock.fill" size={11} color={palette.muted} /></View>
-          : <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.6, alignItems: "center", justifyContent: "center", borderColor: done ? palette.blue : "#B7BDC6", backgroundColor: done ? palette.blue : "transparent", transitionProperty: ["backgroundColor", "borderColor"], transitionDuration: 180 } as never}>
+          : <Animated.View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.6, alignItems: "center", justifyContent: "center", borderColor: done ? palette.blue : "#B7BDC6", backgroundColor: done ? palette.blue : "transparent", transitionProperty: ["backgroundColor", "borderColor"], transitionDuration: 180 } as never}>
             <Animated.View style={{ opacity: done ? 1 : 0, transform: [{ scale: done || reducedMotion ? 1 : 0.5 }], transitionProperty: ["opacity", "transform"], transitionDuration: 240, transitionTimingFunction: EASE_OUT }}>
               <BrandIcon name="check" size={15} color={palette.white} strokeWidth={2.4} />
             </Animated.View>
-          </View>}
+          </Animated.View>}
           <View style={{ flex: 1, gap: 3 }}>
             <View style={{ alignSelf: "flex-start" }}>
-              <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: done ? palette.muted : palette.ink, transitionProperty: "color", transitionDuration: 200 } as never}>{task.title}</Text>
+              <Animated.Text lineBreakStrategyIOS="push-out" style={{ ...type.body, lineHeight: 22, fontWeight: "500", color: done ? palette.muted : palette.ink, transitionProperty: "color", transitionDuration: 200 } as never}>{task.title}</Animated.Text>
               <Animated.View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: 11, height: 1.5, borderRadius: 1, backgroundColor: palette.muted, transformOrigin: "left", opacity: done || !reducedMotion ? 1 : 0, transform: [{ scaleX: done || reducedMotion ? 1 : 0 }], transitionProperty: ["transform", "opacity"], transitionDuration: 320, transitionTimingFunction: EASE_OUT }} />
             </View>
             <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: editable ? 6 : 8 }}>
@@ -441,7 +439,7 @@ function TaskRow({ task, patient: of, name, disabled, locked = false, reopenable
               {source && <Pressable accessibilityRole="link" accessibilityLabel={`Source, ${source.title}`} onPress={openSource} hitSlop={{ top: 13, bottom: 13, left: 8, right: 8 }}><Text style={{ ...type.footnote, color: palette.blue }}>Source ↗</Text></Pressable>}
             </View>
           </View>
-        </Pressable>
+        </PressScale>}</Pressable>
       </Surface>
     </GestureDetector>
     {/* The composer's own pickers, under the row (outside the swipe, so the ruler scrolls freely). */}
@@ -480,8 +478,7 @@ function VisitFollowUps({ except }: { except?: string }) {
   const tasksOf = useVisitTasks();
   return <>{patients.filter(p => p.id !== except && tasksOf(p).length).map(p => {
     const pending = tasksOf(p).filter(task => !task.completed);
-    return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={`${p.name}, ${pending.length} open follow-ups`} accessibilityHint="Shows this visit's follow-ups" onPress={() => { haptic("select"); selectPatient(p.id); }}
-      style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+    return <Pressable key={p.id} accessibilityRole="button" accessibilityLabel={`${p.name}, ${pending.length} open follow-ups`} accessibilityHint="Shows this visit's follow-ups" onPress={() => { haptic("select"); selectPatient(p.id); }}>{({ pressed }) => <PressScale pressed={pressed} scale={0.98}>
       <Surface style={{ padding: 16, gap: 12 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#E6EEFC", alignItems: "center", justifyContent: "center" }}><Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{p.initials}</Text></View>
@@ -491,7 +488,7 @@ function VisitFollowUps({ except }: { except?: string }) {
         </View>
         {pending.slice(0, 3).map(task => <Text key={task.id} numberOfLines={1} style={{ ...type.subhead, color: palette.ink }}>{task.title}<Text style={{ color: palette.muted }}>  {ownerLine(task)}</Text></Text>)}
       </Surface>
-    </Pressable>;
+    </PressScale>}</Pressable>;
   })}</>;
 }
 

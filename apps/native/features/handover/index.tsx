@@ -11,7 +11,7 @@ import { riseIn } from "@/components/sona/motion";
 import { SourcesPill } from "@/components/sona/sources";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { ErrorLine } from "@/components/sona/parts";
+import { ErrorLine, PressScale } from "@/components/sona/parts";
 import { Action, Icon, Insight, Notice, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { toWatch } from "@/features/ask/answers";
 import { ASK_SPACE, WithSona } from "@/features/ask";
@@ -45,7 +45,7 @@ const haptic = (kind: "select" | "light" | "success" = "select") => {
 
 function Line({ tag, children }: { tag: string; children: React.ReactNode }) {
   return <View style={{ flexDirection: "row", gap: 10 }}>
-    <View style={{ width: 22, height: 22, borderRadius: 7, backgroundColor: "rgba(36,91,204,0.1)", alignItems: "center", justifyContent: "center", marginTop: 1 }}><Text style={{ fontSize: 11, fontWeight: "700", color: palette.blue }}>{tag}</Text></View>
+    <View style={{ width: 22, height: 22, borderRadius: 7, backgroundColor: "rgba(36,91,204,0.1)", alignItems: "center", justifyContent: "center", marginTop: 1 }}><Text style={{ ...type.caption, fontWeight: "700", color: palette.blue }}>{tag}</Text></View>
     <View style={{ flex: 1 }}>{children}</View>
   </View>;
 }
@@ -200,7 +200,7 @@ export function HandoverScreen() {
             {(["handed", "discuss"] as const).map(decision => <Animated.View key={decision} pointerEvents="none"
               style={[{ position: "absolute", inset: 0, borderRadius: radius.sheet, borderCurve: "continuous", backgroundColor: TINT[decision].fill, alignItems: "center", justifyContent: "center", gap: 10 }, decision === "handed" ? handedTint : discussTint]}>
               <Icon name={TINT[decision].icon} size={48} color={palette.white} />
-              <Text style={{ fontSize: 18, fontWeight: "700", color: palette.white }}>{TINT[decision].label}</Text>
+              <Text style={{ ...type.headline, fontWeight: "700", color: palette.white }}>{TINT[decision].label}</Text>
             </Animated.View>)}
           </Animated.View>
         </GestureDetector>
@@ -215,7 +215,7 @@ export function HandoverScreen() {
         {tally.discuss.length > 0 && <Text style={{ ...type.callout, color: palette.muted }}>Talk through: {tally.discuss.map(id => cards.find(c => c.id === id)?.name).join(", ")}</Text>}
         <View style={{ gap: 6 }}>
           <Text style={{ ...type.overline, color: palette.muted }}>Receiving clinician</Text>
-          <TextInput value={receiver} onChangeText={setReceiver} editable={!accepted} accessibilityLabel="Receiving clinician" style={{ minHeight: 48, borderRadius: 14, paddingHorizontal: 14, fontSize: 16, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
+          <TextInput value={receiver} onChangeText={setReceiver} editable={!accepted} accessibilityLabel="Receiving clinician" style={{ minHeight: 48, borderRadius: radius.control, paddingHorizontal: 14, fontSize: type.body.fontSize, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
         </View>
       </Animated.View>
       {accepted ? <Animated.View entering={reducedMotion ? FadeIn : ZoomIn.springify().duration(420).dampingRatio(0.72)} accessibilityLiveRegion="polite"
@@ -242,10 +242,9 @@ function WrapUp() {
   const unfinished = entries.filter(e => e.left).length;
   if (!unfinished) return null;
   const parts = [toSign ? `${toSign} ${toSign === 1 ? "note" : "notes"} to sign` : "", unfinished - toSign > 0 ? `${unfinished - toSign} ${unfinished - toSign === 1 ? "visit" : "visits"} unfinished` : ""].filter(Boolean).join(", ");
-  return <Pressable accessibilityRole="button" accessibilityLabel={`Wrap up: ${parts}. Opens Continue`} onPress={() => router.push({ pathname: "/patients", params: { tab: "continue" } })}
-    style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 44, paddingHorizontal: 14, borderRadius: 16, backgroundColor: "rgba(196,120,20,0.10)", opacity: pressed ? 0.7 : 1 })}>
+  return <Pressable accessibilityRole="button" accessibilityLabel={`Wrap up: ${parts}. Opens Continue`} onPress={() => router.push({ pathname: "/patients", params: { tab: "continue" } })}>{({ pressed }) => <PressScale pressed={pressed} style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 44, paddingHorizontal: 14, borderRadius: radius.control, backgroundColor: "rgba(196,120,20,0.10)" }}>
     <Icon name="checklist" size={15} color={palette.amber} />
     <Text style={{ ...type.subhead, flex: 1, fontWeight: "600", color: palette.amber }}>Wrap up: {parts}</Text>
     <Icon name="chevron.right" size={11} color={palette.amber} />
-  </Pressable>;
+  </PressScale>}</Pressable>;
 }

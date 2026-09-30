@@ -1,9 +1,10 @@
+import { useReduceMotionPreference } from "@/components/sona/accessibility";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { RoundAction, useAccessibleEffects } from "@/components/sona/ui";
-import { riseIn } from "@/components/sona/motion";
+import { EASE_OUT_CSS, riseIn } from "@/components/sona/motion";
 import { LiquidVeil } from "@/components/sona/liquid-veil";
 import { GlassOrb } from "@/components/sona/glass-orb";
 import { OrbGlyph, type OrbActivity } from "@/components/sona/orb-glyph";
@@ -17,12 +18,11 @@ import * as Haptics from "expo-haptics";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { AccessibilityInfo, Keyboard, Pressable, StyleSheet, TextInput, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { cubicBezier, Easing, FadeIn, FadeOut, interpolate, useAnimatedReaction, withDelay, withSpring, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, { Easing, FadeIn, FadeOut, interpolate, useAnimatedReaction, withDelay, withSpring, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from "react-native-reanimated";
 import { useKeyboardHandler } from "react-native-keyboard-controller";
 import { scheduleOnRN } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
 const ORB = 64;
 
 type Mode = "idle" | "holding" | "handsfree" | "composing";
@@ -77,19 +77,22 @@ const FALLBACK = { duration: 260, easing: Easing.bezier(0.2, 0.8, 0.2, 1) };
 
 function RoundButton({ icon, label, onPress, hidden, reduced }: { icon: BrandIconName; label: string; onPress: () => void; hidden?: boolean; reduced?: boolean }) {
   // Reduce Motion: the buttons only fade; no shrink.
-  return <Animated.View pointerEvents={hidden ? "none" : "auto"} style={{ opacity: hidden ? 0 : 1, transform: [{ scale: hidden && !reduced ? 0.6 : 1 }], transitionProperty: ["opacity", "transform"], transitionDuration: 260, transitionTimingFunction: EASE_OUT }}>
-    <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityElementsHidden={hidden} onPress={onPress} hitSlop={6}
-      style={({ pressed }) => ({ width: 50, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.72)", borderWidth: 1, borderColor: "rgba(255,255,255,0.9)", boxShadow: "0 4px 16px rgba(40,70,140,0.10)", transform: [{ scale: pressed ? 0.94 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-      <BrandIcon name={icon} size={23} />
+  return <Animated.View pointerEvents={hidden ? "none" : "auto"} style={{ opacity: hidden ? 0 : 1, transform: [{ scale: hidden && !reduced ? 0.6 : 1 }], transitionProperty: ["opacity", "transform"], transitionDuration: 260, transitionTimingFunction: EASE_OUT_CSS }}>
+    <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityElementsHidden={hidden} onPress={onPress} hitSlop={6}>
+      {({ pressed }) => <Animated.View style={{ width: 50, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.72)", borderWidth: 1, borderColor: "rgba(255,255,255,0.9)", boxShadow: "0 4px 16px rgba(40,70,140,0.10)", transform: [{ scale: pressed && !reduced ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 }}>
+        <BrandIcon name={icon} size={23} />
+      </Animated.View>}
     </Pressable>
   </Animated.View>;
 }
 
 /** Composer tool: bare icon at rest, a small glass bubble under the finger. */
 function ToolButton({ icon, label, onPress }: { icon: BrandIconName; label: string; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={4}
-    style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 120 } as never)}>
-    <BrandIcon name={icon} size={21} color="#5B6472" />
+  const reduced = useReduceMotionPreference();
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={4}>
+    {({ pressed }) => <Animated.View style={{ width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0)", transform: [{ scale: pressed && !reduced ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 120 }}>
+      <BrandIcon name={icon} size={21} color={palette.muted} />
+    </Animated.View>}
   </Pressable>;
 }
 
@@ -237,7 +240,7 @@ export function VoiceDock(props: Props) {
   return <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
     {liquid && <LiquidVeil backdrop={backdrop} state={veil} armed={armed && !busy} words={words} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
     {/* Frosted focus layer: a static blur crossfaded by opacity. */}
-    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: scrim ? 1 : 0, transitionProperty: "opacity", transitionDuration: scrim ? 320 : 240, transitionTimingFunction: EASE_OUT }]}>
+    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: scrim ? 1 : 0, transitionProperty: "opacity", transitionDuration: scrim ? 320 : 240, transitionTimingFunction: EASE_OUT_CSS }]}>
       {reducedTransparency ? <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(236,239,244,0.94)" }]} /> : <BlurView tint="light" intensity={38} style={StyleSheet.absoluteFill} />}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(232,236,243,0.28)" }]} />
     </Animated.View>
@@ -273,20 +276,21 @@ export function VoiceDock(props: Props) {
             {handsfree ? <RoundButton icon="close" label="Cancel voice input" onPress={() => finish(false)} /> : tools && <View accessibilityElementsHidden={menu} importantForAccessibility={menu ? "no-hide-descendants" : "auto"} style={{ opacity: menu ? 0 : 1 }}><RoundButton icon="add" label="Attach a photo, camera capture or file" onPress={openMenu} hidden={holding || busy} reduced={reducedMotion} /></View>}
             <RoundButton icon="keyboard" label="Type a message" onPress={() => setMode("composing")} hidden={holding || busy} reduced={reducedMotion} />
             {/* One line at every text size (the full text is the label), capped so the bar never grows. */}
-            <Animated.View pointerEvents={holding || busy ? "none" : "auto"} accessibilityElementsHidden={holding || busy} importantForAccessibility={holding || busy ? "no-hide-descendants" : "auto"} style={{ flex: 1, opacity: holding || busy ? 0 : 1, transitionProperty: "opacity", transitionDuration: 200, transitionTimingFunction: EASE_OUT }}>
+            <Animated.View pointerEvents={holding || busy ? "none" : "auto"} accessibilityElementsHidden={holding || busy} importantForAccessibility={holding || busy ? "no-hide-descendants" : "auto"} style={{ flex: 1, opacity: holding || busy ? 0 : 1, transitionProperty: "opacity", transitionDuration: 200, transitionTimingFunction: EASE_OUT_CSS }}>
               <Pressable accessibilityRole="button" accessibilityLabel={suggestion ? suggestion.label ?? `Ask Sona: ${suggestion.text}` : placeholder} accessibilityHint={suggestion ? "Opens Sona's answer" : "Opens the message composer"}
-                onPress={suggestion ? () => { haptic("select"); suggestion.onPress(); } : () => setMode("composing")}
-                style={({ pressed }) => ({ minHeight: 50, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, borderRadius: 25, borderCurve: "continuous", backgroundColor: pressed ? "rgba(240,244,252,0.96)" : "rgba(255,255,255,0.92)", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", boxShadow: "0 4px 16px rgba(40,70,140,0.10)" })}>
-                {suggestion && <Text maxFontSizeMultiplier={2} style={{ ...type.subhead, color: palette.blue }}>✦</Text>}
-                <Text numberOfLines={1} maxFontSizeMultiplier={2} style={{ flex: 1, ...type.subhead, fontWeight: suggestion ? "600" : "400", color: suggestion ? palette.blue : palette.placeholder }}>{suggestion?.text ?? placeholder}</Text>
+                onPress={suggestion ? () => { haptic("select"); suggestion.onPress(); } : () => setMode("composing")}>
+                {({ pressed }) => <Animated.View style={{ minHeight: 50, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, borderRadius: 25, borderCurve: "continuous", backgroundColor: pressed ? "rgba(240,244,252,0.96)" : "rgba(255,255,255,0.92)", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", boxShadow: "0 4px 16px rgba(40,70,140,0.10)", transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 }}>
+                  {suggestion && <Text maxFontSizeMultiplier={2} style={{ ...type.subhead, color: palette.blue }}>✦</Text>}
+                  <Text numberOfLines={1} maxFontSizeMultiplier={2} style={{ flex: 1, ...type.subhead, fontWeight: suggestion ? "600" : "400", color: suggestion ? palette.blue : palette.placeholder }}>{suggestion?.text ?? placeholder}</Text>
+                </Animated.View>}
               </Pressable>
             </Animated.View>
             <GestureDetector gesture={micGesture}>
               <Animated.View accessible accessibilityRole="button" accessibilityLabel={busy ? `${thinking}. Stop response` : "Talk to Sona"} accessibilityHint={busy ? undefined : handsfree ? "Double-tap to send what you said." : "Tap to talk hands-free, or hold and release to send. With VoiceOver, double-tap to use the sample command."} accessibilityActions={[{ name: "activate" }]} onAccessibilityAction={() => busy ? onCancel() : onSubmit(spokenPrompt)}
-                style={{ width: ORB, height: ORB, borderRadius: ORB / 2, alignItems: "center", justifyContent: "center", transform: [{ scale: holding && !reducedMotion ? 1.12 : 1 }], transitionProperty: "transform", transitionDuration: 320, transitionTimingFunction: EASE_OUT } as never}>
+                style={{ width: ORB, height: ORB, borderRadius: ORB / 2, alignItems: "center", justifyContent: "center", transform: [{ scale: holding && !reducedMotion ? 1.12 : 1 }], transitionProperty: "transform", transitionDuration: 320, transitionTimingFunction: EASE_OUT_CSS } as never}>
                 {/* Two pre-shadowed layers crossfaded by opacity: animating boxShadow would repaint it every frame. */}
-                <Animated.View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: ORB / 2, backgroundColor: palette.white, boxShadow: "0 8px 22px rgba(40,70,140,0.22)", opacity: holding ? 0 : 1, transitionProperty: "opacity", transitionDuration: 320, transitionTimingFunction: EASE_OUT }} />
-                <Animated.View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: ORB / 2, backgroundColor: palette.white, boxShadow: "0 10px 28px rgba(60,100,200,0.32)", opacity: holding ? 1 : 0, transitionProperty: "opacity", transitionDuration: 320, transitionTimingFunction: EASE_OUT }} />
+                <Animated.View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: ORB / 2, backgroundColor: palette.white, boxShadow: "0 8px 22px rgba(40,70,140,0.22)", opacity: holding ? 0 : 1, transitionProperty: "opacity", transitionDuration: 320, transitionTimingFunction: EASE_OUT_CSS }} />
+                <Animated.View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: ORB / 2, backgroundColor: palette.white, boxShadow: "0 10px 28px rgba(60,100,200,0.32)", opacity: holding ? 1 : 0, transitionProperty: "opacity", transitionDuration: 320, transitionTimingFunction: EASE_OUT_CSS }} />
                 <View style={{ position: "absolute", inset: 0 }}><GlassOrb size={ORB} energy={holding ? 1 : busy ? 0.7 : 0} still={reducedMotion} /></View>
                 <OrbGlyph activity={holding ? "listening" : activity ?? (busy ? "searching" : "idle")} still={reducedMotion} />
               </Animated.View>
@@ -309,7 +313,7 @@ export function VoiceDock(props: Props) {
             {busy && <Animated.View key={thinking} entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, scale: 0.96, duration: 240 })} exiting={FadeOut.duration(120)} pointerEvents="none"
               style={{ position: "absolute", bottom: BAR_H + 6, flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.control, backgroundColor: "rgba(255,255,255,0.9)", boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
               <Icon name="stop.fill" size={9} color={palette.muted} />
-              <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: "500", color: palette.ink, animationName: reducedMotion ? undefined : { "0%": { opacity: 1 }, "50%": { opacity: 0.5 }, "100%": { opacity: 1 } }, animationDuration: 1600, animationIterationCount: "infinite" } as never}>{thinking}</Text>
+              <Animated.Text numberOfLines={1} style={{ ...type.footnote, fontWeight: "500", color: palette.ink, animationName: reducedMotion ? undefined : { "0%": { opacity: 1 }, "50%": { opacity: 0.5 }, "100%": { opacity: 1 } }, animationDuration: 1600, animationIterationCount: "infinite" }}>{thinking}</Animated.Text>
             </Animated.View>}
           </View>
         </Animated.View>
@@ -317,7 +321,7 @@ export function VoiceDock(props: Props) {
         {composerMounted && <Animated.View pointerEvents={mode === "composing" ? "box-none" : "none"} onLayout={e => cardH.set(e.nativeEvent.layout.height)}
           style={[{ position: "absolute", bottom: 0, left: CARD_INSET, right: CARD_INSET, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10, gap: 12 }, composerStyle]}>
           {attachments.length > 0 && <AttachmentStrip items={attachments} onRemove={removeAttachment} size={84} />}
-          <TextInput autoFocus onBlur={() => setMode(current => current === "composing" ? "idle" : current)} accessibilityLabel="Ask Sona" value={draft} onChangeText={onDraft} placeholder={placeholder} placeholderTextColor="#7D8591" multiline style={{ fontSize: 17, lineHeight: 22, color: palette.ink, maxHeight: 120, minHeight: 26 }} />
+          <TextInput autoFocus onBlur={() => setMode(current => current === "composing" ? "idle" : current)} accessibilityLabel="Ask Sona" value={draft} onChangeText={onDraft} placeholder={placeholder} placeholderTextColor="#7D8591" multiline style={{ ...type.headline, fontWeight: "400", lineHeight: 22, color: palette.ink, maxHeight: 120, minHeight: 26 }} />
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             {tools && <>
               <ToolButton icon="image" label="Attach or review a chest X-ray" onPress={leave(props.onImage!)} />

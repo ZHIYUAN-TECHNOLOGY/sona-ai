@@ -1,20 +1,18 @@
 import * as Haptics from "expo-haptics";
 import { useEffect, type ReactNode } from "react";
-import { Pressable, View, type AccessibilityRole, type StyleProp, type ViewStyle } from "react-native";
-import Animated, { cubicBezier, useAnimatedProps, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
+import { Pressable, View, type AccessibilityRole, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
+import Animated, { type CSSStyle, useAnimatedProps, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 import { useReduceMotionPreference } from "./accessibility";
 import { BrandIcon } from "./brand-icon";
-import { EASE_OUT, LAYOUT } from "./motion";
+import { EASE_OUT, EASE_OUT_CSS as EASE, LAYOUT } from "./motion";
 import { Text } from "./text";
 import { palette, type, radius } from "./theme";
 import { Expand, glass, Icon, useAccessibleEffects } from "./ui";
 
 /**
  * Shared answer parts: press targets, check marks, quiet notes, disclosures and alert rows.
- * `EASE_OUT` in motion.ts is a worklet easing; CSS transitions need this `cubicBezier` form of the same curve.
  */
-const EASE = cubicBezier(0.23, 1, 0.32, 1);
 /** Neutral ring for an unconfirmed mark or a dashed rule. */
 export const RING = "rgba(89,97,107,0.42)";
 const AMBER_WASH = "rgba(139,85,24,0.08)";
@@ -23,11 +21,21 @@ const AMBER_WASH = "rgba(139,85,24,0.08)";
 export function useLayoutSpring() { return useReduceMotionPreference() ? undefined : LAYOUT; }
 
 /** Whole-row press target; feedback scale on press-in (120 ms), none under Reduce Motion. */
-export function Press({ children, onPress, disabled = false, style, scale = 0.98, accessibilityLabel, accessibilityHint, accessibilityRole = "button", expanded }: { children: ReactNode; onPress: () => void; disabled?: boolean; style?: StyleProp<ViewStyle>; scale?: number; accessibilityLabel?: string; accessibilityHint?: string; accessibilityRole?: AccessibilityRole; expanded?: boolean }) {
+export function Press({ children, onPress, disabled = false, style, scale = 0.98, accessibilityLabel, accessibilityHint, accessibilityRole = "button", expanded, hitSlop }: { children: ReactNode; onPress: () => void; disabled?: boolean; style?: StyleProp<ViewStyle>; scale?: number; accessibilityLabel?: string; accessibilityHint?: string; accessibilityRole?: AccessibilityRole; expanded?: boolean; hitSlop?: PressableProps["hitSlop"] }) {
   const reduced = useReduceMotionPreference();
-  return <Pressable accessibilityRole={accessibilityRole} accessibilityLabel={accessibilityLabel} accessibilityHint={accessibilityHint} accessibilityState={{ disabled, expanded }} disabled={disabled} onPress={onPress}>
+  return <Pressable accessibilityRole={accessibilityRole} accessibilityLabel={accessibilityLabel} accessibilityHint={accessibilityHint} accessibilityState={{ disabled, expanded }} disabled={disabled} onPress={onPress} hitSlop={hitSlop}>
     {({ pressed }) => <Animated.View style={[style, { transform: [{ scale: pressed && !reduced ? scale : 1 }], transitionProperty: "transform", transitionDuration: 120, transitionTimingFunction: EASE }]}>{children}</Animated.View>}
   </Pressable>;
+}
+
+/**
+ * A Pressable's press feedback that actually runs: plain components can't transition, so the scale
+ * lives on an inner Animated view (as in `Action` and `Chip`). 120 ms; still under Reduce Motion.
+ * `style` may add its own `transitionProperty` (e.g. opacity) after the default.
+ */
+export function PressScale({ pressed, scale = 0.96, style, children }: { pressed: boolean; scale?: number; style?: StyleProp<CSSStyle<ViewStyle>>; children?: ReactNode }) {
+  const reduced = useReduceMotionPreference();
+  return <Animated.View style={[{ transform: [{ scale: pressed && !reduced ? scale : 1 }], transitionProperty: "transform", transitionDuration: 120 }, style]}>{children}</Animated.View>;
 }
 
 /**
@@ -71,7 +79,7 @@ export function DrawnCheck({ size = 18, color = palette.white, strokeWidth = 2.4
 export function StatusLine({ state, children }: { state: MarkState; children: ReactNode }) {
   return <View style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
     <View style={{ paddingTop: 1 }}><Mark state={state} size={20} /></View>
-    <Text selectable style={{ flex: 1, fontSize: 15, lineHeight: 21, color: palette.ink }}>{children}</Text>
+    <Text selectable style={{ flex: 1, ...type.callout, color: palette.ink }}>{children}</Text>
   </View>;
 }
 
@@ -80,10 +88,10 @@ export function StatusLine({ state, children }: { state: MarkState; children: Re
  * leaves bare text (a touch tighter, with no glyph to align to) for a line that sits beside a link.
  */
 export function Caption({ icon = "info.circle", color = palette.muted, children }: { icon?: string | null; color?: string; children: ReactNode }) {
-  if (icon === null) return <Text selectable style={{ flex: 1, fontSize: 13, lineHeight: 18, color: palette.muted }}>{children}</Text>;
+  if (icon === null) return <Text selectable style={{ flex: 1, ...type.footnote, color: palette.muted }}>{children}</Text>;
   return <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
     <View style={{ paddingTop: 2 }}><Icon name={icon} size={14} color={color} /></View>
-    <Text selectable style={{ flex: 1, fontSize: 13, lineHeight: 19, color: palette.muted }}>{children}</Text>
+    <Text selectable style={{ flex: 1, ...type.footnote, lineHeight: 19, color: palette.muted }}>{children}</Text>
   </View>;
 }
 
@@ -112,7 +120,7 @@ export function TextLink({ label, onPress, disabled = false }: { label: string; 
 /** A failed write or read, said plainly in red, with Retry beside it. Never paired with a success line. */
 export function ErrorLine({ text, onRetry, retryLabel = "Retry" }: { text: string; onRetry?: () => void; retryLabel?: string }) {
   return <View accessibilityLiveRegion="polite" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-    <Text selectable style={{ flex: 1, fontSize: 13, lineHeight: 18, color: palette.red }}>{text}</Text>
+    <Text selectable style={{ flex: 1, ...type.footnote, color: palette.red }}>{text}</Text>
     {onRetry && <Press onPress={onRetry} accessibilityLabel={`${retryLabel}. ${text}`} scale={0.96} style={{ minHeight: 44, justifyContent: "center" }}>
       <Text style={{ ...type.callout, fontWeight: "600", color: palette.blue }}>{retryLabel}</Text>
     </Press>}
@@ -133,10 +141,10 @@ export function AlertRow({ title, kind, detail, children }: { title: string; kin
     <PairGlyph status="alert" />
     <View style={{ flex: 1, gap: 6 }}>
       <View style={{ gap: 2 }}>
-        <Text selectable style={{ fontSize: 16, lineHeight: 22, fontWeight: "600", color: palette.ink }}>{title}</Text>
+        <Text selectable style={{ ...type.body, lineHeight: 22, fontWeight: "600", color: palette.ink }}>{title}</Text>
         <Text style={{ ...type.caption, fontWeight: "600", letterSpacing: 0.2, color: palette.amber }}>{kind}</Text>
       </View>
-      <Text selectable style={{ fontSize: 15, lineHeight: 21, color: palette.ink }}>{detail}</Text>
+      <Text selectable style={{ ...type.callout, color: palette.ink }}>{detail}</Text>
       {children}
     </View>
   </View>;
@@ -158,20 +166,20 @@ export function Disclosure({ icon, title, detail, open, onToggle, first = false,
 }) {
   const { reducedMotion } = useAccessibleEffects();
   return <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={first ? undefined : { borderTopWidth: 1, borderColor: glass.hairline }}>
-    <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? (detail ? `${title}. ${detail}` : title)} accessibilityHint={accessibilityHint} accessibilityState={{ expanded: open }}
+    <Press accessibilityLabel={accessibilityLabel ?? (detail ? `${title}. ${detail}` : title)} accessibilityHint={accessibilityHint} expanded={open}
       onPress={() => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); onToggle(); }}
-      style={({ pressed }) => ({ flexDirection: "row", alignItems: detail ? "flex-start" : "center", gap: 12, paddingVertical: 14, transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+      style={{ flexDirection: "row", alignItems: detail ? "flex-start" : "center", gap: 12, paddingVertical: 14 }}>
       <IconDisc icon={icon} />
       <View style={{ flex: 1, gap: 2, paddingTop: detail ? 1 : 0 }}>
-        <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "600", color: palette.ink }}>{title}</Text>
-        {detail && <Text style={{ fontSize: 14, lineHeight: 20, color: palette.muted }}>{detail}</Text>}
+        <Text style={{ ...type.body, lineHeight: 22, fontWeight: "600", color: palette.ink }}>{title}</Text>
+        {detail && <Text style={{ ...type.subhead, color: palette.muted }}>{detail}</Text>}
       </View>
       <View style={{ paddingTop: detail ? 4 : 0 }}>
         <Animated.View style={{ transform: [{ rotate: open ? "180deg" : "0deg" }], transitionProperty: "transform", transitionDuration: reducedMotion ? 0 : 240, transitionTimingFunction: EASE }}>
           <Icon name="chevron.down" size={14} color={palette.muted} />
         </Animated.View>
       </View>
-    </Pressable>
+    </Press>
     {open && <Expand style={{ gap: 16, paddingBottom: 18 }}>{children}</Expand>}
   </Animated.View>;
 }

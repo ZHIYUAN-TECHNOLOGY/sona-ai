@@ -31,7 +31,7 @@ export function CareInvite({ encounterId }: { encounterId: string }) {
     <View style={{ flex: 1, gap: 4 }}>
       <Text style={{ ...type.overline, color: palette.blue }}>Sona Care</Text>
       <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{invite.joined ? "Patient has joined" : "Scan to follow up at home"}</Text>
-      <Text selectable style={{ fontSize: 18, fontWeight: "700", letterSpacing: 2, color: palette.ink, fontVariant: ["tabular-nums"] }}>{invite.code}</Text>
+      <Text selectable style={{ ...type.headline, fontWeight: "700", letterSpacing: 2, color: palette.ink, fontVariant: ["tabular-nums"] }}>{invite.code}</Text>
       <Text style={{ ...type.caption, color: palette.muted }}>Check-ins, leaflet and follow-ups on their own phone</Text>
     </View>
   </View>;

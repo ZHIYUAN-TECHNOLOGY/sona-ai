@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { View } from "react-native";
 import Animated from "react-native-reanimated";
 import { Text } from "@/components/sona/text";
-import { palette, radius } from "@/components/sona/theme";
+import { palette, radius, type } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import type { NoteSections } from "./model";
 
@@ -18,7 +18,7 @@ export function StateLine({ children, warning = false, icon }: { children: React
   const color = warning ? palette.amber : palette.muted;
   return <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
     <View style={{ paddingTop: 2 }}><Icon name={icon ?? (warning ? "exclamationmark.circle" : "info.circle")} size={15} color={color} /></View>
-    <Text selectable style={{ flex: 1, fontSize: 13, lineHeight: 19, color }}>{children}</Text>
+    <Text selectable style={{ ...type.footnote, flex: 1, lineHeight: 19, color }}>{children}</Text>
   </View>;
 }
 
@@ -35,4 +35,4 @@ export const noteMeta: Record<keyof NoteSections, { title: string; icon: string 
   plan: { title: "Plan", icon: "list.bullet.clipboard" },
 };
 
-export const fieldStyle = { backgroundColor: "rgba(20,28,40,0.04)", borderRadius: radius.control, borderCurve: "continuous", paddingHorizontal: 14, paddingVertical: 12, minHeight: 46, color: palette.ink, fontSize: 16, lineHeight: 24 } as const;
+export const fieldStyle = { ...type.body, backgroundColor: "rgba(20,28,40,0.04)", borderRadius: radius.control, borderCurve: "continuous", paddingHorizontal: 14, paddingVertical: 12, minHeight: 46, color: palette.ink } as const;

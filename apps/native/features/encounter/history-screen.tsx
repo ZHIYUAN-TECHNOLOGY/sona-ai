@@ -3,9 +3,10 @@ import { Text } from "@/components/sona/text";
 import { Host, Switch } from "@expo/ui";
 import { router } from "expo-router";
 import { useState, type ReactNode } from "react";
-import { Alert, Pressable, TextInput, View } from "react-native";
+import { Alert, TextInput, View } from "react-native";
 import { Action, Body, Card, Expand, Icon, Notice, Screen } from "@/components/sona/ui";
-import { palette, type } from "@/components/sona/theme";
+import { Press } from "@/components/sona/parts";
+import { palette, type, radius } from "@/components/sona/theme";
 import { authClient } from "@/lib/auth-client";
 import { queryClient } from "@/utils/orpc";
 import { TermLegend } from "@/components/sona/marked-text";
@@ -67,7 +68,7 @@ function SignIn() {
       onSuccess: () => { setPassword(""); setBusy(false); void queryClient.refetchQueries(); },
     });
   };
-  const field = { minHeight: 48, borderRadius: 14, paddingHorizontal: 14, backgroundColor: palette.surface, fontSize: 16, color: palette.ink } as const;
+  const field = { minHeight: 48, borderRadius: radius.control, paddingHorizontal: 14, backgroundColor: palette.surface, ...type.body, lineHeight: undefined, color: palette.ink } as const;
   return <View style={{ gap: 10 }}>
     <TextInput accessibilityLabel="Email" placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" autoComplete="email" keyboardType="email-address" textContentType="username" placeholderTextColor={palette.placeholder} style={field} />
     <TextInput accessibilityLabel="Password" placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry autoComplete="current-password" textContentType="password" returnKeyType="go" onSubmitEditing={submit} placeholderTextColor={palette.placeholder} style={field} />
@@ -80,11 +81,11 @@ function SignIn() {
 function DemoTools({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return <View style={{ gap: 12 }}>
-    <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(v => !v)} style={({ pressed }) => ({ minHeight: 52, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.6)", opacity: pressed ? 0.7 : 1 })}>
+    <Press expanded={open} onPress={() => setOpen(v => !v)} style={{ minHeight: 52, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, borderRadius: radius.group, backgroundColor: "rgba(255,255,255,0.6)" }}>
       <Icon name="wrench.and.screwdriver" size={15} color={palette.muted} />
       <Text style={{ ...type.callout, flex: 1, color: palette.ink }}>Demo tools <Text style={{ color: palette.muted }}>· clock, census, interruptions, reset</Text></Text>
       <Icon name={open ? "chevron.up" : "chevron.down"} size={12} color={palette.muted} />
-    </Pressable>
+    </Press>
     {open && <Expand style={{ gap: 18 }}>{children}</Expand>}
   </View>;
 }

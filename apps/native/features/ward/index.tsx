@@ -7,14 +7,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Expand, Icon, Insight, Surface, canvasImage, glass, tone as INK, useAccessibleEffects } from "@/components/sona/ui";
 import { mostUrgent } from "@/components/sona/tone";
 import { ASK_SPACE, WithSona } from "@/features/ask";
 import { soonest } from "@/features/ask/answers";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
-import { ErrorLine } from "@/components/sona/parts";
+import { ErrorLine, PressScale } from "@/components/sona/parts";
 import { api, errorText, useLive } from "@/features/live";
 import { useRole } from "@/features/live/roles";
 import { FollowUpList } from "@/features/findings";
@@ -194,10 +194,9 @@ export function WardScreen() {
             style={{ borderTopWidth: i ? 1 : 0, borderColor: glass.hairline }}>
             <Pressable ref={v => { tiles.current[bed.bed] = v; }} collapsable={false} accessibilityRole="button" accessibilityState={{ disabled: !bed.name }}
               accessibilityLabel={`${bed.bed}, ${bed.name ?? "no patient"}, ${bedTone(bed).label}, ${row.when}${row.flag ? `, ${row.flag}` : ""}`} accessibilityHint={bed.name ? "Opens the bed" : undefined}
-              onPress={() => bed.name && openBed(bed)}
-              style={({ pressed }) => ({ opacity: open?.bed === bed.bed ? 0 : 1, transform: [{ scale: pressed && bed.name && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+              onPress={() => bed.name && openBed(bed)}>{({ pressed }) => <PressScale pressed={pressed && !!bed.name} scale={0.98} style={{ opacity: open?.bed === bed.bed ? 0 : 1 }}>
               <RowFace bed={bed} />
-            </Pressable>
+            </PressScale>}</Pressable>
           </Animated.View>; })
           : <Animated.View key={`empty-${filter}`} entering={reducedMotion ? undefined : FadeIn.duration(200)} style={{ minHeight: 56, justifyContent: "center", paddingHorizontal: 12 }}>
             <Text style={{ ...type.subhead, color: palette.muted }}>{emptyLine(beds, filter)}</Text>
@@ -283,7 +282,7 @@ function BedCard({ bed, focus, from, to, p, owners, told, onAssign, assignError,
 
         <View style={{ gap: 4 }}>
           <Text style={{ ...type.overline, color: bed.blockers.length ? palette.amber : TEAL }}>{bed.blockers.length ? `${bed.blockers.length} holding the discharge` : "Nothing holding the discharge"}</Text>
-          {bed.blockers.map(b => { const owner = owners[b.id]; return <View key={b.id} style={{ gap: 10, paddingVertical: 12, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)", ...(b.id === focus ? { marginHorizontal: -10, paddingHorizontal: 10, borderRadius: 14, backgroundColor: "rgba(36,91,204,0.07)" } : {}) }}>
+          {bed.blockers.map(b => { const owner = owners[b.id]; return <View key={b.id} style={{ gap: 10, paddingVertical: 12, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)", ...(b.id === focus ? { marginHorizontal: -10, paddingHorizontal: 10, borderRadius: radius.control, backgroundColor: "rgba(36,91,204,0.07)" } : {}) }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{b.label}</Text>

@@ -25,8 +25,6 @@ export function useLive() {
 
 export const api = client;
 export const requestId = () => `app-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-/** Server blocker IDs for the demo bed (the server derives them from Amelia's admission). */
-export const serverBlockerId = (kind: string) => ({ gl: "adm-1042-gl", pharmacy: "adm-1042-meds", booking: "adm-1042-followup" } as Record<string, string>)[kind];
 /** The server's message, plus what is still open when it refused (claim criteria or discharge blockers). */
 export function errorText(e: unknown) {
   if (!e || typeof e !== "object") return "The server did not answer";

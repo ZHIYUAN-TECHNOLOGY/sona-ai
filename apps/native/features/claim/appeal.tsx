@@ -5,7 +5,7 @@ import { AccessibilityInfo, Pressable, TextInput, View, type TextStyle } from "r
 import Animated, { FadeIn } from "react-native-reanimated";
 import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
-import { ErrorLine } from "@/components/sona/parts";
+import { ErrorLine, PressScale } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
@@ -155,7 +155,7 @@ function Paragraph({ label, value, onChange }: { label: string; value: string; o
   const [focused, setFocused] = useState(false);
   return <TextInput value={value} onChangeText={onChange} multiline scrollEnabled={false} maxLength={1000} accessibilityLabel={label} accessibilityHint="Edit before sending"
     onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-    style={{ ...type.callout, color: palette.ink, minHeight: 44, paddingHorizontal: 10, paddingTop: 10, paddingBottom: 10, borderRadius: 12, borderCurve: "continuous", borderWidth: 1,
+    style={{ ...type.callout, color: palette.ink, minHeight: 44, paddingHorizontal: 10, paddingTop: 10, paddingBottom: 10, borderRadius: radius.control, borderCurve: "continuous", borderWidth: 1,
       borderColor: focused ? "rgba(36,91,204,0.35)" : "transparent", backgroundColor: focused ? "rgba(255,255,255,0.9)" : "rgba(20,28,40,0.035)" } as TextStyle} />;
 }
 
@@ -163,8 +163,8 @@ function Paragraph({ label, value, onChange }: { label: string; value: string; o
 function FromTheNote({ patientId, sentence }: { patientId: string; sentence: Sentence }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={`From the note: ${sentence.text}`} accessibilityHint="Opens the note sentence this point cites" hitSlop={{ top: 8, bottom: 8, left: 4, right: 12 }}
     onPress={() => { haptic("select"); router.push({ pathname: "/source", params: { id: "note", patientId, quote: sentence.text } }); }}
-    style={({ pressed }) => ({ alignSelf: "flex-start", marginLeft: 10, flexDirection: "row", alignItems: "center", gap: 5, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: "#E6EEFC", opacity: pressed ? 0.7 : 1 })}>
+    style={{ alignSelf: "flex-start", marginLeft: 10 }}>{({ pressed }) => <PressScale pressed={pressed} style={{ flexDirection: "row", alignItems: "center", gap: 5, height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: "#E6EEFC" }}>
     <Icon name="doc.text" size={11} color={palette.blue} />
     <Text style={{ ...type.caption, fontWeight: "600", color: palette.blue }}>From the note</Text>
-  </Pressable>;
+  </PressScale>}</Pressable>;
 }

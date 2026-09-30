@@ -1,3 +1,4 @@
+import { PressScale } from "@/components/sona/parts";
 import { JSONUIProvider, Renderer, defineRegistry } from "@json-render/react-native";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
@@ -132,7 +133,7 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
       {/* The composer sits at the bottom, like every chat, and rides up with the keyboard. */}
       <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 12), borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)", backgroundColor: palette.canvas }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 24, backgroundColor: palette.surface, paddingLeft: 10, paddingRight: 6, boxShadow: "0 4px 14px rgba(30,50,90,0.08)" }}>
-          <TextInput accessibilityLabel="Ask Sona" placeholder={PLACEHOLDER[scope]} value={text} onChangeText={setText} onSubmitEditing={ask} returnKeyType="send" placeholderTextColor={palette.placeholder} style={{ flex: 1, minHeight: 48, fontSize: 16, color: palette.ink }} />
+          <TextInput accessibilityLabel="Ask Sona" placeholder={PLACEHOLDER[scope]} value={text} onChangeText={setText} onSubmitEditing={ask} returnKeyType="send" placeholderTextColor={palette.placeholder} style={{ flex: 1, minHeight: 48, fontSize: type.body.fontSize, color: palette.ink }} />
           <RoundAction icon="send" label="Send" ready={!!text.trim()} onPress={ask} />
         </View>
       </View>
@@ -176,10 +177,10 @@ export function AskOrb({ scope, answers }: { scope: Scope; answers: Answer[] }) 
   const nudge = answers.find(a => a.worth);
   return <>
     <Pressable accessibilityRole="button" accessibilityLabel={`Ask Sona about ${SCOPE_LABEL[scope].toLowerCase()}`} accessibilityHint={nudge?.question} onPress={() => { tap(); setState({ open: true, shown: nudge ?? answers[0] }); }}
-      style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", backgroundColor: palette.white, boxShadow: "0 6px 18px rgba(40,70,140,0.2)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+    >{({ pressed }) => <PressScale pressed={pressed} style={{ width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", backgroundColor: palette.white, boxShadow: "0 6px 18px rgba(40,70,140,0.2)" }}>
       <View style={{ position: "absolute", inset: 0 }}><GlassOrb size={52} energy={0} still /></View>
       <OrbGlyph activity="idle" still />
-    </Pressable>
+    </PressScale>}</Pressable>
     <AskSheet scope={scope} answers={answers} state={state} onChange={setState} />
   </>;
 }

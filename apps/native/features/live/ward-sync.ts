@@ -5,7 +5,6 @@ import { api, useLive } from ".";
 import { useLiveChanges } from "./channel";
 
 export type ServerBed = Awaited<ReturnType<AppRouterClient["ward"]["beds"]>>[number];
-export type ServerForecast = Awaited<ReturnType<AppRouterClient["ward"]["forecast"]>>;
 
 /**
  * One live ward read. Re-read each time the ward comes into view (a discharge or a letter may have

@@ -1,3 +1,4 @@
+import { PressScale } from "@/components/sona/parts";
 import { elapsed } from "@sona-ai/domain/critical";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -7,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Icon, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { openSession } from "@/features/encounter/navigation";
 import { api, errorText, useLive } from "@/features/live";
 import { LockedAction, useRole } from "@/features/live/roles";
@@ -103,6 +104,7 @@ export function CriticalAlert() {
   const openVisit = () => { if (!done) return; setDone(undefined); openSession(done.patientId, { next: "briefing" }); };
 
   if (!waiting && !done) return null;
+  // Page and Acknowledge stay hand-built: `Action` has no red variant.
   const top = insets.top + 6;
   return <Animated.View key={waiting?.id ?? "done"} entering={reducedMotion ? undefined : riseIn({ distance: -18, duration: 320 })} exiting={FadeOut.duration(180)}
     accessibilityLiveRegion="assertive" style={{ position: "absolute", top, left: 12, right: 12, zIndex: 100, borderRadius: radius.group, borderCurve: "continuous", padding: 14, gap: 10,
@@ -116,25 +118,18 @@ export function CriticalAlert() {
       <Text selectable style={{ ...type.headline, color: palette.ink }}>{waiting.test} {waiting.value}{waiting.unit ? ` ${waiting.unit}` : ""} · {waiting.patientName}</Text>
       {!canAck ? role.role === "nurse" ? pagedAt
         ? <Text selectable accessibilityLiveRegion="polite" style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>Paged the doctor on call {clock(pagedAt)} · waiting for them to acknowledge <Text style={{ fontWeight: "400", color: palette.muted }}>(simulated page)</Text></Text>
-        : <Pressable accessibilityRole="button" accessibilityLabel={`Page the doctor about ${waiting.test} for ${waiting.patientName}`} accessibilityHint="A doctor acknowledges it; this sends a simulated page" onPress={page}
-          style={({ pressed }) => ({ minHeight: 44, borderRadius: 22, flexDirection: "row", gap: 8, alignItems: "center", justifyContent: "center", backgroundColor: palette.red, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+        : <Pressable accessibilityRole="button" accessibilityLabel={`Page the doctor about ${waiting.test} for ${waiting.patientName}`} accessibilityHint="A doctor acknowledges it; this sends a simulated page" onPress={page}>{({ pressed }) => <PressScale pressed={pressed} style={{ minHeight: 44, borderRadius: 22, flexDirection: "row", gap: 8, alignItems: "center", justifyContent: "center", backgroundColor: palette.red }}>
           <Icon name="bell.badge.fill" size={14} color={palette.white} /><Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>Page the doctor</Text>
-        </Pressable>
-        : <LockedAction label="Needs a doctor to acknowledge" path="results.acknowledge" height={44} /> : <Pressable accessibilityRole="button" accessibilityLabel={error ? `Retry acknowledging ${waiting.test} for ${waiting.patientName}` : `Acknowledge ${waiting.test} for ${waiting.patientName}`} disabled={busy} onPress={acknowledge}
-        style={({ pressed }) => ({ minHeight: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: palette.red, opacity: busy ? 0.6 : 1, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "opacity"], transitionDuration: 120 } as never)}>
+        </PressScale>}</Pressable>
+        : <LockedAction label="Needs a doctor to acknowledge" path="results.acknowledge" height={44} /> : <Pressable accessibilityRole="button" accessibilityLabel={error ? `Retry acknowledging ${waiting.test} for ${waiting.patientName}` : `Acknowledge ${waiting.test} for ${waiting.patientName}`} disabled={busy} onPress={acknowledge}>{({ pressed }) => <PressScale pressed={pressed} style={{ minHeight: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: palette.red, opacity: busy ? 0.6 : 1, transitionProperty: ["transform", "opacity"] }}>
         <Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>{busy ? "Acknowledging…" : error ? "Retry acknowledge" : "Acknowledge"}</Text>
-      </Pressable>}
+      </PressScale>}</Pressable>}
       {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
     </> : done && <>
       <Text selectable style={{ ...type.subhead, fontWeight: "600", color: palette.green }}>{done.text}</Text>
       <View style={{ flexDirection: "row", gap: 8 }}>
-        <Pressable accessibilityRole="button" accessibilityLabel={`Open ${done.name}'s visit`} onPress={openVisit}
-          style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: palette.ink, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-          <Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>Open {done.name}'s visit</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Dismiss the receipt" onPress={() => setDone(undefined)} style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}>
-          <Text style={{ ...type.callout, fontWeight: "600", color: palette.ink }}>Done</Text>
-        </Pressable>
+        <View style={{ flex: 1 }}><Action label={`Open ${done.name}'s visit`} onPress={openVisit} /></View>
+        <Action secondary label="Done" accessibilityLabel="Dismiss the receipt" onPress={() => setDone(undefined)} />
       </View>
     </>}
   </Animated.View>;

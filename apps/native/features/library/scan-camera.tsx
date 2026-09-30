@@ -1,3 +1,4 @@
+import { PressScale } from "@/components/sona/parts";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
@@ -7,11 +8,10 @@ import Animated, { Easing, FadeIn, LinearTransition, useAnimatedStyle, useDerive
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { CropStage, type CropHandle } from "@/components/sona/crop-stage";
-import { HalftoneGlint } from "@/components/sona/halftone-shimmer";
 import { canCrop, SonaCamera, type CameraHandle } from "@/components/sona/sona-camera";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Icon, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/scribe/parts";
 
 /**
@@ -152,9 +152,9 @@ export function ScanCameraScreen() {
         </View>
         <Pressable accessibilityRole="button" accessibilityLabel="Capture page" onPress={() => void capture()} disabled={(!live && !__DEV__) || busy}>
           {({ pressed }) => <View style={{ width: 76, height: 76, alignItems: "center", justifyContent: "center" }}>
-            <View style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: palette.ink, alignItems: "center", justifyContent: "center", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never}>
+            <PressScale pressed={pressed} style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: palette.ink, alignItems: "center", justifyContent: "center" }}>
               <View style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 2.5, borderColor: "rgba(255,255,255,0.92)" }} />
-            </View>
+            </PressScale>
           </View>}
         </Pressable>
         <View style={{ flex: 1, alignItems: "flex-end" }}>
@@ -179,13 +179,8 @@ export function ScanCameraScreen() {
           </View>
         </View>
         <View style={{ flexDirection: "row", gap: 10 }}>
-          <Pressable accessibilityRole="button" disabled={straightening} onPress={() => void settle(false)} style={({ pressed }) => ({ flex: 1, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(233,238,246,0.95)", borderWidth: 1, borderColor: palette.white, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
-            <Text style={{ ...type.callout, fontWeight: "600", color: palette.ink }}>Retake</Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" disabled={straightening} onPress={() => void settle(true)} style={({ pressed }) => ({ flex: 1.4, height: 46, borderRadius: 23, overflow: "hidden", alignItems: "center", justifyContent: "center", backgroundColor: palette.ink, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
-            <HalftoneGlint width={72} height={46} origin={[10, 2]} reach={[64, 40]} pitch={3} strength={0.7} tint={[0.62, 0.78, 1]} hueShift={0.6} style={{ top: 0, left: 0 }} />
-            <Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>{straightening ? "Straightening…" : "Next page"}</Text>
-          </Pressable>
+          <View style={{ flex: 1 }}><Action secondary label="Retake" disabled={straightening} onPress={() => void settle(false)} /></View>
+          <View style={{ flex: 1.4 }}><Action label={straightening ? "Straightening…" : "Next page"} disabled={straightening} onPress={() => void settle(true)} /></View>
         </View>
       </LightGlass>
     </Animated.View>

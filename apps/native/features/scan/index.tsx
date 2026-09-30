@@ -276,8 +276,8 @@ function Checklist({ ready, error, onFinished, onRetry, onSample }: { ready: boo
           style={{ minHeight: 52, flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 12 }}>
           <View style={{ width: 26, height: 26, alignItems: "center", justifyContent: "center" }}>
             {done ? <>
-              {!reducedMotion && <Animated.View entering={glowOut} style={{ position: "absolute", width: 26, height: 26, borderRadius: 13, backgroundColor: "rgba(40,104,80,0.45)" }} />}
-              <Animated.View entering={reducedMotion ? undefined : popIn} style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: palette.green, alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px rgba(40,140,100,0.45)" }}>
+              {!reducedMotion && <Animated.View entering={glowOut} style={{ position: "absolute", width: 26, height: 26, borderRadius: 13, backgroundColor: "rgba(15,110,102,0.45)" }} />}
+              <Animated.View entering={reducedMotion ? undefined : popIn} style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: palette.green, alignItems: "center", justifyContent: "center", boxShadow: "0 0 10px rgba(15,110,102,0.45)" }}>
                 <Icon name="checkmark" size={13} color={palette.white} />
               </Animated.View>
             </> : <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: current ? palette.blue : palette.line }} />}
@@ -385,7 +385,7 @@ function Review({ header, patientFirst, reading, live, busy, onApply }: { header
             </View>
             {editing === k
               ? <TextInput accessibilityLabel={`${SECTION_TITLE[k]} text`} value={note.sections[k]} onChangeText={v => setNote(n => ({ ...n, sections: { ...n.sections, [k]: v } }))} multiline autoFocus
-                style={{ ...type.callout, color: palette.ink, padding: 10, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.8)", borderWidth: 1, borderColor: "rgba(36,91,204,0.4)", minHeight: 64 }} />
+                style={{ ...type.callout, color: palette.ink, padding: 10, borderRadius: radius.control, backgroundColor: "rgba(255,255,255,0.8)", borderWidth: 1, borderColor: "rgba(36,91,204,0.4)", minHeight: 64 }} />
               : <Text selectable={false} accessibilityActions={inside.map(w => ({ name: `check-${w}`, label: `Check “${w}”` }))}
                   onAccessibilityAction={e => { const w = e.nativeEvent.actionName.slice(6); setFixing({ word: w, to: w }); }}
                   style={{ ...type.callout, color: palette.ink }}>
@@ -397,7 +397,7 @@ function Review({ header, patientFirst, reading, live, busy, onApply }: { header
               <Text style={{ ...type.footnote, color: palette.amber }}>{`Handwriting unclear: read as “${fixing.word}”. Compare with the photo, then keep or correct it.`}</Text>
               <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
                 <TextInput accessibilityLabel={`Correct “${fixing.word}”`} value={fixing.to} onChangeText={to => setFixing(f => f && { ...f, to })} onSubmitEditing={fix} autoFocus autoCapitalize="none" returnKeyType="done"
-                  style={{ flex: 1, height: 44, paddingHorizontal: 12, borderRadius: 12, ...type.callout, color: palette.ink, backgroundColor: "rgba(255,255,255,0.85)", borderWidth: 1, borderColor: "rgba(196,120,20,0.4)" }} />
+                  style={{ flex: 1, height: 44, paddingHorizontal: 12, borderRadius: radius.control, ...type.callout, color: palette.ink, backgroundColor: "rgba(255,255,255,0.85)", borderWidth: 1, borderColor: "rgba(196,120,20,0.4)" }} />
                 <Action label={fixing.to.trim() && fixing.to.trim() !== fixing.word ? "Correct" : "Keep"} onPress={fix} />
               </View>
             </Expand>}

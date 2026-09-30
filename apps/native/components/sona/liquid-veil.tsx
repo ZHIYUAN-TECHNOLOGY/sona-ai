@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import { StyleSheet, useWindowDimensions, type View } from "react-native";
 import { cancelAnimation, Easing, useDerivedValue, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { EASE_IN_OUT, EASE_OUT } from "./motion";
 
 /**
  * Aurora glass — Sona's listening surface.
@@ -139,8 +140,6 @@ function blurred(image: SkImage, width: number, height: number, radius: number) 
   return surface.makeImageSnapshot().makeNonTextureImage();
 }
 
-const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
-const EASE_IN_OUT = Easing.bezier(0.77, 0, 0.175, 1);
 
 export type VeilState = "idle" | "listening" | "flood";
 

@@ -3,7 +3,7 @@ import { BrandIcon } from "@/components/sona/brand-icon";
 import { HalftoneGlint } from "@/components/sona/halftone-shimmer";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { glass } from "@/components/sona/ui";
 import { DrawnCheck, RING } from "@/components/sona/parts";
 import * as Haptics from "expo-haptics";
@@ -30,8 +30,8 @@ export function Hairline({ inset = 0 }: { inset?: number }) {
 
 export function Detail({ label, value }: { label: string; value: string }) {
   return <View style={{ gap: 2 }}>
-    <Text style={{ fontSize: 12, lineHeight: 16, fontWeight: "500", color: palette.muted }}>{label}</Text>
-    <Text selectable style={{ fontSize: 15, lineHeight: 21, color: palette.ink }}>{value}</Text>
+    <Text style={{ ...type.caption, fontWeight: "500", color: palette.muted }}>{label}</Text>
+    <Text selectable style={{ ...type.callout, color: palette.ink }}>{value}</Text>
   </View>;
 }
 

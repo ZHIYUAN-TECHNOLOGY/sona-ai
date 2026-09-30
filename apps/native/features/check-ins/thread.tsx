@@ -3,7 +3,7 @@ import { AccessibilityInfo, ActivityIndicator, Linking, Pressable, View } from "
 import Animated, { FadeIn } from "react-native-reanimated";
 import { MarkedText } from "@/components/sona/marked-text";
 import { LAYOUT, type riseIn } from "@/components/sona/motion";
-import { ErrorLine } from "@/components/sona/parts";
+import { ErrorLine, PressScale } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Chip, Icon, useAccessibleEffects } from "@/components/sona/ui";
@@ -147,24 +147,23 @@ export function FlagActions({ item }: { item: DayItem }) {
           ? `Her ${f.test} (${f.label.toLowerCase()}) is due ${new Date(f.dueAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Asia/Kuala_Lumpur" })}. Same trip?`
           : `Her ${f.label.toLowerCase()} has no follow-up yet.`}</Text>
         <Pressable accessibilityRole="button" accessibilityLabel={`Add ${f.test} to the same visit`} onPress={() => add(f)} hitSlop={{ top: 5, bottom: 5 }}
-          style={({ pressed }) => ({ alignSelf: "flex-start", minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: palette.ink, opacity: pressed ? 0.8 : 1 })}>
+          style={{ alignSelf: "flex-start" }}>{({ pressed }) => <PressScale pressed={pressed} style={{ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: palette.ink }}>
           <Icon name="plus" size={12} color={palette.white} />
           <Text style={{ ...type.subhead, fontWeight: "600", color: palette.white }}>Add {f.test} to this visit</Text>
-        </Pressable>
+        </PressScale>}</Pressable>
       </View>)}
     {visit && visit.toAdd.length > 0 && <Pressable accessibilityRole="button" accessibilityLabel="Done with this flag" onPress={() => releaseFlag(taskId)} hitSlop={{ top: 5, bottom: 5 }}
-      style={({ pressed }) => ({ alignSelf: "flex-start", minHeight: 34, justifyContent: "center", paddingHorizontal: 12, borderRadius: 17, backgroundColor: "rgba(20,28,40,0.06)", opacity: pressed ? 0.7 : 1 })}>
+      style={{ alignSelf: "flex-start" }}>{({ pressed }) => <PressScale pressed={pressed} style={{ minHeight: 34, justifyContent: "center", paddingHorizontal: 12, borderRadius: 17, backgroundColor: "rgba(20,28,40,0.06)" }}>
       <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>Done</Text>
-    </Pressable>}
+    </PressScale>}</Pressable>}
     {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
   </Animated.View>;
   if (!canCall && !canBook) return live && item.patientId ? <DoseLine patientId={item.patientId} /> : null;
   const pill = (label: string, icon: string, primary: boolean, onPress: () => void, extra?: { expanded?: boolean; busy?: boolean; a11y?: string }) =>
-    <Pressable key={label} accessibilityRole="button" accessibilityLabel={extra?.a11y ?? label} accessibilityState={{ expanded: extra?.expanded, busy: extra?.busy }} disabled={extra?.busy} onPress={onPress} hitSlop={{ top: 5, bottom: 5 }}
-      style={({ pressed }) => ({ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: primary ? palette.ink : extra?.expanded ? "rgba(36,91,204,0.12)" : "rgba(20,28,40,0.06)", opacity: pressed || extra?.busy ? 0.7 : 1 })}>
+    <Pressable key={label} accessibilityRole="button" accessibilityLabel={extra?.a11y ?? label} accessibilityState={{ expanded: extra?.expanded, busy: extra?.busy }} disabled={extra?.busy} onPress={onPress} hitSlop={{ top: 5, bottom: 5 }}>{({ pressed }) => <PressScale pressed={pressed} style={{ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: primary ? palette.ink : extra?.expanded ? "rgba(36,91,204,0.12)" : "rgba(20,28,40,0.06)", opacity: extra?.busy ? 0.7 : 1 }}>
       <Icon name={icon} size={12} color={primary ? palette.white : extra?.expanded ? palette.blue : palette.ink} />
       <Text style={{ ...type.subhead, fontWeight: "600", color: primary ? palette.white : extra?.expanded ? palette.blue : palette.ink }}>{label}</Text>
-    </Pressable>;
+    </PressScale>}</Pressable>;
   return <View style={{ gap: 6 }}>
     {live && item.patientId && <DoseLine patientId={item.patientId} />}
     {dialled && <Text selectable style={{ ...type.footnote, color: palette.muted }}>Dialled the ward line, {WARD_PHONE.display} (no patient number on file). Log the call when you're done.</Text>}

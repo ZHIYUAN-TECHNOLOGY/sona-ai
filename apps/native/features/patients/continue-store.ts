@@ -21,7 +21,6 @@ export const useContinueState = () => useSyncExternalStore(subscribe, () => stat
 export const touch = (id: string) => set({ touched: { ...state.touched, [id]: Date.now() } });
 export const setCensus = (census: boolean) => set({ census });
 export const unpin = (id: string) => set({ pins: state.pins.filter(p => p.id !== id) });
-export const isPinned = (id: string) => state.pins.some(p => p.id === id);
 /** Pin a patient; at the cap, returns the oldest pin for the caller to offer replacing (`replaceOldest`). */
 export function pin(id: string): Pin | undefined {
   const plan = planPin(state.pins, id, Date.now());

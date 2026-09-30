@@ -63,8 +63,8 @@ function Row({ icon, title, detail, onPress }: { icon: string; title: string; de
   return <Press onPress={onPress} accessibilityLabel={`${title}. ${detail}`} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14 }}>
     <IconDisc icon={icon} />
     <View style={{ flex: 1, gap: 2 }}>
-      <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "600", color: palette.ink }}>{title}</Text>
-      <Text style={{ fontSize: 14, lineHeight: 20, color: palette.muted }}>{detail}</Text>
+      <Text style={{ ...type.body, lineHeight: 22, fontWeight: "600", color: palette.ink }}>{title}</Text>
+      <Text style={{ ...type.subhead, color: palette.muted }}>{detail}</Text>
     </View>
     <Icon name="chevron.right" size={12} color={palette.muted} />
   </Press>;

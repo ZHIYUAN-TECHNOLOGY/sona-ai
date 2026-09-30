@@ -62,8 +62,8 @@ export function AddSourceSheet() {
       style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, opacity: working ? 0.45 : 1 }}>
       <IconDisc icon="doc.richtext" />
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "600", color: palette.ink }}>Upload a PDF</Text>
-        <Text style={{ fontSize: 14, lineHeight: 20, color: palette.muted }}>A guideline, protocol or paper, up to 10 MB</Text>
+        <Text style={{ ...type.body, lineHeight: 22, fontWeight: "600", color: palette.ink }}>Upload a PDF</Text>
+        <Text style={{ ...type.subhead, color: palette.muted }}>A guideline, protocol or paper, up to 10 MB</Text>
       </View>
       <Icon name="chevron.right" size={12} color={palette.muted} />
     </Press>,
@@ -71,8 +71,8 @@ export function AddSourceSheet() {
       style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, opacity: working ? 0.45 : 1 }}>
       <IconDisc icon="doc.viewfinder" />
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "600", color: palette.ink }}>Scan paper pages</Text>
-        <Text style={{ fontSize: 14, lineHeight: 20, color: palette.muted }}>Printed guidelines and protocols. X-rays go on the patient's visit</Text>
+        <Text style={{ ...type.body, lineHeight: 22, fontWeight: "600", color: palette.ink }}>Scan paper pages</Text>
+        <Text style={{ ...type.subhead, color: palette.muted }}>Printed guidelines and protocols. X-rays go on the patient's visit</Text>
       </View>
       <Icon name="chevron.right" size={12} color={palette.muted} />
     </Press>,
@@ -152,7 +152,7 @@ function PubMedImport({ disabled, preview, onAdd }: { disabled: boolean; preview
     {error && <ErrorLine text={error} />}
     {found && <Expand style={{ gap: 12 }}>
       <View style={{ gap: 4, padding: 14, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: palette.canvas }}>
-        <Text selectable style={{ fontSize: 15, lineHeight: 21, fontWeight: "600", color: palette.ink }}>{found.title}</Text>
+        <Text selectable style={{ ...type.callout, fontWeight: "600", color: palette.ink }}>{found.title}</Text>
         <Text style={{ ...type.footnote, color: palette.muted }}>{[found.journal, found.year, `PMID ${found.pmid}`, `${found.sections} abstract part${found.sections === 1 ? "" : "s"}`].filter(Boolean).join(" · ")}</Text>
         <TextLink label="Open in PubMed" onPress={() => void Linking.openURL(found.url)} />
       </View>
@@ -181,7 +181,7 @@ function StatusPanel({ status, scope, onAnother }: { status: Status; scope: Libr
     <View style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
       <View style={{ paddingTop: 1 }}><Mark state={status.state === "working" ? "pending" : status.state === "done" ? "done" : "blocked"} size={22} /></View>
       <View style={{ flex: 1, gap: 3 }}>
-        <Text numberOfLines={2} style={{ fontSize: 15, lineHeight: 21, fontWeight: "600", color: palette.ink }}>{status.state === "done" ? status.added.title : status.label}</Text>
+        <Text numberOfLines={2} style={{ ...type.callout, fontWeight: "600", color: palette.ink }}>{status.state === "done" ? status.added.title : status.label}</Text>
         {status.state === "working" && <Text style={{ ...type.footnote, color: palette.muted }}>Reading it, checking for patient details, cutting it into sections…</Text>}
         {status.state === "done" && <Text style={{ ...type.footnote, color: palette.muted }}>Added {status.added.sections} section{status.added.sections === 1 ? "" : "s"}{status.added.pages ? ` from ${status.added.pages} page${status.added.pages === 1 ? "" : "s"}` : ""}. {whose(status.added.scope)}</Text>}
         {status.state === "refused" && <Text selectable style={{ ...type.footnote, color: scan ? palette.muted : palette.red }}>{scan ? "This PDF is a scan, so there is no text to read directly. OCR can read the pages for you to review." : status.error}</Text>}

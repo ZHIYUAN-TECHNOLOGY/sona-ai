@@ -111,7 +111,7 @@ export function PrescriptionPanel({ patient, result, onSource, onRequest, onOpen
           </View>)}
           {!!prescription?.audit?.length && <View style={{ gap: 6 }}>
             <Text style={{ ...type.caption, fontWeight: "500", color: palette.muted }}>Audit trail</Text>
-            {prescription.audit.map((entry, index) => <Text key={`${index}-${entry}`} selectable style={{ fontSize: 13, lineHeight: 19, color: palette.ink }}>{entry}</Text>)}
+            {prescription.audit.map((entry, index) => <Text key={`${index}-${entry}`} selectable style={{ ...type.footnote, lineHeight: 19, color: palette.ink }}>{entry}</Text>)}
           </View>}
           {prescription?.inputs && <Detail label="Captured inputs" value={`Weight: ${prescription.inputs.weightKg || "unknown"} kg. Paracetamol allergy: ${prescription.inputs.paracetamolAllergy}. Liver: ${prescription.inputs.liverDisease}. Kidney: ${prescription.inputs.kidneyDisease}. Alcohol risk: ${prescription.inputs.alcoholRisk}.`} />}
         </Expand>}

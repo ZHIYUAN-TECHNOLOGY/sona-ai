@@ -2,9 +2,10 @@ import { Text } from "@/components/sona/text";
 import { LegendList, type LegendListRef } from "@legendapp/list/react-native";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { Fragment, useCallback, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
-import { Alert, Pressable, ScrollView, TextInput, View } from "react-native";
+import { Alert, ScrollView, TextInput, View } from "react-native";
 import { ListRow } from "@/components/sona/list";
 import { Chip, Icon, Insight, Tone, canvasImage, useAccessibleEffects } from "@/components/sona/ui";
+import { Press } from "@/components/sona/parts";
 import { palette, type, radius } from "@/components/sona/theme";
 import { mostUrgent } from "@/components/sona/tone";
 import { GROUPS, letters, listItems, syntheticCensus, type Group, type Item, type Row, type View as Tab } from "@/features/patients/census";
@@ -92,10 +93,10 @@ export function PatientScreen() {
     const first = index === 0 || items[index - 1]!.kind === "header";
     const last = index === items.length - 1 || items[index + 1]!.kind === "header";
     const shape = { backgroundColor: palette.white, borderTopLeftRadius: first ? radius.group : 0, borderTopRightRadius: first ? radius.group : 0, borderBottomLeftRadius: last ? radius.group : 0, borderBottomRightRadius: last ? radius.group : 0, borderTopWidth: first ? 0 : 1, borderColor: "rgba(20,28,40,0.06)" };
-    if (item.kind === "more") return <Pressable accessibilityRole="button" accessibilityLabel={`Show ${item.hidden} more in ${GROUPS.find(g => g.id === item.group)!.title}`} onPress={() => setOpened(o => new Set([...o, item.group]))}
-      style={({ pressed }) => ({ ...shape, minHeight: 48, justifyContent: "center", paddingHorizontal: 16, opacity: pressed ? 0.6 : 1 })}>
+    if (item.kind === "more") return <Press accessibilityLabel={`Show ${item.hidden} more in ${GROUPS.find(g => g.id === item.group)!.title}`} onPress={() => setOpened(o => new Set([...o, item.group]))}
+      style={{ ...shape, minHeight: 48, justifyContent: "center", paddingHorizontal: 16 }}>
       <Text style={{ ...type.subhead, fontWeight: "600", color: palette.blue }}>{GROUPS.find(g => g.id === item.group)!.shown ? `Show ${item.hidden} more` : `Show ${item.hidden}`}</Text>
-    </Pressable>;
+    </Press>;
     const r = item.row;
     return <ListRow title={r.name} badge={r.id === patient?.id ? <Text style={{ fontWeight: "500", color: palette.blue }}>  · current</Text> : undefined} detail={r.reason} tone={r.tone} initials={r.initials} trailing={r.where.replace(/^(Clinic|Bed) /, "")}
       edges={{ first, last }} onPress={r.open ? () => setOpen(r.id) : undefined} accessibilityHint={r.open ? "Shows the patient summary and actions" : undefined}
@@ -108,7 +109,7 @@ export function PatientScreen() {
   const header = <View style={{ gap: 14, paddingBottom: 14 }}>
     <Stack.Screen options={{ title: picking ? "Choose a patient" : "Patients" }} />
     <Insight>{insight.map((part, i) => [i ? " · " : "", part])}</Insight>
-    <View style={{ borderRadius: 18, backgroundColor: palette.surface, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14 }}><Icon name="magnifyingglass" color={palette.muted} size={18} /><TextInput accessibilityLabel="Search patients" placeholder={`Search ${rows.length} patients by name, ID or bed`} value={query} onChangeText={setQuery} placeholderTextColor={palette.placeholder} clearButtonMode="while-editing" style={{ flex: 1, minHeight: 52, fontSize: 17, color: palette.ink }} /></View>
+    <View style={{ borderRadius: radius.control, backgroundColor: palette.surface, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14 }}><Icon name="magnifyingglass" color={palette.muted} size={18} /><TextInput accessibilityLabel="Search patients" placeholder={`Search ${rows.length} patients by name, ID or bed`} value={query} onChangeText={setQuery} placeholderTextColor={palette.placeholder} clearButtonMode="while-editing" style={{ flex: 1, minHeight: 52, ...type.headline, fontWeight: "400", lineHeight: undefined, color: palette.ink }} /></View>
     {!query && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }} style={{ marginHorizontal: -20 }} contentInset={{ left: 20, right: 20 }} contentOffset={{ x: -20, y: 0 }}>
       {/* The design system's pill: the picked tab is ink, like every picked option. */}
       {tabs.map(t => <Chip key={t.id} label={`${t.label} ${count(t.id)}`} selected={t.id === tab} accessibilityLabel={`${t.label}, ${count(t.id)}`} onPress={() => setTab(t.id)} />)}
@@ -151,7 +152,7 @@ function AtoZ({ rows, items, list }: { rows: Row[]; items: Item[]; list: RefObje
       onLayout={() => strip.current?.measureInWindow((_x, y, _w, h) => { box.current = { y, h: h || 1 }; })}
       onStartShouldSetResponder={() => true} onResponderGrant={e => jump(Math.floor(((e.nativeEvent.pageY - box.current.y) / box.current.h) * all.length))} onResponderMove={e => read(e.nativeEvent.pageY)}
       style={{ width: 44, alignItems: "center", paddingVertical: 4 }}>
-      {all.map(l => <Text key={l} style={{ fontSize: 11, lineHeight: 15, fontWeight: "700", color: palette.blue }}>{l}</Text>)}
+      {all.map(l => <Text key={l} style={{ ...type.overline, lineHeight: 15, color: palette.blue }}>{l}</Text>)}
     </View>
   </View>;
 }

@@ -48,17 +48,17 @@ export function InteractionResults({ patient, onSource }: Pick<FeatureProps, "pa
   return <Animated.View layout={layout} style={{ gap: 10 }}>
     {!current ? <View style={{ flexDirection: "row", gap: 14, alignItems: "center" }}>
       <View style={{ width: 24, alignItems: "center" }}><Mark state={reviewing ? "pending" : "open"} size={20} /></View>
-      <Text selectable style={{ flex: 1, fontSize: 15, lineHeight: 21, color: palette.ink }}>{reviewing ? "Checking combinations…" : "Interactions not checked since the list changed"}</Text>
+      <Text selectable style={{ ...type.callout, flex: 1, color: palette.ink }}>{reviewing ? "Checking combinations…" : "Interactions not checked since the list changed"}</Text>
     </View>
     : !pairs.length ? <Footnote>No medication pair to evaluate.</Footnote>
     : <Animated.View layout={layout} entering={reduced ? FadeIn.duration(150) : riseIn({ distance: 8, duration: 280 })} style={{ gap: 10 }}>
       {alerts.map(pair => <AlertRow key={pair.id} title={`${pair.left} + ${pair.right}`} kind={statusLabel.alert} detail={pair.detail}>
-        <Text selectable style={{ fontSize: 14, lineHeight: 20, color: palette.muted }}>{betaBlockerAlert.qualifiers}</Text>
+        <Text selectable style={{ ...type.subhead, color: palette.muted }}>{betaBlockerAlert.qualifiers}</Text>
         <SourceRef id={interactionSource.id} label={interactionSource.title} kind="reference" onPress={openSource} />
       </AlertRow>)}
       {quiet.length > 0 && <Press onPress={() => setDetails(value => !value)} expanded={details} accessibilityLabel={`${summary}. ${details ? "Hide" : "Show"} pairs`} style={{ flexDirection: "row", gap: 14, alignItems: "center", minHeight: 44 }}>
         <View style={{ width: 24, alignItems: "center" }}><PairGlyph status={unresolved ? "unresolved" : "uncovered"} /></View>
-        <Text style={{ flex: 1, fontSize: 15, lineHeight: 21, color: palette.ink }}>{summary}</Text>
+        <Text style={{ ...type.callout, flex: 1, color: palette.ink }}>{summary}</Text>
         <Animated.View style={{ transform: [{ rotate: details ? "180deg" : "0deg" }], transitionProperty: "transform", transitionDuration: 200 }}><Icon name="chevron.down" size={12} color={palette.blue} /></Animated.View>
       </Press>}
       {details && <Expand style={{ gap: 10 }}>
@@ -68,7 +68,7 @@ export function InteractionResults({ patient, onSource }: Pick<FeatureProps, "pa
             <View accessible accessibilityLabel={`${pair.left} plus ${pair.right}. ${statusLabel[pair.status]}`} style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 12 }}>
               <PairGlyph status={pair.status} />
               <View style={{ flex: 1, gap: 2 }}>
-                <Text selectable style={{ fontSize: 15, lineHeight: 21, color: palette.ink }}>{pair.left} <Text style={{ color: palette.muted }}>+</Text> {pair.right}</Text>
+                <Text selectable style={{ ...type.callout, color: palette.ink }}>{pair.left} <Text style={{ color: palette.muted }}>+</Text> {pair.right}</Text>
                 <Text style={{ ...type.caption, fontWeight: "600", color: palette.muted }}>{statusLabel[pair.status]}</Text>
               </View>
             </View>

@@ -2,12 +2,12 @@ import { Collapsible, Column, Host, Picker, Text as NativeText, TextInput, useNa
 import { useEffect, useState, type ReactNode } from "react";
 import { View, type KeyboardTypeOptions } from "react-native";
 import { Card, Label } from "@/components/sona/ui";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 
 export function ClinicalField({ label, value, onChange, multiline = false, keyboardType = "default" }: { label: string; value: string; onChange: (value: string) => void; multiline?: boolean; keyboardType?: KeyboardTypeOptions }) {
   const text = useNativeState(value);
   useEffect(() => { if (text.value !== value) text.value = value; }, [text, value]);
-  return <View style={{ gap: 7 }}><Label muted>{label}</Label><Host matchContents={{ vertical: true }} colorScheme="light" style={{ minHeight: multiline ? 88 : 48 }}><TextInput value={text} onChangeText={onChange} multiline={multiline} keyboardType={keyboardType} placeholder={label} testID={`clinical-${label.toLowerCase().replaceAll(" ", "-")}`} textStyle={{ color: palette.ink, fontSize: 17 }} style={{ padding: 12, backgroundColor: "#EDF0F5", borderRadius: 12 }} /></Host></View>;
+  return <View style={{ gap: 7 }}><Label muted>{label}</Label><Host matchContents={{ vertical: true }} colorScheme="light" style={{ minHeight: multiline ? 88 : 48 }}><TextInput value={text} onChangeText={onChange} multiline={multiline} keyboardType={keyboardType} placeholder={label} testID={`clinical-${label.toLowerCase().replaceAll(" ", "-")}`} textStyle={{ color: palette.ink, fontSize: 17 /* the SwiftUI field keeps iOS body size */ }} style={{ padding: 12, backgroundColor: "#EDF0F5", borderRadius: radius.control }} /></Host></View>;
 }
 
 export function ClinicalChoice<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: { value: T; label: string }[]; onChange: (value: T) => void }) {

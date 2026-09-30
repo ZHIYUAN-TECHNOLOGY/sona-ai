@@ -10,7 +10,7 @@ import { Linking, Pressable, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import Animated, { cancelAnimation, Easing, FadeIn, FadeOut, useSharedValue, withRepeat, withSpring, withTiming } from "react-native-reanimated";
 import { SampleLabel } from "@/components/sona/model-answer";
-import { Caption } from "@/components/sona/parts";
+import { Caption, PressScale } from "@/components/sona/parts";
 import { HalftoneShimmer } from "@/components/sona/halftone-shimmer";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { IconRow, Section } from "@/components/sona/sections";
@@ -79,8 +79,7 @@ export function XrayCard({ onOpen, onRequest, result }: FeatureProps) {
 function Preview({ source, label, onPress }: { source?: ImageSource | number; label: string; onPress: () => void }) {
   const { reducedMotion } = useAccessibleEffects();
   return <Animated.View entering={reducedMotion ? undefined : riseIn({ distance: 8, scale: 0.97 })}>
-    <Pressable accessibilityRole={source ? "imagebutton" : "button"} accessibilityLabel={label} accessibilityHint={source ? "Opens the original image" : undefined} onPress={onPress}
-      style={({ pressed }) => ({ ...VIEWING, aspectRatio: 1.25, transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+    <Pressable accessibilityRole={source ? "imagebutton" : "button"} accessibilityLabel={label} accessibilityHint={source ? "Opens the original image" : undefined} onPress={onPress}>{({ pressed }) => <PressScale pressed={pressed} scale={0.98} style={{ ...VIEWING, aspectRatio: 1.25 }}>
       {source
         ? <Image source={source} contentFit="contain" style={{ flex: 1 }} transition={reducedMotion ? 0 : 200} />
         : <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 10 }}><Icon name="photo" size={32} color={palette.line} /><Text style={{ ...type.callout, color: palette.line }}>Add a teaching image</Text></View>}
@@ -88,7 +87,7 @@ function Preview({ source, label, onPress }: { source?: ImageSource | number; la
         <Icon name="arrow.up.left.and.arrow.down.right" size={14} color={palette.white} />
       </View>}
       <ImageEdge />
-    </Pressable>
+    </PressScale>}</Pressable>
   </Animated.View>;
 }
 
@@ -106,7 +105,7 @@ function AnalysisStatus({ interrupted }: { interrupted: boolean }) {
   return <View accessibilityLiveRegion="polite" onLayout={e => setSize(e.nativeEvent.layout)} style={[surfaceStyle, { borderRadius: radius.group, padding: 14, gap: 3 }]}>
     {live && size.width > 0 && <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: radius.control, overflow: "hidden" }}><HalftoneShimmer width={size.width} height={size.height} progress={sweep} /></View>}
     <Text style={{ ...type.subhead, fontWeight: "600", color: interrupted ? palette.amber : palette.ink }}>{interrupted ? "Response interrupted" : "Analysing"}</Text>
-    <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>{interrupted ? "The preview and attachment are kept." : "Preparing the sample response. No image inference is running."}</Text>
+    <Text selectable style={{ ...type.footnote, lineHeight: 19, color: palette.muted }}>{interrupted ? "The preview and attachment are kept." : "Preparing the sample response. No image inference is running."}</Text>
   </View>;
 }
 
@@ -118,7 +117,7 @@ function AnalysisDetails({ snapshot }: { snapshot?: Pick<Encounter, "imagingAtta
   const scenario = snapshot.imagingScenario ?? "reference";
   const summary = snapshot.hideTeachingImage ? undefined : teachingImage?.referenceSummary;
   return <View style={{ gap: 14 }}>
-    <Text accessibilityRole="header" style={{ fontSize: 17, fontWeight: "600", letterSpacing: -0.2, color: palette.ink }}>Analysis</Text>
+    <Text accessibilityRole="header" style={{ ...type.headline, fontWeight: "600", letterSpacing: -0.2, color: palette.ink }}>Analysis</Text>
     <Findings scenario={scenario} attachment={attachment} summary={summary} />
     <Limits sample={attachment || scenario !== "reference"} />
   </View>;
@@ -186,16 +185,17 @@ function menuIn() {
 type MenuItem = { label: string; icon: string; disabled?: boolean; onPress: () => void };
 /** The `⋯` trigger, placed in the navigation header's right slot; it dips while its menu is open. */
 function MenuTrigger({ open, onPress }: { open: boolean; onPress: () => void }) {
+  const { reducedMotion } = useAccessibleEffects();
   return <Pressable accessibilityRole="button" accessibilityLabel="Image options" accessibilityState={{ expanded: open }} onPress={() => { haptic(); onPress(); }} hitSlop={6}
-    style={({ pressed }) => ({ ...pillStyle, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", transform: [{ scale: pressed ? 0.96 : open ? 0.92 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+   >{({ pressed }) => <Animated.View style={{ ...pillStyle, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", transform: [{ scale: reducedMotion ? 1 : pressed ? 0.96 : open ? 0.92 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never}>
     <Icon name="ellipsis" size={18} />
-  </Pressable>;
+  </Animated.View>}</Pressable>;
 }
 /** Secondary image actions: a compact glass menu that springs open from the header's `⋯`. */
 function MenuPanel({ items, onClose }: { items: MenuItem[]; onClose: () => void }) {
   const { reducedMotion } = useAccessibleEffects();
   return <Animated.View entering={reducedMotion ? FadeIn.duration(120) : menuIn} exiting={FadeOut.duration(120)} style={{ position: "absolute", top: 0, right: 0, width: 224, zIndex: 10, transformOrigin: "top right", boxShadow: "0 12px 32px rgba(24,32,48,0.18)", borderRadius: radius.group }}>
-    <Glass style={{ borderRadius: 18, paddingVertical: 4 }}>
+    <Glass style={{ borderRadius: radius.card, paddingVertical: 4 }}>
       {items.map(item => <Pressable key={item.label} accessibilityRole="button" accessibilityState={{ disabled: item.disabled }} disabled={item.disabled} onPress={() => { onClose(); item.onPress(); }}
         style={({ pressed }) => ({ minHeight: 44, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 10, opacity: item.disabled ? 0.4 : 1, backgroundColor: pressed ? "rgba(20,28,40,0.06)" : "transparent" })}>
         <Icon name={item.icon} size={17} />
@@ -284,13 +284,13 @@ export function XrayScreen() {
     <Section icon="photo" tone="blue" title="An original image belongs here" subtitle="Image review will preserve the original pixels, with zoom, pan and reset controls.">
       <View style={[VIEWING, { minHeight: 250, alignItems: "center", justifyContent: "center", gap: 18, padding: 26 }]}>
         <Icon name="photo.badge.exclamationmark" color={palette.line} size={40} />
-        <Text selectable style={{ color: palette.line, fontSize: 16, lineHeight: 24, textAlign: "center" }}>No licensed teaching radiograph has been attached to this demonstration.</Text>
+        <Text selectable style={{ ...type.body, color: palette.line, textAlign: "center" }}>No licensed teaching radiograph has been attached to this demonstration.</Text>
         <ImageEdge />
       </View>
       <Notice>There is no image analysis result to interpret. This empty state does not indicate a normal chest X-ray.</Notice>
     </Section>
     <Surface feature style={{ padding: 18, gap: 14 }}>
-      <Text selectable style={{ fontSize: 15, lineHeight: 21, color: palette.muted, paddingRight: 40 }}>{`Choose a deidentified teaching image you have permission to use. ${server.live ? "It stays in your hospital’s storage and" : "It stays on this device and"} is not analysed.`}</Text>
+      <Text selectable style={{ ...type.callout, color: palette.muted, paddingRight: 40 }}>{`Choose a deidentified teaching image you have permission to use. ${server.live ? "It stays in your hospital’s storage and" : "It stays on this device and"} is not analysed.`}</Text>
       <Action label={picking ? "Opening photo library…" : "Choose teaching image"} icon="photo.badge.plus" disabled={picking} onPress={pickImage} />
       {pickerError && <Notice warning>{pickerError}</Notice>}
     </Surface>
@@ -300,7 +300,7 @@ export function XrayScreen() {
   const latest = encounter?.cards.findLast(card => card.kind === "xray" && card.imagingSnapshot)?.imagingSnapshot;
   // The decision stays in view: what analysing does, then the button.
   return <ViewerPage scrollEnabled={!zoomed} bottom={<>
-    <Text style={{ fontSize: 13, lineHeight: 18, paddingHorizontal: 4, color: palette.muted }}>Answers in the visit · a sample response, nothing is read from the image</Text>
+    <Text style={{ ...type.footnote, paddingHorizontal: 4, color: palette.muted }}>Answers in the visit · a sample response, nothing is read from the image</Text>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
       <View style={{ flex: 1 }}><Action label={analysing ? "Analysing…" : "Analyse X-ray"} icon="sparkles" disabled={analysing || picking} onPress={analyse} /></View>
       <AskOrb scope="xray" answers={[toFollowUp(findings)]} />

@@ -10,7 +10,7 @@ import { palette, type, radius } from "./theme";
 import { CT_NOTE, IMAGE_TYPES, NOT_ATTACHED, type ImageType } from "./image-type";
 import { CropStage, type CropHandle } from "./crop-stage";
 import { canCrop } from "./sona-camera";
-import { useAccessibleEffects } from "./ui";
+import { Action, useAccessibleEffects } from "./ui";
 
 /**
  * Capture scan (after CapWords' snap-and-mask): the shutter freezes the photo, a band of blue
@@ -95,12 +95,8 @@ export function CaptureScan({ source, width, height, suggested = "Chest X-ray", 
       </View>
       {!confirm && <TypeChips value={kind} onChange={setKind} enterDelay={reducedMotion ? undefined : 900} />}
       <View style={{ flexDirection: "row", gap: 10 }}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Retake photo" onPress={onRetake} style={({ pressed }) => ({ flex: 1, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)", opacity: pressed ? 0.8 : 1 })}>
-          <Text style={{ ...type.body, fontWeight: "600", color: palette.ink }}>Retake</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel={confirm?.action ?? `Attach as ${kind}`} disabled={kind === NOT_ATTACHED || busy} onPress={() => void attach()} style={({ pressed }) => ({ flex: 2, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", backgroundColor: palette.ink, opacity: kind === NOT_ATTACHED ? 0.35 : 1, transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: ["transform", "opacity"], transitionDuration: 120 } as never)}>
-          <Text style={{ ...type.body, fontWeight: "600", color: palette.white }}>{kind === NOT_ATTACHED ? "Not attached" : busy ? "Straightening…" : confirm?.action ?? `Attach as ${kind}`}</Text>
-        </Pressable>
+        <View style={{ flex: 1 }}><Action secondary label="Retake" accessibilityLabel="Retake photo" onPress={onRetake} /></View>
+        <View style={{ flex: 2 }}><Action accessibilityLabel={confirm?.action ?? `Attach as ${kind}`} disabled={kind === NOT_ATTACHED || busy} onPress={() => void attach()} label={kind === NOT_ATTACHED ? "Not attached" : busy ? "Straightening…" : confirm?.action ?? `Attach as ${kind}`} /></View>
       </View>
     </Animated.View>
   </View>;
@@ -108,11 +104,13 @@ export function CaptureScan({ source, width, height, suggested = "Chest X-ray", 
 
 /** The image types as ink-when-chosen chips (a radio group); the capture sheet and the photo review share them. */
 export function TypeChips({ value, onChange, enterDelay }: { value?: ImageType; onChange: (kind: ImageType) => void; enterDelay?: number }) {
+  const { reducedMotion } = useAccessibleEffects();
   return <View accessibilityRole="radiogroup" style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
     {IMAGE_TYPES.map((item, i) => <Animated.View key={item} entering={enterDelay === undefined ? undefined : FadeIn.delay(enterDelay + i * 40).duration(220)}>
-      <Pressable accessibilityRole="radio" accessibilityState={{ selected: item === value }} onPress={() => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); onChange(item); }} hitSlop={{ top: 4, bottom: 4 }}
-        style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: "center", borderWidth: 1, borderColor: item === value ? palette.ink : "rgba(20,28,40,0.1)", backgroundColor: item === value ? palette.ink : palette.white, transitionProperty: ["backgroundColor", "borderColor"], transitionDuration: 150 } as never}>
-        <Text style={{ ...type.callout, fontWeight: "500", color: item === value ? palette.white : palette.ink, transitionProperty: "color", transitionDuration: 150 } as never}>{item}</Text>
+      <Pressable accessibilityRole="radio" accessibilityState={{ selected: item === value }} onPress={() => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); onChange(item); }} hitSlop={{ top: 4, bottom: 4 }}>
+        {({ pressed }) => <Animated.View style={{ minHeight: 40, paddingHorizontal: 14, borderRadius: 20, justifyContent: "center", borderWidth: 1, borderColor: item === value ? palette.ink : "rgba(20,28,40,0.1)", backgroundColor: item === value ? palette.ink : palette.white, transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor", "borderColor"], transitionDuration: 150 }}>
+          <Animated.Text style={{ ...type.callout, fontWeight: "500", color: item === value ? palette.white : palette.ink, transitionProperty: "color", transitionDuration: 150 }}>{item}</Animated.Text>
+        </Animated.View>}
       </Pressable>
     </Animated.View>)}
   </View>;

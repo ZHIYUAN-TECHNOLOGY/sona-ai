@@ -1,3 +1,4 @@
+import { PressScale } from "@/components/sona/parts";
 import { router, Stack } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Keyboard, KeyboardAvoidingView, Pressable, TextInput, View } from "react-native";
@@ -39,8 +40,8 @@ function InterimSegment({ speaker, text, tone, reduced }: { speaker: string; tex
         <Text style={{ ...type.footnote, fontWeight: "600", color: tone }}>{speaker}</Text>
         <Text style={{ ...type.caption, color: palette.muted }}>Interim · not finalized</Text>
       </View>
-      <Text style={{ fontSize: 16, lineHeight: 24, color: palette.muted }}>{text}…</Text>
-      <Text style={{ fontSize: 12, lineHeight: 17, color: palette.muted }}>Provisional sample text cannot be used in a note until finalized.</Text>
+      <Text style={{ ...type.body, color: palette.muted }}>{text}…</Text>
+      <Text style={{ ...type.caption, lineHeight: 17, color: palette.muted }}>Provisional sample text cannot be used in a note until finalized.</Text>
     </View>
   </View>;
 }
@@ -84,7 +85,7 @@ function TranscriptSegment({ line, interpretation, tone, last, fresh }: { line: 
       <TextInput accessibilityLabel="Speaker label" value={speaker} onChangeText={value => updateDraft({ speaker: value })} style={fieldStyle} />
       {interpretation ? <>
         <Label>Original · for comparison</Label>
-        <Text selectable style={{ fontSize: 15, lineHeight: 22, color: palette.muted }}>{original}</Text>
+        <Text selectable style={{ ...type.callout, lineHeight: 22, color: palette.muted }}>{original}</Text>
         <Label>English interpretation · clinician edited</Label>
         <TextInput accessibilityLabel="Edit English interpretation" value={english} multiline onChangeText={value => updateDraft({ english: value })} style={[fieldStyle, { minHeight: 95 }]} textAlignVertical="top" />
       </> : <>
@@ -99,8 +100,7 @@ function TranscriptSegment({ line, interpretation, tone, last, fresh }: { line: 
 
   const locked = Boolean(draft);
   const shown = interpretation ? line.english : line.original;
-  return <Pressable accessibilityRole="button" accessibilityLabel={`${line.speaker}${line.corrected ? ", corrected" : ""}: ${shown}`} accessibilityHint={locked ? "Finish the current correction first" : interpretation ? "Review English interpretation" : "Correct text or speaker"} accessibilityState={{ disabled: locked }} disabled={locked} onPress={startEdit}
-    style={({ pressed }) => ({ flexDirection: "row", gap: 12, transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+  return <Pressable accessibilityRole="button" accessibilityLabel={`${line.speaker}${line.corrected ? ", corrected" : ""}: ${shown}`} accessibilityHint={locked ? "Finish the current correction first" : interpretation ? "Review English interpretation" : "Correct text or speaker"} accessibilityState={{ disabled: locked }} disabled={locked} onPress={startEdit}>{({ pressed }) => <PressScale pressed={pressed} scale={0.98} style={{ flexDirection: "row", gap: 12 }}>
     <Rail tone={tone} last={last} />
     <Animated.View entering={fresh ? FadeIn.duration(220) : undefined} style={{ flex: 1, gap: 6, paddingBottom: 22 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
@@ -110,15 +110,15 @@ function TranscriptSegment({ line, interpretation, tone, last, fresh }: { line: 
           <Text style={{ ...type.footnote, color: palette.blue }}>{interpretation ? "Review" : "Correct"}</Text>
         </View>}
       </View>
-      <Text style={{ fontSize: 16, lineHeight: 24, color: palette.ink }}>{shown}</Text>
+      <Text style={{ ...type.body, color: palette.ink }}>{shown}</Text>
       {line.corrected && !line.englishReviewed && <StateLine warning>Original corrected. The English interpretation shown is a previous draft and needs review.</StateLine>}
       {line.englishReviewed && <StateLine icon="checkmark.circle">English interpretation · clinician confirmed</StateLine>}
       {line.corrected && captured && <View style={{ borderLeftWidth: 2, borderColor: RAIL, paddingLeft: 10, gap: 2 }}>
         <Text style={{ ...type.caption, fontWeight: "600", color: palette.muted }}>Captured original · preserved</Text>
-        <Text style={{ fontSize: 14, lineHeight: 20, color: palette.muted }}>{captured.speaker}: {captured.original}</Text>
+        <Text style={{ ...type.subhead, color: palette.muted }}>{captured.speaker}: {captured.original}</Text>
       </View>}
     </Animated.View>
-  </Pressable>;
+  </PressScale>}</Pressable>;
 }
 
 function statusFor(capture: Capture, recording: string | undefined): { label: string; tone: string } {
@@ -205,8 +205,8 @@ export function RecordingScreen() {
         </View>
         <View style={{ gap: 6 }}>
           <View accessible accessibilityLabel={`Elapsed ${elapsedLabel(encounter.recordingSeconds)} of ${elapsedLabel(total)}`} style={{ flexDirection: "row", alignItems: "baseline", gap: 8 }}>
-            <Text selectable style={{ fontSize: 52, fontWeight: "300", color: palette.ink, letterSpacing: -2, fontVariant: ["tabular-nums"] }}>{elapsedLabel(encounter.recordingSeconds)}</Text>
-            <Text style={{ fontSize: 17, color: palette.muted, fontVariant: ["tabular-nums"] }}>/ {elapsedLabel(total)}</Text>
+            <Text selectable style={{ fontSize: 52 /* timer numerals, off the scale */, fontWeight: "300", color: palette.ink, letterSpacing: -2, fontVariant: ["tabular-nums"] }}>{elapsedLabel(encounter.recordingSeconds)}</Text>
+            <Text style={{ ...type.body, color: palette.muted, fontVariant: ["tabular-nums"] }}>/ {elapsedLabel(total)}</Text>
           </View>
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
             <LiveWaveform state={active ? "live" : idle ? "idle" : "held"} reducedMotion={reducedMotion} />
@@ -224,14 +224,14 @@ export function RecordingScreen() {
         {(capture === "permission" || capture === "denied") && <Expand key="permission" style={{ gap: 12 }}>
           <Text style={{ ...type.caption, fontWeight: "600", letterSpacing: 0.3, color: palette.blue }}>Synthetic permission state</Text>
           <Text style={{ ...type.headline, color: palette.ink }}>{capture === "denied" ? "Microphone access unavailable" : "Before a real consultation"}</Text>
-          <Text selectable style={{ fontSize: 15, lineHeight: 22, color: palette.muted }}>{capture === "denied" ? "This fixture represents denied permission. No operating-system permission was requested. You can grant access in the simulation and continue." : "A connected recorder would request microphone permission and confirm consultation consent here. This prototype plays an authored sample without recording audio."}</Text>
+          <Text selectable style={{ ...type.callout, lineHeight: 22, color: palette.muted }}>{capture === "denied" ? "This fixture represents denied permission. No operating-system permission was requested. You can grant access in the simulation and continue." : "A connected recorder would request microphone permission and confirm consultation consent here. This prototype plays an authored sample without recording audio."}</Text>
           <Action label="Allow in simulation · play sample" icon="play.fill" onPress={play} />
-          {capture === "permission" && <Action label="Simulate denied permission" secondary onPress={() => { haptic("warn"); setCapture("denied"); }} />}
+          {showDemoControls && capture === "permission" && <Action label="Simulate denied permission" secondary onPress={() => { haptic("warn"); setCapture("denied"); }} />}
         </Expand>}
         {capture === "failed" && <Expand key="failed" style={{ gap: 12 }}>
           <Text style={{ ...type.caption, fontWeight: "600", letterSpacing: 0.3, color: palette.amber }}>Synthetic capture failure</Text>
           <Text style={{ ...type.headline, color: palette.ink }}>The sample was interrupted</Text>
-          <Text selectable style={{ fontSize: 15, lineHeight: 22, color: palette.muted }}>Finalized dialogue and corrections are kept. Retry continues from the last sample position; it does not duplicate captured segments.</Text>
+          <Text selectable style={{ ...type.callout, lineHeight: 22, color: palette.muted }}>Finalized dialogue and corrections are kept. Retry continues from the last sample position; it does not duplicate captured segments.</Text>
           <Action label="Retry remaining sample" icon="arrow.clockwise" onPress={play} />
         </Expand>}
         {capture === "interrupted" && <StateLine warning>Simulated interruption. Playback is paused and finalized transcript segments are preserved. Resume when ready.</StateLine>}
@@ -252,7 +252,7 @@ export function RecordingScreen() {
           <Chip label="Prototype controls" expanded={prototype} onPress={() => setPrototype(value => !value)} />
         </View>}
         {showDemoControls && (active || paused) && prototype && <Expand key="prototype" style={{ gap: 10 }}>
-          <Text style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>Exercise recovery without using a microphone.</Text>
+          <Text style={{ ...type.footnote, lineHeight: 19, color: palette.muted }}>Exercise recovery without using a microphone.</Text>
           <Action label="Simulate interruption" secondary onPress={() => { haptic("warn"); setCapture("interrupted"); updateEncounter(current => ({ ...current, recording: "paused" })); }} />
           <Action label="Simulate capture failure" secondary onPress={() => { haptic("warn"); setCapture("failed"); updateEncounter(current => ({ ...current, recording: "stopped" })); }} />
         </Expand>}

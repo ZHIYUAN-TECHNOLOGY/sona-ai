@@ -49,10 +49,10 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
             accessibilityLabel={`${entry.name}. ${identity}. ${state}`} accessibilityHint={draft || !edit.allowed ? undefined : entry.confirmed ? "Correct this medicine" : "Confirm ingredient and formulation"} style={[row, draft && !editing && { opacity: 0.5 }]}>
             <MedicineThumb look={resolveMedicine(entry.ingredient, entry.formulation)} confirmed={entry.confirmed} />
             <View style={{ flex: 1, gap: 2 }}>
-              <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: palette.ink }}>{entry.name}</Text>
-              <Text style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{identity}</Text>
+              <Text style={{ ...type.body, lineHeight: 22, fontWeight: "500", color: palette.ink }}>{entry.name}</Text>
+              <Text style={{ ...type.subhead, lineHeight: 19, color: palette.muted }}>{identity}</Text>
               {/* A proposal from a scanned handwritten note waits here until the doctor confirms it. */}
-              {entry.change && !entry.confirmed && <Text style={{ fontSize: 13, lineHeight: 18, fontWeight: "600", color: entry.change === "new" ? palette.blue : entry.change === "changed" ? palette.amber : palette.muted }}>{entry.change === "new" ? "New" : entry.change === "changed" ? "Changed" : "Stopped"} · from a scanned note</Text>}
+              {entry.change && !entry.confirmed && <Text style={{ ...type.footnote, fontWeight: "600", color: entry.change === "new" ? palette.blue : entry.change === "changed" ? palette.amber : palette.muted }}>{entry.change === "new" ? "New" : entry.change === "changed" ? "Changed" : "Stopped"} · from a scanned note</Text>}
             </View>
             {!draft && edit.allowed && <Text style={{ ...type.subhead, fontWeight: "500", color: palette.blue }}>{entry.confirmed ? "Correct" : "Confirm"}</Text>}
           </Press>
@@ -75,8 +75,8 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
           accessibilityLabel={`Proposed medicine, ${encounter?.proposedMedicine ?? "Paracetamol"}`} accessibilityHint={editProposed || !edit.allowed ? undefined : "Change proposed medicine"} style={row}>
           <MedicineThumb look={resolveMedicine(encounter?.proposedMedicine ?? "Paracetamol", "tablet")} confirmed badge={false} />
           <View style={{ flex: 1, gap: 2 }}>
-            <Text style={{ fontSize: 12, lineHeight: 17, fontWeight: "600", color: palette.muted }}>Proposed medicine</Text>
-            <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: palette.ink }}>{encounter?.proposedMedicine ?? "Paracetamol"}</Text>
+            <Text style={{ ...type.caption, lineHeight: 17, fontWeight: "600", color: palette.muted }}>Proposed medicine</Text>
+            <Text style={{ ...type.body, lineHeight: 22, fontWeight: "500", color: palette.ink }}>{encounter?.proposedMedicine ?? "Paracetamol"}</Text>
           </View>
           {!editProposed && edit.allowed && <Text style={{ ...type.subhead, fontWeight: "500", color: palette.blue }}>Change</Text>}
         </Press>
@@ -88,7 +88,7 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
       </Animated.View>
     </Surface>
     <Animated.View layout={layout} style={{ gap: 6 }}>
-      {edit.error && <Text accessibilityLiveRegion="polite" style={{ fontSize: 13, lineHeight: 18, color: palette.amber }}>{edit.error}</Text>}
+      {edit.error && <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber }}>{edit.error}</Text>}
       <Footnote>A correction invalidates earlier checks. Only the authored paracetamol scenario has simulated coverage. Thumbnails show the dosage form, not a specific brand.</Footnote>
     </Animated.View>
   </Section>;

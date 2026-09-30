@@ -1,3 +1,4 @@
+import { PressScale } from "@/components/sona/parts";
 import { clinicSlots, DOCTORS, slotWords } from "@sona-ai/domain/doctors";
 import { type ReactNode, useEffect, useState, useSyncExternalStore } from "react";
 import { AccessibilityInfo, ActivityIndicator, Pressable, ScrollView, TextInput, View } from "react-native";
@@ -114,7 +115,7 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
 /** One care-team doctor: initials, name and specialty; the chosen one lifts to white with a check. */
 function DoctorRow({ name, specialty, selected, onPress }: { name: string; specialty: string; selected: boolean; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={`With ${name}, ${specialty}`} accessibilityState={{ selected }} onPress={onPress}>
-    {({ pressed }) => <Animated.View style={{ minHeight: 52, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 10, borderRadius: 16, borderCurve: "continuous", borderWidth: 1,
+    {({ pressed }) => <Animated.View style={{ minHeight: 52, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 10, borderRadius: radius.control, borderCurve: "continuous", borderWidth: 1,
       borderColor: selected ? glass.hairline : "transparent", backgroundColor: selected ? palette.white : "transparent", boxShadow: selected ? "0 6px 16px -10px rgba(20,28,40,0.35)" : undefined,
       transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: ["transform", "backgroundColor", "borderColor"], transitionDuration: 180 } as never}>
       <View style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: selected ? palette.blue : "rgba(36,91,204,0.12)" }}>
@@ -134,11 +135,11 @@ function DoctorRow({ name, specialty, selected, onPress }: { name: string; speci
 /** A clinic day as a small calendar tile: weekday over the date; the chosen one fills ink. */
 function DayTile({ weekday, date, label, selected, onPress }: { weekday: string; date: string; label: string; selected: boolean; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected }} onPress={onPress}>
-    {({ pressed }) => <Animated.View style={{ width: 54, height: 62, alignItems: "center", justifyContent: "center", gap: 2, borderRadius: 16, borderCurve: "continuous", borderWidth: 1,
+    {({ pressed }) => <Animated.View style={{ width: 54, height: 62, alignItems: "center", justifyContent: "center", gap: 2, borderRadius: radius.control, borderCurve: "continuous", borderWidth: 1,
       borderColor: selected ? palette.ink : glass.hairline, backgroundColor: selected ? palette.ink : "rgba(255,255,255,0.8)",
-      transform: [{ scale: pressed ? 0.95 : 1 }], transitionProperty: ["transform", "backgroundColor", "borderColor"], transitionDuration: 160 } as never}>
+      transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor", "borderColor"], transitionDuration: 160 } as never}>
       <Text style={{ ...type.caption, fontWeight: "600", color: selected ? "rgba(255,255,255,0.7)" : palette.muted }}>{weekday}</Text>
-      <Text style={{ fontSize: 19, fontWeight: "700", color: selected ? palette.white : palette.ink }}>{date}</Text>
+      <Text style={{ ...type.heading, fontWeight: "700", color: selected ? palette.white : palette.ink }}>{date}</Text>
     </Animated.View>}
   </Pressable>;
 }
@@ -188,11 +189,10 @@ export function BookingActions({ item }: { item: DayItem }) {
     }, e => { setError(errorText(e)); release(item.id); }).finally(() => setBusy(false));
   };
   if (done) return <DoneLine text={done} />;
-  const pill = (label: string, icon: string, dark: boolean, onPress: () => void) => <Pressable key={label} accessibilityRole="button" accessibilityLabel={`${label} ${first}'s request`} disabled={busy} onPress={onPress} hitSlop={{ top: 5, bottom: 5 }}
-    style={({ pressed }) => ({ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: dark ? palette.ink : "rgba(20,28,40,0.06)", opacity: pressed || busy ? 0.7 : 1 })}>
+  const pill = (label: string, icon: string, dark: boolean, onPress: () => void) => <Pressable key={label} accessibilityRole="button" accessibilityLabel={`${label} ${first}'s request`} disabled={busy} onPress={onPress} hitSlop={{ top: 5, bottom: 5 }}>{({ pressed }) => <PressScale pressed={pressed} style={{ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 17, backgroundColor: dark ? palette.ink : "rgba(20,28,40,0.06)", opacity: busy ? 0.7 : 1 }}>
     <Icon name={icon} size={12} color={dark ? palette.white : palette.ink} />
     <Text style={{ ...type.subhead, fontWeight: "600", color: dark ? palette.white : palette.ink }}>{label}</Text>
-  </Pressable>;
+  </PressScale>}</Pressable>;
   return <View style={{ gap: 8 }}>
     {!declining ? <View style={{ flexDirection: "row", gap: 8 }}>
       {pill(busy ? "Confirming…" : "Confirm", "checkmark", true, () => decide("confirm"))}
@@ -200,7 +200,7 @@ export function BookingActions({ item }: { item: DayItem }) {
     </View> : <Expand style={{ gap: 8 }}>
       <TextInput value={note} onChangeText={setNote} autoFocus placeholder={`Note for ${first} (optional), e.g. Wednesday 9:00 works`} placeholderTextColor={palette.placeholder} maxLength={500}
         accessibilityLabel={`Note for ${first}, optional`} returnKeyType="send" onSubmitEditing={() => decide("decline")}
-        style={{ minHeight: 40, borderRadius: radius.control, borderCurve: "continuous", paddingHorizontal: 12, fontSize: 15, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
+        style={{ minHeight: 40, borderRadius: radius.control, borderCurve: "continuous", paddingHorizontal: 12, fontSize: type.callout.fontSize, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
       <View style={{ flexDirection: "row", gap: 8 }}>
         {pill(busy ? "Declining…" : "Decline and tell them", "paperplane", true, () => decide("decline"))}
         {pill("Back", "chevron.left", false, () => setDeclining(false))}

@@ -1,7 +1,9 @@
 import { BrandIcon, type BrandIconName } from "@/components/sona/brand-icon";
 import { DataPill } from "@/components/sona/model-answer";
+import { useReduceMotionPreference } from "@/components/sona/accessibility";
+import { Press } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
-import { palette, type } from "@/components/sona/theme";
+import { palette, type, radius } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import { useOpenAudit } from "@/features/audit";
 import { useInboxSummary } from "@/features/inbox";
@@ -31,17 +33,19 @@ type Item = { label: string; icon?: BrandIconName; sf?: string; onPress: () => v
 
 function Row({ item }: { item: Item }) {
   const badge = item.badge?.count ? item.badge : undefined;
-  return <Pressable accessibilityRole="button" accessibilityLabel={[item.label, item.detail].filter(Boolean).join(", ")} accessibilityState={{ selected: item.active }} onPress={item.onPress}
-    style={({ pressed }) => ({ minHeight: 50, flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 14, borderRadius: 16, borderCurve: "continuous", backgroundColor: item.active ? "rgba(20,28,40,0.07)" : pressed ? "rgba(20,28,40,0.04)" : "transparent", transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 120 } as never)}>
+  const reduced = useReduceMotionPreference();
+  return <Pressable accessibilityRole="button" accessibilityLabel={[item.label, item.detail].filter(Boolean).join(", ")} accessibilityState={{ selected: item.active }} onPress={item.onPress}>
+    {({ pressed }) => <Animated.View style={{ minHeight: 50, flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 14, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: item.active ? "rgba(20,28,40,0.07)" : pressed ? "rgba(20,28,40,0.04)" : "transparent", transform: [{ scale: pressed && !reduced ? 0.98 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 120 }}>
     <View style={{ width: 23, alignItems: "center" }}>{item.sf ? <Icon name={item.sf} size={20} color={palette.ink} /> : <BrandIcon name={item.icon!} size={23} color={palette.ink} strokeWidth={item.active ? 1.9 : 1.5} />}</View>
     <View style={{ flex: 1 }}>
-      <Text numberOfLines={1} style={{ fontSize: 17, color: palette.ink, fontWeight: item.active ? "600" : "400" }}>{item.label}</Text>
+      <Text numberOfLines={1} style={{ ...type.headline, color: palette.ink, fontWeight: item.active ? "600" : "400" }}>{item.label}</Text>
       {item.detail && <Text numberOfLines={1} style={{ ...type.footnote, color: palette.muted, marginTop: 1 }}>{item.detail}</Text>}
     </View>
     {/* Red only when something must not wait; the detail line already says it, so VoiceOver skips the badge. */}
     {badge && <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, backgroundColor: badge.urgent ? palette.red : palette.blue, alignItems: "center", justifyContent: "center" }}>
       <Text style={{ ...type.caption, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{badge.count}</Text>
     </View>}
+    </Animated.View>}
   </Pressable>;
 }
 
@@ -110,13 +114,13 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
     transform: [{ translateX: interpolate(progress.value, [0, 1], [-24, 0]) }],
   }));
 
-  return <View accessibilityViewIsModal={open} accessibilityElementsHidden={!open} importantForAccessibility={open ? "auto" : "no-hide-descendants"} onAccessibilityEscape={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: "#F1F2F4" }]}>
+  return <View accessibilityViewIsModal={open} accessibilityElementsHidden={!open} importantForAccessibility={open ? "auto" : "no-hide-descendants"} onAccessibilityEscape={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: palette.canvas }]}>
     <Animated.View style={[{ width: SIDEBAR_WIDTH, flex: 1 }, contentStyle]}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 12, paddingBottom: insets.bottom + 110 }} showsVerticalScrollIndicator={false}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 14, minHeight: 56 }}>
           <BrandIcon name="user" size={28} color={palette.ink} />
           <View style={{ flex: 1, gap: 4 }}>
-            <Text numberOfLines={1} style={{ fontSize: 17, fontWeight: "600", color: palette.ink }}>{user?.name ?? "Clinician"}</Text>
+            <Text numberOfLines={1} style={{ ...type.headline, color: palette.ink }}>{user?.name ?? "Clinician"}</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
               <RolePill label={role} />
               {/* The one place the clinician app says its data is fictional. */}
@@ -137,11 +141,12 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
     </Animated.View>
 
     <Animated.View pointerEvents="box-none" style={[{ position: "absolute", left: 0, width: SIDEBAR_WIDTH, bottom: Math.max(insets.bottom, 12) + 10, alignItems: "center" }, contentStyle]}>
-      <Pressable accessibilityRole="button" accessibilityLabel="New visit" onPress={go(onNew)}
-        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 10, minHeight: 56, paddingVertical: 8, paddingHorizontal: 26, borderRadius: 28, backgroundColor: "#15171B", borderWidth: 3, borderColor: "rgba(255,255,255,0.92)", boxShadow: "0 8px 22px rgba(20,24,32,0.22)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+      {/* Floating pill with a white ring, larger than Action. */}
+      <Press accessibilityLabel="New visit" onPress={go(onNew)} scale={0.96}
+        style={{ flexDirection: "row", alignItems: "center", gap: 10, minHeight: 56, paddingVertical: 8, paddingHorizontal: 26, borderRadius: 28, backgroundColor: palette.ink, borderWidth: 3, borderColor: "rgba(255,255,255,0.92)", boxShadow: "0 8px 22px rgba(20,24,32,0.22)" }}>
         <BrandIcon name="add" size={22} color={palette.white} strokeWidth={1.8} />
-        <Text style={{ fontSize: 17, fontWeight: "600", color: palette.white }}>New visit</Text>
-      </Pressable>
+        <Text style={{ ...type.headline, color: palette.white }}>New visit</Text>
+      </Press>
     </Animated.View>
   </View>;
 }

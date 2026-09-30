@@ -83,8 +83,8 @@ export function SourcesPill({ sources }: { sources: SourceEntry[] }) {
   const roll = direction !== 0 && !reducedMotion;
   const show = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); open = sources; router.push("/sources"); };
   const noun = count === 1 ? "source" : "sources";
-  return <Pressable accessibilityRole="button" accessibilityLabel={`${count} ${noun}`} accessibilityHint="Lists the sources for this section" onPress={show} hitSlop={8}
-    style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 6, height: 28, paddingLeft: 4, paddingRight: 10, borderRadius: 14, borderWidth: 1, borderColor: glass.hairline, backgroundColor: "rgba(255,255,255,0.7)", transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+  return <Pressable accessibilityRole="button" accessibilityLabel={`${count} ${noun}`} accessibilityHint="Lists the sources for this section" onPress={show} hitSlop={8}>
+    {({ pressed }) => <Animated.View style={{ flexDirection: "row", alignItems: "center", gap: 6, height: 28, paddingLeft: 4, paddingRight: 10, borderRadius: 14, borderWidth: 1, borderColor: glass.hairline, backgroundColor: "rgba(255,255,255,0.7)", transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 }}>
     <View style={{ flexDirection: "row" }}>
       {sources.slice(0, 3).map((source, i) => <Animated.View key={source.id ?? source.label} entering={reducedMotion ? undefined : riseIn({ delay: i * 40, distance: 0, scale: 0.6, duration: 260 })}
         style={{ width: 20, height: 20, borderRadius: 10, marginLeft: i ? -7 : 0, borderWidth: 1.5, borderColor: palette.white, backgroundColor: ["#E6EEFC", "#E8F4F2", "#F1ECFB"][i], alignItems: "center", justifyContent: "center", zIndex: 3 - i }}>
@@ -98,6 +98,7 @@ export function SourcesPill({ sources }: { sources: SourceEntry[] }) {
       </View>
       <Text style={{ ...type.caption, lineHeight: DIGIT, fontWeight: "600", color: palette.muted }}>{noun}</Text>
     </View>
+    </Animated.View>}
   </Pressable>;
 }
 
@@ -125,7 +126,7 @@ export function SourcesSheet() {
     </View>
     {sources.length > 6 && <View style={{ paddingHorizontal: 20 }}>
       <TextInput value={query} onChangeText={setQuery} placeholder="Filter sources" placeholderTextColor={palette.placeholder} accessibilityLabel="Filter sources" clearButtonMode="while-editing"
-        style={{ height: 40, borderRadius: 12, paddingHorizontal: 12, ...type.body, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
+        style={{ height: 40, borderRadius: radius.control, paddingHorizontal: 12, ...type.body, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
     </View>}
     <ScrollView style={{ maxHeight: height * 0.6, flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }} keyboardShouldPersistTaps="handled">
       {groups.map(group => <View key={group.title} style={{ gap: 6 }}>

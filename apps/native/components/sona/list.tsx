@@ -1,6 +1,8 @@
 import * as Haptics from "expo-haptics";
 import type { ReactNode } from "react";
 import { Pressable, View, type ViewStyle } from "react-native";
+import Animated from "react-native-reanimated";
+import { useReduceMotionPreference } from "./accessibility";
 import { Text } from "./text";
 import { palette, type, radius } from "./theme";
 import { Icon } from "./ui";
@@ -54,15 +56,17 @@ export function ListRow({ title, detail, tone = "calm", initials, trailing, badg
  * other questions in the ask sheet): one row each, ✦ then the question, tapping asks it.
  */
 export function QuestionList({ title, questions, onAsk }: { title?: string; questions: { key: string; text: string }[]; onAsk: (key: string) => void }) {
+  const reduced = useReduceMotionPreference();
   if (!questions.length) return null;
   return <View style={{ gap: 8 }}>
     {title && <Text accessibilityRole="header" style={{ ...type.overline, color: palette.muted, paddingHorizontal: 4 }}>{title}</Text>}
     <List>
-      {questions.map((q, i) => <Pressable key={q.key} accessibilityRole="button" accessibilityLabel={q.text} accessibilityHint="Asks Sona" onPress={() => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); onAsk(q.key); }}
-        style={({ pressed }) => ({ minHeight: 50, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, borderTopWidth: i ? 1 : 0, borderColor: HAIRLINE, backgroundColor: pressed ? "rgba(240,242,246,1)" : "transparent", transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-        <Text style={{ ...type.footnote, color: palette.blue }}>✦</Text>
-        <Text style={{ ...type.callout, flex: 1, color: palette.ink }}>{q.text}</Text>
-        <Icon name="arrow.up.right" size={11} color={palette.muted} />
+      {questions.map((q, i) => <Pressable key={q.key} accessibilityRole="button" accessibilityLabel={q.text} accessibilityHint="Asks Sona" onPress={() => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); onAsk(q.key); }}>
+        {({ pressed }) => <Animated.View style={{ minHeight: 50, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, borderTopWidth: i ? 1 : 0, borderColor: HAIRLINE, backgroundColor: pressed ? "rgba(240,242,246,1)" : "transparent", transform: [{ scale: pressed && !reduced ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 }}>
+          <Text style={{ ...type.footnote, color: palette.blue }}>✦</Text>
+          <Text style={{ ...type.callout, flex: 1, color: palette.ink }}>{q.text}</Text>
+          <Icon name="arrow.up.right" size={11} color={palette.muted} />
+        </Animated.View>}
       </Pressable>)}
     </List>
   </View>;

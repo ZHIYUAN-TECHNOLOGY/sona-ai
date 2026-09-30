@@ -188,9 +188,9 @@ export function ClaimScreen() {
         {server.error && <Text style={{ ...type.footnote, color: palette.red }}>{server.error} · showing the authored codes</Text>}
         {!server.loading && codes.map((c, i) => { const on = c.evidence === cited; return <Arrive key={c.code} index={i} animate={Boolean(server.data)}><Pressable accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${c.code}, ${c.label}, ${c.kind}${c.inTable === false ? ", not in the ICD-10 table" : ""}`}
           onPress={() => { haptic("select"); setActive(c.evidence); }} style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 44 }}>
-          <View style={{ width: 58, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.blue : "rgba(20,28,40,0.06)", transitionProperty: "backgroundColor", transitionDuration: 180 } as never}>
-            <Text style={{ ...type.footnote, fontWeight: "700", color: on ? palette.white : palette.ink, fontVariant: ["tabular-nums"], transitionProperty: "color", transitionDuration: 180 } as never}>{c.code}</Text>
-          </View>
+          <Animated.View style={{ width: 58, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.blue : "rgba(20,28,40,0.06)", transitionProperty: "backgroundColor", transitionDuration: 180 } as never}>
+            <Animated.Text lineBreakStrategyIOS="push-out" style={{ ...type.footnote, fontWeight: "700", color: on ? palette.white : palette.ink, fontVariant: ["tabular-nums"], transitionProperty: "color", transitionDuration: 180 } as never}>{c.code}</Animated.Text>
+          </Animated.View>
           <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.ink }}>{c.label}</Text>
           <Text style={{ ...type.caption, color: c.inTable === false ? palette.amber : palette.muted }}>{c.inTable === false ? "Not in ICD-10 table" : c.kind}</Text>
         </Pressable></Arrive>; })}
@@ -219,7 +219,7 @@ function Evidence({ note, active }: { note: Sentence[]; active: string }) {
     <Animated.View pointerEvents="none" style={[{ position: "absolute", left: -8, right: -8, top: 0, borderRadius: 10, borderCurve: "continuous", backgroundColor: "rgba(36,91,204,0.10)" }, block]} />
     {note.map(s => <Animated.View key={s.id} entering={reducedMotion ? undefined : FadeIn.duration(220)} onLayout={e => { const { y, height: h } = e.nativeEvent.layout; frames.current[s.id] = { y, h }; if (s.id === active) place(false); }} style={{ paddingVertical: 4 }}>
       {/* No per-word colour: the highlight on the sentence behind the chosen code is the one that means something. */}
-      <Text selectable style={{ ...type.subhead, color: s.id === active ? palette.ink : palette.muted, transitionProperty: "color", transitionDuration: 200 } as never}>{s.text}</Text>
+      <Animated.Text selectable lineBreakStrategyIOS="push-out" style={{ ...type.subhead, color: s.id === active ? palette.ink : palette.muted, transitionProperty: "color", transitionDuration: 200 } as never}>{s.text}</Animated.Text>
     </Animated.View>)}
   </View>;
 }
@@ -235,7 +235,7 @@ function Criterion({ label, index }: { label: string; index: number }) {
     <Text style={{ ...type.subhead, color: palette.ink }}>{label}</Text>
     <View style={{ width: 70, height: 22, alignItems: "flex-end", justifyContent: "center" }}>
       <Animated.View style={[{ position: "absolute", right: 0, paddingHorizontal: 8, height: 22, borderRadius: 11, justifyContent: "center", backgroundColor: "rgba(196,120,20,0.12)" }, tag]}>
-        <Text style={{ fontSize: 11, fontWeight: "700", color: palette.amber }}>Required</Text>
+        <Text style={{ ...type.caption, fontWeight: "700", color: palette.amber }}>Required</Text>
       </Animated.View>
       <Animated.View style={[{ position: "absolute", right: 0, width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: TEAL }, check]}>
         <Icon name="checkmark" size={11} color={palette.white} />

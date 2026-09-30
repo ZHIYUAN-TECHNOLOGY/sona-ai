@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
 import { HalftoneGlint, HalftoneShimmer } from "./halftone-shimmer";
+import { Press } from "./parts";
 import { riseIn } from "./motion";
 import { Text } from "./text";
 import { palette, type, radius } from "./theme";
@@ -58,7 +59,7 @@ function Key({ a, index, shimmer, wide = false }: { a: QuickAction; index: numbe
       onPressIn={() => { down.set(withTiming(1, { duration: 70 })); if (!reducedMotion) pulse.set(withTiming(0.88, { duration: 90 })); }}
       onPressOut={() => { down.set(withSpring(0, { duration: 260, dampingRatio: 0.6 })); pulse.set(reducedMotion ? 1 : withSpring(1, { duration: 320, dampingRatio: 0.55 })); }}
       onPress={() => { tap(); a.onPress(); }}>
-      <Glass opaque={reducedTransparency} style={{ borderRadius: 24, borderWidth: 1, borderColor: urgent ? "rgba(162,62,62,0.22)" : "rgba(255,255,255,0.95)" }}>
+      <Glass opaque={reducedTransparency} style={{ borderRadius: radius.card, borderWidth: 1, borderColor: urgent ? "rgba(162,62,62,0.22)" : "rgba(255,255,255,0.95)" }}>
         {/* The key's lit top edge. */}
         <View pointerEvents="none" style={{ position: "absolute", left: 10, right: 10, top: 0, height: 1.5, borderRadius: 1, backgroundColor: "rgba(255,255,255,0.95)" }} />
         {!reducedMotion && <View pointerEvents="none" style={{ position: "absolute", inset: 0, overflow: "hidden", borderRadius: radius.card }}><HalftoneShimmer width={keyW} height={104} progress={sweep} /></View>}
@@ -72,7 +73,7 @@ function Key({ a, index, shimmer, wide = false }: { a: QuickAction; index: numbe
             </Animated.View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               {!!a.badge && <View style={{ minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: urgent ? palette.red : a.tone === "caution" ? palette.amber : a.tone === "good" ? palette.green : "rgba(20,28,40,0.08)" }}>
-                <Text style={{ fontSize: 11, fontWeight: "700", color: urgent || a.tone === "caution" || a.tone === "good" ? palette.white : palette.ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text>
+                <Text style={{ ...type.overline, color: urgent || a.tone === "caution" || a.tone === "good" ? palette.white : palette.ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text>
               </View>}
               <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}><Icon name="arrow.up.right" size={10} color={palette.ink} /></View>
             </View>
@@ -145,14 +146,14 @@ export function QuickRow({ actions, scroll, from, top }: { actions: QuickAction[
 export function ToolRow({ actions }: { actions: QuickAction[] }) {
   return <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 20, paddingVertical: 4 }}>
     {actions.map(a => { const tone = a.tone ?? "calm";
-      return <Pressable key={a.key} accessibilityRole="button" accessibilityLabel={`${a.label}, ${a.status}`} onPress={() => { tap(); a.onPress(); }}
-        style={({ pressed }) => ({ width: 108, minHeight: 104, padding: 10, gap: 6, alignItems: "flex-start", ...surfaceStyle, borderRadius: 20, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+      return <Press key={a.key} accessibilityLabel={`${a.label}, ${a.status}`} onPress={() => { tap(); a.onPress(); }} scale={0.96}
+        style={{ width: 108, minHeight: 104, padding: 10, gap: 6, alignItems: "flex-start", ...surfaceStyle, borderRadius: radius.group }}>
         <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: DISC[tone].fill, alignItems: "center", justifyContent: "center" }}>
           <Icon name={a.icon} size={15} color={DISC[tone].glyph} />
-          {a.badge ? <View style={{ position: "absolute", top: -4, right: -6, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: palette.white, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 10, fontWeight: "700", color: DISC[tone].ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text></View> : null}
+          {a.badge ? <View style={{ position: "absolute", top: -4, right: -6, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: palette.white, alignItems: "center", justifyContent: "center" }}><Text style={{ ...type.overline, color: DISC[tone].ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text></View> : null}
         </View>
         <Text numberOfLines={1} style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>{a.label}</Text>
         <Text numberOfLines={2} style={{ ...type.caption, color: tone === "calm" ? palette.muted : INK[tone] }}>{a.status}</Text>
-      </Pressable>; })}
+      </Press>; })}
   </ScrollView>;
 }

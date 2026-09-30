@@ -4,7 +4,7 @@ import Animated from "react-native-reanimated";
 import { Text } from "@/components/sona/text";
 import { IconRow, Section } from "@/components/sona/sections";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
-import { palette } from "@/components/sona/theme";
+import { palette, type } from "@/components/sona/theme";
 import { SourceRef, type SourceKind } from "@/components/sona/sources";
 import { Action, glass, Notice, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
@@ -61,9 +61,9 @@ function GapRow({ title, detail, updates, index, reduced }: { title: string; det
       {updates > 0 && <Animated.View entering={reduced ? undefined : riseIn({ delay: 70 * index + 220, distance: 0, scale: 0.6, duration: 380 })} style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: palette.blue }} />}
     </View>
     <View style={{ flex: 1, gap: 3 }}>
-      <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "600", color: palette.ink }}>{title}</Text>
-      <Text selectable style={{ fontSize: 15, lineHeight: 21, color: palette.muted }}>{detail}</Text>
-      {updates > 0 && <Text style={{ fontSize: 13, lineHeight: 18, color: palette.blue }}>{recorded}</Text>}
+      <Text style={{ ...type.body, lineHeight: 22, fontWeight: "600", color: palette.ink }}>{title}</Text>
+      <Text selectable style={{ ...type.callout, color: palette.muted }}>{detail}</Text>
+      {updates > 0 && <Text style={{ ...type.footnote, color: palette.blue }}>{recorded}</Text>}
     </View>
   </Animated.View>;
 }
@@ -92,9 +92,9 @@ export function ReasoningCard({ patient, result, onSource, onRequest }: FeatureP
   return <View style={{ gap: 20 }}>
     {fromModel && <Surface feature style={{ padding: 16, gap: 10 }}>
       {server.loading ? <Drafting label="Weighing the record…" /> : server.data ? <>
-        <Arrive><Text selectable style={{ fontSize: 16, lineHeight: 24, color: palette.ink }}>{server.data.answer}</Text></Arrive>
+        <Arrive><Text selectable style={{ ...type.body, color: palette.ink }}>{server.data.answer}</Text></Arrive>
         <Arrive index={1}><SampleLabel source={server.data.source} what="reasoning" /></Arrive>
-      </> : <Text style={{ fontSize: 13, lineHeight: 18, color: palette.red }}>{server.error}</Text>}
+      </> : <Text style={{ ...type.footnote, color: palette.red }}>{server.error}</Text>}
     </Surface>}
     <Takeaways items={takeaways} />
     <Anchor id="possibilities" title={patient.incomplete ? "Gaps" : "Possibilities"}>

@@ -1,3 +1,4 @@
+import { PressScale } from "@/components/sona/parts";
 import { useCallback, useEffect, useState } from "react";
 import { ActionSheetIOS, Alert, Pressable, View } from "react-native";
 import { Action, Body, Card, Notice } from "@/components/sona/ui";
@@ -74,9 +75,9 @@ export function DemoTimeLine() {
   };
   return <View style={{ gap: 4 }}>
     <Pressable accessibilityRole="button" accessibilityLabel={`${label}. Change the demo clock`} onPress={open}
-      style={({ pressed }) => ({ alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: status.offsetMs ? "rgba(125,82,244,0.12)" : "rgba(20,28,40,0.05)", opacity: pressed ? 0.7 : 1 })}>
+      style={{ alignSelf: "flex-start" }}>{({ pressed }) => <PressScale pressed={pressed} style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: status.offsetMs ? "rgba(125,82,244,0.12)" : "rgba(20,28,40,0.05)" }}>
       <Body>{`${label}  ›`}</Body>
-    </Pressable>
+    </PressScale>}</Pressable>
     {error && <Notice warning>{error}</Notice>}
   </View>;
 }

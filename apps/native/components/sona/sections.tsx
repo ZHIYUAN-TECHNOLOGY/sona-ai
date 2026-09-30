@@ -1,7 +1,7 @@
 import { Text } from "@/components/sona/text";
 import type { ReactNode } from "react";
 import { Pressable, ScrollView, View } from "react-native";
-import { palette, type } from "./theme";
+import { palette, type, radius } from "./theme";
 import { Icon, surfaceStyle } from "./ui";
 import { MarkedText } from "./marked-text";
 import { SourceScope, SourcesPill, useCapturedSource, type SourceKind } from "./sources";
@@ -40,13 +40,13 @@ export function Shelf({ children }: { children: ReactNode }) {
 
 export function GlanceTile({ value, label, caption, glyph }: { value: string; label: string; caption: string; glyph?: string }) {
   return <View accessible accessibilityLabel={`${label}, ${value}. ${caption}`} style={{ width: 112, gap: 8 }}>
-    <View style={{ height: 96, ...surfaceStyle, borderRadius: 20, alignItems: "center", justifyContent: "center", gap: 2 }}>
-      {glyph && <Text style={{ fontSize: 18 }}>{glyph}</Text>}
-      <Text selectable numberOfLines={1} adjustsFontSizeToFit style={{ ...type.heading, fontSize: 21, color: palette.ink, fontVariant: ["tabular-nums"], paddingHorizontal: 8 }}>{value}</Text>
+    <View style={{ height: 96, ...surfaceStyle, borderRadius: radius.group, alignItems: "center", justifyContent: "center", gap: 2 }}>
+      {glyph && <Text style={{ ...type.heading }}>{glyph}</Text>}
+      <Text selectable numberOfLines={1} adjustsFontSizeToFit style={{ ...type.heading, fontSize: type.title.fontSize, color: palette.ink, fontVariant: ["tabular-nums"], paddingHorizontal: 8 }}>{value}</Text>
     </View>
     <View style={{ gap: 1, paddingHorizontal: 2 }}>
       <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>{label}</Text>
-      <Text numberOfLines={2} style={{ fontSize: 12, lineHeight: 16, color: palette.muted }}>{caption}</Text>
+      <Text numberOfLines={2} style={{ ...type.caption, color: palette.muted }}>{caption}</Text>
     </View>
   </View>;
 }

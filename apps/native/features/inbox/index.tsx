@@ -7,7 +7,7 @@ import Animated, { FadeIn, FadeOut, interpolate, interpolateColor, useAnimatedRe
 import { scheduleOnRN } from "react-native-worklets";
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { EASE_OUT, fold, LAYOUT, riseIn } from "@/components/sona/motion";
-import { Caption, ErrorLine } from "@/components/sona/parts";
+import { Caption, ErrorLine, PressScale } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Chip, Expand, glass, Icon, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
@@ -163,13 +163,12 @@ export function InboxScreen() {
     {handled.length > 0 && <Animated.View layout={layout} style={{ gap: 6, paddingTop: 6 }}>
       <Text accessibilityRole="header" style={{ ...type.overline, color: palette.muted, paddingHorizontal: 4 }}>Handled · last 7 days</Text>
       {handled.map(t => <Animated.View key={t.patientId} layout={layout} entering={FadeIn.duration(220)}>
-        <Pressable accessibilityRole="button" accessibilityLabel={`${t.name}, handled. Last message ${clock(t.lastAt)}: ${lastLine(t)}`} accessibilityHint="Opens the thread" onPress={() => router.push(`/inbox/${t.patientId}`)}
-          style={({ pressed }) => ({ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 4, opacity: pressed ? 0.6 : 1 })}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`${t.name}, handled. Last message ${clock(t.lastAt)}: ${lastLine(t)}`} accessibilityHint="Opens the thread" onPress={() => router.push(`/inbox/${t.patientId}`)}>{({ pressed }) => <PressScale pressed={pressed} scale={0.98} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 4 }}>
           <Text numberOfLines={1} style={{ ...type.subhead, color: palette.muted, flexShrink: 1 }}><Text style={{ fontWeight: "600", color: palette.ink }}>{t.name}</Text>  {!t.lastPhoto && t.lastText}</Text>
           {t.lastPhoto && <LastPhoto label={t.lastPhoto} color={palette.muted} />}
           <View style={{ flex: 1 }} />
           <Text style={{ ...type.caption, color: palette.muted, fontVariant: ["tabular-nums"] }}>{clock(t.lastAt)}</Text>
-        </Pressable>
+        </PressScale>}</Pressable>
       </Animated.View>)}
     </Animated.View>}
     <View style={{ height: ASK_SPACE }} />
@@ -242,8 +241,7 @@ function InboxRow({ thread: t, now, first, canHandle, onHandle }: { thread: Inbo
         <Pressable accessibilityRole="button" accessibilityLabel={a11y} accessibilityHint="Opens the thread and Sona's drafted reply"
           accessibilityActions={[{ name: "activate" }, ...canHandle ? [{ name: "handle", label: "Mark handled" }] : [], ...!urgent && t.reason ? [{ name: "why", label: "Why this triage" }] : []]}
           onAccessibilityAction={e => e.nativeEvent.actionName === "handle" ? request() : e.nativeEvent.actionName === "why" ? AccessibilityInfo.announceForAccessibility(t.reason ?? "") : open()}
-          onPress={open} onLongPress={() => { if (!urgent && t.reason) { haptic("select"); setWhy(w => !w); } }}
-          style={({ pressed }) => ({ flexDirection: "row", gap: 12, paddingHorizontal: 16, paddingVertical: 14, minHeight: 72, opacity: pressed ? 0.7 : 1 })}>
+          onPress={open} onLongPress={() => { if (!urgent && t.reason) { haptic("select"); setWhy(w => !w); } }}>{({ pressed }) => <PressScale pressed={pressed} scale={0.98} style={{ flexDirection: "row", gap: 12, paddingHorizontal: 16, paddingVertical: 14, minHeight: 72 }}>
           <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: style.wash, alignItems: "center", justifyContent: "center" }}>
             <Text style={{ ...type.footnote, fontWeight: "700", color: style.ink }}>{t.initials}</Text>
           </View>
@@ -259,7 +257,7 @@ function InboxRow({ thread: t, now, first, canHandle, onHandle }: { thread: Inbo
             {urgent && t.reason && <Text numberOfLines={1} style={{ ...type.caption, fontWeight: "600", color: palette.red }}>{t.reason}</Text>}
             {why && <Expand><Text style={{ ...type.caption, color: style.ink, paddingTop: 2 }}>{style.text} · {t.reason}</Text></Expand>}
           </View>
-        </Pressable>
+        </PressScale>}</Pressable>
       </Animated.View>
     </GestureDetector>
   </Animated.View>;

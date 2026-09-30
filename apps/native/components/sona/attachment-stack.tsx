@@ -2,10 +2,11 @@ import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
-import Animated, { FadeOut, useAnimatedStyle, useSharedValue, withSpring, withTiming, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring, withTiming, ZoomIn } from "react-native-reanimated";
+import { useReduceMotionPreference } from "./accessibility";
 import { BrandIcon } from "./brand-icon";
 import { EASE_OUT } from "./motion";
-import { palette, radius } from "./theme";
+import { palette, radius, type } from "./theme";
 import { Icon } from "./ui";
 import type { Attachment } from "./attachments-menu";
 
@@ -16,7 +17,7 @@ export const attachmentSource = (item: Attachment) => item.uri === "teaching" ? 
 function Thumb({ item, size, radius }: { item: Attachment; size: number; radius: number }) {
   return item.kind === "image"
     ? <Image source={attachmentSource(item)} contentFit="cover" style={{ width: size, height: size, borderRadius: radius, backgroundColor: "rgba(120,120,128,0.12)" }} />
-    : <View style={{ width: size, height: size, borderRadius: radius, backgroundColor: "#EEF2F8", alignItems: "center", justifyContent: "center", gap: 4, padding: 6 }}>
+    : <View style={{ width: size, height: size, borderRadius: radius, backgroundColor: palette.canvas, alignItems: "center", justifyContent: "center", gap: 4, padding: 6 }}>
       <BrandIcon name="files" size={size * 0.3} color={palette.muted} />
     </View>;
 }
@@ -26,15 +27,16 @@ function Thumb({ item, size, radius }: { item: Attachment; size: number; radius:
  * menu and the chat composer both show it).
  */
 export function AttachmentStrip({ items, onRemove, size = 96 }: { items: Attachment[]; onRemove: (item: Attachment) => void; size?: number }) {
+  const reduced = useReduceMotionPreference();
   return <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingRight: 8 }}>
-    {items.map(item => <Animated.View key={item.uri} entering={ZoomIn.springify().duration(320).dampingRatio(0.8)} exiting={FadeOut.duration(140)}
+    {items.map(item => <Animated.View key={item.uri} entering={reduced ? FadeIn.duration(150) : ZoomIn.springify().duration(320).dampingRatio(0.8)} exiting={FadeOut.duration(140)}
       style={{ borderRadius: radius.control, borderCurve: "continuous", overflow: "hidden", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.1), 0 4px 12px rgba(24,32,48,0.08)" }}>
-      <Thumb item={item} size={size} radius={16} />
+      <Thumb item={item} size={size} radius={radius.control} />
       {/* A 44 pt target in the corner (the thumbnail clips anything outside it); the visible dot stays 24 pt. */}
       <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${item.name}`} onPress={() => onRemove(item)} style={{ position: "absolute", top: 0, right: 0, width: 44, height: 44, padding: 6, alignItems: "flex-end" }}>
-        {({ pressed }) => <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.92)", boxShadow: "0 1px 4px rgba(24,32,48,0.18)", transform: [{ scale: pressed ? 0.9 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never}>
+        {({ pressed }) => <Animated.View style={{ width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.92)", boxShadow: "0 1px 4px rgba(24,32,48,0.18)", transform: [{ scale: pressed && !reduced ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 }}>
           <Icon name="xmark" size={10} color={palette.ink} />
-        </View>}
+        </Animated.View>}
       </Pressable>
     </Animated.View>)}
   </ScrollView>;
@@ -95,7 +97,7 @@ export function AttachmentStack({ items, reduced, onPress }: { items: Attachment
       return <StackCard key={item.uri} item={item} rel={rel} popping={popping !== null && i === popping % shown.length} depth={10 - rel} reduced={reduced} />;
     })}
     {items.length > 1 && <View pointerEvents="none" style={{ position: "absolute", right: 2, top: -4, zIndex: 200, minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: palette.ink }}>
-      <Animated.Text key={items.length} entering={ZoomIn.duration(200)} style={{ fontSize: 11, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{items.length}</Animated.Text>
+      <Animated.Text key={items.length} entering={reduced ? undefined : ZoomIn.duration(200)} style={{ ...type.overline, color: palette.white, fontVariant: ["tabular-nums"] }}>{items.length}</Animated.Text>
     </View>}
   </Pressable>;
 }
