@@ -14,7 +14,7 @@ import { useRole } from "@/features/live/roles";
 import { useInboxSummary } from "@/features/inbox";
 import { useEncounter } from "./store";
 import { SweptLead, wordCount } from "@/components/sona/marked-text";
-import { Chip, Icon, pillStyle, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { Chip, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, View } from "react-native";
@@ -52,7 +52,14 @@ const nextSteps: Record<Capability, Capability[]> = {
   briefing: ["reasoning", "xray", "medication"], reasoning: ["evidence", "xray", "medication"], xray: ["evidence", "reasoning", "note"],
   medication: ["prescription", "reasoning", "note"], prescription: ["followup", "note", "medication"], followup: ["note", "briefing", "reasoning"], note: ["followup", "prescription", "evidence"], evidence: ["prescription", "note", "followup"],
 };
-export const followUpsFor = (kind: Capability, patient: Patient) => nextSteps[kind].map(next => suggestionFor(next, patient));
+/** What is usually asked after an answer of this kind, most likely first. */
+export const askAfter = (kind: Capability) => nextSteps[kind];
+
+/** Meets a visit's need: pages it names open directly; anything else is asked in the visit. */
+export function goToNeed(target: VisitNeed["target"], patient: Patient, onPick: (item: Suggestion) => void) {
+  if (target === "scan" || target === "discharge" || target === "claim" || target === "handover") router.push(`/${target}`);
+  else onPick(suggestionFor(target, patient));
+}
 
 export function thinkingLabel(kind: Capability, patient: Patient) {
   const labels: Record<Capability, string> = { briefing: `Reading ${first(patient)}’s record…`, reasoning: "Weighing the history…", xray: "Opening the radiograph…", medication: "Checking the medicine list…", prescription: "Checking prerequisites…", followup: "Drafting next steps…", note: "Drafting the note…", evidence: "Reading the studies…" };
@@ -96,21 +103,6 @@ export function StreamedLead({ text, animate }: { text: string; animate: boolean
   }, [shown, words.length]);
   // Key terms become chips; a highlight sweeps across them once a fresh answer finishes streaming.
   return <SweptLead text={text} shown={shown} sweep={animate && !reducedMotion} style={{ ...type.title, color: palette.ink }} />;
-}
-
-export function SuggestionList({ items, onPick, stagger = true }: { items: Suggestion[]; onPick: (item: Suggestion) => void; stagger?: boolean }) {
-  const { reducedMotion } = useAccessibleEffects();
-  return <View style={{ ...surfaceStyle, overflow: "hidden" }}>
-    {items.map((item, i) => <Animated.View key={item.text} entering={reducedMotion || !stagger ? undefined : riseIn({ delay: 60 + i * 45, distance: 10 })}>
-      {i > 0 && <View style={{ height: 1, marginLeft: 18, backgroundColor: "rgba(20,28,40,0.07)" }} />}
-      <Pressable accessibilityRole="button" accessibilityLabel={item.text} accessibilityHint={item.kind === "recording" ? "Opens the consultation recorder" : "Asks Sona"} onPress={() => onPick(item)}
-        style={({ pressed }) => ({ minHeight: 70, paddingLeft: 18, paddingRight: 14, paddingVertical: 12, flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: pressed ? "rgba(20,28,40,0.04)" : "transparent", transform: [{ scale: pressed ? 0.985 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 120 } as never)}>
-        <Text style={{ flex: 1, fontSize: 15, lineHeight: 20, color: palette.ink, fontWeight: "500" }}>{item.text}</Text>
-        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "#F0F2F6", alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 22 }}>{item.emoji}</Text></View>
-        <Icon name="arrow.right" size={13} color={palette.ink} />
-      </Pressable>
-    </Animated.View>)}
-  </View>;
 }
 
 export function Pill({ label, emoji: glyph, onPress }: { label: string; emoji?: string; onPress: () => void }) {
@@ -192,7 +184,7 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
     actions={homeKeys} onShelf={onShelf} shelfCollapse={shelfCollapse} /></View>;
   // Insight first: the one thing that needs the doctor, with its action, above the tiles.
   const need = visitNeed(patient, encounters[patient.id], server);
-  const go = (target: VisitNeed["target"]) => target === "scan" || target === "discharge" || target === "claim" ? router.push(`/${target}`) : onPick(suggestionFor(target, patient));
+  const go = (target: VisitNeed["target"]) => goToNeed(target, patient, onPick);
   return <View style={{ gap: 44, paddingTop: 20 }}>
     <View style={{ gap: 18 }}>
       <Animated.View entering={rise(0)}><Text accessibilityRole="header" style={lead}>{greeting()}</Text></Animated.View>
@@ -217,7 +209,7 @@ const RESOLVED_MS = 720, TEAL = palette.green;
  * a beat, then crossfades to the next need, or leaves and the tiles below close the gap on the layout
  * spring. A change that lands while another screen covers this one waits until it is visible again.
  */
-function NeedLine({ need, entering, onPress }: { need?: VisitNeed; entering?: ReturnType<typeof riseIn>; onPress: (need: VisitNeed) => void }) {
+export function NeedLine({ need, entering, onPress }: { need?: VisitNeed; entering?: ReturnType<typeof riseIn>; onPress: (need: VisitNeed) => void }) {
   const { reducedMotion } = useAccessibleEffects();
   const focused = useIsFocused();
   const [shown, setShown] = useState(need);

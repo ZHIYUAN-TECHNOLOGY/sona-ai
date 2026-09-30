@@ -1,3 +1,4 @@
+import * as Haptics from "expo-haptics";
 import type { ReactNode } from "react";
 import { Pressable, View, type ViewStyle } from "react-native";
 import { Text } from "./text";
@@ -46,4 +47,23 @@ export function ListRow({ title, detail, tone = "calm", initials, trailing, badg
   if (!onPress) return <View accessible accessibilityLabel={label} style={base}>{content}</View>;
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityHint={accessibilityHint} onPress={onPress}
     style={({ pressed }) => ({ ...base, backgroundColor: pressed ? "rgba(240,242,246,1)" : edges ? palette.white : "transparent" })}>{content}</Pressable>;
+}
+
+/**
+ * Questions to ask Sona next (Related under an evidence answer, "Also ask" at the end of a visit, the
+ * other questions in the ask sheet): one row each, ✦ then the question, tapping asks it.
+ */
+export function QuestionList({ title, questions, onAsk }: { title?: string; questions: { key: string; text: string }[]; onAsk: (key: string) => void }) {
+  if (!questions.length) return null;
+  return <View style={{ gap: 8 }}>
+    {title && <Text accessibilityRole="header" style={{ ...type.overline, color: palette.muted, paddingHorizontal: 4 }}>{title}</Text>}
+    <List>
+      {questions.map((q, i) => <Pressable key={q.key} accessibilityRole="button" accessibilityLabel={q.text} accessibilityHint="Asks Sona" onPress={() => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); onAsk(q.key); }}
+        style={({ pressed }) => ({ minHeight: 50, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, borderTopWidth: i ? 1 : 0, borderColor: HAIRLINE, backgroundColor: pressed ? "rgba(240,242,246,1)" : "transparent", transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+        <Text style={{ ...type.footnote, color: palette.blue }}>✦</Text>
+        <Text style={{ ...type.callout, flex: 1, color: palette.ink }}>{q.text}</Text>
+        <Icon name="arrow.up.right" size={11} color={palette.muted} />
+      </Pressable>)}
+    </List>
+  </View>;
 }

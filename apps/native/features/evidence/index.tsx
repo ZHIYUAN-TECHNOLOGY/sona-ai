@@ -1,4 +1,5 @@
 import * as WebBrowser from "expo-web-browser";
+import { QuestionList } from "@/components/sona/list";
 import { MarkedText, TINT, segments, type Mark } from "@/components/sona/marked-text";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, View, useWindowDimensions } from "react-native";
@@ -55,7 +56,6 @@ export function EvidenceCard({ patient, result, onRequest }: FeatureProps) {
     : authored && { ...authored, enough: true, references: authoredReferences(), source: undefined, note: "Authored summaries · links open PubMed" };
   const caption = !shown ? "" : !data ? "Rehearsed answer" : data.source === "cached" ? "Rehearsed answer" : data.source === "fixture" ? "Sample: not a model's reading" : `Written by ${data.source}`;
   const cite = (n: number) => { haptic("select"); setFocus({ n, at: Date.now() }); };
-  const ask = (q: string) => { haptic("select"); onRequest("evidence", q); };
 
   return <View style={{ gap: 14 }}>
     <Surface feature style={{ padding: 16, gap: 12 }}>
@@ -70,7 +70,7 @@ export function EvidenceCard({ patient, result, onRequest }: FeatureProps) {
     {shown && shown.references.length > 0 && <Sources references={shown.references} note={shown.note} focus={focus} />}
     {data && !data.references.length && <Text selectable style={{ ...type.footnote, color: palette.amber }}>{data.pubmed === "unavailable" ? SOURCES_NOTE.unavailable : "Nothing on this in PubMed or your library"}</Text>}
     <Severity patient={patient} server={data?.curb65} />
-    {shown && shown.followUps.length > 0 && <Related questions={shown.followUps} onAsk={ask} />}
+    <QuestionList title="Related" questions={shown?.followUps.map(q => ({ key: q, text: q })) ?? []} onAsk={q => onRequest("evidence", q)} />
   </View>;
 }
 
@@ -96,20 +96,6 @@ function ClaimLine({ claim, references, onCite }: { claim: Claim; references: Re
           <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue, fontVariant: ["tabular-nums"] }}>{n}</Text>
         </Pressable>; })}
     </View>
-  </View>;
-}
-
-/** Up to three follow-up questions; tapping one asks it as the next evidence card in this thread. */
-function Related({ questions, onAsk }: { questions: string[]; onAsk: (q: string) => void }) {
-  return <View style={{ gap: 8 }}>
-    <Text accessibilityRole="header" style={{ ...type.overline, color: palette.muted }}>Related</Text>
-    <Surface style={{ paddingVertical: 4 }}>
-      {questions.map((q, i) => <Pressable key={q} accessibilityRole="button" accessibilityLabel={q} accessibilityHint="Asks this as a follow-up" onPress={() => onAsk(q)}
-        style={({ pressed }) => ({ minHeight: 48, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-        <Text style={{ ...type.callout, flex: 1, color: palette.ink }}>{q}</Text>
-        <Icon name="arrow.up.right" size={12} color={palette.blue} />
-      </Pressable>)}
-    </Surface>
   </View>;
 }
 

@@ -2,15 +2,18 @@ import { AmbientWash } from "@/components/sona/ambient";
 import { ResponseFrame } from "@/components/sona/response-frame";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { Action, Icon, Notice, Reveal, pillStyle } from "@/components/sona/ui";
-import { canDischarge } from "@/features/discharge/model";
+import { Action, Notice, Reveal } from "@/components/sona/ui";
 import { ClinicalResponseRenderer } from "@/features/presentation";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, BackHandler, Keyboard, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { capabilityLabels, followUpsFor, Home, leadFor, StreamedLead, SuggestionList, suggestionFor, thinkingLabel, TopBar, type Suggestion } from "./conversation";
+import { askAfter, capabilityLabels, goToNeed, Home, leadFor, NeedLine, StreamedLead, suggestionFor, thinkingLabel, TopBar, type Suggestion } from "./conversation";
+import { visitNeed, type VisitNeed } from "./quick-actions";
+import { threadEnd } from "./visit-next";
+import { QuestionList } from "@/components/sona/list";
+import { useServerData } from "@/features/live/server-day";
 import { touch } from "@/features/patients/continue-store";
 import { AskNudge, AskSheet, closed, openTab, type AskState } from "@/features/ask";
 import { matchQuestion } from "@/features/ask/answers";
@@ -145,6 +148,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
 
   // "Next step" bar: the one action blocking the medication → prescribing path, with the full list on demand.
   const steps = patient && latest && !active ? nextSteps(latest.kind, encounter, patient) : undefined;
+  const server = useServerData(); // the visit's need reads the server's results in live mode
   const next = useNextStep();
   const jumpToId = (id: string) => { const index = sections.findIndex(section => section.id === id); if (index >= 0) jumpTo(index); return index >= 0; };
   const perform = (step: Step) => {
@@ -245,19 +249,15 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
             {req.status === "cancelled" && <Notice>Response stopped. Completed content and your edits are kept.</Notice>}
           </View>;
         })}
-        {/* An evidence answer offers its own Related questions, so a second list of suggestions would compete. */}
-        {!active && latest && patient && latest.kind !== "evidence" && <View style={{ marginHorizontal: -20, paddingHorizontal: 20, paddingTop: 32, paddingBottom: 28, gap: 16, backgroundColor: "rgba(232,235,240,0.55)" }}>
-          <Text accessibilityRole="header" style={{ textAlign: "center", ...type.headline, color: palette.ink, letterSpacing: -0.3 }}>You might want to ask</Text>
-          <SuggestionList items={followUpsFor(latest.kind, patient)} onPick={pick} />
-          {/* Closing the visit: once the note, follow-up or prescription is done, handing over is one tap away. */}
-          {(latest.kind === "note" || latest.kind === "followup" || latest.kind === "prescription") && <View style={{ gap: 10 }}>
-            <Text style={{ textAlign: "center", ...type.footnote, color: palette.muted }}>Done with {patient.name.split(" ")[0]}?</Text>
-            <View style={{ flexDirection: "row", gap: 10 }}>
-              {canDischarge(patient) && <EndKey primary icon={encounter?.discharge?.dischargedAt ? "checkmark" : "bed.double"} label={encounter?.discharge?.dischargedAt ? "Discharged" : "Discharge"} hint="Drafts the discharge with what still blocks it" onPress={() => router.push("/discharge")} />}
-              <EndKey primary={!canDischarge(patient)} icon="arrow.left.arrow.right" label="Hand over" hint="Opens the shift handover with this patient's open items" onPress={() => router.push("/handover")} />
-            </View>
-          </View>}
-        </View>}
+        {/* One next step at a time: the visit's need (the line it opened with), or handing over once nothing is left, then at most two quiet questions. */}
+        {!active && latest && patient && (() => {
+          const end = threadEnd({ latest: latest.kind, need: visitNeed(patient, encounter, server), hasSteps: Boolean(steps), firstName: patient.name.split(" ")[0]!, discharged: Boolean(encounter?.discharge?.dischargedAt), follow: askAfter(latest.kind) });
+          if (!end.need && !end.ask.length) return null;
+          return <View style={{ gap: 18, paddingTop: 28, marginTop: 8, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
+            {end.need && <NeedLine need={end.need as VisitNeed} onPress={n => goToNeed(n.target, patient, pick)} />}
+            <QuestionList title="Also ask" questions={end.ask.map(k => ({ key: k, text: suggestionFor(k, patient).text }))} onAsk={k => pick(suggestionFor(k as Capability, patient))} />
+          </View>;
+        })()}
       </View>}
     </Animated.ScrollView>
 
@@ -307,12 +307,3 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   </View>;
 }
 
-/** One of the two ways out of a finished visit: ink when it is the main one, glass otherwise. */
-function EndKey({ label, icon, hint, primary = false, onPress }: { label: string; icon: string; hint: string; primary?: boolean; onPress: () => void }) {
-  const { reducedMotion } = useAccessibleEffects();
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityHint={hint} onPress={onPress}
-    style={({ pressed }) => ({ flex: 1, height: 52, borderRadius: 26, borderCurve: "continuous", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, ...(primary ? { backgroundColor: palette.ink } : pillStyle), transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-    <Icon name={icon} size={15} color={primary ? palette.white : palette.ink} />
-    <Text style={{ ...type.body, fontWeight: "600", color: primary ? palette.white : palette.ink }}>{label}</Text>
-  </Pressable>;
-}

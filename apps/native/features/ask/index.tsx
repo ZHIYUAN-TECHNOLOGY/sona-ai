@@ -6,7 +6,7 @@ import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn } from "react-native-reanimated";
-import { List, ListRow } from "@/components/sona/list";
+import { List, ListRow, QuestionList } from "@/components/sona/list";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
@@ -144,12 +144,7 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
           <Text style={{ ...type.title, fontWeight: "600", color: palette.ink }}>Ask Sona</Text>
           <Text style={{ ...type.subhead, color: palette.muted }}>Answers are built from this page's own data and can act on it.</Text>
         </View>}
-        {others.length > 0 && <Surface style={{ paddingVertical: 4 }}>
-          {others.map((a, i) => <Pressable key={a.id} accessibilityRole="button" accessibilityLabel={a.question} onPress={() => { tap(); onChange({ open: true, shown: a }); }}
-            style={({ pressed }) => ({ minHeight: 48, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)", opacity: pressed ? 0.6 : 1 })}>
-            <Text style={{ ...type.footnote, color: palette.blue }}>✦</Text><Text style={{ ...type.callout, flex: 1, color: palette.ink }}>{a.question}</Text>
-          </Pressable>)}
-        </Surface>}
+        <QuestionList questions={others.map(a => ({ key: a.id, text: a.question }))} onAsk={id => { const a = others.find(x => x.id === id); if (a) onChange({ open: true, shown: a }); }} />
       </ScrollView>
       {/* The composer sits at the bottom, like every chat, and rides up with the keyboard. */}
       <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 12), borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)", backgroundColor: palette.canvas }}>
