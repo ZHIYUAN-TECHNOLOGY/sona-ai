@@ -9,14 +9,12 @@ import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, BackHandler, Keyboard, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { askAfter, capabilityLabels, goToNeed, Home, leadFor, NeedLine, StreamedLead, suggestionFor, thinkingLabel, TopBar, type Suggestion } from "./conversation";
-import { visitNeed, type VisitNeed } from "./quick-actions";
-import { threadEnd } from "./visit-next";
-import { QuestionList } from "@/components/sona/list";
+import { capabilityLabels, Home, suggestionFor, thinkingLabel, TopBar, VisitEnd, VisitLead, type Suggestion } from "./conversation";
+import { openTaskCount } from "@/features/day/counts";
 import { useServerData } from "@/features/live/server-day";
 import { touch } from "@/features/patients/continue-store";
-import { AskNudge, AskSheet, closed, openTab, type AskState } from "@/features/ask";
-import { matchQuestion } from "@/features/ask/answers";
+import { AskSheet, closed, openTab, type AskState } from "@/features/ask";
+import { PLACEHOLDER, matchQuestion, suggestion } from "@/features/ask/answers";
 import { useTodayAnswers } from "@/features/ask/today";
 import { capabilitySchema, routeInThread } from "./state";
 import { openSession } from "./navigation";
@@ -148,7 +146,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
 
   // "Next step" bar: the one action blocking the medication → prescribing path, with the full list on demand.
   const steps = patient && latest && !active ? nextSteps(latest.kind, encounter, patient) : undefined;
-  const server = useServerData(); // the visit's need reads the server's results in live mode
+  const server = useServerData(); // live mode: the top bar counts the server's tasks too
   const next = useNextStep();
   const jumpToId = (id: string) => { const index = sections.findIndex(section => section.id === id); if (index >= 0) jumpTo(index); return index >= 0; };
   const perform = (step: Step) => {
@@ -179,8 +177,9 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   // Sona on Today: the dock's ✦ suggestion and a typed question the day's rules can answer open the answer sheet; clinical questions still need a visit.
   const todayAnswers = useTodayAnswers();
   const [ask, setAsk] = useState<AskState>(closed);
-  const nudge = home ? todayAnswers.find(a => a.worth) : undefined;
-  const submit = (text: string) => { const prompt = text.trim(); if (!prompt) return;
+  const nudge = home ? suggestion(todayAnswers) : undefined;
+  // A notice answers the last input only: it clears on the next keystroke or submit, so it never hides the dock for good.
+  const submit = (text: string) => { const prompt = text.trim(); if (!prompt) return; setNotice(undefined);
     if (!patient) { const answer = matchQuestion(prompt, todayAnswers); if (answer) { setInput(""); setAsk({ open: true, shown: answer }); return; } setNotice("Pick a visit first. Today’s visits are listed above."); return; }
     if (pending.length) {
       // Images go to the imaging review (the first becomes the encounter's attachment); files and documents, scanned or photographed, are kept for reference.
@@ -222,7 +221,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     <Animated.ScrollView ref={scroll} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentInsetAdjustmentBehavior="never" scrollEventThrottle={16}
       onScroll={onScroll}
       onScrollEndDrag={syncTab} onMomentumScrollEnd={syncTab}
-      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + (!home && sections.length >= 2 ? 112 : 72), paddingBottom: insets.bottom + 150 + (steps ? 66 : 0) + (nudge ? 44 : 0), flexGrow: 1 }}>
+      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + (!home && sections.length >= 2 ? 112 : 72), paddingBottom: insets.bottom + 150 + (steps ? 66 : 0), flexGrow: 1 }}>
       {!requests.length ? <Home patient={patient} patients={patients} onPick={pick} onChoosePatient={() => router.push("/patients")} onSelectPatient={id => openSession(id)}
         onShelf={bottom => setShelfFrom(Math.max(0, Math.round(bottom + scrollSV.get() - (insets.top + 106))))} shelfCollapse={{ scroll: scrollSV, from: shelfFrom }} />
       : <View style={{ gap: 44 }}>
@@ -230,7 +229,6 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
         {visible.map(req => {
           const card = encounter?.cards.find(c => c.requestId === req.id);
           const answerPatient = card?.patientSnapshot ?? patient;
-          const resolved = Boolean(card) || req.status !== "streaming";
           return <View key={req.id} collapsable={false} onLayout={event => {
             offsets.current[req.id] = event.nativeEvent.layout.y;
             if (req.id === latest?.id && requests.length > 1 && (landedAt.current === undefined || Date.now() - landedAt.current < 900)) {
@@ -239,7 +237,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
             }
           }} style={{ gap: 16, minHeight: req.id === latest?.id && req.status === "streaming" ? 320 : undefined }}>
             <Text selectable accessibilityRole="header" style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{req.prompt || prompts[req.kind]}</Text>
-            {resolved && answerPatient && <StreamedLead text={leadFor(req.kind, answerPatient, req.prompt)} animate={req.status === "streaming"} />}
+            {/* The lead summarises the card below, so there is none without a card (failed or stopped). */}
+            {card && answerPatient && <VisitLead req={req} card={card} patient={answerPatient} />}
             {card && props && <ResponseFrame pending={false} partial={req.status === "streaming"} onCancel={cancel} onSource={() => router.push({ pathname: "/source", params: { id: "history", patientId: patient!.id, cardId: card.id } })}>
               <Reveal>{card.revision !== encounter?.revision && <Notice>Earlier encounter revision {card.revision}. Its original context and sources are retained.</Notice>}{(() => { const body = <ClinicalResponseRenderer kind={card.kind} sections={card.sections} loading={req.status === "streaming"} featureProps={{ ...props, patient: card.patientSnapshot ?? props.patient, result: card, onSource: id => router.push({ pathname: "/source", params: { id, patientId: props.patient.id, cardId: card.id } }) }} />;
                 // Only the latest answer feeds the pinned tabs.
@@ -250,14 +249,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
           </View>;
         })}
         {/* One next step at a time: the visit's need (the line it opened with), or handing over once nothing is left, then at most two quiet questions. */}
-        {!active && latest && patient && (() => {
-          const end = threadEnd({ latest: latest.kind, need: visitNeed(patient, encounter, server), hasSteps: Boolean(steps), firstName: patient.name.split(" ")[0]!, discharged: Boolean(encounter?.discharge?.dischargedAt), follow: askAfter(latest.kind) });
-          if (!end.need && !end.ask.length) return null;
-          return <View style={{ gap: 18, paddingTop: 28, marginTop: 8, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
-            {end.need && <NeedLine need={end.need as VisitNeed} onPress={n => goToNeed(n.target, patient, pick)} />}
-            <QuestionList title="Also ask" questions={end.ask.map(k => ({ key: k, text: suggestionFor(k, patient).text }))} onAsk={k => pick(suggestionFor(k as Capability, patient))} />
-          </View>;
-        })()}
+        {!active && latest && patient && <VisitEnd latest={latest.kind} patient={patient} encounter={encounter} hasSteps={Boolean(steps)} onPick={pick} />}
       </View>}
     </Animated.ScrollView>
 
@@ -265,7 +257,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       <SectionTabs sections={sections} active={Math.min(activeTab, sections.length - 1)} onPick={jumpTo} />
     </View>}
     {home && !requests.length && <QuickRow actions={homeKeys} scroll={scrollSV} from={shelfFrom} top={insets.top + 62} />}
-    <TopBar patient={patient} inEncounter={!home} openTasks={(patient ? [encounter] : Object.values(encounters)).reduce((sum, value) => sum + (value?.tasks.filter(task => !task.completed).length ?? 0), 0)} faded={scrolled || requests.length > 0} tall={home && !requests.length && capsule} onMenu={openDrawer} onBack={home ? undefined : () => router.canGoBack() ? router.back() : router.replace("/")} onPatient={() => router.push({ pathname: "/patients", params: { switch: "1" } })} onTasks={() => router.push("/tasks")} />
+    <TopBar patient={patient} inEncounter={!home} openTasks={openTaskCount(patient ? [patient] : patients, encounters, server)} faded={scrolled || requests.length > 0} tall={home && !requests.length && capsule} onMenu={openDrawer} onBack={home ? undefined : () => router.canGoBack() ? router.back() : router.replace("/")} onPatient={() => router.push({ pathname: "/patients", params: { switch: "1" } })} onTasks={() => router.push("/tasks")} />
     </View>
 
     {/* Everything under the dock blurs progressively, on home and in visits alike. */}
@@ -278,22 +270,19 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       onCancel={cancel}
       onSubmit={submit}
       spokenPrompt={patient ? suggestionFor("briefing", patient).text : "Who am I seeing first?"}
-      placeholder={patient ? `Ask about ${patient.name.split(" ")[0]}…` : "Ask anything…"}
+      placeholder={patient ? `Ask about ${patient.name.split(" ")[0]}…` : PLACEHOLDER.today}
       draft={input}
-      onDraft={setInput}
+      onDraft={value => { setInput(value); if (notice) setNotice(undefined); }}
       voiceEnabled={voiceInput}
       onVoiceDisabled={() => setNotice("Voice input is turned off in settings. Type your request instead.")}
-      onImage={() => open("xray")}
-      attachments={pending}
-      onAttachmentsChange={setPending}
-      onConsultation={() => open("recording")}
-      onNote={() => open("note")}
+      // The + and the visit tools only inside a visit; Today has none.
+      {...patient && { onImage: () => open("xray"), onConsultation: () => open("recording"), onNote: () => open("note"), attachments: pending, onAttachmentsChange: setPending }}
+      suggestion={nudge && { text: nudge.text, onPress: () => setAsk({ open: true, shown: nudge.answer }) }}
       above={<>
         {recording && <Pressable accessibilityRole="button" accessibilityLabel={`Consultation ${encounter?.recording === "paused" ? "paused" : "playing"}, ${encounter?.recordingSeconds} seconds`} accessibilityHint="Opens the consultation recorder" hitSlop={{ top: 2, bottom: 2 }} onPress={() => open("recording")} style={{ alignSelf: "center", minHeight: 40, paddingHorizontal: 16, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: palette.white, boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: encounter?.recording === "paused" ? palette.amber : palette.red }} /><Text style={{ ...type.footnote, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>Consultation {encounter?.recording === "paused" ? "paused" : "playing"} · {encounter?.recordingSeconds}s</Text>
         </Pressable>}
         {notice && <Notice>{notice}</Notice>}
-        {nudge && !notice && !drawer && <AskNudge answer={nudge} onPress={() => setAsk({ open: true, shown: nudge })} />}
         {steps && !drawer && <NextStepBar steps={steps} p={next.p} onExpand={next.show} onAct={act} />}
       </>}
     />

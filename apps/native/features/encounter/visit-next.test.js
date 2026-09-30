@@ -18,3 +18,11 @@ test("with nothing left the step is handing over, worded for a discharged patien
   expect(threadEnd({ ...base }).need).toMatchObject({ action: "Hand over", target: "handover", text: "Nothing else needs Amelia now" });
   expect(threadEnd({ ...base, discharged: true }).need?.text).toBe("Amelia is discharged · hand over when you’re done");
 });
+
+test("a need the answer just shown already meets is left to that answer: no looping Brief me under the briefing", () => {
+  const result = { tone: "urgent", text: "New result to review", action: "Brief me", target: "briefing" };
+  const end = threadEnd({ ...base, latest: "briefing", need: result, follow: ["briefing", "reasoning", "xray"] });
+  expect(end.need).toBeUndefined();
+  expect(end.ask).toEqual(["reasoning", "xray"]);
+  expect(threadEnd({ ...base, latest: "reasoning", need: result }).need).toBe(result);
+});

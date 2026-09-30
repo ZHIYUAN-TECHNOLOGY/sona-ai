@@ -8,12 +8,12 @@ import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Expand, Icon, Surface, Tone, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
-import { useEncounter } from "@/features/encounter/store";
+import { useWardBeds } from "@/features/day/use-counts";
 import { api, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { useFindings } from "@/features/live/findings-sync";
-import { useServerBeds, useServerForecast } from "@/features/live/ward-sync";
-import { bedBar, bedKind, clockLabel, filterSegments, forecastBeds, forecastLine, wardBeds, wardSummary, type Bed, type BedForecast, type BedKind, type Owner, type WardFilter } from "./model";
+import { useServerForecast } from "@/features/live/ward-sync";
+import { bedBar, bedKind, clockLabel, filterSegments, forecastBeds, forecastLine, wardSummary, type Bed, type BedForecast, type BedKind, type Owner, type WardFilter } from "./model";
 
 /*
  * Ward summary, minimal (after 60fps "Ultrahuman Positive Recovery Text Animation",
@@ -139,10 +139,9 @@ export function wardLine(beds: Bed[]) {
  * bar, this week's number (the rest on demand), and one quiet way into the ward to act on it.
  */
 export function WardGlance() {
-  const { patients, encounters } = useEncounter();
   const { findings } = useFindings();
   const { reducedMotion } = useAccessibleEffects();
-  const beds = useServerBeds(findings) ?? wardBeds(patients, encounters);
+  const beds = useWardBeds();
   const forecast = useForecast(beds, findings);
   const blocked = wardSummary(beds).blocked;
   return <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 14 }}>

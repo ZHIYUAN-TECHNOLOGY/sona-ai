@@ -28,8 +28,9 @@ export type DayItem = {
 export const byUrgency = (a: DayItem, b: DayItem) => b.score - a.score || (b.at ?? 0) - (a.at ?? 0);
 
 // A synthetic lab result that arrived after Daniel's intake and has not been acted on.
-export type PendingResult = { id?: string; patientId: string; test: string; value: string; flag: string; receivedAt: string };
-export const PENDING_RESULT: PendingResult = { patientId: "SYN-1086", test: "Potassium", value: "3.1 mmol/L", flag: "Low", receivedAt: demoTime(-120) };
+// `last`: the same test's previous value for this patient, when there is one ("3.8 on 14 Sep").
+export type PendingResult = { id?: string; patientId: string; test: string; value: string; flag: string; receivedAt: string; last?: string };
+export const PENDING_RESULT: PendingResult = { patientId: "SYN-1086", test: "Potassium", value: "3.1 mmol/L", flag: "Low", receivedAt: demoTime(-120), last: "3.8 on 14 Sep" };
 /** Keeps the demo result about two hours old when the demo schedule is refreshed. */
 export { testInSentence };
 export function refreshPendingResult(now = new Date()) { PENDING_RESULT.receivedAt = demoTime(-120, now); }

@@ -29,6 +29,8 @@ type Mode = "idle" | "holding" | "handsfree" | "composing";
 /** Silence after the last heard word before a hands-free request is sent. */
 const ENDPOINT_MS = 1300;
 const NONE: Attachment[] = [];
+/** The coach mark shows once per app session, on whichever dock first has room for it. */
+let coachSeen = false;
 type Props = {
   /** Status text while a response is being prepared. Undefined when idle. */
   thinking?: string;
@@ -48,6 +50,8 @@ type Props = {
   onConsultation?: () => void;
   onNote?: () => void;
   above?: ReactNode;
+  /** The page's ✦ suggestion, carried in the idle bar between the keyboard and the orb; without one the bar shows the placeholder and opens the composer. */
+  suggestion?: { text: string; onPress: () => void; label?: string };
   /** Hides the first-run coach mark while something else sits above the dock. */
   quiet?: boolean;
   /** A photo, capture or file chosen from the attachments menu. */
@@ -92,14 +96,13 @@ function ToolButton({ icon, label, onPress }: { icon: BrandIconName; label: stri
 /** Voice-first dock: tap to talk hands-free, or hold to talk and release to send; keyboard morphs into a composer. */
 export function VoiceDock(props: Props) {
   const glass = process.env.EXPO_OS === "ios" && isLiquidGlassAvailable();
-  const { thinking, activity, onCancel, onSubmit, spokenPrompt, placeholder, draft, onDraft, voiceEnabled, onVoiceDisabled, above, backdrop, quiet } = props;
+  const { thinking, activity, onCancel, onSubmit, spokenPrompt, placeholder, draft, onDraft, voiceEnabled, onVoiceDisabled, above, backdrop, quiet, suggestion } = props;
   const insets = useSafeAreaInsets();
   const { reducedMotion, reducedTransparency } = useAccessibleEffects();
   const [mode, setMode] = useState<Mode>("idle");
   const [used, setUsed] = useState(false);
   // The coach mark says its piece and steps aside, so it never sits over the actions on the page behind it.
-  const [coached, setCoached] = useState(false);
-  useEffect(() => { const timer = setTimeout(() => setCoached(true), 6000); return () => clearTimeout(timer); }, []);
+  const [coached, setCoached] = useState(coachSeen);
   const [menu, setMenu] = useState(false);
   const menuProgress = useSharedValue(0), menuExtend = useSharedValue(0);
   const [armed, setArmed] = useState(false);
@@ -147,7 +150,7 @@ export function VoiceDock(props: Props) {
   useEffect(() => { if (thinking) AccessibilityInfo.announceForAccessibility(thinking); }, [Boolean(thinking)]);
 
   const listen = (next: "holding" | "handsfree") => {
-    clear(); setUsed(true); setWords(0); setFlooding(false); setMode(next); haptic("light");
+    clear(); setUsed(true); coachSeen = true; setWords(0); setFlooding(false); setMode(next); haptic("light");
     transcript.forEach((_, i) => timers.current.push(setTimeout(() => {
       setWords(i + 1);
       // Hands-free ends on a pause after the last word, like a real voice endpoint.
@@ -195,6 +198,9 @@ export function VoiceDock(props: Props) {
   const attachments = props.attachments ?? NONE;
   const tools = Boolean(props.onImage && props.onConsultation && props.onNote);
   // Attachments alone can be sent; the question then defaults to reviewing them.
+  const coach = !used && !coached && !quiet && !suggestion && !busy && mode === "idle" && !attachments.length;
+  // Once it has shown, no other dock this session shows it again.
+  useEffect(() => { if (!coach) return; coachSeen = true; const timer = setTimeout(() => setCoached(true), 6000); return () => clearTimeout(timer); }, [coach]);
   const send = () => { const value = draft.trim(); if (!value && !attachments.length) return; onSubmit(value || `Review the attached ${attachments.length === 1 ? "image" : "images"}`); Keyboard.dismiss(); };
 
   // Attachments: the plus morphs into the menu; closing from any depth is one spring back.
@@ -262,29 +268,19 @@ export function VoiceDock(props: Props) {
         </Animated.View>
 
         <Animated.View pointerEvents={mode === "composing" ? "none" : "box-none"} style={[StyleSheet.absoluteFill, { justifyContent: "center" }, dockStyle]}>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 14 }}>
-            {handsfree ? <RoundButton icon="close" label="Cancel voice input" onPress={() => finish(false)} /> : !tools ? <View style={{ width: 50 }} /> : <View accessibilityElementsHidden={menu} importantForAccessibility={menu ? "no-hide-descendants" : "auto"} style={{ opacity: menu ? 0 : 1 }}><RoundButton icon="add" label="Attach a photo, camera capture or file" onPress={openMenu} hidden={holding || busy} reduced={reducedMotion} /></View>}
+          {/* One bar: [+ in a visit] [keyboard] [✦ suggestion, or the placeholder] [orb]. */}
+          <View pointerEvents="box-none" style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 13, paddingRight: 6 }}>
+            {handsfree ? <RoundButton icon="close" label="Cancel voice input" onPress={() => finish(false)} /> : tools && <View accessibilityElementsHidden={menu} importantForAccessibility={menu ? "no-hide-descendants" : "auto"} style={{ opacity: menu ? 0 : 1 }}><RoundButton icon="add" label="Attach a photo, camera capture or file" onPress={openMenu} hidden={holding || busy} reduced={reducedMotion} /></View>}
             <RoundButton icon="keyboard" label="Type a message" onPress={() => setMode("composing")} hidden={holding || busy} reduced={reducedMotion} />
-          </View>
-
-          {/* Coach mark until the first voice request: states both gestures up front. */}
-          {/* Attachments waiting to send: a small deck above the mic (after Airbnb's photo pop and slide). */}
-          {!busy && mode === "idle" && !holding && attachments.length > 0 && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ distance: 10, scale: 0.8, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="box-none"
-            style={{ position: "absolute", bottom: BAR_H + 4, alignSelf: "center" }}>
-            <AttachmentStack items={attachments} reduced={reducedMotion} onPress={openMenu} />
-          </Animated.View>}
-          {!used && !coached && !quiet && !busy && mode === "idle" && !attachments.length && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ delay: 600, distance: 6, scale: 0.96, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="none"
-            style={{ position: "absolute", bottom: BAR_H + 8, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 6, paddingRight: 14, paddingVertical: 6, borderRadius: radius.group, backgroundColor: "rgba(255,255,255,0.94)", boxShadow: "0 6px 20px rgba(24,32,48,0.1)", transformOrigin: "bottom" }}>
-            <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: "#E4EDFD", alignItems: "center", justifyContent: "center" }}><BrandIcon name="wave" size={14} color={palette.blue} strokeWidth={1.8} /></View>
-            <Text style={{ ...type.footnote, fontWeight: "500", color: palette.ink }}>Tap or hold to talk</Text>
-          </Animated.View>}
-
-          <View pointerEvents="box-none" style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, alignItems: "center", justifyContent: "center" }}>
-            {busy && <Animated.View key={thinking} entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, scale: 0.96, duration: 240 })} exiting={FadeOut.duration(120)} pointerEvents="none"
-              style={{ position: "absolute", bottom: BAR_H + 6, flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.control, backgroundColor: "rgba(255,255,255,0.9)", boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
-              <Icon name="stop.fill" size={9} color={palette.muted} />
-              <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: "500", color: palette.ink, animationName: reducedMotion ? undefined : { "0%": { opacity: 1 }, "50%": { opacity: 0.5 }, "100%": { opacity: 1 } }, animationDuration: 1600, animationIterationCount: "infinite" } as never}>{thinking}</Text>
-            </Animated.View>}
+            {/* One line at every text size (the full text is the label), capped so the bar never grows. */}
+            <Animated.View pointerEvents={holding || busy ? "none" : "auto"} accessibilityElementsHidden={holding || busy} importantForAccessibility={holding || busy ? "no-hide-descendants" : "auto"} style={{ flex: 1, opacity: holding || busy ? 0 : 1, transitionProperty: "opacity", transitionDuration: 200, transitionTimingFunction: EASE_OUT }}>
+              <Pressable accessibilityRole="button" accessibilityLabel={suggestion ? suggestion.label ?? `Ask Sona: ${suggestion.text}` : placeholder} accessibilityHint={suggestion ? "Opens Sona's answer" : "Opens the message composer"}
+                onPress={suggestion ? () => { haptic("select"); suggestion.onPress(); } : () => setMode("composing")}
+                style={({ pressed }) => ({ minHeight: 50, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, borderRadius: 25, borderCurve: "continuous", backgroundColor: pressed ? "rgba(240,244,252,0.96)" : "rgba(255,255,255,0.92)", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", boxShadow: "0 4px 16px rgba(40,70,140,0.10)" })}>
+                {suggestion && <Text maxFontSizeMultiplier={2} style={{ ...type.subhead, color: palette.blue }}>✦</Text>}
+                <Text numberOfLines={1} maxFontSizeMultiplier={2} style={{ flex: 1, ...type.subhead, fontWeight: suggestion ? "600" : "400", color: suggestion ? palette.blue : palette.placeholder }}>{suggestion?.text ?? placeholder}</Text>
+              </Pressable>
+            </Animated.View>
             <GestureDetector gesture={micGesture}>
               <Animated.View accessible accessibilityRole="button" accessibilityLabel={busy ? `${thinking}. Stop response` : "Talk to Sona"} accessibilityHint={busy ? undefined : handsfree ? "Double-tap to send what you said." : "Tap to talk hands-free, or hold and release to send. With VoiceOver, double-tap to use the sample command."} accessibilityActions={[{ name: "activate" }]} onAccessibilityAction={() => busy ? onCancel() : onSubmit(spokenPrompt)}
                 style={{ width: ORB, height: ORB, borderRadius: ORB / 2, alignItems: "center", justifyContent: "center", transform: [{ scale: holding && !reducedMotion ? 1.12 : 1 }], transitionProperty: "transform", transitionDuration: 320, transitionTimingFunction: EASE_OUT } as never}>
@@ -295,6 +291,26 @@ export function VoiceDock(props: Props) {
                 <OrbGlyph activity={holding ? "listening" : activity ?? (busy ? "searching" : "idle")} still={reducedMotion} />
               </Animated.View>
             </GestureDetector>
+          </View>
+
+          {/* Attachments waiting to send: a small deck above the mic (after Airbnb's photo pop and slide). */}
+          {!busy && mode === "idle" && !holding && attachments.length > 0 && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ distance: 10, scale: 0.8, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="box-none"
+            style={{ position: "absolute", bottom: BAR_H + 4, alignSelf: "center" }}>
+            <AttachmentStack items={attachments} reduced={reducedMotion} onPress={openMenu} />
+          </Animated.View>}
+          {/* Coach mark once per app session, above the orb, and never while the bar carries a suggestion. */}
+          {coach && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ delay: 600, distance: 6, scale: 0.96, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="none"
+            style={{ position: "absolute", bottom: BAR_H + 8, right: 0, flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 6, paddingRight: 14, paddingVertical: 6, borderRadius: radius.group, backgroundColor: "rgba(255,255,255,0.94)", boxShadow: "0 6px 20px rgba(24,32,48,0.1)", transformOrigin: "bottom right" }}>
+            <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: "#E4EDFD", alignItems: "center", justifyContent: "center" }}><BrandIcon name="wave" size={14} color={palette.blue} strokeWidth={1.8} /></View>
+            <Text style={{ ...type.footnote, fontWeight: "500", color: palette.ink }}>Tap or hold to talk</Text>
+          </Animated.View>}
+
+          <View pointerEvents="none" style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, alignItems: "center", justifyContent: "center" }}>
+            {busy && <Animated.View key={thinking} entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, scale: 0.96, duration: 240 })} exiting={FadeOut.duration(120)} pointerEvents="none"
+              style={{ position: "absolute", bottom: BAR_H + 6, flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.control, backgroundColor: "rgba(255,255,255,0.9)", boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
+              <Icon name="stop.fill" size={9} color={palette.muted} />
+              <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: "500", color: palette.ink, animationName: reducedMotion ? undefined : { "0%": { opacity: 1 }, "50%": { opacity: 0.5 }, "100%": { opacity: 1 } }, animationDuration: 1600, animationIterationCount: "infinite" } as never}>{thinking}</Text>
+            </Animated.View>}
           </View>
         </Animated.View>
 

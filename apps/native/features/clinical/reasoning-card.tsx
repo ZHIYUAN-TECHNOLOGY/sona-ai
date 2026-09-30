@@ -6,7 +6,7 @@ import { IconRow, Section } from "@/components/sona/sections";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { palette } from "@/components/sona/theme";
 import { SourceRef, type SourceKind } from "@/components/sona/sources";
-import { Action, Body, Card, glass, Notice, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, glass, Notice, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps, HistoryFact, Patient } from "@/features/encounter/types";
 import { Anchor, Takeaways, type Takeaway } from "@/components/sona/answer-kit";
@@ -68,7 +68,7 @@ function GapRow({ title, detail, updates, index, reduced }: { title: string; det
   </Animated.View>;
 }
 
-export function ReasoningCard({ patient, result, onSource, onOpen, onRequest }: FeatureProps) {
+export function ReasoningCard({ patient, result, onSource, onRequest }: FeatureProps) {
   const { encounters } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const layout = reducedMotion ? undefined : LAYOUT;
@@ -87,8 +87,10 @@ export function ReasoningCard({ patient, result, onSource, onOpen, onRequest }: 
   // Live mode: the server answers the question asked, above the authored possibilities it does not replace.
   const question = encounters[patient.id]?.requests.find(r => r.id === result?.requestId)?.prompt || "What could explain these symptoms?";
   const server = useLiveReasoning(patient.encounterId, result?.requestId, question);
+  // A fixture's line is the same for every patient, so only a model's answer is highlighted here.
+  const fromModel = server.live && Boolean(server.loading || server.error || (server.data && server.data.source !== "fixture"));
   return <View style={{ gap: 20 }}>
-    {server.live && <Surface feature style={{ padding: 16, gap: 10 }}>
+    {fromModel && <Surface feature style={{ padding: 16, gap: 10 }}>
       {server.loading ? <Drafting label="Weighing the record…" /> : server.data ? <>
         <Arrive><Text selectable style={{ fontSize: 16, lineHeight: 24, color: palette.ink }}>{server.data.answer}</Text></Arrive>
         <Arrive index={1}><SampleLabel source={server.data.source} what="reasoning" /></Arrive>
@@ -120,12 +122,6 @@ export function ReasoningCard({ patient, result, onSource, onOpen, onRequest }: 
     </Section>
     </Anchor>
     <Anchor id="history" title="History" icon="person.text.rectangle" tone="teal"><HistoryEditor patient={patient} result={result} onSource={onSource} onRequest={onRequest} refresh="reasoning" /></Anchor>
-    <Anchor id="next" title="Next"><Animated.View layout={layout}>
-      <Card feature label="Next step" title={patient.incomplete ? "Start with the missing history" : "Bring the assessment into the note"}>
-        {!patient.incomplete && <Body muted>Add examination findings and your assessment. Keep patient facts distinct from these possibilities.</Body>}
-        {patient.incomplete && <Action label="Capture the missing history" icon="waveform" onPress={() => onOpen("recording")} />}
-        <Action label="Open consultation note" icon="square.and.pencil" secondary={patient.incomplete} onPress={() => onOpen("note")} />
-      </Card>
-    </Animated.View></Anchor>
+    {/* No next step of its own: the end of the visit shows the one next step (visit-next.ts). */}
   </View>;
 }

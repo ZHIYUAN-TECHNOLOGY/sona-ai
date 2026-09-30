@@ -1,35 +1,19 @@
 import { router } from "expo-router";
 import type { QuickAction } from "@/components/sona/quick-actions";
-import { PENDING_RESULT, testInSentence } from "@/features/day/model";
-import { newestResult, serverDayPatients } from "@/features/live/day";
+import { testInSentence, type PendingResult } from "@/features/day/model";
+import { useDayPatients, usePendingResult, useWardBeds } from "@/features/day/use-counts";
 import { useRole } from "@/features/live/roles";
 import { useOpenAudit } from "@/features/audit";
 import { shortRM, totalRisk, type AuditItem } from "@/features/audit/model";
 import { useInboxSummary } from "@/features/inbox";
 import { useTrainingStatus } from "@/features/training";
 import { trainingLine } from "@/features/training/model";
-import { acknowledgeResult, useAckFailed, useServerData, useServerDay, type ServerData } from "@/features/live/server-day";
-import { localDate } from "@/features/tasks/state";
+import { acknowledgeResult, useAckFailed, useServerData } from "@/features/live/server-day";
 import { useServerEncounter } from "@/features/live/sync";
-import { DEMO_PATIENT, wardBeds, wardSummary } from "@/features/ward/model";
+import { DEMO_PATIENT, wardSummary, type Bed } from "@/features/ward/model";
 import { defaultMedications } from "./clinical-state";
 import { openSession } from "./navigation";
 import type { Encounter, Patient } from "./types";
-
-/**
- * The result waiting on a doctor: in live mode the server's newest unacknowledged one, else the fixture's.
- * `server` is passed in from `useServerData()`: a module read here would be cached by React Compiler.
- */
-function pendingResult(server: ServerData) {
-  return server ? newestResult(server.results) : PENDING_RESULT;
-}
-
-/** Today's visits: in live mode at the server's appointment times, else the fixtures. */
-export function useDayPatients(patients: Patient[]) {
-  const server = useServerData();
-  const today = useServerDay(server ? localDate(new Date()) : undefined);
-  return today ? serverDayPatients(patients, today) : patients;
-}
 
 /** The lines the home keys and the sidebar share, so both say the same thing. */
 export const wardLine = (ward: { blocked: number; fit: number }) => ward.blocked ? `${ward.blocked} discharges blocked` : `${ward.fit} fit to go`;
@@ -43,6 +27,8 @@ type Messages = { on: boolean; allowed: boolean; waiting: number; urgent: number
 export function useHomeActions(patients: Patient[], encounters: Record<string, Encounter | undefined>) {
   const server = useServerData();
   const day = useDayPatients(patients);
+  const result = usePendingResult();
+  const beds = useWardBeds();
   // The ward key counts bed 6 from Amelia's encounter, so it needs the server's record of it too.
   useServerEncounter(patients.find(p => p.id === DEMO_PATIENT));
   const role = useRole();
@@ -51,13 +37,13 @@ export function useHomeActions(patients: Patient[], encounters: Record<string, E
   const training = useTrainingStatus();
   const messages = { ...useInboxSummary(), allowed: role.can("messages.inbox") };
   // Management's home leads with the ward card, so its keys are its own jobs, not clinical ones.
-  if (role.role === "management") return managementActions(day, encounters, auditOf(audit), training.status ? trainingLine(training.status.counts) : undefined, training.status?.counts.blocked ?? 0);
-  return homeActions(day, encounters, server, ack, messages);
+  if (role.role === "management") return managementActions(day, beds, auditOf(audit), training.status ? trainingLine(training.status.counts) : undefined, training.status?.counts.blocked ?? 0);
+  return homeActions(day, encounters, { result, live: Boolean(server), beds }, ack, messages);
 }
 
 /** Management's home keys: beds ready to go, the handover to read, money at risk in coding, and the training queue. */
-export function managementActions(patients: Patient[], encounters: Record<string, Encounter | undefined>, audit: { count: number; risk: string }, training: string | undefined, trainingBlocked: number): QuickAction[] {
-  const ward = wardSummary(wardBeds(patients, encounters));
+export function managementActions(patients: Patient[], beds: Bed[], audit: { count: number; risk: string }, training: string | undefined, trainingBlocked: number): QuickAction[] {
+  const ward = wardSummary(beds);
   // Fit to go with nothing holding them: the blocked ones already lead the ward card above.
   const ready = Math.max(0, ward.fit - ward.blocked);
   return [
@@ -70,12 +56,11 @@ export function managementActions(patients: Patient[], encounters: Record<string
 
 type Ack = { allowed: boolean; failed?: { id: string; error: string } };
 
-/** Home: where a clinician's day is, each tile with its live status. */
-export function homeActions(patients: Patient[], encounters: Record<string, Encounter | undefined>, server: ServerData, ack: Ack = { allowed: true },
+/** Home: where a clinician's day is, each tile with its live status; the result and the beds come from day/counts. */
+export function homeActions(patients: Patient[], encounters: Record<string, Encounter | undefined>, { result, live, beds }: { result: PendingResult | undefined; live: boolean; beds: Bed[] }, ack: Ack = { allowed: true },
   messages: Messages = { on: false, allowed: true, waiting: 0, urgent: 0, line: "" }): QuickAction[] {
   const next = [...patients].sort((a, b) => a.time.localeCompare(b.time)).find(p => !encounters[p.id]?.requests.length);
-  const ward = wardSummary(wardBeds(patients, encounters));
-  const result = pendingResult(server);
+  const ward = wardSummary(beds);
   const resultFor = result && patients.find(p => p.id === result.patientId);
   // Opening a live result acknowledges it (doctors only), so it leaves the unacknowledged list for everyone.
   // A refusal is kept by acknowledgeResult and shown on the key; opening it again retries.
@@ -87,7 +72,7 @@ export function homeActions(patients: Patient[], encounters: Record<string, Enco
     // Patients' messages from Sona Care; hand over stays in the sidebar. A role that can't read them keeps Hand over here.
     messages.allowed
       ? { key: "messages", label: "Messages", icon: "bubble.left.and.bubble.right", status: messages.on ? messages.line : "From Sona Care", tone: messages.urgent ? "urgent" : messages.waiting ? "caution" : "calm", badge: messages.waiting, onPress: () => router.push("/inbox") }
-      : { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: `${patients.length + (server ? 0 : 3)} patients to hand over`, onPress: () => router.push("/handover") },
+      : { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: `${patients.length + (live ? 0 : 3)} patients to hand over`, onPress: () => router.push("/handover") },
     // Tasks live in the top bar; the ward view is the one place to see every bed's blockers.
     { key: "ward", label: "Ward", icon: "bed.double", status: wardLine(ward), tone: ward.blocked ? "caution" : "calm", badge: ward.blocked, onPress: () => router.push("/ward") },
   ];
@@ -101,8 +86,8 @@ export type VisitTarget = "briefing" | "recording" | "medication" | "xray" | "sc
 
 /** The one thing in this visit that needs the doctor now, with its action; nothing when nothing does. */
 export type VisitNeed = { tone: "urgent" | "caution" | "calm"; text: string; action: string; target: VisitTarget | "discharge" | "claim" | "handover" };
-export function visitNeed(patient: Patient, encounter: Encounter | undefined, server: ServerData): VisitNeed | undefined {
-  if (pendingResult(server)?.patientId === patient.id) return { tone: "urgent", text: "New result to review", action: "Brief me", target: "briefing" };
+export function visitNeed(patient: Patient, encounter: Encounter | undefined, result: PendingResult | undefined): VisitNeed | undefined {
+  if (result?.patientId === patient.id) return { tone: "urgent", text: "New result to review", action: "Brief me", target: "briefing" };
   if (patient.incomplete) return { tone: "caution", text: "History incomplete · medicines and allergies unknown", action: "Brief me", target: "briefing" };
   const claim = encounter?.claim?.status;
   if (claim === "queried" || claim === "denied") return { tone: "caution", text: claim === "queried" ? "Insurer asked about the guarantee letter" : "Guarantee letter denied · appeal drafted", action: "Answer", target: "claim" };
@@ -113,9 +98,9 @@ export function visitNeed(patient: Patient, encounter: Encounter | undefined, se
   if (!encounter?.discharge?.dischargedAt && encounter?.requests.length) return { tone: "calm", text: "Medicines confirmed · ready to draft the discharge", action: "Discharge", target: "discharge" };
   return undefined;
 }
-export function visitActions(patient: Patient, encounter: Encounter | undefined, server: ServerData, go: (target: VisitTarget) => void, scan = false): QuickAction[] {
+export function visitActions(patient: Patient, encounter: Encounter | undefined, result: PendingResult | undefined, go: (target: VisitTarget) => void, scan = false): QuickAction[] {
   const unconfirmed = patient.incomplete ? 0 : (encounter?.medicationEntries ?? defaultMedications(patient)).filter(m => !m.confirmed).length;
-  const resultHere = pendingResult(server)?.patientId === patient.id;
+  const resultHere = result?.patientId === patient.id;
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
   const lines = encounter?.transcript.length ?? 0;
   return [
@@ -131,8 +116,8 @@ export function visitActions(patient: Patient, encounter: Encounter | undefined,
  * The visit's full tool row: the keys above plus the note, its follow-up tasks and discharge (when
  * this patient has a discharge plan), each with its state. Consultation and Note moved here from the sidebar.
  */
-export function visitTools(patient: Patient, encounter: Encounter | undefined, server: ServerData, go: (target: VisitTarget) => void, scan: boolean, discharge: boolean): QuickAction[] {
-  const [brief, consult, ...rest] = visitActions(patient, encounter, server, go, scan);
+export function visitTools(patient: Patient, encounter: Encounter | undefined, result: PendingResult | undefined, go: (target: VisitTarget) => void, scan: boolean, discharge: boolean): QuickAction[] {
+  const [brief, consult, ...rest] = visitActions(patient, encounter, result, go, scan);
   const openTasks = encounter?.tasks.filter(t => !t.completed).length ?? 0;
   const drafted = Boolean(encounter?.note.trim() || encounter?.noteSections);
   return [brief!, consult!,

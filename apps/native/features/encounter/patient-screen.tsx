@@ -10,9 +10,9 @@ import { GROUPS, letters, listItems, syntheticCensus, type Group, type Item, typ
 import { useContinue, useContinueState } from "@/features/patients/continue-store";
 import { ASK_SPACE, WithSona } from "@/features/ask";
 import { needsYou } from "@/features/ask/answers";
-import { defaultMedications } from "./clinical-state";
-import { flagsFor, PatientSheet, type Go } from "./patient-sheet";
-import { useDayPatients } from "./quick-actions";
+import { needLine, patientFlags, unconfirmedOf } from "@/features/day/counts";
+import { useDayPatients, usePendingResult } from "@/features/day/use-counts";
+import { PatientSheet, type Go } from "./patient-sheet";
 import { useEncounter } from "./store";
 import { openSession } from "./navigation";
 
@@ -50,9 +50,10 @@ export function PatientScreen() {
   const now = new Date().getHours() * 60 + new Date().getMinutes();
   // Today's visits come from the same schedule as Today (the server's appointments in live mode), so the two pages agree.
   const day = useDayPatients(patients);
+  const result = usePendingResult(); // the result Today flags, so an acknowledged one stops showing here too
   const real: Row[] = patients.map(p => {
     const visit = day.find(d => d.id === p.id);
-    const flags = flagsFor(p, (encounters[p.id]?.medicationEntries ?? defaultMedications(p)).filter(m => !m.confirmed).length);
+    const flags = patientFlags(p, unconfirmedOf(p, encounters[p.id]), result);
     const answers = encounters[p.id]?.requests.length ?? 0;
     const soon = Boolean(visit) && !answers && minutes(visit!.time) - now >= 0 && minutes(visit!.time) - now <= 60;
     const [group, reason, tone]: [Group, string, Row["tone"]] = flags.length ? ["needs", flags[0]!.label, flags[0]!.tone === "urgent" ? "urgent" : "soon"]
@@ -76,7 +77,7 @@ export function PatientScreen() {
   const upNext = [...day].sort((x, y) => x.time.localeCompare(y.time)).find(p => !encounters[p.id]?.requests.length);
   const insight: ReactNode[] = tab === "continue"
     ? [entries.length ? `${entries.length} unfinished` : "Nothing unfinished", toSign ? <Tone key="sign" of="soon">{toSign} {toSign === 1 ? "note" : "notes"} to sign</Tone> : null].filter(Boolean)
-    : [rows.length === patients.length ? (day.length ? `${day.length} ${day.length === 1 ? "visit" : "visits"} today` : "No visits today") : `${rows.length} patients`, needs ? <Tone key="needs" of="urgent">{needs} {needs === 1 ? "needs" : "need"} you</Tone> : null, upNext ? <Fragment key="next">next <Tone of="next">{upNext.name.split(" ")[0]} at {upNext.time}</Tone></Fragment> : null].filter(Boolean);
+    : [rows.length === patients.length ? (day.length ? `${day.length} ${day.length === 1 ? "visit" : "visits"} today` : "No visits today") : `${rows.length} patients`, needs ? <Tone key="needs" of="urgent">{needLine(needs)}</Tone> : null, upNext ? <Fragment key="next">next <Tone of="next">{upNext.name.split(" ")[0]} at {upNext.time}</Tone></Fragment> : null].filter(Boolean);
 
   const renderItem = useCallback(({ item, index }: { item: Item; index: number }) => {
     if (item.kind === "header") return <Text accessibilityRole="header" style={{ ...type.footnote, fontWeight: "600", color: palette.muted, paddingTop: index ? 18 : 4, paddingBottom: 6, paddingHorizontal: 4 }}>{item.title} · {item.count}</Text>;

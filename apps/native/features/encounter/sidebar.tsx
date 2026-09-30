@@ -9,8 +9,9 @@ import { useLive } from "@/features/live";
 import { RolePill, useRole } from "@/features/live/roles";
 import { useTrainingStatus } from "@/features/training";
 import { trainingLine } from "@/features/training/model";
-import { wardBeds, wardSummary } from "@/features/ward/model";
-import { auditLine, auditOf, useDayPatients, wardLine } from "./quick-actions";
+import { wardSummary } from "@/features/ward/model";
+import { useDayPatients, useOpenTasks, useWardBeds } from "@/features/day/use-counts";
+import { auditLine, auditOf, wardLine } from "./quick-actions";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
@@ -56,7 +57,7 @@ const Divider = () => <View style={{ height: 1, marginHorizontal: 14, marginVert
  */
 export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; progress: SharedValue<number>; onClose: () => void; onNew: () => void }) {
   const insets = useSafeAreaInsets();
-  const { patient, patients, encounters } = useEncounter();
+  const { patient, patients } = useEncounter();
   const { user } = useLive();
   // Close first, then navigate, so the page is back in place when the next screen presents.
   const go = (to: () => void) => () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); onClose(); setTimeout(to, 120); };
@@ -67,13 +68,13 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
   const saved = useSaved();
   const today = useTodayAnswers();
   const leadOf = (id: string) => { const a = today.find(x => x.id === id); const lead = a && Object.values(a.spec.elements).find(e => e.type === "AskLead"); return lead ? String((lead.props as { text: string }).text) : undefined; };
-  const openTasks = Object.values(encounters).reduce((sum, e) => sum + (e?.tasks.filter(t => !t.completed).length ?? 0), 0);
+  const openTasks = useOpenTasks(); // the Tasks page's list, server tasks included
   // Each destination shows only for a role whose screen the server would open, with the same live line as its home key.
   const { can, label: role } = useRole();
   const inbox = useInboxSummary();
   // Today's visits from the same schedule as Today and Patients, so the three never disagree.
   const day = useDayPatients(patients);
-  const ward = wardSummary(wardBeds(day, encounters));
+  const ward = wardSummary(useWardBeds()); // the Ward page's beds
   const audit = auditOf(useOpenAudit());
   const training = useTrainingStatus();
 

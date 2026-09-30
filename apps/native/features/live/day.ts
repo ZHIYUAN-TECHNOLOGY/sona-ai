@@ -21,10 +21,19 @@ export function serverTasks(rows: ServerTask[], encounterId: string): Task[] {
   return rows.filter(r => r.encounterId === encounterId).map(r => ({ id: r.id, title: r.title, owner: r.owner, due: r.due ?? "", completed: r.completed }));
 }
 
+const newestFirst = (a: ServerResult, b: ServerResult) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime();
+
 /** The newest result nobody has acknowledged yet, shaped like the fixture's pending result. */
 export function newestResult(rows: ServerResult[]): PendingResult | undefined {
-  const r = rows.filter(row => !row.acknowledgedAt).sort((a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime())[0];
-  return r && { id: r.id, patientId: r.patientId, test: r.test, value: r.unit ? `${r.value} ${r.unit}` : r.value, flag: r.flag ? sentence(r.flag) : "New", receivedAt: clock(new Date(r.receivedAt)) };
+  const r = rows.filter(row => !row.acknowledgedAt).sort(newestFirst)[0];
+  return r && resultRow(r, rows);
+}
+
+/** One server result in the fixture's shape, with the same test's previous value for this patient ("3.8 on 14 Sep") when there is one. */
+export function resultRow(r: ServerResult, rows: ServerResult[]): PendingResult {
+  const before = rows.filter(x => x.patientId === r.patientId && x.test.toLowerCase() === r.test.toLowerCase() && new Date(x.receivedAt) < new Date(r.receivedAt)).sort(newestFirst)[0];
+  const last = before && `${before.value} on ${new Date(before.receivedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
+  return { id: r.id, patientId: r.patientId, test: r.test, value: r.unit ? `${r.value} ${r.unit}` : r.value, flag: r.flag ? sentence(r.flag) : "New", receivedAt: clock(new Date(r.receivedAt)), ...last ? { last } : {} };
 }
 
 /** Today's demo patients with a server appointment, at the appointment's time, earliest first. */

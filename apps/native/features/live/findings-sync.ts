@@ -13,6 +13,8 @@ import { refreshServerData } from "./server-day";
  */
 let fixture = fixtureFindings(new Date());
 let server: Finding[] | undefined;
+// Every screen counting the ward reads findings on mount (day/counts): one plain re-read in flight serves them all.
+let listing: ReturnType<typeof api.findings.list> | undefined;
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach(l => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
@@ -20,7 +22,7 @@ const subscribe = (l: () => void) => { listeners.add(l); return () => { listener
 /** Re-reads the server's findings; with an encounter, runs detection on it first (a rerun changes nothing). */
 export async function refreshFindings(detect?: string) {
   if (detect) await api.findings.detect({ encounterId: detect });
-  server = await api.findings.list({});
+  server = await (detect ? api.findings.list({}) : listing ??= api.findings.list({}).finally(() => { listing = undefined; }));
   notify();
 }
 

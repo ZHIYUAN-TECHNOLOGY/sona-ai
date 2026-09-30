@@ -24,6 +24,7 @@ import { Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveHuddle } from "@/features/live/model-sync";
 import { useLiveChanges } from "@/features/live/channel";
 import { BedBar, ForecastTimeline, KIND, ThisWeek, useForecast, wardLine } from "./ops";
+import { withFindingBlockers } from "@/features/day/counts";
 import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedRow, defaultFilter, emptyLine, filterBeds, huddle, wardBeds, type Bed, type Owner, type WardFilter } from "./model";
 
 /*
@@ -57,7 +58,8 @@ export function WardScreen() {
   useServerEncounter(patients.find(p => p.id === DEMO_PATIENT));
   const { findings } = useFindings();
   const serverBeds = useServerBeds(findings);
-  const beds = serverBeds ?? wardBeds(patients, encounters);
+  // Demo mode puts the X-ray's open findings on Bed 6, as the server does, so its count matches its Discharge page.
+  const beds = serverBeds ?? withFindingBlockers(wardBeds(patients, encounters), findings);
   const [owners, setOwners] = useState<Record<string, Owner | undefined>>({});
   const [briefed, setBriefed] = useState(false);
   const [open, setOpen] = useState<{ bed: string; from: Rect; focus?: string }>();
