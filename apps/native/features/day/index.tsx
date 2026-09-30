@@ -16,7 +16,7 @@ import type { Patient } from "@/features/encounter/types";
 import { useLive } from "@/features/live";
 import { withFindings } from "@/features/findings/model";
 import { useFindings } from "@/features/live/findings-sync";
-import { newestResult, serverDayPatients, serverVisit } from "@/features/live/day";
+import { serverDayPatients, serverVisit } from "@/features/live/day";
 import { acknowledgeResult, serverDayCount, useAckFailed, useServerData, useServerDay, useVisitTasks } from "@/features/live/server-day";
 import { localDate } from "@/features/tasks/state";
 import { flaggedItems, flaggedTaskIds } from "@/features/check-ins/model";
@@ -27,8 +27,8 @@ import { DemoTimeLine } from "@/features/live/demo-clock";
 import { useRole } from "@/features/live/roles";
 import { WardGlance } from "@/features/ward/ops";
 import { MessageActions, useInbox } from "@/features/inbox";
-import { useServerBeds } from "@/features/live/ward-sync";
-import { wardBeds } from "@/features/ward/model";
+import { needLine } from "./counts";
+import { useNeedsYou, usePendingResult, useWardBeds } from "./use-counts";
 import { bookingItems, dayOf, glDeniedItems, groupVisits, messageItems, rankDay, rankOtherDay, scheduleFor, type DayItem, type DayTone, type ScheduleVisit } from "./model";
 
 /*
@@ -247,11 +247,13 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, s
   const kept = useKeptFlags();
   const keptBookings = useKeptBookings();
   const { findings } = useFindings(); // lane F6: overdue follow-ups rank red
-  const serverBeds = useServerBeds(findings);
+  const beds = useWardBeds();
   const today = useServerDay(live ? localDate(new Date()) : undefined);
   const otherDay = useServerDay(live && offset !== 0 ? localDate(dayOf(offset)) : undefined);
   const patients = live ? serverDayPatients(fixturePatients, today ?? []) : fixturePatients;
-  const result = live ? newestResult(server?.results ?? []) : undefined;
+  // The result waiting on a doctor (live: the server's; demo: the fixture until the briefing acknowledges it).
+  const result = usePendingResult();
+  const needs = useNeedsYou().length; // patients, the same count as Patients and Sona's answer
   // Only real visits open; the authored schedule on other days is read-only. Opening a live result acknowledges it
   // (doctors only); a refusal keeps the row, saying why (useAckFailed), and opening it again retries.
   const onOpen = (id: string | undefined, target: DayItem["open"]) => {
@@ -282,10 +284,9 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, s
   const messages = inbox ? messageItems(inbox.threads, new Date(inbox.now)) : [];
   const messaged = (t: { id: string }, p: Patient) => t.id.startsWith("message:") && messages.some(m => m.patientId === p.id);
   // A denied guarantee letter holds a bed: an amber row that opens Sona's appeal.
-  const denials = glDeniedItems(serverBeds ?? wardBeds(fixturePatients, encounters));
-  const ranked = offset === 0 ? withFindings([...flaggedItems(checkIns, kept), ...messages, ...bookings, ...denials, ...rankDay(patients, encounters, now, undefined, live ? { result, tasksOf: p => tasksOf(p).filter(t => !flaggedTaskIds(checkIns).includes(t.id) && !t.id.startsWith("booking:") && !messaged(t, p)) } : undefined)], findings)
+  const denials = glDeniedItems(beds);
+  const ranked = offset === 0 ? withFindings([...flaggedItems(checkIns, kept), ...messages, ...bookings, ...denials, ...rankDay(patients, encounters, now, result ? undefined : new Set(["result"]), live ? { result, tasksOf: p => tasksOf(p).filter(t => !flaggedTaskIds(checkIns).includes(t.id) && !t.id.startsWith("booking:") && !messaged(t, p)) } : undefined)], findings)
     .map(item => item.id === "result" && ackFailed && ackFailed.id === result?.id ? { ...item, reason: `Not acknowledged: ${ackFailed.error} · open to retry` } : item) : rankOtherDay(offset, schedule);
-  const need = ranked.filter(item => item.tone !== "routine").length;
   const date = dayOf(offset);
   const [switched, setSwitched] = useState(false);
   const pick = (next: number) => { if (next === offset) return; haptic(); setSwitched(true); setAnimate(false); setOffset(next); };
@@ -309,7 +310,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, s
               <Text style={{ fontSize: 17, fontWeight: "600", color: offset === 0 ? palette.blue : palette.ink }}>{offset === 0 ? "Today, " : ""}{date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}</Text>
               <View style={{ transform: [{ rotate: calendar ? "180deg" : "0deg" }], transitionProperty: "transform", transitionDuration: reducedMotion ? 0 : 240 } as never}><Icon name="chevron.down" size={12} color={offset === 0 ? palette.blue : palette.ink} /></View>
             </View>
-            <Text style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{offset === 0 ? (managing ? "" : `${need} need you · `) : offset < 0 ? "Looking back · " : "Coming up · "}{schedule.length} {schedule.length === 1 ? "visit" : "visits"}</Text>
+            <Text style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{offset === 0 ? (managing ? "" : `${needLine(needs)} · `) : offset < 0 ? "Looking back · " : "Coming up · "}{schedule.length} {schedule.length === 1 ? "visit" : "visits"}</Text>
           </Pressable>
         </View>
         {offset !== 0 ? <Pressable accessibilityRole="button" accessibilityLabel="Back to today" onPress={() => pick(0)} hitSlop={8}

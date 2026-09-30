@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { blocking, matchQuestion, needsYou, overdue, soonest, toFollowUp, toWatch } from "./answers";
+import { blocking, matchQuestion, needsYou, overdue, soonest, suggestion, toFollowUp, toWatch } from "./answers";
 import { validateAskSpec } from "./catalog";
 import { withSaved } from "./saved";
 
@@ -61,4 +61,13 @@ test("saved views: newest first, one per answer, three at most", () => {
   const list = ["needs", "overdue", "soonest", "needs"].reduce((l, id) => withSaved(l, v(id)), []);
   expect(list.map(s => s.id)).toEqual(["needs", "soonest", "overdue"]);
   expect(withSaved(list, v("extra")).map(s => s.id)).toEqual(["extra", "needs", "soonest"]);
+});
+
+test("the dock's suggestion: the first answer worth showing, worded as its review when it has one, else none", () => {
+  const late = [{ id: "t1", patientId: "SYN-1", patientName: "Daniel", title: "Repeat K+", owner: "Nurse", due: "2026-09-28", group: "overdue" }, { id: "t2", patientId: "SYN-2", patientName: "Amelia", title: "Claim", owner: "Billing", due: "2026-09-29", group: "overdue" }];
+  expect(suggestion([needsYou([]), overdue(late)])).toMatchObject({ text: "Mark “Repeat K+” done", answer: { id: "overdue" } });
+  // Live mode has no review card, so the suggestion stays a question.
+  expect(suggestion([overdue(late, false)])?.text).toBe("What's overdue?");
+  expect(suggestion([overdue([{ ...late[0], group: "today" }])])?.text).toBe("What's due today?");
+  expect(suggestion([needsYou([]), overdue([])])).toBeUndefined();
 });

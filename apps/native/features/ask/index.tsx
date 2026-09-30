@@ -6,17 +6,18 @@ import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn } from "react-native-reanimated";
+import { EdgeBlur } from "@/components/sona/edge-blur";
 import { List, ListRow, QuestionList } from "@/components/sona/list";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, Icon, Notice, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Icon, Notice, Surface } from "@/components/sona/ui";
 import { GlassOrb } from "@/components/sona/glass-orb";
 import { OrbGlyph } from "@/components/sona/orb-glyph";
 import { VoiceDock } from "@/features/encounter/voice-dock";
 import { openSession } from "@/features/encounter/navigation";
 import { useEncounter } from "@/features/encounter/store";
-import { PLACEHOLDER, SCOPE_LABEL, matchQuestion, type Answer, type Scope } from "./answers";
+import { PLACEHOLDER, SCOPE_LABEL, matchQuestion, suggestion, type Answer, type Scope } from "./answers";
 import { askCatalog, validateAskSpec } from "./catalog";
 import { SAVABLE, isSaved, saveView, useSaved } from "./saved";
 
@@ -55,17 +56,6 @@ const { registry } = defineRegistry(askCatalog, {
     AskActions: ({ props }) => { const { run } = use(OpsContext); return <View style={{ gap: 8 }}>{props.items.map(a => <Action key={a.op} label={a.label} secondary={!a.primary} onPress={() => run(a.op)} />)}</View>; },
   },
 });
-
-/** The page's ✦ suggestion: shown only when its answer has something, one tap opens it. */
-export function AskNudge({ answer, onPress }: { answer: Answer; onPress: () => void }) {
-  const { reducedMotion } = useAccessibleEffects();
-  return <Animated.View entering={reducedMotion ? undefined : FadeIn.delay(250).duration(300)} style={{ alignSelf: "flex-start" }}>
-    <Pressable accessibilityRole="button" accessibilityLabel={`Ask Sona: ${answer.question}`} onPress={() => { tap(); onPress(); }}
-      style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, height: 32, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.9)", boxShadow: "0 4px 14px rgba(36,91,204,0.16)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-      <Text style={{ ...type.footnote, color: palette.blue }}>✦</Text><Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{answer.question}</Text>
-    </Pressable>
-  </Animated.View>;
-}
 
 /**
  * The ops an answer may run, and nothing else: open a visit, go to a page, change the page's tab or
@@ -152,8 +142,9 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
 
 /**
  * Sona on a page: the same dock as Today and a visit (tap or hold the orb to talk, the keyboard to
- * type), with the page's ✦ suggestion above it. What is asked opens the page-scoped sheet. The dock
- * captures the page behind it for the hold-to-talk veil, so the page goes in as children.
+ * type), carrying the page's ✦ suggestion. What is asked opens the page-scoped sheet. The dock
+ * captures the page behind it for the hold-to-talk veil, so the page goes in as children; a fade
+ * behind the dock keeps the end of the page readable.
  */
 export function WithSona({ scope, answers, onTab, hidden = false, children }: { scope: Scope; answers: Answer[]; onTab?: (tab: string) => void; hidden?: boolean; children: ReactNode }) {
   const { voiceInput } = useEncounter();
@@ -161,15 +152,17 @@ export function WithSona({ scope, answers, onTab, hidden = false, children }: { 
   const [state, setState] = useState<AskState>(closed);
   const [draft, setDraft] = useState("");
   const [notice, setNotice] = useState<string>();
-  const nudge = answers.find(a => a.worth);
-  const submit = (text: string) => { const q = text.trim(); if (!q) return; setDraft(""); const a = matchQuestion(q, answers); setState(a ? { open: true, shown: a } : { open: true, missed: q }); };
+  const nudge = suggestion(answers);
+  const submit = (text: string) => { const q = text.trim(); if (!q) return; setDraft(""); setNotice(undefined); const a = matchQuestion(q, answers); setState(a ? { open: true, shown: a } : { open: true, missed: q }); };
   return <View style={{ flex: 1 }}>
     <View ref={backdrop} collapsable={false} style={{ flex: 1 }}>{children}</View>
-    {!hidden && <VoiceDock backdrop={backdrop} onSubmit={submit} onCancel={() => {}} placeholder={PLACEHOLDER[scope]} draft={draft} onDraft={setDraft}
+    {!hidden && <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 100 }} />}
+    {!hidden && <VoiceDock backdrop={backdrop} onSubmit={submit} onCancel={() => {}} placeholder={PLACEHOLDER[scope]} draft={draft} onDraft={value => { setDraft(value); setNotice(undefined); }}
       // The voice sample says the page's suggested question, so talking works the same as tapping it.
-      spokenPrompt={nudge?.question ?? answers[0]?.question ?? "What needs me now?"}
+      spokenPrompt={nudge?.answer.question ?? answers[0]?.question ?? "What needs me now?"}
       voiceEnabled={voiceInput} onVoiceDisabled={() => setNotice("Voice input is turned off in Settings. Type your question instead.")}
-      above={<>{notice && <Notice>{notice}</Notice>}{nudge && !notice && <AskNudge answer={nudge} onPress={() => setState({ open: true, shown: nudge })} />}</>} />}
+      suggestion={nudge && { text: nudge.text, onPress: () => setState({ open: true, shown: nudge.answer }) }}
+      above={notice && <Notice>{notice}</Notice>} />}
     <AskSheet scope={scope} answers={answers} state={state} onChange={setState} onTab={onTab} />
   </View>;
 }

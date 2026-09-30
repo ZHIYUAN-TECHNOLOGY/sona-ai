@@ -1,8 +1,9 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient, Task } from "@/features/encounter/types";
+import { visitTasks } from "@/features/day/counts";
 import { api, errorText, useLive } from ".";
-import { serverTasks, type ServerAppointment, type ServerResult, type ServerTask } from "./day";
+import type { ServerAppointment, ServerResult, ServerTask } from "./day";
 
 /**
  * Live mode's tasks, lab results and appointments, held once for every screen that shows them.
@@ -46,7 +47,7 @@ export function useServerData() {
 export function useVisitTasks() {
   const server = useServerData();
   const { encounters } = useEncounter();
-  return (patient: Patient): Task[] => [...encounters[patient.id]?.tasks ?? [], ...server ? serverTasks(server.tasks, patient.encounterId) : []];
+  return (patient: Patient): Task[] => visitTasks(patient, encounters, server);
 }
 
 /** A date's appointments (YYYY-MM-DD) from the server; undefined until they arrive or when `date` is not given. */

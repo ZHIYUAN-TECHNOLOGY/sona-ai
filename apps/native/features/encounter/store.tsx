@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import { createContext, use, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { AppState } from "react-native";
+import type { Ack } from "@/features/day/counts";
 import { refreshPendingResult } from "@/features/day/model";
 import { useServerPatients } from "@/features/live/patients-sync";
 import { patients, refreshDemoTimes } from "./fixtures";
@@ -17,6 +18,8 @@ type Store = {
   runInPlace: (kind: "medication" | "prescription") => void;
   voiceInput: boolean; setVoiceInput: (value: boolean) => void; compactResponses: boolean; setCompactResponses: (value: boolean) => void; simulateInvalid: boolean; setSimulateInvalid: (value: boolean) => void;
   simulateFailure: boolean; setSimulateFailure: (enabled: boolean) => void; showDemoControls: boolean; setShowDemoControls: (value: boolean) => void; reset: () => void;
+  /** Demo mode's acknowledged results (by `resultKey`); live mode reads the server's acknowledgement instead. */
+  resultAcks: Record<string, Ack>; acknowledgeDemoResult: (key: string, by: string) => void;
 };
 const DEMO_CONTROLS_KEY = "sona.demoControls";
 const Context = createContext<Store | null>(null);
@@ -121,11 +124,13 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
     if (pendingAmendment.phase === "queued-review") request("medication", "Review amended medication context", pendingAmendment.id);
     if (pendingAmendment.phase === "queued-issue") request("prescription", "Create amended prescribing simulation", pendingAmendment.id);
   }, [patientId, pendingAmendment?.id, pendingAmendment?.phase, pendingAmendment?.revision, request]);
-  const reset = useCallback(() => { cancel(); setEncounters(initialEncounters()); setPatientId(undefined); activeRef.current = undefined; setSimulateFailure(false); setSimulateInvalid(false); }, [cancel]);
+  const [resultAcks, setResultAcks] = useState<Record<string, Ack>>({});
+  const acknowledgeDemoResult = useCallback((key: string, by: string) => setResultAcks(acks => acks[key] ? acks : { ...acks, [key]: { at: new Date().toISOString(), by } }), []);
+  const reset = useCallback(() => { cancel(); setEncounters(initialEncounters()); setPatientId(undefined); activeRef.current = undefined; setSimulateFailure(false); setSimulateInvalid(false); setResultAcks({}); }, [cancel]);
   // Live mode: each person's record as the server holds it; the demo schedule keeps its own clock times.
   const server = useServerPatients();
   const currentPatients = patients.map(p => effectivePatient(server?.[p.id] ? { ...p, ...server[p.id], time: p.time } : p, encounters[p.id]));
   const patient = currentPatients.find(p => p.id === patientId);
-  return <Context value={{ patient, patients: currentPatients, encounters, encounter: patientId ? encounters[patientId] : undefined, selectPatient, leaveVisit, request, cancel, startAmendment, updateEncounter, runInPlace, voiceInput, setVoiceInput, compactResponses, setCompactResponses, simulateInvalid, setSimulateInvalid, simulateFailure, setSimulateFailure, showDemoControls, setShowDemoControls, reset }}>{children}</Context>;
+  return <Context value={{ patient, patients: currentPatients, encounters, encounter: patientId ? encounters[patientId] : undefined, selectPatient, leaveVisit, request, cancel, startAmendment, updateEncounter, runInPlace, voiceInput, setVoiceInput, compactResponses, setCompactResponses, simulateInvalid, setSimulateInvalid, simulateFailure, setSimulateFailure, showDemoControls, setShowDemoControls, reset, resultAcks, acknowledgeDemoResult }}>{children}</Context>;
 }
 export function useEncounter() { const value = use(Context); if (!value) throw new Error("EncounterProvider is required"); return value; }

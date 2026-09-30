@@ -7,8 +7,11 @@ import type { Spec } from "@json-render/core";
 export type Scope = "today" | "patients" | "tasks" | "ward" | "handover" | "discharge" | "claim" | "xray";
 export type Tone = "urgent" | "soon" | "good" | "calm";
 export type Row = { id: string; title: string; detail: string; tone: Tone; op?: string };
-/** `worth` is whether the answer has anything to show; only then is it offered as the page's ✦ suggestion. */
-export type Answer = { id: string; question: string; spec: Spec; worth: boolean };
+/**
+ * `worth` is whether the answer has anything to show; only then is it offered as the page's ✦ suggestion.
+ * `action` is what that suggestion says when the answer leads to a review card (it still opens the answer, then the review, then a receipt).
+ */
+export type Answer = { id: string; question: string; spec: Spec; worth: boolean; action?: string };
 
 export const SCOPE_LABEL: Record<Scope, string> = { discharge: "This discharge", claim: "This guarantee letter", xray: "This X-ray", today: "Your day", patients: "Patients", tasks: "Your tasks", ward: "Ward 4B", handover: "Handover" };
 export const PLACEHOLDER: Record<Scope, string> = { discharge: "Ask about this discharge…", claim: "Ask about this letter…", xray: "Ask about this X-ray…", today: "Ask about your day…", patients: "Ask about your patients…", tasks: "Ask about your tasks…", ward: "Ask about the ward…", handover: "Ask about the handover…" };
@@ -44,7 +47,7 @@ export type TaskLine = { id: string; patientId: string; patientName: string; tit
 export function overdue(tasks: TaskLine[], review = true): Answer {
   const late = tasks.filter(t => t.group === "overdue"), today = tasks.filter(t => t.group === "today");
   const first = late[0];
-  return { id: "overdue", question: late.length ? "What's overdue?" : "What's due today?", worth: late.length + today.length > 0, spec: column("overdue", [
+  return { id: "overdue", question: late.length ? "What's overdue?" : "What's due today?", worth: late.length + today.length > 0, ...(first && review ? { action: `Mark “${first.title}” done` } : {}), spec: column("overdue", [
     { type: "AskLead", props: { text: late.length || today.length ? [late.length ? `${plural(late.length, "task")} overdue` : "", today.length ? `${today.length} due today` : ""].filter(Boolean).join(", ") + "." : "Nothing is overdue or due today." } },
     { type: "AskRows", props: { rows: [...late, ...today].slice(0, 8).map(t => ({ id: t.id, title: t.title, detail: `${t.patientName} · ${t.owner} · ${t.group === "overdue" ? `was due ${t.due}` : "due today"}`, tone: t.group === "overdue" ? "soon" as const : "calm" as const, op: `open:${t.patientId}` })) } },
     ...(first && review ? [{ type: "AskReview" as const, props: { title: `Mark “${first.title}” done`, items: [`${first.patientName} · ${first.owner}`, `Was due ${first.due}`], what: "Marks it done in this visit's tasks; you can reopen it under Completed.", confirm: "Mark done", done: `Marked done: ${first.title}`, op: `task-done:${first.patientId}:${first.id}` } }] : []),
@@ -73,6 +76,12 @@ export function toWatch(cards: CardLine[]): Answer {
     { type: "AskLead", props: { text: watch.length ? `${plural(watch.length, "patient")} to watch out of ${cards.length}.` : `Nobody to watch; all ${cards.length} are stable.` } },
     { type: "AskRows", props: { rows: watch.map(c => ({ id: c.id, title: c.name, detail: c.situation, tone: "urgent" as const, ...(c.patientId ? { op: `open:${c.patientId}` } : {}) })) } },
   ]) };
+}
+
+/** The page's ✦ suggestion for the dock: the first answer with something to show, worded as its review when it has one. */
+export function suggestion(answers: Answer[]): { answer: Answer; text: string } | undefined {
+  const answer = answers.find(a => a.worth);
+  return answer && { answer, text: answer.action ?? answer.question };
 }
 
 /** A typed question matched to this page's answers by its words; undefined when none fits. */

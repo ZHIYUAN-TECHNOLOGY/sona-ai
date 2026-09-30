@@ -1,30 +1,67 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { View } from "react-native";
 import { AnswerDeck, Takeaways, type Takeaway } from "@/components/sona/answer-kit";
 import { MarkedText } from "@/components/sona/marked-text";
 import { Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { SourceScope, SourcesPill } from "@/components/sona/sources";
 import { useLiveBriefing } from "@/features/live/model-sync";
-import { Chip, Notice, SourceLink, Surface, useAccessibleEffects } from "@/components/sona/ui";
-import { riseIn } from "@/components/sona/motion";
-import Animated, { FadeOut } from "react-native-reanimated";
+import { Action, Notice, SourceLink, Surface } from "@/components/sona/ui";
 import { IconRow } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { VitalsCard } from "./vitals-card";
 import type { TimelineItem } from "@/components/sona/timeline-carousel";
 import { useEncounter } from "@/features/encounter/store";
-import type { FeatureProps } from "@/features/encounter/types";
+import type { FeatureProps, Patient } from "@/features/encounter/types";
 import { HistoryEditor } from "./history-editor";
-import { defaultMedications } from "@/features/encounter/clinical-state";
 import { emphasise } from "@/features/encounter/emphasis";
+import { patientResult, receiptLine, resultKey, resultLine } from "@/features/day/counts";
+import { errorText, useLive } from "@/features/live";
+import { LockedAction, useRole } from "@/features/live/roles";
+import { acknowledgeResult, useServerData } from "@/features/live/server-day";
 export { PrescriptionPanel as PrescriptionCard } from "./prescription-panel";
 export { ReasoningCard } from "./reasoning-card";
 export { MedicationCard } from "./medication-card";
 
-export function BriefingCard({ patient, result, onSource, onOpen, onRequest }: FeatureProps) {
+/**
+ * A new result leads the briefing: what came back and how it compares, with Acknowledge right here.
+ * Afterwards the card keeps a receipt (who, when), and the visit's "New result to review" and Today's row clear.
+ */
+function NewResult({ patient }: { patient: Patient }) {
+  const server = useServerData();
+  const { on: live, user } = useLive();
+  const { resultAcks, acknowledgeDemoResult } = useEncounter();
+  const canAck = useRole().can("results.acknowledge");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const shown = live && !server ? undefined : patientResult(patient.id, server, resultAcks);
+  if (!shown) return null;
+  const { result, ack } = shown;
+  const acknowledge = async () => {
+    if (busy) return;
+    setError(undefined);
+    if (!live || !result.id) { acknowledgeDemoResult(resultKey(result), user?.name ?? "you"); return; }
+    setBusy(true);
+    try { await acknowledgeResult(result.id); } catch (e) { setError(`Not acknowledged: ${errorText(e)}`); } finally { setBusy(false); }
+  };
+  const ink = ack ? palette.green : palette.red;
+  return <Surface feature style={{ padding: 16, gap: 10 }}>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: ink }} />
+      <Text style={{ ...type.overline, color: ink }}>{ack ? "Result" : "New result"}</Text>
+    </View>
+    <Text selectable style={{ ...type.headline, color: palette.ink }}>{resultLine(result)}</Text>
+    {ack ? <Text selectable style={{ ...type.subhead, fontWeight: "600", color: palette.green }}>{receiptLine(ack)}</Text> : <>
+      <Text style={{ ...type.footnote, color: palette.muted }}>Not yet acknowledged. Acknowledging records your name and the time for the team.</Text>
+      {canAck ? <Action label={busy ? "Acknowledging…" : error ? "Retry acknowledge" : "Acknowledge"} icon="checkmark" disabled={busy} onPress={acknowledge} accessibilityLabel={`Acknowledge ${result.test} ${result.value}`} />
+        : <LockedAction label="Needs a doctor to acknowledge" path="results.acknowledge" height={46} />}
+      {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
+    </>}
+  </Surface>;
+}
+
+export function BriefingCard({ patient, result, onSource, onRequest }: FeatureProps) {
   const { encounters } = useEncounter();
-  const { reducedMotion } = useAccessibleEffects();
   const facts = (encounters[patient.id]?.historyFacts ?? []).filter(fact => !result || fact.revision <= result.revision);
   const sourceFor = (category: string) => facts.findLast(fact => fact.category === category)?.id ?? "history";
   const sections = result?.sections ?? 3;
@@ -47,18 +84,10 @@ export function BriefingCard({ patient, result, onSource, onOpen, onRequest }: F
   // The callout holds only what the headline doesn't already say, coloured only where abnormal.
   const digest: Takeaway[] = (server.data ? server.data.lines.map((text): Takeaway => ({ tone: /allerg|incomplete|missing/i.test(text) ? "caution" : "info", text })) : takeaways)
     .filter(item => !patient.complaint.includes(item.text)).map(item => ({ ...item, text: emphasise(item.text, patient) }));
-  // The suggested next step sits under the headline with its action, rather than as a last page.
-  const unconfirmed = (encounters[patient.id]?.medicationEntries ?? defaultMedications(patient)).some(m => !m.confirmed);
-  const next = patient.incomplete ? { text: "Complete medicines, allergies and history before any treatment.", label: "Start consultation", go: () => onOpen("recording") }
-    : unconfirmed ? { text: "Confirm medicines and the allergy, then start the consultation.", label: "Confirm", go: () => onRequest("medication") }
-    : { text: "Medicines confirmed. Start the consultation.", label: "Start consultation", go: () => onOpen("recording") };
-  // Next step, digest, then the detail as swipeable pages (briefing is a glance before the visit).
+  // A new result first, then the digest, then the detail as swipeable pages (briefing is a glance before the visit).
+  // No next step of its own: the end of the visit shows the one next step (visit-next.ts).
   return <View style={{ gap: 20 }}>
-    {/* Leads the stagger (the digest rows follow 80 ms on); a new next step crossfades in over the old one. */}
-    <Animated.View key={next.text} entering={reducedMotion ? undefined : riseIn({ distance: 10, duration: 420 })} exiting={reducedMotion ? undefined : FadeOut.duration(160)} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 4 }}>
-      <Text style={{ flex: 1, ...type.subhead, color: palette.ink }}><Text style={{ fontWeight: "600", color: palette.blue }}>Next · </Text>{next.text}</Text>
-      <Chip label={next.label} filled accessibilityLabel={`${next.label}. ${next.text}`} onPress={next.go} />
-    </Animated.View>
+    <NewResult patient={patient} />
     {server.loading ? <Surface feature style={{ padding: 16 }}><Drafting label="Reading the record…" /></Surface> : <View style={{ gap: 6 }}>
       {digest.length > 0 && <Takeaways items={digest} />}
       <View style={{ paddingHorizontal: 4 }}>

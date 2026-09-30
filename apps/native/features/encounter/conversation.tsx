@@ -1,4 +1,4 @@
-import { isRehearsed } from "@sona-ai/domain/evidence";
+import { authoredAnswer, isRehearsed } from "@sona-ai/domain/evidence";
 import { router, useIsFocused } from "expo-router";
 import { DrawnCheck } from "@/components/sona/parts";
 import { EdgeBlur } from "@/components/sona/edge-blur";
@@ -9,7 +9,14 @@ import { useHomeActions, visitNeed, visitTools, type VisitNeed } from "./quick-a
 import { openSession } from "./navigation";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
-import { useServerData } from "@/features/live/server-day";
+import { useVisitTasks } from "@/features/live/server-day";
+import { useAnsweredEvidence } from "@/features/live/evidence-sync";
+import { useLive } from "@/features/live";
+import { usePendingResult } from "@/features/day/use-counts";
+import { teachingImage } from "@/features/imaging/fixture";
+import { QuestionList } from "@/components/sona/list";
+import { leadFor } from "./lead";
+import { threadEnd } from "./visit-next";
 import { useRole } from "@/features/live/roles";
 import { useInboxSummary } from "@/features/inbox";
 import { useEncounter } from "./store";
@@ -21,8 +28,7 @@ import { Pressable, View } from "react-native";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import Animated, { cubicBezier, FadeIn, FadeOut, ZoomIn, ZoomOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { Capability, Patient } from "./types";
-import { emphasise } from "./emphasis";
+import type { Capability, Encounter, Patient, RequestState, ResponseCard } from "./types";
 
 const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
 export type Suggestion = { text: string; kind: Capability | "recording"; emoji: string };
@@ -66,29 +72,43 @@ export function thinkingLabel(kind: Capability, patient: Patient) {
   return labels[kind];
 }
 
-/** Authored one-sentence answers. They describe the fixture honestly; none is model output. */
-export function leadFor(kind: Capability, patient: Patient, prompt = "") {
-  const name = first(patient);
-  if (patient.incomplete) {
-    const gaps: Partial<Record<Capability, string>> = {
-      briefing: `${name} is here with ${patient.complaint.charAt(0).toLowerCase()}${patient.complaint.slice(1).replace(/\.$/, "")}, and most of the history is still missing.`,
-      reasoning: "There isn’t enough history yet to weigh possibilities. Here’s what to collect first.",
-    };
-    if (gaps[kind]) return gaps[kind]!;
-  }
-  const leads: Record<Capability, string> = {
-    // Only the abnormal is coloured (fever with a raised temperature), not every noun.
-    briefing: emphasise(`${name} is ${patient.age} and here for a ${patient.subtitle.toLowerCase()}. ${patient.complaint}`, patient),
-    reasoning: "Two possibilities are worth exploring. The record doesn’t confirm either of them.",
-    xray: "Here’s the reference chest radiograph with its uploader’s description. It isn’t a model reading.",
-    medication: `${name} reports ${patient.medicines.length} ${patient.medicines.length === 1 ? "medicine" : "medicines"}. Nothing can be cleared until each one is confirmed.`,
-    prescription: "Here’s the prescribing simulation, with every check it ran before creating a receipt.",
-    followup: "Here’s a follow-up plan you can turn into owned, dated tasks.",
-    note: "Here’s the consultation note drafted from the transcript, ready for your edits.",
-    // The steroid summary belongs to the rehearsed question only; a follow-up or any other question gets a neutral lead.
-    evidence: !prompt || isRehearsed(prompt) ? `The evidence is against routine steroids here. ${name}’s severity score decides which studies apply.` : "Sona answers only from sources it can cite, and says so when there are none.",
-  };
-  return leads[kind];
+/**
+ * The one-line lead above an answer, built from the state its card shows (see lead.ts), so the two
+ * never disagree; nothing when the card has nothing settled to summarise (a live search still running).
+ */
+export function VisitLead({ req, card, patient }: { req: RequestState; card: ResponseCard; patient: Patient }) {
+  const { encounters } = useEncounter();
+  const encounter = encounters[patient.id];
+  const tasksOf = useVisitTasks();
+  const { on: live } = useLive();
+  const answered = useAnsweredEvidence().get(req.id);
+  const result = usePendingResult(patient.id);
+  // The X-ray card reads its own snapshot; the prescribing card follows the encounter while it is the latest answer.
+  const image = card.imagingSnapshot ?? encounter;
+  const scenario = image?.imagingScenario ?? "reference";
+  const rx = encounter?.cards.at(-1)?.id === card.id ? encounter?.prescription : card.prescription;
+  const tasks = encounter ? tasksOf(patient) : [];
+  const question = req.prompt;
+  const text = leadFor(req.kind, patient, {
+    medicines: encounter?.medicationEntries ?? [],
+    image: scenario === "unsupported" ? "unsupported" : image?.imagingAttachment ? "attached" : scenario === "no-finding" ? "no-finding" : !image?.hideTeachingImage && teachingImage?.referenceSummary ? "reference" : "none",
+    note: !encounter?.note ? "none" : encounter.noteReviewed ? "reviewed" : "draft",
+    prescription: rx?.status,
+    tasks: { total: tasks.length, open: tasks.filter(t => !t.completed).length },
+    evidence: live ? answered && (answered.enough ? "enough" : "not-enough") : !question || isRehearsed(question) ? "rehearsed" : authoredAnswer(question) ? "authored" : "off",
+    result: result?.patientId === patient.id ? { test: result.test } : undefined,
+  }, question);
+  return text ? <StreamedLead text={text} animate={req.status === "streaming"} /> : null;
+}
+
+/** The end of a visit's thread: its one next step, then at most two quiet questions (visit-next.ts). */
+export function VisitEnd({ latest, patient, encounter, hasSteps, onPick }: { latest: Capability; patient: Patient; encounter: Encounter | undefined; hasSteps: boolean; onPick: (item: Suggestion) => void }) {
+  const end = threadEnd({ latest, need: visitNeed(patient, encounter, usePendingResult(patient.id)), hasSteps, firstName: first(patient), discharged: Boolean(encounter?.discharge?.dischargedAt), follow: askAfter(latest) });
+  if (!end.need && !end.ask.length) return null;
+  return <View style={{ gap: 18, paddingTop: 28, marginTop: 8, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
+    {end.need && <NeedLine need={end.need as VisitNeed} onPress={n => goToNeed(n.target, patient, onPick)} />}
+    <QuestionList title="Also ask" questions={end.ask.map(k => ({ key: k, text: suggestionFor(k, patient).text }))} onAsk={k => onPick(suggestionFor(k as Capability, patient))} />
+  </View>;
 }
 
 /** Words arrive in a quick sweep, the way Monogram's answers settle in. */
@@ -172,7 +192,7 @@ function greeting() { const hour = new Date().getHours(); return hour < 12 ? "Go
 export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatient, onShelf, shelfCollapse }: { patient?: Patient; patients: Patient[]; onPick: (item: Suggestion) => void; onChoosePatient: () => void; onSelectPatient: (id: string) => void; onShelf?: (windowBottom: number) => void; shelfCollapse?: ShelfCollapse }) {
   const { reducedMotion } = useAccessibleEffects();
   const { encounters } = useEncounter();
-  const server = useServerData(); // live mode: the quick keys follow the server's tasks and results
+  const result = usePendingResult(patient?.id); // the same result Today and Patients flag
   const homeKeys = useHomeActions(patients, encounters);
   const canScan = useRole().can("scan.read");
   const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 80 + i * 70, distance: 14, duration: 460 });
@@ -183,7 +203,7 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
   if (!patient) return <View style={{ paddingTop: 20 }}><MyDay patients={patients} greeting={greeting().replace(/\.$/, "")} onOpen={(id, open) => openSession(id, open)}
     actions={homeKeys} onShelf={onShelf} shelfCollapse={shelfCollapse} /></View>;
   // Insight first: the one thing that needs the doctor, with its action, above the tiles.
-  const need = visitNeed(patient, encounters[patient.id], server);
+  const need = visitNeed(patient, encounters[patient.id], result);
   const go = (target: VisitNeed["target"]) => goToNeed(target, patient, onPick);
   return <View style={{ gap: 44, paddingTop: 20 }}>
     <View style={{ gap: 18 }}>
@@ -195,7 +215,7 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
       </Animated.View>
       <NeedLine need={need} entering={rise(2)} onPress={shown => go(shown.target)} />
       <Animated.View entering={rise(3)} layout={reducedMotion ? undefined : LAYOUT}>
-        {patient ? <ToolRow actions={visitTools(patient, encounters[patient.id], server, go, canScan, canDischarge(patient))} /> : null}
+        {patient ? <ToolRow actions={visitTools(patient, encounters[patient.id], result, go, canScan, canDischarge(patient))} /> : null}
       </Animated.View>
     </View>
   </View>;

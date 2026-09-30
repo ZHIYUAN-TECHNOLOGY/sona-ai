@@ -27,8 +27,12 @@ function useWardRead<T>(read: () => Promise<T>, key?: unknown) {
   return on ? data : undefined;
 }
 
+// Today, its keys, the sidebar and Sona's answers all count beds (day/counts): one read in flight serves them all.
+let beds: Promise<ServerBed[]> | undefined;
+const readBeds = () => beds ??= api.ward.beds().finally(() => { beds = undefined; });
+
 /** Live mode's ward: every bed as the server derives it from its rows. */
-export const useServerBeds = (key?: unknown) => useWardRead(() => api.ward.beds(), key);
+export const useServerBeds = (key?: unknown) => useWardRead(readBeds, key);
 
 /** Live mode's bed forecast, on the hospital's demo clock with the owners saved on the server. */
 export const useServerForecast = (key?: unknown) => useWardRead(() => api.ward.forecast(), key);

@@ -8,6 +8,7 @@ import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
 import { InteractionResults } from "./interaction-results";
 import { Anchor, Takeaways, type Takeaway } from "@/components/sona/answer-kit";
+import { medicinesConfirmed } from "@/features/encounter/lead";
 import { MedicationEditor } from "./medication-editor";
 import { PrescribeCard } from "./prescribe-card";
 import { AlertRow, DisclosureButton, Footnote, StatusLine, TextLink, useLayoutSpring } from "./medication-parts";
@@ -24,12 +25,12 @@ export function MedicationCard({ patient, result, onSource, onRequest, onOpen }:
   const encounter = encounters[patient.id];
   const live = !result || encounter?.cards.at(-1)?.id === result.id;
   const reviewed = encounter?.medicationCheckedRevision === encounter?.revision && encounter?.medicationCheckedRevision !== undefined;
-  const confirmed = Boolean(encounter?.medicationEntries?.length && encounter.medicationEntries.every(entry => entry.confirmed && entry.ingredient.trim() && entry.formulation.trim()));
   const busy = encounter?.requests.some(request => request.status === "streaming") ?? false;
   const reviewing = encounter?.requests.some(request => request.status === "streaming" && request.kind === "medication") ?? false;
 
   const entries = encounter?.medicationEntries ?? [];
-  const confirmedCount = entries.filter(entry => entry.confirmed).length;
+  // The same count the answer's lead gives (lead.ts), so the two can't disagree.
+  const { confirmed: confirmedCount, all: confirmed } = medicinesConfirmed(entries);
   const takeaways: Takeaway[] = [
     confirmed ? { tone: "good", text: "All medicine identities are confirmed" } : { tone: "caution", text: `${confirmedCount} of ${entries.length || patient.medicines.length} medicines confirmed; the rest block the simulation` },
     { tone: "caution", text: patient.allergies ? `${patient.allergies.split(" — ")[0]} allergy still needs confirming` : "Allergy history is unknown" },

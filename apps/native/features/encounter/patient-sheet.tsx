@@ -13,11 +13,10 @@ import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { CareMessages } from "@/features/care-messages";
 import { CheckInThread } from "@/features/check-ins/thread";
-import { PENDING_RESULT, testInSentence } from "@/features/day/model";
-import { useServerData } from "@/features/live/server-day";
+import { patientFlags, unconfirmedOf, type Go } from "@/features/day/counts";
+import { usePendingResult } from "@/features/day/use-counts";
 import { AccessTrail, useRole } from "@/features/live/roles";
 import { useServerEncounter } from "@/features/live/sync";
-import { defaultMedications } from "./clinical-state";
 import { QuickActions } from "@/components/sona/quick-actions";
 import { visitActions } from "./quick-actions";
 import { PIN_LIMIT } from "@/features/patients/continue";
@@ -31,32 +30,21 @@ import type { Patient } from "./types";
  * (60 ms apart): who and when, what needs attention (each chip jumps to its fix), the visit at a
  * glance, and the actions. Drag down past 120 pt or flick to dismiss (spring back 0.35 s, 0.8).
  */
-export type Go = { next?: string; view?: string; to?: "/handover" };
-type Flag = { label: string; tone: "urgent" | "caution"; go: Go };
+export type { Go };
 const TONE = { urgent: { ink: palette.red, wash: "rgba(162,62,62,0.10)" }, caution: { ink: palette.amber, wash: "rgba(196,120,20,0.13)" } };
-
-export function flagsFor(patient: Patient, unconfirmed: number): Flag[] {
-  const flags: Flag[] = [];
-  if (PENDING_RESULT.patientId === patient.id) flags.push({ label: `${PENDING_RESULT.flag} ${testInSentence(PENDING_RESULT.test)} ${PENDING_RESULT.value}`, tone: "urgent", go: { next: "briefing" } });
-  if (patient.allergies) flags.push({ label: `${patient.allergies.split(" — ")[0]} allergy · confirm`, tone: "caution", go: { next: "medication" } });
-  if (!patient.incomplete && unconfirmed) flags.push({ label: `${unconfirmed} ${unconfirmed === 1 ? "medicine" : "medicines"} unconfirmed`, tone: "caution", go: { next: "medication" } });
-  if (patient.incomplete) flags.push({ label: "History incomplete", tone: "caution", go: { next: "reasoning" } }, { label: "Allergies unknown", tone: "caution", go: { view: "recording" } });
-  return flags;
-}
 
 export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onClose: () => void; onGo: (go: Go) => void }) {
   const [box, setBox] = useState(0);
   const { encounters } = useEncounter();
-  const server = useServerData();
+  const result = usePendingResult(patient.id); // the same result Today and Patients flag
   useServerEncounter(patient); // live mode: medicines and discharge as the server holds them
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();
   const encounter = encounters[patient.id];
-  const unconfirmed = (encounter?.medicationEntries ?? defaultMedications(patient)).filter(m => !m.confirmed).length;
-  const flags = flagsFor(patient, unconfirmed);
+  const flags = patientFlags(patient, unconfirmedOf(patient, encounter), result);
   // Doctors also get "Scan note" (full width under the grid); it opens the visit with the scan on top.
-  const visit = visitActions(patient, encounter, server, kind => go(kind === "recording" || kind === "scan" ? { view: kind } : { next: kind }), useRole().can("scan.read"));
+  const visit = visitActions(patient, encounter, result, kind => go(kind === "recording" || kind === "scan" ? { view: kind } : { next: kind }), useRole().can("scan.read"));
   const started = Boolean(encounter?.requests.length);
   const [h, m] = patient.time.split(":").map(Number);
   const now = new Date(), minutes = h! * 60 + m! - (now.getHours() * 60 + now.getMinutes());
