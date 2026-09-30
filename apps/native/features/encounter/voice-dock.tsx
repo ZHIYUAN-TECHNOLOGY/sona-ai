@@ -28,6 +28,7 @@ const ORB = 64;
 type Mode = "idle" | "holding" | "handsfree" | "composing";
 /** Silence after the last heard word before a hands-free request is sent. */
 const ENDPOINT_MS = 1300;
+const NONE: Attachment[] = [];
 type Props = {
   /** Status text while a response is being prepared. Undefined when idle. */
   thinking?: string;
@@ -42,16 +43,17 @@ type Props = {
   onDraft: (value: string) => void;
   voiceEnabled: boolean;
   onVoiceDisabled: () => void;
-  onImage: () => void;
-  onConsultation: () => void;
-  onNote: () => void;
+  /** The visit's tools (the + menu and the composer's X-ray, recorder and note buttons); pages outside a visit leave them out. */
+  onImage?: () => void;
+  onConsultation?: () => void;
+  onNote?: () => void;
   above?: ReactNode;
   /** Hides the first-run coach mark while something else sits above the dock. */
   quiet?: boolean;
   /** A photo, capture or file chosen from the attachments menu. */
   /** Attachments waiting to be sent with the next question. */
-  attachments: Attachment[];
-  onAttachmentsChange: (items: Attachment[]) => void;
+  attachments?: Attachment[];
+  onAttachmentsChange?: (items: Attachment[]) => void;
   /** Screen content captured for the liquid hold-to-talk veil. */
   backdrop: RefObject<View | null>;
 };
@@ -190,7 +192,8 @@ export function VoiceDock(props: Props) {
   const closeComposer = () => { Keyboard.dismiss(); setMode(current => current === "composing" ? "idle" : current); };
   // Tools open another screen: close the chatbox first, or iOS hands the keyboard back to it on return.
   const leave = (go: () => void) => () => { closeComposer(); go(); };
-  const attachments = props.attachments;
+  const attachments = props.attachments ?? NONE;
+  const tools = Boolean(props.onImage && props.onConsultation && props.onNote);
   // Attachments alone can be sent; the question then defaults to reviewing them.
   const send = () => { const value = draft.trim(); if (!value && !attachments.length) return; onSubmit(value || `Review the attached ${attachments.length === 1 ? "image" : "images"}`); Keyboard.dismiss(); };
 
@@ -202,8 +205,8 @@ export function VoiceDock(props: Props) {
     if (reducedMotion) setMenu(false);
   };
   // Chosen items join the carousel at the top of the menu; the menu stays open to pick more.
-  const addAttachments = (items: Attachment[]) => { haptic("select"); props.onAttachmentsChange([...attachments, ...items.filter(item => !attachments.some(a => a.uri === item.uri))]); };
-  const removeAttachment = (item: Attachment) => { haptic("select"); props.onAttachmentsChange(attachments.filter(a => a.uri !== item.uri)); };
+  const addAttachments = (items: Attachment[]) => { haptic("select"); props.onAttachmentsChange?.([...attachments, ...items.filter(item => !attachments.some(a => a.uri === item.uri))]); };
+  const removeAttachment = (item: Attachment) => { haptic("select"); props.onAttachmentsChange?.(attachments.filter(a => a.uri !== item.uri)); };
 
   // Lift so the card rests 8 pt above the keyboard; the bar stays where it is.
   const restBottom = Math.max(insets.bottom, 12) + 4;
@@ -260,7 +263,7 @@ export function VoiceDock(props: Props) {
 
         <Animated.View pointerEvents={mode === "composing" ? "none" : "box-none"} style={[StyleSheet.absoluteFill, { justifyContent: "center" }, dockStyle]}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 14 }}>
-            {handsfree ? <RoundButton icon="close" label="Cancel voice input" onPress={() => finish(false)} /> : <View accessibilityElementsHidden={menu} importantForAccessibility={menu ? "no-hide-descendants" : "auto"} style={{ opacity: menu ? 0 : 1 }}><RoundButton icon="add" label="Attach a photo, camera capture or file" onPress={openMenu} hidden={holding || busy} reduced={reducedMotion} /></View>}
+            {handsfree ? <RoundButton icon="close" label="Cancel voice input" onPress={() => finish(false)} /> : !tools ? <View style={{ width: 50 }} /> : <View accessibilityElementsHidden={menu} importantForAccessibility={menu ? "no-hide-descendants" : "auto"} style={{ opacity: menu ? 0 : 1 }}><RoundButton icon="add" label="Attach a photo, camera capture or file" onPress={openMenu} hidden={holding || busy} reduced={reducedMotion} /></View>}
             <RoundButton icon="keyboard" label="Type a message" onPress={() => setMode("composing")} hidden={holding || busy} reduced={reducedMotion} />
           </View>
 
@@ -300,9 +303,11 @@ export function VoiceDock(props: Props) {
           {attachments.length > 0 && <AttachmentStrip items={attachments} onRemove={removeAttachment} size={84} />}
           <TextInput autoFocus onBlur={() => setMode(current => current === "composing" ? "idle" : current)} accessibilityLabel="Ask Sona" value={draft} onChangeText={onDraft} placeholder={placeholder} placeholderTextColor="#7D8591" multiline style={{ fontSize: 17, lineHeight: 22, color: palette.ink, maxHeight: 120, minHeight: 26 }} />
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <ToolButton icon="image" label="Attach or review a chest X-ray" onPress={leave(props.onImage)} />
-            <ToolButton icon="wave" label="Start the consultation recorder" onPress={leave(props.onConsultation)} />
-            <ToolButton icon="note" label="Open the consultation note" onPress={leave(props.onNote)} />
+            {tools && <>
+              <ToolButton icon="image" label="Attach or review a chest X-ray" onPress={leave(props.onImage!)} />
+              <ToolButton icon="wave" label="Start the consultation recorder" onPress={leave(props.onConsultation!)} />
+              <ToolButton icon="note" label="Open the consultation note" onPress={leave(props.onNote!)} />
+            </>}
             <View style={{ flex: 1 }} />
             <RoundAction icon="send" label="Send message" ready={Boolean(draft.trim()) || attachments.length > 0} onPress={send} />
           </View>
@@ -310,6 +315,7 @@ export function VoiceDock(props: Props) {
       </View>
     </View>
 
-    <AttachmentsMenu hint={draft} visible={menu} progress={menuProgress} extend={menuExtend} anchor={{ left: 34, bottom: Math.max(insets.bottom, 12) + 4 + (BAR_H - 50) / 2, size: 50 }} reducedMotion={reducedMotion} onClose={closeMenu} attached={attachments} onAdd={addAttachments} onRemove={removeAttachment} />
+    {tools && <AttachmentsMenu hint={draft} visible={menu} progress={menuProgress} extend={menuExtend} anchor={{ left: 34, bottom: Math.max(insets.bottom, 12) + 4 + (BAR_H - 50) / 2, size: 50 }} reducedMotion={reducedMotion} onClose={closeMenu} attached={attachments} onAdd={addAttachments} onRemove={removeAttachment} />}
+
   </View>;
 }

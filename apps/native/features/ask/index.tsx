@@ -1,7 +1,7 @@
 import { JSONUIProvider, Renderer, defineRegistry } from "@json-render/react-native";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import { createContext, use, useState } from "react";
+import { createContext, use, useRef, useState, type ReactNode } from "react";
 import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -10,25 +10,18 @@ import { List, ListRow, QuestionList } from "@/components/sona/list";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, Glass, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Icon, Notice, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { GlassOrb } from "@/components/sona/glass-orb";
+import { OrbGlyph } from "@/components/sona/orb-glyph";
+import { VoiceDock } from "@/features/encounter/voice-dock";
 import { openSession } from "@/features/encounter/navigation";
 import { useEncounter } from "@/features/encounter/store";
 import { PLACEHOLDER, SCOPE_LABEL, matchQuestion, type Answer, type Scope } from "./answers";
 import { askCatalog, validateAskSpec } from "./catalog";
 import { SAVABLE, isSaved, saveView, useSaved } from "./saved";
 
-/**
- * ✦ is how Sona shows up to ask or suggest (the bar, the review-page button, suggestions, the scope chip).
- * The waveform stays the brand mark; beside a text field it reads as a microphone.
- */
-function Spark({ size = 28 }: { size?: number }) {
-  return <View accessibilityElementsHidden style={{ width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center", backgroundColor: palette.blueWash }}>
-    <Text style={{ fontSize: size * 0.5, lineHeight: size * 0.62, color: palette.blue }}>✦</Text>
-  </View>;
-}
-
 /** Space a page leaves at the end of its content so the ask bar never covers it. */
-export const ASK_SPACE = 92;
+export const ASK_SPACE = 132;
 const tap = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); };
 
 type Ops = { run: (op: string) => void };
@@ -149,7 +142,6 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
       {/* The composer sits at the bottom, like every chat, and rides up with the keyboard. */}
       <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 12), borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)", backgroundColor: palette.canvas }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 24, backgroundColor: palette.surface, paddingLeft: 10, paddingRight: 6, boxShadow: "0 4px 14px rgba(30,50,90,0.08)" }}>
-          <Spark size={26} />
           <TextInput accessibilityLabel="Ask Sona" placeholder={PLACEHOLDER[scope]} value={text} onChangeText={setText} onSubmitEditing={ask} returnKeyType="send" placeholderTextColor={palette.placeholder} style={{ flex: 1, minHeight: 48, fontSize: 16, color: palette.ink }} />
           <Pressable accessibilityRole="button" accessibilityLabel="Send" disabled={!text.trim()} onPress={ask} style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: text.trim() ? palette.dark : "rgba(20,28,40,0.1)" }}><Icon name="arrow.up" size={15} color={palette.white} /></Pressable>
         </View>
@@ -159,38 +151,41 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
 }
 
 /**
- * Sona on a page without the voice dock: a glass ask bar at the bottom with the page's ✦ suggestion,
- * opening the page-scoped sheet. Answers come from the app's rules over its own data, labelled so;
- * free questions wait for the model.
+ * Sona on a page: the same dock as Today and a visit (tap or hold the orb to talk, the keyboard to
+ * type), with the page's ✦ suggestion above it. What is asked opens the page-scoped sheet. The dock
+ * captures the page behind it for the hold-to-talk veil, so the page goes in as children.
  */
-export function AskBar({ scope, answers, onTab }: { scope: Scope; answers: Answer[]; onTab?: (tab: string) => void }) {
+export function WithSona({ scope, answers, onTab, hidden = false, children }: { scope: Scope; answers: Answer[]; onTab?: (tab: string) => void; hidden?: boolean; children: ReactNode }) {
+  const { voiceInput } = useEncounter();
+  const backdrop = useRef<View>(null);
   const [state, setState] = useState<AskState>(closed);
+  const [draft, setDraft] = useState("");
+  const [notice, setNotice] = useState<string>();
   const nudge = answers.find(a => a.worth);
-  return <>
-    <View pointerEvents="box-none" style={{ position: "absolute", left: 16, right: 16, bottom: 28, gap: 8 }}>
-      {nudge && <AskNudge answer={nudge} onPress={() => setState({ open: true, shown: nudge })} />}
-      <Pressable accessibilityRole="button" accessibilityLabel={`Ask Sona about ${SCOPE_LABEL[scope].toLowerCase()}`} onPress={() => { tap(); setState({ open: true }); }}>
-        <Glass style={{ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14 }}>
-          <Spark /><Text style={{ ...type.callout, flex: 1, color: palette.muted }}>{PLACEHOLDER[scope]}</Text>
-        </Glass>
-      </Pressable>
-    </View>
+  const submit = (text: string) => { const q = text.trim(); if (!q) return; setDraft(""); const a = matchQuestion(q, answers); setState(a ? { open: true, shown: a } : { open: true, missed: q }); };
+  return <View style={{ flex: 1 }}>
+    <View ref={backdrop} collapsable={false} style={{ flex: 1 }}>{children}</View>
+    {!hidden && <VoiceDock backdrop={backdrop} onSubmit={submit} onCancel={() => {}} placeholder={PLACEHOLDER[scope]} draft={draft} onDraft={setDraft}
+      // The voice sample says the page's suggested question, so talking works the same as tapping it.
+      spokenPrompt={nudge?.question ?? answers[0]?.question ?? "What needs me now?"}
+      voiceEnabled={voiceInput} onVoiceDisabled={() => setNotice("Voice input is turned off in Settings. Type your question instead.")}
+      above={<>{notice && <Notice>{notice}</Notice>}{nudge && !notice && <AskNudge answer={nudge} onPress={() => setState({ open: true, shown: nudge })} />}</>} />}
     <AskSheet scope={scope} answers={answers} state={state} onChange={setState} onTab={onTab} />
-  </>;
+  </View>;
 }
 
 /**
- * Sona beside a review page's decision button: a round glass button (the page keeps its decision in
- * view, so no bar competes with it) opening the page-scoped sheet with the page's own answers.
+ * Sona beside a review page's pinned decision (Discharge, the GL, X-ray), where the dock would cover
+ * the decision: the dock's own orb, smaller, opening the page-scoped sheet with the page's answer.
  */
 export function AskOrb({ scope, answers }: { scope: Scope; answers: Answer[] }) {
   const [state, setState] = useState<AskState>(closed);
   const nudge = answers.find(a => a.worth);
   return <>
-    <Pressable accessibilityRole="button" accessibilityLabel={`Ask Sona about ${SCOPE_LABEL[scope].toLowerCase()}`} accessibilityHint={nudge ? nudge.question : undefined} onPress={() => { tap(); setState({ open: true, shown: nudge ?? answers[0] }); }}
-      style={({ pressed }) => ({ width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.85)", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", boxShadow: "0 4px 12px rgba(36,91,204,0.14)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-      <Spark size={30} />
-      {nudge && <View style={{ position: "absolute", top: 3, right: 3, width: 9, height: 9, borderRadius: 5, backgroundColor: palette.blue, borderWidth: 1.5, borderColor: palette.white }} />}
+    <Pressable accessibilityRole="button" accessibilityLabel={`Ask Sona about ${SCOPE_LABEL[scope].toLowerCase()}`} accessibilityHint={nudge?.question} onPress={() => { tap(); setState({ open: true, shown: nudge ?? answers[0] }); }}
+      style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", backgroundColor: palette.white, boxShadow: "0 6px 18px rgba(40,70,140,0.2)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+      <View style={{ position: "absolute", inset: 0 }}><GlassOrb size={52} energy={0} still /></View>
+      <OrbGlyph activity="idle" still />
     </Pressable>
     <AskSheet scope={scope} answers={answers} state={state} onChange={setState} />
   </>;

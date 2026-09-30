@@ -9,7 +9,7 @@ import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Action, Expand, Icon, Insight, Surface, canvasImage, glass, useAccessibleEffects } from "@/components/sona/ui";
-import { ASK_SPACE, AskBar } from "@/features/ask";
+import { ASK_SPACE, WithSona } from "@/features/ask";
 import { soonest } from "@/features/ask/answers";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
@@ -126,7 +126,8 @@ export function WardScreen() {
     setTimeout(() => openBed(bed, blockerId), 80);
   };
 
-  return <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }}>
+  return <WithSona scope="ward" hidden={Boolean(open)} answers={[soonest(beds)]} onTab={t => { const f = asFilter(t); if (f) setPicked(f); }}>
+  <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }}>
     <Animated.View style={[{ flex: 1 }, gridStyle]} pointerEvents={open ? "none" : "auto"}>
       <ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 44 + ASK_SPACE, gap: 18 }}>
         <Insight eyebrow={`Now · ${beds.length} beds`}>{wardLine(beds)}</Insight>
@@ -189,13 +190,13 @@ export function WardScreen() {
         </Animated.View>
       </ScrollView>
     </Animated.View>
-    {!open && <AskBar scope="ward" answers={[soonest(beds)]} onTab={t => { const f = asFilter(t); if (f) setPicked(f); }} />}
 
     {open && current && <BedCard bed={current} focus={open.focus} from={open.from} to={{ x: 12, y: insets.top + 52, w: width - 24, h: height - insets.top - 52 - insets.bottom - 12 }} p={p} owners={owners} onAssign={can("ward.assignOwner") ? assign : undefined} assignError={assignError} onClose={close}
       // The card closes behind the discharge screen, so coming back shows the ward (and the bed it freed), not a stale card.
       // Only a patient the app holds a visit for (Amelia) has a discharge screen to open.
       onDischarge={patients.some(x => x.id === current.patientId) ? () => { selectPatient(current.patientId!); router.push("/discharge"); p.set(0); setOpen(undefined); } : undefined} />}
-  </View>;
+  </View>
+  </WithSona>;
 }
 
 /** A bed's list row (and the face the open card starts from): status dot, "Bed 2 · Nurul", when it frees up and what holds it. */

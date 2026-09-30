@@ -19,7 +19,7 @@ import type { Encounter, FeatureProps, Task } from "@/features/encounter/types";
 import { errorText, requestId, useLive } from "@/features/live";
 import { completeServerTask, createServerTask, useServerData, useVisitTasks } from "@/features/live/server-day";
 import { DUE_GROUPS, dueGroup, taskCounts } from "./counts";
-import { ASK_SPACE, AskBar } from "@/features/ask";
+import { ASK_SPACE, WithSona } from "@/features/ask";
 import { overdue } from "@/features/ask/answers";
 import { createTaskOnce, dayFromToday, friendlyDate, localDate, longDate, MONTHS, mentionQuery, parseDuePhrase, proposedTask, taskDraftErrors, taskProposal, type TaskDraft } from "./state";
 
@@ -424,7 +424,7 @@ function TasksInsight({ tasks, eyebrow }: { tasks: Task[]; eyebrow?: string }) {
 function AllFollowUps() {
   const { patients, selectPatient } = useEncounter();
   const tasksOf = useVisitTasks();
-  return <View style={{ flex: 1 }}><Screen>
+  return <TasksSona><Screen>
     <TasksInsight tasks={patients.flatMap(tasksOf)} />
     <VisitFollowUps />
     <View style={{ gap: 10 }}>
@@ -435,16 +435,16 @@ function AllFollowUps() {
     </View>
     <SessionNote />
     <View style={{ height: ASK_SPACE }} />
-  </Screen><TasksAsk /></View>;
+  </Screen></TasksSona>;
 }
 
-/** Sona on the tasks page: what's overdue across today's visits, with the most overdue one to mark done after a review. */
-function TasksAsk() {
+/** Tasks in the Sona dock: what's overdue across today's visits, with the most overdue one to mark done after a review. */
+function TasksSona({ children }: { children: ReactNode }) {
   const { patients } = useEncounter();
   const tasksOf = useVisitTasks();
   const { on: live } = useLive();
   const lines = patients.flatMap(p => tasksOf(p).filter(t => !t.completed).map(t => ({ id: t.id, patientId: p.id, patientName: p.name, title: t.title, owner: t.owner, due: t.due, group: dueGroup(t.due) })));
-  return <AskBar scope="tasks" answers={[overdue(lines, !live)]} />;
+  return <WithSona scope="tasks" answers={[overdue(lines, !live)]}>{children}</WithSona>;
 }
 
 export function TasksScreen() {
@@ -524,7 +524,7 @@ export function TasksScreen() {
     <TaskRow task={task} disabled={pending} onToggle={() => toggle(task)} />
   </Animated.View>;
 
-  return <View style={{ flex: 1 }}><Screen>
+  return <TasksSona><Screen>
     <TasksInsight tasks={tasks} eyebrow={patient.name} />
     {draft && <Composer key={draft.operationId} draft={draft} pending={pending} error={error} onChange={change => updateEncounter(current => ({ ...current, taskDraft: { ...current.taskDraft!, ...change } }))} onSave={save} />}
     {/* One keyed list, so a completed row glides into Completed instead of remounting there. */}
@@ -538,5 +538,5 @@ export function TasksScreen() {
     <VisitFollowUps except={patient.id} />
     <SessionNote />
     <View style={{ height: ASK_SPACE }} />
-  </Screen><TasksAsk /></View>;
+  </Screen></TasksSona>;
 }
