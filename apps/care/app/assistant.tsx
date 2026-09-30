@@ -5,8 +5,8 @@ import { AccessibilityInfo, ActivityIndicator, Alert, Linking, Pressable, Scroll
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion, useSharedValue, withTiming, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { conditionOf, doctorQuestion, leadOf, noAnswer, reply, spoken, suggestions, type Reply } from "@/features/assistant/answers";
-import { tFor, translate, useLang, useT, type Lang } from "@/lib/i18n";
+import { answer, conditionOf, doctorQuestion, leadOf, noAnswer, spoken, suggestions, urgent, wantsDoctor, type Reply } from "@/features/assistant/answers";
+import { tFor, useLang, useT } from "@/lib/i18n";
 import { Composer, Glyph, GLYPH as COMPOSE } from "@/features/assistant/composer";
 import { MicButton } from "@/features/assistant/mic";
 import { SUGGEST_ICON, SuggestionRow, VoiceMode, type Suggestion } from "@/features/assistant/voice";
@@ -33,12 +33,12 @@ import { client, orpc, queryClient } from "@/utils/orpc";
  * (voice mode until there is text, then send). Asked: the question in a white capsule on the right, and
  * Sona's answer as plain text on the canvas, lead sentence bold, with where it came from, copy / helpful
  * / not helpful, and the next steps (Save for my visit, Ask my care team). While it works, a status line
- * sits by a small live orb. Answers come only from the plan; doctor questions show sample doctors;
- * anything else goes to the care team, with the 999 line first for warning words. + starts a new chat
- * (there is no stored history, so no history button).
+ * sits by a small live orb for as long as the call runs. Answers come only from the plan (care.ask);
+ * doctor questions search the hospital's directory (care.doctors.list); anything else goes to the care
+ * team, with the 999 line first for warning words. + starts a new chat (there is no stored history, so
+ * no history button).
  */
 type Turn = { question: string; reply: Reply; requestId: string; ready: boolean; saved?: boolean; sent?: boolean; rated?: "up" | "down" };
-const WORK_MS = { plan: 800, doctors: 1100 } as const;
 const newRequestId = () => `care-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
 // Lucide-style 24-unit paths this screen needs beyond the shared ICON set.
@@ -72,8 +72,6 @@ export default function Assistant() {
   const flood = useSharedValue(0);
   const scroll = useRef<ScrollView>(null);
   const input = useRef<RNTextInput>(null);
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(timer.current), []);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [chat, setChat] = useState(0);
   const [draft, setDraft] = useState("");
@@ -90,36 +88,24 @@ export default function Assistant() {
   const working = last !== undefined && !last.ready;
   const rest = rows.filter(s => !turns.some(t => t.question === s.question));
 
+  // Real calls: the question to the model grounded in the plan (care.ask), a doctor question to the directory.
+  const answerOf = (question: string) => answer(question, asks, { ask: q => client.care.ask({ question: q }), doctors: search => client.care.doctors.list(search ? { search } : undefined) }, condition, lang);
   const ask = (question: string) => {
-    clearTimeout(timer.current);
-    const r = reply(question, asks, condition, lang), requestId = newRequestId();
+    const requestId = newRequestId();
     const say = (r: Reply) => AccessibilityInfo.announceForAccessibility(r.kind === "plan" ? `${spoken(r, lang)} ${r.asked.source}` : spoken(r, lang));
-    // Anything the authored answers don't cover goes to the model, grounded in the plan (care.ask); with
-    // no model switched on it answers nothing, and the honest "ask your care team" stays.
-    if (r.kind === "none" && !r.urgent) {
-      setTurns(ts => [...ts, { question, reply: r, requestId, ready: false }]);
-      if (!still) flood.set(withTiming(1, { duration: 400, easing: EASE_OUT }));
-      void client.care.ask({ question }).then(a => fromModel(a, lang), () => r).then(next => {
-        flood.set(withTiming(0, { duration: 600, easing: EASE_OUT }));
-        patch(requestId, { reply: next, ready: true });
-        say(next);
-      });
-      return;
-    }
-    // The urgent no needs no reading; plan answers and doctor searches show their status line first.
-    if (still || r.kind === "none") { setTurns(ts => [...ts, { question, reply: r, requestId, ready: true }]); say(r); return; }
-    setTurns(ts => [...ts, { question, reply: r, requestId, ready: false }]);
-    flood.set(withTiming(1, { duration: 400, easing: EASE_OUT }));
-    timer.current = setTimeout(() => {
+    // The urgent no needs no reading; everything else shows its status line while the call runs.
+    if (urgent(question)) { const r: Reply = { kind: "none", urgent: true }; setTurns(ts => [...ts, { question, reply: r, requestId, ready: true }]); say(r); return; }
+    setTurns(ts => [...ts, { question, reply: { kind: "none", urgent: false }, requestId, ready: false }]);
+    if (!still) flood.set(withTiming(1, { duration: 400, easing: EASE_OUT }));
+    void answerOf(question).then(next => {
       flood.set(withTiming(0, { duration: 600, easing: EASE_OUT }));
-      patch(requestId, { ready: true });
-      say(r);
-    }, WORK_MS[r.kind]);
+      patch(requestId, { reply: next, ready: true });
+      say(next);
+    });
   };
-  /** Voice mode asks the same way (the model for anything the plan's own answers don't cover), and reads the answer aloud itself. */
+  /** Voice mode asks the same way, and reads the answer aloud itself. */
   const askAloud = async (question: string) => {
-    const r0 = reply(question, asks, condition, lang);
-    const r = r0.kind === "none" && !r0.urgent ? await client.care.ask({ question }).then(a => fromModel(a, lang), () => r0) : r0;
+    const r = await answerOf(question);
     setTurns(ts => [...ts, { question, reply: r, requestId: newRequestId(), ready: true }]);
     return r;
   };
@@ -139,7 +125,7 @@ export default function Assistant() {
     patch(turn.requestId, { rated: turn.rated === r ? undefined : r });
     if (turn.rated !== r) AccessibilityInfo.announceForAccessibility(t("ask.thanks"));
   };
-  const fresh = () => { clearTimeout(timer.current); flood.set(0); setTurns([]); setChat(c => c + 1); };
+  const fresh = () => { flood.set(0); setTurns([]); setChat(c => c + 1); };
   const newChat = () => Alert.alert(t("ask.newChatTitle"), t("ask.newChatLine"), [
     { text: t("common.cancel"), style: "cancel" },
     { text: t("ask.newChat"), onPress: fresh },
@@ -218,7 +204,7 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
       <Text selectable style={{ ...type.body, color: palette.ink }}>{t.question}</Text>
     </Animated.View>
     {r.kind === "none" && r.urgent && <Animated.View entering={enter(1)}><Call999 /></Animated.View>}
-    {!t.ready ? (lead && <Working doctors={r.kind === "doctors"} flood={flood} />)
+    {!t.ready ? (lead && <Working doctors={wantsDoctor(t.question)} flood={flood} />)
       : <Animated.View entering={enter(1)} style={{ gap: 12 }}>
         <Text selectable style={{ fontSize: 17, lineHeight: 26, letterSpacing: -0.3, color: palette.ink }}>
           <Text style={{ fontWeight: "700" }}>{bold}</Text>{more ? `${lang === "zh" ? "" : " "}${more}` : ""}
@@ -245,13 +231,6 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
         {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(error, lang)}</Text>}
       </Animated.View>}
   </View>;
-}
-
-/** A care.ask answer as a reply: grounded in the plan (with where from), or the honest no (urgent when the model heard a warning sign). */
-function fromModel(a: Awaited<ReturnType<typeof client.care.ask>>, lang: Lang): Reply {
-  if (a.source !== "model" || !a.answer) return { kind: "none", urgent: false };
-  if (!a.grounded) return { kind: "none", urgent: a.urgent };
-  return { kind: "plan", asked: { question: "", answer: a.answer, source: a.from ? translate(lang, "ask.fromModel", { from: a.from }) : translate(lang, "ask.plan"), kind: "medicine" } };
 }
 
 /** A sample doctor inline in an answer: their initials disc, name, specialty and where; tap for their page. */

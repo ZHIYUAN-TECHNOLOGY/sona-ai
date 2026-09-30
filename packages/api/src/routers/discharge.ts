@@ -1,6 +1,6 @@
 import { ORPCError } from "@orpc/server";
-import { admissions, encounters, findings, guaranteeLetters, labResults, patients, receipts, tasks } from "@sona-ai/db/schema/clinical";
-import { EMPTY_DISCHARGE, TYPICAL_WAIT_MINUTES, checkInDaysOf, decideDischarge, dischargeChecks, dischargeTasks, planFor, type DischargeState, type Wait } from "@sona-ai/domain/discharge";
+import { admissions, encounters, findings, guaranteeLetters, labResults, patients, provenance, receipts, tasks } from "@sona-ai/db/schema/clinical";
+import { EMPTY_DISCHARGE, TYPICAL_WAIT_MINUTES, checkInDaysOf, decideDischarge, dischargeChecks, dischargeTasks, planFor, type DischargeState, type Language, type Wait } from "@sona-ai/domain/discharge";
 import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
@@ -12,6 +12,9 @@ import { listFindings } from "./findings";
 import { assertApprover } from "./hospital";
 import { loadEncounter, logAnswer, recordOf, recordSources, visitOf } from "./encounter";
 import { scheduleCheckIns } from "./check-ins";
+
+/** The patient leaflet as approved at discharge, in the discharge language; kept in the visit's discharge state. */
+export type ApprovedLeaflet = { language: Language; text: string };
 
 /**
  * Discharge is refused while any blocker is open, whatever the app shows. Every side effect is
@@ -81,7 +84,14 @@ export const dischargeRouter = {
     }))).onConflictDoNothing();
     await scheduleCheckIns(db, hospitalId, row.patient, input.encounterId, state.language, at, state.checkInDays);
     await db.update(admissions).set({ dischargedAt: at }).where(and(eq(admissions.id, row.admission.id), isNull(admissions.dischargedAt)));
-    const discharged = { ...state, dischargedAt: at.toISOString(), savedMinutes };
+    // The leaflet the approver read goes home with the patient: the latest draft in the discharge language
+    // (discharge.draft), else the authored one. Sona Care shows these approved words, never a new draft.
+    const [draft] = await db.select({ id: provenance.id, output: provenance.output }).from(provenance)
+      .where(and(eq(provenance.encounterId, input.encounterId), eq(provenance.kind, "discharge-draft"), sql`${provenance.output}->>'language' = ${state.language}`))
+      .orderBy(desc(provenance.createdAt)).limit(1);
+    if (draft) await db.update(provenance).set({ approvedBy: input.approvedBy }).where(eq(provenance.id, draft.id));
+    const leaflet: ApprovedLeaflet = { language: state.language, text: (draft?.output as { leaflet?: string } | undefined)?.leaflet || plan.leaflet[state.language] };
+    const discharged = { ...state, dischargedAt: at.toISOString(), savedMinutes, leaflet };
     // Merged in place so a concurrent edit is neither lost nor needed to bump the revision.
     await db.update(encounters).set({ state: sql`jsonb_set(${encounters.state}, '{discharge}', ${JSON.stringify(discharged)}::jsonb)` }).where(eq(encounters.id, input.encounterId));
 

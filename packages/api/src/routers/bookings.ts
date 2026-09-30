@@ -56,9 +56,24 @@ const noteId = (requestId: string) => `booking-note:${requestId}`;
 
 const requestInput = z.object({ doctorId: z.string().min(1), startsAt: z.coerce.date(), reason: z.string().trim().max(200).optional() });
 
+/**
+ * The doctors a patient's words find ("best heart specialist", "Find a doctor for my chest infection",
+ * "Can I see Dr. Lim?"): one of their tags, their specialty or their name as people say it ("Dr. Lim")
+ * appears in the words. The care team first, then best rated.
+ */
+export function searchDoctors<T extends Pick<DoctorRow, "name" | "specialty" | "tags" | "careTeam" | "rating">>(list: T[], search: string) {
+  const words = search.toLowerCase(), tokens = new Set(words.split(/[^\p{L}\p{N}]+/u).filter(Boolean));
+  return list.filter(d => d.tags.some(t => words.includes(t)) || words.includes(d.specialty.toLowerCase()) || tokens.has(d.name.replace(/^Dr\.?\s+/i, "").split(" ")[0]!.toLowerCase()))
+    .sort((a, b) => Number(b.careTeam) - Number(a.careTeam) || b.rating - a.rating);
+}
+
 /** Patient side, under care.doctors and care.bookings. */
 export const careDoctorsRouter = {
-  list: patientProcedure.handler(async ({ context }) => withSlots(context.db, context.hospitalId, await doctorsAt(context.db, context.hospitalId), clockOf(context))),
+  /** The hospital's directory with free slots; `search` (a question's words) keeps only the doctors it finds. */
+  list: patientProcedure.input(z.object({ search: z.string().trim().max(500).optional() }).optional()).handler(async ({ context, input }) => {
+    const all = await doctorsAt(context.db, context.hospitalId);
+    return withSlots(context.db, context.hospitalId, input?.search ? searchDoctors(all, input.search) : all, clockOf(context));
+  }),
   get: patientProcedure.input(z.object({ id: z.string().min(1) })).handler(async ({ context, input }) => {
     const [doctor] = await withSlots(context.db, context.hospitalId, await doctorsAt(context.db, context.hospitalId, eq(doctors.id, input.id)), clockOf(context));
     if (!doctor) throw new ORPCError("NOT_FOUND", { message: "We couldn't find that doctor", data: { code: "DOCTOR_UNKNOWN" } });

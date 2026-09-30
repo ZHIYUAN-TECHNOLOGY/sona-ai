@@ -97,6 +97,19 @@ export function matchQuestion(text: string, answers: Answer[]): Answer | undefin
 }
 
 /**
+ * What the page already shows, for a free question (ask.free): each answer's question and lead, and its
+ * rows (one per id), which carry the only ids and ops a model's answer may reuse. Within the server's limits.
+ */
+export function askContext(answers: Answer[]): { lines: string[]; rows: Row[] } {
+  const lines: string[] = [], rows = new Map<string, Row>();
+  for (const a of answers) for (const e of Object.values(a.spec.elements)) {
+    if (e.type === "AskLead") lines.push(clip(`${a.question} ${(e.props as { text: string }).text}`, 300));
+    if (e.type === "AskRows") for (const r of (e.props as { rows: Row[] }).rows) if (!rows.has(r.id)) rows.set(r.id, r);
+  }
+  return { lines: lines.slice(0, 20), rows: [...rows.values()].slice(0, 40) };
+}
+
+/**
  * A review page's decision: what still blocks it, each with what it needs, or that nothing does. The
  * checks are the page's own (`dischargeChecks`, `claimChecks`), so the answer never disagrees with the card.
  */

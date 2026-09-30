@@ -2,14 +2,14 @@ import { PressScale } from "@/components/sona/parts";
 import { JSONUIProvider, Renderer, defineRegistry } from "@json-render/react-native";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import { createContext, use, useRef, useState, type ReactNode } from "react";
+import { createContext, use, useEffect, useRef, useState, type ReactNode } from "react";
 import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { List, ListRow, QuestionList } from "@/components/sona/list";
-import { SampleLabel } from "@/components/sona/model-answer";
+import { Drafting, MODEL_SLOW, SampleLabel } from "@/components/sona/model-answer";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, Notice, RoundAction, Surface } from "@/components/sona/ui";
@@ -18,7 +18,8 @@ import { OrbGlyph } from "@/components/sona/orb-glyph";
 import { VoiceDock } from "@/features/encounter/voice-dock";
 import { openSession } from "@/features/encounter/navigation";
 import { useEncounter } from "@/features/encounter/store";
-import { PLACEHOLDER, SCOPE_LABEL, matchQuestion, suggestion, type Answer, type Scope } from "./answers";
+import { api, useLive } from "@/features/live";
+import { PLACEHOLDER, SCOPE_LABEL, askContext, matchQuestion, suggestion, type Answer, type Scope } from "./answers";
 import { askCatalog, validateAskSpec } from "./catalog";
 import { SAVABLE, isSaved, saveView, useSaved } from "./saved";
 
@@ -77,15 +78,35 @@ export function useRunOp(leave: () => void, onTab?: (tab: string) => void) {
 /** Where a day-wide answer's page action leads: a Patients tab, or the ward filtered. */
 export const openTab = (tab: string) => tab === "blocked" ? router.push({ pathname: "/ward", params: { filter: "blocked" } }) : router.push({ pathname: "/patients", params: { tab } });
 
-/** An answer as a view from the ask catalogue, with its question and its rule-based label; nothing renders if the spec fails the checks. */
-export function AnswerView({ answer, run, question = true }: { answer: Answer; run: (op: string) => void; question?: boolean }) {
+/** An answer as a view from the ask catalogue, with its question and its label (rule-based, or the model that drafted it); nothing renders if the spec fails the checks. */
+export function AnswerView({ answer, run, question = true, model }: { answer: Answer; run: (op: string) => void; question?: boolean; model?: string }) {
   const spec = validateAskSpec(answer.spec);
   if (!spec) return null;
   return <View style={{ gap: 14 }}>
     {question && <Text style={{ ...type.footnote, color: palette.muted }}>{answer.question}</Text>}
     <OpsContext value={{ run }}><JSONUIProvider initialState={{}}><Renderer spec={spec} registry={registry} includeStandard={false} /></JSONUIProvider></OpsContext>
-    <SampleLabel source="fixture" rule />
+    {model ? <SampleLabel source="model" model={model} /> : <SampleLabel source="fixture" rule />}
   </View>;
+}
+
+/**
+ * Live mode: a question the page's rules don't answer goes to the model (ask.free) with the page's own
+ * data; the server sends a spec only if it stays on that data. No `answer` means no model answer (demo
+ * mode, fixture, or a failed call), so the sheet keeps saying what it can answer here.
+ */
+function useFreeAnswer(scope: Scope, question: string | undefined, answers: Answer[]) {
+  const { on } = useLive();
+  const [state, setState] = useState<{ question: string; thinking: boolean; answer?: Answer; model?: string }>();
+  useEffect(() => {
+    if (!on || !question) return;
+    let current = true;
+    setState({ question, thinking: true });
+    api.ask.free({ scope, question, context: askContext(answers) }).then(r => r.source === "model" ? r : undefined, () => undefined).then(r => {
+      if (current) setState({ question, thinking: false, ...r && { answer: { id: "free", question, spec: r.spec as Answer["spec"], worth: true }, model: r.model } });
+    });
+    return () => { current = false; };
+  }, [on, question]); // eslint-disable-line react-hooks/exhaustive-deps
+  return on && state?.question === question ? state : undefined;
 }
 
 /** Which answer the sheet shows (or a question it couldn't answer), for a page that opens it itself. */
@@ -100,6 +121,7 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
   const insets = useSafeAreaInsets();
   const [text, setText] = useState("");
   const { shown, missed } = state;
+  const free = useFreeAnswer(scope, missed, answers);
   const close = () => onChange(closed);
   const ask = () => { const q = text.trim(); if (!q) return; const a = matchQuestion(q, answers); setText(""); onChange(a ? { open: true, shown: a } : { open: true, missed: q }); };
   const run = useRunOp(close, onTab);
@@ -116,7 +138,9 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
         <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={close} hitSlop={10} style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}><Icon name="xmark" size={14} color={palette.ink} /></Pressable>
       </View>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
-        {missed && <Text style={{ ...type.callout, color: palette.amber }}>“{missed}”: Sona answers only these questions here until the model is switched on.</Text>}
+        {missed && (free?.thinking ? <Drafting label="Thinking…" lines={2} slow={MODEL_SLOW} />
+          : free?.answer ? <AnswerView answer={free.answer} run={run} model={free.model} />
+          : <Text style={{ ...type.callout, color: palette.amber }}>“{missed}”: Sona answers only these questions here until the model is switched on.</Text>)}
         {shown ? <View style={{ gap: 14 }}>
           <AnswerView answer={shown} run={run} />
           {/* A day-wide answer can leave the sheet: as its own page, or kept in the sidebar where it stays live. */}

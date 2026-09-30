@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
-import { beforeSigning, blocking, exportBlockers, matchQuestion, mostMoney, needsYou, noteNext, overdue, soonest, suggestion, toCheck, toFollowUp, toWatch, waitingLongest } from "./answers";
+import { askContextSchema } from "@sona-ai/api/ask-spec";
+import { askContext, beforeSigning, blocking, exportBlockers, matchQuestion, mostMoney, needsYou, noteNext, overdue, soonest, suggestion, toCheck, toFollowUp, toWatch, waitingLongest } from "./answers";
 import { validateAskSpec } from "./catalog";
 import { withSaved } from "./saved";
 
@@ -131,6 +132,16 @@ test("the scan says what still needs checking: unsure words and low-confidence m
   const clear = toCheck({ unsure: [], low: [], off: [] });
   expect({ worth: clear.worth, lead: parts(clear)[0].props.text }).toEqual({ worth: false, lead: "Nothing left to check: every item is ticked and read clearly." });
   for (const x of [a, clear]) expect(validateAskSpec(x.spec)).not.toBeNull();
+});
+
+test("a free question carries the page's own leads and rows (one per id, with their ops), within the server's limits", () => {
+  const daniel = { id: "SYN-1", title: "Daniel Rahman", detail: "Low potassium", tone: "urgent", op: "open:SYN-1" };
+  const late = [{ id: "t1", patientId: "SYN-1", patientName: "Daniel", title: "Repeat K+", owner: "Nurse", due: "2026-09-28", group: "overdue" }];
+  const context = askContext([needsYou([daniel]), overdue(late, false), toWatch([{ id: "SYN-1", patientId: "SYN-1", name: "Daniel", priority: "watch", situation: "K+ 2.9" }])]);
+  expect(context.lines).toEqual(["Who needs me now? 1 patient needs you now, most urgent first.", "What's overdue? 1 task overdue.", "Who should the next shift watch? 1 patient to watch out of 1."]);
+  expect(context.rows.map(r => [r.id, r.op])).toEqual([["SYN-1", "open:SYN-1"], ["t1", "open:SYN-1"]]);
+  expect(askContextSchema.safeParse(context).success).toBe(true);
+  expect(askContextSchema.safeParse(askContext([needsYou(Array.from({ length: 60 }, (_, i) => ({ ...daniel, id: `p${i}` })))])).success).toBe(true);
 });
 
 test("handover watch rows are amber, like the Watch chip", () => {

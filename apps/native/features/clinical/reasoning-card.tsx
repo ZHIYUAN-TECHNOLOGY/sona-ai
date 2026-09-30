@@ -89,17 +89,28 @@ export function ReasoningCard({ patient, result, onSource, onRequest }: FeatureP
   const server = useLiveReasoning(patient.encounterId, result?.requestId, question);
   // A fixture's line is the same for every patient, so only a model's answer is highlighted here.
   const fromModel = server.live && Boolean(server.loading || server.error || (server.data && server.data.source !== "fixture"));
+  // A model's possibilities ("Title: why", one per line, each citing the record) replace the authored list; the
+  // inline "[history, vitals]" citations are dropped from the text because the sources pill already lists them.
+  const modelled = server.data?.source === "model" && !patient.incomplete
+    ? server.data.answer.split("\n").filter(Boolean).map(line => { const [title = "", ...why] = line.split(": "); return { title, why: why.join(": ").replace(/\s*\[[^\]]*\]/g, "").trim() }; }) : undefined;
+  const cited = modelled ? server.data?.sourceIds ?? [] : [];
   return <View style={{ gap: 20 }}>
-    {fromModel && <Surface feature style={{ padding: 16, gap: 10 }}>
+    {fromModel && !modelled && <Surface feature style={{ padding: 16, gap: 10 }}>
       {server.loading ? <Drafting label="Weighing the record…" /> : server.data ? <>
         <Arrive><Text selectable style={{ ...type.body, color: palette.ink }}>{server.data.answer}</Text></Arrive>
-        <Arrive index={1}><SampleLabel source={server.data.source} what="reasoning" /></Arrive>
+        <Arrive index={1}><SampleLabel answer={server} what="reasoning" /></Arrive>
       </> : <Text style={{ ...type.footnote, color: palette.red }}>{server.error}</Text>}
     </Surface>}
-    <Takeaways items={takeaways} />
+    <Takeaways items={modelled ? [{ tone: "info", text: `${modelled.length} unranked ${modelled.length === 1 ? "possibility" : "possibilities"}, each citing the record` }, ...takeaways.slice(1)] : takeaways} />
     <Anchor id="possibilities" title={patient.incomplete ? "Gaps" : "Possibilities"}>
     <Section icon={patient.incomplete ? "checklist" : "lightbulb"} tone={patient.incomplete ? "amber" : "violet"} title={patient.incomplete ? "What to collect first" : "Possibilities to explore"}>
-      {!patient.incomplete && <Surface layout={layout} style={{ paddingHorizontal: 16 }}>
+      {modelled && <Surface layout={layout} style={{ paddingHorizontal: 16 }}>
+        {modelled.map((item, index) => <Arrive key={index} index={index} style={{ paddingVertical: 14, borderTopWidth: index ? 1 : 0, borderColor: glass.hairline }}>
+          <IconRow icon="lightbulb" title={item.title} detail={item.why} />
+        </Arrive>)}
+        {cited.map(id => <SourceRef key={id} id={id} label={patient.sources.find(s => s.id === id)?.title ?? "Patient record"} kind="record" onPress={() => onSource(id)} />)}
+      </Surface>}
+      {!patient.incomplete && !modelled && <Surface layout={layout} style={{ paddingHorizontal: 16 }}>
         {possibilities(patient, presentingSource, medicalSource).map((item, index) => <Disclosure key={item.id} first={index === 0} icon={item.icon} title={item.title} detail={item.summary}
           open={open.includes(item.id)} onToggle={() => toggle(item.id)} accessibilityHint="Shows what supports it, what conflicts and what is still needed">
           {EVIDENCE.map(([key, icon, label], row) => <Animated.View key={key} entering={reducedMotion ? undefined : riseIn({ delay: 60 + 40 * row, distance: 6, duration: 260 })} style={{ paddingLeft: 6 }}>
@@ -114,7 +125,7 @@ export function ReasoningCard({ patient, result, onSource, onRequest }: FeatureP
         {GAPS.map((gap, index) => <GapRow key={gap.title} title={gap.title} detail={gap.detail} index={index} reduced={reducedMotion} updates={facts.filter(fact => gap.categories.includes(fact.category)).length} />)}
       </Surface>}
       <Animated.View layout={layout} style={{ gap: 2 }}>
-        <SampleLabel source="fixture" what="reasoning" />
+        {modelled ? <SampleLabel answer={server} what="reasoning" /> : <SampleLabel source="fixture" what="reasoning" />}
         <Caption>{provenance}</Caption>
         {patient.incomplete && <View style={{ paddingLeft: 22 }}><SourceRef label="Patient context used" kind="record" onPress={() => onSource(presentingSource)} /></View>}
       </Animated.View>

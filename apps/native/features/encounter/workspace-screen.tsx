@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { capabilityLabels, Home, suggestionFor, thinkingLabel, TopBar, VisitEnd, VisitLead, type Suggestion } from "./conversation";
 import { openTaskCount } from "@/features/day/counts";
 import { useServerData } from "@/features/live/server-day";
+import { api, useLive } from "@/features/live";
 import { touch } from "@/features/patients/continue-store";
 import { AskSheet, closed, openTab, type AskState } from "@/features/ask";
 import { PLACEHOLDER, matchQuestion, suggestion } from "@/features/ask/answers";
@@ -177,9 +178,12 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const todayAnswers = useTodayAnswers();
   const [ask, setAsk] = useState<AskState>(closed);
   const nudge = home ? suggestion(todayAnswers) : undefined;
+  const { on: live } = useLive();
   // A notice answers the last input only: it clears on the next keystroke or submit, so it never hides the dock for good.
-  const submit = (text: string) => { const prompt = text.trim(); if (!prompt) return; setNotice(undefined);
-    if (!patient) { const answer = matchQuestion(prompt, todayAnswers); if (answer) { setInput(""); setAsk({ open: true, shown: answer }); return; } }
+  const submit = async (text: string) => { const prompt = text.trim(); if (!prompt) return; setNotice(undefined);
+    if (!patient) { const answer = matchQuestion(prompt, todayAnswers); if (answer) { setInput(""); setAsk({ open: true, shown: answer }); return; }
+      // Live mode: a question about the day that no rule or capability answers goes to the sheet, which asks the model with Today's own data.
+      if (live && !routeInThread(prompt)) { setInput(""); setAsk({ open: true, missed: prompt }); return; } }
     else if (pending.length) {
       // Images go to the imaging review (the first becomes the encounter's attachment); files and documents, scanned or photographed, are kept for reference.
       const image = pending.find(item => item.kind === "image" && item.imageType !== "Document");
@@ -188,7 +192,10 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       const fileNote = files.length ? `${files.map(f => f.name).join(", ")} kept for reference. Document review is not switched on yet.` : undefined;
       if (image) { updateEncounter(current => image.uri === "teaching" ? { ...current, imagingAttachment: undefined, hideTeachingImage: false } : { ...current, imagingAttachment: { uri: image.uri, name: image.name } }, true); run("xray", prompt); if (fileNote) setNotice(fileNote); return; }
       if (fileNote) setNotice(fileNote);
-    } const kind = routeInThread(prompt, encounter?.requests.at(-1)?.kind); if (!kind) { setNotice("Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan. Demo routing uses supported phrases."); return; } setInput(""); run(kind, prompt); };
+    }
+    // Live mode asks Laya first (ask.route, 5 s at most); keyword routing decides when it can't (no key, not covered, or a failed call).
+    const picked = live && patient ? await api.ask.route({ request: prompt, patient: patient.subtitle }).then(r => r.source === "model" ? r.card : null, () => null) : null;
+    const kind = picked ?? routeInThread(prompt, encounter?.requests.at(-1)?.kind); if (!kind) { setNotice("Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan. Demo routing uses supported phrases."); return; } setInput(""); run(kind, prompt); };
 
   useEffect(() => { setShowEarlier(false); setNotice(undefined); setPending([]); if (!patient) setDrafts({}); }, [patient?.id]);
   // Working on a visit keeps it in Continue ("where you left off") for the next 24 h.

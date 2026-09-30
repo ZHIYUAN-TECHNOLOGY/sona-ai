@@ -1,6 +1,7 @@
 import type { Session } from "@sona-ai/auth";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 
+import type { Baseten } from "./baseten-models";
 import type { EncounterEdit, RecordReview, RetrievalHit, SearchInput } from "./contracts";
 import type { Change } from "./events";
 import type { Models } from "./models";
@@ -35,6 +36,8 @@ export type Context = {
   library?: Library;
   /** DEMO_SIGN_IN=1 (staging only): Sona Care's sign-in shows the seeded demo phone and its fixed code (care.demoSignIn). */
   demoSignIn?: boolean;
+  /** The Baseten key (and, in tests, a fake fetch) for routes that call a box directly: ask.route (Laya), ask.free (Gemma). Absent: they answer fixture. */
+  baseten?: Baseten;
 };
 
 /** Email as the routes use it: who sends, the insurer's inbox, and the send itself. */

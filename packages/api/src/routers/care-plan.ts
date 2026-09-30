@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { clockOf, type Context } from "../context";
 import { patientProcedure } from "../index";
+import type { ApprovedLeaflet } from "./discharge";
 import { recordOf } from "./encounter";
 
 /** The patient's own discharge plan, built from their record in this hospital. */
@@ -18,8 +19,8 @@ export async function planOf(db: Context["db"], hospitalId: string, patientId: s
 /** The patient's latest discharge, or none while they are still in hospital. */
 export async function lastDischarge(db: Context["db"], hospitalId: string, patientId: string) {
   const rows = await db.select({ state: encounters.state }).from(encounters).where(and(eq(encounters.patientId, patientId), eq(encounters.hospitalId, hospitalId)));
-  return rows.map(r => (r.state as { discharge?: DischargeState }).discharge)
-    .filter((d): d is DischargeState & { dischargedAt: string } => Boolean(d?.dischargedAt))
+  return rows.map(r => (r.state as { discharge?: DischargeState & { leaflet?: ApprovedLeaflet } }).discharge)
+    .filter((d): d is DischargeState & { dischargedAt: string; leaflet?: ApprovedLeaflet } => Boolean(d?.dischargedAt))
     .sort((a, b) => b.dischargedAt.localeCompare(a.dischargedAt))[0];
 }
 
@@ -48,8 +49,10 @@ export async function patientPlan(context: Context & { hospitalId: string; patie
     const date = reviewDate(d);
     return {
       status: "discharged" as const, dischargedAt: d.dischargedAt, language: d.language,
-      // The language chosen at discharge first, then the others.
-      leaflets: [...LANGUAGES].sort((a, b) => Number(b.id === d.language) - Number(a.id === d.language)).map(l => ({ language: l.id, label: l.label, name: l.name, text: plan.leaflet[l.id] })),
+      // The language chosen at discharge first, then the others; the leaflet approved at discharge in its own
+      // language (older discharges kept none), the authored one in the rest.
+      leaflets: [...LANGUAGES].sort((a, b) => Number(b.id === d.language) - Number(a.id === d.language))
+        .map(l => ({ language: l.id, label: l.label, name: l.name, text: d.leaflet?.language === l.id ? d.leaflet.text : plan.leaflet[l.id] })),
       medicines: patientMeds(plan, lang), warningSigns: warningSigns(plan, lang),
       followUp: date ? { title: reviewWords(plan, lang).title, date } : null,
       checkIns: checkInSchedule(new Date(d.dischargedAt), d.checkInDays).map(c => ({ day: c.day, date: c.dueAt })),

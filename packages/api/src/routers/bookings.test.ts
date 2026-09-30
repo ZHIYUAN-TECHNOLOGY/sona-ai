@@ -52,6 +52,20 @@ test("slots: a care-team doctor's clinic times from tomorrow for two weeks, minu
   expect((await amelia.care.doctors.list()).map(d => d.id).sort()).toEqual(DOCTORS.map(d => d.id).sort());
 });
 
+test("the directory searches by a question's words: tags, specialty or name, care team first; no match is an empty list", async () => {
+  const { amelia } = await setup();
+  const ids = async (search?: string) => (await amelia.care.doctors.list(search === undefined ? undefined : { search })).map(d => d.id);
+  expect(await ids("Find a doctor for my chest infection")).toEqual(["lim", "aisyah"]);
+  expect(await ids("Who is the best heart specialist?")).toEqual(["aisyah"]);
+  expect(await ids("I need an endocrinology review")).toEqual(["tan"]);
+  expect(await ids("Can I see Dr. Priya this week?")).toEqual(["priya"]);
+  expect(await ids("Can you find me a doctor?")).toEqual([]);
+  // No search (or a blank one) is the whole directory, as before, and each found doctor keeps their free slots.
+  expect((await ids()).sort()).toEqual(DOCTORS.map(d => d.id).sort());
+  expect(await ids(" ")).toHaveLength(DOCTORS.length);
+  expect((await amelia.care.doctors.list({ search: "lung" }))[0]!.nextSlots.length).toBeGreaterThan(0);
+});
+
 test("an appointment holds only its own doctor's slot: Book in with Dr. Lim leaves Dr. Priya free at the same time", async () => {
   const { db, doctor, amelia } = await setup();
   const WED_0900 = new Date("2026-09-30T09:00:00+08:00"); // Wednesday 09:00, once Dr. Priya holds clinic then too

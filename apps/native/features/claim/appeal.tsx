@@ -125,7 +125,7 @@ export function AppealCard({ patient, state, onChange, onApproved }: { patient: 
           })}
           <Arrive index={letter.points.length + 1}><Paragraph label="Closing paragraph" value={letter.closing} onChange={closing => edit(l => ({ ...l, closing }))} /></Arrive>
           <Arrive index={letter.points.length + 2} style={{ gap: 10 }}>
-            {draft.source === "fixture" ? <SampleLabel source="fixture" what="appeal" /> : <Text selectable style={{ ...type.caption, color: palette.muted }}>Drafted by {draft.model ?? "a model"}</Text>}
+            <SampleLabel source={draft.source} model={draft.model} what="appeal" />
             <Text style={{ ...type.footnote, color: palette.ink }}>Goes to {INSURER} with a new review link, {letter.points.length} {letter.points.length === 1 ? "point" : "points"} from the note{user?.name ? ` · approved by ${user.name}` : ""}.</Text>
             {error && <Text style={{ ...type.footnote, color: RED }}>Not sent: {error}</Text>}
             {live && !role.can("claim.appeal") ? <LockedAction label="Needs a doctor or management to send" path="claim.appeal" height={46} />

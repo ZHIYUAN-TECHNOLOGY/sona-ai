@@ -1,14 +1,15 @@
+import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import { formatDate, tFor, type Lang } from "@/lib/i18n";
 import { listOf, type Discharged } from "../discharge/lines";
-import { DOCTORS, matchDoctors, type Doctor } from "../doctors/data";
+import type { Doctor } from "../doctors/data";
 import { away, dayLabel } from "../follow-ups/lines";
 import "./strings";
 
 /**
- * Ask Sona Care without a model: up to three questions drawn from the patient's own plan, each with
- * its answer built only from that plan's words (medicines, leaflet, follow-up), and the source it
- * came from. Anything else goes to the care team; urgent words put the 999 line first.
- * ponytail: fixed question templates; a model grounded on the same plan replaces them later.
+ * Ask Sona Care: up to three questions drawn from the patient's own plan, each answered by the model
+ * from that plan (care.ask), with an authored answer built only from the plan's words (medicines,
+ * leaflet, follow-up) for when no model is on. Doctor questions search the hospital's directory.
+ * Anything else the plan does not answer goes to the care team; urgent words put the 999 line first.
  */
 export type PlanLike = Pick<Discharged, "medicines" | "leaflets">;
 export type Visit = { title: string; date: Date | string; why?: string; inDays?: number };
@@ -86,26 +87,45 @@ const DOCTOR = /\b(doctors?|specialists?|dr|doktor|pakar)\b|医生|专科/i, ASK
 export const wantsDoctor = (text: string) => DOCTOR.test(text) && ASKING.test(text);
 
 /**
- * What Sona says to a question: the plan's answer when it is one of the plan's own questions; 1–3 sample
- * doctors for a doctor question (matched on its words, else the plan's condition, else the care team);
- * the one honest "send it to your care team" for anything else. Urgent words win over everything.
+ * What Sona says to a question. Urgent words win: the 999 line, nothing asked. A doctor question: 1–3
+ * doctors from the hospital's directory (care.doctors.list), found by its words, else by the plan's
+ * condition, else the care team. Anything else, the plan's own questions too, is answered by the model
+ * from the patient's plan (care.ask); when no model is on (a fixture) or the call fails, a plan question
+ * gets its authored answer and anything else the one honest "send it to your care team".
  */
 export type Reply =
   | { kind: "plan"; asked: Asked }
   | { kind: "doctors"; doctors: Doctor[]; text: string }
   | { kind: "none"; urgent: boolean };
+export type PlanAnswer = Awaited<ReturnType<AppRouterClient["care"]["ask"]>>;
+/** The calls an answer may make: care.ask with the question, and care.doctors.list with a search (none for the whole directory). */
+export type Api = { ask: (question: string) => Promise<PlanAnswer>; doctors: (search?: string) => Promise<Doctor[]> };
+const NONE: Reply = { kind: "none", urgent: false };
 
-export function reply(question: string, asks: Asked[], condition?: string, lang: Lang = "en"): Reply {
+export async function answer(question: string, asks: Asked[], api: Api, condition?: string, lang: Lang = "en"): Promise<Reply> {
   const q = question.trim(), lower = q.toLowerCase();
   if (urgent(q)) return { kind: "none", urgent: true };
   const asked = asks.find(a => a.question.toLowerCase() === lower);
-  if (asked) return { kind: "plan", asked };
-  if (!wantsDoctor(q)) return { kind: "none", urgent: false };
-  const own = matchDoctors(DOCTORS, q), planned = condition ? matchDoctors(DOCTORS, condition) : [];
-  const about = condition && (!own.length || lower.includes(condition)) && planned.length ? condition : undefined;
-  const doctors = (own.length ? own : planned.length ? planned : DOCTORS.filter(d => d.careTeam)).slice(0, 3);
+  if (!asked && wantsDoctor(q)) return doctorsFor(q, api.doctors, condition, lang).catch(() => NONE);
+  const fallback: Reply = asked ? { kind: "plan", asked } : NONE;
+  return api.ask(q).then(a => a.source === "model" ? fromModel(a, lang) : fallback, () => fallback);
+}
+
+async function doctorsFor(q: string, find: Api["doctors"], condition: string | undefined, lang: Lang): Promise<Reply> {
+  const [own, planned] = await Promise.all([find(q), condition ? find(condition) : []]);
+  const about = condition && (!own.length || q.toLowerCase().includes(condition)) && planned.length ? condition : undefined;
+  const doctors = (own.length ? own : planned.length ? planned : (await find()).filter(d => d.careTeam)).slice(0, 3);
+  if (!doctors.length) return NONE;
   const key = `ask.doctors${doctors.length === 1 ? "1" : "N"}${about ? "About" : ""}`;
   return { kind: "doctors", doctors, text: tFor(lang)(key, { about: about ?? "" }) };
+}
+
+/** A model's care.ask answer as a reply: grounded in the plan (with where from), or the honest no (urgent when the model heard a warning sign). */
+function fromModel(a: PlanAnswer, lang: Lang): Reply {
+  if (!a.answer) return NONE;
+  if (!a.grounded) return { kind: "none", urgent: a.urgent };
+  const t = tFor(lang);
+  return { kind: "plan", asked: { question: "", answer: a.answer, source: a.from ? t("ask.fromModel", { from: a.from }) : t("ask.plan"), kind: "medicine" } };
 }
 
 /** An answer split into its lead sentence (shown bold) and the rest; "Dr." never ends a sentence. */

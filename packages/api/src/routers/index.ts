@@ -37,6 +37,7 @@ import { findingsRouter } from "./findings";
 // lane U
 import { libraryRouter } from "./library";
 import { trainingRouter } from "./training";
+import { askRouter } from "./ask";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -126,6 +127,8 @@ export const appRouter = {
         return heard;
       }),
   },
+  // Sona's ask bar on the models: Laya routes a visit request, Gemma answers a page's free question from its own data.
+  ask: askRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

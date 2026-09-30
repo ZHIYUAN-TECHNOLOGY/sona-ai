@@ -1,4 +1,5 @@
 import { ORPCError } from "@orpc/server";
+import { searchIcd } from "@sona-ai/db/lookups";
 import { claims, encounters, icd10Codes, notes, patients, provenance, receipts } from "@sona-ai/db/schema/clinical";
 import { EMPTY_CLAIM, ESTIMATE, INSURER, decideClaimSend, noteFor, type ClaimState, type Code, type DenialCode, type Sentence } from "@sona-ai/domain/claim";
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
@@ -36,13 +37,25 @@ async function suggest(context: Context & { hospitalId: string }, encounterId: s
   const [saved] = await db.select({ sentences: notes.sentences }).from(notes).where(eq(notes.encounterId, encounterId)).orderBy(desc(notes.revision)).limit(1);
   const excerpt = noteFor(claim);
   const sentences: Sentence[] = saved?.sentences.length ? [...saved.sentences, ...excerpt.filter(s => s.id === "organism" || s.id === "iv")] : excerpt;
-  const answer = await (context.models ?? stubModels).suggestCodes({ sentences });
+  // A hosted model picks from WHO ICD-10 candidates (the table's top hits for each clause); the stub's rules need none.
+  const candidates = context.models ? await icdCandidates(db, sentences) : undefined;
+  const answer = await (context.models ?? stubModels).suggestCodes({ sentences, candidates });
   const grounded = answer.codes.filter(c => sentences.some(s => s.id === c.evidence));
   const diagnoses = grounded.filter(c => c.kind !== "Procedure").map(c => c.code);
   const known = new Set(diagnoses.length ? (await db.select({ code: icd10Codes.code }).from(icd10Codes).where(inArray(icd10Codes.code, diagnoses))).map(r => r.code) : []);
   // Procedures are not ICD-10 codes, so the table does not judge them (undefined).
   const codes = grounded.map(c => ({ ...c, inTable: c.kind === "Procedure" ? undefined : known.has(c.code) }));
   return logAnswer(db, encounterId, "claim-codes", { ...answer, codes, sentences }, codes.map(c => c.evidence));
+}
+
+/**
+ * The WHO ICD-10 table's top 3 codes for each word of the note (a whole clause matches too little), once each.
+ * ponytail: one search per word, up to 30; OpenMed's extracted diagnoses replace the words (docs/delivery-plan.md).
+ */
+async function icdCandidates(db: Context["db"], sentences: Sentence[]) {
+  const words = [...new Set(sentences.flatMap(s => s.text.toLowerCase().split(/[^a-z]+/)).filter(w => w.length > 4))].slice(0, 30);
+  const hits = (await Promise.all(words.map(w => searchIcd(db, w, 3)))).flat();
+  return [...new Map(hits.map(h => [h.code, h] as const)).values()];
 }
 
 /** The codes the doctor last reviewed for this visit (the latest suggestion), suggested now if none was. */

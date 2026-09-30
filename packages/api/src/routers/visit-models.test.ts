@@ -97,6 +97,13 @@ test("claim codes come from the note's sentences, each citing one and checked ag
   expect(log).toMatchObject({ model: "gemma-test", sourceIds: ["assessment", "assessment"] });
 });
 
+test("a hosted model is offered the WHO ICD-10 table's codes for the note's words to pick from", async () => {
+  let offered: { code: string; label: string }[] | undefined;
+  const { api } = await world({ ...stubModels, suggestCodes: input => { offered = input.candidates; return stubModels.suggestCodes(input); } });
+  await api.claim.suggestCodes({ encounterId: "visit-1042" });
+  expect(offered?.map(c => c.code)).toEqual(expect.arrayContaining(["J18.9", "J45.9", "Z88.0"]));
+});
+
 test("the huddle brief reads the live ward and its owners, logged without a visit", async () => {
   const { db, api } = await world();
   await api.ward.assignOwner({ blockerId: "adm-2002-gl", owner: "Billing" });

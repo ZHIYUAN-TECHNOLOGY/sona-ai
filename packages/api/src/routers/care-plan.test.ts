@@ -1,11 +1,12 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
-import { appointments, encounters } from "@sona-ai/db/schema/clinical";
+import { appointments, encounters, guaranteeLetters, provenance } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
+import { stubModels, type Models } from "../models";
 import { appRouter } from "./index";
 
 const user = (id: string) => ({
@@ -14,12 +15,12 @@ const user = (id: string) => ({
 } as unknown as Session);
 
 /** Amelia joined Sona Care on a fixed clock; discharges are written straight to the visit state so their time is fixed too. */
-async function world() {
+async function world(models?: Models) {
   const db = await createTestDb();
   const clock = { now: new Date("2026-09-26T10:00:00+08:00") };
   await seedDemo(db, clock.now);
   await addClinician(db, "dr-aisyah");
-  const as = (id: string) => createRouterClient(appRouter, { context: { db, session: user(id), now: () => clock.now } });
+  const as = (id: string) => createRouterClient(appRouter, { context: { db, session: user(id), now: () => clock.now, models } });
   const doctor = as("dr-aisyah"), amelia = as("amelia-account");
   await amelia.care.join({ code: (await doctor.care.code({ encounterId: "visit-1042" })).code });
   const discharge = (encounterId: string, state: object) => db.update(encounters).set({ state: { discharge: { glReceived: true, medsConfirmed: true, ...state } } }).where(eq(encounters.id, encounterId));
@@ -49,6 +50,32 @@ test("after discharge Amelia reads her plan in plain words, the leaflet first in
   // Two weeks on from 26 Sep, and the check-ins on day 2 and day 7 at 10:00 Malaysian time.
   expect(plan.followUp).toEqual({ title: "Clinic review", date: new Date("2026-10-10T07:40:00.000Z") });
   expect(plan.checkIns).toEqual([{ day: 2, date: new Date("2026-09-28T10:00:00+08:00") }, { day: 7, date: new Date("2026-10-03T10:00:00+08:00") }]);
+});
+
+test("Amelia reads the leaflet her doctor approved at discharge, in its language, and Sona Care answers from it; a later draft changes nothing", async () => {
+  let n = 0;
+  const grounded: string[] = [];
+  const models: Models = {
+    ...stubModels,
+    draftDischarge: async ({ language }) => ({ summary: "Drafted summary", leaflet: `Draf ${++n} (${language})`, source: "model", model: "fake-gemma" }),
+    answerFromPlan: async input => { grounded.push(input.plan); return { answer: "", grounded: false, urgent: false, source: "fixture" }; },
+  };
+  const { db, clock, doctor, amelia } = await world(models);
+  await db.update(guaranteeLetters).set({ status: "received", receivedAt: clock.now }).where(eq(guaranteeLetters.id, "gl-1042"));
+  await db.update(encounters).set({ state: { discharge: { glReceived: true, medsConfirmed: true, followUp: "2w", language: "ms" } } }).where(eq(encounters.id, "visit-1042"));
+  await doctor.discharge.draft({ encounterId: "visit-1042", language: "en" }); // Draf 1: not the discharge language
+  await doctor.discharge.draft({ encounterId: "visit-1042", language: "ms" }); // Draf 2: what she approves
+  await doctor.discharge.request({ encounterId: "visit-1042", requestId: "req-d1", approvedBy: "dr-aisyah" });
+  await doctor.discharge.draft({ encounterId: "visit-1042", language: "ms" }); // Draf 3: after discharge
+
+  const plan = await amelia.care.discharge();
+  if (plan.status !== "discharged") throw new Error("expected a discharged plan");
+  expect(plan.leaflets.map(l => [l.language, l.text.slice(0, 11)])).toEqual([["ms", "Draf 2 (ms)"], ["en", "You were tr"], ["zh", "您因肺部感染接受了治疗"]]);
+  // The approved draft carries its approver in the provenance trail; the others stay unapproved.
+  const drafts = await db.select({ output: provenance.output, approvedBy: provenance.approvedBy }).from(provenance).where(eq(provenance.kind, "discharge-draft"));
+  expect(drafts.map(d => [(d.output as { leaflet: string }).leaflet, d.approvedBy]).sort()).toEqual([["Draf 1 (en)", null], ["Draf 2 (ms)", "dr-aisyah"], ["Draf 3 (ms)", null]]);
+  await amelia.care.ask({ question: "Apa kata risalah saya?" });
+  expect(grounded[0]).toContain("Draf 2 (ms)");
 });
 
 test("the plan and follow-ups come in the language Sona Care asks for, English per string where a word is missing", async () => {

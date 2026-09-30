@@ -32,6 +32,7 @@ export async function createContext({ context }: CreateContextOptions): Promise<
     // X-ray uploads land in the Worker's R2 bucket.
     uploads: (context.env as Env).UPLOADS,
     models: baseten && basetenModels(baseten),
+    baseten,
     publicUrl: ENV.BETTER_AUTH_URL,
     mail: mailOf(context.env as Env),
     announce: announcer(context.env as Env),

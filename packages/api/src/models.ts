@@ -26,8 +26,10 @@ export type Models = {
   xrayRead(input: { image: Uint8Array; contentType: string }): Answer<{ findings: string[]; validated: false }>;
   /** Demo flow 6: findings beyond the question asked, each with a box on the image (a real model's reply goes through `readBoxes`). Never validated. */
   incidentalFindings(input: { patientId: string; image?: Uint8Array; contentType?: string }): Answer<{ findings: DetectedFinding[]; validated: false }>;
-  draftDischarge(input: { patient: Patient; language: Language }): Answer<{ summary: string; leaflet: string }>;
-  suggestCodes(input: { sentences: Sentence[] }): Answer<{ codes: Code[] }>;
+  /** `summary` is the full text; `lines` the three-line summary when a model wrote it (the app shows the plan's own lines otherwise). */
+  draftDischarge(input: { patient: Patient; language: Language }): Answer<{ summary: string; leaflet: string; lines?: { diagnosis: string; course: string; plan: string } }>;
+  /** `candidates`: WHO ICD-10 table hits for the note (the route looks them up for a hosted model; the stub's rules need none). */
+  suggestCodes(input: { sentences: Sentence[]; candidates?: { code: string; label: string }[] }): Answer<{ codes: Code[] }>;
   /**
    * An appeal against the insurer's denial of the final guarantee letter, for the doctor to check and edit
    * before sending: calm, answering the denial reason, each point citing the note sentence behind it

@@ -1,0 +1,105 @@
+import { createRouterClient } from "@orpc/server";
+import type { Session } from "@sona-ai/auth";
+import { seedDemo } from "@sona-ai/db/seed";
+import { addClinician, createTestDb } from "@sona-ai/db/testing";
+import { expect, test } from "bun:test";
+
+import { groundedSpec } from "../ask-model";
+import type { AskContext } from "../ask-spec";
+import type { Baseten } from "../baseten-models";
+import { appRouter } from "./index";
+
+const user = (id: string) => ({
+  user: { id, name: id, email: `${id}@demo.test`, emailVerified: true, createdAt: new Date(), updatedAt: new Date() },
+  session: { id: `s-${id}`, userId: id, token: "t", expiresAt: new Date(Date.now() + 3600_000), createdAt: new Date(), updatedAt: new Date() },
+} as unknown as Session);
+
+async function nurse(baseten?: Baseten) {
+  const db = await createTestDb();
+  await seedDemo(db, new Date("2026-09-26T15:40:00+08:00"));
+  await addClinician(db, "nurse-lee", undefined, "nurse");
+  return createRouterClient(appRouter, { context: { db, session: user("nurse-lee"), baseten } });
+}
+
+/** A fake Baseten: answers each call with `reply(url)` and records what was asked. */
+function boxes(reply: (url: string) => unknown, status = 200) {
+  const calls: { url: string; init: RequestInit }[] = [];
+  const fetcher = (async (url: string, init: RequestInit) => { calls.push({ url, init }); return new Response(JSON.stringify(reply(url)), { status }); }) as unknown as typeof fetch;
+  return { calls, baseten: { apiKey: "k", fetcher } };
+}
+const gemma = (content: unknown) => ({ choices: [{ message: { content: typeof content === "string" ? content : JSON.stringify(content) } }] });
+
+const context: AskContext = {
+  lines: ["Who needs me now? 2 patients need you now, most urgent first.", "What's overdue? 1 task overdue."],
+  rows: [
+    { id: "SYN-1086", title: "Daniel Rahman", detail: "History to complete", tone: "urgent", op: "open:SYN-1086" },
+    { id: "SYN-1042", title: "Amelia Tan", detail: "Result to review", tone: "soon", op: "open:SYN-1042" },
+    { id: "t1", title: "Repeat K+", detail: "Daniel Rahman · Nurse · was due 2026-09-28", tone: "soon", op: "open:SYN-1086" },
+  ],
+};
+const spec = (lead: string, rows: unknown[] = [context.rows[0]]) => ({ root: "f", elements: {
+  f: { type: "AskColumn", props: {}, children: ["f-0", "f-1"] },
+  "f-0": { type: "AskLead", props: { text: lead }, children: [] },
+  "f-1": { type: "AskRows", props: { rows }, children: [] },
+} });
+const free = { scope: "today", question: "Who is sickest?", context };
+
+test("without a Baseten key both routes answer fixture, so the app keeps keyword routing and its own answers", async () => {
+  const client = await nurse();
+  expect(await client.ask.route({ request: "Brief me", patient: "Respiratory review" })).toEqual({ source: "fixture" });
+  expect(await client.ask.free(free)).toEqual({ source: "fixture" });
+});
+
+test("Laya's pick comes back as card and medicine, asked on its box with the Baseten key; not covered is no card; a failure is fixture and wakes the box", async () => {
+  const up = boxes(() => ({ answers: { capability: { choice: "medication", answer_confidence: 0.97 }, medicine: { choice: "salbutamol-inhaler" } } }));
+  const picked = await (await nurse(up.baseten)).ask.route({ request: "Salbutamol ada clash dengan ubat lain tak?", patient: "Respiratory review" });
+  expect(picked).toEqual({ source: "model", model: "sona-laya", card: "medication", medicine: "salbutamol-inhaler", confidence: 0.97 });
+  expect(up.calls[0]!.url).toBe("https://model-qe2dp10q.api.baseten.co/environments/production/sync/v1/systemone");
+  expect((up.calls[0]!.init.headers as Record<string, string>).Authorization).toBe("Api-Key k");
+  expect(JSON.parse(up.calls[0]!.init.body as string).state).toEqual({ request: "Salbutamol ada clash dengan ubat lain tak?", patient: "Respiratory review" });
+
+  const none = boxes(() => ({ answers: { capability: { choice: "not-covered" }, medicine: { choice: "none" } } }));
+  expect(await (await nurse(none.baseten)).ask.route({ request: "Discharge dia hari ni", patient: "Respiratory review" })).toMatchObject({ source: "model", card: null, medicine: null });
+
+  const down = boxes(() => "starting", 503);
+  expect(await (await nurse(down.baseten)).ask.route({ request: "Brief me", patient: "Respiratory review" })).toEqual({ source: "fixture" });
+  expect(down.calls.map(c => c.url.split("/").at(-1))).toEqual(["systemone", "wake"]);
+});
+
+test("a free answer that stays on the page's data comes back as a spec with Gemma's name", async () => {
+  const answer = spec("Daniel Rahman needs you first; 2 patients need you now.");
+  const { calls, baseten } = boxes(() => gemma("```json\n" + JSON.stringify(answer) + "\n```"));
+  expect(await (await nurse(baseten)).ask.free(free)).toEqual({ source: "model", model: "gemma-4-26b-a4b", spec: answer });
+  expect(calls[0]!.url).toBe("https://model-q9p7zn63.api.baseten.co/environments/production/sync/v1/chat/completions");
+  // Gemma is given the page's rows, ids and ops included, to copy from.
+  expect(JSON.parse(calls[0]!.init.body as string).messages[1].content).toContain(JSON.stringify(context.rows[0]));
+});
+
+test("an invalid or ungrounded free answer is fixture: off-catalogue, invented rows, names or numbers, review cards and task-done", async () => {
+  const rejected = [
+    { unanswered: true },
+    "not json at all",
+    spec("Siti Aminah needs you first."), // a name not on the page
+    spec("Daniel's potassium is 2.1."), // a number not on the page
+    spec("Daniel needs you.", [{ ...context.rows[0], id: "SYN-9999" }]), // a row the page doesn't have
+    spec("Daniel needs you.", [{ ...context.rows[0], detail: "Chest pain" }]), // a row's words changed
+    spec("Daniel needs you.", [{ ...context.rows[0], op: "open:SYN-1042" }]), // another row's op
+    spec("Daniel needs you.", [{ ...context.rows[0], op: "task-done:SYN-1086:t1" }]),
+    { root: "f", elements: { f: { type: "AskColumn", props: {}, children: ["f-0"] }, "f-0": { type: "AskReview", props: { title: "Mark done", items: [], what: "x", confirm: "Done", done: "Done", op: "task-done:SYN-1086:t1" }, children: [] } } },
+    { root: "f", elements: { f: { type: "AskColumn", props: {}, children: ["f-0"] }, "f-0": { type: "Script", props: {}, children: [] } } },
+  ];
+  for (const reply of rejected) {
+    const { baseten } = boxes(() => gemma(reply));
+    expect(await (await nurse(baseten)).ask.free(free)).toEqual({ source: "fixture" });
+  }
+});
+
+test("grounding: counts up to the page's rows, names from the data and a row without its op pass; the answer is still the app's schema", () => {
+  expect(groundedSpec(spec("Two patients need you: Daniel Rahman first, then Amelia Tan."), context)).not.toBeNull();
+  expect(groundedSpec(spec("Amelia's result to review.", [{ ...context.rows[1], op: undefined }]), context)).not.toBeNull();
+  expect(groundedSpec(spec("12 patients need you."), context)).toBeNull();
+  // An invented finding fails whatever its case: every word long enough to carry a claim must come from the page or the question.
+  expect(groundedSpec(spec("Daniel needs you: possible sepsis."), context)).toBeNull();
+  expect(groundedSpec(spec("Daniel needs you: possible Sepsis."), context)).toBeNull();
+  expect(groundedSpec(spec(""), context)).toBeNull(); // AskLead needs text
+});

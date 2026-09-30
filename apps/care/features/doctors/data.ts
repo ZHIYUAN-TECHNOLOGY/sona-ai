@@ -6,9 +6,9 @@ import "./strings";
 /**
  * Doctors at the patient's hospital, for Find a doctor and booking (after the Life OS Doctors screens).
  * SYNTHETIC sample data for the demo hospital: invented names, never real clinicians. The screens read
- * the hospital's directory and free slots from the API (care.doctors); the assistant's offline doctor
- * suggestions read the same synthetic list from the domain package. A booking is a request the care
- * team confirms (care.bookings).
+ * the hospital's directory and free slots from the API (care.doctors), and so does the assistant's
+ * doctor search (care.doctors.list with the question). A booking is a request the care team confirms
+ * (care.bookings).
  */
 export { DOCTORS, type Doctor };
 /** A doctor as the API lists them, with their free clinic slots over the next two weeks. */

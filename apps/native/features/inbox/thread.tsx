@@ -151,7 +151,7 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
               : !show.value ? <Drafting label="Sona is drafting…" lines={2} />
               : <>
                 <View ref={draftText} collapsable={false}><Text selectable style={{ ...type.callout, color: palette.ink }}>{show.value.text}</Text></View>
-                {show.value.source === "fixture" ? <SampleLabel source="fixture" rule what="reply" /> : <Text style={{ ...type.caption, color: palette.muted }}>Drafted by {show.value.model ?? "a model"}</Text>}
+                <SampleLabel answer={{ loading: false, data: show.value }} rule what="reply" />
                 <View style={{ flexDirection: "row", gap: 8 }}>
                   <View style={{ flex: 1 }}><Action label="Use draft" icon="arrow.down" accessibilityLabel="Use draft. Puts Sona's reply in the message box to check and send" onPress={() => { void takeDraft(show.value!); }} /></View>
                   <Action secondary label="Dismiss" onPress={() => setHidden(waiting!.id)} />

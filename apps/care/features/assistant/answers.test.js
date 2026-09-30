@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
-import { conditionOf, doctorQuestion, leadOf, NO_ANSWER, reply, spoken, suggestions, urgent, wantsDoctor } from "./answers";
+import { DOCTORS, matchDoctors } from "../doctors/data";
+import { answer, conditionOf, doctorQuestion, leadOf, NO_ANSWER, spoken, suggestions, urgent, wantsDoctor } from "./answers";
 
 const medicines = {
   new: [{ name: "Paracetamol", line: "For pain or fever: 1 g every 6 hours if you need it, no more than 4 g a day" }],
@@ -51,34 +52,63 @@ test("the plan's condition comes from the leaflet's 'treated for', and names the
   expect(conditionOf(undefined)).toBeUndefined();
 });
 
-test("a plan question gets the plan's answer; anything else the honest no", () => {
+// care.ask as the server answers it: no model on (a fixture), a model, or a failed call; the directory searched as care.doctors.list does.
+const fixture = async () => ({ answer: "", grounded: false, urgent: false, source: "fixture" });
+const failing = async () => { throw new Error("offline"); };
+const modelSays = reply => async () => ({ ...reply, source: "model", model: "gemma" });
+const directory = async search => search ? matchDoctors(DOCTORS, search) : DOCTORS;
+const api = (ask, doctors = directory) => ({ ask, doctors });
+
+test("a plan question goes to the model first; its authored answer only when no model is on or the call fails", async () => {
   const asks = suggestions(plan, visit, "Cetirizine");
-  expect(reply("when is my next visit?", asks, "chest infection")).toEqual({ kind: "plan", asked: asks[2] });
-  expect(reply("Can I drink coffee?", asks, "chest infection")).toEqual({ kind: "none", urgent: false });
-  expect(spoken(reply("Can I drink coffee?", asks))).toBe(NO_ANSWER);
+  const asked = [];
+  const grounded = modelSays({ answer: "Your next visit is the clinic review on 11 October.", grounded: true, urgent: false, from: "follow-up" });
+  expect(await answer("When is my next visit?", asks, api(async q => { asked.push(q); return grounded(); }), "chest infection")).toEqual({
+    kind: "plan", asked: { question: "", answer: "Your next visit is the clinic review on 11 October.", source: "From your discharge plan · follow-up", kind: "medicine" },
+  });
+  expect(asked).toEqual(["When is my next visit?"]);
+  expect(await answer("when is my next visit?", asks, api(fixture), "chest infection")).toEqual({ kind: "plan", asked: asks[2] });
+  expect(await answer("When is my next visit?", asks, api(failing))).toEqual({ kind: "plan", asked: asks[2] });
+  // The model saying the plan does not answer it is the honest no, not the template.
+  expect(await answer("When is my next visit?", asks, api(modelSays({ answer: "I'll pass that to your care team.", grounded: false, urgent: false })))).toEqual({ kind: "none", urgent: false });
 });
 
-test("doctor questions return 1–3 sample doctors: by the question's words, else the plan's condition, else the care team", () => {
+test("anything else is the model's grounded answer, or the honest no (urgent when the model heard a warning sign)", async () => {
+  const asks = suggestions(plan, visit, "Cetirizine");
+  expect(await answer("Can I drink coffee?", asks, api(fixture))).toEqual({ kind: "none", urgent: false });
+  expect(spoken(await answer("Can I drink coffee?", asks, api(failing)))).toBe(NO_ANSWER);
+  expect(await answer("I feel confused", asks, api(modelSays({ answer: "Call 999 now.", grounded: false, urgent: true })))).toEqual({ kind: "none", urgent: true });
+  const bm = await answer("Boleh saya minum kopi?", asks, api(modelSays({ answer: "Pelan anda tidak menyebut kopi.", grounded: true, urgent: false })), undefined, "ms");
+  expect(bm.asked.source).toBe("Daripada pelan discaj anda");
+});
+
+test("doctor questions search the directory: by the question's words, else the plan's condition, else the care team (1–3)", async () => {
   expect(wantsDoctor("Find a doctor for my chest infection")).toBe(true);
   expect(wantsDoctor("Who is the best heart specialist?")).toBe(true);
   expect(wantsDoctor("My doctor said rest")).toBe(false);
+  const searched = [];
+  const tracked = api(failing, async search => { searched.push(search); return directory(search); });
 
-  const forPlan = reply(doctorQuestion("chest infection"), [], "chest infection");
+  const forPlan = await answer(doctorQuestion("chest infection"), [], tracked, "chest infection");
   expect(forPlan.kind).toBe("doctors");
   expect(forPlan.doctors.map(d => d.id)).toEqual(["lim", "aisyah"]);
   expect(forPlan.text).toBe("Here are doctors who may help with your chest infection. Ask your care team before you book.");
   expect(spoken(forPlan)).toBe("Here are doctors who may help with your chest infection. Ask your care team before you book. Dr. Lim Wei Jie (Respiratory) and Dr. Aisyah Rahman (Cardiology).");
+  expect(searched).toEqual(["Find a doctor for my chest infection", "chest infection"]); // the model is never asked
 
-  const heart = reply("Who is the best heart specialist?", [], "chest infection");
+  const heart = await answer("Who is the best heart specialist?", [], tracked, "chest infection");
   expect(heart.doctors.map(d => d.id)).toEqual(["aisyah"]);
   expect(heart.text).toBe("Here is a doctor who may help. Ask your care team before you book.");
 
-  expect(reply("Can you find me a doctor?", [], "chest infection").doctors.map(d => d.id)).toEqual(["lim", "aisyah"]);
-  expect(reply("Can you find me a doctor?", []).doctors.every(d => d.careTeam)).toBe(true);
+  expect((await answer("Can you find me a doctor?", [], tracked, "chest infection")).doctors.map(d => d.id)).toEqual(["lim", "aisyah"]);
+  expect((await answer("Can you find me a doctor?", [], tracked)).doctors.every(d => d.careTeam)).toBe(true);
+  // The directory out of reach, or empty: the honest no.
+  expect(await answer("Can you find me a doctor?", [], api(failing, failing))).toEqual({ kind: "none", urgent: false });
+  expect(await answer("Can you find me a doctor?", [], api(failing, async () => []))).toEqual({ kind: "none", urgent: false });
 });
 
-test("urgent words win: the 999 line, even when asking for a doctor", () => {
-  expect(reply("I have chest pain, find me a doctor", [], "chest infection")).toEqual({ kind: "none", urgent: true });
+test("urgent words win: the 999 line, nothing asked, even when asking for a doctor", async () => {
+  expect(await answer("I have chest pain, find me a doctor", [], api(failing, failing), "chest infection")).toEqual({ kind: "none", urgent: true });
   expect(spoken({ kind: "none", urgent: true })).toBe(`If this is happening now, call 999. ${NO_ANSWER}`);
 });
 

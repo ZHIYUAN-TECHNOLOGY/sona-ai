@@ -1,7 +1,11 @@
+import { CODES, EMPTY_CLAIM, appealByRules, noteFor } from "@sona-ai/domain/claim";
+import { DEMO_PATIENTS } from "@sona-ai/domain/demo-patients";
+import { draftByRules } from "@sona-ai/domain/messages";
+import { WARD_FIXTURE, huddle } from "@sona-ai/domain/ward";
 import { expect, test } from "bun:test";
 
 import { ASR_MODEL, BOXES, BRAIN_MODEL, XRAY_MODEL, basetenModels, basetenReranker } from "./baseten-models";
-import { stubModels } from "./models";
+import { stubModels, type Models } from "./models";
 
 type Call = { url: string; init: RequestInit };
 
@@ -77,6 +81,130 @@ test("the reranker scores passages in box ②, and keeps the hybrid order when t
 
 test("methods without a hosted model yet stay on the stub", async () => {
   const { fetcher, calls } = fake({});
-  expect((await basetenModels({ apiKey: "k", fetcher }).draftReply({ text: "Bila appointment?", label: "admin", patientFirstName: "Amelia", language: "en" })).source).toBe("fixture");
+  expect((await basetenModels({ apiKey: "k", fetcher }).deidentify({ text: "Amelia Tan", known: { names: ["Amelia Tan"] } })).source).toBe("fixture");
   expect(calls).toHaveLength(0);
+});
+
+/*
+ * The drafting methods: AI proposes, rules verify. Each gets a happy path, an unreadable reply and replies
+ * that break its rule; the last two must come back as the stub's own answer, labelled fixture.
+ */
+const gemma = (reply: string) => basetenModels({ apiKey: "k", fetcher: fake({ [box("brain")]: chatReply(reply) }).fetcher });
+const amelia = { ...DEMO_PATIENTS[0]!, time: "09:00" };
+const fromModel = { source: "model", model: BRAIN_MODEL };
+
+test("reasoning keeps only possibilities citing a record source it was given, one per line, unranked", async () => {
+  const read = await gemma(JSON.stringify({ possibilities: [
+    { title: "Pneumonia", why: "Five days of cough with a temperature of 38.1 °C.", sources: ["history", "vitals"] },
+    { title: "Asthma: flare", why: "Childhood asthma is recorded.", sources: ["history", "xray"] },
+    { title: "Viral bronchitis", why: "Cough alone.", sources: ["nowhere"] },
+  ] })).reasoning({ patient: amelia, question: "What could explain this?" });
+  expect(read).toEqual({ answer: "Pneumonia: Five days of cough with a temperature of 38.1 °C.\nAsthma flare: Childhood asthma is recorded.", sourceIds: ["history", "vitals"], ...fromModel });
+  const stub = await stubModels.reasoning({ patient: amelia, question: "Why?" });
+  expect(await gemma("Probably pneumonia.").reasoning({ patient: amelia, question: "Why?" })).toEqual(stub);
+  // A verdict, and a number the record lacks: nothing left, so the sample answers.
+  expect(await gemma(JSON.stringify({ possibilities: [
+    { title: "Pneumonia", why: "Most likely pneumonia given the cough.", sources: ["history"] },
+    { title: "Sepsis", why: "A lactate of 4.2 points to it.", sources: ["vitals"] },
+  ] })).reasoning({ patient: amelia, question: "Why?" })).toEqual(stub);
+});
+
+test("the huddle brief is Gemma's words over the rule's numbers; a number the rule did not count brings the rule back", async () => {
+  const facts = huddle(WARD_FIXTURE, {});
+  expect(facts[0]).toBe("3 fit to go, 2 still blocked, about 8 bed-hours waiting.");
+  const lines = ["Three are fit to go and two are still blocked, about 8 bed-hours.", "Start with Bed 2: the final guarantee letter and the urine culture.", "Four blockers still need an owner."];
+  expect(await gemma(JSON.stringify({ lines })).huddleBrief({ beds: WARD_FIXTURE, owners: {} })).toEqual({ lines, ...fromModel });
+  const rule = { lines: facts, source: "fixture" };
+  expect(await gemma(JSON.stringify({ lines: ["3 fit to go.", "Start with Bed 14.", "4 have no owner."] })).huddleBrief({ beds: WARD_FIXTURE, owners: {} })).toEqual(rule);
+  expect(await gemma(JSON.stringify({ lines: lines.slice(0, 2) })).huddleBrief({ beds: WARD_FIXTURE, owners: {} })).toEqual(rule);
+  expect(await gemma("{not json").huddleBrief({ beds: WARD_FIXTURE, owners: {} })).toEqual(rule);
+});
+
+test("a drafted reply may quote the plan, but never changes a dose, diagnoses, promises a time or leaves out 999 when urgent", async () => {
+  const plan = { medicines: [{ name: "Azithromycin", line: "Take 500 mg once a day for 2 more days" }], nextVisit: "Clinic review, 14 Oct" };
+  const ask: Parameters<Models["draftReply"]>[0] = { text: "Can I stop the azithromycin?", label: "clinical", patientFirstName: "Amelia", plan, language: "en" };
+  const quoting = "Hi Amelia, your plan says: Take 500 mg once a day for 2 more days. A nurse can talk it through with you.";
+  expect(await gemma(JSON.stringify({ text: quoting })).draftReply(ask)).toEqual({ text: quoting, ...fromModel });
+  const broken: [string, typeof ask][] = [
+    ["Hi Amelia, take 1000 mg instead.", ask],
+    ["Hi Amelia, you can stop taking it now.", ask],
+    ["Hi Amelia, it sounds like a chest infection.", ask],
+    ["Hi Amelia, a nurse will call you within the hour.", ask],
+    ["Hi Amelia, rest and drink water.", { ...ask, label: "urgent" }],
+    ["Hi Amelia, a nurse can talk it through with you.", { ...ask, language: "zh" }],
+    ["not json", ask],
+  ];
+  for (const [text, input] of broken) expect(await gemma(text === "not json" ? text : JSON.stringify({ text })).draftReply(input)).toEqual({ text: draftByRules(input), source: "fixture" });
+});
+
+test("codes come only from the candidates, each citing a sentence that states it; the kind is checked too", async () => {
+  const sentences = noteFor(EMPTY_CLAIM);
+  const { fetcher, calls } = fake({ [box("brain")]: chatReply(JSON.stringify({ codes: [
+    { code: "J18.1", kind: "Principal", evidence: "diagnosis" }, // lobar is not stated
+    { code: "J18.9", kind: "Principal", evidence: "diagnosis" },
+    { code: "J45.9", kind: "Principal", evidence: "asthma" }, // a second Principal becomes Secondary
+    { code: "J15.9", kind: "Secondary", evidence: "diagnosis" }, // not a candidate
+    { code: "Z88.0", kind: "Secondary", evidence: "presenting" }, // that sentence does not state it
+    { code: "87.44", kind: "Secondary", evidence: "xray" }, // the rule's procedure stays a procedure
+  ] })) });
+  const read = await basetenModels({ apiKey: "k", fetcher }).suggestCodes({ sentences, candidates: [{ code: "J18.1", label: "Lobar pneumonia, unspecified" }, { code: "J18.9", label: "Pneumonia, unspecified" }] });
+  expect(read).toEqual({ codes: [
+    { code: "J18.9", label: "Pneumonia, unspecified organism", kind: "Principal", evidence: "diagnosis" },
+    { code: "J45.9", label: "Asthma, unspecified", kind: "Secondary", evidence: "asthma" },
+    { code: "87.44", label: "Routine chest X-ray", kind: "Procedure", evidence: "xray" },
+  ], ...fromModel });
+  expect(JSON.parse(calls[0]!.init.body as string).messages[1].content).toContain("J18.1 Lobar pneumonia, unspecified");
+  // Negated or someone else's: nothing stated, so the rules answer.
+  const denied = [{ id: "a", text: "No pneumonia on the chest film." }, { id: "b", text: "Mother has asthma." }];
+  const rules = await stubModels.suggestCodes({ sentences: denied });
+  expect(await gemma(JSON.stringify({ codes: [{ code: "J18.9", kind: "Principal", evidence: "a" }, { code: "J45.9", kind: "Secondary", evidence: "b" }] })).suggestCodes({ sentences: denied })).toEqual(rules);
+  expect(await gemma("J18.9").suggestCodes({ sentences })).toEqual(await stubModels.suggestCodes({ sentences }));
+});
+
+test("an appeal quotes only the codes, sentences and numbers it was given", async () => {
+  const input = { denialReason: "Documentation incomplete: organism / severity not stated", denialCode: "DOC" as const, codes: CODES, sentences: noteFor({ ...EMPTY_CLAIM, organismConfirmed: true }), patient: { name: "Amelia Tan" } };
+  const letter = {
+    opening: "We ask the insurer to review its denial for Amelia Tan (“organism / severity not stated”).",
+    points: [{ claim: "The note says the organism was not identified, which J18.9 codes.", evidence: "organism" }, { claim: "Severity is recorded as CURB-65 0.", evidence: "diagnosis" }],
+    closing: "We ask that the denial be withdrawn.",
+  };
+  expect(await gemma(JSON.stringify(letter)).draftAppeal(input)).toEqual({ letter: { ...letter, points: letter.points.map(p => ({ claim: p.claim, evidenceSentenceId: p.evidence })) }, ...fromModel });
+  const rules = { letter: appealByRules(input), source: "fixture" };
+  for (const bad of [
+    { ...letter, points: [{ claim: "Severity is documented.", evidence: "nowhere" }] },
+    { ...letter, points: [{ claim: "J15.9 applies.", evidence: "diagnosis" }] },
+    { ...letter, points: [{ claim: "CURB-65 was 2.", evidence: "diagnosis" }] },
+    { ...letter, opening: "The note says “sputum grew pneumococcus”." },
+  ]) expect(await gemma(JSON.stringify(bad)).draftAppeal(input)).toEqual(rules);
+  expect(await gemma("Dear insurer").draftAppeal(input)).toEqual(rules);
+});
+
+test("a discharge draft lists exactly the take-home medicines, in the leaflet's language, with the record's numbers only", async () => {
+  // Amelia's plan: azithromycin, paracetamol and cetirizine go home; nebulised salbutamol stopped.
+  const draft = {
+    diagnosis: "Community-acquired pneumonia on background asthma.", course: "Cough for five days and fever; observed on the ward.",
+    plan: "Oral azithromycin 2 more days, paracetamol as needed, cetirizine as before; clinic review.",
+    full: "Admitted with five days of cough and fever. Treated with azithromycin. Going home on azithromycin 500 mg daily for 2 more days.",
+    leaflet: "您因肺部感染接受了治疗。请每天服用一次阿奇霉素，再服2天。如呼吸更困难，请立即回院。",
+    medicines: ["Azithromycin", "Paracetamol", "cetirizine"],
+  };
+  const { diagnosis, course, plan, full, leaflet } = draft;
+  expect(await gemma(JSON.stringify(draft)).draftDischarge({ patient: amelia, language: "zh" })).toEqual({ summary: full, leaflet, lines: { diagnosis, course, plan }, ...fromModel });
+  const authored = await stubModels.draftDischarge({ patient: amelia, language: "zh" });
+  for (const bad of [
+    { ...draft, medicines: ["Azithromycin", "Paracetamol"] },
+    { ...draft, plan: "Nebulised salbutamol 4-hourly at home." },
+    { ...draft, course: "36 h observation, afebrile." },
+    { ...draft, leaflet: "Anda dirawat kerana jangkitan paru-paru. Makan azithromycin selama 2 hari lagi." }, // Malay, but Chinese was asked for
+  ]) expect(await gemma(JSON.stringify(bad)).draftDischarge({ patient: amelia, language: "zh" })).toEqual(authored);
+  expect(await gemma("Discharge summary: ...").draftDischarge({ patient: amelia, language: "zh" })).toEqual(authored);
+});
+
+test("a cited sentence counts whether Gemma writes its bare id or '[id] the sentence' (as it does live)", async () => {
+  const { citedSentence } = await import("./baseten-models");
+  const sentences = [{ id: "diagnosis", text: "Community-acquired pneumonia, CURB-65 0." }, { id: "xray", text: "Chest film: right lower zone consolidation." }];
+  expect(citedSentence("diagnosis", sentences)?.id).toBe("diagnosis");
+  expect(citedSentence("[diagnosis] Community-acquired pneumonia, CURB-65 0.", sentences)?.id).toBe("diagnosis");
+  expect(citedSentence("[xray]", sentences)?.id).toBe("xray");
+  expect(citedSentence("[organism] not in the note", sentences)).toBeUndefined();
 });

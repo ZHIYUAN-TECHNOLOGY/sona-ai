@@ -195,7 +195,9 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
   };
 
   const primary = busy ? "Freeing the bed…" : blocked.length ? `Resolve ${blocked.length} to discharge` : `Discharge ${first}`;
-  const summary: [string, string][] = [["Diagnosis", plan.summary.diagnosis], ["Course", plan.summary.course], ["Plan", plan.summary.plan]];
+  // A model's three lines replace the plan's own once it drafted them (live mode); its take-home list was checked on the server.
+  const lines = draft.data?.lines ?? plan.summary;
+  const summary: [string, string][] = [["Diagnosis", lines.diagnosis], ["Course", lines.course], ["Plan", lines.plan]];
   // Colour only what changes the plan: how severe the diagnosis is and the medicines that are new or changed.
   const marked = (text: string) => markTerms(text, [["mild", "finding"], ["moderate", "caution"], ["severe", "alert"],
     ...plan.meds.filter(m => m.change === "changed" || m.change === "new").map((m): [string, "caution"] => [m.name, "caution"])]);
@@ -261,6 +263,7 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
           <Text style={{ ...type.overline, width: 72, paddingTop: 3, color: palette.muted }}>{label}</Text>
           {text === value ? <Text selectable style={{ ...type.subhead, flex: 1, color: palette.ink }}>{value}</Text> : <MarkedText text={text} style={{ ...type.subhead, flex: 1, color: palette.ink }} />}
         </Animated.View>; })}
+        {!full && draft.data?.lines && <SampleLabel answer={draft} what="discharge" />}
         {full && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)} style={{ gap: 6 }}>
           <Text selectable style={{ ...type.footnote, color: palette.muted }}>{draft.data?.summary ?? plan.full}</Text>
           <SampleLabel answer={draft} what="discharge" />

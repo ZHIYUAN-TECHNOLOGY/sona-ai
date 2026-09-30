@@ -99,10 +99,7 @@ function PhotoSheet({ onClose }: { onClose: () => void }) {
   const read = async (photo: Photo, sample: boolean) => {
     setStep({ kind: "reading", photo });
     try {
-      const [r] = await Promise.all([
-        client.care.readMedicinePhoto(sample || !photo.base64 ? {} : { photo: { contentType: photo.mimeType ?? "image/jpeg", dataBase64: photo.base64 } }),
-        new Promise(done => setTimeout(done, reduced ? 300 : 1200)), // long enough to see it read, never a wait for nothing
-      ]);
+      const r = await client.care.readMedicinePhoto(sample || !photo.base64 ? {} : { photo: { contentType: photo.mimeType ?? "image/jpeg", dataBase64: photo.base64 } });
       setStep({ kind: "read", photo, sample: r.source === "fixture", key: r.key, reading: { name: r.name, dose: r.dose, how: r.frequency } });
     } catch { setStep({ kind: "choose", error: t("photo.failed") }); }
   };
