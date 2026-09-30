@@ -2,6 +2,7 @@
   "expo": {
     "name": "sona-ai",
     "slug": "sona-ai",
+    "owner": "zhiyuan-technology",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -54,6 +55,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7cddd66f-5a00-404b-9b22-f6e1c171e072"
+      }
     }
   }
 }
