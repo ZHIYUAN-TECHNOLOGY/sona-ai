@@ -80,10 +80,14 @@ const BAR_H = 76, BAR_R = 38, CARD_R = 26, CARD_INSET = -8;
 const FALLBACK = { duration: 260, easing: Easing.bezier(0.2, 0.8, 0.2, 1) };
 
 function RoundButton({ icon, label, onPress, hidden, reduced }: { icon: BrandIconName; label: string; onPress: () => void; hidden?: boolean; reduced?: boolean }) {
+  // Liquid Glass on iOS 26+ (it answers the touch itself); a frosted disc before that, solid with Reduce Transparency.
+  const { reducedTransparency } = useAccessibleEffects();
+  const liquid = process.env.EXPO_OS === "ios" && isLiquidGlassAvailable() && !reducedTransparency;
   // Reduce Motion: the buttons only fade; no shrink.
   return <Animated.View pointerEvents={hidden ? "none" : "auto"} style={{ opacity: hidden ? 0 : 1, transform: [{ scale: hidden && !reduced ? 0.6 : 1 }], transitionProperty: ["opacity", "transform"], transitionDuration: 260, transitionTimingFunction: EASE_OUT_CSS }}>
     <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityElementsHidden={hidden} onPress={onPress} hitSlop={6}>
-      {({ pressed }) => <Animated.View style={{ width: 50, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.72)", borderWidth: 1, borderColor: "rgba(255,255,255,0.9)", boxShadow: "0 4px 16px rgba(40,70,140,0.10)", transform: [{ scale: pressed && !reduced ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 }}>
+      {({ pressed }) => <Animated.View style={{ width: 50, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", backgroundColor: liquid ? "transparent" : reducedTransparency ? "rgba(255,255,255,0.97)" : "rgba(255,255,255,0.72)", borderWidth: liquid ? 0 : 1, borderColor: "rgba(255,255,255,0.9)", boxShadow: liquid ? undefined : "0 4px 16px rgba(40,70,140,0.10)", transform: [{ scale: pressed && !reduced ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 }}>
+        {liquid && <GlassView colorScheme="light" glassEffectStyle="regular" isInteractive tintColor="rgba(255,255,255,0.2)" style={[StyleSheet.absoluteFill, { borderRadius: 25 }]} />}
         <BrandIcon name={icon} size={23} />
       </Animated.View>}
     </Pressable>

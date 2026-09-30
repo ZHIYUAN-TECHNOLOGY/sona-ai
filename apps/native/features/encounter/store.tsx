@@ -8,7 +8,7 @@ import { useServerPatients } from "@/features/live/patients-sync";
 import { pushAndReview, simulateOnServer } from "@/features/live/prescribing-sync";
 import { patients, refreshDemoTimes } from "./fixtures";
 import { effectivePatient } from "./clinical-state";
-import { acceptCard, beginRequest, createCard, finishRequest, initialEncounters, issueSimulation, reviseEncounter, revealSections, queueAmendment, reconcileAmendment } from "./state";
+import { acceptCard, beginRequest, createCard, finishRequest, initialEncounters, isRepeat, issueSimulation, reviseEncounter, revealSections, queueAmendment, reconcileAmendment } from "./state";
 import type { Capability, Encounter, Patient, RequestState } from "./types";
 
 type Store = {
@@ -68,6 +68,8 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
   const request = useCallback((kind: Capability, prompt = "", amendmentId?: string) => {
     const id = activeRef.current; const base = patients.find(p => p.id === id); const patient = base ? effectivePatient(base, stateRef.current[base.id]) : undefined;
     if (!id || !patient) return;
+    // A double send is one request: the answer already on its way is the answer.
+    if (!amendmentId && isRepeat(stateRef.current[id]?.requests.at(-1), kind, prompt)) return;
     clearTimers();
     const revision = stateRef.current[id]!.revision;
     const req: RequestState = { id: `request-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, kind, prompt, patientId: id, encounterId: patient.encounterId, revision, status: "streaming" };

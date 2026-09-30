@@ -143,17 +143,28 @@ export function QuickRow({ actions, scroll, from, top }: { actions: QuickAction[
  * tool the visit has, each with its live state in its meaning colour, so tools that need a patient
  * live here rather than in the sidebar. Compact glass tiles; the row scrolls sideways past four.
  */
-export function ToolRow({ actions }: { actions: QuickAction[] }) {
-  return <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 20, paddingVertical: 4 }}>
-    {actions.map(a => { const tone = a.tone ?? "calm";
-      return <Press key={a.key} accessibilityLabel={`${a.label}, ${a.status}`} onPress={() => { tap(); a.onPress(); }} scale={0.96}
-        style={{ width: 108, minHeight: 104, padding: 10, gap: 6, alignItems: "flex-start", ...surfaceStyle, borderRadius: radius.group }}>
-        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: DISC[tone].fill, alignItems: "center", justifyContent: "center" }}>
-          <Icon name={a.icon} size={15} color={DISC[tone].glyph} />
-          {a.badge ? <View style={{ position: "absolute", top: -4, right: -6, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: palette.white, alignItems: "center", justifyContent: "center" }}><Text style={{ ...type.overline, color: DISC[tone].ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text></View> : null}
-        </View>
-        <Text numberOfLines={1} style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>{a.label}</Text>
-        <Text numberOfLines={2} style={{ ...type.caption, color: tone === "calm" ? palette.muted : INK[tone] }}>{a.status}</Text>
-      </Press>; })}
-  </ScrollView>;
+/**
+ * A visit's tools under one heading, all in view (no carousel): three to a row, two once text is large, each
+ * tile its glyph in the state's disc, a label and its state in the meaning colour, so the row reads at a glance.
+ */
+export function ToolGrid({ title, actions }: { title: string; actions: QuickAction[] }) {
+  const { fontScale } = useWindowDimensions();
+  const columns = fontScale > 1.3 ? 2 : 3;
+  if (!actions.length) return null;
+  return <View style={{ gap: 8 }}>
+    <Text accessibilityRole="header" style={{ ...type.overline, color: palette.muted, paddingHorizontal: 4 }}>{title}</Text>
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+      {actions.map(a => { const tone = a.tone ?? "calm";
+        // The column's width sits on a plain wrapper: Press's pressable sizes to its content, so a percentage inside it would collapse.
+        return <View key={a.key} style={{ width: `${(100 - (columns - 1) * 2.4) / columns}%` }}><Press accessibilityLabel={`${a.label}, ${a.status}`} onPress={() => { tap(); a.onPress(); }} scale={0.96}
+          style={{ width: "100%", minHeight: 114, padding: 10, gap: 6, alignItems: "flex-start", ...surfaceStyle, borderRadius: radius.group }}>
+          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: DISC[tone].fill, alignItems: "center", justifyContent: "center" }}>
+            <Icon name={a.icon} size={15} color={DISC[tone].glyph} />
+            {a.badge ? <View style={{ position: "absolute", top: -4, right: -6, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: palette.white, alignItems: "center", justifyContent: "center" }}><Text style={{ ...type.overline, color: DISC[tone].ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text></View> : null}
+          </View>
+          <Text numberOfLines={1} style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>{a.label}</Text>
+          <Text numberOfLines={2} style={{ ...type.caption, color: tone === "calm" ? palette.muted : INK[tone] }}>{a.status}</Text>
+        </Press></View>; })}
+    </View>
+  </View>;
 }

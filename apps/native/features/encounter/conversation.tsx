@@ -3,7 +3,7 @@ import { router, useIsFocused } from "expo-router";
 import { DrawnCheck, Press } from "@/components/sona/parts";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { MyDay } from "@/features/day";
-import { ToolRow, type ShelfCollapse } from "@/components/sona/quick-actions";
+import { ToolGrid, type ShelfCollapse } from "@/components/sona/quick-actions";
 import { canDischarge } from "@/features/discharge/model";
 import { useHomeActions, visitNeed, visitTools, type VisitNeed } from "./quick-actions";
 import { openSession } from "./navigation";
@@ -23,7 +23,7 @@ import { useRole } from "@/features/live/roles";
 import { useInboxSummary } from "@/features/inbox";
 import { useEncounter } from "./store";
 import { SweptLead, wordCount } from "@/components/sona/marked-text";
-import { Chip, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { Chip, pillStyle, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { useEffect, useState, type ReactNode } from "react";
 import { View } from "react-native";
@@ -185,28 +185,41 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
   const homeKeys = useHomeActions(patients, encounters);
   const canScan = useRole().can("scan.read");
   const rise = (i: number) => reducedMotion ? undefined : riseIn({ delay: 80 + i * 70, distance: 14, duration: 460 });
-  const lead = { ...type.display, color: palette.ink } as const;
   // Reading order top-down: greeting under the top bar, then the next section at a fixed rhythm.
   // Nothing is centred or pinned to the bottom, so the gap never stretches with screen height.
   // Without a visit, the greeting and the ranked day are one section: MyDay owns the header.
   if (!patient) return <View style={{ paddingTop: 20 }}><MyDay patients={patients} greeting={greeting().replace(/\.$/, "")} onOpen={(id, open) => openSession(id, open)}
     actions={homeKeys} onShelf={onShelf} shelfCollapse={shelfCollapse} /></View>;
-  // Insight first: the one thing that needs the doctor, with its action, above the tiles.
-  const need = visitNeed(patient, encounters[patient.id], result);
+  // Glance to decision: who and when in one line, the one next step with its action (the screen's one
+  // feature card), every tool in view grouped by when it's used, then two questions worth asking.
+  const encounter = encounters[patient.id], name = first(patient);
+  const discharged = Boolean(encounter?.discharge?.dischargedAt);
+  const need: VisitNeed = visitNeed(patient, encounter, result)
+    ?? { tone: "calm", text: discharged ? `${name} is discharged · hand over when you’re done` : `Nothing needs ${name} now`, action: "Hand over", target: "handover" };
   const go = (target: VisitNeed["target"]) => goToNeed(target, patient, onPick);
-  return <View style={{ gap: 44, paddingTop: 20 }}>
-    <View style={{ gap: 18 }}>
-      <Animated.View entering={rise(0)}><Text accessibilityRole="header" style={lead}>{greeting()}</Text></Animated.View>
-      <Animated.View entering={rise(1)}>
-        {patient ? <Text style={lead}>
-          <Text style={{ fontWeight: "600" }}>{patient.name}</Text> is here for a {patient.subtitle.toLowerCase()} {patient.incomplete ? "🫁" : "🩺"} at <Text style={{ fontWeight: "600" }}>{patient.time}</Text>.{"\n"}<Text style={{ color: palette.muted }}>Ask me anything.</Text>
-        </Text> : null}
-      </Animated.View>
-      <NeedLine need={need} entering={rise(2)} onPress={shown => go(shown.target)} />
-      <Animated.View entering={rise(3)} layout={reducedMotion ? undefined : LAYOUT}>
-        {patient ? <ToolRow actions={visitTools(patient, encounters[patient.id], result, go, canScan, canDischarge(patient))} /> : null}
-      </Animated.View>
-    </View>
+  const tools = new Map(visitTools(patient, encounter, result, go, canScan, canDischarge(patient)).map(t => [t.key, t]));
+  const group = (keys: string[]) => keys.flatMap(k => tools.get(k) ?? []);
+  const ask = askAfter("briefing", patient).slice(0, 2);
+  return <View style={{ gap: 28, paddingTop: 20 }}>
+    <Animated.View entering={rise(0)}>
+      <Text accessibilityRole="header" style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>
+        <Text style={{ fontWeight: "600", color: palette.ink }}>{patient.name}</Text> · {patient.age} · {patient.subtitle} · {patient.time}
+      </Text>
+    </Animated.View>
+    <Animated.View entering={rise(1)}>
+      <Surface feature style={{ paddingHorizontal: 16, paddingVertical: 14, gap: 8 }}>
+        <Text style={{ ...type.overline, color: palette.muted }}>Next step</Text>
+        <NeedLine need={need} onPress={shown => go(shown.target)} />
+      </Surface>
+    </Animated.View>
+    <Animated.View entering={rise(2)} layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 18 }}>
+      <ToolGrid title={`Before you see ${name}`} actions={group(["brief", "meds", "xray"])} />
+      <ToolGrid title={`With ${name}`} actions={group(["consult", "note", "scan"])} />
+      <ToolGrid title="Wrap up" actions={group(["tasks", "discharge"])} />
+    </Animated.View>
+    {ask.length > 0 && <Animated.View entering={rise(3)}>
+      <QuestionList title="Try asking" questions={ask.map(k => ({ key: k, text: suggestionFor(k, patient).text }))} onAsk={k => onPick(suggestionFor(k as Capability, patient))} />
+    </Animated.View>}
   </View>;
 }
 

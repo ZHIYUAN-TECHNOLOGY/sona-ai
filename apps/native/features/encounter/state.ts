@@ -29,6 +29,17 @@ export function acceptCard(encounter: Encounter, patient: Patient, payload: unkn
   if (card.patientId !== patient.id || card.encounterId !== patient.encounterId || card.revision !== encounter.revision || !request || request.status !== "streaming" || request.kind !== card.kind || request.patientId !== card.patientId || request.encounterId !== card.encounterId || request.revision !== card.revision || encounter.cards.some(item => item.id === card.id)) return encounter;
   return { ...encounter, cards: [...encounter.cards, { ...card, imagingSnapshot: { imagingAttachment: encounter.imagingAttachment ? { ...encounter.imagingAttachment } : undefined, hideTeachingImage: encounter.hideTeachingImage, imagingScenario: encounter.imagingScenario }, patientSnapshot: { ...patient, history: [...patient.history], medicines: [...patient.medicines], sources: patient.sources.map(source => ({ ...source })), vitals: patient.vitals.map(vital => ({ ...vital })) }, transcriptSnapshot: encounter.transcript.map(line => ({ ...line })) }] };
 }
+/**
+ * The same question sent again while its answer is still coming, or within 2 s of the first (a double
+ * tap on send, a suggestion or "Also ask"), is the same request, not a second answer. Request ids start
+ * with their creation time (`request-<ms>-…`).
+ */
+export function isRepeat(last: Pick<RequestState, "id" | "kind" | "prompt" | "status"> | undefined, kind: Capability, prompt: string, now = Date.now()) {
+  if (!last || last.kind !== kind || last.prompt.trim() !== prompt.trim()) return false;
+  const at = Number(last.id.split("-")[1]);
+  return last.status === "streaming" || (Number.isFinite(at) && now - at < 2000);
+}
+
 export function beginRequest(encounter: Encounter, request: RequestState): Encounter {
   return { ...encounter, requests: [...encounter.requests.map(item => item.status === "streaming" ? { ...item, status: "cancelled" as const } : item), request] };
 }

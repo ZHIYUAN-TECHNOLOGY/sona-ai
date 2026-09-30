@@ -147,3 +147,15 @@ test("a note edit leaves the revision, the medication review and a pending amend
   expect(after.amendmentOperation).toBe(amendment);
   expect(getPrescriptionChecks(after, patient).find(check => check.id === "review").status).toBe("passed");
 });
+
+test("a second send of the same question is the same request: while its answer streams, or within 2 s of it", async () => {
+  const { isRepeat } = await import("./state");
+  const now = 1_790_000_000_000;
+  const last = { id: `request-${now - 500}-abcde`, kind: "reasoning", prompt: "What possibilities should I consider?", status: "complete" };
+  expect(isRepeat(last, "reasoning", "What possibilities should I consider? ", now)).toBe(true); // double tap
+  expect(isRepeat(last, "reasoning", "What possibilities should I consider?", now + 5000)).toBe(false); // asked again later on purpose
+  expect(isRepeat({ ...last, status: "streaming" }, "reasoning", "What possibilities should I consider?", now + 60_000)).toBe(true); // still coming
+  expect(isRepeat(last, "evidence", "What possibilities should I consider?", now)).toBe(false); // another answer
+  expect(isRepeat(last, "reasoning", "Is it pneumonia?", now)).toBe(false); // another question
+  expect(isRepeat(undefined, "reasoning", "x", now)).toBe(false);
+});

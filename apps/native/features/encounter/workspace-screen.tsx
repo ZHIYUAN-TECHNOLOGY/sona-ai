@@ -180,7 +180,12 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const nudge = home ? suggestion(todayAnswers) : undefined;
   const { on: live } = useLive();
   // A notice answers the last input only: it clears on the next keystroke or submit, so it never hides the dock for good.
-  const submit = async (text: string) => { const prompt = text.trim(); if (!prompt) return; setNotice(undefined);
+  // One send at a time: while a request is being routed, further taps on send do nothing (the text box is already empty).
+  const routing = useRef(false);
+  const [routingNow, setRoutingNow] = useState(false);
+  // Laya asleep or slow: skip it for a minute and route by keywords, so a sleeping box never slows every question.
+  const layaRestUntil = useRef(0);
+  const submit = async (text: string) => { const prompt = text.trim(); if (!prompt || routing.current) return; setNotice(undefined);
     if (!patient) { const answer = matchQuestion(prompt, todayAnswers); if (answer) { setInput(""); setAsk({ open: true, shown: answer }); return; }
       // Live mode: a question about the day that no rule or capability answers goes to the sheet, which asks the model with Today's own data.
       if (live && !routeInThread(prompt)) { setInput(""); setAsk({ open: true, missed: prompt }); return; } }
@@ -193,9 +198,23 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       if (image) { updateEncounter(current => image.uri === "teaching" ? { ...current, imagingAttachment: undefined, hideTeachingImage: false } : { ...current, imagingAttachment: { uri: image.uri, name: image.name } }, true); run("xray", prompt); if (fileNote) setNotice(fileNote); return; }
       if (fileNote) setNotice(fileNote);
     }
-    // Live mode asks Laya first (ask.route, 5 s at most); keyword routing decides when it can't (no key, not covered, or a failed call).
-    const picked = live && patient ? await api.ask.route({ request: prompt, patient: patient.subtitle }).then(r => r.source === "model" ? r.card : null, () => null) : null;
-    const kind = picked ?? routeInThread(prompt, encounter?.requests.at(-1)?.kind); if (!kind) { setNotice("Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan. Demo routing uses supported phrases."); return; } setInput(""); run(kind, prompt); };
+    // Live mode asks Laya first (ask.route) for at most 2.5 s; keyword routing decides when it can't (no key, not covered, asleep or slow).
+    // The text box empties and the dock shows the request is being read at once, so nothing invites a second send.
+    routing.current = true; setRoutingNow(true); setInput("");
+    try {
+      const rest = () => { layaRestUntil.current = Date.now() + 60_000; return null; };
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const picked = live && patient && Date.now() > layaRestUntil.current
+        ? await Promise.race([
+          api.ask.route({ request: prompt, patient: patient.subtitle }).then(r => (r.source === "model" ? r.card ?? null : rest()), rest),
+          new Promise<null>(resolve => { timer = setTimeout(() => resolve(rest()), 2500); }),
+        ]).finally(() => clearTimeout(timer))
+        : null;
+      const kind = picked ?? routeInThread(prompt, encounter?.requests.at(-1)?.kind);
+      if (!kind) { setInput(prompt); setNotice("Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan. Demo routing uses supported phrases."); return; }
+      run(kind, prompt);
+    } finally { routing.current = false; setRoutingNow(false); }
+  };
 
   useEffect(() => { setShowEarlier(false); setNotice(undefined); setPending([]); if (!patient) setDrafts({}); }, [patient?.id]);
   // Working on a visit keeps it in Continue ("where you left off") for the next 24 h.
@@ -271,7 +290,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     <VoiceDock
       backdrop={backdrop}
       quiet={Boolean(steps)}
-      thinking={thinking}
+      thinking={routingNow ? "Reading your request…" : thinking}
       activity={active ? (phase === "thinking" ? "searching" : activities[active.kind]) : justDone ? "done" : undefined}
       onCancel={cancel}
       onSubmit={submit}
