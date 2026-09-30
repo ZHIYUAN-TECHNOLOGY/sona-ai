@@ -81,7 +81,7 @@ export function ClaimScreen() {
       api.claim.send({ encounterId: patient.encounterId, requestId: requestId(), approvedBy: user.id })
         .then(async () => {
           const first = await api.claim.status({ encounterId: patient.encounterId }).catch(() => undefined);
-          timers.current.push(setTimeout(() => { set({ status: "sent", reviewUrl: first?.reviewUrl, query: undefined }); setSending(false); }, reducedMotion ? 0 : 900));
+          set({ status: "sent", reviewUrl: first?.reviewUrl, query: undefined }); setSending(false);
           const poll = setInterval(() => {
             api.claim.status({ encounterId: patient.encounterId }).then(r => {
               if (r.status === "queried") { clearInterval(poll); set({ status: "queried", query: r.query }); haptic("warning"); return; }

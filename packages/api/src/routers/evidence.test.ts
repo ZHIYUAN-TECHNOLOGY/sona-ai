@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import { ANSWER, FOLLOW_UPS, STUDIES } from "@sona-ai/domain/evidence";
 import { eq } from "drizzle-orm";
 
-import { stubModels } from "../models";
+import { stubModels, type Models } from "../models";
 import { appRouter } from "./index";
 
 const session = {
@@ -30,11 +30,11 @@ function pubmed(idlist = ["25608756"]) {
   return { state, fetcher };
 }
 
-async function signedIn(fetcher: typeof fetch, signed = true) {
+async function signedIn(fetcher: typeof fetch, signed = true, models?: Models) {
   const db = await createTestDb();
   await seedDemo(db, new Date("2026-09-26T09:00:00+08:00"));
   await addClinician(db, "dr-aisyah");
-  return { db, api: createRouterClient(appRouter, { context: { db, session: signed ? session : null, fetch: fetcher } }) };
+  return { db, api: createRouterClient(appRouter, { context: { db, session: signed ? session : null, fetch: fetcher, models } }) };
 }
 
 const REHEARSED_Q = "Steroids for this patient with community-acquired pneumonia?";
@@ -111,6 +111,15 @@ test("any other question searches PubMed, never borrows the authored answer, and
   expect(r.followUps).toEqual(["What do the guidelines recommend?", "What are the main harms?", "Does this change for severe cases?"]);
   // Daniel has no chart readings: only age counts, and the band is withheld.
   expect(r.curb65).toMatchObject({ recorded: 1, risk: undefined });
+});
+
+test("while Gemma is starting, the sample says in how many minutes it should answer", async () => {
+  const models: Models = { ...stubModels, synthesiseEvidence: async input => ({ ...await stubModels.synthesiseEvidence(input), source: "fixture", waking: 12 }) };
+  const { api } = await signedIn(pubmed(["25608756"]).fetcher, true, models);
+  const r = await api.evidence.ask({ encounterId: "visit-1086", question: "Does prednisone shorten time to stability?" });
+  expect(r).toMatchObject({ source: "fixture", waking: 12, enough: true });
+  // The rehearsed question answers from authored content: no model, so nothing is starting.
+  expect(await api.evidence.ask({ encounterId: "visit-1042", question: REHEARSED_Q })).not.toHaveProperty("waking");
 });
 
 test("a model's uncited or out-of-range claims are all dropped, leaving not enough evidence; the thread reaches the model", async () => {

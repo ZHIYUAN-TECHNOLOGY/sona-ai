@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { DOCTORS, matchDoctors } from "../doctors/data";
-import { answer, conditionOf, doctorQuestion, leadOf, NO_ANSWER, spoken, suggestions, urgent, wantsDoctor } from "./answers";
+import { answer, conditionOf, doctorQuestion, leadOf, NO_ANSWER, spoken, startingLine, suggestions, urgent, wantsDoctor } from "./answers";
 
 const medicines = {
   new: [{ name: "Paracetamol", line: "For pain or fever: 1 g every 6 hours if you need it, no more than 4 g a day" }],
@@ -71,6 +71,17 @@ test("a plan question goes to the model first; its authored answer only when no 
   expect(await answer("When is my next visit?", asks, api(failing))).toEqual({ kind: "plan", asked: asks[2] });
   // The model saying the plan does not answer it is the honest no, not the template.
   expect(await answer("When is my next visit?", asks, api(modelSays({ answer: "I'll pass that to your care team.", grounded: false, urgent: false })))).toEqual({ kind: "none", urgent: false });
+});
+
+test("while the model starts, the fallback reply says how long, in the patient's language", async () => {
+  const asks = suggestions(plan, visit, "Cetirizine");
+  const starting = minutes => async () => ({ answer: "", grounded: false, urgent: false, source: "fixture", waking: minutes });
+  expect(await answer("When is my next visit?", asks, api(starting(3)))).toEqual({ kind: "plan", asked: asks[2], waking: 3 });
+  expect(await answer("Can I drink coffee?", asks, api(starting(1)))).toEqual({ kind: "none", urgent: false, waking: 1 });
+  expect(startingLine(3)).toBe("Sona Care is starting up, about 3 min");
+  expect(startingLine(1)).toBe("Sona Care is starting up, about a minute");
+  expect(startingLine(3, "ms")).toBe("Sona Care sedang dimulakan, kira-kira 3 minit lagi");
+  expect(startingLine(1, "zh")).toBe("Sona Care 正在启动，大约还要一分钟");
 });
 
 test("anything else is the model's grounded answer, or the honest no (urgent when the model heard a warning sign)", async () => {

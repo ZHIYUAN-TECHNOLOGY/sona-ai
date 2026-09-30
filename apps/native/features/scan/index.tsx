@@ -21,6 +21,7 @@ import { OriginalImageViewer } from "@/features/imaging/viewer";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { useServerEncounter } from "@/features/live/sync";
+import { wakingOf } from "@/features/live/waking";
 import { applyLocally, countsOf, itemsOf, keptOf, replaceWord, type ItemKey } from "./model";
 import { NoVisit } from "@/components/sona/no-visit";
 
@@ -30,7 +31,8 @@ import { NoVisit } from "@/components/sona/no-visit";
  *   Capture: camera or library, frozen under the capture scan (CaptureScan, confirm mode).
  *   Reading (after 60fps "Remy AI Analysis Checklist Animation",
  *   https://60fps.design/shots/remy-ai-analysis-checklist-animation): the photo shrinks into a thumbnail
- *   at the top while a checklist rises beneath it, each check popping in with a soft glow, 600 ms apart.
+ *   at the top while a checklist rises beneath it, each check popping in with a soft glow, 600 ms apart
+ *   (live: the upload and the read, each as it returns).
  *   Review (after 60fps "Recollect Value Prop Morph Interaction",
  *   https://60fps.design/shots/recollect-value-prop-morph-interaction, calmed): the thumbnail settles as
  *   a card and what was read springs out beneath it in groups, 70 ms apart, on a near-critical spring.
@@ -48,6 +50,8 @@ type Phase =
 
 const SAMPLE = require("../../assets/scan/sample-ward-note.jpg") as number;
 const STEPS = ["Reading handwriting", "Finding medicines", "Finding tasks", "Structuring the note"];
+// Live: the real calls, each ticked as it returns (the bundled sample is already stored, so it is only read).
+const LIVE_STEPS = ["Uploading the photo", "Reading the note"];
 const SECTION_TITLE: Record<keyof ScanSections, string> = { history: "History", examination: "Examination", assessment: "Assessment", plan: "Plan" };
 // The reconciliation colours (as on the discharge card): changed amber, new blue, stopped and continuing neutral.
 const TAG: Record<MedicineChange, { label: string; ink: string; fill: string }> = {
@@ -74,6 +78,7 @@ export function ScanScreen() {
   const [busy, setBusy] = useState(false);
   // The checklist decides when the review appears (it waits for the reading); see Checklist.
   const [ready, setReady] = useState<{ photo: Photo; key: string; reading: Reading }>();
+  const [uploaded, setUploaded] = useState(false);
 
   if (!patient) return <NoVisit view="scan" what="a scan" />;
   if (!role.can("scan.read")) return <Screen><LockedAction label="Needs a doctor to scan a note" path="scan.read" /></Screen>;
@@ -95,13 +100,14 @@ export function ScanScreen() {
 
   // Live: upload (unless it is the bundled sample) and read on the server; fixture mode: the sample reading, honestly labelled.
   const read = async (photo: Photo) => {
-    setPhase({ kind: "reading", photo });
+    setPhase({ kind: "reading", photo }); setUploaded(false);
     try {
       let key = SAMPLE_SCAN_KEY, reading: Reading = { ...structuredClone(SAMPLE_NOTE), source: "fixture" };
       if (live) {
         if (!photo.sample) {
           if (!photo.base64) throw new Error("The photo could not be read for upload");
           key = (await api.scan.upload({ encounterId, contentType: photo.mimeType ?? "image/jpeg", dataBase64: photo.base64 })).key;
+          setUploaded(true);
         }
         reading = await api.scan.read({ encounterId, key }) as Reading;
       }
@@ -148,7 +154,7 @@ export function ScanScreen() {
     {(phase.kind === "reading" || phase.kind === "done") && <Screen>
       <Text selectable style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{patient.name} · scanned note</Text>
       <PhotoHeader photo={phase.photo} settled={phase.kind === "done"} />
-      {phase.kind === "reading" && <Checklist ready={Boolean(ready)} error={phase.error} onFinished={showReview}
+      {phase.kind === "reading" && <Checklist steps={live ? LIVE_STEPS.slice(phase.photo.sample ? 1 : 0) : STEPS} returned={live ? Number(uploaded) : undefined} ready={Boolean(ready)} error={phase.error} onFinished={showReview}
         onRetry={() => { setReady(undefined); void start(phase.photo); }} onSample={() => { setReady(undefined); void start({ source: SAMPLE, sample: true }); }} />}
       {phase.kind === "done" && <Done line={phase.line} medicines={phase.medicines} live={live}
         onNote={() => router.replace("/note")} onMedicines={() => { request("medication"); if (router.canGoBack()) router.back(); }}
@@ -214,7 +220,7 @@ function PhotoHeader({ photo, settled, source }: { photo: Photo; settled: boolea
         </Animated.View>
         {settled && <Animated.View entering={reducedMotion ? undefined : riseIn({ distance: 4, duration: 300 })} style={{ flex: 1, gap: 3 }}>
           <Text style={{ ...type.headline, color: palette.ink }}>{photo.sample ? "Sample ward-round note" : "Your photo"}</Text>
-          {source?.source === "fixture" ? <SampleLabel source="fixture" what="handwriting" />
+          {source?.source === "fixture" ? <SampleLabel source="fixture" waking={wakingOf(source)} what="handwriting" />
             : source && <Text style={{ ...type.footnote, color: palette.muted }}>Read by {source.model} · check every item</Text>}
           <Text style={{ ...type.caption, color: palette.blue }}>{words ? `${words} ${words === 1 ? "word" : "words"} to check · ` : ""}Tap to compare</Text>
         </Animated.View>}
@@ -245,18 +251,22 @@ function glowOut() {
   return { initialValues: { opacity: 0.55, transform: [{ scale: 1 }] }, animations: { opacity: withTiming(0, { duration: 650, easing: EASE_OUT }), transform: [{ scale: withTiming(2.1, { duration: 650, easing: EASE_OUT }) }] } };
 }
 
-/** Four steps rising in, ticked 600 ms apart; the last waits for the reading, then the review follows. */
-function Checklist({ ready, error, onFinished, onRetry, onSample }: { ready: boolean; error?: string; onFinished: () => void; onRetry: () => void; onSample: () => void }) {
+/**
+ * The steps rising in, then the review. Demo: ticked 600 ms apart, the last waiting for the reading. Live
+ * (`returned`, the calls back so far): each step ticks when its call returns, and the last with the reading.
+ */
+function Checklist({ steps, returned, ready, error, onFinished, onRetry, onSample }: { steps: string[]; returned?: number; ready: boolean; error?: string; onFinished: () => void; onRetry: () => void; onSample: () => void }) {
   const { reducedMotion } = useAccessibleEffects();
-  const [ticked, setTicked] = useState(0);
-  const cap = error ? 0 : ready ? STEPS.length : STEPS.length - 1;
+  const [timed, setTimed] = useState(0);
+  const cap = error ? 0 : ready ? steps.length : steps.length - 1;
+  const ticked = returned === undefined ? timed : ready ? steps.length : returned;
   useEffect(() => {
-    if (ticked >= cap) return;
-    const t = setTimeout(() => setTicked(n => Math.min(cap, n + 1)), ticked === 0 ? 900 : 600);
+    if (returned !== undefined || timed >= cap) return;
+    const t = setTimeout(() => setTimed(n => Math.min(cap, n + 1)), timed === 0 ? 900 : 600);
     return () => clearTimeout(t);
-  }, [ticked, cap]);
+  }, [timed, cap, returned]);
   useEffect(() => {
-    if (ticked !== STEPS.length) return;
+    if (ticked !== steps.length) return;
     haptic("done");
     const t = setTimeout(onFinished, reducedMotion ? 150 : 450);
     return () => clearTimeout(t);
@@ -270,7 +280,7 @@ function Checklist({ ready, error, onFinished, onRetry, onSample }: { ready: boo
   </Expand>;
   return <Surface style={{ padding: 8, gap: 0 }}>
     <View accessibilityLiveRegion="polite">
-      {STEPS.map((step, i) => {
+      {steps.map((step, i) => {
         const done = i < ticked, current = i === ticked;
         return <Animated.View key={step} entering={reducedMotion ? undefined : riseIn({ delay: 300 + i * 90, distance: 18 })} accessible accessibilityLabel={`${step}, ${done ? "done" : current ? "in progress" : "waiting"}`}
           style={{ minHeight: 52, flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 12 }}>

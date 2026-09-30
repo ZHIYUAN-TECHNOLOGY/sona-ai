@@ -13,9 +13,10 @@ import { huddle, type Bed, type Owner } from "@sona-ai/domain/ward";
  * The one seam between the routes and the models (docs/delivery-plan.md, Models and hosting: on
  * hold). Routes call `context.models`; turning on Baseten means passing a real `Models` from the
  * Worker's context, nothing else. Every answer says where it came from, so a fixture can never be
- * shown as a model reading, and a model answer carries the model version for provenance.
+ * shown as a model reading, and a model answer carries the model version for provenance. `waking` is on a
+ * fixture only while the box that would answer is starting: whole minutes (at least 1) until it should be ready.
  */
-export type Origin = { source: "fixture" } | { source: "model"; model: string };
+export type Origin = { source: "fixture"; waking?: number } | { source: "model"; model: string };
 type Answer<T> = Promise<T & Origin>;
 
 export type Models = {

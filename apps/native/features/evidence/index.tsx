@@ -18,6 +18,7 @@ import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
 import { threadBefore, useLiveEvidence, type ServerEvidence } from "@/features/live/evidence-sync";
+import { wakingOf } from "@/features/live/waking";
 import { authoredAnswer, authoredReferences, curb65, type Claim, type Reference } from "./model";
 
 /*
@@ -64,7 +65,7 @@ export function EvidenceCard({ patient, result, onRequest }: FeatureProps) {
         : shown.enough ? shown.claims.map((c, i) => <ClaimLine key={i} claim={c} references={shown.references} onCite={cite} />)
         : <Text selectable style={{ ...type.callout, color: palette.amber }}>{NOT_ENOUGH}</Text>}
       {shown && <View style={{ gap: 4 }}>
-        {data && data.references.length > 0 && <SampleLabel source={data.source === "fixture" || data.source === "cached" ? data.source : "model"} model={data.source} what="evidence" />}
+        {data && data.references.length > 0 && <SampleLabel source={data.source === "fixture" || data.source === "cached" ? data.source : "model"} model={data.source} waking={wakingOf(data)} what="evidence" />}
         {caption ? <Text selectable style={{ ...type.caption, color: palette.muted }}>{caption}</Text> : null}
       </View>}
     </Surface>

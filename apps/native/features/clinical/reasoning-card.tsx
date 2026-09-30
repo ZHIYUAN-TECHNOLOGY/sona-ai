@@ -14,6 +14,7 @@ import { HistoryEditor } from "./history-editor";
 import { Caption, Disclosure } from "./reasoning-parts";
 import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveReasoning } from "@/features/live/model-sync";
+import { wakingOf } from "@/features/live/waking";
 
 type Evidence = { context: string; supports: string; conflicts: string; needed: string };
 type Possibility = { id: string; icon: string; title: string; summary: string; evidence: Evidence; sources: { label: string; id: string; kind: SourceKind }[]; xray?: boolean };
@@ -125,7 +126,7 @@ export function ReasoningCard({ patient, result, onSource, onRequest }: FeatureP
         {GAPS.map((gap, index) => <GapRow key={gap.title} title={gap.title} detail={gap.detail} index={index} reduced={reducedMotion} updates={facts.filter(fact => gap.categories.includes(fact.category)).length} />)}
       </Surface>}
       <Animated.View layout={layout} style={{ gap: 2 }}>
-        {modelled ? <SampleLabel answer={server} what="reasoning" /> : <SampleLabel source="fixture" what="reasoning" />}
+        {modelled ? <SampleLabel answer={server} what="reasoning" /> : <SampleLabel source="fixture" waking={wakingOf(server.data)} what="reasoning" />}
         <Caption>{provenance}</Caption>
         {patient.incomplete && <View style={{ paddingLeft: 22 }}><SourceRef label="Patient context used" kind="record" onPress={() => onSource(presentingSource)} /></View>}
       </Animated.View>

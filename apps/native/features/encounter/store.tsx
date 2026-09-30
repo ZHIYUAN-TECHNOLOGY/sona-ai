@@ -61,6 +61,7 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
   const selectPatient = useCallback((id: string) => { if (!patients.some(p => p.id === id) || activeRef.current === id) return; cancel(); activeRef.current = id; setPatientId(id); }, [cancel]);
   // Home has no visit open: leaving stops any answer still arriving so nothing is left half-streamed.
   const leaveVisit = useCallback(() => { if (!activeRef.current) return; cancel(); activeRef.current = undefined; setPatientId(undefined); }, [cancel]);
+  const { on: live, user } = useLive();
   const updateEncounter = useCallback((update: (current: Encounter) => Encounter, revise = false, patientId?: string) => {
     const id = patientId ?? activeRef.current; if (!id || !patients.some(p => p.id === id)) return;
     setEncounters(prev => { const next = update(prev[id]!); return { ...prev, [id]: revise ? reviseEncounter(next) : next }; });
@@ -78,7 +79,8 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
       if (operation && !["complete", "failed", "cancelled"].includes(operation.phase)) next.amendmentOperation = amendmentId === operation.id ? { ...operation, phase: kind === "medication" ? "reviewing" : "issuing", requestId: req.id } : { ...operation, phase: "cancelled", error: "A different request superseded the amendment. The earlier receipt is retained." };
       return { ...prev, [id]: next };
     });
-    if (kind === "briefing" || kind === "xray" || kind === "prescription") {
+    // Demo: the sample's staged reveal. Live: the whole card at once; a model answer in it shows its own Drafting while the server works.
+    if (!live && (kind === "briefing" || kind === "xray" || kind === "prescription")) {
       for (const [sections, delay] of [[1, 400], [2, 850]] as const) {
         timers.current.push(setTimeout(() => {
           if (activeRef.current !== id) return;
@@ -89,7 +91,7 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
         }, delay));
       }
     }
-    timers.current.push(setTimeout(() => {
+    const settle = () => {
       if (activeRef.current !== id) return;
       setEncounters(prev => {
         let current = prev[id]!;
@@ -106,12 +108,12 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
         }
         return { ...prev, [id]: reconcileAmendment(finishRequest(current, req.id, "complete"), req.id) };
       });
-    }, kind === "prescription" ? 1800 : 1150));
-  }, [clearTimers, simulateFailure, simulateInvalid]);
+    };
+    if (live) settle(); else timers.current.push(setTimeout(settle, kind === "prescription" ? 1800 : 1150));
+  }, [clearTimers, live, simulateFailure, simulateInvalid]);
   // The one way to run the review and the simulation, for the prescribe card and the next-step bar alike, without adding answers.
   // Live: the server records the review and re-checks everything before it writes the receipt, and refuses a role that can't
   // prescribe (both callers show that role a lock instead: useCanPrescribe).
-  const { on: live, user } = useLive();
   const [runErrors, setRunErrors] = useState<Record<string, string | undefined>>({});
   const runInPlace = useCallback((kind: "medication" | "prescription") => {
     const id = activeRef.current; const base = patients.find(p => p.id === id); const patient = base ? effectivePatient(base, stateRef.current[base.id]) : undefined;

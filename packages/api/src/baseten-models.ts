@@ -4,16 +4,45 @@ import { DRAFT_MAX } from "@sona-ai/domain/messages";
 import { huddle } from "@sona-ai/domain/ward";
 
 import { LANGUAGE_NAME, chatModels, jsonIn } from "./chat-models";
-import { stubModels, type Models } from "./models";
+import { stubModels, type Models, type Origin } from "./models";
 
 /**
  * Sona's models on the Baseten boxes (packages/infra/baseten, docs/handoff.md#baseten-boxes): Gemma in box ①,
- * speech in box ②, MedGemma in box ③. Boxes scale to zero and take minutes to wake, so every call has a
- * timeout; a call that fails or times out wakes its box for next time and answers from the stub, which says
- * "fixture", so a failure is never shown as a model reading. Methods not listed here stay on the stub.
+ * speech in box ②, MedGemma in box ③, Laya on its CPU box (./ask-model). Boxes scale to zero and take minutes
+ * to wake, so a box not known to be up gets a quick health check first; a cold one is woken and not waited for:
+ * the stub answers at once, labelled fixture with `waking`, the minutes until the model should be ready. A call
+ * that fails or times out also wakes its box and answers from the stub, so a failure is never shown as a model
+ * reading. Methods not listed here stay on the stub.
  */
-export const BOXES = { brain: "q9p7zn63", voice: "qvmgk79q", xray: "wdlp8jm3" } as const;
-type Box = keyof typeof BOXES;
+export const BOXES = { brain: "q9p7zn63", voice: "qvmgk79q", xray: "wdlp8jm3", laya: "qe2dp10q" } as const;
+export type Box = keyof typeof BOXES;
+
+/**
+ * Minutes from cold to answering, rounded up so "about N min" errs long (docs/handoff.md#baseten-boxes): the GPU
+ * boxes took 9–16 on 30 Sep, then brain ~10, voice ~30 and xray ~12 on 1 Oct; Laya 31 s.
+ */
+export const COLD_START_MIN: Record<Box, number> = { brain: 12, voice: 30, xray: 15, laya: 1 };
+/** A box that answered is trusted for 4 minutes, inside the 5 idle minutes before it scales to zero. */
+const READY_MS = 4 * 60_000;
+/** What this isolate knows about each box (epoch ms): up until `readyUntil`; starting since `wakingSince`. */
+export const boxState = new Map<Box, { readyUntil: number; wakingSince?: number; checkedAt?: number }>();
+/** While a box is starting, its health is checked at most this often; every other call gets its stub at once. */
+const RECHECK_MS = 60_000;
+
+/** The box answered: up for the next 4 minutes, and no longer starting. */
+export function answered(box: Box) {
+  boxState.set(box, { readyUntil: Date.now() + READY_MS });
+}
+/** The box was found cold. A wake older than its cold start plus the 5 idle minutes has lapsed (it woke and slept again), so the count restarts. */
+export function starting(box: Box) {
+  const now = Date.now(), { wakingSince: since, checkedAt } = boxState.get(box) ?? {};
+  boxState.set(box, { readyUntil: 0, checkedAt, wakingSince: since !== undefined && now - since < (COLD_START_MIN[box] + 5) * 60_000 ? since : now });
+}
+/** `{ waking }` in whole minutes (at least 1) while the box is starting; nothing when it is not known to be. */
+export function wakingOf(box: Box): { waking?: number } {
+  const since = boxState.get(box)?.wakingSince;
+  return since === undefined ? {} : { waking: Math.max(1, Math.ceil(COLD_START_MIN[box] - (Date.now() - since) / 60_000)) };
+}
 
 // The names each box serves its model under (vLLM --served-model-name), also recorded as provenance.
 export const BRAIN_MODEL = "gemma-4-26b-a4b";
@@ -161,19 +190,39 @@ function base64(bytes: Uint8Array) {
   return btoa(s);
 }
 
-function boxes({ apiKey, fetcher = fetch, timeoutMs = 30_000 }: Baseten) {
+export function boxes({ apiKey, fetcher = fetch, timeoutMs = 30_000 }: Baseten) {
   const base = (box: Box) => `https://model-${BOXES[box]}.api.baseten.co/environments/production`;
   const headers = { Authorization: `Api-Key ${apiKey}` };
   /** Starts a sleeping box without waiting for it (a wake answers at once). */
   const wake = (box: Box) => fetcher(`${base(box)}/wake`, { method: "POST", headers, signal: AbortSignal.timeout(5000) }).then(() => {}, () => {});
+  /** Up if it answered in the last 4 minutes, or its health route says 200 within 2.5 s (a cold box holds a request open). */
+  async function up(box: Box) {
+    const state = boxState.get(box);
+    if ((state?.readyUntil ?? 0) > Date.now()) return true;
+    // Starting and checked within the minute: still starting, without holding this caller for another health check.
+    if (state?.wakingSince !== undefined && Date.now() - (state.checkedAt ?? 0) < RECHECK_MS) return false;
+    const ok = await fetcher(`${base(box)}/sync/health`, { headers, signal: AbortSignal.timeout(2500) }).then(res => res.status === 200, () => false);
+    if (ok) answered(box);
+    else boxState.set(box, { ...(boxState.get(box) ?? { readyUntil: 0 }), checkedAt: Date.now() });
+    return ok;
+  }
   async function call(box: Box, route: string, body: BodyInit, contentType?: string, ms = timeoutMs): Promise<any> {
+    // A cold box is not waited for (a request held open through a wake gets reset anyway): the caller's stub answers now.
+    if (!await up(box)) {
+      starting(box);
+      await wake(box);
+      throw new Error(`Baseten ${box} is starting`);
+    }
     try {
       const res = await fetcher(`${base(box)}/sync${route}`, {
         method: "POST", body, headers: contentType ? { ...headers, "Content-Type": contentType } : headers, signal: AbortSignal.timeout(ms),
       });
       if (!res.ok) throw new Error(`Baseten ${box} answered ${res.status}`);
-      return await res.json();
+      const out = await res.json();
+      answered(box);
+      return out;
     } catch (error) {
+      boxState.delete(box); // no longer known to be up: the next call checks its health first
       await wake(box);
       throw error;
     }
@@ -184,15 +233,14 @@ function boxes({ apiKey, fetcher = fetch, timeoutMs = 30_000 }: Baseten) {
     const out = await call(box, "/v1/chat/completions", JSON.stringify({ model, messages, temperature: 0.1, max_tokens: maxTokens }), "application/json");
     return out?.choices?.[0]?.message?.content as string | undefined;
   }
-  return { call, chat };
+  return { call, chat, wake };
 }
 
 export function basetenModels(options: Baseten, fallback: Models = stubModels): Models {
   const { call, chat } = boxes(options);
   const brain = async (system: string, user: string, maxTokens?: number) => jsonIn(await chat("brain", BRAIN_MODEL, system, user, maxTokens));
 
-  return {
-    ...fallback,
+  const hosted: Partial<Models> = {
     ...chatModels(brain, BRAIN_MODEL, fallback),
 
     async transcribe(input) {
@@ -350,6 +398,17 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
       return fallback.xrayRead(input);
     },
   };
+
+  // A stub answer from a hosted method whose box is starting says when to expect the model. Box ② hears, box ③
+  // sees, box ① writes the rest; the stub-only methods are not hosted, so nothing is starting for them.
+  const withWaking = Object.entries(hosted).map(([method, run]) => {
+    const box: Box = method === "transcribe" ? "voice" : method === "xrayRead" ? "xray" : "brain";
+    return [method, async (input: never) => {
+      const answer = await (run as (input: never) => Promise<Origin>)(input);
+      return answer.source === "fixture" ? { ...answer, ...wakingOf(box) } : answer;
+    }] as const;
+  });
+  return { ...fallback, ...Object.fromEntries(withWaking) };
 }
 
 /**

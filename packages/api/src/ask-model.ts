@@ -1,5 +1,5 @@
 import { checkAskSpec, type AskContext, type AskSpec } from "./ask-spec";
-import { BOXES, BRAIN_MODEL, type Baseten } from "./baseten-models";
+import { BOXES, BRAIN_MODEL, answered, boxes, starting, wakingOf, type Baseten } from "./baseten-models";
 import { jsonIn } from "./chat-models";
 import { layaEvaluator, pickCard } from "./laya";
 
@@ -7,26 +7,27 @@ import { layaEvaluator, pickCard } from "./laya";
  * Sona's ask bar on the models: Laya routes a visit request to its card (ask.route), and Gemma answers a
  * page's free question from that page's own data as a spec from the ask catalogue (ask.free). Either one
  * failing, timing out or answering off the data returns `{ source: "fixture" }`, and the app keeps its
- * keyword routing or its honest "can't answer that here". A failed call wakes its box for next time.
+ * keyword routing or its honest "can't answer that here". A failed call wakes its box for next time, and
+ * while the box is starting the fixture says in how many minutes (`waking`).
  */
-export const LAYA_BOX = "qe2dp10q"; // Laya v2 on its CPU box (packages/infra/baseten/laya)
 export const LAYA_MODEL = "sona-laya";
 
 const endpoint = (id: string) => `https://model-${id}.api.baseten.co/environments/production`;
 /** The caller's fetch with Baseten's key header on every call. */
 const keyed = ({ apiKey, fetcher = fetch }: Baseten) =>
   ((input: string, init?: RequestInit) => fetcher(input, { ...init, headers: { ...init?.headers as Record<string, string>, Authorization: `Api-Key ${apiKey}` } })) as typeof fetch;
-/** Starts a sleeping box without waiting for it (a wake answers at once). */
-const wake = (id: string, baseten: Baseten) => keyed(baseten)(`${endpoint(id)}/wake`, { method: "POST", signal: AbortSignal.timeout(5000) }).then(() => {}, () => {});
 
 /** Which card answers a visit request, from Laya (pickCard: 5 s timeout). `patient` is the visit label, as Laya was trained. */
 export async function routeRequest(baseten: Baseten, input: { request: string; patient: string }) {
   try {
-    const pick = await pickCard(layaEvaluator({ url: `${endpoint(LAYA_BOX)}/sync`, fetcher: keyed(baseten) }), input);
+    const pick = await pickCard(layaEvaluator({ url: `${endpoint(BOXES.laya)}/sync`, fetcher: keyed(baseten) }), input);
+    answered("laya");
     return { source: "model" as const, model: LAYA_MODEL, ...pick };
   } catch {
-    await wake(LAYA_BOX, baseten);
-    return { source: "fixture" as const };
+    // Laya has no reliable health route, so its 5 s pick is the check: a failure means it is starting (about a minute).
+    starting("laya");
+    await boxes(baseten).wake("laya");
+    return { source: "fixture" as const, ...wakingOf("laya") };
   }
 }
 
@@ -84,16 +85,9 @@ export async function freeAnswer(baseten: Baseten, input: { scope: string; quest
   const { context } = input;
   const user = `Page: ${input.scope}\nQuestion: ${input.question}\n\nWhat the page says:\n${context.lines.join("\n") || "(nothing)"}\n\nThe page's rows:\n${context.rows.map(r => JSON.stringify(r)).join("\n") || "(none)"}`;
   try {
-    const res = await keyed(baseten)(`${endpoint(BOXES.brain)}/sync/v1/chat/completions`, {
-      method: "POST", headers: { "Content-Type": "application/json" }, signal: AbortSignal.timeout(baseten.timeoutMs ?? 30_000),
-      body: JSON.stringify({ model: BRAIN_MODEL, messages: [{ role: "system", content: FREE }, { role: "user", content: user }], temperature: 0.1, max_tokens: 900 }),
-    });
-    if (!res.ok) throw new Error(`Baseten brain answered ${res.status}`);
-    const out = await res.json() as { choices?: { message?: { content?: string } }[] };
-    const spec = groundedSpec(jsonIn(out.choices?.[0]?.message?.content), context, input.question);
+    // Through the adapter's box gate: a cold brain is woken and not waited for.
+    const spec = groundedSpec(jsonIn(await boxes(baseten).chat("brain", BRAIN_MODEL, FREE, user, 900)), context, input.question);
     if (spec) return { source: "model" as const, model: BRAIN_MODEL, spec };
-  } catch {
-    await wake(BOXES.brain, baseten);
-  }
-  return { source: "fixture" as const };
+  } catch { /* the box was starting or failed; it is woken for next time */ }
+  return { source: "fixture" as const, ...wakingOf("brain") };
 }

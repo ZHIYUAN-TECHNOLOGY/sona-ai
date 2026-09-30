@@ -19,6 +19,7 @@ import { VoiceDock } from "@/features/encounter/voice-dock";
 import { openSession } from "@/features/encounter/navigation";
 import { useEncounter } from "@/features/encounter/store";
 import { api, useLive } from "@/features/live";
+import { startingReply, wakingOf } from "@/features/live/waking";
 import { PLACEHOLDER, SCOPE_LABEL, askContext, matchQuestion, suggestion, type Answer, type Scope } from "./answers";
 import { askCatalog, validateAskSpec } from "./catalog";
 import { SAVABLE, isSaved, saveView, useSaved } from "./saved";
@@ -92,17 +93,18 @@ export function AnswerView({ answer, run, question = true, model }: { answer: An
 /**
  * Live mode: a question the page's rules don't answer goes to the model (ask.free) with the page's own
  * data; the server sends a spec only if it stays on that data. No `answer` means no model answer (demo
- * mode, fixture, or a failed call), so the sheet keeps saying what it can answer here.
+ * mode, fixture, or a failed call), so the sheet keeps saying what it can answer here, or, with `waking`,
+ * that the model is starting and when to ask again.
  */
 function useFreeAnswer(scope: Scope, question: string | undefined, answers: Answer[]) {
   const { on } = useLive();
-  const [state, setState] = useState<{ question: string; thinking: boolean; answer?: Answer; model?: string }>();
+  const [state, setState] = useState<{ question: string; thinking: boolean; answer?: Answer; model?: string; waking?: number }>();
   useEffect(() => {
     if (!on || !question) return;
     let current = true;
     setState({ question, thinking: true });
-    api.ask.free({ scope, question, context: askContext(answers) }).then(r => r.source === "model" ? r : undefined, () => undefined).then(r => {
-      if (current) setState({ question, thinking: false, ...r && { answer: { id: "free", question, spec: r.spec as Answer["spec"], worth: true }, model: r.model } });
+    api.ask.free({ scope, question, context: askContext(answers) }).then(r => r.source === "model" ? { answer: { id: "free", question, spec: r.spec as Answer["spec"], worth: true }, model: r.model } : { waking: wakingOf(r) }, () => ({})).then(r => {
+      if (current) setState({ question, thinking: false, ...r });
     });
     return () => { current = false; };
   }, [on, question]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -140,7 +142,7 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         {missed && (free?.thinking ? <Drafting label="Thinking…" lines={2} slow={MODEL_SLOW} />
           : free?.answer ? <AnswerView answer={free.answer} run={run} model={free.model} />
-          : <Text style={{ ...type.callout, color: palette.amber }}>“{missed}”: Sona answers only these questions here until the model is switched on.</Text>)}
+          : <Text style={{ ...type.callout, color: palette.amber }}>“{missed}”: {free?.waking ? startingReply(free.waking) : "Sona answers only these questions here until the model is switched on."}</Text>)}
         {shown ? <View style={{ gap: 14 }}>
           <AnswerView answer={shown} run={run} />
           {/* A day-wide answer can leave the sheet: as its own page, or kept in the sidebar where it stays live. */}

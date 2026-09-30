@@ -74,7 +74,7 @@ export const evidenceRouter = {
     const passages = await passagesFor(context, hospitalId, input.question);
     const references: Reference[] = [...studies, ...passages.map((p, i) => ({ n: studies.length + i + 1, kind: "library" as const, design: "Library" as const, ...p }))];
 
-    let claims: Claim[], followUps: string[], source: string;
+    let claims: Claim[], followUps: string[], source: string, waking: number | undefined;
     if (authored) {
       // Authored cites number the three rehearsed studies; renumber them to where each study landed, so a missing study drops its claims.
       const at = (n: number) => studies.findIndex(s => s.pmid === STUDIES[n - 1]?.pmid) + 1;
@@ -83,12 +83,14 @@ export const evidenceRouter = {
     } else {
       const read = await (context.models ?? stubModels).synthesiseEvidence({ question: input.question, thread: input.thread, sources: references.map(r => ({ n: r.n, design: r.design, year: r.year, title: r.title, text: r.text })) });
       claims = sourcedClaims(read.claims, references.length); followUps = read.followUps.slice(0, 3); source = read.source === "model" ? read.model : "fixture";
+      // While Gemma is starting, the sample says in how many minutes.
+      waking = read.source === "fixture" ? read.waking : undefined;
     }
 
     const rows = await db.select().from(observations).where(eq(observations.patientId, visit.patientId)).orderBy(asc(observations.observedAt));
     const curb65 = curb65FromObservations(rows as ObservationRow[], visit.age);
 
     await db.insert(provenance).values({ id: crypto.randomUUID(), encounterId: input.encounterId, kind: "evidence-answer", output: { question: input.question, claims }, sourceIds: references.map(r => r.id), model: source, approvedBy: null });
-    return { question: input.question, claims, enough: claims.length > 0, followUps, source, references, pubmed, curb65 };
+    return { question: input.question, claims, enough: claims.length > 0, followUps, source, ...waking ? { waking } : {}, references, pubmed, curb65 };
   }),
 };

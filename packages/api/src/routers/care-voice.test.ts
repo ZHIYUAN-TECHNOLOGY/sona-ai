@@ -6,7 +6,7 @@ import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
-import type { Models } from "../models";
+import { stubModels, type Models } from "../models";
 import { TEXT_MODEL, workersModels, type WorkersAi } from "../workers-models";
 import { appRouter } from "./index";
 
@@ -35,6 +35,17 @@ test("without a speech model, speaking is refused plainly and asking answers not
   const e = await amelia.care.transcribe({ audio: btoa("RIFF-some-audio-bytes") }).catch(e => e);
   expect([e.code, e.data?.code, e.message]).toEqual(["PRECONDITION_FAILED", "SPEECH_OFF", "Speaking to Sona Care isn't switched on yet. Please type instead."]);
   expect(await amelia.care.ask({ question: "Bila saya makan ubat?" })).toEqual({ answer: "", grounded: false, urgent: false, source: "fixture" });
+});
+
+test("while the models are starting, speaking says in how many minutes, and so does the sample answer", async () => {
+  const { amelia } = await world({
+    ...stubModels,
+    transcribe: async () => ({ text: "", source: "fixture" as const, waking: 30 }),
+    answerFromPlan: async () => ({ answer: "", grounded: false, urgent: false, source: "fixture" as const, waking: 12 }),
+  });
+  const e = await amelia.care.transcribe({ audio: btoa("RIFF-some-audio-bytes") }).catch(e => e);
+  expect([e.code, e.data?.code, e.message]).toEqual(["PRECONDITION_FAILED", "SPEECH_OFF", "Speaking to Sona Care is starting (about 30 min). Please type instead, or try again then."]);
+  expect(await amelia.care.ask({ question: "Bila saya makan ubat?" })).toEqual({ answer: "", grounded: false, urgent: false, source: "fixture", waking: 12 });
 });
 
 test("with the model, her Manglish reply flags the doctor with the model's own words, and her question is grounded in her plan", async () => {

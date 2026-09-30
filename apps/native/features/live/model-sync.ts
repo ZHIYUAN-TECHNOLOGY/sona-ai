@@ -1,6 +1,7 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import { useEffect, useState } from "react";
 import { api, errorText, useLive } from ".";
+import { askUntilAwake } from "./waking";
 
 /**
  * Live mode's model answers for the visit screens: briefing, reasoning, discharge draft, claim codes
@@ -32,17 +33,19 @@ function useLiveAnswer<T>(key: string, ask: boolean, read: () => Promise<T>, kee
   useEffect(() => {
     if (!on || !ask) return;
     if (answered.has(key)) { setState(s => ({ key, data: answered.get(key) as T, last: s.data ?? s.last })); return; }
-    let current = true;
     setState(s => (s.key === key ? s : { key, last: s.data ?? s.last }));
-    const pending = (asking.get(key) ?? read()) as Promise<T>;
-    asking.set(key, pending);
-    void pending.finally(() => asking.delete(key)).catch(() => {});
-    pending.then(r => {
-      // Only a model's answer is kept: a sample (the model was starting, or failed) is asked again on the next open.
-      if ((r as { source?: string }).source !== "fixture") answered.set(key, r);
-      if (current) setState({ key, data: r });
-    }, e => { if (current) setState(s => ({ key, error: errorText(e), last: s.last })); });
-    return () => { current = false; };
+    // While the model starts, its sample shows and is asked again until the model answers (./waking).
+    return askUntilAwake(() => {
+      if (answered.has(key)) return Promise.resolve(answered.get(key) as T); // another screen's ask got the model's answer
+      const pending = (asking.get(key) ?? read().then(r => {
+        // Only a model's answer is kept: a sample (the model was starting, or failed) is asked again on the next open.
+        if ((r as { source?: string }).source !== "fixture") answered.set(key, r);
+        return r;
+      })) as Promise<T>;
+      asking.set(key, pending);
+      void pending.finally(() => asking.delete(key)).catch(() => {});
+      return pending;
+    }, r => setState({ key, data: r }), e => setState(s => ({ key, error: errorText(e), last: s.last })));
   }, [on, ask, key]); // eslint-disable-line react-hooks/exhaustive-deps
   const mine = on && ask && state.key === key;
   const data = mine ? state.data ?? (keep ? state.last : undefined) : undefined;

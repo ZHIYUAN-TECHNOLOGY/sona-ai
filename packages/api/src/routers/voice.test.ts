@@ -25,6 +25,9 @@ test("speaking to Sona: refused plainly without a speech model, and 'starting' w
   // Hosted but asleep: the adapter falls back to the stub, which says "fixture".
   const cold = await (await doctor({ ...stubModels })).voice.transcribe({ audio: btoa("RIFF-some-audio-bytes") }).catch(e => e);
   expect(cold.message).toBe("The speech model is starting. Try again in a minute, or type.");
+  // Known to be starting: the adapter's minutes reach the refusal.
+  const starting = await (await doctor({ ...stubModels, transcribe: async () => ({ text: "", source: "fixture" as const, waking: 30 }) })).voice.transcribe({ audio: btoa("RIFF-some-audio-bytes") }).catch(e => e);
+  expect([starting.code, starting.data?.code, starting.message]).toEqual(["PRECONDITION_FAILED", "SPEECH_OFF", "The speech model is starting (about 30 min). Try again then, or type."]);
 });
 
 test("with the speech model, the clinician's words come back with the model that heard them", async () => {

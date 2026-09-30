@@ -11,6 +11,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import Animated, { cancelAnimation, Easing, FadeIn, FadeOut, useSharedValue, withRepeat, withSpring, withTiming } from "react-native-reanimated";
 import { Drafting, MODEL_SLOW, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveXray } from "@/features/live/model-sync";
+import { wakingOf } from "@/features/live/waking";
 import { Caption, PressScale } from "@/components/sona/parts";
 import { HalftoneShimmer } from "@/components/sona/halftone-shimmer";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
@@ -71,7 +72,7 @@ export function XrayCard({ patient, onOpen, onRequest, result }: FeatureProps) {
     {sections < 2 && <AnalysisStatus interrupted={interrupted} />}
     {sections >= 2 && <Reveal>{read ? <ModelRead reading={reading} /> : <Findings scenario={scenario} attachment={Boolean(attachment)} summary={referenceImage?.referenceSummary} />}</Reveal>}
     {sections === 2 && !interrupted && <Caption icon={null}>Completing provenance and limitations…</Caption>}
-    {sections >= 3 && !(read && reading.data?.source === "model") && <Reveal><Limits sample={Boolean(attachment) || scenario !== "reference"} detail="The original stays available to inspect." /></Reveal>}
+    {sections >= 3 && !(read && reading.data?.source === "model") && <Reveal><Limits sample={Boolean(attachment) || scenario !== "reference"} waking={wakingOf(reading.data)} detail="The original stays available to inspect." /></Reveal>}
     {superseded && <Notice>This response preserves an earlier image and scenario. New requests use the current encounter image.</Notice>}
     {(interrupted || sections >= 3 && scenario !== "reference") && <View style={{ alignSelf: "flex-start" }}>
       <Action label={superseded ? "Analyse current encounter image" : "Retry analysis"} secondary icon="arrow.clockwise" disabled={busy} onPress={() => onRequest("xray")} />
@@ -128,9 +129,9 @@ function AnalysisDetails({ snapshot }: { snapshot?: Pick<Encounter, "imagingAtta
 }
 
 /** The answer's limits: a sample response is labelled as one (no conclusion from the image); the reference example says what it covers. */
-function Limits({ sample, detail }: { sample: boolean; detail?: string }) {
+function Limits({ sample, detail, waking }: { sample: boolean; detail?: string; waking?: number }) {
   return <View style={{ gap: 4 }}>
-    {sample && <SampleLabel source="fixture" what="X-ray" />}
+    {sample && <SampleLabel source="fixture" waking={waking} what="X-ray" />}
     <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
       <Icon name="info.circle" size={15} color={palette.muted} />
       <Caption icon={null}>{sample ? `No image-derived conclusion can be made.${detail ? ` ${detail}` : ""}` : "Describes only the published example, not this encounter, and does not establish model accuracy."}</Caption>
@@ -143,7 +144,10 @@ function ModelRead({ reading }: { reading: ReturnType<typeof useLiveXray> }) {
   if (reading.loading) return <Drafting label="Reading the image…" slow={MODEL_SLOW} />;
   if (reading.error) return <Notice warning>{`Not read: ${reading.error}. Nothing has been concluded from this image.`}</Notice>;
   const data = reading.data;
-  if (!data || data.source !== "model") return <IconRow icon="eye.slash" title="Findings unavailable" detail="The image model didn’t answer in time, so nothing has been read from this image. Analyse again in a minute." />;
+  // While the image model starts, the read is asked again by itself (useLiveXray), so there is nothing to redo.
+  if (!data || data.source !== "model") return <IconRow icon="eye.slash" title="Findings unavailable" detail={wakingOf(data)
+    ? "The image model is starting, so nothing has been read from this image yet. Its reading appears here by itself."
+    : "The image model didn’t answer in time, so nothing has been read from this image. Analyse again in a minute."} />;
   return <View style={{ gap: 10 }}>
     <Text accessibilityRole="header" style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>What the image model describes</Text>
     {data.findings.map((f, i) => <Text key={i} selectable style={{ ...type.callout, color: palette.ink }}>{f}</Text>)}

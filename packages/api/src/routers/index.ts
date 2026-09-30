@@ -121,7 +121,8 @@ export const appRouter = {
       .handler(async ({ context, input }) => {
         const heard = await (context.models ?? stubModels).transcribe({ audio: Uint8Array.from(atob(input.audio), c => c.charCodeAt(0)), language: input.language });
         if (heard.source === "fixture") throw new ORPCError("PRECONDITION_FAILED", {
-          message: context.models ? "The speech model is starting. Try again in a minute, or type." : "Speaking to Sona isn't switched on yet. Type instead.",
+          message: heard.waking ? `The speech model is starting (about ${heard.waking} min). Try again then, or type.`
+            : context.models ? "The speech model is starting. Try again in a minute, or type." : "Speaking to Sona isn't switched on yet. Type instead.",
           data: { code: "SPEECH_OFF" },
         });
         return heard;

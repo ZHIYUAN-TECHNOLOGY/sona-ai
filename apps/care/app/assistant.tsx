@@ -5,7 +5,7 @@ import { AccessibilityInfo, ActivityIndicator, Alert, Linking, Pressable, Scroll
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion, useSharedValue, withTiming, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { answer, conditionOf, doctorQuestion, leadOf, noAnswer, spoken, suggestions, urgent, wantsDoctor, type Reply } from "@/features/assistant/answers";
+import { answer, conditionOf, doctorQuestion, leadOf, noAnswer, spoken, startingLine, suggestions, urgent, wantsDoctor, type Reply } from "@/features/assistant/answers";
 import { tFor, useLang, useT } from "@/lib/i18n";
 import { Composer, Glyph, GLYPH as COMPOSE } from "@/features/assistant/composer";
 import { MicButton } from "@/features/assistant/mic";
@@ -213,6 +213,8 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
           <Glyph d={GLYPH.source} color={palette.faint} size={14} />
           <Text style={{ ...type.footnote, color: palette.faint }}>{r.asked.source}</Text>
         </View>}
+        {/* Answered without the model while it starts: say so, so asking again later makes sense. */}
+        {r.kind !== "doctors" && r.waking ? <Text style={{ ...type.footnote, color: palette.faint }}>{startingLine(r.waking, lang)}</Text> : null}
         {r.kind === "doctors" && <View style={{ gap: 8 }}>
           <Text style={{ ...type.overline, color: palette.faint }}>{tr("ask.doctorsHead")}</Text>
           {r.doctors.map(d => <DoctorCard key={d.id} d={d} />)}

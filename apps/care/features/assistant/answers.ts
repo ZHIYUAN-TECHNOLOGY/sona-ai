@@ -91,25 +91,34 @@ export const wantsDoctor = (text: string) => DOCTOR.test(text) && ASKING.test(te
  * doctors from the hospital's directory (care.doctors.list), found by its words, else by the plan's
  * condition, else the care team. Anything else, the plan's own questions too, is answered by the model
  * from the patient's plan (care.ask); when no model is on (a fixture) or the call fails, a plan question
- * gets its authored answer and anything else the one honest "send it to your care team".
+ * gets its authored answer and anything else the one honest "send it to your care team". While the model
+ * starts, that reply carries `waking` (whole minutes until it is ready), shown as `startingLine`.
  */
 export type Reply =
-  | { kind: "plan"; asked: Asked }
+  | { kind: "plan"; asked: Asked; waking?: number }
   | { kind: "doctors"; doctors: Doctor[]; text: string }
-  | { kind: "none"; urgent: boolean };
+  | { kind: "none"; urgent: boolean; waking?: number };
 export type PlanAnswer = Awaited<ReturnType<AppRouterClient["care"]["ask"]>>;
 /** The calls an answer may make: care.ask with the question, and care.doctors.list with a search (none for the whole directory). */
 export type Api = { ask: (question: string) => Promise<PlanAnswer>; doctors: (search?: string) => Promise<Doctor[]> };
-const NONE: Reply = { kind: "none", urgent: false };
+const NONE = { kind: "none", urgent: false } as const;
 
 export async function answer(question: string, asks: Asked[], api: Api, condition?: string, lang: Lang = "en"): Promise<Reply> {
   const q = question.trim(), lower = q.toLowerCase();
   if (urgent(q)) return { kind: "none", urgent: true };
   const asked = asks.find(a => a.question.toLowerCase() === lower);
   if (!asked && wantsDoctor(q)) return doctorsFor(q, api.doctors, condition, lang).catch(() => NONE);
-  const fallback: Reply = asked ? { kind: "plan", asked } : NONE;
-  return api.ask(q).then(a => a.source === "model" ? fromModel(a, lang) : fallback, () => fallback);
+  const fallback = asked ? { kind: "plan" as const, asked } : NONE;
+  return api.ask(q).then(a => a.source === "model" ? fromModel(a, lang) : { ...fallback, ...wakingOf(a) }, () => fallback);
 }
+
+/** The server's `waking` on a sample while the model starts (read loosely: older servers never send it). */
+function wakingOf(a: PlanAnswer) {
+  const n = (a as { waking?: unknown }).waking;
+  return typeof n === "number" && n > 0 ? { waking: Math.ceil(n) } : {};
+}
+/** "Sona Care is starting up, about 3 min" in the patient's language. */
+export const startingLine = (minutes: number, lang: Lang = "en") => tFor(lang)(minutes <= 1 ? "ask.startingSoon" : "ask.starting", { n: minutes });
 
 async function doctorsFor(q: string, find: Api["doctors"], condition: string | undefined, lang: Lang): Promise<Reply> {
   const [own, planned] = await Promise.all([find(q), condition ? find(condition) : []]);

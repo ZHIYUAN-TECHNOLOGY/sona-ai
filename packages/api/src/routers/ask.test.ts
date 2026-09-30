@@ -2,12 +2,15 @@ import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
-import { expect, test } from "bun:test";
+import { beforeEach, expect, test } from "bun:test";
 
 import { groundedSpec } from "../ask-model";
 import type { AskContext } from "../ask-spec";
-import type { Baseten } from "../baseten-models";
+import { boxState, type Baseten } from "../baseten-models";
 import { appRouter } from "./index";
+
+// Each test starts knowing nothing about the boxes (the adapter keeps what it learns for the isolate).
+beforeEach(() => boxState.clear());
 
 const user = (id: string) => ({
   user: { id, name: id, email: `${id}@demo.test`, emailVerified: true, createdAt: new Date(), updatedAt: new Date() },
@@ -50,7 +53,7 @@ test("without a Baseten key both routes answer fixture, so the app keeps keyword
   expect(await client.ask.free(free)).toEqual({ source: "fixture" });
 });
 
-test("Laya's pick comes back as card and medicine, asked on its box with the Baseten key; not covered is no card; a failure is fixture and wakes the box", async () => {
+test("Laya's pick comes back as card and medicine, asked on its box with the Baseten key; not covered is no card; a failure is fixture, starting for about a minute, and wakes the box", async () => {
   const up = boxes(() => ({ answers: { capability: { choice: "medication", answer_confidence: 0.97 }, medicine: { choice: "salbutamol-inhaler" } } }));
   const picked = await (await nurse(up.baseten)).ask.route({ request: "Salbutamol ada clash dengan ubat lain tak?", patient: "Respiratory review" });
   expect(picked).toEqual({ source: "model", model: "sona-laya", card: "medication", medicine: "salbutamol-inhaler", confidence: 0.97 });
@@ -62,7 +65,7 @@ test("Laya's pick comes back as card and medicine, asked on its box with the Bas
   expect(await (await nurse(none.baseten)).ask.route({ request: "Discharge dia hari ni", patient: "Respiratory review" })).toMatchObject({ source: "model", card: null, medicine: null });
 
   const down = boxes(() => "starting", 503);
-  expect(await (await nurse(down.baseten)).ask.route({ request: "Brief me", patient: "Respiratory review" })).toEqual({ source: "fixture" });
+  expect(await (await nurse(down.baseten)).ask.route({ request: "Brief me", patient: "Respiratory review" })).toEqual({ source: "fixture", waking: 1 });
   expect(down.calls.map(c => c.url.split("/").at(-1))).toEqual(["systemone", "wake"]);
 });
 
@@ -70,9 +73,16 @@ test("a free answer that stays on the page's data comes back as a spec with Gemm
   const answer = spec("Daniel Rahman needs you first; 2 patients need you now.");
   const { calls, baseten } = boxes(() => gemma("```json\n" + JSON.stringify(answer) + "\n```"));
   expect(await (await nurse(baseten)).ask.free(free)).toEqual({ source: "model", model: "gemma-4-26b-a4b", spec: answer });
-  expect(calls[0]!.url).toBe("https://model-q9p7zn63.api.baseten.co/environments/production/sync/v1/chat/completions");
+  // A health check first (nothing was known about the box), then the question.
+  expect(calls.map(c => c.url)).toEqual(["https://model-q9p7zn63.api.baseten.co/environments/production/sync/health", "https://model-q9p7zn63.api.baseten.co/environments/production/sync/v1/chat/completions"]);
   // Gemma is given the page's rows, ids and ops included, to copy from.
-  expect(JSON.parse(calls[0]!.init.body as string).messages[1].content).toContain(JSON.stringify(context.rows[0]));
+  expect(JSON.parse(calls[1]!.init.body as string).messages[1].content).toContain(JSON.stringify(context.rows[0]));
+});
+
+test("while Gemma is starting, a free question is not held: fixture at once, with the minutes until it should answer", async () => {
+  const cold = boxes(() => "starting", 503);
+  expect(await (await nurse(cold.baseten)).ask.free(free)).toEqual({ source: "fixture", waking: 12 });
+  expect(cold.calls.map(c => c.url.split("/").at(-1))).toEqual(["health", "wake"]);
 });
 
 test("an invalid or ungrounded free answer is fixture: off-catalogue, invented rows, names or numbers, review cards and task-done", async () => {

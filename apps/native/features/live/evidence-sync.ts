@@ -1,6 +1,7 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { api, errorText, useLive } from ".";
+import { askUntilAwake, wakingOf } from "./waking";
 
 export type ServerEvidence = Awaited<ReturnType<AppRouterClient["evidence"]["ask"]>>;
 export type Turn = { question: string; answer: string };
@@ -27,9 +28,11 @@ export function useLiveEvidence(encounterId: string, requestId: string | undefin
   const [error, setError] = useState<string>();
   useEffect(() => {
     if (!on || answered.has(key)) return;
-    let current = true;
-    api.evidence.ask({ encounterId, question, thread }).then(r => { answered = new Map(answered).set(key, r); listeners.forEach(l => l()); if (current) setData(r); }, e => { if (current) setError(errorText(e)); });
-    return () => { current = false; };
+    // A sample while the model starts is shown, not kept: it is asked again until the model answers (./waking), and on the next open.
+    return askUntilAwake(() => api.evidence.ask({ encounterId, question, thread }).then(r => {
+      if (!wakingOf(r)) { answered = new Map(answered).set(key, r); listeners.forEach(l => l()); }
+      return r;
+    }), setData, e => setError(errorText(e)));
   }, [on, key]); // eslint-disable-line react-hooks/exhaustive-deps
   return { live: on, data: on ? data : undefined, error: on ? error : undefined };
 }

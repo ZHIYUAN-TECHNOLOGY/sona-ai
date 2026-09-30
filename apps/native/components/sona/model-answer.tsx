@@ -8,6 +8,7 @@ import { palette, type } from "./theme";
 import { HalftoneGlint } from "./halftone-shimmer";
 import { Icon, pillStyle, useAccessibleEffects } from "./ui";
 import { Press } from "./parts";
+import { startingLabel, wakingOf } from "@/features/live/waking";
 
 /*
  * A model answer arriving from the server (live mode). While it drafts, soft bars breathe in place
@@ -87,9 +88,10 @@ export const modelName = (id?: string) => MODEL_NAMES.find(([re]) => id && re.te
  * The one label for an answer no model gave: "Sample · <what> model not switched on" (authored) or
  * "Rule-based" (fixed rules; with `what`, the model that replaces them). Shown only while `source` is
  * "fixture"; once a model answered, "AI draft · <model> · check before acting". Tap (the info glyph) for the about sheet. Pass `answer`
- * (a live-answer hook's result) instead of `source`, so demo mode is labelled as live mode is.
+ * (a live-answer hook's result) instead of `source`, so demo mode is labelled as live mode is. While the model
+ * starts (the server's `waking`, read from `answer` or passed with `source`): "Sample for now · Sona's model is starting, about N min".
  */
-export function SampleLabel({ source: given, model: givenModel, answer, what, rule = false }: { source?: string; model?: string; answer?: { loading: boolean; data?: { source?: string; model?: string } }; what?: string; rule?: boolean }) {
+export function SampleLabel({ source: given, model: givenModel, answer, what, rule = false, waking: givenWaking }: { source?: string; model?: string; answer?: { loading: boolean; data?: { source?: string; model?: string } }; what?: string; rule?: boolean; waking?: number }) {
   const source = answer ? answerSource(answer) : given;
   // A model's answer says which model drafted it and that it is a draft to check, never a finding on its own.
   if (source === "model") {
@@ -100,7 +102,8 @@ export function SampleLabel({ source: given, model: givenModel, answer, what, ru
     </Press>;
   }
   if (source !== "fixture") return null;
-  const text = `${rule ? "Rule-based" : "Sample"}${what ? ` · ${what} model not switched on` : ""}`;
+  const waking = givenWaking ?? wakingOf(answer?.data);
+  const text = waking ? startingLabel(waking, rule) : `${rule ? "Rule-based" : "Sample"}${what ? ` · ${what} model not switched on` : ""}`;
   return <Press accessibilityLabel={text} accessibilityHint="Why this is not a model answer" onPress={openAbout} hitSlop={8}
     style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
     <Text style={{ ...type.caption, color: palette.muted, flexShrink: 1 }}>{text}</Text>

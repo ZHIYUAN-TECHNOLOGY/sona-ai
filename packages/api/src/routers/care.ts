@@ -108,7 +108,10 @@ export const careRouter = {
   transcribe: patientProcedure.input(z.object({ audio: z.string().min(16).max(MAX_AUDIO_BASE64), language: z.enum(["en", "ms", "zh"]).optional() }))
     .handler(async ({ context, input }) => {
       const heard = await (context.models ?? stubModels).transcribe({ audio: Uint8Array.from(atob(input.audio), c => c.charCodeAt(0)), language: input.language });
-      if (heard.source === "fixture") throw new ORPCError("PRECONDITION_FAILED", { message: "Speaking to Sona Care isn't switched on yet. Please type instead.", data: { code: "SPEECH_OFF" } });
+      if (heard.source === "fixture") throw new ORPCError("PRECONDITION_FAILED", {
+        message: heard.waking ? `Speaking to Sona Care is starting (about ${heard.waking} min). Please type instead, or try again then.` : "Speaking to Sona Care isn't switched on yet. Please type instead.",
+        data: { code: "SPEECH_OFF" },
+      });
       return heard;
     }),
 

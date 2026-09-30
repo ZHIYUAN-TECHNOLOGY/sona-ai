@@ -5,6 +5,7 @@ import { MarkedText } from "@/components/sona/marked-text";
 import { Drafting, MODEL_SLOW, SampleLabel } from "@/components/sona/model-answer";
 import { SourceScope, SourcesPill } from "@/components/sona/sources";
 import { useLiveBriefing } from "@/features/live/model-sync";
+import { wakingOf } from "@/features/live/waking";
 import { Action, Notice, SourceLink, Surface } from "@/components/sona/ui";
 import { IconRow } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
@@ -91,7 +92,7 @@ export function BriefingCard({ patient, result, onSource, onRequest }: FeaturePr
     {server.loading ? <Surface feature style={{ padding: 16 }}><Drafting label="Reading the record…" slow={MODEL_SLOW} /></Surface> : <View style={{ gap: 6 }}>
       {digest.length > 0 && <Takeaways items={digest} />}
       <View style={{ paddingHorizontal: 4 }}>
-        <SampleLabel source={server.data?.source} model={server.data && "model" in server.data ? server.data.model : undefined} what="briefing" />
+        <SampleLabel source={server.data?.source} model={server.data && "model" in server.data ? server.data.model : undefined} waking={wakingOf(server.data)} what="briefing" />
         {server.error && <Text style={{ ...type.caption, color: palette.red }}>{server.error} · showing the authored briefing</Text>}
       </View>
     </View>}

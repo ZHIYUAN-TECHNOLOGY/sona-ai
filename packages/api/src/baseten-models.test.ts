@@ -2,9 +2,9 @@ import { CODES, EMPTY_CLAIM, appealByRules, noteFor } from "@sona-ai/domain/clai
 import { DEMO_PATIENTS } from "@sona-ai/domain/demo-patients";
 import { draftByRules } from "@sona-ai/domain/messages";
 import { WARD_FIXTURE, huddle } from "@sona-ai/domain/ward";
-import { expect, test } from "bun:test";
+import { afterEach, beforeEach, expect, setSystemTime, test } from "bun:test";
 
-import { ASR_MODEL, BOXES, BRAIN_MODEL, XRAY_MODEL, basetenModels, basetenReranker } from "./baseten-models";
+import { ASR_MODEL, BOXES, BRAIN_MODEL, COLD_START_MIN, XRAY_MODEL, basetenModels, basetenReranker, boxState } from "./baseten-models";
 import { stubModels, type Models } from "./models";
 
 type Call = { url: string; init: RequestInit };
@@ -25,28 +25,95 @@ function fake(answers: Record<string, unknown>) {
 }
 const chatReply = (content: string) => ({ choices: [{ message: { content } }] });
 const box = (name: keyof typeof BOXES) => `model-${BOXES[name]}.api.baseten.co`;
+// Each test starts knowing nothing about the boxes (the adapter keeps what it learns for the isolate), in real time.
+beforeEach(() => boxState.clear());
+afterEach(() => setSystemTime());
 const patient = { ...{} as Parameters<typeof stubModels.briefing>[0]["patient"], age: 34, sex: "F", complaint: "Cough and fever for 3 days.", history: [], family: "", social: "", allergies: "Penicillin — rash", medicines: [], vitals: [], sources: [], incomplete: false };
 
 test("speech goes to the ASR box as a WAV upload with the served model name, and the words come back trimmed", async () => {
-  const { fetcher, calls } = fake({ [`${box("voice")}/environments/production/sync/v1/audio/transcriptions`]: { text: " Doktor, saya batuk sampai 睡不着. " } });
+  const { fetcher, calls } = fake({ [box("voice")]: { text: " Doktor, saya batuk sampai 睡不着. " } });
   const heard = await basetenModels({ apiKey: "k", fetcher }).transcribe({ audio: new TextEncoder().encode("RIFF") });
   expect(heard).toEqual({ text: "Doktor, saya batuk sampai 睡不着.", source: "model", model: ASR_MODEL });
-  const form = calls[0]!.init.body as FormData;
-  expect(form.get("model")).toBe(ASR_MODEL);
+  const upload = calls.at(-1)!;
+  expect(upload.url).toBe(`https://${box("voice")}/environments/production/sync/v1/audio/transcriptions`);
+  expect((upload.init.body as FormData).get("model")).toBe(ASR_MODEL);
+  expect((upload.init.headers as Record<string, string>).Authorization).toBe("Api-Key k");
+});
+
+test("a cold box is not waited for: a 2.5 s health check, a wake, and the stub at once with the minutes until the model is ready", async () => {
+  // A cold box holds every request open until it is up; here, until the caller gives up.
+  const urls: string[] = [];
+  const fetcher = ((url: string, init: RequestInit) => {
+    urls.push(url);
+    if (url.endsWith("/wake")) return Promise.resolve(new Response(null, { status: 202 }));
+    return new Promise((_, reject) => init.signal!.addEventListener("abort", () => reject(init.signal!.reason)));
+  }) as typeof fetch;
+  const asked = Date.now();
+  const brief = await basetenModels({ apiKey: "k", fetcher }).briefing({ patient });
+  expect(Date.now() - asked).toBeLessThan(4000);
+  expect(brief).toEqual({ ...await stubModels.briefing({ patient }), waking: COLD_START_MIN.brain });
+  // The chat endpoint is never called.
+  expect(urls).toEqual([`https://${box("brain")}/environments/production/sync/health`, `https://${box("brain")}/environments/production/wake`]);
+});
+
+test("while a box is starting, its health is checked at most once a minute: the calls in between get the stub at once", async () => {
+  const t0 = Date.parse("2026-10-01T09:00:00+08:00");
+  const urls: string[] = [];
+  const fetcher = ((url: string, init: RequestInit) => {
+    urls.push(url.split("/").at(-1)!);
+    if (url.endsWith("/wake")) return Promise.resolve(new Response(null, { status: 202 }));
+    return new Promise((_, reject) => init.signal!.addEventListener("abort", () => reject(init.signal!.reason)));
+  }) as typeof fetch;
+  const models = basetenModels({ apiKey: "k", fetcher });
+  setSystemTime(new Date(t0));
+  await models.briefing({ patient }); // cold: one health check, then the wake
+  setSystemTime(new Date(t0 + 30_000));
+  const asked = performance.now();
+  expect(await models.briefing({ patient })).toMatchObject({ source: "fixture", waking: COLD_START_MIN.brain });
+  expect(performance.now() - asked).toBeLessThan(500); // no second 2.5 s health check inside the minute
+  setSystemTime(new Date(t0 + 61_000));
+  await models.briefing({ patient }); // a minute on: checked again
+  expect(urls.filter(u => u === "health")).toHaveLength(2);
+}, 10_000); // two real 2.5 s health checks (the abort timers run on real time)
+
+test("a box whose health check says 200 is called as before, then trusted for 4 minutes without one", async () => {
+  const t0 = Date.parse("2026-10-01T09:00:00+08:00");
+  const { fetcher, calls } = fake({ [box("brain")]: chatReply('{"lines":["Three days of cough and fever."]}') });
+  const models = basetenModels({ apiKey: "k", fetcher });
+  for (const minute of [0, 3.9, 8]) { // the answer at 3.9 is 4.1 minutes old at 8
+    setSystemTime(new Date(t0 + minute * 60_000));
+    expect(await models.briefing({ patient })).toMatchObject({ source: "model", model: BRAIN_MODEL });
+  }
+  expect(calls.map(c => `${c.init.method ?? "GET"} ${c.url.split("/").at(-1)}`)).toEqual(["GET health", "POST completions", "POST completions", "GET health", "POST completions"]);
   expect((calls[0]!.init.headers as Record<string, string>).Authorization).toBe("Api-Key k");
 });
 
-test("a box that is down or asleep is woken for next time, and the stub answers, labelled fixture", async () => {
-  const { fetcher, wakes } = fake({ [box("voice")]: new Error("timed out") });
-  expect(await basetenModels({ apiKey: "k", fetcher }).transcribe({ audio: new Uint8Array(4) })).toEqual({ text: "", source: "fixture" });
-  expect(wakes()).toEqual([`https://${box("voice")}/environments/production/wake`]);
+test("the minutes count down from the box's measured cold start and never go below 1; an answer clears them, and a lapsed wake starts over", async () => {
+  const t0 = Date.parse("2026-10-01T09:00:00+08:00");
+  const cold = basetenModels({ apiKey: "k", fetcher: fake({ [box("voice")]: new Error("starting") }).fetcher });
+  const minutesAt = async (minute: number) => {
+    setSystemTime(new Date(t0 + minute * 60_000));
+    const heard = await cold.transcribe({ audio: new Uint8Array(4) });
+    expect(heard).toMatchObject({ text: "", source: "fixture" });
+    return (heard as { waking?: number }).waking;
+  };
+  expect(await minutesAt(0)).toBe(30);
+  expect(await minutesAt(10)).toBe(20);
+  expect(await minutesAt(29.5)).toBe(1);
+  expect(await minutesAt(34)).toBe(1); // late, still "about 1 min"
+  expect(await minutesAt(36)).toBe(30); // past the cold start and the 5 idle minutes: it woke and slept again unseen
+  setSystemTime(new Date(t0 + 40 * 60_000));
+  const up = basetenModels({ apiKey: "k", fetcher: fake({ [box("voice")]: { text: "Doktor" } }).fetcher });
+  expect(await up.transcribe({ audio: new Uint8Array(4) })).toEqual({ text: "Doktor", source: "model", model: ASR_MODEL });
+  // It answered, so going cold again (past its 4 trusted minutes) counts from then, not from minute 36.
+  expect(await minutesAt(50)).toBe(30);
 });
 
 test("the evidence answer asks Gemma with numbered sources and keeps only well-formed claims", async () => {
   const { fetcher, calls } = fake({ [box("brain")]: chatReply('```json\n{"claims":[{"text":"A guideline recommends against routine steroids.","cites":[1]},{"text":"no cites"}],"followUps":["What about severe cases?"]}\n```') });
   const read = await basetenModels({ apiKey: "k", fetcher }).synthesiseEvidence({ question: "Steroids in pneumonia?", thread: [], sources: [{ n: 1, design: "Guideline", year: 2019, title: "ATS/IDSA CAP", text: "Do not routinely use corticosteroids." }] });
   expect(read).toEqual({ claims: [{ text: "A guideline recommends against routine steroids.", cites: [1] }], followUps: ["What about severe cases?"], source: "model", model: BRAIN_MODEL });
-  const body = JSON.parse(calls[0]!.init.body as string);
+  const body = JSON.parse(calls.at(-1)!.init.body as string);
   expect(body.model).toBe(BRAIN_MODEL);
   expect(body.messages[1].content).toContain("[1] (Guideline, 2019) ATS/IDSA CAP");
 });
@@ -67,22 +134,33 @@ test("an X-ray goes to MedGemma as an image; a plain-sentence reply is kept, and
   const { fetcher, calls } = fake({ [box("xray")]: chatReply("The heart size is normal and the lungs are clear.") });
   const read = await basetenModels({ apiKey: "k", fetcher }).xrayRead({ image: new Uint8Array([1, 2, 3]), contentType: "image/jpeg" });
   expect(read).toEqual({ findings: ["The heart size is normal and the lungs are clear."], validated: false, source: "model", model: XRAY_MODEL });
-  const body = JSON.parse(calls[0]!.init.body as string);
+  const body = JSON.parse(calls.at(-1)!.init.body as string);
   expect(body.messages[0].content[0].image_url.url).toBe(`data:image/jpeg;base64,${btoa("\x01\x02\x03")}`);
 });
 
 test("the reranker scores passages in box ②, and keeps the hybrid order when the box is asleep", async () => {
   const up = fake({ [box("voice")]: { scores: [0.1, 0.9] } });
   expect(await basetenReranker({ apiKey: "k", fetcher: up.fetcher })("steroid", ["a", "b"])).toEqual([0.1, 0.9]);
+  boxState.clear(); // asleep, not just failing after it answered
   const down = fake({});
   expect(await basetenReranker({ apiKey: "k", fetcher: down.fetcher })("steroid", ["a", "b", "c"])).toEqual([-0, -1, -2]);
   expect(down.wakes()).toHaveLength(1);
 });
 
-test("methods without a hosted model yet stay on the stub", async () => {
+test("methods without a hosted model yet stay on the stub, and never say a model is starting: nothing is starting for them", async () => {
   const { fetcher, calls } = fake({});
-  expect((await basetenModels({ apiKey: "k", fetcher }).deidentify({ text: "Amelia Tan", known: { names: ["Amelia Tan"] } })).source).toBe("fixture");
-  expect(calls).toHaveLength(0);
+  const models = basetenModels({ apiKey: "k", fetcher });
+  // Every box is cold, so the hosted readers say when their model should be ready...
+  expect(await models.briefing({ patient })).toMatchObject({ source: "fixture", waking: COLD_START_MIN.brain });
+  expect(await models.xrayRead({ image: new Uint8Array(1), contentType: "image/png" })).toMatchObject({ source: "fixture", waking: COLD_START_MIN.xray });
+  // ...and the stub-only ones answer exactly as the stub does, calling nothing.
+  const asked = calls.length;
+  const known = { names: ["Amelia Tan"] }, note = { image: new Uint8Array(1), contentType: "image/png", patient: { name: "Amelia Tan", knownMedicines: [] } };
+  expect(await models.deidentify({ text: "Amelia Tan", known })).toEqual(await stubModels.deidentify({ text: "Amelia Tan", known }));
+  expect(await models.readMedicinePhoto({})).toEqual(await stubModels.readMedicinePhoto({}));
+  expect(await models.readHandwrittenNote(note)).toEqual(await stubModels.readHandwrittenNote(note));
+  expect(await models.incidentalFindings({ patientId: "SYN-1042" })).toEqual(await stubModels.incidentalFindings({ patientId: "SYN-1042" }));
+  expect(calls).toHaveLength(asked);
 });
 
 /*
@@ -153,7 +231,7 @@ test("codes come only from the candidates, each citing a sentence that states it
     { code: "J45.9", label: "Asthma, unspecified", kind: "Secondary", evidence: "asthma" },
     { code: "87.44", label: "Routine chest X-ray", kind: "Procedure", evidence: "xray" },
   ], ...fromModel });
-  expect(JSON.parse(calls[0]!.init.body as string).messages[1].content).toContain("J18.1 Lobar pneumonia, unspecified");
+  expect(JSON.parse(calls.at(-1)!.init.body as string).messages[1].content).toContain("J18.1 Lobar pneumonia, unspecified");
   // Negated or someone else's: nothing stated, so the rules answer.
   const denied = [{ id: "a", text: "No pneumonia on the chest film." }, { id: "b", text: "Mother has asthma." }];
   const rules = await stubModels.suggestCodes({ sentences: denied });

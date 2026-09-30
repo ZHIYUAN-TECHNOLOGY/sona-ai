@@ -46,7 +46,7 @@ export async function visitOf(db: Db, hospitalId: string, encounterId: string) {
  * output is (delivery plan, provenance), and returns where it came from so the app can label it.
  */
 export async function logAnswer<T extends Origin>(db: Db, encounterId: string | null, kind: string, answer: T, sourceIds: string[]) {
-  const { source: _, model: __, ...output } = answer as T & { model?: string };
+  const { source: _, model: __, waking: ___, ...output } = answer as T & { model?: string; waking?: number };
   await db.insert(provenance).values({ id: crypto.randomUUID(), encounterId, kind, output, sourceIds, model: answer.source === "model" ? answer.model : "fixture", approvedBy: null });
   return answer;
 }
