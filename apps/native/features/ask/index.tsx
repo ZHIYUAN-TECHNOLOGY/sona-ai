@@ -161,7 +161,7 @@ export function WithSona({ scope, answers, onTab, hidden = false, children }: { 
     {!hidden && <VoiceDock backdrop={backdrop} onSubmit={submit} onCancel={() => {}} placeholder={PLACEHOLDER[scope]} draft={draft} onDraft={value => { setDraft(value); setNotice(undefined); }}
       // The voice sample says the page's suggested question, so talking works the same as tapping it.
       spokenPrompt={nudge?.answer.question ?? answers[0]?.question ?? "What needs me now?"}
-      voiceEnabled={voiceInput} onVoiceDisabled={() => setNotice("Voice input is turned off in Settings. Type your question instead.")}
+      voiceEnabled={voiceInput} onVoiceDisabled={() => setNotice("Voice input is turned off in Settings. Type your question instead.")} onVoiceError={setNotice}
       suggestion={nudge && { text: nudge.text, onPress: () => setState({ open: true, shown: nudge.answer }) }}
       above={notice && <Notice>{notice}</Notice>} />}
     <AskSheet scope={scope} answers={answers} state={state} onChange={setState} onTab={onTab} />

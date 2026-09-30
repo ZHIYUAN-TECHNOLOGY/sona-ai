@@ -1,5 +1,7 @@
 import { useReduceMotionPreference } from "@/components/sona/accessibility";
 import { Text } from "@/components/sona/text";
+import { useLive } from "@/features/live";
+import { useVoiceInput } from "@/features/live/voice-input";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import { SampleLabel } from "@/components/sona/model-answer";
@@ -38,13 +40,15 @@ type Props = {
   activity?: OrbActivity;
   onCancel: () => void;
   onSubmit: (prompt: string) => void;
-  /** Authored transcript used by the hold-to-talk fixture; no microphone is recorded. */
+  /** Demo mode: the authored words the voice sample "hears" (live mode records the microphone instead). */
   spokenPrompt: string;
   placeholder: string;
   draft: string;
   onDraft: (value: string) => void;
   voiceEnabled: boolean;
   onVoiceDisabled: () => void;
+  /** Live mode: why speech didn't become words (microphone off, nothing heard, model starting); the page shows it. */
+  onVoiceError?: (message: string) => void;
   /** The visit's tools (the + menu and the composer's X-ray, recorder and note buttons); pages outside a visit leave them out. */
   onImage?: () => void;
   onConsultation?: () => void;
@@ -117,6 +121,25 @@ export function VoiceDock(props: Props) {
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const screenReader = useRef(false);
   const transcript = spokenPrompt.split(" ");
+  // Live mode hears the microphone (Sona speech on the server); demo mode plays the labelled sample.
+  const { on: live } = useLive();
+  const mic = useVoiceInput({
+    onHeard: (text, how) => {
+      // Holding sends at once; a tap puts the words in the text box to check before sending.
+      if (how === "hold") { haptic("select"); setFlooding(true); onSubmit(text); }
+      else { onDraft(text); setMode("composing"); }
+    },
+    onError: message => { setMode(current => (current === "holding" || current === "handsfree" ? "idle" : current)); props.onVoiceError?.(message); },
+  });
+  // Each burst of speech is one gust of light in the veil, as each sample word is.
+  const [gusts, setGusts] = useState(0);
+  useEffect(() => { if (mic.speaking) setGusts(g => g + 1); }, [mic.speaking]);
+  // The orb stays "listening" through reading the words, then settles once the microphone is done.
+  const wasHearing = useRef(false);
+  useEffect(() => {
+    if (mic.state !== "idle") { wasHearing.current = true; return; }
+    if (wasHearing.current) { wasHearing.current = false; setMode(current => (current === "holding" || current === "handsfree" ? "idle" : current)); }
+  }, [mic.state]);
   const { width: screenW } = useWindowDimensions();
   // Keyboard-synced morph progress: follows the on-screen keyboard frame by frame when there is one.
   const composing = useSharedValue(0);
@@ -154,6 +177,7 @@ export function VoiceDock(props: Props) {
 
   const listen = (next: "holding" | "handsfree") => {
     clear(); setUsed(true); coachSeen = true; setWords(0); setFlooding(false); setMode(next); haptic("light");
+    if (live) { void mic.start(next === "holding" ? "hold" : "tap"); return; }
     transcript.forEach((_, i) => timers.current.push(setTimeout(() => {
       setWords(i + 1);
       // Hands-free ends on a pause after the last word, like a real voice endpoint.
@@ -162,13 +186,14 @@ export function VoiceDock(props: Props) {
   };
   const finish = (send: boolean) => {
     clear();
+    if (live) { void mic.stop(send); return; }
     const heard = wordsRef.current;
     setWords(0); setMode("idle");
     if (send && heard > 0) { haptic("select"); setFlooding(true); onSubmit(spokenPrompt); }
   };
   const tapOrb = () => {
     if (!voiceEnabled) { onVoiceDisabled(); return; }
-    if (screenReader.current) { onSubmit(spokenPrompt); return; }
+    if (screenReader.current && !live) { onSubmit(spokenPrompt); return; }
     if (modeRef.current === "handsfree") finish(true); else listen("handsfree");
   };
   const startHold = () => {
@@ -238,7 +263,7 @@ export function VoiceDock(props: Props) {
   });
 
   return <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-    {liquid && <LiquidVeil backdrop={backdrop} state={veil} armed={armed && !busy} words={words} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
+    {liquid && <LiquidVeil backdrop={backdrop} state={veil} armed={armed && !busy} words={live ? gusts : words} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
     {/* Frosted focus layer: a static blur crossfaded by opacity. */}
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: scrim ? 1 : 0, transitionProperty: "opacity", transitionDuration: scrim ? 320 : 240, transitionTimingFunction: EASE_OUT_CSS }]}>
       {reducedTransparency ? <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(236,239,244,0.94)" }]} /> : <BlurView tint="light" intensity={38} style={StyleSheet.absoluteFill} />}
@@ -246,9 +271,14 @@ export function VoiceDock(props: Props) {
     </Animated.View>
 
     {holding && <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(140)} pointerEvents="none" style={{ position: "absolute", left: 32, right: 32, bottom: insets.bottom + 132, alignItems: "center" }}>
-      <Text accessibilityLiveRegion="polite" style={{ textAlign: "center", ...type.display, fontWeight: "500", color: words ? palette.ink : palette.muted }}>{words ? transcript.slice(0, words).join(" ") : "Listening…"}</Text>
-      <Text style={{ marginTop: 10, ...type.footnote, fontWeight: "500", color: palette.ink }}>{handsfree ? "Pause or tap the orb to send" : "Release to send"}</Text>
-      <View style={{ marginTop: 4 }}><SampleLabel source="fixture" what="voice" /></View>
+      {live ? <>
+        <Text accessibilityLiveRegion="polite" style={{ textAlign: "center", ...type.display, fontWeight: "500", color: palette.muted }}>{mic.state === "reading" ? "Reading what you said…" : "Listening…"}</Text>
+        {mic.state !== "reading" && <Text style={{ marginTop: 10, ...type.footnote, fontWeight: "500", color: palette.ink }}>{handsfree ? "Pause, or tap the orb, and your words appear to check" : "Release to send"}</Text>}
+      </> : <>
+        <Text accessibilityLiveRegion="polite" style={{ textAlign: "center", ...type.display, fontWeight: "500", color: words ? palette.ink : palette.muted }}>{words ? transcript.slice(0, words).join(" ") : "Listening…"}</Text>
+        <Text style={{ marginTop: 10, ...type.footnote, fontWeight: "500", color: palette.ink }}>{handsfree ? "Pause or tap the orb to send" : "Release to send"}</Text>
+        <View style={{ marginTop: 4 }}><SampleLabel source="fixture" what="voice" /></View>
+      </>}
     </Animated.View>}
 
     {mode === "composing" && <Pressable accessibilityRole="button" accessibilityLabel="Close message composer" onPress={closeComposer} style={StyleSheet.absoluteFill} />}

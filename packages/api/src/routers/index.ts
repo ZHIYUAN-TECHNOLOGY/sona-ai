@@ -5,6 +5,7 @@ import { taskUpdateSchema } from "../contracts";
 
 import { openAuditItems, queryAuditItem, runNightlyAudit } from "../audit-job";
 import { clockOf } from "../context";
+import { stubModels } from "../models";
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
@@ -16,7 +17,7 @@ import { adherenceRouter } from "./doses";
 import { opsRouter } from "./ops";
 import { dischargeRouter } from "./discharge";
 import { bookingsRouter, careBookingsRouter, careDoctorsRouter } from "./bookings";
-import { careRouter } from "./care";
+import { careRouter, MAX_AUDIO_BASE64 } from "./care";
 import { carePlanRouter } from "./care-plan";
 import { messagesRouter } from "./messages";
 import { encounterRouter } from "./encounter";
@@ -109,6 +110,22 @@ export const appRouter = {
   library: libraryRouter,
   // Continuous training: de-identified samples, steward review and versioned exports (management only).
   training: trainingRouter,
+  /**
+   * Clinician: speech to text for Sona's dock (Malay, English, Chinese or mixed). The app shows or sends
+   * the words; audio is read and dropped, never stored. Refused while no speech model answers, with a
+   * reason the dock shows (the stub has no ears).
+   */
+  voice: {
+    transcribe: protectedProcedure.input(z.object({ audio: z.string().min(16).max(MAX_AUDIO_BASE64), language: z.enum(["en", "ms", "zh"]).optional() }))
+      .handler(async ({ context, input }) => {
+        const heard = await (context.models ?? stubModels).transcribe({ audio: Uint8Array.from(atob(input.audio), c => c.charCodeAt(0)), language: input.language });
+        if (heard.source === "fixture") throw new ORPCError("PRECONDITION_FAILED", {
+          message: context.models ? "The speech model is starting. Try again in a minute, or type." : "Speaking to Sona isn't switched on yet. Type instead.",
+          data: { code: "SPEECH_OFF" },
+        });
+        return heard;
+      }),
+  },
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

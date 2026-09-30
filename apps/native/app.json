@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "sona-ai",
+    "name": "Sona Pro",
     "slug": "sona-ai",
     "owner": "zhiyuan-technology",
     "version": "1.0.0",
@@ -52,6 +52,12 @@
         {
           "cameraPermission": "Sona uses the camera to scan paper pages, X-rays and wounds you attach to a visit or add to your library.",
           "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Sona listens while you hold or tap the orb, to turn what you say into a question. The recording is sent to your hospital's server to be transcribed, then deleted."
         }
       ]
     ],

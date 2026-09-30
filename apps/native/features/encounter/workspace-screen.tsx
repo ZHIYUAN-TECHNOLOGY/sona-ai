@@ -274,6 +274,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       onDraft={value => { setInput(value); if (notice) setNotice(undefined); }}
       voiceEnabled={voiceInput}
       onVoiceDisabled={() => setNotice("Voice input is turned off in settings. Type your request instead.")}
+      onVoiceError={setNotice}
       // The + and the visit tools only inside a visit; Today has none.
       {...patient && { onImage: () => open("xray"), onConsultation: () => open("recording"), onNote: () => open("note"), attachments: pending, onAttachmentsChange: setPending }}
       suggestion={nudge && { text: nudge.text, onPress: () => setAsk({ open: true, shown: nudge.answer }) }}

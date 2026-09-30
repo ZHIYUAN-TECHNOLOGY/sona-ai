@@ -48,7 +48,7 @@ async function codeRow(db: Context["db"], code: string) {
 }
 
 // About 40 seconds of 16 kHz mono WAV, base64: a spoken question or reply, not a recording session.
-const MAX_AUDIO_BASE64 = 1_800_000;
+export const MAX_AUDIO_BASE64 = 1_800_000;
 
 export const careRouter = {
   /** Clinician: the visit's code and link for the QR, issued once per visit (reissued only once it has expired). */

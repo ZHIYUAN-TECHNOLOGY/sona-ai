@@ -107,6 +107,7 @@ export const PERMISSIONS: Record<string, readonly [readonly Role[], string]> = {
   "training.export": [MANAGEMENT, "export a training dataset"],
   "tasks.update": [CARE, "reassign or redate a task"],
   "ward.unassignOwner": [WARD, "clear a blocker owner"],
+  "voice.transcribe": [ALL, "speak to Sona"],
 };
 
 export const can = (role: Role, path: string) => PERMISSIONS[path]?.[0].includes(role) ?? false;
