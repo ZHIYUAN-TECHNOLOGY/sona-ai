@@ -90,7 +90,7 @@ Baseten Cloud, pay-as-you-go (Basic plan), Dedicated deployments in the US regio
 
 | Box | GPU | Models | State |
 | --- | --- | --- | --- |
-| ① Brain | L4 24 GB | Gemma 4 26B A4B-it, INT4 QAT (`cyankiwi/gemma-4-26B-A4B-it-qat-AWQ-INT4`, vLLM with prefix caching) + Laya multilingual (`laya-serve`) | Warm while working |
+| ① Brain | L4 24 GB | Gemma 4 26B A4B-it, INT4 QAT (`cyankiwi/gemma-4-26B-A4B-it-qat-AWQ-INT4`, vLLM with prefix caching). Laya multilingual (`laya-serve`) runs beside it on a 2-vCPU CPU box (decided 30 Sep: one port per container; ≈ $0.10/h) | Warm while working |
 | ② Voice | L4 24 GB | Qwen3-ASR-1.7B, Qwen3-ForcedAligner-0.6B (≤5 min chunks), Nemotron-3-Diarization, VoxCPM2, OpenMed PII Small, OpenMed clinical extraction, EmbeddingGemma-300M, bge-reranker-v2-m3, PaddleOCR-VL-1.6 | Warm while working |
 | ③ X-ray | L4 24 GB | MedGemma 1.5 4B, FP8 | Scales to zero; the Agent wakes it when an image is attached; pre-warmed before demos |
 

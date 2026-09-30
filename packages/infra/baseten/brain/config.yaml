@@ -1,0 +1,38 @@
+# Box ① Brain: Gemma 4 26B A4B, INT4 QAT (AWQ), on one L4 (docs/delivery-plan.md#models-and-hosting).
+# OpenAI-compatible: /environments/production/sync/v1/chat/completions. Push: baseten model push --dir packages/infra/baseten/brain
+model_name: sona-brain
+base_image:
+  image: vllm/vllm-openai:v0.29.0-cu129
+weights:
+  - source: "hf://cyankiwi/gemma-4-26B-A4B-it-qat-AWQ-INT4@18a3c7285c33ee39d3e5e16ee6fb2c18f4955ef9"
+    mount_location: /app/checkpoint/model
+docker_server:
+  # Text only (image 0): the X-ray and scan work is MedGemma's (box ③), and skipping the vision encoder leaves more
+  # of the 24 GB for KV cache. 16k context is a day-1 guess; raise it if the memory check shows headroom.
+  start_command: >-
+    vllm serve /app/checkpoint/model
+    --served-model-name gemma-4-26b-a4b
+    --host 0.0.0.0 --port 8000
+    --max-model-len 16384
+    --max-num-seqs 8
+    --gpu-memory-utilization 0.92
+    --limit-mm-per-prompt.image 0
+    --enable-prefix-caching
+    --enable-auto-tool-choice
+    --tool-call-parser gemma4
+    --reasoning-parser gemma4
+  readiness_endpoint: /health
+  liveness_endpoint: /health
+  predict_endpoint: /v1/chat/completions
+  server_port: 8000
+environment_variables:
+  VLLM_LOGGING_LEVEL: WARNING
+  VLLM_ENGINE_READY_TIMEOUT_S: "3600"
+resources:
+  instance_type: "L4:4x16"
+runtime:
+  health_checks:
+    startup_threshold_seconds: 1800
+    restart_threshold_seconds: 1200
+    stop_traffic_threshold_seconds: 120
+  predict_concurrency: 8
