@@ -19,6 +19,8 @@ Updated: 2026-09-22. Planning reference, not an implementation or clinical-valid
 
 ## UX principles (standing rules for every screen)
 
+The name for this standard is **glance-to-decision, on-system** (adopted 30 Sep 2026): every screen takes the user from a glance to a decision, on the design system. The rules below are what it means.
+
 Added 2026-09-27 at the user's request. These apply to Sona (clinicians, ward and hospital management) and Sona Care (patients), and to every future screen. Each screen exists to make hospital operations and care faster and safer, so it is judged on how quickly someone understands, acts and moves on.
 
 1. **Insight first.** The first thing on a screen answers "where do I stand?" in one line: a count, a state or a change (e.g. "3 discharges blocked", "Day 2 at home · 1 thing needs you"). No one should have to read a list to find out whether anything is wrong.
