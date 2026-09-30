@@ -1,4 +1,15 @@
-import type { Capability } from "./types";
+import type { Capability, Patient } from "./types";
+
+// Questions only: prescribing acts, so it runs from its card after review, never from "Also ask".
+const follows: Record<Capability, Capability[]> = {
+  briefing: ["reasoning", "xray", "medication"], reasoning: ["evidence", "xray", "medication"], xray: ["evidence", "reasoning", "note"],
+  medication: ["reasoning", "note", "followup"], prescription: ["followup", "note", "medication"], followup: ["note", "briefing", "reasoning"], note: ["followup", "evidence", "reasoning"], evidence: ["note", "followup", "reasoning"],
+};
+/** The steroid question names pneumonia, so it's offered only when the record does (its complaint, history or charted pneumonia source). */
+export const recordsPneumonia = (patient: Pick<Patient, "complaint" | "history" | "sources">) =>
+  /pneumonia/i.test([patient.complaint, ...patient.history].join(" ")) || patient.sources.some(source => source.id === "pneumonia-reference");
+/** What is usually asked after an answer of this kind, most likely first, as far as this patient's record supports it. */
+export const askAfter = (kind: Capability, patient: Pick<Patient, "complaint" | "history" | "sources">) => follows[kind].filter(k => k !== "evidence" || recordsPneumonia(patient));
 
 /** One need: what it is, its meaning colour, and the one action that meets it. */
 export type Need = { tone: "urgent" | "caution" | "calm"; text: string; action: string; target: string };

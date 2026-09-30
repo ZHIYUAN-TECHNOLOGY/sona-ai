@@ -16,7 +16,8 @@ import { usePendingResult } from "@/features/day/use-counts";
 import { teachingImage } from "@/features/imaging/fixture";
 import { QuestionList } from "@/components/sona/list";
 import { leadFor } from "./lead";
-import { threadEnd } from "./visit-next";
+import { askAfter, threadEnd } from "./visit-next";
+import { prescribingState } from "./next-steps";
 import { useRole } from "@/features/live/roles";
 import { useInboxSummary } from "@/features/inbox";
 import { useEncounter } from "./store";
@@ -54,13 +55,6 @@ export function suggestionFor(kind: Capability | "recording", patient: Patient):
   return { text: text[kind], kind, emoji: emoji[kind] };
 }
 
-const nextSteps: Record<Capability, Capability[]> = {
-  briefing: ["reasoning", "xray", "medication"], reasoning: ["evidence", "xray", "medication"], xray: ["evidence", "reasoning", "note"],
-  medication: ["prescription", "reasoning", "note"], prescription: ["followup", "note", "medication"], followup: ["note", "briefing", "reasoning"], note: ["followup", "prescription", "evidence"], evidence: ["prescription", "note", "followup"],
-};
-/** What is usually asked after an answer of this kind, most likely first. */
-export const askAfter = (kind: Capability) => nextSteps[kind];
-
 /** Meets a visit's need: pages it names open directly; anything else is asked in the visit. */
 export function goToNeed(target: VisitNeed["target"], patient: Patient, onPick: (item: Suggestion) => void) {
   if (target === "scan" || target === "discharge" || target === "claim" || target === "handover") router.push(`/${target}`);
@@ -86,14 +80,14 @@ export function VisitLead({ req, card, patient }: { req: RequestState; card: Res
   // The X-ray card reads its own snapshot; the prescribing card follows the encounter while it is the latest answer.
   const image = card.imagingSnapshot ?? encounter;
   const scenario = image?.imagingScenario ?? "reference";
-  const rx = encounter?.cards.at(-1)?.id === card.id ? encounter?.prescription : card.prescription;
+  const rx = encounter && encounter.cards.at(-1)?.id === card.id ? prescribingState(encounter, patient) : card.prescription?.status;
   const tasks = encounter ? tasksOf(patient) : [];
   const question = req.prompt;
   const text = leadFor(req.kind, patient, {
     medicines: encounter?.medicationEntries ?? [],
     image: scenario === "unsupported" ? "unsupported" : image?.imagingAttachment ? "attached" : scenario === "no-finding" ? "no-finding" : !image?.hideTeachingImage && teachingImage?.referenceSummary ? "reference" : "none",
     note: !encounter?.note ? "none" : encounter.noteReviewed ? "reviewed" : "draft",
-    prescription: rx?.status,
+    prescription: rx,
     tasks: { total: tasks.length, open: tasks.filter(t => !t.completed).length },
     evidence: live ? answered && (answered.enough ? "enough" : "not-enough") : !question || isRehearsed(question) ? "rehearsed" : authoredAnswer(question) ? "authored" : "off",
     result: result?.patientId === patient.id ? { test: result.test } : undefined,
@@ -103,7 +97,7 @@ export function VisitLead({ req, card, patient }: { req: RequestState; card: Res
 
 /** The end of a visit's thread: its one next step, then at most two quiet questions (visit-next.ts). */
 export function VisitEnd({ latest, patient, encounter, hasSteps, onPick }: { latest: Capability; patient: Patient; encounter: Encounter | undefined; hasSteps: boolean; onPick: (item: Suggestion) => void }) {
-  const end = threadEnd({ latest, need: visitNeed(patient, encounter, usePendingResult(patient.id)), hasSteps, firstName: first(patient), discharged: Boolean(encounter?.discharge?.dischargedAt), follow: askAfter(latest) });
+  const end = threadEnd({ latest, need: visitNeed(patient, encounter, usePendingResult(patient.id)), hasSteps, firstName: first(patient), discharged: Boolean(encounter?.discharge?.dischargedAt), follow: askAfter(latest, patient) });
   if (!end.need && !end.ask.length) return null;
   return <View style={{ gap: 18, paddingTop: 28, marginTop: 8, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
     {end.need && <NeedLine need={end.need as VisitNeed} onPress={n => goToNeed(n.target, patient, onPick)} />}

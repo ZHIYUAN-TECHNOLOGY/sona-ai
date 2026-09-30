@@ -8,11 +8,10 @@ import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { defaultMedications, getPrescriptionChecks, simulatedRegimen } from "@/features/encounter/clinical-state";
-import { issueSimulation } from "@/features/encounter/state";
+import { CONSEQUENCE, outsideCase } from "@/features/encounter/next-steps";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient, PrescriptionCheck, PrescriptionInputs } from "@/features/encounter/types";
-import { errorText, useLive } from "@/features/live";
-import { pushAndReview, simulateOnServer } from "@/features/live/prescribing-sync";
+import { useLive } from "@/features/live";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { Seal, haptic } from "./medication-parts";
 
@@ -114,29 +113,32 @@ export function useSettling(blockedIds: string[]): Set<string> {
   return new Set([...settling, ...fresh]);
 }
 
+/** Live mode: only a doctor prescribes (the server's own rule); the card and the next-step bar show anyone else a lock. */
+export function useCanPrescribe() {
+  const { on } = useLive();
+  const role = useRole();
+  return !on || role.can("prescribing.simulate");
+}
+
 export function PrescribeCard({ patient }: { patient: Patient }) {
-  const { encounters, updateEncounter, runInPlace, showDemoControls } = useEncounter();
+  const { encounters, updateEncounter, runInPlace: run, runErrors, showDemoControls } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const encounter = encounters[patient.id];
   const [showPassed, setShowPassed] = useState(false);
   const checks = encounter ? getPrescriptionChecks(encounter, patient) : [];
   const resolving = useSettling(checks.filter(c => c.status === "blocked").map(c => c.id));
-  const { on: live, user } = useLive();
-  const [serverError, setServerError] = useState<string>();
-  const role = useRole();
+  const canPrescribe = useCanPrescribe();
+  const serverError = runErrors[patient.id];
+  // One haptic when an outcome lands here, whichever path ran it (the button or the next-step bar).
+  const outcome = encounter?.prescription && `${encounter.prescription.id}:${encounter.prescription.status}`;
+  const seen = useRef(outcome);
+  useEffect(() => {
+    if (outcome === seen.current) return;
+    seen.current = outcome;
+    if (outcome) haptic(outcome.endsWith(":created") ? "success" : "warning");
+  }, [outcome]);
 
   if (!encounter) return null;
-  // Live: the server records the review and re-checks everything before it writes the receipt; otherwise the local fixture runs.
-  const run = (kind: "medication" | "prescription") => {
-    if (!live || !user) return runInPlace(kind);
-    const revision = encounter.revision;
-    setServerError(undefined);
-    updateEncounter(value => ({ ...value, working: kind }));
-    const call = kind === "medication"
-      ? pushAndReview(patient.encounterId, encounter).then(() => updateEncounter(value => value.revision === revision ? { ...value, working: undefined, medicationCheckedRevision: revision, reviewInvalidated: false } : { ...value, working: undefined }))
-      : simulateOnServer(patient.encounterId, user.id).then(receipt => { updateEncounter(value => issueSimulation({ ...value, working: undefined }, patient, receipt.requestId)); haptic("success"); });
-    call.catch(e => { setServerError(errorText(e)); updateEncounter(value => ({ ...value, working: undefined })); });
-  };
   const inputs = encounter.prescriptionInputs ?? EMPTY;
   const set = (change: Partial<PrescriptionInputs>) => updateEncounter(value => ({ ...value, prescriptionInputs: { ...(value.prescriptionInputs ?? EMPTY), ...change } }), true);
   const blocked = checks.filter(c => c.status === "blocked");
@@ -173,13 +175,15 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
     return undefined;
   };
   const label = (check: PrescriptionCheck) => check.id === "review" && reviewStale ? { ...check, detail: "Needs rerun · eligibility or medicines changed since the last review." } : check;
-  const primary = working === "prescription" ? "Checking all 11…" : blocked.length ? `Resolve ${blocked.length} to prescribe` : `Prescribe ${regimen.medication.toLowerCase()}`;
+  // A recorded risk isn't something to resolve: the case is outside what this simulation supports.
+  const outside = outsideCase(encounter);
+  const primary = working === "prescription" ? "Checking all 11…" : outside ? "Outside the supported case · not prescribing" : blocked.length ? `Resolve ${blocked.length} to prescribe` : `Prescribe ${regimen.medication.toLowerCase()}`;
 
   return <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 12 }}>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
       <Ring done={checks.length - blocked.length} total={checks.length} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={{ ...type.overline, color: created ? palette.green : blocked.length ? palette.amber : palette.blue }}>{created ? "Prescribed · simulation" : blocked.length ? `${blocked.length} left before prescribing` : "Ready to prescribe"}</Text>
+        <Text style={{ ...type.overline, color: created ? palette.green : blocked.length ? palette.amber : palette.blue }}>{created ? "Prescribed · simulation" : outside ? "Outside the supported case" : blocked.length ? `${blocked.length} left before prescribing` : "Ready to prescribe"}</Text>
         <Text style={{ ...type.headline, color: palette.ink }}>{regimen.medication} · {regimen.formulation}</Text>
         <Text numberOfLines={2} style={{ ...type.caption, color: palette.muted }}>{regimen.dose} {regimen.unit} · {regimen.route} · {regimen.frequency}</Text>
       </View>
@@ -206,13 +210,17 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
         <Text style={{ ...type.caption, color: palette.muted }}>All {checks.length} checks passed · {new Date(prescription.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · immutable receipt, no dispensing</Text>
       </View>
     </Animated.View>
-      : live && !role.can("prescribing.simulate") ? <LockedAction label="Needs a doctor to prescribe" path="prescribing.simulate" />
-      : <Pressable accessibilityRole="button" accessibilityState={{ disabled: blocked.length > 0 || working !== undefined }} disabled={blocked.length > 0 || working !== undefined}
-        onPress={() => { haptic("select"); run("prescription"); }}
-        style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: blocked.length ? "rgba(20,28,40,0.08)" : palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 200 } as never)}>
-        {!blocked.length && <Icon name={working === "prescription" ? "hourglass" : "doc.badge.plus"} size={15} color={palette.white} />}
-        <Animated.Text key={primary} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ ...type.body, fontWeight: "600", color: blocked.length ? palette.muted : palette.white }}>{primary}</Animated.Text>
-      </Pressable>}
+      : !canPrescribe ? <LockedAction label="Needs a doctor to prescribe" path="prescribing.simulate" />
+      : <View style={{ gap: 8 }}>
+        <Pressable accessibilityRole="button" accessibilityState={{ disabled: blocked.length > 0 || working !== undefined }} accessibilityHint={blocked.length ? undefined : CONSEQUENCE} disabled={blocked.length > 0 || working !== undefined}
+          onPress={() => { haptic("select"); run("prescription"); }}
+          style={({ pressed }) => ({ height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 16, backgroundColor: outside ? "rgba(196,120,20,0.12)" : blocked.length ? "rgba(20,28,40,0.08)" : palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 200 } as never)}>
+          {outside ? <Icon name="exclamationmark.triangle.fill" size={14} color={palette.amber} /> : !blocked.length && <Icon name={working === "prescription" ? "hourglass" : "doc.badge.plus"} size={15} color={palette.white} />}
+          <Animated.Text key={primary} numberOfLines={1} adjustsFontSizeToFit entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ ...type.body, fontWeight: "600", color: outside ? palette.amber : blocked.length ? palette.muted : palette.white }}>{primary}</Animated.Text>
+        </Pressable>
+        {/* What pressing it does, said before it's pressed. */}
+        {!blocked.length && <Text style={{ ...type.caption, color: palette.muted, textAlign: "center" }}>{CONSEQUENCE}</Text>}
+      </View>}
     </Animated.View>
 
     {serverError && <Text accessibilityLiveRegion="polite" style={{ ...type.caption, color: palette.amber }}>{serverError}</Text>}

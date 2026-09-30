@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { defaultMedications, effectivePatient } from "./clinical-state";
+import { defaultMedications, effectivePatient, getPrescriptionChecks } from "./clinical-state";
+import { editNote, readNoteSections } from "../scribe/model";
 import { patients, newEncounter } from "./fixtures";
 import { acceptCard, beginRequest, createCard, finishRequest, issueSimulation, reviseEncounter, routeInThread, routePrompt, revealSections, queueAmendment, reconcileAmendment } from "./state";
 
@@ -132,4 +133,17 @@ test("a question typed after an evidence answer continues the evidence thread un
   expect(routeInThread("What harms should I watch for?", "briefing")).toBe(null);
   expect(routeInThread("Review drug interactions", "evidence")).toBe("medication");
   expect(routeInThread("Steroids for her pneumonia?")).toBe("evidence");
+});
+
+test("a note edit leaves the revision, the medication review and a pending amendment untouched", () => {
+  const amendment = { id: "amendment-1", revision: 1, phase: "queued-review" };
+  const before = { ...eligible(), amendmentOperation: amendment };
+  const after = editNote(before, { ...readNoteSections(""), subjective: "Cough for five days" });
+  expect(after.note).toContain("Cough for five days");
+  expect(after.noteReviewed).toBe(false);
+  expect(after.revision).toBe(before.revision);
+  expect(after.medicationCheckedRevision).toBe(before.medicationCheckedRevision);
+  expect(after.reviewInvalidated).toBeUndefined();
+  expect(after.amendmentOperation).toBe(amendment);
+  expect(getPrescriptionChecks(after, patient).find(check => check.id === "review").status).toBe("passed");
 });

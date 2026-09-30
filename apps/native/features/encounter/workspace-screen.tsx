@@ -27,6 +27,7 @@ import { useHomeActions } from "./quick-actions";
 import { defaultMedications } from "./clinical-state";
 import { nextSteps, type Step } from "./next-steps";
 import { NextStepBar, NextStepSheet, useNextStep } from "./next-step";
+import { useCanPrescribe } from "@/features/clinical/prescribe-card";
 import { AnswerSections, SectionTabs, type AnswerSection } from "@/components/sona/answer-kit";
 import type { Attachment } from "@/components/sona/attachments-menu";
 import { Sidebar, SIDEBAR_WIDTH } from "./sidebar";
@@ -145,26 +146,24 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const thinking = active && !activeCard && patient ? (phase === "thinking" ? "Thinking…" : thinkingLabel(active.kind, patient)) : undefined;
 
   // "Next step" bar: the one action blocking the medication → prescribing path, with the full list on demand.
-  const steps = patient && latest && !active ? nextSteps(latest.kind, encounter, patient) : undefined;
+  const canPrescribe = useCanPrescribe();
+  const steps = patient && latest && !active ? nextSteps(latest.kind, encounter, patient, canPrescribe) : undefined;
   const server = useServerData(); // live mode: the top bar counts the server's tasks too
   const next = useNextStep();
   const jumpToId = (id: string) => { const index = sections.findIndex(section => section.id === id); if (index >= 0) jumpTo(index); return index >= 0; };
   const perform = (step: Step) => {
     const action = step.action;
     if (!patient || !latest) return;
-    const inCard = latest.kind === "medication" || latest.kind === "prescription";
     if (action.type === "confirm") {
       const entry = (encounter?.medicationEntries ?? defaultMedications(patient)).find(item => item.id === action.entryId);
       if (latest.kind !== "medication" || !entry) { run("medication"); return; }
       updateEncounter(value => ({ ...value, medicationDraft: { ...entry } }));
       jumpToId("medicines");
-    } else if (action.type === "request") {
-      // On a medication or prescribing answer the prescribe card runs it in place: no new answer.
-      if (inCard && (action.kind === "medication" || action.kind === "prescription")) { runInPlace(action.kind); jumpToId("prescribing"); }
-      else run(action.kind);
-    } else if (action.type === "inputs") {
-      if (inCard) jumpToId("prescribing"); else run("prescription");
-    } else jumpToId("prescribing");
+      return;
+    }
+    // The card's own path (runInPlace, as its buttons use), in view so its result lands where it is reviewed. A locked step never runs.
+    if (action.type === "run" && !step.locked) runInPlace(action.kind);
+    jumpToId("prescribing");
   };
   const act = (step: Step) => next.open ? next.hide(() => perform(step)) : perform(step);
 

@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import type { QuickAction } from "@/components/sona/quick-actions";
-import { testInSentence, type PendingResult } from "@/features/day/model";
+import { testInSentence, usableKeys, type PendingResult } from "@/features/day/model";
 import { useDayPatients, usePendingResult, useWardBeds } from "@/features/day/use-counts";
 import { useRole } from "@/features/live/roles";
 import { useOpenAudit } from "@/features/audit";
@@ -8,7 +8,7 @@ import { shortRM, totalRisk, type AuditItem } from "@/features/audit/model";
 import { useInboxSummary } from "@/features/inbox";
 import { useTrainingStatus } from "@/features/training";
 import { trainingLine } from "@/features/training/model";
-import { acknowledgeResult, useAckFailed, useServerData } from "@/features/live/server-day";
+import { useServerData } from "@/features/live/server-day";
 import { useServerEncounter } from "@/features/live/sync";
 import { DEMO_PATIENT, wardSummary, type Bed } from "@/features/ward/model";
 import { defaultMedications } from "./clinical-state";
@@ -32,13 +32,12 @@ export function useHomeActions(patients: Patient[], encounters: Record<string, E
   // The ward key counts bed 6 from Amelia's encounter, so it needs the server's record of it too.
   useServerEncounter(patients.find(p => p.id === DEMO_PATIENT));
   const role = useRole();
-  const ack = { allowed: role.can("results.acknowledge"), failed: useAckFailed() };
   const audit = useOpenAudit();
   const training = useTrainingStatus();
   const messages = { ...useInboxSummary(), allowed: role.can("messages.inbox") };
   // Management's home leads with the ward card, so its keys are its own jobs, not clinical ones.
   if (role.role === "management") return managementActions(day, beds, auditOf(audit), training.status ? trainingLine(training.status.counts) : undefined, training.status?.counts.blocked ?? 0);
-  return homeActions(day, encounters, { result, live: Boolean(server), beds }, ack, messages);
+  return usableKeys(homeActions(day, encounters, { result, live: Boolean(server), beds }, messages), role.can);
 }
 
 /** Management's home keys: beds ready to go, the handover to read, money at risk in coding, and the training queue. */
@@ -54,21 +53,17 @@ export function managementActions(patients: Patient[], beds: Bed[], audit: { cou
   ];
 }
 
-type Ack = { allowed: boolean; failed?: { id: string; error: string } };
-
 /** Home: where a clinician's day is, each tile with its live status; the result and the beds come from day/counts. */
-export function homeActions(patients: Patient[], encounters: Record<string, Encounter | undefined>, { result, live, beds }: { result: PendingResult | undefined; live: boolean; beds: Bed[] }, ack: Ack = { allowed: true },
+export function homeActions(patients: Patient[], encounters: Record<string, Encounter | undefined>, { result, live, beds }: { result: PendingResult | undefined; live: boolean; beds: Bed[] },
   messages: Messages = { on: false, allowed: true, waiting: 0, urgent: 0, line: "" }): QuickAction[] {
   const next = [...patients].sort((a, b) => a.time.localeCompare(b.time)).find(p => !encounters[p.id]?.requests.length);
   const ward = wardSummary(beds);
   const resultFor = result && patients.find(p => p.id === result.patientId);
-  // Opening a live result acknowledges it (doctors only), so it leaves the unacknowledged list for everyone.
-  // A refusal is kept by acknowledgeResult and shown on the key; opening it again retries.
-  const openResult = () => { if (!result || !resultFor) return; if (result.id && ack.allowed) void acknowledgeResult(result.id).catch(() => {}); openSession(resultFor.id, { next: "briefing" }); };
-  const ackFailed = Boolean(result?.id && ack.failed?.id === result.id);
+  // Opening a result only shows it: the briefing's Acknowledge (with its receipt) is the one way to clear it for the team.
+  const openResult = () => { if (resultFor) openSession(resultFor.id, { next: "briefing" }); };
   return [
     { key: "patients", label: "Patients", icon: "person.2", status: next ? `Next ${next.name.split(" ")[0]} · ${next.time}` : `${patients.length} today`, badge: patients.length, onPress: () => router.push("/patients") },
-    { key: "results", label: "Results", icon: "testtube.2", status: ackFailed ? "Not acknowledged · tap to retry" : result && resultFor ? `${result.flag} ${testInSentence(result.test)} · ${resultFor.name.split(" ")[0]}` : "Nothing new", tone: resultFor ? "urgent" : "calm", badge: resultFor ? 1 : 0, onPress: openResult },
+    { key: "results", label: "Results", icon: "testtube.2", status: result && resultFor ? `${result.flag} ${testInSentence(result.test)} · ${resultFor.name.split(" ")[0]}` : "Nothing new", tone: resultFor ? "urgent" : "calm", badge: resultFor ? 1 : 0, onPress: openResult },
     // Patients' messages from Sona Care; hand over stays in the sidebar. A role that can't read them keeps Hand over here.
     messages.allowed
       ? { key: "messages", label: "Messages", icon: "bubble.left.and.bubble.right", status: messages.on ? messages.line : "From Sona Care", tone: messages.urgent ? "urgent" : messages.waiting ? "caution" : "calm", badge: messages.waiting, onPress: () => router.push("/inbox") }

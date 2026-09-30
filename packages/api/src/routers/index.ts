@@ -1,6 +1,7 @@
 import type { RouterClient } from "@orpc/server";
 import { tasks } from "@sona-ai/db/schema/clinical";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
+import { taskUpdateSchema } from "../contracts";
 
 import { openAuditItems, queryAuditItem, runNightlyAudit } from "../audit-job";
 import { clockOf } from "../context";
@@ -92,6 +93,13 @@ export const appRouter = {
       context.db.select().from(tasks).where(eq(tasks.hospitalId, context.hospitalId)).orderBy(asc(tasks.createdAt))),
     complete: completeTask, // lane T
     create: createTask, // lane T2
+    /** Reassigns and/or redates one of the hospital's tasks in place. */
+    update: protectedProcedure.input(taskUpdateSchema).handler(async ({ context: { db, hospitalId }, input }) => {
+      const [task] = await db.update(tasks).set({ ...input.owner !== undefined ? { owner: input.owner } : {}, ...input.due !== undefined ? { due: input.due } : {} })
+        .where(and(eq(tasks.id, input.taskId), eq(tasks.hospitalId, hospitalId))).returning();
+      if (!task) throw new ORPCError("NOT_FOUND", { message: `No task ${input.taskId}` });
+      return task;
+    }),
   },
   // lane F7
   checkIns: checkInsRouter,

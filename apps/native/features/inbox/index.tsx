@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { AccessibilityInfo, Linking, Pressable, View } from "react-native";
+import { AccessibilityInfo, Alert, Linking, Pressable, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { FadeIn, FadeOut, interpolate, interpolateColor, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
@@ -48,18 +48,50 @@ function loadInbox(userId: string | undefined) {
   return inflight;
 }
 
+/*
+ * A swipe to handle waits 5 seconds before it reaches the server, so Undo can take it back (the server
+ * has no "unhandle"). Meanwhile the thread reads handled everywhere (this list, Today's row, the counts);
+ * Undo cancels the call and both rows return. The timer outlives the screen, so leaving still commits it.
+ */
+export const UNDO_MS = 5000;
+// `sending`: the 5 seconds are up and the server call is in flight, so it can no longer be undone.
+type Held = { patientId: string; name: string; timer: ReturnType<typeof setTimeout>; sending?: boolean };
+// One immutable value per change, read through useSyncExternalStore (React Compiler only sees reads it can track).
+let holding: { held: Held[]; failed?: string } = { held: [] };
+const setHeld = (held: Held[], failed = holding.failed) => { holding = { held, failed }; subscribers.forEach(s => s()); };
+function holdHandled(t: InboxThread, userId: string | undefined) {
+  const timer = setTimeout(() => {
+    const done = (failed?: string) => setHeld(holding.held.filter(h => h.timer !== timer), failed);
+    setHeld(holding.held.map(h => h.timer === timer ? { ...h, sending: true } : h));
+    api.messages.handle({ patientId: t.patientId })
+      .then(() => Promise.all([loadInbox(userId), refreshServerData().catch(() => {})]))
+      .then(() => done(), e => done(`${firstName(t.name)}'s messages weren't marked handled: ${errorText(e)}`));
+  }, UNDO_MS);
+  holding.held.filter(h => h.patientId === t.patientId).forEach(h => clearTimeout(h.timer));
+  setHeld([...holding.held.filter(h => h.patientId !== t.patientId), { patientId: t.patientId, name: t.name, timer }], undefined);
+}
+function undoHandled(patientId: string) {
+  const undone = (h: Held) => h.patientId === patientId && !h.sending;
+  holding.held.filter(undone).forEach(h => clearTimeout(h.timer));
+  setHeld(holding.held.filter(h => !undone(h)));
+}
+
 /** The inbox for this role, re-read on every Sona Care messages change. `on` false: fixture mode or a role that cannot read it. */
 export function useInbox() {
   const { on: live, user } = useLive();
   const role = useRole();
   const on = live && role.can("messages.inbox");
   const state = useSyncExternalStore(subscribe, () => shared);
+  const { held, failed } = useSyncExternalStore(subscribe, () => holding);
   const userId = user?.id;
   const load = useCallback(() => loadInbox(userId), [userId]);
   useEffect(() => { if (on) void load(); }, [on, load]);
   useLiveChanges(["messages"], () => { if (on) void load(); });
-  // Another account's inbox is never shown, even for the moment before this one's arrives.
-  return { on, inbox: on && state.userId === userId ? state.inbox : undefined, error: on ? state.error : undefined, load };
+  // Another account's inbox is never shown, even for the moment before this one's arrives. Threads inside their Undo window read handled.
+  const mine = on && state.userId === userId ? state.inbox : undefined;
+  const inbox = mine && held.length ? { ...mine, threads: mine.threads.map(t => held.some(h => h.patientId === t.patientId) ? { ...t, handled: true, label: null } : t) } : mine;
+  return { on, inbox, error: on ? state.error : undefined, load, held: on ? held : [], heldFailed: on ? failed : undefined,
+    hold: (t: InboxThread) => holdHandled(t, userId), undo: undoHandled };
 }
 
 /** Threads waiting, urgent and the longest wait, the same numbers wherever messages are reached. */
@@ -76,34 +108,24 @@ function haptic(kind: "select" | "done") {
 const firstName = (name: string) => name.split(" ")[0]!;
 
 export function InboxScreen() {
-  const { on, inbox, error, load } = useInbox();
+  const { on, inbox, error, load, held, heldFailed: failed, hold, undo } = useInbox();
   const role = useRole();
   const canHandle = role.can("messages.handle");
   const { reducedMotion } = useAccessibleEffects();
   const layout = reducedMotion ? undefined : LAYOUT;
-  // Handled here but not yet confirmed by the server: shown handled at once, restored if the call fails.
-  const [pending, setPending] = useState<ReadonlySet<string>>(new Set());
-  const [failed, setFailed] = useState<string>();
 
   if (!on) return <Screen><Caption>Patient messages arrive from Sona Care in live mode (Settings), for doctors, nurses and management.</Caption></Screen>;
   if (!inbox) return <Screen>{error ? <ErrorLine text={`Messages didn't load: ${error}`} onRetry={() => { void load(); }} /> : <Caption icon={null}>Loading messages…</Caption>}</Screen>;
 
-  const threads = inbox.threads.map(t => pending.has(t.patientId) ? { ...t, handled: true, label: null } : t);
+  // Threads inside their Undo window already read handled (useInbox), here and on Today.
+  const threads = inbox.threads;
   const groups = sections(threads);
   const handled = threads.filter(t => t.handled).slice(0, 5);
-  const handle = async (t: InboxThread) => {
-    haptic("done"); setFailed(undefined);
-    setPending(s => new Set(s).add(t.patientId));
-    try {
-      await api.messages.handle({ patientId: t.patientId });
-      AccessibilityInfo.announceForAccessibility(`${firstName(t.name)}'s messages marked handled`);
-      await Promise.all([load(), refreshServerData().catch(() => {})]);
-    } catch (e) {
-      setFailed(`${firstName(t.name)}'s messages weren't marked handled: ${errorText(e)}`);
-    } finally {
-      setPending(s => { const next = new Set(s); next.delete(t.patientId); return next; });
-    }
+  const handle = (t: InboxThread) => {
+    haptic("done"); hold(t);
+    AccessibilityInfo.announceForAccessibility(`${firstName(t.name)}'s messages marked handled. Undo for 5 seconds`);
   };
+  const last = held.filter(h => !h.sending).at(-1);
   const line = insight(threads, inbox.now);
 
   return <Screen>
@@ -111,12 +133,22 @@ export function InboxScreen() {
       {line.split(" · ").map((part, i) => <Text key={part} style={{ color: part.endsWith("urgent") ? palette.red : palette.ink }}>{i ? " · " : ""}{part}</Text>)}
     </Text>
     {failed && <ErrorLine text={failed} />}
+    {/* Every handled swipe: 5 seconds to take it back (the handover deck's Undo), before the server hears of it. */}
+    {last && <Animated.View key={last.patientId} entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, duration: 260 })} exiting={FadeOut.duration(150)}
+      style={{ flexDirection: "row", alignItems: "center", gap: 10, minHeight: 44 }}>
+      <BrandIcon name="check" size={16} color={palette.green} strokeWidth={2.2} />
+      <Text accessibilityLiveRegion="polite" numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.muted }}>{firstName(last.name)}'s messages marked handled</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Undo, keep ${firstName(last.name)}'s messages waiting`} onPress={() => { haptic("select"); undo(last.patientId); }} hitSlop={8}
+        style={{ minHeight: 32, flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 11, borderRadius: 16, backgroundColor: "rgba(36,91,204,0.1)" }}>
+        <Icon name="arrow.uturn.backward" size={11} color={palette.blue} /><Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>Undo</Text>
+      </Pressable>
+    </Animated.View>}
     {groups.map(group => <Animated.View key={group.label} layout={layout} entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 8, duration: 320 })} exiting={reducedMotion ? FadeOut.duration(150) : fold} style={{ gap: 8 }}>
       <SectionHead label={group.label} count={group.rows.length} />
       <Surface layout={layout}>
         {/* The clip keeps a swiped row inside the glass. */}
         <View style={{ borderRadius: radius.group, overflow: "hidden" }}>
-          {group.rows.map((t, i) => <InboxRow key={t.patientId} thread={t} now={inbox.now} first={i === 0} canHandle={canHandle} onHandle={() => { void handle(t); }} />)}
+          {group.rows.map((t, i) => <InboxRow key={t.patientId} thread={t} now={inbox.now} first={i === 0} canHandle={canHandle} onHandle={() => handle(t)} />)}
         </View>
       </Surface>
     </Animated.View>)}
@@ -175,10 +207,17 @@ function InboxRow({ thread: t, now, first, canHandle, onHandle }: { thread: Inbo
   const wait = t.waitingSince ? waited(t.waitingSince, now) : "";
   const tx = useSharedValue(0), width = useSharedValue(360);
   const open = () => router.push(`/inbox/${t.patientId}`);
+  // An urgent thread asks once before it closes without a reply; the rest close on the swipe (each with Undo).
+  const ask = () => Alert.alert("Close without replying?", "It's marked urgent.", [{ text: "Reply first", style: "cancel", onPress: open }, { text: "Close it", style: "destructive", onPress: onHandle }]);
+  const request = () => urgent ? ask() : onHandle();
   const pan = Gesture.Pan().activeOffsetX(14).failOffsetY([-12, 12]).enabled(canHandle)
     .onUpdate(e => { const x = Math.max(0, e.translationX); tx.set(x > SWIPE ? SWIPE + (x - SWIPE) * 0.35 : x); })
     .onEnd(e => {
-      if (tx.value >= SWIPE || e.velocityX > 800) {
+      if (urgent && (tx.value >= SWIPE || e.velocityX > 800)) {
+        // Back into place while the question is asked; "Close it" then folds the row away.
+        tx.set(withSpring(0, { duration: 380, dampingRatio: 0.85 }));
+        scheduleOnRN(ask);
+      } else if (tx.value >= SWIPE || e.velocityX > 800) {
         // Slides out while the row folds away (its exiting animation).
         tx.set(withTiming(width.value, { duration: 220, easing: EASE_OUT }));
         scheduleOnRN(onHandle);
@@ -199,7 +238,7 @@ function InboxRow({ thread: t, now, first, canHandle, onHandle }: { thread: Inbo
       <Animated.View style={rowStyle}>
         <Pressable accessibilityRole="button" accessibilityLabel={a11y} accessibilityHint="Opens the thread and Sona's drafted reply"
           accessibilityActions={[{ name: "activate" }, ...canHandle ? [{ name: "handle", label: "Mark handled" }] : [], ...!urgent && t.reason ? [{ name: "why", label: "Why this triage" }] : []]}
-          onAccessibilityAction={e => e.nativeEvent.actionName === "handle" ? onHandle() : e.nativeEvent.actionName === "why" ? AccessibilityInfo.announceForAccessibility(t.reason ?? "") : open()}
+          onAccessibilityAction={e => e.nativeEvent.actionName === "handle" ? request() : e.nativeEvent.actionName === "why" ? AccessibilityInfo.announceForAccessibility(t.reason ?? "") : open()}
           onPress={open} onLongPress={() => { if (!urgent && t.reason) { haptic("select"); setWhy(w => !w); } }}
           style={({ pressed }) => ({ flexDirection: "row", gap: 12, paddingHorizontal: 16, paddingVertical: 14, minHeight: 72, opacity: pressed ? 0.7 : 1 })}>
           <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: style.wash, alignItems: "center", justifyContent: "center" }}>

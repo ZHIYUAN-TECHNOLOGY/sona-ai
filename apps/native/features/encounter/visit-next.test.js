@@ -1,5 +1,16 @@
 import { expect, test } from "bun:test";
-import { threadEnd } from "./visit-next";
+import { patients } from "./fixtures";
+import { askAfter, threadEnd } from "./visit-next";
+
+const kinds = ["briefing", "reasoning", "xray", "medication", "prescription", "followup", "note", "evidence"];
+test("Also ask only asks: prescribing never appears, since it acts", () => {
+  for (const patient of patients) for (const kind of kinds) expect(askAfter(kind, patient)).not.toContain("prescription");
+});
+test("the steroids-for-pneumonia question is offered only when the record documents pneumonia", () => {
+  expect(askAfter("reasoning", patients[0])).toContain("evidence");
+  expect(askAfter("reasoning", patients[1])).not.toContain("evidence"); // Daniel: incomplete intake, no pneumonia recorded
+  expect(askAfter("note", patients[1])).not.toContain("evidence");
+});
 
 const confirm = { tone: "caution", text: "2 medicines to confirm", action: "Confirm", target: "medication" };
 const base = { latest: "briefing", hasSteps: false, firstName: "Amelia", discharged: false, follow: ["reasoning", "xray", "medication"] };

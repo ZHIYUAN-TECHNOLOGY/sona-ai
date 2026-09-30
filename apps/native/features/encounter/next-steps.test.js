@@ -1,23 +1,45 @@
 import { expect, test } from "bun:test";
+import { getPrescriptionChecks } from "./clinical-state";
 import { patients } from "./fixtures";
-import { nextSteps } from "./next-steps";
+import { nextSteps, prescribingState } from "./next-steps";
 
 const base = { revision: 1, cards: [], requests: [], note: "", noteReviewed: false, transcript: [], recording: "idle", recordingSeconds: 0, language: "english", tasks: [] };
+const confirmed = [{ id: "medicine-0", name: "Salbutamol", ingredient: "salbutamol", formulation: "inhaler", confirmed: true }, { id: "medicine-1", name: "Cetirizine", ingredient: "cetirizine", formulation: "tablet", confirmed: true }];
+const eligible = { weightKg: "62", liverDisease: "no", kidneyDisease: "no", alcoholRisk: "no", paracetamolAllergy: "no" };
+const left = steps => steps.slice(0, -1).filter(step => !step.done).length;
 
-test("steps start at the first unconfirmed medicine and end at the simulation", () => {
+test("one step per card check, then prescribing: the bar's count is the card's Resolve N", () => {
+  for (const [encounter, patient] of [[base, patients[0]], [{ ...base, medicationEntries: confirmed, medicationCheckedRevision: 1 }, patients[0]], [base, patients[1]]]) {
+    const steps = nextSteps("medication", encounter, patient);
+    const blocked = getPrescriptionChecks(encounter, patient).filter(check => check.status === "blocked").length;
+    expect(steps).toHaveLength(getPrescriptionChecks(encounter, patient).length + 1);
+    expect(left(steps)).toBe(blocked);
+    expect(steps.at(-1)).toMatchObject({ id: "simulate", action: { type: "run", kind: "prescription" } });
+  }
+});
+
+test("the first unconfirmed medicine is confirmed from the bar; the review is the last check", () => {
   const steps = nextSteps("medication", base, patients[0]);
-  expect(steps[0].id).toBe("confirm-medicine-0");
-  expect(steps.find(step => !step.done).action.type).toBe("confirm");
-  expect(steps.at(-1).id).toBe("simulate");
+  expect(steps.find(step => step.id === "identity").action).toEqual({ label: "Confirm", type: "confirm", entryId: "medicine-0" });
+  expect(steps.at(-2).id).toBe("review");
+  // Daniel's missing indication and unknown tablet show too, as on his card.
+  expect(nextSteps("medication", base, patients[1]).find(step => !step.done).id).toBe("indication");
 });
 
-test("confirmed medicines and a current review move the next step to eligibility", () => {
-  const medicationEntries = [{ id: "medicine-0", name: "Salbutamol", ingredient: "salbutamol", formulation: "inhaler", confirmed: true }, { id: "medicine-1", name: "Cetirizine", ingredient: "cetirizine", formulation: "tablet", confirmed: true }];
-  const steps = nextSteps("prescription", { ...base, medicationEntries, medicationCheckedRevision: 1 }, patients[0]);
-  expect(steps.find(step => !step.done).id).toBe("eligibility");
+test("a role that can't prescribe sees the prescribing step locked", () => {
+  const ready = { ...base, medicationEntries: confirmed, medicationCheckedRevision: 1, prescriptionInputs: eligible };
+  expect(nextSteps("prescription", ready, patients[0], false).at(-1).locked).toBe(true);
+  expect(nextSteps("prescription", ready, patients[0]).at(-1).locked).toBeUndefined();
+  expect(prescribingState(ready, patients[0])).toBe("ready");
 });
 
-test("other answers and incomplete patients have no step bar", () => {
+test("a recorded risk leads as outside the supported case, not something to resolve", () => {
+  const risky = { ...base, medicationEntries: confirmed, medicationCheckedRevision: 1, prescriptionInputs: { ...eligible, liverDisease: "yes" } };
+  const steps = nextSteps("prescription", risky, patients[0]);
+  expect(steps.find(step => !step.done)).toMatchObject({ id: "liverDisease", stop: true, action: { type: "card" } });
+  expect(prescribingState(risky, patients[0])).toBe("outside");
+});
+
+test("other answers have no step bar", () => {
   expect(nextSteps("briefing", base, patients[0])).toBeUndefined();
-  expect(nextSteps("medication", base, patients[1])).toBeUndefined();
 });

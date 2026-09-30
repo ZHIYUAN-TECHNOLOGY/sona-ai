@@ -120,3 +120,14 @@ test("the trail is hospital-scoped, newest first, names who, and collapses back-
   expect(trail.lines.map(t => [t.who, t.did, t.times])).toEqual([["Test Manager Farah", "opened the note", 1], ["Dr Test Aisyah", "opened the visit", 2]]);
   expect((await other.accessLog.list({ patientId: "SYN-1042" })).lines).toEqual([]);
 });
+
+test("reassigning a task is for hands-on care; clearing a blocker owner is for the ward roles", async () => {
+  const { doctor, nurse, beds, manager } = await world();
+  const task = await doctor.tasks.create({ encounterId: "visit-1042", title: "Review", owner: "Clinic nurse", requestId: "r-upd" });
+  expect(await codeOf(nurse.tasks.update({ taskId: task.id, owner: "Pharmacist" }))).toBe("OK");
+  expect(await codeOf(beds.tasks.update({ taskId: task.id, owner: "Porter" }))).toBe("FORBIDDEN");
+  expect(await codeOf(manager.tasks.update({ taskId: task.id, due: "2026-10-01" }))).toBe("FORBIDDEN");
+  expect(await codeOf(beds.ward.unassignOwner({ blockerId: "adm-1042-gl" }))).toBe("OK");
+  expect(await codeOf(manager.ward.unassignOwner({ blockerId: "adm-1042-gl" }))).toBe("FORBIDDEN");
+  expect(needs("tasks.update")).toBe("Needs a doctor or a nurse");
+});

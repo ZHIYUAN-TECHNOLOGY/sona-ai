@@ -14,7 +14,7 @@ export type LeadState = {
   /** The X-ray card's image: the reference example, the clinician's own, an unsupported or empty sample, or none at all. */
   image?: "reference" | "attached" | "unsupported" | "no-finding" | "none";
   note?: "none" | "draft" | "reviewed";
-  prescription?: "created" | "failed" | "blocked";
+  prescription?: "created" | "failed" | "blocked" | "outside" | "ready";
   tasks?: { total: number; open: number };
   /** Evidence: the rehearsed or an authored answer (demo), live mode off, or the server's answer (enough to answer, or not). */
   evidence?: "rehearsed" | "authored" | "off" | "enough" | "not-enough";
@@ -58,6 +58,8 @@ export function leadFor(kind: Capability, patient: Patient, state: LeadState, pr
     }[state.image ?? "reference"];
     case "prescription": return state.prescription === "created" ? "The prescribing simulation passed every check and created a receipt."
       : state.prescription === "failed" ? "The prescribing simulation failed, so no receipt was created."
+      : state.prescription === "outside" ? "A recorded risk puts this case outside what the simulation supports, so nothing will be prescribed."
+      : state.prescription === "ready" ? "Every check has passed. Review the regimen below, then prescribe."
       : "Nothing is prescribed yet. The checks below say what still blocks the simulation.";
     case "followup": {
       const t = state.tasks;

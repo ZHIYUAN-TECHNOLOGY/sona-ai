@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { createTaskOnce, friendlyDate, mentionQuery, parseDuePhrase, taskDraftErrors, taskProposal } from "./state";
+import { changeReceipt, createTaskOnce, friendlyDate, mentionQuery, parseDuePhrase, taskDraftErrors, taskProposal } from "./state";
 
 const emptyEncounter = () => ({ revision: 1, cards: [], requests: [], note: "", noteReviewed: false, transcript: [], recording: "idle", recordingSeconds: 0, language: "english", tasks: [] });
 const draft = { operationId: "task-operation-1", title: "Follow-up review", owner: "Demo clinician", due: "2026-09-30" };
@@ -91,4 +91,12 @@ describe("friendlyDate", () => {
     expect(friendlyDate("Today", today)).toBe("Today");
     expect(friendlyDate("", today)).toBe("");
   });
+});
+
+it("says what changed and when after a task is reassigned or redated", () => {
+  const at = new Date(2026, 8, 29, 14, 5);
+  expect(changeReceipt({ owner: "Pharmacist" }, at)).toBe("Reassigned to Pharmacist · 14:05");
+  expect(changeReceipt({ due: "2026-09-30" }, at)).toBe("Due tomorrow · 14:05");
+  expect(changeReceipt({ due: "2026-10-02" }, at)).toBe("Due Fri 2 Oct · 14:05");
+  expect(changeReceipt({ owner: "Clinic nurse", due: "2026-09-29" }, new Date(2026, 8, 29, 9, 0))).toBe("Reassigned to Clinic nurse · Due today · 09:00");
 });

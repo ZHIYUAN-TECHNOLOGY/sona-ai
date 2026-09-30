@@ -1,4 +1,5 @@
-import type { Bed } from "@sona-ai/domain/ward";
+import type { Bed, Owner } from "@sona-ai/domain/ward";
+import { hhmm } from "@/features/tasks/state";
 
 export * from "@sona-ai/domain/ward";
 
@@ -60,3 +61,7 @@ export function bedRow(b: Bed) {
     flag: kind === "blocked" ? `${n} ${n === 1 ? "blocker" : "blockers"}` : kind === "fit" ? "Ready" : undefined,
   };
 }
+
+/** Who was told once a blocker takes (or loses) an owner: "Billing notified · 14:05"; demo mode says it was simulated. */
+export const ownerReceipt = (owner: Owner | undefined, at: Date, simulated: boolean) =>
+  `${owner ? `${owner} notified` : "Owner cleared"} · ${hhmm(at)}${simulated ? " · simulated, nothing sent" : ""}`;

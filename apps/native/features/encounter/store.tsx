@@ -3,7 +3,9 @@ import { createContext, use, useCallback, useEffect, useRef, useState, type Reac
 import { AppState } from "react-native";
 import type { Ack } from "@/features/day/counts";
 import { refreshPendingResult } from "@/features/day/model";
+import { errorText, useLive } from "@/features/live";
 import { useServerPatients } from "@/features/live/patients-sync";
+import { pushAndReview, simulateOnServer } from "@/features/live/prescribing-sync";
 import { patients, refreshDemoTimes } from "./fixtures";
 import { effectivePatient } from "./clinical-state";
 import { acceptCard, beginRequest, createCard, finishRequest, initialEncounters, issueSimulation, reviseEncounter, revealSections, queueAmendment, reconcileAmendment } from "./state";
@@ -16,6 +18,8 @@ type Store = {
   /** Updates the open visit, or `patientId`'s when given (a server read that may land after the visit changed). */
   updateEncounter: (update: (current: Encounter) => Encounter, revise?: boolean, patientId?: string) => void;
   runInPlace: (kind: "medication" | "prescription") => void;
+  /** Live mode: the server's refusal of the last in-place run, by patient. */
+  runErrors: Record<string, string | undefined>;
   voiceInput: boolean; setVoiceInput: (value: boolean) => void; compactResponses: boolean; setCompactResponses: (value: boolean) => void; simulateInvalid: boolean; setSimulateInvalid: (value: boolean) => void;
   simulateFailure: boolean; setSimulateFailure: (enabled: boolean) => void; showDemoControls: boolean; setShowDemoControls: (value: boolean) => void; reset: () => void;
   /** Demo mode's acknowledged results (by `resultKey`); live mode reads the server's acknowledgement instead. */
@@ -51,7 +55,8 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
   const cancel = useCallback(() => {
     clearTimers();
     const id = activeRef.current;
-    if (id) setEncounters(prev => ({ ...prev, [id]: { ...prev[id]!, amendmentOperation: prev[id]!.amendmentOperation && !["complete", "failed", "cancelled"].includes(prev[id]!.amendmentOperation!.phase) ? { ...prev[id]!.amendmentOperation!, phase: "cancelled", error: "Amendment cancelled. The earlier receipt is retained." } : prev[id]!.amendmentOperation, requests: prev[id]!.requests.map(r => r.status === "streaming" ? { ...r, status: "cancelled" } : r) } }));
+    // Cleared timers never settle an in-place run, so it stops here too rather than leaving the card busy.
+    if (id) setEncounters(prev => ({ ...prev, [id]: { ...prev[id]!, working: undefined, amendmentOperation: prev[id]!.amendmentOperation && !["complete", "failed", "cancelled"].includes(prev[id]!.amendmentOperation!.phase) ? { ...prev[id]!.amendmentOperation!, phase: "cancelled", error: "Amendment cancelled. The earlier receipt is retained." } : prev[id]!.amendmentOperation, requests: prev[id]!.requests.map(r => r.status === "streaming" ? { ...r, status: "cancelled" } : r) } }));
   }, [clearTimers]);
   const selectPatient = useCallback((id: string) => { if (!patients.some(p => p.id === id) || activeRef.current === id) return; cancel(); activeRef.current = id; setPatientId(id); }, [cancel]);
   // Home has no visit open: leaving stops any answer still arriving so nothing is left half-streamed.
@@ -67,7 +72,7 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
     const revision = stateRef.current[id]!.revision;
     const req: RequestState = { id: `request-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, kind, prompt, patientId: id, encounterId: patient.encounterId, revision, status: "streaming" };
     setEncounters(prev => {
-      const next = beginRequest(prev[id]!, req), operation = next.amendmentOperation;
+      const next = { ...beginRequest(prev[id]!, req), working: undefined }, operation = next.amendmentOperation; // clearTimers above stopped any in-place run
       if (operation && !["complete", "failed", "cancelled"].includes(operation.phase)) next.amendmentOperation = amendmentId === operation.id ? { ...operation, phase: kind === "medication" ? "reviewing" : "issuing", requestId: req.id } : { ...operation, phase: "cancelled", error: "A different request superseded the amendment. The earlier receipt is retained." };
       return { ...prev, [id]: next };
     });
@@ -93,26 +98,35 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
         if (kind === "briefing" || kind === "xray" || kind === "prescription") current = revealSections(current, req.id, 3);
         if (kind === "medication") current = { ...current, medicationCheckedRevision: revision };
         if (kind === "prescription") {
-          current = issueSimulation(current, patient, `simulation-${id}-${revision}`);
+          // Asking shows the card; only an amendment (its own reviewed form) issues here. Otherwise the card's Prescribe does.
+          if (amendmentId) current = issueSimulation(current, patient, `simulation-${id}-${revision}`);
           current = { ...current, cards: current.cards.map(card => card.requestId === req.id ? { ...card, prescription: current.prescription ? { ...current.prescription } : undefined } : card) };
         }
         return { ...prev, [id]: reconcileAmendment(finishRequest(current, req.id, "complete"), req.id) };
       });
     }, kind === "prescription" ? 1800 : 1150));
   }, [clearTimers, simulateFailure, simulateInvalid]);
-  // The prescribe card runs the review and the simulation where they are, without adding answers.
+  // The one way to run the review and the simulation, for the prescribe card and the next-step bar alike, without adding answers.
+  // Live: the server records the review and re-checks everything before it writes the receipt, and refuses a role that can't
+  // prescribe (both callers show that role a lock instead: useCanPrescribe).
+  const { on: live, user } = useLive();
+  const [runErrors, setRunErrors] = useState<Record<string, string | undefined>>({});
   const runInPlace = useCallback((kind: "medication" | "prescription") => {
     const id = activeRef.current; const base = patients.find(p => p.id === id); const patient = base ? effectivePatient(base, stateRef.current[base.id]) : undefined;
-    if (!id || !patient) return;
-    const revision = stateRef.current[id]!.revision;
+    if (!id || !patient || stateRef.current[id]!.working) return; // one run at a time, whichever button started it
+    const encounter = stateRef.current[id]!, revision = encounter.revision;
+    const settle = (update: (current: Encounter) => Encounter) => setEncounters(prev => ({ ...prev, [id]: update({ ...prev[id]!, working: undefined }) }));
+    const reviewed = (current: Encounter): Encounter => current.revision === revision ? { ...current, medicationCheckedRevision: revision, reviewInvalidated: false } : current;
+    setRunErrors(errors => ({ ...errors, [id]: undefined }));
     setEncounters(prev => ({ ...prev, [id]: { ...prev[id]!, working: kind } }));
-    timers.current.push(setTimeout(() => setEncounters(prev => {
-      let current: Encounter = { ...prev[id]!, working: undefined };
-      if (current.revision !== revision) return { ...prev, [id]: current };
-      current = kind === "medication" ? { ...current, medicationCheckedRevision: revision, reviewInvalidated: false } : issueSimulation(current, patient, `simulation-${id}-${revision}-${Date.now()}`);
-      return { ...prev, [id]: current };
-    }), kind === "prescription" ? 1500 : 900));
-  }, []);
+    if (live && user) {
+      const call = kind === "medication" ? pushAndReview(patient.encounterId, encounter).then(() => settle(reviewed))
+        : simulateOnServer(patient.encounterId, user.id).then(receipt => settle(current => issueSimulation(current, patient, receipt.requestId)));
+      call.catch(e => { setRunErrors(errors => ({ ...errors, [id]: errorText(e) })); settle(current => current); });
+      return;
+    }
+    timers.current.push(setTimeout(() => settle(current => current.revision !== revision ? current : kind === "medication" ? reviewed(current) : issueSimulation(current, patient, `simulation-${id}-${revision}-${Date.now()}`)), kind === "prescription" ? 1500 : 900));
+  }, [live, user]);
   const startAmendment = useCallback((reason: string) => {
     const id = activeRef.current; if (!id) return;
     const operationId = `amendment-${id}-${Date.now()}`;
@@ -131,6 +145,6 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
   const server = useServerPatients();
   const currentPatients = patients.map(p => effectivePatient(server?.[p.id] ? { ...p, ...server[p.id], time: p.time } : p, encounters[p.id]));
   const patient = currentPatients.find(p => p.id === patientId);
-  return <Context value={{ patient, patients: currentPatients, encounters, encounter: patientId ? encounters[patientId] : undefined, selectPatient, leaveVisit, request, cancel, startAmendment, updateEncounter, runInPlace, voiceInput, setVoiceInput, compactResponses, setCompactResponses, simulateInvalid, setSimulateInvalid, simulateFailure, setSimulateFailure, showDemoControls, setShowDemoControls, reset, resultAcks, acknowledgeDemoResult }}>{children}</Context>;
+  return <Context value={{ patient, patients: currentPatients, encounters, encounter: patientId ? encounters[patientId] : undefined, selectPatient, leaveVisit, request, cancel, startAmendment, updateEncounter, runInPlace, runErrors, voiceInput, setVoiceInput, compactResponses, setCompactResponses, simulateInvalid, setSimulateInvalid, simulateFailure, setSimulateFailure, showDemoControls, setShowDemoControls, reset, resultAcks, acknowledgeDemoResult }}>{children}</Context>;
 }
 export function useEncounter() { const value = use(Context); if (!value) throw new Error("EncounterProvider is required"); return value; }

@@ -28,3 +28,17 @@ export function buildHandover(patients: Patient[], encounters: Record<string, En
   }));
   return build(patients, withFindings, [PENDING_RESULT], WARD);
 }
+
+/**
+ * The deck's outcome: only patients handed over are accepted; "Discuss" ones stay with the outgoing
+ * clinician to talk through. `line` heads the summary, `receipt` stamps the acceptance.
+ */
+export function handoverTally(done: { id: string; decision: "handed" | "discuss" }[]) {
+  const handed = done.filter(d => d.decision === "handed").map(d => d.id), discuss = done.filter(d => d.decision === "discuss").map(d => d.id);
+  const patients = (n: number) => `${n} ${n === 1 ? "patient" : "patients"}`;
+  return {
+    handed, discuss,
+    line: `${handed.length} handed over${discuss.length ? ` · ${discuss.length} to discuss` : ""}`,
+    receipt: (receiver: string, at: string) => `${receiver} accepted ${patients(handed.length)} at ${at}.${discuss.length ? ` ${patients(discuss.length)} to discuss verbally.` : ""}`,
+  };
+}

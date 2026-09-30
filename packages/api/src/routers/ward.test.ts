@@ -88,3 +88,17 @@ test("the bed forecast reads the live ward, its owners and the hospital's demo c
   await db.update(hospitals).set({ clockOffsetMs: 11 * 3600_000 }).where(eq(hospitals.id, DEMO_HOSPITAL));
   expect(await api.ward.forecast()).toMatchObject({ today: { count: 2, byTime: "now" }, tomorrow: { count: 4 } });
 });
+
+test("unassigning a blocker clears its owner (the forecast counts it unowned again); it is idempotent and hospital-scoped", async () => {
+  const { db, api, client } = await signedIn();
+  await api.ward.assignOwner({ blockerId: "adm-1042-gl", owner: "Billing" });
+  await db.insert(hospitals).values({ id: "other", name: "Other Hospital (synthetic)" });
+  await db.insert(hospitalMembers).values({ userId: "dr-other", hospitalId: "other" });
+  expect(await client("dr-other").ward.unassignOwner({ blockerId: "adm-1042-gl" })).toEqual({ blockerId: "adm-1042-gl", cleared: false });
+  expect((await api.tasks.list()).map(t => t.owner)).toEqual(["Billing"]);
+  expect(await api.ward.unassignOwner({ blockerId: "adm-1042-gl" })).toEqual({ blockerId: "adm-1042-gl", cleared: true });
+  expect(await api.ward.unassignOwner({ blockerId: "adm-1042-gl" })).toEqual({ blockerId: "adm-1042-gl", cleared: false });
+  expect(await api.tasks.list()).toEqual([]);
+  // Assigning again after a clear makes a fresh owner task.
+  expect((await api.ward.assignOwner({ blockerId: "adm-1042-gl", owner: "Nurse" })).owner).toBe("Nurse");
+});

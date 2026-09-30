@@ -23,3 +23,12 @@ export function dueGroup(due: string, today = new Date()): DueGroup {
   const week = localDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7));
   return due <= week ? "week" : "later";
 }
+
+/**
+ * Open rows ranked by when they're due: Overdue, Today, This week, Later, soonest first within each
+ * (the Tasks page, for one visit or across all of them). Empty groups drop out; completed rows are left out.
+ */
+export function rankByDue<T extends { task: Pick<Task, "due" | "completed"> }>(rows: T[], today = new Date()) {
+  const open = rows.filter(r => !r.task.completed).sort((a, b) => a.task.due.localeCompare(b.task.due));
+  return DUE_GROUPS.map(g => ({ ...g, rows: open.filter(r => dueGroup(r.task.due, today) === g.id) })).filter(g => g.rows.length);
+}

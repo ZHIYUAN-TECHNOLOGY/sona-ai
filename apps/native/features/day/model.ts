@@ -1,5 +1,5 @@
 import { testInSentence } from "@sona-ai/domain/handover";
-import { GL_DENIED } from "@sona-ai/domain/ward";
+import { GL_DENIED, SUGGESTED, type Bed, type Owner } from "@sona-ai/domain/ward";
 import { defaultMedications } from "@/features/encounter/clinical-state";
 import { demoTime } from "@/features/encounter/fixtures";
 import type { Encounter, Patient, Task } from "@/features/encounter/types";
@@ -172,4 +172,40 @@ export function rankOtherDay(offset: number, visits: ScheduleVisit[]): DayItem[]
     reason: offset < 0 ? "Seen · note signed" : v.incomplete ? "Prepare · history to take" : "Prepare · review notes", tone: offset > 0 && v.incomplete ? "soon" as const : "routine" as const,
     score: offset > 0 && v.incomplete ? 60 - i : 40 - i, patientId: v.patientId, open: {},
   })).sort((a, b) => b.score - a.score);
+}
+
+/**
+ * Snooze: the row sleeps an hour, then comes back by itself (Today's minute timer re-checks). Urgent rows
+ * never sleep: they can't be snoozed, and one that turned urgent while asleep comes straight back.
+ */
+export const SNOOZE_MS = 60 * 60_000;
+export const canSnooze = (item: Pick<DayItem, "tone">) => item.tone !== "urgent";
+/** Wake times (ms) by row ID. */
+export type Snoozed = Record<string, number>;
+export const snooze = (snoozed: Snoozed, item: DayItem, now: number): Snoozed => canSnooze(item) ? { ...snoozed, [item.id]: now + SNOOZE_MS } : snoozed;
+/** The rows awake now, and the ones still asleep (with when each wakes). */
+export function splitSnoozed(items: DayItem[], snoozed: Snoozed, now: number) {
+  const asleep = (item: DayItem) => canSnooze(item) && (snoozed[item.id] ?? 0) > now;
+  return { active: items.filter(item => !asleep(item)), later: items.filter(asleep).map(item => ({ item, wakes: snoozed[item.id]! })) };
+}
+
+/** What each home key opens, as a permission: a key whose page the role can't read is hidden, not left to refuse (a bed manager keeps the Ward). */
+const NEEDS: Record<string, string> = { patients: "encounter.get", results: "results.list", handover: "handover.list", messages: "messages.inbox" };
+export const usableKeys = <T extends { key: string }>(actions: T[], can: (path: string) => boolean) => actions.filter(a => !NEEDS[a.key] || can(NEEDS[a.key]!));
+
+/** Blocker owners saved on the server: each is a "blocker-owner" task whose source is the blocker. */
+export const ownersOf = (tasks: { kind?: string | null; sourceId?: string | null; owner: string }[]): Record<string, string> =>
+  Object.fromEntries(tasks.filter(t => t.kind === "blocker-owner" && t.sourceId).map(t => [t.sourceId!, t.owner]));
+
+/**
+ * A bed manager's Today after the ward line: the blocked discharges with a blocker nobody owns yet, each
+ * with the team suggested for it, most bed-hours waiting first. Clinical rows (results, visits, medicines)
+ * are not theirs to open, so they are never listed.
+ */
+export type Unowned = { bed: string; name: string; hours: number; blockers: { id: string; label: string; suggested: Owner }[] };
+export function unownedBlocked(beds: Bed[], owners: Record<string, string | undefined>): Unowned[] {
+  return beds.filter(b => b.status === "fit" && b.name && b.blockers.length).flatMap(b => {
+    const open = b.blockers.filter(x => !owners[x.id]);
+    return open.length ? [{ bed: b.bed, name: b.name!, hours: b.waitingHours ?? 0, blockers: open.map(x => ({ id: x.id, label: x.label, suggested: SUGGESTED[x.kind] })) }] : [];
+  }).sort((a, b) => b.hours - a.hours);
 }

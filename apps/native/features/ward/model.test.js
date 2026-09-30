@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { newEncounter, patients } from "@/features/encounter/fixtures";
 import { EMPTY_DISCHARGE } from "@/features/discharge/model";
-import { asFilter, bedBar, bedRow, defaultFilter, emptyLine, filterBeds, filterSegments, huddle, wardBeds, wardSummary } from "./model";
+import { asFilter, bedBar, bedRow, defaultFilter, emptyLine, filterBeds, filterSegments, huddle, ownerReceipt, wardBeds, wardSummary } from "./model";
 
 test("the bed bar has one segment per bed, blocked first, and a legend that adds up", () => {
   const bar = bedBar(wardBeds(patients, {}));
@@ -53,4 +53,11 @@ test("the huddle counts blockers without an owner", () => {
   const beds = wardBeds(patients, {});
   expect(huddle(beds, {})[2]).toBe("7 blockers have no owner yet.");
   expect(huddle(beds, { "b6-gl": "Billing" })[2]).toBe("6 blockers have no owner yet.");
+});
+
+test("assigning says who was told and when; demo mode says nothing was sent", () => {
+  const at = new Date(2026, 8, 30, 14, 5);
+  expect(ownerReceipt("Billing", at, false)).toBe("Billing notified · 14:05");
+  expect(ownerReceipt("Porter", at, true)).toBe("Porter notified · 14:05 · simulated, nothing sent");
+  expect(ownerReceipt(undefined, at, false)).toBe("Owner cleared · 14:05");
 });

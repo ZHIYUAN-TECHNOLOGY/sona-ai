@@ -66,6 +66,16 @@ export function parseDuePhrase(text: string, today = new Date()): { phrase: stri
   return { phrase, due: at(((day - today.getDay() + 7) % 7) || 7) };
 }
 
+/** "14:05" on the device clock. */
+export const hhmm = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+
+/** The receipt under a task once it is reassigned or redated: "Reassigned to Pharmacist · 14:05", "Due tomorrow · 14:05". */
+export function changeReceipt(change: { owner?: string; due?: string }, at: Date, today = at) {
+  const when = change.due === undefined ? "" : friendlyDate(change.due, today);
+  const due = /^(Today|Tomorrow)$/.test(when) ? when.toLowerCase() : when;
+  return [change.owner && `Reassigned to ${change.owner}`, change.due !== undefined && `Due ${due}`, hhmm(at)].filter(Boolean).join(" · ");
+}
+
 /** The "@query" being typed at the end of a task sentence, if any. */
 export function mentionQuery(text: string): string | undefined {
   return text.match(/(?:^|\s)@([^\s@]*)$/)?.[1];

@@ -2,7 +2,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient, Task } from "@/features/encounter/types";
 import { visitTasks } from "@/features/day/counts";
-import { api, errorText, useLive } from ".";
+import { api, useLive } from ".";
 import type { ServerAppointment, ServerResult, ServerTask } from "./day";
 
 /**
@@ -24,9 +24,12 @@ const subscribe = (l: () => void) => { listeners.add(l); return () => { listener
 export const serverSnapshot = () => snapshot;
 export const serverDayCount = (date: string) => days.get(date)?.length ?? 0;
 
+/** A read this role may not make is simply empty (a bed manager has no results); any other failure still fails the refresh. */
+const unlessRefused = <T>(read: Promise<T[]>) => read.catch(e => (e as { code?: string } | undefined)?.code === "FORBIDDEN" ? [] as T[] : Promise.reject(e));
+
 export async function refreshServerData() {
-  // A server without booking yet still serves My Day.
-  const [tasks, results, bookings] = await Promise.all([api.tasks.list(), api.results.list(), api.bookings.list().catch(() => [])]);
+  // Each read stands alone: one the role is refused never drops Today back to the demo data. A server without booking yet still serves My Day.
+  const [tasks, results, bookings] = await Promise.all([unlessRefused(api.tasks.list()), unlessRefused(api.results.list()), api.bookings.list().catch(() => [])]);
   snapshot = { tasks, results, bookings };
   notify();
 }
@@ -79,15 +82,8 @@ export async function decideBooking(input: Parameters<typeof api.bookings.decide
   return decided;
 }
 
-/**
- * A result acknowledgement the server refused or never answered: the result stays unacknowledged,
- * and the Results key and My Day say so (with the reason) until a retry lands.
- */
-let ackFailed: { id: string; error: string } | undefined;
-export const useAckFailed = () => useSyncExternalStore(subscribe, () => ackFailed);
+/** Acknowledges a result for the team (the briefing's and the critical alert's button); a refusal throws for the caller to show. */
 export async function acknowledgeResult(resultId: string) {
-  try { await api.results.acknowledge({ resultId }); }
-  catch (e) { ackFailed = { id: resultId, error: errorText(e) }; notify(); throw e; }
-  if (ackFailed) { ackFailed = undefined; notify(); }
+  await api.results.acknowledge({ resultId });
   await refreshServerData();
 }

@@ -47,6 +47,13 @@ export function readNoteSections(note: string): NoteSections {
 export function serializeNoteSections(sections: NoteSections): string {
   return sectionKeys.map(key => `${key.toUpperCase()}\n${sections[key]}`).join("\n\n");
 }
+/**
+ * A note edit: the draft changes and needs review again, but the encounter is not revised. The note
+ * feeds none of the prescribing checks, so typing must not clear the medication review or cancel an amendment.
+ */
+export function editNote(encounter: Encounter, sections: NoteSections, fromSample?: boolean): Encounter {
+  return { ...encounter, noteSectionDraft: sections, note: serializeNoteSections(sections), noteReviewed: false, noteSaveStatus: "idle", ...(fromSample !== undefined && { noteFromSample: fromSample }) };
+}
 
 export function elapsedLabel(seconds: number) {
   return `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;

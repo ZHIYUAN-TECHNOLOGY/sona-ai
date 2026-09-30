@@ -12,14 +12,15 @@ import { SourcesPill } from "@/components/sona/sources";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { ErrorLine } from "@/components/sona/parts";
-import { Action, Icon, Insight, Tone, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Icon, Insight, Notice, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { useContinue } from "@/features/patients/continue-store";
 import { useEncounter } from "@/features/encounter/store";
 import { useFindings } from "@/features/live/findings-sync";
 import { errorText } from "@/features/live";
 import { useLiveHandover } from "@/features/live/handover-sync";
-import { LockedAction, useRole } from "@/features/live/roles";
-import { buildHandover, type HandoverCard as Sbar } from "./model";
+import { useRole } from "@/features/live/roles";
+import { hhmm } from "@/features/tasks/state";
+import { buildHandover, handoverTally, type HandoverCard as Sbar } from "./model";
 
 /*
  * Shift handover (after Slack's swipe-to-triage cards): one SBAR card per patient on a stack.
@@ -137,13 +138,13 @@ export function HandoverScreen() {
   const discussTint = useAnimatedStyle(() => ({ opacity: interpolate(x.value, [-110, -20], [0.92, 0], "clamp") }));
   const nextStyle = useAnimatedStyle(() => ({ transform: [{ translateY: interpolate(Math.abs(x.value), [0, 200], [10, 0], "clamp") }, { scale: interpolate(Math.abs(x.value), [0, 200], [0.95, 1], "clamp") }] }));
   const undo = () => { haptic(); setDone(list => list.slice(0, -1)); };
-  const handed = done.filter(d => d.decision === "handed").length;
-  const clock = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  // Only patients handed over are accepted; "Discuss" ones stay with the outgoing clinician.
+  const tally = handoverTally(done);
   const accept = () => {
-    if (!server.live) { haptic("success"); setAccepted(clock(new Date())); return; }
+    if (!server.live) { haptic("success"); setAccepted(hhmm(new Date())); return; }
     // A refusal shows under the hold button with Retry; nothing is stamped until the server accepts.
     setAcceptError(undefined);
-    server.accept(cards.map(c => c.id), receiver).then(at => { haptic("success"); setAccepted(clock(at)); }, e => setAcceptError(`Not accepted: ${errorText(e)}`));
+    server.accept(tally.handed, receiver).then(at => { haptic("success"); setAccepted(hhmm(at)); }, e => setAcceptError(`Not accepted: ${errorText(e)}`));
   };
 
   // Live: not readable for this role, still loading, failed, or nothing to hand over. One calm line each.
@@ -158,10 +159,19 @@ export function HandoverScreen() {
         <Text style={{ ...type.callout, color: palette.muted }}>No patients on your list this shift. New admissions and results will appear here.</Text>
       </Animated.View>}
   </View>;
-  const discuss = done.filter(d => d.decision === "discuss");
   // Insight over the whole list (not what's left), so it holds still while the deck moves.
   const watch = cards.filter(c => c.priority === "watch").length, items = cards.reduce((sum, c) => sum + c.recommendation.length, 0);
   const insight = [`${cards.length} ${cards.length === 1 ? "patient" : "patients"}`, watch ? <Tone key="watch" of="urgent">{watch} to watch</Tone> : null, items ? `${items} open ${items === 1 ? "item" : "items"}` : null].filter(Boolean);
+
+  // Read only (management): the cards to read, one under another; no triage and no acceptance.
+  if (server.live && !role.can("handover.accept")) return <View style={{ flex: 1, backgroundColor: palette.canvas, paddingTop: insets.top + 56, paddingHorizontal: 20, gap: 14 }}>
+    <Stack.Screen options={{ title: "Shift handover" }} />
+    <Insight>{insight.map((part, i) => [i ? " · " : "", part])}</Insight>
+    <Notice>Read only. {role.why("handover.accept")}</Notice>
+    <ScrollView contentContainerStyle={{ gap: 14, paddingBottom: Math.max(insets.bottom, 16) + 20 }} showsVerticalScrollIndicator={false}>
+      {cards.map(card => <View key={card.id} style={{ height: 380 }}><HandoverCard card={card} /></View>)}
+    </ScrollView>
+  </View>;
 
   return <View style={{ flex: 1, backgroundColor: palette.canvas, paddingTop: insets.top + 56, paddingBottom: Math.max(insets.bottom, 16), paddingHorizontal: 20, gap: 14 }}>
     <Stack.Screen options={{ title: "Shift handover" }} />
@@ -196,8 +206,8 @@ export function HandoverScreen() {
       </View>
     </> : <ScrollView contentContainerStyle={{ gap: 14, paddingBottom: 20 }}>
       <Animated.View entering={reducedMotion ? FadeIn : riseIn({ distance: 12, duration: 380 })} style={{ borderRadius: radius.sheet, borderCurve: "continuous", backgroundColor: palette.white, padding: 20, gap: 12, boxShadow: "0 10px 30px rgba(24,32,48,0.08)" }}>
-        <Text style={{ ...type.heading, color: palette.ink }}>{handed} handed over{discuss.length ? ` · ${discuss.length} to discuss` : ""}</Text>
-        {discuss.length > 0 && <Text style={{ ...type.callout, color: palette.muted }}>Talk through: {discuss.map(d => cards.find(c => c.id === d.id)?.name).join(", ")}</Text>}
+        <Text style={{ ...type.heading, color: palette.ink }}>{tally.line}</Text>
+        {tally.discuss.length > 0 && <Text style={{ ...type.callout, color: palette.muted }}>Talk through: {tally.discuss.map(id => cards.find(c => c.id === id)?.name).join(", ")}</Text>}
         <View style={{ gap: 6 }}>
           <Text style={{ ...type.overline, color: palette.muted }}>Receiving clinician</Text>
           <TextInput value={receiver} onChangeText={setReceiver} editable={!accepted} accessibilityLabel="Receiving clinician" style={{ minHeight: 48, borderRadius: 14, paddingHorizontal: 14, fontSize: 16, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
@@ -206,11 +216,12 @@ export function HandoverScreen() {
       {accepted ? <Animated.View entering={reducedMotion ? FadeIn : ZoomIn.springify().duration(420).dampingRatio(0.72)} accessibilityLiveRegion="polite"
         style={{ borderRadius: radius.sheet, borderCurve: "continuous", backgroundColor: palette.green, padding: 20, gap: 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}><Icon name="checkmark.seal.fill" size={26} color={palette.white} /><Text style={{ ...type.heading, color: palette.white }}>Handover acknowledged</Text></View>
-        <Text style={{ ...type.callout, color: "rgba(255,255,255,0.9)" }}>{receiver} accepted {cards.length} patients at {accepted}. Each patient’s open items are on their card.</Text>
+        <Text style={{ ...type.callout, color: "rgba(255,255,255,0.9)" }}>{tally.receipt(receiver, accepted)}</Text>
         <Pressable accessibilityRole="button" onPress={() => router.back()} style={{ alignSelf: "flex-start", marginTop: 6, minHeight: 40, paddingHorizontal: 16, borderRadius: 20, justifyContent: "center", backgroundColor: "rgba(255,255,255,0.18)" }}>
           <Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>Done</Text>
         </Pressable>
-      </Animated.View> : server.live && !role.can("handover.accept") ? <LockedAction label="Needs a doctor or a nurse to accept" path="handover.accept" height={56} /> : <HoldToAccept onDone={accept} />}
+      </Animated.View> : tally.handed.length ? <HoldToAccept onDone={accept} />
+        : <Text style={{ ...type.callout, color: palette.muted }}>Nobody handed over yet. Undo to hand someone over, or talk them all through.</Text>}
       {acceptError && !accepted && <ErrorLine text={acceptError} onRetry={accept} />}
       <Text style={{ ...type.caption, color: palette.muted }}>{server.live ? "Clinic patients from today’s records." : "Clinic patients come from today’s visits; ward patients are examples without a record to open."}</Text>
     </ScrollView>}

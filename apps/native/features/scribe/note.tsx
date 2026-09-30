@@ -10,7 +10,7 @@ import { palette, type } from "@/components/sona/theme";
 import { Action, Chip, Expand, Glass, glass, Icon, Insight, Notice, Screen, SourceLink, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
-import { buildDraft, readNoteSections, scriptFor, sectionKeys, serializeNoteSections, type NoteSections } from "./model";
+import { buildDraft, editNote, readNoteSections, scriptFor, sectionKeys, serializeNoteSections, type NoteSections } from "./model";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { haptic, noteMeta, StateLine } from "./parts";
 import { api, errorText, useLive } from "@/features/live";
@@ -143,10 +143,7 @@ export function NoteScreen() {
   const status = encounter.noteSaveStatus ?? "idle";
   const saving = status === "saving";
   const editSection = (key: keyof NoteSections, value: string) => {
-    updateEncounter(current => {
-      const next = { ...(current.noteSectionDraft ?? current.noteSections ?? readNoteSections(current.note)), [key]: value };
-      return { ...current, noteSectionDraft: next, note: serializeNoteSections(next), noteReviewed: false, noteSaveStatus: "idle" };
-    }, true);
+    updateEncounter(current => editNote(current, { ...(current.noteSectionDraft ?? current.noteSections ?? readNoteSections(current.note)), [key]: value }));
   };
   const save = () => {
     Keyboard.dismiss(); failSave.current = failNextSave; setFailNextSave(false);
@@ -168,7 +165,7 @@ export function NoteScreen() {
         <Text selectable style={{ fontSize: 13, lineHeight: 19, color: palette.muted }}>{live ? "Verify drafts against source." : "Verify drafts against source · local session only, no record connected."}</Text>
         {/* An empty note pulls in the consultation in one tap (the scripted sample until a visit is captured). */}
         {canWrite && !hasContent && !encounter.transcriptDraft && <View style={{ gap: 6 }}>
-          <Action label="Draft from consultation" icon="waveform" onPress={() => { haptic("done"); const draft = readNoteSections(buildDraft(consultation)); updateEncounter(current => ({ ...current, noteSectionDraft: draft, note: serializeNoteSections(draft), noteReviewed: false, noteSaveStatus: "idle", noteFromSample: !current.transcript.length }), true); }} />
+          <Action label="Draft from consultation" icon="waveform" onPress={() => { haptic("done"); const draft = readNoteSections(buildDraft(consultation)); updateEncounter(current => editNote(current, draft, !current.transcript.length)); }} />
           <SampleLabel source={encounter.transcript.length ? undefined : "fixture"} what="scribe" />
         </View>}
         {/* A note drafted from the scripted sample stays labelled until the clinician marks it reviewed. */}
@@ -204,7 +201,7 @@ export function NoteScreen() {
               <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{noteMeta[key].title}</Text>
               <Text selectable style={{ fontSize: 15, lineHeight: 22, color: suggestion[key].trim() ? palette.ink : palette.muted }}>{suggestion[key].trim() || "Left empty for you"}</Text>
             </View>)}
-            <Action label="Replace note with this suggestion" onPress={() => { haptic("done"); updateEncounter(current => ({ ...current, noteSectionDraft: suggestion, note: serializeNoteSections(suggestion), noteReviewed: false, noteSaveStatus: "idle", noteFromSample: !current.transcript.length }), true); setSuggestion(undefined); }} />
+            <Action label="Replace note with this suggestion" onPress={() => { haptic("done"); updateEncounter(current => editNote(current, suggestion, !current.transcript.length)); setSuggestion(undefined); }} />
             <Action label="Keep current note" secondary onPress={() => setSuggestion(undefined)} />
           </Surface>
         </Expand>}

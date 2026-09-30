@@ -25,7 +25,8 @@ import { useLiveHuddle } from "@/features/live/model-sync";
 import { useLiveChanges } from "@/features/live/channel";
 import { BedBar, ForecastTimeline, KIND, ThisWeek, useForecast, wardLine } from "./ops";
 import { withFindingBlockers } from "@/features/day/counts";
-import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedRow, defaultFilter, emptyLine, filterBeds, huddle, wardBeds, type Bed, type Owner, type WardFilter } from "./model";
+import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedRow, defaultFilter, emptyLine, filterBeds, huddle, ownerReceipt, wardBeds, type Bed, type Owner, type WardFilter } from "./model";
+import { useWardOwners } from "./owners";
 
 /*
  * Ward command view: one insight line on where the ward stands, the huddle brief as the page's one
@@ -60,7 +61,6 @@ export function WardScreen() {
   const serverBeds = useServerBeds(findings);
   // Demo mode puts the X-ray's open findings on Bed 6, as the server does, so its count matches its Discharge page.
   const beds = serverBeds ?? withFindingBlockers(wardBeds(patients, encounters), findings);
-  const [owners, setOwners] = useState<Record<string, Owner | undefined>>({});
   const [briefed, setBriefed] = useState(false);
   const [open, setOpen] = useState<{ bed: string; from: Rect; focus?: string }>();
   const root = useRef<View>(null);
@@ -69,7 +69,7 @@ export function WardScreen() {
   const tiles = useRef<Record<string, View | null>>({});
   const p = useSharedValue(0);
   // Opened from My Day's legend the ward starts on that status; otherwise on Blocked when anything is.
-  const params = useLocalSearchParams<{ filter?: string; at?: string }>();
+  const params = useLocalSearchParams<{ filter?: string; at?: string; bed?: string }>();
   const [picked, setPicked] = useState<WardFilter>();
   const filter = picked ?? asFilter(params.filter) ?? defaultFilter(beds);
   const shown = filterBeds(beds, filter);
@@ -92,22 +92,28 @@ export function WardScreen() {
   };
   const { on: live } = useLive();
   const { can } = useRole();
+  // Owners outlive the screen (a shared store), so leaving the Ward and coming back keeps them.
+  const { owners, told, setOwners, setTold } = useWardOwners(live);
   const [assignError, setAssignError] = useState<{ id: string; owner: Owner; text: string }>();
-  // Live: server beds carry the server's blocker IDs, so each owner is a real task on the server.
-  // A refusal puts the previous owner back and says why under the blocker, with Retry.
+  // Live: server beds carry the server's blocker IDs, so each owner is a real task on the server;
+  // tapping the chosen owner again clears it there too. A refusal puts the previous owner back and
+  // says why under the blocker, with Retry. The receipt says who was told once the write lands.
   const assign = (id: string, owner: Owner) => {
-    const before = owners[id];
-    haptic("select"); setAssignError(undefined); setOwners(o => ({ ...o, [id]: before === owner ? undefined : owner }));
-    if (serverBeds) void api.ward.assignOwner({ blockerId: id, owner }).catch(e => { setOwners(o => ({ ...o, [id]: before })); setAssignError({ id, owner, text: `Not assigned: ${errorText(e)}` }); });
+    const before = owners[id], next = before === owner ? undefined : owner;
+    haptic("select"); setAssignError(undefined); setOwners(o => ({ ...o, [id]: next })); setTold(id, undefined);
+    if (!serverBeds) { setTold(id, ownerReceipt(next, new Date(), true)); return; }
+    (next ? api.ward.assignOwner({ blockerId: id, owner: next }) : api.ward.unassignOwner({ blockerId: id })).then(
+      () => setTold(id, ownerReceipt(next, new Date(), false)),
+      e => { setOwners(o => ({ ...o, [id]: before })); setAssignError({ id, owner, text: `${next ? "Not assigned" : "Not cleared"}: ${errorText(e)}` }); });
   };
-  // Live: owners already on the server (they are blocker-owner tasks) show on open, so a reload keeps them.
+  // Live: owners on the server (they are blocker-owner tasks) show on open, so a reload keeps them and a clear elsewhere shows.
   useEffect(() => {
     if (!live) return;
     api.tasks.list().then(tasks => {
       const saved = tasks.filter(t => t.kind === "blocker-owner" && t.sourceId);
-      setOwners(o => ({ ...o, ...Object.fromEntries(saved.map(t => [t.sourceId!, t.owner as Owner])) }));
+      setOwners(() => Object.fromEntries(saved.map(t => [t.sourceId!, t.owner as Owner])));
     }).catch(() => {});
-  }, [live]);
+  }, [live]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const gridStyle = useAnimatedStyle(() => ({ opacity: interpolate(p.value, [0, 1], [1, 0.2]), transform: [{ scale: interpolate(p.value, [0, 1], [1, 0.97]) }] }));
   // Live mode: once opened, the brief is the server's over its own ward and owners; the local rule stays the fallback (and the collapsed preview).
@@ -120,13 +126,22 @@ export function WardScreen() {
   const current = open && beds.find(b => b.bed === open.bed);
   const forecast = useForecast(beds, findings, owners);
   // "Frees fastest" opens the bed's card at the blocker; a row the filter hides shows under All first, then opens once mounted.
-  const openAt = (id: string, blockerId: string) => {
+  const openAt = (id: string, blockerId?: string) => {
     const bed = beds.find(b => b.bed === id);
     if (!bed) return;
     if (tiles.current[id]) return openBed(bed, blockerId);
     setPicked("all");
     setTimeout(() => openBed(bed, blockerId), 80);
   };
+  // Opened from Today's "Open Bed N" (`bed`: "Bed 6" or "6"): that bed's card opens on arrival, once;
+  // remembered rather than cleared from the route, since navigating during the first render (a cold link) throws.
+  const openedFor = useRef<string>(undefined);
+  useEffect(() => {
+    const bed = params.bed && openedFor.current !== params.bed && beds.find(b => b.bed === params.bed || b.bed === `Bed ${params.bed}`);
+    if (!bed) return;
+    openedFor.current = params.bed;
+    setTimeout(() => openAt(bed.bed), 120); // after the rows have laid out, so the card grows from its row
+  }, [params.bed, beds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <WithSona scope="ward" hidden={Boolean(open)} answers={[soonest(beds)]} onTab={t => { const f = asFilter(t); if (f) setPicked(f); }}>
   <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }}>
@@ -193,7 +208,7 @@ export function WardScreen() {
       </ScrollView>
     </Animated.View>
 
-    {open && current && <BedCard bed={current} focus={open.focus} from={open.from} to={{ x: 12, y: insets.top + 52, w: width - 24, h: height - insets.top - 52 - insets.bottom - 12 }} p={p} owners={owners} onAssign={can("ward.assignOwner") ? assign : undefined} assignError={assignError} onClose={close}
+    {open && current && <BedCard bed={current} focus={open.focus} from={open.from} to={{ x: 12, y: insets.top + 52, w: width - 24, h: height - insets.top - 52 - insets.bottom - 12 }} p={p} owners={owners} told={told} onAssign={can("ward.assignOwner") ? assign : undefined} assignError={assignError} onClose={close}
       // The card closes behind the discharge screen, so coming back shows the ward (and the bed it freed), not a stale card.
       // Only a patient the app holds a visit for (Amelia) has a discharge screen to open.
       onDischarge={patients.some(x => x.id === current.patientId) ? () => { selectPatient(current.patientId!); router.push("/discharge"); p.set(0); setOpen(undefined); } : undefined} />}
@@ -214,9 +229,9 @@ function RowFace({ bed }: { bed: Bed }) {
   </View>;
 }
 
-function BedCard({ bed, focus, from, to, p, owners, onAssign, assignError, onClose, onDischarge }: {
+function BedCard({ bed, focus, from, to, p, owners, told, onAssign, assignError, onClose, onDischarge }: {
   // `focus`: the blocker it was opened for (the forecast's "Frees fastest"), tinted so the eye lands on it.
-  bed: Bed; focus?: string; from: Rect; to: Rect; p: ReturnType<typeof useSharedValue<number>>; owners: Record<string, Owner | undefined>;
+  bed: Bed; focus?: string; from: Rect; to: Rect; p: ReturnType<typeof useSharedValue<number>>; owners: Record<string, Owner | undefined>; told: Record<string, string | undefined>;
   // Without onAssign (a role the server refuses) the owners read only.
   onAssign?: (id: string, owner: Owner) => void; assignError?: { id: string; owner: Owner; text: string }; onClose: () => void; onDischarge?: () => void;
 }) {
@@ -266,11 +281,12 @@ function BedCard({ bed, focus, from, to, p, owners, onAssign, assignError, onClo
               </Animated.View>}
             </View>
             {onAssign && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-              {OWNERS.map(o => { const on = owner === o, suggested = !owner && SUGGESTED[b.kind] === o; return <Pressable key={o} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`Assign ${b.label} to ${o}`} onPress={() => onAssign(b.id, o)} hitSlop={4}
+              {OWNERS.map(o => { const on = owner === o, suggested = !owner && SUGGESTED[b.kind] === o; return <Pressable key={o} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={on ? `${b.label}, owned by ${o}. Clear owner` : `Assign ${b.label} to ${o}`} onPress={() => onAssign(b.id, o)} hitSlop={4}
                 style={{ height: 32, paddingHorizontal: 12, borderRadius: 16, justifyContent: "center", borderWidth: 1, borderColor: suggested ? "rgba(36,91,204,0.35)" : "transparent", backgroundColor: on ? palette.blue : "rgba(20,28,40,0.05)" }}>
                 <Text style={{ ...type.footnote, fontWeight: "600", color: on ? palette.white : suggested ? palette.blue : palette.ink }}>{o}</Text>
               </Pressable>; })}
             </View>}
+            {told[b.id] && assignError?.id !== b.id && <Animated.Text key={told[b.id]} entering={reducedMotion ? undefined : FadeIn.duration(180)} accessibilityLiveRegion="polite" style={{ ...type.caption, color: owner ? TEAL : palette.muted }}>{told[b.id]}</Animated.Text>}
             {onAssign && assignError?.id === b.id && <ErrorLine text={assignError.text} onRetry={() => onAssign(b.id, assignError.owner)} />}
           </View>; })}
         </View>

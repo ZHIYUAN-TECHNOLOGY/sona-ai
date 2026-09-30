@@ -7,10 +7,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import Svg, { Circle } from "react-native-svg";
 import { EASE_OUT, riseIn } from "@/components/sona/motion";
-import { Mark } from "@/components/sona/parts";
+import { DrawnCheck, Mark } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Icon, glass, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { LockedAction } from "@/features/live/roles";
 import type { Step } from "./next-steps";
 
 /*
@@ -24,18 +25,20 @@ const OPEN = { duration: 450, dampingRatio: 0.82 }, CLOSE = { duration: 500, dam
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const haptic = () => { if (process.env.EXPO_OS === "ios") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); };
 
-function Ring({ done, total }: { done: number; total: number }) {
+/** Checks left, as the prescribe card's ring counts them: amber once a recorded risk stops the case, a check when none are left. */
+function Ring({ left, total, stop }: { left: number; total: number; stop: boolean }) {
   const { reducedMotion } = useAccessibleEffects();
   const r = 13, length = 2 * Math.PI * r;
+  const done = total - left;
   const p = useSharedValue(total ? done / total : 0);
   useEffect(() => { p.set(reducedMotion ? done / total : withTiming(done / total, { duration: 420, easing: EASE_OUT })); }, [done, total, reducedMotion, p]);
   const props = useAnimatedProps(() => ({ strokeDashoffset: length * (1 - p.value) }));
   return <View style={{ width: 32, height: 32, alignItems: "center", justifyContent: "center" }}>
     <Svg width={32} height={32} style={StyleSheet.absoluteFill}>
       <Circle cx={16} cy={16} r={r} stroke="rgba(20,28,40,0.1)" strokeWidth={2.5} fill="none" />
-      <AnimatedCircle cx={16} cy={16} r={r} stroke={palette.blue} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeDasharray={length} animatedProps={props} transform="rotate(-90 16 16)" />
+      <AnimatedCircle cx={16} cy={16} r={r} stroke={stop ? palette.amber : left ? palette.blue : palette.green} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeDasharray={length} animatedProps={props} transform="rotate(-90 16 16)" />
     </Svg>
-    <Text style={{ fontSize: 11, fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{done}</Text>
+    {left ? <Text style={{ fontSize: 11, fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{left}</Text> : <DrawnCheck size={14} color={palette.green} strokeWidth={2.2} />}
   </View>;
 }
 
@@ -54,8 +57,11 @@ export function useNextStep() {
 export function NextStepBar({ steps, p, onExpand, onAct }: { steps: Step[]; p: SharedValue<number>; onExpand: () => void; onAct: (step: Step) => void }) {
   const { reducedMotion } = useAccessibleEffects();
   const current = steps.find(step => !step.done);
-  const done = steps.filter(step => step.done).length;
   const last = steps.at(-1)!;
+  // The last step is prescribing itself; the ones before it are the card's checks.
+  const checks = steps.length - 1, left = steps.slice(0, -1).filter(step => !step.done).length;
+  const stop = Boolean(current?.stop);
+  const status = !current ? "All steps done" : stop ? "Outside the supported case · not prescribing" : left ? `${left} left before prescribing` : "Ready to prescribe";
   const style = useAnimatedStyle(() => reducedMotion ? { opacity: 1 - p.value } : {
     opacity: interpolate(p.value, [0, 0.6], [1, 0], "clamp"),
     transform: [{ translateY: 40 * p.value }, { scale: 1 - 0.18 * p.value }],
@@ -65,21 +71,27 @@ export function NextStepBar({ steps, p, onExpand, onAct }: { steps: Step[]; p: S
   return <GestureDetector gesture={swipeUp}>
     <Animated.View entering={reducedMotion ? FadeIn.duration(160) : riseIn({ distance: 16, scale: 0.94, duration: 360 })} exiting={FadeOut.duration(140)}
       style={[{ ...pillStyle, experimental_backgroundImage: undefined, backgroundColor: "rgba(250,251,253,0.95)", borderRadius: 28, height: 56, flexDirection: "row", alignItems: "center", gap: 10, paddingLeft: 10, paddingRight: 8 }, style]}>
-      <Pressable accessibilityRole="button" accessibilityLabel={current ? `Next step, ${current.label}. ${done} of ${steps.length} done` : `All ${steps.length} steps done`} accessibilityHint="Shows every remaining step" onPress={onExpand}
+      <Pressable accessibilityRole="button" accessibilityLabel={current ? `${status}. Next step, ${current.label}` : status} accessibilityHint="Shows every remaining step" onPress={onExpand}
         style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minHeight: 44 }}>
-        <Ring done={done} total={steps.length} />
+        <Ring left={left} total={checks} stop={stop} />
         <View style={{ flex: 1, overflow: "hidden" }}>
-          <Text style={{ ...type.overline, fontSize: 10, color: current ? palette.muted : palette.green }}>{current ? `Next step · ${done}/${steps.length}` : "All steps done"}</Text>
+          <Text numberOfLines={1} style={{ ...type.overline, fontSize: 10, color: !current ? palette.green : stop ? palette.amber : palette.muted }}>{status}</Text>
           <Animated.View key={current?.id ?? "done"} entering={reducedMotion ? FadeIn.duration(160) : FadeInRight.duration(260)} exiting={reducedMotion ? FadeOut.duration(120) : FadeOutLeft.duration(180)}>
             <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{current?.label ?? "Prescription simulated"}</Text>
           </Animated.View>
         </View>
         <Icon name="chevron.up" size={11} color={palette.muted} />
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel={`${action.label}: ${current?.label ?? "view receipt"}`} onPress={() => onAct(current ?? last)} hitSlop={6}
+      {/* A role that can't prescribe sees the lock; the sheet's locked row says who can. */}
+      {current?.locked ? <Pressable accessibilityRole="button" accessibilityState={{ disabled: true }} accessibilityLabel="Needs a doctor to prescribe. Locked" accessibilityHint="Shows every remaining step" onPress={onExpand} hitSlop={6}
+        style={{ height: 40, paddingHorizontal: 14, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "rgba(20,28,40,0.06)" }}>
+        <Icon name="lock.fill" size={12} color={palette.muted} />
+        <Text style={{ ...type.callout, fontWeight: "600", color: palette.muted }}>Needs a doctor</Text>
+      </Pressable>
+      : <Pressable accessibilityRole="button" accessibilityLabel={`${action.label}: ${current?.label ?? "view receipt"}`} onPress={() => onAct(current ?? last)} hitSlop={6}
         style={({ pressed }) => ({ height: 40, paddingHorizontal: 16, borderRadius: 20, justifyContent: "center", backgroundColor: palette.ink, transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
         <Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>{action.label}</Text>
-      </Pressable>
+      </Pressable>}
     </Animated.View>
   </GestureDetector>;
 }
@@ -90,7 +102,7 @@ export function NextStepSheet({ steps, p, onClose, onAct }: { steps: Step[]; p: 
   const { reducedMotion } = useAccessibleEffects();
   const drag = useSharedValue(0);
   const current = steps.find(step => !step.done);
-  const done = steps.filter(step => step.done).length;
+  const left = steps.slice(0, -1).filter(step => !step.done).length;
   const backdrop = useAnimatedStyle(() => ({ opacity: Math.min(1, Math.max(0, p.value)) }));
   const sheet = useAnimatedStyle(() => ({ opacity: reducedMotion ? p.value : 1, transform: [{ translateY: (reducedMotion ? 0 : (1 - p.value) * 520) + drag.value }] }));
   const pull = Gesture.Pan().activeOffsetY(8).onUpdate(e => { drag.set(Math.max(0, e.translationY)); }).onEnd(e => {
@@ -106,18 +118,19 @@ export function NextStepSheet({ steps, p, onClose, onAct }: { steps: Step[]; p: 
         <View style={{ alignSelf: "center", width: 36, height: 5, borderRadius: 3, backgroundColor: "rgba(20,28,40,0.14)" }} />
         <View style={{ flexDirection: "row", alignItems: "baseline", paddingHorizontal: 20, paddingTop: 14, paddingBottom: 8 }}>
           <Text accessibilityRole="header" style={{ flex: 1, ...type.heading, color: palette.ink }}>Before prescribing</Text>
-          <Text style={{ ...type.footnote, color: palette.muted, fontVariant: ["tabular-nums"] }}>{done} of {steps.length} done</Text>
+          <Text style={{ ...type.footnote, color: palette.muted, fontVariant: ["tabular-nums"] }}>{left ? `${left} left` : "Checks passed"}</Text>
         </View>
         {steps.map((step, i) => {
           const now = step.id === current?.id;
           return <Animated.View key={step.id} entering={reducedMotion ? undefined : riseIn({ delay: 60 + i * 40, distance: 10, duration: 300 })}
             style={{ flexDirection: "row", alignItems: "center", gap: 12, marginHorizontal: 10, paddingHorizontal: 10, paddingVertical: 11, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: now ? "rgba(36,91,204,0.07)" : "transparent" }}>
-            <Mark state={step.done ? "done" : now ? "pending" : "open"} size={22} />
+            <Mark state={step.done ? "done" : step.stop ? "blocked" : now ? "pending" : "open"} size={22} />
             <View style={{ flex: 1, gap: 1 }}>
               <Text style={{ ...type.subhead, fontWeight: now ? "600" : "500", color: step.done ? palette.muted : palette.ink, textDecorationLine: step.done ? "line-through" : "none" }}>{step.label}</Text>
               <Text numberOfLines={1} style={{ ...type.caption, color: palette.muted }}>{step.detail}</Text>
             </View>
-            {(!step.done || step.action.type === "receipt") && <Pressable accessibilityRole="button" accessibilityLabel={`${step.action.label}: ${step.label}`} onPress={() => onAct(step)} hitSlop={8}
+            {step.locked ? <LockedAction label="Needs a doctor" path="prescribing.simulate" height={34} />
+            : (!step.done || step.action.type === "receipt") && <Pressable accessibilityRole="button" accessibilityLabel={`${step.action.label}: ${step.label}`} onPress={() => onAct(step)} hitSlop={8}
               style={({ pressed }) => ({ minHeight: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: "center", backgroundColor: now ? palette.ink : "rgba(20,28,40,0.06)", opacity: pressed ? 0.8 : 1 })}>
               <Text style={{ ...type.subhead, fontWeight: "600", color: now ? palette.white : palette.ink }}>{step.action.label}</Text>
             </Pressable>}

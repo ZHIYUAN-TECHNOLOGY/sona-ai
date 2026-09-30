@@ -7,7 +7,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { useAccessibleEffects } from "@/components/sona/ui";
+import { Icon, useAccessibleEffects } from "@/components/sona/ui";
+import { openSession } from "@/features/encounter/navigation";
 import { api, errorText, useLive } from "@/features/live";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { acknowledgeResult, refreshServerData, useServerData } from "@/features/live/server-day";
@@ -18,12 +19,14 @@ import { acknowledgeResult, refreshServerData, useServerData } from "@/features/
  * acknowledges it. Live mode polls the server's results; fixture mode uses a local stand-in.
  * ponytail: in-app only; a push to a locked phone needs expo-notifications and a development build.
  */
-type Critical = { id: string; patientName: string; test: string; value: string; unit?: string | null; flag: string; receivedAt: Date };
+type Critical = { id: string; patientId: string; patientName: string; test: string; value: string; unit?: string | null; flag: string; receivedAt: Date };
 
 // Fixture mode's one simulated critical result.
 let local: Critical | undefined;
 const listeners = new Set<() => void>();
 const setLocal = (next: Critical | undefined) => { local = next; listeners.forEach(l => l()); };
+const firstName = (name: string) => name.split(" ")[0]!;
+const clock = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 
 /** The demo's lab feed: Daniel's potassium comes back at 2.6 mmol/L. */
 export async function simulateCriticalResult(live: boolean) {
@@ -53,10 +56,14 @@ export function CriticalAlert() {
     : fixture;
 
   const [now, setNow] = useState(() => new Date());
-  const [done, setDone] = useState<string>();
+  // After Acknowledge: the receipt, with the patient's visit as the next step.
+  const [done, setDone] = useState<{ text: string; patientId: string; name: string }>();
+  // A nurse's simulated page, per result: the alert stays until a doctor acknowledges.
+  const [paged, setPaged] = useState<{ id: string; at: Date }>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  const canAck = useRole().can("results.acknowledge");
+  const role = useRole();
+  const canAck = role.can("results.acknowledge");
   useEffect(() => {
     if (!waiting) return;
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -70,7 +77,8 @@ export function CriticalAlert() {
     if (process.env.EXPO_OS === "ios") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
     AccessibilityInfo.announceForAccessibility(`Critical result: ${waiting.test} ${waiting.value} for ${waiting.patientName}`);
   }, [waiting?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (!done) return; const timer = setTimeout(() => setDone(undefined), 2600); return () => clearTimeout(timer); }, [done]);
+  // The receipt stays long enough to act on, then steps aside.
+  useEffect(() => { if (!done) return; const timer = setTimeout(() => setDone(undefined), 12_000); return () => clearTimeout(timer); }, [done]);
 
   const acknowledge = async () => {
     if (!waiting || busy) return;
@@ -79,10 +87,20 @@ export function CriticalAlert() {
     try {
       if (live) await acknowledgeResult(waiting.id); else setLocal(undefined);
       if (process.env.EXPO_OS === "ios") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      setDone(`Acknowledged after ${took} · recorded in handover`);
+      setDone({ text: `Acknowledged after ${took} · recorded in handover`, patientId: waiting.patientId, name: firstName(waiting.patientName) });
     } catch (e) { setError(`Not acknowledged: ${errorText(e)}`); }
     finally { setBusy(false); }
   };
+  // ponytail: simulated page, no pager is connected; the hospital's paging system replaces it.
+  const page = () => {
+    if (!waiting) return;
+    if (process.env.EXPO_OS === "ios") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    const at = new Date();
+    setPaged({ id: waiting.id, at });
+    AccessibilityInfo.announceForAccessibility(`Paged the doctor on call at ${clock(at)}`);
+  };
+  const pagedAt = paged && paged.id === waiting?.id ? paged.at : undefined;
+  const openVisit = () => { if (!done) return; setDone(undefined); openSession(done.patientId, { next: "briefing" }); };
 
   if (!waiting && !done) return null;
   const top = insets.top + 6;
@@ -96,11 +114,28 @@ export function CriticalAlert() {
         <Text accessibilityLabel={`Waiting ${elapsed(waiting.receivedAt, now)}`} style={{ ...type.callout, fontWeight: "700", color: palette.red, fontVariant: ["tabular-nums"] }}>{elapsed(waiting.receivedAt, now)}</Text>
       </View>
       <Text selectable style={{ ...type.headline, color: palette.ink }}>{waiting.test} {waiting.value}{waiting.unit ? ` ${waiting.unit}` : ""} · {waiting.patientName}</Text>
-      {!canAck ? <LockedAction label="Needs a doctor to acknowledge" path="results.acknowledge" height={44} /> : <Pressable accessibilityRole="button" accessibilityLabel={error ? `Retry acknowledging ${waiting.test} for ${waiting.patientName}` : `Acknowledge ${waiting.test} for ${waiting.patientName}`} disabled={busy} onPress={acknowledge}
+      {!canAck ? role.role === "nurse" ? pagedAt
+        ? <Text selectable accessibilityLiveRegion="polite" style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>Paged the doctor on call {clock(pagedAt)} · waiting for them to acknowledge <Text style={{ fontWeight: "400", color: palette.muted }}>(simulated page)</Text></Text>
+        : <Pressable accessibilityRole="button" accessibilityLabel={`Page the doctor about ${waiting.test} for ${waiting.patientName}`} accessibilityHint="A doctor acknowledges it; this sends a simulated page" onPress={page}
+          style={({ pressed }) => ({ minHeight: 44, borderRadius: 22, flexDirection: "row", gap: 8, alignItems: "center", justifyContent: "center", backgroundColor: palette.red, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+          <Icon name="bell.badge.fill" size={14} color={palette.white} /><Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>Page the doctor</Text>
+        </Pressable>
+        : <LockedAction label="Needs a doctor to acknowledge" path="results.acknowledge" height={44} /> : <Pressable accessibilityRole="button" accessibilityLabel={error ? `Retry acknowledging ${waiting.test} for ${waiting.patientName}` : `Acknowledge ${waiting.test} for ${waiting.patientName}`} disabled={busy} onPress={acknowledge}
         style={({ pressed }) => ({ minHeight: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: palette.red, opacity: busy ? 0.6 : 1, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: ["transform", "opacity"], transitionDuration: 120 } as never)}>
         <Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>{busy ? "Acknowledging…" : error ? "Retry acknowledge" : "Acknowledge"}</Text>
       </Pressable>}
       {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
-    </> : <Text selectable style={{ ...type.subhead, fontWeight: "600", color: palette.green }}>{done}</Text>}
+    </> : done && <>
+      <Text selectable style={{ ...type.subhead, fontWeight: "600", color: palette.green }}>{done.text}</Text>
+      <View style={{ flexDirection: "row", gap: 8 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Open ${done.name}'s visit`} onPress={openVisit}
+          style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: palette.ink, transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+          <Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>Open {done.name}'s visit</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Dismiss the receipt" onPress={() => setDone(undefined)} style={{ minHeight: 44, paddingHorizontal: 16, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}>
+          <Text style={{ ...type.callout, fontWeight: "600", color: palette.ink }}>Done</Text>
+        </Pressable>
+      </View>
+    </>}
   </Animated.View>;
 }

@@ -1,7 +1,15 @@
 import { expect, test } from "bun:test";
 import { patients } from "@/features/encounter/fixtures";
 import { fixtureFindings, followUpTask } from "@/features/findings/model";
-import { buildHandover } from "./model";
+import { buildHandover, handoverTally } from "./model";
+
+test("only handed-over patients are accepted; discuss ones are counted apart", () => {
+  const tally = handoverTally([{ id: "a", decision: "handed" }, { id: "b", decision: "discuss" }, { id: "c", decision: "handed" }, { id: "d", decision: "discuss" }, { id: "e", decision: "handed" }]);
+  expect([tally.handed, tally.discuss, tally.line]).toEqual([["a", "c", "e"], ["b", "d"], "3 handed over · 2 to discuss"]);
+  expect(tally.receipt("Dr Lim", "14:05")).toBe("Dr Lim accepted 3 patients at 14:05. 2 patients to discuss verbally.");
+  const one = handoverTally([{ id: "a", decision: "handed" }]);
+  expect([one.line, one.receipt("Dr Lim", "07:30")]).toEqual(["1 handed over", "Dr Lim accepted 1 patient at 07:30."]);
+});
 
 test("five cards, watch patients first, open items carried from state", () => {
   const cards = buildHandover(patients, {});

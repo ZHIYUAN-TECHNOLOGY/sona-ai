@@ -236,3 +236,20 @@ test("running the audit from the app raises the seeded lab gap; querying it crea
   const queries = (await api.tasks.list()).filter(t => t.kind === "coding-query");
   expect(queries.map(t => t.sourceId)).toEqual([item!.id]);
 });
+
+test("a task is reassigned and redated in place; another hospital's task is not found and an empty update is refused", async () => {
+  const { db, api } = await signedIn();
+  const task = await api.tasks.create({ encounterId: "visit-1042", title: "Review inhaler technique", owner: "Clinic nurse", due: "2026-10-03", requestId: "u1" });
+  expect(await api.tasks.update({ taskId: task.id, owner: " Pharmacist " })).toMatchObject({ id: task.id, owner: "Pharmacist", due: "2026-10-03" });
+  expect(await api.tasks.update({ taskId: task.id, due: "2026-10-10" })).toMatchObject({ owner: "Pharmacist", due: "2026-10-10" });
+  expect((await api.tasks.update({ taskId: task.id, due: null })).due).toBeNull();
+  expect((await api.tasks.list()).map(t => [t.id, t.owner])).toEqual([[task.id, "Pharmacist"]]);
+  for (const bad of [{ taskId: task.id }, { taskId: task.id, owner: "  " }, { taskId: task.id, due: "3/10/2026" }])
+    expect((await api.tasks.update(bad).catch(e => e)).code).toBe("BAD_REQUEST");
+  expect((await api.tasks.update({ taskId: "no-such-task", owner: "Nurse" }).catch(e => e)).code).toBe("NOT_FOUND");
+  await db.insert(hospitals).values({ id: "other", name: "Other Hospital (synthetic)" });
+  await db.insert(hospitalMembers).values({ userId: "dr-other", hospitalId: "other" });
+  const theirs = createRouterClient(appRouter, { context: { db, session: { ...session, user: { ...session.user, id: "dr-other" } } as Session } });
+  expect((await theirs.tasks.update({ taskId: task.id, owner: "Someone" }).catch(e => e)).code).toBe("NOT_FOUND");
+  expect((await api.tasks.list())[0]?.owner).toBe("Pharmacist");
+});

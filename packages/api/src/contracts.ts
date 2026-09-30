@@ -145,3 +145,10 @@ export const taskCreateSchema = z.object({
   encounterId: z.string().min(1), title: z.string().trim().min(1).max(200), owner: z.string().trim().min(1).max(80), due: z.iso.date().optional(), requestId: z.string().min(1),
 });
 export type TaskCreate = z.infer<typeof taskCreateSchema>;
+/** Reassigns and/or redates a task in place; `due: null` clears the date. At least one change. */
+export const taskUpdateSchema = z.object({
+  taskId: z.string().min(1), owner: z.string().trim().min(1).max(80).optional(), due: z.iso.date().nullable().optional(),
+}).refine(t => t.owner !== undefined || t.due !== undefined, "An update changes the owner or the due date");
+export type TaskUpdate = z.infer<typeof taskUpdateSchema>;
+/** Clears a ward blocker's owner (tapping the chosen owner again). */
+export const unassignOwnerSchema = z.object({ blockerId: z.string().min(1) });

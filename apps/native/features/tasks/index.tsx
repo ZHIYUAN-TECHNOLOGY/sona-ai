@@ -10,18 +10,19 @@ import { LinearGradient } from "expo-linear-gradient";
 import { scheduleOnRN } from "react-native-worklets";
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
-import { Action, Chip, Expand, glass, Icon, Insight, RoundAction, Screen, SourceLink, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Chip, Expand, glass, Icon, Insight, Notice, RoundAction, Screen, SourceLink, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { Section as AnswerSection } from "@/components/sona/sections";
 import { HalftoneGlint } from "@/components/sona/halftone-shimmer";
 import { palette, type, radius } from "@/components/sona/theme";
 import { useEncounter } from "@/features/encounter/store";
-import type { Encounter, FeatureProps, Task } from "@/features/encounter/types";
-import { errorText, requestId, useLive } from "@/features/live";
-import { completeServerTask, createServerTask, useServerData, useVisitTasks } from "@/features/live/server-day";
-import { DUE_GROUPS, dueGroup, taskCounts } from "./counts";
+import type { Encounter, FeatureProps, Patient, Task } from "@/features/encounter/types";
+import { api, errorText, requestId, useLive } from "@/features/live";
+import { LockedAction, useRole } from "@/features/live/roles";
+import { completeServerTask, createServerTask, refreshServerData, useServerData, useVisitTasks } from "@/features/live/server-day";
+import { dueGroup, rankByDue, taskCounts } from "./counts";
 import { ASK_SPACE, WithSona } from "@/features/ask";
 import { overdue } from "@/features/ask/answers";
-import { createTaskOnce, dayFromToday, friendlyDate, localDate, longDate, MONTHS, mentionQuery, parseDuePhrase, proposedTask, taskDraftErrors, taskProposal, type TaskDraft } from "./state";
+import { changeReceipt, createTaskOnce, dayFromToday, friendlyDate, localDate, longDate, MONTHS, mentionQuery, parseDuePhrase, proposedTask, taskDraftErrors, taskProposal, type TaskDraft } from "./state";
 
 /**
  * Follow-up answer: a generated section in the tasks screen's language. Before any task exists it
@@ -260,7 +261,6 @@ function SuggestionRow({ icon, label, index, onPress, reduced }: { icon: "person
 function Composer({ draft, onChange, onSave, pending, error }: { draft: TaskDraft; onChange: (update: Partial<TaskDraft>) => void; onSave: () => void; pending: boolean; error?: string }) {
   const { reducedMotion } = useAccessibleEffects();
   const [open, setOpen] = useState<"owner" | "due" | null>(null);
-  const [customOwner, setCustomOwner] = useState(Boolean(draft.owner) && !OWNERS.includes(draft.owner));
   const ready = taskDraftErrors(draft).length === 0 && !pending;
   const missing = [!draft.title.trim() && "a task", !draft.owner.trim() && "an owner", !draft.due && "a due date"].filter(Boolean) as string[];
   const toggle = (next: "owner" | "due") => { haptic("select"); setOpen(current => current === next ? null : next); };
@@ -272,7 +272,7 @@ function Composer({ draft, onChange, onSave, pending, error }: { draft: TaskDraf
   const q = mention?.toLowerCase() ?? "";
   const ownerMatches = mention === undefined ? [] : OWNERS.filter(owner => !q || owner.toLowerCase().split(" ").some(word => word.startsWith(q)));
   const customMatch = q && !ownerMatches.length ? capitalise(mention!) : undefined;
-  const takeOwner = (owner: string) => { haptic("select"); setOpen(null); setCustomOwner(!OWNERS.includes(owner)); set({ owner, title: draft.title.replace(/\s*@[^\s@]*$/, "") }); };
+  const takeOwner = (owner: string) => { haptic("select"); setOpen(null); set({ owner, title: draft.title.replace(/\s*@[^\s@]*$/, "") }); };
   const takeDue = () => { if (!parsed) return; haptic("select"); setOpen(null); const at = draft.title.toLowerCase().lastIndexOf(parsed.phrase.toLowerCase()); set({ due: parsed.due, title: draft.title.slice(0, at).trimEnd() }); };
   const typed = mention !== undefined ? `@${mention}` : parsed?.phrase;
   const head = typed ? draft.title.slice(0, draft.title.toLowerCase().lastIndexOf(typed.toLowerCase())) : draft.title;
@@ -298,15 +298,7 @@ function Composer({ draft, onChange, onSave, pending, error }: { draft: TaskDraf
         <Animated.View key={draft.due ? `due-${draft.due}` : "due"} layout={layout} entering={draft.due && !reducedMotion ? tokenIn : undefined}><Chip icon={tokenIcon("calendar", Boolean(draft.due))} label={friendlyDate(draft.due) || "Due"} filled={Boolean(draft.due)} expanded={open === "due"} onPress={() => toggle("due")} accessibilityLabel={draft.due ? `Due ${friendlyDate(draft.due)}. Change` : "Choose a due date"} /></Animated.View>
     </View>
 
-    {open === "owner" && <Expand key="owner" style={{ gap: 10 }}>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {/* Tapping the chosen owner again clears it. */}
-        {OWNERS.map(owner => <Chip key={owner} label={owner} selected={draft.owner === owner} onPress={() => { haptic("select"); setCustomOwner(false); if (draft.owner === owner) set({ owner: "" }); else { set({ owner }); setOpen(null); } }} />)}
-        <Chip label="Someone else" selected={customOwner} onPress={() => { haptic("select"); if (customOwner) { setCustomOwner(false); set({ owner: "" }); return; } setCustomOwner(true); if (OWNERS.includes(draft.owner)) set({ owner: "" }); }} />
-      </View>
-      {customOwner && <Expand><TextInput autoFocus accessibilityLabel="Owner name or team" value={draft.owner} onChangeText={owner => set({ owner })} placeholder="Name or team" placeholderTextColor={palette.placeholder} maxLength={100} returnKeyType="done" onSubmitEditing={() => setOpen(null)}
-        style={{ fontSize: 16, color: palette.ink, paddingHorizontal: 14, paddingVertical: 10, minHeight: 44, borderRadius: 14, backgroundColor: "rgba(20,28,40,0.04)" }} /></Expand>}
-    </Expand>}
+    {open === "owner" && <Expand key="owner"><OwnerPicker value={draft.owner} onChange={owner => set({ owner })} onDone={() => setOpen(null)} /></Expand>}
 
     {open === "due" && <Expand key="due"><DayRuler value={draft.due} onPick={due => set({ due })} /></Expand>}
 
@@ -320,16 +312,78 @@ function Composer({ draft, onChange, onSave, pending, error }: { draft: TaskDraf
   </Surface>;
 }
 
-/** Check marker morphs into a tick and a strike draws across; swipe right does the same. */
-function TaskRow({ task, disabled, onToggle }: { task: Task; disabled: boolean; onToggle: () => void }) {
+/**
+ * The owner list the composer and each task row share: the usual owners, or someone else by name.
+ * `onChange` follows every pick and keystroke (tapping the chosen owner again clears it); `onDone`
+ * fires once a choice is final (a chip picked, or return pressed on a typed name).
+ */
+function OwnerPicker({ value, onChange, onDone }: { value: string; onChange: (owner: string) => void; onDone: () => void }) {
+  const [custom, setCustom] = useState(Boolean(value) && !OWNERS.includes(value));
+  return <View style={{ gap: 10 }}>
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+      {OWNERS.map(owner => <Chip key={owner} label={owner} selected={value === owner} onPress={() => { haptic("select"); setCustom(false); if (value === owner) onChange(""); else { onChange(owner); onDone(); } }} />)}
+      <Chip label="Someone else" selected={custom} onPress={() => { haptic("select"); if (custom) { setCustom(false); onChange(""); return; } setCustom(true); if (OWNERS.includes(value)) onChange(""); }} />
+    </View>
+    {custom && <Expand><TextInput autoFocus accessibilityLabel="Owner name or team" value={value} onChangeText={onChange} placeholder="Name or team" placeholderTextColor={palette.placeholder} maxLength={80} returnKeyType="done" onSubmitEditing={onDone}
+      style={{ fontSize: 16, color: palette.ink, paddingHorizontal: 14, paddingVertical: 10, minHeight: 44, borderRadius: 14, backgroundColor: "rgba(20,28,40,0.04)" }} /></Expand>}
+  </View>;
+}
+
+type Receipt = { text: string; failed?: boolean };
+type TaskChange = { owner?: string; due?: string };
+
+/**
+ * Completing, reopening, reassigning and redating tasks, for any visit: server tasks through the API
+ * (the server keeps no reopen), device tasks in their visit's store. Each change leaves a receipt on
+ * its row. What this role can't do comes back locked (`locked`) or absent (`change`).
+ */
+function useTaskEdits() {
+  const { updateEncounter } = useEncounter();
+  const server = useServerData();
+  const role = useRole();
+  const [receipts, setReceipts] = useState<Record<string, Receipt>>({});
+  const onServer = (task: Task) => Boolean(server?.tasks.some(value => value.id === task.id));
+  const note = (id: string, receipt: Receipt) => setReceipts(r => ({ ...r, [id]: receipt }));
+  const edit = (patientId: string, id: string, change: Partial<Task>) => updateEncounter(current => ({ ...current, tasks: current.tasks.map(value => value.id === id ? { ...value, ...change } : value) }), false, patientId);
+  const toggle = (patientId: string, task: Task) => {
+    if (!onServer(task)) edit(patientId, task.id, { completed: !task.completed });
+    else if (!task.completed) completeServerTask(task.id).catch(e => note(task.id, { text: `Not completed: ${errorText(e)}`, failed: true }));
+  };
+  const change = (patientId: string, task: Task, update: TaskChange) => {
+    const saved = () => note(task.id, { text: changeReceipt(update, new Date()) });
+    if (!onServer(task)) { edit(patientId, task.id, update); saved(); return; }
+    api.tasks.update({ taskId: task.id, ...update }).then(refreshServerData).then(saved, e => note(task.id, { text: `Not saved: ${errorText(e)}`, failed: true }));
+  };
+  return { receipts, toggle, change: role.can("tasks.update") ? change : undefined, locked: !role.can("tasks.complete"), why: role.why, reopenable: (task: Task) => !onServer(task) };
+}
+
+/**
+ * Check marker morphs into a tick and a strike draws across; swipe right does the same. With
+ * `onChange`, the owner and due chips open the composer's owner list and day ruler under the row, and
+ * the receipt says what changed. `locked`: this role can't complete tasks (a lock where the tick goes).
+ * `reopenable`: a completed task can be reopened (device tasks only), else tapping it does nothing.
+ * `patient`/`name`: the visit it belongs to, when the list spans visits.
+ */
+function TaskRow({ task, patient: of, name, disabled, locked = false, reopenable = true, receipt, onToggle, onChange }: {
+  task: Task; patient?: Patient; name?: string; disabled: boolean; locked?: boolean; reopenable?: boolean; receipt?: Receipt; onToggle: () => void; onChange?: (change: TaskChange) => void;
+}) {
   const { reducedMotion } = useAccessibleEffects();
-  const { patient } = useEncounter();
+  const { patient: current } = useEncounter();
+  const { why } = useRole();
+  const patient = of ?? current;
   const [completing, setCompleting] = useState(false);
+  const [editing, setEditing] = useState<"owner" | "due" | null>(null);
+  const [ownerDraft, setOwnerDraft] = useState(task.owner);
+  const picked = useRef(task.owner);
   useEffect(() => { if (!task.completed) setCompleting(false); }, [task.completed]);
   const done = task.completed || completing;
+  // Locked, or done on the server (which keeps no reopen): the row reads but doesn't toggle.
+  const inert = disabled || locked || (task.completed && !reopenable);
+  const editable = Boolean(onChange) && !task.completed && !locked;
   const toggle = () => {
-    if (disabled) return;
+    if (inert) return;
     if (task.completed) { haptic("select"); onToggle(); return; }
+    setEditing(null);
     setCompleting(true); haptic("done");
     // Let the tick and strike land before the row moves to Completed.
     setTimeout(onToggle, reducedMotion ? 0 : 420);
@@ -340,7 +394,7 @@ function TaskRow({ task, disabled, onToggle }: { task: Task; disabled: boolean; 
   // The reveal names what this swipe will do, fixed when the swipe starts so it can't flip mid-gesture.
   const [reopens, setReopens] = useState(task.completed);
   const wasCompleted = task.completed;
-  const pan = Gesture.Pan().activeOffsetX(14).failOffsetY([-12, 12]).enabled(!disabled)
+  const pan = Gesture.Pan().activeOffsetX(14).failOffsetY([-12, 12]).enabled(!inert)
     .onStart(() => scheduleOnRN(setReopens, wasCompleted))
     .onUpdate(e => { const x = Math.max(0, e.translationX); tx.set(x > SWIPE ? SWIPE + (x - SWIPE) * 0.35 : x); })
     .onEnd(e => {
@@ -351,6 +405,13 @@ function TaskRow({ task, disabled, onToggle }: { task: Task; disabled: boolean; 
   useAnimatedReaction(() => tx.value >= SWIPE, (over, was) => { if (over && was === false) scheduleOnRN(haptic, "select"); });
   const rowStyle = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }] }));
   const revealStyle = useAnimatedStyle(() => ({ opacity: interpolate(tx.value, [0, SWIPE], [0, 1], "clamp"), transform: [{ scale: interpolate(tx.value, [0, SWIPE], [0.8, 1], "clamp") }] }));
+  const edit = (kind: "owner" | "due") => { haptic("select"); if (kind === "owner") { picked.current = task.owner; setOwnerDraft(task.owner); } setEditing(value => value === kind ? null : kind); };
+  const dueLabel = task.due ? friendlyDate(task.due) : "No date";
+  const chip = (kind: "owner" | "due", label: string) => <Pressable accessibilityRole="button" accessibilityLabel={kind === "owner" ? `Owner, ${label}. Reassign` : `Due ${label}. Change date`} accessibilityState={{ expanded: editing === kind }} onPress={() => edit(kind)} hitSlop={{ top: 8, bottom: 8 }}
+    style={({ pressed }) => ({ height: 28, paddingHorizontal: 10, borderRadius: 14, flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderColor: editing === kind ? palette.blue : "transparent", backgroundColor: "rgba(20,28,40,0.05)", transform: [{ scale: pressed ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
+    <BrandIcon name={kind === "owner" ? "person" : "calendar"} size={13} color={palette.muted} /><Text style={{ ...type.footnote, color: palette.ink }}>{label}</Text>
+  </Pressable>;
+  const actions = [...source ? [{ name: "source", label: "Open source" }] : [], ...editable ? [{ name: "owner", label: "Reassign" }, { name: "due", label: "Change due date" }] : []];
   return <View>
     <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 0, bottom: 0, width: 120, borderRadius: radius.group, backgroundColor: "#E4EDFD", paddingLeft: 22, justifyContent: "center" }, revealStyle]}>
       <BrandIcon name={reopens ? "back" : "check"} size={22} color={palette.blue} strokeWidth={2} />
@@ -358,28 +419,49 @@ function TaskRow({ task, disabled, onToggle }: { task: Task; disabled: boolean; 
     <GestureDetector gesture={pan}>
       <Surface style={[{ borderRadius: 20 }, rowStyle]}>
         {/* The whole row is the checkbox; only the Source link inside it does something else. */}
-        <Pressable accessibilityRole="checkbox" accessibilityLabel={`${task.title}, ${task.owner}${done ? ", done" : task.due ? `, due ${friendlyDate(task.due)}` : ""}`} accessibilityState={{ checked: done, disabled }} accessibilityHint={done ? "Reopens the task" : "Marks the task completed"} onPress={toggle} disabled={disabled}
-          accessibilityActions={source ? [{ name: "activate" }, { name: "source", label: "Open source" }] : undefined} onAccessibilityAction={e => e.nativeEvent.actionName === "source" ? openSource() : toggle()}
+        <Pressable accessibilityRole="checkbox" accessibilityLabel={`${name ? `${name}, ` : ""}${task.title}, ${task.owner}${done ? ", done" : task.due ? `, due ${friendlyDate(task.due)}` : ""}`} accessibilityState={{ checked: done, disabled: inert }}
+          accessibilityHint={locked ? why("tasks.complete") : inert ? undefined : done ? "Reopens the task" : "Marks the task completed"} onPress={toggle} disabled={inert}
+          accessibilityActions={actions.length ? [{ name: "activate" }, ...actions] : undefined} onAccessibilityAction={e => { const a = e.nativeEvent.actionName; if (a === "source") openSource(); else if (a === "owner" || a === "due") edit(a); else toggle(); }}
           style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 16, paddingVertical: 14, transform: [{ scale: pressed ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never)}>
-          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.6, alignItems: "center", justifyContent: "center", borderColor: done ? palette.blue : "#B7BDC6", backgroundColor: done ? palette.blue : "transparent", transitionProperty: ["backgroundColor", "borderColor"], transitionDuration: 180 } as never}>
+          {locked && !done ? <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}><Icon name="lock.fill" size={11} color={palette.muted} /></View>
+          : <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.6, alignItems: "center", justifyContent: "center", borderColor: done ? palette.blue : "#B7BDC6", backgroundColor: done ? palette.blue : "transparent", transitionProperty: ["backgroundColor", "borderColor"], transitionDuration: 180 } as never}>
             <Animated.View style={{ opacity: done ? 1 : 0, transform: [{ scale: done || reducedMotion ? 1 : 0.5 }], transitionProperty: ["opacity", "transform"], transitionDuration: 240, transitionTimingFunction: EASE_OUT }}>
               <BrandIcon name="check" size={15} color={palette.white} strokeWidth={2.4} />
             </Animated.View>
-          </View>
+          </View>}
           <View style={{ flex: 1, gap: 3 }}>
             <View style={{ alignSelf: "flex-start" }}>
               <Text style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: done ? palette.muted : palette.ink, transitionProperty: "color", transitionDuration: 200 } as never}>{task.title}</Text>
               <Animated.View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: 11, height: 1.5, borderRadius: 1, backgroundColor: palette.muted, transformOrigin: "left", opacity: done || !reducedMotion ? 1 : 0, transform: [{ scaleX: done || reducedMotion ? 1 : 0 }], transitionProperty: ["transform", "opacity"], transitionDuration: 320, transitionTimingFunction: EASE_OUT }} />
             </View>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Text style={{ ...type.footnote, color: palette.muted }}>{ownerLine(task, done)}</Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: editable ? 6 : 8 }}>
+              {name && <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>{name}</Text>}
+              {/* Owner and due read as chips on an open task this role may change; tapping one opens its picker under the row. */}
+              {editable ? <>{chip("owner", task.owner)}{chip("due", dueLabel)}</> : <Text style={{ ...type.footnote, color: palette.muted }}>{ownerLine(task, done)}</Text>}
               {source && <Pressable accessibilityRole="link" accessibilityLabel={`Source, ${source.title}`} onPress={openSource} hitSlop={{ top: 13, bottom: 13, left: 8, right: 8 }}><Text style={{ ...type.footnote, color: palette.blue }}>Source ↗</Text></Pressable>}
             </View>
           </View>
         </Pressable>
       </Surface>
     </GestureDetector>
+    {/* The composer's own pickers, under the row (outside the swipe, so the ruler scrolls freely). */}
+    {editing && editable && <Expand key={editing} style={{ marginTop: 6 }}><Surface style={{ padding: 18 }}>
+      {editing === "owner" ? <OwnerPicker value={ownerDraft} onChange={owner => { picked.current = owner; setOwnerDraft(owner); }} onDone={() => { setEditing(null); const owner = picked.current.trim(); if (owner && owner !== task.owner) onChange!({ owner }); }} />
+        : <DayRuler value={/^\d{4}-\d{2}-\d{2}$/.test(task.due) ? task.due : ""} onPick={due => onChange!({ due })} />}
+    </Surface></Expand>}
+    {receipt && <Animated.Text key={receipt.text} entering={reducedMotion ? undefined : FadeIn.duration(180)} accessibilityLiveRegion="polite"
+      style={{ ...type.caption, color: receipt.failed ? palette.amber : palette.green, paddingHorizontal: 16, paddingTop: 6 }}>{receipt.text}</Animated.Text>}
   </View>;
+}
+
+/** Open rows by when they're due (overdue first, so the next one to chase leads), then Completed: one keyed list, so a completed row glides into Completed instead of remounting there. */
+function rankedList<T extends { task: Task }>(rows: T[], render: (row: T) => ReactNode) {
+  const done = rows.filter(row => row.task.completed);
+  return [
+    ...rankByDue(rows).flatMap(g => [<Section key={g.id} title={g.title} count={g.rows.length} />, ...g.rows.map(render)]),
+    done.length > 0 && <Section key="done" title="Completed" count={done.length} />,
+    ...done.map(render),
+  ];
 }
 
 function Section({ title, count }: { title: string; count: number }) {
@@ -420,19 +502,36 @@ function TasksInsight({ tasks, eyebrow }: { tasks: Task[]; eyebrow?: string }) {
   return <Insight eyebrow={eyebrow}>{open ? parts.map((part, i) => [i ? " · " : "", part]) : tasks.length ? "All follow-ups done" : "No follow-ups yet"}</Insight>;
 }
 
-/** No visit selected: follow-ups across today's visits, and a one-tap way to add one for a visit. */
+/** A role that can't complete tasks reads them: one line says why, where the ticks would be. */
+function LockedNote({ edits }: { edits: ReturnType<typeof useTaskEdits> }) {
+  return edits.locked ? <Notice>Read only. {edits.why("tasks.complete")}</Notice> : null;
+}
+
+/**
+ * No visit selected: every follow-up across today's visits in one list ranked by when it's due
+ * (not by patient), each completable and changeable in place, and a one-tap way to add one for a visit.
+ */
 function AllFollowUps() {
   const { patients, selectPatient } = useEncounter();
+  const { reducedMotion } = useAccessibleEffects();
   const tasksOf = useVisitTasks();
+  const edits = useTaskEdits();
+  const { can } = useRole();
+  const rows = patients.flatMap(patient => tasksOf(patient).map(task => ({ task, patient })));
+  const row = ({ task, patient }: { task: Task; patient: Patient }) => <Animated.View key={task.id} layout={reducedMotion ? undefined : LAYOUT} entering={reducedMotion ? undefined : riseIn({ distance: 10, duration: 320 })} exiting={FadeOut.duration(140)}>
+    <TaskRow task={task} patient={patient} name={patient.name} disabled={false} locked={edits.locked} reopenable={edits.reopenable(task)} receipt={edits.receipts[task.id]}
+      onToggle={() => edits.toggle(patient.id, task)} onChange={edits.change && (change => edits.change!(patient.id, task, change))} />
+  </Animated.View>;
   return <TasksSona><Screen>
-    <TasksInsight tasks={patients.flatMap(tasksOf)} />
-    <VisitFollowUps />
-    <View style={{ gap: 10 }}>
+    <TasksInsight tasks={rows.map(r => r.task)} />
+    <LockedNote edits={edits} />
+    {rankedList(rows, row)}
+    {can("tasks.create") && <View style={{ gap: 10 }}>
       <Text accessibilityRole="header" style={{ ...type.footnote, fontWeight: "600", color: palette.muted, paddingHorizontal: 4 }}>Add a follow-up for</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {patients.map(p => <Chip key={p.id} label={p.name} onPress={() => { haptic("select"); selectPatient(p.id); }} accessibilityLabel={`Add a follow-up for ${p.name}`} />)}
       </View>
-    </View>
+    </View>}
     <SessionNote />
     <View style={{ height: ASK_SPACE }} />
   </Screen></TasksSona>;
@@ -451,7 +550,8 @@ export function TasksScreen() {
   const { patient, patients, encounter, updateEncounter, simulateFailure } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const tasksOf = useVisitTasks();
-  const server = useServerData();
+  const edits = useTaskEdits();
+  const { can } = useRole();
   const { on: live } = useLive();
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
@@ -511,29 +611,19 @@ export function TasksScreen() {
       return { ...next, taskDraft: blankDraft(next) };
     }); });
   };
-  const byDue = (a: Task, b: Task) => a.due.localeCompare(b.due);
   const tasks = tasksOf(patient);
-  const open = tasks.filter(task => !task.completed).sort(byDue);
-  const done = tasks.filter(task => task.completed);
-  // A server task can only be completed (the server keeps no reopen); a device task toggles locally.
-  const toggle = (task: Task) => {
-    if (!server?.tasks.some(value => value.id === task.id)) updateEncounter(current => ({ ...current, tasks: current.tasks.map(value => value.id === task.id ? { ...value, completed: !value.completed } : value) }));
-    else if (!task.completed) void completeServerTask(task.id).catch(() => setError("The task wasn't completed. Try again."));
-  };
-  const row = (task: Task) => <Animated.View key={task.id} layout={reducedMotion ? undefined : LAYOUT} entering={reducedMotion ? undefined : riseIn({ distance: 10, duration: 320 })} exiting={FadeOut.duration(140)}>
-    <TaskRow task={task} disabled={pending} onToggle={() => toggle(task)} />
+  const row = ({ task }: { task: Task }) => <Animated.View key={task.id} layout={reducedMotion ? undefined : LAYOUT} entering={reducedMotion ? undefined : riseIn({ distance: 10, duration: 320 })} exiting={FadeOut.duration(140)}>
+    <TaskRow task={task} disabled={pending} locked={edits.locked} reopenable={edits.reopenable(task)} receipt={edits.receipts[task.id]}
+      onToggle={() => edits.toggle(patient.id, task)} onChange={edits.change && (change => edits.change!(patient.id, task, change))} />
   </Animated.View>;
 
   return <TasksSona><Screen>
     <TasksInsight tasks={tasks} eyebrow={patient.name} />
-    {draft && <Composer key={draft.operationId} draft={draft} pending={pending} error={error} onChange={change => updateEncounter(current => ({ ...current, taskDraft: { ...current.taskDraft!, ...change } }))} onSave={save} />}
-    {/* One keyed list, so a completed row glides into Completed instead of remounting there. */}
-    {[
-      // Open tasks by when they're due (overdue first), so the next one to chase leads.
-      ...DUE_GROUPS.flatMap(g => { const group = open.filter(task => dueGroup(task.due) === g.id); return group.length ? [<Section key={g.id} title={g.title} count={group.length} />, ...group.map(row)] : []; }),
-      done.length > 0 && <Section key="done" title="Completed" count={done.length} />,
-      ...done.map(row),
-    ]}
+    {/* A role that can't add tasks keeps the composer's place, locked, and says who can on tap. */}
+    {!can("tasks.create") ? <LockedAction label="Needs a doctor or a nurse to add a task" path="tasks.create" />
+      : draft && <Composer key={draft.operationId} draft={draft} pending={pending} error={error} onChange={change => updateEncounter(current => ({ ...current, taskDraft: { ...current.taskDraft!, ...change } }))} onSave={save} />}
+    <LockedNote edits={edits} />
+    {rankedList(tasks.map(task => ({ task })), row)}
     {patients.some(p => p.id !== patient.id && tasksOf(p).length) && <Text accessibilityRole="header" style={{ ...type.callout, fontWeight: "600", color: palette.ink, paddingTop: 10, paddingHorizontal: 4 }}>Other visits</Text>}
     <VisitFollowUps except={patient.id} />
     <SessionNote />

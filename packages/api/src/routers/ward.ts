@@ -4,7 +4,7 @@ import { admissions, claims, encounters, findings, guaranteeLetters, labResults,
 import { admittedBed, bedBlockers, byUrgency, forecastBeds, freedBed, WARD_FIXTURE, type Bed, type Owner, type WardRecord } from "@sona-ai/domain/ward";
 import { and, asc, eq } from "drizzle-orm";
 
-import { assignOwnerSchema } from "../contracts";
+import { assignOwnerSchema, unassignOwnerSchema } from "../contracts";
 import { clockOf, type Context } from "../context";
 import { protectedProcedure } from "../index";
 import { stubModels } from "../models";
@@ -72,5 +72,10 @@ export const wardRouter = {
     const owners = await ownersOf(db, hospitalId);
     const answer = await (context.models ?? stubModels).huddleBrief({ beds, owners });
     return logAnswer(db, null, "huddle-brief", answer, beds.flatMap(b => b.blockers.map(x => x.id)));
+  }),
+  /** Clears a blocker's owner (its blocker-owner task); clearing one that has none changes nothing. */
+  unassignOwner: protectedProcedure.input(unassignOwnerSchema).handler(async ({ context: { db, hospitalId }, input }) => {
+    const cleared = await db.delete(tasks).where(and(eq(tasks.hospitalId, hospitalId), eq(tasks.kind, "blocker-owner"), eq(tasks.sourceId, input.blockerId))).returning({ id: tasks.id });
+    return { blockerId: input.blockerId, cleared: cleared.length > 0 };
   }),
 };
