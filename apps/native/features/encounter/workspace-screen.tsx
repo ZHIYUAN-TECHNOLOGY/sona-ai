@@ -320,6 +320,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   };
   // The newest entry is brought into view as a visit brings in its new answer.
   const brought = useRef("");
+  // The dock's height (bar, chip, notices, Live's draft), measured: the page's end clears it. 130 until it has laid out.
+  const [dockH, setDockH] = useState(130);
   // On Today, a spoken question joins Today's thread as a typed one does: the page is the shell, and Live its voice.
   const todayLive: LiveAdapter = { scope: "Today", ask: async question => { await (pending.length ? askForPatient(question) : today.ask(question)); return { shown: true }; } };
   const visible = compactResponses && !showEarlier ? requests.slice(-1) : requests;
@@ -336,7 +338,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     <Animated.ScrollView ref={scroll} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentInsetAdjustmentBehavior="never" scrollEventThrottle={16}
       onScroll={onScroll}
       onScrollEndDrag={syncTab} onMomentumScrollEnd={syncTab}
-      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + (!home && sections.length >= 2 ? 112 : 72), paddingBottom: insets.bottom + 150 + (steps ? 66 : 0), flexGrow: 1 }}>
+      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + (!home && sections.length >= 2 ? 112 : 72), paddingBottom: dockH + 32, flexGrow: 1 }}>
       {!talking ? <Home patient={patient} patients={patients} onPick={pick} onChoosePatient={() => router.push("/patients")} onSelectPatient={id => openSession(id)}
         onShelf={bottom => setShelfFrom(Math.max(0, Math.round(bottom + scrollSV.get() - (insets.top + 106))))} shelfCollapse={{ scroll: scrollSV, from: shelfFrom }} />
       : home ? <View style={{ gap: 44 }}>
@@ -373,10 +375,13 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     <TopBar {...bar} faded={scrolled || talking} tall={home && !talking && capsule} />
     </View>
 
-    {/* Everything under the dock blurs progressively, on home and in visits alike. */}
-    <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 100 }} />
+    {/* Everything passing under the dock blurs progressively and fades into the canvas (a frosted band as tall as the dock
+        and its chip), so the bar's buttons always read over cards; at the end the page stops its last card above it. */}
+    <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 36 }} />
+    <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 36, experimental_backgroundImage: "linear-gradient(180deg, rgba(245,246,248,0) 0%, rgba(245,246,248,0.78) 45%, rgba(245,246,248,0.94) 100%)" }} />
     <VoiceDock
       backdrop={backdrop}
+      onHeight={setDockH}
       sonaLive={patient ? visitLive : todayLive}
       quiet={Boolean(steps)}
       thinking={routingNow ? "Reading your request…" : thinking}

@@ -68,8 +68,10 @@ type Props = {
   onAttachmentsChange?: (items: Attachment[]) => void;
   /** Screen content captured for the liquid hold-to-talk veil. */
   backdrop: RefObject<View | null>;
-  /** Sona Live: with it, a tap on the orb opens the full-screen conversation (holding still talks once); without it, a tap listens hands-free. */
+  /** Sona Live: with it, a tap on the orb listens on the page (holding still talks once); without it, a tap listens hands-free. */
   sonaLive?: LiveAdapter;
+  /** How tall the dock stands (the bar with its chip, notices and draft above it), so the page keeps its last card clear of it. */
+  onHeight?: (height: number) => void;
 };
 
 function haptic(kind: "light" | "select") {
@@ -385,7 +387,7 @@ export function VoiceDock(props: Props) {
 
     {mode === "composing" && <Pressable accessibilityRole="button" accessibilityLabel="Close message composer" onPress={closeComposer} style={StyleSheet.absoluteFill} />}
 
-    <View pointerEvents="box-none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, paddingBottom: Math.max(insets.bottom, 12) + 4, gap: 10 }}>
+    <View pointerEvents="box-none" onLayout={e => props.onHeight?.(e.nativeEvent.layout.height)} style={{ position: "absolute", left: 0, right: 0, bottom: 0, paddingBottom: Math.max(insets.bottom, 12) + 4, gap: 10 }}>
       {mode !== "composing" && (above || chip || talk.open) && <View pointerEvents="box-none" style={{ paddingHorizontal: 20, gap: 8 }}>
         {above}
         {/* Sona Live on the page: the words heard so far wait in the draft for Send (or "submit"), over the status by the mic. */}
