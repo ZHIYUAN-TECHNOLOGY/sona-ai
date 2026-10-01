@@ -9,16 +9,18 @@ import { z } from "zod";
 import { clockOffsetOf } from "../clock";
 import { clockOf, type Context } from "../context";
 import { protectedProcedure } from "../index";
-import { sendDueCheckIns } from "./check-ins";
+import { wakeFollowUps } from "./check-ins";
 
 /**
  * The demo clock's controls: jump the demo hospital to the first or second check-in, the day-1 dose
  * or the clinic review, and back to real time. The clock itself (the offset every route reads) is in ../clock.
  * "day-2" and "day-7" keep their names for the apps already calling them, but land on the first and
  * second check-in days the doctor chose (day 2 and day 7 unless changed); status says which days they are.
+ * "next" (with a visit) lands just after what that visit's check-in agent does next, such as asking again
+ * after 2 h without a reply, so the demo need not wait.
  */
 const MINUTE = 60_000;
-export const JUMPS = ["now", "day-1", "day-2", "day-7", "visit"] as const;
+export const JUMPS = ["now", "day-1", "day-2", "day-7", "visit", "next"] as const;
 export type Jump = (typeof JUMPS)[number];
 
 /** Where each jump lands, from the hospital's latest discharge: just after the first two check-ins are due, and 09:00 on the review day. */
@@ -43,7 +45,7 @@ export async function jumpTargets(db: Context["db"], hospitalId: string) {
     "day-7": after(1),
     visit,
     checkInDays: checkIns.map(c => c.day),
-  } as { dischargedAt: Date; checkInDays: number[] } & Partial<Record<Exclude<Jump, "now">, Date>>;
+  } as { dischargedAt: Date; checkInDays: number[] } & Partial<Record<Exclude<Jump, "now" | "next">, Date>>;
 }
 
 async function status(db: Context["db"], hospitalId: string, now: Date) {
@@ -54,7 +56,7 @@ async function status(db: Context["db"], hospitalId: string, now: Date) {
     dischargedAt: targets?.dischargedAt ?? null,
     // The days behind the "day-2" and "day-7" jumps (the first two chosen), so the app can label them.
     checkInDays: targets?.checkInDays.slice(0, 2) ?? [2, 7],
-    available: JUMPS.filter(j => j === "now" || Boolean(targets?.[j])),
+    available: JUMPS.filter(j => j === "now" || (j !== "next" && Boolean(targets?.[j]))),
   };
 }
 
@@ -63,22 +65,27 @@ export const demoRouter = {
   status: protectedProcedure.handler(({ context }) => status(context.db, context.hospitalId, clockOf(context))),
   /**
    * Moves the demo hospital's clock (announced as a "demo" change, so every connected app re-reads),
-   * then sends whatever check-ins are now due, as the hourly cron would have.
+   * then wakes every followed visit's check-in agent, as the hourly cron would have, so what is now due
+   * happens within seconds.
    */
-  jump: protectedProcedure.input(z.object({ to: z.enum(JUMPS) })).handler(async ({ context, input }) => {
+  jump: protectedProcedure.input(z.object({ to: z.enum(JUMPS), encounterId: z.string().min(1).optional() })).handler(async ({ context, input }) => {
     const { db, hospitalId } = context;
     if (hospitalId !== DEMO_HOSPITAL) throw new ORPCError("FORBIDDEN", { message: "Only the demo hospital has a demo clock" });
     // Real time is the request's clock without the current offset (a test's fixed clock in tests).
     const real = clockOf(context).getTime() - await clockOffsetOf(db, hospitalId);
     let offset = 0;
-    if (input.to !== "now") {
+    if (input.to === "next") {
+      const next = input.encounterId ? (await context.followUps?.get(hospitalId, input.encounterId))?.next : undefined;
+      if (!next) throw new ORPCError("BAD_REQUEST", { message: "Sona has nothing planned for this visit" });
+      offset = new Date(next.at).getTime() + MINUTE - real;
+    } else if (input.to !== "now") {
       const at = (await jumpTargets(db, hospitalId))?.[input.to];
       if (!at) throw new ORPCError("BAD_REQUEST", { message: "Discharge a patient first; the jumps count from their discharge" });
       offset = at.getTime() - real;
     }
     await db.update(hospitals).set({ clockOffsetMs: offset }).where(eq(hospitals.id, hospitalId));
     const now = new Date(real + offset);
-    await sendDueCheckIns(db, hospitalId, now, context.fetch);
+    await wakeFollowUps(context, hospitalId, now);
     return status(db, hospitalId, now);
   }),
 };

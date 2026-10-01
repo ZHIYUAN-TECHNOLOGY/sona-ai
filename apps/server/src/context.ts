@@ -2,6 +2,7 @@ import type { Context as ApiContext } from "@sona-ai/api/context";
 import type { Change } from "@sona-ai/api/events";
 import { patientsFor } from "@sona-ai/api/audience";
 import type { Context as HonoContext } from "hono";
+import { getAgentByName } from "agents";
 
 import { basetenModels, basetenReranker } from "@sona-ai/api/baseten-models";
 import type { EncounterStore } from "@sona-ai/api/context";
@@ -48,6 +49,16 @@ export async function createContext({ context }: CreateContextOptions): Promise<
     },
     // Staging only: Sona Care's sign-in shows the seeded demo phone and its fixed code.
     demoSignIn: ENV.DEMO_SIGN_IN === "1",
+    followUps: followUpAgents(context.env as Env),
+  };
+}
+
+/** Sona's follow-up: each discharged visit's own check-in agent (./agents/check-in.ts), named by the visit. */
+export function followUpAgents(env: Env): NonNullable<ApiContext["followUps"]> {
+  const of = (encounterId: string) => getAgentByName(env.CHECK_IN_AGENTS, encounterId);
+  return {
+    tick: async (hospitalId, encounterId) => (await of(encounterId)).tick(hospitalId, encounterId),
+    get: async (hospitalId, encounterId) => (await of(encounterId)).view(hospitalId),
   };
 }
 

@@ -46,6 +46,9 @@ export async function notifyPatient(context: PushContext, hospitalId: string, pa
 /** What happened, for the patient: the moments Sona Care pushes. */
 export type PatientNews =
   | { kind: "check-in"; day: number }
+  // The check-in agent: no reply after 2 h asks again once; an urgent reply pushes the 999 template it sent to the thread.
+  | { kind: "reask"; day: number }
+  | { kind: "call-999"; text: string }
   | { kind: "booked"; at: Date }
   | { kind: "added"; test: string; at: Date }
   | { kind: "reply" }
@@ -68,6 +71,8 @@ export function when(at: Date, lang: Lang) {
 const COPY: Record<Lang, { [K in PatientNews["kind"]]: (n: Extract<PatientNews, { kind: K }>) => Omit<Push, "data"> }> = {
   en: {
     "check-in": n => ({ title: "Check-in", body: `How are you feeling today? Your day-${n.day} check-in is ready` }),
+    reask: n => ({ title: "Check-in", body: `Just checking in again: how are you feeling today? Your day-${n.day} check-in is waiting when you're ready` }),
+    "call-999": n => ({ title: "Call 999 now", body: n.text }),
     booked: n => ({ title: "Booked in", body: `Your doctor booked you in · ${when(n.at, "en")}` }),
     added: n => ({ title: "Your visit", body: `A ${n.test.replace(/^[A-Z](?=[a-z])/, c => c.toLowerCase())} was added to your visit · ${when(n.at, "en")}` }),
     reply: () => ({ title: "Messages", body: "Your care team replied" }),
@@ -76,6 +81,8 @@ const COPY: Record<Lang, { [K in PatientNews["kind"]]: (n: Extract<PatientNews, 
   },
   ms: {
     "check-in": n => ({ title: "Semakan", body: `Apa khabar hari ini? Semakan hari ke-${n.day} anda sudah sedia` }),
+    reask: n => ({ title: "Semakan", body: `Sekadar bertanya lagi: apa khabar hari ini? Semakan hari ke-${n.day} anda menunggu bila anda bersedia` }),
+    "call-999": n => ({ title: "Hubungi 999 sekarang", body: n.text }),
     booked: n => ({ title: "Temu janji", body: `Doktor anda telah membuat temu janji · ${when(n.at, "ms")}` }),
     added: n => ({ title: "Lawatan anda", body: `${n.test} ditambah pada lawatan anda · ${when(n.at, "ms")}` }),
     reply: () => ({ title: "Mesej", body: "Pasukan penjagaan anda telah membalas" }),
@@ -84,6 +91,8 @@ const COPY: Record<Lang, { [K in PatientNews["kind"]]: (n: Extract<PatientNews, 
   },
   zh: {
     "check-in": n => ({ title: "回访", body: `今天感觉怎么样？您第${n.day}天的回访已经准备好了` }),
+    reask: n => ({ title: "回访", body: `再问候您一下：今天感觉怎么样？您第${n.day}天的回访随时等您回复` }),
+    "call-999": n => ({ title: "请立即拨打999", body: n.text }),
     booked: n => ({ title: "已预约", body: `医生为您预约了复诊 · ${when(n.at, "zh")}` }),
     added: n => ({ title: "您的就诊", body: `您的就诊加了一项${n.test} · ${when(n.at, "zh")}` }),
     reply: () => ({ title: "消息", body: "医护团队回复了您" }),
@@ -91,7 +100,7 @@ const COPY: Record<Lang, { [K in PatientNews["kind"]]: (n: Extract<PatientNews, 
     declined: n => ({ title: "请另选时间", body: `${n.doctor} ${when(n.at, "zh")}无法为您看诊。请在 Sona Care 另选时间` }),
   },
 };
-const URL_OF: Record<PatientNews["kind"], string> = { "check-in": "sona-care:///check-ins", booked: "sona-care:///follow-ups", added: "sona-care:///follow-ups", reply: "sona-care:///messages", confirmed: "sona-care:///follow-ups", declined: "sona-care:///follow-ups" };
+const URL_OF: Record<PatientNews["kind"], string> = { "check-in": "sona-care:///check-ins", reask: "sona-care:///check-ins", "call-999": "sona-care:///messages", booked: "sona-care:///follow-ups", added: "sona-care:///follow-ups", reply: "sona-care:///messages", confirmed: "sona-care:///follow-ups", declined: "sona-care:///follow-ups" };
 
 export function pushFor(news: PatientNews, lang: Lang): Push {
   return { ...(COPY[lang][news.kind] as (n: PatientNews) => Omit<Push, "data">)(news), data: { url: URL_OF[news.kind] } };
