@@ -15,7 +15,7 @@ import { DoctorAvatar } from "@/features/doctors/avatar";
 import type { Doctor } from "@/features/doctors/data";
 import { useNextDose, useNow } from "@/features/doses";
 import { errorText } from "@/features/errors";
-import { dayLabel } from "@/features/follow-ups/lines";
+import { dayLabel, nextVisit } from "@/features/follow-ups/lines";
 import { useFollowUps } from "@/features/follow-ups/row";
 import { useMe } from "@/features/me";
 import { saveQuestion } from "@/features/questions";
@@ -63,7 +63,8 @@ export default function Assistant() {
   const { state } = useMe();
   const { plan, dose } = useNextDose(useNow());
   const discharge = useDischarge();
-  const visit = useFollowUps().data?.[0];
+  // The same next visit Home and Schedule show: the earliest not yet attended, never one already been to.
+  const visit = nextVisit(useFollowUps().data);
   const lang = useLang(), t = tFor(lang);
   const discharged = plan?.status === "discharged" ? plan : undefined;
   const asks = suggestions(discharged, visit, dose?.name, lang);

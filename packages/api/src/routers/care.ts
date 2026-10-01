@@ -49,6 +49,8 @@ async function codeRow(db: Context["db"], code: string) {
 
 // About 40 seconds of 16 kHz mono WAV, base64: a spoken question or reply, not a recording session.
 export const MAX_AUDIO_BASE64 = 1_800_000;
+// A sentence or two of an answer: Sona's voice takes longer to make than to hear, so the app sends one part at a time.
+export const MAX_SPOKEN = 300;
 
 export const careRouter = {
   /** Clinician: the visit's code and link for the QR, issued once per visit (reissued only once it has expired). */
@@ -114,6 +116,17 @@ export const careRouter = {
       });
       return heard;
     }),
+
+  /**
+   * Patient: part of an answer in Sona's own voice (box ②), as base64 WAV for the app to play. No audio
+   * (source "fixture", with `waking` while the voice is starting) means the app reads it in the phone's
+   * voice instead. Nothing is stored.
+   */
+  speak: patientProcedure.input(z.object({ text: z.string().trim().min(1).max(MAX_SPOKEN) })).handler(async ({ context, input }) => {
+    const said = await (context.models ?? stubModels).speak({ text: input.text });
+    if (said.source === "model" && said.audio) return { audio: said.audio, source: said.source, model: said.model };
+    return { source: "fixture" as const, waking: said.source === "fixture" ? said.waking : undefined };
+  }),
 
   /**
    * Patient: a question answered from their own discharge plan only. `grounded` false means the plan

@@ -48,6 +48,7 @@ export function wakingOf(box: Box): { waking?: number } {
 export const BRAIN_MODEL = "gemma-4-26b-a4b";
 export const ASR_MODEL = "sona-asr";
 export const XRAY_MODEL = "medgemma-1.5-4b";
+export const VOICE_MODEL = "sona-voxcpm2-malaysian";
 
 /** Same shape as packages/retrieval's Reranker (that package imports this one, so it is not imported back). */
 export type Reranker = (query: string, passages: string[]) => Promise<number[]>;
@@ -218,7 +219,8 @@ export function boxes({ apiKey, fetcher = fetch, timeoutMs = 30_000 }: Baseten) 
         method: "POST", body, headers: contentType ? { ...headers, "Content-Type": contentType } : headers, signal: AbortSignal.timeout(ms),
       });
       if (!res.ok) throw new Error(`Baseten ${box} answered ${res.status}`);
-      const out = await res.json();
+      // The voice box answers /v1/tts with audio bytes (MP3); every other route answers JSON.
+      const out = res.headers.get("content-type")?.startsWith("audio/") ? new Uint8Array(await res.arrayBuffer()) : await res.json();
       answered(box);
       return out;
     } catch (error) {
@@ -252,6 +254,15 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
         const out = await call("voice", "/v1/audio/transcriptions", form);
         return { text: String(out?.text ?? "").trim(), source: "model", model: ASR_MODEL };
       } catch { return fallback.transcribe(input); }
+    },
+
+    // The settings the round-4 listening test was rated on are the gateway's defaults, so only the text goes.
+    async speak(input) {
+      try {
+        const audio = await call("voice", "/v1/tts", JSON.stringify({ text: input.text }), "application/json");
+        if (audio instanceof Uint8Array && audio.length > 44) return { audio: base64(audio), source: "model", model: VOICE_MODEL };
+      } catch { /* the phone's voice reads it */ }
+      return fallback.speak(input);
     },
 
     async briefing(input) {
@@ -399,10 +410,10 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
     },
   };
 
-  // A stub answer from a hosted method whose box is starting says when to expect the model. Box ② hears, box ③
+  // A stub answer from a hosted method whose box is starting says when to expect the model. Box ② hears and speaks, box ③
   // sees, box ① writes the rest; the stub-only methods are not hosted, so nothing is starting for them.
   const withWaking = Object.entries(hosted).map(([method, run]) => {
-    const box: Box = method === "transcribe" ? "voice" : method === "xrayRead" ? "xray" : "brain";
+    const box: Box = method === "transcribe" || method === "speak" ? "voice" : method === "xrayRead" ? "xray" : "brain";
     return [method, async (input: never) => {
       const answer = await (run as (input: never) => Promise<Origin>)(input);
       return answer.source === "fixture" ? { ...answer, ...wakingOf(box) } : answer;

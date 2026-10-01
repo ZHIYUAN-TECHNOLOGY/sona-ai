@@ -4,7 +4,7 @@ import { draftByRules } from "@sona-ai/domain/messages";
 import { WARD_FIXTURE, huddle } from "@sona-ai/domain/ward";
 import { afterEach, beforeEach, expect, setSystemTime, test } from "bun:test";
 
-import { ASR_MODEL, BOXES, BRAIN_MODEL, COLD_START_MIN, XRAY_MODEL, basetenModels, basetenReranker, boxState } from "./baseten-models";
+import { ASR_MODEL, BOXES, BRAIN_MODEL, COLD_START_MIN, VOICE_MODEL, XRAY_MODEL, basetenModels, basetenReranker, boxState } from "./baseten-models";
 import { stubModels, type Models } from "./models";
 
 type Call = { url: string; init: RequestInit };
@@ -19,6 +19,7 @@ function fake(answers: Record<string, unknown>) {
     const answer = key === undefined ? undefined : answers[key];
     if (answer instanceof Error) throw answer;
     if (answer === undefined) return new Response("no", { status: 503 });
+    if (answer instanceof Uint8Array) return new Response(answer, { headers: { "content-type": "audio/wav" } });
     return Response.json(answer);
   }) as typeof fetch;
   return { fetcher, calls, wakes: () => calls.filter(c => c.url.endsWith("/wake")).map(c => c.url) };
@@ -38,6 +39,19 @@ test("speech goes to the ASR box as a WAV upload with the served model name, and
   expect(upload.url).toBe(`https://${box("voice")}/environments/production/sync/v1/audio/transcriptions`);
   expect((upload.init.body as FormData).get("model")).toBe(ASR_MODEL);
   expect((upload.init.headers as Record<string, string>).Authorization).toBe("Api-Key k");
+});
+
+test("Sona's voice: the text goes to box ② as JSON and the WAV comes back as base64; asleep, the phone reads it", async () => {
+  const wav = new Uint8Array(64).fill(7);
+  const { fetcher, calls } = fake({ [box("voice")]: wav });
+  const said = await basetenModels({ apiKey: "k", fetcher }).speak({ text: "Ambil ubat ini selepas makan." });
+  expect(said).toEqual({ audio: btoa(String.fromCharCode(...wav)), source: "model", model: VOICE_MODEL });
+  const asked = calls.at(-1)!;
+  expect(asked.url).toBe(`https://${box("voice")}/environments/production/sync/v1/tts`);
+  expect(JSON.parse(asked.init.body as string)).toEqual({ text: "Ambil ubat ini selepas makan." });
+  boxState.clear();
+  const asleep = await basetenModels({ apiKey: "k", fetcher: fake({}).fetcher }).speak({ text: "Ambil ubat ini." });
+  expect(asleep).toEqual({ source: "fixture", waking: COLD_START_MIN.voice });
 });
 
 test("a cold box is not waited for: a 2.5 s health check, a wake, and the stub at once with the minutes until the model is ready", async () => {

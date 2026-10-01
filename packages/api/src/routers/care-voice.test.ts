@@ -35,17 +35,30 @@ test("without a speech model, speaking is refused plainly and asking answers not
   const e = await amelia.care.transcribe({ audio: btoa("RIFF-some-audio-bytes") }).catch(e => e);
   expect([e.code, e.data?.code, e.message]).toEqual(["PRECONDITION_FAILED", "SPEECH_OFF", "Speaking to Sona Care isn't switched on yet. Please type instead."]);
   expect(await amelia.care.ask({ question: "Bila saya makan ubat?" })).toEqual({ answer: "", grounded: false, urgent: false, source: "fixture" });
+  // No voice: no audio, so the phone reads the answer.
+  expect(await amelia.care.speak({ text: "Ambil ubat ini selepas makan." })).toEqual({ source: "fixture" });
 });
 
 test("while the models are starting, speaking says in how many minutes, and so does the sample answer", async () => {
   const { amelia } = await world({
     ...stubModels,
     transcribe: async () => ({ text: "", source: "fixture" as const, waking: 30 }),
+    speak: async () => ({ source: "fixture" as const, waking: 30 }),
     answerFromPlan: async () => ({ answer: "", grounded: false, urgent: false, source: "fixture" as const, waking: 12 }),
   });
   const e = await amelia.care.transcribe({ audio: btoa("RIFF-some-audio-bytes") }).catch(e => e);
   expect([e.code, e.data?.code, e.message]).toEqual(["PRECONDITION_FAILED", "SPEECH_OFF", "Speaking to Sona Care is starting (about 30 min). Please type instead, or try again then."]);
   expect(await amelia.care.ask({ question: "Bila saya makan ubat?" })).toEqual({ answer: "", grounded: false, urgent: false, source: "fixture", waking: 12 });
+  expect(await amelia.care.speak({ text: "Ambil ubat ini selepas makan." })).toEqual({ source: "fixture", waking: 30 });
+});
+
+test("with Sona's voice, a part of an answer comes back as WAV with the model that spoke it; a long text is refused, so a part stays short", async () => {
+  let spoken = "";
+  const { amelia } = await world({ ...stubModels, speak: async ({ text }) => { spoken = text; return { audio: btoa("RIFF-wav"), source: "model" as const, model: "sona-voxcpm2-malaysian" }; } });
+  expect(await amelia.care.speak({ text: "  Ambil ubat ini selepas makan. " })).toEqual({ audio: btoa("RIFF-wav"), source: "model", model: "sona-voxcpm2-malaysian" });
+  expect(spoken).toBe("Ambil ubat ini selepas makan.");
+  const long = await amelia.care.speak({ text: "a".repeat(301) }).catch(e => e);
+  expect(long.code).toBe("BAD_REQUEST");
 });
 
 test("with the model, her Manglish reply flags the doctor with the model's own words, and her question is grounded in her plan", async () => {

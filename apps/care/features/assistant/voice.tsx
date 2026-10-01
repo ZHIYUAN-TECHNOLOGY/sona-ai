@@ -10,7 +10,8 @@ import { scheduleOnRN } from "react-native-worklets";
 import Svg, { Path } from "react-native-svg";
 import { spoken, type Asked, type Reply } from "@/features/assistant/answers";
 import { Glyph } from "@/features/assistant/composer";
-import { pickVoices, preview, voiceFor, type SonaVoice } from "@/features/assistant/voices";
+import { pickVoices, preview, standInFor, voiceFor, type SonaVoice } from "@/features/assistant/voices";
+import { FIRST_MS, sayInSonaVoice } from "./sona-voice";
 import { useListen } from "@/lib/listen";
 import { tFor, useLang, useT } from "@/lib/i18n";
 import "./strings";
@@ -29,8 +30,11 @@ import { Button, CircleButton, ICON } from "@/lib/ui";
  * conversation, turn by turn: the patient speaks, the turn ends when they pause, Sona answers aloud,
  * then listens again, until they tap stop or go quiet. It only says it is listening while the mic is on,
  * and with no speech model switched on it says so plainly; tapping a question still reads its answer.
- * The first time, "Choose Sona's voice" (after Gemini's picker): swipe between the phone's English
- * voices; each says hello. Reduce Motion: no sliding, and the orb holds still.
+ * The first time, "Choose Sona's voice" (after Gemini's picker): Sona's own Malaysian voice first, then
+ * the phone's voices; each says hello. Sona's own voice is made on Sona's server (./sona-voice): its words
+ * light up by how much of each sentence has played, and while it is starting or slow the phone's voice
+ * reads in its place, saying so under the status (a hello is never read in its place). Reduce Motion: no
+ * sliding, and the orb holds still.
  */
 const KEY = "sona-care.voice";
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
@@ -67,6 +71,10 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
   const [talking, setTalking] = useState(false);
   const [heard, setHeard] = useState<string>();
   const listen = useListen({ language, onHeard: q => { setHeard(q); void ask(q); } });
+  // Sona's own voice: stops the answer it is reading. `standIn` while the phone reads in its place.
+  const hosted = useRef<() => void>(undefined);
+  const [preparing, setPreparing] = useState(false);
+  const [standIn, setStandIn] = useState<{ waking?: number }>();
   const again = useRef(() => {});
   again.current = () => { if (talking && listen.state === "idle") listen.toggle(); };
   // A turn with nothing said, or an error (no speech model yet), ends the conversation.
@@ -79,25 +87,43 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
       const list = pickVoices(all, lang), saved = list.find(v => v.id === id);
       setVoices(list); setVoice(saved); setPicking(!saved);
     });
-    return () => { live = false; void Speech.stop(); };
+    return () => { live = false; hosted.current?.(); void Speech.stop(); };
   }, []);
 
   const on = (id: number, now: boolean) => {
     if (id !== turn.current) return;
-    setSpeaking(now);
+    setSpeaking(now); setPreparing(false);
     if (!now) setUpto(undefined);
     talk.set(still ? 0 : withTiming(now ? 1 : 0, { duration: now ? 500 : 900, easing: EASE_OUT }));
   };
-  const speak = (text: string, v: SonaVoice, follow = false) => {
-    const id = ++turn.current;
-    void Speech.stop();
-    setUpto(undefined);
-    Speech.speak(text, { voice: v.voice, language: v.language, rate: v.rate, pitch: v.pitch,
-      onBoundary: follow ? (e: { charIndex: number; charLength: number }) => { if (id === turn.current) setUpto(e.charIndex + e.charLength); } : undefined,
+  /** The phone's voice reads `text` from `from` (the rest of an answer Sona's own voice began). */
+  const phone = (id: number, text: string, v: SonaVoice, follow: boolean, from = 0) =>
+    Speech.speak(text.slice(from), { voice: v.voice, language: v.language, rate: v.rate, pitch: v.pitch,
+      onBoundary: follow ? (e: { charIndex: number; charLength: number }) => { if (id === turn.current) setUpto(from + e.charIndex + e.charLength); } : undefined,
       onStart: () => on(id, true), onDone: () => { on(id, false); if (id === turn.current) again.current(); }, onStopped: () => on(id, false), onError: () => on(id, false) });
+  const quiet = () => { hosted.current?.(); hosted.current = undefined; void Speech.stop(); };
+  /** `hello`: a voice saying hello in the picker: waited for, and never said by the phone in Sona's place. */
+  const speak = (text: string, v: SonaVoice, follow = false, hello = false) => {
+    const id = ++turn.current;
+    quiet();
+    setUpto(undefined);
+    if (!v.hosted) { phone(id, text, v, follow); return; }
+    // The note is about this answer only (the voice may have woken since the last one).
+    setSpeaking(true); setPreparing(true); setStandIn(undefined);
+    hosted.current = sayInSonaVoice(text, {
+      start: () => { if (id === turn.current) setStandIn(undefined); on(id, true); },
+      upto: n => { if (follow && id === turn.current) setUpto(n); },
+      done: () => { on(id, false); if (id === turn.current) again.current(); },
+      fallback: (from, waking) => {
+        if (id !== turn.current) return;
+        setStandIn({ waking });
+        if (hello) on(id, false);
+        else { setPreparing(false); phone(id, text, standInFor(text, voices ?? []), follow, from); }
+      },
+    }, hello ? undefined : FIRST_MS);
   };
-  const stop = () => { turn.current++; void Speech.stop(); setSpeaking(false); setUpto(undefined); talk.set(still ? 0 : withTiming(0, { duration: 600, easing: EASE_OUT })); };
-  // A Malay or Chinese answer is read in that language's voice, whichever voice was picked.
+  const stop = () => { turn.current++; quiet(); setSpeaking(false); setPreparing(false); setUpto(undefined); talk.set(still ? 0 : withTiming(0, { duration: 600, easing: EASE_OUT })); };
+  // A Malay or Chinese answer is read in that language's voice, unless Sona's own (it reads all three) was picked.
   const read = (text: string, v = voice) => { if (!v) return; setSaid(text); speak(text, voiceFor(text, v, voices ?? []), true); };
 
   const start = (v: SonaVoice) => {
@@ -116,11 +142,13 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
   };
   const leave = (then: () => void) => { setTalking(false); listen.cancel(); stop(); then(); };
   const lit = upto === undefined ? said?.length ?? 0 : upto;
-  const status = listen.state === "listening" ? t("voice.listening") : listen.state === "reading" ? t("voice.thinking") : speaking ? t("voice.readingAloud")
+  const starting = standIn?.waking ? t("voice.sonaStarting", { n: standIn.waking }) : undefined;
+  const standInLine = standIn && (starting ?? t("voice.sonaSlow"));
+  const status = listen.state === "listening" ? t("voice.listening") : listen.state === "reading" ? t("voice.thinking") : preparing ? t("voice.preparing") : speaking ? t("voice.readingAloud")
     : listen.error ?? (said ? t("voice.again") : t("voice.start"));
 
   if (!voices) return <ActivityIndicator color={palette.muted} style={{ flex: 1 }} />;
-  if (picking || !voice) return <Picker voices={voices} initial={Math.max(0, voices.findIndex(v => v.id === voice?.id))} onPreview={v => speak(preview(v), v)} onStart={start} onClose={() => leave(voice ? () => setPicking(false) : onChat)} />;
+  if (picking || !voice) return <Picker voices={voices} initial={Math.max(0, voices.findIndex(v => v.id === voice?.id))} onPreview={v => speak(preview(v, lang), v, false, true)} note={starting} onStart={start} onClose={() => leave(voice ? () => setPicking(false) : onChat)} />;
 
   return <View style={{ flex: 1, paddingTop: insets.top + 8 }}>
     <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16 }}>
@@ -134,6 +162,7 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
         <SonaOrb size={150} flood={talk} />
       </Pressable>
       <Text accessibilityLiveRegion="polite" style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: listen.error && !speaking && listen.state === "error" ? palette.amber : palette.ink, textAlign: "center" }}>{status}</Text>
+      {standInLine && voice.hosted && <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{standInLine}</Text>}
       {heard && <Text selectable accessibilityLabel={t("voice.youSaid", { q: heard })} style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>“{heard}”</Text>}
       {said && <Text accessibilityLiveRegion="polite" selectable style={{ fontSize: 24, lineHeight: 32, fontWeight: "600", letterSpacing: -0.6, color: palette.ink, textAlign: "center", marginTop: 4 }}>
         {said.slice(0, lit)}<Text style={{ fontWeight: "600", color: palette.faint }}>{said.slice(lit)}</Text>
@@ -165,7 +194,7 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
  * sits on `pos` (the line on `lag`, 40 ms behind), so they slide and fade together. VoiceOver swipes
  * up or down to change voice; the arrows do the same for anyone who doesn't swipe.
  */
-function Picker({ voices, initial, onPreview, onStart, onClose }: { voices: SonaVoice[]; initial: number; onPreview: (v: SonaVoice) => void; onStart: (v: SonaVoice) => void; onClose: () => void }) {
+function Picker({ voices, initial, note, onPreview, onStart, onClose }: { voices: SonaVoice[]; initial: number; note?: string; onPreview: (v: SonaVoice) => void; onStart: (v: SonaVoice) => void; onClose: () => void }) {
   const still = useReducedMotion();
   const insets = useSafeAreaInsets();
   const t = useT();
@@ -226,6 +255,7 @@ function Picker({ voices, initial, onPreview, onStart, onClose }: { voices: Sona
         <View style={{ flexDirection: "row", justifyContent: "center", gap: 6, height: 8 }}>
           {voices.map((x, i) => <PageDot key={x.id} i={i} pos={pos} />)}
         </View>
+        {v.hosted && note && <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{note}</Text>}
       </View>
     </GestureDetector>
     <View style={{ alignSelf: "center", minWidth: 160 }}><Button label={t("voice.startButton")} onPress={() => onStart(v)} /></View>

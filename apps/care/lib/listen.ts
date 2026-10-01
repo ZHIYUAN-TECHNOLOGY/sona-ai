@@ -22,8 +22,9 @@ const OPTIONS: RecordingOptions = {
   bitRate: 256_000,
   ios: { ...RecordingPresets.HIGH_QUALITY.ios, extension: ".wav", outputFormat: IOSOutputFormat.LINEARPCM, sampleRate: 16_000, linearPCMBitDepth: 16, linearPCMIsBigEndian: false, linearPCMIsFloat: false },
 };
-// Metering is dBFS: above SPEECH counts as talking; SILENCE_MS of quiet after talking ends the turn.
-const SPEECH_DB = -38, SILENCE_MS = 1300, MAX_MS = 30_000, NOTHING_MS = 7_000;
+// Metering is dBFS: above SPEECH counts as talking; SILENCE_MS of quiet after talking ends the turn (0.8 s, as voice
+// assistants do: a longer wait reads as Sona being slow to answer).
+const SPEECH_DB = -38, SILENCE_MS = 800, MAX_MS = 30_000, NOTHING_MS = 7_000;
 
 export type Listening = "idle" | "listening" | "reading" | "error";
 

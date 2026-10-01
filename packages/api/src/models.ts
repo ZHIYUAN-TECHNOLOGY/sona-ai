@@ -48,6 +48,12 @@ export type Models = {
   /** Sona Care: the patient's speech as text (Malay, English, Chinese or mixed). The stub has no ears: it returns no text. */
   transcribe(input: { audio: Uint8Array; language?: Language }): Answer<{ text: string; language?: string }>;
   /**
+   * Sona Care: a sentence or two read aloud in Sona's own voice (VoxCPM2 fine-tuned on a Malaysian nurse's voice,
+   * docs/tts-training.md), in whichever of Malay, English or Chinese it is written. `audio` is the box's MP3 (or WAV)
+   * as base64, ready to send. The stub has no voice: no audio, so the app reads with the phone's voice.
+   */
+  speak(input: { text: string }): Answer<{ audio?: string }>;
+  /**
    * Sona Care: an answer to the patient's question from their own discharge plan only. `grounded` false
    * means the plan does not answer it (the app offers the care team); `urgent` puts the 999 line first.
    * The stub answers nothing, so the app's authored plan answers stay in charge.
@@ -125,6 +131,7 @@ export const stubModels: Models = {
   // ponytail: keyword rule standing in for the classifier; the demo reply is "fever returned".
   classifyReply: ({ text }) => fixture({ label: readReply(text) }),
   transcribe: () => fixture({ text: "" }),
+  speak: () => fixture({}),
   // ponytail: keyword rules and templates (packages/domain/messages) until a model triages and drafts.
   triageMessage: ({ text }) => fixture(triageByRules(text)),
   draftReply: input => fixture({ text: draftByRules(input) }),
