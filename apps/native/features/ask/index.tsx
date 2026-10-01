@@ -1,7 +1,7 @@
 import { PressScale } from "@/components/sona/parts";
 import { JSONUIProvider, Renderer, defineRegistry } from "@json-render/react-native";
 import * as Haptics from "expo-haptics";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import { createContext, use, useEffect, useRef, useState, type ReactNode } from "react";
 import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
@@ -16,11 +16,12 @@ import { Action, Icon, Notice, RoundAction, Surface } from "@/components/sona/ui
 import { GlassOrb } from "@/components/sona/glass-orb";
 import { OrbGlyph } from "@/components/sona/orb-glyph";
 import { VoiceDock } from "@/features/encounter/voice-dock";
+import { useLiveClose, type LiveAdapter, type LiveReply } from "@/features/encounter/sona-live";
 import { openSession } from "@/features/encounter/navigation";
 import { useEncounter } from "@/features/encounter/store";
 import { api, useLive } from "@/features/live";
 import { startingReply, wakingOf } from "@/features/live/waking";
-import { PLACEHOLDER, SCOPE_LABEL, askContext, matchQuestion, suggestion, type Answer, type Scope } from "./answers";
+import { PLACEHOLDER, SCOPE_LABEL, askContext, leadOf, matchQuestion, suggestion, withoutLead, type Answer, type Scope } from "./answers";
 import { askCatalog, validateAskSpec } from "./catalog";
 import { SAVABLE, isSaved, saveView, useSaved } from "./saved";
 
@@ -112,6 +113,40 @@ function useFreeAnswer(scope: Scope, question: string | undefined, answers: Answ
   return on && state?.question === question ? state : undefined;
 }
 
+/**
+ * Sona Live on a page with rule answers (Today, and the pages with the dock): a question the page's rules
+ * answer shows that answer (Open shows it in the page's sheet); otherwise, live, the model answers from the
+ * page's own data (ask.free), as the sheet does; otherwise a quiet notice of what Sona answers here, or that the model is starting.
+ */
+export function usePageLive(scope: Scope, answers: Answer[], show: (answer: Answer) => void, onTab?: (tab: string) => void): LiveAdapter {
+  const { on } = useLive();
+  const reply = (answer: Answer, model?: string, open?: () => void): LiveReply => ({ lead: leadOf(answer) ?? answer.question, render: () => <LiveAnswer answer={answer} model={model} onTab={onTab} />, open });
+  return {
+    scope: SCOPE_LABEL[scope],
+    ask: async question => {
+      const rule = matchQuestion(question, answers);
+      if (rule) return reply(rule, undefined, () => show(rule));
+      const only = `Until the model is switched on, Sona answers only: ${answers.map(a => a.question).join(" · ")}`;
+      if (!on) return { notice: only };
+      try {
+        const r = await api.ask.free({ scope, question, context: askContext(answers) });
+        if (r.source === "model") return reply({ id: "free", question, spec: r.spec as Answer["spec"], worth: true }, r.model);
+        const waking = wakingOf(r);
+        return { notice: waking ? startingReply(waking) : "unanswered" in r && r.unanswered ? "Sona couldn't answer that from this page." : only };
+      } catch {
+        return { notice: "Sona couldn't reach the model. Ask again." };
+      }
+    },
+  };
+}
+
+/** An answer in Sona Live: its view without the lead (Live says that above it), its label kept; its ops end Live first. */
+function LiveAnswer({ answer, model, onTab }: { answer: Answer; model?: string; onTab?: (tab: string) => void }) {
+  const run = useRunOp(useLiveClose(), onTab);
+  const rest = withoutLead(answer);
+  return rest ? <AnswerView answer={rest} run={run} question={false} model={model} /> : <SampleLabel source={model ? "model" : "fixture"} model={model} rule={!model} />;
+}
+
 /** Which answer the sheet shows (or a question it couldn't answer), for a page that opens it itself. */
 export type AskState = { open: boolean; shown?: Answer; missed?: string };
 export const closed: AskState = { open: false };
@@ -183,10 +218,13 @@ export function WithSona({ scope, answers, onTab, hidden = false, children }: { 
   const [notice, setNotice] = useState<string>();
   const nudge = suggestion(answers);
   const submit = (text: string) => { const q = text.trim(); if (!q) return; setDraft(""); setNotice(undefined); const a = matchQuestion(q, answers); setState(a ? { open: true, shown: a } : { open: true, missed: q }); };
+  // Sona Live covers the whole screen, this page's header included.
+  const navigation = useNavigation();
+  const sonaLive: LiveAdapter = { ...usePageLive(scope, answers, shown => setState({ open: true, shown }), onTab), onOpenChange: open => navigation.setOptions({ headerShown: !open }) };
   return <View style={{ flex: 1 }}>
     <View ref={backdrop} collapsable={false} style={{ flex: 1 }}>{children}</View>
     {!hidden && <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 100 }} />}
-    {!hidden && <VoiceDock backdrop={backdrop} onSubmit={submit} onCancel={() => {}} placeholder={PLACEHOLDER[scope]} draft={draft} onDraft={value => { setDraft(value); setNotice(undefined); }}
+    {!hidden && <VoiceDock backdrop={backdrop} sonaLive={sonaLive} onSubmit={submit} onCancel={() => {}} placeholder={PLACEHOLDER[scope]} draft={draft} onDraft={value => { setDraft(value); setNotice(undefined); }}
       // The voice sample says the page's suggested question, so talking works the same as tapping it.
       spokenPrompt={nudge?.answer.question ?? answers[0]?.question ?? "What needs me now?"}
       voiceEnabled={voiceInput} onVoiceDisabled={() => setNotice("Voice input is turned off in Settings. Type your question instead.")} onVoiceError={setNotice}

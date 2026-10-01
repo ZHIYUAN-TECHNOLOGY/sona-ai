@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { askContextSchema } from "@sona-ai/api/ask-spec";
-import { askContext, beforeSigning, blocking, exportBlockers, matchQuestion, mostMoney, needsYou, noteNext, overdue, soonest, suggestion, toCheck, toFollowUp, toWatch, waitingLongest } from "./answers";
+import { askContext, beforeSigning, blocking, exportBlockers, leadOf, matchQuestion, mostMoney, needsYou, noteNext, overdue, soonest, suggestion, toCheck, toFollowUp, toWatch, waitingLongest, withoutLead } from "./answers";
 import { validateAskSpec } from "./catalog";
 import { withSaved } from "./saved";
 
@@ -14,6 +14,16 @@ test("every rule answer is a valid spec from the ask catalogue, empty or full", 
     toWatch([]), toWatch([{ id: "c1", patientId: "SYN-1", name: "Siti", priority: "watch", situation: "K+ 2.9" }]),
   ];
   for (const a of answers) expect(validateAskSpec(a.spec)).not.toBeNull();
+});
+
+test("Sona Live says an answer's lead and shows the rest, still a valid spec; a lead-only answer has no rest", () => {
+  const full = needsYou([{ id: "SYN-1", title: "Daniel Rahman", detail: "Low potassium", tone: "urgent", op: "open:SYN-1" }]);
+  expect(leadOf(full)).toBe("1 patient needs you now, most urgent first.");
+  const rest = withoutLead(full);
+  expect(parts(rest).map(p => p.type)).toEqual(["AskRows", "AskActions"]);
+  expect(validateAskSpec(rest.spec)).not.toBeNull();
+  expect(leadOf(full)).toBeDefined(); // the original is untouched
+  expect(withoutLead(needsYou([]))).toBeUndefined();
 });
 
 test("empty answers say so plainly and offer no rows or actions", () => {

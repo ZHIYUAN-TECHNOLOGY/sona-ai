@@ -70,22 +70,29 @@ export function thinkingLabel(kind: Capability, patient: Patient) {
  * never disagree; nothing when the card has nothing settled to summarise (a live search still running).
  */
 export function VisitLead({ req, card, patient }: { req: RequestState; card: ResponseCard; patient: Patient }) {
+  const text = useVisitLead(req, card, patient);
+  return text ? <StreamedLead text={text} animate={req.status === "streaming"} /> : null;
+}
+
+/** VisitLead's sentence (Sona Live says it above the card); undefined without a card or while it has nothing settled. */
+export function useVisitLead(req: RequestState | undefined, card: ResponseCard | undefined, patient: Patient | undefined) {
   const { encounters } = useEncounter();
-  const encounter = encounters[patient.id];
+  const encounter = patient && encounters[patient.id];
   const tasksOf = useVisitTasks();
   const { on: live } = useLive();
-  const answered = useAnsweredEvidence().get(req.id);
-  const result = usePendingResult(patient.id);
+  const answered = useAnsweredEvidence().get(req?.id ?? "");
+  const result = usePendingResult(patient?.id);
   // The X-ray lead follows the image model's reading when live mode has one (the same answer its card shows).
-  const xrayImage = req.kind === "xray" ? (card.imagingSnapshot ?? encounter)?.imagingAttachment?.uri : undefined;
-  const xrayRead = useLiveXray(patient.encounterId, xrayImage);
+  const xrayImage = req?.kind === "xray" ? (card?.imagingSnapshot ?? encounter)?.imagingAttachment?.uri : undefined;
+  const xrayRead = useLiveXray(patient?.encounterId ?? "", xrayImage);
+  if (!req || !card || !patient) return undefined;
   // The X-ray card reads its own snapshot; the prescribing card follows the encounter while it is the latest answer.
   const image = card.imagingSnapshot ?? encounter;
   const scenario = image?.imagingScenario ?? "reference";
   const rx = encounter && encounter.cards.at(-1)?.id === card.id ? prescribingState(encounter, patient) : card.prescription?.status;
   const tasks = encounter ? tasksOf(patient) : [];
   const question = req.prompt;
-  const text = leadFor(req.kind, patient, {
+  return leadFor(req.kind, patient, {
     medicines: encounter?.medicationEntries ?? [],
     image: scenario === "unsupported" ? "unsupported" : image?.imagingAttachment ? (xrayRead.data?.source === "model" ? "read" : "attached") : scenario === "no-finding" ? "no-finding" : !image?.hideTeachingImage && teachingImage?.referenceSummary ? "reference" : "none",
     note: !encounter?.note ? "none" : encounter.noteReviewed ? "reviewed" : "draft",
@@ -94,7 +101,6 @@ export function VisitLead({ req, card, patient }: { req: RequestState; card: Res
     evidence: live ? answered && (answered.enough ? "enough" : "not-enough") : !question || isRehearsed(question) ? "rehearsed" : authoredAnswer(question) ? "authored" : "off",
     result: result?.patientId === patient.id ? { test: result.test } : undefined,
   }, question);
-  return text ? <StreamedLead text={text} animate={req.status === "streaming"} /> : null;
 }
 
 /** The end of a visit's thread: its one next step, then at most two quiet questions (visit-next.ts). */

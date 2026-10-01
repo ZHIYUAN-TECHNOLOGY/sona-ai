@@ -88,6 +88,21 @@ export function suggestion(answers: Answer[]): { answer: Answer; text: string } 
   return answer && { answer, text: answer.action ?? answer.question };
 }
 
+/** An answer's lead sentence (its AskLead), which Sona Live says above the rest of it. */
+export function leadOf(answer: Answer): string | undefined {
+  const lead = Object.values(answer.spec.elements).find(e => e.type === "AskLead");
+  return (lead?.props as { text?: string } | undefined)?.text;
+}
+
+/** The answer without its lead, for when the lead is said above it; undefined when the lead was all of it. */
+export function withoutLead(answer: Answer): Answer | undefined {
+  const { root, elements } = answer.spec, top = elements[root];
+  const children = top?.children?.filter(id => elements[id]?.type !== "AskLead") ?? [];
+  if (!top || !children.length) return undefined;
+  const kept = Object.fromEntries(Object.entries(elements).filter(([, e]) => e.type !== "AskLead"));
+  return { ...answer, spec: { ...answer.spec, elements: { ...kept, [root]: { ...top, children } } } };
+}
+
 /** A typed question matched to this page's answers by its words; undefined when none fits. */
 export function matchQuestion(text: string, answers: Answer[]): Answer | undefined {
   const t = text.toLowerCase();

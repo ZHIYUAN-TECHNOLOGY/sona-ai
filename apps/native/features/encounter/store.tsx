@@ -14,7 +14,9 @@ import type { Capability, Encounter, Patient, RequestState } from "./types";
 type Store = {
   patient: Patient | undefined; patients: Patient[]; encounters: Record<string, Encounter>; encounter: Encounter | undefined;
   startAmendment: (reason: string) => void;
-  selectPatient: (id: string) => void; leaveVisit: () => void; request: (kind: Capability, prompt?: string) => void; cancel: () => void;
+  selectPatient: (id: string) => void; leaveVisit: () => void; cancel: () => void;
+  /** Asks in the open visit; returns the request's id (the earlier one's, for a repeat), so Sona Live can show that answer. */
+  request: (kind: Capability, prompt?: string) => string | undefined;
   /** Updates the open visit, or `patientId`'s when given (a server read that may land after the visit changed). */
   updateEncounter: (update: (current: Encounter) => Encounter, revise?: boolean, patientId?: string) => void;
   runInPlace: (kind: "medication" | "prescription") => void;
@@ -70,7 +72,8 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
     const id = activeRef.current; const base = patients.find(p => p.id === id); const patient = base ? effectivePatient(base, stateRef.current[base.id]) : undefined;
     if (!id || !patient) return;
     // A double send is one request: the answer already on its way is the answer.
-    if (!amendmentId && isRepeat(stateRef.current[id]?.requests.at(-1), kind, prompt)) return;
+    const last = stateRef.current[id]?.requests.at(-1);
+    if (!amendmentId && last && isRepeat(last, kind, prompt)) return last.id;
     clearTimers();
     const revision = stateRef.current[id]!.revision;
     const req: RequestState = { id: `request-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, kind, prompt, patientId: id, encounterId: patient.encounterId, revision, status: "streaming" };
@@ -120,6 +123,7 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
       void (kind === "medication" ? pushAndReview(patient.encounterId, current).then(() => undefined)
         : amendOnServer(patient.encounterId, user.id, current.prescriptionAmendment ?? "", amendmentId)).then(settle, e => fail(errorText(e)));
     } else if (live) settle(); else timers.current.push(setTimeout(settle, kind === "prescription" ? 1800 : 1150));
+    return req.id;
   }, [clearTimers, live, user, simulateFailure, simulateInvalid]);
   // The one way to run the review and the simulation, for the prescribe card and the next-step bar alike, without adding answers.
   // Live: the server records the review and re-checks everything before it writes the receipt, and refuses a role that can't
