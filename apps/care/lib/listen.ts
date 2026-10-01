@@ -1,5 +1,6 @@
 import { AudioModule, IOSOutputFormat, RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState, type RecordingOptions } from "expo-audio";
 import { File } from "expo-file-system";
+import { base64, partialDue, PARTIAL_MS, wavSoFar } from "@sona-ai/domain/partial-wav";
 import { useEffect, useRef, useState } from "react";
 import { errorText } from "@/features/errors";
 import { client } from "@/utils/orpc";
@@ -12,7 +13,8 @@ import "./strings";
  * into text on the server (care.transcribe). The words come back for the patient to see before
  * anything is sent. Audio is 16 kHz mono WAV on iOS (what speech models read best), kept only on the
  * phone until it is sent, then deleted. With no speech model switched on, the server says so plainly
- * and the patient types instead.
+ * and the patient types instead. With `untilStop` the words so far stream back as `partial` while they
+ * speak (Sona Pro's rolling partials, see @sona-ai/domain/partial-wav); the pass on the whole file replaces them.
  */
 const OPTIONS: RecordingOptions = {
   ...RecordingPresets.HIGH_QUALITY,
@@ -34,6 +36,9 @@ export function useListen({ language, onHeard, untilStop }: { language?: "en" | 
   const status = useAudioRecorderState(recorder, 100);
   const [state, setState] = useState<Listening>("idle");
   const [error, setError] = useState<string>();
+  const [partial, setPartial] = useState("");
+  // turn: which recording a partial belongs to, so a late answer from the last one never shows over this one.
+  const turn = useRef(0), partialBusy = useRef(false), partialSent = useRef(0), latest = useRef("");
   const spoke = useRef(false), quietSince = useRef<number>(undefined), startedAt = useRef(0), ending = useRef(false);
   const heard = useRef(onHeard);
   useEffect(() => { heard.current = onHeard; });
@@ -45,16 +50,22 @@ export function useListen({ language, onHeard, untilStop }: { language?: "en" | 
     await recorder.stop().catch(() => {});
     await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => {});
     const uri = recorder.uri;
-    if (!send || !uri) { setState("idle"); return; }
+    // The partial stays on screen while the whole file is read (no blank wait); if that read fails or hears
+    // nothing, the partial is what they said, so it lands in the field instead of an error.
+    const said = latest.current;
+    latest.current = "";
+    const fail = (message: string) => { setPartial(""); setError(message); setState("error"); };
+    if (!send || !uri) { setPartial(""); setState("idle"); return; }
     setState("reading");
     const file = new File(uri);
     try {
       const { text } = await client.care.transcribe({ audio: await file.base64(), language });
-      setState("idle");
-      if (text.trim()) heard.current(text.trim());
-      else { setError(translate(currentLang(), "listen.missed")); setState("error"); }
+      setPartial(""); setState("idle");
+      if (text.trim() || said) heard.current(text.trim() || said);
+      else fail(translate(currentLang(), "listen.missed"));
     } catch (e) {
-      setError(errorText(e, currentLang())); setState("error");
+      if (said) { setPartial(""); setState("idle"); heard.current(said); }
+      else fail(errorText(e, currentLang()));
     } finally {
       try { file.delete(); } catch { /* already gone */ }
     }
@@ -68,6 +79,7 @@ export function useListen({ language, onHeard, untilStop }: { language?: "en" | 
     await recorder.prepareToRecordAsync();
     recorder.record();
     spoke.current = false; quietSince.current = undefined; startedAt.current = Date.now(); ending.current = false;
+    turn.current++; partialSent.current = 0; latest.current = ""; setPartial("");
     setState("listening");
   };
 
@@ -83,8 +95,32 @@ export function useListen({ language, onHeard, untilStop }: { language?: "en" | 
     else if (now - startedAt.current > MAX_MS) void finish(true);
   });
 
+  // With `untilStop`, every PARTIAL_MS while recording send the file so far (a tick is skipped while the last partial
+  // is still out). A partial fails silently: it is only a preview, and the final pass says what went wrong.
+  useEffect(() => {
+    if (!untilStop || state !== "listening") return;
+    const tick = setInterval(() => {
+      const uri = recorder.uri, mine = turn.current;
+      if (!uri || ending.current) return;
+      const file = new File(uri), size = file.size;
+      if (!partialDue({ busy: partialBusy.current, spoke: spoke.current, sent: partialSent.current, size })) return;
+      partialBusy.current = true; partialSent.current = size;
+      void (async () => {
+        try {
+          const wav = wavSoFar(await file.bytes());
+          if (!wav || ending.current) return;
+          const { text } = await client.care.transcribe({ audio: base64(wav), language });
+          if (turn.current === mine && !ending.current && text.trim()) { latest.current = text.trim(); setPartial(latest.current); }
+        } catch { /* preview only */ } finally { partialBusy.current = false; }
+      })();
+    }, PARTIAL_MS);
+    return () => clearInterval(tick);
+  }, [state]); // eslint-disable-line react-hooks/exhaustive-deps -- one ticker per recording
+
   return {
     state, error, level, untilStop,
+    /** The words so far (untilStop only): live while recording, held while the whole file is read. */
+    partial,
     /** How long this recording has run, for the timer. */
     ms: status.durationMillis,
     /** Tap: start listening, or (while listening) send what was said now. */
