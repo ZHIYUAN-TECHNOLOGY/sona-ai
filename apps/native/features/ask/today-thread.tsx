@@ -8,11 +8,14 @@ import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import { StreamedLead } from "@/features/encounter/conversation";
-import { Bubble, useLiveClose } from "@/features/encounter/sona-live";
+import { Bubble } from "@/features/encounter/sona-live";
 import { useLive } from "@/features/live";
 import { AnswerView, KeepRow, answerFree, answerNow, openTab, useRunOp } from ".";
 import { leadOf, withoutLead, type Answer } from "./answers";
 import { askThread, replyTo, useThread, type Entry } from "./thread";
+
+// Nothing to close before an answer's op runs: the page is the shell, and Live is its voice.
+const stay = () => {};
 
 /**
  * Asking on Today: each question joins Today's thread (thread.ts), which the page shows and Sona Live asks into. A rule
@@ -36,15 +39,13 @@ export function useTodayThread(answers: Answer[]) {
 }
 
 /**
- * One question on Today and what Sona said, as a visit shows a request: the question (muted), the answer's lead inked in
- * like a visit's lead, then its view with its label, ops and, for a day-wide answer, Open as page / Save to sidebar; or
- * Sona thinking, or a notice (Ask again when that may work). `fresh` (the page's newest, while Live is closed) inks the
- * lead in and has VoiceOver read the answer as it lands. Sona Live shows it with `lead={false}`: Live shows the question
- * and says the lead itself, and the answer's ops end Live first (useLiveClose does nothing outside Live).
+ * One question on Today and what Sona said, as a visit shows a request: the question in the glass bubble, the answer's lead
+ * inked in like a visit's lead, then its view with its label, ops and, for a day-wide answer, Open as page / Save to
+ * sidebar; or Sona thinking, or a notice (Ask again when that may work). `fresh` (the page's newest) inks the lead in and
+ * has VoiceOver read the answer as it lands, spoken or typed alike.
  */
-export function ThreadEntry({ entry, lead = true, fresh = false, onAgain }: { entry: Entry; lead?: boolean; fresh?: boolean; onAgain?: () => void }) {
-  const leave = useLiveClose();
-  const run = useRunOp(leave, openTab);
+export function ThreadEntry({ entry, fresh = false, onAgain }: { entry: Entry; fresh?: boolean; onAgain?: () => void }) {
+  const run = useRunOp(stay, openTab);
   const reduced = useReduceMotionPreference();
   const { reply } = entry;
   // iOS has no live regions, so a new answer is announced.
@@ -53,7 +54,7 @@ export function ThreadEntry({ entry, lead = true, fresh = false, onAgain }: { en
   const said = reply && "answer" in reply ? reply : undefined;
   const text = said && leadOf(said.answer), rest = said && (text ? withoutLead(said.answer) : said.answer);
   return <View style={{ gap: 16 }}>
-    {lead && <Bubble text={entry.question} />}
+    <Bubble text={entry.question} />
     {!reply ? <Drafting label="Thinking…" lines={2} slow={MODEL_SLOW} />
       : "notice" in reply ? <View style={{ gap: 2 }}>
         <Caption>{reply.notice}</Caption>
@@ -65,17 +66,12 @@ export function ThreadEntry({ entry, lead = true, fresh = false, onAgain }: { en
         </View>}
       </View>
       : <>
-        {lead && text && <StreamedLead text={text} animate={fresh} />}
+        {text && <StreamedLead text={text} animate={fresh} />}
         <Animated.View entering={fresh && !reduced ? FadeInDown.duration(220) : undefined} style={{ gap: 14 }}>
           {rest ? <AnswerView answer={rest} run={run} question={false} model={reply.model} /> : <SampleLabel source={reply.model ? "model" : "fixture"} model={reply.model} rule={!reply.model} />}
-          {lead && <KeepRow answer={reply.answer} leave={leave} />}
+          <KeepRow answer={reply.answer} leave={stay} />
         </Animated.View>
       </>}
   </View>;
 }
 
-/** Today's thread inside Sona Live, laid out as the page lays it out (the page adds its own scrolling): the newest inked in. */
-export function TodayConversation({ entries, onAgain }: { entries: Entry[]; onAgain: (entry: Entry) => void }) {
-  const newest = entries.at(-1);
-  return <View style={{ gap: 44 }}>{entries.map(entry => <ThreadEntry key={entry.id} entry={entry} fresh={entry.id === newest?.id} onAgain={() => onAgain(entry)} />)}</View>;
-}

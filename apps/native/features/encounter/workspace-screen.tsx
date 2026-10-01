@@ -6,24 +6,24 @@ import { Action, Notice, Reveal } from "@/components/sona/ui";
 import { ClinicalResponseRenderer } from "@/features/presentation";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useRef, useState, type ComponentProps } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, BackHandler, Keyboard, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { capabilityLabels, Home, suggestionFor, thinkingLabel, TopBar, useVisitLead, VisitEnd, VisitLead, type Suggestion } from "./conversation";
+import { capabilityLabels, Home, suggestionFor, thinkingLabel, TopBar, VisitEnd, VisitLead, type Suggestion } from "./conversation";
 import { openTaskCount } from "@/features/day/counts";
 import { useServerData } from "@/features/live/server-day";
 import { api, useLive } from "@/features/live";
 import { touch } from "@/features/patients/continue-store";
 import { PLACEHOLDER, forWhichPatient, matchQuestion, suggestion } from "@/features/ask/answers";
 import { useTodayAnswers } from "@/features/ask/today";
-import { ThreadEntry, TodayConversation, useTodayThread } from "@/features/ask/today-thread";
+import { ThreadEntry, useTodayThread } from "@/features/ask/today-thread";
 import { answerOf, clearThread } from "@/features/ask/thread";
 import { capabilitySchema, routeInThread } from "./state";
 import { openSession } from "./navigation";
 import { useEncounter } from "./store";
 import type { Capability, FeatureProps, FocusView, RequestState, ResponseCard } from "./types";
 import { VoiceDock } from "./voice-dock";
-import { Bubble, useLiveClose, type LiveAdapter } from "./sona-live";
+import { Bubble, type LiveAdapter } from "./sona-live";
 import { QuickRow } from "@/components/sona/quick-actions";
 import { useServerEncounter } from "@/features/live/sync";
 import { useHomeActions } from "./quick-actions";
@@ -68,15 +68,6 @@ function RequestAnswer({ req, card, revision, props, onRetry, lead = true, leave
     {req.status === "failed" && <><Notice warning>{req.error}</Notice><Action secondary label="Retry request" onPress={away(onRetry)} /></>}
     {req.status === "cancelled" && <Notice>Response stopped. Completed content and your edits are kept.</Notice>}
   </>;
-}
-
-/** Sona Live's view of a visit request: its card as the thread shows it, without the lead (Live says that above it). */
-function LiveRequest({ patientId, id, props, onRetry }: { patientId: string; id: string; props: FeatureProps; onRetry: () => void }) {
-  const { encounters } = useEncounter();
-  const leave = useLiveClose();
-  const encounter = encounters[patientId], req = encounter?.requests.find(r => r.id === id);
-  if (!encounter || !req) return null;
-  return <View style={{ gap: 16 }}><RequestAnswer req={req} card={encounter.cards.find(c => c.requestId === id)} revision={encounter.revision} props={props} onRetry={onRetry} lead={false} leave={leave} /></View>;
 }
 
 /**
@@ -291,12 +282,10 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
 
   const props: FeatureProps | undefined = patient ? { patient, onSource: id => router.push({ pathname: "/source", params: { id, patientId: patient.id } }), onOpen: open, onRequest: run } : undefined;
 
-  // Sona Live (a tap on the orb). In a visit it routes as the dock does (Laya first, then keywords) and its answer is
-  // the visit's own request: the card the thread shows, led by the thread's lead line; Open ends Live on it in the thread.
+  // Sona Live (a tap on the orb) is the page's voice. In a visit it routes as the dock does (Laya first, then keywords)
+  // and its answer is the visit's own request, shown on the page as a typed one is.
   const encRef = useRef(encounters); encRef.current = encounters;
-  const latestLead = useVisitLead(latest, latestCard, latestCard?.patientSnapshot ?? patient);
-  const leadRef = useRef({ id: latest?.id, text: latestLead }); leadRef.current = { id: latest?.id, text: latestLead };
-  /** Resolves once request `id` has its card or has ended (4 s at most), so Live can say the lead its card has. */
+  /** Resolves once request `id` has its card or has ended (4 s at most), so Live knows Sona has answered. */
   const settled = (patientId: string, id: string) => new Promise<void>(resolve => {
     const until = Date.now() + 4000;
     const check = () => {
@@ -305,19 +294,15 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     };
     check();
   });
-  const showRequest = (id: string) => {
-    setShowEarlier(true);
-    setTimeout(() => { const y = offsets.current[id]; if (y !== undefined) scroll.current?.scrollTo({ y: Math.max(0, y + 8), animated: !reducedMotion }); }, 80);
-  };
-  // The page's top bar, also Sona Live's: Live keeps the menu, the toolbar and the way back, and adds its X.
+  // The page's top bar.
   const bar = { patient, inEncounter: !home, openTasks: openTaskCount(patient ? [patient] : patients, encounters, server), onMenu: openDrawer,
     onBack: home ? undefined : () => router.canGoBack() ? router.back() : router.replace("/"), onPatient: () => router.push({ pathname: "/patients", params: { switch: "1" } }), onTasks: () => router.push("/tasks"),
     onNew: thread.length ? () => { clearThread(); scroll.current?.scrollTo({ y: 0, animated: false }); } : undefined };
   const visitLive: LiveAdapter | undefined = patient && props && {
-    scope: patient.name.split(" ")[0] ?? patient.name, header: <LiveTopBar {...bar} />,
+    scope: patient.name.split(" ")[0] ?? patient.name,
     ask: async question => {
-      // Attachments from the dock's + menu go with the question, as `submit` sends them: an image to the imaging review
-      // (Live shows its card); files and documents are kept for reference, which Live says (with an image, the page does).
+      // Attachments from the dock's + menu go with the question, as `submit` sends them: an image to the imaging review;
+      // files and documents are kept for reference, which the page says.
       const image = pending.find(item => item.kind === "image" && item.imageType !== "Document");
       const files = pending.filter(item => item.kind === "file" || item.imageType === "Document");
       if (pending.length) setPending([]);
@@ -328,21 +313,15 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       const id = kind ? runRouted(kind, question, medicine) : undefined;
       if (image && fileNote) setNotice(fileNote);
       if (!kind || !id) return { notice: UNROUTED };
+      // The page shows the request as it shows a typed one (it brings the newest into view); Live waits for it to land.
       await settled(patient.id, id);
-      const lead = leadRef.current.id === id ? leadRef.current.text : undefined;
-      return { lead: lead ?? capabilityLabels[kind], render: () => <LiveRequest patientId={patient.id} id={id} props={props} onRetry={() => run(kind, question)} />, open: () => showRequest(id) };
+      return { shown: true };
     },
   };
   // The newest entry is brought into view as a visit brings in its new answer.
   const brought = useRef("");
-  // On Today, Live asks into the same thread, so closing it leaves the conversation on Today (like Claude's voice mode): an
-  // answer shows in Live as the thread shows it, and Open ends Live on its entry. While Live is open the page stays quiet (`inLive`).
-  const [inLive, setInLive] = useState(false);
-  // Live shows Today's thread itself, as the page does (question bubbles, the lead inked in, the answer and its ops), so
-  // speaking, typing and the page read as one conversation; each question Live asks lands there (`shown`).
-  const todayLive: LiveAdapter = { scope: "Today", onOpenChange: setInLive, header: <LiveTopBar {...bar} />,
-    conversation: { render: () => <TodayConversation entries={thread} onAgain={today.again} />, empty: !thread.length },
-    ask: async question => { await (pending.length ? askForPatient(question) : today.ask(question)); return { shown: true }; } };
+  // On Today, a spoken question joins Today's thread as a typed one does: the page is the shell, and Live its voice.
+  const todayLive: LiveAdapter = { scope: "Today", ask: async question => { await (pending.length ? askForPatient(question) : today.ask(question)); return { shown: true }; } };
   const visible = compactResponses && !showEarlier ? requests.slice(-1) : requests;
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
   // Live mode records the room (scribe/live-recorder); the demo plays its sample consultation.
@@ -366,7 +345,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
           // Each new question, and its answer once it lands, comes into view.
           const key = `${entry.id}${entry.reply ? "+" : ""}`;
           if (entry.id === newest?.id && brought.current !== key) { brought.current = key; scroll.current?.scrollTo({ y: Math.max(0, y + 8), animated: !reducedMotion }); }
-        }}><ThreadEntry entry={entry} fresh={entry.id === newest?.id && !inLive} onAgain={() => today.again(entry)} /></View>)}
+        }}><ThreadEntry entry={entry} fresh={entry.id === newest?.id} onAgain={() => today.again(entry)} /></View>)}
       </View>
       : <View style={{ gap: 44 }}>
         {compactResponses && requests.length > 1 && <Action label={showEarlier ? "Collapse earlier responses" : `Show ${requests.length - 1} earlier responses`} secondary onPress={() => setShowEarlier(value => !value)} />}
@@ -434,8 +413,3 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
 }
 
 
-/** The page's top bar inside Sona Live: the menu ends Live before the drawer opens (leaving the page ends it too, in useSonaLive), and the X ends it. */
-function LiveTopBar(props: Omit<ComponentProps<typeof TopBar>, "faded">) {
-  const end = useLiveClose();
-  return <TopBar {...props} faded={false} onMenu={() => { end(); props.onMenu(); }} onClose={end} />;
-}

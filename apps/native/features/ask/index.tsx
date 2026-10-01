@@ -1,7 +1,7 @@
 import { PressScale } from "@/components/sona/parts";
 import { JSONUIProvider, Renderer, defineRegistry } from "@json-render/react-native";
 import * as Haptics from "expo-haptics";
-import { router, useNavigation } from "expo-router";
+import { router } from "expo-router";
 import { createContext, use, useEffect, useRef, useState, type ReactNode } from "react";
 import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
@@ -16,12 +16,12 @@ import { Action, Icon, Notice, RoundAction, Surface } from "@/components/sona/ui
 import { GlassOrb } from "@/components/sona/glass-orb";
 import { OrbGlyph } from "@/components/sona/orb-glyph";
 import { VoiceDock } from "@/features/encounter/voice-dock";
-import { useLiveClose, type LiveAdapter, type LiveReply } from "@/features/encounter/sona-live";
+import type { LiveAdapter, LiveReply } from "@/features/encounter/sona-live";
 import { openSession } from "@/features/encounter/navigation";
 import { useEncounter } from "@/features/encounter/store";
 import { api, useLive } from "@/features/live";
 import { startingReply, wakingOf } from "@/features/live/waking";
-import { PLACEHOLDER, SCOPE_LABEL, askContext, leadOf, matchQuestion, suggestion, withoutLead, type Answer, type Scope } from "./answers";
+import { PLACEHOLDER, SCOPE_LABEL, askContext, matchQuestion, suggestion, type Answer, type Scope } from "./answers";
 import { askCatalog, validateAskSpec } from "./catalog";
 import { SAVABLE, isSaved, saveView, useSaved } from "./saved";
 import type { Reply } from "./thread";
@@ -137,24 +137,18 @@ export async function answerFree(scope: Scope, question: string, answers: Answer
  * page's rules answer shows that answer (Open shows it in the page's sheet); otherwise, live, the model answers from the
  * page's own data (ask.free), as the sheet does; otherwise a quiet notice of what Sona answers here, or that the model is starting.
  */
-export function usePageLive(scope: Scope, answers: Answer[], show: (answer: Answer) => void, onTab?: (tab: string) => void): LiveAdapter {
+export function usePageLive(scope: Scope, answers: Answer[], show: (answer: Answer) => void): LiveAdapter {
   const { on } = useLive();
   return {
     scope: SCOPE_LABEL[scope],
+    // Sona Live is the page's voice: a spoken question shows where a typed one does (the page's sheet).
     ask: async (question): Promise<LiveReply> => {
       const reply = answerNow(question, answers, on) ?? await answerFree(scope, question, answers);
       if ("notice" in reply) return { notice: reply.notice };
-      const { answer, model } = reply;
-      return { lead: leadOf(answer) ?? answer.question, render: () => <LiveAnswer answer={answer} model={model} onTab={onTab} />, open: model ? undefined : () => show(answer) };
+      show(reply.answer);
+      return { shown: true };
     },
   };
-}
-
-/** An answer in Sona Live: its view without the lead (Live says that above it), its label kept; its ops end Live first. */
-function LiveAnswer({ answer, model, onTab }: { answer: Answer; model?: string; onTab?: (tab: string) => void }) {
-  const run = useRunOp(useLiveClose(), onTab);
-  const rest = withoutLead(answer);
-  return rest ? <AnswerView answer={rest} run={run} question={false} model={model} /> : <SampleLabel source={model ? "model" : "fixture"} model={model} rule={!model} />;
 }
 
 /** A day-wide answer can leave the sheet or Today's thread: as its own page, or kept in the sidebar where it stays live. `leave` closes what shows it first. */
@@ -234,8 +228,7 @@ export function WithSona({ scope, answers, onTab, hidden = false, children }: { 
   const nudge = suggestion(answers);
   const submit = (text: string) => { const q = text.trim(); if (!q) return; setDraft(""); setNotice(undefined); const a = matchQuestion(q, answers); setState(a ? { open: true, shown: a } : { open: true, missed: q }); };
   // Sona Live covers the whole screen, this page's header included.
-  const navigation = useNavigation();
-  const sonaLive: LiveAdapter = { ...usePageLive(scope, answers, shown => setState({ open: true, shown }), onTab), onOpenChange: open => navigation.setOptions({ headerShown: !open }) };
+  const sonaLive = usePageLive(scope, answers, shown => setState({ open: true, shown }));
   return <View style={{ flex: 1 }}>
     <View ref={backdrop} collapsable={false} style={{ flex: 1 }}>{children}</View>
     {!hidden && <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 100 }} />}

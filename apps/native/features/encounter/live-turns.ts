@@ -19,7 +19,7 @@ export type Talk<R> = {
   floor: number;
   /** Sent, waiting for the mic to finish reading; chunks after this one (said after a send phrase) stay out. */
   sending?: number;
-  /** The keyboard takes the draft once it is all read (Live stays open, the mic off, for typing). */
+  /** The keyboard takes the draft once it is all read (for the page's composer). */
   handoff?: boolean;
 };
 export type Step<R> =
@@ -30,7 +30,6 @@ export type Step<R> =
   | { type: "clear"; upTo: number } // Clear: the draft goes, with every chunk up to `upTo` still being read
   | { type: "keyboard" } // the keyboard takes over: the mic goes off and the draft goes to the composer once read
   | { type: "handed" } // the composer has the draft: it leaves Live's draft
-  | { type: "say"; text: string } // a typed question, sent from the composer inside Live
   | { type: "reply"; reply: R; session: number } // Sona's answer, or a notice
   | { type: "mic" } // the mic button
   | { type: "fail"; id?: number; reply?: R }; // the microphone, or chunk `id`'s reading, failed: the mic goes off, with a notice (none repeats one)
@@ -88,8 +87,6 @@ export function step<R>(s: Talk<R>, e: Step<R>): Talk<R> {
     case "clear": return s.phase === "thinking" ? s : { ...s, draft: [], floor: Math.max(s.floor, e.upTo) };
     case "keyboard": return { ...s, mic: false, phase: s.phase === "thinking" ? "thinking" : "paused", handoff: true };
     case "handed": return { ...s, draft: [], handoff: undefined };
-    // Typed in Live: it is the clinician's turn as a spoken one is, once Sona has answered the last.
-    case "say": return s.phase === "thinking" || !e.text.trim() ? s : { ...s, phase: "thinking", turns: [...s.turns, { id: s.next, who: "you", text: e.text.trim() }], next: s.next + 1 };
     case "reply": return e.session !== s.session ? s : { ...s, phase: s.mic ? "listening" : "paused", turns: [...s.turns, { id: s.next, who: "sona", reply: e.reply }], next: s.next + 1 };
     case "mic": {
       const mic = !s.mic;
@@ -110,9 +107,6 @@ export function step<R>(s: Talk<R>, e: Step<R>): Talk<R> {
 /** Words of a lead (Sona's first sentence), as the page lays them out. */
 export const wordsOf = (text: string) => text.split(/\s+/).filter(Boolean);
 
-/** Claude-style lead: the sentence is laid out muted and one more word turns ink every 35 ms; all at once under Reduce Motion. */
-export const WORD_MS = 35;
-export const inked = (elapsed: number, words: number, reduced = false) => (reduced ? words : Math.min(words, Math.max(0, Math.floor(elapsed / WORD_MS))));
 
 /** Demo mode's sample streams into the draft as the dock's voice sample does: a word every 170 ms after 380 ms. */
 export const sampleAt = (index: number) => 380 + index * 170;

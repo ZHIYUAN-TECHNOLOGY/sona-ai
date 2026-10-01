@@ -5,7 +5,7 @@ import { useVoiceInput } from "@/features/live/voice-input";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import { SampleLabel } from "@/components/sona/model-answer";
-import { canvasImage, RoundAction, useAccessibleEffects } from "@/components/sona/ui";
+import { RoundAction, useAccessibleEffects } from "@/components/sona/ui";
 import { EASE_OUT, EASE_OUT_CSS, riseIn } from "@/components/sona/motion";
 import { LiquidVeil } from "@/components/sona/liquid-veil";
 import { GlassOrb } from "@/components/sona/glass-orb";
@@ -25,11 +25,12 @@ import Animated, { Easing, FadeIn, FadeOut, interpolate, useAnimatedReaction, wi
 import { useKeyboardHandler } from "react-native-keyboard-controller";
 import { scheduleOnRN } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { SonaLive, useSonaLive, type LiveAdapter } from "./sona-live";
+import { DraftBubble, LiveStatus, useSonaLive, type LiveAdapter } from "./sona-live";
 
 const ORB = 64;
 /** Sona Live: the mic takes the bar's centre at 72 pt (scaled, so the layout keeps one size), and the wave rests about a quarter of the screen up. */
-const LIVE_ORB = 72 / ORB, LIVE_CREST = 0.26, LIVE_FADE = 320;
+/** The shell's mic is 72 pt (scaled, so the layout keeps one size); Sona Live's wave rests about a quarter of the screen up. */
+const LIVE_ORB = 72 / ORB, LIVE_CREST = 0.26;
 
 type Mode = "idle" | "holding" | "handsfree" | "composing";
 /** Silence after the last heard word before a hands-free request is sent. */
@@ -176,7 +177,7 @@ export function VoiceDock(props: Props) {
       else { onDraft(text); setMode("composing"); }
     },
     onError: (message, chunk) => {
-      if (owner.current === "live") { talk.onError(message, chunk); return; }
+      if (owner.current === "live") { talk.onError(message, chunk); props.onVoiceError?.(message); return; }
       setMode(current => (current === "holding" || current === "handsfree" ? "idle" : current)); props.onVoiceError?.(message);
     },
     // Sona Live's draft fills in as it is heard (the dock's own hold or tap shows `mic.partial`).
@@ -199,7 +200,7 @@ export function VoiceDock(props: Props) {
     if (mic.state !== "idle") { wasHearing.current = true; return; }
     if (wasHearing.current) { wasHearing.current = false; setMode(current => (current === "holding" || current === "handsfree" ? "idle" : current)); }
   }, [mic.state]);
-  const { width: screenW, height: screenH } = useWindowDimensions();
+  const { width: screenW } = useWindowDimensions();
   // Keyboard-synced morph progress: follows the on-screen keyboard frame by frame when there is one.
   const composing = useSharedValue(0);
   const kbHeight = useSharedValue(0), kbProgress = useSharedValue(0), soft = useSharedValue(0), fallback = useSharedValue(0);
@@ -264,21 +265,15 @@ export function VoiceDock(props: Props) {
   const release = () => { if (modeRef.current === "holding") finish(true); };
   // In Sona Live the orb is the mic: a tap pauses or resumes listening, with a selection tick.
   const toggleMic = () => { haptic("select"); talk.toggle(); };
-  // Live's page is memoised, so it gets a stable Send: the level readings (ten a second) don't re-render it.
-  const latestTalk = useRef(talk); latestTalk.current = talk;
-  const liveSend = useCallback(() => { haptic("select"); latestTalk.current.send(); }, []);
-  // Live's keyboard hands the unsent words to the composer: the mic goes off, Live stays, and its bar morphs into the
-  // text box with the keyboard up (no words keep what was already typed there); what is sent is asked in Live.
-  const typeInstead = async () => { const text = await talk.keyboard(); if (text) onDraft(text); setMode("composing"); };
-  // Live is a page of its own: this canvas covers the page under it, and the wave's glass refracts it instead of that page.
-  // The wave rises once the canvas has faded in, so its one snapshot is the canvas, never the page fading out under it.
-  const liveCanvas = useRef<View>(null);
-  const [liveShown, setLiveShown] = useState(false);
-  useEffect(() => {
-    if (!talk.open) { setLiveShown(false); return; }
-    const timer = setTimeout(() => setLiveShown(true), LIVE_FADE + 40);
-    return () => clearTimeout(timer);
-  }, [talk.open]);
+  // The keyboard while talking hands the unsent words to the page's composer: the mic goes off, the voice session ends
+  // and the bar morphs into the text box with the keyboard up (no words keep what was already typed there).
+  const typeInstead = async () => { const text = await talk.keyboard(); talk.end(); if (text) onDraft(text); setMode("composing"); };
+  // Sona Live is the page's voice, not a page of its own: with the mic off, nothing left to send and no answer coming,
+  // the session ends by itself (the status goes, the wave has sunk).
+  useEffect(() => { if (talk.open && !talk.micOn && talk.phase !== "thinking" && !talk.draft && !talk.reading) talk.end(); }, [talk.open, talk.micOn, talk.phase, talk.draft, talk.reading]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A notice Live hears back (nothing for that question here, the model starting) is the page's notice, above the bar.
+  const said = talk.turns.at(-1);
+  useEffect(() => { if (said?.who === "sona" && "notice" in said.reply) props.onVoiceError?.(said.reply.notice); }, [said?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   // Gestures are built once and call the latest handlers, so re-renders (one per heard word) don't re-attach them.
   const handlers = useRef({ startHold, release, tapOrb, toggleMic, onCancel, arm: (on: boolean) => setArmed(on) });
   handlers.current = { startHold, release, tapOrb, toggleMic, onCancel, arm: (on: boolean) => setArmed(on) };
@@ -301,7 +296,7 @@ export function VoiceDock(props: Props) {
   const liquid = !reducedTransparency && !veilFailed;
   const scrim = busy || (holding && !liquid);
   // Live keeps the wave up while the mic is on (calm while Sona thinks) and lets it sink while paused.
-  const veil = talk.open ? (liveShown && talk.phase !== "paused" ? "listening" : "idle") : holding ? "listening" : flooding && busy ? "flood" : "idle";
+  const veil = talk.open ? (talk.phase !== "paused" ? "listening" : "idle") : holding ? "listening" : flooding && busy ? "flood" : "idle";
   // In Live the orb only ever says whether the mic is on (the header says when Sona is thinking).
   const orbActivity: OrbActivity = talk.open ? (talk.micOn ? "mic" : "muted")
     : mode === "handsfree" ? "stop" : holding ? "listening" : activity ?? (busy ? "searching" : "idle");
@@ -320,7 +315,6 @@ export function VoiceDock(props: Props) {
     const value = draft.trim() || (attachments.length ? `Review the attached ${attachments.length === 1 ? "image" : "images"}` : "");
     if (!value) return;
     // Typed inside Sona Live, it is asked there, as a spoken question is (the box keeps it while Sona still answers).
-    if (talk.open) { if (talk.say(value)) { onDraft(""); Keyboard.dismiss(); } return; }
     onSubmit(value); Keyboard.dismiss();
   };
 
@@ -337,7 +331,7 @@ export function VoiceDock(props: Props) {
 
   // The ✦ suggestion, one tap to its answer, in a glass chip over the mic (the bar itself is [+] [mic] [keyboard]); it steps
   // aside while Sona works, while talking, and while attachments wait above the +.
-  const chip = suggestion && !busy && !holding && mode === "idle" && !attachments.length ? <Animated.View entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, scale: 0.96, duration: 240 })} exiting={FadeOut.duration(140)} style={{ alignSelf: "center", maxWidth: "100%" }}>
+  const chip = suggestion && !busy && !holding && !talk.open && mode === "idle" && !attachments.length ? <Animated.View entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, scale: 0.96, duration: 240 })} exiting={FadeOut.duration(140)} style={{ alignSelf: "center", maxWidth: "100%" }}>
     <Pressable accessibilityRole="button" accessibilityLabel={suggestion.label ?? `Ask Sona: ${suggestion.text}`} accessibilityHint="Opens Sona's answer" onPress={() => { haptic("select"); suggestion.onPress(); }}>
       {/* Frosted under the glass: the chip floats over the page's cards, and its words must read over any of them. */}
       {({ pressed }) => <Animated.View style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 16, borderRadius: 22, borderCurve: "continuous", backgroundColor: reducedTransparency ? "rgba(255,255,255,0.97)" : pressed ? "rgba(244,247,253,0.9)" : "rgba(255,255,255,0.84)", borderWidth: glass && !reducedTransparency ? 0 : 1, borderColor: "rgba(255,255,255,0.9)", boxShadow: glass && !reducedTransparency ? undefined : "0 4px 16px rgba(40,70,140,0.10)", transform: [{ scale: pressed && !reducedMotion ? 0.97 : 1 }], transitionProperty: "transform", transitionDuration: 120 }}>
@@ -368,20 +362,14 @@ export function VoiceDock(props: Props) {
     return { opacity: Math.min(1, Math.max(0, (m - 0.45) / 0.5)), transform: [{ translateY: -lift + (reducedMotion ? 0 : (1 - m) * 10) }] };
   });
 
-  // Sona Live is a page of its own: VoiceOver stays inside the overlay (its escape gesture ends Live).
-  return <View pointerEvents="box-none" style={StyleSheet.absoluteFill} accessibilityViewIsModal={talk.open} onAccessibilityEscape={talk.open ? talk.end : undefined}>
-    {/* Sona Live is a page of its own (as Claude's voice mode is): the canvas covers the page behind and keeps taps off it. */}
-    {talk.open && <Animated.View entering={FadeIn.duration(LIVE_FADE).easing(EASE_OUT)} exiting={FadeOut.duration(240)} style={StyleSheet.absoluteFill}>
-      <View ref={liveCanvas} collapsable={false} style={[StyleSheet.absoluteFill, { backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }]} />
-    </Animated.View>}
-    {/* Sona Live keeps the wave low (about a quarter of the screen) so the conversation above it has the room. */}
-    {/* Keyed by Live: a touch-down on the orb already froze the page for a hold, and Live's wave must freeze its own canvas instead. */}
-    {liquid && <LiquidVeil key={talk.open ? "live" : "page"} backdrop={talk.open ? liveCanvas : backdrop} state={veil} armed={armed && !busy} words={live ? gusts : sampleWords} voiceLevel={level} crest={talk.open ? LIVE_CREST : undefined} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
+  // The page is the shell: Sona Live is its voice, so the page stays where it is (and reads, scrolls and answers) while it listens.
+  return <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+    {/* Sona Live keeps the wave low (about a quarter of the screen) so the page above it keeps the room. */}
+    {liquid && <LiquidVeil backdrop={backdrop} state={veil} armed={armed && !busy} words={live ? gusts : sampleWords} voiceLevel={level} crest={talk.open ? LIVE_CREST : undefined} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
     {/* Frosted focus layer: a static blur crossfaded by opacity. */}
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: scrim ? 1 : 0, transitionProperty: "opacity", transitionDuration: scrim ? 320 : 240, transitionTimingFunction: EASE_OUT_CSS }]}>
       <Frost solid={reducedTransparency} />
     </Animated.View>
-    {talk.open && <SonaLive phase={talk.phase} turns={talk.turns} draft={talk.draft} reading={talk.reading} scope={props.sonaLive?.scope ?? ""} sample={!live} bottom={Math.round(screenH * LIVE_CREST)} conversation={props.sonaLive?.conversation} header={props.sonaLive?.header} onSend={liveSend} onEnd={talk.end} />}
 
     {holding && <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(140)} pointerEvents="none" style={{ position: "absolute", left: 32, right: 32, bottom: insets.bottom + 132, alignItems: "center" }}>
       {/* The words grow above the dock as they are heard (live: a partial reading every second; the sample: its
@@ -398,7 +386,13 @@ export function VoiceDock(props: Props) {
     {mode === "composing" && <Pressable accessibilityRole="button" accessibilityLabel="Close message composer" onPress={closeComposer} style={StyleSheet.absoluteFill} />}
 
     <View pointerEvents="box-none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, paddingBottom: Math.max(insets.bottom, 12) + 4, gap: 10 }}>
-      {mode !== "composing" && !talk.open && (above || chip) && <View pointerEvents="box-none" style={{ paddingHorizontal: 20, gap: 8 }}>{above}{chip}</View>}
+      {mode !== "composing" && (above || chip || talk.open) && <View pointerEvents="box-none" style={{ paddingHorizontal: 20, gap: 8 }}>
+        {above}
+        {/* Sona Live on the page: the words heard so far wait in the draft for Send (or "submit"), over the status by the mic. */}
+        {talk.open && Boolean(talk.draft) && <DraftBubble text={talk.draft} reading={talk.reading} sample={!live} reduced={reducedMotion} solid={reducedTransparency} onSend={() => { haptic("select"); talk.send(); }} />}
+        {talk.open && <LiveStatus phase={talk.phase} hint={!talk.draft} />}
+        {chip}
+      </View>}
 
       {/* One surface for both states: bar at rest, composer card while typing. */}
       <View pointerEvents="box-none" style={{ height: BAR_H, marginHorizontal: 20 }}>
