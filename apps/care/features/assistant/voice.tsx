@@ -12,6 +12,7 @@ import { spoken, type Asked, type Reply } from "@/features/assistant/answers";
 import { Glyph } from "@/features/assistant/composer";
 import { pickVoices, preview, standInFor, voiceFor, type SonaVoice } from "@/features/assistant/voices";
 import { FIRST_MS, sayInSonaVoice } from "./sona-voice";
+import { useLiveVoice } from "./live";
 import { useListen } from "@/lib/listen";
 import { tFor, useLang, useT } from "@/lib/i18n";
 import "./strings";
@@ -35,6 +36,12 @@ import { Button, CircleButton, ICON } from "@/lib/ui";
  * light up by how much of each sentence has played, and while it is starting or slow the phone's voice
  * reads in its place, saying so under the status (a hello is never read in its place). Reduce Motion: no
  * sliding, and the orb holds still.
+ * Where this build and the server have Sona's voice agent (./live), one tap on the mic (the patient's consent to open
+ * it) starts a live conversation instead, hands-free from then on: no tap per turn, and talking over Sona stops her.
+ * The orb floods while she speaks, half while she thinks, and follows the patient's voice while she listens; one line
+ * says which ("Sona is speaking · talk to interrupt"); the patient's words and her answer (lit as she speaks it) stay on
+ * screen. The same round button becomes stop, which ends the conversation; back and the keyboard stay. If the call drops
+ * or is refused, the mic is tap per turn again, with one line saying so.
  */
 const KEY = "sona-care.voice";
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
@@ -71,6 +78,18 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
   const [talking, setTalking] = useState(false);
   const [heard, setHeard] = useState<string>();
   const listen = useListen({ language, onHeard: q => { setHeard(q); void ask(q); } });
+  const live = useLiveVoice({ voice, voices, onFlood: n => talk.set(still ? 0 : withTiming(n, { duration: 160, easing: EASE_OUT })) });
+  const inCall = live.phase === "on";
+  // When a call ends, its last exchange stays on screen, and the orb can read it again.
+  useEffect(() => {
+    if (inCall) return;
+    if (live.said) setSaid(live.said);
+    if (live.heard) setHeard(live.heard);
+    talk.set(still ? 0 : withTiming(0, { duration: 600, easing: EASE_OUT }));
+  }, [inCall]);
+  // The line saying the live call dropped stays until the patient talks again.
+  const [dropped, setDropped] = useState(false);
+  useEffect(() => { if (live.phase === "lost") setDropped(true); }, [live.phase]);
   // Sona's own voice: stops the answer it is reading. `standIn` while the phone reads in its place.
   const hosted = useRef<() => void>(undefined);
   const [preparing, setPreparing] = useState(false);
@@ -134,18 +153,27 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
   };
   const ask = async (q: string) => read(spoken(await answer(q), lang));
   const replay = () => { if (speaking) stop(); else if (said) read(said); };
-  /** The mic: start a conversation, send the turn now, or (while Sona talks) stop and end it. */
+  /** The mic: start a conversation (live, where there is one), send the turn now, or (while Sona talks, or in a live call) stop and end it. */
   const main = () => {
+    if (inCall) { live.end(); return; }
     if (speaking) { setTalking(false); stop(); return; }
     if (listen.state === "listening") { listen.toggle(); return; }
-    setTalking(true); setHeard(undefined); listen.toggle();
+    setHeard(undefined); setDropped(false);
+    if (live.phase === "ready") { void live.start(); return; }
+    setTalking(true); listen.toggle();
   };
-  const leave = (then: () => void) => { setTalking(false); listen.cancel(); stop(); then(); };
-  const lit = upto === undefined ? said?.length ?? 0 : upto;
+  const leave = (then: () => void) => { setTalking(false); listen.cancel(); live.end(); stop(); then(); };
+  // Live: her answer as the agent writes it (the last one stays until the next begins), lit as she speaks it.
+  const shown = inCall ? live.said || said : said;
+  const words = inCall ? live.heard : heard;
+  const lit = inCall ? live.upto ?? shown?.length ?? 0 : upto === undefined ? said?.length ?? 0 : upto;
   const starting = standIn?.waking ? t("voice.sonaStarting", { n: standIn.waking }) : undefined;
-  const standInLine = standIn && (starting ?? t("voice.sonaSlow"));
-  const status = listen.state === "listening" ? t("voice.listening") : listen.state === "reading" ? t("voice.thinking") : preparing ? t("voice.preparing") : speaking ? t("voice.readingAloud")
-    : listen.error ?? (said ? t("voice.again") : t("voice.start"));
+  const standInLine = inCall ? live.standIn && t("voice.sonaSlow") : standIn && (starting ?? t("voice.sonaSlow"));
+  const note = listen.error ?? live.error ?? (dropped ? t("voice.liveLost") : undefined);
+  const status = inCall ? (live.audible || live.status === "speaking" ? t("voice.liveSpeaking") : live.status === "thinking" ? t("voice.thinking") : live.status === "listening" ? t("voice.listening") : t("voice.connecting"))
+    : listen.state === "listening" ? t("voice.listening") : listen.state === "reading" ? t("voice.thinking") : preparing ? t("voice.preparing") : speaking ? t("voice.readingAloud")
+      : note ?? (said ? t("voice.again") : t("voice.start"));
+  const warn = !inCall && status === note && (listen.state === "error" || !listen.error);
 
   if (!voices) return <ActivityIndicator color={palette.muted} style={{ flex: 1 }} />;
   if (picking || !voice) return <Picker voices={voices} initial={Math.max(0, voices.findIndex(v => v.id === voice?.id))} onPreview={v => speak(preview(v, lang), v, false, true)} note={starting} onStart={start} onClose={() => leave(voice ? () => setPicking(false) : onChat)} />;
@@ -157,29 +185,30 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
       <View style={{ width: 48 }} />
     </View>
     <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 24, paddingVertical: 16, gap: 14 }}>
-      <Pressable accessibilityRole="button" accessibilityLabel={speaking ? t("voice.stopReading") : said ? t("voice.hear") : t("voice.nothing")} accessibilityState={{ disabled: !said }} disabled={!said} onPress={replay}
+      {/* In a live call the orb only shows the state (talking over Sona is how to stop her); the status line says it. */}
+      <Pressable accessible={!inCall} accessibilityRole="button" accessibilityLabel={speaking ? t("voice.stopReading") : said ? t("voice.hear") : t("voice.nothing")} accessibilityState={{ disabled: !said }} disabled={inCall || !said} onPress={replay}
         style={({ pressed }) => ({ margin: -orbPad(150) + 8, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
         <SonaOrb size={150} flood={talk} />
       </Pressable>
-      <Text accessibilityLiveRegion="polite" style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: listen.error && !speaking && listen.state === "error" ? palette.amber : palette.ink, textAlign: "center" }}>{status}</Text>
+      <Text accessibilityLiveRegion="polite" style={{ fontSize: 16, lineHeight: 22, fontWeight: "500", color: warn ? palette.amber : palette.ink, textAlign: "center" }}>{status}</Text>
       {standInLine && voice.hosted && <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{standInLine}</Text>}
-      {heard && <Text selectable accessibilityLabel={t("voice.youSaid", { q: heard })} style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>“{heard}”</Text>}
-      {said && <Text accessibilityLiveRegion="polite" selectable style={{ fontSize: 24, lineHeight: 32, fontWeight: "600", letterSpacing: -0.6, color: palette.ink, textAlign: "center", marginTop: 4 }}>
-        {said.slice(0, lit)}<Text style={{ fontWeight: "600", color: palette.faint }}>{said.slice(lit)}</Text>
+      {words && <Text selectable accessibilityLabel={t("voice.youSaid", { q: words })} style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>“{words}”</Text>}
+      {shown && <Text accessibilityLiveRegion="polite" selectable style={{ fontSize: 24, lineHeight: 32, fontWeight: "600", letterSpacing: -0.6, color: palette.ink, textAlign: "center", marginTop: 4 }}>
+        {shown.slice(0, lit)}<Text style={{ fontWeight: "600", color: palette.faint }}>{shown.slice(lit)}</Text>
       </Text>}
       <View style={{ alignSelf: "stretch", marginTop: 8 }}>
-        {questions.map(s => <SuggestionRow key={s.question} s={s} aloud onPress={() => ask(s.question)} />)}
+        {questions.map(s => <SuggestionRow key={s.question} s={s} aloud onPress={() => { if (inCall) live.say(s.question); else void ask(s.question); }} />)}
       </View>
     </ScrollView>
     <Animated.View entering={still ? undefined : FadeIn.duration(260).delay(160)}
       style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 36, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 16) }}>
-      <CircleButton d={GLYPH.person} size={56} label={t("voice.choose", { name: voice.name })} onPress={() => { stop(); setPicking(true); }} />
-      <Pressable accessibilityRole="button" accessibilityLabel={speaking ? t("voice.stop") : listen.state === "listening" ? t("voice.sendSaid") : t("voice.talk")}
-        accessibilityHint={speaking || listen.state === "listening" ? undefined : t("voice.talkHint")}
+      {inCall ? <View style={{ width: 56 }} /> : <CircleButton d={GLYPH.person} size={56} label={t("voice.choose", { name: voice.name })} onPress={() => { stop(); setPicking(true); }} />}
+      <Pressable accessibilityRole="button" accessibilityLabel={inCall ? t("voice.end") : speaking ? t("voice.stop") : listen.state === "listening" ? t("voice.sendSaid") : t("voice.talk")}
+        accessibilityHint={inCall || speaking || listen.state === "listening" ? undefined : t("voice.talkHint")}
         accessibilityState={{ busy: listen.state === "reading" }} disabled={listen.state === "reading"} onPress={main}
         style={({ pressed }) => ({ width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: listen.state === "listening" ? palette.blue : palette.white, borderWidth: 1, borderColor: listen.state === "listening" ? palette.blue : palette.line,
           boxShadow: "0 14px 28px -14px rgba(37,99,235,0.45)", transform: [{ scale: pressed ? 0.94 : 1 }] })}>
-        {speaking ? <View style={{ width: 20, height: 20, borderRadius: 5, backgroundColor: palette.blue }} />
+        {inCall || speaking ? <View style={{ width: 20, height: 20, borderRadius: 5, backgroundColor: palette.blue }} />
           : listen.state === "reading" ? <ActivityIndicator color={palette.blue} />
             : <Glyph d={MIC} color={listen.state === "listening" ? palette.white : palette.blue} size={28} />}
       </Pressable>

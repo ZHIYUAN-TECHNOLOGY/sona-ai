@@ -71,7 +71,14 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Sona Care uses the microphone so you can speak your question or check-in reply instead of typing."
+          "microphonePermission": "Sona Care uses the microphone so you can talk with Sona, or speak your question or check-in reply instead of typing."
+        }
+      ],
+      [
+        "react-native-audio-api",
+        {
+          "iosBackgroundMode": false,
+          "iosMicrophonePermission": "Sona Care uses the microphone so you can talk with Sona, or speak your question or check-in reply instead of typing."
         }
       ]
     ],
