@@ -94,6 +94,8 @@ export const dischargeRouter = {
     const discharged = { ...state, dischargedAt: at.toISOString(), savedMinutes, leaflet };
     // Merged in place so a concurrent edit is neither lost nor needed to bump the revision.
     await db.update(encounters).set({ state: sql`jsonb_set(${encounters.state}, '{discharge}', ${JSON.stringify(discharged)}::jsonb)` }).where(eq(encounters.id, input.encounterId));
+    // Sona's follow-up starts: the visit's check-in agent plans the first check-in and wakes itself for it.
+    await context.followUps?.tick(hospitalId, input.encounterId).catch(error => console.error("check-in agent failed", error));
 
     await db.insert(receipts).values({
       id: crypto.randomUUID(), kind: "discharge", encounterId: input.encounterId, requestId: input.requestId, revision: encounter.revision, approvedBy: input.approvedBy,

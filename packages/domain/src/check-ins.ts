@@ -74,6 +74,9 @@ export function readReply(text: string): ReplyLabel {
 const SYMPTOMS: [RegExp, string][] = [
   [/chest pain|pain in (my )?chest|sakit(\s+\S+){0,2}\s+dada|dada(\s+\S+){0,2}\s+(sakit|sesak|ketat)|胸痛/i, "chest pain"], [/fever|demam|发烧/i, "fever returned"], [/breath|nafas|呼吸/i, "breathing worse"],
 ];
+/** What a flagged reply was about, in the patient's words: "Amelia: fever returned after discharge" → "fever returned". */
+export const reasonOf = (title: string) => title.replace(/^[^:]+:\s*/, "").replace(/\s*after discharge$/i, "") || "follow-up";
+
 /**
  * Worse and urgent replies become a flagged task named by what the patient said (the model's short
  * symptom when it gave one, else a keyword match); urgent ranks above worse. Fine replies are only logged.
