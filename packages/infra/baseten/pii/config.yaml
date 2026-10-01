@@ -1,0 +1,36 @@
+# PII box: OpenMed's clinical PII model behind OpenMed's own REST service (openmed.service: /health, /pii/extract,
+# no PHI in its logs), on a small CPU box (docs/delivery-plan.md, privacy step). Models.deidentify
+# (packages/api/src/pii-model.ts, PII_MODEL there must name the same model) sends it text the rules have already
+# redacted, and it finds what they miss. Training capture only (never live chat), so a CPU is enough.
+# Model: OpenMed-PII-mClinicalE5-Large-560M-v1 (Apache-2.0, multilingual-e5-large fine-tuned on Nemotron-PII). No
+# OpenMed model lists Malay; on check.ts's Malaysian snippets this multilingual one found as many names (Malay,
+# Chinese, Indian, Chinese script) as the English ones, without taking Pakcik, Puan or a Chinese symptom for a name.
+# Route: /environments/production/sync/pii/extract   Live check: packages/infra/baseten/pii/check.ts
+model_name: sona-pii
+base_image:
+  image: python:3.11-slim
+build_commands:
+  # CPU torch first, so nothing below pulls the CUDA build.
+  - pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+  # The versions the live check passed on.
+  - pip install --no-cache-dir "openmed[service,hf]==2.5.0" "transformers==5.18.0" "fastapi==0.142.2"
+  # Bakes the weights and OpenMed's integrity manifest into $HOME, so a cold start loads from disk, verified.
+  - python -c "from openmed import extract_pii; print(extract_pii('Seen with her son Hafiz.', model_name='OpenMed/OpenMed-PII-mClinicalE5-Large-560M-v1').entities)"
+docker_server:
+  # OpenMed's app, with every request presented as local (data/serve.py says why).
+  start_command: python /app/data/serve.py
+  readiness_endpoint: /health
+  liveness_endpoint: /health
+  predict_endpoint: /pii/extract
+  server_port: 8000
+environment_variables:
+  # Loaded before /health answers, and kept loaded.
+  OPENMED_SERVICE_PRELOAD_MODELS: OpenMed/OpenMed-PII-mClinicalE5-Large-560M-v1
+  # Two threads per request on 4 vCPUs: a capture sends the draft and the saved note at once, and on 2 vCPUs the pair
+  # took 2.4 s for a 200-word note against 1.3 s for one. torch would otherwise size its pool to the host's cores.
+  OMP_NUM_THREADS: "2"
+  MKL_NUM_THREADS: "2"
+resources:
+  instance_type: "4x16"
+runtime:
+  predict_concurrency: 8

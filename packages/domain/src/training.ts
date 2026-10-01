@@ -26,7 +26,7 @@ const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
 /**
  * The rule-based de-identifier behind the model seam's stub. It replaces the patient's FULL names only
  * ("Amelia Tan" → [NAME]), so a first name alone slips through; the leak gate is what catches that.
- * ponytail: rules stand in for OpenMed's clinical PII model (openmed-skills: deidentifying-clinical-text), which also finds partial names and other people.
+ * On Baseten these rules run first and OpenMed's PII model adds partial names and other people (packages/api/src/pii-model.ts).
  */
 export function deidentifyByRules(text: string, known: KnownIdentity): { text: string; replacements: Replacement[] } {
   const replacements: Replacement[] = [];

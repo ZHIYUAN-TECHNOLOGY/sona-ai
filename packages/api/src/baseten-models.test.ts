@@ -161,17 +161,14 @@ test("the reranker scores passages in box ②, and keeps the hybrid order when t
   expect(down.wakes()).toHaveLength(1);
 });
 
-test("methods without a hosted model yet stay on the stub, and never say a model is starting: nothing is starting for them", async () => {
-  const { fetcher, calls } = fake({});
+test("with every box cold, each hosted reader answers its stub at once and says when its own model should be ready", async () => {
+  const { fetcher } = fake({});
   const models = basetenModels({ apiKey: "k", fetcher });
-  // Every box is cold, so the hosted readers say when their model should be ready...
+  const photo = { image: new Uint8Array(1), contentType: "image/png" };
   expect(await models.briefing({ patient })).toMatchObject({ source: "fixture", waking: COLD_START_MIN.brain });
-  expect(await models.xrayRead({ image: new Uint8Array(1), contentType: "image/png" })).toMatchObject({ source: "fixture", waking: COLD_START_MIN.xray });
-  // ...and the stub-only ones answer exactly as the stub does, calling nothing.
-  const asked = calls.length;
-  const known = { names: ["Amelia Tan"] };
-  expect(await models.deidentify({ text: "Amelia Tan", known })).toEqual(await stubModels.deidentify({ text: "Amelia Tan", known }));
-  expect(calls).toHaveLength(asked);
+  expect(await models.xrayRead(photo)).toMatchObject({ source: "fixture", waking: COLD_START_MIN.xray });
+  expect(await models.readMedicinePhoto(photo)).toMatchObject({ source: "fixture", waking: COLD_START_MIN.xray });
+  expect(await models.deidentify({ text: "Amelia is better.", known: { names: ["Amelia Tan"] } })).toMatchObject({ source: "fixture", waking: COLD_START_MIN.pii });
 });
 
 test("the image readers go to MedGemma in box ③ with the photo, and while it starts the sample says when to expect it", async () => {

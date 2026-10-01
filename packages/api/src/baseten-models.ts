@@ -5,6 +5,7 @@ import { huddle } from "@sona-ai/domain/ward";
 
 import { LANGUAGE_NAME, chatModels, jsonIn } from "./chat-models";
 import { stubModels, type Models, type Origin } from "./models";
+import { piiModels } from "./pii-model";
 import { scribeModels } from "./scribe-model";
 import { chatLook, visionModels } from "./vision-models";
 
@@ -16,14 +17,14 @@ import { chatLook, visionModels } from "./vision-models";
  * that fails or times out also wakes its box and answers from the stub, so a failure is never shown as a model
  * reading. Methods not listed here stay on the stub.
  */
-export const BOXES = { brain: "q9p7zn63", voice: "qvmgk79q", xray: "wdlp8jm3", laya: "qe2dp10q" } as const;
+export const BOXES = { brain: "q9p7zn63", voice: "qvmgk79q", xray: "wdlp8jm3", laya: "qe2dp10q", pii: "w6py8mgq" } as const;
 export type Box = keyof typeof BOXES;
 
 /**
  * Minutes from cold to answering, rounded up so "about N min" errs long (docs/handoff.md#baseten-boxes): the GPU
- * boxes took 9–16 on 30 Sep, then brain ~10, voice ~30 and xray ~12 on 1 Oct; Laya 31 s.
+ * boxes took 9–16 on 30 Sep, then brain ~10, voice ~30 and xray ~12 on 1 Oct; Laya 31 s, the PII box ~1.5 min.
  */
-export const COLD_START_MIN: Record<Box, number> = { brain: 12, voice: 30, xray: 15, laya: 1 };
+export const COLD_START_MIN: Record<Box, number> = { brain: 12, voice: 30, xray: 15, laya: 1, pii: 2 };
 /** A box that answered is trusted for 4 minutes, inside the 5 idle minutes before it scales to zero. */
 const READY_MS = 4 * 60_000;
 /** What this isolate knows about each box (epoch ms): up until `readyUntil`; starting since `wakingSince`. */
@@ -249,6 +250,7 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
     ...scribeModels(call, BRAIN_MODEL, fallback),
     // The photo, film and handwriting readers: MedGemma in box ③ (box ①'s Gemma takes no images).
     ...visionModels(chatLook(body => call("xray", "/v1/chat/completions", body, "application/json"), XRAY_MODEL), XRAY_MODEL, fallback),
+    ...piiModels((route, body) => call("pii", route, body, "application/json"), fallback),
 
     async transcribe(input) {
       try {
@@ -416,10 +418,11 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
   };
 
   // A stub answer from a hosted method whose box is starting says when to expect the model. Box ② hears and speaks, box ③
-  // sees, box ① writes the rest; the stub-only methods are not hosted, so nothing is starting for them.
+  // sees, the PII box de-identifies, box ① writes the rest; the stub-only methods are not hosted, so nothing is starting for them.
   const withWaking = Object.entries(hosted).map(([method, run]) => {
     const box: Box = method === "transcribe" || method === "speak" ? "voice"
-      : ["xrayRead", "readMedicinePhoto", "incidentalFindings", "readHandwrittenNote"].includes(method) ? "xray" : "brain";
+      : ["xrayRead", "readMedicinePhoto", "incidentalFindings", "readHandwrittenNote"].includes(method) ? "xray"
+      : method === "deidentify" ? "pii" : "brain";
     return [method, async (input: never) => {
       const answer = await (run as (input: never) => Promise<Origin>)(input);
       return answer.source === "fixture" ? { ...answer, ...wakingOf(box) } : answer;

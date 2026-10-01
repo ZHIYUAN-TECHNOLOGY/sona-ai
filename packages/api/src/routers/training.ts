@@ -34,7 +34,10 @@ async function consents(db: Db, hospitalId: string, patientId: string) {
   return Boolean(row?.contributes && row.consentedAt && !row.withdrawnAt);
 }
 
-/** De-identifies both sides, then gates them: any hit blocks the sample and masks what leaked, so the value is never stored. */
+/**
+ * De-identifies both sides, then gates them: any hit blocks the sample and masks what leaked, so the value is never stored.
+ * The gate runs whoever de-identified; the sample names the model only when it read both sides (else the rules did).
+ */
 async function prepare(context: Pick<Context, "db" | "models">, patientId: string, input: string, output: string) {
   const known = await knownIdentity(context.db, patientId);
   const models = context.models ?? stubModels;
@@ -43,7 +46,7 @@ async function prepare(context: Pick<Context, "db" | "models">, patientId: strin
   const leak = [...new Set([...ga.kinds, ...gb.kinds])];
   return {
     input: ga.masked, output: gb.masked, replacements: [...a.replacements, ...b.replacements],
-    deidentifier: a.source === "model" ? a.model : "rules", status: leak.length ? "blocked" as const : "pending" as const, leak: leak.length ? leak : null,
+    deidentifier: a.source === "model" && b.source === "model" ? a.model : "rules", status: leak.length ? "blocked" as const : "pending" as const, leak: leak.length ? leak : null,
   };
 }
 
