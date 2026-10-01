@@ -59,6 +59,21 @@ export function IconButton({ name, label, onPress, dark = false }: { name: strin
   const reduced = useReduceMotionPreference();
   return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress}>{({ pressed }) => <Animated.View style={{ minWidth: 46, minHeight: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", backgroundColor: dark ? palette.dark : "transparent", transform: [{ scale: pressed && !reduced ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never}><Icon name={name} color={dark ? palette.white : palette.ink} /></Animated.View>}</Pressable>;
 }
+/**
+ * Every round icon button that floats in the shell (the top bar, the bar's + and keyboard, the composer's tools) is the
+ * same liquid glass: native on iOS 26+ (it answers the touch itself), a frosted disc before that, solid with Reduce
+ * Transparency. Wider content (the patient chip) keeps the round ends.
+ */
+export function GlassButton({ label, onPress, size = 50, onGlass = false, children }: { label: string; onPress: () => void; size?: number; /** On another glass surface (the composer): a whiter tint and a hairline, so the disc still reads. */ onGlass?: boolean; children: ReactNode }) {
+  const { reducedMotion, reducedTransparency } = useAccessibleEffects();
+  const liquid = process.env.EXPO_OS === "ios" && isLiquidGlassAvailable() && !reducedTransparency;
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={6}>
+    {({ pressed }) => <Animated.View style={{ minWidth: size, height: size, borderRadius: size / 2, paddingHorizontal: 4, flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: liquid ? "transparent" : reducedTransparency ? "rgba(255,255,255,0.97)" : onGlass ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.72)", borderWidth: liquid && !onGlass ? 0 : 1, borderColor: onGlass ? "rgba(20,28,40,0.07)" : "rgba(255,255,255,0.9)", boxShadow: liquid && !onGlass ? undefined : "0 3px 10px rgba(40,70,140,0.10)", transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 } as never}>
+      {liquid && <GlassView colorScheme="light" glassEffectStyle="regular" isInteractive tintColor={onGlass ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.2)"} style={[StyleSheet.absoluteFill, { borderRadius: size / 2 }]} />}
+      {children}
+    </Animated.View>}
+  </Pressable>;
+}
 /** A modal's or sheet's one close control, on the right (pushed pages get the back chevron on the left). */
 export function CloseButton({ label = "Close" }: { label?: string }) {
   return <IconButton name="xmark" label={label} onPress={() => router.canGoBack() ? router.back() : router.replace("/")} />;

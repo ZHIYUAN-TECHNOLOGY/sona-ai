@@ -1,6 +1,6 @@
 import { authoredAnswer, isRehearsed } from "@sona-ai/domain/evidence";
 import { router, useIsFocused } from "expo-router";
-import { DrawnCheck, Press } from "@/components/sona/parts";
+import { DrawnCheck } from "@/components/sona/parts";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { MyDay } from "@/features/day";
 import { ToolGrid, type ShelfCollapse } from "@/components/sona/quick-actions";
@@ -23,7 +23,7 @@ import { useRole } from "@/features/live/roles";
 import { useInboxSummary } from "@/features/inbox";
 import { useEncounter } from "./store";
 import { SweptLead, wordCount } from "@/components/sona/marked-text";
-import { Chip, Icon, pillStyle, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Chip, GlassButton, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { useEffect, useState, type ReactNode } from "react";
 import { View } from "react-native";
@@ -127,9 +127,9 @@ export function StreamedLead({ text, animate }: { text: string; animate: boolean
   return <SweptLead text={text} shown={shown} sweep={animate && !reducedMotion} style={{ ...type.title, color: palette.ink }} />;
 }
 
+/** The top bar's buttons: the shell's liquid glass button, as the bar's below. */
 function Round({ children, label, onPress }: { children: ReactNode; label: string; onPress: () => void }) {
-  return <Press accessibilityLabel={label} onPress={onPress} hitSlop={4} scale={0.96}
-    style={{ minHeight: 44, minWidth: 44, borderRadius: 22, paddingHorizontal: 4, alignItems: "center", justifyContent: "center", flexDirection: "row", ...pillStyle }}>{children}</Press>;
+  return <GlassButton label={label} onPress={onPress} size={44}>{children}</GlassButton>;
 }
 
 /** Floating header: menu on the left, the patient in context on the right. Content scrolls beneath a soft fade. */

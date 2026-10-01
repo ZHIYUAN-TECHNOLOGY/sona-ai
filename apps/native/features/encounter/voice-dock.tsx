@@ -1,11 +1,10 @@
-import { useReduceMotionPreference } from "@/components/sona/accessibility";
 import { Text } from "@/components/sona/text";
 import { useLive } from "@/features/live";
 import { useVoiceInput } from "@/features/live/voice-input";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import { SampleLabel } from "@/components/sona/model-answer";
-import { RoundAction, useAccessibleEffects } from "@/components/sona/ui";
+import { GlassButton, RoundAction, useAccessibleEffects } from "@/components/sona/ui";
 import { EASE_OUT, EASE_OUT_CSS, riseIn } from "@/components/sona/motion";
 import { LiquidVeil } from "@/components/sona/liquid-veil";
 import { GlassOrb } from "@/components/sona/glass-orb";
@@ -95,19 +94,9 @@ const BAR_H = 76, BAR_R = 38, CARD_R = 26, CARD_INSET = -8;
 // Close to the iOS keyboard slide so the fallback reads the same.
 const FALLBACK = { duration: 260, easing: Easing.bezier(0.2, 0.8, 0.2, 1) };
 
-function RoundButton({ icon, label, onPress, hidden, reduced }: { icon: BrandIconName; label: string; onPress: () => void; hidden?: boolean; reduced?: boolean }) {
-  // Liquid Glass on iOS 26+ (it answers the touch itself); a frosted disc before that, solid with Reduce Transparency.
-  const { reducedTransparency } = useAccessibleEffects();
-  const liquid = process.env.EXPO_OS === "ios" && isLiquidGlassAvailable() && !reducedTransparency;
-  // Reduce Motion: the buttons only fade; no shrink.
-  return <Animated.View pointerEvents={hidden ? "none" : "auto"} style={{ opacity: hidden ? 0 : 1, transform: [{ scale: hidden && !reduced ? 0.6 : 1 }], transitionProperty: ["opacity", "transform"], transitionDuration: 260, transitionTimingFunction: EASE_OUT_CSS }}>
-    <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityElementsHidden={hidden} onPress={onPress} hitSlop={6}>
-      {({ pressed }) => <Animated.View style={{ width: 50, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", backgroundColor: liquid ? "transparent" : reducedTransparency ? "rgba(255,255,255,0.97)" : "rgba(255,255,255,0.72)", borderWidth: liquid ? 0 : 1, borderColor: "rgba(255,255,255,0.9)", boxShadow: liquid ? undefined : "0 4px 16px rgba(40,70,140,0.10)", transform: [{ scale: pressed && !reduced ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 }}>
-        {liquid && <GlassView colorScheme="light" glassEffectStyle="regular" isInteractive tintColor="rgba(255,255,255,0.2)" style={[StyleSheet.absoluteFill, { borderRadius: 25 }]} />}
-        <BrandIcon name={icon} size={23} />
-      </Animated.View>}
-    </Pressable>
-  </Animated.View>;
+/** The bar's round buttons ([+], the keyboard, hands-free's X): the shell's liquid glass button. They never hide. */
+function RoundButton({ icon, label, onPress }: { icon: BrandIconName; label: string; onPress: () => void }) {
+  return <GlassButton label={label} onPress={onPress}><BrandIcon name={icon} size={23} /></GlassButton>;
 }
 
 // On release the orb folds into a dark loading pill while the words are read (after Monogram's mic → loading pill),
@@ -136,14 +125,9 @@ function Words({ text, reduced }: { text: string; reduced: boolean }) {
   </View>;
 }
 
-/** Composer tool: bare icon at rest, a small glass bubble under the finger. */
+/** Composer tool ([+] first, then a visit's X-ray, recorder and note): the shell's liquid glass button, a size smaller. */
 function ToolButton({ icon, label, onPress }: { icon: BrandIconName; label: string; onPress: () => void }) {
-  const reduced = useReduceMotionPreference();
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={4}>
-    {({ pressed }) => <Animated.View style={{ width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0)", transform: [{ scale: pressed && !reduced ? 0.96 : 1 }], transitionProperty: ["transform", "backgroundColor"], transitionDuration: 120 }}>
-      <BrandIcon name={icon} size={21} color={palette.muted} />
-    </Animated.View>}
-  </Pressable>;
+  return <GlassButton label={label} onPress={onPress} size={40} onGlass><BrandIcon name={icon} size={20} /></GlassButton>;
 }
 
 /** Voice-first dock: tap to talk hands-free, or hold to talk and release to send; keyboard morphs into a composer. */
@@ -416,7 +400,7 @@ export function VoiceDock(props: Props) {
               keyboard opens the composer, which leads with the same +. Hands-free (a page without Live) the X cancels. */}
           <View pointerEvents="box-none" style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 13 }}>
             {handsfree ? <RoundButton icon="close" label="Cancel voice input" onPress={() => finish(false)} />
-              : attach ? <View accessibilityElementsHidden={menu} importantForAccessibility={menu ? "no-hide-descendants" : "auto"} style={{ opacity: menu ? 0 : 1 }}><RoundButton icon="add" label="Attach a photo, camera capture or file" onPress={openMenu} hidden={holding || busy} reduced={reducedMotion} /></View>
+              : attach ? <View accessibilityElementsHidden={menu} importantForAccessibility={menu ? "no-hide-descendants" : "auto"} style={{ opacity: menu ? 0 : 1 }}><RoundButton icon="add" label="Attach a photo, camera capture or file" onPress={openMenu} /></View>
               : <View style={{ width: 50 }} />}
             <View style={{ flex: 1 }} />
             <View style={{ width: ORB, height: ORB }}>
@@ -444,7 +428,7 @@ export function VoiceDock(props: Props) {
             </Animated.View>}
             </View>
             <View style={{ flex: 1 }} />
-            <RoundButton icon="keyboard" label={talk.open ? "Type instead" : "Type a message"} onPress={talk.open ? () => void typeInstead() : () => setMode("composing")} hidden={holding || busy} reduced={reducedMotion} />
+            <RoundButton icon="keyboard" label={talk.open ? "Type instead" : "Type a message"} onPress={talk.open ? () => void typeInstead() : () => setMode("composing")} />
           </View>
 
           {/* Attachments waiting to send: a small deck above the + (after Airbnb's photo pop and slide). */}
