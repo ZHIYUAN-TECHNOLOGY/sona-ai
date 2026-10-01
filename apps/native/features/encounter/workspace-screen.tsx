@@ -9,19 +9,20 @@ import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, BackHandler, Keyboard, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { capabilityLabels, Home, suggestionFor, thinkingLabel, TopBar, VisitEnd, VisitLead, type Suggestion } from "./conversation";
+import { capabilityLabels, Home, suggestionFor, thinkingLabel, TopBar, useVisitLead, VisitEnd, VisitLead, type Suggestion } from "./conversation";
 import { openTaskCount } from "@/features/day/counts";
 import { useServerData } from "@/features/live/server-day";
 import { api, useLive } from "@/features/live";
 import { touch } from "@/features/patients/continue-store";
-import { AskSheet, closed, openTab, type AskState } from "@/features/ask";
+import { AskSheet, closed, openTab, usePageLive, type AskState } from "@/features/ask";
 import { PLACEHOLDER, matchQuestion, suggestion } from "@/features/ask/answers";
 import { useTodayAnswers } from "@/features/ask/today";
 import { capabilitySchema, routeInThread } from "./state";
 import { openSession } from "./navigation";
 import { useEncounter } from "./store";
-import type { Capability, FeatureProps, FocusView } from "./types";
+import type { Capability, FeatureProps, FocusView, RequestState, ResponseCard } from "./types";
 import { VoiceDock } from "./voice-dock";
+import { useLiveClose, type LiveAdapter } from "./sona-live";
 import { QuickRow } from "@/components/sona/quick-actions";
 import { useServerEncounter } from "@/features/live/sync";
 import { useHomeActions } from "./quick-actions";
@@ -43,6 +44,36 @@ import type { OrbActivity } from "@/components/sona/orb-glyph";
 
 const activities: Record<Capability, OrbActivity> = { briefing: "reading", reasoning: "solving", xray: "breathing", medication: "checking", prescription: "composing", followup: "connecting", note: "composing", evidence: "reading" };
 const prompts: Record<Capability, string> = { briefing: "Brief me on this patient", reasoning: "What possibilities should I consider?", xray: "Review the chest X-ray", medication: "Review medication interactions", prescription: "Run the prescribing simulation", followup: "Prepare a follow-up plan", note: "Show the consultation note", evidence: "What does the evidence say about steroids?" };
+const UNROUTED = "Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan.";
+
+/**
+ * One request's answer as a visit's thread shows it: its lead, its card as it streams, or why it stopped. Sona Live
+ * shows the same without the lead (it says that above), and `leave` ends Live before the card opens anything else.
+ * `onSections` feeds the pinned section tabs (the thread's latest answer only).
+ */
+function RequestAnswer({ req, card, revision, props, onRetry, lead = true, leave, onSections }: { req: RequestState; card?: ResponseCard; revision?: number; props?: FeatureProps; onRetry: () => void; lead?: boolean; leave?: () => void; onSections?: (list: AnswerSection[]) => void }) {
+  const away = <A extends unknown[]>(go: (...args: A) => void) => (...args: A) => { leave?.(); go(...args); };
+  const answerPatient = card?.patientSnapshot ?? props?.patient;
+  const body = card && props && <ClinicalResponseRenderer kind={card.kind} sections={card.sections} loading={req.status === "streaming"} featureProps={{ ...props, onOpen: away(props.onOpen), onRequest: away(props.onRequest), patient: card.patientSnapshot ?? props.patient, result: card, onSource: away(id => router.push({ pathname: "/source", params: { id, patientId: props.patient.id, cardId: card.id } })) }} />;
+  return <>
+    {/* The lead summarises the card below, so there is none without a card (failed or stopped). */}
+    {lead && card && answerPatient && <VisitLead req={req} card={card} patient={answerPatient} />}
+    {card && body && <ResponseFrame partial={req.status === "streaming"}>
+      <Reveal>{card.revision !== revision && <Notice>Earlier encounter revision {card.revision}. Its original context and sources are retained.</Notice>}{onSections ? <AnswerSections key={req.id} onChange={onSections}>{body}</AnswerSections> : body}</Reveal>
+    </ResponseFrame>}
+    {req.status === "failed" && <><Notice warning>{req.error}</Notice><Action secondary label="Retry request" onPress={away(onRetry)} /></>}
+    {req.status === "cancelled" && <Notice>Response stopped. Completed content and your edits are kept.</Notice>}
+  </>;
+}
+
+/** Sona Live's view of a visit request: its card as the thread shows it, without the lead (Live says that above it). */
+function LiveRequest({ patientId, id, props, onRetry }: { patientId: string; id: string; props: FeatureProps; onRetry: () => void }) {
+  const { encounters } = useEncounter();
+  const leave = useLiveClose();
+  const encounter = encounters[patientId], req = encounter?.requests.find(r => r.id === id);
+  if (!encounter || !req) return null;
+  return <View style={{ gap: 16 }}><RequestAnswer req={req} card={encounter.cards.find(c => c.requestId === id)} revision={encounter.revision} props={props} onRetry={onRetry} lead={false} leave={leave} /></View>;
+}
 
 /**
  * `home`: the launchpad (greeting, today's visits); never shows answers and has no visit open.
@@ -171,7 +202,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const act = (step: Step) => next.open ? next.hide(() => perform(step)) : perform(step);
 
   const open = (view: FocusView) => { if (!patient) { router.push({ pathname: "/patients", params: { view } }); return; } router.push(`/${view}`); };
-  const run = (kind: Capability, prompt = prompts[kind]) => { setNotice(undefined); if (!patient) { router.push({ pathname: "/patients", params: { next: kind, prompt } }); return; } request(kind, prompt); Keyboard.dismiss(); };
+  const run = (kind: Capability, prompt = prompts[kind]) => { setNotice(undefined); if (!patient) { router.push({ pathname: "/patients", params: { next: kind, prompt } }); return; } const id = request(kind, prompt); Keyboard.dismiss(); return id; };
   // Open a session at its latest answer rather than the top of the thread. Earlier answers can
   // still settle (images, reveals) just after mount, so the landing follows them for a moment.
   const landedAt = useRef<number | undefined>(undefined);
@@ -188,6 +219,25 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const [routingNow, setRoutingNow] = useState(false);
   // Laya asleep or slow: skip it for a minute and route by keywords, so a sleeping box never slows every question.
   const layaRestUntil = useRef(0);
+  /** Which card answers a visit request: live mode asks Laya first (ask.route) for at most 2.5 s; keyword routing decides when it can't (no key, not covered, asleep or slow). */
+  const route = async (prompt: string) => {
+    const rest = () => { layaRestUntil.current = Date.now() + 60_000; return null; };
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const picked = live && patient && Date.now() > layaRestUntil.current
+      ? await Promise.race([
+        api.ask.route({ request: prompt, patient: patient.subtitle }).then(r => (r.source === "model" ? (r.card ? r : null) : rest()), rest),
+        new Promise<null>(resolve => { timer = setTimeout(() => resolve(rest()), 2500); }),
+      ]).finally(() => clearTimeout(timer))
+      : null;
+    return { kind: picked?.card ?? routeInThread(prompt, encounter?.requests.at(-1)?.kind), medicine: picked?.medicine };
+  };
+  /** Runs a routed request. Laya also names the medicine asked about: its card opens in the review, ready to confirm (never over a draft being edited). */
+  const runRouted = (kind: Capability, prompt: string, medicine?: string | null) => {
+    const id = run(kind, prompt);
+    const named = kind === "medication" && patient && medicine && can("encounter.edit") ? entryFor(medicine, encounter?.medicationEntries ?? defaultMedications(patient)) : undefined;
+    if (named) updateEncounter(value => value.medicationDraft ? value : { ...value, medicationDraft: { ...named } });
+    return id;
+  };
   const submit = async (text: string) => { const prompt = text.trim(); if (!prompt || routing.current) return; setNotice(undefined);
     if (!patient) { const answer = matchQuestion(prompt, todayAnswers); if (answer) { setInput(""); setAsk({ open: true, shown: answer }); return; }
       // A question about the day that no rule or visit tool answers goes to the sheet, never the visit tools' notice: live, the
@@ -202,24 +252,12 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       if (image) { updateEncounter(current => image.uri === "teaching" ? { ...current, imagingAttachment: undefined, hideTeachingImage: false } : { ...current, imagingAttachment: { uri: image.uri, name: image.name } }, true); run("xray", prompt); if (fileNote) setNotice(fileNote); return; }
       if (fileNote) setNotice(fileNote);
     }
-    // Live mode asks Laya first (ask.route) for at most 2.5 s; keyword routing decides when it can't (no key, not covered, asleep or slow).
     // The text box empties and the dock shows the request is being read at once, so nothing invites a second send.
     routing.current = true; setRoutingNow(true); setInput("");
     try {
-      const rest = () => { layaRestUntil.current = Date.now() + 60_000; return null; };
-      let timer: ReturnType<typeof setTimeout> | undefined;
-      const picked = live && patient && Date.now() > layaRestUntil.current
-        ? await Promise.race([
-          api.ask.route({ request: prompt, patient: patient.subtitle }).then(r => (r.source === "model" ? (r.card ? r : null) : rest()), rest),
-          new Promise<null>(resolve => { timer = setTimeout(() => resolve(rest()), 2500); }),
-        ]).finally(() => clearTimeout(timer))
-        : null;
-      const kind = picked?.card ?? routeInThread(prompt, encounter?.requests.at(-1)?.kind);
-      if (!kind) { setInput(prompt); setNotice("Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan. Demo routing uses supported phrases."); return; }
-      run(kind, prompt);
-      // Laya also names the medicine asked about: its card opens in the review, ready to confirm (never over a draft being edited).
-      const named = kind === "medication" && patient && picked?.medicine && can("encounter.edit") ? entryFor(picked.medicine, encounter?.medicationEntries ?? defaultMedications(patient)) : undefined;
-      if (named) updateEncounter(value => value.medicationDraft ? value : { ...value, medicationDraft: { ...named } });
+      const { kind, medicine } = await route(prompt);
+      if (!kind) { setInput(prompt); setNotice(`${UNROUTED} Demo routing uses supported phrases.`); return; }
+      runRouted(kind, prompt, medicine);
     } finally { routing.current = false; setRoutingNow(false); }
   };
 
@@ -241,6 +279,38 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   }, [latestCard?.id]);
 
   const props: FeatureProps | undefined = patient ? { patient, onSource: id => router.push({ pathname: "/source", params: { id, patientId: patient.id } }), onOpen: open, onRequest: run } : undefined;
+
+  // Sona Live (a tap on the orb). In a visit it routes as the dock does (Laya first, then keywords) and its answer is
+  // the visit's own request: the card the thread shows, led by the thread's lead line; Open ends Live on it in the thread.
+  const encRef = useRef(encounters); encRef.current = encounters;
+  const latestLead = useVisitLead(latest, latestCard, latestCard?.patientSnapshot ?? patient);
+  const leadRef = useRef({ id: latest?.id, text: latestLead }); leadRef.current = { id: latest?.id, text: latestLead };
+  /** Resolves once request `id` has its card or has ended (4 s at most), so Live can say the lead its card has. */
+  const settled = (patientId: string, id: string) => new Promise<void>(resolve => {
+    const until = Date.now() + 4000;
+    const check = () => {
+      const e = encRef.current[patientId], req = e?.requests.find(r => r.id === id);
+      if (Date.now() > until || (req && (req.status !== "streaming" || e!.cards.some(c => c.requestId === id)))) resolve(); else setTimeout(check, 60);
+    };
+    check();
+  });
+  const showRequest = (id: string) => {
+    setShowEarlier(true);
+    setTimeout(() => { const y = offsets.current[id]; if (y !== undefined) scroll.current?.scrollTo({ y: Math.max(0, y + 8), animated: !reducedMotion }); }, 80);
+  };
+  const visitLive: LiveAdapter | undefined = patient && props && {
+    scope: patient.name.split(" ")[0] ?? patient.name,
+    ask: async question => {
+      const { kind, medicine } = await route(question);
+      const id = kind ? runRouted(kind, question, medicine) : undefined;
+      if (!kind || !id) return { notice: UNROUTED };
+      await settled(patient.id, id);
+      const lead = leadRef.current.id === id ? leadRef.current.text : undefined;
+      return { lead: lead ?? capabilityLabels[kind], render: () => <LiveRequest patientId={patient.id} id={id} props={props} onRetry={() => run(kind, question)} />, open: () => showRequest(id) };
+    },
+  };
+  // On Today: the day's rule answers, or the model on Today's own data, as the sheet answers them.
+  const todayLive: LiveAdapter = { ...usePageLive("today", todayAnswers, shown => setAsk({ open: true, shown }), openTab), scope: "Today" };
   const visible = compactResponses && !showEarlier ? requests.slice(-1) : requests;
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
   // Live mode records the room (scribe/live-recorder); the demo plays its sample consultation.
@@ -260,28 +330,18 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
         onShelf={bottom => setShelfFrom(Math.max(0, Math.round(bottom + scrollSV.get() - (insets.top + 106))))} shelfCollapse={{ scroll: scrollSV, from: shelfFrom }} />
       : <View style={{ gap: 44 }}>
         {compactResponses && requests.length > 1 && <Action label={showEarlier ? "Collapse earlier responses" : `Show ${requests.length - 1} earlier responses`} secondary onPress={() => setShowEarlier(value => !value)} />}
-        {visible.map(req => {
-          const card = encounter?.cards.find(c => c.requestId === req.id);
-          const answerPatient = card?.patientSnapshot ?? patient;
-          return <View key={req.id} collapsable={false} onLayout={event => {
-            offsets.current[req.id] = event.nativeEvent.layout.y;
-            if (req.id === latest?.id && requests.length > 1 && (landedAt.current === undefined || Date.now() - landedAt.current < 900)) {
-              landedAt.current ??= Date.now();
-              scroll.current?.scrollTo({ y: Math.max(0, event.nativeEvent.layout.y + 8), animated: false });
-            }
-          }} style={{ gap: 16, minHeight: req.id === latest?.id && req.status === "streaming" ? 320 : undefined }}>
-            <Text selectable accessibilityRole="header" style={{ ...type.subhead, lineHeight: 19, color: palette.muted }}>{req.prompt || prompts[req.kind]}</Text>
-            {/* The lead summarises the card below, so there is none without a card (failed or stopped). */}
-            {card && answerPatient && <VisitLead req={req} card={card} patient={answerPatient} />}
-            {card && props && <ResponseFrame partial={req.status === "streaming"}>
-              <Reveal>{card.revision !== encounter?.revision && <Notice>Earlier encounter revision {card.revision}. Its original context and sources are retained.</Notice>}{(() => { const body = <ClinicalResponseRenderer kind={card.kind} sections={card.sections} loading={req.status === "streaming"} featureProps={{ ...props, patient: card.patientSnapshot ?? props.patient, result: card, onSource: id => router.push({ pathname: "/source", params: { id, patientId: props.patient.id, cardId: card.id } }) }} />;
-                // Only the latest answer feeds the pinned tabs.
-                return req.id === latest?.id ? <AnswerSections key={req.id} onChange={list => { setSections([...list]); setActiveTab(0); }}>{body}</AnswerSections> : body; })()}</Reveal>
-            </ResponseFrame>}
-            {req.status === "failed" && <><Notice warning>{req.error}</Notice><Action secondary label="Retry request" onPress={() => run(req.kind, req.prompt)} /></>}
-            {req.status === "cancelled" && <Notice>Response stopped. Completed content and your edits are kept.</Notice>}
-          </View>;
-        })}
+        {visible.map(req => <View key={req.id} collapsable={false} onLayout={event => {
+          offsets.current[req.id] = event.nativeEvent.layout.y;
+          if (req.id === latest?.id && requests.length > 1 && (landedAt.current === undefined || Date.now() - landedAt.current < 900)) {
+            landedAt.current ??= Date.now();
+            scroll.current?.scrollTo({ y: Math.max(0, event.nativeEvent.layout.y + 8), animated: false });
+          }
+        }} style={{ gap: 16, minHeight: req.id === latest?.id && req.status === "streaming" ? 320 : undefined }}>
+          <Text selectable accessibilityRole="header" style={{ ...type.subhead, lineHeight: 19, color: palette.muted }}>{req.prompt || prompts[req.kind]}</Text>
+          {/* Only the latest answer feeds the pinned tabs. */}
+          <RequestAnswer req={req} card={encounter?.cards.find(c => c.requestId === req.id)} revision={encounter?.revision} props={props} onRetry={() => run(req.kind, req.prompt)}
+            onSections={req.id === latest?.id ? list => { setSections([...list]); setActiveTab(0); } : undefined} />
+        </View>)}
         {/* One next step at a time: the visit's need (the line it opened with), or handing over once nothing is left, then at most two quiet questions. */}
         {!active && latest && patient && <VisitEnd latest={latest.kind} patient={patient} encounter={encounter} hasSteps={Boolean(steps)} onPick={pick} />}
       </View>}
@@ -298,6 +358,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 100 }} />
     <VoiceDock
       backdrop={backdrop}
+      sonaLive={patient ? visitLive : todayLive}
       quiet={Boolean(steps)}
       thinking={routingNow ? "Reading your request…" : thinking}
       activity={active ? (phase === "thinking" ? "searching" : activities[active.kind]) : justDone ? "done" : undefined}

@@ -12,7 +12,7 @@ import { BrandIcon } from "./brand-icon";
  */
 export type OrbActivity =
   | "idle" | "listening" | "searching" | "reading" | "solving" | "breathing"
-  | "checking" | "composing" | "connecting" | "done" | "stop";
+  | "checking" | "composing" | "connecting" | "done" | "stop" | "muted";
 
 const INK = "#16213A";
 const SPRING = { duration: 450, dampingRatio: 0.72 };
@@ -108,6 +108,8 @@ function Glyph({ activity, still, level }: { activity: OrbActivity; still: boole
     // Linked points pulsing as the plan connects tasks.
     case "connecting": return <Moving still={still} motion={loop({ "0%": { transform: [{ scale: 0.92 }], opacity: 0.7 }, "50%": { transform: [{ scale: 1.06 }], opacity: 1 }, "100%": { transform: [{ scale: 0.92 }], opacity: 0.7 } }, 1200)}><Icon name="point.3.connected.trianglepath.dotted" size={22} color={INK} /></Moving>;
     case "done": return <Icon name="checkmark" size={22} color={INK} />;
+    // Sona Live with the microphone off.
+    case "muted": return <Icon name="mic.slash" size={22} color={INK} />;
     default: return <BrandIcon name="mic" size={26} color={INK} strokeWidth={1.9} />;
   }
 }

@@ -43,7 +43,8 @@ export function useVoiceInput({ onHeard, onError }: { onHeard: (text: string, ho
     await recorder.stop().catch(() => {});
     await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => {});
     const uri = recorder.uri;
-    if (!send || !uri || !spoke.current) { setState("idle"); return; }
+    // Nothing to send: the room's audio goes now (Sona Live drops a silent turn every few seconds while it listens).
+    if (!send || !uri || !spoke.current) { try { if (uri) new File(uri).delete(); } catch { /* already gone */ } setState("idle"); return; }
     setState("reading");
     const file = new File(uri);
     try {
