@@ -332,7 +332,8 @@ export function VoiceDock(props: Props) {
   return <View pointerEvents="box-none" style={StyleSheet.absoluteFill} accessibilityViewIsModal={talk.open} onAccessibilityEscape={talk.open ? talk.end : undefined}>
     {/* Sona Live frosts the whole page under the veil, so the conversation reads anywhere on it; it also keeps taps off the page behind. */}
     {talk.open && <Animated.View entering={FadeIn.duration(320).easing(EASE_OUT)} exiting={FadeOut.duration(240)} style={StyleSheet.absoluteFill}><Frost solid={reducedTransparency} /></Animated.View>}
-    {liquid && <LiquidVeil backdrop={backdrop} state={veil} armed={armed && !busy} words={live ? gusts : sampleWords} voiceLevel={level} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
+    {/* Sona Live keeps the wave low (about a quarter of the screen) so the conversation above it has the room. */}
+    {liquid && <LiquidVeil backdrop={backdrop} state={veil} armed={armed && !busy} words={live ? gusts : sampleWords} voiceLevel={level} crest={talk.open ? 0.26 : undefined} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
     {/* Frosted focus layer: a static blur crossfaded by opacity. */}
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: scrim ? 1 : 0, transitionProperty: "opacity", transitionDuration: scrim ? 320 : 240, transitionTimingFunction: EASE_OUT_CSS }]}>
       <Frost solid={reducedTransparency} />
