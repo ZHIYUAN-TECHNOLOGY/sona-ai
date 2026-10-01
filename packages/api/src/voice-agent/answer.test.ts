@@ -107,6 +107,20 @@ test("Gemma's urgent flag also puts the 999 line first; a patient feeling worse 
   expect(fine.escalated).toEqual([]);
 });
 
+test("'I've let your care team know' is said once, by Sona when a task exists: Gemma echoing it from an earlier answer is not heard, nor sent back to it", async () => {
+  // Staging, 1 Oct: the second call's answer said it twice, Gemma copying the first call's last line.
+  for (const language of ["ms", "en", "zh"] as const) {
+    const told = LINES[language].told;
+    const { chat, log } = gemma([`{"triage":"worse","inPlan":true}\nYour plan says to come back if the fever comes back. ${told}`]);
+    const history = [{ role: "user" as const, content: "Saya demam." }, { role: "assistant" as const, content: `Your plan says to come back if the fever comes back. ${told}` }];
+    const { turn } = turnOf({ question: "Saya batuk, still demam.", language, chat, history, escalate: async () => true });
+    expect(await spoken(turn)).toEqual(["Your plan says to come back if the fever comes back.", told]);
+    expect(log.messages[2]).toEqual({ role: "assistant", content: "Your plan says to come back if the fever comes back." });
+    // Gemma claiming it with no task made is not heard either.
+    expect(await spoken(turnOf({ question: "Saya batuk.", language, chat: gemma([`{"triage":"worse","inPlan":true}\n${told}`]).chat }).turn)).toEqual([LINES[language].noPlan]);
+  }
+});
+
 test("honest when there is no answer: Gemma starting (with its minutes), a plan that does not say, a hospital stay; a reply without flags still counts", async () => {
   const starting = turnOf({ question: "Bila saya makan ubat?", language: "ms", chat: async () => ({ waking: 12 }) });
   expect(await spoken(starting.turn)).toEqual([LINES.ms.starting(12)]);

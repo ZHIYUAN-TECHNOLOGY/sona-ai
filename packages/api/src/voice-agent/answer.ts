@@ -98,13 +98,22 @@ The words to say:
 - Never diagnose, never change a dose, and never stop a medicine the plan does not stop. Asked about stopping, changing or still using a medicine, say what its line in the plan says, and that any change is for their care team.
 - If urgent, tell them to call 999 now.`;
 
-/** The chat for one turn: the plan in the system message; the conversation strictly alternating, as chat templates require (an interrupted turn leaves two patient lines in a row). */
+/**
+ * Sona's "told your care team" line, in every language: only a made task says it (the end of answerTurn), never Gemma.
+ * Gemma copied it from an earlier answer in the history (1 Oct, staging: the second call said it twice).
+ */
+const TOLD = Object.values(LINES).map(l => l.told);
+
+/**
+ * The chat for one turn: the plan in the system message; the conversation strictly alternating, as chat templates
+ * require (an interrupted turn leaves two patient lines in a row); Sona's told line left out, so Gemma does not echo it.
+ */
 export function messagesFor(turn: Pick<AnswerTurn, "question" | "history" | "plan" | "language">): ChatMessage[] {
   const said: ChatMessage[] = [];
   for (const m of [...turn.history, { role: "user" as const, content: turn.question }]) {
-    const last = said.at(-1);
-    if (last?.role === m.role) last.content += `\n${m.content}`;
-    else if (last || m.role === "user") said.push({ role: m.role, content: m.content });
+    const last = said.at(-1), content = m.role === "assistant" ? TOLD.reduce((c, t) => c.split(t).join(""), m.content).trim() : m.content;
+    if (last?.role === m.role) last.content += `\n${content}`;
+    else if (last || m.role === "user") said.push({ role: m.role, content });
   }
   // Malaysians mix languages in one sentence, so a mixed question gets the patient's own app language.
   return [{ role: "system", content: `${VOICE}\nWhen they mix languages, or you cannot tell, answer in ${LANGUAGE_NAME[turn.language]}.\n\nDischarge plan:\n${turn.plan}` }, ...said];
@@ -203,8 +212,8 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
     yield* say(lines.call999);
   }
   function* checked(sentence: string): Generator<Part> {
-    // The 999 line already led; Gemma's own call to 999 would only repeat it.
-    if (summary.urgent && EMERGENCY.test(sentence)) return;
+    // The 999 line already led; Gemma's own call to 999 would only repeat it. The told line is Sona's, said once a task exists.
+    if ((summary.urgent && EMERGENCY.test(sentence)) || TOLD.includes(sentence)) return;
     if (safeSentence(sentence, turn.plan ?? "")) return yield* say(sentence);
     // One honest line for whatever was held back, not one per sentence.
     if (!steered) { steered = true; yield* say(lines.check); }
