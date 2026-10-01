@@ -8,7 +8,6 @@ import { SampleLabel } from "@/components/sona/model-answer";
 import { RoundAction, useAccessibleEffects } from "@/components/sona/ui";
 import { EASE_OUT_CSS, riseIn } from "@/components/sona/motion";
 import { LiquidVeil } from "@/components/sona/liquid-veil";
-import { VoiceWave } from "@/components/sona/voice-wave";
 import { GlassOrb } from "@/components/sona/glass-orb";
 import { Bars, OrbGlyph, type OrbActivity } from "@/components/sona/orb-glyph";
 import { loudness } from "@/features/live/turn";
@@ -308,9 +307,8 @@ export function VoiceDock(props: Props) {
     </Animated.View>
 
     {holding && <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(140)} pointerEvents="none" style={{ position: "absolute", left: 32, right: 32, bottom: insets.bottom + 132, alignItems: "center" }}>
-      {/* The voice drawn big above the words while it is heard; the words grow under it (live: a partial reading every
-          second; the sample: its script), with the small bars beside the hint. */}
-      {mic.state !== "reading" && <View style={{ marginBottom: 28 }}><VoiceWave level={level} still={reducedMotion} /></View>}
+      {/* The words grow above the dock as they are heard (live: a partial reading every second; the sample: its
+          script), with the voice bars beside the hint. */}
       {(live ? mic.partial : words) ? <Words text={live ? mic.partial : transcript.slice(0, words).join(" ")} reduced={reducedMotion} />
         : <Text accessibilityLiveRegion="polite" style={{ textAlign: "center", ...type.display, fontWeight: "500", color: palette.muted }}>{mic.state === "reading" ? "Reading what you said…" : "Listening…"}</Text>}
       {mic.state !== "reading" && <View style={{ marginTop: 10, flexDirection: "row", alignItems: "center", gap: 8 }}>
