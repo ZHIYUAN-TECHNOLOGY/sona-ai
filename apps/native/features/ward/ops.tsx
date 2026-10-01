@@ -8,7 +8,7 @@ import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Expand, Icon, Surface, Tone, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
-import { useWardBeds } from "@/features/day/use-counts";
+import { useWard } from "@/features/day/use-counts";
 import { api, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { useFindings } from "@/features/live/findings-sync";
@@ -149,13 +149,13 @@ export function wardLine(beds: Bed[]) {
 export function WardGlance() {
   const { findings } = useFindings();
   const { reducedMotion } = useAccessibleEffects();
-  const beds = useWardBeds();
+  const { beds, loading } = useWard();
   const forecast = useForecast(beds, findings);
   const blocked = wardSummary(beds).blocked;
   return <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 14 }}>
     <View style={{ gap: 4 }}>
       <Text style={{ ...type.overline, color: blocked ? palette.amber : palette.blue }}>Ward now</Text>
-      <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{wardLine(beds)}</Text>
+      <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{loading ? "Reading the ward…" : wardLine(beds)}</Text>
     </View>
     <View>
       <BedBar beds={beds} />

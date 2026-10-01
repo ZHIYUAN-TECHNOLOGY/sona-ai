@@ -54,20 +54,24 @@ export function finishRequest(encounter: Encounter, id: string, status: RequestS
 export function reviseEncounter(encounter: Encounter): Encounter {
   return { ...encounter, revision: encounter.revision + 1, medicationCheckedRevision: undefined, reviewInvalidated: encounter.medicationCheckedRevision !== undefined || encounter.reviewInvalidated, amendmentOperation: encounter.amendmentOperation && !["complete", "failed", "cancelled"].includes(encounter.amendmentOperation.phase) ? { ...encounter.amendmentOperation, phase: "cancelled", error: "Clinical context changed. The prior receipt is unchanged; rerun the amendment." } : encounter.amendmentOperation, requests: encounter.requests.map(item => item.status === "streaming" ? { ...item, status: "cancelled" } : item) };
 }
-export function issueSimulation(encounter: Encounter, patient: Patient, operationId: string): Encounter {
+/** A receipt the server wrote (live mode): its id, time and revision there, and for an amendment the receipt it supersedes. */
+export type ServerReceipt = { id: string; requestId: string; revision: number; createdAt: Date | string; payload: unknown };
+export function issueSimulation(encounter: Encounter, patient: Patient, operationId: string, server?: ServerReceipt): Encounter {
   if (encounter.prescription?.id === operationId && encounter.prescription.status === "created") return encounter;
   if (encounter.prescription?.revision === encounter.revision && encounter.prescription.status === "created") return encounter;
   const checks = getPrescriptionChecks(encounter, patient);
-  const reasons = checks.filter(c => c.status === "blocked").map(c => c.detail);
-  const failed = !reasons.length && encounter.prescriptionScenario === "creation-failure";
+  // The server's receipt is the outcome: it ran the same checks on its own record before it wrote one.
+  const reasons = server ? [] : checks.filter(c => c.status === "blocked").map(c => c.detail);
+  const failed = !server && !reasons.length && encounter.prescriptionScenario === "creation-failure";
   const previous = encounter.cards.map(c => c.prescription).findLast(p => p?.status === "created");
-  const createdAt = new Date().toISOString();
+  const amended = (server?.payload as { amendment?: { supersedes?: string } } | undefined)?.amendment;
+  const createdAt = new Date(server?.createdAt ?? Date.now()).toISOString();
   return { ...encounter, prescription: {
     id: operationId, revision: encounter.revision, status: reasons.length ? "blocked" : failed ? "failed" : "created",
     reasons: failed ? ["The simulated order could not be saved. Retry keeps the same operation identifier."] : reasons,
     createdAt, regimen: { ...simulatedRegimen }, checks, inputs: encounter.prescriptionInputs ? { ...encounter.prescriptionInputs } : undefined,
-    supersedes: previous && previous.revision !== encounter.revision ? previous.id : undefined,
-    audit: ["Automatic fixture workflow v2 · no live model inference", `Patient ${patient.id} · encounter ${patient.encounterId} · revision ${encounter.revision}`, `Evidence: ${simulatedRegimen.sourceVersion}`, `Indication provenance: intake/history + recorded observations`, ...checks.map(c => `${c.label}: ${c.status} — ${c.detail}`), ...(encounter.prescriptionAmendment ? [`Amendment reason: ${encounter.prescriptionAmendment}`] : []), `Operation ${operationId} · ${createdAt}`, reasons.length ? "Creation blocked" : failed ? "Creation failed; no receipt issued" : "Simulated AI-created receipt; no clinician approval gate; no pharmacy transmission"],
+    supersedes: amended?.supersedes ?? (previous && previous.revision !== encounter.revision ? previous.id : undefined),
+    audit: ["Automatic fixture workflow v2 · no live model inference", `Patient ${patient.id} · encounter ${patient.encounterId} · revision ${encounter.revision}`, `Evidence: ${simulatedRegimen.sourceVersion}`, `Indication provenance: intake/history + recorded observations`, ...checks.map(c => `${c.label}: ${c.status} — ${c.detail}`), ...(encounter.prescriptionAmendment ? [`Amendment reason: ${encounter.prescriptionAmendment}`] : []), ...(server ? [`Server receipt ${server.id} · server revision ${server.revision}`] : []), `Operation ${operationId} · ${createdAt}`, reasons.length ? "Creation blocked" : failed ? "Creation failed; no receipt issued" : "Simulated AI-created receipt; no clinician approval gate; no pharmacy transmission"],
   } };
 }
 export const initialEncounters = (): Record<string, Encounter> => Object.fromEntries(patients.map(patient => [patient.id, { ...newEncounter(), medicationEntries: defaultMedications(patient) }]));

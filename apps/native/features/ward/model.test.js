@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
 import { newEncounter, patients } from "@/features/encounter/fixtures";
 import { EMPTY_DISCHARGE } from "@/features/discharge/model";
+import { soonest } from "@/features/ask/answers";
+import { unownedBlocked } from "@/features/day/model";
 import { asFilter, bedBar, bedRow, defaultFilter, emptyLine, filterBeds, filterSegments, huddle, ownerReceipt, wardBeds, wardSummary } from "./model";
 
 test("the bed bar has one segment per bed, blocked first, and a legend that adds up", () => {
@@ -60,4 +62,18 @@ test("assigning says who was told and when; demo mode says nothing was sent", ()
   expect(ownerReceipt("Billing", at, false)).toBe("Billing notified · 14:05");
   expect(ownerReceipt("Porter", at, true)).toBe("Porter notified · 14:05 · simulated, nothing sent");
   expect(ownerReceipt(undefined, at, false)).toBe("Owner cleared · 14:05");
+});
+
+test("every count of blocked beds is the list it opens: the filter, the summary, the huddle, Today's unowned beds and Sona's answer", () => {
+  // Where the copies of the rule used to part: a bed marked fit with a blocker but no patient, and a watch bed with one.
+  const nameless = { bed: "Bed 3", status: "fit", predicted: "Once cleared", blockers: [{ id: "b3-gl", kind: "gl", label: "Final guarantee letter", detail: "Requested" }] };
+  const watched = { bed: "Bed 5", name: "Ali Hassan", status: "watch", predicted: "Tomorrow", blockers: [{ id: "b5-renal", kind: "result", label: "Renal function", detail: "Due 06:00" }] };
+  const beds = [...wardBeds(patients, {}), nameless, watched];
+  const blocked = filterBeds(beds, "blocked").map(b => b.bed);
+  for (const s of filterSegments(beds, "all")) expect(filterBeds(beds, s.key)).toHaveLength(s.count);
+  expect(blocked).toEqual(["Bed 6", "Bed 2", "Bed 14"]);
+  expect(wardSummary(beds).blocked).toBe(blocked.length);
+  expect(huddle(beds, {})).toEqual(["4 fit to go, 3 still blocked, about 9 bed-hours waiting.", "Start with Bed 6: final guarantee letter, take-home medicines, follow-up booking.", "7 blockers have no owner yet."]);
+  expect(unownedBlocked(beds, {}).map(r => r.bed).sort()).toEqual([...blocked].sort());
+  expect(Object.values(soonest(beds).spec.elements).find(e => e.type === "AskLead").props.text).toBe("1 bed can free now; 3 discharges are blocked, about 9 bed-hours waiting.");
 });

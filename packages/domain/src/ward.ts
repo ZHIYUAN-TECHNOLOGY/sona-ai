@@ -113,17 +113,25 @@ export function wardBeds(patients: Patient[], encounters: Record<string, Encount
   return [demo, ...WARD_FIXTURE].sort(byUrgency);
 }
 
+/**
+ * A bed's place on the ward: blocked (a patient fit to go, held by something), fit to go, on watch, or the
+ * rest. The one rule behind every count and every list of beds (the ward's filter and its rows, the summary,
+ * the huddle, Today's keys), so a count can never disagree with the list it opens.
+ */
+export type BedKind = "blocked" | "fit" | "watch" | "other";
+export const bedKind = (b: Pick<Bed, "status" | "name"> & { blockers: unknown[] }): BedKind =>
+  b.status === "fit" && b.name ? (b.blockers.length ? "blocked" : "fit") : b.status === "watch" ? "watch" : "other";
+
 export function wardSummary(beds: Bed[]) {
-  const occupied = beds.filter(b => b.name);
-  const fit = occupied.filter(b => b.status === "fit");
-  const blocked = fit.filter(b => b.blockers.length);
-  return { beds: beds.length, fit: fit.length, blocked: blocked.length, bedHours: blocked.reduce((sum, b) => sum + (b.waitingHours ?? 0), 0) };
+  const blocked = beds.filter(b => bedKind(b) === "blocked");
+  const fit = blocked.length + beds.filter(b => bedKind(b) === "fit").length;
+  return { beds: beds.length, fit, blocked: blocked.length, bedHours: blocked.reduce((sum, b) => sum + (b.waitingHours ?? 0), 0) };
 }
 
 /** Three lines for the huddle: what blocks the most beds, and who owns it. */
 export function huddle(beds: Bed[], owners: Record<string, Owner | undefined>): string[] {
   const s = wardSummary(beds);
-  const blockedBeds = beds.filter(b => b.status === "fit" && b.blockers.length);
+  const blockedBeds = beds.filter(b => bedKind(b) === "blocked");
   const unowned = blockedBeds.flatMap(b => b.blockers).filter(x => !owners[x.id]).length;
   const top = blockedBeds[0];
   return [

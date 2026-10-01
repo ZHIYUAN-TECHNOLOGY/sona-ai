@@ -18,5 +18,12 @@ export async function pushAndReview(encounterId: string, local: Encounter) {
 
 export const simulateOnServer = (encounterId: string, approvedBy: string) => api.prescribing.simulate({ encounterId, requestId: requestId(), approvedBy });
 
+/**
+ * An amendment's new receipt: the server re-runs the checks on the reviewed record and names the receipt it
+ * supersedes and why. `operationId` is the amendment's, so a retry after a lost reply returns the same receipt.
+ */
+export const amendOnServer = (encounterId: string, approvedBy: string, reason: string, operationId: string) =>
+  api.prescribing.amend({ encounterId, requestId: operationId, approvedBy, reason });
+
 /** Note sections as the server's sentences and back (shared with the server's scan.apply). */
 export { noteSections, noteSentences } from "@sona-ai/domain/scan";

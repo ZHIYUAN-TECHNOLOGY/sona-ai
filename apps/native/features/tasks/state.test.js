@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { changeReceipt, createTaskOnce, friendlyDate, mentionQuery, parseDuePhrase, taskDraftErrors, taskProposal } from "./state";
+import { changeReceipt, createTaskOnce, dueRuler, friendlyDate, mentionQuery, parseDuePhrase, taskDraftErrors, taskProposal } from "./state";
 
 const emptyEncounter = () => ({ revision: 1, cards: [], requests: [], note: "", noteReviewed: false, transcript: [], recording: "idle", recordingSeconds: 0, language: "english", tasks: [] });
 const draft = { operationId: "task-operation-1", title: "Follow-up review", owner: "Demo clinician", due: "2026-09-30" };
@@ -99,4 +99,25 @@ it("says what changed and when after a task is reassigned or redated", () => {
   expect(changeReceipt({ due: "2026-09-30" }, at)).toBe("Due tomorrow · 14:05");
   expect(changeReceipt({ due: "2026-10-02" }, at)).toBe("Due Fri 2 Oct · 14:05");
   expect(changeReceipt({ owner: "Clinic nurse", due: "2026-09-29" }, new Date(2026, 8, 29, 9, 0))).toBe("Reassigned to Clinic nurse · Due today · 09:00");
+});
+
+it("the due-date ruler saves once per drag, when the finger lifts, and never an unchanged day", () => {
+  const today = new Date(2026, 9, 1, 9, 0), saves = [];
+  const ruler = dueRuler("2026-10-01", 12, due => saves.push(due), today);
+  // Placing the ruler on open (a scroll nobody dragged) saves nothing, even for an overdue task it parks on today.
+  dueRuler("2026-09-28", 12, due => saves.push(due), today).settle(0);
+  expect(saves).toEqual([]);
+  // A flick: one save at lift, at the tick it will rest on (forward takes the next tick); its settle there adds none.
+  ruler.drag(); ruler.release(5.2 * 12, 0.8); ruler.settle(6 * 12);
+  expect(saves).toEqual(["2026-10-07"]);
+  // Moving back takes the previous tick; still, the nearest. Dragging back to the saved day saves nothing.
+  ruler.drag(); ruler.release(3.6 * 12, -0.4); ruler.settle(3 * 12);
+  ruler.drag(); ruler.release(3.4 * 12, 0); ruler.settle(3 * 12);
+  expect(saves).toEqual(["2026-10-07", "2026-10-04"]);
+  // Where it settles corrects the lift only if they differ.
+  ruler.drag(); ruler.release(9 * 12, 0); ruler.settle(10 * 12);
+  expect(saves.slice(2)).toEqual(["2026-10-10", "2026-10-11"]);
+  // The server's copy arriving is the new saved day; a tapped interval or picked date saves at once, unchanged ones never.
+  ruler.sync("2026-10-15"); ruler.jump(14); ruler.jump(28); ruler.jump(28);
+  expect(saves.slice(4)).toEqual(["2026-10-29"]);
 });

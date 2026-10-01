@@ -24,6 +24,10 @@ export function formOf(formulation: string): MedicineForm {
   return FORMS.find(([pattern]) => pattern.test(text))?.[1] ?? "unknown";
 }
 
+/** The reported medicine a catalogue ID names (Laya's pick, e.g. "cetirizine-tablet"), by what it resolves to here; none when the visit has no such entry. */
+export const entryFor = <T extends { ingredient: string; formulation: string }>(id: string, entries: T[]) =>
+  entries.find(entry => resolveMedicine(entry.ingredient, entry.formulation).id === id);
+
 /** Catalogue entry for an ingredient + formulation, else a neutral look for the reported form only. */
 export function resolveMedicine(ingredient: string, formulation: string): MedicineLook {
   const form = formOf(formulation);

@@ -20,13 +20,12 @@ import { useRole } from "@/features/live/roles";
 import { FollowUpList } from "@/features/findings";
 import { useFindings } from "@/features/live/findings-sync";
 import { useServerEncounter } from "@/features/live/sync";
-import { useServerBeds } from "@/features/live/ward-sync";
 import { Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveHuddle } from "@/features/live/model-sync";
 import { useLiveChanges } from "@/features/live/channel";
 import { BedBar, ForecastTimeline, KIND, ThisWeek, useForecast, wardLine } from "./ops";
-import { withFindingBlockers } from "@/features/day/counts";
-import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedKind, bedRow, defaultFilter, emptyLine, filterBeds, huddle, ownerReceipt, wardBeds, type Bed, type Owner, type WardFilter } from "./model";
+import { useWard } from "@/features/day/use-counts";
+import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedKind, bedRow, defaultFilter, emptyLine, filterBeds, huddle, ownerReceipt, type Bed, type Owner, type WardFilter } from "./model";
 import { useWardOwners } from "./owners";
 
 /*
@@ -60,17 +59,15 @@ function bedTone(bed: Bed) {
 }
 
 export function WardScreen() {
-  const { patients, encounters, selectPatient } = useEncounter();
+  const { patients, selectPatient } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  // Live mode: every bed comes from the server (the fixture ward shows until it arrives). Amelia's
+  // Live mode: every bed comes from the server, and nothing shows until it arrives (useWard). Amelia's
   // encounter is pulled too, so the discharge screen opened from bed 6 starts from the server's record.
   useServerEncounter(patients.find(p => p.id === DEMO_PATIENT));
   const { findings } = useFindings();
-  const serverBeds = useServerBeds(findings);
-  // Demo mode puts the X-ray's open findings on Bed 6, as the server does, so its count matches its Discharge page.
-  const beds = serverBeds ?? withFindingBlockers(wardBeds(patients, encounters), findings);
+  const { beds, loading } = useWard();
   const [briefed, setBriefed] = useState(false);
   const [open, setOpen] = useState<{ bed: string; from: Rect; focus?: string }>();
   const root = useRef<View>(null);
@@ -111,7 +108,7 @@ export function WardScreen() {
   const assign = (id: string, owner: Owner) => {
     const before = owners[id], next = before === owner ? undefined : owner;
     haptic("select"); setAssignError(undefined); setOwners(o => ({ ...o, [id]: next })); setTold(id, undefined);
-    if (!serverBeds) { setTold(id, ownerReceipt(next, new Date(), true)); return; }
+    if (!live) { setTold(id, ownerReceipt(next, new Date(), true)); return; }
     (next ? api.ward.assignOwner({ blockerId: id, owner: next }) : api.ward.unassignOwner({ blockerId: id })).then(
       () => setTold(id, ownerReceipt(next, new Date(), false)),
       e => { setOwners(o => ({ ...o, [id]: before })); setAssignError({ id, owner, text: `${next ? "Not assigned" : "Not cleared"}: ${errorText(e)}` }); });
@@ -130,7 +127,7 @@ export function WardScreen() {
   const [wardVersion, setWardVersion] = useState(0);
   useLiveChanges(["ward"], () => setWardVersion(v => v + 1));
   // Keyed on the beds and on the server's own ward announcements (an owner saved there), so it never briefs before a write lands.
-  const server = useLiveHuddle(briefed && Boolean(serverBeds), `${beds.map(b => `${b.bed}:${b.blockers.map(x => x.id).join(",")}`).join("|")}#${wardVersion}`);
+  const server = useLiveHuddle(briefed && live && !loading, `${beds.map(b => `${b.bed}:${b.blockers.map(x => x.id).join(",")}`).join("|")}#${wardVersion}`);
   const local = huddle(beds, owners);
   const lines = server.data?.lines ?? local;
   const current = open && beds.find(b => b.bed === open.bed);
@@ -157,8 +154,10 @@ export function WardScreen() {
   <View ref={root} collapsable={false} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }}>
     <Animated.View style={[{ flex: 1 }, gridStyle]} pointerEvents={open ? "none" : "auto"} accessibilityElementsHidden={Boolean(open)} importantForAccessibility={open ? "no-hide-descendants" : "auto"}>
       <ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 44 + ASK_SPACE, gap: 18 }}>
-        <Insight eyebrow={`Now · ${beds.length} beds`}>{wardLine(beds)}</Insight>
+        {/* Live mode says it is reading the ward rather than counting or listing beds it doesn't have yet. */}
+        <Insight eyebrow={loading ? "Now" : `Now · ${beds.length} beds`}>{loading ? "Reading the ward…" : wardLine(beds)}</Insight>
 
+        {!loading && <>
         {/* Huddle brief, the page's one feature card: one line and a small pill; the brief opens under it and the page below moves with it. */}
         <Surface feature layout={motion} style={{ padding: 16, gap: 4 }}>
           {/* The pill wraps below the title when large text leaves no room beside it. */}
@@ -211,6 +210,7 @@ export function WardScreen() {
         }}>
           <ForecastTimeline beds={beds} forecast={forecast} onOpen={openAt} />
         </Animated.View>
+        </>}
 
         {/* The week's proof sits below the beds and moves with the list as it re-lays. */}
         <Animated.View layout={motion} style={{ gap: 12 }}>

@@ -94,16 +94,17 @@ export function AnswerView({ answer, run, question = true, model }: { answer: An
  * Live mode: a question the page's rules don't answer goes to the model (ask.free) with the page's own
  * data; the server sends a spec only if it stays on that data. No `answer` means no model answer (demo
  * mode, fixture, or a failed call), so the sheet keeps saying what it can answer here, or, with `waking`,
- * that the model is starting and when to ask again.
+ * that the model is starting and when to ask again, or, `unanswered`, that the model found no answer on the page.
  */
 function useFreeAnswer(scope: Scope, question: string | undefined, answers: Answer[]) {
   const { on } = useLive();
-  const [state, setState] = useState<{ question: string; thinking: boolean; answer?: Answer; model?: string; waking?: number }>();
+  const [state, setState] = useState<{ question: string; thinking: boolean; answer?: Answer; model?: string; waking?: number; unanswered?: boolean }>();
   useEffect(() => {
     if (!on || !question) return;
     let current = true;
     setState({ question, thinking: true });
-    api.ask.free({ scope, question, context: askContext(answers) }).then(r => r.source === "model" ? { answer: { id: "free", question, spec: r.spec as Answer["spec"], worth: true }, model: r.model } : { waking: wakingOf(r) }, () => ({})).then(r => {
+    api.ask.free({ scope, question, context: askContext(answers) }).then(r => r.source === "model" ? { answer: { id: "free", question, spec: r.spec as Answer["spec"], worth: true }, model: r.model }
+      : { waking: wakingOf(r), unanswered: "unanswered" in r && r.unanswered }, () => ({})).then(r => {
       if (current) setState({ question, thinking: false, ...r });
     });
     return () => { current = false; };
@@ -142,6 +143,7 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         {missed && (free?.thinking ? <Drafting label="Thinking…" lines={2} slow={MODEL_SLOW} />
           : free?.answer ? <AnswerView answer={free.answer} run={run} model={free.model} />
+          : free?.unanswered ? <Text style={{ ...type.callout, color: palette.muted }}>“{missed}”: Sona couldn't answer that from this page.</Text>
           : <Text style={{ ...type.callout, color: palette.amber }}>“{missed}”: {free?.waking ? startingReply(free.waking) : "Sona answers only these questions here until the model is switched on."}</Text>)}
         {shown ? <View style={{ gap: 14 }}>
           <AnswerView answer={shown} run={run} />

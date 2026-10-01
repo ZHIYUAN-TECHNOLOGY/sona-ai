@@ -59,6 +59,7 @@ export const PERMISSIONS: Record<string, readonly [readonly Role[], string]> = {
   "encounter.recordReview": [DOCTOR, "record a medication review"],
   "prescribing.review": [DOCTOR, "run a prescribing check"],
   "prescribing.simulate": [DOCTOR, "prescribe"],
+  "prescribing.amend": [DOCTOR, "amend a prescription"],
   "note.get": [CLINICAL_READ, "read the note"],
   "note.save": [DOCTOR, "write the note"],
   "note.draft": [DOCTOR, "draft the note from the consultation"],

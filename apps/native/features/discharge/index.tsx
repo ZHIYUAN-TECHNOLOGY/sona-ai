@@ -263,10 +263,8 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
           <Text style={{ ...type.overline, width: 72, paddingTop: 3, color: palette.muted }}>{label}</Text>
           {text === value ? <Text selectable style={{ ...type.subhead, flex: 1, color: palette.ink }}>{value}</Text> : <MarkedText text={text} style={{ ...type.subhead, flex: 1, color: palette.ink }} />}
         </Animated.View>; })}
-        {!full && draft.data?.lines && <SampleLabel answer={draft} what="discharge" />}
-        {full && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)} style={{ gap: 6 }}>
+        {full && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(200)}>
           <Text selectable style={{ ...type.footnote, color: palette.muted }}>{draft.data?.summary ?? plan.full}</Text>
-          <SampleLabel answer={draft} what="discharge" />
         </Animated.View>}
         <Pressable accessibilityRole="button" accessibilityState={{ expanded: full }} onPress={() => setFull(v => !v)} hitSlop={6} style={{ alignSelf: "flex-start", minHeight: 32, flexDirection: "row", alignItems: "center", gap: 4 }}>
           <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{full ? "Show less" : "Read full"}</Text>
@@ -286,10 +284,11 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
         <Animated.View key={state.language} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ padding: 12, gap: 6, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" }}>
           {draft.loading ? <Drafting label={`Drafting the leaflet in ${language.name}…`} lines={2} />
             : <Arrive animate={Boolean(draft.data)}><Text selectable style={{ ...type.subhead, color: palette.ink }}>{draft.data?.leaflet ?? plan.leaflet[state.language]}</Text></Arrive>}
-          <SampleLabel answer={draft} what="discharge" />
           {draft.error && <Text style={{ ...type.caption, color: palette.red }}>{draft.error} · showing the authored leaflet</Text>}
         </Animated.View>
       </Animated.View>}
+      {/* The summary and the leaflet are one draft (discharge.draft), so they carry one label, under the last of them on view. */}
+      {(!done || full) && <SampleLabel answer={draft} what="discharge" />}
       </Animated.View>
     </Surface>
     </Animated.View>

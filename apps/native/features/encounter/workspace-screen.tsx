@@ -29,6 +29,8 @@ import { defaultMedications } from "./clinical-state";
 import { nextSteps, type Step } from "./next-steps";
 import { NextStepBar, NextStepSheet, useNextStep } from "./next-step";
 import { useCanPrescribe } from "@/features/clinical/prescribe-card";
+import { entryFor } from "@/features/clinical/medicine-catalog";
+import { useRole } from "@/features/live/roles";
 import { AnswerSections, SectionTabs, type AnswerSection } from "@/components/sona/answer-kit";
 import type { Attachment } from "@/components/sona/attachments-menu";
 import { Sidebar, SIDEBAR_WIDTH } from "./sidebar";
@@ -179,6 +181,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const [ask, setAsk] = useState<AskState>(closed);
   const nudge = home ? suggestion(todayAnswers) : undefined;
   const { on: live } = useLive();
+  const { can } = useRole();
   // A notice answers the last input only: it clears on the next keystroke or submit, so it never hides the dock for good.
   // One send at a time: while a request is being routed, further taps on send do nothing (the text box is already empty).
   const routing = useRef(false);
@@ -187,8 +190,9 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const layaRestUntil = useRef(0);
   const submit = async (text: string) => { const prompt = text.trim(); if (!prompt || routing.current) return; setNotice(undefined);
     if (!patient) { const answer = matchQuestion(prompt, todayAnswers); if (answer) { setInput(""); setAsk({ open: true, shown: answer }); return; }
-      // Live mode: a question about the day that no rule or capability answers goes to the sheet, which asks the model with Today's own data.
-      if (live && !routeInThread(prompt)) { setInput(""); setAsk({ open: true, missed: prompt }); return; } }
+      // A question about the day that no rule or visit tool answers goes to the sheet, never the visit tools' notice: live, the
+      // model answers it from Today's own data (ask.free), or says it is starting; in demo mode the sheet says why it can't.
+      if (!routeInThread(prompt)) { setInput(""); setAsk({ open: true, missed: prompt }); return; } }
     else if (pending.length) {
       // Images go to the imaging review (the first becomes the encounter's attachment); files and documents, scanned or photographed, are kept for reference.
       const image = pending.find(item => item.kind === "image" && item.imageType !== "Document");
@@ -206,13 +210,16 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       let timer: ReturnType<typeof setTimeout> | undefined;
       const picked = live && patient && Date.now() > layaRestUntil.current
         ? await Promise.race([
-          api.ask.route({ request: prompt, patient: patient.subtitle }).then(r => (r.source === "model" ? r.card ?? null : rest()), rest),
+          api.ask.route({ request: prompt, patient: patient.subtitle }).then(r => (r.source === "model" ? (r.card ? r : null) : rest()), rest),
           new Promise<null>(resolve => { timer = setTimeout(() => resolve(rest()), 2500); }),
         ]).finally(() => clearTimeout(timer))
         : null;
-      const kind = picked ?? routeInThread(prompt, encounter?.requests.at(-1)?.kind);
+      const kind = picked?.card ?? routeInThread(prompt, encounter?.requests.at(-1)?.kind);
       if (!kind) { setInput(prompt); setNotice("Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan. Demo routing uses supported phrases."); return; }
       run(kind, prompt);
+      // Laya also names the medicine asked about: its card opens in the review, ready to confirm (never over a draft being edited).
+      const named = kind === "medication" && patient && picked?.medicine && can("encounter.edit") ? entryFor(picked.medicine, encounter?.medicationEntries ?? defaultMedications(patient)) : undefined;
+      if (named) updateEncounter(value => value.medicationDraft ? value : { ...value, medicationDraft: { ...named } });
     } finally { routing.current = false; setRoutingNow(false); }
   };
 
@@ -236,6 +243,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const props: FeatureProps | undefined = patient ? { patient, onSource: id => router.push({ pathname: "/source", params: { id, patientId: patient.id } }), onOpen: open, onRequest: run } : undefined;
   const visible = compactResponses && !showEarlier ? requests.slice(-1) : requests;
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
+  // Live mode records the room (scribe/live-recorder); the demo plays its sample consultation.
+  const consultation = encounter?.recording === "paused" ? "paused" : live ? "recording" : "playing";
 
   return <View style={{ flex: 1, backgroundColor: palette.canvas }}>
     {home && <Sidebar open={drawer} progress={drawerP} onClose={closeDrawer} onNew={() => router.push("/patients")} />}
@@ -305,8 +314,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       {...patient && { onImage: () => open("xray"), onConsultation: () => open("recording"), onNote: () => open("note"), attachments: pending, onAttachmentsChange: setPending }}
       suggestion={nudge && { text: nudge.text, onPress: () => setAsk({ open: true, shown: nudge.answer }) }}
       above={<>
-        {recording && <Pressable accessibilityRole="button" accessibilityLabel={`Consultation ${encounter?.recording === "paused" ? "paused" : "playing"}, ${encounter?.recordingSeconds} seconds`} accessibilityHint="Opens the consultation recorder" hitSlop={{ top: 2, bottom: 2 }} onPress={() => open("recording")} style={{ alignSelf: "center", minHeight: 40, paddingHorizontal: 16, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: palette.white, boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
-          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: encounter?.recording === "paused" ? palette.amber : palette.red }} /><Text style={{ ...type.footnote, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>Consultation {encounter?.recording === "paused" ? "paused" : "playing"} · {encounter?.recordingSeconds}s</Text>
+        {recording && <Pressable accessibilityRole="button" accessibilityLabel={`Consultation ${consultation}, ${encounter?.recordingSeconds} seconds`} accessibilityHint="Opens the consultation recorder" hitSlop={{ top: 2, bottom: 2 }} onPress={() => open("recording")} style={{ alignSelf: "center", minHeight: 40, paddingHorizontal: 16, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: palette.white, boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: encounter?.recording === "paused" ? palette.amber : palette.red }} /><Text style={{ ...type.footnote, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>Consultation {consultation} · {encounter?.recordingSeconds}s</Text>
         </Pressable>}
         {notice && <Notice>{notice}</Notice>}
         {steps && !drawer && <NextStepBar steps={steps} p={next.p} onExpand={next.show} onAct={act} />}

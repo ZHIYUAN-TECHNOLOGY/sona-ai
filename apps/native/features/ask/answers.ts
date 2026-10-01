@@ -1,5 +1,6 @@
 import type { Spec } from "@json-render/core";
 import { formatRM } from "@sona-ai/domain/audit";
+import { bedKind } from "@sona-ai/domain/ward";
 import { waited } from "@/features/inbox/state";
 
 /**
@@ -61,8 +62,7 @@ export function overdue(tasks: TaskLine[], review = true): Answer {
 export type BedLine = { bed: string; patientId?: string; name?: string; status: "fit" | "watch" | "stable" | "empty" | "free"; blockers: { label: string }[]; waitingHours?: number };
 /** Ward: who can go home soonest, what holds each blocked bed, and the way into the ward. */
 export function soonest(beds: BedLine[]): Answer {
-  const fit = beds.filter(b => b.name && b.status === "fit");
-  const clear = fit.filter(b => !b.blockers.length), held = fit.filter(b => b.blockers.length);
+  const clear = beds.filter(b => bedKind(b) === "fit"), held = beds.filter(b => bedKind(b) === "blocked"), fit = [...clear, ...held];
   const hours = held.reduce((n, b) => n + (b.waitingHours ?? 0), 0);
   return { id: "soonest", question: "Who can go home soonest?", worth: fit.length > 0, spec: column("soonest", [
     { type: "AskLead", props: { text: fit.length ? `${plural(clear.length, "bed")} can free now${held.length ? `; ${plural(held.length, "discharge")} ${held.length === 1 ? "is" : "are"} blocked, about ${hours} bed-hours waiting` : ""}.` : "Nobody on the ward is fit to go yet." } },
