@@ -22,6 +22,94 @@ export async function searchPubmed(query: string, fetcher: typeof fetch = fetch,
   return (JSON.parse(body) as { esearchresult?: { idlist?: string[] } }).esearchresult?.idlist ?? [];
 }
 
+/**
+ * Words that frame a question rather than name its topic: question and helper words, pronouns, the patient
+ * in front of the doctor, verdict words abstracts rarely use ("safe", "useful", "stop"), the labels of an
+ * abstract's parts ("aim", "results": every abstract matches them), units and a few Malay and Manglish ones.
+ * PubMed ANDs every word it is given, so any one of these can empty a search or match everything.
+ */
+const FILLER = new Set(`a about after again all also am an and any are as at be been being both but by can could did do does doing done
+during each either for from get gets give given giving good got has have having he her here hers him his how i if in into is it its just
+may me might more most much must my need needed needs no nor not now of on only or other our over own patient patients really right same
+she should so some still such take takes taking than that the their them then there these they this those to too under up us very was way we were what
+when where which while who whom why will with within without would yet you your
+safe safely safety effective benefit beneficial help helps helpful useful use used using work works worth better best reasonable
+appropriate indicated recommend recommended recommends consider considered option options start starting stop stopping continue
+change changes main key evidence data study studies trial trials research literature say says show shows know known think mean means
+reduce reduces improve improves increase increases decrease decreases shorten shortens prevent prevents cause causes
+manage managing management versus vs compared compare case cases aim aims objective objectives background method methods result results conclusion conclusions
+man woman lady gentleman boy girl mr mrs ms madam encik puan year years old aged day days week weeks mg mcg ml kg mmol
+adakah apa apakah bagaimana berapa bila boleh dan atau untuk dengan dalam pada ke ini itu yang saya dia pesakit perlu patut tak tidak
+ada bagi mana kenapa jika kalau ah lah leh lor meh kan`.split(/\s+/));
+
+/**
+ * Bedside abbreviations PubMed misreads ("iv" is a journal to it, "mi" the microbiology subheading), spelled
+ * out; harm words as PubMed indexes them. ponytail: a hand list grown from failed searches; a Gemma rewrite
+ * of the question into MeSH terms replaces it if questions keep missing.
+ */
+const SPELLED: Record<string, string> = {
+  iv: "intravenous", im: "intramuscular", po: "oral", sc: "subcutaneous", gi: "gastrointestinal", bp: "blood pressure",
+  mi: "myocardial infarction", pe: "pulmonary embolism", ed: "emergency department", cap: "community-acquired pneumonia",
+  harm: "adverse effects", harms: "adverse effects", harmful: "adverse effects", danger: "adverse effects", dangers: "adverse effects", dangerous: "adverse effects",
+};
+
+/**
+ * A question's key clinical terms as phrases, in order: the runs of words left once the filler and any
+ * `drop` words (the patient's name and record number, which never leave the hospital) are taken out, so
+ * PubMed's own term mapping still reads "heart failure" or "long qt" as one concept. Lowercased letters,
+ * digits and hyphens only, so nothing a doctor types becomes PubMed syntax ([pt], OR, quotes).
+ * ponytail: English, plus Malay filler; a Malay or Chinese clinical term is not translated, so such a question finds little.
+ */
+export function keyTerms(question: string, drop: string[] = []): string[] {
+  const skip = new Set(drop.flatMap(d => d.toLowerCase().split(/\s+/)));
+  // Numbers (ages, doses, IC digits) and single letters say nothing a search can use either, nor does a compound of them ("65-year-old").
+  const noise = (w: string) => FILLER.has(w) || w.length < 2 || !/[a-z]/.test(w);
+  const phrases: string[][] = [[]];
+  for (const word of question.toLowerCase().replace(/\bhow long\b/g, "duration").match(/[a-z0-9]+(?:-[a-z0-9]+)*/g) ?? []) {
+    if (skip.has(word) || word.split("-").every(noise)) phrases.push([]); // ends the phrase
+    else phrases.at(-1)!.push(word);
+  }
+  return phrases.filter(p => p.length).map(p => p.join(" "));
+}
+
+const words = (terms: string[]) => terms.join(" ").split(" ").filter(Boolean).length;
+
+/**
+ * The terms to search for: the question's own, and for a follow-up with under two key words of its own
+ * ("What about the harms?"), the topic of the thread's latest question that named one (or of every earlier
+ * question, when none did on its own).
+ */
+export function searchTerms(question: string, earlier: string[] = [], drop: string[] = []): string[] {
+  const own = keyTerms(question, drop);
+  if (words(own) >= 2) return own;
+  const before = earlier.map(q => keyTerms(q, drop));
+  const topic = before.findLast(t => words(t) >= 2) ?? before.flat();
+  return [...new Set([...topic, ...own])];
+}
+
+const STUDY_TYPES = "(guideline[pt] OR systematic review[pt] OR meta-analysis[pt] OR randomized controlled trial[pt])";
+// Something to cite: an abstract, in the language the clinicians read.
+const CITABLE = "hasabstract AND english[la]";
+const phrase = (term: string) => `(${term.split(" ").map(w => SPELLED[w] ?? w).join(" ")})`;
+
+/**
+ * PubMed IDs for a clinical question's terms, best evidence first: all of them in a guideline, review or
+ * trial, topped up from any study type. Never an article without an English abstract: it has nothing to cite.
+ * Every term must match: loosening to any one of them cited unrelated papers (a Malay question's "guna" found
+ * Ayurveda), and no study is better than a wrong one, since the library still answers. At most two searches,
+ * one after the other (each under the 4 s timeout, and slower than NCBI's 3 a second); the first failing is
+ * PubMed being down, so it throws, while the second failing keeps what was found.
+ */
+export async function searchEvidence(terms: string[], fetcher: typeof fetch = fetch, max = 3): Promise<string[]> {
+  if (!terms.length) return [];
+  const all = terms.map(phrase).join(" AND ");
+  const found = await searchPubmed(`${all} AND ${STUDY_TYPES} AND ${CITABLE}`, fetcher, max);
+  if (found.length < max) {
+    for (const id of await searchPubmed(`${all} AND ${CITABLE}`, fetcher, max).catch(() => [])) if (!found.includes(id)) found.push(id);
+  }
+  return found.slice(0, max);
+}
+
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
 /** Element text without inline markup (<i>, <sup>) or entities. */
 const text = (s = "") => s.replace(/<[^>]+>/g, "").replace(/&(#\d+|\w+);/g, (m, e: string) => e.startsWith("#") ? String.fromCharCode(Number(e.slice(1))) : ENTITIES[e] ?? m).replace(/\s+/g, " ").trim();

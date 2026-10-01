@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { jsonIn, SPEECH_MODEL, TEXT_MODEL, workersModels, type WorkersAi } from "./workers-models";
+import { EMBED_MODEL, jsonIn, SPEECH_MODEL, TEXT_MODEL, workersEmbedder, workersModels, type WorkersAi } from "./workers-models";
 
 /** A fake Workers AI: answers by model, records what it was asked. */
 function fake(answers: Record<string, unknown | (() => never)>) {
@@ -60,4 +60,35 @@ test("SEA-LION's OpenAI-shaped answer (choices[0].message.content) is read the s
   const { ai } = fake({ [TEXT_MODEL]: { choices: [{ message: { content: '```json\n{"label":"urgent","symptom":"breathless when talking"}\n```' } }] } });
   expect(await workersModels(ai).classifyReply({ text: "nafas pendek bila cakap", language: "ms" }))
     .toEqual({ label: "urgent", symptom: "breathless when talking", source: "model", model: TEXT_MODEL });
+});
+
+test("EmbeddingGemma: a question and passages get the model's own prompts, 100 texts a call, each a 768-dim vector", async () => {
+  const calls: { model: string; text: string[]; signal?: AbortSignal }[] = [];
+  const ai: WorkersAi = {
+    async run(model, input, options) {
+      const text = input.text as string[];
+      calls.push({ model, text, signal: options?.signal });
+      return { shape: [text.length, 768], data: text.map((_, i) => new Array(768).fill(i / 1000)) };
+    },
+  };
+  const embed = workersEmbedder(ai);
+  expect(await embed([], "document")).toEqual([]);
+  expect(calls).toEqual([]);
+  expect(await embed(["Steroids in mild pneumonia?"], "query")).toEqual([new Array(768).fill(0)]);
+  expect(calls[0]).toMatchObject({ model: EMBED_MODEL, text: ["task: search result | query: Steroids in mild pneumonia?"] });
+  // Every call carries its timeout, so a slow Workers AI gives up rather than hold the search.
+  expect(calls[0]!.signal).toBeInstanceOf(AbortSignal);
+  const vectors = await embed(Array.from({ length: 150 }, (_, i) => `CAP guideline\nSteroids\nPassage ${i}`), "document");
+  expect(calls.slice(1).map(c => c.text.length)).toEqual([100, 50]);
+  expect(calls[1]!.text[0]).toBe("title: none | text: CAP guideline\nSteroids\nPassage 0");
+  expect(vectors).toHaveLength(150);
+  expect(vectors[149]).toEqual(new Array(768).fill(0.049));
+});
+
+test("EmbeddingGemma down or answering out of shape throws, so retrieval falls back instead of storing a wrong vector", async () => {
+  const answering = (out: unknown): WorkersAi => ({ run: async () => out });
+  await expect(workersEmbedder({ run: async () => { throw new Error("Workers AI 503"); } })(["q"], "query")).rejects.toThrow("503");
+  for (const out of [undefined, { data: [] }, { data: [[0.1, 0.2]] }, { data: [new Array(768).fill(Number.NaN)] }]) {
+    await expect(workersEmbedder(answering(out))(["q"], "query")).rejects.toThrow("out of shape");
+  }
 });

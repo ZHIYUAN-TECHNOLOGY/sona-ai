@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 
-import { fetchArticles, searchPubmed } from "./pubmed";
+import { fetchArticles, keyTerms, searchEvidence, searchPubmed, searchTerms } from "./pubmed";
 
 // Real E-utilities efetch output for the three studies behind the rehearsed steroid question.
 const xml = readFileSync(new URL("./fixtures/pubmed-cap-steroids.xml", import.meta.url), "utf8");
@@ -20,4 +20,64 @@ test("an efetch reply becomes articles: title, journal, year, design and the abs
 test("a search returns PubMed IDs in its order; a failed call is an error, not an empty answer", async () => {
   expect(await searchPubmed("steroids pneumonia", serve(JSON.stringify({ esearchresult: { idlist: ["2", "1"] } })))).toEqual(["2", "1"]);
   expect(searchPubmed("steroids pneumonia", serve("busy", 429))).rejects.toThrow("PubMed answered 429");
+});
+
+test("a question keeps its clinical terms as phrases; framing words, numbers and the patient's identity are dropped", () => {
+  expect(keyTerms("Is azithromycin safe with a long QT interval?")).toEqual(["azithromycin", "long qt interval"]);
+  expect(keyTerms("Procalcitonin to stop antibiotics in lower respiratory tract infection?")).toEqual(["procalcitonin", "antibiotics", "lower respiratory tract infection"]);
+  expect(keyTerms("How much IV fluid should I give in dengue with warning signs?")).toEqual(["iv fluid", "dengue", "warning signs"]);
+  expect(keyTerms("How long should a 65-year-old take 500 mg amoxicillin?")).toEqual(["duration", "amoxicillin"]);
+  // An abstract's own labels ("AIM:", "RESULTS:") would match every article.
+  expect(keyTerms("What oxygen saturation should I aim for in COPD with pneumonia?")).toEqual(["oxygen saturation", "copd", "pneumonia"]);
+  expect(keyTerms("Should Amelia (SYN-1042) get oseltamivir for her influenza?", ["Amelia Tan", "SYN-1042"])).toEqual(["oseltamivir", "influenza"]);
+  // Whatever is typed, only lowercase words reach PubMed, never its syntax.
+  expect(keyTerms('steroids[pt] OR "sepsis" NOT (shock)')).toEqual(["steroids pt", "sepsis", "shock"]);
+  expect(keyTerms("这个病人可以用激素吗?")).toEqual([]);
+});
+
+test("a follow-up with too little of its own keeps the topic of the thread's latest question that named one", () => {
+  const thread = ["Dapagliflozin in heart failure with preserved ejection fraction?", "What are the main harms?"];
+  expect(searchTerms("What are the main harms?", thread.slice(0, 1))).toEqual(["dapagliflozin", "heart failure", "preserved ejection fraction", "harms"]);
+  expect(searchTerms("Does this change for severe cases?", thread)).toEqual(["dapagliflozin", "heart failure", "preserved ejection fraction", "severe"]);
+  // No earlier question named a topic on its own: all of them together.
+  expect(searchTerms("What about the harms?", ["Is prednisone useful here?"])).toEqual(["prednisone", "harms"]);
+  // A question with a topic of its own never borrows one.
+  expect(searchTerms("Dengue fluids?", thread)).toEqual(["dengue fluids"]);
+});
+
+/** PubMed's esearch as a fake: each call takes the next answer (an ID list, or an error for PubMed failing), and its term is kept. */
+function esearch(...answers: (string[] | Error)[]) {
+  const terms: string[] = [];
+  const fetcher = (async (url: string) => {
+    terms.push(new URL(url).searchParams.get("term")!);
+    const answer = answers.shift() ?? [];
+    if (answer instanceof Error) throw answer;
+    return Response.json({ esearchresult: { idlist: answer } });
+  }) as unknown as typeof fetch;
+  return { terms, fetcher };
+}
+
+test("the best evidence is searched first and topped up from any study type; every term must match, never just one", async () => {
+  const strict = esearch(["1", "2", "3"]);
+  expect(await searchEvidence(["iv fluid", "dengue"], strict.fetcher)).toEqual(["1", "2", "3"]);
+  // One search; abbreviations spelled out, an English abstract required.
+  expect(strict.terms).toEqual(["(intravenous fluid) AND (dengue) AND (guideline[pt] OR systematic review[pt] OR meta-analysis[pt] OR randomized controlled trial[pt]) AND hasabstract AND english[la]"]);
+
+  const topped = esearch(["1"], ["1", "4", "5"]);
+  expect(await searchEvidence(["harms", "dengue"], topped.fetcher)).toEqual(["1", "4", "5"]);
+  expect(topped.terms[1]).toBe("(adverse effects) AND (dengue) AND hasabstract AND english[la]");
+
+  // Nothing has every term: no study, rather than one that matches a single word of the question.
+  const none = esearch([], [], ["7"]);
+  expect(await searchEvidence(["dos amoxicillin", "wad", "guna"], none.fetcher)).toEqual([]);
+  expect(none.terms).toHaveLength(2);
+
+  const nothing = esearch();
+  expect(await searchEvidence([], nothing.fetcher)).toEqual([]);
+  expect(nothing.terms).toEqual([]);
+});
+
+test("PubMed failing on the first search throws (the route falls back to its cache); a later one failing keeps what was found", async () => {
+  await expect(searchEvidence(["dengue"], esearch(new Error("timeout")).fetcher)).rejects.toThrow("timeout");
+  expect(await searchEvidence(["dengue"], esearch(["1"], new Error("timeout")).fetcher)).toEqual(["1"]);
 });

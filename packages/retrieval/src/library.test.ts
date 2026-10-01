@@ -1,10 +1,10 @@
 import { createRouterClient } from "@orpc/server";
 import { appRouter } from "@sona-ai/api/routers/index";
 import { hospitalMembers, hospitals, provenance } from "@sona-ai/db/schema/clinical";
-import { seedDemo } from "@sona-ai/db/seed";
+import { DEMO_HOSPITAL, seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
-import { ingest, search, stubEmbedder } from "./retrieval";
+import { ingest, reindex, search, stubEmbedder } from "./retrieval";
 
 /** A doctor's own hospital library through the API, with the real retrieval functions behind it (as the Worker wires them). */
 const user = (id: string) => ({
@@ -22,7 +22,11 @@ async function signedIn(fetcher: typeof fetch = offline) {
   await addClinician(db, "dr-bala");
   await db.insert(hospitals).values({ id: "other", name: "Other Hospital (synthetic)" });
   await db.insert(hospitalMembers).values({ userId: "dr-other", hospitalId: "other" });
-  const library = { ingest: (doc: Parameters<typeof ingest>[1], text: string) => ingest(db, doc, text, stubEmbedder), search: (input: Parameters<typeof search>[1]) => search(db, input, stubEmbedder) };
+  const library = {
+    ingest: (doc: Parameters<typeof ingest>[1], text: string) => ingest(db, doc, text, stubEmbedder),
+    search: (input: Parameters<typeof search>[1]) => search(db, input, stubEmbedder),
+    reindex: (hospitalId: string) => reindex(db, stubEmbedder, hospitalId),
+  };
   const as = (id: string | null) => createRouterClient(appRouter, { context: { db, session: id ? user(id) : null, library, fetch: fetcher } });
   return { db, as, api: as("dr-aisyah") };
 }
@@ -67,6 +71,16 @@ test("the evidence answer lists the hospital's own passages as numbered library 
   expect(log!.sourceIds).toContain(`${doc.id}#antibiotics`);
   await api.library.remove({ documentId: doc.id });
   expect(await ask()).toMatchObject({ references: [], claims: [], enough: false });
+});
+
+test("management re-indexes the shared library and every source of its hospital, never another hospital's; a doctor may not", async () => {
+  const { api, as, db } = await signedIn();
+  await addClinician(db, "mgr-farah", DEMO_HOSPITAL, "management");
+  await api.library.add(protocol); // the doctor's own source: 2 sections
+  await api.library.add({ ...protocol, requestId: "req-2", scope: "hospital", text: "# Fluids\nThirty millilitres per kilogram." });
+  await as("dr-other").library.add({ ...protocol, requestId: "req-3" }); // another hospital's: not this hospital's to re-index
+  expect(await as("mgr-farah").library.reindex()).toEqual({ chunks: 3 });
+  await expect(api.library.reindex()).rejects.toMatchObject({ code: "FORBIDDEN" });
 });
 
 test("the library needs a login", async () => {

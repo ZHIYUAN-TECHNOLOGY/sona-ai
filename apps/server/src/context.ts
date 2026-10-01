@@ -5,7 +5,8 @@ import type { Context as HonoContext } from "hono";
 
 import { basetenModels, basetenReranker } from "@sona-ai/api/baseten-models";
 import type { EncounterStore } from "@sona-ai/api/context";
-import { ingest, search, stubEmbedder } from "@sona-ai/retrieval/retrieval";
+import { workersEmbedder } from "@sona-ai/api/workers-models";
+import { ingest, reindex, search, stubEmbedder } from "@sona-ai/retrieval/retrieval";
 
 import { ENV } from "./env.server";
 import { getDb } from "./services";
@@ -25,6 +26,10 @@ export async function createContext({ context }: CreateContextOptions): Promise<
   // The hosted models once a Baseten key is set; without one every model answer stays a labelled fixture.
   const baseten = ENV.BASETEN_API_KEY ? { apiKey: ENV.BASETEN_API_KEY } : undefined;
   const reranker = baseten && basetenReranker(baseten);
+  // EmbeddingGemma on Workers AI; the hashed stub only where the Worker has no AI binding. Switching between them
+  // needs one `library.reindex`, since stored vectors from the other one do not compare.
+  const ai = (context.env as Env).AI;
+  const embedder = ai ? workersEmbedder(ai) : stubEmbedder;
   return {
     db,
     session,
@@ -36,8 +41,11 @@ export async function createContext({ context }: CreateContextOptions): Promise<
     publicUrl: ENV.BETTER_AUTH_URL,
     mail: mailOf(context.env as Env),
     announce: announcer(context.env as Env),
-    // ponytail: hashed bag-of-words vectors until EmbeddingGemma runs in box ②; swap stubEmbedder for it then (and re-ingest).
-    library: { ingest: (doc, text) => ingest(db, doc, text, stubEmbedder), search: input => search(db, input, stubEmbedder, reranker) },
+    library: {
+      ingest: (doc, text) => ingest(db, doc, text, embedder),
+      search: input => search(db, input, embedder, reranker),
+      reindex: hospitalId => reindex(db, embedder, hospitalId),
+    },
     // Staging only: Sona Care's sign-in shows the seeded demo phone and its fixed code.
     demoSignIn: ENV.DEMO_SIGN_IN === "1",
   };

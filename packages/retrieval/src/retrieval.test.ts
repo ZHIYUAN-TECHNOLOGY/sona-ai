@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 import { retrievalHitSchema } from "@sona-ai/api/contracts";
 import { createTestDb } from "@sona-ai/db/testing";
-import { ingest, search, stubEmbedder } from "./retrieval";
+import { ingest, reindex, search, stubEmbedder, type Embedder } from "./retrieval";
 
 const guideline = { id: "ats-2019", hospitalId: null, title: "CAP guideline (synthetic)", source: "ATS/IDSA", year: 2019 };
 const guidelineText = `# Corticosteroids
@@ -114,4 +114,54 @@ test("under the database's own rules, a restricted role reads the shared library
     return rows.rows.map(r => r.document_id);
   });
   expect(seen).toEqual(["ats-2019", "h1-abx"]);
+});
+
+test("a question and a passage reach the embedder as such, so EmbeddingGemma can prompt each its own way", async () => {
+  const db = await createTestDb();
+  const seen: string[] = [];
+  const recording: Embedder = async (texts, as) => { seen.push(`${as} x${texts.length}`); return stubEmbedder(texts, as); };
+  await ingest(db, guideline, guidelineText, recording);
+  await search(db, { query: "azithromycin dose", hospitalId: "h1" }, recording);
+  await reindex(db, recording, "h1");
+  expect(seen).toEqual(["document x2", "query x1", "document x2"]);
+});
+
+/** Workers AI unreachable or slow. */
+const down: Embedder = async () => { throw new Error("Workers AI unreachable"); };
+const withVectors = async (db: Awaited<ReturnType<typeof createTestDb>>) =>
+  (await db.execute(sql`select id from chunks where embedding is not null order by id`)).rows.map(r => r.id);
+
+test("an embedder that is down never breaks the library: sections are stored and found by keywords alone", async () => {
+  const db = await createTestDb();
+  expect(await ingest(db, guideline, guidelineText, down)).toBe(2);
+  expect(await withVectors(db)).toEqual([]);
+  // Only the keyword half answers: the steroid section shares no word with the question, so it is not returned.
+  expect((await search(db, { query: "azithromycin dose", hospitalId: "h1" }, down)).map(h => h.sourceId)).toEqual(["ats-2019#macrolides"]);
+});
+
+test("a re-index gives every section its vector from the current embedder, and search then finds a passage by meaning alone", async () => {
+  const db = await createTestDb();
+  await ingest(db, guideline, guidelineText, down);
+  // The question shares no word with either section; only its vector points at the steroid one.
+  const meaning: Embedder = async (texts, as) => texts.map(t => (as === "query" || t.includes("corticosteroids") ? axes({ 0: 1 }) : axes({ 1: 1 })));
+  const question = { query: "anti-inflammatory treatment", hospitalId: "h1" };
+  expect(await search(db, question, meaning)).toEqual([]);
+  expect(await reindex(db, meaning, "h1")).toBe(2);
+  expect(await withVectors(db)).toEqual(["ats-2019#corticosteroids", "ats-2019#macrolides"]);
+  expect((await search(db, question, meaning)).map(h => h.sourceId)).toEqual(["ats-2019#corticosteroids", "ats-2019#macrolides"]);
+});
+
+test("a re-index covers the shared library and the caller's hospital only, 100 sections a call", async () => {
+  const db = await createTestDb();
+  const many = Array.from({ length: 150 }, (_, i) => `# Part ${i}\nBody ${i}.`).join("\n");
+  await ingest(db, guideline, many, down);
+  await ingest(db, { id: "h1-abx", hospitalId: "h1", title: "Antibiotic policy", source: "h1 pharmacy", year: 2026 }, "# Azithromycin\n500 mg on day one.", down);
+  await ingest(db, { id: "h2-abx", hospitalId: "h2", title: "Antibiotic policy", source: "h2 pharmacy", year: 2026 }, "# Azithromycin\n250 mg daily.", down);
+  const calls: number[] = [];
+  expect(await reindex(db, async (texts, as) => { calls.push(texts.length); return stubEmbedder(texts, as); }, "h1")).toBe(151);
+  expect(calls).toEqual([100, 51]);
+  const done = await withVectors(db);
+  expect(done).toHaveLength(151);
+  expect(done).toContain("h1-abx#azithromycin");
+  expect(done).not.toContain("h2-abx#azithromycin");
 });

@@ -40,6 +40,8 @@ export const server = Cloudflare.Worker("server", {
     DEMO_SIGN_IN: Config.String("DEMO_SIGN_IN").pipe(Config.withDefault("")),
     // The hosted models (packages/infra/baseten). Empty keeps every model answer on the labelled fixtures.
     BASETEN_API_KEY: Config.Redacted("BASETEN_API_KEY").pipe(Config.withDefault(Redacted.make(""))),
+    // Workers AI: EmbeddingGemma embeds the library (packages/api/src/workers-models.ts).
+    AI: Cloudflare.Workers.AI(),
   },
   // Nightly coding audit (flow 5), 02:00 Malaysia time; after-discharge check-ins (flow 7) go out hourly.
   crons: ["0 18 * * *", "0 * * * *"],

@@ -110,6 +110,12 @@ export const libraryRouter = {
       .where(and(eq(documents.hospitalId, context.hospitalId), or(isNull(documents.ownerId), eq(documents.ownerId, context.session.user.id))))
       .orderBy(desc(documents.createdAt))),
 
+  /**
+   * Management only: re-embeds the shared library and every source of the hospital (its doctors' private ones too;
+   * only the count comes back). Run once after the embedding model changes, since vectors from two models do not compare.
+   */
+  reindex: protectedProcedure.handler(async ({ context }) => ({ chunks: await libraryOf(context).reindex(context.hospitalId) })),
+
   /** Deletes a shared source of the hospital's or one of the caller's own; its sections go with it. */
   remove: protectedProcedure.input(z.object({ documentId: z.string().min(1) })).handler(async ({ context, input }) => {
     const [gone] = await context.db.delete(documents).where(and(eq(documents.id, input.documentId), eq(documents.hospitalId, context.hospitalId), or(isNull(documents.ownerId), eq(documents.ownerId, context.session.user.id)))).returning({ id: documents.id });

@@ -139,6 +139,22 @@ test("a model's uncited or out-of-range claims are all dropped, leaving not enou
   expect(seen).toMatchObject({ question: "What about the harms?", thread, sources: [{ n: 1, design: "Trial", year: 2015 }] });
 });
 
+test("PubMed is searched by the question's key terms, never the patient's name or record number, and an article without an abstract is not a source", async () => {
+  const calls: string[] = [];
+  // esearch finds an abstract-less article (111) before a real one; efetch returns both.
+  const noAbstract = `<PubmedArticle><MedlineCitation><PMID Version="1">111</PMID><Article><Journal><ISOAbbreviation>J Test</ISOAbbreviation><JournalIssue><PubDate><Year>2020</Year></PubDate></JournalIssue></Journal><ArticleTitle>Editorial without an abstract.</ArticleTitle></Article></MedlineCitation></PubmedArticle>`;
+  const fetcher = (async (url: string) => {
+    calls.push(decodeURIComponent(String(url)));
+    return new Response(String(url).includes("esearch") ? JSON.stringify({ esearchresult: { idlist: ["111", "25608756"] } }) : efetch.replace("</PubmedArticleSet>", `${noAbstract}</PubmedArticleSet>`));
+  }) as unknown as typeof fetch;
+  const { api } = await signedIn(fetcher);
+  const r = await api.evidence.ask({ encounterId: "visit-1042", question: "Should Amelia Tan (SYN-1042) get oseltamivir for her influenza?" });
+  const searches = calls.filter(u => u.includes("esearch"));
+  expect(searches[0]).toContain("(oseltamivir) AND (influenza) AND");
+  expect(searches.some(u => /amelia|tan\b|syn-1042/i.test(u))).toBe(false);
+  expect(r.references.map(s => s.pmid)).toEqual(["25608756"]);
+});
+
 test("evidence needs a login", async () => {
   const { api } = await signedIn(pubmed().fetcher, false);
   expect(api.evidence.ask({ encounterId: "visit-1042", question: "Steroids?" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });

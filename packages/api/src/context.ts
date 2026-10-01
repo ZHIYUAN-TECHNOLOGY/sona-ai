@@ -54,6 +54,8 @@ export type Library = {
   ingest(doc: LibraryDocument, text: string): Promise<number>;
   /** Hybrid search over the shared library, the caller's hospital and the caller's own private sources. */
   search(input: SearchInput): Promise<RetrievalHit[]>;
+  /** Re-embeds the shared library and the hospital's sources (after the embedding model changes). Returns the chunk count. */
+  reindex(hospitalId: string): Promise<number>;
 };
 
 /** The slice of an R2 bucket the routes use. */
