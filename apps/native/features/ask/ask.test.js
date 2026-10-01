@@ -54,6 +54,9 @@ test("a typed question finds this page's answer by its words", () => {
   expect(matchQuestion("who is most urgent?", answers)?.id).toBe("needs");
   expect(matchQuestion("anything late?", answers)?.id).toBe("overdue");
   expect(matchQuestion("what's the weather", answers)).toBeUndefined();
+  // Today's three: a bare "who" no longer outranks the words that say which answer.
+  const day = [needsYou([]), overdue([]), soonest([])];
+  expect(["Who can go home soonest?", "Who am I seeing first?", "Who needs me now?", "who?"].map(q => matchQuestion(q, day)?.id)).toEqual(["soonest", "needs", "needs", "needs"]);
 });
 
 test("review pages: what blocks the decision comes from the page's own checks, and open findings need a decision", () => {

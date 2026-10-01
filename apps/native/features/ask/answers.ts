@@ -103,12 +103,16 @@ export function withoutLead(answer: Answer): Answer | undefined {
   return { ...answer, spec: { ...answer.spec, elements: { ...kept, [root]: { ...top, children } } } };
 }
 
-/** A typed question matched to this page's answers by its words; undefined when none fits. */
+/**
+ * A typed or spoken question matched to this page's answers by its words; undefined when none fits. A bare "who" counts
+ * only when nothing more telling does, so "Who can go home soonest?" finds the ward's answer, not who needs you.
+ */
 export function matchQuestion(text: string, answers: Answer[]): Answer | undefined {
   const t = text.toLowerCase();
   const words: Record<string, RegExp> = { needs: /need|urgent|attention|first|who/, overdue: /overdue|late|due|task/, soonest: /home|discharge|free|bed|soon/, watch: /watch|handover|hand over|sick|worr/,
     waiting: /wait|longest|reply|message|who/, money: /money|risk|\brm\b|most|quer/, export: /export|block|dataset|review|approv/, signing: /sign|left|review|ready|plan|missing/, checking: /check|unsure|left|missing|word|tick/ };
-  return answers.find(a => words[a.id]?.test(t));
+  const fits = (q: string) => answers.find(a => words[a.id]?.test(q));
+  return fits(t.replace(/\bwho\b/g, "")) ?? fits(t);
 }
 
 /**

@@ -23,7 +23,7 @@ import { useRole } from "@/features/live/roles";
 import { useInboxSummary } from "@/features/inbox";
 import { useEncounter } from "./store";
 import { SweptLead, wordCount } from "@/components/sona/marked-text";
-import { Chip, pillStyle, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { Chip, Icon, pillStyle, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { useEffect, useState, type ReactNode } from "react";
 import { View } from "react-native";
@@ -137,7 +137,7 @@ function Round({ children, label, onPress }: { children: ReactNode; label: strin
  * Floating header: menu on the left; patient messages and follow-up tasks on the right (what a clinician checks
  * between patients). Inside an encounter, the patient chip joins it so every answer's subject stays visible.
  */
-export function TopBar({ patient, inEncounter, openTasks, faded, tall = false, onMenu, onBack, onPatient, onTasks }: { patient?: Patient; inEncounter: boolean; openTasks: number; faded: boolean; tall?: boolean; onMenu: () => void; onBack?: () => void; onPatient: () => void; onTasks: () => void }) {
+export function TopBar({ patient, inEncounter, openTasks, faded, tall = false, onMenu, onBack, onPatient, onTasks, onNew }: { patient?: Patient; inEncounter: boolean; openTasks: number; faded: boolean; tall?: boolean; onMenu: () => void; onBack?: () => void; onPatient: () => void; onTasks: () => void; onNew?: () => void }) {
   const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();
   return <View pointerEvents="box-none" style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
@@ -149,6 +149,10 @@ export function TopBar({ patient, inEncounter, openTasks, faded, tall = false, o
       {/* Home opens the menu; a session goes back to home (swiping from the edge does the same). */}
       {onBack ? <Round label="Back to home" onPress={onBack}><BrandIcon name="back" size={22} /></Round> : <Round label="Menu" onPress={onMenu}><BrandIcon name="menu" size={22} /></Round>}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        {/* Today with a conversation: start a fresh one, and the day's dashboard comes back. */}
+        {onNew && <Animated.View entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, scale: 0.96, duration: 240 })}>
+          <Round label="New conversation" onPress={onNew}><View style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}><Icon name="plus.bubble" size={20} /></View></Round>
+        </Animated.View>}
         {patient && inEncounter && <Animated.View entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, scale: 0.96, duration: 240 })}>
           <Round label={`Current patient ${patient.name}, ${patient.id}. Change patient`} onPress={onPatient}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingRight: 10 }}>
