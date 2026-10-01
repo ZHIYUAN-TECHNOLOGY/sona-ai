@@ -6,6 +6,7 @@ import * as Redacted from "effect/Redacted";
 import "varlock/auto-load";
 
 import type { CheckInAgent } from "../../apps/server/src/agents/check-in";
+import type { SonaVoiceAgent } from "../../apps/server/src/agents/voice";
 import type { EncounterState } from "../../apps/server/src/encounter-state";
 import type { HospitalChannel } from "../../apps/server/src/hospital-channel";
 
@@ -27,6 +28,8 @@ export const server = Cloudflare.Worker("server", {
     CHANNELS: Cloudflare.DurableObject<HospitalChannel>("CHANNELS", { className: "HospitalChannel" }),
     // Sona's follow-up after discharge: one check-in agent (Cloudflare Agents, SQLite-backed) per visit.
     CHECK_IN_AGENTS: Cloudflare.DurableObject<CheckInAgent>("CHECK_IN_AGENTS", { className: "CheckInAgent" }),
+    // Sona Care's live voice: one voice agent (Cloudflare Agents, SQLite-backed: it keeps the conversation) per patient.
+    VOICE: Cloudflare.DurableObject<SonaVoiceAgent>("VOICE", { className: "SonaVoiceAgent" }),
     UPLOADS: uploads,
     // Cloudflare Email Service. Sending needs a domain onboarded under Email Service > Email Sending;
     // until EMAIL_FROM and INSURER_EMAIL are set, the review link is only shown in the app.
