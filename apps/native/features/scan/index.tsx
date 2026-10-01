@@ -14,8 +14,6 @@ import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Expand, Icon, IconButton, Notice, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
-import { WithSona } from "@/features/ask";
-import { toCheck } from "@/features/ask/answers";
 import { useEncounter } from "@/features/encounter/store";
 import { OriginalImageViewer } from "@/features/imaging/viewer";
 import { api, errorText, requestId, useLive } from "@/features/live";
@@ -354,14 +352,9 @@ function Review({ header, patientFirst, reading, live, busy, onApply }: { header
     counts.tasks && `${counts.tasks} ${counts.tasks === 1 ? "task" : "tasks"}`,
   ].filter(Boolean).join(" · ");
   let group = 0;
-  // Sona beside the decision: the unsure words and low-confidence medicines still to check, and what is unticked.
-  const label = (k: ItemKey) => k === "followUp" ? `Follow-up in ${note.followUp?.in ?? ""}` : k.startsWith("section:") ? SECTION_TITLE[k.slice(8) as keyof ScanSections]
-    : k.startsWith("med:") ? medicineLabel(note.medicines[Number(k.slice(4))]!) : note.tasks[Number(k.slice(5))]?.title ?? k;
-  const check = toCheck({ unsure, off: items.filter(k => off.has(k)).map(k => ({ id: k, label: label(k) })),
-    low: note.medicines.flatMap((m, i) => m.confidence === "low" && !off.has(`med:${i}`) ? [{ id: `low-${i}`, label: medicineLabel(m) }] : []) });
 
   // Review before deciding: what will happen sits on the button's bar; nothing is written before the tap.
-  return <WithSona scope="scan" inline answers={[check]}><Screen bottom={<>
+  return <Screen bottom={<>
     <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: error ? palette.amber : palette.muted, paddingHorizontal: 4 }}>
       {error ?? (any ? `Adds ${preview || "nothing new"} · recorded as from this scanned note` : "Tick at least one item to add")}
     </Text>
@@ -455,7 +448,7 @@ function Review({ header, patientFirst, reading, live, busy, onApply }: { header
         </View>
       </Row>}
     </Group>}
-  </Screen></WithSona>;
+  </Screen>;
 }
 
 /** The receipt, then the likely next move: confirm the medicine, read the note, or scan the next page. */

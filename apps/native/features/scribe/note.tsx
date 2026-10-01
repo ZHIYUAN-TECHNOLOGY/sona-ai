@@ -7,8 +7,7 @@ import { GlanceTile, IconRow, Section, Shelf } from "@/components/sona/sections"
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Chip, Expand, glass, Icon, Insight, Notice, Screen, SourceLink, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
-import { WithSona } from "@/features/ask";
-import { beforeSigning, noteNext } from "@/features/ask/answers";
+import { noteNext } from "@/features/ask/answers";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
 import { buildDraft, editNote, readNoteSections, scriptFor, sectionKeys, serializeNoteSections, type NoteSections } from "./model";
@@ -214,7 +213,7 @@ export function NoteScreen() {
     </Pressable>}
   </>;
 
-  return <WithSona scope="note" inline answers={[beforeSigning(noteState)]}><KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}>
+  return <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}>
     <Screen bottom={bar}>
       <Animated.View entering={rise(0)} style={{ gap: 12 }}>
         <Insight eyebrow={patient.name}>{encounter.noteReviewed ? <Tone of="good">Reviewed</Tone> : !hasContent ? "Nothing drafted yet" : <>Draft{emptyLine ? <> · <Tone of="soon">{emptyLine}</Tone></> : null} · not reviewed</>}</Insight>
@@ -277,5 +276,5 @@ export function NoteScreen() {
         </Expand>}
       </Animated.View>}
     </Screen>
-  </KeyboardAvoidingView></WithSona>;
+  </KeyboardAvoidingView>;
 }

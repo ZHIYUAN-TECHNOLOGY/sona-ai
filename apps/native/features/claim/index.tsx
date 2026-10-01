@@ -1,6 +1,4 @@
 import { router } from "expo-router";
-import { WithSona } from "@/features/ask";
-import { blocking } from "@/features/ask/answers";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
@@ -124,7 +122,7 @@ export function ClaimScreen() {
       </View>
     </>;
 
-  return <WithSona scope="claim" inline answers={[blocking("claim", "What's left before sending?", "you can send", checks)]}><Screen bottom={bar}>
+  return <Screen bottom={bar}>
     <ModalHeader title="Guarantee letter" />
 
     {(denied || appealed) && state.denial && <>
@@ -197,7 +195,7 @@ export function ClaimScreen() {
       </Animated.View>
       </Animated.View>
     </Surface>
-  </Screen></WithSona>;
+  </Screen>;
 }
 
 /** The note as sentences with one soft highlight that glides to the active sentence and stretches to fit it. */

@@ -5,7 +5,7 @@ import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { createContext, use, useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn, FadeInDown, FadeOut, type AnimatedStyle, type LayoutAnimationFunction } from "react-native-reanimated";
@@ -148,18 +148,14 @@ export const canvasImage = "radial-gradient(circle at 8% 4%, rgba(150,190,255,0.
  * glass decision bar above the home indicator (review pages keep their one decision in view); the
  * content gets matching space at its end so nothing hides under it.
  */
-/** How tall the shell's bar stands under a page (WithSona's dock), so a page's pinned decision bar sits above it; 0 outside the shell. */
-export const ShellLift = createContext(0);
-
 export function Screen({ children, bottom }: { children: ReactNode; bottom?: ReactNode }) {
   const insets = useSafeAreaInsets();
-  const lift = use(ShellLift);
   const [barHeight, setBarHeight] = useState(0);
-  const scroll = <ScrollView style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingBottom: 44 + lift, gap: 18 }}>{children}{bottom ? <View style={{ height: barHeight }} /> : null}</ScrollView>;
+  const scroll = <ScrollView style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }} contentInsetAdjustmentBehavior="automatic" automaticallyAdjustKeyboardInsets keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingBottom: 44, gap: 18 }}>{children}{bottom ? <View style={{ height: barHeight }} /> : null}</ScrollView>;
   if (!bottom) return scroll;
   return <View style={{ flex: 1 }}>
     {scroll}
-    <View onLayout={e => setBarHeight(e.nativeEvent.layout.height)} style={{ position: "absolute", left: 16, right: 16, bottom: lift ? lift + 8 : Math.max(insets.bottom, 12) }}>
+    <View onLayout={e => setBarHeight(e.nativeEvent.layout.height)} style={{ position: "absolute", left: 16, right: 16, bottom: Math.max(insets.bottom, 12) }}>
       <Glass style={{ padding: 12, gap: 10 }}>{bottom}</Glass>
     </View>
   </View>;

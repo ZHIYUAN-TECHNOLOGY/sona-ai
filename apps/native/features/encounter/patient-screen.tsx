@@ -10,7 +10,6 @@ import { palette, type, radius } from "@/components/sona/theme";
 import { mostUrgent } from "@/components/sona/tone";
 import { GROUPS, letters, listItems, syntheticCensus, type Group, type Item, type Row, type View as Tab } from "@/features/patients/census";
 import { useContinue, useContinueState } from "@/features/patients/continue-store";
-import { ASK_SPACE, WithSona } from "@/features/ask";
 import { needsYou } from "@/features/ask/answers";
 import { needLine, patientFlags, unconfirmedOf } from "@/features/day/counts";
 import { useDayPatients, usePendingResult } from "@/features/day/use-counts";
@@ -117,14 +116,14 @@ export function PatientScreen() {
     {!items.length && <Text style={{ ...type.callout, color: palette.muted, paddingHorizontal: 4 }}>{query ? "No one matches. Try a name, patient ID or bed." : tab === "continue" ? "Nothing unfinished. Visits you work on show here for 24 hours, and pinned patients stay." : "Nobody here right now."}</Text>}
   </View>;
 
-  // Sona sits in the same dock as Today; it steps aside while a patient's sheet is open.
-  return <WithSona scope="patients" hidden={Boolean(chosen)} onTab={t => { setQuery(""); setTab(t as Tab); }} answers={[needsYou(rows.filter(r => r.group === "needs").slice(0, 12).map(r => ({ id: r.id, title: r.name, detail: r.reason, tone: r.tone, ...(r.open ? { op: `open:${r.id}` } : {}) })))]}>
+  // A picker: no Sona bar here (search is the way in), so the list runs to the sheet's edge.
+  return <>
     <LegendList ref={list} data={items} keyExtractor={i => i.key} getItemType={i => i.kind} renderItem={renderItem} recycleItems estimatedItemSize={64}
-      ListHeaderComponent={header} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }} contentContainerStyle={{ padding: 20, paddingBottom: 44 + ASK_SPACE }}
+      ListHeaderComponent={header} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }} contentContainerStyle={{ padding: 20, paddingBottom: 44 }}
       contentInsetAdjustmentBehavior="automatic" keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled" />
     {tab === "all" && !query && <AtoZ rows={rows} items={items} list={list} />}
     {chosen && <PatientSheet key={chosen.id} patient={chosen} onClose={() => setOpen(undefined)} onGo={go => select(chosen.id, go)} />}
-  </WithSona>;
+  </>;
 }
 
 /**

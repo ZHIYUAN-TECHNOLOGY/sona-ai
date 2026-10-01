@@ -1,7 +1,5 @@
 import { PressScale } from "@/components/sona/parts";
 import { router } from "expo-router";
-import { WithSona } from "@/features/ask";
-import { blocking } from "@/features/ask/answers";
 import { MarkedText } from "@/components/sona/marked-text";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
@@ -219,7 +217,7 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
     </View>
   </>;
 
-  return <WithSona scope="discharge" inline answers={[blocking("discharge", "What's still blocking discharge?", `${patient.name.split(" ")[0]} can go home`, checks)]}><Screen bottom={bar}>
+  return <Screen bottom={bar}>
     <ModalHeader title="Discharge" />
     <VisitChip patient={patient} answers={answers} animate={animate} />
     <Animated.View entering={animate ? riseCard : undefined}>
@@ -291,7 +289,7 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
       </Animated.View>
     </Surface>
     </Animated.View>
-  </Screen></WithSona>;
+  </Screen>;
 }
 
 /**

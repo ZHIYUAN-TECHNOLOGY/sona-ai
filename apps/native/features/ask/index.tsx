@@ -10,7 +10,7 @@ import { List, ListRow } from "@/components/sona/list";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, CloseButton, GlassButton, Icon, IconButton, Notice, ShellLift, Surface } from "@/components/sona/ui";
+import { Action, Icon, IconButton, Notice, Surface } from "@/components/sona/ui";
 import { VoiceDock } from "@/features/encounter/voice-dock";
 import type { LiveAdapter } from "@/features/encounter/sona-live";
 import type { Attachment } from "@/components/sona/attachments-menu";
@@ -126,7 +126,7 @@ export function KeepRow({ answer, leave }: { answer: Answer; leave: () => void }
  * ops); New conversation in the header, or an op that changes the page (a filter), brings the page back. A rule answer
  * lands at once; live, the model answers from the page's own data; demo mode says what Sona answers here.
  */
-export function WithSona({ scope, answers, onTab, hidden = false, inline = false, children }: { scope: Scope; answers: Answer[]; onTab?: (tab: string) => void; hidden?: boolean; /** A review page (Discharge, the GL, X-ray, Note, Scan) owns its header: New conversation sits in the conversation instead. */ inline?: boolean; children: ReactNode }) {
+export function WithSona({ scope, answers, onTab, hidden = false, children }: { scope: Scope; answers: Answer[]; onTab?: (tab: string) => void; hidden?: boolean; children: ReactNode }) {
   const { voiceInput, patients } = useEncounter();
   const { on } = useLive();
   const navigation = useNavigation();
@@ -155,18 +155,13 @@ export function WithSona({ scope, answers, onTab, hidden = false, inline = false
   const submit = (text: string) => { const q = text.trim(); if (!q) return; setDraft(""); setNotice(undefined); ask(q); };
   // Sona Live is the page's voice: a spoken question joins the conversation as a typed one does.
   const sonaLive: LiveAdapter = { scope: SCOPE_LABEL[scope], ask: async question => { ask(question); return { shown: true }; } };
-  // New conversation sits in the page's header while there is one (beside the sheet's close, on Patients).
+  // New conversation sits in the page's header while there is one.
   useEffect(() => {
-    if (inline) return;
-    const close = scope === "patients" ? <CloseButton /> : null;
-    navigation.setOptions({ headerRight: talking
-      ? () => <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><IconButton name="plus.bubble" label="New conversation" onPress={clear} />{close}</View>
-      : close ? () => close : undefined });
+    navigation.setOptions({ headerRight: talking ? () => <IconButton name="plus.bubble" label="New conversation" onPress={clear} /> : undefined });
   }, [talking]); // eslint-disable-line react-hooks/exhaustive-deps
   return <View style={{ flex: 1 }}>
     <View ref={backdrop} collapsable={false} style={{ flex: 1 }}>
-      {/* A page's pinned decision bar (Screen's `bottom`) sits above the shell's bar. */}
-      {talking ? <PageConversation entries={entries} bottom={dockH + 32} onAgain={e => { reply(e.id); void settle(e.id, e.question); }} onTab={tab} onNew={inline ? clear : undefined} /> : <ShellLift value={hidden ? 0 : dockH}>{children}</ShellLift>}
+      {talking ? <PageConversation entries={entries} bottom={dockH + 32} onAgain={e => { reply(e.id); void settle(e.id, e.question); }} onTab={tab} /> : children}
     </View>
     {/* What passes under the dock blurs and fades into the canvas, as on Today. */}
     {!hidden && <>
@@ -184,13 +179,12 @@ export function WithSona({ scope, answers, onTab, hidden = false, inline = false
 }
 
 /** A page's conversation, laid out as Today's: each newest question, and its answer once it lands, is brought into view. */
-function PageConversation({ entries, bottom, onAgain, onTab, onNew }: { entries: Entry[]; bottom: number; onAgain: (entry: Entry) => void; onTab?: (tab: string) => void; onNew?: () => void }) {
+function PageConversation({ entries, bottom, onAgain, onTab }: { entries: Entry[]; bottom: number; onAgain: (entry: Entry) => void; onTab?: (tab: string) => void }) {
   const insets = useSafeAreaInsets();
   const scroll = useRef<ScrollView>(null), brought = useRef("");
   const newest = entries.at(-1);
   return <ScrollView ref={scroll} style={{ flex: 1, backgroundColor: palette.canvas }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive"
     contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + 64, paddingBottom: bottom, gap: 44 }}>
-    {onNew && <View style={{ alignSelf: "flex-end", marginBottom: -28 }}><GlassButton label="New conversation" onPress={onNew} size={44}><Icon name="plus.bubble" size={20} /></GlassButton></View>}
     {entries.map(entry => <View key={entry.id} collapsable={false} onLayout={e => {
       const key = `${entry.id}${entry.reply ? "+" : ""}`;
       if (entry.id === newest?.id && brought.current !== key) { brought.current = key; scroll.current?.scrollTo({ y: Math.max(0, e.nativeEvent.layout.y - 8), animated: true }); }
