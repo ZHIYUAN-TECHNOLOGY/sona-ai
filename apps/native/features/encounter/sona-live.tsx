@@ -173,8 +173,6 @@ export const SonaLive = memo(function SonaLive({ phase, turns, draft, reading, s
         {Boolean(draft) && <DraftBubble text={draft} reading={reading} sample={sample} reduced={reducedMotion} solid={reducedTransparency} onSend={onSend} />}
       </ScrollView>
       <EdgeBlur edge="top" style={{ position: "absolute", top: 0, left: 0, right: 0, height: top + 6 }} />
-      {/* Words soften into the wave where they meet it, instead of crossing its light. */}
-      <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom, height: 48 }} />
     </Animated.View>
   </CloseContext>;
 });

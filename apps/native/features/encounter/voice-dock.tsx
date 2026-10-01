@@ -354,7 +354,8 @@ export function VoiceDock(props: Props) {
       <View ref={liveCanvas} collapsable={false} style={[StyleSheet.absoluteFill, { backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }]} />
     </Animated.View>}
     {/* Sona Live keeps the wave low (about a quarter of the screen) so the conversation above it has the room. */}
-    {liquid && <LiquidVeil backdrop={talk.open ? liveCanvas : backdrop} state={veil} armed={armed && !busy} words={live ? gusts : sampleWords} voiceLevel={level} crest={talk.open ? LIVE_CREST : undefined} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
+    {/* Keyed by Live: a touch-down on the orb already froze the page for a hold, and Live's wave must freeze its own canvas instead. */}
+    {liquid && <LiquidVeil key={talk.open ? "live" : "page"} backdrop={talk.open ? liveCanvas : backdrop} state={veil} armed={armed && !busy} words={live ? gusts : sampleWords} voiceLevel={level} crest={talk.open ? LIVE_CREST : undefined} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
     {/* Frosted focus layer: a static blur crossfaded by opacity. */}
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: scrim ? 1 : 0, transitionProperty: "opacity", transitionDuration: scrim ? 320 : 240, transitionTimingFunction: EASE_OUT_CSS }]}>
       <Frost solid={reducedTransparency} />
