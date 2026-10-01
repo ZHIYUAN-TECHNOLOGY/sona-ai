@@ -1,6 +1,6 @@
 import { Blur, Canvas, Circle, Group, Oval, RadialGradient, vec } from "@shopify/react-native-skia";
 import { BlurView } from "expo-blur";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated, { Easing, FadeIn, FadeOut, useAnimatedProps, useAnimatedStyle, useDerivedValue, useReducedMotion, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,6 +18,11 @@ import "./strings";
  * then getting the plan ready, then saying when it is slow). When ready it dissolves, slowly and without
  * bounce: Sona's layer fades as the next screen comes up through a blur that clears. Signed out, the welcome's
  * own orb is already under this one, so nothing moves. Reduce Motion: no bloom, breath or blur, a short fade.
+ *
+ * 100% smooth (as Wabi holds its ambient load until the screen is whole): the next screen mounts under the opaque
+ * layer as soon as the session is known (`ready`), so its mount and first layout never land in the dissolve; the
+ * layer holds until that screen's data has arrived too (`settled`, at most 5 s after ready), so no tile pops in
+ * after the reveal; then it dissolves while the screen settles from 0.97 to full size, and the dock comes in with it.
  */
 const SLOW = Easing.inOut(Easing.cubic);
 const BREATH = 3200;
@@ -26,22 +31,39 @@ const AnimatedBlur = Animated.createAnimatedComponent(BlurView);
 // Where the welcome screen's orb rests (features/sign-in/welcome.tsx): top padding 8, the 48 pt back-button
 // row, then the hero (12 pt margin, 250 pt tall) with its 180 pt orb in the middle; the wordmark 8 pt below.
 const HERO = { above: 8 + 48 + 12, height: 250, size: 180 };
+// The longest the layer waits on the screen's data once the session is known: a slow call shows in place, not under Sona.
+const HOLD = 5000;
 
-export function Opening({ ready, step, children }: { ready: boolean; step: "session" | "record"; children: ReactNode }) {
+// Whether the opening has revealed the app, for chrome that must arrive with it (the dock), never before.
+let revealed = false;
+const listeners = new Set<() => void>();
+const reveal = (on: boolean) => { if (revealed === on) return; revealed = on; listeners.forEach(l => l()); };
+export const useRevealed = () => useSyncExternalStore(l => { listeners.add(l); return () => { listeners.delete(l); }; }, () => revealed);
+
+export function Opening({ ready: known, settled, step, children }: { ready: boolean; settled: boolean; step: "session" | "record"; children: ReactNode }) {
   const still = useReducedMotion();
   const t = useT();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   // The layer stays mounted through its dissolve, then goes.
-  const [shown, setShown] = useState(!ready);
+  const [shown, setShown] = useState(!(known && settled));
   const [slow, setSlow] = useState(false);
   // Only the first line waits for the orb to bloom; a changed line replaces the old one at once.
   const [firstLine, setFirstLine] = useState(true);
-  const veil = useSharedValue(ready ? 0 : 1), blur = useSharedValue(0), bloom = useSharedValue(still ? 1 : 0), breath = useSharedValue(0), flood = useSharedValue(0);
+  // The session is known (mount what comes next, hidden), and its data is in (or the hold ran out): reveal.
+  const [held, setHeld] = useState(false);
+  useEffect(() => {
+    if (!known || settled) { setHeld(false); return; }
+    const timer = setTimeout(() => setHeld(true), HOLD);
+    return () => clearTimeout(timer);
+  }, [known, settled]);
+  const ready = known && (settled || held);
+  const veil = useSharedValue(ready ? 0 : 1), blur = useSharedValue(0), bloom = useSharedValue(still ? 1 : 0), breath = useSharedValue(0), flood = useSharedValue(0), grow = useSharedValue(ready ? 1 : 0.97);
+  useEffect(() => { reveal(ready); }, [ready]);
 
   useEffect(() => {
     if (ready) return;
-    setShown(true); setSlow(false); setFirstLine(true);
+    setShown(true); setSlow(false); setFirstLine(true); grow.set(still ? 1 : 0.97);
     // Back to loading after a screen (signing in): fade the layer in over what was there.
     veil.set(still ? 1 : withTiming(1, { duration: 300, easing: SLOW }));
     bloom.set(still ? 1 : withTiming(1, { duration: 700, easing: SLOW }));
@@ -59,6 +81,7 @@ export function Opening({ ready, step, children }: { ready: boolean; step: "sess
     if (still) { veil.set(withTiming(0, { duration: 200 }, gone)); return; }
     blur.set(28);
     blur.set(withTiming(0, { duration: 700, easing: SLOW }));
+    grow.set(withTiming(1, { duration: 700, easing: SLOW }));
     veil.set(withTiming(0, { duration: 560, easing: SLOW }, gone));
   }, [ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -68,14 +91,16 @@ export function Opening({ ready, step, children }: { ready: boolean; step: "sess
   const glow = useDerivedValue(() => 0.55 + 0.35 * breath.get());
   const horizon = useDerivedValue(() => 0.5 + 0.3 * (1 - breath.get()));
   const veilStyle = useAnimatedStyle(() => ({ opacity: veil.get() }));
+  const screenStyle = useAnimatedStyle(() => ({ transform: [{ scale: grow.get() }] }));
   const orbStyle = useAnimatedStyle(() => ({ opacity: bloom.get(), transform: [{ scale: (0.94 + 0.06 * bloom.get()) * (1 + 0.025 * breath.get()) }] }));
   const blurProps = useAnimatedProps(() => ({ intensity: blur.get() }));
   const line = slow ? t("open.slow") : step === "session" ? t("open.session") : t("open.record");
 
   return <View style={{ flex: 1 }}>
-    {ready && children}
+    {/* Mounted, laid out and fed under the opaque layer; it only settles into full size as the layer dissolves. */}
+    {known && <Animated.View style={[{ flex: 1 }, screenStyle]}>{children}</Animated.View>}
     {ready && shown && !still && <AnimatedBlur pointerEvents="none" tint="light" animatedProps={blurProps} style={StyleSheet.absoluteFill} />}
-    {shown && <Animated.View pointerEvents={ready ? "none" : "auto"} accessible accessibilityLabel={`Sona Care. ${line}`} style={[StyleSheet.absoluteFill, veilStyle]}>
+    {shown && <Animated.View pointerEvents={ready ? "none" : "auto"} accessible accessibilityLabel={`Sona Care. ${line}`} style={[StyleSheet.absoluteFill, { backgroundColor: palette.canvas }, veilStyle]}>
       <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
         {/* The azure glow the orb sits in, and a violet horizon low on the screen, breathing against each other. */}
         <Group opacity={glow}>

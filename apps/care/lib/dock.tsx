@@ -2,7 +2,8 @@ import { BlurView } from "expo-blur";
 import { router, usePathname } from "expo-router";
 import { useEffect } from "react";
 import { Pressable, View } from "react-native";
-import Animated, { FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { Easing, FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
+import { useRevealed } from "@/features/opening";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { useMe } from "@/features/me";
@@ -36,6 +37,7 @@ export function Dock() {
   const insets = useSafeAreaInsets();
   const still = useReducedMotion();
   const { state } = useMe();
+  const revealed = useRevealed();
   const tr = useT();
   const unread = useMessageNeeds() > 0;
   const at = TABS.findIndex(t => t.path === path);
@@ -48,9 +50,10 @@ export function Dock() {
     stretch.set(withSequence(withTiming(1.3, { duration: 130 }), withSpring(1, { duration: 380, dampingRatio: 0.7 })));
   }, [at, still, x, stretch]);
   const indicator = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }, { scaleX: stretch.value }] }));
-  if (state !== "joined" || at < 0) return null;
+  // It arrives with the opening's reveal, never over Sona while the app is still opening.
+  if (state !== "joined" || at < 0 || !revealed) return null;
 
-  return <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(120)} pointerEvents="box-none"
+  return <Animated.View entering={still ? undefined : FadeIn.duration(560).easing(Easing.inOut(Easing.cubic))} exiting={FadeOut.duration(120)} pointerEvents="box-none"
     style={{ position: "absolute", left: 20, right: 20, bottom: Math.max(insets.bottom, 12) + 2, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
     <View style={{ borderRadius: 999, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.9)", boxShadow: "0 14px 30px -16px rgba(80,60,140,0.45)" }}>
       <BlurView accessibilityRole="tablist" intensity={60} tint="light" style={{ flexDirection: "row", padding: PAD, backgroundColor: "rgba(255,255,255,0.62)" }}>

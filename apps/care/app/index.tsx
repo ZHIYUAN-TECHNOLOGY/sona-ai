@@ -19,7 +19,8 @@ import { SettingsSheet, SignOutRow } from "@/features/home/settings-sheet";
 import { tFor, useLang } from "@/lib/i18n";
 import { ConsistencyTile, LatestTile, MedicinesTile, VisitTile } from "@/features/home/bento";
 import { useMe } from "@/features/me";
-import { useMessageNeeds } from "@/features/messages/row";
+import { useMessageNeeds, useThread } from "@/features/messages/row";
+import { useDischarge } from "@/features/discharge/row";
 import { NudgeCard } from "@/features/notifications";
 import { Opening } from "@/features/opening";
 import { Welcome } from "@/features/sign-in/welcome";
@@ -78,10 +79,16 @@ let seen = false;
  * when there is one, the next visit; hidden tiles let the rest reflow); and the one feature card, today's
  * check-in. At large Dynamic Type the bento stacks to one column.
  */
-/** The first screen: Sona's opening while the session and the record load, then the welcome or home through its dissolve. */
+/**
+ * The first screen: Sona's opening while the session and the record load, then the welcome or home through its
+ * dissolve. Home's own data (check-ins, the plan, visits, messages) starts loading with the record and the opening
+ * holds until it is in, so home is revealed whole.
+ */
 export default function Index() {
   const { state, step } = useMe();
-  return <Opening ready={state !== "loading"} step={step}>{state === "signed-out" ? <Welcome /> : <Home />}</Opening>;
+  const loads = [useCheckIns(), useFollowUps(), useDischarge(), useThread()];
+  const settled = state !== "joined" || loads.every(q => !q.isLoading);
+  return <Opening ready={state !== "loading"} settled={settled} step={step}>{state === "signed-out" ? <Welcome /> : <Home />}</Opening>;
 }
 
 function Home() {
