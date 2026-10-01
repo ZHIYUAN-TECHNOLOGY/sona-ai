@@ -14,7 +14,7 @@ import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Expand, Icon, IconButton, Notice, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
-import { AskOrb } from "@/features/ask";
+import { WithSona } from "@/features/ask";
 import { toCheck } from "@/features/ask/answers";
 import { useEncounter } from "@/features/encounter/store";
 import { OriginalImageViewer } from "@/features/imaging/viewer";
@@ -361,14 +361,13 @@ function Review({ header, patientFirst, reading, live, busy, onApply }: { header
     low: note.medicines.flatMap((m, i) => m.confidence === "low" && !off.has(`med:${i}`) ? [{ id: `low-${i}`, label: medicineLabel(m) }] : []) });
 
   // Review before deciding: what will happen sits on the button's bar; nothing is written before the tap.
-  return <Screen bottom={<>
+  return <WithSona scope="scan" inline answers={[check]}><Screen bottom={<>
     <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: error ? palette.amber : palette.muted, paddingHorizontal: 4 }}>
       {error ?? (any ? `Adds ${preview || "nothing new"} · recorded as from this scanned note` : "Tick at least one item to add")}
     </Text>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
       <View style={{ flex: 1 }}><Action label={busy ? "Adding…" : `Add to ${patientFirst}’s record`} icon="plus" disabled={!any || busy}
         onPress={() => { setError(undefined); onApply(note, off).catch((e: Error) => setError(e.message)); }} /></View>
-      <AskOrb scope="scan" answers={[check]} />
     </View>
   </>}>
     {header}
@@ -456,7 +455,7 @@ function Review({ header, patientFirst, reading, live, busy, onApply }: { header
         </View>
       </Row>}
     </Group>}
-  </Screen>;
+  </Screen></WithSona>;
 }
 
 /** The receipt, then the likely next move: confirm the medicine, read the note, or scan the next page. */

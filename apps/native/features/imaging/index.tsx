@@ -1,11 +1,11 @@
 import { Text } from "@/components/sona/text";
-import { AskOrb } from "@/features/ask";
+import { WithSona } from "@/features/ask";
 import { toFollowUp } from "@/features/ask/answers";
 import * as Haptics from "expo-haptics";
 import { Image, type ImageSource } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import Animated, { cancelAnimation, Easing, FadeIn, FadeOut, useSharedValue, withRepeat, withSpring, withTiming } from "react-native-reanimated";
@@ -17,7 +17,7 @@ import { HalftoneShimmer } from "@/components/sona/halftone-shimmer";
 import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { IconRow, Section } from "@/components/sona/sections";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, Chip, Expand, Glass, Icon, Insight, Notice, pillStyle, Reveal, Screen, SourceLink, Surface, surfaceStyle, Tone, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Chip, Expand, Glass, Icon, Insight, Notice, pillStyle, Reveal, Screen, ShellLift, SourceLink, Surface, surfaceStyle, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEncounter } from "@/features/encounter/store";
 import type { Encounter, FeatureProps } from "@/features/encounter/types";
@@ -172,13 +172,14 @@ function Findings({ scenario, attachment, summary }: { scenario: Scenario; attac
  */
 function ViewerPage({ children, scrollEnabled = true, bottom }: { children: ReactNode; scrollEnabled?: boolean; bottom?: ReactNode }) {
   const insets = useSafeAreaInsets();
+  const lift = use(ShellLift);
   const [barHeight, setBarHeight] = useState(0);
-  const scroll = <ScrollView scrollEnabled={scrollEnabled} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: "linear-gradient(to bottom, #F5F6F8 0%, #EFF2F7 45%, #E3EBF7 100%)" }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 44, gap: 20 }}>{children}{bottom ? <View style={{ height: barHeight }} /> : null}</ScrollView>;
+  const scroll = <ScrollView scrollEnabled={scrollEnabled} style={{ flex: 1, backgroundColor: palette.canvas, experimental_backgroundImage: "linear-gradient(to bottom, #F5F6F8 0%, #EFF2F7 45%, #E3EBF7 100%)" }} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 44 + lift, gap: 20 }}>{children}{bottom ? <View style={{ height: barHeight }} /> : null}</ScrollView>;
   if (!bottom) return scroll;
   // ponytail: copies `Screen`'s bar; fold into the Page primitive once it takes a scroll lock.
   return <View style={{ flex: 1 }}>
     {scroll}
-    <View onLayout={e => setBarHeight(e.nativeEvent.layout.height)} style={{ position: "absolute", left: 16, right: 16, bottom: Math.max(insets.bottom, 12) }}>
+    <View onLayout={e => setBarHeight(e.nativeEvent.layout.height)} style={{ position: "absolute", left: 16, right: 16, bottom: lift ? lift + 8 : Math.max(insets.bottom, 12) }}>
       <Glass style={{ padding: 12, gap: 10 }}>{bottom}</Glass>
     </View>
   </View>;
@@ -326,11 +327,10 @@ export function XrayScreen() {
 
   const latest = encounter?.cards.findLast(card => card.kind === "xray" && card.imagingSnapshot)?.imagingSnapshot;
   // The decision stays in view: what analysing does, then the button.
-  return <ViewerPage scrollEnabled={!zoomed} bottom={<>
+  return <WithSona scope="xray" inline answers={[toFollowUp(findings)]}><ViewerPage scrollEnabled={!zoomed} bottom={<>
     <Text style={{ ...type.footnote, paddingHorizontal: 4, color: palette.muted }}>{upload?.state === "uploaded" ? "Answers in the visit · the image model reads it; unvalidated" : "Answers in the visit · a sample response, nothing is read from the image"}</Text>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
       <View style={{ flex: 1 }}><Action label={analysing ? "Analysing…" : "Analyse X-ray"} icon="sparkles" disabled={analysing || picking} onPress={analyse} /></View>
-      <AskOrb scope="xray" answers={[toFollowUp(findings)]} />
     </View>
   </>}>
     {/* Image actions live in the header's right slot, before Close. */}
@@ -355,5 +355,5 @@ export function XrayScreen() {
         {(Object.keys(SCENARIOS) as Scenario[]).map(value => <Chip key={value} label={SCENARIOS[value]} selected={scenario === value} onPress={() => pickScenario(value)} />)}
       </Expand>}
     </Animated.View>}
-  </ViewerPage>;
+  </ViewerPage></WithSona>;
 }

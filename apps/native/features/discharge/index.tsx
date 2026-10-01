@@ -1,6 +1,6 @@
 import { PressScale } from "@/components/sona/parts";
 import { router } from "expo-router";
-import { AskOrb } from "@/features/ask";
+import { WithSona } from "@/features/ask";
 import { blocking } from "@/features/ask/answers";
 import { MarkedText } from "@/components/sona/marked-text";
 import { useState } from "react";
@@ -216,11 +216,10 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
       <View style={{ flex: 1 }}>{live && !role.can("discharge.request") ? <LockedAction label="Needs a doctor's approval" path="discharge.request" />
         : <Decide label={primary} icon={blocked.length ? undefined : busy ? "hourglass" : "bed.double"} muted={blocked.length > 0} disabled={blocked.length > 0 || busy} onPress={go} />}</View>
-      <AskOrb scope="discharge" answers={[blocking("discharge", "What's still blocking discharge?", `${patient.name.split(" ")[0]} can go home`, checks)]} />
     </View>
   </>;
 
-  return <Screen bottom={bar}>
+  return <WithSona scope="discharge" inline answers={[blocking("discharge", "What's still blocking discharge?", `${patient.name.split(" ")[0]} can go home`, checks)]}><Screen bottom={bar}>
     <ModalHeader title="Discharge" />
     <VisitChip patient={patient} answers={answers} animate={animate} />
     <Animated.View entering={animate ? riseCard : undefined}>
@@ -292,7 +291,7 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
       </Animated.View>
     </Surface>
     </Animated.View>
-  </Screen>;
+  </Screen></WithSona>;
 }
 
 /**

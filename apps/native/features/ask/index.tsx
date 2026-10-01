@@ -1,20 +1,16 @@
-import { PressScale } from "@/components/sona/parts";
 import { JSONUIProvider, Renderer, defineRegistry } from "@json-render/react-native";
 import * as Haptics from "expo-haptics";
 import { router, useNavigation } from "expo-router";
 import { createContext, use, useEffect, useRef, useState, type ReactNode } from "react";
-import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { EdgeBlur } from "@/components/sona/edge-blur";
-import { List, ListRow, QuestionList } from "@/components/sona/list";
-import { Drafting, MODEL_SLOW, SampleLabel } from "@/components/sona/model-answer";
+import { List, ListRow } from "@/components/sona/list";
+import { SampleLabel } from "@/components/sona/model-answer";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, CloseButton, Icon, IconButton, Notice, RoundAction, Surface } from "@/components/sona/ui";
-import { GlassOrb } from "@/components/sona/glass-orb";
-import { OrbGlyph } from "@/components/sona/orb-glyph";
+import { Action, CloseButton, GlassButton, Icon, IconButton, Notice, ShellLift, Surface } from "@/components/sona/ui";
 import { VoiceDock } from "@/features/encounter/voice-dock";
 import type { LiveAdapter } from "@/features/encounter/sona-live";
 import type { Attachment } from "@/components/sona/attachments-menu";
@@ -95,28 +91,6 @@ export function AnswerView({ answer, run, question = true, model }: { answer: An
   </View>;
 }
 
-/**
- * Live mode: a question the page's rules don't answer goes to the model (ask.free) with the page's own
- * data; the server sends a spec only if it stays on that data. No `answer` means no model answer (demo
- * mode, fixture, or a failed call), so the sheet keeps saying what it can answer here, or, with `waking`,
- * that the model is starting and when to ask again, or, `unanswered`, that the model found no answer on the page.
- */
-function useFreeAnswer(scope: Scope, question: string | undefined, answers: Answer[]) {
-  const { on } = useLive();
-  const [state, setState] = useState<{ question: string; thinking: boolean; answer?: Answer; model?: string; waking?: number; unanswered?: boolean }>();
-  useEffect(() => {
-    if (!on || !question) return;
-    let current = true;
-    setState({ question, thinking: true });
-    api.ask.free({ scope, question, context: askContext(answers) }).then(r => r.source === "model" ? { answer: { id: "free", question, spec: r.spec as Answer["spec"], worth: true }, model: r.model }
-      : { waking: wakingOf(r), unanswered: "unanswered" in r && r.unanswered }, () => ({})).then(r => {
-      if (current) setState({ question, thinking: false, ...r });
-    });
-    return () => { current = false; };
-  }, [on, question]); // eslint-disable-line react-hooks/exhaustive-deps
-  return on && state?.question === question ? state : undefined;
-}
-
 const only = (answers: Answer[]) => `Until the model is switched on, Sona answers only: ${answers.map(a => a.question).join(" · ")}`;
 /** What a page says to a question without a model: its rule answer, or (demo mode) what Sona answers here; undefined when the model should answer. */
 export function answerNow(question: string, answers: Answer[], live: boolean): Reply | undefined {
@@ -145,58 +119,6 @@ export function KeepRow({ answer, leave }: { answer: Answer; leave: () => void }
   </View>;
 }
 
-/** Which answer the sheet shows (or a question it couldn't answer), for a page that opens it itself. */
-export type AskState = { open: boolean; shown?: Answer; missed?: string };
-export const closed: AskState = { open: false };
-
-/**
- * The page-scoped sheet ("Ward 4B"): the chosen answer as a view from the ask catalogue, the page's
- * other questions, and a field that matches a typed question to them. `onTab` lets an answer change the page.
- */
-export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Scope; answers: Answer[]; state: AskState; onChange: (s: AskState) => void; onTab?: (tab: string) => void }) {
-  const insets = useSafeAreaInsets();
-  const [text, setText] = useState("");
-  const { shown, missed } = state;
-  const free = useFreeAnswer(scope, missed, answers);
-  const close = () => onChange(closed);
-  const ask = () => { const q = text.trim(); if (!q) return; const a = matchQuestion(q, answers); setText(""); onChange(a ? { open: true, shown: a } : { open: true, missed: q }); };
-  const run = useRunOp(close, onTab);
-  const others = answers.filter(a => a.id !== shown?.id);
-
-  return <Modal visible={state.open} animationType="slide" presentationStyle="pageSheet" onRequestClose={close}>
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: palette.canvas }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, padding: 16, paddingBottom: 8 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: palette.blueWash }}>
-          <Text style={{ ...type.caption, color: palette.blue }}>✦</Text><Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{SCOPE_LABEL[scope]}</Text>
-        </View>
-        <View style={{ flex: 1 }} />
-        <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={close} hitSlop={10} style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}><Icon name="xmark" size={14} color={palette.ink} /></Pressable>
-      </View>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
-        {missed && (free?.thinking ? <Drafting label="Thinking…" lines={2} slow={MODEL_SLOW} />
-          : free?.answer ? <AnswerView answer={free.answer} run={run} model={free.model} />
-          : free?.unanswered ? <Text style={{ ...type.callout, color: palette.muted }}>“{missed}”: Sona couldn't answer that from this page.</Text>
-          : <Text style={{ ...type.callout, color: palette.amber }}>“{missed}”: {free?.waking ? startingReply(free.waking) : "Sona answers only these questions here until the model is switched on."}</Text>)}
-        {shown ? <View style={{ gap: 14 }}>
-          <AnswerView answer={shown} run={run} />
-          <KeepRow answer={shown} leave={close} />
-        </View> : <View style={{ gap: 10 }}>
-          <Text style={{ ...type.title, fontWeight: "600", color: palette.ink }}>Ask Sona</Text>
-          <Text style={{ ...type.subhead, color: palette.muted }}>Answers are built from this page's own data and can act on it.</Text>
-        </View>}
-        <QuestionList questions={others.map(a => ({ key: a.id, text: a.question }))} onAsk={id => { const a = others.find(x => x.id === id); if (a) onChange({ open: true, shown: a }); }} />
-      </ScrollView>
-      {/* The composer sits at the bottom, like every chat, and rides up with the keyboard. */}
-      <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 12), borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)", backgroundColor: palette.canvas }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 24, backgroundColor: palette.surface, paddingLeft: 10, paddingRight: 6, boxShadow: "0 4px 14px rgba(30,50,90,0.08)" }}>
-          <TextInput accessibilityLabel="Ask Sona" placeholder={PLACEHOLDER[scope]} value={text} onChangeText={setText} onSubmitEditing={ask} returnKeyType="send" placeholderTextColor={palette.placeholder} style={{ flex: 1, minHeight: 48, fontSize: type.body.fontSize, color: palette.ink }} />
-          <RoundAction icon="send" label="Send" ready={!!text.trim()} onPress={ask} />
-        </View>
-      </View>
-    </KeyboardAvoidingView>
-  </Modal>;
-}
-
 /**
  * Sona on a page (Ward, Messages, Tasks, Patients…), the same shell as Today and a visit: the page, then the bar
  * ([+] [mic] [keyboard]) with the page's ✦ suggestion above it. What is asked (typed, spoken, or the ✦) starts the page's
@@ -204,7 +126,7 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
  * ops); New conversation in the header, or an op that changes the page (a filter), brings the page back. A rule answer
  * lands at once; live, the model answers from the page's own data; demo mode says what Sona answers here.
  */
-export function WithSona({ scope, answers, onTab, hidden = false, children }: { scope: Scope; answers: Answer[]; onTab?: (tab: string) => void; hidden?: boolean; children: ReactNode }) {
+export function WithSona({ scope, answers, onTab, hidden = false, inline = false, children }: { scope: Scope; answers: Answer[]; onTab?: (tab: string) => void; hidden?: boolean; /** A review page (Discharge, the GL, X-ray, Note, Scan) owns its header: New conversation sits in the conversation instead. */ inline?: boolean; children: ReactNode }) {
   const { voiceInput, patients } = useEncounter();
   const { on } = useLive();
   const navigation = useNavigation();
@@ -235,6 +157,7 @@ export function WithSona({ scope, answers, onTab, hidden = false, children }: { 
   const sonaLive: LiveAdapter = { scope: SCOPE_LABEL[scope], ask: async question => { ask(question); return { shown: true }; } };
   // New conversation sits in the page's header while there is one (beside the sheet's close, on Patients).
   useEffect(() => {
+    if (inline) return;
     const close = scope === "patients" ? <CloseButton /> : null;
     navigation.setOptions({ headerRight: talking
       ? () => <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><IconButton name="plus.bubble" label="New conversation" onPress={clear} />{close}</View>
@@ -242,12 +165,13 @@ export function WithSona({ scope, answers, onTab, hidden = false, children }: { 
   }, [talking]); // eslint-disable-line react-hooks/exhaustive-deps
   return <View style={{ flex: 1 }}>
     <View ref={backdrop} collapsable={false} style={{ flex: 1 }}>
-      {talking ? <PageConversation entries={entries} bottom={dockH + 32} onAgain={e => { reply(e.id); void settle(e.id, e.question); }} onTab={tab} /> : children}
+      {/* A page's pinned decision bar (Screen's `bottom`) sits above the shell's bar. */}
+      {talking ? <PageConversation entries={entries} bottom={dockH + 32} onAgain={e => { reply(e.id); void settle(e.id, e.question); }} onTab={tab} onNew={inline ? clear : undefined} /> : <ShellLift value={hidden ? 0 : dockH}>{children}</ShellLift>}
     </View>
     {/* What passes under the dock blurs and fades into the canvas, as on Today. */}
     {!hidden && <>
-      <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 36 }} />
-      <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 36, experimental_backgroundImage: "linear-gradient(180deg, rgba(245,246,248,0) 0%, rgba(245,246,248,0.78) 45%, rgba(245,246,248,0.94) 100%)" }} />
+      <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 12 }} />
+      <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 12, experimental_backgroundImage: "linear-gradient(180deg, rgba(245,246,248,0) 0%, rgba(245,246,248,0.78) 45%, rgba(245,246,248,0.94) 100%)" }} />
     </>}
     {!hidden && <VoiceDock backdrop={backdrop} sonaLive={sonaLive} onSubmit={submit} onCancel={() => {}} placeholder={PLACEHOLDER[scope]} draft={draft} onDraft={value => { setDraft(value); setNotice(undefined); }}
       // The voice sample says the page's suggested question, so talking works the same as tapping it.
@@ -260,32 +184,16 @@ export function WithSona({ scope, answers, onTab, hidden = false, children }: { 
 }
 
 /** A page's conversation, laid out as Today's: each newest question, and its answer once it lands, is brought into view. */
-function PageConversation({ entries, bottom, onAgain, onTab }: { entries: Entry[]; bottom: number; onAgain: (entry: Entry) => void; onTab?: (tab: string) => void }) {
+function PageConversation({ entries, bottom, onAgain, onTab, onNew }: { entries: Entry[]; bottom: number; onAgain: (entry: Entry) => void; onTab?: (tab: string) => void; onNew?: () => void }) {
   const insets = useSafeAreaInsets();
   const scroll = useRef<ScrollView>(null), brought = useRef("");
   const newest = entries.at(-1);
   return <ScrollView ref={scroll} style={{ flex: 1, backgroundColor: palette.canvas }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive"
     contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + 64, paddingBottom: bottom, gap: 44 }}>
+    {onNew && <View style={{ alignSelf: "flex-end", marginBottom: -28 }}><GlassButton label="New conversation" onPress={onNew} size={44}><Icon name="plus.bubble" size={20} /></GlassButton></View>}
     {entries.map(entry => <View key={entry.id} collapsable={false} onLayout={e => {
       const key = `${entry.id}${entry.reply ? "+" : ""}`;
       if (entry.id === newest?.id && brought.current !== key) { brought.current = key; scroll.current?.scrollTo({ y: Math.max(0, e.nativeEvent.layout.y - 8), animated: true }); }
     }}><ThreadEntry entry={entry} fresh={entry.id === newest?.id} onAgain={() => onAgain(entry)} onTab={onTab} /></View>)}
   </ScrollView>;
-}
-
-/**
- * Sona beside a review page's pinned decision (Discharge, the GL, X-ray), where the dock would cover
- * the decision: the dock's own orb, smaller, opening the page-scoped sheet with the page's answer.
- */
-export function AskOrb({ scope, answers }: { scope: Scope; answers: Answer[] }) {
-  const [state, setState] = useState<AskState>(closed);
-  const nudge = answers.find(a => a.worth);
-  return <>
-    <Pressable accessibilityRole="button" accessibilityLabel={`Ask Sona about ${SCOPE_LABEL[scope].toLowerCase()}`} accessibilityHint={nudge?.question} onPress={() => { tap(); setState({ open: true, shown: nudge ?? answers[0] }); }}
-    >{({ pressed }) => <PressScale pressed={pressed} style={{ width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", backgroundColor: palette.white, boxShadow: "0 6px 18px rgba(40,70,140,0.2)" }}>
-      <View style={{ position: "absolute", inset: 0 }}><GlassOrb size={52} energy={0} still /></View>
-      <OrbGlyph activity="idle" still />
-    </PressScale>}</Pressable>
-    <AskSheet scope={scope} answers={answers} state={state} onChange={setState} />
-  </>;
 }

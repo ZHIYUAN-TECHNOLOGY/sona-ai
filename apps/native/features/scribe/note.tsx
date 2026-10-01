@@ -7,7 +7,7 @@ import { GlanceTile, IconRow, Section, Shelf } from "@/components/sona/sections"
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Chip, Expand, glass, Icon, Insight, Notice, Screen, SourceLink, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
-import { AskOrb } from "@/features/ask";
+import { WithSona } from "@/features/ask";
 import { beforeSigning, noteNext } from "@/features/ask/answers";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
@@ -191,10 +191,9 @@ export function NoteScreen() {
   const noteState = { drafted: hasContent, saved: status === "saved", reviewed: encounter.noteReviewed, empty, unsureLines: encounter.transcript.filter(line => line.corrected && !line.englishReviewed).length,
     fromSample: Boolean(encounter.noteFromSample), plan: sections.plan, openTasks: encounter.tasks.filter(t => !t.completed).length };
   const next = noteNext(noteState);
-  const orb = <AskOrb scope="note" answers={[beforeSigning(noteState)]} />;
 
   // One glass bar (the page's `Screen bottom`): the save state inline, the two note actions and Sona, then the next step.
-  const bar = !canWrite ? <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}><View style={{ flex: 1 }}><LockedAction label="Needs a doctor to write the note" path="note.save" height={48} /></View>{orb}</View> : <>
+  const bar = !canWrite ? <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}><View style={{ flex: 1 }}><LockedAction label="Needs a doctor to write the note" path="note.save" height={48} /></View></View> : <>
     <View accessible accessibilityLiveRegion="polite" accessibilityLabel={state.title} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 4 }}>
       <Animated.View key={state.title} entering={reducedMotion ? undefined : riseIn({ distance: 0, scale: 0.8, duration: 240 })}>
         <Animated.View style={{ animationName: saving && !reducedMotion ? SPIN : undefined, animationDuration: 1000, animationIterationCount: "infinite", animationTimingFunction: "linear" }}>
@@ -206,7 +205,6 @@ export function NoteScreen() {
     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
       <View style={{ flex: 1 }}><Action label={saving ? "Saving…" : status === "failed" ? "Retry save" : "Save draft"} accessibilityLabel={status === "failed" ? "Retry saving draft" : undefined} icon="checkmark" disabled={!hasContent || saving} onPress={save} /></View>
       <View style={{ flex: 1 }}><Action label={encounter.noteReviewed ? "Reviewed" : "Mark reviewed"} accessibilityLabel={encounter.noteReviewed ? "Marked reviewed" : "Mark note reviewed"} secondary disabled={!hasContent || encounter.noteReviewed || saving || status !== "saved"} onPress={() => { Keyboard.dismiss(); haptic("done"); updateEncounter(current => ({ ...current, noteReviewed: true })); }} /></View>
-      {orb}
     </View>
     {next && <QuietLink label={`Next: ${next.label}`} icon="arrow.right.circle" onPress={() => { haptic("tap"); router.push(next.op.slice(3) as never); }} />}
     {live && <Pressable accessibilityRole="switch" accessibilityLabel="Exclude this note from training" accessibilityHint="When on, saving keeps this visit's note out of the de-identified training data" accessibilityState={{ checked: excludeFromTraining }}
@@ -216,7 +214,7 @@ export function NoteScreen() {
     </Pressable>}
   </>;
 
-  return <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}>
+  return <WithSona scope="note" inline answers={[beforeSigning(noteState)]}><KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}>
     <Screen bottom={bar}>
       <Animated.View entering={rise(0)} style={{ gap: 12 }}>
         <Insight eyebrow={patient.name}>{encounter.noteReviewed ? <Tone of="good">Reviewed</Tone> : !hasContent ? "Nothing drafted yet" : <>Draft{emptyLine ? <> · <Tone of="soon">{emptyLine}</Tone></> : null} · not reviewed</>}</Insight>
@@ -279,5 +277,5 @@ export function NoteScreen() {
         </Expand>}
       </Animated.View>}
     </Screen>
-  </KeyboardAvoidingView>;
+  </KeyboardAvoidingView></WithSona>;
 }

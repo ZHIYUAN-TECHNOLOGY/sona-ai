@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { AskOrb } from "@/features/ask";
+import { WithSona } from "@/features/ask";
 import { blocking } from "@/features/ask/answers";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
@@ -121,11 +121,10 @@ export function ClaimScreen() {
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         <View style={{ flex: 1 }}>{live && !sent && !role.can("claim.send") ? <LockedAction label="Needs a doctor to send" path="claim.send" />
           : <Decide label={primary} icon={blocked.length ? undefined : sent ? "hourglass" : "paperplane"} muted={blocked.length > 0 || sent} disabled={blocked.length > 0 || sending || sent} onPress={send} />}</View>
-        <AskOrb scope="claim" answers={[blocking("claim", "What's left before sending?", "you can send", checks)]} />
       </View>
     </>;
 
-  return <Screen bottom={bar}>
+  return <WithSona scope="claim" inline answers={[blocking("claim", "What's left before sending?", "you can send", checks)]}><Screen bottom={bar}>
     <ModalHeader title="Guarantee letter" />
 
     {(denied || appealed) && state.denial && <>
@@ -198,7 +197,7 @@ export function ClaimScreen() {
       </Animated.View>
       </Animated.View>
     </Surface>
-  </Screen>;
+  </Screen></WithSona>;
 }
 
 /** The note as sentences with one soft highlight that glides to the active sentence and stretches to fit it. */
