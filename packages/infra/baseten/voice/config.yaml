@@ -1,6 +1,6 @@
 # Box ② Voice: Manglish ASR (fine-tuned Qwen3-ASR-1.7B on vLLM), Malaysian TTS (fine-tuned VoxCPM2 on Nano-vLLM-VoxCPM)
-# and the bge reranker, behind one gateway port (data/gateway.py). The aligner, diarization, OpenMed, EmbeddingGemma and
-# PaddleOCR-VL join this box in later steps of docs/delivery-plan.md.
+# and the bge reranker, behind one gateway port (data/gateway.py). EmbeddingGemma runs on Workers AI and OpenMed PII on
+# its own CPU box instead (docs/handoff.md#baseten-boxes-deployed-30-sep-2026).
 # Routes: /environments/production/sync/v1/audio/transcriptions | /v1/tts | /v1/rerank
 model_name: sona-voice
 base_image:
