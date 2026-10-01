@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { answer, conditionOf, doctorQuestion, leadOf, noAnswer, spoken, startingLine, suggestions, urgent, wantsDoctor, type Reply } from "@/features/assistant/answers";
 import { tFor, useLang, useT } from "@/lib/i18n";
 import { Composer, Glyph, GLYPH as COMPOSE } from "@/features/assistant/composer";
-import { MicButton } from "@/features/assistant/mic";
+import { Dictation, MicButton } from "@/features/assistant/mic";
 import { SUGGEST_ICON, SuggestionRow, VoiceMode, type Suggestion } from "@/features/assistant/voice";
 import { useListen } from "@/lib/listen";
 import { DoctorAvatar } from "@/features/doctors/avatar";
@@ -110,7 +110,9 @@ export default function Assistant() {
     setTurns(ts => [...ts, { question, reply: r, requestId: newRequestId(), ready: true }]);
     return r;
   };
-  const listen = useListen({ language: lang, onHeard: q => { if (!working) ask(q); } });
+  // Dictation runs until the patient taps stop (a pause mid-thought used to cut them off), and the words
+  // land in the field to check and send; the mic only shows while the field is empty.
+  const listen = useListen({ language: lang, untilStop: true, onHeard: q => setDraft(d => d.trim() ? `${d.trim()} ${q}` : q) });
   const askTyped = () => {
     const question = draft.trim();
     if (!question || working) return;
@@ -173,16 +175,16 @@ export default function Assistant() {
 
     <View style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 12), gap: 8 }}>
       {joined && <Composer inputRef={input} value={draft} onChangeText={setDraft} placeholder={t("ask.placeholder")} label={t("ask.label")} onSend={askTyped} canSend={canSend}
-        idle={<View style={{ flexDirection: "row", gap: 6 }}>
-          <MicButton listen={listen} label={t("ask.speak")} />
-          <Pressable accessibilityRole="button" accessibilityLabel={t("ask.voiceMode")} accessibilityHint={t("ask.voiceHint")}onPress={() => { listen.cancel(); setVoice(true); }}
+        pill={listen.state === "listening" || listen.state === "reading" ? <Dictation listen={listen} /> : undefined}
+        idle={<View style={{ flexDirection: "row", gap: 12 }}>
+          <MicButton listen={listen} label={t("ask.speak")} quiet />
+          <Pressable accessibilityRole="button" accessibilityLabel={t("ask.voiceMode")} accessibilityHint={t("ask.voiceHint")} onPress={() => { listen.cancel(); setVoice(true); }}
             style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.mutedWash, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
             <Glyph d={COMPOSE.voice} color={palette.ink} size={20} />
           </Pressable>
         </View>} />}
       {listen.state === "listening" ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, fontWeight: "600", color: palette.blue, textAlign: "center" }}>{t("ask.listening")}</Text>
-        : listen.state === "reading" ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("ask.reading")}</Text>
-          : listen.error ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber, textAlign: "center" }}>{listen.error}</Text> : null}
+        : listen.error ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber, textAlign: "center" }}>{listen.error}</Text> : null}
       <Text style={{ ...type.footnote, fontWeight: "600", color: palette.amber, textAlign: "center" }}>{t("common.emergency")}</Text>
     </View>
   </KeyboardAvoidingView>;
