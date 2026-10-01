@@ -11,6 +11,9 @@ import { palette, type } from "@/components/sona/theme";
 import { Action, Chip, CloseButton, Expand, Icon, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { TranscriptLine } from "@/features/encounter/types";
+import { useLive } from "@/features/live";
+import { failedLine, isCaption, partRange, UNSURE, type Part } from "./live";
+import { applyCaptured, applyDraft, askDraft, retryParts, useScribe } from "./live-recorder";
 import { LiveWaveform } from "./live-waveform";
 import { buildDraft, elapsedLabel, scriptFor } from "./model";
 import { Dot, fieldStyle, haptic, StateLine } from "./parts";
@@ -46,7 +49,11 @@ function InterimSegment({ speaker, text, tone, reduced }: { speaker: string; tex
   </View>;
 }
 
-function TranscriptSegment({ line, interpretation, tone, last, fresh }: { line: TranscriptLine; interpretation: boolean; tone: string; last: boolean; fresh: boolean }) {
+/**
+ * One turn of the transcript, tap to correct. `live`: what was heard is the only text (no separate English interpretation),
+ * and a caption's label is its time, not a speaker, until the draft says who said what.
+ */
+function TranscriptSegment({ line, interpretation, tone, last, fresh, live = false }: { line: TranscriptLine; interpretation: boolean; tone: string; last: boolean; fresh: boolean; live?: boolean }) {
   const { encounter, updateEncounter } = useEncounter();
   const draft = encounter?.transcriptDraft;
   const editing = draft?.lineId === line.id;
@@ -68,7 +75,7 @@ function TranscriptSegment({ line, interpretation, tone, last, fresh }: { line: 
     const interpretationConfirmed = interpretation && english.trim().length > 0;
     if (changed || interpretationConfirmed) {
       haptic("done");
-      updateEncounter(current => ({ ...current, transcriptDraft: undefined, noteReviewed: false, transcript: current.transcript.map(value => value.id === line.id ? { ...value, speaker: speaker.trim(), original: original.trim(), english: english.trim(), englishReviewed: interpretationConfirmed || (original.trim() === line.original && value.englishReviewed), corrected: true } : value) }), true);
+      updateEncounter(current => ({ ...current, transcriptDraft: undefined, noteReviewed: false, transcript: current.transcript.map(value => value.id === line.id ? { ...value, speaker: speaker.trim(), original: original.trim(), english: live ? original.trim() : english.trim(), englishReviewed: live || interpretationConfirmed || (original.trim() === line.original && value.englishReviewed), corrected: true } : value) }), true);
     } else cancelEdit();
     Keyboard.dismiss();
   };
@@ -77,12 +84,14 @@ function TranscriptSegment({ line, interpretation, tone, last, fresh }: { line: 
   if (editing) return <View style={{ flexDirection: "row", gap: 12 }}>
     <Rail tone={tone} last={last} />
     <Animated.View entering={FadeIn.duration(180)} style={{ flex: 1, gap: 12, paddingBottom: 24 }}>
-      <Label>Speaker label</Label>
-      {/* The clinician assigns identity; nothing is inferred from diarization. */}
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {["Clinician", "Patient"].map(label => <Chip key={label} label={label} selected={speaker.trim() === label} onPress={() => updateDraft({ speaker: label })} accessibilityLabel={`Speaker is ${label}`} />)}
-      </View>
-      <TextInput accessibilityLabel="Speaker label" value={speaker} onChangeText={value => updateDraft({ speaker: value })} style={fieldStyle} />
+      {/* The clinician assigns identity; in live mode Sona's reading of who spoke is only a suggestion until confirmed here. */}
+      {!(live && isCaption(line)) && <>
+        <Label>Speaker label</Label>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          {["Clinician", "Patient"].map(label => <Chip key={label} label={label} selected={speaker.trim() === label} onPress={() => updateDraft({ speaker: label })} accessibilityLabel={`Speaker is ${label}`} />)}
+        </View>
+        <TextInput accessibilityLabel="Speaker label" value={speaker} onChangeText={value => updateDraft({ speaker: value })} style={fieldStyle} />
+      </>}
       {interpretation ? <>
         <Label>Original · for comparison</Label>
         <Text selectable style={{ ...type.callout, lineHeight: 22, color: palette.muted }}>{original}</Text>
@@ -112,7 +121,7 @@ function TranscriptSegment({ line, interpretation, tone, last, fresh }: { line: 
       </View>
       <Text style={{ ...type.body, color: palette.ink }}>{shown}</Text>
       {line.corrected && !line.englishReviewed && <StateLine warning>Original corrected. The English interpretation shown is a previous draft and needs review.</StateLine>}
-      {line.englishReviewed && <StateLine icon="checkmark.circle">English interpretation · clinician confirmed</StateLine>}
+      {line.englishReviewed && !live && <StateLine icon="checkmark.circle">English interpretation · clinician confirmed</StateLine>}
       {line.corrected && captured && <View style={{ borderLeftWidth: 2, borderColor: RAIL, paddingLeft: 10, gap: 2 }}>
         <Text style={{ ...type.caption, fontWeight: "600", color: palette.muted }}>Captured original · preserved</Text>
         <Text style={{ ...type.subhead, color: palette.muted }}>{captured.speaker}: {captured.original}</Text>
@@ -131,11 +140,148 @@ function statusFor(capture: Capture, recording: string | undefined): { label: st
   return { label: "Ready for consultation", tone: palette.muted };
 }
 
+/** Consultation capture: the microphone in live mode, the scripted sample otherwise. */
+export function RecordingScreen() {
+  const { on: live } = useLive();
+  return live ? <LiveRecording /> : <ScriptedRecording />;
+}
+
+const about = (minutes?: number) => !minutes ? "" : minutes <= 1 ? ", about a minute" : `, about ${minutes} min`;
+
+/** Live: drafting first, then the recording's state and what is still being transcribed; the microphone's trouble when nothing could be recorded. */
+function liveStatus(recording: string, { drafting, mic, pending, failed }: { drafting: boolean; mic?: string; pending: number; failed: number }): { label: string; tone: string } {
+  if (drafting) return { label: "Drafting the note", tone: palette.blue };
+  if (recording === "recording") return { label: "Recording consultation", tone: palette.red };
+  if (mic && recording === "idle") return { label: "Microphone unavailable", tone: palette.amber };
+  if (recording === "paused") return { label: "Paused", tone: palette.amber };
+  if (recording === "stopped") return pending ? { label: "Transcribing the last part", tone: palette.blue } : failed ? { label: "Transcript incomplete", tone: palette.amber } : { label: "Transcript ready", tone: palette.green };
+  return { label: "Ready to record", tone: palette.muted };
+}
+
+/** A part still on its way to the speech model, or one that failed: its time, and what is happening to it. */
+function PartRow({ part, last, reduced }: { part: Part; last: boolean; reduced: boolean }) {
+  const failed = part.status === "failed";
+  const state = failed ? "Not transcribed" : part.status === "retrying" ? "Trying again…" : "Transcribing…";
+  return <View accessible accessibilityLabel={`${partRange(part)}: ${state}`} style={{ flexDirection: "row", gap: 12 }}>
+    <Rail tone={failed ? palette.amber : palette.muted} last={last} live={!failed} pulse={!failed && !reduced} />
+    <View style={{ flex: 1, gap: 6, paddingBottom: 22 }}>
+      <View style={{ flexDirection: "row", alignItems: "baseline", gap: 8 }}>
+        <Text style={{ ...type.footnote, fontWeight: "600", color: failed ? palette.amber : palette.muted }}>{partRange(part)}</Text>
+        <Text style={{ ...type.caption, color: palette.muted }}>{state}</Text>
+      </View>
+      {failed && <Text style={{ ...type.caption, lineHeight: 17, color: palette.muted }}>Its audio stays on this phone until it is transcribed.</Text>}
+    </View>
+  </View>;
+}
+
+/** Colour by role: the clinician blue, the patient ink, an unsure speaker amber (check it); a caption's time is muted. */
+const liveTone = (line: TranscriptLine) => isCaption(line) ? palette.muted : line.speaker.endsWith(UNSURE) ? palette.amber : line.speaker === "Clinician" ? palette.blue : palette.ink;
+
 /**
- * Consultation capture. One feature surface holds the live state (status, clock, trace and the
+ * Live mode: the real microphone (./live-recorder, mounted with the shell, so minimizing keeps it recording). The same
+ * feature surface holds state, clock and controls; captions arrive part by part beneath it, and the draft then marks
+ * who said what. Stop, then draft: Gemma writes the note for review on the note screen.
+ */
+function LiveRecording() {
+  const { patient, encounter, updateEncounter } = useEncounter();
+  const { reducedMotion } = useAccessibleEffects();
+  const scribe = useScribe(patient?.id);
+  const [drafting, setDrafting] = useState(false);
+  const [initialLines] = useState(() => encounter?.transcript.length ?? 0);
+  const shown = useRef(true);
+  useEffect(() => () => { shown.current = false; }, []);
+  const waiting = scribe.parts.filter(p => p.status !== "done");
+  const pending = waiting.filter(p => p.status !== "failed"), failed = waiting.filter(p => p.status === "failed");
+  const status = liveStatus(encounter?.recording ?? "idle", { drafting, mic: scribe.mic, pending: pending.length, failed: failed.length });
+  const announced = useRef(status.label);
+  useEffect(() => { if (announced.current !== status.label) { announced.current = status.label; AccessibilityInfo.announceForAccessibility(status.label); } }, [status.label]);
+  if (!patient || !encounter) return <NoVisit view="recording" what="a consultation" />;
+
+  const layout = reducedMotion ? undefined : LAYOUT;
+  const active = encounter.recording === "recording", paused = encounter.recording === "paused";
+  const stopped = encounter.recording === "stopped", idle = encounter.recording === "idle";
+  const lines = encounter.transcript;
+  const starting = failed.find(p => p.starting)?.starting;
+  const record = () => { haptic("tap"); updateEncounter(current => ({ ...current, recording: "recording" })); };
+  const canDraft = !drafting && !pending.length && lines.length > 0 && !encounter.transcriptDraft;
+  // The draft is applied for review even if the clinician has left this screen; only then does it open the note.
+  const draft = async () => {
+    if (encounter.note) return router.push("/note");
+    const owner = patient.id;
+    haptic("tap"); setDrafting(true);
+    try { applyDraft(owner, await askDraft(patient.encounterId, encounter.transcript), updateEncounter); haptic("done"); }
+    catch (e) { applyCaptured(owner, e, updateEncounter); haptic("warn"); }
+    if (!shown.current) return;
+    setDrafting(false);
+    router.push("/note");
+  };
+  const subtitle = !lines.length && !waiting.length ? (stopped ? "No speech captured, so there is nothing to draft from." : "Captions appear here about every 30 seconds while you record.")
+    : lines.some(line => !isCaption(line)) ? "Who said what, as Sona read it; unsure speakers are amber. Tap a turn to correct it."
+    : "Captions as heard, part by part. Tap one to correct a word; Sona marks who said what when it drafts the note.";
+
+  return <KeyboardAvoidingView style={{ flex: 1 }} behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}><Screen>
+    <Stack.Screen options={{ headerRight: () => <CloseButton label={active || paused ? "Minimize to encounter" : "Return to encounter"} /> }} />
+    {/* Who, then one honesty line: the words are the speech model's, and the audio does not stay. */}
+    <View style={{ gap: 4 }}>
+      <Text selectable style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>{patient.name} · {patient.id}</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 4 }}>
+        <SampleLabel source="model" model="sona-asr" />
+        <Text style={{ ...type.caption, color: palette.muted }}>· audio deleted once transcribed</Text>
+      </View>
+    </View>
+
+    <Surface feature layout={layout} style={{ padding: 22, gap: 18 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 9 }}>
+        <Dot color={status.tone} pulse={active && !reducedMotion} />
+        <Animated.View key={status.label} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ flex: 1 }}>
+          <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{status.label}</Text>
+        </Animated.View>
+      </View>
+      <View style={{ gap: 6 }}>
+        <Text accessibilityLabel={`Recorded ${elapsedLabel(encounter.recordingSeconds)}`} selectable style={{ fontSize: 52 /* timer numerals, off the scale */, fontWeight: "300", color: palette.ink, letterSpacing: -2, fontVariant: ["tabular-nums"] }}>{elapsedLabel(encounter.recordingSeconds)}</Text>
+        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <LiveWaveform state={active ? "live" : idle ? "idle" : "held"} reducedMotion={reducedMotion} />
+        </View>
+      </View>
+
+      {idle && !scribe.mic && <StateLine>Tell the patient Sona is listening. Each part is sent to your hospital's server to be transcribed, then deleted.</StateLine>}
+      {scribe.mic && !active && <StateLine warning>{scribe.mic}</StateLine>}
+      {starting && <StateLine warning>{`Sona's speech model is starting${about(starting.minutes)}. Parts are kept on this phone until they can be transcribed.`}</StateLine>}
+      {failed.length > 0 && <StateLine warning>{[failedLine(failed), !starting && failed[0]!.error].filter(Boolean).join(" ")}</StateLine>}
+      {failed.length > 0 && <Action label={failed.length === 1 ? "Retry this part" : `Retry ${failed.length} parts`} secondary icon="arrow.clockwise" onPress={() => { haptic("tap"); retryParts(patient.id, updateEncounter); }} />}
+      {paused && <StateLine>Paused. Leaving the app pauses too; what was said so far is kept.</StateLine>}
+
+      {idle && <Action label="Start recording" icon="mic.fill" onPress={record} />}
+      {(active || paused) && <View style={{ flexDirection: "row", gap: 10 }}>
+        <View style={{ flex: 1 }}><Action label={active ? "Pause" : "Resume"} icon={active ? "pause.fill" : "mic.fill"} onPress={() => { haptic("tap"); updateEncounter(current => ({ ...current, recording: active ? "paused" : "recording" })); }} /></View>
+        <View style={{ flex: 1 }}><Action label="Stop" secondary icon="stop.fill" onPress={() => { haptic("tap"); updateEncounter(current => ({ ...current, recording: "stopped" })); }} /></View>
+      </View>}
+      {stopped && <Action label={drafting ? "Drafting note…" : encounter.note ? "Open note" : "Draft note"} icon="doc.text" disabled={!encounter.note && !canDraft} onPress={draft} />}
+      {stopped && !drafting && <Action label="Record more" secondary icon="mic.fill" onPress={record} />}
+    </Surface>
+
+    <Animated.View layout={layout}>
+      <Section icon="waveform" tone="blue" title="Transcript" subtitle={subtitle}>
+        {encounter.transcriptDraft && <StateLine>Finish the current correction first. Other turns unlock once it is saved or cancelled.</StateLine>}
+        {/* A part keeps its key when its words arrive, so the caption settles where "Transcribing…" was. */}
+        <View>{[
+          ...lines.map((line, index) => <Animated.View key={line.id} layout={layout} entering={!reducedMotion && index >= initialLines ? riseIn({ distance: 10, duration: 320 }) : undefined}>
+            <TranscriptSegment line={line} interpretation={false} live tone={liveTone(line)} last={index === lines.length - 1 && !waiting.length} fresh={!reducedMotion && index >= initialLines} />
+          </Animated.View>),
+          ...waiting.map((part, index) => <Animated.View key={`part-${part.n}`} layout={layout} entering={reducedMotion ? undefined : riseIn({ distance: 10, duration: 320 })} exiting={FadeOut.duration(140)}>
+            <PartRow part={part} last={index === waiting.length - 1} reduced={reducedMotion} />
+          </Animated.View>),
+        ]}</View>
+      </Section>
+    </Animated.View>
+  </Screen></KeyboardAvoidingView>;
+}
+
+/**
+ * The scripted sample (live mode off). One feature surface holds the live state (status, clock, trace and the
  * controls for that state); the transcript grows beneath it as a rail of speaker turns.
  */
-export function RecordingScreen() {
+function ScriptedRecording() {
   const { patient, encounter, updateEncounter, showDemoControls } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const [interpretation, setInterpretation] = useState(false);

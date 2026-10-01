@@ -10,7 +10,7 @@ import { MAX_MS, SPEECH_DB, turnEnd } from "./turn";
  * (`voice.transcribe`, Sona speech on Baseten). Holding the orb records until release; a tap records
  * until a pause after speaking. Audio stays on the phone until it is sent, then it is deleted.
  */
-const OPTIONS: RecordingOptions = {
+export const OPTIONS: RecordingOptions = {
   ...RecordingPresets.HIGH_QUALITY,
   isMeteringEnabled: true,
   extension: ".wav",

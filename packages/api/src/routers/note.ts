@@ -5,8 +5,19 @@ import { z } from "zod";
 import { noteSaveSchema } from "../contracts";
 import type { Context } from "../context";
 import { protectedProcedure } from "../index";
-import { loadEncounter, stale } from "./encounter";
+import { stubModels } from "../models";
+import { logAnswer, loadEncounter, stale } from "./encounter";
 import { captureNoteEdit } from "./training";
+
+/**
+ * The consultation as heard: the speech model's parts in order, or the dialogue's turns once a draft has marked who
+ * said what (a speaker is sent only where the clinician confirmed it). About 40 minutes of talk at most: Gemma reads 16k tokens.
+ */
+export const noteDraftSchema = z.object({
+  encounterId: z.string().min(1),
+  lines: z.array(z.object({ text: z.string().trim().min(1).max(4000), speaker: z.enum(["clinician", "patient"]).optional() })).min(1).max(600)
+    .refine(lines => lines.reduce((n, l) => n + l.text.length, 0) <= 40_000, "This consultation is too long to draft in one go"),
+});
 
 /**
  * The consultation note as revisions: nothing is overwritten, so an addendum or fix stays visible as
@@ -34,5 +45,15 @@ export const noteRouter = {
     // The scribe's draft and the saved note become a de-identified training sample (if consented); never fails the save.
     await captureNoteEdit(context, hospitalId, encounterId, sentences.map(s => s.text).join("\n"), input.excludeFromTraining);
     return { encounterId, revision, sentences };
+  }),
+  /**
+   * The scribe's draft of the visit's note from its consultation, for the doctor to review and edit before note.save:
+   * Gemma's sections checked against the transcript (models.draftNote), or the captured words as they are, labelled fixture.
+   * Nothing is saved here; the draft is logged in provenance like every model answer.
+   */
+  draft: protectedProcedure.input(noteDraftSchema).handler(async ({ context, input }) => {
+    await loadEncounter(context.db, context.hospitalId, input.encounterId); // the caller's hospital only
+    const answer = await (context.models ?? stubModels).draftNote({ lines: input.lines });
+    return logAnswer(context.db, input.encounterId, "note-draft", answer, []);
   }),
 };

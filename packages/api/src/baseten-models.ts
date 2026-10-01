@@ -5,6 +5,7 @@ import { huddle } from "@sona-ai/domain/ward";
 
 import { LANGUAGE_NAME, chatModels, jsonIn } from "./chat-models";
 import { stubModels, type Models, type Origin } from "./models";
+import { scribeModels } from "./scribe-model";
 
 /**
  * Sona's models on the Baseten boxes (packages/infra/baseten, docs/handoff.md#baseten-boxes): Gemma in box ①,
@@ -244,6 +245,7 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
 
   const hosted: Partial<Models> = {
     ...chatModels(brain, BRAIN_MODEL, fallback),
+    ...scribeModels(call, BRAIN_MODEL, fallback),
 
     async transcribe(input) {
       try {
