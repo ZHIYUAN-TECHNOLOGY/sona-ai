@@ -85,8 +85,7 @@ export function step<R>(s: Talk<R>, e: Step<R>): Talk<R> {
     }
     case "clear": return s.phase === "thinking" ? s : { ...s, draft: [], floor: Math.max(s.floor, e.upTo) };
     case "keyboard": return { ...s, mic: false, phase: s.phase === "thinking" ? "thinking" : "paused", handoff: true };
-    case "reply": return s.phase !== "thinking" || e.session !== s.session ? s
-      : { ...s, phase: s.mic ? "listening" : "paused", turns: [...s.turns, { id: s.next, who: "sona", reply: e.reply }], next: s.next + 1 };
+    case "reply": return e.session !== s.session ? s : { ...s, phase: s.mic ? "listening" : "paused", turns: [...s.turns, { id: s.next, who: "sona", reply: e.reply }], next: s.next + 1 };
     case "mic": {
       const mic = !s.mic;
       // While Sona thinks the mic only decides whether listening resumes after the reply. Either way the draft stays.
@@ -98,7 +97,7 @@ export function step<R>(s: Talk<R>, e: Step<R>): Talk<R> {
       // A send waiting on that chunk is called off: the draft stays (the chunk with its partial words), to check and send again.
       const off = e.id !== undefined && s.sending !== undefined;
       const turns = e.reply === undefined ? s.turns : [...s.turns, { id: s.next, who: "sona" as const, reply: e.reply }];
-      return { ...s, mic: false, phase: s.phase === "thinking" && !off ? "thinking" : "paused", sending: off ? undefined : s.sending, turns, next: s.next + turns.length - s.turns.length };
+      return { ...s, mic: false, phase: s.phase === "thinking" && !off ? "thinking" : "paused", sending: off ? undefined : s.sending, turns, next: e.reply === undefined ? s.next : s.next + 1 };
     }
   }
 }

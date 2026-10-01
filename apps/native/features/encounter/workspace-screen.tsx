@@ -305,8 +305,17 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const visitLive: LiveAdapter | undefined = patient && props && {
     scope: patient.name.split(" ")[0] ?? patient.name,
     ask: async question => {
-      const { kind, medicine } = await route(question);
+      // Attachments from the dock's + menu go with the question, as `submit` sends them: an image to the imaging review
+      // (Live shows its card); files and documents are kept for reference, which Live says (with an image, the page does).
+      const image = pending.find(item => item.kind === "image" && item.imageType !== "Document");
+      const files = pending.filter(item => item.kind === "file" || item.imageType === "Document");
+      if (pending.length) setPending([]);
+      const fileNote = files.length ? `${files.map(f => f.name).join(", ")} kept for reference. Document review is not switched on yet.` : undefined;
+      if (image) updateEncounter(current => image.uri === "teaching" ? { ...current, imagingAttachment: undefined, hideTeachingImage: false } : { ...current, imagingAttachment: { uri: image.uri, name: image.name } }, true);
+      else if (fileNote) return { notice: fileNote };
+      const { kind, medicine } = image ? { kind: "xray" as const, medicine: undefined } : await route(question);
       const id = kind ? runRouted(kind, question, medicine) : undefined;
+      if (image && fileNote) setNotice(fileNote);
       if (!kind || !id) return { notice: UNROUTED };
       await settled(patient.id, id);
       const lead = leadRef.current.id === id ? leadRef.current.text : undefined;
