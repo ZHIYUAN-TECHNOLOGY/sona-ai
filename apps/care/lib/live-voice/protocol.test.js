@@ -58,8 +58,8 @@ test("sentences are cut where the agent cuts them before speaking each: a stop b
   expect(cut("Take Paracetamol 2.5 mg every 6 hours. Come back if the fever returns!")).toEqual(["Take Paracetamol 2.5 mg every 6 hours.", "Come back if the fever returns!"]);
   expect(cut("Yes. Take it after food, with water.")).toEqual(["Yes. Take it after food, with water."]);
   expect(cut("  Your visit is on Tue 13 Oct.\nBring your medicines.  ")).toEqual(["Your visit is on Tue 13 Oct.", "Bring your medicines."]);
-  // The agent's chunker only knows . ! and ?, so a Chinese answer is spoken (and lit) as one.
-  expect(cut("你的复诊在十月四日。请带上药物清单。")).toEqual(["你的复诊在十月四日。请带上药物清单。"]);
+  // Chinese stops end a sentence with no space after them, as the agent cuts them (one audio frame each).
+  expect(cut("你的复诊在十月四日。请带上药物清单。")).toEqual(["你的复诊在十月四日。", "请带上药物清单。"]);
   expect(cut("")).toEqual([]);
 });
 
@@ -71,4 +71,11 @@ test("each audio frame lights its sentence; the answer's last frame lights the r
   expect(lit(text, spanOf(text, 0, 1, true))).toBe(text);
   // More frames than sentences (a streaming voice): nothing left to light, so the words stay lit rather than going back.
   expect(spanOf(text, 5, 6, false)).toEqual({ start: text.length, end: text.length });
+});
+
+test("sentences are cut where the agent cuts them: after 。！？ with no space, at a line end, and never after Dr.", () => {
+  expect(cut("每天早餐后服用一次阿奇霉素。如果发烧又回来了，请马上回医院。")).toEqual(["每天早餐后服用一次阿奇霉素。", "如果发烧又回来了，请马上回医院。"]);
+  expect(cut("Please see Dr. Aisyah on Tuesday. Bring your medicines.")).toEqual(["Please see Dr. Aisyah on Tuesday.", "Bring your medicines."]);
+  expect(cut("Your plan says this\nTake it after breakfast.")).toEqual(["Your plan says this", "Take it after breakfast."]);
+  expect(agentUrl("https://sona.example.dev", "u1", "ms")).toBe("wss://sona.example.dev/agents/sona-voice-agent/u1?lang=ms");
 });

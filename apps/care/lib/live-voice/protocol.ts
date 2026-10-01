@@ -9,7 +9,8 @@ export const PROTOCOL_VERSION = 1;
 // Sona Care's voice agent (SonaVoiceAgent on the Worker) at the Agents SDK's default route; the instance is the signed-in
 // account, so each patient talks to their own agent. The one place to change if the Worker routes it elsewhere.
 export const agentPath = (instance: string) => `/agents/sona-voice-agent/${encodeURIComponent(instance)}`;
-export const agentUrl = (server: string, instance: string) => `${server.replace(/^http/, "ws")}${agentPath(instance)}`;
+/** `lang`: the app's language, so Sona's own lines (the 999 line, "your care team knows", notices) are in it. */
+export const agentUrl = (server: string, instance: string, lang?: string) => `${server.replace(/^http/, "ws")}${agentPath(instance)}${lang ? `?lang=${lang}` : ""}`;
 
 export type Status = "idle" | "listening" | "thinking" | "speaking";
 export type AudioFormat = "mp3" | "pcm16" | "wav" | "opus";
@@ -87,18 +88,22 @@ export function reduce(t: Talk, a: Action): Talk {
   }
 }
 
+// The agent doesn't end a sentence after these (packages/api/src/voice-agent/answer.ts, ABBREVIATION).
+const ABBREVIATION = /\b(dr|mr|mrs|ms|dato|datin|datuk|puan|encik|e\.g|i\.e|etc|vs|no|tab|caps)\.$/i;
 /**
- * Sona's answer in sentences, cut where the agent's SentenceChunker cuts it before each one is spoken (one audio frame
- * each): at . ! or ? followed by a space or a new line, once the sentence has 10 characters; what is left is the last
- * one. Offsets into `text`, so its words can light up as each frame plays.
+ * Sona's answer in sentences, cut exactly where the agent cuts it before each one is spoken (one audio frame each;
+ * `sentencesOf` in packages/api/src/voice-agent/answer.ts): after 。！？, at a line end, or after . ! ? and a space
+ * (not "Dr."), once the sentence has 10 characters; what is left is the last one. Offsets into `text`, so its words
+ * can light up as each frame plays.
  */
 export function sentencesOf(text: string) {
   const out: { start: number; end: number }[] = [];
   let from = 0;
   for (let i = 0; i < text.length - 1; i++) {
-    if (!".!?".includes(text[i]!) || (text[i + 1] !== " " && text[i + 1] !== "\n")) continue;
-    if (text.slice(from, i + 1).trim().length < 10) continue;
-    out.push({ start: from + text.slice(from).search(/\S/), end: i + 1 });
+    const c = text[i]!;
+    const ends = c === "\n" || "。！？".includes(c) || (".!?".includes(c) && /\s/.test(text[i + 1]!) && !ABBREVIATION.test(text.slice(from, i + 1)));
+    if (!ends || text.slice(from, i + 1).trim().length < 10) continue;
+    out.push({ start: from + text.slice(from).search(/\S/), end: from + text.slice(from, i + 1).trimEnd().length });
     from = i + 1;
   }
   const rest = text.slice(from).search(/\S/);

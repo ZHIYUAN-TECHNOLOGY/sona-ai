@@ -48,7 +48,7 @@ export function useLiveVoice({ voice, voices, onFlood }: { voice?: SonaVoice; vo
     let gone = false;
     void authClient.getCookie().then(cookie => {
       if (gone) return;
-      live.current = connectLive(agentUrl(ENV.EXPO_PUBLIC_SERVER_URL, user), cookie || undefined, {
+      live.current = connectLive(agentUrl(ENV.EXPO_PUBLIC_SERVER_URL, user, currentLang()), cookie || undefined, {
         change: t => {
           // A new answer starts faint and lights up as she speaks it.
           if (t.answer !== latest.current.talk.answer) setUpto(0);
