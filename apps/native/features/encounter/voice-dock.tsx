@@ -100,7 +100,9 @@ function RoundButton({ icon, label, onPress, hidden, reduced }: { icon: BrandIco
 // on the stop glyph's spring (Apple Messages: response 0.4 s, damping 0.8). The pill is laid out right-aligned to the
 // orb and grows out of it by scale from its right edge (transformOrigin), never by animating its frame: a frame
 // animation on a right-anchored view could leave it past the screen edge (1 Oct, iPhone).
-const MORPH = { duration: 400, dampingRatio: 0.8 }, PILL_H = 40;
+// Its width is set, not shrink-to-fit: it lives in the orb's 64 pt box, and an absolute child can't grow past its parent's
+// width on its own (it clipped to "Transcr", 1 Oct). Wide enough for the spinner and the word at 1.4x text.
+const MORPH = { duration: 400, dampingRatio: 0.8 }, PILL_H = 40, PILL_W = 176;
 function pillIn() {
   "worklet";
   return {
@@ -367,9 +369,9 @@ export function VoiceDock(props: Props) {
               </Animated.View>
             </GestureDetector>
             {reading && <Animated.View entering={reducedMotion ? FadeIn.duration(150) : pillIn} exiting={FadeOut.duration(140)} pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden
-              style={{ position: "absolute", right: 0, top: (ORB - PILL_H) / 2, height: PILL_H, borderRadius: PILL_H / 2, transformOrigin: "right center", flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, backgroundColor: palette.ink }}>
+              style={{ position: "absolute", right: 0, top: (ORB - PILL_H) / 2, width: PILL_W, height: PILL_H, borderRadius: PILL_H / 2, transformOrigin: "right center", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 16, backgroundColor: palette.ink }}>
               <ActivityIndicator size="small" color={palette.white} />
-              <Text numberOfLines={1} maxFontSizeMultiplier={1.4} style={{ ...type.footnote, fontWeight: "600", color: palette.white }}>Transcribing…</Text>
+              <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} maxFontSizeMultiplier={1.4} style={{ flexShrink: 1, ...type.footnote, fontWeight: "600", color: palette.white }}>Transcribing…</Text>
             </Animated.View>}
             </View>
           </View>
