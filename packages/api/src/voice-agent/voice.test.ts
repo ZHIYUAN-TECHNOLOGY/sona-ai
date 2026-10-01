@@ -1,0 +1,69 @@
+import { expect, test } from "bun:test";
+
+import { SonaVoice, type PhoneVoice, type Speak, type Spoken } from "./voice";
+
+const MP3 = Uint8Array.from([0xff, 0xfb, 0x90, 0x64, ...Array(60).fill(7)]);
+/** A box that holds the request until it is aborted, like a slow box. */
+const hanging = (seen: AbortSignal[]): Speak => (_text, signal) => {
+  seen.push(signal);
+  return new Promise<Spoken>((_, reject) => signal.addEventListener("abort", () => reject(signal.reason)));
+};
+
+test("a sentence in Sona's voice comes back as the box's MP3", async () => {
+  const told: PhoneVoice[] = [];
+  const voice = new SonaVoice(async () => ({ audio: MP3 }), said => told.push(said));
+  const audio = await voice.synthesize("Ambil ubat selepas makan.", new AbortController().signal);
+  expect(new Uint8Array(audio!)).toEqual(MP3);
+  expect(told).toEqual([]);
+});
+
+test("while the voice starts, the phone reads the sentence and the rest of that turn; the next turn tries the voice again", async () => {
+  const told: [PhoneVoice, AbortSignal | undefined][] = [];
+  let asked = 0;
+  const voice = new SonaVoice(async () => { asked++; return { waking: 25 }; }, (said, turn) => told.push([said, turn]));
+  const turn = new AbortController().signal;
+  expect(await voice.synthesize("Satu.", turn)).toBeNull();
+  expect(await voice.synthesize("Dua.", turn)).toBeNull();
+  expect([asked, told]).toEqual([1, [[{ text: "Satu.", reason: "starting", waking: 25 }, turn], [{ text: "Dua.", reason: "starting", waking: 25 }, turn]]]);
+  await voice.synthesize("Tiga.", new AbortController().signal);
+  expect(asked).toBe(2);
+});
+
+test("a voice slower than its budget is cut off and the phone reads instead; a failing one too", async () => {
+  const seen: AbortSignal[] = [], told: PhoneVoice[] = [];
+  const slow = new SonaVoice(hanging(seen), said => told.push(said), 30);
+  const started = Date.now();
+  expect(await slow.synthesize("Your plan says rest.", new AbortController().signal)).toBeNull();
+  expect(Date.now() - started).toBeLessThan(1000);
+  expect([seen[0]!.aborted, told]).toEqual([true, [{ text: "Your plan says rest.", reason: "slow" }]]);
+  // Even a box that ignores the abort cannot hold the sentence past the budget.
+  const deaf = new SonaVoice(() => new Promise<Spoken>(() => {}), said => told.push(said), 30);
+  expect(await deaf.synthesize("Rest.", new AbortController().signal)).toBeNull();
+  const failing = new SonaVoice(async () => { throw new Error("Baseten voice answered 500"); }, said => told.push(said));
+  expect(await failing.synthesize("Drink water.", new AbortController().signal)).toBeNull();
+  expect(told.slice(1)).toEqual([{ text: "Rest.", reason: "slow" }, { text: "Drink water.", reason: "unavailable" }]);
+});
+
+test("only an answer's first sentence is held to the budget; a later one is made while the one before plays, so it gets twice as long", async () => {
+  const seen: AbortSignal[] = [];
+  const voice = new SonaVoice((text, signal) => text === "Satu." ? Promise.resolve({ audio: MP3 }) : hanging(seen)(text, signal), () => {}, 50);
+  const turn = new AbortController().signal;
+  expect(await voice.synthesize("Satu.", turn)).not.toBeNull();
+  const started = Date.now();
+  expect(await voice.synthesize("Dua.", turn)).toBeNull();
+  expect(Date.now() - started).toBeGreaterThanOrEqual(95);
+});
+
+test("an interruption cancels the sentence in flight: its request is aborted and nothing is played or read", async () => {
+  const seen: AbortSignal[] = [], told: PhoneVoice[] = [];
+  const voice = new SonaVoice(hanging(seen), said => told.push(said));
+  const turn = new AbortController();
+  const pending = voice.synthesize("Your follow-up is on 12 October.", turn.signal);
+  await Bun.sleep(5);
+  turn.abort();
+  expect(await pending).toBeNull();
+  expect([seen[0]!.aborted, told]).toEqual([true, []]);
+  // An already interrupted turn asks the box for nothing.
+  expect(await voice.synthesize("Rest.", turn.signal)).toBeNull();
+  expect(seen.length).toBe(1);
+});

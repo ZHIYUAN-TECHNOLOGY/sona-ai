@@ -16,6 +16,7 @@ import { decideReview, renderReviewPage, reviewPacket } from "@sona-ai/api/insur
 import { wakeFollowUps } from "@sona-ai/api/routers/check-ins";
 import { hospitals } from "@sona-ai/db/schema/clinical";
 import { careLinkOf, hospitalOf } from "@sona-ai/api/routers/hospital";
+import { voiceRoute } from "./agents/voice";
 
 const app = new Hono();
 
@@ -111,6 +112,9 @@ app.get("/live", async (c) => {
   return env.CHANNELS.get(env.CHANNELS.idFromName(channel)).fetch(c.req.raw);
 });
 
+// Sona Care's live voice: a WebSocket to the signed-in patient's own voice agent (see agents/voice.ts).
+app.get("/agents/sona-voice-agent/:id", voiceRoute);
+
 app.get("/", (c) => {
   return c.text("OK");
 });
@@ -118,6 +122,7 @@ app.get("/", (c) => {
 export { EncounterState } from "./encounter-state";
 export { HospitalChannel } from "./hospital-channel";
 export { CheckInAgent } from "./agents/check-in";
+export { SonaVoiceAgent } from "./agents/voice";
 
 /** Matches the hourly cron in packages/infra/alchemy.run.ts. */
 const CHECK_IN_CRON = "0 * * * *";

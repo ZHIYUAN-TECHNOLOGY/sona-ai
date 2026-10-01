@@ -136,10 +136,10 @@ const unique = <T>(values: T[]) => [...new Set(values)];
 const VERDICT = /\b(most likely|likeliest|leading|probable|definite(ly)?|confirms|confirmed|diagnosed|the diagnosis|certainly)\b/i;
 
 // ponytail: word lists, not a reader: they miss a paraphrase, so the nurse's check before sending stays.
-const DOSE_CHANGE = /\b(increase|decrease|reduce|double|halve|skip|stop (taking|your|the))\b|tambah(kan)? dos|kurangkan|gandakan|berhenti (makan|ambil)|加量|减量|加倍|减半|停药|停止服用/i;
-const DIAGNOSIS = /\b(you (have|may have|might have|probably have)|sounds like|could be|likely|probably|diagnos\w*)\b|menghidap|kemungkinan|您(可能)?(患有|得了)|可能是/i;
+export const DOSE_CHANGE = /\b(increase|decrease|reduce|double|halve|skip|stop (taking|your|the))\b|tambah(kan)? dos|kurangkan|gandakan|berhenti (makan|ambil)|加量|减量|加倍|减半|停药|停止服用/i;
+export const DIAGNOSIS = /\b(you (have|may have|might have|probably have)|sounds like|could be|likely|probably|diagnos\w*)\b|menghidap|kemungkinan|您(可能)?(患有|得了)|可能是/i;
 const PROMISED_TIME = /\b(today|tonight|tomorrow|this (morning|afternoon|evening)|within|in (an?|\d+) (minutes?|hours?)|by \d|\d+ ?[ap]\.?m\b)|hari ini|malam ini|esok|dalam masa|sejam|今天|今晚|明天|小时内|分钟内/i;
-const EMERGENCY = /999|emergency|kecemasan|急诊/i;
+export const EMERGENCY = /999|emergency|kecemasan|急诊/i;
 
 /** A reply a nurse may send after checking: in the patient's language, urgent ones sent to 999, and nothing the plan does not say. */
 function safeReply(reply: string, input: Parameters<Models["draftReply"]>[0], plan: string) {
@@ -210,7 +210,13 @@ export function boxes({ apiKey, fetcher = fetch, timeoutMs = 30_000 }: Baseten) 
     else boxState.set(box, { ...(boxState.get(box) ?? { readyUntil: 0 }), checkedAt: Date.now() });
     return ok;
   }
-  async function call(box: Box, route: string, body: BodyInit, contentType?: string, ms = timeoutMs): Promise<any> {
+  /** No longer known to be up: the next call checks its health first. */
+  const down = (box: Box) => { boxState.delete(box); return wake(box); };
+  /**
+   * One request, answered as it arrives. `signal` lets the caller hang up (a patient interrupting Sona Care's live
+   * voice): that is not the box failing, so the box is not marked down for it.
+   */
+  async function send(box: Box, route: string, body: BodyInit, contentType?: string, ms = timeoutMs, signal?: AbortSignal): Promise<Response> {
     // A cold box is not waited for (a request held open through a wake gets reset anyway): the caller's stub answers now.
     if (!await up(box)) {
       starting(box);
@@ -219,16 +225,25 @@ export function boxes({ apiKey, fetcher = fetch, timeoutMs = 30_000 }: Baseten) 
     }
     try {
       const res = await fetcher(`${base(box)}/sync${route}`, {
-        method: "POST", body, headers: contentType ? { ...headers, "Content-Type": contentType } : headers, signal: AbortSignal.timeout(ms),
+        method: "POST", body, headers: contentType ? { ...headers, "Content-Type": contentType } : headers,
+        signal: signal ? AbortSignal.any([AbortSignal.timeout(ms), signal]) : AbortSignal.timeout(ms),
       });
       if (!res.ok) throw new Error(`Baseten ${box} answered ${res.status}`);
+      return res;
+    } catch (error) {
+      if (!signal?.aborted) await down(box);
+      throw error;
+    }
+  }
+  async function call(box: Box, route: string, body: BodyInit, contentType?: string, ms = timeoutMs): Promise<any> {
+    const res = await send(box, route, body, contentType, ms);
+    try {
       // The voice box answers /v1/tts with audio bytes (MP3); every other route answers JSON.
       const out = res.headers.get("content-type")?.startsWith("audio/") ? new Uint8Array(await res.arrayBuffer()) : await res.json();
       answered(box);
       return out;
     } catch (error) {
-      boxState.delete(box); // no longer known to be up: the next call checks its health first
-      await wake(box);
+      await down(box);
       throw error;
     }
   }
@@ -238,7 +253,7 @@ export function boxes({ apiKey, fetcher = fetch, timeoutMs = 30_000 }: Baseten) 
     const out = await call(box, "/v1/chat/completions", JSON.stringify({ model, messages, temperature: 0.1, max_tokens: maxTokens }), "application/json");
     return out?.choices?.[0]?.message?.content as string | undefined;
   }
-  return { call, chat, wake };
+  return { call, chat, wake, send, up };
 }
 
 export function basetenModels(options: Baseten, fallback: Models = stubModels): Models {
