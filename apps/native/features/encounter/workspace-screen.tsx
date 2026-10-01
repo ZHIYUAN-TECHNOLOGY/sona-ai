@@ -243,6 +243,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const props: FeatureProps | undefined = patient ? { patient, onSource: id => router.push({ pathname: "/source", params: { id, patientId: patient.id } }), onOpen: open, onRequest: run } : undefined;
   const visible = compactResponses && !showEarlier ? requests.slice(-1) : requests;
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
+  // Live mode records the room (scribe/live-recorder); the demo plays its sample consultation.
+  const consultation = encounter?.recording === "paused" ? "paused" : live ? "recording" : "playing";
 
   return <View style={{ flex: 1, backgroundColor: palette.canvas }}>
     {home && <Sidebar open={drawer} progress={drawerP} onClose={closeDrawer} onNew={() => router.push("/patients")} />}
@@ -312,8 +314,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       {...patient && { onImage: () => open("xray"), onConsultation: () => open("recording"), onNote: () => open("note"), attachments: pending, onAttachmentsChange: setPending }}
       suggestion={nudge && { text: nudge.text, onPress: () => setAsk({ open: true, shown: nudge.answer }) }}
       above={<>
-        {recording && <Pressable accessibilityRole="button" accessibilityLabel={`Consultation ${encounter?.recording === "paused" ? "paused" : "playing"}, ${encounter?.recordingSeconds} seconds`} accessibilityHint="Opens the consultation recorder" hitSlop={{ top: 2, bottom: 2 }} onPress={() => open("recording")} style={{ alignSelf: "center", minHeight: 40, paddingHorizontal: 16, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: palette.white, boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
-          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: encounter?.recording === "paused" ? palette.amber : palette.red }} /><Text style={{ ...type.footnote, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>Consultation {encounter?.recording === "paused" ? "paused" : "playing"} · {encounter?.recordingSeconds}s</Text>
+        {recording && <Pressable accessibilityRole="button" accessibilityLabel={`Consultation ${consultation}, ${encounter?.recordingSeconds} seconds`} accessibilityHint="Opens the consultation recorder" hitSlop={{ top: 2, bottom: 2 }} onPress={() => open("recording")} style={{ alignSelf: "center", minHeight: 40, paddingHorizontal: 16, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: palette.white, boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: encounter?.recording === "paused" ? palette.amber : palette.red }} /><Text style={{ ...type.footnote, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>Consultation {consultation} · {encounter?.recordingSeconds}s</Text>
         </Pressable>}
         {notice && <Notice>{notice}</Notice>}
         {steps && !drawer && <NextStepBar steps={steps} p={next.p} onExpand={next.show} onAct={act} />}
