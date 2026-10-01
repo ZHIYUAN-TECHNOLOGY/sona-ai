@@ -2,13 +2,15 @@ import { AudioModule, IOSOutputFormat, RecordingPresets, setAudioModeAsync, useA
 import { File } from "expo-file-system";
 import { useEffect, useRef, useState } from "react";
 import { api, errorText } from ".";
+import { base64, partialDue, PARTIAL_MS, wavSoFar } from "./partial-wav";
 import { MAX_MS, SPEECH_DB, turnEnd } from "./turn";
 
 /**
  * Speaking to Sona from the dock, in live mode: record the clinician's voice as 16 kHz mono WAV (what
  * the speech model reads best, the same format Sona Care sends), then turn it into text on the server
  * (`voice.transcribe`, Sona speech on Baseten). Holding the orb records until release; a tap records
- * until a pause after speaking. Audio stays on the phone until it is sent, then it is deleted.
+ * until a pause after speaking. Audio stays on the phone until it is sent, then it is deleted. While it
+ * records, the words so far come back as `partial` (see partial-wav); reading the whole file replaces them.
  */
 export const OPTIONS: RecordingOptions = {
   ...RecordingPresets.HIGH_QUALITY,
@@ -26,6 +28,9 @@ export function useVoiceInput({ onHeard, onError }: { onHeard: (text: string, ho
   const recorder = useAudioRecorder(OPTIONS);
   const status = useAudioRecorderState(recorder, 100);
   const [state, setState] = useState<Hearing>("idle");
+  const [partial, setPartial] = useState("");
+  // turn: which recording a partial belongs to, so a late answer from the last one never shows over this one.
+  const turn = useRef(0), partialBusy = useRef(false), partialSent = useRef(0);
   const starting = useRef(false), dropped = useRef(false), how = useRef<How>("hold"), spoke = useRef(false), quietSince = useRef<number>(undefined), startedAt = useRef(0), ending = useRef(false);
   const handlers = useRef({ onHeard, onError });
   useEffect(() => { handlers.current = { onHeard, onError }; });
@@ -72,6 +77,7 @@ export function useVoiceInput({ onHeard, onError }: { onHeard: (text: string, ho
     } finally {
       starting.current = false;
     }
+    turn.current++; partialSent.current = 0; setPartial("");
     how.current = next; spoke.current = false; quietSince.current = undefined; startedAt.current = Date.now(); ending.current = false;
     setState("listening");
   };
@@ -87,5 +93,27 @@ export function useVoiceInput({ onHeard, onError }: { onHeard: (text: string, ho
     if (end && (how.current === "tap" || now - startedAt.current > MAX_MS)) void stop(end === "send");
   });
 
-  return { state, level, speaking: state === "listening" && level > SPEECH_DB, start, stop };
+  // Every PARTIAL_MS while recording, send the file so far (a tick is skipped while the last partial is still out).
+  // A partial fails silently: it is only a preview, and the final pass says what went wrong.
+  useEffect(() => {
+    if (state !== "listening") { if (state === "idle") setPartial(""); return; }
+    const tick = setInterval(() => {
+      const uri = recorder.uri, mine = turn.current;
+      if (!uri || ending.current) return;
+      const file = new File(uri), size = file.size;
+      if (!partialDue({ busy: partialBusy.current, spoke: spoke.current, sent: partialSent.current, size })) return;
+      partialBusy.current = true; partialSent.current = size;
+      void (async () => {
+        try {
+          const wav = wavSoFar(await file.bytes());
+          if (!wav || ending.current) return;
+          const { text } = await api.voice.transcribe({ audio: base64(wav) });
+          if (turn.current === mine && !ending.current && text.trim()) setPartial(text.trim());
+        } catch { /* preview only */ } finally { partialBusy.current = false; }
+      })();
+    }, PARTIAL_MS);
+    return () => clearInterval(tick);
+  }, [state]);
+
+  return { state, level, partial, speaking: state === "listening" && level > SPEECH_DB, start, stop };
 }

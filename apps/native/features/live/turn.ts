@@ -9,3 +9,6 @@ export function turnEnd({ spoke, quietFor, elapsed }: { spoke: boolean; quietFor
   if (!spoke && elapsed > NOTHING_MS) return "drop";
   return undefined;
 }
+
+/** Metering (dBFS) as 0–1 for the voice bars: a quiet room (-55) is flat, a raised voice (-15) is full height. */
+export const loudness = (db: number) => Math.min(1, Math.max(0, (db + 55) / 40));

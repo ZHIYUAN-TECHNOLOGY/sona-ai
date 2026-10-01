@@ -9,7 +9,8 @@ import { RoundAction, useAccessibleEffects } from "@/components/sona/ui";
 import { EASE_OUT_CSS, riseIn } from "@/components/sona/motion";
 import { LiquidVeil } from "@/components/sona/liquid-veil";
 import { GlassOrb } from "@/components/sona/glass-orb";
-import { OrbGlyph, type OrbActivity } from "@/components/sona/orb-glyph";
+import { Bars, OrbGlyph, type OrbActivity } from "@/components/sona/orb-glyph";
+import { loudness } from "@/features/live/turn";
 import { HalftoneGlint, HalftoneShimmer } from "@/components/sona/halftone-shimmer";
 import { BrandIcon, type BrandIconName } from "@/components/sona/brand-icon";
 import { AttachmentStack, AttachmentStrip } from "@/components/sona/attachment-stack";
@@ -18,9 +19,9 @@ import { BlurView } from "expo-blur";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import * as Haptics from "expo-haptics";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
-import { AccessibilityInfo, Keyboard, Pressable, StyleSheet, TextInput, View, useWindowDimensions } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Keyboard, Pressable, StyleSheet, TextInput, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { Easing, FadeIn, FadeOut, interpolate, useAnimatedReaction, withDelay, withSpring, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, { Easing, FadeIn, FadeOut, interpolate, useAnimatedReaction, withDelay, withSequence, withSpring, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming, type EntryAnimationsValues } from "react-native-reanimated";
 import { useKeyboardHandler } from "react-native-keyboard-controller";
 import { scheduleOnRN } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -94,6 +95,31 @@ function RoundButton({ icon, label, onPress, hidden, reduced }: { icon: BrandIco
   </Animated.View>;
 }
 
+// On release the orb folds into a dark loading pill while the words are read (after Monogram's mic → loading pill),
+// on the stop glyph's spring (Apple Messages: response 0.4 s, damping 0.8). It starts as the orb's own circle and
+// grows left (the frame animates, so the origin moves with the width to keep the right edge on the orb's).
+const MORPH = { duration: 400, dampingRatio: 0.8 }, PILL_H = 40;
+function pillIn(v: EntryAnimationsValues) {
+  "worklet";
+  return {
+    initialValues: { originX: v.targetOriginX + v.targetWidth - ORB, originY: v.targetOriginY - (ORB - PILL_H) / 2, width: ORB, height: ORB, borderRadius: ORB / 2, opacity: 0 },
+    animations: {
+      originX: withSpring(v.targetOriginX, MORPH), originY: withSpring(v.targetOriginY, MORPH), width: withSpring(v.targetWidth, MORPH), height: withSpring(PILL_H, MORPH),
+      borderRadius: withSpring(PILL_H / 2, MORPH), opacity: withTiming(1, { duration: 160 }),
+    },
+  };
+}
+
+/** Heard words, each fading in as it arrives (after Monogram's live transcript). Only the last 36, so a long turn never climbs the screen. */
+function Words({ text, reduced }: { text: string; reduced: boolean }) {
+  const all = text.split(/\s+/), from = Math.max(0, all.length - 36);
+  return <View accessible accessibilityLabel={text} accessibilityLiveRegion="polite" style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", columnGap: 7 }}>
+    {all.slice(from).map((word, i) => <Animated.View key={from + i} entering={reduced ? FadeIn.duration(150) : riseIn({ distance: 6, duration: 300 })}>
+      <Text style={{ ...type.display, fontWeight: "500", color: palette.ink }}>{word}</Text>
+    </Animated.View>)}
+  </View>;
+}
+
 /** Composer tool: bare icon at rest, a small glass bubble under the finger. */
 function ToolButton({ icon, label, onPress }: { icon: BrandIconName; label: string; onPress: () => void }) {
   const reduced = useReduceMotionPreference();
@@ -138,6 +164,11 @@ export function VoiceDock(props: Props) {
   // Each burst of speech is one gust of light in the veil, as each sample word is.
   const [gusts, setGusts] = useState(0);
   useEffect(() => { if (mic.speaking) setGusts(g => g + 1); }, [mic.speaking]);
+  // The voice bars' level, on the UI thread: live, the recorder's metering (10 a second, eased between readings); the
+  // sample pulses once per scripted word. Only the shared value changes, so the bars never re-render.
+  const level = useSharedValue(0);
+  useEffect(() => { if (live) level.set(withTiming(mic.state === "listening" ? loudness(mic.level) : 0, { duration: 100 })); }, [live, mic.level, mic.state]);
+  useEffect(() => { if (!live && words) level.set(withSequence(withTiming(0.8, { duration: 90 }), withTiming(0.2, { duration: 260 }))); }, [live, words]);
   // The orb stays "listening" through reading the words, then settles once the microphone is done.
   const wasHearing = useRef(false);
   useEffect(() => {
@@ -218,7 +249,8 @@ export function VoiceDock(props: Props) {
   }, []);
   const micGesture = thinking ? gestures.stop : gestures.listen;
 
-  const holding = mode === "holding" || mode === "handsfree", handsfree = mode === "handsfree", busy = Boolean(thinking);
+  const holding = mode === "holding" || mode === "handsfree", handsfree = mode === "handsfree" && mic.state !== "reading", busy = Boolean(thinking);
+  const reading = live && mic.state === "reading";
   const liquid = !reducedTransparency && !veilFailed;
   const scrim = busy || (holding && !liquid);
   const veil = holding ? "listening" : flooding && busy ? "flood" : "idle";
@@ -275,14 +307,15 @@ export function VoiceDock(props: Props) {
     </Animated.View>
 
     {holding && <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(140)} pointerEvents="none" style={{ position: "absolute", left: 32, right: 32, bottom: insets.bottom + 132, alignItems: "center" }}>
-      {live ? <>
-        <Text accessibilityLiveRegion="polite" style={{ textAlign: "center", ...type.display, fontWeight: "500", color: palette.muted }}>{mic.state === "reading" ? "Reading what you said…" : "Listening…"}</Text>
-        {mic.state !== "reading" && <Text style={{ marginTop: 10, ...type.footnote, fontWeight: "500", color: palette.ink }}>{handsfree ? "Pause, or tap the orb, and your words appear to check" : "Release to send"}</Text>}
-      </> : <>
-        <Text accessibilityLiveRegion="polite" style={{ textAlign: "center", ...type.display, fontWeight: "500", color: words ? palette.ink : palette.muted }}>{words ? transcript.slice(0, words).join(" ") : "Listening…"}</Text>
-        <Text style={{ marginTop: 10, ...type.footnote, fontWeight: "500", color: palette.ink }}>{handsfree ? "Pause or tap the orb to send" : "Release to send"}</Text>
-        <View style={{ marginTop: 4 }}><SampleLabel source="fixture" what="voice" /></View>
-      </>}
+      {/* The words grow above the dock as they are heard (live: a partial reading every 1.5 s; the sample: its script),
+          with the voice bars beside the hint. */}
+      {(live ? mic.partial : words) ? <Words text={live ? mic.partial : transcript.slice(0, words).join(" ")} reduced={reducedMotion} />
+        : <Text accessibilityLiveRegion="polite" style={{ textAlign: "center", ...type.display, fontWeight: "500", color: palette.muted }}>{mic.state === "reading" ? "Reading what you said…" : "Listening…"}</Text>}
+      {mic.state !== "reading" && <View style={{ marginTop: 10, flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Bars still={reducedMotion} level={level} color={palette.muted} />
+        <Text style={{ ...type.footnote, fontWeight: "500", color: palette.ink }}>{handsfree ? live ? "Pause, or tap stop, to check your words" : "Pause or tap stop to send" : "Release to send"}</Text>
+      </View>}
+      {!live && <View style={{ marginTop: 4 }}><SampleLabel source="fixture" what="voice" /></View>}
     </Animated.View>}
 
     {mode === "composing" && <Pressable accessibilityRole="button" accessibilityLabel="Close message composer" onPress={closeComposer} style={StyleSheet.absoluteFill} />}
@@ -319,16 +352,26 @@ export function VoiceDock(props: Props) {
                 </Animated.View>}
               </Pressable>
             </Animated.View>
+            <View style={{ width: ORB, height: ORB }}>
             <GestureDetector gesture={micGesture}>
-              <Animated.View accessible accessibilityRole="button" accessibilityLabel={busy ? `${thinking}. Stop response` : "Talk to Sona"} accessibilityHint={busy ? undefined : handsfree ? "Double-tap to send what you said." : "Tap to talk hands-free, or hold and release to send. With VoiceOver, double-tap to use the sample command."} accessibilityActions={[{ name: "activate" }]} onAccessibilityAction={() => busy ? onCancel() : onSubmit(spokenPrompt)}
-                style={{ width: ORB, height: ORB, borderRadius: ORB / 2, alignItems: "center", justifyContent: "center", transform: [{ scale: holding && !reducedMotion ? 1.12 : 1 }], transitionProperty: "transform", transitionDuration: 320, transitionTimingFunction: EASE_OUT_CSS } as never}>
+              {/* While the words are read, the orb gives way to the loading pill below. Activate goes through tapOrb, so
+                  VoiceOver starts and stops listening in live mode (the sample answers at once). */}
+              <Animated.View accessible accessibilityRole="button" accessibilityLabel={busy ? `${thinking}. Stop response` : reading ? "Transcribing" : handsfree ? "Stop" : "Talk to Sona"} accessibilityHint={busy || reading ? undefined : handsfree ? "Double-tap to send what you said." : "Tap to talk hands-free, or hold and release to send. With VoiceOver, double-tap to use the sample command."} accessibilityActions={[{ name: "activate" }]} onAccessibilityAction={() => busy ? onCancel() : tapOrb()}
+                style={{ width: ORB, height: ORB, borderRadius: ORB / 2, alignItems: "center", justifyContent: "center", opacity: reading ? 0 : 1, transform: [{ scale: reading && !reducedMotion ? 0.9 : holding && !reducedMotion ? 1.12 : 1 }], transitionProperty: ["opacity", "transform"], transitionDuration: [reading ? 160 : 240, 320], transitionTimingFunction: EASE_OUT_CSS } as never}>
                 {/* Two pre-shadowed layers crossfaded by opacity: animating boxShadow would repaint it every frame. */}
                 <Animated.View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: ORB / 2, backgroundColor: palette.white, boxShadow: "0 8px 22px rgba(40,70,140,0.22)", opacity: holding ? 0 : 1, transitionProperty: "opacity", transitionDuration: 320, transitionTimingFunction: EASE_OUT_CSS }} />
                 <Animated.View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: ORB / 2, backgroundColor: palette.white, boxShadow: "0 10px 28px rgba(60,100,200,0.32)", opacity: holding ? 1 : 0, transitionProperty: "opacity", transitionDuration: 320, transitionTimingFunction: EASE_OUT_CSS }} />
                 <View style={{ position: "absolute", inset: 0 }}><GlassOrb size={ORB} energy={holding ? 1 : busy ? 0.7 : 0} still={reducedMotion} /></View>
-                <OrbGlyph activity={holding ? "listening" : activity ?? (busy ? "searching" : "idle")} still={reducedMotion} />
+                {/* Tap-to-talk shows a stop square (tapping it sends); hold-to-talk keeps the bars, following the voice. */}
+                <OrbGlyph activity={mode === "handsfree" ? "stop" : holding ? "listening" : activity ?? (busy ? "searching" : "idle")} still={reducedMotion} level={level} />
               </Animated.View>
             </GestureDetector>
+            {reading && <Animated.View entering={reducedMotion ? FadeIn.duration(150) : pillIn} exiting={FadeOut.duration(140)} pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden
+              style={{ position: "absolute", right: 0, top: (ORB - PILL_H) / 2, height: PILL_H, borderRadius: PILL_H / 2, overflow: "hidden", flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, backgroundColor: palette.ink }}>
+              <ActivityIndicator size="small" color={palette.white} />
+              <Text numberOfLines={1} maxFontSizeMultiplier={1.4} style={{ ...type.footnote, fontWeight: "600", color: palette.white }}>Transcribing…</Text>
+            </Animated.View>}
+            </View>
           </View>
 
           {/* Attachments waiting to send: a small deck above the mic (after Airbnb's photo pop and slide). */}
