@@ -6,7 +6,7 @@ addStrings({
   en: {
     "doc.all": "All", "doc.careTeam": "Care team", "doc.top": "Top rated", "doc.forYou": "For you",
     "doc.titleLight": "Your", "doc.titleBold": "care team", "doc.noTeam": "Your care team shows here once the hospital adds them.",
-    "doc.find": "Find another doctor", "doc.findHint": "Shows the hospital's doctors, with search and filters", "doc.searchPlaceholder": "Name or specialty", "doc.searchLabel": "Search doctors by name or specialty",
+    "doc.find": "Find another doctor", "doc.findLight": "Find a", "doc.findBold": "doctor", "doc.findHint": "Shows the hospital's doctors, with search and filters", "doc.searchPlaceholder": "Name or specialty", "doc.searchLabel": "Search doctors by name or specialty",
     "doc.matched": "Matched to words in your discharge leaflet", "doc.noMatch": "No doctor matches “{q}”.",
     "doc.nothingForYou": "Nothing in your plan to match yet. Your care team can suggest who to see.", "doc.none": "No doctors here.",
     "doc.recordsLight": "Your", "doc.recordsBold": "records", "doc.plan": "Discharge plan", "doc.planA11y": "Discharge plan, {day}. {line}",
@@ -35,7 +35,7 @@ addStrings({
   ms: {
     "doc.all": "Semua", "doc.careTeam": "Pasukan saya", "doc.top": "Terbaik", "doc.forYou": "Untuk anda",
     "doc.titleLight": "Pasukan", "doc.titleBold": "penjagaan anda", "doc.noTeam": "Pasukan penjagaan anda akan ditunjukkan di sini selepas hospital menambahnya.",
-    "doc.find": "Cari doktor lain", "doc.findHint": "Tunjukkan doktor hospital, dengan carian dan penapis", "doc.searchPlaceholder": "Nama atau kepakaran", "doc.searchLabel": "Cari doktor mengikut nama atau kepakaran",
+    "doc.find": "Cari doktor lain", "doc.findLight": "Cari", "doc.findBold": "doktor", "doc.findHint": "Tunjukkan doktor hospital, dengan carian dan penapis", "doc.searchPlaceholder": "Nama atau kepakaran", "doc.searchLabel": "Cari doktor mengikut nama atau kepakaran",
     "doc.matched": "Dipadankan dengan perkataan dalam risalah discaj anda", "doc.noMatch": "Tiada doktor yang sepadan dengan “{q}”.",
     "doc.nothingForYou": "Belum ada apa-apa dalam pelan anda untuk dipadankan. Pasukan penjagaan anda boleh cadangkan siapa perlu dijumpai.", "doc.none": "Tiada doktor di sini.",
     "doc.recordsLight": "Rekod", "doc.recordsBold": "anda", "doc.plan": "Pelan discaj", "doc.planA11y": "Pelan discaj, {day}. {line}",
@@ -64,7 +64,7 @@ addStrings({
   zh: {
     "doc.all": "全部", "doc.careTeam": "医护团队", "doc.top": "高评分", "doc.forYou": "适合您",
     "doc.titleLight": "您的", "doc.titleBold": "医护团队", "doc.noTeam": "医院添加后，您的医护团队会显示在这里。",
-    "doc.find": "找其他医生", "doc.findHint": "显示医院的医生，可搜索和筛选", "doc.searchPlaceholder": "姓名或专科", "doc.searchLabel": "按姓名或专科搜索医生",
+    "doc.find": "找其他医生", "doc.findLight": "找", "doc.findBold": "医生", "doc.findHint": "显示医院的医生，可搜索和筛选", "doc.searchPlaceholder": "姓名或专科", "doc.searchLabel": "按姓名或专科搜索医生",
     "doc.matched": "根据您出院说明单里的词语匹配", "doc.noMatch": "没有医生符合“{q}”。",
     "doc.nothingForYou": "您的计划里还没有可以匹配的内容。医护团队可以建议看哪位医生。", "doc.none": "这里没有医生。",
     "doc.recordsLight": "您的", "doc.recordsBold": "记录", "doc.plan": "出院计划", "doc.planA11y": "出院计划，{day}。{line}",
