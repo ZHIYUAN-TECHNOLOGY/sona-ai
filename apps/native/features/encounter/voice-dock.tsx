@@ -170,18 +170,21 @@ export function VoiceDock(props: Props) {
   // Whose recording the microphone is ending: its words and errors go back there (Sona Live, or the dock's own hold or tap).
   const owner = useRef<"dock" | "live">("dock");
   const mic = useVoiceInput({
-    onHeard: (text, how) => {
-      if (owner.current === "live") { talk.onHeard(text); return; }
+    onHeard: (text, how, chunk) => {
+      if (owner.current === "live") { talk.onHeard(text, chunk); return; }
       // Holding sends at once; a tap puts the words in the text box to check before sending.
       if (how === "hold") { haptic("select"); setFlooding(true); onSubmit(text); }
       else { onDraft(text); setMode("composing"); }
     },
-    onError: message => {
-      if (owner.current === "live") { talk.onError(message); return; }
+    onError: (message, chunk) => {
+      if (owner.current === "live") { talk.onError(message, chunk); return; }
       setMode(current => (current === "holding" || current === "handsfree" ? "idle" : current)); props.onVoiceError?.(message);
     },
+    // Sona Live's draft fills in as it is heard (the dock's own hold or tap shows `mic.partial`).
+    onWords: (text, chunk) => talk.onWords(text, chunk),
   });
-  const talk = useSonaLive(props.sonaLive, { state: mic.state, partial: mic.partial, start: () => mic.start("tap"), stop: mic.stop }, owner, live, spokenPrompt);
+  // Sona Live records in chunks ("live") into one draft that only Send, or a send phrase, sends.
+  const talk = useSonaLive(props.sonaLive, mic, owner, live, spokenPrompt);
   // Each burst of speech is one gust of light in the veil, as each sample word is (the dock's sample, or Live's).
   const [gusts, setGusts] = useState(0);
   useEffect(() => { if (mic.speaking) setGusts(g => g + 1); }, [mic.speaking]);
