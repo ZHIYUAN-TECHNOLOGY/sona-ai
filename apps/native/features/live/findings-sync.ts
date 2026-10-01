@@ -12,6 +12,8 @@ import { refreshServerData } from "./server-day";
  * (the store's value, never a module read: React Compiler caches those).
  */
 let fixture: Finding[] = [];
+// One empty list until the server's arrive (or for a role that can't read them): reads keyed on findings, like the ward's, re-read only when they change.
+const NONE: Finding[] = [];
 let server: Finding[] | undefined;
 // Every screen counting the ward reads findings on mount (day/counts): one plain re-read in flight serves them all.
 let listing: ReturnType<typeof api.findings.list> | undefined;
@@ -70,5 +72,5 @@ export function useFindings() {
     const next = detectFixture(fixture, encounterId, new Date());
     if (next !== fixture) { fixture = next; notify(); }
   };
-  return { live: on, findings: on ? serverRows ?? [] : fixtureRows, error, track, dismiss, detect };
+  return { live: on, findings: on ? serverRows ?? NONE : fixtureRows, error, track, dismiss, detect };
 }

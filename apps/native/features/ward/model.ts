@@ -1,15 +1,11 @@
-import type { Bed, Owner } from "@sona-ai/domain/ward";
+import { bedKind, type Bed, type BedKind, type Owner } from "@sona-ai/domain/ward";
 import { hhmm } from "@/features/tasks/state";
 
 export * from "@sona-ai/domain/ward";
 
-/** A bed's place on the ward bar: blocked (fit but held) leads, then fit to go, watch, and the rest. */
-export type BedKind = "blocked" | "fit" | "watch" | "other";
+/** The ward bar's order: blocked (fit but held) leads, then fit to go, watch, and the rest. Kinds are the domain's one rule (bedKind). */
 const ORDER: BedKind[] = ["blocked", "fit", "watch", "other"];
 const LABEL: Record<BedKind, string> = { blocked: "blocked", fit: "fit to go", watch: "watch", other: "other" };
-
-export const bedKind = (b: Bed): BedKind =>
-  b.status === "fit" && b.name ? (b.blockers.length ? "blocked" : "fit") : b.status === "watch" ? "watch" : "other";
 
 /** One segment per bed (grouped in ORDER), the legend's non-empty counts, and one spoken summary. */
 export function bedBar(beds: Bed[]) {

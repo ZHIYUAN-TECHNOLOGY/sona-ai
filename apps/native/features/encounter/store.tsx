@@ -5,10 +5,10 @@ import type { Ack } from "@/features/day/counts";
 import { refreshPendingResult } from "@/features/day/model";
 import { errorText, useLive } from "@/features/live";
 import { useServerPatients } from "@/features/live/patients-sync";
-import { pushAndReview, simulateOnServer } from "@/features/live/prescribing-sync";
+import { amendOnServer, pushAndReview, simulateOnServer } from "@/features/live/prescribing-sync";
 import { patients, refreshDemoTimes } from "./fixtures";
 import { effectivePatient } from "./clinical-state";
-import { acceptCard, beginRequest, createCard, finishRequest, initialEncounters, isRepeat, issueSimulation, reviseEncounter, revealSections, queueAmendment, reconcileAmendment } from "./state";
+import { acceptCard, beginRequest, createCard, finishRequest, initialEncounters, isRepeat, issueSimulation, reviseEncounter, revealSections, queueAmendment, reconcileAmendment, type ServerReceipt } from "./state";
 import type { Capability, Encounter, Patient, RequestState } from "./types";
 
 type Store = {
@@ -91,26 +91,36 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
         }, delay));
       }
     }
-    const settle = () => {
+    // Settles this request unless the visit, its revision or the request moved on meanwhile.
+    const finish = (end: (current: Encounter) => Encounter) => {
       if (activeRef.current !== id) return;
       setEncounters(prev => {
-        let current = prev[id]!;
+        const current = prev[id]!;
         if (current.revision !== revision || current.requests.find(r => r.id === req.id)?.status !== "streaming") return prev;
-        if (simulateInvalid) return { ...prev, [id]: reconcileAmendment(finishRequest(current, req.id, "failed", "This response requested an unsupported component. The renderer kept your existing content. Turn off the invalid-component fixture and retry."), req.id) };
-        if (simulateFailure) return { ...prev, [id]: reconcileAmendment(finishRequest(current, req.id, "failed", "The fixture stream was interrupted. Your completed results and edits are kept."), req.id) };
-        current = acceptCard(current, patient, createCard(req));
-        if (kind === "briefing" || kind === "xray" || kind === "prescription") current = revealSections(current, req.id, 3);
-        if (kind === "medication") current = { ...current, medicationCheckedRevision: revision };
-        if (kind === "prescription") {
-          // Asking shows the card; only an amendment (its own reviewed form) issues here. Otherwise the card's Prescribe does.
-          if (amendmentId) current = issueSimulation(current, patient, `simulation-${id}-${revision}`);
-          current = { ...current, cards: current.cards.map(card => card.requestId === req.id ? { ...card, prescription: current.prescription ? { ...current.prescription } : undefined } : card) };
-        }
-        return { ...prev, [id]: reconcileAmendment(finishRequest(current, req.id, "complete"), req.id) };
+        return { ...prev, [id]: reconcileAmendment(end(current), req.id) };
       });
     };
-    if (live) settle(); else timers.current.push(setTimeout(settle, kind === "prescription" ? 1800 : 1150));
-  }, [clearTimers, live, simulateFailure, simulateInvalid]);
+    const fail = (error: string) => finish(current => finishRequest(current, req.id, "failed", error));
+    const settle = (receipt?: ServerReceipt) => finish(current => {
+      if (simulateInvalid) return finishRequest(current, req.id, "failed", "This response requested an unsupported component. The renderer kept your existing content. Turn off the invalid-component fixture and retry.");
+      if (simulateFailure) return finishRequest(current, req.id, "failed", "The fixture stream was interrupted. Your completed results and edits are kept.");
+      current = acceptCard(current, patient, createCard(req));
+      if (kind === "briefing" || kind === "xray" || kind === "prescription") current = revealSections(current, req.id, 3);
+      if (kind === "medication") current = { ...current, medicationCheckedRevision: revision };
+      if (kind === "prescription") {
+        // Asking shows the card; only an amendment (its own reviewed form) issues here. Otherwise the card's Prescribe does.
+        if (amendmentId) current = issueSimulation(current, patient, receipt?.requestId ?? `simulation-${id}-${revision}`, receipt);
+        current = { ...current, cards: current.cards.map(card => card.requestId === req.id ? { ...card, prescription: current.prescription ? { ...current.prescription } : undefined } : card) };
+      }
+      return finishRequest(current, req.id, "complete");
+    });
+    // Live: an amendment's review and its new receipt go through the server, and the card shows what it answered (or why it refused).
+    if (live && user && amendmentId && (kind === "medication" || kind === "prescription")) {
+      const current = stateRef.current[id]!;
+      void (kind === "medication" ? pushAndReview(patient.encounterId, current).then(() => undefined)
+        : amendOnServer(patient.encounterId, user.id, current.prescriptionAmendment ?? "", amendmentId)).then(settle, e => fail(errorText(e)));
+    } else if (live) settle(); else timers.current.push(setTimeout(settle, kind === "prescription" ? 1800 : 1150));
+  }, [clearTimers, live, user, simulateFailure, simulateInvalid]);
   // The one way to run the review and the simulation, for the prescribe card and the next-step bar alike, without adding answers.
   // Live: the server records the review and re-checks everything before it writes the receipt, and refuses a role that can't
   // prescribe (both callers show that role a lock instead: useCanPrescribe).
@@ -125,7 +135,7 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
     setEncounters(prev => ({ ...prev, [id]: { ...prev[id]!, working: kind } }));
     if (live && user) {
       const call = kind === "medication" ? pushAndReview(patient.encounterId, encounter).then(() => settle(reviewed))
-        : simulateOnServer(patient.encounterId, user.id).then(receipt => settle(current => issueSimulation(current, patient, receipt.requestId)));
+        : simulateOnServer(patient.encounterId, user.id).then(receipt => settle(current => issueSimulation(current, patient, receipt.requestId, receipt)));
       call.catch(e => { setRunErrors(errors => ({ ...errors, [id]: errorText(e) })); settle(current => current); });
       return;
     }

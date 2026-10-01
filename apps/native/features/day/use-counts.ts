@@ -33,13 +33,20 @@ export function usePendingResult(patientId?: string) {
   return mine && !mine.ack ? mine.result : undefined;
 }
 
-/** Every bed: the server's in live mode (one read shared by every caller); else the authored ward with the X-ray's open findings on Bed 6. */
-export function useWardBeds() {
+/**
+ * Every bed, and whether live mode is still reading them: the server's in live mode (one read shared by every
+ * caller), none until it arrives and never the demo's fixture, so the ward's list never swaps the fixture's rows
+ * for the server's under the eye; else the authored ward with the X-ray's open findings on Bed 6.
+ */
+export function useWard() {
   const { patients, encounters } = useEncounter();
-  const { findings } = useFindings();
+  const { findings, live } = useFindings();
   const server = useServerBeds(findings);
-  return server ?? withFindingBlockers(wardBeds(patients, encounters), findings);
+  return live ? { beds: server ?? [], loading: !server } : { beds: withFindingBlockers(wardBeds(patients, encounters), findings), loading: false };
 }
+
+/** Every bed (see useWard). */
+export const useWardBeds = () => useWard().beds;
 
 /** The patients who need you, each with the most urgent reason. */
 export function useNeedsYou() {

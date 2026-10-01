@@ -7,8 +7,9 @@ import { layaEvaluator, pickCard } from "./laya";
  * Sona's ask bar on the models: Laya routes a visit request to its card (ask.route), and Gemma answers a
  * page's free question from that page's own data as a spec from the ask catalogue (ask.free). Either one
  * failing, timing out or answering off the data returns `{ source: "fixture" }`, and the app keeps its
- * keyword routing or its honest "can't answer that here". A failed call wakes its box for next time, and
- * while the box is starting the fixture says in how many minutes (`waking`).
+ * keyword routing or its honest "can't answer that here" (`unanswered`: the model ran, but nothing it said
+ * stayed on the page's data). A failed call wakes its box for next time, and while the box is starting the
+ * fixture says in how many minutes (`waking`).
  */
 export const LAYA_MODEL = "sona-laya";
 
@@ -88,6 +89,8 @@ export async function freeAnswer(baseten: Baseten, input: { scope: string; quest
     // Through the adapter's box gate: a cold brain is woken and not waited for.
     const spec = groundedSpec(jsonIn(await boxes(baseten).chat("brain", BRAIN_MODEL, FREE, user, 900)), context, input.question);
     if (spec) return { source: "model" as const, model: BRAIN_MODEL, spec };
+    // The model answered, but not from the page's data (or said the page doesn't say): the app says so, not that it is off.
+    return { source: "fixture" as const, unanswered: true as const };
   } catch { /* the box was starting or failed; it is woken for next time */ }
   return { source: "fixture" as const, ...wakingOf("brain") };
 }

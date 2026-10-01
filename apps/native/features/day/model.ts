@@ -1,5 +1,5 @@
 import { testInSentence } from "@sona-ai/domain/handover";
-import { GL_DENIED, SUGGESTED, type Bed, type Owner } from "@sona-ai/domain/ward";
+import { GL_DENIED, SUGGESTED, bedKind, type Bed, type Owner } from "@sona-ai/domain/ward";
 import { defaultMedications } from "@/features/encounter/clinical-state";
 import { demoTime } from "@/features/encounter/fixtures";
 import type { Encounter, Patient, Task } from "@/features/encounter/types";
@@ -203,7 +203,7 @@ export const ownersOf = (tasks: { kind?: string | null; sourceId?: string | null
  */
 export type Unowned = { bed: string; name: string; hours: number; blockers: { id: string; label: string; suggested: Owner }[] };
 export function unownedBlocked(beds: Bed[], owners: Record<string, string | undefined>): Unowned[] {
-  return beds.filter(b => b.status === "fit" && b.name && b.blockers.length).flatMap(b => {
+  return beds.filter(b => bedKind(b) === "blocked").flatMap(b => {
     const open = b.blockers.filter(x => !owners[x.id]);
     return open.length ? [{ bed: b.bed, name: b.name!, hours: b.waitingHours ?? 0, blockers: open.map(x => ({ id: x.id, label: x.label, suggested: SUGGESTED[x.kind] })) }] : [];
   }).sort((a, b) => b.hours - a.hours);

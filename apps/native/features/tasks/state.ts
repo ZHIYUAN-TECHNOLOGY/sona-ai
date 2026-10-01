@@ -66,6 +66,25 @@ export function parseDuePhrase(text: string, today = new Date()): { phrase: stri
   return { phrase, due: at(((day - today.getDay() + 7) % 7) || 7) };
 }
 
+/**
+ * When the due-date ruler saves: once per drag, when the finger lifts, at the day it will come to rest
+ * (the scroll view's snap rule: the next tick moving forward, the previous moving back, the nearest when
+ * still); where it settles corrects that only if it differs. A scroll nobody dragged (placing the ruler
+ * on open) never saves, and neither does the day already saved. `jump`: a tapped interval, a picked
+ * date or a VoiceOver step, saved at once. `sync`: the saved value changed elsewhere (the server's copy).
+ */
+export function dueRuler(value: string, tick: number, save: (due: string) => void, today?: Date) {
+  let held = value, dragged = false;
+  const commit = (day: number) => { const due = dayFromToday(Math.max(0, day), today); if (due !== held) { held = due; save(due); } };
+  return {
+    sync: (next: string) => { held = next; },
+    drag: () => { dragged = true; },
+    release: (target: number, velocity: number) => { const at = target / tick; commit(velocity > 0 ? Math.ceil(at) : velocity < 0 ? Math.floor(at) : Math.round(at)); },
+    settle: (offset: number) => { if (dragged) { dragged = false; commit(Math.round(offset / tick)); } },
+    jump: (day: number) => commit(day),
+  };
+}
+
 /** "14:05" on the device clock. */
 export const hhmm = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 

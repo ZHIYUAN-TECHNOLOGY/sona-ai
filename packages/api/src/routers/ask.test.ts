@@ -85,7 +85,7 @@ test("while Gemma is starting, a free question is not held: fixture at once, wit
   expect(cold.calls.map(c => c.url.split("/").at(-1))).toEqual(["health", "wake"]);
 });
 
-test("an invalid or ungrounded free answer is fixture: off-catalogue, invented rows, names or numbers, review cards and task-done", async () => {
+test("an invalid or ungrounded free answer is fixture, marked unanswered (the model ran): off-catalogue, invented rows, names or numbers, review cards and task-done", async () => {
   const rejected = [
     { unanswered: true },
     "not json at all",
@@ -98,10 +98,10 @@ test("an invalid or ungrounded free answer is fixture: off-catalogue, invented r
     { root: "f", elements: { f: { type: "AskColumn", props: {}, children: ["f-0"] }, "f-0": { type: "AskReview", props: { title: "Mark done", items: [], what: "x", confirm: "Done", done: "Done", op: "task-done:SYN-1086:t1" }, children: [] } } },
     { root: "f", elements: { f: { type: "AskColumn", props: {}, children: ["f-0"] }, "f-0": { type: "Script", props: {}, children: [] } } },
   ];
-  for (const reply of rejected) {
-    const { baseten } = boxes(() => gemma(reply));
-    expect(await (await nurse(baseten)).ask.free(free)).toEqual({ source: "fixture" });
-  }
+  // One database for all of them: the fake box answers with whichever reply is current.
+  let reply: unknown;
+  const client = await nurse(boxes(() => gemma(reply)).baseten);
+  for (reply of rejected) expect(await client.ask.free(free)).toEqual({ source: "fixture", unanswered: true });
 });
 
 test("grounding: counts up to the page's rows, names from the data and a row without its op pass; the answer is still the app's schema", () => {

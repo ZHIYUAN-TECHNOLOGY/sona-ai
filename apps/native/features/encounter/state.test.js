@@ -128,6 +128,16 @@ test("amendment lifecycle survives presentation changes and stops on stale conte
   expect(reconcileAmendment(failed, prescriptionRequest.id).amendmentOperation.phase).toBe("failed");
 });
 
+test("live mode shows the server's receipt: its time, its id and, for an amendment, the receipt it supersedes", () => {
+  const issued = issueSimulation(eligible(), patient, "rx-1");
+  const revised = reviseEncounter({ ...issued, cards: [{ ...createCard(request), prescription: issued.prescription }] });
+  const server = { id: "r-2", requestId: "amendment-op", revision: 3, createdAt: new Date("2026-10-01T02:05:00Z"), payload: { amendment: { reason: "Weight re-measured", supersedes: "rx-1" } } };
+  // The server wrote the receipt after its own checks passed, so it is the outcome even where this phone's checks lag.
+  const amended = issueSimulation(revised, patient, server.requestId, server).prescription;
+  expect(amended).toMatchObject({ id: "amendment-op", status: "created", reasons: [], createdAt: "2026-10-01T02:05:00.000Z", supersedes: "rx-1" });
+  expect(amended.audit).toContain("Server receipt r-2 · server revision 3");
+});
+
 test("a question typed after an evidence answer continues the evidence thread unless another capability claims it", () => {
   expect(routeInThread("What harms should I watch for?", "evidence")).toBe("evidence");
   expect(routeInThread("What harms should I watch for?", "briefing")).toBe(null);

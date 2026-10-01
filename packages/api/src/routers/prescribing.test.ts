@@ -57,6 +57,28 @@ test("with every check passed the prescription is receipted once per revision; a
   expect(await refusal(api.prescribing.simulate({ ...simulate, requestId: "rx-2" }))).toEqual(["PRECONDITION_FAILED", ["Current medication review"]]);
 });
 
+test("an amendment goes through the server: it needs an earlier receipt and a newer reviewed revision, names what it supersedes and why, and leaves that receipt unchanged", async () => {
+  const api = await signedIn();
+  const amend = { encounterId: "visit-1042", requestId: "rx-amend", approvedBy: "dr-aisyah", reason: "Weight re-measured at 64 kg" };
+  expect(await refusal(api.prescribing.amend(amend))).toEqual(["PRECONDITION_FAILED", []]); // nothing to amend yet
+  const edited = await api.encounter.edit({ encounterId: "visit-1042", expectedRevision: 1, prescriptionInputs: eligible, medicationEntries: confirmed });
+  await api.prescribing.review({ encounterId: "visit-1042", expectedRevision: edited.revision });
+  const first = await api.prescribing.simulate(simulate);
+  // Nothing recorded since that receipt: nothing to amend.
+  expect(await refusal(api.prescribing.amend(amend))).toEqual(["PRECONDITION_FAILED", []]);
+
+  // The amended record must be reviewed again before the server writes anything.
+  const amended = await api.encounter.edit({ encounterId: "visit-1042", expectedRevision: 2, prescriptionInputs: { ...eligible, weightKg: "64" } });
+  expect(await refusal(api.prescribing.amend(amend))).toEqual(["PRECONDITION_FAILED", ["Current medication review"]]);
+  await api.prescribing.review({ encounterId: "visit-1042", expectedRevision: amended.revision });
+  expect(await code(api.prescribing.amend({ ...amend, approvedBy: "dr-someone-else" }))).toBe("FORBIDDEN");
+  const receipt = await api.prescribing.amend(amend);
+  expect(receipt).toMatchObject({ kind: "prescription", requestId: "rx-amend", revision: 3, approvedBy: "dr-aisyah",
+    payload: { medication: "Paracetamol", simulated: true, amendment: { reason: "Weight re-measured at 64 kg", supersedes: "rx-1" } } });
+  expect(await api.prescribing.amend(amend)).toEqual(receipt); // a replay returns it
+  expect(await api.prescribing.simulate(simulate)).toEqual(first); // the earlier receipt is unchanged
+});
+
 test("a note save appends the next revision; a save against an older revision is refused and the latest stays", async () => {
   const api = await signedIn();
   expect(await api.note.get({ encounterId: "visit-1042" })).toEqual({ encounterId: "visit-1042", revision: 0, sentences: [] });
@@ -73,7 +95,7 @@ test("a note save appends the next revision; a save against an older revision is
 
 test("prescribing and note routes need a signed-in user", async () => {
   const api = await signedIn(false);
-  const codes = await Promise.all([api.prescribing.review({ encounterId: "visit-1042", expectedRevision: 1 }), api.prescribing.simulate(simulate),
+  const codes = await Promise.all([api.prescribing.review({ encounterId: "visit-1042", expectedRevision: 1 }), api.prescribing.simulate(simulate), api.prescribing.amend({ ...simulate, reason: "x" }),
     api.note.get({ encounterId: "visit-1042" }), api.note.save({ encounterId: "visit-1042", sentences: [], expectedRevision: 0 })].map(code));
-  expect(codes).toEqual(["UNAUTHORIZED", "UNAUTHORIZED", "UNAUTHORIZED", "UNAUTHORIZED"]);
+  expect(codes).toEqual(["UNAUTHORIZED", "UNAUTHORIZED", "UNAUTHORIZED", "UNAUTHORIZED", "UNAUTHORIZED"]);
 });

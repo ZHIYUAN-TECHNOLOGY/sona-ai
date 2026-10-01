@@ -23,7 +23,7 @@ import { completeServerTask, createServerTask, refreshServerData, useServerData,
 import { dueGroup, rankByDue, taskCounts } from "./counts";
 import { ASK_SPACE, WithSona } from "@/features/ask";
 import { overdue } from "@/features/ask/answers";
-import { changeReceipt, createTaskOnce, dayFromToday, friendlyDate, localDate, longDate, MONTHS, mentionQuery, parseDuePhrase, proposedTask, taskDraftErrors, taskProposal, type TaskDraft } from "./state";
+import { changeReceipt, createTaskOnce, dayFromToday, dueRuler, friendlyDate, localDate, longDate, MONTHS, mentionQuery, parseDuePhrase, proposedTask, taskDraftErrors, taskProposal, type TaskDraft } from "./state";
 
 /**
  * Follow-up answer: a generated section in the tasks screen's language. Before any task exists it
@@ -136,9 +136,10 @@ function relativeDay(i: number) {
 
 /**
  * Due-date ruler (after Habitastic's timeline scroll): one tick per day slides under a fixed ink
- * marker. Drag with momentum; it snaps to a day, ticks a haptic per day passed, and commits when
- * it settles. Months and years are labelled above, review intervals and yearly anniversaries
- * below (tap to jump), and the native compact picker jumps straight to any future date. The
+ * marker. Drag with momentum; it snaps to a day, ticks a haptic per day passed, and saves once, when
+ * the finger lifts, at the day it comes to rest. Months and years are labelled above, review
+ * intervals and yearly anniversaries below (tap to jump), and the native compact picker jumps
+ * straight to any future date. The
  * ruler never ends: ticks are virtualised and another year loads before you reach the last one.
  */
 function DayRuler({ value, onPick }: { value: string; onPick: (due: string) => void }) {
@@ -154,18 +155,21 @@ function DayRuler({ value, onPick }: { value: string; onPick: (due: string) => v
   const x = useSharedValue(initial * TICK);
   // Only the day index crosses to React, once per day passed, never per frame.
   useAnimatedReaction(() => clampDay(x.value / TICK), (i, prev) => { if (prev !== null && i !== prev) { scheduleOnRN(setShown, i); scheduleOnRN(haptic, "select"); } });
-  const latest = useRef({ value, onPick }); latest.current = { value, onPick };
-  const commit = (i: number) => { const due = days[i]; if (due && due !== latest.current.value) latest.current.onPick(due); };
+  // One save per drag, when the finger lifts; never for the scroll that places it on open, nor for the day already saved (state.ts).
+  const latest = useRef(onPick); latest.current = onPick;
+  const [{ sync, drag, release, settle, jump: save }] = useState(() => dueRuler(value, TICK, due => latest.current(due)));
+  useEffect(() => sync(value), [sync, value]);
   const onScroll = useAnimatedScrollHandler({
     onScroll: e => { x.set(e.contentOffset.x); },
-    onEndDrag: e => { if (Math.abs(e.velocity?.x ?? 0) < 0.05) scheduleOnRN(commit, clampDay(e.contentOffset.x / TICK)); },
-    onMomentumEnd: e => { scheduleOnRN(commit, clampDay(e.contentOffset.x / TICK)); },
+    onBeginDrag: () => { scheduleOnRN(drag); },
+    onEndDrag: e => { scheduleOnRN(release, e.targetContentOffset?.x ?? e.contentOffset.x, e.velocity?.x ?? 0); },
+    onMomentumEnd: e => { scheduleOnRN(settle, e.contentOffset.x); },
   });
   const jump = (i: number, animated = !reducedMotion) => {
     const day = clampDay(i);
     // A date beyond what is loaded: load up to it (and a year past), then jump once it has rendered.
     if (day >= days.length) { pendingJump.current = day; setCount(day + YEAR_OF_DAYS); return; }
-    ref.current?.scrollToOffset({ offset: day * TICK, animated }); setShown(day); commit(day);
+    ref.current?.scrollToOffset({ offset: day * TICK, animated }); setShown(day); save(day);
   };
   useEffect(() => { const day = pendingJump.current; if (day !== null && day < days.length) { pendingJump.current = null; jumpRef.current(day, false); } }, [days]);
   const jumpRef = useRef(jump); jumpRef.current = jump;
@@ -188,7 +192,8 @@ function DayRuler({ value, onPick }: { value: string; onPick: (due: string) => v
   const getItemLayout = useCallback((_: unknown, i: number) => ({ length: TICK, offset: side + TICK * i, index: i }), [side]);
   const edge = useMemo(() => <View style={{ width: side }} />, [side]);
   const loadMore = useCallback(() => setCount(value => value + YEAR_OF_DAYS), []);
-  const pickerDate = new Date(`${days[shown]}T12:00:00`);
+  // The picker shows the saved day, not each day passed: fed a new date per tick, it sent stale ones back mid-drag, each one a save.
+  const pickerDate = new Date(`${dayFromToday(value ? dayIndex(value) : initial)}T12:00:00`);
   return <View style={{ gap: 8 }}>
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
       {/* Only the readout is adjustable (swipe up/down a day); the native picker beside it stays reachable for big jumps. */}
