@@ -167,10 +167,10 @@ test("methods without a hosted model yet stay on the stub, and never say a model
   // Every box is cold, so the hosted readers say when their model should be ready...
   expect(await models.briefing({ patient })).toMatchObject({ source: "fixture", waking: COLD_START_MIN.brain });
   expect(await models.xrayRead({ image: new Uint8Array(1), contentType: "image/png" })).toMatchObject({ source: "fixture", waking: COLD_START_MIN.xray });
+  expect(await models.deidentify({ text: "Amelia is better.", known: { names: ["Amelia Tan"] } })).toMatchObject({ source: "fixture", waking: COLD_START_MIN.pii });
   // ...and the stub-only ones answer exactly as the stub does, calling nothing.
   const asked = calls.length;
-  const known = { names: ["Amelia Tan"] }, note = { image: new Uint8Array(1), contentType: "image/png", patient: { name: "Amelia Tan", knownMedicines: [] } };
-  expect(await models.deidentify({ text: "Amelia Tan", known })).toEqual(await stubModels.deidentify({ text: "Amelia Tan", known }));
+  const note = { image: new Uint8Array(1), contentType: "image/png", patient: { name: "Amelia Tan", knownMedicines: [] } };
   expect(await models.readMedicinePhoto({})).toEqual(await stubModels.readMedicinePhoto({}));
   expect(await models.readHandwrittenNote(note)).toEqual(await stubModels.readHandwrittenNote(note));
   expect(await models.incidentalFindings({ patientId: "SYN-1042" })).toEqual(await stubModels.incidentalFindings({ patientId: "SYN-1042" }));

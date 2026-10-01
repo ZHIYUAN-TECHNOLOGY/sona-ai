@@ -6,7 +6,9 @@ import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
-import { stubModels } from "../models";
+import { BOXES, basetenModels, boxState } from "../baseten-models";
+import { stubModels, type Models } from "../models";
+import { PII_MODEL } from "../pii-model";
 import { scheduleCheckIns } from "./check-ins";
 import { appRouter } from "./index";
 
@@ -17,7 +19,7 @@ const session = (id: string) => ({
 const codeOf = (p: Promise<unknown>) => p.then(() => "OK", (e: { data?: { code?: string }; code?: string }) => e.data?.code ?? e.code);
 
 /** The demo hospital with a doctor, a manager, a nurse, Amelia's Sona Care account and her check-ins, and an in-memory bucket. */
-async function world() {
+async function world(models?: Models) {
   const db = await createTestDb();
   const now = new Date("2026-09-28T10:00:00+08:00");
   await seedDemo(db, now);
@@ -28,7 +30,7 @@ async function world() {
   const uploads = { put: async (key: string, value: Uint8Array) => { bucket.set(key, value); }, get: async () => null };
   // Time moves a second per read, so "newest first" is well defined.
   let ticks = 0;
-  const as = (id: string) => createRouterClient(appRouter, { context: { db, session: session(id), now: () => new Date(now.getTime() + ++ticks * 1000), uploads } });
+  const as = (id: string) => createRouterClient(appRouter, { context: { db, session: session(id), now: () => new Date(now.getTime() + ++ticks * 1000), uploads, models } });
   return { db, bucket, doctor: as("doctor"), nurse: as("nurse"), manager: as("management"), amelia: as("amelia") };
 }
 const saveNote = (doctor: Awaited<ReturnType<typeof world>>["doctor"], expectedRevision: number, text: string, excludeFromTraining?: boolean) =>
@@ -70,6 +72,26 @@ test("the scribe's draft names Amelia by first name: the rules miss it, the gate
   // A blocked sample cannot be approved; it can be excluded. excludeFromTraining on a save keeps the note out too.
   expect(await codeOf(manager.training.decide({ id: note.id, decision: "approve" }))).toBe("SAMPLE_BLOCKED");
   expect((await manager.training.decide({ id: note.id, decision: "exclude" })).status).toBe("excluded");
+});
+
+test("with OpenMed on the PII box the same draft loses her first name too, so it passes the gate and waits for review", async () => {
+  boxState.clear();
+  // The box finds "Amelia" wherever the rules left it; every other box is down.
+  const fetcher = (async (url: string, init: RequestInit) => {
+    if (!url.includes(BOXES.pii)) return new Response("no", { status: 503 });
+    if (url.endsWith("/health")) return new Response("ok");
+    const { text } = JSON.parse(init.body as string) as { text: string };
+    const at = text.indexOf("Amelia");
+    return Response.json({ entities: at < 0 ? [] : [{ label: "first_name", start: at, end: at + 6, confidence: 0.99 }] });
+  }) as typeof fetch;
+  const { doctor, manager, amelia } = await world(basetenModels({ apiKey: "k", fetcher }));
+  await manager.training.setContributes({ contributes: true });
+  await amelia.care.setTrainingConsent({ consented: true });
+  await saveNote(doctor, 0, "Amelia Tan (SYN-1042): cough for five days; fever since yesterday.");
+  const [note] = await manager.training.samples();
+  expect(note).toMatchObject({ source: "note-edit", status: "pending", leak: null, output: "[NAME] ([MRN]): cough for five days; fever since yesterday." });
+  expect(note!.input).toStartWith("[NAME] reports a cough");
+  expect((await manager.training.status()).deidentifier).toBe(PII_MODEL);
 });
 
 test("export writes approved samples as JSONL, stamps the version, and the next export starts after it", async () => {

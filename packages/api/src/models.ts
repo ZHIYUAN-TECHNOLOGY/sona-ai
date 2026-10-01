@@ -135,7 +135,7 @@ export const stubModels: Models = {
   // ponytail: keyword rules and templates (packages/domain/messages) until a model triages and drafts.
   triageMessage: ({ text }) => fixture(triageByRules(text)),
   draftReply: input => fixture({ text: draftByRules(input) }),
-  // ponytail: full names, IC, phone, email and MRN by rule (packages/domain/training); OpenMed's clinical PII model replaces it, and catches first names too.
+  // ponytail: full names, IC, phone, email and MRN by rule (packages/domain/training); on Baseten OpenMed's PII model adds first names and other people (./pii-model).
   deidentify: ({ text, known }) => fixture(deidentifyByRules(text, known)),
   answerFromPlan: () => fixture({ answer: "", grounded: false, urgent: false }),
   // ponytail: the stub has no eyes; it returns what the sample note says, whatever the photo. Gemma 4 vision

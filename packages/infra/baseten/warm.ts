@@ -1,6 +1,6 @@
 /**
- * Demo-day warm-up for Sona's Baseten boxes (docs/handoff.md#baseten-boxes): wakes brain, voice, xray and Laya,
- * then checks every box every 20 s, printing each one's state and the minutes elapsed, until all four answer
+ * Demo-day warm-up for Sona's Baseten boxes (docs/handoff.md#baseten-boxes): wakes every box in BOXES (brain, voice,
+ * xray, Laya, PII), then checks every box every 20 s, printing each one's state and the minutes elapsed, until all answer
  * (45 minutes at most). Cold starts have taken 9–30 minutes, so run it at least 30 minutes before the demo.
  *
  *   BASETEN_API_KEY=... bun packages/infra/baseten/warm.ts wake
@@ -48,4 +48,4 @@ for (;;) {
   }
   await sleep(20_000);
 }
-console.log("All four answer. Idle boxes scale to zero after 5 minutes unless Min replicas is 1 (see this file's header).");
+console.log("All answer. Idle boxes scale to zero after 5 minutes unless Min replicas is 1 (see this file's header).");
