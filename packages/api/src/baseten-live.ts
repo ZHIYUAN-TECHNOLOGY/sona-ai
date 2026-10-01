@@ -40,4 +40,9 @@ await timed("codes", () => models.suggestCodes({ sentences: note }));
 await timed("appeal", () => models.draftAppeal({ denialReason: DENIAL_REASONS[2]!.reason, denialCode: "DOC", codes: CODES, sentences: note, patient: { name: amelia.name } }));
 await timed("discharge", () => models.draftDischarge({ patient: amelia, language: "ms" }));
 await timed("x-ray", () => models.xrayRead({ image: readFileSync(new URL("../../../apps/native/features/imaging/assets/normal-pa-chest.jpg", import.meta.url).pathname), contentType: "image/jpeg" }));
+// The image readers (./vision-models): the normal film should find nothing, the sample label and note read as printed and written.
+const asset = (path: string) => readFileSync(new URL(`../../../${path}`, import.meta.url).pathname);
+await timed("x-ray findings", () => models.incidentalFindings({ patientId: amelia.id, image: asset("apps/native/features/imaging/assets/normal-pa-chest.jpg"), contentType: "image/jpeg" }));
+await timed("medicine photo", () => models.readMedicinePhoto({ image: asset("apps/care/assets/scan/sample-medicine.jpg"), contentType: "image/jpeg" }));
+await timed("handwritten note", () => models.readHandwrittenNote({ image: asset("apps/native/assets/scan/sample-ward-note.jpg"), contentType: "image/jpeg", patient: { name: "[NAME]", knownMedicines: [] } }));
 await timed("rerank", () => basetenReranker(baseten)("steroid untuk pneumonia", ["Corticosteroids are not recommended routinely in adults with non-severe community-acquired pneumonia.", "Paracetamol 500 mg to 1 g every 4 to 6 hours."]));

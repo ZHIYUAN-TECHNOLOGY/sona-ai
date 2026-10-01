@@ -50,6 +50,14 @@ export function detectFixture(rows: Finding[], encounterId: string, seenAt: Date
   return found.length ? [...rows, ...found] : rows;
 }
 
+/**
+ * The findings to mark on the image shown, since a mark belongs to the film it was read from: the authored ones go on
+ * the bundled reference film only; on an image of the user's own, only a model's read of that very upload (its key).
+ * A local or unread image of their own therefore has none, never the reference film's.
+ */
+export const onImage = (findings: Finding[], encounterId: string | undefined, image: { reference: true } | { key?: string }) =>
+  findings.filter(f => f.encounterId === encounterId && ("reference" in image ? f.source === "fixture" : f.source !== "fixture" && Boolean(image.key) && f.imageKey === image.key));
+
 /** Fixture mode's follow-up task, as the server makes it; none when the rule needs no follow-up. */
 export function followUpTask(f: Finding, owner = "Attending doctor"): Task | undefined {
   if (!f.dueAt) return undefined;

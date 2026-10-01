@@ -14,7 +14,7 @@ import { motion, palette, type } from "@/lib/theme";
 import { Button, field, ICON, pillStyle, SampleLabel, surfaceStyle } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 import { Pill } from "./pill";
-import { addWaiting, medLine, messageFor, statusOf, unplanned, type PhotoMedicine, type PhotoReading } from "./photo-model";
+import { addWaiting, afterRead, medLine, messageFor, statusOf, unplanned, type PhotoMedicine, type PhotoReading } from "./photo-model";
 import { useMe } from "../me";
 import "./strings";
 
@@ -46,7 +46,7 @@ function keep(m: PhotoMedicine) {
 const newRequestId = () => `care-photo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 type Photo = { source: number | { uri: string }; base64?: string | null; mimeType?: string | null };
-type Step = { kind: "choose"; error?: string } | { kind: "reading"; photo: Photo } | { kind: "read"; photo: Photo; reading: PhotoReading; key?: string; sample: boolean } | { kind: "sent"; med: string };
+type Step = { kind: "choose"; error?: string } | { kind: "reading"; photo: Photo } | { kind: "read"; photo: Photo; reading: PhotoReading; key?: string; sample: boolean; unread?: { waking?: number } } | { kind: "sent"; med: string };
 
 /** The entry (under the medicine list) and the waiting medicines above it, leaving out any the plan (`planned`) already lists. */
 export function PhotoMedicines({ planned }: { planned: string[] }) {
@@ -99,8 +99,12 @@ function PhotoSheet({ onClose }: { onClose: () => void }) {
   const read = async (photo: Photo, sample: boolean) => {
     setStep({ kind: "reading", photo });
     try {
-      const r = await client.care.readMedicinePhoto(sample || !photo.base64 ? {} : { photo: { contentType: photo.mimeType ?? "image/jpeg", dataBase64: photo.base64 } });
-      setStep({ kind: "read", photo, sample: r.source === "fixture", key: r.key, reading: { name: r.name, dose: r.dose, how: r.frequency } });
+      const own = !sample && Boolean(photo.base64);
+      const r = await client.care.readMedicinePhoto(own ? { photo: { contentType: photo.mimeType ?? "image/jpeg", dataBase64: photo.base64! } } : {});
+      const shown = afterRead(r, own);
+      setStep({ kind: "read", photo, key: r.key, ...shown });
+      // Nothing was read off their photo: the fields open for them to type it in.
+      setEditing(Boolean(shown.unread));
     } catch { setStep({ kind: "choose", error: t("photo.failed") }); }
   };
   const pick = async (from: "camera" | "library") => {
@@ -156,12 +160,15 @@ function PhotoSheet({ onClose }: { onClose: () => void }) {
         <Animated.View entering={row(0)} style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
           <Image source={step.photo.source} contentFit="cover" style={{ width: 64, height: 64, borderRadius: 16 }} accessibilityIgnoresInvertColors />
           <View style={{ flex: 1, gap: 2 }}>
-            <Text style={{ ...type.footnote, fontWeight: "600", color: palette.faint }}>{t("photo.weRead")}</Text>
-            <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{medLine(step.reading)}</Text>
+            {!step.unread && <Text style={{ ...type.footnote, fontWeight: "600", color: palette.faint }}>{t("photo.weRead")}</Text>}
+            <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{step.unread ? t("photo.typeIt") : medLine(step.reading)}</Text>
           </View>
-          <Pill name={step.reading.name} size={48} />
+          {!step.unread && <Pill name={step.reading.name} size={48} />}
         </Animated.View>
         <SampleLabel source={step.sample ? "fixture" : undefined} what="photo" />
+        {step.unread && <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber }}>
+          {step.unread.waking ? t("photo.starting", { min: step.unread.waking }) : t("photo.unread")}
+        </Text>}
         {editing ? <Animated.View entering={reduced ? undefined : FadeIn.duration(160)} style={{ gap: 10 }}>
           {([["name", "photo.name"], ["dose", "photo.dose"], ["how", "photo.how"]] as const).map(([k, label]) => <View key={k} style={{ gap: 4 }}>
             <Text style={{ ...type.footnote, color: palette.muted }}>{t(label)}</Text>

@@ -25,8 +25,8 @@ const BAND: Record<RiskBand, { label: string; ink: string; fill: string }> = {
   low: { label: "Low risk", ink: palette.muted, fill: "rgba(20,28,40,0.06)" },
 };
 
-/** Where the findings came from, honestly: authored fixtures are never presented as a reading. */
-const provenance = (f: Finding) => f.source === "fixture" ? "Unvalidated · not read from this image" : `Unvalidated · from ${f.source}`;
+/** Where the findings came from, honestly: authored fixtures are never presented as a reading, and a model's is never a validated one. */
+const provenance = (f: Finding) => f.source === "fixture" ? "Unvalidated · not read from this image" : `Not a validated read · marked by ${f.source}`;
 
 export function FindingsCard({ findings, error, focus, onFocus, onTrack, onDismiss }: { findings: Finding[]; error?: string; focus?: string; onFocus?: (id: string) => void; onTrack?: (f: Finding) => void; onDismiss?: (f: Finding, reason: string) => void }) {
   const { reducedMotion } = useAccessibleEffects();
@@ -56,7 +56,7 @@ function FindingRow({ n, finding: f, focused, onFocus, onTrack, onDismiss }: { n
       </Animated.View>
       <View style={{ flex: 1, gap: 3 }}>
         <MarkedText text={f.label} style={{ ...type.subhead, fontWeight: "600", color: palette.ink }} />
-        <Text selectable style={{ ...type.footnote, color: palette.muted }}>{f.intervalDays ? followUpLine(f) : "No routine follow-up needed"}</Text>
+        <Text selectable style={{ ...type.footnote, color: palette.muted }}>{f.intervalDays ? followUpLine(f) : f.ruleId ? "No routine follow-up needed" : "Size not read · measure it to set the follow-up"}</Text>
       </View>
       <View style={{ height: 22, paddingHorizontal: 8, borderRadius: 11, justifyContent: "center", backgroundColor: band.fill }}>
         <Text style={{ ...type.caption, fontWeight: "700", color: band.ink }}>{band.label}</Text>

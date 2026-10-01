@@ -6,6 +6,7 @@ import { huddle } from "@sona-ai/domain/ward";
 import { LANGUAGE_NAME, chatModels, jsonIn } from "./chat-models";
 import { stubModels, type Models, type Origin } from "./models";
 import { scribeModels } from "./scribe-model";
+import { chatLook, visionModels } from "./vision-models";
 
 /**
  * Sona's models on the Baseten boxes (packages/infra/baseten, docs/handoff.md#baseten-boxes): Gemma in box ①,
@@ -246,6 +247,8 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
   const hosted: Partial<Models> = {
     ...chatModels(brain, BRAIN_MODEL, fallback),
     ...scribeModels(call, BRAIN_MODEL, fallback),
+    // The photo, film and handwriting readers: MedGemma in box ③ (box ①'s Gemma takes no images).
+    ...visionModels(chatLook(body => call("xray", "/v1/chat/completions", body, "application/json"), XRAY_MODEL), XRAY_MODEL, fallback),
 
     async transcribe(input) {
       try {
@@ -415,7 +418,8 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
   // A stub answer from a hosted method whose box is starting says when to expect the model. Box ② hears and speaks, box ③
   // sees, box ① writes the rest; the stub-only methods are not hosted, so nothing is starting for them.
   const withWaking = Object.entries(hosted).map(([method, run]) => {
-    const box: Box = method === "transcribe" || method === "speak" ? "voice" : method === "xrayRead" ? "xray" : "brain";
+    const box: Box = method === "transcribe" || method === "speak" ? "voice"
+      : ["xrayRead", "readMedicinePhoto", "incidentalFindings", "readHandwrittenNote"].includes(method) ? "xray" : "brain";
     return [method, async (input: never) => {
       const answer = await (run as (input: never) => Promise<Origin>)(input);
       return answer.source === "fixture" ? { ...answer, ...wakingOf(box) } : answer;

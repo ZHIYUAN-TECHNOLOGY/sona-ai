@@ -88,6 +88,8 @@ addStrings({
     "photo.message": "Please check a medicine I added from a photo: {med}.", "photo.added": "Added by your care team",
     "photo.noCamera": "No camera here. Choose a photo or use the sample.", "photo.failed": "We couldn't read that photo. Try again or use the sample.",
     "photo.sendFailed": "Not sent. Check your connection and try again.",
+    "photo.typeIt": "Type the medicine", "photo.unread": "We couldn't read a medicine on this photo. Type it in below, or take another photo.",
+    "photo.starting": "Photo reading is starting (about {min} min). Type the medicine in below, or try again then.",
   },
   ms: {
     "photo.add": "Tambah dari gambar", "photo.addLine": "Kotak ubat atau surat · pasukan penjagaan anda menyemaknya",
@@ -101,6 +103,8 @@ addStrings({
     "photo.message": "Tolong semak ubat yang saya tambah dari gambar: {med}.", "photo.added": "Ditambah oleh pasukan penjagaan anda",
     "photo.noCamera": "Tiada kamera di sini. Pilih gambar atau guna contoh.", "photo.failed": "Kami tidak dapat membaca gambar itu. Cuba lagi atau guna contoh.",
     "photo.sendFailed": "Tidak dihantar. Semak sambungan anda dan cuba lagi.",
+    "photo.typeIt": "Taip ubat", "photo.unread": "Kami tidak dapat membaca ubat pada gambar ini. Taip di bawah, atau ambil gambar lain.",
+    "photo.starting": "Bacaan gambar sedang dimulakan (kira-kira {min} min). Taip ubat di bawah, atau cuba lagi nanti.",
   },
   zh: {
     "photo.add": "拍照添加", "photo.addLine": "药盒或信件 · 由医护团队核对",
@@ -114,6 +118,8 @@ addStrings({
     "photo.message": "请帮我核对从照片添加的药物：{med}。", "photo.added": "医护团队已添加",
     "photo.noCamera": "这里没有相机。请选择照片或使用示例。", "photo.failed": "无法读取这张照片。请重试或使用示例。",
     "photo.sendFailed": "未发送。请检查网络后重试。",
+    "photo.typeIt": "输入药物", "photo.unread": "无法从这张照片读出药物。请在下面输入，或重新拍照。",
+    "photo.starting": "照片识别正在启动（约{min}分钟）。请在下面输入药物，或稍后再试。",
   },
 });
 

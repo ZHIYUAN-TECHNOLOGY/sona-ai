@@ -73,15 +73,18 @@ export const findingsRouter = {
     const at = clockOf(context);
     const ids = read.findings.map(f => `finding:${visit.id}:${f.kind}`);
     if (!ids.length) return [];
+    // A mark belongs to the image it was read from: the authored fixture was read from no upload, so it carries no key
+    // (the app shows it on the bundled reference film only), and a model's carries the key of the image it read.
+    const imageKey = read.source === "model" ? xray?.key ?? null : null;
     await db.insert(findings).values(read.findings.map((f, i) => {
       const rule = ruleFor(f, rules);
       return {
-        id: ids[i]!, hospitalId, patientId: visit.patientId, encounterId: visit.id, imageKey: xray?.key, kind: f.kind, label: f.label, sizeMm: f.sizeMm,
+        id: ids[i]!, hospitalId, patientId: visit.patientId, encounterId: visit.id, imageKey, kind: f.kind, label: f.label, sizeMm: f.sizeMm,
         location: f.location, riskBand: rule?.riskBand ?? "intermediate", ruleId: rule?.id, source: read.source === "model" ? read.model : "fixture",
         dueAt: rule && dueDate(rule, at), createdAt: at,
       };
-    // A repeat read may place the mark better (or add its box); status, rule and due date stay as they were.
-    })).onConflictDoUpdate({ target: findings.id, set: { location: sql`excluded.location`, label: sql`excluded.label`, source: sql`excluded.source` } });
+    // A repeat read may place the mark better (or add its box), on whichever image it read; status, rule and due date stay as they were.
+    })).onConflictDoUpdate({ target: findings.id, set: { location: sql`excluded.location`, label: sql`excluded.label`, source: sql`excluded.source`, imageKey: sql`excluded.image_key` } });
     return listFindings(db, hospitalId, at, inArray(findings.id, ids));
   }),
   /**

@@ -1,7 +1,19 @@
 import { expect, test } from "bun:test";
 import { tFor } from "@/lib/i18n";
 import "./strings";
-import { addWaiting, medLine, messageFor, statusOf, unplanned } from "./photo-model";
+import { addWaiting, afterRead, medLine, messageFor, statusOf, unplanned } from "./photo-model";
+
+test("a reading of their own photo is shown as read; the sample's words are never offered as their own photo's", () => {
+  const model = { name: "Amlodipine", dose: "5 mg", source: "model", model: "medgemma-1.5-4b" };
+  expect(afterRead(model, true)).toEqual({ reading: { name: "Amlodipine", dose: "5 mg", how: undefined }, sample: false });
+  const sample = { name: "Cetirizine", dose: "10 mg", frequency: "once at night", source: "fixture" };
+  // The bundled sample photo: the sample's reading, labelled.
+  expect(afterRead(sample, false)).toEqual({ reading: { name: "Cetirizine", dose: "10 mg", how: "once at night" }, sample: true });
+  // Their own photo came back as the sample: nothing was read, so they type it (and are told when the reader is starting).
+  expect(afterRead(sample, true)).toEqual({ reading: { name: "" }, sample: false, unread: { waking: undefined } });
+  expect(afterRead({ ...sample, waking: 4 }, true).unread).toEqual({ waking: 4 });
+  expect(tFor("en")("photo.starting", { min: 4 })).toBe("Photo reading is starting (about 4 min). Type the medicine in below, or try again then.");
+});
 
 test("the care message says what was read, in the patient's language", () => {
   const read = { name: "Cetirizine", dose: "10 mg", how: "once at night" };
