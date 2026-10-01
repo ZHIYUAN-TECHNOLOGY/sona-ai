@@ -3,7 +3,7 @@ import { addStrings } from "./i18n";
 /** Words shared across Sona Care: buttons, the dock, time words, the emergency line, the language picker. */
 addStrings({
   en: {
-    "common.back": "Back", "common.close": "Close", "common.cancel": "Cancel", "common.send": "Send", "common.done": "Done",
+    "common.back": "Back", "common.close": "Close", "common.cancel": "Cancel", "common.send": "Send", "common.done": "Done", "common.showPassword": "Show password", "common.hidePassword": "Hide password",
     "common.keepHolding": "Keep holding…", "common.holdHint": "Press and hold to confirm",
     "common.emergency": "Not for emergencies · call 999",
     "common.error": "Something went wrong. Try again.",
@@ -34,7 +34,7 @@ addStrings({
     "sample.model": "Sample · {what} model not switched on", "sample.hint": "Why this is not a model answer", "sample.photo": "photo reading",
   },
   ms: {
-    "common.back": "Kembali", "common.close": "Tutup", "common.cancel": "Batal", "common.send": "Hantar", "common.done": "Selesai",
+    "common.back": "Kembali", "common.close": "Tutup", "common.cancel": "Batal", "common.send": "Hantar", "common.done": "Selesai", "common.showPassword": "Tunjukkan kata laluan", "common.hidePassword": "Sembunyikan kata laluan",
     "common.keepHolding": "Terus tekan…", "common.holdHint": "Tekan dan tahan untuk sahkan",
     "common.emergency": "Bukan untuk kecemasan · hubungi 999",
     "common.error": "Ada masalah. Sila cuba lagi.",
@@ -65,7 +65,7 @@ addStrings({
     "sample.model": "Contoh · model {what} belum dihidupkan", "sample.hint": "Mengapa ini bukan jawapan model", "sample.photo": "bacaan gambar",
   },
   zh: {
-    "common.back": "返回", "common.close": "关闭", "common.cancel": "取消", "common.send": "发送", "common.done": "完成",
+    "common.back": "返回", "common.close": "关闭", "common.cancel": "取消", "common.send": "发送", "common.done": "完成", "common.showPassword": "显示密码", "common.hidePassword": "隐藏密码",
     "common.keepHolding": "请继续按住…", "common.holdHint": "按住以确认",
     "common.emergency": "紧急情况请勿使用 · 请拨打 999",
     "common.error": "出了点问题，请再试一次。",

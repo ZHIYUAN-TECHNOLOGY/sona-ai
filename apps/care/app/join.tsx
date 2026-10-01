@@ -6,14 +6,14 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { FadeIn, FadeInDown, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
-import { Text, TextInput } from "@/lib/text";
+import { Text } from "@/lib/text";
 import { errorText } from "@/features/errors";
 import { Head, Label } from "@/features/sign-in/head";
 import "@/features/sign-in/strings";
 import { tFor, useLang } from "@/lib/i18n";
 import { authClient } from "@/lib/auth-client";
 import { palette, type } from "@/lib/theme";
-import { BackButton, Button, field, pillStyle } from "@/lib/ui";
+import { BackButton, Button, Field, pillStyle } from "@/lib/ui";
 import { hospitalName } from "@/features/me";
 import { client, queryClient } from "@/utils/orpc";
 
@@ -92,8 +92,8 @@ export default function Join() {
 
         {showField ? <Animated.View entering={still ? undefined : FadeIn.duration(180)} style={{ gap: 8 }}>
           <Label>{t("join.codeLabel")}</Label>
-          <TextInput autoFocus={typing} value={code} onChangeText={setCode} placeholder="ABCD-2345" placeholderTextColor={palette.muted} autoCapitalize="characters" autoCorrect={false}
-            accessibilityLabel={t("join.codeLabel")}style={{ ...field, fontSize: 20, letterSpacing: 2, textAlign: "center" }} />
+          <Field autoFocus={typing} value={code} onChangeText={setCode} placeholder="ABCD-2345" autoCapitalize="characters" autoCorrect={false}
+            accessibilityLabel={t("join.codeLabel")} style={{ fontSize: 20, letterSpacing: 2, textAlign: "center" }} />
         </Animated.View>
           : <Pressable accessibilityRole="button" onPress={() => setTyping(true)} style={{ minHeight: 48, alignSelf: "center", justifyContent: "center", paddingHorizontal: 12 }}>
             <Text style={{ ...type.body, fontWeight: "600", color: palette.ink, textDecorationLine: "underline" }}>{t("join.type")}</Text>
@@ -122,11 +122,11 @@ export default function Join() {
           </Text>
           {!session?.user && <View style={{ alignSelf: "stretch", gap: 8 }}>
             <Label>{t("join.name")}</Label>
-            <TextInput value={name} onChangeText={setName} placeholder={t("join.nameHint")} placeholderTextColor={palette.muted} autoComplete="name" accessibilityLabel={t("join.name")} style={field} />
+            <Field value={name} onChangeText={setName} placeholder={t("join.nameHint")} autoComplete="name" accessibilityLabel={t("join.name")} />
             <Label>{t("in.emailLabel")}</Label>
-            <TextInput value={email} onChangeText={setEmail} placeholder="you@example.com" placeholderTextColor={palette.muted} autoCapitalize="none" autoComplete="email" keyboardType="email-address" accessibilityLabel={t("in.emailLabel")} style={field} />
+            <Field value={email} onChangeText={setEmail} placeholder="you@example.com" autoCapitalize="none" autoCorrect={false} spellCheck={false} autoComplete="email" keyboardType="email-address" accessibilityLabel={t("in.emailLabel")} />
             <Label>{t("in.password")}</Label>
-            <TextInput value={password} onChangeText={setPassword} placeholder={t("in.passwordHint")} placeholderTextColor={palette.muted} secureTextEntry autoComplete="new-password" accessibilityLabel={t("in.password")} style={field} />
+            <Field secret value={password} onChangeText={setPassword} placeholder={t("in.passwordHint")} autoComplete="new-password" accessibilityLabel={t("in.password")} />
           </View>}
         </Animated.View>
         {error && <Text selectable accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.red, textAlign: "center" }}>{error}</Text>}

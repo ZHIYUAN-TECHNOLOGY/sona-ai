@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { authClient } from "@/lib/auth-client";
 import { palette, type } from "@/lib/theme";
-import { Button, CircleButton, field, ICON } from "@/lib/ui";
+import { Button, CircleButton, Field, field, ICON } from "@/lib/ui";
 import { orpc, queryClient } from "@/utils/orpc";
 import { useQuery } from "@tanstack/react-query";
 import { LanguageRow } from "@/features/language/picker";
@@ -205,8 +205,10 @@ function PhoneStep({ phone, setPhone, onSent, demo }: { phone: string; setPhone:
     <Label>{t("in.mobile")}</Label>
     <View style={{ flexDirection: "row", gap: 8 }}>
       <View style={[field, { justifyContent: "center", paddingHorizontal: 14 }]}><Text style={{ fontSize: 17, fontWeight: "600", color: palette.ink }}>🇲🇾 +60</Text></View>
-      <TextInput value={phone} onChangeText={setPhone} placeholder="12-345 6789" placeholderTextColor={palette.muted} keyboardType="phone-pad" textContentType="telephoneNumber" autoComplete="tel"
-        autoFocus accessibilityLabel={t("in.mobile")}onSubmitEditing={() => { void send(); }} style={[field, { flex: 1, fontSize: 17, fontVariant: ["tabular-nums"] }]} />
+      <View style={{ flex: 1 }}>
+        <Field value={phone} onChangeText={setPhone} placeholder="12-345 6789" keyboardType="phone-pad" textContentType="telephoneNumber" autoComplete="tel"
+          autoFocus accessibilityLabel={t("in.mobile")} onSubmitEditing={() => { void send(); }} style={{ fontVariant: ["tabular-nums"] }} />
+      </View>
     </View>
     {error && <Text selectable accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
     {demo && <DemoHint label={t("in.demo", { phone: `0${demo.phone.slice(3)}` })} onPress={() => setPhone(demo.phone.slice(3))} />}
@@ -238,9 +240,9 @@ function CodeStep({ phone, onDone, onChangeNumber, demoCode }: { phone: string; 
     <Pressable accessibilityLabel={t("in.codeA11y", { n: code.length })}onPress={() => input.current?.focus()} style={{ flexDirection: "row", gap: 8, justifyContent: "center" }}>
       {Array.from({ length: 6 }, (_, i) => {
         const on = i === code.length && !busy;
-        // The kit's field: #FAFAFA on the hairline, 16 pt corners; the box being typed into is ringed in ink.
+        // Each box is a field (white on the visible edge, 16 pt corners); the one being typed into is edged in blue, as a focused Field.
         return <View key={i} style={{ width: 48, height: 58, borderRadius: 16, borderCurve: "continuous", alignItems: "center", justifyContent: "center",
-          backgroundColor: palette.card, borderWidth: on ? 1.5 : 1, borderColor: on ? palette.ink : palette.line }}>
+          backgroundColor: palette.white, borderWidth: on ? 1.5 : 1, borderColor: on ? palette.blue : field.borderColor }}>
           <Text style={{ fontSize: 24, fontWeight: "600", color: palette.ink, fontVariant: ["tabular-nums"] }}>{code[i] ?? ""}</Text>
         </View>;
       })}
@@ -266,6 +268,7 @@ function EmailStep({ onDone }: { onDone: () => void }) {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const secret = useRef<import("react-native").TextInput>(null);
   const t = useT();
   const ready = email.trim().includes("@") && password.length >= 8;
   const submit = async () => {
@@ -276,10 +279,13 @@ function EmailStep({ onDone }: { onDone: () => void }) {
   };
   return <View style={{ flex: 1, gap: 8 }}>
     <Label>{t("in.emailLabel")}</Label>
-    <TextInput value={email} onChangeText={setEmail} placeholder="you@example.com" placeholderTextColor={palette.muted} autoCapitalize="none" autoComplete="email" keyboardType="email-address" autoFocus accessibilityLabel={t("in.emailLabel")} style={field} />
+    {/* Return moves on to the password and then signs in; iOS pairs the two for Password AutoFill. */}
+    <Field value={email} onChangeText={setEmail} placeholder="you@example.com" autoCapitalize="none" autoCorrect={false} spellCheck={false} autoComplete="email" textContentType="username"
+      keyboardType="email-address" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => secret.current?.focus()} autoFocus accessibilityLabel={t("in.emailLabel")} />
     <View style={{ height: 6 }} />
     <Label>{t("in.password")}</Label>
-    <TextInput value={password} onChangeText={setPassword} placeholder={t("in.passwordHint")} placeholderTextColor={palette.muted} secureTextEntry autoComplete="current-password" accessibilityLabel={t("in.password")} style={field} />
+    <Field ref={secret} secret value={password} onChangeText={setPassword} placeholder={t("in.passwordHint")} autoComplete="current-password" textContentType="password"
+      returnKeyType="go" onSubmitEditing={() => { if (ready && !busy) void submit(); }} accessibilityLabel={t("in.password")} />
     {error && <Text selectable accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
     <View style={{ flex: 1, minHeight: 24 }} />
     <Button label={t("in.signIn")}busy={busy} disabled={!ready} onPress={() => { void submit(); }} />

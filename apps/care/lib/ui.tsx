@@ -2,10 +2,10 @@ import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import Svg, { Path } from "react-native-svg";
-import { useState, type ReactNode } from "react";
-import { AccessibilityInfo, ActivityIndicator, Pressable, View, type TextStyle, type ViewStyle } from "react-native";
-import { Text } from "./text";
-import Animated, { cancelAnimation, Easing, LinearTransition, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import { useEffect, useState, type ReactNode, type Ref } from "react";
+import { AccessibilityInfo, ActivityIndicator, Pressable, View, type TextInput as RNTextInput, type TextInputProps, type TextStyle, type ViewStyle } from "react-native";
+import { Text, TextInput } from "./text";
+import Animated, { cancelAnimation, Easing, interpolateColor, LinearTransition, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { HalftoneGlint } from "./halftone";
 import { accent, palette, type } from "./theme";
@@ -46,11 +46,17 @@ export function Card({ children, feature = false, style }: { children: ReactNode
 /** Primary: the kit's near-black capsule (only the action that matters). `quiet`: a white capsule on a hairline. */
 export function Button({ label, onPress, busy, disabled, quiet }: { label: string; onPress: () => void; busy?: boolean; disabled?: boolean; quiet?: boolean }) {
   const off = disabled || busy;
-  return <Pressable accessibilityRole="button" accessibilityState={{ disabled: off, busy }} disabled={off} onPress={onPress}
-    style={({ pressed }) => ({ minHeight: 52, borderRadius: 26, paddingHorizontal: 20, overflow: "hidden", alignItems: "center", justifyContent: "center", borderWidth: 1,
-      borderColor: quiet ? "#EDEDED" : palette.dark, backgroundColor: quiet ? palette.white : palette.dark, opacity: disabled ? 0.45 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
-    {busy ? <ActivityIndicator color={quiet ? palette.ink : palette.white} /> : <Text style={{ fontSize: 16, fontWeight: "600", color: quiet ? palette.ink : palette.white }}>{label}</Text>}
-  </Pressable>;
+  // Coming on as the form fills fades in (after Family's Continue), rather than snapping.
+  const on = useSharedValue(disabled ? 0.45 : 1);
+  useEffect(() => { on.set(withTiming(disabled ? 0.45 : 1, SNAP)); }, [disabled, on]);
+  const fade = useAnimatedStyle(() => ({ opacity: on.get() }));
+  return <Animated.View style={fade}>
+    <Pressable accessibilityRole="button" accessibilityState={{ disabled: off, busy }} disabled={off} onPress={onPress}
+      style={({ pressed }) => ({ minHeight: 52, borderRadius: 26, paddingHorizontal: 20, overflow: "hidden", alignItems: "center", justifyContent: "center", borderWidth: 1,
+        borderColor: quiet ? "#EDEDED" : palette.dark, backgroundColor: quiet ? palette.white : palette.dark, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
+      {busy ? <ActivityIndicator color={quiet ? palette.ink : palette.white} /> : <Text style={{ fontSize: 16, fontWeight: "600", color: quiet ? palette.ink : palette.white }}>{label}</Text>}
+    </Pressable>
+  </Animated.View>;
 }
 
 /**
@@ -174,6 +180,8 @@ export function CircleButton({ d, label, onPress, dot, tint = palette.ink, size 
 
 /** Icon paths shared across screens (Lucide-style, 24 units). */
 export const ICON = {
+  eye: "M2.062 12.348a1 1 0 0 1 0-.696a10.75 10.75 0 0 1 19.876 0a1 1 0 0 1 0 .696a10.75 10.75 0 0 1-19.876 0M15 12a3 3 0 1 1-6 0a3 3 0 0 1 6 0",
+  eyeOff: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575a1 1 0 0 1 0 .696a10.8 10.8 0 0 1-1.444 2.49m-6.41-.679a3 3 0 0 1-4.242-4.242M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151a1 1 0 0 1 0-.696a10.75 10.75 0 0 1 4.446-5.143M2 2l20 20",
   back: "m15 18l-6-6l6-6", close: "M18 6L6 18M6 6l12 12", plus: "M12 5v14M5 12h14",
   bell: "M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0",
   phone: "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z",
@@ -190,7 +198,51 @@ export function Chip({ label, onPress, dot, tone, accessibilityLabel }: { label:
   </Pressable>;
 }
 
-export const field = { minHeight: 52, borderRadius: 18, paddingHorizontal: 16, fontSize: 17, color: palette.ink, backgroundColor: palette.card, borderWidth: 1, borderColor: palette.line } as const;
+// A field's resting edge: white on a visible edge, where the kit's #FAFAFA on a #F5F5F5 hairline vanished into the canvas.
+const EDGE = "rgba(30,40,90,0.14)";
+export const field = { minHeight: 52, borderRadius: 18, paddingHorizontal: 16, fontSize: 17, color: palette.ink, backgroundColor: palette.white, borderWidth: 1, borderColor: EDGE } as const;
+
+// A small state change (focus, the eye, a button coming on): fast, with a strong ease-out and no spring.
+const SNAP = { duration: 180, easing: Easing.bezier(0.23, 1, 0.32, 1) };
+
+/**
+ * A text field patients find at a glance (after Family's sign-up field): white with a visible edge and a soft lift,
+ * ringed in blue while it is typed into. `secret`: a password, hidden until the eye is tapped; the eye crossfades to
+ * the other glyph (after Family's stealth mode). The dots and letters swap at once, as in iOS: the system redraws a
+ * secure field on its own clock (about 180 ms on the simulator), so a fade over it only lands on an empty field. The
+ * secure entry stays the system's, so the keyboard never learns the password.
+ */
+export function Field({ secret, style, onFocus, onBlur, ref, ...props }: TextInputProps & { secret?: boolean; ref?: Ref<RNTextInput> }) {
+  const still = useReducedMotion();
+  const t = useT();
+  const [shown, setShown] = useState(false);
+  const focus = useSharedValue(0), eye = useSharedValue(0);
+  const ring = useAnimatedStyle(() => ({ opacity: focus.get() }));
+  const edge = useAnimatedStyle(() => ({ borderColor: interpolateColor(focus.get(), [0, 1], [EDGE, palette.blue]) }));
+  // The glyph going away shrinks a touch as it fades and the new one grows into place (Family's 0.94).
+  const showGlyph = useAnimatedStyle(() => ({ opacity: 1 - eye.get(), transform: [{ scale: still ? 1 : 1 - 0.06 * eye.get() }] }));
+  const hideGlyph = useAnimatedStyle(() => ({ opacity: eye.get(), transform: [{ scale: still ? 1 : 0.94 + 0.06 * eye.get() }] }));
+  const toggle = () => {
+    if (process.env.EXPO_OS === "ios") void Haptics.selectionAsync();
+    eye.set(withTiming(shown ? 0 : 1, SNAP));
+    setShown(!shown);
+  };
+  return <View>
+    <Animated.View pointerEvents="none" style={[{ position: "absolute", inset: -4, borderRadius: 22, borderCurve: "continuous", borderWidth: 4, borderColor: "rgba(37,99,235,0.16)" }, ring]} />
+    <Animated.View style={[{ flexDirection: "row", alignItems: "center", borderRadius: 18, borderCurve: "continuous", borderWidth: 1, backgroundColor: palette.white,
+      boxShadow: "0 1px 2px rgba(30,40,90,0.06)" }, edge]}>
+      <TextInput ref={ref} placeholderTextColor={palette.faint} {...props} secureTextEntry={secret && !shown}
+        onFocus={e => { focus.set(withTiming(1, SNAP)); onFocus?.(e); }} onBlur={e => { focus.set(withTiming(0, SNAP)); onBlur?.(e); }}
+        style={[{ flex: 1, minHeight: 50, paddingHorizontal: 16, fontSize: 17, color: palette.ink }, secret && { paddingRight: 4 }, style]} />
+      {secret && <Pressable accessibilityRole="button" accessibilityLabel={t(shown ? "common.hidePassword" : "common.showPassword")} onPress={toggle}
+        style={{ width: 48, height: 48, marginRight: 2, alignItems: "center", justifyContent: "center" }}>
+        {([[ICON.eye, showGlyph], [ICON.eyeOff, hideGlyph]] as const).map(([d, glyph]) => <Animated.View key={d} style={[{ position: "absolute" }, glyph]}>
+          <Svg width={22} height={22} viewBox="0 0 24 24"><Path d={d} fill="none" stroke={palette.muted} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+        </Animated.View>)}
+      </Pressable>}
+    </Animated.View>
+  </View>;
+}
 
 /*
  * Honesty, two truths, two treatments (mirrors apps/native model-answer). The data is fictional, so
