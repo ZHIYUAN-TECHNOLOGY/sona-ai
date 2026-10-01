@@ -7,7 +7,7 @@ import { z } from "zod";
 import type { Context } from "../context";
 import { stubModels } from "../models";
 import { protectedProcedure } from "../index";
-import { fetchArticles, searchPubmed, type Article } from "../pubmed";
+import { fetchArticles, searchEvidence, searchTerms, type Article } from "../pubmed";
 
 /**
  * Flow 4, the evidence answer (docs/evidence-answer-spec.md): short claims each citing numbered
@@ -28,10 +28,11 @@ type Cached = typeof pubmedArticles.$inferSelect;
 const fromCache = (r: Cached): Article => ({ pmid: r.pmid, title: r.title, journal: r.journal, year: r.year, publicationTypes: r.publicationTypes, kind: studyKind(r.publicationTypes), conclusion: r.conclusion });
 
 /** The articles, live from PubMed (and cached) when it answers, else from the cache. */
-async function articlesFor(db: Context["db"], fetcher: typeof fetch, question: string, rehearsed: boolean) {
+async function articlesFor(db: Context["db"], fetcher: typeof fetch, terms: string[], rehearsed: boolean) {
   try {
-    const pmids = rehearsed ? REHEARSED.pmids : await searchPubmed(`(${question}) AND (guideline[pt] OR systematic review[pt] OR randomized controlled trial[pt])`, fetcher, 3);
-    const articles = await fetchArticles(pmids, fetcher);
+    const pmids = rehearsed ? REHEARSED.pmids : await searchEvidence(terms, fetcher);
+    // An article without an abstract has nothing to cite (the search asks for abstracts; this catches the odd one without).
+    const articles = (await fetchArticles(pmids, fetcher)).filter(a => rehearsed || a.conclusion);
     if (articles.length) await db.insert(pubmedArticles).values(articles.map(a => ({ pmid: a.pmid, title: a.title, journal: a.journal, year: a.year, publicationTypes: a.publicationTypes, conclusion: a.conclusion })))
       .onConflictDoUpdate({ target: pubmedArticles.pmid, set: { title: sql`excluded.title`, conclusion: sql`excluded.conclusion`, publicationTypes: sql`excluded.publication_types`, fetchedAt: sql`now()` } });
     return { articles, pubmed: "live" as const };
@@ -61,13 +62,15 @@ const turn = z.object({ question: z.string().trim().min(1).max(500), answer: z.s
 export const evidenceRouter = {
   ask: protectedProcedure.input(z.object({ encounterId: z.string().min(1), question: z.string().trim().min(1).max(500), thread: z.array(turn).max(4).default([]) })).handler(async ({ context, input }) => {
     const { db, hospitalId } = context;
-    const [visit] = await db.select({ patientId: patients.id, age: patients.age }).from(encounters).innerJoin(patients, eq(patients.id, encounters.patientId))
+    const [visit] = await db.select({ patientId: patients.id, name: patients.name, age: patients.age }).from(encounters).innerJoin(patients, eq(patients.id, encounters.patientId))
       .where(and(eq(encounters.id, input.encounterId), eq(encounters.hospitalId, hospitalId)));
     if (!visit) throw new ORPCError("NOT_FOUND", { message: `No encounter ${input.encounterId}` });
 
     // The rehearsed question, or one of its suggested follow-ups word for word, answers from authored content.
     const authored = authoredAnswer(input.question);
-    const { articles, pubmed } = await articlesFor(db, context.fetch ?? fetch, input.question, Boolean(authored));
+    // PubMed gets the question's key terms (a follow-up keeps the thread's topic), never the patient's name or record number.
+    const terms = searchTerms(input.question, input.thread.map(t => t.question), [visit.name, visit.patientId]);
+    const { articles, pubmed } = await articlesFor(db, context.fetch ?? fetch, terms, Boolean(authored));
     // Authored answers show their reviewed summary of each study (a guideline's abstract rarely states its recommendations); others quote the abstract.
     const summary = (pmid: string) => (authored ? STUDIES.find(s => s.pmid === pmid)?.finding : undefined);
     const studies: Reference[] = articles.map((a, i) => ({ n: i + 1, id: `pmid:${a.pmid}`, kind: "study", design: a.kind, title: a.title, year: a.year, from: a.journal, text: summary(a.pmid) ?? a.conclusion, url: pubmedUrl({ pmid: a.pmid, query: a.title }), pmid: a.pmid }));

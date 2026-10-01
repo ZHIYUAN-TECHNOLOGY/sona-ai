@@ -101,6 +101,7 @@ export const PERMISSIONS: Record<string, readonly [readonly Role[], string]> = {
   "library.previewArticle": [OVERSIGHT, "add to the library"],
   "library.importArticle": [OVERSIGHT, "add to the library"],
   "library.remove": [OVERSIGHT, "remove from the library"],
+  "library.reindex": [MANAGEMENT, "re-index the library"],
   "training.status": [MANAGEMENT, "see the training data"],
   "training.setContributes": [MANAGEMENT, "change whether the hospital contributes training data"],
   "training.samples": [MANAGEMENT, "review training samples"],

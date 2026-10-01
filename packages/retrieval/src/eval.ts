@@ -67,13 +67,41 @@ export const EVAL_QUESTIONS: { question: string; expected: string }[] = [
   { question: "how long does the insurer take to answer a guarantee letter", expected: "synth-gl-policy#turnaround" },
 ];
 
+/** The same questions as clinicians here might ask them in Malay and in Chinese, in the same order (30 in all). */
+const MALAY = [
+  "Perlukah steroid diberi untuk pneumonia ringan?",
+  "Hidrokortison untuk pesakit pneumonia di ICU",
+  "Apakah kriteria yang dikira dalam skor CURB-65?",
+  "Skor CURB-65 sebanyak 3, perlu dimasukkan ke wad?",
+  "Urea tidak direkodkan, macam mana nak kira skor?",
+  "Dos azithromycin untuk orang dewasa dengan pneumonia",
+  "Adakah dos azithromycin perlu diubah untuk pesakit buah pinggang lemah?",
+  "Risiko QT azithromycin, perlu buat ECG?",
+  "Apakah dokumen yang diperlukan untuk permohonan surat jaminan?",
+  "Berapa lama syarikat insurans ambil masa untuk jawab surat jaminan?",
+];
+const CHINESE = [
+  "轻度肺炎需要用类固醇吗？",
+  "ICU肺炎患者用氢化可的松",
+  "CURB-65评分包括哪些项目？",
+  "CURB-65评分3分需要住院吗？",
+  "没有记录尿素，怎么评分？",
+  "成人肺炎阿奇霉素的剂量",
+  "肾功能不全时阿奇霉素需要调整剂量吗？",
+  "阿奇霉素的QT间期延长风险，需要做心电图吗？",
+  "申请担保信需要哪些文件？",
+  "保险公司多久会回复担保信申请？",
+];
+const sameAnswers = (questions: string[]) => questions.map((question, i) => ({ question, expected: EVAL_QUESTIONS[i]!.expected }));
+export const EVAL_SETS = { en: EVAL_QUESTIONS, ms: sameAnswers(MALAY), zh: sameAnswers(CHINESE) };
+
 /** Ingests the synthetic corpus and reports hit@k: the share of questions whose expected source is in the top k. */
-export async function evaluate(db: Db, embedder: Embedder, reranker?: Reranker, k = 5) {
+export async function evaluate(db: Db, embedder: Embedder, reranker?: Reranker, k = 5, questions = EVAL_QUESTIONS) {
   for (const { doc, text } of SYNTHETIC_CORPUS) await ingest(db, doc, text, embedder);
   const misses: { question: string; expected: string; got: string[] }[] = [];
-  for (const { question, expected } of EVAL_QUESTIONS) {
+  for (const { question, expected } of questions) {
     const got = (await search(db, { query: question, hospitalId: "eval", k }, embedder, reranker)).map(h => h.sourceId);
     if (!got.includes(expected)) misses.push({ question, expected, got });
   }
-  return { hitAtK: 1 - misses.length / EVAL_QUESTIONS.length, misses };
+  return { hitAtK: 1 - misses.length / questions.length, misses };
 }
