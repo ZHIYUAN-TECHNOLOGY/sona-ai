@@ -5,8 +5,8 @@ import { useVoiceInput } from "@/features/live/voice-input";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import { SampleLabel } from "@/components/sona/model-answer";
-import { Action, RoundAction, useAccessibleEffects } from "@/components/sona/ui";
-import { EASE_OUT, EASE_OUT_CSS, riseIn } from "@/components/sona/motion";
+import { canvasImage, RoundAction, useAccessibleEffects } from "@/components/sona/ui";
+import { EASE_OUT, EASE_OUT_CSS, LAYOUT, riseIn } from "@/components/sona/motion";
 import { LiquidVeil } from "@/components/sona/liquid-veil";
 import { GlassOrb } from "@/components/sona/glass-orb";
 import { Bars, OrbGlyph, type OrbActivity } from "@/components/sona/orb-glyph";
@@ -18,16 +18,18 @@ import { AttachmentsMenu, MENU_CLOSE, MENU_SPRING, type Attachment } from "@/com
 import { BlurView } from "expo-blur";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import * as Haptics from "expo-haptics";
-import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { AccessibilityInfo, ActivityIndicator, Keyboard, Pressable, StyleSheet, TextInput, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { Easing, FadeIn, FadeOut, interpolate, useAnimatedReaction, withDelay, withSequence, withSpring, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, { Easing, FadeIn, FadeOut, interpolate, LayoutAnimationConfig, useAnimatedReaction, withDelay, withSequence, withSpring, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from "react-native-reanimated";
 import { useKeyboardHandler } from "react-native-keyboard-controller";
 import { scheduleOnRN } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SonaLive, useSonaLive, type LiveAdapter } from "./sona-live";
 
 const ORB = 64;
+/** Sona Live: the mic takes the bar's centre at 72 pt (scaled, so the layout keeps one size), and the wave rests about a quarter of the screen up. */
+const LIVE_ORB = 72 / ORB, LIVE_CREST = 0.26, LIVE_FADE = 320;
 
 type Mode = "idle" | "holding" | "handsfree" | "composing";
 /** Silence after the last heard word before a hands-free request is sent. */
@@ -112,8 +114,9 @@ function RoundButton({ icon, label, onPress, hidden, reduced }: { icon: BrandIco
 // animation on a right-anchored view could leave it past the screen edge (1 Oct, iPhone).
 // Its width is set, not shrink-to-fit: it lives in the orb's 64 pt box, and an absolute child can't grow past its parent's
 // width on its own (it clipped to "Transcr", 1 Oct). Wide enough for the spinner and the word at 1.4x text.
+// Sona Live's keyboard button arrives the same way, on its new side of the bar (Monogram's pulse sweep: scale and fade on a ~0.45 s spring).
 const MORPH = { duration: 400, dampingRatio: 0.8 }, PILL_H = 40, PILL_W = 176;
-function pillIn() {
+function popIn() {
   "worklet";
   return {
     initialValues: { opacity: 0, transform: [{ scale: 0.6 }] },
@@ -194,7 +197,7 @@ export function VoiceDock(props: Props) {
     if (mic.state !== "idle") { wasHearing.current = true; return; }
     if (wasHearing.current) { wasHearing.current = false; setMode(current => (current === "holding" || current === "handsfree" ? "idle" : current)); }
   }, [mic.state]);
-  const { width: screenW } = useWindowDimensions();
+  const { width: screenW, height: screenH } = useWindowDimensions();
   // Keyboard-synced morph progress: follows the on-screen keyboard frame by frame when there is one.
   const composing = useSharedValue(0);
   const kbHeight = useSharedValue(0), kbProgress = useSharedValue(0), soft = useSharedValue(0), fallback = useSharedValue(0);
@@ -259,6 +262,21 @@ export function VoiceDock(props: Props) {
   const release = () => { if (modeRef.current === "holding") finish(true); };
   // In Sona Live the orb is the mic: a tap pauses or resumes listening, with a selection tick.
   const toggleMic = () => { haptic("select"); talk.toggle(); };
+  // Live's page is memoised, so it gets a stable Send: the level readings (ten a second) don't re-render it.
+  const latestTalk = useRef(talk); latestTalk.current = talk;
+  const liveSend = useCallback(() => { haptic("select"); latestTalk.current.send(); }, []);
+  // Live's keyboard hands the unsent words to the composer: Live ends and the bar morphs into the text box with the
+  // keyboard up (no words keep what was already typed there).
+  const typeInstead = async () => { const text = await talk.keyboard(); if (text) onDraft(text); setMode("composing"); };
+  // Live is a page of its own: this canvas covers the page under it, and the wave's glass refracts it instead of that page.
+  // The wave rises once the canvas has faded in, so its one snapshot is the canvas, never the page fading out under it.
+  const liveCanvas = useRef<View>(null);
+  const [liveShown, setLiveShown] = useState(false);
+  useEffect(() => {
+    if (!talk.open) { setLiveShown(false); return; }
+    const timer = setTimeout(() => setLiveShown(true), LIVE_FADE + 40);
+    return () => clearTimeout(timer);
+  }, [talk.open]);
   // Gestures are built once and call the latest handlers, so re-renders (one per heard word) don't re-attach them.
   const handlers = useRef({ startHold, release, tapOrb, toggleMic, onCancel, arm: (on: boolean) => setArmed(on) });
   handlers.current = { startHold, release, tapOrb, toggleMic, onCancel, arm: (on: boolean) => setArmed(on) };
@@ -276,13 +294,14 @@ export function VoiceDock(props: Props) {
   // Sona Live shows its own status, so the dock's busy and reading states stay out of it.
   const holding = mode === "holding" || mode === "handsfree", handsfree = mode === "handsfree" && mic.state !== "reading", busy = Boolean(thinking) && !talk.open;
   const reading = live && mic.state === "reading" && !talk.open;
-  // Lit: the orb grows and glows while it hears (the dock's listening, or Live with the mic on).
+  // Lit: the orb grows and glows while it hears (the dock's listening; in Live, with the mic on, it only glows: it is already 72 pt).
   const lit = holding || (talk.open && talk.phase === "listening");
   const liquid = !reducedTransparency && !veilFailed;
   const scrim = busy || (holding && !liquid);
   // Live keeps the wave up while the mic is on (calm while Sona thinks) and lets it sink while paused.
-  const veil = talk.open ? (talk.phase === "paused" ? "idle" : "listening") : holding ? "listening" : flooding && busy ? "flood" : "idle";
-  const orbActivity: OrbActivity = talk.open ? (talk.phase === "paused" ? "muted" : talk.phase === "thinking" ? activity ?? "searching" : "listening")
+  const veil = talk.open ? (liveShown && talk.phase !== "paused" ? "listening" : "idle") : holding ? "listening" : flooding && busy ? "flood" : "idle";
+  // In Live the orb only ever says whether the mic is on (the header says when Sona is thinking).
+  const orbActivity: OrbActivity = talk.open ? (talk.micOn ? "mic" : "muted")
     : mode === "handsfree" ? "stop" : holding ? "listening" : activity ?? (busy ? "searching" : "idle");
   // Tapping anywhere outside the composer closes it, even when no software keyboard is showing
   // (hardware keyboard), where the input would otherwise never blur. The draft is kept.
@@ -330,15 +349,17 @@ export function VoiceDock(props: Props) {
 
   // Sona Live is a page of its own: VoiceOver stays inside the overlay (its escape gesture ends Live).
   return <View pointerEvents="box-none" style={StyleSheet.absoluteFill} accessibilityViewIsModal={talk.open} onAccessibilityEscape={talk.open ? talk.end : undefined}>
-    {/* Sona Live frosts the whole page under the veil, so the conversation reads anywhere on it; it also keeps taps off the page behind. */}
-    {talk.open && <Animated.View entering={FadeIn.duration(320).easing(EASE_OUT)} exiting={FadeOut.duration(240)} style={StyleSheet.absoluteFill}><Frost solid={reducedTransparency} /></Animated.View>}
+    {/* Sona Live is a page of its own (as Claude's voice mode is): the canvas covers the page behind and keeps taps off it. */}
+    {talk.open && <Animated.View entering={FadeIn.duration(LIVE_FADE).easing(EASE_OUT)} exiting={FadeOut.duration(240)} style={StyleSheet.absoluteFill}>
+      <View ref={liveCanvas} collapsable={false} style={[StyleSheet.absoluteFill, { backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage }]} />
+    </Animated.View>}
     {/* Sona Live keeps the wave low (about a quarter of the screen) so the conversation above it has the room. */}
-    {liquid && <LiquidVeil backdrop={backdrop} state={veil} armed={armed && !busy} words={live ? gusts : sampleWords} voiceLevel={level} crest={talk.open ? 0.26 : undefined} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
+    {liquid && <LiquidVeil backdrop={talk.open ? liveCanvas : backdrop} state={veil} armed={armed && !busy} words={live ? gusts : sampleWords} voiceLevel={level} crest={talk.open ? LIVE_CREST : undefined} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
     {/* Frosted focus layer: a static blur crossfaded by opacity. */}
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: scrim ? 1 : 0, transitionProperty: "opacity", transitionDuration: scrim ? 320 : 240, transitionTimingFunction: EASE_OUT_CSS }]}>
       <Frost solid={reducedTransparency} />
     </Animated.View>
-    {talk.open && <SonaLive phase={talk.phase} turns={talk.turns} scope={props.sonaLive?.scope ?? ""} sample={!live} bottom={restBottom + BAR_H + 8} onEnd={talk.end} />}
+    {talk.open && <SonaLive phase={talk.phase} turns={talk.turns} draft={talk.draft} reading={talk.reading} scope={props.sonaLive?.scope ?? ""} sample={!live} bottom={Math.round(screenH * LIVE_CREST)} onSend={liveSend} onEnd={talk.end} />}
 
     {holding && <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(140)} pointerEvents="none" style={{ position: "absolute", left: 32, right: 32, bottom: insets.bottom + 132, alignItems: "center" }}>
       {/* The words grow above the dock as they are heard (live: a partial reading every second; the sample: its
@@ -372,11 +393,17 @@ export function VoiceDock(props: Props) {
         </Animated.View>
 
         <Animated.View pointerEvents={mode === "composing" ? "none" : "box-none"} style={[StyleSheet.absoluteFill, { justifyContent: "center" }, dockStyle]}>
-          {/* One bar: [+ in a visit] [keyboard] [✦ suggestion, or the placeholder] [orb]. */}
-          <View pointerEvents="box-none" style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 13, paddingRight: 6 }}>
-            {/* Listening hands-free or in Sona Live, the X on the left cancels or ends it. */}
-            {handsfree || talk.open ? <RoundButton icon="close" label={talk.open ? "End Sona Live" : "Cancel voice input"} onPress={talk.open ? talk.end : () => finish(false)} /> : tools && <View accessibilityElementsHidden={menu} importantForAccessibility={menu ? "no-hide-descendants" : "auto"} style={{ opacity: menu ? 0 : 1 }}><RoundButton icon="add" label="Attach a photo, camera capture or file" onPress={openMenu} hidden={holding || busy} reduced={reducedMotion} /></View>}
-            <RoundButton icon="keyboard" label="Type a message" onPress={() => setMode("composing")} hidden={holding || busy || talk.open} reduced={reducedMotion} />
+          {/* One bar: [+ in a visit] [keyboard] [✦ suggestion, or the placeholder] [orb]. Sona Live centres it on the mic,
+              [+] [mic] [keyboard] (after Monogram's voice-first bar): the orb glides there on the layout spring, the
+              keyboard pops in on the right, and the X moves up into Live's header. */}
+          <LayoutAnimationConfig skipEntering>
+          <View pointerEvents="box-none" style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 13, paddingRight: talk.open ? 13 : 6 }}>
+            {/* Listening hands-free, the X on the left cancels it; in a visit the + attaches, in Live too. Today's Live keeps
+                the slot empty, so the mic stays centred. */}
+            {handsfree ? <RoundButton icon="close" label="Cancel voice input" onPress={() => finish(false)} /> : tools ? <View accessibilityElementsHidden={menu} importantForAccessibility={menu ? "no-hide-descendants" : "auto"} style={{ opacity: menu ? 0 : 1 }}><RoundButton icon="add" label="Attach a photo, camera capture or file" onPress={openMenu} hidden={holding || busy} reduced={reducedMotion} /></View> : talk.open && <View style={{ width: 50 }} />}
+            {!talk.open && <Animated.View entering={reducedMotion ? FadeIn.duration(150) : popIn} exiting={FadeOut.duration(140)}>
+              <RoundButton icon="keyboard" label="Type a message" onPress={() => setMode("composing")} hidden={holding || busy} reduced={reducedMotion} />
+            </Animated.View>}
             {/* One line at every text size (the full text is the label), capped so the bar never grows. */}
             <Animated.View pointerEvents={holding || busy || talk.open ? "none" : "auto"} accessibilityElementsHidden={holding || busy || talk.open} importantForAccessibility={holding || busy || talk.open ? "no-hide-descendants" : "auto"} style={{ flex: 1, opacity: holding || busy || talk.open ? 0 : 1, transitionProperty: "opacity", transitionDuration: 200, transitionTimingFunction: EASE_OUT_CSS }}>
               <Pressable accessibilityRole="button" accessibilityLabel={suggestion ? suggestion.label ?? `Ask Sona: ${suggestion.text}` : placeholder} accessibilityHint={suggestion ? "Opens Sona's answer" : "Opens the message composer"}
@@ -387,7 +414,7 @@ export function VoiceDock(props: Props) {
                 </Animated.View>}
               </Pressable>
             </Animated.View>
-            <View style={{ width: ORB, height: ORB }}>
+            <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ width: ORB, height: ORB }}>
             <GestureDetector gesture={micGesture}>
               {/* While the words are read, the orb gives way to the loading pill below. Activate goes through tapOrb, so
                   VoiceOver starts and stops listening in live mode (the sample answers at once). In Sona Live the orb is
@@ -395,7 +422,7 @@ export function VoiceDock(props: Props) {
               <Animated.View accessible accessibilityRole="button" accessibilityLabel={talk.open ? `Turn microphone ${talk.micOn ? "off" : "on"}` : busy ? `${thinking}. Stop response` : reading ? "Transcribing" : handsfree ? "Stop" : "Talk to Sona"}
                 accessibilityHint={talk.open || busy || reading ? undefined : handsfree ? "Double-tap to send what you said." : props.sonaLive ? "Tap to talk with Sona Live, or hold and release to send." : "Tap to talk hands-free, or hold and release to send. With VoiceOver, double-tap to use the sample command."}
                 accessibilityActions={[{ name: "activate" }]} onAccessibilityAction={() => talk.open ? toggleMic() : busy ? onCancel() : tapOrb()}
-                style={{ width: ORB, height: ORB, borderRadius: ORB / 2, alignItems: "center", justifyContent: "center", opacity: reading ? 0 : talk.open && !talk.micOn ? 0.55 : 1, transform: [{ scale: reading && !reducedMotion ? 0.9 : lit && !reducedMotion ? 1.12 : 1 }], transitionProperty: ["opacity", "transform"], transitionDuration: [reading ? 160 : 240, 320], transitionTimingFunction: EASE_OUT_CSS } as never}>
+                style={{ width: ORB, height: ORB, borderRadius: ORB / 2, alignItems: "center", justifyContent: "center", opacity: reading ? 0 : talk.open && !talk.micOn ? 0.55 : 1, transform: [{ scale: talk.open ? LIVE_ORB : reading && !reducedMotion ? 0.9 : lit && !reducedMotion ? 1.12 : 1 }], transitionProperty: ["opacity", "transform"], transitionDuration: [reading ? 160 : 240, reducedMotion ? 0 : 320], transitionTimingFunction: EASE_OUT_CSS } as never}>
                 {/* Two pre-shadowed layers crossfaded by opacity: animating boxShadow would repaint it every frame. */}
                 <Animated.View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: ORB / 2, backgroundColor: palette.white, boxShadow: "0 8px 22px rgba(40,70,140,0.22)", opacity: lit ? 0 : 1, transitionProperty: "opacity", transitionDuration: 320, transitionTimingFunction: EASE_OUT_CSS }} />
                 <Animated.View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: ORB / 2, backgroundColor: palette.white, boxShadow: "0 10px 28px rgba(60,100,200,0.32)", opacity: lit ? 1 : 0, transitionProperty: "opacity", transitionDuration: 320, transitionTimingFunction: EASE_OUT_CSS }} />
@@ -404,17 +431,24 @@ export function VoiceDock(props: Props) {
                 <OrbGlyph activity={orbActivity} still={reducedMotion} level={level} />
               </Animated.View>
             </GestureDetector>
-            {reading && <Animated.View entering={reducedMotion ? FadeIn.duration(150) : pillIn} exiting={FadeOut.duration(140)} pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden
+            {reading && <Animated.View entering={reducedMotion ? FadeIn.duration(150) : popIn} exiting={FadeOut.duration(140)} pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden
               style={{ position: "absolute", right: 0, top: (ORB - PILL_H) / 2, width: PILL_W, height: PILL_H, borderRadius: PILL_H / 2, transformOrigin: "right center", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 16, backgroundColor: palette.ink }}>
               <ActivityIndicator size="small" color={palette.white} />
               <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} maxFontSizeMultiplier={1.4} style={{ flexShrink: 1, ...type.footnote, fontWeight: "600", color: palette.white }}>Transcribing…</Text>
             </Animated.View>}
-            </View>
+            </Animated.View>
+            {talk.open && <>
+              <View style={{ flex: 1 }} />
+              <Animated.View entering={reducedMotion ? FadeIn.duration(150) : popIn} exiting={FadeOut.duration(140)}>
+                <RoundButton icon="keyboard" label="Type instead" onPress={() => void typeInstead()} reduced={reducedMotion} />
+              </Animated.View>
+            </>}
           </View>
+          </LayoutAnimationConfig>
 
-          {/* Attachments waiting to send: a small deck above the mic (after Airbnb's photo pop and slide). */}
-          {!busy && mode === "idle" && !holding && !talk.open && attachments.length > 0 && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ distance: 10, scale: 0.8, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="box-none"
-            style={{ position: "absolute", bottom: BAR_H + 4, alignSelf: "center" }}>
+          {/* Attachments waiting to send: a small deck above the mic (after Airbnb's photo pop and slide); in Live, above the +. */}
+          {!busy && mode === "idle" && !holding && attachments.length > 0 && <Animated.View entering={reducedMotion ? FadeIn.duration(120) : riseIn({ distance: 10, scale: 0.8, duration: 320 })} exiting={FadeOut.duration(140)} pointerEvents="box-none"
+            style={[{ position: "absolute", bottom: BAR_H + 4 }, talk.open ? { left: -3 } : { alignSelf: "center" }]}>
             <AttachmentStack items={attachments} reduced={reducedMotion} onPress={openMenu} />
           </Animated.View>}
           {/* Coach mark once per app session, above the orb, and never while the bar carries a suggestion. */}
@@ -431,12 +465,6 @@ export function VoiceDock(props: Props) {
               <Animated.Text numberOfLines={1} style={{ ...type.footnote, fontWeight: "500", color: palette.ink, animationName: reducedMotion ? undefined : { "0%": { opacity: 1 }, "50%": { opacity: 0.5 }, "100%": { opacity: 1 } }, animationDuration: 1600, animationIterationCount: "infinite" }}>{thinking}</Animated.Text>
             </Animated.View>}
           </View>
-          {/* Sona Live: once words are heard, Send ends the turn without waiting for the pause (between the X and the orb). */}
-          {talk.canSend && <View pointerEvents="box-none" style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, alignItems: "center", justifyContent: "center" }}>
-            <Animated.View entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, scale: 0.96, duration: 240 })} exiting={FadeOut.duration(140)}>
-              <Action label="Send" icon="arrow.up" accessibilityLabel="Send what you said" onPress={() => { haptic("select"); talk.send(); }} />
-            </Animated.View>
-          </View>}
         </Animated.View>
 
         {composerMounted && <Animated.View pointerEvents={mode === "composing" ? "box-none" : "none"} onLayout={e => cardH.set(e.nativeEvent.layout.height)}

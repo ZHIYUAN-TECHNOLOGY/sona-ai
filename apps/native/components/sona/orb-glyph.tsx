@@ -12,7 +12,7 @@ import { BrandIcon } from "./brand-icon";
  */
 export type OrbActivity =
   | "idle" | "listening" | "searching" | "reading" | "solving" | "breathing"
-  | "checking" | "composing" | "connecting" | "done" | "stop" | "muted";
+  | "checking" | "composing" | "connecting" | "done" | "stop" | "mic" | "muted";
 
 const INK = "#16213A";
 const SPRING = { duration: 450, dampingRatio: 0.72 };
@@ -76,6 +76,21 @@ export function Bars({ still, level, color = INK }: { still: boolean; level?: Sh
   </View>;
 }
 
+/**
+ * Sona Live's mic, on: the mic in a thin blue ring that swells and brightens with the voice (`level`, on the UI thread),
+ * resting faint in silence. Still (Reduce Motion): the ring keeps its size and only its strength follows the voice.
+ */
+function MicRing({ level, still }: { level?: SharedValue<number>; still: boolean }) {
+  const ring = useAnimatedStyle(() => {
+    const v = level?.get() ?? 0;
+    return { opacity: 0.3 + 0.6 * v, transform: [{ scale: still ? 1 : 1 + 0.32 * v }] };
+  });
+  return <View style={{ width: 34, height: 34, alignItems: "center", justifyContent: "center" }}>
+    <Animated.View style={[{ position: "absolute", inset: 0, borderRadius: 17, borderWidth: 1.5, borderColor: "rgba(36,91,204,0.7)" }, ring]} />
+    <BrandIcon name="mic" size={24} color={INK} strokeWidth={1.9} />
+  </View>;
+}
+
 function Moving({ children, motion, still }: { children: ReactNode; motion: object; still: boolean }) {
   return <Animated.View style={still ? null : motion}>{children}</Animated.View>;
 }
@@ -108,7 +123,8 @@ function Glyph({ activity, still, level }: { activity: OrbActivity; still: boole
     // Linked points pulsing as the plan connects tasks.
     case "connecting": return <Moving still={still} motion={loop({ "0%": { transform: [{ scale: 0.92 }], opacity: 0.7 }, "50%": { transform: [{ scale: 1.06 }], opacity: 1 }, "100%": { transform: [{ scale: 0.92 }], opacity: 0.7 } }, 1200)}><Icon name="point.3.connected.trianglepath.dotted" size={22} color={INK} /></Moving>;
     case "done": return <Icon name="checkmark" size={22} color={INK} />;
-    // Sona Live with the microphone off.
+    // Sona Live with the microphone on, and off.
+    case "mic": return <MicRing level={level} still={still} />;
     case "muted": return <Icon name="mic.slash" size={22} color={INK} />;
     default: return <BrandIcon name="mic" size={26} color={INK} strokeWidth={1.9} />;
   }
