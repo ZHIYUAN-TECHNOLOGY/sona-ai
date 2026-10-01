@@ -1,7 +1,7 @@
 import { PressScale } from "@/components/sona/parts";
 import { JSONUIProvider, Renderer, defineRegistry } from "@json-render/react-native";
 import * as Haptics from "expo-haptics";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import { createContext, use, useEffect, useRef, useState, type ReactNode } from "react";
 import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
@@ -12,19 +12,22 @@ import { List, ListRow, QuestionList } from "@/components/sona/list";
 import { Drafting, MODEL_SLOW, SampleLabel } from "@/components/sona/model-answer";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, Icon, Notice, RoundAction, Surface } from "@/components/sona/ui";
+import { Action, CloseButton, Icon, IconButton, Notice, RoundAction, Surface } from "@/components/sona/ui";
 import { GlassOrb } from "@/components/sona/glass-orb";
 import { OrbGlyph } from "@/components/sona/orb-glyph";
 import { VoiceDock } from "@/features/encounter/voice-dock";
-import type { LiveAdapter, LiveReply } from "@/features/encounter/sona-live";
+import type { LiveAdapter } from "@/features/encounter/sona-live";
+import type { Attachment } from "@/components/sona/attachments-menu";
+import { carry } from "@/features/encounter/carry";
 import { openSession } from "@/features/encounter/navigation";
 import { useEncounter } from "@/features/encounter/store";
 import { api, useLive } from "@/features/live";
 import { startingReply, wakingOf } from "@/features/live/waking";
-import { PLACEHOLDER, SCOPE_LABEL, askContext, matchQuestion, suggestion, type Answer, type Scope } from "./answers";
+import { PLACEHOLDER, SCOPE_LABEL, askContext, forWhichPatient, matchQuestion, suggestion, type Answer, type Scope } from "./answers";
 import { askCatalog, validateAskSpec } from "./catalog";
 import { SAVABLE, isSaved, saveView, useSaved } from "./saved";
-import type { Reply } from "./thread";
+import { answerOf, type Entry, type Reply } from "./thread";
+import { ThreadEntry } from "./today-thread";
 
 /** Space a page leaves at the end of its content so the ask bar never covers it. */
 export const ASK_SPACE = 132;
@@ -132,25 +135,6 @@ export async function answerFree(scope: Scope, question: string, answers: Answer
   }
 }
 
-/**
- * Sona Live on a page with rule answers (the pages with the dock; Today asks into its thread instead): a question the
- * page's rules answer shows that answer (Open shows it in the page's sheet); otherwise, live, the model answers from the
- * page's own data (ask.free), as the sheet does; otherwise a quiet notice of what Sona answers here, or that the model is starting.
- */
-export function usePageLive(scope: Scope, answers: Answer[], show: (answer: Answer) => void): LiveAdapter {
-  const { on } = useLive();
-  return {
-    scope: SCOPE_LABEL[scope],
-    // Sona Live is the page's voice: a spoken question shows where a typed one does (the page's sheet).
-    ask: async (question): Promise<LiveReply> => {
-      const reply = answerNow(question, answers, on) ?? await answerFree(scope, question, answers);
-      if ("notice" in reply) return { notice: reply.notice };
-      show(reply.answer);
-      return { shown: true };
-    },
-  };
-}
-
 /** A day-wide answer can leave the sheet or Today's thread: as its own page, or kept in the sidebar where it stays live. `leave` closes what shows it first. */
 export function KeepRow({ answer, leave }: { answer: Answer; leave: () => void }) {
   const saved = useSaved(), kept = isSaved(saved, answer.id);
@@ -214,32 +198,79 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
 }
 
 /**
- * Sona on a page: the same dock as Today and a visit (tap or hold the orb to talk, the keyboard to
- * type), carrying the page's ✦ suggestion. What is asked opens the page-scoped sheet. The dock
- * captures the page behind it for the hold-to-talk veil, so the page goes in as children; a fade
- * behind the dock keeps the end of the page readable.
+ * Sona on a page (Ward, Messages, Tasks, Patients…), the same shell as Today and a visit: the page, then the bar
+ * ([+] [mic] [keyboard]) with the page's ✦ suggestion above it. What is asked (typed, spoken, or the ✦) starts the page's
+ * conversation in place of its content, read as Today's is (the question's bubble, the lead inked in, the answer and its
+ * ops); New conversation in the header, or an op that changes the page (a filter), brings the page back. A rule answer
+ * lands at once; live, the model answers from the page's own data; demo mode says what Sona answers here.
  */
 export function WithSona({ scope, answers, onTab, hidden = false, children }: { scope: Scope; answers: Answer[]; onTab?: (tab: string) => void; hidden?: boolean; children: ReactNode }) {
-  const { voiceInput } = useEncounter();
+  const { voiceInput, patients } = useEncounter();
+  const { on } = useLive();
+  const navigation = useNavigation();
+  const [pending, setPending] = useState<Attachment[]>([]);
   const backdrop = useRef<View>(null);
-  const [state, setState] = useState<AskState>(closed);
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const next = useRef(0);
   const [draft, setDraft] = useState("");
   const [notice, setNotice] = useState<string>();
+  const [dockH, setDockH] = useState(130);
+  const talking = entries.length > 0, newest = entries.at(-1);
   const nudge = suggestion(answers);
-  const submit = (text: string) => { const q = text.trim(); if (!q) return; setDraft(""); setNotice(undefined); const a = matchQuestion(q, answers); setState(a ? { open: true, shown: a } : { open: true, missed: q }); };
-  // Sona Live covers the whole screen, this page's header included.
-  const sonaLive = usePageLive(scope, answers, shown => setState({ open: true, shown }));
+  const reply = (id: number, r?: Reply) => setEntries(list => list.map(e => (e.id === id ? { id, question: e.question, ...(r && { reply: r }) } : e)));
+  const settle = async (id: number, question: string) => reply(id, await answerFree(scope, question, answers));
+  /** `rule`: the answer when the question is a known one (the ✦), so it never rests on matching its words. Attachments
+   * have no reader on these pages: Sona asks whose they are, and the visit picked has them waiting (./encounter/carry). */
+  const ask = (question: string, rule?: Answer) => {
+    if (!rule && pending.length) { carry(pending); setPending([]); rule = forWhichPatient(question, patients); }
+    const now = rule ? { answer: rule } : answerNow(question, answers, on), id = next.current++;
+    setEntries(list => [...list, { id, question, ...(now && { reply: now }) }]);
+    if (!now) void settle(id, question);
+  };
+  const clear = () => setEntries([]);
+  // An op that changes the page (Ward's blocked beds) shows the page: the conversation steps aside.
+  const tab = onTab && ((t: string) => { clear(); onTab(t); });
+  const submit = (text: string) => { const q = text.trim(); if (!q) return; setDraft(""); setNotice(undefined); ask(q); };
+  // Sona Live is the page's voice: a spoken question joins the conversation as a typed one does.
+  const sonaLive: LiveAdapter = { scope: SCOPE_LABEL[scope], ask: async question => { ask(question); return { shown: true }; } };
+  // New conversation sits in the page's header while there is one (beside the sheet's close, on Patients).
+  useEffect(() => {
+    const close = scope === "patients" ? <CloseButton /> : null;
+    navigation.setOptions({ headerRight: talking
+      ? () => <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><IconButton name="plus.bubble" label="New conversation" onPress={clear} />{close}</View>
+      : close ? () => close : undefined });
+  }, [talking]); // eslint-disable-line react-hooks/exhaustive-deps
   return <View style={{ flex: 1 }}>
-    <View ref={backdrop} collapsable={false} style={{ flex: 1 }}>{children}</View>
-    {!hidden && <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 100 }} />}
+    <View ref={backdrop} collapsable={false} style={{ flex: 1 }}>
+      {talking ? <PageConversation entries={entries} bottom={dockH + 32} onAgain={e => { reply(e.id); void settle(e.id, e.question); }} onTab={tab} /> : children}
+    </View>
+    {/* What passes under the dock blurs and fades into the canvas, as on Today. */}
+    {!hidden && <>
+      <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 36 }} />
+      <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 36, experimental_backgroundImage: "linear-gradient(180deg, rgba(245,246,248,0) 0%, rgba(245,246,248,0.78) 45%, rgba(245,246,248,0.94) 100%)" }} />
+    </>}
     {!hidden && <VoiceDock backdrop={backdrop} sonaLive={sonaLive} onSubmit={submit} onCancel={() => {}} placeholder={PLACEHOLDER[scope]} draft={draft} onDraft={value => { setDraft(value); setNotice(undefined); }}
       // The voice sample says the page's suggested question, so talking works the same as tapping it.
       spokenPrompt={nudge?.answer.question ?? answers[0]?.question ?? "What needs me now?"}
       voiceEnabled={voiceInput} onVoiceDisabled={() => setNotice("Voice input is turned off in Settings. Type your question instead.")} onVoiceError={setNotice}
-      suggestion={nudge && { text: nudge.text, onPress: () => setState({ open: true, shown: nudge.answer }) }}
-      above={notice && <Notice>{notice}</Notice>} />}
-    <AskSheet scope={scope} answers={answers} state={state} onChange={setState} onTab={onTab} />
+      // The ✦ asks into the conversation too; it steps aside while the newest answer already is it.
+      suggestion={nudge && answerOf(newest)?.id !== nudge.answer.id ? { text: nudge.text, onPress: () => ask(nudge.answer.question, nudge.answer) } : undefined}
+      attachments={pending} onAttachmentsChange={setPending} onHeight={setDockH} above={notice && <Notice>{notice}</Notice>} />}
   </View>;
+}
+
+/** A page's conversation, laid out as Today's: each newest question, and its answer once it lands, is brought into view. */
+function PageConversation({ entries, bottom, onAgain, onTab }: { entries: Entry[]; bottom: number; onAgain: (entry: Entry) => void; onTab?: (tab: string) => void }) {
+  const insets = useSafeAreaInsets();
+  const scroll = useRef<ScrollView>(null), brought = useRef("");
+  const newest = entries.at(-1);
+  return <ScrollView ref={scroll} style={{ flex: 1, backgroundColor: palette.canvas }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive"
+    contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + 64, paddingBottom: bottom, gap: 44 }}>
+    {entries.map(entry => <View key={entry.id} collapsable={false} onLayout={e => {
+      const key = `${entry.id}${entry.reply ? "+" : ""}`;
+      if (entry.id === newest?.id && brought.current !== key) { brought.current = key; scroll.current?.scrollTo({ y: Math.max(0, e.nativeEvent.layout.y - 8), animated: true }); }
+    }}><ThreadEntry entry={entry} fresh={entry.id === newest?.id} onAgain={() => onAgain(entry)} onTab={onTab} /></View>)}
+  </ScrollView>;
 }
 
 /**

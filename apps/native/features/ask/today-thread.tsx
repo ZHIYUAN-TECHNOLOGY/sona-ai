@@ -44,8 +44,8 @@ export function useTodayThread(answers: Answer[]) {
  * sidebar; or Sona thinking, or a notice (Ask again when that may work). `fresh` (the page's newest) inks the lead in and
  * has VoiceOver read the answer as it lands, spoken or typed alike.
  */
-export function ThreadEntry({ entry, fresh = false, onAgain }: { entry: Entry; fresh?: boolean; onAgain?: () => void }) {
-  const run = useRunOp(stay, openTab);
+export function ThreadEntry({ entry, fresh = false, onAgain, onTab = openTab, leave = stay }: { entry: Entry; fresh?: boolean; onAgain?: () => void; /** A page's own tabs (Ward's filters); Today opens Patients or the ward. */ onTab?: (tab: string) => void; /** What steps aside before an op runs (a page's conversation, to show the page). */ leave?: () => void }) {
+  const run = useRunOp(leave, onTab);
   const reduced = useReduceMotionPreference();
   const { reply } = entry;
   // iOS has no live regions, so a new answer is announced.
@@ -69,7 +69,7 @@ export function ThreadEntry({ entry, fresh = false, onAgain }: { entry: Entry; f
         {text && <StreamedLead text={text} animate={fresh} />}
         <Animated.View entering={fresh && !reduced ? FadeInDown.duration(220) : undefined} style={{ gap: 14 }}>
           {rest ? <AnswerView answer={rest} run={run} question={false} model={reply.model} /> : <SampleLabel source={reply.model ? "model" : "fixture"} model={reply.model} rule={!reply.model} />}
-          <KeepRow answer={reply.answer} leave={stay} />
+          <KeepRow answer={reply.answer} leave={leave} />
         </Animated.View>
       </>}
   </View>;
