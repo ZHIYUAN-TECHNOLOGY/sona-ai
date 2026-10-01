@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
-import { SonaVoice, type PhoneVoice, type Speak, type Spoken } from "./voice";
+import { ASR_MODEL, BOXES, BRAIN_MODEL, boxState } from "../baseten-models";
+import { SonaVoice, warmBoxes, type PhoneVoice, type Speak, type Spoken } from "./voice";
 
 const MP3 = Uint8Array.from([0xff, 0xfb, 0x90, 0x64, ...Array(60).fill(7)]);
 /** A box that holds the request until it is aborted, like a slow box. */
@@ -66,4 +67,32 @@ test("an interruption cancels the sentence in flight: its request is aborted and
   // An already interrupted turn asks the box for nothing.
   expect(await voice.synthesize("Rest.", turn.signal)).toBeNull();
   expect(seen.length).toBe(1);
+});
+
+test("when the phone connects, each box that is up gets one tiny request per path a turn takes; one that is down gets nothing more", async () => {
+  /** Boxes up or down; every request as box and route, its body kept. */
+  const asked = (up: Record<"voice" | "brain", boolean>) => {
+    const calls: { to: string; body?: BodyInit | null }[] = [];
+    const fetcher = (async (url: string, init?: RequestInit) => {
+      const box = url.includes(BOXES.voice) ? "voice" : "brain";
+      calls.push({ to: `${box} ${url.split("/environments/production")[1]}`, body: init?.body });
+      if (!up[box]) return new Response("starting", { status: 503 });
+      return url.endsWith("/v1/tts") ? new Response(MP3, { headers: { "content-type": "audio/mpeg" } }) : Response.json({ text: "", choices: [] });
+    }) as typeof fetch;
+    return { fetcher, calls };
+  };
+  boxState.clear();
+  const voiceOnly = asked({ voice: true, brain: false });
+  await warmBoxes({ apiKey: "k", fetcher: voiceOnly.fetcher });
+  expect(voiceOnly.calls.map(c => c.to).sort()).toEqual(["brain /sync/health", "voice /sync/health", "voice /sync/v1/audio/transcriptions", "voice /sync/v1/tts"]);
+  const [hear, speak] = ["voice /sync/v1/audio/transcriptions", "voice /sync/v1/tts"].map(to => voiceOnly.calls.find(c => c.to === to)!.body);
+  expect([(hear as FormData).get("model"), ((hear as FormData).get("file") as Blob).size, JSON.parse(speak as string)]).toEqual([ASR_MODEL, 44 + 16_000, { text: "Hai." }]);
+  // Box ② is now known up in this isolate, so the call's first turn skips its health check.
+  expect(boxState.get("voice")!.readyUntil).toBeGreaterThan(Date.now());
+
+  boxState.clear();
+  const both = asked({ voice: true, brain: true });
+  await warmBoxes({ apiKey: "k", fetcher: both.fetcher });
+  const chat = JSON.parse(both.calls.find(c => c.to === "brain /sync/v1/chat/completions")!.body as string);
+  expect([both.calls.length, chat.model, chat.max_tokens]).toEqual([5, BRAIN_MODEL, 1]);
 });

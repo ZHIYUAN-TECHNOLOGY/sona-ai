@@ -12,7 +12,8 @@ import "./strings";
  * Voice mode as one live conversation with Sona's voice agent (lib/live-voice), where this build has the audio module
  * and the server has the agent: the patient just talks, Sona answers in her own voice as each sentence is ready, and
  * talking over her stops her. Her words light up by how much of each sentence has played (an estimate, as in
- * ./sona-voice); an answer that comes without her voice (it isn't ready) is read by the phone's voice, as today, and so
+ * ./sona-voice); a sentence her voice was too slow for is read by the phone's voice in its place (lit on its word
+ * boundaries), an answer that comes with none of her voice (it isn't ready) is read whole by the phone's voice, and so
  * is every answer if the patient picked one of the phone's voices. `phase`: off (no live mode: voice mode stays turn by
  * turn), ready (the agent answered; no call yet), on (in a call), lost (the call dropped or was refused: turn by turn
  * from here, with one line saying so).
@@ -31,8 +32,8 @@ export function useLiveVoice({ voice, voices, onFlood }: { voice?: SonaVoice; vo
   const live = useRef<Live>(undefined);
   // The answer the phone's voice is reading (0: none), and the last one handed to it, so each is read once.
   const reading = useRef(0), handed = useRef(0);
-  const latest = useRef({ talk, voice, onFlood });
-  useEffect(() => { latest.current = { talk, voice, onFlood }; });
+  const latest = useRef({ talk, voice, voices, onFlood });
+  useEffect(() => { latest.current = { talk, voice, voices, onFlood }; });
 
   const quietPhone = () => {
     if (!reading.current) return;
@@ -63,12 +64,24 @@ export function useLiveVoice({ voice, voices, onFlood }: { voice?: SonaVoice; vo
           const on = l.audible(), at = l.playing();
           setAudible(on);
           if (at && t.said) {
-            const s = spanOf(t.said, at.frame, t.frames, t.done);
+            const s = spanOf(t.said, at.frame, t.spoken, t.done);
             setUpto(wordEnd(t.said, s.start + Math.round((s.end - s.start) * at.share), s.end));
-          } else if (!reading.current && t.done) setUpto(undefined);
+          } else if (!on && t.done) setUpto(undefined);
           latest.current.onFlood(on ? 1 : t.status === "thinking" ? 0.55 : Math.min(0.4, level * 6));
         },
         plays: () => !!latest.current.voice?.hosted,
+        read: (text, k) => new Promise<void>(done => {
+          const { talk: t, voices: all } = latest.current, answer = t.answer;
+          if (!all) return done();
+          const { start, end } = spanOf(t.said ?? "", k, t.spoken, t.done), v = standInFor(text, all);
+          reading.current = answer;
+          setStandIn(true);
+          setUpto(start);
+          const finished = () => { if (reading.current === answer) { reading.current = 0; setStandIn(false); } done(); };
+          Speech.speak(text, { voice: v.voice, language: v.language, rate: v.rate, pitch: v.pitch,
+            onBoundary: (e: { charIndex: number; charLength: number }) => { if (reading.current === answer) setUpto(Math.min(end, start + e.charIndex + e.charLength)); },
+            onDone: finished, onStopped: finished, onError: finished });
+        }),
         closed: () => {
           // The last exchange stays on screen; only the connection is gone.
           const wasOn = latest.current.talk.call !== "off", t: Talk = { ...latest.current.talk, ready: false, call: "off" };

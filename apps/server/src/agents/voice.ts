@@ -7,7 +7,7 @@ import { careLinkOf } from "@sona-ai/api/routers/hospital";
 import { LINES, answerTurn, basetenChat } from "@sona-ai/api/voice-agent/answer";
 import { tellCareTeam } from "@sona-ai/api/voice-agent/care-team";
 import { SonaTranscriber } from "@sona-ai/api/voice-agent/listen";
-import { SonaVoice, basetenSpeak, startingBoxes, type PhoneVoice } from "@sona-ai/api/voice-agent/voice";
+import { SonaVoice, basetenSpeak, startingBoxes, warmBoxes, type PhoneVoice } from "@sona-ai/api/voice-agent/voice";
 import { Agent, getAgentByName, type Connection } from "agents";
 import { withVoice, type VoiceTurnContext } from "agents/voice";
 import type { Context as HonoContext } from "hono";
@@ -48,6 +48,11 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>) {
   // The app speaks the voice protocol only: no state-sync or identity frames (which would name the instance).
   shouldSendProtocolMessages() {
     return false;
+  }
+
+  /** The phone opened voice mode: the call's boxes are warmed while the patient gets ready (warmBoxes), not holding the socket. */
+  onConnect() {
+    if (this.#baseten) void warmBoxes(this.#baseten);
   }
 
   createTranscriber(connection: Connection) {
