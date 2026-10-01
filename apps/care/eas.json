@@ -1,0 +1,22 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "production": {
+      "autoIncrement": true,
+      "bun": "1.4.0",
+      "env": {
+        "EXPO_PUBLIC_SERVER_URL": "https://sona-ai-server-staging-uxfqzyce5rxhzsju.zhiyuantech.workers.dev"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6818003956"
+      }
+    }
+  }
+}

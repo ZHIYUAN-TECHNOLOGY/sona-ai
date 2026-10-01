@@ -11,7 +11,10 @@
       "supportsTablet": false,
       "bundleIdentifier": "ai.zhiyuantech.sona.care",
       "appleTeamId": "LTF2YZMF2D",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +24,14 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "ai.zhiyuantech.sona.care"
+      "package": "ai.zhiyuantech.sona.care",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     },
     "web": {
       "output": "static",
@@ -68,6 +78,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "owner": "zhiyuan-technology",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "39372b76-7e5b-47f4-9e2d-818874f18615"
+      }
     }
   }
 }
