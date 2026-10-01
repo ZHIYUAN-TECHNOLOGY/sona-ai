@@ -24,6 +24,7 @@ import { startingReply, wakingOf } from "@/features/live/waking";
 import { PLACEHOLDER, SCOPE_LABEL, askContext, leadOf, matchQuestion, suggestion, withoutLead, type Answer, type Scope } from "./answers";
 import { askCatalog, validateAskSpec } from "./catalog";
 import { SAVABLE, isSaved, saveView, useSaved } from "./saved";
+import type { Reply } from "./thread";
 
 /** Space a page leaves at the end of its content so the ask bar never covers it. */
 export const ASK_SPACE = 132;
@@ -113,29 +114,38 @@ function useFreeAnswer(scope: Scope, question: string | undefined, answers: Answ
   return on && state?.question === question ? state : undefined;
 }
 
+const only = (answers: Answer[]) => `Until the model is switched on, Sona answers only: ${answers.map(a => a.question).join(" · ")}`;
+/** What a page says to a question without a model: its rule answer, or (demo mode) what Sona answers here; undefined when the model should answer. */
+export function answerNow(question: string, answers: Answer[], live: boolean): Reply | undefined {
+  const rule = matchQuestion(question, answers);
+  return rule ? { answer: rule } : live ? undefined : { notice: only(answers) };
+}
+/** Live mode: the model's answer from the page's own data (ask.free), or why not: it is starting or out of reach (ask again), or the page has no answer. */
+export async function answerFree(scope: Scope, question: string, answers: Answer[]): Promise<Reply> {
+  try {
+    const r = await api.ask.free({ scope, question, context: askContext(answers) });
+    if (r.source === "model") return { answer: { id: "free", question, spec: r.spec as Answer["spec"], worth: true }, model: r.model };
+    const waking = wakingOf(r);
+    return waking ? { notice: startingReply(waking), again: true } : { notice: "unanswered" in r && r.unanswered ? "Sona couldn't answer that from this page." : only(answers) };
+  } catch {
+    return { notice: "Sona couldn't reach the model. Ask again.", again: true };
+  }
+}
+
 /**
- * Sona Live on a page with rule answers (Today, and the pages with the dock): a question the page's rules
- * answer shows that answer (Open shows it in the page's sheet); otherwise, live, the model answers from the
+ * Sona Live on a page with rule answers (the pages with the dock; Today asks into its thread instead): a question the
+ * page's rules answer shows that answer (Open shows it in the page's sheet); otherwise, live, the model answers from the
  * page's own data (ask.free), as the sheet does; otherwise a quiet notice of what Sona answers here, or that the model is starting.
  */
 export function usePageLive(scope: Scope, answers: Answer[], show: (answer: Answer) => void, onTab?: (tab: string) => void): LiveAdapter {
   const { on } = useLive();
-  const reply = (answer: Answer, model?: string, open?: () => void): LiveReply => ({ lead: leadOf(answer) ?? answer.question, render: () => <LiveAnswer answer={answer} model={model} onTab={onTab} />, open });
   return {
     scope: SCOPE_LABEL[scope],
-    ask: async question => {
-      const rule = matchQuestion(question, answers);
-      if (rule) return reply(rule, undefined, () => show(rule));
-      const only = `Until the model is switched on, Sona answers only: ${answers.map(a => a.question).join(" · ")}`;
-      if (!on) return { notice: only };
-      try {
-        const r = await api.ask.free({ scope, question, context: askContext(answers) });
-        if (r.source === "model") return reply({ id: "free", question, spec: r.spec as Answer["spec"], worth: true }, r.model);
-        const waking = wakingOf(r);
-        return { notice: waking ? startingReply(waking) : "unanswered" in r && r.unanswered ? "Sona couldn't answer that from this page." : only };
-      } catch {
-        return { notice: "Sona couldn't reach the model. Ask again." };
-      }
+    ask: async (question): Promise<LiveReply> => {
+      const reply = answerNow(question, answers, on) ?? await answerFree(scope, question, answers);
+      if ("notice" in reply) return { notice: reply.notice };
+      const { answer, model } = reply;
+      return { lead: leadOf(answer) ?? answer.question, render: () => <LiveAnswer answer={answer} model={model} onTab={onTab} />, open: model ? undefined : () => show(answer) };
     },
   };
 }
@@ -145,6 +155,16 @@ function LiveAnswer({ answer, model, onTab }: { answer: Answer; model?: string; 
   const run = useRunOp(useLiveClose(), onTab);
   const rest = withoutLead(answer);
   return rest ? <AnswerView answer={rest} run={run} question={false} model={model} /> : <SampleLabel source={model ? "model" : "fixture"} model={model} rule={!model} />;
+}
+
+/** A day-wide answer can leave the sheet or Today's thread: as its own page, or kept in the sidebar where it stays live. `leave` closes what shows it first. */
+export function KeepRow({ answer, leave }: { answer: Answer; leave: () => void }) {
+  const saved = useSaved(), kept = isSaved(saved, answer.id);
+  if (!SAVABLE.has(answer.id)) return null;
+  return <View style={{ flexDirection: "row", gap: 8 }}>
+    <View style={{ flex: 1 }}><Action label="Open as page" icon="arrow.up.left.and.arrow.down.right" secondary onPress={() => { leave(); setTimeout(() => router.push({ pathname: "/view/[id]", params: { id: answer.id } }), 250); }} /></View>
+    <View style={{ flex: 1 }}><Action label={kept ? "Saved" : "Save to sidebar"} icon={kept ? "checkmark" : "pin"} secondary disabled={kept} onPress={() => { tap(); saveView({ id: answer.id, question: answer.question }); }} /></View>
+  </View>;
 }
 
 /** Which answer the sheet shows (or a question it couldn't answer), for a page that opens it itself. */
@@ -163,7 +183,6 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
   const close = () => onChange(closed);
   const ask = () => { const q = text.trim(); if (!q) return; const a = matchQuestion(q, answers); setText(""); onChange(a ? { open: true, shown: a } : { open: true, missed: q }); };
   const run = useRunOp(close, onTab);
-  const saved = useSaved();
   const others = answers.filter(a => a.id !== shown?.id);
 
   return <Modal visible={state.open} animationType="slide" presentationStyle="pageSheet" onRequestClose={close}>
@@ -182,11 +201,7 @@ export function AskSheet({ scope, answers, state, onChange, onTab }: { scope: Sc
           : <Text style={{ ...type.callout, color: palette.amber }}>“{missed}”: {free?.waking ? startingReply(free.waking) : "Sona answers only these questions here until the model is switched on."}</Text>)}
         {shown ? <View style={{ gap: 14 }}>
           <AnswerView answer={shown} run={run} />
-          {/* A day-wide answer can leave the sheet: as its own page, or kept in the sidebar where it stays live. */}
-          {SAVABLE.has(shown.id) && <View style={{ flexDirection: "row", gap: 8 }}>
-            <View style={{ flex: 1 }}><Action label="Open as page" icon="arrow.up.left.and.arrow.down.right" secondary onPress={() => { close(); setTimeout(() => router.push({ pathname: "/view/[id]", params: { id: shown.id } }), 250); }} /></View>
-            <View style={{ flex: 1 }}><Action label={isSaved(saved, shown.id) ? "Saved" : "Save to sidebar"} icon={isSaved(saved, shown.id) ? "checkmark" : "pin"} secondary disabled={isSaved(saved, shown.id)} onPress={() => { tap(); saveView({ id: shown.id, question: shown.question }); }} /></View>
-          </View>}
+          <KeepRow answer={shown} leave={close} />
         </View> : <View style={{ gap: 10 }}>
           <Text style={{ ...type.title, fontWeight: "600", color: palette.ink }}>Ask Sona</Text>
           <Text style={{ ...type.subhead, color: palette.muted }}>Answers are built from this page's own data and can act on it.</Text>

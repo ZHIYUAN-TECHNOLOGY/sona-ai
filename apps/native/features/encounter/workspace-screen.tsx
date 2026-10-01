@@ -14,9 +14,10 @@ import { openTaskCount } from "@/features/day/counts";
 import { useServerData } from "@/features/live/server-day";
 import { api, useLive } from "@/features/live";
 import { touch } from "@/features/patients/continue-store";
-import { AskSheet, closed, openTab, usePageLive, type AskState } from "@/features/ask";
-import { PLACEHOLDER, matchQuestion, suggestion } from "@/features/ask/answers";
+import { PLACEHOLDER, leadOf, matchQuestion, suggestion } from "@/features/ask/answers";
 import { useTodayAnswers } from "@/features/ask/today";
+import { ThreadEntry, useTodayThread } from "@/features/ask/today-thread";
+import { answerOf, clearThread } from "@/features/ask/thread";
 import { capabilitySchema, routeInThread } from "./state";
 import { openSession } from "./navigation";
 import { useEncounter } from "./store";
@@ -207,9 +208,13 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   // still settle (images, reveals) just after mount, so the landing follows them for a moment.
   const landedAt = useRef<number | undefined>(undefined);
   const pick = (item: Suggestion) => item.kind === "recording" ? open("recording") : run(item.kind, item.text);
-  // Sona on Today: the dock's ✦ suggestion and a typed question the day's rules can answer open the answer sheet; a clinical question opens the patient picker (run) and runs once a visit is chosen.
+  // Sona on Today: a question about the day (typed, dictated, the dock's ✦ suggestion or Sona Live) joins Today's thread,
+  // shown in place of the dashboard; a clinical question opens the patient picker (run) and runs once a visit is chosen.
   const todayAnswers = useTodayAnswers();
-  const [ask, setAsk] = useState<AskState>(closed);
+  const today = useTodayThread(todayAnswers);
+  const thread = home ? today.entries : [], newest = thread.at(-1);
+  // The canvas holds a conversation (a visit's requests or Today's thread) rather than the dashboard.
+  const talking = requests.length > 0 || thread.length > 0;
   const nudge = home ? suggestion(todayAnswers) : undefined;
   const { on: live } = useLive();
   const { can } = useRole();
@@ -239,10 +244,9 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     return id;
   };
   const submit = async (text: string) => { const prompt = text.trim(); if (!prompt || routing.current) return; setNotice(undefined);
-    if (!patient) { const answer = matchQuestion(prompt, todayAnswers); if (answer) { setInput(""); setAsk({ open: true, shown: answer }); return; }
-      // A question about the day that no rule or visit tool answers goes to the sheet, never the visit tools' notice: live, the
-      // model answers it from Today's own data (ask.free), or says it is starting; in demo mode the sheet says why it can't.
-      if (!routeInThread(prompt)) { setInput(""); setAsk({ open: true, missed: prompt }); return; } }
+    // A question about the day (the day's rules answer it, or no visit tool does) joins Today's thread, never the visit tools'
+    // notice: live, the model answers it from Today's own data (ask.free), or says it is starting; demo mode says what Sona answers.
+    if (!patient) { if (matchQuestion(prompt, todayAnswers) || !routeInThread(prompt)) { setInput(""); void today.ask(prompt); return; } }
     else if (pending.length) {
       // Images go to the imaging review (the first becomes the encounter's attachment); files and documents, scanned or photographed, are kept for reference.
       const image = pending.find(item => item.kind === "image" && item.imageType !== "Document");
@@ -309,8 +313,17 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       return { lead: lead ?? capabilityLabels[kind], render: () => <LiveRequest patientId={patient.id} id={id} props={props} onRetry={() => run(kind, question)} />, open: () => showRequest(id) };
     },
   };
-  // On Today: the day's rule answers, or the model on Today's own data, as the sheet answers them.
-  const todayLive: LiveAdapter = { ...usePageLive("today", todayAnswers, shown => setAsk({ open: true, shown }), openTab), scope: "Today" };
+  // Today's entries by where they sit: the newest is brought into view as a visit brings in its new answer, and Live's Open shows one.
+  const entryAt = useRef<Record<number, number>>({});
+  const brought = useRef("");
+  const showEntry = (id: number) => setTimeout(() => { const y = entryAt.current[id]; if (y !== undefined) scroll.current?.scrollTo({ y: Math.max(0, y + 8), animated: !reducedMotion }); }, 80);
+  // On Today, Live asks into the same thread, so closing it leaves the conversation on Today (like Claude's voice mode): an
+  // answer shows in Live as the thread shows it, and Open ends Live on its entry. While Live is open the page stays quiet (`inLive`).
+  const [inLive, setInLive] = useState(false);
+  const todayLive: LiveAdapter = { scope: "Today", onOpenChange: setInLive, ask: async question => {
+    const entry = await today.ask(question), { reply } = entry;
+    return "notice" in reply ? { notice: reply.notice } : { lead: leadOf(reply.answer) ?? reply.answer.question, render: () => <ThreadEntry entry={entry} lead={false} />, open: () => showEntry(entry.id) };
+  } };
   const visible = compactResponses && !showEarlier ? requests.slice(-1) : requests;
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
   // Live mode records the room (scribe/live-recorder); the demo plays its sample consultation.
@@ -321,13 +334,22 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     <GestureDetector gesture={dragClose}>
     <Animated.View style={[{ flex: 1, overflow: "hidden", borderCurve: "continuous", backgroundColor: palette.canvas }, pageStyle]}>
     <View ref={backdrop} collapsable={false} accessibilityElementsHidden={drawer} importantForAccessibility={drawer ? "no-hide-descendants" : "auto"} style={{ flex: 1, backgroundColor: palette.canvas }}>
-    <AmbientWash quiet={requests.length > 0} thinking={Boolean(thinking)} />
+    <AmbientWash quiet={talking} thinking={Boolean(thinking) || thread.some(entry => !entry.reply)} />
     <Animated.ScrollView ref={scroll} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentInsetAdjustmentBehavior="never" scrollEventThrottle={16}
       onScroll={onScroll}
       onScrollEndDrag={syncTab} onMomentumScrollEnd={syncTab}
       contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + (!home && sections.length >= 2 ? 112 : 72), paddingBottom: insets.bottom + 150 + (steps ? 66 : 0), flexGrow: 1 }}>
-      {!requests.length ? <Home patient={patient} patients={patients} onPick={pick} onChoosePatient={() => router.push("/patients")} onSelectPatient={id => openSession(id)}
+      {!talking ? <Home patient={patient} patients={patients} onPick={pick} onChoosePatient={() => router.push("/patients")} onSelectPatient={id => openSession(id)}
         onShelf={bottom => setShelfFrom(Math.max(0, Math.round(bottom + scrollSV.get() - (insets.top + 106))))} shelfCollapse={{ scroll: scrollSV, from: shelfFrom }} />
+      : home ? <View style={{ gap: 44 }}>
+        {thread.map(entry => <View key={entry.id} collapsable={false} onLayout={event => {
+          const { y } = event.nativeEvent.layout;
+          entryAt.current[entry.id] = y;
+          // Each new question, and its answer once it lands, comes into view.
+          const key = `${entry.id}${entry.reply ? "+" : ""}`;
+          if (entry.id === newest?.id && brought.current !== key) { brought.current = key; scroll.current?.scrollTo({ y: Math.max(0, y + 8), animated: !reducedMotion }); }
+        }}><ThreadEntry entry={entry} fresh={entry.id === newest?.id && !inLive} onAgain={() => today.again(entry)} /></View>)}
+      </View>
       : <View style={{ gap: 44 }}>
         {compactResponses && requests.length > 1 && <Action label={showEarlier ? "Collapse earlier responses" : `Show ${requests.length - 1} earlier responses`} secondary onPress={() => setShowEarlier(value => !value)} />}
         {visible.map(req => <View key={req.id} collapsable={false} onLayout={event => {
@@ -350,8 +372,9 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     {!home && sections.length >= 2 && !active && <View pointerEvents="box-none" style={{ position: "absolute", top: TAB_TOP, left: 0, right: 0, alignItems: "center", zIndex: 2 }}>
       <SectionTabs sections={sections} active={Math.min(activeTab, sections.length - 1)} onPick={jumpTo} />
     </View>}
-    {home && !requests.length && <QuickRow actions={homeKeys} scroll={scrollSV} from={shelfFrom} top={insets.top + 62} />}
-    <TopBar patient={patient} inEncounter={!home} openTasks={openTaskCount(patient ? [patient] : patients, encounters, server)} faded={scrolled || requests.length > 0} tall={home && !requests.length && capsule} onMenu={openDrawer} onBack={home ? undefined : () => router.canGoBack() ? router.back() : router.replace("/")} onPatient={() => router.push({ pathname: "/patients", params: { switch: "1" } })} onTasks={() => router.push("/tasks")} />
+    {home && !talking && <QuickRow actions={homeKeys} scroll={scrollSV} from={shelfFrom} top={insets.top + 62} />}
+    <TopBar patient={patient} inEncounter={!home} openTasks={openTaskCount(patient ? [patient] : patients, encounters, server)} faded={scrolled || talking} tall={home && !talking && capsule} onMenu={openDrawer} onBack={home ? undefined : () => router.canGoBack() ? router.back() : router.replace("/")} onPatient={() => router.push({ pathname: "/patients", params: { switch: "1" } })} onTasks={() => router.push("/tasks")}
+      onNew={thread.length ? () => { clearThread(); scroll.current?.scrollTo({ y: 0, animated: false }); } : undefined} />
     </View>
 
     {/* Everything under the dock blurs progressively, on home and in visits alike. */}
@@ -373,7 +396,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       onVoiceError={setNotice}
       // The + and the visit tools only inside a visit; Today has none.
       {...patient && { onImage: () => open("xray"), onConsultation: () => open("recording"), onNote: () => open("note"), attachments: pending, onAttachmentsChange: setPending }}
-      suggestion={nudge && { text: nudge.text, onPress: () => setAsk({ open: true, shown: nudge.answer }) }}
+      // The ✦ asks into Today's thread too; it steps aside while the newest entry already answers it.
+      suggestion={nudge && answerOf(newest)?.id !== nudge.answer.id ? { text: nudge.text, onPress: () => void today.ask(nudge.answer.question, nudge.answer) } : undefined}
       above={<>
         {recording && <Pressable accessibilityRole="button" accessibilityLabel={`Consultation ${consultation}, ${encounter?.recordingSeconds} seconds`} accessibilityHint="Opens the consultation recorder" hitSlop={{ top: 2, bottom: 2 }} onPress={() => open("recording")} style={{ alignSelf: "center", minHeight: 40, paddingHorizontal: 16, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: palette.white, boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: encounter?.recording === "paused" ? palette.amber : palette.red }} /><Text style={{ ...type.footnote, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>Consultation {consultation} · {encounter?.recordingSeconds}s</Text>
@@ -382,7 +406,6 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
         {steps && !drawer && <NextStepBar steps={steps} p={next.p} onExpand={next.show} onAct={act} />}
       </>}
     />
-    <AskSheet scope="today" answers={todayAnswers} state={ask} onChange={setAsk} onTab={openTab} />
     {steps && next.open && <NextStepSheet steps={steps} p={next.p} onClose={() => next.hide()} onAct={act} />}
     {/* While open, the page is a quiet surface: it fades back and a tap anywhere closes it. */}
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: palette.canvas }, dimStyle]} />
