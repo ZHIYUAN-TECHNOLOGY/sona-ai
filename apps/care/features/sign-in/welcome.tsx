@@ -266,31 +266,55 @@ function CodeStep({ phone, onDone, onChangeNumber, demoCode }: { phone: string; 
   </View>;
 }
 
+/**
+ * Email sign-in, one field per screen like the phone steps (and Apple's and Google's sign-in): the email, then the
+ * password under it as a chip that goes back to change it. Not both at once: moving between a plain field and a
+ * secure one reloads iOS's keyboard, which redraws without its Passwords bar and then adds it back (320 then 347 pt
+ * within 70 ms on an iPhone, 1 Oct), so every tap between the two fields made the keyboard flicker. Now it swaps once,
+ * as the screen changes. The password screen keeps the email in a hidden username field so Password AutoFill still
+ * pairs them (Apple's advice for a login split across screens).
+ */
 function EmailStep({ onDone }: { onDone: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [asking, setAsking] = useState<"email" | "password">("email");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  const secret = useRef<import("react-native").TextInput>(null);
   const t = useT();
-  const ready = email.trim().includes("@") && password.length >= 8;
+  const known = /^\S+@\S+\.\S+$/.test(email.trim());
+  const ready = known && password.length >= 8;
+  const next = () => { if (known) { setError(undefined); setAsking("password"); } };
   const submit = async () => {
+    if (!ready || busy) return;
     setBusy(true); setError(undefined);
     const { error } = await authClient.signIn.email({ email: email.trim(), password });
     setBusy(false);
     if (error) setError(error.message ?? t("in.signInFailed")); else onDone();
   };
-  return <View style={{ gap: 8 }}>
+  // A fade only (it reads under Reduce Motion too): the screen swaps in place, nothing travels.
+  const swap = FadeIn.duration(180);
+  return asking === "email" ? <Animated.View key="email" entering={swap} style={{ gap: 8 }}>
     <Label>{t("in.emailLabel")}</Label>
-    {/* Return moves on to the password and then signs in; iOS pairs the two for Password AutoFill. */}
     <Field value={email} onChangeText={setEmail} placeholder="you@example.com" autoCapitalize="none" autoCorrect={false} spellCheck={false} autoComplete="email" textContentType="username"
-      keyboardType="email-address" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => secret.current?.focus()} autoFocus accessibilityLabel={t("in.emailLabel")} />
-    <View style={{ height: 6 }} />
+      keyboardType="email-address" returnKeyType="next" submitBehavior="submit" onSubmitEditing={next} autoFocus accessibilityLabel={t("in.emailLabel")} />
+    <View style={{ height: 16 }} />
+    <Button label={t("in.next")} disabled={!known} onPress={next} />
+  </Animated.View> : <Animated.View key="password" entering={swap} style={{ gap: 8 }}>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 44, paddingLeft: 4 }}>
+      <Text numberOfLines={1} selectable style={{ ...type.body, flexShrink: 1, color: palette.ink }}>{email.trim()}</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={t("in.changeEmail")} hitSlop={8} onPress={() => { setError(undefined); setAsking("email"); }}
+        style={{ minHeight: 44, justifyContent: "center", paddingHorizontal: 4 }}>
+        <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{t("in.changeEmail")}</Text>
+      </Pressable>
+    </View>
+    {/* Hidden username for Password AutoFill: it offers and saves the pair as one login. */}
+    <TextInput value={email.trim()} editable={false} textContentType="username" autoComplete="username" importantForAutofill="yes" accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
     <Label>{t("in.password")}</Label>
-    <Field ref={secret} secret value={password} onChangeText={setPassword} placeholder={t("in.passwordHint")} autoComplete="current-password" textContentType="password"
-      returnKeyType="go" onSubmitEditing={() => { if (ready && !busy) void submit(); }} accessibilityLabel={t("in.password")} />
+    <Field secret value={password} onChangeText={setPassword} placeholder={t("in.passwordHint")} autoComplete="current-password" textContentType="password"
+      returnKeyType="go" onSubmitEditing={() => { void submit(); }} autoFocus accessibilityLabel={t("in.password")} />
     {error && <Text selectable accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
     <View style={{ height: 16 }} />
-    <Button label={t("in.signIn")}busy={busy} disabled={!ready} onPress={() => { void submit(); }} />
-  </View>;
+    <Button label={t("in.signIn")} busy={busy} disabled={!ready} onPress={() => { void submit(); }} />
+  </Animated.View>;
 }
