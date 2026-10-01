@@ -5,7 +5,7 @@ import { palette, type } from "@/components/sona/theme";
 import { Action, Notice, Reveal } from "@/components/sona/ui";
 import { ClinicalResponseRenderer } from "@/features/presentation";
 import { EdgeBlur } from "@/components/sona/edge-blur";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, BackHandler, Keyboard, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -206,7 +206,17 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const today = useTodayThread(todayAnswers);
   const thread = home ? today.entries : [], newest = thread.at(-1);
   // The canvas holds a conversation (a visit's requests or Today's thread) rather than the dashboard.
-  const talking = requests.length > 0 || thread.length > 0;
+  // A visit's answers sit on top of its tiles: back returns to the tiles (answers kept) before it leaves the visit, and
+  // the next answer brings them back.
+  const [tiles, setTiles] = useState(false);
+  useEffect(() => { setTiles(false); }, [requests.length, patient?.id]);
+  const talking = (requests.length > 0 && !tiles) || thread.length > 0;
+  const backToTiles = !home && requests.length > 0 && !tiles;
+  const back = () => { if (backToTiles) { setTiles(true); scroll.current?.scrollTo({ y: 0, animated: false }); } else if (router.canGoBack()) router.back(); else router.replace("/"); };
+  // Android's back does the same; iOS's edge swipe would leave the visit, so it waits until the tiles show.
+  const navigation = useNavigation();
+  useEffect(() => { navigation.setOptions({ gestureEnabled: !backToTiles }); }, [backToTiles, navigation]);
+  useEffect(() => { if (!backToTiles) return; const sub = BackHandler.addEventListener("hardwareBackPress", () => { back(); return true; }); return () => sub.remove(); }, [backToTiles]); // eslint-disable-line react-hooks/exhaustive-deps
   const nudge = home ? suggestion(todayAnswers) : undefined;
   const { on: live } = useLive();
   const { can } = useRole();
@@ -294,7 +304,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   });
   // The page's top bar.
   const bar = { patient, inEncounter: !home, openTasks: openTaskCount(patient ? [patient] : patients, encounters, server), onMenu: openDrawer,
-    onBack: home ? undefined : () => router.canGoBack() ? router.back() : router.replace("/"), onPatient: () => router.push({ pathname: "/patients", params: { switch: "1" } }), onTasks: () => router.push("/tasks"),
+    onBack: home ? undefined : back, onPatient: () => router.push({ pathname: "/patients", params: { switch: "1" } }), onTasks: () => router.push("/tasks"),
     onNew: thread.length ? () => { clearThread(); scroll.current?.scrollTo({ y: 0, animated: false }); } : undefined };
   const visitLive: LiveAdapter | undefined = patient && props && {
     scope: patient.name.split(" ")[0] ?? patient.name,
@@ -366,7 +376,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       </View>}
     </Animated.ScrollView>
 
-    {!home && sections.length >= 2 && !active && <View pointerEvents="box-none" style={{ position: "absolute", top: TAB_TOP, left: 0, right: 0, alignItems: "center", zIndex: 2 }}>
+    {talking && !home && sections.length >= 2 && !active && <View pointerEvents="box-none" style={{ position: "absolute", top: TAB_TOP, left: 0, right: 0, alignItems: "center", zIndex: 2 }}>
       <SectionTabs sections={sections} active={Math.min(activeTab, sections.length - 1)} onPick={jumpTo} />
     </View>}
     {home && !talking && <QuickRow actions={homeKeys} scroll={scrollSV} from={shelfFrom} top={insets.top + 62} />}
