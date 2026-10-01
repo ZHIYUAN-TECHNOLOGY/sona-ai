@@ -8,6 +8,7 @@ import { SampleLabel } from "@/components/sona/model-answer";
 import { RoundAction, useAccessibleEffects } from "@/components/sona/ui";
 import { EASE_OUT_CSS, riseIn } from "@/components/sona/motion";
 import { LiquidVeil } from "@/components/sona/liquid-veil";
+import { VoiceWave } from "@/components/sona/voice-wave";
 import { GlassOrb } from "@/components/sona/glass-orb";
 import { Bars, OrbGlyph, type OrbActivity } from "@/components/sona/orb-glyph";
 import { loudness } from "@/features/live/turn";
@@ -21,7 +22,7 @@ import * as Haptics from "expo-haptics";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { AccessibilityInfo, ActivityIndicator, Keyboard, Pressable, StyleSheet, TextInput, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { Easing, FadeIn, FadeOut, interpolate, useAnimatedReaction, withDelay, withSequence, withSpring, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming, type EntryAnimationsValues } from "react-native-reanimated";
+import Animated, { Easing, FadeIn, FadeOut, interpolate, useAnimatedReaction, withDelay, withSequence, withSpring, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from "react-native-reanimated";
 import { useKeyboardHandler } from "react-native-keyboard-controller";
 import { scheduleOnRN } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -96,17 +97,15 @@ function RoundButton({ icon, label, onPress, hidden, reduced }: { icon: BrandIco
 }
 
 // On release the orb folds into a dark loading pill while the words are read (after Monogram's mic → loading pill),
-// on the stop glyph's spring (Apple Messages: response 0.4 s, damping 0.8). It starts as the orb's own circle and
-// grows left (the frame animates, so the origin moves with the width to keep the right edge on the orb's).
+// on the stop glyph's spring (Apple Messages: response 0.4 s, damping 0.8). The pill is laid out right-aligned to the
+// orb and grows out of it by scale from its right edge (transformOrigin), never by animating its frame: a frame
+// animation on a right-anchored view could leave it past the screen edge (1 Oct, iPhone).
 const MORPH = { duration: 400, dampingRatio: 0.8 }, PILL_H = 40;
-function pillIn(v: EntryAnimationsValues) {
+function pillIn() {
   "worklet";
   return {
-    initialValues: { originX: v.targetOriginX + v.targetWidth - ORB, originY: v.targetOriginY - (ORB - PILL_H) / 2, width: ORB, height: ORB, borderRadius: ORB / 2, opacity: 0 },
-    animations: {
-      originX: withSpring(v.targetOriginX, MORPH), originY: withSpring(v.targetOriginY, MORPH), width: withSpring(v.targetWidth, MORPH), height: withSpring(PILL_H, MORPH),
-      borderRadius: withSpring(PILL_H / 2, MORPH), opacity: withTiming(1, { duration: 160 }),
-    },
+    initialValues: { opacity: 0, transform: [{ scale: 0.6 }] },
+    animations: { opacity: withTiming(1, { duration: 160 }), transform: [{ scale: withSpring(1, MORPH) }] },
   };
 }
 
@@ -307,8 +306,9 @@ export function VoiceDock(props: Props) {
     </Animated.View>
 
     {holding && <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(140)} pointerEvents="none" style={{ position: "absolute", left: 32, right: 32, bottom: insets.bottom + 132, alignItems: "center" }}>
-      {/* The words grow above the dock as they are heard (live: a partial reading every 1.5 s; the sample: its script),
-          with the voice bars beside the hint. */}
+      {/* The voice drawn big above the words while it is heard; the words grow under it (live: a partial reading every
+          second; the sample: its script), with the small bars beside the hint. */}
+      {mic.state !== "reading" && <View style={{ marginBottom: 28 }}><VoiceWave level={level} still={reducedMotion} /></View>}
       {(live ? mic.partial : words) ? <Words text={live ? mic.partial : transcript.slice(0, words).join(" ")} reduced={reducedMotion} />
         : <Text accessibilityLiveRegion="polite" style={{ textAlign: "center", ...type.display, fontWeight: "500", color: palette.muted }}>{mic.state === "reading" ? "Reading what you said…" : "Listening…"}</Text>}
       {mic.state !== "reading" && <View style={{ marginTop: 10, flexDirection: "row", alignItems: "center", gap: 8 }}>
@@ -367,7 +367,7 @@ export function VoiceDock(props: Props) {
               </Animated.View>
             </GestureDetector>
             {reading && <Animated.View entering={reducedMotion ? FadeIn.duration(150) : pillIn} exiting={FadeOut.duration(140)} pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden
-              style={{ position: "absolute", right: 0, top: (ORB - PILL_H) / 2, height: PILL_H, borderRadius: PILL_H / 2, overflow: "hidden", flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, backgroundColor: palette.ink }}>
+              style={{ position: "absolute", right: 0, top: (ORB - PILL_H) / 2, height: PILL_H, borderRadius: PILL_H / 2, transformOrigin: "right center", flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, backgroundColor: palette.ink }}>
               <ActivityIndicator size="small" color={palette.white} />
               <Text numberOfLines={1} maxFontSizeMultiplier={1.4} style={{ ...type.footnote, fontWeight: "600", color: palette.white }}>Transcribing…</Text>
             </Animated.View>}
