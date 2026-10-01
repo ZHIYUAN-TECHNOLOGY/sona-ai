@@ -7,7 +7,8 @@ import { currentLang, translate } from "./i18n";
 import "./strings";
 
 /**
- * Speaking to Sona Care: record the patient's voice, stop by itself once they go quiet, and turn it
+ * Speaking to Sona Care: record the patient's voice, stop by itself once they go quiet (or, with
+ * `untilStop`, only when they tap stop: the composer's dictation, where a pause mid-thought cut them off), and turn it
  * into text on the server (care.transcribe). The words come back for the patient to see before
  * anything is sent. Audio is 16 kHz mono WAV on iOS (what speech models read best), kept only on the
  * phone until it is sent, then deleted. With no speech model switched on, the server says so plainly
@@ -28,7 +29,7 @@ const SPEECH_DB = -38, SILENCE_MS = 800, MAX_MS = 30_000, NOTHING_MS = 7_000;
 
 export type Listening = "idle" | "listening" | "reading" | "error";
 
-export function useListen({ language, onHeard }: { language?: "en" | "ms" | "zh"; onHeard: (text: string) => void }) {
+export function useListen({ language, onHeard, untilStop }: { language?: "en" | "ms" | "zh"; onHeard: (text: string) => void; untilStop?: boolean }) {
   const recorder = useAudioRecorder(OPTIONS);
   const status = useAudioRecorderState(recorder, 100);
   const [state, setState] = useState<Listening>("idle");
@@ -70,20 +71,22 @@ export function useListen({ language, onHeard }: { language?: "en" | "ms" | "zh"
     setState("listening");
   };
 
-  // Ends the turn by itself: a pause after speaking sends it; nothing said for a while, or too long, stops.
+  // Ends the turn by itself: a pause after speaking sends it (unless `untilStop`); nothing said for a while, or too long, stops.
   const level = status.metering ?? -160;
   useEffect(() => {
     if (state !== "listening") return;
     const now = Date.now();
     if (level > SPEECH_DB) { spoke.current = true; quietSince.current = undefined; }
     else if (spoke.current) quietSince.current ??= now;
-    if (spoke.current && quietSince.current && now - quietSince.current > SILENCE_MS) void finish(true);
+    if (!untilStop && spoke.current && quietSince.current && now - quietSince.current > SILENCE_MS) void finish(true);
     else if (!spoke.current && now - startedAt.current > NOTHING_MS) void finish(false);
     else if (now - startedAt.current > MAX_MS) void finish(true);
   });
 
   return {
-    state, error, level,
+    state, error, level, untilStop,
+    /** How long this recording has run, for the timer. */
+    ms: status.durationMillis,
     /** Tap: start listening, or (while listening) send what was said now. */
     toggle: () => { if (state === "listening") void finish(true); else if (state !== "reading") void start(); },
     cancel: () => { void finish(false); },
