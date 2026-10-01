@@ -268,8 +268,8 @@ export function VoiceDock(props: Props) {
   // Live's page is memoised, so it gets a stable Send: the level readings (ten a second) don't re-render it.
   const latestTalk = useRef(talk); latestTalk.current = talk;
   const liveSend = useCallback(() => { haptic("select"); latestTalk.current.send(); }, []);
-  // Live's keyboard hands the unsent words to the composer: Live ends and the bar morphs into the text box with the
-  // keyboard up (no words keep what was already typed there).
+  // Live's keyboard hands the unsent words to the composer: the mic goes off, Live stays, and its bar morphs into the
+  // text box with the keyboard up (no words keep what was already typed there); what is sent is asked in Live.
   const typeInstead = async () => { const text = await talk.keyboard(); if (text) onDraft(text); setMode("composing"); };
   // Live is a page of its own: this canvas covers the page under it, and the wave's glass refracts it instead of that page.
   // The wave rises once the canvas has faded in, so its one snapshot is the canvas, never the page fading out under it.
@@ -317,7 +317,13 @@ export function VoiceDock(props: Props) {
   const coach = !used && !coached && !quiet && !suggestion && !busy && !talk.open && mode === "idle" && !attachments.length;
   // Once it has shown, no other dock this session shows it again.
   useEffect(() => { if (!coach) return; coachSeen = true; const timer = setTimeout(() => setCoached(true), 6000); return () => clearTimeout(timer); }, [coach]);
-  const send = () => { const value = draft.trim(); if (!value && !attachments.length) return; onSubmit(value || `Review the attached ${attachments.length === 1 ? "image" : "images"}`); Keyboard.dismiss(); };
+  const send = () => {
+    const value = draft.trim() || (attachments.length ? `Review the attached ${attachments.length === 1 ? "image" : "images"}` : "");
+    if (!value) return;
+    // Typed inside Sona Live, it is asked there, as a spoken question is (the box keeps it while Sona still answers).
+    if (talk.open) { if (talk.say(value)) { onDraft(""); Keyboard.dismiss(); } return; }
+    onSubmit(value); Keyboard.dismiss();
+  };
 
   // Attachments: the plus morphs into the menu; closing from any depth is one spring back.
   const openMenu = () => { setMenu(true); haptic("light"); menuProgress.set(reducedMotion ? 1 : withSpring(1, MENU_SPRING)); };
@@ -363,7 +369,7 @@ export function VoiceDock(props: Props) {
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: scrim ? 1 : 0, transitionProperty: "opacity", transitionDuration: scrim ? 320 : 240, transitionTimingFunction: EASE_OUT_CSS }]}>
       <Frost solid={reducedTransparency} />
     </Animated.View>
-    {talk.open && <SonaLive phase={talk.phase} turns={talk.turns} draft={talk.draft} reading={talk.reading} scope={props.sonaLive?.scope ?? ""} sample={!live} bottom={Math.round(screenH * LIVE_CREST)} onSend={liveSend} onEnd={talk.end} />}
+    {talk.open && <SonaLive phase={talk.phase} turns={talk.turns} draft={talk.draft} reading={talk.reading} scope={props.sonaLive?.scope ?? ""} sample={!live} bottom={Math.round(screenH * LIVE_CREST)} conversation={props.sonaLive?.conversation} header={props.sonaLive?.header} onSend={liveSend} onEnd={talk.end} />}
 
     {holding && <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(140)} pointerEvents="none" style={{ position: "absolute", left: 32, right: 32, bottom: insets.bottom + 132, alignItems: "center" }}>
       {/* The words grow above the dock as they are heard (live: a partial reading every second; the sample: its

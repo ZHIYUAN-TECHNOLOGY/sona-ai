@@ -137,7 +137,7 @@ function Round({ children, label, onPress }: { children: ReactNode; label: strin
  * Floating header: menu on the left; patient messages and follow-up tasks on the right (what a clinician checks
  * between patients). Inside an encounter, the patient chip joins it so every answer's subject stays visible.
  */
-export function TopBar({ patient, inEncounter, openTasks, faded, tall = false, onMenu, onBack, onPatient, onTasks, onNew }: { patient?: Patient; inEncounter: boolean; openTasks: number; faded: boolean; tall?: boolean; onMenu: () => void; onBack?: () => void; onPatient: () => void; onTasks: () => void; onNew?: () => void }) {
+export function TopBar({ patient, inEncounter, openTasks, faded, tall = false, onMenu, onBack, onPatient, onTasks, onNew, onClose }: { patient?: Patient; inEncounter: boolean; openTasks: number; faded: boolean; tall?: boolean; onMenu: () => void; onBack?: () => void; onPatient: () => void; onTasks: () => void; onNew?: () => void; /** Inside Sona Live: ends it, last in the toolbar. */ onClose?: () => void }) {
   const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();
   return <View pointerEvents="box-none" style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
@@ -168,6 +168,7 @@ export function TopBar({ patient, inEncounter, openTasks, faded, tall = false, o
             <Text style={{ ...type.overline, color: palette.white, fontVariant: ["tabular-nums"] }}>{openTasks}</Text>
           </View>}
         </Round>
+        {onClose && <Round label="End Sona Live" onPress={onClose}><View style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}><Icon name="xmark" size={16} /></View></Round>}
       </View>
     </View>
   </View>;

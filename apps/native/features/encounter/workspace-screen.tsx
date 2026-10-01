@@ -6,7 +6,7 @@ import { Action, Notice, Reveal } from "@/components/sona/ui";
 import { ClinicalResponseRenderer } from "@/features/presentation";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentProps } from "react";
 import { AccessibilityInfo, BackHandler, Keyboard, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { capabilityLabels, Home, suggestionFor, thinkingLabel, TopBar, useVisitLead, VisitEnd, VisitLead, type Suggestion } from "./conversation";
@@ -14,16 +14,16 @@ import { openTaskCount } from "@/features/day/counts";
 import { useServerData } from "@/features/live/server-day";
 import { api, useLive } from "@/features/live";
 import { touch } from "@/features/patients/continue-store";
-import { PLACEHOLDER, leadOf, matchQuestion, suggestion } from "@/features/ask/answers";
+import { PLACEHOLDER, matchQuestion, suggestion } from "@/features/ask/answers";
 import { useTodayAnswers } from "@/features/ask/today";
-import { ThreadEntry, useTodayThread } from "@/features/ask/today-thread";
+import { ThreadEntry, TodayConversation, useTodayThread } from "@/features/ask/today-thread";
 import { answerOf, clearThread } from "@/features/ask/thread";
 import { capabilitySchema, routeInThread } from "./state";
 import { openSession } from "./navigation";
 import { useEncounter } from "./store";
 import type { Capability, FeatureProps, FocusView, RequestState, ResponseCard } from "./types";
 import { VoiceDock } from "./voice-dock";
-import { useLiveClose, type LiveAdapter } from "./sona-live";
+import { Bubble, useLiveClose, type LiveAdapter } from "./sona-live";
 import { QuickRow } from "@/components/sona/quick-actions";
 import { useServerEncounter } from "@/features/live/sync";
 import { useHomeActions } from "./quick-actions";
@@ -302,8 +302,12 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     setShowEarlier(true);
     setTimeout(() => { const y = offsets.current[id]; if (y !== undefined) scroll.current?.scrollTo({ y: Math.max(0, y + 8), animated: !reducedMotion }); }, 80);
   };
+  // The page's top bar, also Sona Live's: Live keeps the menu, the toolbar and the way back, and adds its X.
+  const bar = { patient, inEncounter: !home, openTasks: openTaskCount(patient ? [patient] : patients, encounters, server), onMenu: openDrawer,
+    onBack: home ? undefined : () => router.canGoBack() ? router.back() : router.replace("/"), onPatient: () => router.push({ pathname: "/patients", params: { switch: "1" } }), onTasks: () => router.push("/tasks"),
+    onNew: thread.length ? () => { clearThread(); scroll.current?.scrollTo({ y: 0, animated: false }); } : undefined };
   const visitLive: LiveAdapter | undefined = patient && props && {
-    scope: patient.name.split(" ")[0] ?? patient.name,
+    scope: patient.name.split(" ")[0] ?? patient.name, header: <LiveTopBar {...bar} />,
     ask: async question => {
       // Attachments from the dock's + menu go with the question, as `submit` sends them: an image to the imaging review
       // (Live shows its card); files and documents are kept for reference, which Live says (with an image, the page does).
@@ -322,17 +326,16 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       return { lead: lead ?? capabilityLabels[kind], render: () => <LiveRequest patientId={patient.id} id={id} props={props} onRetry={() => run(kind, question)} />, open: () => showRequest(id) };
     },
   };
-  // Today's entries by where they sit: the newest is brought into view as a visit brings in its new answer, and Live's Open shows one.
-  const entryAt = useRef<Record<number, number>>({});
+  // The newest entry is brought into view as a visit brings in its new answer.
   const brought = useRef("");
-  const showEntry = (id: number) => setTimeout(() => { const y = entryAt.current[id]; if (y !== undefined) scroll.current?.scrollTo({ y: Math.max(0, y + 8), animated: !reducedMotion }); }, 80);
   // On Today, Live asks into the same thread, so closing it leaves the conversation on Today (like Claude's voice mode): an
   // answer shows in Live as the thread shows it, and Open ends Live on its entry. While Live is open the page stays quiet (`inLive`).
   const [inLive, setInLive] = useState(false);
-  const todayLive: LiveAdapter = { scope: "Today", onOpenChange: setInLive, ask: async question => {
-    const entry = await today.ask(question), { reply } = entry;
-    return "notice" in reply ? { notice: reply.notice } : { lead: leadOf(reply.answer) ?? reply.answer.question, render: () => <ThreadEntry entry={entry} lead={false} />, open: () => showEntry(entry.id) };
-  } };
+  // Live shows Today's thread itself, as the page does (question bubbles, the lead inked in, the answer and its ops), so
+  // speaking, typing and the page read as one conversation; each question Live asks lands there (`shown`).
+  const todayLive: LiveAdapter = { scope: "Today", onOpenChange: setInLive, header: <LiveTopBar {...bar} />,
+    conversation: { render: () => <TodayConversation entries={thread} onAgain={today.again} />, empty: !thread.length },
+    ask: async question => { await today.ask(question); return { shown: true }; } };
   const visible = compactResponses && !showEarlier ? requests.slice(-1) : requests;
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
   // Live mode records the room (scribe/live-recorder); the demo plays its sample consultation.
@@ -353,7 +356,6 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       : home ? <View style={{ gap: 44 }}>
         {thread.map(entry => <View key={entry.id} collapsable={false} onLayout={event => {
           const { y } = event.nativeEvent.layout;
-          entryAt.current[entry.id] = y;
           // Each new question, and its answer once it lands, comes into view.
           const key = `${entry.id}${entry.reply ? "+" : ""}`;
           if (entry.id === newest?.id && brought.current !== key) { brought.current = key; scroll.current?.scrollTo({ y: Math.max(0, y + 8), animated: !reducedMotion }); }
@@ -368,7 +370,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
             scroll.current?.scrollTo({ y: Math.max(0, event.nativeEvent.layout.y + 8), animated: false });
           }
         }} style={{ gap: 16, minHeight: req.id === latest?.id && req.status === "streaming" ? 320 : undefined }}>
-          <Text selectable accessibilityRole="header" style={{ ...type.subhead, lineHeight: 19, color: palette.muted }}>{req.prompt || prompts[req.kind]}</Text>
+          <Bubble text={req.prompt || prompts[req.kind]} />
           {/* Only the latest answer feeds the pinned tabs. */}
           <RequestAnswer req={req} card={encounter?.cards.find(c => c.requestId === req.id)} revision={encounter?.revision} props={props} onRetry={() => run(req.kind, req.prompt)}
             onSections={req.id === latest?.id ? list => { setSections([...list]); setActiveTab(0); } : undefined} />
@@ -382,8 +384,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       <SectionTabs sections={sections} active={Math.min(activeTab, sections.length - 1)} onPick={jumpTo} />
     </View>}
     {home && !talking && <QuickRow actions={homeKeys} scroll={scrollSV} from={shelfFrom} top={insets.top + 62} />}
-    <TopBar patient={patient} inEncounter={!home} openTasks={openTaskCount(patient ? [patient] : patients, encounters, server)} faded={scrolled || talking} tall={home && !talking && capsule} onMenu={openDrawer} onBack={home ? undefined : () => router.canGoBack() ? router.back() : router.replace("/")} onPatient={() => router.push({ pathname: "/patients", params: { switch: "1" } })} onTasks={() => router.push("/tasks")}
-      onNew={thread.length ? () => { clearThread(); scroll.current?.scrollTo({ y: 0, animated: false }); } : undefined} />
+    <TopBar {...bar} faded={scrolled || talking} tall={home && !talking && capsule} />
     </View>
 
     {/* Everything under the dock blurs progressively, on home and in visits alike. */}
@@ -424,3 +425,9 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   </View>;
 }
 
+
+/** The page's top bar inside Sona Live: the menu ends Live before the drawer opens (leaving the page ends it too, in useSonaLive), and the X ends it. */
+function LiveTopBar(props: Omit<ComponentProps<typeof TopBar>, "faded">) {
+  const end = useLiveClose();
+  return <TopBar {...props} faded={false} onMenu={() => { end(); props.onMenu(); }} onClose={end} />;
+}

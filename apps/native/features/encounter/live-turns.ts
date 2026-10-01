@@ -19,7 +19,7 @@ export type Talk<R> = {
   floor: number;
   /** Sent, waiting for the mic to finish reading; chunks after this one (said after a send phrase) stay out. */
   sending?: number;
-  /** The keyboard takes the draft once it is all read (Live then ends). */
+  /** The keyboard takes the draft once it is all read (Live stays open, the mic off, for typing). */
   handoff?: boolean;
 };
 export type Step<R> =
@@ -29,6 +29,8 @@ export type Step<R> =
   | { type: "settled" } // the mic has nothing left to read
   | { type: "clear"; upTo: number } // Clear: the draft goes, with every chunk up to `upTo` still being read
   | { type: "keyboard" } // the keyboard takes over: the mic goes off and the draft goes to the composer once read
+  | { type: "handed" } // the composer has the draft: it leaves Live's draft
+  | { type: "say"; text: string } // a typed question, sent from the composer inside Live
   | { type: "reply"; reply: R; session: number } // Sona's answer, or a notice
   | { type: "mic" } // the mic button
   | { type: "fail"; id?: number; reply?: R }; // the microphone, or chunk `id`'s reading, failed: the mic goes off, with a notice (none repeats one)
@@ -85,6 +87,9 @@ export function step<R>(s: Talk<R>, e: Step<R>): Talk<R> {
     }
     case "clear": return s.phase === "thinking" ? s : { ...s, draft: [], floor: Math.max(s.floor, e.upTo) };
     case "keyboard": return { ...s, mic: false, phase: s.phase === "thinking" ? "thinking" : "paused", handoff: true };
+    case "handed": return { ...s, draft: [], handoff: undefined };
+    // Typed in Live: it is the clinician's turn as a spoken one is, once Sona has answered the last.
+    case "say": return s.phase === "thinking" || !e.text.trim() ? s : { ...s, phase: "thinking", turns: [...s.turns, { id: s.next, who: "you", text: e.text.trim() }], next: s.next + 1 };
     case "reply": return e.session !== s.session ? s : { ...s, phase: s.mic ? "listening" : "paused", turns: [...s.turns, { id: s.next, who: "sona", reply: e.reply }], next: s.next + 1 };
     case "mic": {
       const mic = !s.mic;

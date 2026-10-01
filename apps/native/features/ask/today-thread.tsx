@@ -8,7 +8,7 @@ import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import { StreamedLead } from "@/features/encounter/conversation";
-import { useLiveClose } from "@/features/encounter/sona-live";
+import { Bubble, useLiveClose } from "@/features/encounter/sona-live";
 import { useLive } from "@/features/live";
 import { AnswerView, KeepRow, answerFree, answerNow, openTab, useRunOp } from ".";
 import { leadOf, withoutLead, type Answer } from "./answers";
@@ -53,7 +53,7 @@ export function ThreadEntry({ entry, lead = true, fresh = false, onAgain }: { en
   const said = reply && "answer" in reply ? reply : undefined;
   const text = said && leadOf(said.answer), rest = said && (text ? withoutLead(said.answer) : said.answer);
   return <View style={{ gap: 16 }}>
-    {lead && <Text selectable accessibilityRole="header" style={{ ...type.subhead, lineHeight: 19, color: palette.muted }}>{entry.question}</Text>}
+    {lead && <Bubble text={entry.question} />}
     {!reply ? <Drafting label="Thinking…" lines={2} slow={MODEL_SLOW} />
       : "notice" in reply ? <View style={{ gap: 2 }}>
         <Caption>{reply.notice}</Caption>
@@ -72,4 +72,10 @@ export function ThreadEntry({ entry, lead = true, fresh = false, onAgain }: { en
         </Animated.View>
       </>}
   </View>;
+}
+
+/** Today's thread inside Sona Live, laid out as the page lays it out (the page adds its own scrolling): the newest inked in. */
+export function TodayConversation({ entries, onAgain }: { entries: Entry[]; onAgain: (entry: Entry) => void }) {
+  const newest = entries.at(-1);
+  return <View style={{ gap: 44 }}>{entries.map(entry => <ThreadEntry key={entry.id} entry={entry} fresh={entry.id === newest?.id} onAgain={() => onAgain(entry)} />)}</View>;
 }

@@ -103,6 +103,18 @@ test("the keyboard takes over: the mic goes off and the last chunk still joins t
   expect(draft(step(s, { type: "heard", id: 1, text: "Brief me." }))).toBe("Brief me.");
 });
 
+test("typing in Live: the composer takes the draft, and a typed question is a turn like a spoken one", () => {
+  const handed = run({ type: "heard", id: 1, text: "Brief me" }, { type: "keyboard" }, { type: "handed" });
+  expect([handed.phase, handed.mic, handed.handoff, draft(handed)]).toEqual(["paused", false, undefined, ""]);
+  const typed = step(handed, { type: "say", text: " Brief me on Amelia " });
+  expect([typed.phase, said(typed)]).toEqual(["thinking", ["you: Brief me on Amelia"]]);
+  // Sona answers one question at a time, and an empty box sends nothing.
+  expect(step(typed, { type: "say", text: "Next" })).toBe(typed);
+  expect(step(handed, { type: "say", text: "  " })).toBe(handed);
+  // The reply lands, and with the mic off Live waits, paused.
+  expect(step(typed, { type: "reply", reply: "ok", session: 1 }).phase).toBe("paused");
+});
+
 test("the lead inks a word every 35 ms, all at once under Reduce Motion", () => {
   expect(wordsOf("  Amelia is  42. ")).toEqual(["Amelia", "is", "42."]);
   expect(inked(0, 5)).toBe(0);
