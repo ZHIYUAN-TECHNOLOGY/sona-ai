@@ -14,7 +14,7 @@ import { openTaskCount } from "@/features/day/counts";
 import { useServerData } from "@/features/live/server-day";
 import { api, useLive } from "@/features/live";
 import { touch } from "@/features/patients/continue-store";
-import { PLACEHOLDER, matchQuestion, suggestion } from "@/features/ask/answers";
+import { PLACEHOLDER, forWhichPatient, matchQuestion, suggestion } from "@/features/ask/answers";
 import { useTodayAnswers } from "@/features/ask/today";
 import { ThreadEntry, TodayConversation, useTodayThread } from "@/features/ask/today-thread";
 import { answerOf, clearThread } from "@/features/ask/thread";
@@ -46,6 +46,9 @@ import type { OrbActivity } from "@/components/sona/orb-glyph";
 const activities: Record<Capability, OrbActivity> = { briefing: "reading", reasoning: "solving", xray: "breathing", medication: "checking", prescription: "composing", followup: "connecting", note: "composing", evidence: "reading" };
 const prompts: Record<Capability, string> = { briefing: "Brief me on this patient", reasoning: "What possibilities should I consider?", xray: "Review the chest X-ray", medication: "Review medication interactions", prescription: "Run the prescribing simulation", followup: "Prepare a follow-up plan", note: "Show the consultation note", evidence: "What does the evidence say about steroids?" };
 const UNROUTED = "Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan.";
+/** Attachments sent from Today, on their way to the visit the clinician picks for them (it adopts them when it opens). */
+// ponytail: the next visit opened adopts them, whichever it is (they show above its +, to remove); tie them to the row tapped if that misleads.
+let carried: Attachment[] = [];
 
 /**
  * One request's answer as a visit's thread shows it: its lead, its card as it streams, or why it stopped. Sona Live
@@ -243,9 +246,12 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     if (named) updateEncounter(value => value.medicationDraft ? value : { ...value, medicationDraft: { ...named } });
     return id;
   };
+  // On Today nothing reads a photo or file yet, so Sona asks whose they are: each patient row opens that visit with them waiting.
+  const askForPatient = (question: string) => { carried = pending; setPending([]); return today.ask(question, forWhichPatient(question, patients)); };
   const submit = async (text: string) => { const prompt = text.trim(); if (!prompt || routing.current) return; setNotice(undefined);
     // A question about the day (the day's rules answer it, or no visit tool does) joins Today's thread, never the visit tools'
     // notice: live, the model answers it from Today's own data (ask.free), or says it is starting; demo mode says what Sona answers.
+    if (!patient && pending.length) { setInput(""); void askForPatient(prompt); return; }
     if (!patient) { if (matchQuestion(prompt, todayAnswers) || !routeInThread(prompt)) { setInput(""); void today.ask(prompt); return; } }
     else if (pending.length) {
       // Images go to the imaging review (the first becomes the encounter's attachment); files and documents, scanned or photographed, are kept for reference.
@@ -265,7 +271,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     } finally { routing.current = false; setRoutingNow(false); }
   };
 
-  useEffect(() => { setShowEarlier(false); setNotice(undefined); setPending([]); if (!patient) setDrafts({}); }, [patient?.id]);
+  // A visit opened for attachments sent from Today has them waiting, to go with its next question.
+  useEffect(() => { setShowEarlier(false); setNotice(undefined); setPending(patient && carried.length ? carried : []); carried = []; if (!patient) setDrafts({}); }, [patient?.id]);
   // Working on a visit keeps it in Continue ("where you left off") for the next 24 h.
   useEffect(() => { if (!home && patient) touch(patient.id); }, [home, patient?.id, encounter?.requests.length]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!active) return; setPhase("thinking"); const timer = setTimeout(() => setPhase("working"), 320); return () => clearTimeout(timer); }, [active?.id]);
@@ -335,7 +342,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   // speaking, typing and the page read as one conversation; each question Live asks lands there (`shown`).
   const todayLive: LiveAdapter = { scope: "Today", onOpenChange: setInLive, header: <LiveTopBar {...bar} />,
     conversation: { render: () => <TodayConversation entries={thread} onAgain={today.again} />, empty: !thread.length },
-    ask: async question => { await today.ask(question); return { shown: true }; } };
+    ask: async question => { await (pending.length ? askForPatient(question) : today.ask(question)); return { shown: true }; } };
   const visible = compactResponses && !showEarlier ? requests.slice(-1) : requests;
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
   // Live mode records the room (scribe/live-recorder); the demo plays its sample consultation.
@@ -404,8 +411,9 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       voiceEnabled={voiceInput}
       onVoiceDisabled={() => setNotice("Voice input is turned off in settings. Type your request instead.")}
       onVoiceError={setNotice}
-      // The + and the visit tools only inside a visit; Today has none.
-      {...patient && { onImage: () => open("xray"), onConsultation: () => open("recording"), onNote: () => open("note"), attachments: pending, onAttachmentsChange: setPending }}
+      // The + on every page (Today asks whose they are); the visit's tools only inside a visit.
+      attachments={pending} onAttachmentsChange={setPending}
+      {...patient && { onImage: () => open("xray"), onConsultation: () => open("recording"), onNote: () => open("note") }}
       // The ✦ asks into Today's thread too; it steps aside while the newest entry already answers it.
       suggestion={nudge && answerOf(newest)?.id !== nudge.answer.id ? { text: nudge.text, onPress: () => void today.ask(nudge.answer.question, nudge.answer) } : undefined}
       above={<>

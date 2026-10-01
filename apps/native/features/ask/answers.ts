@@ -82,6 +82,14 @@ export function toWatch(cards: CardLine[]): Answer {
   ]) };
 }
 
+/** Attachments sent from Today: which patient they are for. Each row opens that visit, where they wait to go with its next question. */
+export function forWhichPatient(question: string, patients: { id: string; name: string; age: number; subtitle: string }[]): Answer {
+  return { id: "attach", question, worth: true, spec: column("attach", [
+    { type: "AskLead", props: { text: "Which patient is this for?" } },
+    { type: "AskRows", props: { rows: patients.slice(0, 8).map(p => ({ id: p.id, title: p.name, detail: `${p.age} · ${p.subtitle}`, tone: "calm" as const, op: `open:${p.id}` })) } },
+  ]) };
+}
+
 /** The page's ✦ suggestion for the dock: the first answer with something to show, worded as its review when it has one. */
 export function suggestion(answers: Answer[]): { answer: Answer; text: string } | undefined {
   const answer = answers.find(a => a.worth);

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { askContextSchema } from "@sona-ai/api/ask-spec";
-import { askContext, beforeSigning, blocking, exportBlockers, leadOf, matchQuestion, mostMoney, needsYou, noteNext, overdue, soonest, suggestion, toCheck, toFollowUp, toWatch, waitingLongest, withoutLead } from "./answers";
+import { askContext, beforeSigning, forWhichPatient, blocking, exportBlockers, leadOf, matchQuestion, mostMoney, needsYou, noteNext, overdue, soonest, suggestion, toCheck, toFollowUp, toWatch, waitingLongest, withoutLead } from "./answers";
 import { validateAskSpec } from "./catalog";
 import { withSaved } from "./saved";
 
@@ -159,4 +159,11 @@ test("a free question carries the page's own leads and rows (one per id, with th
 
 test("handover watch rows are amber, like the Watch chip", () => {
   expect(parts(toWatch([{ id: "c1", name: "Siti", priority: "watch", situation: "K+ 2.9" }]))[1].props.rows[0].tone).toBe("soon");
+});
+
+test("attachments sent from Today ask whose they are: each patient a row that opens their visit", () => {
+  const a = forWhichPatient("Review the attached image", [{ id: "SYN-1042", name: "Amelia Tan", age: 42, subtitle: "Respiratory review" }]);
+  expect(validateAskSpec(a.spec)).not.toBeNull();
+  const rows = Object.values(a.spec.elements).find(e => e.type === "AskRows").props.rows;
+  expect(rows).toEqual([{ id: "SYN-1042", title: "Amelia Tan", detail: "42 · Respiratory review", tone: "calm", op: "open:SYN-1042" }]);
 });
