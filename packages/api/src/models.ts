@@ -138,8 +138,8 @@ export const stubModels: Models = {
   // ponytail: full names, IC, phone, email and MRN by rule (packages/domain/training); OpenMed's clinical PII model replaces it, and catches first names too.
   deidentify: ({ text, known }) => fixture(deidentifyByRules(text, known)),
   answerFromPlan: () => fixture({ answer: "", grounded: false, urgent: false }),
-  // ponytail: the stub has no eyes; it returns what the sample note says, whatever the photo. Gemma 4 vision
-  // or MedGemma replaces it through the Baseten adapter (docs/delivery-plan.md), with the same shape.
+  // ponytail: the stub has no eyes; it returns what the sample note says, whatever the photo. MedGemma reads
+  // photos through the Baseten adapter (./vision-models), with the same shape.
   readHandwrittenNote: () => fixture(structuredClone(SAMPLE_NOTE)),
   // ponytail: the sample box's words (a synthetic reading); the same vision model reads real photos.
   readMedicinePhoto: () => fixture({ name: "Cetirizine", dose: "10 mg", frequency: "once at night" }),

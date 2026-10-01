@@ -58,6 +58,27 @@ test("detection hands the model the uploaded X-ray when there is one", async () 
   expect(finding).toMatchObject({ kind: "effusion", source: "fake-cxr-1", ruleId: "effusion-small", intervalDays: 14, validated: false });
 });
 
+test("a mark belongs to the image it was read from: the authored fixture claims no upload, a model's read carries that image's key", async () => {
+  const objects = new Map<string, Uint8Array>();
+  const uploads = { put: async (key: string, bytes: Uint8Array) => { objects.set(key, bytes); }, get: async (key: string) => {
+    const bytes = objects.get(key);
+    return bytes ? { arrayBuffer: async () => bytes.slice().buffer } : null;
+  } };
+  let eyes = false; // the image model is off, then on
+  const models: Models = { ...stubModels, incidentalFindings: input => eyes
+    ? Promise.resolve({ findings: [{ kind: "nodule", label: "12 mm nodule, left upper zone", sizeMm: 12, location: { x: 0.7, y: 0.25, zone: "left upper zone", box: [0.2, 0.65, 0.3, 0.75] } }], validated: false, source: "model", model: "medgemma-1.5-4b" })
+    : stubModels.incidentalFindings(input) };
+  const { api } = await signedIn({ models, uploads });
+  const { key: first } = await api.xray.upload({ encounterId: "visit-1042", contentType: "image/png", dataBase64: Buffer.from([1]).toString("base64") });
+  // The stub has no eyes: Amelia's authored findings were not read from her upload, so they carry no key.
+  expect((await api.findings.detect({ encounterId: "visit-1042" })).map(f => [f.kind, f.source, f.imageKey])).toEqual([["nodule", "fixture", null], ["cardiomegaly", "fixture", null]]);
+  eyes = true;
+  expect((await api.findings.detect({ encounterId: "visit-1042" })).map(f => [f.kind, f.source, f.imageKey, f.label])).toEqual([["nodule", "medgemma-1.5-4b", first, "12 mm nodule, left upper zone"]]);
+  // A read of a newer image moves the mark onto it.
+  const { key: second } = await api.xray.upload({ encounterId: "visit-1042", contentType: "image/png", dataBase64: Buffer.from([2]).toString("base64") });
+  expect((await api.findings.detect({ encounterId: "visit-1042" }))[0]?.imageKey).toBe(second);
+});
+
 test("tracking a finding makes one task and one recall at its due date, however often it is sent, and it turns overdue once the date passes", async () => {
   const { api, clock } = await signedIn();
   const [nodule] = await api.findings.detect({ encounterId: "visit-1042" });

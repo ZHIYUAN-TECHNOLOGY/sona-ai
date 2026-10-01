@@ -169,12 +169,24 @@ test("methods without a hosted model yet stay on the stub, and never say a model
   expect(await models.xrayRead({ image: new Uint8Array(1), contentType: "image/png" })).toMatchObject({ source: "fixture", waking: COLD_START_MIN.xray });
   // ...and the stub-only ones answer exactly as the stub does, calling nothing.
   const asked = calls.length;
-  const known = { names: ["Amelia Tan"] }, note = { image: new Uint8Array(1), contentType: "image/png", patient: { name: "Amelia Tan", knownMedicines: [] } };
+  const known = { names: ["Amelia Tan"] };
   expect(await models.deidentify({ text: "Amelia Tan", known })).toEqual(await stubModels.deidentify({ text: "Amelia Tan", known }));
-  expect(await models.readMedicinePhoto({})).toEqual(await stubModels.readMedicinePhoto({}));
-  expect(await models.readHandwrittenNote(note)).toEqual(await stubModels.readHandwrittenNote(note));
-  expect(await models.incidentalFindings({ patientId: "SYN-1042" })).toEqual(await stubModels.incidentalFindings({ patientId: "SYN-1042" }));
   expect(calls).toHaveLength(asked);
+});
+
+test("the image readers go to MedGemma in box ③ with the photo, and while it starts the sample says when to expect it", async () => {
+  const { fetcher, calls } = fake({ [box("xray")]: chatReply('Amlodipine 5 mg", "name": "Amlodipine", "dose": "5 mg"}') });
+  const photo = { image: new Uint8Array([1, 2, 3]), contentType: "image/jpeg" };
+  expect(await basetenModels({ apiKey: "k", fetcher }).readMedicinePhoto(photo)).toEqual({ name: "Amlodipine", dose: "5 mg", source: "model", model: XRAY_MODEL });
+  const body = JSON.parse(calls.at(-1)!.init.body as string);
+  expect(calls.at(-1)!.url).toBe(`https://${box("xray")}/environments/production/sync/v1/chat/completions`);
+  expect([body.model, body.messages[0].content[0].image_url.url, body.messages[1], body.continue_final_message]).toEqual([XRAY_MODEL, `data:image/jpeg;base64,${btoa("\x01\x02\x03")}`, { role: "assistant", content: '{"printed": "' }, true]);
+  boxState.clear();
+  const cold = basetenModels({ apiKey: "k", fetcher: fake({}).fetcher });
+  expect(await cold.readMedicinePhoto(photo)).toEqual({ ...await stubModels.readMedicinePhoto(photo), waking: COLD_START_MIN.xray });
+  const note = { ...photo, patient: { name: "[NAME]", knownMedicines: [] } };
+  expect(await cold.readHandwrittenNote(note)).toEqual({ ...await stubModels.readHandwrittenNote(note), waking: COLD_START_MIN.xray });
+  expect(await cold.incidentalFindings({ patientId: "SYN-1042", ...photo })).toMatchObject({ source: "fixture", waking: COLD_START_MIN.xray });
 });
 
 /*

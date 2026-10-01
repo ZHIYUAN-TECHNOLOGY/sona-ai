@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useEncounter } from "@/features/encounter/store";
 import type { Encounter, FeatureProps } from "@/features/encounter/types";
 import { FindingsCard } from "@/features/findings";
+import { onImage } from "@/features/findings/model";
 import { useFindings } from "@/features/live/findings-sync";
 import { useRole } from "@/features/live/roles";
 import { useXrayUpload } from "@/features/live/xray-upload";
@@ -245,16 +246,22 @@ export function XrayScreen() {
   const activePatient = useRef(patient?.id);
   // Live backend mode: the chosen image is also uploaded to the server, where Analyse has the image model read it.
   const server = useXrayUpload();
-  // Demo flow 6: findings beyond the question asked, marked on the image and listed under it.
+  const attachment = evidence?.imagingAttachment;
+  const referenceImage = evidence?.hideTeachingImage ? undefined : teachingImage;
+  // A local image has no source page: its provenance line says it stays on this device and is not analysed.
+  const upload = attachment && server.upload?.uri === attachment.uri ? server.upload : undefined;
+  // Demo flow 6: findings beyond the question asked, marked on the image and listed under it; only those read from it.
   const found = useFindings();
   const role = useRole();
-  const findings = found.findings.filter(f => f.encounterId === patient?.encounterId);
+  const findings = onImage(found.findings, patient?.encounterId, attachment ? { key: upload?.key } : { reference: true });
   const markers = useMemo(() => findings.filter(f => f.status !== "dismissed").map(f => ({ id: f.id, n: findings.indexOf(f) + 1, x: f.location.x, y: f.location.y, label: f.label, box: f.location.box })), [findings.map(f => `${f.id}:${f.status}`).join()]); // eslint-disable-line react-hooks/exhaustive-deps
   // The finding under the torch; one tap on a marker or its row, and a dismissed finding lets go of it.
   const [focus, setFocus] = useState<string>();
   const focused = markers.some(m => m.id === focus) ? focus : undefined;
   const focusOn = useCallback((id: string | undefined) => { haptic(); setFocus(current => (id === current ? undefined : id)); }, []);
   useEffect(() => { if (patient) found.detect(patient.encounterId); }, [found.live, patient?.encounterId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A newly stored image is read for findings at once, so its own marks (or none) are what it shows.
+  useEffect(() => { if (patient && upload?.key) found.detect(patient.encounterId); }, [upload?.key]); // eslint-disable-line react-hooks/exhaustive-deps
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   activePatient.current = patient?.id;
@@ -278,10 +285,6 @@ export function XrayScreen() {
     } catch { setPickerError("The photo library could not be opened. Try again or check access in Settings."); }
     finally { setPicking(false); }
   };
-  const attachment = evidence?.imagingAttachment;
-  const referenceImage = evidence?.hideTeachingImage ? undefined : teachingImage;
-  // A local image has no source page: its provenance line says it stays on this device and is not analysed.
-  const upload = attachment && server.upload?.uri === attachment.uri ? server.upload : undefined;
   const kept = !upload ? "Kept on this device · not uploaded or analysed"
     : upload.state === "uploading" ? "Saving to your hospital’s storage · not analysed"
     : upload.state === "uploaded" ? "In your hospital’s storage · Analyse asks the image model to read it"

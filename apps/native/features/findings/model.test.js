@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { detectFixture, fixtureFindings, followUpTask, withFindings } from "./model";
+import { detectFixture, fixtureFindings, followUpTask, onImage, withFindings } from "./model";
 
 const seen = new Date("2026-09-26T10:00:00+08:00");
 
@@ -24,6 +24,20 @@ test("on My Day an overdue follow-up ranks red at the top and replaces its own t
   const ranked = withFindings(items, [tracked, { ...heart, status: "dismissed" }], new Date("2027-01-02T09:00:00+08:00"));
   expect(ranked.map(i => [i.id, i.tone])).toEqual([["finding-finding:visit-1042:nodule", "urgent"], ["visit-SYN-1042", "soon"]]);
   expect(ranked[0].title).toBe("Follow up 9 mm nodule: CT chest at 3 months · due 25 Dec");
+});
+
+test("marks come only from a read of the image shown: the authored ones stay on the reference film, never on the user's own image", () => {
+  const authored = fixtureFindings(seen);
+  const read = { ...authored[0], id: "finding:visit-1042:effusion", kind: "effusion", source: "medgemma-1.5-4b", imageKey: "demo/xray/visit-1042/a" };
+  const all = [...authored, read];
+  expect(onImage(all, "visit-1042", { reference: true }).map(f => f.source)).toEqual(["fixture", "fixture"]);
+  // The user's own image: only the model's read of that very upload, and nothing while it is local or unread.
+  expect(onImage(all, "visit-1042", { key: "demo/xray/visit-1042/a" })).toEqual([read]);
+  expect(onImage(all, "visit-1042", { key: "demo/xray/visit-1042/b" })).toEqual([]);
+  expect(onImage(all, "visit-1042", {})).toEqual([]);
+  expect(onImage(authored, "visit-1042", {})).toEqual([]);
+  // Another visit's findings never show.
+  expect(onImage(all, "visit-2001", { reference: true })).toEqual([]);
 });
 
 test("fixture findings appear only once the X-ray is opened, once, and only on Amelia's visit", () => {

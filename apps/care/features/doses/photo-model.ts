@@ -10,6 +10,16 @@ export type PhotoReading = Pick<PhotoMedicine, "name" | "dose" | "how">;
 /** "Cetirizine 10 mg, once at night". */
 export const medLine = (m: PhotoReading) => [[m.name, m.dose].filter(Boolean).join(" "), m.how].filter(Boolean).join(", ");
 
+/**
+ * What the sheet shows after a read. The sample photo's reading is the sample's (labelled). The patient's own photo
+ * that came back as the sample (the reader is off, starting, or found no medicine on it) was not read, so its fields
+ * start empty for them to type, with why: the sample's medicine is never offered as theirs.
+ */
+export function afterRead(r: { name: string; dose?: string; frequency?: string; source: string; waking?: number }, ownPhoto: boolean): { reading: PhotoReading; sample: boolean; unread?: { waking?: number } } {
+  if (r.source === "fixture" && ownPhoto) return { reading: { name: "" }, sample: false, unread: { waking: r.waking } };
+  return { reading: { name: r.name, dose: r.dose, how: r.frequency }, sample: r.source === "fixture" };
+}
+
 /** The care message's words; the photo and the reading travel with it as its attachment. */
 export const messageFor = (m: PhotoReading, t: T) => t("photo.message", { med: medLine(m) });
 

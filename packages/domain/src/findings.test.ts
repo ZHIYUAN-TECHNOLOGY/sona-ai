@@ -18,6 +18,8 @@ test("a nodule's rule is picked by its size: 9 mm is high risk with a 90-day CT,
   expect(ruleFor(nodule(4), RULES)).toMatchObject({ id: "nodule-under-6", riskBand: "low", intervalDays: null });
   // Just over 8 mm is over 8, not between bands.
   expect(ruleFor(nodule(8.05), RULES)?.id).toBe("nodule-over-8");
+  // A nodule a model saw but did not size is not "under 6 mm": it has no rule until someone measures it.
+  expect(ruleFor({ kind: "nodule", label: "Nodule, right upper zone", location }, RULES)).toBeUndefined();
 });
 
 test("any other finding's rule is picked by its kind, and a kind without a rule has none", () => {
@@ -65,4 +67,24 @@ test("a box outside the image, turned inside out, or a finding kind we have no r
 
 test("a left lower effusion is named from the patient's side (image right is the patient's left)", () => {
   expect(readBoxes('[{"label":"small pleural effusion","box_2d":[0.7,0.62,0.88,0.9]}]')[0]?.location.zone).toBe("left lower zone");
+});
+
+// MedGemma 1.5 answers in thousandths; these are its own boxes from live reads (1 Oct 2026).
+test("thousandths are read on their scale; a box the wrong size or place for its kind, or contradicting its zone words, is dropped", () => {
+  expect(readBoxes('Final Answer: ```json[{"box_2d": [180, 500, 830, 870], "label": "Left pleural effusion"}]```', 1000)).toEqual([
+    { kind: "effusion", label: "Left pleural effusion", location: { x: 0.685, y: 0.505, zone: "left middle zone", box: [0.18, 0.5, 0.83, 0.87] } },
+  ]);
+  expect(readBoxes('[{"box_2d": [350, 450, 770, 750], "label": "Enlarged heart (cardiomegaly)"}]', 1000)[0]?.location.zone).toBe("cardiac silhouette");
+  for (const wrong of [
+    '[{"box_2d": [0, 100, 1000, 950], "label": "cardiomegaly"}]', // the whole film is not a heart
+    '[{"box_2d": [270, 150, 440, 550], "label": "cardiomegaly"}]', // the right upper lung is not a heart either
+    '[{"box_2d": [500, 150, 750, 550], "label": "left pleural effusion"}]', // on the patient's right
+    '[{"box_2d": [100, 600, 400, 900], "label": "9 mm nodule, left upper zone"}]', // a third of the film is no nodule
+    '[{"box_2d": [700, 200, 760, 260], "label": "9 mm nodule, right upper zone"}]', // it is in the lower zone
+  ]) expect(readBoxes(wrong, 1000)).toEqual([]);
+  // A box past the scale is off the image, whatever the scale.
+  expect(readBoxes('[{"box_2d": [500, 500, 600, 1200], "label": "nodule"}]', 1000)).toEqual([]);
+  // Effusions on both sides are one box across the chest; one side's box that wide is not a mark.
+  expect(readBoxes('[{"box_2d": [600, 80, 900, 920], "label": "Pleural effusions on both sides"}]', 1000)).toHaveLength(1);
+  expect(readBoxes('[{"box_2d": [600, 80, 900, 920], "label": "Left pleural effusion"}]', 1000)).toEqual([]);
 });
