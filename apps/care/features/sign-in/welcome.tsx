@@ -51,7 +51,10 @@ export function Welcome() {
   const enter = (i: number) => reduced ? FadeIn.duration(160) : FadeInDown.springify().duration(420).dampingRatio(0.9).delay(60 + i * 40);
   const leave = FadeOut.duration(120);
 
-  return <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+  // The email step stays put while the keyboard is up: moving from email to password swaps iOS's keyboard for its
+  // secure one, which reports a few quick frame changes, and padding the page for each re-laid it out (a flicker).
+  // Its fields and button already sit above the keyboard. The phone and code steps keep their capsule above it.
+  return <KeyboardAvoidingView behavior="padding" enabled={step !== "email"} style={{ flex: 1 }}>
     <ScrollView keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="never"
       contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 }}>
       <View style={{ height: 48, justifyContent: "center" }}>
@@ -106,7 +109,7 @@ export function Welcome() {
 
       {step === "email" && <Animated.View key="email" exiting={leave} style={{ flex: 1, gap: 24, paddingTop: 12 }}>
         <Animated.View entering={enter(0)}><Head light={t("in.emailLight")} bold={t("in.emailBold")} /></Animated.View>
-        <Animated.View entering={enter(1)} style={{ flex: 1 }}><EmailStep onDone={signedIn} /></Animated.View>
+        <Animated.View entering={enter(1)}><EmailStep onDone={signedIn} /></Animated.View>
       </Animated.View>}
     </ScrollView>
   </KeyboardAvoidingView>;
@@ -277,7 +280,7 @@ function EmailStep({ onDone }: { onDone: () => void }) {
     setBusy(false);
     if (error) setError(error.message ?? t("in.signInFailed")); else onDone();
   };
-  return <View style={{ flex: 1, gap: 8 }}>
+  return <View style={{ gap: 8 }}>
     <Label>{t("in.emailLabel")}</Label>
     {/* Return moves on to the password and then signs in; iOS pairs the two for Password AutoFill. */}
     <Field value={email} onChangeText={setEmail} placeholder="you@example.com" autoCapitalize="none" autoCorrect={false} spellCheck={false} autoComplete="email" textContentType="username"
@@ -287,7 +290,7 @@ function EmailStep({ onDone }: { onDone: () => void }) {
     <Field ref={secret} secret value={password} onChangeText={setPassword} placeholder={t("in.passwordHint")} autoComplete="current-password" textContentType="password"
       returnKeyType="go" onSubmitEditing={() => { if (ready && !busy) void submit(); }} accessibilityLabel={t("in.password")} />
     {error && <Text selectable accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
-    <View style={{ flex: 1, minHeight: 24 }} />
+    <View style={{ height: 16 }} />
     <Button label={t("in.signIn")}busy={busy} disabled={!ready} onPress={() => { void submit(); }} />
   </View>;
 }
