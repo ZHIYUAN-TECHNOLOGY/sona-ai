@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, useWindowDimensions, View, type LayoutChangeEvent } from "react-native";
+import { Pressable, ScrollView, useWindowDimensions, View, type LayoutChangeEvent } from "react-native";
 import { Text } from "@/lib/text";
 import Animated, { FadeIn, FadeOut, LinearTransition, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { KeyboardAwareScrollView, type KeyboardAwareScrollViewRef } from "react-native-keyboard-controller";
@@ -21,6 +21,7 @@ import { ConsistencyTile, LatestTile, MedicinesTile, VisitTile } from "@/feature
 import { useMe } from "@/features/me";
 import { useMessageNeeds } from "@/features/messages/row";
 import { NudgeCard } from "@/features/notifications";
+import { Opening } from "@/features/opening";
 import { Welcome } from "@/features/sign-in/welcome";
 import { DOCK_SPACE } from "@/lib/dock";
 import { motion, palette, space, type } from "@/lib/theme";
@@ -77,7 +78,13 @@ let seen = false;
  * when there is one, the next visit; hidden tiles let the rest reflow); and the one feature card, today's
  * check-in. At large Dynamic Type the bento stacks to one column.
  */
-export default function Home() {
+/** The first screen: Sona's opening while the session and the record load, then the welcome or home through its dissolve. */
+export default function Index() {
+  const { state, step } = useMe();
+  return <Opening ready={state !== "loading"} step={step}>{state === "signed-out" ? <Welcome /> : <Home />}</Opening>;
+}
+
+function Home() {
   const { state, me } = useMe();
   const needs = useNeeds();
   const now = useNow();
@@ -93,7 +100,6 @@ export default function Home() {
   useEffect(() => { if (state === "joined") seen = true; }, [state]);
   const health = useQuery(orpc.healthCheck.queryOptions());
   const offline = health.isError || (health.data !== undefined && health.data !== "OK");
-  if (state === "signed-out") return <Welcome />;
   const layout = reduced ? undefined : LinearTransition.springify().duration(380).dampingRatio(1);
   const spot = (to: keyof typeof spots.current) => (e: LayoutChangeEvent) => { spots.current[to] = e.nativeEvent.layout.y; };
   const jump = (to: keyof typeof spots.current) => scroll.current?.scrollTo({ y: Math.max(0, spots.current[to] - insets.top - 12), animated: !reduced });
@@ -138,7 +144,6 @@ export default function Home() {
       </>
       : <Title overline="Sona Care" line={t("home.signedOutLine")}>{t("home.signedOutTitle")}</Title>}
     {offline && <Text style={{ ...type.footnote, color: palette.amber }}>{t("home.offline")}</Text>}
-    {state === "loading" && <ActivityIndicator color={palette.muted} />}
     {state === "not-joined" && <Card feature>
       <Text style={{ ...type.headline, color: palette.ink }}>{t("home.linkTitle")}</Text>
       <Text style={{ ...type.body, color: palette.muted }}>{t("home.linkLine")}</Text>

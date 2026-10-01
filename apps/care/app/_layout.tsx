@@ -19,6 +19,8 @@ import { queryClient } from "@/utils/orpc";
 
 // Hold the splash until Plus Jakarta Sans has loaded, so no screen draws in the system font first.
 SplashScreen.preventAutoHideAsync().catch(() => {});
+// The splash is the bare canvas (app.json), so fading it reads as the opening's orb blooming in (features/opening).
+SplashScreen.setOptions({ duration: 300, fade: true });
 
 /** Sona Care: the patient's side of their care (check-ins, discharge, follow-ups, messages to the care team). */
 export default function RootLayout() {

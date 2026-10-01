@@ -13,5 +13,6 @@ export function useMe() {
   const { data: session, isPending } = authClient.useSession();
   const me = useQuery({ ...orpc.care.me.queryOptions(), enabled: Boolean(session?.user), retry: false, select: d => d && { ...d, hospital: hospitalName(d.hospital) } });
   const state = isPending || (session?.user && me.isLoading) ? "loading" : !session?.user ? "signed-out" : me.data ? "joined" : "not-joined";
-  return { state, me: me.data, refresh: () => me.refetch() } as const;
+  // While loading: still checking the session, or signed in and fetching the record.
+  return { state, step: isPending ? "session" : "record", me: me.data, refresh: () => me.refetch() } as const;
 }
