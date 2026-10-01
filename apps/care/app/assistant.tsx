@@ -111,8 +111,11 @@ export default function Assistant() {
     return r;
   };
   // Dictation runs until the patient taps stop (a pause mid-thought used to cut them off), and the words
-  // land in the field to check and send; the mic only shows while the field is empty.
-  const listen = useListen({ language: lang, untilStop: true, onHeard: q => setDraft(d => d.trim() ? `${d.trim()} ${q}` : q) });
+  // land in the field to check and send; the mic only shows while the field is empty. The words stream into
+  // the pill as they speak; on stop the last of them sit in the field, dimmed, until the whole recording is read.
+  const join = (d: string, q: string) => d.trim() ? `${d.trim()} ${q}` : q;
+  const listen = useListen({ language: lang, untilStop: true, onHeard: q => setDraft(d => join(d, q)) });
+  const finishing = listen.state === "reading" && !!listen.partial;
   const askTyped = () => {
     const question = draft.trim();
     if (!question || working) return;
@@ -174,8 +177,8 @@ export default function Assistant() {
     </ScrollView>
 
     <View style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 12), gap: 8 }}>
-      {joined && <Composer inputRef={input} value={draft} onChangeText={setDraft} placeholder={t("ask.placeholder")} label={t("ask.label")} onSend={askTyped} canSend={canSend}
-        pill={listen.state === "listening" || listen.state === "reading" ? <Dictation listen={listen} /> : undefined}
+      {joined && <Composer inputRef={input} value={finishing ? join(draft, listen.partial) : draft} onChangeText={setDraft} placeholder={t("ask.placeholder")} label={t("ask.label")} onSend={askTyped} canSend={canSend}
+        finishing={finishing} pill={listen.state === "listening" || (listen.state === "reading" && !finishing) ? <Dictation listen={listen} /> : undefined}
         idle={<View style={{ flexDirection: "row", gap: 12 }}>
           <MicButton listen={listen} label={t("ask.speak")} quiet />
           <Pressable accessibilityRole="button" accessibilityLabel={t("ask.voiceMode")} accessibilityHint={t("ask.voiceHint")} onPress={() => { listen.cancel(); setVoice(true); }}
@@ -184,6 +187,7 @@ export default function Assistant() {
           </Pressable>
         </View>} />}
       {listen.state === "listening" ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, fontWeight: "600", color: palette.blue, textAlign: "center" }}>{t("ask.listening")}</Text>
+        : finishing ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.faint, textAlign: "center" }}>{t("mic.finishing")}</Text>
         : listen.error ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber, textAlign: "center" }}>{listen.error}</Text> : null}
       <Text style={{ ...type.footnote, fontWeight: "600", color: palette.amber, textAlign: "center" }}>{t("common.emergency")}</Text>
     </View>

@@ -1,8 +1,8 @@
 import { AudioModule, IOSOutputFormat, RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState, type RecordingOptions } from "expo-audio";
 import { File } from "expo-file-system";
+import { base64, partialDue, PARTIAL_MS, wavSoFar } from "@sona-ai/domain/partial-wav";
 import { useEffect, useRef, useState } from "react";
 import { api, errorText } from ".";
-import { base64, partialDue, PARTIAL_MS, wavSoFar } from "./partial-wav";
 import { MAX_MS, SPEECH_DB, turnEnd } from "./turn";
 
 /**
@@ -10,7 +10,7 @@ import { MAX_MS, SPEECH_DB, turnEnd } from "./turn";
  * the speech model reads best, the same format Sona Care sends), then turn it into text on the server
  * (`voice.transcribe`, Sona speech on Baseten). Holding the orb records until release; a tap records
  * until a pause after speaking. Audio stays on the phone until it is sent, then it is deleted. While it
- * records, the words so far come back as `partial` (see partial-wav); reading the whole file replaces them.
+ * records, the words so far come back as `partial` (see @sona-ai/domain/partial-wav); reading the whole file replaces them.
  */
 export const OPTIONS: RecordingOptions = {
   ...RecordingPresets.HIGH_QUALITY,

@@ -48,7 +48,7 @@ addStrings({
     "voice.sonaLine": "Sona's own Malaysian voice · Malay, English and Chinese", "voice.preparing": "Getting ready to speak…",
     "voice.sonaStarting": "Sona's voice is starting (about {n} min). Your phone reads until then.", "voice.sonaSlow": "Sona's voice didn't answer in time, so this one is in your phone's voice.",
     "voice.phone": "Your phone", "voice.phoneLine": "Your phone's own voice", "voice.slow": "Slow", "voice.slowLine": "Your phone's voice, a little slower", "voice.low": "Low", "voice.lowLine": "Your phone's voice, a little lower",
-    "mic.stop": "Stop recording", "mic.recording": "Recording, {time}", "mic.transcribing": "Transcribing", "mic.reading": "Reading what you said", "mic.speak": "Speak", "mic.stopHint": "Or just stop talking", "mic.hint": "Speak in Malay, English or Chinese",
+    "mic.stop": "Stop recording", "mic.recording": "Recording, {time}", "mic.transcribing": "Transcribing", "mic.reading": "Reading what you said", "mic.speak": "Speak", "mic.stopHint": "Or just stop talking", "mic.hint": "Speak in Malay, English or Chinese", "mic.finishing": "Finishing…",
   },
   ms: {
     "ask.plan": "Daripada pelan discaj anda", "ask.from": "Daripada arahan {name} anda", "ask.fromModel": "Daripada pelan discaj anda · {from}",
@@ -92,7 +92,7 @@ addStrings({
     "voice.sonaLine": "Suara Sona sendiri, loghat Malaysia · Melayu, Inggeris dan Cina", "voice.preparing": "Bersedia untuk bercakap…",
     "voice.sonaStarting": "Suara Sona sedang bermula (kira-kira {n} minit). Telefon anda membaca sehingga itu.", "voice.sonaSlow": "Suara Sona lambat menjawab, jadi yang ini dalam suara telefon anda.",
     "voice.phone": "Telefon anda", "voice.phoneLine": "Suara asal telefon anda", "voice.slow": "Perlahan", "voice.slowLine": "Suara telefon anda, lebih perlahan sedikit", "voice.low": "Rendah", "voice.lowLine": "Suara telefon anda, lebih rendah sedikit",
-    "mic.stop": "Berhenti merakam", "mic.recording": "Merakam, {time}", "mic.transcribing": "Menukar suara kepada teks", "mic.reading": "Sedang membaca apa yang anda kata", "mic.speak": "Cakap", "mic.stopHint": "Atau berhenti bercakap sahaja", "mic.hint": "Cakap dalam Bahasa Melayu, Inggeris atau Cina",
+    "mic.stop": "Berhenti merakam", "mic.recording": "Merakam, {time}", "mic.transcribing": "Menukar suara kepada teks", "mic.reading": "Sedang membaca apa yang anda kata", "mic.speak": "Cakap", "mic.stopHint": "Atau berhenti bercakap sahaja", "mic.hint": "Cakap dalam Bahasa Melayu, Inggeris atau Cina", "mic.finishing": "Menyiapkan…",
   },
   zh: {
     "ask.plan": "来自您的出院计划", "ask.from": "来自{name}的用药说明", "ask.fromModel": "来自您的出院计划 · {from}",
@@ -136,6 +136,6 @@ addStrings({
     "voice.sonaLine": "Sona 自己的马来西亚声音 · 马来语、英语和华语", "voice.preparing": "正在准备朗读…",
     "voice.sonaStarting": "Sona 的声音正在启动（约 {n} 分钟），在此之前由手机朗读。", "voice.sonaSlow": "Sona 的声音没有及时回应，这次用的是手机的声音。",
     "voice.phone": "您的手机", "voice.phoneLine": "手机自带的声音", "voice.slow": "慢速", "voice.slowLine": "手机的声音，慢一点", "voice.low": "低沉", "voice.lowLine": "手机的声音，低一点",
-    "mic.stop": "停止录音", "mic.recording": "正在录音，{time}", "mic.transcribing": "正在转成文字", "mic.reading": "正在识别您说的话", "mic.speak": "说话", "mic.stopHint": "或者停下来不说", "mic.hint": "可以说马来语、英语或华语",
+    "mic.stop": "停止录音", "mic.recording": "正在录音，{time}", "mic.transcribing": "正在转成文字", "mic.reading": "正在识别您说的话", "mic.speak": "说话", "mic.stopHint": "或者停下来不说", "mic.hint": "可以说马来语、英语或华语", "mic.finishing": "正在完成…",
   },
 });

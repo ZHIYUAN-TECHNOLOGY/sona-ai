@@ -1,13 +1,15 @@
 /**
- * Live words while the clinician speaks. Sona speech (`voice.transcribe`) reads a whole file, not a stream, so every
- * PARTIAL_MS the dock sends the WAV recorded so far and shows what comes back; the pass on the finished file still wins.
+ * Live words while someone speaks (Sona Pro's dock, Sona Care's Ask composer). Sona speech (`voice.transcribe`,
+ * `care.transcribe`) reads a whole file, not a stream, so every PARTIAL_MS the app sends the WAV recorded so far and
+ * shows what comes back; the pass on the finished file still wins.
  */
-// 16 kHz mono 16-bit PCM (OPTIONS in voice-input): 32 000 bytes a second.
+// 16 kHz mono 16-bit PCM (both apps' recording OPTIONS): 32 000 bytes a second.
 export const BYTES_PER_S = 32_000;
-export const PARTIAL_MS = 1500;
+// 1 s: words keep pace with speech (ChatGPT-style); a slow answer only skips ticks, it never queues them.
+export const PARTIAL_MS = 1000;
 // Half a second of new audio, or the partial would only repeat the last one.
 const MIN_NEW = BYTES_PER_S / 2;
-// The server takes ~40 s (MAX_AUDIO_BASE64, 1.8 M base64 chars); a turn stops at 30 s (MAX_MS), so this cap only bites
+// The server takes ~40 s (MAX_AUDIO_BASE64, 1.8 M base64 chars, both routes); a turn stops at 30 s (MAX_MS), so this cap only bites
 // if MAX_MS grows: a partial then hears the last 38 s and loses the start until the final pass reads the whole file.
 export const PARTIAL_MAX_S = 38;
 
