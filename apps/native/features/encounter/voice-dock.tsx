@@ -299,7 +299,7 @@ export function VoiceDock(props: Props) {
   });
 
   return <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-    {liquid && <LiquidVeil backdrop={backdrop} state={veil} armed={armed && !busy} words={live ? gusts : words} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
+    {liquid && <LiquidVeil backdrop={backdrop} state={veil} armed={armed && !busy} words={live ? gusts : words} voiceLevel={level} reducedMotion={reducedMotion} onUnavailable={() => setVeilFailed(true)} />}
     {/* Frosted focus layer: a static blur crossfaded by opacity. */}
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: scrim ? 1 : 0, transitionProperty: "opacity", transitionDuration: scrim ? 320 : 240, transitionTimingFunction: EASE_OUT_CSS }]}>
       {reducedTransparency ? <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(236,239,244,0.94)" }]} /> : <BlurView tint="light" intensity={38} style={StyleSheet.absoluteFill} />}
