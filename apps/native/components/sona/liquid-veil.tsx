@@ -8,17 +8,24 @@ import { follow, HISTORY, pushHistory, STEP_MS } from "./veil-signal";
 
 /**
  * Aurora glass — Sona's listening surface.
- * Frosted liquid glass widens out of the mic and lifts; its top is a slow aurora wave drawn
- * only by refraction and sheen, with dithered aurora curtains rising from it. It breathes on
- * a 4 s in / 6 s out cycle; every heard word is a gust: the wave swells and glides a little
- * further while a band of light climbs the curtains. The live voice lifts and ripples the crest, hangs
- * dithered columns of its last ~1.7 s from it (newest at the centre) and pulses a thin line under it.
+ * Frosted liquid glass widens out of the mic and lifts; its top is a slow, glowing cloud edge
+ * drawn by refraction and sheen, with dithered aurora curtains rising from it and a dithered
+ * aurora blooming under it. It breathes on a 4 s in / 6 s out cycle; every heard word is a gust:
+ * the edge swells and glides a little further while a band of light climbs the curtains. The live
+ * voice lifts the crest, raises its lobes and ripples it, deepens and saturates the aurora, hangs
+ * dithered columns of its last ~1.7 s from the crest (newest at the centre) and pulses a thin line
+ * under it.
+ *
+ * The cloud edge and the aurora are adapted from "Voice Blob" by @mehdi_made (MIT licence):
+ * value noise, an edge folded into billowed lobes, a vaporous rim and an fbm colour field that
+ * saturates with depth and loudness.
  */
 const effect = Skia.RuntimeEffect.Make(`
 uniform shader soft;
 uniform shader heavy;
 uniform float2 size;
 uniform float base;     // resting y of the slab top, just above the mic
+uniform float crestY;   // y where the listening crest rests (the crest prop)
 uniform float level;    // 0 = resting at the mic, 1 = listening, >1 floods upward
 uniform float spread;   // 0..1 how far the slab has widened out of the mic
 uniform float time;     // seconds, for slow drift
@@ -29,7 +36,7 @@ uniform float flare;    // seconds since the latest word, for light climbing the
 uniform float exit;     // 0..1 while sinking back into the mic: softens the shape and fades it out
 uniform float loud;     // 0..1 smoothed mic loudness (80 ms attack, 350 ms release)
 uniform float hist[24]; // loudness history, newest first: the centre column, older ones toward the edges
-uniform float still;    // 1 with Reduce Motion: no ripples or column motion, loudness only changes opacity
+uniform float still;    // 1 with Reduce Motion: nothing moves with the voice, loudness only changes opacity
 
 // Loudness history at column f (0 = centre, 23 = edge), interpolated. Runtime effects may only index
 // uniform arrays with loop indices, hence the loop.
@@ -40,45 +47,72 @@ float histAt(float f) {
   return mix(a, b, fract(f));
 }
 
-// Aurora wave: a soft travelling sine over a broad, low arch. Corners round off at the
-// current reach, so the glass widens out of the mic.
-float horizon(float x) {
+// exp(-x²) without pow(): pow() of a negative base is undefined on the GPU.
+float gauss(float x) { return exp(-x * x); }
+
+// Value noise for the cloud edge and the aurora, on a sin-free hash (Dave Hoskins) that holds up in fp32.
+float hash(float n) { n = fract(n * 0.1031); n *= n + 33.33; n *= n + n; return fract(n); }
+
+// 2D value noise and its x-derivative, so the crest's slope (for refraction) needs no extra evaluations.
+float2 noisedx(float2 p) {
+  float2 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f);
+  float n = i.x + i.y * 57.0;
+  float a = hash(n), b = hash(n + 1.0), c = hash(n + 57.0), e = hash(n + 58.0);
+  return float2(mix(a + (b - a) * u.x, c + (e - c) * u.x, u.y), mix(b - a, e - c, u.y) * 6.0 * f.x * (1.0 - f.x));
+}
+
+float noise(float2 p) {
+  float2 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f);
+  float n = i.x + i.y * 57.0;
+  return mix(mix(hash(n), hash(n + 1.0), u.x), mix(hash(n + 57.0), hash(n + 58.0), u.x), u.y);
+}
+
+// Where the crest sits for a level: the mic at 0, the listening rest at 1, then on to the flood height.
+float lift(float lv) {
+  return lv <= 1.0 ? mix(base, crestY, lv) : mix(crestY, base + (size.y * 0.5 - base) * 2.1, (lv - 1.0) / 1.1);
+}
+
+// The crest: its y at x, and its slope. A cloud edge rather than a sine: two broad noise layers (about 1.5 and
+// 3.3 cells across) drift in opposite directions and slowly morph, each folded into rounded lobes with soft
+// creases between (cloud, not water), over a broad low arch. Calm at rest; louder speech raises the lobes.
+// Corners round off at the current reach, so the glass widens out of the mic.
+float2 horizon(float x) {
   float lit = min(level, 1.0);
   float nx = x / size.x;
-  float y = mix(base, size.y * 0.5, level) - size.y * 0.012 * breath * lit;
-  // One broad travelling sine (~1.2 wavelengths across) with a single gentle harmonic.
-  float wave = 0.8 * sin(nx * 7.5 - time * 0.42 - phase) + 0.2 * sin(nx * 3.1 + time * 0.27 + 1.1 + phase * 0.4);
-  float arch = 12.0 * sin(3.14159 * nx);
-  float reach = spread * (size.x * 0.5 + 30.0);
-  float inset = reach - abs(x - size.x * 0.5);
-  // While exiting, the corners widen and the walls slope gently, so the narrowing glass
-  // becomes a soft bell rather than a pointed cone.
-  float radius = mix(26.0, 90.0, exit), wall = mix(6.0, 1.1, exit);
-  float corner = mix(34.0, 60.0, exit) * exp(-max(inset, 0.0) / radius) + max(-inset, 0.0) * wall;
+  float y = lift(level) - size.y * 0.012 * breath * lit;
+  float move = loud * (1.0 - still);
+  float2 a = noisedx(float2(nx * 1.5 + time * 0.09 + phase * 0.16, time * 0.05));
+  float2 b = noisedx(float2(nx * 3.3 - time * 0.07 - phase * 0.06, 4.7 + time * 0.04));
+  float za = a.x * 2.0 - 1.0, zb = b.x * 2.0 - 1.0, la = sqrt(za * za + 0.008), lb = sqrt(zb * zb + 0.008);
+  // Heights in pt (up is positive) and their slopes per unit of nx; 0.62 is the lobes' mean. Each word is a
+  // gust: the cloud and the arch swell, then ease back.
+  float amp = (38.0 + 22.0 * move) * (1.0 + 0.4 * voice);
+  float h = (la + 0.8 * lb - 0.62) * amp;
+  float dh = (za / la * 3.0 * a.y + zb / lb * 5.28 * b.y) * amp;
+  float s = sin(3.14159 * nx), cs = 3.14159 * cos(3.14159 * nx);
+  h += 12.0 * s * (1.0 + 0.25 * voice);
+  dh += 12.0 * cs * (1.0 + 0.25 * voice);
   // The crest lifts with loudness and carries small travelling ripples whose height follows it; both are
   // capped (16 + 5 pt) so the words above stay clear, and both stop with Reduce Motion.
-  float move = loud * (1.0 - still);
-  float ripple = (0.7 * sin(nx * 26.0 - time * 3.2) + 0.3 * sin(nx * 41.0 - time * 2.1 + 0.8)) * sin(3.14159 * nx);
-  // Each word is a gust: the whole wave swells in amplitude, then eases back.
-  return y - (arch * (1.0 + 0.25 * voice) + wave * 13.0 * (1.0 + 0.4 * voice) + move * (16.0 + 5.0 * ripple)) * lit + corner;
+  float k1 = nx * 26.0 - time * 3.2, k2 = nx * 41.0 - time * 2.1 + 0.8;
+  float ripple = 0.7 * sin(k1) + 0.3 * sin(k2);
+  h += move * (16.0 + 5.0 * ripple * s);
+  dh += move * 5.0 * ((18.2 * cos(k1) + 12.3 * cos(k2)) * s + ripple * cs);
+  // While exiting, the corners widen and the walls slope gently, so the narrowing glass
+  // becomes a soft bell rather than a pointed cone.
+  float off = x - size.x * 0.5, inset = spread * (size.x * 0.5 + 30.0) - abs(off);
+  float radius = mix(26.0, 90.0, exit), wall = mix(6.0, 1.1, exit);
+  float bow = mix(34.0, 60.0, exit) * exp(-max(inset, 0.0) / radius);
+  return float2(y - h * lit + bow + max(-inset, 0.0) * wall, -dh * lit / size.x + sign(off) * (inset > 0.0 ? bow / radius : wall));
 }
 
 // Aurora curtains rising from the wave: vertical folds that sway slowly.
 float curtain(float x, float above, float column) {
   float nx = x / size.x;
   float folds = 0.5 + 0.5 * sin(nx * 18.0 + sin(nx * 5.0 + time * 0.3) * 2.2 + time * 0.18);
-  folds = pow(folds, 1.6);
+  folds = pow(max(folds, 0.0), 1.6);
   float reachUp = 38.0 + 30.0 * (0.5 + 0.5 * sin(nx * 4.0 - time * 0.21)) + 28.0 * voice + 34.0 * column * (1.0 - still);
   return folds * exp(-above / reachUp) * smoothstep(0.0, 8.0, above + 2.0);
-}
-
-float glow(float2 p) {
-  float2 uv = p / size;
-  float2 asp = float2(size.x / size.y, 1.0);
-  float t = time * 0.1;
-  float2 a = (uv - float2(0.3 + 0.14 * sin(t * 1.3), 0.82)) * asp;
-  float2 b = (uv - float2(0.72 + 0.12 * cos(t * 0.9 + 1.7), 0.74)) * asp;
-  return smoothstep(0.05, 0.9, 0.8 * exp(-dot(a, a) * 14.0) + 0.7 * exp(-dot(b, b) * 18.0));
 }
 
 float halftone(float2 p, float amount) {
@@ -89,8 +123,8 @@ float halftone(float2 p, float amount) {
 
 half4 main(float2 p) {
   float lit = min(level, 1.0);
-  float h = horizon(p.x);
-  float d = p.y - h;
+  float2 crest = horizon(p.x);
+  float d = p.y - crest.x;
   half3 ink = mix(half3(0.3, 0.58, 0.86), half3(0.38, 0.44, 0.9), p.x / size.x);
 
   // Voice columns, mirrored about the centre (newest there): each is a dithered streak that hangs from the
@@ -101,31 +135,27 @@ half4 main(float2 p) {
   float streak = (1.0 - smoothstep(0.3, 0.8, abs(fract(f + 0.5) - 0.5) * 2.0)) * lit * (1.0 - exit);
   float hang = mix(10.0 + 72.0 * column, 34.0, still);
   float streaks = streak * (1.0 - smoothstep(hang * 0.55, hang, d)) * smoothstep(-2.0, 6.0, d) * (0.12 + 0.4 * mix(column, loud, still));
-
-  // Halftone band just inside the glass, swelling with each gust and brightening with loudness.
-  float band = exp(-pow((d - 20.0) / (18.0 + 12.0 * voice + 8.0 * loud), 2.0));
-  float dots = halftone(p, band * (0.16 + 0.34 * voice + 0.3 * loud) * lit * (1.0 - exit) + streaks);
   float vanish = 1.0 - smoothstep(0.15, 0.9, exit);
+  float loudM = loud * (1.0 - still);
+  // The crest glows rather than cuts: a soft band of the aurora's light straddling it, brighter with the voice.
+  float glow = gauss(d / (8.0 + 6.0 * loudM)) * (0.2 + 0.2 * loud + 0.1 * voice) * lit * vanish;
+  half3 glowCol = mix(half3(0.66, 0.76, 1.0), half3(0.76, 0.68, 1.0), p.x / size.x);
 
-  // Above the glass: dithered aurora curtains plus a soft contact shadow.
+  // Above the glass: dithered aurora curtains over the glow.
   if (d < 0.0) {
     float above = -d;
     // A band of light climbs the curtains after each word and fades near their tips.
-    float climb = exp(-pow((above - flare * 120.0) / 24.0, 2.0)) * exp(-flare * 1.4) * smoothstep(0.0, 0.08, flare);
+    float climb = gauss((above - flare * 120.0) / 24.0) * exp(-flare * 1.4) * smoothstep(0.0, 0.08, flare);
     float light = curtain(p.x, above, column) * (0.55 + 0.3 * voice + 0.35 * loud + 1.3 * climb) * lit;
     half3 aurora = mix(mix(half3(0.32, 0.78, 0.8), half3(0.45, 0.5, 0.95), p.x / size.x), half3(0.72, 0.62, 0.98), clamp(above / 140.0, 0.0, 1.0));
     float speck = halftone(p, light * 0.9 * (1.0 - exit)) * 0.5;
-    float haze = light * 0.1;
-    float shade = exp(-pow((d + 3.0) / 12.0, 2.0)) * (0.05 + 0.02 * voice) * lit;
-    float a = speck + haze;
-    a *= vanish; shade *= vanish;
-    return half4(aurora * a, a + shade * (1.0 - a));
+    float a = (speck + light * 0.1) * vanish;
+    return half4(aurora * a + glowCol * glow * (1.0 - a), a + glow * (1.0 - a));
   }
 
   // Refraction is strongest just under the edge, and deepens with each gust.
-  float slope = (horizon(p.x + 1.5) - horizon(p.x - 1.5)) / 3.0;
-  float2 normal = normalize(float2(slope, -1.0));
-  float bend = exp(-pow(d / 52.0, 2.0)) * (20.0 + 8.0 * voice) * lit + 4.0;
+  float2 normal = normalize(float2(crest.y, -1.0));
+  float bend = gauss(d / 52.0) * (20.0 + 8.0 * voice) * lit + 4.0;
   float2 q = p - normal * bend;
 
   float depth = clamp(d / (size.y * 0.42), 0.0, 1.0);
@@ -141,15 +171,47 @@ half4 main(float2 p) {
   }
   half3 c = half3(r, body.g, b);
 
-  // Frosted body: lifted near the surface, cooler with depth, a whisper of drifting light.
+  // Frosted body: lifted near the surface, cooler with depth.
   c = mix(c, half3(1.0), 0.17 * (1.0 - depth));
   c = mix(c, half3(0.9, 0.92, 0.952), 0.12 + 0.3 * depth);
-  c = mix(c, ink, glow(p) * 0.06 * lit);
-  c = mix(c, ink * 0.92, dots * (0.28 + 0.1 * loud));
+
+  // The aurora: a bloom of azure into violet, with a faint teal hint, hanging under the crest in the upper glass
+  // (above the words). Two drifting fbm layers set its density and lobe its lower edge; it saturates away from
+  // the rim and with loudness, reaches further down as the voice rises and breathes when quiet. It shows as a
+  // light wash and, mostly, as halftone dots sized by its density: subtle at rest, alive with the voice.
+  float reach = 62.0 + 36.0 * loudM + 10.0 * breath * (1.0 - loudM) + 10.0 * voice;
+  float aur = 0.0;
+  half3 aurCol = ink;
+  if (d < 1.8 * reach) {
+    float2 uv = float2(p.x / size.x, 1.0 - p.y / size.y);
+    float2 q2 = float2(uv.x * 2.4 - time * 0.08, uv.y * 2.6 + time * 0.03);
+    float bulk = 0.0, amp = 0.55;
+    for (int i = 0; i < 3; i++) { bulk += amp * noise(q2); q2 = q2 * 2.03 + float2(13.7, 7.31); amp *= 0.5; }
+    float2 w = float2(uv.x * 5.2 + time * 0.05, uv.y * 5.5 - time * 0.02);
+    float wisp = 0.55 * noise(w) + 0.275 * noise(w * 2.03 + float2(13.7, 7.31));
+    float dens = 0.4 * (bulk - 0.48) + 0.22 * (wisp - 0.41);
+    float fade = 1.0 - smoothstep(0.45 * reach, 1.45 * reach, d + dens * 2.0 * reach);
+    aur = smoothstep(0.0, 10.0, d) * fade * smoothstep(-0.05, 0.08, dens) * lit * (1.0 - exit);
+    float deep = clamp(d / reach, 0.0, 1.0) * (0.55 + 0.45 * loud);
+    half3 hue = mix(half3(0.14, 0.36, 0.8), half3(0.61, 0.48, 1.0), smoothstep(0.25, 0.85, uv.x + 1.2 * dens));
+    aurCol = mix(half3(0.5, 0.63, 1.0), hue, clamp(deep * 1.4, 0.0, 1.0));
+    aurCol = mix(aurCol, half3(0.25, 0.74, 0.78), 0.3 * (1.0 - deep) * (1.0 - uv.x));
+    c = mix(c, aurCol, aur * (0.08 + 0.17 * loud));
+  }
+
+  // One dot per cell for the halftone band just inside the edge (swelling with each gust, brightening with
+  // loudness), the voice columns and the aurora; its colour and strength blend by their shares.
+  float band = gauss((d - 20.0) / (18.0 + 12.0 * voice + 8.0 * loud));
+  float rimAmt = band * (0.16 + 0.34 * voice + 0.3 * loud) * lit * (1.0 - exit) + streaks;
+  float aurAmt = aur * mix(0.28 + 0.6 * loudM + 0.15 * voice, 0.45, still);
+  float total = max(rimAmt + aurAmt, 0.0001);
+  float dots = halftone(p, rimAmt + aurAmt);
+  half3 dotCol = (ink * 0.92 * rimAmt + aurCol * aurAmt) / total;
+  c = mix(c, dotCol, dots * (rimAmt * (0.28 + 0.1 * loud) + aurAmt * (0.3 + 0.3 * loud)) / total);
 
   // A thin voice line under the crest, centred on the mic: the loudness history, newest in the middle,
   // ripples outward from the centre. Flat with Reduce Motion, where only its opacity follows the voice.
-  float y0 = mix(base, size.y * 0.5, min(level, 1.0)) + 40.0;
+  float y0 = lift(min(level, 1.0)) + 40.0;
   if (abs(p.y - y0) < 16.0) {
     float sx = (p.x / size.x - 0.5) / 0.2;
     float span = exp(-sx * sx);
@@ -163,12 +225,13 @@ half4 main(float2 p) {
 
   // Glass edge from light alone: a soft specular sheen and an inner glow, no drawn stroke.
   float sheen = 0.6 + 0.4 * sin(p.x / size.x * 3.0 - time * 0.35);
-  c += half3(exp(-pow(d / 3.2, 2.0)) * (0.26 + 0.12 * voice) * sheen);
-  c += half3(exp(-pow((d - 12.0) / 20.0, 2.0)) * (0.06 + 0.04 * voice));
+  c += half3(gauss(d / 6.0) * (0.2 + 0.1 * voice) * sheen);
+  c += half3(gauss((d - 12.0) / 20.0) * (0.06 + 0.04 * voice));
 
-  // Feathered edge and fading body while exiting, so it ends as a soft haze.
-  float alpha = smoothstep(0.0, 3.0 + 26.0 * exit, d) * vanish;
-  return half4(c * alpha, alpha);
+  // A vaporous rim that fades the glass in under the glow, wider and fading out while exiting, so it ends as a
+  // soft haze.
+  float alpha = smoothstep(0.0, 14.0 + 16.0 * exit, d) * vanish;
+  return half4(glowCol * glow + c * alpha * (1.0 - glow), glow + alpha * (1.0 - glow));
 }`)!;
 
 function blurred(image: SkImage, width: number, height: number, radius: number) {
@@ -184,7 +247,7 @@ function blurred(image: SkImage, width: number, height: number, radius: number) 
 
 export type VeilState = "idle" | "listening" | "flood";
 
-export function LiquidVeil({ backdrop, state, armed = false, words = 0, voiceLevel, reducedMotion, onUnavailable }: { backdrop: RefObject<View | null>; state: VeilState; /** Finger is down on the mic: capture early so the veil is ready. */ armed?: boolean; words?: number; /** Live voice loudness 0..1 (UI thread): lifts and ripples the crest, drives the columns and the voice line. */ voiceLevel?: SharedValue<number>; reducedMotion: boolean; onUnavailable: () => void }) {
+export function LiquidVeil({ backdrop, state, armed = false, words = 0, voiceLevel, crest = 0.5, reducedMotion, onUnavailable }: { backdrop: RefObject<View | null>; state: VeilState; /** Finger is down on the mic: capture early so the veil is ready. */ armed?: boolean; words?: number; /** Live voice loudness 0..1 (UI thread): lifts and ripples the crest, deepens the aurora, drives the columns and the voice line. */ voiceLevel?: SharedValue<number>; /** How high the listening crest rests, as a fraction of the screen height from the bottom (mid-screen by default); a full-screen page can keep it lower. */ crest?: number; reducedMotion: boolean; onUnavailable: () => void }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const restY = height - Math.max(insets.bottom, 12) - 78;
@@ -270,7 +333,7 @@ export function LiquidVeil({ backdrop, state, armed = false, words = 0, voiceLev
   useEffect(() => { if (state === "idle" && !armed) { const t = setTimeout(() => setLayers(null), 480); return () => clearTimeout(t); } }, [state, armed]);
   useEffect(() => () => { [level, spread, time, breath, voice, phase, flare, exit, loud].forEach(v => cancelAnimation(v)); }, []);
 
-  const uniforms = useDerivedValue(() => ({ size: [width, height], base: restY, level: level.value, spread: spread.value, time: time.value, breath: breath.value, voice: voice.value, phase: phase.value, flare: flare.value, exit: exit.value, loud: loud.get(), hist: history.get(), still: reducedMotion ? 1 : 0 }));
+  const uniforms = useDerivedValue(() => ({ size: [width, height], base: restY, crestY: height * (1 - crest), level: level.value, spread: spread.value, time: time.value, breath: breath.value, voice: voice.value, phase: phase.value, flare: flare.value, exit: exit.value, loud: loud.get(), hist: history.get(), still: reducedMotion ? 1 : 0 }));
   if (!layers) return null;
   return <Canvas pointerEvents="none" style={StyleSheet.absoluteFill}>
     <Fill>
