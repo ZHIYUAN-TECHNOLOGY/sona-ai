@@ -413,7 +413,10 @@ export function VoiceDock(props: Props) {
             <Animated.View pointerEvents={holding || busy || talk.open ? "none" : "auto"} accessibilityElementsHidden={holding || busy || talk.open} importantForAccessibility={holding || busy || talk.open ? "no-hide-descendants" : "auto"} layout={reducedMotion ? undefined : LAYOUT} style={{ flex: 1, opacity: holding || busy || talk.open ? 0 : 1, transitionProperty: "opacity", transitionDuration: 200, transitionTimingFunction: EASE_OUT_CSS }}>
               <Pressable accessibilityRole="button" accessibilityLabel={suggestion ? suggestion.label ?? `Ask Sona: ${suggestion.text}` : placeholder} accessibilityHint={suggestion ? "Opens Sona's answer" : "Opens the message composer"}
                 onPress={suggestion ? () => { haptic("select"); suggestion.onPress(); } : () => setMode("composing")}>
-                {({ pressed }) => <Animated.View style={{ minHeight: 50, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, borderRadius: 25, borderCurve: "continuous", backgroundColor: pressed ? "rgba(240,244,252,0.96)" : "rgba(255,255,255,0.92)", borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", boxShadow: "0 4px 16px rgba(40,70,140,0.10)", transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 }}>
+                {/* Liquid glass, as the round buttons beside it (native on iOS 26+, answering the touch itself; frosted white
+                    before that; solid with Reduce Transparency). */}
+                {({ pressed }) => <Animated.View style={{ minHeight: 50, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, borderRadius: 25, borderCurve: "continuous", backgroundColor: glass && !reducedTransparency ? "transparent" : reducedTransparency ? "rgba(255,255,255,0.97)" : pressed ? "rgba(244,247,253,0.86)" : "rgba(255,255,255,0.72)", borderWidth: glass && !reducedTransparency ? 0 : 1, borderColor: "rgba(255,255,255,0.9)", boxShadow: glass && !reducedTransparency ? undefined : "0 4px 16px rgba(40,70,140,0.10)", transform: [{ scale: pressed && !reducedMotion ? 0.98 : 1 }], transitionProperty: "transform", transitionDuration: 120 }}>
+                  {glass && !reducedTransparency && <GlassView colorScheme="light" glassEffectStyle="regular" isInteractive tintColor="rgba(255,255,255,0.2)" style={[StyleSheet.absoluteFill, { borderRadius: 25 }]} />}
                   {suggestion && <Text maxFontSizeMultiplier={2} style={{ ...type.subhead, color: palette.blue }}>✦</Text>}
                   <Text numberOfLines={1} maxFontSizeMultiplier={2} style={{ flex: 1, ...type.subhead, fontWeight: suggestion ? "600" : "400", color: suggestion ? palette.blue : palette.placeholder }}>{suggestion?.text ?? placeholder}</Text>
                 </Animated.View>}
@@ -478,6 +481,8 @@ export function VoiceDock(props: Props) {
           <TextInput autoFocus onBlur={() => setMode(current => current === "composing" ? "idle" : current)} accessibilityLabel="Ask Sona" value={draft} onChangeText={onDraft} placeholder={placeholder} placeholderTextColor="#7D8591" multiline style={{ ...type.headline, fontWeight: "400", lineHeight: 22, color: palette.ink, maxHeight: 120, minHeight: 26 }} />
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             {tools && <>
+              {/* Attachments from the composer, on the left as in Claude's: the composer folds into the bar while the menu opens from its +. */}
+              <ToolButton icon="add" label="Attach a photo, camera capture or file" onPress={leave(openMenu)} />
               <ToolButton icon="image" label="Attach or review a chest X-ray" onPress={leave(props.onImage!)} />
               <ToolButton icon="wave" label="Start the consultation recorder" onPress={leave(props.onConsultation!)} />
               <ToolButton icon="note" label="Open the consultation note" onPress={leave(props.onNote!)} />
