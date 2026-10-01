@@ -81,6 +81,7 @@ export const PERMISSIONS: Record<string, readonly [readonly Role[], string]> = {
   "findings.addToVisit": [DOCTOR, "add a finding to a visit"],
   "findings.dismiss": [DOCTOR, "dismiss a finding"],
   "checkIns.list": [CLINICAL_READ, "see check-ins"],
+  "checkIns.followUp": [CLINICAL_READ, "see Sona's follow-up"],
   "checkIns.tick": [CARE, "send due check-ins"],
   "checkIns.reply": [CARE, "record a check-in reply"],
   "checkIns.bookIn": [DOCTOR, "book a patient in"],

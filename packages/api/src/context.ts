@@ -1,4 +1,5 @@
 import type { Session } from "@sona-ai/auth";
+import type { FollowUp } from "@sona-ai/domain/check-in-agent";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 
 import type { Baseten } from "./baseten-models";
@@ -38,6 +39,17 @@ export type Context = {
   demoSignIn?: boolean;
   /** The Baseten key (and, in tests, a fake fetch) for routes that call a box directly: ask.route (Laya), ask.free (Gemma). Absent: they answer fixture. */
   baseten?: Baseten;
+  /** Sona's follow-up after discharge: the Worker's check-in agents, one per visit. Absent (tests), due check-ins are sent directly. */
+  followUps?: FollowUps;
+};
+
+export type { FollowUp };
+/** A discharged visit's check-in agent, by visit (apps/server/src/agents/check-in.ts; tests run it in memory). */
+export type FollowUps = {
+  /** Wakes the agent: it acts on whatever is due by the hospital's clock, reads new replies and sets its next alarm. */
+  tick(hospitalId: string, encounterId: string): Promise<{ sent: number }>;
+  /** What it remembers and did, for the clinician; null before its first wake or for another hospital. */
+  get(hospitalId: string, encounterId: string): Promise<FollowUp | null>;
 };
 
 /** Email as the routes use it: who sends, the insurer's inbox, and the send itself. */

@@ -15,12 +15,14 @@ import type { Patient } from "@/features/encounter/types";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { useRole } from "@/features/live/roles";
+import { FollowUpTimeline } from "./follow-up";
 import { callBackNote, shortDate, WARD_PHONE, type ReplyLabel } from "./model";
 import { addToVisit, bookIn, releaseFlag, resolveFlag, simulateReply, useCheckIns } from "./state";
 
 /*
  * Check-ins on the patient sheet: each sent message and the patient's reply as a short thread.
  * A fine reply sits quietly; worse is amber and urgent red, each saying it went to the doctor.
+ * In live mode Sona's follow-up (the visit's check-in agent: what it did, why, and what is next) sits below.
  */
 const LABEL: Record<ReplyLabel, { text: string; ink: string; wash: string }> = {
   fine: { text: "Fine · logged", ink: palette.muted, wash: "rgba(20,28,40,0.05)" },
@@ -62,6 +64,7 @@ export function CheckInThread({ patient, entering }: { patient: Patient; enterin
     </View>
     {showDemoControls && next && <Chip label={busy ? "Replying…" : `Simulate reply “${DEMO_REPLY}”`} icon={<Icon name="bubble.left" size={13} color={palette.ink} />} onPress={busy ? () => {} : reply} />}
     {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
+    <FollowUpTimeline encounterId={mine[0]!.encounterId} />
   </Animated.View>;
 }
 

@@ -8,12 +8,12 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
-import { announcer, createContext, patientChannel } from "./context";
+import { announcer, createContext, followUpAgents, patientChannel } from "./context";
 import { ENV } from "./env.server";
 import { createAuth, getDb } from "./services";
 import { runNightlyAudit } from "@sona-ai/api/audit-job";
 import { decideReview, renderReviewPage, reviewPacket } from "@sona-ai/api/insurer";
-import { sendDueCheckIns } from "@sona-ai/api/routers/check-ins";
+import { wakeFollowUps } from "@sona-ai/api/routers/check-ins";
 import { hospitals } from "@sona-ai/db/schema/clinical";
 import { careLinkOf, hospitalOf } from "@sona-ai/api/routers/hospital";
 
@@ -117,6 +117,7 @@ app.get("/", (c) => {
 
 export { EncounterState } from "./encounter-state";
 export { HospitalChannel } from "./hospital-channel";
+export { CheckInAgent } from "./agents/check-in";
 
 /** Matches the hourly cron in packages/infra/alchemy.run.ts. */
 const CHECK_IN_CRON = "0 * * * *";
@@ -132,8 +133,8 @@ export default {
     for (const { id, offset } of await db.select({ id: hospitals.id, offset: hospitals.clockOffsetMs }).from(hospitals)) {
       const at = new Date(controller.scheduledTime + offset);
       if (controller.cron === CHECK_IN_CRON) {
-        // Also pushes each patient's phones (Expo push, through the Worker's global fetch).
-        const { sent, patientIds } = await sendDueCheckIns(db, id, at);
+        // The backstop: every followed visit's check-in agent wakes and sends what is due (Expo push through the global fetch).
+        const { sent, patientIds } = await wakeFollowUps({ db, followUps: followUpAgents(env) }, id, at);
         // Patients whose check-in just arrived see it without reopening the app.
         await Promise.all(patientIds.map(patientId => announce?.(id, { topic: "checkIns", patientId }).catch(() => {})));
         console.log(`check-ins ${controller.cron}: ${id} sent ${sent}`);
