@@ -85,9 +85,10 @@ export function useLiveVoice({ voice, voices, onFlood }: { voice?: SonaVoice; vo
   }, [user]);
 
   // An answer the phone reads: Sona's voice sent none (it isn't ready), or the patient picked one of the phone's voices.
+  // Never one she was cut off from (`muted`): the patient has already moved on.
   useEffect(() => {
-    const { said, answer, frames, written, done } = talk;
-    if (!voice || !voices || !said?.trim() || answer <= handed.current) return;
+    const { said, answer, frames, written, done, muted } = talk;
+    if (!voice || !voices || !said?.trim() || muted || answer <= handed.current) return;
     if (voice.hosted ? !(done && frames === 0) : !written) return;
     handed.current = reading.current = answer;
     const v = voice.hosted ? standInFor(said, voices) : voiceFor(said, voice, voices);
