@@ -10,9 +10,10 @@ test("the agent is reached at the Agents SDK's default route: wss on a https ser
   expect(agentUrl("http://localhost:3000", "u1")).toBe("ws://localhost:3000/agents/sona-voice-agent/u1");
 });
 
-test("only the protocol's own events are read; diagnostics, metrics, the agent's own messages and broken frames are skipped", () => {
+test("only the protocol's own events and sona_say are read; diagnostics, metrics, the agent's other messages and broken frames are skipped", () => {
   expect(parse('{"type":"status","status":"listening"}')).toEqual({ type: "status", status: "listening" });
   expect(parse('{"type":"metrics","llm_ms":1}')).toBeUndefined();
+  expect(parse('{"type":"sona_turn","grounded":true}')).toBeUndefined();
   expect(parse('{"type":"diagnostic","event":"x","timestamp":1}')).toBeUndefined();
   expect(parse("not json")).toBeUndefined();
   expect(parse("null")).toBeUndefined();
@@ -37,6 +38,18 @@ test("a turn: the patient's words as they speak, Sona's answer as it is written,
   ], asked);
   expect(answering).toMatchObject({ said: "Tuesday 13 Oct. Bring your medicines.", answer: 1, frames: 2, written: true, done: false });
   expect(run([{ type: "status", status: "listening" }], answering)).toMatchObject({ done: true, frames: 2, call: "on" });
+});
+
+test("a sentence her voice sent without audio counts as one of her answer's sentences, not as audio; once cut off, neither counts", () => {
+  expect(parse('{"type":"sona_say","text":"Rest.","reason":"slow"}')).toEqual({ type: "sona_say", text: "Rest.", reason: "slow" });
+  const mixed = run([
+    { type: "call" }, { type: "status", status: "listening" }, { type: "transcript_start", role: "assistant" },
+    { type: "audio" }, { type: "sona_say", text: "Drink water.", reason: "slow" }, { type: "audio" },
+  ]);
+  expect(mixed).toMatchObject({ spoken: 3, frames: 2 });
+  // A notice (Sona's line with no audio) is an answer of its own, with no audio: the phone reads it whole.
+  expect(run([{ type: "transcript", role: "assistant", text: "I didn't catch that." }, { type: "sona_say", text: "I didn't catch that.", reason: "notice" }], mixed)).toMatchObject({ answer: 2, spoken: 1, frames: 0 });
+  expect(run([{ type: "barge_in" }, { type: "sona_say", text: "Rest.", reason: "slow" }, { type: "audio" }], mixed)).toMatchObject({ spoken: 3, frames: 2 });
 });
 
 test("once Sona is cut off, audio still in flight from that answer is dropped until her next answer", () => {

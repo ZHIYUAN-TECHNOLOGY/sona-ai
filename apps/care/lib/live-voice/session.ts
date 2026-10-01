@@ -7,7 +7,8 @@ import { Playback } from "./queue";
 
 /**
  * A live conversation with Sona's voice agent: one WebSocket (./protocol), the mic streamed to it through the gate
- * (./gate), and Sona's audio played back to back (./queue) with react-native-audio-api. For the call the phone's audio
+ * (./gate), and Sona's audio played back to back (./queue) with react-native-audio-api, a sentence sent without her
+ * audio read by the phone's voice in its place (`read`). For the call the phone's audio
  * is set up as a voice chat (play and record, voiceChat mode, the speaker unless headphones or AirPods are in) and handed
  * back when it ends. Expo Go and the web have no react-native-audio-api: `liveVoiceAvailable` is false there, nothing
  * here loads it, and voice mode stays turn by turn.
@@ -23,6 +24,8 @@ export type LiveHandlers = {
   tick(level: number): void;
   /** Whether to play Sona's own audio (not when the patient picked one of the phone's voices). */
   plays(): boolean;
+  /** Her voice sent sentence `k` of her answer without audio (it was slow): the phone's voice reads it. Resolves once read or stopped. */
+  read(text: string, k: number): Promise<void>;
   /** The socket closed; nothing more happens on this connection. */
   closed(): void;
 };
@@ -36,6 +39,7 @@ const Socket = WebSocket as unknown as new (url: string, protocols: undefined, o
 let recorder: Audio.AudioRecorder | undefined;
 // A call waits for the last one to let go of the mic and the audio session.
 let released: Promise<unknown> = Promise.resolve();
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export function connectLive(url: string, cookie: string | undefined, on: LiveHandlers) {
   const api = require("react-native-audio-api") as typeof Audio;
@@ -52,7 +56,7 @@ export function connectLive(url: string, cookie: string | undefined, on: LiveHan
   const now = () => ctx?.currentTime ?? 0;
   const audible = () => phone || queue.busy(now());
   /** Sona stops at once: her audio here, and through `hush`, the phone's voice. */
-  const hush = () => { generation++; queue.clear(); on.hush(); };
+  const hush = () => { generation++; queue.clear(); phone = false; on.hush(); };
   /** She is cut off: the agent is told, and audio still coming from that answer is dropped. */
   const cutOff = () => { hush(); act({ type: "barge_in" }); send({ type: "interrupt" }); };
 
@@ -67,8 +71,26 @@ export function connectLive(url: string, cookie: string | undefined, on: LiveHan
       const source = c.createBufferSource();
       source.buffer = buffer;
       source.connect(c.destination);
-      source.start(queue.add(t.frames - 1, buffer.duration, c.currentTime, () => source.stop()));
+      source.start(queue.add(t.spoken - 1, buffer.duration, c.currentTime, () => source.stop()));
     }).catch(() => { /* a frame that won't decode is skipped; the next one plays */ });
+  };
+
+  /**
+   * A sentence her voice sent without audio (sona_say) in an answer it has voiced so far: the phone's voice reads it in
+   * its place, once her audio before it has played, and her next sentence waits for it. From then until it is read the
+   * phone is her for the gate. Once her voice falls back it does for the rest of the answer (SonaVoice), so an answer
+   * with no audio before such a sentence has none at all: the phone reads it whole at the end (features/assistant/live).
+   */
+  const read = (text: string) => {
+    const t = talk, mine = generation;
+    if (!ctx || t.muted || !t.frames || !on.plays()) return;
+    decoding = decoding.then(async () => {
+      if (mine !== generation) return;
+      phone = true;
+      while (mine === generation && queue.busy(now())) await sleep(50);
+      if (mine === generation) await on.read(text, t.spoken - 1).catch(() => {});
+      if (mine === generation) phone = false;
+    });
   };
 
   /** One mic frame: to the agent through the gate, which also hears the patient talking over Sona. */
@@ -117,6 +139,7 @@ export function connectLive(url: string, cookie: string | undefined, on: LiveHan
     // The agent cut her off, or heard the patient's next words while she still played: she stops.
     if (event.type === "playback_interrupt" || (event.type === "transcript" && event.role === "user" && audible())) hush();
     act(event);
+    if (event.type === "sona_say") read(event.text);
     // The agent ended the call (refused it, or its speech recognition failed).
     if (talk.call === "off") stopAudio();
   };

@@ -1,4 +1,5 @@
-import { answered, boxes, starting, wakingOf, type Baseten } from "../baseten-models";
+import { ASR_MODEL, BRAIN_MODEL, answered, boxes, starting, wakingOf, type Baseten, type Box } from "../baseten-models";
+import { RATE, wav } from "./listen";
 
 /**
  * Sona's own voice in a live call (VoxCPM2 fine-tuned on a Malaysian nurse's voice, box ②). withVoice hands it each
@@ -56,6 +57,29 @@ export async function startingBoxes(options: Baseten): Promise<{ voice?: number;
     return wakingOf(box).waking;
   }));
   return { voice: minutes[0], brain: minutes[1] };
+}
+
+/**
+ * When the phone connects, before the patient taps the mic: each box a call needs that passes its check gets one tiny
+ * request on every path a turn takes (hearing, Sona's voice, Gemma), so the first turn finds them warm. Box ② stalls on
+ * its first requests after a quiet spell although it is up (1 Oct, staging, Baseten's own timing: 12–16 s to hear the
+ * first turn and about 19 s for its first sentence, GPU and CPU idle; the call right after heard in 1.9 s and made its
+ * first sentence in 2.9 s), while Gemma answered in 1 s. A box that fails its check gets nothing more here; the call
+ * wakes it (startingBoxes), though Baseten starts a sleeping box on any request, the check included.
+ */
+export async function warmBoxes(options: Baseten) {
+  const { up, call } = boxes(options);
+  // A tiny request that fails only leaves the first turn as it was.
+  const warm = async (box: Box, ...tiny: [route: string, body: BodyInit, type?: string][]) => {
+    if (await up(box)) await Promise.all(tiny.map(([route, body, type]) => call(box, route, body, type).catch(() => {})));
+  };
+  const quiet = new FormData();
+  quiet.append("model", ASR_MODEL);
+  quiet.append("file", new Blob([wav(new Int16Array(RATE / 2))], { type: "audio/wav" }), "quiet.wav");
+  await Promise.all([
+    warm("voice", ["/v1/audio/transcriptions", quiet], ["/v1/tts", JSON.stringify({ text: "Hai." }), "application/json"]),
+    warm("brain", ["/v1/chat/completions", JSON.stringify({ model: BRAIN_MODEL, messages: [{ role: "user", content: "Hai" }], max_tokens: 1 }), "application/json"]),
+  ]);
 }
 
 /** Box ②'s /v1/tts as `Speak`: a cold box is woken and not waited for, so the phone reads while it starts. */

@@ -2,7 +2,8 @@
  * The Cloudflare Agents voice protocol (agents/voice, version 1), spoken as its VoiceClient speaks it: one WebSocket to
  * the agent; the phone says hello, then start_call, then streams the mic as binary frames of 16 kHz mono 16-bit PCM
  * (./pcm). The agent answers with JSON events (its status, the patient's words, Sona's answer as it is written) and
- * binary audio, one frame per sentence, MP3 unless audio_config says otherwise. An interrupt stops the answer being
+ * binary audio, one frame per sentence, MP3 unless audio_config says otherwise; a sentence Sona's voice could not make
+ * comes as `sona_say` with no audio instead (apps/server/src/agents/voice.ts). An interrupt stops the answer being
  * spoken. Pure, so bun can test it; the socket and the audio live in ./session.
  */
 export const PROTOCOL_VERSION = 1;
@@ -25,6 +26,7 @@ export type ServerEvent =
   | { type: "transcript_end"; text: string }
   | { type: "transcript_interim"; text: string }
   | { type: "playback_interrupt" }
+  | { type: "sona_say"; text: string; reason: "starting" | "slow" | "unavailable" | "notice"; waking?: number }
   | { type: "error"; message: string };
 
 export type ClientMessage =
@@ -36,9 +38,9 @@ export type ClientMessage =
   | { type: "interrupt" }
   | { type: "text_message"; text: string };
 
-const EVENTS = new Set<string>(["welcome", "status", "audio_config", "transcript", "transcript_start", "transcript_delta", "transcript_end", "transcript_interim", "playback_interrupt", "error"]);
+const EVENTS = new Set<string>(["welcome", "status", "audio_config", "transcript", "transcript_start", "transcript_delta", "transcript_end", "transcript_interim", "playback_interrupt", "sona_say", "error"]);
 
-/** A text frame from the agent as an event; undefined for the rest (diagnostics, metrics, the agent's own messages). */
+/** A text frame from the agent as an event; undefined for the rest (diagnostics, metrics, the agent's other messages). */
 export function parse(data: string): ServerEvent | undefined {
   try {
     const m = JSON.parse(data) as { type?: unknown };
@@ -50,17 +52,17 @@ export function parse(data: string): ServerEvent | undefined {
 
 /**
  * The conversation as voice mode shows it. `call`: off, starting (start_call sent) or on (the agent took it).
- * `answer` counts Sona's answers, so each is read once; `frames` counts the audio frames of the current one, and `done`
- * says the agent has sent all of it (its status went back to listening). `muted`: Sona was cut off, so audio still in
- * flight from that answer is dropped until the next one. `dropped`: the agent ended the call itself (refused it, or its
- * speech recognition failed).
+ * `answer` counts Sona's answers, so each is read once; `spoken` counts the sentences of the current one sent so far,
+ * `frames` those that came as audio (the rest came as sona_say), and `done` says the agent has sent all of it (its status
+ * went back to listening). `muted`: Sona was cut off, so audio still in flight from that answer is dropped until the next
+ * one. `dropped`: the agent ended the call itself (refused it, or its speech recognition failed).
  */
 export type Talk = {
   ready: boolean; call: "off" | "starting" | "on"; status: Status;
-  heard?: string; said?: string; answer: number; frames: number; written: boolean; done: boolean; muted: boolean;
+  heard?: string; said?: string; answer: number; spoken: number; frames: number; written: boolean; done: boolean; muted: boolean;
   format: AudioFormat; rate: number; error?: string; dropped: boolean;
 };
-export const quiet: Talk = { ready: false, call: "off", status: "idle", answer: 0, frames: 0, written: true, done: true, muted: false, format: "mp3", rate: 16_000, dropped: false };
+export const quiet: Talk = { ready: false, call: "off", status: "idle", answer: 0, spoken: 0, frames: 0, written: true, done: true, muted: false, format: "mp3", rate: 16_000, dropped: false };
 
 /** What the phone did: started or ended the call, cut Sona off, or got a binary audio frame. */
 export type Action = ServerEvent | { type: "call" } | { type: "hang_up" } | { type: "barge_in" } | { type: "audio" };
@@ -71,7 +73,8 @@ export function reduce(t: Talk, a: Action): Talk {
     case "call": return { ...t, call: "starting", error: undefined, dropped: false };
     case "hang_up": return { ...t, call: "off", muted: true };
     case "barge_in": case "playback_interrupt": return { ...t, muted: true };
-    case "audio": return t.muted ? t : { ...t, frames: t.frames + 1 };
+    case "audio": return t.muted ? t : { ...t, spoken: t.spoken + 1, frames: t.frames + 1 };
+    case "sona_say": return t.muted ? t : { ...t, spoken: t.spoken + 1 };
     case "audio_config": return { ...t, format: a.format, rate: a.sampleRate ?? 16_000, call: t.call === "starting" ? "on" : t.call };
     case "status": {
       // The agent says idle as the socket opens, before it takes the call; idle after taking it (or after an error) ends it.
@@ -80,8 +83,8 @@ export function reduce(t: Talk, a: Action): Talk {
     }
     // The agent clears the interim line with "" as it starts answering; the words stay until the final ones arrive.
     case "transcript_interim": return a.text ? { ...t, heard: a.text } : t;
-    case "transcript": return a.role === "user" ? { ...t, heard: a.text } : { ...t, said: a.text, answer: t.answer + 1, frames: 0, written: true, done: false, muted: false };
-    case "transcript_start": return { ...t, said: "", answer: t.answer + 1, frames: 0, written: false, done: false, muted: false };
+    case "transcript": return a.role === "user" ? { ...t, heard: a.text } : { ...t, said: a.text, answer: t.answer + 1, spoken: 0, frames: 0, written: true, done: false, muted: false };
+    case "transcript_start": return { ...t, said: "", answer: t.answer + 1, spoken: 0, frames: 0, written: false, done: false, muted: false };
     case "transcript_delta": return { ...t, said: (t.said ?? "") + a.text };
     case "transcript_end": return { ...t, said: a.text, written: true };
     case "error": return { ...t, error: a.message };
@@ -112,13 +115,14 @@ export function sentencesOf(text: string) {
 }
 
 /**
- * What audio frame `k` of `frames` speaks: its sentence, and once the answer is all sent, the last frame speaks
- * everything left (an agent that sends one frame for a whole answer, or a sentence its voice skipped).
+ * What sentence `k` of the `spoken` so far (an audio frame or a sona_say each) speaks: its sentence, and once the
+ * answer is all sent, the last one speaks everything left (an agent that sends one frame for a whole answer, or a
+ * sentence its voice skipped).
  * ponytail: one frame per sentence, as withVoice's buffered TTS sends them; a streaming TTS (several frames a sentence)
  * would light ahead of the voice, and needs a text marker per frame from the agent.
  */
-export function spanOf(text: string, k: number, frames: number, done: boolean) {
+export function spanOf(text: string, k: number, spoken: number, done: boolean) {
   const s = sentencesOf(text)[k];
   if (!s) return { start: text.length, end: text.length };
-  return { start: s.start, end: done && k === frames - 1 ? text.trimEnd().length : s.end };
+  return { start: s.start, end: done && k === spoken - 1 ? text.trimEnd().length : s.end };
 }
