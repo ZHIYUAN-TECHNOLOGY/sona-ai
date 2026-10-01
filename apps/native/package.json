@@ -10,6 +10,7 @@
     "prebuild": "expo prebuild",
     "web": "expo start --web",
     "check-types": "tsc -b ../../packages/api && tsc --noEmit",
+    "update": "EXPO_PUBLIC_SERVER_URL=https://sona-ai-server-staging-uxfqzyce5rxhzsju.zhiyuantech.workers.dev eas update --channel production --environment production",
     "env:generate": "varlock codegen",
     "test": "bun test features components"
   },
@@ -54,6 +55,7 @@
     "expo-splash-screen": "~57.0.8",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.3",
+    "expo-updates": "~57.0.24",
     "expo-web-browser": "~57.0.2",
     "qrcode-generator": "^2.0.4",
     "react": "19.2.3",
