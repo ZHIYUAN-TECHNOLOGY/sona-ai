@@ -14,6 +14,8 @@ import type { FeatureProps } from "@/features/encounter/types";
 import { buildDraft, editNote, readNoteSections, scriptFor, sectionKeys, serializeNoteSections, type NoteSections } from "./model";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { haptic, noteMeta, StateLine } from "./parts";
+import { draftOrigin, failedLine, UNSURE, type LiveDraft } from "./live";
+import { applyCaptured, applyDraft, askDraft, useScribe } from "./live-recorder";
 import { api, errorText, useLive } from "@/features/live";
 import { noteSections, noteSentences } from "@/features/live/prescribing-sync";
 import { LockedAction, useRole } from "@/features/live/roles";
@@ -30,14 +32,20 @@ const emptyDetail: Record<keyof NoteSections, string> = {
 /** The answer in the conversation: what the note holds, section by section, and one way in. */
 export function NoteCard({ onOpen, onSource, patient }: FeatureProps) {
   const { encounter } = useEncounter();
+  const { on: live } = useLive();
+  const drafted = useScribe(patient.id).draft?.source === "model";
   const note = encounter?.note;
   const sections = encounter && (encounter.noteSectionDraft ?? encounter.noteSections ?? readNoteSections(encounter.note));
   return <View style={{ gap: 18 }}>
-    <Section icon="doc.text" tone="blue" title={note ? "Your consultation, captured" : "Room for the conversation"} subtitle={note ? encounter?.noteReviewed ? "Marked reviewed in this local session." : "Draft ready. Add your assessment and plan." : "Play a scripted sample, then draft an editable English note."}>
+    <Section icon="doc.text" tone="blue" title={note ? "Your consultation, captured" : "Room for the conversation"} subtitle={note ? encounter?.noteReviewed ? "Marked reviewed in this local session." : drafted ? "Sona's draft is ready for your review." : "Draft ready. Add your assessment and plan." : live ? "Record the consultation, then review the note Sona drafts from it." : "Play a scripted sample, then draft an editable English note."}>
       {note && sections ? <View style={{ gap: 20 }}>
         {sectionKeys.map(key => <IconRow key={key} icon={noteMeta[key].icon} title={noteMeta[key].title} detail={sections[key].trim() ? clip(sections[key].trim()) : emptyDetail[key]} />)}
-        <Text selectable style={{ ...type.footnote, lineHeight: 19, color: palette.muted }}>Dialogue sections are drafts to verify against source. Assessment and plan are clinician authored.</Text>
-      </View> : <Shelf>
+        <Text selectable style={{ ...type.footnote, lineHeight: 19, color: palette.muted }}>{drafted ? "Sona drafted every section from the consultation, assessment and plan only from what you said. Check each against the transcript." : "Dialogue sections are drafts to verify against source. Assessment and plan are clinician authored."}</Text>
+      </View> : live ? <Shelf>
+        <GlanceTile glyph="🎙️" value="1" label="Record it" caption="Microphone · audio deleted once transcribed" />
+        <GlanceTile glyph="✍️" value="2" label="Correct it" caption="Words and speakers · yours to confirm" />
+        <GlanceTile glyph="🗒️" value="3" label="Review the draft" caption="Sona drafts it · you decide" />
+      </Shelf> : <Shelf>
         <GlanceTile glyph="🎙️" value="1" label="Play the sample" caption="Scripted dialogue · no audio recorded" />
         <GlanceTile glyph="✍️" value="2" label="Correct it" caption="Speakers and text · original kept" />
         <GlanceTile glyph="🗒️" value="3" label="Draft the note" caption="Assessment and plan stay yours" />
@@ -88,6 +96,10 @@ export function NoteScreen() {
   const [prototype, setPrototype] = useState(false);
   const [focused, setFocused] = useState<keyof NoteSections>();
   const [info, setInfo] = useState<keyof NoteSections>();
+  // Live: a recorded consultation is drafted by Gemma (note.draft); `pendingDraft` is a fresh draft offered beside the note.
+  const scribe = useScribe(patient?.id);
+  const [drafting, setDrafting] = useState(false);
+  const pendingDraft = useRef<LiveDraft>(undefined);
   // Live: the doctor can keep this visit's note out of training (draft vs saved is otherwise a sample, if the patient consented).
   const [excludeFromTraining, setExcludeFromTraining] = useState(false);
   const failSave = useRef(false);
@@ -155,6 +167,25 @@ export function NoteScreen() {
   const rise = (index: number) => reducedMotion ? undefined : riseIn({ delay: 40 * index, distance: 8, duration: 320 });
   // No visit captured yet: drafts come from the scripted sample consultation, labelled as a sample.
   const consultation = encounter.transcript.length ? encounter.transcript : scriptFor(encounter.language);
+  // A consultation recorded in live mode is drafted by Gemma from its own transcript, then labelled by where the draft came from.
+  const fromRecording = live && encounter.transcript.length > 0;
+  const liveDraft = scribe.draft;
+  const unsure = encounter.transcript.filter(line => line.speaker.endsWith(UNSURE)).length;
+  const missing = scribe.parts.filter(part => part.status === "failed");
+  const draftLive = async (offer: boolean) => {
+    const owner = patient.id;
+    haptic("tap"); setDrafting(true); setServerError(undefined);
+    try {
+      const draft = await askDraft(patient.encounterId, encounter.transcript);
+      if (offer) { pendingDraft.current = draft; setSuggestion(draft.sections); } else applyDraft(owner, draft, updateEncounter);
+      haptic("done");
+    } catch (e) {
+      if (offer) setServerError(errorText(e)); else applyCaptured(owner, e, updateEncounter);
+      haptic("warn");
+    }
+    setDrafting(false);
+  };
+  const offered = pendingDraft.current && draftOrigin(pendingDraft.current);
   const suggestionBlocked = encounter.transcriptDraft ? "Finish the pending transcript correction before a fresh draft." : undefined;
   // Sona beside the decision reads the page's own state; once saved, the visit's next step shows under the buttons.
   const noteState = { drafted: hasContent, saved: status === "saved", reviewed: encounter.noteReviewed, empty, unsureLines: encounter.transcript.filter(line => line.corrected && !line.englishReviewed).length,
@@ -192,11 +223,17 @@ export function NoteScreen() {
         <Text selectable style={{ ...type.footnote, lineHeight: 19, color: palette.muted }}>{live ? "Verify drafts against source." : "Verify drafts against source · local session only, no record connected."}</Text>
         {/* An empty note pulls in the consultation in one tap (the scripted sample until a visit is captured). */}
         {canWrite && !hasContent && !encounter.transcriptDraft && <View style={{ gap: 6 }}>
-          <Action label="Draft from consultation" icon="waveform" onPress={() => { haptic("done"); const draft = readNoteSections(buildDraft(consultation)); updateEncounter(current => editNote(current, draft, !current.transcript.length)); }} />
+          <Action label={drafting ? "Drafting from consultation…" : "Draft from consultation"} icon="waveform" disabled={drafting} onPress={() => { if (fromRecording) return void draftLive(false); haptic("done"); const draft = readNoteSections(buildDraft(consultation)); updateEncounter(current => editNote(current, draft, !current.transcript.length)); }} />
           <SampleLabel source={encounter.transcript.length ? undefined : "fixture"} what="scribe" />
         </View>}
-        {/* A note drafted from the scripted sample stays labelled until the clinician marks it reviewed. */}
+        {/* A note drafted from the scripted sample stays labelled until the clinician marks it reviewed; so does a live draft, by its origin. */}
         {hasContent && encounter.noteFromSample && !encounter.noteReviewed && <SampleLabel source="fixture" what="scribe" />}
+        {hasContent && liveDraft && !encounter.noteFromSample && !encounter.noteReviewed && <SampleLabel source={liveDraft.source} model={liveDraft.model} waking={liveDraft.waking} rule what="scribe" />}
+        {liveDraft?.error && !encounter.noteReviewed && <StateLine warning>{`Sona couldn't draft this note (${liveDraft.error}), so it holds the consultation as captured.`}</StateLine>}
+        {!!liveDraft?.dropped && !encounter.noteReviewed && <StateLine>{`Sona left out ${liveDraft.dropped} ${liveDraft.dropped === 1 ? "statement" : "statements"} it couldn't check against the transcript.`}</StateLine>}
+        {unsure > 0 && <StateLine warning>{`${unsure} ${unsure === 1 ? "turn has" : "turns have"} an unsure speaker.`}</StateLine>}
+        {unsure > 0 && <QuietLink label="Check speakers" icon="person.2" onPress={() => { haptic("tap"); router.push("/recording"); }} />}
+        {missing.length > 0 && <StateLine warning>{`${failedLine(missing)} Not in this draft.`}</StateLine>}
         {encounter.transcript.some(line => line.corrected && !line.englishReviewed) && <StateLine warning>Unreviewed interpretations in the transcript. Check the original dialogue first.</StateLine>}
         {serverError && <StateLine warning>{serverError}</StateLine>}
       </Animated.View>
@@ -209,7 +246,7 @@ export function NoteScreen() {
           </Pressable>
         </View>
         {info === key && <Expand key={`info-${key}`} style={{ gap: 2 }}>
-          <Text selectable style={{ ...type.footnote, lineHeight: 19, color: palette.muted }}>{framing[key]}</Text>
+          <Text selectable style={{ ...type.footnote, lineHeight: 19, color: palette.muted }}>{liveDraft?.source === "model" && (key === "assessment" || key === "plan") ? "Drafted by Sona only from what you said in the consultation · yours to confirm." : framing[key]}</Text>
           {sources[key] && <SourceLink label={key === "subjective" ? "Review consultation / history source" : "Review observation source"} onPress={() => router.push({ pathname: "/source", params: { id: sources[key]!, patientId: patient.id } })} />}
         </Expand>}
         <Surface style={{ paddingHorizontal: 16, paddingVertical: 14, borderRadius: radius.group, borderColor: focused === key ? FOCUS : glass.rim, transitionProperty: "borderColor", transitionDuration: 160 } as never}>
@@ -220,16 +257,17 @@ export function NoteScreen() {
 
       <Animated.View entering={rise(5)} layout={layout} style={{ gap: 10 }}>
         {!canWrite ? null : suggestionBlocked ? <StateLine>{suggestionBlocked}</StateLine>
-          : !suggestion && hasContent && <QuietLink label="Fresh draft from consultation" icon="doc.text.magnifyingglass" onPress={() => { haptic("tap"); setSuggestion(readNoteSections(buildDraft(consultation))); }} />}
+          : !suggestion && hasContent && <QuietLink label={drafting ? "Drafting from consultation…" : "Fresh draft from consultation"} icon="doc.text.magnifyingglass" onPress={() => { if (drafting) return; if (fromRecording) return void draftLive(true); haptic("tap"); setSuggestion(readNoteSections(buildDraft(consultation))); }} />}
         {suggestion && <Expand key="suggestion">
           <Surface style={{ padding: 18, gap: 14 }}>
             <Text style={{ ...type.caption, fontWeight: "600", letterSpacing: 0.3, color: palette.blue }}>New suggestion · not applied · your note stays until you replace it</Text>
+            {offered && <SampleLabel source={offered.source} model={offered.model} waking={offered.waking} rule what="scribe" />}
             {sectionKeys.map(key => <View key={key} style={{ gap: 3 }}>
               <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{noteMeta[key].title}</Text>
               <Text selectable style={{ ...type.callout, lineHeight: 22, color: suggestion[key].trim() ? palette.ink : palette.muted }}>{suggestion[key].trim() || "Left empty for you"}</Text>
             </View>)}
-            <Action label="Replace note with this suggestion" onPress={() => { haptic("done"); updateEncounter(current => editNote(current, suggestion, !current.transcript.length)); setSuggestion(undefined); }} />
-            <Action label="Keep current note" secondary onPress={() => setSuggestion(undefined)} />
+            <Action label="Replace note with this suggestion" onPress={() => { haptic("done"); if (pendingDraft.current) applyDraft(patient.id, pendingDraft.current, updateEncounter); else updateEncounter(current => editNote(current, suggestion, !current.transcript.length)); pendingDraft.current = undefined; setSuggestion(undefined); }} />
+            <Action label="Keep current note" secondary onPress={() => { pendingDraft.current = undefined; setSuggestion(undefined); }} />
           </Surface>
         </Expand>}
       </Animated.View>

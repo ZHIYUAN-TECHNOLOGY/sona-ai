@@ -9,6 +9,8 @@ import { SAMPLE_NOTE, type HandwrittenNote } from "@sona-ai/domain/scan";
 import type { Patient } from "@sona-ai/domain/types";
 import { huddle, type Bed, type Owner } from "@sona-ai/domain/ward";
 
+import { ruleNote, type ConsultationLine, type ScribeDraft } from "./scribe-model";
+
 /**
  * The one seam between the routes and the models (docs/delivery-plan.md, Models and hosting: on
  * hold). Routes call `context.models`; turning on Baseten means passing a real `Models` from the
@@ -81,6 +83,11 @@ export type Models = {
   readHandwrittenNote(input: { image: Uint8Array; contentType: string; patient: { name: string; knownMedicines: string[] } }): Answer<HandwrittenNote>;
   /** Sona Care: a photo of a medicine box or letter read as one medicine, for the care team to check. */
   readMedicinePhoto(input: { image?: Uint8Array; contentType?: string }): Answer<{ name: string; dose?: string; frequency?: string }>;
+  /**
+   * The scribe: a consultation's transcript as the note's four sections, for the doctor to review before saving, and
+   * who said what (unsure speakers marked). Every number, dose and medicine in the note is one the transcript has (./scribe-model).
+   */
+  draftNote(input: { lines: ConsultationLine[] }): Answer<ScribeDraft>;
 };
 
 const fixture = <T>(value: T) => Promise.resolve({ ...value, source: "fixture" as const });
@@ -143,4 +150,6 @@ export const stubModels: Models = {
   readHandwrittenNote: () => fixture(structuredClone(SAMPLE_NOTE)),
   // ponytail: the sample box's words (a synthetic reading); the same vision model reads real photos.
   readMedicinePhoto: () => fixture({ name: "Cetirizine", dose: "10 mg", frequency: "once at night" }),
+  // ponytail: no reader, so the captured words stand as the history and the rest stays the clinician's; Gemma drafts through the Baseten adapter.
+  draftNote: ({ lines }) => fixture(ruleNote(lines)),
 };
