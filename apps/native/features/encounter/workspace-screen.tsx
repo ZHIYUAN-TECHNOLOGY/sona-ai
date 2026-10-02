@@ -193,7 +193,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const run = (kind: Capability, prompt = prompts[kind]) => { setNotice(undefined); if (!patient) { router.push({ pathname: "/patients", params: { next: kind, prompt } }); return; } const id = request(kind, prompt); Keyboard.dismiss(); return id; };
   // Open a session at its latest answer rather than the top of the thread. Earlier answers can
   // still settle (images, reveals) just after mount, so the landing follows them for a moment.
-  const landedAt = useRef<number | undefined>(undefined);
+  const landed = useRef<{ id?: string; at: number }>({ at: 0 });
   const pick = (item: Suggestion) => item.kind === "recording" ? open("recording") : run(item.kind, item.text);
   // Sona on Today: a question about the day (typed, dictated, the dock's ✦ suggestion or Sona Live) joins Today's thread,
   // shown in place of the dashboard; a clinical question opens the patient picker (run) and runs once a visit is chosen.
@@ -353,8 +353,9 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
         {compactResponses && requests.length > 1 && <Action label={showEarlier ? "Collapse earlier responses" : `Show ${requests.length - 1} earlier responses`} secondary onPress={() => setShowEarlier(value => !value)} />}
         {visible.map(req => <View key={req.id} collapsable={false} onLayout={event => {
           offsets.current[req.id] = event.nativeEvent.layout.y;
-          if (req.id === latest?.id && requests.length > 1 && (landedAt.current === undefined || Date.now() - landedAt.current < 900)) {
-            landedAt.current ??= Date.now();
+          // Also each new answer once it lays out: one that resolves at once (Brief me from the tiles) has no offset yet when its card lands.
+          if (req.id === latest?.id && requests.length > 1 && (landed.current.id !== req.id || Date.now() - landed.current.at < 900)) {
+            if (landed.current.id !== req.id) landed.current = { id: req.id, at: Date.now() };
             scroll.current?.scrollTo({ y: Math.max(0, event.nativeEvent.layout.y + 8), animated: false });
           }
         }} style={{ gap: 16, minHeight: req.id === latest?.id && req.status === "streaming" ? 320 : undefined }}>
