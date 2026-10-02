@@ -3,9 +3,9 @@ import { router, useIsFocused } from "expo-router";
 import { DrawnCheck } from "@/components/sona/parts";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { MyDay } from "@/features/day";
-import { ToolGrid } from "@/components/sona/quick-actions";
+import { QuickActions } from "@/components/sona/quick-actions";
 import { canDischarge } from "@/features/discharge/model";
-import { useHomeActions, visitNeed, visitTools, type VisitNeed } from "./quick-actions";
+import { NEED_KEY, useHomeActions, visitNeed, visitTools, type VisitNeed } from "./quick-actions";
 import { openSession } from "./navigation";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -204,14 +204,15 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
   if (!patient) return <View style={{ paddingTop: 20 }}><MyDay patients={patients} greeting={greeting().replace(/\.$/, "")} onOpen={(id, open) => openSession(id, open)}
     actions={homeKeys} /></View>;
   // Glance to decision: who and when in one line, the one next step with its action (the screen's one
-  // feature card), every tool in view grouped by when it's used, then two questions worth asking.
+  // feature card), every tool in view as the sheet's keys in the order it's used, then two questions worth asking.
   const encounter = encounters[patient.id], name = first(patient);
   const discharged = Boolean(encounter?.discharge?.dischargedAt);
   const need: VisitNeed = visitNeed(patient, encounter, result)
     ?? { tone: "calm", text: discharged ? `${name} is discharged · hand over when you’re done` : `Nothing needs ${name} now`, action: "Hand over", target: "handover" };
   const go = (target: VisitNeed["target"]) => goToNeed(target, patient, onPick);
   const tools = new Map(visitTools(patient, encounter, result, go, canScan, canDischarge(patient)).map(t => [t.key, t]));
-  const group = (keys: string[]) => keys.flatMap(k => tools.get(k) ?? []);
+  // Before the visit, during it, wrap up; the key that repeats the Next step's action is left out.
+  const keys = ["brief", "meds", "xray", "consult", "note", "scan", "discharge"].flatMap(k => k === NEED_KEY[need.target] ? [] : tools.get(k) ?? []);
   const ask = askAfter("briefing", patient).slice(0, 2);
   return <View style={{ gap: 28, paddingTop: 20 }}>
     <Animated.View entering={rise(0)}>
@@ -225,11 +226,9 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
         <NeedLine need={need} onPress={shown => go(shown.target)} />
       </Surface>
     </Animated.View>
-    <Animated.View entering={rise(2)} layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 18 }}>
-      <ToolGrid title={`Before you see ${name}`} actions={group(["brief", "meds", "xray"])} />
-      <ToolGrid title={`With ${name}`} actions={group(["consult", "note", "scan"])} />
-      {/* Tasks sit in the top bar on every page, so Wrap up is discharge alone (hidden when there's no plan). */}
-      <ToolGrid title="Wrap up" actions={group(["discharge"])} />
+    {/* Tasks sit in the top bar on every page; discharge shows only when there's a plan. */}
+    <Animated.View entering={rise(2)} layout={reducedMotion ? undefined : LAYOUT}>
+      <QuickActions animate={false} actions={keys} />
     </Animated.View>
     {ask.length > 0 && <Animated.View entering={rise(3)}>
       <QuestionList title="Try asking" questions={ask.map(k => ({ key: k, text: suggestionFor(k, patient).text }))} onAsk={k => onPick(suggestionFor(k as Capability, patient))} />
