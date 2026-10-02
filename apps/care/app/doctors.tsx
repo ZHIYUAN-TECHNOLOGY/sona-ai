@@ -14,7 +14,7 @@ import { dayLabel } from "@/features/follow-ups/lines";
 import { DOCK_SPACE } from "@/lib/dock";
 import { Text } from "@/lib/text";
 import { palette, space, type } from "@/lib/theme";
-import { Section, surfaceStyle, Title, LoadError } from "@/lib/ui";
+import { field, Section, surfaceStyle, Title, LoadError } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
 const SEARCH = "M11 19a8 8 0 1 0 0-16a8 8 0 0 0 0 16M21 21l-4.3-4.3";
@@ -49,10 +49,13 @@ export default function Doctors() {
 
   return <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
     contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
-    <Animated.View entering={enter(0)}><Title greeting={t("doc.titleLight")}>{t("doc.titleBold")}</Title></Animated.View>
+    {/* Finding a doctor is the page's one action, so it comes first, at a glance, as the search it opens (it zooms into
+        the directory page on iOS 18+; elsewhere the stack's crossfade); the patient's own care team follows. */}
+    <Animated.View entering={enter(0)}><Link href="/find-doctor" asChild><FindBar /></Link></Animated.View>
+    <Animated.View entering={enter(1)} style={{ marginTop: 4 }}><Title greeting={t("doc.titleLight")}>{t("doc.titleBold")}</Title></Animated.View>
 
     <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 12 }}>
-      {team.map((d, i) => <Animated.View key={d.id} entering={enter(1 + i)} style={{ width }}>
+      {team.map((d, i) => <Animated.View key={d.id} entering={enter(2 + i)} style={{ width }}>
         <DoctorCard doctor={d} badge={false} />
       </Animated.View>)}
     </View>
@@ -60,7 +63,7 @@ export default function Doctors() {
     {!doctors.data && doctors.error && <LoadError query={doctors} />}
     {doctors.data && !team.length && <Text style={{ ...type.body, color: palette.muted }}>{t("doc.noTeam")}</Text>}
 
-    <Animated.View entering={enter(1 + team.length)} style={{ gap: 10, marginTop: 8 }}>
+    <Animated.View entering={enter(2 + team.length)} style={{ gap: 10, marginTop: 8 }}>
       <Section light={t("doc.recordsLight")} bold={t("doc.recordsBold")} />
       {plan?.status === "discharged" ? <>
         <RecordRow icon={DOC} title={t("doc.plan")} value={dayLabel(plan.dischargedAt, lang)} spoken={t("doc.planA11y", { day: dayLabel(plan.dischargedAt, lang), line: takeLine(plan.medicines, "", lang) })} />
@@ -69,28 +72,42 @@ export default function Doctors() {
       </>
         : <Text style={{ ...type.body, color: palette.muted }}>{plan ? t("doc.papersLater") : t("doc.papers")}</Text>}
     </Animated.View>
-
-    {/* The whole directory is its own page (search, filters, every doctor). */}
-    <Animated.View entering={enter(2 + team.length)} style={{ marginTop: 8 }}>
-      {/* The row zooms into the directory page (iOS 18+ native zoom; elsewhere the stack's crossfade). */}
-      <Link href="/find-doctor" asChild><RecordRow icon={SEARCH} title={t("doc.find")} value="" spoken={t("doc.find")} hint={t("doc.findHint")} zoom /></Link>
-    </Animated.View>
   </ScrollView>;
 }
 
-/** A kit form row (icon, label, value, chevron): a record opening the plan, or the directory (inside a Link; `zoom`: the row zooms into its page). */
-function RecordRow({ icon, title, value, spoken, hint, onPress, zoom = false }: { icon: string; title: string; value: string; spoken: string; hint?: string; onPress?: () => void; zoom?: boolean }) {
+/**
+ * Find a doctor, the page's call to action: a white search capsule in the field's own look (so it reads as the search it
+ * opens), a blue search glyph, "Find a doctor" over "Name or specialty", and an ink arrow. Inside a Link (the press);
+ * the zoom source sits inside the button in a plain unflattened wrapper, so VoiceOver keeps one labelled button.
+ */
+function FindBar({ onPress }: { onPress?: () => void }) {
   const t = useT();
-  // The zoom source takes exactly one native view and restyles it, so the row's face sits in a plain unflattened wrapper.
-  const face = <View style={[surfaceStyle, { borderRadius: 20, minHeight: 60, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16 }]}>
+  return <Pressable accessibilityRole="button" accessibilityLabel={t("doc.findCta")} accessibilityHint={t("doc.findHint")} onPress={onPress}
+    style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+    <Link.AppleZoom><View collapsable={false}>
+      <View style={{ ...field, borderRadius: 999, minHeight: 64, flexDirection: "row", alignItems: "center", gap: 12, paddingLeft: 18, paddingRight: 8, boxShadow: "0 12px 26px -16px rgba(51,92,255,0.45)" }}>
+        <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={palette.blue} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d={SEARCH} /></Svg>
+        <View style={{ flex: 1 }}>
+          <Text style={{ ...type.body, fontWeight: "600", color: palette.ink }}>{t("doc.findCta")}</Text>
+          <Text numberOfLines={1} style={{ ...type.footnote, color: palette.muted }}>{t("doc.searchPlaceholder")}</Text>
+        </View>
+        <View style={{ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.dark }}>
+          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={palette.white} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><Path d="M5 12h14M13 6l6 6-6 6" /></Svg>
+        </View>
+      </View>
+    </View></Link.AppleZoom>
+  </Pressable>;
+}
+
+/** A kit form row (icon, label, value, chevron): a record opening the plan. */
+function RecordRow({ icon, title, value, spoken, hint, onPress }: { icon: string; title: string; value: string; spoken: string; hint?: string; onPress?: () => void }) {
+  const t = useT();
+  return <Pressable accessibilityRole="button" accessibilityLabel={spoken} accessibilityHint={hint ?? t("doc.recordHint")}
+    onPress={onPress ?? (() => router.push("/discharge"))}
+    style={({ pressed }) => [surfaceStyle, { borderRadius: 20, minHeight: 60, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={palette.ink} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><Path d={icon} /></Svg>
     <Text style={{ ...type.body, fontWeight: "500", color: palette.ink }}>{title}</Text>
     <Text numberOfLines={1} style={{ flex: 1, ...type.footnote, color: palette.muted, textAlign: "right" }}>{value}</Text>
     <Text style={{ fontSize: 20, color: palette.faint }}>›</Text>
-  </View>;
-  // The zoom source sits inside the button, so VoiceOver keeps the row as one labelled button.
-  return <Pressable accessibilityRole="button" accessibilityLabel={spoken} accessibilityHint={hint ?? t("doc.recordHint")}
-    onPress={onPress ?? (() => router.push("/discharge"))} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.96 : 1 }] })}>
-    {zoom ? <Link.AppleZoom><View collapsable={false}>{face}</View></Link.AppleZoom> : face}
   </Pressable>;
 }
