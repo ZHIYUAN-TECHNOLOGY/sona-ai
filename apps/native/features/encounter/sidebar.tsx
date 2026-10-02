@@ -1,7 +1,6 @@
 import { BrandIcon, type BrandIconName } from "@/components/sona/brand-icon";
 import { DataPill } from "@/components/sona/model-answer";
 import { useReduceMotionPreference } from "@/components/sona/accessibility";
-import { Press } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
@@ -57,9 +56,10 @@ const Divider = () => <View style={{ height: 1, marginHorizontal: 14, marginVert
 /**
  * Workspace sidebar, revealed underneath as the page slides right (after the ChatGPT-style
  * drawer). Grouped by the kind of work: Today, then My work, Patients (with where you left off)
- * and Ward & hospital. Tools that need a patient (consultation, note) live inside the visit.
+ * and Ward & hospital. Tools that need a patient (consultation, note) live inside the visit. The Patients
+ * row is the one way to find a patient or start a visit (no search row or New visit pill repeating it).
  */
-export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; progress: SharedValue<number>; onClose: () => void; onNew: () => void }) {
+export function Sidebar({ open, progress, onClose }: { open: boolean; progress: SharedValue<number>; onClose: () => void }) {
   const insets = useSafeAreaInsets();
   const { patient, patients } = useEncounter();
   const { user } = useLive();
@@ -116,7 +116,7 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
 
   return <View accessibilityViewIsModal={open} accessibilityElementsHidden={!open} importantForAccessibility={open ? "auto" : "no-hide-descendants"} onAccessibilityEscape={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: palette.canvas }]}>
     <Animated.View style={[{ width: SIDEBAR_WIDTH, flex: 1 }, contentStyle]}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 12, paddingBottom: insets.bottom + 110 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 12, paddingBottom: insets.bottom + 24 }} showsVerticalScrollIndicator={false}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 14, minHeight: 56 }}>
           <BrandIcon name="user" size={28} color={palette.ink} />
           <View style={{ flex: 1, gap: 4 }}>
@@ -131,22 +131,12 @@ export function Sidebar({ open, progress, onClose, onNew }: { open: boolean; pro
             <BrandIcon name="settings" size={24} color={palette.muted} />
           </Pressable>
         </View>
-        {can("patients.list") && <Row item={{ label: "Find a patient", sf: "magnifyingglass", onPress: go(() => router.push("/patients")) }} />}
         <Divider />
         {groups.map(group => <View key={group.title ?? "today"}>
           {group.title && <Group title={group.title} />}
           {group.items.map(item => <Row key={item.label} item={item} />)}
         </View>)}
       </ScrollView>
-    </Animated.View>
-
-    <Animated.View pointerEvents="box-none" style={[{ position: "absolute", left: 0, width: SIDEBAR_WIDTH, bottom: Math.max(insets.bottom, 12) + 10, alignItems: "center" }, contentStyle]}>
-      {/* Floating pill with a white ring, larger than Action. */}
-      <Press accessibilityLabel="New visit" onPress={go(onNew)} scale={0.96}
-        style={{ flexDirection: "row", alignItems: "center", gap: 10, minHeight: 56, paddingVertical: 8, paddingHorizontal: 26, borderRadius: 28, backgroundColor: palette.ink, borderWidth: 3, borderColor: "rgba(255,255,255,0.92)", boxShadow: "0 8px 22px rgba(20,24,32,0.22)" }}>
-        <BrandIcon name="add" size={22} color={palette.white} strokeWidth={1.8} />
-        <Text style={{ ...type.headline, color: palette.white }}>New visit</Text>
-      </Press>
     </Animated.View>
   </View>;
 }

@@ -329,7 +329,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const consultation = encounter?.recording === "paused" ? "paused" : live ? "recording" : "playing";
 
   return <View style={{ flex: 1, backgroundColor: palette.canvas }}>
-    {home && <Sidebar open={drawer} progress={drawerP} onClose={closeDrawer} onNew={() => router.push("/patients")} />}
+    {home && <Sidebar open={drawer} progress={drawerP} onClose={closeDrawer} />}
     <GestureDetector gesture={dragClose}>
     <Animated.View style={[{ flex: 1, overflow: "hidden", borderCurve: "continuous", backgroundColor: palette.canvas }, pageStyle]}>
     <View ref={backdrop} collapsable={false} accessibilityElementsHidden={drawer} importantForAccessibility={drawer ? "no-hide-descendants" : "auto"} style={{ flex: 1, backgroundColor: palette.canvas }}>
@@ -392,9 +392,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       voiceEnabled={voiceInput}
       onVoiceDisabled={() => setNotice("Voice input is turned off in settings. Type your request instead.")}
       onVoiceError={setNotice}
-      // The + on every page (Today asks whose they are); the visit's tools only inside a visit.
+      // The + on every page (Today asks whose they are); the visit's tools stay in its labelled tiles, not here.
       attachments={pending} onAttachmentsChange={setPending}
-      {...patient && { onImage: () => open("xray"), onConsultation: () => open("recording"), onNote: () => open("note") }}
       // The ✦ asks into Today's thread too; it steps aside while the newest entry already answers it.
       suggestion={nudge && answerOf(newest)?.id !== nudge.answer.id ? { text: nudge.text, onPress: () => void today.ask(nudge.answer.question, nudge.answer) } : undefined}
       above={<>

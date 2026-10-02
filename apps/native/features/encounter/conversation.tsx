@@ -135,7 +135,7 @@ function Round({ children, label, onPress }: { children: ReactNode; label: strin
 /** Floating header: menu on the left, the patient in context on the right. Content scrolls beneath a soft fade. */
 /**
  * Floating header: menu on the left; patient messages and follow-up tasks on the right (what a clinician checks
- * between patients). Inside an encounter, the patient chip joins it so every answer's subject stays visible.
+ * between patients; on Today, messages are a key instead). Inside an encounter, the patient chip joins it so every answer's subject stays visible.
  */
 export function TopBar({ patient, inEncounter, openTasks, faded, onMenu, onBack, onPatient, onTasks, onNew }: { patient?: Patient; inEncounter: boolean; openTasks: number; faded: boolean; onMenu: () => void; onBack?: () => void; onPatient: () => void; onTasks: () => void; onNew?: () => void }) {
   const insets = useSafeAreaInsets();
@@ -160,7 +160,7 @@ export function TopBar({ patient, inEncounter, openTasks, faded, onMenu, onBack,
             </View>
           </Round>
         </Animated.View>}
-        <InboxButton />
+        <InboxButton home={!inEncounter} />
         <Round label={openTasks ? `Follow-up tasks, ${openTasks} open` : "Follow-up tasks"} onPress={onTasks}>
           <View style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}><BrandIcon name="tasks" size={22} /></View>
           {openTasks > 0 && <View accessibilityElementsHidden style={{ position: "absolute", top: -3, right: -3, minWidth: 19, height: 19, borderRadius: 10, paddingHorizontal: 5, backgroundColor: palette.blue, borderWidth: 2, borderColor: palette.white, alignItems: "center", justifyContent: "center" }}>
@@ -172,10 +172,14 @@ export function TopBar({ patient, inEncounter, openTasks, faded, onMenu, onBack,
   </View>;
 }
 
-/** Patient messages (Sona Care): the count is threads waiting for a reply, red when any is urgent. Live mode, for roles that read them. */
-function InboxButton() {
+/**
+ * Patient messages (Sona Care): the count is threads waiting for a reply, red when any is urgent. Live mode, for roles that read them.
+ * Today's Messages key already carries it there (management's keys don't, so its bar keeps it).
+ */
+function InboxButton({ home }: { home: boolean }) {
   const { on, waiting: count, urgent, line } = useInboxSummary();
-  if (!on) return null;
+  const keyed = useRole().role !== "management" && home;
+  if (!on || keyed) return null;
   return <Round label={count ? `Patient messages, ${line}` : "Patient messages"} onPress={() => router.push("/inbox")}>
     <View style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}><BrandIcon name="feedback" size={22} /></View>
     {count > 0 && <View accessibilityElementsHidden style={{ position: "absolute", top: -3, right: -3, minWidth: 19, height: 19, borderRadius: 10, paddingHorizontal: 5, backgroundColor: urgent ? palette.red : palette.blue, borderWidth: 2, borderColor: palette.white, alignItems: "center", justifyContent: "center" }}>
@@ -224,7 +228,8 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
     <Animated.View entering={rise(2)} layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 18 }}>
       <ToolGrid title={`Before you see ${name}`} actions={group(["brief", "meds", "xray"])} />
       <ToolGrid title={`With ${name}`} actions={group(["consult", "note", "scan"])} />
-      <ToolGrid title="Wrap up" actions={group(["tasks", "discharge"])} />
+      {/* Tasks sit in the top bar on every page, so Wrap up is discharge alone (hidden when there's no plan). */}
+      <ToolGrid title="Wrap up" actions={group(["discharge"])} />
     </Animated.View>
     {ask.length > 0 && <Animated.View entering={rise(3)}>
       <QuestionList title="Try asking" questions={ask.map(k => ({ key: k, text: suggestionFor(k, patient).text }))} onAsk={k => onPick(suggestionFor(k as Capability, patient))} />
