@@ -30,13 +30,14 @@ import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedKind, bedRow, defaultFilt
 import { useWardOwners } from "./owners";
 
 /*
- * Ward command view: one insight line on where the ward stands, the blockers nobody owns as the page's one
- * feature card (one tap assigns the suggested team), the huddle as a compact row under it, the legend as the filter (Blocked first when anything is), and one glass list of the filtered beds; rows spring in and out in place on a filter change (after 60fps
+ * Ward command view, glance to decision: one insight line on where the ward stands, the next 24 h as a bar chart of
+ * beds freeing (the glance), the blockers nobody owns as the page's one feature card (the decision: one tap assigns
+ * every suggested team), the huddle as a compact row, the legend as the filter (Blocked first when anything is), and one glass list of the filtered beds; rows spring in and out in place on a filter change (after 60fps
  * "Revolut Number of Transactions Interaction", https://60fps.design/shots/revolut-number-of-transactions-interaction).
  * Tapping a row grows it into the bed's card (after Trackables' card-to-screen morph; spring 0.48 s at
  * damping 0.82) while the list fades back, the row's face crossfades out and the detail fades in
  * 120 ms later. Closing shrinks it back into the row (0.46 s at 0.84). Each blocker takes an owner in
- * one tap; the owner's badge pops onto the row. The forecast and the week sit below.
+ * one tap; the owner's badge pops onto the row. The week sits below.
  */
 const TEAL = palette.green;
 // Screen's canvas. The ward keeps its own ScrollView because Screen takes no ref and the forecast link scrolls to its section.
@@ -159,8 +160,17 @@ export function WardScreen() {
         <Insight eyebrow={loading ? "Now" : `Now · ${beds.length} beds`}>{loading ? "Reading the ward…" : wardLine(beds)}</Insight>
 
         {!loading && <>
-        {/* The page's one feature card: what frees beds is an owner on each blocker, so the unowned ones lead, assigned in place. */}
-        <NoOwner beds={beds} owners={owners} onAssign={can("ward.assignOwner") ? assign : undefined} assignError={assignError} onOpen={openAt} />
+        {/* The glance under the headline: when beds free over the next 24 h. Opened from My Day's forecast line, the ward scrolls here once. */}
+        <Animated.View layout={motion} onLayout={e => {
+          if (params.at !== "forecast" || scrolledToForecast.current) return;
+          scrolledToForecast.current = true;
+          scroll.current?.scrollTo({ y: e.nativeEvent.layout.y - insets.top - 52, animated: !reducedMotion });
+        }}>
+          <ForecastTimeline beds={beds} forecast={forecast} onOpen={openAt} />
+        </Animated.View>
+
+        {/* The decision: what moves those bars is an owner on each blocker, so the unowned ones follow, assigned in one tap. */}
+        <NoOwner beds={beds} owners={owners} unlock={forecast.unlock} onAssign={can("ward.assignOwner") ? assign : undefined} assignError={assignError} onOpen={openAt} />
 
         {/* Huddle, a compact row under it: one line and a small pill; the brief opens under it and the page below moves with it. */}
         <Surface layout={motion} style={{ paddingHorizontal: 14, paddingVertical: 8, gap: 4 }}>
@@ -206,14 +216,6 @@ export function WardScreen() {
           </Animated.View>}
         </Surface>
 
-        {/* When beds free up, after the list; opened from My Day's forecast line, the ward scrolls here once. */}
-        <Animated.View layout={motion} onLayout={e => {
-          if (params.at !== "forecast" || scrolledToForecast.current) return;
-          scrolledToForecast.current = true;
-          scroll.current?.scrollTo({ y: e.nativeEvent.layout.y - insets.top - 52, animated: !reducedMotion });
-        }}>
-          <ForecastTimeline beds={beds} forecast={forecast} onOpen={openAt} />
-        </Animated.View>
         </>}
 
         {/* The week's proof sits below the beds and moves with the list as it re-lays. */}
@@ -233,33 +235,47 @@ export function WardScreen() {
 }
 
 /**
- * Blocked beds with a blocker nobody owns, most bed-hours waiting first (Today's rule, unownedBlocked), each
- * blocker with its suggested team. One tap goes through the bed card's own assign (server or demo book), so the
- * row leaves as the owner lands and comes back with the refusal and Retry if the write fails. None: one line.
+ * The decision card: blocked beds with a blocker nobody owns, most bed-hours waiting first (Today's rule,
+ * unownedBlocked). Each bed's line opens its card; each blocker shows its suggested team as a light chip that
+ * assigns it alone, and the blocker that frees beds fastest (the forecast's unlock) says how much sooner. One
+ * primary action on the card's first line assigns every suggested team at once, through the bed card's own assign (server or demo book), so
+ * rows leave as owners land and the refusal comes back with Retry if a write fails. None: one line.
  */
-function NoOwner({ beds, owners, onAssign, assignError, onOpen }: { beds: Bed[]; owners: Record<string, Owner | undefined>; onAssign?: (id: string, owner: Owner) => void; assignError?: { id: string; owner: Owner; text: string }; onOpen: (bed: string) => void }) {
+function NoOwner({ beds, owners, unlock, onAssign, assignError, onOpen }: { beds: Bed[]; owners: Record<string, Owner | undefined>; unlock?: { blockerId: string; hours: number }; onAssign?: (id: string, owner: Owner) => void; assignError?: { id: string; owner: Owner; text: string }; onOpen: (bed: string) => void }) {
   const { reducedMotion } = useAccessibleEffects();
   const motion = reducedMotion ? undefined : LAYOUT;
   const rows = unownedBlocked(beds, owners);
-  const failed = assignError && rows.some(r => r.blockers.some(x => x.id === assignError.id)) ? assignError : undefined;
+  const all = rows.flatMap(r => r.blockers);
+  const failed = assignError && all.some(x => x.id === assignError.id) ? assignError : undefined;
   if (!rows.length) return <Surface feature layout={motion} style={{ minHeight: 56, paddingHorizontal: 16, justifyContent: "center" }}>
     <Text style={{ ...type.subhead, color: palette.muted }}>Every blocker has an owner.</Text>
   </Surface>;
   return <Surface feature layout={motion} style={{ padding: 16, gap: 12 }}>
-    <Text style={{ ...type.overline, color: palette.amber }}>No owner yet · {rows.length} {rows.length === 1 ? "bed" : "beds"}</Text>
-    {rows.map((r, i) => <Animated.View key={r.bed} layout={motion} style={{ gap: 8, paddingTop: i ? 12 : 0, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)" }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{r.bed} · {r.name.split(" ")[0]}</Text>
-          {r.hours > 0 && <Text style={{ ...type.caption, color: palette.muted }}>~{r.hours} bed-hours waiting</Text>}
+    {/* The card's one primary action sits on its first line, in reach at a glance; it wraps under at large text. */}
+    <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 10, rowGap: 8 }}>
+      <Text style={{ ...type.overline, flexGrow: 1, flexShrink: 1, flexBasis: 160, color: palette.amber }}>No owner yet · {all.length} {all.length === 1 ? "blocker" : "blockers"}</Text>
+      {onAssign && all.length > 1 && <Pressable accessibilityRole="button" accessibilityLabel={`Assign all ${all.length} blockers to their suggested teams`} hitSlop={7}
+        onPress={() => { haptic("select"); all.forEach(x => onAssign(x.id, x.suggested)); }}
+        style={({ pressed }) => ({ minHeight: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: palette.dark, boxShadow: "0 6px 14px rgba(24,32,48,0.16)", transform: [{ scale: pressed ? 0.96 : 1 }] })}>
+        <Icon name="person.2" size={13} color={palette.white} />
+        <Text style={{ ...type.footnote, fontWeight: "600", color: palette.white }}>Assign all {all.length}</Text>
+      </Pressable>}
+    </View>
+    {rows.map((r, i) => <Animated.View key={r.bed} layout={motion} style={{ gap: 6, paddingTop: i ? 10 : 0, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)" }}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`${r.bed}, ${r.name.split(" ")[0]}${r.hours > 0 ? `, about ${r.hours} bed-hours waiting` : ""}`} accessibilityHint="Opens the bed"
+        onPress={() => onOpen(r.bed)} style={{ minHeight: 36, flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{r.bed} · {r.name.split(" ")[0]}</Text>
+        {r.hours > 0 && <Text style={{ ...type.caption, flex: 1, color: palette.muted }}>~{r.hours} bed-hours waiting</Text>}
+        <Icon name="chevron.right" size={11} color={palette.muted} />
+      </Pressable>
+      {r.blockers.map(x => { const fastest = unlock?.blockerId === x.id; return <View key={x.id} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <View style={{ flex: 1, gap: 1 }}>
+          <Text style={{ ...type.footnote, color: palette.ink }}>{x.label}</Text>
+          {fastest && <Text style={{ ...type.caption, fontWeight: "600", color: TEAL }}>Frees beds fastest · ~{unlock.hours} h sooner</Text>}
         </View>
-        <Chip label={`Open ${r.bed}`} onPress={() => onOpen(r.bed)} />
-      </View>
-      {r.blockers.map(x => <View key={x.id} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <Text style={{ ...type.footnote, flex: 1, color: palette.ink }}>{x.label} <Text style={{ color: palette.muted }}>· {x.suggested} suggested</Text></Text>
-        {/* Without onAssign (a role the server refuses) the row reads only; Open still shows the bed. */}
-        {onAssign && <Chip selected label={`Assign ${x.suggested}`} accessibilityLabel={`Assign ${x.label.toLowerCase()} on ${r.bed} to ${x.suggested}`} onPress={() => onAssign(x.id, x.suggested)} />}
-      </View>)}
+        {/* Without onAssign (a role the server refuses) the row reads only; the bed line still opens the bed. */}
+        {onAssign && <Chip filled label={x.suggested} icon={<Icon name="plus" size={11} color={palette.blue} />} accessibilityLabel={`Assign ${x.label.toLowerCase()} on ${r.bed} to ${x.suggested}`} onPress={() => onAssign(x.id, x.suggested)} />}
+      </View>; })}
     </Animated.View>)}
     {failed && onAssign && <ErrorLine text={failed.text} onRetry={() => onAssign(failed.id, failed.owner)} />}
   </Surface>;

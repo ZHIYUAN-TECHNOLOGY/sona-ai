@@ -1,7 +1,8 @@
 import { router } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import { BarChart } from "@/components/charts/bar-chart";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, LAYOUT_SPRING, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
@@ -13,7 +14,7 @@ import { api, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { useFindings } from "@/features/live/findings-sync";
 import { useServerForecast } from "@/features/live/ward-sync";
-import { bedBar, bedKind, clockLabel, filterSegments, forecastBeds, forecastLine, wardSummary, type Bed, type BedForecast, type BedKind, type Owner, type WardFilter } from "./model";
+import { bedBar, bedKind, clockLabel, filterSegments, forecastBeds, forecastLine, freeingWindows, wardSummary, type Bed, type BedForecast, type BedKind, type Owner, type WardFilter } from "./model";
 
 /*
  * Ward summary, minimal (after 60fps "Ultrahuman Positive Recovery Text Animation",
@@ -176,82 +177,55 @@ export function useForecast(beds: Bed[], key?: unknown, owners: Record<string, O
   return useServerForecast(key) ?? forecastBeds(beds, new Date(), owners);
 }
 
-const WINDOW = 24 * 3_600_000, DOT = 12;
-
 /*
- * "Next 24 h": one axis from now to +24 h, a dot per bed at its forecast free time (bed-kind colour;
- * filled high confidence, ringed medium, hollow low), rising in on a short stagger (still under
- * Reduce Motion). Tap or hold a dot for its bed, time and reasons. Below, the blocker that frees the
- * most bed-hours, with its owner and one tap into that bed's card.
+ * "Next 24 h" (glance-to-decision): the headline count, then one bar per 3-hour window of the beds that free in it
+ * (reacticx bar chart, components/charts/bar-chart), coloured by the window's most urgent bed: amber means a blocker
+ * still holds one there, so chasing it moves that bar left. Drag across to scrub, tap a bar for its beds; each bed
+ * opens its card. Reduce Motion: the bars stand still. What to chase lives in the No owner card above, not here.
  */
-export function ForecastTimeline({ beds, forecast, onOpen }: { beds: Bed[]; forecast: BedForecast; onOpen: (bed: string, blockerId: string) => void }) {
+export function ForecastTimeline({ beds, forecast, onOpen }: { beds: Bed[]; forecast: BedForecast; onOpen: (bed: string) => void }) {
   const { reducedMotion } = useAccessibleEffects();
-  const [width, setWidth] = useState(0);
-  const [picked, setPicked] = useState<string>();
-  // The axis runs on the forecast's own clock (the server's demo clock in live mode).
+  const windows = useMemo(() => freeingWindows(forecast, beds), [forecast, beds]);
+  const [picked, setPicked] = useState<number>();
+  // A picked window stays marked: the other bars fade back (hex colours take an alpha suffix).
+  const data = useMemo(() => windows.map((w, i) => {
+    const c = w.entries.length ? KIND[w.kind] : "rgba(20,28,40,0.06)";
+    return { label: w.label, value: w.entries.length, color: picked !== undefined && i !== picked && c.length === 7 ? `${c}59` : c };
+  }), [windows, picked]);
+  const top = Math.max(2, ...data.map(d => d.value));
   const now = new Date(forecast.now).getTime();
-  const dots = forecast.timeline.filter(e => new Date(e.at).getTime() - now <= WINDOW);
-  const x = (at: Date) => Math.max(0, Math.min(1, (new Date(at).getTime() - now) / WINDOW)) * (width - DOT);
-  // Beds at the same moment stack upward rather than hide each other.
-  const lift = dots.map((e, i) => dots.slice(0, i).filter(o => Math.abs(x(o.at) - x(e.at)) < DOT).length);
-  const mid = x(forecast.midnight);
-  const selected = dots.find(e => e.bed === picked);
-  const bedOf = (id: string) => beds.find(b => b.bed === id);
-  const u = forecast.unlock;
   const count = forecast.today.count;
-  return <Surface layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 12 }}>
+  const w = picked === undefined ? undefined : windows[picked];
+  return <Surface layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 10 }}>
     <View style={{ gap: 2 }}>
       <Text style={{ ...type.overline, color: TEAL }}>Next 24 h</Text>
       <Text style={{ ...type.subhead, color: palette.muted }}>
         <Text style={{ fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{count}</Text> bed{count === 1 ? "" : "s"} free {count ? forecast.today.byTime : "today"} · <Text style={{ fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{forecast.tomorrow.count}</Text> tomorrow
       </Text>
     </View>
-
-    {/* Each dot is its own VoiceOver stop (bed, time, confidence, reasons); the header above reads the totals. */}
-    <View onLayout={e => setWidth(e.nativeEvent.layout.width)} style={{ height: 64 }}>
-      <View style={{ position: "absolute", left: DOT / 2, right: DOT / 2, bottom: 20, height: 2, borderRadius: 1, backgroundColor: "rgba(20,28,40,0.08)" }} />
-      {width > 0 && <View style={{ position: "absolute", left: mid + DOT / 2, bottom: 14, width: 1, height: 14, backgroundColor: "rgba(20,28,40,0.18)" }} />}
-      {width > 0 && dots.map((e, i) => {
-        const color = KIND[bedOf(e.bed) ? bedKind(bedOf(e.bed)!) : "other"];
-        const on = e.bed === picked;
-        return <Animated.View key={e.bed} entering={reducedMotion ? undefined : riseIn({ delay: i * 45, distance: 8, scale: 0.4, duration: 300 })}
-          style={{ position: "absolute", left: x(e.at) + DOT / 2 - 22, bottom: 21 - 22 + lift[i]! * (DOT + 2) }}>
-          <Pressable accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${e.bed}${e.name ? `, ${e.name.split(" ")[0]}` : ""}, free ${new Date(e.at).getTime() <= now ? "now" : `at ${clockLabel(new Date(e.at))}`}, ${e.confidence} confidence. ${e.reasons.join(", ")}`}
-            onPress={() => { haptic("select"); setPicked(on ? undefined : e.bed); }} onLongPress={() => { haptic("select"); setPicked(e.bed); }}
-            style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}>
-            <View style={{ width: DOT, height: DOT, borderRadius: DOT / 2, borderWidth: 2, borderColor: color, transform: [{ scale: on ? 1.35 : 1 }],
-              backgroundColor: e.confidence === "high" ? color : e.confidence === "medium" ? `${color}66` : palette.white }} />
-          </Pressable>
-        </Animated.View>;
-      })}
-      <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 16 }}>
-        <Text style={{ ...type.caption, position: "absolute", left: 0, color: palette.muted }}>Now</Text>
-        {/* Midnight splits today from tomorrow; its label hides when it would crowd "Now" or "+24 h". */}
-        {width > 0 && mid > 44 && mid < width - 72 && <Text style={{ ...type.caption, position: "absolute", left: mid - 12, color: palette.muted }}>12 am</Text>}
-        <Text style={{ ...type.caption, position: "absolute", right: 0, color: palette.muted }}>+24 h</Text>
-      </View>
+    {/* The chart reads as one image (the spoken forecast); the beds of a picked window are their own stops below. */}
+    <View accessible accessibilityRole="image" accessibilityLabel={`Beds freeing in the next 24 hours. ${forecast.label}`}>
+      <BarChart data={data} maxY={top} tickCount={top + 1 <= 5 ? top + 1 : 3} barRatio={0.56} leftInset={18} bottomInset={22} topInset={6} animate={!reducedMotion} style={{ height: 112 }}
+        onBarChange={(_, i) => { haptic("select"); setPicked(p => p === i && !windows[i]!.entries.length ? undefined : i); }}>
+        <BarChart.Grid color="rgba(20,28,40,0.05)" />
+        <BarChart.Highlight color="rgba(20,28,40,0.05)" radius={8} inset={4} />
+        <BarChart.Bars radius={5} activeColor={palette.ink} />
+        <BarChart.YAxis format={v => (Number.isInteger(v) && v ? String(v) : "")} style={{ ...type.caption, color: palette.placeholder }} />
+        <BarChart.XAxis format={p => p.label.replace(" ", "")} style={{ fontSize: 11, color: palette.muted }} activeStyle={{ color: palette.ink }} />
+      </BarChart>
     </View>
-
-    {selected && <Expand>
-      <Text style={{ ...type.footnote, color: palette.muted }}>
-        <Text style={{ fontWeight: "700", color: palette.ink }}>{selected.bed}{selected.name ? ` · ${selected.name.split(" ")[0]}` : ""} · {new Date(selected.at).getTime() <= now ? "now" : clockLabel(new Date(selected.at))}</Text> · {selected.reasons.join(", ")}
-      </Text>
-    </Expand>}
-
-    {u && <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingTop: 10, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text style={{ ...type.overline, color: palette.blue }}>Frees fastest</Text>
-        <Text style={{ ...type.subhead, color: palette.ink }}>{u.line}</Text>
-        <Text style={{ ...type.caption, color: palette.muted }}>{u.owned ? `Owner · ${u.owner}` : `No owner yet · ${u.owner} suggested`}</Text>
+    {w ? <Expand key={picked} style={{ gap: 6 }}>
+      <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>{picked ? `${clockLabel(w.from)} – ${clockLabel(w.to)}` : `Now – ${clockLabel(w.to)}`}{w.entries.length ? "" : " · no beds free"}</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+        {w.entries.map(e => { const b = beds.find(x => x.bed === e.bed); const t = new Date(e.at).getTime() <= now ? "now" : clockLabel(new Date(e.at));
+          return <Pressable key={e.bed} accessibilityRole="button" accessibilityLabel={`${e.bed}${e.name ? `, ${e.name.split(" ")[0]}` : ""}, free ${t === "now" ? "now" : `at ${t}`}, ${e.confidence} confidence. ${e.reasons.join(", ")}`} accessibilityHint={b?.name ? "Opens the bed" : undefined}
+            disabled={!b?.name} onPress={() => onOpen(e.bed)} style={{ minHeight: 36, paddingHorizontal: 12, borderRadius: 18, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "rgba(244,246,250,0.9)", borderWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
+            <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: KIND[b ? bedKind(b) : "other"] }} />
+            <Text style={{ ...type.footnote, color: palette.ink }}><Text style={{ fontWeight: "600" }}>{e.bed}</Text> · {t}</Text>
+          </Pressable>; })}
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel={`${u.line}. ${u.owned ? `Owner ${u.owner}` : `No owner yet, ${u.owner} suggested`}. Open ${u.bed}`} hitSlop={7}
-        onPress={() => { haptic("select"); onOpen(u.bed, u.blockerId); }}
-        style={{ minHeight: 30, paddingHorizontal: 12, borderRadius: 15, justifyContent: "center", backgroundColor: palette.blue }}>
-        <Text style={{ ...type.footnote, fontWeight: "600", color: palette.white }}>Open {u.bed}</Text>
-      </Pressable>
-    </View>}
-
-    <Text style={{ ...type.caption, color: palette.muted }}>Forecast from today's blockers and planned times</Text>
+    </Expand>
+    : <Text style={{ ...type.caption, color: palette.muted }}>Amber: a blocker still holds a bed · tap a bar for its beds</Text>}
     <SampleLabel source="fixture" rule />
   </Surface>;
 }

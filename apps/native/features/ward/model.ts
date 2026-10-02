@@ -1,4 +1,4 @@
-import { bedKind, type Bed, type BedKind, type Owner } from "@sona-ai/domain/ward";
+import { bedKind, clockLabel, type Bed, type BedForecast, type BedKind, type Owner } from "@sona-ai/domain/ward";
 import { hhmm } from "@/features/tasks/state";
 
 export * from "@sona-ai/domain/ward";
@@ -61,3 +61,19 @@ export function bedRow(b: Bed) {
 /** Who was told once a blocker takes (or loses) an owner: "Billing notified · 14:05"; demo mode says it was simulated. */
 export const ownerReceipt = (owner: Owner | undefined, at: Date, simulated: boolean) =>
   `${owner ? `${owner} notified` : "Owner cleared"} · ${hhmm(at)}${simulated ? " · simulated, nothing sent" : ""}`;
+
+const HOUR = 3_600_000, SPAN = 3;
+/**
+ * The forecast's next 24 h as eight 3-hour windows from the hour it is now ("Now", then "3 pm", "6 pm", …): each
+ * window's beds (a bed free already counts in Now) and the most urgent kind among them (bar order), for the ward's chart.
+ */
+export function freeingWindows(f: BedForecast, beds: Bed[]) {
+  const start = Math.floor(new Date(f.now).getTime() / HOUR) * HOUR;
+  const kindOf = (id: string) => { const b = beds.find(x => x.bed === id); return b ? bedKind(b) : "other"; };
+  return Array.from({ length: 24 / SPAN }, (_, i) => {
+    const from = start + i * SPAN * HOUR, to = from + SPAN * HOUR;
+    const entries = f.timeline.filter(e => { const t = new Date(e.at).getTime(); return t < to && (i === 0 || t >= from); });
+    const kinds = entries.map(e => kindOf(e.bed));
+    return { label: i ? clockLabel(new Date(from)) : "Now", from: new Date(from), to: new Date(to), entries, kind: ORDER.find(k => kinds.includes(k)) ?? "other" };
+  });
+}

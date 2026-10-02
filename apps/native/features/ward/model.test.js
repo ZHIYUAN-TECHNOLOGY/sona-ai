@@ -3,7 +3,7 @@ import { newEncounter, patients } from "@/features/encounter/fixtures";
 import { EMPTY_DISCHARGE } from "@/features/discharge/model";
 import { soonest } from "@/features/ask/answers";
 import { unownedBlocked } from "@/features/day/model";
-import { asFilter, bedBar, bedRow, defaultFilter, emptyLine, filterBeds, filterSegments, huddle, ownerReceipt, wardBeds, wardSummary } from "./model";
+import { asFilter, bedBar, freeingWindows, bedRow, defaultFilter, emptyLine, filterBeds, filterSegments, huddle, ownerReceipt, wardBeds, wardSummary } from "./model";
 
 test("the bed bar has one segment per bed, blocked first, and a legend that adds up", () => {
   const bar = bedBar(wardBeds(patients, {}));
@@ -76,4 +76,24 @@ test("every count of blocked beds is the list it opens: the filter, the summary,
   expect(huddle(beds, {})).toEqual(["4 fit to go, 3 still blocked, about 9 bed-hours waiting.", "Start with Bed 6: final guarantee letter, take-home medicines, follow-up booking.", "7 blockers have no owner yet."]);
   expect(unownedBlocked(beds, {}).map(r => r.bed).sort()).toEqual([...blocked].sort());
   expect(Object.values(soonest(beds).spec.elements).find(e => e.type === "AskLead").props.text).toBe("1 bed can free now; 3 discharges are blocked, about 9 bed-hours waiting.");
+});
+
+test("the chart's windows: eight 3-hour slots from this hour, free-now beds in Now, each coloured by its most urgent bed", () => {
+  const now = new Date("2026-10-02T05:20:00Z"); // 1:20 pm on the ward's clock
+  const at = h => new Date(now.getTime() + h * 3_600_000);
+  const beds = [
+    { bed: "Bed 2", name: "Nurul", status: "fit", predicted: "", blockers: [{ id: "x" }] },
+    { bed: "Bed 8", name: "Siti", status: "fit", predicted: "", blockers: [] },
+    { bed: "Bed 9", name: "Tan", status: "watch", predicted: "", blockers: [] },
+  ];
+  const f = { now, midnight: at(10), today: { count: 2 }, tomorrow: { count: 1 }, label: "", timeline: [
+    { bed: "Bed 8", at: at(-1), confidence: "high", reasons: [] },
+    { bed: "Bed 2", at: at(3.5), confidence: "medium", reasons: [] },
+    { bed: "Bed 9", at: at(21), confidence: "low", reasons: [] },
+    { bed: "Bed 3", at: at(30), confidence: "low", reasons: [] },
+  ] };
+  const w = freeingWindows(f, beds);
+  expect(w.map(x => x.label)).toEqual(["Now", "4 pm", "7 pm", "10 pm", "1 am", "4 am", "7 am", "10 am"]);
+  expect(w.map(x => x.entries.length)).toEqual([1, 1, 0, 0, 0, 0, 0, 1]);
+  expect(w.map(x => x.kind)).toEqual(["fit", "blocked", "other", "other", "other", "other", "other", "watch"]);
 });
