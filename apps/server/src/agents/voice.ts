@@ -123,7 +123,7 @@ function send(connection: Connection, message: Record<string, unknown>) {
 
 // The agent's name is its patient, set only by voiceRoute from the session.
 const nameOf = (link: { hospitalId: string; patientId: string }) => `${encodeURIComponent(link.hospitalId)}/${encodeURIComponent(link.patientId)}`;
-function patientOf(name: string) {
+export function patientOf(name: string) {
   const [hospitalId = "", patientId = ""] = name.split("/").map(decodeURIComponent);
   return { hospitalId, patientId };
 }
@@ -142,6 +142,8 @@ export async function voiceRoute(c: HonoContext) {
   if (c.req.param("id") !== session.user.id) return c.text("This is another account's conversation", 403);
   const link = await careLinkOf(db, session.user.id);
   if (!link) return c.text("Join with the code on your discharge paper first", 403);
-  const agent = await getAgentByName((c.env as Env).VOICE, nameOf(link));
+  // The call on MiniCPM-o (agents/live.ts) once its box is set; the app's route stays the same either way.
+  const env = c.env as Env;
+  const agent = env.SONA_LIVE_URL ? await getAgentByName(env.LIVE, nameOf(link)) : await getAgentByName(env.VOICE, nameOf(link));
   return agent.fetch(c.req.raw);
 }
