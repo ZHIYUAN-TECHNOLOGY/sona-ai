@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { router } from "expo-router";
+import { Link, router } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
 import Animated, { Easing, FadeInDown, useReducedMotion } from "react-native-reanimated";
@@ -72,20 +72,25 @@ export default function Doctors() {
 
     {/* The whole directory is its own page (search, filters, every doctor). */}
     <Animated.View entering={enter(2 + team.length)} style={{ marginTop: 8 }}>
-      <RecordRow icon={SEARCH} title={t("doc.find")} value="" spoken={t("doc.find")} hint={t("doc.findHint")} onPress={() => router.push("/find-doctor")} />
+      {/* The row zooms into the directory page (iOS 18+ native zoom; elsewhere the stack's crossfade). */}
+      <Link href="/find-doctor" asChild><RecordRow icon={SEARCH} title={t("doc.find")} value="" spoken={t("doc.find")} hint={t("doc.findHint")} zoom /></Link>
     </Animated.View>
   </ScrollView>;
 }
 
-/** A kit form row (icon, label, value, chevron): a record opening the plan, or (`onPress`) the directory. */
-function RecordRow({ icon, title, value, spoken, hint, onPress }: { icon: string; title: string; value: string; spoken: string; hint?: string; onPress?: () => void }) {
+/** A kit form row (icon, label, value, chevron): a record opening the plan, or the directory (inside a Link; `zoom`: the row zooms into its page). */
+function RecordRow({ icon, title, value, spoken, hint, onPress, zoom = false }: { icon: string; title: string; value: string; spoken: string; hint?: string; onPress?: () => void; zoom?: boolean }) {
   const t = useT();
-  return <Pressable accessibilityRole="button" accessibilityLabel={spoken} accessibilityHint={hint ?? t("doc.recordHint")}
-    onPress={onPress ?? (() => router.push("/discharge"))}
-    style={({ pressed }) => [surfaceStyle, { borderRadius: 20, minHeight: 60, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
+  // The zoom source takes exactly one native view and restyles it, so the row's face sits in a plain unflattened wrapper.
+  const face = <View style={[surfaceStyle, { borderRadius: 20, minHeight: 60, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16 }]}>
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={palette.ink} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><Path d={icon} /></Svg>
     <Text style={{ ...type.body, fontWeight: "500", color: palette.ink }}>{title}</Text>
     <Text numberOfLines={1} style={{ flex: 1, ...type.footnote, color: palette.muted, textAlign: "right" }}>{value}</Text>
     <Text style={{ fontSize: 20, color: palette.faint }}>›</Text>
+  </View>;
+  // The zoom source sits inside the button, so VoiceOver keeps the row as one labelled button.
+  return <Pressable accessibilityRole="button" accessibilityLabel={spoken} accessibilityHint={hint ?? t("doc.recordHint")}
+    onPress={onPress ?? (() => router.push("/discharge"))} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.96 : 1 }] })}>
+    {zoom ? <Link.AppleZoom><View collapsable={false}>{face}</View></Link.AppleZoom> : face}
   </Pressable>;
 }

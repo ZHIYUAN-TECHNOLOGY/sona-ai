@@ -30,6 +30,8 @@ export const surfaceStyle: ViewStyle = { borderRadius: CARD_RADIUS, borderCurve:
   boxShadow: "0 0 0 0.75px rgba(30,50,110,0.10), 0 1px 2px rgba(30,50,110,0.06), 0 16px 32px -18px rgba(37,70,170,0.32), inset 0 1px 0 #FFFFFF, inset 0 12px 20px -14px rgba(255,255,255,1), inset 0 -14px 24px -16px rgba(37,99,235,0.2)" } as ViewStyle;
 /** A glass capsule for a value or label (a time, a status, a chip). */
 export const pillStyle: ViewStyle = { borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.95)", backgroundColor: "rgba(255,255,255,0.78)", boxShadow: "0 0 0 0.5px rgba(20,28,40,0.05), 0 4px 12px -6px rgba(40,70,140,0.18), inset 0 1px 0 #FFFFFF" } as ViewStyle;
+/** A selected or primary capsule: solid ink. It drops the glass rim and the inset top highlight, which read as a white line on dark. */
+export const inkPill: ViewStyle = { backgroundColor: palette.dark, borderColor: palette.dark, boxShadow: "0 6px 14px -8px rgba(20,28,40,0.45)" } as ViewStyle;
 const featureStyle: ViewStyle = { backgroundColor: palette.white, borderColor: "rgba(37,99,235,0.10)", boxShadow: "0 18px 36px -20px rgba(37,99,235,0.35)" } as ViewStyle;
 
 /** Cards resize on the layout spring (no bounce), so a card that grows in place (a check-in opening) springs rather than jumps. */

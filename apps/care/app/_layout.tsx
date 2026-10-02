@@ -22,6 +22,8 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 // The splash is the bare canvas (app.json), so fading it reads as the opening's orb blooming in (features/opening).
 SplashScreen.setOptions({ duration: 300, fade: true });
 
+const OPAQUE = { backgroundColor: "#FAFAFA", experimental_backgroundImage: "linear-gradient(180deg, #ECEFFC 0%, #F6F4FD 22%, #FAFAFC 55%, #FAFAFA 100%)" } as const;
+
 /** Sona Care: the patient's side of their care (check-ins, discharge, follow-ups, messages to the care team). */
 export default function RootLayout() {
   const [fonts, fontError] = useFonts(FONTS);
@@ -44,6 +46,10 @@ export default function RootLayout() {
       <Stack.Screen name="follow-ups" options={{ gestureEnabled: false }} />
       <Stack.Screen name="dose" options={{ gestureEnabled: false }} />
       <Stack.Screen name="doctors" options={{ gestureEnabled: false }} />
+      {/* Zoom destinations (iOS 18+ native zoom from the row or card tapped) are opaque: a clear page zooming over the
+          one it came from would show both. A still wash in the canvas's colours stands in for the living one. */}
+      <Stack.Screen name="find-doctor" options={{ contentStyle: OPAQUE }} />
+      <Stack.Screen name="doctor" options={{ contentStyle: OPAQUE }} />
       <Stack.Screen name="join" options={{ presentation: "modal", headerShown: false }} />
       <Stack.Screen name="medicine" options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 40, contentStyle: { backgroundColor: "#FFFFFF" } }} />
       <Stack.Screen name="about-data" options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 40, contentStyle: { backgroundColor: "#FFFFFF" } }} />

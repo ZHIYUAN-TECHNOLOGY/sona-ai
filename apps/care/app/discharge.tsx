@@ -11,7 +11,7 @@ import { dayLabel } from "@/features/follow-ups/lines";
 import { daysHome } from "@/features/home";
 import { Text } from "@/lib/text";
 import { motion, palette, type } from "@/lib/theme";
-import { BackButton, Card, pillStyle, Row, Section, surfaceStyle, Title, LoadError } from "@/lib/ui";
+import { BackButton, Card, pillStyle, Row, Section, surfaceStyle, Title, LoadError, inkPill } from "@/lib/ui";
 
 const GROUPS: Group[] = ["new", "changed", "continue", "stopped"];
 const open = (name: string) => router.push({ pathname: "/medicine", params: { name } });
@@ -63,7 +63,7 @@ function Plan({ plan, reduced }: { plan: Discharged; reduced: boolean }) {
           {plan.leaflets.map(l => {
             const on = l.language === leaflet.language;
             return <Pressable key={l.language} accessibilityRole="button" accessibilityLabel={l.name} accessibilityState={{ selected: on }} onPress={() => setPicked(l.language)}
-              style={({ pressed }) => [pillStyle, { minHeight: 48, minWidth: 56, paddingHorizontal: 16, alignItems: "center", justifyContent: "center", transform: [{ scale: pressed ? motion.press : 1 }] }, on && { backgroundColor: palette.dark, borderColor: palette.dark }]}>
+              style={({ pressed }) => [pillStyle, { minHeight: 48, minWidth: 56, paddingHorizontal: 16, alignItems: "center", justifyContent: "center", transform: [{ scale: pressed ? motion.press : 1 }] }, on && inkPill]}>
               <Text style={{ fontSize: 15, fontWeight: "600", color: on ? palette.white : palette.ink }}>{l.label}</Text>
             </Pressable>;
           })}

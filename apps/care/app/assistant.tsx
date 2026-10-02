@@ -22,7 +22,7 @@ import { saveQuestion } from "@/features/questions";
 import { orbPad, SonaOrb } from "@/lib/orb";
 import { AnimatedText, Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { AccentText, CircleButton, ICON, LoadError, pillStyle, surfaceStyle } from "@/lib/ui";
+import { AccentText, CircleButton, ICON, LoadError, pillStyle, surfaceStyle, inkPill } from "@/lib/ui";
 import { useDischarge } from "@/features/discharge/row";
 import { client, orpc, queryClient } from "@/utils/orpc";
 
@@ -271,7 +271,7 @@ function Action({ d, label, onPress, busy, ink }: { d: string; label: string; on
   const fg = ink ? palette.white : palette.ink;
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ busy, disabled: busy }} disabled={busy} onPress={onPress}
     style={({ pressed }) => [pillStyle, { maxWidth: "100%", minHeight: 48, paddingHorizontal: 16, paddingVertical: 6, flexDirection: "row", alignItems: "center", gap: 7, transform: [{ scale: pressed ? 0.96 : 1 }] },
-      ink && { backgroundColor: palette.dark, borderColor: palette.dark }]}>
+      ink && inkPill]}>
     {busy ? <ActivityIndicator color={fg} /> : <Glyph d={d} color={fg} size={16} />}
     <Text style={{ flexShrink: 1, fontSize: 15, fontWeight: "600", color: fg }}>{label}</Text>
   </Pressable>;

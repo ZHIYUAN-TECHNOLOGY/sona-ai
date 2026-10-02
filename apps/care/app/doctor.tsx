@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
-import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion } from "react-native-reanimated";
+import Animated, { FadeIn, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { DoctorAvatar } from "@/features/doctors/avatar";
@@ -13,13 +13,11 @@ import { tFor, useLang } from "@/lib/i18n";
 import { useMe } from "@/features/me";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { AccentText, BackButton, Card, ICON, pillStyle, surfaceStyle, LoadError } from "@/lib/ui";
+import { AccentText, BackButton, Card, ICON, pillStyle, surfaceStyle, LoadError, inkPill } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
 const STAR = "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21L12 17.77L5.82 21L7 14.14l-5-4.87l6.91-1.01z";
 const AWARD = "M12 15a7 7 0 1 0 0-14a7 7 0 0 0 0 14M8.21 13.89L7 23l5-3l5 3l-1.21-9.12";
-/** First appearance: a 40 ms ease-out stagger (60fps Vakitler); still under Reduce Motion. */
-const rise = (i: number) => FadeInDown.duration(360).easing(Easing.out(Easing.cubic)).delay(i * 40);
 const BAR = 56 + 8 + 48;
 
 /**
@@ -60,13 +58,12 @@ function Details({ doctor: d }: { doctor: ListedDoctor }) {
   // The picked time by its moment, so a re-read that drops another slot never shifts the pick.
   const slot = day?.times.find(t => t.date.getTime() === time);
   const next = days[0] && dayParts(days[0].day, lang);
-  const enter = (i: number) => still ? undefined : rise(i);
 
   return <View style={{ flex: 1 }}>
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: BAR + Math.max(insets.bottom, 12) + 28, gap: 20 }}>
       <BackButton />
 
-      <Animated.View entering={enter(0)} accessible accessibilityRole="header"
+      <Animated.View accessible accessibilityRole="header"
         accessibilityLabel={[d.name, d.specialty, d.careTeam && t("doc.inTeamCap"), next && t("doc.nextClinicCap", { day: next.spoken })].filter(Boolean).join(". ")}
         style={{ gap: 14 }}>
         <DoctorAvatar doctor={d} size={88} />
@@ -78,14 +75,14 @@ function Details({ doctor: d }: { doctor: ListedDoctor }) {
         </View>
       </Animated.View>
 
-      <Animated.View entering={enter(1)} style={[surfaceStyle, { paddingHorizontal: 18, paddingVertical: 4 }]}>
+      <Animated.View style={[surfaceStyle, { paddingHorizontal: 18, paddingVertical: 4 }]}>
         <Fact first icon={STAR} label={t("doc.rating")} value={t("doc.ratingValue", { rating: d.rating, n: d.reviews })} spoken={t("doc.ratingA11y", { rating: d.rating, n: d.reviews })} />
         <Fact icon={AWARD} label={t("doc.experience")} value={t("doc.years", { n: d.years })} spoken={t("doc.yearsA11y", { n: d.years })} />
         <Fact icon={ICON.pin} label={t("doc.clinic")} value={d.room} spoken={t("doc.clinicA11y", { room: d.room })} />
         <Fact icon={ICON.chat} label={t("doc.speaks")} value={d.languages.join(", ")} spoken={t("doc.speaksA11y", { langs: listOf(d.languages, lang) })} />
       </Animated.View>
 
-      <Animated.View entering={enter(2)} style={{ gap: 12 }}>
+      <Animated.View style={{ gap: 12 }}>
         <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>{t("doc.clinicDays")}</Text>
         {days.length ? <>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
@@ -102,7 +99,7 @@ function Details({ doctor: d }: { doctor: ListedDoctor }) {
         </> : <Text style={{ ...type.body, color: palette.muted }}>{t("doc.noTime")}</Text>}
       </Animated.View>
 
-      <Animated.View entering={enter(3)} style={{ gap: 4 }}>
+      <Animated.View style={{ gap: 4 }}>
         <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>{t("doc.about")}</Text>
         <Text style={{ ...type.body, color: palette.muted }}>{d.about}</Text>
       </Animated.View>
@@ -138,7 +135,7 @@ function Fact({ icon, label, value, spoken, first }: { icon: string; label: stri
 function Capsule({ label, spoken, on, onPress }: { label: string; spoken: string; on: boolean; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={spoken} accessibilityState={{ selected: on }} onPress={onPress}
     style={({ pressed }) => [pillStyle, { minHeight: 48, paddingHorizontal: 16, alignItems: "center", justifyContent: "center", transform: [{ scale: pressed ? 0.96 : 1 }] },
-      on && { backgroundColor: palette.dark, borderColor: palette.dark }]}>
+      on && inkPill]}>
     <Text style={{ fontSize: 15, fontWeight: on ? "600" : "500", fontVariant: ["tabular-nums"], color: on ? palette.white : palette.ink }}>{label}</Text>
   </Pressable>;
 }
