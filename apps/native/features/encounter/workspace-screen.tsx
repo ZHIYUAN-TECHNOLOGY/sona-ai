@@ -26,7 +26,6 @@ import type { Capability, FeatureProps, FocusView, RequestState, ResponseCard } 
 import { VoiceDock } from "./voice-dock";
 import { Bubble, type LiveAdapter } from "./sona-live";
 import { useServerEncounter } from "@/features/live/sync";
-import { useHomeActions } from "./quick-actions";
 import { defaultMedications } from "./clinical-state";
 import { nextSteps, type Step } from "./next-steps";
 import { NextStepBar, NextStepSheet, useNextStep } from "./next-step";
@@ -75,7 +74,6 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const store = useEncounter();
   const { patients, encounters, request, runInPlace, cancel, voiceInput, compactResponses, selectPatient, leaveVisit, updateEncounter } = store;
   const home = mode === "home";
-  const homeKeys = useHomeActions(patients, encounters); // live mode: follows the server's visits, tasks and results
   // Home ignores any visit another screen left selected; a session only ever shows its own visit.
   // Read straight from the route so the first frame of the push already shows this visit.
   const patient = home ? undefined : patients.find(p => p.id === sessionId);
