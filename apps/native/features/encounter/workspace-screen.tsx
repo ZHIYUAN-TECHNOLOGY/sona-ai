@@ -165,7 +165,11 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
 
   // "Next step" bar: the one action blocking the medication → prescribing path, with the full list on demand.
   const canPrescribe = useCanPrescribe();
-  const steps = patient && latest && !active ? nextSteps(latest.kind, encounter, patient, canPrescribe) : undefined;
+  // A visit's answers sit on top of its tiles: back returns to the tiles (answers kept) before it leaves the visit, and
+  // the next answer brings them back. The bar belongs to the answer, so it steps aside with it.
+  const [tiles, setTiles] = useState(false);
+  useEffect(() => { setTiles(false); }, [requests.length, patient?.id]);
+  const steps = patient && latest && !active && !tiles ? nextSteps(latest.kind, encounter, patient, canPrescribe) : undefined;
   const server = useServerData(); // live mode: the top bar counts the server's tasks too
   const next = useNextStep();
   const jumpToId = (id: string) => { const index = sections.findIndex(section => section.id === id); if (index >= 0) jumpTo(index); return index >= 0; };
@@ -197,11 +201,9 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const today = useTodayThread(todayAnswers);
   const thread = home ? today.entries : [], newest = thread.at(-1);
   // The canvas holds a conversation (a visit's requests or Today's thread) rather than the dashboard.
-  // A visit's answers sit on top of its tiles: back returns to the tiles (answers kept) before it leaves the visit, and
-  // the next answer brings them back.
-  const [tiles, setTiles] = useState(false);
-  useEffect(() => { setTiles(false); }, [requests.length, patient?.id]);
   const talking = (requests.length > 0 && !tiles) || thread.length > 0;
+  // The latest answer's section tabs pin under the top bar, whose frosted band then reaches under them.
+  const tabbed = talking && !home && sections.length >= 2 && !active;
   const backToTiles = !home && requests.length > 0 && !tiles;
   const back = () => { if (backToTiles) { setTiles(true); scroll.current?.scrollTo({ y: 0, animated: false }); } else if (router.canGoBack()) router.back(); else router.replace("/"); };
   // Android's back does the same; iOS's edge swipe would leave the visit, so it waits until the tiles show.
@@ -366,10 +368,10 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       </View>}
     </Animated.ScrollView>
 
-    {talking && !home && sections.length >= 2 && !active && <View pointerEvents="box-none" style={{ position: "absolute", top: TAB_TOP, left: 0, right: 0, alignItems: "center", zIndex: 2 }}>
+    {tabbed && <View pointerEvents="box-none" style={{ position: "absolute", top: TAB_TOP, left: 0, right: 0, alignItems: "center", zIndex: 2 }}>
       <SectionTabs sections={sections} active={Math.min(activeTab, sections.length - 1)} onPick={jumpTo} />
     </View>}
-    <TopBar {...bar} faded={scrolled || talking} />
+    <TopBar {...bar} faded={scrolled || talking} under={tabbed ? 44 : 0} />
     </View>
 
     {/* Everything passing under the dock blurs progressively and fades into the canvas (a frosted band as tall as the dock

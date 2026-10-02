@@ -137,11 +137,11 @@ function Round({ children, label, onPress }: { children: ReactNode; label: strin
  * Floating header: menu on the left; patient messages and follow-up tasks on the right (what a clinician checks
  * between patients; on Today, messages are a key instead). Inside an encounter, the patient chip joins it so every answer's subject stays visible.
  */
-export function TopBar({ patient, inEncounter, openTasks, faded, onMenu, onBack, onPatient, onTasks, onNew }: { patient?: Patient; inEncounter: boolean; openTasks: number; faded: boolean; onMenu: () => void; onBack?: () => void; onPatient: () => void; onTasks: () => void; onNew?: () => void }) {
+export function TopBar({ patient, inEncounter, openTasks, faded, under = 0, onMenu, onBack, onPatient, onTasks, onNew }: { patient?: Patient; inEncounter: boolean; openTasks: number; faded: boolean; under?: number; onMenu: () => void; onBack?: () => void; onPatient: () => void; onTasks: () => void; onNew?: () => void }) {
   const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();
   return <View pointerEvents="box-none" style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
-    <Animated.View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top + 84, opacity: faded ? 1 : 0, transitionProperty: "opacity", transitionDuration: 200, transitionTimingFunction: EASE_OUT_CSS }}>
+    <Animated.View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top + 84 + under, opacity: faded ? 1 : 0, transitionProperty: "opacity", transitionDuration: 200, transitionTimingFunction: EASE_OUT_CSS }}>
       <EdgeBlur edge="top" style={{ flex: 1 }} />
     </Animated.View>
     <View pointerEvents="box-none" style={{ paddingTop: insets.top + 6, paddingHorizontal: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>

@@ -163,10 +163,10 @@ export function WithSona({ scope, answers, onTab, hidden = false, children }: { 
     <View ref={backdrop} collapsable={false} style={{ flex: 1 }}>
       {talking ? <PageConversation entries={entries} bottom={dockH + 32} onAgain={e => { reply(e.id); void settle(e.id, e.question); }} onTab={tab} /> : children}
     </View>
-    {/* What passes under the dock blurs and fades into the canvas, as on Today. */}
+    {/* What passes under the dock and its ✦ blurs and fades into the canvas, as tall a band as Today's, so the chip reads over a calm edge. */}
     {!hidden && <>
-      <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 12 }} />
-      <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 12, experimental_backgroundImage: "linear-gradient(180deg, rgba(245,246,248,0) 0%, rgba(245,246,248,0.78) 45%, rgba(245,246,248,0.94) 100%)" }} />
+      <EdgeBlur edge="bottom" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 36 }} />
+      <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: dockH + 36, experimental_backgroundImage: "linear-gradient(180deg, rgba(245,246,248,0) 0%, rgba(245,246,248,0.78) 45%, rgba(245,246,248,0.94) 100%)" }} />
     </>}
     {!hidden && <VoiceDock backdrop={backdrop} sonaLive={sonaLive} onSubmit={submit} onCancel={() => {}} placeholder={PLACEHOLDER[scope]} draft={draft} onDraft={value => { setDraft(value); setNotice(undefined); }}
       // The voice sample says the page's suggested question, so talking works the same as tapping it.
