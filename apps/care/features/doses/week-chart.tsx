@@ -16,7 +16,8 @@ function barOf(d: StripDay) {
   if (!due) return { value: STUB, color: NEUTRAL };
   if (done === due) return { value: 1, color: palette.success };
   if (d.today && d.state !== "none") return { value: Math.max(done / due, STUB), color: done ? palette.info : NEUTRAL };
-  return done ? { value: done / due, color: palette.warning } : { value: STUB, color: palette.error };
+  // Missed is the darker orange, not red: red stays for "call the hospital now" (lib/theme.ts).
+  return done ? { value: done / due, color: palette.warning } : { value: STUB, color: palette.amber };
 }
 
 /**
