@@ -5,7 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withRepeat, with
 import { scheduleOnRN } from "react-native-worklets";
 import { Text } from "./text";
 import { palette } from "./theme";
-import { canvasImage, useAccessibleEffects } from "./ui";
+import { useAccessibleEffects } from "./ui";
 import { EASE_IN_OUT, EASE_OUT } from "./motion";
 
 /*
@@ -14,7 +14,9 @@ import { EASE_IN_OUT, EASE_OUT } from "./motion";
  * on the canvas, until it knows what to show (the live choice read and, when live, the day's data in), so nothing
  * pops in or swaps after it appears. Then the mark steps toward you (1 → 1.15) and fades on a fast ease-out while the
  * layer clears, and Home's ranked rows rise in one after another underneath. At most 4 s, then it opens anyway.
- * Once per launch; Reduce Motion: a short fade, no scale.
+ * Once per launch; Reduce Motion: a short fade, no scale. The layer is the plain canvas colour with the mark where the
+ * native launch screen draws it (assets/images/splash-icon.png is this layer's own mark, captured), so the hand-off
+ * from the launch screen shows no change.
  */
 const ICON = require("../../assets/images/icon.png");
 const HOLD = 4000;
@@ -55,7 +57,7 @@ export function Opening({ ready }: { ready: boolean }) {
     transform: [{ scale: reducedMotion ? 1 : (1 + 0.15 * (1 - mark.value)) * (1 + 0.02 * breath.value) }],
   }));
   if (!shown) return null;
-  return <Animated.View pointerEvents={go ? "none" : "auto"} accessible accessibilityLabel="Sona Pro is opening" style={[StyleSheet.absoluteFill, { zIndex: 50, backgroundColor: palette.canvas, experimental_backgroundImage: canvasImage, alignItems: "center", justifyContent: "center" }, veilStyle]}>
+  return <Animated.View pointerEvents={go ? "none" : "auto"} accessible accessibilityLabel="Sona Pro is opening" style={[StyleSheet.absoluteFill, { zIndex: 50, backgroundColor: palette.canvas, alignItems: "center", justifyContent: "center" }, veilStyle]}>
     <Animated.View style={[{ alignItems: "center", gap: 14 }, markStyle]}>
       <View style={{ width: 96, height: 96, borderRadius: 24, borderCurve: "continuous", overflow: "hidden", boxShadow: "0 14px 30px -14px rgba(36,91,204,0.45)" }}>
         <Image source={ICON} style={{ width: 96, height: 96 }} />
