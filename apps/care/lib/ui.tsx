@@ -190,6 +190,33 @@ export const ICON = {
   chat: "M7.9 20A9 9 0 1 0 4 16.1L2 22Z", pin: "M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0ZM12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6", alarm: "M12 21a8 8 0 1 0 0-16a8 8 0 0 0 0 16M12 9v4l2 2M5 3L2 6M22 6l-3-3",
 } as const;
 
+/**
+ * A quick-action key (the 2×2 shelf, after Sona Pro's quick actions): raised white glass that reads as pressable before it
+ * is touched (a lit top edge and a 2 pt ledge that flattens as it sinks), the glyph in a filled blue circle (amber when
+ * something waits on the patient), a small ↗ in the corner, the label, and one line of live status (amber waiting, blue news).
+ */
+export function QuickKey({ d, label, status, tone, onPress, hint }: { d: string; label: string; status: string; tone?: "attention" | "news"; onPress: () => void; hint?: string }) {
+  const fill = tone === "attention" ? palette.warning : palette.blue;
+  return <Pressable accessibilityRole="button" accessibilityLabel={`${label}, ${status}`} accessibilityHint={hint} onPress={onPress} style={{ flex: 1 }}>
+    {({ pressed }) => <View style={[surfaceStyle, { minHeight: 108, padding: 14, gap: 10, borderRadius: 24,
+      boxShadow: pressed ? "inset 0 1px 0 #FFFFFF, 0 0 0 rgba(40,70,140,0)" : "inset 0 1px 0 #FFFFFF, 0 2px 0 rgba(40,70,140,0.10), 0 12px 24px -16px rgba(40,70,140,0.35)",
+      transform: [{ translateY: pressed ? 2 : 0 }] } as ViewStyle]}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: fill }}>
+          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={palette.white} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d={d} /></Svg>
+        </View>
+        <View style={{ width: 26, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.05)" }}>
+          <Svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke={palette.muted} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M7 17L17 7M8 7h9v9" /></Svg>
+        </View>
+      </View>
+      <View style={{ gap: 1 }}>
+        <Text numberOfLines={1} style={{ ...type.headline, color: palette.ink }}>{label}</Text>
+        <Text numberOfLines={1} style={{ ...type.footnote, fontWeight: tone ? "600" : "400", color: tone === "attention" ? palette.amber : tone === "news" ? palette.blue : palette.muted }}>{status}</Text>
+      </View>
+    </View>}
+  </Pressable>;
+}
+
 /** A small white chip that does one thing (a quick reply, a needs shortcut, a filter). */
 export function Chip({ label, onPress, dot, tone, accessibilityLabel }: { label: string; onPress: () => void; dot?: string; tone?: { bg: string; fg: string }; accessibilityLabel?: string }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} onPress={onPress}

@@ -11,7 +11,7 @@ import Svg, { Path } from "react-native-svg";
 import { tFor, useLang } from "@/lib/i18n";
 import { Text } from "@/lib/text";
 import { motion, palette, type } from "@/lib/theme";
-import { Button, field, ICON, pillStyle, SampleLabel, surfaceStyle } from "@/lib/ui";
+import { Button, field, pillStyle, SampleLabel, surfaceStyle } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 import { Pill } from "./pill";
 import { addWaiting, afterRead, medLine, messageFor, statusOf, unplanned, type PhotoMedicine, type PhotoReading } from "./photo-model";
@@ -29,7 +29,6 @@ import "./strings";
 let picker: typeof import("expo-image-picker") | undefined;
 try { picker = require("expo-image-picker"); } catch { picker = undefined; }
 const SAMPLE = require("../../assets/scan/sample-medicine.jpg") as number;
-const CAMERA = "M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3zM12 17a4 4 0 1 0 0-8a4 4 0 0 0 0 8";
 
 // Waiting medicines, kept on the phone (read through useSyncExternalStore, like the dose log).
 const KEY = "sona-care.photo-medicines";
@@ -48,13 +47,20 @@ const newRequestId = () => `care-photo-${Date.now()}-${Math.random().toString(36
 type Photo = { source: number | { uri: string }; base64?: string | null; mimeType?: string | null };
 type Step = { kind: "choose"; error?: string } | { kind: "reading"; photo: Photo } | { kind: "read"; photo: Photo; reading: PhotoReading; key?: string; sample: boolean; unread?: { waking?: number } } | { kind: "sent"; med: string };
 
-/** The entry (under the medicine list) and the waiting medicines above it, leaving out any the plan (`planned`) already lists. */
-export function PhotoMedicines({ planned }: { planned: string[] }) {
-  const t = tFor(useLang());
+export const CAMERA_GLYPH = "M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3zM12 17a4 4 0 1 0 0-8a4 4 0 0 0 0 8";
+
+/** The medicines from photos, leaving out any the plan (`planned`) already lists, with where each stands. */
+export function usePhotoMedicines(planned: string[]) {
   const { state } = useMe();
   const thread = useQuery({ ...orpc.care.messages.list.queryOptions(), enabled: state === "joined" }).data;
-  const list = unplanned(useSyncExternalStore(subscribe, () => waiting), planned).map(m => ({ ...m, status: statusOf(m, thread) })).filter(m => m.status !== "declined");
-  const [open, setOpen] = useState(false);
+  return unplanned(useSyncExternalStore(subscribe, () => waiting), planned).map(m => ({ ...m, status: statusOf(m, thread) })).filter(m => m.status !== "declined");
+}
+
+/** The waiting medicines (under the medicine list); the photo sheet opens from the page's "Add from a photo" key (`adding`). */
+export function PhotoMedicines({ planned, adding, onDone }: { planned: string[]; adding: boolean; onDone: () => void }) {
+  const t = tFor(useLang());
+  const list = usePhotoMedicines(planned);
+  if (!list.length && !adding) return null;
   return <View style={{ gap: 12 }}>
     {list.map(m => <Pressable key={m.id} accessibilityRole="button" accessibilityLabel={`${medLine(m)}. ${t(m.status === "added" ? "photo.added" : "photo.waiting")}`} accessibilityHint={t("photo.openMessages")} onPress={() => router.push("/messages")}
       style={({ pressed }) => [surfaceStyle, { flexDirection: "row", alignItems: "center", gap: 12, padding: 12, transform: [{ scale: pressed ? motion.press : 1 }] }]}>
@@ -69,14 +75,7 @@ export function PhotoMedicines({ planned }: { planned: string[] }) {
         </Animated.View>
       </View>
     </Pressable>)}
-    {/* A quiet secondary action under the list: one line, a dashed edge (something to add, not something to read). */}
-    <Pressable accessibilityRole="button" accessibilityLabel={t("photo.add")} accessibilityHint={t("photo.addLine")} onPress={() => setOpen(true)}
-      style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, minHeight: 52, borderRadius: 18, borderCurve: "continuous", borderWidth: 1, borderStyle: "dashed", borderColor: "rgba(51,92,255,0.35)", transform: [{ scale: pressed ? motion.press : 1 }] })}>
-      <Svg width={20} height={20} viewBox="0 0 24 24"><Path d={CAMERA} fill="none" stroke={palette.blue} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></Svg>
-      <Text style={{ flex: 1, ...type.body, fontWeight: "600", color: palette.blue }}>{t("photo.add")}</Text>
-      <Svg width={16} height={16} viewBox="0 0 24 24"><Path d={ICON.plus} fill="none" stroke={palette.blue} strokeWidth={2.2} strokeLinecap="round" /></Svg>
-    </Pressable>
-    {open && <PhotoSheet onClose={() => setOpen(false)} />}
+    {adding && <PhotoSheet onClose={onDone} />}
   </View>;
 }
 

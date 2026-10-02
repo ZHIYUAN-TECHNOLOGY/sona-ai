@@ -1,25 +1,26 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, Modal, Pressable, ScrollView, View, type ViewStyle } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Linking, Modal, Pressable, ScrollView, View, type ViewStyle } from "react-native";
 import Animated, { FadeInDown, SlideInDown, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming, ZoomOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { scheduleLine } from "@/features/discharge/lines";
 import { useDischarge } from "@/features/discharge/row";
 import { EASE_OUT, markTaken, Pill, rise, snooze, tintOf, useNextDose, useNow, useSnooze } from "@/features/doses";
-import { RemindCard } from "@/features/doses/remind";
+import { RemindCard, setReminders, useReminders } from "@/features/doses/remind";
+import { dayLabel } from "@/features/follow-ups/lines";
+import { useMessageNeeds } from "@/features/messages/row";
 import { clock, doseOf, dosesToday, early, isLate, untilLine, weekOf, whenWords, type DayDose, type Dose, type ScheduledMed } from "@/features/doses/model";
 import { foodOf, insight, weekStrip } from "@/features/doses/strip";
 import "@/features/doses/strings";
-import { PhotoMedicines } from "@/features/doses/photo";
-import { useMe } from "@/features/me";
+import { CAMERA_GLYPH, PhotoMedicines, usePhotoMedicines } from "@/features/doses/photo";
 import "@/features/messages/strings";
 import { DOCK_SPACE } from "@/lib/dock";
 import { Sunbeam } from "@/lib/halftone";
 import { tFor, useLang } from "@/lib/i18n";
 import { Text } from "@/lib/text";
 import { motion, palette, space, type } from "@/lib/theme";
-import { Button, Card, CircleButton, HoldButton, ICON, LoadError, pillStyle, Section, surfaceStyle, Title } from "@/lib/ui";
+import { Button, Card, HoldButton, ICON, LoadError, pillStyle, QuickKey, Section, surfaceStyle, Title } from "@/lib/ui";
 import { now as clockNow } from "@/lib/clock";
 
 /** The tick, drawn from its short stroke (4,12 → 9,17 → 20,6). */
@@ -49,6 +50,7 @@ export default function DoseScreen() {
   useEffect(() => { shown = true; }, []);
   const enter = (i: number) => first ? rise(reduced, i) : undefined;
   const [took, setTook] = useState<{ dose: Dose; at: Date }>();
+  const [adding, setAdding] = useState(false);
   const out = plan?.status === "discharged" ? plan.dischargedAt : undefined;
   const today = dosesToday(meds, out, taken, now);
   const line = out ? insight(today, now, lang) : undefined;
@@ -79,16 +81,18 @@ export default function DoseScreen() {
         {/* Asked here, where doses are, and only once. */}
         {meds.some(m => m.at?.length) && <Animated.View entering={enter(2)}><RemindCard /></Animated.View>}
 
+        {/* Everything to do here, in one 2×2 shelf of quick-action keys with live status (Sona's quick actions). */}
+        <Animated.View entering={enter(2)}><Shelf planned={meds.map(m => m.name)} onAdd={() => setAdding(true)} timed={meds.some(m => m.at?.length)} /></Animated.View>
+
         {/* One list, like My plan's, so no card is left alone in a row. */}
-        <Animated.View entering={enter(2)} style={{ gap: 12 }}>
-          <Section light={t("dose.yourLight")} bold={t("dose.yourBold")} action={<FullPlan />} />
+        <Animated.View entering={enter(3)} style={{ gap: 12 }}>
+          <Section light={t("dose.yourLight")} bold={t("dose.yourBold")} />
           {meds.length ? <View style={[surfaceStyle, { paddingHorizontal: 14 }]}>
             {meds.map((m, i) => <MedRow key={m.name} med={m} first={i === 0} today={today.filter(d => d.name === m.name)} />)}
           </View> : <Text style={{ ...type.body, color: palette.muted }}>{t("dose.nothingAtHome")}</Text>}
         </Animated.View>
-        {/* A medicine from a photo waits here for the care team (unless the plan already lists it); the entry to add one sits under the list. */}
-        <Animated.View entering={enter(3)}><PhotoMedicines planned={meds.map(m => m.name)} /></Animated.View>
-        <Animated.View entering={enter(4)}><CareTeam /></Animated.View>
+        {/* A medicine from a photo waits here for the care team (unless the plan already lists it); its sheet opens from the shelf. */}
+        <Animated.View entering={enter(4)}><PhotoMedicines planned={meds.map(m => m.name)} adding={adding} onDone={() => setAdding(false)} /></Animated.View>
 
         {!missed && <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("dose.missedTip")}</Text>}
       </>}
@@ -274,29 +278,38 @@ function Check({ size, pop, style }: { size: number; pop?: boolean; style?: View
   </Animated.View>;
 }
 
-/** "Full plan": the whole discharge plan (leaflet, warning signs, what's next), as a white capsule. */
-function FullPlan() {
-  const t = tFor(useLang());
-  return <Pressable accessibilityRole="button" accessibilityLabel={t("dose.fullPlan")} accessibilityHint={t("dose.fullPlanHint")} onPress={() => router.push("/discharge")}
-    style={({ pressed }) => [pillStyle, { minHeight: 48, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", gap: 6, transform: [{ scale: pressed ? motion.press : 1 }] }]}>
-    <Text style={{ fontSize: 15, fontWeight: "600", color: palette.ink }}>{t("dose.fullPlan")}</Text>
-    <Text style={{ fontSize: 18, color: palette.muted }}>›</Text>
-  </Pressable>;
-}
+const PLAN = "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5";
 
-/** The kit's contact row: the care team's initials, where they are and how soon they reply, and a round button to message them. */
-function CareTeam() {
-  const t = tFor(useLang());
-  const { me } = useMe();
-  return <View style={[surfaceStyle, { flexDirection: "row", alignItems: "center", gap: 12, padding: 10, paddingLeft: 12 }]}>
-    <View style={{ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.blueWash }}>
-      <Text maxFontSizeMultiplier={1.2} style={{ fontSize: 16, fontWeight: "700", color: palette.blue }}>{t("dose.careTeamInitials")}</Text>
+/**
+ * The Medicine tab's quick actions, one 2×2 shelf (after Sona Pro's quick-action keys): add a medicine from a photo (how many
+ * wait for the care team), the full plan (since when), the care team (a new reply, or how soon they reply) and dose
+ * reminders (on or off, switched in place; a phone that blocks them opens Settings).
+ */
+function Shelf({ planned, onAdd, timed }: { planned: string[]; onAdd: () => void; timed: boolean }) {
+  const lang = useLang(), t = tFor(lang);
+  const plan = useDischarge().data;
+  const waitingCount = usePhotoMedicines(planned).filter(m => m.status !== "added").length;
+  const reply = useMessageNeeds() > 0;
+  const { on } = useReminders();
+  const remind = async () => {
+    const result = await setReminders(!on);
+    if (result === "blocked") void Linking.openSettings();
+    else AccessibilityInfo.announceForAccessibility(`${t("reminders.row")}: ${t(result === "on" ? "reminders.rowOn" : "reminders.rowOff")}`);
+  };
+  return <View style={{ gap: 12 }}>
+    <View style={{ flexDirection: "row", gap: 12 }}>
+      <QuickKey d={CAMERA_GLYPH} label={t("photo.add")} hint={t("photo.addLine")} onPress={onAdd}
+        status={waitingCount ? t("photo.waitingCount", { n: waitingCount }) : t("photo.addShort")} tone={waitingCount ? "attention" : undefined} />
+      <QuickKey d={PLAN} label={t("dose.fullPlan")} hint={t("dose.fullPlanHint")} onPress={() => router.push("/discharge")}
+        status={plan?.status === "discharged" ? t("dose.planSince", { day: dayLabel(plan.dischargedAt, lang) }) : t("dose.fullPlanShort")} />
     </View>
-    <View accessible style={{ flex: 1, gap: 1 }}>
-      <Text style={{ ...type.headline, color: palette.ink }}>{t("dose.careTeam")}</Text>
-      <Text numberOfLines={2} style={{ ...type.footnote, color: palette.faint }}>{[me?.hospital, t("msg.replyTimeShort")].filter(Boolean).join(" · ")}</Text>
+    <View style={{ flexDirection: "row", gap: 12 }}>
+      <QuickKey d={ICON.chat} label={t("dose.careTeam")} hint={t("dose.messageTeam")} onPress={() => router.push("/messages")}
+        status={reply ? t("dose.newReply") : t("dose.repliesShort")} tone={reply ? "news" : undefined} />
+      {timed && <QuickKey d={ICON.alarm} label={t("reminders.row")} hint={t("reminders.hint")} onPress={() => { void remind(); }}
+        status={on ? t("reminders.rowOn") : t("reminders.rowOff")} />}
+      {!timed && <View style={{ flex: 1 }} />}
     </View>
-    <CircleButton d={ICON.chat} label={t("dose.messageTeam")} onPress={() => router.push("/messages")} />
   </View>;
 }
 

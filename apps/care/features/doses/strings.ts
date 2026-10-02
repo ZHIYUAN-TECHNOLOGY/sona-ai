@@ -4,6 +4,7 @@ import "@/lib/strings";
 /** The Medicine tab, the next-dose card and the medicine sheet. */
 addStrings({
   en: {
+    "photo.addShort": "Box or letter", "photo.waitingCount": "{n} waiting for your team", "dose.planSince": "From {day}", "dose.fullPlanShort": "Leaflet and warning signs", "dose.newReply": "New reply", "dose.repliesShort": "Replies in a few hours",
     "dose.nothingToday": "Nothing due today", "dose.isLate": "{name} is {late}", "dose.allTaken": "All taken today",
     "dose.countTaken": "{n} of {of} taken", "dose.missed": "{n} missed", "dose.nextAt": "next {time}",
     "dose.titleLight": "Today's", "dose.titleBold": "Medicines",
@@ -27,6 +28,7 @@ addStrings({
     "dose.notInPlan": "{name} isn't in your plan.", "dose.thisNotInPlan": "This medicine isn't in your plan.", "dose.askIfUnsure": "Ask your care team if you're unsure.",
   },
   ms: {
+    "photo.addShort": "Kotak atau surat", "photo.waitingCount": "{n} menunggu pasukan anda", "dose.planSince": "Dari {day}", "dose.fullPlanShort": "Risalah dan tanda amaran", "dose.newReply": "Balasan baharu", "dose.repliesShort": "Membalas dalam beberapa jam",
     "dose.nothingToday": "Tiada ubat hari ini", "dose.isLate": "{name} {late}", "dose.allTaken": "Semua sudah diambil hari ini",
     "dose.countTaken": "{n} daripada {of} diambil", "dose.missed": "{n} terlepas", "dose.nextAt": "seterusnya {time}",
     "dose.titleLight": "Ubat", "dose.titleBold": "Hari Ini",
@@ -50,6 +52,7 @@ addStrings({
     "dose.notInPlan": "{name} tiada dalam pelan anda.", "dose.thisNotInPlan": "Ubat ini tiada dalam pelan anda.", "dose.askIfUnsure": "Tanya pasukan penjagaan anda jika tidak pasti.",
   },
   zh: {
+    "photo.addShort": "药盒或信件", "photo.waitingCount": "{n} 项待团队核对", "dose.planSince": "自{day}起", "dose.fullPlanShort": "说明单和警示症状", "dose.newReply": "有新回复", "dose.repliesShort": "通常几小时内回复",
     "dose.nothingToday": "今天没有要吃的药", "dose.isLate": "{name}{late}", "dose.allTaken": "今天的药都吃了",
     "dose.countTaken": "已吃 {n}/{of}", "dose.missed": "漏了 {n} 次", "dose.nextAt": "下次 {time}",
     "dose.titleLight": "今天的", "dose.titleBold": "药物",
