@@ -25,7 +25,7 @@ import { Opening } from "@/features/opening";
 import { Welcome } from "@/features/sign-in/welcome";
 import { DOCK_SPACE } from "@/lib/dock";
 import { motion, palette, space, type } from "@/lib/theme";
-import { Button, Card, Chip, CircleButton, DataPill, ICON, Section, Title } from "@/lib/ui";
+import { Button, Card, Chip, CircleButton, DataPill, Section, Title } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
 /** Every open thing on home, most urgent first; each chip jumps to or opens its thing. */
@@ -128,7 +128,7 @@ function Home() {
             <Text numberOfLines={1} style={{ fontSize: 18, lineHeight: 24, fontWeight: "500", letterSpacing: -0.4, color: palette.ink }}>{headerDate(now, lang)}</Text>
           </View>
           <View>
-            <CircleButton d={ICON.bell} label={t("home.bell", { needs: needsLine(needs, lang) })} onPress={bell} />
+            <CircleButton icon="bell" label={t("home.bell", { needs: needsLine(needs, lang) })} onPress={bell} />
             {needs.length > 0 && <Animated.View key={needs.length} entering={reduced ? undefined : pop} pointerEvents="none"
               style={{ position: "absolute", top: -4, right: -4, minWidth: 20, minHeight: 20, paddingHorizontal: 5, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: palette.blue, borderWidth: 2, borderColor: palette.white }}>
               <Text maxFontSizeMultiplier={1.3} style={{ fontSize: 11, lineHeight: 14, fontWeight: "700", color: palette.white, fontVariant: ["tabular-nums"] }}>{needs.length}</Text>

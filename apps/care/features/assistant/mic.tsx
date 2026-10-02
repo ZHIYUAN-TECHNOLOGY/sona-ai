@@ -6,11 +6,10 @@ import type { useListen } from "@/lib/listen";
 import { AnimatedText, Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
-import { Glyph } from "./composer";
+import { Icon } from "@/lib/icons";
 import { bar, clock, pieces } from "./wave";
 import "./strings";
 
-export const MIC = "M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3M19 10v2a7 7 0 0 1-14 0v-2M12 19v3";
 type Listen = ReturnType<typeof useListen>;
 // The recording morph (iMessage's audio bar, 0.4 s at 0.8 damping): mic to stop, field to pill and back.
 const MORPH = { duration: 400, dampingRatio: 0.8 } as const;
@@ -44,7 +43,7 @@ export function MicButton({ listen, size = 48, label, quiet }: { listen: Listen;
       transitionProperty: "backgroundColor", transitionDuration: 180 }}>
       {reading && !quiet ? <ActivityIndicator color={palette.ink} />
         : <>
-          <Animated.View style={mic}><Glyph d={MIC} color={on ? palette.white : palette.ink} size={glyph} /></Animated.View>
+          <Animated.View style={mic}><Icon name="mic" color={on ? palette.white : palette.ink} size={glyph} /></Animated.View>
           <Animated.View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center" }, stop]}>
             <View style={{ width: glyph * 0.62, height: glyph * 0.62, borderRadius: 4, borderCurve: "continuous", backgroundColor: palette.white }} />
           </Animated.View>

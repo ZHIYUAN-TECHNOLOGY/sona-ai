@@ -8,7 +8,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { authClient } from "@/lib/auth-client";
 import { palette, type } from "@/lib/theme";
-import { Button, CircleButton, Field, field, ICON } from "@/lib/ui";
+import { Icon } from "@/lib/icons";
+import { Button, CircleButton, Field, field } from "@/lib/ui";
 import { orpc, queryClient } from "@/utils/orpc";
 import { useQuery } from "@tanstack/react-query";
 import { LanguageRow } from "@/features/language/picker";
@@ -59,7 +60,7 @@ export function Welcome() {
       contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 }}>
       <View style={{ height: 48, justifyContent: "center" }}>
         {small && <Animated.View entering={FadeIn.duration(200)} exiting={leave} style={{ alignSelf: "flex-start" }}>
-          <CircleButton d={ICON.back} label={t("common.back")} onPress={() => go(step === "code" ? "phone" : "options")} />
+          <CircleButton icon="back" label={t("common.back")} onPress={() => go(step === "code" ? "phone" : "options")} />
         </Animated.View>}
       </View>
       <Animated.View style={[{ alignItems: "center", justifyContent: "center" }, heroStyle]}><HeroOrb size={180} roll={step} /></Animated.View>
@@ -73,7 +74,7 @@ export function Welcome() {
         <View style={{ gap: 10 }}>
           <Animated.View entering={enter(1)}>
             <Way label={t("in.phone")} hint={t("in.phoneHint")} onPress={() => go("phone")}
-              icon={<Glyph d={ICON.phone} color={palette.ink} size={20} />} />
+              icon={<Icon name="phone" color={palette.ink} size={20} />} />
           </Animated.View>
           <Animated.View entering={enter(2)} style={{ flexDirection: "row", gap: 10 }}>
             <GoogleChoice onError={setError} />
@@ -129,9 +130,6 @@ function Way({ icon, label, hint, glass, busy, onPress, accessibilityLabel }: { 
   </Pressable>;
 }
 
-function Glyph({ d, color, size = 22 }: { d: string; color: string; size?: number }) {
-  return <Svg width={size} height={size} viewBox="0 0 24 24"><Path d={d} fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
-}
 
 const APPLE = "M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04c-2.04.027-3.91 1.183-4.961 3.014c-2.117 3.675-.546 9.103 1.519 12.09c1.013 1.454 2.208 3.09 3.792 3.039c1.52-.065 2.09-.987 3.935-.987c1.831 0 2.35.987 3.96.948c1.637-.026 2.676-1.48 3.676-2.948c1.156-1.688 1.636-3.325 1.662-3.415c-.039-.013-3.182-1.221-3.22-4.857c-.026-3.04 2.48-4.494 2.597-4.559c-1.429-2.09-3.623-2.324-4.39-2.376c-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83c-1.207.052-2.662.805-3.532 1.818c-.78.896-1.454 2.338-1.273 3.714c1.338.104 2.715-.688 3.559-1.701";
 

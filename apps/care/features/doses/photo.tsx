@@ -7,7 +7,7 @@ import { useState, useSyncExternalStore } from "react";
 import { AccessibilityInfo, ActivityIndicator, Modal, Pressable, TextInput, View, type ViewStyle } from "react-native";
 import Animated, { FadeIn, FadeInDown, SlideInDown, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Path } from "react-native-svg";
+import { Icon } from "@/lib/icons";
 import { tFor, useLang } from "@/lib/i18n";
 import { Text } from "@/lib/text";
 import { motion, palette, type } from "@/lib/theme";
@@ -46,8 +46,6 @@ const newRequestId = () => `care-photo-${Date.now()}-${Math.random().toString(36
 
 type Photo = { source: number | { uri: string }; base64?: string | null; mimeType?: string | null };
 type Step = { kind: "choose"; error?: string } | { kind: "reading"; photo: Photo } | { kind: "read"; photo: Photo; reading: PhotoReading; key?: string; sample: boolean; unread?: { waking?: number } } | { kind: "sent"; med: string };
-
-export const CAMERA_GLYPH = "M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3zM12 17a4 4 0 1 0 0-8a4 4 0 0 0 0 8";
 
 /** The medicines from photos, leaving out any the plan (`planned`) already lists, with where each stands. */
 export function usePhotoMedicines(planned: string[]) {
@@ -181,7 +179,7 @@ function PhotoSheet({ onClose }: { onClose: () => void }) {
       {step.kind === "sent" && <>
         <Animated.View entering={row(0)} accessible accessibilityRole="header" style={{ alignItems: "center", gap: 10 }}>
           <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: palette.success, alignItems: "center", justifyContent: "center" }}>
-            <Svg width={28} height={28} viewBox="0 0 24 24"><Path d="M20 6 9 17l-5-5" fill="none" stroke={palette.white} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+            <Icon name="check" size={28} color={palette.white} weight="bold" />
           </View>
           <Text style={{ ...type.title, fontWeight: "600", color: palette.ink, textAlign: "center" }}>{t("photo.sent")}</Text>
         </Animated.View>

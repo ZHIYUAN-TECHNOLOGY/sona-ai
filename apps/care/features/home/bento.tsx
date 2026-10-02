@@ -17,8 +17,9 @@ import "@/features/doses/strings";
 import { tFor, useLang } from "@/lib/i18n";
 import "./strings";
 import { HalftoneGlint, type Pattern } from "@/lib/halftone";
+import { Icon } from "@/lib/icons";
 import { palette } from "@/lib/theme";
-import { CARD_RADIUS, HoldButton, ICON, pillStyle, surfaceStyle } from "@/lib/ui";
+import { CARD_RADIUS, HoldButton, pillStyle, surfaceStyle } from "@/lib/ui";
 
 /**
  * Home's bento (the kit's "Child Home" on Sona's glass): four glass tiles in two columns, each one labelled
@@ -56,8 +57,6 @@ const Kicker = ({ children }: { children: string }) => <Text style={{ fontSize: 
 const Capsule = ({ children }: { children: string }) => <View style={[pillStyle, { alignSelf: "flex-start", maxWidth: "100%", minHeight: 32, paddingHorizontal: 12, paddingVertical: 5, justifyContent: "center", borderRadius: 16 }]}>
   <Text numberOfLines={2}style={{ fontSize: 14, lineHeight: 19, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>{children}</Text>
 </View>;
-const Icon = ({ d, size = 20, color = palette.ink }: { d: string; size?: number; color?: string }) =>
-  <Svg width={size} height={size} viewBox="0 0 24 24"><Path d={d} fill="none" stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
 
 /**
  * Today's medicines (tall): a green check per dose taken today, grey for the rest, "2 of 3 doses taken",
@@ -92,7 +91,7 @@ export function MedicinesTile({ index, still }: { index: number; still: boolean 
     <Kicker>{t("home.meds")}</Kicker>
     {today.length > 0 && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
       {today.map(d => <View key={d.key} style={{ width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: d.taken ? palette.success : "rgba(255,255,255,0.7)", borderWidth: d.taken ? 0 : 1.5, borderColor: "rgba(31,31,31,0.12)", borderStyle: "dashed" }}>
-        {d.taken && <Icon d="M6 12.5l4 4L18 8" size={18} color={palette.white} />}
+        {d.taken && <Icon name="check" size={18} color={palette.white} weight="bold" />}
       </View>)}
     </View>}
     <Text style={{ flexGrow: 1, fontSize: 20, lineHeight: 26, fontWeight: "500", letterSpacing: -0.6, color: palette.faint }}>
@@ -128,7 +127,6 @@ const TONE: Record<Update["tone"], { fill: string; text: string }> = {
   green: { fill: palette.success, text: palette.green }, amber: { fill: palette.warning, text: palette.amber },
   blue: { fill: palette.info, text: palette.blue }, muted: { fill: palette.faint, text: palette.muted },
 };
-const SPARKLE = "M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2Z";
 
 /** Latest update (short): a face or chat icon in a white circle and one sparkle line; tap goes to it. Hidden when nothing is new. */
 export function LatestTile({ index, still, onCheckIn }: { index: number; still: boolean; onCheckIn: () => void }) {
@@ -144,19 +142,15 @@ export function LatestTile({ index, still, onCheckIn }: { index: number; still: 
   return <Tile index={index} still={still} dither={{ pattern: "pixels", corner: "top-right" }} label={t("home.latestA11y", { line: u.line })} onPress={go}>
     <Kicker>{t("home.latest")}</Kicker>
     <View style={[pillStyle, { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" }]}>
-      <Svg width={26} height={26} viewBox="0 0 24 24">
-        {u.face === "chat" ? <Path d={ICON.chat} fill="none" stroke={palette.ink} strokeWidth={1.8} strokeLinejoin="round" />
-          : <><Circle cx={12} cy={12} r={10} fill="none" stroke={palette.ink} strokeWidth={1.8} /><Path d={FACE[u.face]} fill="none" stroke={palette.ink} strokeWidth={2} strokeLinecap="round" /></>}
-      </Svg>
+      {u.face === "chat" ? <Icon name="chat" size={26} />
+        : <Svg width={26} height={26} viewBox="0 0 24 24"><Circle cx={12} cy={12} r={10} fill="none" stroke={palette.ink} strokeWidth={1.8} /><Path d={FACE[u.face]} fill="none" stroke={palette.ink} strokeWidth={2} strokeLinecap="round" /></Svg>}
     </View>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-      <Svg width={14} height={14} viewBox="0 0 24 24"><Path d={SPARKLE} fill={TONE[u.tone].fill} /></Svg>
+      <Icon name="sparkle" size={14} color={TONE[u.tone].fill} weight="fill" />
       <Text style={{ flexShrink: 1, fontSize: 14, lineHeight: 19, fontWeight: "500", color: TONE[u.tone].text }}>{u.line}</Text>
     </View>
   </Tile>;
 }
-
-const PENCIL = "M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5zM15 5l4 4";
 
 /**
  * Next visit (tall): its time (or day) in a white capsule, what it is big, the hospital, then the day
@@ -187,7 +181,7 @@ export function VisitTile({ index, still, hospital }: { index: number; still: bo
     </View>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
       <Text style={{ flex: 1, fontSize: 14, lineHeight: 19, fontWeight: soon ? "600" : "400", color: soon ? palette.amber : palette.faint }}>{when}</Text>
-      <Icon d={PENCIL} />
+      <Icon name="pencil" size={20} />
     </View>
   </Tile>;
 }

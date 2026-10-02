@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import Animated, { FadeIn, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Path } from "react-native-svg";
+import { Icon, type IconName } from "@/lib/icons";
 import { DoctorAvatar } from "@/features/doctors/avatar";
 import { BookingSheet } from "@/features/doctors/booking";
 import { dayParts, nameLines, slotOf, type ListedDoctor, type Slot } from "@/features/doctors/data";
@@ -13,11 +13,9 @@ import { tFor, useLang } from "@/lib/i18n";
 import { useMe } from "@/features/me";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { AccentText, BackButton, Card, ICON, pillStyle, surfaceStyle, LoadError, inkPill } from "@/lib/ui";
+import { AccentText, BackButton, Card, pillStyle, surfaceStyle, LoadError, inkPill } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
-const STAR = "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21L12 17.77L5.82 21L7 14.14l-5-4.87l6.91-1.01z";
-const AWARD = "M12 15a7 7 0 1 0 0-14a7 7 0 0 0 0 14M8.21 13.89L7 23l5-3l5 3l-1.21-9.12";
 const BAR = 56 + 8 + 48;
 
 /**
@@ -76,10 +74,10 @@ function Details({ doctor: d }: { doctor: ListedDoctor }) {
       </Animated.View>
 
       <Animated.View style={[surfaceStyle, { paddingHorizontal: 18, paddingVertical: 4 }]}>
-        <Fact first icon={STAR} label={t("doc.rating")} value={t("doc.ratingValue", { rating: d.rating, n: d.reviews })} spoken={t("doc.ratingA11y", { rating: d.rating, n: d.reviews })} />
-        <Fact icon={AWARD} label={t("doc.experience")} value={t("doc.years", { n: d.years })} spoken={t("doc.yearsA11y", { n: d.years })} />
-        <Fact icon={ICON.pin} label={t("doc.clinic")} value={d.room} spoken={t("doc.clinicA11y", { room: d.room })} />
-        <Fact icon={ICON.chat} label={t("doc.speaks")} value={d.languages.join(", ")} spoken={t("doc.speaksA11y", { langs: listOf(d.languages, lang) })} />
+        <Fact first icon="star" label={t("doc.rating")} value={t("doc.ratingValue", { rating: d.rating, n: d.reviews })} spoken={t("doc.ratingA11y", { rating: d.rating, n: d.reviews })} />
+        <Fact icon="medal" label={t("doc.experience")} value={t("doc.years", { n: d.years })} spoken={t("doc.yearsA11y", { n: d.years })} />
+        <Fact icon="pin" label={t("doc.clinic")} value={d.room} spoken={t("doc.clinicA11y", { room: d.room })} />
+        <Fact icon="chat" label={t("doc.speaks")} value={d.languages.join(", ")} spoken={t("doc.speaksA11y", { langs: listOf(d.languages, lang) })} />
       </Animated.View>
 
       <Animated.View style={{ gap: 12 }}>
@@ -122,10 +120,10 @@ function Details({ doctor: d }: { doctor: ListedDoctor }) {
 }
 
 /** A kit form row without a chevron (it shows, it doesn't go anywhere): icon, label, value. */
-function Fact({ icon, label, value, spoken, first }: { icon: string; label: string; value: string; spoken: string; first?: boolean }) {
+function Fact({ icon, label, value, spoken, first }: { icon: IconName; label: string; value: string; spoken: string; first?: boolean }) {
   return <View accessible accessibilityLabel={spoken}
     style={{ minHeight: 56, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderTopWidth: first ? 0 : 1, borderColor: palette.line }}>
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={palette.ink} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><Path d={icon} /></Svg>
+    <Icon name={icon} size={20} />
     <Text style={{ ...type.body, color: palette.ink }}>{label}</Text>
     <Text style={{ flex: 1, ...type.footnote, color: palette.muted, textAlign: "right" }}>{value}</Text>
   </View>;

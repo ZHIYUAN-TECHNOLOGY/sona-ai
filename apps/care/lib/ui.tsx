@@ -1,13 +1,13 @@
 import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import Svg, { Path } from "react-native-svg";
 import { useEffect, useState, type ReactNode, type Ref } from "react";
 import { AccessibilityInfo, ActivityIndicator, Pressable, View, type TextInput as RNTextInput, type TextInputProps, type TextStyle, type ViewStyle } from "react-native";
 import { Text, TextInput } from "./text";
 import Animated, { cancelAnimation, Easing, interpolateColor, LinearTransition, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { HalftoneGlint } from "./halftone";
+import { Icon, type IconName } from "./icons";
 import { accent, palette, type } from "./theme";
 import { errorText } from "@/features/errors";
 import { tFor, useLang, useT } from "./i18n";
@@ -108,7 +108,7 @@ export function HoldButton({ label, doneLabel, onDone, done = false, hold = 800,
 /** The glass back button for screens off the dock (no header band): back, or home if opened directly. */
 export function BackButton({ label }: { label?: string }) {
   const t = useT();
-  return <View style={{ alignSelf: "flex-start" }}><CircleButton d={ICON.back} label={label ?? t("common.back")}onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }} /></View>;
+  return <View style={{ alignSelf: "flex-start" }}><CircleButton icon="back" label={label ?? t("common.back")}onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }} /></View>;
 }
 
 /**
@@ -171,42 +171,33 @@ export function Section({ light, bold, action }: { light: string; bold: string; 
   </View>;
 }
 
-/** A round glass icon button (the kit's 48–56 pt white-glass circle): back, close, add, bell, call. `d` is a 24-unit SVG path. */
-export function CircleButton({ d, label, onPress, dot, tint = palette.ink, size = 48 }: { d: string; label: string; onPress: () => void; dot?: boolean; tint?: string; size?: number }) {
+/** A round glass icon button (the kit's 48–56 pt white-glass circle): back, close, add, bell, call. */
+export function CircleButton({ icon, label, onPress, dot, tint = palette.ink, size = 48 }: { icon: IconName; label: string; onPress: () => void; dot?: boolean; tint?: string; size?: number }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} hitSlop={Math.max(0, (44 - size) / 2)} onPress={onPress}
     style={({ pressed }) => ({ width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.6)", borderWidth: 1, borderColor: "rgba(255,255,255,0.9)", transform: [{ scale: pressed ? 0.94 : 1 }] })}>
-    <Svg width={size * 0.44} height={size * 0.44} viewBox="0 0 24 24"><Path d={d} fill="none" stroke={tint} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+    <Icon name={icon} size={Math.round(size * 0.44)} color={tint} />
     {dot && <View style={{ position: "absolute", top: size * 0.22, right: size * 0.24, width: 8, height: 8, borderRadius: 4, backgroundColor: palette.blue, borderWidth: 1.5, borderColor: palette.white }} />}
   </Pressable>;
 }
 
-/** Icon paths shared across screens (Lucide-style, 24 units). */
-export const ICON = {
-  eye: "M2.062 12.348a1 1 0 0 1 0-.696a10.75 10.75 0 0 1 19.876 0a1 1 0 0 1 0 .696a10.75 10.75 0 0 1-19.876 0M15 12a3 3 0 1 1-6 0a3 3 0 0 1 6 0",
-  eyeOff: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575a1 1 0 0 1 0 .696a10.8 10.8 0 0 1-1.444 2.49m-6.41-.679a3 3 0 0 1-4.242-4.242M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151a1 1 0 0 1 0-.696a10.75 10.75 0 0 1 4.446-5.143M2 2l20 20",
-  back: "m15 18l-6-6l6-6", close: "M18 6L6 18M6 6l12 12", plus: "M12 5v14M5 12h14",
-  bell: "M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0",
-  phone: "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z",
-  chat: "M7.9 20A9 9 0 1 0 4 16.1L2 22Z", pin: "M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0ZM12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6", alarm: "M12 21a8 8 0 1 0 0-16a8 8 0 0 0 0 16M12 9v4l2 2M5 3L2 6M22 6l-3-3",
-} as const;
-
 /**
  * A quick-action key (the 2×2 shelf, after Sona Pro's quick actions): raised white glass that reads as pressable before it
- * is touched (a lit top edge and a 2 pt ledge that flattens as it sinks), the glyph in a filled blue circle (amber when
- * something waits on the patient), a small ↗ in the corner, the label, and one line of live status (amber waiting, blue news).
+ * is touched (a lit top edge and a 2 pt ledge that flattens as it sinks), the duotone glyph in a filled blue circle with a glow of
+ * its own colour (orange when something waits on the patient), a small ↗ on a raised white disc in the corner, the label, and one line of live status (amber waiting, blue news).
  */
-export function QuickKey({ d, label, status, tone, onPress, hint }: { d: string; label: string; status: string; tone?: "attention" | "news"; onPress: () => void; hint?: string }) {
+export function QuickKey({ icon, label, status, tone, onPress, hint }: { icon: IconName; label: string; status: string; tone?: "attention" | "news"; onPress: () => void; hint?: string }) {
   const fill = tone === "attention" ? palette.warning : palette.blue;
   return <Pressable accessibilityRole="button" accessibilityLabel={`${label}, ${status}`} accessibilityHint={hint} onPress={onPress} style={{ flex: 1 }}>
     {({ pressed }) => <View style={[surfaceStyle, { minHeight: 108, padding: 14, gap: 10, borderRadius: 24,
       boxShadow: pressed ? "inset 0 1px 0 #FFFFFF, 0 0 0 rgba(40,70,140,0)" : "inset 0 1px 0 #FFFFFF, 0 2px 0 rgba(40,70,140,0.10), 0 12px 24px -16px rgba(40,70,140,0.35)",
       transform: [{ translateY: pressed ? 2 : 0 }] } as ViewStyle]}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: fill }}>
-          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={palette.white} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d={d} /></Svg>
+        <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: fill, boxShadow: `0 3px 8px ${tone === "attention" ? "rgba(249,115,22,0.3)" : "rgba(37,99,235,0.3)"}` }}>
+          <Icon name={icon} size={20} color={palette.white} weight="duotone" duotoneColor={palette.white} />
         </View>
-        <View style={{ width: 26, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.05)" }}>
-          <Svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke={palette.muted} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M7 17L17 7M8 7h9v9" /></Svg>
+        {/* Raised white, as in Sona Pro: a grey disc sank into the grey glass. */}
+        <View style={{ width: 26, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.9)", boxShadow: "0 1px 3px rgba(20,28,40,0.1)" }}>
+          <Icon name="arrowUpRight" size={12} color={palette.muted} />
         </View>
       </View>
       <View style={{ gap: 1 }}>
@@ -265,8 +256,8 @@ export function Field({ secret, style, onFocus, onBlur, ref, ...props }: TextInp
         style={[{ flex: 1, minHeight: 50, paddingHorizontal: 16, fontSize: 17, color: palette.ink }, secret && { paddingRight: 4 }, style]} />
       {secret && <Pressable accessibilityRole="button" accessibilityLabel={t(shown ? "common.hidePassword" : "common.showPassword")} onPress={toggle}
         style={{ width: 48, height: 48, marginRight: 2, alignItems: "center", justifyContent: "center" }}>
-        {([[ICON.eye, showGlyph], [ICON.eyeOff, hideGlyph]] as const).map(([d, glyph]) => <Animated.View key={d} style={[{ position: "absolute" }, glyph]}>
-          <Svg width={22} height={22} viewBox="0 0 24 24"><Path d={d} fill="none" stroke={palette.muted} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+        {([["eye", showGlyph], ["eyeOff", hideGlyph]] as const).map(([name, glyph]) => <Animated.View key={name} style={[{ position: "absolute" }, glyph]}>
+          <Icon name={name} color={palette.muted} />
         </Animated.View>)}
       </Pressable>}
     </Animated.View>
@@ -279,7 +270,6 @@ export function Field({ secret, style, onFocus, onBlur, ref, ...props }: TextInp
  * (SampleLabel), driven by the server's `source`, so it goes by itself once a model answers. Both open
  * the same short sheet (app/about-data).
  */
-const INFO = "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-4M12 8h.01";
 const openAbout = () => router.push("/about-data");
 
 /** The one "Synthetic data" signal: a quiet glass pill with a dotted halftone accent; tap for what is fictional. */
@@ -300,6 +290,6 @@ export function SampleLabel({ source, what }: { source?: string; what: "photo" }
   return <Pressable accessibilityRole="button" accessibilityLabel={text} accessibilityHint={t("sample.hint")} onPress={openAbout} hitSlop={12}
     style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 5, opacity: pressed ? 0.6 : 1 })}>
     <Text style={{ ...type.footnote, flexShrink: 1, color: palette.muted }}>{text}</Text>
-    <Svg width={14} height={14} viewBox="0 0 24 24"><Path d={INFO} fill="none" stroke={palette.muted} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+    <Icon name="info" size={14} color={palette.muted} />
   </Pressable>;
 }

@@ -7,7 +7,8 @@ import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion, useSharedValue,
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { answer, conditionOf, doctorQuestion, leadOf, noAnswer, spoken, startingLine, suggestions, urgent, wantsDoctor, type Reply } from "@/features/assistant/answers";
 import { tFor, useLang, useT } from "@/lib/i18n";
-import { Composer, Glyph, GLYPH as COMPOSE } from "@/features/assistant/composer";
+import { Composer } from "@/features/assistant/composer";
+import { Icon, type IconName } from "@/lib/icons";
 import { Dictation, MicButton } from "@/features/assistant/mic";
 import { SUGGEST_ICON, SuggestionRow, VoiceMode, type Suggestion } from "@/features/assistant/voice";
 import { useListen } from "@/lib/listen";
@@ -22,7 +23,7 @@ import { saveQuestion } from "@/features/questions";
 import { orbPad, SonaOrb } from "@/lib/orb";
 import { AnimatedText, Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { AccentText, CircleButton, ICON, LoadError, pillStyle, surfaceStyle, inkPill } from "@/lib/ui";
+import { AccentText, CircleButton, LoadError, pillStyle, surfaceStyle, inkPill } from "@/lib/ui";
 import { useDischarge } from "@/features/discharge/row";
 import { client, orpc, queryClient } from "@/utils/orpc";
 
@@ -41,15 +42,6 @@ import { client, orpc, queryClient } from "@/utils/orpc";
 type Turn = { question: string; reply: Reply; requestId: string; ready: boolean; saved?: boolean; sent?: boolean; rated?: "up" | "down" };
 const newRequestId = () => `care-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
-// Lucide-style 24-unit paths this screen needs beyond the shared ICON set.
-const GLYPH = {
-  save: "m19 21l-7-4l-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z",
-  copy: "M8 8h12v12H8zM4 16V4h12",
-  up: "M7 10v12M15 5.88L14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88",
-  down: "M17 14V2M9 18.12L10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88",
-  source: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8",
-  next: "m9 18l6-6l-6-6",
-};
 /** Suggestions refresh after Grok's new-chat pop: all at once (no stagger), a fade and a short drop into place. */
 const drop = () => {
   "worklet";
@@ -69,7 +61,7 @@ export default function Assistant() {
   const discharged = plan?.status === "discharged" ? plan : undefined;
   const asks = suggestions(discharged, visit, dose?.name, lang);
   const condition = conditionOf(discharged);
-  const rows: Suggestion[] = [...asks.map(a => ({ question: a.question, d: SUGGEST_ICON[a.kind] })), ...(condition ? [{ question: doctorQuestion(condition, lang), d: SUGGEST_ICON.doctor }] : [])];
+  const rows: Suggestion[] = [...asks.map(a => ({ question: a.question, icon: SUGGEST_ICON[a.kind] })), ...(condition ? [{ question: doctorQuestion(condition, lang), icon: SUGGEST_ICON.doctor }] : [])];
   const flood = useSharedValue(0);
   const scroll = useRef<ScrollView>(null);
   const input = useRef<RNTextInput>(null);
@@ -147,9 +139,9 @@ export default function Assistant() {
 
   return <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 4 }}>
-      <CircleButton d={ICON.back} label={t("common.back")} onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }} />
+      <CircleButton icon="back" label={t("common.back")} onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }} />
       <View style={{ opacity: turns.length ? 1 : 0.4 }} pointerEvents={turns.length ? "auto" : "none"}>
-        <CircleButton d={ICON.plus} label={t("ask.newChat")} onPress={newChat} />
+        <CircleButton icon="plus" label={t("ask.newChat")} onPress={newChat} />
       </View>
     </View>
 
@@ -183,7 +175,7 @@ export default function Assistant() {
           <MicButton listen={listen} label={t("ask.speak")} quiet />
           <Pressable accessibilityRole="button" accessibilityLabel={t("ask.voiceMode")} accessibilityHint={t("ask.voiceHint")} onPress={() => { listen.cancel(); setVoice(true); }}
             style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.mutedWash, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
-            <Glyph d={COMPOSE.voice} color={palette.ink} size={20} />
+            <Icon name="voice" color={palette.ink} size={20} />
           </Pressable>
         </View>} />}
       {listen.state === "listening" ? <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, fontWeight: "600", color: palette.blue, textAlign: "center" }}>{t("ask.listening")}</Text>
@@ -217,7 +209,7 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
           <Text style={{ fontWeight: "700" }}>{bold}</Text>{more ? `${lang === "zh" ? "" : " "}${more}` : ""}
         </Text>
         {r.kind === "plan" && <View accessible accessibilityLabel={r.asked.source} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <Glyph d={GLYPH.source} color={palette.faint} size={14} />
+          <Icon name="doc" color={palette.faint} size={14} />
           <Text style={{ ...type.footnote, color: palette.faint }}>{r.asked.source}</Text>
         </View>}
         {/* Answered without the model while it starts: say so, so asking again later makes sense. */}
@@ -227,15 +219,15 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
           {r.doctors.map(d => <DoctorCard key={d.id} d={d} />)}
         </View>}
         <View style={{ flexDirection: "row", marginLeft: -12 }}>
-          <IconAction d={GLYPH.copy} label={tr("ask.copy")} onPress={() => void Share.share({ message: spoken(r, lang) })} />
-          <IconAction d={GLYPH.up} label={tr("ask.helpful")} on={t.rated === "up"} onPress={() => onRate("up")} />
-          <IconAction d={GLYPH.down} label={tr("ask.notHelpful")} on={t.rated === "down"} onPress={() => onRate("down")} />
+          <IconAction icon="copy" label={tr("ask.copy")} onPress={() => void Share.share({ message: spoken(r, lang) })} />
+          <IconAction icon="thumbsUp" label={tr("ask.helpful")} on={t.rated === "up"} onPress={() => onRate("up")} />
+          <IconAction icon="thumbsDown" label={tr("ask.notHelpful")} on={t.rated === "down"} onPress={() => onRate("down")} />
         </View>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-          {r.kind === "plan" && (t.saved ? <Done text={tr("ask.savedFor", { day: visitDay })} /> : <Action d={GLYPH.save} label={tr("ask.save")} onPress={onSave} />)}
+          {r.kind === "plan" && (t.saved ? <Done text={tr("ask.savedFor", { day: visitDay })} /> : <Action icon="save" label={tr("ask.save")} onPress={onSave} />)}
           {t.sent ? <Done text={tr("ask.sent")} /> : r.kind === "none"
-            ? <Action d={ICON.chat} label={tr("ask.sendTeam")} busy={busy} ink onPress={onSend} />
-            : <Action d={ICON.chat} label={tr("ask.askTeam")} busy={busy} onPress={onSend} />}
+            ? <Action icon="chat" label={tr("ask.sendTeam")} busy={busy} ink onPress={onSend} />
+            : <Action icon="chat" label={tr("ask.askTeam")} busy={busy} onPress={onSend} />}
         </View>
         {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{errorText(error, lang)}</Text>}
       </Animated.View>}
@@ -254,25 +246,25 @@ function DoctorCard({ d }: { d: Doctor }) {
       <Text style={{ ...type.footnote, color: palette.muted }}>{d.specialty} · ★ {d.rating} · {d.room}</Text>
       {d.careTeam && <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{t("ask.yourTeam")}</Text>}
     </View>
-    <Glyph d={GLYPH.next} color={palette.faint} size={18} />
+    <Icon name="next" color={palette.faint} size={18} />
   </Pressable>;
 }
 
-/** A small icon under an answer (copy, helpful, not helpful): 48 pt to tap, ink once chosen. */
-function IconAction({ d, label, onPress, on }: { d: string; label: string; onPress: () => void; on?: boolean }) {
+/** A small icon under an answer (copy, helpful, not helpful): 48 pt to tap, ink and filled once chosen. */
+function IconAction({ icon, label, onPress, on }: { icon: IconName; label: string; onPress: () => void; on?: boolean }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={on === undefined ? undefined : { selected: on }} onPress={onPress}
     style={({ pressed }) => ({ width: 48, height: 48, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.5 : 1 })}>
-    <Glyph d={d} color={on ? palette.ink : palette.faint} size={18} width={on ? 2.2 : 1.8} />
+    <Icon name={icon} color={on ? palette.ink : palette.faint} size={18} weight={on ? "fill" : "regular"} />
   </Pressable>;
 }
 
 /** A next step under an answer: a white capsule with an icon and a plain label. `ink` for the one that matters. */
-function Action({ d, label, onPress, busy, ink }: { d: string; label: string; onPress: () => void; busy?: boolean; ink?: boolean }) {
+function Action({ icon, label, onPress, busy, ink }: { icon: IconName; label: string; onPress: () => void; busy?: boolean; ink?: boolean }) {
   const fg = ink ? palette.white : palette.ink;
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ busy, disabled: busy }} disabled={busy} onPress={onPress}
     style={({ pressed }) => [pillStyle, { maxWidth: "100%", minHeight: 48, paddingHorizontal: 16, paddingVertical: 6, flexDirection: "row", alignItems: "center", gap: 7, transform: [{ scale: pressed ? 0.96 : 1 }] },
       ink && inkPill]}>
-    {busy ? <ActivityIndicator color={fg} /> : <Glyph d={d} color={fg} size={16} />}
+    {busy ? <ActivityIndicator color={fg} /> : <Icon name={icon} color={fg} size={16} />}
     <Text style={{ flexShrink: 1, fontSize: 15, fontWeight: "600", color: fg }}>{label}</Text>
   </Pressable>;
 }

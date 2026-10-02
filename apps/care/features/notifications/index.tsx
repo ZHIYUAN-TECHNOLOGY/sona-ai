@@ -5,11 +5,11 @@ import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { AccessibilityInfo, Linking, Platform, View, type ViewStyle } from "react-native";
 import Animated, { Easing, FadeOut, useReducedMotion, withDelay, withTiming } from "react-native-reanimated";
-import Svg, { Path } from "react-native-svg";
+import { Icon } from "@/lib/icons";
 import { useMe } from "@/features/me";
 import { Text } from "@/lib/text";
 import { accent, palette, type } from "@/lib/theme";
-import { Button, Card, ICON, pillStyle } from "@/lib/ui";
+import { Button, Card, pillStyle } from "@/lib/ui";
 import { client } from "@/utils/orpc";
 import { formatDate, tFor, useLang } from "@/lib/i18n";
 import { asksForNudges, routeOf, type NudgeChoice, type Permission } from "./model";
@@ -123,7 +123,7 @@ export function NudgeCard() {
       <Animated.View entering={arrive(160, -12, still)} accessible accessibilityLabel={t("nudge.exampleA11y", { text: example })}
         style={[pillStyle, { borderRadius: 18, padding: 10, flexDirection: "row", alignItems: "center", gap: 10 }]}>
         <View style={{ width: 32, height: 32, borderRadius: 9, alignItems: "center", justifyContent: "center", experimental_backgroundImage: `linear-gradient(135deg, ${accent[1]}, ${accent[2]})` } as ViewStyle}>
-          <Svg width={16} height={16} viewBox="0 0 24 24"><Path d={ICON.bell} fill="none" stroke={palette.white} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+          <Icon name="bell" size={16} color={palette.white} weight="bold" />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ ...type.footnote, fontWeight: "600", color: palette.ink }}>Sona Care <Text style={{ fontWeight: "400", color: palette.faint }}>{t("nudge.now")}</Text></Text>
