@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AccessibilityInfo, ActivityIndicator, Linking, Pressable, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { MarkedText } from "@/components/sona/marked-text";
-import { LAYOUT, type riseIn } from "@/components/sona/motion";
+import { LAYOUT, unfold, type riseIn } from "@/components/sona/motion";
 import { ErrorLine, PressScale } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
@@ -186,16 +186,24 @@ export function FlagActions({ item }: { item: DayItem }) {
  * Live mode: what the patient's own dose log says, next to a flagged reply, so the doctor sees at a
  * glance whether "fever returned" came with missed antibiotics. Re-read when she marks a dose.
  */
+// The last line read per patient, so a card mounting again shows it at once instead of popping it in a beat later.
+const doseLines = new Map<string, { text: string; missed: boolean } | undefined>();
 function DoseLine({ patientId }: { patientId: string }) {
-  const [line, setLine] = useState<{ text: string; missed: boolean }>();
+  const [line, setLine] = useState(() => doseLines.get(patientId));
+  const [cached] = useState(() => doseLines.has(patientId));
+  const { reducedMotion } = useAccessibleEffects();
   const read = useCallback(() => {
-    void api.adherence.get({ patientId }).then(a => setLine(a.line ? { text: a.line, missed: true } : a.due ? { text: `All ${a.taken} doses taken so far`, missed: false } : undefined), () => {});
+    void api.adherence.get({ patientId }).then(a => {
+      const next = a.line ? { text: a.line, missed: true } : a.due ? { text: `All ${a.taken} doses taken so far`, missed: false } : undefined;
+      doseLines.set(patientId, next); setLine(next);
+    }, () => {});
   }, [patientId]);
   useEffect(read, [read]);
   useLiveChanges(["day"], read);
   if (!line) return null;
-  return <View accessible accessibilityLabel={`Doses: ${line.text}`} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+  // Arriving after its card (the first read), it opens in place on the layout spring rather than jumping the card.
+  return <Animated.View entering={cached || reducedMotion ? undefined : unfold} accessible accessibilityLabel={`Doses: ${line.text}`} style={{ flexDirection: "row", alignItems: "center", gap: 6, overflow: "hidden" }}>
     <Icon name={line.missed ? "pills.fill" : "checkmark.circle.fill"} size={12} color={line.missed ? palette.amber : palette.green} />
     <Text style={{ ...type.footnote, fontWeight: "600", color: line.missed ? palette.amber : palette.green }}>{line.text}</Text>
-  </View>;
+  </Animated.View>;
 }

@@ -13,10 +13,19 @@ import { client } from "@/utils/orpc";
 // Remembered across reloads, so a reload mid-flow comes back to the server's state, not the fixtures.
 const KEY = "sona.liveBackend";
 let live = false;
+// Whether the remembered choice has been read yet: until then, `on: false` means "not known", not "off".
+let known = false;
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach(l => l());
-export function setLive(on: boolean) { live = on; notify(); SecureStore.setItemAsync(KEY, on ? "1" : "0").catch(() => {}); }
-SecureStore.getItemAsync(KEY).then(v => { if (v === "1" && !live) { live = true; notify(); } }).catch(() => {});
+export function setLive(on: boolean) { live = on; known = true; notify(); SecureStore.setItemAsync(KEY, on ? "1" : "0").catch(() => {}); }
+SecureStore.getItemAsync(KEY).then(v => { if (v === "1" && !live) live = true; }).catch(() => {}).finally(() => { known = true; notify(); });
+/** True once the live choice is known and, when it is on, the session check has finished (signed in or not). */
+export function useLiveSettled() {
+  const isKnown = useSyncExternalStore(l => { listeners.add(l); return () => listeners.delete(l); }, () => known);
+  const wanted = useSyncExternalStore(l => { listeners.add(l); return () => listeners.delete(l); }, () => live);
+  const { isPending } = authClient.useSession();
+  return isKnown && (!wanted || !isPending);
+}
 export function useLive() {
   const on = useSyncExternalStore(l => { listeners.add(l); return () => listeners.delete(l); }, () => live);
   const { data } = authClient.useSession();

@@ -1,4 +1,5 @@
 import { AmbientWash } from "@/components/sona/ambient";
+import { Opening } from "@/components/sona/opening";
 import { ResponseFrame } from "@/components/sona/response-frame";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -12,7 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { capabilityLabels, Home, suggestionFor, thinkingLabel, TopBar, VisitEnd, VisitLead, type Suggestion } from "./conversation";
 import { openTaskCount } from "@/features/day/counts";
 import { useServerData } from "@/features/live/server-day";
-import { api, useLive } from "@/features/live";
+import { api, useLive, useLiveSettled } from "@/features/live";
 import { touch } from "@/features/patients/continue-store";
 import { PLACEHOLDER, forWhichPatient, matchQuestion, suggestion } from "@/features/ask/answers";
 import { useTodayAnswers } from "@/features/ask/today";
@@ -171,6 +172,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   useEffect(() => { setTiles(false); }, [requests.length, patient?.id]);
   const steps = patient && latest && !active && !tiles ? nextSteps(latest.kind, encounter, patient, canPrescribe) : undefined;
   const server = useServerData(); // live mode: the top bar counts the server's tasks too
+  const liveSettled = useLiveSettled();
   const next = useNextStep();
   const jumpToId = (id: string) => { const index = sections.findIndex(section => section.id === id); if (index >= 0) jumpTo(index); return index >= 0; };
   const perform = (step: Step) => {
@@ -414,6 +416,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     {drawer && <Pressable accessibilityRole="button" accessibilityLabel="Close menu" onPress={closeDrawer} style={StyleSheet.absoluteFill} />}
     </Animated.View>
     </GestureDetector>
+    {/* Cold start on Today: one calm layer until the day is known, so nothing pops in or swaps under the doctor. */}
+    {home && <Opening ready={liveSettled && (!live || server !== undefined)} />}
   </View>;
 }
 

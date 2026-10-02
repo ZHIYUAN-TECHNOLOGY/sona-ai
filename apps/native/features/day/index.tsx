@@ -19,6 +19,7 @@ import { withFindings } from "@/features/findings/model";
 import { useFindings } from "@/features/live/findings-sync";
 import { serverDayPatients, serverVisit } from "@/features/live/day";
 import { api, errorText } from "@/features/live";
+import { useOpened } from "@/components/sona/opening";
 import { refreshServerData, serverDayCount, useServerData, useServerDay, useVisitTasks } from "@/features/live/server-day";
 import { localDate } from "@/features/tasks/state";
 import { flaggedItems, flaggedTaskIds } from "@/features/check-ins/model";
@@ -35,8 +36,8 @@ import { useNeedsYou, usePendingResult, useWardBeds } from "./use-counts";
 import { bookingItems, canSnooze, dayOf, glDeniedItems, groupVisits, messageItems, ownersOf, rankDay, rankOtherDay, scheduleFor, snooze, splitSnoozed, unownedBlocked, type DayItem, type DayTone, type ScheduleVisit, type Snoozed } from "./model";
 
 /*
- * My day, ranked (after Superlist's AI list making): on first open a small "Sorting your day…"
- * card pulses, then morphs away as the ranked items drop in one after another (spring 0.45 s,
+ * My day, ranked (after Superlist's AI list making): on first open, as the opening layer lifts, the ranked
+ * items drop in one after another (spring 0.45 s,
  * damping 0.72, 90 ms apart), most urgent first, each with the reason it is there. Later visits
  * to home show the list settled; re-ranking after a pin or snooze glides rows to their new place.
  */
@@ -53,15 +54,6 @@ const nowMinutes = (d = new Date()) => d.getHours() * 60 + d.getMinutes();
 const clockOf = (ms: number) => new Date(ms).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 const haptic = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); };
 
-function Sorting() {
-  const pulse = useSharedValue(0.4);
-  useEffect(() => { pulse.set(withRepeat(withSequence(withTiming(1, { duration: 420 }), withTiming(0.4, { duration: 420 })), -1)); }, [pulse]);
-  const dots = useAnimatedStyle(() => ({ opacity: pulse.value }));
-  return <Animated.View exiting={FadeOut.duration(180)} style={{ alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, height: 44, borderRadius: 22, backgroundColor: palette.ink }}>
-    <Animated.View style={[{ flexDirection: "row", gap: 3 }, dots]}>{[0, 1, 2].map(i => <View key={i} style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: palette.white }} />)}</Animated.View>
-    <Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>Sorting your day…</Text>
-  </Animated.View>;
-}
 
 /*
  * Time ruler (after Habitastic's check-in timeline): a quiet tick ruler (15-minute ticks, hour
@@ -161,7 +153,7 @@ function Row({ item, first, index, animate, pinned, onOpen, onPin, onSnooze }: {
   const [menu, setMenu] = useState(false);
   const { reducedMotion } = useAccessibleEffects();
   const tone = TONE[item.tone];
-  return <Animated.View layout={reducedMotion ? undefined : LAYOUT} entering={animate ? riseIn({ delay: index * 90, distance: 14, duration: 450 }) : undefined}>
+  return <Animated.View layout={reducedMotion ? undefined : LAYOUT} entering={animate ? riseIn({ delay: 80 + index * 90, distance: 14, duration: 450 }) : undefined}>
     <View style={{ borderTopWidth: first ? 0 : 1, borderColor: "rgba(20,28,40,0.06)" }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingLeft: 14, paddingRight: 6, paddingVertical: 12 }}>
         <Pressable accessibilityRole="button" accessibilityLabel={`${item.title}. ${item.reason}${pinned ? ". Pinned" : ""}`} accessibilityHint={HINT(item)} onPress={onOpen} style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 12 }}>
@@ -309,10 +301,11 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const [at, setAt] = useState(Date.now);
   useEffect(() => { const timer = setInterval(() => setAt(Date.now()), 60_000); return () => clearInterval(timer); }, []);
   const now = nowMinutes(new Date(at));
-  // First open sorts after the home greeting has settled.
-  const [sorting, setSorting] = useState(!sortedOnce && !reducedMotion);
+  // First open: the opening layer covers the wait (components/sona/opening), and the ranked rows rise in as it lifts.
+  const opened = useOpened();
+  const sorting = !opened;
   const [animate, setAnimate] = useState(!sortedOnce && !reducedMotion);
-  useEffect(() => { sortedOnce = true; if (!sorting) return; const timer = setTimeout(() => setSorting(false), 1700); return () => clearTimeout(timer); }, [sorting]);
+  useEffect(() => { if (opened) sortedOnce = true; }, [opened]);
   const [pins, setPins] = useState<string[]>([]);
   const [snoozed, setSnoozed] = useState<Snoozed>({});
   const [showSnoozed, setShowSnoozed] = useState(false);
@@ -365,7 +358,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
     {managing && <WardGlance />}
     {offset === 0 && bedManager && <UnownedBeds beds={beds} />}
     {offset === 0 && managing && shelf}
-    {managing ? null : sorting ? <Sorting /> : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
+    {managing || sorting ? null : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
       {top && <Animated.View key="top" layout={reducedMotion ? undefined : LAYOUT} entering={animate ? riseIn({ distance: 14, scale: 0.97, duration: 450 }) : undefined}>
         {/* The card opens the item; its inline actions sit beside that button, not inside it, so VoiceOver reaches them. */}
         <Surface feature style={{ padding: 18, gap: 12 }}>
@@ -388,7 +381,8 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
           {top.kind === "message" && <MessageActions item={top} />}
         </Surface>
       </Animated.View>}
-      {offset === 0 && shelf}
+      {/* Medium-style cascade on first open: the lead card, then the keys, then the rows, each a beat later. */}
+      {offset === 0 && <Animated.View entering={animate ? riseIn({ delay: 80, distance: 14, duration: 450 }) : undefined}>{shelf}</Animated.View>}
       {rest.length > 0 && <Surface layout={reducedMotion ? undefined : LAYOUT} style={{ paddingVertical: 2 }}>
         {rest.map((item, i) => <Row key={item.id} item={item} first={i === 0} index={i + 1} animate={animate} pinned={pins.includes(item.id)} onOpen={() => onOpen(item.patientId, item.open)}
           onPin={() => setPins(list => list.includes(item.id) ? list.filter(id => id !== item.id) : [item.id, ...list])}
