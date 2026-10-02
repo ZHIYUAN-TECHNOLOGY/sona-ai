@@ -23,7 +23,6 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 // The splash is the bare canvas (app.json), so fading it reads as the opening's orb blooming in (features/opening).
 SplashScreen.setOptions({ duration: 300, fade: true });
 
-const TAB = { gestureEnabled: false, animation: "fade", animationDuration: 250 } as const;
 // Form sheets draw on their own white, not the canvas.
 const SHEETS = new Set(["medicine", "about-data"]);
 
@@ -44,11 +43,8 @@ export default function RootLayout() {
     <Stack screenLayout={({ route, children }) => SHEETS.has(route.name) ? children : <View style={{ flex: 1 }}><CalmCanvas />{children}</View>}
       screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" },
       fullScreenGestureEnabled: true, freezeOnBlur: true }}>
-      {/* The dock's four places switch like tabs: a quick crossfade, never a slide or a swipe back between them. */}
-      <Stack.Screen name="index" options={TAB} />
-      <Stack.Screen name="follow-ups" options={TAB} />
-      <Stack.Screen name="dose" options={TAB} />
-      <Stack.Screen name="doctors" options={TAB} />
+      {/* The dock's four places are one tab navigator (app/(tabs)): they switch at once, with no swipe back between them. */}
+      <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
       {/* Zoom destinations (iOS 18+ native zoom from the row or card tapped): opaque like every screen, so the zoom never shows both. */}
       <Stack.Screen name="find-doctor" />
       <Stack.Screen name="doctor" />
