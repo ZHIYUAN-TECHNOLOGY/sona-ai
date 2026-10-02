@@ -158,6 +158,20 @@ The sample is small, but it fits what stage 1 taught: short, sure answers. Stage
 - Fixed: "don't press the wound" (Malay) and codeine for a dizzy patient.
 - Still wrong in both: a missed rivaroxaban dose skipped instead of taken the same day, and instructions invented for medicines the plan does not list.
 - `live1` scored 7/40 on K-QA both times it was judged, so the blind judge is consistent.
+
+**live2 (2 Oct, job `qkg8x9w`, branch `live2` at `6429ab1f`)**: the live layer retrained on stage 2 with `RELANG=0.3`, 91 min. On the same 60 held-out live calls:
+
+| Test | stage 2 alone | live2 | live1 (1 Oct) |
+|---|---|---|---|
+| Talked over the patient | 10 | **0** | 0 |
+| Replied in the patient's language (hand-checked) | 33/60 by the script | **58/60** | 60/60 |
+| Brief names another language, answered in the spoken one (hand-checked) | 13/36 by the script | **30/36** | followed the brief on box ④ |
+| Median start after the question | 0.62 s | 0.73 s | 0.73 s |
+
+- The script's language check calls short Malay replies English ("Faham, Puan. Fokus pada kesihatan Puan dulu ya."). By hand, all 5 of live1's misses and 6 of live2's 8 were right; live2's two real misses are English questions answered in Malay.
+- One calm Malay question got the 999 line.
+
+**Box ④ with live2 (2 Oct, deployment `qkjgr09`, deactivated after the test; live1 stays production)**, the same 6 calls with talker v1: every reply came in the language asked. Under the English-fallback brief, the Malay and Mandarin questions now got Malay and Mandarin (live1 answered both in English). First words came 0.9–1.7 s after the question ended. The 999 line came first for chest pain, and the appointment answer gave the plan's date and clinic. The Manglish cough reply was cut by the test's 10 s tail, not by the model. Replies: `live2-all-6.wav`, sent to the user for listening.
 - The GPUs were still about 72% idle with the loader workers (28% busy each, 43 of 80 GB used), so loading audio was not what held them back.
 
 **Hearing real speech** (2 Oct, Mac, `tools/omni-eval/hear.py`; mixed error as `tools/asr-data/baseline.py` counts it):
@@ -198,6 +212,88 @@ The base model also answers with markdown (bold, lists), which is wrong for spee
 7. From huggingface_hub 1.0 the `hf` CLI's `--exclude` takes one pattern, and the rest become file names, so only those download. Stage 2's first job got 9 asset files and no weights; `run.sh` now downloads with `snapshot_download` and stops if the weights are missing.
 8. The tokenizer's workers type each column from their first batch of 1,000 rows. Stage 2's last worker began with text-only rows, typed `images` as null, then failed on the image replay: "Couldn't cast array of type list<item: string> to null". `preprocessing_batch_size: 100000` gives each worker one batch (replayed locally with the same set sizes).
 9. The org's 100 GB of private Hugging Face storage filled up, and stage 2's merged push failed after training. `run.sh` now pushes the adapter (0.1 GB) on its own first, and `push.py` leaves the `checkpoint-*` folders out (1.1 GB a stage) and any top-level README.md (HF rejects PEFT's card, whose `base_model` is a local path).
+
+## The brain against Gemma 26B (2 Oct)
+
+`tools/omni-eval/gemma_bench.py` put box ①'s Gemma 4 26B (today's call's brain) through the same tests as MiniCPM-o's stage 2 brain; answers judged blind in shuffled pairs by Claude, not a clinician.
+
+| Test | stage 2 (MiniCPM-o brain) | Gemma 4 26B | MedGemma 27B (judged against Gemma) |
+|---|---|---|---|
+| Global-MMLU medical, English (500) | 73.8% | **81.6%** | 75.4% |
+| Global-MMLU medical, Malay (500) | 61.8% | **74.2%** | 70.4% |
+| Global-MMLU medical, Mandarin (500) | 65.6% | **76.6%** | 70.4% |
+| K-QA replies contradicting the physicians (40) | 5 | **0** (1 in the MedGemma round) | 5 |
+| K-QA, judged better | 8 | **16** (16 equal) | 11 to Gemma's 12 (17 equal) |
+| Plan answers with a medical error (90) | 9 | 6 (5 in the MedGemma round) | **3** |
+| Plan answers, judged better | 17 | **30** (43 equal) | 19 to Gemma's 44 (27 equal) |
+
+The gap is 8-12 exam points (largest in Malay) and clear on safety. Fine-tuning so far moved exam scores within ±2 points. Gemma's own plan errors are mostly 999 for a catch-all "if you feel unwell".
+
+MedGemma 27B (box ⑥, `packages/infra/baseten/medgemma27`, vLLM on one H100, up for the bench and live4's teaching answers, then deactivated) is not a stronger teacher than Gemma 4 26B: lower exam scores in all three languages and more K-QA contradictions. Its plan answers made the fewest errors but lost mostly on language (English replies to Malay questions). Two scoring fixes came out of it:
+- With no system prompt, MedGemma thinks first (`<unused94>thought`), so the 8-token multiple-choice reply had no letter. `BENCH_MC_TOKENS=1024` lets it finish, and the parser skips the thinking.
+- The parser took the first A-D anywhere, so "Jawapan yang betul ialah **B**" counted as A. Both benches now take a lone letter. Re-scoring every stored reply changed only the base model, by at most 0.8 points.
+
+## live4: the brain from bigger teachers (2 Oct, running)
+
+Stage 3 (job `3mko9kw`, 2×H100) trained 50,161 rows in 3,136 steps and 109 min (2.1 s a step), about $26. Loss went from 1.13 to 0.88 (mean 0.92). It pushed `stage3` @ `0c02230c`. live4 (job `wngk943`) and the stage 3 scoring job (`wp7nv8w`) started together at 01:53.
+
+Stage 3 continues from live3's weights with LoRA on every attention and MLP projection at rank 64 (stages 1-2: q and v at rank 32), the ear frozen, one epoch on 2×H100 (`MODE=stage3`, `data.py`). live4 then retrains the live layer on it (`BRAIN=stage3`, numbers as words), as live3 did on stage 2.
+
+| Set | Rows | Source |
+|---|---|---|
+| knowledge | 32,942 | OpenMed Medical-Reasoning-SFT-Mega 15,000 (minus 58 that send patients to 911), medical-o1 6,000 English and 6,000 Chinese, MedReason 6,000. Final answers only, at most 1,800 characters, markdown flattened |
+| knowledge_ms | 5,994 | MedReason and medical-o1 English, translated into Malaysian Malay by Gemma 26B (box ①) |
+| knowledge_medgemma | 6,000 | MedGemma 27B on MedQuAD consumer questions |
+| replays | 5,225 | answer_med 2,000, hear_answer (numbers as words) 1,325, hear 800, answer 800, see 300 |
+
+Every Global-MMLU medical, K-QA, sft/eval and med_eval question is left out (`knowledge.py tests()`). Two fixes went into the MedGemma answers before training:
+- **Facts:** alone, MedGemma made up rare-disease facts. It said isobutyryl-CoA dehydrogenase deficiency affects leucine; it is valine. For the 1,935 questions where MedQuAD kept the NIH answer (GARD, GHR and other NIH sources), MedGemma now answers from that text.
+- **999:** the prompt asked when to call 999, so 67% of answers ended with "call 999 if …". The live call already over-escalates (live3: 999 for a cough), so `publish` drops that last sentence from 3,545 answers. Poisoning, overdose and emergency questions keep it.
+
+**Result: stage 3 is worse than stage 2.** Same tests and blind judges as above; each brain was judged against Gemma 4 26B in its own round.
+
+| Test | stage 2 | stage 3 | Gemma 4 26B |
+|---|---|---|---|
+| Global-MMLU medical, English / Malay / Mandarin | 73.8 / 61.8 / 65.6% | 73.2 / 58.2 / 65.8% | **81.6 / 74.2 / 76.6%** |
+| K-QA replies contradicting the physicians (40) | 5 | 11 | **0-1** |
+| Plan answers with a medical error (90) | 9 | 11 | 5-6 |
+| Hearing error, Manglish / FLEURS en / FLEURS zh / real Malay | 5.8 / 4.6 / 5.7 / 28.3% | 5.3 / 3.5 / 4.2 / 29.6% | |
+| Red flags sent to 999 / label name and strength | 30/30 / 69 of 89 | 30/30 / 64 of 89 | |
+
+The 50,161 answers from bigger models moved neither exam score, and in Malay the brain switched to "A. option" replies and lost 3.6 points. They made it more confident, not more correct: stage 3 calls loperamide "generally safe" with a fatty liver, says steroids are contraindicated in pregnancy for ulcerative colitis, and suggests ibuprofen for a child whose plan points to dengue. The teachers' assertive exam-style answers transferred; their knowledge did not. An 8B brain holds about what its pretraining gave it, and LoRA fine-tuning shapes how it answers. **live3 (stage 2's brain) stays the best MiniCPM-o version.**
+
+live4 (job `wngk943`, about $11) finished at 03:33 and pushed `live4` @ `d663bb4b`. Its live layer behaves like live3's on the 60 held-out spoken questions: none spoken over the patient, first words at 0.73 s, the spoken language followed 30 of 36 times (live3: 28). Its brain is stage 3's, so it was not scored again or put on box ④. Sprint spend at the end: about $165 of the $200 cap (training $149, box ④ $11, MedGemma $4.55).
+
+**Where this leaves the one-model call.** MiniCPM-o 8B hears Manglish well and talks naturally, but its brain stays 8-16 exam points and clearly on safety behind Gemma 4 26B, and fine-tuning did not close that. Replacing ASR, Gemma and the voice with it is not safe for medical answers. Next options: Gemma writes the answer and MiniCPM-o speaks it through the call agent (Gemini Live's half-cascade shape), or a bigger open speech model (Qwen3-Omni 30B-A3B) as the next candidate.
+
+## Voice v3 plan: numbers and Manglish (2 Oct, after the user listened to live2)
+
+**Problem (user, 2 Oct):** Sona's spoken words are sometimes wrong, mostly numbers ("38°C") and Chinese words.
+
+**Causes found:**
+1. **Live, the talker reads one second of text at a time and cannot look ahead.** On box ④, "999" came to it as "99" then "9", "2026" as "202" then "6", and "38°C" across two units. It has to start saying a number before it has seen all of it.
+2. **Its training clips rarely contain numbers or mixed Chinese.** Of the 12,133 voice clips (17.9 h), 2.5% contain digits, 91 contain units (°, mg, ml, %), and almost none put Chinese characters inside a Malay or English sentence. The 159 that mix scripts are Chinese sentences with the word "App".
+3. **The speaking test reads whole sentences in the chat layout**, so it never tested the live, one-second reading where these errors happen.
+
+**Fix, in order:**
+
+| Step | What | Time | Cost |
+|---|---|---|---|
+| 0 | A hard speaking test in the live layout, about 120 lines: numbers, doses, dates, temperatures and 999; Malay and English with Chinese words; Mandarin. Scored by box ②'s Manglish ASR and by ear. Baselines: talker v1, the model's own talker (7.8% against v1's 13.3% earlier), VoxCPM2 | 2 h | about $3 |
+| 1 | The brain writes numbers as spoken words in live mode, in the sentence's language ("tiga puluh lapan darjah Celsius", "thirty-eight degrees", "三十八度"; 999 digit by digit). A small en/ms/zh verbaliser rewrites the live training answers, then the live layer is retrained (live3: stage 2 plus the live LoRA, `RELANG` 0.3). The talker then only reads words, which it does well, and no number can split across units. No added latency | 3 h | about $10 |
+| 2 | Talker v3 on targeted clips in the live layout: about 4,000 new lines (numbers in spoken form, Manglish with Chinese words, Mandarin) written by Gemma, voiced in Sona's voice (Gemini Kore for mixed lines, VoxCPM2 for single-language ones), kept only when the ASR hears them back right. Words force-aligned to the audio (the suspected voice-v2 fault), with a replay of today's clips | 1 day | about $25 |
+| 3 | Box ④ with live3 and talker v3: the hard test again, the 6 calls, and the user's ears | 30 min | about $2 |
+
+Pass: numbers right in every hard-test line, at most 5% word errors per language, and the user approves by ear. Until then VoxCPM2, today's call, stays the voice users hear.
+
+**Started 2 Oct, 16:00 MYT** (the user asked for Gemini TTS with a Malaysian accent as the talker's new data, and approved the fix and the deletions):
+- `tools/omni-voice/spoken.py` writes numbers as words in en/ms/zh. `sft/hear_answer_words.json` is the live set with all 209 answers' numbers in words. live3 (job `q8rknp3`: stage 2, `DATA=hear_answer_words`, `RELANG=0.3`) trains on it.
+- `tools/omni-voice/lines_v3.py`: Gemma writes about 4,000 lines in seven categories (numbers as words in ms/en/zh/Manglish, Chinese inside Malay or English, Malay or English inside Mandarin, Manglish). 25 of each are held out as the hard speaking test.
+- `tools/omni-voice/voice3.py`: Gemini TTS (Kore, asked for a Malaysian accent) voices the training lines, and only clips the Manglish ASR hears back within 5% are kept. They are published as `voice3/` with lang "num" or "mix", so the talker's even language sampling gives them a third of its steps (`VOICE3=1` in `tools/omni-voice-train/run.sh`).
+- `tools/omni-eval/hard.py` scores `speak.py` (`SPEAK_LINES=voice3/test.jsonl`) per category, comparing numbers as words.
+- For space (approved): deleted voice-v1's 11 intermediate talkers and stage1's adapter checkpoints, and stage2's merged weights once live3 has loaded them.
+- **live3 landed** (job `q8rknp3`, 92 min; branch `live3` at `dc3db4cc`). On the 60 held-out live calls none of its replies has a digit (stage 2 alone: 4), e.g. "记得在十月十五号复诊". It talked over the patient 0 times, replied in the patient's language on 58/60 by hand (the script said 53: five short Malay replies read as English), and on 28/36 calls whose brief named another language it answered in the spoken one.
+- **Gemini read its accent instruction aloud** before nearly every one of the 3,668 clips (each 4-6 s too long). A system instruction is refused by `gemini-3.8-flash-tts`, and shorter in-text prompts leaked too. `voice3.py trim` cuts each clip at the pause after the instruction's closing colon (3,667 clips). The Manglish ASR then keeps only clips where exactly the line is left: in 24 samples, every instruction was gone.
 
 ## 2-day version (user, 1 Oct evening: everything trained, but in 2 days)
 

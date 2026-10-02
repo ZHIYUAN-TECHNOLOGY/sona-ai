@@ -1,0 +1,339 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How Sona's AI models fit together on a call",
+    "output": "minicpm-models.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1200,
+      420
+    ],
+    "repository": {
+      "url": "https://github.com/zyt-ngchwanlii/sona-ai",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "669b86d00fff705acc3b7cb3cf31de4000ae01bc"
+    },
+    "views": [
+      {
+        "id": "minicpm",
+        "label": "Inside MiniCPM-o",
+        "focus": [
+          "agent",
+          "ear",
+          "brain",
+          "mouth",
+          "flow"
+        ],
+        "note": "Each second: the ear hears, the brain decides and writes, the mouth and flow speak in Sona's voice."
+      },
+      {
+        "id": "ears",
+        "label": "Second ear and safety",
+        "focus": [
+          "agent",
+          "asr",
+          "safety"
+        ],
+        "note": "The same audio also goes to our Manglish ASR, whose text drives the 999 line and care-team alerts."
+      },
+      {
+        "id": "hybrid",
+        "label": "Proposed: Gemma answers",
+        "focus": [
+          "asr",
+          "gemma",
+          "mouth"
+        ],
+        "note": "Gemma 26B would write the medical answers from the ASR's text, and MiniCPM-o's mouth would speak them."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "safety",
+      "type": "security",
+      "label": "Safety rails",
+      "sublabel": "999 line · care team",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "asr",
+      "type": "cloud",
+      "label": "Qwen3-ASR · box ②",
+      "sublabel": "our Manglish ears",
+      "tag": "fine-tuned",
+      "pos": [
+        290,
+        40
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "apps/server/src/agents/live.ts",
+          "line": 73,
+          "label": "second ear"
+        }
+      ]
+    },
+    {
+      "id": "gemma",
+      "type": "cloud",
+      "label": "Gemma 4 26B · box ①",
+      "sublabel": "medical answers",
+      "tag": "proposed",
+      "pos": [
+        990,
+        40
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "sources": [
+        {
+          "path": "packages/api/src/voice-agent/answer.ts",
+          "label": "today's answers"
+        }
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Sona Care app",
+      "sublabel": "patient's phone",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "SonaLiveAgent",
+      "sublabel": "brief, relay, checks",
+      "pos": [
+        290,
+        170
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "apps/server/src/agents/live.ts",
+          "line": 58,
+          "label": "SonaLiveAgent"
+        }
+      ]
+    },
+    {
+      "id": "ear",
+      "type": "cloud",
+      "label": "Ear",
+      "sublabel": "audio encoder",
+      "tag": "stage 1-2 LoRA",
+      "pos": [
+        530,
+        170
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "packages/infra/baseten/live/data/live.py",
+          "line": 92,
+          "label": "one second a step"
+        }
+      ]
+    },
+    {
+      "id": "brain",
+      "type": "cloud",
+      "label": "Brain · 8B LLM",
+      "sublabel": "listen or speak",
+      "tag": "stage 2 + live3",
+      "pos": [
+        760,
+        170
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "mouth",
+      "type": "cloud",
+      "label": "Mouth · talker",
+      "sublabel": "speech tokens",
+      "tag": "voice-v3",
+      "pos": [
+        760,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tools/omni-voice-train/talker.py",
+          "line": 1,
+          "label": "talker layouts"
+        }
+      ]
+    },
+    {
+      "id": "flow",
+      "type": "cloud",
+      "label": "Flow + vocoder",
+      "sublabel": "Sona's timbre",
+      "tag": "frozen",
+      "pos": [
+        530,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tools/omni-eval/roundtrip.py",
+          "line": 1,
+          "label": "speech tokens"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "MiniCPM-o 4.5 · box ④ · 1×H100",
+      "wraps": [
+        "ear",
+        "brain",
+        "mouth",
+        "flow"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-agent",
+      "from": "app",
+      "to": "agent",
+      "label": "audio both ways",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-ear",
+      "from": "agent",
+      "to": "ear",
+      "label": "1 s, 16 kHz",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ear-brain",
+      "from": "ear",
+      "to": "brain",
+      "label": "10 embeddings"
+    },
+    {
+      "id": "brain-mouth",
+      "from": "brain",
+      "to": "mouth",
+      "label": "words + state",
+      "labelDy": 24
+    },
+    {
+      "id": "mouth-flow",
+      "from": "mouth",
+      "to": "flow",
+      "label": "25 tokens/s"
+    },
+    {
+      "id": "flow-agent",
+      "from": "flow",
+      "to": "agent",
+      "label": "24 kHz audio",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-asr",
+      "from": "agent",
+      "to": "asr",
+      "label": "same audio"
+    },
+    {
+      "id": "asr-safety",
+      "from": "asr",
+      "to": "safety",
+      "label": "patient's words",
+      "variant": "security"
+    },
+    {
+      "id": "asr-gemma",
+      "from": "asr",
+      "to": "gemma",
+      "label": "question text",
+      "variant": "dashed"
+    },
+    {
+      "id": "gemma-mouth",
+      "from": "gemma",
+      "to": "mouth",
+      "label": "answer text",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Each second of a call",
+      "items": [
+        "Ear: one second of audio becomes 10 embeddings",
+        "Brain: decides listen or speak, writes a few words",
+        "Mouth: words and the brain's state become 25 speech tokens",
+        "Flow + vocoder: tokens become audio in Sona's voice, from her reference clip"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "What fine-tuning changed",
+      "items": [
+        "Ear: real Malaysian speech 45.3% to 22.6% word errors (ASR: 17.7%)",
+        "Mouth: Chinese words in Malay or English 31.5% to 20.2%",
+        "Brain: medical exam scores flat; 9 of 90 plan answers with an error"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Proposed hybrid (dashed)",
+      "items": [
+        "Gemma 26B writes medical answers from the ASR's text",
+        "MiniCPM-o's mouth speaks them; it keeps hearing, turn-taking and the accent",
+        "Not built yet"
+      ]
+    }
+  ]
+}
