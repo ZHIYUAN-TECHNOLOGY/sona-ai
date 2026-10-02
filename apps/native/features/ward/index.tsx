@@ -8,7 +8,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, Expand, Icon, Insight, Surface, canvasImage, glass, tone as INK, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Chip, Expand, Icon, Insight, Surface, canvasImage, glass, tone as INK, useAccessibleEffects } from "@/components/sona/ui";
 import { mostUrgent } from "@/components/sona/tone";
 import { ASK_SPACE, WithSona } from "@/features/ask";
 import { soonest } from "@/features/ask/answers";
@@ -25,12 +25,13 @@ import { useLiveHuddle } from "@/features/live/model-sync";
 import { useLiveChanges } from "@/features/live/channel";
 import { BedBar, ForecastTimeline, KIND, ThisWeek, useForecast, wardLine } from "./ops";
 import { useWard } from "@/features/day/use-counts";
+import { unownedBlocked } from "@/features/day/model";
 import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedKind, bedRow, defaultFilter, emptyLine, filterBeds, huddle, ownerReceipt, type Bed, type Owner, type WardFilter } from "./model";
 import { useWardOwners } from "./owners";
 
 /*
- * Ward command view: one insight line on where the ward stands, the huddle brief as the page's one
- * feature card, the legend as the filter (Blocked first when anything is), and one glass list of the filtered beds; rows spring in and out in place on a filter change (after 60fps
+ * Ward command view: one insight line on where the ward stands, the blockers nobody owns as the page's one
+ * feature card (one tap assigns the suggested team), the huddle as a compact row under it, the legend as the filter (Blocked first when anything is), and one glass list of the filtered beds; rows spring in and out in place on a filter change (after 60fps
  * "Revolut Number of Transactions Interaction", https://60fps.design/shots/revolut-number-of-transactions-interaction).
  * Tapping a row grows it into the bed's card (after Trackables' card-to-screen morph; spring 0.48 s at
  * damping 0.82) while the list fades back, the row's face crossfades out and the detail fades in
@@ -158,15 +159,18 @@ export function WardScreen() {
         <Insight eyebrow={loading ? "Now" : `Now · ${beds.length} beds`}>{loading ? "Reading the ward…" : wardLine(beds)}</Insight>
 
         {!loading && <>
-        {/* Huddle brief, the page's one feature card: one line and a small pill; the brief opens under it and the page below moves with it. */}
-        <Surface feature layout={motion} style={{ padding: 16, gap: 4 }}>
+        {/* The page's one feature card: what frees beds is an owner on each blocker, so the unowned ones lead, assigned in place. */}
+        <NoOwner beds={beds} owners={owners} onAssign={can("ward.assignOwner") ? assign : undefined} assignError={assignError} onOpen={openAt} />
+
+        {/* Huddle, a compact row under it: one line and a small pill; the brief opens under it and the page below moves with it. */}
+        <Surface layout={motion} style={{ paddingHorizontal: 14, paddingVertical: 8, gap: 4 }}>
           {/* The pill wraps below the title when large text leaves no room beside it. */}
           <View style={{ minHeight: 44, flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 10, rowGap: 8 }}>
             <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 200, flexDirection: "row", alignItems: "center", gap: 10 }}>
               <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(36,91,204,0.1)" }}>
                 <Icon name="waveform" size={12} color={palette.blue} />
               </View>
-              <Text numberOfLines={2} style={{ ...type.subhead, flex: 1, color: palette.muted }}><Text style={{ fontWeight: "600", color: palette.ink }}>Huddle</Text> · {briefed ? "30 seconds for the team" : local[1]}</Text>
+              <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.muted }}><Text style={{ fontWeight: "600", color: palette.ink }}>Huddle</Text> · {briefed ? "30 seconds for the team" : local[1]}</Text>
             </View>
             <Pressable accessibilityRole="button" accessibilityLabel={briefed ? "Hide the huddle brief" : "Brief me for the huddle"} accessibilityState={{ expanded: briefed }} hitSlop={7} onPress={() => { haptic("select"); setBriefed(v => !v); }}
               style={{ minHeight: 30, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 15, justifyContent: "center", backgroundColor: briefed ? "rgba(20,28,40,0.06)" : palette.blue }}>
@@ -226,6 +230,39 @@ export function WardScreen() {
       onDischarge={patients.some(x => x.id === current.patientId) ? () => { selectPatient(current.patientId!); router.push("/discharge"); p.set(0); setOpen(undefined); } : undefined} />}
   </View>
   </WithSona>;
+}
+
+/**
+ * Blocked beds with a blocker nobody owns, most bed-hours waiting first (Today's rule, unownedBlocked), each
+ * blocker with its suggested team. One tap goes through the bed card's own assign (server or demo book), so the
+ * row leaves as the owner lands and comes back with the refusal and Retry if the write fails. None: one line.
+ */
+function NoOwner({ beds, owners, onAssign, assignError, onOpen }: { beds: Bed[]; owners: Record<string, Owner | undefined>; onAssign?: (id: string, owner: Owner) => void; assignError?: { id: string; owner: Owner; text: string }; onOpen: (bed: string) => void }) {
+  const { reducedMotion } = useAccessibleEffects();
+  const motion = reducedMotion ? undefined : LAYOUT;
+  const rows = unownedBlocked(beds, owners);
+  const failed = assignError && rows.some(r => r.blockers.some(x => x.id === assignError.id)) ? assignError : undefined;
+  if (!rows.length) return <Surface feature layout={motion} style={{ minHeight: 56, paddingHorizontal: 16, justifyContent: "center" }}>
+    <Text style={{ ...type.subhead, color: palette.muted }}>Every blocker has an owner.</Text>
+  </Surface>;
+  return <Surface feature layout={motion} style={{ padding: 16, gap: 12 }}>
+    <Text style={{ ...type.overline, color: palette.amber }}>No owner yet · {rows.length} {rows.length === 1 ? "bed" : "beds"}</Text>
+    {rows.map((r, i) => <Animated.View key={r.bed} layout={motion} style={{ gap: 8, paddingTop: i ? 12 : 0, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{r.bed} · {r.name.split(" ")[0]}</Text>
+          {r.hours > 0 && <Text style={{ ...type.caption, color: palette.muted }}>~{r.hours} bed-hours waiting</Text>}
+        </View>
+        <Chip label={`Open ${r.bed}`} onPress={() => onOpen(r.bed)} />
+      </View>
+      {r.blockers.map(x => <View key={x.id} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <Text style={{ ...type.footnote, flex: 1, color: palette.ink }}>{x.label} <Text style={{ color: palette.muted }}>· {x.suggested} suggested</Text></Text>
+        {/* Without onAssign (a role the server refuses) the row reads only; Open still shows the bed. */}
+        {onAssign && <Chip selected label={`Assign ${x.suggested}`} accessibilityLabel={`Assign ${x.label.toLowerCase()} on ${r.bed} to ${x.suggested}`} onPress={() => onAssign(x.id, x.suggested)} />}
+      </View>)}
+    </Animated.View>)}
+    {failed && onAssign && <ErrorLine text={failed.text} onRetry={() => onAssign(failed.id, failed.owner)} />}
+  </Surface>;
 }
 
 /** A bed's list row (and the face the open card starts from): status dot, "Bed 2 · Nurul", when it frees up and what holds it. */
