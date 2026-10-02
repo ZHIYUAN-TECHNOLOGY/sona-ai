@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { BarChart } from "@/components/charts/bar-chart";
+import { RadialChart } from "@/components/charts/radial-chart";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, LAYOUT_SPRING, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
@@ -97,7 +98,11 @@ function Segmented({ beds, value, onChange }: { beds: Bed[]; value: WardFilter; 
   </View>;
 }
 
-/** This week, collapsed to its one number (bed time saved); the six ops stats open as a quiet list. */
+/*
+ * This week, collapsed to its one number (bed time saved). Open, the three ratios read as small rings first
+ * (reacticx radial chart, components/charts/radial-chart), green when on target and amber when not, then the
+ * facts that are not ratios as quiet rows. The rings grow in on open; under Reduce Motion they stand still.
+ */
 export function ThisWeek({ divider }: { divider?: boolean } = {}) {
   const { on } = useLive();
   const { reducedMotion } = useAccessibleEffects();
@@ -107,13 +112,16 @@ export function ThisWeek({ divider }: { divider?: boolean } = {}) {
   useEffect(() => { if (on) read(); }, [on, read]);
   useLiveChanges(["ward", "day", "checkIns", "findings"], read);
   if (!on || !ops) return null;
+  // Red flags are judged all-or-nothing; the other two pass at 80 %.
+  const rings: Ratio[] = [
+    { label: "Red flags acted on", value: ops.redFlagsActedOn, max: ops.redFlags, fraction: true, good: ops.redFlagsActedOn >= ops.redFlags },
+    { label: "Check-ins answered", value: ops.checkInsAnswered, max: ops.checkInsSent, good: ops.checkInsAnswered >= 0.8 * ops.checkInsSent },
+    { label: "Doses taken", value: ops.dosesTaken, max: ops.dosesDue, good: ops.dosesTaken >= 0.8 * ops.dosesDue },
+  ];
   const rows: { value: string; label: string; tone?: "good" | "warn" }[] = [
     { value: hoursMinutes(ops.bedMinutesSaved), label: `Bed time saved · ${ops.discharges} discharge${ops.discharges === 1 ? "" : "s"}`, tone: ops.bedMinutesSaved ? "good" : undefined },
-    { value: `${ops.redFlagsActedOn} of ${ops.redFlags}`, label: "Red flags acted on", tone: ops.redFlags && ops.redFlagsActedOn < ops.redFlags ? "warn" : ops.redFlags ? "good" : undefined },
     { value: ops.medianMinutesToBook === null ? "–" : hoursMinutes(ops.medianMinutesToBook), label: "Flag → booked (median)" },
-    { value: `${ops.checkInsAnswered} of ${ops.checkInsSent}`, label: "Check-ins answered" },
     { value: `${ops.lostFollowUps}`, label: `Lost X-ray follow-ups · ${ops.trackedFollowUps} tracked`, tone: ops.lostFollowUps ? "warn" : "good" },
-    { value: ops.dosesDue ? `${Math.round((ops.dosesTaken / ops.dosesDue) * 100)}%` : "–", label: "Doses taken (Sona Care)" },
   ];
   const saved = rows[0];
   return <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={divider ? { borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" } : undefined}>
@@ -124,8 +132,11 @@ export function ThisWeek({ divider }: { divider?: boolean } = {}) {
       <Icon name={open ? "chevron.up" : "chevron.right"} size={11} color={palette.blue} />
     </Pressable>
     {open && <Expand>
-      <View accessible accessibilityLabel={`This week, counted from records. ${rows.map(r => `${r.label}: ${r.value}`).join(". ")}.`} style={{ paddingBottom: 2 }}>
-        {rows.map((r, i) => <Animated.View key={r.label} entering={reducedMotion ? undefined : riseIn({ delay: 60 + i * 45, distance: 8, duration: 300 })}
+      <View style={{ paddingBottom: 2 }}>
+        <View style={{ flexDirection: "row", paddingTop: 6, paddingBottom: 12 }}>
+          {rings.map(r => <Ring key={r.label} ratio={r} animate={!reducedMotion} />)}
+        </View>
+        {rows.map((r, i) => <Animated.View key={r.label} accessible accessibilityLabel={`${r.label}: ${r.value}`} entering={reducedMotion ? undefined : riseIn({ delay: 60 + i * 45, distance: 8, duration: 300 })}
           style={{ flexDirection: "row", alignItems: "baseline", gap: 12, paddingVertical: 8, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
           <Text numberOfLines={2} style={{ ...type.footnote, flex: 1, color: palette.muted }}>{r.label}</Text>
           <Text style={{ ...type.subhead, fontWeight: "600", fontVariant: ["tabular-nums"], color: r.tone === "warn" ? palette.amber : r.tone === "good" ? TEAL : palette.ink }}>{r.value}</Text>
@@ -134,6 +145,29 @@ export function ThisWeek({ divider }: { divider?: boolean } = {}) {
       </View>
     </Expand>}
   </Animated.View>;
+}
+
+type Ratio = { label: string; value: number; max: number; good: boolean; fraction?: boolean };
+const RING = 76;
+
+/** One ratio as one ring, its value in the centre; nothing to count shows an empty track and "–". */
+function Ring({ ratio: { label, value, max, good, fraction }, animate }: { ratio: Ratio; animate: boolean }) {
+  const color = good ? TEAL : palette.amber;
+  const data = useMemo(() => [{ label, value, max, color }], [label, value, max, color]);
+  const shown = !max ? "–" : fraction ? `${value}/${max}` : `${Math.round((value / max) * 100)}%`;
+  return <View accessible accessibilityRole="image" accessibilityLabel={max ? `${label}, ${value} of ${max}` : `${label}, none this week`} style={{ flex: 1, alignItems: "center", gap: 6 }}>
+    <View style={{ width: RING, height: RING }}>
+      {/* One ring per chart, so there is nothing to scrub: the gesture stays off and the page scrolls through it. */}
+      <RadialChart.Root data={data} radius={RING / 2 - 1} barWidth={7} animate={animate} enableGesture={false} style={{ width: RING, height: RING }}>
+        <RadialChart.Tracks color="rgba(20,28,40,0.06)" />
+        <RadialChart.Bars />
+      </RadialChart.Root>
+      <View pointerEvents="none" style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }}>
+        <Text numberOfLines={1} adjustsFontSizeToFit style={{ ...type.subhead, fontWeight: "700", fontVariant: ["tabular-nums"], color: max ? palette.ink : palette.muted, maxWidth: RING - 20 }}>{shown}</Text>
+      </View>
+    </View>
+    <Text numberOfLines={2} style={{ ...type.caption, color: palette.muted, textAlign: "center" }}>{label}</Text>
+  </View>;
 }
 
 /** Where the ward stands, in one line. The ward page opens with it and management's My Day leads with it, so the two never disagree. */
