@@ -53,10 +53,6 @@ type Props = {
   onVoiceDisabled: () => void;
   /** Live mode: why speech didn't become words (microphone off, nothing heard, model starting); the page shows it. */
   onVoiceError?: (message: string) => void;
-  /** The visit's tools (the composer's X-ray, recorder and note buttons); pages outside a visit leave them out. */
-  onImage?: () => void;
-  onConsultation?: () => void;
-  onNote?: () => void;
   above?: ReactNode;
   /** The page's ✦ suggestion: a glass chip just above the bar, one tap to its answer. */
   suggestion?: { text: string; onPress: () => void; label?: string };
@@ -289,10 +285,10 @@ export function VoiceDock(props: Props) {
   // Tapping anywhere outside the composer closes it, even when no software keyboard is showing
   // (hardware keyboard), where the input would otherwise never blur. The draft is kept.
   const closeComposer = () => { Keyboard.dismiss(); setMode(current => current === "composing" ? "idle" : current); };
-  // Tools open another screen: close the chatbox first, or iOS hands the keyboard back to it on return.
+  // The + closes the chatbox first, so it folds into the bar as the menu opens.
   const leave = (go: () => void) => () => { closeComposer(); go(); };
   const attachments = props.attachments ?? NONE;
-  const tools = Boolean(props.onImage && props.onConsultation && props.onNote), attach = Boolean(props.onAttachmentsChange);
+  const attach = Boolean(props.onAttachmentsChange);
   // Attachments alone can be sent; the question then defaults to reviewing them.
   const coach = !used && !coached && !quiet && !suggestion && !busy && !talk.open && mode === "idle" && !attachments.length;
   // Once it has shown, no other dock this session shows it again.
@@ -459,11 +455,6 @@ export function VoiceDock(props: Props) {
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             {/* Attachments from the composer, at its bottom left as in Claude's: the composer folds into the bar while the menu opens from its +. */}
             {attach && <ToolButton icon="add" label="Attach a photo, camera capture or file" onPress={leave(openMenu)} />}
-            {tools && <>
-              <ToolButton icon="image" label="Attach or review a chest X-ray" onPress={leave(props.onImage!)} />
-              <ToolButton icon="wave" label="Start the consultation recorder" onPress={leave(props.onConsultation!)} />
-              <ToolButton icon="note" label="Open the consultation note" onPress={leave(props.onNote!)} />
-            </>}
             <View style={{ flex: 1 }} />
             <RoundAction icon="send" label="Send message" ready={Boolean(draft.trim()) || attachments.length > 0} onPress={send} />
           </View>
