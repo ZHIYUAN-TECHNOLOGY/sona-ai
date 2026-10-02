@@ -1,7 +1,7 @@
 import { beforeEach, expect, test } from "bun:test";
 
 import { boxState } from "../baseten-models";
-import { LINES, answerTurn, basetenChat, deltas, flagsOf, messagesFor, safeSentence, sentencesOf, type AnswerTurn, type ChatStream, type Part, type TurnSummary } from "./answer";
+import { LINES, answerTurn, basetenChat, deltas, flagsOf, messagesFor, sentencesOf, type AnswerTurn, type ChatStream, type Part, type TurnSummary } from "./answer";
 
 /** Amelia's plan as Gemma reads it (planText, discharged in Malay). */
 const PLAN = `Discharged: 2026-09-28T02:05:00.000Z
@@ -59,23 +59,12 @@ test("each sentence is handed on as soon as Gemma finishes it, after the flags l
   expect(log.messages.at(-1)!.content).toBe("After breakfast or dinner?");
 });
 
-test("rules check every sentence before it is spoken: an invented number, a dose change or a diagnosis is held back, once said as 'check with your care team'", async () => {
-  const { chat } = gemma(['{"triage":"fine","inPlan":true}\n', "Your plan says paracetamol 1 g every 6 hours if you need it. You can take 3 tablets at once. ",
-    "Double the dose if the fever is high. It sounds like the infection is back. Take it every eight hours. Your review is on 12 October."]);
-  expect(await spoken(turnOf({ question: "How much paracetamol can I take?", chat }).turn))
-    .toEqual(["Your plan says paracetamol 1 g every 6 hours if you need it.", LINES.en.check, "Your review is on 12 October."]);
-  // A plan's own line, quoted as written, may say what it says; the same words of Sona's own are held back.
-  const plan = `${PLAN}\n- Ibuprofen (stopped): Stop taking ibuprofen; it can upset your stomach`;
-  expect(safeSentence("Your plan says: Stop taking ibuprofen.", plan)).toBe(true);
-  expect(safeSentence("Stop taking your azithromycin.", plan)).toBe(false);
-  expect(safeSentence("Makan azithromycin sekali sehari selama 2 hari lagi.", PLAN)).toBe(true);
-  expect(safeSentence("Makan tiga biji sehari.", PLAN)).toBe(false);
-  expect(safeSentence("Call 999 now.", PLAN)).toBe(true);
-  // Live Gemma said these; the plan's own date and warning signs, put another way, may be said.
-  expect(safeSentence("您的计划显示，您在2026年10月12日星期一进行门诊复诊。", PLAN)).toBe(true);
-  expect(safeSentence("Your plan says to come back or call if you have chest pain or feel faint.", PLAN)).toBe(true);
-  expect(safeSentence("Your review is on 13 October.", PLAN)).toBe(false);
-  expect(safeSentence("You have pneumonia again.", PLAN)).toBe(false);
+test("every sentence Gemma writes is said as written: no limit on numbers, doses or conditions (user, 1 Oct)", async () => {
+  const { chat, log } = gemma(['{"triage":"fine","inPlan":false}\n', "Adults usually take at most 4 g of paracetamol a day. ",
+    "High blood pressure means the pressure stays above 140 over 90. Diabetes means your blood sugar runs high."]);
+  expect(await spoken(turnOf({ question: "What is the most paracetamol I can take, and what is diabetes?", chat }).turn))
+    .toEqual(["Adults usually take at most 4 g of paracetamol a day.", "High blood pressure means the pressure stays above 140 over 90.", "Diabetes means your blood sugar runs high."]);
+  expect(log.messages[0]!.content).toContain("Answer whatever they ask");
 });
 
 test("an emergency sign: the 999 line first, before Gemma is even heard, Gemma's own 999 line not repeated, then the care team told", async () => {
@@ -117,20 +106,20 @@ test("'I've let your care team know' is said once, by Sona when a task exists: G
     expect(await spoken(turn)).toEqual(["Your plan says to come back if the fever comes back.", told]);
     expect(log.messages[2]).toEqual({ role: "assistant", content: "Your plan says to come back if the fever comes back." });
     // Gemma claiming it with no task made is not heard either.
-    expect(await spoken(turnOf({ question: "Saya batuk.", language, chat: gemma([`{"triage":"worse","inPlan":true}\n${told}`]).chat }).turn)).toEqual([LINES[language].noPlan]);
+    expect(await spoken(turnOf({ question: "Saya batuk.", language, chat: gemma([`{"triage":"worse","inPlan":true}\n${told}`]).chat }).turn)).toEqual([LINES[language].unavailable]);
   }
 });
 
-test("honest when there is no answer: Gemma starting (with its minutes), a plan that does not say, a hospital stay; a reply without flags still counts", async () => {
+test("honest when there is no answer: Gemma starting (with its minutes), a reply with no words; a patient still in hospital is answered too; a reply without flags still counts", async () => {
   const starting = turnOf({ question: "Bila saya makan ubat?", language: "ms", chat: async () => ({ waking: 12 }) });
   expect(await spoken(starting.turn)).toEqual([LINES.ms.starting(12)]);
   expect(starting.summaries).toEqual([{ grounded: false, urgent: false, source: "fixture", waking: 12 }]);
   const notSaid = turnOf({ question: "Can I fly next week?", chat: gemma(['{"triage":"fine","inPlan":false}']).chat });
-  expect(await spoken(notSaid.turn)).toEqual([LINES.en.noPlan]);
+  expect(await spoken(notSaid.turn)).toEqual([LINES.en.unavailable]);
   expect(notSaid.summaries[0]!.grounded).toBe(false);
   let asked = false;
-  expect(await spoken(turnOf({ question: "When can I go home?", plan: undefined, chat: async () => { asked = true; return { waking: 1 }; } }).turn)).toEqual([LINES.en.notHome]);
-  expect(asked).toBe(false);
+  expect(await spoken(turnOf({ question: "When can I go home?", plan: undefined, chat: async messages => { asked = messages[0]!.content.includes("None yet: they are still in hospital."); return { waking: 1 }; } }).turn)).toEqual([LINES.en.starting(1)]);
+  expect(asked).toBe(true);
   const bare = turnOf({ question: "Can I rest?", chat: gemma(["Your plan says rest ", "at home."]).chat });
   expect(await spoken(bare.turn)).toEqual(["Your plan says rest at home."]);
   expect(bare.summaries[0]!.grounded).toBe(true);
