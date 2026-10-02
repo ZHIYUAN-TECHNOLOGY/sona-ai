@@ -115,7 +115,7 @@ function labelFor(patientId: string, bed?: string | null) {
 type SampleRow = typeof trainingSamples.$inferSelect;
 const view = (s: SampleRow, bed?: string | null) => ({
   id: s.id, source: s.source, input: s.input, output: s.output, replacements: s.replacements as Replacement[], status: s.status,
-  leak: s.leak as IdentityKind[] | null, patientLabel: labelFor(s.patientId, bed),
+  leak: s.leak as IdentityKind[] | null, patientLabel: labelFor(s.patientId, bed), deidentifier: s.deidentifier,
 });
 
 async function samplesOf(db: Db, hospitalId: string, where?: ReturnType<typeof eq>) {
@@ -129,7 +129,7 @@ async function samplesOf(db: Db, hospitalId: string, where?: ReturnType<typeof e
 const refuse = (code: string, message: string, status: "CONFLICT" | "PRECONDITION_FAILED" | "NOT_FOUND" = "CONFLICT") => new ORPCError(status, { message, data: { code } });
 
 export const trainingRouter = {
-  /** Management: whether the hospital contributes, the review queue by status, the last export and who de-identifies. */
+  /** Management: whether the hospital contributes, the review queue by status and the last export. Each sample names who de-identified it. */
   status: protectedProcedure.handler(async ({ context: { db, hospitalId } }) => {
     const [hospital] = await db.select({ contributes: hospitals.contributesTraining }).from(hospitals).where(eq(hospitals.id, hospitalId));
     const grouped = await db.select({ status: trainingSamples.status, n: sql<number>`count(*)::int` }).from(trainingSamples).where(eq(trainingSamples.hospitalId, hospitalId)).groupBy(trainingSamples.status);
@@ -138,11 +138,9 @@ export const trainingRouter = {
     const [ready] = await db.select({ n: sql<number>`count(*)::int` }).from(trainingSamples)
       .where(and(eq(trainingSamples.hospitalId, hospitalId), eq(trainingSamples.status, "approved"), isNull(trainingSamples.datasetVersion)));
     const [last] = await db.select().from(trainingDatasets).where(eq(trainingDatasets.hospitalId, hospitalId)).orderBy(desc(trainingDatasets.version)).limit(1);
-    const [latest] = await db.select({ deidentifier: trainingSamples.deidentifier }).from(trainingSamples).where(eq(trainingSamples.hospitalId, hospitalId)).orderBy(desc(trainingSamples.createdAt)).limit(1);
     return {
       contributes: hospital?.contributes ?? false, counts, ready: ready?.n ?? 0,
       lastDataset: last ? { version: last.version, rows: last.rows, exportedAt: last.exportedAt } : null,
-      deidentifier: latest?.deidentifier ?? "rules",
     };
   }),
   /** Management: switch the hospital's contribution on or off (off stops capture; samples already taken stay for review). */

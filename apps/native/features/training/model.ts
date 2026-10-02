@@ -20,6 +20,25 @@ export function placeholderParts(text: string): Part[] {
   return parts;
 }
 
+/** One word as laid out on the card: its runs (a placeholder stays attached to its punctuation, "[NAME]'s") and whether a space follows. */
+export type Word = { parts: Part[]; space: boolean };
+/** De-identified text as words, so each placeholder can be its own animated chip and still wrap with its punctuation. */
+export function redactedWords(text: string): Word[] {
+  const words: Word[] = [];
+  let parts: Part[] = [];
+  const end = () => {
+    if (parts.length) words.push({ parts, space: true });
+    else if (words.length) words[words.length - 1]!.space = true;
+    parts = [];
+  };
+  for (const part of placeholderParts(text)) {
+    if (part.placeholder) { parts.push(part); continue; }
+    for (const piece of part.text.split(/(\s+)/)) if (piece) /^\s+$/.test(piece) ? end() : parts.push({ text: piece });
+  }
+  if (parts.length) words.push({ parts, space: false });
+  return words;
+}
+
 const SPOKEN: Record<Placeholder, string> = { NAME: "name removed", IC: "IC removed", PHONE: "phone removed", EMAIL: "email removed", MRN: "record number removed", LEAK: "leaked identity masked" };
 /** What VoiceOver reads instead of bracketed capitals. */
 export const spoken = (text: string) => text.replace(PLACEHOLDER, (_, k: Placeholder) => SPOKEN[k]);
@@ -29,14 +48,26 @@ const KIND: Record<string, string> = { name: "name", ic: "IC", phone: "phone", e
 export const leakLine = (kinds: readonly string[] | null) =>
   `Blocked by leak check${kinds?.length ? ` · ${kinds.map(k => KIND[k] ?? k).join(" and ")} found` : ""}`;
 
+const REMOVED: [Placeholder, string, string, string][] = [["NAME", "name", "name", "names"], ["IC", "ic", "IC number", "IC numbers"], ["PHONE", "phone", "phone number", "phone numbers"], ["EMAIL", "email", "email", "emails"], ["MRN", "mrn", "record number", "record numbers"]];
+/** What a sample's de-identifier took out, and who ("OpenMed" removed "4 names", "1 phone number"), each count with the placeholder it left (the card tints it to match). */
+export function removed(replacements: readonly { kind: string }[], deidentifier: string) {
+  const who = deidentifier === "rules" ? "Rules" : deidentifier.split("/")[0]!;
+  const counts = REMOVED.flatMap(([placeholder, kind, one, many]) => {
+    const n = replacements.filter(r => r.kind === kind).length;
+    return n ? [{ placeholder, text: `${n} ${n === 1 ? one : many}` }] : [];
+  });
+  return { who, counts };
+}
+
 const rows = (n: number) => `${n} row${n === 1 ? "" : "s"}`;
-/** "3 waiting for review · 1 blocked · last dataset v1, 12 rows". */
-export function insight({ counts, lastDataset }: { counts: { pending: number; blocked: number }; lastDataset: { version: number; rows: number } | null }) {
+/** "Sharing off · 3 waiting for review · 1 blocked · last dataset v1, 12 rows". */
+export function insight({ contributes, counts, lastDataset }: { contributes: boolean; counts: { pending: number; blocked: number }; lastDataset: { version: number; rows: number } | null }) {
   return [
-    counts.pending ? `${counts.pending} waiting for review` : "Nothing waiting for review",
+    contributes ? "" : "sharing off",
+    counts.pending ? `${counts.pending} waiting for review` : "nothing waiting for review",
     counts.blocked ? `${counts.blocked} blocked` : "",
     lastDataset ? `last dataset v${lastDataset.version}, ${rows(lastDataset.rows)}` : "no dataset yet",
-  ].filter(Boolean).join(" · ");
+  ].filter(Boolean).join(" · ").replace(/^./, c => c.toUpperCase());
 }
 
 /** The ward's entry row: "3 waiting · 1 blocked", or "Nothing to review". */

@@ -66,9 +66,10 @@ test("the scribe's draft names Amelia by first name: the rules miss it, the gate
   expect(note.input).toStartWith("[LEAK] reports a cough");
   expect(note.output).toBe("[NAME] ([MRN]): cough for five days; fever since yesterday.");
   expect(note.patientLabel).toBe("Patient in Bed 6");
+  expect(note.deidentifier).toBe("rules");
   expect(JSON.stringify(samples)).not.toMatch(/Amelia|SYN-1042/);
   expect(samples[0]).toMatchObject({ input: "demam balik", output: "worse" });
-  expect(await manager.training.status()).toEqual({ contributes: true, counts: { pending: 1, approved: 0, blocked: 1, excluded: 0, withdrawn: 0 }, ready: 0, lastDataset: null, deidentifier: "rules" });
+  expect(await manager.training.status()).toEqual({ contributes: true, counts: { pending: 1, approved: 0, blocked: 1, excluded: 0, withdrawn: 0 }, ready: 0, lastDataset: null });
   // A blocked sample cannot be approved; it can be excluded. excludeFromTraining on a save keeps the note out too.
   expect(await codeOf(manager.training.decide({ id: note.id, decision: "approve" }))).toBe("SAMPLE_BLOCKED");
   expect((await manager.training.decide({ id: note.id, decision: "exclude" })).status).toBe("excluded");
@@ -91,7 +92,7 @@ test("with OpenMed on the PII box the same draft loses her first name too, so it
   const [note] = await manager.training.samples();
   expect(note).toMatchObject({ source: "note-edit", status: "pending", leak: null, output: "[NAME] ([MRN]): cough for five days; fever since yesterday." });
   expect(note!.input).toStartWith("[NAME] reports a cough");
-  expect((await manager.training.status()).deidentifier).toBe(PII_MODEL);
+  expect(note!.deidentifier).toBe(PII_MODEL);
 });
 
 test("export writes approved samples as JSONL, stamps the version, and the next export starts after it", async () => {
