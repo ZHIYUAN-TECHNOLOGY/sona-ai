@@ -10,14 +10,15 @@ import { LAYOUT } from "@/components/sona/motion";
 import { ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, Icon, Screen, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Chip, Icon, Screen, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { BarChart } from "@/components/charts/bar-chart";
 import { AUDIT_NEXT, mostMoney } from "@/features/ask/answers";
 import { ASK_SPACE, WithSona } from "@/features/ask";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
 import { api, errorText, useLive } from "@/features/live";
 import { useRole } from "@/features/live/roles";
-import { formatRM, markSent, openItems, totalRisk, useSent, type AuditItem } from "./model";
+import { formatRM, markSent, openItems, riskByDoctor, totalRisk, useSent, type AuditItem } from "./model";
 
 /*
  * Coding audit (after Twodos' swipe-to-check): drag a row right and its ring fills; past 75 pt it
@@ -94,6 +95,11 @@ export function AuditScreen() {
   const badge = useSharedValue(1);
   const risk = totalRisk(items.filter(i => !sending.includes(i.id)));
   const sentCount = sent.size + sending.length;
+  // A tapped bar narrows the list to that doctor; it lets go once their last row has gone.
+  const [picked, setPicked] = useState<string>();
+  const doctor = picked && items.some(i => i.doctor === picked) ? picked : undefined;
+  const groups = riskByDoctor(items.filter(i => !sending.includes(i.id)));
+  const listed = doctor ? items.filter(i => i.doctor === doctor) : items;
 
   const [asking, setAsking] = useState<string[]>([]);
   // The row says who it went to, then folds away; live, only once the server has taken the query.
@@ -128,18 +134,49 @@ export function AuditScreen() {
       {refused ? <Text style={{ ...type.subhead, color: palette.muted }}>{refused}</Text>
         : loadError ? <ErrorLine text={`The audit didn't run: ${loadError}`} onRetry={() => setAttempt(a => a + 1)} />
         : <><Ticker text={formatRM(risk)} />
-      <Text style={{ ...type.subhead, color: palette.muted }}>{live && !ran ? "Running the audit…" : items.length ? `at risk across ${items.length - sending.length} under-specified ${items.length - sending.length === 1 ? "note" : "notes"}` : "Nothing left at risk. Every query is out."}</Text></>}
+      <Text style={{ ...type.subhead, color: palette.muted }}>{live && !ran ? "Running the audit…" : items.length ? `at risk across ${items.length - sending.length} under-specified ${items.length - sending.length === 1 ? "note" : "notes"}` : "Nothing left at risk. Every query is out."}</Text>
+      {settled && groups.length > 0 && <DoctorRisk groups={groups} doctor={doctor} onPick={d => { haptic("select"); setPicked(p => (p === d ? undefined : d)); }} />}</>}
       {settled && !items.length && <Action label={AUDIT_NEXT.label} icon="bed.double" onPress={() => router.push(AUDIT_NEXT.op.slice(3) as never)} />}
     </Surface>
 
     {items.length > 0 && <Text style={{ ...type.caption, color: palette.muted }}>Swipe right to send the query shown, or tap to read all of it.</Text>}
     <View style={{ gap: 10 }}>
-      {items.map(item => <Animated.View key={item.id} layout={reducedMotion ? undefined : LAYOUT} exiting={reducedMotion ? undefined : FadeOut.duration(160)}>
+      {listed.map(item => <Animated.View key={item.id} layout={reducedMotion ? undefined : LAYOUT} exiting={reducedMotion ? undefined : FadeOut.duration(160)}>
         <Row item={item} sending={sending.includes(item.id)} asking={asking.includes(item.id)} error={failed[item.id]} open={open === item.id} onToggle={() => setOpen(o => (o === item.id ? undefined : item.id))} onSend={() => send(item)} />
       </Animated.View>)}
     </View>
     <View style={{ height: ASK_SPACE }} />
   </Screen></WithSona>;
+}
+
+/*
+ * RM at risk by doctor (glance-to-decision): one amber bar each (money at risk is "soon"), most first. The biggest
+ * is full amber so the eye lands there; a picked doctor stays full and the rest fade. Tap a bar to narrow the list,
+ * tap it again or All doctors to widen it. VoiceOver reads it as one image with an action per doctor.
+ */
+function DoctorRisk({ groups, doctor, onPick }: { groups: { doctor: string; risk: number; count: number }[]; doctor?: string; onPick: (doctor: string) => void }) {
+  const { reducedMotion } = useAccessibleEffects();
+  // Whole, even thousands, so the three ticks (0, middle, top) read as "3k", "6k".
+  const top = Math.max(2, Math.ceil((groups[0]?.risk ?? 0) / 2000) * 2) * 1000;
+  const data = groups.map((g, i) => ({ label: g.doctor, value: g.risk, color: (doctor ? g.doctor === doctor : i === 0) ? palette.amber : `${palette.amber}${doctor ? "40" : "99"}` }));
+  const g = groups.find(x => x.doctor === doctor);
+  return <View style={{ gap: 8 }}>
+    <View accessible accessibilityRole="image" accessibilityLabel={`RM at risk by doctor: ${groups.map(x => `${x.doctor} ${formatRM(x.risk)}`).join(", ")}.${doctor ? ` Showing ${doctor} only.` : ""}`}
+      accessibilityActions={groups.map(x => ({ name: x.doctor, label: x.doctor === doctor ? "Show all doctors" : `Show ${x.doctor} only` }))} onAccessibilityAction={e => onPick(e.nativeEvent.actionName)}>
+      <BarChart data={data} maxY={top} tickCount={3} barRatio={0.5} leftInset={24} bottomInset={22} topInset={6} animate={!reducedMotion} style={{ height: 110 }} onBarChange={p => onPick(p.label)}>
+        <BarChart.Grid color="rgba(20,28,40,0.05)" />
+        <BarChart.Highlight color="rgba(20,28,40,0.05)" radius={8} inset={4} />
+        <BarChart.Bars radius={5} />
+        <BarChart.YAxis format={v => (v ? `${Math.round(v / 1000)}k` : "")} style={{ ...type.caption, color: palette.placeholder }} />
+        <BarChart.XAxis format={p => p.label.replace(/^Dr\.? /, "")} style={{ fontSize: 11, color: palette.muted }} activeStyle={{ color: palette.ink }} />
+      </BarChart>
+    </View>
+    {doctor ? <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(160)} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <Text style={{ ...type.footnote, flex: 1, color: palette.ink }}><Text style={{ fontWeight: "700" }}>{doctor}</Text>{g ? ` · ${g.count} ${g.count === 1 ? "note" : "notes"} · ${formatRM(g.risk)}` : ""}</Text>
+      <Chip label="All doctors" accessibilityLabel={`Showing ${doctor} only. Show all doctors`} onPress={() => onPick(doctor)} />
+    </Animated.View>
+    : <Text style={{ ...type.caption, color: palette.muted }}>By doctor · tap a bar for their notes</Text>}
+  </View>;
 }
 
 /** Money that rolls only the digits that change, like an odometer. 32 pt numerals on the 40 pt row they scroll through (off the type scale). */

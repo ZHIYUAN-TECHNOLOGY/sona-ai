@@ -1,7 +1,15 @@
 import { expect, test } from "bun:test";
 import { newEncounter } from "@/features/encounter/fixtures";
 import { EMPTY_CLAIM } from "@/features/claim/model";
-import { formatRM, openItems, shortRM, totalRisk } from "./model";
+import { formatRM, openItems, riskByDoctor, shortRM, totalRisk } from "./model";
+
+test("money at risk per doctor, most first, adds up to the total", () => {
+  const items = openItems({}, new Set());
+  const groups = riskByDoctor(items);
+  expect(groups.map(g => g.doctor)).toEqual(["Dr Lee", "Dr Kumar", "Dr Aisyah", "Dr Tan"]);
+  expect(groups[0]).toEqual({ doctor: "Dr Lee", risk: 5870, count: 3 });
+  expect(groups.reduce((s, g) => s + g.risk, 0)).toBe(totalRisk(items));
+});
 
 test("twelve notes and about RM 19k at risk before anything is sent", () => {
   const items = openItems({}, new Set());
