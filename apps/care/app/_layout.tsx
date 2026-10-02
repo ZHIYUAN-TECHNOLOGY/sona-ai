@@ -5,7 +5,7 @@ import { DefaultTheme } from "expo-router/react-navigation";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { View } from "react-native";
+import { AppState, Keyboard, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -14,6 +14,7 @@ import { DoseReminders } from "@/features/doses/remind";
 import { PushSetup } from "@/features/notifications";
 import { CalmCanvas } from "@/lib/canvas";
 import { Dock } from "@/lib/dock";
+import { poke } from "@/lib/idle";
 import { FONTS } from "@/lib/text";
 import { palette } from "@/lib/theme";
 import { queryClient } from "@/utils/orpc";
@@ -26,12 +27,25 @@ SplashScreen.setOptions({ duration: 300, fade: true });
 // Form sheets draw on their own white, not the canvas.
 const SHEETS = new Set(["medicine", "about-data"]);
 
+const touched = () => { poke(); return false; };
+
+/** The keyboard opening or closing, and the app coming back to the front, are activity too. */
+function ActivityWatch() {
+  useEffect(() => {
+    const subs = [Keyboard.addListener("keyboardWillShow", poke), Keyboard.addListener("keyboardWillHide", poke),
+      AppState.addEventListener("change", s => { if (s === "active") poke(); })];
+    return () => subs.forEach(sub => sub.remove());
+  }, []);
+  return null;
+}
+
 /** Sona Care: the patient's side of their care (check-ins, discharge, follow-ups, messages to the care team). */
 export default function RootLayout() {
   const [fonts, fontError] = useFonts(FONTS);
   useEffect(() => { if (fonts || fontError) void SplashScreen.hideAsync(); }, [fonts, fontError]);
   if (!fonts && !fontError) return null;
-  return <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.canvas }}><KeyboardProvider><SafeAreaProvider><QueryClientProvider client={queryClient}>
+  // Every touch start is activity (lib/idle): seen on the way down, never claimed, so the touch goes on as before.
+  return <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.canvas }} onStartShouldSetResponderCapture={touched}><ActivityWatch /><KeyboardProvider><SafeAreaProvider><QueryClientProvider client={queryClient}>
     <StatusBar style="dark" />
     {/* The navigation theme's own background (#F2F2F2) would cover the canvas; make it clear. */}
     <ThemeProvider value={{ ...DefaultTheme, colors: { ...DefaultTheme.colors, background: "transparent" } }}>

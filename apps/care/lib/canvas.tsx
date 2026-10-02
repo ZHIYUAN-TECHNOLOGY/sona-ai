@@ -3,6 +3,7 @@ import { useIsFocused } from "expo-router";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
 import { useDerivedValue, useReducedMotion, type SharedValue } from "react-native-reanimated";
 import { useCalmClock } from "./calm-clock";
+import { useIdle } from "./idle";
 
 /**
  * The canvas behind every screen (the kit's aurora in Sona Care's azure and violet): a #FAFAFA ground with
@@ -57,7 +58,9 @@ function Ribbon({ spec, clock, width, height, still }: { spec: (typeof ribbons)[
 export function CalmCanvas() {
   const { width, height } = useWindowDimensions();
   const still = useReducedMotion();
-  const clock = useCalmClock(useIsFocused() && !still);
+  // Moves only on the screen in front, and comes to rest once the screen is left alone (./idle). Both hooks always run.
+  const focused = useIsFocused(), idle = useIdle();
+  const clock = useCalmClock(focused && !still && !idle);
   return <View pointerEvents="none" style={StyleSheet.absoluteFill}>
     <Canvas style={StyleSheet.absoluteFill}>
       <Rect x={0} y={0} width={width} height={height} color="#FAFAFA" />

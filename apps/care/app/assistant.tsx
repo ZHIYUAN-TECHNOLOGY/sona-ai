@@ -274,7 +274,7 @@ function Working({ doctors, flood }: { doctors: boolean; flood: SharedValue<numb
   const t = useT();
   const label = doctors ? t("ask.searching") : t("ask.readingPlan");
   return <View accessible accessibilityLabel={label} accessibilityLiveRegion="polite" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-    <View style={{ margin: -orbPad(28) }}><SonaOrb size={28} flood={flood} lift={false} /></View>
+    <View style={{ margin: -orbPad(28) }}><SonaOrb size={28} flood={flood} lift={false} awake /></View>
     <AnimatedText entering={FadeIn.duration(200)} style={{ ...type.body, color: palette.faint }}>{label}</AnimatedText>
   </View>;
 }

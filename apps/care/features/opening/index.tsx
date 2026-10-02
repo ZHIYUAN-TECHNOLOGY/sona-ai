@@ -115,7 +115,7 @@ export function Opening({ ready: known, settled, step, children }: { ready: bool
         </Group>
       </Canvas>
       <Animated.View style={[{ position: "absolute", top, left: (width - W) / 2, width: W, height: W }, orbStyle]}>
-        <SonaOrb size={HERO.size} flood={flood} />
+        <SonaOrb size={HERO.size} flood={flood} awake />
       </Animated.View>
       <View style={{ position: "absolute", top: insets.top + HERO.above + HERO.height + 8, left: 20, right: 20, alignItems: "center", gap: 10 }}>
         <Animated.View entering={still ? undefined : FadeIn.duration(600).delay(200).easing(SLOW)}>

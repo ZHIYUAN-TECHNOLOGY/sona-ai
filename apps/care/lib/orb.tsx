@@ -1,6 +1,7 @@
 import { Blur, Canvas, Circle, Fill, FractalNoise, Group, LinearGradient, Oval, Paint, RadialGradient, Rect, Shader, Skia, vec } from "@shopify/react-native-skia";
 import { useDerivedValue, useReducedMotion, useSharedValue, type SharedValue } from "react-native-reanimated";
 import { useCalmClock } from "./calm-clock";
+import { useIdle } from "./idle";
 
 /**
  * The Sona orb, an azure-violet pearl with a sunbeam tide (orb study round 4, "#5 × Dawn, slow"; recoloured
@@ -8,7 +9,7 @@ import { useCalmClock } from "./calm-clock";
  * blush through the middle, settling into azure, with fine grain. A halftone "sunbeam" enters from the top-left, where the light comes from, and the glass
  * gives way to dots under it. It rises from 8 % to 70 % of the sphere on a 16 s tide and holds at its
  * peak; `flood` (0–1) pushes it further while Sona is working or a step changes. `tx`/`ty` (−1…1)
- * tilt the core and the light. Still under Reduce Motion. The same orb is the sign-in hero and the
+ * tilt the core and the light. Still under Reduce Motion; at rest on a screen left alone unless `awake`. The same orb is the sign-in hero and the
  * assistant button in the dock. Measurements are the prototype's 148 pt orb, scaled.
  */
 // Body blobs (white, pale azure, a violet blush, azure): [colour, width, height, centre x, centre y (fractions), orbit (pt at 148), speed rad/s, phase]
@@ -94,10 +95,12 @@ function tide(t: number) {
 }
 
 /** The orb drawn in a canvas `size + 2 × pad` wide (the pad leaves room for its soft lift). */
-export function SonaOrb({ size = 148, flood, tx, ty, lift = true }: { size?: number; flood?: SharedValue<number>; tx?: SharedValue<number>; ty?: SharedValue<number>; lift?: boolean }) {
+export function SonaOrb({ size = 148, flood, tx, ty, lift = true, awake = false }: { size?: number; flood?: SharedValue<number>; tx?: SharedValue<number>; ty?: SharedValue<number>; lift?: boolean; awake?: boolean }) {
   const still = useReducedMotion();
-  // Under Reduce Motion the orb holds still, so its clock stops too (useClock kept ticking for nothing).
-  const clock = useCalmClock(!still);
+  // Under Reduce Motion the orb holds still, so its clock stops too (useClock kept ticking for nothing). On a screen left
+  // alone (./idle) it holds its frame, unless `awake`: a voice call, Sona working, the opening, where nobody touches it.
+  const idle = useIdle();
+  const clock = useCalmClock(!still && (awake || !idle));
   const zero = useSharedValue(0);
   const fl = flood ?? zero, x = tx ?? zero, y = ty ?? zero;
   const s = size, k = s / 148, pad = orbPad(s), W = s + pad * 2, center = vec(s / 2, s / 2);
