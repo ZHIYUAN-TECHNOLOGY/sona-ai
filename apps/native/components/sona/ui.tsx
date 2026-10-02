@@ -10,6 +10,8 @@ import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, View, type StyleP
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn, FadeInDown, FadeOut, type AnimatedStyle, type LayoutAnimationFunction } from "react-native-reanimated";
 import { BrandIcon, type BrandIconName } from "./brand-icon";
+import { PHOSPHOR } from "./icons";
+import type { IconWeight } from "phosphor-react-native";
 import { HalftoneGlint } from "./halftone-shimmer";
 import { useCapturedSource } from "./sources";
 import { fold, LAYOUT, unfold } from "./motion";
@@ -37,8 +39,18 @@ export function Glass({ children, style, opaque = false }: { children?: ReactNod
   </View>;
   return <BlurView tint="light" intensity={35} style={[base, { backgroundColor: "rgba(249,251,255,0.72)" }]}>{children}</BlurView>;
 }
-export function Icon({ name, size = 21, color = palette.ink }: { name: string; size?: number; color?: string }) {
-  return <Image source={`sf:${name}`} style={{ width: size, height: size }} tintColor={color} accessibilityElementsHidden />;
+/**
+ * One icon by its SF Symbol name, drawn from Phosphor (./icons). Phosphor draws inside a 1/16 margin, so it is scaled
+ * up a little to sit like the SF glyph it replaces in the same box; small icons take the bold weight to keep their
+ * line. `weight` overrides (a key's glyph is duotone: its soft fill keeps it off a disc of the same grey).
+ */
+export function Icon({ name, size = 21, color = palette.ink, weight, duotoneColor }: { name: string; size?: number; color?: string; weight?: IconWeight; duotoneColor?: string }) {
+  const p = PHOSPHOR[name];
+  if (!p) return <Image source={`sf:${name}`} style={{ width: size, height: size }} tintColor={color} accessibilityElementsHidden />;
+  const Glyph = p.icon;
+  return <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+    <Glyph size={Math.round(size * 1.14)} color={color} weight={weight ?? p.weight ?? (size < 16 ? "bold" : "regular")} duotoneColor={duotoneColor} duotoneOpacity={duotoneColor ? 0.28 : undefined} />
+  </View>;
 }
 export function Label({ children, muted = false }: { children: ReactNode; muted?: boolean }) { return <Text selectable style={{ color: muted ? palette.muted : palette.blue, ...type.overline }}>{children}</Text>; }
 export function Body({ children, muted = false }: { children: ReactNode; muted?: boolean }) { return <Text selectable style={{ color: muted ? palette.muted : palette.ink, ...type.body }}>{children}</Text>; }

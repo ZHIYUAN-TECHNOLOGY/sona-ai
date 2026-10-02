@@ -22,12 +22,12 @@ export type QuickAction = { key: string; label: string; icon: string; status: st
 const INK: Record<QuickTone, string> = { urgent: palette.red, caution: palette.amber, good: palette.green, calm: palette.muted };
 // The glyph's disc says the key's state, the same colours as everywhere else (tone.ts): red must not
 // miss, amber soon or blocked, green done. Blue is kept for the one next step, so calm keys sit on a
-// neutral disc with an ink glyph. `ink` is the state's colour on glass (the capsule's glyphs, count badges).
+// raised white disc (a grey one sank into the grey glass) with an ink glyph. `ink` is the state's colour on glass (the capsule's glyphs, count badges).
 const DISC: Record<QuickTone, { fill: string; glyph: string; ink: string; glow: string; tint: [number, number, number] }> = {
   urgent: { fill: palette.red, glyph: palette.white, ink: palette.red, glow: "rgba(162,62,62,0.3)", tint: [0.86, 0.42, 0.42] },
   caution: { fill: palette.amber, glyph: palette.white, ink: palette.amber, glow: "rgba(139,85,24,0.3)", tint: [0.92, 0.66, 0.34] },
   good: { fill: palette.green, glyph: palette.white, ink: palette.green, glow: "rgba(15,110,102,0.3)", tint: [0.36, 0.74, 0.68] },
-  calm: { fill: "rgba(20,28,40,0.07)", glyph: palette.ink, ink: palette.ink, glow: "rgba(20,28,40,0.08)", tint: [0.62, 0.66, 0.72] },
+  calm: { fill: palette.white, glyph: palette.ink, ink: palette.ink, glow: "rgba(20,28,40,0.12)", tint: [0.62, 0.66, 0.72] },
 };
 // Each key keeps its own dither corner and grain (fixed by position, never random per render), so the
 // shelf reads as four distinct keys under one material; the grain takes the key's state colour.
@@ -68,13 +68,14 @@ function Key({ a, index, shimmer, wide = false }: { a: QuickAction; index: numbe
         <View style={{ minHeight: 104, padding: 14, justifyContent: "space-between", gap: 10 }}>
           <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
             <Animated.View style={[{ width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", backgroundColor: disc.fill, boxShadow: `0 3px 8px ${disc.glow}` }, glyph]}>
-              <Icon name={a.icon} size={17} color={disc.glyph} />
+              {/* Duotone: the glyph's soft fill gives it body on any disc. */}
+              <Icon name={a.icon} size={18} color={disc.glyph} weight="duotone" duotoneColor={disc.glyph} />
             </Animated.View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               {!!a.badge && <View style={{ minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: urgent ? palette.red : a.tone === "caution" ? palette.amber : a.tone === "good" ? palette.green : "rgba(20,28,40,0.08)" }}>
                 <Text style={{ ...type.overline, color: urgent || a.tone === "caution" || a.tone === "good" ? palette.white : palette.ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text>
               </View>}
-              <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}><Icon name="arrow.up.right" size={10} color={palette.ink} /></View>
+              <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.9)", boxShadow: "0 1px 3px rgba(20,28,40,0.1)" }}><Icon name="arrow.up.right" size={11} color={palette.ink} /></View>
             </View>
           </View>
           <View style={{ gap: 1 }}>
