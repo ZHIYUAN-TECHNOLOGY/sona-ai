@@ -1,4 +1,4 @@
-import { useReduceMotionPreference } from "@/components/sona/accessibility";
+import { useReduceMotionPreference, useReduceTransparencyPreference } from "@/components/sona/accessibility";
 import { Text } from "@/components/sona/text";
 import { BlurView } from "expo-blur";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
@@ -18,14 +18,7 @@ import { fold, LAYOUT, unfold } from "./motion";
 import { palette, type, radius } from "./theme";
 
 export function useAccessibleEffects() {
-  const reducedMotion = useReduceMotionPreference();
-  const [reducedTransparency, setReducedTransparency] = useState(false);
-  useEffect(() => {
-    AccessibilityInfo.isReduceTransparencyEnabled().then(setReducedTransparency);
-    const sub = AccessibilityInfo.addEventListener("reduceTransparencyChanged", setReducedTransparency);
-    return () => sub.remove();
-  }, []);
-  return { reducedMotion, reducedTransparency };
+  return { reducedMotion: useReduceMotionPreference(), reducedTransparency: useReduceTransparencyPreference() };
 }
 export function Glass({ children, style, opaque = false }: { children?: ReactNode; style?: StyleProp<ViewStyle>; opaque?: boolean }) {
   const { reducedTransparency } = useAccessibleEffects();

@@ -21,11 +21,21 @@ export const useSnooze = () => useSyncExternalStore(subscribe, () => snoozed);
 
 /** The clock, ticking every 30 seconds by default, so countdowns and "due now" move on their own. */
 /** The current time on the demo clock (see lib/clock), ticking every `every` ms and whenever the clock jumps. */
-export function useNow(every = 30_000) {
+// One app-wide 30 s clock for every screen and tile that shows the time (there were about 8 timers, one per user,
+// still running under hidden screens). It runs while anything is subscribed and moves on with the demo clock.
+let current = clockNow(), at = Date.now(), timer: ReturnType<typeof setInterval> | undefined, lastOffset: unknown;
+const nowListeners = new Set<() => void>();
+const tickNow = () => { current = clockNow(); at = Date.now(); nowListeners.forEach(l => l()); };
+const subscribeNow = (l: () => void) => {
+  nowListeners.add(l);
+  if (Date.now() - at > 1000) tickNow(); // a screen opening late reads the time now, as before
+  timer ??= setInterval(tickNow, 30_000);
+  return () => { nowListeners.delete(l); if (!nowListeners.size && timer) { clearInterval(timer); timer = undefined; } };
+};
+export function useNow() {
   const offset = useClockOffset();
-  const [now, setNow] = useState(clockNow);
-  useEffect(() => { setNow(clockNow()); const id = setInterval(() => setNow(clockNow()), every); return () => clearInterval(id); }, [every, offset]);
-  return now;
+  useEffect(() => { if (offset !== lastOffset) { lastOffset = offset; tickNow(); } }, [offset]);
+  return useSyncExternalStore(subscribeNow, () => current);
 }
 
 /** The next dose from the discharge plan, or undefined (still in hospital, or nothing on a schedule), with the timed medicines and what is taken. */

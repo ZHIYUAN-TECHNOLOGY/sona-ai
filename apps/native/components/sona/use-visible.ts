@@ -24,16 +24,18 @@ export function useVisible() {
 /**
  * True once the view has scrolled into sight (its top clear of the voice dock, 280 pt above the
  * bottom edge), so a one-time reveal plays where it can be seen instead of below the fold.
- * ponytail: polls the view's window position every 200 ms until it is seen; no global scroll wiring.
+ * ponytail: polls the view's window position every 200 ms until it is seen (only while the screen is visible); no global scroll wiring.
  */
 export function useSeenOnce(ref: RefObject<View | null>, skip = false) {
   const [seen, setSeen] = useState(skip);
+  // Nothing can come into sight while the screen is hidden or the app is away, so the polling waits.
+  const visible = useVisible();
   useEffect(() => {
-    if (seen) return;
+    if (seen || !visible) return;
     const id = setInterval(() => ref.current?.measureInWindow((_x, y, _w, h) => {
       if (h > 0 && y < Dimensions.get("window").height - 280 && y + h > 0) setSeen(true);
     }), 200);
     return () => clearInterval(id);
-  }, [seen, ref]);
+  }, [seen, ref, visible]);
   return seen;
 }
