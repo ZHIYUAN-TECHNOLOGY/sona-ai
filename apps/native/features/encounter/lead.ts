@@ -16,8 +16,8 @@ export type LeadState = {
   note?: "none" | "draft" | "reviewed";
   prescription?: "created" | "failed" | "blocked" | "outside" | "ready";
   tasks?: { total: number; open: number };
-  /** Evidence: the rehearsed or an authored answer (demo), live mode off, or the server's answer (enough to answer, or not). */
-  evidence?: "rehearsed" | "authored" | "off" | "enough" | "not-enough";
+  /** Evidence: the rehearsed or an authored answer (demo), live mode off, or the server's answer (cited, general when no source answers, or none). */
+  evidence?: "rehearsed" | "authored" | "off" | "enough" | "general" | "not-enough";
   /** A new result for this patient nobody has acknowledged (the briefing leads with it). */
   result?: { test: string };
 };
@@ -74,7 +74,8 @@ export function leadFor(kind: Capability, patient: Patient, state: LeadState, pr
       // The steroid summary belongs to the rehearsed question only.
       case "rehearsed": return !prompt || isRehearsed(prompt) ? `The evidence is against routine steroids here. ${name}’s severity score decides which studies apply.` : "Here’s what the cited studies say.";
       case "authored": case "enough": return "Here’s what the cited sources say. Each claim links to its study.";
-      case "not-enough": return "Not enough evidence was found to answer this, so Sona makes no claim.";
+      case "general": return "No source covers this, so here’s a general answer, not from the evidence.";
+      case "not-enough": return "Not enough evidence was found to answer this.";
       case "off": return "Live mode answers this from PubMed and your library. It’s off now.";
       default: return undefined; // still searching, or the search failed: the card says which
     }

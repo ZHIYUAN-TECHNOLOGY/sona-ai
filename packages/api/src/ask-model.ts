@@ -4,12 +4,11 @@ import { jsonIn } from "./chat-models";
 import { layaEvaluator, pickCard } from "./laya";
 
 /**
- * Sona's ask bar on the models: Laya routes a visit request to its card (ask.route), and Gemma answers a
- * page's free question from that page's own data as a spec from the ask catalogue (ask.free). Either one
- * failing, timing out or answering off the data returns `{ source: "fixture" }`, and the app keeps its
- * keyword routing or its honest "can't answer that here" (`unanswered`: the model ran, but nothing it said
- * stayed on the page's data). A failed call wakes its box for next time, and while the box is starting the
- * fixture says in how many minutes (`waking`).
+ * Sona's ask bar on the models: Laya routes a visit request to its card (ask.route), and Gemma answers any
+ * question asked on a page (ask.free): from the page's own data when it can, otherwise from general knowledge,
+ * marked `general`. A call failing or timing out returns `{ source: "fixture" }` and the app keeps its keyword
+ * routing; `unanswered` is left only for a model that returned nothing usable at all. A failed call wakes its box for
+ * next time, and while the box is starting the fixture says in how many minutes (`waking`).
  */
 export const LAYA_MODEL = "sona-laya";
 
@@ -32,12 +31,12 @@ export async function routeRequest(baseten: Baseten, input: { request: string; p
   }
 }
 
-const FREE = `You answer a hospital clinician's question about one page of their app. Use ONLY the page's data below: never add a patient, bed, task, name, number or finding it does not state.
+const FREE = `You answer a hospital clinician's question asked on one page of their app. When the page's data below answers it, use only that data: never add a patient, bed, task, name, number or finding it does not state.
 Answer with JSON only, in exactly this shape:
 {"root":"f","elements":{"f":{"type":"AskColumn","props":{},"children":["f-0","f-1"]},"f-0":{"type":"AskLead","props":{"text":"<one short sentence that answers the question>"},"children":[]},"f-1":{"type":"AskRows","props":{"rows":[<rows>]},"children":[]}}}
 Rules:
 - <rows>: up to 8 of the page's rows that answer the question, most important first, each copied exactly as given (id, title, detail, tone, op). If no row answers it, leave out "f-1" and its child id.
-- If the data does not answer the question, answer {"unanswered": true}.`;
+- If the data does not answer the question, answer it from general medical, hospital and everyday knowledge instead, in one to three short sentences, as {"general": "<text>"}. You have not seen this hospital's other records: never state a fact about a specific patient, bed, task or number there.`;
 
 /** Words the lead must find in the data: a number or a capitalised word (a name, a bed) not opening a sentence. */
 const TOKEN = /[\p{L}\p{N}][\p{L}\p{N}+'’-]*(?:\.\d+)*/gu;
@@ -81,15 +80,22 @@ export function groundedSpec(spec: unknown, context: AskContext, question = ""):
   return valid;
 }
 
-/** A page's free question, answered by Gemma from the page's data only, as a checked spec. */
+/**
+ * Any question asked on a page, answered (the user lifted every content limit on 1 Oct). Gemma answers from the page's
+ * own data first, as a checked spec (its rows, every claim found in the data); when the page doesn't answer it, the same
+ * call answers from general knowledge as one lead line, marked `general` so the app shows it is not from the records.
+ */
 export async function freeAnswer(baseten: Baseten, input: { scope: string; question: string; context: AskContext }) {
   const { context } = input;
   const user = `Page: ${input.scope}\nQuestion: ${input.question}\n\nWhat the page says:\n${context.lines.join("\n") || "(nothing)"}\n\nThe page's rows:\n${context.rows.map(r => JSON.stringify(r)).join("\n") || "(none)"}`;
   try {
     // Through the adapter's box gate: a cold brain is woken and not waited for.
-    const spec = groundedSpec(jsonIn(await boxes(baseten).chat("brain", BRAIN_MODEL, FREE, user, 900)), context, input.question);
+    const read = jsonIn(await boxes(baseten).chat("brain", BRAIN_MODEL, FREE, user, 900));
+    const spec = groundedSpec(read, context, input.question);
     if (spec) return { source: "model" as const, model: BRAIN_MODEL, spec };
-    // The model answered, but not from the page's data (or said the page doesn't say): the app says so, not that it is off.
+    const text = typeof read?.general === "string" ? read.general.trim().slice(0, 600) : "";
+    const general = text && checkAskSpec({ root: "f", elements: { f: { type: "AskColumn", props: {}, children: ["f-0"] }, "f-0": { type: "AskLead", props: { text }, children: [] } } });
+    if (general) return { source: "model" as const, model: BRAIN_MODEL, spec: general, general: true as const };
     return { source: "fixture" as const, unanswered: true as const };
   } catch { /* the box was starting or failed; it is woken for next time */ }
   return { source: "fixture" as const, ...wakingOf("brain") };

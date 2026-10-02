@@ -59,7 +59,7 @@ const modelSays = reply => async () => ({ ...reply, source: "model", model: "gem
 const directory = async search => search ? matchDoctors(DOCTORS, search) : DOCTORS;
 const api = (ask, doctors = directory) => ({ ask, doctors });
 
-test("a plan question goes to the model first; its authored answer only when no model is on or the call fails", async () => {
+test("any question goes to the model first; a plan question's authored answer only when no model is on or the call fails", async () => {
   const asks = suggestions(plan, visit, "Cetirizine");
   const asked = [];
   const grounded = modelSays({ answer: "Your next visit is the clinic review on 11 October.", grounded: true, urgent: false, from: "follow-up" });
@@ -69,8 +69,12 @@ test("a plan question goes to the model first; its authored answer only when no 
   expect(asked).toEqual(["When is my next visit?"]);
   expect(await answer("when is my next visit?", asks, api(fixture), "chest infection")).toEqual({ kind: "plan", asked: asks[2] });
   expect(await answer("When is my next visit?", asks, api(failing))).toEqual({ kind: "plan", asked: asks[2] });
-  // The model saying the plan does not answer it is the honest no, not the template.
-  expect(await answer("When is my next visit?", asks, api(modelSays({ answer: "I'll pass that to your care team.", grounded: false, urgent: false })))).toEqual({ kind: "none", urgent: false });
+  // No content limit: an answer from general knowledge is shown too, marked as not from their records.
+  expect(await answer("Can I drink coffee?", asks, api(modelSays({ answer: "A cup of coffee is fine for most people.", grounded: false, urgent: false })))).toEqual({
+    kind: "plan", asked: { question: "", answer: "A cup of coffee is fine for most people.", source: "General answer · not from your records", kind: "medicine" },
+  });
+  // A warning sign is the 999 card, whatever the answer says.
+  expect(await answer("Can I drink coffee?", asks, api(modelSays({ answer: "Call 999 now.", grounded: false, urgent: true })))).toEqual({ kind: "none", urgent: true });
 });
 
 test("while the model starts, the fallback reply says how long, in the patient's language", async () => {

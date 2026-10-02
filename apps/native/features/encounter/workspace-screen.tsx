@@ -16,9 +16,10 @@ import { useServerData } from "@/features/live/server-day";
 import { api, useLive, useLiveSettled } from "@/features/live";
 import { touch } from "@/features/patients/continue-store";
 import { PLACEHOLDER, forWhichPatient, matchQuestion, suggestion } from "@/features/ask/answers";
+import { answerFree } from "@/features/ask";
 import { useTodayAnswers } from "@/features/ask/today";
 import { ThreadEntry, useTodayThread } from "@/features/ask/today-thread";
-import { answerOf, clearThread } from "@/features/ask/thread";
+import { answerOf, clearThread, type Entry, type Reply } from "@/features/ask/thread";
 import { capabilitySchema, routeInThread } from "./state";
 import { carry, takeCarried } from "./carry";
 import { openSession } from "./navigation";
@@ -46,6 +47,7 @@ import type { OrbActivity } from "@/components/sona/orb-glyph";
 const activities: Record<Capability, OrbActivity> = { briefing: "reading", reasoning: "solving", xray: "breathing", medication: "checking", prescription: "composing", followup: "connecting", note: "composing", evidence: "reading" };
 const prompts: Record<Capability, string> = { briefing: "Brief me on this patient", reasoning: "What possibilities should I consider?", xray: "Review the chest X-ray", medication: "Review medication interactions", prescription: "Run the prescribing simulation", followup: "Prepare a follow-up plan", note: "Show the consultation note", evidence: "What does the evidence say about steroids?" };
 const UNROUTED = "Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan.";
+const NO_ASIDES: Entry[] = [];
 
 /**
  * One request's answer as a visit's thread shows it: its lead, its card as it streams, or why it stopped. Sona Live
@@ -169,7 +171,12 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   // A visit's answers sit on top of its tiles: back returns to the tiles (answers kept) before it leaves the visit, and
   // the next answer brings them back. The bar belongs to the answer, so it steps aside with it.
   const [tiles, setTiles] = useState(false);
-  useEffect(() => { setTiles(false); }, [requests.length, patient?.id]);
+  // A visit question no card covers is still answered, in the visit's conversation (no content limit): Gemma answers it
+  // (ask.free), from general knowledge when nothing on the page holds it, as Today's thread does. Kept per patient.
+  const [asides, setAsides] = useState<Record<string, Entry[]>>({});
+  const visitAsides = patient ? asides[patient.id] ?? NO_ASIDES : NO_ASIDES;
+  const asideId = useRef(0);
+  useEffect(() => { setTiles(false); }, [requests.length, visitAsides.length, patient?.id]);
   const steps = patient && latest && !active && !tiles ? nextSteps(latest.kind, encounter, patient, canPrescribe) : undefined;
   const server = useServerData(); // live mode: the top bar counts the server's tasks too
   const liveSettled = useLiveSettled();
@@ -203,10 +210,10 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   const today = useTodayThread(todayAnswers);
   const thread = home ? today.entries : [], newest = thread.at(-1);
   // The canvas holds a conversation (a visit's requests or Today's thread) rather than the dashboard.
-  const talking = (requests.length > 0 && !tiles) || thread.length > 0;
+  const talking = ((requests.length > 0 || visitAsides.length > 0) && !tiles) || thread.length > 0;
   // The latest answer's section tabs pin under the top bar, whose frosted band then reaches under them.
   const tabbed = talking && !home && sections.length >= 2 && !active;
-  const backToTiles = !home && requests.length > 0 && !tiles;
+  const backToTiles = !home && (requests.length > 0 || visitAsides.length > 0) && !tiles;
   const back = () => { if (backToTiles) { setTiles(true); scroll.current?.scrollTo({ y: 0, animated: false }); } else if (router.canGoBack()) router.back(); else router.replace("/"); };
   // Android's back does the same; iOS's edge swipe would leave the visit, so it waits until the tiles show.
   const navigation = useNavigation();
@@ -214,6 +221,16 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   useEffect(() => { if (!backToTiles) return; const sub = BackHandler.addEventListener("hardwareBackPress", () => { back(); return true; }); return () => sub.remove(); }, [backToTiles]); // eslint-disable-line react-hooks/exhaustive-deps
   const nudge = home ? suggestion(todayAnswers) : undefined;
   const { on: live } = useLive();
+  /** Answers a visit question no card covers, in the visit's own conversation; resolves with the reply (for Sona Live). */
+  const askAside = async (question: string, entryId?: number): Promise<Reply> => {
+    if (!patient) return { notice: UNROUTED };
+    const pid = patient.id, id = entryId ?? asideId.current++;
+    setAsides(a => ({ ...a, [pid]: entryId === undefined ? [...(a[pid] ?? []), { id, question }] : (a[pid] ?? []).map(e => (e.id === id ? { id, question } : e)) }));
+    setTimeout(() => scroll.current?.scrollToEnd({ animated: !reducedMotion }), 60);
+    const reply = await answerFree("visit", question, []);
+    setAsides(a => ({ ...a, [pid]: (a[pid] ?? []).map(e => (e.id === id ? { id, question, reply } : e)) }));
+    return reply;
+  };
   const { can } = useRole();
   // A notice answers the last input only: it clears on the next keystroke or submit, so it never hides the dock for good.
   // One send at a time: while a request is being routed, further taps on send do nothing (the text box is already empty).
@@ -260,7 +277,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     routing.current = true; setRoutingNow(true); setInput("");
     try {
       const { kind, medicine } = await route(prompt);
-      if (!kind) { setInput(prompt); setNotice(`${UNROUTED} Demo routing uses supported phrases.`); return; }
+      // Live: any question no card covers is answered in the visit; demo mode (no model) still names what it routes.
+      if (!kind) { if (live) void askAside(prompt); else { setInput(prompt); setNotice(`${UNROUTED} Demo routing uses supported phrases.`); } return; }
       runRouted(kind, prompt, medicine);
     } finally { routing.current = false; setRoutingNow(false); }
   };
@@ -316,6 +334,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       const { kind, medicine } = image ? { kind: "xray" as const, medicine: undefined } : await route(question);
       const id = kind ? runRouted(kind, question, medicine) : undefined;
       if (image && fileNote) setNotice(fileNote);
+      if (!kind && !image && live) { await askAside(question); return { shown: true }; }
       if (!kind || !id) return { notice: UNROUTED };
       // The page shows the request as it shows a typed one (it brings the newest into view); Live waits for it to land.
       await settled(patient.id, id);
@@ -367,6 +386,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
           <RequestAnswer req={req} card={encounter?.cards.find(c => c.requestId === req.id)} revision={encounter?.revision} props={props} onRetry={() => run(req.kind, req.prompt)}
             onSections={req.id === latest?.id ? list => { setSections([...list]); setActiveTab(0); } : undefined} />
         </View>)}
+        {visitAsides.map(e => <ThreadEntry key={`aside-${e.id}`} entry={e} fresh={e.id === visitAsides.at(-1)?.id} onAgain={() => void askAside(e.question, e.id)} />)}
         {/* One next step at a time: the visit's need (the line it opened with), or handing over once nothing is left, then at most two quiet questions. */}
         {!active && latest && patient && <VisitEnd latest={latest.kind} patient={patient} encounter={encounter} hasSteps={Boolean(steps)} onPick={pick} />}
       </View>}

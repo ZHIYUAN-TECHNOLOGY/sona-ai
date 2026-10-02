@@ -6,8 +6,11 @@ import type { Answer } from "./answers";
  * said back, oldest first. One thread for the day, kept for the app session like a visit's requests, so Live and the page
  * are one conversation: closing Live leaves it on Today. New conversation clears it; a new day starts a new one.
  */
-/** What Sona said: an answer (a rule's, or a model's with its name), or a notice; `again` when asking again may work (the model was starting or out of reach). */
-export type Reply = { answer: Answer; model?: string } | { notice: string; again?: boolean };
+/**
+ * What Sona said: an answer (a rule's, or a model's with its name; `general` when it came from general knowledge, not the
+ * page's data), or a notice; `again` when asking again may work (the model was starting or out of reach).
+ */
+export type Reply = { answer: Answer; model?: string; general?: boolean } | { notice: string; again?: boolean };
 /** No reply yet: Sona is thinking. */
 export type Entry = { id: number; question: string; reply?: Reply };
 export type Thread = { day: string; entries: Entry[]; next: number };

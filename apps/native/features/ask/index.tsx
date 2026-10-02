@@ -97,13 +97,13 @@ export function answerNow(question: string, answers: Answer[], live: boolean): R
   const rule = matchQuestion(question, answers);
   return rule ? { answer: rule } : live ? undefined : { notice: only(answers) };
 }
-/** Live mode: the model's answer from the page's own data (ask.free), or why not: it is starting or out of reach (ask again), or the page has no answer. */
+/** Live mode: the model's answer to any question (ask.free: from the page's own data, else general knowledge, marked), or why not: it is starting or out of reach (ask again). */
 export async function answerFree(scope: Scope, question: string, answers: Answer[]): Promise<Reply> {
   try {
     const r = await api.ask.free({ scope, question, context: askContext(answers) });
-    if (r.source === "model") return { answer: { id: "free", question, spec: r.spec as Answer["spec"], worth: true }, model: r.model };
+    if (r.source === "model") return { answer: { id: "free", question, spec: r.spec as Answer["spec"], worth: true }, model: r.model, general: "general" in r };
     const waking = wakingOf(r);
-    return waking ? { notice: startingReply(waking), again: true } : { notice: "unanswered" in r && r.unanswered ? "Sona couldn't answer that from this page." : only(answers) };
+    return waking ? { notice: startingReply(waking), again: true } : { notice: "unanswered" in r && r.unanswered ? "Sona couldn't answer that." : only(answers) };
   } catch {
     return { notice: "Sona couldn't reach the model. Ask again.", again: true };
   }

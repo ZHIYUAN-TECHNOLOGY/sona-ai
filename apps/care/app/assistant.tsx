@@ -34,10 +34,10 @@ import { client, orpc, queryClient } from "@/utils/orpc";
  * (voice mode until there is text, then send). Asked: the question in a white capsule on the right, and
  * Sona's answer as plain text on the canvas, lead sentence bold, with where it came from, copy / helpful
  * / not helpful, and the next steps (Save for my visit, Ask my care team). While it works, a status line
- * sits by a small live orb for as long as the call runs. Answers come only from the plan (care.ask);
- * doctor questions search the hospital's directory (care.doctors.list); anything else goes to the care
- * team, with the 999 line first for warning words. + starts a new chat (there is no stored history, so
- * no history button).
+ * sits by a small live orb for as long as the call runs. Any question is answered (care.ask): their own care
+ * from their plan, anything else from general knowledge, marked as such; doctor questions search the hospital's
+ * directory (care.doctors.list), and warning words put the 999 line first. + starts a new chat (there is no
+ * stored history, so no history button).
  */
 type Turn = { question: string; reply: Reply; requestId: string; ready: boolean; saved?: boolean; sent?: boolean; rated?: "up" | "down" };
 const newRequestId = () => `care-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

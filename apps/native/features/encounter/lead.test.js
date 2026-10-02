@@ -31,7 +31,8 @@ test("the X-ray lead only mentions a reference radiograph when the card shows on
 
 test("the evidence lead never contradicts 'not enough evidence', and is hidden while the card is still searching", () => {
   expect(leadFor("evidence", amelia, { evidence: "rehearsed" }, "")).toMatch(/against routine steroids/);
-  expect(leadFor("evidence", amelia, { evidence: "not-enough" }, "Steroids?")).toBe("Not enough evidence was found to answer this, so Sona makes no claim.");
+  expect(leadFor("evidence", amelia, { evidence: "not-enough" }, "Steroids?")).toBe("Not enough evidence was found to answer this.");
+  expect(leadFor("evidence", amelia, { evidence: "general" }, "Anything")).toMatch(/general answer, not from the evidence/);
   expect(leadFor("evidence", amelia, { evidence: "enough" }, "Anything")).not.toMatch(/steroids/);
   expect(leadFor("evidence", amelia, { evidence: "off" }, "Anything")).toMatch(/Live mode/);
   expect(leadFor("evidence", amelia, {}, "Anything")).toBeUndefined();

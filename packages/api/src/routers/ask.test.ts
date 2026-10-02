@@ -104,6 +104,12 @@ test("an invalid or ungrounded free answer is fixture, marked unanswered (the mo
   for (reply of rejected) expect(await client.ask.free(free)).toEqual({ source: "fixture", unanswered: true });
 });
 
+test("a question the page doesn't answer gets a general answer from Gemma, marked general (no content limit)", async () => {
+  const client = await nurse(boxes(() => gemma({ general: "Paracetamol's usual adult maximum is 4 g a day." })).baseten);
+  const r = await client.ask.free({ ...free, question: "What is the maximum daily dose of paracetamol?" });
+  expect(r).toMatchObject({ source: "model", general: true, spec: { root: "f", elements: { "f-0": { type: "AskLead", props: { text: "Paracetamol's usual adult maximum is 4 g a day." } } } } });
+});
+
 test("grounding: counts up to the page's rows, names from the data and a row without its op pass; the answer is still the app's schema", () => {
   expect(groundedSpec(spec("Two patients need you: Daniel Rahman first, then Amelia Tan."), context)).not.toBeNull();
   expect(groundedSpec(spec("Amelia's result to review.", [{ ...context.rows[1], op: undefined }]), context)).not.toBeNull();

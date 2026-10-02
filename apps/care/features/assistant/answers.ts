@@ -6,10 +6,10 @@ import { away, dayLabel } from "../follow-ups/lines";
 import "./strings";
 
 /**
- * Ask Sona Care: up to three questions drawn from the patient's own plan, each answered by the model
- * from that plan (care.ask), with an authored answer built only from the plan's words (medicines,
- * leaflet, follow-up) for when no model is on. Doctor questions search the hospital's directory.
- * Anything else the plan does not answer goes to the care team; urgent words put the 999 line first.
+ * Ask Sona Care: any question, answered by the model (care.ask): their own care from their plan, anything else
+ * from general knowledge, marked as such. Up to three suggested questions come from their plan, with an
+ * authored answer built from the plan's words (medicines, leaflet, follow-up) for when no model is on.
+ * Doctor questions search the hospital's directory; urgent words put the 999 line first.
  */
 export type PlanLike = Pick<Discharged, "medicines" | "leaflets">;
 export type Visit = { title: string; date: Date | string; why?: string; inDays?: number };
@@ -129,12 +129,16 @@ async function doctorsFor(q: string, find: Api["doctors"], condition: string | u
   return { kind: "doctors", doctors, text: tFor(lang)(key, { about: about ?? "" }) };
 }
 
-/** A model's care.ask answer as a reply: grounded in the plan (with where from), or the honest no (urgent when the model heard a warning sign). */
+/**
+ * A model's care.ask answer as a reply. Any question gets its answer (no content limit): from their plan, it says where
+ * from; otherwise it is marked as a general answer, not from their records. A warning sign is the 999 card.
+ */
 function fromModel(a: PlanAnswer, lang: Lang): Reply {
   if (!a.answer) return NONE;
-  if (!a.grounded) return { kind: "none", urgent: a.urgent };
+  if (a.urgent) return { kind: "none", urgent: true };
   const t = tFor(lang);
-  return { kind: "plan", asked: { question: "", answer: a.answer, source: a.from ? t("ask.fromModel", { from: a.from }) : t("ask.plan"), kind: "medicine" } };
+  const source = a.grounded ? a.from ? t("ask.fromModel", { from: a.from }) : t("ask.plan") : t("ask.general");
+  return { kind: "plan", asked: { question: "", answer: a.answer, source, kind: "medicine" } };
 }
 
 /** An answer split into its lead sentence (shown bold) and the rest; "Dr." never ends a sentence. */

@@ -7,7 +7,7 @@ import { waited } from "@/features/inbox/state";
  * Sona's answers on a page, built by rules from the app's own data (no model): each is a small
  * json-render spec from the ask catalogue. Scopes are the pages the ask bar sits on.
  */
-export type Scope = "today" | "patients" | "tasks" | "ward" | "handover" | "discharge" | "claim" | "xray" | "inbox" | "audit" | "training" | "note" | "scan";
+export type Scope = "today" | "patients" | "tasks" | "ward" | "handover" | "discharge" | "claim" | "xray" | "inbox" | "audit" | "training" | "note" | "scan" | "visit";
 export type Tone = "urgent" | "soon" | "good" | "calm";
 export type Row = { id: string; title: string; detail: string; tone: Tone; op?: string };
 /**
@@ -16,8 +16,8 @@ export type Row = { id: string; title: string; detail: string; tone: Tone; op?: 
  */
 export type Answer = { id: string; question: string; spec: Spec; worth: boolean; action?: string };
 
-export const SCOPE_LABEL: Record<Scope, string> = { discharge: "This discharge", claim: "This guarantee letter", xray: "This X-ray", today: "Your day", patients: "Patients", tasks: "Your tasks", ward: "Ward 4B", handover: "Handover", inbox: "Messages", audit: "Coding audit", training: "Training data", note: "This note", scan: "This scan" };
-export const PLACEHOLDER: Record<Scope, string> = { discharge: "Ask about this discharge…", claim: "Ask about this letter…", xray: "Ask about this X-ray…", today: "Ask about your day…", patients: "Ask about your patients…", tasks: "Ask about your tasks…", ward: "Ask about the ward…", handover: "Ask about the handover…", inbox: "Ask about your messages…", audit: "Ask about the audit…", training: "Ask about training data…", note: "Ask about this note…", scan: "Ask about this scan…" };
+export const SCOPE_LABEL: Record<Scope, string> = { discharge: "This discharge", claim: "This guarantee letter", xray: "This X-ray", today: "Your day", patients: "Patients", tasks: "Your tasks", ward: "Ward 4B", handover: "Handover", inbox: "Messages", audit: "Coding audit", training: "Training data", note: "This note", scan: "This scan", visit: "This visit" };
+export const PLACEHOLDER: Record<Scope, string> = { discharge: "Ask about this discharge…", claim: "Ask about this letter…", xray: "Ask about this X-ray…", today: "Ask about your day…", patients: "Ask about your patients…", tasks: "Ask about your tasks…", ward: "Ask about the ward…", handover: "Ask about the handover…", inbox: "Ask about your messages…", audit: "Ask about the audit…", training: "Ask about training data…", note: "Ask about this note…", scan: "Ask about this scan…", visit: "Ask anything…" };
 
 type Part = { type: "AskLead"; props: { text: string } } | { type: "AskRows"; props: { rows: Row[] } }
   | { type: "AskReview"; props: { title: string; items: string[]; what: string; confirm: string; done: string; op: string } }

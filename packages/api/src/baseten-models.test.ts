@@ -221,15 +221,15 @@ test("the huddle brief is Gemma's words over the rule's numbers; a number the ru
   expect(await gemma("{not json").huddleBrief({ beds: WARD_FIXTURE, owners: {} })).toEqual(rule);
 });
 
-test("a drafted reply may quote the plan, but never changes a dose, diagnoses, promises a time or leaves out 999 when urgent", async () => {
+test("a drafted reply may answer anything (the nurse checks it), but never promises a time, leaves out 999 when urgent or switches language", async () => {
   const plan = { medicines: [{ name: "Azithromycin", line: "Take 500 mg once a day for 2 more days" }], nextVisit: "Clinic review, 14 Oct" };
   const ask: Parameters<Models["draftReply"]>[0] = { text: "Can I stop the azithromycin?", label: "clinical", patientFirstName: "Amelia", plan, language: "en" };
-  const quoting = "Hi Amelia, your plan says: Take 500 mg once a day for 2 more days. A nurse can talk it through with you.";
-  expect(await gemma(JSON.stringify({ text: quoting })).draftReply(ask)).toEqual({ text: quoting, ...fromModel });
+  // No content limit: quoting the plan, general advice, or what a symptom may mean all reach the nurse as drafts.
+  for (const text of [
+    "Hi Amelia, your plan says: Take 500 mg once a day for 2 more days. A nurse can talk it through with you.",
+    "Hi Amelia, it sounds like a chest infection is settling. Finish the course unless your doctor says otherwise.",
+  ]) expect(await gemma(JSON.stringify({ text })).draftReply(ask)).toEqual({ text, ...fromModel });
   const broken: [string, typeof ask][] = [
-    ["Hi Amelia, take 1000 mg instead.", ask],
-    ["Hi Amelia, you can stop taking it now.", ask],
-    ["Hi Amelia, it sounds like a chest infection.", ask],
     ["Hi Amelia, a nurse will call you within the hour.", ask],
     ["Hi Amelia, rest and drink water.", { ...ask, label: "urgent" }],
     ["Hi Amelia, a nurse can talk it through with you.", { ...ask, language: "zh" }],

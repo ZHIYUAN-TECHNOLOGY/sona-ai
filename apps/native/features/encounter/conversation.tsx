@@ -98,7 +98,7 @@ export function useVisitLead(req: RequestState | undefined, card: ResponseCard |
     note: !encounter?.note ? "none" : encounter.noteReviewed ? "reviewed" : "draft",
     prescription: rx,
     tasks: { total: tasks.length, open: tasks.filter(t => !t.completed).length },
-    evidence: live ? answered && (answered.enough ? "enough" : "not-enough") : !question || isRehearsed(question) ? "rehearsed" : authoredAnswer(question) ? "authored" : "off",
+    evidence: live ? answered && (answered.enough ? "enough" : answered.general ? "general" : "not-enough") : !question || isRehearsed(question) ? "rehearsed" : authoredAnswer(question) ? "authored" : "off",
     result: result?.patientId === patient.id ? { test: result.test } : undefined,
   }, question);
 }

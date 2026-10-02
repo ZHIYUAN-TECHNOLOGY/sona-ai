@@ -38,7 +38,7 @@ const SNAP = { duration: 360, dampingRatio: 0.82 }, TAP = { duration: 380, dampi
 const REHEARSED_QUESTION = "Steroids for this patient with community-acquired pneumonia?";
 const SOURCES_NOTE: Record<ServerEvidence["pubmed"], string> = { live: "PubMed · conclusions quoted from each abstract", cached: "PubMed, saved copy · offline now", unavailable: "PubMed unreachable · no studies" };
 const DESIGN_WORDS: Record<Reference["design"], string> = { Guideline: "guideline", Review: "systematic review", Trial: "randomised trial", "Narrative review": "narrative review", Study: "study", Library: "your library" };
-const NOT_ENOUGH = "Not enough evidence found to answer this. Sona only says what a source supports.";
+const NOT_ENOUGH = "Not enough evidence found to answer this.";
 
 type Shown = { claims: Claim[]; enough: boolean; followUps: string[]; references: Reference[]; source?: string; note: string };
 
@@ -63,6 +63,10 @@ export function EvidenceCard({ patient, result, onRequest }: FeatureProps) {
     <Surface feature style={{ padding: 16, gap: 12 }}>
       {!shown ? <Text style={{ ...type.callout, color: palette.muted }}>Live mode answers this question from PubMed and your library. Switch it on in Settings.</Text>
         : shown.enough ? shown.claims.map((c, i) => <ClaimLine key={i} claim={c} references={shown.references} onCite={cite} />)
+        : data?.general ? <View style={{ gap: 4 }}>
+          <Text selectable style={{ ...type.callout, color: palette.ink }}>{data.general}</Text>
+          <Text selectable style={{ ...type.caption, color: palette.muted }}>General answer · no source found for this</Text>
+        </View>
         : <Text selectable style={{ ...type.callout, color: palette.amber }}>{NOT_ENOUGH}</Text>}
       {shown && <View style={{ gap: 4 }}>
         {data && data.references.length > 0 && <SampleLabel source={data.source === "fixture" || data.source === "cached" ? data.source : "model"} model={data.source} waking={wakingOf(data)} what="evidence" />}

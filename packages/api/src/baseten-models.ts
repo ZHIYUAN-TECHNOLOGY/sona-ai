@@ -61,12 +61,12 @@ export type Baseten = { apiKey: string; fetcher?: typeof fetch; timeoutMs?: numb
 const BRIEFING = `You brief a hospital doctor before they see a patient. Use ONLY the record below; never add a diagnosis, test result or number it does not state.
 Answer with JSON only: {"lines": ["<one short sentence>", ...]}: 2 to 4 lines, most important first: why they came, what in the history or medicines matters today, any allergy, and anything missing from the record.`;
 
-const EVIDENCE = `You answer a doctor's clinical question from the numbered sources only.
-Answer with JSON only: {"claims": [{"text": "<one or two sentences>", "cites": [<source numbers>]}], "followUps": ["<question>", ...]}
+const EVIDENCE = `You answer a doctor's clinical question, from the numbered sources first.
+Answer with JSON only: {"claims": [{"text": "<one or two sentences>", "cites": [<source numbers>]}], "followUps": ["<question>", ...], "general": "<only when there are no claims>"}
 Rules:
 - 2 to 4 claims, each supported by and citing at least one numbered source. Never state a dose, number or finding that a cited source does not contain.
 - Say how strong each claim is in words from the source's design (a guideline recommends, a randomised trial found, a review concluded).
-- If the sources do not answer the question, return no claims.
+- If the sources do not answer the question, return no claims and answer in "general" from general medical knowledge, in one to three short sentences. You have not seen this patient's record: never state a fact about them.
 - Up to 3 short follow-up questions these sources could answer.`;
 
 const XRAY = `If this is not a chest radiograph, say so in one sentence. Otherwise list the findings a radiologist would report, most important first, in at most 4 short sentences.
@@ -92,8 +92,8 @@ Answer with JSON only: {"lines": ["<line>", "<line>", "<line>"]}`;
 const REPLY = `You draft a short reply from a hospital care team to their patient's message, for a nurse to check before sending.
 Rules:
 - Write only in LANGUAGE: plain, kind, at most 3 short sentences and under 280 characters. Greet the patient by first name.
-- Use only the patient's own plan below: quote a medicine line exactly as written; never change, add or stop a dose or a medicine.
-- Never diagnose or guess what is wrong. Never promise a time or say when someone will call or reply.
+- Answer what they asked. For their own medicines and next visit, use their plan below and quote a medicine line exactly as written; anything else from general knowledge.
+- Never promise a time or say when someone will call or reply: the care team decides that.
 - If the label is urgent, tell them to call 999 or go to the nearest emergency department now.
 Answer with JSON only: {"text": "<reply>"}`;
 
@@ -135,19 +135,16 @@ const unique = <T>(values: T[]) => [...new Set(values)];
 // A possibility worded as a ranking or a verdict is dropped: the card says "unranked, not a diagnosis".
 const VERDICT = /\b(most likely|likeliest|leading|probable|definite(ly)?|confirms|confirmed|diagnosed|the diagnosis|certainly)\b/i;
 
-// ponytail: word lists, not a reader: they miss a paraphrase, so the nurse's check before sending stays.
-export const DOSE_CHANGE = /\b(increase|decrease|reduce|double|halve|skip|stop (taking|your|the))\b|tambah(kan)? dos|kurangkan|gandakan|berhenti (makan|ambil)|加量|减量|加倍|减半|停药|停止服用/i;
-export const DIAGNOSIS = /\b(you (have|may have|might have|probably have)|sounds like|could be|likely|probably|diagnos\w*)\b|menghidap|kemungkinan|您(可能)?(患有|得了)|可能是/i;
+// ponytail: a word list, not a reader: it misses a paraphrase, so the nurse's check before sending stays.
 const PROMISED_TIME = /\b(today|tonight|tomorrow|this (morning|afternoon|evening)|within|in (an?|\d+) (minutes?|hours?)|by \d|\d+ ?[ap]\.?m\b)|hari ini|malam ini|esok|dalam masa|sejam|今天|今晚|明天|小时内|分钟内/i;
 export const EMERGENCY = /999|emergency|kecemasan|急诊/i;
 
-/** A reply a nurse may send after checking: in the patient's language, urgent ones sent to 999, and nothing the plan does not say. */
-function safeReply(reply: string, input: Parameters<Models["draftReply"]>[0], plan: string) {
-  // The plan's own lines, quoted, may say anything they say ("every 6 hours"); the rest of the reply may not.
-  const quoted = [...input.plan?.medicines.map(m => m.line) ?? [], input.plan?.nextVisit ?? ""].filter(Boolean);
-  const rest = quoted.reduce((s, line) => s.split(line).join(" "), reply);
-  return reply.length <= DRAFT_MAX && inLanguage(reply, input.language) && (input.label !== "urgent" || EMERGENCY.test(reply))
-    && !DOSE_CHANGE.test(rest) && !DIAGNOSIS.test(rest) && !PROMISED_TIME.test(rest) && onlyNumbersFrom(`${plan} 999`, reply);
+/**
+ * A draft a nurse checks before sending: in the patient's language, short, urgent ones sent to 999, and no promise of
+ * when the team will act. What it may talk about is not limited (the user lifted every content limit on 1 Oct).
+ */
+function safeReply(reply: string, input: Parameters<Models["draftReply"]>[0]) {
+  return reply.length <= DRAFT_MAX && inLanguage(reply, input.language) && (input.label !== "urgent" || EMERGENCY.test(reply)) && !PROMISED_TIME.test(reply);
 }
 
 // Label words too general to show which code a sentence means ("Pneumonia, unspecified organism" is stated by "pneumonia").
@@ -311,7 +308,7 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
           // The route drops claims citing nothing or a number outside the sources (sourcedClaims).
           const claims = read.claims.flatMap(c => typeof c?.text === "string" && Array.isArray(c.cites)
             ? [{ text: c.text.trim(), cites: c.cites.filter((n: unknown): n is number => Number.isInteger(n)) }] : []);
-          return { claims, followUps: strings(read.followUps, 3), source: "model", model: BRAIN_MODEL };
+          return { claims, followUps: strings(read.followUps, 3), general: text(read.general), source: "model", model: BRAIN_MODEL };
         }
       } catch { /* falls back below */ }
       return fallback.synthesiseEvidence(input);
@@ -354,7 +351,7 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
         const read = await brain(REPLY.replace("LANGUAGE", LANGUAGE_NAME[input.language]),
           `Label: ${input.label}\nFirst name: ${input.patientFirstName}\nPlan:\n${plan || "(none)"}\n\nPatient's message: """${input.text}"""`);
         const reply = typeof read?.text === "string" ? read.text.trim() : "";
-        if (reply && safeReply(reply, input, plan)) return { text: reply, source: "model", model: BRAIN_MODEL };
+        if (reply && safeReply(reply, input)) return { text: reply, source: "model", model: BRAIN_MODEL };
       } catch { /* the template below */ }
       return fallback.draftReply(input);
     },

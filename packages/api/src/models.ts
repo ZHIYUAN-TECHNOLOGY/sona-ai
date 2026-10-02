@@ -45,7 +45,8 @@ export type Models = {
    * lacks), and up to 3 follow-ups the sources could answer. `thread` is the earlier turns, oldest
    * first. The route drops any claim citing nothing or a number not in `sources`.
    */
-  synthesiseEvidence(input: { question: string; thread: { question: string; answer: string }[]; sources: { n: number; design: string; year?: number; title: string; text: string }[] }): Answer<{ claims: Claim[]; followUps: string[] }>;
+  /** `general`: the model's own answer from general knowledge, when no source answers the question. */
+  synthesiseEvidence(input: { question: string; thread: { question: string; answer: string }[]; sources: { n: number; design: string; year?: number; title: string; text: string }[] }): Answer<{ claims: Claim[]; followUps: string[]; general?: string }>;
   huddleBrief(input: { beds: Bed[]; owners: Record<string, Owner | undefined> }): Answer<{ lines: string[] }>;
   /** Sona Care: the patient's speech as text (Malay, English, Chinese or mixed). The stub has no ears: it returns no text. */
   transcribe(input: { audio: Uint8Array; language?: Language }): Answer<{ text: string; language?: string }>;
@@ -56,8 +57,8 @@ export type Models = {
    */
   speak(input: { text: string }): Answer<{ audio?: string }>;
   /**
-   * Sona Care: an answer to the patient's question from their own discharge plan only. `grounded` false
-   * means the plan does not answer it (the app offers the care team); `urgent` puts the 999 line first.
+   * Sona Care: an answer to any question the patient asks; their own care from their discharge plan. `grounded` false
+   * means the answer is general knowledge, not their plan (the app marks it so); `urgent` puts the 999 line first.
    * The stub answers nothing, so the app's authored plan answers stay in charge.
    */
   answerFromPlan(input: { question: string; plan: string; language: Language }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string }>;
@@ -67,7 +68,7 @@ export type Models = {
   triageMessage(input: { text: string; language?: Language }): Answer<{ label: MessageLabel; reason: string }>;
   /**
    * The inbox's suggested reply to a patient message, for a person to check before sending: short and kind,
-   * in the patient's language, never advice beyond their own plan (their medicines' lines and next visit).
+   * in the patient's language, answering what they asked; their own medicines and next visit as their plan states them.
    */
   draftReply(input: { text: string; label: MessageLabel; patientFirstName: string; plan?: DraftPlan; language: Language }): Answer<{ text: string }>;
   /**

@@ -129,14 +129,14 @@ export const careRouter = {
   }),
 
   /**
-   * Patient: a question answered from their own discharge plan only. `grounded` false means the plan
-   * does not say, so the app offers their care team; the stub answers nothing (source "fixture") and
-   * the app keeps its authored plan answers.
+   * Patient: any question, answered. Their own care comes from their discharge plan (their record; "None yet"
+   * while they are still in hospital), anything else from general knowledge: `grounded` says which. The stub
+   * answers nothing (source "fixture") and the app keeps its authored plan answers.
    */
   ask: patientProcedure.input(z.object({ question: z.string().trim().min(2).max(500) })).handler(async ({ context, input }) => {
     const plan = await patientPlan(context);
-    if (plan.status !== "discharged") return { answer: "", grounded: false, urgent: false, source: "fixture" as const };
-    return (context.models ?? stubModels).answerFromPlan({ question: input.question, plan: planText(plan), language: plan.language });
+    const record = plan.status === "discharged" ? planText(plan) : "None yet: they are still in hospital.";
+    return (context.models ?? stubModels).answerFromPlan({ question: input.question, plan: record, language: plan.language ?? "en" });
   }),
 
   /**

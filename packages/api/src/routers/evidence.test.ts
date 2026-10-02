@@ -139,6 +139,19 @@ test("a model's uncited or out-of-range claims are all dropped, leaving not enou
   expect(seen).toMatchObject({ question: "What about the harms?", thread, sources: [{ n: 1, design: "Trial", year: 2015 }] });
 });
 
+test("no source answers it: Gemma's general answer comes back instead, and only when no claim survives", async () => {
+  const { fetcher } = pubmed(["25608756"]);
+  const db = await createTestDb();
+  await seedDemo(db, new Date("2026-09-26T09:00:00+08:00"));
+  await addClinician(db, "dr-aisyah");
+  let claims = [{ text: "Cites a source that is not there.", cites: [7] }];
+  const models = { ...stubModels, synthesiseEvidence: async () => ({ claims, followUps: [], general: "Hand hygiene is the main defence.", source: "model" as const, model: "gemma-test" }) };
+  const api = createRouterClient(appRouter, { context: { db, session, fetch: fetcher, models } });
+  expect(await api.evidence.ask({ encounterId: "visit-1086", question: "How do I stop a ward outbreak?" })).toMatchObject({ claims: [], enough: false, general: "Hand hygiene is the main defence." });
+  claims = [{ text: "A randomised trial found stability a day sooner.", cites: [1] }];
+  expect((await api.evidence.ask({ encounterId: "visit-1086", question: "Is prednisone useful here?" })).general).toBeUndefined();
+});
+
 test("PubMed is searched by the question's key terms, never the patient's name or record number, and an article without an abstract is not a source", async () => {
   const calls: string[] = [];
   // esearch finds an abstract-less article (111) before a real one; efetch returns both.
