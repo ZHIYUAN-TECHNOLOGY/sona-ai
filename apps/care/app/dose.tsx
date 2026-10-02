@@ -26,7 +26,7 @@ import { now as clockNow } from "@/lib/clock";
 
 /** The tick, drawn from its short stroke (4,12 → 9,17 → 20,6). */
 const CHECK = "M4 12l5 5L20 6";
-const SNOOZE = 15 * 60_000, EARLY = 2 * 3600_000;
+const SNOOZE = 15 * 60_000;
 const open = (name: string) => router.push({ pathname: "/medicine", params: { name } });
 // The tab rises in once per launch, not every time the patient comes back to it.
 let shown = false;
@@ -113,13 +113,15 @@ const centred = { ...type.body, color: palette.muted, textAlign: "center" } as c
 /**
  * The one feature card. Due (from 2 h before until 6 h late, as everywhere): "Time to take" with the
  * hold and "Remind me later". Snoozed: when it comes back. Just taken: a popped check and what is next.
- * Early: what is next and from when it can be marked. Nothing on a timer: says so.
+ * Nothing on a timer: says so.
  */
 function NextCard({ dose, now, took, onTook }: { dose?: Dose; now: Date; took?: { dose: Dose; at: Date }; onTook: (d: Dose) => void }) {
   const lang = useLang(), t = tFor(lang);
   const snoozed = useSnooze();
   const [asking, setAsking] = useState(false);
-  const due = dose && !early(dose.dueAt, now) ? dose : undefined;
+  // The next open dose can always be logged: when it was taken is the patient's to say, not a window of ours.
+  const due = dose;
+  const soon = due && early(due.dueAt, now);
   const resting = due && snoozed?.key === due.key && snoozed.until > now.getTime() ? snoozed : undefined;
   // Just logged: the done state holds until the next dose is itself due.
   const logged = took && !due ? took : undefined;
@@ -129,7 +131,7 @@ function NextCard({ dose, now, took, onTook }: { dose?: Dose; now: Date; took?: 
     const food = foodOf(due.line);
     return <Card feature style={{ alignItems: "center", gap: 12 }}>
       <View accessible accessibilityLabel={t("dose.timeToTakeA11y", { name: due.name, time: clock(due.dueAt, lang), late: late ? `, ${late}` : "", line: due.line })} style={{ alignItems: "center", gap: 10, alignSelf: "stretch" }}>
-        <Text style={{ ...type.footnote, fontWeight: "500", color: palette.faint }}>{t("dose.timeToTake")}</Text>
+        <Text style={{ ...type.footnote, fontWeight: "500", color: palette.faint }}>{soon ? t("dose.nextUp") : t("dose.timeToTake")}</Text>
         <Capsule tone={late ? "amber" : undefined}>{late ? `${clock(due.dueAt, lang)} · ${late}` : clock(due.dueAt, lang)}</Capsule>
         <Pill name={due.name} size={132} />
         <Text style={nameStyle}>{due.name}</Text>
@@ -172,21 +174,6 @@ function NextCard({ dose, now, took, onTook }: { dose?: Dose; now: Date; took?: 
       <Text style={{ ...type.body, color: palette.ink, textAlign: "center" }}>{next}</Text>
     </View>
     <Sunbeam play={logged.at.getTime()} radius={32} />
-  </Card>;
-
-  // Nothing to do yet: one compact row, so the page leads with what is next without a big card asking for nothing.
-  if (dose) return <Card style={{ padding: 14 }}>
-    <View accessible style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-      <View style={{ width: 60, height: 60, borderRadius: 20, borderCurve: "continuous", backgroundColor: tintOf(dose.name), alignItems: "center", justifyContent: "center" }}>
-        <Pill name={dose.name} size={54} />
-      </View>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{t("dose.nextUp")} · {whenWords(dose.dueAt, now, lang)}</Text>
-        <Text style={{ ...type.headline, color: palette.ink }}>{dose.name}</Text>
-        <Text style={{ ...type.footnote, color: palette.muted }}>{sentenceCase(dose.line)}</Text>
-      </View>
-    </View>
-    <Text style={{ ...type.footnote, color: palette.faint }}>{t("dose.markFrom", { time: clock(new Date(dose.dueAt.getTime() - EARLY), lang) })}</Text>
   </Card>;
 
   return <Card>

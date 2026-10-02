@@ -1,5 +1,5 @@
 import { formatDate, tFor, type Lang } from "@/lib/i18n";
-import { clock, early, isLate, untilLine, type DayDose, type WeekDay } from "./model";
+import { clock, isLate, untilLine, type DayDose, type WeekDay } from "./model";
 import "./strings";
 
 const MYT = 8 * 3600_000, DAY = 86_400_000;
@@ -33,11 +33,11 @@ export function dayLine(d: StripDay, lang: Lang = "en") {
 export const weekSaid = (days: StripDay[], lang: Lang = "en") =>
   tFor(lang)("dose.week", { days: days.filter(d => d.due !== undefined).map(d => dayLine(d, lang).replace(" · ", " ")).join("; ") });
 
-/** A dose's state: taken; `now` (within 2 h or late, so a hold logs it); `later`; `missed` (6 h late, never offered, so no double dose). */
-export function checkState(d: DayDose, now: Date): "taken" | "now" | "later" | "missed" {
+/** A dose's state: taken; `now` (still open: the patient can log it whenever they took it); `missed` (6 h late, never offered, so no double dose). */
+export function checkState(d: DayDose, now: Date): "taken" | "now" | "missed" {
   if (d.taken) return "taken";
   if (d.dueAt.getTime() < now.getTime() - GRACE) return "missed";
-  return early(d.dueAt, now) ? "later" : "now";
+  return "now";
 }
 
 /**
@@ -48,7 +48,7 @@ export function insight(today: DayDose[], now: Date, lang: Lang = "en"): { text:
   const t = tFor(lang);
   if (!today.length) return { text: t("dose.nothingToday"), tone: "muted" };
   const state = today.map(d => checkState(d, now));
-  const at = state.findIndex(s => s === "now" || s === "later"), up = today[at];
+  const at = state.findIndex(s => s === "now"), up = today[at];
   if (up && state[at] === "now" && isLate(up.dueAt, now)) return { text: t("dose.isLate", { name: up.name, late: untilLine(up.dueAt, now, lang) }), tone: "amber" };
   const count = state.filter(s => s === "taken").length, missed = state.filter(s => s === "missed").length;
   if (count === today.length) return { text: t("dose.allTaken"), tone: "green" };

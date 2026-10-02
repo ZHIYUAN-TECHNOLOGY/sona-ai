@@ -69,7 +69,8 @@ export function MedicinesTile({ index, still }: { index: number; still: boolean 
   const { plan, dose, taken, meds } = useNextDose(now);
   const out = plan?.status === "discharged" ? plan.dischargedAt : undefined;
   const today = dosesToday(meds, out, taken, now), done = today.filter(d => d.taken).length;
-  const hold = dose && !early(dose.dueAt, now);
+  // The next open dose can always be logged here; a dose not due yet also says when it is.
+  const hold = dose, soon = dose && early(dose.dueAt, now);
   // The dose just taken keeps its (now done) button a moment: the finger is still down, and a button
   // that vanished under it would hand the release to whatever tile slid beneath.
   const [justTook, setJustTook] = useState<{ key: string; name: string }>();
@@ -79,12 +80,12 @@ export function MedicinesTile({ index, still }: { index: number; still: boolean 
     return () => clearTimeout(id);
   }, [justTook]);
   const shown = justTook ?? (hold ? dose : undefined);
-  const when = dose && !hold ? nextCapsule(dose.dueAt, now, lang) : undefined;
+  const when = dose && soon ? nextCapsule(dose.dueAt, now, lang) : undefined;
   const count = t("home.countOf", { done, n: today.length });
   const summary = today.length ? t("home.dosesTaken", { count }) : out ? t("home.nothingDue") : t("home.onceHome");
   // The count in ink, the rest faint, in whatever order the language puts them.
   const [before = "", after = ""] = t("home.dosesTaken").split("{count}");
-  return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={t("home.medsA11y", { summary, extra: hold ? t("home.isDue", { name: dose.name }) : when ? ` ${when}.` : "" })}
+  return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={t("home.medsA11y", { summary, extra: when ? ` ${when}.` : hold ? t("home.isDue", { name: dose.name }) : "" })}
     onPress={() => router.push(out ? "/dose" : "/discharge")}
     footer={shown && <HoldButton key={shown.key} compact label={t("home.holdName", { name: shown.name })} doneLabel={t("dose.taken", { name: shown.name })}
       onDone={() => { setJustTook({ key: shown.key, name: shown.name }); markTaken(shown.key); }} />}>

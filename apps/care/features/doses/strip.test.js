@@ -21,10 +21,10 @@ test("each bar says its day in one line, and the chart reads out the days so far
   expect(weekSaid(weekStrip(week, now))).toBe("This week. Thu 4 of 4 taken; Fri 3 of 4 taken; Sat nothing due; Today 1 of 3 so far");
 });
 
-test("a dose is holdable from 2 h before until 6 h late; later ones wait, missed ones are never offered", () => {
+test("a dose is open to log from any time before until 6 h late (the patient decides when they took it); missed ones are never offered", () => {
   expect(checkState(dose("2026-09-27T05:30:00Z"), now)).toBe("now");
   expect(checkState(dose("2026-09-27T03:00:00Z"), now)).toBe("now");
-  expect(checkState(dose("2026-09-27T13:00:00Z"), now)).toBe("later");
+  expect(checkState(dose("2026-09-27T13:00:00Z"), now)).toBe("now");
   expect(checkState(dose("2026-09-26T21:00:00Z"), now)).toBe("missed");
   expect(checkState(dose("2026-09-26T21:00:00Z", true), now)).toBe("taken");
 });

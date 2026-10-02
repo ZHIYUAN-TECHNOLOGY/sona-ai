@@ -5,6 +5,7 @@ import { DefaultTheme } from "expo-router/react-navigation";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -22,7 +23,9 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 // The splash is the bare canvas (app.json), so fading it reads as the opening's orb blooming in (features/opening).
 SplashScreen.setOptions({ duration: 300, fade: true });
 
-const OPAQUE = { backgroundColor: "#FAFAFA", experimental_backgroundImage: "linear-gradient(180deg, #ECEFFC 0%, #F6F4FD 22%, #FAFAFC 55%, #FAFAFA 100%)" } as const;
+const TAB = { gestureEnabled: false, animation: "fade", animationDuration: 250 } as const;
+// Form sheets draw on their own white, not the canvas.
+const SHEETS = new Set(["medicine", "about-data"]);
 
 /** Sona Care: the patient's side of their care (check-ins, discharge, follow-ups, messages to the care team). */
 export default function RootLayout() {
@@ -31,25 +34,24 @@ export default function RootLayout() {
   if (!fonts && !fontError) return null;
   return <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.canvas }}><KeyboardProvider><SafeAreaProvider><QueryClientProvider client={queryClient}>
     <StatusBar style="dark" />
-    <CalmCanvas />
     {/* The navigation theme's own background (#F2F2F2) would cover the canvas; make it clear. */}
     <ThemeProvider value={{ ...DefaultTheme, colors: { ...DefaultTheme.colors, background: "transparent" } }}>
     {/* No header band: every screen runs to the top like home; screens off the dock carry their own glass back button.
-        Every screen is clear over the one living canvas, so a push crossfades (250 ms; the stack's default fade is 500)
-        rather than slides: a slide would drag one clear page across another, both showing. The swipe back drives the
-        same fade from anywhere on the screen. Screens out of sight are frozen, so their clocks and live queries don't
-        re-render under the one in front. */}
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" }, animation: "fade", animationDuration: 250,
-      animationMatchesGesture: true, fullScreenGestureEnabled: true, freezeOnBlur: true }}>
-      {/* The dock's four places switch like tabs: a crossfade, never a swipe back between them. */}
-      <Stack.Screen name="index" options={{ gestureEnabled: false }} />
-      <Stack.Screen name="follow-ups" options={{ gestureEnabled: false }} />
-      <Stack.Screen name="dose" options={{ gestureEnabled: false }} />
-      <Stack.Screen name="doctors" options={{ gestureEnabled: false }} />
-      {/* Zoom destinations (iOS 18+ native zoom from the row or card tapped) are opaque: a clear page zooming over the
-          one it came from would show both. A still wash in the canvas's colours stands in for the living one. */}
-      <Stack.Screen name="find-doctor" options={{ contentStyle: OPAQUE }} />
-      <Stack.Screen name="doctor" options={{ contentStyle: OPAQUE }} />
+        Every screen carries its own living canvas (screenLayout), so it is opaque, and a page opened on top slides in
+        with the native push; the swipe back (from anywhere on the screen) slides it off and uncovers the page beneath.
+        When screens were clear over one shared canvas, a swipe back showed both pages' text on top of each other.
+        Sheets keep their white. Screens out of sight are frozen, so their clocks and live queries don't re-render. */}
+    <Stack screenLayout={({ route, children }) => SHEETS.has(route.name) ? children : <View style={{ flex: 1 }}><CalmCanvas />{children}</View>}
+      screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" },
+      fullScreenGestureEnabled: true, freezeOnBlur: true }}>
+      {/* The dock's four places switch like tabs: a quick crossfade, never a slide or a swipe back between them. */}
+      <Stack.Screen name="index" options={TAB} />
+      <Stack.Screen name="follow-ups" options={TAB} />
+      <Stack.Screen name="dose" options={TAB} />
+      <Stack.Screen name="doctors" options={TAB} />
+      {/* Zoom destinations (iOS 18+ native zoom from the row or card tapped): opaque like every screen, so the zoom never shows both. */}
+      <Stack.Screen name="find-doctor" />
+      <Stack.Screen name="doctor" />
       <Stack.Screen name="join" options={{ presentation: "modal", headerShown: false }} />
       <Stack.Screen name="medicine" options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 40, contentStyle: { backgroundColor: "#FFFFFF" } }} />
       <Stack.Screen name="about-data" options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 40, contentStyle: { backgroundColor: "#FFFFFF" } }} />

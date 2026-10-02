@@ -1,5 +1,6 @@
 import { Blur, Canvas, Circle, Group, LinearGradient, Paint, Path, RadialGradient, Rect, Skia, useClock, vec } from "@shopify/react-native-skia";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
+import { useState } from "react";
 import { useDerivedValue, useReducedMotion, type SharedValue } from "react-native-reanimated";
 
 /**
@@ -48,10 +49,14 @@ function Ribbon({ spec, clock, width, height, still }: { spec: (typeof ribbons)[
   return <Path path={path} style="stroke" strokeWidth={stroke} strokeCap="round" color={color} />;
 }
 
+// Every screen draws its own canvas, so all of them read one app-wide clock: two pages crossfading show the same sky.
+const EPOCH = Date.now();
 export function CalmCanvas() {
   const { width, height } = useWindowDimensions();
   const still = useReducedMotion();
-  const clock = useClock();
+  const local = useClock();
+  const [since] = useState(() => Date.now() - EPOCH);
+  const clock = useDerivedValue(() => local.value + since);
   return <View pointerEvents="none" style={StyleSheet.absoluteFill}>
     <Canvas style={StyleSheet.absoluteFill}>
       <Rect x={0} y={0} width={width} height={height} color="#FAFAFA" />
