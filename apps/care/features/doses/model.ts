@@ -70,12 +70,12 @@ export function dosesToday(meds: ScheduledMed[], dischargedAt: string | undefine
     .sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime());
 }
 
-export type WeekDay = { label: string; state: "all" | "some" | "none" | "ahead" | "free" };
+export type WeekDay = { label: string; state: "all" | "some" | "none" | "ahead" | "free"; done: number; due: number };
 
 /**
  * Home's "this week" review: one entry per day from discharge day (at most the last 7), whether every
- * dose that was due that day is marked taken. "ahead": doses still to come today and none missed yet;
- * "free": nothing scheduled that day.
+ * dose that was due that day is marked taken, and how many (`done` of `due`, for the bar charts).
+ * "ahead": doses still to come today and none missed yet; "free": nothing scheduled that day.
  */
 export function weekOf(meds: ScheduledMed[], dischargedAt: string | undefined, taken: string[], now: Date): WeekDay[] {
   if (!dischargedAt) return [];
@@ -86,6 +86,6 @@ export function weekOf(meds: ScheduledMed[], dischargedAt: string | undefined, t
     const label = new Date(day * DAY - MYT + 12 * 3600_000).toLocaleDateString("en-GB", { weekday: "narrow", timeZone: "Asia/Kuala_Lumpur" });
     const pastDue = due.filter(d => d.dueAt <= now && !taken.includes(d.key)).length;
     const state = !due.length ? "free" : done === due.length ? "all" : day === today && !pastDue ? (done ? "some" : "ahead") : done ? "some" : "none";
-    return { label, state };
+    return { label, state, done, due: due.length };
   });
 }

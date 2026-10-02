@@ -90,6 +90,7 @@ test("the week shows each day since discharge: all taken, some, none, still ahea
   const week = weekOf(meds, out, [d27.key, d28[0].key], now);
   expect(week.map(d => d.state)).toEqual(["all", "some", "none"]); // 27 all; 28 missed cetirizine; 29 azithro 08:00 is past and not taken
   expect(week).toHaveLength(3);
+  expect(week.map(d => `${d.done}/${d.due}`)).toEqual(["1/1", "1/2", "0/2"]); // the bar charts' taken per day
   const fresh = weekOf(meds, out, [d27.key, ...d28.map(d => d.key)], at("2026-09-29T23:00:00Z"));
   expect(fresh.at(-1).state).toBe("ahead"); // 07:00 on 30 Sep: the azithromycin course has ended, cetirizine is due at 21:00
 });

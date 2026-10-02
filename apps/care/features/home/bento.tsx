@@ -1,21 +1,23 @@
 import { router } from "expo-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { Pressable, View, type ViewStyle } from "react-native";
+import { Pressable, View } from "react-native";
 import Animated from "react-native-reanimated";
 import Svg, { Circle, Path } from "react-native-svg";
 import { useCheckIns } from "@/features/check-ins/today";
 import { markTaken, rise, useNextDose, useNow } from "@/features/doses";
-import { dosesToday, early, weekOf, type WeekDay } from "@/features/doses/model";
+import { dosesToday, early, weekOf } from "@/features/doses/model";
+import { weekSaid, weekStrip } from "@/features/doses/strip";
+import { WeekChart } from "@/features/doses/week-chart";
 import { dayLabel, nextVisit, timeLabel, away } from "@/features/follow-ups/lines";
 import { useFollowUps } from "@/features/follow-ups/row";
 import { consistency, latestUpdate, nextCapsule, type Update } from "@/features/home";
 import { useMessageNeeds } from "@/features/messages/row";
 import { Text } from "@/lib/text";
 import "@/features/doses/strings";
-import { tFor, useLang, useT } from "@/lib/i18n";
+import { tFor, useLang } from "@/lib/i18n";
 import "./strings";
 import { HalftoneGlint, type Pattern } from "@/lib/halftone";
-import { accent, palette } from "@/lib/theme";
+import { palette } from "@/lib/theme";
 import { CARD_RADIUS, HoldButton, ICON, pillStyle, surfaceStyle } from "@/lib/ui";
 
 /**
@@ -100,24 +102,24 @@ export function MedicinesTile({ index, still }: { index: number; still: boolean 
   </Tile>;
 }
 
-// A day's bar: azure into violet when every dose was taken, grey otherwise; its height says how much was taken.
-const BAR: Record<WeekDay["state"], number> = { all: 1, some: 0.6, none: 0.3, ahead: 0.45, free: 0.15 };
-
-/** Consistency (short): the share of the week's doses taken, big, over a bar per day since discharge (at most 7). Hidden until two days have counted. */
+/**
+ * Consistency (short): the share of the week's doses taken, big, over a bar per day since discharge (at most 7)
+ * of how many of that day's doses were taken. Hidden until two days have counted.
+ */
 export function ConsistencyTile({ index, still }: { index: number; still: boolean }) {
   const now = useNow();
   const { plan, taken, meds } = useNextDose(now);
   const out = plan?.status === "discharged" ? plan.dischargedAt : undefined;
-  const t = useT();
+  const lang = useLang(), t = tFor(lang);
   const pct = consistency(meds, out, taken, now), week = weekOf(meds, out, taken, now);
   if (pct === undefined) return null;
-  return <Tile index={index} still={still} dither={{ pattern: "lines", corner: "bottom-right" }} label={t("home.consistencyA11y", { line: t("home.pctTaken", { pct }) })}
+  // Every day since discharge, ending today: the tile is the button, so the chart is still and folds into its label.
+  const days = weekStrip(week, now, lang, 6, week.length);
+  return <Tile index={index} still={still} dither={{ pattern: "lines", corner: "bottom-right" }} label={t("home.consistencyA11y", { line: `${t("home.pctTaken", { pct })}. ${weekSaid(days, lang)}` })}
     onPress={() => router.push(out ? "/dose" : "/discharge")}>
     <Kicker>{t("home.consistency")}</Kicker>
     <Text style={{ fontSize: 28, lineHeight: 32, fontWeight: "500", letterSpacing: -1.2, color: palette.ink, fontVariant: ["tabular-nums"] }}>{pct}<Text style={{ fontSize: 14, fontWeight: "400", color: palette.faint }}> %</Text></Text>
-    <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 6, height: 32 }}>
-      {week.map((d, i) => <View key={i} style={{ width: 7, height: `${BAR[d.state] * 100}%`, borderRadius: 4, backgroundColor: d.state === "all" ? accent[1] : "rgba(31,31,31,0.12)", experimental_backgroundImage: d.state === "all" ? `linear-gradient(180deg, ${accent[2]}, ${accent[1]})` : undefined } as ViewStyle} />)}
-    </View>
+    <WeekChart days={days} height={60} />
   </Tile>;
 }
 
