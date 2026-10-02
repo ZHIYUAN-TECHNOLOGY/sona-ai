@@ -16,7 +16,11 @@ import { removeQuestion, saveQuestion, useQuestions, useSentQuestions } from "@/
 import { DOCK_SPACE } from "@/lib/dock";
 import { AnimatedText, Text, TextInput } from "@/lib/text";
 import { palette, space, type } from "@/lib/theme";
-import { Button, Card, Chip, CircleButton, field, ICON, surfaceStyle, Title, LoadError } from "@/lib/ui";
+import { Button, Card, Chip, CircleButton, field, ICON, QuickKey, surfaceStyle, Title, LoadError } from "@/lib/ui";
+import { useMessageNeeds } from "@/features/messages/row";
+import "@/features/doses/strings";
+
+const CALENDAR = "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2";
 
 // Motion: the screen rises in on a 40 ms ease-out stagger, and the timeline's stops rise again the
 // same way whenever the chosen day changes (after 60fps' Vakitler list fade-in). Still under Reduce Motion.
@@ -41,6 +45,7 @@ export default function ScheduleScreen() {
   const still = useReducedMotion();
   const lang = useLang(), t = tFor(lang);
   const requests = openRequests(useBookingRequests().data ?? [], now);
+  const reply = useMessageNeeds() > 0;
 
   const today = dayOf(now);
   const [picked, setPicked] = useState<number>();
@@ -57,15 +62,21 @@ export default function ScheduleScreen() {
   return <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
     contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     <Animated.View entering={rise(still, 0)} style={{ gap: 8 }}>
-      <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-        <CircleButton d={ICON.plus} label={t("fu.book")} onPress={() => router.push("/doctors")} />
-      </View>
       <Title accent={t("fu.title")} line={insight?.line} lineTone={insight?.tone} />
       {isLoading && <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} />}
       {!data && error && <LoadError query={query} />}
     </Animated.View>
 
-    <Animated.View entering={rise(still, 1)}>
+    {/* What there is to do from here, as quick-action keys with live status (the Medicine tab's shelf): book a visit, and
+        the care team. Replaces the bare + that said nothing until pressed. */}
+    <Animated.View entering={rise(still, 1)} style={{ flexDirection: "row", gap: 12 }}>
+      <QuickKey d={CALENDAR} label={t("fu.book")} hint={t("fu.bookHint")} onPress={() => router.push("/find-doctor")}
+        status={next ? t("fu.nextOn", { when: away(next.inDays, lang) }) : t("fu.noneBooked")} />
+      <QuickKey d={ICON.chat} label={t("dose.careTeam")} hint={t("dose.messageTeam")} onPress={() => router.push("/messages")}
+        status={reply ? t("dose.newReply") : t("dose.repliesShort")} tone={reply ? "news" : undefined} />
+    </Animated.View>
+
+    <Animated.View entering={rise(still, 2)}>
       <WeekStrip day={day} today={today} marks={marks} still={still} onPick={setPicked} a11y={d => dayA11y(d, today, visits, checkIns, marks[d], lang)} />
     </Animated.View>
 
