@@ -12,6 +12,7 @@ import { dayLabel } from "@/features/follow-ups/lines";
 import { useMessageNeeds } from "@/features/messages/row";
 import { clock, doseOf, dosesToday, early, isLate, untilLine, weekOf, whenWords, type DayDose, type Dose, type ScheduledMed } from "@/features/doses/model";
 import { foodOf, insight, weekStrip } from "@/features/doses/strip";
+import { WeekChart } from "@/features/doses/week-chart";
 import "@/features/doses/strings";
 import { CAMERA_GLYPH, PhotoMedicines, usePhotoMedicines } from "@/features/doses/photo";
 import "@/features/messages/strings";
@@ -32,7 +33,7 @@ let shown = false;
 
 /**
  * Medicine (the AI Health Companion kit's "Today's Medicines" and "Time to take Medicines"): one
- * insight line on today and the week as dots, then the one feature card for the next dose: time,
+ * insight line on today and the week as bars of doses taken per day, then the one feature card for the next dose: time,
  * the medicine drawn big, how to take it, and a hold to mark it taken, or "Remind me later", which
  * steps the card aside for 15 min in this app. When nothing is due the same card says what is next.
  * Below, every medicine to take as one list (rows opening their sheets), photo medicines, then the care team one tap away.
@@ -60,8 +61,8 @@ export default function DoseScreen() {
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     <Animated.View entering={enter(0)} style={{ gap: 14 }}>
       <Title greeting={t("dose.titleLight")} accent={t("dose.titleBold")} line={line?.text} lineTone={line?.tone} />
-      {week && <Week days={week} />}
-      {/* A missed day shows amber above, so what to do about it sits right there, not at the foot of the page. */}
+      {week && <WeekChart days={week} height={96} interactive />}
+      {/* A missed day shows in the bars above, so what to do about it sits right there, not at the foot of the page. */}
       {missed && <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 12, borderRadius: 16, borderCurve: "continuous", backgroundColor: palette.amberWash }}>
         <View style={{ width: 8, height: 8, borderRadius: 4, marginTop: 6, backgroundColor: palette.warning }} />
         <Text style={{ flex: 1, ...type.footnote, fontWeight: "500", color: palette.amber }}>{t("dose.missedTip")}</Text>
@@ -97,19 +98,6 @@ export default function DoseScreen() {
         {!missed && <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("dose.missedTip")}</Text>}
       </>}
   </ScrollView>;
-}
-
-/** The week as seven small dots under the insight: green all taken, amber one missed, today ringed in blue. Read out as one line. */
-function Week({ days }: { days: ReturnType<typeof weekStrip> }) {
-  const t = tFor(useLang());
-  const said = days.filter(d => d.mark || d.today).map(d => `${d.today ? t("dose.weekToday") : `${d.weekday} ${d.date}`}${d.mark === "green" ? t("dose.weekAll") : d.mark === "amber" ? t("dose.weekMissed") : ""}`).join("; ");
-  return <View accessible accessibilityLabel={t("dose.week", { days: said })} style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 4 }}>
-    {days.map(d => <View key={d.key} style={{ alignItems: "center", gap: 6, minWidth: 32 }}>
-      <Text maxFontSizeMultiplier={1.3} style={{ fontSize: 12, lineHeight: 16, fontWeight: d.today ? "700" : "500", color: d.today ? palette.blue : palette.faint }}>{d.weekday.slice(0, 2)}</Text>
-      <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: d.mark === "green" ? palette.success : d.mark === "amber" ? palette.warning : palette.line,
-        borderWidth: d.today ? 2 : 0, borderColor: palette.blue }} />
-    </View>)}
-  </View>;
 }
 
 /** A white capsule for a value (the dose time), amber when the dose is late. */

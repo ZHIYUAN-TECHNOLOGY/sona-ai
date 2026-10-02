@@ -7,21 +7,31 @@ const MYT = 8 * 3600_000, DAY = 86_400_000;
 const GRACE = 6 * 3600_000;
 const dayOf = (d: Date) => Math.floor((d.getTime() + MYT) / DAY);
 
-export type StripDay = { key: number; weekday: string; date: string; today: boolean; mark?: "green" | "amber" };
+export type StripDay = { key: number; weekday: string; narrow: string; date: string; today: boolean; mark?: "green" | "amber" } & Partial<Omit<WeekDay, "label">>;
 
 /**
  * The medicine screen's 7-day strip: up to 3 days back since discharge, today, then the days ahead.
- * Days so far carry a dot from `weekOf`: green when every dose was taken, amber when one was missed.
+ * Days so far carry a dot from `weekOf` (green when every dose was taken, amber when one was missed)
+ * and its state and counts; days ahead have none. Home asks for the days so far only (`back` 6, `length` the week's).
  */
-export function weekStrip(week: WeekDay[], now: Date, lang: Lang = "en"): StripDay[] {
-  const today = dayOf(now), past = Math.min(Math.max(week.length - 1, 0), 3);
-  return Array.from({ length: 7 }, (_, i) => {
-    const day = today - past + i, state = week[week.length - 1 - past + i]?.state;
+export function weekStrip(week: WeekDay[], now: Date, lang: Lang = "en", back = 3, length = 7): StripDay[] {
+  const today = dayOf(now), past = Math.min(Math.max(week.length - 1, 0), back);
+  return Array.from({ length }, (_, i) => {
+    const day = today - past + i, { state, done, due } = week[week.length - 1 - past + i] ?? {} as Partial<WeekDay>;
     const noon = new Date(day * DAY - MYT + 12 * 3600_000);
     const mark = state === "all" && day <= today ? "green" : (state === "some" || state === "none") && day < today ? "amber" : undefined;
-    return { key: day, weekday: formatDate(lang, noon, "weekday"), date: String(new Date(noon.getTime() + MYT).getUTCDate()), today: day === today, mark };
+    return { key: day, weekday: formatDate(lang, noon, "weekday"), narrow: formatDate(lang, noon, "narrow"), state, done, due, date: String(new Date(noon.getTime() + MYT).getUTCDate()), today: day === today, mark };
   });
 }
+
+/** A bar's one line: "Tue · 3 of 4 taken", "Today · 1 of 3 so far", "Thu · nothing due", "Fri · still to come". */
+export function dayLine(d: StripDay, lang: Lang = "en") {
+  const t = tFor(lang), day = d.today ? t("dose.weekToday") : d.weekday, n = { day, done: d.done ?? 0, due: d.due ?? 0 };
+  return d.due === undefined ? t("dose.dayAhead", n) : !d.due ? t("dose.dayFree", n) : t(d.today && n.done < d.due ? "dose.daySoFar" : "dose.dayTaken", n);
+}
+/** The chart read out as one line: "This week. Mon 4 of 4 taken; Tue nothing due; Today 1 of 3 so far" (days ahead left out). */
+export const weekSaid = (days: StripDay[], lang: Lang = "en") =>
+  tFor(lang)("dose.week", { days: days.filter(d => d.due !== undefined).map(d => dayLine(d, lang).replace(" · ", " ")).join("; ") });
 
 /** A dose's state: taken; `now` (within 2 h or late, so a hold logs it); `later`; `missed` (6 h late, never offered, so no double dose). */
 export function checkState(d: DayDose, now: Date): "taken" | "now" | "later" | "missed" {

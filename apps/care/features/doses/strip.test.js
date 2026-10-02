@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { checkState, foodOf, insight, weekStrip } from "./strip";
+import { checkState, dayLine, foodOf, insight, weekSaid, weekStrip } from "./strip";
 
 const now = new Date("2026-09-27T04:00:00Z"); // Sun 27 Sep, noon in Malaysia
 const dose = (iso, taken = false) => ({ name: "Cetirizine", line: "", dueAt: new Date(iso), key: `Cetirizine@${iso}`, taken });
@@ -11,6 +11,14 @@ test("the strip shows up to 3 days back, today selected, then the days ahead; do
   expect(days.map(d => d.mark ?? "-")).toEqual(["amber", "amber", "green", "-", "-", "-", "-"]);
   expect(days.findIndex(d => d.today)).toBe(3);
   expect(weekStrip([{ label: "", state: "ahead" }], now).findIndex(d => d.today)).toBe(0); // discharged today
+});
+
+test("each bar says its day in one line, and the chart reads out the days so far", () => {
+  const week = [["all", 4, 4], ["some", 3, 4], ["free", 0, 0], ["some", 1, 3]].map(([state, done, due]) => ({ label: "", state, done, due }));
+  const home = weekStrip(week, now, "en", 6, week.length); // home: only the days since discharge, ending today
+  expect(home.map(d => dayLine(d))).toEqual(["Thu · 4 of 4 taken", "Fri · 3 of 4 taken", "Sat · nothing due", "Today · 1 of 3 so far"]);
+  expect(dayLine(weekStrip(week, now)[4])).toBe("Mon · still to come");
+  expect(weekSaid(weekStrip(week, now))).toBe("This week. Thu 4 of 4 taken; Fri 3 of 4 taken; Sat nothing due; Today 1 of 3 so far");
 });
 
 test("a dose is holdable from 2 h before until 6 h late; later ones wait, missed ones are never offered", () => {
