@@ -3,7 +3,7 @@ import { router, useIsFocused } from "expo-router";
 import { DrawnCheck } from "@/components/sona/parts";
 import { EdgeBlur } from "@/components/sona/edge-blur";
 import { MyDay } from "@/features/day";
-import { ToolGrid, type ShelfCollapse } from "@/components/sona/quick-actions";
+import { ToolGrid } from "@/components/sona/quick-actions";
 import { canDischarge } from "@/features/discharge/model";
 import { useHomeActions, visitNeed, visitTools, type VisitNeed } from "./quick-actions";
 import { openSession } from "./navigation";
@@ -137,12 +137,11 @@ function Round({ children, label, onPress }: { children: ReactNode; label: strin
  * Floating header: menu on the left; patient messages and follow-up tasks on the right (what a clinician checks
  * between patients). Inside an encounter, the patient chip joins it so every answer's subject stays visible.
  */
-export function TopBar({ patient, inEncounter, openTasks, faded, tall = false, onMenu, onBack, onPatient, onTasks, onNew }: { patient?: Patient; inEncounter: boolean; openTasks: number; faded: boolean; tall?: boolean; onMenu: () => void; onBack?: () => void; onPatient: () => void; onTasks: () => void; onNew?: () => void }) {
+export function TopBar({ patient, inEncounter, openTasks, faded, onMenu, onBack, onPatient, onTasks, onNew }: { patient?: Patient; inEncounter: boolean; openTasks: number; faded: boolean; onMenu: () => void; onBack?: () => void; onPatient: () => void; onTasks: () => void; onNew?: () => void }) {
   const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();
   return <View pointerEvents="box-none" style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
-    {/* `tall` while home's collapsed shortcuts show: the fade reaches under the capsule, so no text runs beside it. */}
-    <Animated.View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top + (tall ? 132 : 84), opacity: faded ? 1 : 0, transitionProperty: ["opacity", "height"], transitionDuration: 200, transitionTimingFunction: EASE_OUT_CSS }}>
+    <Animated.View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top + 84, opacity: faded ? 1 : 0, transitionProperty: "opacity", transitionDuration: 200, transitionTimingFunction: EASE_OUT_CSS }}>
       <EdgeBlur edge="top" style={{ flex: 1 }} />
     </Animated.View>
     <View pointerEvents="box-none" style={{ paddingTop: insets.top + 6, paddingHorizontal: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
@@ -188,7 +187,7 @@ function InboxButton() {
 function greeting() { const hour = new Date().getHours(); return hour < 12 ? "Good morning." : hour < 18 ? "Good afternoon." : "Good evening."; }
 
 /** Idle canvas: one greeting, one line of context, a couple of starting points. */
-export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatient, onShelf, shelfCollapse }: { patient?: Patient; patients: Patient[]; onPick: (item: Suggestion) => void; onChoosePatient: () => void; onSelectPatient: (id: string) => void; onShelf?: (windowBottom: number) => void; shelfCollapse?: ShelfCollapse }) {
+export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatient }: { patient?: Patient; patients: Patient[]; onPick: (item: Suggestion) => void; onChoosePatient: () => void; onSelectPatient: (id: string) => void }) {
   const { reducedMotion } = useAccessibleEffects();
   const { encounters } = useEncounter();
   const result = usePendingResult(patient?.id); // the same result Today and Patients flag
@@ -199,7 +198,7 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
   // Nothing is centred or pinned to the bottom, so the gap never stretches with screen height.
   // Without a visit, the greeting and the ranked day are one section: MyDay owns the header.
   if (!patient) return <View style={{ paddingTop: 20 }}><MyDay patients={patients} greeting={greeting().replace(/\.$/, "")} onOpen={(id, open) => openSession(id, open)}
-    actions={homeKeys} onShelf={onShelf} shelfCollapse={shelfCollapse} /></View>;
+    actions={homeKeys} /></View>;
   // Glance to decision: who and when in one line, the one next step with its action (the screen's one
   // feature card), every tool in view grouped by when it's used, then two questions worth asking.
   const encounter = encounters[patient.id], name = first(patient);

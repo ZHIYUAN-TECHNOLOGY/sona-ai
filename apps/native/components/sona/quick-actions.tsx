@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, View, useWindowDimensions } from "react-native";
-import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
 import { HalftoneGlint, HalftoneShimmer } from "./halftone-shimmer";
 import { Press } from "./parts";
 import { riseIn } from "./motion";
@@ -88,53 +88,17 @@ function Key({ a, index, shimmer, wide = false }: { a: QuickAction; index: numbe
   </Animated.View>;
 }
 
-/**
- * Shelf → capsule, driven by the scroll offset on the UI thread (after Neuecast's player folding into its
- * mini player, calmer: no snap, no bounce). `from` is the offset where the shelf's bottom meets the capsule's.
- * Over the shelf's last 90 pt the keys fade and settle back 4%; the capsule fades and slides in across
- * `from` − 36 … `from` + 28, so the two overlap into one hand-off instead of a pop at a threshold.
- */
-export type ShelfCollapse = { scroll: SharedValue<number>; from: number };
-const SHELF_FADE = 90, CAPSULE_IN: [number, number] = [-36, 28];
 
 let shimmered = false;
-export function QuickActions({ actions, animate = true, collapse }: { actions: QuickAction[]; animate?: boolean; collapse?: ShelfCollapse }) {
+export function QuickActions({ actions, animate = true }: { actions: QuickAction[]; animate?: boolean }) {
   const { reducedMotion } = useAccessibleEffects();
   // The shimmer hint plays the first time a shelf appears in a session, then never again.
   const [shimmer, setShimmer] = useState(false);
   useEffect(() => { if (animate && !shimmered) { shimmered = true; setShimmer(true); } }, [animate]);
-  const folding = useAnimatedStyle(() => {
-    if (!collapse) return {};
-    const p = interpolate(collapse.scroll.value, [collapse.from - SHELF_FADE, collapse.from], [0, 1], "clamp");
-    return { opacity: 1 - p, transform: [{ scale: reducedMotion ? 1 : 1 - 0.04 * p }] };
-  });
-  return <Animated.View style={[{ transformOrigin: "top" }, folding]}>
+  return <Animated.View>
     <Animated.View entering={animate && !reducedMotion ? riseIn({ delay: 60, distance: 10, duration: 380 }) : undefined} style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
       {actions.map((a, i) => <Key key={a.key} a={a} index={i} shimmer={shimmer} wide={actions.length % 2 === 1 && i === actions.length - 1} />)}
     </Animated.View>
-  </Animated.View>;
-}
-
-/** The shelf flattened: a slim glass capsule of glyphs with counts, taking over from the shelf as it scrolls away. */
-export function QuickRow({ actions, scroll, from, top }: { actions: QuickAction[]; scroll: SharedValue<number>; from: number; top: number }) {
-  const { reducedMotion } = useAccessibleEffects();
-  const style = useAnimatedStyle(() => {
-    const p = interpolate(scroll.value, [from + CAPSULE_IN[0], from + CAPSULE_IN[1]], [0, 1], "clamp");
-    return { opacity: p, transform: [{ translateY: reducedMotion ? 0 : (1 - p) * -10 }, { scale: reducedMotion ? 1 : 0.94 + 0.06 * p }] };
-  });
-  const pointer = useAnimatedStyle(() => ({ pointerEvents: scroll.value > from ? "box-none" : "none" }) as never);
-  return <Animated.View style={[{ position: "absolute", left: 0, right: 0, top, zIndex: 3, alignItems: "center" }, style, pointer]}>
-    <Glass style={{ borderRadius: 22, boxShadow: "0 6px 18px rgba(40,70,140,0.12)" }}>
-      {/* Frost over the glass: the shelf it replaces often sits right behind it. */}
-      <View pointerEvents="none" style={{ position: "absolute", inset: 0, backgroundColor: "rgba(248,250,253,0.86)" }} />
-      <View style={{ flexDirection: "row", paddingHorizontal: 6, paddingVertical: 5, gap: 2 }}>
-        {actions.map(a => { const urgent = a.tone === "urgent"; return <Pressable key={a.key} accessibilityRole="button" accessibilityLabel={`${a.label}. ${a.status}`} onPress={() => { tap(); a.onPress(); }}
-          style={({ pressed }) => ({ height: 34, minWidth: 52, paddingHorizontal: 12, borderRadius: 17, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, backgroundColor: pressed ? "rgba(255,255,255,0.5)" : "transparent" })}>
-          <Icon name={a.icon} size={15} color={DISC[a.tone ?? "calm"].ink} />
-          {!!a.badge && <Text style={{ ...type.footnote, fontWeight: "700", color: urgent ? palette.red : palette.ink, fontVariant: ["tabular-nums"] }}>{a.badge}</Text>}
-        </Pressable>; })}
-      </View>
-    </Glass>
   </Animated.View>;
 }
 

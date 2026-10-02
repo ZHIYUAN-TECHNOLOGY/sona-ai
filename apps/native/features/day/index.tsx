@@ -7,7 +7,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import Animated, { Easing, FadeIn, FadeOut, FadeOutDown, interpolate, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
-import { QuickActions, type QuickAction, type ShelfCollapse } from "@/components/sona/quick-actions";
+import { QuickActions, type QuickAction } from "@/components/sona/quick-actions";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Chip, Expand, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
@@ -271,8 +271,7 @@ function MonthCard({ offset, counts, onPick, onClose }: { offset: number; counts
   </>;
 }
 
-export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, shelfCollapse, onOpen: open }: { patients: Patient[]; greeting: string; actions: QuickAction[]; onShelf?: (windowBottom: number) => void; shelfCollapse?: ShelfCollapse; onOpen: (patientId: string, open: DayItem["open"]) => void }) {
-  const shelfRef = useRef<View>(null);
+export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: open }: { patients: Patient[]; greeting: string; actions: QuickAction[]; onOpen: (patientId: string, open: DayItem["open"]) => void }) {
   const [calendar, setCalendar] = useState(false);
   // Insight first: the ranked day leads, and the 24-hour ruler waits behind one row (it is navigation, not the answer).
   const [timeline, setTimeline] = useState(false);
@@ -339,7 +338,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onShelf, s
   // Insight first: the most urgent item leads, the shortcuts follow, without a key that repeats it.
   // The shelf reports where it ends, so the collapsed capsule appears only once it has scrolled away.
   const keys = top?.kind === "result" ? actions.filter(a => a.key !== "results") : actions;
-  const shelf = <View ref={shelfRef} onLayout={() => shelfRef.current?.measureInWindow((_x, y, _w, h) => onShelf?.(y + h))}><QuickActions actions={keys} collapse={shelfCollapse} /></View>;
+  const shelf = <QuickActions actions={keys} />;
 
   return <View style={{ gap: 14 }}>
     <View style={{ gap: 16, zIndex: 5 }}>

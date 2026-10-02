@@ -25,7 +25,6 @@ import { useEncounter } from "./store";
 import type { Capability, FeatureProps, FocusView, RequestState, ResponseCard } from "./types";
 import { VoiceDock } from "./voice-dock";
 import { Bubble, type LiveAdapter } from "./sona-live";
-import { QuickRow } from "@/components/sona/quick-actions";
 import { useServerEncounter } from "@/features/live/sync";
 import { useHomeActions } from "./quick-actions";
 import { defaultMedications } from "./clinical-state";
@@ -106,16 +105,10 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   // Attachments picked in the dock wait here and go out with the next question.
   const [pending, setPending] = useState<Attachment[]>([]);
   const [scrolled, setScrolled] = useState(false);
-  // Home: the quick-action grid collapses into a sticky row once it scrolls under the top bar.
+  // The offset lives on the UI thread; React only hears when the page leaves the top (the top bar's fade).
   const scrollSV = useSharedValue(0);
-  // The scroll offset where the grid's bottom meets the capsule's (capsule at top + 62, 44 pt tall), measured from the grid.
-  const [shelfFrom, setShelfFrom] = useState(210);
-  const [capsule, setCapsule] = useState(false);
-  // The offset lives on the UI thread, so the shelf → capsule hand-off follows the finger every frame;
-  // React only hears about the two booleans below when they flip.
   const onScroll = useAnimatedScrollHandler(event => { scrollSV.set(event.contentOffset.y); });
   useAnimatedReaction(() => scrollSV.value > 8, (now, before) => { if (now !== before) scheduleOnRN(setScrolled, now); });
-  useAnimatedReaction(() => scrollSV.value > shelfFrom, (now, before) => { if (now !== before) scheduleOnRN(setCapsule, now); }, [shelfFrom]);
   // Sidebar: the page slides right to reveal it. A finger drives it, so springs carry velocity.
   const { reducedMotion } = useAccessibleEffects();
   const [drawer, setDrawer] = useState(false);
@@ -347,8 +340,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       onScroll={onScroll}
       onScrollEndDrag={syncTab} onMomentumScrollEnd={syncTab}
       contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + (!home && sections.length >= 2 ? 112 : 72), paddingBottom: dockH + 32, flexGrow: 1 }}>
-      {!talking ? <Home patient={patient} patients={patients} onPick={pick} onChoosePatient={() => router.push("/patients")} onSelectPatient={id => openSession(id)}
-        onShelf={bottom => setShelfFrom(Math.max(0, Math.round(bottom + scrollSV.get() - (insets.top + 106))))} shelfCollapse={{ scroll: scrollSV, from: shelfFrom }} />
+      {!talking ? <Home patient={patient} patients={patients} onPick={pick} onChoosePatient={() => router.push("/patients")} onSelectPatient={id => openSession(id)} />
       : home ? <View style={{ gap: 44 }}>
         {thread.map(entry => <View key={entry.id} collapsable={false} onLayout={event => {
           const { y } = event.nativeEvent.layout;
@@ -379,8 +371,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     {talking && !home && sections.length >= 2 && !active && <View pointerEvents="box-none" style={{ position: "absolute", top: TAB_TOP, left: 0, right: 0, alignItems: "center", zIndex: 2 }}>
       <SectionTabs sections={sections} active={Math.min(activeTab, sections.length - 1)} onPick={jumpTo} />
     </View>}
-    {home && !talking && <QuickRow actions={homeKeys} scroll={scrollSV} from={shelfFrom} top={insets.top + 62} />}
-    <TopBar {...bar} faded={scrolled || talking} tall={home && !talking && capsule} />
+    <TopBar {...bar} faded={scrolled || talking} />
     </View>
 
     {/* Everything passing under the dock blurs progressively and fades into the canvas (a frosted band as tall as the dock
