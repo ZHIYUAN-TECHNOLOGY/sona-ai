@@ -32,16 +32,23 @@ export default function RootLayout() {
     <CalmCanvas />
     {/* The navigation theme's own background (#F2F2F2) would cover the canvas; make it clear. */}
     <ThemeProvider value={{ ...DefaultTheme, colors: { ...DefaultTheme.colors, background: "transparent" } }}>
-    {/* No header band: every screen runs to the top like home; screens off the dock carry their own glass back button. */}
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" } }}>
-      <Stack.Screen name="index" />
+    {/* No header band: every screen runs to the top like home; screens off the dock carry their own glass back button.
+        Every screen is clear over the one living canvas, so a push crossfades (250 ms; the stack's default fade is 500)
+        rather than slides: a slide would drag one clear page across another, both showing. The swipe back drives the
+        same fade from anywhere on the screen. Screens out of sight are frozen, so their clocks and live queries don't
+        re-render under the one in front. */}
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" }, animation: "fade", animationDuration: 250,
+      animationMatchesGesture: true, fullScreenGestureEnabled: true, freezeOnBlur: true }}>
+      {/* The dock's four places switch like tabs: a crossfade, never a swipe back between them. */}
+      <Stack.Screen name="index" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="follow-ups" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="dose" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="doctors" options={{ gestureEnabled: false }} />
       <Stack.Screen name="join" options={{ presentation: "modal", headerShown: false }} />
       <Stack.Screen name="medicine" options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 40, contentStyle: { backgroundColor: "#FFFFFF" } }} />
       <Stack.Screen name="about-data" options={{ presentation: "formSheet", sheetAllowedDetents: "fitToContents", sheetGrabberVisible: true, sheetCornerRadius: 40, contentStyle: { backgroundColor: "#FFFFFF" } }} />
       {/* Ask Sona Care is a full screen (Life OS AI chat), opened from the orb in the dock. */}
       <Stack.Screen name="assistant" />
-      {/* Find a doctor: the directory, faded in as the search it opens (60fps Google search morph). */}
-      <Stack.Screen name="find-doctor" options={{ animation: "fade" }} />
     </Stack>
     <Dock />
     <LiveUpdates />

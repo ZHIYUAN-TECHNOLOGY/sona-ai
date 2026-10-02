@@ -32,6 +32,8 @@ const MESSAGES = "M7.9 20A9 9 0 1 0 4 16.1L2 22Z";
 // Five 50 pt keys + pad (260) and the 66 pt orb fit 335 pt, the narrowest phone less its 20 pt gutters; every key stays over 44 pt.
 const TAB = 50, PAD = 4, ORB = 56;
 
+let arrived = false;
+
 export function Dock() {
   const path = usePathname();
   const insets = useSafeAreaInsets();
@@ -51,9 +53,13 @@ export function Dock() {
   }, [at, still, x, stretch]);
   const indicator = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }, { scaleX: stretch.value }] }));
   // It arrives with the opening's reveal, never over Sona while the app is still opening.
-  if (state !== "joined" || at < 0 || !revealed) return null;
+  const shown = state === "joined" && at >= 0 && revealed;
+  useEffect(() => { if (shown) arrived = true; }, [shown]);
+  if (!shown) return null;
 
-  return <Animated.View entering={still ? undefined : FadeIn.duration(560).easing(Easing.inOut(Easing.cubic))} exiting={FadeOut.duration(120)} pointerEvents="box-none"
+  // The first time, it arrives with the opening's slow reveal; after that (back from a page) on the stack's 250 ms crossfade.
+  const arrive = arrived ? FadeIn.duration(250) : FadeIn.duration(560).easing(Easing.inOut(Easing.cubic));
+  return <Animated.View entering={still ? undefined : arrive} exiting={FadeOut.duration(120)} pointerEvents="box-none"
     style={{ position: "absolute", left: 20, right: 20, bottom: Math.max(insets.bottom, 12) + 2, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
     <View style={{ borderRadius: 999, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.9)", boxShadow: "0 14px 30px -16px rgba(80,60,140,0.45)" }}>
       <BlurView accessibilityRole="tablist" intensity={60} tint="light" style={{ flexDirection: "row", padding: PAD, backgroundColor: "rgba(255,255,255,0.62)" }}>
