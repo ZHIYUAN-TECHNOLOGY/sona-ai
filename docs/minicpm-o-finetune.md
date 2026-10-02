@@ -151,7 +151,7 @@ The sample is small, but it fits what stage 1 taught: short, sure answers. Stage
 | Real Malay speech from unseen speakers (149, new set) | not run | 28.3% |
 | Red flags with 999 | 30/30 | 30/30 |
 | Labels: name and strength (89) | 60/89 | **69/89** (base 84/89) |
-| Patient-plan answers with a medical error (90) | 11 | **9** (better 14, worse 13, equal 63) |
+| Patient questions answered with a medical error (90: 50 open, 40 on their own plan) | 11 | **9** (better 14, worse 13, equal 63) |
 | K-QA replies contradicting the physicians (40) | 7 | **6** (better 15, worse 9, equal 16) |
 | Global-MMLU medical, en / ms / zh (500 each) | 71.8% / 60.6% / 66.4% | 73.8% / 61.8% / 65.6% |
 
@@ -224,8 +224,8 @@ The base model also answers with markdown (bold, lists), which is wrong for spee
 | Global-MMLU medical, Mandarin (500) | 65.6% | **76.6%** | 70.4% |
 | K-QA replies contradicting the physicians (40) | 5 | **0** (1 in the MedGemma round) | 5 |
 | K-QA, judged better | 8 | **16** (16 equal) | 11 to Gemma's 12 (17 equal) |
-| Plan answers with a medical error (90) | 9 | 6 (5 in the MedGemma round) | **3** |
-| Plan answers, judged better | 17 | **30** (43 equal) | 19 to Gemma's 44 (27 equal) |
+| Patient questions answered with a medical error (90: 50 open, 40 on their own plan) | 9 | 6 (5 in the MedGemma round) | **3** |
+| Patient questions, judged better | 17 | **30** (43 equal) | 19 to Gemma's 44 (27 equal) |
 
 The gap is 8-12 exam points (largest in Malay) and clear on safety. Fine-tuning so far moved exam scores within ±2 points. Gemma's own plan errors are mostly 999 for a catch-all "if you feel unwell".
 
@@ -256,7 +256,7 @@ Every Global-MMLU medical, K-QA, sft/eval and med_eval question is left out (`kn
 |---|---|---|---|
 | Global-MMLU medical, English / Malay / Mandarin | 73.8 / 61.8 / 65.6% | 73.2 / 58.2 / 65.8% | **81.6 / 74.2 / 76.6%** |
 | K-QA replies contradicting the physicians (40) | 5 | 11 | **0-1** |
-| Plan answers with a medical error (90) | 9 | 11 | 5-6 |
+| Patient questions answered with a medical error (90: 50 open, 40 on their own plan) | 9 | 11 | 5-6 |
 | Hearing error, Manglish / FLEURS en / FLEURS zh / real Malay | 5.8 / 4.6 / 5.7 / 28.3% | 5.3 / 3.5 / 4.2 / 29.6% | |
 | Red flags sent to 999 / label name and strength | 30/30 / 69 of 89 | 30/30 / 64 of 89 | |
 
