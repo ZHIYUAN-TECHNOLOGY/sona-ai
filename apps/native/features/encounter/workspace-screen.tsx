@@ -297,8 +297,9 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
   });
   // The page's top bar.
   const bar = { patient, inEncounter: !home, openTasks: openTaskCount(patient ? [patient] : patients, encounters, server), onMenu: openDrawer,
-    onBack: home ? undefined : back, onPatient: () => router.push({ pathname: "/patients", params: { switch: "1" } }), onTasks: () => router.push("/tasks"),
-    onNew: thread.length ? () => { clearThread(); scroll.current?.scrollTo({ y: 0, animated: false }); } : undefined };
+    // Today with a conversation: Back returns to the day's dashboard (the menu stays one tap away there).
+    onBack: home ? (thread.length ? () => { clearThread(); scroll.current?.scrollTo({ y: 0, animated: false }); } : undefined) : back, onPatient: () => router.push({ pathname: "/patients", params: { switch: "1" } }), onTasks: () => router.push("/tasks"),
+  };
   const visitLive: LiveAdapter | undefined = patient && props && {
     scope: patient.name.split(" ")[0] ?? patient.name,
     ask: async question => {

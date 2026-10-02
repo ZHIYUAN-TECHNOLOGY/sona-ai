@@ -1,3 +1,4 @@
+import { clearThread } from "@/features/ask/thread";
 import { BrandIcon, type BrandIconName } from "@/components/sona/brand-icon";
 import { DataPill } from "@/components/sona/model-answer";
 import { useReduceMotionPreference } from "@/components/sona/accessibility";
@@ -83,7 +84,8 @@ export function Sidebar({ open, progress, onClose }: { open: boolean; progress: 
   const training = useTrainingStatus();
 
   const all: { title?: string; items: Item[] }[] = [
-    { items: [{ label: "Today", icon: "calendar", active: true, onPress: onClose }] },
+    // Home: the day's dashboard, from anywhere in Today (a conversation there steps aside).
+    { items: [{ label: "Home", sf: "house", active: true, onPress: () => { clearThread(); onClose(); } }] },
     { title: "My work", items: [
       // Fixture mode has no inbox: the item still opens it, without a count.
       { label: "Messages", icon: "feedback", detail: inbox.on ? inbox.line : undefined, badge: inbox.on ? { count: inbox.waiting, urgent: inbox.urgent > 0 } : undefined, show: can("messages.inbox"), onPress: go(() => router.push("/inbox")) },
