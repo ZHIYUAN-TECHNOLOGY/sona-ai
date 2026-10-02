@@ -205,7 +205,7 @@ export function ForecastTimeline({ beds, forecast, onOpen }: { beds: Bed[]; fore
     </View>
     {/* The chart reads as one image (the spoken forecast); the beds of a picked window are their own stops below. */}
     <View accessible accessibilityRole="image" accessibilityLabel={`Beds freeing in the next 24 hours. ${forecast.label}`}>
-      <BarChart data={data} maxY={top} tickCount={top + 1 <= 5 ? top + 1 : 3} barRatio={0.56} leftInset={18} bottomInset={22} topInset={6} animate={!reducedMotion} style={{ height: 112 }}
+      <BarChart data={data} maxY={top} tickCount={top + 1 <= 5 ? top + 1 : 3} barRatio={0.56} leftInset={18} bottomInset={22} topInset={6} animate={!reducedMotion} style={{ height: 96 }}
         onBarChange={(_, i) => { haptic("select"); setPicked(p => p === i && !windows[i]!.entries.length ? undefined : i); }}>
         <BarChart.Grid color="rgba(20,28,40,0.05)" />
         <BarChart.Highlight color="rgba(20,28,40,0.05)" radius={8} inset={4} />
@@ -225,7 +225,11 @@ export function ForecastTimeline({ beds, forecast, onOpen }: { beds: Bed[]; fore
           </Pressable>; })}
       </View>
     </Expand>
-    : <Text style={{ ...type.caption, color: palette.muted }}>Amber: a blocker still holds a bed · tap a bar for its beds</Text>}
-    <SampleLabel source="fixture" rule />
+    : null}
+    {/* The key and the honesty label share one line. */}
+    <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 10, rowGap: 4 }}>
+      <Text style={{ ...type.caption, flex: 1, minWidth: 180, color: palette.muted }}>{w ? "Tap a bed to open it" : "Amber: a blocker holds a bed · tap a bar"}</Text>
+      <SampleLabel source="fixture" rule />
+    </View>
   </Surface>;
 }

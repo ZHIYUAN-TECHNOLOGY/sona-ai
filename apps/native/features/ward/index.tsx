@@ -240,9 +240,9 @@ export function WardScreen() {
 
 /**
  * The decision card: blocked beds with a blocker nobody owns, most bed-hours waiting first (Today's rule,
- * unownedBlocked). Each bed's line opens its card; each blocker shows its suggested team as a light chip that
+ * unownedBlocked). Each bed's line opens its card; each blocker shows its suggested team as a quiet token that
  * assigns it alone, and the blocker that frees beds fastest (the forecast's unlock) says how much sooner. One
- * primary action on the card's first line assigns every suggested team at once, through the bed card's own assign (server or demo book), so
+ * primary action under the rows (review, then decide) assigns every suggested team at once, through the bed card's own assign (server or demo book), so
  * rows leave as owners land and the refusal comes back with Retry if a write fails. None: one line.
  */
 function NoOwner({ beds, owners, unlock, onAssign, onClear, assignError, onOpen }: { beds: Bed[]; owners: Record<string, Owner | undefined>; unlock?: { blockerId: string; hours: number }; onAssign?: (id: string, owner: Owner) => void; onClear?: () => void; assignError?: { id: string; owner: Owner; text: string }; onOpen: (bed: string) => void }) {
@@ -256,33 +256,30 @@ function NoOwner({ beds, owners, unlock, onAssign, onClear, assignError, onOpen 
     {onClear && Object.values(owners).some(Boolean) && <Chip label="Clear owners · demo" icon={<Icon name="arrow.counterclockwise" size={13} color={palette.ink} />} onPress={() => { haptic("select"); onClear(); }} />}
   </Surface>;
   return <Surface feature layout={motion} style={{ padding: 16, gap: 12 }}>
-    {/* The card's one primary action sits on its first line, in reach at a glance; it wraps under at large text. */}
-    <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 10, rowGap: 8 }}>
-      <Text style={{ ...type.overline, flexGrow: 1, flexShrink: 1, flexBasis: 160, color: palette.amber }}>No owner yet · {all.length} {all.length === 1 ? "blocker" : "blockers"}</Text>
-      {onAssign && all.length > 1 && <Pressable accessibilityRole="button" accessibilityLabel={`Assign all ${all.length} blockers to their suggested teams`} hitSlop={7}
-        onPress={() => { haptic("select"); all.forEach(x => onAssign(x.id, x.suggested)); }}
-        style={({ pressed }) => ({ minHeight: 34, paddingHorizontal: 14, borderRadius: 17, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: palette.dark, boxShadow: "0 6px 14px rgba(24,32,48,0.16)", transform: [{ scale: pressed ? 0.96 : 1 }] })}>
-        <Icon name="person.2" size={13} color={palette.white} />
-        <Text style={{ ...type.footnote, fontWeight: "600", color: palette.white }}>Assign all {all.length}</Text>
-      </Pressable>}
-    </View>
-    {rows.map((r, i) => <Animated.View key={r.bed} layout={motion} style={{ gap: 6, paddingTop: i ? 10 : 0, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)" }}>
+    <Text style={{ ...type.overline, color: palette.amber }}>No owner yet · {all.length} {all.length === 1 ? "blocker" : "blockers"}</Text>
+    {rows.map((r, i) => <Animated.View key={r.bed} layout={motion} style={{ gap: 4, paddingTop: i ? 8 : 0, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)" }}>
       <Pressable accessibilityRole="button" accessibilityLabel={`${r.bed}, ${r.name.split(" ")[0]}${r.hours > 0 ? `, about ${r.hours} bed-hours waiting` : ""}`} accessibilityHint="Opens the bed"
-        onPress={() => onOpen(r.bed)} style={{ minHeight: 36, flexDirection: "row", alignItems: "center", gap: 8 }}>
+        onPress={() => onOpen(r.bed)} style={{ minHeight: 32, flexDirection: "row", alignItems: "center", gap: 8 }}>
         <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{r.bed} · {r.name.split(" ")[0]}</Text>
         {r.hours > 0 && <Text style={{ ...type.caption, flex: 1, color: palette.muted }}>~{r.hours} bed-hours waiting</Text>}
         <Icon name="chevron.right" size={11} color={palette.muted} />
       </Pressable>
-      {r.blockers.map(x => { const fastest = unlock?.blockerId === x.id; return <View key={x.id} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+      {r.blockers.map(x => { const fastest = unlock?.blockerId === x.id; return <View key={x.id} style={{ minHeight: 34, flexDirection: "row", alignItems: "center", gap: 10 }}>
         <View style={{ flex: 1, gap: 1 }}>
           <Text style={{ ...type.footnote, color: palette.ink }}>{x.label}</Text>
           {fastest && <Text style={{ ...type.caption, fontWeight: "600", color: TEAL }}>Frees beds fastest · ~{unlock.hours} h sooner</Text>}
         </View>
-        {/* Without onAssign (a role the server refuses) the row reads only; the bed line still opens the bed. */}
-        {onAssign && <Chip filled label={x.suggested} icon={<Icon name="plus" size={11} color={palette.blue} />} accessibilityLabel={`Assign ${x.label.toLowerCase()} on ${r.bed} to ${x.suggested}`} onPress={() => onAssign(x.id, x.suggested)} />}
+        {/* The suggested team, one even column of quiet tokens; a tap assigns this blocker alone. Read-only without onAssign. */}
+        {onAssign ? <Pressable accessibilityRole="button" accessibilityLabel={`Assign ${x.label.toLowerCase()} on ${r.bed} to ${x.suggested}`} hitSlop={{ top: 7, bottom: 7 }} onPress={() => onAssign(x.id, x.suggested)}
+          style={({ pressed }) => ({ minWidth: 92, minHeight: 30, paddingHorizontal: 12, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: "#E6EEFC", transform: [{ scale: pressed ? 0.96 : 1 }] })}>
+          <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{x.suggested}</Text>
+        </Pressable>
+        : <Text style={{ ...type.footnote, color: palette.muted }}>{x.suggested}</Text>}
       </View>; })}
     </Animated.View>)}
     {failed && onAssign && <ErrorLine text={failed.text} onRetry={() => onAssign(failed.id, failed.owner)} />}
+    {/* The decision, after the rows it acts on: every suggested team at once; each one is told as its owner lands. */}
+    {onAssign && all.length > 1 && <Action label={`Assign ${all.length} suggested owners`} icon="person.2" onPress={() => { haptic("select"); all.forEach(x => onAssign(x.id, x.suggested)); }} />}
   </Surface>;
 }
 
