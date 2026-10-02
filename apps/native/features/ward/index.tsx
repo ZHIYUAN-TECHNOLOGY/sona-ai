@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { MarkedText } from "@/components/sona/marked-text";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import Animated, { FadeIn, FadeOutUp, ZoomIn, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -61,7 +61,7 @@ function bedTone(bed: Bed) {
 }
 
 export function WardScreen() {
-  const { patients, selectPatient } = useEncounter();
+  const { patients, selectPatient, showDemoControls } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -112,7 +112,7 @@ export function WardScreen() {
     haptic("select"); setAssignError(undefined); setOwners(o => ({ ...o, [id]: next })); setTold(id, undefined);
     if (!live) { setTold(id, ownerReceipt(next, new Date(), true)); return; }
     (next ? api.ward.assignOwner({ blockerId: id, owner: next }) : api.ward.unassignOwner({ blockerId: id })).then(
-      () => setTold(id, ownerReceipt(next, new Date(), false)),
+      () => { setTold(id, ownerReceipt(next, new Date(), false)); setWardVersion(v => v + 1); },
       e => { setOwners(o => ({ ...o, [id]: before })); setAssignError({ id, owner, text: `${next ? "Not assigned" : "Not cleared"}: ${errorText(e)}` }); });
   };
   // Live: owners on the server (they are blocker-owner tasks) show on open, so a reload keeps them and a clear elsewhere shows.
@@ -133,7 +133,9 @@ export function WardScreen() {
   const local = huddle(beds, owners);
   const lines = server.data?.lines ?? local;
   const current = open && beds.find(b => b.bed === open.bed);
-  const forecast = useForecast(beds, findings, owners);
+  // The server's forecast re-reads once each owner write lands, so the chart moves with Assign.
+  const forecastKey = useMemo(() => [findings, wardVersion], [findings, wardVersion]);
+  const forecast = useForecast(beds, forecastKey, owners);
   // "Frees fastest" opens the bed's card at the blocker; a row the filter hides shows under All first, then opens once mounted.
   const openAt = (id: string, blockerId?: string) => {
     const bed = beds.find(b => b.bed === id);
@@ -170,7 +172,9 @@ export function WardScreen() {
         </Animated.View>
 
         {/* The decision: what moves those bars is an owner on each blocker, so the unowned ones follow, assigned in one tap. */}
-        <NoOwner beds={beds} owners={owners} unlock={forecast.unlock} onAssign={can("ward.assignOwner") ? assign : undefined} assignError={assignError} onOpen={openAt} />
+        <NoOwner beds={beds} owners={owners} unlock={forecast.unlock} onAssign={can("ward.assignOwner") ? assign : undefined}
+          // Demo only (Settings › Show demo controls): clear every owner, through the same assign, so Assign all can be shown again.
+          onClear={showDemoControls && can("ward.assignOwner") ? () => Object.entries(owners).forEach(([id, o]) => { if (o) assign(id, o); }) : undefined} assignError={assignError} onOpen={openAt} />
 
         {/* Huddle, a compact row under it: one line and a small pill; the brief opens under it and the page below moves with it. */}
         <Surface layout={motion} style={{ paddingHorizontal: 14, paddingVertical: 8, gap: 4 }}>
@@ -241,14 +245,15 @@ export function WardScreen() {
  * primary action on the card's first line assigns every suggested team at once, through the bed card's own assign (server or demo book), so
  * rows leave as owners land and the refusal comes back with Retry if a write fails. None: one line.
  */
-function NoOwner({ beds, owners, unlock, onAssign, assignError, onOpen }: { beds: Bed[]; owners: Record<string, Owner | undefined>; unlock?: { blockerId: string; hours: number }; onAssign?: (id: string, owner: Owner) => void; assignError?: { id: string; owner: Owner; text: string }; onOpen: (bed: string) => void }) {
+function NoOwner({ beds, owners, unlock, onAssign, onClear, assignError, onOpen }: { beds: Bed[]; owners: Record<string, Owner | undefined>; unlock?: { blockerId: string; hours: number }; onAssign?: (id: string, owner: Owner) => void; onClear?: () => void; assignError?: { id: string; owner: Owner; text: string }; onOpen: (bed: string) => void }) {
   const { reducedMotion } = useAccessibleEffects();
   const motion = reducedMotion ? undefined : LAYOUT;
   const rows = unownedBlocked(beds, owners);
   const all = rows.flatMap(r => r.blockers);
   const failed = assignError && all.some(x => x.id === assignError.id) ? assignError : undefined;
-  if (!rows.length) return <Surface feature layout={motion} style={{ minHeight: 56, paddingHorizontal: 16, justifyContent: "center" }}>
-    <Text style={{ ...type.subhead, color: palette.muted }}>Every blocker has an owner.</Text>
+  if (!rows.length) return <Surface feature layout={motion} style={{ minHeight: 56, paddingHorizontal: 16, paddingVertical: 8, flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 10, rowGap: 8 }}>
+    <Text style={{ ...type.subhead, flexGrow: 1, flexShrink: 1, color: palette.muted }}>Every blocker has an owner.</Text>
+    {onClear && Object.values(owners).some(Boolean) && <Chip label="Clear owners · demo" icon={<Icon name="arrow.counterclockwise" size={13} color={palette.ink} />} onPress={() => { haptic("select"); onClear(); }} />}
   </Surface>;
   return <Surface feature layout={motion} style={{ padding: 16, gap: 12 }}>
     {/* The card's one primary action sits on its first line, in reach at a glance; it wraps under at large text. */}
