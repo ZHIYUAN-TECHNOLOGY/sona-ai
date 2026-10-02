@@ -13,7 +13,6 @@ import { clock, dueNow } from "@/features/doses/model";
 import { away } from "@/features/follow-ups/lines";
 import { useFollowUps } from "@/features/follow-ups/row";
 import { daysHome, headerDate, needsLine, type Need } from "@/features/home";
-import { AddSheet } from "@/features/home/add-sheet";
 import { LanguageRow } from "@/features/language/picker";
 import { SettingsSheet, SignOutRow } from "@/features/home/settings-sheet";
 import { tFor, useLang } from "@/lib/i18n";
@@ -72,8 +71,8 @@ let seen = false;
 
 /**
  * Sona Care's home (the kit's "Child Home", the patient watching their own recovery): initials (opening
- * settings), "Hello! Amelia" over the date, and the bell with its count; then "Today's / Latest updates"
- * with a + for adding (ask, message, book), one insight line (day at home, what needs you and how long)
+ * settings), "Hello! Amelia" over the date, and the bell with its count; then "Today's / Latest updates",
+ * one insight line (day at home, what needs you and how long)
  * and a chip per open thing but the dose (its hold is on the medicines tile); a two-column bento (today's
  * medicines with a hold to take the due dose in place, consistency once two days count, the latest update
  * when there is one, the next visit; hidden tiles let the rest reflow); and the one feature card, today's
@@ -101,7 +100,6 @@ function Home() {
   const { fontScale } = useWindowDimensions();
   const scroll = useRef<KeyboardAwareScrollViewRef>(null);
   const spots = useRef({ cards: 0, today: 0 });
-  const [adding, setAdding] = useState(false);
   const [settings, setSettings] = useState(false);
   const [still] = useState(() => seen);
   useEffect(() => { if (state === "joined") seen = true; }, [state]);
@@ -138,7 +136,8 @@ function Home() {
           </View>
         </View>
         <View style={{ gap: 10, marginTop: space.section - space.stack }}>
-          <Section light={t("home.updatesLight")} bold={t("home.updatesBold")} action={<CircleButton d={ICON.plus} label={t("home.add")} onPress={() => setAdding(true)} />} />
+          {/* No + here: asking, messaging and booking are each one tap away in the dock (the orb, Messages, Doctors). */}
+          <Section light={t("home.updatesLight")} bold={t("home.updatesBold")} />
           <Text style={{ ...type.body, color: needs.length ? palette.muted : palette.green, fontWeight: needs.length ? "400" : "600" }}>{insight}</Text>
           {chips.length > 0 && <Animated.View layout={layout} exiting={FadeOut.duration(200)} style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {chips.map(n => <Animated.View key={`${n.kind}:${n.label}`} layout={layout} entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)}>
@@ -172,7 +171,6 @@ function Home() {
         <TodayCard />
       </Animated.View>
       <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("common.emergency")}</Text>
-      <AddSheet open={adding} onClose={() => setAdding(false)} />
       <SettingsSheet open={settings} onClose={() => setSettings(false)} />
     </>}
     {/* The one place Sona Care says its data is fictional, by the emergency line; tap for the details. */}
