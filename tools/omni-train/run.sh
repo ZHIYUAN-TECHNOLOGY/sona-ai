@@ -5,7 +5,8 @@
 # and runs it. Base weights are mounted at /app/models/MiniCPM-o-4_5 (hf://openbmb/MiniCPM-o-4_5@503e754).
 # Env: MODE smoke|full|stage2 (smoke: 20 steps on 200 sona-manglish-asr clips, to prove the setup end to end; stage2: new
 #      sets plus a replay of stage 1's, data.py), FROM (a sona-minicpmo branch to continue from, e.g. stage1),
-#      EAR 1|0 (1 also trains the ear: freeze_vision_tower false), EPOCHS (default 1), TRANSFORMERS (pin, default 4.56.2).
+#      EAR 1|0 (1 also trains the ear: freeze_vision_tower false), EPOCHS (default 1), TRANSFORMERS (pin, default 4.56.2),
+#      LORA_TARGET (default q_proj,v_proj; stage3 adds k/o and the MLP, where facts live), LORA_RANK (default 32).
 set -euo pipefail
 MODE="${MODE:-smoke}"; EAR="${EAR:-1}"; EPOCHS="${EPOCHS:-1}"; TF="${TRANSFORMERS:-4.56.2}"
 BASE=/app/models/MiniCPM-o-4_5; W=/workspace; OUT="${BT_CHECKPOINT_DIR:-$W/ckpt}/$MODE"; R=$(cd "$(dirname "$0")" && pwd)
@@ -55,9 +56,9 @@ trust_remote_code: true
 stage: sft
 do_train: true
 finetuning_type: lora
-lora_target: q_proj,v_proj
-lora_rank: 32
-lora_alpha: 64
+lora_target: ${LORA_TARGET:-q_proj,v_proj}
+lora_rank: ${LORA_RANK:-32}
+lora_alpha: $((2 * ${LORA_RANK:-32}))
 lora_dropout: 0.05
 freeze_vision_tower: $([ "$EAR" = 1 ] && echo false || echo true)
 dataset: $(python -c "import json; print(','.join(json.load(open('$W/data/dataset_info.json'))))")

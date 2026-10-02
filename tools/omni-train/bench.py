@@ -56,7 +56,7 @@ for spec in sys.argv[1:]:
             r = mmlu[lang][i]
             q = f"{r['question']}\nA. {r['option_a']}\nB. {r['option_b']}\nC. {r['option_c']}\nD. {r['option_d']}\n{ASK[lang]}"
             reply = chat([{"role": "user", "content": [q]}], 8)
-            got = (re.search(r"[ABCD]", reply.upper()) or [None])[0]
+            got = (re.search(r"(?<![A-Za-z])[ABCD](?![A-Za-z])", reply) or [None])[0]  # a lone letter: "Jawapan ... B" is B, not the A in Jawapan
             right += got == r["answer"]
             rows.append({"id": i, "subject": r["subject"], "answer": r["answer"], "got": got, "reply": reply})
         out["mmlu"][lang] = {"accuracy": round(right / len(ids), 4), "rows": rows}

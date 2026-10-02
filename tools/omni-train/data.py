@@ -30,6 +30,44 @@ if mode == "smoke":
     info = {"hear": {"file_name": "hear.json", "formatting": "sharegpt", "columns": {"messages": "messages", "audios": "audios"},
                      "tags": {"role_tag": "role", "content_tag": "content", "user_tag": "user", "assistant_tag": "assistant", "system_tag": "system"}}}
     (out / "dataset_info.json").write_text(json.dumps(info, indent=2))
+elif mode == "stage3":
+    # live4's brain (docs/minicpm-o-finetune.md, "The brain against Gemma 26B"): medical knowledge from bigger models
+    # (tools/omni-data/knowledge.py: OpenMed Mega, medical-o1, MedReason, MedGemma 27B, Malay by Gemma), with replays of
+    # the spoken questions, hearing, plan answers and labels so those skills stay. Text only plus sft-audio.tar and the
+    # label images; hear2's real speech (sft-audio2.tar) is not replayed.
+    snapshot_download("zhiyuantechnology/sona-minicpmo-data", repo_type="dataset", local_dir=out, token=token, max_workers=2,
+                      allow_patterns=["sft/*.json", "see/train.json", "packs/sft-audio.tar", "packs/see-images.tar"])
+    for tar, part in (("sft-audio.tar", "sft"), ("see-images.tar", "see")):
+        with tarfile.open(out / "packs" / tar) as t:
+            t.extractall(out / part)
+    rng = random.Random(3)
+    take = lambda rows, n: rows if n >= len(rows) else rng.sample(rows, n)
+    load = lambda p: json.loads((out / p).read_text()) if (out / p).exists() else []
+    n = lambda k, d: int(os.environ.get(k, d))
+    strip = lambda rows: [{"messages": r["messages"]} for r in rows]  # source/lang tags are not LLaMA-Factory columns
+    sets = {  # name: (rows, has audio, has images)
+        "knowledge": (strip(load("sft/knowledge.json")), False, False),
+        "knowledge_ms": (strip(load("sft/knowledge_ms.json")), False, False),
+        "knowledge_medgemma": (strip(load("sft/knowledge_medgemma.json")), False, False),
+        "med_replay": (take(load("sft/answer_med.json"), n("MED_REPLAY", 2000)), False, False),
+        "hear_answer": (load("sft/hear_answer_words.json"), True, False),  # numbers as words, as live3 and live4 speak them
+        "hear_replay": (take(load("sft/hear.json"), n("HEAR_REPLAY", 800)), True, False),
+        "answer_replay": (take(load("sft/answer.json"), n("ANSWER_REPLAY", 800)), False, False),
+        "see_replay": (take(load("see/train.json"), n("SEE_REPLAY", 300)), False, True),
+    }
+    sets = {k: v for k, v in sets.items() if v[0]}
+    tags = {"role_tag": "role", "content_tag": "content", "user_tag": "user", "assistant_tag": "assistant", "system_tag": "system"}
+    info = {}
+    for name, (rows, audio, images) in sets.items():
+        base = out / ("see" if images else "sft")
+        for r in rows:
+            if audio: r["audios"] = [str(base / a) for a in r["audios"]]
+            if images: r["images"] = [str(base / i) for i in r["images"]]
+        (out / f"{name}.json").write_text(json.dumps(rows, ensure_ascii=False))
+        cols = {"messages": "messages", **({"audios": "audios"} if audio else {}), **({"images": "images"} if images else {})}
+        info[name] = {"file_name": f"{name}.json", "formatting": "sharegpt", "columns": cols, "tags": tags}
+        print(name, len(rows), flush=True)
+    (out / "dataset_info.json").write_text(json.dumps(info, indent=2))
 elif mode == "stage2":
     # Stage 2 continues from stage 1 (run.sh FROM=stage1): the new sets whole, and a replay of stage 1's so it keeps them
     # (docs/minicpm-o-finetune.md, run log). New: sft/answer_med.json (medical answers in en/ms/zh, tools/omni-data) and

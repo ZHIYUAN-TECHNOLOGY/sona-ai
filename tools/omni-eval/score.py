@@ -4,9 +4,11 @@ roundtrip.py rows: the clip before (`orig`) and after (`resynth`) MiniCPM-o's sp
 speak.py rows: only what MiniCPM-o said (`resynth`), against the text it wrote.
 Pass rule for the token check, fixed before any result: Malay passes when, for Sona's voice and for FLEURS, the error
 rate rises by no more than 5 points or 1.5 times the English rise, whichever is larger.
-Needs `qwen-asr==0.0.6`. Usage: python score.py <out_dir>
+Needs `qwen-asr==0.0.6`. Usage: python score.py <out_dir>   (env BATCH: clips per ASR call, default 8)
+scored.jsonl grows a row per clip as it goes, and a rerun skips rows already there: a stopped run resumes (2 Oct, a
+2,000-clip run stopped at 2 h lost everything when it only wrote at the end).
 """
-import json, re, sys
+import json, os, re, sys
 from pathlib import Path
 
 import librosa, torch
@@ -29,21 +31,29 @@ def ed(a, b):
 
 
 m = Qwen3ASRModel.from_pretrained(str(DATA / "sona-asr/ckpt/mixed-final"), dtype=torch.float32, device_map="mps")
-hear = lambda p: m.transcribe((librosa.load(p, sr=16000)[0], 16000))[0].text
-rows, sets = [], {}
-for line in (OUT / "manifest.jsonl").read_text().splitlines():
-    r = json.loads(line)
-    ref = toks(r["text"])
-    r["hyp_resynth"] = hear(r["resynth"])
-    r["err_resynth"], r["words"] = ed(ref, toks(r["hyp_resynth"])), len(ref)
-    if r.get("orig"):
-        r["hyp_orig"] = hear(r["orig"])
-        r["err_orig"] = ed(ref, toks(r["hyp_orig"]))
-    torch.mps.empty_cache()
-    rows.append(r)
+def hear(paths):
+    return [t.text for t in m.transcribe([(librosa.load(p, sr=16000)[0], 16000) for p in paths])]
+
+
+BATCH, scored = int(os.environ.get("BATCH", 8)), OUT / "scored.jsonl"
+done = {json.loads(l)["key"] for l in scored.read_text().splitlines() if l.strip()} if scored.exists() else set()
+if scored.exists() and not scored.read_text().endswith("\n"): scored.write_text(scored.read_text() + "\n")  # a whole-file write
+todo = [r for r in map(json.loads, (OUT / "manifest.jsonl").read_text().splitlines()) if r["key"] not in done]
+with open(scored, "a") as log:
+    for i in range(0, len(todo), BATCH):
+        batch = todo[i:i + BATCH]
+        for r, hyp in zip(batch, hear([r["resynth"] for r in batch])):
+            ref = toks(r["text"])
+            r["hyp_resynth"], r["err_resynth"], r["words"] = hyp, ed(ref, toks(hyp)), len(ref)
+        origs = [r for r in batch if r.get("orig")]
+        for r, hyp in zip(origs, hear([r["orig"] for r in origs]) if origs else []):
+            r["hyp_orig"], r["err_orig"] = hyp, ed(toks(r["text"]), toks(hyp))
+        torch.mps.empty_cache()
+        log.write("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in batch)); log.flush()
+rows, sets = [json.loads(l) for l in scored.read_text().splitlines() if l.strip()], {}
+for r in rows:
     s = sets.setdefault(r["set"], [0, 0, 0])
     s[0] += r.get("err_orig", 0); s[1] += r["err_resynth"]; s[2] += r["words"]
-(OUT / "scored.jsonl").write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows))
 
 rate = {k: (o / n, x / n) for k, (o, x, n) in sets.items()}
 for k, (o, x) in rate.items():

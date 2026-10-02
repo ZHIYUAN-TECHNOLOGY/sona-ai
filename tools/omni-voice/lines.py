@@ -43,10 +43,10 @@ EVAL = {norm(json.loads(l)["text"]) for l in (Path.home() / "zyt/data/sona-tts/e
 CJK = re.compile(r"[一-鿿]")
 
 
-def ask(lang, topic, terms):
+def ask(lang, topic, terms, style=None):
     must = f" Use each of these words at least once, as written: {', '.join(terms)}." if terms else ""
     prompt = (f"Write 25 different things Sona Care, a hospital's voice assistant, might say aloud to a patient about: {topic}. "
-              f"Language: {STYLE[lang]}{must} Each item is one or two short sentences, at most 25 words, plain enough to read "
+              f"Language: {style or STYLE[lang]}{must} Each item is one or two short sentences, at most 25 words, plain enough to read "
               "aloud: no lists, symbols, brackets, emojis or markdown. Vary them: questions, instructions, reassurance. "
               'Answer with a JSON array of 25 strings only.')
     body = json.dumps({"model": MODEL, "messages": [{"role": "user", "content": prompt}], "temperature": 0.9, "max_tokens": 2400}).encode()

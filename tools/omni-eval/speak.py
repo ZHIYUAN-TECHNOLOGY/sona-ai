@@ -31,6 +31,10 @@ MANGLISH = [  # how a Malaysian nurse mixes languages in one sentence
     "Kalau rasa sesak nafas, terus call 999, don't wait.",
 ]
 SETS = {"ms_speak": pick("ms", 20), "en_speak": pick("en", 10), "zh_speak": pick("zh", 10), "manglish_speak": MANGLISH}
+if os.environ.get("SPEAK_LINES"):  # the hard speaking test instead: voice3/test.jsonl (numbers as words, Manglish with Chinese)
+    SETS = {}
+    for r in map(json.loads, Path(os.environ["SPEAK_LINES"]).read_text().splitlines()):
+        SETS.setdefault(r["cat"], []).append(r["text"])
 
 repo = os.environ.get("BRAIN") or snapshot_download("openbmb/MiniCPM-o-4_5", revision=REVISION, allow_patterns=["*.safetensors", "*.json", "*.py", "*.txt", *ASSETS])
 device = "mps" if torch.backends.mps.is_available() else "cpu"
