@@ -24,7 +24,8 @@ import { formatRM, markSent, openItems, totalRisk, useSent, type AuditItem } fro
  * checks, says who the query went to, and the row collapses while the rows below slide up
  * (spring 0.38 s, damping 0.82). The sent count pops (0.75 then 1.25 then 1) and the money at
  * risk rolls down digit by digit (after Finma's number flip: only changed digits move, on a light
- * spring). Tapping a row shows the drafted query with a Send button, so swiping is never required.
+ * spring). Each row shows the start of the query a swipe sends; tapping shows all of it with a Send
+ * button, so swiping is never required.
  */
 const THRESHOLD = 75, TEAL = palette.green;
 const RING = 11, RING_C = 2 * Math.PI * RING;
@@ -131,7 +132,7 @@ export function AuditScreen() {
       {settled && !items.length && <Action label={AUDIT_NEXT.label} icon="bed.double" onPress={() => router.push(AUDIT_NEXT.op.slice(3) as never)} />}
     </Surface>
 
-    {items.length > 0 && <Text style={{ ...type.caption, color: palette.muted }}>Swipe right to send, or tap to read first.</Text>}
+    {items.length > 0 && <Text style={{ ...type.caption, color: palette.muted }}>Swipe right to send the query shown, or tap to read all of it.</Text>}
     <View style={{ gap: 10 }}>
       {items.map(item => <Animated.View key={item.id} layout={reducedMotion ? undefined : LAYOUT} exiting={reducedMotion ? undefined : FadeOut.duration(160)}>
         <Row item={item} sending={sending.includes(item.id)} asking={asking.includes(item.id)} error={failed[item.id]} open={open === item.id} onToggle={() => setOpen(o => (o === item.id ? undefined : item.id))} onSend={() => send(item)} />
@@ -182,7 +183,7 @@ function Row({ item, sending, asking, error, open, onToggle, onSend }: { item: A
     </Animated.View>
     <GestureDetector gesture={pan}>
       <Animated.View style={slide}>
-        <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={`${item.bed}, ${item.patient}. ${item.gap}. ${formatRM(item.risk)} at risk.${error ? ` ${error}.` : ""}`}
+        <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={`${item.bed}, ${item.patient}. ${item.gap}. ${formatRM(item.risk)} at risk. Query: ${item.query}${error ? ` ${error}.` : ""}`}
           accessibilityActions={[{ name: "activate" }, { name: "send", label: `Send query to ${item.doctor}` }]} onAccessibilityAction={e => (e.nativeEvent.actionName === "send" ? onSend() : onToggle())}
           onPress={onToggle} style={{ ...surfaceStyle, borderRadius: radius.group, padding: 14, gap: 10 }}>
           <View style={{ flexDirection: "row", gap: 12 }}>
@@ -204,9 +205,10 @@ function Row({ item, sending, asking, error, open, onToggle, onSend }: { item: A
               <Text style={{ ...type.caption, color: palette.muted }}>{sending ? `Sent to ${item.doctor}` : asking ? `Sending to ${item.doctor}…` : [item.bed, item.doctor, `${item.from || "Not coded"} → ${item.to}`].filter(Boolean).join(" · ")}</Text>
             </View>
           </View>
+          {/* The query a swipe sends is always on the row (two lines; tap for all of it), so nothing goes unread. */}
+          {!sending && <Text selectable={open} numberOfLines={open ? undefined : 2} style={{ ...type.footnote, color: palette.ink, marginLeft: 38, padding: 10, borderRadius: radius.control, overflow: "hidden", backgroundColor: "rgba(20,28,40,0.04)" }}>{item.query}</Text>}
           {error && <View style={{ paddingLeft: 38 }}><ErrorLine text={error} onRetry={onSend} /></View>}
-          {open && !sending && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ gap: 10, paddingLeft: 38 }}>
-            <Text selectable style={{ ...type.footnote, color: palette.ink, padding: 10, borderRadius: radius.control, overflow: "hidden", backgroundColor: "rgba(20,28,40,0.04)" }}>{item.query}</Text>
+          {open && !sending && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ paddingLeft: 38 }}>
             <View style={{ alignSelf: "flex-start" }}><Action label={`Send to ${item.doctor}`} icon="paperplane.fill" accessibilityLabel={`Send query to ${item.doctor}`} disabled={asking} onPress={onSend} /></View>
           </Animated.View>}
         </Pressable>
