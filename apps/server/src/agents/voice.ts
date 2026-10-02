@@ -20,8 +20,8 @@ type Language = keyof typeof LINES;
 /**
  * Sona Care's live voice, on the Cloudflare Agents SDK (withVoice): one Durable Object per patient, named by the Worker
  * from the signed-in session (voiceRoute), never by the app. The patient talks naturally: our Manglish ASR hears each
- * turn (packages/api/src/voice-agent/listen.ts), Gemma answers from their own plan sentence by sentence, each sentence
- * checked before it is said (answer.ts), and Sona's Malaysian voice speaks it (voice.ts). The patient can cut in at any
+ * turn (packages/api/src/voice-agent/listen.ts), Gemma answers anything they ask, their own care from their plan, sentence
+ * by sentence (answer.ts), and Sona's Malaysian voice speaks it (voice.ts). The patient can cut in at any
  * point, which cancels the answer and the voice in flight. The SDK keeps the conversation, so follow-ups work.
  *
  * The protocol is the SDK's voice protocol (agents/voice VoiceClient: PCM16 16 kHz mono up; JSON events and one MP3 frame
