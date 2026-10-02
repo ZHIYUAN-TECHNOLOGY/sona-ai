@@ -119,15 +119,15 @@ export function ThisWeek({ divider }: { divider?: boolean } = {}) {
     { label: "Doses taken", value: ops.dosesTaken, max: ops.dosesDue, good: ops.dosesTaken >= 0.8 * ops.dosesDue },
   ];
   const rows: { value: string; label: string; tone?: "good" | "warn" }[] = [
-    { value: hoursMinutes(ops.bedMinutesSaved), label: `Bed time saved · ${ops.discharges} discharge${ops.discharges === 1 ? "" : "s"}`, tone: ops.bedMinutesSaved ? "good" : undefined },
     { value: ops.medianMinutesToBook === null ? "–" : hoursMinutes(ops.medianMinutesToBook), label: "Flag → booked (median)" },
     { value: `${ops.lostFollowUps}`, label: `Lost X-ray follow-ups · ${ops.trackedFollowUps} tracked`, tone: ops.lostFollowUps ? "warn" : "good" },
   ];
-  const saved = rows[0];
+  // The headline row carries bed time saved (and its discharges), so the open list never repeats it.
+  const saved = { value: hoursMinutes(ops.bedMinutesSaved), tone: ops.bedMinutesSaved ? "good" : undefined, discharges: `${ops.discharges} discharge${ops.discharges === 1 ? "" : "s"}` };
   return <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={divider ? { borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" } : undefined}>
     <Pressable accessibilityRole="button" accessibilityLabel={`This week: ${saved.value} bed time saved`} accessibilityHint={open ? "Hides this week's numbers" : "Shows this week's numbers"}
       accessibilityState={{ expanded: open }} onPress={() => setOpen(v => !v)} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 8 }}>
-      <Text style={{ ...type.subhead, flex: 1, color: palette.muted }}><Text style={{ fontWeight: "700", color: saved.tone ? TEAL : palette.ink, fontVariant: ["tabular-nums"] }}>{saved.value}</Text> bed time saved</Text>
+      <Text style={{ ...type.subhead, flex: 1, color: palette.muted }}><Text style={{ fontWeight: "700", color: saved.tone ? TEAL : palette.ink, fontVariant: ["tabular-nums"] }}>{saved.value}</Text> bed time saved{open ? ` · ${saved.discharges}` : ""}</Text>
       <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>This week</Text>
       <Icon name={open ? "chevron.up" : "chevron.right"} size={11} color={palette.blue} />
     </Pressable>

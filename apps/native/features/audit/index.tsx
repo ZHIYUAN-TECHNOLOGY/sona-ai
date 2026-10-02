@@ -135,7 +135,8 @@ export function AuditScreen() {
         : loadError ? <ErrorLine text={`The audit didn't run: ${loadError}`} onRetry={() => setAttempt(a => a + 1)} />
         : <><Ticker text={formatRM(risk)} />
       <Text style={{ ...type.subhead, color: palette.muted }}>{live && !ran ? "Running the audit…" : items.length ? `at risk across ${items.length - sending.length} under-specified ${items.length - sending.length === 1 ? "note" : "notes"}` : "Nothing left at risk. Every query is out."}</Text>
-      {settled && groups.length > 0 && <DoctorRisk groups={groups} doctor={doctor} onPick={d => { haptic("select"); setPicked(p => (p === d ? undefined : d)); }} />}</>}
+      {/* A comparison needs two doctors; one doctor's bar would only repeat the total above. */}
+      {settled && groups.length > 1 && <DoctorRisk groups={groups} doctor={doctor} onPick={d => { haptic("select"); setPicked(p => (p === d ? undefined : d)); }} />}</>}
       {settled && !items.length && <Action label={AUDIT_NEXT.label} icon="bed.double" onPress={() => router.push(AUDIT_NEXT.op.slice(3) as never)} />}
     </Surface>
 
