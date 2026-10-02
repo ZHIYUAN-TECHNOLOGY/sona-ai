@@ -6,6 +6,7 @@ import * as Redacted from "effect/Redacted";
 import "varlock/auto-load";
 
 import type { CheckInAgent } from "../../apps/server/src/agents/check-in";
+import type { SonaLiveAgent } from "../../apps/server/src/agents/live";
 import type { SonaVoiceAgent } from "../../apps/server/src/agents/voice";
 import type { EncounterState } from "../../apps/server/src/encounter-state";
 import type { HospitalChannel } from "../../apps/server/src/hospital-channel";
@@ -30,6 +31,10 @@ export const server = Cloudflare.Worker("server", {
     CHECK_IN_AGENTS: Cloudflare.DurableObject<CheckInAgent>("CHECK_IN_AGENTS", { className: "CheckInAgent" }),
     // Sona Care's live voice: one voice agent (Cloudflare Agents, SQLite-backed: it keeps the conversation) per patient.
     VOICE: Cloudflare.DurableObject<SonaVoiceAgent>("VOICE", { className: "SonaVoiceAgent" }),
+    // The same call on MiniCPM-o (box ④): voiceRoute sends patients to it instead once SONA_LIVE_URL names the box's
+    // WebSocket (wss://model-<id>.api.baseten.co/environments/production/websocket). Empty keeps today's call.
+    LIVE: Cloudflare.DurableObject<SonaLiveAgent>("LIVE", { className: "SonaLiveAgent" }),
+    SONA_LIVE_URL: Config.String("SONA_LIVE_URL").pipe(Config.withDefault("")),
     UPLOADS: uploads,
     // Cloudflare Email Service. Sending needs a domain onboarded under Email Service > Email Sending;
     // until EMAIL_FROM and INSURER_EMAIL are set, the review link is only shown in the app.

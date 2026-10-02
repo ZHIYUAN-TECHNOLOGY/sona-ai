@@ -13,7 +13,7 @@
  *   --text "..."         a typed question instead of a WAV (text_message)
  *   --then <wav>         talk over Sona once her first sentence arrives (the SDK's barge-in), then wait for that answer
  *   --interrupt <ms>     send "interrupt" this long after the first sentence arrives, as a patient cutting in
- *   --save <dir>         keep the MP3s
+ *   --save <dir>         keep the MP3s (or, from the live call on MiniCPM-o, its PCM as one sona.wav)
  *   --cookie "<Cookie>"  an existing session instead of signing in; --no-sign-in for a local harness with no auth
  * Other audio: ffmpeg -i in.m4a -ar 16000 -ac 1 -c:a pcm_s16le out.wav
  * Not part of the test run (bun test src). The boxes must be awake for model answers (packages/infra/baseten/warm.ts).
@@ -74,6 +74,9 @@ socket.binaryType = "arraybuffer";
 
 let spokeAt = Date.now(), firstAudio = 0, sentences = 0, answered = 0, listening = false;
 let marks: Record<string, number> = {};
+// The live call on MiniCPM-o (src/agents/live.ts) sends raw PCM16 a second a frame (audio_config pcm16, 24 kHz), not MP3.
+let format = "mp3", rate = 16_000;
+const pcm: Uint8Array[] = [];
 const since = () => `${((Date.now() - spokeAt) / 1000).toFixed(2)}s`;
 const mark = (name: string) => { marks[name] ??= Date.now() - spokeAt; };
 
@@ -83,10 +86,12 @@ socket.addEventListener("message", event => {
     if (!firstAudio) firstAudio = Date.now();
     mark("first audio");
     console.log(`${since()}  audio #${sentences} ${event.data.byteLength} bytes`);
-    if (saveDir) { mkdirSync(saveDir, { recursive: true }); writeFileSync(join(saveDir, `sentence-${sentences}.mp3`), new Uint8Array(event.data)); }
+    if (format === "pcm16") pcm.push(new Uint8Array(event.data));
+    else if (saveDir) { mkdirSync(saveDir, { recursive: true }); writeFileSync(join(saveDir, `sentence-${sentences}.mp3`), new Uint8Array(event.data)); }
     return;
   }
   const message = JSON.parse(String(event.data)), { type, ...rest } = message;
+  if (type === "audio_config") { format = message.format; rate = message.sampleRate ?? 16_000; }
   if (type === "transcript" && message.role === "user") mark("heard");
   if (type === "transcript_delta") mark("first words");
   if (type === "sona_say") mark("first phone line");
@@ -125,5 +130,14 @@ for (let tick = 0; tick < 90 * 50 && doneTicks < 100; tick++) {
 socket.send(JSON.stringify({ type: "end_call" }));
 await Bun.sleep(300);
 socket.close();
+if (saveDir && pcm.length) {
+  const data = Buffer.concat(pcm), header = Buffer.alloc(44);
+  header.write("RIFF", 0); header.writeUInt32LE(36 + data.length, 4); header.write("WAVEfmt ", 8); header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20); header.writeUInt16LE(1, 22); header.writeUInt32LE(rate, 24); header.writeUInt32LE(rate * 2, 28);
+  header.writeUInt16LE(2, 32); header.writeUInt16LE(16, 34); header.write("data", 36); header.writeUInt32LE(data.length, 40);
+  mkdirSync(saveDir, { recursive: true });
+  writeFileSync(join(saveDir, "sona.wav"), Buffer.concat([header, data]));
+  console.log(`saved ${join(saveDir, "sona.wav")} (${(data.length / 2 / rate).toFixed(1)} s)`);
+}
 console.log("\nSeconds after the patient last stopped speaking:", Object.fromEntries(Object.entries(marks).map(([k, v]) => [k, +(v / 1000).toFixed(2)])), `· ${sentences} MP3 sentences in all`);
 process.exit(0);

@@ -35,6 +35,7 @@ Ruled out:
 - **BytePlus MLP:** in Johor, but no HIPAA, no MCP or skills, and thin docs. $5.21/h.
 - **GMI Cloud:** H100-class only, no HIPAA found, and its MCP only calls models.
 - **YTL AI Cloud:** GB200 capacity by contract only.
+- **Nebius** (checked 3 Oct 2026): no Asian region, public or private, and none announced. Its 9 regions are in Europe, Israel and the US; APAC is a sales office in Singapore ([regions](https://docs.nebius.com/overview/regions), [APAC](https://nebius.com/newsroom/nebius-expands-into-asia-pacific-region-to-support-rapid-global-growth)). It is a GPU cloud, not an inference platform. It has no 24 GB GPU (L40S 48 GB from $1.55/h, H100 $4.50/h from 1 Oct [prices](https://nebius.com/prices)). Its serverless endpoints run custom containers but have no autoscaling until "Q4+ 2026" and are outside its BAA ([HIPAA](https://docs.nebius.com/legal/hipaa)). It has an official local MCP ([nebius/mcp-server](https://github.com/nebius/mcp-server), beta) and a Claude Code plugin with 13 skills ([nebius/skills](https://github.com/nebius/skills), v0.1.0). Possible use: cheaper H100 training on synthetic data.
 
 ## Cost by environment
 

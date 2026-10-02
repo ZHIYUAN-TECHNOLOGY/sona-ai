@@ -285,6 +285,23 @@ Re-run Sona-S2S-60 on held-out plans.
 
 **Step 3: decide (1 day).** Adopt only for the languages where the model passed. The likely outcome (**judgement**) is an English/Mandarin duplex mode alongside the cascade, with Malay kept on the cascade.
 
+## Update, 3 Oct 2026: newer Qwen models and Hugging Face's speech-to-speech
+
+Checked after the MiniCPM-o sprint ([minicpm-o-finetune.md](../minicpm-o-finetune.md)): fine-tuning did not bring MiniCPM-o's 8B brain to Gemma 4 26B.
+
+**Qwen: no new open-weight speech-to-speech model since Qwen3-Omni (Sep 2025)** ([HF Qwen org](https://huggingface.co/Qwen), checked 3 Oct 2026).
+- Qwen3-Omni-30B-A3B is unchanged. It hears Malay but does not speak it, and it is turn-based: vLLM-Omni's duplex wrapper (17 Sep 2026) gives "interruptible VAD turns; not native streaming input KV". It needs about 79 GB in BF16. ms-swift trains only the thinker, not the talker. Its thinker is stronger (MMLU-Redux 86.6, against MiniCPM-o's 77.0 MMLU; different tests).
+- Everything newer is API-only. Qwen3.5-Omni (arXiv 2604.15804) speaks 36 languages including Malay. Qwen3.8-Omni-Flash-Realtime (Alibaba Cloud Model Studio, 21 Sep 2026; Singapore region) is full-duplex with semantic VAD, function calling and MCP.
+- Qwen-Live-Harness (21 Sep 2026) is a macOS desktop agent for that cloud API, not a model.
+
+**[huggingface/speech-to-speech](https://github.com/huggingface/speech-to-speech)** (v1.0.0, 6 Sep 2026; Apache-2.0; last commit 2 Oct 2026) is a cascade like ours (VAD → STT → LLM → TTS) behind an OpenAI Realtime-compatible WebSocket/WebRTC API. It is not duplex and has no echo cancellation of its own; Malay needs our own ASR and TTS. Four of its techniques fit our call:
+1. Start early. STT and the LLM begin 64 ms after speech stops, and Smart Turn v3.2 (BSD-2, 8 MB, CPU) holds the reply 0.8 s for a finished turn or 2 s for an unfinished one, throwing the work away if the speaker goes on. Smart Turn covers Indonesian, not Malay.
+2. Stream TTS audio in chunks (about 0.67 s) instead of one MP3 per sentence.
+3. Barge-in that cancels the LLM and TTS by turn number, after 384 ms of speech. Short "mm-hmm" sounds still cancel it (issue #565).
+4. Partial transcripts every 0.5 s.
+
+**Judgement:** these, plus iOS echo cancellation so the mic stays open, could bring today's call from 3.5 s to about 1.5-2 s of first audio with real interruptions, while Gemma keeps answering. That is unmeasured on our stack.
+
 ## Open questions
 
 - **Malay speech output:** can a LoRA teach MiniCPM-o's CosyVoice2-based decoder or Moshi's depth transformer Malay speech output, and how many hours would it take? No source states this; it is the biggest uncertainty.
