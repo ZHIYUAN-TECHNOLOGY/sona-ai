@@ -57,3 +57,4 @@ coverage
 tmp
 temp
 .claude/worktrees/
+__pycache__/
