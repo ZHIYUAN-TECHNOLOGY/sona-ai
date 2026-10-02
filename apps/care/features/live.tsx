@@ -48,7 +48,9 @@ export function LiveUpdates() {
         `${ENV.EXPO_PUBLIC_SERVER_URL.replace(/^http/, "ws")}/live`, undefined, { headers: cookie ? { Cookie: cookie } : {} });
       socket = ws;
       ws.onopen = () => {
-        attempt = 0;
+        // The back-off resets once a socket has stayed open a while, so one that opens and drops at once can't reconnect every second.
+        const steady = setTimeout(() => { attempt = 0; }, 10_000);
+        ws.addEventListener("close", () => clearTimeout(steady));
         ping = setInterval(() => { try { ws.send("ping"); } catch { /* reconnect handles it */ } }, PING_MS);
         void (opened ? reread(true) : catchUp());
         opened = true;

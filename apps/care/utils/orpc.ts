@@ -2,13 +2,20 @@ import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
-import { QueryCache, QueryClient } from "@tanstack/react-query";
+import { focusManager, QueryCache, QueryClient } from "@tanstack/react-query";
 import { fetch as nativeFetch } from "expo/fetch";
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 
 import { authClient } from "@/lib/auth-client";
 
 import { ENV } from "../src/env";
+
+// React Query knows the browser's tab focus, not the app's: tell it when the app is in front, so polling
+// (refetchInterval) and refetches pause in the background and resume when the app comes back.
+focusManager.setEventListener(setFocused => {
+  const sub = AppState.addEventListener("change", s => setFocused(s === "active"));
+  return () => sub.remove();
+});
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({

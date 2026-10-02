@@ -71,7 +71,10 @@ export function LiveUpdates() {
         `${ENV.EXPO_PUBLIC_SERVER_URL.replace(/^http/, "ws")}/live`, undefined, { headers: cookie ? { Cookie: cookie } : {} });
       socket = ws;
       ws.onopen = () => {
-        attempt = 0; setStatus("connected");
+        // The back-off resets once a socket has stayed open a while, so one that opens and drops at once can't reconnect every second.
+        const steady = setTimeout(() => { attempt = 0; }, 10_000);
+        ws.addEventListener("close", () => clearTimeout(steady));
+        setStatus("connected");
         ping = setInterval(() => { try { ws.send("ping"); } catch { /* reconnect handles it */ } }, PING_MS);
         // The first connect needs no catch-up (screens read on open); a reconnect may have missed changes.
         if (opened) emit("resync");

@@ -51,13 +51,13 @@ function Ribbon({ spec, clock, width, height, still }: { spec: (typeof ribbons)[
 }
 
 /**
- * Every stack screen draws its own canvas (it is opaque), but only the screen in front moves, at 15 fps (the drift is
- * 19–31 s per cycle, so it looks the same as 60): a page covered by another holds still and costs nothing.
+ * Every stack screen draws its own canvas (it is opaque), and only the screen in front moves: a page covered by
+ * another holds its last frame and costs nothing. (Under Reduce Motion everything holds still.)
  */
 export function CalmCanvas() {
   const { width, height } = useWindowDimensions();
   const still = useReducedMotion();
-  const clock = useCalmClock(15, useIsFocused() && !still);
+  const clock = useCalmClock(useIsFocused() && !still);
   return <View pointerEvents="none" style={StyleSheet.absoluteFill}>
     <Canvas style={StyleSheet.absoluteFill}>
       <Rect x={0} y={0} width={width} height={height} color="#FAFAFA" />

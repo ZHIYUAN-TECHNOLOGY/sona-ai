@@ -96,8 +96,8 @@ function tide(t: number) {
 /** The orb drawn in a canvas `size + 2 × pad` wide (the pad leaves room for its soft lift). */
 export function SonaOrb({ size = 148, flood, tx, ty, lift = true }: { size?: number; flood?: SharedValue<number>; tx?: SharedValue<number>; ty?: SharedValue<number>; lift?: boolean }) {
   const still = useReducedMotion();
-  // The tide and the drift are slow: 30 fps for a big orb, 15 for the dock's small one; none under Reduce Motion.
-  const clock = useCalmClock(size >= 100 ? 30 : 15, !still);
+  // Under Reduce Motion the orb holds still, so its clock stops too (useClock kept ticking for nothing).
+  const clock = useCalmClock(!still);
   const zero = useSharedValue(0);
   const fl = flood ?? zero, x = tx ?? zero, y = ty ?? zero;
   const s = size, k = s / 148, pad = orbPad(s), W = s + pad * 2, center = vec(s / 2, s / 2);
