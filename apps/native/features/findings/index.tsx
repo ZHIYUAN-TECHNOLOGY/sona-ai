@@ -85,13 +85,15 @@ function FindingRow({ n, finding: f, focused, onFocus, onTrack, onDismiss }: { n
 }
 
 /** The ward's list: one compact row per open or tracked finding, overdue ones first and in red. */
-export function FollowUpList({ findings }: { findings: Finding[] }) {
+/** `bare`: rows only, inside a list that already titles them (the ward's More). */
+export function FollowUpList({ findings, bare }: { findings: Finding[]; bare?: boolean }) {
   const { selectPatient } = useEncounter();
   const rows = toFollowUp(findings);
   if (!rows.length) return null;
   const now = new Date();
-  return <Surface style={{ paddingHorizontal: 14, paddingTop: 12, paddingBottom: 4 }}>
-    <Text accessibilityRole="header" style={{ ...type.overline, color: palette.blue, paddingBottom: 4 }}>Findings to follow up</Text>
+  const Box = bare ? View : Surface;
+  return <Box style={bare ? undefined : { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 4 }}>
+    {!bare && <Text accessibilityRole="header" style={{ ...type.overline, color: palette.blue, paddingBottom: 4 }}>Findings to follow up</Text>}
     {rows.map((f, i) => {
       const overdue = isOverdue(f, now);
       const status = f.status === "open" ? "Not tracked · unvalidated" : `${f.owner ?? "Attending doctor"}${f.dueAt ? ` · ${overdue ? "overdue since" : "due"} ${shortDate(f.dueAt)}` : ""}`;
@@ -105,5 +107,5 @@ export function FollowUpList({ findings }: { findings: Finding[] }) {
         <Icon name="chevron.right" size={12} color={palette.muted} />
       </PressScale>}</Pressable>;
     })}
-  </Surface>;
+  </Box>;
 }

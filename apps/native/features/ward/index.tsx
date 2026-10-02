@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { MarkedText } from "@/components/sona/marked-text";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import Animated, { FadeIn, FadeOutUp, ZoomIn, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,6 +18,7 @@ import { ErrorLine, PressScale } from "@/components/sona/parts";
 import { api, errorText, useLive } from "@/features/live";
 import { useRole } from "@/features/live/roles";
 import { FollowUpList } from "@/features/findings";
+import { toFollowUp } from "@/features/findings/model";
 import { useFindings } from "@/features/live/findings-sync";
 import { useServerEncounter } from "@/features/live/sync";
 import { Drafting, SampleLabel } from "@/components/sona/model-answer";
@@ -26,8 +27,9 @@ import { useLiveChanges } from "@/features/live/channel";
 import { BedBar, ForecastTimeline, KIND, ThisWeek, useForecast, wardLine } from "./ops";
 import { useWard } from "@/features/day/use-counts";
 import { unownedBlocked } from "@/features/day/model";
-import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedKind, bedRow, defaultFilter, emptyLine, filterBeds, huddle, ownerReceipt, type Bed, type Owner, type WardFilter } from "./model";
+import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedKind, bedRow, emptyLine, filterBeds, huddle, ownerReceipt, type Bed, type Owner, type WardFilter } from "./model";
 import { useWardOwners } from "./owners";
+import { hhmm } from "@/features/tasks/state";
 
 /*
  * Ward command view, glance to decision: one insight line on where the ward stands, the next 24 h as a bar chart of
@@ -69,8 +71,10 @@ export function WardScreen() {
   // encounter is pulled too, so the discharge screen opened from bed 6 starts from the server's record.
   useServerEncounter(patients.find(p => p.id === DEMO_PATIENT));
   const { findings } = useFindings();
+  const followUps = toFollowUp(findings).length;
   const { beds, loading } = useWard();
   const [briefed, setBriefed] = useState(false);
+  const [findingsOpen, setFindingsOpen] = useState(false);
   const [open, setOpen] = useState<{ bed: string; from: Rect; focus?: string }>();
   const root = useRef<View>(null);
   const scroll = useRef<ScrollView>(null);
@@ -80,7 +84,8 @@ export function WardScreen() {
   // Opened from My Day's legend the ward starts on that status; otherwise on Blocked when anything is.
   const params = useLocalSearchParams<{ filter?: string; at?: string; bed?: string }>();
   const [picked, setPicked] = useState<WardFilter>();
-  const filter = picked ?? asFilter(params.filter) ?? defaultFilter(beds);
+  // All beds by default: the blocked ones already lead in the decision card above, so the list is the ward's map.
+  const filter = picked ?? asFilter(params.filter) ?? "all";
   const shown = filterBeds(beds, filter);
   const motion = reducedMotion ? undefined : LAYOUT;
   // The page draws under the translucent header, so the open card starts below it.
@@ -172,35 +177,9 @@ export function WardScreen() {
         </Animated.View>
 
         {/* The decision: what moves those bars is an owner on each blocker, so the unowned ones follow, assigned in one tap. */}
-        <NoOwner beds={beds} owners={owners} unlock={forecast.unlock} onAssign={can("ward.assignOwner") ? assign : undefined}
+        <NoOwner beds={beds} owners={owners} unlock={forecast.unlock} live={live} onAssign={can("ward.assignOwner") ? assign : undefined}
           // Demo only (Settings › Show demo controls): clear every owner, through the same assign, so Assign all can be shown again.
           onClear={showDemoControls && can("ward.assignOwner") ? () => Object.entries(owners).forEach(([id, o]) => { if (o) assign(id, o); }) : undefined} assignError={assignError} onOpen={openAt} />
-
-        {/* Huddle, a compact row under it: one line and a small pill; the brief opens under it and the page below moves with it. */}
-        <Surface layout={motion} style={{ paddingHorizontal: 14, paddingVertical: 8, gap: 4 }}>
-          {/* The pill wraps below the title when large text leaves no room beside it. */}
-          <View style={{ minHeight: 44, flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 10, rowGap: 8 }}>
-            <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 200, flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(36,91,204,0.1)" }}>
-                <Icon name="waveform" size={12} color={palette.blue} />
-              </View>
-              <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.muted }}><Text style={{ fontWeight: "600", color: palette.ink }}>Huddle</Text> · {briefed ? "30 seconds for the team" : local[1]}</Text>
-            </View>
-            <Pressable accessibilityRole="button" accessibilityLabel={briefed ? "Hide the huddle brief" : "Brief me for the huddle"} accessibilityState={{ expanded: briefed }} hitSlop={7} onPress={() => { haptic("select"); setBriefed(v => !v); }}
-              style={{ minHeight: 30, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 15, justifyContent: "center", backgroundColor: briefed ? "rgba(20,28,40,0.06)" : palette.blue }}>
-              <Text style={{ ...type.footnote, fontWeight: "600", color: briefed ? palette.ink : palette.white }}>{briefed ? "Hide" : "Brief me"}</Text>
-            </Pressable>
-          </View>
-          {briefed && <Expand style={{ gap: 10, paddingLeft: 38, paddingTop: 4 }}>
-            {server.loading && <Drafting label="Briefing the ward…" />}
-            {!server.loading && lines.map((line, i) => <Animated.View key={i} entering={reducedMotion ? undefined : riseIn({ delay: i * 60, distance: 8, duration: 300 })} style={{ flexDirection: "row", gap: 10 }}>
-              <Text style={{ ...type.footnote, fontWeight: "700", color: palette.blue, width: 14 }}>{i + 1}</Text>
-              <MarkedText text={line} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
-            </Animated.View>)}
-            <SampleLabel answer={server} rule what="briefing" />
-            {server.error && <Text style={{ ...type.caption, color: palette.red }}>{server.error} · showing the ward's own count</Text>}
-          </Expand>}
-        </Surface>
 
         <Animated.View layout={motion}><BedBar beds={beds} filter={filter} onFilter={setPicked} /></Animated.View>
 
@@ -222,11 +201,23 @@ export function WardScreen() {
 
         </>}
 
-        {/* The week's proof sits below the beds and moves with the list as it re-lays. */}
-        <Animated.View layout={motion} style={{ gap: 12 }}>
-          <ThisWeek />
-          <FollowUpList findings={findings} />
-        </Animated.View>
+        {/* More, last and quiet: one glass list of rows that open in place (the huddle brief, the X-ray findings to
+            follow up, this week's numbers), so none of them competes with the decision above. */}
+        {!loading && <Surface layout={motion} style={{ paddingHorizontal: 14, paddingVertical: 2 }}>
+          <MoreRow icon="waveform" title="Huddle brief" detail="30 seconds for the team" open={briefed} onToggle={() => setBriefed(v => !v)}>
+            {server.loading && <Drafting label="Briefing the ward…" />}
+            {!server.loading && lines.map((line, i) => <Animated.View key={i} entering={reducedMotion ? undefined : riseIn({ delay: i * 60, distance: 8, duration: 300 })} style={{ flexDirection: "row", gap: 10 }}>
+              <Text style={{ ...type.footnote, fontWeight: "700", color: palette.blue, width: 14 }}>{i + 1}</Text>
+              <MarkedText text={line} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
+            </Animated.View>)}
+            <SampleLabel answer={server} rule what="briefing" />
+            {server.error && <Text style={{ ...type.caption, color: palette.red }}>{server.error} · showing the ward's own count</Text>}
+          </MoreRow>
+          {followUps > 0 && <MoreRow icon="lungs" title="Findings to follow up" detail={`${followUps} from X-rays`} open={findingsOpen} onToggle={() => setFindingsOpen(v => !v)} divider>
+            <FollowUpList findings={findings} bare />
+          </MoreRow>}
+          <ThisWeek divider />
+        </Surface>}
       </ScrollView>
     </Animated.View>
 
@@ -245,18 +236,29 @@ export function WardScreen() {
  * primary action under the rows (review, then decide) assigns every suggested team at once, through the bed card's own assign (server or demo book), so
  * rows leave as owners land and the refusal comes back with Retry if a write fails. None: one line.
  */
-function NoOwner({ beds, owners, unlock, onAssign, onClear, assignError, onOpen }: { beds: Bed[]; owners: Record<string, Owner | undefined>; unlock?: { blockerId: string; hours: number }; onAssign?: (id: string, owner: Owner) => void; onClear?: () => void; assignError?: { id: string; owner: Owner; text: string }; onOpen: (bed: string) => void }) {
+function NoOwner({ beds, owners, unlock, live, onAssign, onClear, assignError, onOpen }: { beds: Bed[]; owners: Record<string, Owner | undefined>; unlock?: { blockerId: string; hours: number }; live: boolean; onAssign?: (id: string, owner: Owner) => void; onClear?: () => void; assignError?: { id: string; owner: Owner; text: string }; onOpen: (bed: string) => void }) {
   const { reducedMotion } = useAccessibleEffects();
   const motion = reducedMotion ? undefined : LAYOUT;
   const rows = unownedBlocked(beds, owners);
   const all = rows.flatMap(r => r.blockers);
   const failed = assignError && all.some(x => x.id === assignError.id) ? assignError : undefined;
-  if (!rows.length) return <Surface feature layout={motion} style={{ minHeight: 56, paddingHorizontal: 16, paddingVertical: 8, flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 10, rowGap: 8 }}>
-    <Text style={{ ...type.subhead, flexGrow: 1, flexShrink: 1, color: palette.muted }}>Every blocker has an owner.</Text>
-    {onClear && Object.values(owners).some(Boolean) && <Chip label="Clear owners · demo" icon={<Icon name="arrow.counterclockwise" size={13} color={palette.ink} />} onPress={() => { haptic("select"); onClear(); }} />}
-  </Surface>;
+  // What was just sent, for the receipt once the rows leave: "Billing, Nurse and Porter told · 14:41".
+  const [sent, setSent] = useState<{ teams: string[]; at: Date }>();
+  const send = (items: typeof all) => {
+    if (!onAssign) return;
+    haptic("select");
+    items.forEach(x => onAssign(x.id, x.suggested));
+    const teams = [...new Set(items.map(x => x.suggested))];
+    setSent({ teams: [...new Set([...(sent?.teams ?? []), ...teams])], at: new Date() });
+  };
+  const told = sent && `${sent.teams.length > 1 ? `${sent.teams.slice(0, -1).join(", ")} and ${sent.teams.at(-1)}` : sent.teams[0]} told · ${hhmm(sent.at)}${live ? "" : " · simulated, nothing sent"}`;
+  // Nothing to decide: a receipt line on the canvas, not a card (the page keeps its one feature surface for a decision).
+  if (!rows.length) return <Animated.View layout={motion} style={{ minHeight: 44, flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 10, rowGap: 8 }}>
+    <Text style={{ ...type.subhead, flexGrow: 1, flexShrink: 1, color: told ? TEAL : palette.muted }}>{told ?? "Every blocker is being chased."}</Text>
+    {onClear && Object.values(owners).some(Boolean) && <Chip label="Clear owners · demo" icon={<Icon name="arrow.counterclockwise" size={13} color={palette.ink} />} onPress={() => { haptic("select"); setSent(undefined); onClear(); }} />}
+  </Animated.View>;
   return <Surface feature layout={motion} style={{ padding: 16, gap: 12 }}>
-    <Text style={{ ...type.overline, color: palette.amber }}>No owner yet · {all.length} {all.length === 1 ? "blocker" : "blockers"}</Text>
+    <Text style={{ ...type.overline, color: palette.amber }}>Nobody is chasing these yet · {all.length}</Text>
     {rows.map((r, i) => <Animated.View key={r.bed} layout={motion} style={{ gap: 4, paddingTop: i ? 8 : 0, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)" }}>
       <Pressable accessibilityRole="button" accessibilityLabel={`${r.bed}, ${r.name.split(" ")[0]}${r.hours > 0 ? `, about ${r.hours} bed-hours waiting` : ""}`} accessibilityHint="Opens the bed"
         onPress={() => onOpen(r.bed)} style={{ minHeight: 32, flexDirection: "row", alignItems: "center", gap: 8 }}>
@@ -269,18 +271,32 @@ function NoOwner({ beds, owners, unlock, onAssign, onClear, assignError, onOpen 
           <Text style={{ ...type.footnote, color: palette.ink }}>{x.label}</Text>
           {fastest && <Text style={{ ...type.caption, fontWeight: "600", color: TEAL }}>Frees beds fastest · ~{unlock.hours} h sooner</Text>}
         </View>
-        {/* The suggested team, one even column of quiet tokens; a tap assigns this blocker alone. Read-only without onAssign. */}
-        {onAssign ? <Pressable accessibilityRole="button" accessibilityLabel={`Assign ${x.label.toLowerCase()} on ${r.bed} to ${x.suggested}`} hitSlop={{ top: 7, bottom: 7 }} onPress={() => onAssign(x.id, x.suggested)}
-          style={({ pressed }) => ({ minWidth: 92, minHeight: 30, paddingHorizontal: 12, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: "#E6EEFC", transform: [{ scale: pressed ? 0.96 : 1 }] })}>
+        {/* "→ Billing": the team that chases it, one even column of quiet tokens; a tap sends this one alone. Read-only without onAssign. */}
+        {onAssign ? <Pressable accessibilityRole="button" accessibilityLabel={`Send ${x.label.toLowerCase()} on ${r.bed} to ${x.suggested}`} hitSlop={{ top: 7, bottom: 7 }} onPress={() => send([x])}
+          style={({ pressed }) => ({ minWidth: 100, minHeight: 30, paddingHorizontal: 12, borderRadius: 15, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, backgroundColor: "#E6EEFC", transform: [{ scale: pressed ? 0.96 : 1 }] })}>
+          <Icon name="arrow.right" size={10} color={palette.blue} />
           <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{x.suggested}</Text>
         </Pressable>
-        : <Text style={{ ...type.footnote, color: palette.muted }}>{x.suggested}</Text>}
+        : <Text style={{ ...type.footnote, color: palette.muted }}>→ {x.suggested}</Text>}
       </View>; })}
     </Animated.View>)}
     {failed && onAssign && <ErrorLine text={failed.text} onRetry={() => onAssign(failed.id, failed.owner)} />}
-    {/* The decision, after the rows it acts on: every suggested team at once; each one is told as its owner lands. */}
-    {onAssign && all.length > 1 && <Action label={`Assign ${all.length} suggested owners`} icon="person.2" onPress={() => { haptic("select"); all.forEach(x => onAssign(x.id, x.suggested)); }} />}
+    {/* The decision, after the rows it acts on: each blocker to its team at once; the card then says who was told. */}
+    {onAssign && all.length > 1 && <Action label={`Send each to its team (${all.length})`} icon="paperplane" onPress={() => send(all)} />}
   </Surface>;
+}
+
+/** One row of the More list: icon, title, a muted detail and a chevron; it opens its content in place underneath. */
+function MoreRow({ icon, title, detail, open, onToggle, divider, children }: { icon: string; title: string; detail: string; open: boolean; onToggle: () => void; divider?: boolean; children: ReactNode }) {
+  return <View style={{ borderTopWidth: divider ? 1 : 0, borderColor: "rgba(20,28,40,0.06)" }}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${title}, ${detail}`} accessibilityState={{ expanded: open }} onPress={() => { haptic("select"); onToggle(); }}
+      style={{ minHeight: 52, flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <Icon name={icon} size={14} color={palette.muted} />
+      <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.muted }}><Text style={{ fontWeight: "600", color: palette.ink }}>{title}</Text> · {detail}</Text>
+      <Icon name={open ? "chevron.up" : "chevron.down"} size={11} color={palette.muted} />
+    </Pressable>
+    {open && <Expand style={{ gap: 10, paddingBottom: 12 }}>{children}</Expand>}
+  </View>;
 }
 
 /** A bed's list row (and the face the open card starts from): status dot, "Bed 2 · Nurul", when it frees up and what holds it. */

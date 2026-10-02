@@ -98,7 +98,7 @@ function Segmented({ beds, value, onChange }: { beds: Bed[]; value: WardFilter; 
 }
 
 /** This week, collapsed to its one number (bed time saved); the six ops stats open as a quiet list. */
-export function ThisWeek() {
+export function ThisWeek({ divider }: { divider?: boolean } = {}) {
   const { on } = useLive();
   const { reducedMotion } = useAccessibleEffects();
   const [ops, setOps] = useState<Ops>();
@@ -116,7 +116,7 @@ export function ThisWeek() {
     { value: ops.dosesDue ? `${Math.round((ops.dosesTaken / ops.dosesDue) * 100)}%` : "–", label: "Doses taken (Sona Care)" },
   ];
   const saved = rows[0];
-  return <Animated.View layout={reducedMotion ? undefined : LAYOUT}>
+  return <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={divider ? { borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" } : undefined}>
     <Pressable accessibilityRole="button" accessibilityLabel={`This week: ${saved.value} bed time saved`} accessibilityHint={open ? "Hides this week's numbers" : "Shows this week's numbers"}
       accessibilityState={{ expanded: open }} onPress={() => setOpen(v => !v)} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 8 }}>
       <Text style={{ ...type.subhead, flex: 1, color: palette.muted }}><Text style={{ fontWeight: "700", color: saved.tone ? TEAL : palette.ink, fontVariant: ["tabular-nums"] }}>{saved.value}</Text> bed time saved</Text>
@@ -196,11 +196,11 @@ export function ForecastTimeline({ beds, forecast, onOpen }: { beds: Bed[]; fore
   const now = new Date(forecast.now).getTime();
   const count = forecast.today.count;
   const w = picked === undefined ? undefined : windows[picked];
-  return <Surface layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 10 }}>
-    <View style={{ gap: 2 }}>
-      <Text style={{ ...type.overline, color: TEAL }}>Next 24 h</Text>
+  // Part of the page's glance under the headline: on the canvas, not a card.
+  return <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 10 }}>
+    <View>
       <Text style={{ ...type.subhead, color: palette.muted }}>
-        <Text style={{ fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{count}</Text> bed{count === 1 ? "" : "s"} free {count ? forecast.today.byTime : "today"} · <Text style={{ fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{forecast.tomorrow.count}</Text> tomorrow
+        <Text style={{ fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{count}</Text> bed{count === 1 ? "" : "s"} free {count ? forecast.today.byTime : "today"} · <Text style={{ fontWeight: "700", color: palette.ink, fontVariant: ["tabular-nums"] }}>{forecast.tomorrow.count}</Text> tomorrow · next 24 h
       </Text>
     </View>
     {/* The chart reads as one image (the spoken forecast); the beds of a picked window are their own stops below. */}
@@ -231,5 +231,5 @@ export function ForecastTimeline({ beds, forecast, onOpen }: { beds: Bed[]; fore
       <Text style={{ ...type.caption, flex: 1, minWidth: 180, color: palette.muted }}>{w ? "Tap a bed to open it" : "Amber: a blocker holds a bed · tap a bar"}</Text>
       <SampleLabel source="fixture" rule />
     </View>
-  </Surface>;
+  </Animated.View>;
 }
