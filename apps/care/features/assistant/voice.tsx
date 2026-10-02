@@ -7,20 +7,18 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { Easing, FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
-import Svg, { Path } from "react-native-svg";
 import { spoken, type Asked, type Reply } from "@/features/assistant/answers";
-import { Glyph } from "@/features/assistant/composer";
 import { pickVoices, preview, standInFor, voiceFor, type SonaVoice } from "@/features/assistant/voices";
 import { FIRST_MS, sayInSonaVoice } from "./sona-voice";
 import { useLiveVoice } from "./live";
 import { useListen } from "@/lib/listen";
 import { tFor, useLang, useT } from "@/lib/i18n";
 import "./strings";
-import { MIC } from "./mic";
 import { orbPad, SonaOrb } from "@/lib/orb";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { Button, CircleButton, ICON } from "@/lib/ui";
+import { Icon, type IconName } from "@/lib/icons";
+import { Button, CircleButton } from "@/lib/ui";
 
 /**
  * Voice mode, after the AI Health Companion kit's voice screens: "Sona Care" centred at the top with
@@ -45,19 +43,9 @@ import { Button, CircleButton, ICON } from "@/lib/ui";
  */
 const KEY = "sona-care.voice";
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
-const GLYPH = {
-  next: "m9 18l6-6l-6-6",
-  keyboard: "M10 8h.01M12 12h.01M14 8h.01M16 12h.01M18 8h.01M6 8h.01M7 16h10M8 12h.01M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2",
-  person: "M18 20a6 6 0 0 0-12 0M12 14a4 4 0 1 0 0-8a4 4 0 0 0 0 8",
-};
 /** A question to offer and its small line icon (a missed dose, a medicine, a visit, a doctor). */
-export type Suggestion = { question: string; d: string };
-export const SUGGEST_ICON: Record<Asked["kind"] | "doctor", string> = {
-  dose: ICON.alarm,
-  medicine: "m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7ZM8.5 8.5l7 7",
-  visit: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2",
-  doctor: "M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3M8 15v1a6 6 0 0 0 6 6a6 6 0 0 0 6-6v-4M20 10a2 2 0 1 0 0 4a2 2 0 0 0 0-4",
-};
+export type Suggestion = { question: string; icon: IconName };
+export const SUGGEST_ICON: Record<Asked["kind"] | "doctor", IconName> = { dose: "alarm", medicine: "pill", visit: "calendar", doctor: "doctor" };
 
 export function VoiceMode({ questions, answer, first, language, onChat, onType }: { questions: Suggestion[]; answer: (question: string) => Reply | Promise<Reply>; first?: string; language?: "en" | "ms" | "zh"; onChat: () => void; onType: () => void }) {
   const still = useReducedMotion();
@@ -180,7 +168,7 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
 
   return <View style={{ flex: 1, paddingTop: insets.top + 8 }}>
     <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16 }}>
-      <CircleButton d={ICON.back} label={t("voice.backToChat")} onPress={() => leave(onChat)} />
+      <CircleButton icon="back" label={t("voice.backToChat")} onPress={() => leave(onChat)} />
       <Text accessibilityRole="header" style={{ flex: 1, textAlign: "center", fontSize: 20, lineHeight: 26, fontWeight: "600", letterSpacing: -0.6, color: palette.ink }}>Sona Care</Text>
       <View style={{ width: 48 }} />
     </View>
@@ -202,7 +190,7 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
     </ScrollView>
     <Animated.View entering={still ? undefined : FadeIn.duration(260).delay(160)}
       style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 36, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 16) }}>
-      {inCall ? <View style={{ width: 56 }} /> : <CircleButton d={GLYPH.person} size={56} label={t("voice.choose", { name: voice.name })} onPress={() => { stop(); setPicking(true); }} />}
+      {inCall ? <View style={{ width: 56 }} /> : <CircleButton icon="person" size={56} label={t("voice.choose", { name: voice.name })} onPress={() => { stop(); setPicking(true); }} />}
       <Pressable accessibilityRole="button" accessibilityLabel={inCall ? t("voice.end") : speaking ? t("voice.stop") : listen.state === "listening" ? t("voice.sendSaid") : t("voice.talk")}
         accessibilityHint={inCall || speaking || listen.state === "listening" ? undefined : t("voice.talkHint")}
         accessibilityState={{ busy: listen.state === "reading" }} disabled={listen.state === "reading"} onPress={main}
@@ -210,9 +198,9 @@ export function VoiceMode({ questions, answer, first, language, onChat, onType }
           boxShadow: "0 14px 28px -14px rgba(37,99,235,0.45)", transform: [{ scale: pressed ? 0.94 : 1 }] })}>
         {inCall || speaking ? <View style={{ width: 20, height: 20, borderRadius: 5, backgroundColor: palette.blue }} />
           : listen.state === "reading" ? <ActivityIndicator color={palette.blue} />
-            : <Glyph d={MIC} color={listen.state === "listening" ? palette.white : palette.blue} size={28} />}
+            : <Icon name="mic" color={listen.state === "listening" ? palette.white : palette.blue} size={28} />}
       </Pressable>
-      <CircleButton d={GLYPH.keyboard} size={56} label={t("voice.type")}onPress={() => leave(onType)} />
+      <CircleButton icon="keyboard" size={56} label={t("voice.type")}onPress={() => leave(onType)} />
     </Animated.View>
   </View>;
 }
@@ -263,7 +251,7 @@ function Picker({ voices, initial, note, onPreview, onStart, onClose }: { voices
 
   return <View style={{ flex: 1, paddingTop: insets.top + 12, paddingBottom: Math.max(insets.bottom, 16), paddingHorizontal: 20 }}>
     <View style={{ flexDirection: "row", alignItems: "center" }}>
-      <CircleButton d={ICON.close} label={t("common.close")} onPress={onClose} />
+      <CircleButton icon="close" label={t("common.close")} onPress={onClose} />
       <Text accessibilityRole="header" style={{ flex: 1, textAlign: "center", ...type.headline, color: palette.ink }}>{t("voice.pickTitle")}</Text>
       <View style={{ width: 44 }} />
     </View>
@@ -273,13 +261,13 @@ function Picker({ voices, initial, note, onPreview, onStart, onClose }: { voices
         accessibilityActions={[{ name: "increment" }, { name: "decrement" }]} onAccessibilityAction={e => go(index + (e.nativeEvent.actionName === "increment" ? 1 : -1))}>
         <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("voice.pickLine")}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-          <View style={{ opacity: index > 0 ? 1 : 0 }} pointerEvents={index > 0 ? "auto" : "none"}><CircleButton d={ICON.back} label={t("voice.prev")}onPress={() => go(index - 1)} /></View>
+          <View style={{ opacity: index > 0 ? 1 : 0 }} pointerEvents={index > 0 ? "auto" : "none"}><CircleButton icon="back" label={t("voice.prev")}onPress={() => go(index - 1)} /></View>
           <View style={{ flex: 1, overflow: "hidden" }}>
             {/* The current voice, invisible, sizes the stage (so large text still fits); the moving copies sit on top. */}
             <Sizer v={v} />
             {voices.map((x, i) => <Slide key={x.id} i={i} v={x} pos={pos} lag={lag} />)}
           </View>
-          <View style={{ opacity: index < last ? 1 : 0 }} pointerEvents={index < last ? "auto" : "none"}><CircleButton d={GLYPH.next} label={t("voice.next")}onPress={() => go(index + 1)} /></View>
+          <View style={{ opacity: index < last ? 1 : 0 }} pointerEvents={index < last ? "auto" : "none"}><CircleButton icon="next" label={t("voice.next")}onPress={() => go(index + 1)} /></View>
         </View>
         <View style={{ flexDirection: "row", justifyContent: "center", gap: 6, height: 8 }}>
           {voices.map((x, i) => <PageDot key={x.id} i={i} pos={pos} />)}
@@ -328,7 +316,7 @@ export function SuggestionRow({ s, onPress, aloud }: { s: Suggestion; onPress: (
   const t = useT();
   return <Pressable accessibilityRole="button" accessibilityLabel={s.question} accessibilityHint={aloud ? t("voice.readsAloud") : undefined} onPress={onPress}
     style={({ pressed }) => ({ minHeight: 48, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8, paddingHorizontal: 4, opacity: pressed ? 0.55 : 1 })}>
-    <Glyph d={s.d} color={palette.muted} size={16} width={1.8} />
+    <Icon name={s.icon} color={palette.muted} size={16} />
     <Text style={{ flex: 1, fontSize: 15, lineHeight: 21, fontWeight: "500", color: palette.ink }}>{s.question}</Text>
   </Pressable>;
 }

@@ -3,7 +3,7 @@ import { Link, router } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
 import Animated, { Easing, FadeInDown, useReducedMotion } from "react-native-reanimated";
-import Svg, { Path } from "react-native-svg";
+import { Icon, type IconName } from "@/lib/icons";
 import { listOf, takeLine } from "@/features/discharge/lines";
 import { tFor, useLang, useT } from "@/lib/i18n";
 import { useDischarge } from "@/features/discharge/row";
@@ -17,9 +17,6 @@ import { palette, space, type } from "@/lib/theme";
 import { field, Section, surfaceStyle, Title, LoadError } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
-const SEARCH = "M11 19a8 8 0 1 0 0-16a8 8 0 0 0 0 16M21 21l-4.3-4.3";
-const DOC = "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5";
-const BOOK = "M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20";
 /** First appearance: a 40 ms ease-out stagger (60fps Vakitler); still under Reduce Motion, and never on a tab switch or search. */
 const rise = (i: number) => FadeInDown.duration(360).easing(Easing.out(Easing.cubic)).delay(i * 40);
 // Your care team rises in once per launch, not on every return to the tab.
@@ -66,8 +63,8 @@ export default function Doctors() {
     <Animated.View entering={enter(2 + team.length)} style={{ gap: 10, marginTop: 8 }}>
       <Section light={t("doc.recordsLight")} bold={t("doc.recordsBold")} />
       {plan?.status === "discharged" ? <>
-        <RecordRow icon={DOC} title={t("doc.plan")} value={dayLabel(plan.dischargedAt, lang)} spoken={t("doc.planA11y", { day: dayLabel(plan.dischargedAt, lang), line: takeLine(plan.medicines, "", lang) })} />
-        {plan.leaflets[0] && <RecordRow icon={BOOK} title={t("doc.leaflet")} value={plan.leaflets.map(l => l.name).join(", ")}
+        <RecordRow icon="doc" title={t("doc.plan")} value={dayLabel(plan.dischargedAt, lang)} spoken={t("doc.planA11y", { day: dayLabel(plan.dischargedAt, lang), line: takeLine(plan.medicines, "", lang) })} />
+        {plan.leaflets[0] && <RecordRow icon="book" title={t("doc.leaflet")} value={plan.leaflets.map(l => l.name).join(", ")}
           spoken={t("doc.leafletA11y", { names: listOf(plan.leaflets.map(l => l.name), lang) })} />}
       </>
         : <Text style={{ ...type.body, color: palette.muted }}>{plan ? t("doc.papersLater") : t("doc.papers")}</Text>}
@@ -86,13 +83,13 @@ function FindBar({ onPress }: { onPress?: () => void }) {
     style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.97 : 1 }] })}>
     <Link.AppleZoom><View collapsable={false}>
       <View style={{ ...field, borderRadius: 999, minHeight: 64, flexDirection: "row", alignItems: "center", gap: 12, paddingLeft: 18, paddingRight: 8, boxShadow: "0 12px 26px -16px rgba(51,92,255,0.45)" }}>
-        <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={palette.blue} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d={SEARCH} /></Svg>
+        <Icon name="search" color={palette.blue} weight="bold" />
         <View style={{ flex: 1 }}>
           <Text style={{ ...type.body, fontWeight: "600", color: palette.ink }}>{t("doc.findCta")}</Text>
           <Text numberOfLines={1} style={{ ...type.footnote, color: palette.muted }}>{t("doc.searchPlaceholder")}</Text>
         </View>
         <View style={{ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.dark }}>
-          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={palette.white} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><Path d="M5 12h14M13 6l6 6-6 6" /></Svg>
+          <Icon name="arrowRight" size={18} color={palette.white} weight="bold" />
         </View>
       </View>
     </View></Link.AppleZoom>
@@ -100,12 +97,12 @@ function FindBar({ onPress }: { onPress?: () => void }) {
 }
 
 /** A kit form row (icon, label, value, chevron): a record opening the plan. */
-function RecordRow({ icon, title, value, spoken, hint, onPress }: { icon: string; title: string; value: string; spoken: string; hint?: string; onPress?: () => void }) {
+function RecordRow({ icon, title, value, spoken, hint, onPress }: { icon: IconName; title: string; value: string; spoken: string; hint?: string; onPress?: () => void }) {
   const t = useT();
   return <Pressable accessibilityRole="button" accessibilityLabel={spoken} accessibilityHint={hint ?? t("doc.recordHint")}
     onPress={onPress ?? (() => router.push("/discharge"))}
     style={({ pressed }) => [surfaceStyle, { borderRadius: 20, minHeight: 60, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
-    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={palette.ink} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><Path d={icon} /></Svg>
+    <Icon name={icon} />
     <Text style={{ ...type.body, fontWeight: "500", color: palette.ink }}>{title}</Text>
     <Text numberOfLines={1} style={{ flex: 1, ...type.footnote, color: palette.muted, textAlign: "right" }}>{value}</Text>
     <Text style={{ fontSize: 20, color: palette.faint }}>›</Text>

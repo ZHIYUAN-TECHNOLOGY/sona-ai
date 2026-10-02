@@ -14,14 +14,14 @@ import { clock, doseOf, dosesToday, early, isLate, untilLine, weekOf, whenWords,
 import { foodOf, insight, weekStrip } from "@/features/doses/strip";
 import { WeekChart } from "@/features/doses/week-chart";
 import "@/features/doses/strings";
-import { CAMERA_GLYPH, PhotoMedicines, usePhotoMedicines } from "@/features/doses/photo";
+import { PhotoMedicines, usePhotoMedicines } from "@/features/doses/photo";
 import "@/features/messages/strings";
 import { DOCK_SPACE } from "@/lib/dock";
 import { Sunbeam } from "@/lib/halftone";
 import { tFor, useLang } from "@/lib/i18n";
 import { Text } from "@/lib/text";
 import { motion, palette, space, type } from "@/lib/theme";
-import { Button, Card, HoldButton, ICON, LoadError, pillStyle, QuickKey, Section, surfaceStyle, Title } from "@/lib/ui";
+import { Button, Card, HoldButton, LoadError, pillStyle, QuickKey, Section, surfaceStyle, Title } from "@/lib/ui";
 import { now as clockNow } from "@/lib/clock";
 
 /** The tick, drawn from its short stroke (4,12 → 9,17 → 20,6). */
@@ -266,8 +266,6 @@ function Check({ size, pop, style }: { size: number; pop?: boolean; style?: View
   </Animated.View>;
 }
 
-const PLAN = "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5";
-
 /**
  * The Medicine tab's quick actions, one 2×2 shelf (after Sona Pro's quick-action keys): add a medicine from a photo (how many
  * wait for the care team), the full plan (since when), the care team (a new reply, or how soon they reply) and dose
@@ -286,15 +284,15 @@ function Shelf({ planned, onAdd, timed }: { planned: string[]; onAdd: () => void
   };
   return <View style={{ gap: 12 }}>
     <View style={{ flexDirection: "row", gap: 12 }}>
-      <QuickKey d={CAMERA_GLYPH} label={t("photo.add")} hint={t("photo.addLine")} onPress={onAdd}
+      <QuickKey icon="camera" label={t("photo.add")} hint={t("photo.addLine")} onPress={onAdd}
         status={waitingCount ? t("photo.waitingCount", { n: waitingCount }) : t("photo.addShort")} tone={waitingCount ? "attention" : undefined} />
-      <QuickKey d={PLAN} label={t("dose.fullPlan")} hint={t("dose.fullPlanHint")} onPress={() => router.push("/discharge")}
+      <QuickKey icon="doc" label={t("dose.fullPlan")} hint={t("dose.fullPlanHint")} onPress={() => router.push("/discharge")}
         status={plan?.status === "discharged" ? t("dose.planSince", { day: dayLabel(plan.dischargedAt, lang) }) : t("dose.fullPlanShort")} />
     </View>
     <View style={{ flexDirection: "row", gap: 12 }}>
-      <QuickKey d={ICON.chat} label={t("dose.careTeam")} hint={t("dose.messageTeam")} onPress={() => router.push("/messages")}
+      <QuickKey icon="chat" label={t("dose.careTeam")} hint={t("dose.messageTeam")} onPress={() => router.push("/messages")}
         status={reply ? t("dose.newReply") : t("dose.repliesShort")} tone={reply ? "news" : undefined} />
-      {timed && <QuickKey d={ICON.alarm} label={t("reminders.row")} hint={t("reminders.hint")} onPress={() => { void remind(); }}
+      {timed && <QuickKey icon="alarm" label={t("reminders.row")} hint={t("reminders.hint")} onPress={() => { void remind(); }}
         status={on ? t("reminders.rowOn") : t("reminders.rowOff")} />}
       {!timed && <View style={{ flex: 1 }} />}
     </View>

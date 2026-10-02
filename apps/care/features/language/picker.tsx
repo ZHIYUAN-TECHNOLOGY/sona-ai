@@ -3,7 +3,7 @@ import { useState } from "react";
 import { AccessibilityInfo, Modal, Pressable, View } from "react-native";
 import Animated, { Easing, FadeIn, FadeInDown, FadeOut, SlideInDown, SlideOutDown, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Path } from "react-native-svg";
+import { Icon } from "@/lib/icons";
 import { LANGS, setLang, tFor, translate, useLang, type Lang } from "@/lib/i18n";
 import "@/lib/strings";
 import { AnimatedText, Text } from "@/lib/text";
@@ -12,7 +12,6 @@ import { AccentText, Button } from "@/lib/ui";
 
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
 const OUT_MS = 220;
-const CHECK = "M20 6 9 17l-5-5";
 
 /** Home's quiet row beside Sign out: "Language · Bahasa Melayu", opening the three choices. */
 export function LanguageRow() {
@@ -83,7 +82,7 @@ function LanguageSheet({ open, onClose }: { open: boolean; onClose: () => void }
             </View>
             <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", borderWidth: on ? 0 : 1.5, borderColor: "#DADADA" }}>
               {on && <Animated.View entering={fade} style={{ position: "absolute", inset: 0, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: palette.dark }}>
-                <Svg width={15} height={15} viewBox="0 0 24 24"><Path d={CHECK} fill="none" stroke={palette.white} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+                <Icon name="check" size={15} color={palette.white} />
               </Animated.View>}
             </View>
           </Pressable>

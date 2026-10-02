@@ -5,10 +5,10 @@ import { Pressable, View } from "react-native";
 import Animated, { Easing, FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { useRevealed } from "@/features/opening";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Path } from "react-native-svg";
 import { useMe } from "@/features/me";
 import { useMessageNeeds } from "@/features/messages/row";
 import { useT } from "./i18n";
+import { Icon } from "./icons";
 import { orbPad, SonaOrb } from "./orb";
 import "./strings";
 import { palette } from "./theme";
@@ -22,13 +22,12 @@ import { palette } from "./theme";
  */
 export const DOCK_SPACE = 120;
 const TABS = [
-  { path: "/", label: "dock.home", d:"m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10" },
-  { path: "/follow-ups", label: "dock.schedule", d:"M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2" },
-  { path: "/dose", label: "dock.medicine", d:"m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7ZM8.5 8.5l7 7" },
-  { path: "/doctors", label: "dock.doctors", d:"M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3M8 15v1a6 6 0 0 0 6 6a6 6 0 0 0 6-6v-4M20 10a2 2 0 1 0 0 4a2 2 0 0 0 0-4" },
+  { path: "/", label: "dock.home", icon: "home" },
+  { path: "/follow-ups", label: "dock.schedule", icon: "calendar" },
+  { path: "/dose", label: "dock.medicine", icon: "pill" },
+  { path: "/doctors", label: "dock.doctors", icon: "doctor" },
 ] as const;
 // Messages sits last in the pill but opens the thread over the dock (its composer needs the bottom edge), so it is never the current tab.
-const MESSAGES = "M7.9 20A9 9 0 1 0 4 16.1L2 22Z";
 // Five 50 pt keys + pad (260) and the 66 pt orb fit 335 pt, the narrowest phone less its 20 pt gutters; every key stays over 44 pt.
 const TAB = 50, PAD = 4, ORB = 56;
 
@@ -68,13 +67,14 @@ export function Dock() {
           const on = i === at;
           return <Pressable key={t.path} accessibilityRole="tab" accessibilityLabel={tr(t.label)} accessibilityState={{ selected: on }} onPress={() => { if (!on) router.navigate(t.path); }}
             style={({ pressed }) => ({ width: TAB, height: TAB, alignItems: "center", justifyContent: "center", transform: [{ scale: pressed ? 0.92 : 1 }] })}>
-            <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={on ? palette.ink : palette.faint} strokeWidth={on ? 2.4 : 1.7} strokeLinecap="round" strokeLinejoin="round"><Path d={t.d} /></Svg>
+            {/* The current tab is filled, so it reads by shape as well as colour. */}
+            <Icon name={t.icon} color={on ? palette.ink : palette.faint} weight={on ? "fill" : "regular"} />
           </Pressable>;
         })}
         {/* A small blue dot while the care team's reply is unopened; VoiceOver says it in the label. */}
         <Pressable accessibilityRole="button" accessibilityLabel={tr(unread ? "dock.messagesNew" : "dock.messages")} onPress={() => router.push("/messages")}
           style={({ pressed }) => ({ width: TAB, height: TAB, alignItems: "center", justifyContent: "center", transform: [{ scale: pressed ? 0.92 : 1 }] })}>
-          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={palette.faint} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round"><Path d={MESSAGES} /></Svg>
+          <Icon name="chat" color={palette.faint} />
           {unread && <Animated.View entering={still ? undefined : FadeIn.duration(200)} pointerEvents="none"
             style={{ position: "absolute", top: 12, right: 11, width: 10, height: 10, borderRadius: 5, backgroundColor: palette.info, borderWidth: 2, borderColor: palette.white }} />}
         </Pressable>
