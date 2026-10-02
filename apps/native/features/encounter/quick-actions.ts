@@ -93,6 +93,8 @@ export function visitNeed(patient: Patient, encounter: Encounter | undefined, re
   if (!encounter?.discharge?.dischargedAt && encounter?.requests.length) return { tone: "calm", text: "Medicines confirmed · ready to draft the discharge", action: "Discharge", target: "discharge" };
   return undefined;
 }
+/** The tool key that does what a need's action does, so the visit's shelf can leave it out under the need. */
+export const NEED_KEY: Partial<Record<VisitNeed["target"], string>> = { briefing: "brief", recording: "consult", medication: "meds", xray: "xray", scan: "scan", discharge: "discharge" };
 export function visitActions(patient: Patient, encounter: Encounter | undefined, result: PendingResult | undefined, go: (target: VisitTarget) => void, scan = false): QuickAction[] {
   const unconfirmed = patient.incomplete ? 0 : (encounter?.medicationEntries ?? defaultMedications(patient)).filter(m => !m.confirmed).length;
   const resultHere = result?.patientId === patient.id;
