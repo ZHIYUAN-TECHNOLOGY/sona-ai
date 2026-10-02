@@ -59,10 +59,15 @@ half4 main(float2 p) {
 export function GlassOrb({ size, energy, still = false }: { size: number; energy: number; still?: boolean }) {
   const t = useSharedValue(Math.random() * 40), level = useSharedValue(energy);
   useEffect(() => { level.set(withTiming(energy, { duration: 600 })); }, [energy, level]);
-  // Integrate time on the UI thread so the swirl speeds up smoothly instead of jumping.
+  // Integrate time on the UI thread so the swirl speeds up smoothly instead of jumping. At rest (the mic in every
+  // page's bar) the swirl is slow, so it redraws 15 times a second; listening or thinking, every frame. Redrawing the
+  // shader every frame on every page while idle kept the GPU busy and warmed the phone.
+  const pending = useSharedValue(0);
   const frames = useFrameCallback(frame => {
-    const dt = Math.min(frame.timeSincePreviousFrame ?? 16, 64) / 1000;
-    t.set(t.value + dt * (0.5 + 1.2 * level.value));
+    pending.value += Math.min(frame.timeSincePreviousFrame ?? 16, 64);
+    if (level.value < 0.05 && pending.value < 1000 / 15) return;
+    t.set(t.value + (pending.value / 1000) * (0.5 + 1.2 * level.value));
+    pending.value = 0;
   }, false);
   const visible = useVisible();
   // Stop redrawing while hidden, backgrounded or under Reduce Motion (including when toggled live).

@@ -1,7 +1,8 @@
-import { Blur, Canvas, Circle, Group, LinearGradient, Paint, Path, RadialGradient, Rect, Skia, useClock, vec } from "@shopify/react-native-skia";
+import { Blur, Canvas, Circle, Group, LinearGradient, Paint, Path, RadialGradient, Rect, Skia, vec } from "@shopify/react-native-skia";
+import { useIsFocused } from "expo-router";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
-import { useState } from "react";
 import { useDerivedValue, useReducedMotion, type SharedValue } from "react-native-reanimated";
+import { useCalmClock } from "./calm-clock";
 
 /**
  * The canvas behind every screen (the kit's aurora in Sona Care's azure and violet): a #FAFAFA ground with
@@ -49,14 +50,14 @@ function Ribbon({ spec, clock, width, height, still }: { spec: (typeof ribbons)[
   return <Path path={path} style="stroke" strokeWidth={stroke} strokeCap="round" color={color} />;
 }
 
-// Every screen draws its own canvas, so all of them read one app-wide clock: two pages crossfading show the same sky.
-const EPOCH = Date.now();
+/**
+ * Every stack screen draws its own canvas (it is opaque), but only the screen in front moves, at 15 fps (the drift is
+ * 19–31 s per cycle, so it looks the same as 60): a page covered by another holds still and costs nothing.
+ */
 export function CalmCanvas() {
   const { width, height } = useWindowDimensions();
   const still = useReducedMotion();
-  const local = useClock();
-  const [since] = useState(() => Date.now() - EPOCH);
-  const clock = useDerivedValue(() => local.value + since);
+  const clock = useCalmClock(15, useIsFocused() && !still);
   return <View pointerEvents="none" style={StyleSheet.absoluteFill}>
     <Canvas style={StyleSheet.absoluteFill}>
       <Rect x={0} y={0} width={width} height={height} color="#FAFAFA" />

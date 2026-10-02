@@ -1,5 +1,6 @@
-import { Blur, Canvas, Circle, Fill, FractalNoise, Group, LinearGradient, Oval, Paint, RadialGradient, Rect, Shader, Skia, useClock, vec } from "@shopify/react-native-skia";
+import { Blur, Canvas, Circle, Fill, FractalNoise, Group, LinearGradient, Oval, Paint, RadialGradient, Rect, Shader, Skia, vec } from "@shopify/react-native-skia";
 import { useDerivedValue, useReducedMotion, useSharedValue, type SharedValue } from "react-native-reanimated";
+import { useCalmClock } from "./calm-clock";
 
 /**
  * The Sona orb, an azure-violet pearl with a sunbeam tide (orb study round 4, "#5 × Dawn, slow"; recoloured
@@ -94,8 +95,9 @@ function tide(t: number) {
 
 /** The orb drawn in a canvas `size + 2 × pad` wide (the pad leaves room for its soft lift). */
 export function SonaOrb({ size = 148, flood, tx, ty, lift = true }: { size?: number; flood?: SharedValue<number>; tx?: SharedValue<number>; ty?: SharedValue<number>; lift?: boolean }) {
-  const clock = useClock();
   const still = useReducedMotion();
+  // The tide and the drift are slow: 30 fps for a big orb, 15 for the dock's small one; none under Reduce Motion.
+  const clock = useCalmClock(size >= 100 ? 30 : 15, !still);
   const zero = useSharedValue(0);
   const fl = flood ?? zero, x = tx ?? zero, y = ty ?? zero;
   const s = size, k = s / 148, pad = orbPad(s), W = s + pad * 2, center = vec(s / 2, s / 2);

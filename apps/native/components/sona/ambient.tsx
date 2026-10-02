@@ -1,7 +1,7 @@
 import { Canvas, Circle, RadialGradient, vec } from "@shopify/react-native-skia";
 import { useEffect } from "react";
 import { StyleSheet, useWindowDimensions } from "react-native";
-import Animated, { cancelAnimation, Easing, type SharedValue, useDerivedValue, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
+import Animated, { cancelAnimation, Easing, type SharedValue, useDerivedValue, useFrameCallback, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { useReduceMotionPreference } from "./accessibility";
 import { useVisible } from "./use-visible";
 
@@ -24,13 +24,20 @@ export function AmbientWash({ quiet = false, thinking = false }: { quiet?: boole
   const { width, height } = useWindowDimensions();
   const reduced = useReduceMotionPreference();
   const visible = useVisible();
-  const drift = useSharedValue(0), pulse = useSharedValue(0);
-  // Skia redraws the full-screen wash whenever drift changes, so stop the loop while nobody can see it.
+  const drift = useSharedValue(0), pulse = useSharedValue(0), elapsed = useSharedValue(0), pending = useSharedValue(0);
+  // Skia redraws the full-screen wash whenever drift changes. The drift is a slow 9 s sway, so it steps 15 times a
+  // second rather than every frame (a withRepeat redrew it 60–120 times a second), and stops while nobody can see it.
+  const sway = useFrameCallback(f => {
+    pending.value += f.timeSincePreviousFrame ?? 0;
+    if (pending.value < 1000 / 15) return;
+    elapsed.value += pending.value; pending.value = 0;
+    drift.value = (1 - Math.cos((elapsed.value / 9000) * Math.PI)) / 2;
+  }, false);
   useEffect(() => {
-    if (reduced) { drift.set(0); return; }
-    if (!visible) { cancelAnimation(drift); return; }
-    drift.set(withRepeat(withTiming(1, { duration: 9000, easing: Easing.inOut(Easing.sin) }), -1, true));
-  }, [reduced, visible, drift]);
+    if (reduced) drift.set(0);
+    sway.setActive(visible && !reduced);
+    return () => sway.setActive(false);
+  }, [reduced, visible]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!visible) { cancelAnimation(pulse); return; }
     pulse.set(thinking ? (reduced ? 0.5 : withRepeat(withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.sin) }), -1, true)) : withTiming(0, { duration: 350 }));
