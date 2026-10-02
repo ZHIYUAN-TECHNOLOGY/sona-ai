@@ -267,8 +267,9 @@ function InboxRow({ thread: t, now, first, canHandle, onHandle }: { thread: Inbo
  * My Day's urgent message, answered in place: Reply opens the thread with Sona's drafted reply; Call
  * back dials (the ward line, as for a flagged check-in), then logs the call in the patient's Sona Care
  * thread, which answers the message, so the row leaves. Call back shows only for a role that can reply.
+ * The thread itself passes `onReply` (its composer is right there) and only the name as `title`.
  */
-export function MessageActions({ item }: { item: DayItem }) {
+export function MessageActions({ item, onReply }: { item: Pick<DayItem, "patientId" | "title">; onReply?: () => void }) {
   const { user } = useLive();
   const canCall = useRole().can("messages.reply");
   const [dialled, setDialled] = useState(false);
@@ -299,7 +300,7 @@ export function MessageActions({ item }: { item: DayItem }) {
         <Chip label="Not now" onPress={() => { setDialled(false); setError(undefined); }} />
       </> : <>
         <Chip selected label="Reply" accessibilityLabel={`Reply to ${first}`} icon={<Icon name="arrowshape.turn.up.left.fill" size={12} color={palette.white} />}
-          onPress={() => { haptic("select"); router.push({ pathname: "/inbox/[patientId]", params: { patientId } }); }} />
+          onPress={() => { haptic("select"); if (onReply) onReply(); else router.push({ pathname: "/inbox/[patientId]", params: { patientId } }); }} />
         {canCall && <Chip label="Call back" accessibilityLabel={`Call back ${first}`} icon={<Icon name="phone.fill" size={12} color={palette.ink} />} onPress={call} />}
       </>}
     </View>

@@ -15,6 +15,7 @@ import { Action, Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { CareMessages } from "@/features/care-messages";
 import { CheckInThread } from "@/features/check-ins/thread";
 import { patientFlags, unconfirmedOf, type Go } from "@/features/day/counts";
+import { testInSentence } from "@/features/day/model";
 import { usePendingResult } from "@/features/day/use-counts";
 import { AccessTrail, useRole } from "@/features/live/roles";
 import { useServerEncounter } from "@/features/live/sync";
@@ -28,11 +29,10 @@ import type { Patient } from "./types";
 /*
  * Patient sheet (after Must's leaderboard profile sheet): tapping a patient row slides this sheet
  * up (spring 0.42 s, damping 0.82) over the dimmed list, then its sections rise in top to bottom
- * (60 ms apart): who and when, what needs attention (each chip jumps to its fix), the visit at a
- * glance, and the actions. Drag down past 120 pt or flick to dismiss (spring back 0.35 s, 0.8).
+ * (60 ms apart): who and when, Open visit, the keys (each saying what needs attention there and
+ * opening its fix), then the visit at a glance. Drag down past 120 pt or flick to dismiss (spring back 0.35 s, 0.8).
  */
 export type { Go };
-const TONE = { urgent: { ink: palette.red, wash: "rgba(162,62,62,0.10)" }, caution: { ink: palette.amber, wash: "rgba(196,120,20,0.13)" } };
 
 export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onClose: () => void; onGo: (go: Go) => void }) {
   const [box, setBox] = useState(0);
@@ -46,6 +46,13 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
   const flags = patientFlags(patient, unconfirmedOf(patient, encounter), result);
   // Doctors also get "Scan note" (full width under the grid); it opens the visit with the scan on top.
   const visit = visitActions(patient, encounter, result, kind => go(kind === "recording" || kind === "scan" ? { view: kind } : { next: kind }), useRole().can("scan.read"));
+  // What Today and Patients flag is said once, on the key that fixes it (no chips repeating the
+  // keys): the result's value on Brief me, the allergy (or that it is unknown) on Medicines.
+  const resultLine = result?.patientId === patient.id ? `${result.flag} ${testInSentence(result.test)} ${result.value}` : undefined;
+  const allergy = patient.allergies ? `${patient.allergies.split(" — ")[0]} allergy` : undefined;
+  const keys = visit.slice(0, 3).map(a => a.key === "brief" && resultLine ? { ...a, status: resultLine }
+    : a.key === "meds" && patient.incomplete ? { ...a, status: "Allergies unknown" }
+    : a.key === "meds" && allergy ? { ...a, status: `${allergy} · ${a.status}`, tone: "caution" as const } : a);
   const started = Boolean(encounter?.requests.length);
   const [h, m] = patient.time.split(":").map(Number);
   const now = new Date(), minutes = h! * 60 + m! - (now.getHours() * 60 + now.getMinutes());
@@ -86,25 +93,19 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
             </View>
           </Animated.View>
 
-          {flags.length > 0 && <Animated.View entering={rise(1)} style={{ gap: 8 }}>
-            <Text style={{ ...type.overline, color: palette.muted }}>Needs attention</Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {flags.map(flag => <Press key={flag.label} accessibilityLabel={`${flag.label}. Opens the visit to resolve it`} onPress={() => go(flag.go)} hitSlop={{ top: 4, bottom: 4 }} scale={0.96}
-                style={{ minHeight: 36, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, borderRadius: 18, backgroundColor: TONE[flag.tone].wash }}>
-                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: TONE[flag.tone].ink }} />
-                <Text style={{ ...type.subhead, fontWeight: "600", color: TONE[flag.tone].ink }}>{flag.label}</Text>
-                <Icon name="chevron.right" size={10} color={TONE[flag.tone].ink} />
-              </Press>)}
-            </View>
-          </Animated.View>}
-          {/* The main action sits right under what needs attention; everything below is context. */}
+          {/* Who, the main action, then the keys (each with what needs attention there); everything below is context. */}
           <Animated.View entering={rise(1)}><Action label={started ? "Continue visit" : "Open visit"} icon="arrow.right" accessibilityLabel={`${started ? "Continue" : "Open"} visit with ${patient.name}`} onPress={() => go({})} /></Animated.View>
           <Animated.View entering={rise(1)}><PinControl patient={patient} /></Animated.View>
+          <Animated.View entering={rise(2)}>
+            <QuickActions animate={false} actions={[...keys,
+              { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: flags.length ? `${flags.length} open ${flags.length === 1 ? "item" : "items"}` : "Nothing open", onPress: () => go({ to: "/handover" }) },
+              ...visit.filter(a => a.key === "scan")]} />
+          </Animated.View>
 
-          <CheckInThread patient={patient} entering={rise(2)} />
-          <CareMessages patient={patient} entering={rise(2)} />
+          <CheckInThread patient={patient} entering={rise(3)} />
+          <CareMessages patient={patient} entering={rise(3)} />
 
-          <Animated.View entering={rise(2)} style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, padding: 16, gap: 12 }}>
+          <Animated.View entering={rise(3)} style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, padding: 16, gap: 12 }}>
             <View style={{ gap: 3 }}>
               <Text style={{ ...type.overline, color: palette.muted }}>{patient.subtitle}</Text>
               <Text style={{ ...type.callout, color: palette.ink }}>{patient.complaint}</Text>
@@ -118,14 +119,9 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
             <Text style={{ ...type.footnote, color: palette.muted }}>{patient.history[0]} · Medicines: {patient.medicines.length}</Text>
           </Animated.View>
 
-          <Animated.View entering={rise(3)} style={{ gap: 10 }}>
-            <QuickActions animate={false} actions={[...visit.slice(0, 3),
-              { key: "handover", label: "Hand over", icon: "arrow.left.arrow.right", status: flags.length ? `${flags.length} open ${flags.length === 1 ? "item" : "items"}` : "Nothing open", onPress: () => go({ to: "/handover" }) },
-              ...visit.filter(a => a.key === "scan")]} />
-            <Pressable accessibilityRole="link" onPress={() => { onClose(); router.push({ pathname: "/source", params: { id: "history", patientId: patient.id } }); }} hitSlop={8} style={{ alignSelf: "center", minHeight: 36, justifyContent: "center" }}>
-              <Text style={{ ...type.footnote, color: palette.blue }}>Full history & sources</Text>
-            </Pressable>
-          </Animated.View>
+          <Pressable accessibilityRole="link" onPress={() => { onClose(); router.push({ pathname: "/source", params: { id: "history", patientId: patient.id } }); }} hitSlop={8} style={{ alignSelf: "center", minHeight: 36, justifyContent: "center" }}>
+            <Text style={{ ...type.footnote, color: palette.blue }}>Full history & sources</Text>
+          </Pressable>
 
           {/* PDPA: who opened this record (doctors and management, live mode). */}
           <AccessTrail patientId={patient.id} encounterId={patient.encounterId} entering={rise(4)} />

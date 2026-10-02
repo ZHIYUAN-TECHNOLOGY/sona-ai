@@ -1,5 +1,6 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import { router, Stack } from "expo-router";
+import { useHeaderHeight } from "expo-router/react-navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, ScrollView, TextInput, View, type TextStyle, type ViewStyle } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
@@ -12,19 +13,20 @@ import { EASE_OUT, LAYOUT, riseIn } from "@/components/sona/motion";
 import { Caption, ErrorLine } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, CanvasBackground, Icon, IconButton, RoundAction, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, CanvasBackground, Chip, glass, Icon, RoundAction, Surface, surfaceStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { openSession } from "@/features/encounter/navigation";
 import { api, errorText, requestId, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { useRole } from "@/features/live/roles";
 import { refreshServerData } from "@/features/live/server-day";
+import { MessageActions } from "./index";
 import { PhotoMessage } from "./photo";
 import { clock, LABEL_STYLE, type Label } from "./state";
 
 /**
  * One patient's Sona Care thread for the care team. Opening it marks the patient's messages seen
- * (Sona Care then says "Seen by care team"). Above the composer, Sona's drafted reply to the latest
- * waiting message, with its triage and why, and an honest source line: the rule-based template says
+ * (Sona Care then says "Seen by care team"). Under the header, the latest waiting message's triage
+ * and why (urgent: Reply / Call back, as on Today); above the composer, Sona's drafted reply with an honest source line: the rule-based template says
  * so until a model is switched on. Nothing is sent until a doctor or nurse presses send; after
  * sending, back to the inbox, where the thread has moved to handled.
  *
@@ -51,6 +53,7 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
   const canReply = role.can("messages.reply"), canDraft = role.can("messages.draft");
   const { reducedMotion } = useAccessibleEffects();
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
   const [data, setData] = useState<Thread>();
   const [loadError, setLoadError] = useState<string>();
   const load = useCallback(() => api.messages.thread({ patientId }).then(t => { setData(t); setLoadError(undefined); }, e => setLoadError(errorText(e))), [patientId]);
@@ -123,9 +126,20 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
         <Text style={{ ...type.headline, color: palette.ink }}>{patient?.name ?? "Messages"}</Text>
         {patient?.bed && <Text style={{ ...type.caption, color: palette.muted }}>{patient.bed}</Text>}
       </View>,
-      headerRight: () => patient ? <IconButton name="person.crop.circle" label={`Open ${patient.name}`} onPress={() => openSession(patient.id)} /> : null,
+      headerRight: () => patient ? <Chip label="Open visit" accessibilityLabel={`Open ${patient.name}'s visit`} onPress={() => openSession(patient.id)} /> : null,
     }} />
     <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+      {/* Insight first, pinned under the header so the bottom-anchored thread never scrolls it away:
+          the waiting message's triage in its colour and why, and for urgent ones Reply / Call back as on Today. */}
+      {on && waiting && <View style={{ marginTop: headerHeight, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 10, gap: 10, borderBottomWidth: 1, borderColor: glass.hairline }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10, backgroundColor: LABEL_STYLE[label].wash }}>
+            <Text style={{ ...type.caption, fontWeight: "700", color: LABEL_STYLE[label].ink }}>{LABEL_STYLE[label].text}</Text>
+          </View>
+          <Text numberOfLines={2} style={{ ...type.footnote, fontWeight: label === "urgent" ? "600" : "400", color: label === "urgent" ? palette.red : palette.muted, flex: 1 }}>{waiting.triageReason ?? "Not triaged: read it first"}</Text>
+        </View>
+        {label === "urgent" && canReply && <MessageActions item={{ patientId, title: first }} onReply={() => input.current?.focus()} />}
+      </View>}
       <ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled"
         onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })} contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 16, gap: 14 }}>
         {!on ? <Caption>Patient messages arrive from Sona Care in live mode (Settings).</Caption>
@@ -141,12 +155,6 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
         {show && <Animated.View layout={reducedMotion ? undefined : LAYOUT} entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 10, duration: 360 })} exiting={FadeOut.duration(160)}>
           <Surface feature style={{ padding: 16, gap: 10, opacity: fading ? 0 : 1, transitionProperty: "opacity", transitionDuration: 240 } as never}>
             <Text style={{ ...type.overline, color: palette.blue }}>Sona drafted a reply · check before sending</Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10, backgroundColor: LABEL_STYLE[label].wash }}>
-                <Text style={{ ...type.caption, fontWeight: "700", color: LABEL_STYLE[label].ink }}>{LABEL_STYLE[label].text}</Text>
-              </View>
-              <Text numberOfLines={2} style={{ ...type.caption, color: palette.muted, flex: 1 }}>{waiting?.triageReason ?? "Not triaged: read it first"}</Text>
-            </View>
             {show.error ? <ErrorLine text={`No draft: ${show.error}`} onRetry={() => setAttempt(a => a + 1)} />
               : !show.value ? <Drafting label="Sona is drafting…" lines={2} />
               : <>
@@ -169,7 +177,7 @@ export function ThreadScreen({ patientId }: { patientId: string }) {
     </KeyboardAvoidingView>
     {/* The header floats over the thread; a canvas fade keeps scrolled bubbles (dark ones too) from reading through it. */}
     <LinearGradient pointerEvents="none" colors={[palette.canvas, "rgba(245,246,248,0.94)", "rgba(245,246,248,0)"]} locations={[0, 0.72, 1]}
-      style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top + 78 }} />
+      style={{ position: "absolute", top: 0, left: 0, right: 0, height: on && waiting ? headerHeight : insets.top + 78 }} />
     {flight && <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 0, width: flight.width, transformOrigin: "left top" }, flightStyle]}>
       <Text style={{ ...type.callout, color: palette.ink }}>{flight.text}</Text>
     </Animated.View>}
