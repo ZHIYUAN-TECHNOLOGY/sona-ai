@@ -1,8 +1,11 @@
 import { Stack, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
+import { AppState, Keyboard } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { poke } from "@/components/sona/idle";
 import { palette } from "@/components/sona/theme";
 import { CloseButton, IconButton } from "@/components/sona/ui";
 import { CriticalAlert } from "@/features/critical";
@@ -14,8 +17,21 @@ export const unstable_settings = { initialRouteName: "index" };
 // One rule: pushed pages get the back chevron (screenOptions); modals and sheets get one close control on the right.
 const closable = { headerLeft: () => null, headerRight: () => <CloseButton /> };
 
+const touched = () => { poke(); return false; };
+
+/** The keyboard opening or closing, and the app coming back to the front, are activity too. */
+function ActivityWatch() {
+  useEffect(() => {
+    const subs = [Keyboard.addListener("keyboardWillShow", poke), Keyboard.addListener("keyboardWillHide", poke),
+      AppState.addEventListener("change", s => { if (s === "active") poke(); })];
+    return () => subs.forEach(sub => sub.remove());
+  }, []);
+  return null;
+}
+
 export default function RootLayout() {
-  return <GestureHandlerRootView style={{ flex: 1 }}><KeyboardProvider><SafeAreaProvider><EncounterProvider><ScribePlayback /><StatusBar style="dark" /><Stack screenOptions={{ headerLeft: () => <IconButton name="chevron.left" label="Return to previous screen" onPress={() => router.canGoBack() ? router.back() : router.replace("/")} />, headerTransparent: true, headerStyle: { backgroundColor: "transparent" }, headerBlurEffect: "none", headerTintColor: palette.ink, headerShadowVisible: false, headerBackButtonDisplayMode: "minimal", contentStyle: { backgroundColor: palette.canvas } }}>
+  // Every touch start is activity (./components/sona/idle): seen on the way down, never claimed, so the touch goes on as before.
+  return <GestureHandlerRootView style={{ flex: 1 }} onStartShouldSetResponderCapture={touched}><ActivityWatch /><KeyboardProvider><SafeAreaProvider><EncounterProvider><ScribePlayback /><StatusBar style="dark" /><Stack screenOptions={{ headerLeft: () => <IconButton name="chevron.left" label="Return to previous screen" onPress={() => router.canGoBack() ? router.back() : router.replace("/")} />, headerTransparent: true, headerStyle: { backgroundColor: "transparent" }, headerBlurEffect: "none", headerTintColor: palette.ink, headerShadowVisible: false, headerBackButtonDisplayMode: "minimal", contentStyle: { backgroundColor: palette.canvas } }}>
     <Stack.Screen name="index" options={{ headerShown: false }} />
     <Stack.Screen name="session/[patientId]" options={{ headerShown: false }} />
     <Stack.Screen name="patients" options={{ ...closable, title: "Choose a patient", presentation: "formSheet", sheetAllowedDetents: [0.75, 1], sheetGrabberVisible: true }} />
