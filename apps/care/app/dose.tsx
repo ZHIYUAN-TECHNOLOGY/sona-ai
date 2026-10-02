@@ -52,11 +52,18 @@ export default function DoseScreen() {
   const out = plan?.status === "discharged" ? plan.dischargedAt : undefined;
   const today = dosesToday(meds, out, taken, now);
   const line = out ? insight(today, now, lang) : undefined;
+  const week = out && meds.some(m => m.at?.length) ? weekStrip(weekOf(meds, out, taken, now), now, lang) : undefined;
+  const missed = week?.some(d => d.mark === "amber") ?? false;
 
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     <Animated.View entering={enter(0)} style={{ gap: 14 }}>
       <Title greeting={t("dose.titleLight")} accent={t("dose.titleBold")} line={line?.text} lineTone={line?.tone} />
-      {out && meds.some(m => m.at?.length) && <Week days={weekStrip(weekOf(meds, out, taken, now), now, lang)} />}
+      {week && <Week days={week} />}
+      {/* A missed day shows amber above, so what to do about it sits right there, not at the foot of the page. */}
+      {missed && <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 12, borderRadius: 16, borderCurve: "continuous", backgroundColor: palette.amberWash }}>
+        <View style={{ width: 8, height: 8, borderRadius: 4, marginTop: 6, backgroundColor: palette.warning }} />
+        <Text style={{ flex: 1, ...type.footnote, fontWeight: "500", color: palette.amber }}>{t("dose.missedTip")}</Text>
+      </View>}
     </Animated.View>
 
     {!plan ? (discharge.error ? <LoadError query={discharge} /> : <ActivityIndicator color={palette.muted} />)
@@ -83,7 +90,7 @@ export default function DoseScreen() {
         <Animated.View entering={enter(3)}><PhotoMedicines planned={meds.map(m => m.name)} /></Animated.View>
         <Animated.View entering={enter(4)}><CareTeam /></Animated.View>
 
-        <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("dose.missedTip")}</Text>
+        {!missed && <Text style={{ ...type.footnote, color: palette.muted, textAlign: "center" }}>{t("dose.missedTip")}</Text>}
       </>}
   </ScrollView>;
 }
@@ -175,15 +182,19 @@ function NextCard({ dose, now, took, onTook }: { dose?: Dose; now: Date; took?: 
     <Sunbeam play={logged.at.getTime()} radius={32} />
   </Card>;
 
-  if (dose) return <Card style={{ alignItems: "center", gap: 10 }}>
-    <View accessible style={{ alignItems: "center", gap: 8 }}>
-      <Text style={{ ...type.footnote, fontWeight: "500", color: palette.faint }}>{t("dose.nextUp")}</Text>
-      <Capsule>{whenWords(dose.dueAt, now, lang)}</Capsule>
-      <Pill name={dose.name} size={96} />
-      <Text style={nameStyle}>{dose.name}</Text>
-      <Text style={centred}>{sentenceCase(dose.line)}</Text>
-      <Text style={{ ...type.footnote, color: palette.faint, textAlign: "center" }}>{t("dose.markFrom", { time: clock(new Date(dose.dueAt.getTime() - EARLY), lang) })}</Text>
+  // Nothing to do yet: one compact row, so the page leads with what is next without a big card asking for nothing.
+  if (dose) return <Card style={{ padding: 14 }}>
+    <View accessible style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+      <View style={{ width: 60, height: 60, borderRadius: 20, borderCurve: "continuous", backgroundColor: tintOf(dose.name), alignItems: "center", justifyContent: "center" }}>
+        <Pill name={dose.name} size={54} />
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{t("dose.nextUp")} · {whenWords(dose.dueAt, now, lang)}</Text>
+        <Text style={{ ...type.headline, color: palette.ink }}>{dose.name}</Text>
+        <Text style={{ ...type.footnote, color: palette.muted }}>{sentenceCase(dose.line)}</Text>
+      </View>
     </View>
+    <Text style={{ ...type.footnote, color: palette.faint }}>{t("dose.markFrom", { time: clock(new Date(dose.dueAt.getTime() - EARLY), lang) })}</Text>
   </Card>;
 
   return <Card>
@@ -299,12 +310,14 @@ function MedRow({ med, first, today }: { med: ScheduledMed; first: boolean; toda
   const lang = useLang(), t = tFor(lang);
   const reduced = useReducedMotion();
   const done = today.length > 0 && today.every(d => d.taken), schedule = scheduleLine(med, lang);
+  // The next of today's doses still to take, and whether it is past its time.
+  const pending = today.find(d => !d.taken), late = pending ? isLate(pending.dueAt, clockNow()) : false;
   const [doneAtMount] = useState(done);
   const pop = done && !doneAtMount;
   const settle = useSharedValue(0);
   useEffect(() => { if (pop && !reduced) settle.value = withSequence(withTiming(3, { duration: 120, easing: EASE_OUT }), withSpring(0, motion.pop)); }, [pop, reduced, settle]);
   const settled = useAnimatedStyle(() => ({ transform: [{ translateY: settle.value }] }));
-  return <Pressable accessibilityRole="button" accessibilityLabel={[med.name, schedule, done && t("dose.todayTaken")].filter(Boolean).join(". ")} accessibilityHint={t("dose.openHint")} onPress={() => open(med.name)}
+  return <Pressable accessibilityRole="button" accessibilityLabel={[med.name, schedule, done ? t("dose.todayTaken") : pending && clock(pending.dueAt, lang)].filter(Boolean).join(". ")} accessibilityHint={t("dose.openHint")} onPress={() => open(med.name)}
     style={({ pressed }) => ({ minHeight: 72, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderTopWidth: first ? 0 : 1, borderColor: palette.line, opacity: pressed ? 0.6 : 1 })}>
     <View style={{ width: 48, height: 48, borderRadius: 16, borderCurve: "continuous", backgroundColor: tintOf(med.name), alignItems: "center", justifyContent: "center" }}>
       <Pill name={med.name} size={44} />
@@ -313,8 +326,10 @@ function MedRow({ med, first, today }: { med: ScheduledMed; first: boolean; toda
       <Text style={{ ...type.headline, color: palette.ink }}>{med.name}</Text>
       <Text style={{ ...type.footnote, color: palette.faint }}>{schedule}</Text>
     </Animated.View>
-    {done ? <Check size={24} pop={pop} /> : today.length > 0 && <Animated.View exiting={reduced ? undefined : ZoomOut.duration(160)}
-      style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: "#E5E5E5" }} />}
+    {done ? <Check size={24} pop={pop} /> : pending && <Animated.View exiting={reduced ? undefined : ZoomOut.duration(160)}
+      style={[pillStyle, { paddingHorizontal: 10, paddingVertical: 4 }, late && { backgroundColor: palette.amberWash, borderColor: palette.amberEdge }]}>
+      <Text maxFontSizeMultiplier={1.4} style={{ fontSize: 13, lineHeight: 17, fontWeight: "600", fontVariant: ["tabular-nums"], color: late ? palette.amber : palette.ink }}>{clock(pending.dueAt, lang)}</Text>
+    </Animated.View>}
     <Text style={{ fontSize: 20, color: palette.faint }}>›</Text>
   </Pressable>;
 }

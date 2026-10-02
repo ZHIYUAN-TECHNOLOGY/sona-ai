@@ -69,16 +69,12 @@ export function PhotoMedicines({ planned }: { planned: string[] }) {
         </Animated.View>
       </View>
     </Pressable>)}
+    {/* A quiet secondary action under the list: one line, a dashed edge (something to add, not something to read). */}
     <Pressable accessibilityRole="button" accessibilityLabel={t("photo.add")} accessibilityHint={t("photo.addLine")} onPress={() => setOpen(true)}
-      style={({ pressed }) => [surfaceStyle, { flexDirection: "row", alignItems: "center", gap: 12, padding: 12, minHeight: 64, transform: [{ scale: pressed ? motion.press : 1 }] }]}>
-      <View style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: palette.blueWash }}>
-        <Svg width={22} height={22} viewBox="0 0 24 24"><Path d={CAMERA} fill="none" stroke={palette.blue} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></Svg>
-      </View>
-      <View style={{ flex: 1, gap: 1 }}>
-        <Text style={{ ...type.headline, color: palette.ink }}>{t("photo.add")}</Text>
-        <Text style={{ ...type.footnote, color: palette.faint }}>{t("photo.addLine")}</Text>
-      </View>
-      <Svg width={18} height={18} viewBox="0 0 24 24"><Path d={ICON.plus} fill="none" stroke={palette.muted} strokeWidth={2} strokeLinecap="round" /></Svg>
+      style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, minHeight: 52, borderRadius: 18, borderCurve: "continuous", borderWidth: 1, borderStyle: "dashed", borderColor: "rgba(51,92,255,0.35)", transform: [{ scale: pressed ? motion.press : 1 }] })}>
+      <Svg width={20} height={20} viewBox="0 0 24 24"><Path d={CAMERA} fill="none" stroke={palette.blue} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></Svg>
+      <Text style={{ flex: 1, ...type.body, fontWeight: "600", color: palette.blue }}>{t("photo.add")}</Text>
+      <Svg width={16} height={16} viewBox="0 0 24 24"><Path d={ICON.plus} fill="none" stroke={palette.blue} strokeWidth={2.2} strokeLinecap="round" /></Svg>
     </Pressable>
     {open && <PhotoSheet onClose={() => setOpen(false)} />}
   </View>;

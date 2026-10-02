@@ -101,6 +101,8 @@ export function RemindCard() {
   const [asked, setAsked] = useState(false);
   const [busy, setBusy] = useState(false);
   const blocked = choice === "on" && permission !== undefined && permission !== "granted";
+  // Once on, it says so for a moment and steps aside: a setting, not something to keep reading.
+  useEffect(() => { if (!(on && asked)) return; const timer = setTimeout(() => setAsked(false), 3500); return () => clearTimeout(timer); }, [on, asked]);
   if (!loaded || (choice !== undefined && !asked && !blocked)) return null;
   const toggle = async (to: boolean) => {
     setBusy(true); setAsked(true);
