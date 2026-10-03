@@ -3,7 +3,7 @@ import { EMPTY_DISCHARGE, dischargeChecks, planFor } from "@sona-ai/domain/disch
 import { newEncounter, patients } from "@/features/encounter/fixtures";
 import { fixtureFindings } from "@/features/findings/model";
 import { wardBeds } from "@/features/ward/model";
-import { needLine, needsYou, openTaskCount, patientResult, pendingResult, receiptLine, resultKey, resultLine, withFindingBlockers } from "./counts";
+import { allergyConfirmation, allergyLine, needLine, needsYou, openTaskCount, patientFlags, patientResult, pendingResult, receiptLine, resultKey, resultLine, withFindingBlockers } from "./counts";
 import { PENDING_RESULT } from "./model";
 
 const row = (over = {}) => ({ id: "lab-1", patientId: "SYN-1086", patientName: "Daniel Rahman", test: "Potassium", value: "3.1", unit: "mmol/L", flag: "low", receivedAt: new Date("2026-09-30T00:00:00Z"), acknowledgedBy: null, acknowledgedAt: null, acknowledgedByName: null, critical: false, ...over });
@@ -40,6 +40,24 @@ test("live: the server's acknowledgement is the one that counts, with who and wh
   expect(patientResult("SYN-1086", bothDone, {}, now)).toMatchObject({ result: { id: "lab-2" }, ack: { by: "Dr Aisyah" } });
   expect(receiptLine({ at: new Date(2026, 8, 30, 10, 14).toISOString(), by: "Dr Lim" }, new Date(2026, 8, 30, 12))).toBe("Acknowledged 10:14 by Dr Lim");
   expect(receiptLine({ at: new Date(2026, 8, 29, 10, 14).toISOString(), by: "Dr Lim" }, new Date(2026, 8, 30, 12))).toBe("Acknowledged 29 Sep 10:14 by Dr Lim");
+});
+
+test("the allergy flag clears once a clinician confirms it, and a discharge leaves only a waiting result", () => {
+  const [amelia, daniel] = ["SYN-1042", "SYN-1086"].map(id => patients.find(p => p.id === id));
+  const at = new Date(2026, 9, 3, 14, 32);
+  const fact = allergyConfirmation(amelia, 2, "Dr Lim", at);
+  expect(fact).toMatchObject({ category: "allergy", value: "Penicillin — reported rash", source: "Confirmed by Dr Lim", date: "2026-10-03 14:32", revision: 2 });
+  expect([allergyLine(fact, new Date(2026, 9, 3, 18)), allergyLine(fact, new Date(2026, 9, 4, 9)), allergyLine({ date: "2026-10-03" }, at)])
+    .toEqual(["Allergy confirmed · 14:32", "Allergy confirmed · 3 Oct 14:32", "Allergy confirmed · today"]);
+  const label = list => list.find(n => n.patient.id === "SYN-1042")?.flag.label;
+  const confirmed = { ...encounters, "SYN-1042": { ...newEncounter(), historyFacts: [fact] } };
+  expect(label(needsYou(patients, confirmed, undefined))).toBe("2 medicines unconfirmed");
+  // Discharged: nothing left to do in the visit, so Amelia leaves; a result still waiting keeps Daniel.
+  const discharged = { ...newEncounter(), discharge: { dischargedAt: at.toISOString() } };
+  expect(label(needsYou(patients, { ...encounters, "SYN-1042": discharged }, undefined))).toBeUndefined();
+  expect(patientFlags(daniel, 1, PENDING_RESULT, discharged).map(f => f.label)).toEqual(["Low potassium 3.1 mmol/L"]);
+  // An allergy recorded for an incomplete history is no longer unknown.
+  expect(patientFlags(daniel, 1, undefined, { ...newEncounter(), historyFacts: [{ ...fact, value: "No known allergies" }] }).map(f => f.label)).toEqual(["History incomplete"]);
 });
 
 test("'needs you' is always a count of patients", () => {

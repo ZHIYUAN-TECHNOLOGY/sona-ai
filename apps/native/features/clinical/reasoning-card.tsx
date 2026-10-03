@@ -77,6 +77,8 @@ export function ReasoningCard({ patient, result, onSource, onRequest }: FeatureP
   const facts = (encounters[patient.id]?.historyFacts ?? []).filter(fact => !result || fact.revision <= result.revision);
   const presentingSource = facts.findLast(fact => fact.category === "presenting")?.id ?? "history";
   const medicalSource = facts.findLast(fact => fact.category === "medical")?.id ?? "history";
+  // Only an image the clinician attached to this visit can be reviewed from here.
+  const attached = Boolean(encounters[patient.id]?.imagingAttachment);
   const toggle = (id: string) => setOpen(ids => ids.includes(id) ? ids.filter(value => value !== id) : [...ids, id]);
   // One quiet provenance line replaces the section subtitle, the complaint quote and the sources caption.
   const provenance = patient.incomplete
@@ -117,7 +119,7 @@ export function ReasoningCard({ patient, result, onSource, onRequest }: FeatureP
           {EVIDENCE.map(([key, icon, label], row) => <Animated.View key={key} entering={reducedMotion ? undefined : riseIn({ delay: 60 + 40 * row, distance: 6, duration: 260 })} style={{ paddingLeft: 6 }}>
             <IconRow icon={icon} title={label} detail={item.evidence[key]} />
           </Animated.View>)}
-          {item.xray && <Action label="Review the X-ray attachment" icon="photo" secondary onPress={() => onRequest("xray")} />}
+          {item.xray && attached && <Action label="Review the X-ray attachment" icon="photo" secondary onPress={() => onRequest("xray")} />}
         </Disclosure>)}
         {/* Registered outside the disclosures so the section's sources pill counts them while collapsed. */}
         {possibilities(patient, presentingSource, medicalSource).flatMap(item => item.sources).map(source => <SourceRef key={source.label} id={source.label} label={source.label} kind={source.kind} onPress={() => onSource(source.id)} />)}

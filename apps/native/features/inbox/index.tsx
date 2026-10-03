@@ -7,7 +7,7 @@ import Animated, { FadeIn, FadeOut, interpolate, interpolateColor, useAnimatedRe
 import { scheduleOnRN } from "react-native-worklets";
 import { BrandIcon } from "@/components/sona/brand-icon";
 import { EASE_OUT, fold, LAYOUT, riseIn } from "@/components/sona/motion";
-import { Caption, ErrorLine, PressScale } from "@/components/sona/parts";
+import { Caption, ErrorLine, Press, PressScale } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Chip, Expand, glass, Icon, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
@@ -20,7 +20,7 @@ import { api, errorText, requestId, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { useRole } from "@/features/live/roles";
 import { refreshServerData } from "@/features/live/server-day";
-import { clock, insight, LABEL_STYLE, lastLine, sections, summary, waited, type Inbox, type InboxThread, type Label } from "./state";
+import { clock, insight, LABEL_STYLE, lastLine, sampleInbox, sections, summary, waited, type Inbox, type InboxThread, type Label } from "./state";
 
 /**
  * The care team's inbox for Sona Care messages, ranked by triage so nothing urgent is buried: the
@@ -107,16 +107,28 @@ function haptic(kind: "select" | "done") {
   if (process.env.EXPO_OS !== "ios") return;
   (kind === "done" ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success) : Haptics.selectionAsync()).catch(() => {});
 }
+
+/** The blue Undo beside a swipe's receipt, for its UNDO_MS (here and on the coding audit). */
+export function UndoPill({ label, onUndo }: { label: string; onUndo: () => void }) {
+  return <Press accessibilityLabel={label} onPress={() => { haptic("select"); onUndo(); }} hitSlop={8} scale={0.96}
+    style={{ minHeight: 32, flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 11, borderRadius: 16, backgroundColor: "rgba(36,91,204,0.1)" }}>
+    <Icon name="arrow.uturn.backward" size={11} color={palette.blue} /><Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>Undo</Text>
+  </Press>;
+}
 const firstName = (name: string) => name.split(" ")[0]!;
 
 export function InboxScreen() {
-  const { on, inbox, error, load, held, heldFailed: failed, hold, undo } = useInbox();
+  const { on, inbox: served, error, load, held, heldFailed: failed, hold, undo } = useInbox();
+  const { on: live } = useLive();
   const role = useRole();
-  const canHandle = role.can("messages.handle");
+  // Demo mode reads a labelled sample so the page can be reviewed without the server; handling one needs the server.
+  const [sample] = useState(sampleInbox);
+  const inbox = on ? served : sample;
+  const canHandle = on && role.can("messages.handle");
   const { reducedMotion } = useAccessibleEffects();
   const layout = reducedMotion ? undefined : LAYOUT;
 
-  if (!on) return <Screen><Caption>Patient messages arrive from Sona Care in live mode (Settings), for doctors, nurses and management.</Caption></Screen>;
+  if (!on && live) return <Screen><Caption>{role.why("messages.inbox") ?? "Patient messages are read by doctors, nurses and management."}</Caption></Screen>;
   if (!inbox) return <Screen>{error ? <ErrorLine text={`Messages didn't load: ${error}`} onRetry={() => { void load(); }} /> : <Caption icon={null}>Loading messages…</Caption>}</Screen>;
 
   // Threads inside their Undo window already read handled (useInbox), here and on Today.
@@ -134,16 +146,14 @@ export function InboxScreen() {
     <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>
       {line.split(" · ").map((part, i) => <Text key={part} style={{ color: part.endsWith("urgent") ? palette.red : palette.ink }}>{i ? " · " : ""}{part}</Text>)}
     </Text>
+    {!on && <Caption>Sample messages. Patients' own arrive from Sona Care in live mode (Settings).</Caption>}
     {failed && <ErrorLine text={failed} />}
     {/* Every handled swipe: 5 seconds to take it back (the handover deck's Undo), before the server hears of it. */}
     {last && <Animated.View key={last.patientId} entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 6, duration: 260 })} exiting={FadeOut.duration(150)}
       style={{ flexDirection: "row", alignItems: "center", gap: 10, minHeight: 44 }}>
       <BrandIcon name="check" size={16} color={palette.green} strokeWidth={2.2} />
       <Text accessibilityLiveRegion="polite" numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.muted }}>{firstName(last.name)}'s messages marked handled</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Undo, keep ${firstName(last.name)}'s messages waiting`} onPress={() => { haptic("select"); undo(last.patientId); }} hitSlop={8}
-        style={{ minHeight: 32, flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 11, borderRadius: 16, backgroundColor: "rgba(36,91,204,0.1)" }}>
-        <Icon name="arrow.uturn.backward" size={11} color={palette.blue} /><Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>Undo</Text>
-      </Pressable>
+      <UndoPill label={`Undo, keep ${firstName(last.name)}'s messages waiting`} onUndo={() => undo(last.patientId)} />
     </Animated.View>}
     {groups.map(group => <Animated.View key={group.label} layout={layout} entering={reducedMotion ? FadeIn.duration(150) : riseIn({ distance: 8, duration: 320 })} exiting={reducedMotion ? FadeOut.duration(150) : fold} style={{ gap: 8 }}>
       <SectionHead label={group.label} count={group.rows.length} />

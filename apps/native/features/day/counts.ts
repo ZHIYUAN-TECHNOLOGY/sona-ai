@@ -1,7 +1,8 @@
 import { defaultMedications } from "@/features/encounter/clinical-state";
-import type { Encounter, Patient, Task } from "@/features/encounter/types";
+import type { Encounter, HistoryFact, Patient, Task } from "@/features/encounter/types";
 import { newestResult, resultRow, serverTasks, type ServerResult, type ServerTask } from "@/features/live/day";
 import { taskCounts } from "@/features/tasks/counts";
+import { localDate } from "@/features/tasks/state";
 import type { Bed } from "@/features/ward/model";
 import { PENDING_RESULT, testInSentence, type PendingResult } from "./model";
 
@@ -57,13 +58,37 @@ export const resultLine = (r: PendingResult) => [`${r.test} ${r.value}`, r.flag.
 export type Go = { next?: string; view?: string; to?: "/handover" };
 export type Flag = { label: string; tone: "urgent" | "caution"; go: Go };
 
-/** Why a patient needs you, most urgent first: the result waiting on a doctor, the allergy, medicines to confirm, missing history. */
-export function patientFlags(patient: Patient, unconfirmed: number, result: PendingResult | undefined): Flag[] {
+/** The allergy a clinician recorded in this visit (the allergy row's Confirm, or a history correction); until one is, the record's allergy needs confirming. */
+export const confirmedAllergy = (encounter: Pick<Encounter, "historyFacts"> | undefined) => encounter?.historyFacts?.findLast(fact => fact.category === "allergy");
+
+/**
+ * What the allergy row's Confirm records: the same history edit a correction makes, so live mode saves it to the
+ * server. The record's note that it needs confirming goes; `date` keeps the time for the receipt.
+ */
+export function allergyConfirmation(patient: Patient, revision: number, by: string, at = new Date()): HistoryFact {
+  return { id: `history-${patient.id}-${at.getTime()}`, category: "allergy", value: (patient.allergies ?? "").replace(/;\s*details need confirmation$/i, ""), source: `Confirmed by ${by}`, date: `${localDate(at)} ${clock(at)}`, revision };
+}
+
+/** "Allergy confirmed · 14:32", with the day when it wasn't today (a history correction has a day, no time). */
+export function allergyLine(fact: Pick<HistoryFact, "date">, now = new Date()) {
+  const [day = "", time] = fact.date.split(" ");
+  const date = day === localDate(now) ? "" : new Date(`${day}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  return `Allergy confirmed · ${[date, time].filter(Boolean).join(" ") || "today"}`;
+}
+
+/**
+ * Why a patient needs you, most urgent first: the result waiting on a doctor, the allergy, medicines to confirm, missing
+ * history. With the visit: an allergy a clinician recorded asks nothing more, and once discharged only the result does.
+ */
+export function patientFlags(patient: Patient, unconfirmed: number, result: PendingResult | undefined, encounter?: Encounter): Flag[] {
   const flags: Flag[] = [];
   if (result?.patientId === patient.id) flags.push({ label: `${result.flag} ${testInSentence(result.test)} ${result.value}`, tone: "urgent", go: { next: "briefing" } });
-  if (patient.allergies) flags.push({ label: `${patient.allergies.split(" — ")[0]} allergy · confirm`, tone: "caution", go: { next: "medication" } });
+  if (encounter?.discharge?.dischargedAt) return flags;
+  const allergy = confirmedAllergy(encounter);
+  if (patient.allergies && !allergy) flags.push({ label: `${patient.allergies.split(" — ")[0]} allergy · confirm`, tone: "caution", go: { next: "medication" } });
   if (!patient.incomplete && unconfirmed) flags.push({ label: `${unconfirmed} ${unconfirmed === 1 ? "medicine" : "medicines"} unconfirmed`, tone: "caution", go: { next: "medication" } });
-  if (patient.incomplete) flags.push({ label: "History incomplete", tone: "caution", go: { next: "reasoning" } }, { label: "Allergies unknown", tone: "caution", go: { view: "recording" } });
+  if (patient.incomplete) flags.push({ label: "History incomplete", tone: "caution", go: { next: "reasoning" } });
+  if (patient.incomplete && !allergy) flags.push({ label: "Allergies unknown", tone: "caution", go: { view: "recording" } });
   return flags;
 }
 
@@ -72,7 +97,7 @@ export const unconfirmedOf = (patient: Patient, encounter: Encounter | undefined
 /** The patients who need you (not the items): each with the most urgent reason, red ones first. */
 export function needsYou(patients: Patient[], encounters: Record<string, Encounter | undefined>, result: PendingResult | undefined) {
   return patients.flatMap(patient => {
-    const [flag] = patientFlags(patient, unconfirmedOf(patient, encounters[patient.id]), result);
+    const [flag] = patientFlags(patient, unconfirmedOf(patient, encounters[patient.id]), result, encounters[patient.id]);
     return flag ? [{ patient, flag }] : [];
   }).sort((a, b) => Number(b.flag.tone === "urgent") - Number(a.flag.tone === "urgent"));
 }

@@ -18,7 +18,8 @@ const categories: { value: HistoryFact["category"]; label: string; icon: string 
   { value: "family", label: "Family history", icon: "figure.2.and.child.holdinghands" }, { value: "social", label: "Social history", icon: "house" }, { value: "allergy", label: "Allergies", icon: "allergens" },
 ];
 const categoryOf = (value: HistoryFact["category"]) => categories.find(category => category.value === value)!;
-const shortDate = (value: string) => new Date(`${value}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+// A confirmed allergy's date carries its time ("2026-10-03 14:32"); the day is the first ten characters either way.
+const shortDate = (value: string) => new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 /** Each recorded change is its own source; the detail line tells revisions apart in the sources sheet. */
 const sourceOf = (fact: HistoryFact, onSource: (id: string) => void): SourceEntry => ({
   id: fact.id, label: "History update", kind: "record", detail: `Revision ${fact.revision} · ${categoryOf(fact.category).label} · ${shortDate(fact.date)} · ${fact.source}`, onPress: () => onSource(fact.id),

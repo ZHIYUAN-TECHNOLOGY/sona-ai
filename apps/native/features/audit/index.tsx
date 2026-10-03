@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { MarkedText } from "@/components/sona/marked-text";
-import { Pressable, View } from "react-native";
+import { AccessibilityInfo, Pressable, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { FadeIn, FadeOut, useAnimatedProps, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
@@ -16,14 +16,15 @@ import { AUDIT_NEXT, mostMoney } from "@/features/ask/answers";
 import { ASK_SPACE, WithSona } from "@/features/ask";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
+import { UNDO_MS, UndoPill } from "@/features/inbox";
 import { api, errorText, useLive } from "@/features/live";
 import { useRole } from "@/features/live/roles";
 import { formatRM, markSent, openItems, riskByDoctor, totalRisk, useSent, type AuditItem } from "./model";
 
 /*
  * Coding audit (after Twodos' swipe-to-check): drag a row right and its ring fills; past 75 pt it
- * checks, says who the query went to, and the row collapses while the rows below slide up
- * (spring 0.38 s, damping 0.82). The sent count pops (0.75 then 1.25 then 1) and the money at
+ * checks and says who the query went to, with 5 seconds to Undo, then the row collapses while the
+ * rows below slide up (spring 0.38 s, damping 0.82). The sent count pops (0.75 then 1.25 then 1) and the money at
  * risk rolls down digit by digit (after Finma's number flip: only changed digits move, on a light
  * spring). Each row shows the start of the query a swipe sends; tapping shows all of it with a Send
  * button, so swiping is never required.
@@ -102,21 +103,35 @@ export function AuditScreen() {
   const listed = doctor ? items.filter(i => i.doctor === doctor) : items;
 
   const [asking, setAsking] = useState<string[]>([]);
-  // The row says who it went to, then folds away; live, only once the server has taken the query.
-  const confirmSent = (item: AuditItem) => {
+  /*
+   * A swipe or Send holds the query for 5 seconds, the inbox's Undo: the row says who it goes to, with Undo beside it,
+   * and only then does it go (live: to the server, which may refuse it: the row comes back with Retry). It folds away
+   * once gone. Leaving the page still sends it.
+   * ponytail: the hold lives in this screen, so coming back within the 5 seconds shows the row until it goes; keep it
+   * beside `sent` in model.ts if that matters.
+   */
+  const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  const send = (item: AuditItem) => {
+    if (sending.includes(item.id)) return;
     haptic("success");
+    AccessibilityInfo.announceForAccessibility(`Query to ${item.doctor} sent. Undo for 5 seconds`);
+    setFailed(({ [item.id]: _, ...rest }) => rest);
     setSending(list => [...list, item.id]);
     if (!reducedMotion) badge.set(withSequence(withTiming(0.75, { duration: 80 }), withSpring(1.25, { duration: 140, dampingRatio: 0.5 }), withSpring(1, { duration: 120, dampingRatio: 1 })));
-    setTimeout(() => { markSent(item.id); setSending(list => list.filter(id => id !== item.id)); }, reducedMotion ? 0 : 650);
+    timers.current.set(item.id, setTimeout(() => {
+      timers.current.delete(item.id);
+      const done = () => setSending(list => list.filter(id => id !== item.id));
+      if (!live) { done(); markSent(item.id); return; }
+      setAsking(list => [...list, item.id]);
+      api.audit.query({ itemId: item.id })
+        .then(() => { done(); markSent(item.id); }, e => { done(); haptic("warning"); setFailed(f => ({ ...f, [item.id]: `Not sent: ${errorText(e)}` })); })
+        .finally(() => setAsking(list => list.filter(id => id !== item.id)));
+    }, UNDO_MS));
   };
-  const send = (item: AuditItem) => {
-    if (sending.includes(item.id) || asking.includes(item.id)) return;
-    setFailed(({ [item.id]: _, ...rest }) => rest);
-    if (!live) { confirmSent(item); return; }
-    setAsking(list => [...list, item.id]);
-    api.audit.query({ itemId: item.id })
-      .then(() => confirmSent(item), e => { haptic("warning"); setFailed(f => ({ ...f, [item.id]: `Not sent: ${errorText(e)}` })); })
-      .finally(() => setAsking(list => list.filter(id => id !== item.id)));
+  const undo = (item: AuditItem) => {
+    clearTimeout(timers.current.get(item.id));
+    timers.current.delete(item.id);
+    setSending(list => list.filter(id => id !== item.id));
   };
   const badgeStyle = useAnimatedStyle(() => ({ transform: [{ scale: badge.value }] }));
 
@@ -143,7 +158,7 @@ export function AuditScreen() {
     {items.length > 0 && <Text style={{ ...type.caption, color: palette.muted }}>Swipe right to send the query shown, or tap to read all of it.</Text>}
     <View style={{ gap: 10 }}>
       {listed.map(item => <Animated.View key={item.id} layout={reducedMotion ? undefined : LAYOUT} exiting={reducedMotion ? undefined : FadeOut.duration(160)}>
-        <Row item={item} sending={sending.includes(item.id)} asking={asking.includes(item.id)} error={failed[item.id]} open={open === item.id} onToggle={() => setOpen(o => (o === item.id ? undefined : item.id))} onSend={() => send(item)} />
+        <Row item={item} sending={sending.includes(item.id)} asking={asking.includes(item.id)} error={failed[item.id]} open={open === item.id} onToggle={() => setOpen(o => (o === item.id ? undefined : item.id))} onSend={() => send(item)} onUndo={() => undo(item)} />
       </Animated.View>)}
     </View>
     <View style={{ height: ASK_SPACE }} />
@@ -199,17 +214,17 @@ function Digit({ d }: { d: number }) {
   </View>;
 }
 
-function Row({ item, sending, asking, error, open, onToggle, onSend }: { item: AuditItem; sending: boolean; asking: boolean; error?: string; open: boolean; onToggle: () => void; onSend: () => void }) {
+function Row({ item, sending, asking, error, open, onToggle, onSend, onUndo }: { item: AuditItem; sending: boolean; asking: boolean; error?: string; open: boolean; onToggle: () => void; onSend: () => void; onUndo: () => void }) {
   const { reducedMotion } = useAccessibleEffects();
   const x = useSharedValue(0);
-  // A refused send slides the row back, so it can be swiped again.
-  useEffect(() => { if (error) x.set(withSpring(0, { duration: 300, dampingRatio: 0.7 })); }, [error, x]);
-  const pan = Gesture.Pan().activeOffsetX(10).failOffsetX(-10).failOffsetY([-12, 12]).enabled(!sending && !asking)
+  // Past the threshold the query is held and the row springs back, so its Undo is in reach.
+  const pan = Gesture.Pan().activeOffsetX(10).failOffsetX(-10).failOffsetY([-12, 12]).enabled(!sending)
     .onUpdate(e => { x.set(Math.max(0, e.translationX)); })
     .onEnd(() => {
-      if (x.value > THRESHOLD) { x.set(withSpring(THRESHOLD + 20, { duration: 200, dampingRatio: 0.8 })); scheduleOnRN(onSend); }
-      else x.set(withSpring(0, { duration: 300, dampingRatio: 0.7 }));
+      if (x.value > THRESHOLD) scheduleOnRN(onSend);
+      x.set(withSpring(0, { duration: 300, dampingRatio: 0.7 }));
     });
+  const held = sending && !asking;
   const slide = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   const ring = useAnimatedProps(() => ({ strokeDashoffset: RING_C * (1 - Math.min(1, x.value / THRESHOLD)) }));
   const reveal = useAnimatedStyle(() => ({ opacity: Math.min(1, x.value / THRESHOLD) }));
@@ -221,8 +236,9 @@ function Row({ item, sending, asking, error, open, onToggle, onSend }: { item: A
     </Animated.View>
     <GestureDetector gesture={pan}>
       <Animated.View style={slide}>
-        <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={`${item.bed}, ${item.patient}. ${item.gap}. ${formatRM(item.risk)} at risk. Query: ${item.query}${error ? ` ${error}.` : ""}`}
-          accessibilityActions={[{ name: "activate" }, { name: "send", label: `Send query to ${item.doctor}` }]} onAccessibilityAction={e => (e.nativeEvent.actionName === "send" ? onSend() : onToggle())}
+        <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={`${item.bed}, ${item.patient}. ${item.gap}. ${formatRM(item.risk)} at risk. Query: ${item.query}${held ? ` Sent to ${item.doctor}.` : ""}${error ? ` ${error}.` : ""}`}
+          accessibilityActions={[{ name: "activate" }, held ? { name: "undo", label: `Undo, don't send to ${item.doctor}` } : { name: "send", label: `Send query to ${item.doctor}` }]}
+          onAccessibilityAction={e => (e.nativeEvent.actionName === "send" ? onSend() : e.nativeEvent.actionName === "undo" ? onUndo() : onToggle())}
           onPress={onToggle} style={{ ...surfaceStyle, borderRadius: radius.group, padding: 14, gap: 10 }}>
           <View style={{ flexDirection: "row", gap: 12 }}>
             <View style={{ width: 26, height: 26, marginTop: 2 }}>
@@ -240,11 +256,15 @@ function Row({ item, sending, asking, error, open, onToggle, onSend }: { item: A
                 <Text style={{ ...type.footnote, fontWeight: "700", color: palette.amber, fontVariant: ["tabular-nums"] }}>{formatRM(item.risk)}</Text>
               </View>
               <MarkedText selectable={false} text={item.gap} style={{ ...type.footnote, color: palette.ink }} />
-              <Text style={{ ...type.caption, color: palette.muted }}>{sending ? `Sent to ${item.doctor}` : asking ? `Sending to ${item.doctor}…` : [item.bed, item.doctor, `${item.from || "Not coded"} → ${item.to}`].filter(Boolean).join(" · ")}</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Text style={{ ...type.caption, flex: 1, color: palette.muted }}>{asking ? `Sending to ${item.doctor}…` : sending ? `Sent to ${item.doctor}` : [item.bed, item.doctor, `${item.from || "Not coded"} → ${item.to}`].filter(Boolean).join(" · ")}</Text>
+                {held && <UndoPill label={`Undo, don't send the query to ${item.doctor}`} onUndo={onUndo} />}
+              </View>
             </View>
           </View>
-          {/* The query a swipe sends is always on the row (two lines; tap for all of it), so nothing goes unread. */}
-          {!sending && <Text selectable={open} numberOfLines={open ? undefined : 2} style={{ ...type.footnote, color: palette.ink, marginLeft: 38, padding: 10, borderRadius: radius.control, overflow: "hidden", backgroundColor: "rgba(20,28,40,0.04)" }}>{item.query}</Text>}
+          {/* The query a swipe sends is always on the row (two lines; tap for all of it), so nothing goes unread.
+              Open sets 0 (no limit) explicitly rather than dropping the prop, so the 2-line limit is lifted for sure. */}
+          {!sending && <Text selectable={open} numberOfLines={open ? 0 : 2} style={{ ...type.footnote, color: palette.ink, marginLeft: 38, padding: 10, borderRadius: radius.control, overflow: "hidden", backgroundColor: "rgba(20,28,40,0.04)" }}>{item.query}</Text>}
           {error && <View style={{ paddingLeft: 38 }}><ErrorLine text={error} onRetry={onSend} /></View>}
           {open && !sending && <Animated.View entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ paddingLeft: 38 }}>
             <View style={{ alignSelf: "flex-start" }}><Action label={`Send to ${item.doctor}`} icon="paperplane.fill" accessibilityLabel={`Send query to ${item.doctor}`} disabled={asking} onPress={onSend} /></View>
