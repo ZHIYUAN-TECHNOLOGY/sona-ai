@@ -5,6 +5,7 @@ import { EMPTY_CLAIM, ESTIMATE, INSURER, decideClaimSend, noteFor, type ClaimSta
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 
+import { answerOnce } from "../answers";
 import { appealSchema, claimUpdateSchema, approvedCommandSchema } from "../contracts";
 import { newReviewToken, reviewUrl } from "../insurer";
 import { clockOf, type Context } from "../context";
@@ -28,7 +29,7 @@ type Suggestion = { codes: (Code & { inTable?: boolean })[]; sentences: Sentence
  * Codes for the letter, suggested over the note's sentences: the latest saved note (with any fix the
  * claim added), or the claim's own note excerpt when none is saved. A code must cite one of those
  * sentences or it is dropped; each diagnosis code is looked up in the WHO ICD-10 table, and one the
- * table lacks is kept but flagged, never silently trusted.
+ * table lacks is kept but flagged, never silently trusted. The model codes a note once: the same sentences get its stored codes.
  */
 async function suggest(context: Context & { hospitalId: string }, encounterId: string) {
   const { db, hospitalId } = context;
@@ -37,15 +38,17 @@ async function suggest(context: Context & { hospitalId: string }, encounterId: s
   const [saved] = await db.select({ sentences: notes.sentences }).from(notes).where(eq(notes.encounterId, encounterId)).orderBy(desc(notes.revision)).limit(1);
   const excerpt = noteFor(claim);
   const sentences: Sentence[] = saved?.sentences.length ? [...saved.sentences, ...excerpt.filter(s => s.id === "organism" || s.id === "iv")] : excerpt;
-  // A hosted model picks from WHO ICD-10 candidates (the table's top hits for each clause); the stub's rules need none.
-  const candidates = context.models ? await icdCandidates(db, sentences) : undefined;
-  const answer = await (context.models ?? stubModels).suggestCodes({ sentences, candidates });
-  const grounded = answer.codes.filter(c => sentences.some(s => s.id === c.evidence));
-  const diagnoses = grounded.filter(c => c.kind !== "Procedure").map(c => c.code);
-  const known = new Set(diagnoses.length ? (await db.select({ code: icd10Codes.code }).from(icd10Codes).where(inArray(icd10Codes.code, diagnoses))).map(r => r.code) : []);
-  // Procedures are not ICD-10 codes, so the table does not judge them (undefined).
-  const codes = grounded.map(c => ({ ...c, inTable: c.kind === "Procedure" ? undefined : known.has(c.code) }));
-  return logAnswer(db, encounterId, "claim-codes", { ...answer, codes, sentences }, codes.map(c => c.evidence));
+  return answerOnce(db, encounterId, "claim-codes", { sentences }, async () => {
+    // A hosted model picks from WHO ICD-10 candidates (the table's top hits for each clause); the stub's rules need none.
+    const candidates = context.models ? await icdCandidates(db, sentences) : undefined;
+    const answer = await (context.models ?? stubModels).suggestCodes({ sentences, candidates });
+    const grounded = answer.codes.filter(c => sentences.some(s => s.id === c.evidence));
+    const diagnoses = grounded.filter(c => c.kind !== "Procedure").map(c => c.code);
+    const known = new Set(diagnoses.length ? (await db.select({ code: icd10Codes.code }).from(icd10Codes).where(inArray(icd10Codes.code, diagnoses))).map(r => r.code) : []);
+    // Procedures are not ICD-10 codes, so the table does not judge them (undefined).
+    const codes = grounded.map(c => ({ ...c, inTable: c.kind === "Procedure" ? undefined : known.has(c.code) }));
+    return { ...answer, codes, sentences };
+  }, answer => answer.codes.map(c => c.evidence));
 }
 
 /**
@@ -130,8 +133,8 @@ export const claimRouter = {
    */
   status: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(async ({ context, input }) => {
     const { db, hospitalId } = context;
-    await loadEncounter(db, hospitalId, input.encounterId);
-    const [claim] = await db.select().from(claims).where(eq(claims.id, claimId(input.encounterId)));
+    // Read together (every visit open asks); a visit outside the hospital still refuses before anything is returned.
+    const [, [claim]] = await Promise.all([loadEncounter(db, hospitalId, input.encounterId), db.select().from(claims).where(eq(claims.id, claimId(input.encounterId)))]);
     if (!claim) return { status: "draft" as const };
     const withInsurer = claim.status === "sent" || claim.status === "appealed";
     const link = claim.reviewToken && context.publicUrl && withInsurer ? reviewUrl(context.publicUrl, claim.reviewToken) : undefined;

@@ -61,6 +61,9 @@ export function createAuth(
     },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
+    // Every API call reads the session: a signed copy in a cookie answers it for 5 minutes without the database
+    // (so a signed-out or revoked session can last up to that long; membership and role are still read on every call).
+    session: { cookieCache: { enabled: true, maxAge: 5 * 60 } },
     advanced: {
       defaultCookieAttributes: {
         sameSite: "none",

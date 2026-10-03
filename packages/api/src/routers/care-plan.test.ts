@@ -1,6 +1,6 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
-import { appointments, encounters, guaranteeLetters, provenance } from "@sona-ai/db/schema/clinical";
+import { appointments, encounters, guaranteeLetters, patients, provenance } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
@@ -66,6 +66,9 @@ test("Amelia reads the leaflet her doctor approved at discharge, in its language
   await doctor.discharge.draft({ encounterId: "visit-1042", language: "en" }); // Draf 1: not the discharge language
   await doctor.discharge.draft({ encounterId: "visit-1042", language: "ms" }); // Draf 2: what she approves
   await doctor.discharge.request({ encounterId: "visit-1042", requestId: "req-d1", approvedBy: "dr-aisyah" });
+  // Opened again, the same record gets the model's stored draft; once her record changes, the model drafts again.
+  expect(await doctor.discharge.draft({ encounterId: "visit-1042", language: "ms" })).toMatchObject({ leaflet: "Draf 2 (ms)", source: "model", model: "fake-gemma" });
+  await db.update(patients).set({ allergies: "Penicillin; sulfonamides" }).where(eq(patients.id, "SYN-1042"));
   await doctor.discharge.draft({ encounterId: "visit-1042", language: "ms" }); // Draf 3: after discharge
 
   const plan = await amelia.care.discharge();

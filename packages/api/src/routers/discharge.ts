@@ -4,13 +4,14 @@ import { EMPTY_DISCHARGE, TYPICAL_WAIT_MINUTES, checkInDaysOf, decideDischarge, 
 import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
+import { answerOnce } from "../answers";
 import { clockOf } from "../context";
 import { dischargeRequestSchema, dischargeUpdateSchema } from "../contracts";
 import { protectedProcedure } from "../index";
 import { stubModels } from "../models";
 import { listFindings } from "./findings";
 import { assertApprover } from "./hospital";
-import { loadEncounter, logAnswer, recordOf, recordSources, visitOf } from "./encounter";
+import { loadEncounter, recordOf, recordSources, visitOf } from "./encounter";
 import { scheduleCheckIns } from "./check-ins";
 
 /** The patient leaflet as approved at discharge, in the discharge language; kept in the visit's discharge state. */
@@ -22,11 +23,15 @@ export type ApprovedLeaflet = { language: Language; text: string };
  * for the same encounter returns the one receipt. No transaction: Neon's HTTP driver has none.
  */
 export const dischargeRouter = {
-  /** The summary and the leaflet in the chosen language, drafted from the patient's own record (a labelled fixture until Gemma is on). */
+  /**
+   * The summary and the leaflet in the chosen language, drafted from the patient's own record (a labelled fixture until
+   * Gemma is on). The model drafts once per record and language: opening the card again shows the same draft.
+   */
   draft: protectedProcedure.input(z.object({ encounterId: z.string().min(1), language: z.enum(["ms", "en", "zh"]) })).handler(async ({ context, input }) => {
     const { patient } = await visitOf(context.db, context.hospitalId, input.encounterId);
-    const answer = await (context.models ?? stubModels).draftDischarge({ patient, language: input.language });
-    return logAnswer(context.db, input.encounterId, "discharge-draft", { ...answer, language: input.language }, recordSources(patient));
+    const asked = { patient, language: input.language };
+    return answerOnce(context.db, input.encounterId, "discharge-draft", asked,
+      async () => ({ ...await (context.models ?? stubModels).draftDischarge(asked), language: input.language }), () => recordSources(patient));
   }),
   /** Inline fixes on the discharge card. They do not touch prescribing, so the revision stays put. */
   update: protectedProcedure.input(dischargeUpdateSchema).handler(async ({ context: { db, hospitalId }, input }) => {

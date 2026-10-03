@@ -21,11 +21,11 @@ test("a member keeps their hospital; the seeded demo clinician joins the demo ho
   expect((await db.select().from(hospitalMembers)).map(m => m.userId).sort()).toEqual(["dr-other", "dr-test"]);
 });
 
-test("a seeded test nurse joins the demo hospital as a nurse on first sign-in, and keeps that role", async () => {
+test("a seeded test nurse joins the demo hospital as a nurse on first sign-in, and keeps that role; the hospital's demo clock comes with it", async () => {
   const db = await createTestDb();
-  await db.insert(hospitals).values({ id: DEMO_HOSPITAL, name: "Demo" });
+  await db.insert(hospitals).values({ id: DEMO_HOSPITAL, name: "Demo", clockOffsetMs: 3_600_000 });
   const nurse = { id: "nurse-test", email: "Nurse.Test@sona.test" };
-  expect(await memberOf(db, nurse)).toEqual({ hospitalId: DEMO_HOSPITAL, role: "nurse" });
-  expect(await memberOf(db, nurse)).toEqual({ hospitalId: DEMO_HOSPITAL, role: "nurse" });
+  expect(await memberOf(db, nurse)).toEqual({ hospitalId: DEMO_HOSPITAL, role: "nurse", clockOffsetMs: 3_600_000 });
+  expect(await memberOf(db, nurse)).toEqual({ hospitalId: DEMO_HOSPITAL, role: "nurse", clockOffsetMs: 3_600_000 });
   expect(Object.values(DEMO_CLINICIANS).sort()).toEqual(["bed-manager", "doctor", "management", "nurse"]);
 });

@@ -7,6 +7,7 @@ import { mergeMedicines } from "@sona-ai/domain/scan";
 import { and, asc, desc, eq, gte, inArray, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 
+import { answerOnce } from "../answers";
 import { SAMPLE_PHOTO_KEY } from "../contracts";
 import { clockOf, type Context } from "../context";
 import { patientProcedure, protectedProcedure } from "../index";
@@ -187,7 +188,8 @@ export const messagesRouter = {
   /**
    * Sona's suggested reply to the latest waiting message, grounded only in the patient's own plan (their
    * medicines and next visit, in their discharge language); null when nothing is waiting. The source says
-   * whether a model or the rule-based template wrote it. A person checks it before it is sent.
+   * whether a model or the rule-based template wrote it. A person checks it before it is sent. A model drafts
+   * once per message and plan: opening the thread again shows the same draft.
    */
   draft: protectedProcedure.input(patientInput).handler(async ({ context, input }) => {
     const patient = await ownPatient(context.db, context.hospitalId, input.patientId);
@@ -198,12 +200,12 @@ export const messagesRouter = {
     const language = /[一-鿿]/.test(latest.text) ? "zh" : discharged?.language ?? "en";
     const plan = await patientPlan({ ...context, patientId: patient.id }, language);
     const label = latest.triage ? labelOf(latest.triage) : "clinical";
-    const models = context.models ?? stubModels;
-    const reply = await models.draftReply({
+    const asked = {
       text: latest.text, label, patientFirstName: patient.name.split(" ")[0]!, language,
       // ponytail: the discharge review is the next visit; booked clinic visits join once the draft needs them.
       plan: plan.status === "discharged" ? { medicines: Object.values(plan.medicines).flat(), nextVisit: plan.followUp ? `${plan.followUp.title}, ${when(new Date(plan.followUp.date), language)}` : undefined } : undefined,
-    });
+    };
+    const reply = await answerOnce(context.db, null, "reply-draft", { messageId: latest.id, ...asked }, () => (context.models ?? stubModels).draftReply(asked), () => [latest.id]);
     return { messageId: latest.id, label, reason: latest.triageReason ?? "Not triaged: read it first", ...reply };
   }),
 

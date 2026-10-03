@@ -97,6 +97,24 @@ test("claim codes come from the note's sentences, each citing one and checked ag
   expect(log).toMatchObject({ model: "gemma-test", sourceIds: ["assessment", "assessment"] });
 });
 
+test("a model codes a note once: asked again, its stored codes come back still labelled with it; a fixture or a changed note is asked again", async () => {
+  let calls = 0, awake = false;
+  const { api } = await world({ ...stubModels, suggestCodes: async input => {
+    calls++;
+    const codes = await stubModels.suggestCodes(input);
+    return awake ? { codes: codes.codes, source: "model", model: "gemma-test" } : codes;
+  } });
+  expect((await api.claim.suggestCodes({ encounterId: "visit-1042" })).source).toBe("fixture");
+  awake = true;
+  const coded = await api.claim.suggestCodes({ encounterId: "visit-1042" });
+  expect(await api.claim.suggestCodes({ encounterId: "visit-1042" })).toEqual(coded);
+  expect([coded.source, calls]).toEqual(["model", 2]);
+  // A fix adds a sentence to the note, so the note is coded again.
+  await api.claim.update({ encounterId: "visit-1042", organismConfirmed: true });
+  await api.claim.suggestCodes({ encounterId: "visit-1042" });
+  expect(calls).toBe(3);
+});
+
 test("a hosted model is offered the WHO ICD-10 table's codes for the note's words to pick from", async () => {
   let offered: { code: string; label: string }[] | undefined;
   const { api } = await world({ ...stubModels, suggestCodes: input => { offered = input.candidates; return stubModels.suggestCodes(input); } });

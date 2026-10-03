@@ -1,5 +1,5 @@
 import type { Database } from "@sona-ai/db";
-import { user } from "@sona-ai/db/schema/auth";
+import { session, user } from "@sona-ai/db/schema/auth";
 import { DEMO_SIGN_IN_CODE } from "@sona-ai/db/demo";
 import { seedDemo, seedTestPatient, TEST_PATIENT } from "@sona-ai/db/seed";
 import { createTestDb } from "@sona-ai/db/testing";
@@ -31,6 +31,19 @@ test("the seeded test patient signs in by email, and by the demo phone with the 
   await on.api.sendPhoneNumberOTP({ body: { phoneNumber: "+60123456789" } });
   expect(await tryCode(on, "+60123456789")).toBe("refused");
   expect(sent).toEqual(["+60123456789"]);
+});
+
+test("the session is read from its signed cookie for a few minutes, without the database", async () => {
+  const db = await createTestDb();
+  await seedDemo(db);
+  const id = await seedTestPatient(db);
+  const auth = createAuth(config, db as unknown as Database);
+  const { headers } = await auth.api.signInEmail({ body: { email: TEST_PATIENT.email, password: TEST_PATIENT.password }, returnHeaders: true });
+  const cookies = headers.getSetCookie().map(c => c.split(";")[0]!);
+  // With the session row gone, only the cached copy can answer.
+  await db.delete(session);
+  expect((await auth.api.getSession({ headers: new Headers({ cookie: cookies.join("; ") }) }))?.user.id).toBe(id);
+  expect(await auth.api.getSession({ headers: new Headers({ cookie: cookies.filter(c => !c.includes("session_data")).join("; ") }) })).toBeNull();
 });
 
 test("a phone number signs in with its SMS code: a wrong code is refused, the right one creates the account and a session", async () => {

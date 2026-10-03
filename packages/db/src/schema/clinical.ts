@@ -75,7 +75,7 @@ export const patients = pgTable("patients", {
 export const encounters = pgTable("encounters", {
   id: text("id").primaryKey(), patientId: text("patient_id").notNull().references(() => patients.id), hospitalId: text("hospital_id").notNull(),
   revision: integer("revision").default(1).notNull(), state: jsonb("state").notNull().default({}), updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, t => [index("encounters_patient").on(t.patientId, t.updatedAt), index("encounters_hospital").on(t.hospitalId)]);
 
 /** A note is a list of sentences with stable IDs, so a code or claim can point at the sentence that justifies it. */
 export const notes = pgTable("notes", {
@@ -89,7 +89,7 @@ export const tasks = pgTable("tasks", {
   kind: text("kind", { enum: ["followup", "blocker-owner", "coding-query", "discharge", "finding", "check-in", "message", "booking"] }).notNull(),
   title: text("title").notNull(), owner: text("owner").notNull(), due: text("due"), completed: boolean("completed").default(false).notNull(),
   sourceId: text("source_id"), idempotencyKey: text("idempotency_key").unique(), createdAt: created(),
-});
+}, t => [index("tasks_hospital").on(t.hospitalId, t.kind)]);
 
 export const admissions = pgTable("admissions", {
   id: text("id").primaryKey(), patientId: text("patient_id").notNull().references(() => patients.id), hospitalId: text("hospital_id").notNull(),
@@ -120,7 +120,7 @@ export const claims = pgTable("claims", {
   denialCode: text("denial_code"), denialReason: text("denial_reason"), deniedAt: timestamp("denied_at"),
   /** The appeal the doctor approved, each point frozen with the note sentence it cites, and when it went. */
   appeal: jsonb("appeal").$type<{ opening: string; points: { claim: string; evidenceSentenceId: string; text: string }[]; closing: string }>(), appealedAt: timestamp("appealed_at"),
-});
+}, t => [index("claims_encounter").on(t.encounterId)]);
 
 /** Insurer rules as rows so the check is deterministic; the policy text lives in the retrieval library. */
 export const insurerCriteria = pgTable("insurer_criteria", {
@@ -137,7 +137,7 @@ export const labResults = pgTable("lab_results", {
   unit: text("unit"), flag: text("flag"), sourceId: text("source_id").notNull(), receivedAt: timestamp("received_at").defaultNow().notNull(),
   /** Who first acknowledged the result, and when; empty while it still needs a doctor to see it. */
   acknowledgedBy: text("acknowledged_by"), acknowledgedAt: timestamp("acknowledged_at"),
-});
+}, t => [index("lab_results_patient").on(t.patientId, t.flag)]);
 
 /**
  * Doses a Sona Care patient marked taken (hold to take), so the care team sees adherence. One row per
@@ -155,7 +155,7 @@ export const appointments = pgTable("appointments", {
   bookedAt: timestamp("booked_at"),
   /** The directory doctor it is with (Book in with a doctor, a confirmed booking), so it holds only that doctor's slot. */
   doctorId: text("doctor_id"),
-});
+}, t => [index("appointments_hospital").on(t.hospitalId, t.startsAt), index("appointments_patient").on(t.patientId)]);
 
 export const handoverAcceptances = pgTable("handover_acceptances", {
   id: text("id").primaryKey(), hospitalId: text("hospital_id").notNull(), fromUser: text("from_user").notNull(), toUser: text("to_user").notNull(),
@@ -200,11 +200,15 @@ export const chunks = pgTable("chunks", {
   index("chunks_search_gin").using("gin", t.search),
 ]);
 
-/** Every AI output with the sources it used, the model that wrote it and who approved it. */
+/**
+ * Every AI output with the sources it used, the model that wrote it and who approved it. `input_key` (a hash of what
+ * the model was asked) lets a route hand back a model's stored answer instead of paying for the same one again.
+ */
 export const provenance = pgTable("provenance", {
   id: text("id").primaryKey(), encounterId: text("encounter_id"), kind: text("kind").notNull(), output: jsonb("output").notNull(),
   sourceIds: jsonb("source_ids").$type<string[]>().notNull(), model: text("model").notNull(), approvedBy: text("approved_by"), createdAt: created(),
-});
+  inputKey: text("input_key"),
+}, t => [index("provenance_answer").on(t.encounterId, t.kind, t.inputKey)]);
 
 /**
  * Demo flow 6: follow-up rules as data (Fleischner-style intervals for nodules, local rules for
@@ -231,7 +235,7 @@ export const findings = pgTable("findings", {
   status: text("status", { enum: ["open", "tracked", "dismissed"] }).default("open").notNull(),
   /** "fixture" or the model version that read the image, so a fixture is never shown as a reading. */
   source: text("source").notNull(), taskId: text("task_id"), dueAt: timestamp("due_at"), createdAt: created(),
-}, t => [uniqueIndex("findings_encounter_kind").on(t.encounterId, t.kind)]);
+}, t => [uniqueIndex("findings_encounter_kind").on(t.encounterId, t.kind), index("findings_hospital").on(t.hospitalId, t.patientId)]);
 
 /** Demo flow 7: messages after discharge on day 2 and day 7, in the leaflet's language, through a simulated inbox. */
 export const checkIns = pgTable("check_ins", {
@@ -254,6 +258,11 @@ export const checkInReplies = pgTable("check_in_replies", {
 export const pubmedArticles = pgTable("pubmed_articles", {
   pmid: text("pmid").primaryKey(), title: text("title").notNull(), journal: text("journal").notNull(), year: integer("year").notNull(),
   publicationTypes: jsonb("publication_types").$type<string[]>().notNull(), conclusion: text("conclusion").notNull(), fetchedAt: timestamp("fetched_at").defaultNow().notNull(),
+});
+
+/** Flow 4: the PubMed IDs a search found, by its key terms, so a question asked again skips PubMed's search. Public data, like the articles. */
+export const pubmedSearches = pgTable("pubmed_searches", {
+  terms: text("terms").primaryKey(), pmids: jsonb("pmids").$type<string[]>().notNull(), searchedAt: timestamp("searched_at").defaultNow().notNull(),
 });
 
 /**

@@ -121,6 +121,17 @@ test("Sona's draft answers the latest waiting message from the patient's own pla
   expect((await manager.messages.draft({ patientId: "SYN-1042" }).catch(e => e)).code).toBe("FORBIDDEN");
 });
 
+test("a model drafts a reply once per message: opening the thread again shows its stored draft, a new message is drafted afresh", async () => {
+  let calls = 0;
+  const { amelia, nurse, send } = await world({ ...stubModels, draftReply: async () => ({ text: `Draft ${++calls}`, source: "model", model: "gemma-test" }) });
+  await send(amelia, "Can I shower?");
+  const draft = await nurse.messages.draft({ patientId: "SYN-1042" });
+  expect(draft).toMatchObject({ text: "Draft 1", source: "model", model: "gemma-test" });
+  expect(await nurse.messages.draft({ patientId: "SYN-1042" })).toEqual(draft);
+  await send(amelia, "And swim?");
+  expect((await nurse.messages.draft({ patientId: "SYN-1042" }))!.text).toBe("Draft 2");
+});
+
 function memoryBucket() {
   const objects = new Map<string, { bytes: Uint8Array; contentType?: string }>();
   return { objects, put: async (key: string, bytes: Uint8Array, o?: { httpMetadata?: { contentType?: string } }) => { objects.set(key, { bytes, contentType: o?.httpMetadata?.contentType }); },
