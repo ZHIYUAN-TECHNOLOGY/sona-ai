@@ -12,6 +12,7 @@ import { palette, type } from "@/components/sona/theme";
 import { useVisitTasks } from "@/features/live/server-day";
 import { useAnsweredEvidence } from "@/features/live/evidence-sync";
 import { useLive } from "@/features/live";
+import { confirmedAllergy } from "@/features/day/counts";
 import { usePendingResult } from "@/features/day/use-counts";
 import { useLiveXray } from "@/features/live/model-sync";
 import { teachingImage } from "@/features/imaging/fixture";
@@ -94,6 +95,7 @@ export function useVisitLead(req: RequestState | undefined, card: ResponseCard |
   const question = req.prompt;
   return leadFor(req.kind, patient, {
     medicines: encounter?.medicationEntries ?? [],
+    allergyConfirmed: Boolean(confirmedAllergy(encounter)),
     image: scenario === "unsupported" ? "unsupported" : image?.imagingAttachment ? (xrayRead.data?.source === "model" ? "read" : "attached") : scenario === "no-finding" ? "no-finding" : !image?.hideTeachingImage && teachingImage?.referenceSummary ? "reference" : "none",
     note: !encounter?.note ? "none" : encounter.noteReviewed ? "reviewed" : "draft",
     prescription: rx,
@@ -106,7 +108,7 @@ export function useVisitLead(req: RequestState | undefined, card: ResponseCard |
 
 /** The end of a visit's thread: its one next step, then at most two quiet questions (visit-next.ts). */
 export function VisitEnd({ latest, patient, encounter, hasSteps, onPick }: { latest: Capability; patient: Patient; encounter: Encounter | undefined; hasSteps: boolean; onPick: (item: Suggestion) => void }) {
-  const end = threadEnd({ latest, need: visitNeed(patient, encounter, usePendingResult(patient.id)), hasSteps, firstName: first(patient), discharged: Boolean(encounter?.discharge?.dischargedAt), follow: askAfter(latest, patient) });
+  const end = threadEnd({ latest, need: visitNeed(patient, encounter, usePendingResult(patient.id)), hasSteps, firstName: first(patient), discharged: Boolean(encounter?.discharge?.dischargedAt), follow: askAfter(latest, patient, encounter) });
   if (!end.need && !end.ask.length) return null;
   return <View style={{ gap: 18, paddingTop: 28, marginTop: 8, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)" }}>
     {end.need && <NeedLine need={end.need as VisitNeed} onPress={n => goToNeed(n.target, patient, onPick)} />}
@@ -214,7 +216,7 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
   const tools = new Map(visitTools(patient, encounter, result, go, canScan, canDischarge(patient)).map(t => [t.key, t]));
   // Before the visit, during it, wrap up; the key that repeats the Next step's action is left out.
   const keys = ["brief", "meds", "xray", "consult", "note", "scan", "discharge"].flatMap(k => k === NEED_KEY[need.target] ? [] : tools.get(k) ?? []);
-  const ask = askAfter("briefing", patient).slice(0, 2);
+  const ask = askAfter("briefing", patient, encounter).slice(0, 2);
   return <View style={{ gap: 28, paddingTop: 20 }}>
     <Animated.View entering={rise(0)}>
       <Text accessibilityRole="header" style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>

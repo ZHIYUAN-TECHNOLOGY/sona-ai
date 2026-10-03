@@ -11,6 +11,10 @@ test("the steroids-for-pneumonia question is offered only when the record docume
   expect(askAfter("reasoning", patients[1])).not.toContain("evidence"); // Daniel: incomplete intake, no pneumonia recorded
   expect(askAfter("note", patients[1])).not.toContain("evidence");
 });
+test("the X-ray review is offered only with an image attached to the visit, as the reasoning card offers it", () => {
+  expect(askAfter("briefing", patients[0], undefined)).toEqual(["reasoning", "medication"]);
+  expect(askAfter("briefing", patients[0], { imagingAttachment: { uri: "file:///film.jpg", name: "Scanned X-ray" } })).toContain("xray");
+});
 
 const confirm = { tone: "caution", text: "2 medicines to confirm", action: "Confirm", target: "medication" };
 const base = { latest: "briefing", hasSteps: false, firstName: "Amelia", discharged: false, follow: ["reasoning", "xray", "medication"] };

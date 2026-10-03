@@ -27,8 +27,9 @@ export function pendingResult(server: Server, acks: Record<string, Ack>): Pendin
 /**
  * A patient's newest result for the briefing, with its acknowledgement once there is one. An acknowledged
  * live result shows for a day after it was acknowledged (its receipt); older ones are history, not news.
+ * `now` is the hospital's demo clock in live mode, the clock the server stamps acknowledgements on.
  */
-export function patientResult(patientId: string, server: Server, acks: Record<string, Ack>, now = new Date()): { result: PendingResult; ack?: Ack } | undefined {
+export function patientResult(patientId: string, server: Server, acks: Record<string, Ack>, now: Date): { result: PendingResult; ack?: Ack } | undefined {
   if (!server) {
     if (PENDING_RESULT.patientId !== patientId) return undefined;
     return { result: PENDING_RESULT, ack: acks[resultKey(PENDING_RESULT)] };
@@ -44,8 +45,8 @@ export function patientResult(patientId: string, server: Server, acks: Record<st
 }
 
 const clock = (at: Date) => `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
-/** "Acknowledged 10:14 by Dr Lim" (with the date when it wasn't today). */
-export function receiptLine(ack: Ack, now = new Date()) {
+/** "Acknowledged 10:14 by Dr Lim" (with the date when it wasn't today on `now`, the demo clock in live mode). */
+export function receiptLine(ack: Ack, now: Date) {
   const at = new Date(ack.at);
   const when = at.toDateString() === now.toDateString() ? clock(at) : `${at.toLocaleDateString("en-GB", { day: "numeric", month: "short" })} ${clock(at)}`;
   return `Acknowledged ${when} by ${ack.by}`;
@@ -80,7 +81,7 @@ export function allergyLine(fact: Pick<HistoryFact, "date">, now = new Date()) {
  * Why a patient needs you, most urgent first: the result waiting on a doctor, the allergy, medicines to confirm, missing
  * history. With the visit: an allergy a clinician recorded asks nothing more, and once discharged only the result does.
  */
-export function patientFlags(patient: Patient, unconfirmed: number, result: PendingResult | undefined, encounter?: Encounter): Flag[] {
+export function patientFlags(patient: Patient, unconfirmed: number, result: PendingResult | undefined, encounter: Encounter | undefined): Flag[] {
   const flags: Flag[] = [];
   if (result?.patientId === patient.id) flags.push({ label: `${result.flag} ${testInSentence(result.test)} ${result.value}`, tone: "urgent", go: { next: "briefing" } });
   if (encounter?.discharge?.dischargedAt) return flags;

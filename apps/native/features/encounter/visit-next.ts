@@ -1,4 +1,4 @@
-import type { Capability, Patient } from "./types";
+import type { Capability, Encounter, Patient } from "./types";
 
 // Questions only: prescribing acts, so it runs from its card after review, never from "Also ask".
 const follows: Record<Capability, Capability[]> = {
@@ -8,8 +8,12 @@ const follows: Record<Capability, Capability[]> = {
 /** The steroid question names pneumonia, so it's offered only when the record does (its complaint, history or charted pneumonia source). */
 export const recordsPneumonia = (patient: Pick<Patient, "complaint" | "history" | "sources">) =>
   /pneumonia/i.test([patient.complaint, ...patient.history].join(" ")) || patient.sources.some(source => source.id === "pneumonia-reference");
-/** What is usually asked after an answer of this kind, most likely first, as far as this patient's record supports it. */
-export const askAfter = (kind: Capability, patient: Pick<Patient, "complaint" | "history" | "sources">) => follows[kind].filter(k => k !== "evidence" || recordsPneumonia(patient));
+/**
+ * What is usually asked after an answer of this kind, most likely first, as far as this visit supports it: the X-ray
+ * review only with an image attached to the visit, the same rule as the reasoning card's "Review the X-ray attachment".
+ */
+export const askAfter = (kind: Capability, patient: Pick<Patient, "complaint" | "history" | "sources">, encounter: Pick<Encounter, "imagingAttachment"> | undefined) =>
+  follows[kind].filter(k => (k !== "evidence" || recordsPneumonia(patient)) && (k !== "xray" || Boolean(encounter?.imagingAttachment)));
 
 /** One need: what it is, its meaning colour, and the one action that meets it. */
 export type Need = { tone: "urgent" | "caution" | "calm"; text: string; action: string; target: string };

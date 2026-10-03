@@ -55,7 +55,7 @@ test("nothing scheduled, or not home yet, means no dose", () => {
 });
 
 test("time words read in Malaysia time and say how long to wait", () => {
-  expect(clock(at("2026-09-27T13:00:00Z"))).toBe("9:00 PM");
+  expect(clock(at("2026-09-27T13:00:00Z"))).toBe("9:00\u00a0PM");
   const due = at("2026-09-27T13:00:00Z");
   expect(untilLine(due, at("2026-09-27T10:50:00Z"))).toBe("in 2 h 10 min");
   expect(untilLine(due, at("2026-09-27T12:20:00Z"))).toBe("in 40 min");
@@ -69,9 +69,9 @@ test("time words read in Malaysia time and say how long to wait", () => {
 
 test("the next dose after taking one reads as a day word and a time", () => {
   const now = at("2026-09-27T13:05:00Z"); // 21:05 Malaysia
-  expect(whenWords(at("2026-09-27T14:00:00Z"), now)).toBe("today 10:00 PM");
-  expect(whenWords(at("2026-09-28T00:00:00Z"), now)).toBe("tomorrow 8:00 AM");
-  expect(whenWords(at("2026-09-29T00:00:00Z"), now)).toBe("Tue 29 Sep 8:00 AM");
+  expect(whenWords(at("2026-09-27T14:00:00Z"), now)).toBe("today 10:00\u00a0PM");
+  expect(whenWords(at("2026-09-28T00:00:00Z"), now)).toBe("tomorrow 8:00\u00a0AM");
+  expect(whenWords(at("2026-09-29T00:00:00Z"), now)).toBe("Tue 29 Sep 8:00\u00a0AM");
 });
 
 test("today's doses are the ones due on this Malaysia day, marked taken or not", () => {

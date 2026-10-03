@@ -62,6 +62,7 @@ export function useT() {
  *   long      Monday 28 September · Isnin 28 September · 9月28日 星期一
  *   time      9:00 PM · 9:00 PTG · 晚上9:00      hm  21:05 (24 h, every language)
  *   weekday   Mon · Isn · 周一                    narrow  M · I · 一
+ * A no-break space joins a time to its AM / PM (PG / PTG), so "9:00 PTG" never splits across lines.
  */
 const WEEK = {
   en: { short: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], long: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], narrow: ["S", "M", "T", "W", "T", "F", "S"] },
@@ -79,7 +80,7 @@ export function formatDate(lang: Lang, at: Date | string | number, style: DateSt
   const d = new Date(new Date(at).getTime() + MYT);
   const wd = d.getUTCDay(), day = d.getUTCDate(), mo = d.getUTCMonth(), h = d.getUTCHours(), mm = String(d.getUTCMinutes()).padStart(2, "0");
   const h12 = h % 12 || 12;
-  const time = lang === "zh" ? `${h < 6 ? "凌晨" : h < 12 ? "上午" : h < 13 ? "中午" : h < 18 ? "下午" : "晚上"}${h12}:${mm}` : `${h12}:${mm} ${lang === "ms" ? (h < 12 ? "PG" : "PTG") : h < 12 ? "AM" : "PM"}`;
+  const time = lang === "zh" ? `${h < 6 ? "凌晨" : h < 12 ? "上午" : h < 13 ? "中午" : h < 18 ? "下午" : "晚上"}${h12}:${mm}` : `${h12}:${mm}\u00a0${lang === "ms" ? (h < 12 ? "PG" : "PTG") : h < 12 ? "AM" : "PM"}`;
   const w = WEEK[lang];
   const md = lang === "zh" ? `${mo + 1}月${day}日` : `${day} ${MONTH[lang].short[mo]}`;
   switch (style) {

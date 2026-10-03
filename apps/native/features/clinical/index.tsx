@@ -18,6 +18,7 @@ import { HistoryEditor } from "./history-editor";
 import { emphasise } from "@/features/encounter/emphasis";
 import { confirmedAllergy, patientResult, receiptLine, resultKey, resultLine } from "@/features/day/counts";
 import { errorText, useLive } from "@/features/live";
+import { useDemoOffset } from "@/features/live/demo-clock";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { acknowledgeResult, useServerData } from "@/features/live/server-day";
 export { PrescriptionPanel as PrescriptionCard } from "./prescription-panel";
@@ -35,7 +36,8 @@ function NewResult({ patient }: { patient: Patient }) {
   const canAck = useRole().can("results.acknowledge");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  const shown = live && !server ? undefined : patientResult(patient.id, server, resultAcks);
+  const now = new Date(Date.now() + useDemoOffset());
+  const shown = live && !server ? undefined : patientResult(patient.id, server, resultAcks, now);
   if (!shown) return null;
   const { result, ack } = shown;
   const acknowledge = async () => {
@@ -52,7 +54,7 @@ function NewResult({ patient }: { patient: Patient }) {
       <Text style={{ ...type.overline, color: ink }}>{ack ? "Result" : "New result"}</Text>
     </View>
     <Text selectable style={{ ...type.headline, color: palette.ink }}>{resultLine(result)}</Text>
-    {ack ? <Text selectable style={{ ...type.subhead, fontWeight: "600", color: palette.green }}>{receiptLine(ack)}</Text> : <>
+    {ack ? <Text selectable style={{ ...type.subhead, fontWeight: "600", color: palette.green }}>{receiptLine(ack, now)}</Text> : <>
       <Text style={{ ...type.footnote, color: palette.muted }}>Not yet acknowledged. Acknowledging records your name and the time for the team.</Text>
       {canAck ? <Action label={busy ? "Acknowledging…" : error ? "Retry acknowledge" : "Acknowledge"} icon="checkmark" disabled={busy} onPress={acknowledge} accessibilityLabel={`Acknowledge ${result.test} ${result.value}`} />
         : <LockedAction label="Needs a doctor to acknowledge" path="results.acknowledge" height={46} />}

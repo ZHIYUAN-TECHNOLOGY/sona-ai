@@ -2,11 +2,13 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import Animated, { useReducedMotion } from "react-native-reanimated";
+import { upcomingOf } from "@/features/check-ins/model";
+import { useCheckIns } from "@/features/check-ins/today";
 import { changeOf, homeLine, listOf, scheduleLine, takeLine, type Discharged, type Group, type Med } from "@/features/discharge/lines";
 import "@/features/doses/strings";
 import { tFor, useLang } from "@/lib/i18n";
 import { Tag, useDischarge } from "@/features/discharge/row";
-import { Pill, rise, tintOf } from "@/features/doses";
+import { Pill, rise, tintOf, useNow } from "@/features/doses";
 import { dayLabel } from "@/features/follow-ups/lines";
 import { daysHome } from "@/features/home";
 import { Text } from "@/lib/text";
@@ -47,6 +49,9 @@ function Plan({ plan, reduced }: { plan: Discharged; reduced: boolean }) {
   // The leaflet in the language Sona Care speaks, else the one chosen at discharge.
   const leaflet = plan.leaflets.find(l => l.language === (picked ?? lang)) ?? plan.leaflets.find(l => l.language === plan.language) ?? plan.leaflets[0]!;
   const meds = GROUPS.flatMap(group => plan.medicines[group].map(m => ({ ...m, group })));
+  // The check-ins still to come, from the visit's rows: a day the follow-up agent added is there, a past one is not.
+  const now = useNow(), rows = useCheckIns().data;
+  const upcoming = rows && upcomingOf(rows, now);
 
   return <>
     <Animated.View entering={rise(reduced, 1)} style={{ gap: 12 }}>
@@ -84,7 +89,8 @@ function Plan({ plan, reduced }: { plan: Discharged; reduced: boolean }) {
       <Section light={t("dis.nextLight")} bold={t("dis.nextBold")} />
       <Card style={{ paddingVertical: 6 }}>
         {plan.followUp && <Row first title={plan.followUp.title} line={dayLabel(plan.followUp.date, lang)} onPress={() => router.push("/follow-ups")} />}
-        <Row first={!plan.followUp} title={t("dis.checkIns")} line={t("dis.weMessage", { dates: listOf(plan.checkIns.map(c => dayLabel(c.date, lang)), lang) })} onPress={() => router.push("/check-ins")} />
+        {upcoming && <Row first={!plan.followUp} title={t("dis.checkIns")} onPress={() => router.push("/check-ins")}
+          line={upcoming.length ? t("dis.weMessage", { dates: listOf(upcoming.map(c => dayLabel(c.dueAt, lang)), lang) }) : t("ci.allDone")} />}
       </Card>
     </Animated.View>
   </>;
@@ -104,6 +110,6 @@ function MedRow({ med, first }: { med: Med & { group: Group }; first: boolean })
       <Text style={{ ...type.footnote, color: palette.faint }}>{line}</Text>
     </View>
     {med.group !== "continue" && <Tag group={med.group} />}
-    <Text style={{ fontSize: 20, color: palette.faint }}>›</Text>
+    <Text style={{ fontSize: 20, color: palette.pale }}>›</Text>
   </Pressable>;
 }

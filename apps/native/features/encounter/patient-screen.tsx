@@ -59,7 +59,7 @@ export function PatientScreen() {
   const result = usePendingResult(); // the result Today flags, so an acknowledged one stops showing here too
   const real: Row[] = patients.map(p => {
     const visit = day.find(d => d.id === p.id);
-    const flags = patientFlags(p, unconfirmedOf(p, encounters[p.id]), result);
+    const flags = patientFlags(p, unconfirmedOf(p, encounters[p.id]), result, encounters[p.id]);
     const answers = encounters[p.id]?.requests.length ?? 0;
     const soon = Boolean(visit) && !answers && minutes(visit!.time) - now >= 0 && minutes(visit!.time) - now <= 60;
     const [group, reason, tone]: [Group, string, Row["tone"]] = flags.length ? ["needs", flags[0]!.label, flags[0]!.tone === "urgent" ? "urgent" : "soon"]

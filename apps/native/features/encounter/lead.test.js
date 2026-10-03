@@ -9,10 +9,16 @@ const plain = text => text?.replace(/\[\[([^|]+)\|\w+\]\]/g, "$1");
 
 test("the medication lead counts what the card counts, and never says 'nothing cleared' above 'all confirmed'", () => {
   expect(plain(leadFor("medication", amelia, { medicines: [med(true), med(true)] }))).toBe("Both medicines are confirmed. Penicillin allergy still needs confirming.");
-  expect(plain(leadFor("medication", amelia, { medicines: [med(true), med(false)] }))).toBe("1 of 2 medicines confirmed. The rest block the prescribing simulation. Penicillin allergy still needs confirming.");
-  // Confirmed without an ingredient is not "all confirmed", exactly as the card reads it.
-  expect(plain(leadFor("medication", amelia, { medicines: [med(true), med(true, { ingredient: " " })] }))).toMatch(/^2 of 2 medicines confirmed/);
+  expect(plain(leadFor("medication", amelia, { medicines: [med(true), med(false)] }))).toBe("1 medicine to confirm before prescribing. Penicillin allergy still needs confirming.");
+  expect(plain(leadFor("medication", amelia, { medicines: [med(false), med(false)] }))).toMatch(/^2 medicines to confirm before prescribing\./);
+  // Confirmed without an ingredient still needs confirming, exactly as the card reads it.
+  expect(plain(leadFor("medication", amelia, { medicines: [med(true), med(true, { ingredient: " " })] }))).toMatch(/^1 medicine to confirm before prescribing\./);
   expect(plain(leadFor("medication", amelia, { medicines: [med(true), med(true), med(true)] }))).toMatch(/^All 3 medicines are confirmed\./);
+});
+
+test("once a clinician records the allergy, the medication lead stops asking for it", () => {
+  expect(plain(leadFor("medication", amelia, { medicines: [med(true), med(false)], allergyConfirmed: true }))).toBe("1 medicine to confirm before prescribing.");
+  expect(leadFor("medication", daniel, { medicines: [], allergyConfirmed: true })).toBe("No medicines are recorded yet.");
 });
 
 test("the note lead names the real state and the step that changes it", () => {

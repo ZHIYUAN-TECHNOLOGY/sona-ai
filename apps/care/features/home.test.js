@@ -60,9 +60,9 @@ test("consistency: the share of the week's doses taken, counting only those take
 
 test("the medicines capsule says when the next dose is, plainly", () => {
   const due = new Date("2026-09-27T13:00:00Z"); // 9:00 PM Sun, Malaysia
-  expect(nextCapsule(due, new Date("2026-09-27T05:00:00Z"))).toBe("Next at 9:00 PM");
-  expect(nextCapsule(due, new Date("2026-09-26T13:30:00Z"))).toBe("Tomorrow 9:00 PM");
-  expect(nextCapsule(due, new Date("2026-09-25T05:00:00Z"))).toBe("Sun 27 Sep 9:00 PM");
+  expect(nextCapsule(due, new Date("2026-09-27T05:00:00Z"))).toBe("Next at 9:00\u00a0PM");
+  expect(nextCapsule(due, new Date("2026-09-26T13:30:00Z"))).toBe("Tomorrow 9:00\u00a0PM");
+  expect(nextCapsule(due, new Date("2026-09-25T05:00:00Z"))).toBe("Sun 27 Sep 9:00\u00a0PM");
 });
 
 test("the header date reads in Malaysia time", () => {

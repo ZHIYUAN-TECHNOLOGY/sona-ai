@@ -12,6 +12,8 @@ import type { Capability, MedicationEntry, Patient } from "./types";
 export type LeadState = {
   /** The medicines as the card lists them. */
   medicines?: Pick<MedicationEntry, "confirmed" | "ingredient" | "formulation">[];
+  /** A clinician has recorded the allergy in this visit (the card shows its receipt instead of asking). */
+  allergyConfirmed?: boolean;
   /** The X-ray card's image: the reference example, the clinician's own, an unsupported or empty sample, or none at all. */
   image?: "reference" | "attached" | "read" | "unsupported" | "no-finding" | "none";
   note?: "none" | "draft" | "reviewed";
@@ -25,10 +27,10 @@ export type LeadState = {
   result?: { test: string };
 };
 
-/** How many medicines are confirmed, and whether all are (with an ingredient and a form), as the medication card counts them. */
+/** How many medicines are confirmed (with an ingredient and a form), and whether all are, as the medication card counts them. */
 export function medicinesConfirmed(entries: NonNullable<LeadState["medicines"]>) {
-  const confirmed = entries.filter(e => e.confirmed).length;
-  return { total: entries.length, confirmed, all: entries.length > 0 && entries.every(e => e.confirmed && e.ingredient.trim() && e.formulation.trim()) };
+  const confirmed = entries.filter(e => e.confirmed && e.ingredient.trim() && e.formulation.trim()).length;
+  return { total: entries.length, confirmed, all: entries.length > 0 && confirmed === entries.length };
 }
 
 const first = (patient: Patient) => patient.name.split(" ")[0]!;
@@ -47,10 +49,11 @@ export function leadFor(kind: Capability, patient: Patient, state: LeadState, pr
     case "reasoning": return patient.incomplete ? "There isn’t enough history yet to weigh possibilities. Here’s what to collect first." : "Two possibilities are worth exploring. The record doesn’t confirm either of them.";
     case "medication": {
       const { total, confirmed, all } = medicinesConfirmed(state.medicines ?? []);
+      const left = total - confirmed;
       const meds = !total ? "No medicines are recorded yet."
         : all ? (total === 1 ? "The one medicine is confirmed." : total === 2 ? "Both medicines are confirmed." : `All ${total} medicines are confirmed.`)
-        : `${confirmed} of ${total} medicines confirmed. The rest block the prescribing simulation.`;
-      return emphasise(`${meds} ${allergy}`, patient);
+        : `${left} ${left === 1 ? "medicine" : "medicines"} to confirm before prescribing.`;
+      return emphasise(state.allergyConfirmed ? meds : `${meds} ${allergy}`, patient);
     }
     case "xray": return {
       reference: "Here’s a reference chest radiograph, not this patient’s, with its uploader’s description. It isn’t a model reading.",

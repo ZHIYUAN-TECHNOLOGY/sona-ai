@@ -51,7 +51,7 @@ export function ClaimScreen() {
   // Live mode: the codes (and the note sentences they cite) come from the server; a fix to the note codes it again.
   const server = useLiveCodes(patient?.encounterId ?? "", `${state.organismConfirmed}:${state.ivReasonAdded}`);
 
-  if (!patient || !encounter) return <NoVisit title="Guarantee letter" view="claim" what="a guarantee letter" />;
+  if (!patient || !encounter) return <><ModalHeader title="Guarantee letter" /><NoVisit view="claim" what="a guarantee letter" /></>;
   const set = (change: Partial<ClaimState>) => {
     const { organismConfirmed, ivReasonAdded } = change;
     // Only a doctor changes the claim; anyone else is told why and nothing changes here either.

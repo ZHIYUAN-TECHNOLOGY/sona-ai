@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, Alert, Linking, Pressable, ScrollView, Share, View, type TextInput as RNTextInput } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Alert, Pressable, ScrollView, Share, View, type TextInput as RNTextInput } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion, useSharedValue, withTiming, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,7 +23,7 @@ import { saveQuestion } from "@/features/questions";
 import { orbPad, SonaOrb } from "@/lib/orb";
 import { AnimatedText, Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { AccentText, CircleButton, LoadError, pillStyle, surfaceStyle, inkPill } from "@/lib/ui";
+import { AccentText, Call999, CircleButton, LoadError, pillStyle, surfaceStyle, inkPill } from "@/lib/ui";
 import { useDischarge } from "@/features/discharge/row";
 import { client, orpc, queryClient } from "@/utils/orpc";
 
@@ -202,7 +202,7 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
     <Animated.View entering={enter(0)} style={{ alignSelf: "flex-end", maxWidth: "86%", backgroundColor: palette.white, borderRadius: 22, borderCurve: "continuous", borderWidth: 1, borderColor: palette.line, paddingHorizontal: 16, paddingVertical: 11 }}>
       <Text selectable style={{ ...type.body, color: palette.ink }}>{t.question}</Text>
     </Animated.View>
-    {r.kind === "none" && r.urgent && <Animated.View entering={enter(1)}><Call999 /></Animated.View>}
+    {r.kind === "none" && r.urgent && <Animated.View entering={enter(1)}><Call999 label={tr("ask.call999")} line={tr("ask.call999Line")} /></Animated.View>}
     {!t.ready ? (lead && <Working doctors={wantsDoctor(t.question)} flood={flood} />)
       : <Animated.View entering={enter(1)} style={{ gap: 12 }}>
         <Text selectable style={{ fontSize: 17, lineHeight: 26, letterSpacing: -0.3, color: palette.ink }}>
@@ -246,7 +246,7 @@ function DoctorCard({ d }: { d: Doctor }) {
       <Text style={{ ...type.footnote, color: palette.muted }}>{d.specialty} · ★ {d.rating} · {d.room}</Text>
       {d.careTeam && <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{t("ask.yourTeam")}</Text>}
     </View>
-    <Icon name="next" color={palette.faint} size={18} />
+    <Icon name="next" color={palette.pale} size={18} />
   </Pressable>;
 }
 
@@ -282,14 +282,4 @@ function Working({ doctors, flood }: { doctors: boolean; flood: SharedValue<numb
 /** The done line that replaces a next-step button once it has happened. */
 function Done({ text }: { text: string }) {
   return <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, fontWeight: "600", color: palette.green, flexShrink: 1, paddingVertical: 12 }}>✓ {text}</Text>;
-}
-
-/** Urgent words: the call comes before anything else. */
-function Call999() {
-  const t = useT();
-  return <Pressable accessibilityRole="button" accessibilityLabel={t("ask.call999")} accessibilityHint={t("ask.call999Hint")} onPress={() => void Linking.openURL("tel:999")}
-    style={({ pressed }) => ({ minHeight: 48, borderRadius: 20, borderCurve: "continuous", paddingHorizontal: 16, paddingVertical: 12, gap: 2, justifyContent: "center", backgroundColor: "#FDECEC", transform: [{ scale: pressed ? 0.96 : 1 }] })}>
-    <Text style={{ ...type.headline, color: palette.red }}>{t("ask.call999")}</Text>
-    <Text style={{ ...type.footnote, color: palette.red }}>{t("ask.call999Line")}</Text>
-  </Pressable>;
 }

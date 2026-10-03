@@ -14,7 +14,7 @@ import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { CareMessages } from "@/features/care-messages";
 import { CheckInThread } from "@/features/check-ins/thread";
-import { patientFlags, unconfirmedOf, type Go } from "@/features/day/counts";
+import { confirmedAllergy, patientFlags, unconfirmedOf, type Go } from "@/features/day/counts";
 import { testInSentence } from "@/features/day/model";
 import { usePendingResult } from "@/features/day/use-counts";
 import { AccessTrail, useRole } from "@/features/live/roles";
@@ -43,15 +43,16 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
   const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();
   const encounter = encounters[patient.id];
-  const flags = patientFlags(patient, unconfirmedOf(patient, encounter), result);
+  const flags = patientFlags(patient, unconfirmedOf(patient, encounter), result, encounter);
   // Doctors also get "Scan note" (full width under the grid); it opens the visit with the scan on top.
   const visit = visitActions(patient, encounter, result, kind => go(kind === "recording" || kind === "scan" ? { view: kind } : { next: kind }), useRole().can("scan.read"));
   // What Today and Patients flag is said once, on the key that fixes it (no chips repeating the
-  // keys): the result's value on Brief me, the allergy (or that it is unknown) on Medicines.
+  // keys): the result's value on Brief me, the allergy (or that it is unknown) on Medicines until a clinician records it.
   const resultLine = result?.patientId === patient.id ? `${result.flag} ${testInSentence(result.test)} ${result.value}` : undefined;
-  const allergy = patient.allergies ? `${patient.allergies.split(" — ")[0]} allergy` : undefined;
+  const recorded = Boolean(confirmedAllergy(encounter));
+  const allergy = patient.allergies && !recorded ? `${patient.allergies.split(" — ")[0]} allergy` : undefined;
   const keys = visit.slice(0, 3).map(a => a.key === "brief" && resultLine ? { ...a, status: resultLine }
-    : a.key === "meds" && patient.incomplete ? { ...a, status: "Allergies unknown" }
+    : a.key === "meds" && patient.incomplete && !recorded ? { ...a, status: "Allergies unknown" }
     : a.key === "meds" && allergy ? { ...a, status: `${allergy} · ${a.status}`, tone: "caution" as const } : a);
   const started = Boolean(encounter?.requests.length);
   const [h, m] = patient.time.split(":").map(Number);
