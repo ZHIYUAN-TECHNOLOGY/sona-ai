@@ -128,14 +128,17 @@ export function wardSummary(beds: Bed[]) {
   return { beds: beds.length, fit, blocked: blocked.length, bedHours: blocked.reduce((sum, b) => sum + (b.waitingHours ?? 0), 0) };
 }
 
-/** Three lines for the huddle: what blocks the most beds, and who owns it. */
+/**
+ * Three lines for the huddle: where the ward stands, what blocks the most beds, and who owns it. Counted as the
+ * ward's filter counts (bedKind): ready is its "Fit to go", and a fit bed something holds is blocked, not ready.
+ */
 export function huddle(beds: Bed[], owners: Record<string, Owner | undefined>): string[] {
   const s = wardSummary(beds);
   const blockedBeds = beds.filter(b => bedKind(b) === "blocked");
   const unowned = blockedBeds.flatMap(b => b.blockers).filter(x => !owners[x.id]).length;
   const top = blockedBeds[0];
   return [
-    `${s.fit} fit to go, ${s.blocked} still blocked, about ${s.bedHours} bed-hours waiting.`,
+    `${s.fit - s.blocked} ready to go, ${s.blocked} fit but blocked, about ${s.bedHours} bed-hours waiting.`,
     top ? `Start with ${top.bed}: ${top.blockers.map(x => x.label.toLowerCase()).join(", ")}.` : "No discharge is blocked right now.",
     unowned ? `${unowned} ${unowned === 1 ? "blocker has" : "blockers have"} no owner yet.` : "Every blocker has an owner.",
   ];

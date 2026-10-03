@@ -13,7 +13,7 @@ import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { ErrorLine, PressScale } from "@/components/sona/parts";
 import { Action, Icon, Insight, Notice, Tone, useAccessibleEffects } from "@/components/sona/ui";
-import { toWatch } from "@/features/ask/answers";
+import { suggestion, toWatch } from "@/features/ask/answers";
 import { ASK_SPACE, WithSona } from "@/features/ask";
 import { useContinue } from "@/features/patients/continue-store";
 import { useEncounter } from "@/features/encounter/store";
@@ -166,19 +166,22 @@ export function HandoverScreen() {
   const watch = cards.filter(c => c.priority === "watch").length, items = cards.reduce((sum, c) => sum + c.recommendation.length, 0);
   const insight = [`${cards.length} ${cards.length === 1 ? "patient" : "patients"}`, watch ? <Tone key="watch" of="soon">{watch} to watch</Tone> : null, items ? `${items} open ${items === 1 ? "item" : "items"}` : null].filter(Boolean);
   const answers = [toWatch(cards)];
+  // The dock: the bar, and the ✦ chip with its gap (44 + 10 pt) when the page has one.
+  // ponytail: VoiceDock's sizes, not its measured height, which WithSona keeps to itself; read that once it shares it.
+  const dockSpace = ASK_SPACE + (suggestion(answers) ? 54 : 0);
 
   // Read only (management): the cards to read, one under another; no triage and no acceptance.
   if (server.live && !role.can("handover.accept")) return <WithSona scope="handover" answers={answers}><View style={{ flex: 1, backgroundColor: palette.canvas, paddingTop: insets.top + 56, paddingHorizontal: 20, gap: 14 }}>
     <Stack.Screen options={{ title: "Shift handover" }} />
     <Insight>{insight.map((part, i) => [i ? " · " : "", part])}</Insight>
     <Notice>Read only. {role.why("handover.accept")}</Notice>
-    <ScrollView contentContainerStyle={{ gap: 14, paddingBottom: ASK_SPACE + 20 }} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={{ gap: 14, paddingBottom: dockSpace + 20 }} showsVerticalScrollIndicator={false}>
       {cards.map(card => <View key={card.id} style={{ height: 380 }}><HandoverCard card={card} /></View>)}
     </ScrollView>
   </View></WithSona>;
 
-  // The deck and its two buttons end above the dock.
-  return <WithSona scope="handover" answers={answers}><View style={{ flex: 1, backgroundColor: palette.canvas, paddingTop: insets.top + 56, paddingBottom: ASK_SPACE, paddingHorizontal: 20, gap: 14 }}>
+  // The deck and its two buttons end above the dock and its ✦.
+  return <WithSona scope="handover" answers={answers}><View style={{ flex: 1, backgroundColor: palette.canvas, paddingTop: insets.top + 56, paddingBottom: dockSpace, paddingHorizontal: 20, gap: 14 }}>
     <Stack.Screen options={{ title: "Shift handover" }} />
     <Insight>{insight.map((part, i) => [i ? " · " : "", part])}</Insight>
     <WrapUp />

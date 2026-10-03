@@ -261,7 +261,7 @@ function NoOwner({ beds, owners, unlock, live, onAssign, onClear, assignError, o
     <Text style={{ ...type.overline, color: palette.amber }}>Nobody is chasing these yet · {all.length}</Text>
     {rows.map((r, i) => <Animated.View key={r.bed} layout={motion} style={{ gap: 4, paddingTop: i ? 8 : 0, borderTopWidth: i ? 1 : 0, borderColor: "rgba(20,28,40,0.06)" }}>
       <Pressable accessibilityRole="button" accessibilityLabel={`${r.bed}, ${r.name.split(" ")[0]}${r.hours > 0 ? `, about ${r.hours} bed-hours waiting` : ""}`} accessibilityHint="Opens the bed"
-        onPress={() => onOpen(r.bed)} style={{ minHeight: 32, flexDirection: "row", alignItems: "center", gap: 8 }}>
+        onPress={() => onOpen(r.bed)} hitSlop={{ top: 6, bottom: 6 }} style={{ minHeight: 32, flexDirection: "row", alignItems: "center", gap: 8 }}>
         <Text style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{r.bed} · {r.name.split(" ")[0]}</Text>
         {r.hours > 0 && <Text style={{ ...type.caption, flex: 1, color: palette.muted }}>~{r.hours} bed-hours waiting</Text>}
         <Icon name="chevron.right" size={11} color={palette.muted} />
@@ -353,6 +353,8 @@ function BedCard({ bed, focus, from, to, p, owners, told, onAssign, assignError,
 
         <View style={{ gap: 4 }}>
           <Text style={{ ...type.overline, color: bed.blockers.length ? palette.amber : TEAL }}>{bed.blockers.length ? `${bed.blockers.length} holding the discharge` : "Nothing holding the discharge"}</Text>
+          {/* Ready: the next move is the discharge, opened below for a patient on your list; anyone else's is their doctor's to sign. */}
+          {bedKind(bed) === "fit" && !onDischarge && <Text style={{ ...type.subhead, color: palette.ink }}>Ready to go home. Their own doctor signs the discharge.</Text>}
           {bed.blockers.map(b => { const owner = owners[b.id]; return <View key={b.id} style={{ gap: 10, paddingVertical: 12, borderTopWidth: 1, borderColor: "rgba(20,28,40,0.06)", ...(b.id === focus ? { marginHorizontal: -10, paddingHorizontal: 10, borderRadius: radius.control, backgroundColor: "rgba(36,91,204,0.07)" } : {}) }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <View style={{ flex: 1, gap: 2 }}>

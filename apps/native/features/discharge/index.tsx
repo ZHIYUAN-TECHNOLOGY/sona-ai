@@ -1,5 +1,5 @@
 import { PressScale } from "@/components/sona/parts";
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 import { MarkedText } from "@/components/sona/marked-text";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
@@ -7,7 +7,7 @@ import Animated, { FadeIn, withSpring, withTiming } from "react-native-reanimate
 import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, glass, Icon, Insight, Screen, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, CloseButton, glass, Icon, Insight, Screen, Surface, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { BlockerRow, useSettling, Pill, Ring } from "@/features/clinical/prescribe-card";
 import { Seal, haptic } from "@/features/clinical/medication-parts";
 import { capabilityLabels } from "@/features/encounter/conversation";
@@ -18,13 +18,13 @@ import { useServerEncounter } from "@/features/live/sync";
 import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveDraft } from "@/features/live/model-sync";
 import { CareInvite } from "@/features/care-invite";
-import { refreshServerData } from "@/features/live/server-day";
+import { refreshServerData, useVisitTasks } from "@/features/live/server-day";
 import { CHECK_IN_CHOICES, MAX_CHECK_INS, checkInDaysLine, defaultCheckInDays, toggleCheckInDay } from "@/features/check-ins/model";
 import { markTerms } from "@/features/encounter/emphasis";
-import { refreshCheckIns } from "@/features/check-ins/state";
+import { refreshCheckIns, useCheckIns } from "@/features/check-ins/state";
 import { useFindings } from "@/features/live/findings-sync";
 import type { Patient, PrescriptionCheck } from "@/features/encounter/types";
-import { EMPTY_DISCHARGE, FOLLOW_UPS, LANGUAGES, checkInDaysOf, discharge, dischargeChecks, formatMinutes, planFor, type DischargeState, type MedChange } from "./model";
+import { EMPTY_DISCHARGE, FOLLOW_UPS, LANGUAGES, checkInDaysFor, checkInDaysOf, discharge, dischargeChecks, fitAtOf, followUpsOf, formatMinutes, planFor, type DischargeState, type MedChange } from "./model";
 import { NoVisit } from "@/components/sona/no-visit";
 
 /*
@@ -39,23 +39,19 @@ export function DischargeScreen() {
   // The open visit is the one being discharged (updateEncounter writes to it).
   const { patient, encounters } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
-  if (!patient) return <NoVisit title="Discharge" view="discharge" what="a discharge" />;
+  if (!patient) return <><ModalHeader title="Discharge" /><NoVisit view="discharge" what="a discharge" /></>;
   const discharged = Boolean(encounters[patient.id]?.discharge?.dischargedAt);
   const answers = encounters[patient.id]?.requests.map(r => capabilityLabels[r.kind]) ?? [];
   // An already discharged patient opens still, on the receipt.
   return <View style={{ flex: 1, backgroundColor: palette.canvas }}>
+    <ModalHeader title="Discharge" />
     <DischargePage patient={patient} answers={answers} animate={!reducedMotion && !discharged} />
   </View>;
 }
 
-/** The modal's own header row (these modals hide the native header): a title and Close. */
+/** The modal's header, as Consultation's and Scan's: the native bar's centred title and glass Close (these modals start without it). */
 export function ModalHeader({ title }: { title: string }) {
-  return <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
-    <Text accessibilityRole="header" style={{ ...type.headline, color: palette.ink }}>{title}</Text>
-    <Pressable accessibilityRole="button" accessibilityLabel="Close" hitSlop={8} onPress={() => router.back()} style={{ width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(20,28,40,0.06)" }}>
-      <Icon name="xmark" size={13} color={palette.ink} />
-    </Pressable>
-  </View>;
+  return <Stack.Screen options={{ headerShown: true, title, headerLeft: () => null, headerRight: () => <CloseButton /> }} />;
 }
 
 /** The decision bar's one line above its button: what the action will do, or why it just failed. */
@@ -133,8 +129,11 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
   const role = useRole();
   // Live mode: the full summary and the leaflet in the chosen language are drafted by the server from this patient's record.
   const draft = useLiveDraft(patient.encounterId, state.language);
+  // The receipt reads what the discharge left: the visit's tasks (the Tasks page's list) and its scheduled check-ins.
+  const tasksOf = useVisitTasks();
+  const checkIns = useCheckIns();
 
-  if (!encounter) return <NoVisit title="Discharge" view="discharge" what="a discharge" />;
+  if (!encounter) return <NoVisit view="discharge" what="a discharge" />;
   const set = (change: Partial<DischargeState>) => {
     // A role that cannot change the plan is told why, and nothing changes on this phone either.
     if (live && !role.can("discharge.update")) { haptic("select"); setServerError(role.why("discharge.update")); return; }
@@ -142,7 +141,10 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
     if (live) void api.discharge.update({ encounterId: patient.encounterId, ...change }).catch(e => setServerError(errorText(e)));
   };
   const done = state.dischargedAt ? new Date(state.dischargedAt) : undefined;
-  const rows = checks.filter(c => c.status === "blocked" || resolving.has(c.id));
+  // Once discharged, fit reads back from what was stored, not from when this page opened.
+  const fit = done ? fitAtOf(state) : fitAt;
+  const followUps = followUpsOf(tasksOf(patient), patient, state, plan).length;
+  const rows =checks.filter(c => c.status === "blocked" || resolving.has(c.id));
   const passed = checks.filter(c => c.status === "passed" && !resolving.has(c.id));
   const first = patient.name.split(" ")[0];
   const language = LANGUAGES.find(l => l.id === state.language) ?? LANGUAGES[0]!;
@@ -204,9 +206,9 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
   const error = serverError ?? found.error;
   // The decision stays in view: what discharging does, then the button; once done, the next step.
   const bar = done ? <>
-    {error ? <BarLine error>{error}</BarLine> : <BarLine>{`Sona Care checks in on day ${checkInDaysOf(state, plan).join(", ")} · ${language.name}`}</BarLine>}
+    {error ? <BarLine error>{error}</BarLine> : <BarLine>{`Sona Care checks in on day ${checkInDaysFor(checkIns, patient.encounterId, checkInDaysOf(state, plan)).join(", ")} · ${language.name}`}</BarLine>}
     <View style={{ flexDirection: "row", gap: 10 }}>
-      <View style={{ flex: 1 }}><Action label="View tasks" icon="checklist" secondary onPress={() => { router.back(); setTimeout(() => router.push("/tasks"), 320); }} /></View>
+      {followUps > 0 && <View style={{ flex: 1 }}><Action label="View tasks" icon="checklist" secondary onPress={() => { router.back(); setTimeout(() => router.push("/tasks"), 320); }} /></View>}
       <View style={{ flex: 1 }}><Action label="Done" onPress={() => router.back()} /></View>
     </View>
   </> : <>
@@ -218,7 +220,6 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
   </>;
 
   return <Screen bottom={bar}>
-    <ModalHeader title="Discharge" />
     <VisitChip patient={patient} answers={answers} animate={animate} />
     <Animated.View entering={animate ? riseCard : undefined}>
     <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 14 }}>
@@ -226,7 +227,7 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
         {/* Once discharged the ring reads complete, whatever the checks say now. */}
         <Ring done={done ? checks.length : checks.length - blocked.length} total={checks.length} />
         <View style={{ flex: 1 }}>
-          <Insight eyebrow={`${patient.name} · ${plan.bed} · fit since ${time(fitAt)}`}>
+          <Insight eyebrow={[patient.name, plan.bed, fit && `fit ${done ? "at" : "since"} ${time(fit)}`].filter(Boolean).join(" · ")}>
             {done ? <><Tone of="good">Discharged</Tone> at {time(done)}</> : blocked.length ? <><Tone of="soon">{blocked.length} left</Tone> before {first} can go home</> : <>{first} is <Tone of="next">ready to go home</Tone></>}
           </Insight>
         </View>
@@ -238,7 +239,7 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
           <Seal draw stampDelay={fresh ? 120 : undefined} />
           <Animated.View entering={fresh ? riseIn({ delay: 220, distance: 6, duration: 360 }) : undefined} style={{ flex: 1, gap: 2 }}>
             <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{plan.bed} free{saved ? ` · ${saved} earlier` : ""}</Text>
-            <Text style={{ ...type.caption, color: palette.muted }}>2 follow-up tasks created · leaflet ready to print · {time(done)}</Text>
+            <Text style={{ ...type.caption, color: palette.muted }}>{[followUps && `${followUps} follow-up ${followUps === 1 ? "task" : "tasks"} created`, "leaflet ready to print", time(done)].filter(Boolean).join(" · ")}</Text>
           </Animated.View>
         </View>
         <CareInvite encounterId={patient.encounterId} />

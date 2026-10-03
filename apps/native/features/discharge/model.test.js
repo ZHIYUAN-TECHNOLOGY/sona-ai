@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { newEncounter, patients } from "@/features/encounter/fixtures";
 import { fixtureCheckIns, scheduleLine } from "@/features/check-ins/model";
-import { EMPTY_DISCHARGE, canDischarge, discharge, dischargeChecks, planFor, formatMinutes, minutesSaved } from "./model";
+import { EMPTY_DISCHARGE, canDischarge, checkInDaysFor, discharge, dischargeChecks, fitAtOf, followUpsOf, planFor, formatMinutes, minutesSaved } from "./model";
 
 const amelia = patients.find(p => p.id === "SYN-1042");
 
@@ -38,4 +38,24 @@ test("discharging keeps the chosen check-in days, else the condition's, and the 
   const chosen = discharge({ ...encounter, discharge: { ...encounter.discharge, checkInDays: [1, 3, 14] } }, amelia, at, at);
   expect(fixtureCheckIns(amelia, chosen.discharge, {}, at).map(c => c.day)).toEqual([1, 3, 14]);
   expect(scheduleLine(at, [1, 3])).toBe("Day 1 Sun 27 Sep · Day 3 Tue 29 Sep");
+});
+
+test("a reopened receipt reads what was stored and made: when the patient was fit, the follow-ups on the visit and the check-ins scheduled", () => {
+  const fit = new Date(2026, 8, 25, 10, 0), at = new Date(2026, 8, 25, 10, 25);
+  const done = discharge({ ...newEncounter(), discharge: { ...EMPTY_DISCHARGE, followUp: "2w" } }, amelia, fit, at);
+  // Fit comes back from the stored saving, whenever the receipt reopens; with nothing saved there is nothing to read.
+  expect(fitAtOf(done.discharge)).toEqual(fit);
+  expect(fitAtOf({ ...done.discharge, savedMinutes: 0 })).toBeUndefined();
+  expect(fitAtOf(EMPTY_DISCHARGE)).toBeUndefined();
+  // Only the discharge's own tasks count: this device's copies by ID, the server's by title; none when the visit has none.
+  const plan = planFor(amelia);
+  const other = { id: "t-xray", title: "Repeat chest X-ray in 6 weeks", owner: "Clinic clerk", due: "", completed: false };
+  expect(followUpsOf([...done.tasks, other], amelia, done.discharge, plan)).toHaveLength(2);
+  expect(followUpsOf([{ ...done.tasks[0], id: "server-row-1" }, other], amelia, done.discharge, plan)).toHaveLength(1);
+  expect(followUpsOf([], amelia, done.discharge, plan)).toHaveLength(0);
+  // The check-ins actually scheduled for this visit (a day the server added included), else the days picked at discharge.
+  const visit = amelia.encounterId;
+  const checkIns = [{ encounterId: visit, day: 7 }, { encounterId: visit, day: 2 }, { encounterId: visit, day: 4 }, { encounterId: "visit-other", day: 1 }];
+  expect(checkInDaysFor(checkIns, visit, [2, 7])).toEqual([2, 4, 7]);
+  expect(checkInDaysFor([], visit, [2, 7])).toEqual([2, 7]);
 });

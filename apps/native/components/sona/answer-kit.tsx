@@ -129,16 +129,18 @@ export function AnswerDeck({ pages }: { pages: { title: string; content: ReactNo
   const [index, setIndex] = useState(0);
   const deck = useRef<ScrollView>(null);
   const pageW = width - 40 - 28, gap = 12;
-  const turn = (step: number) => { const next = Math.max(0, Math.min(pages.length - 1, index + step)); if (next === index) return; setIndex(next); deck.current?.scrollTo({ x: next * (pageW + gap), animated: !reducedMotion }); };
+  const go = (next: number) => { if (next === index) return; setIndex(next); deck.current?.scrollTo({ x: next * (pageW + gap), animated: !reducedMotion }); };
+  const turn = (step: number) => go(Math.max(0, Math.min(pages.length - 1, index + step)));
   const settle = (x: number) => { const next = Math.round(x / (pageW + gap)); if (next !== index) { setIndex(next); if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); } };
   return <View style={{ gap: 12 }}>
     <View accessible accessibilityRole="adjustable" accessibilityLabel={`Page ${index + 1} of ${pages.length}, ${pages[index]?.title}`} accessibilityActions={[{ name: "increment" }, { name: "decrement" }]} onAccessibilityAction={e => turn(e.nativeEvent.actionName === "increment" ? 1 : -1)} style={{ flexDirection: "row", gap: 4 }}>
-      {pages.map((page, i) => <View key={page.title} style={{ flex: 1, gap: 6 }}>
+      {/* Each label is a tab too: a tap jumps to its page (VoiceOver keeps the one adjustable row). */}
+      {pages.map((page, i) => <Pressable key={page.title} onPress={() => go(i)} hitSlop={{ top: 10, bottom: 10 }} style={{ flex: 1, gap: 6 }}>
         <View style={{ height: 3, borderRadius: 2, backgroundColor: "rgba(20,28,40,0.1)", overflow: "hidden" }}>
           <Animated.View style={{ height: 3, backgroundColor: palette.ink, transformOrigin: "left", transform: [{ scaleX: i <= index ? 1 : 0 }], transitionProperty: "transform", transitionDuration: reducedMotion ? 0 : 320 }} />
         </View>
         <Text numberOfLines={1} style={{ ...type.caption, fontWeight: i === index ? "600" : "500", color: i === index ? palette.ink : palette.muted }}>{page.title}</Text>
-      </View>)}
+      </Pressable>)}
     </View>
     <ScrollView ref={deck} horizontal showsHorizontalScrollIndicator={false} decelerationRate="fast" snapToInterval={pageW + gap} snapToAlignment="start"
       onMomentumScrollEnd={e => settle(e.nativeEvent.contentOffset.x)} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap, alignItems: "flex-start" }}>
