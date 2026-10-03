@@ -13,7 +13,7 @@ import { useEncounter } from "@/features/encounter/store";
 import type { TranscriptLine } from "@/features/encounter/types";
 import { useLive } from "@/features/live";
 import { failedLine, isCaption, partRange, UNSURE, type Part } from "./live";
-import { applyCaptured, applyDraft, askDraft, retryParts, useScribe } from "./live-recorder";
+import { RecordingSeconds, applyCaptured, applyDraft, askDraft, retryParts, useScribe } from "./live-recorder";
 import { LiveWaveform } from "./live-waveform";
 import { buildDraft, elapsedLabel, scriptFor } from "./model";
 import { Dot, fieldStyle, haptic, StateLine } from "./parts";
@@ -238,7 +238,10 @@ function LiveRecording() {
         </Animated.View>
       </View>
       <View style={{ gap: 6 }}>
-        <Text accessibilityLabel={`Recorded ${elapsedLabel(encounter.recordingSeconds)}`} selectable style={{ fontSize: 52 /* timer numerals, off the scale */, fontWeight: "300", color: palette.ink, letterSpacing: -2, fontVariant: ["tabular-nums"] }}>{elapsedLabel(encounter.recordingSeconds)}</Text>
+        {/* The clock ticks in its own store while recording, so only this text re-renders each second. */}
+        <RecordingSeconds patientId={patient?.id} saved={encounter.recordingSeconds}>{seconds =>
+          <Text accessibilityLabel={`Recorded ${elapsedLabel(seconds)}`} selectable style={{ fontSize: 52 /* timer numerals, off the scale */, fontWeight: "300", color: palette.ink, letterSpacing: -2, fontVariant: ["tabular-nums"] }}>{elapsedLabel(seconds)}</Text>}
+        </RecordingSeconds>
         <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <LiveWaveform state={active ? "live" : idle ? "idle" : "held"} reducedMotion={reducedMotion} />
         </View>

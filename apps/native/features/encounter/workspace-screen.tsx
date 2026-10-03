@@ -32,6 +32,7 @@ import { defaultMedications } from "./clinical-state";
 import { nextSteps, type Step } from "./next-steps";
 import { NextStepBar, NextStepSheet, useNextStep } from "./next-step";
 import { useCanPrescribe } from "@/features/clinical/prescribe-card";
+import { RecordingSeconds } from "@/features/scribe/live-recorder";
 import { entryFor } from "@/features/clinical/medicine-catalog";
 import { useRole } from "@/features/live/roles";
 import { AnswerSections, SectionTabs, type AnswerSection } from "@/components/sona/answer-kit";
@@ -424,9 +425,9 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       // The ✦ asks into Today's thread too; it steps aside while the newest entry already answers it.
       suggestion={nudge && answerOf(newest)?.id !== nudge.answer.id ? { text: nudge.text, onPress: () => void today.ask(nudge.answer.question, nudge.answer) } : undefined}
       above={<>
-        {recording && <Pressable accessibilityRole="button" accessibilityLabel={`Consultation ${consultation}, ${encounter?.recordingSeconds} seconds`} accessibilityHint="Opens the consultation recorder" hitSlop={{ top: 2, bottom: 2 }} onPress={() => open("recording")} style={{ alignSelf: "center", minHeight: 40, paddingHorizontal: 16, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: palette.white, boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
-          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: encounter?.recording === "paused" ? palette.amber : palette.red }} /><Text style={{ ...type.footnote, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>Consultation {consultation} · {encounter?.recordingSeconds}s</Text>
-        </Pressable>}
+        {recording && <RecordingSeconds patientId={patient?.id} saved={encounter?.recordingSeconds ?? 0}>{seconds => <Pressable accessibilityRole="button" accessibilityLabel={`Consultation ${consultation}, ${seconds} seconds`} accessibilityHint="Opens the consultation recorder" hitSlop={{ top: 2, bottom: 2 }} onPress={() => open("recording")} style={{ alignSelf: "center", minHeight: 40, paddingHorizontal: 16, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: palette.white, boxShadow: "0 4px 14px rgba(24,32,48,0.1)" }}>
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: encounter?.recording === "paused" ? palette.amber : palette.red }} /><Text style={{ ...type.footnote, fontWeight: "500", color: palette.ink, fontVariant: ["tabular-nums"] }}>Consultation {consultation} · {seconds}s</Text>
+        </Pressable>}</RecordingSeconds>}
         {notice && <Notice>{notice}</Notice>}
         {steps && !drawer && <NextStepBar steps={steps} p={next.p} onExpand={next.show} onAct={act} />}
       </>}

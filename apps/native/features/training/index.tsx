@@ -14,6 +14,7 @@ import { exportBlockers } from "@/features/ask/answers";
 import { ASK_SPACE, WithSona } from "@/features/ask";
 import { haptic } from "@/features/clinical/medication-parts";
 import { api, errorText, useLive } from "@/features/live";
+import { useLiveChanges } from "@/features/live/channel";
 import { useRole } from "@/features/live/roles";
 import { exported, insight, leakLine, type Part, type Placeholder, placeholderParts, redactedWords, removed, spoken } from "./model";
 
@@ -73,6 +74,8 @@ export function TrainingScreen() {
       .then(([s, list]) => { setStatus(s); setSamples([...list].sort((a, b) => Number(b.status === "blocked") - Number(a.status === "blocked"))); }, e => setLoadError(errorText(e)));
   }, []);
   useFocusEffect(useCallback(() => { if (allowed) void load(); }, [allowed, load]));
+  // A consent change, a new sample or a decision elsewhere refreshes the queue while it is open.
+  useLiveChanges(["training"], () => { if (allowed) void load(); });
 
   if (!live) return <Screen><Notice>Training data comes from the live backend. Switch it on in Settings and sign in as management.</Notice></Screen>;
   if (role.known && !allowed) return <Screen><Notice>{role.why("training.status")}</Notice></Screen>;
