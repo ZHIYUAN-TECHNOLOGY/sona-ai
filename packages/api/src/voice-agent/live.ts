@@ -33,6 +33,28 @@ ${plan ?? "None yet: they are still in hospital."}`;
  */
 export const mayReport = (text: string) => readReply(text) !== "fine";
 
+/** 999 as live3 and later say it: numbers in words, so her voice reads them right (tools/omni-voice/spoken.py). */
+const SPOKEN_999 = /nine nine nine|sembilan sembilan sembilan|九九九/i;
+
+/** What box ④ itself wrote down of the patient's turn, when it starts to answer (its second ear; data/live.py "transcribe"). */
+export type Heard = { type: "heard"; text: string; seconds: number; ms: number };
+
+/**
+ * Two ears hear each patient turn (box ②'s ASR and box ④ itself), so a check may fire for either, but once a turn: a
+ * second firing of the same check within TURN_MS is the other ear on the same words.
+ */
+export const TURN_MS = 20_000;
+export class Checks {
+  #last = { call999: -Infinity, report: -Infinity };
+
+  /** Whether this check may act now; taking it starts its quiet time. */
+  take(check: "call999" | "report", now: number) {
+    if (now - this.#last[check] < TURN_MS) return false;
+    this.#last[check] = now;
+    return true;
+  }
+}
+
 /** Box ④'s report for one second of the call: listening, or speaking these words; their audio follows as one binary frame. */
 export type Unit = { type: "unit"; i: number; listen: boolean; text: string; end_of_turn: boolean; ms: number; behind: number };
 export type PhoneEvent =
@@ -73,6 +95,6 @@ export class LiveTurns {
 
   /** Whether an answer since `from` (an index into `said`), or the one being spoken, sent the patient to 999. */
   sent999(from: number) {
-    return [...this.said.slice(from), this.#answer ?? ""].some(a => EMERGENCY.test(a));
+    return [...this.said.slice(from), this.#answer ?? ""].some(a => EMERGENCY.test(a) || SPOKEN_999.test(a));
   }
 }

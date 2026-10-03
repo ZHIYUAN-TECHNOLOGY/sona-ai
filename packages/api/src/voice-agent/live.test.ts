@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { LiveTurns, liveBrief, mayReport } from "./live";
+import { Checks, LiveTurns, TURN_MS, liveBrief, mayReport } from "./live";
 
 const listen = { listen: true, text: "", end_of_turn: false };
 const speak = (text: string, end_of_turn = false) => ({ listen: false, text, end_of_turn });
@@ -40,4 +40,18 @@ test("the brief is the one stage 1 learnt, in the patient's language, with their
 test("only words that may report feeling worse go on to the care team's reader", () => {
   expect(mayReport("Demam saya datang balik")).toBe(true);
   expect(mayReport("When is my next appointment?")).toBe(false);
+});
+
+test("a check fires once a turn, whichever ear hears it first, and again on a later turn", () => {
+  const checks = new Checks();
+  expect(checks.take("call999", 1000)).toBe(true); // box ④'s ear
+  expect(checks.take("call999", 3500)).toBe(false); // box ②'s ear, the same words
+  expect(checks.take("report", 3500)).toBe(true); // the other check keeps its own time
+  expect(checks.take("call999", 1000 + TURN_MS)).toBe(true);
+});
+
+test("999 said in words counts as sending them to 999", () => {
+  const turns = new LiveTurns();
+  turns.unit(speak(" Call nine nine nine now.", true));
+  expect(turns.sent999(0)).toBe(true);
 });
