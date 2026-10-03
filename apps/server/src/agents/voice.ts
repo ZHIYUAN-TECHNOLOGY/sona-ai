@@ -8,6 +8,7 @@ import { LINES, answerTurn, basetenChat } from "@sona-ai/api/voice-agent/answer"
 import { tellCareTeam } from "@sona-ai/api/voice-agent/care-team";
 import { SonaTranscriber } from "@sona-ai/api/voice-agent/listen";
 import { SonaVoice, basetenSpeak, startingBoxes, warmBoxes, type PhoneVoice } from "@sona-ai/api/voice-agent/voice";
+import { hosted } from "@sona-ai/api/sagemaker";
 import { Agent, getAgentByName, type Connection } from "agents";
 import { withVoice, type VoiceTurnContext } from "agents/voice";
 import type { Context as HonoContext } from "hono";
@@ -32,7 +33,7 @@ type Language = keyof typeof LINES;
  * - `sona_care_team` {taskId, title}: what the patient reported reached their care team as a flagged task.
  */
 export class SonaVoiceAgent extends withVoice(Agent<Env>) {
-  readonly #baseten = this.env.BASETEN_API_KEY ? { apiKey: this.env.BASETEN_API_KEY } : undefined;
+  readonly #baseten = hosted(this.env);
   readonly #models = this.#baseten ? basetenModels(this.#baseten) : stubModels;
   readonly #chat = this.#baseten && basetenChat(this.#baseten);
   /** Each answer turn's phone, so a sentence for the phone's voice reaches the phone that asked. */

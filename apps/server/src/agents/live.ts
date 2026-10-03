@@ -7,6 +7,7 @@ import { LINES, callNow } from "@sona-ai/api/voice-agent/answer";
 import { tellCareTeam } from "@sona-ai/api/voice-agent/care-team";
 import { SonaTranscriber, type SessionHooks } from "@sona-ai/api/voice-agent/listen";
 import { Checks, LiveTurns, liveBrief, mayReport, type Ear, type Heard, type Unit } from "@sona-ai/api/voice-agent/live";
+import { hosted } from "@sona-ai/api/sagemaker";
 import { Agent, type Connection } from "agents";
 import { withVoiceInput } from "agents/voice";
 
@@ -63,7 +64,7 @@ class LiveCall {
  * sleeps or mishears (docs/minicpm-o-finetune.md, "One ear").
  */
 export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
-  readonly #baseten = this.env.BASETEN_API_KEY ? { apiKey: this.env.BASETEN_API_KEY } : undefined;
+  readonly #baseten = hosted(this.env);
   readonly #models = this.#baseten ? basetenModels(this.#baseten) : stubModels;
   readonly #calls = new Map<string, LiveCall>();
 

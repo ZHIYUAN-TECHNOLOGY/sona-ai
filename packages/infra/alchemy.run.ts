@@ -51,6 +51,12 @@ export const server = Cloudflare.Worker("server", {
     DEMO_SIGN_IN: Config.String("DEMO_SIGN_IN").pipe(Config.withDefault("")),
     // The hosted models (packages/infra/baseten). Empty keeps every model answer on the labelled fixtures.
     BASETEN_API_KEY: Config.Redacted("BASETEN_API_KEY").pipe(Config.withDefault(Redacted.make(""))),
+    // Boxes moved to SageMaker in Malaysia (packages/infra/aws, packages/api/src/sagemaker.ts). Empty keeps them on Baseten.
+    SAGEMAKER_ENDPOINTS: Config.String("SAGEMAKER_ENDPOINTS").pipe(Config.withDefault("")),
+    SAGEMAKER_REGION: Config.String("SAGEMAKER_REGION").pipe(Config.withDefault("ap-southeast-5")),
+    AWS_ACCESS_KEY_ID: Config.String("AWS_ACCESS_KEY_ID").pipe(Config.withDefault("")),
+    AWS_SECRET_ACCESS_KEY: Config.Redacted("AWS_SECRET_ACCESS_KEY").pipe(Config.withDefault(Redacted.make(""))),
+    AWS_SESSION_TOKEN: Config.Redacted("AWS_SESSION_TOKEN").pipe(Config.withDefault(Redacted.make(""))),
     // Workers AI: EmbeddingGemma embeds the library (packages/api/src/workers-models.ts).
     AI: Cloudflare.Workers.AI(),
   },
