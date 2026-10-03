@@ -80,14 +80,16 @@ const pcm: Uint8Array[] = [];
 const since = () => `${((Date.now() - spokeAt) / 1000).toFixed(2)}s`;
 const mark = (name: string) => { marks[name] ??= Date.now() - spokeAt; };
 
-socket.addEventListener("message", event => {
-  if (event.data instanceof ArrayBuffer) {
+socket.addEventListener("message", async event => {
+  // Bun hands a binary frame over as an ArrayBuffer or, from a local workerd, as a Blob.
+  if (typeof event.data !== "string") {
+    const bytes = new Uint8Array(event.data instanceof Blob ? await event.data.arrayBuffer() : event.data);
     sentences++;
     if (!firstAudio) firstAudio = Date.now();
     mark("first audio");
-    console.log(`${since()}  audio #${sentences} ${event.data.byteLength} bytes`);
-    if (format === "pcm16") pcm.push(new Uint8Array(event.data));
-    else if (saveDir) { mkdirSync(saveDir, { recursive: true }); writeFileSync(join(saveDir, `sentence-${sentences}.mp3`), new Uint8Array(event.data)); }
+    console.log(`${since()}  audio #${sentences} ${bytes.byteLength} bytes`);
+    if (format === "pcm16") pcm.push(bytes);
+    else if (saveDir) { mkdirSync(saveDir, { recursive: true }); writeFileSync(join(saveDir, `sentence-${sentences}.mp3`), bytes); }
     return;
   }
   const message = JSON.parse(String(event.data)), { type, ...rest } = message;

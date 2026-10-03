@@ -175,8 +175,11 @@ async function openBox(url: string, apiKey?: string): Promise<WebSocket> {
   const http = url.replace(/^ws/, "http"), headers = apiKey ? { Authorization: `Api-Key ${apiKey}` } : undefined;
   const wake = /^(https:\/\/model-[^/]+\/environments\/[^/]+)\/websocket$/.exec(http)?.[1];
   if (wake && headers) void fetch(`${wake}/wake`, { method: "POST", headers, signal: AbortSignal.timeout(5000) }).catch(() => {});
-  const res = await fetch(http, { headers: { Upgrade: "websocket", ...headers }, signal: AbortSignal.timeout(OPEN_MS) });
+  // The time limit covers opening only: left on the request, it closed the open call at OPEN_MS (3 Oct, 20 s into a call).
+  const opening = new AbortController(), limit = setTimeout(() => opening.abort(), OPEN_MS);
+  const res = await fetch(http, { headers: { Upgrade: "websocket", ...headers }, signal: opening.signal }).finally(() => clearTimeout(limit));
   if (!res.webSocket) throw new Error(`box ④ answered ${res.status}`);
+  res.webSocket.binaryType = "arraybuffer"; // a Blob by default from this compatibility date, which reached the phone as text
   res.webSocket.accept();
   return res.webSocket;
 }
