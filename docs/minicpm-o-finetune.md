@@ -307,6 +307,8 @@ The safety rules give the true words' decisions on all 60 lines for both. Real s
 
 ear1 hears real Malaysian speech better than live3, not worse. Its gain is mostly drama (56% to 26%); street interviews got worse (39% to 46%). ear2 is better on telephone audio (41% to 30%) but writes far too much on singing and is worse on street interviews (62%). Box ②'s ASR scored 17.7% on an earlier 100-clip sample. **ear1 is the best ear.**
 
+**Wired in (3 Oct evening):** `sona-live` production runs ear1 + voice-v3 (deployment `ear1-fast-brief`), and a local Worker with `SONA_LIVE_URL` set carried whole calls (`apps/server/test/voice-call.ts`). That first end-to-end run found four faults: `SONA_LIVE_URL` was not in the env schemas, so it never reached the Worker; the box socket's opening time limit closed every call at 20 s; her audio reached the phone as text (a Blob by default at this compatibility date); and the model's own `prepare` feeds the brief a token at a time, 15 s for a patient's plan, so first words came 12 s after the question. `live.py` now feeds the brief in one pass (0.2 s; same cache length and top choices). After the fixes, first words came 1.2-2.5 s after the question in English, Malay and Mandarin through the Worker.
+
 **Where one ear stands:** good enough for staff demos (7.5% live, safety decisions as box ②'s), not yet for patients: on real Malaysian speech ear1 is at 22.0% (Revolab) against box ②'s 17.7%, and live3's stage 2 trained on MagicHub speech (non-commercial), so a patient version must be retrained without it.
 
 ## Voice v3 plan: numbers and Manglish (2 Oct, after the user listened to live2)

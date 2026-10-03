@@ -62,6 +62,37 @@ def load():
 
 
 duplex = load()
+
+
+def prepare(**kw):
+    """duplex.prepare with the brief fed in one pass. The model's own feeds the system prompt a token at a time (one
+    forward each, ~35 ms): a patient's plan in the brief took 15 s, and the call's first seconds queued behind it
+    (3 Oct: first words 12 s after the question). What it feeds is held and goes in together before the cache length is
+    read; attention is causal, so the cache is the same."""
+    d, held = duplex.decoder, []
+
+    def flush():
+        if held:
+            feed(torch.cat(held, dim=0))
+            held.clear()
+
+    def hold(embeds, return_logits=False):
+        assert not return_logits
+        held.append(embeds)
+
+    def then(register):
+        return lambda *a, **k: (flush(), register(*a, **k))[1]
+
+    feed, names = d.feed, ("register_system_prompt", "register_system_prompt_with_context")
+    d.feed = hold
+    for name in names:
+        setattr(d, name, then(getattr(d, name)))
+    try:
+        return duplex.prepare(**kw)
+    finally:
+        flush()
+        for name in ("feed", *names):
+            delattr(d, name)
 voice = librosa.load(VOICE, sr=16_000, mono=True)[0]
 busy = asyncio.Lock()
 
@@ -165,7 +196,7 @@ async def live(ws: WebSocket):
             # prepare() leaves the ear's streaming cache (audio_past_key_values) from the last call; reset_session clears it,
             # as OpenBMB's demo does between calls (tools/omni-live-train/layout.py builds training calls the same way).
             duplex.model.reset_session(reset_token2wav_cache=True)
-            await asyncio.to_thread(duplex.prepare, prefix_system_prompt=start.get("system") or "Streaming Omni Conversation.",
+            await asyncio.to_thread(prepare, prefix_system_prompt=start.get("system") or "Streaming Omni Conversation.",
                                     ref_audio=voice, prompt_wav_path=VOICE if AUDIO else None)
             await ws.send_text(json.dumps({"type": "ready", "audio": AUDIO, "voice": voice_name}))
 
