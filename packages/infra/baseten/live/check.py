@@ -5,6 +5,10 @@ what Sona decided each second and saves what she said. Synthetic data only.
   BASETEN_API_KEY=... python check.py question.wav wss://model-<id>.api.baseten.co/environments/production/websocket
 Env: SYSTEM (the call's system prompt), LISTEN (listen_prob_scale), PACE (max_speak_tokens: tokens a unit), TALKER
 (v1 or base: which voice), OUT (reply wav, default reply.wav), TAIL (seconds of silence after the question, default 8).
+One-ear test: TRANSCRIBE=1 (the box also writes down the patient's turn: "heard"), SEED (same seed, same replies),
+FAST=1 (send the audio at once, not in real time), JSON (write what was said, heard and each second's ms there).
+Speak test: HOLD=1 (she only listens until told), SAY (words for her to say as written), SAY_AT (seconds into the
+call, default when the first question ends), RATE (text tokens a second, default 4), RELEASE=1 (she answers by herself after).
 """
 import asyncio
 import contextlib
@@ -51,16 +55,29 @@ async def main(wav: str, url: str):
             start["max_speak_tokens"] = int(os.environ["PACE"])
         if os.environ.get("TALKER"):
             start["voice"] = os.environ["TALKER"]
+        if os.environ.get("TRANSCRIBE") == "1":
+            start["transcribe"] = True
+        if os.environ.get("SEED"):
+            start["seed"] = int(os.environ["SEED"])
+        if os.environ.get("HOLD") == "1":
+            start["hold"] = True
         await ws.send(json.dumps(start))
         print(json.loads(await ws.recv()))
-        speech, said, t0, spoke = [], [], time.time(), None
+        speech, said, heard, ms, t0, spoke, said_it = [], [], [], [], time.time(), None, []
         question_ends = t0 + (len(audio) / 16_000 - float(os.environ.get("TAIL", 8)))
         units, heard_all = len(audio) // 16_000, asyncio.Event()
 
+        say_at = float(os.environ.get("SAY_AT", 0)) * 32_000 if os.environ.get("SAY") else None
+
         async def play():  # 100 ms frames at the speed a phone sends them, then hang up once every second is answered
             for i in range(0, len(pcm), 3200):
+                if say_at is not None and i >= say_at and not said_it:
+                    said_it.append(1)
+                    await ws.send(json.dumps({"type": "say", "text": os.environ["SAY"], "rate": int(os.environ.get("RATE", 4)),
+                                              "release": os.environ.get("RELEASE") == "1"}))
                 await ws.send(pcm[i:i + 3200])
-                await asyncio.sleep(max(0, t0 + (i + 3200) / 32_000 - time.time()))
+                if os.environ.get("FAST") != "1":
+                    await asyncio.sleep(max(0, t0 + (i + 3200) / 32_000 - time.time()))
             with contextlib.suppress(TimeoutError):
                 await asyncio.wait_for(heard_all.wait(), 120)
             await ws.send(json.dumps({"type": "stop"}))
@@ -73,6 +90,11 @@ async def main(wav: str, url: str):
                     continue
                 u = json.loads(m)
                 at = time.time() - t0
+                if u.get("type") == "heard":
+                    heard.append(u)
+                    print(f"{at:5.1f}s HEARD ({u['seconds']} s of audio, {u['ms']} ms): {u['text']!r}")
+                    continue
+                ms.append(u["ms"])
                 if not u["listen"] and spoke is None:
                     spoke = time.time()
                 said.append(u["text"])
@@ -84,6 +106,14 @@ async def main(wav: str, url: str):
             pass
         player.cancel()
     print("Sona said:", "".join(said).strip())
+    if heard:
+        print("heard:", " | ".join(h["text"] for h in heard))
+    if ms:
+        print(f"seconds: {len(ms)}, slowest {max(ms)} ms, over 900 ms: {sum(m > 900 for m in ms)}")
+    if os.environ.get("JSON"):
+        with open(os.environ["JSON"], "w") as f:
+            json.dump({"said": "".join(said).strip(), "heard": heard, "ms": ms,
+                       "first_words": round(spoke - question_ends, 2) if spoke else None}, f, ensure_ascii=False)
     if spoke:
         print(f"first words {spoke - question_ends:+.1f} s after the question ended")
     if speech:

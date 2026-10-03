@@ -93,10 +93,9 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     if (!box) return this.#tell(connection, LINES[call.language].unavailable);
     box.addEventListener("message", event => this.#fromBox(connection, call, event.data));
     box.addEventListener("close", () => { if (!call.closed) this.#tell(connection, LINES[call.language].unavailable); call.close(); });
-    // Her voice by language until voice v2 (docs/minicpm-o-finetune.md, run log): talker v1 speaks Malay far better than
-    // the model's own (14.6% against 36.4% of words wrong), but garbles more in live English (13.3% against 7.8%).
-    const voice = call.language === "ms" ? "v1" : "base";
-    box.send(JSON.stringify({ type: "start", system: liveBrief(home && planText(home), call.language), voice }));
+    // Her trained voice in every language (the box's "v1" slot holds talker voice-v3, trained on the live layout:
+    // docs/minicpm-o-finetune.md); voice-v1 garbled live English, so English and Chinese used the model's own until 3 Oct.
+    box.send(JSON.stringify({ type: "start", system: liveBrief(home && planText(home), call.language), voice: "v1" }));
     send(connection, { type: "audio_config", format: "pcm16", sampleRate: 24_000 });
     call.box = box;
     for (const chunk of call.pending.splice(0)) box.send(chunk);

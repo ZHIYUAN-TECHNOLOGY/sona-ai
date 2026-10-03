@@ -1,6 +1,6 @@
 # Box ④ Live: Sona's MiniCPM-o 4.5 in full-duplex mode (docs/minicpm-o-plan.md#architecture), one call per replica.
-# Brain: live1 (stage 1, then trained in the live format); ear and eyes: stage 1; voice: talker voice-v1
-# (docs/minicpm-o-finetune.md#run-log).
+# One model, loaded from two files: ear1 (live3's brain, trained in the live format with numbers as words, and its ear
+# retrained for transcription) and the talker voice-v3 (docs/minicpm-o-finetune.md, "One ear").
 # WebSocket: wss://model-<id>.api.baseten.co/environments/production/websocket (protocol: data/live.py).
 # Push: baseten model push --dir packages/infra/baseten/live   Check: packages/infra/baseten/live/check.py
 model_name: sona-live
@@ -15,13 +15,13 @@ build_commands:
     safetensors huggingface_hub fastapi "uvicorn[standard]"
   - python -c "import stepaudio2, transformers, torch; print('live deps ok', transformers.__version__, torch.__version__)"
 weights:
-  - source: "hf://zhiyuantechnology/sona-minicpmo@de7da0de8ee5f1ef06780cda934e9da0eac61b31"  # live1: stage 1 + live-format LoRA
+  - source: "hf://zhiyuantechnology/sona-minicpmo@f59feac269b9a42625f612bafa0e00fa4e84f40f"  # ear1: live3 with its ear retrained
     mount_location: /app/models/live
     auth: {auth_method: CUSTOM_SECRET, auth_secret_name: hf_access_token}
     # Dotfiles out: the mirror dropped stage1's .complete marker and then refused the volume it had built (2 Oct:
     # "volume view file set mismatch … missing=[.complete]", retried until stopped).
     ignore_patterns: [".*", "lora-adapter/**", "assets/*.mp4", "assets/*.mp3", "assets/*.png", "assets/*.wav"]
-  - source: "hf://zhiyuantechnology/sona-minicpmo@fe0d8603553696f88a7a06dc44ff6f53872e208c"  # voice-v1 (trained on stage 1's states)
+  - source: "hf://zhiyuantechnology/sona-minicpmo@1b4aba42310a4d54349c612408767237c9fd8087"  # voice-v3 (live3 states, Malaysian-accent numbers and Manglish)
     mount_location: /app/models/voice
     auth: {auth_method: CUSTOM_SECRET, auth_secret_name: hf_access_token}
     allow_patterns: ["talker.safetensors"]
