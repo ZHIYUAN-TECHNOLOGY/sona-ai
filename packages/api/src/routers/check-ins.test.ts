@@ -101,6 +101,10 @@ test("\"demam balik\" two days later sends the check-in and flags one task for t
   expect(day2.replies).toMatchObject([{ text: "demam balik", label: "worse", source: "fixture", task: { title: "Amelia: fever returned after discharge", completed: false } }]);
   const flagged = (await api.tasks.list()).filter(t => t.kind === "check-in");
   expect(flagged.map(t => [t.id, t.title, t.owner, t.due, t.encounterId])).toEqual([[day2.replies[0]!.task!.id, "Amelia: fever returned after discharge", "Attending doctor", "Today", "visit-1042"]]);
+  // The same problem sent again while that task is open rides on it: still one task.
+  const again = await api.checkIns.reply({ checkInId: "check-in:visit-1042:2", text: "demam balik" });
+  expect(again.replies.map(r => r.task?.id)).toEqual([flagged[0]!.id, flagged[0]!.id]);
+  expect((await api.tasks.list()).filter(t => t.kind === "check-in")).toHaveLength(1);
 
   const day7 = await api.checkIns.reply({ checkInId: "check-in:visit-1042:7", text: "Sudah sihat, terima kasih" });
   expect(day7.replies).toMatchObject([{ label: "fine", task: null }]);

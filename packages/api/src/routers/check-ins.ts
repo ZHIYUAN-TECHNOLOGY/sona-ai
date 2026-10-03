@@ -216,12 +216,15 @@ export async function replyToCheckIn(context: Context, hospitalId: string, input
   const read = await (context.models ?? stubModels).classifyReply({ text: input.text, language: row.checkIn.language });
   const id = crypto.randomUUID();
   const flag = replyFlag(row.name.split(" ")[0]!, read.label, input.text, read.symptom);
-  if (flag) await db.insert(tasks).values({
+  // The same problem again, while its task is still open, rides on that task: the doctor sees one item, not one per message.
+  const [open] = flag ? await db.select({ id: tasks.id }).from(tasks)
+    .where(and(eq(tasks.hospitalId, hospitalId), eq(tasks.encounterId, row.checkIn.encounterId), eq(tasks.kind, "check-in"), eq(tasks.title, flag.title), eq(tasks.completed, false))) : [];
+  if (flag && !open) await db.insert(tasks).values({
     id, hospitalId, encounterId: row.checkIn.encounterId, kind: "check-in", title: flag.title, owner: "Attending doctor", due: "Today",
     sourceId: id, idempotencyKey: `check-in:${id}`,
   }).onConflictDoNothing();
   await db.insert(checkInReplies).values({
-    id, checkInId: row.checkIn.id, text: input.text, label: read.label, source: read.source === "model" ? read.model : "fixture", taskId: flag ? id : null, receivedAt: at,
+    id, checkInId: row.checkIn.id, text: input.text, label: read.label, source: read.source === "model" ? read.model : "fixture", taskId: flag ? open?.id ?? id : null, receivedAt: at,
   });
   // The reply and how it was read become a de-identified training sample (if consented); never fails the reply.
   await captureSample(context, { id: `check-in-reply:${id}`, hospitalId, patientId: row.checkIn.patientId, source: "check-in-reply", sourceRef: row.checkIn.id, input: input.text, output: read.label });

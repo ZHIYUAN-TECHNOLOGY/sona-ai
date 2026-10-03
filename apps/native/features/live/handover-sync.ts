@@ -9,7 +9,7 @@ import { useRole } from "./roles";
  * "hold to accept" writes one acceptance. The request ID is fixed for the screen, so a retry after
  * a dropped answer replays the same acceptance instead of writing a second.
  */
-export function useLiveHandover() {
+export function useLiveHandover(enabled = true) {
   const { on } = useLive();
   // Bed managers may not read the handover; the screen says so instead of asking.
   const readable = useRole().can("handover.list");
@@ -20,11 +20,11 @@ export function useLiveHandover() {
   const [version, setVersion] = useState(0);
   useLiveChanges(["handover", "day", "findings"], () => setVersion(v => v + 1));
   useEffect(() => {
-    if (!on || !readable) return;
+    if (!on || !readable || !enabled) return;
     let current = true;
     api.handover.list().then(list => { if (current) { setCards(list); setError(undefined); } }, e => { if (current) setError(errorText(e)); });
     return () => { current = false; };
-  }, [on, readable, version]);
+  }, [on, readable, version, enabled]);
   /** Resolves to the server's acceptance time, or throws its refusal as readable text. */
   const accept = async (cardIds: string[], toUser: string) => {
     setError(undefined);

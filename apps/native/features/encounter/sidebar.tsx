@@ -9,6 +9,7 @@ import { useOpenAudit } from "@/features/audit";
 import { useInboxSummary } from "@/features/inbox";
 import { useLive } from "@/features/live";
 import { RolePill, useRole } from "@/features/live/roles";
+import { useLiveHandover } from "@/features/live/handover-sync";
 import { useTrainingStatus } from "@/features/training";
 import { trainingLine } from "@/features/training/model";
 import { wardSummary } from "@/features/ward/model";
@@ -82,6 +83,8 @@ export function Sidebar({ open, progress, onClose }: { open: boolean; progress: 
   const ward = wardSummary(useWardBeds()); // the Ward page's beds
   const audit = auditOf(useOpenAudit());
   const training = useTrainingStatus();
+  const handover = useLiveHandover(open);
+  const handoverCount = handover.live ? handover.cards?.length : patients.length + 3;
 
   const all: { title?: string; items: Item[] }[] = [
     // Home: the day's dashboard, from anywhere in Today (a conversation there steps aside).
@@ -90,8 +93,8 @@ export function Sidebar({ open, progress, onClose }: { open: boolean; progress: 
       // Fixture mode has no inbox: the item still opens it, without a count.
       { label: "Messages", icon: "feedback", detail: inbox.on ? inbox.line : undefined, badge: inbox.on ? { count: inbox.waiting, urgent: inbox.urgent > 0 } : undefined, show: can("messages.inbox"), onPress: go(() => router.push("/inbox")) },
       { label: "Follow-up tasks", icon: "tasks", detail: openTasks ? `${openTasks} open` : "Nothing open", show: can("tasks.list"), onPress: go(() => router.push("/tasks")) },
-      // Same count as home's Hand over key: today's visits plus the three synthetic ward examples.
-      { label: "Shift handover", sf: "arrow.left.arrow.right", detail: `${patients.length + 3} patients`, show: can("handover.list"), onPress: go(() => router.push("/handover")) },
+      // The handover page's own count: the server's cards (read while the drawer is open), or in fixture mode today's visits plus the three synthetic ward examples.
+      { label: "Shift handover", sf: "arrow.left.arrow.right", detail: handoverCount === undefined ? undefined : `${handoverCount} ${handoverCount === 1 ? "patient" : "patients"}`, show: can("handover.list"), onPress: go(() => router.push("/handover")) },
     ] },
     { title: "Patients", items: [
       { label: "Patients", icon: "patients", detail: day.length ? `${day.length} ${day.length === 1 ? "visit" : "visits"} today` : "No visits today", show: can("patients.list"), onPress: go(() => router.push("/patients")) },
