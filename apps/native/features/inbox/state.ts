@@ -1,4 +1,5 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
+import { triageByRules } from "@sona-ai/domain/messages";
 import { palette } from "@/components/sona/theme";
 
 /** The care inbox's words and ordering, kept pure so they are tested without a phone. */
@@ -52,3 +53,18 @@ export function summary(threads: InboxThread[] | undefined, now?: Date | string)
 
 /** The row's last-message line: a medicine photo reads "Photo · Cetirizine 10 mg" (the row draws a camera icon, not an emoji). */
 export const lastLine = (t: Pick<InboxThread, "lastText" | "lastPhoto">) => t.lastPhoto ? `Photo · ${t.lastPhoto}` : t.lastText;
+
+/**
+ * Demo mode's inbox, so the page can be reviewed without the server: one waiting thread per triage, in the messages
+ * the server's tests send, triaged by the server's own rules. The page labels it as a sample.
+ */
+export function sampleInbox(now = new Date()): Inbox {
+  const ago = (minutes: number) => new Date(now.getTime() - minutes * 60_000);
+  const thread = (patientId: string, name: string, initials: string, lastText: string, minutes: number, lastPhoto: string | null = null) =>
+    ({ patientId, name, initials, bed: null, lastText, lastFrom: "patient" as const, lastAt: ago(minutes), lastPhoto, waitingSince: ago(minutes), waiting: 1, unread: 1, handled: false, ...triageByRules(lastText) });
+  return { now, threads: [
+    thread("SYN-1042", "Amelia Tan", "AT", "Also I am breathless when I walk", 12),
+    thread("SYN-1086", "Daniel Rahman", "DR", "Please check a medicine I added from a photo: Cetirizine 10 mg, once at night.", 95, "Cetirizine 10 mg"),
+    thread("sample-nurul", "Nurul Huda", "NH", "When is my next appointment?", 180),
+  ] };
+}

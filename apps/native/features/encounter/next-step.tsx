@@ -22,6 +22,7 @@ import type { Step } from "./next-steps";
  * label slides out left and the next one slides in from the right, like the shot's status morph.
  */
 const OPEN = { duration: 450, dampingRatio: 0.82 }, CLOSE = { duration: 500, dampingRatio: 0.72 };
+const STOPPED = "Outside the supported case · not prescribing";
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const haptic = () => { if (process.env.EXPO_OS === "ios") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); };
 
@@ -61,7 +62,7 @@ export function NextStepBar({ steps, p, onExpand, onAct }: { steps: Step[]; p: S
   // The last step is prescribing itself; the ones before it are the card's checks.
   const checks = steps.length - 1, left = steps.slice(0, -1).filter(step => !step.done).length;
   const stop = Boolean(current?.stop);
-  const status = !current ? "All steps done" : stop ? "Outside the supported case · not prescribing" : left ? `${left} left before prescribing` : "Ready to prescribe";
+  const status = !current ? "All steps done" : stop ? STOPPED : left ? `${left} left before prescribing` : "Ready to prescribe";
   const style = useAnimatedStyle(() => reducedMotion ? { opacity: 1 - p.value } : {
     opacity: interpolate(p.value, [0, 0.6], [1, 0], "clamp"),
     transform: [{ translateY: 40 * p.value }, { scale: 1 - 0.18 * p.value }],
@@ -100,6 +101,8 @@ export function NextStepSheet({ steps, p, onClose, onAct }: { steps: Step[]; p: 
   const drag = useSharedValue(0);
   const current = steps.find(step => !step.done);
   const left = steps.slice(0, -1).filter(step => !step.done).length;
+  // Prescribing (the last step) waits for every check: until then its button is off and its row says why.
+  const wait = !left ? undefined : current?.stop ? STOPPED : `Resolve the ${left === 1 ? "check" : `${left} checks`} above first`;
   const backdrop = useAnimatedStyle(() => ({ opacity: Math.min(1, Math.max(0, p.value)) }));
   const sheet = useAnimatedStyle(() => ({ opacity: reducedMotion ? p.value : 1, transform: [{ translateY: (reducedMotion ? 0 : (1 - p.value) * 520) + drag.value }] }));
   const pull = Gesture.Pan().activeOffsetY(8).onUpdate(e => { drag.set(Math.max(0, e.translationY)); }).onEnd(e => {
@@ -120,17 +123,18 @@ export function NextStepSheet({ steps, p, onClose, onAct }: { steps: Step[]; p: 
         </View>
         {steps.map((step, i) => {
           const now = step.id === current?.id;
+          const off = i === steps.length - 1 && !step.done ? wait : undefined;
           return <Animated.View key={step.id} entering={reducedMotion ? undefined : riseIn({ delay: 60 + i * 40, distance: 10, duration: 300 })}
             style={{ flexDirection: "row", alignItems: "center", gap: 12, marginHorizontal: 10, paddingHorizontal: 10, paddingVertical: 11, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: now ? "rgba(36,91,204,0.07)" : "transparent" }}>
             <Mark state={step.done ? "done" : step.stop ? "blocked" : now ? "pending" : "open"} size={22} />
             <View style={{ flex: 1, gap: 1 }}>
               <Text style={{ ...type.subhead, fontWeight: now ? "600" : "500", color: step.done ? palette.muted : palette.ink, textDecorationLine: step.done ? "line-through" : "none" }}>{step.label}</Text>
-              <Text numberOfLines={1} style={{ ...type.caption, color: palette.muted }}>{step.detail}</Text>
+              <Text numberOfLines={off ? 2 : 1} style={{ ...type.caption, color: off ? palette.amber : palette.muted }}>{off ?? step.detail}</Text>
             </View>
             {step.locked ? <LockedAction label="Needs a doctor" path="prescribing.simulate" height={34} />
             // A compact 34 pt row button: Action is 46 pt and would grow every row.
-            : (!step.done || step.action.type === "receipt") && <Pressable accessibilityRole="button" accessibilityLabel={`${step.action.label}: ${step.label}`} onPress={() => onAct(step)} hitSlop={8}>
-              {({ pressed }) => <Animated.View style={{ minHeight: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: "center", backgroundColor: now ? palette.ink : "rgba(20,28,40,0.06)", transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 }}>
+            : (!step.done || step.action.type === "receipt") && <Pressable accessibilityRole="button" accessibilityState={{ disabled: Boolean(off) }} disabled={Boolean(off)} accessibilityLabel={`${step.action.label}: ${step.label}${off ? `. ${off}` : ""}`} onPress={() => onAct(step)} hitSlop={8}>
+              {({ pressed }) => <Animated.View style={{ minHeight: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: "center", backgroundColor: now ? palette.ink : "rgba(20,28,40,0.06)", opacity: off ? 0.45 : 1, transform: [{ scale: pressed && !reducedMotion ? 0.96 : 1 }], transitionProperty: "transform", transitionDuration: 120 }}>
                 <Text style={{ ...type.subhead, fontWeight: "600", color: now ? palette.white : palette.ink }}>{step.action.label}</Text>
               </Animated.View>}
             </Pressable>}

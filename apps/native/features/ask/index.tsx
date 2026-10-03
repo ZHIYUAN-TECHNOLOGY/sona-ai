@@ -1,7 +1,8 @@
 import { JSONUIProvider, Renderer, defineRegistry } from "@json-render/react-native";
 import * as Haptics from "expo-haptics";
-import { router, useNavigation } from "expo-router";
-import { createContext, use, useEffect, useRef, useState, type ReactNode } from "react";
+import { router } from "expo-router";
+import { usePreventRemove } from "expo-router/react-navigation";
+import { createContext, use, useRef, useState, type ReactNode } from "react";
 import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn } from "react-native-reanimated";
@@ -10,7 +11,7 @@ import { List, ListRow } from "@/components/sona/list";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
-import { Action, Icon, IconButton, Notice, Surface } from "@/components/sona/ui";
+import { Action, Icon, Notice, Surface } from "@/components/sona/ui";
 import { VoiceDock } from "@/features/encounter/voice-dock";
 import type { LiveAdapter } from "@/features/encounter/sona-live";
 import type { Attachment } from "@/components/sona/attachments-menu";
@@ -28,6 +29,9 @@ import { ThreadEntry } from "./today-thread";
 
 /** Space a page leaves at the end of its content so the ask bar never covers it. */
 export const ASK_SPACE = 132;
+const DockHeight = createContext(0);
+/** The measured height of the Sona dock over this page (0 while hidden or outside `WithSona`), to pad by instead of ASK_SPACE. */
+export const useDockHeight = () => use(DockHeight);
 const tap = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); };
 
 type Ops = { run: (op: string) => void };
@@ -124,13 +128,12 @@ export function KeepRow({ answer, leave }: { answer: Answer; leave: () => void }
  * Sona on a page (Ward, Messages, Tasks, Patients…), the same shell as Today and a visit: the page, then the bar
  * ([+] [mic] [keyboard]) with the page's ✦ suggestion above it. What is asked (typed, spoken, or the ✦) starts the page's
  * conversation in place of its content, read as Today's is (the question's bubble, the lead inked in, the answer and its
- * ops); New conversation in the header, or an op that changes the page (a filter), brings the page back. A rule answer
+ * ops); Back, or an op that changes the page (a filter), brings the page back, and the next Back leaves. A rule answer
  * lands at once; live, the model answers from the page's own data; demo mode says what Sona answers here.
  */
 export function WithSona({ scope, answers, onTab, hidden = false, children }: { scope: Scope; answers: Answer[]; onTab?: (tab: string) => void; hidden?: boolean; children: ReactNode }) {
   const { voiceInput, patients } = useEncounter();
   const { on } = useLive();
-  const navigation = useNavigation();
   const [pending, setPending] = useState<Attachment[]>([]);
   const backdrop = useRef<View>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -158,13 +161,11 @@ export function WithSona({ scope, answers, onTab, hidden = false, children }: { 
   const submit = (text: string) => { const q = text.trim(); if (!q) return; setDraft(""); setNotice(undefined); ask(q); };
   // Sona Live is the page's voice: a spoken question joins the conversation as a typed one does.
   const sonaLive: LiveAdapter = { scope: SCOPE_LABEL[scope], ask: async question => { ask(question); return { shown: true }; } };
-  // New conversation sits in the page's header while there is one.
-  useEffect(() => {
-    navigation.setOptions({ headerRight: talking ? () => <IconButton name="plus.bubble" label="New conversation" onPress={clear} /> : undefined });
-  }, [talking]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Back (the header's, or the edge swipe) closes the conversation and shows the page; the next Back leaves.
+  usePreventRemove(talking, clear);
   return <View style={{ flex: 1 }}>
     <View ref={backdrop} collapsable={false} style={{ flex: 1 }}>
-      {talking ? <PageConversation entries={entries} bottom={dockH + 32} onAgain={e => { reply(e.id); void settle(e.id, e.question); }} onEvidence={q => ask(q, undefined, true)} onTab={tab} /> : children}
+      {talking ? <PageConversation entries={entries} bottom={dockH + 32} onAgain={e => { reply(e.id); void settle(e.id, e.question); }} onEvidence={q => ask(q, undefined, true)} onTab={tab} /> : <DockHeight value={hidden ? 0 : dockH}>{children}</DockHeight>}
     </View>
     {/* What passes under the dock and its ✦ blurs and fades into the canvas, as tall a band as Today's, so the chip reads over a calm edge. */}
     {!hidden && <>

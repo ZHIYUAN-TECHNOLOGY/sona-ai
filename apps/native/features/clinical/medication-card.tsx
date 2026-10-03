@@ -1,17 +1,22 @@
 import { useState } from "react";
-import { View } from "react-native";
+import { AccessibilityInfo, View } from "react-native";
 import Animated, { LayoutAnimationConfig } from "react-native-reanimated";
 import { IconRow } from "@/components/sona/sections";
 import { SourceRef, SourceScope, SourcesPill } from "@/components/sona/sources";
+import { Text } from "@/components/sona/text";
+import { palette, type } from "@/components/sona/theme";
 import { Action, Expand, Label, Notice, Surface } from "@/components/sona/ui";
+import { allergyConfirmation, allergyLine, confirmedAllergy } from "@/features/day/counts";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
+import { useLive } from "@/features/live";
+import { useEncounterEdit } from "@/features/live/sync";
 import { InteractionResults } from "./interaction-results";
 import { Anchor, Takeaways, type Takeaway } from "@/components/sona/answer-kit";
 import { medicinesConfirmed } from "@/features/encounter/lead";
 import { MedicationEditor } from "./medication-editor";
 import { PrescribeCard } from "./prescribe-card";
-import { AlertRow, DisclosureButton, Footnote, StatusLine, TextLink, useLayoutSpring } from "./medication-parts";
+import { AlertRow, DisclosureButton, Footnote, haptic, StatusLine, TextLink, useLayoutSpring } from "./medication-parts";
 
 /**
  * Medication review, condensed: the confirm checklist, one allergy line with its source, one
@@ -31,9 +36,11 @@ export function MedicationCard({ patient, result, onSource, onRequest, onOpen }:
   const entries = encounter?.medicationEntries ?? [];
   // The same count the answer's lead gives (lead.ts), so the two can't disagree.
   const { confirmed: confirmedCount, all: confirmed } = medicinesConfirmed(entries);
+  const total = entries.length || patient.medicines.length, left = total - confirmedCount;
+  const allergy = confirmedAllergy(encounter);
   const takeaways: Takeaway[] = [
-    confirmed ? { tone: "good", text: "All medicine identities are confirmed" } : { tone: "caution", text: `${confirmedCount} of ${entries.length || patient.medicines.length} medicines confirmed; the rest block the simulation` },
-    { tone: "caution", text: patient.allergies ? `${patient.allergies.split(" — ")[0]} allergy still needs confirming` : "Allergy history is unknown" },
+    confirmed ? { tone: "good", text: "All medicine identities are confirmed" } : { tone: "caution", text: total ? `${left} ${left === 1 ? "medicine" : "medicines"} to confirm before prescribing` : "No medicines are recorded yet" },
+    allergy ? { tone: "info", text: `Allergy confirmed: ${allergy.value}` } : { tone: "caution", text: patient.allergies ? `${patient.allergies.split(" — ")[0]} allergy still needs confirming` : "Allergy history is unknown" },
     { tone: "info", text: "No validated interaction database is connected" },
   ];
   return <LayoutAnimationConfig skipEntering><View style={{ gap: 20 }}>
@@ -43,7 +50,7 @@ export function MedicationCard({ patient, result, onSource, onRequest, onOpen }:
     </Animated.View></Anchor>
 
     <Anchor id="interactions" title="Interactions" icon="arrow.triangle.branch" tone="amber"><Animated.View layout={layout} style={{ gap: 16 }}>
-      <IconRow icon="allergens" title="Allergies" detail={patient.allergies ?? "Unknown — collect an allergy history"} sourceLabel="Original intake & allergy record" sourceKind="record" onSource={() => onSource("history")} />
+      <AllergyRow patient={patient} onSource={onSource} />
       <InteractionResults patient={patient} onSource={onSource} onRequest={onRequest} />
     </Animated.View></Anchor>
 
@@ -70,4 +77,32 @@ export function MedicationCard({ patient, result, onSource, onRequest, onOpen }:
       </Expand>}
     </Animated.View>}
   </View></LayoutAnimationConfig>;
+}
+
+/**
+ * The allergy with Confirm right on its row. Confirming is the history edit a correction makes (saved to the server
+ * in live mode), so its receipt replaces the button and the flag leaves Today and Patients.
+ */
+function AllergyRow({ patient, onSource }: Pick<FeatureProps, "patient" | "onSource">) {
+  const { encounters } = useEncounter();
+  const { user } = useLive();
+  const edit = useEncounterEdit(patient);
+  const encounter = encounters[patient.id];
+  const confirmed = confirmedAllergy(encounter);
+  const confirm = () => {
+    if (!encounter) return;
+    const fact = allergyConfirmation(patient, encounter.revision + 1, user?.name ?? "the doctor");
+    edit.save({ historyFacts: [...encounter.historyFacts ?? [], fact] }, value => ({ ...value, historyFacts: [...value.historyFacts ?? [], fact] }),
+      () => { haptic("success"); AccessibilityInfo.announceForAccessibility(allergyLine(fact)); });
+  };
+  const action = confirmed ? <Text selectable accessibilityLiveRegion="polite" style={{ ...type.subhead, fontWeight: "600", color: palette.green }}>{allergyLine(confirmed)}</Text>
+    : patient.allergies && edit.allowed ? <TextLink label={edit.saving ? "Confirming…" : "Confirm allergy"} disabled={edit.saving} onPress={confirm} /> : undefined;
+  return <View style={{ gap: 6 }}>
+    <IconRow icon="allergens" title="Allergies" detail={confirmed?.value ?? patient.allergies ?? "Unknown — collect an allergy history"} sourceLabel="Original intake & allergy record" sourceKind="record" onSource={() => onSource("history")} />
+    {/* Under the row's text: past its 24 pt icon and 14 pt gap. */}
+    {(action || edit.error) && <View style={{ paddingLeft: 38 }}>
+      {action}
+      {edit.error && <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber }}>{edit.error}</Text>}
+    </View>}
+  </View>;
 }

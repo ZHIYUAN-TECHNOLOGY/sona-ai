@@ -16,7 +16,7 @@ import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps, Patient } from "@/features/encounter/types";
 import { HistoryEditor } from "./history-editor";
 import { emphasise } from "@/features/encounter/emphasis";
-import { patientResult, receiptLine, resultKey, resultLine } from "@/features/day/counts";
+import { confirmedAllergy, patientResult, receiptLine, resultKey, resultLine } from "@/features/day/counts";
 import { errorText, useLive } from "@/features/live";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { acknowledgeResult, useServerData } from "@/features/live/server-day";
@@ -66,6 +66,7 @@ export function BriefingCard({ patient, result, onSource, onRequest }: FeaturePr
   const facts = (encounters[patient.id]?.historyFacts ?? []).filter(fact => !result || fact.revision <= result.revision);
   const sourceFor = (category: string) => facts.findLast(fact => fact.category === category)?.id ?? "history";
   const sections = result?.sections ?? 3;
+  const allergy = confirmedAllergy({ historyFacts: facts });
   const timeline: TimelineItem[] = patient.incomplete ? [
     { id: "onset", label: "Onset", icon: "questionmark", glyph: "❔", title: "Not documented", meta: "Gap in the history", body: "When the breathlessness began, and how it has changed, is not yet recorded." },
     { id: "intake", label: "22 Sep", icon: "stethoscope", glyph: "🩺", title: "Intake", meta: "This encounter · 09:45", body: "Breathlessness on exertion recorded. Onset and previous course have not been documented." },
@@ -77,7 +78,7 @@ export function BriefingCard({ patient, result, onSource, onRequest }: FeaturePr
   ];
   const takeaways: Takeaway[] = patient.incomplete
     ? [{ tone: "caution", text: "Onset, observations and background are missing" }, { tone: "info", text: "Breathlessness on exertion is the only recorded complaint" }, { tone: "caution", text: "Medicines and allergies are unknown" }]
-    : [{ tone: "caution", text: `Temperature ${patient.vitals.find(v => v.label === "Temp")?.value ?? ""} is the only raised vital` }, { tone: "caution", text: `${patient.allergies?.split(" — ")[0] ?? "Allergy"} allergy still needs confirming` }];
+    : [{ tone: "caution", text: `Temperature ${patient.vitals.find(v => v.label === "Temp")?.value ?? ""} is the only raised vital` }, allergy ? { tone: "info", text: `Allergy confirmed: ${allergy.value}` } : { tone: "caution", text: `${patient.allergies?.split(" — ")[0] ?? "Allergy"} allergy still needs confirming` }];
   // Each page gathers its sources into one pill at the bottom instead of links under every row.
   const card = (children: ReactNode) => <SourceScope>{sources => <Surface style={{ padding: 16, gap: 14 }}>{children}{sources.length > 0 && <View style={{ alignItems: "flex-end" }}><SourcesPill sources={sources} /></View>}</Surface>}</SourceScope>;
   // Live mode: the digest is the server's briefing of this patient's record (allergy and gaps stay amber); authored otherwise.
