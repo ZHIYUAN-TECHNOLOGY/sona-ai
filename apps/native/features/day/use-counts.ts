@@ -2,6 +2,7 @@ import { useEncounter } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
 import { useLive } from "@/features/live";
 import { serverDayPatients } from "@/features/live/day";
+import { useDemoOffset } from "@/features/live/demo-clock";
 import { useFindings } from "@/features/live/findings-sync";
 import { useServerData, useServerDay } from "@/features/live/server-day";
 import { useServerBeds } from "@/features/live/ward-sync";
@@ -9,12 +10,13 @@ import { localDate } from "@/features/tasks/state";
 import { wardBeds } from "@/features/ward/model";
 import { needsYou, openTaskCount, patientResult, pendingResult, withFindingBlockers } from "./counts";
 
-/** The hooks every page reads its counts through (the rules are in `counts.ts`). */
+/** The hooks every page reads its counts through (the rules are in `counts.ts`). "Now" is the hospital's demo clock in live mode, as on Today. */
 
 /** Today's visits: in live mode at the server's appointment times, else the fixtures. */
 export function useDayPatients(patients: Patient[]) {
   const server = useServerData();
-  const today = useServerDay(server ? localDate(new Date()) : undefined);
+  const offset = useDemoOffset();
+  const today = useServerDay(server ? localDate(new Date(Date.now() + offset)) : undefined);
   return today ? serverDayPatients(patients, today) : patients;
 }
 
@@ -26,10 +28,11 @@ export function usePendingResult(patientId?: string) {
   const server = useServerData();
   const { on } = useLive();
   const { resultAcks } = useEncounter();
+  const offset = useDemoOffset();
   // Live mode before the server's results arrive: nothing yet, never the demo's fixture.
   if (on && !server) return undefined;
   if (!patientId) return pendingResult(server, resultAcks);
-  const mine = patientResult(patientId, server, resultAcks);
+  const mine = patientResult(patientId, server, resultAcks, new Date(Date.now() + offset));
   return mine && !mine.ack ? mine.result : undefined;
 }
 

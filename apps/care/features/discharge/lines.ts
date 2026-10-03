@@ -13,7 +13,7 @@ const hour = (hhmm: string, lang: Lang) => {
   const [h = 0, m = 0] = hhmm.split(":").map(Number), h12 = h % 12 || 12;
   if (lang === "zh") return `${h < 6 ? "凌晨" : h < 12 ? "上午" : h < 13 ? "中午" : h < 18 ? "下午" : "晚上"}${h12}点${m ? `${m}分` : ""}`;
   const t = tFor(lang);
-  return `${h12}${m ? `:${String(m).padStart(2, "0")}` : ""} ${h < 12 ? t("dis.am") : t("dis.pm")}`;
+  return `${h12}${m ? `:${String(m).padStart(2, "0")}` : ""}\u00a0${h < 12 ? t("dis.am") : t("dis.pm")}`;
 };
 /** "8 AM, 2 PM and 8 PM" in the patient's language. */
 export const listOf = (xs: string[], lang: Lang) => {

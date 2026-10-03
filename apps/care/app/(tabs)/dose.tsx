@@ -313,6 +313,6 @@ function MedRow({ med, first, today }: { med: Med; first: boolean; today: DayDos
       style={[pillStyle, { paddingHorizontal: 10, paddingVertical: 4 }, late && { backgroundColor: palette.amberWash, borderColor: palette.amberEdge }]}>
       <Text maxFontSizeMultiplier={1.4} style={{ fontSize: 13, lineHeight: 17, fontWeight: "600", fontVariant: ["tabular-nums"], color: late ? palette.amber : palette.ink }}>{clock(pending.dueAt, lang)}</Text>
     </Animated.View>}
-    <Text style={{ fontSize: 20, color: palette.faint }}>›</Text>
+    <Text style={{ fontSize: 20, color: palette.pale }}>›</Text>
   </Pressable>;
 }

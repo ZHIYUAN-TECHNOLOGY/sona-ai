@@ -43,15 +43,15 @@ function missed(plan: PlanLike, name: string, lang: Lang): Asked | undefined {
 }
 
 /**
- * The questions to offer (at most three), in order: a missed dose of the next scheduled medicine (or
- * the first one on a schedule), what a new medicine is for (or what changed with a changed one), and
- * when the next visit is. The fixed words are in the patient's language; the plan's own lines as written.
+ * The questions to offer (at most three), in order: a missed dose of the next scheduled medicine (or the
+ * first one still on a schedule, never a finished course), what a new medicine is for (or what changed with
+ * a changed one), and when the next visit is. The fixed words are in the patient's language; the plan's own lines as written.
  */
 export function suggestions(plan: PlanLike | undefined, visit: Visit | undefined, nextMed?: string, lang: Lang = "en"): Asked[] {
   const t = tFor(lang), out: (Asked | undefined)[] = [];
   if (plan) {
     const { medicines: m } = plan;
-    const scheduled = nextMed ?? [...m.new, ...m.changed, ...m.continue].find(x => x.at?.length)?.name;
+    const scheduled = nextMed ?? [...m.new, ...m.changed, ...m.continue].find(x => x.at?.length && !x.finished)?.name;
     if (scheduled) out.push(missed(plan, scheduled, lang));
     const fresh = m.new[0], changed = m.changed[0];
     if (fresh) out.push({ question: t("ask.qFor", { name: fresh.name }), answer: `${t("ask.planSays", { text: end(fresh.line, lang) })}${fresh.take ? `${sp(lang)}${t("ask.take", { take: end(fresh.take, lang) })}` : ""}`, source: t("ask.from", { name: fresh.name }), kind: "medicine" });

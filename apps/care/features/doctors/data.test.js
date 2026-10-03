@@ -42,5 +42,5 @@ test("filters: care team only; top rated in order", () => {
 });
 
 test("a free time from the API reads as a slot in Malaysia time", () => {
-  expect(slotOf("2026-09-28T01:00:00.000Z")).toEqual({ date: new Date("2026-09-28T01:00:00.000Z"), label: "9:00 AM" });
+  expect(slotOf("2026-09-28T01:00:00.000Z")).toEqual({ date: new Date("2026-09-28T01:00:00.000Z"), label: "9:00\u00a0AM" });
 });

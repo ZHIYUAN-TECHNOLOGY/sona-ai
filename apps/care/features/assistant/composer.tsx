@@ -26,7 +26,7 @@ export function Composer({ value, onChangeText, placeholder, label, onSend, canS
     <View style={{ flex: 1, alignSelf: "stretch", justifyContent: "flex-end" }}>
       <Animated.View pointerEvents={pill ? "none" : "auto"} accessibilityElementsHidden={!!pill} importantForAccessibility={pill ? "no-hide-descendants" : "auto"}
         style={[!!pill && { position: "absolute", left: 0, right: 0, bottom: 0 }, { opacity: pill ? 0 : finishing ? 0.55 : 1, transitionProperty: "opacity", transitionDuration: 200 }]}>
-        <TextInput ref={inputRef} value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={palette.faint} maxLength={1000} multiline editable={!finishing}
+        <TextInput ref={inputRef} value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={palette.pale} maxLength={1000} multiline editable={!finishing}
           returnKeyType="send" submitBehavior="submit" onSubmitEditing={onSend} accessibilityLabel={label} accessibilityState={{ busy: finishing }}
           style={{ fontSize: 17, lineHeight: 22, color: palette.ink, paddingTop: 13, paddingBottom: 13, maxHeight: 140 }} />
       </Animated.View>

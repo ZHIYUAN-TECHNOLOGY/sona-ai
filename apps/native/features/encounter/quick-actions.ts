@@ -1,5 +1,6 @@
 import { router } from "expo-router";
 import type { QuickAction } from "@/components/sona/quick-actions";
+import { confirmedAllergy } from "@/features/day/counts";
 import { testInSentence, usableKeys, type PendingResult } from "@/features/day/model";
 import { useDayPatients, usePendingResult, useWardBeds } from "@/features/day/use-counts";
 import { useRole } from "@/features/live/roles";
@@ -87,7 +88,7 @@ export function visitNeed(patient: Patient, encounter: Encounter | undefined, re
   const claim = encounter?.claim?.status;
   if (claim === "queried" || claim === "denied") return { tone: "caution", text: claim === "queried" ? "Insurer asked about the guarantee letter" : "Guarantee letter denied · appeal drafted", action: "Answer", target: "claim" };
   const unconfirmed = (encounter?.medicationEntries ?? defaultMedications(patient)).filter(m => !m.confirmed).length;
-  const allergy = patient.allergies ? `${patient.allergies.split(" — ")[0]} allergy` : undefined;
+  const allergy = patient.allergies && !confirmedAllergy(encounter) ? `${patient.allergies.split(" — ")[0]} allergy` : undefined;
   if (unconfirmed) return { tone: "caution", text: [`${unconfirmed} ${unconfirmed === 1 ? "medicine" : "medicines"} to confirm`, allergy].filter(Boolean).join(" · "), action: "Confirm", target: "medication" };
   // Once the medicines are settled the visit can close: discharge is the next move until it is done.
   if (!encounter?.discharge?.dischargedAt && encounter?.requests.length) return { tone: "calm", text: "Medicines confirmed · ready to draft the discharge", action: "Discharge", target: "discharge" };

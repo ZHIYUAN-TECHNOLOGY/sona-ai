@@ -16,7 +16,7 @@ test("three questions from the plan: the next dose, the new medicine, the next v
   const [miss, fresh, next, ...rest] = suggestions(plan, visit, "Cetirizine");
   expect(rest).toEqual([]);
   expect(miss.question).toBe("What if I miss a dose of Cetirizine?");
-  expect(miss.answer).toBe("Your plan doesn't say what to do if you miss a dose of Cetirizine, so ask your care team. Never take two doses at once to make up for one. Your usual dose: 1 tablet at night, at 9:00 PM.");
+  expect(miss.answer).toBe("Your plan doesn't say what to do if you miss a dose of Cetirizine, so ask your care team. Never take two doses at once to make up for one. Your usual dose: 1 tablet at night, at 9:00\u00a0PM.");
   expect(miss.source).toBe("From your Cetirizine instructions");
   expect(miss.kind).toBe("dose");
   expect(fresh).toEqual({ question: "What is Paracetamol for?", answer: "Your plan says: For pain or fever: 1 g every 6 hours if you need it, no more than 4 g a day.", source: "From your Paracetamol instructions", kind: "medicine" });
@@ -29,6 +29,11 @@ test("the missed-dose answer follows the plan's own wording when it has one, and
   expect(miss.question).toBe("What if I miss a dose of Azithromycin?"); // no next dose given: the first medicine on a schedule
   expect(miss.answer).toBe("Your plan says: If you forget a dose, take it when you remember that day. Never take two doses at once to make up for one.");
   expect(miss.source).toBe("From your discharge plan");
+});
+
+test("with no next dose, the missed-dose question skips a finished course", () => {
+  const done = { ...medicines, changed: [{ ...medicines.changed[0], finished: true }] };
+  expect(suggestions({ medicines: done, leaflets }, undefined)[0].question).toBe("What if I miss a dose of Cetirizine?");
 });
 
 test("with no new medicine it asks what changed; with nothing planned it offers nothing", () => {

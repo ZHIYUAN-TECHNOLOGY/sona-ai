@@ -47,9 +47,9 @@ test("the dock names Messages in every language, and says when the care team has
 test("dates and times read in Malaysia time, in each language's own words", () => {
   const at = new Date("2026-09-28T13:00:00Z"); // Mon 28 Sep, 9:00 PM in Malaysia
   const morning = new Date("2026-09-28T01:00:00Z"); // 9:00 AM
-  expect(formatDate("en", at, "dayTime")).toBe("Mon 28 Sep 9:00 PM");
-  expect(formatDate("ms", morning, "dayTime")).toBe("Isn 28 Sep, 9:00 PG");
-  expect(formatDate("ms", at, "time")).toBe("9:00 PTG");
+  expect(formatDate("en", at, "dayTime")).toBe("Mon 28 Sep 9:00\u00a0PM");
+  expect(formatDate("ms", morning, "dayTime")).toBe("Isn 28 Sep, 9:00\u00a0PG");
+  expect(formatDate("ms", at, "time")).toBe("9:00\u00a0PTG");
   expect(formatDate("zh", morning, "dayTime")).toBe("9月28日 周一 上午9:00");
   expect(formatDate("zh", at, "time")).toBe("晚上9:00");
   expect(formatDate("en", new Date("2026-09-27T16:30:00Z"), "header")).toBe("Mon, 28 Sep"); // 00:30 the next day in Malaysia

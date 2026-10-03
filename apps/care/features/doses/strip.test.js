@@ -33,8 +33,8 @@ test("the insight names a late dose first, then all taken, else the count, misse
   expect(insight([], now)).toEqual({ text: "Nothing due today", tone: "muted" });
   expect(insight([dose("2026-09-27T00:00:00Z", true), dose("2026-09-27T03:40:00Z")], now)).toEqual({ text: "Cetirizine is 20 min late", tone: "amber" });
   expect(insight([dose("2026-09-27T00:00:00Z", true), dose("2026-09-27T13:00:00Z", true)], now)).toEqual({ text: "All taken today", tone: "green" });
-  expect(insight([dose("2026-09-27T00:00:00Z", true), dose("2026-09-27T13:00:00Z")], now)).toEqual({ text: "1 of 2 taken · next 9:00 PM", tone: "muted" });
-  expect(insight([dose("2026-09-26T21:00:00Z"), dose("2026-09-27T13:00:00Z")], now)).toEqual({ text: "0 of 2 taken · 1 missed · next 9:00 PM", tone: "amber" });
+  expect(insight([dose("2026-09-27T00:00:00Z", true), dose("2026-09-27T13:00:00Z")], now)).toEqual({ text: "1 of 2 taken · next 9:00\u00a0PM", tone: "muted" });
+  expect(insight([dose("2026-09-26T21:00:00Z"), dose("2026-09-27T13:00:00Z")], now)).toEqual({ text: "0 of 2 taken · 1 missed · next 9:00\u00a0PM", tone: "amber" });
 });
 
 test("food timing only when the take line names before or after", () => {
