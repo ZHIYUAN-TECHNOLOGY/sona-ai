@@ -39,6 +39,15 @@ def hear_set():
     for i in random.Random(1).sample(range(len(asr)), 150):
         r = asr[i]
         rows.append(("manglish", librosa.load(io.BytesIO(r["audio"]["bytes"]), sr=16000)[0], r["text"]))
+    # The one-ear test's 60 lines (eval/safety60.json): every test line the live agent's 999 or care-team rule fires on,
+    # plus 14 others; scored apart, and their transcripts go through those rules offline.
+    try:
+        hard = set(json.load(open(hf_hub_download(DATA, "eval/safety60.json", repo_type="dataset", token=token))))
+    except Exception:
+        hard = set()
+    for r in asr:
+        if r["id"] in hard:
+            rows.append(("safety60", librosa.load(io.BytesIO(r["audio"]["bytes"]), sr=16000)[0], r["text"]))
     for lang, n, tag in (("ms_my", 50, "fleurs_ms"), ("en_us", 25, "fleurs_en"), ("cmn_hans_cn", 25, "fleurs_zh")):
         t = pq.read_table(hf_hub_download("google/fleurs", f"parquet-data/{lang}/test-00000-of-00001.parquet", repo_type="dataset")).to_pylist()
         for r in random.Random(1).sample(t, n):

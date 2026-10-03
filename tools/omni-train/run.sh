@@ -3,8 +3,8 @@
 # GPUs llamafactory-cli runs DDP by itself; the effective batch stays 16.
 # The job's start command downloads this recipe from the private HF dataset zhiyuantechnology/sona-minicpmo-data (recipe/)
 # and runs it. Base weights are mounted at /app/models/MiniCPM-o-4_5 (hf://openbmb/MiniCPM-o-4_5@503e754).
-# Env: MODE smoke|full|stage2 (smoke: 20 steps on 200 sona-manglish-asr clips, to prove the setup end to end; stage2: new
-#      sets plus a replay of stage 1's, data.py), FROM (a sona-minicpmo branch to continue from, e.g. stage1),
+# Env: MODE smoke|full|stage2|stage3|ear (smoke: 20 steps on 200 sona-manglish-asr clips, to prove the setup end to end;
+#      stage2: new sets plus a replay of stage 1's; ear: transcription only, data.py), FROM (a sona-minicpmo branch to continue from, e.g. stage1),
 #      EAR 1|0 (1 also trains the ear: freeze_vision_tower false), EPOCHS (default 1), TRANSFORMERS (pin, default 4.56.2),
 #      LORA_TARGET (default q_proj,v_proj; stage3 adds k/o and the MLP, where facts live), LORA_RANK (default 32).
 set -euo pipefail
@@ -96,6 +96,8 @@ cat $W/train.yaml
 # audio tokenizer at 2.2 examples/s (full set: ~85 min of an idle H100).
 export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 TOKENIZERS_PARALLELISM=false
 cd $W/lf && llamafactory-cli train $W/train.yaml
+# Which parts the adapter changed (llm, apm = ear, vpm = eyes): MODE=ear with LORA_TARGET=out_proj,fc1,fc2 must not touch llm.
+python -c 'import sys, collections; from safetensors import safe_open; f = safe_open(sys.argv[1], "pt"); print("adapter tensors by part:", dict(collections.Counter(k.split(".")[2] for k in f.keys())), flush=True)' "$OUT/lora/adapter_model.safetensors"
 # PUSH_BRANCH set: save the adapter first, on its own (0.1 GB). Stage 2's merged push hit HF's private storage limit
 # (2 Oct) and the finished run went down with the container; FROM's weights plus this adapter rebuild the merged model.
 P="${PUSH_REPO:-zhiyuantechnology/sona-minicpmo}"

@@ -3,13 +3,13 @@
 smoke: 200 clips of zhiyuantechnology/sona-manglish-asr (train split) as "write down exactly what was said", enough to
 prove loading, training, merging and restoring on the H100. full: the stage 1 sets from zhiyuantechnology/sona-minicpmo-data
 (config "sft", built by tools/omni-data/), downloaded as written there. stage2: the new sets plus a replay of stage 1's.
-Usage: python data.py smoke|full|stage2 <out_dir>   (needs HF_TOKEN for the private datasets)
+Usage: python data.py smoke|full|stage2|stage3|ear <out_dir>   (needs HF_TOKEN for the private datasets)
 """
 import json, os, random, sys, tarfile
 from pathlib import Path
 
 from datasets import Audio, load_dataset
-from huggingface_hub import snapshot_download
+from huggingface_hub import hf_hub_download, snapshot_download
 
 mode, out = sys.argv[1], Path(sys.argv[2])
 (out / "audio").mkdir(parents=True, exist_ok=True)
@@ -30,6 +30,78 @@ if mode == "smoke":
     info = {"hear": {"file_name": "hear.json", "formatting": "sharegpt", "columns": {"messages": "messages", "audios": "audios"},
                      "tags": {"role_tag": "role", "content_tag": "content", "user_tag": "user", "assistant_tag": "assistant", "system_tag": "system"}}}
     (out / "dataset_info.json").write_text(json.dumps(info, indent=2))
+elif mode == "ear":
+    # MiniCPM-o's own ear for a one-model call (docs/minicpm-o-finetune.md, one-ear test): "write down exactly what was
+    # said" on the set box ②'s ASR was fine-tuned on (config `mixed`: the synthetic Manglish turns plus FLEURS train in
+    # Malay, Mandarin and English; tools/asr-data/mixed_data.py). A fifth gets 0.5-3 s of quiet on each side, as a live
+    # turn comes to the side job. Test splits never train.
+    # ear2 adds real speech and rougher audio (env, all off for ear1): EAR_N caps the mixed set; NSC (shards of IMDA NSC
+    # Part 4, Singapore code-switched conversations, via MERaLiON's copy; Singapore Open Data Licence, Part 4 terms to
+    # confirm before hospital use); AUG (share of synthetic clips given noise, a room or a phone line).
+    import io
+    import re
+    import numpy as np
+    import soundfile as sf
+    n = lambda k, d: int(os.environ.get(k, d))
+    rows = load_dataset("zhiyuantechnology/sona-manglish-asr", "mixed", split="train", token=token).cast_column("audio", Audio(decode=False))
+    pick = random.Random(7)
+    keep = sorted(pick.sample(range(len(rows)), n("EAR_N", len(rows)))) if os.environ.get("EAR_N") else range(len(rows))
+    aug = float(os.environ.get("AUG", 0))
+
+    def rough(x, sr):
+        """Noise at 10-30 dB, a room (0.2-0.6 s of reverb) or a phone line (300-3400 Hz, mu-law)."""
+        g, kind = np.random.default_rng(pick.randrange(1 << 30)), pick.choice(["noise", "room", "phone"])
+        if kind == "noise":
+            x = x + g.standard_normal(len(x)).astype(np.float32) * np.sqrt((np.mean(x ** 2) + 1e-9) / 10 ** (pick.uniform(10, 30) / 10))
+        elif kind == "room":
+            k = int(sr * pick.uniform(0.2, 0.6)); ir = g.standard_normal(k).astype(np.float32) * np.exp(-6.9 * np.arange(k) / k); ir[0] = 1
+            m = 1 << int(np.ceil(np.log2(len(x) + k)))
+            y = np.fft.irfft(np.fft.rfft(x, m) * np.fft.rfft(ir, m), m)[:len(x)]
+            x = y * (np.max(np.abs(x)) / (np.max(np.abs(y)) + 1e-9))
+        else:
+            spec, f = np.fft.rfft(x), np.fft.rfftfreq(len(x), 1 / sr); spec[(f < 300) | (f > 3400)] = 0
+            y = np.clip(np.fft.irfft(spec, len(x)), -1, 1); mu = 255
+            q = np.round(np.sign(y) * np.log1p(mu * np.abs(y)) / np.log1p(mu) * 127) / 127
+            x = np.sign(q) * ((1 + mu) ** np.abs(q) - 1) / mu
+        return np.clip(x, -1, 1).astype(np.float32)
+
+    rng, data = random.Random(6), []
+    for i in keep:
+        r = rows[i]
+        path = out / "audio" / f"ear_{i:05d}.wav"
+        quiet_pad, rougher = rng.random() < 0.2, r.get("scene") != "fleurs" and pick.random() < aug
+        if quiet_pad or rougher:
+            x, sr = sf.read(io.BytesIO(r["audio"]["bytes"]), dtype="float32")
+            x = x if x.ndim == 1 else x.mean(1)
+            if rougher:
+                x = rough(x, sr)
+            if quiet_pad:
+                quiet = lambda: np.zeros(int(sr * rng.uniform(0.5, 3)), np.float32)
+                x = np.concatenate([quiet(), x, quiet()])
+            sf.write(path, x, sr)
+        else:
+            path.write_bytes(r["audio"]["bytes"])
+        data.append({"messages": [{"role": "user", "content": "<audio>Write down exactly what was said."},
+                                  {"role": "assistant", "content": r["text"]}], "audios": [str(path)]})
+    # NSC transcripts mark speakers, fillers and cut words: "<Speaker1>: ... (uh) ... [lah] ... !wah! ... di~"
+    tidy = lambda t: re.sub(r"\s+", " ", re.sub(r"<[^>]*>:?|\([^)]*\)|\S*~|[\[\]!]", " ", t)).strip()
+    import pyarrow.parquet as pq
+    for k in range(n("NSC", 0)):
+        f = hf_hub_download("MERaLiON/Multitask-National-Speech-Corpus-v1", f"ASR-PART4-Train/train-{k:05d}-of-00017.parquet", repo_type="dataset")
+        for j, r in enumerate(pq.read_table(f, columns=["context", "answer"]).to_pylist()):
+            x, sr = sf.read(io.BytesIO(r["context"]["bytes"]), dtype="float32")
+            text = tidy(r["answer"])
+            if not text or len(x) / sr > 30:
+                continue
+            path = out / "audio" / f"nsc_{k:02d}_{j:04d}.wav"
+            sf.write(path, x if x.ndim == 1 else x.mean(1), sr)
+            data.append({"messages": [{"role": "user", "content": "<audio>Write down exactly what was said."},
+                                      {"role": "assistant", "content": text}], "audios": [str(path)]})
+    (out / "ear.json").write_text(json.dumps(data, ensure_ascii=False))
+    info = {"ear": {"file_name": "ear.json", "formatting": "sharegpt", "columns": {"messages": "messages", "audios": "audios"},
+                    "tags": {"role_tag": "role", "content_tag": "content", "user_tag": "user", "assistant_tag": "assistant", "system_tag": "system"}}}
+    (out / "dataset_info.json").write_text(json.dumps(info, indent=2))
+    print("ear", len(data), "of which NSC", sum("nsc_" in d["audios"][0] for d in data), flush=True)
 elif mode == "stage3":
     # live4's brain (docs/minicpm-o-finetune.md, "The brain against Gemma 26B"): medical knowledge from bigger models
     # (tools/omni-data/knowledge.py: OpenMed Mega, medical-o1, MedReason, MedGemma 27B, Malay by Gemma), with replays of
