@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Inside sona-live: one model, four parts",
+    "output": "minicpm-inside.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1160,
+      600
+    ],
+    "repository": {
+      "url": "https://github.com/zyt-ngchwanlii/sona-ai",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "e6ec60155665981698982a40773c8db255096250"
+    },
+    "views": [
+      {
+        "id": "second",
+        "label": "Every second",
+        "focus": [
+          "ear",
+          "brain",
+          "mouth",
+          "vocoder"
+        ],
+        "note": "Inside one model: hear a second, decide to listen or speak, say it in Sona's voice."
+      },
+      {
+        "id": "routing",
+        "label": "The orchestrator",
+        "focus": [
+          "app",
+          "agent",
+          "ear",
+          "vocoder",
+          "asr"
+        ],
+        "note": "The Cloudflare agent moves audio between the phone, sona-live and box ②."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Sona Care app",
+      "sublabel": "patient's phone",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        160,
+        72
+      ],
+      "sources": [
+        {
+          "path": "apps/care/lib/live-voice/session.ts",
+          "label": "call audio"
+        }
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "SonaLiveAgent",
+      "sublabel": "Cloudflare · orchestrator",
+      "pos": [
+        330,
+        250
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "apps/server/src/agents/live.ts",
+          "label": "SonaLiveAgent"
+        }
+      ]
+    },
+    {
+      "id": "ear",
+      "type": "cloud",
+      "label": "Ear",
+      "sublabel": "Whisper-medium",
+      "tag": "ours: stage 1-2",
+      "pos": [
+        640,
+        120
+      ],
+      "size": [
+        170,
+        72
+      ]
+    },
+    {
+      "id": "brain",
+      "type": "cloud",
+      "label": "Brain",
+      "sublabel": "Qwen3-8B",
+      "tag": "ours: live3",
+      "pos": [
+        920,
+        120
+      ],
+      "size": [
+        170,
+        72
+      ],
+      "sources": [
+        {
+          "path": "packages/infra/baseten/live/config.yaml",
+          "label": "weights"
+        }
+      ]
+    },
+    {
+      "id": "mouth",
+      "type": "cloud",
+      "label": "Mouth (talker)",
+      "sublabel": "MiniCPM-o talker",
+      "tag": "ours: voice-v3",
+      "pos": [
+        920,
+        400
+      ],
+      "size": [
+        170,
+        72
+      ],
+      "sources": [
+        {
+          "path": "packages/infra/baseten/live/data/live.py",
+          "label": "loads voice-v3"
+        }
+      ]
+    },
+    {
+      "id": "vocoder",
+      "type": "cloud",
+      "label": "Vocoder",
+      "sublabel": "flow + HiFT",
+      "tag": "Sona's clip",
+      "pos": [
+        640,
+        400
+      ],
+      "size": [
+        170,
+        72
+      ]
+    },
+    {
+      "id": "asr",
+      "type": "cloud",
+      "label": "sona-voice · box ②",
+      "sublabel": "Qwen3-ASR · exact words",
+      "pos": [
+        330,
+        480
+      ],
+      "size": [
+        180,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "sona-live · Baseten box ④ · one H100 · MiniCPM-o 4.5",
+      "wraps": [
+        "ear",
+        "brain",
+        "mouth",
+        "vocoder"
+      ],
+      "pad": 36
+    }
+  ],
+  "connections": [
+    {
+      "id": "mic",
+      "from": "app",
+      "to": "agent",
+      "label": "voice, both ways",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hear",
+      "from": "agent",
+      "to": "ear",
+      "label": "1 s of audio",
+      "variant": "emphasis"
+    },
+    {
+      "id": "think",
+      "from": "ear",
+      "to": "brain",
+      "label": "sound features"
+    },
+    {
+      "id": "words",
+      "from": "brain",
+      "to": "mouth",
+      "label": "words + states",
+      "labelDy": 24
+    },
+    {
+      "id": "tokens",
+      "from": "mouth",
+      "to": "vocoder",
+      "label": "speech tokens"
+    },
+    {
+      "id": "speak",
+      "from": "vocoder",
+      "to": "agent",
+      "label": "Sona's audio",
+      "variant": "emphasis"
+    },
+    {
+      "id": "safety",
+      "from": "agent",
+      "to": "asr",
+      "label": "same audio",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "One model, not an orchestrator",
+      "items": [
+        "The four parts pass numbers inside one program on one GPU",
+        "The Cloudflare agent is the orchestrator between boxes"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "What we fine-tuned",
+      "items": [
+        "Ear: stage 1-2 · Brain: stage 2 + live3",
+        "Mouth: voice-v3 · Vocoder: untouched"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Kept by box ②",
+      "items": [
+        "Exact words keep the 999 line",
+        "and the care-team alerts"
+      ]
+    }
+  ]
+}

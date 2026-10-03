@@ -266,6 +266,49 @@ live4 (job `wngk943`, about $11) finished at 03:33 and pushed `live4` @ `d663bb4
 
 **Where this leaves the one-model call.** MiniCPM-o 8B hears Manglish well and talks naturally, but its brain stays 8-16 exam points and clearly on safety behind Gemma 4 26B, and fine-tuning did not close that. Replacing ASR, Gemma and the voice with it is not safe for medical answers. Next options: Gemma writes the answer and MiniCPM-o speaks it through the call agent (Gemini Live's half-cascade shape), or a bigger open speech model (Qwen3-Omni 30B-A3B) as the next candidate.
 
+## One ear: MiniCPM-o writes down the patient too (3 Oct)
+
+In a live call MiniCPM-o outputs only Sona's words and voice, so the agent sends the same audio to box ②'s Qwen3-ASR for the patient's words (the 999 rule, care-team alerts, the record). The user asked whether one model could do it all.
+
+**The side job** (`packages/infra/baseten/live/data/live.py`, off unless a call's start says `"transcribe": true`): when the model switches from listening to speaking, the seconds it listened to are written down by the same model ("Write down exactly what was said.", greedy) and sent as a `heard` event. A plain chat call writes none of the live session's caches; only the streaming calls and `reset_session` do (`modeling_minicpmo.py`).
+
+**Test on box ④** (live3 + voice-v3, deployment `3y6kz6k`, about $4):
+- Sona's replies were word for word the same with and without the side job, on 6 calls at a fixed seed.
+- It adds 0.1-0.4 s to the gap after her first spoken second, and 1.3 s on a session's first call while it warms up.
+- On 60 held-out lines from the ASR test split (every line the agent's 999 or care-team rule fires on, plus 14 others; `eval/safety60.json`), compared with box ② on the same lines:
+
+| Ear | Word errors | 999 rule caught | Care-team rule caught |
+|---|---|---|---|
+| MiniCPM-o live3, live side job | 13.2% | 20/21 | 30/31 |
+| Box ② Qwen3-ASR | 5.0% | 21/21 | 29/30 (59 lines) |
+| Either ear | | 21/21 | |
+
+**ear1** (job `wp7ojlw`, 1×H100, 83 min, about $10.6): live3 with only the ear trained (LoRA on the Whisper encoder's `out_proj`, `fc1`, `fc2`; the adapter holds `apm` tensors and untouched `vpm` ones, no `llm`). Data: config `mixed` of `sona-manglish-asr` (the synthetic turns plus FLEURS train, 23,617 clips), a fifth padded with 0.5-3 s of quiet. Loss 0.20 to 0.17. Pushed `ear1` @ `f59feac2`. Scored offline, the way `eval.py` asks (job `w7v8jdw`):
+
+| Word errors | live3 | ear1 | Box ② |
+|---|---|---|---|
+| 60 safety lines | 8.1% | **5.6%** | 5.0% |
+| Manglish, 150 random test lines | 6.1% | **4.7%** | 4.1% (whole test split) |
+| FLEURS Malay / English / Mandarin | 19.1 / 5.0 / 5.7% | **16.3 / 4.6 / 3.0%** | 9.8 / 4.6 / 3.1% |
+| Real Malaysian speech (`hear2_test`) | 29.5% | **33.8% (worse)** | |
+
+The safety rules give the true words' decisions on all 60 lines for both. Real speech got worse, as box ②'s did when it trained on synthetic voices only: real Malaysian recordings are the missing data. The text red-flag test reads 0/30 for both because live3 says "nine nine nine" in words; the test looks for "999".
+
+**ear1 live** (deployment `32z6x52`, the same 6 calls and 60 lines as live3's run, about $4): word errors on the 60 lines **7.5%** (live3 live 13.2%, box ② 5.0%). The 999 and care-team rules match the true words on 58 of 60, the same two doctor lines as live3: "stool occult blood" lost "blood" (the 999 rule fires on that word), and "tak sakit sangat" became "sikit sikit je". Every real emergency line was caught. Sona's replies were again identical with and without the side job. This box ran every second slower than live3's box, side job or not (first words 1.1-2.5 s, against 0.8-1.7 s), so speed needs both versions on one box to compare. Still heard wrong: "batuk" as "patuk", 阿莫西林 as 莫西林.
+
+**ear2** (job `wlp00eq`, about $10; `ear2` @ `1c0128f9`): the same training on 16,000 of the mixed clips (40% of the synthetic ones given noise, a room or a phone line) plus 2,268 real conversations from IMDA NSC Part 4 (MERaLiON's copy). It did not beat ear1: safety lines 6.0%, Manglish 5.5%, FLEURS Malay / English / Mandarin 16.0 / 4.6 / 5.7%, `hear2_test` 31.2%.
+
+**Revolab, the fair real-speech test** (200 real Malaysian clips no version trained on, on the Mac with `tools/omni-eval/hear.py`; `hear2_test` is held-out MagicHub speech and stage 2 trained on other MagicHub clips, so it favours live3):
+
+| Word errors | live3 | ear1 | ear2 |
+|---|---|---|---|
+| Revolab, 200 clips | 24.9% | **22.0%** | 25.8% |
+| The user's 15 recorded lines | 12.3% | 10.4% | **9.0%** |
+
+ear1 hears real Malaysian speech better than live3, not worse. Its gain is mostly drama (56% to 26%); street interviews got worse (39% to 46%). ear2 is better on telephone audio (41% to 30%) but writes far too much on singing and is worse on street interviews (62%). Box ②'s ASR scored 17.7% on an earlier 100-clip sample. **ear1 is the best ear.**
+
+**Where one ear stands:** good enough for staff demos (7.5% live, safety decisions as box ②'s), not yet for patients: on real Malaysian speech ear1 is at 22.0% (Revolab) against box ②'s 17.7%, and live3's stage 2 trained on MagicHub speech (non-commercial), so a patient version must be retrained without it.
+
 ## Voice v3 plan: numbers and Manglish (2 Oct, after the user listened to live2)
 
 **Problem (user, 2 Oct):** Sona's spoken words are sometimes wrong, mostly numbers ("38°C") and Chinese words.
