@@ -29,8 +29,8 @@ export function WeekChart({ days, height, interactive }: { days: StripDay[]; hei
   const lang = useLang();
   const reduced = useReducedMotion();
   const [picked, setPicked] = useState<number>();
-  // The clock ticks every 30 s; only a changed count should re-draw (and re-morph) the bars.
-  const sig = days.map(d => `${d.key}:${d.done}/${d.due}:${d.state}`).join();
+  // The clock ticks every 30 s; only a changed count, or the day letters in another language, should re-draw the bars.
+  const sig = days.map(d => `${d.key}:${d.narrow}:${d.done}/${d.due}:${d.state}`).join();
   const data = useMemo(() => days.map(d => ({ label: d.narrow, ...barOf(d) })), [sig]); // eslint-disable-line react-hooks/exhaustive-deps
   const pick = picked !== undefined ? days[picked] : undefined;
   return <View style={{ gap: 6 }}>

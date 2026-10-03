@@ -17,6 +17,16 @@ test("Amelia's plan reads in Chinese and Malay, medicine names as written", () =
   expect(reviewWords(amelia, "zh")).toEqual({ title: "门诊复诊", short: "门诊复诊", why: "看看您肺炎后恢复得怎样" });
 });
 
+test("read at a time, Amelia's azithromycin ends with its last dose and then says it is finished; cetirizine carries on", () => {
+  const out = "2026-09-26T07:40:00.000Z"; // Sat 15:40 in Malaysia: the 2 doses are Sun and Mon at 08:00
+  const during = patientMeds(amelia, "en", { out, now: new Date("2026-09-28T09:00:00+08:00") }).changed[0]!;
+  expect(during).toMatchObject({ line: "Now a tablet once a day, for 2 more days", endsAt: new Date("2026-09-28T08:00:00+08:00") });
+  expect(during.finished).toBeUndefined();
+  const after = patientMeds(amelia, "zh", { out, now: new Date("2026-10-03T09:00:00+08:00") });
+  expect(after.changed[0]).toMatchObject({ name: "Azithromycin", line: "疗程已结束，不用再吃", finished: true, endsAt: new Date("2026-09-28T08:00:00+08:00") });
+  expect(after.continue[0]).toEqual(patientMeds(amelia, "zh").continue[0]!);
+});
+
 test("every condition rule has its own review and warning signs, and every drafted medicine has plain words in Malay and Chinese", () => {
   for (const plan of others) {
     expect(plan.condition).toBeString();

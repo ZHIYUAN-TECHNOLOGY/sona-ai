@@ -1,5 +1,5 @@
 import type { AppRouterClient } from "@sona-ai/api/routers/index";
-import { tFor, type Lang } from "@/lib/i18n";
+import { formatDate, tFor, type Lang } from "@/lib/i18n";
 import "./strings";
 
 export type Plan = Awaited<ReturnType<AppRouterClient["care"]["discharge"]>>;
@@ -24,9 +24,13 @@ const times = (at: string[], lang: Lang) => listOf(at.map(a => hour(a, lang)), l
 /** "Once a day, 8 AM" (`sched`) or "once a day at 8 AM" (`when`). */
 const often = (at: string[], kind: "sched" | "when", lang: Lang) =>
   tFor(lang)(`dis.${kind}${at.length === 1 ? "1" : at.length === 2 ? "2" : "N"}`, { n: at.length, times: times(at, lang) });
-/** A card's plain-language schedule: "Once a day, 8 AM", "Twice a day, 8 AM and 8 PM", "When you need it". */
-export function scheduleLine({ at = [] }: Pick<Med, "at">, lang: Lang = "en") {
-  return at.length ? often(at, "sched", lang) : tFor(lang)("dis.whenNeeded");
+/** "Finished Thu 1 Oct" for a course whose last dose has gone by (the server reads it on the demo clock), else undefined. */
+const finishedLine = ({ finished, endsAt }: Pick<Med, "finished" | "endsAt">, lang: Lang) =>
+  finished && endsAt ? tFor(lang)("dis.finished", { day: formatDate(lang, endsAt, "day") }) : undefined;
+
+/** A card's plain-language schedule: "Once a day, 8 AM", "Twice a day, 8 AM and 8 PM", "When you need it", or "Finished Thu 1 Oct". */
+export function scheduleLine({ at = [], ...med }: Pick<Med, "at" | "finished" | "endsAt">, lang: Lang = "en") {
+  return finishedLine(med, lang) ?? (at.length ? often(at, "sched", lang) : tFor(lang)("dis.whenNeeded"));
 }
 
 /** What the stay did to a medicine, in the patient's words (the sheet's grey line). */
@@ -34,10 +38,12 @@ export const changeOf = (group: Group, lang: Lang = "en") => tFor(lang)(`dis.cha
 
 /**
  * The sheet's sentence as runs of plain and bold text: "You have to take **1 tablet**, **once a day at
- * 8 AM**, with or without food." from how to take one dose and its times; without a schedule, the plan line.
- * The dose words (`take`) are the care team's, shown as written.
+ * 8 AM**, with or without food." from how to take one dose and its times; without a schedule, the plan line; a finished
+ * course, "**Finished Thu 1 Oct**". The dose words (`take`) are the care team's, shown as written.
  */
-export function takeSentence({ line, take, at = [] }: Pick<Med, "line" | "take" | "at">, lang: Lang = "en"): { text: string; bold?: boolean }[] {
+export function takeSentence({ line, take, at = [], ...med }: Pick<Med, "line" | "take" | "at" | "finished" | "endsAt">, lang: Lang = "en"): { text: string; bold?: boolean }[] {
+  const done = finishedLine(med, lang);
+  if (done) return [{ text: done, bold: true }];
   if (!at.length) return [{ text: line }];
   const t = tFor(lang);
   const when = { text: often(at, "when", lang), bold: true };
@@ -52,8 +58,9 @@ export const homeLine = (days: number | undefined, lang: Lang = "en") => {
   return days === undefined || days <= 0 ? t("dis.homeToday") : days === 1 ? t("dis.homeYesterday") : t("dis.homeDays", { n: days });
 };
 
-/** The medicines title's insight line: how many to take at home and what changed, then how long home ("3 to take · 1 new · 1 changed"). */
+/** The medicines title's insight line: how many to take at home and what changed, then how long home ("3 to take · 1 new · 1 changed"); a finished course no longer counts. */
 export function takeLine(meds: Discharged["medicines"], home: string, lang: Lang = "en") {
-  const t = tFor(lang), taking = meds.new.length + meds.changed.length + meds.continue.length;
-  return [taking ? t("dis.toTake", { n: taking }) : t("dis.nothingToTake"), meds.new.length && t("dis.new", { n: meds.new.length }), meds.changed.length && t("dis.changed", { n: meds.changed.length }), home].filter(Boolean).join(" · ");
+  const t = tFor(lang), active = (g: Group) => meds[g].filter(m => !m.finished).length;
+  const taking = active("new") + active("changed") + active("continue");
+  return [taking ? t("dis.toTake", { n: taking }) : t("dis.nothingToTake"), active("new") && t("dis.new", { n: active("new") }), active("changed") && t("dis.changed", { n: active("changed") }), home].filter(Boolean).join(" · ");
 }

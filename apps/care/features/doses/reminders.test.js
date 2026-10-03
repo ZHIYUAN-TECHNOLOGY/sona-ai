@@ -40,6 +40,17 @@ test("the demo clock: a reminder fires at dose time minus the offset, and a dose
   expect(list).toHaveLength(8); // cetirizine 28 Sep to 4 Oct, and azithromycin on 29 Sep
 });
 
+test("remind me later holds one more reminder for that dose, even with dose reminders off, and drops it once taken", () => {
+  const key = doseKey("Cetirizine", new Date("2026-09-27T13:00:00Z")), at = new Date("2026-09-27T13:05:00Z"); // 5 min late
+  const later = { key, until: Date.parse("2026-09-27T13:20:00Z") };
+  expect(doseReminders({ meds, dischargedAt: out, taken: [], now: at, later })[0]).toEqual({ id: `dose:later:${key}`, at: new Date("2026-09-27T13:20:00Z"), doseKey: key });
+  expect(doseReminders({ meds: [], dischargedAt: out, taken: [], now: at, later })).toHaveLength(1);
+  expect(doseReminders({ meds, dischargedAt: out, taken: [key], now: at, later }).some(r => r.doseKey === key)).toBe(false);
+  // The demo clock a day ahead: `until` is demo time, so the phone fires a day earlier by its own clock.
+  const ahead = doseReminders({ meds: [], dischargedAt: out, taken: [], now: new Date(at.getTime() - 86_400_000), offsetMs: 86_400_000, later });
+  expect(ahead[0].at).toEqual(new Date("2026-09-26T13:20:00Z"));
+});
+
 test("at most 60, the earliest kept", () => {
   const hourly = [{ name: "Test", line: "Every hour", at: Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, "0")}:00`) }];
   const list = doseReminders({ meds: hourly, dischargedAt: out, taken: [], now });

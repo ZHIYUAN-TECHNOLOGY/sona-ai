@@ -1,16 +1,16 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, Linking, Modal, Pressable, ScrollView, View, type ViewStyle } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Modal, Pressable, ScrollView, View, type ViewStyle } from "react-native";
 import Animated, { FadeInDown, SlideInDown, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming, ZoomOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
-import { scheduleLine } from "@/features/discharge/lines";
+import { scheduleLine, type Med } from "@/features/discharge/lines";
 import { useDischarge } from "@/features/discharge/row";
 import { EASE_OUT, markTaken, Pill, rise, snooze, tintOf, useNextDose, useNow, useSnooze } from "@/features/doses";
-import { RemindCard, setReminders, useReminders } from "@/features/doses/remind";
+import { askOnce, RemindCard, RemindersKey, useReminders } from "@/features/doses/remind";
 import { dayLabel } from "@/features/follow-ups/lines";
 import { useMessageNeeds } from "@/features/messages/row";
-import { clock, doseOf, dosesToday, early, isLate, untilLine, weekOf, whenWords, type DayDose, type Dose, type ScheduledMed } from "@/features/doses/model";
+import { clock, doseOf, dosesToday, dueNow, early, isLate, untilLine, weekOf, whenWords, type DayDose, type Dose } from "@/features/doses/model";
 import { foodOf, insight, weekStrip } from "@/features/doses/strip";
 import { WeekChart } from "@/features/doses/week-chart";
 import "@/features/doses/strings";
@@ -34,10 +34,10 @@ let shown = false;
 /**
  * Medicine (the AI Health Companion kit's "Today's Medicines" and "Time to take Medicines"): one
  * insight line on today and the week as bars of doses taken per day, then the one feature card for the next dose: time,
- * the medicine drawn big, how to take it, and a hold to mark it taken, or "Remind me later", which
- * steps the card aside for 15 min in this app. When nothing is due the same card says what is next.
- * Below, every medicine to take as one list (rows opening their sheets), photo medicines, then the care team one tap away.
- * A dose reminder opens this screen with its dose (`key`), so the card holds that dose until it is taken.
+ * the medicine drawn big, how to take it, and a hold to mark it taken, or, once it is due, "Remind me later", which
+ * steps the card aside for 15 min and sets a reminder. When nothing is due the same card says what is next.
+ * Below, every medicine as one list (a finished course last, marked so; rows opening their sheets), photo medicines,
+ * then the care team one tap away. A dose reminder opens this screen with its dose (`key`), so the card holds that dose until it is taken.
  */
 export default function DoseScreen() {
   const now = useNow();
@@ -89,7 +89,7 @@ export default function DoseScreen() {
         <Animated.View entering={enter(3)} style={{ gap: 12 }}>
           <Section light={t("dose.yourLight")} bold={t("dose.yourBold")} />
           {meds.length ? <View style={[surfaceStyle, { paddingHorizontal: 14 }]}>
-            {meds.map((m, i) => <MedRow key={m.name} med={m} first={i === 0} today={today.filter(d => d.name === m.name)} />)}
+            {[...meds].sort((a, b) => Number(!!a.finished) - Number(!!b.finished)).map((m, i) => <MedRow key={m.name} med={m} first={i === 0} today={today.filter(d => d.name === m.name)} />)}
           </View> : <Text style={{ ...type.body, color: palette.muted }}>{t("dose.nothingAtHome")}</Text>}
         </Animated.View>
         {/* A medicine from a photo waits here for the care team (unless the plan already lists it); its sheet opens from the shelf. */}
@@ -111,9 +111,10 @@ const nameStyle = { fontSize: 24, lineHeight: 30, fontWeight: "600", letterSpaci
 const centred = { ...type.body, color: palette.muted, textAlign: "center" } as const;
 
 /**
- * The one feature card. Due (from 2 h before until 6 h late, as everywhere): "Time to take" with the
- * hold and "Remind me later". Snoozed: when it comes back. Just taken: a popped check and what is next.
- * Nothing on a timer: says so.
+ * The one feature card. From 2 h before until 6 h late (as everywhere): "Time to take" with the hold, and
+ * "Remind me later" once it is due (from 30 min before). Earlier, "Next up" with the quiet "Took it early?"
+ * hold, since logging it clears its reminder. Snoozed: when it comes back. Just taken: a popped check and what
+ * is next. Nothing on a timer: says so.
  */
 function NextCard({ dose, now, took, onTook }: { dose?: Dose; now: Date; took?: { dose: Dose; at: Date }; onTook: (d: Dose) => void }) {
   const lang = useLang(), t = tFor(lang);
@@ -139,15 +140,16 @@ function NextCard({ dose, now, took, onTook }: { dose?: Dose; now: Date; took?: 
         {food && <Food when={food} />}
       </View>
       <View style={{ alignSelf: "stretch", marginTop: 4 }}>
-        <HoldButton key={due.key} label={t("dose.hold")} doneLabel={t("dose.taken", { name: due.name })} onDone={() => { markTaken(due.key); onTook(due); }} />
+        <HoldButton key={due.key} quiet={soon} label={t(soon ? "dose.holdEarly" : "dose.hold")} doneLabel={t("dose.taken", { name: due.name })} onDone={() => { markTaken(due.key); onTook(due); }} />
       </View>
-      <Pressable accessibilityRole="button" accessibilityHint={t("dose.laterHint")} onPress={() => setAsking(true)}
+      {dueNow(due.dueAt, now) && <Pressable accessibilityRole="button" accessibilityHint={t("dose.laterHint")} onPress={() => setAsking(true)}
         style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: 16, justifyContent: "center", opacity: pressed ? 0.6 : 1 })}>
         <Text style={{ fontSize: 16, fontWeight: "500", color: palette.muted }}>{t("dose.later")}</Text>
-      </Pressable>
+      </Pressable>}
       <RemindSheet visible={asking} name={due.name} onClose={() => setAsking(false)} onRemind={() => {
         const until = clockNow().getTime() + SNOOZE;
         snooze({ key: due.key, until });
+        askOnce();
         setAsking(false);
         AccessibilityInfo.announceForAccessibility(t("dose.showAgainAt", { name: due.name, time: clock(new Date(until), lang) }));
       }} />
@@ -196,12 +198,14 @@ function Food({ when }: { when: "before" | "after" }) {
 
 /**
  * The kit's "Remind me later?" sheet: white, 40 pt corners, springing up with its rows 40 ms apart
- * (after Canopi's sheet); an orange ! badge, one honest line, black "Remind in 15 min", Cancel.
+ * (after Canopi's sheet); an orange ! badge, one honest line (a notification, or only in the app while
+ * the phone blocks them), black "Remind in 15 min", Cancel.
  */
 function RemindSheet({ visible, name, onRemind, onClose }: { visible: boolean; name: string; onRemind: () => void; onClose: () => void }) {
   const t = tFor(useLang());
   const reduced = useReducedMotion();
   const insets = useSafeAreaInsets();
+  const blocked = useReminders().permission === "denied";
   const row = (i: number) => reduced ? undefined : FadeInDown.springify().duration(motion.spring.duration).dampingRatio(1).delay(80 + i * motion.stagger);
   return <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
     <Pressable accessibilityRole="button" accessibilityLabel={t("common.cancel")} onPress={onClose} style={{ flex: 1, backgroundColor: "rgba(31,31,31,0.28)" }} />
@@ -215,7 +219,7 @@ function RemindSheet({ visible, name, onRemind, onClose }: { visible: boolean; n
         <Text style={{ ...nameStyle }}>{t("dose.remindTitle")}</Text>
       </Animated.View>
       <Animated.View entering={row(2)}>
-        <Text style={centred}>{t("dose.remindLine", { name })}</Text>
+        <Text style={centred}>{t(blocked ? "dose.remindLineOpen" : "dose.remindLine", { name })}</Text>
       </Animated.View>
       <Animated.View entering={row(3)} style={{ alignSelf: "stretch", marginTop: 6 }}>
         <Button label={t("dose.remind")} onPress={onRemind} />
@@ -256,19 +260,13 @@ function Check({ size, pop, style }: { size: number; pop?: boolean; style?: View
 /**
  * The Medicine tab's quick actions, one 2×2 shelf (after Sona Pro's quick-action keys): add a medicine from a photo (how many
  * wait for the care team), the full plan (since when), the care team (a new reply, or how soon they reply) and dose
- * reminders (on or off, switched in place; a phone that blocks them opens Settings).
+ * reminders (a real switch, in place; a phone that blocks them opens Settings).
  */
 function Shelf({ planned, onAdd, timed }: { planned: string[]; onAdd: () => void; timed: boolean }) {
   const lang = useLang(), t = tFor(lang);
   const plan = useDischarge().data;
   const waitingCount = usePhotoMedicines(planned).filter(m => m.status !== "added").length;
   const reply = useMessageNeeds() > 0;
-  const { on } = useReminders();
-  const remind = async () => {
-    const result = await setReminders(!on);
-    if (result === "blocked") void Linking.openSettings();
-    else AccessibilityInfo.announceForAccessibility(`${t("reminders.row")}: ${t(result === "on" ? "reminders.rowOn" : "reminders.rowOff")}`);
-  };
   return <View style={{ gap: 12 }}>
     <View style={{ flexDirection: "row", gap: 12 }}>
       <QuickKey icon="camera" label={t("photo.add")} hint={t("photo.addLine")} onPress={onAdd}
@@ -279,9 +277,7 @@ function Shelf({ planned, onAdd, timed }: { planned: string[]; onAdd: () => void
     <View style={{ flexDirection: "row", gap: 12 }}>
       <QuickKey icon="chat" label={t("dose.careTeam")} hint={t("dose.messageTeam")} onPress={() => router.push("/messages")}
         status={reply ? t("dose.newReply") : t("dose.repliesShort")} tone={reply ? "news" : undefined} />
-      {timed && <QuickKey icon="alarm" label={t("reminders.row")} hint={t("reminders.hint")} onPress={() => { void remind(); }}
-        status={on ? t("reminders.rowOn") : t("reminders.rowOff")} />}
-      {!timed && <View style={{ flex: 1 }} />}
+      {timed ? <RemindersKey /> : <View style={{ flex: 1 }} />}
     </View>
   </View>;
 }
@@ -290,14 +286,15 @@ function Shelf({ planned, onAdd, timed }: { planned: string[]; onAdd: () => void
  * One medicine in the list (My plan's row): its pill on its tint, name and schedule, a faint ring while
  * today's doses of it are still open and a green check once they are taken; opens its sheet. When the
  * last dose is taken here, in its sheet or on home, the ring shrinks away as the check pops and draws, and
- * the name settles (a 3 pt dip back to rest). Never on mount: a row already done just shows its check.
+ * the name settles (a 3 pt dip back to rest). Never on mount: a row already done just shows its check. A finished
+ * course reads "Finished Thu 1 Oct", with nothing left to take.
  */
-function MedRow({ med, first, today }: { med: ScheduledMed; first: boolean; today: DayDose[] }) {
+function MedRow({ med, first, today }: { med: Med; first: boolean; today: DayDose[] }) {
   const lang = useLang(), t = tFor(lang);
   const reduced = useReducedMotion();
   const done = today.length > 0 && today.every(d => d.taken), schedule = scheduleLine(med, lang);
   // The next of today's doses still to take, and whether it is past its time.
-  const pending = today.find(d => !d.taken), late = pending ? isLate(pending.dueAt, clockNow()) : false;
+  const pending = med.finished ? undefined : today.find(d => !d.taken), late = pending ? isLate(pending.dueAt, clockNow()) : false;
   const [doneAtMount] = useState(done);
   const pop = done && !doneAtMount;
   const settle = useSharedValue(0);

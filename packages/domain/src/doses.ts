@@ -22,6 +22,16 @@ export function doseSlots(med: ScheduledMed, out: Date, until: Date): Date[] {
   return med.doses === undefined ? all : all.slice(0, med.doses);
 }
 
+/** A course's last dose (its `doses`-th after discharge); undefined for a medicine taken on without end. */
+export function lastDose(med: ScheduledMed, out: Date): Date | undefined {
+  if (med.doses === undefined || !med.at?.length) return undefined;
+  // Days enough for every dose, the discharge day included.
+  return doseSlots(med, out, new Date(out.getTime() + (Math.ceil(med.doses / med.at.length) + 1) * DAY)).at(-1);
+}
+
+/** A course is finished once its last dose can no longer be taken (MISSED_AFTER past it), as the missed count reads it. */
+export const courseFinished = (endsAt: Date, now: Date) => now.getTime() - endsAt.getTime() >= MISSED_AFTER;
+
 export const doseKey = (name: string, dueAt: Date) => `${name}@${dueAt.toISOString()}`;
 
 /** A dose key's medicine and due time, or undefined if it is not one. */

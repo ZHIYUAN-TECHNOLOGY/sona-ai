@@ -5,7 +5,7 @@ import "@/lib/strings";
 addStrings({
   en: {
     "dis.am": "AM", "dis.pm": "PM",
-    "dis.sched1": "Once a day, {times}", "dis.sched2": "Twice a day, {times}", "dis.schedN": "{n} times a day, {times}", "dis.whenNeeded": "When you need it",
+    "dis.sched1": "Once a day, {times}", "dis.sched2": "Twice a day, {times}", "dis.schedN": "{n} times a day, {times}", "dis.whenNeeded": "When you need it", "dis.finished": "Finished {day}",
     "dis.when1": "once a day at {times}", "dis.when2": "twice a day at {times}", "dis.whenN": "{n} times a day at {times}",
     "dis.takeIt": "Take it ", "dis.youTake": "You have to take ", "dis.comma": ", ", "dis.end": ".",
     "dis.change.new": "Started in hospital", "dis.change.changed": "Changed in hospital", "dis.change.continue": "Same as before your stay", "dis.change.stopped": "Stopped in hospital",
@@ -20,7 +20,7 @@ addStrings({
   },
   ms: {
     "dis.am": "PG", "dis.pm": "PTG",
-    "dis.sched1": "Sekali sehari, {times}", "dis.sched2": "Dua kali sehari, {times}", "dis.schedN": "{n} kali sehari, {times}", "dis.whenNeeded": "Bila perlu",
+    "dis.sched1": "Sekali sehari, {times}", "dis.sched2": "Dua kali sehari, {times}", "dis.schedN": "{n} kali sehari, {times}", "dis.whenNeeded": "Bila perlu", "dis.finished": "Selesai {day}",
     "dis.when1": "sekali sehari pada {times}", "dis.when2": "dua kali sehari pada {times}", "dis.whenN": "{n} kali sehari pada {times}",
     "dis.takeIt": "Ambil ", "dis.youTake": "Anda perlu ambil ", "dis.comma": ", ", "dis.end": ".",
     "dis.change.new": "Dimulakan di hospital", "dis.change.changed": "Diubah di hospital", "dis.change.continue": "Sama seperti sebelum masuk hospital", "dis.change.stopped": "Dihentikan di hospital",
@@ -35,7 +35,7 @@ addStrings({
   },
   zh: {
     "dis.am": "上午", "dis.pm": "下午",
-    "dis.sched1": "每天1次，{times}", "dis.sched2": "每天2次，{times}", "dis.schedN": "每天{n}次，{times}", "dis.whenNeeded": "需要时服用",
+    "dis.sched1": "每天1次，{times}", "dis.sched2": "每天2次，{times}", "dis.schedN": "每天{n}次，{times}", "dis.whenNeeded": "需要时服用", "dis.finished": "已服完 · {day}",
     "dis.when1": "每天1次，{times}", "dis.when2": "每天2次，{times}", "dis.whenN": "每天{n}次，{times}",
     "dis.takeIt": "服用：", "dis.youTake": "您需要服用 ", "dis.comma": "，", "dis.end": "。",
     "dis.change.new": "住院时开始服用", "dis.change.changed": "住院时有调整", "dis.change.continue": "和住院前一样", "dis.change.stopped": "住院时已停用",

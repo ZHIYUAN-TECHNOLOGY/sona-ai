@@ -22,6 +22,16 @@ test("the medicines title line says how many to take, what changed and how long 
   expect(takeLine({ new: [], changed: [], continue: [], stopped: [] }, "Home for 3 days")).toBe("Nothing to take · Home for 3 days");
 });
 
+test("a finished course reads as finished on its last day, and no longer counts as one to take", () => {
+  const azithro = { name: "Azithromycin", line: "Course finished, nothing left to take", take: "1 tablet", at: ["08:00"], endsAt: new Date("2026-10-01T00:00:00Z"), finished: true };
+  expect(scheduleLine(azithro)).toBe("Finished Thu 1 Oct");
+  expect(scheduleLine(azithro, "ms")).toBe("Selesai Kha 1 Okt");
+  expect(scheduleLine(azithro, "zh")).toBe("已服完 · 10月1日 周四");
+  expect(takeSentence(azithro)).toEqual([{ text: "Finished Thu 1 Oct", bold: true }]);
+  expect(scheduleLine({ ...azithro, finished: undefined })).toBe("Once a day, 8 AM"); // still going: its last dose shows nowhere new
+  expect(takeLine({ new: [{ name: "A" }], changed: [azithro], continue: [{ name: "C" }], stopped: [] }, "Home for 5 days")).toBe("2 to take · 1 new · Home for 5 days");
+});
+
 test("the sheet's sentence bolds the dose and when, and falls back to the plan line without a schedule", () => {
   const text = runs => runs.map(r => r.bold ? `**${r.text}**` : r.text).join("");
   expect(text(takeSentence({ line: "x", take: "1 tablet, with or without food", at: ["08:00"] }))).toBe("You have to take **1 tablet**, **once a day at 8 AM**, with or without food.");

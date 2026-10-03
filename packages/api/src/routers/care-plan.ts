@@ -1,8 +1,8 @@
-import { accessLogs, appointments, encounters, findings, followUpRules, hospitalMembers, patients } from "@sona-ai/db/schema/clinical";
+import { accessLogs, appointments, checkIns, encounters, findings, followUpRules, hospitalMembers, patients } from "@sona-ai/db/schema/clinical";
 import { appointmentWords, followUpTiming, malaysianDay, patientMeds, reviewWords, warningSigns } from "@sona-ai/domain/care";
-import { checkInSchedule } from "@sona-ai/domain/check-ins";
+import { checkInDaysLine, checkInSchedule } from "@sona-ai/domain/check-ins";
 import { FOLLOW_UPS, LANGUAGES, planFor, type DischargeState, type Language } from "@sona-ai/domain/discharge";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 import { clockOf, type Context } from "../context";
@@ -16,11 +16,11 @@ export async function planOf(db: Context["db"], hospitalId: string, patientId: s
   return planFor(row ? recordOf(row) : { id: patientId });
 }
 
-/** The patient's latest discharge, or none while they are still in hospital. */
+/** The patient's latest discharge (with its visit), or none while they are still in hospital. */
 export async function lastDischarge(db: Context["db"], hospitalId: string, patientId: string) {
-  const rows = await db.select({ state: encounters.state }).from(encounters).where(and(eq(encounters.patientId, patientId), eq(encounters.hospitalId, hospitalId)));
-  return rows.map(r => (r.state as { discharge?: DischargeState & { leaflet?: ApprovedLeaflet } }).discharge)
-    .filter((d): d is DischargeState & { dischargedAt: string; leaflet?: ApprovedLeaflet } => Boolean(d?.dischargedAt))
+  const rows = await db.select({ id: encounters.id, state: encounters.state }).from(encounters).where(and(eq(encounters.patientId, patientId), eq(encounters.hospitalId, hospitalId)));
+  return rows.map(r => ({ ...(r.state as { discharge?: DischargeState & { leaflet?: ApprovedLeaflet } }).discharge, encounterId: r.id }))
+    .filter((d): d is DischargeState & { dischargedAt: string; leaflet?: ApprovedLeaflet; encounterId: string } => Boolean(d.dischargedAt))
     .sort((a, b) => b.dischargedAt.localeCompare(a.dischargedAt))[0];
 }
 
@@ -41,11 +41,19 @@ const reviewDate = (d: DischargeState & { dischargedAt: string }) => {
   return days === undefined ? undefined : new Date(new Date(d.dischargedAt).getTime() + days * 86400_000);
 };
 
-/** The patient's own plan as Sona Care shows it (and as care.ask grounds its answers), or in-hospital; patient-facing words in `lang`. */
+/**
+ * The patient's own plan as Sona Care shows it (and as care.ask grounds its answers), or in-hospital; patient-facing words in `lang`.
+ * Courses are read on the demo clock, so a finished one says so. The check-ins are the visit's own rows (the check-in
+ * agent can bring one forward); a discharge from before they were stored keeps the days chosen then.
+ */
 export async function patientPlan(context: Context & { hospitalId: string; patientId: string }, lang: Language = "en") {
     const d = await lastDischarge(context.db, context.hospitalId, context.patientId);
     if (!d) return { status: "in-hospital" as const };
-    const plan = await planOf(context.db, context.hospitalId, context.patientId);
+    const [plan, scheduled] = await Promise.all([
+      planOf(context.db, context.hospitalId, context.patientId),
+      context.db.select({ day: checkIns.day, date: checkIns.dueAt }).from(checkIns)
+        .where(and(eq(checkIns.hospitalId, context.hospitalId), eq(checkIns.encounterId, d.encounterId))).orderBy(asc(checkIns.dueAt)),
+    ]);
     const date = reviewDate(d);
     return {
       status: "discharged" as const, dischargedAt: d.dischargedAt, language: d.language,
@@ -53,22 +61,26 @@ export async function patientPlan(context: Context & { hospitalId: string; patie
       // language (older discharges kept none), the authored one in the rest.
       leaflets: [...LANGUAGES].sort((a, b) => Number(b.id === d.language) - Number(a.id === d.language))
         .map(l => ({ language: l.id, label: l.label, name: l.name, text: d.leaflet?.language === l.id ? d.leaflet.text : plan.leaflet[l.id] })),
-      medicines: patientMeds(plan, lang), warningSigns: warningSigns(plan, lang),
+      medicines: patientMeds(plan, lang, { out: d.dischargedAt, now: clockOf(context) }), warningSigns: warningSigns(plan, lang),
       followUp: date ? { title: reviewWords(plan, lang).title, date } : null,
-      checkIns: checkInSchedule(new Date(d.dischargedAt), d.checkInDays).map(c => ({ day: c.day, date: c.dueAt })),
+      checkIns: scheduled.length ? scheduled : checkInSchedule(new Date(d.dischargedAt), d.checkInDays).map(c => ({ day: c.day, date: c.dueAt })),
     };
 }
 
-/** The plan as plain text for the model: only what the patient's own app already shows them. */
+/** "Thu, 01 Oct 2026": the day in Malaysia, the same on any server. */
+const malaysiaDay = (at: Date) => new Date(at.getTime() + 8 * 3600_000).toUTCString().slice(0, 16);
+
+/** The plan as plain text for the model: only what the patient's own app already shows them. A course gives its last dose. */
 export function planText(plan: Extract<Awaited<ReturnType<typeof patientPlan>>, { status: "discharged" }>) {
-  const meds = Object.entries(plan.medicines).flatMap(([group, list]) => list.map(m => `- ${m.name} (${group}): ${m.line}${m.take ? `; ${m.take}` : ""}`));
+  const meds = Object.entries(plan.medicines).flatMap(([group, list]) => list.map(m =>
+    `- ${m.name} (${group}): ${[m.line, !m.finished && m.take, m.endsAt && `last dose ${malaysiaDay(m.endsAt)}`].filter(Boolean).join("; ")}`));
   const leaflet = plan.leaflets.find(l => l.language === plan.language) ?? plan.leaflets[0];
   return [
     `Discharged: ${plan.dischargedAt}`,
     "Medicines:", ...meds,
     "Come back or call if:", ...plan.warningSigns.map(w => `- ${w}`),
     plan.followUp ? `Follow-up: ${plan.followUp.title} on ${new Date(plan.followUp.date).toDateString()}` : "Follow-up: none booked",
-    `Check-ins: day ${plan.checkIns.map(c => c.day).join(" and ")} after discharge`,
+    `Check-ins: ${checkInDaysLine(plan.checkIns.map(c => c.day))} after discharge`,
     `Leaflet (${leaflet?.label ?? ""}):`, leaflet?.text ?? "",
   ].join("\n");
 }
