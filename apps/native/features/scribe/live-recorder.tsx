@@ -1,6 +1,6 @@
 import { AudioModule, setAudioModeAsync, useAudioRecorder } from "expo-audio";
 import { File } from "expo-file-system";
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { AppState } from "react-native";
 import { useEncounter } from "@/features/encounter/store";
 import type { TranscriptLine } from "@/features/encounter/types";
@@ -11,6 +11,23 @@ import { captionLine, draftLines, draftOrigin, listen, placeCaption, scribeStore
 type Update = ReturnType<typeof useEncounter>["updateEncounter"];
 /** A visit's live parts, last draft and microphone state, re-read whenever they change. */
 export const useScribe = (patientId: string | undefined) => useSyncExternalStore(scribeStore.subscribe, () => scribeStore.get(patientId));
+
+/*
+ * The consultation clock while recording (one microphone, so one clock). It ticks here once a second rather than in
+ * the visit's state, so only the clock re-renders, not every screen that reads the visit. The visit's
+ * `recordingSeconds` is written at each cut, pause and stop, and the tick is dropped once that has landed.
+ */
+let ticking: { owner: string; seconds: number } | undefined;
+const clockListeners = new Set<() => void>();
+const clockStore = {
+  get: (patientId: string | undefined) => ticking && ticking.owner === patientId ? ticking.seconds : undefined,
+  set(next: typeof ticking) { ticking = next; clockListeners.forEach(l => l()); },
+  subscribe(listener: () => void) { clockListeners.add(listener); return () => { clockListeners.delete(listener); }; },
+};
+/** Renders `children` with the visit's recorded seconds (`saved` is its `recordingSeconds`), live while recording. */
+export function RecordingSeconds({ patientId, saved, children }: { patientId: string | undefined; saved: number; children: (seconds: number) => ReactNode }) {
+  return children(useSyncExternalStore(clockStore.subscribe, () => clockStore.get(patientId) ?? saved));
+}
 
 const deps: SendDeps = {
   read: uri => new File(uri).base64(),
@@ -78,7 +95,13 @@ export function LiveRecorder() {
 
   const halt = (owner: string, mic?: string) => {
     if (mic) scribeStore.update(owner, s => ({ ...s, mic }));
-    updateEncounter(c => c.recording === "recording" ? { ...c, recording: c.recordingSeconds ? "paused" : "idle" } : c, false, owner);
+    // The clock runs ahead of the visit's seconds between cuts; keep what was recorded.
+    const ticked = clockStore.get(owner) ?? 0;
+    updateEncounter(c => {
+      if (c.recording !== "recording") return c;
+      const seconds = Math.max(ticked, c.recordingSeconds);
+      return { ...c, recording: seconds ? "paused" : "idle", recordingSeconds: seconds };
+    }, false, owner);
   };
   const queue = (owner: string, span: { from: number; to: number }, uri: string) => {
     const part: Part = { n: scribeStore.get(owner).parts.length + 1, from: Math.round(span.from / 1000), to: Math.round(span.to / 1000), status: "sending", uri };
@@ -127,7 +150,7 @@ export function LiveRecorder() {
   // Recording starts a stretch; pausing, stopping or opening another visit ends it (one microphone, one consultation).
   useEffect(() => {
     const r = run.current;
-    if (!r && wanted === "recording" && id) start(id, encounter?.recordingSeconds ?? 0);
+    if (!r && wanted === "recording" && id) start(id, clockStore.get(id) ?? encounter?.recordingSeconds ?? 0);
     else if (r && (wanted !== "recording" || id !== r.owner)) {
       if (id !== r.owner) updateEncounter(c => c.recording === "recording" ? { ...c, recording: "paused" } : c, false, r.owner);
       run.current = undefined; r.busy = true;
@@ -154,10 +177,12 @@ export function LiveRecorder() {
       const reading = listen(r.heard, { elapsed: durationMillis, level: metering, now });
       r.heard = reading.heard;
       if (reading.cut) { r.busy = true; cut(r, true); return; }
-      if (++tick % 10 === 0) updateEncounter(c => ({ ...c, recordingSeconds: Math.floor((r.baseMs + r.doneMs + durationMillis) / 1000) }), false, r.owner);
+      if (++tick % 10 === 0) clockStore.set({ owner: r.owner, seconds: Math.floor((r.baseMs + r.doneMs + durationMillis) / 1000) });
     }, 100);
     return () => clearInterval(timer);
   }, [wanted]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Once the visit's seconds have landed after the last cut (or no visit is open), the clock text reads them again.
+  useEffect(() => { if (!run.current) clockStore.set(undefined); }, [id, encounter?.recordingSeconds]);
 
   // Leaving the app pauses the consultation: iOS stops the microphone in the background. ("inactive" is only a sheet over the app, like the permission prompt.)
   useEffect(() => {
@@ -168,7 +193,7 @@ export function LiveRecorder() {
     return () => sub.remove();
   }, [updateEncounter]);
   // Live mode switched off mid-recording: the recorder goes with this component, so the visit pauses.
-  useEffect(() => () => { const r = run.current; if (r) halt(r.owner); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => { const r = run.current; if (r) halt(r.owner); clockStore.set(undefined); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 }

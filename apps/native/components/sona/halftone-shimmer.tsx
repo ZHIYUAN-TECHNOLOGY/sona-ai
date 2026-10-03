@@ -1,11 +1,13 @@
-import { Canvas, Fill, Shader, Skia } from "@shopify/react-native-skia";
+import { Canvas, Fill, Shader, Skia, type SkRuntimeEffect } from "@shopify/react-native-skia";
 import { type SharedValue, useDerivedValue } from "react-native-reanimated";
 
 /**
  * A band of aurora halftone dots that sweeps across a surface while it morphs; strongest
  * mid-morph (sin π·p) and gone at either end. Fixed canvas size, clipped by its parent.
  */
-const effect = Skia.RuntimeEffect.Make(`
+// Both shaders here compile when first drawn, not at app start.
+let compiledBand: SkRuntimeEffect | undefined;
+const effect = () => compiledBand ??= Skia.RuntimeEffect.Make(`
 uniform float2 res;
 uniform float p;
 half4 main(float2 q) {
@@ -25,7 +27,7 @@ half4 main(float2 q) {
 export function HalftoneShimmer({ width, height, progress }: { width: number; height: number; progress: SharedValue<number> }) {
   const uniforms = useDerivedValue(() => ({ res: [width, height], p: progress.value }));
   return <Canvas pointerEvents="none" style={{ position: "absolute", left: 0, bottom: 0, width, height }}>
-    <Fill><Shader source={effect} uniforms={uniforms} /></Fill>
+    <Fill><Shader source={effect()} uniforms={uniforms} /></Fill>
   </Canvas>;
 }
 
@@ -33,7 +35,8 @@ export function HalftoneShimmer({ width, height, progress }: { width: number; he
  * A still patch of halftone dots, densest at `origin` and thinning out over `reach` (x, y):
  * light catching the edge of glass. Drawn once; nothing animates.
  */
-const glint = Skia.RuntimeEffect.Make(`
+let compiledGlint: SkRuntimeEffect | undefined;
+const glint = () => compiledGlint ??= Skia.RuntimeEffect.Make(`
 uniform float2 origin;
 uniform float2 reach;
 uniform float pitch;
@@ -53,6 +56,6 @@ half4 main(float2 q) {
 
 export function HalftoneGlint({ width, height, origin, reach, pitch = 4, strength = 1, tint = [0.3, 0.62, 0.86], hueShift = 1, style }: { width: number; height: number; origin: [number, number]; reach: [number, number]; pitch?: number; strength?: number; tint?: [number, number, number]; hueShift?: number; style?: object }) {
   return <Canvas pointerEvents="none" style={[{ position: "absolute", width, height }, style]}>
-    <Fill><Shader source={glint} uniforms={{ origin, reach, pitch, strength, tint, hueShift, res: [width, height] }} /></Fill>
+    <Fill><Shader source={glint()} uniforms={{ origin, reach, pitch, strength, tint, hueShift, res: [width, height] }} /></Fill>
   </Canvas>;
 }

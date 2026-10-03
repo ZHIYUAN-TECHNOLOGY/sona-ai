@@ -1,4 +1,4 @@
-import { Canvas, Fill, Shader, Skia } from "@shopify/react-native-skia";
+import { Canvas, Fill, Shader, Skia, type SkRuntimeEffect } from "@shopify/react-native-skia";
 import { useEffect, useRef } from "react";
 import { scheduleOnRN } from "react-native-worklets";
 import { useIdle } from "./idle";
@@ -10,7 +10,9 @@ import { useDerivedValue, useFrameCallback, useSharedValue, withTiming } from "r
  * inside, matching the hold-to-talk aurora glass. The aurora drifts slowly at rest, rises and
  * brightens while listening (`energy` 1) and circles gently while thinking.
  */
-const effect = Skia.RuntimeEffect.Make(`
+// Compiled when first drawn, not at app start.
+let compiled: SkRuntimeEffect | undefined;
+const effect = () => compiled ??= Skia.RuntimeEffect.Make(`
 uniform float2 res;
 uniform float t;
 uniform float energy;
@@ -84,6 +86,6 @@ export function GlassOrb({ size, energy, still = false }: { size: number; energy
   useEffect(() => () => frames.setActive(false), [frames]);
   const uniforms = useDerivedValue(() => ({ res: [size, size], t: t.value, energy: level.value }));
   return <Canvas pointerEvents="none" style={{ width: size, height: size }}>
-    <Fill><Shader source={effect} uniforms={uniforms} /></Fill>
+    <Fill><Shader source={effect()} uniforms={uniforms} /></Fill>
   </Canvas>;
 }
