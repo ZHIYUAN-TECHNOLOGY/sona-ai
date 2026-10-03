@@ -73,7 +73,10 @@ test("every count of blocked beds is the list it opens: the filter, the summary,
   for (const s of filterSegments(beds, "all")) expect(filterBeds(beds, s.key)).toHaveLength(s.count);
   expect(blocked).toEqual(["Bed 6", "Bed 2", "Bed 14"]);
   expect(wardSummary(beds).blocked).toBe(blocked.length);
-  expect(huddle(beds, {})).toEqual(["4 fit to go, 3 still blocked, about 9 bed-hours waiting.", "Start with Bed 6: final guarantee letter, take-home medicines, follow-up booking.", "7 blockers have no owner yet."]);
+  // The huddle counts as the filter does: its "ready" is "Fit to go", its "fit but blocked" is "Blocked".
+  const shown = Object.fromEntries(filterSegments(beds, "all").map(s => [s.key, s.count]));
+  expect(huddle(beds, {})[0]).toStartWith(`${shown.fit} ready to go, ${shown.blocked} fit but blocked,`);
+  expect(huddle(beds, {})).toEqual(["1 ready to go, 3 fit but blocked, about 9 bed-hours waiting.", "Start with Bed 6: final guarantee letter, take-home medicines, follow-up booking.", "7 blockers have no owner yet."]);
   expect(unownedBlocked(beds, {}).map(r => r.bed).sort()).toEqual([...blocked].sort());
   expect(Object.values(soonest(beds).spec.elements).find(e => e.type === "AskLead").props.text).toBe("1 bed can free now; 3 discharges are blocked, about 9 bed-hours waiting.");
 });

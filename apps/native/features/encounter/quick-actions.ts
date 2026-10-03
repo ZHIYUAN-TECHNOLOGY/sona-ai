@@ -104,7 +104,8 @@ export function visitActions(patient: Patient, encounter: Encounter | undefined,
     { key: "brief", label: "Brief me", icon: "text.alignleft", status: resultHere ? "New result to review" : patient.incomplete ? "History incomplete" : "Summary in seconds", tone: resultHere ? "urgent" : patient.incomplete ? "caution" : "calm", onPress: () => go("briefing") },
     { key: "consult", label: "Consultation", icon: "waveform", status: recording ? "Recording now" : lines ? `${lines} lines captured` : "Not started", tone: recording ? "caution" : "calm", onPress: () => go("recording") },
     { key: "meds", label: "Medicines", icon: "pills", status: patient.incomplete ? "Ingredient unknown" : unconfirmed ? `${unconfirmed} unconfirmed` : "All confirmed", tone: patient.incomplete || unconfirmed ? "caution" : "calm", badge: unconfirmed, onPress: () => go("medication") },
-    { key: "xray", label: "X-ray", icon: "photo", status: encounter?.imagingAttachment ? "Image attached" : patient.incomplete ? "No image" : "Chest film on file", onPress: () => go("xray") },
+    // Without an attachment the X-ray page shows only the bundled reference film, which is not this patient's (unless removed).
+    { key: "xray", label: "X-ray", icon: "photo", status: encounter?.imagingAttachment ? "Image attached" : patient.incomplete || encounter?.hideTeachingImage ? "No image" : "Reference image only", onPress: () => go("xray") },
     ...scan ? [{ key: "scan", label: "Scan note", icon: "doc.viewfinder", status: "Handwritten notes into the record", onPress: () => go("scan") }] : [],
   ];
 }
