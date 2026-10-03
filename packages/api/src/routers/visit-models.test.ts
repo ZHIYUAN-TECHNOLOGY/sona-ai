@@ -126,6 +126,6 @@ test("every visit answer needs a login and stays inside the caller's hospital", 
   for (const call of [other.encounter.briefing({ encounterId: "visit-1042" }), other.encounter.reasoning({ encounterId: "visit-1042", question: "Why?" }), other.discharge.draft({ encounterId: "visit-1042", language: "en" }), other.claim.suggestCodes({ encounterId: "visit-1042" })])
     expect((await call.catch(e => e)).code).toBe("NOT_FOUND");
   // Another hospital's ward is empty to them, and nothing about Amelia was logged for them.
-  expect((await other.ward.huddle()).lines[0]).toStartWith("0 fit to go");
+  expect((await other.ward.huddle()).lines[0]).toStartWith("0 ready to go");
   expect(await db.select().from(provenance).where(eq(provenance.encounterId, "visit-1042"))).toEqual([]);
 });
