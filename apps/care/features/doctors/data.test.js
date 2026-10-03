@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { planFor } from "@sona-ai/domain/discharge";
 import { dayParts, DOCTORS, initials, listFor, matchDoctors, nameLines, searchDoctors, slotOf } from "./data";
 
 test("search matches name or specialty in any case; empty keeps the list", () => {
@@ -23,6 +24,14 @@ test("pneumonia finds the respiratory doctor first; heart finds cardiology", () 
   expect(matchDoctors(DOCTORS, "After my pneumonia I still cough")[0].id).toBe("lim");
   expect(matchDoctors(DOCTORS, "heart problem")[0].specialty).toBe("Cardiology");
   expect(matchDoctors(DOCTORS, "nothing relevant")).toEqual([]);
+});
+
+test("For you follows the condition the plan names, never a single word: a chest infection is Respiratory's, not Cardiology's", () => {
+  const forYou = complaint => listFor(DOCTORS, "for-you", planFor(complaint ? { id: "x", complaint } : {}).leaflet.en).map(d => d.id);
+  expect(forYou()).toEqual(["lim"]); // "treated for a chest infection … breathing gets harder … the fever returns"
+  expect(forYou("Heart failure")).toEqual(["aisyah"]); // "fluid on the lungs", "breathless": still the heart doctor
+  expect(forYou("Stroke")).toEqual(["arjun"]);
+  expect(forYou("Kidney infection")).toEqual([]); // no one here follows it up, so the page says the care team can suggest who
 });
 
 test("filters: care team only; top rated in order", () => {

@@ -1,15 +1,17 @@
 /**
  * Sona Care's tokens (the AI Health Companion kit's style guide, 27 Sep 2026): a #FAFAFA canvas under
  * a lilac and mint aurora, near-white cards on a #F5F5F5 hairline, content in three greys (#1F1F1F,
- * #4E4E4E, #979795), the kit's blue for the next step, and its green and orange for done and soon.
+ * #4E4E4E, #646462), the kit's blue for the next step, and its green and orange for done and soon.
+ * Every content grey reads at 4.5:1 or more on the canvas, the cards and the washes (the kit's #979795
+ * measured 2.6–2.9:1); `pale` keeps the kit's grey for decoration only (placeholders, chevrons, idle dots).
  * State colours keep their meaning: bright bases (500) fill dots, bars and badges; darker shades (700)
  * carry text so it stays readable. Red stays for "call the hospital now".
  */
 export const palette = {
-  canvas: "#FAFAFA", surface: "#FFFFFF", card: "#FAFAFA", ink: "#1F1F1F", muted: "#4E4E4E", faint: "#979795",
+  canvas: "#FAFAFA", surface: "#FFFFFF", card: "#FAFAFA", ink: "#1F1F1F", muted: "#4E4E4E", faint: "#646462", pale: "#979795",
   blue: "#2563EB", blueWash: "#EFF6FF", line: "#F5F5F5", white: "#FFFFFF",
   green: "#15803D", amber: "#C2410C", red: "#C81E2E", dark: "#1F1F1F",
-  amberWash: "#FFF7ED", amberEdge: "#FED7AA", mutedWash: "#F5F5F5", greenWash: "#F0FDF4",
+  amberWash: "#FFF7ED", amberEdge: "#FED7AA", redWash: "#FEF2F2", redEdge: "#FECACA", mutedWash: "#F5F5F5", greenWash: "#F0FDF4",
   azure: "#2563EB", violet: "#9333EA",
   // Fills (dots, bars, badges), never text: the kit's 500 shades.
   success: "#22C55E", warning: "#F97316", error: "#EF4444", feature: "#A855F7", info: "#3B82F6", away: "#FB923C",

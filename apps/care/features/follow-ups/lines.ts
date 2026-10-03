@@ -69,6 +69,14 @@ export function marksByDay(today: number, visits: Pick<FollowUp, "date" | "statu
   return marks;
 }
 
+/** A dot under a day, by what it marks; a missed visit and missed doses share the one "missed" dot. */
+export type Dot = "visit" | "checkIn" | "taken" | "missed";
+export const dotsOf = (m: DayMarks = {}) =>
+  [m.visit && (m.visit === "missed" ? "missed" : "visit"), m.checkIn && "checkIn", m.doses && (m.doses === "taken" ? "taken" : "missed")].filter((d): d is Dot => !!d);
+/** The strip's one-line key: each kind of dot the shown week has, once, in a fixed order. */
+export const legendOf = (week: number[], marks: Record<number, DayMarks>) =>
+  (["visit", "checkIn", "taken", "missed"] as const).filter(k => week.some(d => dotsOf(marks[d]).includes(k)));
+
 /** A day chip's VoiceOver label: "Sunday 4 October, today, Clinic review, Day 7 check-in". */
 export function dayA11y(day: number, today: number, visits: Visit[], checkIns: Ask[], marks: DayMarks = {}, lang: Lang = "en") {
   const t = tFor(lang);

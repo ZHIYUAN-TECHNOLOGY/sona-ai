@@ -105,6 +105,6 @@ function RecordRow({ icon, title, value, spoken, hint, onPress }: { icon: IconNa
     <Icon name={icon} />
     <Text style={{ ...type.body, fontWeight: "500", color: palette.ink }}>{title}</Text>
     <Text numberOfLines={1} style={{ flex: 1, ...type.footnote, color: palette.muted, textAlign: "right" }}>{value}</Text>
-    <Text style={{ fontSize: 20, color: palette.faint }}>›</Text>
+    <Text style={{ fontSize: 20, color: palette.pale }}>›</Text>
   </Pressable>;
 }

@@ -15,19 +15,38 @@ export { DOCTORS, type Doctor };
 export type ListedDoctor = Awaited<ReturnType<AppRouterClient["care"]["doctors"]["list"]>>[number];
 
 export type Filter = "all" | "care-team" | "top-rated" | "for-you";
-/** The list for a filter: all; your care team; best rated first; or matched to words from the plan (e.g. "pneumonia"). */
+/** The list for a filter: all; your care team; best rated first; or for the condition the plan names (e.g. a chest infection). */
 export function listFor<T extends Doctor>(list: T[], filter: Filter, planWords = "") {
   if (filter === "care-team") return list.filter(d => d.careTeam);
   if (filter === "top-rated") return [...list].sort((a, b) => b.rating - a.rating);
-  if (filter === "for-you") return matchDoctors(list, planWords);
+  if (filter === "for-you") return forYou(list, planWords);
   return list;
 }
 
-/** Doctors whose tags or specialty appear in the words (a question or the plan), best rated first; the care team first on a tie. */
+/** Care team first, then best rated. */
+const best = (a: Doctor, b: Doctor) => Number(!!b.careTeam) - Number(!!a.careTeam) || b.rating - a.rating;
+
+/** Doctors whose tags or specialty appear in the words (a question), best rated first; the care team first on a tie. */
 export function matchDoctors<T extends Doctor>(list: T[], words: string) {
   const w = words.toLowerCase();
-  return list.filter(d => d.tags.some(t => w.includes(t)) || w.includes(d.specialty.toLowerCase()))
-    .sort((a, b) => Number(!!b.careTeam) - Number(!!a.careTeam) || b.rating - a.rating);
+  return list.filter(d => d.tags.some(t => w.includes(t)) || w.includes(d.specialty.toLowerCase())).sort(best);
+}
+
+/**
+ * The conditions a discharge plan names, each with the specialty that follows it up. "For you" matches the condition,
+ * never a single word: a chest infection is Respiratory's, though "chest" is a Cardiology tag too, and a warning sign
+ * ("the fever returns") is not a condition. ponytail: phrases read from the plan's words; the plan's own condition
+ * replaces them once care.plan sends it.
+ */
+const FOLLOWED_BY: [RegExp, string][] = [
+  [/pneumonia|chest infection|lung infection|asthma|copd/i, "respiratory"],
+  [/heart failure|heart attack|high blood pressure|hypertension/i, "cardiology"],
+  [/diabetes|thyroid/i, "endocrinology"],
+  [/stroke/i, "rehabilitation"],
+];
+function forYou<T extends Doctor>(list: T[], planWords: string) {
+  const specialties = FOLLOWED_BY.filter(([condition]) => condition.test(planWords)).map(([, specialty]) => specialty);
+  return list.filter(d => specialties.some(s => d.specialty.toLowerCase().includes(s))).sort(best);
 }
 
 export type Slot = { date: Date; label: string };

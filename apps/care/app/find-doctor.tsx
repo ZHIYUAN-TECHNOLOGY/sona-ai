@@ -32,7 +32,7 @@ export default function FindDoctor() {
   const doctors = useQuery({ ...orpc.care.doctors.list.queryOptions(), enabled: state === "joined" });
   const [tab, setTab] = useState<Filter>("all");
   const [query, setQuery] = useState("");
-  // "For you" reads the English leaflet (the doctors' tags are English words), e.g. "chest infection … breathing".
+  // "For you" reads the condition the English leaflet names ("You were treated for a chest infection"); see listFor.
   const words = plan?.status === "discharged" ? plan.leaflets.find(l => l.language === "en")?.text ?? "" : "";
   const list = searchDoctors(listFor(doctors.data ?? [], tab, words), query);
   const width = fontScale > 1.3 ? "100%" : "48.2%";

@@ -15,14 +15,22 @@ export type { CheckIn, ReplyLabel };
  * answered), else the next one to come, else nothing (both answered).
  */
 export function todayOf(checkIns: CheckIn[], now: Date): { ask?: CheckIn; next?: CheckIn } {
-  const open = checkIns.filter(c => !c.replies.length);
-  const ask = open.find(c => c.sentAt || c.dueAt <= now);
+  const ask = checkIns.find(c => !c.replies.length && (c.sentAt || c.dueAt <= now));
   if (ask) return { ask };
-  const next = open.find(c => c.dueAt > now);
+  const next = upcomingOf(checkIns, now)[0];
   return next ? { next } : {};
 }
 
-/** After an answer: the line that follows it, a prompt, and quick replies (`none` sends the answer alone). */
+/**
+ * The check-ins still to come: not sent (an answer marks one sent) and due after now, in the rows' order (by due
+ * time). Read from the rows, so a day the follow-up agent added (day 4 after a worse answer) is there and a past one is not.
+ */
+export const upcomingOf = (checkIns: CheckIn[], now: Date) => checkIns.filter(c => !c.sentAt && c.dueAt > now);
+
+/**
+ * After an answer: the line that follows it, a prompt, and quick replies (`none` sends the answer alone). Nothing is
+ * sent yet, so worse asks what's worse and promises no call; doneLine promises it once sent.
+ */
 type FollowUp = { line: string; prompt: string; quick: string[]; none?: string };
 type Copy = { question: string; answers: [string, Feeling][]; follow: Record<Feeling, FollowUp>; more: string; placeholder: string; send: string;
   /** Review before a worse answer is sent, and the emergency lines (never tinted, always in the patient's language). */
@@ -36,7 +44,7 @@ const COPY: Record<Language, Copy> = {
     follow: {
       better: { line: "Glad to hear it", prompt: "Anything else for your care team?", quick: ["Walked today", "Sleeping better"], none: "No, that's all" },
       same: { line: "Thanks for telling us", prompt: "Anything you'd like them to know?", quick: ["Still tired", "Some pain"], none: "No, that's all" },
-      worse: { line: "We're sorry. Your care team will call you today.", prompt: "What's worse?", quick: ["Chest pain", "Breathless", "Dizzy", "Something else"] },
+      worse: { line: "Sorry to hear that", prompt: "Tell us what's worse so we can alert your care team", quick: ["Chest pain", "Breathless", "Dizzy", "Something else"] },
     },
     more: "Tell us in your own words", placeholder: "How are you feeling?", send: "Send",
     review: "We will send your care team", sendNow: "Send now", change: "Change", urgent: "Severe chest pain or can't breathe? Call 999 now.", emergency: "For an emergency, call 999.",
@@ -46,7 +54,7 @@ const COPY: Record<Language, Copy> = {
     follow: {
       better: { line: "Baguslah", prompt: "Ada apa-apa lagi untuk pasukan penjagaan anda?", quick: ["Berjalan hari ini", "Tidur lebih lena"], none: "Tidak, itu sahaja" },
       same: { line: "Terima kasih kerana memberitahu", prompt: "Ada apa-apa yang mereka perlu tahu?", quick: ["Masih letih", "Sakit sedikit"], none: "Tidak, itu sahaja" },
-      worse: { line: "Maaf mendengarnya. Pasukan penjagaan anda akan menelefon hari ini.", prompt: "Apa yang lebih teruk?", quick: ["Sakit dada", "Sesak nafas", "Pening", "Lain-lain"] },
+      worse: { line: "Maaf mendengarnya", prompt: "Beritahu kami apa yang lebih teruk supaya kami boleh maklumkan pasukan penjagaan anda", quick: ["Sakit dada", "Sesak nafas", "Pening", "Lain-lain"] },
     },
     more: "Tulis dengan kata-kata sendiri", placeholder: "Tulis di sini", send: "Hantar",
     review: "Kami akan hantar kepada pasukan penjagaan anda", sendNow: "Hantar sekarang", change: "Tukar", urgent: "Sakit dada teruk atau tidak boleh bernafas? Hubungi 999 sekarang.", emergency: "Untuk kecemasan, hubungi 999.",
@@ -56,7 +64,7 @@ const COPY: Record<Language, Copy> = {
     follow: {
       better: { line: "太好了", prompt: "还有什么想告诉医护团队的吗？", quick: ["今天走了路", "睡得更好"], none: "没有了" },
       same: { line: "谢谢告诉我们", prompt: "有什么想让他们知道的吗？", quick: ["还是很累", "有点痛"], none: "没有了" },
-      worse: { line: "很抱歉。医护团队今天会给您打电话。", prompt: "哪里更差了？", quick: ["胸痛", "喘不过气", "头晕", "其他"] },
+      worse: { line: "很抱歉", prompt: "请告诉我们哪里更差了，以便我们通知您的医护团队", quick: ["胸痛", "喘不过气", "头晕", "其他"] },
     },
     more: "用自己的话告诉我们", placeholder: "在这里写", send: "发送",
     review: "我们会发送给您的医护团队", sendNow: "立即发送", change: "修改", urgent: "严重胸痛或无法呼吸？请立即拨打 999。", emergency: "紧急情况请拨打 999。",

@@ -25,7 +25,7 @@ export function Stop({ index, still, done, lead, children }: { index: number; st
       {done ? <View style={{ width: 18, height: 18, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: palette.success }}>
         <Svg width={11} height={11} viewBox="0 0 24 24"><Path d="M20 6L9 17l-5-5" fill="none" stroke={palette.white} strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round" /></Svg>
       </View>
-        : <View style={{ width: 14, height: 14, marginTop: 2, borderRadius: 7, backgroundColor: lead ? palette.info : palette.faint, borderWidth: 2, borderColor: palette.canvas }} />}
+        : <View style={{ width: 14, height: 14, marginTop: 2, borderRadius: 7, backgroundColor: lead ? palette.info : palette.pale, borderWidth: 2, borderColor: palette.canvas }} />}
     </View>
     <View style={{ flex: 1 }}>{children}</View>
   </Animated.View>;

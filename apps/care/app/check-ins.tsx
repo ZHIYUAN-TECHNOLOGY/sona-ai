@@ -7,7 +7,7 @@ import { Capsule, Stop, STOP_TITLE, Timeline } from "@/features/follow-ups/timel
 import { tFor, useLang } from "@/lib/i18n";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { BackButton, Button, LoadError, surfaceStyle, Title } from "@/lib/ui";
+import { BACK_SPACE, Button, LoadError, PinnedBack, surfaceStyle, Title } from "@/lib/ui";
 import { now as clockNow } from "@/lib/clock";
 
 const TONE = { muted: palette.muted, blue: palette.blue, amber: palette.amber, green: palette.green } as const;
@@ -15,7 +15,8 @@ const TONE = { muted: palette.muted, blue: palette.blue, amber: palette.amber, g
 /**
  * Past check-ins to review: the insight line (how many answered, what's next), then every check-in on the
  * kit's timeline in date order (a green check once answered, blue for the next open one): what we asked,
- * what they said and what happened. The one waiting links to the home card, where it is answered.
+ * what they said and what happened. The one waiting links to the home card, where it is answered. Back stays
+ * pinned, since the list runs long.
  */
 export default function Screen() {
   const query = useCheckIns(), { data } = query;
@@ -24,8 +25,7 @@ export default function Screen() {
   const now = clockNow();
   const items = [...data ?? []].sort((a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime());
   const lead = items.findIndex(c => !c.replies.length);
-  return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 48, gap: 18 }}>
-    <BackButton />
+  return <View style={{ flex: 1 }}><ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingTop: BACK_SPACE, paddingBottom: 48, gap: 18 }}>
     <Title accent={t("ci.title")} line={data ? historyLine(data, now, lang) : undefined} />
     {!data ? (query.error ? <LoadError query={query} /> : <ActivityIndicator color={palette.muted} style={{ alignSelf: "flex-start" }} />) : <>
       {items.length > 0 && <Timeline line={items.length > 1}>
@@ -50,5 +50,5 @@ export default function Screen() {
       </Timeline>}
       <Button quiet label={t("ci.message")} onPress={() => router.push("/messages")} />
     </>}
-  </ScrollView>;
+  </ScrollView><PinnedBack /></View>;
 }

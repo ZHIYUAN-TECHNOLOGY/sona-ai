@@ -23,10 +23,10 @@ export function markRead(id: string) {
   SecureStore.setItemAsync(KEY, id).catch(() => {});
 }
 
-/** The thread; the messages screen passes a refetch interval while it is open (patients have no live socket). */
-export function useThread(refetchInterval?: number) {
+/** The thread; the live socket (features/live) re-reads it when the care team writes or opens it, so nothing polls. */
+export function useThread() {
   const { state } = useMe();
-  return useQuery({ ...orpc.care.messages.list.queryOptions(), enabled: state === "joined", refetchInterval });
+  return useQuery({ ...orpc.care.messages.list.queryOptions(), enabled: state === "joined" });
 }
 
 export function useMessageNeeds() {
