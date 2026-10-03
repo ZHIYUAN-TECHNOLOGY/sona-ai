@@ -1,4 +1,4 @@
-import { Canvas, Fill, Shader, Skia } from "@shopify/react-native-skia";
+import { Canvas, Fill, Shader, Skia, type SkRuntimeEffect } from "@shopify/react-native-skia";
 import * as Haptics from "expo-haptics";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -21,7 +21,9 @@ import { Action, useAccessibleEffects } from "./ui";
  */
 export { IMAGE_TYPES, type ImageType } from "./image-type";
 
-const band = Skia.RuntimeEffect.Make(`
+// Compiled when first drawn, not at app start.
+let compiled: SkRuntimeEffect | undefined;
+const band = () => compiled ??= Skia.RuntimeEffect.Make(`
 uniform float2 res;
 uniform float p;
 half4 main(float2 q) {
@@ -41,7 +43,7 @@ half4 main(float2 q) {
 function Sweep({ rect: { x, y, width, height }, progress }: { rect: { x: number; y: number; width: number; height: number }; progress: ReturnType<typeof useSharedValue<number>> }) {
   const uniforms = useDerivedValue(() => ({ res: [width, height], p: progress.value }));
   return <Canvas pointerEvents="none" style={{ position: "absolute", left: x, top: y, width, height }}>
-    <Fill><Shader source={band} uniforms={uniforms} /></Fill>
+    <Fill><Shader source={band()} uniforms={uniforms} /></Fill>
   </Canvas>;
 }
 

@@ -2,6 +2,7 @@ import * as Haptics from "expo-haptics";
 import { useEffect, useState } from "react";
 import { Pressable, View, useWindowDimensions } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import { HalftoneGlint, HalftoneShimmer } from "./halftone-shimmer";
 import { riseIn } from "./motion";
 import { Text } from "./text";
@@ -48,7 +49,9 @@ function Key({ a, index, shimmer, wide = false }: { a: QuickAction; index: numbe
   const { width } = useWindowDimensions();
   const keyW = wide ? width - 40 : (width - 40 - 10) / 2;
   const down = useSharedValue(0), pulse = useSharedValue(1), sweep = useSharedValue(0);
-  useEffect(() => { if (shimmer && !reducedMotion) sweep.set(withDelay(500 + index * 120, withTiming(1, { duration: 1100, easing: EASE_IN_OUT }))); }, [shimmer, reducedMotion, index, sweep]);
+  // The shimmer's canvas is there only while it sweeps: before and after, its band draws nothing.
+  const [swept, setSwept] = useState(false);
+  useEffect(() => { if (shimmer && !reducedMotion) sweep.set(withDelay(500 + index * 120, withTiming(1, { duration: 1100, easing: EASE_IN_OUT }, done => { "worklet"; if (done) scheduleOnRN(setSwept, true); }))); }, [shimmer, reducedMotion, index, sweep]);
   const urgent = a.tone === "urgent";
   const disc = DISC[a.tone ?? "calm"], dither = DITHER[index % DITHER.length]!;
   const key = useAnimatedStyle(() => ({ transform: [{ translateY: down.value * 2 }], boxShadow: `0 ${2 - down.value * 2}px 0 rgba(40,70,140,${0.14 - down.value * 0.1}), 0 ${8 - down.value * 6}px ${18 - down.value * 10}px rgba(40,70,140,0.10)` }));
@@ -61,7 +64,7 @@ function Key({ a, index, shimmer, wide = false }: { a: QuickAction; index: numbe
       <Glass opaque={reducedTransparency} style={{ borderRadius: radius.card, borderWidth: 1, borderColor: urgent ? "rgba(162,62,62,0.22)" : "rgba(255,255,255,0.95)" }}>
         {/* The key's lit top edge. */}
         <View pointerEvents="none" style={{ position: "absolute", left: 10, right: 10, top: 0, height: 1.5, borderRadius: 1, backgroundColor: "rgba(255,255,255,0.95)" }} />
-        {!reducedMotion && <View pointerEvents="none" style={{ position: "absolute", inset: 0, overflow: "hidden", borderRadius: radius.card }}><HalftoneShimmer width={keyW} height={104} progress={sweep} /></View>}
+        {shimmer && !swept && !reducedMotion && <View pointerEvents="none" style={{ position: "absolute", inset: 0, overflow: "hidden", borderRadius: radius.card }}><HalftoneShimmer width={keyW} height={104} progress={sweep} /></View>}
         <View pointerEvents="none" style={{ position: "absolute", width: 96, height: 62, [dither.corner[0] === "t" ? "top" : "bottom"]: 0, [dither.corner[1] === "r" ? "right" : "left"]: 0, overflow: "hidden", borderRadius: radius.card }}>
           <HalftoneGlint width={96} height={62} origin={[dither.corner[1] === "r" ? 96 : 0, dither.corner[0] === "t" ? 0 : 62]} reach={[88, 58]} pitch={dither.pitch} strength={urgent ? 0.5 : 0.32} tint={disc.tint} hueShift={0} style={{ top: 0, left: 0 }} />
         </View>

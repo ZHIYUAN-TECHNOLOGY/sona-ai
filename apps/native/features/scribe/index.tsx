@@ -6,7 +6,12 @@ import { LiveRecorder } from "./live-recorder";
 import { advancePlayback } from "./model";
 
 export { NoteCard, NoteScreen } from "./note";
-export { RecordingScreen } from "./recording-screen";
+
+/** The recorder screen (and its waveform shader) loads when first opened, not with the shell that imports this module. */
+export function RecordingScreen() {
+  const { RecordingScreen: Screen } = require("./recording-screen") as typeof import("./recording-screen");
+  return <Screen />;
+}
 
 /** Mount once in the encounter shell so minimizing the recorder keeps it going: the microphone in live mode, the scripted sample otherwise. */
 export function ScribePlayback() {

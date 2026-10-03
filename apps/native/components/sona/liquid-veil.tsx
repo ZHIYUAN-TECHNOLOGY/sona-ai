@@ -1,4 +1,4 @@
-import { Canvas, Fill, ImageShader, Shader, Skia, TileMode, makeImageFromView, type SkImage } from "@shopify/react-native-skia";
+import { Canvas, Fill, ImageShader, Shader, Skia, TileMode, makeImageFromView, type SkImage, type SkRuntimeEffect } from "@shopify/react-native-skia";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { StyleSheet, useWindowDimensions, type View } from "react-native";
 import { cancelAnimation, Easing, useDerivedValue, useFrameCallback, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
@@ -20,7 +20,9 @@ import { follow, HISTORY, pushHistory, STEP_MS } from "./veil-signal";
  * value noise, an edge folded into billowed lobes, a vaporous rim and an fbm colour field that
  * saturates with depth and loudness.
  */
-const effect = Skia.RuntimeEffect.Make(`
+// Compiled on the first hold to talk, not at app start.
+let compiled: SkRuntimeEffect | undefined;
+const effect = () => compiled ??= Skia.RuntimeEffect.Make(`
 uniform shader soft;
 uniform shader heavy;
 uniform float2 size;
@@ -337,7 +339,7 @@ export function LiquidVeil({ backdrop, state, armed = false, words = 0, voiceLev
   if (!layers) return null;
   return <Canvas pointerEvents="none" style={StyleSheet.absoluteFill}>
     <Fill>
-      <Shader source={effect} uniforms={uniforms}>
+      <Shader source={effect()} uniforms={uniforms}>
         <ImageShader image={layers.soft} fit="fill" tx="clamp" ty="clamp" rect={{ x: 0, y: 0, width, height }} />
         <ImageShader image={layers.heavy} fit="fill" tx="clamp" ty="clamp" rect={{ x: 0, y: 0, width, height }} />
       </Shader>
