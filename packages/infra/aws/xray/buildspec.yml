@@ -1,0 +1,19 @@
+# Builds the shared vLLM image (../vllm) into ECR and copies MedGemma 1.5 4B's pinned weights from Hugging Face to S3.
+# HF_TOKEN (the repo is gated: its account has accepted MedGemma's terms) comes from Parameter Store.
+version: 0.2
+env:
+  parameter-store:
+    HF_TOKEN: /sona/hf-read-token
+  variables:
+    HF_REPO: google/medgemma-1.5-4b-it
+    HF_REV: 91850547d9f0b2fdd21aa7c5f4f3d1a8a52c243b
+phases:
+  build:
+    commands:
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR
+      - docker build -t $ECR/sona/vllm:v0.29.0 .
+      - docker push $ECR/sona/vllm:v0.29.0
+      - pip install -q huggingface_hub
+      - python -c "from huggingface_hub import snapshot_download as d; d('$HF_REPO', revision='$HF_REV', local_dir='/tmp/w', ignore_patterns=['.*'])"
+      - du -sh /tmp/w && ls -la /tmp/w
+      - aws s3 sync /tmp/w s3://$BUCKET/xray/$HF_REV/ --only-show-errors --exclude ".cache/*"
