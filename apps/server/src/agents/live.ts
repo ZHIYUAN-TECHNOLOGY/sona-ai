@@ -6,7 +6,7 @@ import { lastDischarge, patientPlan, planText } from "@sona-ai/api/routers/care-
 import { LINES, callNow } from "@sona-ai/api/voice-agent/answer";
 import { tellCareTeam } from "@sona-ai/api/voice-agent/care-team";
 import { SonaTranscriber, type SessionHooks } from "@sona-ai/api/voice-agent/listen";
-import { Checks, LiveTurns, liveBrief, mayReport, type Heard, type Unit } from "@sona-ai/api/voice-agent/live";
+import { Checks, LiveTurns, liveBrief, mayReport, type Ear, type Heard, type Unit } from "@sona-ai/api/voice-agent/live";
 import { Agent, type Connection } from "agents";
 import { withVoiceInput } from "agents/voice";
 
@@ -134,7 +134,7 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     const call = this.#calls.get(connection.id);
     if (call) {
       call.heardAt = Date.now();
-      this.#check(connection, call, transcript);
+      this.#check(connection, call, "box2", transcript);
     }
     return null;
   }
@@ -142,7 +142,7 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
   /** The same turn as box ④ wrote it down: checked too, and shown when box ②'s words do not come (quiet comes as "."). */
   #heard(connection: Connection, call: LiveCall, transcript: string) {
     if (!/[\p{L}\p{N}]/u.test(transcript)) return;
-    this.#check(connection, call, transcript);
+    this.#check(connection, call, "box4", transcript);
     const at = Date.now();
     setTimeout(() => {
       if (!call.closed && call.heardAt < at - OWN_WORDS_WAIT_MS) send(connection, { type: "transcript", role: "user", text: transcript });
@@ -150,15 +150,15 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
   }
 
   /** The two checks on what the patient said, by either ear, each once a turn. */
-  #check(connection: Connection, call: LiveCall, transcript: string) {
-    if (callNow(transcript) && call.checks.take("call999", Date.now())) {
+  #check(connection: Connection, call: LiveCall, ear: Ear, transcript: string) {
+    if (callNow(transcript) && call.checks.take("call999", ear, transcript, Date.now())) {
       const from = call.turns.said.length;
       setTimeout(() => {
         if (!call.closed && !call.turns.sent999(from)) this.#tell(connection, LINES[call.language].call999);
       }, CALL_999_WAIT_MS);
     }
     // The care team's own reader (Gemma, as for a check-in reply) decides whether to flag a task.
-    if (mayReport(transcript) && call.checks.take("report", Date.now())) void this.#careTeam(connection, transcript);
+    if (mayReport(transcript) && call.checks.take("report", ear, transcript, Date.now())) void this.#careTeam(connection, transcript);
   }
 
   /** The patient spoke over Sona: the phone stopped her, so the rest of that answer's audio stays here. */
