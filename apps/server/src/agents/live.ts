@@ -6,7 +6,7 @@ import { lastDischarge, patientPlan, planText } from "@sona-ai/api/routers/care-
 import { LINES, callNow } from "@sona-ai/api/voice-agent/answer";
 import { tellCareTeam } from "@sona-ai/api/voice-agent/care-team";
 import { SonaTranscriber, type SessionHooks } from "@sona-ai/api/voice-agent/listen";
-import { LiveTurns, liveBrief, mayReport, type Unit } from "@sona-ai/api/voice-agent/live";
+import { Checks, LiveTurns, liveBrief, mayReport, type Ear, type Heard, type Unit } from "@sona-ai/api/voice-agent/live";
 import { Agent, type Connection } from "agents";
 import { withVoiceInput } from "agents/voice";
 
@@ -22,6 +22,8 @@ const CALL_999_WAIT_MS = 6000;
 const PENDING_BYTES = 30 * 32_000;
 /** How long box ④ gets to take a call; a cold one starts meanwhile. ponytail: measure its cold start and say it, as startingBoxes does. */
 const OPEN_MS = 20_000;
+/** Box ②'s words for a turn are the ones shown; box ④'s own are shown in their place when box ②'s have not come by then. */
+const OWN_WORDS_WAIT_MS = 5000;
 
 /** One call's link to box ④: the phone's audio until the box takes it, the socket after, and Sona's answers so far. */
 class LiveCall {
@@ -33,6 +35,9 @@ class LiveCall {
   muted = false;
   closed = false;
   language: Language = "en";
+  checks = new Checks();
+  /** When box ②'s ear last gave the patient's words. */
+  heardAt = -Infinity;
 
   hear(chunk: ArrayBuffer) {
     if (this.closed) return;
@@ -54,6 +59,8 @@ class LiveCall {
  * Every chunk from the phone goes to box ④ and to Sona's ears (box ②'s Manglish ASR), which keep what the patient said,
  * for the phone and the record, and run the two checks that stay (user, 1 Oct): the 999 line when an emergency sign was
  * heard and Sona did not send them to 999 herself, and the care team told when the patient reports feeling worse.
+ * Box ④ writes each turn down too (3 Oct): the checks run on either ear's words, once a turn, so they hold while box ②
+ * sleeps or mishears (docs/minicpm-o-finetune.md, "One ear").
  */
 export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
   readonly #baseten = this.env.BASETEN_API_KEY ? { apiKey: this.env.BASETEN_API_KEY } : undefined;
@@ -93,10 +100,9 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     if (!box) return this.#tell(connection, LINES[call.language].unavailable);
     box.addEventListener("message", event => this.#fromBox(connection, call, event.data));
     box.addEventListener("close", () => { if (!call.closed) this.#tell(connection, LINES[call.language].unavailable); call.close(); });
-    // Her voice by language until voice v2 (docs/minicpm-o-finetune.md, run log): talker v1 speaks Malay far better than
-    // the model's own (14.6% against 36.4% of words wrong), but garbles more in live English (13.3% against 7.8%).
-    const voice = call.language === "ms" ? "v1" : "base";
-    box.send(JSON.stringify({ type: "start", system: liveBrief(home && planText(home), call.language), voice }));
+    // Her trained voice in every language (the box's "v1" slot holds talker voice-v3, trained on the live layout:
+    // docs/minicpm-o-finetune.md); voice-v1 garbled live English, so English and Chinese used the model's own until 3 Oct.
+    box.send(JSON.stringify({ type: "start", system: liveBrief(home && planText(home), call.language), voice: "v1", transcribe: true }));
     send(connection, { type: "audio_config", format: "pcm16", sampleRate: 24_000 });
     call.box = box;
     for (const chunk of call.pending.splice(0)) box.send(chunk);
@@ -107,7 +113,8 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
       if (!call.muted) sendAudio(connection, data); // the second of her voice the last unit described
       return;
     }
-    const unit = JSON.parse(data) as Unit | { type: "ready" };
+    const unit = JSON.parse(data) as Unit | Heard | { type: "ready" };
+    if (unit.type === "heard") return this.#heard(connection, call, unit.text);
     if (unit.type !== "unit") return;
     for (const event of call.turns.unit(unit)) {
       if (event.type === "transcript_start") call.muted = false;
@@ -125,15 +132,33 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     send(connection, { type: "transcript_interim", text: "" });
     send(connection, { type: "transcript", role: "user", text: transcript });
     const call = this.#calls.get(connection.id);
-    if (call && callNow(transcript)) {
+    if (call) {
+      call.heardAt = Date.now();
+      this.#check(connection, call, "box2", transcript);
+    }
+    return null;
+  }
+
+  /** The same turn as box ④ wrote it down: checked too, and shown when box ②'s words do not come (quiet comes as "."). */
+  #heard(connection: Connection, call: LiveCall, transcript: string) {
+    if (!/[\p{L}\p{N}]/u.test(transcript)) return;
+    this.#check(connection, call, "box4", transcript);
+    const at = Date.now();
+    setTimeout(() => {
+      if (!call.closed && call.heardAt < at - OWN_WORDS_WAIT_MS) send(connection, { type: "transcript", role: "user", text: transcript });
+    }, OWN_WORDS_WAIT_MS);
+  }
+
+  /** The two checks on what the patient said, by either ear, each once a turn. */
+  #check(connection: Connection, call: LiveCall, ear: Ear, transcript: string) {
+    if (callNow(transcript) && call.checks.take("call999", ear, transcript, Date.now())) {
       const from = call.turns.said.length;
       setTimeout(() => {
         if (!call.closed && !call.turns.sent999(from)) this.#tell(connection, LINES[call.language].call999);
       }, CALL_999_WAIT_MS);
     }
     // The care team's own reader (Gemma, as for a check-in reply) decides whether to flag a task.
-    if (mayReport(transcript)) void this.#careTeam(connection, transcript);
-    return null;
+    if (mayReport(transcript) && call.checks.take("report", ear, transcript, Date.now())) void this.#careTeam(connection, transcript);
   }
 
   /** The patient spoke over Sona: the phone stopped her, so the rest of that answer's audio stays here. */
@@ -176,8 +201,11 @@ async function openBox(url: string, apiKey?: string): Promise<WebSocket> {
   const http = url.replace(/^ws/, "http"), headers = apiKey ? { Authorization: `Api-Key ${apiKey}` } : undefined;
   const wake = /^(https:\/\/model-[^/]+\/environments\/[^/]+)\/websocket$/.exec(http)?.[1];
   if (wake && headers) void fetch(`${wake}/wake`, { method: "POST", headers, signal: AbortSignal.timeout(5000) }).catch(() => {});
-  const res = await fetch(http, { headers: { Upgrade: "websocket", ...headers }, signal: AbortSignal.timeout(OPEN_MS) });
+  // The time limit covers opening only: left on the request, it closed the open call at OPEN_MS (3 Oct, 20 s into a call).
+  const opening = new AbortController(), limit = setTimeout(() => opening.abort(), OPEN_MS);
+  const res = await fetch(http, { headers: { Upgrade: "websocket", ...headers }, signal: opening.signal }).finally(() => clearTimeout(limit));
   if (!res.webSocket) throw new Error(`box ④ answered ${res.status}`);
+  res.webSocket.binaryType = "arraybuffer"; // a Blob by default from this compatibility date, which reached the phone as text
   res.webSocket.accept();
   return res.webSocket;
 }

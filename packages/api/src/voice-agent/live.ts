@@ -33,6 +33,39 @@ ${plan ?? "None yet: they are still in hospital."}`;
  */
 export const mayReport = (text: string) => readReply(text) !== "fine";
 
+/** 999 as live3 and later say it: numbers in words, so her voice reads them right (tools/omni-voice/spoken.py). */
+const SPOKEN_999 = /nine nine nine|sembilan sembilan sembilan|九九九/i;
+
+/** What box ④ itself wrote down of the patient's turn, when it starts to answer (its second ear; data/live.py "transcribe"). */
+export type Heard = { type: "heard"; text: string; seconds: number; ms: number };
+
+/**
+ * Two ears hear each patient turn (box ②'s ASR and box ④ itself), so a check may fire for either, but once a turn: the
+ * other ear's words for a turn that already fired are that turn again, however late they come (box ② may be waking).
+ * The same turn is told by its words (half of the shorter one's, as each ear spells a little differently), not by time,
+ * so a second symptom said straight after still fires. A turn is remembered for PAIR_MS.
+ */
+export const PAIR_MS = 3 * 60_000;
+export type Ear = "box2" | "box4";
+const wordsOf = (text: string) => new Set(text.toLowerCase().match(/[一-鿿]|[\p{L}\p{N}]+/gu) ?? []);
+export class Checks {
+  #fired: { check: string; ear: Ear; words: Set<string>; at: number }[] = [];
+
+  /** Whether this check may act on these words from this ear; false when the other ear already fired it for this turn. */
+  take(check: "call999" | "report", ear: Ear, text: string, now: number) {
+    const words = wordsOf(text);
+    this.#fired = this.#fired.filter(f => now - f.at < PAIR_MS);
+    const twin = this.#fired.findIndex(f => f.check === check && f.ear !== ear
+      && [...words].filter(w => f.words.has(w)).length * 2 >= Math.min(words.size, f.words.size));
+    if (twin >= 0) {
+      this.#fired.splice(twin, 1); // each ear hears a turn once: paired, so the same words said again later fire again
+      return false;
+    }
+    this.#fired.push({ check, ear, words, at: now });
+    return true;
+  }
+}
+
 /** Box ④'s report for one second of the call: listening, or speaking these words; their audio follows as one binary frame. */
 export type Unit = { type: "unit"; i: number; listen: boolean; text: string; end_of_turn: boolean; ms: number; behind: number };
 export type PhoneEvent =
@@ -73,6 +106,6 @@ export class LiveTurns {
 
   /** Whether an answer since `from` (an index into `said`), or the one being spoken, sent the patient to 999. */
   sent999(from: number) {
-    return [...this.said.slice(from), this.#answer ?? ""].some(a => EMERGENCY.test(a));
+    return [...this.said.slice(from), this.#answer ?? ""].some(a => EMERGENCY.test(a) || SPOKEN_999.test(a));
   }
 }
