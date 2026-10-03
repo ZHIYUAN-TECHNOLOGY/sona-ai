@@ -44,3 +44,15 @@ test("an abbreviated analyte still marks an abnormal result", () => {
 test("a symptom that is absent or denied is not highlighted as present", () => {
   expect(marks("Observations: Confusion absent, no fever, denies chest pain; cough since Monday.")).toEqual([["cough", "symptom"]]);
 });
+
+test("a measurement out of range is marked with its value, amber then red; one in range stays plain", () => {
+  expect(marks("Oxygen saturation 97% on room air; temperature 38.1 °C; pulse 96 bpm."))
+    .toEqual([["temperature 38.1 °C", "caution"]]);
+  expect(marks("Temperature 39.4 °C, oxygen saturation 89%, respiratory rate 18 /min, systolic 124 mmHg."))
+    .toEqual([["Temperature 39.4 °C", "alert"], ["oxygen saturation 89%", "alert"]]);
+});
+
+test("a full mental test score is not a symptom to look at", () => {
+  expect(marks("Observations: Confusion AMT 10/10, Urea 5.1 mmol/L.")).toEqual([]);
+  expect(marks("Confusion AMT 6/10.")).toEqual([["Confusion", "symptom"]]);
+});

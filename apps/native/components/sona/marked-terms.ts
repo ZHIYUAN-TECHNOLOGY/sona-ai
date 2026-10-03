@@ -2,7 +2,7 @@
  * Which words in clinical text get a colour, so the eye lands on what matters first:
  * alert (red) for what must not be missed (allergies, severe or critical findings, abnormal
  * results), medicine (violet), finding (teal) for diagnoses and signs, symptom (blue), and
- * caution (amber) for what is unconfirmed or still open. Terms come from explicit
+ * caution (amber) for what is unconfirmed or still open, and for a measurement out of range. Terms come from explicit
  * `[[text|kind]]` markup (what a model response would emit) or, when a text has none, this dictionary.
  *
  * ponytail: dictionary matching is a stand-in; the backend should emit markup once responses are
@@ -39,8 +39,24 @@ const DICTIONARY: [RegExp, Mark][] = [
   ]), "caution"],
 ];
 
+/**
+ * A measurement outside its usual adult range, marked with its number and unit: amber outside [low, high],
+ * red outside [criticalLow, criticalHigh]. A value in range stays plain, so the colour keeps its meaning.
+ * ponytail: fixed adult ranges, a stand-in until results arrive with their own reference ranges and flags.
+ */
+const VITALS: [label: string, unit: string, low: number, high: number, criticalLow: number, criticalHigh: number][] = [
+  ["temperature|temp", "\\s?°C", 36, 37.9, 35, 38.9],
+  ["oxygen saturation|spo2|sats", "\\s?%", 94, 100, 92, 100],
+  ["pulse|heart rate", "\\s?(?:bpm|/min)", 50, 100, 40, 119],
+  ["respiratory rate", "\\s?/min", 12, 20, 9, 24],
+  ["systolic", "\\s?mmHg", 100, 139, 90, 179],
+  ["diastolic", "\\s?mmHg", 60, 89, 50, 109],
+];
+const MEASURED = VITALS.map(([label, unit, ...range]) => [new RegExp(`\\b(?:${label})(?: is| of|:)? (\\d+(?:\\.\\d+)?)(?:${unit})?`, "gi"), range] as const);
+
 const NEGATED_BEFORE = /\b(?:no|denies|denied|without|nil)\s+$/i;
-const NEGATED_AFTER = /^\s+(?:absent|not present|denied|resolved)\b/i;
+// A full mental test score (AMT 8 to 10 of 10) is the same as "absent".
+const NEGATED_AFTER = /^\s+(?:absent|not present|denied|resolved|AMT (?:8|9|10)\/10)\b/i;
 
 export type Segment = { text: string; mark?: Mark };
 export function segments(input: string): Segment[] {
@@ -49,6 +65,10 @@ export function segments(input: string): Segment[] {
   let last = 0;
   const plain = (text: string) => {
     const hits: { start: number; end: number; mark: Mark }[] = [];
+    for (const [pattern, [low, high, criticalLow, criticalHigh]] of MEASURED) for (const m of text.matchAll(pattern)) {
+      const value = Number(m[1]);
+      if (value < low || value > high) hits.push({ start: m.index!, end: m.index! + m[0].length, mark: value < criticalLow || value > criticalHigh ? "alert" : "caution" });
+    }
     // Categories in order, and within one the longest match first, so an earlier or longer term wins an overlap.
     for (const [pattern, mark] of DICTIONARY) {
       const found = [...text.matchAll(pattern)].sort((a, b) => b[0].length - a[0].length);
