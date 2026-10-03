@@ -215,7 +215,7 @@ test("reasoning keeps only possibilities citing a record source it was given, on
 test("the huddle brief is Gemma's words over the rule's numbers; a number the rule did not count brings the rule back", async () => {
   const facts = huddle(WARD_FIXTURE, {});
   expect(facts[0]).toBe("1 ready to go, 2 fit but blocked, about 8 bed-hours waiting.");
-  const lines = ["Three are fit to go and two are still blocked, about 8 bed-hours.", "Start with Bed 2: the final guarantee letter and the urine culture.", "Four blockers still need an owner."];
+  const lines = ["One is ready to go and two are fit but blocked, about 8 bed-hours.", "Start with Bed 2: the final guarantee letter and the urine culture.", "Four blockers still need an owner."];
   expect(await gemma(JSON.stringify({ lines })).huddleBrief({ beds: WARD_FIXTURE, owners: {} })).toEqual({ lines, ...fromModel });
   const rule = { lines: facts, source: "fixture" };
   expect(await gemma(JSON.stringify({ lines: ["3 fit to go.", "Start with Bed 14.", "4 have no owner."] })).huddleBrief({ beds: WARD_FIXTURE, owners: {} })).toEqual(rule);
