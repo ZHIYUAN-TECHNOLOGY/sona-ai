@@ -1,6 +1,6 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
-import { provenance, pubmedArticles } from "@sona-ai/db/schema/clinical";
+import { provenance, pubmedArticles, pubmedSearches } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
@@ -156,6 +156,37 @@ test("no source answers it: Gemma's general answer comes back instead, and only 
   expect(await api.evidence.ask({ encounterId: "visit-1086", question: "How do I stop a ward outbreak?" })).toMatchObject({ claims: [], enough: false, general: "Hand hygiene is the main defence." });
   claims = [{ text: "A randomised trial found stability a day sooner.", cites: [1] }];
   expect((await api.evidence.ask({ encounterId: "visit-1086", question: "Is prednisone useful here?" })).general).toBeUndefined();
+});
+
+test("a question asked again within the week skips PubMed's search (its articles are still fetched), has its studies when PubMed is down, and searches again once a week old", async () => {
+  const { state, fetcher } = pubmed(["25608756"]);
+  const { api, db } = await signedIn(fetcher);
+  const question = "Does prednisone shorten time to stability?";
+  const searches = () => state.calls.filter(u => u.includes("esearch")).length;
+  await api.evidence.ask({ encounterId: "visit-1086", question });
+  const searched = searches();
+  expect(await api.evidence.ask({ encounterId: "visit-1086", question })).toMatchObject({ pubmed: "live", references: [{ pmid: "25608756" }] });
+  expect(searches()).toBe(searched);
+  state.down = true;
+  expect(await api.evidence.ask({ encounterId: "visit-1086", question })).toMatchObject({ pubmed: "cached", references: [{ pmid: "25608756" }] });
+  state.down = false;
+  await db.update(pubmedSearches).set({ searchedAt: new Date(Date.now() - 8 * 86400_000) });
+  await api.evidence.ask({ encounterId: "visit-1086", question });
+  expect(searches()).toBeGreaterThan(searched);
+});
+
+test("the library is searched while PubMed is, not after it", async () => {
+  let libraryAsked!: () => void;
+  const asked = new Promise<void>(resolve => { libraryAsked = resolve; });
+  const { fetcher } = pubmed(["25608756"]);
+  // PubMed answers only once the library was asked: searched one after the other, this would never finish.
+  const waiting = (async (url: string) => { await asked; return fetcher(url); }) as unknown as typeof fetch;
+  const library = { search: async () => { libraryAsked(); return []; }, ingest: async () => 0, reindex: async () => 0 };
+  const db = await createTestDb();
+  await seedDemo(db, new Date("2026-09-26T09:00:00+08:00"));
+  await addClinician(db, "dr-aisyah");
+  const api = createRouterClient(appRouter, { context: { db, session, fetch: waiting, library } });
+  expect((await api.evidence.ask({ question: "Does prednisone shorten time to stability?" })).references.map(r => r.pmid)).toEqual(["25608756"]);
 });
 
 test("PubMed is searched by the question's key terms, never the patient's name or record number, and an article without an abstract is not a source", async () => {

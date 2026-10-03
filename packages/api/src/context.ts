@@ -41,6 +41,8 @@ export type Context = {
   baseten?: Baseten;
   /** Sona's follow-up after discharge: the Worker's check-in agents, one per visit. Absent (tests), due check-ins are sent directly. */
   followUps?: FollowUps;
+  /** The Worker's waitUntil: work that finishes after the answer is sent (the access trail). Absent (tests), it is awaited. */
+  waitUntil?: (promise: Promise<unknown>) => void;
 };
 
 export type { FollowUp };

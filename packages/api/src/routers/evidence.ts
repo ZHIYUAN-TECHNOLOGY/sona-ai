@@ -1,4 +1,4 @@
-import { documents, encounters, observations, patients, provenance, pubmedArticles } from "@sona-ai/db/schema/clinical";
+import { documents, encounters, observations, patients, provenance, pubmedArticles, pubmedSearches } from "@sona-ai/db/schema/clinical";
 import { STUDIES, authoredAnswer, curb65FromObservations, isRehearsed, pubmedUrl, quotedClaims, sourcedClaims, studyKind, type Claim, type ObservationRow, type Reference } from "@sona-ai/domain/evidence";
 import { ORPCError } from "@orpc/server";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
@@ -26,20 +26,31 @@ const REHEARSED = {
 
 type Cached = typeof pubmedArticles.$inferSelect;
 const fromCache = (r: Cached): Article => ({ pmid: r.pmid, title: r.title, journal: r.journal, year: r.year, publicationTypes: r.publicationTypes, kind: studyKind(r.publicationTypes), conclusion: r.conclusion });
+/** How long a search's PubMed IDs are reused before PubMed is searched again. */
+const SEARCH_DAYS = 7;
 
-/** The articles, live from PubMed (and cached) when it answers, else from the cache. */
+/**
+ * The articles, live from PubMed (and cached) when it answers, else from the cache. Terms searched in the last week
+ * reuse that search's IDs, so only the articles are fetched; any question searched once has its sources offline too.
+ */
 async function articlesFor(db: Context["db"], fetcher: typeof fetch, terms: string[], rehearsed: boolean) {
+  const key = terms.join(" AND ");
+  const [saved] = rehearsed ? [] : await db.select().from(pubmedSearches).where(eq(pubmedSearches.terms, key));
+  const recent = saved && Date.now() - saved.searchedAt.getTime() < SEARCH_DAYS * 86400_000;
+  let pmids = rehearsed ? REHEARSED.pmids : saved?.pmids ?? [];
   try {
-    const pmids = rehearsed ? REHEARSED.pmids : await searchEvidence(terms, fetcher);
+    if (!rehearsed && !recent) {
+      pmids = await searchEvidence(terms, fetcher);
+      await db.insert(pubmedSearches).values({ terms: key, pmids }).onConflictDoUpdate({ target: pubmedSearches.terms, set: { pmids, searchedAt: sql`now()` } });
+    }
     // An article without an abstract has nothing to cite (the search asks for abstracts; this catches the odd one without).
     const articles = (await fetchArticles(pmids, fetcher)).filter(a => rehearsed || a.conclusion);
     if (articles.length) await db.insert(pubmedArticles).values(articles.map(a => ({ pmid: a.pmid, title: a.title, journal: a.journal, year: a.year, publicationTypes: a.publicationTypes, conclusion: a.conclusion })))
       .onConflictDoUpdate({ target: pubmedArticles.pmid, set: { title: sql`excluded.title`, conclusion: sql`excluded.conclusion`, publicationTypes: sql`excluded.publication_types`, fetchedAt: sql`now()` } });
     return { articles, pubmed: "live" as const };
   } catch {
-    // ponytail: only the rehearsed question's IDs are known offline; other questions need PubMed's search.
-    const rows = rehearsed ? await db.select().from(pubmedArticles).where(inArray(pubmedArticles.pmid, REHEARSED.pmids)) : [];
-    const articles = REHEARSED.pmids.flatMap(id => rows.filter(r => r.pmid === id)).map(fromCache);
+    const rows = pmids.length ? await db.select().from(pubmedArticles).where(inArray(pubmedArticles.pmid, pmids)) : [];
+    const articles = pmids.flatMap(id => rows.filter(r => r.pmid === id)).map(fromCache);
     return { articles, pubmed: articles.length ? ("cached" as const) : ("unavailable" as const) };
   }
 }
@@ -83,11 +94,11 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
   const authored = authoredAnswer(input.question);
   // PubMed gets the question's key terms (a follow-up keeps the thread's topic), never the patient's name or record number.
   const terms = searchTerms(input.question, input.thread.map(t => t.question), visit ? [visit.name, visit.patientId] : []);
-  const { articles, pubmed } = await articlesFor(db, context.fetch ?? fetch, terms, Boolean(authored));
+  // PubMed and the library are searched at once.
+  const [{ articles, pubmed }, passages] = await Promise.all([articlesFor(db, context.fetch ?? fetch, terms, Boolean(authored)), passagesFor(context, hospitalId, input.question)]);
   // Authored answers show their reviewed summary of each study (a guideline's abstract rarely states its recommendations); others quote the abstract.
   const summary = (pmid: string) => (authored ? STUDIES.find(s => s.pmid === pmid)?.finding : undefined);
   const studies: Reference[] = articles.map((a, i) => ({ n: i + 1, id: `pmid:${a.pmid}`, kind: "study", design: a.kind, title: a.title, year: a.year, from: a.journal, text: summary(a.pmid) ?? a.conclusion, url: pubmedUrl({ pmid: a.pmid, query: a.title }), pmid: a.pmid }));
-  const passages = await passagesFor(context, hospitalId, input.question);
   const references: Reference[] = [...studies, ...passages.map((p, i) => ({ n: studies.length + i + 1, kind: "library" as const, design: "Library" as const, ...p }))];
   yield { type: "step", step: "read", studies: studies.length, passages: passages.length, references } as EvidenceStep;
 

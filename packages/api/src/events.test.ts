@@ -20,6 +20,14 @@ test("a write names its topic and visit; a read announces nothing", () => {
     expect(changeFor(read, { encounterId: "visit-1042" })).toBeUndefined();
 });
 
+test("model answers, speech, previews and push tokens change nothing an app shows, so a visit's question never sets its patient's Sona Care refetching", () => {
+  for (const read of [["evidence", "stream"], ["ask", "route"], ["ask", "free"], ["voice", "transcribe"], ["library", "previewArticle"], ["clinician", "me"], ["push", "register"], ["push", "unregister"]])
+    expect(changeFor(read, { encounterId: "visit-1042" })).toBeUndefined();
+  // Real writes on the same topics still announce.
+  expect(changeFor(["library", "importArticle"], { pmid: "1" })).toEqual({ topic: "library" });
+  expect(changeFor(["scan", "apply"], { encounterId: "visit-1042" })).toEqual({ topic: "scan", encounterId: "visit-1042" });
+});
+
 test("every successful write through the API is announced to the caller's hospital; refused writes and reads are not", async () => {
   const db = await createTestDb();
   await seedDemo(db);

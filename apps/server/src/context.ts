@@ -50,6 +50,7 @@ export async function createContext({ context }: CreateContextOptions): Promise<
     // Staging only: Sona Care's sign-in shows the seeded demo phone and its fixed code.
     demoSignIn: ENV.DEMO_SIGN_IN === "1",
     followUps: followUpAgents(context.env as Env),
+    waitUntil: promise => context.executionCtx.waitUntil(promise),
   };
 }
 

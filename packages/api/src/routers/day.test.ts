@@ -89,12 +89,14 @@ test("my day lists that date's appointments in the hospital's day (+08:00), in t
 });
 
 test("a result from the (simulated) lab feed past a call-now limit arrives flagged critical; a normal one arrives unflagged", async () => {
-  const { api, db, as } = await signedIn();
+  const { api, db, as, clock } = await signedIn();
   const critical = await api.results.receive({ patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L" });
   expect(critical).toMatchObject({ patientName: "Daniel Rahman", flag: "critical low", critical: true, acknowledgedAt: null });
+  clock.now = new Date(clock.now.getTime() + 60_000);
   const normal = await api.results.receive({ patientId: "SYN-1042", test: "Sodium", value: "138", unit: "mmol/L" });
   expect(normal).toMatchObject({ flag: null, critical: false });
-  expect((await api.results.list({ unacknowledged: true }))[0]!.id).toBe(critical.id);
+  // Newest first (the normal result came a minute later), each still waiting on a doctor.
+  expect((await api.results.list({ unacknowledged: true })).slice(0, 2).map(r => [r.id, r.critical])).toEqual([[normal.id, false], [critical.id, true]]);
   // Another hospital's lab cannot post to this hospital's patient.
   expect((await (await otherHospital(db, as)).results.receive({ patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L" }).catch(e => e)).code).toBe("NOT_FOUND");
 });

@@ -3,6 +3,7 @@ import { encounters } from "@sona-ai/db/schema/clinical";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
+import { answerOnce } from "../answers";
 import { xrayUploadSchema } from "../contracts";
 import { clockOf, type Context } from "../context";
 import { stubModels } from "../models";
@@ -26,13 +27,17 @@ export const xrayRouter = {
     await db.update(encounters).set({ state: sql`jsonb_set(${encounters.state}, '{xray}', ${JSON.stringify(latest)}::jsonb)` }).where(eq(encounters.id, input.encounterId));
     return { key };
   }),
-  /** The latest image's key and what the model seam says about it; never a validated read. */
+  /** The latest image's key and what the model seam says about it; never a validated read. A model reads each image once. */
   read: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(async ({ context, input }) => {
     const { state } = await loadEncounter(context.db, context.hospitalId, input.encounterId);
     const latest = (state as { xray?: { key: string; contentType: string } }).xray;
-    const object = latest && await bucket(context).get(latest.key);
-    if (!latest || !object) throw new ORPCError("NOT_FOUND", { message: `No X-ray uploaded for ${input.encounterId}` });
-    const read = await (context.models ?? stubModels).xrayRead({ image: new Uint8Array(await object.arrayBuffer()), contentType: latest.contentType });
+    const missing = () => new ORPCError("NOT_FOUND", { message: `No X-ray uploaded for ${input.encounterId}` });
+    if (!latest) throw missing();
+    const read = await answerOnce(context.db, input.encounterId, "xray-read", { image: latest.key }, async () => {
+      const object = await bucket(context).get(latest.key);
+      if (!object) throw missing();
+      return (context.models ?? stubModels).xrayRead({ image: new Uint8Array(await object.arrayBuffer()), contentType: latest.contentType });
+    }, () => [latest.key]);
     return { key: latest.key, ...read, validated: false as const };
   }),
 };

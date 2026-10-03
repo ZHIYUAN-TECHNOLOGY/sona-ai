@@ -7,8 +7,10 @@
 export type Change = { topic: string; encounterId?: string; patientId?: string };
 
 // Calls that only read; everything else behind a login is a write.
-// A model answer only logs its provenance, so it is a read too (announcing it would set the ward re-reading).
-const READS = new Set(["list", "inbox", "thread", "get", "status", "beds", "forecast", "ask", "read", "briefing", "reasoning", "draft", "suggestCodes", "appealDraft", "huddle", "slots", "samples", "photo", "followUp"]);
+// A model answer only logs its provenance, so it is a read too (announcing it would set the ward re-reading, and a
+// visit's patient's Sona Care refetching everything). So is a phone's push token: no app shows it.
+const READS = new Set(["list", "inbox", "thread", "get", "status", "beds", "forecast", "ask", "read", "briefing", "reasoning", "draft", "suggestCodes", "appealDraft", "huddle", "slots", "samples", "photo", "followUp",
+  "stream", "route", "free", "transcribe", "previewArticle", "me", "register", "unregister"]);
 
 export function changeFor(path: readonly string[], input: unknown): Change | undefined {
   const [topic, verb] = path;

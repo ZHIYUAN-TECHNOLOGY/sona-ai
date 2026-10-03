@@ -7,6 +7,7 @@ import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
 import type { Context } from "../context";
+import type { Change } from "../events";
 import { stubModels, type Models } from "../models";
 import { appRouter } from "./index";
 
@@ -56,6 +57,17 @@ test("detection hands the model the uploaded X-ray when there is one", async () 
   const [finding] = await api.findings.detect({ encounterId: "visit-1042" });
   expect(seen).toEqual([{ image: undefined, contentType: undefined }, { image: [1, 2, 3], contentType: "image/png" }]);
   expect(finding).toMatchObject({ kind: "effusion", source: "fake-cxr-1", ruleId: "effusion-small", intervalDays: 14, validated: false });
+  // Detected again on the same image, the model's stored reading is reused rather than paid for twice.
+  expect((await api.findings.detect({ encounterId: "visit-1042" }))[0]).toMatchObject({ kind: "effusion", source: "fake-cxr-1" });
+  expect(seen).toHaveLength(2);
+});
+
+test("tracking a finding tells the patient's Sona Care about the new recall", async () => {
+  const heard: Change[] = [];
+  const { api } = await signedIn({ announce: async (_hospital, change) => { heard.push(change); } });
+  const [nodule] = await api.findings.detect({ encounterId: "visit-1042" });
+  await api.findings.track({ findingId: nodule!.id, requestId: "t-1" });
+  expect(heard).toContainEqual({ topic: "findings", patientId: "SYN-1042" });
 });
 
 test("a mark belongs to the image it was read from: the authored fixture claims no upload, a model's read carries that image's key", async () => {

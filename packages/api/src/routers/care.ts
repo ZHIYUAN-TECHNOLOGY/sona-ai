@@ -171,8 +171,12 @@ export const careRouter = {
   /** Patient: whether they help improve Sona Care with de-identified replies and notes (off until they switch it on). */
   trainingConsent: patientProcedure.handler(({ context }) => trainingConsentOf(context.db, context.hospitalId, context.patientId)),
   /** Patient: switch it on, or withdraw (samples not yet exported are withdrawn with it). */
-  setTrainingConsent: patientProcedure.input(z.object({ consented: z.boolean() }))
-    .handler(({ context, input }) => setTrainingConsent(context, context.hospitalId, context.patientId, input.consented)),
+  setTrainingConsent: patientProcedure.input(z.object({ consented: z.boolean() })).handler(async ({ context, input }) => {
+    const consent = await setTrainingConsent(context, context.hospitalId, context.patientId, input.consented);
+    // The middleware finds no topic in this route's name; management's Training screen hears it as a training change.
+    await context.announce?.(context.hospitalId, { topic: "training", patientId: context.patientId }).catch(() => {});
+    return consent;
+  }),
   /** Patient: their thread with the care team. */
   messages: careMessagesRouter,
   /** Patient: this phone's Expo push token, so check-ins, bookings and replies reach it (see ../push). */

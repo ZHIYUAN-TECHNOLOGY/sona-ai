@@ -4,6 +4,7 @@ import { dueDate, findingLine, isOverdue, ruleFor } from "@sona-ai/domain/findin
 import { and, asc, eq, ne, inArray, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 
+import { answerOnce } from "../answers";
 import { findingDismissSchema, findingTrackSchema } from "../contracts";
 import { clockOf, type Context } from "../context";
 import { stubModels } from "../models";
@@ -60,15 +61,20 @@ export async function followUpsToAdd(context: Context, hospitalId: string, patie
 }
 
 export const findingsRouter = {
-  /** Runs the image reader for the encounter's patient and stores one row per kind; a rerun changes nothing. */
+  /**
+   * Runs the image reader for the encounter's patient and stores one row per kind; a rerun changes nothing. A model
+   * reads each image once: detecting again on the same image reuses its stored reading.
+   */
   detect: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(async ({ context, input }) => {
     const { db, hospitalId } = context;
     const [visit] = await db.select().from(encounters).where(and(eq(encounters.id, input.encounterId), eq(encounters.hospitalId, hospitalId)));
     if (!visit) throw new ORPCError("NOT_FOUND", { message: `No encounter ${input.encounterId}` });
     const xray = (visit.state as { xray?: { key: string; contentType: string } }).xray;
-    const object = xray && await context.uploads?.get(xray.key);
-    const image = object ? { image: new Uint8Array(await object.arrayBuffer()), contentType: xray.contentType } : {};
-    const read = await (context.models ?? stubModels).incidentalFindings({ patientId: visit.patientId, ...image });
+    const read = await answerOnce(db, visit.id, "incidental-findings", { image: xray?.key }, async () => {
+      const object = xray && await context.uploads?.get(xray.key);
+      const image = object ? { image: new Uint8Array(await object.arrayBuffer()), contentType: xray.contentType } : {};
+      return (context.models ?? stubModels).incidentalFindings({ patientId: visit.patientId, ...image });
+    }, () => (xray ? [xray.key] : []));
     const rules = await db.select().from(followUpRules);
     const at = clockOf(context);
     const ids = read.findings.map(f => `finding:${visit.id}:${f.kind}`);
@@ -91,7 +97,12 @@ export const findingsRouter = {
    * One task and one recall at the due date, then the finding is tracked. Both are keyed on the
    * finding, so a replay (any requestId) or tracking it again returns the same follow-up.
    */
-  track: protectedProcedure.input(findingTrackSchema).handler(({ context, input }) => trackFinding(context, context.hospitalId, input.findingId, input.owner)),
+  track: protectedProcedure.input(findingTrackSchema).handler(async ({ context, input }) => {
+    const finding = await trackFinding(context, context.hospitalId, input.findingId, input.owner);
+    // The middleware announces this write without a patient; Sona Care hears of the new recall here.
+    await context.announce?.(context.hospitalId, { topic: "findings", patientId: finding.patientId }).catch(() => {});
+    return finding;
+  }),
   /**
    * Same trip: moves a finding's follow-up onto a visit the patient already has (the "Book in" from a
    * flagged check-in), tracking it first if it was open. Her Sona Care then shows the test on that

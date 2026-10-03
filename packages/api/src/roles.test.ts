@@ -97,6 +97,16 @@ test("reads and writes naming a patient or visit are logged (the visit resolved 
   expect(rows[0]!.at.toISOString()).toBe("2026-09-26T02:00:00.000Z");
 });
 
+test("in the Worker the trail is written after the answer (waitUntil), not before it", async () => {
+  const { db } = await world();
+  const later: Promise<unknown>[] = [];
+  const doctor = createRouterClient(appRouter, { context: { db, session: session("doctor"), waitUntil: promise => { later.push(promise); } } });
+  await doctor.encounter.get({ encounterId: "visit-1042" });
+  expect(later).toHaveLength(1);
+  await Promise.all(later);
+  expect((await db.select().from(accessLogs)).map(r => [r.userId, r.patientId, r.route])).toEqual([["doctor", "SYN-1042", "encounter.get"]]);
+});
+
 test("Sona Care's own routes never write the clinician access trail", async () => {
   const { db, doctor, as } = await world();
   const { code } = await doctor.care.code({ encounterId: "visit-1042" });

@@ -53,7 +53,7 @@ export async function resetDemo(db: AnyDb, now = new Date()) {
   await db.delete(trainingSamples).where(eq(trainingSamples.hospitalId, DEMO_HOSPITAL));
   await db.delete(trainingDatasets).where(eq(trainingDatasets.hospitalId, DEMO_HOSPITAL));
   await db.delete(trainingConsents).where(eq(trainingConsents.hospitalId, DEMO_HOSPITAL));
-  // The demo clock goes back to real time.
+  // The demo clock goes back to real time. A CLI cannot announce "demo": the apps re-read the clock on reconnect or foreground.
   await db.update(hospitals).set({ clockOffsetMs: 0, contributesTraining: false }).where(eq(hospitals.id, DEMO_HOSPITAL));
   await seedDemo(db, now);
   // The demo patient's Sona Care account stays linked to Amelia, so the phone is ready after a reset.

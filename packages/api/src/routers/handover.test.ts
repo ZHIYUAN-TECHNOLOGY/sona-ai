@@ -88,6 +88,9 @@ test("reading an X-ray hands the latest image to the model seam and labels the a
   const read = await api.xray.read({ encounterId: "visit-1042" });
   expect(read).toEqual({ key, validated: false, findings: ["Fake model: right lower zone opacity"], source: "model", model: "fake-xray-1" });
   expect(seen).toEqual([{ image: [...Buffer.from(png, "base64")], contentType: "image/png" }]);
+  // The model reads an image once: opened again, its stored reading comes back, still labelled with the model.
+  expect(await api.xray.read({ encounterId: "visit-1042" })).toEqual(read);
+  expect(seen).toHaveLength(1);
 });
 
 test("without a model switched on, the X-ray read is the fixture's honest unavailable answer", async () => {

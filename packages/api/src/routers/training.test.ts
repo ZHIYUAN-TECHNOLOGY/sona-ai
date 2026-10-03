@@ -7,6 +7,7 @@ import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
 import { BOXES, basetenModels, boxState } from "../baseten-models";
+import type { Change } from "../events";
 import { stubModels, type Models } from "../models";
 import { PII_MODEL } from "../pii-model";
 import { scheduleCheckIns } from "./check-ins";
@@ -130,6 +131,14 @@ test("withdrawing marks her samples not yet exported as withdrawn; exported ones
   await amelia.care.setTrainingConsent({ consented: false });
   expect((await manager.training.samples()).map(s => s.status)).toEqual(["withdrawn", "approved"]);
   expect(await codeOf(manager.training.decide({ id: (await manager.training.samples())[0]!.id, decision: "approve" }))).toBe("SAMPLE_WITHDRAWN");
+});
+
+test("a patient's consent change is announced as a training change, so management's Training screen re-reads", async () => {
+  const { db } = await world();
+  const heard: Change[] = [];
+  const amelia = createRouterClient(appRouter, { context: { db, session: session("amelia"), announce: async (_hospital, change) => { heard.push(change); } } });
+  await amelia.care.setTrainingConsent({ consented: true });
+  expect(heard).toEqual([{ topic: "training", patientId: "SYN-1042" }]);
 });
 
 test("only management sees or changes training data", async () => {

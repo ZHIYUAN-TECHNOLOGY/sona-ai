@@ -1,6 +1,6 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
-import { admissions, hospitalMembers, hospitals } from "@sona-ai/db/schema/clinical";
+import { admissions, claims, hospitalMembers, hospitals } from "@sona-ai/db/schema/clinical";
 import { DEMO_HOSPITAL } from "@sona-ai/db/demo";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
@@ -48,6 +48,14 @@ test("the live ward is every bed the app draws, fit beds first and the most bloc
   expect(beds.find(b => b.bed === "Bed 14")!.blockers[1]).toEqual({ id: "adm-2014-transport", kind: "transport", label: "Ride home", detail: "Family free after 17:00" });
   // The same summary the fixture ward gives: 4 fit, 3 blocked, about 9 bed-hours waiting.
   expect(wardSummary(beds)).toEqual({ beds: 8, fit: 4, blocked: 3, bedHours: 9 });
+});
+
+test("each bed's letter follows its own visit's claim, from the ward's one read of claims", async () => {
+  const { db, api } = await signedIn();
+  await db.insert(claims).values({ id: "claim-visit-2002", encounterId: "visit-2002", insurer: "Synthetic insurer", status: "sent", estimateCents: 1, codes: [] });
+  const beds = await api.ward.beds();
+  const letter = (bed: string) => beds.find(b => b.bed === bed)!.blockers.find(x => x.kind === "gl")?.detail;
+  expect([letter("Bed 2"), letter("Bed 6")]).toEqual(["Sent · awaiting insurer", "Codes ready to review"]);
 });
 
 test("once Amelia is discharged, bed 6 shows as freed", async () => {
