@@ -2,6 +2,7 @@ import { readReply } from "@sona-ai/domain/check-ins";
 import type { Language } from "@sona-ai/domain/discharge";
 
 import { BRAIN_MODEL, EMERGENCY, answered, boxes, wakingOf, type Baseten } from "../baseten-models";
+import { deltas } from "../sse";
 import { LANGUAGE_NAME, jsonIn } from "../chat-models";
 
 /**
@@ -218,28 +219,6 @@ export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
   if (!said) yield* say(summary.waking ? lines.starting(summary.waking) : lines.unavailable);
   if (told && await within(told, TOLD_WAIT_MS) && !turn.signal.aborted) yield* say(lines.told);
   if (!turn.signal.aborted) turn.done?.(summary);
-}
-
-/** The text of an OpenAI-style streamed chat reply (server-sent events), as it arrives. */
-export async function* deltas(body: ReadableStream<Uint8Array>, finished?: () => void): AsyncGenerator<string> {
-  const reader = body.pipeThrough(new TextDecoderStream()).getReader();
-  let pending = "";
-  try {
-    for (let read = await reader.read(); !read.done; read = await reader.read()) {
-      const lines = (pending + read.value).split("\n");
-      pending = lines.pop()!;
-      for (const line of lines) {
-        const data = line.startsWith("data:") ? line.slice(5).trim() : "";
-        if (!data || data === "[DONE]") continue;
-        const text = (JSON.parse(data) as { choices?: { delta?: { content?: unknown } }[] }).choices?.[0]?.delta?.content;
-        if (typeof text === "string" && text) yield text;
-      }
-    }
-    finished?.();
-  } finally {
-    // An interrupted turn stops reading here: cancelling the body closes the request, so vLLM stops writing.
-    await reader.cancel().catch(() => {});
-  }
 }
 
 /** Gemma in box ① as a `ChatStream`: a cold box is woken and not waited for, so Sona says when it should be ready. */

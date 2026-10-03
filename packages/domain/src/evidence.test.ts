@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { ANSWER, FOLLOW_UPS, STUDIES, authoredAnswer, curb65, curb65FromObservations, sourcedClaims, studyKind } from "./evidence";
+import { ANSWER, BOTTOM_LINE, FOLLOW_UPS, STUDIES, authoredAnswer, curb65, curb65FromObservations, sourcedClaims, studyKind, quotedClaims } from "./evidence";
 import type { Patient } from "./types";
 
 const patient = (over: Partial<Patient>): Patient => ({ id: "X-1", encounterId: "visit-x", name: "Test Patient", initials: "TP", age: 70, sex: "Female", subtitle: "", time: "09:00", complaint: "", history: [], family: "", social: "", allergies: null, medicines: [], vitals: [], sources: [], incomplete: false, ...over });
@@ -58,9 +58,28 @@ test("the authored answers cite only the three rehearsed studies, and every foll
   const all = [...ANSWER, ...FOLLOW_UPS.flatMap(f => f.claims)];
   expect(all.every(c => c.cites.length > 0 && c.cites.every(n => n >= 1 && n <= STUDIES.length))).toBe(true);
   expect(sourcedClaims(all, STUDIES.length)).toEqual(all);
-  expect(authoredAnswer("Steroids for this patient with community-acquired pneumonia?")).toEqual({ claims: ANSWER, followUps: FOLLOW_UPS.map(f => f.question) });
+  expect(authoredAnswer("Steroids for this patient with community-acquired pneumonia?")).toEqual({ bottomLine: BOTTOM_LINE, claims: ANSWER, followUps: FOLLOW_UPS.map(f => f.question) });
   const harms = authoredAnswer("What harms should I watch for?")!;
   expect(harms.claims).toBe(FOLLOW_UPS[1]!.claims);
   expect(harms.followUps).toEqual([FOLLOW_UPS[0]!.question, FOLLOW_UPS[2]!.question]);
   expect(authoredAnswer("Does amoxicillin need a renal dose?")).toBeUndefined();
+});
+
+test("a quote is proof only when its own cited source says it word for word; a one-sentence source quotes itself", () => {
+  const references = [
+    { n: 1, text: "Recommends against routine corticosteroids in non-severe pneumonia." },
+    { n: 2, text: "Prednisone shortened time to stability. Hyperglycaemia needing insulin was more common. Mortality did not differ." },
+  ];
+  const [kept, invented, unquoted] = quotedClaims([
+    { text: "Steroids raise glucose.", cites: [2], topic: "harms", quotes: [{ n: 2, text: "hyperglycaemia  needing insulin was more common" }] },
+    { text: "Steroids cure pneumonia.", cites: [2], quotes: [{ n: 2, text: "Steroids cure pneumonia in every case." }, { n: 1, text: "Recommends against routine corticosteroids" }] },
+    { text: "Not routinely.", cites: [1, 2] },
+  ], references);
+  expect(kept).toEqual({ text: "Steroids raise glucose.", cites: [2], topic: "harms", quotes: [{ n: 2, text: "hyperglycaemia  needing insulin was more common" }] });
+  // Invented text and a quote from a source the claim does not cite are both dropped.
+  expect(invented).toEqual({ text: "Steroids cure pneumonia.", cites: [2] });
+  // The one-sentence guideline finding is its own quote; the three-sentence abstract needs one given.
+  expect(unquoted).toEqual({ text: "Not routinely.", cites: [1, 2], quotes: [{ n: 1, text: "Recommends against routine corticosteroids in non-severe pneumonia." }] });
+  expect(sourcedClaims([{ text: " A dose. ", cites: [1, 1, 9], topic: "dose" }, { text: "Odd topic.", cites: [1], topic: "nonsense" as never }], 2))
+    .toEqual([{ text: "A dose.", cites: [1], topic: "dose" }, { text: "Odd topic.", cites: [1] }]);
 });

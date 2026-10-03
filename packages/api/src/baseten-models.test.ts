@@ -18,6 +18,8 @@ function fake(answers: Record<string, unknown>) {
     const key = Object.keys(answers).find(k => url.includes(k));
     const answer = key === undefined ? undefined : answers[key];
     if (answer instanceof Error) throw answer;
+    // A function answers for itself (a streamed reply, say).
+    if (typeof answer === "function") return (answer as (url: string, init: RequestInit) => Response)(url, init);
     if (answer === undefined) return new Response("no", { status: 503 });
     if (answer instanceof Uint8Array) return new Response(answer, { headers: { "content-type": "audio/wav" } });
     return Response.json(answer);
@@ -308,4 +310,24 @@ test("a cited sentence counts whether Gemma writes its bare id or '[id] the sent
   expect(citedSentence("[diagnosis] Community-acquired pneumonia, CURB-65 0.", sentences)?.id).toBe("diagnosis");
   expect(citedSentence("[xray]", sentences)?.id).toBe("xray");
   expect(citedSentence("[organism] not in the note", sentences)).toBeUndefined();
+});
+
+test("the evidence answer streams: its bottom line, then each claim as it closes, then the whole answer; a box that is down gives the whole answer", async () => {
+  const written = JSON.stringify({ bottomLine: "Not routinely.", claims: [{ text: "Guideline says no.", cites: [1], topic: "evidence" }, { text: "Trial found harm.", cites: [2], topic: "harms" }], followUps: ["When?"] });
+  const encoder = new TextEncoder();
+  // Gemma's reply as vLLM streams it: server-sent events of a few characters each.
+  const streamed = (url: string) => url.endsWith("/health") ? new Response("ok") : new Response(new ReadableStream({ start(c) {
+    for (const piece of written.match(/[\s\S]{1,7}/g)!) c.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: piece } }] })}\n\n`));
+    c.enqueue(encoder.encode("data: [DONE]\n\n")); c.close();
+  } }), { headers: { "content-type": "text/event-stream" } });
+  const input = { question: "Steroids?", thread: [], sources: [{ n: 1, design: "Guideline", title: "G", text: "x" }, { n: 2, design: "Trial", title: "T", text: "y" }] };
+  const run = basetenModels({ apiKey: "k", fetcher: fake({ [box("brain")]: streamed }).fetcher }).streamEvidence!(input);
+  const parts = [];
+  let next = await run.next();
+  for (; !next.done; next = await run.next()) parts.push(next.value);
+  expect(parts).toEqual([{ bottomLine: "Not routinely." }, { claim: { text: "Guideline says no.", cites: [1], topic: "evidence" } }, { claim: { text: "Trial found harm.", cites: [2], topic: "harms" } }]);
+  expect(next.value).toMatchObject({ bottomLine: "Not routinely.", followUps: ["When?"], ...fromModel });
+  boxState.clear();
+  const down = await basetenModels({ apiKey: "k", fetcher: fake({}).fetcher }).streamEvidence!(input).next();
+  expect(down.done && down.value).toMatchObject({ source: "fixture", waking: COLD_START_MIN.brain });
 });

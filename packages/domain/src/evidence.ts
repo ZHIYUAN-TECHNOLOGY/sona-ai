@@ -13,8 +13,16 @@ import type { Patient } from "./types";
 export type StudyKind = "Guideline" | "Review" | "Trial" | "Narrative review" | "Study";
 export type Study = { id: string; kind: StudyKind; year: number; title: string; finding: string; query: string; pmid?: string; journal?: string };
 export type Factor = { id: string; label: string; value?: string; rule: string; point?: boolean };
-/** One sentence of an answer and the 1-based numbers of the references behind it. */
-export type Claim = { text: string; cites: number[] };
+/** Where a claim sits in the answer: the evidence itself, the dose, or the harms to watch for. */
+export type Topic = "evidence" | "dose" | "harms";
+export const TOPICS: readonly Topic[] = ["evidence", "dose", "harms"];
+/** From one cited reference, the sentence that supports the claim, word for word. */
+export type Quote = { n: number; text: string };
+/**
+ * One sentence of an answer, the 1-based numbers of the references behind it, its topic, and from each cited reference
+ * the sentence that supports it (`quotes`, checked against the reference's own text, so the card can show the proof).
+ */
+export type Claim = { text: string; cites: number[]; topic?: Topic; quotes?: Quote[] };
 /** One numbered source: PubMed studies first, then library passages. */
 export type Reference = {
   n: number; id: string; kind: "study" | "library"; design: StudyKind | "Library"; title: string; year: number; from?: string; text: string;
@@ -29,34 +37,35 @@ export const STUDIES: Study[] = [
 
 /** The rehearsed demo question: steroids for community-acquired pneumonia. Cites number the three STUDIES in order. */
 export const isRehearsed = (q: string) => /steroid|prednis|hydrocortisone/i.test(q) && /pneumonia|\bCAP\b/i.test(q);
-// Have a clinician check these sentences before a live demo.
+// Have a clinician check these sentences before a live demo. Each bottom line only restates its own claims.
+export const BOTTOM_LINE = "Not routinely: steroids are for severe pneumonia treated in intensive care.";
 export const ANSWER: Claim[] = [
-  { text: "Routine corticosteroids are not recommended for non-severe community-acquired pneumonia; the adult guideline advises against them.", cites: [1] },
-  { text: "In severe pneumonia treated in intensive care, a large randomised trial found hydrocortisone lowered 28-day mortality, so steroids can be considered there.", cites: [3] },
-  { text: "Outside severe cases, a randomised trial found a week of prednisone reached stability about a day sooner but raised blood glucose, with no difference in mortality.", cites: [2, 1] },
+  { text: "Routine corticosteroids are not recommended for non-severe community-acquired pneumonia; the adult guideline advises against them.", cites: [1], topic: "evidence" },
+  { text: "In severe pneumonia treated in intensive care, a large randomised trial found hydrocortisone lowered 28-day mortality, so steroids can be considered there.", cites: [3], topic: "evidence" },
+  { text: "Outside severe cases, a randomised trial found a week of prednisone reached stability about a day sooner but raised blood glucose, with no difference in mortality.", cites: [2, 1], topic: "harms" },
 ];
 /** The rehearsed answer's suggested follow-ups, each with its own authored, cited answer. */
-export const FOLLOW_UPS: { question: string; claims: Claim[] }[] = [
-  { question: "When would steroids be reasonable for her?", claims: [
-    { text: "Only if her pneumonia becomes severe enough for intensive care: that is where the randomised trial found hydrocortisone lowered 28-day mortality.", cites: [3] },
-    { text: "While it stays non-severe, the guideline advises against routine steroids.", cites: [1] },
+export const FOLLOW_UPS: { question: string; bottomLine: string; claims: Claim[] }[] = [
+  { question: "When would steroids be reasonable for her?", bottomLine: "Only if her pneumonia becomes severe enough for intensive care.", claims: [
+    { text: "Only if her pneumonia becomes severe enough for intensive care: that is where the randomised trial found hydrocortisone lowered 28-day mortality.", cites: [3], topic: "evidence" },
+    { text: "While it stays non-severe, the guideline advises against routine steroids.", cites: [1], topic: "evidence" },
   ] },
-  { question: "What harms should I watch for?", claims: [
-    { text: "High blood glucose: patients given prednisone had it more often, sometimes needing insulin.", cites: [2] },
-    { text: "That trial found no difference in mortality, so the harm is not offset by survival outside severe cases.", cites: [2] },
+  { question: "What harms should I watch for?", bottomLine: "High blood glucose, with no survival benefit outside severe cases.", claims: [
+    { text: "High blood glucose: patients given prednisone had it more often, sometimes needing insulin.", cites: [2], topic: "harms" },
+    { text: "That trial found no difference in mortality, so the harm is not offset by survival outside severe cases.", cites: [2], topic: "harms" },
   ] },
-  { question: "What dose and duration did the trials use?", claims: [
-    { text: "Prednisone 50 mg once daily for 7 days in hospitalised patients.", cites: [2] },
-    { text: "Intravenous hydrocortisone 200 mg a day for 4 days, then tapered, for 8 or 14 days in all, in intensive care.", cites: [3] },
+  { question: "What dose and duration did the trials use?", bottomLine: "Prednisone 50 mg daily for 7 days; in intensive care, hydrocortisone 200 mg a day, then tapered.", claims: [
+    { text: "Prednisone 50 mg once daily for 7 days in hospitalised patients.", cites: [2], topic: "dose" },
+    { text: "Intravenous hydrocortisone 200 mg a day for 4 days, then tapered, for 8 or 14 days in all, in intensive care.", cites: [3], topic: "dose" },
   ] },
 ];
 
 /** The authored answer for the rehearsed question or one of its suggested follow-ups (exact wording); undefined for anything else. */
-export function authoredAnswer(question: string): { claims: Claim[]; followUps: string[] } | undefined {
+export function authoredAnswer(question: string): { bottomLine: string; claims: Claim[]; followUps: string[] } | undefined {
   const q = question.trim();
   const follow = FOLLOW_UPS.find(f => f.question === q);
-  if (follow) return { claims: follow.claims, followUps: FOLLOW_UPS.filter(f => f !== follow).map(f => f.question) };
-  if (isRehearsed(q)) return { claims: ANSWER, followUps: FOLLOW_UPS.map(f => f.question) };
+  if (follow) return { bottomLine: follow.bottomLine, claims: follow.claims, followUps: FOLLOW_UPS.filter(f => f !== follow).map(f => f.question) };
+  if (isRehearsed(q)) return { bottomLine: BOTTOM_LINE, claims: ANSWER, followUps: FOLLOW_UPS.map(f => f.question) };
 }
 
 /** The authored studies as numbered references, for the answer shown without the server. */
@@ -70,7 +79,31 @@ export function sourcedClaims(claims: Claim[], count: number): Claim[] {
   return claims.flatMap(c => {
     const cites = [...new Set(c.cites)].filter(n => Number.isInteger(n) && n >= 1 && n <= count);
     const text = c.text.trim();
-    return text && cites.length ? [{ text, cites }] : [];
+    const topic = c.topic && TOPICS.includes(c.topic) ? c.topic : undefined;
+    return text && cites.length ? [{ text, cites, ...topic && { topic }, ...c.quotes && { quotes: c.quotes } }] : [];
+  });
+}
+
+const plain = (s: string) => s.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"').replace(/\s+/g, " ").replace(/^[\s"'(]+|[\s"'.,;:)]+$/g, "").trim();
+/**
+ * The proof for each claim: a quote is kept only when it cites one of the claim's own references and appears in that
+ * reference's text word for word (case and spacing aside), so a quote can never be invented. A cited reference that
+ * gives no quote but is itself one short sentence (an authored finding) is quoted whole.
+ */
+export function quotedClaims(claims: Claim[], references: Pick<Reference, "n" | "text">[]): Claim[] {
+  const textOf = new Map(references.map(r => [r.n, r.text]));
+  return claims.map(c => {
+    const given = new Map((c.quotes ?? []).flatMap(q => {
+      const source = textOf.get(q.n), text = typeof q.text === "string" ? q.text.trim().slice(0, 400) : "";
+      return c.cites.includes(q.n) && source && text.length >= 12 && plain(source).includes(plain(text)) ? [[q.n, text] as const] : [];
+    }));
+    const quotes = c.cites.flatMap(n => {
+      const source = textOf.get(n)?.trim();
+      const text = given.get(n) ?? (source && source.length <= 240 && !/[.!?]\s+\S/.test(source) ? source : undefined);
+      return text ? [{ n, text }] : [];
+    });
+    const { quotes: _, ...rest } = c;
+    return quotes.length ? { ...rest, quotes } : rest;
   });
 }
 

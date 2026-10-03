@@ -5,11 +5,11 @@ import { MarkedText, TINT, segments, type Mark } from "@/components/sona/marked-
 import { useEffect, useRef, useState } from "react";
 import { Pressable, View, useWindowDimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { FadeIn, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInDown, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming, type SharedValue } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
 import { scheduleOnRN } from "react-native-worklets";
-import { Drafting, MODEL_SLOW, SampleLabel } from "@/components/sona/model-answer";
-import { EASE_OUT } from "@/components/sona/motion";
+import { SampleLabel } from "@/components/sona/model-answer";
+import { EASE_OUT, EASE_OUT_CSS, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
@@ -17,9 +17,12 @@ import { useSeenOnce } from "@/components/sona/use-visible";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
-import { threadBefore, useLiveEvidence, type ServerEvidence } from "@/features/live/evidence-sync";
+import { StreamedLead } from "@/features/encounter/conversation";
+import type { Patient } from "@/features/encounter/types";
+import { threadBefore, useLiveEvidence, type EvidenceStep, type ServerEvidence, type Turn } from "@/features/live/evidence-sync";
 import { wakingOf } from "@/features/live/waking";
-import { authoredAnswer, authoredReferences, curb65, type Claim, type Reference } from "./model";
+import { basis, calmTerms, forPatient, searchedLine, sections, stepLines, strength } from "./answer";
+import { authoredAnswer, authoredReferences, curb65, quotedClaims, type Claim, type Reference } from "./model";
 
 /*
  * Evidence answer, OpenEvidence style (docs/evidence-answer-spec.md): short claims, each ending in
@@ -40,29 +43,66 @@ const SOURCES_NOTE: Record<ServerEvidence["pubmed"], string> = { live: "PubMed �
 const DESIGN_WORDS: Record<Reference["design"], string> = { Guideline: "guideline", Review: "systematic review", Trial: "randomised trial", "Narrative review": "narrative review", Study: "study", Library: "your library" };
 const NOT_ENOUGH = "Not enough evidence found to answer this.";
 
-type Shown = { claims: Claim[]; enough: boolean; followUps: string[]; references: Reference[]; source?: string; note: string };
+type Shown = { bottomLine?: string; claims: Claim[]; enough: boolean; followUps: string[]; references: Reference[]; source?: string; note: string };
 
+/** A visit's evidence card: the request's question, answered for this patient (their CURB-65), its follow-ups asked in the visit. */
 export function EvidenceCard({ patient, result, onRequest }: FeatureProps) {
-  // Live mode asks the server; otherwise the authored answers show, for the rehearsed question and its follow-ups only.
   const { encounters } = useEncounter();
   const requests = encounters[patient.id]?.requests ?? [];
   const question = requests.find(r => r.id === result?.requestId)?.prompt || REHEARSED_QUESTION;
-  const { live, data, error } = useLiveEvidence(patient.encounterId, result?.requestId, question, threadBefore(requests, result?.requestId));
+  return <EvidenceAnswer question={question} encounterId={patient.encounterId} answerKey={result?.requestId ?? `${patient.encounterId}:${question}`}
+    thread={threadBefore(requests, result?.requestId)} patient={patient} onAsk={q => onRequest("evidence", q)} />;
+}
+
+/**
+ * One evidence answer, in a visit or anywhere else (no `patient`): while Sona works, the steps it has taken so far; then,
+ * when `lead`, its bottom line (a visit says it as the visit's lead instead), what the answer rests on, the line tying it
+ * to this patient, the claims under their topics with each citation's strength, the sources, and Related questions.
+ * A citation opens, under its claim, the sentence from that source that supports it. Live mode asks the server;
+ * otherwise the authored answers show, for the rehearsed question and its follow-ups only.
+ */
+export function EvidenceAnswer({ question, encounterId, answerKey, thread, patient, lead = false, onAsk }: {
+  question: string; encounterId?: string; answerKey: string; thread: Turn[]; patient?: Patient; lead?: boolean; onAsk: (question: string) => void;
+}) {
+  const { reducedMotion } = useAccessibleEffects();
+  const { live, data, steps, written, error } = useLiveEvidence(encounterId, answerKey, question, thread);
   const [focus, setFocus] = useState<{ n: number; at: number }>();
-  if (live && !data) return <Surface feature style={{ padding: 16, gap: 8 }}>
-    {error ? <Text style={{ ...type.subhead, color: palette.red }}>{error}</Text> : <Drafting label="Searching PubMed and your library, checking the chart…" slow={MODEL_SLOW} />}
-  </Surface>;
-  const authored = data ? undefined : authoredAnswer(question);
+  // The reveal plays once, for an answer that lands while this is on screen; one already fetched just shows.
+  const [landing] = useState(() => live && !data);
+  const at = (i: number) => (landing && !reducedMotion ? rise(i) : undefined);
+  // Streamed from the moment its first part is written: the steps fold away and the answer grows in place, part by part.
+  const writing = live && !data && written && (written.bottomLine || written.claims.length) ? written : undefined;
+  if (live && !data && !writing) return error ? <Surface feature style={{ padding: 16 }}><Text style={{ ...type.subhead, color: palette.red }}>{error}</Text></Surface>
+    : <Animated.View exiting={reducedMotion ? undefined : fold} style={{ transformOrigin: "top" }}><EvidenceSteps steps={steps} /></Animated.View>;
+  const authored = data || writing ? undefined : authoredAnswer(question);
   const shown: Shown | undefined = data
     ? { ...data, note: data.source === "cached" && data.references.some(r => r.kind === "study") ? `${data.pubmed === "live" ? "PubMed records" : "PubMed, saved copy"} · reviewed summaries` : data.references.some(r => r.kind === "library") && data.pubmed !== "live" ? "Your library · PubMed unreachable" : SOURCES_NOTE[data.pubmed] }
-    : authored && { ...authored, enough: true, references: authoredReferences(), source: undefined, note: "Authored summaries · links open PubMed" };
-  const caption = !shown ? "" : !data ? "Rehearsed answer" : data.source === "cached" ? "Rehearsed answer" : "";
+    : writing ? { bottomLine: writing.bottomLine, claims: writing.claims, enough: true, followUps: [], references: writing.references ?? [], note: "" }
+    : authored && { ...authored, claims: quotedClaims(authored.claims, authoredReferences()), enough: true, references: authoredReferences(), source: undefined, note: "Authored summaries · links open PubMed" };
+  const caption = !shown || writing ? "" : !data ? "Rehearsed answer" : data.source === "cached" ? "Rehearsed answer" : "";
   const cite = (n: number) => { haptic("select"); setFocus({ n, at: Date.now() }); };
+  const rests = shown?.enough ? basis(shown.claims, shown.references) : "";
+  // Tied to the patient once the server's CURB-65 is in (or, without the server, the chart's own).
+  const mine = patient && !writing && forPatient(question, patient.name.split(" ")[0]!, data ? data.curb65 : curb65(patient));
 
   return <View style={{ gap: 14 }}>
-    <Surface feature style={{ padding: 16, gap: 12 }}>
+    {/* The steps, folded to one line: writing while the answer streams in, then what was searched, read and cited. */}
+    {(data || writing) && <Animated.View key="status" entering={at(0)} accessible accessibilityLiveRegion="polite" style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+      <StepMark done={Boolean(data)} still={reducedMotion} />
+      <Text numberOfLines={1} style={{ ...type.footnote, flexShrink: 1, color: palette.muted }}>{data ? searchedLine(data.claims, data.references) : "Writing the answer…"}</Text>
+    </Animated.View>}
+    {lead && shown?.bottomLine && <Animated.View entering={at(1)}><StreamedLead text={calmTerms(shown.bottomLine)} animate /></Animated.View>}
+    {/* The card's surface only fades in; what it holds rises, block by block. */}
+    <Animated.View entering={landing && !reducedMotion ? riseIn({ delay: REVEAL.step, distance: 0, duration: 300 }) : undefined}><Surface feature style={{ padding: 16, gap: 12 }}>
+      {(rests || mine) && <Animated.View entering={at(2)} style={{ gap: 4 }}>
+        {rests ? <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{rests}</Text> : null}
+        {mine && <Text style={{ ...type.subhead, fontWeight: "600", color: palette.blue }}>{mine}</Text>}
+      </Animated.View>}
       {!shown ? <Text style={{ ...type.callout, color: palette.muted }}>Live mode answers this question from PubMed and your library. Switch it on in Settings.</Text>
-        : shown.enough ? shown.claims.map((c, i) => <ClaimLine key={i} claim={c} references={shown.references} onCite={cite} />)
+        : shown.enough ? sections(shown.claims).map((section, i) => <Animated.View key={section.topic} entering={at(3 + i)} style={{ gap: 10 }}>
+          {section.title && <Text style={{ ...type.overline, color: palette.muted }}>{section.title}</Text>}
+          {section.claims.map((c, j) => <ClaimLine key={j} claim={c} references={shown.references} onCite={cite} />)}
+        </Animated.View>)
         : data?.general ? <View style={{ gap: 4 }}>
           <Text selectable style={{ ...type.callout, color: palette.ink }}>{data.general}</Text>
           <Text selectable style={{ ...type.caption, color: palette.muted }}>General answer · no source found for this</Text>
@@ -72,36 +112,120 @@ export function EvidenceCard({ patient, result, onRequest }: FeatureProps) {
         {data && data.references.length > 0 && <SampleLabel source={data.source === "fixture" || data.source === "cached" ? data.source : "model"} model={data.source} waking={wakingOf(data)} what="evidence" />}
         {caption ? <Text selectable style={{ ...type.caption, color: palette.muted }}>{caption}</Text> : null}
       </View>}
-    </Surface>
-    {shown && shown.references.length > 0 && <Sources references={shown.references} note={shown.note} focus={focus} />}
+    </Surface></Animated.View>
+    {shown && shown.references.length > 0 && <Animated.View entering={at(6)}><Sources references={shown.references} note={shown.note} focus={focus} /></Animated.View>}
     {data && !data.references.length && <Text selectable style={{ ...type.footnote, color: palette.amber }}>{data.pubmed === "unavailable" ? SOURCES_NOTE.unavailable : "Nothing on this in PubMed or your library"}</Text>}
-    <Severity patient={patient} server={data?.curb65} />
-    <QuestionList title="Related" questions={shown?.followUps.map(q => ({ key: q, text: q })) ?? []} onAsk={q => onRequest("evidence", q)} />
+    {patient && <Animated.View entering={at(7)}><Severity patient={patient} server={data?.curb65 ?? undefined} /></Animated.View>}
+    <Animated.View entering={at(7)}><QuestionList title="Related" questions={shown?.followUps.map(q => ({ key: q, text: q })) ?? []} onAsk={onAsk} /></Animated.View>
   </View>;
 }
 
+/*
+ * The answer lands (after Monogram's pulse-sweep reveal, 60fps): the searched line, the bottom line, then each block of
+ * the card rise 24 pt into place and fade in over 0.55 s on the ease-out, 60 ms apart; the card's own surface only fades.
+ * The steps fold away meanwhile: their card lifts 10 pt, flattens toward its top edge and fades (0.28 s).
+ */
+const REVEAL = { distance: 24, duration: 550, step: 60 };
+const rise = (i: number) => riseIn({ delay: REVEAL.step * i, distance: REVEAL.distance, duration: REVEAL.duration });
+function fold() {
+  "worklet";
+  const config = { duration: 280, easing: EASE_OUT };
+  return {
+    initialValues: { opacity: 1, transform: [{ translateY: 0 }, { scaleY: 1 }] },
+    animations: { opacity: withTiming(0, { duration: 220, easing: EASE_OUT }), transform: [{ translateY: withTiming(-10, config) }, { scaleY: withTiming(0.5, config) }] },
+  };
+}
+
+/*
+ * What Sona is doing while the answer is made (after Remy's analysis checklist, 60fps), one line per step as the server
+ * reports it: each slides up 10 pt and fades in over 0.45 s; the step in progress breathes (a dot with a soft halo that
+ * swells and fades every 1.1 s, only while it works); a finished step's tick pops in on a spring (0.35 s, damping 0.55)
+ * with a short teal glow that settles to a faint halo. Reduced motion: the same marks, still.
+ */
+function EvidenceSteps({ steps }: { steps: EvidenceStep[] }) {
+  const { reducedMotion } = useAccessibleEffects();
+  const lines = stepLines(steps);
+  return <Surface feature style={{ padding: 16, gap: 12 }}>
+    <View accessible accessibilityLiveRegion="polite" accessibilityLabel={lines.at(-1)!.text} style={{ gap: 12 }}>
+      {lines.map(line => <Animated.View key={line.key} entering={reducedMotion ? undefined : riseIn({ distance: 10, duration: 450 })} style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <StepMark done={line.done} still={reducedMotion} />
+        <Text style={{ ...type.subhead, flex: 1, color: line.done ? palette.muted : palette.ink, fontWeight: line.done ? "400" : "600" }}>{line.text}</Text>
+      </Animated.View>)}
+    </View>
+  </Surface>;
+}
+
+const BLUE_HALO = "rgba(36,91,204,0.22)";
+/** A step's mark: while it works, a dot breathing in its halo; once done, a tick that pops in with a short glow. */
+function StepMark({ done, still }: { done: boolean; still: boolean }) {
+  return <View style={{ width: 22, height: 22, alignItems: "center", justifyContent: "center" }}>
+    {done ? <>
+      {/* The glow ends where its style rests (a faint halo), so nothing jumps when the animation hands over. */}
+      <Animated.View key="glow" entering={still ? undefined : glow} style={{ position: "absolute", width: 22, height: 22, borderRadius: 11, backgroundColor: TEAL, opacity: 0.12, transform: [{ scale: still ? 1 : 1.3 }] }} />
+      <Animated.View key="tick" entering={still ? undefined : pop}><Icon name="checkmark" size={13} color={TEAL} /></Animated.View>
+    </> : <>
+      <Animated.View key="halo" style={{ position: "absolute", width: 22, height: 22, borderRadius: 11, backgroundColor: BLUE_HALO, ...(still ? { opacity: 0.6 } : BREATHE) }} />
+      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: palette.blue }} />
+    </>}
+  </View>;
+}
+const BREATHE = { animationName: { from: { opacity: 0.9, transform: [{ scale: 0.55 }] }, to: { opacity: 0, transform: [{ scale: 1.2 }] } }, animationDuration: 1100, animationIterationCount: "infinite", animationTimingFunction: EASE_OUT_CSS } as const;
+function pop() {
+  "worklet";
+  return { initialValues: { opacity: 0, transform: [{ scale: 0.6 }] }, animations: { opacity: withTiming(1, { duration: 120 }), transform: [{ scale: withSpring(1, { duration: 350, dampingRatio: 0.55 }) }] } };
+}
+function glow() {
+  "worklet";
+  return {
+    initialValues: { opacity: 0, transform: [{ scale: 0.8 }] },
+    animations: { opacity: withSequence(withTiming(0.4, { duration: 120 }), withTiming(0.12, { duration: 600, easing: EASE_OUT })), transform: [{ scale: withTiming(1.3, { duration: 700, easing: EASE_OUT }) }] },
+  };
+}
+
 /**
- * One claim laid out word by word so its citation pills are real rounded pills that wrap with the
- * last words. Key terms keep their tint. VoiceOver reads the claim once, then each citation.
+ * One claim laid out word by word so its citation pills are real rounded pills that wrap with the last words. Key terms
+ * keep their tint, and a term of several words reads as one tint. Each pill says its number and strength ("1 · Guideline");
+ * tapping it opens, under the claim, the sentence from that source that supports the claim. VoiceOver reads the claim
+ * once, then each citation.
  */
 function ClaimLine({ claim, references, onCite }: { claim: Claim; references: Reference[]; onCite: (n: number) => void }) {
+  const { reducedMotion } = useAccessibleEffects();
+  const [open, setOpen] = useState<number>();
   // Words with their tint, and whether a space follows: punctuation after a tinted term ("pneumonia;") stays attached.
   const words: { word: string; mark?: Mark; space: boolean }[] = [];
-  for (const seg of segments(claim.text)) {
+  for (const seg of segments(calmTerms(claim.text))) {
     if (/^\s/.test(seg.text) && words.length) words[words.length - 1]!.space = true;
     for (const m of seg.text.matchAll(/(\S+)(\s*)/g)) words.push({ word: m[1]!, mark: seg.mark, space: m[2]!.length > 0 });
   }
-  return <View>
-    <Text accessible accessibilityLabel={claim.text} style={{ position: "absolute", opacity: 0 }}>{claim.text}</Text>
+  const plainText = segments(claim.text).map(s => s.text).join("");
+  const proof = open === undefined ? undefined : { source: references.find(r => r.n === open), quote: claim.quotes?.find(q => q.n === open)?.text };
+  return <View style={{ gap: 8 }}>
+    <Text accessible accessibilityLabel={plainText} style={{ position: "absolute", opacity: 0 }}>{plainText}</Text>
     <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", rowGap: 2 }}>
-      {words.map((w, i) => <Text key={i} accessible={false} style={{ ...type.callout, color: palette.ink }}>{w.mark ? <Text style={{ ...TINT[w.mark], fontWeight: "500" }}>{w.word}</Text> : w.word}{w.space ? " " : ""}</Text>)}
-      {claim.cites.map(n => { const r = references.find(x => x.n === n);
-        return <Pressable key={n} accessibilityRole="button" accessibilityLabel={`Source ${n}${r ? `, ${DESIGN_WORDS[r.design]}, ${[r.from, r.year].filter(Boolean).join(" ")}` : ""}`} accessibilityHint="Shows this source below"
-          hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }} onPress={() => onCite(n)}
-          style={{ marginLeft: 4 }}>{({ pressed }) => <PressScale pressed={pressed} style={{ minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(36,91,204,0.12)" }}>
-          <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue, fontVariant: ["tabular-nums"] }}>{n}</Text>
+      {words.map((w, i) => {
+        // The space inside a term of several words takes the tint too, so "intensive care" is one tint, not two.
+        const joined = w.mark && w.space && words[i + 1]?.mark === w.mark;
+        return <Text key={i} accessible={false} style={{ ...type.callout, color: palette.ink }}>{w.mark ? <Text style={{ ...TINT[w.mark], fontWeight: "500" }}>{joined ? `${w.word} ` : w.word}</Text> : w.word}{w.space && !joined ? " " : ""}</Text>;
+      })}
+      {claim.cites.map(n => { const r = references.find(x => x.n === n), on = open === n;
+        return <Pressable key={n} accessibilityRole="button" accessibilityState={{ expanded: on }} accessibilityLabel={`Source ${n}${r ? `, ${DESIGN_WORDS[r.design]}, ${[r.from, r.year].filter(Boolean).join(" ")}` : ""}`} accessibilityHint="Shows what this source says"
+          hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }} onPress={() => { setOpen(on ? undefined : n); if (!on) onCite(n); }}
+          style={{ marginLeft: 4 }}>{({ pressed }) => <PressScale pressed={pressed} style={{ height: 22, paddingHorizontal: 7, borderRadius: 11, flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: on ? palette.blue : "rgba(36,91,204,0.12)" }}>
+          <Text style={{ ...type.caption, fontWeight: "700", color: on ? palette.white : palette.blue, fontVariant: ["tabular-nums"] }}>{n}</Text>
+          {r && <Text style={{ ...type.caption, fontWeight: "500", color: on ? palette.white : palette.blue }}>· {strength(r.design)}</Text>}
         </PressScale>}</Pressable>; })}
     </View>
+    {proof?.source && <Animated.View entering={reducedMotion ? undefined : FadeInDown.duration(200)} style={{ gap: 6, padding: 12, borderRadius: radius.control, backgroundColor: "rgba(36,91,204,0.06)", borderLeftWidth: 3, borderLeftColor: palette.blue }}>
+      {proof.quote ? <Text selectable style={{ ...type.subhead, color: palette.ink }}>“{proof.quote}”</Text>
+        : <Text style={{ ...type.footnote, color: palette.muted }}>This source has no single sentence quoted for this claim. Open it to read the whole of it.</Text>}
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Text numberOfLines={1} style={{ ...type.caption, flex: 1, color: palette.muted }}>{[DESIGN_WORDS[proof.source.design].replace(/^./, c => c.toUpperCase()), proof.source.year, proof.source.from].filter(Boolean).join(" · ")}</Text>
+        {proof.source.url ? <Pressable accessibilityRole="link" accessibilityLabel={`Open the PubMed abstract for ${proof.source.title}`} hitSlop={8} onPress={() => { void WebBrowser.openBrowserAsync(proof.source!.url!).catch(() => {}); }} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+          <Text style={{ ...type.caption, fontWeight: "600", color: palette.blue }}>Open abstract</Text>
+          <Icon name="arrow.up.right" size={10} color={palette.blue} />
+        </Pressable> : null}
+      </View>
+    </Animated.View>}
   </View>;
 }
 

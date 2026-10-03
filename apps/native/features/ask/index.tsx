@@ -22,7 +22,8 @@ import { startingReply, wakingOf } from "@/features/live/waking";
 import { PLACEHOLDER, SCOPE_LABEL, askContext, forWhichPatient, matchQuestion, suggestion, type Answer, type Scope } from "./answers";
 import { askCatalog, validateAskSpec } from "./catalog";
 import { SAVABLE, isSaved, saveView, useSaved } from "./saved";
-import { answerOf, type Entry, type Reply } from "./thread";
+import { routePrompt } from "@/features/encounter/state";
+import { EVIDENCE, answerOf, type Entry, type Reply } from "./thread";
 import { ThreadEntry } from "./today-thread";
 
 /** Space a page leaves at the end of its content so the ask bar never covers it. */
@@ -143,7 +144,9 @@ export function WithSona({ scope, answers, onTab, hidden = false, children }: { 
   const settle = async (id: number, question: string) => reply(id, await answerFree(scope, question, answers));
   /** `rule`: the answer when the question is a known one (the ✦), so it never rests on matching its words. Attachments
    * have no reader on these pages: Sona asks whose they are, and the visit picked has them waiting (./encounter/carry). */
-  const ask = (question: string, rule?: Answer) => {
+  const ask = (question: string, rule?: Answer, evidence = false) => {
+    // A clinical question (or an evidence answer's follow-up) is answered from the evidence, with citations, as on Today.
+    if (!rule && !pending.length && (evidence || routePrompt(question) === "evidence")) { const id = next.current++; setEntries(list => [...list, { id, question, reply: EVIDENCE }]); return; }
     if (!rule && pending.length) { carry(pending); setPending([]); rule = forWhichPatient(question, patients); }
     const now = rule ? { answer: rule } : answerNow(question, answers, on), id = next.current++;
     setEntries(list => [...list, { id, question, ...(now && { reply: now }) }]);
@@ -161,7 +164,7 @@ export function WithSona({ scope, answers, onTab, hidden = false, children }: { 
   }, [talking]); // eslint-disable-line react-hooks/exhaustive-deps
   return <View style={{ flex: 1 }}>
     <View ref={backdrop} collapsable={false} style={{ flex: 1 }}>
-      {talking ? <PageConversation entries={entries} bottom={dockH + 32} onAgain={e => { reply(e.id); void settle(e.id, e.question); }} onTab={tab} /> : children}
+      {talking ? <PageConversation entries={entries} bottom={dockH + 32} onAgain={e => { reply(e.id); void settle(e.id, e.question); }} onEvidence={q => ask(q, undefined, true)} onTab={tab} /> : children}
     </View>
     {/* What passes under the dock and its ✦ blurs and fades into the canvas, as tall a band as Today's, so the chip reads over a calm edge. */}
     {!hidden && <>
@@ -179,7 +182,7 @@ export function WithSona({ scope, answers, onTab, hidden = false, children }: { 
 }
 
 /** A page's conversation, laid out as Today's: each newest question, and its answer once it lands, is brought into view. */
-function PageConversation({ entries, bottom, onAgain, onTab }: { entries: Entry[]; bottom: number; onAgain: (entry: Entry) => void; onTab?: (tab: string) => void }) {
+function PageConversation({ entries, bottom, onAgain, onEvidence, onTab }: { entries: Entry[]; bottom: number; onAgain: (entry: Entry) => void; onEvidence: (question: string) => void; onTab?: (tab: string) => void }) {
   const insets = useSafeAreaInsets();
   const scroll = useRef<ScrollView>(null), brought = useRef("");
   const newest = entries.at(-1);
@@ -188,6 +191,6 @@ function PageConversation({ entries, bottom, onAgain, onTab }: { entries: Entry[
     {entries.map(entry => <View key={entry.id} collapsable={false} onLayout={e => {
       const key = `${entry.id}${entry.reply ? "+" : ""}`;
       if (entry.id === newest?.id && brought.current !== key) { brought.current = key; scroll.current?.scrollTo({ y: Math.max(0, e.nativeEvent.layout.y - 8), animated: true }); }
-    }}><ThreadEntry entry={entry} fresh={entry.id === newest?.id} onAgain={() => onAgain(entry)} onTab={onTab} /></View>)}
+    }}><ThreadEntry entry={entry} fresh={entry.id === newest?.id} onAgain={() => onAgain(entry)} onEvidence={onEvidence} onTab={onTab} /></View>)}
   </ScrollView>;
 }

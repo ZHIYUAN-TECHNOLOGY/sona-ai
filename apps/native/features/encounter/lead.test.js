@@ -36,6 +36,8 @@ test("the evidence lead never contradicts 'not enough evidence', and is hidden w
   expect(leadFor("evidence", amelia, { evidence: "enough" }, "Anything")).not.toMatch(/steroids/);
   expect(leadFor("evidence", amelia, { evidence: "off" }, "Anything")).toMatch(/Live mode/);
   expect(leadFor("evidence", amelia, {}, "Anything")).toBeUndefined();
+  // An answer's own bottom line leads, so the doctor reads the answer before the card.
+  expect(leadFor("evidence", amelia, { evidence: "enough", bottomLine: "Not routinely." }, "Steroids?")).toBe("Not routinely.");
 });
 
 test("the briefing lead mentions a result only while it waits to be acknowledged; prescribing and follow-up follow their state", () => {

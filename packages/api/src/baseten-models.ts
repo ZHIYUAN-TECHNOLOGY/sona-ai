@@ -1,10 +1,13 @@
 import type { AppealLetter, Code } from "@sona-ai/domain/claim";
 import { planFor, type Language, type PlanRecord } from "@sona-ai/domain/discharge";
+import type { Claim } from "@sona-ai/domain/evidence";
 import { DRAFT_MAX } from "@sona-ai/domain/messages";
 import { huddle } from "@sona-ai/domain/ward";
 
 import { LANGUAGE_NAME, chatModels, jsonIn } from "./chat-models";
-import { stubModels, type Models, type Origin } from "./models";
+import { partialEvidence } from "./evidence-stream";
+import { stubModels, type EvidenceAnswer, type EvidenceInput, type EvidencePart, type Models, type Origin } from "./models";
+import { deltas } from "./sse";
 import { piiModels } from "./pii-model";
 import { scribeModels } from "./scribe-model";
 import { chatLook, visionModels } from "./vision-models";
@@ -62,9 +65,12 @@ const BRIEFING = `You brief a hospital doctor before they see a patient. Use ONL
 Answer with JSON only: {"lines": ["<one short sentence>", ...]}: 2 to 4 lines, most important first: why they came, what in the history or medicines matters today, any allergy, and anything missing from the record.`;
 
 const EVIDENCE = `You answer a doctor's clinical question, from the numbered sources first.
-Answer with JSON only: {"claims": [{"text": "<one or two sentences>", "cites": [<source numbers>]}], "followUps": ["<question>", ...], "general": "<only when there are no claims>"}
+Answer with JSON only: {"bottomLine": "<one sentence>", "claims": [{"text": "<one or two sentences>", "cites": [<source numbers>], "topic": "evidence" | "dose" | "harms", "quotes": [{"n": <source number>, "text": "<sentence copied from that source>"}]}], "followUps": ["<question>", ...], "general": "<only when there are no claims>"}
 Rules:
+- bottomLine: the direct answer to the question in one short sentence, drawn only from your claims.
 - 2 to 4 claims, each supported by and citing at least one numbered source. Never state a dose, number or finding that a cited source does not contain.
+- topic: "dose" for doses and durations, "harms" for side effects and risks, otherwise "evidence".
+- quotes: for each source a claim cites, copy the one sentence from that source that supports it, word for word.
 - Say how strong each claim is in words from the source's design (a guideline recommends, a randomised trial found, a review concluded).
 - If the sources do not answer the question, return no claims and answer in "general" from general medical knowledge, in one to three short sentences. You have not seen this patient's record: never state a fact about them.
 - Up to 3 short follow-up questions these sources could answer.`;
@@ -254,7 +260,7 @@ export function boxes({ apiKey, fetcher = fetch, timeoutMs = 30_000 }: Baseten) 
 }
 
 export function basetenModels(options: Baseten, fallback: Models = stubModels): Models {
-  const { call, chat } = boxes(options);
+  const { call, chat, send } = boxes(options);
   const brain = async (system: string, user: string, maxTokens?: number) => jsonIn(await chat("brain", BRAIN_MODEL, system, user, maxTokens));
 
   const hosted: Partial<Models> = {
@@ -301,15 +307,8 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
 
     async synthesiseEvidence(input) {
       try {
-        const sources = input.sources.map(s => `[${s.n}] (${s.design}${s.year ? `, ${s.year}` : ""}) ${s.title}\n${s.text}`).join("\n\n");
-        const thread = input.thread.map(t => `Earlier question: ${t.question}\nEarlier answer: ${t.answer}`).join("\n");
-        const read = await brain(EVIDENCE, `${thread ? `${thread}\n\n` : ""}Question: ${input.question}\n\nSources:\n${sources}`, 900);
-        if (read && Array.isArray(read.claims)) {
-          // The route drops claims citing nothing or a number outside the sources (sourcedClaims).
-          const claims = read.claims.flatMap(c => typeof c?.text === "string" && Array.isArray(c.cites)
-            ? [{ text: c.text.trim(), cites: c.cites.filter((n: unknown): n is number => Number.isInteger(n)) }] : []);
-          return { claims, followUps: strings(read.followUps, 3), general: text(read.general), source: "model", model: BRAIN_MODEL };
-        }
+        const read = await brain(EVIDENCE, evidenceQuestion(input), 900);
+        if (read && Array.isArray(read.claims)) return { ...evidenceOf(read), source: "model", model: BRAIN_MODEL };
       } catch { /* falls back below */ }
       return fallback.synthesiseEvidence(input);
     },
@@ -440,7 +439,50 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
       return answer.source === "fixture" ? { ...answer, ...wakingOf(box) } : answer;
     }] as const;
   });
-  return { ...fallback, ...Object.fromEntries(withWaking) };
+  const wrapped: Models = { ...fallback, ...Object.fromEntries(withWaking) };
+
+  /**
+   * The evidence answer as Gemma writes it: the bottom line, then each claim as it closes, then the whole answer read and
+   * checked as `synthesiseEvidence` reads it. Outside the waking wrapper (it streams); a box that is starting or fails
+   * gives the whole answer from `synthesiseEvidence` instead, which says when the box will be up.
+   */
+  async function* streamEvidence(input: EvidenceInput): AsyncGenerator<EvidencePart, Awaited<ReturnType<Models["synthesiseEvidence"]>>> {
+    try {
+      const body = JSON.stringify({ model: BRAIN_MODEL, messages: [{ role: "system", content: EVIDENCE }, { role: "user", content: evidenceQuestion(input) }], stream: true, temperature: 0.1, max_tokens: 900 });
+      const res = await send("brain", "/v1/chat/completions", body, "application/json", 60_000);
+      let written = "", bottom = false, sent = 0;
+      for await (const delta of deltas(res.body!, () => answered("brain"))) {
+        written += delta;
+        const part = partialEvidence(written);
+        if (!bottom && part.bottomLine?.trim()) { bottom = true; yield { bottomLine: part.bottomLine.trim().slice(0, 240) }; }
+        for (const claim of evidenceOf({ claims: part.claims.slice(sent) }).claims) yield { claim };
+        sent = part.claims.length;
+      }
+      const read = jsonIn(written);
+      if (read && Array.isArray(read.claims)) return { ...evidenceOf(read), source: "model", model: BRAIN_MODEL };
+    } catch { /* the whole answer below */ }
+    return await wrapped.synthesiseEvidence(input);
+  }
+  return { ...wrapped, streamEvidence };
+}
+
+/** The question, the thread so far and the numbered sources, as the evidence prompt reads them. */
+function evidenceQuestion(input: EvidenceInput) {
+  const sources = input.sources.map(s => `[${s.n}] (${s.design}${s.year ? `, ${s.year}` : ""}) ${s.title}\n${s.text}`).join("\n\n");
+  const thread = input.thread.map(t => `Earlier question: ${t.question}\nEarlier answer: ${t.answer}`).join("\n");
+  return `${thread ? `${thread}\n\n` : ""}Question: ${input.question}\n\nSources:\n${sources}`;
+}
+
+/**
+ * Gemma's evidence JSON as an answer: claims with text and numeric cites (their topic and quotes passed on for the route
+ * to check: sourcedClaims drops claims citing nothing or a number outside the sources, quotedClaims keeps only quotes the
+ * source says), up to 3 follow-ups, the general answer and the bottom line.
+ */
+function evidenceOf(read: Record<string, unknown>): EvidenceAnswer {
+  const claims = (Array.isArray(read.claims) ? read.claims : []).flatMap((c: { text?: unknown; cites?: unknown; topic?: unknown; quotes?: unknown }) => typeof c?.text === "string" && Array.isArray(c.cites)
+    ? [{ text: c.text.trim(), cites: c.cites.filter((n: unknown): n is number => Number.isInteger(n)), topic: c.topic as Claim["topic"],
+      quotes: Array.isArray(c.quotes) ? c.quotes.filter((q: { n?: unknown; text?: unknown }) => Number.isInteger(q?.n) && typeof q?.text === "string") : undefined }] : []);
+  return { claims, followUps: strings(read.followUps, 3), general: text(read.general), bottomLine: text(read.bottomLine, 240) };
 }
 
 /**

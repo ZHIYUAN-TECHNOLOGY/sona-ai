@@ -8,9 +8,12 @@ import type { Answer } from "./answers";
  */
 /**
  * What Sona said: an answer (a rule's, or a model's with its name; `general` when it came from general knowledge, not the
- * page's data), or a notice; `again` when asking again may work (the model was starting or out of reach).
+ * page's data), or a notice; `again` when asking again may work (the model was starting or out of reach); or, for a
+ * clinical question, an evidence answer, which reads PubMed and the library as the entry shows it.
  */
-export type Reply = { answer: Answer; model?: string; general?: boolean } | { notice: string; again?: boolean };
+export type Reply = { answer: Answer; model?: string; general?: boolean } | { notice: string; again?: boolean } | { evidence: true };
+/** A clinical question for the evidence (steroids, guidelines, trials…), or a follow-up from an evidence answer. */
+export const EVIDENCE: Reply = { evidence: true };
 /** No reply yet: Sona is thinking. */
 export type Entry = { id: number; question: string; reply?: Reply };
 export type Thread = { day: string; entries: Entry[]; next: number };

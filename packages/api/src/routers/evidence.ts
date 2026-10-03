@@ -1,11 +1,11 @@
 import { documents, encounters, observations, patients, provenance, pubmedArticles } from "@sona-ai/db/schema/clinical";
-import { STUDIES, authoredAnswer, curb65FromObservations, isRehearsed, pubmedUrl, sourcedClaims, studyKind, type Claim, type ObservationRow, type Reference } from "@sona-ai/domain/evidence";
+import { STUDIES, authoredAnswer, curb65FromObservations, isRehearsed, pubmedUrl, quotedClaims, sourcedClaims, studyKind, type Claim, type ObservationRow, type Reference } from "@sona-ai/domain/evidence";
 import { ORPCError } from "@orpc/server";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import type { Context } from "../context";
-import { stubModels } from "../models";
+import { stubModels, type Models } from "../models";
 import { protectedProcedure } from "../index";
 import { fetchArticles, searchEvidence, searchTerms, type Article } from "../pubmed";
 
@@ -58,44 +58,90 @@ async function passagesFor(context: Context, hospitalId: string, question: strin
 }
 
 const turn = z.object({ question: z.string().trim().min(1).max(500), answer: z.string().max(4000) });
+/** A visit's question (`encounterId`: its patient's CURB-65 and the patient kept out of the search), or one asked anywhere else (no patient). */
+const askInput = z.object({ encounterId: z.string().min(1).optional(), question: z.string().trim().min(1).max(500), thread: z.array(turn).max(4).default([]) });
+
+/**
+ * What the answer is doing, as it happens: searching, then reading what was found, then (when a model writes it)
+ * writing; while it writes, its bottom line and each claim as soon as they are written and checked.
+ */
+export type EvidenceStep = { type: "step"; step: "search" } | { type: "step"; step: "read"; studies: number; passages: number; references: Reference[] } | { type: "step"; step: "write" }
+  | { type: "bottomLine"; text: string } | { type: "claim"; claim: Claim };
+
+/**
+ * One evidence answer, step by step: `ask` waits for it, `stream` passes each step to the app as it happens, so the
+ * clinician sees what Sona is doing (searching, reading, writing) instead of a spinner.
+ */
+async function* answer(context: Context & { hospitalId: string }, input: z.infer<typeof askInput>) {
+  const { db, hospitalId } = context;
+  const [visit] = input.encounterId ? await db.select({ patientId: patients.id, name: patients.name, age: patients.age }).from(encounters).innerJoin(patients, eq(patients.id, encounters.patientId))
+    .where(and(eq(encounters.id, input.encounterId), eq(encounters.hospitalId, hospitalId))) : [];
+  if (input.encounterId && !visit) throw new ORPCError("NOT_FOUND", { message: `No encounter ${input.encounterId}` });
+
+  yield { type: "step", step: "search" } as EvidenceStep;
+  // The rehearsed question, or one of its suggested follow-ups word for word, answers from authored content.
+  const authored = authoredAnswer(input.question);
+  // PubMed gets the question's key terms (a follow-up keeps the thread's topic), never the patient's name or record number.
+  const terms = searchTerms(input.question, input.thread.map(t => t.question), visit ? [visit.name, visit.patientId] : []);
+  const { articles, pubmed } = await articlesFor(db, context.fetch ?? fetch, terms, Boolean(authored));
+  // Authored answers show their reviewed summary of each study (a guideline's abstract rarely states its recommendations); others quote the abstract.
+  const summary = (pmid: string) => (authored ? STUDIES.find(s => s.pmid === pmid)?.finding : undefined);
+  const studies: Reference[] = articles.map((a, i) => ({ n: i + 1, id: `pmid:${a.pmid}`, kind: "study", design: a.kind, title: a.title, year: a.year, from: a.journal, text: summary(a.pmid) ?? a.conclusion, url: pubmedUrl({ pmid: a.pmid, query: a.title }), pmid: a.pmid }));
+  const passages = await passagesFor(context, hospitalId, input.question);
+  const references: Reference[] = [...studies, ...passages.map((p, i) => ({ n: studies.length + i + 1, kind: "library" as const, design: "Library" as const, ...p }))];
+  yield { type: "step", step: "read", studies: studies.length, passages: passages.length, references } as EvidenceStep;
+
+  let claims: Claim[], followUps: string[], source: string, waking: number | undefined, general: string | undefined, bottomLine: string | undefined;
+  if (authored) {
+    // Authored cites number the three rehearsed studies; renumber them to where each study landed, so a missing study drops its claims.
+    const at = (n: number) => studies.findIndex(s => s.pmid === STUDIES[n - 1]?.pmid) + 1;
+    claims = sourcedClaims(authored.claims.map(c => ({ ...c, cites: c.cites.map(at) })), studies.length);
+    followUps = authored.followUps; source = "cached"; bottomLine = claims.length ? authored.bottomLine : undefined;
+  } else {
+    yield { type: "step", step: "write" } as EvidenceStep;
+    const models = context.models ?? stubModels;
+    const asked = { question: input.question, thread: input.thread, sources: references.map(r => ({ n: r.n, design: r.design, year: r.year, title: r.title, text: r.text })) };
+    let read: Awaited<ReturnType<Models["synthesiseEvidence"]>>;
+    if (models.streamEvidence) {
+      // Each part goes to the app as soon as it is written, checked as the whole answer is: a claim must cite a source, and its quotes must be in it.
+      const run = models.streamEvidence(asked);
+      for (let next = await run.next(); ; next = await run.next()) {
+        if (next.done) { read = next.value; break; }
+        if ("bottomLine" in next.value) { yield { type: "bottomLine", text: next.value.bottomLine } as EvidenceStep; continue; }
+        const [claim] = quotedClaims(sourcedClaims([next.value.claim], references.length), references);
+        if (claim) yield { type: "claim", claim } as EvidenceStep;
+      }
+    } else read = await models.synthesiseEvidence(asked);
+    claims = sourcedClaims(read.claims, references.length); followUps = read.followUps.slice(0, 3); source = read.source === "model" ? read.model : "fixture";
+    // While Gemma is starting, the sample says in how many minutes.
+    waking = read.source === "fixture" ? read.waking : undefined;
+    // No source answers it: Gemma's general answer shows instead, marked as not from the sources.
+    general = claims.length ? undefined : read.general;
+    bottomLine = claims.length ? read.bottomLine : undefined;
+  }
+  // Each claim's proof: the sentence from each cited source that says it, checked word for word against that source.
+  claims = quotedClaims(claims, references);
+
+  const rows = visit ? await db.select().from(observations).where(eq(observations.patientId, visit.patientId)).orderBy(asc(observations.observedAt)) : [];
+  const curb65 = visit ? curb65FromObservations(rows as ObservationRow[], visit.age) : null;
+
+  await db.insert(provenance).values({ id: crypto.randomUUID(), encounterId: input.encounterId ?? null, kind: "evidence-answer", output: { question: input.question, bottomLine, claims, general }, sourceIds: references.map(r => r.id), model: source, approvedBy: null });
+  return { question: input.question, bottomLine, claims, enough: claims.length > 0, general, followUps, source, ...waking ? { waking } : {}, references, pubmed, curb65 };
+}
 
 export const evidenceRouter = {
-  ask: protectedProcedure.input(z.object({ encounterId: z.string().min(1), question: z.string().trim().min(1).max(500), thread: z.array(turn).max(4).default([]) })).handler(async ({ context, input }) => {
-    const { db, hospitalId } = context;
-    const [visit] = await db.select({ patientId: patients.id, name: patients.name, age: patients.age }).from(encounters).innerJoin(patients, eq(patients.id, encounters.patientId))
-      .where(and(eq(encounters.id, input.encounterId), eq(encounters.hospitalId, hospitalId)));
-    if (!visit) throw new ORPCError("NOT_FOUND", { message: `No encounter ${input.encounterId}` });
-
-    // The rehearsed question, or one of its suggested follow-ups word for word, answers from authored content.
-    const authored = authoredAnswer(input.question);
-    // PubMed gets the question's key terms (a follow-up keeps the thread's topic), never the patient's name or record number.
-    const terms = searchTerms(input.question, input.thread.map(t => t.question), [visit.name, visit.patientId]);
-    const { articles, pubmed } = await articlesFor(db, context.fetch ?? fetch, terms, Boolean(authored));
-    // Authored answers show their reviewed summary of each study (a guideline's abstract rarely states its recommendations); others quote the abstract.
-    const summary = (pmid: string) => (authored ? STUDIES.find(s => s.pmid === pmid)?.finding : undefined);
-    const studies: Reference[] = articles.map((a, i) => ({ n: i + 1, id: `pmid:${a.pmid}`, kind: "study", design: a.kind, title: a.title, year: a.year, from: a.journal, text: summary(a.pmid) ?? a.conclusion, url: pubmedUrl({ pmid: a.pmid, query: a.title }), pmid: a.pmid }));
-    const passages = await passagesFor(context, hospitalId, input.question);
-    const references: Reference[] = [...studies, ...passages.map((p, i) => ({ n: studies.length + i + 1, kind: "library" as const, design: "Library" as const, ...p }))];
-
-    let claims: Claim[], followUps: string[], source: string, waking: number | undefined, general: string | undefined;
-    if (authored) {
-      // Authored cites number the three rehearsed studies; renumber them to where each study landed, so a missing study drops its claims.
-      const at = (n: number) => studies.findIndex(s => s.pmid === STUDIES[n - 1]?.pmid) + 1;
-      claims = sourcedClaims(authored.claims.map(c => ({ text: c.text, cites: c.cites.map(at) })), studies.length);
-      followUps = authored.followUps; source = "cached";
-    } else {
-      const read = await (context.models ?? stubModels).synthesiseEvidence({ question: input.question, thread: input.thread, sources: references.map(r => ({ n: r.n, design: r.design, year: r.year, title: r.title, text: r.text })) });
-      claims = sourcedClaims(read.claims, references.length); followUps = read.followUps.slice(0, 3); source = read.source === "model" ? read.model : "fixture";
-      // While Gemma is starting, the sample says in how many minutes.
-      waking = read.source === "fixture" ? read.waking : undefined;
-      // No source answers it: Gemma's general answer shows instead, marked as not from the sources.
-      general = claims.length ? undefined : read.general;
+  /** The whole answer at once (a visit card asked again from cache, scripts, tests). */
+  ask: protectedProcedure.input(askInput).handler(async ({ context, input }) => {
+    const run = answer(context, input);
+    for (;;) { const next = await run.next(); if (next.done) return next.value; }
+  }),
+  /** The same answer, with each step sent as it happens and the answer last (an event stream the app reads as it arrives). */
+  stream: protectedProcedure.input(askInput).handler(async function* ({ context, input }) {
+    const run = answer(context, input);
+    for (;;) {
+      const next = await run.next();
+      if (next.done) { yield { type: "answer" as const, answer: next.value }; return; }
+      yield next.value;
     }
-
-    const rows = await db.select().from(observations).where(eq(observations.patientId, visit.patientId)).orderBy(asc(observations.observedAt));
-    const curb65 = curb65FromObservations(rows as ObservationRow[], visit.age);
-
-    await db.insert(provenance).values({ id: crypto.randomUUID(), encounterId: input.encounterId, kind: "evidence-answer", output: { question: input.question, claims, general }, sourceIds: references.map(r => r.id), model: source, approvedBy: null });
-    return { question: input.question, claims, enough: claims.length > 0, general, followUps, source, ...waking ? { waking } : {}, references, pubmed, curb65 };
   }),
 };

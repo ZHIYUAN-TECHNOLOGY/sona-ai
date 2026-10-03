@@ -6,7 +6,7 @@ import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 
-import { ANSWER, FOLLOW_UPS, STUDIES } from "@sona-ai/domain/evidence";
+import { ANSWER, BOTTOM_LINE, FOLLOW_UPS, STUDIES, type Claim } from "@sona-ai/domain/evidence";
 import { eq } from "drizzle-orm";
 
 import { stubModels, type Models } from "../models";
@@ -38,6 +38,8 @@ async function signedIn(fetcher: typeof fetch, signed = true, models?: Models) {
 }
 
 const REHEARSED_Q = "Steroids for this patient with community-acquired pneumonia?";
+/** Claims without their proof, to compare with the authored ones (their quotes are checked on their own). */
+const bare = (claims: Claim[]) => claims.map(({ quotes: _, ...c }) => c);
 
 test("the rehearsed steroid question: cited claims over its three PubMed studies, follow-ups, and Amelia's CURB-65 from her chart", async () => {
   const { fetcher } = pubmed();
@@ -45,7 +47,10 @@ test("the rehearsed steroid question: cited claims over its three PubMed studies
   const r = await api.evidence.ask({ encounterId: "visit-1042", question: REHEARSED_Q });
   expect(r.source).toBe("cached");
   expect(r.enough).toBe(true);
-  expect(r.claims).toEqual(ANSWER);
+  expect(bare(r.claims)).toEqual(ANSWER);
+  expect(r.bottomLine).toBe(BOTTOM_LINE);
+  // Each claim's proof is the cited study's own reviewed sentence, so tapping its number shows what it rests on.
+  expect(r.claims.map(c => c.quotes)).toEqual([[{ n: 1, text: STUDIES[0]!.finding }], [{ n: 3, text: STUDIES[2]!.finding }], [{ n: 2, text: STUDIES[1]!.finding }, { n: 1, text: STUDIES[0]!.finding }]]);
   expect(r.followUps).toEqual(FOLLOW_UPS.map(f => f.question));
   expect(r.references.map(s => [s.n, s.pmid, s.kind, s.design, s.year, s.from])).toEqual([[1, "31573350", "study", "Guideline", 2019, "Am J Respir Crit Care Med"], [2, "25608756", "study", "Trial", 2015, "Lancet"], [3, "36942789", "study", "Trial", 2023, "N Engl J Med"]]);
   // A guideline abstract rarely states its recommendations, so the rehearsed answer shows its summaries of each study.
@@ -66,7 +71,7 @@ test("a suggested follow-up answers from its authored claims, offers the other t
   const follow = FOLLOW_UPS[1]!;
   const r = await api.evidence.ask({ encounterId: "visit-1042", question: follow.question, thread: [{ question: REHEARSED_Q, answer: ANSWER.map(c => c.text).join(" ") }] });
   expect({ source: r.source, enough: r.enough }).toEqual({ source: "cached", enough: true });
-  expect(r.claims).toEqual(follow.claims);
+  expect(bare(r.claims)).toEqual(follow.claims);
   expect(r.followUps).toEqual([FOLLOW_UPS[0]!.question, FOLLOW_UPS[2]!.question]);
   expect(state.calls.some(u => u.includes("esearch"))).toBe(false);
 });
@@ -85,7 +90,7 @@ test("when PubMed is down the studies come from the last fetch; never fetched me
   const warm = await api.evidence.ask({ encounterId: "visit-1042", question });
   expect(warm.pubmed).toBe("cached");
   expect(warm.references.map(s => s.pmid)).toEqual(["31573350", "25608756", "36942789"]);
-  expect(warm.claims).toEqual(ANSWER);
+  expect(bare(warm.claims)).toEqual(ANSWER);
 });
 
 test("a missing study drops the authored claims that cite it, and the rest are renumbered to where their study landed", async () => {
@@ -97,7 +102,7 @@ test("a missing study drops the authored claims that cite it, and the rest are r
   const r = await api.evidence.ask({ encounterId: "visit-1042", question: REHEARSED_Q });
   expect(r.references.map(s => [s.n, s.pmid])).toEqual([[1, "25608756"], [2, "36942789"]]);
   // [1] (the guideline) is gone: its claim drops; [3] becomes [2]; [2, 1] keeps only the trial, now [1].
-  expect(r.claims).toEqual([{ text: ANSWER[1]!.text, cites: [2] }, { text: ANSWER[2]!.text, cites: [1] }]);
+  expect(bare(r.claims)).toEqual([{ text: ANSWER[1]!.text, cites: [2], topic: "evidence" }, { text: ANSWER[2]!.text, cites: [1], topic: "harms" }]);
 });
 
 test("any other question searches PubMed, never borrows the authored answer, and shows the mock's cited claims as a sample", async () => {
@@ -107,7 +112,8 @@ test("any other question searches PubMed, never borrows the authored answer, and
   expect(state.calls.some(u => u.includes("esearch") && u.includes("prednisone"))).toBe(true);
   expect(r.source).toBe("fixture");
   expect(r.references.map(s => [s.n, s.pmid, s.text.slice(0, 32)])).toEqual([[1, "25608756", "Prednisone treatment for 7 days "]]);
-  expect(r.claims).toEqual([{ text: expect.stringMatching(/^A randomised trial \(2015\) reports: Prednisone treatment for 7 days/), cites: [1] }]);
+  // The mock quotes each source's first sentence; the route keeps it because the abstract says it word for word.
+  expect(r.claims).toEqual([{ text: expect.stringMatching(/^A randomised trial \(2015\) reports: Prednisone treatment for 7 days/), cites: [1], topic: "evidence", quotes: [{ n: 1, text: expect.stringMatching(/^Prednisone treatment for 7 days/) }] }]);
   expect(r.followUps).toEqual(["What do the guidelines recommend?", "What are the main harms?", "Does this change for severe cases?"]);
   // Daniel has no chart readings: only age counts, and the band is withheld.
   expect(r.curb65).toMatchObject({ recorded: 1, risk: undefined });
@@ -171,4 +177,44 @@ test("PubMed is searched by the question's key terms, never the patient's name o
 test("evidence needs a login", async () => {
   const { api } = await signedIn(pubmed().fetcher, false);
   expect(api.evidence.ask({ encounterId: "visit-1042", question: "Steroids?" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+});
+
+test("the stream shows each step as it happens (search, read, then write for a model's answer) and ends with the answer; asked off a visit there is no patient", async () => {
+  const { fetcher } = pubmed();
+  const { api } = await signedIn(fetcher);
+  const events = [];
+  for await (const event of await api.evidence.stream({ encounterId: "visit-1042", question: REHEARSED_Q })) events.push(event);
+  // The rehearsed answer is authored, so nothing is written: search, read, answer.
+  expect(events.map(e => e.type === "step" ? e.step : e.type)).toEqual(["search", "read", "answer"]);
+  expect(events[1]).toMatchObject({ type: "step", step: "read", studies: 3, passages: 0 });
+  expect(events[1]!.type === "step" && events[1]!.step === "read" && events[1]!.references.map(r => r.pmid)).toEqual(["31573350", "25608756", "36942789"]);
+  const last = events.at(-1)!;
+  expect(last.type === "answer" && last.answer.bottomLine).toBe(BOTTOM_LINE);
+
+  const steps = [];
+  for await (const event of await api.evidence.stream({ question: "Does azithromycin prolong the QT interval?" })) steps.push(event.type === "step" ? event.step : event.type);
+  expect(steps).toEqual(["search", "read", "write", "answer"]);
+  // A question asked anywhere else has no patient: no CURB-65, and nothing of a patient's kept out of the search.
+  const anywhere = await api.evidence.ask({ question: REHEARSED_Q });
+  expect({ curb65: anywhere.curb65, enough: anywhere.enough, bottomLine: anywhere.bottomLine }).toEqual({ curb65: null, enough: true, bottomLine: BOTTOM_LINE });
+});
+
+test("a model's answer streams part by part, each claim checked as it arrives: one citing no source is dropped, an invented quote never shows", async () => {
+  const { fetcher } = pubmed(["25608756"]);
+  const db = await createTestDb();
+  await seedDemo(db, new Date("2026-09-26T09:00:00+08:00"));
+  await addClinician(db, "dr-aisyah");
+  const models = { ...stubModels, async *streamEvidence() {
+    yield { bottomLine: "Prednisone shortens time to stability." };
+    yield { claim: { text: "Cites a source that is not there.", cites: [9] } };
+    yield { claim: { text: "Prednisone shortened time to stability.", cites: [1], quotes: [{ n: 1, text: "An invented sentence that no abstract says." }] } };
+    return { claims: [{ text: "Prednisone shortened time to stability.", cites: [1] }], followUps: [], bottomLine: "Prednisone shortens time to stability.", source: "model" as const, model: "gemma-test" };
+  } };
+  const api = createRouterClient(appRouter, { context: { db, session, fetch: fetcher, models } });
+  const events = [];
+  for await (const event of await api.evidence.stream({ encounterId: "visit-1086", question: "What about prednisone?" })) events.push(event);
+  expect(events.map(e => e.type === "step" ? e.step : e.type)).toEqual(["search", "read", "write", "bottomLine", "claim", "answer"]);
+  const claim = events[4]!.type === "claim" ? events[4]!.claim : undefined;
+  expect(claim).toMatchObject({ text: "Prednisone shortened time to stability.", cites: [1] });
+  expect(claim?.quotes?.some(q => q.text.startsWith("An invented"))).toBeFalsy();
 });

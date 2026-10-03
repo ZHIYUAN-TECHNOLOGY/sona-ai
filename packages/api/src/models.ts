@@ -21,6 +21,11 @@ import { ruleNote, type ConsultationLine, type ScribeDraft } from "./scribe-mode
 export type Origin = { source: "fixture"; waking?: number } | { source: "model"; model: string };
 type Answer<T> = Promise<T & Origin>;
 
+export type EvidenceInput = { question: string; thread: { question: string; answer: string }[]; sources: { n: number; design: string; year?: number; title: string; text: string }[] };
+export type EvidenceAnswer = { claims: Claim[]; followUps: string[]; general?: string; bottomLine?: string };
+/** A part of an evidence answer, as soon as it is written: its bottom line, or one claim. */
+export type EvidencePart = { bottomLine: string } | { claim: Claim };
+
 export type Models = {
   /** Brain (Gemma): what to know before seeing the patient. */
   briefing(input: { patient: Patient }): Answer<{ lines: string[] }>;
@@ -45,8 +50,17 @@ export type Models = {
    * lacks), and up to 3 follow-ups the sources could answer. `thread` is the earlier turns, oldest
    * first. The route drops any claim citing nothing or a number not in `sources`.
    */
-  /** `general`: the model's own answer from general knowledge, when no source answers the question. */
-  synthesiseEvidence(input: { question: string; thread: { question: string; answer: string }[]; sources: { n: number; design: string; year?: number; title: string; text: string }[] }): Answer<{ claims: Claim[]; followUps: string[]; general?: string }>;
+  /**
+   * `bottomLine`: one sentence answering the question, from the claims. Each claim may carry its `topic` and, per cited
+   * source, the sentence that supports it (`quotes`; the route keeps only those the source says word for word).
+   * `general`: the model's own answer from general knowledge, when no source answers the question.
+   */
+  synthesiseEvidence(input: EvidenceInput): Answer<EvidenceAnswer>;
+  /**
+   * Optional: the same answer as it is written, part by part (its bottom line, then each claim as it closes), ending
+   * with the whole of it as `synthesiseEvidence` gives it. Without it, the answer arrives whole.
+   */
+  streamEvidence?(input: EvidenceInput): AsyncGenerator<EvidencePart, Awaited<Answer<EvidenceAnswer>>>;
   huddleBrief(input: { beds: Bed[]; owners: Record<string, Owner | undefined> }): Answer<{ lines: string[] }>;
   /** Sona Care: the patient's speech as text (Malay, English, Chinese or mixed). The stub has no ears: it returns no text. */
   transcribe(input: { audio: Uint8Array; language?: Language }): Answer<{ text: string; language?: string }>;
@@ -132,7 +146,7 @@ export const stubModels: Models = {
   // no dose or number a source lacks, up to 3 follow-ups the sources could answer.
   // Until then: one claim per top source (max 3) quoting its first sentence, and fixed follow-ups.
   synthesiseEvidence: ({ question, sources }) => fixture({
-    claims: sources.slice(0, 3).map(s => ({ text: `${DESIGN_WORDS[s.design] ?? "A source"}${s.year ? ` (${s.year})` : ""} reports: ${firstSentence(s.text)}`, cites: [s.n] })),
+    claims: sources.slice(0, 3).map(s => ({ text: `${DESIGN_WORDS[s.design] ?? "A source"}${s.year ? ` (${s.year})` : ""} reports: ${firstSentence(s.text)}`, cites: [s.n], topic: "evidence" as const, quotes: [{ n: s.n, text: firstSentence(s.text) }] })),
     followUps: MOCK_FOLLOW_UPS.filter(f => f.toLowerCase() !== question.trim().toLowerCase()),
   }),
   huddleBrief: ({ beds, owners }) => fixture({ lines: huddle(beds, owners) }),

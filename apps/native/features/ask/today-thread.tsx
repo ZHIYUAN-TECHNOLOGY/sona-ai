@@ -8,11 +8,13 @@ import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
 import { StreamedLead } from "@/features/encounter/conversation";
+import { routePrompt } from "@/features/encounter/state";
+import { EvidenceAnswer } from "@/features/evidence";
 import { Bubble } from "@/features/encounter/sona-live";
 import { useLive } from "@/features/live";
 import { AnswerView, KeepRow, answerFree, answerNow, openTab, useRunOp } from ".";
 import { leadOf, withoutLead, type Answer } from "./answers";
-import { askThread, replyTo, useThread, type Entry } from "./thread";
+import { EVIDENCE, askThread, replyTo, useThread, type Entry } from "./thread";
 
 // Nothing to close before an answer's op runs: the page is the shell, and Live is its voice.
 const stay = () => {};
@@ -27,8 +29,12 @@ export function useTodayThread(answers: Answer[]) {
   const settle = async (id: number, question: string) => { const reply = await answerFree("today", question, answers); replyTo(id, reply); return { id, question, reply }; };
   return {
     entries: useThread(),
-    /** `rule`: the answer when the question is a known one (the ✦ suggestion), so it never rests on matching its words. */
-    ask: async (question: string, rule?: Answer): Promise<Required<Entry>> => {
+    /**
+     * `rule`: the answer when the question is a known one (the ✦ suggestion), so it never rests on matching its words.
+     * A clinical question (or `evidence`, a follow-up from an evidence answer) is answered from the evidence, with citations.
+     */
+    ask: async (question: string, rule?: Answer, evidence = false): Promise<Required<Entry>> => {
+      if (!rule && (evidence || routePrompt(question) === "evidence")) return { id: askThread(question, EVIDENCE), question, reply: EVIDENCE };
       const now = rule ? { answer: rule } : answerNow(question, answers, on);
       const id = askThread(question, now);
       return now ? { id, question, reply: now } : settle(id, question);
@@ -44,18 +50,19 @@ export function useTodayThread(answers: Answer[]) {
  * sidebar; or Sona thinking, or a notice (Ask again when that may work). `fresh` (the page's newest) inks the lead in and
  * has VoiceOver read the answer as it lands, spoken or typed alike.
  */
-export function ThreadEntry({ entry, fresh = false, onAgain, onTab = openTab, leave = stay }: { entry: Entry; fresh?: boolean; onAgain?: () => void; /** A page's own tabs (Ward's filters); Today opens Patients or the ward. */ onTab?: (tab: string) => void; /** What steps aside before an op runs (a page's conversation, to show the page). */ leave?: () => void }) {
+export function ThreadEntry({ entry, fresh = false, onAgain, onEvidence, onTab = openTab, leave = stay }: { entry: Entry; fresh?: boolean; onAgain?: () => void; /** An evidence answer's follow-up, asked as evidence in the same conversation. */ onEvidence?: (question: string) => void; /** A page's own tabs (Ward's filters); Today opens Patients or the ward. */ onTab?: (tab: string) => void; /** What steps aside before an op runs (a page's conversation, to show the page). */ leave?: () => void }) {
   const run = useRunOp(leave, onTab);
   const reduced = useReduceMotionPreference();
   const { reply } = entry;
   // iOS has no live regions, so a new answer is announced.
-  useEffect(() => { if (fresh && reply) AccessibilityInfo.announceForAccessibility("notice" in reply ? reply.notice : leadOf(reply.answer) ?? reply.answer.question); }, [reply]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (fresh && reply) AccessibilityInfo.announceForAccessibility("notice" in reply ? reply.notice : "evidence" in reply ? "Searching the evidence" : leadOf(reply.answer) ?? reply.answer.question); }, [reply]); // eslint-disable-line react-hooks/exhaustive-deps
   // The lead is said above the view, so the view goes on without it; a lead-only answer keeps just its label.
   const said = reply && "answer" in reply ? reply : undefined;
   const text = said && leadOf(said.answer), rest = said && (text ? withoutLead(said.answer) : said.answer);
   return <View style={{ gap: 16 }}>
     <Bubble text={entry.question} />
     {!reply ? <Drafting label="Thinking…" lines={2} slow={MODEL_SLOW} />
+      : "evidence" in reply ? <EvidenceAnswer question={entry.question} answerKey={`evidence:${entry.id}:${entry.question}`} thread={[]} lead onAsk={q => onEvidence?.(q)} />
       : "notice" in reply ? <View style={{ gap: 2 }}>
         <Caption>{reply.notice}</Caption>
         {reply.again && onAgain && <View style={{ alignSelf: "flex-start" }}>

@@ -263,7 +263,8 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     // A question about the day (the day's rules answer it, or no visit tool does) joins Today's thread, never the visit tools'
     // notice: live, the model answers it from Today's own data (ask.free), or says it is starting; demo mode says what Sona answers.
     if (!patient && pending.length) { setInput(""); void askForPatient(prompt); return; }
-    if (!patient) { if (matchQuestion(prompt, todayAnswers) || !routeInThread(prompt)) { setInput(""); void today.ask(prompt); return; } }
+    // An evidence question (steroids, a guideline, a trial…) is answered on Today too, with no patient: a visit adds theirs.
+    if (!patient) { const routed = routeInThread(prompt); if (matchQuestion(prompt, todayAnswers) || !routed || routed === "evidence") { setInput(""); void today.ask(prompt); return; } }
     else if (pending.length) {
       // Images go to the imaging review (the first becomes the encounter's attachment); files and documents, scanned or photographed, are kept for reference.
       const image = pending.find(item => item.kind === "image" && item.imageType !== "Document");
@@ -369,7 +370,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
           // Each new question, and its answer once it lands, comes into view.
           const key = `${entry.id}${entry.reply ? "+" : ""}`;
           if (entry.id === newest?.id && brought.current !== key) { brought.current = key; scroll.current?.scrollTo({ y: Math.max(0, y + 8), animated: !reducedMotion }); }
-        }}><ThreadEntry entry={entry} fresh={entry.id === newest?.id} onAgain={() => today.again(entry)} /></View>)}
+        }}><ThreadEntry entry={entry} fresh={entry.id === newest?.id} onAgain={() => today.again(entry)} onEvidence={q => void today.ask(q, undefined, true)} /></View>)}
       </View>
       : <View style={{ gap: 44 }}>
         {compactResponses && requests.length > 1 && <Action label={showEarlier ? "Collapse earlier responses" : `Show ${requests.length - 1} earlier responses`} secondary onPress={() => setShowEarlier(value => !value)} />}

@@ -64,6 +64,7 @@ export const PERMISSIONS: Record<string, readonly [readonly Role[], string]> = {
   "note.save": [DOCTOR, "write the note"],
   "note.draft": [DOCTOR, "draft the note from the consultation"],
   "evidence.ask": [CARE, "ask for evidence"],
+  "evidence.stream": [CARE, "ask for evidence"],
   "adherence.get": [CLINICAL_READ, "see doses taken"],
   "results.list": [CLINICAL_READ, "see results"],
   "results.receive": [CARE, "record a result"],

@@ -32,9 +32,9 @@ test("the evidence mock quotes one claim per top source, cites it, and never off
   const r = await stubModels.synthesiseEvidence({ question: "What are the main harms?", thread: [{ question: "Steroids?", answer: "No." }], sources });
   expect(r.source).toBe("fixture");
   expect(r.claims).toEqual([
-    { text: "A randomised trial (2016) reports: Finding 1.", cites: [1] },
-    { text: "Your library (2017) reports: Finding 2.", cites: [2] },
-    { text: "Your library (2018) reports: Finding 3.", cites: [3] },
+    { text: "A randomised trial (2016) reports: Finding 1.", cites: [1], topic: "evidence", quotes: [{ n: 1, text: "Finding 1." }] },
+    { text: "Your library (2017) reports: Finding 2.", cites: [2], topic: "evidence", quotes: [{ n: 2, text: "Finding 2." }] },
+    { text: "Your library (2018) reports: Finding 3.", cites: [3], topic: "evidence", quotes: [{ n: 3, text: "Finding 3." }] },
   ]);
   expect(r.followUps).toEqual(["What do the guidelines recommend?", "Does this change for severe cases?"]);
   expect((await stubModels.synthesiseEvidence({ question: "x", thread: [], sources: [] })).claims).toEqual([]);

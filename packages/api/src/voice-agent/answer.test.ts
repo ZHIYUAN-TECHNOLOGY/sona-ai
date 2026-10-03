@@ -1,7 +1,8 @@
 import { beforeEach, expect, test } from "bun:test";
 
 import { boxState } from "../baseten-models";
-import { LINES, answerTurn, basetenChat, deltas, flagsOf, messagesFor, sentencesOf, type AnswerTurn, type ChatStream, type Part, type TurnSummary } from "./answer";
+import { deltas } from "../sse";
+import { LINES, answerTurn, basetenChat, flagsOf, messagesFor, sentencesOf, type AnswerTurn, type ChatStream, type Part, type TurnSummary } from "./answer";
 
 /** Amelia's plan as Gemma reads it (planText, discharged in Malay). */
 const PLAN = `Discharged: 2026-09-28T02:05:00.000Z

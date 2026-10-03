@@ -99,6 +99,7 @@ export function useVisitLead(req: RequestState | undefined, card: ResponseCard |
     prescription: rx,
     tasks: { total: tasks.length, open: tasks.filter(t => !t.completed).length },
     evidence: live ? answered && (answered.enough ? "enough" : answered.general ? "general" : "not-enough") : !question || isRehearsed(question) ? "rehearsed" : authoredAnswer(question) ? "authored" : "off",
+    bottomLine: live ? answered?.bottomLine : authoredAnswer(question)?.bottomLine,
     result: result?.patientId === patient.id ? { test: result.test } : undefined,
   }, question);
 }

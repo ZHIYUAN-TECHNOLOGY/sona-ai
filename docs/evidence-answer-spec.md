@@ -3,6 +3,13 @@
 Status: specified 29 Sep 2026; built 29 Sep 2026, awaiting the owner's review on the iPhone (screenshots in `verification/evidence-answer/`). Decisions below were made by the product owner; build them as written.
 Read `CLAUDE.md`, [the handoff](handoff.md) and the [UX principles](design-direction.md#ux-principles-standing-rules-for-every-screen) first.
 
+**Update, 3 Oct 2026** (the owner's requests since the build; the sections below are the original spec):
+- Asked anywhere, typed or spoken: a clinical question on Today or any page answers as evidence, with no patient; in a visit it adds the patient (CURB-65, and a line such as "For Amelia: CURB-65 0, low risk, so the non-severe evidence applies").
+- `evidence.stream` sends each step as it happens (search, read with its sources, write), then the bottom line and each claim as Gemma writes them, each checked like the whole answer; `evidence.ask` still answers in one piece.
+- The answer leads with a one-sentence bottom line; claims sit under Evidence, Dose and Harms; each citation pill says its strength ("1 · Guideline") and opens, under its claim, the sentence from that source that supports it (kept only if the source says it word for word, `quotedClaims`).
+- No source answers it: Gemma's general answer, marked "General answer · no source found for this". In evidence text a general finding ("severe pneumonia") is teal, not the patient-alert red.
+- Motion (60fps): a checklist of the steps while it works (after Remy's analysis checklist), folding away as the answer rises in block by block (after Monogram's pulse-sweep reveal).
+
 ## 1. Goal
 
 A clinician asks a clinical question inside a patient's visit (typed now, spoken later) and gets an answer in the style of OpenEvidence: every sentence cites numbered sources, how strong the evidence is is said in the words, the sources are one numbered list, and suggested follow-up questions continue the thread. Sona's edge stays: answers are tied to the patient (CURB-65 from the chart), cite the hospital's and the doctor's own library, and record which sources each answer used.
