@@ -6,8 +6,8 @@ import { useCheckIns } from "@/features/check-ins/today";
 import { EASE_OUT, rise, useNextDose, useNow } from "@/features/doses";
 import { clock, dosesToday, weekOf } from "@/features/doses/model";
 import {
-  agendaOf, away, bringLine, dateOf, dayA11y, dayLabel, dayOf, emptyLine, marksByDay, nextUp, nextVisit, openRequests, pillLine, scheduleLine, weekAround, weekdayOf, weekLabel,
-  type AgendaItem, type BookingRequest, type DayMarks, type FollowUp,
+  agendaOf, away, bringLine, dateOf, dayA11y, dayLabel, dayOf, dotsOf, emptyLine, legendOf, marksByDay, nextUp, nextVisit, openRequests, pillLine, scheduleLine, weekAround, weekdayOf, weekLabel,
+  type AgendaItem, type BookingRequest, type DayMarks, type Dot, type FollowUp,
 } from "@/features/follow-ups/lines";
 import { tFor, useLang, type Lang } from "@/lib/i18n";
 import { useBookingRequests, useFollowUps } from "@/features/follow-ups/row";
@@ -28,7 +28,7 @@ const labelOf = (day: number, lang: Lang) => dayLabel(new Date(day * 86_400_000)
 /**
  * Schedule (the kit's "Schedules"): a round + to book a visit, "Schedule" with the insight line (what is
  * next today, when the next visit is), a 7-day strip (today ringed, the chosen day filled ink; dots: blue
- * visit, violet check-in, green all doses taken, amber some missed or overdue), then the chosen day as the
+ * visit, violet check-in, green all doses taken, amber some missed or overdue, with a key), then the chosen day as the
  * kit's timeline: a hairline with a dot per stop (blue for the next, grey after, a green check once done),
  * each stop a card with its time capsule, title, one line and at most one inline action. The next visit
  * is the one feature card (Before you go, questions for the doctor), on its day, else under the timeline.
@@ -91,12 +91,14 @@ export default function ScheduleScreen() {
   </ScrollView>;
 }
 
-/** The week around the chosen day: its dates, ‹ › a week at a time, and Today when elsewhere. */
+const DOT: Record<Dot, string> = { visit: palette.info, checkIn: palette.feature, taken: palette.success, missed: palette.warning };
+
+/** The week around the chosen day: its dates, ‹ › a week at a time, Today when elsewhere, and a one-line key to its dots. */
 function WeekStrip({ day, today, marks, still, onPick, a11y }: {
   day: number; today: number; marks: Record<number, DayMarks>; still: boolean; onPick: (d: number) => void; a11y: (d: number) => string;
 }) {
   const lang = useLang(), t = tFor(lang);
-  const week = weekAround(day);
+  const week = weekAround(day), legend = legendOf(week, marks);
   return <View style={[surfaceStyle, { backgroundColor: palette.white, paddingHorizontal: 6, paddingVertical: 10, gap: 4 }]}>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 12, paddingRight: 4 }}>
       <Text accessibilityRole="header" style={{ ...type.footnote, flex: 1, fontWeight: "600", color: palette.muted }}>{weekLabel(week, lang)}</Text>
@@ -110,12 +112,19 @@ function WeekStrip({ day, today, marks, still, onPick, a11y }: {
     <Animated.View key={week[0]} entering={still ? undefined : FadeIn.duration(220).easing(EASE_OUT)} style={{ flexDirection: "row" }}>
       {week.map(d => <DayChip key={d} d={d} weekday={weekdayOf(d, lang)}today={d === today} selected={d === day} marks={marks[d]} label={a11y(d)} onPress={() => onPick(d)} />)}
     </Animated.View>
+    {/* Each day's label already says its dots in words, so VoiceOver skips the key. */}
+    {legend.length > 0 && <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+      style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", columnGap: 14, rowGap: 2, paddingHorizontal: 12 }}>
+      {legend.map(k => <View key={k} style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: DOT[k] }} />
+        <Text maxFontSizeMultiplier={1.3} style={{ fontSize: 13, lineHeight: 17, color: palette.muted }}>{t(`fu.key.${k}`)}</Text>
+      </View>)}
+    </View>}
   </View>;
 }
 
 function DayChip({ d, weekday, today, selected, marks, label, onPress }: { d: number; weekday: string; today: boolean; selected: boolean; marks?: DayMarks; label: string; onPress: () => void }) {
-  const dots = [marks?.visit && (marks.visit === "missed" ? palette.warning : palette.info), marks?.checkIn && palette.feature,
-    marks?.doses && (marks.doses === "taken" ? palette.success : palette.warning)].filter((c): c is string => !!c);
+  const dots = dotsOf(marks).map(k => DOT[k]);
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected }} onPress={onPress}
     style={({ pressed }) => ({ flex: 1, minHeight: 76, alignItems: "center", justifyContent: "center", gap: 4, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
     <Text maxFontSizeMultiplier={1.3} style={{ fontSize: 12, lineHeight: 16, fontWeight: "500", color: palette.faint }}>{weekday}</Text>
@@ -218,7 +227,7 @@ function Review({ f, still }: { f: FollowUp; still: boolean }) {
       </Pressable>
     </Animated.View>)}
     <TextInput value={draft} onChangeText={setDraft} onSubmitEditing={() => { saveQuestion(draft); setDraft(""); }}
-      placeholder={t("fu.addQ")} placeholderTextColor={palette.faint} returnKeyType="done" submitBehavior="blurAndSubmit"
+      placeholder={t("fu.addQ")} placeholderTextColor={palette.pale} returnKeyType="done" submitBehavior="blurAndSubmit"
       accessibilityLabel={t("fu.addQLabel")} accessibilityHint={t("fu.addQHint")}style={{ ...field, backgroundColor: palette.white }} />
   </View>;
 }

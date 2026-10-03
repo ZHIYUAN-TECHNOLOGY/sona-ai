@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
-import { suggestions, unreadReply, whileYouWait, withDays } from "./model";
+import { draftByRules } from "@sona-ai/domain/messages";
+import { suggestions, unreadReply, urgentFromTeam, whileYouWait, withDays } from "./model";
 
 const m = (id, from, text = id, createdAt = new Date()) => ({ id, from, text, createdAt });
 
@@ -41,4 +42,28 @@ test("suggestions follow where the thread stands and never repeat what was just 
   expect(suggestions([m("a", "patient", "I feel a bit dizzy")])).toEqual(["Thank you", "When is my next visit?"]);
   expect(suggestions([m("a", "patient", "When is my next visit?")])).toEqual(["Thank you"]);
   expect(suggestions([m("a", "patient", "thank you"), m("b", "care-team", "See you soon.")])).toEqual(["I have a question about my medicine", "When is my next visit?"]);
+});
+
+test("the care team's call-999-now message is urgent in every language; a routine 'if worse, call 999' is not", () => {
+  for (const language of ["en", "ms", "zh"]) {
+    const said = label => ({ from: "care-team", text: draftByRules({ text: "", label, patientFirstName: "Amelia", language }) });
+    expect(urgentFromTeam(said("urgent"))).toBe(true);
+    expect(urgentFromTeam(said("clinical"))).toBe(false);
+    expect(urgentFromTeam({ ...said("urgent"), from: "patient" })).toBe(false);
+  }
+  expect(urgentFromTeam(m("a", "care-team", "Please go to the emergency department straight away."))).toBe(true);
+  expect(urgentFromTeam(m("a", "care-team", "For an emergency, call 999."))).toBe(false);
+  expect(urgentFromTeam(m("a", "care-team", "Rest today. If the pain comes back, call 999 straight away."))).toBe(false);
+  // Read per sentence: an "if" elsewhere doesn't hide the instruction, and "now" elsewhere doesn't make the 999 line one.
+  expect(urgentFromTeam(m("a", "care-team", "Please call 999 now. If you can't, ask someone to drive you to the emergency department."))).toBe(true);
+  expect(urgentFromTeam(m("a", "care-team", "Take your tablet now. For an emergency, call 999."))).toBe(false);
+  expect(urgentFromTeam(undefined)).toBe(false);
+});
+
+test("after the care team's urgent message, the replies say what the patient did, until the team writes again", () => {
+  const urgent = m("u", "care-team", "Hi Amelia, please call 999 or go to the nearest emergency department now.");
+  expect(suggestions([urgent])).toEqual(["I've called 999", "I'm going to the emergency department", "Please call me"]);
+  expect(suggestions([urgent, m("p", "patient", "I've called 999")])).toEqual(["I'm going to the emergency department", "Please call me"]);
+  expect(suggestions([urgent, m("p", "patient", "ok"), m("t", "care-team", "Glad you're safe.")])).toEqual(["Thank you", "I have a question about my medicine", "When is my next visit?"]);
+  expect(suggestions([urgent], "ms")[0]).toBe("Saya sudah hubungi 999");
 });

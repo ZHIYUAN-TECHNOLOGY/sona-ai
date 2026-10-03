@@ -8,12 +8,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Composer } from "@/features/assistant/composer";
 import { errorText } from "@/features/errors";
 import { useMe } from "@/features/me";
-import { clockOf, type Message, suggestions, whileYouWait, withDays } from "@/features/messages/model";
+import { clockOf, type Message, suggestions, urgentFromTeam, whileYouWait, withDays } from "@/features/messages/model";
 import { tFor, useLang, useT } from "@/lib/i18n";
 import { markRead, useThread } from "@/features/messages/row";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { BackButton, Card, Chip, pillStyle, surfaceStyle, LoadError } from "@/lib/ui";
+import { BackButton, Call999, Card, Chip, pillStyle, surfaceStyle, LoadError } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 import { now as clockNow } from "@/lib/clock";
 
@@ -22,15 +22,15 @@ import { now as clockNow } from "@/lib/clock";
  * reply time faint under it; the care team on the left in flat kit cards with their initials and the
  * time, the patient on the right in ink; a white day capsule per day. A sent message springs up from
  * the composer and is followed by its status ("Sent · 12:01", then "Seen by care team · 12:04"); a
- * warning sign in it adds what to do while waiting. Up to three likely replies sit over the composer as
- * chips and send in one tap. The emergency line never leaves the screen. Re-read every 15 s while open.
+ * warning sign in it adds what to do while waiting. The care team's urgent message ("call 999 now") is
+ * red, with a Call 999 button under it. Up to three likely replies sit over the composer as chips and send
+ * in one tap. The emergency line never leaves the screen. Replies arrive over the live socket (features/live).
  */
-const REFETCH_MS = 15_000;
 const newRequestId = () => `care-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 type Draft = { text: string; requestId: string; at: Date };
 
 export default function Messages() {
-  const threadQuery = useThread(REFETCH_MS), { data, error } = threadQuery;
+  const threadQuery = useThread(), { data, error } = threadQuery;
   const { me } = useMe();
   const lang = useLang(), t = tFor(lang);
   const insets = useSafeAreaInsets();
@@ -120,19 +120,24 @@ function Pill({ label }: { label: string }) {
 
 function Bubble({ m, sending, reduced }: { m: Message; sending: boolean; reduced: boolean }) {
   const t = useT();
-  const mine = m.from === "patient";
+  const mine = m.from === "patient", urgent = urgentFromTeam(m);
   const who = mine ? t("msg.you") : t("msg.title");
   const tail: ViewStyle = mine ? { borderBottomRightRadius: 8 } : { borderBottomLeftRadius: 8 };
-  return <Animated.View entering={reduced ? FadeIn.duration(200) : mine ? springIn : FadeIn.duration(240)} accessible accessibilityLabel={`${who}, ${sending ? t("msg.sendingA11y") : clockOf(m.createdAt)}: ${m.text}`}
+  const enter = reduced ? FadeIn.duration(200) : mine ? springIn : FadeIn.duration(240);
+  const bubble = <Animated.View entering={enter} accessible accessibilityLabel={`${who}, ${sending ? t("msg.sendingA11y") : clockOf(m.createdAt)}: ${m.text}`}
     style={{ alignSelf: mine ? "flex-end" : "flex-start", maxWidth: "86%", flexDirection: "row", alignItems: "flex-end", gap: 8, transformOrigin: "right bottom" }}>
     {!mine && <Initials />}
     <View style={{ flexShrink: 1, gap: 4, alignItems: mine ? "flex-end" : "flex-start" }}>
-      <View style={[mine ? { backgroundColor: palette.dark, borderRadius: 24, borderCurve: "continuous" } : { ...surfaceStyle, borderRadius: 24 }, tail, { paddingHorizontal: 16, paddingVertical: 12 }]}>
+      <View style={[mine ? { backgroundColor: palette.dark, borderRadius: 24, borderCurve: "continuous" }
+        : urgent ? { backgroundColor: palette.redWash, borderWidth: 1, borderColor: palette.redEdge, borderRadius: 24, borderCurve: "continuous" } : { ...surfaceStyle, borderRadius: 24 }, tail, { paddingHorizontal: 16, paddingVertical: 12 }]}>
         <Text selectable style={{ ...type.body, color: mine ? palette.white : palette.ink }}>{m.text}</Text>
       </View>
       <Text style={{ fontSize: 12, lineHeight: 16, color: palette.faint, paddingHorizontal: 4 }}>{mine ? "" : t("msg.teamAt")}{sending ? t("msg.sending") : clockOf(m.createdAt)}</Text>
     </View>
   </Animated.View>;
+  if (!urgent) return bubble;
+  // Must not be missed: the call sits under the message, outside its spoken label, so VoiceOver reaches the button.
+  return <>{bubble}<Animated.View entering={enter} style={{ marginLeft: 42 }}><Call999 label={t("msg.call999")} line={t("msg.call999Line")} /></Animated.View></>;
 }
 
 /** The care team's mark: "CT" on a soft wash with a white rim (the thread names no one, so no person's initials). */

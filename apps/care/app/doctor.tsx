@@ -13,18 +13,18 @@ import { tFor, useLang } from "@/lib/i18n";
 import { useMe } from "@/features/me";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { AccentText, BackButton, Card, pillStyle, surfaceStyle, LoadError, inkPill } from "@/lib/ui";
+import { AccentText, BACK_SPACE, BackButton, Card, EdgeFade, pillStyle, PinnedBack, surfaceStyle, LoadError, inkPill } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
 const BAR = 56 + 8 + 48;
 
 /**
- * Doctor details (the AI Health Companion kit): back; the initials avatar, the name large on two lines
+ * Doctor details (the AI Health Companion kit): back, pinned; the initials avatar, the name large on two lines
  * in the headline gradient and the specialty; one card of kit form rows (rating, experience, clinic,
  * languages); the next clinic days and that day's free times (from the hospital's directory, so a
  * time already requested or booked is gone) as capsules (selected in ink); a line about
- * them. At the bottom the black "Request appointment", live once a time is picked, opens the review
- * card (a request the care team confirms), with a quiet "Message care team" under it.
+ * them. At the bottom, on a soft fade, the black "Request appointment", live once a time is picked, opens the
+ * review card (a request the care team confirms), with a quiet "Message care team" under it.
  */
 export default function DoctorScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -56,11 +56,10 @@ function Details({ doctor: d }: { doctor: ListedDoctor }) {
   // The picked time by its moment, so a re-read that drops another slot never shifts the pick.
   const slot = day?.times.find(t => t.date.getTime() === time);
   const next = days[0] && dayParts(days[0].day, lang);
+  const bottom = Math.max(insets.bottom, 12);
 
   return <View style={{ flex: 1 }}>
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: BAR + Math.max(insets.bottom, 12) + 28, gap: 20 }}>
-      <BackButton />
-
+    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingTop: BACK_SPACE, paddingBottom: BAR + bottom + 28, gap: 20 }}>
       <Animated.View accessible accessibilityRole="header"
         accessibilityLabel={[d.name, d.specialty, d.careTeam && t("doc.inTeamCap"), next && t("doc.nextClinicCap", { day: next.spoken })].filter(Boolean).join(". ")}
         style={{ gap: 14 }}>
@@ -103,7 +102,10 @@ function Details({ doctor: d }: { doctor: ListedDoctor }) {
       </Animated.View>
     </ScrollView>
 
-    <View style={{ position: "absolute", left: 20, right: 20, bottom: Math.max(insets.bottom, 12), gap: 8 }}>
+    {/* Back stays reachable on this long page; the fades keep scrolled text off the clock and out from under the buttons. */}
+    <PinnedBack />
+    <EdgeFade edge="bottom" solid={BAR + bottom} />
+    <View style={{ position: "absolute", left: 20, right: 20, bottom, gap: 8 }}>
       <Pressable accessibilityRole="button" accessibilityLabel={t("doc.request")} accessibilityHint={slot ? t("doc.requestHint") : t("doc.pickFirst")} accessibilityState={{ disabled: !slot }}
         disabled={!slot} onPress={() => setBooking(slot)}
         style={({ pressed }) => ({ minHeight: 56, borderRadius: 28, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, backgroundColor: palette.dark, opacity: slot ? 1 : 0.45, transform: [{ scale: pressed ? 0.96 : 1 }] })}>

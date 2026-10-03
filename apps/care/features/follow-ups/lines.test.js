@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { agendaOf, bringLine, dateOf, dayA11y, dayOf, emptyLine, followUpNeeds, marksByDay, nextUp, nextVisit, openRequests, pillLine, scheduleLine, weekAround, weekLabel, whenLine } from "./lines";
+import { agendaOf, bringLine, dateOf, dayA11y, dayOf, dotsOf, emptyLine, followUpNeeds, legendOf, marksByDay, nextUp, nextVisit, openRequests, pillLine, scheduleLine, weekAround, weekLabel, whenLine } from "./lines";
 
 const D = (iso) => Date.UTC(...iso.split("-").map((n, i) => Number(n) - (i === 1 ? 1 : 0))) / 86_400_000; // "2026-09-27" → day number
 test("the strip reads days in Malaysia and shows the Monday-first week around the chosen day", () => {
@@ -20,6 +20,13 @@ test("dots mark visits, check-ins and this week's doses; empty days point to wha
   expect(marks[D("2026-09-20")]).toEqual({ visit: "missed" });
   expect(marks[D("2026-10-01")]).toEqual({ checkIn: true });
   expect([marks[D("2026-09-24")], marks[D("2026-09-25")], marks[D("2026-09-26")], marks[today]]).toEqual([{ doses: "taken" }, { doses: "missed" }, undefined, undefined]);
+  expect(dotsOf(marks[D("2026-09-20")])).toEqual(["missed"]);
+  expect(dotsOf({ visit: "due", checkIn: true, doses: "missed" })).toEqual(["visit", "checkIn", "missed"]);
+  expect(dotsOf(undefined)).toEqual([]);
+  // The key names only the dots this week shows, once each, in a fixed order.
+  expect(legendOf(weekAround(today), marks)).toEqual(["taken", "missed"]);
+  expect(legendOf(weekAround(D("2026-10-01")), marks)).toEqual(["visit", "checkIn"]);
+  expect(legendOf(weekAround(D("2026-10-05")), marks)).toEqual([]);
   expect(dayA11y(D("2026-10-04"), today, visits, checkIns)).toBe("Sunday 4 October, Clinic review");
   expect(dayA11y(D("2026-09-25"), D("2026-09-25"), visits, checkIns, marks[D("2026-09-25")])).toBe("Friday 25 September, today, some doses missed");
   expect(nextUp(today, visits, checkIns)).toEqual({ day: D("2026-10-01"), title: "Day 7 check-in" });

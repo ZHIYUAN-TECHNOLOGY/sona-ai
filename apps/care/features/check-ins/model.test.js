@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { readReply } from "@sona-ai/domain/check-ins";
-import { answersFor, doneLine, historyLine, replyText, statusOf, todayOf } from "./model";
+import { answersFor, doneLine, historyLine, replyText, statusOf, todayOf, upcomingOf } from "./model";
 
 const checkIn = (day, dueAt, extra = {}) => ({ id: `check-in:visit-1042:${day}`, day, language: "ms", message: "Hai Amelia", dueAt: new Date(dueAt), sentAt: null, replies: [], ...extra });
 const day2 = checkIn(2, "2026-09-28T02:00:00Z"), day7 = checkIn(7, "2026-10-03T02:00:00Z");
@@ -22,6 +22,21 @@ test("the question and quick answers are in the check-in's language, with a smal
   expect(answersFor("ms")).toMatchObject({ question: "Macam mana hari ini?", english: "How are you today?", answers: [["Jauh lebih baik", "better"], ["Lebih baik", "better"], ["Sama", "same"], ["Lebih teruk", "worse"], ["Jauh lebih teruk", "worse"]] });
   expect(answersFor("en")).toMatchObject({ question: "How are you feeling today?", english: undefined, answers: [["Much better", "better"], ["Better", "better"], ["Same", "same"], ["Worse", "worse"], ["Much worse", "worse"]] });
   expect(answersFor("zh").answers.map(([, label]) => label)).toEqual(["better", "better", "same", "worse", "worse"]);
+});
+
+test("before it is sent, Worse asks what's worse and promises no call (doneLine promises it once sent)", () => {
+  for (const language of ["en", "ms", "zh"]) {
+    const { line, prompt } = answersFor(language).follow.worse;
+    expect(`${line} ${prompt}`).not.toMatch(/call|telefon|电话/i);
+  }
+  expect(answersFor("en").follow.worse.prompt).toBe("Tell us what's worse so we can alert your care team");
+});
+
+test("upcoming check-ins come from the rows: a day the agent added is in; past and sent ones are out", () => {
+  const sent = { ...checkIn(3, "2026-09-30T01:00:00Z"), sentAt: new Date("2026-09-29T02:00:00Z") };
+  const day4 = checkIn(4, "2026-09-30T02:00:00Z"), day14 = checkIn(14, "2026-10-10T02:00:00Z");
+  expect(upcomingOf([day2, sent, day4, day7, day14], new Date("2026-09-30T00:00:00Z")).map(c => c.day)).toEqual([4, 7, 14]);
+  expect(upcomingOf([day2, day4], new Date("2026-10-01T00:00:00Z"))).toEqual([]);
 });
 
 test("after answering, worse or urgent says who was told and when they will call; fine only thanks them", () => {

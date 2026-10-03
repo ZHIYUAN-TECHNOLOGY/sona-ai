@@ -2,7 +2,8 @@ import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { useEffect, useState, type ReactNode, type Ref } from "react";
-import { AccessibilityInfo, ActivityIndicator, Pressable, View, type TextInput as RNTextInput, type TextInputProps, type TextStyle, type ViewStyle } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Linking, Pressable, View, type TextInput as RNTextInput, type TextInputProps, type TextStyle, type ViewStyle } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, TextInput } from "./text";
 import Animated, { cancelAnimation, Easing, interpolateColor, LinearTransition, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
@@ -109,6 +110,45 @@ export function HoldButton({ label, doneLabel, onDone, done = false, hold = 800,
 export function BackButton({ label }: { label?: string }) {
   const t = useT();
   return <View style={{ alignSelf: "flex-start" }}><CircleButton icon="back" label={label ?? t("common.back")}onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }} /></View>;
+}
+
+// The canvas body's tint (lib/canvas), so a fade reads as the page itself.
+const WASH = "250,251,255";
+/**
+ * A soft fade at a scroll edge (Sona Pro's EdgeBlur in its gradient form): the canvas washes in over `solid` pt from the
+ * edge (the status bar, or floating buttons) and fades out over `fade` pt more, so content scrolling there never runs
+ * into the clock or the buttons. Touches pass through.
+ */
+export function EdgeFade({ edge, solid, fade = 36 }: { edge: "top" | "bottom"; solid: number; fade?: number }) {
+  const at = Math.round((solid / (solid + fade)) * 100);
+  return <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, height: solid + fade, ...(edge === "top" ? { top: 0 } : { bottom: 0 }),
+    experimental_backgroundImage: `linear-gradient(${edge === "top" ? 180 : 0}deg, rgba(${WASH},0.9) 0%, rgba(${WASH},0.85) ${at}%, rgba(${WASH},0) 100%)` } as ViewStyle} />;
+}
+
+/** Room a page under `PinnedBack` leaves above its first row: the button's 8 + 48 pt and the usual 20 pt gap. */
+export const BACK_SPACE = 76;
+/** Back pinned at the top of a long page, so it never scrolls away, on a fade that keeps scrolled content off the clock. */
+export function PinnedBack() {
+  const insets = useSafeAreaInsets();
+  return <>
+    <EdgeFade edge="top" solid={insets.top} fade={56} />
+    <View style={{ position: "absolute", top: insets.top + 8, left: 20 }}><BackButton /></View>
+  </>;
+}
+
+/**
+ * Call 999 for a must-not-miss moment: a red pill that dials, and the number written out under it, since a tel: link
+ * does nothing on a phone or tablet that can't call. The caller words both in the patient's language.
+ */
+export function Call999({ label, line }: { label: string; line: string }) {
+  return <View style={{ gap: 6 }}>
+    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={() => { void Linking.openURL("tel:999").catch(() => {}); }}
+      style={({ pressed }) => ({ minHeight: 56, borderRadius: 28, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 20, backgroundColor: palette.red, transform: [{ scale: pressed ? 0.96 : 1 }] })}>
+      <Icon name="phone" size={20} color={palette.white} weight="fill" />
+      <Text style={{ fontSize: 17, fontWeight: "700", color: palette.white }}>{label}</Text>
+    </Pressable>
+    <Text style={{ ...type.footnote, fontWeight: "600", color: palette.red }}>{line}</Text>
+  </View>;
 }
 
 /**
@@ -251,7 +291,7 @@ export function Field({ secret, style, onFocus, onBlur, ref, ...props }: TextInp
     <Animated.View pointerEvents="none" style={[{ position: "absolute", inset: -4, borderRadius: 22, borderCurve: "continuous", borderWidth: 4, borderColor: "rgba(37,99,235,0.16)" }, ring]} />
     <Animated.View style={[{ flexDirection: "row", alignItems: "center", borderRadius: 18, borderCurve: "continuous", borderWidth: 1, backgroundColor: palette.white,
       boxShadow: "0 1px 2px rgba(30,40,90,0.06)" }, edge]}>
-      <TextInput ref={ref} placeholderTextColor={palette.faint} {...props} secureTextEntry={secret && !shown}
+      <TextInput ref={ref} placeholderTextColor={palette.pale} {...props} secureTextEntry={secret && !shown}
         onFocus={e => { focus.set(withTiming(1, SNAP)); onFocus?.(e); }} onBlur={e => { focus.set(withTiming(0, SNAP)); onBlur?.(e); }}
         style={[{ flex: 1, minHeight: 50, paddingHorizontal: 16, fontSize: 17, color: palette.ink }, secret && { paddingRight: 4 }, style]} />
       {secret && <Pressable accessibilityRole="button" accessibilityLabel={t(shown ? "common.hidePassword" : "common.showPassword")} onPress={toggle}

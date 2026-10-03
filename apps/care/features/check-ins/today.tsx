@@ -7,10 +7,11 @@ import { Text } from "@/lib/text";
 import Animated, { FadeIn, LinearTransition, useReducedMotion } from "react-native-reanimated";
 import { errorText } from "@/features/errors";
 import { useMe } from "@/features/me";
+import { urgentFromTeam } from "@/features/messages/model";
 import { useMessageNeeds, useThread } from "@/features/messages/row";
 import { Sunbeam } from "@/lib/halftone";
 import { palette, type } from "@/lib/theme";
-import { Button, Card, pillStyle } from "@/lib/ui";
+import { Button, Call999, Card, pillStyle } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 import { Answer, TINT } from "./answer";
 import { answersFor, doneLine, shortDate, todayOf, type Feeling, type ReplyLabel } from "./model";
@@ -118,12 +119,13 @@ export function TodayCard() {
     </Card>;
   }
 
-  // Nothing to answer, but the care team replied: that reply is the one thing that needs them now.
-  const lastReply = thread.data?.at(-1);
+  // Nothing to answer, but the care team replied: that reply is the one thing that needs them now (the call first, when it says call 999 now).
+  const lastReply = thread.data?.at(-1), urgent = urgentFromTeam(lastReply);
   if (replyWaiting && lastReply) return <Card feature>
     {overline(t("ci.fromTeam"))}
     <Text numberOfLines={3} style={{ ...type.body, color: palette.ink }}>{lastReply.text}</Text>
-    <Button label={t("ci.readReply")} onPress={() => router.push("/messages")} />
+    {urgent && <Call999 label={t("msg.call999")} line={t("msg.call999Line")} />}
+    <Button quiet={urgent} label={t("ci.readReply")} onPress={() => router.push("/messages")} />
     {history}
   </Card>;
 

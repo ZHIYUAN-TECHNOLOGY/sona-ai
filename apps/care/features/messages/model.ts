@@ -48,17 +48,32 @@ export function whileYouWait(messages: Said[], lang: Lang = "en"): string | unde
   return key && tFor(lang)(key);
 }
 
+// EMERGENCY mirrors packages/api/src/baseten-models.ts.
+const EMERGENCY = /999|emergency|kecemasan|急诊/i;
+const NOW = /\b(now|immediately|straight away|right away)\b|sekarang|segera|立即|马上|立刻/i;
+const IF = /\b(if|jika|kalau)\b|如果/i;
+
 /**
- * Up to three likely next messages, from where the thread stands: answers to a care-team question,
- * follow-ups after the patient has just written, openers on an empty thread. Never the message the
- * patient just sent. Written in the patient's language, since they are sent as they are.
+ * The care team telling the patient to get emergency help now, as its urgent reply does ("please call 999 or go to the
+ * nearest emergency department now"): a sentence with 999 or the emergency department, now, and no "if". "If you feel
+ * much worse, call 999" in a routine reply stays a plain bubble. ponytail: words, since care.messages.list sends no
+ * urgent flag; a flag from the server replaces this.
+ */
+export const urgentFromTeam = (m: Said | undefined) =>
+  m?.from === "care-team" && m.text.split(/[.!?。！？\n]/).some(s => EMERGENCY.test(s) && NOW.test(s) && !IF.test(s));
+
+/**
+ * Up to three likely next messages, from where the thread stands: what they did after the care team's urgent message,
+ * answers to a care-team question, follow-ups after the patient has just written, openers on an empty thread. Never the
+ * message the patient just sent. Written in the patient's language, since they are sent as they are.
  */
 export function suggestions(messages: Said[], lang: Lang = "en"): string[] {
   const t = tFor(lang), last = messages.at(-1);
   const picks = (!last ? ["question", "visit", "dizzy"]
-    : last.from === "patient" ? ["thanks", "visit"]
-      : /[?？]$/.test(last.text.trim()) ? ["going", "question", "dizzy"]
-        : ["thanks", "question", "visit"]).map(k => t(`msg.s.${k}`));
+    : urgentFromTeam(messages.findLast(m => m.from === "care-team")) ? ["called", "toEmergency", "callMe"]
+      : last.from === "patient" ? ["thanks", "visit"]
+        : /[?？]$/.test(last.text.trim()) ? ["going", "question", "dizzy"]
+          : ["thanks", "question", "visit"]).map(k => t(`msg.s.${k}`));
   const lastMine = messages.findLast(m => m.from === "patient")?.text.trim().toLowerCase();
   return picks.filter(p => p.toLowerCase() !== lastMine).slice(0, 3);
 }
