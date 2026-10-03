@@ -92,9 +92,9 @@ export type BookingRequest = { id: string; patientId: string; doctorName: string
 /**
  * Sona Care booking requests waiting for the care team: amber rows ("Amelia asks to see Dr. Lim ·
  * Thu 10:30") that rank above blockers but below a patient getting worse at home; the row's ID carries
- * the request's, so Confirm and Decline act on it in place.
+ * the request's, so Confirm and Decline act on it in place. `now` is on the demo clock, which stamps the request.
  */
-export function bookingItems(requests: BookingRequest[], now = new Date()): DayItem[] {
+export function bookingItems(requests: BookingRequest[], now: Date): DayItem[] {
   return requests.map(r => ({
     id: `booking-${r.id}`, kind: "booking" as const, title: r.title ?? `Booking request · ${r.doctorName}`, detail: r.reason ? `“${r.reason}” · ${r.specialty}` : `${r.doctorName} · ${r.specialty}`,
     reason: `Asked in Sona Care ${since(r.createdAt, now)} ago · confirm or decline`, tone: "soon" as const, score: 75, patientId: r.patientId, open: {},
@@ -151,8 +151,8 @@ const OTHER: [string, string, string, boolean][] = [
   ["Siti Aminah", "SA", "Diabetes review", false], ["Lim Wei Jie", "LW", "Post-op check", false], ["Ravi Kumar", "RK", "Heart failure follow-up", true],
   ["Nur Aisyah", "NA", "Asthma action plan", false], ["Tan Mei Ling", "TM", "Blood pressure review", false], ["Arjun Pillai", "AP", "New referral · history to take", true],
 ];
-export function dayOf(offset: number, today = new Date()) { const d = new Date(today); d.setDate(d.getDate() + offset); return d; }
-export function scheduleFor(offset: number, patients: Patient[], today = new Date()): ScheduleVisit[] {
+export function dayOf(offset: number, today: Date) { const d = new Date(today); d.setDate(d.getDate() + offset); return d; }
+export function scheduleFor(offset: number, patients: Patient[], today: Date): ScheduleVisit[] {
   if (offset === 0) return patients.map(p => ({ id: p.id, name: p.name, initials: p.initials, time: p.time, reason: p.subtitle, incomplete: p.incomplete, patientId: p.id }));
   const day = dayOf(offset, today).getDay();
   if (day === 0 || day === 6) return [];

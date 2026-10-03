@@ -15,8 +15,13 @@ type Snapshot = { tasks: ServerTask[]; results: ServerResult[]; bookings: Server
 export type ServerBooking = Awaited<ReturnType<typeof api.bookings.list>>[number];
 export type ServerData = Snapshot | undefined;
 let snapshot: Snapshot | undefined;
+// Today's widgets each load on mount, about 18 at once on a cold start: the read in flight, or one just done, serves them all.
+const SHARED_MS = 2500;
+let loading: Promise<void> | undefined, loadedAt = 0;
 // ponytail: appointments cached per date for the session; the month view counts only dates already opened.
 const days = new Map<string, ServerAppointment[]>();
+// Today, the sidebar and the quick actions read today's visits at once: one read per date in flight serves them.
+const dayReads = new Map<string, Promise<void>>();
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach(l => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
@@ -27,11 +32,18 @@ export const serverDayCount = (date: string) => days.get(date)?.length ?? 0;
 /** A read this role may not make is simply empty (a bed manager has no results); any other failure still fails the refresh. */
 const unlessRefused = <T>(read: Promise<T[]>) => read.catch(e => (e as { code?: string } | undefined)?.code === "FORBIDDEN" ? [] as T[] : Promise.reject(e));
 
+/** A fresh read, as after a write or a live change. */
 export async function refreshServerData() {
   // Each read stands alone: one the role is refused never drops Today back to the demo data. A server without booking yet still serves My Day.
   const [tasks, results, bookings] = await Promise.all([unlessRefused(api.tasks.list()), unlessRefused(api.results.list()), api.bookings.list().catch(() => [])]);
-  snapshot = { tasks, results, bookings };
+  snapshot = { tasks, results, bookings }; loadedAt = Date.now();
   notify();
+}
+
+/** A screen mounting: reads unless a read is in flight or one finished moments ago. */
+export function loadServerData() {
+  if (!loading && (!snapshot || Date.now() - loadedAt > SHARED_MS)) loading = refreshServerData().finally(() => { loading = undefined; });
+  return loading ?? Promise.resolve();
 }
 
 /** The server's tasks and results while live mode is on (loaded on first use), else undefined. */
@@ -39,7 +51,7 @@ export function useServerData() {
   const { on, wanted } = useLive();
   const value = useSyncExternalStore(subscribe, serverSnapshot);
   useEffect(() => {
-    if (on) void refreshServerData().catch(() => {});
+    if (on) void loadServerData().catch(() => {});
     // Only the switch going off clears it: a screen mounting while the session is still loading reads `on` as false too.
     else if (!wanted && snapshot) { snapshot = undefined; days.clear(); notify(); }
   }, [on, wanted]);
@@ -57,8 +69,8 @@ export function useVisitTasks() {
 export function useServerDay(date: string | undefined) {
   const rows = useSyncExternalStore(subscribe, () => (date ? days.get(date) : undefined));
   useEffect(() => {
-    if (!date) return;
-    api.day.list({ date }).then(rows => { days.set(date, rows); notify(); }, () => {});
+    if (!date || dayReads.has(date)) return;
+    dayReads.set(date, api.day.list({ date }).then(rows => { days.set(date, rows); notify(); }, () => {}).finally(() => { dayReads.delete(date); }));
   }, [date]);
   // The store's value, not a fresh Map read: React Compiler caches reads of module state per `date`.
   return rows;

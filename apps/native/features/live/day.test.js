@@ -1,6 +1,6 @@
 process.env.TZ = "Asia/Kuala_Lumpur";
 import { expect, test } from "bun:test";
-import { mergeServerState, newestResult, serverDayPatients, serverTasks, serverVisit } from "./day";
+import { demoLine, mergeServerState, newestResult, serverDayPatients, serverTasks, serverVisit } from "./day";
 
 const task = (over = {}) => ({ id: "t1", hospitalId: "demo", encounterId: "visit-1042", kind: "discharge", title: "Book review clinic", owner: "Clinic clerk", due: "2026-10-10", completed: false, sourceId: null, idempotencyKey: "k", createdAt: new Date("2026-09-26T02:00:00Z"), ...over });
 
@@ -77,4 +77,14 @@ test("a denied claim carries the insurer's reason; an appealed one keeps it, wit
   expect(mergeServerState({ revision: 1 }, {}, { status: "denied", denial }, false).claim).toMatchObject({ status: "denied", denial });
   const appealed = mergeServerState({ revision: 1 }, {}, { status: "appealed", denial, appealedAt: "2026-09-26T02:05:00Z", reviewUrl: "https://sona.test/insurer/new" }, false);
   expect(appealed.claim).toMatchObject({ status: "appealed", denial, appealedAt: "2026-09-26T02:05:00Z", reviewUrl: "https://sona.test/insurer/new" });
+});
+
+test("the demo pill keeps the hospital's time from the offset, in Kuala Lumpur, counting days since discharge", () => {
+  // Demo time Sun 4 Oct (21 h ahead of a phone on Sat 3 Oct); Sona Care says "Sun, 4 Oct · Day 5" at the same moment.
+  const status = { offsetMs: 21 * 3600_000, dischargedAt: "2026-09-29T03:00:00Z" };
+  expect(demoLine(status, new Date("2026-10-04T02:02:00Z"))).toBe("Demo time · Sun 4 Oct at 10:02 · day 5 after discharge");
+  // Later, with no new read: the line moves with `now`, past midnight in Kuala Lumpur.
+  expect(demoLine(status, new Date("2026-10-04T16:30:00Z"))).toBe("Demo time · Mon 5 Oct at 00:30 · day 6 after discharge");
+  expect(demoLine({ ...status, dischargedAt: null }, new Date("2026-10-04T02:02:00Z"))).toBe("Demo time · Sun 4 Oct at 10:02");
+  expect(demoLine({ offsetMs: 0, dischargedAt: null }, new Date())).toBe("Demo clock · real time");
 });

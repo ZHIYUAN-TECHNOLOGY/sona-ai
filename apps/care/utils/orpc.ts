@@ -18,6 +18,9 @@ focusManager.setEventListener(setFocused => {
 });
 
 export const queryClient = new QueryClient({
+  // Fresh for 30 s, so coming back to the app or opening a screen re-reads only what is older; a live change
+  // re-reads what it touches at once (features/live).
+  defaultOptions: { queries: { staleTime: 30_000 } },
   queryCache: new QueryCache({
     onError: (error) => {
       console.log(error);

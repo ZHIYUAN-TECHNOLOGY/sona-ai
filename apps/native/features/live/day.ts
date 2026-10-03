@@ -3,6 +3,7 @@ import type { PendingResult, ScheduleVisit } from "@/features/day/model";
 import { EMPTY_CLAIM, type ClaimState, type Denial } from "@sona-ai/domain/claim";
 import { EMPTY_DISCHARGE } from "@sona-ai/domain/discharge";
 import type { Encounter, Patient, Task } from "@/features/encounter/types";
+import { MONTHS, WEEKDAYS } from "@/features/tasks/state";
 
 /**
  * Live mode's read side for tasks, lab results and My Day: pure mappings from the server's rows to
@@ -47,6 +48,24 @@ export function serverDayPatients(patients: Patient[], rows: ServerAppointment[]
 /** Any day's appointment as a schedule row; it opens a visit only for a patient the app knows. */
 export function serverVisit(r: ServerAppointment, known: string[]): ScheduleVisit {
   return { id: r.id, name: r.patientName, initials: r.initials, time: clock(new Date(r.startsAt)), reason: sentence(r.kind), incomplete: r.incomplete, patientId: known.includes(r.patientId) ? r.patientId : undefined };
+}
+
+// The hospital keeps Malaysian time (UTC+8), whatever zone the phone is in; Sona Care counts the same way.
+const KL = 8 * 3600_000, DAY = 86_400_000;
+/** "Sun 4 Oct at 10:02" in Kuala Lumpur, as iOS writes the date and time in en-GB. */
+export function hospitalTime(at: Date) {
+  const d = new Date(at.getTime() + KL);
+  return `${WEEKDAYS[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} at ${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
+}
+/** Days since discharge counted on calendar days in Kuala Lumpur (discharge day is day 0), as Sona Care and the check-ins count them. */
+export function calendarDays(from: Date | string, to: Date) {
+  const day = (d: Date | string) => Math.floor((new Date(d).getTime() + KL) / DAY);
+  return day(to) - day(from);
+}
+/** My Day's demo pill at `now` on the demo clock: "Demo time · Sun 4 Oct at 10:02 · day 5 after discharge", or "Demo clock · real time". */
+export function demoLine(status: { offsetMs: number; dischargedAt: Date | string | null }, now: Date) {
+  if (!status.offsetMs) return "Demo clock · real time";
+  return `Demo time · ${hospitalTime(now)}${status.dischargedAt ? ` · day ${calendarDays(status.dischargedAt, now)} after discharge` : ""}`;
 }
 
 /** What the server holds for a visit (the encounter row's state), as far as the app reads it. */

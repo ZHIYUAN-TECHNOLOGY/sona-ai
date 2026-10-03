@@ -2,13 +2,14 @@ import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { api, errorText, requestId, useLive } from ".";
+import { useLiveChanges } from "./channel";
 
 export type LibraryDocument = Awaited<ReturnType<AppRouterClient["library"]["list"]>>[number];
 export type LibraryScope = "me" | "hospital";
 export type ArticlePreview = Awaited<ReturnType<AppRouterClient["library"]["previewArticle"]>>;
 export type Added = Awaited<ReturnType<AppRouterClient["library"]["add"]>> & { pages?: number };
 
-/** The doctor's library in live mode: their own sources and the hospital's shared ones. Re-read whenever the screen comes back into view (after the add sheet closes). */
+/** The doctor's library in live mode: their own sources and the hospital's shared ones. Re-read whenever the screen comes back into view (after the add sheet closes) or a colleague changes it. */
 export function useLiveLibrary() {
   const { on } = useLive();
   const [docs, setDocs] = useState<LibraryDocument[]>();
@@ -16,6 +17,7 @@ export function useLiveLibrary() {
   const [pending, setPending] = useState(false);
   const refresh = useCallback(() => { if (on) api.library.list().then(setDocs, e => setError(errorText(e))); }, [on]);
   useFocusEffect(refresh);
+  useLiveChanges(["library"], refresh);
   const remove = async (documentId: string) => {
     setPending(true); setError(undefined);
     try { await api.library.remove({ documentId }); refresh(); } catch (e) { setError(errorText(e)); } finally { setPending(false); }
