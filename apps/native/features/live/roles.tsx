@@ -17,6 +17,8 @@ import { useLiveChanges } from "./channel";
  * doctor; in live mode the role comes from clinician.me once per signed-in account.
  */
 let known: { userId: string; role: Role } | undefined;
+// Every screen asks on mount, about 8 at once on a cold start: one read in flight serves them all.
+let asking: ReturnType<typeof api.clinician.me> | undefined;
 
 export function useRole() {
   const { on, user } = useLive();
@@ -25,7 +27,7 @@ export function useRole() {
   useEffect(() => {
     if (!on || !userId) return;
     if (known?.userId === userId) { setMine(known); return; }
-    void api.clinician.me().then(me => { known = { userId, role: me.role }; setMine(known); }, () => {});
+    void (asking ??= api.clinician.me().finally(() => { asking = undefined; })).then(me => { known = { userId: me.userId, role: me.role }; setMine(known); }, () => {});
   }, [on, userId]);
   // Until the role arrives, nothing is hidden; the server still refuses what the role cannot do.
   const role = on && mine?.userId === userId ? mine?.role : undefined;

@@ -26,7 +26,7 @@ import { flaggedItems, flaggedTaskIds } from "@/features/check-ins/model";
 import { useCheckIns, useKeptFlags } from "@/features/check-ins/state";
 import { FlagActions } from "@/features/check-ins/thread";
 import { BookingActions, useKeptBookings } from "@/features/bookings/parts";
-import { DemoTimeLine } from "@/features/live/demo-clock";
+import { DemoTimeLine, useDemoOffset } from "@/features/live/demo-clock";
 import { useRole } from "@/features/live/roles";
 import type { Bed, Owner } from "@/features/ward/model";
 import { WardGlance } from "@/features/ward/ops";
@@ -50,7 +50,7 @@ const ICON: Record<DayItem["kind"], string> = { result: "testtube.2", blocker: "
 const HINT = (item: DayItem) => item.kind === "message" ? "Opens the messages" : item.kind === "claim" ? "Opens the guarantee letter and its appeal" : "Opens the visit";
 let sortedOnce = false;
 
-const nowMinutes = (d = new Date()) => d.getHours() * 60 + d.getMinutes();
+const nowMinutes = (d: Date) => d.getHours() * 60 + d.getMinutes();
 const clockOf = (ms: number) => new Date(ms).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 const haptic = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); };
 
@@ -225,9 +225,9 @@ function UnownedBeds({ beds }: { beds: Bed[] }) {
  * 40 ms apart. It floats over the ruler and list; picking a day folds it back. Dots mark visit
  * counts; today keeps a blue ring. Weekend days with nothing booked are dimmed.
  */
-function MonthCard({ offset, counts, onPick, onClose }: { offset: number; counts: (offset: number) => number; onPick: (offset: number) => void; onClose: () => void }) {
+function MonthCard({ offset, now, counts, onPick, onClose }: { offset: number; now: Date; counts: (offset: number) => number; onPick: (offset: number) => void; onClose: () => void }) {
   const { reducedMotion } = useAccessibleEffects();
-  const today = new Date(); today.setHours(12, 0, 0, 0);
+  const today = new Date(now); today.setHours(12, 0, 0, 0);
   const [month, setMonth] = useState(() => { const d = dayOf(offset, today); return new Date(d.getFullYear(), d.getMonth(), 1, 12); });
   const lead = (month.getDay() + 6) % 7; // Monday first
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
@@ -282,8 +282,14 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const keptBookings = useKeptBookings();
   const { findings } = useFindings(); // lane F6: overdue follow-ups rank red
   const beds = useWardBeds();
-  const today = useServerDay(live ? localDate(new Date()) : undefined);
-  const otherDay = useServerDay(live && offset !== 0 ? localDate(dayOf(offset)) : undefined);
+  // The minute timer: re-ranks by the clock and wakes snoozed rows when their hour is up (on the phone's time, so a demo jump never strands one).
+  const [at, setAt] = useState(Date.now);
+  useEffect(() => { const timer = setInterval(() => setAt(Date.now()), 60_000); return () => clearInterval(timer); }, []);
+  // "Now" on the hospital's demo clock in live mode, as Sona Care reads it (else the phone's): the day, its visits and how long ago a patient asked.
+  const offsetMs = useDemoOffset();
+  const clock = new Date(at + offsetMs);
+  const today = useServerDay(live ? localDate(clock) : undefined);
+  const otherDay = useServerDay(live && offset !== 0 ? localDate(dayOf(offset, clock)) : undefined);
   const patients = live ? serverDayPatients(fixturePatients, today ?? []) : fixturePatients;
   // The result waiting on a doctor (live: the server's; demo: the fixture until the briefing acknowledges it).
   const result = usePendingResult();
@@ -297,10 +303,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   };
   const { encounters } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
-  // The minute timer: re-ranks by the clock and wakes snoozed rows when their hour is up.
-  const [at, setAt] = useState(Date.now);
-  useEffect(() => { const timer = setInterval(() => setAt(Date.now()), 60_000); return () => clearInterval(timer); }, []);
-  const now = nowMinutes(new Date(at));
+  const now = nowMinutes(clock);
   // First open: the opening layer covers the wait (components/sona/opening), and the ranked rows rise in as it lifts.
   const opened = useOpened();
   const sorting = !opened;
@@ -310,10 +313,10 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const [snoozed, setSnoozed] = useState<Snoozed>({});
   const [showSnoozed, setShowSnoozed] = useState(false);
 
-  const schedule = live && offset !== 0 ? (otherDay ?? []).map(a => serverVisit(a, fixturePatients.map(p => p.id))) : scheduleFor(offset, patients);
+  const schedule = live && offset !== 0 ? (otherDay ?? []).map(a => serverVisit(a, fixturePatients.map(p => p.id))) : scheduleFor(offset, patients, clock);
   // Flagged check-in replies rank in red above the rest; their tasks are not listed twice. Findings follow-ups join the same ranking.
   // Sona Care booking requests are amber rows with Confirm / Decline (their tasks are not listed twice); one just decided stays a beat.
-  const requests = bookingItems(server?.bookings ?? []);
+  const requests = bookingItems(server?.bookings ?? [], clock);
   const bookings = [...requests, ...keptBookings.filter(k => !requests.some(r => r.id === k.id))];
   // An urgent unanswered Sona Care message is a red row with Reply / Call back; its task is not listed twice.
   const messages = inbox ? messageItems(inbox.threads, new Date(inbox.now)) : [];
@@ -322,7 +325,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   // A denied guarantee letter holds a bed: an amber row that opens Sona's appeal.
   const denials = glDeniedItems(beds);
   const ranked = offset === 0 ? withFindings([...flaggedItems(checkIns, kept), ...messages, ...bookings, ...denials, ...rankDay(patients, encounters, now, result ? undefined : new Set(["result"]), live ? { result, tasksOf: p => tasksOf(p).filter(t => !flaggedTaskIds(checkIns).includes(t.id) && !t.id.startsWith("booking:") && !messaged(t, p)) } : undefined)], findings) : rankOtherDay(offset, schedule);
-  const date = dayOf(offset);
+  const date = dayOf(offset, clock);
   const [switched, setSwitched] = useState(false);
   const pick = (next: number) => { if (next === offset) return; haptic(); setSwitched(true); setAnimate(false); setOffset(next); };
   const { active, later } = splitSnoozed(ranked, snoozed, at);
@@ -352,7 +355,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
           <Icon name="arrow.uturn.backward" size={12} color={palette.blue} /><Text style={{ ...type.subhead, fontWeight: "600", color: palette.blue }}>Today</Text>
         </Pressable> : null}
       </View>
-      {calendar && <MonthCard offset={offset} counts={o => live ? serverDayCount(localDate(dayOf(o))) : scheduleFor(o, patients).length} onPick={o => { setCalendar(false); pick(o); }} onClose={() => setCalendar(false)} />}
+      {calendar && <MonthCard offset={offset} now={clock} counts={o => live ? serverDayCount(localDate(dayOf(o, clock))) : scheduleFor(o, patients, clock).length} onPick={o => { setCalendar(false); pick(o); }} onClose={() => setCalendar(false)} />}
     </View>
     {/* Management's day leads with the ward and this week's numbers, not clinical tasks. */}
     {managing && <WardGlance />}
@@ -392,8 +395,8 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
         <Pressable accessibilityRole="button" accessibilityState={{ expanded: showSnoozed }} onPress={() => setShowSnoozed(v => !v)} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Icon name="moon.zzz" size={13} color={palette.muted} /><Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>Snoozed · {later.length}</Text>
         </Pressable>
-        {showSnoozed && later.map(({ item, wakes }) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`${item.title}, back at ${clockOf(wakes)}. Wake it now`} onPress={() => setSnoozed(({ [item.id]: _, ...rest }) => rest)} style={{ minHeight: 44, justifyContent: "center", paddingLeft: 20 }}>
-          <Text style={{ ...type.footnote, color: palette.muted }}>{item.title} · back {clockOf(wakes)} · <Text style={{ color: palette.blue }}>Wake now</Text></Text>
+        {showSnoozed && later.map(({ item, wakes }) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`${item.title}, back at ${clockOf(wakes + offsetMs)}. Wake it now`} onPress={() => setSnoozed(({ [item.id]: _, ...rest }) => rest)} style={{ minHeight: 44, justifyContent: "center", paddingLeft: 20 }}>
+          <Text style={{ ...type.footnote, color: palette.muted }}>{item.title} · back {clockOf(wakes + offsetMs)} · <Text style={{ color: palette.blue }}>Wake now</Text></Text>
         </Pressable>)}
       </Animated.View>}
       {!ordered.length && <Text style={{ ...type.callout, color: palette.muted, textAlign: "center", paddingVertical: 12 }}>Nothing scheduled this day.</Text>}
@@ -408,6 +411,6 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
       {(live || offset === 0) && <SampleLabel source="fixture" rule />}
     </Animated.View>}
     {/* The demo clock is a presenter's tool: it sits under the day, not above the insight. */}
-    <DemoTimeLine />
+    <DemoTimeLine now={clock} />
   </View>;
 }
