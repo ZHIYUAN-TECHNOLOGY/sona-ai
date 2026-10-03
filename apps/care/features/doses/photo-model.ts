@@ -1,5 +1,8 @@
 import type { T } from "@/lib/i18n";
 
+/** The bundled sample photo's key, as the server knows it (packages/api contracts); kept here so Care doesn't bundle zod. */
+export const SAMPLE_PHOTO_KEY = "sample-medicine";
+
 /**
  * A medicine the patient added from a photo: what was read (and corrected by them), sent to the care
  * team to check. It shows in their medicines as waiting, never as confirmed, and has no dose timer.

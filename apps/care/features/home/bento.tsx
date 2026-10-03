@@ -59,9 +59,9 @@ const Capsule = ({ children }: { children: string }) => <View style={[pillStyle,
 </View>;
 
 /**
- * Today's medicines (tall): a green check per dose taken today, grey for the rest, "2 of 3 doses taken",
- * and a white capsule for when the next is. Within 2 h of a dose (or late) the capsule is a hold to take
- * it right here. Tap opens the medicine screen.
+ * Today's medicines (tall): a green check per dose taken today, grey for the rest, "2 of 3 doses taken", then the next
+ * dose's name (with a white capsule for when it is, once over 2 h away) and a hold to log it right here. Logging it
+ * clears its reminder, so until 2 h before it is due the hold is the quiet "Took it early?" one. Tap opens the medicine screen.
  */
 export function MedicinesTile({ index, still }: { index: number; still: boolean }) {
   const now = useNow();
@@ -69,8 +69,7 @@ export function MedicinesTile({ index, still }: { index: number; still: boolean 
   const { plan, dose, taken, meds } = useNextDose(now);
   const out = plan?.status === "discharged" ? plan.dischargedAt : undefined;
   const today = dosesToday(meds, out, taken, now), done = today.filter(d => d.taken).length;
-  // The next open dose can always be logged here; a dose not due yet also says when it is.
-  const hold = dose, soon = dose && early(dose.dueAt, now);
+  const soon = dose && early(dose.dueAt, now);
   // The dose just taken keeps its (now done) button a moment: the finger is still down, and a button
   // that vanished under it would hand the release to whatever tile slid beneath.
   const [justTook, setJustTook] = useState<{ key: string; name: string }>();
@@ -79,15 +78,15 @@ export function MedicinesTile({ index, still }: { index: number; still: boolean 
     const id = setTimeout(() => setJustTook(undefined), 1500);
     return () => clearTimeout(id);
   }, [justTook]);
-  const shown = justTook ?? (hold ? dose : undefined);
+  const shown = justTook ?? dose;
   const when = dose && soon ? nextCapsule(dose.dueAt, now, lang) : undefined;
   const count = t("home.countOf", { done, n: today.length });
   const summary = today.length ? t("home.dosesTaken", { count }) : out ? t("home.nothingDue") : t("home.onceHome");
   // The count in ink, the rest faint, in whatever order the language puts them.
   const [before = "", after = ""] = t("home.dosesTaken").split("{count}");
-  return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={t("home.medsA11y", { summary, extra: when ? ` ${when}.` : hold ? t("home.isDue", { name: dose.name }) : "" })}
+  return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={t("home.medsA11y", { summary, extra: !dose ? "" : when ? ` ${dose.name}, ${when}.` : t("home.isDue", { name: dose.name }) })}
     onPress={() => router.push(out ? "/dose" : "/discharge")}
-    footer={shown && <HoldButton key={shown.key} compact label={t("home.holdName", { name: shown.name })} doneLabel={t("dose.taken", { name: shown.name })}
+    footer={shown && <HoldButton key={shown.key} compact done={!!justTook} quiet={!!soon} label={t(soon ? "dose.holdEarly" : "dose.hold")} doneLabel={t("dose.taken", { name: shown.name })}
       onDone={() => { setJustTook({ key: shown.key, name: shown.name }); markTaken(shown.key); }} />}>
     <Kicker>{t("home.meds")}</Kicker>
     {today.length > 0 && <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -98,6 +97,7 @@ export function MedicinesTile({ index, still }: { index: number; still: boolean 
     <Text style={{ flexGrow: 1, fontSize: 20, lineHeight: 26, fontWeight: "500", letterSpacing: -0.6, color: palette.faint }}>
       {today.length ? <>{before}<Text style={{ color: palette.ink }}>{count}</Text>{after}</> : summary}
     </Text>
+    {dose && <Text numberOfLines={1} style={{ fontSize: 16, lineHeight: 21, fontWeight: "600", letterSpacing: -0.3, color: palette.ink }}>{dose.name}</Text>}
     {when && <Capsule>{when}</Capsule>}
   </Tile>;
 }
@@ -155,7 +155,7 @@ export function LatestTile({ index, still, onCheckIn }: { index: number; still: 
 
 /**
  * Next visit (tall): its time (or day) in a white capsule, what it is big, the hospital, then the day
- * and how far off (amber once due soon or overdue) with an edit pencil. Tap opens My visits. None
+ * and how far off (amber once due soon or overdue), or "Time to be confirmed" when it has no time yet. Tap opens My visits. None
  * booked: says so, with Book to find a doctor. The data has no doctor or room yet, so neither is shown.
  */
 export function VisitTile({ index, still, hospital }: { index: number; still: boolean; hospital?: string }) {
@@ -173,16 +173,13 @@ export function VisitTile({ index, still, hospital }: { index: number; still: bo
   const soon = next.status !== "upcoming";
   // The capsule carries the time, or the day when there is no time; the line under it never repeats the day.
   const time = timeLabel(next, lang), far = next.status === "missed" ? t("home.visitOverdue") : away(next.inDays, lang);
-  const when = time ? `${dayLabel(next.date, lang)} · ${far}` : far[0]!.toUpperCase() + far.slice(1);
+  const when = time ? `${dayLabel(next.date, lang)} · ${far}` : `${far[0]!.toUpperCase() + far.slice(1)} · ${t("home.timeTbc")}`;
   return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={t("home.visitA11y", { title: next.title, time: time ?? dayLabel(next.date, lang), when, hospital: hospital ? ` ${hospital}.` : "" })} onPress={() => router.push("/follow-ups")}>
     <Capsule>{time ?? dayLabel(next.date, lang)}</Capsule>
     <View style={{ flexGrow: 1, gap: 4 }}>
       <Text numberOfLines={3} style={{ fontSize: 24, lineHeight: 28, fontWeight: "600", letterSpacing: -1, color: palette.ink }}>{next.title}</Text>
       {hospital && <Text numberOfLines={2} style={{ fontSize: 14, lineHeight: 19, color: palette.muted }}>{hospital}</Text>}
     </View>
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-      <Text style={{ flex: 1, fontSize: 14, lineHeight: 19, fontWeight: soon ? "600" : "400", color: soon ? palette.amber : palette.faint }}>{when}</Text>
-      <Icon name="pencil" size={20} />
-    </View>
+    <Text style={{ fontSize: 14, lineHeight: 19, fontWeight: soon ? "600" : "400", color: soon ? palette.amber : palette.faint }}>{when}</Text>
   </Tile>;
 }

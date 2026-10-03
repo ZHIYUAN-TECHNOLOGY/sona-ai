@@ -1,4 +1,5 @@
 import type { DischargePlan, Language } from "./discharge";
+import { courseFinished, lastDose } from "./doses";
 import type { FindingKind } from "./findings";
 
 /**
@@ -7,8 +8,12 @@ import type { FindingKind } from "./findings";
  * ponytail: authored per condition rule (see discharge.ts); a model writes them per plan later.
  */
 export type MedGroup = "new" | "changed" | "stopped" | "continue";
-/** `take`: how to take one dose; `at`: daily times in Malaysia ("HH:MM"); `doses`: how many are left of a course (none = ongoing). As-needed medicines have no times. */
-export type PatientMed = { name: string; line: string; take?: string; at?: string[]; doses?: number };
+/**
+ * `take`: how to take one dose; `at`: daily times in Malaysia ("HH:MM"); `doses`: how many are left of a course (none = ongoing).
+ * As-needed medicines have no times. Read at a time (patientMeds' `home`), a course also carries its last dose (`endsAt`), and
+ * `finished` once that has gone by.
+ */
+export type PatientMed = { name: string; line: string; take?: string; at?: string[]; doses?: number; endsAt?: Date; finished?: boolean };
 
 /** One string in the patient's languages; English is always there to fall back to. */
 type Words = { en: string; ms?: string; zh?: string };
@@ -50,14 +55,21 @@ const MEDS: Record<string, { name?: string; line: Words; take?: Words; at?: stri
   "Continue as before": { line: CONTINUE },
 };
 
-/** Take-home medicines grouped the way a patient reads a change: new, changed, stopped, carry on. An unknown instruction reads as written. */
-export function patientMeds(plan: DischargePlan, lang: Language = "en"): Record<MedGroup, PatientMed[]> {
+const FINISHED: Words = { en: "Course finished, nothing left to take", ms: "Kursus sudah tamat, tiada lagi untuk diambil", zh: "疗程已结束，不用再吃" };
+
+/**
+ * Take-home medicines grouped the way a patient reads a change: new, changed, stopped, carry on. An unknown instruction reads as written.
+ * Given when the patient left and the time now (`home`, the demo clock), a course carries its last dose, and once finished it says
+ * so in place of its instruction, so the app, the models and reply drafts stop reading it as current.
+ */
+export function patientMeds(plan: DischargePlan, lang: Language = "en", home?: { out: Date | string; now: Date }): Record<MedGroup, PatientMed[]> {
   const groups: Record<MedGroup, PatientMed[]> = { new: [], changed: [], stopped: [], continue: [] };
   for (const med of plan.meds) {
     const plain = MEDS[med.detail];
-    groups[med.change === "unchanged" ? "continue" : med.change].push({
-      name: plain?.name ?? med.name, line: plain ? say(plain.line, lang) : med.detail, take: plain?.take && say(plain.take, lang), at: plain?.at, doses: plain?.doses,
-    });
+    const m: PatientMed = { name: plain?.name ?? med.name, line: plain ? say(plain.line, lang) : med.detail, take: plain?.take && say(plain.take, lang), at: plain?.at, doses: plain?.doses };
+    const endsAt = home && lastDose(m, new Date(home.out));
+    groups[med.change === "unchanged" ? "continue" : med.change].push(!home || !endsAt ? m
+      : courseFinished(endsAt, home.now) ? { ...m, endsAt, finished: true, line: say(FINISHED, lang) } : { ...m, endsAt });
   }
   return groups;
 }

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EASE_OUT } from "@/features/doses";
 import { RemindersRow } from "@/features/doses/remind";
 import { LanguageRow } from "@/features/language/picker";
+import { useMe } from "@/features/me";
 import { forgetPhone } from "@/features/notifications";
 import { TrainingRow } from "@/features/training/consent";
 import { authClient } from "@/lib/auth-client";
@@ -12,24 +13,39 @@ import { Text } from "@/lib/text";
 import { useT } from "@/lib/i18n";
 import "./strings";
 import { motion, palette, type } from "@/lib/theme";
-import { AccentText } from "@/lib/ui";
+import { AccentText, Button } from "@/lib/ui";
 
 const OUT_MS = 220;
 /** Head, rows and Close rise in 40 ms apart once the sheet is most of the way up (60fps must-leaderboard-sheet, toned down: 8 pt, no bounce). */
 const reveal = (i: number) => FadeInDown.withInitialValues({ opacity: 0, transform: [{ translateY: 8 }] }).springify().duration(motion.spring.duration).dampingRatio(1).delay(140 + i * motion.stagger);
 
-/** Sign out: forgets this phone for pushes, then ends the session. */
+/**
+ * Sign out: forgets this phone for pushes, then ends the session. Linked to a record, it asks first, in place (coming
+ * back needs the discharge code), as the training sheet does: no alert.
+ */
 export function SignOutRow() {
   const t = useT();
-  return <Pressable accessibilityRole="button" onPress={() => { void forgetPhone().finally(() => authClient.signOut()); }} style={{ minHeight: 48, minWidth: 48, justifyContent: "center" }}>
-    <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{t("home.signOut")}</Text>
-  </Pressable>;
+  const reduced = useReducedMotion();
+  const linked = useMe().state === "joined";
+  const [asking, setAsking] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const out = () => { setBusy(true); void forgetPhone().finally(() => authClient.signOut()).finally(() => setBusy(false)); };
+  return <View>
+    <Pressable accessibilityRole="button" onPress={() => linked ? setAsking(true) : out()} style={{ minHeight: 48, minWidth: 48, justifyContent: "center" }}>
+      <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{t("home.signOut")}</Text>
+    </Pressable>
+    {asking && <Animated.View entering={reduced ? undefined : FadeInDown.duration(220).easing(EASE_OUT)} style={{ gap: 10, paddingBottom: 8 }}>
+      <Text accessibilityLiveRegion="polite" style={{ ...type.body, color: palette.ink }}>{t("home.signOutConfirm")}</Text>
+      <Button label={t("home.signOut")} busy={busy} onPress={out} />
+      <Button quiet label={t("common.cancel")} disabled={busy} onPress={() => setAsking(false)} />
+    </Animated.View>}
+  </View>;
 }
 
 /**
  * Settings a patient needs rarely (language, dose reminders, the training consent, sign out), off home in
  * the + sheet's shape: opened from the initials, a white sheet with the light-then-gradient head, one row
- * each on hairlines, and a grey Close. Each row opens its own sheet or toggles in place, as before.
+ * each on hairlines, and a grey Close. Each row opens its own sheet, switches in place, or (sign out) asks in place.
  */
 export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const reduced = useReducedMotion();

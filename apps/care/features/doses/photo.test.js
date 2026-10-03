@@ -1,7 +1,12 @@
+import { SAMPLE_PHOTO_KEY as serverKey } from "@sona-ai/api/contracts";
 import { expect, test } from "bun:test";
 import { tFor } from "@/lib/i18n";
 import "./strings";
-import { addWaiting, afterRead, medLine, messageFor, statusOf, unplanned } from "./photo-model";
+import { addWaiting, afterRead, medLine, messageFor, SAMPLE_PHOTO_KEY, statusOf, unplanned } from "./photo-model";
+
+test("the sample photo travels under the key the server checks (kept apart so the app never bundles zod)", () => {
+  expect(SAMPLE_PHOTO_KEY).toBe(serverKey);
+});
 
 test("a reading of their own photo is shown as read; the sample's words are never offered as their own photo's", () => {
   const model = { name: "Amlodipine", dose: "5 mg", source: "model", model: "medgemma-1.5-4b" };

@@ -20,17 +20,19 @@ export type Reminder = { id: string; at: Date; doseKey: string };
 
 /**
  * The reminders to hold: every dose from `now` (phone time, plus `offsetMs` for the demo clock) up to
- * seven days on, not yet taken and not already past, earliest first, capped.
+ * seven days on, not yet taken and not already past, earliest first, capped. `later` ("Remind me later",
+ * `until` on the demo clock) adds one more for that dose, until it is taken.
  */
-export function doseReminders({ meds, dischargedAt, taken, now, offsetMs = 0 }: {
-  meds: ScheduledMed[]; dischargedAt: string | Date | undefined; taken: string[]; now: Date; offsetMs?: number;
+export function doseReminders({ meds, dischargedAt, taken, now, offsetMs = 0, later }: {
+  meds: ScheduledMed[]; dischargedAt: string | Date | undefined; taken: string[]; now: Date; offsetMs?: number; later?: { key: string; until: number };
 }): Reminder[] {
   if (!dischargedAt) return [];
   const done = new Set(taken), until = new Date(now.getTime() + offsetMs + REMINDER_DAYS * DAY);
-  return meds.flatMap(med => doseSlots(med, new Date(dischargedAt), until).map(dueAt => {
+  const snoozed = later ? [{ id: `${REMINDER_PREFIX}later:${later.key}`, at: new Date(later.until - offsetMs), doseKey: later.key }] : [];
+  return [...snoozed, ...meds.flatMap(med => doseSlots(med, new Date(dischargedAt), until).map(dueAt => {
     const key = doseKey(med.name, dueAt);
     return { id: `${REMINDER_PREFIX}${key}`, at: new Date(dueAt.getTime() - offsetMs), doseKey: key };
-  }))
+  }))]
     .filter(r => !done.has(r.doseKey) && r.at.getTime() > now.getTime())
     .sort((a, b) => a.at.getTime() - b.at.getTime())
     .slice(0, REMINDER_CAP);

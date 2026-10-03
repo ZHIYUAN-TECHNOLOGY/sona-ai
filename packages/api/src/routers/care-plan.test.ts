@@ -7,6 +7,8 @@ import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
 import { stubModels, type Models } from "../models";
+import { planText } from "./care-plan";
+import { scheduleCheckIns } from "./check-ins";
 import { appRouter } from "./index";
 
 const user = (id: string) => ({
@@ -76,6 +78,39 @@ test("Amelia reads the leaflet her doctor approved at discharge, in its language
   expect(drafts.map(d => [(d.output as { leaflet: string }).leaflet, d.approvedBy]).sort()).toEqual([["Draf 1 (en)", null], ["Draf 2 (ms)", "dr-aisyah"], ["Draf 3 (ms)", null]]);
   await amelia.care.ask({ question: "Apa kata risalah saya?" });
   expect(grounded[0]).toContain("Draf 2 (ms)");
+});
+
+test("azithromycin reads as current until its last dose has gone by on the demo clock, then finished, in Care and in what the models read", async () => {
+  const { clock, amelia, discharge } = await world();
+  await discharge("visit-1042", { followUp: "2w", language: "en", dischargedAt: "2026-09-26T07:40:00.000Z" }); // Sat 15:40: doses Sun and Mon at 08:00
+  const read = async (lang?: "ms") => {
+    const plan = await amelia.care.discharge(lang && { lang });
+    if (plan.status !== "discharged") throw new Error("expected a discharged plan");
+    return plan;
+  };
+  clock.now = new Date("2026-09-28T13:59:00+08:00"); // Monday's dose can still be logged
+  const during = await read();
+  expect(during.medicines.changed[0]).toMatchObject({ line: "Now a tablet once a day, for 2 more days", endsAt: new Date("2026-09-28T08:00:00+08:00") });
+  expect(planText(during)).toContain("- Azithromycin (changed): Now a tablet once a day, for 2 more days; 1 tablet, with or without food; last dose Mon, 28 Sep 2026\n");
+  clock.now = new Date("2026-09-28T14:00:00+08:00");
+  const after = await read();
+  expect(after.medicines.changed[0]).toMatchObject({ finished: true, line: "Course finished, nothing left to take" });
+  expect(planText(after)).toContain("- Azithromycin (changed): Course finished, nothing left to take; last dose Mon, 28 Sep 2026\n");
+  expect(planText(after)).toContain("- Cetirizine (continue): Keep taking it as before; 1 tablet at night\n");
+  expect((await read("ms")).medicines.changed[0]!.line).toBe("Kursus sudah tamat, tiada lagi untuk diambil");
+});
+
+test("the plan's check-ins are the visit's own, including one the check-in agent brought forward", async () => {
+  const { db, amelia, discharge } = await world();
+  const out = "2026-09-26T07:40:00.000Z", amy = { id: "SYN-1042", name: "Amelia Tan" };
+  await discharge("visit-1042", { followUp: "2w", language: "en", dischargedAt: out, checkInDays: [2, 7, 14] });
+  await scheduleCheckIns(db, "demo", amy, "visit-1042", "en", new Date(out), [2, 7, 14]);
+  await scheduleCheckIns(db, "demo", amy, "visit-1042", "en", new Date(out), [4]); // brought forward after a worse reply
+  const plan = await amelia.care.discharge();
+  if (plan.status !== "discharged") throw new Error("expected a discharged plan");
+  expect(plan.checkIns.map(c => c.day)).toEqual([2, 4, 7, 14]);
+  expect(plan.checkIns[1]!.date).toEqual(new Date("2026-09-30T10:00:00+08:00"));
+  expect(planText(plan)).toContain("Check-ins: day 2, day 4, day 7 and day 14 after discharge");
 });
 
 test("the plan and follow-ups come in the language Sona Care asks for, English per string where a word is missing", async () => {

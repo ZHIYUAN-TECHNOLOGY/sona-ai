@@ -7,18 +7,20 @@ import { useMe } from "@/features/me";
 import type { Permission } from "@/features/notifications/model";
 import { useClockOffset } from "@/lib/clock";
 import { tFor, useLang } from "@/lib/i18n";
+import { Icon } from "@/lib/icons";
 import { Text } from "@/lib/text";
 import { palette, type } from "@/lib/theme";
-import { Button, Card } from "@/lib/ui";
+import { Button, Card, surfaceStyle } from "@/lib/ui";
+import { useSnooze } from "./index";
 import { subscribe as onTaken, takenNow } from "./log";
 import { doseReminders, REMINDER_PREFIX, reminderUrl, type Reminder } from "./reminders";
 import "./strings";
 
 /**
  * Local dose reminders (features/doses/reminders.ts decides which). The patient switches them on once,
- * in context on the Medicine screen, or later from home's row; the choice is kept on the phone. While on
+ * in context on the Medicine screen, or later from Settings or the Medicine shelf; the choice is kept on the phone. While on
  * and allowed, the phone holds a notification for each dose in the next week, rebuilt whenever the plan,
- * a taken dose, the demo clock, the language or the app coming back to the foreground changes things.
+ * a taken dose, the demo clock, the language, a "Remind me later" or the app coming back to the foreground changes things.
  * The lock screen shows only "Sona Care · Time for your medicine", never the medicine.
  */
 const KEY = "sona-care.reminders";
@@ -38,16 +40,20 @@ export function useReminders() {
   return { ...s, on: s.choice === "on" && s.permission === "granted" };
 }
 
+/** Asks the phone (it shows its prompt only the first time); whether notifications are allowed. */
+const request = () => Notifications.requestPermissionsAsync().then(p => { put({ permission: p.status as Permission }); return p.granted; }, () => false);
+
 /** Switches reminders on (asking the phone once) or off; says how it went. */
 export async function setReminders(on: boolean): Promise<"on" | "blocked" | "off"> {
   const choice: Choice = on ? "on" : "off";
   put({ choice });
   void SecureStore.setItemAsync(KEY, choice).catch(() => {});
   if (!on) return "off";
-  const asked = await Notifications.requestPermissionsAsync().catch(() => undefined);
-  put({ permission: (asked?.status as Permission | undefined) ?? state.permission });
-  return asked?.granted ? "on" : "blocked";
+  return await request() ? "on" : "blocked";
 }
+
+/** "Remind me later" asks the phone once if it never has, even with dose reminders off; DoseReminders then holds that reminder. */
+export const askOnce = () => { if (state.permission === "undetermined") void request(); };
 
 // One rebuild at a time: cancel every reminder of ours (IDs start "dose:"), then set the new ones.
 let queue = Promise.resolve();
@@ -71,6 +77,7 @@ export function DoseReminders() {
   const offset = useClockOffset();
   const lang = useLang();
   const { loaded, permission, on } = useReminders();
+  const later = useSnooze();
   const [woke, setWoke] = useState(0);
   useEffect(() => {
     // Back from Settings (or anywhere): the permission may have changed, and the week ahead has moved on.
@@ -81,12 +88,13 @@ export function DoseReminders() {
     // Nothing until the choice and the permission are read, so a cold start never clears reminders it cannot rebuild.
     if (!loaded || !permission || me === "loading") return;
     const body = tFor(lang)("reminders.body");
-    if (!on || me === "signed-out" || data?.status === "in-hospital") return hold([], body);
+    if (permission !== "granted" || me === "signed-out" || data?.status === "in-hospital") return hold([], body);
     // Plan not read (starting offline, or the record unreachable): keep what the phone already holds.
     if (data?.status !== "discharged") return;
-    const meds = [...data.medicines.new, ...data.medicines.changed, ...data.medicines.continue];
-    hold(doseReminders({ meds, dischargedAt: data.dischargedAt, taken, now: new Date(), offsetMs: offset }), body);
-  }, [loaded, permission, on, me, data, taken, offset, lang, woke]);
+    // With reminders off, only a "Remind me later" is held: the patient asked for that one.
+    const meds = on ? [...data.medicines.new, ...data.medicines.changed, ...data.medicines.continue] : [];
+    hold(doseReminders({ meds, dischargedAt: data.dischargedAt, taken, now: new Date(), offsetMs: offset, later }), body);
+  }, [loaded, permission, on, me, data, taken, offset, lang, woke, later]);
   return null;
 }
 
@@ -127,18 +135,38 @@ export function RemindCard() {
   </Card>;
 }
 
-/** Home's quiet row beside Language: "Dose reminders · On". Off turns them off; On asks the phone, or opens Settings if it blocks them. */
-export function RemindersRow() {
+/** The reminders switch wherever it sits: off at once; on asks the phone, or opens Settings when the phone blocks them. */
+function useRemindersSwitch() {
   const t = tFor(useLang());
   const { on } = useReminders();
-  const label = on ? t("reminders.rowOn") : t("reminders.rowOff");
-  const toggle = async () => {
-    const result = await setReminders(!on);
+  const toggle = (to: boolean) => void setReminders(to).then(result => {
     if (result === "blocked") void Linking.openSettings();
     else AccessibilityInfo.announceForAccessibility(`${t("reminders.row")}: ${t(result === "on" ? "reminders.rowOn" : "reminders.rowOff")}`);
-  };
+  });
+  return { t, on, toggle };
+}
+
+/** Settings' row: "Dose reminders" with a real switch; the whole row toggles it. */
+export function RemindersRow() {
+  const { t, on, toggle } = useRemindersSwitch();
   return <Pressable accessibilityRole="switch" accessibilityState={{ checked: on }} accessibilityLabel={t("reminders.row")} accessibilityHint={t("reminders.hint")}
-    onPress={() => { void toggle(); }} style={({ pressed }) => ({ minHeight: 48, justifyContent: "center", opacity: pressed ? 0.6 : 1 })}>
-    <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{t("reminders.row")} · <Text style={{ color: on ? palette.green : palette.blue }}>{label}</Text></Text>
+    onPress={() => toggle(!on)} style={{ minHeight: 48, flexDirection: "row", alignItems: "center", gap: 12 }}>
+    <Text style={{ flex: 1, ...type.footnote, fontWeight: "600", color: palette.muted }}>{t("reminders.row")}</Text>
+    <Switch accessible={false} value={on} onValueChange={toggle} trackColor={{ true: palette.green }} />
+  </Pressable>;
+}
+
+/** The Medicine shelf's key for reminders: a quick key's glass and glyph, with a real switch where the others point away (it opens nothing). */
+export function RemindersKey() {
+  const { t, on, toggle } = useRemindersSwitch();
+  return <Pressable accessibilityRole="switch" accessibilityState={{ checked: on }} accessibilityLabel={t("reminders.row")} accessibilityHint={t("reminders.hint")}
+    onPress={() => toggle(!on)} style={[surfaceStyle, { flex: 1, minHeight: 108, padding: 14, justifyContent: "space-between" }]}>
+    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: palette.blue }}>
+        <Icon name="alarm" size={20} color={palette.white} weight="duotone" duotoneColor={palette.white} />
+      </View>
+      <Switch accessible={false} value={on} onValueChange={toggle} trackColor={{ true: palette.green }} />
+    </View>
+    <Text numberOfLines={1} style={{ ...type.headline, color: palette.ink }}>{t("reminders.row")}</Text>
   </Pressable>;
 }

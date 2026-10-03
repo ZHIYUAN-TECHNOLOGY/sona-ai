@@ -1,4 +1,3 @@
-import { SAMPLE_PHOTO_KEY } from "@sona-ai/api/contracts";
 import { useQuery } from "@tanstack/react-query";
 import * as SecureStore from "expo-secure-store";
 import { Image } from "expo-image";
@@ -14,7 +13,7 @@ import { motion, palette, type } from "@/lib/theme";
 import { Button, field, pillStyle, SampleLabel, surfaceStyle } from "@/lib/ui";
 import { client, orpc, queryClient } from "@/utils/orpc";
 import { Pill } from "./pill";
-import { addWaiting, afterRead, medLine, messageFor, statusOf, unplanned, type PhotoMedicine, type PhotoReading } from "./photo-model";
+import { addWaiting, afterRead, medLine, messageFor, SAMPLE_PHOTO_KEY, statusOf, unplanned, type PhotoMedicine, type PhotoReading } from "./photo-model";
 import { useMe } from "../me";
 import "./strings";
 
@@ -77,7 +76,7 @@ export function PhotoMedicines({ planned, adding, onDone }: { planned: string[];
   </View>;
 }
 
-/** The sheet (white, 40 pt corners, rows springing up 40 ms apart, like "Remind me later"): choose → reading → check and send → sent. */
+/** The sheet (white, 40 pt corners, rows springing up 40 ms apart, like "Remind me later"): choose → reading → check and send → sent, with Cancel until it is sent. */
 function PhotoSheet({ onClose }: { onClose: () => void }) {
   const lang = useLang(), t = tFor(lang);
   const reduced = useReducedMotion();
@@ -186,6 +185,11 @@ function PhotoSheet({ onClose }: { onClose: () => void }) {
         <Animated.View entering={row(1)}><Text style={{ ...type.body, color: palette.muted, textAlign: "center" }}>{t("photo.sentLine", { med: step.med })}</Text></Animated.View>
         <Animated.View entering={row(2)}><Button label={t("common.done")} onPress={onClose} /></Animated.View>
       </>}
+
+      {step.kind !== "sent" && <Pressable accessibilityRole="button" disabled={sending} onPress={onClose}
+        style={({ pressed }) => ({ alignSelf: "center", minHeight: 48, paddingHorizontal: 24, justifyContent: "center", opacity: pressed ? 0.6 : 1 })}>
+        <Text style={{ fontSize: 16, fontWeight: "600", color: palette.ink }}>{t("common.cancel")}</Text>
+      </Pressable>}
     </Animated.View>
   </Modal>;
 }

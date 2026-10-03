@@ -19,7 +19,7 @@ const big = { fontSize: 32, lineHeight: 38, fontWeight: "600", letterSpacing: -1
 /**
  * One medicine as a white sheet (the kit's medicine sheet): the medicine drawn big, its name in the
  * headline gradient, the plan's own line faint, then how to take it as one sentence with the dose and
- * the times in ink, and what the stay did to it as a capsule. If a dose of it is due now, a hold marks
+ * the times in ink ("Finished Thu 1 Oct" once a course is over), and what the stay did to it as a capsule. If a dose of it is due now, a hold marks
  * it taken right here. Rows spring up 40 ms apart as the sheet rises (after Canopi); Close goes back.
  */
 export default function Medicine() {
@@ -50,12 +50,13 @@ export default function Medicine() {
     close,
   ]);
 
+  // Without a schedule the sentence below already is the plan line; a finished course says so there instead.
+  const planLine = med.at?.length && !med.finished ? med.line : undefined;
   return rows([
     <Pill name={med.name} size={150} />,
-    <View accessible accessibilityRole="header" accessibilityLabel={`${med.name}. ${med.at?.length ? med.line : ""}`} style={{ alignItems: "center", gap: 4 }}>
+    <View accessible accessibilityRole="header" accessibilityLabel={`${med.name}. ${planLine ?? ""}`} style={{ alignItems: "center", gap: 4 }}>
       <AccentText style={big}>{med.name}</AccentText>
-      {/* Without a schedule the sentence below already is the plan line. */}
-      {med.at?.length ? <Text style={{ ...type.footnote, color: palette.faint, textAlign: "center" }}>{med.line}</Text> : null}
+      {planLine && <Text style={{ ...type.footnote, color: palette.faint, textAlign: "center" }}>{planLine}</Text>}
     </View>,
     <View style={{ alignSelf: "stretch", height: 1, backgroundColor: palette.line }} />,
     <Text style={{ fontSize: 20, lineHeight: 28, letterSpacing: -0.5, color: palette.faint, textAlign: "center" }}>

@@ -9,8 +9,8 @@ import { listeners, subscribe, takenNow } from "./log";
 export { clearTaken, markTaken, syncTaken } from "./log";
 
 /**
- * "Remind me later": the dose card steps aside until `until` (ms), in this app only (no notification
- * is scheduled, so the screen says it shows here again). Kept beside the taken log so every screen agrees.
+ * "Remind me later": the dose card steps aside until `until` (ms, demo clock), and DoseReminders (remind.tsx) holds a
+ * notification for then when the phone allows it. Kept beside the taken log so every screen agrees.
  */
 let snoozed: { key: string; until: number } | undefined;
 export function snooze(next: typeof snoozed) {
