@@ -423,3 +423,15 @@ test("a code whose evidence quotes the note's words, not the sentence id, is kep
   expect(citedSentence("[plan] Chest film today.", sentences)?.id).toBe("plan");
   expect(citedSentence("Something the note never says at all", sentences)).toBeUndefined();
 });
+
+test("a condition the doctor names in other words than the WHO label is coded when the model copies those words, never a negated or made-up one", async () => {
+  const sentences = [{ id: "assessment", text: "Acute pyelonephritis, uncomplicated; no pneumonia." }];
+  const candidates = [{ code: "N10", label: "Acute tubulo-interstitial nephritis" }, { code: "J18.9", label: "Pneumonia, unspecified" }, { code: "N17.9", label: "Acute renal failure, unspecified" }];
+  const fetcher = (async () => new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ codes: [
+    { code: "N10", kind: "Principal", evidence: "assessment", stated: "Acute pyelonephritis" },
+    { code: "J18.9", kind: "Secondary", evidence: "assessment", stated: "pneumonia" }, // negated
+    { code: "N17.9", kind: "Secondary", evidence: "assessment", stated: "renal failure" }, // not in the sentence
+  ] }) } }] }))) as unknown as typeof fetch;
+  const read = await basetenModels({ apiKey: "k", fetcher }).suggestCodes({ sentences, candidates });
+  expect(read.codes).toEqual([{ code: "N10", label: "Acute tubulo-interstitial nephritis", kind: "Principal", evidence: "assessment" }]);
+});

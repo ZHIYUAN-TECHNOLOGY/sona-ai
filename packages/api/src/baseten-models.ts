@@ -106,8 +106,9 @@ Answer with JSON only: {"text": "<reply>"}`;
 
 const CODING = `You code a hospital admission note for the insurer in WHO ICD-10. Pick codes ONLY from the candidates; never write any other code.
 Code only what a note sentence states the patient has: skip anything negated, ruled out, only suspected, or in the family history.
-One Principal code (the main reason for admission), other diagnoses Secondary, a procedure Procedure. Cite the id of the one sentence that states each.
-Answer with JSON only: {"codes": [{"code": "<candidate code>", "kind": "Principal" | "Secondary" | "Procedure", "evidence": "<sentence id>"}]}`;
+One Principal code (the main reason for admission), other diagnoses Secondary, a procedure Procedure. Cite the id of the one sentence that states each,
+and copy the exact words in it that name the condition. Choose the candidate whose meaning matches those words most exactly: a named condition, not a general one.
+Answer with JSON only: {"codes": [{"code": "<candidate code>", "kind": "Principal" | "Secondary" | "Procedure", "evidence": "<sentence id>", "stated": "<the exact words>"}]}`;
 
 const APPEAL = `You draft a hospital's appeal to an insurer that denied a final guarantee letter, for the doctor to check and edit before sending.
 Use ONLY the note sentences and codes below. Calm and factual; answer the denial reason.
@@ -152,6 +153,18 @@ export const EMERGENCY = /999|emergency|kecemasan|急诊/i;
  */
 function safeReply(reply: string, input: Parameters<Models["draftReply"]>[0]) {
   return reply.length <= DRAFT_MAX && inLanguage(reply, input.language) && (input.label !== "urgent" || EMERGENCY.test(reply)) && !PROMISED_TIME.test(reply);
+}
+
+/**
+ * The clinician's own name for a condition whose WHO label uses other words ("pyelonephritis" is N10, "Acute
+ * tubulo-interstitial nephritis"; 5 Oct, real Gemma): the model's copied words are in the sentence, not negated, and
+ * no candidate's label says those words itself (then the label check decides, so "pneumonia" cannot pass as "Lobar pneumonia").
+ * The doctor reviews every code against its sentence before the letter goes.
+ */
+function namedIn(sentence: string, stated: unknown, candidates: { label: string }[]) {
+  const words = typeof stated === "string" ? stated.trim().toLowerCase() : "";
+  const at = words.length >= 4 ? sentence.toLowerCase().indexOf(words) : -1;
+  return at >= 0 && !NOT_STATED.test(sentence.toLowerCase().slice(0, at).split(/[.;]/).pop()!) && !candidates.some(c => statedIn(words, c.label));
 }
 
 // Label words too general to show which code a sentence means ("Pneumonia, unspecified organism" is stated by "pneumonia").
@@ -374,8 +387,10 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
         const read = await brain(CODING, `Note sentences:\n${input.sentences.map(s => `[${s.id}] ${s.text}`).join("\n")}\n\nCandidates:\n${[...candidates.values()].map(c => `${c.code} ${c.label}${c.kind === "Procedure" ? " (procedure)" : ""}`).join("\n")}`);
         const codes: Code[] = [];
         for (const c of Array.isArray(read?.codes) ? read.codes : []) {
-          const candidate = candidates.get(c?.code), sentence = citedSentence(c?.evidence, input.sentences);
-          if (!candidate || !sentence || codes.some(x => x.code === candidate.code) || !statedIn(sentence.text, candidate.label)) continue;
+          // Gemma numbers the sentences as often as it names them ("3" for "assessment"): then the words it copied find the sentence.
+          const candidate = candidates.get(c?.code), sentence = citedSentence(c?.evidence, input.sentences) ?? citedSentence(c?.stated, input.sentences);
+          if (!candidate || !sentence || codes.some(x => x.code === candidate.code)) continue;
+          if (!statedIn(sentence.text, candidate.label) && !namedIn(sentence.text, c?.stated, [...candidates.values()])) continue;
           // Only a rule's procedure is a procedure; one Principal at most.
           const kind = candidate.kind === "Procedure" ? "Procedure" : c.kind === "Principal" && !codes.some(x => x.kind === "Principal") ? "Principal" : "Secondary";
           codes.push({ code: candidate.code, label: candidate.label, kind, evidence: sentence.id });
