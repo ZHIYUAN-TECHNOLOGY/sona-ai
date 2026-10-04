@@ -1,7 +1,19 @@
 import { appendSections, mergeMedicines, SCAN_SECTION_KEYS, type HandwrittenNote, type ScanMedicine, type ScanSections, type ScanTask } from "@sona-ai/domain/scan";
 import { defaultMedications } from "@/features/encounter/clinical-state";
 import type { Encounter, Patient, Task } from "@/features/encounter/types";
+import { startingReply, wakingOf } from "@/features/live/waking";
 import { readNoteSections, serializeNoteSections } from "@/features/scribe/model";
+
+/**
+ * Why a reading is not shown, in the judge build only. With no handwriting model answering, the server returns its
+ * stand-in reading (source "fixture"), which is not this photo's words: there it is a failed read (with the wait,
+ * when the model is starting) and nothing is offered for review. Elsewhere the stand-in shows, labelled a sample.
+ */
+export function unreadReason(judge: boolean, reading: { source: string; waking?: number }) {
+  if (!judge || reading.source === "model") return undefined;
+  const minutes = wakingOf(reading);
+  return minutes ? startingReply(minutes) : "No handwriting model answered, so this photo was not read";
+}
 
 /** One reviewable item from a reading: a note section, a medicine, a task or the follow-up. */
 export type ItemKey = `section:${keyof ScanSections}` | `med:${number}` | `task:${number}` | "followUp";

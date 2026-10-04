@@ -105,6 +105,12 @@ export function withDraft(encounter: Encounter, draft: LiveDraft): Encounter {
   const next = editNote(encounter, draft.sections, false);
   return draft.source === "model" ? { ...next, transcript: turnLines(draft.turns), transcriptDraft: undefined } : next;
 }
+/**
+ * What an empty note is drafted from. Connected, a recorded consultation goes to note.draft; otherwise the demo drafts
+ * on the phone (from its scripted sample until something is captured). The judge build has only the recording: with
+ * nothing recorded there is nothing to draft, and the note says so rather than borrow the script.
+ */
+export const draftFrom = (judge: boolean, live: boolean, lines: number): "recording" | "demo" | "nothing" => live && lines ? "recording" : judge ? "nothing" : "demo";
 /** No draft from the server (offline, or refused): the captured words stand as the note's history, so the doctor can still write it now. */
 export const withCapturedDraft = (encounter: Encounter) => editNote(encounter, readNoteSections(buildDraft(encounter.transcript)), false);
 /** What the note screen labels a draft by: the model that wrote it, or why it is the captured words. */

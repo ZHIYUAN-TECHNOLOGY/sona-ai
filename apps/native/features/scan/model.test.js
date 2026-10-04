@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { SAMPLE_NOTE } from "@sona-ai/domain/scan";
 import { DEMO_PATIENTS } from "@sona-ai/domain/demo-patients";
-import { applyLocally, countsOf, itemsOf, keptOf, replaceWord } from "./model";
+import { applyLocally, countsOf, itemsOf, keptOf, replaceWord, unreadReason } from "./model";
 
 const encounter = () => ({ revision: 1, cards: [], requests: [], note: "", noteReviewed: true, noteSections: { subjective: "Cough.", objective: "", assessment: "", plan: "Mine." }, transcript: [], recording: "idle", recordingSeconds: 0, language: "english", tasks: [] });
 const amelia = DEMO_PATIENTS.find(p => p.id === "SYN-1042");
@@ -35,5 +35,16 @@ describe("scanned note review", () => {
   it("changes nothing when every item is unticked", () => {
     const start = encounter();
     expect(applyLocally(start, amelia, keptOf(SAMPLE_NOTE, new Set(itemsOf(SAMPLE_NOTE))), "x", "s")).toBe(start);
+  });
+});
+
+describe("the judge build's reading", () => {
+  it("shows only a model's reading: the server's stand-in is a failed read, with the wait when the model is starting", () => {
+    expect(unreadReason(true, { ...SAMPLE_NOTE, source: "model", model: "medgemma" })).toBeUndefined();
+    expect(unreadReason(true, { ...SAMPLE_NOTE, source: "fixture" })).toBe("No handwriting model answered, so this photo was not read");
+    expect(unreadReason(true, { ...SAMPLE_NOTE, source: "fixture", waking: 2.2 })).toBe("Sona's model is starting, about 3 min. Ask again then.");
+  });
+  it("leaves the demo's labelled sample reading alone", () => {
+    expect(unreadReason(false, { ...SAMPLE_NOTE, source: "fixture" })).toBeUndefined();
   });
 });

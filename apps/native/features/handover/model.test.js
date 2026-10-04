@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { patients } from "@/features/encounter/fixtures";
 import { fixtureFindings, followUpTask } from "@/features/findings/model";
-import { buildHandover, handoverTally } from "./model";
+import { buildHandover, handoverTally, startingReceiver } from "./model";
 
 test("only handed-over patients are accepted; discuss ones are counted apart", () => {
   const tally = handoverTally([{ id: "a", decision: "handed" }, { id: "b", decision: "discuss" }, { id: "c", decision: "handed" }, { id: "d", decision: "discuss" }, { id: "e", decision: "handed" }]);
@@ -28,4 +28,9 @@ test("each open or tracked finding is one handover line, never repeated as its t
   const cards = buildHandover(patients, { "SYN-1042": { tasks: [task] } }, [{ ...nodule, status: "tracked", taskId: task.id }, { ...heart, status: "dismissed" }]);
   const amelia = cards.find(card => card.patientId === "SYN-1042");
   expect(amelia.recommendation.filter(line => line.startsWith("Follow up"))).toEqual(["Follow up 9 mm nodule: CT chest at 3 months · due 25 Dec"]);
+});
+
+test("the judge build names no receiving clinician until one is typed; the demo keeps its authored colleague", () => {
+  expect(startingReceiver(true)).toBe("");
+  expect(startingReceiver(false)).toBe("Dr Lim · night registrar");
 });

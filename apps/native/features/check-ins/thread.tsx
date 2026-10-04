@@ -12,7 +12,7 @@ import { haptic } from "@/features/clinical/medication-parts";
 import type { DayItem } from "@/features/day/model";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
-import { api, errorText, requestId, useLive } from "@/features/live";
+import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { useRole } from "@/features/live/roles";
 import { FollowUpTimeline } from "./follow-up";
@@ -23,6 +23,8 @@ import { addToVisit, bookIn, releaseFlag, resolveFlag, simulateReply, useCheckIn
  * Check-ins on the patient sheet: each sent message and the patient's reply as a short thread.
  * A fine reply sits quietly; worse is amber and urgent red, each saying it went to the doctor.
  * In live mode Sona's follow-up (the visit's check-in agent: what it did, why, and what is next) sits below.
+ * The judge build's thread is the server's alone (./state): messages sent to the patient's Sona Care and the
+ * replies made there, so it carries no "simulated inbox" line and no reply made from this app.
  */
 const LABEL: Record<ReplyLabel, { text: string; ink: string; wash: string }> = {
   fine: { text: "Fine · logged", ink: palette.muted, wash: "rgba(20,28,40,0.05)" },
@@ -60,9 +62,9 @@ export function CheckInThread({ patient, entering }: { patient: Patient; enterin
           <Text style={{ ...type.caption, fontWeight: "600", color: LABEL[r.label].ink }}>{r.task?.completed ? "Handled" : LABEL[r.label].text}</Text>
         </Animated.View>)}
       </View>)}
-      <Text style={{ ...type.caption, color: palette.muted }}>Simulated inbox · no real patient is contacted</Text>
+      {!JUDGE && <Text style={{ ...type.caption, color: palette.muted }}>Simulated inbox · no real patient is contacted</Text>}
     </View>
-    {showDemoControls && next && <Chip label={busy ? "Replying…" : `Simulate reply “${DEMO_REPLY}”`} icon={<Icon name="bubble.left" size={13} color={palette.ink} />} onPress={busy ? () => {} : reply} />}
+    {!JUDGE && showDemoControls && next && <Chip label={busy ? "Replying…" : `Simulate reply “${DEMO_REPLY}”`} icon={<Icon name="bubble.left" size={13} color={palette.ink} />} onPress={busy ? () => {} : reply} />}
     {error && <Text selectable style={{ ...type.footnote, color: palette.red }}>{error}</Text>}
     <FollowUpTimeline encounterId={mine[0]!.encounterId} />
   </Animated.View>;
@@ -114,6 +116,9 @@ export function FlagActions({ item }: { item: DayItem }) {
   };
   const call = () => {
     haptic("select"); setError(undefined); setPicking(false); setDialled(true);
+    // The record holds no phone number and the ward line is a placeholder, so the judge build dials nothing:
+    // the clinician calls from the ward's own phone, then logs it here.
+    if (JUDGE) return;
     Linking.openURL(`tel:${WARD_PHONE.tel}`).catch(() => setError(`This device can't place calls. Dial ${WARD_PHONE.display} from a phone, then log it.`));
   };
   // Live: the note lands in her Sona Care thread first; only then is the call shown as logged.
@@ -169,7 +174,7 @@ export function FlagActions({ item }: { item: DayItem }) {
     </PressScale>}</Pressable>;
   return <View style={{ gap: 6 }}>
     {live && item.patientId && <DoseLine patientId={item.patientId} />}
-    {dialled && <Text selectable style={{ ...type.footnote, color: palette.muted }}>Dialled the ward line, {WARD_PHONE.display} (no patient number on file). Log the call when you're done.</Text>}
+    {dialled && <Text selectable style={{ ...type.footnote, color: palette.muted }}>{JUDGE ? `No phone number on file for ${first}. Call from the ward phone, then log it here.` : `Dialled the ward line, ${WARD_PHONE.display} (no patient number on file). Log the call when you're done.`}</Text>}
     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
       {dialled
         ? [pill(logging ? "Logging…" : "Log call-back", "checkmark", true, () => { void logCall(); }, { busy: logging, a11y: `Log call-back to ${first}` }),
