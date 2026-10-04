@@ -17,8 +17,15 @@ import { ruleNote, type ConsultationLine, type ScribeDraft } from "./scribe-mode
  * Worker's context, nothing else. Every answer says where it came from, so a fixture can never be
  * shown as a model reading, and a model answer carries the model version for provenance. `waking` is on a
  * fixture only while the box that would answer is starting: whole minutes (at least 1) until it should be ready.
+ * `storedAt` is on a model's answer only when it was not asked now: the answer it gave then, kept and shown again (./answers).
  */
-export type Origin = { source: "fixture"; waking?: number } | { source: "model"; model: string };
+export type Origin = { source: "fixture"; waking?: number } | { source: "model"; model: string; storedAt?: Date };
+/**
+ * Which of the two decided a label a model was asked for: the keyword rule's urgent words win over a milder model
+ * reading (the safety floor in ./chat-models), and when they did the answer says "rules" beside the model's name, so a
+ * rule's label is never shown as the model's. A fixture names none: the rule alone answered.
+ */
+export type DecidedBy = { decidedBy?: "model" | "rules" };
 type Answer<T> = Promise<T & Origin>;
 
 export type EvidenceInput = { question: string; thread: { question: string; answer: string }[]; sources: { n: number; design: string; year?: number; title: string; text: string }[] };
@@ -77,9 +84,9 @@ export type Models = {
    */
   answerFromPlan(input: { question: string; plan: string; language: Language }): Answer<{ answer: string; grounded: boolean; urgent: boolean; from?: string }>;
   /** After-discharge check-ins: worse or urgent replies become a flagged task (with the model's short symptom, when it read one). */
-  classifyReply(input: { text: string; language: Language }): Answer<{ label: "fine" | "worse" | "urgent"; symptom?: string }>;
+  classifyReply(input: { text: string; language: Language }): Answer<{ label: "fine" | "worse" | "urgent"; symptom?: string } & DecidedBy>;
   /** The care team's inbox: how soon a patient message needs a clinician (urgent, clinical, admin) and why, in a few words. */
-  triageMessage(input: { text: string; language?: Language }): Answer<{ label: MessageLabel; reason: string }>;
+  triageMessage(input: { text: string; language?: Language }): Answer<{ label: MessageLabel; reason: string } & DecidedBy>;
   /**
    * The inbox's suggested reply to a patient message, for a person to check before sending: short and kind,
    * in the patient's language, answering what they asked; their own medicines and next visit as their plan states them.

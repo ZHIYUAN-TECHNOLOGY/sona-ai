@@ -25,7 +25,7 @@ test("jsonIn finds the JSON in a fenced or chatty reply, and nothing in prose", 
 test("a Manglish reply is read by Gemma: label and a short symptom for the doctor's task, named as the model", async () => {
   const { ai, calls } = fake({ [TEXT_MODEL]: { response: '{"label":"worse","symptom":"Fever back, cough worse"}' } });
   const read = await workersModels(ai).classifyReply({ text: "Demam balik, batuk makin teruk", language: "ms" });
-  expect(read).toEqual({ label: "worse", symptom: "Fever back, cough worse", source: "model", model: TEXT_MODEL });
+  expect(read).toEqual({ label: "worse", symptom: "Fever back, cough worse", source: "model", model: TEXT_MODEL, decidedBy: "model" });
   expect(JSON.stringify(calls[0]![1])).toContain("Demam balik, batuk makin teruk");
 });
 
@@ -59,7 +59,7 @@ test("a plan answer carries whether the plan said it and whether it is urgent; a
 test("SEA-LION's OpenAI-shaped answer (choices[0].message.content) is read the same way", async () => {
   const { ai } = fake({ [TEXT_MODEL]: { choices: [{ message: { content: '```json\n{"label":"urgent","symptom":"breathless when talking"}\n```' } }] } });
   expect(await workersModels(ai).classifyReply({ text: "nafas pendek bila cakap", language: "ms" }))
-    .toEqual({ label: "urgent", symptom: "breathless when talking", source: "model", model: TEXT_MODEL });
+    .toEqual({ label: "urgent", symptom: "breathless when talking", source: "model", model: TEXT_MODEL, decidedBy: "model" });
 });
 
 test("EmbeddingGemma: a question and passages get the model's own prompts, 100 texts a call, each a 768-dim vector", async () => {

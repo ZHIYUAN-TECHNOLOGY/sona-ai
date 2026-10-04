@@ -11,7 +11,7 @@ import { lastDischarge } from "../routers/care-plan";
  * read by the check-in replies' reader, and a worse or urgent reading flags one task for the attending doctor on their
  * visit, in hospital or at home. It is a report, not an answer to a check-in: no scheduled check-in is sent or replied
  * to by it. The hospital's channel then hears "checkIns", so Sona Pro's My Day re-reads at once. Returns the flagged
- * task, or none when the words read as fine.
+ * task and who read the words that flagged it, or none when the words read as fine.
  * ponytail: the task's title carries the symptom, not the patient's words (tasks have nowhere to keep them), and with
  * no reply behind it My Day lists it as a task, not as a red flagged reply; a "said to Sona" table when either matters.
  */
@@ -32,5 +32,8 @@ export async function tellCareTeam(context: Context, hospitalId: string, patient
   const id = open?.id ?? crypto.randomUUID();
   if (!open) await db.insert(tasks).values({ id, hospitalId, encounterId, kind: "check-in", title, owner: "Attending doctor", due: "Today", sourceId: id, idempotencyKey: `check-in:${id}` });
   await context.announce?.(hospitalId, { topic: "checkIns", patientId }).catch(() => {});
-  return { taskId: id, title };
+  // `readBy`: who read the patient's words as worse or urgent, so the task is never shown as a model's call when the
+  // keyword rule made it (the stub, a failed model, or the rule's urgent words over a milder model reading).
+  const { label, symptom: _, decidedBy, ...origin } = read;
+  return { taskId: id, title, label, readBy: { ...origin, decidedBy: origin.source === "model" ? decidedBy ?? "model" : "rules" as const } };
 }

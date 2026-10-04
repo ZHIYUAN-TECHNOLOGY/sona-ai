@@ -9,6 +9,7 @@ import { eq } from "drizzle-orm";
 
 import type { Context, FollowUps } from "../context";
 import type { Change } from "../events";
+import { stubModels, type Models } from "../models";
 import { registerPushToken } from "../push";
 import { runFollowUp, sendDueCheckIns, wakeFollowUps } from "./check-ins";
 import { appRouter } from "./index";
@@ -115,8 +116,19 @@ test("chest pain or severe breathlessness in any language reads as urgent", asyn
   const { api } = await discharged();
   for (const text of ["Sesak nafas teruk malam tadi", "chest pain since this morning", "胸痛"]) {
     const [reply] = (await api.checkIns.reply({ checkInId: "check-in:visit-1042:2", text })).replies.slice(-1);
-    expect([text, reply?.label]).toEqual([text, "urgent"]);
+    expect([text, reply?.label, reply?.source, reply?.decidedBy]).toEqual([text, "urgent", "fixture", "rules"]);
   }
+});
+
+test("a reply says which decided its label: the model, or the rule's urgent words over the model's milder reading", async () => {
+  const models: Models = { ...stubModels, classifyReply: async ({ text }) => /dada/.test(text)
+    ? { label: "urgent", symptom: "chest discomfort", source: "model", model: "gemma-test", decidedBy: "rules" } : { label: "fine", source: "model", model: "gemma-test", decidedBy: "model" } };
+  const { api } = await discharged("ms", undefined, () => ({ models }));
+  await api.checkIns.reply({ checkInId: "check-in:visit-1042:2", text: "Sudah sihat" });
+  const read = await api.checkIns.reply({ checkInId: "check-in:visit-1042:2", text: "sakit dada sikit" });
+  // The model is named either way (it was asked); only the first label was its own.
+  expect(read.replies.map(r => [r.label, r.source, r.decidedBy])).toEqual([["fine", "gemma-test", "model"], ["urgent", "gemma-test", "rules"]]);
+  expect((await api.checkIns.list({ encounterId: "visit-1042" }))[0]!.replies.map(r => r.decidedBy)).toEqual(["model", "rules"]);
 });
 
 test("check-ins need a signed-in doctor, and another hospital's doctor cannot see or answer them", async () => {

@@ -169,3 +169,27 @@ test("approval marks only the current admission's guarantee letter received, not
   const letters = Object.fromEntries((await db.select().from(guaranteeLetters)).map(g => [g.id, g.status]));
   expect([letters["gl-1042"], letters["gl-1042-earlier"]]).toEqual(["received", "requested"]);
 });
+
+test("the letter and its appeal keep who suggested the codes and who drafted the appeal: a model by name, the rules as a fixture, an older letter as unknown", async () => {
+  const ruled = await sentClaim();
+  expect((await ruled.api.claim.status({ encounterId: "visit-1042" })).codedBy).toEqual({ source: "fixture" });
+  const models: Models = { ...stubModels,
+    suggestCodes: async input => ({ ...await stubModels.suggestCodes(input), source: "model", model: "coder-test" }),
+    draftAppeal: async input => ({ ...await stubModels.draftAppeal(input), source: "model", model: "appeal-test" }) };
+  const { db, api, clock, token } = await sentClaim({ models });
+  const status = () => api.claim.status({ encounterId: "visit-1042" });
+  // The same request again returns the one receipt, which names the coder; each frozen code carries it too.
+  expect((await api.claim.send({ encounterId: "visit-1042", requestId: "c1", approvedBy: "dr-aisyah" })).payload).toMatchObject({ codedBy: { source: "model", model: "coder-test" } });
+  expect((await db.select().from(claims))[0]!.codes.map(c => (c as { source?: string }).source)).toEqual(["coder-test", "coder-test", "coder-test", "coder-test"]);
+  expect(await status()).toMatchObject({ codedBy: { source: "model", model: "coder-test" } });
+  expect((await status()).appealDraftedBy).toBeUndefined();
+  await decideReview(db, token, "deny", "", clock.now, "DOC");
+  const draft = await api.claim.appealDraft({ encounterId: "visit-1042" });
+  expect(draft).toMatchObject({ source: "model", model: "appeal-test", codedBy: { source: "model", model: "coder-test" } });
+  const { letter } = draft;
+  expect((await api.claim.appeal({ encounterId: "visit-1042", requestId: "a1", approvedBy: "dr-aisyah", letter })).payload).toMatchObject({ draftedBy: { source: "model", model: "appeal-test" } });
+  expect(await status()).toMatchObject({ status: "appealed", appealDraftedBy: { source: "model", model: "appeal-test" } });
+  // A letter frozen before the coder was kept names no one: unknown, never a model.
+  await db.update(claims).set({ codes: [{ code: "J18.9", evidence: "diagnosis" }] });
+  expect((await status()).codedBy).toEqual({ source: "unknown" });
+});

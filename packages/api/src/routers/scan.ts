@@ -50,13 +50,16 @@ export const scanRouter = {
     const models = sample ? stubModels : context.models ?? stubModels;
     // Nothing identifying leaves for a real model: the name goes through the de-identify seam first.
     // ponytail: the handwriting in the photo can still name the patient; a Baseten deployment in our own tenancy is the boundary for pixels.
-    const name = models === stubModels ? patient.name : (await models.deidentify({ text: patient.name, known: { names: [patient.name], mrn: patient.id } })).text;
-    const reading = await models.readHandwrittenNote({
+    const removed = models === stubModels ? undefined : await models.deidentify({ text: patient.name, known: { names: [patient.name], mrn: patient.id } });
+    const read = await models.readHandwrittenNote({
       image: object ? new Uint8Array(await object.arrayBuffer()) : new Uint8Array(), contentType: object?.httpMetadata?.contentType ?? "image/png",
-      patient: { name, knownMedicines: patient.medicines },
+      patient: { name: removed?.text ?? patient.name, knownMedicines: patient.medicines },
     });
+    // Who took the name out before the reader saw it, as a training sample says it: the PII model, "rules" (a bare
+    // name is the rules' alone: ./pii-model wakes no box for it), or "none" when no hosted model was asked, so nothing left.
+    const reading = { ...read, deidentifier: !removed ? "none" : removed.source === "model" ? removed.model : "rules" };
     const model = reading.source === "model" ? reading.model : "fixture";
-    const { source: _, ...output } = reading as HandwrittenNote & { source: string; model?: string };
+    const { source: _, ...output } = reading as HandwrittenNote & { source: string; model?: string; deidentifier: string };
     await db.insert(provenance).values({ id: readId(input.encounterId, input.key), encounterId: input.encounterId, kind: "scan-read", output, sourceIds: [input.key], model, approvedBy: null })
       .onConflictDoUpdate({ target: provenance.id, set: { output, model } });
     return reading;
@@ -109,11 +112,12 @@ export const scanRouter = {
     }).onConflictDoNothing();
     // The model's reading and what the doctor kept become a de-identified training sample (if consented); never fails the apply.
     const reading = (read?.output as { text?: unknown } | undefined)?.text;
-    if (typeof reading === "string" && sectionCount) await captureSample(context as Context, {
+    const sample = typeof reading === "string" && sectionCount ? await captureSample(context as Context, {
       id: `handwritten-scan:${encounterId}:${key}`, hospitalId, patientId: patient.id, source: "handwritten-scan", sourceRef: key,
       input: reading, output: Object.values(sections).join("\n"),
-    });
+    }) : undefined;
     await context.announce?.(hospitalId, { topic: "visit", encounterId }).catch(() => {});
-    return result;
+    // `sample`: who de-identified the training sample, said once, when it is captured (a replay returns the stored result without it).
+    return { ...result, ...sample && { sample } };
   }),
 };

@@ -1,7 +1,8 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { user as users } from "@sona-ai/db/schema/auth";
-import { encounters } from "@sona-ai/db/schema/clinical";
+import { encounters, provenance } from "@sona-ai/db/schema/clinical";
+import { triageByRules } from "@sona-ai/domain/messages";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
@@ -52,7 +53,28 @@ test("a patient's message is triaged when sent; a failed triage never stops the 
 
   const broken = await world({ ...stubModels, triageMessage: async () => { throw new Error("model down"); } });
   expect((await broken.send(broken.amelia, "Hello?")).text).toBe("Hello?");
-  expect((await broken.doctor.messages.inbox()).threads[0]).toMatchObject({ label: "clinical", reason: "Not triaged: read it first" });
+  expect((await broken.doctor.messages.inbox()).threads[0]).toMatchObject({ label: "clinical", reason: "Not triaged: read it first", triagedBy: { source: "none" } });
+});
+
+test("the inbox, the thread and the draft say who triaged a message: the rules, a model, the rule over a model, or no one", async () => {
+  // The stub is the keyword rules: never shown as a model's reading.
+  const ruled = await world();
+  await ruled.send(ruled.amelia, "Sakit dada sejak pagi");
+  expect((await ruled.doctor.messages.inbox()).threads[0]!.triagedBy).toEqual({ source: "fixture" });
+  // A model's own reading, then one the rule's urgent words decided over it: both name the model, only one says it decided.
+  const { amelia, farid, doctor, send } = await world({ ...stubModels, triageMessage: async ({ text }) =>
+    /dada/.test(text) ? { ...triageByRules(text), source: "model", model: "gemma-test", decidedBy: "rules" } : { label: "admin", reason: "asks about a visit", source: "model", model: "gemma-test", decidedBy: "model" } });
+  await send(amelia, "When is my next appointment?");
+  await send(farid, "Sakit dada sejak pagi");
+  const threads = (await doctor.messages.inbox()).threads;
+  expect(threads.map(t => [t.patientId, t.label, t.triagedBy])).toEqual([
+    ["SYN-1086", "urgent", { source: "model", model: "gemma-test", decidedBy: "rules" }], ["SYN-1042", "admin", { source: "model", model: "gemma-test", decidedBy: "model" }]]);
+  expect((await doctor.messages.thread({ patientId: "SYN-1042" })).messages.map(m => m.triagedBy)).toEqual([{ source: "model", model: "gemma-test", decidedBy: "model" }]);
+  // The draft's own source is the rule-based template; the label beside it was the model's.
+  expect(await doctor.messages.draft({ patientId: "SYN-1042" })).toMatchObject({ label: "admin", source: "fixture", triagedBy: { source: "model", model: "gemma-test", decidedBy: "model" } });
+  // A message from before the reader was kept has a label and no one named for it: unknown, never a model.
+  await ruled.db.delete(provenance).where(eq(provenance.kind, "message-triage"));
+  expect((await ruled.doctor.messages.inbox()).threads[0]!.triagedBy).toEqual({ source: "unknown" });
 });
 
 test("the inbox puts urgent first, then the longest waiting; a handled thread drops below, and an answered one is handled", async () => {
@@ -127,7 +149,7 @@ test("a model drafts a reply once per message: opening the thread again shows it
   await send(amelia, "Can I shower?");
   const draft = await nurse.messages.draft({ patientId: "SYN-1042" });
   expect(draft).toMatchObject({ text: "Draft 1", source: "model", model: "gemma-test" });
-  expect(await nurse.messages.draft({ patientId: "SYN-1042" })).toEqual(draft);
+  expect(await nurse.messages.draft({ patientId: "SYN-1042" })).toEqual({ ...draft, storedAt: expect.any(Date) });
   await send(amelia, "And swim?");
   expect((await nurse.messages.draft({ patientId: "SYN-1042" }))!.text).toBe("Draft 2");
 });
@@ -148,11 +170,13 @@ test("an urgent message is answered at once by Sona's call-999 line, once howeve
   expect(await amelia.care.messages.send({ text: "Sakit dada sejak pagi", requestId: "urgent-1" })).toEqual(sent);
   // Her words first, then Sona's line; one line and one push for the two sends, and her thread hears it.
   expect((await amelia.care.messages.list()).map(m => [m.from, m.text])).toEqual([["patient", "Sakit dada sejak pagi"], ["care-team", call]]);
+  // The line is the safety rule's template, and says so to her and to staff; no staff id reaches her thread.
+  expect((await amelia.care.messages.list()).map(m => [m.rule, "authorId" in m])).toEqual([[undefined, false], ["call-999", false]]);
   expect(told).toEqual([expect.objectContaining({ title: "Call 999 now", body: call })]);
   expect(heard).toContainEqual({ topic: "messages", patientId: "SYN-1042" });
   // Still waiting for a person: the inbox row and its task stay open, with her words, not Sona's.
   expect((await doctor.messages.inbox()).threads[0]).toMatchObject({ patientId: "SYN-1042", label: "urgent", lastText: "Sakit dada sejak pagi", lastFrom: "patient", waiting: 1, handled: false });
-  expect((await doctor.messages.thread({ patientId: "SYN-1042" })).messages.map(m => [m.author, m.unanswered])).toEqual([["Amelia", true], ["Care team", false]]);
+  expect((await doctor.messages.thread({ patientId: "SYN-1042" })).messages.map(m => [m.author, m.unanswered, m.rule])).toEqual([["Amelia", true, undefined], ["Care team", false, "call-999"]]);
 
   // Written in Chinese, answered in Chinese; a message that is not urgent gets no line.
   await send(farid, "我胸痛");

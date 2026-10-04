@@ -8,7 +8,8 @@ import type { Models } from "./models";
  * The readers any open chat model can do the same way, whichever host serves it (Workers AI's SEA-LION,
  * Baseten's Gemma): check-in replies, inbox triage and answers from the patient's own plan. `chat` asks the
  * model with a system and a user message and returns the JSON in its reply. A failed or unreadable call
- * falls back to the rules, labelled fixture, so a failure is never shown as a model reading.
+ * falls back to the rules, labelled fixture, so a failure is never shown as a model reading. When the model answered
+ * but the keyword rule's urgent words set the label, the answer says `decidedBy: "rules"` beside the model's name.
  */
 export type Chat = (system: string, user: string) => Promise<Record<string, unknown> | undefined>;
 
@@ -52,10 +53,10 @@ export function chatModels(chat: Chat, model: string, fallback: Models): Pick<Mo
         const read = await chat(TRIAGE, `Reply (${LANGUAGE_NAME[input.language]} expected): """${input.text}"""`);
         const label = read?.label;
         if (label === "fine" || label === "worse" || label === "urgent") {
-          // Safety floor: the keyword rule's urgent words always win over a milder model reading.
-          const final = readReply(input.text) === "urgent" ? "urgent" : label;
+          // Safety floor: the keyword rule's urgent words always win over a milder model reading, and the answer then says the rule decided.
+          const ruled = label !== "urgent" && readReply(input.text) === "urgent";
           const symptom = typeof read?.symptom === "string" && read.symptom.trim() ? read.symptom.trim().slice(0, 60) : undefined;
-          return { label: final, ...symptom ? { symptom } : {}, source: "model", model };
+          return { label: ruled ? "urgent" : label, ...symptom ? { symptom } : {}, source: "model", model, decidedBy: ruled ? "rules" : "model" };
         }
       } catch { /* the rule below answers, labelled fixture */ }
       return fallback.classifyReply(input);
@@ -66,11 +67,12 @@ export function chatModels(chat: Chat, model: string, fallback: Models): Pick<Mo
         const read = await chat(INBOX, `Message: """${input.text}"""`);
         const label = read?.label;
         if (label === "urgent" || label === "clinical" || label === "admin") {
-          // Safety floor: the rule's urgent words always win over a milder model reading.
+          // Safety floor: the rule's urgent words always win, whatever the model read. The label and reason returned are
+          // then the rule's own words, so the answer says the rule decided (the model is still named: it was asked).
           const rule = triageByRules(input.text);
-          if (rule.label === "urgent") return { ...rule, source: "model", model };
+          if (rule.label === "urgent") return { ...rule, source: "model", model, decidedBy: "rules" };
           const reason = typeof read?.reason === "string" && read.reason.trim() ? read.reason.trim().slice(0, 80) : rule.reason;
-          return { label, reason, source: "model", model };
+          return { label, reason, source: "model", model, decidedBy: "model" };
         }
       } catch { /* the rule below answers, labelled fixture */ }
       return fallback.triageMessage(input);

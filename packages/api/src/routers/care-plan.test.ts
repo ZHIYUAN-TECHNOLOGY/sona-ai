@@ -4,7 +4,7 @@ import { appointments, encounters, guaranteeLetters, patients, provenance } from
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { stubModels, type Models } from "../models";
 import { planText } from "./care-plan";
@@ -76,6 +76,14 @@ test("Amelia reads the leaflet her doctor approved at discharge, in its language
   const plan = await amelia.care.discharge();
   if (plan.status !== "discharged") throw new Error("expected a discharged plan");
   expect(plan.leaflets.map(l => [l.language, l.text.slice(0, 11)])).toEqual([["ms", "Draf 2 (ms)"], ["en", "You were tr"], ["zh", "您因肺部感染接受了治疗"]]);
+  // The one that went home is a model's draft a doctor approved, and says so; the others are the authored ones.
+  expect(plan.leaflets[0]).toMatchObject({ source: "model", model: "fake-gemma", approvedBy: "Dr dr-aisyah", approvedAt: clock.now.toISOString() });
+  expect(plan.leaflets.slice(1).map(l => [l.source, "approvedBy" in l])).toEqual([["fixture", false], ["fixture", false]]);
+  // A discharge from before the drafter was kept has the words only: unknown, never a model's.
+  await db.update(encounters).set({ state: sql`jsonb_set(${encounters.state}, '{discharge,leaflet}', '{"language":"ms","text":"Lama"}')` }).where(eq(encounters.id, "visit-1042"));
+  const old = await amelia.care.discharge();
+  expect(old.status === "discharged" && old.leaflets[0]).toMatchObject({ text: "Lama", source: "unknown" });
+  await db.update(encounters).set({ state: sql`jsonb_set(${encounters.state}, '{discharge,leaflet,text}', '"Draf 2 (ms)"')` }).where(eq(encounters.id, "visit-1042"));
   // The approved draft carries its approver in the provenance trail; the others stay unapproved.
   const drafts = await db.select({ output: provenance.output, approvedBy: provenance.approvedBy }).from(provenance).where(eq(provenance.kind, "discharge-draft"));
   expect(drafts.map(d => [(d.output as { leaflet: string }).leaflet, d.approvedBy]).sort()).toEqual([["Draf 1 (en)", null], ["Draf 2 (ms)", "dr-aisyah"], ["Draf 3 (ms)", null]]);

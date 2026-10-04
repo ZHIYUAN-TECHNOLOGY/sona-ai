@@ -1,14 +1,14 @@
 import { ORPCError } from "@orpc/server";
 import { user } from "@sona-ai/db/schema/auth";
-import { admissions, careMessages, encounters, hospitalMembers, patients, tasks, type MedicineReading, type MessageAttachment } from "@sona-ai/db/schema/clinical";
+import { admissions, careMessages, encounters, hospitalMembers, patients, provenance, tasks, type MedicineReading, type MessageAttachment } from "@sona-ai/db/schema/clinical";
 import type { Language } from "@sona-ai/domain/discharge";
 import { LABEL_RANK, type MessageLabel } from "@sona-ai/domain/messages";
 import { defaultMedications } from "@sona-ai/domain/prescribing";
 import { mergeMedicines } from "@sona-ai/domain/scan";
-import { and, asc, desc, eq, gte, inArray, isNull, or } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
-import { answerOnce } from "../answers";
+import { answerOnce, originOf } from "../answers";
 import { SAMPLE_PHOTO_KEY } from "../contracts";
 import { clockOf, type Context } from "../context";
 import { patientProcedure, protectedProcedure } from "../index";
@@ -16,7 +16,7 @@ import { stubModels } from "../models";
 import { tellPatient, when } from "../push";
 import type { Role } from "../roles";
 import { lastDischarge, patientPlan } from "./care-plan";
-import { SONA_AUTHOR, tellCall999 } from "./check-ins";
+import { SONA_AUTHOR, ruleOf, tellCall999 } from "./check-ins";
 import { editEncounter, loadEncounter, visitOf } from "./encounter";
 import { bucket } from "./xray";
 
@@ -42,8 +42,27 @@ const CARE_TEAM: readonly Role[] = ["doctor", "nurse"];
 const answerIn = (text: string, leaflet?: Language): Language => /[一-鿿]/.test(text) ? "zh" : leaflet ?? "en";
 
 const own = { id: careMessages.id, from: careMessages.from, text: careMessages.text, createdAt: careMessages.createdAt, seenAt: careMessages.seenAt, attachment: careMessages.attachment };
-const thread = (db: Context["db"], patientId: string) =>
-  db.select(own).from(careMessages).where(eq(careMessages.patientId, patientId)).orderBy(asc(careMessages.createdAt), asc(careMessages.id));
+/** The patient's own thread. `rule` marks Sona's call-999 line as the safety rule's template (check-ins' ruleOf); staff ids stay out of it. */
+const thread = async (db: Context["db"], patientId: string) =>
+  (await db.select({ ...own, authorId: careMessages.authorId }).from(careMessages).where(eq(careMessages.patientId, patientId)).orderBy(asc(careMessages.createdAt), asc(careMessages.id)))
+    .map(({ authorId, ...m }) => ({ ...m, ...ruleOf(authorId) }));
+
+/** A message's triage as provenance keeps it (care_messages has no column for who triaged): one row per message. */
+const triageId = (messageId: string) => `triage:${messageId}`;
+const triageJoin = eq(provenance.id, sql`'triage:' || ${careMessages.id}`);
+/**
+ * Who triaged a patient's message, so the inbox never shows the rule's label, or the default one, as a model's reading:
+ * the model (and whether the rule's urgent words decided over it), "fixture" for the rules alone, "none" when triage
+ * did not run (it failed; the label shown is only the default), "unknown" for a message from before this was kept.
+ * Spread into a row only where there is a patient message to speak of, so the field is optional and the apps' own
+ * sample rows, built to the same types, still stand.
+ */
+function triagedBy(m: { triage: string | null; triageModel: string | null; triageRead: unknown }) {
+  if (!m.triage) return { source: "none" as const };
+  const by = originOf(m.triageModel);
+  if (by.source !== "model") return by;
+  return { ...by, decidedBy: (m.triageRead as { decidedBy?: string } | null)?.decidedBy === "rules" ? "rules" as const : "model" as const };
+}
 
 async function stored(db: Context["db"], id: string) {
   const [row] = await db.select(own).from(careMessages).where(eq(careMessages.id, id));
@@ -62,8 +81,14 @@ export const careMessagesRouter = {
     const [patient] = await db.select({ name: patients.name, encounterId: encounters.id }).from(patients)
       .leftJoin(encounters, eq(encounters.patientId, patients.id)).where(eq(patients.id, patientId)).orderBy(desc(encounters.updatedAt)).limit(1);
     const title = `${patient!.name.split(" ")[0]}: ${input.text.length > TITLE_CHARS ? `${input.text.slice(0, TITLE_CHARS).trimEnd()}…` : input.text}`;
-    // Triage never blocks the send: a failed read leaves the message untriaged (the inbox reads it as clinical).
+    // Triage never blocks the send: a failed read leaves the message untriaged (the inbox lists it as clinical, and
+    // says triage did not run: triagedBy "none").
     const triage = await (context.models ?? stubModels).triageMessage({ text: input.text }).catch(error => { console.error("triage failed", error); return undefined; });
+    // Who triaged it is logged as every AI output is; keyed by the message, so a replay keeps the first reading's.
+    if (triage) await db.insert(provenance).values({
+      id: triageId(id), encounterId: patient!.encounterId, kind: "message-triage", output: { label: triage.label, reason: triage.reason, decidedBy: triage.source === "model" ? triage.decidedBy ?? "model" : "rules" },
+      sourceIds: [id], model: triage.source === "model" ? triage.model : "fixture", approvedBy: null,
+    }).onConflictDoNothing();
     // The task shares the message's ID, so a replay inserts neither.
     await db.insert(tasks).values({ id, hospitalId, encounterId: patient!.encounterId, kind: "message", title, owner: "Attending doctor", due: "Today", sourceId: id, idempotencyKey: id })
       .onConflictDoNothing();
@@ -91,13 +116,19 @@ export function staffName(name: string | null, role: Role | null) {
   return role === "doctor" ? `Dr ${bare}` : role === "nurse" ? `Nurse ${bare}` : bare;
 }
 
-/** The thread as the care team reads it: who wrote each message, the patient's triage and when the team saw it. */
+/**
+ * The thread as the care team reads it: who wrote each message, the patient's triage and who made it (`triagedBy`),
+ * when the team saw it, and `rule` on Sona's call-999 line (a safety rule's template, not a person's or a model's words).
+ */
 async function staffThread(db: Context["db"], patient: { id: string; name: string }) {
-  const rows = await db.select({ ...own, authorName: user.name, authorRole: hospitalMembers.role, triage: careMessages.triage, triageReason: careMessages.triageReason, taskDone: tasks.completed })
+  const rows = await db.select({ ...own, authorId: careMessages.authorId, authorName: user.name, authorRole: hospitalMembers.role, triage: careMessages.triage, triageReason: careMessages.triageReason, taskDone: tasks.completed,
+    triageModel: provenance.model, triageRead: provenance.output })
     .from(careMessages).leftJoin(user, eq(user.id, careMessages.authorId)).leftJoin(hospitalMembers, eq(hospitalMembers.userId, careMessages.authorId)).leftJoin(tasks, eq(tasks.id, careMessages.taskId))
+    .leftJoin(provenance, triageJoin)
     .where(eq(careMessages.patientId, patient.id)).orderBy(asc(careMessages.createdAt), asc(careMessages.id));
-  return rows.map(({ authorName, authorRole, taskDone, ...m }) => ({
-    ...m, author: m.from === "patient" ? patient.name.split(" ")[0]! : staffName(authorName, authorRole),
+  return rows.map(({ authorId, authorName, authorRole, taskDone, triageModel, triageRead, ...m }) => ({
+    ...m, ...m.from === "patient" && { triagedBy: triagedBy({ ...m, triageModel, triageRead }) }, ...ruleOf(authorId),
+    author: m.from === "patient" ? patient.name.split(" ")[0]! : staffName(authorName, authorRole),
     // A patient message is waiting while its task is open (a missing task counts as answered).
     unanswered: m.from === "patient" && taskDone === false,
   }));
@@ -153,8 +184,9 @@ export const messagesRouter = {
     const { db, hospitalId } = context, now = clockOf(context);
     const since = new Date(now.getTime() - RECENT_DAYS * 86400_000);
     const rows = await db.select({ patientId: careMessages.patientId, from: careMessages.from, text: careMessages.text, createdAt: careMessages.createdAt, seenAt: careMessages.seenAt, attachment: careMessages.attachment,
-      triage: careMessages.triage, triageReason: careMessages.triageReason, taskDone: tasks.completed, name: patients.name, initials: patients.initials, authorId: careMessages.authorId })
-      .from(careMessages).innerJoin(patients, eq(patients.id, careMessages.patientId)).leftJoin(tasks, eq(tasks.id, careMessages.taskId))
+      triage: careMessages.triage, triageReason: careMessages.triageReason, taskDone: tasks.completed, name: patients.name, initials: patients.initials, authorId: careMessages.authorId,
+      triageModel: provenance.model, triageRead: provenance.output })
+      .from(careMessages).innerJoin(patients, eq(patients.id, careMessages.patientId)).leftJoin(tasks, eq(tasks.id, careMessages.taskId)).leftJoin(provenance, triageJoin)
       .where(and(eq(careMessages.hospitalId, hospitalId), or(gte(careMessages.createdAt, since), eq(tasks.completed, false))))
       .orderBy(asc(careMessages.createdAt), asc(careMessages.id));
     const ids = [...new Set(rows.map(r => r.patientId))];
@@ -173,6 +205,8 @@ export const messagesRouter = {
         waitingSince: waiting[0]?.createdAt ?? null, waiting: waiting.length,
         unread: msgs.filter(m => m.from === "patient" && !m.seenAt).length,
         label: top ? labelOf(top.triage) : null, reason: top ? (top.triageReason ?? "Not triaged: read it first") : null,
+        // Who gave the row its label: a model, the rules, or no one ("none": triage did not run, the label is the default).
+        ...top && { triagedBy: triagedBy(top) },
         handled: !waiting.length,
       };
     });
@@ -215,7 +249,8 @@ export const messagesRouter = {
       plan: plan.status === "discharged" ? { medicines: Object.values(plan.medicines).flat(), nextVisit: plan.followUp ? `${plan.followUp.title}, ${when(new Date(plan.followUp.date), language)}` : undefined } : undefined,
     };
     const reply = await answerOnce(context.db, null, "reply-draft", { messageId: latest.id, ...asked }, () => (context.models ?? stubModels).draftReply(asked), () => [latest.id]);
-    return { messageId: latest.id, label, reason: latest.triageReason ?? "Not triaged: read it first", ...reply };
+    // `source` and `model` are the draft's; `triagedBy` is the label's, which a different reader (or none) may have given.
+    return { messageId: latest.id, label, reason: latest.triageReason ?? "Not triaged: read it first", triagedBy: latest.triagedBy, ...reply };
   }),
 
   /** "No reply needed": closes the patient's waiting messages (and their tasks on My Day) without writing to them. */

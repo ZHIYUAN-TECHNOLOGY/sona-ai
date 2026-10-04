@@ -5,6 +5,7 @@ import { FOLLOW_UPS, LANGUAGES, planFor, type DischargeState, type Language } fr
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
+import { originOf } from "../answers";
 import { clockOf, type Context } from "../context";
 import { patientProcedure } from "../index";
 import type { ApprovedLeaflet } from "./discharge";
@@ -58,9 +59,12 @@ export async function patientPlan(context: Context & { hospitalId: string; patie
     return {
       status: "discharged" as const, dischargedAt: d.dischargedAt, language: d.language,
       // The language chosen at discharge first, then the others; the leaflet approved at discharge in its own
-      // language (older discharges kept none), the authored one in the rest.
+      // language (older discharges kept none), the authored one in the rest. Each says which it is: a model's draft
+      // with the doctor who approved it ("unknown" when the discharge kept only the words), or "fixture" for the authored one.
       leaflets: [...LANGUAGES].sort((a, b) => Number(b.id === d.language) - Number(a.id === d.language))
-        .map(l => ({ language: l.id, label: l.label, name: l.name, text: d.leaflet?.language === l.id ? d.leaflet.text : plan.leaflet[l.id] })),
+        .map(l => ({ language: l.id, label: l.label, name: l.name, ...d.leaflet?.language === l.id
+          ? { text: d.leaflet.text, ...originOf(d.leaflet.model), approvedBy: d.leaflet.approvedBy, approvedAt: d.leaflet.approvedAt }
+          : { text: plan.leaflet[l.id], source: "fixture" as const } })),
       medicines: patientMeds(plan, lang, { out: d.dischargedAt, now: clockOf(context) }), warningSigns: warningSigns(plan, lang),
       followUp: date ? { title: reviewWords(plan, lang).title, date } : null,
       checkIns: scheduled.length ? scheduled : checkInSchedule(new Date(d.dischargedAt), d.checkInDays).map(c => ({ day: c.day, date: c.dueAt })),

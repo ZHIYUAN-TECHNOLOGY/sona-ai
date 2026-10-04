@@ -63,14 +63,17 @@ test("a photo is stored under the hospital's scans, the model reads its bytes, a
   const { key } = await doctor.scan.upload({ encounterId: "visit-1042", contentType: "image/jpeg", dataBase64: Buffer.from([7, 8, 9]).toString("base64") });
   expect(key).toMatch(/^scans\/demo\/[0-9a-f-]+\.jpg$/);
   const reading = await doctor.scan.read({ encounterId: "visit-1042", key });
-  expect(reading).toMatchObject({ source: "model", model: "gemma-4-vision-test" });
+  // The stub's de-identifier is the rules; a PII model that read the name is named instead.
+  expect(reading).toMatchObject({ source: "model", model: "gemma-4-vision-test", deidentifier: "rules" });
   expect(seen).toEqual([{ image: [7, 8, 9], name: "[NAME]", meds: ["Salbutamol inhaler, as needed", "Cetirizine, patient-reported"] }]);
   // The sample never goes to the model: it is the fixture's reading.
-  expect((await doctor.scan.read({ encounterId: "visit-1042", key: "sample" })).source).toBe("fixture");
+  expect(await doctor.scan.read({ encounterId: "visit-1042", key: "sample" })).toMatchObject({ source: "fixture", deidentifier: "none" });
   expect(seen).toHaveLength(1);
   // Another hospital's key, or a key outside scans, is not found.
   expect(await codeOf(doctor.scan.read({ encounterId: "visit-1042", key: "scans/other/x.jpg" }))).toBe("NOT_FOUND");
   expect(await codeOf(doctor.scan.read({ encounterId: "visit-1042", key: "demo/xray/visit-1042/x" }))).toBe("NOT_FOUND");
+  const withPii = await world({ models: { ...models, deidentify: async () => ({ text: "[NAME]", replacements: [], source: "model", model: "pii-test" }) }, uploads });
+  expect((await withPii.doctor.scan.read({ encounterId: "visit-1042", key })).deidentifier).toBe("pii-test");
 });
 
 test("applying appends only the kept sections, proposes the medicine unconfirmed, creates the tasks and records where it came from; a replay writes nothing again", async () => {
@@ -83,7 +86,7 @@ test("applying appends only the kept sections, proposes the medicine unconfirmed
 
   const input = { encounterId: "visit-1042", key: "sample", requestId: "scan-1", ...ALL, sections: { examination: SAMPLE_NOTE.sections.examination, plan: SAMPLE_NOTE.sections.plan, history: "  " } };
   const applied = await doctor.scan.apply(input);
-  expect(applied).toEqual({ noteRevision: 2, sections: 2, medicines: 1, tasks: 2, line: "Note updated · 1 medicine to confirm · 2 tasks added" });
+  expect(applied).toEqual({ noteRevision: 2, sections: 2, medicines: 1, tasks: 2, line: "Note updated · 1 medicine to confirm · 2 tasks added", sample: { deidentifier: "rules", status: "blocked" } });
 
   const note = await doctor.note.get({ encounterId: "visit-1042" });
   expect(note.sentences).toEqual([
@@ -105,7 +108,9 @@ test("applying appends only the kept sections, proposes the medicine unconfirmed
   expect(receipt).toMatchObject({ kind: "scan-apply", sourceIds: ["sample"], approvedBy: "dr-aisyah", model: "fixture" });
 
   // The same request again: the first result, and nothing appended or created twice.
-  expect(await doctor.scan.apply(input)).toEqual(applied);
+  // Who de-identified the training sample is said once, when it is captured.
+  const { sample: _, ...first } = applied;
+  expect(await doctor.scan.apply(input)).toEqual(first);
   expect((await doctor.note.get({ encounterId: "visit-1042" })).revision).toBe(2);
   expect((await doctor.tasks.list()).filter(t => t.id.startsWith("scan:"))).toHaveLength(2);
   expect((await doctor.encounter.get({ encounterId: "visit-1042" })).revision).toBe(after.revision);

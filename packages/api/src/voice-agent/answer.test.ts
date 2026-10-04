@@ -55,6 +55,10 @@ test("each sentence is handed on as soon as Gemma finishes it, after the flags l
   for await (const p of parts) if (p.type === "text-delta") rest.push(p.text);
   expect(rest).toEqual(["It is for 2 more days."]);
   expect(summaries).toEqual([{ grounded: true, urgent: false, source: "model", model: "gemma-test" }]);
+  // A spoken question names its ear beside Gemma; a typed one (above) names none.
+  const heard = turnOf({ question: "After breakfast or dinner?", chat: gemma(["Hello there, Amelia."]).chat, heard: { source: "model", model: "asr-test" } });
+  await spoken(heard.turn);
+  expect(heard.summaries).toEqual([{ grounded: true, urgent: false, source: "model", model: "gemma-test", ear: { source: "model", model: "asr-test" } }]);
   expect(log.messages.map(m => m.role)).toEqual(["system", "user", "assistant", "user"]);
   expect(log.messages[0]!.content).toContain("Azithromycin (changed): Now a tablet once a day");
   expect(log.messages.at(-1)!.content).toBe("After breakfast or dinner?");

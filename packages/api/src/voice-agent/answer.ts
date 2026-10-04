@@ -19,7 +19,14 @@ export type Part = { type: "text-delta"; text: string } | { type: "text-end" };
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 /** Gemma's reply as it is written, or none (`waking` minutes while box ① starts). Aborting `signal` stops it. */
 export type ChatStream = (messages: ChatMessage[], signal: AbortSignal) => Promise<{ text: AsyncIterable<string>; model: string } | { waking?: number }>;
-export type TurnSummary = { grounded: boolean; urgent: boolean; source: "model" | "fixture"; model?: string; waking?: number };
+/**
+ * `source` and `model` are the brain's alone (Gemma). `ear` is who heard the question, when the caller knows (the
+ * transcriber's own answer, passed in as `heard`; a typed question has none). The voice is not here: each sentence is
+ * spoken after it is handed on, so only the speaker knows (a sentence with no model voice is told by `sona_say`).
+ */
+export type TurnSummary = { grounded: boolean; urgent: boolean; source: "model" | "fixture"; model?: string; waking?: number; ear?: Heard };
+/** Who turned the patient's speech into `question`: the ASR model, or a fixture when none did. */
+export type Heard = { source: "model"; model: string } | { source: "fixture" };
 
 export type AnswerTurn = {
   question: string;
@@ -31,6 +38,8 @@ export type AnswerTurn = {
   language: Language;
   /** None: no hosted model. */
   chat?: ChatStream;
+  /** Who heard the question, for the turn's summary; none when it was typed. */
+  heard?: Heard;
   signal: AbortSignal;
   /** Tells the care team; true once a flagged task is made. */
   escalate(label: "worse" | "urgent"): Promise<boolean>;
@@ -160,7 +169,7 @@ function within(promise: Promise<boolean>, ms: number) {
 }
 
 export async function* answerTurn(turn: AnswerTurn): AsyncGenerator<Part> {
-  const lines = LINES[turn.language], summary: TurnSummary = { grounded: false, urgent: false, source: "fixture" };
+  const lines = LINES[turn.language], summary: TurnSummary = { grounded: false, urgent: false, source: "fixture", ...turn.heard && { ear: turn.heard } };
   let told: Promise<boolean> | undefined, said = false;
   const escalate = (label: "worse" | "urgent") => { told ??= turn.escalate(label).catch(() => false); };
   function* say(text: string): Generator<Part> {
