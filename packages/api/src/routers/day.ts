@@ -7,7 +7,9 @@ import { and, asc, desc, eq, gte, isNull, lt, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { taskCreateSchema } from "../contracts";
+import { clockOffsetOf, shifted } from "../clock";
 import { clockOf, type Context } from "../context";
+import { changeFor } from "../events";
 import { protectedProcedure } from "../index";
 
 /** Marks one of the caller's hospital's tasks done; completing it again returns the same task. */
@@ -42,29 +44,60 @@ export const listResults = async (db: Context["db"], hospitalId: string, where?:
   .where(and(eq(patients.hospitalId, hospitalId), where)).orderBy(desc(labResults.receivedAt)))
   .map(r => ({ ...r, critical: Boolean(r.flag?.startsWith("critical")) }));
 
+const resultInput = z.object({ patientId: z.string().min(1), test: z.string().trim().min(1), value: z.string().trim().min(1), unit: z.string().trim().min(1).optional() });
+
+/**
+ * A result arrives for one of the hospital's patients, flagged critical by rule when it is past a call-now limit.
+ * The one path for a result, whoever sends it: the lab's system (labFeed) or a signed-in clinician (results.receive).
+ */
+async function receiveResult(context: Pick<Context, "db" | "now">, hospitalId: string, input: z.infer<typeof resultInput>) {
+  const { db } = context;
+  const [patient] = await db.select({ id: patients.id }).from(patients).where(and(eq(patients.id, input.patientId), eq(patients.hospitalId, hospitalId)));
+  if (!patient) throw new ORPCError("NOT_FOUND", { message: `No patient ${input.patientId}` });
+  // A sample the lab was still running (a ward and discharge blocker) is filled in place, keeping its ID; anything else is a new result.
+  const [pending] = await db.select({ id: labResults.id }).from(labResults)
+    .where(and(eq(labResults.patientId, input.patientId), eq(labResults.flag, "pending"), sql`lower(${labResults.test}) = lower(${input.test})`)).orderBy(asc(labResults.receivedAt)).limit(1);
+  const id = pending?.id ?? `lab-${crypto.randomUUID()}`;
+  const values = { value: input.value, unit: input.unit, flag: criticalOf(input) ?? null, receivedAt: clockOf(context) };
+  if (pending) await db.update(labResults).set(values).where(eq(labResults.id, id));
+  else await db.insert(labResults).values({ id, patientId: input.patientId, test: input.test, sourceId: id, ...values });
+  const [result] = await listResults(db, hospitalId, eq(labResults.id, id));
+  return result!;
+}
+
+const sha256 = async (s: string) => new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s))).join();
+
+/**
+ * The lab system's way in (POST /lab/results on the Worker): no person is signed in, so the credential is the shared
+ * secret in LAB_FEED_SECRET, sent as `Authorization: Bearer <secret>`. With no secret set the route does not exist
+ * (404), so nothing is open by accident. The body is results.receive's input; the result goes down the same path
+ * (receiveResult), on the patient's hospital's clock, and is announced to that hospital's connected apps as a signed-in
+ * write is, so Sona Pro's critical banner appears as it lands.
+ * ponytail: one secret for the whole deployment, and the patient ID picks the hospital; a credential per hospital's lab,
+ * and HL7/FHIR messages in place of this JSON, once a second lab connects. Not in the access trail, which names users.
+ */
+export async function labFeed(context: Pick<Context, "db" | "now" | "announce">, secret: string | undefined, request: Request): Promise<Response> {
+  if (!secret) return Response.json({ error: "The lab feed is not switched on" }, { status: 404 });
+  const given = /^Bearer (.+)$/.exec(request.headers.get("authorization") ?? "")?.[1];
+  // Compared as digests, so how long the comparison takes says nothing about the secret.
+  if (!given || await sha256(given) !== await sha256(secret)) return Response.json({ error: "Wrong or missing lab credential" }, { status: 401 });
+  const input = resultInput.safeParse(await request.json().catch(() => undefined));
+  if (!input.success) return Response.json({ error: "Expected { patientId, test, value, unit? }" }, { status: 400 });
+  const { db } = context;
+  const [patient] = await db.select({ hospitalId: patients.hospitalId }).from(patients).where(eq(patients.id, input.data.patientId));
+  if (!patient) return Response.json({ error: `No patient ${input.data.patientId}` }, { status: 404 });
+  const result = await receiveResult({ db, now: shifted(context.now, await clockOffsetOf(db, patient.hospitalId)) }, patient.hospitalId, input.data);
+  // The same change a signed-in results.receive announces; a failed announcement never fails the write.
+  await context.announce?.(patient.hospitalId, changeFor(["results", "receive"], input.data)!).catch(() => {});
+  return Response.json(result, { status: 201 });
+}
+
 export const resultsRouter = {
   // A sample still at the lab ("pending") is a ward blocker, not a result to act on.
   list: protectedProcedure.input(z.object({ unacknowledged: z.boolean().optional() }).optional()).handler(async ({ context: { db, hospitalId }, input }) =>
     (await listResults(db, hospitalId, input?.unacknowledged ? isNull(labResults.acknowledgedAt) : undefined)).filter(r => r.flag !== "pending")),
-  /**
-   * The lab feed, simulated for the demo: a result arrives for one of the hospital's patients, flagged
-   * critical by rule when it is past a call-now limit. ponytail: a real lab posts HL7/FHIR here.
-   */
-  receive: protectedProcedure.input(z.object({ patientId: z.string().min(1), test: z.string().trim().min(1), value: z.string().trim().min(1), unit: z.string().trim().min(1).optional() }))
-    .handler(async ({ context, input }) => {
-      const { db, hospitalId } = context;
-      const [patient] = await db.select({ id: patients.id }).from(patients).where(and(eq(patients.id, input.patientId), eq(patients.hospitalId, hospitalId)));
-      if (!patient) throw new ORPCError("NOT_FOUND", { message: `No patient ${input.patientId}` });
-      // A sample the lab was still running (a ward and discharge blocker) is filled in place, keeping its ID; anything else is a new result.
-      const [pending] = await db.select({ id: labResults.id }).from(labResults)
-        .where(and(eq(labResults.patientId, input.patientId), eq(labResults.flag, "pending"), sql`lower(${labResults.test}) = lower(${input.test})`)).orderBy(asc(labResults.receivedAt)).limit(1);
-      const id = pending?.id ?? `lab-${crypto.randomUUID()}`;
-      const values = { value: input.value, unit: input.unit, flag: criticalOf(input) ?? null, receivedAt: clockOf(context) };
-      if (pending) await db.update(labResults).set(values).where(eq(labResults.id, id));
-      else await db.insert(labResults).values({ id, patientId: input.patientId, test: input.test, sourceId: id, ...values });
-      const [result] = await listResults(db, hospitalId, eq(labResults.id, id));
-      return result!;
-    }),
+  /** A result entered from inside the app by a signed-in clinician (Settings' simulate button); the lab's own system posts through labFeed. */
+  receive: protectedProcedure.input(resultInput).handler(({ context, input }) => receiveResult(context, context.hospitalId, input)),
   /** Records the first doctor to acknowledge a result; acknowledging it again returns that same record. */
   acknowledge: protectedProcedure.input(z.object({ resultId: z.string().min(1) })).handler(async ({ context, input }) => {
     const { db, hospitalId } = context;

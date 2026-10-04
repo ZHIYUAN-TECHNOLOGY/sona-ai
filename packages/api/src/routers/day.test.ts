@@ -5,6 +5,8 @@ import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 
+import type { Change } from "../events";
+import { labFeed } from "./day";
 import { appRouter } from "./index";
 
 const user = (id: string) => ({
@@ -88,7 +90,7 @@ test("my day lists that date's appointments in the hospital's day (+08:00), in t
   expect((await api.day.list({ date: "26/09/2026" }).catch(e => e)).code).toBe("BAD_REQUEST");
 });
 
-test("a result from the (simulated) lab feed past a call-now limit arrives flagged critical; a normal one arrives unflagged", async () => {
+test("a result entered by a signed-in clinician past a call-now limit arrives flagged critical; a normal one arrives unflagged", async () => {
   const { api, db, as, clock } = await signedIn();
   const critical = await api.results.receive({ patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L" });
   expect(critical).toMatchObject({ patientName: "Daniel Rahman", flag: "critical low", critical: true, acknowledgedAt: null });
@@ -99,6 +101,41 @@ test("a result from the (simulated) lab feed past a call-now limit arrives flagg
   expect((await api.results.list({ unacknowledged: true })).slice(0, 2).map(r => [r.id, r.critical])).toEqual([[normal.id, false], [critical.id, true]]);
   // Another hospital's lab cannot post to this hospital's patient.
   expect((await (await otherHospital(db, as)).results.receive({ patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L" }).catch(e => e)).code).toBe("NOT_FOUND");
+});
+
+test("the lab's own system posts a result with its shared secret: refused without the right one, closed while no secret is set, and a right one lands as results.receive does and is announced", async () => {
+  const { api, db, clock } = await signedIn();
+  const SECRET = "lab-secret-for-this-test-only";
+  const announced: [string, Change][] = [];
+  const context = { db, now: () => clock.now, announce: async (hospitalId: string, change: Change) => { announced.push([hospitalId, change]); } };
+  const potassium = { patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L" };
+  const post = (authorization: string | undefined, body: unknown, secret: string | undefined = SECRET) => labFeed(context, secret, new Request("https://sona.test/lab/results", {
+    method: "POST", headers: { "content-type": "application/json", ...authorization ? { authorization } : {} }, body: typeof body === "string" ? body : JSON.stringify(body),
+  }));
+  const before = (await api.results.list()).length;
+  // No secret configured: the route is closed, even to a caller who sends an empty or any credential.
+  expect((await post(`Bearer ${SECRET}`, potassium, "")).status).toBe(404);
+  expect((await post("Bearer ", potassium, "")).status).toBe(404);
+  // Missing, wrong, and right-but-not-a-bearer credentials are all refused.
+  for (const wrong of [undefined, "Bearer wrong", `Bearer ${SECRET}x`, SECRET, "Bearer "]) expect((await post(wrong, potassium)).status).toBe(401);
+  expect((await api.results.list()).length).toBe(before);
+  expect(announced).toEqual([]);
+
+  expect((await post(`Bearer ${SECRET}`, "not json")).status).toBe(400);
+  expect((await post(`Bearer ${SECRET}`, { patientId: "SYN-1086", test: "Potassium" })).status).toBe(400);
+  expect((await post(`Bearer ${SECRET}`, { ...potassium, patientId: "SYN-none" })).status).toBe(404);
+
+  const res = await post(`Bearer ${SECRET}`, potassium);
+  expect(res.status).toBe(201);
+  const landed = await res.json() as { id: string };
+  expect(landed).toMatchObject({ patientName: "Daniel Rahman", flag: "critical low", critical: true, acknowledgedAt: null, receivedAt: clock.now.toISOString() });
+  // What the clinician's app reads is the same row, critical and waiting; the hospital's apps were told results changed.
+  expect((await api.results.list({ unacknowledged: true }))[0]).toMatchObject({ id: landed.id, critical: true, value: "2.6" });
+  expect(announced).toEqual([["demo", { topic: "results", patientId: "SYN-1086" }]]);
+  // A pending sample is filled in place, as from the app; a failed announcement never fails the result.
+  const failing = { ...context, announce: async () => { throw new Error("channel down"); } };
+  const culture = await labFeed(failing, SECRET, new Request("https://sona.test/lab/results", { method: "POST", headers: { authorization: `Bearer ${SECRET}` }, body: JSON.stringify({ patientId: "SYN-2002", test: "Urine culture sensitivities", value: "No growth" }) }));
+  expect([culture.status, (await culture.json() as { id: string }).id]).toEqual([201, "lab-2002-b2-result"]);
 });
 
 test("a result for a sample the lab was still running fills that pending row, so the ward and the discharge stop waiting on it", async () => {

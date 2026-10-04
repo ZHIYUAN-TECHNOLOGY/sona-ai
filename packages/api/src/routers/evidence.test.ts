@@ -41,7 +41,7 @@ const REHEARSED_Q = "Steroids for this patient with community-acquired pneumonia
 /** Claims without their proof, to compare with the authored ones (their quotes are checked on their own). */
 const bare = (claims: Claim[]) => claims.map(({ quotes: _, ...c }) => c);
 
-test("the rehearsed steroid question: cited claims over its three PubMed studies, follow-ups, and Amelia's CURB-65 from her chart", async () => {
+test("with no model configured, the rehearsed steroid question answers from authored content, labelled cached: cited claims over its three PubMed studies, follow-ups, and Amelia's CURB-65 from her chart", async () => {
   const { fetcher } = pubmed();
   const { api, db } = await signedIn(fetcher);
   const r = await api.evidence.ask({ encounterId: "visit-1042", question: REHEARSED_Q });
@@ -65,7 +65,7 @@ test("the rehearsed steroid question: cited claims over its three PubMed studies
   expect(log).toMatchObject({ encounterId: "visit-1042", kind: "evidence-answer", output: { question: REHEARSED_Q, claims: ANSWER }, sourceIds: ["pmid:31573350", "pmid:25608756", "pmid:36942789"], model: "cached" });
 });
 
-test("a suggested follow-up answers from its authored claims, offers the other two, and never searches PubMed afresh", async () => {
+test("with no model configured, a suggested follow-up answers from its authored claims, offers the other two, and never searches PubMed afresh", async () => {
   const { state, fetcher } = pubmed();
   const { api } = await signedIn(fetcher);
   const follow = FOLLOW_UPS[1]!;
@@ -119,13 +119,55 @@ test("any other question searches PubMed, never borrows the authored answer, and
   expect(r.curb65).toMatchObject({ recorded: 1, risk: undefined });
 });
 
-test("while Gemma is starting, the sample says in how many minutes it should answer", async () => {
+test("with a model configured the rehearsed question is searched and written like any other: PubMed is searched, the model writes from the abstracts, and nothing authored is used", async () => {
+  const { state, fetcher } = pubmed(["25608756"]);
+  let seen: Parameters<Models["synthesiseEvidence"]>[0] | undefined;
+  const models: Models = { ...stubModels, synthesiseEvidence: async input => {
+    seen = input;
+    return { bottomLine: "It shortens time to stability.", claims: [{ text: "A randomised trial found prednisone shortened time to clinical stability.", cites: [1], topic: "evidence" }], followUps: ["At what dose?"], source: "model", model: "gemma-test" };
+  } };
+  const { api, db } = await signedIn(fetcher, true, models);
+  const r = await api.evidence.ask({ encounterId: "visit-1042", question: REHEARSED_Q });
+  expect(state.calls.some(u => u.includes("esearch") && u.includes("steroids"))).toBe(true);
+  // The model read the study's own abstract, not the authored summary of it.
+  expect(seen).toMatchObject({ question: REHEARSED_Q, sources: [{ n: 1, design: "Trial", year: 2015, text: expect.stringMatching(/^Prednisone treatment for 7 days/) }] });
+  expect({ source: r.source, enough: r.enough, bottomLine: r.bottomLine, followUps: r.followUps }).toEqual({ source: "gemma-test", enough: true, bottomLine: "It shortens time to stability.", followUps: ["At what dose?"] });
+  expect(bare(r.claims)).toEqual([{ text: "A randomised trial found prednisone shortened time to clinical stability.", cites: [1], topic: "evidence" }]);
+  expect(r.references.map(s => [s.pmid, s.text === STUDIES[1]!.finding])).toEqual([["25608756", false]]);
+  expect((await db.select().from(provenance))[0]).toMatchObject({ model: "gemma-test" });
+  // A suggested follow-up, word for word, is the model's too; and the stream says it is being written.
+  expect((await api.evidence.ask({ encounterId: "visit-1042", question: FOLLOW_UPS[1]!.question, thread: [{ question: REHEARSED_Q, answer: "" }] })).source).toBe("gemma-test");
+  const steps = [];
+  for await (const event of await api.evidence.stream({ encounterId: "visit-1042", question: REHEARSED_Q })) steps.push(event.type === "step" ? event.step : event.type);
+  expect(steps).toEqual(["search", "read", "write", "answer"]);
+});
+
+test("a configured model that does not answer is said as that: no claims, no authored or sample text, and while its box starts, in how many minutes to ask again", async () => {
+  // What the hosted adapter returns when Gemma's box is starting or its call failed: the stub's sample, labelled fixture.
   const models: Models = { ...stubModels, synthesiseEvidence: async input => ({ ...await stubModels.synthesiseEvidence(input), source: "fixture", waking: 12 }) };
-  const { api } = await signedIn(pubmed(["25608756"]).fetcher, true, models);
-  const r = await api.evidence.ask({ encounterId: "visit-1086", question: "Does prednisone shorten time to stability?" });
-  expect(r).toMatchObject({ source: "fixture", waking: 12, enough: true });
-  // The rehearsed question answers from authored content: no model, so nothing is starting.
-  expect(await api.evidence.ask({ encounterId: "visit-1042", question: REHEARSED_Q })).not.toHaveProperty("waking");
+  const { api, db } = await signedIn(pubmed(["25608756"]).fetcher, true, models);
+  for (const question of [REHEARSED_Q, "Does prednisone shorten time to stability?"]) {
+    const r = await api.evidence.ask({ encounterId: "visit-1042", question });
+    expect(r).toMatchObject({ source: "fixture", waking: 12, enough: false, claims: [], followUps: [], references: [{ pmid: "25608756" }] });
+    expect([r.bottomLine, r.general]).toEqual([undefined, undefined]);
+  }
+  expect((await db.select().from(provenance)).map(p => p.model)).toEqual(["fixture", "fixture"]);
+  // The same when the answer streams and the stream gives up: nothing written is shown as the answer.
+  const streaming: Models = { ...models, async *streamEvidence(input) { return await models.synthesiseEvidence(input); } };
+  const failed = await (await signedIn(pubmed(["25608756"]).fetcher, true, streaming)).api.evidence.ask({ question: REHEARSED_Q });
+  expect(failed).toMatchObject({ source: "fixture", waking: 12, enough: false, claims: [] });
+});
+
+test("a search that found nothing is searched again the next time, not reused for a week", async () => {
+  const idlist: string[] = [];
+  const { state, fetcher } = pubmed(idlist);
+  const { api } = await signedIn(fetcher);
+  const question = "Does prednisone shorten time to stability?";
+  expect((await api.evidence.ask({ question })).references).toEqual([]);
+  idlist.push("25608756");
+  state.calls.length = 0;
+  expect((await api.evidence.ask({ question })).references.map(r => r.pmid)).toEqual(["25608756"]);
+  expect(state.calls.some(u => u.includes("esearch"))).toBe(true);
 });
 
 test("a model's uncited or out-of-range claims are all dropped, leaving not enough evidence; the thread reaches the model", async () => {
