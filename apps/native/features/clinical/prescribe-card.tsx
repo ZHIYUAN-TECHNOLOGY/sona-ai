@@ -7,23 +7,27 @@ import { DrawnCheck, PressScale } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
-import { defaultMedications, getPrescriptionChecks, simulatedRegimen } from "@/features/encounter/clinical-state";
-import { CONSEQUENCE, outsideCase } from "@/features/encounter/next-steps";
+import { defaultMedications, getPrescriptionChecks, regimenLine, regimenOf } from "@/features/encounter/clinical-state";
+import { CONSEQUENCE, outsideCase, receiptWords } from "@/features/encounter/next-steps";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient, PrescriptionCheck, PrescriptionInputs } from "@/features/encounter/types";
 import { useLive } from "@/features/live";
 import { LockedAction, useRole } from "@/features/live/roles";
+import { RegimenForm } from "./medication-editor";
 import { Seal, haptic } from "./medication-parts";
 
 /*
  * One card for the whole prescribing job, so nothing navigates and no new answers stream in:
- * a progress ring and the regimen, then only what blocks it, each fixable where it sits (weight,
- * No/Yes history pills, an inline Run for the review). A resolved row does what Particle News'
+ * a progress ring and the regimen the clinician entered (none until they do), then only what blocks
+ * it, each fixable where it sits (the regimen's own fields, weight, No/Yes history pills, an inline
+ * Run for the review). A resolved row does what Particle News'
  * checklist does: its number badge crossfades into a check with a small spring, a line draws
  * through the label and the text fades, then the row folds away. The ring fills and "N left"
  * counts down; the button morphs from "Resolve N" to "Prescribe", and the receipt stamps in here.
  */
 const EMPTY: PrescriptionInputs = { weightKg: "", liverDisease: "unknown", kidneyDisease: "unknown", alcoholRisk: "unknown", paracetamolAllergy: "unknown" };
+// Sample mode's rehearsal shortcut (demo controls on, never live): typed in for the presenter like any other entry, and checked by the same rule.
+const DEMO_REGIMEN = regimenLine({ medication: "Paracetamol", formulation: "500 mg tablet", dose: "500", unit: "mg", route: "Oral", frequency: "Every 6 hours", duration: "3 days" });
 const HISTORY = ["paracetamolAllergy", "liverDisease", "kidneyDisease", "alcoholRisk"] as const;
 const RING_R = 22, RING_C = 2 * Math.PI * RING_R;
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -128,6 +132,7 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
   const checks = encounter ? getPrescriptionChecks(encounter, patient) : [];
   const resolving = useSettling(checks.filter(c => c.status === "blocked").map(c => c.id));
   const canPrescribe = useCanPrescribe();
+  const { on: live } = useLive();
   const serverError = runErrors[patient.id];
   // One haptic when an outcome lands here, whichever path ran it (the button or the next-step bar).
   const outcome = encounter?.prescription && `${encounter.prescription.id}:${encounter.prescription.status}`;
@@ -148,11 +153,14 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
   const passed = checks.filter(c => c.status === "passed" && !resolving.has(c.id));
   const prescription = encounter.prescription;
   const created = prescription?.status === "created" && prescription.revision === encounter.revision;
-  const regimen = prescription?.regimen ?? simulatedRegimen;
+  // The receipt's regimen once there is one; before that, what is entered on this visit, which may be nothing yet.
+  const regimen = (created && prescription?.regimen) || regimenOf(encounter, patient);
+  const words = receiptWords(live);
   const working = encounter.working;
   const reviewStale = Boolean(encounter.reviewInvalidated) && encounter.medicationCheckedRevision !== encounter.revision;
 
   const fix = (check: PrescriptionCheck) => {
+    if (check.id === "regimen") return <RegimenForm key={encounter.proposedMedicine ?? ""} patient={patient} />;
     if (check.id === "age-weight") return <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
       <TextInput accessibilityLabel="Weight in kilograms" value={inputs.weightKg} onChangeText={weightKg => set({ weightKg: weightKg.replace(/[^0-9.]/g, "") })} keyboardType="decimal-pad" placeholder="Weight" placeholderTextColor={palette.placeholder}
         style={{ width: 96, height: 44, borderRadius: radius.control, paddingHorizontal: 12, ...type.body, fontWeight: "600", color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
@@ -168,17 +176,17 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
     return undefined;
   };
   const label = (check: PrescriptionCheck) => check.id === "review" && reviewStale ? { ...check, detail: "Needs rerun · eligibility or medicines changed since the last review." } : check;
-  // A recorded risk isn't something to resolve: the case is outside what this simulation supports.
+  // A recorded risk isn't something to resolve: the case is outside what the dose rules cover.
   const outside = outsideCase(encounter);
-  const primary = working === "prescription" ? "Checking all 11…" : outside ? "Outside the supported case · not prescribing" : blocked.length ? `Resolve ${blocked.length} to prescribe` : `Prescribe ${regimen.medication.toLowerCase()}`;
+  const primary = working === "prescription" ? `Checking all ${checks.length}…` : outside ? "Outside the supported case · not prescribing" : blocked.length ? `Resolve ${blocked.length} to prescribe` : regimen ? `Prescribe ${regimen.medication.toLowerCase()}` : "Prescribe";
 
   return <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 12 }}>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
       <Ring done={checks.length - blocked.length} total={checks.length} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={{ ...type.overline, color: created ? palette.green : blocked.length ? palette.amber : palette.blue }}>{created ? "Prescribed · simulation" : outside ? "Outside the supported case" : blocked.length ? `${blocked.length} left before prescribing` : "Ready to prescribe"}</Text>
-        <Text style={{ ...type.headline, color: palette.ink }}>{regimen.medication} · {regimen.formulation}</Text>
-        <Text numberOfLines={2} style={{ ...type.caption, color: palette.muted }}>{regimen.dose} {regimen.unit} · {regimen.route} · {regimen.frequency}</Text>
+        <Text style={{ ...type.overline, color: created ? palette.green : blocked.length ? palette.amber : palette.blue }}>{created ? words.title : outside ? "Outside the supported case" : blocked.length ? `${blocked.length} left before prescribing` : "Ready to prescribe"}</Text>
+        <Text style={{ ...type.headline, color: palette.ink }}>{regimen ? `${regimen.medication} · ${regimen.formulation}` : "No regimen entered"}</Text>
+        <Text numberOfLines={2} style={{ ...type.caption, color: palette.muted }}>{regimen ? `${regimen.dose} ${regimen.unit} · ${regimen.route} · ${regimen.frequency} · ${regimen.duration}` : "Enter the medicine, dose, route, frequency and duration below."}</Text>
       </View>
     </View>
 
@@ -199,8 +207,8 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
     {created && prescription ? <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: radius.group, backgroundColor: "rgba(15,110,102,0.08)" }}>
       <Seal stampDelay={reducedMotion ? undefined : 120} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>Simulated prescription created</Text>
-        <Text style={{ ...type.caption, color: palette.muted }}>All {checks.length} checks passed · {new Date(prescription.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · immutable receipt, no dispensing</Text>
+        <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{words.title}</Text>
+        <Text style={{ ...type.caption, color: palette.muted }}>All {checks.length} checks passed · {new Date(prescription.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · {words.where}</Text>
       </View>
     </Animated.View>
       : !canPrescribe ? <LockedAction label="Needs a doctor to prescribe" path="prescribing.simulate" />
@@ -218,8 +226,8 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
 
     {serverError && <Text accessibilityLiveRegion="polite" style={{ ...type.caption, color: palette.amber }}>{serverError}</Text>}
 
-    {!created && showDemoControls &&<Pressable accessibilityRole="button" onPress={() => updateEncounter(value => ({ ...value, prescriptionInputs: { weightKg: "62", liverDisease: "no", kidneyDisease: "no", alcoholRisk: "no", paracetamolAllergy: "no" } }), true)} style={{ alignSelf: "center", minHeight: 32, justifyContent: "center" }}>
-      <Text style={{ ...type.footnote, color: palette.blue }}>Demo · load synthetic eligibility</Text>
+    {!created && showDemoControls &&<Pressable accessibilityRole="button" onPress={() => updateEncounter(value => ({ ...value, ...(!live && { proposedMedicine: DEMO_REGIMEN }), prescriptionInputs: { weightKg: "62", liverDisease: "no", kidneyDisease: "no", alcoholRisk: "no", paracetamolAllergy: "no" } }), true)} style={{ alignSelf: "center", minHeight: 32, justifyContent: "center" }}>
+      <Text style={{ ...type.footnote, color: palette.blue }}>{live ? "Demo · load synthetic eligibility" : "Demo · load sample regimen and eligibility"}</Text>
     </Pressable>}
   </Surface>;
 }

@@ -1,12 +1,13 @@
+import { useState } from "react";
 import { View } from "react-native";
 import Animated from "react-native-reanimated";
 import { Section } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { Action, Surface } from "@/components/sona/ui";
-import { defaultMedications } from "@/features/encounter/clinical-state";
+import { defaultMedications, parseRegimen, regimenLine } from "@/features/encounter/clinical-state";
 import { useEncounter } from "@/features/encounter/store";
-import type { FeatureProps, MedicationEntry } from "@/features/encounter/types";
+import type { FeatureProps, MedicationEntry, Patient } from "@/features/encounter/types";
 import { useEncounterEdit } from "@/features/live/sync";
 import { ClinicalField } from "./controls";
 import { Footnote, FormReveal, Hairline, Press, useLayoutSpring } from "./medication-parts";
@@ -14,10 +15,50 @@ import { resolveMedicine } from "./medicine-catalog";
 import { MedicineThumb } from "./medicine-thumb";
 
 /**
+ * The regimen the clinician proposes for this patient, entered field by field; nothing is filled in for them. Saving writes
+ * the visit's one proposed line (regimenLine): a new revision, so the review and the dose rule run on exactly what was entered.
+ * Shown where it is needed: under the proposed row here, and inside the prescribe card's "Bounded regimen" blocker.
+ */
+export function RegimenForm({ patient, onCancel }: { patient: Patient; onCancel?: () => void }) {
+  const { encounters } = useEncounter();
+  const edit = useEncounterEdit(patient);
+  const [draft, setDraft] = useState(() => {
+    const line = encounters[patient.id]?.proposedMedicine, saved = parseRegimen(line);
+    // A bare medicine name saved before regimens were entered keeps its name; the rest is still to enter.
+    return saved ? { medication: saved.medication, strength: saved.formulation, dose: saved.dose, route: saved.route, hours: saved.frequency.match(/\d+/)?.[0] ?? "", days: saved.duration.match(/\d+/)?.[0] ?? "" }
+      : { medication: line?.includes("·") ? "" : line ?? "", strength: "", dose: "", route: "", hours: "", days: "" };
+  });
+  if (!edit.allowed) return <Footnote>Needs a doctor to enter the regimen.</Footnote>;
+  // "·" separates the saved line's parts, so it is kept out of them; the number fields take digits only.
+  const text = (key: "medication" | "strength" | "route") => (value: string) => setDraft(d => ({ ...d, [key]: value.replace(/·/g, "") }));
+  const digits = (key: "dose" | "hours" | "days") => (value: string) => setDraft(d => ({ ...d, [key]: value.replace(/[^0-9]/g, "") }));
+  const complete = Object.values(draft).every(value => value.trim());
+  const save = () => {
+    const proposedMedicine = regimenLine({ medication: draft.medication, formulation: draft.strength, dose: draft.dose, unit: "mg", route: draft.route, frequency: `Every ${draft.hours} hours`, duration: `${draft.days} ${draft.days === "1" ? "day" : "days"}` });
+    edit.save({ proposedMedicine }, value => ({ ...value, proposedMedicine, proposedMedicineDraft: undefined }));
+  };
+  return <View style={{ gap: 12 }}>
+    <ClinicalField label="Medicine" value={draft.medication} onChange={text("medication")} />
+    <ClinicalField label="Strength and form" value={draft.strength} onChange={text("strength")} />
+    <View style={{ flexDirection: "row", gap: 12 }}>
+      <View style={{ flex: 1 }}><ClinicalField label="Dose (mg)" value={draft.dose} onChange={digits("dose")} keyboardType="number-pad" /></View>
+      <View style={{ flex: 1 }}><ClinicalField label="Route" value={draft.route} onChange={text("route")} /></View>
+    </View>
+    <View style={{ flexDirection: "row", gap: 12 }}>
+      <View style={{ flex: 1 }}><ClinicalField label="Hours between doses" value={draft.hours} onChange={digits("hours")} keyboardType="number-pad" /></View>
+      <View style={{ flex: 1 }}><ClinicalField label="Days" value={draft.days} onChange={digits("days")} keyboardType="number-pad" /></View>
+    </View>
+    <Action label={edit.saving ? "Saving…" : "Save regimen"} disabled={edit.saving || !complete} onPress={save} />
+    {onCancel && <Action label="Cancel" secondary onPress={onCancel} />}
+    {edit.error && <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber }}>{edit.error}</Text>}
+  </View>;
+}
+
+/**
  * Reconciliation checklist: one row per reported medicine with its confirmation state. Tapping a
  * row opens its identity form in place (one at a time); saving a correction revises the
- * encounter, which invalidates earlier medication checks. The proposed ingredient closes the list.
- * Review itself is requested from the next-step surface below.
+ * encounter, which invalidates earlier medication checks. The proposed regimen closes the list:
+ * empty until the clinician enters it. Review itself is requested from the next-step surface below.
  */
 export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "onRequest">) {
   const { encounters, updateEncounter } = useEncounter();
@@ -25,7 +66,7 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
   const encounter = encounters[patient.id];
   const entries: MedicationEntry[] = encounter?.medicationEntries ?? defaultMedications(patient);
   const draft = encounter?.medicationDraft;
-  const proposed = encounter?.proposedMedicineDraft ?? encounter?.proposedMedicine ?? "Paracetamol";
+  const regimen = parseRegimen(encounter?.proposedMedicine);
   const editProposed = encounter?.proposedMedicineDraft !== undefined;
   const confirmed = entries.filter(entry => entry.confirmed).length;
   const editDraft = (change: Partial<MedicationEntry>) => updateEncounter(value => ({ ...value, medicationDraft: value.medicationDraft ? { ...value.medicationDraft, ...change, confirmed: false } : undefined }));
@@ -42,7 +83,7 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
       {entries.map((entry, index) => {
         const editing = draft?.id === entry.id;
         const identity = `${entry.ingredient || "Ingredient unknown"} · ${entry.formulation || "Formulation unknown"}`;
-        const state = editing ? "Editing this medicine" : entry.confirmed ? "Confirmed in simulation" : "Needs confirmation";
+        const state = editing ? "Editing this medicine" : entry.confirmed ? "Confirmed" : "Needs confirmation";
         return <Animated.View key={entry.id} layout={layout}>
           {index > 0 && <Hairline inset={74} />}
           <Press disabled={Boolean(draft) || !edit.allowed} onPress={() => updateEncounter(value => ({ ...value, medicationDraft: { ...entry } }))}
@@ -71,25 +112,24 @@ export function MedicationEditor({ patient }: Pick<FeatureProps, "patient" | "on
 
       <Animated.View layout={layout}>
         <Hairline />
-        <Press disabled={editProposed || !edit.allowed} onPress={() => updateEncounter(value => ({ ...value, proposedMedicineDraft: value.proposedMedicine ?? "Paracetamol" }))}
-          accessibilityLabel={`Proposed medicine, ${encounter?.proposedMedicine ?? "Paracetamol"}`} accessibilityHint={editProposed || !edit.allowed ? undefined : "Change proposed medicine"} style={row}>
-          <MedicineThumb look={resolveMedicine(encounter?.proposedMedicine ?? "Paracetamol", "tablet")} confirmed badge={false} />
+        <Press disabled={editProposed || !edit.allowed} onPress={() => updateEncounter(value => ({ ...value, proposedMedicineDraft: value.proposedMedicine ?? "" }))}
+          accessibilityLabel={`Proposed regimen, ${encounter?.proposedMedicine?.trim() || "not entered yet"}`} accessibilityHint={editProposed || !edit.allowed ? undefined : regimen ? "Change the proposed regimen" : "Enter the proposed regimen"} style={row}>
+          <MedicineThumb look={resolveMedicine(regimen?.medication ?? "", regimen?.formulation ?? "")} confirmed badge={false} />
           <View style={{ flex: 1, gap: 2 }}>
-            <Text style={{ ...type.caption, lineHeight: 17, fontWeight: "600", color: palette.muted }}>Proposed medicine</Text>
-            <Text style={{ ...type.body, lineHeight: 22, fontWeight: "500", color: palette.ink }}>{encounter?.proposedMedicine ?? "Paracetamol"}</Text>
+            <Text style={{ ...type.caption, lineHeight: 17, fontWeight: "600", color: palette.muted }}>Proposed regimen</Text>
+            <Text style={{ ...type.body, lineHeight: 22, fontWeight: "500", color: palette.ink }}>{regimen ? `${regimen.medication} · ${regimen.formulation}` : encounter?.proposedMedicine?.trim() || "Not entered yet"}</Text>
+            {regimen && <Text style={{ ...type.subhead, lineHeight: 19, color: palette.muted }}>{regimen.dose} {regimen.unit} · {regimen.route} · {regimen.frequency} · {regimen.duration}</Text>}
           </View>
-          {!editProposed && edit.allowed && <Text style={{ ...type.subhead, fontWeight: "500", color: palette.blue }}>Change</Text>}
+          {!editProposed && edit.allowed && <Text style={{ ...type.subhead, fontWeight: "500", color: palette.blue }}>{regimen ? "Change" : "Enter"}</Text>}
         </Press>
-        {editProposed && <FormReveal style={{ paddingHorizontal: 16, paddingBottom: 16, gap: 12 }}>
-          <ClinicalField label="Proposed medication" value={proposed} onChange={proposedMedicineDraft => updateEncounter(value => ({ ...value, proposedMedicineDraft }))} />
-          <Action label="Save proposed medicine" disabled={edit.saving || !proposed.trim()} onPress={() => edit.save({ proposedMedicine: proposed.trim() }, value => ({ ...value, proposedMedicine: proposed.trim(), proposedMedicineDraft: undefined }))} />
-          <Action label="Cancel" secondary onPress={() => updateEncounter(value => ({ ...value, proposedMedicineDraft: undefined }))} />
+        {editProposed && <FormReveal style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+          <RegimenForm patient={patient} onCancel={() => updateEncounter(value => ({ ...value, proposedMedicineDraft: undefined }))} />
         </FormReveal>}
       </Animated.View>
     </Surface>
     <Animated.View layout={layout} style={{ gap: 6 }}>
       {edit.error && <Text accessibilityLiveRegion="polite" style={{ ...type.footnote, color: palette.amber }}>{edit.error}</Text>}
-      <Footnote>A correction invalidates earlier checks. Only the authored paracetamol scenario has simulated coverage. Thumbnails show the dosage form, not a specific brand.</Footnote>
+      <Footnote>A correction invalidates earlier checks. The dose rules cover adult paracetamol tablets only; any other regimen is blocked, never guessed. Thumbnails show the dosage form, not a specific brand.</Footnote>
     </Animated.View>
   </Section>;
 }

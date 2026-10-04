@@ -7,18 +7,19 @@ import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
 import { SourceRef } from "@/components/sona/sources";
 import { Action, Expand, Icon, Notice, Surface } from "@/components/sona/ui";
-import { defaultMedications } from "@/features/encounter/clinical-state";
+import { defaultMedications, parseRegimen } from "@/features/encounter/clinical-state";
 import { patients as baselinePatients } from "@/features/encounter/fixtures";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps } from "@/features/encounter/types";
+import { useServerPatients } from "@/features/live/patients-sync";
 import { betaBlockerAlert, interactionSource, lookupInteractionPairs, type InteractionPair } from "./interaction-lookup";
 import { AlertRow, DisclosureButton, Footnote, Hairline, Mark, PairGlyph, Press, useLayoutSpring } from "./medication-parts";
 
 const statusLabel: Record<InteractionPair["status"], string> = { alert: "Label-backed class alert", unresolved: "Ingredient unresolved", uncovered: "Coverage unavailable" };
 
 /**
- * The entered combinations as one line: the sourced alert when there is one, otherwise a count of
- * pairs with no conclusion. Pair rows and the reason behind each "no conclusion" open on demand.
+ * The visit's own medicines (the server's record of them in live mode) with the regimen the clinician
+ * entered, as one line: the sourced alert when there is one, otherwise a count of pairs with no conclusion. Pair rows and the reason behind each "no conclusion" open on demand.
  * A changed list or encounter shows as unchecked; no pair is presented as evaluated until review.
  * Fixture loaders appear only with demo controls on.
  */
@@ -30,11 +31,13 @@ export function InteractionResults({ patient, onSource }: Pick<FeatureProps, "pa
   const [sourceFailed, setSourceFailed] = useState(false);
   const [details, setDetails] = useState(false);
   const [fixtures, setFixtures] = useState(false);
-  const baseline = baselinePatients.find(value => value.id === patient.id) ?? patient;
+  // The reported list before any confirmation, for the demo "Restore": the server's record of this patient when there is one, else the sample's.
+  const baseline = { ...(baselinePatients.find(value => value.id === patient.id) ?? patient), ...useServerPatients()?.[patient.id] };
   const current = encounter?.medicationCheckedRevision === encounter?.revision && encounter?.medicationCheckedRevision !== undefined;
   const busy = encounter?.requests.some(request => request.status === "streaming") ?? false;
   const reviewing = encounter?.requests.some(request => request.status === "streaming" && request.kind === "medication") ?? false;
-  const pairs = lookupInteractionPairs(encounter?.medicationEntries ?? defaultMedications(baseline), encounter?.proposedMedicine ?? "Paracetamol");
+  // Pairs are this visit's medicines with the medicine of the entered regimen; with none entered, only the visit's own.
+  const pairs = lookupInteractionPairs(encounter?.medicationEntries ?? defaultMedications(baseline), parseRegimen(encounter?.proposedMedicine)?.medication ?? encounter?.proposedMedicine ?? "");
   const alerts = pairs.filter(pair => pair.status === "alert");
   const quiet = pairs.filter(pair => pair.status !== "alert");
   const unresolved = quiet.some(pair => pair.status === "unresolved");
@@ -82,12 +85,12 @@ export function InteractionResults({ patient, onSource }: Pick<FeatureProps, "pa
     {showDemoControls && <Animated.View layout={layout} style={{ gap: 4 }}>
       <DisclosureButton label="Fixture controls" open={fixtures} onToggle={() => setFixtures(value => !value)} />
       {fixtures && <Expand style={{ gap: 8 }}>
-        <Footnote>Replaces the list with confirmed albuterol and propranolol, keeps paracetamol proposed, and invalidates the review.</Footnote>
+        <Footnote>Replaces the list with confirmed albuterol and propranolol, keeps the entered regimen, and invalidates the review.</Footnote>
         <Action label="Load interaction example" secondary disabled={busy} onPress={() => updateEncounter(value => ({ ...value, medicationEntries: [
           { id: "medicine-0", name: "Albuterol · loaded interaction fixture", ingredient: "albuterol", formulation: "inhaler", confirmed: true },
           { id: "medicine-1", name: "Propranolol · loaded interaction fixture", ingredient: "propranolol", formulation: "tablet", confirmed: true },
-        ], proposedMedicine: "Paracetamol", medicationDraft: undefined }), true)} />
-        <Action label="Restore reported medicines" secondary disabled={busy} onPress={() => updateEncounter(value => ({ ...value, medicationEntries: defaultMedications(baseline), proposedMedicine: "Paracetamol", medicationDraft: undefined }), true)} />
+        ], medicationDraft: undefined }), true)} />
+        <Action label="Restore reported medicines" secondary disabled={busy} onPress={() => updateEncounter(value => ({ ...value, medicationEntries: defaultMedications(baseline), medicationDraft: undefined }), true)} />
       </Expand>}
     </Animated.View>}
   </Animated.View>;

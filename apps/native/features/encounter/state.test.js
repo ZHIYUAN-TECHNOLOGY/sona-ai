@@ -5,7 +5,9 @@ import { patients, newEncounter } from "./fixtures";
 import { acceptCard, beginRequest, createCard, finishRequest, issueSimulation, reviseEncounter, routeInThread, routePrompt, revealSections, queueAmendment, reconcileAmendment } from "./state";
 
 const patient = patients[0];
-const eligible = () => ({ ...newEncounter(), medicationCheckedRevision: 1, medicationEntries: defaultMedications(patient).map(m => ({ ...m, confirmed: true })), prescriptionInputs: { weightKg: "62", liverDisease: "no", kidneyDisease: "no", alcoholRisk: "no", paracetamolAllergy: "no" } });
+const regimen = "Paracetamol 500 mg tablet · 1000 mg · Oral · Every 6 hours · 3 days";
+// The clinician's part: the regimen entered, and each reported medicine confirmed (the record names no form for the cetirizine).
+const eligible = () => ({ ...newEncounter(), proposedMedicine: regimen, medicationCheckedRevision: 1, medicationEntries: defaultMedications(patient).map(m => ({ ...m, formulation: m.formulation || "tablet", confirmed: true })), prescriptionInputs: { weightKg: "62", liverDisease: "no", kidneyDisease: "no", alcoholRisk: "no", paracetamolAllergy: "no" } });
 const request = { id: "req1", kind: "briefing", patientId: patient.id, encounterId: patient.encounterId, revision: 1, prompt: "Brief me", status: "streaming" };
 describe("encounter isolation and streaming", () => {
   test("rejects cross-patient, cross-encounter, malformed and unexpected capability cards", () => {
@@ -87,8 +89,15 @@ test("creation failure retries idempotently and amendments retain earlier eviden
   expect(failed.prescription.status).toBe("failed");
   const created = issueSimulation({ ...failed, prescriptionScenario: "standard" }, patient, "same-op");
   expect(created.prescription.status).toBe("created");
-  expect(created.prescription.regimen.dose).toBe("500");
-  expect(created.prescription.audit.some(s => s.includes("NHS"))).toBe(true);
+  // The receipt holds the regimen that was entered, and its audit says what happened: sample mode, on this phone, nothing sent.
+  expect(created.prescription.regimen).toMatchObject({ medication: "Paracetamol", dose: "1000", frequency: "Every 6 hours", duration: "3 days", indication: `Recorded complaint: ${patient.complaint}` });
+  expect(created.prescription.audit).toContain(`Regimen entered by the clinician: ${regimen}`);
+  expect(created.prescription.audit[0]).toBe("Sample mode · checked on this phone; nothing was saved to a hospital record");
+  expect(created.prescription.audit.at(-1)).toBe("Checked by Sona's rules, not by a model; not sent to a pharmacy; nothing dispensed");
+  expect(created.prescription.audit.join(" ")).not.toMatch(/fixture|simulat/i);
+  // No regimen entered: blocked, with no regimen on the outcome.
+  const empty = issueSimulation({ ...eligible(), proposedMedicine: undefined }, patient, "none").prescription;
+  expect([empty.status, empty.regimen]).toEqual(["blocked", undefined]);
   const withCard = { ...created, cards: [{ ...createCard(request), prescription: created.prescription }] };
   const revised = reviseEncounter(withCard);
   const next = issueSimulation({ ...revised, medicationCheckedRevision: revised.revision }, patient, "amendment");
@@ -131,11 +140,14 @@ test("amendment lifecycle survives presentation changes and stops on stale conte
 test("live mode shows the server's receipt: its time, its id and, for an amendment, the receipt it supersedes", () => {
   const issued = issueSimulation(eligible(), patient, "rx-1");
   const revised = reviseEncounter({ ...issued, cards: [{ ...createCard(request), prescription: issued.prescription }] });
-  const server = { id: "r-2", requestId: "amendment-op", revision: 3, createdAt: new Date("2026-10-01T02:05:00Z"), payload: { amendment: { reason: "Weight re-measured", supersedes: "rx-1" } } };
+  const server = { id: "r-2", requestId: "amendment-op", revision: 3, createdAt: new Date("2026-10-01T02:05:00Z"), approvedBy: "dr-aisyah",
+    payload: { medication: "Paracetamol", formulation: "500 mg tablet", dose: "500", unit: "mg", route: "Oral", frequency: "Every 8 hours", duration: "2 days", indication: "Recorded complaint: fever", sourceId: "paracetamol-reference", sourceVersion: "NHS", checks: [], transmitted: false, amendment: { reason: "Weight re-measured", supersedes: "rx-1" } } };
   // The server wrote the receipt after its own checks passed, so it is the outcome even where this phone's checks lag.
   const amended = issueSimulation(revised, patient, server.requestId, server).prescription;
   expect(amended).toMatchObject({ id: "amendment-op", status: "created", reasons: [], createdAt: "2026-10-01T02:05:00.000Z", supersedes: "rx-1" });
-  expect(amended.audit).toContain("Server receipt r-2 · server revision 3");
+  // The regimen shown is the one the server recorded, not this phone's copy, and only the regimen (no receipt flags).
+  expect(amended.regimen).toEqual({ medication: "Paracetamol", formulation: "500 mg tablet", dose: "500", unit: "mg", route: "Oral", frequency: "Every 8 hours", duration: "2 days", indication: "Recorded complaint: fever", sourceId: "paracetamol-reference", sourceVersion: "NHS" });
+  expect(amended.audit[0]).toBe("Recorded in the visit record on the server · receipt r-2 · server revision 3 · prescribed by dr-aisyah");
 });
 
 test("a question typed after an evidence answer continues the evidence thread unless another capability claims it", () => {
