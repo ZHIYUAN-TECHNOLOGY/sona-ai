@@ -1,0 +1,19 @@
+# Builds Laya's image into ECR and copies its pinned weights from Hugging Face to S3.
+# HF_TOKEN (the repo is private) comes from Parameter Store: /sona/hf-read-token.
+version: 0.2
+env:
+  parameter-store:
+    HF_TOKEN: /sona/hf-read-token
+  variables:
+    HF_REPO: zhiyuantechnology/sona-laya
+    HF_REV: c75de435cb825110cce8d51ec06a8314d902584d
+phases:
+  build:
+    commands:
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR
+      - docker build -t $ECR/sona/laya:0.3.21 .
+      - docker push $ECR/sona/laya:0.3.21
+      - pip install -q huggingface_hub
+      - python -c "from huggingface_hub import snapshot_download as d; d('$HF_REPO', revision='$HF_REV', local_dir='/tmp/w', ignore_patterns=['.*'])"
+      - du -sh /tmp/w && ls -la /tmp/w
+      - aws s3 sync /tmp/w s3://$BUCKET/laya/$HF_REV/ --only-show-errors --exclude ".cache/*"
