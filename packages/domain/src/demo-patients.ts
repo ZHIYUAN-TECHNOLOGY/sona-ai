@@ -1,13 +1,27 @@
+import type { MedChange, VisitFacts } from "./discharge";
 import type { Patient } from "./types";
+import { DEMO_WARD, type WardRecord } from "./ward";
 
 /**
  * The two synthetic demo patients' records, shared by the app's fixtures and the server's seed so
  * both show the same people. Fictional people only. The visit time is left out: the app times the
  * demo schedule from the clock, the server from its appointments.
+ * `ward` and `takeHome` are an admitted patient's ward record and charted take-home list, seeded into
+ * `patients.record` like the rest. `visit` is sample mode's stand-in for the visit's rows (her guarantee
+ * letter); the seed leaves it out, because connected the rows themselves are read. The scripted
+ * consultation is a sample too: the seed leaves that source out, since no recording of the visit is saved.
  */
-export type DemoPatient = Omit<Patient, "time">;
+export type DemoPatient = Omit<Patient, "time"> & { ward?: WardRecord; takeHome?: MedChange[]; visit?: VisitFacts };
 export const DEMO_PATIENTS: DemoPatient[] = [
   { id: "SYN-1042", encounterId: "visit-1042", name: "Amelia Tan", initials: "AT", age: 42, sex: "Female", subtitle: "Respiratory review", complaint: "Cough for five days, with fever since yesterday.", history: ["Asthma since childhood", "No previous admission documented", "Symptoms began five days ago"], family: "Mother has asthma; father has type 2 diabetes.", social: "Teacher. Does not smoke. Lives with her partner and two children.", allergies: "Penicillin — reported rash; details need confirmation", medicines: ["Salbutamol inhaler, as needed", "Cetirizine, patient-reported"], vitals: [{ label: "SpO₂", value: "97%" }, { label: "Temp", value: "38.1 °C" }, { label: "Pulse", value: "96 bpm" }], incomplete: false,
+    ward: DEMO_WARD,
+    takeHome: [
+      { name: "Azithromycin", change: "changed", detail: "IV 500 mg to oral 500 mg daily, 2 more days" },
+      { name: "Paracetamol", change: "new", detail: "1 g every 6 h as needed, max 4 g a day" },
+      { name: "Nebulised salbutamol", change: "stopped", detail: "Back to her own inhaler as needed" },
+      { name: "Cetirizine", change: "unchanged", detail: "Patient-reported, continue" },
+    ],
+    visit: { gl: { insurer: "Synthetic insurer", requestedAt: "2026-09-25T09:40:00+08:00" } },
     sources: [
       { id: "beta-reference", title: "DailyMed · Albuterol HFA, section 7.1", date: "Accessed 23 Sep 2026", kind: "reference", synthetic: false, url: "https://dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=825975b1-a4a9-78ca-e053-2a91aa0a3948", excerpt: "Label summary: beta-blockers can oppose albuterol's pulmonary effects and can cause severe bronchospasm in people with asthma. The label discusses circumstances requiring individual clinical judgement. This source supports the bounded entered-pair example and the hypothetical alert preview; applicability depends on the confirmed ingredients shown in the result." },
       { id: "pneumonia-reference", title: "NHS · Pneumonia", date: "Reviewed 17 Jul 2026 · accessed 23 Sep 2026", kind: "reference", synthetic: false, url: "https://www.nhs.uk/conditions/pneumonia/", excerpt: "Reference summary: pneumonia can involve cough, fever and breathlessness. Chest X-rays may form part of assessment. These general facts inform an authored UI example; they do not establish the fictional patient's diagnosis." },

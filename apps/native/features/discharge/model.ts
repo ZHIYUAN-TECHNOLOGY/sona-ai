@@ -3,6 +3,9 @@ import type { Patient, Task } from "@/features/encounter/types";
 
 export * from "@sona-ai/domain/discharge";
 
+/** Sample mode has no admission row to say when the bed was marked fit: its demo patient became fit this long before the card opened. */
+export const SAMPLE_FIT_MINUTES = 25;
+
 /** When a discharged patient became fit: the stored saving was counted from it, so it reads back; unknown when nothing was saved. */
 export const fitAtOf = (state: DischargeState) => state.dischargedAt && state.savedMinutes
   ? new Date(new Date(state.dischargedAt).getTime() - (TYPICAL_WAIT_MINUTES - state.savedMinutes) * 60000) : undefined;

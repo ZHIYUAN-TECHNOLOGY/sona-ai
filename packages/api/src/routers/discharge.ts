@@ -1,21 +1,59 @@
 import { ORPCError } from "@orpc/server";
-import { admissions, encounters, findings, guaranteeLetters, labResults, patients, provenance, receipts, tasks } from "@sona-ai/db/schema/clinical";
-import { EMPTY_DISCHARGE, TYPICAL_WAIT_MINUTES, checkInDaysOf, decideDischarge, dischargeChecks, dischargeTasks, planFor, type DischargeState, type Language, type Wait } from "@sona-ai/domain/discharge";
-import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
+import { admissions, encounters, findings, guaranteeLetters, labResults, observations, patients, provenance, receipts, tasks } from "@sona-ai/db/schema/clinical";
+import { EMPTY_DISCHARGE, TYPICAL_WAIT_MINUTES, checkInDaysOf, decideDischarge, dischargeChecks, dischargeTasks, planFor, type DischargeState, type Language, type VisitFacts, type Wait } from "@sona-ai/domain/discharge";
+import { and, asc, desc, eq, isNull, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { answerOnce } from "../answers";
-import { clockOf } from "../context";
+import { clockOf, type Context } from "../context";
 import { dischargeRequestSchema, dischargeUpdateSchema } from "../contracts";
 import { protectedProcedure } from "../index";
 import { stubModels } from "../models";
 import { listFindings } from "./findings";
 import { assertApprover } from "./hospital";
-import { loadEncounter, recordOf, recordSources, visitOf } from "./encounter";
+import { loadEncounter, recordOf, recordSources, visitOf, type EncounterSnapshot } from "./encounter";
 import { scheduleCheckIns } from "./check-ins";
 
 /** The patient leaflet as approved at discharge, in the discharge language; kept in the visit's discharge state. */
 export type ApprovedLeaflet = { language: Language; text: string };
+
+/** A model's stored discharge drafts for the visit (never the stub's rule-built stand-in). */
+const modelDraft = (encounterId: string) => and(eq(provenance.encounterId, encounterId), eq(provenance.kind, "discharge-draft"), ne(provenance.model, "fixture"));
+
+/**
+ * The visit's plan as its own rows give it: the patient's record, the bed and fit time from their admission, the
+ * guarantee letter that stay waits on, the chart's latest reading of each observation, and whether a model's draft is
+ * stored. `waits` is the rest of what the ward shows as blocking the bed (ward.ts, bedBlockers): pending results and
+ * a ride still to arrange. What the app shows (discharge.plan) and what the server checks (discharge.request) are this one read.
+ */
+async function visitPlan(db: Context["db"], encounter: EncounterSnapshot) {
+  const { encounterId } = encounter;
+  const [row] = await db.select({ patient: patients, admission: admissions }).from(encounters)
+    .innerJoin(patients, eq(patients.id, encounters.patientId))
+    .leftJoin(admissions, eq(admissions.patientId, patients.id))
+    .where(eq(encounters.id, encounterId)).orderBy(desc(admissions.id)).limit(1);
+  const { patient, admission } = row!;
+  const [letters, chart, drafts, pending] = await Promise.all([
+    admission ? db.select().from(guaranteeLetters).where(eq(guaranteeLetters.admissionId, admission.id)) : [],
+    db.select().from(observations).where(eq(observations.patientId, patient.id)).orderBy(asc(observations.observedAt)),
+    db.select({ id: provenance.id }).from(provenance).where(modelDraft(encounterId)).limit(1),
+    db.select({ id: labResults.id, test: labResults.test }).from(labResults).where(and(eq(labResults.patientId, patient.id), eq(labResults.flag, "pending"))),
+  ]);
+  const gl = letters[0];
+  // Oldest first, so the last reading of each kind is the one kept.
+  const latest = [...new Map(chart.map(o => [o.kind, o])).values()];
+  const visit: VisitFacts = {
+    fitAt: admission?.fitAt?.toISOString(), gl: gl && { insurer: gl.insurer, requestedAt: gl.requestedAt.toISOString() },
+    vitals: latest.map(o => ({ kind: o.kind, value: o.value, unit: o.unit, at: o.observedAt.toISOString() })), drafted: drafts.length > 0,
+  };
+  const person = recordOf(patient, encounterId);
+  const transport = (encounter.state as { transport?: { label: string; detail: string } }).transport;
+  const waits: Wait[] = [
+    ...pending.map(r => ({ id: `result-${r.id}`, label: r.test, detail: "Pending" })),
+    ...(transport ? [{ id: "transport", ...transport }] : []),
+  ];
+  return { patient, admission, gl, person, plan: planFor({ ...person, bed: admission?.bed, visit }), waits };
+}
 
 /**
  * Discharge is refused while any blocker is open, whatever the app shows. Every side effect is
@@ -32,6 +70,11 @@ export const dischargeRouter = {
     const asked = { patient, language: input.language };
     return answerOnce(context.db, input.encounterId, "discharge-draft", asked,
       async () => ({ ...await (context.models ?? stubModels).draftDischarge(asked), language: input.language }), () => recordSources(patient));
+  }),
+  /** The discharge card's plan and what else holds the bed, read from the visit's rows (visitPlan): the same facts discharge.request checks. */
+  plan: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(async ({ context: { db, hospitalId }, input }) => {
+    const { plan, waits } = await visitPlan(db, await loadEncounter(db, hospitalId, input.encounterId));
+    return { plan, waits };
   }),
   /** Inline fixes on the discharge card. They do not touch prescribing, so the revision stays put. */
   update: protectedProcedure.input(dischargeUpdateSchema).handler(async ({ context: { db, hospitalId }, input }) => {
@@ -51,30 +94,17 @@ export const dischargeRouter = {
     if (prior && (prior.encounterId !== input.encounterId || prior.kind !== "discharge")) throw new ORPCError("CONFLICT", { message: `Request ${input.requestId} was used for another action` });
     if (prior) return prior;
 
-    const [row] = await db.select({ patient: patients, admission: admissions }).from(encounters)
-      .innerJoin(patients, eq(patients.id, encounters.patientId))
-      .innerJoin(admissions, eq(admissions.patientId, patients.id))
-      .where(eq(encounters.id, input.encounterId)).orderBy(desc(admissions.id)).limit(1);
-    if (!row) throw new ORPCError("PRECONDITION_FAILED", { message: "The patient is not admitted" });
-    const [gl] = await db.select().from(guaranteeLetters).where(eq(guaranteeLetters.admissionId, row.admission.id));
-
-    // The patient's own plan: its blockers, follow-up and take-home list are what the server checks.
-    const person = recordOf(row.patient, input.encounterId);
-    const plan = planFor({ ...person, bed: row.admission.bed });
+    // The patient's own plan, from their record and this visit's rows: its blockers and take-home list are what the server checks.
+    const { patient, admission, gl, person, plan, waits } = await visitPlan(db, encounter);
+    if (!admission) throw new ORPCError("PRECONDITION_FAILED", { message: "The patient is not admitted" });
     const saved: DischargeState = { ...EMPTY_DISCHARGE, ...encounter.state.discharge, glReceived: !gl || gl.status === "received" };
     // The check-in days go with the discharge: the ones sent now, else the saved pick, else the condition's suggestion.
     const state: DischargeState = { ...saved, checkInDays: input.checkInDays ?? checkInDaysOf(saved, plan) };
     // The context's clock, so the check-in schedule follows a test's (or the demo's) day, not the wall clock.
     const at = clockOf(context);
-    const fitAt = row.admission.fitAt ?? new Date(at.getTime() - plan.fitMinutesAgo * 60000);
+    // A bed nobody marked fit has no wait to count from, so its receipt claims no minutes saved.
+    const fitAt = admission.fitAt ?? undefined;
     const openFindings = await listFindings(db, hospitalId, at, and(eq(findings.encounterId, input.encounterId), eq(findings.status, "open"))); // lane F6
-    // The rest of what the ward shows as blocking this bed (ward.ts, bedBlockers): pending results and a ride still to arrange.
-    const pending = await db.select({ id: labResults.id, test: labResults.test }).from(labResults).where(and(eq(labResults.patientId, row.patient.id), eq(labResults.flag, "pending")));
-    const transport = (encounter.state as { transport?: { label: string; detail: string } }).transport;
-    const waits: Wait[] = [
-      ...pending.map(r => ({ id: `result-${r.id}`, label: r.test, detail: "Pending" })),
-      ...(transport ? [{ id: "transport", ...transport }] : []),
-    ];
     // The domain guard decides; the refusal carries the blocked checks so the app can show them.
     const decision = decideDischarge(state, plan, input, fitAt, at, openFindings, waits);
     if (decision.status === "refused") throw new ORPCError("PRECONDITION_FAILED", {
@@ -87,15 +117,17 @@ export const dischargeRouter = {
       id: crypto.randomUUID(), hospitalId: hospitalId,encounterId: input.encounterId,
       kind: "discharge" as const, title: t.title, owner: t.owner, due: t.due, idempotencyKey: `discharge:${input.encounterId}:${t.id}`,
     }))).onConflictDoNothing();
-    await scheduleCheckIns(db, hospitalId, row.patient, input.encounterId, state.language, at, state.checkInDays);
-    await db.update(admissions).set({ dischargedAt: at }).where(and(eq(admissions.id, row.admission.id), isNull(admissions.dischargedAt)));
-    // The leaflet the approver read goes home with the patient: the latest draft in the discharge language
-    // (discharge.draft), else the authored one. Sona Care shows these approved words, never a new draft.
+    await scheduleCheckIns(db, hospitalId, patient, input.encounterId, state.language, at, state.checkInDays);
+    await db.update(admissions).set({ dischargedAt: at }).where(and(eq(admissions.id, admission.id), isNull(admissions.dischargedAt)));
+    // The leaflet the approver read goes home with the patient: the model's latest draft in the discharge language
+    // (discharge.draft). Sona Care shows these approved words, never a new draft. With no model draft nothing was read,
+    // so no leaflet is recorded as approved.
     const [draft] = await db.select({ id: provenance.id, output: provenance.output }).from(provenance)
-      .where(and(eq(provenance.encounterId, input.encounterId), eq(provenance.kind, "discharge-draft"), sql`${provenance.output}->>'language' = ${state.language}`))
+      .where(and(modelDraft(input.encounterId), sql`${provenance.output}->>'language' = ${state.language}`))
       .orderBy(desc(provenance.createdAt)).limit(1);
     if (draft) await db.update(provenance).set({ approvedBy: input.approvedBy }).where(eq(provenance.id, draft.id));
-    const leaflet: ApprovedLeaflet = { language: state.language, text: (draft?.output as { leaflet?: string } | undefined)?.leaflet || plan.leaflet[state.language] };
+    const text = (draft?.output as { leaflet?: string } | undefined)?.leaflet;
+    const leaflet: ApprovedLeaflet | undefined = text ? { language: state.language, text } : undefined;
     const discharged = { ...state, dischargedAt: at.toISOString(), savedMinutes, leaflet };
     // Merged in place so a concurrent edit is neither lost nor needed to bump the revision.
     await db.update(encounters).set({ state: sql`jsonb_set(${encounters.state}, '{discharge}', ${JSON.stringify(discharged)}::jsonb)` }).where(eq(encounters.id, input.encounterId));

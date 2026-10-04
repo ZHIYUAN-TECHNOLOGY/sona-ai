@@ -58,6 +58,7 @@ export function AppealCard({ patient, state, onChange, onApproved }: { patient: 
   const { reducedMotion } = useAccessibleEffects();
   const appealed = state.status === "appealed";
   const server = useLiveAppeal(patient.encounterId, live && role.can("claim.appealDraft") && !appealed ? state.denial.at : undefined);
+  // Sample mode only: the rules' letter over the sample note. Connected, the server drafts over the visit's saved note.
   const local: Draft | undefined = live || JUDGE ? undefined : (() => {
     const sentences = noteFor(state);
     const letter = appealByRules({ denialCode: state.denial.code, denialReason: state.denial.reason, sentences, patient });
@@ -154,10 +155,10 @@ export async function insurerDenies(live: boolean, encounterId: string, deny: (d
   if (!res.ok) throw new Error(`The insurer page refused (${res.status})`);
 }
 
-/** One paragraph of the letter, edited in place: it reads as text, with a faint field behind it. */
-function Paragraph({ label, value, onChange }: { label: string; value: string; onChange: (text: string) => void }) {
+/** One paragraph of the letter, edited in place: it reads as text, with a faint field behind it. The claim's IV reason is written in one too. */
+export function Paragraph({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (text: string) => void; placeholder?: string }) {
   const [focused, setFocused] = useState(false);
-  return <TextInput value={value} onChangeText={onChange} multiline scrollEnabled={false} maxLength={1000} accessibilityLabel={label} accessibilityHint="Edit before sending"
+  return <TextInput value={value} onChangeText={onChange} multiline scrollEnabled={false} maxLength={1000} accessibilityLabel={label} accessibilityHint="Edit before sending" placeholder={placeholder} placeholderTextColor={palette.muted}
     onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
     style={{ ...type.callout, color: palette.ink, minHeight: 44, paddingHorizontal: 10, paddingTop: 10, paddingBottom: 10, borderRadius: radius.control, borderCurve: "continuous", borderWidth: 1,
       borderColor: focused ? "rgba(36,91,204,0.35)" : "transparent", backgroundColor: focused ? "rgba(255,255,255,0.9)" : "rgba(20,28,40,0.035)" } as TextStyle} />;

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { View } from "react-native";
 import { AnswerDeck, Takeaways, type Takeaway } from "@/components/sona/answer-kit";
 import { MarkedText } from "@/components/sona/marked-text";
@@ -19,7 +19,8 @@ import { HistoryEditor } from "./history-editor";
 import { unanswered } from "./judge-answer";
 import { emphasise } from "@/features/encounter/emphasis";
 import { confirmedAllergy, patientResult, receiptLine, resultKey, resultLine } from "@/features/day/counts";
-import { errorText, JUDGE, useLive } from "@/features/live";
+import { api, errorText, JUDGE, useLive } from "@/features/live";
+import { timelineLabel } from "./timeline";
 import { useDemoOffset } from "@/features/live/demo-clock";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { acknowledgeResult, useServerData } from "@/features/live/server-day";
@@ -65,12 +66,32 @@ function NewResult({ patient }: { patient: Patient }) {
   </Surface>;
 }
 
+type RecordedEvent = Awaited<ReturnType<typeof api.encounter.timeline>>[number];
+/**
+ * Connected, the briefing's timeline is the visit's dated events as the server reads them from the record's rows
+ * (encounter.timeline): the chart, results, notes, the stay, what was approved. No model writes it and nothing is authored.
+ */
+function useRecordedTimeline(encounterId: string) {
+  const { on } = useLive();
+  const [state, setState] = useState<{ events?: RecordedEvent[]; error?: string }>({});
+  useEffect(() => {
+    if (!on || !encounterId) return;
+    let gone = false;
+    api.encounter.timeline({ encounterId }).then(events => { if (!gone) setState({ events }); }, e => { if (!gone) setState({ error: errorText(e) }); });
+    return () => { gone = true; };
+  }, [on, encounterId]);
+  return { live: on, ...state };
+}
+
 export function BriefingCard({ patient, result, onSource, onRequest }: FeatureProps) {
   const { encounters } = useEncounter();
   const facts = (encounters[patient.id]?.historyFacts ?? []).filter(fact => !result || fact.revision <= result.revision);
   const sourceFor = (category: string) => facts.findLast(fact => fact.category === category)?.id ?? "history";
   const sections = result?.sections ?? 3;
   const allergy = confirmedAllergy({ historyFacts: facts });
+  const recorded = useRecordedTimeline(patient.encounterId);
+  const now = new Date(Date.now() + useDemoOffset());
+  // Sample mode's two demo patients keep their sample story; connected, every patient's timeline is their own record's (below).
   const timeline: TimelineItem[] = patient.incomplete ? [
     { id: "onset", label: "Onset", icon: "questionmark", glyph: "❔", title: "Not documented", meta: "Gap in the history", body: "When the breathlessness began, and how it has changed, is not yet recorded." },
     { id: "intake", label: "22 Sep", icon: "stethoscope", glyph: "🩺", title: "Intake", meta: "This encounter · 09:45", body: "Breathlessness on exertion recorded. Onset and previous course have not been documented." },
@@ -106,15 +127,23 @@ export function BriefingCard({ patient, result, onSource, onRequest }: FeaturePr
     </View>}
     {sections >= 2 && <AnswerDeck pages={[
       { title: "Vitals", content: patient.incomplete ? card(<Notice warning>Not recorded yet. Missing information is not a negative finding.</Notice>) : <VitalsCard vitals={patient.vitals} allergy={patient.allergies} /> },
-      // The timeline is authored (one patient's story, whoever is open), so the judge build leaves the page out.
-      ...(JUDGE ? [] : [{ title: "Timeline", content: card(<>
+      // Connected (always, in the judge build): what the record holds with a time on it, however little; never the sample story.
+      { title: "Timeline", content: recorded.live || JUDGE ? card(
+        recorded.error ? <ErrorLine text={`No timeline: ${recorded.error}`} />
+          : !recorded.events ? <Drafting label="Reading the record…" />
+          : !recorded.events.length ? <Notice>Nothing in the record has a time on it yet.</Notice>
+          : recorded.events.map(event => <View key={event.id} style={{ flexDirection: "row", gap: 12 }}>
+            <Text style={{ width: 78, ...type.footnote, color: palette.muted }}>{timelineLabel(event.at, now)}</Text>
+            <View style={{ flex: 1, gap: 2 }}><Text selectable style={{ ...type.callout, fontWeight: "600", color: palette.ink }}>{event.title}</Text>{!!event.detail && <Text selectable style={{ ...type.footnote, color: palette.muted }}>{event.detail}</Text>}</View>
+          </View>),
+      ) : card(<>
         {timeline.map(item => <View key={item.id} style={{ flexDirection: "row", gap: 12 }}>
           <Text style={{ width: 78, ...type.footnote, color: palette.muted }}>{item.label}</Text>
           <View style={{ flex: 1, gap: 2 }}><MarkedText text={item.title} style={{ ...type.callout, fontWeight: "600", color: palette.ink }} /><Text style={{ ...type.footnote, color: palette.muted }}>{item.meta}</Text></View>
         </View>)}
         {!!facts.length && <Text style={{ ...type.footnote, color: palette.muted }}>Original intake shown · newer history is below.</Text>}
         <SourceLink label="Timeline source" onPress={() => onSource("history")} />
-      </>) }]),
+      </>) },
       { title: "History", content: card(<>
         <IconRow icon="cross.case" title="Medical" detail={patient.history.join(". ")} sourceLabel="Medical history source" onSource={() => onSource(sourceFor("medical"))} />
         <IconRow icon="figure.2.and.child.holdinghands" title="Family" detail={patient.family} sourceLabel="Family history source" onSource={() => onSource(sourceFor("family"))} />

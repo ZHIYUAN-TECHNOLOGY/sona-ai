@@ -1,9 +1,10 @@
 import { expect, test } from "bun:test";
 
 import { appointmentWords, followUpTiming, patientMeds, reviewWords, warningSigns } from "./care";
+import { DEMO_PATIENTS } from "./demo-patients";
 import { planFor } from "./discharge";
 
-const amelia = planFor({ id: "SYN-1042" });
+const amelia = planFor(DEMO_PATIENTS[0]!);
 // One record per condition rule, with and without a penicillin allergy (it swaps the antibiotic).
 const others = ["pyelonephritis", "appendicitis", "cellulitis", "pneumonia", "heart failure", "stroke"]
   .flatMap((complaint, i) => [{ id: `SYN-9${i}0`, complaint }, { id: `SYN-9${i}1`, complaint, allergies: "Penicillin" }]).map(planFor);

@@ -1,6 +1,9 @@
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
-import { account, admissions, appointments, careLinks, casemixWeights, encounters, followUpRules, guaranteeLetters, insurerCriteria, labResults, observations, patients, user } from "./schema";
+import { claimChecks } from "@sona-ai/domain/claim";
+import { dischargeChecks, planFor } from "@sona-ai/domain/discharge";
+import type { Patient } from "@sona-ai/domain/types";
+import { account, admissions, appointments, careLinks, casemixWeights, encounters, followUpRules, guaranteeLetters, insurerCriteria, labResults, notes, observations, patients, user } from "./schema";
 import { DEMO_CLINICIANS } from "./demo";
 import { DEMO_HOSPITAL, seedDemo, seedTestPatient, TEST_BED_MANAGER, TEST_DOCTOR, TEST_MANAGER, TEST_NURSE, TEST_PATIENT, WARD_EXTRA } from "./seed";
 import { createTestDb } from "./testing";
@@ -91,11 +94,69 @@ test("the chart holds Amelia's CURB-65 readings and Daniel's low potassium, each
   const obs = await db.select().from(observations).where(eq(observations.patientId, "SYN-1042"));
   expect(Object.fromEntries(obs.map(o => [o.kind, `${o.value} ${o.unit}`]))).toEqual({
     confusion: "10 AMT", urea: "5.1 mmol/L", "respiratory-rate": "18 /min", systolic: "124 mmHg", diastolic: "78 mmHg",
+    // This morning's chart: afebrile, as her ward record says.
+    temperature: "36.9 °C", pulse: "84 bpm", "oxygen-saturation": "97 %",
   });
   expect(obs.every(o => o.sourceId)).toBe(true);
   const [k] = await db.select().from(labResults).where(eq(labResults.id, "lab-1086-potassium"));
   expect(k).toMatchObject({ patientId: "SYN-1086", test: "Potassium", value: "3.1", unit: "mmol/L", flag: "low" });
   expect(k?.sourceId).toBeTruthy();
+});
+
+test("every admitted patient has a whole fictional record in the real tables: history, medicines, this morning's chart, a saved note, sources that say they are fictional", async () => {
+  const db = await createTestDb();
+  const now = new Date("2026-09-26T09:00:00+08:00");
+  await seedDemo(db, now);
+  await seedDemo(db, new Date(now.getTime() + 3600_000)); // a later reseed moves the chart with the clock and adds nothing
+  const people = await db.select().from(patients).where(eq(patients.hospitalId, DEMO_HOSPITAL));
+  const chart = await db.select().from(observations), saved = await db.select().from(notes), visits = await db.select().from(encounters);
+  const admitted = people.filter(p => p.id.startsWith("SYN-20"));
+  expect(admitted).toHaveLength(15);
+  for (const p of admitted) {
+    const record = p.record as Pick<Patient, "history" | "family" | "social" | "medicines" | "vitals" | "sources" | "subtitle">;
+    expect(record.history.length).toBeGreaterThanOrEqual(2);
+    expect([record.family, record.social, record.subtitle].every(Boolean)).toBe(true);
+    expect(record.medicines).toBeArray();
+    expect(record.vitals.map(v => v.label)).toEqual(["SpO₂", "Temp", "Pulse"]);
+    expect(record.sources.map(s => [s.id, s.kind, s.synthetic, s.excerpt.startsWith("Fictional")])).toEqual([["history", "record", true, true], ["vitals", "record", true, true]]);
+    // One row per reading, two hours before the latest seed, agreeing with the record's vitals.
+    const obs = chart.filter(o => o.patientId === p.id);
+    expect(obs.map(o => o.kind).sort()).toEqual(["diastolic", "oxygen-saturation", "pulse", "respiratory-rate", "systolic", "temperature"]);
+    expect(obs.every(o => o.observedAt.toISOString() === "2026-09-26T00:00:00.000Z" && o.sourceId === o.id)).toBe(true);
+    expect(record.vitals[1]!.value).toBe(`${obs.find(o => o.kind === "temperature")!.value} °C`);
+    // The visit's note, in the shape note.save writes: one sentence per section.
+    const visit = visits.find(v => v.patientId === p.id)!;
+    expect(saved.filter(n => n.encounterId === visit.id).map(n => [n.id, n.revision, n.sentences.map(s => s.id)])).toEqual([[`note-${visit.id}-1`, 1, ["subjective", "objective", "assessment", "plan"]]]);
+  }
+  // No transcript is listed as a source of anyone's record: no recording of a visit is saved.
+  expect(people.flatMap(p => (p.record as Pick<Patient, "sources">).sources ?? []).filter(s => s.kind === "transcript")).toEqual([]);
+  expect((people.find(p => p.id === "SYN-1042")!.record as { visit?: unknown }).visit).toBeUndefined();
+  // Recorded allergies are the patient's own; no row claims "none".
+  expect(Object.fromEntries(people.filter(p => p.allergies).map(p => [p.name, p.allergies!.split(" — ")[0]]))).toEqual({
+    "Amelia Tan": "Penicillin", "Priya Nair": "Penicillin", "Ravi Kumar": "Perindopril", "Dayang Suhaila": "Aspirin", "Wong Siew Ling": "Co-trimoxazole", "Chong Mei Yee": "Codeine",
+  });
+});
+
+test("a take-home list is charted only for a bed that is fit to go, and the plan, the checks and a claim's criteria read the seeded rows", async () => {
+  const db = await createTestDb();
+  const now = new Date("2026-09-26T09:00:00+08:00");
+  await seedDemo(db, now);
+  const people = await db.select().from(patients).where(eq(patients.hospitalId, DEMO_HOSPITAL));
+  type Record = Parameters<typeof planFor>[0] & { ward?: { status: string } };
+  for (const p of people) expect([p.name, Boolean((p.record as Record).takeHome)]).toEqual([p.name, (p.record as Record).ward?.status === "fit"]);
+  const meds = (id: string) => planFor(people.find(p => p.id === id)!.record as Record).meds.map(m => [m.name, m.change]);
+  expect(meds("SYN-1042")).toEqual([["Azithromycin", "changed"], ["Paracetamol", "new"], ["Nebulised salbutamol", "stopped"], ["Cetirizine", "unchanged"]]);
+  expect(meds("SYN-2008")).toEqual([["Clindamycin", "changed"], ["Paracetamol", "new"], ["Metformin", "unchanged"]]);
+  // Not yet fit: the medicines taken before admission carry on until the ward charts a list.
+  expect(meds("SYN-2009")).toEqual([["Furosemide 40 mg", "unchanged"], ["Bisoprolol 2.5 mg", "unchanged"], ["Losartan 50 mg", "unchanged"]]);
+  // Amelia's chart passes the observations check from her own rows.
+  const vitals = (await db.select().from(observations).where(eq(observations.patientId, "SYN-1042"))).map(o => ({ kind: o.kind, value: o.value, unit: o.unit, at: o.observedAt.toISOString() }));
+  expect(dischargeChecks({ glReceived: false, medsConfirmed: false, language: "ms" }, planFor({ ...people.find(p => p.id === "SYN-1042")!.record as Record, visit: { vitals } })).find(c => c.id === "observations")?.status).toBe("passed");
+  // The two stays waiting on a guarantee letter. Nurul's note meets the insurer's criteria but one: it says IV, not why.
+  // Amelia's visit has no note until her consultation's is saved, so nothing is met and none is made up for her.
+  const note = async (visit: string) => (await db.select().from(notes).where(eq(notes.encounterId, visit)))[0]?.sentences ?? [];
+  expect(claimChecks(await note("visit-2002")).map(c => [c.id, c.status])).toEqual([["severity", "passed"], ["imaging", "passed"], ["iv", "blocked"]]);
+  expect(await note("visit-1042")).toEqual([]);
 });
 
 test("the demo insurer's criteria for Amelia's claim are rows, the organism rule tied to J18.9", async () => {

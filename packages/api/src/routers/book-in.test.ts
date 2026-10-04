@@ -102,7 +102,7 @@ test("the ops counter counts the week's loops from their rows: bed time, flags a
   await doctor.findings.addToVisit({ findingId: booked.toAdd[0]!.id, appointmentId: booked.appointmentId });
 
   const ops = await doctor.ops.get();
-  expect(ops.bedMinutesSaved).toBe(250); // the discharge receipt's minutes saved against the synthetic typical wait
+  expect(ops.bedMinutesSaved).toBe(215); // the discharge receipt's minutes saved: the synthetic typical wait less the hour since her admission was marked fit
   expect([ops.discharges, ops.redFlags, ops.redFlagsActedOn, ops.medianMinutesToBook]).toEqual([1, 1, 1, 11]);
   expect([ops.checkInsSent, ops.checkInsAnswered]).toEqual([1, 1]);
   expect([ops.lostFollowUps, ops.trackedFollowUps]).toEqual([0, 1]);

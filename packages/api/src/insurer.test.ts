@@ -4,6 +4,7 @@ import { admissions, claims, guaranteeLetters } from "@sona-ai/db/schema/clinica
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
+import { EMPTY_CLAIM, ORGANISM_UNKNOWN, ivReason, noteFor } from "@sona-ai/domain/claim";
 import { eq } from "drizzle-orm";
 
 import type { Context, Mail } from "./context";
@@ -18,6 +19,9 @@ const session = {
 const sent: Parameters<Mail["send"]>[0][] = [];
 const mail = (fail = false): Mail => ({ from: "sona@mail.demo.test", insurer: "desk@insurer.test", send: async m => { if (fail) throw new Error("domain not onboarded"); sent.push(m); } });
 
+/** Amelia's consultation note as saved, with both fixes written into it, so the insurer's criteria are all met by the note itself. */
+const NOTE = [...noteFor(EMPTY_CLAIM), ORGANISM_UNKNOWN, ivReason("vomiting on arrival, unable to keep oral tablets down.")];
+
 /** Amelia's claim, documented and sent, as the app sends it. */
 async function sentClaim(extra: Partial<Context> = {}) {
   sent.length = 0;
@@ -26,20 +30,26 @@ async function sentClaim(extra: Partial<Context> = {}) {
   await addClinician(db, "dr-aisyah");
   const clock = { now: new Date("2026-09-26T10:00:00+08:00") };
   const api = createRouterClient(appRouter, { context: { db, session, now: () => clock.now, publicUrl: "https://sona.test", ...extra } });
-  await api.claim.update({ encounterId: "visit-1042", organismConfirmed: true, ivReasonAdded: true });
+  await api.note.save({ encounterId: "visit-1042", expectedRevision: 0, sentences: NOTE });
   await api.claim.send({ encounterId: "visit-1042", requestId: "c1", approvedBy: "dr-aisyah" });
   return { db, api, clock, token: await reviewTokenOf(db, "visit-1042") };
 }
 
-test("sending a claim creates a review link; the page shows the packet: patient, estimate, each code with its note sentence, and the criteria met", async () => {
+test("sending a claim creates a review link; the page shows the packet: patient, each code with its note sentence, and the criteria as the note meets them, with no amount nobody recorded", async () => {
   const { db, api, clock, token } = await sentClaim();
   expect(token).toMatch(/^[A-Za-z0-9_-]{32,}$/);
   const status = await api.claim.status({ encounterId: "visit-1042" });
   expect(status).toMatchObject({ status: "sent", reviewUrl: `https://sona.test/insurer/${token}` });
   const packet = (await reviewPacket(db, token, clock.now))!;
-  expect(packet).toMatchObject({ patient: "Amelia Tan", insurer: "Synthetic insurer", estimate: "RM 3,480", status: "sent" });
+  expect(packet).toMatchObject({ patient: "Amelia Tan", insurer: "Synthetic insurer", estimate: undefined, status: "sent" });
+  expect((await db.select().from(claims))[0]!.estimateCents).toBe(0);
+  expect(renderReviewPage(packet)).not.toContain("estimated");
   expect(packet.codes.find(c => c.code === "J18.9")).toMatchObject({ label: "Pneumonia, unspecified organism", evidence: "Community-acquired pneumonia, CURB-65 0." });
-  expect(packet.criteria.every(c => c.status === "passed")).toBe(true);
+  // Each criterion quotes the sentence of her note that meets it.
+  expect(packet.criteria.map(c => [c.id, c.status, c.detail])).toEqual([
+    ["severity", "passed", "“Community-acquired pneumonia, CURB-65 0.”"], ["imaging", "passed", "“Chest film: right lower zone consolidation.”"],
+    ["organism", "passed", "“Organism not identified.”"], ["iv", "passed", "“IV first: vomiting on arrival, unable to keep oral tablets down.”"],
+  ]);
   expect(await reviewPacket(db, "not-a-token", clock.now)).toBeUndefined();
 });
 
@@ -65,7 +75,7 @@ test("the insurer queries: the claim shows their question, the letter stays outs
 test("the review link is emailed to the insurer's inbox; a failed email never fails the send, and with no mail configured nothing is sent", async () => {
   const { token } = await sentClaim({ mail: mail() });
   expect(sent).toHaveLength(1);
-  expect(sent[0]).toMatchObject({ from: "sona@mail.demo.test", to: "desk@insurer.test", subject: "Final guarantee letter · Amelia Tan · RM 3,480 (synthetic)" });
+  expect(sent[0]).toMatchObject({ from: "sona@mail.demo.test", to: "desk@insurer.test", subject: "Final guarantee letter · Amelia Tan (synthetic)" });
   expect(sent[0]!.text).toContain(`https://sona.test/insurer/${token}`);
   const failed = await sentClaim({ mail: mail(true) });
   expect(await failed.api.claim.status({ encounterId: "visit-1042" })).toMatchObject({ status: "sent" });
@@ -94,7 +104,7 @@ test("the letter carries the codes the doctor reviewed for this patient, not the
   await addClinician(db, "dr-aisyah");
   const clock = { now: new Date("2026-09-26T10:00:00+08:00") };
   const api = createRouterClient(appRouter, { context: { db, session, now: () => clock.now, models } });
-  await api.claim.update({ encounterId: "visit-1042", organismConfirmed: true, ivReasonAdded: true });
+  await api.note.save({ encounterId: "visit-1042", expectedRevision: 0, sentences: NOTE });
   await api.claim.suggestCodes({ encounterId: "visit-1042" });
   await api.claim.send({ encounterId: "visit-1042", requestId: "c-own", approvedBy: "dr-aisyah" });
 
@@ -126,7 +136,7 @@ test("the insurer denies with a listed reason; the doctor appeals with a draft g
   const draft = await api.claim.appealDraft({ encounterId: "visit-1042" });
   expect(draft.source).toBe("fixture");
   expect(draft.letter.points.map(p => p.evidenceSentenceId)).toEqual(["organism", "diagnosis", "xray"]);
-  expect(draft.sentences.find(s => s.id === "organism")?.text).toBe("Organism not identified; sputum culture not sent.");
+  expect(draft.sentences.find(s => s.id === "organism")?.text).toBe("Organism not identified.");
 
   // A point citing nothing in the note is refused; the doctor's edited letter goes, once per requestId, with a fresh link.
   const letter = { ...draft.letter, opening: "Edited by the doctor." };
@@ -144,7 +154,7 @@ test("the insurer denies with a listed reason; the doctor appeals with a draft g
   const page = renderReviewPage((await reviewPacket(db, fresh, clock.now))!);
   expect(page).toContain("Appeal from the hospital");
   expect(page).toContain("Edited by the doctor.");
-  expect(page).toContain("From the note: “Organism not identified; sputum culture not sent.”");
+  expect(page).toContain("From the note: “Organism not identified.”");
   for (const decision of ['value="approve"', 'value="query"', 'value="deny"']) expect(page).toContain(decision);
   expect(await decideReview(db, token, "approve", "", clock.now)).toEqual({ ok: false, reason: "Unknown link" });
   expect(await decideReview(db, fresh, "approve", "", clock.now)).toMatchObject({ ok: true, status: "approved" });

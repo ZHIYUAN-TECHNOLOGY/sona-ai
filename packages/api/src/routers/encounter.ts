@@ -1,5 +1,6 @@
 import { ORPCError } from "@orpc/server";
-import { encounters, patients, provenance } from "@sona-ai/db/schema/clinical";
+import { admissions, appointments, checkInReplies, checkIns, encounters, findings, guaranteeLetters, labResults, notes, observations, patients, provenance, receipts } from "@sona-ai/db/schema/clinical";
+import type { MedChange } from "@sona-ai/domain/discharge";
 import type { Encounter, Patient } from "@sona-ai/domain/types";
 import type { WardRecord } from "@sona-ai/domain/ward";
 import { and, eq } from "drizzle-orm";
@@ -23,7 +24,7 @@ type Db = Context["db"];
 
 
 /** A patient row with its record spread back over it: what the models and planFor read. */
-export type PatientRecord = Patient & { ward?: WardRecord };
+export type PatientRecord = Patient & { ward?: WardRecord; takeHome?: MedChange[] };
 export const recordOf = (row: typeof patients.$inferSelect, encounterId = ""): PatientRecord => ({
   ...(row.record as Omit<PatientRecord, "id">), id: row.id, encounterId, time: "", name: row.name, initials: row.initials, age: row.age, sex: row.sex,
   complaint: row.complaint, allergies: row.allergies, incomplete: row.incomplete,
@@ -49,6 +50,57 @@ export async function logAnswer<T extends Origin>(db: Db, encounterId: string | 
   const { source: _, model: __, waking: ___, ...output } = answer as T & { model?: string; waking?: number };
   await db.insert(provenance).values({ id: crypto.randomUUID(), encounterId, kind, output, sourceIds, model: answer.source === "model" ? answer.model : "fixture", approvedBy: null });
   return answer;
+}
+
+/** One dated thing the record holds about the visit's patient. */
+export type TimelineEvent = { id: string; at: Date; title: string; detail?: string };
+const sentenceCase = (text: string) => text.charAt(0).toUpperCase() + text.slice(1).replace(/-/g, " ");
+
+/**
+ * The briefing's timeline, read from the rows that carry a time: the chart, results, the visit's notes, the stay (fit,
+ * guarantee letter, discharge), what a doctor approved, X-ray findings, appointments and check-ins. Oldest first.
+ * Nothing is told that no row holds: the schema keeps no time for the admission itself or for when an illness began,
+ * so a thin record gives a short timeline, never a story.
+ */
+export async function timelineOf(db: Db, hospitalId: string, encounterId: string): Promise<TimelineEvent[]> {
+  const [visit] = await db.select({ patientId: encounters.patientId }).from(encounters).where(and(eq(encounters.id, encounterId), eq(encounters.hospitalId, hospitalId)));
+  if (!visit) throw new ORPCError("NOT_FOUND", { message: `No encounter ${encounterId}` });
+  const { patientId } = visit;
+  const [chart, labs, saved, stays, approved, found, booked, asked] = await Promise.all([
+    db.select().from(observations).where(eq(observations.patientId, patientId)),
+    db.select().from(labResults).where(eq(labResults.patientId, patientId)),
+    db.select().from(notes).where(eq(notes.encounterId, encounterId)),
+    db.select({ admission: admissions, gl: guaranteeLetters }).from(admissions).leftJoin(guaranteeLetters, eq(guaranteeLetters.admissionId, admissions.id)).where(eq(admissions.patientId, patientId)),
+    db.select().from(receipts).where(eq(receipts.encounterId, encounterId)),
+    db.select().from(findings).where(eq(findings.encounterId, encounterId)),
+    db.select().from(appointments).where(and(eq(appointments.patientId, patientId), eq(appointments.hospitalId, hospitalId))),
+    db.select({ checkIn: checkIns, reply: checkInReplies }).from(checkIns).leftJoin(checkInReplies, eq(checkInReplies.checkInId, checkIns.id)).where(eq(checkIns.encounterId, encounterId)),
+  ]);
+  // One round of observations is one event, however many readings it took.
+  const rounds = Map.groupBy(chart, o => o.observedAt.getTime());
+  const reading = (o: (typeof chart)[number]) => o.unit === "AMT" ? `AMT ${o.value}/10` : `${sentenceCase(o.kind)} ${o.value} ${o.unit}`;
+  const RECEIPT: Record<string, string> = { prescription: "Prescription approved", claim: "Guarantee letter request sent", appeal: "Appeal sent to the insurer" };
+  const events: (TimelineEvent | false | null | undefined)[] = [
+    ...[...rounds].map(([time, readings]) => ({ id: `observations-${time}`, at: new Date(time), title: "Observations", detail: readings.map(reading).join(" · ") })),
+    ...labs.map(l => l.flag === "pending" ? { id: l.id, at: l.receivedAt, title: `${l.test} sent to the lab`, detail: "Result pending" }
+      : { id: l.id, at: l.receivedAt, title: [l.test, l.value, l.unit].filter(Boolean).join(" "), detail: l.flag ? sentenceCase(l.flag) : undefined }),
+    ...saved.map(n => ({ id: n.id, at: n.createdAt, title: n.revision === 1 ? "Note saved" : "Note updated", detail: n.sentences[0]?.text })),
+    ...stays.flatMap(({ admission: a, gl }) => [
+      a.fitAt && { id: `${a.id}-fit`, at: a.fitAt, title: "Marked fit for discharge", detail: a.bed },
+      gl && { id: `${gl.id}-requested`, at: gl.requestedAt, title: "Final guarantee letter requested", detail: gl.insurer },
+      gl?.receivedAt && { id: `${gl.id}-received`, at: gl.receivedAt, title: "Final guarantee letter received", detail: gl.insurer },
+      a.dischargedAt && { id: `${a.id}-discharged`, at: a.dischargedAt, title: "Discharged", detail: `${a.bed} freed` },
+    ]),
+    // The discharge's receipt is the same moment as the admission's discharge time, so it is not told twice.
+    ...approved.map(r => RECEIPT[r.kind] !== undefined && { id: r.id, at: r.createdAt, title: RECEIPT[r.kind]!, detail: r.kind === "prescription" ? [(r.payload as { medication?: string }).medication, (r.payload as { simulated?: boolean }).simulated && "simulated, not dispensed"].filter(Boolean).join(" · ") : undefined }),
+    ...found.map(f => ({ id: f.id, at: f.createdAt, title: "X-ray finding", detail: `${f.label} · not validated` })),
+    ...booked.map(a => ({ id: a.id, at: a.startsAt, title: sentenceCase(a.kind) })),
+    ...asked.flatMap(({ checkIn: c, reply }) => [
+      c.sentAt && { id: c.id, at: c.sentAt, title: `Day ${c.day} check-in sent` },
+      reply && { id: reply.id, at: reply.receivedAt, title: `Check-in reply: ${reply.label}`, detail: reply.text },
+    ]),
+  ];
+  return events.filter((e): e is TimelineEvent => Boolean(e)).sort((a, b) => a.at.getTime() - b.at.getTime());
 }
 
 export const stale = (encounterId: string) => new ORPCError("CONFLICT", { message: `Encounter ${encounterId} has moved on; reload and retry` });
@@ -108,6 +160,8 @@ export const encounterRouter = {
     const answer = await (context.models ?? stubModels).briefing({ patient });
     return logAnswer(context.db, input.encounterId, "briefing", answer, recordSources(patient));
   }),
+  /** The briefing's timeline: the dated events the record holds for this visit's patient (timelineOf). */
+  timeline: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(({ context, input }) => timelineOf(context.db, context.hospitalId, input.encounterId)),
   reasoning: protectedProcedure.input(z.object({ encounterId: z.string().min(1), question: z.string().trim().min(1).max(500) })).handler(async ({ context, input }) => {
     const { patient } = await visitOf(context.db, context.hospitalId, input.encounterId);
     const answer = await (context.models ?? stubModels).reasoning({ patient, question: input.question });

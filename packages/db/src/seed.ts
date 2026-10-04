@@ -2,8 +2,9 @@ import { hashPassword } from "better-auth/crypto";
 import { and, eq, ne, sql } from "drizzle-orm";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 import { DEMO_PATIENTS } from "@sona-ai/domain/demo-patients";
+import type { MedChange } from "@sona-ai/domain/discharge";
 import { DOCTORS } from "@sona-ai/domain/doctors";
-import { DEMO_WARD, WARD_FIXTURE, type Bed, type BlockerKind } from "@sona-ai/domain/ward";
+import { WARD_FIXTURE, type Bed, type BlockerKind } from "@sona-ai/domain/ward";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -46,6 +47,95 @@ export const WARD_EXTRA: Bed[] = [
     blockers: [{ id: "b15-transfer", kind: "transport", label: "Transfer to cardiac centre", detail: "Waiting for a slot" }] },
 ];
 /**
+ * Each ward patient's chart, by bed: the rest of a believable record for the bed's SBAR. FICTIONAL, like the people:
+ * written for a Malaysian medical ward and seeded into the real tables (the patient's record, the observations chart,
+ * the visit's note), which is where the app, the rules and the models read it from. `medicines` are those taken before
+ * admission. `obs`: temperature °C, pulse, respiratory rate, SpO₂ %, systolic and diastolic pressure. `note`: the visit's
+ * saved note by section (subjective, objective, assessment, plan). `takeHome`: charted only once a bed is fit to go.
+ * No `allergies` means none is on record (the app has no way to say "none known" yet), not that there is none.
+ */
+type Chart = {
+  subtitle: string; allergies?: string; history: string[]; family: string; social: string; medicines: string[];
+  obs: [temperature: number, pulse: number, respiratoryRate: number, spo2: number, systolic: number, diastolic: number];
+  note: [subjective: string, objective: string, assessment: string, plan: string]; takeHome?: MedChange[];
+};
+const PARACETAMOL: MedChange = { name: "Paracetamol", change: "new", detail: "1 g every 6 h as needed, max 4 g a day" };
+const CHARTS: Record<string, Chart> = {
+  "Bed 2": { subtitle: "Pyelonephritis", history: ["Two days of right loin pain, fever and dysuria before admission", "No previous admission", "No regular medicines"],
+    family: "No family history of kidney disease.", social: "Primary school teacher. Married, one child. Does not smoke.", medicines: [], obs: [36.9, 78, 16, 99, 112, 70],
+    note: ["Two days of right loin pain, fever and dysuria before admission. Now pain-free, eating and walking.", "Afebrile for 36 hours. Renal ultrasound: no obstruction or abscess. Urine culture grew E. coli; sensitivities pending.",
+      "Acute pyelonephritis, uncomplicated; qSOFA 0 on admission.", "IV cefuroxime, day 3; oral once the sensitivities are back. Home when the final guarantee letter arrives."],
+    takeHome: [{ name: "Cefuroxime", change: "changed", detail: "IV to oral 500 mg twice daily, to finish 10 days (check against sensitivities)" }, PARACETAMOL] },
+  "Bed 14": { subtitle: "Appendicectomy, day 1", history: ["One day of central abdominal pain moving to the right iliac fossa", "Laparoscopic appendicectomy yesterday, uncomplicated", "No regular medicines"],
+    family: "Nil of note.", social: "Software engineer. Lives with his wife. Does not smoke; drinks socially.", medicines: [], obs: [37.1, 84, 16, 98, 124, 78],
+    note: ["Pain controlled on oral analgesia, eating and mobilising. Passed flatus.", "Afebrile. Abdomen soft, port sites clean and dry.",
+      "Day 1 after laparoscopic appendicectomy for acute appendicitis, uncomplicated.", "Home today on simple analgesia. Wound check at the surgical clinic in 1 to 2 weeks."],
+    takeHome: [PARACETAMOL, { name: "Ibuprofen", change: "new", detail: "400 mg every 8 h with food, for 3 days" }, { name: "Morphine", change: "stopped", detail: "Ward-only pain relief, not needed at home" }] },
+  "Bed 8": { subtitle: "Cellulitis, left leg", allergies: "Penicillin — rash as a child", history: ["Type 2 diabetes for eight years", "Three days of redness and swelling of the left lower leg before admission", "HbA1c 8.1% in June"],
+    family: "Mother has type 2 diabetes.", social: "Runs a food stall. Lives with her husband and two teenagers. Does not smoke.", medicines: ["Metformin 1 g, twice daily"], obs: [36.8, 80, 16, 98, 128, 80],
+    note: ["Left leg less painful; walking to the bathroom unaided.", "Afebrile for 48 hours. Redness receding inside the marked line. Capillary glucose 7 to 10.",
+      "Cellulitis of the left lower leg, improving; type 2 diabetes.", "Oral clindamycin for 5 more days (penicillin allergy). Wound clinic in 1 week."],
+    takeHome: [{ name: "Clindamycin", change: "changed", detail: "IV to oral 300 mg four times daily, 5 more days" }, PARACETAMOL, { name: "Metformin", change: "unchanged", detail: "Continue as before" }] },
+  "Bed 12": { subtitle: "Pneumonia, day 2", history: ["Type 2 diabetes and hypertension", "Three days of productive cough and fever before admission"],
+    family: "Sister has type 2 diabetes.", social: "Retired tailor. Lives with her son's family. Never smoked.", medicines: ["Metformin 500 mg, twice daily", "Amlodipine 5 mg, once daily"], obs: [37.2, 92, 20, 94, 134, 76],
+    note: ["Cough easing, less breathless. Eating half portions.", "Afebrile since 06:00. SpO₂ 94% on 2 L oxygen. Chest X-ray: left lower zone consolidation.",
+      "Community-acquired pneumonia, CURB-65 2 on admission.", "IV amoxicillin-clavulanate, day 2. Review the oral switch on the morning round; wean oxygen."] },
+  "Bed 9": { subtitle: "Heart failure", allergies: "Perindopril — dry cough", history: ["Heart failure with a reduced ejection fraction (35% in 2025)", "Chronic kidney disease stage 3", "A week of worsening breathlessness and ankle swelling before admission"],
+    family: "Father died of a heart attack at 62.", social: "Retired lorry driver. Lives with his wife. Stopped smoking ten years ago.",
+    medicines: ["Furosemide 40 mg, each morning", "Bisoprolol 2.5 mg, once daily", "Losartan 50 mg, once daily"], obs: [36.6, 76, 18, 95, 118, 70],
+    note: ["Breathing easier, sleeping on two pillows. Ankles less swollen.", "Weight down 1.2 kg since admission. Fine basal crackles. Creatinine 148 yesterday.",
+      "Acute decompensated heart failure, responding to IV furosemide; chronic kidney disease stage 3.", "IV furosemide 40 mg twice daily. Repeat renal function at 06:00. Daily weights and a 1.5 L fluid limit."] },
+  "Bed 4": { subtitle: "Stroke, day 9", history: ["Hypertension and atrial fibrillation", "Nine days ago: right arm weakness and slurred speech", "Swallow assessed as safe for a soft diet on day 3"],
+    family: "Brother had a stroke at 70.", social: "Retired shopkeeper. Lives with his wife; a daughter lives nearby. Never smoked.", medicines: ["Amlodipine 10 mg, once daily"], obs: [36.7, 72, 16, 97, 138, 82],
+    note: ["Comfortable. Speech clearer; right hand grip improving.", "CT brain on admission: left middle cerebral artery infarct, no bleed. Power 4/5 in the right arm. Atrial fibrillation, rate 72.",
+      "Ischaemic stroke, day 9, medically stable; atrial fibrillation.", "Apixaban and atorvastatin started. Awaiting an inpatient rehabilitation bed; physiotherapy daily."] },
+  "Bed 7": { subtitle: "Asthma exacerbation", allergies: "Aspirin — wheeze", history: ["Asthma since childhood, two admissions in the past five years", "Exacerbation after a week of a cold", "Uses her preventer inhaler irregularly"],
+    family: "Mother and brother have asthma.", social: "Bank clerk. Lives with her husband and two children. Does not smoke; no pets.",
+    medicines: ["Budesonide-formoterol inhaler, 2 puffs twice daily", "Salbutamol inhaler, as needed"], obs: [36.7, 82, 16, 98, 116, 74],
+    note: ["No wheeze overnight; walking the ward without breathlessness.", "Peak flow 85% of her best. Chest clear. Off nebulisers for 24 hours.",
+      "Acute asthma exacerbation, resolved.", "Prednisolone 40 mg daily for 2 more days. Inhaler technique checked and a written asthma plan given. Clinic in 2 weeks."],
+    takeHome: [{ name: "Prednisolone", change: "new", detail: "40 mg each morning, 2 more days" }, { name: "Nebulised salbutamol", change: "stopped", detail: "Back to her own inhaler as needed" },
+      { name: "Budesonide-formoterol inhaler", change: "unchanged", detail: "Continue as before" }, { name: "Salbutamol inhaler", change: "unchanged", detail: "Continue as before" }] },
+  "Bed 1": { subtitle: "Diabetic ketoacidosis", history: ["Type 1 diabetes since the age of 19", "Missed insulin for two days during a stomach bug", "Last HbA1c 9.2%"],
+    family: "No family history of diabetes.", social: "Clinic receptionist. Lives with her husband. Does not smoke.", medicines: ["Insulin glargine 22 units, at night", "Insulin aspart, with meals"], obs: [36.8, 88, 16, 98, 122, 76],
+    note: ["Eating full meals, no nausea.", "Ketones 0.3, bicarbonate 22. Capillary glucose 8 to 11 on subcutaneous insulin.",
+      "Diabetic ketoacidosis, resolved; brought on by missed insulin during gastroenteritis.", "Back on her usual basal-bolus insulin. Diabetes nurse to go through sick-day rules; home tomorrow."] },
+  "Bed 5": { subtitle: "Gallstone pancreatitis", history: ["Two episodes of biliary colic earlier this year", "Admitted with severe epigastric pain and vomiting", "No regular medicines"],
+    family: "Mother had gallstones.", social: "Accountant. Lives with his wife and three children. Rarely drinks alcohol; does not smoke.", medicines: [], obs: [37.0, 86, 18, 97, 126, 80],
+    note: ["Pain 3 out of 10, tolerating clear fluids, no vomiting since yesterday.", "Ultrasound: gallstones, common bile duct not dilated. Lipase 420, down from 1,850.",
+      "Acute gallstone pancreatitis, mild.", "IV fluids and analgesia; build up the diet. Surgical review for a cholecystectomy date."] },
+  "Bed 13": { subtitle: "Urosepsis", allergies: "Co-trimoxazole — rash", history: ["Hypertension", "Two urinary infections in the past year", "Admitted confused, with fever and rigors"],
+    family: "Nil of note.", social: "Retired teacher. Lives alone; her daughter visits daily. Never smoked.", medicines: ["Amlodipine 5 mg, once daily"], obs: [37.0, 84, 18, 96, 128, 72],
+    note: ["Alert and orientated today, drinking well.", "Afebrile for 24 hours. CRP 64, down from 212. Blood and urine cultures grew E. coli.",
+      "Urosepsis, improving on IV ceftriaxone.", "IV ceftriaxone, day 3; oral switch tomorrow if the sensitivities agree."] },
+  "Bed 17": { subtitle: "Upper GI bleed", history: ["Ischaemic heart disease, one stent in 2021", "Admitted with black stools and dizziness", "Endoscopy yesterday: duodenal ulcer, clipped"],
+    family: "Father had ischaemic heart disease.", social: "Taxi driver. Lives with his wife. Stopped smoking in 2021; no alcohol.",
+    medicines: ["Aspirin 100 mg, once daily (on hold)", "Atorvastatin 40 mg, at night", "Bisoprolol 5 mg, once daily"], obs: [36.6, 78, 16, 98, 118, 72],
+    note: ["No further black stools; no dizziness on standing.", "Haemoglobin 9.4, stable over 24 hours. Endoscopy: duodenal ulcer, clipped, no active bleeding.",
+      "Upper gastrointestinal bleed from a duodenal ulcer, bleeding stopped; anaemia from blood loss.", "IV pantoprazole, then oral. Repeat haemoglobin in the morning; restart aspirin as cardiology advises."] },
+  "Bed 11": { subtitle: "COPD exacerbation", history: ["COPD, two exacerbations this year", "Smoked for 40 pack-years, stopped in 2022", "Three days of worsening breathlessness and green sputum before admission"],
+    family: "Nil of note.", social: "Retired rubber tapper. Lives with his wife. Walks about 100 m on the flat.", medicines: ["Tiotropium inhaler, once daily", "Salbutamol inhaler, as needed"], obs: [36.9, 90, 20, 92, 132, 78],
+    note: ["Less breathless; sputum now white.", "SpO₂ 92% on 1 L oxygen. Chest X-ray: hyperinflated, no consolidation. Scattered wheeze.",
+      "Acute exacerbation of COPD, improving.", "Prednisolone and doxycycline, day 3 of 5. Wean oxygen; home oxygen assessment before discharge."] },
+  "Bed 16": { subtitle: "Fall, wrist fracture", history: ["Alzheimer's dementia, diagnosed in 2023", "Fell in the bathroom at home: left distal radius fracture, in a cast", "Osteoarthritis of both knees"],
+    family: "Not known.", social: "Widow. Lives with her daughter, who is her main carer. Walks with a stick.", medicines: ["Donepezil 5 mg, at night", "Paracetamol 1 g, three times daily"], obs: [36.5, 74, 16, 97, 136, 70],
+    note: ["Calmer; slept through the night. Eating with help.", "AMT 6/10, up from 4/10 on admission. Wrist X-ray: distal radius fracture in a good position in the cast.",
+      "Fall with a left distal radius fracture; delirium on dementia, settling.", "Physiotherapy and a falls assessment. Family meeting before discharge; fracture clinic in 1 week."] },
+  "Bed 3": { subtitle: "Hip hemiarthroplasty, day 6", allergies: "Codeine — nausea and vomiting", history: ["Osteoporosis", "Fell at the market: left neck of femur fracture", "Left hip hemiarthroplasty six days ago"],
+    family: "Mother had a hip fracture.", social: "Runs a sundry shop with her husband. Lives above the shop; the bedroom is upstairs.", medicines: ["Calcium and vitamin D, once daily"], obs: [36.7, 76, 16, 98, 124, 76],
+    note: ["Pain 2 out of 10 on paracetamol. Walking 20 m with a frame.", "Wound clean and dry. Haemoglobin 10.8.",
+      "Day 6 after a left hip hemiarthroplasty for a neck of femur fracture; anaemia after surgery, not transfused.", "Enoxaparin until day 28. Stairs assessment with physiotherapy; alendronate to start at the clinic."] },
+  "Bed 15": { subtitle: "NSTEMI, day 2", history: ["Type 2 diabetes for ten years", "Smokes 15 cigarettes a day", "Admitted with an hour of central chest pain at rest"],
+    family: "Brother had a heart attack at 55.", social: "Lorry mechanic from Sibu, working in Klang. Lives with his wife.", medicines: ["Metformin 1 g, twice daily", "Gliclazide 80 mg, once daily"], obs: [36.6, 68, 16, 98, 122, 74],
+    note: ["Pain-free since admission. No breathlessness.", "Troponin peaked at 1,240. ECG: T-wave inversion in V4 to V6, unchanged. Echocardiogram: ejection fraction 50%.",
+      "Non-ST elevation myocardial infarction, day 2, stable.", "Aspirin, ticagrelor, fondaparinux, atorvastatin and bisoprolol. Transfer for an angiogram when the cardiac centre has a slot."] },
+};
+const OBS = [["temperature", "°C"], ["pulse", "bpm"], ["respiratory-rate", "/min"], ["oxygen-saturation", "%"], ["systolic", "mmHg"], ["diastolic", "mmHg"]] as const;
+const NOTE_SECTIONS = ["subjective", "objective", "assessment", "plan"] as const;
+/** "5 Oct 2026, 07:00" on the ward's clock (Malaysia), whichever zone the seed runs in. */
+const wardTime = (at: Date) => at.toLocaleString("en-GB", { timeZone: "Asia/Kuala_Lumpur", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+/**
  * The rest of the ward, read off the fixture beds and WARD_EXTRA so live mode draws them: bed N holds SYN-20NN
  * with each blocker turned into the row it derives from (a requested GL, a pending result, discharge state).
  */
@@ -57,7 +147,7 @@ const WARD = [...WARD_FIXTURE, ...WARD_EXTRA].filter(b => b.name).map(b => {
     // Transport has no table yet: a ride or transfer still to arrange lives in the visit state.
     ...(ride && { transport: { label: ride.label, detail: ride.detail } }),
   };
-  return { n, id: `SYN-20${n}`, bed: b, age: Number(age), sex: sex!, state, gl: of("gl").length > 0, labs: of("result").map(r => ({ id: `lab-20${n}-${r.id}`, test: r.label })) };
+  return { n, id: `SYN-20${n}`, bed: b, chart: CHARTS[b.bed]!, age: Number(age), sex: sex!, state, gl: of("gl").length > 0, labs: of("result").map(r => ({ id: `lab-20${n}-${r.id}`, test: r.label })) };
 });
 /** The lab results the seed writes; any other result arrived during a demo run. */
 export const SEED_LAB_IDS = ["lab-1086-potassium", "lab-hb-1086", ...WARD.flatMap(w => w.labs.map(l => l.id))];
@@ -79,25 +169,41 @@ export const TEST_PATIENT = { name: "Amelia Tan", email: "amelia.test@sona.test"
 // Any drizzle Postgres database: Neon in staging, PGlite in tests.
 type AnyDb = PgAsyncDatabase<any, any>;
 
+/** Observations go on the chart two hours before `now` and the round's notes three, on every reseed, like the potassium below. */
+const HOUR = 3600_000;
+
 export async function seedDemo(db: AnyDb, now = new Date()) {
+  const observedAt = new Date(now.getTime() - 2 * HOUR), notedAt = new Date(now.getTime() - 3 * HOUR);
   await db.insert(hospitals).values({ id: DEMO_HOSPITAL, name: "Demo General Hospital (synthetic)" }).onConflictDoNothing();
   // The synthetic doctor directory Sona Care's Find a doctor reads.
   await db.insert(doctors).values(DOCTORS.map(d => ({ ...d, careTeam: d.careTeam ?? false, hospitalId: DEMO_HOSPITAL })))
     .onConflictDoUpdate({ target: doctors.id, set: { days: sql`excluded.days`, times: sql`excluded.times`, room: sql`excluded.room` } });
   // The same records the app's fixtures show; the rest of each record (history, medicines, vitals, sources) is kept whole in `record`.
-  // The ward's own view of each admitted patient (status, SBAR, predicted time) is kept in `record.ward`.
+  // The ward's own view of each admitted patient (status, SBAR, predicted time) is kept in `record.ward`, a charted take-home list in `record.takeHome`.
+  // Left out: sample mode's stand-in for the visit's rows, and the scripted consultation (no recording of the visit is saved, so the record lists none).
   await db.insert(patients).values([
-    ...DEMO_PATIENTS.map(({ id, name, initials, age, sex, complaint, allergies, incomplete, encounterId: _, ...record }) =>
-      ({ id, hospitalId: DEMO_HOSPITAL, name, initials, age, sex, complaint, allergies, incomplete, record: id === "SYN-1042" ? { ...record, ward: DEMO_WARD } : record })),
-    ...WARD.map(({ id, bed: { name, initials, status, predicted, waitingHours, sbar }, age, sex }) =>
-      ({ id, hospitalId: DEMO_HOSPITAL, name: name!, initials: initials!, age, sex, complaint: sbar!.s, record: { ward: { status, predicted, waitingHours, sbar } } })),
+    ...DEMO_PATIENTS.map(({ id, name, initials, age, sex, complaint, allergies, incomplete, encounterId: _, visit: __, ...record }) =>
+      ({ id, hospitalId: DEMO_HOSPITAL, name, initials, age, sex, complaint, allergies, incomplete, record: { ...record, sources: record.sources.filter(s => s.kind !== "transcript") } })),
+    ...WARD.map(({ id, bed: { name, initials, status, predicted, waitingHours, sbar }, age, sex, chart: { allergies, obs, note: _, ...chart } }) => {
+      const [temperature, pulse, respiratoryRate, spo2, systolic, diastolic] = obs;
+      return { id, hospitalId: DEMO_HOSPITAL, name: name!, initials: initials!, age, sex, complaint: sbar!.s, allergies, record: {
+        ...chart, ward: { status, predicted, waitingHours, sbar },
+        vitals: [{ label: "SpO₂", value: `${spo2}%` }, { label: "Temp", value: `${temperature} °C` }, { label: "Pulse", value: `${pulse} bpm` }],
+        sources: [
+          { id: "history", title: "Admission record", date: wardTime(notedAt), kind: "record", synthetic: true, excerpt: `Fictional admission record: ${name}, ${age}. ${sbar!.s} ${chart.history.join(". ")}. Family: ${chart.family} Social: ${chart.social} Medicines before admission: ${chart.medicines.join("; ") || "none"}. Allergy on record: ${allergies ?? "none"}.` },
+          { id: "vitals", title: "Observations", date: wardTime(observedAt), kind: "record", synthetic: true, excerpt: `Fictional observations: temperature ${temperature} °C, pulse ${pulse} bpm, respiratory rate ${respiratoryRate} a minute, oxygen saturation ${spo2}%, blood pressure ${systolic}/${diastolic} mmHg.` },
+        ],
+      } };
+    }),
   ])
     .onConflictDoUpdate({ target: patients.id, set: { complaint: sql`excluded.complaint`, allergies: sql`excluded.allergies`, incomplete: sql`excluded.incomplete`, record: sql`excluded.record` } });
   await db.insert(encounters).values([
     { id: "visit-1042", patientId: "SYN-1042", hospitalId: DEMO_HOSPITAL },
     { id: "visit-1086", patientId: "SYN-1086", hospitalId: DEMO_HOSPITAL },
   ]).onConflictDoNothing();
-  await db.insert(admissions).values({ id: "adm-1042", patientId: "SYN-1042", hospitalId: DEMO_HOSPITAL, bed: "Bed 6" }).onConflictDoNothing();
+  // Amelia's ward record says she has been fit for an hour; the admission carries when, kept that old on every reseed like the ward's fit beds.
+  await db.insert(admissions).values({ id: "adm-1042", patientId: "SYN-1042", hospitalId: DEMO_HOSPITAL, bed: "Bed 6", fitAt: new Date(now.getTime() - (DEMO_PATIENTS[0]!.ward?.waitingHours ?? 0) * HOUR) })
+    .onConflictDoUpdate({ target: admissions.id, set: { fitAt: sql`excluded.fit_at` } });
   // The rest of the ward. A visit's state is only written while empty (new, or just reset), so a run's changes survive a reboot;
   // fit beds became fit `waitingHours` ago, kept that old on every reseed like the potassium below.
   await db.insert(encounters).values(WARD.map(w => ({ id: `visit-20${w.n}`, patientId: w.id, hospitalId: DEMO_HOSPITAL, state: w.state })))
@@ -113,11 +219,22 @@ export async function seedDemo(db: AnyDb, now = new Date()) {
   await db.insert(drugs).values(readCsv("drugs.csv").map(r => ({ id: r.id!, name: r.name!, ingredient: r.ingredient!, formulation: r.formulation, dose: r.dose!, sourceId: r.source_id! })))
     .onConflictDoUpdate({ target: drugs.id, set: { name: sql`excluded.name`, ingredient: sql`excluded.ingredient`, formulation: sql`excluded.formulation`, dose: sql`excluded.dose`, sourceId: sql`excluded.source_id` } });
   // Amelia's CURB-65 inputs (confusion is a 0/1 flag; AMT 10/10), each citable by its own source ID.
-  const observedAt = new Date("2026-09-22T09:26:00+08:00");
+  const intakeAt = new Date("2026-09-22T09:26:00+08:00");
   // Confusion is the abbreviated mental test out of 10, the scale CURB-65 reads (8 or less scores).
   await db.insert(observations).values(([["confusion", 10, "AMT"], ["urea", 5.1, "mmol/L"], ["respiratory-rate", 18, "/min"], ["systolic", 124, "mmHg"], ["diastolic", 78, "mmHg"]] as const)
-    .map(([kind, value, unit]) => ({ id: `obs-1042-${kind}`, patientId: "SYN-1042", kind, value, unit, sourceId: `obs-1042-${kind}`, observedAt })))
+    .map(([kind, value, unit]) => ({ id: `obs-1042-${kind}`, patientId: "SYN-1042", kind, value, unit, sourceId: `obs-1042-${kind}`, observedAt: intakeAt })))
     .onConflictDoUpdate({ target: observations.id, set: { value: sql`excluded.value`, unit: sql`excluded.unit` } });
+  // This morning's chart for everyone in a bed (Amelia's: afebrile now, as her ward record says), one row per reading.
+  const chartRow = (patientId: string, kind: string, value: number, unit: string) => ({ id: `obs-${patientId.slice(4)}-${kind}`, patientId, kind, value, unit, sourceId: `obs-${patientId.slice(4)}-${kind}`, observedAt });
+  await db.insert(observations).values([
+    chartRow("SYN-1042", "temperature", 36.9, "°C"), chartRow("SYN-1042", "pulse", 84, "bpm"), chartRow("SYN-1042", "oxygen-saturation", 97, "%"),
+    ...WARD.flatMap(w => OBS.map(([kind, unit], i) => chartRow(w.id, kind, w.chart.obs[i]!, unit))),
+  ]).onConflictDoUpdate({ target: observations.id, set: { value: sql`excluded.value`, unit: sql`excluded.unit`, observedAt: sql`excluded.observed_at` } });
+  // Each ward patient's saved note, in the table and shape note.save writes (one sentence per section). A note saved during
+  // a run is a later revision, so it is never overwritten. Amelia has none: hers is written in her consultation, and until
+  // it is saved her guarantee letter says there is no note to build on.
+  await db.insert(notes).values(WARD.map(w => ({ id: `note-visit-20${w.n}-1`, encounterId: `visit-20${w.n}`, revision: 1, sentences: NOTE_SECTIONS.map((id, i) => ({ id, text: w.chart.note[i]! })), createdAt: notedAt })))
+    .onConflictDoNothing();
   // Daniel's potassium arrived two hours ago, like the app's pending result; reseeding keeps it two hours old.
   await db.insert(labResults).values({ id: "lab-1086-potassium", patientId: "SYN-1086", test: "Potassium", value: "3.1", unit: "mmol/L", flag: "low", sourceId: "lab-1086-potassium", receivedAt: new Date(now.getTime() - 2 * 3600_000) })
     .onConflictDoUpdate({ target: labResults.id, set: { receivedAt: sql`excluded.received_at` } });
@@ -143,7 +260,7 @@ export async function seedDemo(db: AnyDb, now = new Date()) {
     .onConflictDoUpdate({ target: appointments.id, set: { startsAt: sql`excluded.starts_at` } });
   await db.insert(guaranteeLetters).values({ id: "gl-1042", admissionId: "adm-1042", insurer: "Synthetic insurer", status: "requested", requestedAt: new Date("2026-09-25T09:40:00+08:00") }).onConflictDoNothing();
   // Daniel's note and a haemoglobin the note does not mention: the coding audit's worked example.
-  await db.insert(notes).values({ id: "note-1086-1", encounterId: "visit-1086", revision: 1, sentences: [{ id: "s1", text: "Breathless on exertion; onset not yet documented." }, { id: "s2", text: "Tablet reported; ingredient unknown." }] }).onConflictDoNothing();
+  await db.insert(notes).values({ id: "note-1086-1", encounterId: "visit-1086", revision: 1, sentences: [{ id: "s1", text: "Breathless on exertion; onset not yet documented." }, { id: "s2", text: "Tablet reported; ingredient unknown." }], createdAt: notedAt }).onConflictDoNothing();
   await db.insert(labResults).values({ id: "lab-hb-1086", patientId: "SYN-1086", test: "Hb", value: "9.8", unit: "g/dL", flag: "low", sourceId: "lab-hb-1086", receivedAt: new Date(now.getTime() - 26 * 3600_000) }).onConflictDoNothing();
   // Demo flow 6: follow-up intervals are looked up from this table, never generated.
   const num = (v?: string) => (v ? Number(v) : null);

@@ -5,6 +5,7 @@ import { runNightlyAudit } from "../audit-job";
 import { decideReview, reviewTokenOf } from "../insurer";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
+import { EMPTY_CLAIM, ORGANISM_UNKNOWN, ivReason, noteFor } from "@sona-ai/domain/claim";
 import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
@@ -155,15 +156,21 @@ test("a discharge approved by a blank name is refused as unapproved, before any 
   expect([refusal?.code, refusal?.data?.reason]).toEqual(["PRECONDITION_FAILED", "unapproved"]);
 });
 
-test("a claim is refused while the organism and the reason for IV antibiotics are undocumented, and the refusal names them", async () => {
+test("a claim is refused while the visit's saved note leaves a criterion open, and the refusal names each: every one with no note, then the organism and the reason for IV antibiotics", async () => {
   const { api } = await signedIn();
-  const refusal = await api.claim.send({ encounterId: "visit-1042", requestId: "c1", approvedBy: "dr-aisyah" }).then(() => null, (e: { data?: { reason?: string; open?: string[] } }) => e);
-  expect(refusal?.data).toEqual({ reason: "blocked", open: ["Organism documented", "Reason for IV antibiotics"] });
+  const refused = () => api.claim.send({ encounterId: "visit-1042", requestId: "c1", approvedBy: "dr-aisyah" }).then(() => null, (e: { data?: { reason?: string; open?: string[] } }) => e?.data);
+  // No note is saved for the visit yet, and none is assumed.
+  expect(await refused()).toEqual({ reason: "blocked", open: ["Severity score documented", "Imaging result attached"] });
+  await api.note.save({ encounterId: "visit-1042", expectedRevision: 0, sentences: noteFor(EMPTY_CLAIM) });
+  expect(await refused()).toEqual({ reason: "blocked", open: ["Organism documented", "Reason for IV antibiotics"] });
+  // The old switches on the claim no longer stand in for the note.
+  await api.claim.update({ encounterId: "visit-1042", organismConfirmed: true, ivReasonAdded: true });
+  expect(await refused()).toEqual({ reason: "blocked", open: ["Organism documented", "Reason for IV antibiotics"] });
 });
 
 test("once documented, the claim is sent once; when the insurer approves, the discharge stops waiting on the guarantee letter", async () => {
   const { api, db, clock } = await signedIn();
-  await api.claim.update({ encounterId: "visit-1042", organismConfirmed: true, ivReasonAdded: true });
+  await api.note.save({ encounterId: "visit-1042", expectedRevision: 0, sentences: [...noteFor(EMPTY_CLAIM), ORGANISM_UNKNOWN, ivReason("vomiting on arrival, unable to keep oral tablets down.")] });
   const sent = await api.claim.send({ encounterId: "visit-1042", requestId: "c2", approvedBy: "dr-aisyah" });
   expect(await api.claim.send({ encounterId: "visit-1042", requestId: "c2", approvedBy: "dr-aisyah" })).toEqual(sent);
   expect((await api.claim.status({ encounterId: "visit-1042" })).status).toBe("sent");

@@ -49,14 +49,16 @@ test("a demo reset undoes a whole run (discharge, claim, receipts, tasks, findin
   expect(visits.find(e => e.id === "visit-2014")).toMatchObject({ revision: 1, state: { discharge: { medsConfirmed: false, followUp: "2w" }, transport: { label: "Ride home", detail: "Family free after 17:00" } } });
   const beds = await db.select().from(admissions);
   expect(beds.map(a => a.dischargedAt)).toEqual(beds.map(() => null));
-  expect(beds.find(a => a.id === "adm-1042")?.fitAt).toBeNull();
+  // Amelia is fit again from an hour before the reset, as her ward record says.
+  expect(beds.find(a => a.id === "adm-1042")?.fitAt?.toISOString()).toBe("2026-09-26T00:00:00.000Z");
   expect(beds.find(a => a.id === "adm-2002")?.fitAt?.toISOString()).toBe("2026-09-25T20:00:00.000Z");
   expect((await db.select().from(guaranteeLetters)).map(g => [g.status, g.receivedAt])).toEqual([["requested", null], ["requested", null]]);
   expect((await db.select().from(labResults)).every(r => r.acknowledgedAt === null)).toBe(true);
   // Results that arrived during the run are gone, not merely unacknowledged; records return to the seed.
   expect((await db.select().from(labResults)).map(r => r.id).sort()).toEqual(["lab-1086-potassium", "lab-2002-b2-result", "lab-2009-b9-renal", "lab-2017-b17-hb", "lab-hb-1086"]);
-  expect((await db.select().from(patients)).map(p => p.allergies).sort()).toEqual(["Penicillin — reported rash; details need confirmation", ...Array(16).fill(null)]);
-  expect((await db.select().from(notes)).map(n => n.revision)).toEqual([1]);
+  expect((await db.select().from(patients)).map(p => p.allergies).filter(Boolean).sort()).toEqual(["Aspirin — wheeze", "Co-trimoxazole — rash", "Codeine — nausea and vomiting", "Penicillin — rash as a child", "Penicillin — reported rash; details need confirmation", "Perindopril — dry cough"]);
+  // The run's second revision is gone; Daniel and each ward patient are back to their one seeded note.
+  expect((await db.select().from(notes)).map(n => n.revision)).toEqual(Array(16).fill(1));
   expect((await db.select().from(appointments)).map(a => a.id).sort()).toEqual(["appt-SYN-1042", "appt-SYN-1086"]);
 });
 
