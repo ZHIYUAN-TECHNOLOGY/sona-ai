@@ -74,13 +74,15 @@ type RecordedEvent = Awaited<ReturnType<typeof api.encounter.timeline>>[number];
 function useRecordedTimeline(encounterId: string) {
   const { on } = useLive();
   const [state, setState] = useState<{ events?: RecordedEvent[]; error?: string }>({});
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     if (!on || !encounterId) return;
     let gone = false;
+    setState(s => (s.error ? {} : s)); // a retry reads again from "Reading the record…", not under the old failure
     api.encounter.timeline({ encounterId }).then(events => { if (!gone) setState({ events }); }, e => { if (!gone) setState({ error: errorText(e) }); });
     return () => { gone = true; };
-  }, [on, encounterId]);
-  return { live: on, ...state };
+  }, [on, encounterId, attempt]);
+  return { live: on, ...state, retry: () => setAttempt(a => a + 1) };
 }
 
 export function BriefingCard({ patient, result, onSource, onRequest }: FeatureProps) {
@@ -118,7 +120,7 @@ export function BriefingCard({ patient, result, onSource, onRequest }: FeaturePr
   return <View style={{ gap: 20 }}>
     <NewResult patient={patient} />
     {server.loading ? <Surface feature style={{ padding: 16 }}><Drafting label="Reading the record…" slow={MODEL_SLOW} /></Surface>
-      : held ? <Surface feature style={{ padding: 16 }}><ErrorLine text={`No briefing: ${held.reason}`} /></Surface> : <View style={{ gap: 6 }}>
+      : held ? <Surface feature style={{ padding: 16 }}><ErrorLine text={`No briefing: ${held.reason}`} onRetry={server.retry} /></Surface> : <View style={{ gap: 6 }}>
       {digest.length > 0 && <Takeaways items={digest} />}
       <View style={{ paddingHorizontal: 4 }}>
         <SampleLabel source={server.data?.source} model={server.data && "model" in server.data ? server.data.model : undefined} waking={wakingOf(server.data)} what="briefing" />
@@ -129,7 +131,7 @@ export function BriefingCard({ patient, result, onSource, onRequest }: FeaturePr
       { title: "Vitals", content: patient.incomplete ? card(<Notice warning>Not recorded yet. Missing information is not a negative finding.</Notice>) : <VitalsCard vitals={patient.vitals} allergy={patient.allergies} /> },
       // Connected (always, in the judge build): what the record holds with a time on it, however little; never the sample story.
       { title: "Timeline", content: recorded.live || JUDGE ? card(
-        recorded.error ? <ErrorLine text={`No timeline: ${recorded.error}`} />
+        recorded.error ? <ErrorLine text={`No timeline: ${recorded.error}`} onRetry={recorded.retry} />
           : !recorded.events ? <Drafting label="Reading the record…" />
           : !recorded.events.length ? <Notice>Nothing in the record has a time on it yet.</Notice>
           : recorded.events.map(event => <View key={event.id} style={{ flexDirection: "row", gap: 12 }}>

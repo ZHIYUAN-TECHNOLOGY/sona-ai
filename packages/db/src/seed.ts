@@ -8,7 +8,7 @@ import { WARD_FIXTURE, type Bed, type BlockerKind } from "@sona-ai/domain/ward";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { account, admissions, appointments, careLinks, casemixWeights, doctors, drugs, encounters, followUpRules, guaranteeLetters, hospitals, icd10Codes, insurerCriteria, labResults, notes, observations, patients, user } from "./schema";
+import { account, admissions, appointments, careLinks, casemixWeights, doctors, drugs, encounters, followUpRules, guaranteeLetters, hospitalMembers, hospitals, icd10Codes, insurerCriteria, labResults, notes, observations, patients, user } from "./schema";
 
 /**
  * The demo ward's starting state, matching the app's fixtures (synthetic people only). Idempotent,
@@ -132,6 +132,13 @@ const CHARTS: Record<string, Chart> = {
 };
 const OBS = [["temperature", "°C"], ["pulse", "bpm"], ["respiratory-rate", "/min"], ["oxygen-saturation", "%"], ["systolic", "mmHg"], ["diastolic", "mmHg"]] as const;
 const NOTE_SECTIONS = ["subjective", "objective", "assessment", "plan"] as const;
+// Amelia's (SYN-1042) saved note, a line per section, from her record: the intake, her ward record (DEMO_WARD) and her take-home list.
+const AMELIA_NOTE = [
+  "Five days of cough, with fever from the day before admission. Now eating and walking; the cough is easing.",
+  "Afebrile for 18 hours. SpO₂ 97% on room air. Chest film: right lower zone consolidation.",
+  "Community-acquired pneumonia, mild; CURB-65 0. Background asthma, on a salbutamol inhaler. Penicillin allergy reported.",
+  "IV azithromycin given, day 2; oral azithromycin 500 mg daily for 2 more days. Fit for discharge today; home when the final guarantee letter arrives.",
+];
 /** "5 Oct 2026, 07:00" on the ward's clock (Malaysia), whichever zone the seed runs in. */
 const wardTime = (at: Date) => at.toLocaleString("en-GB", { timeZone: "Asia/Kuala_Lumpur", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
@@ -160,6 +167,12 @@ export const TEST_DOCTOR = { name: "Dr Test Aisyah", email: "dr.test@sona.test",
 export const TEST_NURSE = { name: "Nurse Test Mei Ling", email: "nurse.test@sona.test", password: "Sona-DqqMailMAYIgh" };
 export const TEST_BED_MANAGER = { name: "Test Bed Manager Hafiz", email: "beds.test@sona.test", password: "Sona-xcEhUim76L7g" };
 export const TEST_MANAGER = { name: "Test Manager Farah", email: "manager.test@sona.test", password: "Sona-A6lR268CDTts" };
+/**
+ * Two more synthetic clinicians (never real people), seeded by seedTestStaff as signed-up accounts that are already
+ * members of the demo hospital, so the demo doctor's handover always has a colleague to receive it.
+ */
+export const TEST_DOCTOR_2 = { id: "test-doctor-2", name: "Dr Test Rajesh Kumar", email: "dr2.test@sona.test", password: "Sona-GU3hJZxY7Wc6", role: "doctor" as const };
+export const TEST_NURSE_2 = { id: "test-nurse-2", name: "Nurse Test Siti Aminah", email: "nurse2.test@sona.test", password: "Sona-MSPAlt9TRjfW", role: "nurse" as const };
 /**
  * The synthetic test patient for Sona Care runs (never a real person): seeded as a signed-up account
  * already linked to Amelia (SYN-1042) by seedTestPatient, so it signs in with this email and password,
@@ -231,8 +244,7 @@ export async function seedDemo(db: AnyDb, now = new Date()) {
     ...WARD.flatMap(w => OBS.map(([kind, unit], i) => chartRow(w.id, kind, w.chart.obs[i]!, unit))),
   ]).onConflictDoUpdate({ target: observations.id, set: { value: sql`excluded.value`, unit: sql`excluded.unit`, observedAt: sql`excluded.observed_at` } });
   // Each ward patient's saved note, in the table and shape note.save writes (one sentence per section). A note saved during
-  // a run is a later revision, so it is never overwritten. Amelia has none: hers is written in her consultation, and until
-  // it is saved her guarantee letter says there is no note to build on.
+  // a run is a later revision, so it is never overwritten. Amelia's is seedDemoNote's, a step of its own (see there).
   await db.insert(notes).values(WARD.map(w => ({ id: `note-visit-20${w.n}-1`, encounterId: `visit-20${w.n}`, revision: 1, sentences: NOTE_SECTIONS.map((id, i) => ({ id, text: w.chart.note[i]! })), createdAt: notedAt })))
     .onConflictDoNothing();
   // Daniel's potassium arrived two hours ago, like the app's pending result; reseeding keeps it two hours old.
@@ -271,6 +283,19 @@ export async function seedDemo(db: AnyDb, now = new Date()) {
 }
 
 /**
+ * Amelia's saved note for her stay, in the table and shape note.save writes (revision 1, one sentence per section), so her
+ * discharge and guarantee letter build on a real saved note. Like Nurul's it leaves the insurer's two open questions (the
+ * organism, why IV came first) for the doctor: the seed answers nothing on the doctor's behalf. Safe to rerun; a note saved
+ * during a run is a later revision and is never overwritten.
+ * ponytail: its own step, run by the seed and the reset (seed-run.ts, reset.ts) and not inside seedDemo, because the API's
+ * tests seed with seedDemo and many start from Amelia with no note; move it into seedDemo once those tests expect her note.
+ */
+export async function seedDemoNote(db: AnyDb, now = new Date()) {
+  await db.insert(notes).values({ id: "note-visit-1042-1", encounterId: "visit-1042", revision: 1, sentences: NOTE_SECTIONS.map((id, i) => ({ id, text: AMELIA_NOTE[i]! })), createdAt: new Date(now.getTime() - 3 * HOUR) })
+    .onConflictDoNothing();
+}
+
+/**
  * TEST_PATIENT as a real Sona Care account: the user (email verified, the demo phone verified), an
  * email-and-password login, and the link to Amelia's record. Safe to rerun: an account that already
  * exists (even one signed up in the app) is reused, and a stray account holding the demo phone gives it up.
@@ -281,10 +306,29 @@ export async function seedTestPatient(db: AnyDb) {
   const [{ id }] = await db.select({ id: user.id }).from(user).where(eq(user.email, email)) as [{ id: string }];
   await db.update(user).set({ phoneNumber: null, phoneNumberVerified: null }).where(and(eq(user.phoneNumber, phone), ne(user.id, id)));
   await db.update(user).set({ phoneNumber: phone, phoneNumberVerified: true }).where(eq(user.id, id));
-  const [login] = await db.select({ id: account.id }).from(account).where(and(eq(account.userId, id), eq(account.providerId, "credential")));
-  if (!login) await db.insert(account).values({ id: `credential-${id}`, accountId: id, providerId: "credential", userId: id, password: await hashPassword(password) });
+  await credential(db, id, password);
   await db.insert(careLinks).values({ userId: id, hospitalId: DEMO_HOSPITAL, patientId }).onConflictDoNothing();
   return id;
+}
+
+/** An email-and-password login for a seeded user, unless the account already has one (then its password is kept). */
+async function credential(db: AnyDb, id: string, password: string) {
+  const [login] = await db.select({ id: account.id }).from(account).where(and(eq(account.userId, id), eq(account.providerId, "credential")));
+  if (!login) await db.insert(account).values({ id: `credential-${id}`, accountId: id, providerId: "credential", userId: id, password: await hashPassword(password) });
+}
+
+/**
+ * TEST_DOCTOR_2 and TEST_NURSE_2 as real staff accounts (made as seedTestPatient makes Amelia's) that are members of the
+ * demo hospital without a first sign-in: handover.receivers (the members who may accept, the caller left out) is then
+ * never empty for the demo doctor. Safe to rerun: an account or a membership that exists is kept as it is.
+ */
+export async function seedTestStaff(db: AnyDb) {
+  for (const { id: seeded, name, email, password, role } of [TEST_DOCTOR_2, TEST_NURSE_2]) {
+    await db.insert(user).values({ id: seeded, name, email, emailVerified: true }).onConflictDoNothing();
+    const [{ id }] = await db.select({ id: user.id }).from(user).where(eq(user.email, email)) as [{ id: string }];
+    await credential(db, id, password);
+    await db.insert(hospitalMembers).values({ userId: id, hospitalId: DEMO_HOSPITAL, role }).onConflictDoNothing();
+  }
 }
 
 /** Rows of a reference file in the repo's data/ folder; `#` lines are provenance notes, quoted fields may hold commas. */

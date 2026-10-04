@@ -80,7 +80,7 @@ export function getPrescriptionChecks(encounter: Encounter, patient: Patient): P
     check("age-weight", "Adult age & weight", patient.age >= 18 && Number.isFinite(weight) && weight >= 50, `Adult, ${inputs?.weightKg} kg recorded.`, "Record a weight of at least 50 kg; the dose rules cover adults of 50 kg or more, and lower or unknown weights need a different regimen."),
     ...([ ["paracetamolAllergy", "Paracetamol allergy"], ["liverDisease", "Liver history"], ["kidneyDisease", "Kidney history"], ["alcoholRisk", "Alcohol risk"] ] as const).map(([key,label]) => key === "paracetamolAllergy" && recordedAllergy
       // The record outranks the answer on the card: a listed allergy blocks even when "No" was tapped.
-      ? check(key, label, false, "", `The record lists this allergy: ${patient.allergies}. Paracetamol is not prescribed.`)
+      ? { ...check(key, label, false, "", `The record lists this allergy: ${patient.allergies}. Paracetamol is not prescribed.`), recorded: true as const }
       : check(key, label, inputs?.[key] === "no", "Recorded as no by the clinician.", inputs?.[key] === "yes" ? "Positive risk recorded: this case is outside what the dose rules cover." : "History not recorded. Unknown is not a negative finding.")),
     check("prerequisite", "Prerequisite service", encounter.prescriptionScenario !== "failed-prerequisite", "The rules run inside Sona; no outside service is called.", "Demo scenario: the prerequisite service failed. Restore the standard scenario and retry."),
   ];

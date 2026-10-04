@@ -35,7 +35,7 @@ import type { Capability, Encounter, Patient, RequestState, ResponseCard } from 
 
 export type Suggestion = { text: string; kind: Capability | "recording" };
 
-export const capabilityLabels: Record<Capability, string> = { briefing: "Patient briefing", reasoning: "Clinical reasoning", xray: "Chest X-ray", medication: "Medication review", prescription: "Prescribing simulation", followup: "Follow-up plan", note: "Consultation note", evidence: "Evidence" };
+export const capabilityLabels: Record<Capability, string> = { briefing: "Patient briefing", reasoning: "Clinical reasoning", xray: "Chest X-ray", medication: "Medication review", prescription: "Prescribing", followup: "Follow-up plan", note: "Consultation note", evidence: "Evidence" };
 
 const first = (patient: Patient) => patient.name.split(" ")[0];
 
@@ -46,7 +46,7 @@ export function suggestionFor(kind: Capability | "recording", patient: Patient):
     reasoning: "What possibilities should I consider?",
     xray: `Review ${name}’s chest X-ray`,
     medication: `Check ${name}’s medicines for interactions`,
-    prescription: "Run the prescribing simulation",
+    prescription: "Run the prescribing checks",
     followup: "Prepare a follow-up plan",
     note: "Show me the consultation note",
     evidence: `Should ${name} get steroids for this pneumonia?`,
@@ -98,7 +98,7 @@ export function useVisitLead(req: RequestState | undefined, card: ResponseCard |
     allergyConfirmed: Boolean(confirmedAllergy(encounter)),
     image: scenario === "unsupported" ? "unsupported" : image?.imagingAttachment ? (xrayRead?.data?.source === "model" ? "read" : "attached") : scenario === "no-finding" ? "no-finding" : !image?.hideTeachingImage && teachingImage?.referenceSummary ? "reference" : "none",
     note: !encounter?.note ? "none" : encounter.noteReviewed ? "reviewed" : "draft",
-    prescription: rx,
+    prescription: rx, live,
     tasks: { total: tasks.length, open: tasks.filter(t => !t.completed).length },
     evidence: live ? answered && (answered.enough ? "enough" : answered.general ? "general" : "not-enough") : !question || isRehearsed(question) ? "rehearsed" : authoredAnswer(question) ? "authored" : "off",
     bottomLine: live ? answered?.bottomLine : authoredAnswer(question)?.bottomLine,

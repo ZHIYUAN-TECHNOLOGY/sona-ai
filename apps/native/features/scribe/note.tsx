@@ -237,7 +237,7 @@ export function NoteScreen() {
       <Text selectable style={{ ...type.footnote, lineHeight: 19, color: palette.muted }}>{live ? "Verify drafts against source." : "Verify drafts against source · local session only, no record connected."}</Text>
       {/* A note drafted from the scripted sample stays labelled until the clinician marks it reviewed; so does a live draft, by its origin. */}
       {hasContent && encounter.noteFromSample && !encounter.noteReviewed && <SampleLabel source="fixture" what="scribe" />}
-      {hasContent && liveDraft && !encounter.noteFromSample && !encounter.noteReviewed && <SampleLabel source={liveDraft.source} model={liveDraft.model} waking={liveDraft.waking} rule what="scribe" />}
+      {hasContent && liveDraft && !encounter.noteFromSample && !encounter.noteReviewed && <SampleLabel source={liveDraft.source} model={liveDraft.model} waking={liveDraft.waking} error={liveDraft.error} rule what="scribe" />}
       {liveDraft?.error && !encounter.noteReviewed && <StateLine warning>{`Sona couldn't draft this note (${liveDraft.error}), so it holds the consultation as captured.`}</StateLine>}
       {!!liveDraft?.dropped && !encounter.noteReviewed && <StateLine>{`Sona left out ${liveDraft.dropped} ${liveDraft.dropped === 1 ? "statement" : "statements"} it couldn't check against the transcript.`}</StateLine>}
       {unsure > 0 && <StateLine warning>{`${unsure} ${unsure === 1 ? "turn has" : "turns have"} an unsure speaker.`}</StateLine>}
@@ -271,7 +271,7 @@ export function NoteScreen() {
       {suggestion && <Expand key="suggestion">
         <Surface style={{ padding: 18, gap: 14 }}>
           <Text style={{ ...type.caption, fontWeight: "600", letterSpacing: 0.3, color: palette.blue }}>New suggestion · not applied · your note stays until you replace it</Text>
-          {offered && <SampleLabel source={offered.source} model={offered.model} waking={offered.waking} rule what="scribe" />}
+          {offered && <SampleLabel source={offered.source} model={offered.model} waking={offered.waking} error={offered.error} rule what="scribe" />}
           {sectionKeys.map(key => <View key={key} style={{ gap: 3 }}>
             <Text style={{ ...type.footnote, fontWeight: "600", color: palette.muted }}>{noteMeta[key].title}</Text>
             <Text selectable style={{ ...type.callout, lineHeight: 22, color: suggestion[key].trim() ? palette.ink : palette.muted }}>{suggestion[key].trim() || "Left empty for you"}</Text>

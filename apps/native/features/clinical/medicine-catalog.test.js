@@ -20,9 +20,9 @@ test("unknown products fall back to the reported form, never another medicine", 
 test("Laya's medicine pick finds the visit's own reported medicine, or none", () => {
   const amelia = defaultMedications(patients[0]), daniel = defaultMedications(patients[1]);
   expect(entryFor("salbutamol-inhaler", amelia)?.name).toBe("Salbutamol inhaler, as needed");
-  // The record names no form for the cetirizine, so it is not a tablet until the clinician says so.
-  expect(entryFor("cetirizine-tablet", amelia)).toBeUndefined();
-  expect(entryFor("cetirizine-tablet", amelia.map(m => ({ ...m, formulation: m.formulation || "tablet" })))?.name).toBe("Cetirizine, patient-reported");
+  // Her record names the cetirizine's form, so it resolves from the record's own words; with no form on the entry it is not a tablet until the clinician says so.
+  expect(entryFor("cetirizine-tablet", amelia)?.name).toBe("Cetirizine tablet 10 mg, patient-reported");
+  expect(entryFor("cetirizine-tablet", amelia.map(m => ({ ...m, formulation: "" })))).toBeUndefined();
   // The proposed paracetamol is not a reported medicine, and an unknown tablet is never guessed to be one.
   expect(entryFor("paracetamol-tablet", amelia)).toBeUndefined();
   expect(entryFor("cetirizine-tablet", daniel)).toBeUndefined();

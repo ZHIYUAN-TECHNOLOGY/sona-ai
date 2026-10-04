@@ -2,6 +2,7 @@ import { isRehearsed } from "@sona-ai/domain/evidence";
 import { calmTerms } from "@/features/evidence/answer";
 import { testInSentence } from "@/features/day/model";
 import { emphasise } from "./emphasis";
+import { receiptWords } from "./next-steps";
 import type { Capability, MedicationEntry, Patient } from "./types";
 
 /**
@@ -18,6 +19,8 @@ export type LeadState = {
   image?: "reference" | "attached" | "read" | "unsupported" | "no-finding" | "none";
   note?: "none" | "draft" | "reviewed";
   prescription?: "created" | "failed" | "blocked" | "outside" | "ready";
+  /** Connected: a receipt is the visit record's. Otherwise it is a sample on this phone, and the lead says so (receiptWords). */
+  live?: boolean;
   tasks?: { total: number; open: number };
   /** Evidence: the rehearsed or an authored answer (demo), live mode off, or the server's answer (cited, general when no source answers, or none). */
   evidence?: "rehearsed" | "authored" | "off" | "enough" | "general" | "not-enough";
@@ -63,11 +66,11 @@ export function leadFor(kind: Capability, patient: Patient, state: LeadState, pr
       "no-finding": "This sample returned no finding result. That doesn’t mean the examination is normal.",
       none: "No image is attached, so there are no findings yet.",
     }[state.image ?? "reference"];
-    case "prescription": return state.prescription === "created" ? "The prescribing simulation passed every check and created a receipt."
-      : state.prescription === "failed" ? "The prescribing simulation failed, so no receipt was created."
-      : state.prescription === "outside" ? "A recorded risk puts this case outside what the simulation supports, so nothing will be prescribed."
+    case "prescription": return state.prescription === "created" ? `Every check passed. ${receiptWords(Boolean(state.live)).title}, ${receiptWords(Boolean(state.live)).where}.`
+      : state.prescription === "failed" ? "Prescribing failed, so no receipt was created."
+      : state.prescription === "outside" ? "A recorded risk puts this case outside what Sona prescribes, so nothing will be prescribed."
       : state.prescription === "ready" ? "Every check has passed. Review the regimen below, then prescribe."
-      : "Nothing is prescribed yet. The checks below say what still blocks the simulation.";
+      : "Nothing is prescribed yet. The checks below say what still blocks it.";
     case "followup": {
       const t = state.tasks;
       if (!t?.total) return "One follow-up is proposed. Give it an owner and a date to make it a task.";

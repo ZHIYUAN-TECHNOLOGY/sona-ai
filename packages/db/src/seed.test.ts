@@ -2,10 +2,11 @@ import { expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 import { claimChecks } from "@sona-ai/domain/claim";
 import { dischargeChecks, planFor } from "@sona-ai/domain/discharge";
+import { defaultMedications } from "@sona-ai/domain/prescribing";
 import type { Patient } from "@sona-ai/domain/types";
-import { account, admissions, appointments, careLinks, casemixWeights, encounters, followUpRules, guaranteeLetters, insurerCriteria, labResults, notes, observations, patients, user } from "./schema";
+import { account, admissions, appointments, careLinks, casemixWeights, encounters, followUpRules, guaranteeLetters, hospitalMembers, insurerCriteria, labResults, notes, observations, patients, user } from "./schema";
 import { DEMO_CLINICIANS } from "./demo";
-import { DEMO_HOSPITAL, seedDemo, seedTestPatient, TEST_BED_MANAGER, TEST_DOCTOR, TEST_MANAGER, TEST_NURSE, TEST_PATIENT, WARD_EXTRA } from "./seed";
+import { DEMO_HOSPITAL, seedDemo, seedDemoNote, seedTestPatient, seedTestStaff, TEST_BED_MANAGER, TEST_DOCTOR, TEST_DOCTOR_2, TEST_MANAGER, TEST_NURSE, TEST_NURSE_2, TEST_PATIENT, WARD_EXTRA } from "./seed";
 import { createTestDb } from "./testing";
 
 test("the Sona Care test patient is seeded signed up and linked to Amelia, rerun-safe, and takes the demo phone back from a stray account", async () => {
@@ -17,6 +18,17 @@ test("the Sona Care test patient is seeded signed up and linked to Amelia, rerun
   expect((await db.select().from(user).where(eq(user.phoneNumber, TEST_PATIENT.phone))).map(u => [u.id, u.email, u.phoneNumberVerified])).toEqual([[id, TEST_PATIENT.email, true]]);
   expect((await db.select().from(account).where(eq(account.userId, id))).map(a => a.providerId)).toEqual(["credential"]);
   expect(await db.select().from(careLinks).where(eq(careLinks.userId, id))).toMatchObject([{ hospitalId: DEMO_HOSPITAL, patientId: "SYN-1042" }]);
+});
+
+test("two more test clinicians are seeded signed up and already members of the demo hospital, rerun-safe, so a handover has a receiver", async () => {
+  const db = await createTestDb();
+  await seedDemo(db);
+  await seedTestStaff(db);
+  await seedTestStaff(db);
+  const staff = await db.select({ name: user.name, email: user.email, role: hospitalMembers.role, hospitalId: hospitalMembers.hospitalId })
+    .from(hospitalMembers).innerJoin(user, eq(user.id, hospitalMembers.userId)).orderBy(user.email);
+  expect(staff).toEqual([TEST_DOCTOR_2, TEST_NURSE_2].map(({ name, email, role }) => ({ name, email, role, hospitalId: DEMO_HOSPITAL })));
+  expect((await db.select().from(account)).map(a => [a.userId, a.providerId]).sort()).toEqual([[TEST_DOCTOR_2.id, "credential"], [TEST_NURSE_2.id, "credential"]]);
 });
 
 test("each synthetic test clinician joins the demo hospital with its own role", () => {
@@ -153,10 +165,17 @@ test("a take-home list is charted only for a bed that is fit to go, and the plan
   const vitals = (await db.select().from(observations).where(eq(observations.patientId, "SYN-1042"))).map(o => ({ kind: o.kind, value: o.value, unit: o.unit, at: o.observedAt.toISOString() }));
   expect(dischargeChecks({ glReceived: false, medsConfirmed: false, language: "ms" }, planFor({ ...people.find(p => p.id === "SYN-1042")!.record as Record, visit: { vitals } })).find(c => c.id === "observations")?.status).toBe("passed");
   // The two stays waiting on a guarantee letter. Nurul's note meets the insurer's criteria but one: it says IV, not why.
-  // Amelia's visit has no note until her consultation's is saved, so nothing is met and none is made up for her.
+  // Amelia's visit has no note in seedDemo alone. seedDemoNote adds her one saved note, however often it runs: it says her
+  // score and her film; the organism and why IV came first are left for the doctor, never answered by the seed.
+  expect(await db.select().from(notes).where(eq(notes.encounterId, "visit-1042"))).toEqual([]);
+  await seedDemoNote(db);
+  await seedDemoNote(db);
   const note = async (visit: string) => (await db.select().from(notes).where(eq(notes.encounterId, visit)))[0]?.sentences ?? [];
   expect(claimChecks(await note("visit-2002")).map(c => [c.id, c.status])).toEqual([["severity", "passed"], ["imaging", "passed"], ["iv", "blocked"]]);
-  expect(await note("visit-1042")).toEqual([]);
+  expect((await db.select().from(notes).where(eq(notes.encounterId, "visit-1042"))).map(n => [n.id, n.revision, n.sentences.map(s => s.id)])).toEqual([["note-visit-1042-1", 1, ["subjective", "objective", "assessment", "plan"]]]);
+  expect(claimChecks(await note("visit-1042")).map(c => [c.id, c.status])).toEqual([["severity", "passed"], ["imaging", "passed"], ["organism", "blocked"], ["iv", "blocked"]]);
+  // Her cetirizine is recorded with its form, so the medicine resolves without a guess.
+  expect(defaultMedications({ medicines: (people.find(p => p.id === "SYN-1042")!.record as Pick<Patient, "medicines">).medicines } as Patient).map(m => [m.ingredient, m.formulation])).toEqual([["salbutamol", "inhaler"], ["cetirizine", "tablet"]]);
 });
 
 test("the demo insurer's criteria for Amelia's claim are rows, the organism rule tied to J18.9", async () => {

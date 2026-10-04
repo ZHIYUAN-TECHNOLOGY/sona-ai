@@ -56,7 +56,8 @@ export function sendXray(encounterId: string, asset: XrayAsset, deps: UploadDeps
   return sent;
 }
 
-type Reading<T> = { live: boolean; loading: boolean; data?: T; error?: string };
+/** `retry` asks the server's read again (the live-answer hook's); only a reading of this card's own stored image carries it. */
+type Reading<T> = { live: boolean; loading: boolean; data?: T; error?: string; retry?: () => void };
 /**
  * A card's reading of its own image, from that image's upload and the server's read of the visit's latest: it waits
  * while the image is still being saved, says so when the upload failed, and drops a reading of any other image (a newer

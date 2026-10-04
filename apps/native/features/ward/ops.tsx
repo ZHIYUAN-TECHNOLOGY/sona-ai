@@ -5,6 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-na
 import { BarChart } from "@/components/charts/bar-chart";
 import { RadialChart } from "@/components/charts/radial-chart";
 import { SampleLabel } from "@/components/sona/model-answer";
+import { ErrorLine } from "@/components/sona/parts";
 import { LAYOUT, LAYOUT_SPRING, riseIn } from "@/components/sona/motion";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
@@ -15,7 +16,7 @@ import { api, JUDGE, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { useDemoOffset } from "@/features/live/demo-clock";
 import { useFindings } from "@/features/live/findings-sync";
-import { useServerForecast } from "@/features/live/ward-sync";
+import { useServerForecast, useWardFailure } from "@/features/live/ward-sync";
 import { bedBar, bedKind, clockLabel, filterSegments, forecastBeds, forecastLine, freeingWindows, wardSummary, type Bed, type BedForecast, type BedKind, type Owner, type WardFilter } from "./model";
 
 /*
@@ -185,15 +186,20 @@ export function wardLine(beds: Bed[]) {
 export function WardGlance() {
   const { findings } = useFindings();
   const { reducedMotion } = useAccessibleEffects();
-  const { beds, loading } = useWard();
-  const forecast = useForecast(beds, findings);
+  const { beds, loading, failure, retry } = useWard();
+  const [attempt, setAttempt] = useState(0);
+  const forecastKey = useMemo(() => [findings, attempt], [findings, attempt]);
+  const forecast = useForecast(beds, forecastKey);
   const blocked = wardSummary(beds).blocked;
+  // The beds never arrived: no count and no forecast of an empty ward stands in for them.
+  const unread = Boolean(failure) && !beds.length;
   return <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 14 }}>
     <View style={{ gap: 4 }}>
       <Text style={{ ...type.overline, color: blocked ? palette.amber : palette.blue }}>Ward now</Text>
-      <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{loading ? "Reading the ward…" : wardLine(beds)}</Text>
+      <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{loading ? "Reading the ward…" : unread ? "The ward didn't load" : wardLine(beds)}</Text>
     </View>
-    <View>
+    {failure && <ErrorLine text={wardFailureLine(failure, beds)} onRetry={retry} />}
+    {!unread && <View>
       <BedBar beds={beds} />
       <Pressable accessibilityRole="button" accessibilityLabel={`Forecast: ${forecast.label}`} accessibilityHint="Opens the ward's forecast"
         onPress={() => router.push({ pathname: "/ward", params: { at: "forecast" } })} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 6 }}>
@@ -201,10 +207,23 @@ export function WardGlance() {
         <Text numberOfLines={1} style={{ ...type.footnote, flex: 1, fontWeight: "600", color: TEAL }}>{forecastLine(forecast)}</Text>
         <Icon name="chevron.right" size={11} color={TEAL} />
       </Pressable>
-    </View>
+      <ForecastFailure onRetry={() => setAttempt(a => a + 1)} />
+    </View>}
     <ThisWeek />
     <Action label="Open the ward" icon="bed.double" onPress={() => router.push("/ward")} />
   </Surface>;
+}
+
+/** The beds' failed read in the screen's words; beds from an earlier read are said to be that. */
+export const wardFailureLine = (failure: string, beds: Bed[]) => `The ward's beds didn't load: ${failure}${beds.length ? " · showing the last read" : ""}`;
+
+/**
+ * The forecast on view is not the server's when its read failed (useForecast then runs the same rule here): said under
+ * the forecast with the server's reason and Retry (`onRetry` changes the caller's forecast key, which reads again).
+ */
+export function ForecastFailure({ onRetry }: { onRetry: () => void }) {
+  const reason = useWardFailure("forecast");
+  return reason ? <ErrorLine text={`The server's forecast didn't load: ${reason} · this one is the same rule run on this phone`} onRetry={onRetry} /> : null;
 }
 
 // Chosen once per build, so outside the judge build the forecast reads no clock it did not read before.

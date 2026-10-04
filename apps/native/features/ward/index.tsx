@@ -25,7 +25,7 @@ import { Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveHuddle } from "@/features/live/model-sync";
 import { unanswered } from "@/features/clinical/judge-answer";
 import { useLiveChanges } from "@/features/live/channel";
-import { BedBar, ForecastTimeline, KIND, ThisWeek, useForecast, wardLine } from "./ops";
+import { BedBar, ForecastFailure, ForecastTimeline, KIND, ThisWeek, useForecast, wardFailureLine, wardLine } from "./ops";
 import { useWard } from "@/features/day/use-counts";
 import { unownedBlocked } from "@/features/day/model";
 import { DEMO_PATIENT, OWNERS, SUGGESTED, asFilter, bedKind, bedRow, emptyLine, filterBeds, huddle, ownerReceipt, type Bed, type Owner, type WardFilter } from "./model";
@@ -73,7 +73,10 @@ export function WardScreen() {
   useServerEncounter(patients.find(p => p.id === DEMO_PATIENT));
   const { findings } = useFindings();
   const followUps = toFollowUp(findings).length;
-  const { beds, loading } = useWard();
+  const { beds, loading, failure, retry } = useWard();
+  // The beds never arrived: the headline says so and nothing below draws an empty ward as if it were the ward.
+  const unread = Boolean(failure) && !beds.length;
+  const [forecastAttempt, setForecastAttempt] = useState(0);
   const [briefed, setBriefed] = useState(false);
   const [findingsOpen, setFindingsOpen] = useState(false);
   const [open, setOpen] = useState<{ bed: string; from: Rect; focus?: string }>();
@@ -144,7 +147,7 @@ export function WardScreen() {
   const unbriefed = held?.reason ?? server.error;
   const current = open && beds.find(b => b.bed === open.bed);
   // The server's forecast re-reads once each owner write lands, so the chart moves with Assign.
-  const forecastKey = useMemo(() => [findings, wardVersion], [findings, wardVersion]);
+  const forecastKey = useMemo(() => [findings, wardVersion, forecastAttempt], [findings, wardVersion, forecastAttempt]);
   const forecast = useForecast(beds, forecastKey, owners);
   // "Frees fastest" opens the bed's card at the blocker; a row the filter hides shows under All first, then opens once mounted.
   const openAt = (id: string, blockerId?: string) => {
@@ -169,9 +172,10 @@ export function WardScreen() {
     <Animated.View style={[{ flex: 1 }, gridStyle]} pointerEvents={open ? "none" : "auto"} accessibilityElementsHidden={Boolean(open)} importantForAccessibility={open ? "no-hide-descendants" : "auto"}>
       <ScrollView ref={scroll} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 44 + ASK_SPACE, gap: 18 }}>
         {/* Live mode says it is reading the ward rather than counting or listing beds it doesn't have yet. */}
-        <Insight eyebrow={loading ? "Now" : `Now · ${beds.length} beds`}>{loading ? "Reading the ward…" : wardLine(beds)}</Insight>
+        <Insight eyebrow={loading || unread ? "Now" : `Now · ${beds.length} beds`}>{loading ? "Reading the ward…" : unread ? "The ward didn't load" : wardLine(beds)}</Insight>
+        {failure && <ErrorLine text={wardFailureLine(failure, beds)} onRetry={retry} />}
 
-        {!loading && <>
+        {!loading && !unread && <>
         {/* The glance under the headline: when beds free over the next 24 h. Opened from My Day's forecast line, the ward scrolls here once. */}
         <Animated.View layout={motion} onLayout={e => {
           if (params.at !== "forecast" || scrolledToForecast.current) return;
@@ -179,6 +183,7 @@ export function WardScreen() {
           scroll.current?.scrollTo({ y: e.nativeEvent.layout.y - insets.top - 52, animated: !reducedMotion });
         }}>
           <ForecastTimeline beds={beds} forecast={forecast} onOpen={openAt} />
+          <ForecastFailure onRetry={() => setForecastAttempt(a => a + 1)} />
         </Animated.View>
 
         {/* The decision: what moves those bars is an owner on each blocker, so the unowned ones follow, assigned in one tap. */}
@@ -208,7 +213,7 @@ export function WardScreen() {
 
         {/* More, last and quiet: one glass list of rows that open in place (the huddle brief, the X-ray findings to
             follow up, this week's numbers), so none of them competes with the decision above. */}
-        {!loading && <Surface layout={motion} style={{ paddingHorizontal: 14, paddingVertical: 2 }}>
+        {!loading && !unread && <Surface layout={motion} style={{ paddingHorizontal: 14, paddingVertical: 2 }}>
           <MoreRow icon="waveform" title="Huddle brief" detail="30 seconds for the team" open={briefed} onToggle={() => setBriefed(v => !v)}>
             {server.loading && <Drafting label="Briefing the ward…" />}
             {!server.loading && lines.map((line, i) => <Animated.View key={i} entering={reducedMotion ? undefined : riseIn({ delay: i * 60, distance: 8, duration: 300 })} style={{ flexDirection: "row", gap: 10 }}>
@@ -216,7 +221,9 @@ export function WardScreen() {
               <MarkedText text={line} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
             </Animated.View>)}
             {held?.reason ? <SampleLabel source="fixture" rule /> : <SampleLabel answer={server} rule what="briefing" />}
-            {unbriefed && <Text style={{ ...type.caption, color: palette.red }}>{unbriefed} · showing the ward's own count</Text>}
+            {/* The ward changed: the previous brief stays on view while it is briefed again (`stale`), and says so. */}
+            {server.stale && !server.error && <Drafting label="Briefing the ward again…" lines={0} />}
+            {unbriefed && <ErrorLine text={`${unbriefed} · showing ${server.stale ? "the brief from before the change" : "the ward's own count"}`} onRetry={server.retry} />}
           </MoreRow>
           {followUps > 0 && <MoreRow icon="lungs" title="Findings to follow up" detail={`${followUps} from X-rays`} open={findingsOpen} onToggle={() => setFindingsOpen(v => !v)} divider>
             <FollowUpList findings={findings} bare />

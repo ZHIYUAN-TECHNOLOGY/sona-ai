@@ -80,7 +80,7 @@ export function issueSimulation(encounter: Encounter, patient: Patient, operatio
     createdAt, regimen, checks, inputs: encounter.prescriptionInputs ? { ...encounter.prescriptionInputs } : undefined,
     supersedes: recorded?.amendment?.supersedes ?? (previous && previous.revision !== encounter.revision ? previous.id : undefined),
     audit: [
-      server ? `Recorded in the visit record on the server · receipt ${server.id} · server revision ${server.revision}${server.approvedBy ? ` · prescribed by ${server.approvedBy}` : ""}` : "Sample mode · checked on this phone; nothing was saved to a hospital record",
+      server ? `Recorded in the visit record on the server · receipt ${server.id} · server revision ${server.revision}${server.approvedBy ? ` · prescribed by ${(server as { approvedByName?: string }).approvedByName ?? server.approvedBy}` : ""}` : "Sample mode · checked on this phone; nothing was saved to a hospital record",
       `Patient ${patient.id} · encounter ${patient.encounterId} · revision ${encounter.revision}`,
       ...(regimen ? [`Regimen entered by the clinician: ${regimenLine(regimen)}`, `Indication: ${regimen.indication}`, `Dose limits: ${regimen.sourceVersion}`] : ["No regimen entered"]),
       ...checks.map(c => `${c.label}: ${c.status} — ${c.detail}`), ...(encounter.prescriptionAmendment ? [`Amendment reason: ${encounter.prescriptionAmendment}`] : []), `Operation ${operationId} · ${createdAt}`,

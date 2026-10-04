@@ -57,8 +57,8 @@ test("a demo reset undoes a whole run (discharge, claim, receipts, tasks, findin
   // Results that arrived during the run are gone, not merely unacknowledged; records return to the seed.
   expect((await db.select().from(labResults)).map(r => r.id).sort()).toEqual(["lab-1086-potassium", "lab-2002-b2-result", "lab-2009-b9-renal", "lab-2017-b17-hb", "lab-hb-1086"]);
   expect((await db.select().from(patients)).map(p => p.allergies).filter(Boolean).sort()).toEqual(["Aspirin — wheeze", "Co-trimoxazole — rash", "Codeine — nausea and vomiting", "Penicillin — rash as a child", "Penicillin — reported rash; details need confirmation", "Perindopril — dry cough"]);
-  // The run's second revision is gone; Daniel and each ward patient are back to their one seeded note.
-  expect((await db.select().from(notes)).map(n => n.revision)).toEqual(Array(16).fill(1));
+  // The run's second revision is gone; Daniel, Amelia and each ward patient are back to their one seeded note.
+  expect((await db.select().from(notes)).map(n => n.revision)).toEqual(Array(17).fill(1));
   expect((await db.select().from(appointments)).map(a => a.id).sort()).toEqual(["appt-SYN-1042", "appt-SYN-1086"]);
 });
 

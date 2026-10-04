@@ -105,7 +105,7 @@ export function ReasoningCard({ patient, result, onSource, onRequest }: FeatureP
   const held = unanswered(JUDGE, server);
   return <View style={{ gap: 20 }}>
     {(held || (fromModel && !modelled)) && <Surface feature style={{ padding: 16, gap: 10 }}>
-      {held?.reason ? <ErrorLine text={`No reasoning: ${held.reason}`} /> : server.loading ? <Drafting label="Weighing the record…" /> : server.data ? <>
+      {held?.reason ? <ErrorLine text={`No reasoning: ${held.reason}`} onRetry={server.retry} /> : server.loading ? <Drafting label="Weighing the record…" /> : server.data ? <>
         <Arrive><Text selectable style={{ ...type.body, color: palette.ink }}>{server.data.answer}</Text></Arrive>
         <Arrive index={1}><SampleLabel answer={server} what="reasoning" /></Arrive>
       </> : <Text style={{ ...type.footnote, color: palette.red }}>{server.error}</Text>}

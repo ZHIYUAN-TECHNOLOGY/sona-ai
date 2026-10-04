@@ -175,7 +175,7 @@ test("patients list the hospital's people with their full record and visit, so l
   expect(people.find(p => p.id === "SYN-2017")).toMatchObject({ initials: "HS", age: 63, sex: "Male", complaint: "Upper GI bleed, day 2 after endoscopy." });
   const beds = await api.ward.beds();
   expect(people.filter(p => p.id.startsWith("SYN-20")).every(p => beds.some(b => b.patientId === p.id))).toBe(true);
-  expect(people[0]).toMatchObject({ subtitle: "Respiratory review", allergies: "Penicillin — reported rash; details need confirmation", medicines: ["Salbutamol inhaler, as needed", "Cetirizine, patient-reported"] });
+  expect(people[0]).toMatchObject({ subtitle: "Respiratory review", allergies: "Penicillin — reported rash; details need confirmation", medicines: ["Salbutamol inhaler, as needed", "Cetirizine tablet 10 mg, patient-reported"] });
   expect(people[0]!.history).toContain("Asthma since childhood");
   expect(people[0]!.sources.map(s => s.id)).toContain("history");
   expect(await (await otherHospital(db, as)).patients.list()).toEqual([]);
