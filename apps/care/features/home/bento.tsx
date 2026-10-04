@@ -8,7 +8,7 @@ import { markTaken, rise, useNextDose, useNow } from "@/features/doses";
 import { dosesToday, early, weekOf } from "@/features/doses/model";
 import { weekSaid, weekStrip } from "@/features/doses/strip";
 import { WeekChart } from "@/features/doses/week-chart";
-import { dayLabel, nextVisit, timeLabel, away } from "@/features/follow-ups/lines";
+import { dayLabel, gone, nextVisit, timeLabel, away } from "@/features/follow-ups/lines";
 import { useFollowUps } from "@/features/follow-ups/row";
 import { consistency, latestUpdate, nextCapsule, type Update } from "@/features/home";
 import { useMessageNeeds } from "@/features/messages/row";
@@ -132,12 +132,12 @@ const TONE: Record<Update["tone"], { fill: string; text: string }> = {
 /** Latest update (short): a face or chat icon in a white circle and one sparkle line; tap goes to it. Hidden when nothing is new. */
 export function LatestTile({ index, still, onCheckIn }: { index: number; still: boolean; onCheckIn: () => void }) {
   // A visit the doctor booked from her check-in (keyed "book-in:"), still ahead.
-  const visits = useFollowUps().data;
-  const booked = visits?.find(f => f.id.startsWith("book-in:") && f.status !== "missed");
+  const visits = useFollowUps().data, now = useNow();
+  const booked = visits?.find(f => f.id.startsWith("book-in:") && f.status !== "missed" && !gone(f, now));
   // A test from her X-ray the doctor put on the same visit ("CT added to your visit").
   const test = booked && visits?.find(f => f.id.startsWith("recall:") && new Date(f.date).getTime() === new Date(booked.date).getTime());
   const lang = useLang(), t = tFor(lang);
-  const u = latestUpdate(useCheckIns().data, useMessageNeeds() > 0, useNow(), booked && `${away(booked.inDays, lang)} ${timeLabel(booked, lang) ?? ""}`.trim(), test?.short, lang);
+  const u = latestUpdate(useCheckIns().data, useMessageNeeds() > 0, now, booked && `${away(booked.inDays, lang)} ${timeLabel(booked, lang) ?? ""}`.trim(), test?.short, lang);
   if (!u) return null;
   const go = () => u.to === "check-in" ? onCheckIn() : router.push(u.to === "messages" ? "/messages" : u.to === "follow-ups" ? "/follow-ups" : "/check-ins");
   return <Tile index={index} still={still} dither={{ pattern: "pixels", corner: "top-right" }} label={t("home.latestA11y", { line: u.line })} onPress={go}>
@@ -161,7 +161,7 @@ export function LatestTile({ index, still, onCheckIn }: { index: number; still: 
 export function VisitTile({ index, still, hospital }: { index: number; still: boolean; hospital?: string }) {
   const lang = useLang(), t = tFor(lang);
   const { data } = useFollowUps();
-  const next = nextVisit(data);
+  const next = nextVisit(data, useNow());
   if (!next) return <Tile index={index} still={still} grow dither={{ pattern: "dots", corner: "top-right" }} label={t(data ? "home.noVisit" : "home.visitsHere")} onPress={() => router.push(data ? "/doctors" : "/follow-ups")}
     footer={data && <Pressable accessibilityRole="button" accessibilityLabel={t("home.bookVisit")} onPress={() => router.push("/doctors")}
       style={({ pressed }) => ({ minHeight: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: palette.dark, transform: [{ scale: pressed ? 0.96 : 1 }] })}>

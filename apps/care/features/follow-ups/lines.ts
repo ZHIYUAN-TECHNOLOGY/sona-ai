@@ -2,6 +2,7 @@ import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import { formatDate, tFor, type Lang } from "@/lib/i18n";
 import { statusOf, type CheckIn } from "../check-ins/model";
 import { clock, dueNow, isLate, untilLine, type DayDose } from "../doses/model";
+import { now as clockNow } from "@/lib/clock";
 import "./strings";
 
 export type FollowUp = Awaited<ReturnType<AppRouterClient["care"]["followUps"]>>[number];
@@ -15,19 +16,30 @@ export const dayLabel = (date: Date | string, lang: Lang = "en") => formatDate(l
 /** "Fri 25 Dec · in 90 days". */
 export const whenLine = (f: Pick<FollowUp, "date" | "inDays">, lang: Lang = "en") => `${dayLabel(f.date, lang)} · ${away(f.inDays, lang)}`;
 
+/** A booked visit has a time; a recall or the discharge review has a due day only. */
+const timed = (f: Pick<FollowUp, "id">) => !f.id.startsWith("recall:") && f.id !== "discharge-review";
 /** "10:30 AM" in Malaysia for a booked visit; a recall or the discharge review has a due day, not a time. */
-export const timeLabel = (f: Pick<FollowUp, "id" | "date">, lang: Lang = "en") => f.id.startsWith("recall:") || f.id === "discharge-review" ? undefined
-  : formatDate(lang, f.date, "time");
+export const timeLabel = (f: Pick<FollowUp, "id" | "date">, lang: Lang = "en") => timed(f) ? formatDate(lang, f.date, "time") : undefined;
+/**
+ * A booked visit whose time has gone by today. The server keeps it due soon until its day ends (only then is it attended
+ * or missed), so here it stops being next and needs nothing; it stays on today's timeline.
+ */
+export const gone = (f: Pick<FollowUp, "id" | "date" | "inDays">, now: Date) => f.inDays === 0 && timed(f) && new Date(f.date) < now;
 /** The visit card's pill: "Fri 25 Dec · 10:30 AM", or just the day. */
 export const pillLine = (f: Pick<FollowUp, "id" | "date">, lang: Lang = "en") => [dayLabel(f.date, lang), timeLabel(f, lang)].filter(Boolean).join(" · ");
 /** What to bring: paperwork only, since the data holds no preparation steps for a visit or test. */
 export const bringLine = (f: Pick<FollowUp, "id">, lang: Lang = "en") => tFor(lang)(f.id === "discharge-review" ? "fu.bringReview" : "fu.bring");
 
-/** The next visit: the earliest not yet attended (upcoming, due soon or missed), from the list earliest first. Home and Schedule both read this. */
-export const nextVisit = <T extends Pick<FollowUp, "status">>(items: T[] | undefined) => items?.find(f => f.status !== "attended");
+type Timing = Pick<FollowUp, "id" | "date" | "inDays" | "status">;
+/**
+ * The next visit: the earliest not yet attended (upcoming, due soon or missed) whose time has not gone by today, from
+ * the list earliest first. Home, Schedule and Ask Sona Care all read this.
+ */
+export const nextVisit = <T extends Timing>(items: T[] | undefined, now = clockNow()) => items?.find(f => f.status !== "attended" && !gone(f, now));
 
-/** How many follow-ups need the patient now (due soon or missed); counts toward home's insight line. */
-export const followUpNeeds = (items: Pick<FollowUp, "status">[] | undefined) => items?.filter(f => f.status === "due-soon" || f.status === "missed").length ?? 0;
+/** The follow-ups that need the patient now (due soon or missed, not one gone by today); home's chips and its insight line count these. */
+export const needing = <T extends Timing>(items: T[] | undefined, now = clockNow()) => items?.filter(f => (f.status === "due-soon" || f.status === "missed") && !gone(f, now)) ?? [];
+export const followUpNeeds = (items: Timing[] | undefined, now?: Date) => needing(items, now).length;
 
 // The Schedule strip. A day is a whole number: days since 1 Jan 1970 in Malaysia (the hospital's
 // time), so a day number times DAY is that date's midnight in UTC and reads back with getUTC*.
@@ -104,7 +116,9 @@ export type Tone = "muted" | "blue" | "amber" | "green";
  * it is done, and at most one inline action: take the doses, answer the check-in, or read before the visit.
  * `soon` is how the insight line names it when it is next ("check-in at 9:00 AM").
  */
-export type AgendaItem = { key: string; at?: Date; title: string; line: string; tone: Tone; done: boolean; action?: "take" | "answer" | "prepare"; soon: string; visit?: FollowUp };
+export type AgendaItem = { key: string; at?: Date; title: string; line: string; tone: Tone; done: boolean; gone?: boolean; action?: "take" | "answer" | "prepare"; soon: string; visit?: FollowUp };
+/** The stop that leads a day: the first not done, and not a visit whose time has gone by (`gone`: it cannot be called done, and is not next). */
+export const leads = (i: AgendaItem) => !i.done && !i.gone;
 
 const partOf = (at: Date) => { const h = new Date(at.getTime() + MYT).getUTCHours(); return h < 12 ? "morning" : h < 17 ? "afternoon" : "evening"; };
 
@@ -129,7 +143,7 @@ export function agendaOf(now: Date, { visits, checkIns, doses, doseMark }: { vis
     }),
     ...visits.map((f): AgendaItem => {
       const time = timeLabel(f, lang), overdue = f.status === "missed";
-      return { key: f.id, at: time ? new Date(f.date) : undefined, title: f.title, line: overdue ? tr("fu.overdueDue", { when: away(f.inDays, lang) }) : f.why, tone: overdue ? "amber" : "muted", done: false,
+      return { key: f.id, at: time ? new Date(f.date) : undefined, title: f.title, line: overdue ? tr("fu.overdueDue", { when: away(f.inDays, lang) }) : f.why, tone: overdue ? "amber" : "muted", done: false, gone: gone(f, now),
         action: "prepare", soon: overdue ? tr("fu.soonVisitOverdue") : time && f.inDays === 0 ? tr("fu.soonVisitAt", { time }) : tr("fu.soonVisitWhen", { when: away(f.inDays, lang) }), visit: f };
     }),
   ];
@@ -141,9 +155,9 @@ export function agendaOf(now: Date, { visits, checkIns, doses, doseMark }: { vis
  * Schedule's insight under the title, one short line: "Next: check-in at 9:00 AM · visit in 3 days". A late dose
  * is named without its lateness (its row carries the one amber "late" with Take now); amber only for a missed visit.
  */
-export function scheduleLine(today: AgendaItem[], visits: Pick<FollowUp, "id" | "status" | "inDays">[], lang: Lang = "en"): { line: string; tone: "muted" | "amber" } {
-  const t = tFor(lang), next = today.find(i => !i.done), visit = nextVisit(visits);
-  const parts = [next ? t("fu.next", { what: next.soon }) : today.length ? t("fu.allDoneToday") : undefined,
+export function scheduleLine(today: AgendaItem[], visits: Timing[], lang: Lang = "en", now = clockNow()): { line: string; tone: "muted" | "amber" } {
+  const t = tFor(lang), next = today.find(leads), visit = nextVisit(visits, now);
+  const parts = [next ? t("fu.next", { what: next.soon }) : today.some(i => i.done) ? t("fu.allDoneToday") : undefined,
     visit && visit.id !== next?.key && (visit.status === "missed" ? t("fu.soonVisitOverdue") : t("fu.soonVisitWhen", { when: away(visit.inDays, lang) }))].filter(Boolean) as string[];
   const line = parts.join(" · ").replace(/^./, c => c.toUpperCase()) || t("fu.nothingBooked");
   return { line, tone: visit?.status === "missed" ? "amber" : "muted" };

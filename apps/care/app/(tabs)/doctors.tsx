@@ -14,7 +14,7 @@ import { dayLabel } from "@/features/follow-ups/lines";
 import { DOCK_SPACE } from "@/lib/dock";
 import { Text } from "@/lib/text";
 import { palette, space, type } from "@/lib/theme";
-import { field, Section, surfaceStyle, Title, LoadError } from "@/lib/ui";
+import { field, Section, surfaceStyle, Title, LoadError, useBelowStatusBar } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
 /** First appearance: a 40 ms ease-out stagger (60fps Vakitler); still under Reduce Motion, and never on a tab switch or search. */
@@ -43,8 +43,9 @@ export default function Doctors() {
   const team = listFor(doctors.data ?? [], "care-team");
   const enter = (i: number) => still || touched ? undefined : rise(i);
   const width = fontScale > 1.3 ? "100%" : "48.2%";
+  const below = useBelowStatusBar();
 
-  return <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
+  return <ScrollView style={below} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
     contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     {/* Finding a doctor is the page's one action, so it comes first, at a glance, as the search it opens (it zooms into
         the directory page on iOS 18+; elsewhere the stack's crossfade); the patient's own care team follows. */}

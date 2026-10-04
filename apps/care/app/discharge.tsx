@@ -13,7 +13,7 @@ import { dayLabel } from "@/features/follow-ups/lines";
 import { daysHome } from "@/features/home";
 import { Text } from "@/lib/text";
 import { motion, palette, type } from "@/lib/theme";
-import { BackButton, Card, pillStyle, Row, Section, surfaceStyle, Title, LoadError, inkPill } from "@/lib/ui";
+import { BackButton, Card, pillStyle, Row, Section, surfaceStyle, Title, LoadError, inkPill, useBelowStatusBar } from "@/lib/ui";
 
 const GROUPS: Group[] = ["new", "changed", "continue", "stopped"];
 const open = (name: string) => router.push({ pathname: "/medicine", params: { name } });
@@ -28,7 +28,8 @@ export default function DischargeScreen() {
   const query = useDischarge(), { data, error, isLoading } = query;
   const reduced = useReducedMotion();
   const lang = useLang(), t = tFor(lang);
-  return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingTop: 8, paddingBottom: 48, gap: 16 }}>
+  const below = useBelowStatusBar();
+  return <ScrollView style={below} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingTop: 8, paddingBottom: 48, gap: 16 }}>
     <Animated.View entering={rise(reduced, 0)} style={{ gap: 16 }}>
       <BackButton />
       <Title greeting={t("dis.titleLight")} accent={t("dis.titleBold")} line={data?.status === "discharged" ? takeLine(data.medicines, homeLine(daysHome(data.dischargedAt), lang), lang) : undefined} />

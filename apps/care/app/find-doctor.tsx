@@ -9,7 +9,7 @@ import { useMe } from "@/features/me";
 import { tFor, useLang } from "@/lib/i18n";
 import { Text, TextInput } from "@/lib/text";
 import { palette, space, type } from "@/lib/theme";
-import { BackButton, Card, field, LoadError, Title } from "@/lib/ui";
+import { BackButton, Card, field, LoadError, Title, useBelowStatusBar } from "@/lib/ui";
 import { orpc } from "@/utils/orpc";
 
 /**
@@ -36,8 +36,9 @@ export default function FindDoctor() {
   const words = plan?.status === "discharged" ? plan.leaflets.find(l => l.language === "en")?.text ?? "" : "";
   const list = searchDoctors(listFor(doctors.data ?? [], tab, words), query);
   const width = fontScale > 1.3 ? "100%" : "48.2%";
+  const below = useBelowStatusBar();
 
-  return <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
+  return <ScrollView style={below} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
     contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: 40, gap: space.stack }}>
     <BackButton />
     <Title greeting={t("doc.findLight")}>{t("doc.findBold")}</Title>

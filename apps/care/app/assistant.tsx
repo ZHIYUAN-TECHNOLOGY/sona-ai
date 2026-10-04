@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, Alert, Pressable, ScrollView, Share, View, type TextInput as RNTextInput } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Alert, Keyboard, Pressable, ScrollView, Share, View, type TextInput as RNTextInput } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion, useSharedValue, withTiming, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -54,10 +54,11 @@ export default function Assistant() {
   const still = useReducedMotion();
   const insets = useSafeAreaInsets();
   const { state } = useMe();
-  const { plan, dose } = useNextDose(useNow());
+  const now = useNow();
+  const { plan, dose } = useNextDose(now);
   const discharge = useDischarge();
-  // The same next visit Home and Schedule show: the earliest not yet attended, never one already been to.
-  const visit = nextVisit(useFollowUps().data);
+  // The same next visit Home and Schedule show: the earliest not yet attended, never one already been to or gone by today.
+  const visit = nextVisit(useFollowUps().data, now);
   const lang = useLang(), t = tFor(lang);
   const discharged = plan?.status === "discharged" ? plan : undefined;
   const asks = suggestions(discharged, visit, dose?.name, lang);
@@ -85,6 +86,8 @@ export default function Assistant() {
   // Real calls: the question to the model grounded in the plan (care.ask), a doctor question to the directory.
   const answerOf = (question: string) => answer(question, asks, { ask: q => client.care.ask({ question: q }), doctors: search => client.care.doctors.list(search ? { search } : undefined) }, condition, lang);
   const ask = (question: string) => {
+    // Asked (typed, or a suggestion tapped while typing): the keyboard goes down, or it covers the answer and leaves only its chips in view.
+    Keyboard.dismiss();
     const requestId = newRequestId();
     const say = (r: Reply) => AccessibilityInfo.announceForAccessibility(r.kind === "plan" ? `${spoken(r, lang)} ${r.asked.source}` : spoken(r, lang));
     // The 999 card never waits for the network. The question still goes to the server, which tells the care team; once the

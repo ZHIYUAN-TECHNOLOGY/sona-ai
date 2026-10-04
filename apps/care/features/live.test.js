@@ -58,6 +58,8 @@ test("a change re-reads what its topic touches, an unknown topic everything; a r
   expect(await heard("messages")).toEqual([[["care", "messages"]]]);
   expect(await heard("doses")).toEqual([]); // the echo of a dose taken on this phone
   expect(await heard("visit")).toEqual([undefined]); // not known here: everything
+  // Staff approved her discharge (the Worker tells the visit's patient): her plan, medicines, leaflet, check-ins and days home all re-read.
+  expect(await heard("discharge")).toEqual([undefined]);
   invalidated.length = 0;
   socket.onclose();
   socket.onopen(); // the retry is back

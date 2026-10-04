@@ -115,15 +115,23 @@ export function BackButton({ label }: { label?: string }) {
 // The canvas body's tint (lib/canvas), so a fade reads as the page itself.
 const WASH = "250,251,255";
 /**
- * A soft fade at a scroll edge (Sona Pro's EdgeBlur in its gradient form): the canvas washes in over `solid` pt from the
+ * A soft fade at a scroll edge (Sona Pro's EdgeBlur in its gradient form): the canvas covers `solid` pt from the
  * edge (the status bar, or floating buttons) and fades out over `fade` pt more, so content scrolling there never runs
- * into the clock or the buttons. Touches pass through.
+ * into the clock or the buttons. The cover is whole: at 85–90 % a big title still showed through under the clock.
+ * Touches pass through.
  */
 export function EdgeFade({ edge, solid, fade = 36 }: { edge: "top" | "bottom"; solid: number; fade?: number }) {
   const at = Math.round((solid / (solid + fade)) * 100);
   return <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, height: solid + fade, ...(edge === "top" ? { top: 0 } : { bottom: 0 }),
-    experimental_backgroundImage: `linear-gradient(${edge === "top" ? 180 : 0}deg, rgba(${WASH},0.9) 0%, rgba(${WASH},0.85) ${at}%, rgba(${WASH},0) 100%)` } as ViewStyle} />;
+    experimental_backgroundImage: `linear-gradient(${edge === "top" ? 180 : 0}deg, rgb(${WASH}) 0%, rgb(${WASH}) ${at}%, rgba(${WASH},0) 100%)` } as ViewStyle} />;
 }
+
+/**
+ * A page with no header band and nothing pinned starts below the status bar: its scroll view takes this style, so what
+ * scrolls up is cut off there (as under Messages' fixed header) and a title never slides under the clock. The canvas
+ * behind still runs to the top, and the page rests where it did (the scroll view's own safe-area inset becomes 0).
+ */
+export const useBelowStatusBar = () => ({ marginTop: useSafeAreaInsets().top });
 
 /** Room a page under `PinnedBack` leaves above its first row: the button's 8 + 48 pt and the usual 20 pt gap. */
 export const BACK_SPACE = 76;

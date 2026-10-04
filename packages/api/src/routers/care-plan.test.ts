@@ -6,6 +6,8 @@ import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
 import { eq, sql } from "drizzle-orm";
 
+import { patientsFor } from "../audience";
+import type { Change } from "../events";
 import { stubModels, type Models } from "../models";
 import { planText } from "./care-plan";
 import { scheduleCheckIns } from "./check-ins";
@@ -33,6 +35,18 @@ test("before discharge Amelia's plan says she is still in hospital, even when an
   const { amelia, discharge } = await world();
   await discharge("visit-1086", { followUp: "1w", language: "en", dischargedAt: "2026-09-25T08:00:00.000Z" });
   expect(await amelia.care.discharge()).toEqual({ status: "in-hospital" });
+});
+
+test("a discharge is announced with its visit, which is how Amelia's own Sona Care hears it and re-reads her plan", async () => {
+  const { db, clock } = await world();
+  const heard: Change[] = [];
+  const doctor = createRouterClient(appRouter, { context: { db, session: user("dr-aisyah"), now: () => clock.now, announce: async (_: string, change: Change) => { heard.push(change); } } });
+  await db.update(guaranteeLetters).set({ status: "received", receivedAt: clock.now }).where(eq(guaranteeLetters.id, "gl-1042"));
+  await db.update(encounters).set({ state: { discharge: { glReceived: true, medsConfirmed: true, followUp: "2w", language: "en" } } }).where(eq(encounters.id, "visit-1042"));
+  await doctor.discharge.request({ encounterId: "visit-1042", requestId: "req-d1", approvedBy: "dr-aisyah" });
+  expect(heard).toEqual([{ topic: "discharge", encounterId: "visit-1042" }]);
+  // The Worker tells the patient of that visit (announcer, apps/server/src/context.ts); her plan is there to read by then.
+  expect(await patientsFor(db, "demo", heard[0]!)).toEqual(["SYN-1042"]);
 });
 
 test("after discharge Amelia reads her plan in plain words, the leaflet first in the language chosen at discharge", async () => {
@@ -89,6 +103,25 @@ test("Amelia reads the leaflet her doctor approved at discharge, in its language
   expect(drafts.map(d => [(d.output as { leaflet: string }).leaflet, d.approvedBy]).sort()).toEqual([["Draf 1 (en)", null], ["Draf 2 (ms)", "dr-aisyah"], ["Draf 3 (ms)", null]]);
   await amelia.care.ask({ question: "Apa kata risalah saya?" });
   expect(grounded[0]).toContain("Draf 2 (ms)");
+  // Home, her visits still follow her plan.
+  expect(grounded[0]).toContain("- Clinic visit: Sat, 26 Sep 2026 10:15 (coming up)");
+});
+
+test("still in hospital, Sona Care's model reads the visits her app shows: the booked one, the one she asked for, and the time now", async () => {
+  const read: string[] = [];
+  const { clock, amelia } = await world({ ...stubModels, answerFromPlan: async input => { read.push(input.plan); return { answer: "", grounded: false, urgent: false, source: "fixture" }; } });
+  const [doctor] = await amelia.care.doctors.list();
+  const startsAt = doctor!.nextSlots[0]!.times[0]!;
+  await amelia.care.bookings.request({ doctorId: doctor!.id, startsAt });
+  await amelia.care.ask({ question: "When is my next visit?" });
+  expect(read[0]).toStartWith("Still in hospital");
+  expect(read[0]).toContain("Now: Sat, 26 Sep 2026 10:00 (Malaysia time)");
+  expect(read[0]).toContain("- Clinic visit: Sat, 26 Sep 2026 10:15 (coming up)");
+  expect(read[0]).toContain(`waiting for the care team to confirm:\n- ${doctor!.name} (${doctor!.specialty}): ${new Date(startsAt.getTime() + 8 * 3600_000).toUTCString().slice(0, 22)}`);
+  // Once its time has gone by it is no longer the one coming up.
+  clock.now = new Date("2026-09-26T10:30:00+08:00");
+  await amelia.care.ask({ question: "When is my next visit?" });
+  expect(read[1]).toContain("- Clinic visit: Sat, 26 Sep 2026 10:15 (earlier today)");
 });
 
 test("azithromycin reads as current until its last dose has gone by on the demo clock, then finished, in Care and in what the models read", async () => {

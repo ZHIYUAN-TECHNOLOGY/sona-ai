@@ -6,7 +6,7 @@ import { useCheckIns } from "@/features/check-ins/today";
 import { EASE_OUT, rise, useNextDose, useNow } from "@/features/doses";
 import { clock, dosesToday, weekOf } from "@/features/doses/model";
 import {
-  agendaOf, away, bringLine, dateOf, dayA11y, dayLabel, dayOf, dotsOf, emptyLine, legendOf, marksByDay, nextUp, nextVisit, openRequests, pillLine, scheduleLine, weekAround, weekdayOf, weekLabel,
+  agendaOf, away, bringLine, dateOf, dayA11y, dayLabel, dayOf, dotsOf, emptyLine, leads, legendOf, marksByDay, nextUp, nextVisit, openRequests, pillLine, scheduleLine, weekAround, weekdayOf, weekLabel,
   type AgendaItem, type BookingRequest, type DayMarks, type Dot, type FollowUp,
 } from "@/features/follow-ups/lines";
 import { tFor, useLang, type Lang } from "@/lib/i18n";
@@ -16,7 +16,7 @@ import { removeQuestion, saveQuestion, useQuestions, useSentQuestions } from "@/
 import { DOCK_SPACE } from "@/lib/dock";
 import { AnimatedText, Text, TextInput } from "@/lib/text";
 import { palette, space, type } from "@/lib/theme";
-import { Button, Card, Chip, CircleButton, field, QuickKey, surfaceStyle, Title, LoadError } from "@/lib/ui";
+import { Button, Card, Chip, CircleButton, field, QuickKey, surfaceStyle, Title, LoadError, useBelowStatusBar } from "@/lib/ui";
 import { useMessageNeeds } from "@/features/messages/row";
 import "@/features/doses/strings";
 
@@ -48,15 +48,16 @@ export default function ScheduleScreen() {
   const [picked, setPicked] = useState<number>();
   const day = picked ?? today;
 
-  const visits = data ?? [], next = nextVisit(data);
+  const visits = data ?? [], next = nextVisit(data, now);
   const dischargedAt = plan?.status === "discharged" ? plan.dischargedAt : undefined;
   const marks = marksByDay(today, visits, checkIns, weekOf(meds, dischargedAt, taken, now));
   const on = (d: number) => ({ visits: visits.filter(f => dayOf(f.date) === d), checkIns: checkIns.filter(c => dayOf(c.dueAt) === d) });
   const todayItems = agendaOf(now, { ...on(today), doses: dosesToday(meds, dischargedAt, taken, now) }, lang);
   const items = day === today ? todayItems : agendaOf(now, { ...on(day), doses: [], doseMark: marks[day]?.doses }, lang);
-  const insight = data && scheduleLine(todayItems, visits, lang);
+  const insight = data && scheduleLine(todayItems, visits, lang, now);
+  const below = useBelowStatusBar();
 
-  return <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
+  return <ScrollView style={below} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
     contentContainerStyle={{ padding: space.edge, paddingTop: space.top, paddingBottom: DOCK_SPACE, gap: space.stack }}>
     <Animated.View entering={rise(still, 0)} style={{ gap: 8 }}>
       <Title accent={t("fu.title")} line={insight?.line} lineTone={insight?.tone} />
@@ -144,7 +145,7 @@ function Agenda({ day, today, still, items, next, upNext, onJump }: {
 }) {
   const lang = useLang(), t = tFor(lang);
   const [open, setOpen] = useState<string>();
-  const lead = day >= today ? items.findIndex(i => !i.done) : -1;
+  const lead = day >= today ? items.findIndex(leads) : -1;
   return <View style={{ gap: 12 }}>
     <AnimatedText entering={rise(still, 0)} accessibilityRole="header" style={{ ...type.overline, color: palette.faint }}>
       {day === today ? t("fu.todayLabel", { day: labelOf(day, lang) }) : labelOf(day, lang)}

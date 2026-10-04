@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { agendaOf, bringLine, dateOf, dayA11y, dayOf, dotsOf, emptyLine, followUpNeeds, legendOf, marksByDay, nextUp, nextVisit, openRequests, pillLine, scheduleLine, weekAround, weekLabel, whenLine } from "./lines";
+import { agendaOf, bringLine, dateOf, dayA11y, dayOf, dotsOf, emptyLine, followUpNeeds, leads, legendOf, marksByDay, nextUp, nextVisit, openRequests, pillLine, scheduleLine, weekAround, weekLabel, whenLine } from "./lines";
 
 const D = (iso) => Date.UTC(...iso.split("-").map((n, i) => Number(n) - (i === 1 ? 1 : 0))) / 86_400_000; // "2026-09-27" → day number
 test("the strip reads days in Malaysia and shows the Monday-first week around the chosen day", () => {
@@ -112,6 +112,24 @@ test("the next visit is the earliest one not yet attended, never a visit already
   expect(nextVisit([seen, review])).toBe(review);
   expect(nextVisit([seen])).toBeUndefined();
   expect(nextVisit(undefined)).toBeUndefined();
+});
+
+test("a booked visit whose time has gone by today is no longer next and needs nothing; a day-only one, or one missed, still is", () => {
+  const at1030 = visit({ id: "appt-1", inDays: 0, date: new Date("2026-09-27T02:30:00Z") }), review = visit({ id: "review", status: "upcoming", inDays: 13, date: new Date("2026-10-10T02:30:00Z") });
+  const before = new Date("2026-09-27T02:00:00Z"), after = new Date("2026-09-27T03:00:00Z");
+  expect(nextVisit([at1030, review], before)).toBe(at1030);
+  expect(nextVisit([at1030, review], after)).toBe(review);
+  expect(nextVisit([at1030], after)).toBeUndefined();
+  expect([followUpNeeds([at1030, review], before), followUpNeeds([at1030, review], after)]).toEqual([1, 0]);
+  // The server calls it attended or missed once its day has ended; until then Schedule keeps it on today's timeline, leading nothing.
+  const today = agendaOf(after, { visits: [at1030], checkIns: [], doses: [] });
+  expect(today.map(i => [i.key, i.done, leads(i)])).toEqual([["appt-1", false, false]]);
+  expect(scheduleLine(today, [at1030, review], "en", after).line).toBe("Visit in 13 days");
+  expect(scheduleLine(agendaOf(before, { visits: [at1030], checkIns: [], doses: [] }), [at1030, review], "en", before).line).toMatch(/^Next: visit at 10:30\sAM$/);
+  // A recall or the discharge review is due on a day, not at a time; a missed visit stays next (the app offers to call the clinic).
+  const dueToday = visit({ id: "discharge-review", inDays: 0, date: new Date("2026-09-27T02:30:00Z") }), missed = visit({ status: "missed", inDays: -1, date: new Date("2026-09-26T02:30:00Z") });
+  expect(nextVisit([dueToday], after)).toBe(dueToday);
+  expect(nextVisit([missed], after)).toBe(missed);
 });
 
 test("a late dose leads the insight line plainly; only its row says late", () => {
