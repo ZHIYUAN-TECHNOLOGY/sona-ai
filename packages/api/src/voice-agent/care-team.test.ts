@@ -37,6 +37,7 @@ test("a patient telling Sona they feel worse flags one task for the attending do
   const { db, doctor, context, heard } = await world("worse");
   const told = await tellCareTeam(context, DEMO_HOSPITAL, "SYN-1042", "Demam saya datang balik malam tadi");
   expect(told?.title).toBe("Amelia: fever returned after discharge");
+  expect(told).toMatchObject({ label: "worse", readBy: { source: "model", model: "gemma-test", decidedBy: "model" } });
   expect(heard).toEqual([[DEMO_HOSPITAL, { topic: "checkIns", patientId: "SYN-1042" }]]);
   const [task] = await db.select().from(tasks).where(eq(tasks.id, told!.taskId));
   expect([task!.kind, task!.owner, task!.due, task!.completed, task!.encounterId]).toEqual(["check-in", "Attending doctor", "Today", false, "visit-1042"]);
@@ -49,6 +50,8 @@ test("a patient telling Sona they feel worse flags one task for the attending do
   expect(answered.replies.map(r => [r.label, r.task?.id])).toEqual([["worse", told!.taskId]]);
   // Booked in like any flagged reply.
   expect((await doctor.checkIns.bookIn({ taskId: told!.taskId })).kind).toBe("Clinic review · fever returned");
+  // With no model the keyword rule reads it, and the task says so.
+  expect((await tellCareTeam({ ...context, models: undefined }, DEMO_HOSPITAL, "SYN-1086", "Sakit dada"))?.readBy).toEqual({ source: "fixture", decidedBy: "rules" });
 });
 
 test("words read as fine flag nothing; a patient still in hospital, with no check-ins, is passed on too", async () => {

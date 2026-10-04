@@ -53,17 +53,19 @@ async function prepare(context: Pick<Context, "db" | "models">, patientId: strin
 /**
  * Records one sample when the hospital contributes and the patient consented; otherwise nothing. A
  * sample with the same id (a note saved again) is re-captured unless it was already exported, excluded or withdrawn.
- * Never throws: a failed capture is logged and dropped.
+ * Never throws: a failed capture is logged and dropped. Returns who de-identified the sample it wrote ("rules", or the
+ * model) and whether the leak gate let it through, so the route that caused the capture can say so; none when nothing was written.
  */
 export async function captureSample(context: Context, sample: { id: string; hospitalId: string; patientId: string; source: Source; sourceRef: string; input: string; output: string }) {
   try {
     if (!await consents(context.db, sample.hospitalId, sample.patientId)) return;
     const clean = await prepare(context, sample.patientId, sample.input, sample.output);
     const row = { ...sample, ...clean, createdAt: clockOf(context) };
-    await context.db.insert(trainingSamples).values(row).onConflictDoUpdate({
+    const [written] = await context.db.insert(trainingSamples).values(row).onConflictDoUpdate({
       target: trainingSamples.id, set: { input: row.input, output: row.output, replacements: row.replacements, deidentifier: row.deidentifier, status: row.status, leak: row.leak, createdAt: row.createdAt },
       setWhere: and(isNull(trainingSamples.datasetVersion), notInArray(trainingSamples.status, ["excluded", "withdrawn"])),
-    });
+    }).returning({ deidentifier: trainingSamples.deidentifier, status: trainingSamples.status });
+    return written;
   } catch (error) {
     console.error("training capture failed", error);
   }
@@ -98,7 +100,7 @@ export async function captureNoteEdit(context: Context, hospitalId: string, enco
     const draft = await noteDraftOf(context.db, encounterId);
     const [visit] = await context.db.select({ patientId: encounters.patientId }).from(encounters).where(and(eq(encounters.id, encounterId), eq(encounters.hospitalId, hospitalId)));
     if (!draft || !visit) return;
-    await captureSample(context, { id, hospitalId, patientId: visit.patientId, source: "note-edit", sourceRef: encounterId, input: draft, output: saved });
+    return await captureSample(context, { id, hospitalId, patientId: visit.patientId, source: "note-edit", sourceRef: encounterId, input: draft, output: saved });
   } catch (error) {
     console.error("training capture failed", error);
   }

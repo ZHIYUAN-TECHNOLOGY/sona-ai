@@ -1,10 +1,10 @@
 import { ORPCError } from "@orpc/server";
 import { appointments, encounters, findings, followUpRules, patients, provenance, tasks } from "@sona-ai/db/schema/clinical";
 import { dueDate, findingLine, isOverdue, ruleFor } from "@sona-ai/domain/findings";
-import { and, asc, eq, ne, inArray, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ne, inArray, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 
-import { answerOnce } from "../answers";
+import { answerOnce, originOf } from "../answers";
 import { findingDismissSchema, findingTrackSchema } from "../contracts";
 import { clockOf, type Context } from "../context";
 import { stubModels } from "../models";
@@ -92,6 +92,22 @@ export const findingsRouter = {
     // A repeat read may place the mark better (or add its box), on whichever image it read; status, rule and due date stay as they were.
     })).onConflictDoUpdate({ target: findings.id, set: { location: sql`excluded.location`, label: sql`excluded.label`, source: sql`excluded.source`, imageKey: sql`excluded.image_key` } });
     return listFindings(db, hospitalId, at, inArray(findings.id, ids));
+  }),
+  /**
+   * Who last read the visit's current film for findings, when, and how many it found: detect answers with the rows
+   * alone (its callers take a list), so a model that rightly found none looked the same as one that never ran. Here a
+   * model's empty read is `source: "model", found: 0`, the stub's is "fixture", and a film nobody has read yet is null.
+   * Read from provenance, where detect logs every reading with the image it read.
+   */
+  status: protectedProcedure.input(z.object({ encounterId: z.string().min(1) })).handler(async ({ context: { db, hospitalId }, input }) => {
+    const [visit] = await db.select({ state: encounters.state }).from(encounters).where(and(eq(encounters.id, input.encounterId), eq(encounters.hospitalId, hospitalId)));
+    if (!visit) throw new ORPCError("NOT_FOUND", { message: `No encounter ${input.encounterId}` });
+    const key = (visit.state as { xray?: { key: string } }).xray?.key;
+    const readings = await db.select({ output: provenance.output, model: provenance.model, sourceIds: provenance.sourceIds, createdAt: provenance.createdAt }).from(provenance)
+      .where(and(eq(provenance.encounterId, input.encounterId), eq(provenance.kind, "incidental-findings"))).orderBy(desc(provenance.createdAt));
+    // The reading of this film (no upload: the one made of none), a model's before a fixture's, as detect reuses them.
+    const ofFilm = readings.filter(r => r.sourceIds[0] === key), last = ofFilm.find(r => r.model !== "fixture") ?? ofFilm[0];
+    return last ? { ...originOf(last.model), readAt: last.createdAt, imageKey: key ?? null, found: (last.output as { findings?: unknown[] }).findings?.length ?? 0 } : null;
   }),
   /**
    * One task and one recall at the due date, then the finding is tracked. Both are keyed on the

@@ -37,7 +37,29 @@ test("detecting findings stores Amelia's two with their rules, unvalidated, and 
   expect(again.map(f => f.id)).toEqual(found.map(f => f.id));
   expect(await api.findings.list({})).toHaveLength(2);
   // Daniel's film shows nothing incidental in the stub.
+  expect(await api.findings.status({ encounterId: "visit-1086" })).toBeNull();
   expect(await api.findings.detect({ encounterId: "visit-1086" })).toEqual([]);
+  // No rows either way, so the status says who found none: here the stub, which read no image.
+  expect(await api.findings.status({ encounterId: "visit-1086" })).toEqual({ source: "fixture", readAt: expect.any(Date), imageKey: null, found: 0 });
+  expect(await api.findings.status({ encounterId: "visit-1042" })).toMatchObject({ source: "fixture", found: 2 });
+});
+
+test("a model that read the film and found nothing is told apart from one that never ran", async () => {
+  let awake = false;
+  const models: Models = { ...stubModels, incidentalFindings: async input => awake ? { findings: [], validated: false, source: "model", model: "fake-cxr-1" } : stubModels.incidentalFindings(input) };
+  const objects = new Map<string, Uint8Array>();
+  const uploads = { put: async (key: string, bytes: Uint8Array) => { objects.set(key, bytes); }, get: async (key: string) => { const bytes = objects.get(key); return bytes ? { arrayBuffer: async () => bytes.slice().buffer } : null; } };
+  const { api } = await signedIn({ models, uploads });
+  const { key } = await api.xray.upload({ encounterId: "visit-1086", contentType: "image/png", dataBase64: Buffer.from([1, 2, 3]).toString("base64") });
+  expect(await api.findings.status({ encounterId: "visit-1086" })).toBeNull();
+  expect(await api.findings.detect({ encounterId: "visit-1086" })).toEqual([]);
+  expect(await api.findings.status({ encounterId: "visit-1086" })).toMatchObject({ source: "fixture", found: 0, imageKey: key });
+  awake = true;
+  expect(await api.findings.detect({ encounterId: "visit-1086" })).toEqual([]);
+  expect(await api.findings.status({ encounterId: "visit-1086" })).toEqual({ source: "model", model: "fake-cxr-1", readAt: expect.any(Date), imageKey: key, found: 0 });
+  // A new film has not been read yet, whoever read the last one.
+  await api.xray.upload({ encounterId: "visit-1086", contentType: "image/png", dataBase64: Buffer.from([4]).toString("base64") });
+  expect(await api.findings.status({ encounterId: "visit-1086" })).toBeNull();
 });
 
 test("detection hands the model the uploaded X-ray when there is one", async () => {

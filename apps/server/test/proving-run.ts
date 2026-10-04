@@ -19,13 +19,16 @@
  *   --json            the results as JSON instead of lines
  *
  * A check FAILS when the answer says `source: "fixture"` (with `waking` while its box starts), "cached" (the rehearsed
- * evidence answer) or "rules" (the PII rules alone), when it names no source at all, when it is empty, or when the call
- * errors or times out. Exit code 1 if any check fails. A failure means that screen would show a stand-in on the day:
+ * evidence answer), "rules" (the PII rules alone), "none" (the reader did not run) or "unknown" (kept from before its
+ * source was), when it names no source at all, when it is empty, or when the call errors or times out. A label the
+ * safety rule's urgent words decided over a model's reading passes (the model answered) and is printed as the rule's.
+ * Exit code 1 if any check fails. A failure means that screen would show a stand-in on the day:
  * the model endpoints must be on and warm first (packages/infra/baseten/warm.ts; the SageMaker endpoints in Malaysia).
  *
  * Without --writes nothing an app shows changes, but nothing here is free of rows: every sign-in is a session, every
  * call is in the PDPA access trail, every AI answer is logged in provenance (a stored model answer is reused, so
- * discharge-draft, claim-codes and messages-draft can pass on yesterday's answer: see `note`), PubMed's results are
+ * discharge-draft, claim-codes, messages-draft and the X-ray checks can pass on an earlier answer: it says `storedAt`,
+ * and the line's note gives its date), PubMed's results are
  * cached, and scan-read and care-medicine-photo each leave one image in storage that nothing points to.
  * Images are the apps' own bundled samples: apps/native/features/imaging/assets/normal-pa-chest.jpg (X-ray),
  * apps/native/assets/scan/sample-ward-note.jpg (handwriting), apps/care/assets/scan/sample-medicine.jpg (medicine box).
@@ -64,8 +67,17 @@ function origin(answer: unknown): Pick<Outcome, "source" | "model" | "waking"> {
   const { source, model, waking } = (answer ?? {}) as Record<string, unknown>;
   return { source: typeof source === "string" ? source : undefined, model: typeof model === "string" ? model : undefined, waking: typeof waking === "number" ? waking : undefined };
 }
-/** The sources that are a stand-in: the stub, the authored evidence answer, the PII rules alone. */
-const STAND_IN = new Set(["fixture", "cached", "rules"]);
+/** The sources that are a stand-in: the stub, the authored evidence answer, the PII rules alone, a reader that did not run, a source nobody kept. */
+const STAND_IN = new Set(["fixture", "cached", "rules", "none", "unknown"]);
+/** A model's answer kept from an earlier ask (answerOnce): true of that model then, no proof its box is up now. */
+const kept = (answer: unknown) => {
+  const at = (answer as { storedAt?: Date } | null)?.storedAt;
+  return at ? `a stored answer from ${new Date(at).toISOString().slice(0, 16)}Z: it does not prove the model is up now` : undefined;
+};
+/** Which decided a label a model was asked for: the model, or the safety rule's urgent words over it. */
+const decided = (read: { source?: string; model?: string; decidedBy?: string } | null | undefined) =>
+  read?.decidedBy === "rules" && !STAND_IN.has(read.source ?? "") ? "the safety rule's urgent words decided, over the model's reading" : undefined;
+const notes = (...parts: (string | false | null | undefined)[]) => parts.filter(Boolean).join("; ") || undefined;
 const none = (value: unknown) => value == null || (Array.isArray(value) ? !value.length : typeof value === "string" ? !value.trim() : false);
 const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 /** An oRPC refusal as "412 PRECONDITION_FAILED The speech model is starting…"; anything else as its message. */
@@ -182,21 +194,29 @@ const CHECKS: Check[] = [
   } },
   { name: "discharge-draft", route: "discharge.draft", async run() {
     const answer = await (await doctor()).discharge.draft({ encounterId: (await visit()).encounterId, language: "ms" });
-    return { ...origin(answer), empty: none(answer.leaflet), note: "one draft per record and language is stored: a pass may be an earlier model's draft" };
+    return { ...origin(answer), empty: none(answer.leaflet), note: kept(answer) };
   } },
   { name: "claim-codes", route: "claim.suggestCodes", async run() {
     const answer = await (await doctor()).claim.suggestCodes({ encounterId: (await visit()).encounterId });
-    return { ...origin(answer), empty: none(answer.codes), note: "codes are stored per note: a pass may be an earlier model's codes" };
+    return { ...origin(answer), empty: none(answer.codes), note: kept(answer) };
   } },
   { name: "claim-appeal", route: "claim.appealDraft", async run() {
     try {
       const answer = await (await doctor()).claim.appealDraft({ encounterId: (await visit()).encounterId });
-      return { ...origin(answer), empty: none(answer.letter.points) };
+      // The appeal argues from the letter's codes: codes the rules picked fail it, whoever drafted the words.
+      const coder = answer.codedBy.source;
+      return { ...origin(answer), empty: none(answer.letter.points), fail: coder === "model" ? undefined : `the codes it argues from are ${coder}, not a model's` };
     } catch (error) {
       // Only a denied letter has an appeal to draft, and the denial is the insurer's to make (their review page).
       if (refused(error, "PRECONDITION_FAILED")) return { skip: "the insurer has not denied this visit's guarantee letter" };
       throw error;
     }
+  } },
+  { name: "claim-letter", route: "claim.status (who coded the letter sent)", async run() {
+    const letter = await (await doctor()).claim.status({ encounterId: (await visit()).encounterId });
+    if (letter.status === "draft") return { skip: "no guarantee letter sent for this visit yet" };
+    const appeal = letter.appealDraftedBy;
+    return { ...origin(letter.codedBy), fail: appeal && appeal.source !== "model" ? `the appeal that went was drafted by ${appeal.source}` : undefined, note: `status ${letter.status}` };
   } },
   { name: "evidence", route: "evidence.stream (PubMed, library, Gemma)", async run() {
     // Not the rehearsed question, so nothing authored can answer it.
@@ -222,18 +242,19 @@ const CHECKS: Check[] = [
     const api = await doctor(), { encounterId } = await visit();
     const { key } = await api.scan.upload({ encounterId, ...jpeg(WARD_NOTE) });
     const answer = await api.scan.read({ encounterId, key });
-    return { ...origin(answer), empty: none(answer.text) };
+    // The patient's bare name is the rules' to replace (pii-model wakes no box for it): said, not failed.
+    return { ...origin(answer), empty: none(answer.text), note: `name removed by ${answer.deidentifier} before the reader saw it` };
   } },
   { name: "messages-draft", route: "messages.draft", async run() {
     const answer = await (await doctor()).messages.draft({ patientId: TEST_PATIENT.patientId });
     if (!answer) return { skip: "no patient message is waiting: message-send (--writes) sends one" };
-    return { ...origin(answer), empty: none(answer.text), note: "one draft per message is stored: a pass may be an earlier model's draft" };
+    return { ...origin(answer), empty: none(answer.text), note: notes(kept(answer), `triaged ${answer.label} by ${answer.triagedBy?.source ?? "no one"}`) };
   } },
   { name: "check-ins", route: "checkIns.list (how replies were read)", async run() {
     // What was stored when the last reply was read: it says nothing of a box that has gone cold since (check-in-reply asks now).
     const replies = (await (await doctor()).checkIns.list()).flatMap(c => c.replies).sort((a, b) => a.receivedAt.getTime() - b.receivedAt.getTime());
     const last = replies.at(-1);
-    return last ? { ...origin(last), note: `the newest of ${replies.length} replies, read as ${last.label}` } : { skip: "no check-in reply yet: check-in-reply (--writes) sends one once the patient is discharged" };
+    return last ? { ...origin(last), note: notes(`the newest of ${replies.length} replies, read as ${last.label}`, decided(last)) } : { skip: "no check-in reply yet: check-in-reply (--writes) sends one once the patient is discharged" };
   } },
   { name: "voice-transcribe", route: "voice.transcribe (the dock's ears)", async run() {
     const audio = wav();
@@ -263,7 +284,13 @@ const CHECKS: Check[] = [
   // Sona Care, signed in as the patient.
   { name: "care-ask", route: "care.ask", async run() {
     const answer = await (await patient()).care.ask({ question: PATIENT_QUESTION });
-    return { ...origin(answer), empty: none(answer.answer), note: "careTeam" in answer ? "this question flagged a task for the care team" : undefined };
+    return { ...origin(answer), empty: none(answer.answer), note: "careTeam" in answer ? `this question flagged a task for the care team, read as ${answer.careTeam.label} by ${answer.careTeam.readBy.source}` : undefined };
+  } },
+  { name: "care-leaflet", route: "care.discharge (the leaflet that went home)", async run() {
+    const plan = await (await patient()).care.discharge();
+    if (plan.status !== "discharged") return { skip: "the patient is still in hospital: no leaflet has gone home" };
+    const leaflet = plan.leaflets[0]!;
+    return { ...origin(leaflet), empty: none(leaflet.text), note: "approvedBy" in leaflet && leaflet.approvedBy ? `approved by ${leaflet.approvedBy}` : "no model's draft was approved at discharge: the authored leaflet went home" };
   } },
   { name: "care-speak", route: "care.speak (Sona's voice)", async run() {
     const answer = await (await patient()).care.speak({ text: "Hello Amelia, this is Sona. Your care team is here for you." });
@@ -286,28 +313,33 @@ const CHECKS: Check[] = [
     const api = await doctor(), { encounterId } = await visit();
     await api.xray.upload({ encounterId, ...jpeg(XRAY) });
     const answer = await api.xray.read({ encounterId });
-    return { ...origin(answer), empty: none(answer.findings) };
+    return { ...origin(answer), empty: none(answer.findings), note: kept(answer) };
   } },
-  { name: "findings", route: "xray.upload + findings.detect", writes: true, async run() {
+  { name: "findings", route: "xray.upload + findings.detect + findings.status", writes: true, async run() {
     const api = await doctor(), { encounterId } = await visit();
     await api.xray.upload({ encounterId, ...jpeg(XRAY) });
     const rows = await api.findings.detect({ encounterId });
-    // The bundled film is a normal chest, and no findings come back as [] with no source: a model that rightly found none reads the same as one that never ran.
-    if (!rows.length) return { skip: "no findings on the normal film, and the route names no source for none: cannot be told" };
-    return { source: rows.find(r => STAND_IN.has(r.source))?.source ?? rows[0]!.source, note: `${rows.length} findings` };
+    // The bundled film is a normal chest: no rows is the right answer, so who read it comes from the reading's status.
+    const read = await api.findings.status({ encounterId });
+    if (!read) return { fail: "detect ran, but no reading of this film is on record" };
+    return { ...origin(read), fail: read.found === rows.length ? undefined : `the reading found ${read.found}, detect returned ${rows.length}`, note: `${read.found} findings` };
   } },
   { name: "check-in-reply", route: "checkIns.reply", writes: true, async run() {
     const api = await doctor(), { encounterId } = await visit();
     const latest = (await api.checkIns.list({ encounterId })).at(-1);
     if (!latest) return { skip: "no check-in scheduled: the patient is not discharged" };
     const read = (await api.checkIns.reply({ checkInId: latest.id, text: "Feeling much better today, thank you. Eating and sleeping well." })).replies.at(-1);
-    return { ...origin(read), empty: !read, note: read && `read as ${read.label}` };
+    // Plain good news: nothing the urgent words could decide, so a rule's label here means the model did not read it.
+    return { ...origin(read), empty: !read, fail: read?.decidedBy === "rules" && read.source !== "fixture" ? "the rule decided the label of a reply with no urgent words" : undefined, note: read && `read as ${read.label}` };
   } },
   { name: "message-send", route: "care.messages.send + messages.draft", writes: true, async run() {
-    // The triage of the message names no source (it is stored as a label), so the proof is the draft written for this new message.
+    // Two models answer here: the one that triaged the new message, and the one that drafts its reply. Both must be models.
     await (await patient()).care.messages.send({ text: "Can I move my clinic appointment to next week?", requestId: `proving-${crypto.randomUUID()}` });
     const answer = await (await doctor()).messages.draft({ patientId: TEST_PATIENT.patientId });
-    return answer ? { ...origin(answer), empty: none(answer.text), note: `triaged ${answer.label}, by a model or by rules: the route does not say` } : { fail: "the message sent is not waiting for a reply" };
+    if (!answer) return { fail: "the message sent is not waiting for a reply" };
+    const triage = answer.triagedBy;
+    return { ...origin(answer), empty: none(answer.text), fail: triage?.source !== "model" ? `triage: ${triage?.source ?? "no source"}` : triage.decidedBy === "rules" ? "triage: the rule decided a message with no urgent words" : undefined,
+      note: `triaged ${answer.label} by ${triage?.source === "model" ? triage.model : triage?.source}` };
   } },
   { name: "watch", route: "watches.create (asked once now) + watches.remove", writes: true, async run() {
     const api = await doctor(), requestId = `proving-${crypto.randomUUID()}`;

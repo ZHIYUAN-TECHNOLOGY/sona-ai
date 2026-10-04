@@ -112,7 +112,7 @@ test("a discharge records what the rows say: minutes saved from when the bed was
   expect(stubbed.discharge.leaflet).toBeUndefined();
   expect(stubbed.tasks.map(t => t.title)).toEqual(["Book clinic review for Priya"]);
   const modelled = await leave({ ...stubModels, draftDischarge: async () => ({ source: "model", model: "gemma-test", summary: "s", leaflet: "Makan ubat seperti yang diarahkan." }) });
-  expect(modelled.discharge.leaflet).toEqual({ language: "ms", text: "Makan ubat seperti yang diarahkan." });
+  expect(modelled.discharge.leaflet).toEqual({ language: "ms", text: "Makan ubat seperti yang diarahkan.", model: "gemma-test", approvedBy: "Dr dr-aisyah", approvedAt: expect.any(String) });
   // The context has no clock, so the discharge is at the wall clock's now, long after the seed marked her fit: nothing is claimed as saved.
   expect(modelled.discharge.savedMinutes).toBe(0);
 });
@@ -177,7 +177,7 @@ test("a model codes a note once: asked again, its stored codes come back still l
   expect((await api.claim.suggestCodes({ encounterId: "visit-1042" })).source).toBe("fixture");
   awake = true;
   const coded = await api.claim.suggestCodes({ encounterId: "visit-1042" });
-  expect(await api.claim.suggestCodes({ encounterId: "visit-1042" })).toEqual(coded);
+  expect(await api.claim.suggestCodes({ encounterId: "visit-1042" })).toEqual({ ...coded, storedAt: expect.any(Date) });
   expect([coded.source, calls]).toEqual(["model", 2]);
   // A fix saves a sentence to the note, so the note is coded again.
   await api.note.save({ encounterId: "visit-1042", expectedRevision: 1, sentences: [...noteFor(EMPTY_CLAIM), ORGANISM_UNKNOWN] });

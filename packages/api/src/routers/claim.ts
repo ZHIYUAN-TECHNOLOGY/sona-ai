@@ -5,7 +5,7 @@ import { INSURER, decideClaimSend, type Code, type DenialCode, type Sentence } f
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 
-import { answerOnce } from "../answers";
+import { answerOnce, originOf } from "../answers";
 import { appealSchema, claimUpdateSchema, approvedCommandSchema } from "../contracts";
 import { newReviewToken, reviewUrl } from "../insurer";
 import { clockOf, type Context } from "../context";
@@ -60,11 +60,17 @@ async function icdCandidates(db: Context["db"], sentences: Sentence[]) {
   return [...new Map(hits.map(h => [h.code, h] as const)).values()];
 }
 
-/** The codes the doctor last reviewed for this visit (the latest suggestion), suggested now if none was. */
-async function reviewedCodes(context: Context & { hospitalId: string }, encounterId: string): Promise<Suggestion> {
-  const [last] = await context.db.select({ output: provenance.output }).from(provenance)
+/**
+ * The codes the doctor last reviewed for this visit (the latest suggestion), suggested now if none was. `codedBy` is
+ * who suggested them, as provenance kept it ("fixture" for the keyword rules, else the model's name): it goes into
+ * the letter with the codes, so codes the rules picked are never frozen, or appealed on, as a model's.
+ */
+async function reviewedCodes(context: Context & { hospitalId: string }, encounterId: string): Promise<Suggestion & { codedBy: string }> {
+  const [last] = await context.db.select({ output: provenance.output, model: provenance.model }).from(provenance)
     .where(and(eq(provenance.encounterId, encounterId), eq(provenance.kind, "claim-codes"))).orderBy(desc(provenance.createdAt)).limit(1);
-  return (last?.output as Suggestion | undefined) ?? suggest(context, encounterId);
+  if (last) return { ...(last.output as Suggestion), codedBy: last.model };
+  const now = await suggest(context, encounterId);
+  return { codes: now.codes, sentences: now.sentences, codedBy: now.source === "model" ? now.model : "fixture" };
 }
 
 export const claimRouter = {
@@ -95,9 +101,11 @@ export const claimRouter = {
     const decision = decideClaimSend((await latestNote(db, hospitalId, input.encounterId)).sentences, input, at);
     if (decision.status === "refused") throw new ORPCError("PRECONDITION_FAILED", { message: "The claim is not ready to send", data: { reason: decision.reason, open: decision.open } });
 
-    // The codes the doctor reviewed for this patient, each with the note sentence behind it, frozen into the letter.
+    // The codes the doctor reviewed for this patient, each with the note sentence behind it and who suggested it, frozen into the letter.
+    // ponytail: `source` (and the appeal's `draftedBy`) ride in the existing JSON, which the columns' types in
+    // packages/db do not name yet, so they are read back by cast (claim.status); name them there when the insurer's page shows them.
     const reviewed = await reviewedCodes(context, input.encounterId);
-    const codes = reviewed.codes.map(c => ({ code: c.code, label: c.label, kind: c.kind, evidence: c.evidence, text: reviewed.sentences.find(s => s.id === c.evidence)?.text ?? "" }));
+    const codes = reviewed.codes.map(c => ({ code: c.code, label: c.label, kind: c.kind, evidence: c.evidence, text: reviewed.sentences.find(s => s.id === c.evidence)?.text ?? "", source: reviewed.codedBy }));
     // A fresh link each send; a claim the insurer queried goes back to them once the doctor sends again.
     const token = newReviewToken();
     await db.insert(claims).values({
@@ -117,7 +125,7 @@ export const claimRouter = {
     }
     await db.insert(receipts).values({
       id: crypto.randomUUID(), kind: "claim", encounterId: input.encounterId, requestId: input.requestId, revision: encounter.revision,
-      approvedBy: input.approvedBy, payload: { sentAt: decision.sentAt, insurer: INSURER, reviewLink: true, emailed },
+      approvedBy: input.approvedBy, payload: { sentAt: decision.sentAt, insurer: INSURER, reviewLink: true, emailed, codedBy: originOf(reviewed.codedBy) },
     }).onConflictDoNothing();
     const [receipt] = await db.select().from(receipts).where(and(eq(receipts.kind, "claim"), eq(receipts.encounterId, input.encounterId)));
     return receipt!;
@@ -139,7 +147,10 @@ export const claimRouter = {
     const link = claim.reviewToken && context.publicUrl && withInsurer ? reviewUrl(context.publicUrl, claim.reviewToken) : undefined;
     const denial = claim.denialCode && claim.denialReason && (claim.status === "denied" || claim.status === "appealed")
       ? { code: claim.denialCode as DenialCode, reason: claim.denialReason, note: claim.status === "denied" ? claim.insurerNote ?? undefined : undefined, at: (claim.deniedAt ?? claim.decidedAt)?.toISOString() ?? "" } : undefined;
-    return { status: claim.status, approvedAt: claim.approvedAt?.toISOString(), reviewUrl: link, query: claim.status === "queried" ? claim.insurerNote ?? undefined : undefined, denial, appealedAt: claim.appealedAt?.toISOString() };
+    // Who suggested the letter's codes and drafted the appeal that went, as each was frozen ("unknown" on a letter from before this was kept).
+    const kept = { codes: (claim.codes as { source?: string }[])[0]?.source, appeal: (claim.appeal as { draftedBy?: string } | null)?.draftedBy };
+    return { status: claim.status, approvedAt: claim.approvedAt?.toISOString(), reviewUrl: link, query: claim.status === "queried" ? claim.insurerNote ?? undefined : undefined, denial, appealedAt: claim.appealedAt?.toISOString(),
+      codedBy: originOf(kept.codes), appealDraftedBy: claim.appeal ? originOf(kept.appeal) : undefined };
   }),
 
   /**
@@ -159,7 +170,8 @@ export const claimRouter = {
     });
     const points = answer.letter.points.filter(p => reviewed.sentences.some(s => s.id === p.evidenceSentenceId));
     const sentences = reviewed.sentences.filter(s => points.some(p => p.evidenceSentenceId === s.id));
-    return logAnswer(db, input.encounterId, "claim-appeal", { ...answer, letter: { ...answer.letter, points }, sentences }, points.map(p => p.evidenceSentenceId));
+    // `source` and `model` are the appeal's drafter; `codedBy` is who suggested the codes it argues from.
+    return logAnswer(db, input.encounterId, "claim-appeal", { ...answer, letter: { ...answer.letter, points }, sentences, codedBy: originOf(reviewed.codedBy) }, points.map(p => p.evidenceSentenceId));
   }),
 
   /**
@@ -180,14 +192,19 @@ export const claimRouter = {
     const points = input.letter.points.map(p => ({ ...p, text: sentences.find(s => s.id === p.evidenceSentenceId)?.text }));
     if (points.some(p => p.text === undefined)) throw new ORPCError("BAD_REQUEST", { message: "Every appeal point must cite a sentence of the note" });
     const at = clockOf(context), token = newReviewToken();
+    // The letter is the doctor's edit of the latest draft (appealDraft logs each one): who drafted it is frozen with it,
+    // "fixture" for the rules' template. A letter sent with no draft behind it has none, and reads as unknown.
+    const [drafted] = await db.select({ model: provenance.model }).from(provenance)
+      .where(and(eq(provenance.encounterId, input.encounterId), eq(provenance.kind, "claim-appeal"))).orderBy(desc(provenance.createdAt)).limit(1);
+    const appeal = { ...input.letter, points: points as { claim: string; evidenceSentenceId: string; text: string }[], draftedBy: drafted?.model };
     // sentAt restarts the link's week; the denial stays on the row so the insurer sees what the appeal answers.
-    const moved = await db.update(claims).set({ status: "appealed", appeal: { ...input.letter, points: points as { claim: string; evidenceSentenceId: string; text: string }[] }, appealedAt: at, sentAt: at, reviewToken: token, decidedAt: null })
+    const moved = await db.update(claims).set({ status: "appealed", appeal, appealedAt: at, sentAt: at, reviewToken: token, decidedAt: null })
       .where(and(eq(claims.id, claimId(input.encounterId)), eq(claims.status, "denied"))).returning({ id: claims.id });
     // Another appeal landed first (a different requestId racing this one).
     if (!moved.length) throw new ORPCError("CONFLICT", { message: "The appeal was already sent" });
     const [receipt] = await db.insert(receipts).values({
       id: crypto.randomUUID(), kind: "appeal", encounterId: input.encounterId, requestId: input.requestId, revision: encounter.revision,
-      approvedBy: input.approvedBy, payload: { appealedAt: at.toISOString(), insurer: INSURER, points: points.length, reviewLink: true },
+      approvedBy: input.approvedBy, payload: { appealedAt: at.toISOString(), insurer: INSURER, points: points.length, reviewLink: true, draftedBy: originOf(drafted?.model) },
     }).returning();
     return receipt!;
   }),

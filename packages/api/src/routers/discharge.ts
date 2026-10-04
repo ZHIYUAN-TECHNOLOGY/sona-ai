@@ -13,9 +13,14 @@ import { listFindings } from "./findings";
 import { assertApprover } from "./hospital";
 import { loadEncounter, recordOf, recordSources, visitOf, type EncounterSnapshot } from "./encounter";
 import { scheduleCheckIns } from "./check-ins";
+import { staffName } from "./messages";
 
-/** The patient leaflet as approved at discharge, in the discharge language; kept in the visit's discharge state. */
-export type ApprovedLeaflet = { language: Language; text: string };
+/**
+ * The patient leaflet as approved at discharge, in the discharge language; kept in the visit's discharge state. It is a
+ * model's draft a doctor approved, and says so: the model that drafted it, and who approved it and when (their name as
+ * the patient reads it). A discharge from before these were kept has the words only.
+ */
+export type ApprovedLeaflet = { language: Language; text: string; model?: string; approvedBy?: string; approvedAt?: string };
 
 /** A model's stored discharge drafts for the visit (never the stub's rule-built stand-in). */
 const modelDraft = (encounterId: string) => and(eq(provenance.encounterId, encounterId), eq(provenance.kind, "discharge-draft"), ne(provenance.model, "fixture"));
@@ -122,12 +127,12 @@ export const dischargeRouter = {
     // The leaflet the approver read goes home with the patient: the model's latest draft in the discharge language
     // (discharge.draft). Sona Care shows these approved words, never a new draft. With no model draft nothing was read,
     // so no leaflet is recorded as approved.
-    const [draft] = await db.select({ id: provenance.id, output: provenance.output }).from(provenance)
+    const [draft] = await db.select({ id: provenance.id, output: provenance.output, model: provenance.model }).from(provenance)
       .where(and(modelDraft(input.encounterId), sql`${provenance.output}->>'language' = ${state.language}`))
       .orderBy(desc(provenance.createdAt)).limit(1);
     if (draft) await db.update(provenance).set({ approvedBy: input.approvedBy }).where(eq(provenance.id, draft.id));
     const text = (draft?.output as { leaflet?: string } | undefined)?.leaflet;
-    const leaflet: ApprovedLeaflet | undefined = text ? { language: state.language, text } : undefined;
+    const leaflet: ApprovedLeaflet | undefined = text ? { language: state.language, text, model: draft!.model, approvedBy: staffName(session.user.name, context.role), approvedAt: at.toISOString() } : undefined;
     const discharged = { ...state, dischargedAt: at.toISOString(), savedMinutes, leaflet };
     // Merged in place so a concurrent edit is neither lost nor needed to bump the revision.
     await db.update(encounters).set({ state: sql`jsonb_set(${encounters.state}, '{discharge}', ${JSON.stringify(discharged)}::jsonb)` }).where(eq(encounters.id, input.encounterId));

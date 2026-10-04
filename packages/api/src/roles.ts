@@ -81,6 +81,7 @@ export const PERMISSIONS: Record<string, readonly [readonly Role[], string]> = {
   "scan.apply": [DOCTOR, "add a scanned note to the record"],
   "findings.list": [CLINICAL_READ, "see findings"],
   "findings.detect": [DOCTOR, "read an X-ray for findings"],
+  "findings.status": [CLINICAL_READ, "see who read the X-ray for findings"],
   "findings.track": [DOCTOR, "track a finding"],
   "findings.addToVisit": [DOCTOR, "add a finding to a visit"],
   "findings.dismiss": [DOCTOR, "dismiss a finding"],

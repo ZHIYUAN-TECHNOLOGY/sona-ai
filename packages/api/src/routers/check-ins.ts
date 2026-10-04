@@ -13,7 +13,7 @@ import { clockOf, type Context } from "../context";
 import { checkInReplySchema, type CheckInReply } from "../contracts";
 import type { Change } from "../events";
 import { protectedProcedure } from "../index";
-import { stubModels } from "../models";
+import { stubModels, type Models } from "../models";
 import { followUpsToAdd } from "./findings";
 import { tellPatient } from "../push";
 import { captureSample } from "./training";
@@ -49,8 +49,19 @@ export async function sendDueCheckIns(db: Context["db"], hospitalId: string, now
   return { sent: sent.length, patientIds: [...latest.keys()] };
 }
 
+/**
+ * Who read a reply, as check_in_replies.source keeps it (one text column, no other place): the model's name, "fixture"
+ * for the keyword rule alone, or "rules over <model>" when the model was asked but the rule's urgent words set the label.
+ */
+const RULED = "rules over ";
+const keptReader = (read: Awaited<ReturnType<Models["classifyReply"]>>) => read.source === "model" ? `${read.decidedBy === "rules" ? RULED : ""}${read.model}` : "fixture";
+const readerOf = (kept: string) => kept.startsWith(RULED) ? { source: kept.slice(RULED.length), decidedBy: "rules" as const }
+  : { source: kept, decidedBy: kept === "fixture" ? "rules" as const : "model" as const };
+/** A check-in whose replies also say which decided each label: the model named in `source`, or the rules. */
+export type ReadCheckIn = Omit<CheckIn, "replies"> & { replies: (CheckIn["replies"][number] & { decidedBy: "model" | "rules" })[] };
+
 /** A hospital's check-ins with their replies, for one visit or (Sona Care) one patient when given. */
-export async function listCheckIns(db: Context["db"], hospitalId: string, { encounterId, patientId }: { encounterId?: string; patientId?: string } = {}): Promise<CheckIn[]> {
+export async function listCheckIns(db: Context["db"], hospitalId: string, { encounterId, patientId }: { encounterId?: string; patientId?: string } = {}): Promise<ReadCheckIn[]> {
   const rows = await db.select({
     id: checkIns.id, patientId: checkIns.patientId, encounterId: checkIns.encounterId, day: checkIns.day, language: checkIns.language,
     message: checkIns.message, dueAt: checkIns.dueAt, sentAt: checkIns.sentAt,
@@ -61,13 +72,19 @@ export async function listCheckIns(db: Context["db"], hospitalId: string, { enco
     .leftJoin(tasks, eq(tasks.id, checkInReplies.taskId))
     .where(inArray(checkInReplies.checkInId, rows.map(r => r.id))).orderBy(asc(checkInReplies.receivedAt));
   return rows.map(r => ({ ...r, replies: replies.filter(x => x.checkInId === r.id).map(({ reply, task }) => ({
-    id: reply.id, text: reply.text, label: reply.label, source: reply.source, receivedAt: reply.receivedAt,
+    id: reply.id, text: reply.text, label: reply.label, ...readerOf(reply.source), receivedAt: reply.receivedAt,
     task: task && { id: task.id, title: task.title, completed: task.completed },
   })) }));
 }
 
 /** The author of the agent's messages in a patient's thread: Sona, not a person (the care team's view shows "Care team"). */
 export const SONA_AUTHOR = "sona";
+/**
+ * Sona writes one thing in a thread: the call-999 line, a fixed template the safety rule posts (tellCall999). No model
+ * and no person wrote it, so a thread says so on that message (`rule`, spread in: every other message has none).
+ * ponytail: the author is the stored mark; a kind column once Sona posts anything else.
+ */
+export const ruleOf = (authorId: string) => authorId === SONA_AUTHOR && { rule: "call-999" as const };
 
 /**
  * Sona tells a patient with an emergency sign to call 999 now: the existing template in her thread, and a push.
@@ -230,12 +247,13 @@ export async function replyToCheckIn(context: Context, hospitalId: string, input
     sourceId: id, idempotencyKey: `check-in:${id}`,
   }).onConflictDoNothing();
   await db.insert(checkInReplies).values({
-    id, checkInId: row.checkIn.id, text: input.text, label: read.label, source: read.source === "model" ? read.model : "fixture", taskId: flag ? open?.id ?? id : null, receivedAt: at,
+    id, checkInId: row.checkIn.id, text: input.text, label: read.label, source: keptReader(read), taskId: flag ? open?.id ?? id : null, receivedAt: at,
   });
   // The reply and how it was read become a de-identified training sample (if consented); never fails the reply.
-  await captureSample(context, { id: `check-in-reply:${id}`, hospitalId, patientId: row.checkIn.patientId, source: "check-in-reply", sourceRef: row.checkIn.id, input: input.text, output: read.label });
+  const sample = await captureSample(context, { id: `check-in-reply:${id}`, hospitalId, patientId: row.checkIn.patientId, source: "check-in-reply", sourceRef: row.checkIn.id, input: input.text, output: read.label });
   // The visit's agent acts on it now: worse brings the next check-in forward, urgent tells her to call 999.
   // A failed wake never fails the reply; the agent reads it on its next wake.
   await context.followUps?.tick(hospitalId, row.checkIn.encounterId).catch(error => console.error("check-in agent failed", error));
-  return (await listCheckIns(db, hospitalId, { encounterId: row.checkIn.encounterId })).find(c => c.id === row.checkIn.id)!;
+  // `sample`: who de-identified the training sample this reply became, and whether the leak gate let it through (none without consent).
+  return { ...(await listCheckIns(db, hospitalId, { encounterId: row.checkIn.encounterId })).find(c => c.id === row.checkIn.id)!, ...sample && { sample } };
 }

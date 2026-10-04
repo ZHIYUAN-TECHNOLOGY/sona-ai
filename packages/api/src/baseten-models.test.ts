@@ -217,7 +217,7 @@ test("a brief always names a recorded allergy, even when Gemma leaves it out", a
 test("check-in replies go to Gemma through the shared readers, with the rule's urgent words as a floor", async () => {
   const { fetcher } = fake({ [box("brain")]: chatReply('{"label":"worse","symptom":"chest discomfort"}') });
   const models = basetenModels({ apiKey: "k", fetcher });
-  expect(await models.classifyReply({ text: "sakit dada sikit", language: "ms" })).toEqual({ label: "urgent", symptom: "chest discomfort", source: "model", model: BRAIN_MODEL });
+  expect(await models.classifyReply({ text: "sakit dada sikit", language: "ms" })).toEqual({ label: "urgent", symptom: "chest discomfort", source: "model", model: BRAIN_MODEL, decidedBy: "rules" });
 });
 
 test("an X-ray goes to MedGemma as an image; a plain-sentence reply is kept, and the read is never validated", async () => {
