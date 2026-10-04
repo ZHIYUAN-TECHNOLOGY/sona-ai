@@ -2,7 +2,8 @@ import type { EncounterEdit } from "@sona-ai/api/contracts";
 import { useCallback, useEffect, useState } from "react";
 import { useEncounter } from "@/features/encounter/store";
 import type { Encounter, Patient } from "@/features/encounter/types";
-import { api, errorText, useLive } from ".";
+import { letterReceived } from "@/features/patients/record";
+import { api, errorText, JUDGE, useLive } from ".";
 import { useLiveChanges } from "./channel";
 import { mergeServerState, type ServerVisitState } from "./day";
 import { useRole } from "./roles";
@@ -10,7 +11,7 @@ import { useRole } from "./roles";
 /**
  * In live mode, pulls the server's record of a visit into the app's encounter so every screen renders
  * what the server holds (see `mergeServerState`): medicines, discharge and claim fixes, claim status,
- * and whether the guarantee letter has arrived (the server's bed no longer lists that blocker).
+ * and whether the guarantee letter has arrived (the patient's bed on the server no longer lists that blocker).
  */
 // Reads shared across every screen showing a visit (only touched inside callbacks, never during render).
 const inflight = new Map<string, Promise<void>>();
@@ -32,8 +33,10 @@ export function useServerEncounter(patient: Patient | undefined) {
       // The status call settles the insurer's answer first, so the bed list read after it is current.
       const claim = await api.claim.status({ encounterId });
       const [snapshot, beds] = await Promise.all([api.encounter.get({ encounterId }), api.ward.beds()]);
+      // The judge build reads the letter for this visit's own admission (its patient's bed). Sample visits keep the one
+      // demo admission, Amelia's, whichever of the two is open.
       const bed = beds.find(b => b.blockers.some(x => x.id.startsWith("adm-1042")) || b.admissionId === "adm-1042");
-      const glReceived = !bed || !bed.blockers.some(x => x.kind === "gl");
+      const glReceived = JUDGE ? letterReceived(beds, patientId!) : !bed || !bed.blockers.some(x => x.kind === "gl");
       updateEncounter(value => mergeServerState(value, snapshot.state as ServerVisitState, claim, glReceived), false, patientId);
     })().finally(() => { inflight.delete(encounterId); lastRead.set(encounterId, Date.now()); });
     inflight.set(encounterId, read);

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { GROUPS, letters, listItems, serverRows, syntheticCensus } from "./census";
+import { GROUPS, letters, listItems, rosterRows, serverRows, syntheticCensus } from "./census";
 import { continueList, IDLE_MS, planPin, replacePin, whatIsLeft } from "./continue";
 
 test("connected, the rest of the list is the server's people at the server's beds: the visits opened here are left out, and each row says where the patient stands", () => {
@@ -96,4 +96,18 @@ test("inside a group, red comes before amber whatever the time", () => {
   const row = (id, tone, where) => ({ id, name: id, initials: "X", where, group: "needs", reason: "", tone, mine: true, ward: false, clinic: true, open: true });
   const items = listItems([row("amber", "soon", "03:45"), row("red", "urgent", "04:15")], "needs", new Set());
   expect(items.filter(i => i.kind === "row").map(i => i.row.id)).toEqual(["red", "amber"]);
+});
+
+test("the judge build's list is one row per person on the record: a visit that needs you keeps its row, the rest open from the ward's row, and no visit opens nothing", () => {
+  const row = (id, over = {}) => ({ id, name: id, initials: "X", where: "", group: "waiting", reason: "", tone: "calm", mine: false, ward: false, clinic: false, open: false, ...over });
+  const visits = [row("SYN-1042", { where: "10:15", group: "needs", reason: "Penicillin allergy · confirm", tone: "soon", mine: true, clinic: true, open: true })];
+  const ward = [row("SYN-1042", { where: "Bed 6", ward: true }), row("SYN-2007", { where: "Bed 7", reason: "Fit to go", tone: "good", ward: true }), row("SYN-3001", { reason: "Booked for review" })];
+  const rows = rosterRows(visits, ward, new Set(["SYN-1042", "SYN-2007"]));
+  expect(rows.map(r => [r.id, r.where, r.group, r.ward, r.open])).toEqual([
+    ["SYN-1042", "10:15", "needs", true, true], // ranked from her visit, and counted on the ward tab as the Ward page counts her bed
+    ["SYN-2007", "Bed 7", "waiting", true, true], // a ward patient now opens the visit the server holds
+    ["SYN-3001", "", "waiting", false, false], // no visit on the record: listed, never opened as someone else's
+  ]);
+  // Nothing read yet: no rows, never the visits alone.
+  expect(rosterRows(visits, [], new Set())).toEqual([]);
 });

@@ -32,8 +32,8 @@ const byUrgency = (a: Row, b: Row) => RANK[a.group] - RANK[b.group] || TONE_RANK
  * (`open`): each person from the server's patient list, at their bed from the server's ward. They wait
  * (a held discharge belongs to the blocker's owner on the Ward page, so "Needs you" still counts what
  * Today counts): amber when fit but held, green when fit and ready, the reason they are in otherwise.
- * ponytail: listed, not opened; the visit store is built over the two demo visits (encounter/store),
- * so a ward patient's row opens nothing until that store takes the server's roster.
+ * Sample visits in connected mode: listed, not opened (the visit store there holds the two demo visits).
+ * The judge build opens them: its store takes the server's roster, and `rosterRows` joins the two lists.
  */
 export function serverRows(
   people: { id: string; name: string; initials: string; complaint: string }[],
@@ -45,6 +45,19 @@ export function serverRows(
     const why = p.complaint.replace(/\.$/, "");
     const [reason, tone]: [string, Tone] = kind === "blocked" ? [`${n} ${n === 1 ? "blocker" : "blockers"} · ${why}`, "soon"] : kind === "fit" ? [`Fit to go · ${why}`, "good"] : [why, "calm"];
     return { id: p.id, name: p.name, initials: p.initials, where: bed?.bed ?? "", group: "waiting", reason, tone, mine: false, ward: Boolean(bed), clinic: false, open: false };
+  });
+}
+
+/**
+ * The judge build's list: one row for each person on the hospital record (`ward`: serverRows for everyone).
+ * Someone the Patients page ranks from their visit (they need you, are booked today or are being seen: `visits`)
+ * keeps that row, and joins the ward tab when they hold a bed, so the tab and the Ward page count the same
+ * people. Everyone else keeps the ward's row, which opens their visit when the server holds one (`open`).
+ */
+export function rosterRows(visits: Row[], ward: Row[], open: ReadonlySet<string>): Row[] {
+  return ward.map(w => {
+    const visit = visits.find(v => v.id === w.id);
+    return visit ? { ...visit, ward: w.ward } : { ...w, open: open.has(w.id) };
   });
 }
 

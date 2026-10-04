@@ -3,12 +3,13 @@ import { createContext, use, useCallback, useEffect, useRef, useState, type Reac
 import { AppState } from "react-native";
 import type { Ack } from "@/features/day/counts";
 import { refreshPendingResult } from "@/features/day/model";
-import { errorText, useLive } from "@/features/live";
+import { errorText, JUDGE, useLive } from "@/features/live";
 import { useServerPatients } from "@/features/live/patients-sync";
+import { serverRoster } from "@/features/patients/record";
 import { amendOnServer, pushAndReview, simulateOnServer } from "@/features/live/prescribing-sync";
 import { patients, refreshDemoTimes } from "./fixtures";
 import { effectivePatient } from "./clinical-state";
-import { acceptCard, beginRequest, createCard, finishRequest, initialEncounters, isRepeat, issueSimulation, reviseEncounter, revealSections, queueAmendment, reconcileAmendment, type ServerReceipt } from "./state";
+import { acceptCard, beginRequest, createCard, finishRequest, initialEncounters, isRepeat, issueSimulation, reviseEncounter, revealSections, queueAmendment, reconcileAmendment, withRoster, type ServerReceipt } from "./state";
 import type { Capability, Encounter, Patient, RequestState } from "./types";
 
 type Store = {
@@ -29,6 +30,8 @@ type Store = {
 };
 const DEMO_CONTROLS_KEY = "sona.demoControls";
 const Context = createContext<Store | null>(null);
+// The judge build starts with no visits: each one starts when the server's roster brings its patient (withRoster), never from a fixture.
+const firstEncounters = () => JUDGE ? {} : initialEncounters();
 export function EncounterProvider({ children }: { children: ReactNode }) {
   const [patientId, setPatientId] = useState<string>();
   // Coming back to the app (or a long idle stretch) re-times the demo schedule so it never reads "running late".
@@ -39,7 +42,14 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
     const timer = setInterval(refresh, 60_000);
     return () => { sub.remove(); clearInterval(timer); };
   }, []);
-  const [encounters, setEncounters] = useState(initialEncounters);
+  const [encounters, setEncounters] = useState(firstEncounters);
+  // Live mode: each person's record as the server holds it. The judge build's roster is the server's alone (everyone it
+  // holds a visit for; empty until it is read, behind the judge gate); otherwise the two sample visits.
+  const server = useServerPatients();
+  const roster = JUDGE ? serverRoster(server) : patients;
+  const rosterRef = useRef(roster); rosterRef.current = roster;
+  // Set while rendering, so no screen ever sees a patient on the roster without their visit.
+  if (JUDGE && roster.some(p => !encounters[p.id])) setEncounters(prev => withRoster(prev, roster));
   const [simulateFailure, setSimulateFailure] = useState(false);
   const [simulateInvalid, setSimulateInvalid] = useState(false);
   const [voiceInput, setVoiceInput] = useState(true);
@@ -60,16 +70,16 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
     // Cleared timers never settle an in-place run, so it stops here too rather than leaving the card busy.
     if (id) setEncounters(prev => ({ ...prev, [id]: { ...prev[id]!, working: undefined, amendmentOperation: prev[id]!.amendmentOperation && !["complete", "failed", "cancelled"].includes(prev[id]!.amendmentOperation!.phase) ? { ...prev[id]!.amendmentOperation!, phase: "cancelled", error: "Amendment cancelled. The earlier receipt is retained." } : prev[id]!.amendmentOperation, requests: prev[id]!.requests.map(r => r.status === "streaming" ? { ...r, status: "cancelled" } : r) } }));
   }, [clearTimers]);
-  const selectPatient = useCallback((id: string) => { if (!patients.some(p => p.id === id) || activeRef.current === id) return; cancel(); activeRef.current = id; setPatientId(id); }, [cancel]);
+  const selectPatient = useCallback((id: string) => { if (!rosterRef.current.some(p => p.id === id) || activeRef.current === id) return; cancel(); activeRef.current = id; setPatientId(id); }, [cancel]);
   // Home has no visit open: leaving stops any answer still arriving so nothing is left half-streamed.
   const leaveVisit = useCallback(() => { if (!activeRef.current) return; cancel(); activeRef.current = undefined; setPatientId(undefined); }, [cancel]);
   const { on: live, user } = useLive();
   const updateEncounter = useCallback((update: (current: Encounter) => Encounter, revise = false, patientId?: string) => {
-    const id = patientId ?? activeRef.current; if (!id || !patients.some(p => p.id === id)) return;
+    const id = patientId ?? activeRef.current; if (!id || !rosterRef.current.some(p => p.id === id)) return;
     setEncounters(prev => { const next = update(prev[id]!); return { ...prev, [id]: revise ? reviseEncounter(next) : next }; });
   }, []);
   const request = useCallback((kind: Capability, prompt = "", amendmentId?: string) => {
-    const id = activeRef.current; const base = patients.find(p => p.id === id); const patient = base ? effectivePatient(base, stateRef.current[base.id]) : undefined;
+    const id = activeRef.current; const base = rosterRef.current.find(p => p.id === id); const patient = base ? effectivePatient(base, stateRef.current[base.id]) : undefined;
     if (!id || !patient) return;
     // A double send is one request: the answer already on its way is the answer.
     const last = stateRef.current[id]?.requests.at(-1);
@@ -130,7 +140,7 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
   // prescribe (both callers show that role a lock instead: useCanPrescribe).
   const [runErrors, setRunErrors] = useState<Record<string, string | undefined>>({});
   const runInPlace = useCallback((kind: "medication" | "prescription") => {
-    const id = activeRef.current; const base = patients.find(p => p.id === id); const patient = base ? effectivePatient(base, stateRef.current[base.id]) : undefined;
+    const id = activeRef.current; const base = rosterRef.current.find(p => p.id === id); const patient = base ? effectivePatient(base, stateRef.current[base.id]) : undefined;
     if (!id || !patient || stateRef.current[id]!.working) return; // one run at a time, whichever button started it
     const encounter = stateRef.current[id]!, revision = encounter.revision;
     const settle = (update: (current: Encounter) => Encounter) => setEncounters(prev => ({ ...prev, [id]: update({ ...prev[id]!, working: undefined }) }));
@@ -158,10 +168,9 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
   }, [patientId, pendingAmendment?.id, pendingAmendment?.phase, pendingAmendment?.revision, request]);
   const [resultAcks, setResultAcks] = useState<Record<string, Ack>>({});
   const acknowledgeDemoResult = useCallback((key: string, by: string) => setResultAcks(acks => acks[key] ? acks : { ...acks, [key]: { at: new Date().toISOString(), by } }), []);
-  const reset = useCallback(() => { cancel(); setEncounters(initialEncounters()); setPatientId(undefined); activeRef.current = undefined; setSimulateFailure(false); setSimulateInvalid(false); setResultAcks({}); }, [cancel]);
-  // Live mode: each person's record as the server holds it; the demo schedule keeps its own clock times.
-  const server = useServerPatients();
-  const currentPatients = patients.map(p => effectivePatient(server?.[p.id] ? { ...p, ...server[p.id], time: p.time } : p, encounters[p.id]));
+  const reset = useCallback(() => { cancel(); setEncounters(firstEncounters()); setPatientId(undefined); activeRef.current = undefined; setSimulateFailure(false); setSimulateInvalid(false); setResultAcks({}); }, [cancel]);
+  // Sample visits take the server's record in live mode and keep the demo schedule's clock times; the judge build's roster is already the server's.
+  const currentPatients = roster.map(p => effectivePatient(!JUDGE && server?.[p.id] ? { ...p, ...server[p.id], time: p.time } : p, encounters[p.id]));
   const patient = currentPatients.find(p => p.id === patientId);
   return <Context value={{ patient, patients: currentPatients, encounters, encounter: patientId ? encounters[patientId] : undefined, selectPatient, leaveVisit, request, cancel, startAmendment, updateEncounter, runInPlace, runErrors, voiceInput, setVoiceInput, compactResponses, setCompactResponses, simulateInvalid, setSimulateInvalid, simulateFailure, setSimulateFailure, showDemoControls, setShowDemoControls, reset, resultAcks, acknowledgeDemoResult }}>{children}</Context>;
 }

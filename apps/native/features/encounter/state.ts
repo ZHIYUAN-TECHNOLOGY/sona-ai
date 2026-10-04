@@ -74,7 +74,16 @@ export function issueSimulation(encounter: Encounter, patient: Patient, operatio
     audit: ["Automatic fixture workflow v2 · no live model inference", `Patient ${patient.id} · encounter ${patient.encounterId} · revision ${encounter.revision}`, `Evidence: ${simulatedRegimen.sourceVersion}`, `Indication provenance: intake/history + recorded observations`, ...checks.map(c => `${c.label}: ${c.status} — ${c.detail}`), ...(encounter.prescriptionAmendment ? [`Amendment reason: ${encounter.prescriptionAmendment}`] : []), ...(server ? [`Server receipt ${server.id} · server revision ${server.revision}`] : []), `Operation ${operationId} · ${createdAt}`, reasons.length ? "Creation blocked" : failed ? "Creation failed; no receipt issued" : "Simulated AI-created receipt; no clinician approval gate; no pharmacy transmission"],
   } };
 }
-export const initialEncounters = (): Record<string, Encounter> => Object.fromEntries(patients.map(patient => [patient.id, { ...newEncounter(), medicationEntries: defaultMedications(patient) }]));
+/** Each patient's visit as it starts: nothing asked yet, and the medicines their record lists (sample mode: the fixture roster). */
+export const initialEncounters = (roster: Patient[] = patients): Record<string, Encounter> => Object.fromEntries(roster.map(patient => [patient.id, { ...newEncounter(), medicationEntries: defaultMedications(patient) }]));
+/**
+ * Judge build: a visit for each patient the server's roster brought that has none yet, started from that
+ * patient's own record. Visits already under way are kept, and the same object comes back when nobody is new.
+ */
+export function withRoster(encounters: Record<string, Encounter>, roster: Patient[]): Record<string, Encounter> {
+  const fresh = roster.filter(patient => !encounters[patient.id]);
+  return fresh.length ? { ...encounters, ...initialEncounters(fresh) } : encounters;
+}
 
 export function createCard(request: RequestState): ResponseCard { return { id: `${request.id}-result`, kind: request.kind, requestId: request.id, patientId: request.patientId, encounterId: request.encounterId, revision: request.revision }; }
 
