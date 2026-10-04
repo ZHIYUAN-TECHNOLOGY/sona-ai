@@ -27,7 +27,7 @@ test("pneumonia finds the respiratory doctor first; heart finds cardiology", () 
 });
 
 test("For you follows the condition the plan names, never a single word: a chest infection is Respiratory's, not Cardiology's", () => {
-  const forYou = complaint => listFor(DOCTORS, "for-you", planFor(complaint ? { id: "x", complaint } : {}).leaflet.en).map(d => d.id);
+  const forYou = complaint => listFor(DOCTORS, "for-you", planFor({ id: "x", complaint: complaint ?? "Pneumonia" }).leaflet.en).map(d => d.id);
   expect(forYou()).toEqual(["lim"]); // "treated for a chest infection … breathing gets harder … the fever returns"
   expect(forYou("Heart failure")).toEqual(["aisyah"]); // "fluid on the lungs", "breathless": still the heart doctor
   expect(forYou("Stroke")).toEqual(["arjun"]);
