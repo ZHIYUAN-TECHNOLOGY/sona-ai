@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useEncounter } from "@/features/encounter/store";
-import { api, useLive } from "@/features/live";
+import { api, JUDGE, useLive } from "@/features/live";
 import { completeServerTask, refreshServerData } from "@/features/live/server-day";
 import { fixtureCheckIns, fixtureReply, type CheckIn } from "./model";
 
@@ -26,13 +26,18 @@ export function useCheckIns(): CheckIn[] {
     if (on) void refreshCheckIns().catch(() => {});
     else if (!wanted) set({ server: undefined });
   }, [on, wanted]);
-  if (on) return snapshot.server ?? [];
+  // The judge build has no fixture check-ins: signed out or not yet read, there are none.
+  if (on || JUDGE) return on ? snapshot.server ?? [] : [];
   const now = new Date();
   return patients.flatMap(p => fixtureCheckIns(p, encounters[p.id]?.discharge, snapshot.replies, now));
 }
 
-/** The simulated patient reply; in live mode the server reads it and makes the task. */
+/**
+ * The simulated patient reply; in live mode the server reads it and makes the task. The judge build
+ * refuses: there a reply only comes from the patient's own Sona Care.
+ */
 export async function simulateReply(checkIn: CheckIn, patientName: string, text: string, live: boolean) {
+  if (JUDGE) throw new Error("Replies come from the patient's Sona Care, not from this app");
   if (live) {
     await api.checkIns.reply({ checkInId: checkIn.id, text });
     await Promise.all([refreshCheckIns(), refreshServerData()]);

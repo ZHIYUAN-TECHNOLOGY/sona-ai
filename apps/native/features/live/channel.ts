@@ -1,11 +1,12 @@
 import type { Change } from "@sona-ai/api/events";
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { createElement, useEffect, useRef, useSyncExternalStore } from "react";
 import { authClient } from "@/lib/auth-client";
 import { ENV } from "../../src/env";
-import { useLive } from ".";
+import { JUDGE, useLive } from ".";
 import { refreshCheckIns } from "@/features/check-ins/state";
 import { rereads, type Reread } from "./channel-routing";
 import { refreshFindings } from "./findings-sync";
+import { JudgeGate } from "./judge-gate";
 import { refreshServerData } from "./server-day";
 
 /**
@@ -51,7 +52,7 @@ export function useLiveStatus() {
 const PING_MS = 25_000;
 const MAX_BACKOFF_MS = 30_000;
 
-/** Keeps one socket open while live mode is on and signed in, reconnecting with back-off. Mounted once at the root. */
+/** Keeps one socket open while live mode is on and signed in, reconnecting with back-off. Mounted once at the root; draws nothing outside the judge build. */
 export function LiveUpdates() {
   const { on } = useLive();
   // The shared stores (My Day's results and tasks, check-ins, findings) re-read here; screens with their own state subscribe.
@@ -95,5 +96,6 @@ export function LiveUpdates() {
     void connect();
     return () => { stopped = true; clearInterval(ping); clearTimeout(retry); socket?.close(); setStatus("off"); };
   }, [on]);
-  return null;
+  // The judge build's sign-in gate rides on this one root mount of the live plumbing (app/_layout renders nothing else of ours above the screens).
+  return JUDGE ? createElement(JudgeGate) : null;
 }

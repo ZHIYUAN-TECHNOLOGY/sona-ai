@@ -2,6 +2,8 @@ import * as SecureStore from "expo-secure-store";
 import { useSyncExternalStore } from "react";
 import { authClient } from "@/lib/auth-client";
 import { client } from "@/utils/orpc";
+import { ENV } from "../../src/env";
+import { wantsLive } from "./judge";
 
 /**
  * "Live backend" mode: discharge, guarantee letter, ward owners, coding audit, tasks, results, My Day,
@@ -10,14 +12,20 @@ import { client } from "@/utils/orpc";
  * with a signed-in doctor. Answers that need a model (briefing, reasoning, discharge draft, claim codes,
  * huddle brief, evidence) come from the server's model routes (./model-sync), labelled while they are samples.
  */
+/**
+ * The judge build (EXPO_PUBLIC_JUDGE_BUILD, off by default): the hospital record is the only mode and no
+ * control fakes an event (rules in ./judge). Read as text too, in case a build inlines the flag as "true".
+ */
+export const JUDGE = String(ENV.EXPO_PUBLIC_JUDGE_BUILD) === "true";
 // Remembered across reloads, so a reload mid-flow comes back to the server's state, not the fixtures.
 const KEY = "sona.liveBackend";
-let live = false;
+// The judge build starts connected and stays so: the remembered choice cannot switch it off.
+let live = wantsLive(JUDGE, false);
 // Whether the remembered choice has been read yet: until then, `on: false` means "not known", not "off".
 let known = false;
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach(l => l());
-export function setLive(on: boolean) { live = on; known = true; notify(); SecureStore.setItemAsync(KEY, on ? "1" : "0").catch(() => {}); }
+export function setLive(on: boolean) { live = wantsLive(JUDGE, on); known = true; notify(); SecureStore.setItemAsync(KEY, on ? "1" : "0").catch(() => {}); }
 SecureStore.getItemAsync(KEY).then(v => { if (v === "1" && !live) live = true; }).catch(() => {}).finally(() => { known = true; notify(); });
 /** True once the live choice is known and, when it is on, the session check has finished (signed in or not). */
 export function useLiveSettled() {

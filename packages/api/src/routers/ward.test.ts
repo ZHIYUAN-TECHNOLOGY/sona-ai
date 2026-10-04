@@ -31,10 +31,19 @@ test("the live ward is every bed the app draws, fit beds first and the most bloc
     ["Bed 6", "Amelia Tan", "fit", "Once cleared", ["gl", "pharmacy", "booking"]],
     ["Bed 2", "Nurul Huda", "fit", "11:00", ["gl", "result"]],
     ["Bed 14", "Lim Wei Jie", "fit", "14:30", ["pharmacy", "transport"]],
+    ["Bed 7", "Dayang Suhaila", "fit", "15:30", []],
     ["Bed 8", "Priya Nair", "fit", "13:00", []],
     ["Bed 9", "Ravi Kumar", "watch", "In 2 days", ["result"]],
+    ["Bed 17", "Harjit Singh", "watch", "Tomorrow", ["result"]],
+    ["Bed 1", "Hafizah Yusof", "watch", "Tomorrow", []],
+    ["Bed 5", "Suresh Pillai", "watch", "Tomorrow", []],
+    ["Bed 11", "Ganesan Muthu", "watch", "In 2 days", []],
     ["Bed 12", "Siti Aminah", "watch", "Tomorrow", []],
+    ["Bed 13", "Wong Siew Ling", "watch", "Tomorrow", []],
+    ["Bed 16", "Rosnah Ismail", "watch", "In 2 days", []],
     ["Bed 4", "Tan Ah Kow", "stable", "Awaiting rehab", ["transport"]],
+    ["Bed 15", "Jimmy Anak Sali", "stable", "Awaiting angiogram", ["transport"]],
+    ["Bed 3", "Chong Mei Yee", "stable", "In 2 days", []],
     ["Bed 10", undefined, "empty", "Cleaning · ready 12:30", []],
   ]);
   expect(beds.find(b => b.bed === "Bed 2")).toMatchObject({
@@ -46,8 +55,8 @@ test("the live ward is every bed the app draws, fit beds first and the most bloc
     ],
   });
   expect(beds.find(b => b.bed === "Bed 14")!.blockers[1]).toEqual({ id: "adm-2014-transport", kind: "transport", label: "Ride home", detail: "Family free after 17:00" });
-  // The same summary the fixture ward gives: 4 fit, 3 blocked, about 9 bed-hours waiting.
-  expect(wardSummary(beds)).toEqual({ beds: 8, fit: 4, blocked: 3, bedHours: 9 });
+  // The fixture ward's blocked beds and bed-hours (3 blocked, about 9 bed-hours waiting); the seed's extra beds add one fit and ready (Bed 7) and block nothing.
+  expect(wardSummary(beds)).toEqual({ beds: 17, fit: 5, blocked: 3, bedHours: 9 });
 });
 
 test("each bed's letter follows its own visit's claim, from the ward's one read of claims", async () => {
@@ -86,15 +95,15 @@ test("the bed forecast reads the live ward, its owners and the hospital's demo c
   const { db } = await signedIn();
   const api = createRouterClient(appRouter, { context: { db, session: as("dr-aisyah") as unknown as Session, now: () => new Date("2026-09-26T09:00:00+08:00") } });
   const f = await api.ward.forecast();
-  expect(f.today).toEqual({ count: 5, byTime: "by 7 pm" });
-  expect(f.tomorrow).toEqual({ count: 1 });
+  expect(f.today).toEqual({ count: 6, byTime: "by 7 pm" });
+  expect(f.tomorrow).toEqual({ count: 5 });
   expect(f.unlock).toMatchObject({ bed: "Bed 6", blockerId: "adm-1042-gl", owner: "Billing", owned: false, hours: 4 });
   // An owner on the server takes the unowned hour off, so Bed 2's letter becomes the one to chase.
   await api.ward.assignOwner({ blockerId: "adm-1042-gl", owner: "Billing" });
   expect((await api.ward.forecast()).unlock).toMatchObject({ bed: "Bed 2", blockerId: "adm-2002-gl" });
   // The demo clock jumps to 20:00: only the free beds are left today, the rest move to tomorrow.
   await db.update(hospitals).set({ clockOffsetMs: 11 * 3600_000 }).where(eq(hospitals.id, DEMO_HOSPITAL));
-  expect(await api.ward.forecast()).toMatchObject({ today: { count: 2, byTime: "now" }, tomorrow: { count: 4 } });
+  expect(await api.ward.forecast()).toMatchObject({ today: { count: 3, byTime: "now" }, tomorrow: { count: 8 } });
 });
 
 test("unassigning a blocker clears its owner (the forecast counts it unowned again); it is idempotent and hospital-scoped", async () => {

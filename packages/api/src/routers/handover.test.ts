@@ -28,6 +28,9 @@ test("the handover is one SBAR card per patient built from the server's rows, pa
     // The rest of the ward; a result still pending at the lab (Nurul's culture, Ravi's renal function) is nothing to act on yet.
     ["visit-SYN-2002", "Nurul Huda", "stable"], ["visit-SYN-2014", "Lim Wei Jie", "stable"], ["visit-SYN-2008", "Priya Nair", "stable"],
     ["visit-SYN-2012", "Siti Aminah", "stable"], ["visit-SYN-2009", "Ravi Kumar", "stable"], ["visit-SYN-2004", "Tan Ah Kow", "stable"],
+    // The seed's WARD_EXTRA beds; Harjit's repeat haemoglobin is pending too.
+    ["visit-SYN-2007", "Dayang Suhaila", "stable"], ["visit-SYN-2001", "Hafizah Yusof", "stable"], ["visit-SYN-2005", "Suresh Pillai", "stable"], ["visit-SYN-2013", "Wong Siew Ling", "stable"], ["visit-SYN-2017", "Harjit Singh", "stable"],
+    ["visit-SYN-2011", "Ganesan Muthu", "stable"], ["visit-SYN-2016", "Rosnah Ismail", "stable"], ["visit-SYN-2003", "Chong Mei Yee", "stable"], ["visit-SYN-2015", "Jimmy Anak Sali", "stable"],
   ]);
   expect(cards.flatMap(c => c.recommendation).filter(l => l.startsWith("Act on pending"))).toEqual([]);
   const [daniel, amelia] = cards;

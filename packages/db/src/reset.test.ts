@@ -54,8 +54,8 @@ test("a demo reset undoes a whole run (discharge, claim, receipts, tasks, findin
   expect((await db.select().from(guaranteeLetters)).map(g => [g.status, g.receivedAt])).toEqual([["requested", null], ["requested", null]]);
   expect((await db.select().from(labResults)).every(r => r.acknowledgedAt === null)).toBe(true);
   // Results that arrived during the run are gone, not merely unacknowledged; records return to the seed.
-  expect((await db.select().from(labResults)).map(r => r.id).sort()).toEqual(["lab-1086-potassium", "lab-2002-b2-result", "lab-2009-b9-renal", "lab-hb-1086"]);
-  expect((await db.select().from(patients)).map(p => p.allergies).sort()).toEqual(["Penicillin — reported rash; details need confirmation", ...Array(7).fill(null)]);
+  expect((await db.select().from(labResults)).map(r => r.id).sort()).toEqual(["lab-1086-potassium", "lab-2002-b2-result", "lab-2009-b9-renal", "lab-2017-b17-hb", "lab-hb-1086"]);
+  expect((await db.select().from(patients)).map(p => p.allergies).sort()).toEqual(["Penicillin — reported rash; details need confirmation", ...Array(16).fill(null)]);
   expect((await db.select().from(notes)).map(n => n.revision)).toEqual([1]);
   expect((await db.select().from(appointments)).map(a => a.id).sort()).toEqual(["appt-SYN-1042", "appt-SYN-1086"]);
 });

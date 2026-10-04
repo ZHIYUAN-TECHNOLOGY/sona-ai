@@ -3,7 +3,7 @@ import { and, eq, ne, sql } from "drizzle-orm";
 import type { PgAsyncDatabase } from "drizzle-orm/pg-core/async";
 import { DEMO_PATIENTS } from "@sona-ai/domain/demo-patients";
 import { DOCTORS } from "@sona-ai/domain/doctors";
-import { DEMO_WARD, WARD_FIXTURE, type BlockerKind } from "@sona-ai/domain/ward";
+import { DEMO_WARD, WARD_FIXTURE, type Bed, type BlockerKind } from "@sona-ai/domain/ward";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -18,10 +18,38 @@ import { account, admissions, appointments, careLinks, casemixWeights, doctors, 
 import { DEMO_HOSPITAL, DEMO_PATIENT_PHONE } from "./demo";
 export { DEMO_HOSPITAL };
 /**
- * The rest of the ward, read off the fixture beds so live mode draws the same ward: bed N holds SYN-20NN
+ * The beds the sample screens never drew, so the connected ward and patient list read as a working ward
+ * (16 beds taken) rather than seven. Fictional people only, written like the fixture beds and seeded the
+ * same way. Kept out of WARD_FIXTURE so sample mode's ward and its counts stay as they were. One is fit
+ * and ready and none is blocked, so the ward's blocked count and bed-hours waiting stay the demo's.
+ */
+export const WARD_EXTRA: Bed[] = [
+  { bed: "Bed 7", name: "Dayang Suhaila", initials: "DS", meta: "37 · Female", status: "fit", predicted: "15:30", waitingHours: 2,
+    sbar: { s: "Day 3, asthma exacerbation.", b: "Asthma since childhood.", a: "Peak flow 85% of best, off nebulisers for 24 h.", r: "Discharge today with an inhaler plan; clinic in 2 weeks." }, blockers: [] },
+  { bed: "Bed 1", name: "Hafizah Yusof", initials: "HY", meta: "54 · Female", status: "watch", predicted: "Tomorrow",
+    sbar: { s: "Day 2, diabetic ketoacidosis, now on subcutaneous insulin.", b: "Type 1 diabetes.", a: "Ketones cleared, eating, glucose 8 to 11.", r: "Diabetes nurse review, then home tomorrow." }, blockers: [] },
+  { bed: "Bed 5", name: "Suresh Pillai", initials: "SP", meta: "48 · Male", status: "watch", predicted: "Tomorrow",
+    sbar: { s: "Day 2, gallstone pancreatitis.", b: "No significant history.", a: "Pain settling, tolerating fluids, lipase falling.", r: "Surgical review for a cholecystectomy date." }, blockers: [] },
+  { bed: "Bed 13", name: "Wong Siew Ling", initials: "WS", meta: "72 · Female", status: "watch", predicted: "Tomorrow",
+    sbar: { s: "Day 3 of IV antibiotics for urosepsis.", b: "Hypertension.", a: "Afebrile 24 h, CRP falling.", r: "Oral switch tomorrow if the cultures agree." }, blockers: [] },
+  { bed: "Bed 17", name: "Harjit Singh", initials: "HS", meta: "63 · Male", status: "watch", predicted: "Tomorrow",
+    sbar: { s: "Upper GI bleed, day 2 after endoscopy.", b: "On aspirin for ischaemic heart disease.", a: "Hb stable at 9.4, no further melaena.", r: "Repeat Hb in the morning; restart aspirin per cardiology." },
+    blockers: [{ id: "b17-hb", kind: "result", label: "Repeat haemoglobin", detail: "Due 06:00" }] },
+  { bed: "Bed 11", name: "Ganesan Muthu", initials: "GM", meta: "66 · Male", status: "watch", predicted: "In 2 days",
+    sbar: { s: "COPD exacerbation, day 3.", b: "Ex-smoker, 40 pack-years.", a: "On 1 L oxygen, steroids day 3.", r: "Wean oxygen; home oxygen assessment." }, blockers: [] },
+  { bed: "Bed 16", name: "Rosnah Ismail", initials: "RI", meta: "81 · Female", status: "watch", predicted: "In 2 days",
+    sbar: { s: "Fall with a fractured wrist; delirium settling.", b: "Dementia, lives with her daughter.", a: "Eating, sleeping better, AMT 6/10.", r: "Physiotherapy and a family meeting before discharge." }, blockers: [] },
+  { bed: "Bed 3", name: "Chong Mei Yee", initials: "CM", meta: "61 · Female", status: "stable", predicted: "In 2 days",
+    sbar: { s: "Day 6 after a left hip hemiarthroplasty.", b: "Osteoporosis.", a: "Walking with a frame, pain controlled.", r: "Home once the stairs assessment is passed." }, blockers: [] },
+  { bed: "Bed 15", name: "Jimmy Anak Sali", initials: "JS", meta: "59 · Male", status: "stable", predicted: "Awaiting angiogram",
+    sbar: { s: "NSTEMI, day 2, pain-free on dual antiplatelets.", b: "Type 2 diabetes, smoker.", a: "Troponin peaked, ECG stable.", r: "Transfer for an angiogram when the cardiac centre has a slot." },
+    blockers: [{ id: "b15-transfer", kind: "transport", label: "Transfer to cardiac centre", detail: "Waiting for a slot" }] },
+];
+/**
+ * The rest of the ward, read off the fixture beds and WARD_EXTRA so live mode draws them: bed N holds SYN-20NN
  * with each blocker turned into the row it derives from (a requested GL, a pending result, discharge state).
  */
-const WARD = WARD_FIXTURE.filter(b => b.name).map(b => {
+const WARD = [...WARD_FIXTURE, ...WARD_EXTRA].filter(b => b.name).map(b => {
   const n = b.bed.replace("Bed ", "").padStart(2, "0"), of = (kind: BlockerKind) => b.blockers.filter(x => x.kind === kind);
   const [age, sex] = b.meta!.split(" · "), [ride] = of("transport");
   const state = {
