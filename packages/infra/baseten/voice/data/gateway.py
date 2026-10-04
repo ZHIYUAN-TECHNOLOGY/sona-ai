@@ -12,6 +12,7 @@ import httpx
 import torch
 import uvicorn
 from fastapi import FastAPI, Request, Response
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sentence_transformers import CrossEncoder
 
@@ -31,7 +32,7 @@ def wait_for(proc: subprocess.Popen, url: str, name: str):
 
 # Sona's voice first, in its own venv (data/tts_server.py: Nano-vLLM-VoxCPM needs flash-attn, which has no build for
 # this image's torch), so it takes its share of the GPU before the reranker and vLLM.
-voice = subprocess.Popen(["/opt/tts/bin/python", "/app/data/tts_server.py"])
+voice = subprocess.Popen(["/opt/tts/bin/python", os.path.join(os.path.dirname(os.path.abspath(__file__)), "tts_server.py")])
 wait_for(voice, "http://127.0.0.1:8002/health", "Voice server")
 
 reranker = CrossEncoder(f"{MODELS}/rerank", device="cuda", model_kwargs={"torch_dtype": torch.float16})
@@ -69,6 +70,18 @@ async def speak(request: Request):
     return Response(r.content, r.status_code, media_type=r.headers.get("content-type"))
 
 
+@app.post("/v1/tts/stream")
+async def speak_stream(request: Request):
+    body = await request.body()
+
+    async def pieces():  # her voice as it is made (tts_server.py), passed on a piece at a time
+        async with tts.stream("POST", "/v1/tts/stream", content=body, headers={"content-type": "application/json"}) as r:
+            async for piece in r.aiter_raw():
+                yield piece
+
+    return StreamingResponse(pieces(), media_type="application/octet-stream")
+
+
 class Rerank(BaseModel):
     query: str
     passages: list[str]
@@ -80,7 +93,7 @@ def rerank(r: Rerank):
 
 
 # SageMaker's contract: GET /ping, and every request on POST /invocations. An uploaded file is speech to write down;
-# JSON with passages is a rerank; other JSON is a line for Sona's voice.
+# JSON with passages is a rerank; other JSON is a line for Sona's voice ("stream": as it is made).
 app.get("/ping")(health)
 
 
@@ -89,7 +102,7 @@ async def invocations(request: Request):
     if request.headers.get("content-type", "").startswith("multipart/"):
         return await transcribe(request)
     body = await request.json()
-    return rerank(Rerank(**body)) if "passages" in body else await speak(request)
+    return rerank(Rerank(**body)) if "passages" in body else await (speak_stream if body.get("stream") else speak)(request)
 
 
 uvicorn.run(app, host="0.0.0.0", port=PORT)

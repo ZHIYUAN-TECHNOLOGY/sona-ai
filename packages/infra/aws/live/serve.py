@@ -40,7 +40,8 @@ log = open("/tmp/live.log", "w")
 LIVE = next(p for p in ("/opt/ml/model/code/live.py", f"{HERE}/live.py") if os.path.exists(p))
 live = subprocess.Popen([PYTHON, LIVE], env={**os.environ, "PORT": "8000", "CUDA_VISIBLE_DEVICES": "0,1", "VOICE_GPU": "1"}, stdout=log, stderr=subprocess.STDOUT)
 # Box ②, with its own share: the gateway's three models fit one L4, as on their own endpoint.
-ears = subprocess.Popen(["python3", "/app/data/gateway.py"], env={**os.environ, "PORT": "8003", "CUDA_VISIBLE_DEVICES": "2", "MODELS": os.environ.get("VOICE_BOX", "/opt/ml/model/voicebox")})
+GATEWAY = next(p for p in ("/opt/ml/model/code/gateway.py", "/app/data/gateway.py") if os.path.exists(p))  # with tts_server.py beside it
+ears = subprocess.Popen(["python3", GATEWAY], env={**os.environ, "PORT": "8003", "CUDA_VISIBLE_DEVICES": "2", "MODELS": os.environ.get("VOICE_BOX", "/opt/ml/model/voicebox")})
 run = {"proc": None}
 call: dict = {}  # the open call: its socket to live.py, what live.py has sent that no listen has taken yet, its reader
 app = FastAPI()
@@ -109,9 +110,19 @@ async def frames(out: asyncio.Queue):
 async def invocations(request: Request):
     body = await request.body()
     if request.headers.get("x-amzn-sagemaker-custom-attributes") == "voice":  # box ②'s: as it is, to its gateway
-        async with httpx.AsyncClient(timeout=600) as box2:
-            r = await box2.post("http://127.0.0.1:8003/invocations", content=body, headers={"content-type": request.headers.get("content-type", "application/json")})
-        return Response(r.content, status_code=r.status_code, media_type=r.headers.get("content-type"))
+        box2 = httpx.AsyncClient(timeout=600)
+        r = await box2.send(box2.build_request("POST", "http://127.0.0.1:8003/invocations", content=body,
+                                               headers={"content-type": request.headers.get("content-type", "application/json")}), stream=True)
+
+        async def relay():  # as it comes: her voice may be streamed
+            try:
+                async for piece in r.aiter_raw():
+                    yield piece
+            finally:
+                await r.aclose()
+                await box2.aclose()
+
+        return StreamingResponse(relay(), status_code=r.status_code, media_type=r.headers.get("content-type"))
     if request.headers.get("content-type", "").startswith("application/octet-stream"):
         if not call:
             return Response(status_code=409)
