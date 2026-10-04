@@ -104,7 +104,7 @@ Rules:
 - If the label is urgent, tell them to call 999 or go to the nearest emergency department now.
 Answer with JSON only: {"text": "<reply>"}`;
 
-const CODING = `You code a hospital admission note for the insurer in WHO ICD-10. Pick codes ONLY from the candidates; never write any other code.
+const CODING = `You code a hospital admission note for the insurer in WHO ICD-10. Pick from the candidates. Only when no candidate is the exact code for a stated condition, write the WHO ICD-10 code you are sure of (it is checked against the WHO table).
 Code only what a note sentence states the patient has: skip anything negated, ruled out, only suspected, or in the family history.
 One Principal code (the main reason for admission), other diagnoses Secondary, a procedure Procedure. Cite the id of the one sentence that states each,
 and copy the exact words in it that name the condition. Choose the candidate whose meaning matches those words most exactly: a named condition, not a general one.
@@ -157,14 +157,15 @@ function safeReply(reply: string, input: Parameters<Models["draftReply"]>[0]) {
 
 /**
  * The clinician's own name for a condition whose WHO label uses other words ("pyelonephritis" is N10, "Acute
- * tubulo-interstitial nephritis"; 5 Oct, real Gemma): the model's copied words are in the sentence, not negated, and
- * no candidate's label says those words itself (then the label check decides, so "pneumonia" cannot pass as "Lobar pneumonia").
- * The doctor reviews every code against its sentence before the letter goes.
+ * tubulo-interstitial nephritis"; "Non-ST elevation myocardial infarction" is I21.4, "Acute subendocardial myocardial
+ * infarction"; 5 Oct, real Gemma): the words the model copied are in the sentence and not negated. Which code those
+ * words mean is the model's judgement, checked against the WHO table and by the doctor, who reviews every code against
+ * its sentence before the letter goes.
  */
-function namedIn(sentence: string, stated: unknown, candidates: { label: string }[]) {
+function namedIn(sentence: string, stated: unknown) {
   const words = typeof stated === "string" ? stated.trim().toLowerCase() : "";
   const at = words.length >= 4 ? sentence.toLowerCase().indexOf(words) : -1;
-  return at >= 0 && !NOT_STATED.test(sentence.toLowerCase().slice(0, at).split(/[.;]/).pop()!) && !candidates.some(c => statedIn(words, c.label));
+  return at >= 0 && !NOT_STATED.test(sentence.toLowerCase().slice(0, at).split(/[.;]/).pop()!);
 }
 
 // Label words too general to show which code a sentence means ("Pneumonia, unspecified organism" is stated by "pneumonia").
@@ -387,10 +388,16 @@ export function basetenModels(options: Baseten, fallback: Models = stubModels): 
         const read = await brain(CODING, `Note sentences:\n${input.sentences.map(s => `[${s.id}] ${s.text}`).join("\n")}\n\nCandidates:\n${[...candidates.values()].map(c => `${c.code} ${c.label}${c.kind === "Procedure" ? " (procedure)" : ""}`).join("\n")}`);
         const codes: Code[] = [];
         for (const c of Array.isArray(read?.codes) ? read.codes : []) {
+          // Cut to WHO's four characters: Gemma also writes the US form (S72.00XA for S72.0).
+          const [, block, digit] = /^([A-Z]\d{2})(?:\.(\d))?/.exec(typeof c?.code === "string" ? c.code : "") ?? [], who = block && (digit ? `${block}.${digit}` : block);
           // Gemma numbers the sentences as often as it names them ("3" for "assessment"): then the words it copied find the sentence.
-          const candidate = candidates.get(c?.code), sentence = citedSentence(c?.evidence, input.sentences) ?? citedSentence(c?.stated, input.sentences);
+          const candidate = candidates.get(c?.code) ?? (who ? candidates.get(who) : undefined), sentence = citedSentence(c?.evidence, input.sentences) ?? citedSentence(c?.stated, input.sentences);
+          // A code outside the candidates is the model's own knowledge (N10 for "pyelonephritis", which no label search finds):
+          // kept without a label only when its copied words are in the sentence; the route keeps it only if the WHO table has it.
+          if (!candidate && who && sentence && namedIn(sentence.text, c?.stated) && !codes.some(x => x.code === who))
+            codes.push({ code: who, label: "", kind: c.kind === "Principal" && !codes.some(x => x.kind === "Principal") ? "Principal" : "Secondary", evidence: sentence.id });
           if (!candidate || !sentence || codes.some(x => x.code === candidate.code)) continue;
-          if (!statedIn(sentence.text, candidate.label) && !namedIn(sentence.text, c?.stated, [...candidates.values()])) continue;
+          if (!statedIn(sentence.text, candidate.label) && !namedIn(sentence.text, c?.stated)) continue;
           // Only a rule's procedure is a procedure; one Principal at most.
           const kind = candidate.kind === "Procedure" ? "Procedure" : c.kind === "Principal" && !codes.some(x => x.kind === "Principal") ? "Principal" : "Secondary";
           codes.push({ code: candidate.code, label: candidate.label, kind, evidence: sentence.id });

@@ -43,9 +43,10 @@ async function suggest(context: Context & { hospitalId: string }, encounterId: s
     const answer = await (context.models ?? stubModels).suggestCodes({ sentences, candidates });
     const grounded = answer.codes.filter(c => sentences.some(s => s.id === c.evidence));
     const diagnoses = grounded.filter(c => c.kind !== "Procedure").map(c => c.code);
-    const known = new Set(diagnoses.length ? (await db.select({ code: icd10Codes.code }).from(icd10Codes).where(inArray(icd10Codes.code, diagnoses))).map(r => r.code) : []);
-    // Procedures are not ICD-10 codes, so the table does not judge them (undefined).
-    const codes = grounded.map(c => ({ ...c, inTable: c.kind === "Procedure" ? undefined : known.has(c.code) }));
+    const known = new Map(diagnoses.length ? (await db.select({ code: icd10Codes.code, label: icd10Codes.label }).from(icd10Codes).where(inArray(icd10Codes.code, diagnoses))).map(r => [r.code, r.label] as const) : []);
+    // Procedures are not ICD-10 codes, so the table does not judge them (undefined). A code the model wrote from its own
+    // knowledge comes without a label: the table names it, and one the table lacks is dropped (nothing vouches for it).
+    const codes = grounded.filter(c => c.label || known.has(c.code)).map(c => ({ ...c, label: c.label || known.get(c.code)!, inTable: c.kind === "Procedure" ? undefined : known.has(c.code) }));
     return { ...answer, codes, sentences };
   }, answer => answer.codes.map(c => c.evidence));
 }

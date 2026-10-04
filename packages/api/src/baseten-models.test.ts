@@ -434,4 +434,8 @@ test("a condition the doctor names in other words than the WHO label is coded wh
   ] }) } }] }))) as unknown as typeof fetch;
   const read = await basetenModels({ apiKey: "k", fetcher }).suggestCodes({ sentences, candidates });
   expect(read.codes).toEqual([{ code: "N10", label: "Acute tubulo-interstitial nephritis", kind: "Principal", evidence: "assessment" }]);
+  // A code from the model's own knowledge, in the US form: cut to WHO's four characters and left for the WHO table to name.
+  const hip = [{ id: "assessment", text: "Day 6 after a left hip hemiarthroplasty for a neck of femur fracture." }];
+  const own = (async () => new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ codes: [{ code: "S72.00XA", kind: "Principal", evidence: "3", stated: "neck of femur fracture" }, { code: "B96.2", kind: "Secondary", evidence: "assessment", stated: "E. coli" }] }) } }] }))) as unknown as typeof fetch;
+  expect((await basetenModels({ apiKey: "k", fetcher: own }).suggestCodes({ sentences: hip, candidates: [] })).codes).toEqual([{ code: "S72.0", label: "", kind: "Principal", evidence: "assessment" }]);
 });
