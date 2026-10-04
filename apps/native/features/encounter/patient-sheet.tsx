@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import { Keyboard, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
@@ -65,6 +65,9 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
   const summary = [patient.history[0], JUDGE && !patient.medicines.length ? "" : `Medicines: ${patient.medicines.length}`].filter(Boolean).join(" · ");
 
   const y = useSharedValue(height), drag = useSharedValue(0);
+  // Opened from a search, the list's keyboard would stay up over the sheet (the list keeps it through a row's tap, so the
+  // tap lands): it goes as the sheet arrives. The reply box inside raises its own when tapped.
+  useEffect(() => { Keyboard.dismiss(); }, []);
   useEffect(() => { y.set(reducedMotion ? withTiming(0, { duration: 200 }) : withSpring(0, { duration: 420, dampingRatio: 0.82 })); }, [reducedMotion, y]);
   const close = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); y.set(withTiming(height, { duration: 260 })); setTimeout(onClose, 240); };
   const go = (target: Go) => { if (process.env.EXPO_OS === "ios") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); onGo(target); };

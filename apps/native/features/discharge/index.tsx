@@ -49,7 +49,7 @@ export function DischargeScreen() {
   // An already discharged patient opens still, on the receipt.
   return <View style={{ flex: 1, backgroundColor: palette.canvas }}>
     <ModalHeader title="Discharge" />
-    <DischargePage patient={patient} answers={answers} animate={!reducedMotion && !discharged} />
+    <DischargePage key={patient.id} patient={patient} answers={answers} animate={!reducedMotion && !discharged} />
   </View>;
 }
 
@@ -119,6 +119,10 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
   const role = useRole();
   // Live mode: the full summary and the leaflet in the chosen language are drafted by the server from this patient's record.
   const draft = useLiveDraft(patient.encounterId, state.language);
+  // Picking another leaflet language drafts the summary again too (one draft per language). The draft on view stays until the
+  // new one arrives (`stale`), so the summary and its check keep their place above the pills and the page does not jump under
+  // the reader; `redrafting` is that wait. The leaflet is only ever the chosen language's (`ownDraft`).
+  const redrafting = draft.stale && !draft.error, ownDraft = draft.stale ? undefined : draft.data;
   // Connected: the plan and what else holds the bed, read by the server from this visit's rows. Sample mode has no rows,
   // so the plan is the fixture record's own (its guarantee letter included).
   const [served, setServed] = useState<{ plan: DischargePlan; waits: Wait[] }>();
@@ -150,7 +154,8 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
   const fresh = !wasDone && !reducedMotion;
   // Judge build: the summary and the leaflet are the model's or absent. While it drafts both say so; a failed call or the
   // server's stub is said once, where the summary would be, and the plan's authored words never stand in (features/clinical/judge-answer).
-  const held = unanswered(JUDGE, draft);
+  // A draft kept from the previous language is not this one's answer once this one's ask failed.
+  const held = unanswered(JUDGE, draft.stale && draft.error ? { ...draft, data: undefined } : draft);
   // The receipt reads what the discharge left: the visit's tasks (the Tasks page's list) and its scheduled check-ins.
   const tasksOf = useVisitTasks();
   const checkIns = useCheckIns();
@@ -219,7 +224,7 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
   const primary = busy ? "Freeing the bed…" : reading ? "Reading the record…" : blocked.length ? `Resolve ${blocked.length} to discharge` : `Discharge ${first}`;
   // What discharging leaves behind, said as it will be: the tasks this plan creates, and a leaflet only where one will go home
   // (the model's draft; sample mode's own).
-  const tasks = plan.visit.gl ? 2 : 1, leaflet = !live || draft.data?.source === "model";
+  const tasks = plan.visit.gl ? 2 : 1, leaflet = !live || ownDraft?.source === "model";
   // A model's three lines replace the plan's own once it drafted them (live mode); its take-home list was checked on the server.
   const lines = draft.data?.lines ?? plan.summary;
   const summary: [string, string][] = [["Diagnosis", lines.diagnosis], ["Course", lines.course], ["Plan", lines.plan]];
@@ -307,8 +312,8 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
           </View>
         </View>
         {!held?.reason && <Animated.View key={state.language} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ padding: 12, gap: 6, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" }}>
-          {draft.loading ? <Drafting label={`Drafting the leaflet in ${language.name}…`} lines={2} />
-            : <Arrive animate={Boolean(draft.data)}><Text selectable style={{ ...type.subhead, color: palette.ink }}>{draft.data?.leaflet ?? plan.leaflet[state.language]}</Text></Arrive>}
+          {draft.loading || redrafting ? <Drafting label={`Drafting the leaflet in ${language.name}…`} lines={2} />
+            : <Arrive animate={Boolean(ownDraft)}><Text selectable style={{ ...type.subhead, color: palette.ink }}>{ownDraft?.leaflet ?? plan.leaflet[state.language]}</Text></Arrive>}
           {draft.error && <Text style={{ ...type.caption, color: palette.red }}>{draft.error} · showing the authored leaflet</Text>}
         </Animated.View>}
       </Animated.View>}

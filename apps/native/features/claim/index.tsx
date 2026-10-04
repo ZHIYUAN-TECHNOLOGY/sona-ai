@@ -15,7 +15,7 @@ import { LockedAction, useRole } from "@/features/live/roles";
 import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
 import { useServerEncounter } from "@/features/live/sync";
 import type { PrescriptionCheck } from "@/features/encounter/types";
-import { CODES, EMPTY_CLAIM, INSURER, ORGANISM_UNKNOWN, approveClaim, claimChecks, ivReason, noteFor, withFix, type ClaimState, type Code, type Sentence } from "./model";
+import { CODES, EMPTY_CLAIM, INSURER, ORGANISM_UNKNOWN, approveClaim, claimChecks, ivReason, nextNoteRead, noteFor, withFix, type ClaimState, type Code, type Sentence } from "./model";
 import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { keptByText } from "@/components/sona/sample-label";
 import { useLiveCodes } from "@/features/live/model-sync";
@@ -44,10 +44,11 @@ export function ClaimScreen() {
   const state = encounter?.claim ?? EMPTY_CLAIM;
   const { live, refresh } = useServerEncounter(patient);
   // Connected: the codes and the note sentences they cite come from the server, read from the visit's saved note. The
-  // note is read again whenever it may have changed: a fix saved here, or coming back from the note screen.
-  const [noteRead, setNoteRead] = useState(0);
+  // note is read again whenever it may have changed: opening the sheet, a fix saved here, or coming back from the note screen.
+  // Each read has its own number for the whole session (nextNoteRead), so no read is answered with an earlier note's codes.
+  const [noteRead, setNoteRead] = useState(nextNoteRead);
   const opened = useRef(false);
-  useFocusEffect(useCallback(() => { if (opened.current) setNoteRead(n => n + 1); opened.current = true; }, []));
+  useFocusEffect(useCallback(() => { if (opened.current) setNoteRead(nextNoteRead()); opened.current = true; }, []));
   const server = useLiveCodes(patient?.encounterId ?? "", String(noteRead));
   // The note is the server's or, in sample mode only, the sample's; connected, nothing stands in for a note that is not saved.
   const note: Sentence[] = server.data?.sentences ?? (live || JUDGE ? [] : noteFor(state));
@@ -74,7 +75,7 @@ export function ClaimScreen() {
     setServerError(undefined);
     api.note.get({ encounterId: patient.encounterId })
       .then(saved => api.note.save({ encounterId: patient.encounterId, expectedRevision: saved.revision, sentences: withFix(saved.sentences, fix) }))
-      .then(() => { setNoteRead(n => n + 1); setActive(fix.id); setWhy(""); })
+      .then(() => { setNoteRead(nextNoteRead()); setActive(fix.id); setWhy(""); })
       .catch(e => setServerError(errorText(e)));
   };
   // Judge build: the note and the codes are the server's or absent, never the authored ones. Its stub's codes are keyword rules over

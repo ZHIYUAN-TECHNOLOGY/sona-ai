@@ -7,17 +7,24 @@ import { buildHandover, type HandoverPatient } from "@sona-ai/domain/handover";
 import { and, eq, inArray, isNotNull, ne } from "drizzle-orm";
 
 import { handoverAcceptSchema } from "../contracts";
-import type { Context } from "../context";
+import { clockOf, type Context } from "../context";
 import { protectedProcedure } from "../index";
 import { PERMISSIONS } from "../roles";
 import { listFindings } from "./findings";
 
 // The demo hospital's wall clock (Malaysia); the Worker runs in UTC.
 const clock = (at: Date) => at.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur" });
+const day = (at: Date) => at.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Asia/Kuala_Lumpur" });
+/** When a result came in, for a card's "received …": the time, with the date once that is not today ("09:47 on 4 Oct"). */
+const received = (at: Date, now: Date) => day(at) === day(now) ? clock(at) : `${clock(at)} on ${day(at)}`;
 const label = (kind: string) => kind[0]!.toUpperCase() + kind.slice(1).replace(/-/g, " ");
 
-/** SBAR cards for the hospital's patients, from its rows: observations, flagged results, open tasks, the note's review. */
-export async function handoverCards(db: Context["db"], hospitalId: string) {
+/**
+ * SBAR cards for the hospital's patients, from its rows: observations, flagged results, open tasks, the note's review.
+ * A patient whose visit is discharged has left the ward and is nobody's to hand over, so they have no card, unless a
+ * result of theirs still waits on a doctor: that must not leave the shift unseen. `now` is the hospital's clock.
+ */
+export async function handoverCards(db: Context["db"], hospitalId: string, now: Date) {
   const people = await db.select().from(patients).where(eq(patients.hospitalId, hospitalId));
   const ids = people.map(p => p.id);
   if (!ids.length) return [];
@@ -30,7 +37,11 @@ export async function handoverCards(db: Context["db"], hospitalId: string) {
     db.select().from(appointments).where(eq(appointments.hospitalId, hospitalId)),
     listFindings(db, hospitalId, new Date(), ne(findings.status, "dismissed")), // lane F6
   ]);
-  const rows: HandoverPatient[] = people.map(p => {
+  // Only results nobody has acknowledged are still to act on.
+  const waiting = labs.filter(({ lab }) => !lab.acknowledgedAt).map(({ lab }) => lab);
+  const discharged = (patientId: string) => Boolean((visits.find(v => v.patientId === patientId)?.state as { discharge?: { dischargedAt?: string } } | undefined)?.discharge?.dischargedAt);
+  const onShift = people.filter(p => !discharged(p.id) || waiting.some(l => l.patientId === p.id));
+  const rows: HandoverPatient[] = onShift.map(p => {
     const vitals = obs.filter(o => o.patientId === p.id).map(o => ({ label: label(o.kind), value: o.unit === "AMT" ? `AMT ${o.value}/10` : `${o.value} ${o.unit}` }));
     const appt = appts.find(a => a.patientId === p.id);
     return {
@@ -39,7 +50,7 @@ export async function handoverCards(db: Context["db"], hospitalId: string) {
       sources: vitals.length ? [{ id: "vitals", title: "Observations", date: "", kind: "record", excerpt: "", synthetic: true }] : [],
     };
   });
-  const byPatient = Object.fromEntries(people.map(p => {
+  const byPatient = Object.fromEntries(onShift.map(p => {
     const visit = visits.find(v => v.patientId === p.id);
     const state = (visit?.state ?? {}) as { noteReviewed?: boolean };
     // A finding's own line stands in for its task, so a tracked one is handed over once, with its due date.
@@ -49,8 +60,7 @@ export async function handoverCards(db: Context["db"], hospitalId: string) {
       .map(({ lab, by }) => ({ title: `Critical ${lab.test.toLowerCase()} ${[lab.value, lab.unit].filter(Boolean).join(" ")} acknowledged by ${by ?? lab.acknowledgedBy} after ${elapsed(lab.receivedAt, lab.acknowledgedAt!)}`, completed: false }));
     return [p.id, { noteReviewed: state.noteReviewed, tasks: [...open.filter(t => visit && t.encounterId === visit.id && t.kind !== "finding").map(t => ({ title: t.title, due: t.due ?? undefined, completed: t.completed })), ...followUps, ...acted] }];
   }));
-  // Only results nobody has acknowledged are still to act on.
-  const pending = labs.filter(({ lab }) => !lab.acknowledgedAt).map(({ lab: l }) => ({ patientId: l.patientId, test: l.test, value: [l.value, l.unit].filter(Boolean).join(" "), flag: l.flag!, receivedAt: clock(l.receivedAt) }));
+  const pending = waiting.map(l => ({ patientId: l.patientId, test: l.test, value: [l.value, l.unit].filter(Boolean).join(" "), flag: l.flag!, receivedAt: received(l.receivedAt, now) }));
   return buildHandover(rows, byPatient, pending);
 }
 
@@ -65,9 +75,10 @@ export const handoverReceivers = (db: Context["db"], hospitalId: string) => db.s
 export const handoverRouter = {
   /** The clinicians the signed-in one can hand over to: everyone who may accept, except themselves. */
   receivers: protectedProcedure.handler(async ({ context: { db, hospitalId, session } }) => (await handoverReceivers(db, hospitalId)).filter(r => r.id !== session.user.id)),
-  list: protectedProcedure.handler(({ context: { db, hospitalId } }) => handoverCards(db, hospitalId)),
-  accept: protectedProcedure.input(handoverAcceptSchema).handler(async ({ context: { db, hospitalId, session }, input }) => {
-    const known = new Set((await handoverCards(db, hospitalId)).map(c => c.id));
+  list: protectedProcedure.handler(({ context }) => handoverCards(context.db, context.hospitalId, clockOf(context))),
+  accept: protectedProcedure.input(handoverAcceptSchema).handler(async ({ context, input }) => {
+    const { db, hospitalId, session } = context;
+    const known = new Set((await handoverCards(db, hospitalId, clockOf(context))).map(c => c.id));
     const missing = input.cardIds.filter(id => !known.has(id));
     if (missing.length) throw new ORPCError("NOT_FOUND", { message: `No handover card ${missing.join(", ")}` });
     // The receiver is a user id, never a typed name: the record names a real colleague at this hospital who may accept.

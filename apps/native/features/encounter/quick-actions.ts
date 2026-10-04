@@ -60,7 +60,7 @@ export function useHomeActions(patients: Patient[], encounters: Record<string, E
   const messages = { ...useInboxSummary(), allowed: role.can("messages.inbox") };
   // Management's home leads with the ward card, so its keys are its own jobs, not clinical ones.
   if (role.role === "management") return managementActions(day, beds, auditOf(audit), training.status ? trainingLine(training.status.counts) : undefined, training.status?.counts.blocked ?? 0, reading, failed);
-  return usableKeys(homeActions(day, encounters, { result, live: Boolean(server), beds, reading, failed }, messages), role.can);
+  return usableKeys(homeActions(day, encounters, { result, live: Boolean(server), beds, reading, failed, roster: patients }, messages), role.can);
 }
 
 /** Management's home keys: beds ready to go, the handover to read, money at risk in coding, and the training queue. */
@@ -78,11 +78,13 @@ export function managementActions(patients: Patient[], beds: Bed[], audit: { cou
 }
 
 /** Home: where a clinician's day is, each tile with its live status; the result and the beds come from day/counts. */
-export function homeActions(patients: Patient[], encounters: Record<string, Encounter | undefined>, { result, live, beds, reading, failed }: { result: PendingResult | undefined; live: boolean; beds: Bed[]; reading?: Reading; failed?: Failed },
+export function homeActions(patients: Patient[], encounters: Record<string, Encounter | undefined>, { result, live, beds, reading, failed, roster = patients }: { result: PendingResult | undefined; live: boolean; beds: Bed[]; reading?: Reading; failed?: Failed; roster?: Patient[] },
   messages: Messages = { on: false, allowed: true, waiting: 0, urgent: 0, line: "" }): QuickAction[] {
   const next = [...patients].sort((a, b) => a.time.localeCompare(b.time)).find(p => !encounters[p.id]?.requests.length);
   const ward = wardSummary(beds);
-  const resultFor = result && patients.find(p => p.id === result.patientId);
+  // Whose result it is, among every patient the app knows (`roster`), not only today's visits: a ward patient with no
+  // appointment today gets results too, and the key said "Nothing new" under the alert for one.
+  const resultFor = result && roster.find(p => p.id === result.patientId);
   // Opening a result only shows it: the briefing's Acknowledge (with its receipt) is the one way to clear it for the team.
   const openResult = () => { if (resultFor) openSession(resultFor.id, { next: "briefing" }); };
   return [
@@ -109,14 +111,17 @@ export type VisitTarget = "briefing" | "recording" | "medication" | "xray" | "sc
 export type VisitNeed = { tone: "urgent" | "caution" | "calm"; text: string; action: string; target: VisitTarget | "discharge" | "claim" | "handover" };
 export function visitNeed(patient: Patient, encounter: Encounter | undefined, result: PendingResult | undefined): VisitNeed | undefined {
   if (result?.patientId === patient.id) return { tone: "urgent", text: "New result to review", action: "Brief me", target: "briefing" };
-  if (patient.incomplete) return { tone: "caution", text: "History incomplete · medicines and allergies unknown", action: "Brief me", target: "briefing" };
+  // Once discharged, the visit's own jobs are closed (the rule patientFlags counts by): only a result, or the insurer, still asks.
+  const discharged = Boolean(encounter?.discharge?.dischargedAt);
+  if (patient.incomplete && !discharged) return { tone: "caution", text: "History incomplete · medicines and allergies unknown", action: "Brief me", target: "briefing" };
   const claim = encounter?.claim?.status;
   if (claim === "queried" || claim === "denied") return { tone: "caution", text: claim === "queried" ? "Insurer asked about the guarantee letter" : "Guarantee letter denied · appeal drafted", action: "Answer", target: "claim" };
   const unconfirmed = (encounter?.medicationEntries ?? defaultMedications(patient)).filter(m => !m.confirmed).length;
   const allergy = patient.allergies && !confirmedAllergy(encounter) ? `${patient.allergies.split(" — ")[0]} allergy` : undefined;
+  if (discharged) return undefined;
   if (unconfirmed) return { tone: "caution", text: [`${unconfirmed} ${unconfirmed === 1 ? "medicine" : "medicines"} to confirm`, allergy].filter(Boolean).join(" · "), action: "Confirm", target: "medication" };
   // Once the medicines are settled the visit can close: discharge is the next move until it is done.
-  if (!encounter?.discharge?.dischargedAt && encounter?.requests.length) return { tone: "calm", text: "Medicines confirmed · ready to draft the discharge", action: "Discharge", target: "discharge" };
+  if (encounter?.requests.length) return { tone: "calm", text: "Medicines confirmed · ready to draft the discharge", action: "Discharge", target: "discharge" };
   return undefined;
 }
 /** The tool key that does what a need's action does, so the visit's shelf can leave it out under the need. */
@@ -126,9 +131,12 @@ export function visitActions(patient: Patient, encounter: Encounter | undefined,
   const resultHere = result?.patientId === patient.id;
   const recording = encounter?.recording === "recording" || encounter?.recording === "paused";
   const lines = encounter?.transcript.length ?? 0;
+  // A consultation's words stay on the phone that captured them (the hospital record keeps the note, not the transcript),
+  // so a discharged visit with none here says that, not that a consultation is still to start.
+  const none = encounter?.discharge?.dischargedAt ? "None on this phone" : "Not started";
   return [
     { key: "brief", label: "Brief me", icon: "text.alignleft", status: resultHere ? "New result to review" : patient.incomplete ? "History incomplete" : "Summary in seconds", tone: resultHere ? "urgent" : patient.incomplete ? "caution" : "calm", onPress: () => go("briefing") },
-    { key: "consult", label: "Consultation", icon: "waveform", status: recording ? "Recording now" : lines ? `${lines} lines captured` : "Not started", tone: recording ? "caution" : "calm", onPress: () => go("recording") },
+    { key: "consult", label: "Consultation", icon: "waveform", status: recording ? "Recording now" : lines ? `${lines} lines captured` : none, tone: recording ? "caution" : "calm", onPress: () => go("recording") },
     { key: "meds", label: "Medicines", icon: "pills", status: patient.incomplete ? "Ingredient unknown" : unconfirmed ? `${unconfirmed} unconfirmed` : "All confirmed", tone: patient.incomplete || unconfirmed ? "caution" : "calm", badge: unconfirmed, onPress: () => go("medication") },
     // Without an attachment the X-ray page shows only the bundled reference film, which is not this patient's (unless removed).
     { key: "xray", label: "X-ray", icon: "photo", status: encounter?.imagingAttachment ? "Image attached" : patient.incomplete || encounter?.hideTeachingImage ? "No image" : "Reference image only", onPress: () => go("xray") },

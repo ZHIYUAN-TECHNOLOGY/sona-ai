@@ -37,21 +37,26 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 // management home key all count the same notes and the same money.
 let serverItems: AuditItem[] | undefined;
 const serverListeners = new Set<() => void>();
-function loadServerAudit(run: boolean, nameOf: (id: string) => string) {
-  return (run ? api.audit.run() : Promise.resolve()).then(() => api.audit.list()).then(rows => {
+// Every read runs the audit first, as the screen does. A read that only listed saw none of the gaps in notes saved since
+// the last run, so the menu said "All queries sent" above a screen that then found one. Readers at the same moment share one run.
+// ponytail: the whole hospital's audit runs on each read (rules only, and a rerun changes nothing); list a stored run once the nightly job is the only writer.
+let reading: Promise<void> | undefined;
+function loadServerAudit(nameOf: (id: string) => string) {
+  return reading ??= api.audit.run().then(() => api.audit.list()).then(rows => {
     serverItems = rows.map(r => ({
       id: r.id, bed: "", patient: nameOf(r.patientId), doctor: r.doctor, gap: r.gap,
       from: r.fromCode ?? "", to: r.toCode, risk: Math.round(r.riskCents / 100), query: r.query,
     }));
     serverListeners.forEach(l => l());
-  });
+  }).finally(() => { reading = undefined; });
 }
 
 /**
- * The open coding-audit items every surface counts: live, the server's (listed once, refreshed when
- * the audit screen runs it; empty until it answers), else last night's authored audit.
+ * The open coding-audit items every surface counts: live, the server's (read once, and again when
+ * the audit screen opens; empty until it answers), else last night's authored audit. `reread` reads
+ * again each time it turns true: the side menu passes whether it is open, so its line is the screen's.
  */
-export function useOpenAudit(): AuditItem[] {
+export function useOpenAudit(reread?: boolean): AuditItem[] {
   const { encounters, patients } = useEncounter();
   const { on: live } = useLive();
   const { can } = useRole();
@@ -60,8 +65,8 @@ export function useOpenAudit(): AuditItem[] {
   const allowed = can("audit.list");
   useEffect(() => {
     // The patient list is only read for names, so it is not a dependency.
-    if (live && allowed && !serverItems) void loadServerAudit(false, id => patients.find(p => p.id === id)?.name ?? id).catch(() => {});
-  }, [live, allowed]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (live && allowed && (reread ?? !serverItems)) void loadServerAudit(id => patients.find(p => p.id === id)?.name ?? id).catch(() => {});
+  }, [live, allowed, reread]); // eslint-disable-line react-hooks/exhaustive-deps
   return live ? (server ?? []).filter(i => !sent.has(i.id)) : openItems(encounters, sent);
 }
 
@@ -86,7 +91,7 @@ export function AuditScreen() {
     if (!live || refused) return;
     let alive = true;
     setLoadError(undefined);
-    loadServerAudit(true, id => nameOf.current(id)).then(() => alive && setRan(true), e => alive && setLoadError(errorText(e)));
+    loadServerAudit(id => nameOf.current(id)).then(() => alive && setRan(true), e => alive && setLoadError(errorText(e)));
     return () => { alive = false; };
   }, [live, refused, attempt]);
   // Live never shows the authored list: empty until the server answers. Most money at risk first.

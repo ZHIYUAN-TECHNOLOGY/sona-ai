@@ -85,7 +85,7 @@ export function Sidebar({ open, progress, onClose }: { open: boolean; progress: 
   const dayError = useDayError();
   const { beds, failure: bedsFailed, retry: retryBeds } = useWard();
   const ward = wardSummary(beds); // the Ward page's beds
-  const audit = auditOf(useOpenAudit());
+  const audit = auditOf(useOpenAudit(open));
   const training = useTrainingStatus();
   const handover = useLiveHandover(open);
   const handoverCount = handover.live ? handover.cards?.length : patients.length + 3;
