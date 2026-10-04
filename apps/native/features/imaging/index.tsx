@@ -8,7 +8,6 @@ import { Linking, Pressable, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import Animated, { cancelAnimation, Easing, FadeIn, FadeOut, useSharedValue, withRepeat, withSpring, withTiming } from "react-native-reanimated";
 import { Drafting, MODEL_SLOW, SampleLabel } from "@/components/sona/model-answer";
-import { useLiveXray } from "@/features/live/model-sync";
 import { wakingOf } from "@/features/live/waking";
 import { Caption, PressScale } from "@/components/sona/parts";
 import { HalftoneShimmer } from "@/components/sona/halftone-shimmer";
@@ -23,7 +22,7 @@ import { FindingsCard } from "@/features/findings";
 import { onImage } from "@/features/findings/model";
 import { useFindings } from "@/features/live/findings-sync";
 import { useRole } from "@/features/live/roles";
-import { useXrayUpload } from "@/features/live/xray-upload";
+import { useXrayAttach, useXrayReading, useXrayUploadOf } from "./use-upload";
 import { takeXray } from "@/features/library/scan-state";
 import { teachingImage, type TeachingImage } from "./fixture";
 import { ImageEdge, OriginalImageViewer, VIEWING } from "./viewer";
@@ -54,14 +53,15 @@ export function XrayCard({ patient, onOpen, onRequest, result }: FeatureProps) {
   const referenceImage = evidence?.hideTeachingImage ? undefined : teachingImage;
   const [sourceError, setSourceError] = useState(false);
   const imageSource = attachment ? { uri: attachment.uri } : referenceImage?.source;
-  // Live mode: the uploaded image is read by the image model (MedGemma), labelled unvalidated; demo mode keeps the honest sample.
-  const reading = useLiveXray(patient.encounterId, attachment && !superseded ? attachment.uri : undefined);
-  const read = reading.live && Boolean(attachment);
+  // Live mode: this card's own image, once stored, is read by the image model (MedGemma), labelled unvalidated; a reading of
+  // any other image is never shown here. Demo mode, and an image that was never sent, keep the honest sample.
+  const reading = useXrayReading(patient.encounterId, attachment?.uri);
+  const server = useXrayAttach();
   const openOriginal = () => { if (result && (attachment || referenceImage)) router.push({ pathname: "/xray", params: { recordCardId: result.id, patientId: result.patientId } }); else onOpen("xray"); };
   return <View style={{ gap: 18 }}>
     <View style={{ gap: 8 }}>
       <Preview source={imageSource} label={attachment ? "Selected local teaching image" : referenceImage ? "Reference radiograph, unrelated to this patient" : "Add a teaching image"} onPress={openOriginal} />
-      {attachment && <Caption icon={null}>{attachment.name} · {read ? "in your hospital’s storage" : "local, not uploaded or analysed"}</Caption>}
+      {attachment && <Caption icon={null}>{attachment.name} · {reading?.saving ? "saving to your hospital’s storage" : reading && !reading.failed ? "in your hospital’s storage" : "local, not uploaded or analysed"}</Caption>}
       {!attachment && referenceImage && <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         <Caption icon={null}>Reference example, not this patient · {referenceImage.attribution} · {referenceImage.license}</Caption>
         <SourceLink label="Source" onPress={() => { void Linking.openURL(referenceImage.sourceUrl).catch(() => setSourceError(true)); }} />
@@ -69,9 +69,10 @@ export function XrayCard({ patient, onOpen, onRequest, result }: FeatureProps) {
       {sourceError && <Notice warning>The source page could not be opened. Attribution remains available here.</Notice>}
     </View>
     {sections < 2 && <AnalysisStatus interrupted={interrupted} />}
-    {sections >= 2 && <Reveal>{read ? <ModelRead reading={reading} /> : <Findings scenario={scenario} attachment={Boolean(attachment)} summary={referenceImage?.referenceSummary} />}</Reveal>}
+    {sections >= 2 && <Reveal>{reading ? <ModelRead reading={reading} onRetry={attachment && server.live ? () => server.attach(patient.encounterId, attachment) : undefined} /> : <Findings scenario={scenario} attachment={Boolean(attachment)} summary={referenceImage?.referenceSummary} />}</Reveal>}
     {sections === 2 && !interrupted && <Caption icon={null}>Completing provenance and limitations…</Caption>}
-    {sections >= 3 && !(read && reading.data?.source === "model") && <Reveal><Limits sample={Boolean(attachment) || scenario !== "reference"} waking={wakingOf(reading.data)} detail="The original stays available to inspect." /></Reveal>}
+    {/* Live, the sample's limits show only under a sample: a model's reading, a wait or a failure each say their own. */}
+    {sections >= 3 && (!reading || reading.data?.source === "fixture") && <Reveal><Limits sample={Boolean(attachment) || scenario !== "reference"} waking={wakingOf(reading?.data)} detail="The original stays available to inspect." /></Reveal>}
     {superseded && <Notice>This response preserves an earlier image and scenario. New requests use the current encounter image.</Notice>}
     {(interrupted || sections >= 3 && scenario !== "reference") && <View style={{ alignSelf: "flex-start" }}>
       <Action label={superseded ? "Analyse current encounter image" : "Retry analysis"} secondary icon="arrow.clockwise" disabled={busy} onPress={() => onRequest("xray")} />
@@ -115,15 +116,16 @@ function AnalysisStatus({ interrupted }: { interrupted: boolean }) {
 
 /** Only ever the source's own description or an honest unavailable state; nothing is read from the pixels. */
 /** What an X-ray answer said, shown under the image so the viewer and its analysis are one page. */
-function AnalysisDetails({ snapshot }: { snapshot?: Pick<Encounter, "imagingAttachment" | "hideTeachingImage" | "imagingScenario"> }) {
+function AnalysisDetails({ snapshot, reading }: { snapshot?: Pick<Encounter, "imagingAttachment" | "hideTeachingImage" | "imagingScenario">; reading?: ReturnType<typeof useXrayReading> }) {
   if (!snapshot) return null;
   const attachment = Boolean(snapshot.imagingAttachment);
   const scenario = snapshot.imagingScenario ?? "reference";
   const summary = snapshot.hideTeachingImage ? undefined : teachingImage?.referenceSummary;
   return <View style={{ gap: 14 }}>
     <Text accessibilityRole="header" style={{ ...type.headline, fontWeight: "600", letterSpacing: -0.2, color: palette.ink }}>Analysis</Text>
-    <Findings scenario={scenario} attachment={attachment} summary={summary} />
-    <Limits sample={attachment || scenario !== "reference"} />
+    {/* Live: the same reading of this image as its card in the visit shows. */}
+    {reading ? <ModelRead reading={reading} /> : <Findings scenario={scenario} attachment={attachment} summary={summary} />}
+    {(!reading || reading.data?.source === "fixture") && <Limits sample={attachment || scenario !== "reference"} waking={wakingOf(reading?.data)} />}
   </View>;
 }
 
@@ -139,9 +141,13 @@ function Limits({ sample, detail, waking }: { sample: boolean; detail?: string; 
 }
 
 /** The image model's reading of the uploaded X-ray: a draft description, never a validated read or a diagnosis. */
-function ModelRead({ reading }: { reading: ReturnType<typeof useLiveXray> }) {
-  if (reading.loading) return <Drafting label="Reading the image…" slow={MODEL_SLOW} />;
-  if (reading.error) return <Notice warning>{`Not read: ${reading.error}. Nothing has been concluded from this image.`}</Notice>;
+function ModelRead({ reading, onRetry }: { reading: NonNullable<ReturnType<typeof useXrayReading>>; onRetry?: () => void }) {
+  // The read waits for the image to be stored: asked sooner, the server would read the visit's previous image.
+  if (reading.loading) return <Drafting label={reading.saving ? "Saving to your hospital’s storage…" : "Reading the image…"} slow={MODEL_SLOW} />;
+  if (reading.error) return <View style={{ gap: 10 }}>
+    <Notice warning>{`Not read: ${reading.error}. Nothing has been concluded from this image.`}</Notice>
+    {reading.failed && onRetry && <View style={{ alignSelf: "flex-start" }}><Action label="Retry upload" secondary icon="arrow.clockwise" onPress={onRetry} /></View>}
+  </View>;
   const data = reading.data;
   // While the image model starts, the read is asked again by itself (useLiveXray), so there is nothing to redo.
   if (!data || data.source !== "model") return <IconRow icon="eye.slash" title="Findings unavailable" detail={wakingOf(data)
@@ -182,8 +188,9 @@ function ViewerPage({ children, scrollEnabled = true, bottom }: { children: Reac
   </View>;
 }
 /** One line for what an X-ray answer said (the same cases `Findings` spells out), or that there is none yet. */
-function resultLine(snapshot?: Pick<Encounter, "imagingAttachment" | "hideTeachingImage" | "imagingScenario">) {
+function resultLine(snapshot?: Pick<Encounter, "imagingAttachment" | "hideTeachingImage" | "imagingScenario">, reading?: ReturnType<typeof useXrayReading>) {
   if (!snapshot) return "Not analysed yet";
+  if (reading?.data?.source === "model") return "Described by the image model · unvalidated";
   const scenario = snapshot.imagingScenario ?? "reference";
   if (scenario === "unsupported") return "Unsupported category";
   if (scenario === "no-finding" || snapshot.imagingAttachment) return "Findings unavailable";
@@ -243,11 +250,16 @@ export function XrayScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   const activePatient = useRef(patient?.id);
   // Live backend mode: the chosen image is also uploaded to the server, where Analyse has the image model read it.
-  const server = useXrayUpload();
+  const server = useXrayAttach();
   const attachment = evidence?.imagingAttachment;
   const referenceImage = evidence?.hideTeachingImage ? undefined : teachingImage;
   // A local image has no source page: its provenance line says it stays on this device and is not analysed.
-  const upload = attachment && server.upload?.uri === attachment.uri ? server.upload : undefined;
+  const upload = useXrayUploadOf(patient?.encounterId, attachment?.uri);
+  // The analysis shown under the image: the saved card's, else the latest when it is of the image shown (an analysis of an earlier
+  // image, or of the reference film, says nothing about this one). Live, the model's reading of that same image goes with it.
+  const latest = encounter?.cards.findLast(card => card.kind === "xray" && card.imagingSnapshot)?.imagingSnapshot;
+  const analysed = historical ? savedCard?.imagingSnapshot : latest?.imagingAttachment?.uri === attachment?.uri ? latest : undefined;
+  const analysis = useXrayReading(patient?.encounterId ?? "", analysed?.imagingAttachment?.uri);
   // Demo flow 6: findings beyond the question asked, marked on the image and listed under it; only those read from it.
   const found = useFindings();
   const role = useRole();
@@ -258,16 +270,17 @@ export function XrayScreen() {
   const focused = markers.some(m => m.id === focus) ? focus : undefined;
   const focusOn = useCallback((id: string | undefined) => { haptic(); setFocus(current => (id === current ? undefined : id)); }, []);
   useEffect(() => { if (patient) found.detect(patient.encounterId); }, [found.live, patient?.encounterId]); // eslint-disable-line react-hooks/exhaustive-deps
-  // A newly stored image is read for findings at once, so its own marks (or none) are what it shows.
-  useEffect(() => { if (patient && upload?.key) found.detect(patient.encounterId); }, [upload?.key]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A newly stored image is read for findings at once (useXrayAttach), so its own marks (or none) are what it shows.
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   activePatient.current = patient?.id;
-  // A chest X-ray scanned from Add a source arrives here once its patient is chosen; it stays on this device, like a picked image.
+  // A chest X-ray scanned from Add a source arrives here once its patient is chosen; it is kept on this device, or stored in live mode, like a picked image.
   useEffect(() => {
     if (!patient || historical) return;
     const uri = takeXray();
-    if (uri) updateEncounter(current => ({ ...current, imagingAttachment: { uri, name: "Scanned X-ray" } }), true);
+    if (!uri) return;
+    updateEncounter(current => ({ ...current, imagingAttachment: { uri, name: "Scanned X-ray" } }), true);
+    server.attach(patient.encounterId, { uri });
   }, [patient?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const pickImage = async () => {
     if (picking || historical) return;
@@ -279,7 +292,7 @@ export function XrayScreen() {
       const asset = result.assets[0];
       if (!asset) return;
       updateEncounter(current => ({ ...current, imagingAttachment: { uri: asset.uri, name: asset.fileName ?? "Selected teaching image" } }), true);
-      if (server.live && patient) void server.send(patient.encounterId, asset);
+      if (patient) server.attach(patient.encounterId, asset);
     } catch { setPickerError("The photo library could not be opened. Try again or check access in Settings."); }
     finally { setPicking(false); }
   };
@@ -297,11 +310,11 @@ export function XrayScreen() {
   if (historical && (sourcePatientId !== patient.id || !savedCard?.imagingSnapshot)) return <Screen><Notice warning>This saved image is unavailable in the active patient’s encounter. No current image has been substituted.</Notice><Action label="Return to encounter" secondary onPress={() => (router.canGoBack() ? router.back() : undefined)} /></Screen>;
   const open = findings.filter(f => f.status === "open").length;
   if (historical) return <ViewerPage scrollEnabled={!zoomed}>
-    <Heading identity={`${patient.name} · saved revision ${savedCard?.revision} · ${attachment ? "local image, no model inference" : "reference example, not this patient"}`} result={resultLine(savedCard?.imagingSnapshot)} open={open} />
+    <Heading identity={`${patient.name} · saved revision ${savedCard?.revision} · ${attachment ? (upload?.state === "uploaded" ? "image in your hospital’s storage" : "local image, no model inference") : "reference example, not this patient"}`} result={resultLine(analysed, analysis)} open={open} />
     {/* The visit's findings travel with its film, so a saved answer shows the same marks as the live view. */}
     {image ? <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} /> : <Notice>No image was attached when this response was created.</Notice>}
     {image && <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={role.can("findings.track") ? f => void found.track(f) : undefined} onDismiss={role.can("findings.dismiss") ? (f, reason) => void found.dismiss(f, reason) : undefined} />}
-    <AnalysisDetails snapshot={savedCard?.imagingSnapshot} />
+    <AnalysisDetails snapshot={analysed} reading={analysis} />
   </ViewerPage>;
 
   if (!image) return <ViewerPage>
@@ -322,7 +335,6 @@ export function XrayScreen() {
     <Action label="Restore bundled reference" secondary onPress={() => updateEncounter(current => ({ ...current, hideTeachingImage: false }))} />
   </ViewerPage>;
 
-  const latest = encounter?.cards.findLast(card => card.kind === "xray" && card.imagingSnapshot)?.imagingSnapshot;
   // The decision stays in view: what analysing does, then the button.
   return <ViewerPage scrollEnabled={!zoomed} bottom={<>
     <Text style={{ ...type.footnote, paddingHorizontal: 4, color: palette.muted }}>{upload?.state === "uploaded" ? "Answers in the visit · the image model reads it; unvalidated" : "Answers in the visit · a sample response, nothing is read from the image"}</Text>
@@ -336,12 +348,12 @@ export function XrayScreen() {
       { label: picking ? "Opening library…" : "Choose local image", icon: "photo.on.rectangle", disabled: picking || analysing, onPress: pickImage },
       { label: "Remove image", icon: "trash", disabled: analysing, onPress: () => updateEncounter(current => ({ ...current, imagingAttachment: undefined, hideTeachingImage: true }), true) },
     ]} />}
-    <Heading identity={attachment ? `${patient.name} · local teaching image` : "Reference example · not this patient"} result={analysing ? "Analysing…" : resultLine(latest)} open={open} />
+    <Heading identity={attachment ? `${patient.name} · local teaching image` : "Reference example · not this patient"} result={analysing ? "Analysing…" : resultLine(analysed, analysis)} open={open} />
     {pickerError && <Notice warning>{pickerError}</Notice>}
     <OriginalImageViewer key={image.id} asset={image} onZoomChange={setZoomed} markers={markers} focus={focused} onFocus={focusOn} />
     <FindingsCard findings={findings} error={found.error} focus={focused} onFocus={focusOn} onTrack={role.can("findings.track") ? f => void found.track(f) : undefined} onDismiss={role.can("findings.dismiss") ? (f, reason) => void found.dismiss(f, reason) : undefined} />
     {/* The latest analysis sits right under the image: one page, no separate details screen. */}
-    <AnalysisDetails snapshot={latest} />
+    <AnalysisDetails snapshot={analysed} reading={analysis} />
 
     {/* Rehearsal only: which sample response the next analysis returns. */}
     {showDemoControls && <Animated.View layout={layout} pointerEvents={analysing ? "none" : "auto"} style={{ gap: 10, opacity: analysing ? 0.45 : 1 }}>
