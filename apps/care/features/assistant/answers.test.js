@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { DOCTORS, matchDoctors } from "../doctors/data";
-import { answer, conditionOf, doctorQuestion, leadOf, NO_ANSWER, spoken, startingLine, suggestions, urgent, wantsDoctor } from "./answers";
+import { answer, conditionOf, doctorQuestion, leadOf, NO_ANSWER, shown, spoken, startingLine, suggestions, urgent, wantsDoctor } from "./answers";
 
 const medicines = {
   new: [{ name: "Paracetamol", line: "For pain or fever: 1 g every 6 hours if you need it, no more than 4 g a day" }],
@@ -127,9 +127,40 @@ test("doctor questions search the directory: by the question's words, else the p
   expect(await answer("Can you find me a doctor?", [], api(failing, async () => []))).toEqual({ kind: "none", urgent: false });
 });
 
-test("urgent words win: the 999 line, nothing asked, even when asking for a doctor", async () => {
+test("urgent words win: the 999 line, even when asking for a doctor or when the server is out of reach", async () => {
   expect(await answer("I have chest pain, find me a doctor", [], api(failing, failing), "chest infection")).toEqual({ kind: "none", urgent: true });
   expect(spoken({ kind: "none", urgent: true })).toBe(`If this is happening now, call 999. ${NO_ANSWER}`);
+});
+
+// care.ask's `careTeam`: the flagged task and Sona's line, there once the server has told the care team.
+const careTeam = { taskId: "task-1", title: "Amelia: chest pain after discharge", line: "I've let your care team know." };
+
+test("a typed emergency still reaches the server, and the 999 reply carries the care team's task, model or no model", async () => {
+  const asked = [];
+  const reply = await answer("I have chest pain", [], api(async q => { asked.push(q); return { ...(await fixture()), careTeam }; }));
+  expect(asked).toEqual(["I have chest pain"]);
+  expect(reply).toEqual({ kind: "none", urgent: true, careTeam });
+  // Her line stands in for "Send it to your care team?": shown once, and after the 999 line when read aloud.
+  expect(shown(reply)).toBe("I've let your care team know.");
+  expect(spoken(reply)).toBe("If this is happening now, call 999. I've let your care team know.");
+  // Typed warning words are the 999 card whatever a model says back; no task made, no line.
+  expect(await answer("I have chest pain", [], api(modelSays({ answer: "Rest and drink water.", grounded: false, urgent: false, careTeam })))).toEqual({ kind: "none", urgent: true, careTeam });
+  expect(await answer("I have chest pain", [], api(fixture))).toEqual({ kind: "none", urgent: true });
+});
+
+test("a problem that is not an emergency carries the care team's line too: after a model's answer, or alone when no model is on", async () => {
+  const answered = await answer("My cough is worse today", [], api(modelSays({ answer: "Rest and keep taking your tablets.", grounded: false, urgent: false, careTeam })));
+  expect(answered).toMatchObject({ kind: "plan", careTeam });
+  expect(shown(answered)).toBe("Rest and keep taking your tablets. I've let your care team know.");
+  expect(spoken(answered)).toBe(shown(answered));
+  // The line is the server's, in the plan's language.
+  const ms = { ...careTeam, line: "Saya sudah maklumkan pasukan penjagaan anda." };
+  const off = await answer("Batuk saya makin teruk", [], api(async () => ({ ...(await fixture()), careTeam: ms })), undefined, "ms");
+  expect(off).toEqual({ kind: "none", urgent: false, careTeam: ms });
+  expect(shown(off, "ms")).toBe("Saya sudah maklumkan pasukan penjagaan anda.");
+  // The model's own warning sign: the 999 card, with the line.
+  expect(await answer("I feel confused", [], api(modelSays({ answer: "Call 999 now.", grounded: false, urgent: true, careTeam })))).toEqual({ kind: "none", urgent: true, careTeam });
+  expect(shown({ kind: "none", urgent: false })).toBe(NO_ANSWER);
 });
 
 test("an answer's lead sentence is split from the rest, never at Dr.", () => {

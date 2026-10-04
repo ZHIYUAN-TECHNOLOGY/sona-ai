@@ -21,7 +21,7 @@ import { StreamedLead } from "@/features/encounter/conversation";
 import type { Patient } from "@/features/encounter/types";
 import { threadBefore, useLiveEvidence, type EvidenceStep, type ServerEvidence, type Turn } from "@/features/live/evidence-sync";
 import { wakingOf } from "@/features/live/waking";
-import { basis, calmTerms, forPatient, searchedLine, sections, stepLines, strength } from "./answer";
+import { basis, calmTerms, forPatient, searchedLine, sections, stepLines, strength, unanswered } from "./answer";
 import { authoredAnswer, authoredReferences, curb65, quotedClaims, type Claim, type Reference } from "./model";
 
 /*
@@ -82,6 +82,8 @@ export function EvidenceAnswer({ question, encounterId, answerKey, thread, patie
   const caption = !shown || writing ? "" : !data ? "Rehearsed answer" : data.source === "cached" ? "Rehearsed answer" : "";
   const cite = (n: number) => { haptic("select"); setFocus({ n, at: Date.now() }); };
   const rests = shown?.enough ? basis(shown.claims, shown.references) : "";
+  // The model did not answer (or is starting, and is asked again by itself): said as that, not as thin evidence or a sample.
+  const failed = unanswered(data, wakingOf(data));
   // Tied to the patient once the server's CURB-65 is in (or, without the server, the chart's own).
   const mine = patient && !writing && forPatient(question, patient.name.split(" ")[0]!, data ? data.curb65 : curb65(patient));
 
@@ -107,9 +109,9 @@ export function EvidenceAnswer({ question, encounterId, answerKey, thread, patie
           <Text selectable style={{ ...type.callout, color: palette.ink }}>{data.general}</Text>
           <Text selectable style={{ ...type.caption, color: palette.muted }}>General answer · no source found for this</Text>
         </View>
-        : <Text selectable style={{ ...type.callout, color: palette.amber }}>{NOT_ENOUGH}</Text>}
+        : <Text selectable style={{ ...type.callout, color: palette.amber }}>{failed ?? NOT_ENOUGH}</Text>}
       {shown && <View style={{ gap: 4 }}>
-        {data && data.references.length > 0 && <SampleLabel source={data.source === "fixture" || data.source === "cached" ? data.source : "model"} model={data.source} waking={wakingOf(data)} what="evidence" />}
+        {data && data.references.length > 0 && !failed && <SampleLabel source={data.source === "fixture" || data.source === "cached" ? data.source : "model"} model={data.source} waking={wakingOf(data)} what="evidence" />}
         {caption ? <Text selectable style={{ ...type.caption, color: palette.muted }}>{caption}</Text> : null}
       </View>}
     </Surface></Animated.View>

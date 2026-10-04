@@ -22,7 +22,7 @@ import { api, errorText } from "@/features/live";
 import { useOpened } from "@/components/sona/opening";
 import { refreshServerData, serverDayCount, useServerData, useServerDay, useVisitTasks } from "@/features/live/server-day";
 import { localDate } from "@/features/tasks/state";
-import { flaggedItems, flaggedTaskIds } from "@/features/check-ins/model";
+import { flaggedItems, flaggedTaskIds, reportItems } from "@/features/check-ins/model";
 import { useCheckIns, useKeptFlags } from "@/features/check-ins/state";
 import { FlagActions } from "@/features/check-ins/thread";
 import { BookingActions, useKeptBookings } from "@/features/bookings/parts";
@@ -325,7 +325,10 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const messaged = (t: { id: string }, p: Patient) => t.id.startsWith("message:") && (messages.some(m => m.patientId === p.id) || held.some(h => h.patientId === p.id));
   // A denied guarantee letter holds a bed: an amber row that opens Sona's appeal.
   const denials = glDeniedItems(beds);
-  const ranked = offset === 0 ? withFindings([...flaggedItems(checkIns, kept), ...messages, ...bookings, ...denials, ...rankDay(patients, encounters, now, result ? undefined : new Set(["result"]), live ? { result, tasksOf: p => tasksOf(p).filter(t => !flaggedTaskIds(checkIns).includes(t.id) && !t.id.startsWith("booking:") && !messaged(t, p)) } : undefined)], findings) : rankOtherDay(offset, schedule);
+  // A problem told to Sona Care (no check-in reply behind its task) is flagged the same way: red, with Call back and Book in.
+  const reports = reportItems(server?.tasks ?? [], checkIns, id => fixturePatients.find(p => p.encounterId === id)?.id, kept);
+  const flagged = (t: { id: string }) => flaggedTaskIds(checkIns).includes(t.id) || reports.some(r => r.id === `check-in-${t.id}`);
+  const ranked = offset === 0 ? withFindings([...flaggedItems(checkIns, kept), ...reports, ...messages, ...bookings, ...denials, ...rankDay(patients, encounters, now, result ? undefined : new Set(["result"]), live ? { result, tasksOf: p => tasksOf(p).filter(t => !flagged(t) && !t.id.startsWith("booking:") && !messaged(t, p)) } : undefined)], findings) : rankOtherDay(offset, schedule);
   const date = dayOf(offset, clock);
   const [switched, setSwitched] = useState(false);
   const pick = (next: number) => { if (next === offset) return; haptic(); setSwitched(true); setAnimate(false); setOffset(next); };
