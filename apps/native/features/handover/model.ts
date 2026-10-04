@@ -1,3 +1,4 @@
+import { ROLE_LABEL, type Role } from "@sona-ai/api/roles";
 import { buildHandover as build, type HandoverCard, type HandoverEncounter } from "@sona-ai/domain/handover";
 import { findingLine } from "@sona-ai/domain/findings";
 import type { Encounter, Patient } from "@/features/encounter/types";
@@ -30,9 +31,9 @@ export function buildHandover(patients: Patient[], encounters: Record<string, En
 }
 
 /**
- * Who the acceptance names before anyone types. The demo starts on an authored colleague; the server holds no
- * receiving clinician (handover.accept takes whatever name is typed), so the judge build starts blank and the
- * outgoing clinician names who is taking over.
+ * Who the acceptance names before anyone types, without the server: the demo starts on an authored colleague.
+ * Connected to the hospital record nothing is typed at all: the receiver is picked from the hospital's own
+ * doctors and nurses (handover.receivers), blank until one is picked, and the acceptance names that user.
  */
 export const startingReceiver = (judge: boolean) => judge ? "" : "Dr Lim · night registrar";
 
@@ -40,6 +41,9 @@ export const startingReceiver = (judge: boolean) => judge ? "" : "Dr Lim · nigh
  * The deck's outcome: only patients handed over are accepted; "Discuss" ones stay with the outgoing
  * clinician to talk through. `line` heads the summary, `receipt` stamps the acceptance.
  */
+/** A receiver as the pick shows them: "Dr Lim · Doctor". */
+export const receiverLabel = (r: { name: string; role: Role }) => `${r.name} · ${ROLE_LABEL[r.role]}`;
+
 export function handoverTally(done: { id: string; decision: "handed" | "discuss" }[]) {
   const handed = done.filter(d => d.decision === "handed").map(d => d.id), discuss = done.filter(d => d.decision === "discuss").map(d => d.id);
   const patients = (n: number) => `${n} ${n === 1 ? "patient" : "patients"}`;

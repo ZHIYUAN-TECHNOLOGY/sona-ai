@@ -220,7 +220,8 @@ export function Home({ patient, patients, onPick, onChoosePatient, onSelectPatie
   return <View style={{ gap: 28, paddingTop: 20 }}>
     <Animated.View entering={rise(0)}>
       <Text accessibilityRole="header" style={{ ...type.footnote, fontWeight: "500", color: palette.muted }}>
-        <Text style={{ fontWeight: "600", color: palette.ink }}>{patient.name}</Text> · {patient.age} · {patient.subtitle} · {patient.time}
+        {/* A ward patient's record can be sparse (no subtitle, no appointment time): only the parts it has, so no separator trails. */}
+        <Text style={{ fontWeight: "600", color: palette.ink }}>{patient.name}</Text>{[patient.age, patient.subtitle, patient.time].filter(part => part != null && part !== "").map(part => ` · ${part}`).join("")}
       </Text>
     </Animated.View>
     <Animated.View entering={rise(1)}>

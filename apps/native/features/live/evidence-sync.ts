@@ -25,6 +25,13 @@ export function threadBefore(requests: { id: string; kind: string; prompt: strin
     .map(r => ({ question: r.prompt, answer: answered.get(r.id)?.claims.map(c => c.text).join(" ") ?? "" })).slice(-4);
 }
 
+/**
+ * Whether an answer is kept for the session. Not while the model starts (asked again by itself), and not the
+ * server's stub with no claims (the model did not answer): kept, that failure would show on every reopen
+ * until the question was asked afresh. Reopening the card asks again instead.
+ */
+export const keeps = (answer: Pick<ServerEvidence, "source" | "enough">) => !wakingOf(answer) && !(answer.source === "fixture" && !answer.enough);
+
 type Ask = Parameters<AppRouterClient["evidence"]["ask"]>[0];
 /**
  * One answer, read as the server sends it: each step goes to `onStep` as it happens (searching, reading, writing), what is
@@ -61,9 +68,9 @@ export function useLiveEvidence(encounterId: string | undefined, key: string, qu
   const [error, setError] = useState<string>();
   useEffect(() => {
     if (!on || answered.has(key)) return;
-    // A sample while the model starts is shown, not kept: it is asked again until the model answers (./waking), and on the next open.
+    // A sample while the model starts, or a failure, is shown, not kept (keeps): it is asked again until the model answers (./waking), and on the next open.
     return askUntilAwake(() => streamed({ encounterId, question, thread }, setSteps, setWritten).then(r => {
-      if (!wakingOf(r)) { answered = new Map(answered).set(key, r); listeners.forEach(l => l()); }
+      if (keeps(r)) { answered = new Map(answered).set(key, r); listeners.forEach(l => l()); }
       return r;
     }), setData, e => setError(errorText(e)));
   }, [on, key]); // eslint-disable-line react-hooks/exhaustive-deps

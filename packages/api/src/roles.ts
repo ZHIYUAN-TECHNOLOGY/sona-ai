@@ -71,6 +71,7 @@ export const PERMISSIONS: Record<string, readonly [readonly Role[], string]> = {
   "results.acknowledge": [DOCTOR, "acknowledge a result"],
   "handover.list": [CLINICAL_READ, "read the handover"],
   "handover.accept": [CARE, "accept a handover"],
+  "handover.receivers": [CARE, "see who can take a handover"],
   "xray.read": [CLINICAL_READ, "see the X-ray"],
   "xray.upload": [DOCTOR, "add an X-ray"],
   "scan.upload": [DOCTOR, "scan a handwritten note"],

@@ -12,7 +12,7 @@ import { SourcesPill } from "@/components/sona/sources";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { ErrorLine, PressScale } from "@/components/sona/parts";
-import { Action, Icon, Insight, Notice, Tone, useAccessibleEffects } from "@/components/sona/ui";
+import { Action, Chip, Icon, Insight, Notice, Tone, useAccessibleEffects } from "@/components/sona/ui";
 import { toWatch } from "@/features/ask/answers";
 import { useDockHeight, WithSona } from "@/features/ask";
 import { useContinue } from "@/features/patients/continue-store";
@@ -20,10 +20,10 @@ import { useEncounter } from "@/features/encounter/store";
 import { useFindings } from "@/features/live/findings-sync";
 import { errorText, JUDGE } from "@/features/live";
 import { wantsLive } from "@/features/live/judge";
-import { useLiveHandover } from "@/features/live/handover-sync";
+import { useHandoverReceivers, useLiveHandover } from "@/features/live/handover-sync";
 import { useRole } from "@/features/live/roles";
 import { hhmm } from "@/features/tasks/state";
-import { buildHandover, handoverTally, startingReceiver, type HandoverCard as Sbar } from "./model";
+import { buildHandover, handoverTally, receiverLabel, startingReceiver, type HandoverCard as Sbar } from "./model";
 
 /*
  * Shift handover (after Slack's swipe-to-triage cards): one SBAR card per patient on a stack.
@@ -110,6 +110,11 @@ export function HandoverScreen() {
   const cards = live ? server.cards ?? [] : fixtureCards;
   const [done, setDone] = useState<{ id: string; decision: Decision }[]>([]);
   const [receiver, setReceiver] = useState(startingReceiver(JUDGE));
+  // Connected, the receiver is one of the hospital's own doctors and nurses, picked (blank until then), never typed.
+  const colleagues = useHandoverReceivers(live);
+  const [receiverId, setReceiverId] = useState<string>();
+  const picked = colleagues.list?.find(r => r.id === receiverId);
+  const receiverName = live ? picked?.name ?? "" : receiver;
   const [accepted, setAccepted] = useState<string>();
   const [acceptError, setAcceptError] = useState<string>();
   const remaining = cards.filter(card => !done.some(d => d.id === card.id));
@@ -149,7 +154,8 @@ export function HandoverScreen() {
     if (!live) { haptic("success"); setAccepted(hhmm(new Date())); return; }
     // A refusal shows under the hold button with Retry; nothing is stamped until the server accepts.
     setAcceptError(undefined);
-    server.accept(tally.handed, receiver).then(at => { haptic("success"); setAccepted(hhmm(at)); }, e => setAcceptError(`Not accepted: ${errorText(e)}`));
+    if (!picked) return;
+    server.accept(tally.handed, picked.id).then(at => { haptic("success"); setAccepted(hhmm(at)); }, e => setAcceptError(`Not accepted: ${errorText(e)}`));
   };
 
   // Live: not readable for this role, still loading, failed, or nothing to hand over. One calm line each.
@@ -219,17 +225,24 @@ export function HandoverScreen() {
         {tally.discuss.length > 0 && <Text style={{ ...type.callout, color: palette.muted }}>Talk through: {tally.discuss.map(id => cards.find(c => c.id === id)?.name).join(", ")}</Text>}
         <View style={{ gap: 6 }}>
           <Text style={{ ...type.overline, color: palette.muted }}>Receiving clinician</Text>
-          <TextInput value={receiver} onChangeText={setReceiver} editable={!accepted} accessibilityLabel="Receiving clinician" placeholder={JUDGE ? "Who is taking over?" : undefined} placeholderTextColor={palette.placeholder} style={{ minHeight: 48, borderRadius: radius.control, paddingHorizontal: 14, fontSize: type.body.fontSize, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
+          {/* ponytail: every colleague as a chip; a search field once a hospital has more doctors and nurses than wrap onto a few rows. */}
+          {live ? colleagues.error ? <ErrorLine text={`The hospital's clinicians didn't load: ${colleagues.error}`} onRetry={colleagues.retry} />
+            : !colleagues.list ? <Text accessibilityLiveRegion="polite" style={{ ...type.callout, color: palette.muted }}>Loading the hospital’s clinicians…</Text>
+            : !colleagues.list.length ? <Text style={{ ...type.callout, color: palette.muted }}>No other doctor or nurse has an account at this hospital yet, so there is nobody to hand over to.</Text>
+            : <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {(accepted && picked ? [picked] : colleagues.list).map(r => <Chip key={r.id} label={receiverLabel(r)} selected={r.id === receiverId} onPress={() => { if (accepted) return; haptic(); setReceiverId(r.id); setAcceptError(undefined); }} />)}
+            </View>
+          : <TextInput value={receiver} onChangeText={setReceiver} editable={!accepted} accessibilityLabel="Receiving clinician" placeholder={JUDGE ? "Who is taking over?" : undefined} placeholderTextColor={palette.placeholder} style={{ minHeight: 48, borderRadius: radius.control, paddingHorizontal: 14, fontSize: type.body.fontSize, color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />}
         </View>
       </Animated.View>
       {accepted ? <Animated.View entering={reducedMotion ? FadeIn : ZoomIn.springify().duration(420).dampingRatio(0.72)} accessibilityLiveRegion="polite"
         style={{ borderRadius: radius.sheet, borderCurve: "continuous", backgroundColor: palette.green, padding: 20, gap: 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}><Icon name="checkmark.seal.fill" size={26} color={palette.white} /><Text style={{ ...type.heading, color: palette.white }}>Handover acknowledged</Text></View>
-        <Text style={{ ...type.callout, color: "rgba(255,255,255,0.9)" }}>{tally.receipt(receiver, accepted)}</Text>
+        <Text style={{ ...type.callout, color: "rgba(255,255,255,0.9)" }}>{tally.receipt(receiverName, accepted)}</Text>
         <Pressable accessibilityRole="button" onPress={() => router.back()} style={{ alignSelf: "flex-start", marginTop: 6, minHeight: 40, paddingHorizontal: 16, borderRadius: 20, justifyContent: "center", backgroundColor: "rgba(255,255,255,0.18)" }}>
           <Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>Done</Text>
         </Pressable>
-      </Animated.View> : tally.handed.length ? JUDGE && !receiver.trim() ? <Text style={{ ...type.callout, color: palette.muted }}>Name the receiving clinician to accept.</Text> : <HoldToAccept onDone={accept} />
+      </Animated.View> : tally.handed.length ? (live ? !picked : JUDGE && !receiver.trim()) ? live && !colleagues.list?.length ? null : <Text style={{ ...type.callout, color: palette.muted }}>{live ? "Pick the receiving clinician to accept." : "Name the receiving clinician to accept."}</Text> : <HoldToAccept onDone={accept} />
         : <Text style={{ ...type.callout, color: palette.muted }}>Nobody handed over yet. Undo to hand someone over, or talk them all through.</Text>}
       {acceptError && !accepted && <ErrorLine text={acceptError} onRetry={accept} />}
       <Text style={{ ...type.caption, color: palette.muted }}>{live ? "Clinic patients from today’s records." : "Clinic patients come from today’s visits; ward patients are examples without a record to open."}</Text>

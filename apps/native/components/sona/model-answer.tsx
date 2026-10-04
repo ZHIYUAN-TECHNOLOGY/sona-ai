@@ -8,7 +8,9 @@ import { palette, type } from "./theme";
 import { HalftoneGlint } from "./halftone-shimmer";
 import { Icon, pillStyle, useAccessibleEffects } from "./ui";
 import { Press } from "./parts";
-import { startingLabel, wakingOf } from "@/features/live/waking";
+import { JUDGE } from "@/features/live";
+import { wakingOf } from "@/features/live/waking";
+import { sampleText } from "./sample-label";
 
 /*
  * A model answer arriving from the server (live mode). While it drafts, soft bars breathe in place
@@ -90,8 +92,10 @@ export const modelName = (id?: string) => MODEL_NAMES.find(([re]) => id && re.te
  * "fixture"; once a model answered, "AI draft · <model> · check before acting". Tap (the info glyph) for the about sheet. Pass `answer`
  * (a live-answer hook's result) instead of `source`, so demo mode is labelled as live mode is. While the model
  * starts (the server's `waking`, read from `answer` or passed with `source`): "Sample for now · Sona's model is starting, about N min".
+ * The judge build never says "Sample": there this state means the model did not answer or is starting, and the label
+ * says that. `error` (or the `answer`'s) is why the model was not reached, for a rule-based fallback shown after a failed call.
  */
-export function SampleLabel({ source: given, model: givenModel, answer, what, rule = false, waking: givenWaking }: { source?: string; model?: string; answer?: { loading: boolean; data?: { source?: string; model?: string } }; what?: string; rule?: boolean; waking?: number }) {
+export function SampleLabel({ source: given, model: givenModel, answer, what, rule = false, waking: givenWaking, error }: { source?: string; model?: string; answer?: { loading: boolean; data?: { source?: string; model?: string }; error?: string }; what?: string; rule?: boolean; waking?: number; error?: string }) {
   const source = answer ? answerSource(answer) : given;
   // A model's answer says which model drafted it and that it is a draft to check, never a finding on its own.
   if (source === "model") {
@@ -103,7 +107,7 @@ export function SampleLabel({ source: given, model: givenModel, answer, what, ru
   }
   if (source !== "fixture") return null;
   const waking = givenWaking ?? wakingOf(answer?.data);
-  const text = waking ? startingLabel(waking, rule) : `${rule ? "Rule-based" : "Sample"}${what ? ` · ${what} model not switched on` : ""}`;
+  const text = sampleText({ judge: JUDGE, rule, what, waking, error, answerError: answer?.error });
   return <Press accessibilityLabel={text} accessibilityHint="Why this is not a model answer" onPress={openAbout} hitSlop={8}
     style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
     <Text style={{ ...type.caption, color: palette.muted, flexShrink: 1 }}>{text}</Text>
@@ -111,11 +115,13 @@ export function SampleLabel({ source: given, model: givenModel, answer, what, ru
   </Press>;
 }
 
-/** The sheet both open: what is fictional, and what "Sample" and "Rule-based" mean. */
+/** The sheet both open: what is fictional, and what "Sample" and "Rule-based" mean (the judge build has no samples: what "AI draft" means, and what a card says when no model answered). */
 export function AboutDataSheet() {
   return <View style={{ paddingTop: 36, paddingBottom: 34, paddingHorizontal: 24, gap: 12 }}>
     <Text accessibilityRole="header" style={{ ...type.heading, color: palette.ink }}>Synthetic data</Text>
     <Text selectable style={{ ...type.body, color: palette.ink }}>Every patient, doctor, hospital and insurer in this demo is fictional. No real person's data is used.</Text>
-    <Text selectable style={{ ...type.body, color: palette.muted }}>Answers marked "Sample" come from authored examples until the AI models are switched on. "Rule-based" means fixed rules worked it out, not a model.</Text>
+    <Text selectable style={{ ...type.body, color: palette.muted }}>{JUDGE
+      ? "Answers marked \"AI draft\" were written by a model: check them before acting. \"Rule-based\" means fixed rules worked it out, not a model. When Sona's model does not answer or is still starting, the card says so and nothing is shown in the answer's place."
+      : "Answers marked \"Sample\" come from authored examples until the AI models are switched on. \"Rule-based\" means fixed rules worked it out, not a model."}</Text>
   </View>;
 }

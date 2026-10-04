@@ -1,5 +1,7 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
+import { user } from "@sona-ai/db/schema/auth";
+import { hospitals } from "@sona-ai/db/schema/clinical";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
@@ -17,6 +19,13 @@ async function signedIn(extra: Partial<Context> = {}, signed = true) {
   const db = await createTestDb();
   await seedDemo(db, new Date("2026-09-26T09:00:00+08:00"));
   await addClinician(db, "dr-aisyah");
+  // Colleagues with accounts: a doctor and a nurse may take a handover; a bed manager and another hospital's doctor may not.
+  await db.insert(user).values([["dr-aisyah", "Dr Aisyah"], ["dr-lim", "Dr Lim"], ["nurse-mei", "Nurse Mei"], ["beds-tan", "Tan (beds)"], ["dr-away", "Dr Away"]].map(([id, name]) => ({ id: id!, name: name!, email: `${id}@demo.test` })));
+  await addClinician(db, "dr-lim");
+  await addClinician(db, "nurse-mei", undefined, "nurse");
+  await addClinician(db, "beds-tan", undefined, "bed-manager");
+  await db.insert(hospitals).values({ id: "elsewhere", name: "Elsewhere" });
+  await addClinician(db, "dr-away", "elsewhere");
   return createRouterClient(appRouter, { context: { db, session: signed ? session : null, now: () => new Date("2026-09-26T10:00:00+08:00"), ...extra } });
 }
 
@@ -43,12 +52,21 @@ test("the handover is one SBAR card per patient built from the server's rows, pa
 
 test("accepting the handover writes one acceptance however often the request is replayed, and refuses cards it never built", async () => {
   const api = await signedIn();
-  const accept = { requestId: "hand-1", cardIds: ["visit-SYN-1086", "visit-SYN-1042"], toUser: "Dr Lim · night registrar" };
+  const accept = { requestId: "hand-1", cardIds: ["visit-SYN-1086", "visit-SYN-1042"], toUser: "dr-lim" };
   const first = await api.handover.accept(accept);
   expect(first).toMatchObject({ fromUser: "dr-aisyah", ...accept });
   expect(await api.handover.accept(accept)).toEqual(first);
   const unknown = await api.handover.accept({ ...accept, requestId: "hand-2", cardIds: ["ward-12"] }).catch(e => e);
   expect(unknown.code).toBe("NOT_FOUND");
+});
+
+test("the receiver is picked from the hospital's own doctors and nurses, and an acceptance names one of them by id", async () => {
+  const api = await signedIn();
+  expect(await api.handover.receivers()).toEqual([{ id: "dr-lim", name: "Dr Lim", role: "doctor" }, { id: "nurse-mei", name: "Nurse Mei", role: "nurse" }]);
+  const accept = { requestId: "hand-3", cardIds: ["visit-SYN-1086"] };
+  // A typed name, a role that may not accept, another hospital's doctor and the outgoing clinician are all refused.
+  for (const toUser of ["Dr Lim · night registrar", "beds-tan", "dr-away", "dr-aisyah"]) expect((await api.handover.accept({ ...accept, toUser }).catch(e => e)).code).toBe("BAD_REQUEST");
+  expect(await api.handover.accept({ ...accept, toUser: "nurse-mei" })).toMatchObject({ fromUser: "dr-aisyah", toUser: "nurse-mei" });
 });
 
 /** An in-memory stand-in for the Worker's R2 bucket. */
@@ -104,7 +122,8 @@ test("without a model switched on, the X-ray read is the fixture's honest unavai
 
 test("the handover and X-ray routes need a signed-in user", async () => {
   const api = await signedIn({ uploads: memoryBucket() }, false);
-  const calls = [() => api.handover.list(), () => api.handover.accept({ requestId: "r", cardIds: ["visit-SYN-1042"], toUser: "Dr Lim" }),
+  const calls = [() => api.handover.list(), () => api.handover.accept({ requestId: "r", cardIds: ["visit-SYN-1042"], toUser: "dr-lim" }),
+    () => api.handover.receivers(),
     () => api.xray.upload({ encounterId: "visit-1042", contentType: "image/png", dataBase64: png }), () => api.xray.read({ encounterId: "visit-1042" })];
   for (const call of calls) expect((await call().catch(e => e)).code).toBe("UNAUTHORIZED");
 });

@@ -1,5 +1,5 @@
 import { ORPCError } from "@orpc/server";
-import { appointments, encounters, findings, handoverAcceptances, labResults, observations, patients, tasks } from "@sona-ai/db/schema/clinical";
+import { appointments, encounters, findings, handoverAcceptances, hospitalMembers, labResults, observations, patients, tasks } from "@sona-ai/db/schema/clinical";
 import { user } from "@sona-ai/db/schema/auth";
 import { elapsed } from "@sona-ai/domain/critical";
 import { findingLine } from "@sona-ai/domain/findings";
@@ -9,6 +9,7 @@ import { and, eq, inArray, isNotNull, ne } from "drizzle-orm";
 import { handoverAcceptSchema } from "../contracts";
 import type { Context } from "../context";
 import { protectedProcedure } from "../index";
+import { PERMISSIONS } from "../roles";
 import { listFindings } from "./findings";
 
 // The demo hospital's wall clock (Malaysia); the Worker runs in UTC.
@@ -53,12 +54,25 @@ export async function handoverCards(db: Context["db"], hospitalId: string) {
   return buildHandover(rows, byPatient, pending);
 }
 
+/**
+ * Who can take a handover: the hospital's own members whose role may accept one (the handover.accept row of
+ * the permission table), by their account name. A member appears once they have signed in; nobody is authored.
+ */
+export const handoverReceivers = (db: Context["db"], hospitalId: string) => db.select({ id: user.id, name: user.name, role: hospitalMembers.role })
+  .from(hospitalMembers).innerJoin(user, eq(user.id, hospitalMembers.userId))
+  .where(and(eq(hospitalMembers.hospitalId, hospitalId), inArray(hospitalMembers.role, [...PERMISSIONS["handover.accept"]![0]]))).orderBy(user.name);
+
 export const handoverRouter = {
+  /** The clinicians the signed-in one can hand over to: everyone who may accept, except themselves. */
+  receivers: protectedProcedure.handler(async ({ context: { db, hospitalId, session } }) => (await handoverReceivers(db, hospitalId)).filter(r => r.id !== session.user.id)),
   list: protectedProcedure.handler(({ context: { db, hospitalId } }) => handoverCards(db, hospitalId)),
   accept: protectedProcedure.input(handoverAcceptSchema).handler(async ({ context: { db, hospitalId, session }, input }) => {
     const known = new Set((await handoverCards(db, hospitalId)).map(c => c.id));
     const missing = input.cardIds.filter(id => !known.has(id));
     if (missing.length) throw new ORPCError("NOT_FOUND", { message: `No handover card ${missing.join(", ")}` });
+    // The receiver is a user id, never a typed name: the record names a real colleague at this hospital who may accept.
+    if (input.toUser === session.user.id) throw new ORPCError("BAD_REQUEST", { message: "Hand over to a colleague, not to yourself" });
+    if (!(await handoverReceivers(db, hospitalId)).some(r => r.id === input.toUser)) throw new ORPCError("BAD_REQUEST", { message: "The receiving clinician is not a doctor or nurse at this hospital" });
     await db.insert(handoverAcceptances)
       .values({ id: crypto.randomUUID(), hospitalId, fromUser: session.user.id, toUser: input.toUser, cardIds: input.cardIds, requestId: input.requestId })
       .onConflictDoNothing({ target: handoverAcceptances.requestId });

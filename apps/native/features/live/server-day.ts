@@ -2,7 +2,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient, Task } from "@/features/encounter/types";
 import { visitTasks } from "@/features/day/counts";
-import { api, useLive } from ".";
+import { api, errorText, useLive } from ".";
 import type { ServerAppointment, ServerResult, ServerTask } from "./day";
 
 /**
@@ -22,12 +22,23 @@ let loading: Promise<void> | undefined, loadedAt = 0;
 const days = new Map<string, ServerAppointment[]>();
 // Today, the sidebar and the quick actions read today's visits at once: one read per date in flight serves them.
 const dayReads = new Map<string, Promise<void>>();
+// Why a date's read failed, until a read of it succeeds: a failed day is said as that, never shown as an empty one.
+const dayErrors = new Map<string, string>();
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach(l => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 
 export const serverSnapshot = () => snapshot;
 export const serverDayCount = (date: string) => days.get(date)?.length ?? 0;
+export const serverDayError = (date: string) => dayErrors.get(date);
+
+/** Reads a date's appointments unless a read of it is in flight; a failure is kept as its reason (serverDayError) and can be read again. */
+export function readServerDay(date: string) {
+  if (!dayReads.has(date)) dayReads.set(date, api.day.list({ date })
+    .then(rows => { days.set(date, rows); dayErrors.delete(date); }, e => { dayErrors.set(date, errorText(e)); })
+    .finally(() => { dayReads.delete(date); notify(); }));
+  return dayReads.get(date)!;
+}
 
 /** A read this role may not make is simply empty (a bed manager has no results); any other failure still fails the refresh. */
 const unlessRefused = <T>(read: Promise<T[]>) => read.catch(e => (e as { code?: string } | undefined)?.code === "FORBIDDEN" ? [] as T[] : Promise.reject(e));
@@ -53,7 +64,7 @@ export function useServerData() {
   useEffect(() => {
     if (on) void loadServerData().catch(() => {});
     // Only the switch going off clears it: a screen mounting while the session is still loading reads `on` as false too.
-    else if (!wanted && snapshot) { snapshot = undefined; days.clear(); notify(); }
+    else if (!wanted && snapshot) { snapshot = undefined; days.clear(); dayErrors.clear(); notify(); }
   }, [on, wanted]);
   return on ? value : undefined;
 }
@@ -68,12 +79,18 @@ export function useVisitTasks() {
 /** A date's appointments (YYYY-MM-DD) from the server; undefined until they arrive or when `date` is not given. */
 export function useServerDay(date: string | undefined) {
   const rows = useSyncExternalStore(subscribe, () => (date ? days.get(date) : undefined));
-  useEffect(() => {
-    if (!date || dayReads.has(date)) return;
-    dayReads.set(date, api.day.list({ date }).then(rows => { days.set(date, rows); notify(); }, () => {}).finally(() => { dayReads.delete(date); }));
-  }, [date]);
+  useEffect(() => { if (date) void readServerDay(date); }, [date]);
   // The store's value, not a fresh Map read: React Compiler caches reads of module state per `date`.
   return rows;
+}
+
+/**
+ * Why `useServerDay(date)` is still undefined: the read failed (the server's reason), with `retry` to read again.
+ * Undefined while it loads or once it has arrived. A sibling hook, so useServerDay's callers are untouched.
+ */
+export function useServerDayError(date: string | undefined) {
+  const error = useSyncExternalStore(subscribe, () => (date ? dayErrors.get(date) : undefined));
+  return error && date ? { error, retry: () => { dayErrors.delete(date); notify(); void readServerDay(date); } } : undefined;
 }
 
 export async function completeServerTask(taskId: string) {

@@ -16,7 +16,7 @@ import { ASK_SPACE, WithSona } from "@/features/ask";
 import { DoneLine } from "@/features/bookings/parts";
 import { callBackNote, WARD_PHONE } from "@/features/check-ins/model";
 import type { DayItem } from "@/features/day/model";
-import { api, errorText, requestId, useLive } from "@/features/live";
+import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
 import { useRole } from "@/features/live/roles";
 import { refreshServerData } from "@/features/live/server-day";
@@ -291,6 +291,9 @@ export function MessageActions({ item, onReply }: { item: Pick<DayItem, "patient
   const first = item.title.split(":")[0]!;
   const call = () => {
     haptic("select"); setError(undefined); setDialled(true);
+    // As in the check-ins thread: the record holds no phone number (neither the patient's nor the ward's; the hospital
+    // row is a name and a clock) and the ward line is a placeholder, so the judge build dials nothing and only logs.
+    if (JUDGE) return;
     Linking.openURL(`tel:${WARD_PHONE.tel}`).catch(() => setError(`This device can't place calls. Dial ${WARD_PHONE.display} from a phone, then log it.`));
   };
   const log = async () => {
@@ -303,7 +306,7 @@ export function MessageActions({ item, onReply }: { item: Pick<DayItem, "patient
   };
   if (logged) return <DoneLine text={logged} />;
   return <View style={{ gap: 6 }}>
-    {dialled && <Text selectable style={{ ...type.footnote, color: palette.muted }}>Dialled the ward line, {WARD_PHONE.display} (no patient number on file). Log the call when you're done.</Text>}
+    {dialled && <Text selectable style={{ ...type.footnote, color: palette.muted }}>{JUDGE ? `No phone number on file for ${first}. Call from the ward phone, then log it here.` : `Dialled the ward line, ${WARD_PHONE.display} (no patient number on file). Log the call when you're done.`}</Text>}
     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
       {dialled ? <>
         <Chip selected label={logging ? "Logging…" : "Log call-back"} accessibilityLabel={`Log call-back to ${first}`} icon={<Icon name="checkmark" size={12} color={palette.white} />} onPress={() => { if (!logging) void log(); }} />

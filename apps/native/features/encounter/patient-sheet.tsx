@@ -17,6 +17,7 @@ import { CheckInThread } from "@/features/check-ins/thread";
 import { confirmedAllergy, patientFlags, unconfirmedOf, type Go } from "@/features/day/counts";
 import { testInSentence } from "@/features/day/model";
 import { usePendingResult } from "@/features/day/use-counts";
+import { JUDGE } from "@/features/live";
 import { AccessTrail, useRole } from "@/features/live/roles";
 import { useServerEncounter } from "@/features/live/sync";
 import { QuickActions } from "@/components/sona/quick-actions";
@@ -60,6 +61,9 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
   // No appointment today (a ward patient in the judge build) has no time to count from.
   const when = started ? "In progress" : !patient.time ? "" : minutes > 0 ? `Starts in ${minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)} h ${minutes % 60} min`}` : minutes > -10 ? "Due now" : `Running ${-minutes} min late`;
 
+  // The judge build's records can hold no medicines list at all: an empty one is left out, not counted as "Medicines: 0".
+  const summary = [patient.history[0], JUDGE && !patient.medicines.length ? "" : `Medicines: ${patient.medicines.length}`].filter(Boolean).join(" · ");
+
   const y = useSharedValue(height), drag = useSharedValue(0);
   useEffect(() => { y.set(reducedMotion ? withTiming(0, { duration: 200 }) : withSpring(0, { duration: 420, dampingRatio: 0.82 })); }, [reducedMotion, y]);
   const close = () => { if (process.env.EXPO_OS === "ios") Haptics.selectionAsync().catch(() => {}); y.set(withTiming(height, { duration: 260 })); setTimeout(onClose, 240); };
@@ -87,7 +91,7 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
             </View>
             <View style={{ flex: 1, gap: 2 }}>
               <Text accessibilityRole="header" style={{ ...type.title, fontWeight: "600", color: palette.ink }}>{patient.name}</Text>
-              <Text style={{ ...type.footnote, color: palette.muted }}>{patient.age} · {patient.sex} · {patient.id}</Text>
+              <Text style={{ ...type.footnote, color: palette.muted }}>{[patient.age, patient.sex, patient.id].filter(part => part != null && part !== "").join(" · ")}</Text>
             </View>
             <View style={{ alignItems: "flex-end", gap: 2 }}>
               <Text style={{ ...type.heading, color: palette.ink, fontVariant: ["tabular-nums"] }}>{patient.time}</Text>
@@ -108,17 +112,18 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
           <CareMessages patient={patient} entering={rise(3)} />
 
           <Animated.View entering={rise(3)} style={{ borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white, padding: 16, gap: 12 }}>
-            <View style={{ gap: 3 }}>
-              <Text style={{ ...type.overline, color: palette.muted }}>{patient.subtitle}</Text>
-              <Text style={{ ...type.callout, color: palette.ink }}>{patient.complaint}</Text>
-            </View>
+            {/* A sparse record (a ward patient's) shows only what it holds: no empty overline, no blank line. */}
+            {(patient.subtitle || patient.complaint) && <View style={{ gap: 3 }}>
+              {patient.subtitle ? <Text style={{ ...type.overline, color: palette.muted }}>{patient.subtitle}</Text> : null}
+              {patient.complaint ? <Text style={{ ...type.callout, color: palette.ink }}>{patient.complaint}</Text> : null}
+            </View>}
             {patient.vitals.length > 0 ? <View style={{ flexDirection: "row", gap: 8 }}>
               {patient.vitals.map(v => { const raised = v.label === "Temp" && parseFloat(v.value) >= 37.8; return <View key={v.label} style={{ flex: 1, borderRadius: radius.control, padding: 10, gap: 2, backgroundColor: raised ? "rgba(196,120,20,0.10)" : "rgba(20,28,40,0.04)" }}>
                 <Text style={{ ...type.caption, color: palette.muted }}>{v.label}</Text>
                 <Text style={{ ...type.headline, color: raised ? palette.amber : palette.ink, fontVariant: ["tabular-nums"] }}>{v.value}</Text>
               </View>; })}
             </View> : <Text style={{ ...type.footnote, color: palette.muted }}>No observations recorded yet.</Text>}
-            <Text style={{ ...type.footnote, color: palette.muted }}>{patient.history[0]} · Medicines: {patient.medicines.length}</Text>
+            {summary ? <Text style={{ ...type.footnote, color: palette.muted }}>{summary}</Text> : null}
           </Animated.View>
 
           <Pressable accessibilityRole="link" onPress={() => { onClose(); router.push({ pathname: "/source", params: { id: "history", patientId: patient.id } }); }} hitSlop={8} style={{ alignSelf: "center", minHeight: 36, justifyContent: "center" }}>

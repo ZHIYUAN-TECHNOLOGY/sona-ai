@@ -26,6 +26,7 @@ export function useLiveHandover(enabled = true) {
     return () => { current = false; };
   }, [on, readable, version, enabled]);
   /** Resolves to the server's acceptance time, or throws its refusal as readable text. */
+  // `toUser` is the receiving clinician's user id (one of useHandoverReceivers), never a typed name.
   const accept = async (cardIds: string[], toUser: string) => {
     setError(undefined);
     try { return new Date((await api.handover.accept({ requestId: id, cardIds, toUser })).acceptedAt); }
@@ -33,4 +34,26 @@ export function useLiveHandover(enabled = true) {
   };
   const retry = () => { setError(undefined); setVersion(v => v + 1); };
   return { live: on, cards, error, accept, retry };
+}
+
+export type HandoverReceiver = Awaited<ReturnType<typeof api.handover.receivers>>[number];
+
+/**
+ * Who the handover can go to: the hospital's own doctors and nurses, other than the one signed in (the server's
+ * list; nobody is authored). Undefined until it arrives; a failed read is said with `retry`. Its own hook, so
+ * the sidebar's card count does not read it.
+ */
+export function useHandoverReceivers(enabled = true) {
+  const { on } = useLive();
+  const allowed = useRole().can("handover.receivers");
+  const [list, setList] = useState<HandoverReceiver[]>();
+  const [error, setError] = useState<string>();
+  const [version, setVersion] = useState(0);
+  useEffect(() => {
+    if (!on || !allowed || !enabled) return;
+    let current = true;
+    api.handover.receivers().then(rows => { if (current) { setList(rows); setError(undefined); } }, e => { if (current) setError(errorText(e)); });
+    return () => { current = false; };
+  }, [on, allowed, version, enabled]);
+  return { list, error, retry: () => { setError(undefined); setVersion(v => v + 1); } };
 }

@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { patients } from "@/features/encounter/fixtures";
 import { fixtureFindings, followUpTask } from "@/features/findings/model";
-import { buildHandover, handoverTally, startingReceiver } from "./model";
+import { buildHandover, handoverTally, receiverLabel, startingReceiver } from "./model";
 
 test("only handed-over patients are accepted; discuss ones are counted apart", () => {
   const tally = handoverTally([{ id: "a", decision: "handed" }, { id: "b", decision: "discuss" }, { id: "c", decision: "handed" }, { id: "d", decision: "discuss" }, { id: "e", decision: "handed" }]);
@@ -33,4 +33,10 @@ test("each open or tracked finding is one handover line, never repeated as its t
 test("the judge build names no receiving clinician until one is typed; the demo keeps its authored colleague", () => {
   expect(startingReceiver(true)).toBe("");
   expect(startingReceiver(false)).toBe("Dr Lim · night registrar");
+});
+
+test("a receiver from the hospital's list is shown by name and role, and the receipt names them", () => {
+  const nurse = { id: "u2", name: "Nurse Mei", role: "nurse" };
+  expect(receiverLabel(nurse)).toBe("Nurse Mei · Nurse");
+  expect(handoverTally([{ id: "a", decision: "handed" }]).receipt(nurse.name, "19:02")).toBe("Nurse Mei accepted 1 patient at 19:02.");
 });
