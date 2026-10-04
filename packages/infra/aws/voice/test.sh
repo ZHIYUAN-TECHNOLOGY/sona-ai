@@ -16,7 +16,7 @@ down() {
 trap down EXIT
 aws sagemaker delete-endpoint-config --endpoint-config-name $N > /dev/null 2>&1; aws sagemaker delete-model --model-name $N > /dev/null 2>&1
 aws sagemaker create-model --model-name $N --execution-role-arn "arn:aws:iam::${A}:role/sona-sagemaker-hosting" \
-  --primary-container "{\"Image\":\"${A}.dkr.ecr.ap-southeast-5.amazonaws.com/sona/voice:1\",\"ModelDataSource\":{\"S3DataSource\":{\"S3Uri\":\"s3://${B}/voice/1/\",\"S3DataType\":\"S3Prefix\",\"CompressionType\":\"None\"}}}" \
+  --primary-container "{\"Image\":\"${A}.dkr.ecr.ap-southeast-5.amazonaws.com/sona/voice:2\",\"ModelDataSource\":{\"S3DataSource\":{\"S3Uri\":\"s3://${B}/voice/1/\",\"S3DataType\":\"S3Prefix\",\"CompressionType\":\"None\"}}}" \
   --query ModelArn --output text || exit 1
 aws sagemaker create-endpoint-config --endpoint-config-name $N --production-variants \
   "VariantName=main,ModelName=$N,InstanceType=$TYPE,InitialInstanceCount=1,ContainerStartupHealthCheckTimeoutInSeconds=900,ModelDataDownloadTimeoutInSeconds=1200" \

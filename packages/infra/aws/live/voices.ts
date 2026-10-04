@@ -6,6 +6,7 @@
  * Measured 4 Oct (first sound, whole line, both warm): VoxCPM2 0.14-0.18 s and 1.6-1.9 s for 5-6 s of sound;
  * box ④ 2.1-2.2 s and 5.5-7.7 s. So another model's words are VoxCPM2's to say.
  *
+ * ONLY=voxcpm ENDPOINT=sona-voice times box ②'s stream on its own endpoint (../voice/test.sh).
  *   CREDS=$(aws configure export-credentials --profile sona --format process) bun packages/infra/aws/live/voices.ts [out dir]
  */
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -71,5 +72,5 @@ async function sona(lang: string, text: string) {
 }
 
 for (const [lang, text] of Object.entries(LINES)) { await voxcpm(lang, text); await voxcpm(lang, text); }
-for (const [lang, text] of Object.entries(LINES)) await sona(lang, text);
+if (process.env.ONLY !== "voxcpm") for (const [lang, text] of Object.entries(LINES)) await sona(lang, text);
 process.exit(0);

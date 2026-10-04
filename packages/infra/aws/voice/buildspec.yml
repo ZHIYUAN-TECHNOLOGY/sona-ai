@@ -8,8 +8,8 @@ phases:
   build:
     commands:
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR
-      - docker build -t $ECR/sona/voice:1 .
-      - docker push $ECR/sona/voice:1
+      - docker build -t $ECR/sona/voice:2 .
+      - docker push $ECR/sona/voice:2
       - pip install -q huggingface_hub
       - |
         python - <<'PY'
