@@ -11,8 +11,9 @@ import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import type { Patient } from "@/features/encounter/types";
-import { api, errorText, requestId, useLive } from "@/features/live";
+import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
 import { useLiveAppeal } from "@/features/live/model-sync";
+import { unanswered } from "@/features/clinical/judge-answer";
 import { wakingOf } from "@/features/live/waking";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { DENIAL_REASONS, INSURER, appealByRules, noteFor, type AppealLetter, type ClaimState, type Denial, type Sentence } from "./model";
@@ -57,12 +58,14 @@ export function AppealCard({ patient, state, onChange, onApproved }: { patient: 
   const { reducedMotion } = useAccessibleEffects();
   const appealed = state.status === "appealed";
   const server = useLiveAppeal(patient.encounterId, live && role.can("claim.appealDraft") && !appealed ? state.denial.at : undefined);
-  const local: Draft | undefined = live ? undefined : (() => {
+  const local: Draft | undefined = live || JUDGE ? undefined : (() => {
     const sentences = noteFor(state);
     const letter = appealByRules({ denialCode: state.denial.code, denialReason: state.denial.reason, sentences, patient });
     return { letter, sentences: sentences.filter(s => letter.points.some(p => p.evidenceSentenceId === s.id)), source: "fixture" };
   })();
-  const draft: Draft | undefined = live ? server.data : local;
+  // Judge build: only the model's letter is Sona's draft; the server's stub (the rules' letter) and a failed call are said as no draft.
+  const held = unanswered(JUDGE, server);
+  const draft: Draft | undefined = held ? undefined : live ? server.data : local;
   const [edited, setEdited] = useState<AppealLetter>();
   const letter = edited ?? draft?.letter;
   const [sendId, setSendId] = useState(requestId);
@@ -110,7 +113,7 @@ export function AppealCard({ patient, state, onChange, onApproved }: { patient: 
     <Surface feature style={{ padding: 16, gap: 12 }}>
       <Text style={{ ...type.overline, color: palette.blue }}>Sona drafted an appeal · check before sending</Text>
       {live && !role.can("claim.appealDraft") ? <Text style={{ ...type.footnote, color: palette.muted }}>{role.why("claim.appealDraft")}</Text>
-        : server.error ? <ErrorLine text={`No draft: ${server.error}`} />
+        : server.error || held?.reason ? <ErrorLine text={`No draft: ${server.error ?? held?.reason}`} />
         : !letter || !draft ? <Drafting label="Sona is drafting the appeal…" />
         : <>
           <Arrive index={0}><Paragraph label="Opening paragraph" value={letter.opening} onChange={opening => edit(l => ({ ...l, opening }))} /></Arrive>

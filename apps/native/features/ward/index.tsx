@@ -15,7 +15,7 @@ import { soonest } from "@/features/ask/answers";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useEncounter } from "@/features/encounter/store";
 import { ErrorLine, PressScale } from "@/components/sona/parts";
-import { api, errorText, useLive } from "@/features/live";
+import { api, errorText, JUDGE, useLive } from "@/features/live";
 import { useRole } from "@/features/live/roles";
 import { FollowUpList } from "@/features/findings";
 import { toFollowUp } from "@/features/findings/model";
@@ -23,6 +23,7 @@ import { useFindings } from "@/features/live/findings-sync";
 import { useServerEncounter } from "@/features/live/sync";
 import { Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveHuddle } from "@/features/live/model-sync";
+import { unanswered } from "@/features/clinical/judge-answer";
 import { useLiveChanges } from "@/features/live/channel";
 import { BedBar, ForecastTimeline, KIND, ThisWeek, useForecast, wardLine } from "./ops";
 import { useWard } from "@/features/day/use-counts";
@@ -137,6 +138,10 @@ export function WardScreen() {
   const server = useLiveHuddle(briefed && live && !loading, `${beds.map(b => `${b.bed}:${b.blockers.map(x => x.id).join(",")}`).join("|")}#${wardVersion}`);
   const local = huddle(beds, owners);
   const lines = server.data?.lines ?? local;
+  // Judge build: without the model's brief the lines are the rule's count of the server's own ward (here, or in its stub), so they
+  // stay; the card says they are the rule's and that the model did not answer (features/clinical/judge-answer).
+  const held = unanswered(JUDGE, server);
+  const unbriefed = held?.reason ?? server.error;
   const current = open && beds.find(b => b.bed === open.bed);
   // The server's forecast re-reads once each owner write lands, so the chart moves with Assign.
   const forecastKey = useMemo(() => [findings, wardVersion], [findings, wardVersion]);
@@ -210,8 +215,8 @@ export function WardScreen() {
               <Text style={{ ...type.footnote, fontWeight: "700", color: palette.blue, width: 14 }}>{i + 1}</Text>
               <MarkedText text={line} style={{ ...type.subhead, flex: 1, color: palette.ink }} />
             </Animated.View>)}
-            <SampleLabel answer={server} rule what="briefing" />
-            {server.error && <Text style={{ ...type.caption, color: palette.red }}>{server.error} · showing the ward's own count</Text>}
+            {held?.reason ? <SampleLabel source="fixture" rule /> : <SampleLabel answer={server} rule what="briefing" />}
+            {unbriefed && <Text style={{ ...type.caption, color: palette.red }}>{unbriefed} · showing the ward's own count</Text>}
           </MoreRow>
           {followUps > 0 && <MoreRow icon="lungs" title="Findings to follow up" detail={`${followUps} from X-rays`} open={findingsOpen} onToggle={() => setFindingsOpen(v => !v)} divider>
             <FollowUpList findings={findings} bare />

@@ -7,6 +7,7 @@ import { SourceScope, SourcesPill } from "@/components/sona/sources";
 import { useLiveBriefing } from "@/features/live/model-sync";
 import { wakingOf } from "@/features/live/waking";
 import { Action, Notice, SourceLink, Surface } from "@/components/sona/ui";
+import { ErrorLine } from "@/components/sona/parts";
 import { IconRow } from "@/components/sona/sections";
 import { Text } from "@/components/sona/text";
 import { palette, type } from "@/components/sona/theme";
@@ -15,9 +16,10 @@ import type { TimelineItem } from "@/components/sona/timeline-carousel";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps, Patient } from "@/features/encounter/types";
 import { HistoryEditor } from "./history-editor";
+import { unanswered } from "./judge-answer";
 import { emphasise } from "@/features/encounter/emphasis";
 import { confirmedAllergy, patientResult, receiptLine, resultKey, resultLine } from "@/features/day/counts";
-import { errorText, useLive } from "@/features/live";
+import { errorText, JUDGE, useLive } from "@/features/live";
 import { useDemoOffset } from "@/features/live/demo-clock";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { acknowledgeResult, useServerData } from "@/features/live/server-day";
@@ -85,6 +87,8 @@ export function BriefingCard({ patient, result, onSource, onRequest }: FeaturePr
   const card = (children: ReactNode) => <SourceScope>{sources => <Surface style={{ padding: 16, gap: 14 }}>{children}{sources.length > 0 && <View style={{ alignItems: "flex-end" }}><SourcesPill sources={sources} /></View>}</Surface>}</SourceScope>;
   // Live mode: the digest is the server's briefing of this patient's record (allergy and gaps stay amber); authored otherwise.
   const server = useLiveBriefing(patient.encounterId);
+  // Judge build: only the model's briefing is a briefing. A failed call or the server's stub is said in the card, never the authored digest (./judge-answer).
+  const held = unanswered(JUDGE, server);
   // The callout holds only what the headline doesn't already say, coloured only where abnormal.
   const digest: Takeaway[] = (server.data ? server.data.lines.map((text): Takeaway => ({ tone: /allerg|incomplete|missing/i.test(text) ? "caution" : "info", text })) : takeaways)
     .filter(item => !patient.complaint.includes(item.text)).map(item => ({ ...item, text: emphasise(item.text, patient) }));
@@ -92,7 +96,8 @@ export function BriefingCard({ patient, result, onSource, onRequest }: FeaturePr
   // No next step of its own: the end of the visit shows the one next step (visit-next.ts).
   return <View style={{ gap: 20 }}>
     <NewResult patient={patient} />
-    {server.loading ? <Surface feature style={{ padding: 16 }}><Drafting label="Reading the record…" slow={MODEL_SLOW} /></Surface> : <View style={{ gap: 6 }}>
+    {server.loading ? <Surface feature style={{ padding: 16 }}><Drafting label="Reading the record…" slow={MODEL_SLOW} /></Surface>
+      : held ? <Surface feature style={{ padding: 16 }}><ErrorLine text={`No briefing: ${held.reason}`} /></Surface> : <View style={{ gap: 6 }}>
       {digest.length > 0 && <Takeaways items={digest} />}
       <View style={{ paddingHorizontal: 4 }}>
         <SampleLabel source={server.data?.source} model={server.data && "model" in server.data ? server.data.model : undefined} waking={wakingOf(server.data)} what="briefing" />
@@ -101,14 +106,15 @@ export function BriefingCard({ patient, result, onSource, onRequest }: FeaturePr
     </View>}
     {sections >= 2 && <AnswerDeck pages={[
       { title: "Vitals", content: patient.incomplete ? card(<Notice warning>Not recorded yet. Missing information is not a negative finding.</Notice>) : <VitalsCard vitals={patient.vitals} allergy={patient.allergies} /> },
-      { title: "Timeline", content: card(<>
+      // The timeline is authored (one patient's story, whoever is open), so the judge build leaves the page out.
+      ...(JUDGE ? [] : [{ title: "Timeline", content: card(<>
         {timeline.map(item => <View key={item.id} style={{ flexDirection: "row", gap: 12 }}>
           <Text style={{ width: 78, ...type.footnote, color: palette.muted }}>{item.label}</Text>
           <View style={{ flex: 1, gap: 2 }}><MarkedText text={item.title} style={{ ...type.callout, fontWeight: "600", color: palette.ink }} /><Text style={{ ...type.footnote, color: palette.muted }}>{item.meta}</Text></View>
         </View>)}
         {!!facts.length && <Text style={{ ...type.footnote, color: palette.muted }}>Original intake shown · newer history is below.</Text>}
         <SourceLink label="Timeline source" onPress={() => onSource("history")} />
-      </>) },
+      </>) }]),
       { title: "History", content: card(<>
         <IconRow icon="cross.case" title="Medical" detail={patient.history.join(". ")} sourceLabel="Medical history source" onSource={() => onSource(sourceFor("medical"))} />
         <IconRow icon="figure.2.and.child.holdinghands" title="Family" detail={patient.family} sourceLabel="Family history source" onSource={() => onSource(sourceFor("family"))} />

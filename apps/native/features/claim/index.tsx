@@ -12,12 +12,13 @@ import { Seal, haptic } from "@/features/clinical/medication-parts";
 import { BarLine, Decide, FixChip, ModalHeader } from "@/features/discharge";
 import { useEncounter } from "@/features/encounter/store";
 import { LockedAction, useRole } from "@/features/live/roles";
-import { api, errorText, requestId, useLive } from "@/features/live";
+import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
 import { useServerEncounter } from "@/features/live/sync";
 import type { PrescriptionCheck } from "@/features/encounter/types";
 import { CODES, EMPTY_CLAIM, ESTIMATE, INSURER, approveClaim, claimChecks, noteFor, type ClaimState, type Code, type Sentence } from "./model";
 import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveCodes } from "@/features/live/model-sync";
+import { unanswered } from "@/features/clinical/judge-answer";
 import { AppealCard, DeniedCard } from "./appeal";
 import { NoVisit } from "@/components/sona/no-visit";
 
@@ -59,8 +60,11 @@ export function ClaimScreen() {
     updateEncounter(value => ({ ...value, claim: { ...(value.claim ?? EMPTY_CLAIM), ...change } }));
     if (live && (organismConfirmed !== undefined || ivReasonAdded !== undefined)) void api.claim.update({ encounterId: patient.encounterId, organismConfirmed, ivReasonAdded }).catch(e => setServerError(errorText(e)));
   };
-  const note: Sentence[] = server.data?.sentences ?? noteFor(state);
-  const codes: (Code & { inTable?: boolean })[] = server.data?.codes ?? CODES;
+  // Judge build: the note and the codes are the server's or absent, never the authored ones. Its stub's codes are keyword rules over
+  // the note it sent (and what the letter would carry), so they stay, said as rules and as the model not answering (features/clinical/judge-answer).
+  const held = unanswered(JUDGE, server);
+  const note: Sentence[] = server.data?.sentences ?? (JUDGE ? [] : noteFor(state));
+  const codes: (Code & { inTable?: boolean })[] = server.data?.codes ?? (JUDGE ? [] : CODES);
   // The highlight follows a code that is still listed, else the first one.
   const cited = codes.some(c => c.evidence === active) || note.some(s => s.id === active) ? active : codes[0]?.evidence ?? "";
   const rows = checks.filter(c => c.status === "blocked" || resolving.has(c.id));
@@ -173,16 +177,17 @@ export function ClaimScreen() {
 
       {/* The record behind the letter: quieter, under what blocks it. */}
       <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 16, paddingTop: 14, borderTopWidth: 1, borderColor: glass.hairline }}>
-      <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
+      {note.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
         <Text style={{ ...type.overline, color: palette.muted }}>Evidence in the note</Text>
         <Evidence note={note} active={cited} />
-      </Animated.View>
+      </Animated.View>}
 
       <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 2 }}>
         <Text style={{ ...type.overline, color: palette.muted, paddingBottom: 6 }}>Codes · tap to see why</Text>
         {server.loading && <Drafting label="Coding the note…" style={{ paddingVertical: 6 }} />}
         {server.data && !codes.length && <Text style={{ ...type.footnote, color: palette.amber }}>No codable diagnosis in the note yet</Text>}
-        {server.error && <Text style={{ ...type.footnote, color: palette.red }}>{server.error} · showing the authored codes</Text>}
+        {server.error && <Text style={{ ...type.footnote, color: palette.red }}>{JUDGE ? `${held ? "No codes: " : ""}${server.error}` : `${server.error} · showing the authored codes`}</Text>}
+        {held?.why === "stub" && <Text style={{ ...type.footnote, color: palette.red }}>{held.reason} · codes by keyword rule over the note</Text>}
         {!server.loading && codes.map((c, i) => { const on = c.evidence === cited; return <Arrive key={c.code} index={i} animate={Boolean(server.data)}><Pressable accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${c.code}, ${c.label}, ${c.kind}${c.inTable === false ? ", not in the ICD-10 table" : ""}`}
           onPress={() => { haptic("select"); setActive(c.evidence); }} style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 44 }}>
           <Animated.View style={{ width: 58, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.blue : "rgba(20,28,40,0.06)", transitionProperty: "backgroundColor", transitionDuration: 180 } as never}>
@@ -191,7 +196,7 @@ export function ClaimScreen() {
           <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.ink }}>{c.label}</Text>
           <Text style={{ ...type.caption, color: c.inTable === false ? palette.amber : palette.muted }}>{c.inTable === false ? "Not in ICD-10 table" : c.kind}</Text>
         </Pressable></Arrive>; })}
-        <SampleLabel answer={server} rule what="coding" />
+        {!held?.reason && <SampleLabel answer={server} rule what="coding" />}
       </Animated.View>
       </Animated.View>
     </Surface>

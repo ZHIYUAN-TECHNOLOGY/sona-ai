@@ -11,8 +11,9 @@ import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Expand, Icon, Surface, Tone, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
 import { haptic } from "@/features/clinical/medication-parts";
 import { useWard } from "@/features/day/use-counts";
-import { api, useLive } from "@/features/live";
+import { api, JUDGE, useLive } from "@/features/live";
 import { useLiveChanges } from "@/features/live/channel";
+import { useDemoOffset } from "@/features/live/demo-clock";
 import { useFindings } from "@/features/live/findings-sync";
 import { useServerForecast } from "@/features/live/ward-sync";
 import { bedBar, bedKind, clockLabel, filterSegments, forecastBeds, forecastLine, freeingWindows, wardSummary, type Bed, type BedForecast, type BedKind, type Owner, type WardFilter } from "./model";
@@ -206,9 +207,16 @@ export function WardGlance() {
   </Surface>;
 }
 
-/** The bed forecast: the server's in live mode (demo clock, saved owners), else the same rule over the fixture ward on the device clock. */
+// Chosen once per build, so outside the judge build the forecast reads no clock it did not read before.
+const useForecastOffset = JUDGE ? useDemoOffset : () => 0;
+/**
+ * The bed forecast: the server's in live mode (demo clock, saved owners), else the same rule over the fixture ward on the device clock.
+ * Judge build: until the server's arrives (or if its read fails) the same rule runs over the server's beds on the hospital's demo clock,
+ * so a jumped clock never shows a forecast for the phone's own time. A rule either way, and labelled so.
+ */
 export function useForecast(beds: Bed[], key?: unknown, owners: Record<string, Owner | undefined> = {}): BedForecast {
-  return useServerForecast(key) ?? forecastBeds(beds, new Date(), owners);
+  const offset = useForecastOffset();
+  return useServerForecast(key) ?? forecastBeds(beds, new Date(Date.now() + offset), owners);
 }
 
 /*
