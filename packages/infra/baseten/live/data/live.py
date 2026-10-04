@@ -326,6 +326,9 @@ async def live(ws: WebSocket):
 
             async def speak():  # one second at a time, in order, while the socket keeps reading
                 while (audio := await units.get()) is not None:
+                    if isinstance(audio, tuple):  # held to listening, and the patient has finished: their turn in words
+                        await ws.send_text(json.dumps(await asyncio.to_thread(transcribe, audio[1]), ensure_ascii=False))
+                        continue
                     unit, speech = await asyncio.to_thread(step, audio, opts, call)
                     unit["behind"] = units.qsize()
                     await ws.send_text(json.dumps(unit, ensure_ascii=False))
@@ -333,7 +336,7 @@ async def live(ws: WebSocket):
                         voices.put_nowait((unit["i"], speech))
                     elif speech:
                         await ws.send_bytes(speech)
-                    if not call["transcribe"]:
+                    if not call["transcribe"] or call["hold"]:
                         continue
                     # The seconds it listened to are the patient's turn; once it starts to speak, the turn is written down.
                     if unit["listen"]:
@@ -352,6 +355,15 @@ async def live(ws: WebSocket):
             speaker, voice_out = asyncio.create_task(speak()), asyncio.create_task(voice_later())
             heard = np.zeros(0, dtype=np.float32)
             quiet, spoke, still, recent = int(start.get("turn_silence_ms", 0)) * UNIT // 1000, False, 0, np.zeros(0, dtype=np.float32)
+            # Held to listening (another model answers) with "transcribe": she never starts an answer, which is when
+            # she writes a turn down, so the turn is written down when the judge hears it finish (or WAIT_S of quiet).
+            ear, turn = call["hold"] and call["transcribe"], np.zeros(0, dtype=np.float32)
+
+            def heard_turn():
+                nonlocal turn
+                if len(turn) > UNIT // 2:
+                    units.put_nowait(("heard", turn[-TURN_MAX:]))
+                turn = turn[:0]
             while True:
                 m = await ws.receive()
                 note = json.loads(m["text"]) if m.get("text") else {}
@@ -367,6 +379,8 @@ async def live(ws: WebSocket):
                         heard = heard[UNIT:]
                     if quiet and len(frame):
                         recent = np.concatenate([recent, frame])[-8 * UNIT:]
+                        if ear and (spoke or len(turn) or float(np.sqrt(np.mean(frame ** 2))) > LOUD):
+                            turn = np.concatenate([turn if len(turn) else recent[-len(frame) - UNIT // 3:-len(frame)], frame])
                         if float(np.sqrt(np.mean(frame ** 2))) > LOUD:
                             # The patient is speaking: she waits for the verdict (not while she speaks herself: her
                             # own listening decides whether to give way, as before).
@@ -377,13 +391,17 @@ async def live(ws: WebSocket):
                             p = finished(recent) if judge else 1.0
                             await ws.send_text(json.dumps({"type": "turn", "finished": round(p, 2)}))
                             spoke = False
-                            if p > 0.5:  # the pause, now
+                            if p > 0.5 and ear:
+                                heard_turn()
+                            elif p > 0.5:  # the pause, now
                                 if len(heard):
                                     units.put_nowait(np.concatenate([heard, np.zeros(UNIT - len(heard), np.float32)]))
                                 units.put_nowait(np.zeros(UNIT, np.float32))
                                 heard, call["wait"] = heard[:0], False
                         elif call.get("wait") and still >= WAIT_S * UNIT:
                             call["wait"] = False  # quiet this long: her turn after all
+                            if ear:
+                                heard_turn()
         except WebSocketDisconnect:
             pass
         finally:

@@ -1,5 +1,5 @@
 # Builds box ④'s image into ECR and copies its pinned weights from Hugging Face to S3: ear1 (the model), the talker
-# voice-v3, and Sona's reference clip. HF_TOKEN (private repos) comes from Parameter Store: /sona/hf-read-token.
+# voice-v3, Sona's reference clip, and the judge of turns. HF_TOKEN (private repos) comes from Parameter Store: /sona/hf-read-token.
 version: 0.2
 env:
   parameter-store:
@@ -19,6 +19,7 @@ phases:
           ignore_patterns=[".*", "lora-adapter/**", "assets/*.mp4", "assets/*.mp3", "assets/*.png", "assets/*.wav"])
         f("zhiyuantechnology/sona-minicpmo", "talker.safetensors", revision="1b4aba42310a4d54349c612408767237c9fd8087", local_dir="/tmp/w/voice")
         f("zhiyuantechnology/sona-minicpmo-data", "code/sona_voice.wav", repo_type="dataset", local_dir="/tmp/v")
+        f("zhiyuantechnology/sona-turn", "sona-turn.onnx", revision="1a9a125c6ef76f94e633fa56e438262461e2ac6c", local_dir="/tmp/w/turn")
         PY
       - cp /tmp/v/code/sona_voice.wav /tmp/w/sona_voice.wav
       - du -sh /tmp/w/*

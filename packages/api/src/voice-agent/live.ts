@@ -110,13 +110,19 @@ export class LiveTurns {
   }
 }
 
+/** After this much quiet box ④ asks its judge of turns whether the patient has finished (data/live.py, QUIET). */
+const TURN_SILENCE_MS = 500;
+
 /**
  * The call's start message to box ④. With Gemma as the brain (SONA_LIVE_BRAIN=gemma) she is held to listening and says
- * only what a `say` gives her; her own writing-down of the patient comes when she starts an answer of her own, which
- * she then never does, so box ② alone is the ear.
+ * only what a `say` gives her. Her own writing-down of the patient comes when she starts an answer of her own, which
+ * she then never does, so box ② is the ear; unless she is the ear too (SONA_LIVE_EAR=own), when the box writes each
+ * turn down as soon as its judge hears the patient finish.
  */
-export const liveStart = (system: string, brain: "own" | "gemma", transcribe: boolean) =>
-  ({ type: "start", system, voice: "v1", ...brain === "gemma" ? { transcribe: false, hold: true } : { transcribe } });
+export const liveStart = (system: string, brain: "own" | "gemma", transcribe: boolean, ear: "box2" | "own" = "box2") => ({
+  type: "start", system, voice: "v1",
+  ...brain !== "gemma" ? { transcribe } : ear === "own" ? { transcribe: true, hold: true, turn_silence_ms: TURN_SILENCE_MS } : { transcribe: false, hold: true },
+});
 
 /** Words for box ④ to say as written (data/live.py "say"), from its next second, `rate` text tokens a second. No words: she stops there. */
 export type Say = { type: "say"; text: string; rate: number };

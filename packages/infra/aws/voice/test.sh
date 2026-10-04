@@ -56,3 +56,5 @@ for line in "Take one tablet after food, three times a day." "Makan satu biji se
 done
 echo '{"query": "When should I take amoxicillin?", "passages": ["Amoxicillin 500mg: take 1 tablet three times a day after food.", "Follow-up at the clinic on Thursday."]}' > "$OUT/rank.json"
 echo "rerank: $(call application/json "$OUT/rank.json" "$OUT/rank.out") | $(cat "$OUT/rank.out")"
+# THEN: one more command while the endpoint is up.
+[ -z "${THEN:-}" ] || bash -c "$THEN"

@@ -4,9 +4,9 @@
 # baseten/live/data as data/, baseten/live/check.py, and question.wav (buildspec.yml).
 FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-devel
 RUN pip install --no-cache-dir "minicpmo-utils[tts]==1.0.6" "transformers==4.51.3" "accelerate<1.8" "setuptools<80" \
-    safetensors huggingface_hub fastapi "uvicorn[standard]" websockets soundfile && \
+    safetensors huggingface_hub fastapi "uvicorn[standard]" websockets soundfile onnxruntime && \
     python -c "import stepaudio2, transformers, torch; print('live deps ok', transformers.__version__, torch.__version__)"
 COPY data /app/data
 COPY check.py serve.py question.wav /app/
-ENV MODEL=/opt/ml/model/live TALKER=/opt/ml/model/voice/talker.safetensors VOICE=/opt/ml/model/sona_voice.wav
+ENV MODEL=/opt/ml/model/live TALKER=/opt/ml/model/voice/talker.safetensors VOICE=/opt/ml/model/sona_voice.wav TURN=/opt/ml/model/turn/sona-turn.onnx
 ENTRYPOINT ["python", "/app/serve.py"]

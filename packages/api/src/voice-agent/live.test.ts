@@ -76,6 +76,8 @@ test("the start message holds her to listening only with Gemma as the brain; her
   expect(liveStart("brief", "own", true)).toEqual({ type: "start", system: "brief", voice: "v1", transcribe: true });
   expect(liveStart("brief", "own", false)).toEqual({ type: "start", system: "brief", voice: "v1", transcribe: false });
   expect(liveStart("brief", "gemma", true)).toEqual({ type: "start", system: "brief", voice: "v1", transcribe: false, hold: true });
+  expect(liveStart("brief", "gemma", false, "own")).toEqual({ type: "start", system: "brief", voice: "v1", transcribe: true, hold: true, turn_silence_ms: 500 });
+  expect(liveStart("brief", "own", true, "own")).toEqual({ type: "start", system: "brief", voice: "v1", transcribe: true });
 });
 
 test("the first sentence goes to the box at once; those written while she says it go together at her end of turn, in order, as one answer", () => {

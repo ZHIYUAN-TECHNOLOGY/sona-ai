@@ -37,6 +37,7 @@ export const server = Cloudflare.Worker("server", {
     SONA_LIVE_URL: Config.String("SONA_LIVE_URL").pipe(Config.withDefault("")),
     // Who writes her answers on that call: "own" (box ④ itself) or "gemma" (Gemma writes, box ④ only says it).
     SONA_LIVE_BRAIN: Config.String("SONA_LIVE_BRAIN").pipe(Config.withDefault("own")),
+    SONA_LIVE_EAR: Config.String("SONA_LIVE_EAR").pipe(Config.withDefault("box2")),
     UPLOADS: uploads,
     // Cloudflare Email Service. Sending needs a domain onboarded under Email Service > Email Sending;
     // until EMAIL_FROM and INSURER_EMAIL are set, the review link is only shown in the app.

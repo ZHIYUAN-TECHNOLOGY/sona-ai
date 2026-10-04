@@ -85,6 +85,8 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
   readonly #models = this.#baseten ? basetenModels(this.#baseten) : stubModels;
   readonly #chat = this.#baseten && basetenChat(this.#baseten);
   readonly #gemma = this.env.SONA_LIVE_BRAIN === "gemma";
+  /** Box ④ writes the patient down for Gemma itself, and box ② is left out of the call. */
+  readonly #oneEar = this.#gemma && this.env.SONA_LIVE_EAR === "own";
   readonly #calls = new Map<string, LiveCall>();
 
   // The app speaks the voice protocol only: no state-sync or identity frames (which would name the instance).
@@ -98,6 +100,7 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     const call = new LiveCall();
     if (this.#gemma) call.says = new Says(say => call.say(JSON.stringify(say)));
     this.#calls.set(connection.id, call);
+    if (this.#oneEar) return { createSession: () => ({ feed: (chunk: ArrayBuffer) => call.hear(chunk), close: () => {} }) };
     const ears = new SonaTranscriber(audio => this.#models.transcribe({ audio }));
     return {
       createSession: (hooks?: SessionHooks) => {
@@ -124,7 +127,7 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     // Her trained voice in every language (the box's "v1" slot holds talker voice-v3, trained on the live layout:
     // docs/minicpm-o-finetune.md); voice-v1 garbled live English, so English and Chinese used the model's own until 3 Oct.
     // On SageMaker's L4s her own writing-down (2.6 s) stalls her voice, so box ② alone writes the patient down there.
-    box.send(JSON.stringify(liveStart(liveBrief(home && planText(home), call.language), this.#gemma ? "gemma" : "own", !onSageMaker(this.env.SONA_LIVE_URL))));
+    box.send(JSON.stringify(liveStart(liveBrief(home && planText(home), call.language), this.#gemma ? "gemma" : "own", !onSageMaker(this.env.SONA_LIVE_URL), this.#oneEar ? "own" : "box2")));
     send(connection, { type: "audio_config", format: "pcm16", sampleRate: 24_000 });
     call.box = box;
     for (const chunk of call.pending.splice(0)) box.send(chunk);
@@ -210,6 +213,10 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
   /** The same turn as box ④ wrote it down: checked too, and shown when box ②'s words do not come (quiet comes as "."). */
   #heard(connection: Connection, call: LiveCall, transcript: string) {
     if (!/[\p{L}\p{N}]/u.test(transcript)) return;
+    if (this.#oneEar && call.says) { // her ear is the call's only one: its words are shown, checked and answered
+      send(connection, { type: "transcript", role: "user", text: transcript });
+      return void this.#answer(connection, call, call.says, transcript, this.#check(connection, call, "box4", transcript));
+    }
     this.#check(connection, call, "box4", transcript);
     const at = Date.now();
     setTimeout(() => {
