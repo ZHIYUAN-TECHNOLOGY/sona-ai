@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Where Smart Turn sits in a Sona live call",
+    "output": "smart-turn-pipeline.html",
+    "viewBox": [
+      1040,
+      540
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "hear",
+        "label": "Hear the patient",
+        "focus": [
+          "app",
+          "agent",
+          "brain"
+        ],
+        "note": "The patient's voice reaches the brain in small pieces, as today."
+      },
+      {
+        "id": "turn",
+        "label": "Whose turn?",
+        "focus": [
+          "agent",
+          "turn",
+          "brain"
+        ],
+        "note": "At each pause Smart Turn judges: finished, or still thinking. It only decides when she may start."
+      },
+      {
+        "id": "speak",
+        "label": "Speak the answer",
+        "focus": [
+          "brain",
+          "voice",
+          "agent",
+          "app"
+        ],
+        "note": "Brain writes the words on GPU 1 while her voice is made on GPU 2."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "dashed": {
+          "label": "planned, not built yet"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Sona Care app",
+      "sublabel": "patient's phone"
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Call agent",
+      "sublabel": "Cloudflare · relay + safety"
+    },
+    {
+      "id": "turn",
+      "type": "security",
+      "label": "Smart Turn v3",
+      "sublabel": "live box · CPU · 12 ms"
+    },
+    {
+      "id": "brain",
+      "type": "cloud",
+      "label": "Ear + brain",
+      "sublabel": "MiniCPM-o · GPU 1"
+    },
+    {
+      "id": "voice",
+      "type": "cloud",
+      "label": "Talker + decoder",
+      "sublabel": "Sona's voice · GPU 2"
+    }
+  ],
+  "segments": [
+    {
+      "from": 178,
+      "to": 230,
+      "label": "Hear the patient"
+    },
+    {
+      "from": 240,
+      "to": 362,
+      "label": "Whose turn?"
+    },
+    {
+      "from": 372,
+      "to": 462,
+      "label": "Speak the answer"
+    }
+  ],
+  "messages": [
+    {
+      "id": "mic",
+      "from": "app",
+      "to": "agent",
+      "y": 190,
+      "label": "patient's voice",
+      "variant": "emphasis"
+    },
+    {
+      "id": "audio",
+      "from": "agent",
+      "to": "brain",
+      "y": 218,
+      "label": "audio, 0.1 s pieces",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pause",
+      "from": "brain",
+      "to": "turn",
+      "y": 256,
+      "label": "pause heard: last 8 s",
+      "variant": "dashed"
+    },
+    {
+      "id": "hold",
+      "from": "turn",
+      "to": "brain",
+      "y": 286,
+      "label": "not finished: keep listening",
+      "variant": "dashed"
+    },
+    {
+      "id": "pause2",
+      "from": "brain",
+      "to": "turn",
+      "y": 318,
+      "label": "next pause",
+      "variant": "dashed"
+    },
+    {
+      "id": "go",
+      "from": "turn",
+      "to": "brain",
+      "y": 348,
+      "label": "finished: start now",
+      "variant": "dashed"
+    },
+    {
+      "id": "states",
+      "from": "brain",
+      "to": "voice",
+      "y": 392,
+      "label": "words + states",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sound",
+      "from": "voice",
+      "to": "agent",
+      "y": 422,
+      "label": "Sona's voice, 1 s pieces",
+      "variant": "return"
+    },
+    {
+      "id": "play",
+      "from": "agent",
+      "to": "app",
+      "y": 450,
+      "label": "voice + captions",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "agent",
+      "from": 185,
+      "to": 454,
+      "type": "backend"
+    },
+    {
+      "participant": "brain",
+      "from": 213,
+      "to": 396,
+      "type": "cloud"
+    },
+    {
+      "participant": "turn",
+      "from": 251,
+      "to": 352,
+      "type": "security"
+    },
+    {
+      "participant": "voice",
+      "from": 387,
+      "to": 426,
+      "type": "cloud"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What Smart Turn does",
+      "items": [
+        "Judges from tone and rhythm whether the patient has finished",
+        "Finished: she starts about 1 s sooner. Not finished: she waits through the pause"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "What it does not touch",
+      "items": [
+        "Her hearing, answers and voice: same model, full precision",
+        "It only decides when she may start"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Measured today, 4 Oct",
+      "items": [
+        "Without it: first sound 2.7 s, and she cuts in at pauses",
+        "Early start alone saved 1.1 s but cut patients off: it needs this judge"
+      ]
+    }
+  ]
+}
