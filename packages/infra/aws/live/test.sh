@@ -47,8 +47,10 @@ play() {
 import json; d=json.load(open('$OUT/$1.json')); print('== $1 | gpu:', d['gpu']); print('\n'.join(d['run'][-45:]))"
 }
 SAY="You can take two tablets of paracetamol every six hours. Please call the clinic if the fever stays for three days."
+[ -n "${SKIP_PLAYS:-}" ] || {
 play own '{"SEED": "7"}'                    # she hears the question and answers by herself
 play again '{"SEED": "7", "TRANSCRIBE": "1"}'   # the same, and she writes the patient's turn down too
 play say "{\"HOLD\": \"1\", \"SAY\": \"$SAY\", \"RATE\": \"4\"}"   # a given answer, 8 seconds of speech
-# THEN: one more command while the endpoint is up.
+}
+# THEN: one more command while the endpoint is up (call.ts: a call from outside, as the Worker makes it).
 [ -z "${THEN:-}" ] || bash -c "$THEN"

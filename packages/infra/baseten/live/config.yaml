@@ -12,7 +12,7 @@ build_commands:
   # voice decoder; librosa 0.9 imports pkg_resources, gone from setuptools 80.
   - >-
     pip install --no-cache-dir "minicpmo-utils[tts]==1.0.6" "transformers==4.51.3" "accelerate<1.8" "setuptools<80"
-    safetensors huggingface_hub fastapi "uvicorn[standard]"
+    safetensors huggingface_hub fastapi "uvicorn[standard]" onnxruntime
   - python -c "import stepaudio2, transformers, torch; print('live deps ok', transformers.__version__, torch.__version__)"
 weights:
   - source: "hf://zhiyuantechnology/sona-minicpmo@f59feac269b9a42625f612bafa0e00fa4e84f40f"  # ear1: live3 with its ear retrained
@@ -25,6 +25,10 @@ weights:
     mount_location: /app/models/voice
     auth: {auth_method: CUSTOM_SECRET, auth_secret_name: hf_access_token}
     allow_patterns: ["talker.safetensors"]
+  - source: "hf://zhiyuantechnology/sona-turn@1a9a125c6ef76f94e633fa56e438262461e2ac6c"  # the judge of turns (data/live.py, QUIET)
+    mount_location: /app/models/turn
+    auth: {auth_method: CUSTOM_SECRET, auth_secret_name: hf_access_token}
+    allow_patterns: ["sona-turn.onnx"]
 docker_server:
   start_command: python /app/data/live.py
   readiness_endpoint: /health

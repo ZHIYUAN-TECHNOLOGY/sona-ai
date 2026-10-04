@@ -46,12 +46,24 @@ TRANSCRIBE = "Write down exactly what was said."
 TURN_MAX = 30 * UNIT  # the last 30 s of a turn at most
 # QUIET: the model hears in whole seconds, and takes its turn after a second of silence: the second the patient stopped
 # in has to end, then a silent one, so her first words wait 1-2 s for audio alone (4 Oct: 1.4 s of 2.7). With
-# "turn_silence_ms" in a call's start, once the patient has spoken and then been quiet that long, the second they
-# stopped in is filled with silence and a silent second follows, both at once: she hears the pause without waiting for
-# it. Measured on the H100 (4 Oct): first sound 2.9 s to 1.8 s on a question said in one breath, but at 500 ms and at
-# 300 ms she took every pause for the end ("Hi Sona." then her greeting over the question; half a question answered).
-# So off unless asked for: quiet alone cannot tell finished from thinking, and this needs a judge of that before it.
-# ponytail: loudness alone tells speech from quiet (a noisy room never goes quiet, and the call then works as before).
+# "turn_silence_ms" in a call's start, once the patient has spoken and then been quiet that long, a judge of turns
+# (TURN: Smart Turn v3.2 fine-tuned on our languages, tools/turn-train; 14 ms on a CPU) hears the last 8 s:
+#   finished      the second they stopped in is filled with silence and a silent second follows, both at once, so she
+#                 hears the pause without waiting for it;
+#   not finished  she is kept listening (the patient is thinking) until they speak and pause again, or have been quiet
+#                 for WAIT_S, when she may take the turn as she would have.
+# From the patient's first word to that verdict she only listens, so she no longer starts over a pause by herself.
+# Without the judge every pause counts as finished: on the H100 (4 Oct) that brought first sound from 2.9 s to 1.8 s
+# on a question said in one breath, but she took every pause for the end ("Hi Sona." then her greeting over the
+# question), which is why the judge is here. ponytail: loudness alone tells speech from quiet (a noisy room never goes
+# quiet, and the call then works as before; her own voice from a loudspeaker would count as the patient's).
+# Measured (4 Oct, H100, from Malaysia): "Hi Sona." and its pause no longer start her; a question said through to its end
+# got first sound at 2.3 s (300 ms) and 2.8 s (500 ms) against 3.0 s. The judge on 15 real recorded voices: cut
+# mid-sentence heard as not finished 15 of 15, whole heard as finished 12 of 15 (as published: 2 and 13). A whole
+# question heard as not finished costs the wait below; on three questions read by a computer voice it misjudged four
+# pauses of seven, so real calls decide whether this goes on by default.
+TURN = os.environ.get("TURN", "/app/models/turn/sona-turn.onnx")
+WAIT_S = 1.5  # near what she waits by herself (a silent second after the one the patient stopped in)
 LOUD = 0.01  # RMS of a frame, about -40 dBFS
 # Two GPUs (packages/infra/aws/live: no GPU in Malaysia holds the whole model; on one 24 GB L4 it ran out of memory
 # setting up her voice, 4 Oct). VOICE_GPU=1 puts her voice on that GPU: the talker, the voice decoder (Token2wav: flow,
@@ -101,6 +113,20 @@ def load():
 
 
 duplex = load()
+judge = None
+if os.path.exists(TURN):
+    import onnxruntime
+    from transformers import WhisperFeatureExtractor
+
+    judge, mel = onnxruntime.InferenceSession(TURN, providers=["CPUExecutionProvider"]), WhisperFeatureExtractor(chunk_length=8)
+    print("turn judge:", TURN, flush=True)
+
+
+def finished(audio: np.ndarray) -> float:
+    """The judge's probability that the speaker of these last seconds is done (Smart Turn's inference.py)."""
+    audio = audio[-8 * UNIT:] if len(audio) > 8 * UNIT else np.pad(audio, (8 * UNIT - len(audio), 0))
+    x = mel(audio, sampling_rate=UNIT, return_tensors="np", padding="max_length", max_length=8 * UNIT, truncation=True, do_normalize=True)
+    return float(judge.run(None, {"input_features": x.input_features.astype(np.float32)})[0].item())
 
 # Her voice in its own thread (two GPUs only). On an L4 a spoken second took 1.25 s: the brain 0.44 s, the talker
 # 0.44 s, the voice decoder 0.23 s, one after the other, so she fell behind her own voice (4 Oct). Here the brain's
@@ -252,7 +278,7 @@ def step(audio: np.ndarray, opts: dict, call: dict) -> tuple[dict, bytes | Futur
             call["hold"] = False
     else:
         # "hold" in a call's start: she only listens until told what to say (her own answers are not wanted)
-        duplex.force_listen_count = 10 ** 9 if call.get("hold") else call.get("force_listen", 0)
+        duplex.force_listen_count = 10 ** 9 if call.get("hold") or call.get("wait") else call.get("force_listen", 0)
         r, wave = generate(**opts)
     # On two GPUs her voice for this second is still being made: the caller sends it when it is done.
     speech = None if r["is_listen"] else wave if isinstance(wave, Future) else pcm(wave)
@@ -260,7 +286,7 @@ def step(audio: np.ndarray, opts: dict, call: dict) -> tuple[dict, bytes | Futur
     # and a character cut mid-byte waits for the next second.
     said = duplex.tokenizer.decode(duplex.res_ids, skip_special_tokens=True).rstrip("�")
     text = said[len(call["said"]):] if said.startswith(call["said"]) else said
-    call["said"] = said
+    call["said"], call["speaking"] = said, not r["is_listen"]
     return {"type": "unit", "i": r["current_time"], "listen": r["is_listen"], "text": text,
             "end_of_turn": r["end_of_turn"], "ms": round((time.time() - t) * 1000),
             "cost": {k[5:]: round(r[k] * 1000) for k in ("cost_llm", "cost_tts", "cost_token2wav") if r.get(k)}}, speech
@@ -325,7 +351,7 @@ async def live(ws: WebSocket):
 
             speaker, voice_out = asyncio.create_task(speak()), asyncio.create_task(voice_later())
             heard = np.zeros(0, dtype=np.float32)
-            quiet, spoke, still = int(start.get("turn_silence_ms", 0)) * UNIT // 1000, False, 0
+            quiet, spoke, still, recent = int(start.get("turn_silence_ms", 0)) * UNIT // 1000, False, 0, np.zeros(0, dtype=np.float32)
             while True:
                 m = await ws.receive()
                 note = json.loads(m["text"]) if m.get("text") else {}
@@ -340,15 +366,24 @@ async def live(ws: WebSocket):
                         units.put_nowait(heard[:UNIT])
                         heard = heard[UNIT:]
                     if quiet and len(frame):
+                        recent = np.concatenate([recent, frame])[-8 * UNIT:]
                         if float(np.sqrt(np.mean(frame ** 2))) > LOUD:
-                            spoke, still = True, 0
+                            # The patient is speaking: she waits for the verdict (not while she speaks herself: her
+                            # own listening decides whether to give way, as before).
+                            spoke, still, call["wait"] = True, 0, call.get("wait") or (judge is not None and not call.get("speaking"))
                         else:
                             still += len(frame)
-                        if spoke and still >= quiet:  # the patient has stopped: the pause, now
-                            if len(heard):
-                                units.put_nowait(np.concatenate([heard, np.zeros(UNIT - len(heard), np.float32)]))
-                            units.put_nowait(np.zeros(UNIT, np.float32))
-                            heard, spoke = heard[:0], False
+                        if spoke and still >= quiet:  # a pause: finished?
+                            p = finished(recent) if judge else 1.0
+                            await ws.send_text(json.dumps({"type": "turn", "finished": round(p, 2)}))
+                            spoke = False
+                            if p > 0.5:  # the pause, now
+                                if len(heard):
+                                    units.put_nowait(np.concatenate([heard, np.zeros(UNIT - len(heard), np.float32)]))
+                                units.put_nowait(np.zeros(UNIT, np.float32))
+                                heard, call["wait"] = heard[:0], False
+                        elif call.get("wait") and still >= WAIT_S * UNIT:
+                            call["wait"] = False  # quiet this long: her turn after all
         except WebSocketDisconnect:
             pass
         finally:

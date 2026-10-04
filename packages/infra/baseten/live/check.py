@@ -98,6 +98,9 @@ async def main(wav: str, url: str):
                     heard.append(u)
                     print(f"{at:5.1f}s HEARD ({u['seconds']} s of audio, {u['ms']} ms): {u['text']!r}")
                     continue
+                if u.get("type") == "turn":
+                    print(f"{at:5.1f}s pause: finished {u['finished']}")
+                    continue
                 if u.get("type") == "voice":
                     print(f"{at:5.1f}s voice of unit {u['i']:3d}, made in {u['ms']} ms")
                     continue
