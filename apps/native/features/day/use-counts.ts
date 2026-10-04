@@ -1,24 +1,30 @@
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
-import { useLive } from "@/features/live";
-import { serverDayPatients } from "@/features/live/day";
+import { JUDGE, useLive } from "@/features/live";
 import { useDemoOffset } from "@/features/live/demo-clock";
 import { useFindings } from "@/features/live/findings-sync";
 import { useServerData, useServerDay } from "@/features/live/server-day";
 import { useServerBeds } from "@/features/live/ward-sync";
+import { dayVisits } from "@/features/patients/record";
 import { localDate } from "@/features/tasks/state";
 import { wardBeds } from "@/features/ward/model";
 import { needsYou, openTaskCount, patientResult, pendingResult, withFindingBlockers } from "./counts";
 
 /** The hooks every page reads its counts through (the rules are in `counts.ts`). "Now" is the hospital's demo clock in live mode, as on Today. */
 
-/** Today's visits: in live mode at the server's appointment times, else the fixtures. */
-export function useDayPatients(patients: Patient[]) {
+/**
+ * Today's visits: in live mode at the server's appointment times, else the fixtures. In the judge build undefined
+ * until the server's day arrives, so a count shows no number meanwhile and never the whole roster's (dayVisits).
+ */
+export function useDay(patients: Patient[]) {
   const server = useServerData();
   const offset = useDemoOffset();
   const today = useServerDay(server ? localDate(new Date(Date.now() + offset)) : undefined);
-  return today ? serverDayPatients(patients, today) : patients;
+  return dayVisits(JUDGE, patients, today);
 }
+
+/** Today's visits as a list (see useDay); the judge build's is empty until the server's day arrives. */
+export const useDayPatients = (patients: Patient[]) => useDay(patients) ?? [];
 
 /**
  * The result waiting on a doctor, gone once acknowledged (on the server, or here in demo mode). With a

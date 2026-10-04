@@ -57,7 +57,8 @@ export function PatientSheet({ patient, onClose, onGo }: { patient: Patient; onC
   const started = Boolean(encounter?.requests.length);
   const [h, m] = patient.time.split(":").map(Number);
   const now = new Date(), minutes = h! * 60 + m! - (now.getHours() * 60 + now.getMinutes());
-  const when = started ? "In progress" : minutes > 0 ? `Starts in ${minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)} h ${minutes % 60} min`}` : minutes > -10 ? "Due now" : `Running ${-minutes} min late`;
+  // No appointment today (a ward patient in the judge build) has no time to count from.
+  const when = started ? "In progress" : !patient.time ? "" : minutes > 0 ? `Starts in ${minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)} h ${minutes % 60} min`}` : minutes > -10 ? "Due now" : `Running ${-minutes} min late`;
 
   const y = useSharedValue(height), drag = useSharedValue(0);
   useEffect(() => { y.set(reducedMotion ? withTiming(0, { duration: 200 }) : withSpring(0, { duration: 420, dampingRatio: 0.82 })); }, [reducedMotion, y]);

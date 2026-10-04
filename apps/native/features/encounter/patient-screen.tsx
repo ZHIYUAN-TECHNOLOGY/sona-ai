@@ -8,10 +8,11 @@ import { Chip, Icon, Insight, Tone, canvasImage, useAccessibleEffects } from "@/
 import { Press } from "@/components/sona/parts";
 import { palette, type, radius } from "@/components/sona/theme";
 import { mostUrgent } from "@/components/sona/tone";
-import { GROUPS, letters, listItems, syntheticCensus, type Group, type Item, type Row, type View as Tab } from "@/features/patients/census";
+import { GROUPS, letters, listItems, rosterRows, syntheticCensus, type Group, type Item, type Row, type View as Tab } from "@/features/patients/census";
 import { useContinue, useContinueState } from "@/features/patients/continue-store";
 import { useServerCensus } from "@/features/patients/server-census";
 import { needsYou } from "@/features/ask/answers";
+import { JUDGE } from "@/features/live";
 import { needLine, patientFlags, unconfirmedOf } from "@/features/day/counts";
 import { useDayPatients, usePendingResult } from "@/features/day/use-counts";
 import { PatientSheet, type Go } from "./patient-sheet";
@@ -24,6 +25,8 @@ const TABS: { id: Tab; label: string }[] = [
 // The tab and search outlive the screen, so opening a visit and coming back finds Patients as it was left.
 // ponytail: one module-level slot for the session; a per-user store if Patients ever opens twice at once.
 const kept: { tab?: Tab; query: string } = { query: "" };
+// Judge build: the server's list leaves nobody out, since every row comes from it (rosterRows).
+const NOBODY: { id: string }[] = [];
 const minutes = (hhmm: string) => { const [h, m] = hhmm.split(":").map(Number); return (h ?? 0) * 60 + (m ?? 0); };
 
 /**
@@ -58,19 +61,23 @@ export function PatientScreen() {
   // Today's visits come from the same schedule as Today (the server's appointments in live mode), so the two pages agree.
   const day = useDayPatients(patients);
   const result = usePendingResult(); // the result Today flags, so an acknowledged one stops showing here too
-  const real: Row[] = patients.map(p => {
+  const real: Row[] = patients.flatMap(p => {
     const visit = day.find(d => d.id === p.id);
     const flags = patientFlags(p, unconfirmedOf(p, encounters[p.id]), result, encounters[p.id]);
     const answers = encounters[p.id]?.requests.length ?? 0;
+    // Judge build: the roster is the whole hospital record, so only who needs you, is booked today or is being seen is
+    // ranked from their visit; the rest keep the ward's row (rosterRows).
+    if (JUDGE && !flags.length && !visit && !answers) return [];
     const soon = Boolean(visit) && !answers && minutes(visit!.time) - now >= 0 && minutes(visit!.time) - now <= 60;
     const [group, reason, tone]: [Group, string, Row["tone"]] = flags.length ? ["needs", flags[0]!.label, flags[0]!.tone === "urgent" ? "urgent" : "soon"]
       : soon ? ["next", `Starts in ${minutes(visit!.time) - now} min`, "good"] : answers ? ["waiting", `In progress · ${answers} ${answers === 1 ? "answer" : "answers"}`, "calm"] : ["waiting", p.subtitle, "calm"];
-    return { id: p.id, name: p.name, initials: p.initials, where: visit?.time ?? "", group, reason, tone, mine: true, ward: false, clinic: Boolean(visit), open: true };
+    return [{ id: p.id, name: p.name, initials: p.initials, where: visit?.time ?? "", group, reason, tone, mine: true, ward: false, clinic: Boolean(visit), open: true }];
   });
   // Connected: everyone else on the list is the hospital record's (the ward's patients, read from the server), never the synthetic census.
-  const others = useServerCensus(patients);
+  const others = useServerCensus(JUDGE ? NOBODY : patients);
   const synthetic = useMemo(() => others ?? (census ? syntheticCensus(106) : []), [census, others]);
-  const rows = useMemo(() => [...real, ...synthetic], [real, synthetic]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Judge build: one row per person on the record, opening the visit the server holds for them (the roster is exactly those).
+  const rows = useMemo(() => JUDGE ? rosterRows(real, others ?? [], new Set(patients.map(p => p.id))) : [...real, ...synthetic], [real, synthetic]); // eslint-disable-line react-hooks/exhaustive-deps
   const count = (t: Tab) => t === "continue" ? entries.length : t === "needs" ? rows.filter(r => r.group === "needs").length : t === "all" ? rows.length : rows.filter(r => r[t]).length;
   const tabs = TABS.filter(t => t.id === "needs" || t.id === "all" || count(t.id) > 0);
 
@@ -88,7 +95,7 @@ export function PatientScreen() {
   const upNext = [...day].sort((x, y) => x.time.localeCompare(y.time)).find(p => !encounters[p.id]?.requests.length);
   const insight: ReactNode[] = tab === "continue"
     ? [entries.length ? `${entries.length} unfinished` : "Nothing unfinished", toSign ? <Tone key="sign" of="soon">{toSign} {toSign === 1 ? "note" : "notes"} to sign</Tone> : null].filter(Boolean)
-    : [rows.length === patients.length ? (day.length ? `${day.length} ${day.length === 1 ? "visit" : "visits"} today` : "No visits today") : `${rows.length} patients`, needs ? <Tone key="needs" of={needTone}>{needLine(needs)}</Tone> : null, upNext ? <Fragment key="next">next <Tone of="next">{upNext.name.split(" ")[0]} at {upNext.time}</Tone></Fragment> : null].filter(Boolean);
+    : [!JUDGE && rows.length === patients.length ? (day.length ? `${day.length} ${day.length === 1 ? "visit" : "visits"} today` : "No visits today") : `${rows.length} patients`, needs ? <Tone key="needs" of={needTone}>{needLine(needs)}</Tone> : null, upNext ? <Fragment key="next">next <Tone of="next">{upNext.name.split(" ")[0]} at {upNext.time}</Tone></Fragment> : null].filter(Boolean);
 
   const renderItem = useCallback(({ item, index }: { item: Item; index: number }) => {
     if (item.kind === "header") return <Text accessibilityRole="header" style={{ ...type.footnote, fontWeight: "600", color: palette.muted, paddingTop: index ? 18 : 4, paddingBottom: 6, paddingHorizontal: 4 }}>{item.title} · {item.count}</Text>;
@@ -101,11 +108,12 @@ export function PatientScreen() {
     </Press>;
     const r = item.row;
     return <ListRow title={r.name} badge={r.id === patient?.id ? <Text style={{ fontWeight: "500", color: palette.blue }}>  · current</Text> : undefined} detail={r.reason} tone={r.tone} initials={r.initials} trailing={r.where.replace(/^(Clinic|Bed) /, "")}
-      edges={{ first, last }} onPress={r.open ? () => setOpen(r.id) : undefined} accessibilityHint={r.open ? "Shows the patient summary and actions" : undefined}
+      edges={{ first, last }} onPress={r.open ? () => setOpen(r.id) : JUDGE ? () => Alert.alert(r.name, "The hospital record has no visit for this patient.") : undefined} accessibilityHint={r.open ? "Shows the patient summary and actions" : undefined}
       accessibilityLabel={`${r.name}, ${r.where}, ${r.reason}${r.open || others ? "" : ". Synthetic census row"}`} />;
   }, [items, patient?.id, others]);
 
-  const chosen = patients.find(p => p.id === open);
+  // The sheet shows today's appointment time, as the row did: the judge build's roster carries no clock time of its own.
+  const picked = patients.find(p => p.id === open), chosen = picked && { ...picked, time: day.find(d => d.id === open)?.time ?? picked.time };
   // Opened to pick a visit for something (a question, a tool, a switch) it says so; from the sidebar it is the Patients page.
   const picking = Boolean(next || view || prompt || switching);
   const header = <View style={{ gap: 14, paddingBottom: 14 }}>
