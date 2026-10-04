@@ -7,7 +7,7 @@ import { LINES, callNow } from "@sona-ai/api/voice-agent/answer";
 import { tellCareTeam } from "@sona-ai/api/voice-agent/care-team";
 import { SonaTranscriber, type SessionHooks } from "@sona-ai/api/voice-agent/listen";
 import { Checks, LiveTurns, liveBrief, mayReport, type Ear, type Heard, type Unit } from "@sona-ai/api/voice-agent/live";
-import { hosted } from "@sona-ai/api/sagemaker";
+import { awsOf, hosted, sagemakerLive, type HostingEnv, type LiveLink } from "@sona-ai/api/sagemaker";
 import { Agent, type Connection } from "agents";
 import { withVoiceInput } from "agents/voice";
 
@@ -28,7 +28,7 @@ const OWN_WORDS_WAIT_MS = 5000;
 
 /** One call's link to box ④: the phone's audio until the box takes it, the socket after, and Sona's answers so far. */
 class LiveCall {
-  box?: WebSocket;
+  box?: LiveLink;
   pending: ArrayBuffer[] = [];
   bytes = 0;
   turns = new LiveTurns();
@@ -49,7 +49,7 @@ class LiveCall {
 
   close() {
     this.closed = true;
-    try { this.box?.close(1000, "call ended"); } catch { /* already closed */ }
+    this.box?.close();
   }
 }
 
@@ -96,14 +96,15 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     const home = plan?.status === "discharged" ? plan : undefined;
     const discharged = home?.language ?? await lastDischarge(getDb(), hospitalId, patientId).then(d => d?.language, () => undefined);
     call.language = languageOf(connection, discharged);
-    const box = await openBox(this.env.SONA_LIVE_URL, this.#baseten?.apiKey).catch(() => undefined);
+    const box = await openBox(this.env.SONA_LIVE_URL, this.env, this.#baseten?.apiKey).catch(() => undefined);
     if (call.closed) return box?.close();
     if (!box) return this.#tell(connection, LINES[call.language].unavailable);
-    box.addEventListener("message", event => this.#fromBox(connection, call, event.data));
-    box.addEventListener("close", () => { if (!call.closed) this.#tell(connection, LINES[call.language].unavailable); call.close(); });
+    box.onmessage = data => this.#fromBox(connection, call, data);
+    box.onclose = () => { if (!call.closed) this.#tell(connection, LINES[call.language].unavailable); call.close(); };
     // Her trained voice in every language (the box's "v1" slot holds talker voice-v3, trained on the live layout:
     // docs/minicpm-o-finetune.md); voice-v1 garbled live English, so English and Chinese used the model's own until 3 Oct.
-    box.send(JSON.stringify({ type: "start", system: liveBrief(home && planText(home), call.language), voice: "v1", transcribe: true }));
+    // On SageMaker's L4s her own writing-down (2.6 s) stalls her voice, so box ② alone writes the patient down there.
+    box.send(JSON.stringify({ type: "start", system: liveBrief(home && planText(home), call.language), voice: "v1", transcribe: !onSageMaker(this.env.SONA_LIVE_URL) }));
     send(connection, { type: "audio_config", format: "pcm16", sampleRate: 24_000 });
     call.box = box;
     for (const chunk of call.pending.splice(0)) box.send(chunk);
@@ -197,18 +198,33 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
   }
 }
 
-/** Box ④'s socket, signed with the Baseten key (a Worker opens it as a fetch upgrade); a cold box is woken meanwhile. */
-async function openBox(url: string, apiKey?: string): Promise<WebSocket> {
+/** SONA_LIVE_URL "sagemaker:<endpoint>": box ④ on a SageMaker endpoint in Malaysia (packages/infra/aws/live). */
+const onSageMaker = (url: string) => url.startsWith("sagemaker:");
+
+/**
+ * The call's link to box ④. On Baseten its WebSocket, signed with the Baseten key (a Worker opens it as a fetch
+ * upgrade), a cold box woken meanwhile; on SageMaker the same call as requests (sagemakerLive).
+ */
+async function openBox(url: string, env: HostingEnv, apiKey?: string): Promise<LiveLink> {
+  if (onSageMaker(url)) {
+    const aws = awsOf(env);
+    if (!aws) throw new Error("box ④ on SageMaker needs the AWS keys");
+    return sagemakerLive(aws, url.slice("sagemaker:".length));
+  }
   const http = url.replace(/^ws/, "http"), headers = apiKey ? { Authorization: `Api-Key ${apiKey}` } : undefined;
   const wake = /^(https:\/\/model-[^/]+\/environments\/[^/]+)\/websocket$/.exec(http)?.[1];
   if (wake && headers) void fetch(`${wake}/wake`, { method: "POST", headers, signal: AbortSignal.timeout(5000) }).catch(() => {});
   // The time limit covers opening only: left on the request, it closed the open call at OPEN_MS (3 Oct, 20 s into a call).
   const opening = new AbortController(), limit = setTimeout(() => opening.abort(), OPEN_MS);
   const res = await fetch(http, { headers: { Upgrade: "websocket", ...headers }, signal: opening.signal }).finally(() => clearTimeout(limit));
-  if (!res.webSocket) throw new Error(`box ④ answered ${res.status}`);
-  res.webSocket.binaryType = "arraybuffer"; // a Blob by default from this compatibility date, which reached the phone as text
-  res.webSocket.accept();
-  return res.webSocket;
+  const socket = res.webSocket;
+  if (!socket) throw new Error(`box ④ answered ${res.status}`);
+  socket.binaryType = "arraybuffer"; // a Blob by default from this compatibility date, which reached the phone as text
+  socket.accept();
+  const link: LiveLink = { send: data => socket.send(data), close: () => { try { socket.close(1000, "call ended"); } catch { /* already closed */ } } };
+  socket.addEventListener("message", event => link.onmessage?.(event.data as string | ArrayBuffer));
+  socket.addEventListener("close", () => link.onclose?.());
+  return link;
 }
 
 /** The app's language (`?lang=` on the socket), else the one chosen at discharge, else English. */

@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { BOXES } from "./baseten-models";
-import { endpointsOf, hosted, payloads, sagemakerFetcher, signed } from "./sagemaker";
+import { endpointsOf, hosted, payloads, sagemakerFetcher, sagemakerLive, signed } from "./sagemaker";
 
 const creds = { region: "us-east-1", accessKeyId: "AKIDEXAMPLE", secretAccessKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY" };
 
@@ -86,4 +86,38 @@ test("a box named lambda:<function> is invoked as a Lambda function: the request
   // A function that failed answers 200 with an error header: a failed call to the caller.
   const failing = sagemakerFetcher({ ...creds, endpoints: { pii: "lambda:sona-pii" } }, (async () => new Response("{}", { headers: { "x-amz-function-error": "Unhandled" } })) as typeof fetch);
   expect((await failing(`https://model-${BOXES.pii}.api.baseten.co/environments/production/sync/pii/extract`, { method: "POST", body: "{}" })).status).toBe(502);
+});
+
+test("a live call on SageMaker: the start, then audio a second a request, in order; the box's frames come back from one streamed request", async () => {
+  // An AWS event-stream frame around some of the box's bytes, as the response-stream route sends them.
+  const wrap = (payload: Uint8Array) => {
+    const headers = new TextEncoder().encode("\x0b:event-type\x07\x00\x0bPayloadPart");
+    const bytes = new Uint8Array(12 + headers.length + payload.length + 4), view = new DataView(bytes.buffer);
+    view.setUint32(0, bytes.length); view.setUint32(4, headers.length);
+    bytes.set(headers, 12); bytes.set(payload, 12 + headers.length);
+    return bytes;
+  };
+  const boxFrame = (kind: number, data: Uint8Array) => { const f = new Uint8Array(5 + data.length); f[0] = kind; new DataView(f.buffer).setUint32(1, data.length); f.set(data, 5); return f; };
+  const said = [boxFrame(0, new TextEncoder().encode('{"type":"unit","i":1}')), boxFrame(1, new Uint8Array([1, 2, 3, 4])), boxFrame(2, new Uint8Array(0))];
+  const all = new Uint8Array(said.flatMap(f => [...f]));
+  const sent: string[] = [];
+  let heardBoth = () => {};
+  const bothSeconds = new Promise<void>(done => { heardBoth = done; });
+  const fetcher = (async (url: RequestInfo | URL, init?: RequestInit) => {
+    const body = init!.body as Uint8Array, type = (init!.headers as Record<string, string>)["content-type"];
+    sent.push(`${String(url).split("/").pop()} ${type === "application/json" ? new TextDecoder().decode(body) : `${body.length} bytes`}`);
+    if (sent.filter(s => s.endsWith("bytes")).length === 2) heardBoth();
+    if (String(url).endsWith("-response-stream")) // the box answers once it has heard both seconds; its frames split across two chunks, mid-frame
+      return bothSeconds.then(() => new Response(new ReadableStream({ start(c) { c.enqueue(wrap(all.slice(0, 9))); c.enqueue(wrap(all.slice(9))); c.close(); } })));
+    return new Response(type === "application/json" && sent.length === 1 ? '{"type":"ready"}' : null);
+  }) as typeof fetch;
+  const link = sagemakerLive({ ...creds, region: "ap-southeast-5" }, "sona-live", fetcher), got: (string | ArrayBuffer)[] = [];
+  const over = new Promise<void>(done => { link.onclose = done; });
+  link.onmessage = data => got.push(data);
+  link.send('{"type":"start","system":"s"}');
+  link.send(new Uint8Array(20_000).buffer); // under a second: held
+  link.send(new Uint8Array(50_000).buffer); // 70,000 bytes so far: two seconds go, 6,000 wait
+  await over;
+  expect(sent).toEqual(['invocations {"type":"start","system":"s"}', 'invocations-response-stream {"type":"listen"}', "invocations 32000 bytes", "invocations 32000 bytes"]);
+  expect(got.map(g => typeof g === "string" ? g : [...new Uint8Array(g)])).toEqual(['{"type":"ready"}', '{"type":"unit","i":1}', [1, 2, 3, 4]]);
 });
