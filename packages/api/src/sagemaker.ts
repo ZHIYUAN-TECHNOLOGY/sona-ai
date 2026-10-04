@@ -9,6 +9,8 @@ import { BOXES, type Baseten, type Box } from "./baseten-models";
  * model's own bytes (its SSE lines).
  * ponytail: an endpoint that exists is taken to be up, and wake does nothing; when the endpoints scale to zero, health
  * needs DescribeEndpoint and wake a scale-up.
+ * A box named "lambda:<function>" is an AWS Lambda function instead (the PII box, packages/infra/aws/pii): it bills per
+ * call, wakes by being called, and takes the request as an HTTP event (Lambda's web adapter hands it to the service).
  */
 export type SageMaker = {
   region: string;
@@ -16,7 +18,7 @@ export type SageMaker = {
   secretAccessKey: string;
   /** With temporary credentials (a local test with `aws login`). */
   sessionToken?: string;
-  /** The boxes that have moved, and their endpoint names: { brain: "sona-brain" }. */
+  /** The boxes that have moved, and their endpoint names: { brain: "sona-brain", pii: "lambda:sona-pii" }. */
   endpoints: Partial<Record<Box, string>>;
 };
 
@@ -58,6 +60,7 @@ export function sagemakerFetcher(sm: SageMaker, fetcher: typeof fetch = fetch, n
     const type = new Headers(init?.headers).get("content-type");
     const sent = new Request("https://sagemaker.invalid", { method: "POST", body: init?.body, headers: type ? { "content-type": type } : undefined });
     const body = new Uint8Array(await sent.arrayBuffer()), contentType = sent.headers.get("content-type") ?? "application/octet-stream";
+    if (endpoint.startsWith("lambda:")) return viaLambda(sm, endpoint.slice(7), route.slice(4), body, contentType, fetcher, now(), init?.signal);
     const streamed = contentType.startsWith("application/json") && /"stream"\s*:\s*true/.test(new TextDecoder().decode(body));
     const url = `https://runtime.sagemaker.${sm.region}.amazonaws.com/endpoints/${encodeURIComponent(endpoint)}/${streamed ? "invocations-response-stream" : "invocations"}`;
     const headers = await signed(sm, "sagemaker", url, body, contentType, now());
@@ -65,6 +68,21 @@ export function sagemakerFetcher(sm: SageMaker, fetcher: typeof fetch = fetch, n
     if (!streamed || !res.ok || !res.body) return res;
     return new Response(res.body.pipeThrough(payloads()), { status: res.status, headers: { "content-type": "text/event-stream" } });
   }) as typeof fetch;
+}
+
+/**
+ * One call to a Lambda function behind Lambda's web adapter: the request as an API Gateway v2 event, the service's
+ * reply out of the event it answers with. ponytail: text bodies only (the PII box speaks JSON); base64 both ways for bytes.
+ */
+async function viaLambda(sm: SageMaker, name: string, path: string, body: Uint8Array, contentType: string, fetcher: typeof fetch, at: Date, signal?: AbortSignal | null) {
+  const event = text.encode(JSON.stringify({ version: "2.0", rawPath: path, rawQueryString: "", headers: { "content-type": contentType },
+    requestContext: { http: { method: "POST", path, sourceIp: "127.0.0.1" } }, body: new TextDecoder().decode(body), isBase64Encoded: false }));
+  const url = `https://lambda.${sm.region}.amazonaws.com/2015-03-31/functions/${encodeURIComponent(name)}/invocations`;
+  const res = await fetcher(url, { method: "POST", body: event, headers: await signed(sm, "lambda", url, event, "application/json", at), signal });
+  // A function that failed still answers 200, with this header.
+  if (!res.ok || res.headers.get("x-amz-function-error")) return new Response(await res.text(), { status: res.ok ? 502 : res.status });
+  const out = await res.json() as { statusCode?: number; headers?: Record<string, string>; body?: string };
+  return new Response(out.body ?? "", { status: out.statusCode ?? 502, headers: { "content-type": out.headers?.["content-type"] ?? "application/json" } });
 }
 
 const hex = (bytes: ArrayBuffer) => [...new Uint8Array(bytes)].map(b => b.toString(16).padStart(2, "0")).join("");

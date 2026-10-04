@@ -68,3 +68,22 @@ test("hosting follows the settings: no key, no models; no moved boxes or no AWS 
   expect(hosted({ BASETEN_API_KEY: "k", SAGEMAKER_ENDPOINTS: "brain=sona-brain" })).toEqual({ apiKey: "k" });
   expect(hosted({ BASETEN_API_KEY: "k", SAGEMAKER_ENDPOINTS: "brain=sona-brain", AWS_ACCESS_KEY_ID: "a", AWS_SECRET_ACCESS_KEY: "s" })!.fetcher).toBeFunction();
 });
+
+test("a box named lambda:<function> is invoked as a Lambda function: the request as an HTTP event, the service's reply out of the event", async () => {
+  let seen: { url: string; init?: RequestInit } | undefined;
+  const fetcher = (async (url: RequestInfo | URL, init?: RequestInit) => {
+    seen = { url: String(url), init };
+    return Response.json({ statusCode: 200, headers: { "content-type": "application/json" }, body: '{"entities":[]}' });
+  }) as typeof fetch;
+  const f = sagemakerFetcher({ ...creds, region: "ap-southeast-5", endpoints: { pii: "lambda:sona-pii" } }, fetcher);
+  const res = await f(`https://model-${BOXES.pii}.api.baseten.co/environments/production/sync/pii/extract`,
+    { method: "POST", body: '{"text":"Seen with her son Hafiz."}', headers: { "content-type": "application/json", Authorization: "Api-Key k" } });
+  expect(seen!.url).toBe("https://lambda.ap-southeast-5.amazonaws.com/2015-03-31/functions/sona-pii/invocations");
+  expect((seen!.init!.headers as Record<string, string>).Authorization).toContain("/ap-southeast-5/lambda/aws4_request");
+  const event = JSON.parse(new TextDecoder().decode(seen!.init!.body as Uint8Array));
+  expect([event.rawPath, event.requestContext.http.method, event.body]).toEqual(["/pii/extract", "POST", '{"text":"Seen with her son Hafiz."}']);
+  expect([res.status, await res.json()]).toEqual([200, { entities: [] }]);
+  // A function that failed answers 200 with an error header: a failed call to the caller.
+  const failing = sagemakerFetcher({ ...creds, endpoints: { pii: "lambda:sona-pii" } }, (async () => new Response("{}", { headers: { "x-amz-function-error": "Unhandled" } })) as typeof fetch);
+  expect((await failing(`https://model-${BOXES.pii}.api.baseten.co/environments/production/sync/pii/extract`, { method: "POST", body: "{}" })).status).toBe(502);
+});

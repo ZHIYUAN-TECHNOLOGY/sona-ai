@@ -1,0 +1,9 @@
+# Builds the PII box's image into ECR (the weights are public and baked into the image, as on Baseten).
+version: 0.2
+phases:
+  build:
+    commands:
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR
+      - docker build -t $ECR/sona/pii:2.5.0 .
+      - docker run --rm --read-only --tmpfs /tmp --user 993 --entrypoint python $ECR/sona/pii:2.5.0 -c "from openmed import extract_pii; print(extract_pii('Seen with her son Hafiz.', model_name='OpenMed/OpenMed-PII-mClinicalE5-Large-560M-v1').entities)"
+      - docker push $ECR/sona/pii:2.5.0
