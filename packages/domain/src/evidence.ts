@@ -7,8 +7,9 @@ import type { Patient } from "./types";
  * which evidence applies to this patient.
  *
  * ponytail: authored summaries of real, well-known publications, each linked to its PubMed record
- * (PMIDs checked against PubMed). Any other question's claims come from the model seam (a mock until
- * the models are hosted).
+ * (PMIDs checked against PubMed), shown only where no model is configured (local development, and the
+ * app without the server). With a model, the server never uses them: every question goes to PubMed,
+ * the library and the model (packages/api/src/routers/evidence.ts).
  */
 export type StudyKind = "Guideline" | "Review" | "Trial" | "Narrative review" | "Study";
 export type Study = { id: string; kind: StudyKind; year: number; title: string; finding: string; query: string; pmid?: string; journal?: string };
@@ -60,7 +61,10 @@ export const FOLLOW_UPS: { question: string; bottomLine: string; claims: Claim[]
   ] },
 ];
 
-/** The authored answer for the rehearsed question or one of its suggested follow-ups (exact wording); undefined for anything else. */
+/**
+ * The authored answer for the rehearsed question or one of its suggested follow-ups (exact wording); undefined for
+ * anything else. For where no model is configured only: never a stand-in for a configured model's answer.
+ */
 export function authoredAnswer(question: string): { bottomLine: string; claims: Claim[]; followUps: string[] } | undefined {
   const q = question.trim();
   const follow = FOLLOW_UPS.find(f => f.question === q);

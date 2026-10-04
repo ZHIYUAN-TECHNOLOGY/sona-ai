@@ -14,6 +14,7 @@ import { createAuth, getDb } from "./services";
 import { runNightlyAudit } from "@sona-ai/api/audit-job";
 import { decideReview, renderReviewPage, reviewPacket } from "@sona-ai/api/insurer";
 import { wakeFollowUps } from "@sona-ai/api/routers/check-ins";
+import { labFeed } from "@sona-ai/api/routers/day";
 import { hospitals } from "@sona-ai/db/schema/clinical";
 import { careLinkOf, hospitalOf } from "@sona-ai/api/routers/hospital";
 import { voiceRoute } from "./agents/voice";
@@ -97,6 +98,9 @@ app.post("/insurer/:token", async (c) => {
   if (!packet) return c.text("This review link is not valid.", 404);
   return c.html(renderReviewPage(packet, result.reason), 400, { "cache-control": "no-store" });
 });
+
+// The hospital's lab system posts results here with its shared secret (labFeed); closed until LAB_FEED_SECRET is set.
+app.post("/lab/results", async (c) => labFeed({ db: await getDb(), announce: announcer(c.env as Env) }, ENV.LAB_FEED_SECRET, c.req.raw));
 
 // Live updates: a signed-in app opens one WebSocket here. A clinician joins their hospital's channel;
 // a Sona Care patient joins their own, which only hears changes about them (see announcer).

@@ -12,11 +12,14 @@ import { fetchArticles, searchEvidence, searchTerms, type Article } from "../pub
 /**
  * Flow 4, the evidence answer (docs/evidence-answer-spec.md): short claims each citing numbered
  * sources, one reference list (PubMed studies, then library passages), follow-ups, and the patient's
- * CURB-65 from recorded readings. The rehearsed question and its suggested follow-ups answer from
- * authored content so the stage cannot fail on the network or a cold model; anything else goes to
- * the model seam (a labelled mock until the models are hosted). No source, no claim: the route drops
- * any claim citing nothing or a number not in the list. Fetched articles are cached, so a question
- * asked once still has its sources when PubMed is unreachable.
+ * CURB-65 from recorded readings. With a model configured (`context.models`), every question, the
+ * rehearsed one included, is searched in PubMed and the library and written by the model from what
+ * was found; a model that does not answer is said as that (no claims, `source: "fixture"`), never
+ * covered with other text. Only where no model is configured (local development) do the rehearsed
+ * question and its suggested follow-ups answer from authored content (`source: "cached"`, which the
+ * app captions "Rehearsed answer") and anything else from the stub's labelled sample. No source, no
+ * claim: the route drops any claim citing nothing or a number not in the list. Fetched articles are
+ * cached, so a question asked once still has its sources when PubMed is unreachable.
  */
 const REHEARSED = {
   matches: isRehearsed,
@@ -36,7 +39,8 @@ const SEARCH_DAYS = 7;
 async function articlesFor(db: Context["db"], fetcher: typeof fetch, terms: string[], rehearsed: boolean) {
   const key = terms.join(" AND ");
   const [saved] = rehearsed ? [] : await db.select().from(pubmedSearches).where(eq(pubmedSearches.terms, key));
-  const recent = saved && Date.now() - saved.searchedAt.getTime() < SEARCH_DAYS * 86400_000;
+  // A search that found nothing is not reused: it may only have been PubMed's second search timing out, and would leave the question without studies for a week.
+  const recent = saved?.pmids.length && Date.now() - saved.searchedAt.getTime() < SEARCH_DAYS * 86400_000;
   let pmids = rehearsed ? REHEARSED.pmids : saved?.pmids ?? [];
   try {
     if (!rehearsed && !recent) {
@@ -90,8 +94,9 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
   if (input.encounterId && !visit) throw new ORPCError("NOT_FOUND", { message: `No encounter ${input.encounterId}` });
 
   yield { type: "step", step: "search" } as EvidenceStep;
-  // The rehearsed question, or one of its suggested follow-ups word for word, answers from authored content.
-  const authored = authoredAnswer(input.question);
+  // Only with no model configured (local development) does the rehearsed question, or one of its suggested follow-ups
+  // word for word, answer from authored content; with one, it is searched, read and written like any other question.
+  const authored = context.models ? undefined : authoredAnswer(input.question);
   // PubMed gets the question's key terms (a follow-up keeps the thread's topic), never the patient's name or record number.
   const terms = searchTerms(input.question, input.thread.map(t => t.question), visit ? [visit.name, visit.patientId] : []);
   // PubMed and the library are searched at once.
@@ -123,6 +128,9 @@ async function* answer(context: Context & { hospitalId: string }, input: z.infer
         if (claim) yield { type: "claim", claim } as EvidenceStep;
       }
     } else read = await models.synthesiseEvidence(asked);
+    // A configured model that did not answer (its box starting, or the call failing) came back as the stub's sample: that
+    // is said as it is, with no claims and `waking` kept so the app asks again, instead of showing text no model wrote.
+    if (context.models && read.source === "fixture") read = { ...read, claims: [], followUps: [], general: undefined, bottomLine: undefined };
     claims = sourcedClaims(read.claims, references.length); followUps = read.followUps.slice(0, 3); source = read.source === "model" ? read.model : "fixture";
     // While Gemma is starting, the sample says in how many minutes.
     waking = read.source === "fixture" ? read.waking : undefined;
