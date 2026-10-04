@@ -5,16 +5,20 @@ with about a second of Sona's voice (her trained talker from tools/omni-voice-tr
 
 WebSocket /v1/live, one call per connection:
   in   1. JSON {"type": "start", "system": str, optional "listen_prob_scale", "temperature", "force_listen",
-          "max_speak_tokens" (tokens a unit, the brain's pace), "voice" ("v1", Sona's trained talker, or "base")}
+          "max_speak_tokens" (tokens a unit, the brain's pace), "voice" ("v1", Sona's trained talker, or "base"),
+          "turn_silence_ms" (QUIET below: her turn starts that soon after the patient stops)}
        2. binary frames: the patient's audio, 16 kHz mono PCM16 little-endian, any length
        3. JSON {"type": "stop"}, or just close
   out  JSON {"type": "ready"} once the call is set up; then for each second heard
-       JSON {"type": "unit", "i", "listen", "text", "end_of_turn", "ms" (model time), "behind" (seconds queued)},
-       followed, when Sona speaks, by one binary frame: 24 kHz mono PCM16 little-endian.
+       JSON {"type": "unit", "i", "listen", "text", "end_of_turn", "ms" (model time), "cost" (ms by part: brain, talker,
+       voice), "behind" (seconds queued)}, followed, when Sona speaks, by one binary frame: 24 kHz mono PCM16
+       little-endian. On two GPUs (VOICE_GPU below) her voice for a second comes when it is made, after a JSON
+       {"type": "voice", "i", "ms"}, and the next second's unit may come before it.
 Off CUDA (a Mac, for tests) the voice decoder cannot run, so the box answers in text only.
 """
 import asyncio
 import contextlib
+from concurrent.futures import Future, ThreadPoolExecutor
 import json
 import os
 import time
@@ -40,13 +44,48 @@ talkers: dict = {}  # "base" (the model's own voice) and "v1" (Sona's trained ta
 # training task (tools/omni-train/eval.py), and sent as a "heard" event; box ② keeps transcribing beside it to compare.
 TRANSCRIBE = "Write down exactly what was said."
 TURN_MAX = 30 * UNIT  # the last 30 s of a turn at most
+# QUIET: the model hears in whole seconds, and takes its turn after a second of silence: the second the patient stopped
+# in has to end, then a silent one, so her first words wait 1-2 s for audio alone (4 Oct: 1.4 s of 2.7). With
+# "turn_silence_ms" in a call's start, once the patient has spoken and then been quiet that long, the second they
+# stopped in is filled with silence and a silent second follows, both at once: she hears the pause without waiting for
+# it. Measured on the H100 (4 Oct): first sound 2.9 s to 1.8 s on a question said in one breath, but at 500 ms and at
+# 300 ms she took every pause for the end ("Hi Sona." then her greeting over the question; half a question answered).
+# So off unless asked for: quiet alone cannot tell finished from thinking, and this needs a judge of that before it.
+# ponytail: loudness alone tells speech from quiet (a noisy room never goes quiet, and the call then works as before).
+LOUD = 0.01  # RMS of a frame, about -40 dBFS
+# Two GPUs (packages/infra/aws/live: no GPU in Malaysia holds the whole model; on one 24 GB L4 it ran out of memory
+# setting up her voice, 4 Oct). VOICE_GPU=1 puts her voice on that GPU: the talker, the voice decoder (Token2wav: flow,
+# HiFT and their caches) and the spare talker copies, about 7 GB. The brain and ear stay on GPU 0, everything at full
+# precision. Her voice then also works in its own thread while the brain goes on to the next second (sound() below).
+# Unset, everything is on one GPU and in one line, as before.
+VOICE_GPU = os.environ.get("VOICE_GPU")
+THERE = f"cuda:{VOICE_GPU}" if VOICE_GPU else None
+
+
+def vocoder_on(gpu: int):
+    """stepaudio2's Token2wav places everything with .cuda() and device='cuda', the current GPU: each of its calls runs
+    with `gpu` as the current one. The model code imports the class when it loads the decoder, so it gets this one."""
+    import stepaudio2
+
+    def there(method):
+        def call(self, *a, **k):
+            with torch.cuda.device(gpu):
+                return method(self, *a, **k)
+        return call
+
+    names = ("__init__", "__call__", "_prepare_prompt", "set_stream_cache", "stream")
+    stepaudio2.Token2wav = type("Token2wav", (stepaudio2.Token2wav,), {n: there(getattr(stepaudio2.Token2wav, n)) for n in names})
 
 
 def load():
     from transformers import AutoModel
 
+    if VOICE_GPU:
+        vocoder_on(int(VOICE_GPU))
     model = AutoModel.from_pretrained(MODEL, trust_remote_code=True, attn_implementation="sdpa", init_vision=False,
                                       torch_dtype=torch.bfloat16 if AUDIO else torch.float16).eval().to(DEVICE)
+    if THERE:
+        model.tts.to(THERE)
     # Both voices stay loaded, so a call can pick one ("voice" in its start): Sona's trained talker, or the model's own.
     talkers["base"] = {k: v.detach().clone() for k, v in model.tts.state_dict().items()}
     if os.path.exists(TALKER):
@@ -62,6 +101,52 @@ def load():
 
 
 duplex = load()
+
+# Her voice in its own thread (two GPUs only). On an L4 a spoken second took 1.25 s: the brain 0.44 s, the talker
+# 0.44 s, the voice decoder 0.23 s, one after the other, so she fell behind her own voice (4 Oct). Here the brain's
+# second ends when its words are written, and the talker and decoder make that second's voice on the other GPU while
+# the brain hears the next: a second costs the slower of the two, not their sum. One thread, so her voice's seconds
+# stay in order.
+voicing = ThreadPoolExecutor(1)
+
+
+def sound(hidden: list, end_of_turn: bool, now: int):
+    """One spoken second's voice from the brain's states for it: the end of the model's streaming_generate (its "TTS
+    generate" and token2wav steps, modeling_minicpmo.py), with the states moved to the talker's GPU."""
+    t, d, tts = time.time(), duplex, duplex.model.tts
+    there = tts.emb_text.weight.device
+    bos = tts.emb_text(torch.tensor([tts.audio_bos_token_id], device=there, dtype=torch.long))
+    if hidden:
+        states = torch.nn.functional.normalize(tts.projector_semantic(torch.cat([h[1].squeeze(0) for h in hidden], dim=0).to(there)), p=2, dim=-1)
+        bos = torch.cat([tts.emb_text(torch.tensor([h[0] for h in hidden], device=there, dtype=torch.long)) + states, bos], dim=0)
+    condition, first = bos.unsqueeze(0), d.tts_text_start_pos == 0  # a turn's first second may be under a second of audio
+    if d.tts_current_turn_start_time is None:
+        d.tts_current_turn_start_time = now
+    tokens, kv = tts.generate_chunk(
+        inputs_embeds=condition, temperature=d.tts_temperature, repetition_penalty=d.tts_repetition_penalty,
+        eos_token=d.tts_eos_token, force_no_stop=False, max_new_token=26, min_new_tokens=0 if end_of_turn or first else 26,
+        past_key_values=d.tts_past_key_values, logits_processors=d.tts_logits_processors, text_start_pos=d.tts_text_start_pos)
+    if end_of_turn:
+        d.tts_text_start_pos, d.tts_past_key_values, d.tts_current_turn_start_time = 0, None, None
+    else:
+        d.tts_past_key_values, d.tts_text_start_pos = kv, d.tts_text_start_pos + condition.shape[1] + tokens.shape[1]
+    wave = d._generate_waveform_from_tokens(tokens, VOICE, end_of_turn, force_flush=first)
+    if end_of_turn:
+        d._reset_token2wav_for_new_turn()
+    return wave, round((time.time() - t) * 1000)
+
+
+def generate(**opts) -> tuple[dict, object]:
+    """One second: what the brain decided, and her voice for it (on two GPUs a Future of (samples, ms))."""
+    if not THERE:
+        r = duplex.streaming_generate(prompt_wav_path=VOICE, **opts)
+        return r, r.get("audio_waveform")
+    duplex.generate_audio = False  # the model's second then ends at the brain's words
+    try:
+        r = duplex.streaming_generate(prompt_wav_path=VOICE, **opts)
+    finally:
+        duplex.generate_audio = True
+    return r, None if r["is_listen"] else voicing.submit(sound, list(duplex.total_hidden[-1]), r["end_of_turn"], r["current_time"])
 
 
 def prepare(**kw):
@@ -106,7 +191,9 @@ def warm():
     audio, t, spoke = np.concatenate([voice, np.zeros(8 * UNIT, np.float32)]), time.time(), 0
     for k in range(len(audio) // UNIT):
         duplex.streaming_prefill(audio_waveform=audio[k * UNIT:(k + 1) * UNIT])
-        r = duplex.streaming_generate(prompt_wav_path=VOICE)
+        r, said = generate()
+        if isinstance(said, Future):
+            said.result()
         spoke += not r["is_listen"]
         if r["end_of_turn"]:
             break
@@ -143,7 +230,14 @@ def script(text: str, rate: int) -> list[list[int]]:
     return units + [[duplex.speak_token_id, duplex.turn_eos_token_id, duplex.chunk_eos_token_id]]
 
 
-def step(audio: np.ndarray, opts: dict, call: dict) -> tuple[dict, bytes | None]:
+def pcm(wave) -> bytes | None:
+    if wave is None or not len(wave):
+        return None
+    wave = wave.float().cpu().numpy() if isinstance(wave, torch.Tensor) else np.asarray(wave, dtype=np.float32)
+    return (np.clip(wave.reshape(-1), -1, 1) * 32767).astype("<i2").tobytes()
+
+
+def step(audio: np.ndarray, opts: dict, call: dict) -> tuple[dict, bytes | Future | None]:
     t = time.time()
     duplex.streaming_prefill(audio_waveform=audio)
     if call.get("script"):  # this second's tokens are given, not chosen: the brain's states still drive her voice
@@ -151,7 +245,7 @@ def step(audio: np.ndarray, opts: dict, call: dict) -> tuple[dict, bytes | None]
         choose, duplex.decoder.decode, duplex.force_listen_count = duplex.decoder.decode, lambda **_: torch.tensor(
             [next(forced)], dtype=torch.long, device=duplex.device), 0
         try:
-            r = duplex.streaming_generate(prompt_wav_path=VOICE, **{**opts, "max_new_speak_tokens_per_chunk": 64})
+            r, wave = generate(**{**opts, "max_new_speak_tokens_per_chunk": 64})
         finally:
             duplex.decoder.decode = choose
         if not call["script"] and call.get("release"):
@@ -159,18 +253,17 @@ def step(audio: np.ndarray, opts: dict, call: dict) -> tuple[dict, bytes | None]
     else:
         # "hold" in a call's start: she only listens until told what to say (her own answers are not wanted)
         duplex.force_listen_count = 10 ** 9 if call.get("hold") else call.get("force_listen", 0)
-        r = duplex.streaming_generate(prompt_wav_path=VOICE, **opts)
-    wave, speech = r.get("audio_waveform"), None
-    if not r["is_listen"] and wave is not None and len(wave):
-        wave = wave.float().cpu().numpy() if isinstance(wave, torch.Tensor) else np.asarray(wave, dtype=np.float32)
-        speech = (np.clip(wave.reshape(-1), -1, 1) * 32767).astype("<i2").tobytes()
+        r, wave = generate(**opts)
+    # On two GPUs her voice for this second is still being made: the caller sends it when it is done.
+    speech = None if r["is_listen"] else wave if isinstance(wave, Future) else pcm(wave)
     # The new part of everything said this call: one second's own decode splits words at the edge ("up" + " sets"),
     # and a character cut mid-byte waits for the next second.
     said = duplex.tokenizer.decode(duplex.res_ids, skip_special_tokens=True).rstrip("�")
     text = said[len(call["said"]):] if said.startswith(call["said"]) else said
     call["said"] = said
     return {"type": "unit", "i": r["current_time"], "listen": r["is_listen"], "text": text,
-            "end_of_turn": r["end_of_turn"], "ms": round((time.time() - t) * 1000)}, speech
+            "end_of_turn": r["end_of_turn"], "ms": round((time.time() - t) * 1000),
+            "cost": {k[5:]: round(r[k] * 1000) for k in ("cost_llm", "cost_tts", "cost_token2wav") if r.get(k)}}, speech
 
 
 @app.websocket("/v1/live")
@@ -181,7 +274,8 @@ async def live(ws: WebSocket):
         return
     async with busy:
         units: asyncio.Queue = asyncio.Queue()
-        speaker = None
+        speaker = voice_out = None
+        voices: asyncio.Queue = asyncio.Queue()  # on two GPUs: each spoken second's voice, to send in order
         call = {"said": "", "transcribe": False, "turn": []}
         try:
             start = json.loads(await ws.receive_text())
@@ -209,7 +303,9 @@ async def live(ws: WebSocket):
                     unit, speech = await asyncio.to_thread(step, audio, opts, call)
                     unit["behind"] = units.qsize()
                     await ws.send_text(json.dumps(unit, ensure_ascii=False))
-                    if speech:
+                    if isinstance(speech, Future):
+                        voices.put_nowait((unit["i"], speech))
+                    elif speech:
                         await ws.send_bytes(speech)
                     if not call["transcribe"]:
                         continue
@@ -220,8 +316,16 @@ async def live(ws: WebSocket):
                         turn, call["turn"] = np.concatenate(call["turn"])[-TURN_MAX:], []
                         await ws.send_text(json.dumps(await asyncio.to_thread(transcribe, turn), ensure_ascii=False))
 
-            speaker = asyncio.create_task(speak())
+            async def voice_later():
+                while (item := await voices.get()) is not None:
+                    wave, ms = await asyncio.wrap_future(item[1])
+                    if speech := pcm(wave):
+                        await ws.send_text(json.dumps({"type": "voice", "i": item[0], "ms": ms}))
+                        await ws.send_bytes(speech)
+
+            speaker, voice_out = asyncio.create_task(speak()), asyncio.create_task(voice_later())
             heard = np.zeros(0, dtype=np.float32)
+            quiet, spoke, still = int(start.get("turn_silence_ms", 0)) * UNIT // 1000, False, 0
             while True:
                 m = await ws.receive()
                 note = json.loads(m["text"]) if m.get("text") else {}
@@ -230,10 +334,21 @@ async def live(ws: WebSocket):
                 if note.get("type") == "say":  # from the next second on; "release" lets her answer by herself after it
                     call["script"], call["release"] = script(note["text"], int(note.get("rate", 4))), bool(note.get("release"))
                 if m.get("bytes"):
-                    heard = np.concatenate([heard, np.frombuffer(m["bytes"], "<i2").astype(np.float32) / 32768])
+                    frame = np.frombuffer(m["bytes"], "<i2").astype(np.float32) / 32768
+                    heard = np.concatenate([heard, frame])
                     while len(heard) >= UNIT:
                         units.put_nowait(heard[:UNIT])
                         heard = heard[UNIT:]
+                    if quiet and len(frame):
+                        if float(np.sqrt(np.mean(frame ** 2))) > LOUD:
+                            spoke, still = True, 0
+                        else:
+                            still += len(frame)
+                        if spoke and still >= quiet:  # the patient has stopped: the pause, now
+                            if len(heard):
+                                units.put_nowait(np.concatenate([heard, np.zeros(UNIT - len(heard), np.float32)]))
+                            units.put_nowait(np.zeros(UNIT, np.float32))
+                            heard, spoke = heard[:0], False
         except WebSocketDisconnect:
             pass
         finally:
@@ -244,6 +359,11 @@ async def live(ws: WebSocket):
             if speaker:
                 with contextlib.suppress(Exception):
                     await speaker
+            voices.put_nowait(None)  # what is still being made is sent, or dropped with the socket
+            if voice_out:
+                with contextlib.suppress(Exception):
+                    await voice_out
+            await asyncio.to_thread(voicing.submit(lambda: None).result)  # her voice is idle before its state is reset
             if call["transcribe"] and call["turn"]:  # a turn she never answered is written down too
                 with contextlib.suppress(Exception):
                     await ws.send_text(json.dumps(await asyncio.to_thread(

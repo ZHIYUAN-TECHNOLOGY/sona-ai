@@ -9,6 +9,7 @@ One-ear test: TRANSCRIBE=1 (the box also writes down the patient's turn: "heard"
 FAST=1 (send the audio at once, not in real time), JSON (write what was said, heard and each second's ms there).
 Speak test: HOLD=1 (she only listens until told), SAY (words for her to say as written), SAY_AT (seconds into the
 call, default when the first question ends), RATE (text tokens a second, default 4), RELEASE=1 (she answers by herself after).
+Fast turn: TURN_MS (turn_silence_ms: her turn starts that many ms after the patient stops).
 """
 import asyncio
 import contextlib
@@ -61,9 +62,11 @@ async def main(wav: str, url: str):
             start["seed"] = int(os.environ["SEED"])
         if os.environ.get("HOLD") == "1":
             start["hold"] = True
+        if os.environ.get("TURN_MS"):
+            start["turn_silence_ms"] = int(os.environ["TURN_MS"])
         await ws.send(json.dumps(start))
         print(json.loads(await ws.recv()))
-        speech, said, heard, ms, t0, spoke, said_it = [], [], [], [], time.time(), None, []
+        speech, said, heard, ms, t0, spoke, said_it, sound = [], [], [], [], time.time(), None, [], None
         question_ends = t0 + (len(audio) / 16_000 - float(os.environ.get("TAIL", 8)))
         units, heard_all = len(audio) // 16_000, asyncio.Event()
 
@@ -86,6 +89,7 @@ async def main(wav: str, url: str):
         try:
             async for m in ws:
                 if isinstance(m, bytes):
+                    sound = sound or time.time()
                     speech.append(np.frombuffer(m, "<i2"))
                     continue
                 u = json.loads(m)
@@ -94,6 +98,9 @@ async def main(wav: str, url: str):
                     heard.append(u)
                     print(f"{at:5.1f}s HEARD ({u['seconds']} s of audio, {u['ms']} ms): {u['text']!r}")
                     continue
+                if u.get("type") == "voice":
+                    print(f"{at:5.1f}s voice of unit {u['i']:3d}, made in {u['ms']} ms")
+                    continue
                 ms.append(u["ms"])
                 if not u["listen"] and spoke is None:
                     spoke = time.time()
@@ -101,7 +108,7 @@ async def main(wav: str, url: str):
                 if u["i"] >= units - 1:
                     heard_all.set()
                 print(f"{at:5.1f}s unit {u['i']:3d} {'listen' if u['listen'] else 'SPEAK '} {u['ms']:4d} ms "
-                      f"behind {u['behind']} {u['text']!r}{' [end of turn]' if u['end_of_turn'] else ''}")
+                      f"behind {u['behind']} {u.get('cost') or ''} {u['text']!r}{' [end of turn]' if u['end_of_turn'] else ''}")
         except websockets.ConnectionClosed:
             pass
         player.cancel()
@@ -113,9 +120,10 @@ async def main(wav: str, url: str):
     if os.environ.get("JSON"):
         with open(os.environ["JSON"], "w") as f:
             json.dump({"said": "".join(said).strip(), "heard": heard, "ms": ms,
-                       "first_words": round(spoke - question_ends, 2) if spoke else None}, f, ensure_ascii=False)
+                       "first_words": round(spoke - question_ends, 2) if spoke else None,
+                       "first_sound": round(sound - question_ends, 2) if sound else None}, f, ensure_ascii=False)
     if spoke:
-        print(f"first words {spoke - question_ends:+.1f} s after the question ended")
+        print(f"first words {spoke - question_ends:+.1f} s after the question ended" + (f", first sound {sound - question_ends:+.1f} s" if sound else ""))
     if speech:
         sf.write(os.environ.get("OUT", "reply.wav"), np.concatenate(speech), 24_000)
         print("audio:", os.environ.get("OUT", "reply.wav"), f"{sum(map(len, speech)) / 24_000:.1f} s")
