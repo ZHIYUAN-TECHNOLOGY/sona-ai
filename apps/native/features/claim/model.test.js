@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { newEncounter } from "@/features/encounter/fixtures";
-import { CODES, EMPTY_CLAIM, ORGANISM_UNKNOWN, approveClaim, claimChecks, ivReason, noteFor, withFix } from "./model";
+import { CODES, EMPTY_CLAIM, ORGANISM_UNKNOWN, approveClaim, claimChecks, ivReason, nextNoteRead, noteFor, withFix } from "./model";
 
 test("two insurer gaps block until fixed, and each fix adds its sentence to the note", () => {
   expect(claimChecks(noteFor(EMPTY_CLAIM)).filter(c => c.status === "blocked").map(c => c.id)).toEqual(["organism", "iv"]);
@@ -28,4 +28,10 @@ test("approval resolves the discharge guarantee letter", () => {
   const approved = approveClaim({ ...newEncounter(), claim: { ...EMPTY_CLAIM, status: "sent" } }, new Date(2026, 8, 26, 9, 0));
   expect(approved.claim.status).toBe("approved");
   expect(approved.discharge.glReceived).toBe(true);
+});
+
+test("every read of the saved note has its own number, so a sheet opened again never shares one with an earlier sitting", () => {
+  // First sitting: the sheet opens, then one fix. Second sitting: the same. The codes are kept per number, so none may repeat.
+  const first = [nextNoteRead(), nextNoteRead()], second = [nextNoteRead(), nextNoteRead()];
+  expect(new Set([...first, ...second]).size).toBe(4);
 });

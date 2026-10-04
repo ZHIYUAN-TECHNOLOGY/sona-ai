@@ -23,9 +23,15 @@ type Part = { type: "AskLead"; props: { text: string } } | { type: "AskRows"; pr
   | { type: "AskReview"; props: { title: string; items: string[]; what: string; confirm: string; done: string; op: string } }
   | { type: "AskActions"; props: { items: { label: string; op: string; primary?: boolean }[] } };
 
-/** A column of parts as a spec, with stable element ids. */
+/**
+ * A column of parts as a spec, with stable element ids. Rows are cut to the 12 the catalogue lets one answer list
+ * (ASK_PROPS.AskRows): a longer list fails the check every spec passes before it is shown, so a busy day's answer was
+ * its lead alone ("14 patients need you now" and no patients). Each answer ranks its rows, so these are its first 12;
+ * the lead still counts them all.
+ */
+const MAX_ROWS = 12;
 export function column(id: string, parts: Part[]): Spec {
-  const kept = parts.filter(p => p.type !== "AskRows" || p.props.rows.length);
+  const kept = parts.filter(p => p.type !== "AskRows" || p.props.rows.length).map(p => p.type === "AskRows" ? { ...p, props: { rows: p.props.rows.slice(0, MAX_ROWS) } } : p);
   const elements: Spec["elements"] = { [`${id}-root`]: { type: "AskColumn", props: {}, children: kept.map((_, i) => `${id}-${i}`) } };
   kept.forEach((p, i) => { elements[`${id}-${i}`] = { type: p.type, props: p.props, children: [] }; });
   return { root: `${id}-root`, elements };
@@ -35,7 +41,7 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 /** Free text (a reason, a task title) cut to what the catalogue allows. */
 const clip = (text: string, length: number) => text.length > length ? `${text.slice(0, length - 1).trimEnd()}…` : text;
 
-/** Patients: who needs you now, each opening their visit, and the page narrowed to them. */
+/** Patients: who needs you now, each opening their visit, and the page narrowed to them ("Show only these": everyone, past the rows an answer lists). */
 export function needsYou(rows: Row[]): Answer {
   return { id: "needs", question: "Who needs me now?", worth: rows.length > 0, spec: column("needs", [
     { type: "AskLead", props: { text: rows.length ? `${plural(rows.length, "patient")} ${rows.length === 1 ? "needs" : "need"} you now, most urgent first.` : "Nobody needs you right now." } },

@@ -1,6 +1,6 @@
 process.env.TZ = "Asia/Kuala_Lumpur";
 import { expect, test } from "bun:test";
-import { demoLine, mergeServerState, newestResult, serverDayPatients, serverTasks, serverVisit } from "./day";
+import { demoLine, mergeSavedNote, mergeServerState, newestResult, serverDayPatients, serverTasks, serverVisit } from "./day";
 
 const task = (over = {}) => ({ id: "t1", hospitalId: "demo", encounterId: "visit-1042", kind: "discharge", title: "Book review clinic", owner: "Clinic clerk", due: "2026-10-10", completed: false, sourceId: null, idempotencyKey: "k", createdAt: new Date("2026-09-26T02:00:00Z"), ...over });
 
@@ -87,4 +87,18 @@ test("the demo pill keeps the hospital's time from the offset, in Kuala Lumpur, 
   expect(demoLine(status, new Date("2026-10-04T16:30:00Z"))).toBe("Demo time · Mon 5 Oct at 00:30 · day 6 after discharge");
   expect(demoLine({ ...status, dischargedAt: null }, new Date("2026-10-04T02:02:00Z"))).toBe("Demo time · Sun 4 Oct at 10:02");
   expect(demoLine({ offsetMs: 0, dischargedAt: null }, new Date())).toBe("Demo clock · real time");
+});
+
+test("the hospital record's saved note reaches a visit this phone never opened the note on; words not saved here are kept", () => {
+  const saved = [{ id: "assessment", text: "Community-acquired pneumonia." }, { id: "plan", text: "IV ceftriaxone." }];
+  const merged = mergeSavedNote({ revision: 1, note: "", noteReviewed: false }, saved);
+  expect(merged.noteSections).toMatchObject({ assessment: "Community-acquired pneumonia.", plan: "IV ceftriaxone." });
+  expect(merged.note).toContain("ASSESSMENT\nCommunity-acquired pneumonia.");
+  expect(merged).toMatchObject({ noteSaveStatus: "saved", noteReviewed: false, revision: 1 });
+  // A later revision replaces the one read before; no saved note leaves the visit as it was.
+  expect(mergeSavedNote(merged, [{ id: "plan", text: "Oral co-amoxiclav." }]).noteSections.plan).toBe("Oral co-amoxiclav.");
+  expect(mergeSavedNote({ revision: 1, note: "" }, [])).toEqual({ revision: 1, note: "" });
+  // A draft being written, a save on its way and typed words never saved all stay the doctor's.
+  const draft = { subjective: "", objective: "", assessment: "Asthma.", plan: "" };
+  for (const local of [{ note: "x", noteSectionDraft: draft }, { note: "x", noteSaveStatus: "saving" }, { note: "CONSULTATION\nCough for 3 days." }]) expect(mergeSavedNote(local, saved)).toBe(local);
 });

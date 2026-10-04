@@ -67,10 +67,11 @@ export const useLiveBriefing = (encounterId: string) =>
 export const useLiveReasoning = (encounterId: string, requestId: string | undefined, question: string) =>
   useLiveAnswer<LiveReasoning>(`reasoning:${encounterId}:${requestId ?? question}`, true, () => api.encounter.reasoning({ encounterId, question }));
 
+/** Kept while another language drafts (`stale`), so the card's summary holds its height; the caller never shows that draft's leaflet as the new language's. */
 export const useLiveDraft = (encounterId: string, language: "ms" | "en" | "zh") =>
-  useLiveAnswer<LiveDraft>(`draft:${encounterId}:${language}`, true, () => api.discharge.draft({ encounterId, language }));
+  useLiveAnswer<LiveDraft>(`draft:${encounterId}:${language}`, true, () => api.discharge.draft({ encounterId, language }), true);
 
-/** `note` is whatever changes the note being coded (the claim's fixes), so a fix codes the new note. */
+/** `note` names one read of the saved note (the claim's nextNoteRead: never reused, since the note itself is only known to the server), so a fix codes the new note. */
 export const useLiveCodes = (encounterId: string, note: string) =>
   useLiveAnswer<LiveCodes>(`codes:${encounterId}:${note}`, Boolean(encounterId), () => api.claim.suggestCodes({ encounterId }), true);
 

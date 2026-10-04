@@ -16,6 +16,16 @@ test("every rule answer is a valid spec from the ask catalogue, empty or full", 
   for (const a of answers) expect(validateAskSpec(a.spec)).not.toBeNull();
 });
 
+test("a list longer than an answer may show keeps its first 12 rows under a lead that counts everyone, instead of failing its check", () => {
+  const many = Array.from({ length: 14 }, (_, i) => ({ id: `SYN-${i}`, title: `Patient ${i}`, detail: "2 medicines unconfirmed", tone: i ? "soon" : "urgent", op: `open:SYN-${i}` }));
+  const answer = needsYou(many);
+  expect(validateAskSpec(answer.spec)).not.toBeNull();
+  expect(leadOf(answer)).toBe("14 patients need you now, most urgent first.");
+  expect(parts(answer).find(p => p.type === "AskRows").props.rows.map(r => r.id)).toEqual(many.slice(0, 12).map(r => r.id));
+  // The ward's and the handover's answers list whole wards through the same column.
+  expect(validateAskSpec(toWatch(many.map(r => ({ id: r.id, name: r.title, priority: "watch", situation: "K+ 2.9" }))).spec)).not.toBeNull();
+});
+
 test("Sona Live says an answer's lead and shows the rest, still a valid spec; a lead-only answer has no rest", () => {
   const full = needsYou([{ id: "SYN-1", title: "Daniel Rahman", detail: "Low potassium", tone: "urgent", op: "open:SYN-1" }]);
   expect(leadOf(full)).toBe("1 patient needs you now, most urgent first.");

@@ -1,7 +1,8 @@
 import { createRouterClient } from "@orpc/server";
 import type { Session } from "@sona-ai/auth";
 import { user } from "@sona-ai/db/schema/auth";
-import { hospitals } from "@sona-ai/db/schema/clinical";
+import { encounters, hospitals } from "@sona-ai/db/schema/clinical";
+import { eq } from "drizzle-orm";
 import { seedDemo } from "@sona-ai/db/seed";
 import { addClinician, createTestDb } from "@sona-ai/db/testing";
 import { expect, test } from "bun:test";
@@ -16,7 +17,7 @@ const session = {
 } as unknown as Session;
 
 async function signedIn(extra: Partial<Context> = {}, signed = true) {
-  const db = await createTestDb();
+  const db = extra.db ?? await createTestDb();
   await seedDemo(db, new Date("2026-09-26T09:00:00+08:00"));
   await addClinician(db, "dr-aisyah");
   // Colleagues with accounts: a doctor and a nurse may take a handover; a bed manager and another hospital's doctor may not.
@@ -48,6 +49,26 @@ test("the handover is one SBAR card per patient built from the server's rows, pa
   expect(daniel!.recommendation.some(line => line.startsWith("Act on low potassium (3.1 mmol/L)"))).toBe(true);
   expect(amelia!.background).toBe("Allergy: Penicillin.");
   expect(amelia!.assessment).toContain("Respiratory rate 18 /min");
+});
+
+test("a discharged patient is not handed over, unless a result of theirs still waits; a result from another day carries its date", async () => {
+  const db = await createTestDb();
+  // The next morning on the hospital's clock: Daniel's potassium came in the day before.
+  const api = await signedIn({ db, now: () => new Date("2026-09-27T08:00:00+08:00") });
+  const discharge = async (patientId: string) => {
+    const [visit] = await db.select().from(encounters).where(eq(encounters.patientId, patientId));
+    await db.update(encounters).set({ state: { ...visit!.state, discharge: { dischargedAt: "2026-09-26T12:00:00+08:00" } } as typeof visit.state }).where(eq(encounters.id, visit!.id));
+  };
+  await discharge("SYN-1042");
+  await discharge("SYN-1086");
+  const cards = await api.handover.list();
+  expect(cards).toHaveLength(16);
+  expect(cards.some(c => c.id === "visit-SYN-1042")).toBe(false);
+  // Daniel went home with a low potassium nobody acknowledged: he stays, first, and the line says which day it came in.
+  expect(cards[0]!.id).toBe("visit-SYN-1086");
+  expect(cards[0]!.recommendation.find(l => l.startsWith("Act on low potassium"))).toMatch(/received \d\d:\d\d on 26 Sep$/);
+  // A card that is no longer built cannot be accepted.
+  expect((await api.handover.accept({ requestId: "hand-gone", cardIds: ["visit-SYN-1042"], toUser: "dr-lim" }).catch(e => e)).code).toBe("NOT_FOUND");
 });
 
 test("accepting the handover writes one acceptance however often the request is replayed, and refuses cards it never built", async () => {

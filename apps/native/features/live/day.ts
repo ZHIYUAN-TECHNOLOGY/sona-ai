@@ -2,7 +2,9 @@ import type { AppRouterClient } from "@sona-ai/api/routers/index";
 import type { PendingResult, ScheduleVisit } from "@/features/day/model";
 import { EMPTY_CLAIM, type ClaimState, type Denial } from "@sona-ai/domain/claim";
 import { EMPTY_DISCHARGE } from "@sona-ai/domain/discharge";
+import { noteSections } from "@sona-ai/domain/scan";
 import type { Encounter, Patient, Task } from "@/features/encounter/types";
+import { serializeNoteSections } from "@/features/scribe/model";
 import { MONTHS, WEEKDAYS } from "@/features/tasks/state";
 
 /**
@@ -89,4 +91,16 @@ export function mergeServerState<T extends Partial<Encounter>>(value: T, server:
     discharge: { ...EMPTY_DISCHARGE, ...value.discharge, ...server.discharge, glReceived },
     claim: { ...EMPTY_CLAIM, ...server.claim, status, approvedAt: claim.approvedAt === undefined ? undefined : String(claim.approvedAt), reviewUrl: claim.reviewUrl, query: claim.query, denial: claim.denial, appealedAt: claim.appealedAt, codedBy: claim.codedBy, appealDraftedBy: claim.appealDraftedBy },
   };
+}
+
+/**
+ * The visit's saved note from the hospital record (note.get), as the note screen loads it. Until now only that screen read it,
+ * so a visit whose note was saved elsewhere, or before this phone opened it, said "Note · Not started" on the patient's page.
+ * Words not saved yet on this phone (a draft, a save on its way) are the doctor's and are kept; no saved note changes nothing.
+ */
+export function mergeSavedNote<T extends Partial<Encounter>>(value: T, sentences: { id: string; text: string }[]): T {
+  const unsaved = value.noteSectionDraft || value.noteSaveStatus === "saving" || (value.note?.trim() && value.noteSaveStatus !== "saved");
+  if (!sentences.length || unsaved) return value;
+  const sections = noteSections(sentences);
+  return { ...value, noteSections: sections, note: serializeNoteSections(sections), noteSaveStatus: "saved" };
 }
