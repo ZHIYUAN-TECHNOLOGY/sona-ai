@@ -7,12 +7,15 @@ import { LAYOUT, riseIn } from "@/components/sona/motion";
 import { palette, type } from "@/components/sona/theme";
 import { SourceRef, type SourceKind } from "@/components/sona/sources";
 import { Action, glass, Notice, Surface, useAccessibleEffects } from "@/components/sona/ui";
+import { ErrorLine } from "@/components/sona/parts";
 import { useEncounter } from "@/features/encounter/store";
 import type { FeatureProps, HistoryFact, Patient } from "@/features/encounter/types";
 import { Anchor, Takeaways, type Takeaway } from "@/components/sona/answer-kit";
 import { HistoryEditor } from "./history-editor";
+import { unanswered } from "./judge-answer";
 import { Caption, Disclosure } from "./reasoning-parts";
 import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
+import { JUDGE } from "@/features/live";
 import { useLiveReasoning } from "@/features/live/model-sync";
 import { wakingOf } from "@/features/live/waking";
 
@@ -97,15 +100,18 @@ export function ReasoningCard({ patient, result, onSource, onRequest }: FeatureP
   const modelled = server.data?.source === "model" && !patient.incomplete
     ? server.data.answer.split("\n").filter(Boolean).map(line => { const [title = "", ...why] = line.split(": "); return { title, why: why.join(": ").replace(/\s*\[[^\]]*\]/g, "").trim() }; }) : undefined;
   const cited = modelled ? server.data?.sourceIds ?? [] : [];
+  // Judge build: the authored takeaways, possibilities and gaps never show. The card drafts, shows the model's answer,
+  // or says why there is none (./judge-answer); the history below is the record's own and stays.
+  const held = unanswered(JUDGE, server);
   return <View style={{ gap: 20 }}>
-    {fromModel && !modelled && <Surface feature style={{ padding: 16, gap: 10 }}>
-      {server.loading ? <Drafting label="Weighing the record…" /> : server.data ? <>
+    {(held || (fromModel && !modelled)) && <Surface feature style={{ padding: 16, gap: 10 }}>
+      {held?.reason ? <ErrorLine text={`No reasoning: ${held.reason}`} /> : server.loading ? <Drafting label="Weighing the record…" /> : server.data ? <>
         <Arrive><Text selectable style={{ ...type.body, color: palette.ink }}>{server.data.answer}</Text></Arrive>
         <Arrive index={1}><SampleLabel answer={server} what="reasoning" /></Arrive>
       </> : <Text style={{ ...type.footnote, color: palette.red }}>{server.error}</Text>}
     </Surface>}
-    <Takeaways items={modelled ? [{ tone: "info", text: `${modelled.length} unranked ${modelled.length === 1 ? "possibility" : "possibilities"}, each citing the record` }, ...takeaways.slice(1)] : takeaways} />
-    <Anchor id="possibilities" title={patient.incomplete ? "Gaps" : "Possibilities"}>
+    {(!JUDGE || modelled) && <Takeaways items={modelled ? [{ tone: "info", text: `${modelled.length} unranked ${modelled.length === 1 ? "possibility" : "possibilities"}, each citing the record` }, ...(JUDGE ? [] : takeaways.slice(1))] : takeaways} />}
+    {(!JUDGE || modelled) && <Anchor id="possibilities" title={patient.incomplete ? "Gaps" : "Possibilities"}>
     <Section icon={patient.incomplete ? "checklist" : "lightbulb"} tone={patient.incomplete ? "amber" : "violet"} title={patient.incomplete ? "What to collect first" : "Possibilities to explore"}>
       {modelled && <Surface layout={layout} style={{ paddingHorizontal: 16 }}>
         {modelled.map((item, index) => <Arrive key={index} index={index} style={{ paddingVertical: 14, borderTopWidth: index ? 1 : 0, borderColor: glass.hairline }}>
@@ -134,7 +140,7 @@ export function ReasoningCard({ patient, result, onSource, onRequest }: FeatureP
       </Animated.View>
       {patient.incomplete && <Notice warning>A ranked differential and treatment suggestions are unavailable in this fixture.</Notice>}
     </Section>
-    </Anchor>
+    </Anchor>}
     <Anchor id="history" title="History" icon="person.text.rectangle" tone="teal"><HistoryEditor patient={patient} result={result} onSource={onSource} onRequest={onRequest} refresh="reasoning" /></Anchor>
     {/* No next step of its own: the end of the visit shows the one next step (visit-next.ts). */}
   </View>;

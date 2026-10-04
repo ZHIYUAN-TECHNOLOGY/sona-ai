@@ -1,4 +1,4 @@
-import { PressScale } from "@/components/sona/parts";
+import { ErrorLine, PressScale } from "@/components/sona/parts";
 import { router, Stack } from "expo-router";
 import { MarkedText } from "@/components/sona/marked-text";
 import { useState } from "react";
@@ -13,10 +13,11 @@ import { Seal, haptic } from "@/features/clinical/medication-parts";
 import { capabilityLabels } from "@/features/encounter/conversation";
 import { useEncounter } from "@/features/encounter/store";
 import { LockedAction, useRole } from "@/features/live/roles";
-import { api, errorText, requestId, useLive } from "@/features/live";
+import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
 import { useServerEncounter } from "@/features/live/sync";
 import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveDraft } from "@/features/live/model-sync";
+import { unanswered } from "@/features/clinical/judge-answer";
 import { CareInvite } from "@/features/care-invite";
 import { refreshServerData, useVisitTasks } from "@/features/live/server-day";
 import { CHECK_IN_CHOICES, MAX_CHECK_INS, checkInDaysLine, defaultCheckInDays, toggleCheckInDay } from "@/features/check-ins/model";
@@ -129,6 +130,9 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
   const role = useRole();
   // Live mode: the full summary and the leaflet in the chosen language are drafted by the server from this patient's record.
   const draft = useLiveDraft(patient.encounterId, state.language);
+  // Judge build: the summary and the leaflet are the model's or absent. While it drafts both say so; a failed call or the
+  // server's stub is said once, where the summary would be, and the plan's authored words never stand in (features/clinical/judge-answer).
+  const held = unanswered(JUDGE, draft);
   // The receipt reads what the discharge left: the visit's tasks (the Tasks page's list) and its scheduled check-ins.
   const tasksOf = useVisitTasks();
   const checkIns = useCheckIns();
@@ -257,6 +261,7 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
       {/* What the discharge carries: quieter, under what blocks it. */}
       <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 14, paddingTop: 14, borderTopWidth: 1, borderColor: glass.hairline }}>
       <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
+        {held ? !done && (held.reason ? <ErrorLine text={`No discharge draft: ${held.reason}`} /> : <Drafting label="Drafting the summary…" />) : <>
         {(!done || full) && summary.map(([label, value], i) => { const text = marked(value); return <Animated.View key={label} entering={animate ? riseIn({ delay: 180 + i * 40, distance: 10, duration: 320 }) : undefined} style={{ flexDirection: "row", gap: 12 }}>
           <Text style={{ ...type.overline, width: 72, paddingTop: 3, color: palette.muted }}>{label}</Text>
           {text === value ? <Text selectable style={{ ...type.subhead, flex: 1, color: palette.ink }}>{value}</Text> : <MarkedText text={text} style={{ ...type.subhead, flex: 1, color: palette.ink }} />}
@@ -268,6 +273,7 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
           <Text style={{ ...type.footnote, fontWeight: "600", color: palette.blue }}>{full ? "Show less" : "Read full"}</Text>
           <Icon name={full ? "chevron.up" : "chevron.right"} size={10} color={palette.blue} />
         </Pressable>
+        </>}
       </Animated.View>
 
       {!done && <CheckInDays state={state} condition={plan.condition} language={language.name} onChange={checkInDays => set({ checkInDays })} />}
@@ -279,14 +285,14 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
             {LANGUAGES.map(l => <Pill key={l.id} label={l.label} on={state.language === l.id} onPress={() => set({ language: l.id })} />)}
           </View>
         </View>
-        <Animated.View key={state.language} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ padding: 12, gap: 6, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" }}>
+        {!held?.reason && <Animated.View key={state.language} entering={reducedMotion ? undefined : FadeIn.duration(180)} style={{ padding: 12, gap: 6, borderRadius: radius.control, borderCurve: "continuous", backgroundColor: "rgba(20,28,40,0.04)" }}>
           {draft.loading ? <Drafting label={`Drafting the leaflet in ${language.name}…`} lines={2} />
             : <Arrive animate={Boolean(draft.data)}><Text selectable style={{ ...type.subhead, color: palette.ink }}>{draft.data?.leaflet ?? plan.leaflet[state.language]}</Text></Arrive>}
           {draft.error && <Text style={{ ...type.caption, color: palette.red }}>{draft.error} · showing the authored leaflet</Text>}
-        </Animated.View>
+        </Animated.View>}
       </Animated.View>}
       {/* The summary and the leaflet are one draft (discharge.draft), so they carry one label, under the last of them on view. */}
-      {(!done || full) && <SampleLabel answer={draft} what="discharge" />}
+      {(!done || full) && !held && <SampleLabel answer={draft} what="discharge" />}
       </Animated.View>
     </Surface>
     </Animated.View>
