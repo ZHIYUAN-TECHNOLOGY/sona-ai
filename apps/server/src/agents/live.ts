@@ -3,10 +3,10 @@ import { clockOffsetOf, shifted } from "@sona-ai/api/clock";
 import type { Context as ApiContext } from "@sona-ai/api/context";
 import { stubModels } from "@sona-ai/api/models";
 import { lastDischarge, patientPlan, planText } from "@sona-ai/api/routers/care-plan";
-import { LINES, callNow } from "@sona-ai/api/voice-agent/answer";
+import { LINES, answerTurn, basetenChat, callNow, type TurnSummary } from "@sona-ai/api/voice-agent/answer";
 import { tellCareTeam } from "@sona-ai/api/voice-agent/care-team";
 import { SonaTranscriber, type SessionHooks } from "@sona-ai/api/voice-agent/listen";
-import { Checks, LiveTurns, liveBrief, mayReport, type Ear, type Heard, type Unit } from "@sona-ai/api/voice-agent/live";
+import { CallHistory, Checks, LiveTurns, Says, liveBrief, liveStart, mayReport, type Ear, type Heard, type Unit } from "@sona-ai/api/voice-agent/live";
 import { awsOf, hosted, sagemakerLive, type HostingEnv, type LiveLink } from "@sona-ai/api/sagemaker";
 import { Agent, type Connection } from "agents";
 import { withVoiceInput } from "agents/voice";
@@ -39,6 +39,19 @@ class LiveCall {
   checks = new Checks();
   /** When box ②'s ear last gave the patient's words. */
   heardAt = -Infinity;
+  /** With Gemma as the brain: her answers on their way to the box, the call so far, and the answer being written. */
+  says?: Says;
+  history = new CallHistory();
+  answering?: AbortController;
+  /** How Gemma's answer went (answerTurn's `done`), sent when she has said it. */
+  summary?: TurnSummary;
+  /** The say written before the box took the call: it goes once it has (a say replaces the one before, so only the last). */
+  script?: string;
+
+  say(message: string) {
+    if (this.box) this.box.send(message);
+    else this.script = message;
+  }
 
   hear(chunk: ArrayBuffer) {
     if (this.closed) return;
@@ -49,6 +62,7 @@ class LiveCall {
 
   close() {
     this.closed = true;
+    this.answering?.abort();
     this.box?.close();
   }
 }
@@ -62,10 +76,15 @@ class LiveCall {
  * heard and Sona did not send them to 999 herself, and the care team told when the patient reports feeling worse.
  * Box ④ writes each turn down too (3 Oct): the checks run on either ear's words, once a turn, so they hold while box ②
  * sleeps or mishears (docs/minicpm-o-finetune.md, "One ear").
+ * With SONA_LIVE_BRAIN=gemma the brain is not box ④'s (it said "fifty milligram" for 500 mg): she is held to listening,
+ * each turn box ② writes down is answered by Gemma exactly as on the three-model call (answerTurn), and box ④ says those
+ * words in Sona's voice (Says). Box ② is then the only ear.
  */
 export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
   readonly #baseten = hosted(this.env);
   readonly #models = this.#baseten ? basetenModels(this.#baseten) : stubModels;
+  readonly #chat = this.#baseten && basetenChat(this.#baseten);
+  readonly #gemma = this.env.SONA_LIVE_BRAIN === "gemma";
   readonly #calls = new Map<string, LiveCall>();
 
   // The app speaks the voice protocol only: no state-sync or identity frames (which would name the instance).
@@ -77,6 +96,7 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
   createTranscriber(connection: Connection) {
     this.#calls.get(connection.id)?.close();
     const call = new LiveCall();
+    if (this.#gemma) call.says = new Says(say => call.say(JSON.stringify(say)));
     this.#calls.set(connection.id, call);
     const ears = new SonaTranscriber(audio => this.#models.transcribe({ audio }));
     return {
@@ -104,10 +124,11 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     // Her trained voice in every language (the box's "v1" slot holds talker voice-v3, trained on the live layout:
     // docs/minicpm-o-finetune.md); voice-v1 garbled live English, so English and Chinese used the model's own until 3 Oct.
     // On SageMaker's L4s her own writing-down (2.6 s) stalls her voice, so box ② alone writes the patient down there.
-    box.send(JSON.stringify({ type: "start", system: liveBrief(home && planText(home), call.language), voice: "v1", transcribe: !onSageMaker(this.env.SONA_LIVE_URL) }));
+    box.send(JSON.stringify(liveStart(liveBrief(home && planText(home), call.language), this.#gemma ? "gemma" : "own", !onSageMaker(this.env.SONA_LIVE_URL))));
     send(connection, { type: "audio_config", format: "pcm16", sampleRate: 24_000 });
     call.box = box;
     for (const chunk of call.pending.splice(0)) box.send(chunk);
+    if (call.script) box.send(call.script);
   }
 
   #fromBox(connection: Connection, call: LiveCall, data: string | ArrayBuffer) {
@@ -118,17 +139,26 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     const unit = JSON.parse(data) as Unit | Heard | { type: "ready" };
     if (unit.type === "heard") return this.#heard(connection, call, unit.text);
     if (unit.type !== "unit") return;
+    this.#show(connection, call, call.says ? call.says.unit(unit) : unit);
+  }
+
+  /** One second of Sona's side of the call, on the phone. */
+  #show(connection: Connection, call: LiveCall, unit?: Pick<Unit, "listen" | "text" | "end_of_turn">) {
+    if (!unit) return;
     for (const event of call.turns.unit(unit)) {
       if (event.type === "transcript_start") call.muted = false;
       send(connection, event);
-      // As SonaVoiceAgent ends a turn (a client may ignore it; apps/server/test/voice-call.ts waits for it).
-      if (event.type === "transcript_end") send(connection, { type: "sona_turn", grounded: true, urgent: EMERGENCY.test(event.text), source: "model", model: "sona-live" });
+      if (event.type !== "transcript_end") continue;
+      // As SonaVoiceAgent ends a turn (a client may ignore it; apps/server/test/voice-call.ts waits for it). Gemma's
+      // answer ends as answerTurn summed it up; one cut off has no summary, as there.
+      const turn = call.says ? call.summary : { grounded: true, urgent: EMERGENCY.test(event.text), source: "model", model: "sona-live" };
+      if (turn) send(connection, { type: "sona_turn", ...turn });
     }
   }
 
   /**
    * What the patient said, as box ② heard it: shown on the phone and checked. Box ④ is already answering it, so this
-   * starts no turn of ours (null tells the SDK so).
+   * starts no turn of the SDK's (null tells it so); with Gemma as the brain, her answer starts here.
    */
   async afterTranscribe(transcript: string, connection: Connection) {
     send(connection, { type: "transcript_interim", text: "" });
@@ -136,9 +166,45 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     const call = this.#calls.get(connection.id);
     if (call) {
       call.heardAt = Date.now();
-      this.#check(connection, call, "box2", transcript);
+      const reported = this.#check(connection, call, "box2", transcript);
+      if (call.says) void this.#answer(connection, call, call.says, transcript, reported);
     }
     return null;
+  }
+
+  /**
+   * Gemma answers the turn as SonaVoiceAgent's onTurn does (answerTurn: the plan, the call so far, the 999 line first,
+   * the care team told), and each sentence goes to box ④ to say as soon as it is written. A turn that comes while
+   * the last answer is still being written or said takes its place. The care team is told once a turn: by the check on
+   * the patient's words when that fired (`reported`), else when Gemma flags the turn.
+   */
+  async #answer(connection: Connection, call: LiveCall, says: Says, question: string, reported?: Promise<boolean>) {
+    call.answering?.abort();
+    const { signal } = call.answering = new AbortController(), { history, said } = call.history.turn(question);
+    call.summary = undefined;
+    this.#show(connection, call, says.begin());
+    try {
+      const { hospitalId, patientId } = patientOf(this.name);
+      // ponytail: the plan is read again each turn, as onTurn reads it (two queries before Gemma is asked); the one
+      // onCallStart read could be kept for the call if those milliseconds matter.
+      const plan = await patientPlan({ ...await this.#context(hospitalId), hospitalId, patientId });
+      const parts = answerTurn({
+        question, history, signal, chat: this.#chat,
+        plan: plan.status === "discharged" ? planText(plan) : undefined,
+        language: call.language,
+        escalate: () => reported ?? this.#careTeam(connection, question),
+        done: summary => { call.summary = summary; },
+      });
+      for await (const part of parts) {
+        if (signal.aborted) return;
+        if (part.type !== "text-delta") continue;
+        said(part.text);
+        says.sentence(part.text);
+      }
+    } catch {
+      if (!signal.aborted) this.#tell(connection, LINES[call.language].unavailable);
+    }
+    if (!signal.aborted) this.#show(connection, call, says.end());
   }
 
   /** The same turn as box ④ wrote it down: checked too, and shown when box ②'s words do not come (quiet comes as "."). */
@@ -151,7 +217,7 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     }, OWN_WORDS_WAIT_MS);
   }
 
-  /** The two checks on what the patient said, by either ear, each once a turn. */
+  /** The two checks on what the patient said, by either ear, each once a turn. A report on its way to the care team comes back. */
   #check(connection: Connection, call: LiveCall, ear: Ear, transcript: string) {
     if (callNow(transcript) && call.checks.take("call999", ear, transcript, Date.now())) {
       const from = call.turns.said.length;
@@ -160,13 +226,19 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
       }, CALL_999_WAIT_MS);
     }
     // The care team's own reader (Gemma, as for a check-in reply) decides whether to flag a task.
-    if (mayReport(transcript) && call.checks.take("report", ear, transcript, Date.now())) void this.#careTeam(connection, transcript);
+    return mayReport(transcript) && call.checks.take("report", ear, transcript, Date.now()) ? this.#careTeam(connection, transcript) : undefined;
   }
 
-  /** The patient spoke over Sona: the phone stopped her, so the rest of that answer's audio stays here. */
+  /**
+   * The patient spoke over Sona: the phone stopped her, so the rest of that answer's audio stays here. An answer of
+   * Gemma's stops being written and said too; what the patient says next is answered as a new turn.
+   */
   onInterrupt(connection: Connection) {
     const call = this.#calls.get(connection.id);
-    if (call) call.muted = true;
+    if (!call) return;
+    call.muted = true;
+    call.answering?.abort();
+    this.#show(connection, call, call.says?.stop());
   }
 
   onCallEnd(connection: Connection) {
@@ -182,6 +254,7 @@ export class SonaLiveAgent extends withVoiceInput(Agent<Env>) {
     const { hospitalId, patientId } = patientOf(this.name);
     const told = await tellCareTeam(await this.#context(hospitalId), hospitalId, patientId, transcript).catch(() => undefined);
     if (told) send(connection, { type: "sona_care_team", ...told });
+    return Boolean(told);
   }
 
   /** As a route's context: the hospital's demo clock, live updates, and the visit's check-in agent. */

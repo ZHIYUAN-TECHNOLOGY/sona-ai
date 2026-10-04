@@ -109,3 +109,129 @@ export class LiveTurns {
     return [...this.said.slice(from), this.#answer ?? ""].some(a => EMERGENCY.test(a) || SPOKEN_999.test(a));
   }
 }
+
+/**
+ * The call's start message to box ④. With Gemma as the brain (SONA_LIVE_BRAIN=gemma) she is held to listening and says
+ * only what a `say` gives her; her own writing-down of the patient comes when she starts an answer of her own, which
+ * she then never does, so box ② alone is the ear.
+ */
+export const liveStart = (system: string, brain: "own" | "gemma", transcribe: boolean) =>
+  ({ type: "start", system, voice: "v1", ...brain === "gemma" ? { transcribe: false, hold: true } : { transcribe } });
+
+/** Words for box ④ to say as written (data/live.py "say"), from its next second, `rate` text tokens a second. No words: she stops there. */
+export type Say = { type: "say"; text: string; rate: number };
+/**
+ * The box's own default, near the pace her voice was trained at (2.7 to 4.2 tokens a second by language).
+ * Known limit, not solved here: at 4 a second her scripted voice drops words in Malay and Manglish (the speak test,
+ * packages/infra/baseten/live/check.py SAY); the captions still carry every word.
+ */
+const SAY_RATE = 4;
+type Spoken = Pick<Unit, "listen" | "text" | "end_of_turn">;
+const CLOSE: Spoken = { listen: false, text: "", end_of_turn: true };
+
+/**
+ * The hybrid call (SONA_LIVE_BRAIN=gemma): Gemma writes each answer, a sentence at a time (answer.ts), and box ④ only
+ * says it. This keeps the order: which words go to the box when, and which of the box's seconds are that answer on the phone.
+ * The box keeps one script, and a new `say` replaces what is left of the last, so one say is with the box at a time.
+ * The first sentence goes as soon as it is written (she starts talking while Gemma writes); the sentences written
+ * while she says it wait here and go together, as one say, when the box reports that say's end of turn. Gemma writes
+ * faster than she speaks, so an answer is two says as a rule, and the pause between says (the box ends a turn with a
+ * second of its own) falls between sentences. The box's end of turn is the cue, not a count of words heard back: a
+ * unit's text is the box's own decoding, which need not match ours letter for letter.
+ * The phone sees one answer: a say's end of turn closes it only when nothing waits and Gemma has finished.
+ * Cut off (the patient spoke over her, or asked again): what waits is dropped and an empty say replaces her script,
+ * so she stops within a second. Her own end of turn may cross it on the way, and the box then says the empty one as a
+ * turn of its own; that late end has no words before it, which tells it from the next say's, and it is left out.
+ */
+export class Says {
+  #waiting: string[] = [];
+  /** What is with the box until its end of turn comes back: a say (its words not heard back yet, or heard), or the cut. */
+  #with: "say" | "words" | "cut" | undefined;
+  /** The answer is open on the phone. */
+  #open = false;
+  /** Gemma is still writing this answer. */
+  #more = false;
+
+  constructor(private readonly send: (say: Say) => void) {}
+
+  /** A new answer starts, over whatever was left of the last. As `stop`, a unit for the phone may come back. */
+  begin() {
+    const close = this.stop();
+    this.#more = true;
+    return close;
+  }
+
+  /** The answer's next sentence, in order. */
+  sentence(text: string) {
+    this.#waiting.push(text);
+    this.#next();
+  }
+
+  /** Gemma has finished: the answer closes here if she has already said all of it, else at her end of turn. */
+  end() {
+    this.#more = false;
+    return this.#close();
+  }
+
+  /** The rest of the answer is not said. Between says there is nothing to stop, so the answer closes here. */
+  stop() {
+    this.#waiting = [];
+    this.#more = false;
+    if (this.#with === "say" || this.#with === "words") {
+      this.send({ type: "say", text: "", rate: SAY_RATE });
+      this.#with = "cut";
+    }
+    return this.#close();
+  }
+
+  /** One of the box's seconds as the phone should see it (LiveTurns.unit); none when it is not part of an answer. */
+  unit(u: Spoken): Spoken | undefined {
+    if (u.listen) return u;
+    const ours = this.#with === "say" || this.#with === "words";
+    // One answer in two says: the box starts each without the space between sentences (Chinese has none).
+    const text = this.#with === "say" && this.#open && /^[^\s㐀-鿿]/.test(u.text) ? ` ${u.text}` : u.text;
+    if (u.text && this.#with === "say") this.#with = "words";
+    if (!u.end_of_turn) {
+      if (!ours) return undefined; // the rest of an answer that was cut off
+      this.#open = true;
+      return { ...u, text };
+    }
+    if (this.#with !== "words" && this.#with !== "cut") return undefined; // the cut's own end, come late
+    const cut = this.#with === "cut";
+    this.#with = undefined;
+    this.#next();
+    if (cut) return this.#open ? (this.#open = false, CLOSE) : undefined;
+    this.#open = Boolean(this.#with) || this.#more;
+    return { ...u, text, end_of_turn: !this.#open };
+  }
+
+  #next() {
+    if (this.#with || !this.#waiting.length) return;
+    this.send({ type: "say", text: this.#waiting.splice(0).join(" ").replace(/([。！？]) /g, "$1"), rate: SAY_RATE });
+    this.#with = "say";
+  }
+
+  #close() {
+    if (this.#with || !this.#open) return undefined;
+    this.#open = false;
+    return CLOSE;
+  }
+}
+
+type Line = { role: "user" | "assistant"; content: string };
+/** How much of the call Gemma reads back: the last turns (the three-model call's history is the SDK's, kept the same way). */
+const HISTORY = 20;
+/**
+ * The hybrid call so far, for Gemma (answerTurn's `history`). ponytail: kept for the call only, where the three-model
+ * call's lasts across calls (the SDK's SQLite); and an answer cut off is kept as written, not as far as she got saying it.
+ */
+export class CallHistory {
+  #lines: Line[] = [];
+
+  /** A patient turn: the conversation before it, and where Sona's answer to it is kept, sentence by sentence. */
+  turn(question: string): { history: Line[]; said(sentence: string): void } {
+    const history = this.#lines.filter(l => l.content).slice(-HISTORY), answer: Line = { role: "assistant", content: "" };
+    this.#lines.push({ role: "user", content: question }, answer);
+    return { history, said: sentence => { answer.content += `${answer.content && " "}${sentence}`; } };
+  }
+}
