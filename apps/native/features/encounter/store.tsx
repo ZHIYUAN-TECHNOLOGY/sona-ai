@@ -135,7 +135,7 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
     } else if (live) settle(); else timers.current.push(setTimeout(settle, kind === "prescription" ? 1800 : 1150));
     return req.id;
   }, [clearTimers, live, user, simulateFailure, simulateInvalid]);
-  // The one way to run the review and the simulation, for the prescribe card and the next-step bar alike, without adding answers.
+  // The one way to run the review and the prescription, for the prescribe card and the next-step bar alike, without adding answers.
   // Live: the server records the review and re-checks everything before it writes the receipt, and refuses a role that can't
   // prescribe (both callers show that role a lock instead: useCanPrescribe).
   const [runErrors, setRunErrors] = useState<Record<string, string | undefined>>({});
@@ -164,7 +164,7 @@ export function EncounterProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!pendingAmendment || pendingAmendment.revision !== encounters[patientId!]?.revision) return;
     if (pendingAmendment.phase === "queued-review") request("medication", "Review amended medication context", pendingAmendment.id);
-    if (pendingAmendment.phase === "queued-issue") request("prescription", "Create amended prescribing simulation", pendingAmendment.id);
+    if (pendingAmendment.phase === "queued-issue") request("prescription", live ? "Record the amended prescription" : "Create the amended sample prescription", pendingAmendment.id);
   }, [patientId, pendingAmendment?.id, pendingAmendment?.phase, pendingAmendment?.revision, request]);
   const [resultAcks, setResultAcks] = useState<Record<string, Ack>>({});
   const acknowledgeDemoResult = useCallback((key: string, by: string) => setResultAcks(acks => acks[key] ? acks : { ...acks, [key]: { at: new Date().toISOString(), by } }), []);

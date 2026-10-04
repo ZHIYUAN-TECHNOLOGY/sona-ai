@@ -11,8 +11,9 @@ import { DrawnCheck, Mark } from "@/components/sona/parts";
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, glass, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { useLive } from "@/features/live";
 import { LockedAction } from "@/features/live/roles";
-import type { Step } from "./next-steps";
+import { receiptWords, type Step } from "./next-steps";
 
 /*
  * "Next step" decision bar (after Moonlitt's floating bottom bar): a glass pill above the dock
@@ -59,6 +60,7 @@ export function NextStepBar({ steps, p, onExpand, onAct }: { steps: Step[]; p: S
   const { reducedMotion } = useAccessibleEffects();
   const current = steps.find(step => !step.done);
   const last = steps.at(-1)!;
+  const { on: live } = useLive();
   // The last step is prescribing itself; the ones before it are the card's checks.
   const checks = steps.length - 1, left = steps.slice(0, -1).filter(step => !step.done).length;
   const stop = Boolean(current?.stop);
@@ -78,7 +80,7 @@ export function NextStepBar({ steps, p, onExpand, onAct }: { steps: Step[]; p: S
         <View style={{ flex: 1, overflow: "hidden" }}>
           <Text numberOfLines={1} style={{ ...type.overline, color: !current ? palette.green : stop ? palette.amber : palette.muted }}>{status}</Text>
           <Animated.View key={current?.id ?? "done"} entering={reducedMotion ? FadeIn.duration(160) : FadeInRight.duration(260)} exiting={reducedMotion ? FadeOut.duration(120) : FadeOutLeft.duration(180)}>
-            <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{current?.label ?? "Prescription simulated"}</Text>
+            <Text numberOfLines={1} style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>{current?.label ?? receiptWords(live).title}</Text>
           </Animated.View>
         </View>
         <Icon name="chevron.up" size={11} color={palette.muted} />
@@ -94,7 +96,7 @@ export function NextStepBar({ steps, p, onExpand, onAct }: { steps: Step[]; p: S
   </GestureDetector>;
 }
 
-/** Every step toward the simulation, in order, each with its own action. Drag down or tap outside to close. */
+/** Every step toward the prescription, in order, each with its own action. Drag down or tap outside to close. */
 export function NextStepSheet({ steps, p, onClose, onAct }: { steps: Step[]; p: SharedValue<number>; onClose: () => void; onAct: (step: Step) => void }) {
   const insets = useSafeAreaInsets();
   const { reducedMotion } = useAccessibleEffects();

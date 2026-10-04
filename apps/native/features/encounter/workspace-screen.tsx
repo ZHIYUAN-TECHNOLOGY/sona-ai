@@ -48,8 +48,8 @@ import { scheduleOnRN } from "react-native-worklets";
 import type { OrbActivity } from "@/components/sona/orb-glyph";
 
 const activities: Record<Capability, OrbActivity> = { briefing: "reading", reasoning: "solving", xray: "breathing", medication: "checking", prescription: "composing", followup: "connecting", note: "composing", evidence: "reading" };
-const prompts: Record<Capability, string> = { briefing: "Brief me on this patient", reasoning: "What possibilities should I consider?", xray: "Review the chest X-ray", medication: "Review medication interactions", prescription: "Run the prescribing simulation", followup: "Prepare a follow-up plan", note: "Show the consultation note", evidence: "What does the evidence say about steroids?" };
-const UNROUTED = "Try a briefing, clinical possibilities, X-ray, medication review, prescribing simulation, consultation note or follow-up plan.";
+const prompts: Record<Capability, string> = { briefing: "Brief me on this patient", reasoning: "What possibilities should I consider?", xray: "Review the chest X-ray", medication: "Review medication interactions", prescription: "Run the prescribing checks", followup: "Prepare a follow-up plan", note: "Show the consultation note", evidence: "What does the evidence say about steroids?" };
+const UNROUTED = "Try a briefing, clinical possibilities, X-ray, medication review, prescribing, consultation note or follow-up plan.";
 const NO_ASIDES: Entry[] = [];
 
 /**

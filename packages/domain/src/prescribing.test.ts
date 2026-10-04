@@ -59,3 +59,10 @@ test("reported medicines take their ingredient and form from the record's own wo
   expect(defaultMedications({ medicines: ["Cetirizine, patient-reported", "Salbutamol inhaler, as needed", "Patient reports a tablet; ingredient unknown", "Metformin"] } as Patient).map(m => [m.ingredient, m.formulation, m.confirmed]))
     .toEqual([["cetirizine", "", false], ["salbutamol", "inhaler", false], ["", "tablet", false], ["", "", false]]);
 });
+
+test("an allergy the record lists blocks whatever the card answered, and is marked as the record's own so the card offers no answer for it", () => {
+  const allergic = { ...amelia, allergies: "Paracetamol — rash" } as Patient;
+  const check = (patient: Patient) => getPrescriptionChecks({ revision: 1, prescriptionInputs: eligible } as Encounter, patient).find(c => c.id === "paracetamolAllergy")!;
+  expect(check(allergic)).toMatchObject({ status: "blocked", recorded: true, detail: "The record lists this allergy: Paracetamol — rash. Paracetamol is not prescribed." });
+  expect(check(amelia)).toEqual({ id: "paracetamolAllergy", label: "Paracetamol allergy", status: "passed", detail: "Recorded as no by the clinician." });
+});

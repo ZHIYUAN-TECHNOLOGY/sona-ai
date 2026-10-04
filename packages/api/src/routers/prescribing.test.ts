@@ -51,7 +51,7 @@ test("with every check passed the prescription is receipted once per revision, w
 
   expect(await code(api.prescribing.simulate({ ...simulate, approvedBy: "dr-someone-else" }))).toBe("FORBIDDEN");
   const receipt = await api.prescribing.simulate(simulate);
-  expect(receipt).toMatchObject({ kind: "prescription", ...simulate, revision: 2, payload: {
+  expect(receipt).toMatchObject({ kind: "prescription", ...simulate, approvedByName: "Dr Aisyah", revision: 2, payload: {
     medication: "Paracetamol", formulation: "500 mg tablet", dose: "1000", unit: "mg", route: "Oral", frequency: "Every 6 hours", duration: "3 days",
     indication: "Recorded complaint: Cough for five days, with fever since yesterday.", sourceId: "paracetamol-reference", transmitted: false, dispensed: false } });
   expect(receipt.payload).not.toHaveProperty("simulated");
@@ -113,6 +113,7 @@ test("an amendment goes through the server: it needs an earlier receipt and a ne
 
 test("a note save appends the next revision; a save against an older revision is refused and the latest stays", async () => {
   const api = await signedIn();
+  // seedDemo alone gives Amelia no note (her seeded one is seedDemoNote's step), so here her visit starts at revision 0.
   expect(await api.note.get({ encounterId: "visit-1042" })).toEqual({ encounterId: "visit-1042", revision: 0, sentences: [] });
   const seeded = await api.note.get({ encounterId: "visit-1086" });
   expect([seeded.revision, seeded.sentences.map(s => s.id)]).toEqual([1, ["s1", "s2"]]);

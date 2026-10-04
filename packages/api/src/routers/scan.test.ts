@@ -64,7 +64,7 @@ test("a photo is stored under the hospital's scans, the model reads its bytes, a
   expect(key).toMatch(/^scans\/demo\/[0-9a-f-]+\.jpg$/);
   const reading = await doctor.scan.read({ encounterId: "visit-1042", key });
   expect(reading).toMatchObject({ source: "model", model: "gemma-4-vision-test" });
-  expect(seen).toEqual([{ image: [7, 8, 9], name: "[NAME]", meds: ["Salbutamol inhaler, as needed", "Cetirizine, patient-reported"] }]);
+  expect(seen).toEqual([{ image: [7, 8, 9], name: "[NAME]", meds: ["Salbutamol inhaler, as needed", "Cetirizine tablet 10 mg, patient-reported"] }]);
   // The sample never goes to the model: it is the fixture's reading.
   expect((await doctor.scan.read({ encounterId: "visit-1042", key: "sample" })).source).toBe("fixture");
   expect(seen).toHaveLength(1);
@@ -95,7 +95,7 @@ test("applying appends only the kept sections, proposes the medicine unconfirmed
   const after = await doctor.encounter.get({ encounterId: "visit-1042" });
   expect(after.revision).toBe(before.revision + 1);
   expect(after.state.medicationEntries?.map(m => [m.name, m.confirmed, m.change ?? null])).toEqual([
-    ["Salbutamol inhaler, as needed", false, null], ["Cetirizine, patient-reported", false, null], ["Clarithromycin 500 mg oral BD", false, "changed"],
+    ["Salbutamol inhaler, as needed", false, null], ["Cetirizine tablet 10 mg, patient-reported", false, null], ["Clarithromycin 500 mg oral BD", false, "changed"],
   ]);
   expect(after.state.medicationEntries?.[2]?.from).toBe("From a scanned handwritten note (sample)");
 

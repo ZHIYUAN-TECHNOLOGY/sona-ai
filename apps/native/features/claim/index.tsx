@@ -21,6 +21,7 @@ import { useLiveCodes } from "@/features/live/model-sync";
 import { unanswered } from "@/features/clinical/judge-answer";
 import { AppealCard, DeniedCard, Paragraph } from "./appeal";
 import { NoVisit } from "@/components/sona/no-visit";
+import { ErrorLine } from "@/components/sona/parts";
 
 /*
  * Final guarantee letter request, one card. The note sits above its codes; tapping a code glides a
@@ -212,8 +213,10 @@ export function ClaimScreen() {
         <Text style={{ ...type.overline, color: palette.muted, paddingBottom: 6 }}>Codes · tap to see why</Text>
         {server.loading && <Drafting label="Coding the note…" style={{ paddingVertical: 6 }} />}
         {server.data && !codes.length && !noNote && <Text style={{ ...type.footnote, color: palette.amber }}>No codable diagnosis in the note yet</Text>}
-        {server.error && <Text style={{ ...type.footnote, color: palette.red }}>{JUDGE ? `${held ? "No codes: " : ""}${server.error}` : `${server.error} · showing the authored codes`}</Text>}
-        {held?.why === "stub" && !noNote && <Text style={{ ...type.footnote, color: palette.red }}>{held.reason} · codes by keyword rule over the note</Text>}
+        {/* After a fix the previous codes stay on view while the new note is coded (`stale`), and say so; a failure says which codes these are. */}
+        {server.stale && !server.error && <Drafting label="Coding the note again…" lines={0} />}
+        {server.error && <ErrorLine text={`${held ? "No codes: " : ""}${server.error}${server.stale ? " · showing the codes from before the change" : JUDGE ? "" : " · showing the authored codes"}`} onRetry={server.retry} />}
+        {held?.why === "stub" && !noNote && <ErrorLine text={`${held.reason} · codes by keyword rule over the note`} onRetry={server.retry} />}
         {!server.loading && codes.map((c, i) => { const on = c.evidence === cited; return <Arrive key={c.code} index={i} animate={Boolean(server.data)}><Pressable accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${c.code}, ${c.label}, ${c.kind}${c.inTable === false ? ", not in the ICD-10 table" : ""}`}
           onPress={() => { haptic("select"); setActive(c.evidence); }} style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 44 }}>
           <Animated.View style={{ width: 58, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.blue : "rgba(20,28,40,0.06)", transitionProperty: "backgroundColor", transitionDuration: 180 } as never}>

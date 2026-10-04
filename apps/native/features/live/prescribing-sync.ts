@@ -4,6 +4,8 @@ import { api, requestId } from ".";
 /**
  * Live mode for the prescribe card and the consultation note. The review stays the authored
  * fixture; the server records it and re-runs the eleven checks itself before it writes a receipt.
+ * The receipt is a real row in the visit record (never sent to a pharmacy), not a simulation: the
+ * route kept its first name, `prescribing.simulate`, and so does `simulateOnServer`.
  */
 
 /** Sends the card's eligibility and medicines to the server, then records the review at the revision that edit produced. */

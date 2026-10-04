@@ -166,6 +166,8 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
         style={{ width: 96, height: 44, borderRadius: radius.control, paddingHorizontal: 12, ...type.body, fontWeight: "600", color: palette.ink, backgroundColor: "rgba(20,28,40,0.05)" }} />
       <Text style={{ ...type.footnote, color: palette.muted }}>kg · 50 kg or more</Text>
     </View>;
+    // A recorded allergy is the record's own block: No/Yes here could not lift it, so the row states it and offers nothing to tap.
+    if (check.recorded) return undefined;
     const key = HISTORY.find(k => k === check.id);
     if (key) return <View style={{ flexDirection: "row", gap: 8 }}>
       <Pill label="No" on={inputs[key] === "no"} onPress={() => set({ [key]: "no" })} />
@@ -177,14 +179,16 @@ export function PrescribeCard({ patient }: { patient: Patient }) {
   };
   const label = (check: PrescriptionCheck) => check.id === "review" && reviewStale ? { ...check, detail: "Needs rerun · eligibility or medicines changed since the last review." } : check;
   // A recorded risk isn't something to resolve: the case is outside what the dose rules cover.
-  const outside = outsideCase(encounter);
-  const primary = working === "prescription" ? `Checking all ${checks.length}…` : outside ? "Outside the supported case · not prescribing" : blocked.length ? `Resolve ${blocked.length} to prescribe` : regimen ? `Prescribe ${regimen.medication.toLowerCase()}` : "Prescribe";
+  // So is an allergy the record lists: nothing on the card resolves it, and the button says that instead of "Resolve 1".
+  const recordedAllergy = blocked.some(c => c.recorded);
+  const outside = outsideCase(encounter) || recordedAllergy;
+  const primary = working === "prescription" ? `Checking all ${checks.length}…` : recordedAllergy ? "Recorded allergy · not prescribing" : outside ? "Outside the supported case · not prescribing" : blocked.length ? `Resolve ${blocked.length} to prescribe` : regimen ? `Prescribe ${regimen.medication.toLowerCase()}` : "Prescribe";
 
   return <Surface feature layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 12 }}>
     <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
       <Ring done={checks.length - blocked.length} total={checks.length} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={{ ...type.overline, color: created ? palette.green : blocked.length ? palette.amber : palette.blue }}>{created ? words.title : outside ? "Outside the supported case" : blocked.length ? `${blocked.length} left before prescribing` : "Ready to prescribe"}</Text>
+        <Text style={{ ...type.overline, color: created ? palette.green : blocked.length ? palette.amber : palette.blue }}>{created ? words.title : recordedAllergy ? "Recorded allergy" : outside ? "Outside the supported case" : blocked.length ? `${blocked.length} left before prescribing` : "Ready to prescribe"}</Text>
         <Text style={{ ...type.headline, color: palette.ink }}>{regimen ? `${regimen.medication} · ${regimen.formulation}` : "No regimen entered"}</Text>
         <Text numberOfLines={2} style={{ ...type.caption, color: palette.muted }}>{regimen ? `${regimen.dose} ${regimen.unit} · ${regimen.route} · ${regimen.frequency} · ${regimen.duration}` : "Enter the medicine, dose, route, frequency and duration below."}</Text>
       </View>

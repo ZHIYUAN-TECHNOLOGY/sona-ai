@@ -114,7 +114,7 @@ export function AppealCard({ patient, state, onChange, onApproved }: { patient: 
     <Surface feature style={{ padding: 16, gap: 12 }}>
       <Text style={{ ...type.overline, color: palette.blue }}>Sona drafted an appeal · check before sending</Text>
       {live && !role.can("claim.appealDraft") ? <Text style={{ ...type.footnote, color: palette.muted }}>{role.why("claim.appealDraft")}</Text>
-        : server.error || held?.reason ? <ErrorLine text={`No draft: ${server.error ?? held?.reason}`} />
+        : server.error || held?.reason ? <ErrorLine text={`No draft: ${server.error ?? held?.reason}`} onRetry={server.retry} />
         : !letter || !draft ? <Drafting label="Sona is drafting the appeal…" />
         : <>
           <Arrive index={0}><Paragraph label="Opening paragraph" value={letter.opening} onChange={opening => edit(l => ({ ...l, opening }))} /></Arrive>

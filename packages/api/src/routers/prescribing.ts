@@ -1,4 +1,5 @@
 import { ORPCError } from "@orpc/server";
+import { user } from "@sona-ai/db/schema/auth";
 import { receipts } from "@sona-ai/db/schema/clinical";
 import { effectivePatient, getPrescriptionChecks, regimenOf } from "@sona-ai/domain/prescribing";
 import type { Encounter } from "@sona-ai/domain/types";
@@ -30,8 +31,19 @@ export const prescribingRouter = {
     .handler(({ context, input }) => issue(context, input, input.reason)),
 };
 
-/** One prescription receipt, replay-safe by request; with `reason`, the amendment of the latest one. */
-async function issue({ db, hospitalId, session }: Pick<Context, "db"> & { hospitalId: string; session: { user: { id: string } } }, input: ApprovedCommand, reason?: string) {
+/**
+ * One prescription receipt, replay-safe by request; with `reason`, the amendment of the latest one. `approvedByName` is
+ * the approver's display name, read beside the row (which holds the user id), so the app's audit line names a person.
+ */
+async function issue(context: Pick<Context, "db"> & { hospitalId: string; session: { user: { id: string; name?: string } } }, input: ApprovedCommand, reason?: string) {
+  const receipt = await write(context, input, reason);
+  // The caller's own name is in the session; a replay may return a receipt a colleague approved, read from their account.
+  const approvedByName = receipt.approvedBy === context.session.user.id ? context.session.user.name
+    : receipt.approvedBy ? (await context.db.select({ name: user.name }).from(user).where(eq(user.id, receipt.approvedBy)))[0]?.name : undefined;
+  return { ...receipt, approvedByName };
+}
+
+async function write({ db, hospitalId, session }: Pick<Context, "db"> & { hospitalId: string; session: { user: { id: string } } }, input: ApprovedCommand, reason?: string) {
   assertApprover(session.user.id, input.approvedBy);
   if (!input.approvedBy.trim()) throw new ORPCError("PRECONDITION_FAILED", { message: "The prescription needs a named approver", data: { open: [] } });
   const encounter = await loadEncounter(db, hospitalId, input.encounterId);

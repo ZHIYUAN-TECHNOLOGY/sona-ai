@@ -20,7 +20,7 @@ describe("scanned note review", () => {
     expect(next.noteSectionDraft.plan).toBe(`Mine.\n${SAMPLE_NOTE.sections.plan}`);
     expect(next.noteReviewed).toBe(false);
     expect(next.medicationEntries.map(m => [m.name, m.confirmed, m.change ?? null])).toEqual([
-      ["Salbutamol inhaler, as needed", false, null], ["Cetirizine, patient-reported", false, null], ["Clarithromycin 500 mg oral BD", false, "changed"],
+      ["Salbutamol inhaler, as needed", false, null], ["Cetirizine tablet 10 mg, patient-reported", false, null], ["Clarithromycin 500 mg oral BD", false, "changed"],
     ]);
     expect(next.tasks.map(t => [t.id, t.title, t.owner, t.due])).toEqual([["scan-1-0", "Repeat chest X-ray and FBC", "Ward nurse", "Tomorrow"], ["scan-1-1", "Book follow-up in 2 weeks", "Attending doctor", "2 weeks"]]);
   });

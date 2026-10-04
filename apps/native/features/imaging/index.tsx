@@ -144,15 +144,21 @@ function Limits({ sample, detail, waking }: { sample: boolean; detail?: string; 
 function ModelRead({ reading, onRetry }: { reading: NonNullable<ReturnType<typeof useXrayReading>>; onRetry?: () => void }) {
   // The read waits for the image to be stored: asked sooner, the server would read the visit's previous image.
   if (reading.loading) return <Drafting label={reading.saving ? "Saving to your hospital’s storage…" : "Reading the image…"} slow={MODEL_SLOW} />;
+  // The stored image is read again without sending it again (`retry` is the read's own; absent when the upload failed or a newer image took its place).
+  const again = reading.retry && <View style={{ alignSelf: "flex-start" }}><Action label="Analyse again" secondary icon="arrow.clockwise" onPress={reading.retry} /></View>;
   if (reading.error) return <View style={{ gap: 10 }}>
     <Notice warning>{`Not read: ${reading.error}. Nothing has been concluded from this image.`}</Notice>
     {reading.failed && onRetry && <View style={{ alignSelf: "flex-start" }}><Action label="Retry upload" secondary icon="arrow.clockwise" onPress={onRetry} /></View>}
+    {again}
   </View>;
   const data = reading.data;
   // While the image model starts, the read is asked again by itself (useLiveXray), so there is nothing to redo.
-  if (!data || data.source !== "model") return <IconRow icon="eye.slash" title="Findings unavailable" detail={wakingOf(data)
-    ? "The image model is starting, so nothing has been read from this image yet. Its reading appears here by itself."
-    : "The image model didn’t answer in time, so nothing has been read from this image. Analyse again in a minute."} />;
+  if (!data || data.source !== "model") return <View style={{ gap: 10 }}>
+    <IconRow icon="eye.slash" title="Findings unavailable" detail={wakingOf(data)
+      ? "The image model is starting, so nothing has been read from this image yet. Its reading appears here by itself."
+      : "The image model didn’t answer in time, so nothing has been read from this image. Analyse again in a minute."} />
+    {!wakingOf(data) && again}
+  </View>;
   return <View style={{ gap: 10 }}>
     <Text accessibilityRole="header" style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>What the image model describes</Text>
     {data.findings.map((f, i) => <Text key={i} selectable style={{ ...type.callout, color: palette.ink }}>{f}</Text>)}

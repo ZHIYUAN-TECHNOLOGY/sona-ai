@@ -282,7 +282,7 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
       {/* What the discharge carries: quieter, under what blocks it. */}
       <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 14, paddingTop: 14, borderTopWidth: 1, borderColor: glass.hairline }}>
       <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
-        {held ? !done && (held.reason ? <ErrorLine text={`No discharge draft: ${held.reason}`} /> : <Drafting label="Drafting the summary…" />) : <>
+        {held ? !done && (held.reason ? <ErrorLine text={`No discharge draft: ${held.reason}`} onRetry={draft.retry} /> : <Drafting label="Drafting the summary…" />) : <>
         {(!done || full) && summary.map(([label, value], i) => { const text = marked(value); return <Animated.View key={label} entering={animate ? riseIn({ delay: 180 + i * 40, distance: 10, duration: 320 }) : undefined} style={{ flexDirection: "row", gap: 12 }}>
           <Text style={{ ...type.overline, width: 72, paddingTop: 3, color: palette.muted }}>{label}</Text>
           {text === value ? <Text selectable style={{ ...type.subhead, flex: 1, color: palette.ink }}>{value}</Text> : <MarkedText text={text} style={{ ...type.subhead, flex: 1, color: palette.ink }} />}

@@ -20,7 +20,7 @@ import { useFindings } from "@/features/live/findings-sync";
 import { serverDayPatients, serverVisit } from "@/features/live/day";
 import { api, errorText } from "@/features/live";
 import { useOpened } from "@/components/sona/opening";
-import { refreshServerData, serverDayCount, useServerData, useServerDay, useVisitTasks } from "@/features/live/server-day";
+import { refreshServerData, serverDayCount, useServerData, useServerDay, useServerDayError, useVisitTasks } from "@/features/live/server-day";
 import { localDate } from "@/features/tasks/state";
 import { flaggedItems, flaggedTaskIds, reportItems } from "@/features/check-ins/model";
 import { useCheckIns, useKeptFlags } from "@/features/check-ins/state";
@@ -291,6 +291,8 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
   const clock = new Date(at + offsetMs);
   const today = useServerDay(live ? localDate(clock) : undefined);
   const otherDay = useServerDay(live && offset !== 0 ? localDate(dayOf(offset, clock)) : undefined);
+  // The day on view failed to load: said as that with Retry, never shown as a day with nothing booked.
+  const dayError = useServerDayError(live ? localDate(dayOf(offset, clock)) : undefined);
   const patients = live ? serverDayPatients(fixturePatients, today ?? []) : fixturePatients;
   // The result waiting on a doctor (live: the server's; demo: the fixture until the briefing acknowledges it).
   const result = usePendingResult();
@@ -361,6 +363,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
       </View>
       {calendar && <MonthCard offset={offset} now={clock} counts={o => live ? serverDayCount(localDate(dayOf(o, clock))) : scheduleFor(o, patients, clock).length} onPick={o => { setCalendar(false); pick(o); }} onClose={() => setCalendar(false)} />}
     </View>
+    {dayError && <ErrorLine text={`${offset === 0 ? "Today's" : "This day's"} visits didn't load: ${dayError.error}`} onRetry={dayError.retry} />}
     {/* Management's day leads with the ward and this week's numbers, not clinical tasks. */}
     {managing && <WardGlance />}
     {offset === 0 && bedManager && <UnownedBeds beds={beds} />}
@@ -406,7 +409,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
           <Text style={{ ...type.footnote, color: palette.muted }}>{item.title} · back {clockOf(wakes + offsetMs)} · <Text style={{ color: palette.blue }}>Wake now</Text></Text>
         </Pressable>)}
       </Animated.View>}
-      {!ordered.length && <Text style={{ ...type.callout, color: palette.muted, textAlign: "center", paddingVertical: 12 }}>Nothing scheduled this day.</Text>}
+      {!ordered.length && !dayError && <Text style={{ ...type.callout, color: palette.muted, textAlign: "center", paddingVertical: 12 }}>Nothing scheduled this day.</Text>}
       {schedule.length > 0 && <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 8 }}>
         <Pressable accessibilityRole="button" accessibilityState={{ expanded: timeline }} onPress={() => { haptic(); setTimeline(v => !v); }} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: 8 }}>
           <Icon name={timeline ? "chevron.up" : "clock"} size={13} color={palette.blue} />

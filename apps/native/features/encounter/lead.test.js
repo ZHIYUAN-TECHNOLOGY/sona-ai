@@ -49,7 +49,10 @@ test("the evidence lead never contradicts 'not enough evidence', and is hidden w
 test("the briefing lead mentions a result only while it waits to be acknowledged; prescribing and follow-up follow their state", () => {
   expect(leadFor("briefing", daniel, { result: { test: "Potassium" } })).toMatch(/most of the history is still missing\. A new potassium result needs acknowledging\.$/);
   expect(leadFor("briefing", daniel, {})).not.toMatch(/result/);
-  expect(leadFor("prescription", amelia, { prescription: "created" })).toMatch(/created a receipt/);
+  // A receipt is said by where it was written: the visit record when connected, else a sample on this phone. Never "simulation".
+  expect(leadFor("prescription", amelia, { prescription: "created", live: true })).toBe("Every check passed. Prescription recorded, in the visit record, not sent to a pharmacy.");
+  expect(leadFor("prescription", amelia, { prescription: "created" })).toMatch(/^Every check passed\. Sample prescription, on this phone only/);
+  for (const prescription of ["created", "failed", "outside", "ready", undefined]) expect(leadFor("prescription", amelia, { prescription, live: true })).not.toMatch(/simulat/i);
   expect(leadFor("prescription", amelia, {})).toMatch(/^Nothing is prescribed yet/);
   expect(leadFor("followup", amelia, { tasks: { total: 2, open: 1 } })).toBe("1 follow-up is open for Amelia.");
   expect(leadFor("followup", amelia, { tasks: { total: 2, open: 0 } })).toBe("All of Amelia’s follow-ups are done.");

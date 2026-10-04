@@ -15,7 +15,8 @@ export type HistoryFact = { id: string; category: "medical" | "family" | "social
 /** `change` and `from` mark a proposal read from a scanned note (./scan), waiting for the doctor to confirm it. */
 export type MedicationEntry = { id: string; name: string; ingredient: string; formulation: string; confirmed: boolean; change?: "new" | "changed" | "stopped"; from?: string };
 export type PrescriptionInputs = { weightKg: string; liverDisease: "unknown" | "no" | "yes"; kidneyDisease: "unknown" | "no" | "yes"; alcoholRisk: "unknown" | "no" | "yes"; paracetamolAllergy: "unknown" | "no" | "yes" };
-export type PrescriptionCheck = { id: string; label: string; status: "passed" | "blocked"; detail: string };
+/** `recorded`: the patient's record itself blocks this check (a listed allergy), so no answer on the card can resolve it. */
+export type PrescriptionCheck = { id: string; label: string; status: "passed" | "blocked"; detail: string; recorded?: true };
 export type Regimen = { medication: string; formulation: string; dose: string; unit: string; route: string; frequency: string; duration: string; indication: string; sourceId: string; sourceVersion: string };
 export type NoteSections = { subjective: string; objective: string; assessment: string; plan: string };
 export type Task = { id: string; title: string; owner: string; due: string; completed: boolean; sourceSnapshot?: Source; sourceId?: string; sourceRevision?: number; provenance?: "fixture" | "clinician" };

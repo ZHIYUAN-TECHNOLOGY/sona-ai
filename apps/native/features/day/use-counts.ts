@@ -1,10 +1,11 @@
+import { useMemo, useState } from "react";
 import { useEncounter } from "@/features/encounter/store";
 import type { Patient } from "@/features/encounter/types";
 import { JUDGE, useLive } from "@/features/live";
 import { useDemoOffset } from "@/features/live/demo-clock";
 import { useFindings } from "@/features/live/findings-sync";
 import { useServerData, useServerDay } from "@/features/live/server-day";
-import { useServerBeds } from "@/features/live/ward-sync";
+import { useServerBeds, useWardFailure } from "@/features/live/ward-sync";
 import { dayVisits } from "@/features/patients/record";
 import { localDate } from "@/features/tasks/state";
 import { wardBeds } from "@/features/ward/model";
@@ -46,12 +47,19 @@ export function usePendingResult(patientId?: string) {
  * Every bed, and whether live mode is still reading them: the server's in live mode (one read shared by every
  * caller), none until it arrives and never the demo's fixture, so the ward's list never swaps the fixture's rows
  * for the server's under the eye; else the authored ward with the X-ray's open findings on Bed 6.
+ * `failure` is why the last read of the beds failed (then it is not `loading`: the screen says so, with `retry`,
+ * which reads again); beds from an earlier read stay.
  */
 export function useWard() {
   const { patients, encounters } = useEncounter();
   const { findings, live } = useFindings();
-  const server = useServerBeds(findings);
-  return live ? { beds: server ?? [], loading: !server } : { beds: withFindingBlockers(wardBeds(patients, encounters), findings), loading: false };
+  const [attempt, setAttempt] = useState(0);
+  // One stable key: the read re-runs when it changes, so a fresh array each render would read without end.
+  const key = useMemo(() => [findings, attempt], [findings, attempt]);
+  const server = useServerBeds(key);
+  const failure = useWardFailure("beds");
+  const retry = () => setAttempt(a => a + 1);
+  return live ? { beds: server ?? [], loading: !server && !failure, failure, retry } : { beds: withFindingBlockers(wardBeds(patients, encounters), findings), loading: false, failure: undefined, retry };
 }
 
 /** Every bed (see useWard). */

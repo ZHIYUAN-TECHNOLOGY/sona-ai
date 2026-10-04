@@ -8,7 +8,8 @@
       "autoIncrement": true,
       "bun": "1.4.0",
       "env": {
-        "EXPO_PUBLIC_SERVER_URL": "https://sona-ai-server-staging-uxfqzyce5rxhzsju.zhiyuantech.workers.dev"
+        "EXPO_PUBLIC_SERVER_URL": "https://sona-ai-server-staging-uxfqzyce5rxhzsju.zhiyuantech.workers.dev",
+        "EXPO_PUBLIC_JUDGE_BUILD": "true"
       },
       "channel": "production"
     }
