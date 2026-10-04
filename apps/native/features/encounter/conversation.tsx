@@ -14,7 +14,7 @@ import { useAnsweredEvidence } from "@/features/live/evidence-sync";
 import { useLive } from "@/features/live";
 import { confirmedAllergy } from "@/features/day/counts";
 import { usePendingResult } from "@/features/day/use-counts";
-import { useLiveXray } from "@/features/live/model-sync";
+import { useXrayReading } from "@/features/imaging/use-upload";
 import { teachingImage } from "@/features/imaging/fixture";
 import { QuestionList } from "@/components/sona/list";
 import { leadFor } from "./lead";
@@ -85,7 +85,7 @@ export function useVisitLead(req: RequestState | undefined, card: ResponseCard |
   const result = usePendingResult(patient?.id);
   // The X-ray lead follows the image model's reading when live mode has one (the same answer its card shows).
   const xrayImage = req?.kind === "xray" ? (card?.imagingSnapshot ?? encounter)?.imagingAttachment?.uri : undefined;
-  const xrayRead = useLiveXray(patient?.encounterId ?? "", xrayImage);
+  const xrayRead = useXrayReading(patient?.encounterId ?? "", xrayImage);
   if (!req || !card || !patient) return undefined;
   // The X-ray card reads its own snapshot; the prescribing card follows the encounter while it is the latest answer.
   const image = card.imagingSnapshot ?? encounter;
@@ -96,7 +96,7 @@ export function useVisitLead(req: RequestState | undefined, card: ResponseCard |
   return leadFor(req.kind, patient, {
     medicines: encounter?.medicationEntries ?? [],
     allergyConfirmed: Boolean(confirmedAllergy(encounter)),
-    image: scenario === "unsupported" ? "unsupported" : image?.imagingAttachment ? (xrayRead.data?.source === "model" ? "read" : "attached") : scenario === "no-finding" ? "no-finding" : !image?.hideTeachingImage && teachingImage?.referenceSummary ? "reference" : "none",
+    image: scenario === "unsupported" ? "unsupported" : image?.imagingAttachment ? (xrayRead?.data?.source === "model" ? "read" : "attached") : scenario === "no-finding" ? "no-finding" : !image?.hideTeachingImage && teachingImage?.referenceSummary ? "reference" : "none",
     note: !encounter?.note ? "none" : encounter.noteReviewed ? "reviewed" : "draft",
     prescription: rx,
     tasks: { total: tasks.length, open: tasks.filter(t => !t.completed).length },

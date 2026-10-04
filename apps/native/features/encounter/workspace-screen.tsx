@@ -36,6 +36,7 @@ import { useCanPrescribe } from "@/features/clinical/prescribe-card";
 import { RecordingSeconds } from "@/features/scribe/live-recorder";
 import { entryFor } from "@/features/clinical/medicine-catalog";
 import { useRole } from "@/features/live/roles";
+import { useXrayAttach } from "@/features/imaging/use-upload";
 import { AnswerSections, SectionTabs, type AnswerSection } from "@/components/sona/answer-kit";
 import type { Attachment } from "@/components/sona/attachments-menu";
 import { Sidebar, SIDEBAR_WIDTH } from "./sidebar";
@@ -259,6 +260,13 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     if (named) updateEncounter(value => value.medicationDraft ? value : { ...value, medicationDraft: { ...named } });
     return id;
   };
+  const xray = useXrayAttach();
+  /** An image from the dock becomes the visit's X-ray. Live, it is stored as the X-ray page stores one, so the answer reads this image and never the visit's last. */
+  const attachImage = (image: Attachment) => {
+    const teaching = image.uri === "teaching";
+    updateEncounter(current => teaching ? { ...current, imagingAttachment: undefined, hideTeachingImage: false } : { ...current, imagingAttachment: { uri: image.uri, name: image.name } }, true);
+    if (patient && !teaching) xray.attach(patient.encounterId, image);
+  };
   // On Today nothing reads a photo or file yet, so Sona asks whose they are: each patient row opens that visit with them waiting.
   const askForPatient = (question: string) => { carry(pending); setPending([]); return today.ask(question, forWhichPatient(question, patients)); };
   const submit = async (text: string) => { const prompt = text.trim(); if (!prompt || routing.current) return; setNotice(undefined);
@@ -273,7 +281,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       const files = pending.filter(item => item.kind === "file" || item.imageType === "Document");
       setPending([]);
       const fileNote = files.length ? `${files.map(f => f.name).join(", ")} kept for reference. Document review is not switched on yet.` : undefined;
-      if (image) { updateEncounter(current => image.uri === "teaching" ? { ...current, imagingAttachment: undefined, hideTeachingImage: false } : { ...current, imagingAttachment: { uri: image.uri, name: image.name } }, true); run("xray", prompt); if (fileNote) setNotice(fileNote); return; }
+      if (image) { attachImage(image); run("xray", prompt); if (fileNote) setNotice(fileNote); return; }
       if (fileNote) setNotice(fileNote);
     }
     // The text box empties and the dock shows the request is being read at once, so nothing invites a second send.
@@ -332,7 +340,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
       const files = pending.filter(item => item.kind === "file" || item.imageType === "Document");
       if (pending.length) setPending([]);
       const fileNote = files.length ? `${files.map(f => f.name).join(", ")} kept for reference. Document review is not switched on yet.` : undefined;
-      if (image) updateEncounter(current => image.uri === "teaching" ? { ...current, imagingAttachment: undefined, hideTeachingImage: false } : { ...current, imagingAttachment: { uri: image.uri, name: image.name } }, true);
+      if (image) attachImage(image);
       else if (fileNote) return { notice: fileNote };
       const { kind, medicine } = image ? { kind: "xray" as const, medicine: undefined } : await route(question);
       const id = kind ? runRouted(kind, question, medicine) : undefined;
