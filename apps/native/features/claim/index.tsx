@@ -1,6 +1,6 @@
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from "react-native-reanimated";
 import { EASE_OUT, LAYOUT } from "@/components/sona/motion";
@@ -15,11 +15,11 @@ import { LockedAction, useRole } from "@/features/live/roles";
 import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
 import { useServerEncounter } from "@/features/live/sync";
 import type { PrescriptionCheck } from "@/features/encounter/types";
-import { CODES, EMPTY_CLAIM, ESTIMATE, INSURER, approveClaim, claimChecks, noteFor, type ClaimState, type Code, type Sentence } from "./model";
+import { CODES, EMPTY_CLAIM, INSURER, ORGANISM_UNKNOWN, approveClaim, claimChecks, ivReason, noteFor, withFix, type ClaimState, type Code, type Sentence } from "./model";
 import { Arrive, Drafting, SampleLabel } from "@/components/sona/model-answer";
 import { useLiveCodes } from "@/features/live/model-sync";
 import { unanswered } from "@/features/clinical/judge-answer";
-import { AppealCard, DeniedCard } from "./appeal";
+import { AppealCard, DeniedCard, Paragraph } from "./appeal";
 import { NoVisit } from "@/components/sona/no-visit";
 
 /*
@@ -27,7 +27,9 @@ import { NoVisit } from "@/components/sona/no-visit";
  * soft highlight onto the sentence that justifies it (after Threads' lyric highlight: the block
  * slides on a fast spring, 0.25 s at damping 0.72, and its height follows a touch slower, 0.32 s at
  * 0.8, so it stretches as it moves; other sentences dim). The insurer's gaps are blockers fixed in
- * place, each adding its sentence to the note. Sending turns every "Required" tag into a check,
+ * place, each adding its sentence to the note. Connected, the note is the visit's saved note: the
+ * criteria are read against it, a fix saves its sentence to it (the IV reason in the doctor's own
+ * words), and with no note saved the card says so. Sending turns every "Required" tag into a check,
  * 90 ms apart on a 200 ms ease-out (after Toss's terms check), then the mock insurer's approval stamps in.
  */
 const TEAL = palette.green;
@@ -38,33 +40,46 @@ export function ClaimScreen() {
   const { reducedMotion } = useAccessibleEffects();
   const encounter = patient ? encounters[patient.id] : undefined;
   const state = encounter?.claim ?? EMPTY_CLAIM;
-  const checks = claimChecks(state);
+  const { live, refresh } = useServerEncounter(patient);
+  // Connected: the codes and the note sentences they cite come from the server, read from the visit's saved note. The
+  // note is read again whenever it may have changed: a fix saved here, or coming back from the note screen.
+  const [noteRead, setNoteRead] = useState(0);
+  const opened = useRef(false);
+  useFocusEffect(useCallback(() => { if (opened.current) setNoteRead(n => n + 1); opened.current = true; }, []));
+  const server = useLiveCodes(patient?.encounterId ?? "", String(noteRead));
+  // The note is the server's or, in sample mode only, the sample's; connected, nothing stands in for a note that is not saved.
+  const note: Sentence[] = server.data?.sentences ?? (live || JUDGE ? [] : noteFor(state));
+  // Until the saved note has been read there is nothing to judge: no criterion is shown as open or met, and nothing can be sent.
+  const read = !(live || JUDGE) || Boolean(server.data);
+  const checks = read ? claimChecks(note) : [];
   const blocked = checks.filter(c => c.status === "blocked");
   const resolving = useSettling(blocked.map(c => c.id));
   const [active, setActive] = useState(CODES[0]!.evidence);
   const [sending, setSending] = useState(false);
+  const [why, setWhy] = useState("");
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
-  const { live, refresh } = useServerEncounter(patient);
   const { user } = useLive();
   const [serverError, setServerError] = useState<string>();
   const role = useRole();
-  // Live mode: the codes (and the note sentences they cite) come from the server; a fix to the note codes it again.
-  const server = useLiveCodes(patient?.encounterId ?? "", `${state.organismConfirmed}:${state.ivReasonAdded}`);
 
   if (!patient || !encounter) return <><ModalHeader title="Guarantee letter" /><NoVisit view="claim" what="a guarantee letter" /></>;
-  const set = (change: Partial<ClaimState>) => {
-    const { organismConfirmed, ivReasonAdded } = change;
-    // Only a doctor changes the claim; anyone else is told why and nothing changes here either.
-    if (live && (organismConfirmed !== undefined || ivReasonAdded !== undefined) && !role.can("claim.update")) { setServerError(role.why("claim.update")); return; }
-    updateEncounter(value => ({ ...value, claim: { ...(value.claim ?? EMPTY_CLAIM), ...change } }));
-    if (live && (organismConfirmed !== undefined || ivReasonAdded !== undefined)) void api.claim.update({ encounterId: patient.encounterId, organismConfirmed, ivReasonAdded }).catch(e => setServerError(errorText(e)));
+  const set = (change: Partial<ClaimState>) => updateEncounter(value => ({ ...value, claim: { ...(value.claim ?? EMPTY_CLAIM), ...change } }));
+  // Connected, a fix is a new revision of the visit's saved note (only a doctor writes it), so the letter is built on the
+  // note everyone reads. In sample mode the sample note grows on this phone instead (the two switches in the claim's state).
+  const addToNote = (fix: Sentence) => {
+    if (!role.can("note.save")) { setServerError(role.why("note.save")); return; }
+    setServerError(undefined);
+    api.note.get({ encounterId: patient.encounterId })
+      .then(saved => api.note.save({ encounterId: patient.encounterId, expectedRevision: saved.revision, sentences: withFix(saved.sentences, fix) }))
+      .then(() => { setNoteRead(n => n + 1); setActive(fix.id); setWhy(""); })
+      .catch(e => setServerError(errorText(e)));
   };
   // Judge build: the note and the codes are the server's or absent, never the authored ones. Its stub's codes are keyword rules over
   // the note it sent (and what the letter would carry), so they stay, said as rules and as the model not answering (features/clinical/judge-answer).
   const held = unanswered(JUDGE, server);
-  const note: Sentence[] = server.data?.sentences ?? (JUDGE ? [] : noteFor(state));
-  const codes: (Code & { inTable?: boolean })[] = server.data?.codes ?? (JUDGE ? [] : CODES);
+  const codes: (Code & { inTable?: boolean })[] = server.data?.codes ?? (live || JUDGE ? [] : CODES);
+  const noNote = Boolean(server.data) && !note.length;
   // The highlight follows a code that is still listed, else the first one.
   const cited = codes.some(c => c.evidence === active) || note.some(s => s.id === active) ? active : codes[0]?.evidence ?? "";
   const rows = checks.filter(c => c.status === "blocked" || resolving.has(c.id));
@@ -104,8 +119,14 @@ export function ClaimScreen() {
     wait(2300, () => { updateEncounter(value => approveClaim(value, new Date())); setSending(false); haptic("success"); });
   };
   const fix = (check: PrescriptionCheck) => {
-    if (check.id === "organism") return <FixChip label="Confirm unknown" icon="checkmark" onPress={() => { set({ organismConfirmed: true }); setActive("organism"); }} />;
-    if (check.id === "iv") return <View style={{ gap: 8 }}>
+    // With no note saved, the one fix is to write it; a sentence is added only to a note that exists.
+    if (noNote) return undefined;
+    if (check.id === "organism") return <FixChip label="Confirm unknown" icon="checkmark" onPress={() => { if (live) addToNote(ORGANISM_UNKNOWN); else { set({ organismConfirmed: true }); setActive("organism"); } }} />;
+    // The reason is the doctor's to give: connected they write it, and those words are what the note and the insurer get.
+    if (check.id === "iv") return live ? <View style={{ gap: 8 }}>
+      <Paragraph label="Reason for IV antibiotics" placeholder="Why oral was not used first" value={why} onChange={setWhy} />
+      {why.trim() !== "" && <FixChip label="Add to note" icon="plus" strong onPress={() => addToNote(ivReason(why))} />}
+    </View> : <View style={{ gap: 8 }}>
       <Text style={{ ...type.footnote, color: palette.ink }}>“IV first: vomiting on arrival, unable to keep oral tablets down.”</Text>
       <FixChip label="Add to note" icon="plus" strong onPress={() => { set({ ivReasonAdded: true }); setActive("iv"); }} />
     </View>;
@@ -114,7 +135,7 @@ export function ClaimScreen() {
   const primary = blocked.length ? `Resolve ${blocked.length} to send` : sent ? "Sent · awaiting insurer" : sending ? "Sending…" : queried ? "Send again" : `Send to ${INSURER.toLowerCase()}`;
   const status = approved ? <>Final GL <Tone of="good">approved</Tone></> : sent ? <><Tone of="next">Sent</Tone>, awaiting the insurer</> : queried ? <><Tone of="soon">The insurer asked</Tone> a question</>
     : denied ? <><Tone of="urgent">Denied</Tone> · appeal below</> : appealed ? <><Tone of="next">Appeal sent</Tone>, awaiting the insurer</>
-    : blocked.length ? <><Tone of="soon">{blocked.length} left</Tone> before sending</> : <><Tone of="next">Ready</Tone> to send</>;
+    : !read ? (server.error ? <>The note was not read</> : <>Reading the note</>) : blocked.length ? <><Tone of="soon">{blocked.length} left</Tone> before sending</> : <><Tone of="next">Ready</Tone> to send</>;
   // The decision stays in view. A denied letter's decision is the appeal, which acts in its own review card, so no bar then.
   const bar = approved ? <><BarLine>The discharge's GL check is cleared</BarLine><Action label="Back to discharge" icon="chevron.left" onPress={() => router.back()} /></>
     : denied || appealed ? undefined
@@ -122,7 +143,7 @@ export function ClaimScreen() {
       {serverError ? <BarLine error>{serverError}</BarLine> : <BarLine>{sent ? "Approval clears the discharge's GL check" : `Sends the note and ${codes.length} ${codes.length === 1 ? "code" : "codes"} to ${INSURER}`}</BarLine>}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         <View style={{ flex: 1 }}>{live && !sent && !role.can("claim.send") ? <LockedAction label="Needs a doctor to send" path="claim.send" />
-          : <Decide label={primary} icon={blocked.length ? undefined : sent ? "hourglass" : "paperplane"} muted={blocked.length > 0 || sent} disabled={blocked.length > 0 || sending || sent} onPress={send} />}</View>
+          : <Decide label={primary} icon={blocked.length ? undefined : sent ? "hourglass" : "paperplane"} muted={blocked.length > 0 || sent || !read} disabled={blocked.length > 0 || sending || sent || !read} onPress={send} />}</View>
       </View>
     </>;
 
@@ -137,9 +158,9 @@ export function ClaimScreen() {
 
     <Surface feature={!denied && !appealed} layout={reducedMotion ? undefined : LAYOUT} style={{ padding: 16, gap: 16 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-        <Ring done={approved ? checks.length : checks.length - blocked.length} total={checks.length} />
+        <Ring done={approved ? checks.length : checks.length - blocked.length} total={checks.length || 1} />
         <View style={{ flex: 1, gap: 4 }}>
-          <Insight eyebrow={`${patient.name} · ${INSURER} · estimated ${ESTIMATE}`}>{status}</Insight>
+          <Insight eyebrow={`${patient.name} · ${INSURER}`}>{status}</Insight>
           {serverError && !bar && <Text style={{ ...type.footnote, color: palette.red }}>{serverError}</Text>}
         </View>
       </View>
@@ -170,7 +191,7 @@ export function ClaimScreen() {
       {approved && <Animated.View entering={reducedMotion ? FadeIn : FadeIn.duration(260)} style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: "rgba(15,110,102,0.08)" }}>
         <Seal stampDelay={reducedMotion ? undefined : 120} />
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>Final GL approved · {ESTIMATE}</Text>
+          <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>Final GL approved</Text>
           <Text style={{ ...type.caption, color: palette.muted }}>Discharge no longer waits on the insurer · {new Date(state.approvedAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · {live ? "approved on the insurer's page" : "mock insurer"}</Text>
         </View>
       </Animated.View>}
@@ -181,13 +202,18 @@ export function ClaimScreen() {
         <Text style={{ ...type.overline, color: palette.muted }}>Evidence in the note</Text>
         <Evidence note={note} active={cited} />
       </Animated.View>}
+      {noNote && <View style={{ gap: 8 }}>
+        <Text style={{ ...type.overline, color: palette.muted }}>Evidence in the note</Text>
+        <Text style={{ ...type.footnote, color: palette.amber }}>No note saved for this visit yet. The codes and the insurer's criteria are read from it, so save the note first.</Text>
+        <FixChip label="Open the note" icon="doc.text" strong onPress={() => router.push("/note")} />
+      </View>}
 
       <Animated.View layout={reducedMotion ? undefined : LAYOUT} style={{ gap: 2 }}>
         <Text style={{ ...type.overline, color: palette.muted, paddingBottom: 6 }}>Codes · tap to see why</Text>
         {server.loading && <Drafting label="Coding the note…" style={{ paddingVertical: 6 }} />}
-        {server.data && !codes.length && <Text style={{ ...type.footnote, color: palette.amber }}>No codable diagnosis in the note yet</Text>}
+        {server.data && !codes.length && !noNote && <Text style={{ ...type.footnote, color: palette.amber }}>No codable diagnosis in the note yet</Text>}
         {server.error && <Text style={{ ...type.footnote, color: palette.red }}>{JUDGE ? `${held ? "No codes: " : ""}${server.error}` : `${server.error} · showing the authored codes`}</Text>}
-        {held?.why === "stub" && <Text style={{ ...type.footnote, color: palette.red }}>{held.reason} · codes by keyword rule over the note</Text>}
+        {held?.why === "stub" && !noNote && <Text style={{ ...type.footnote, color: palette.red }}>{held.reason} · codes by keyword rule over the note</Text>}
         {!server.loading && codes.map((c, i) => { const on = c.evidence === cited; return <Arrive key={c.code} index={i} animate={Boolean(server.data)}><Pressable accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${c.code}, ${c.label}, ${c.kind}${c.inTable === false ? ", not in the ICD-10 table" : ""}`}
           onPress={() => { haptic("select"); setActive(c.evidence); }} style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 44 }}>
           <Animated.View style={{ width: 58, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: on ? palette.blue : "rgba(20,28,40,0.06)", transitionProperty: "backgroundColor", transitionDuration: 180 } as never}>
@@ -196,7 +222,7 @@ export function ClaimScreen() {
           <Text numberOfLines={1} style={{ ...type.subhead, flex: 1, color: palette.ink }}>{c.label}</Text>
           <Text style={{ ...type.caption, color: c.inTable === false ? palette.amber : palette.muted }}>{c.inTable === false ? "Not in ICD-10 table" : c.kind}</Text>
         </Pressable></Arrive>; })}
-        {!held?.reason && <SampleLabel answer={server} rule what="coding" />}
+        {!held?.reason && !noNote && <SampleLabel answer={server} rule what="coding" />}
       </Animated.View>
       </Animated.View>
     </Surface>

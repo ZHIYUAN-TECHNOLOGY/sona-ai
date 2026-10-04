@@ -1,6 +1,6 @@
-import { admissions, claims, encounters, guaranteeLetters, patients } from "@sona-ai/db/schema/clinical";
-import { CODES, DENIAL_REASONS, EMPTY_CLAIM, claimChecks, noteFor, type ClaimState } from "@sona-ai/domain/claim";
-import { and, eq, isNull } from "drizzle-orm";
+import { admissions, claims, encounters, guaranteeLetters, notes, patients } from "@sona-ai/db/schema/clinical";
+import { CODES, DENIAL_REASONS, claimChecks } from "@sona-ai/domain/claim";
+import { and, desc, eq, isNull } from "drizzle-orm";
 
 import type { Context } from "./context";
 
@@ -29,7 +29,7 @@ export async function reviewTokenOf(db: Db, encounterId: string) {
 
 async function claimByToken(db: Db, token: string) {
   if (!token) return undefined;
-  const [row] = await db.select({ claim: claims, patient: patients.name, state: encounters.state, patientId: patients.id, hospitalId: encounters.hospitalId }).from(claims)
+  const [row] = await db.select({ claim: claims, patient: patients.name, patientId: patients.id, hospitalId: encounters.hospitalId }).from(claims)
     .innerJoin(encounters, eq(encounters.id, claims.encounterId)).innerJoin(patients, eq(patients.id, encounters.patientId))
     .where(eq(claims.reviewToken, token));
   return row;
@@ -38,20 +38,23 @@ const expired = (sentAt: Date | null, now: Date) => !sentAt || now.getTime() > s
 
 export type ReviewPacket = NonNullable<Awaited<ReturnType<typeof reviewPacket>>>;
 
-/** What the insurer reviews: the patient, the estimate, each code with the note sentence behind it, and the criteria. */
+/**
+ * What the insurer reviews: the patient, each code with the note sentence behind it, and the criteria read against the
+ * visit's saved note. `estimate` is absent unless an amount was recorded with the claim (nothing records one today).
+ */
 export async function reviewPacket(db: Db, token: string, now: Date) {
   const row = await claimByToken(db, token);
   if (!row) return undefined;
-  const state: ClaimState = { ...EMPTY_CLAIM, ...((row.state as { claim?: Partial<ClaimState> }).claim ?? {}) };
-  const note = noteFor(state);
+  const [saved] = await db.select({ sentences: notes.sentences }).from(notes).where(eq(notes.encounterId, row.claim.encounterId)).orderBy(desc(notes.revision)).limit(1);
+  const note = saved?.sentences ?? [];
   return {
-    token, patient: row.patient, insurer: row.claim.insurer, estimate: ringgit(row.claim.estimateCents), status: row.claim.status,
+    token, patient: row.patient, insurer: row.claim.insurer, estimate: row.claim.estimateCents ? ringgit(row.claim.estimateCents) : undefined, status: row.claim.status,
     sentAt: row.claim.sentAt, decidedAt: row.claim.decidedAt, query: row.claim.insurerNote, expired: expired(row.claim.sentAt, now),
-    // Letters sent before codes were frozen with their label and sentence fall back to the authored ones.
+    // Letters sent before codes were frozen with their label and sentence fall back to the code table's label and the note as it is now.
     codes: row.claim.codes.map(({ code, label, kind, evidence, text }) => ({ code,
       label: label ?? CODES.find(k => k.code === code)?.label ?? code, kind: kind ?? CODES.find(k => k.code === code)?.kind ?? "Secondary",
       evidence: text ?? note.find(s => s.id === evidence)?.text ?? "" })),
-    criteria: claimChecks(state),
+    criteria: claimChecks(note),
     denial: row.claim.denialReason ? { reason: row.claim.denialReason, note: row.claim.insurerNote } : undefined,
     appeal: row.claim.appeal ?? undefined,
   };
@@ -112,7 +115,7 @@ export function renderReviewPage(p: ReviewPacket, notice?: string) {
 table{width:100%;border-collapse:collapse}td{padding:8px 4px;border-top:1px solid #eef0f3;vertical-align:top}ul{padding:0;list-style:none;margin:0}li{padding:6px 0}.ok{color:#0F6E66}.no{color:#A23E3E}
 button{width:100%;min-height:46px;border-radius:23px;border:1px solid #D8DBE0;background:#E9EEF6;font:600 16px system-ui;margin-top:10px}.primary{background:#1D1F23;color:#fff;border-color:#1D1F23}
 textarea,select{width:100%;box-sizing:border-box;border-radius:14px;border:1px solid #D8DBE0;padding:12px;font:16px system-ui;margin-top:14px;background:#fff}.deny{color:#A23E3E}ol{padding-left:20px}ol li{padding:6px 0}.outcome{font-weight:600;color:#0F6E66}.outcome.no{color:#A23E3E}.notice{color:#A23E3E;font-weight:600}.tag{font:700 11px system-ui;letter-spacing:.8px;text-transform:uppercase;color:#245BCC}</style></head>
-<body><main><div class="tag">Final guarantee letter · synthetic demo</div><h1>${escape(p.patient)}</h1><div class="muted">${escape(p.insurer)} · estimated ${escape(p.estimate)}</div>
+<body><main><div class="tag">Final guarantee letter · synthetic demo</div><h1>${escape(p.patient)}</h1><div class="muted">${escape(p.insurer)}${p.estimate ? ` · estimated ${escape(p.estimate)}` : ""}</div>
 ${notice ? `<p class="notice">${escape(notice)}</p>` : ""}
 ${appeal}
 <div class="card"><b>Codes and the note behind each</b><table>${rows}</table></div>

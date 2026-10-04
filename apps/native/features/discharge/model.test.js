@@ -13,6 +13,26 @@ test("three blockers until GL, medicines and follow-up are resolved", () => {
   expect(canDischarge(patients.find(p => p.incomplete))).toBe(false);
 });
 
+test("the plan is read from the record, not written for one patient: the charted take-home list, and only the checks its visit's facts can answer", () => {
+  const plan = planFor(amelia);
+  expect(plan.meds).toEqual(amelia.takeHome);
+  // The sample's visit holds a guarantee letter and nothing else: no chart, no model's draft, so neither is claimed as passed.
+  expect(dischargeChecks(EMPTY_DISCHARGE, plan).map(c => c.id)).toEqual(["gl", "meds", "followup"]);
+  // Connected, the server's read of the visit's rows adds what it found: a stable chart and a stored draft pass, a fever blocks.
+  const at = "2026-09-26T00:00:00.000Z", vitals = [{ kind: "temperature", value: 36.9, unit: "°C", at }, { kind: "pulse", value: 84, unit: "bpm", at }];
+  const served = { ...plan, visit: { ...plan.visit, fitAt: at, vitals, drafted: true } };
+  expect(dischargeChecks(EMPTY_DISCHARGE, served).map(c => [c.id, c.status])).toEqual([["observations", "passed"], ["summary", "passed"], ["gl", "blocked"], ["meds", "blocked"], ["followup", "blocked"]]);
+  const febrile = { ...served, visit: { ...served.visit, vitals: [{ ...vitals[0], value: 38.5 }] } };
+  expect(dischargeChecks(EMPTY_DISCHARGE, febrile)[0]).toMatchObject({ id: "observations", status: "blocked", detail: "Temp 38.5 °C" });
+  // A pending result or a ride the ward is waiting on holds the discharge here as it does on the server.
+  expect(dischargeChecks(EMPTY_DISCHARGE, plan, [], [{ id: "result-1", label: "Urine culture sensitivities", detail: "Pending" }]).at(-1)).toMatchObject({ label: "Urine culture sensitivities", status: "blocked" });
+  // A stay with no guarantee letter (self-pay) has no letter check and leaves no claim task; a bed nobody marked fit counts no minutes saved.
+  const selfPay = { ...amelia, visit: {} };
+  expect(dischargeChecks(EMPTY_DISCHARGE, planFor(selfPay)).map(c => c.id)).toEqual(["meds", "followup"]);
+  const done = discharge({ ...newEncounter(), discharge: { ...EMPTY_DISCHARGE, followUp: "2w" } }, selfPay, undefined, new Date(2026, 8, 25, 12, 0));
+  expect([done.tasks.map(t => t.owner), done.discharge.savedMinutes]).toEqual([["Clinic clerk"], 0]);
+});
+
 test("time saved is the ward's typical fit-to-door wait minus this one", () => {
   const fit = new Date(2026, 8, 25, 10, 0);
   expect(formatMinutes(minutesSaved(fit, new Date(2026, 8, 25, 10, 25)))).toBe("4 h 10 m");

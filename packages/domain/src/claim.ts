@@ -6,11 +6,14 @@ import type { Encounter, PrescriptionCheck } from "./types";
  * it, the insurer's criteria as blockers fixed in place, then a send that a mock insurer approves.
  * Approval resolves the discharge card's guarantee-letter blocker.
  *
- * ponytail: authored fixture for the demo patient and a timed mock insurer. Codes come from a model
- * plus a terminology lookup later; criteria come from panel insurer documents stored as data.
+ * Connected, the letter is built on the visit's saved note: the criteria are read against its sentences
+ * and a fix is a sentence the doctor saves to it. No amount is shown: no table records what was billed.
+ * ponytail: sample mode keeps a fixture note (NOTE, CODES) and a timed mock insurer. Criteria are keyword
+ * rules over the note until a model reads the panel insurer's documents against it.
  */
 export type ClaimStatus = "draft" | "sent" | "approved" | "queried" | "denied" | "appealed";
 export type ClaimState = {
+  /** Sample mode's two fixes (each adds its sentence to the fixture note); connected, a fix is saved to the visit's note instead. */
   organismConfirmed: boolean; ivReasonAdded: boolean; status: ClaimStatus; approvedAt?: string;
   /** Live mode: the insurer's review page while the letter is with them, and their question if they queried it. */
   reviewUrl?: string; query?: string;
@@ -26,16 +29,15 @@ export type Code = { code: string; label: string; kind: "Principal" | "Secondary
 
 export const EMPTY_CLAIM: ClaimState = { organismConfirmed: false, ivReasonAdded: false, status: "draft" };
 export const INSURER = "Synthetic insurer";
-export const ESTIMATE = "RM 3,480";
 
+// Sample mode's note for the demo patient. Connected, her visit has no note until her consultation's is saved.
 const NOTE: Sentence[] = [
   { id: "presenting", text: "Five days of cough, fever since yesterday." },
   { id: "xray", text: "Chest film: right lower zone consolidation." },
   { id: "diagnosis", text: "Community-acquired pneumonia, CURB-65 0." },
   { id: "asthma", text: "Background asthma, on a salbutamol inhaler." },
-  { id: "allergy", text: "Penicillin allergy reported, so azithromycin given." },
+  { id: "allergy", text: "Penicillin allergy reported, so IV azithromycin given." },
 ];
-const ORGANISM: Sentence = { id: "organism", text: "Organism not identified; sputum culture not sent." };
 const IV_REASON: Sentence = { id: "iv", text: "IV first: vomiting on arrival, unable to keep oral tablets down." };
 
 export const CODES: Code[] = [
@@ -45,27 +47,49 @@ export const CODES: Code[] = [
   { code: "87.44", label: "Routine chest X-ray", kind: "Procedure", evidence: "xray" },
 ];
 
-/** The note excerpt the codes point into; a fix adds its sentence, so the evidence grows in place. */
+/** Sample mode's note; a fix adds its sentence, so the evidence grows in place. */
 export function noteFor(state: ClaimState): Sentence[] {
-  return [...NOTE, ...(state.organismConfirmed ? [ORGANISM] : []), ...(state.ivReasonAdded ? [IV_REASON] : [])];
+  return [...NOTE, ...(state.organismConfirmed ? [ORGANISM_UNKNOWN] : []), ...(state.ivReasonAdded ? [IV_REASON] : [])];
 }
 
-export function claimChecks(state: ClaimState): PrescriptionCheck[] {
-  return [
-    { id: "severity", label: "Severity score documented", status: "passed", detail: "CURB-65 0" },
-    { id: "imaging", label: "Imaging result attached", status: "passed", detail: "Chest film report" },
-    { id: "stay", label: "Stay within the approved plan", status: "passed", detail: "36 h of 3 days" },
-    { id: "organism", label: "Organism documented", status: state.organismConfirmed ? "passed" : "blocked", detail: "J18.9 needs the note to say the organism is unknown" },
-    { id: "iv", label: "Reason for IV antibiotics", status: state.ivReasonAdded ? "passed" : "blocked", detail: "The insurer asks why oral was not used first" },
-  ];
+/**
+ * The sentence each fix saves to the note. Its ID is the criterion it answers, and the IV reason is the doctor's own
+ * words after "IV first:", so it still reads as the reason once the note is edited as a whole.
+ */
+export const ORGANISM_UNKNOWN: Sentence = { id: "organism", text: "Organism not identified." };
+export const ivReason = (why: string): Sentence => ({ id: "iv", text: `IV first: ${why.trim()}` });
+
+type Criterion = { id: string; label: string; applies?: RegExp; met: RegExp; missing: string };
+/**
+ * The synthetic insurer's criteria as rules over the note. `applies`: only a note that says so calls for it.
+ * ponytail: keywords stand in for a model reading the insurer's policy (the same rules are rows in insurer_criteria).
+ * The policy's length-of-stay limit is not judged: no table records when an admission began.
+ */
+const CRITERIA: Criterion[] = [
+  { id: "severity", label: "Severity score documented", met: /CURB-65|CRB-65|qSOFA|NEWS2?\b|severity score/i, missing: "No severity score in the note" },
+  { id: "imaging", label: "Imaging result attached", met: /chest film|x-?ray|radiograph|ultrasound|\bCT\b|\bMRI\b|echocardiogra/i, missing: "No imaging result in the note" },
+  { id: "organism", label: "Organism documented", applies: /pneumonia/i, met: /organism|culture/i, missing: "J18.9 needs the note to say the organism is unknown" },
+  // IV and its reason in one sentence: "IV azithromycin given" alone says what was given, not why oral was not.
+  { id: "iv", label: "Reason for IV antibiotics", applies: /\bIV\b|intravenous/i, met: /^(?=.*(\bIV\b|intravenous))(?=.*(IV first:|because|unable|vomit|could not|not tolerat|nil by mouth))/i, missing: "The insurer asks why oral was not used first" },
+];
+// A saved note keeps a whole section in one entry, so each of its sentences is read by itself and only the one that says it is quoted.
+const sentencesOf = (s: Sentence) => s.text.split(/(?<=[.!?])\s+|\n+/).filter(Boolean);
+
+/** Each criterion read against the note: met by a sentence that says it (quoted as the detail), blocked until one does. */
+export function claimChecks(note: Sentence[]): PrescriptionCheck[] {
+  const text = note.map(s => s.text).join(" ");
+  return CRITERIA.filter(c => !c.applies || c.applies.test(text)).map(c => {
+    const said = note.flatMap(s => s.id === c.id ? [s.text] : sentencesOf(s).filter(t => c.met.test(t)))[0];
+    return { id: c.id, label: c.label, status: said ? "passed" as const : "blocked" as const, detail: said ? `“${said}”` : c.missing };
+  });
 }
 
 export type ClaimReceipt = { status: "sent"; encounterId: string; requestId: string; approvedBy: string; sentAt: string };
 
-/** Server rule: a claim goes to the insurer only with a named approver and every criterion met. */
-export function decideClaimSend(state: ClaimState, command: Approval, at: Date): Refusal | ClaimReceipt {
+/** Server rule: a claim goes to the insurer only with a named approver and every criterion met by the note. */
+export function decideClaimSend(note: Sentence[], command: Approval, at: Date): Refusal | ClaimReceipt {
   if (!command.approvedBy.trim()) return { status: "refused", reason: "unapproved", open: [] };
-  const open = openLabels(claimChecks(state));
+  const open = openLabels(claimChecks(note));
   if (open.length) return { status: "refused", reason: "blocked", open };
   const { encounterId, requestId, approvedBy } = command;
   return { status: "sent", encounterId, requestId, approvedBy, sentAt: at.toISOString() };
@@ -100,7 +124,7 @@ const APPEAL_RULES: Record<DenialCode, { points: [RegExp, string][]; closing: st
     [/penicillin|allergy/i, "A penicillin allergy narrowed the antibiotic choice, so the first doses were given under observation."],
   ], closing: "Admission was needed to give antibiotics safely. We ask that the denial be withdrawn and the final guarantee letter approved." },
   DOC: { points: [
-    [/organism/i, "The organism is documented: not identified, with no sputum culture sent. J18.9 is the code for pneumonia with an unidentified organism."],
+    [/organism/i, "The organism is documented as not identified. J18.9 is the code for pneumonia with an unidentified organism."],
     [/CURB-65/i, "Severity is documented: CURB-65 score 0, recorded with the diagnosis."],
     [/consolidation|chest (film|x-?ray)/i, "The imaging result is documented: right lower zone consolidation on the chest film."],
   ], closing: "The organism and severity are both in the note. We ask that the claim be reassessed on the documentation attached and the final guarantee letter approved." },

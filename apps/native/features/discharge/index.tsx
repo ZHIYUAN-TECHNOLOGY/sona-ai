@@ -1,7 +1,7 @@
 import { ErrorLine, PressScale } from "@/components/sona/parts";
 import { router, Stack } from "expo-router";
 import { MarkedText } from "@/components/sona/marked-text";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
 import Animated, { FadeIn, withSpring, withTiming } from "react-native-reanimated";
 import { LAYOUT, riseIn } from "@/components/sona/motion";
@@ -25,7 +25,7 @@ import { markTerms } from "@/features/encounter/emphasis";
 import { refreshCheckIns, useCheckIns } from "@/features/check-ins/state";
 import { useFindings } from "@/features/live/findings-sync";
 import type { Patient, PrescriptionCheck } from "@/features/encounter/types";
-import { EMPTY_DISCHARGE, FOLLOW_UPS, LANGUAGES, checkInDaysFor, checkInDaysOf, discharge, dischargeChecks, fitAtOf, followUpsOf, formatMinutes, planFor, type DischargeState, type MedChange } from "./model";
+import { EMPTY_DISCHARGE, FOLLOW_UPS, LANGUAGES, SAMPLE_FIT_MINUTES, checkInDaysFor, checkInDaysOf, discharge, dischargeChecks, fitAtOf, followUpsOf, formatMinutes, planFor, type DischargePlan, type DischargeState, type MedChange, type Wait } from "./model";
 import { NoVisit } from "@/components/sona/no-visit";
 
 /*
@@ -33,6 +33,9 @@ import { NoVisit } from "@/components/sona/no-visit";
  * (0.8 s, damping 0.85) with its summary lines 40 ms apart; no timed "drafting" stands in front of it.
  * Inside, the prescribe card's pattern: ring, only what blocks, each fixed where it sits, a button
  * (pinned in the decision bar) that morphs into the discharge, and a receipt that stamps in the card.
+ * Connected, the plan is the server's read of this visit's rows (discharge.plan): the charted take-home
+ * list, when the bed was marked fit, the guarantee letter, the chart's observations and what else holds
+ * the bed, so the card shows exactly what discharge.request will check.
  */
 const TEAL = palette.green;
 
@@ -109,27 +112,42 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
   const { encounters, updateEncounter } = useEncounter();
   const { reducedMotion } = useAccessibleEffects();
   const encounter = encounters[patient.id];
-  const plan = planFor(patient);
   const state = encounter?.discharge ?? EMPTY_DISCHARGE;
-  // An open incidental finding travels with the patient: it blocks until tracked or dismissed.
-  const found = useFindings();
-  const openFindings = found.findings.filter(f => f.encounterId === patient.encounterId && f.status === "open");
-  const checks = dischargeChecks(state, plan, openFindings);
-  const blocked = checks.filter(c => c.status === "blocked");
-  const resolving = useSettling(blocked.map(c => c.id));
-  const [full, setFull] = useState(false);
-  const [busy, setBusy] = useState(false);
-  // The demo patient became fit a little before the card opened, so the saving reads the same at any hour.
-  const [fitAt] = useState(() => new Date(Date.now() - plan.fitMinutesAgo * 60000));
-  // The outcome's check draws only when the discharge happens here, not when a discharged visit reopens.
-  const [wasDone] = useState(() => Boolean(state.dischargedAt));
-  const fresh = !wasDone && !reducedMotion;
   const { live, refresh } = useServerEncounter(patient);
   const { user } = useLive();
   const [serverError, setServerError] = useState<string>();
   const role = useRole();
   // Live mode: the full summary and the leaflet in the chosen language are drafted by the server from this patient's record.
   const draft = useLiveDraft(patient.encounterId, state.language);
+  // Connected: the plan and what else holds the bed, read by the server from this visit's rows. Sample mode has no rows,
+  // so the plan is the fixture record's own (its guarantee letter included).
+  const [served, setServed] = useState<{ plan: DischargePlan; waits: Wait[] }>();
+  useEffect(() => {
+    if (!live) return;
+    let gone = false;
+    api.discharge.plan({ encounterId: patient.encounterId }).then(r => { if (!gone) setServed(r); }).catch(e => { if (!gone) setServerError(errorText(e)); });
+    return () => { gone = true; };
+  }, [live, patient.encounterId]);
+  const base = served?.plan ?? planFor(patient);
+  // The summary check exists once a model's draft is stored for the visit, which is the moment the card has one.
+  const plan: DischargePlan = { ...base, visit: { ...base.visit, drafted: base.visit.drafted || draft.data?.source === "model" } };
+  // Connected, nothing can be decided until the visit's rows have been read (or the read failed and said so).
+  const reading = live && !served && !serverError;
+  // An open incidental finding travels with the patient: it blocks until tracked or dismissed.
+  const found = useFindings();
+  const openFindings = found.findings.filter(f => f.encounterId === patient.encounterId && f.status === "open");
+  const checks = dischargeChecks(state, plan, openFindings, served?.waits);
+  const blocked = checks.filter(c => c.status === "blocked");
+  const resolving = useSettling(blocked.map(c => c.id));
+  const [full, setFull] = useState(false);
+  const [busy, setBusy] = useState(false);
+  // Sample mode only: the demo patient became fit a little before the card opened, so the saving reads the same at any hour.
+  // Connected, fit is when the admission was marked fit, and unknown when nobody marked it.
+  const [sampleFit] = useState(() => new Date(Date.now() - SAMPLE_FIT_MINUTES * 60000));
+  const fitAt = plan.visit.fitAt ? new Date(plan.visit.fitAt) : live ? undefined : sampleFit;
+  // The outcome's check draws only when the discharge happens here, not when a discharged visit reopens.
+  const [wasDone] = useState(() => Boolean(state.dischargedAt));
+  const fresh = !wasDone && !reducedMotion;
   // Judge build: the summary and the leaflet are the model's or absent. While it drafts both say so; a failed call or the
   // server's stub is said once, where the summary would be, and the plan's authored words never stand in (features/clinical/judge-answer).
   const held = unanswered(JUDGE, draft);
@@ -190,7 +208,7 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
           <Text style={{ ...type.caption, color: palette.muted }}>{m.detail}</Text>
         </View>
       </View>)}
-      <Text style={{ ...type.caption, color: palette.muted }}>{plan.meds.filter(m => m.change === "unchanged").map(m => m.name).join(", ")} unchanged</Text>
+      {plan.meds.some(m => m.change === "unchanged") && <Text style={{ ...type.caption, color: palette.muted }}>{plan.meds.filter(m => m.change === "unchanged").map(m => m.name).join(", ")} unchanged</Text>}
       <FixChip label="Confirm take-home list" strong onPress={() => set({ medsConfirmed: true })} />
     </View>;
     const finding = openFindings.find(f => check.id === `finding-${f.id}`);
@@ -198,7 +216,10 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
     return undefined;
   };
 
-  const primary = busy ? "Freeing the bed…" : blocked.length ? `Resolve ${blocked.length} to discharge` : `Discharge ${first}`;
+  const primary = busy ? "Freeing the bed…" : reading ? "Reading the record…" : blocked.length ? `Resolve ${blocked.length} to discharge` : `Discharge ${first}`;
+  // What discharging leaves behind, said as it will be: the tasks this plan creates, and a leaflet only where one will go home
+  // (the model's draft; sample mode's own).
+  const tasks = plan.visit.gl ? 2 : 1, leaflet = !live || draft.data?.source === "model";
   // A model's three lines replace the plan's own once it drafted them (live mode); its take-home list was checked on the server.
   const lines = draft.data?.lines ?? plan.summary;
   const summary: [string, string][] = [["Diagnosis", lines.diagnosis], ["Course", lines.course], ["Plan", lines.plan]];
@@ -216,10 +237,10 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
       <View style={{ flex: 1 }}><Action label="Done" onPress={() => router.back()} /></View>
     </View>
   </> : <>
-    {error ? <BarLine error>{error}</BarLine> : <BarLine>{`Frees ${plan.bed} · creates 2 follow-up tasks · leaflet in ${language.name}`}</BarLine>}
+    {error ? <BarLine error>{error}</BarLine> : <BarLine>{`Frees ${plan.bed} · creates ${tasks} follow-up ${tasks === 1 ? "task" : "tasks"}${leaflet ? ` · leaflet in ${language.name}` : ""}`}</BarLine>}
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
       <View style={{ flex: 1 }}>{live && !role.can("discharge.request") ? <LockedAction label="Needs a doctor's approval" path="discharge.request" />
-        : <Decide label={primary} icon={blocked.length ? undefined : busy ? "hourglass" : "bed.double"} muted={blocked.length > 0} disabled={blocked.length > 0 || busy} onPress={go} />}</View>
+        : <Decide label={primary} icon={blocked.length ? undefined : busy ? "hourglass" : "bed.double"} muted={blocked.length > 0 || reading} disabled={blocked.length > 0 || busy || reading} onPress={go} />}</View>
     </View>
   </>;
 
@@ -243,7 +264,7 @@ function DischargePage({ patient, answers, animate }: { patient: Patient; answer
           <Seal draw stampDelay={fresh ? 120 : undefined} />
           <Animated.View entering={fresh ? riseIn({ delay: 220, distance: 6, duration: 360 }) : undefined} style={{ flex: 1, gap: 2 }}>
             <Text style={{ ...type.subhead, fontWeight: "700", color: palette.ink }}>{plan.bed} free{saved ? ` · ${saved} earlier` : ""}</Text>
-            <Text style={{ ...type.caption, color: palette.muted }}>{[followUps && `${followUps} follow-up ${followUps === 1 ? "task" : "tasks"} created`, "leaflet ready to print", time(done)].filter(Boolean).join(" · ")}</Text>
+            <Text style={{ ...type.caption, color: palette.muted }}>{[followUps && `${followUps} follow-up ${followUps === 1 ? "task" : "tasks"} created`, leaflet && "leaflet ready to print", time(done)].filter(Boolean).join(" · ")}</Text>
           </Animated.View>
         </View>
         <CareInvite encounterId={patient.encounterId} />
