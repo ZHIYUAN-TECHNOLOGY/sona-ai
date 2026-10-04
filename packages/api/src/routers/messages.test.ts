@@ -132,6 +132,35 @@ test("a model drafts a reply once per message: opening the thread again shows it
   expect((await nurse.messages.draft({ patientId: "SYN-1042" }))!.text).toBe("Draft 2");
 });
 
+test("an urgent message is answered at once by Sona's call-999 line, once however often it is resent; the inbox keeps the patient's words", async () => {
+  const told: { title: string; body: string }[] = [];
+  const fetch = (async (_url: string, init: RequestInit) => {
+    const pushes = JSON.parse(String(init.body)) as typeof told;
+    told.push(...pushes);
+    return Response.json({ data: pushes.map(() => ({ status: "ok", id: "x" })) });
+  }) as unknown as typeof globalThis.fetch;
+  const { amelia, farid, doctor, heard, send, later } = await world(undefined, { fetch });
+  await amelia.care.push.register({ token: "ExponentPushToken[amelia]", platform: "ios" });
+  heard.length = 0;
+  const call = "Hi Amelia, please call 999 or go to the nearest emergency department now. Don't wait for a reply here. Your care team will call you.";
+  const sent = await amelia.care.messages.send({ text: "Sakit dada sejak pagi", requestId: "urgent-1" });
+  expect(sent).toMatchObject({ from: "patient", text: "Sakit dada sejak pagi" });
+  expect(await amelia.care.messages.send({ text: "Sakit dada sejak pagi", requestId: "urgent-1" })).toEqual(sent);
+  // Her words first, then Sona's line; one line and one push for the two sends, and her thread hears it.
+  expect((await amelia.care.messages.list()).map(m => [m.from, m.text])).toEqual([["patient", "Sakit dada sejak pagi"], ["care-team", call]]);
+  expect(told).toEqual([expect.objectContaining({ title: "Call 999 now", body: call })]);
+  expect(heard).toContainEqual({ topic: "messages", patientId: "SYN-1042" });
+  // Still waiting for a person: the inbox row and its task stay open, with her words, not Sona's.
+  expect((await doctor.messages.inbox()).threads[0]).toMatchObject({ patientId: "SYN-1042", label: "urgent", lastText: "Sakit dada sejak pagi", lastFrom: "patient", waiting: 1, handled: false });
+  expect((await doctor.messages.thread({ patientId: "SYN-1042" })).messages.map(m => [m.author, m.unanswered])).toEqual([["Amelia", true], ["Care team", false]]);
+
+  // Written in Chinese, answered in Chinese; a message that is not urgent gets no line.
+  await send(farid, "我胸痛");
+  later(1);
+  await send(farid, "When is my next appointment?");
+  expect((await farid.care.messages.list()).map(m => [m.from, m.text])).toEqual([["patient", "我胸痛"], ["care-team", "Daniel您好，请立即拨打999或前往最近的急诊部。不要在这里等回复。医护团队会给您打电话。"], ["patient", "When is my next appointment?"]]);
+});
+
 function memoryBucket() {
   const objects = new Map<string, { bytes: Uint8Array; contentType?: string }>();
   return { objects, put: async (key: string, bytes: Uint8Array, o?: { httpMetadata?: { contentType?: string } }) => { objects.set(key, { bytes, contentType: o?.httpMetadata?.contentType }); },

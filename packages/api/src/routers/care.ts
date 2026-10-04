@@ -16,6 +16,9 @@ import { careDosesRouter } from "./doses";
 import { careMessagesRouter } from "./messages";
 import { registerPushToken, unregisterPushToken } from "../push";
 import { setTrainingConsent, trainingConsentOf } from "./training";
+import { LINES, callNow } from "../voice-agent/answer";
+import { tellCareTeam } from "../voice-agent/care-team";
+import { mayReport } from "../voice-agent/live";
 
 /**
  * Errors a patient can see carry a stable `data.code` (CODE_UNKNOWN, SPEECH_OFF, …) so Sona Care can
@@ -131,12 +134,21 @@ export const careRouter = {
   /**
    * Patient: any question, answered. Their own care comes from their discharge plan (their record; "None yet"
    * while they are still in hospital), anything else from general knowledge: `grounded` says which. The stub
-   * answers nothing (source "fixture") and the app keeps its authored plan answers.
+   * answers nothing (source "fixture") and the app keeps its authored plan answers. A question that reports feeling
+   * worse or names an emergency sign also reaches their care team, as it does in the live call: `careTeam` is the
+   * flagged task (the call's `sona_care_team`) with Sona's line saying so (`line`, in the plan's language), there only
+   * once a task is made.
    */
   ask: patientProcedure.input(z.object({ question: z.string().trim().min(2).max(500) })).handler(async ({ context, input }) => {
     const plan = await patientPlan(context);
     const record = plan.status === "discharged" ? planText(plan) : "None yet: they are still in hospital.";
-    return (context.models ?? stubModels).answerFromPlan({ question: input.question, plan: record, language: plan.language ?? "en" });
+    // The live call's gates: the keyword floors, or the model's own urgent flag; the care team's reader then decides. Never fails the answer.
+    const tell = () => tellCareTeam(context, context.hospitalId, context.patientId, input.question).catch(error => { console.error("care team not told", error); return undefined; });
+    const floor = callNow(input.question) || mayReport(input.question) ? tell() : undefined;
+    const language = plan.language ?? "en";
+    const answer = await (context.models ?? stubModels).answerFromPlan({ question: input.question, plan: record, language });
+    const told = await (floor ?? (answer.urgent ? tell() : undefined));
+    return told ? { ...answer, careTeam: { ...told, line: LINES[language].told } } : answer;
   }),
 
   /**
