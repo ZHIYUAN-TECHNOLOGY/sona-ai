@@ -7,7 +7,7 @@ import { careLinkOf } from "@sona-ai/api/routers/hospital";
 import { LINES, answerTurn, basetenChat } from "@sona-ai/api/voice-agent/answer";
 import { tellCareTeam } from "@sona-ai/api/voice-agent/care-team";
 import { SonaTranscriber } from "@sona-ai/api/voice-agent/listen";
-import { SonaVoice, basetenSpeak, startingBoxes, warmBoxes, type PhoneVoice } from "@sona-ai/api/voice-agent/voice";
+import { SonaVoice, VOICE_RATE, basetenSpeak, basetenSpeakStream, startingBoxes, warmBoxes, type PhoneVoice } from "@sona-ai/api/voice-agent/voice";
 import { hosted } from "@sona-ai/api/sagemaker";
 import { Agent, getAgentByName, type Connection } from "agents";
 import { withVoice, type VoiceTurnContext } from "agents/voice";
@@ -32,7 +32,7 @@ type Language = keyof typeof LINES;
  * - `sona_turn` {grounded, urgent, source, model?, waking?}: how the answer went, after its last sentence.
  * - `sona_care_team` {taskId, title}: what the patient reported reached their care team as a flagged task.
  */
-export class SonaVoiceAgent extends withVoice(Agent<Env>) {
+export class SonaVoiceAgent extends withVoice(Agent<Env>, { audioFormat: "pcm16", sampleRate: VOICE_RATE }) {
   readonly #baseten = hosted(this.env);
   readonly #models = this.#baseten ? basetenModels(this.#baseten) : stubModels;
   readonly #chat = this.#baseten && basetenChat(this.#baseten);
@@ -41,10 +41,11 @@ export class SonaVoiceAgent extends withVoice(Agent<Env>) {
   /** The language chosen at discharge, read when a call starts: Sona's own lines when the app does not say (`?lang=`). */
   #discharged: Language | undefined;
 
+  // Her voice comes as it is made (raw PCM, a piece at a time); box ② needs its /v1/tts/stream route for it.
   tts = new SonaVoice(this.#baseten ? basetenSpeak(this.#baseten) : async () => ({}), (said, turn) => {
     const phone = turn && this.#phoneOf.get(turn);
     if (phone) send(phone, { type: "sona_say", ...said });
-  });
+  }, undefined, this.#baseten && basetenSpeakStream(this.#baseten));
 
   // The app speaks the voice protocol only: no state-sync or identity frames (which would name the instance).
   shouldSendProtocolMessages() {

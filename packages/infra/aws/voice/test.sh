@@ -16,7 +16,7 @@ down() {
 trap down EXIT
 aws sagemaker delete-endpoint-config --endpoint-config-name $N > /dev/null 2>&1; aws sagemaker delete-model --model-name $N > /dev/null 2>&1
 aws sagemaker create-model --model-name $N --execution-role-arn "arn:aws:iam::${A}:role/sona-sagemaker-hosting" \
-  --primary-container "{\"Image\":\"${A}.dkr.ecr.ap-southeast-5.amazonaws.com/sona/voice:1\",\"ModelDataSource\":{\"S3DataSource\":{\"S3Uri\":\"s3://${B}/voice/1/\",\"S3DataType\":\"S3Prefix\",\"CompressionType\":\"None\"}}}" \
+  --primary-container "{\"Image\":\"${A}.dkr.ecr.ap-southeast-5.amazonaws.com/sona/voice:2\",\"ModelDataSource\":{\"S3DataSource\":{\"S3Uri\":\"s3://${B}/voice/1/\",\"S3DataType\":\"S3Prefix\",\"CompressionType\":\"None\"}}}" \
   --query ModelArn --output text || exit 1
 aws sagemaker create-endpoint-config --endpoint-config-name $N --production-variants \
   "VariantName=main,ModelName=$N,InstanceType=$TYPE,InitialInstanceCount=1,ContainerStartupHealthCheckTimeoutInSeconds=900,ModelDataDownloadTimeoutInSeconds=1200" \
@@ -56,3 +56,5 @@ for line in "Take one tablet after food, three times a day." "Makan satu biji se
 done
 echo '{"query": "When should I take amoxicillin?", "passages": ["Amoxicillin 500mg: take 1 tablet three times a day after food.", "Follow-up at the clinic on Thursday."]}' > "$OUT/rank.json"
 echo "rerank: $(call application/json "$OUT/rank.json" "$OUT/rank.out") | $(cat "$OUT/rank.out")"
+# THEN: one more command while the endpoint is up.
+[ -z "${THEN:-}" ] || bash -c "$THEN"

@@ -15,6 +15,12 @@ export const VOICE_BUDGET_MS = 8000;
 /** Sona's voice for one sentence: MP3 bytes, or none (`waking` minutes while box ② starts). */
 export type Spoken = { audio?: Uint8Array; waking?: number };
 export type Speak = (text: string, signal: AbortSignal) => Promise<Spoken>;
+/** Her voice for one sentence as it is made: raw PCM16 in pieces of any size; none, and `waking`, while box ② starts. */
+export type SpeakStream = (text: string, signal: AbortSignal) => AsyncGenerator<Uint8Array, Spoken | void>;
+/** The rate box ②'s VoxCPM2 makes sound at (tts_server.py), which the phone is told in `audio_config`. */
+export const VOICE_RATE = 48_000;
+/** A piece for the phone: whole samples, and at least 50 ms of them, so its player is not fed slivers. */
+const PIECE = VOICE_RATE / 20 * 2;
 /** A sentence for the phone's voice, and why: Sona's voice is starting (about `waking` minutes), slow, or unavailable. */
 export type PhoneVoice = { text: string; reason: "starting" | "slow" | "unavailable"; waking?: number };
 
@@ -24,7 +30,48 @@ export class SonaVoice {
   /** Per turn (the SDK gives each turn its own signal): the sentences asked so far and, once one falls back, why. */
   readonly #turns = new WeakMap<AbortSignal, { asked: number; fellBack?: Omit<PhoneVoice, "text"> }>();
 
-  constructor(private readonly speak: Speak, private readonly onText: (said: PhoneVoice, turn?: AbortSignal) => void, private readonly budgetMs = VOICE_BUDGET_MS) {}
+  constructor(private readonly speak: Speak, private readonly onText: (said: PhoneVoice, turn?: AbortSignal) => void, private readonly budgetMs = VOICE_BUDGET_MS,
+    private readonly stream?: SpeakStream) {}
+
+  /**
+   * The sentence as her voice makes it (the SDK plays each piece as it comes: first sound 0.15 s after asking, where
+   * the whole sentence as one MP3 took its 2 s, 4 Oct). The budget is for the first piece; a sentence with no sound
+   * falls to the phone's voice as in `synthesize`. Six calls with every model in Malaysia (4 Oct): her voice 1.5-2.25 s
+   * after the patient stops, a greeting or a question about care alike (the words heard at 0.1-1.0 s, Gemma's first
+   * sentence about a second later).
+   */
+  async *synthesizeStream(text: string, turn?: AbortSignal): AsyncGenerator<ArrayBuffer> {
+    if (turn?.aborted) return;
+    const state = turn ? this.#turns.get(turn) ?? { asked: 0 } : { asked: 0 };
+    if (turn) this.#turns.set(turn, state);
+    let why = state.fellBack;
+    if (!why && this.stream) {
+      const first = AbortSignal.timeout(state.asked++ ? 2 * this.budgetMs : this.budgetMs), stop = new AbortController();
+      const end = () => stop.abort();
+      first.addEventListener("abort", end, { once: true });
+      turn?.addEventListener("abort", end, { once: true });
+      const pieces = this.stream(text, stop.signal);
+      let held = new Uint8Array(0), sound = false, said: Spoken | void = undefined;
+      try {
+        for (;;) {
+          const next = await pieces.next();
+          if (next.done) { said = next.value; break; }
+          if (!sound) first.removeEventListener("abort", end); // she has started: the budget was for her first sound
+          sound = true;
+          const all = new Uint8Array(held.length + next.value.length);
+          all.set(held); all.set(next.value, held.length);
+          const whole = all.length - (all.length % 2), cut = whole >= PIECE ? whole : 0;
+          held = all.slice(cut);
+          if (cut && !turn?.aborted) yield all.slice(0, cut).buffer as ArrayBuffer;
+        }
+      } catch { /* a stream that broke: what came was played */ }
+      if (turn?.aborted) return; // interrupted: nothing more to play or read
+      if (held.length > 1) yield held.slice(0, held.length - (held.length % 2)).buffer as ArrayBuffer;
+      if (sound) return;
+      why = state.fellBack = said?.waking ? { reason: "starting", waking: said.waking } : { reason: first.aborted ? "slow" : "unavailable" };
+    }
+    this.onText({ text, ...why ?? { reason: "unavailable" } }, turn);
+  }
 
   async synthesize(text: string, turn?: AbortSignal): Promise<ArrayBuffer | null> {
     if (turn?.aborted) return null;
@@ -80,6 +127,20 @@ export async function warmBoxes(options: Baseten) {
     warm("voice", ["/v1/audio/transcriptions", quiet], ["/v1/tts", JSON.stringify({ text: "Hai." }), "application/json"]),
     warm("brain", ["/v1/chat/completions", JSON.stringify({ model: BRAIN_MODEL, messages: [{ role: "user", content: "Hai" }], max_tokens: 1 }), "application/json"]),
   ]);
+}
+
+/** Box ②'s /v1/tts/stream as `SpeakStream` (on SageMaker the box tells it from /v1/tts by "stream" in the body). */
+export function basetenSpeakStream(options: Baseten): SpeakStream {
+  const { send } = boxes(options);
+  return async function* (text, signal) {
+    try {
+      const res = await send("voice", "/v1/tts/stream", JSON.stringify({ text, stream: true }), "application/json", 30_000, signal);
+      answered("voice");
+      for await (const piece of res.body as unknown as AsyncIterable<Uint8Array>) yield piece;
+    } catch {
+      return wakingOf("voice");
+    }
+  };
 }
 
 /** Box ②'s /v1/tts as `Speak`: a cold box is woken and not waited for, so the phone reads while it starts. */

@@ -9,6 +9,7 @@ import numpy as np
 import soundfile as sf
 import uvicorn
 from fastapi import FastAPI, Response
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 voice = None
@@ -51,6 +52,17 @@ async def speak(s: Speak):
     buf = io.BytesIO()
     sf.write(buf, wav, rate, format="MP3")
     return Response(buf.getvalue(), media_type="audio/mpeg")
+
+
+# The same line as it is made: raw PCM16 at the model's rate (48 kHz), a piece at a time, so its first sound can be
+# played while the rest is still being made (the whole line as one MP3 above is a wait of its full length).
+@app.post("/v1/tts/stream")
+async def speak_stream(s: Speak):
+    async def pieces():
+        async for chunk in voice.generate(target_text=s.text, cfg_value=s.cfg_value):
+            yield (np.clip(chunk, -1, 1) * 32767).astype("<i2").tobytes()
+
+    return StreamingResponse(pieces(), media_type="application/octet-stream", headers={"x-sample-rate": str(rate)})
 
 
 if __name__ == "__main__":  # the engine starts its worker process with spawn, which re-imports this file

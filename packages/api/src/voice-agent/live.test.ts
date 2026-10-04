@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
-import { Checks, LiveTurns, liveBrief, mayReport } from "./live";
+import { answerTurn, type ChatMessage, type ChatStream } from "./answer";
+import { CallHistory, Checks, LiveTurns, Router, Says, liveBrief, liveStart, mayReport, onlyTalk, type PhoneEvent } from "./live";
 
 const listen = { listen: true, text: "", end_of_turn: false };
 const speak = (text: string, end_of_turn = false) => ({ listen: false, text, end_of_turn });
@@ -59,4 +60,196 @@ test("999 said in words counts as sending them to 999", () => {
   const turns = new LiveTurns();
   turns.unit(speak(" Call nine nine nine now.", true));
   expect(turns.sent999(0)).toBe(true);
+});
+
+// The hybrid call (SONA_LIVE_BRAIN=gemma): Gemma writes, box ④ says.
+const end = speak("", true);
+/** A Says, the says it sent to the box, and what the phone was shown of the box's seconds (through LiveTurns, as the agent does). */
+function hybrid() {
+  const sent: string[] = [], turns = new LiveTurns(), shown: PhoneEvent[] = [];
+  const says = new Says(say => sent.push(say.text));
+  const show = (u?: ReturnType<Says["unit"]>) => { if (u) shown.push(...turns.unit(u)); };
+  return { says, sent, turns, shown, show, box: (u: Parameters<Says["unit"]>[0]) => show(says.unit(u)) };
+}
+
+test("the start message holds her to listening only with Gemma as the brain; her own brain's start is as it was", () => {
+  expect(liveStart("brief", "own", true)).toEqual({ type: "start", system: "brief", voice: "v1", transcribe: true });
+  expect(liveStart("brief", "own", false)).toEqual({ type: "start", system: "brief", voice: "v1", transcribe: false });
+  expect(liveStart("brief", "gemma", true)).toEqual({ type: "start", system: "brief", voice: "v1", transcribe: false, hold: true });
+  expect(liveStart("brief", "gemma", false, "own")).toEqual({ type: "start", system: "brief", voice: "v1", transcribe: true, hold: true, turn_silence_ms: 500 });
+  expect(liveStart("brief", "own", true, "own")).toEqual({ type: "start", system: "brief", voice: "v1", transcribe: true });
+});
+
+test("the first sentence goes to the box at once; those written while she says it go together at her end of turn, in order, as one answer", () => {
+  const { says, sent, turns, shown, show, box } = hybrid();
+  show(says.begin());
+  says.sentence("Take it after food.");
+  expect(sent).toEqual(["Take it after food."]);
+  says.sentence("Twice a day.");
+  says.sentence("Drink water with it.");
+  expect(sent).toHaveLength(1); // one say is with the box at a time: another would replace it
+  box(listen);
+  box(speak("Take it after"));
+  box(speak(" food."));
+  box(end);
+  expect(sent).toEqual(["Take it after food.", "Twice a day. Drink water with it."]);
+  show(says.end()); // Gemma finished while she is still speaking: the answer stays open
+  box(speak("Twice a day."));
+  box(speak(" Drink water with it."));
+  expect(turns.said).toEqual([]);
+  box(end);
+  expect(turns.said).toEqual(["Take it after food. Twice a day. Drink water with it."]);
+  expect(shown.filter(e => e.type === "transcript_start" || e.type === "transcript_end")).toEqual([
+    { type: "transcript_start", role: "assistant" }, { type: "transcript_end", text: "Take it after food. Twice a day. Drink water with it." },
+  ]);
+});
+
+test("an answer she finishes saying before Gemma finishes writing stays open, and closes when Gemma does", () => {
+  const { says, sent, turns, show, box } = hybrid();
+  show(says.begin());
+  says.sentence("Rest today.");
+  box(speak("Rest today."));
+  box(end);
+  expect(turns.said).toEqual([]);
+  says.sentence("I've let your care team know."); // nothing is with the box, so it goes at once
+  expect(sent).toEqual(["Rest today.", "I've let your care team know."]);
+  box(speak("I've let your care team know."));
+  box(end);
+  expect(turns.said).toEqual([]);
+  show(says.end());
+  expect(turns.said).toEqual(["Rest today. I've let your care team know."]);
+});
+
+test("Chinese sentences go and show with no space between them", () => {
+  const { says, sent, turns, show, box } = hybrid();
+  show(says.begin());
+  says.sentence("饭后服用。");
+  says.sentence("一天两次。");
+  says.sentence("多喝水。");
+  box(speak("饭后服用。"));
+  box(end);
+  expect(sent).toEqual(["饭后服用。", "一天两次。多喝水。"]);
+  show(says.end());
+  box(speak("一天两次。多喝水。"));
+  box(end);
+  expect(turns.said).toEqual(["饭后服用。一天两次。多喝水。"]);
+});
+
+test("cut off, the rest of the answer is dropped and she is stopped; the new turn's answer waits for her to stop, then is its own answer", () => {
+  const { says, sent, turns, shown, show, box } = hybrid();
+  show(says.begin());
+  says.sentence("Take it after food.");
+  says.sentence("Twice a day.");
+  box(speak("Take it"));
+  show(says.stop()); // the patient spoke over her
+  expect(sent).toEqual(["Take it after food.", ""]); // the empty say replaces her script
+  show(says.begin()); // the new turn
+  says.sentence("Yes, with water.");
+  expect(sent).toHaveLength(2);
+  box(speak(" after")); // the second she was already in: not shown
+  box(end);
+  expect(turns.said).toEqual(["Take it"]);
+  expect(sent).toEqual(["Take it after food.", "", "Yes, with water."]); // "Twice a day." never goes
+  box(speak("Yes, with water."));
+  show(says.end());
+  box(end);
+  expect(turns.said).toEqual(["Take it", "Yes, with water."]);
+  expect(shown.filter(e => e.type === "transcript_start")).toHaveLength(2);
+});
+
+test("a cut that crosses her own end of turn: the empty turn the box then says is not taken for the next say's end", () => {
+  const { says, sent, turns, show, box } = hybrid();
+  show(says.begin());
+  says.sentence("Take it after food.");
+  box(speak("Take it after food."));
+  show(says.stop());
+  show(says.begin());
+  says.sentence("Yes, with water.");
+  box(end); // her own end, already on its way when the cut was sent
+  expect(sent).toEqual(["Take it after food.", "", "Yes, with water."]);
+  says.sentence("A full glass.");
+  box(end); // the cut, said as a turn of its own: no words of the new say have come back yet
+  expect(sent).toHaveLength(3);
+  expect(turns.said).toEqual(["Take it after food."]);
+  box(speak("Yes, with water."));
+  box(end);
+  expect(sent[3]).toBe("A full glass.");
+});
+
+test("cut off between says there is nothing to stop: the answer closes at once", () => {
+  const { says, sent, turns, show, box } = hybrid();
+  show(says.begin());
+  says.sentence("Rest today.");
+  box(speak("Rest today."));
+  box(end);
+  show(says.stop());
+  expect(sent).toEqual(["Rest today."]);
+  expect(turns.said).toEqual(["Rest today."]);
+  box(end); // nothing of ours is with the box
+  expect(turns.said).toHaveLength(1);
+});
+
+test("Gemma reads the call so far on each turn: every patient turn, and each answer as it was written, cut off or not", async () => {
+  const call = new CallHistory(), asked: ChatMessage[][] = [];
+  const replies = ['{"triage":"fine","inPlan":true}\nTake it after food. Twice a day.', '{"triage":"fine","inPlan":true}\nYes, with water.', '{"triage":"fine","inPlan":false}\nGoodbye for now.'];
+  const chat: ChatStream = async messages => {
+    asked.push(messages);
+    const reply = replies[asked.length - 1]!;
+    return { text: (async function* () { yield reply; })(), model: "gemma" };
+  };
+  async function turn(question: string, stopAfter = Infinity) {
+    const { history, said } = call.turn(question), stop = new AbortController(), sentences: string[] = [];
+    for await (const part of answerTurn({ question, history, chat, language: "en", signal: stop.signal, escalate: async () => false })) {
+      if (stop.signal.aborted) break; // as the agent leaves an answer that was cut off
+      if (part.type !== "text-delta") continue;
+      said(part.text);
+      if (sentences.push(part.text) === stopAfter) stop.abort();
+    }
+    return sentences;
+  }
+  expect(await turn("How do I take it?", 1)).toEqual(["Take it after food."]); // the patient cut in after the first sentence
+  expect(await turn("With water?")).toEqual(["Yes, with water."]);
+  await turn("Thanks, bye.");
+  expect(asked[1]!.slice(1)).toEqual([
+    { role: "user", content: "How do I take it?" }, { role: "assistant", content: "Take it after food." }, { role: "user", content: "With water?" },
+  ]);
+  expect(asked[2]!.slice(1).map(m => m.content)).toEqual(["How do I take it?", "Take it after food.", "With water?", "Yes, with water.", "Thanks, bye."]);
+});
+
+test("a turn cut off before any answer leaves two patient lines for Gemma, not an empty answer", () => {
+  const call = new CallHistory();
+  call.turn("How do I");
+  expect(call.turn("How do I take it?").history).toEqual([{ role: "user", content: "How do I" }]);
+});
+
+test("only talk is hers to answer: a greeting, thanks, a goodbye; anything about care, a number or a question of what to do is Gemma's", () => {
+  for (const hers of ["Hi Sona.", "Hello!", "Good morning Sona", "Thank you so much", "Okay, bye", "Who are you?", "Terima kasih", "Selamat pagi", "Apa khabar?", "你好", "谢谢你", "再见"])
+    expect([hers, onlyTalk(hers)]).toEqual([hers, true]);
+  for (const gemmas of ["Hi Sona. I have a fever of 39 degrees since last night. How many paracetamol tablets can I take, and how often?",
+    "Hi Sona, can I take my medicine now?", "Thanks. When is my appointment?", "Okay, how many tablets?", "I have chest pain", "Hello, I feel dizzy",
+    "Terima kasih, bila temu janji saya?", "Saya demam", "Boleh saya makan ubat?", "你好，我可以吃药吗", "我发烧了", "Tell me about my discharge plan", "What happens next?"])
+    expect([gemmas, onlyTalk(gemmas)]).toEqual([gemmas, false]);
+  expect(liveStart("brief", "router", true)).toEqual({ type: "start", system: "brief", voice: "v1", transcribe: true });
+});
+
+test("the router keeps her own words back until the patient's are known: talk goes on to the phone, the rest is left out for Gemma", () => {
+  const r = new Router(), a = { text: "Hello" }, voice = new ArrayBuffer(4), b = { text: " there" };
+  // She starts before the ear has answered: nothing reaches the phone yet.
+  expect([r.own(a), r.own(voice)]).toEqual([undefined, undefined]);
+  // Only talk: what was kept comes back in order, and the rest of her turn passes as it comes.
+  expect(r.heard("Hi Sona.")).toEqual({ by: "own", kept: [a, voice] });
+  expect(r.own(b, true)).toBe(b);
+  // Her turn is over: the next one waits for its own words.
+  const c = { text: "You can take" };
+  expect(r.own(c)).toBeUndefined();
+  expect(r.heard("How many tablets can I take?")).toEqual({ by: "gemma", kept: [] });
+  expect(r.own({ text: " two" })).toBeUndefined(); // the rest of her own answer is left out too
+  r.done();
+  // The ear first, then she speaks: no wait at all.
+  expect(r.heard("Thank you").by).toBe("own");
+  expect(r.own(a)).toBe(a);
+  // A turn judged hers that she never took does not open the next one.
+  expect(r.heard("Okay").by).toBe("own");
+  for (let i = 0; i < 5; i++) r.listened();
+  expect(r.own(c)).toBeUndefined();
 });
