@@ -8,6 +8,7 @@ import { AlertRow, Caption, Mark, type MarkState, TextLink } from "@/components/
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Card, Label, Notice, Screen, useAccessibleEffects } from "@/components/sona/ui";
+import { JUDGE } from "@/features/live";
 import { haptic } from "@/features/scribe/parts";
 import { lastScan } from "./scan-state";
 import { ScannedPages } from "./scan-parts";
@@ -27,7 +28,15 @@ import { CONFIDENCE_FLOOR, keptPages, SAMPLE_READING, WORD_FLOOR, type OcrDose, 
 const STEPS = ["Reading each page", "Checking for patient details", "Checking doses against the drug table"];
 const STEP_MS = 900;
 
+/**
+ * The server has no OCR route yet (a PDF without text is refused), so the judge build has no way in: the rows that
+ * lead here are hidden (./add-source-sheet). Opened anyway, it says so and shows nothing of the sample.
+ */
 export function OcrReviewScreen() {
+  return !JUDGE ? <SampleReview /> : <Screen><Notice>Sona can't read scanned pages yet. Upload a PDF with text, or paste the text.</Notice></Screen>;
+}
+
+function SampleReview() {
   const { title, scanned: fromScan } = useLocalSearchParams<{ title?: string; scope?: string; scanned?: string }>();
   const { reducedMotion } = useAccessibleEffects();
   const reading: OcrResult = SAMPLE_READING;

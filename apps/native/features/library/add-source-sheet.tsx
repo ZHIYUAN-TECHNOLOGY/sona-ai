@@ -8,6 +8,7 @@ import { Disclosure, ErrorLine, IconDisc, Mark, Press, TextLink } from "@/compon
 import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Expand, glass, Icon, pillStyle, useAccessibleEffects } from "@/components/sona/ui";
+import { JUDGE } from "@/features/live";
 import { useAddSource, type Added, type ArticlePreview, type LibraryScope } from "@/features/live/library-sync";
 import { haptic } from "@/features/scribe/parts";
 
@@ -67,7 +68,8 @@ export function AddSourceSheet() {
       </View>
       <Icon name="chevron.right" size={12} color={palette.muted} />
     </Press>,
-    <Press key="scan" onPress={scan} disabled={working} accessibilityLabel="Scan paper pages" accessibilityHint="Opens the camera to photograph pages for OCR"
+    // Scanned pages can only reach the sample reading until the server has OCR, so the judge build has no scan row.
+    !JUDGE && <Press key="scan" onPress={scan} disabled={working} accessibilityLabel="Scan paper pages" accessibilityHint="Opens the camera to photograph pages for OCR"
       style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, opacity: working ? 0.45 : 1 }}>
       <IconDisc icon="doc.viewfinder" />
       <View style={{ flex: 1, gap: 2 }}>
@@ -82,7 +84,7 @@ export function AddSourceSheet() {
     <Disclosure key="paste" icon="text.alignleft" title="Paste text" detail="Lines starting with # become sections" open={open === "paste"} onToggle={() => setOpen(open === "paste" ? undefined : "paste")}>
       <PasteText disabled={working} onAdd={(title, text) => void submit(title, () => add.text(scope, title, text))} />
     </Disclosure>,
-  ];
+  ].filter(row => row !== false);
 
   return <ScrollView style={{ maxHeight: height * 0.9, flexGrow: 0 }} contentContainerStyle={{ paddingTop: 36, paddingBottom: 34, paddingHorizontal: 20, gap: 16 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
     <View style={{ gap: 4 }}>
@@ -175,7 +177,8 @@ function PasteText({ disabled, onAdd }: { disabled: boolean; onAdd: (title: stri
 /** What the server is doing with the source, then what it added (or why it would not). */
 function StatusPanel({ status, scope, onAnother }: { status: Status; scope: LibraryScope; onAnother: () => void }) {
   // A scan is not a dead end: it goes to OCR review (the reading itself is a labelled sample until the model is hosted).
-  const scan = status.state === "refused" && status.reason === "no-text";
+  // The judge build has no sample reading, so there a scanned PDF shows the server's refusal as it is.
+  const scan = !JUDGE && status.state === "refused" && status.reason === "no-text";
   const whose = (s: LibraryScope) => s === "me" ? "Only you can cite it." : "Everyone at your hospital can cite it.";
   return <View accessibilityLiveRegion="polite" style={{ gap: 12, padding: 16, borderRadius: radius.group, borderCurve: "continuous", backgroundColor: palette.white }}>
     <View style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>

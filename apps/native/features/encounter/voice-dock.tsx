@@ -1,5 +1,6 @@
 import { Text } from "@/components/sona/text";
-import { useLive } from "@/features/live";
+import { JUDGE, useLive } from "@/features/live";
+import { wantsLive } from "@/features/live/judge";
 import { useVoiceInput } from "@/features/live/voice-input";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Icon } from "@/components/sona/ui";
@@ -148,7 +149,8 @@ export function VoiceDock(props: Props) {
   const screenReader = useRef(false);
   const transcript = spokenPrompt.split(" ");
   // Live mode hears the microphone (Sona speech on the server); demo mode plays the labelled sample.
-  const { on: live } = useLive();
+  // The judge build always listens with the microphone: the authored words (`spokenPrompt`) never stand in for speech.
+  const live = wantsLive(JUDGE, useLive().on);
   // Whose recording the microphone is ending: its words and errors go back there (Sona Live, or the dock's own hold or tap).
   const owner = useRef<"dock" | "live">("dock");
   const mic = useVoiceInput({

@@ -16,11 +16,12 @@ import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Expand, Icon, IconButton, Notice, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import { OriginalImageViewer } from "@/features/imaging/viewer";
-import { api, errorText, requestId, useLive } from "@/features/live";
+import { api, errorText, JUDGE, requestId, useLive } from "@/features/live";
+import { wantsLive } from "@/features/live/judge";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { useServerEncounter } from "@/features/live/sync";
 import { wakingOf } from "@/features/live/waking";
-import { applyLocally, countsOf, itemsOf, keptOf, replaceWord, type ItemKey } from "./model";
+import { applyLocally, countsOf, itemsOf, keptOf, replaceWord, unreadReason, type ItemKey } from "./model";
 import { NoVisit } from "@/components/sona/no-visit";
 
 /**
@@ -68,7 +69,8 @@ const first = (name: string) => name.split(" ")[0]!;
 
 export function ScanScreen() {
   const { patient, updateEncounter, request } = useEncounter();
-  const { on: live } = useLive();
+  // The judge build reads only a real photo with the server's model: no bundled sample note, no stand-in reading.
+  const live = wantsLive(JUDGE, useLive().on);
   const role = useRole();
   const { refresh } = useServerEncounter(patient);
   const [phase, setPhase] = useState<Phase>({ kind: "start" });
@@ -92,7 +94,7 @@ export function ScanScreen() {
       const asset = result.canceled ? undefined : result.assets[0];
       if (asset) setPhase({ kind: "confirm", photo: { source: { uri: asset.uri }, sample: false, base64: asset.base64, mimeType: asset.mimeType } });
     } catch {
-      setPhase({ kind: "start", error: from === "camera" ? "No camera here (a simulator has none). Choose from the library or use the sample note." : "The photo library could not be opened. Try again or check access in Settings." });
+      setPhase({ kind: "start", error: from === "camera" ? JUDGE ? "No camera here (a simulator has none). Choose from the library." : "No camera here (a simulator has none). Choose from the library or use the sample note." : "The photo library could not be opened. Try again or check access in Settings." });
     } finally { setBusy(false); }
   };
 
@@ -109,6 +111,8 @@ export function ScanScreen() {
         }
         reading = await api.scan.read({ encounterId, key }) as Reading;
       }
+      const unread = unreadReason(JUDGE, reading);
+      if (unread) throw new Error(unread);
       return { key, reading };
     } catch (e) {
       haptic("warn");
@@ -185,7 +189,7 @@ function Start({ patientName, live, busy, error, onCamera, onLibrary, onSample }
       <Surface feature style={{ padding: 18, gap: 12 }}>
         <Action label={busy ? "Opening…" : "Take photo"} icon="camera" disabled={busy} onPress={onCamera} />
         <Action label="Choose from library" icon="photo.on.rectangle" secondary disabled={busy} onPress={onLibrary} />
-        <Action label="Use sample note" icon="doc.text" secondary disabled={busy} onPress={onSample} />
+        {!JUDGE && <Action label="Use sample note" icon="doc.text" secondary disabled={busy} onPress={onSample} />}
         {error && <Notice warning>{error}</Notice>}
         <Text selectable style={{ ...type.footnote, color: palette.muted }}>{live
           ? "The photo stays in your hospital’s storage."
@@ -273,7 +277,7 @@ function Checklist({ steps, returned, ready, error, onFinished, onRetry, onSampl
     <Surface style={{ padding: 18, gap: 12 }}>
       <Notice warning>{`The note could not be read: ${error}`}</Notice>
       <Action label="Try again" icon="arrow.clockwise" onPress={onRetry} />
-      <Action label="Use sample note" secondary onPress={onSample} />
+      {!JUDGE && <Action label="Use sample note" secondary onPress={onSample} />}
     </Surface>
   </Expand>;
   return <Surface style={{ padding: 8, gap: 0 }}>

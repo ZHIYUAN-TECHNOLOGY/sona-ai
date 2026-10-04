@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { newEncounter } from "@/features/encounter/fixtures";
-import { captionLine, draftLines, draftOrigin, failedLine, HARD_MS, isQuiet, listen, placeCaption, scribeStore, sendPart, speechOff, turnLines, withCapturedDraft, withDraft, withPart } from "./live";
+import { captionLine, draftFrom, draftLines, draftOrigin, failedLine, HARD_MS, isQuiet, listen, placeCaption, scribeStore, sendPart, speechOff, turnLines, withCapturedDraft, withDraft, withPart } from "./live";
 
 /**
  * Plays a recording through `listen` as the recorder does, ten level readings a second: speech around -30 dBFS, and
@@ -128,4 +128,11 @@ test("the store shares each visit's parts with every screen and tells them when 
   expect(scribeStore.get("SYN-T").parts[0].status).toBe("done");
   expect(told).toBe(2);
   stop();
+});
+
+test("the judge build drafts only from a recording: with nothing recorded there is nothing to draft, never the script", () => {
+  expect([draftFrom(true, true, 0), draftFrom(true, false, 0), draftFrom(true, false, 3)]).toEqual(["nothing", "nothing", "nothing"]);
+  expect(draftFrom(true, true, 3)).toBe("recording");
+  // Outside the judge build nothing changes: connected with a transcript asks the server, anything else drafts on the phone.
+  expect([draftFrom(false, true, 3), draftFrom(false, true, 0), draftFrom(false, false, 0), draftFrom(false, false, 3)]).toEqual(["recording", "demo", "demo", "demo"]);
 });

@@ -30,6 +30,13 @@ export function buildHandover(patients: Patient[], encounters: Record<string, En
 }
 
 /**
+ * Who the acceptance names before anyone types. The demo starts on an authored colleague; the server holds no
+ * receiving clinician (handover.accept takes whatever name is typed), so the judge build starts blank and the
+ * outgoing clinician names who is taking over.
+ */
+export const startingReceiver = (judge: boolean) => judge ? "" : "Dr Lim · night registrar";
+
+/**
  * The deck's outcome: only patients handed over are accepted; "Discuss" ones stay with the outgoing
  * clinician to talk through. `line` heads the summary, `receipt` stamps the acceptance.
  */

@@ -13,9 +13,10 @@ import type { FeatureProps } from "@/features/encounter/types";
 import { buildDraft, editNote, readNoteSections, scriptFor, sectionKeys, serializeNoteSections, type NoteSections } from "./model";
 import { SampleLabel } from "@/components/sona/model-answer";
 import { haptic, noteMeta, StateLine } from "./parts";
-import { draftOrigin, failedLine, UNSURE, type LiveDraft } from "./live";
+import { draftFrom, draftOrigin, failedLine, UNSURE, type LiveDraft } from "./live";
 import { applyCaptured, applyDraft, askDraft, useScribe } from "./live-recorder";
-import { api, errorText, useLive } from "@/features/live";
+import { api, errorText, JUDGE, useLive } from "@/features/live";
+import { wantsLive } from "@/features/live/judge";
 import { noteSections, noteSentences } from "@/features/live/prescribing-sync";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { NoVisit } from "@/components/sona/no-visit";
@@ -31,7 +32,8 @@ const emptyDetail: Record<keyof NoteSections, string> = {
 /** The answer in the conversation: what the note holds, section by section, and one way in. */
 export function NoteCard({ onOpen, onSource, patient }: FeatureProps) {
   const { encounter } = useEncounter();
-  const { on: live } = useLive();
+  // The judge build only ever records: the scripted sample's wording never shows, even before the sign-in is known.
+  const live = wantsLive(JUDGE, useLive().on);
   const drafted = useScribe(patient.id).draft?.source === "model";
   const note = encounter?.note;
   const sections = encounter && (encounter.noteSectionDraft ?? encounter.noteSections ?? readNoteSections(encounter.note));
@@ -52,7 +54,7 @@ export function NoteCard({ onOpen, onSource, patient }: FeatureProps) {
     </Section>
     {!encounter?.noteReviewed && encounter?.transcript.some(line => line.corrected) && <Notice warning>Transcript corrections require review against your note.</Notice>}
     <Action label={note ? "Open note" : "Open consultation"} icon={note ? "doc.text" : "waveform"} onPress={() => onOpen(note ? "note" : "recording")} />
-    {patient.sources.some(source => source.id === "consultation") && <SourceLink label="Consultation sample provenance" onPress={() => onSource("consultation")} />}
+    {!JUDGE && patient.sources.some(source => source.id === "consultation") && <SourceLink label="Consultation sample provenance" onPress={() => onSource("consultation")} />}
   </View>;
 }
 
@@ -60,7 +62,7 @@ export function NoteCard({ onOpen, onSource, patient }: FeatureProps) {
 const framing: Record<keyof NoteSections, string> = {
   subjective: "Drafted from the captured dialogue · verify against source.",
   objective: "Draft · verify against source.",
-  assessment: "Clinician authored. A simulation assumption is never recorded as a confirmed assessment automatically.",
+  assessment: JUDGE ? "Clinician authored · your clinical assessment." : "Clinician authored. A simulation assumption is never recorded as a confirmed assessment automatically.",
   plan: "Clinician authored · the next steps you agreed.",
 };
 const placeholders: Record<keyof NoteSections, string> = { subjective: "Captured symptoms and relevant history…", objective: "Document observations with units and dates…", assessment: "Record your clinical assessment…", plan: "Record the agreed next steps…" };
@@ -71,8 +73,9 @@ const SPIN = { from: { transform: [{ rotate: "0deg" }] }, to: { transform: [{ ro
 
 /** Save state as one inline line in the action bar. */
 function saveState(status: "idle" | "saving" | "saved" | "failed", reviewed: boolean) {
-  if (status === "saving") return { icon: "arrow.triangle.2.circlepath", color: palette.blue, title: "Saving local draft…" };
-  if (status === "failed") return { icon: "exclamationmark.circle", color: palette.amber, title: "Save failed · simulated · your edits are kept" };
+  // The judge build saves to the hospital record, so a failed save is the server's (its reason shows above), never a rehearsed one.
+  if (status === "saving") return { icon: "arrow.triangle.2.circlepath", color: palette.blue, title: JUDGE ? "Saving draft…" : "Saving local draft…" };
+  if (status === "failed") return { icon: "exclamationmark.circle", color: palette.amber, title: JUDGE ? "Save failed · your edits are kept" : "Save failed · simulated · your edits are kept" };
   if (status === "saved") return reviewed
     ? { icon: "checkmark.seal.fill", color: palette.green, title: "Reviewed · any edit returns it to draft" }
     : { icon: "checkmark.circle.fill", color: palette.green, title: "Draft saved · not yet reviewed" };
@@ -103,7 +106,7 @@ export function NoteScreen() {
   const [excludeFromTraining, setExcludeFromTraining] = useState(false);
   const failSave = useRef(false);
   // Live: the note is read from and saved to the server as revisions; a save against an older one is refused.
-  const { on: live } = useLive();
+  const live = wantsLive(JUDGE, useLive().on);
   // Only a doctor writes the note (note.save); other roles read it.
   const canWrite = useRole().can("note.save");
   const noteRevision = useRef(0);
@@ -159,15 +162,17 @@ export function NoteScreen() {
     Keyboard.dismiss(); failSave.current = failNextSave; setFailNextSave(false);
     updateEncounter(current => ({ ...current, noteSaveStatus: "saving", noteReviewed: false }));
   };
-  const sources: Partial<Record<keyof NoteSections, string>> = { subjective: patient.sources.some(source => source.id === "consultation") ? "consultation" : "history", objective: patient.sources.some(source => source.id === "vitals") ? "vitals" : "history" };
+  // The record's "consultation" source is the scripted dialogue, so the judge build points at the history instead.
+  const sources: Partial<Record<keyof NoteSections, string>> = { subjective: !JUDGE && patient.sources.some(source => source.id === "consultation") ? "consultation" : "history", objective: patient.sources.some(source => source.id === "vitals") ? "vitals" : "history" };
   const state = saveState(status, encounter.noteReviewed);
   const layout = reducedMotion ? undefined : LAYOUT;
   // Sections arrive together with a short 40 ms stagger, once, when the note opens.
   const rise = (index: number) => reducedMotion ? undefined : riseIn({ delay: 40 * index, distance: 8, duration: 320 });
-  // No visit captured yet: drafts come from the scripted sample consultation, labelled as a sample.
-  const consultation = encounter.transcript.length ? encounter.transcript : scriptFor(encounter.language);
   // A consultation recorded in live mode is drafted by Gemma from its own transcript, then labelled by where the draft came from.
-  const fromRecording = live && encounter.transcript.length > 0;
+  const from = draftFrom(JUDGE, live, encounter.transcript.length);
+  const fromRecording = from === "recording";
+  // Demo, no visit captured yet: drafts come from the scripted sample consultation, labelled as a sample.
+  const consultation = encounter.transcript.length || from === "nothing" ? encounter.transcript : scriptFor(encounter.language);
   const liveDraft = scribe.draft;
   const unsure = encounter.transcript.filter(line => line.speaker.endsWith(UNSURE)).length;
   const missing = scribe.parts.filter(part => part.status === "failed");
@@ -192,10 +197,15 @@ export function NoteScreen() {
   const next = noteNext(noteState);
 
   // An empty note pulls in the consultation in one tap (the scripted sample until a visit is captured).
-  const draftNote = () => { if (fromRecording) return void draftLive(false); haptic("done"); const draft = readNoteSections(buildDraft(consultation)); updateEncounter(current => editNote(current, draft, !current.transcript.length)); };
+  const draftNote = () => { if (from === "nothing") return; if (fromRecording) return void draftLive(false); haptic("done"); const draft = readNoteSections(buildDraft(consultation)); updateEncounter(current => editNote(current, draft, !current.transcript.length)); };
   // One glass bar (the page's `Screen bottom`) with only what applies: an empty note's way in (or why it waits), else the save state
   // inline, the two note actions and the next step. It always holds something, so the first word typed never remounts the page.
   const bar = !canWrite ? <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}><View style={{ flex: 1 }}><LockedAction label="Needs a doctor to write the note" path="note.save" height={48} /></View></View>
+    // The judge build with nothing recorded: no transcript, so no draft; the way in is the recorder.
+    : !hasContent && from === "nothing" ? <>
+      <StateLine>Nothing recorded yet, so there is nothing to draft from. Record the consultation, then review the note Sona drafts from it.</StateLine>
+      <Action label="Open consultation" icon="waveform" onPress={() => { haptic("tap"); router.push("/recording"); }} />
+    </>
     : !hasContent ? suggestionBlocked ? <StateLine>{suggestionBlocked}</StateLine> : <>
       <Action label={drafting ? "Drafting from consultation…" : "Draft from consultation"} icon="waveform" disabled={drafting} onPress={draftNote} />
       <SampleLabel source={encounter.transcript.length ? undefined : "fixture"} what="scribe" />
@@ -256,7 +266,7 @@ export function NoteScreen() {
 
     <Animated.View entering={rise(5)} layout={layout} style={{ gap: 10 }}>
       {/* An empty note's bar holds its way in, or why it waits. */}
-      {!canWrite || !hasContent ? null : suggestionBlocked ? <StateLine>{suggestionBlocked}</StateLine>
+      {!canWrite || !hasContent || from === "nothing" ? null : suggestionBlocked ? <StateLine>{suggestionBlocked}</StateLine>
         : !suggestion && <QuietLink label={drafting ? "Drafting from consultation…" : "Fresh draft from consultation"} icon="doc.text.magnifyingglass" onPress={() => { if (drafting) return; if (fromRecording) return void draftLive(true); haptic("tap"); setSuggestion(readNoteSections(buildDraft(consultation))); }} />}
       {suggestion && <Expand key="suggestion">
         <Surface style={{ padding: 18, gap: 14 }}>

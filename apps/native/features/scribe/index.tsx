@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { AppState } from "react-native";
 import { useEncounter } from "@/features/encounter/store";
-import { useLive } from "@/features/live";
+import { JUDGE, useLive } from "@/features/live";
+import { wantsLive } from "@/features/live/judge";
 import { LiveRecorder } from "./live-recorder";
 import { advancePlayback } from "./model";
 
@@ -13,10 +14,13 @@ export function RecordingScreen() {
   return <Screen />;
 }
 
-/** Mount once in the encounter shell so minimizing the recorder keeps it going: the microphone in live mode, the scripted sample otherwise. */
+/**
+ * Mount once in the encounter shell so minimizing the recorder keeps it going: the microphone in live mode, the scripted
+ * sample otherwise. The judge build never plays the script, so a transcript there is only ever what was recorded.
+ */
 export function ScribePlayback() {
   const { patient, encounter, updateEncounter } = useEncounter();
-  const { on: live } = useLive();
+  const live = wantsLive(JUDGE, useLive().on);
   useEffect(() => {
     if (live || encounter?.recording !== "recording") return;
     const timer = setInterval(() => updateEncounter(current => advancePlayback(current)), 1000);

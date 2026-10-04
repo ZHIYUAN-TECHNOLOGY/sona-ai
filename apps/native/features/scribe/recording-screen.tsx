@@ -11,7 +11,8 @@ import { palette, type } from "@/components/sona/theme";
 import { Action, Chip, CloseButton, Expand, Icon, Screen, Surface, useAccessibleEffects } from "@/components/sona/ui";
 import { useEncounter } from "@/features/encounter/store";
 import type { TranscriptLine } from "@/features/encounter/types";
-import { useLive } from "@/features/live";
+import { JUDGE, useLive } from "@/features/live";
+import { wantsLive } from "@/features/live/judge";
 import { failedLine, isCaption, partRange, UNSURE, type Part } from "./live";
 import { RecordingSeconds, applyCaptured, applyDraft, askDraft, retryParts, useScribe } from "./live-recorder";
 import { LiveWaveform } from "./live-waveform";
@@ -140,10 +141,9 @@ function statusFor(capture: Capture, recording: string | undefined): { label: st
   return { label: "Ready for consultation", tone: palette.muted };
 }
 
-/** Consultation capture: the microphone in live mode, the scripted sample otherwise. */
+/** Consultation capture: the microphone in live mode (always, in the judge build), the scripted sample otherwise. */
 export function RecordingScreen() {
-  const { on: live } = useLive();
-  return live ? <LiveRecording /> : <ScriptedRecording />;
+  return wantsLive(JUDGE, useLive().on) ? <LiveRecording /> : <ScriptedRecording />;
 }
 
 const about = (minutes?: number) => !minutes ? "" : minutes <= 1 ? ", about a minute" : `, about ${minutes} min`;
