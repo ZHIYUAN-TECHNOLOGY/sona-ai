@@ -12,6 +12,8 @@ import { routePrompt } from "@/features/encounter/state";
 import { EvidenceAnswer } from "@/features/evidence";
 import { Bubble } from "@/features/encounter/sona-live";
 import { useLive } from "@/features/live";
+import { WatchProposal } from "@/features/watches";
+import { isWatch, parseWatch } from "@sona-ai/domain/watch";
 import { AnswerView, KeepRow, answerFree, answerNow, openTab, useRunOp } from ".";
 import { leadOf, withoutLead, type Answer } from "./answers";
 import { EVIDENCE, askThread, replyTo, useThread, type Entry } from "./thread";
@@ -34,6 +36,8 @@ export function useTodayThread(answers: Answer[]) {
      * A clinical question (or `evidence`, a follow-up from an evidence answer) is answered from the evidence, with citations.
      */
     ask: async (question: string, rule?: Answer, evidence = false): Promise<Required<Entry>> => {
+      // A sentence that asks Sona to keep asking is shown back as a watch to confirm, before anything is kept.
+      if (!rule && !evidence && isWatch(question)) { const reply = { watch: parseWatch(question) }; return { id: askThread(question, reply), question, reply }; }
       if (!rule && (evidence || routePrompt(question) === "evidence")) return { id: askThread(question, EVIDENCE), question, reply: EVIDENCE };
       const now = rule ? { answer: rule } : answerNow(question, answers, on);
       const id = askThread(question, now);
@@ -41,6 +45,8 @@ export function useTodayThread(answers: Answer[]) {
     },
     /** A notice worth asking again (the model was starting or out of reach): the entry thinks again in place. */
     again: (entry: Entry) => { replyTo(entry.id); void settle(entry.id, entry.question); },
+    /** A proposed watch declined for now: its question is answered once, in the same entry. */
+    once: (entry: Entry, question: string) => { const now = answerNow(question, answers, on); replyTo(entry.id, now); if (!now) void settle(entry.id, question); },
   };
 }
 
@@ -50,12 +56,12 @@ export function useTodayThread(answers: Answer[]) {
  * sidebar; or Sona thinking, or a notice (Ask again when that may work). `fresh` (the page's newest) inks the lead in and
  * has VoiceOver read the answer as it lands, spoken or typed alike.
  */
-export function ThreadEntry({ entry, fresh = false, onAgain, onEvidence, onTab = openTab, leave = stay }: { entry: Entry; fresh?: boolean; onAgain?: () => void; /** An evidence answer's follow-up, asked as evidence in the same conversation. */ onEvidence?: (question: string) => void; /** A page's own tabs (Ward's filters); Today opens Patients or the ward. */ onTab?: (tab: string) => void; /** What steps aside before an op runs (a page's conversation, to show the page). */ leave?: () => void }) {
+export function ThreadEntry({ entry, fresh = false, onAgain, onEvidence, onOnce, onTab = openTab, leave = stay }: { entry: Entry; fresh?: boolean; onAgain?: () => void; /** A proposed watch's question, answered once instead. */ onOnce?: (question: string) => void; /** An evidence answer's follow-up, asked as evidence in the same conversation. */ onEvidence?: (question: string) => void; /** A page's own tabs (Ward's filters); Today opens Patients or the ward. */ onTab?: (tab: string) => void; /** What steps aside before an op runs (a page's conversation, to show the page). */ leave?: () => void }) {
   const run = useRunOp(leave, onTab);
   const reduced = useReduceMotionPreference();
   const { reply } = entry;
   // iOS has no live regions, so a new answer is announced.
-  useEffect(() => { if (fresh && reply) AccessibilityInfo.announceForAccessibility("notice" in reply ? reply.notice : "evidence" in reply ? "Searching the evidence" : leadOf(reply.answer) ?? reply.answer.question); }, [reply]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (fresh && reply) AccessibilityInfo.announceForAccessibility("notice" in reply ? reply.notice : "evidence" in reply ? "Searching the evidence" : "watch" in reply ? `Review before confirming: ${reply.watch.question}` : leadOf(reply.answer) ?? reply.answer.question); }, [reply]); // eslint-disable-line react-hooks/exhaustive-deps
   // The lead is said above the view, so the view goes on without it; a lead-only answer keeps just its label.
   const said = reply && "answer" in reply ? reply : undefined;
   const text = said && leadOf(said.answer), rest = said && (text ? withoutLead(said.answer) : said.answer);
@@ -63,6 +69,7 @@ export function ThreadEntry({ entry, fresh = false, onAgain, onEvidence, onTab =
     <Bubble text={entry.question} />
     {!reply ? <Drafting label="Thinking…" lines={2} slow={MODEL_SLOW} />
       : "evidence" in reply ? <EvidenceAnswer question={entry.question} answerKey={`evidence:${entry.id}:${entry.question}`} thread={[]} lead onAsk={q => onEvidence?.(q)} />
+      : "watch" in reply ? <WatchProposal {...reply.watch} onOnce={onOnce && (() => onOnce(reply.watch.question))} />
       : "notice" in reply ? <View style={{ gap: 2 }}>
         <Caption>{reply.notice}</Caption>
         {reply.again && onAgain && <View style={{ alignSelf: "flex-start" }}>

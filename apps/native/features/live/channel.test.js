@@ -18,5 +18,6 @@ test("a change re-reads only what it touches", () => {
 });
 
 test("after a reconnect everything is re-read, since changes may have been missed", () => {
-  expect(rereads("resync")).toEqual(["visit", "ward", "day", "checkIns", "findings", "handover", "messages", "library", "training"]);
+  expect(rereads("resync")).toEqual(["visit", "ward", "day", "checkIns", "findings", "handover", "messages", "library", "training", "watches"]);
+  expect(rereads({ topic: "watches" })).toEqual(["watches"]);
 });

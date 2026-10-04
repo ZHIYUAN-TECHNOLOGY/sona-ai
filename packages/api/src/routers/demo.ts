@@ -9,6 +9,7 @@ import { z } from "zod";
 import { clockOffsetOf } from "../clock";
 import { clockOf, type Context } from "../context";
 import { protectedProcedure } from "../index";
+import { wakeWatches } from "../watches";
 import { wakeFollowUps } from "./check-ins";
 
 /**
@@ -65,8 +66,8 @@ export const demoRouter = {
   status: protectedProcedure.handler(({ context }) => status(context.db, context.hospitalId, clockOf(context))),
   /**
    * Moves the demo hospital's clock (announced as a "demo" change, so every connected app re-reads),
-   * then wakes every followed visit's check-in agent, as the hourly cron would have, so what is now due
-   * happens within seconds.
+   * then wakes every followed visit's check-in agent, as the hourly cron would have, and every clinician's
+   * watch agent, so what is now due happens within seconds.
    */
   jump: protectedProcedure.input(z.object({ to: z.enum(JUMPS), encounterId: z.string().min(1).optional() })).handler(async ({ context, input }) => {
     const { db, hospitalId } = context;
@@ -86,6 +87,7 @@ export const demoRouter = {
     await db.update(hospitals).set({ clockOffsetMs: offset }).where(eq(hospitals.id, hospitalId));
     const now = new Date(real + offset);
     await wakeFollowUps(context, hospitalId, now);
+    await wakeWatches(context, hospitalId);
     return status(db, hospitalId, now);
   }),
 };

@@ -9,9 +9,10 @@ import type { Answer } from "./answers";
 /**
  * What Sona said: an answer (a rule's, or a model's with its name; `general` when it came from general knowledge, not the
  * page's data), or a notice; `again` when asking again may work (the model was starting or out of reach); or, for a
- * clinical question, an evidence answer, which reads PubMed and the library as the entry shows it.
+ * clinical question, an evidence answer, which reads PubMed and the library as the entry shows it; or, for a sentence
+ * that asks Sona to keep asking ("Every morning at 7, …"), the watch shown back for confirmation (features/watches).
  */
-export type Reply = { answer: Answer; model?: string; general?: boolean } | { notice: string; again?: boolean } | { evidence: true };
+export type Reply = { answer: Answer; model?: string; general?: boolean } | { notice: string; again?: boolean } | { evidence: true } | { watch: { question: string; hour: number } };
 /** A clinical question for the evidence (steroids, guidelines, trials…), or a follow-up from an evidence answer. */
 export const EVIDENCE: Reply = { evidence: true };
 /** No reply yet: Sona is thinking. */

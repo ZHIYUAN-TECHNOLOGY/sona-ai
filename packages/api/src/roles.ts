@@ -115,6 +115,10 @@ export const PERMISSIONS: Record<string, readonly [readonly Role[], string]> = {
   "voice.transcribe": [ALL, "speak to Sona"],
   "ask.route": [ALL, "ask Sona"],
   "ask.free": [ALL, "ask Sona"],
+  // Watches answer from results and tasks, so they follow results.list.
+  "watches.list": [CLINICAL_READ, "see your watches"],
+  "watches.create": [CLINICAL_READ, "ask Sona to keep watching"],
+  "watches.remove": [CLINICAL_READ, "remove a watch"],
 };
 
 export const can = (role: Role, path: string) => PERMISSIONS[path]?.[0].includes(role) ?? false;

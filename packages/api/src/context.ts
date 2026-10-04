@@ -7,6 +7,7 @@ import type { EncounterEdit, RecordReview, RetrievalHit, SearchInput } from "./c
 import type { Change } from "./events";
 import type { Models } from "./models";
 import type { EncounterSnapshot } from "./routers/encounter";
+import type { Watches } from "./watches";
 
 export type EncounterStore = {
   edit(hospitalId: string, edit: EncounterEdit): Promise<EncounterSnapshot>;
@@ -41,6 +42,8 @@ export type Context = {
   baseten?: Baseten;
   /** Sona's follow-up after discharge: the Worker's check-in agents, one per visit. Absent (tests), due check-ins are sent directly. */
   followUps?: FollowUps;
+  /** The clinicians' own watch agents, one per clinician (./watches). Absent, nobody has watches. */
+  watches?: Watches;
   /** The Worker's waitUntil: work that finishes after the answer is sent (the access trail). Absent (tests), it is awaited. */
   waitUntil?: (promise: Promise<unknown>) => void;
 };

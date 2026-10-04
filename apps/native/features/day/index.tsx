@@ -31,6 +31,7 @@ import { useRole } from "@/features/live/roles";
 import type { Bed, Owner } from "@/features/ward/model";
 import { WardGlance } from "@/features/ward/ops";
 import { MessageActions, useInbox } from "@/features/inbox";
+import { TodayWatches } from "@/features/watches";
 import { needLine } from "./counts";
 import { useNeedsYou, usePendingResult, useWardBeds } from "./use-counts";
 import { bookingItems, canSnooze, dayOf, glDeniedItems, groupVisits, messageItems, ownersOf, rankDay, rankOtherDay, scheduleFor, snooze, splitSnoozed, unownedBlocked, type DayItem, type DayTone, type ScheduleVisit, type Snoozed } from "./model";
@@ -361,6 +362,7 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
     {managing && <WardGlance />}
     {offset === 0 && bedManager && <UnownedBeds beds={beds} />}
     {offset === 0 && managing && shelf}
+    {offset === 0 && managing && <TodayWatches />}
     {managing || sorting ? null : <Animated.View key={`day-${offset}`} entering={switched && !reducedMotion ? riseIn({ delay: 60, distance: 48, duration: 420 }) : undefined} exiting={reducedMotion ? undefined : FadeOutDown.duration(180)} style={{ gap: 14 }}>
       {top && <Animated.View key="top" layout={reducedMotion ? undefined : LAYOUT} entering={animate ? riseIn({ distance: 14, scale: 0.97, duration: 450 }) : undefined}>
         {/* The card opens the item; its inline actions sit beside that button, not inside it, so VoiceOver reaches them. */}
@@ -386,6 +388,8 @@ export function MyDay({ patients: fixturePatients, greeting, actions, onOpen: op
       </Animated.View>}
       {/* Medium-style cascade on first open: the lead card, then the keys, then the rows, each a beat later. */}
       {offset === 0 && <Animated.View entering={animate ? riseIn({ delay: 80, distance: 14, duration: 450 }) : undefined}>{shelf}</Animated.View>}
+      {/* What the clinician asked Sona to keep asking, answered: above the ranked rows, since they asked to see it each day. */}
+      {offset === 0 && <TodayWatches />}
       {rest.length > 0 && <Surface layout={reducedMotion ? undefined : LAYOUT} style={{ paddingVertical: 2 }}>
         {rest.map((item, i) => <Row key={item.id} item={item} first={i === 0} index={i + 1} animate={animate} pinned={pins.includes(item.id)} onOpen={() => onOpen(item.patientId, item.open)}
           onPin={() => setPins(list => list.includes(item.id) ? list.filter(id => id !== item.id) : [item.id, ...list])}

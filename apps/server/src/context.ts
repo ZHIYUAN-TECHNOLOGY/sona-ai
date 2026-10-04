@@ -6,6 +6,7 @@ import { getAgentByName } from "agents";
 
 import { basetenModels, basetenReranker } from "@sona-ai/api/baseten-models";
 import type { EncounterStore } from "@sona-ai/api/context";
+import type { Watches } from "@sona-ai/api/watches";
 import { workersEmbedder } from "@sona-ai/api/workers-models";
 import { hosted } from "@sona-ai/api/sagemaker";
 import { ingest, reindex, search, stubEmbedder } from "@sona-ai/retrieval/retrieval";
@@ -51,6 +52,7 @@ export async function createContext({ context }: CreateContextOptions): Promise<
     // Staging only: Sona Care's sign-in shows the seeded demo phone and its fixed code.
     demoSignIn: ENV.DEMO_SIGN_IN === "1",
     followUps: followUpAgents(context.env as Env),
+    watches: watchAgents(context.env as Env),
     waitUntil: promise => context.executionCtx.waitUntil(promise),
   };
 }
@@ -61,6 +63,17 @@ export function followUpAgents(env: Env): NonNullable<ApiContext["followUps"]> {
   return {
     tick: async (hospitalId, encounterId) => (await of(encounterId)).tick(hospitalId, encounterId),
     get: async (hospitalId, encounterId) => (await of(encounterId)).view(hospitalId),
+  };
+}
+
+/** Each clinician's own watch agent (./agents/watch.ts), named by the user. */
+export function watchAgents(env: Env): Watches {
+  const of = (userId: string) => getAgentByName(env.WATCH_AGENTS, userId);
+  return {
+    list: async (hospitalId, userId) => (await of(userId)).list(hospitalId, userId),
+    add: async (hospitalId, userId, watch) => (await of(userId)).add(hospitalId, userId, watch),
+    remove: async (hospitalId, userId, watchId) => (await of(userId)).remove(hospitalId, userId, watchId),
+    tick: async (hospitalId, userId) => (await of(userId)).tick(hospitalId, userId),
   };
 }
 

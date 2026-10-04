@@ -1,8 +1,8 @@
 import type { Change } from "@sona-ai/api/events";
 
 /** What a screen may need to re-read; "visit" is filtered by encounter where it is used. */
-export type Reread = "visit" | "ward" | "day" | "checkIns" | "findings" | "handover" | "messages" | "library" | "training";
-const ALL: Reread[] = ["visit", "ward", "day", "checkIns", "findings", "handover", "messages", "library", "training"];
+export type Reread = "visit" | "ward" | "day" | "checkIns" | "findings" | "handover" | "messages" | "library" | "training" | "watches";
+const ALL: Reread[] = ["visit", "ward", "day", "checkIns", "findings", "handover", "messages", "library", "training", "watches"];
 
 // Which parts of the app each API topic touches (a discharge also writes tasks and schedules check-ins).
 const BY_TOPIC: Record<string, Reread[]> = {
@@ -16,6 +16,8 @@ const BY_TOPIC: Record<string, Reread[]> = {
   checkIns: ["day", "checkIns"],
   findings: ["ward", "day", "findings"],
   handover: ["handover"], library: ["library"], training: ["training"],
+  // A clinician's watch was added, removed or just asked: Today re-reads their answers.
+  watches: ["watches"],
   // Sona Care: a patient's message is a task on My Day; either side's message re-reads the thread.
   messages: ["day", "messages"],
   // Sona Care: a dose marked taken changes what My Day's flagged rows say was missed.

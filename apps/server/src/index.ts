@@ -124,6 +124,7 @@ export { HospitalChannel } from "./hospital-channel";
 export { CheckInAgent } from "./agents/check-in";
 export { SonaVoiceAgent } from "./agents/voice";
 export { SonaLiveAgent } from "./agents/live";
+export { WatchAgent } from "./agents/watch";
 
 /** Matches the hourly cron in packages/infra/alchemy.run.ts. */
 const CHECK_IN_CRON = "0 * * * *";

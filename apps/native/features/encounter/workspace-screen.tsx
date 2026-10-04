@@ -20,6 +20,7 @@ import { answerFree } from "@/features/ask";
 import { useTodayAnswers } from "@/features/ask/today";
 import { ThreadEntry, useTodayThread } from "@/features/ask/today-thread";
 import { answerOf, clearThread, type Entry, type Reply } from "@/features/ask/thread";
+import { isWatch } from "@sona-ai/domain/watch";
 import { capabilitySchema, routeInThread } from "./state";
 import { carry, takeCarried } from "./carry";
 import { openSession } from "./navigation";
@@ -265,7 +266,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
     // notice: live, the model answers it from Today's own data (ask.free), or says it is starting; demo mode says what Sona answers.
     if (!patient && pending.length) { setInput(""); void askForPatient(prompt); return; }
     // An evidence question (steroids, a guideline, a trial…) is answered on Today too, with no patient: a visit adds theirs.
-    if (!patient) { const routed = routeInThread(prompt); if (matchQuestion(prompt, todayAnswers) || !routed || routed === "evidence") { setInput(""); void today.ask(prompt); return; } }
+    if (!patient) { const routed = routeInThread(prompt); if (isWatch(prompt) || matchQuestion(prompt, todayAnswers) || !routed || routed === "evidence") { setInput(""); void today.ask(prompt); return; } }
     else if (pending.length) {
       // Images go to the imaging review (the first becomes the encounter's attachment); files and documents, scanned or photographed, are kept for reference.
       const image = pending.find(item => item.kind === "image" && item.imageType !== "Document");
@@ -371,7 +372,7 @@ export function WorkspaceScreen({ mode, sessionId }: { mode: "home" | "session";
           // Each new question, and its answer once it lands, comes into view.
           const key = `${entry.id}${entry.reply ? "+" : ""}`;
           if (entry.id === newest?.id && brought.current !== key) { brought.current = key; scroll.current?.scrollTo({ y: Math.max(0, y + 8), animated: !reducedMotion }); }
-        }}><ThreadEntry entry={entry} fresh={entry.id === newest?.id} onAgain={() => today.again(entry)} onEvidence={q => void today.ask(q, undefined, true)} /></View>)}
+        }}><ThreadEntry entry={entry} fresh={entry.id === newest?.id} onAgain={() => today.again(entry)} onEvidence={q => void today.ask(q, undefined, true)} onOnce={q => today.once(entry, q)} /></View>)}
       </View>
       : <View style={{ gap: 44 }}>
         {compactResponses && requests.length > 1 && <Action label={showEarlier ? "Collapse earlier responses" : `Show ${requests.length - 1} earlier responses`} secondary onPress={() => setShowEarlier(value => !value)} />}

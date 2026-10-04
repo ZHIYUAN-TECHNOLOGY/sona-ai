@@ -34,7 +34,7 @@ export const createTask = protectedProcedure.input(taskCreateSchema).handler(asy
 });
 
 /** The hospital's lab results with the patient's name and who acknowledged each, newest first (lab rows are scoped through their patient). */
-const listResults = async (db: Context["db"], hospitalId: string, where?: ReturnType<typeof eq>) => (await db.select({
+export const listResults = async (db: Context["db"], hospitalId: string, where?: ReturnType<typeof eq>) => (await db.select({
   id: labResults.id, patientId: labResults.patientId, patientName: patients.name, test: labResults.test, value: labResults.value,
   unit: labResults.unit, flag: labResults.flag, receivedAt: labResults.receivedAt, acknowledgedBy: labResults.acknowledgedBy, acknowledgedAt: labResults.acknowledgedAt,
   acknowledgedByName: user.name,
