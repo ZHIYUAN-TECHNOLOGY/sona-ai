@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { basis, calmTerms, forPatient, searchedLine, sections, stepLines, strength } from "./answer";
+import { basis, calmTerms, forPatient, searchedLine, sections, stepLines, strength, unanswered } from "./answer";
 
 const refs = [
   { n: 1, design: "Guideline" }, { n: 2, design: "Trial" }, { n: 3, design: "Trial" }, { n: 4, design: "Library" },
@@ -45,4 +45,16 @@ test("evidence text keeps its key terms but never paints a general finding as a 
   expect(calmTerms("Not routinely: steroids are for severe pneumonia treated in intensive care."))
     .toBe("Not routinely: [[steroids|medicine]] are for [[severe pneumonia|finding]] treated in [[intensive care|finding]].");
   expect(calmTerms("No key terms here.")).toBe("No key terms here.");
+});
+
+test("a model that did not answer is said as that, or as starting; never as too little evidence or a sample", () => {
+  const failed = { source: "fixture", enough: false, claims: [] };
+  expect(unanswered(failed)).toBe("Sona's model did not answer. Ask again in a moment.");
+  expect(unanswered(failed, 3)).toBe("Sona's model is starting, about 3 min. Ask again then.");
+  // A model's own verdict, a general answer, the sample with no model configured, and no answer yet keep their own wording.
+  expect(unanswered({ source: "medgemma-27b", enough: false })).toBeUndefined();
+  expect(unanswered({ source: "fixture", enough: false, general: "Usually 5 days." })).toBeUndefined();
+  expect(unanswered({ source: "fixture", enough: true })).toBeUndefined();
+  expect(unanswered({ source: "cached", enough: true })).toBeUndefined();
+  expect(unanswered(undefined)).toBeUndefined();
 });

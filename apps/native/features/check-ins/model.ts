@@ -62,3 +62,24 @@ export function flaggedItems(checkIns: CheckIn[], keep: string[] = []): DayItem[
     }] : [];
   }));
 }
+
+/** A server task, as far as a report's row reads it (tasks.list). */
+type ReportTask = { id: string; kind: string; title: string; completed: boolean; encounterId: string | null; createdAt: Date | string };
+
+/**
+ * A problem the patient told Sona Care (in the live call, or typed or spoken to Ask Sona Care) is a check-in task with
+ * no reply behind it: the same red row with the same Call back and Book in, named by the task's title. Tasks a reply
+ * flagged are `flaggedItems`' rows, so none shows twice. `patientOf` finds the visit's patient, when the app knows them.
+ * ponytail: the task keeps the symptom, not the patient's words or how urgent they read, so urgency is re-read from the
+ * title by the keyword rule (chest pain leads, the rest rank as worse); read the label once the server keeps it.
+ */
+export function reportItems(tasks: ReportTask[], checkIns: CheckIn[], patientOf: (encounterId: string) => string | undefined, keep: string[] = []): DayItem[] {
+  const replied = new Set(flaggedTaskIds(checkIns));
+  return tasks.filter(t => t.kind === "check-in" && !replied.has(t.id) && (!t.completed || keep.includes(t.id))).map(t => {
+    const urgent = readReply(t.title) === "urgent", at = new Date(t.createdAt);
+    return {
+      id: `check-in-${t.id}`, kind: "check-in" as const, title: t.title, detail: "Told to Sona Care",
+      reason: `${urgent ? "Urgent" : "Worse"} · reported ${clock(at)}`, tone: "urgent" as const, score: urgent ? 120 : 105, at: at.getTime(), patientId: t.encounterId ? patientOf(t.encounterId) : undefined, open: {},
+    };
+  });
+}

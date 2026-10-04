@@ -5,7 +5,7 @@ import { AccessibilityInfo, ActivityIndicator, Alert, Pressable, ScrollView, Sha
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { Easing, FadeIn, FadeInDown, useReducedMotion, useSharedValue, withTiming, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { answer, conditionOf, doctorQuestion, leadOf, noAnswer, spoken, startingLine, suggestions, urgent, wantsDoctor, type Reply } from "@/features/assistant/answers";
+import { answer, conditionOf, doctorQuestion, leadOf, shown, spoken, startingLine, suggestions, urgent, wantsDoctor, type Reply } from "@/features/assistant/answers";
 import { tFor, useLang, useT } from "@/lib/i18n";
 import { Composer } from "@/features/assistant/composer";
 import { Icon, type IconName } from "@/lib/icons";
@@ -36,7 +36,8 @@ import { client, orpc, queryClient } from "@/utils/orpc";
  * / not helpful, and the next steps (Save for my visit, Ask my care team). While it works, a status line
  * sits by a small live orb for as long as the call runs. Any question is answered (care.ask): their own care
  * from their plan, anything else from general knowledge, marked as such; doctor questions search the hospital's
- * directory (care.doctors.list), and warning words put the 999 line first. + starts a new chat (there is no
+ * directory (care.doctors.list), and warning words put the 999 line first. A problem they report reaches their care
+ * team (care.ask makes the task), and Sona's line saying so closes the answer. + starts a new chat (there is no
  * stored history, so no history button).
  */
 type Turn = { question: string; reply: Reply; requestId: string; ready: boolean; saved?: boolean; sent?: boolean; rated?: "up" | "down" };
@@ -86,8 +87,14 @@ export default function Assistant() {
   const ask = (question: string) => {
     const requestId = newRequestId();
     const say = (r: Reply) => AccessibilityInfo.announceForAccessibility(r.kind === "plan" ? `${spoken(r, lang)} ${r.asked.source}` : spoken(r, lang));
-    // The urgent no needs no reading; everything else shows its status line while the call runs.
-    if (urgent(question)) { const r: Reply = { kind: "none", urgent: true }; setTurns(ts => [...ts, { question, reply: r, requestId, ready: true }]); say(r); return; }
+    // The 999 card never waits for the network. The question still goes to the server, which tells the care team; once the
+    // task is made, Sona's line saying so takes the place of the offer to send it. Everything else shows its status line while the call runs.
+    if (urgent(question)) {
+      const r: Reply = { kind: "none", urgent: true };
+      setTurns(ts => [...ts, { question, reply: r, requestId, ready: true }]); say(r);
+      void answerOf(question).then(next => { if (next.kind === "none" && next.careTeam) { patch(requestId, { reply: next }); AccessibilityInfo.announceForAccessibility(next.careTeam.line); } });
+      return;
+    }
     setTurns(ts => [...ts, { question, reply: { kind: "none", urgent: false }, requestId, ready: false }]);
     if (!still) flood.set(withTiming(1, { duration: 400, easing: EASE_OUT }));
     void answerOf(question).then(next => {
@@ -98,8 +105,12 @@ export default function Assistant() {
   };
   /** Voice mode asks the same way, and reads the answer aloud itself. */
   const askAloud = async (question: string) => {
-    const r = await answerOf(question);
-    setTurns(ts => [...ts, { question, reply: r, requestId: newRequestId(), ready: true }]);
+    const requestId = newRequestId(), now = urgent(question), asked = answerOf(question);
+    // ponytail: the 999 line is read at once, so the voice does not wait to say the care team was told; the chat's turn
+    // gains that line when the server answers. Read it aloud too once voice mode can add to an answer it has begun.
+    const r: Reply = now ? { kind: "none", urgent: true } : await asked;
+    setTurns(ts => [...ts, { question, reply: r, requestId, ready: true }]);
+    if (now) void asked.then(next => patch(requestId, { reply: next }));
     return r;
   };
   // Dictation runs until the patient taps stop (a pause mid-thought used to cut them off), and the words
@@ -196,8 +207,7 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
 }) {
   const lang = useLang(), tr = tFor(lang);
   const r = t.reply;
-  const text = r.kind === "plan" ? r.asked.answer : r.kind === "doctors" ? r.text : noAnswer(lang);
-  const [bold, more] = leadOf(text);
+  const [bold, more] = leadOf(shown(r, lang));
   return <View style={{ gap: 12 }}>
     <Animated.View entering={enter(0)} style={{ alignSelf: "flex-end", maxWidth: "86%", backgroundColor: palette.white, borderRadius: 22, borderCurve: "continuous", borderWidth: 1, borderColor: palette.line, paddingHorizontal: 16, paddingVertical: 11 }}>
       <Text selectable style={{ ...type.body, color: palette.ink }}>{t.question}</Text>
@@ -225,7 +235,8 @@ function TurnView({ t, lead, flood, enter, visitDay, busy, error, onSave, onSend
         </View>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
           {r.kind === "plan" && (t.saved ? <Done text={tr("ask.savedFor", { day: visitDay })} /> : <Action icon="save" label={tr("ask.save")} onPress={onSave} />)}
-          {t.sent ? <Done text={tr("ask.sent")} /> : r.kind === "none"
+          {/* Already told: sending it is no longer the one step that matters, so it is offered as after any answer. */}
+          {t.sent ? <Done text={tr("ask.sent")} /> : r.kind === "none" && !r.careTeam
             ? <Action icon="chat" label={tr("ask.sendTeam")} busy={busy} ink onPress={onSend} />
             : <Action icon="chat" label={tr("ask.askTeam")} busy={busy} onPress={onSend} />}
         </View>

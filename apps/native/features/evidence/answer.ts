@@ -1,4 +1,5 @@
 import { segments } from "@/components/sona/marked-terms";
+import { startingReply } from "@/features/live/waking";
 import type { Claim, Reference, Topic } from "./model";
 
 /**
@@ -72,3 +73,13 @@ export function forPatient(question: string, firstName: string, curb?: { score: 
   const risk = curb.risk.split(" · ")[0]!.toLowerCase();
   return `For ${firstName}: CURB-65 ${curb.score}, ${risk}, so the ${curb.score <= 1 ? "non-severe" : "severe"} evidence applies.`;
 }
+
+/**
+ * A live answer with nothing written because the model did not answer, not because the evidence is thin: with a model
+ * configured, the server sends that as `source: "fixture"` with no claims (never other text in its place). Says which:
+ * the model is starting (`waking` minutes; the screen asks again by itself meanwhile), or it gave no answer. Undefined
+ * for anything else, so "not enough evidence" stays what a model said of the sources.
+ */
+export const NO_MODEL_ANSWER = "Sona's model did not answer. Ask again in a moment.";
+export const unanswered = (data: { source: string; enough: boolean; general?: string } | undefined, waking?: number) =>
+  !data || data.source !== "fixture" || data.enough || data.general ? undefined : waking ? startingReply(waking) : NO_MODEL_ANSWER;

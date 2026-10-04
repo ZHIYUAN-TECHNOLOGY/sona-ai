@@ -87,29 +87,39 @@ const DOCTOR = /\b(doctors?|specialists?|dr|doktor|pakar)\b|医生|专科/i, ASK
 export const wantsDoctor = (text: string) => DOCTOR.test(text) && ASKING.test(text);
 
 /**
- * What Sona says to a question. Urgent words win: the 999 line, nothing asked. A doctor question: 1–3
+ * What Sona says to a question. Urgent words win: the 999 line, whatever the server says, and the question still goes
+ * to it (care.ask), because that is what tells the care team; a failed call leaves the 999 line. A doctor question: 1–3
  * doctors from the hospital's directory (care.doctors.list), found by its words, else by the plan's
  * condition, else the care team. Anything else, the plan's own questions too, is answered by the model
  * from the patient's plan (care.ask); when no model is on (a fixture) or the call fails, a plan question
  * gets its authored answer and anything else the one honest "send it to your care team". While the model
- * starts, that reply carries `waking` (whole minutes until it is ready), shown as `startingLine`.
+ * starts, that reply carries `waking` (whole minutes until it is ready), shown as `startingLine`. A question that
+ * reports a problem carries `careTeam` once the server has made the care team's task, model or no model.
  */
+/** The care team's flagged task and Sona's line saying so ("I've let your care team know.", in the plan's language). */
+export type CareTeam = { taskId: string; title: string; line: string };
 export type Reply =
-  | { kind: "plan"; asked: Asked; waking?: number }
+  | { kind: "plan"; asked: Asked; waking?: number; careTeam?: CareTeam }
   | { kind: "doctors"; doctors: Doctor[]; text: string }
-  | { kind: "none"; urgent: boolean; waking?: number };
+  | { kind: "none"; urgent: boolean; waking?: number; careTeam?: CareTeam };
 export type PlanAnswer = Awaited<ReturnType<AppRouterClient["care"]["ask"]>>;
 /** The calls an answer may make: care.ask with the question, and care.doctors.list with a search (none for the whole directory). */
 export type Api = { ask: (question: string) => Promise<PlanAnswer>; doctors: (search?: string) => Promise<Doctor[]> };
-const NONE = { kind: "none", urgent: false } as const;
+const NONE = { kind: "none", urgent: false } as const, CALL_999 = { kind: "none", urgent: true } as const;
 
 export async function answer(question: string, asks: Asked[], api: Api, condition?: string, lang: Lang = "en"): Promise<Reply> {
   const q = question.trim(), lower = q.toLowerCase();
-  if (urgent(q)) return { kind: "none", urgent: true };
+  if (urgent(q)) return api.ask(q).then(a => ({ ...CALL_999, ...toldOf(a) }), () => CALL_999);
   const asked = asks.find(a => a.question.toLowerCase() === lower);
   if (!asked && wantsDoctor(q)) return doctorsFor(q, api.doctors, condition, lang).catch(() => NONE);
   const fallback = asked ? { kind: "plan" as const, asked } : NONE;
-  return api.ask(q).then(a => a.source === "model" ? fromModel(a, lang) : { ...fallback, ...wakingOf(a) }, () => fallback);
+  return api.ask(q).then(a => ({ ...(a.source === "model" ? fromModel(a, lang) : { ...fallback, ...wakingOf(a) }), ...toldOf(a) }), () => fallback);
+}
+
+/** The server's `careTeam`, there only once the task is made (read loosely: older servers never send it). */
+function toldOf(a: PlanAnswer) {
+  const told = (a as { careTeam?: CareTeam }).careTeam;
+  return told?.line ? { careTeam: told } : {};
 }
 
 /** The server's `waking` on a sample while the model starts (read loosely: older servers never send it). */
@@ -133,9 +143,9 @@ async function doctorsFor(q: string, find: Api["doctors"], condition: string | u
  * A model's care.ask answer as a reply. Any question gets its answer (no content limit): from their plan, it says where
  * from; otherwise it is marked as a general answer, not from their records. A warning sign is the 999 card.
  */
-function fromModel(a: PlanAnswer, lang: Lang): Reply {
+function fromModel(a: PlanAnswer, lang: Lang): Exclude<Reply, { kind: "doctors" }> {
   if (!a.answer) return NONE;
-  if (a.urgent) return { kind: "none", urgent: true };
+  if (a.urgent) return CALL_999;
   const t = tFor(lang);
   const source = a.grounded ? a.from ? t("ask.fromModel", { from: a.from }) : t("ask.plan") : t("ask.general");
   return { kind: "plan", asked: { question: "", answer: a.answer, source, kind: "medicine" } };
@@ -148,9 +158,19 @@ export function leadOf(text: string): [string, string] {
   return m ? [m[1]!, text.slice(m[0].length)] : [text, ""];
 }
 
-/** The words to read aloud (and show) for a reply: the answer, the doctors by name, or the honest no. */
+/**
+ * A reply's words as the chat shows them: the answer, the doctors' line, or the honest no. Sona's "I've let your care
+ * team know." follows an answer, and stands in for the no: that one offers to send what has already reached them.
+ */
+export function shown(r: Reply, lang: Lang = "en") {
+  if (r.kind === "doctors") return r.text;
+  const told = r.careTeam?.line;
+  if (r.kind === "plan") return told ? `${r.asked.answer}${sp(lang)}${told}` : r.asked.answer;
+  return told ?? noAnswer(lang);
+}
+
+/** The words to read aloud for a reply: what the chat shows, the doctors by name, and the 999 line first (the chat has its card for that). */
 export function spoken(r: Reply, lang: Lang = "en") {
-  if (r.kind === "plan") return r.asked.answer;
   if (r.kind === "doctors") return `${r.text}${sp(lang)}${end(listOf(r.doctors.map(d => `${d.name} (${d.specialty})`), lang), lang)}`;
-  return r.urgent ? `${tFor(lang)("ask.call999First")}${sp(lang)}${noAnswer(lang)}` : noAnswer(lang);
+  return r.kind === "none" && r.urgent ? `${tFor(lang)("ask.call999First")}${sp(lang)}${shown(r, lang)}` : shown(r, lang);
 }
