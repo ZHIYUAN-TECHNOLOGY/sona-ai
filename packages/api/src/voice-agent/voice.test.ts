@@ -96,3 +96,24 @@ test("when the phone connects, each box that is up gets one tiny request per pat
   const chat = JSON.parse(both.calls.find(c => c.to === "brain /sync/v1/chat/completions")!.body as string);
   expect([both.calls.length, chat.model, chat.max_tokens]).toEqual([5, BRAIN_MODEL, 1]);
 });
+
+test("her voice as it is made: pieces go on as whole samples of 50 ms or more, a sentence with no sound falls to the phone, an interruption ends it", async () => {
+  const read: PhoneVoice[] = [];
+  const pieces = (sizes: number[]) => async function* () { for (const n of sizes) yield new Uint8Array(n); };
+  const collect = async (v: SonaVoice, turn?: AbortSignal) => { const out: number[] = []; for await (const p of v.synthesizeStream("Hai.", turn)) out.push(p.byteLength); return out; };
+  // 3001 + 3000 bytes: under 50 ms (4800 bytes) at first, then 6000 whole; the odd byte and the rest follow at the end.
+  const v = new SonaVoice(async () => ({}), said => read.push(said), 50, pieces([3001, 3000, 1001]));
+  expect(await collect(v)).toEqual([6000, 1002]);
+  expect(read).toEqual([]);
+  // No sound at all, with the box starting: the phone reads it, and the rest of that turn.
+  const turn = new AbortController();
+  const cold = new SonaVoice(async () => ({}), said => read.push(said), 50, async function* () { return { waking: 12 }; });
+  expect(await collect(cold, turn.signal)).toEqual([]);
+  expect(await collect(cold, turn.signal)).toEqual([]);
+  expect(read).toEqual([{ text: "Hai.", reason: "starting", waking: 12 }, { text: "Hai.", reason: "starting", waking: 12 }]);
+  // Interrupted mid-sentence: no more pieces, nothing read.
+  const cut = new AbortController(), before = read.length;
+  const slow = new SonaVoice(async () => ({}), said => read.push(said), 50, async function* () { yield new Uint8Array(4800); cut.abort(); yield new Uint8Array(4800); });
+  expect(await collect(slow, cut.signal)).toEqual([4800]);
+  expect(read.length).toBe(before);
+});

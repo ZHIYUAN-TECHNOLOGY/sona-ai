@@ -99,3 +99,20 @@ test("the STT provider: while the ASR starts, the turn is unheard with its minut
   await Bun.sleep(40);
   expect([unheard, said]).toEqual([[30], ["pertama", "kedua"]]);
 });
+
+test("a turn is read from its first 0.3 s of quiet: said through, it is read once and its words come as it ends; a patient who goes on is read again, whole", async () => {
+  const sent: number[] = [], said: string[] = [];
+  const ears = new SonaTranscriber(async audio => { sent.push(audio.length); return { text: `turn of ${audio.length} bytes`, source: "model", model: "sona-asr" }; });
+  const session = ears.createSession({ onUtterance: text => said.push(text) });
+  const feed = (speech: Int16Array) => { const raw = bytes(speech); for (let at = 0; at < raw.length; at += 3200) session.feed(raw.slice(at, at + 3200).buffer); };
+  feed(pcm(quiet(300), tone(900), quiet(900)));
+  await Bun.sleep(0);
+  expect(sent.length).toBe(1); // the early reading is the turn's
+  expect(said).toEqual([`turn of ${sent[0]} bytes`]);
+  // A pause of 0.5 s mid-turn: read early, in vain; the whole turn is read at its end (its early reading is that of the whole).
+  feed(pcm(tone(800), quiet(500), tone(800), quiet(900)));
+  await Bun.sleep(0);
+  expect(sent.length).toBe(3);
+  expect(sent[2]).toBeGreaterThan(sent[1]!);
+  expect(said[1]).toBe(`turn of ${sent[2]} bytes`);
+});

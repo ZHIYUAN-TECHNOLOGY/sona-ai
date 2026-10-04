@@ -24,10 +24,14 @@ export type TurnOptions = {
   quietMs?: number;
   /** A turn is cut (and still sent) at this length. */
   maxMs?: number;
+  /** Quiet after speech at which the turn so far is given out early (0: never), so reading it can start before it ends. */
+  earlyMs?: number;
 };
-const DEFAULTS: Required<TurnOptions> = { speechDb: -40, minSpeechMs: 300, quietMs: 700, maxMs: 30_000 };
+const DEFAULTS: Required<TurnOptions> = { speechDb: -40, minSpeechMs: 300, quietMs: 700, maxMs: 30_000, earlyMs: 0 };
+/** The ear reads a turn from this much quiet on; the turn still ends at quietMs (SonaTranscriber). */
+const EARLY_MS = 300;
 
-export type TurnEvent = { type: "start" } | { type: "end"; pcm: Int16Array };
+export type TurnEvent = { type: "start" } | { type: "early"; pcm: Int16Array } | { type: "end"; pcm: Int16Array };
 
 function joined(parts: Int16Array[]) {
   const out = new Int16Array(parts.reduce((n, p) => n + p.length, 0));
@@ -78,10 +82,14 @@ export class TurnDetector {
     }
     this.#turn.push(frame);
     this.#quietMs = loud ? 0 : this.#quietMs + FRAME_MS;
-    if (this.#quietMs < this.#o.quietMs && this.#turn.length * FRAME_MS < this.#o.maxMs) return;
     // A little of the quiet stays: the ASR reads a last word better with its tail than with a hard cut.
-    const drop = Math.max(0, this.#quietMs / FRAME_MS - TAIL);
-    events.push({ type: "end", pcm: joined(this.#turn.slice(0, this.#turn.length - drop)) });
+    const drop = Math.max(0, this.#quietMs / FRAME_MS - TAIL), sofar = () => joined(this.#turn!.slice(0, this.#turn!.length - drop));
+    if (this.#quietMs < this.#o.quietMs && this.#turn.length * FRAME_MS < this.#o.maxMs) {
+      // The same samples the turn will end with if nothing more is said.
+      if (this.#o.earlyMs && this.#quietMs === this.#o.earlyMs) events.push({ type: "early", pcm: sofar() });
+      return;
+    }
+    events.push({ type: "end", pcm: sofar() });
     this.#turn = undefined;
   }
 }
@@ -112,10 +120,15 @@ export class SonaTranscriber {
   ) {}
 
   createSession(hooks: SessionHooks = {}) {
-    const turns = new TurnDetector(this.options);
+    // The turn is read from its first 300 ms of quiet, though it ends at 700: when nothing more is said, its words are
+    // ready, or nearly, as it ends (the ASR's half second came after the end before, 4 Oct). A patient who goes on
+    // makes that reading a waste, and the turn is read again whole.
+    const turns = new TurnDetector({ earlyMs: EARLY_MS, ...this.options });
     let odd: Uint8Array | undefined, closed = false, reading = Promise.resolve();
-    const read = async (pcm: Int16Array) => {
-      const heard = await this.hear(wav(pcm)).catch(() => undefined);
+    let ahead: { samples: number; heard: Promise<Heard | undefined> } | undefined;
+    const hear = (pcm: Int16Array) => this.hear(wav(pcm)).catch(() => undefined);
+    const read = async (pcm: Int16Array, early?: Promise<Heard | undefined>) => {
+      const heard = await (early ?? hear(pcm));
       if (closed) return;
       // A model that heard no words (a sigh, the TV) is no turn; no model at all is said out loud.
       if (heard?.source === "model") { if (heard.text.trim()) hooks.onUtterance?.(heard.text.trim()); }
@@ -132,8 +145,13 @@ export class SonaTranscriber {
         odd = even < bytes.length ? bytes.slice(even) : undefined;
         for (const event of turns.push(samples)) {
           if (event.type === "start") hooks.onSpeechStart?.();
-          // One at a time, so turns reach the agent in the order they were said.
-          else reading = reading.then(() => read(event.pcm));
+          else if (event.type === "early") ahead = { samples: event.pcm.length, heard: hear(event.pcm) };
+          else {
+            const early = ahead?.samples === event.pcm.length ? ahead.heard : undefined;
+            ahead = undefined;
+            // One at a time, so turns reach the agent in the order they were said.
+            reading = reading.then(() => read(event.pcm, early));
+          }
         }
       },
       close: () => { closed = true; },
