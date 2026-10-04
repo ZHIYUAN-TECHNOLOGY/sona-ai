@@ -1,21 +1,22 @@
 import { ORPCError } from "@orpc/server";
-import { encounters, patients, receipts } from "@sona-ai/db/schema/clinical";
-import { getPrescriptionChecks, simulatedRegimen } from "@sona-ai/domain/prescribing";
-import type { Encounter, Patient } from "@sona-ai/domain/types";
+import { receipts } from "@sona-ai/db/schema/clinical";
+import { effectivePatient, getPrescriptionChecks, regimenOf } from "@sona-ai/domain/prescribing";
+import type { Encounter } from "@sona-ai/domain/types";
 import { and, desc, eq, or } from "drizzle-orm";
 import { z } from "zod";
 
 import { approvedCommandSchema, type ApprovedCommand } from "../contracts";
 import type { Context } from "../context";
 import { protectedProcedure } from "../index";
-import { encounterRouter, loadEncounter } from "./encounter";
+import { encounterRouter, loadEncounter, visitOf } from "./encounter";
 import { assertApprover } from "./hospital";
 
 /**
- * The prescribe card's server steps. The review itself is the authored fixture; only its
- * recording reaches the server, at the revision it ran against (encounter.recordReview's rule).
- * The simulation runs the same eleven domain checks on the server's encounter state and patient
- * row, whatever the app shows, and is refused while any of them is blocked.
+ * The prescribe card's server steps. The review is recorded at the revision it ran against
+ * (encounter.recordReview's rule). Prescribing runs the same eleven domain checks on the server's
+ * encounter state and patient record, whatever the app shows, and is refused while any of them is
+ * blocked. The receipt holds the regimen the clinician entered for this visit; it is a record here,
+ * sent to no pharmacy system. (`simulate` is the route's first name, kept so callers need not change.)
  */
 export const prescribingRouter = {
   review: encounterRouter.recordReview,
@@ -45,16 +46,18 @@ async function issue({ db, hospitalId, session }: Pick<Context, "db"> & { hospit
     .where(and(eq(receipts.kind, "prescription"), eq(receipts.encounterId, input.encounterId))).orderBy(desc(receipts.revision)).limit(1) : [];
   if (reason && !latest) throw new ORPCError("PRECONDITION_FAILED", { message: "There is no prescription to amend", data: { open: [] } });
 
-  const [row] = await db.select({ patient: patients }).from(encounters).innerJoin(patients, eq(patients.id, encounters.patientId)).where(eq(encounters.id, input.encounterId));
-  // ponytail: the reported medicines live in the app's fixtures; the server knows only those the doctor confirmed (medicationEntries).
-  const patient = { ...row!.patient, medicines: (row!.patient.record as { medicines?: string[] }).medicines ?? [] } as unknown as Patient;
-  const checks = getPrescriptionChecks({ ...encounter.state, revision: encounter.revision } as Encounter, patient);
+  // The server's own record of the patient, with what the clinician recorded on this visit laid over it (an allergy, a corrected complaint).
+  const { patient: record } = await visitOf(db, hospitalId, input.encounterId);
+  const visit = { ...encounter.state, revision: encounter.revision } as Encounter;
+  const patient = effectivePatient({ ...record, sources: record.sources ?? [] }, visit);
+  const checks = getPrescriptionChecks(visit, patient);
   const open = checks.filter(c => c.status === "blocked").map(c => c.label);
   if (open.length) throw new ORPCError("PRECONDITION_FAILED", { message: reason ? "The amended prescription is blocked" : "The prescription is blocked", data: { open } });
 
   await db.insert(receipts).values({
     id: crypto.randomUUID(), kind: "prescription", encounterId: input.encounterId, requestId: input.requestId, revision: encounter.revision, approvedBy: input.approvedBy,
-    payload: { ...simulatedRegimen, checks: checks.map(c => c.label), simulated: true, dispensed: false, ...latest ? { amendment: { reason, supersedes: latest.requestId } } : {} },
+    // The regimen check passed, so the visit holds a whole regimen: the one entered for this patient, never a stock one.
+    payload: { ...regimenOf(visit, patient)!, checks: checks.map(c => c.label), transmitted: false, dispensed: false, ...latest ? { amendment: { reason, supersedes: latest.requestId } } : {} },
   }).onConflictDoNothing();
   const [receipt] = await db.select().from(receipts).where(eq(receipts.requestId, input.requestId));
   return receipt!;

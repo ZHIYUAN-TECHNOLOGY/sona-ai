@@ -1,10 +1,11 @@
 import { expect, test } from "bun:test";
 import { getPrescriptionChecks } from "./clinical-state";
 import { patients } from "./fixtures";
-import { nextSteps, prescribingState } from "./next-steps";
+import { nextSteps, prescribingState, receiptWords } from "./next-steps";
 
 const base = { revision: 1, cards: [], requests: [], note: "", noteReviewed: false, transcript: [], recording: "idle", recordingSeconds: 0, language: "english", tasks: [] };
 const confirmed = [{ id: "medicine-0", name: "Salbutamol", ingredient: "salbutamol", formulation: "inhaler", confirmed: true }, { id: "medicine-1", name: "Cetirizine", ingredient: "cetirizine", formulation: "tablet", confirmed: true }];
+const regimen = "Paracetamol 500 mg tablet · 1000 mg · Oral · Every 6 hours · 3 days";
 const eligible = { weightKg: "62", liverDisease: "no", kidneyDisease: "no", alcoholRisk: "no", paracetamolAllergy: "no" };
 const left = steps => steps.slice(0, -1).filter(step => !step.done).length;
 
@@ -27,10 +28,23 @@ test("the first unconfirmed medicine is confirmed from the bar; the review is th
 });
 
 test("a role that can't prescribe sees the prescribing step locked", () => {
-  const ready = { ...base, medicationEntries: confirmed, medicationCheckedRevision: 1, prescriptionInputs: eligible };
+  const ready = { ...base, proposedMedicine: regimen, medicationEntries: confirmed, medicationCheckedRevision: 1, prescriptionInputs: eligible };
   expect(nextSteps("prescription", ready, patients[0], false).at(-1).locked).toBe(true);
   expect(nextSteps("prescription", ready, patients[0]).at(-1).locked).toBeUndefined();
   expect(prescribingState(ready, patients[0])).toBe("ready");
+  // Without an entered regimen the visit is not ready: nothing stands in for the clinician's choice.
+  expect(prescribingState({ ...ready, proposedMedicine: undefined }, patients[0])).toBeUndefined();
+});
+
+test("the last step says what really happens: it names the entered medicine, and a receipt reads as recorded, not simulated", () => {
+  const ready = { ...base, proposedMedicine: regimen, medicationEntries: confirmed, medicationCheckedRevision: 1, prescriptionInputs: eligible };
+  expect(nextSteps("prescription", base, patients[0]).at(-1).label).toBe("Prescribe");
+  expect(nextSteps("prescription", ready, patients[0]).at(-1)).toMatchObject({ label: "Prescribe paracetamol", detail: "Records this prescription on the visit. Nothing is sent to a pharmacy. It can't be edited afterwards, only amended." });
+  const done = { ...ready, prescription: { id: "rx", revision: 1, status: "created", reasons: [], createdAt: "2026-10-04T02:00:00.000Z" } };
+  expect(nextSteps("prescription", done, patients[0]).at(-1)).toMatchObject({ label: "Prescription recorded", done: true, action: { type: "receipt" } });
+  // The receipt never claims a pharmacy got it, and sample mode never claims a hospital record.
+  expect(receiptWords(true)).toEqual({ title: "Prescription recorded", where: "in the visit record, not sent to a pharmacy" });
+  expect(receiptWords(false)).toEqual({ title: "Sample prescription", where: "on this phone only: no hospital record, no pharmacy" });
 });
 
 test("a recorded risk leads as outside the supported case, not something to resolve", () => {
