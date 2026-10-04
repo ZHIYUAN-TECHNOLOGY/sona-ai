@@ -10,7 +10,7 @@ import { Text } from "@/components/sona/text";
 import { palette, type, radius } from "@/components/sona/theme";
 import { Action, Icon, useAccessibleEffects } from "@/components/sona/ui";
 import { openSession } from "@/features/encounter/navigation";
-import { api, errorText, useLive } from "@/features/live";
+import { api, errorText, JUDGE, useLive } from "@/features/live";
 import { LockedAction, useRole } from "@/features/live/roles";
 import { acknowledgeResult, refreshServerData, useServerData } from "@/features/live/server-day";
 
@@ -29,8 +29,9 @@ const setLocal = (next: Critical | undefined) => { local = next; listeners.forEa
 const firstName = (name: string) => name.split(" ")[0]!;
 const clock = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 
-/** The demo's lab feed: Daniel's potassium comes back at 2.6 mmol/L. */
+/** The demo's lab feed: Daniel's potassium comes back at 2.6 mmol/L. The judge build refuses: there a result only arrives from the lab's side. */
 export async function simulateCriticalResult(live: boolean) {
+  if (JUDGE) throw new Error("Results arrive from the lab, not from this app");
   const result = { patientId: "SYN-1086", test: "Potassium", value: "2.6", unit: "mmol/L" };
   if (!live) { setLocal({ id: "local-critical", patientName: "Daniel Rahman", ...result, flag: "critical low", receivedAt: new Date() }); return; }
   await api.results.receive(result);
@@ -116,7 +117,8 @@ export function CriticalAlert() {
         <Text accessibilityLabel={`Waiting ${elapsed(waiting.receivedAt, now)}`} style={{ ...type.callout, fontWeight: "700", color: palette.red, fontVariant: ["tabular-nums"] }}>{elapsed(waiting.receivedAt, now)}</Text>
       </View>
       <Text selectable style={{ ...type.headline, color: palette.ink }}>{waiting.test} {waiting.value}{waiting.unit ? ` ${waiting.unit}` : ""} · {waiting.patientName}</Text>
-      {!canAck ? role.role === "nurse" ? pagedAt
+      {/* The page is simulated (no pager is connected), so the judge build shows a nurse the lock every other role gets. */}
+      {!canAck ? role.role === "nurse" && !JUDGE ? pagedAt
         ? <Text selectable accessibilityLiveRegion="polite" style={{ ...type.subhead, fontWeight: "600", color: palette.ink }}>Paged the doctor on call {clock(pagedAt)} · waiting for them to acknowledge <Text style={{ fontWeight: "400", color: palette.muted }}>(simulated page)</Text></Text>
         : <Pressable accessibilityRole="button" accessibilityLabel={`Page the doctor about ${waiting.test} for ${waiting.patientName}`} accessibilityHint="A doctor acknowledges it; this sends a simulated page" onPress={page}>{({ pressed }) => <PressScale pressed={pressed} style={{ minHeight: 44, borderRadius: 22, flexDirection: "row", gap: 8, alignItems: "center", justifyContent: "center", backgroundColor: palette.red }}>
           <Icon name="bell.badge.fill" size={14} color={palette.white} /><Text style={{ ...type.callout, fontWeight: "600", color: palette.white }}>Page the doctor</Text>

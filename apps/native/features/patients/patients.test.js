@@ -1,6 +1,37 @@
 import { expect, test } from "bun:test";
-import { GROUPS, letters, listItems, syntheticCensus } from "./census";
+import { GROUPS, letters, listItems, serverRows, syntheticCensus } from "./census";
 import { continueList, IDLE_MS, planPin, replacePin, whatIsLeft } from "./continue";
+
+test("connected, the rest of the list is the server's people at the server's beds: the visits opened here are left out, and each row says where the patient stands", () => {
+  const people = [
+    { id: "SYN-1042", name: "Amelia Tan", initials: "AT", complaint: "Cough for five days, with fever since yesterday." },
+    { id: "SYN-2002", name: "Nurul Huda", initials: "NH", complaint: "Day 3 of antibiotics for pyelonephritis." },
+    { id: "SYN-2007", name: "Dayang Suhaila", initials: "DS", complaint: "Day 3, asthma exacerbation." },
+    { id: "SYN-2012", name: "Siti Aminah", initials: "SA", complaint: "Day 2 of IV antibiotics for pneumonia." },
+    { id: "SYN-3001", name: "Clinic Only", initials: "CO", complaint: "Booked for review" },
+  ];
+  const beds = [
+    { bed: "Bed 6", patientId: "SYN-1042", name: "Amelia Tan", status: "fit", blockers: [{}] },
+    { bed: "Bed 2", patientId: "SYN-2002", name: "Nurul Huda", status: "fit", blockers: [{}, {}] },
+    { bed: "Bed 7", patientId: "SYN-2007", name: "Dayang Suhaila", status: "fit", blockers: [] },
+    { bed: "Bed 12", patientId: "SYN-2012", name: "Siti Aminah", status: "watch", blockers: [] },
+    { bed: "Bed 10", status: "empty", blockers: [] },
+  ];
+  const rows = serverRows(people, beds, new Set(["SYN-1042", "SYN-1086"]));
+  expect(rows.map(r => [r.id, r.where, r.reason, r.tone])).toEqual([
+    ["SYN-2002", "Bed 2", "2 blockers · Day 3 of antibiotics for pyelonephritis", "soon"],
+    ["SYN-2007", "Bed 7", "Fit to go · Day 3, asthma exacerbation", "good"],
+    ["SYN-2012", "Bed 12", "Day 2 of IV antibiotics for pneumonia", "calm"],
+    ["SYN-3001", "", "Booked for review", "calm"],
+  ]);
+  // They wait and open nothing here; only a patient in a bed counts for the ward tab, and none joins "Needs you" or "My list".
+  expect(rows.every(r => r.group === "waiting" && !r.open && !r.mine && !r.clinic)).toBe(true);
+  expect(rows.map(r => r.ward)).toEqual([true, true, true, false]);
+  // In the ward tab, the held discharge leads and Bed 2 sorts before Bed 12.
+  expect(listItems(rows, "ward", new Set()).map(i => i.row.where)).toEqual(["Bed 2", "Bed 7", "Bed 12"]);
+  // Nothing from the server yet (still reading, or it failed): no rows, never a sample.
+  expect(serverRows([], [], new Set())).toEqual([]);
+});
 
 test("the synthetic census is deterministic, unique and roughly 11% needs you, 6% next hour, a third waiting", () => {
   const rows = syntheticCensus(108);

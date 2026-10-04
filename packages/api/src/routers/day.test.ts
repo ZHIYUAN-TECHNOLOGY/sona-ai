@@ -130,8 +130,14 @@ test("patients list the hospital's people with their full record and visit, so l
   const people = await api.patients.list();
   expect(people.map(p => [p.id, p.encounterId, p.name, p.incomplete])).toEqual([
     ["SYN-1042", "visit-1042", "Amelia Tan", false], ["SYN-1086", "visit-1086", "Daniel Rahman", true],
-    ...[["2002", "Nurul Huda"], ["2004", "Tan Ah Kow"], ["2008", "Priya Nair"], ["2009", "Ravi Kumar"], ["2012", "Siti Aminah"], ["2014", "Lim Wei Jie"]].map(([n, name]) => [`SYN-${n}`, `visit-${n}`, name, false]),
+    // The ward (the fixture beds and the seed's WARD_EXTRA): 17 people in all, each a real row with a visit.
+    ...[["2001", "Hafizah Yusof"], ["2002", "Nurul Huda"], ["2003", "Chong Mei Yee"], ["2004", "Tan Ah Kow"], ["2005", "Suresh Pillai"], ["2007", "Dayang Suhaila"], ["2008", "Priya Nair"], ["2009", "Ravi Kumar"],
+      ["2011", "Ganesan Muthu"], ["2012", "Siti Aminah"], ["2013", "Wong Siew Ling"], ["2014", "Lim Wei Jie"], ["2015", "Jimmy Anak Sali"], ["2016", "Rosnah Ismail"], ["2017", "Harjit Singh"]].map(([n, name]) => [`SYN-${n}`, `visit-${n}`, name, false]),
   ]);
+  // A ward patient's list entry is its own columns: who they are and why they are in (the patient list's row; their bed comes from ward.beds).
+  expect(people.find(p => p.id === "SYN-2017")).toMatchObject({ initials: "HS", age: 63, sex: "Male", complaint: "Upper GI bleed, day 2 after endoscopy." });
+  const beds = await api.ward.beds();
+  expect(people.filter(p => p.id.startsWith("SYN-20")).every(p => beds.some(b => b.patientId === p.id))).toBe(true);
   expect(people[0]).toMatchObject({ subtitle: "Respiratory review", allergies: "Penicillin — reported rash; details need confirmation", medicines: ["Salbutamol inhaler, as needed", "Cetirizine, patient-reported"] });
   expect(people[0]!.history).toContain("Asthma since childhood");
   expect(people[0]!.sources.map(s => s.id)).toContain("history");

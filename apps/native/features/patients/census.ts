@@ -3,9 +3,11 @@
  * by default. Views carry counts, "Needs you" groups rows by urgency with the large groups folded,
  * and "All" is A–Z. Pure; the Patients screen renders `listItems` in one virtualised list.
  */
+import { bedKind, type Bed } from "@sona-ai/domain/ward";
+
 export type Group = "needs" | "next" | "waiting" | "done";
 export type Tone = "urgent" | "soon" | "good" | "calm";
-/** One patient row. `open` is false for synthetic census rows that have no full record in this demo. */
+/** One patient row. `open` is false for rows with no visit to open here: the synthetic census, and in connected mode the ward's other patients (serverRows). */
 export type Row = { id: string; name: string; initials: string; where: string; group: Group; reason: string; tone: Tone; mine: boolean; ward: boolean; clinic: boolean; open: boolean };
 export type View = "needs" | "continue" | "mine" | "ward" | "clinic" | "all";
 export type Item =
@@ -22,8 +24,29 @@ export const GROUPS: { id: Group; title: string; shown: number }[] = [
 ];
 const RANK: Record<Group, number> = { needs: 0, next: 1, waiting: 2, done: 3 };
 const TONE_RANK: Record<Tone, number> = { urgent: 0, soon: 1, good: 2, calm: 3 };
-/** Most urgent group first; inside a group, red before amber, then by time or bed. */
-const byUrgency = (a: Row, b: Row) => RANK[a.group] - RANK[b.group] || TONE_RANK[a.tone] - TONE_RANK[b.tone] || a.where.localeCompare(b.where);
+/** Most urgent group first; inside a group, red before amber, then by time or bed (Bed 2 before Bed 12). */
+const byUrgency = (a: Row, b: Row) => RANK[a.group] - RANK[b.group] || TONE_RANK[a.tone] - TONE_RANK[b.tone] || a.where.localeCompare(b.where, undefined, { numeric: true });
+
+/**
+ * Connected mode's rows for everyone the hospital record holds beyond the visits this app opens
+ * (`open`): each person from the server's patient list, at their bed from the server's ward. They wait
+ * (a held discharge belongs to the blocker's owner on the Ward page, so "Needs you" still counts what
+ * Today counts): amber when fit but held, green when fit and ready, the reason they are in otherwise.
+ * ponytail: listed, not opened; the visit store is built over the two demo visits (encounter/store),
+ * so a ward patient's row opens nothing until that store takes the server's roster.
+ */
+export function serverRows(
+  people: { id: string; name: string; initials: string; complaint: string }[],
+  beds: { patientId?: string; bed: string; status: Bed["status"]; name?: string; blockers: unknown[] }[],
+  open: ReadonlySet<string>,
+): Row[] {
+  return people.filter(p => !open.has(p.id)).map(p => {
+    const bed = beds.find(b => b.patientId === p.id), kind = bed ? bedKind(bed) : "other", n = bed?.blockers.length ?? 0;
+    const why = p.complaint.replace(/\.$/, "");
+    const [reason, tone]: [string, Tone] = kind === "blocked" ? [`${n} ${n === 1 ? "blocker" : "blockers"} · ${why}`, "soon"] : kind === "fit" ? [`Fit to go · ${why}`, "good"] : [why, "calm"];
+    return { id: p.id, name: p.name, initials: p.initials, where: bed?.bed ?? "", group: "waiting", reason, tone, mine: false, ward: Boolean(bed), clinic: false, open: false };
+  });
+}
 
 export const inView = (rows: Row[], view: Exclude<View, "continue">) =>
   view === "mine" ? rows.filter(r => r.mine) : view === "ward" ? rows.filter(r => r.ward) : view === "clinic" ? rows.filter(r => r.clinic) : view === "needs" ? rows.filter(r => r.group === "needs") : rows;

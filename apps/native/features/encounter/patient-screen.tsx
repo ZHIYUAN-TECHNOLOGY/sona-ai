@@ -10,6 +10,7 @@ import { palette, type, radius } from "@/components/sona/theme";
 import { mostUrgent } from "@/components/sona/tone";
 import { GROUPS, letters, listItems, syntheticCensus, type Group, type Item, type Row, type View as Tab } from "@/features/patients/census";
 import { useContinue, useContinueState } from "@/features/patients/continue-store";
+import { useServerCensus } from "@/features/patients/server-census";
 import { needsYou } from "@/features/ask/answers";
 import { needLine, patientFlags, unconfirmedOf } from "@/features/day/counts";
 import { useDayPatients, usePendingResult } from "@/features/day/use-counts";
@@ -66,7 +67,9 @@ export function PatientScreen() {
       : soon ? ["next", `Starts in ${minutes(visit!.time) - now} min`, "good"] : answers ? ["waiting", `In progress · ${answers} ${answers === 1 ? "answer" : "answers"}`, "calm"] : ["waiting", p.subtitle, "calm"];
     return { id: p.id, name: p.name, initials: p.initials, where: visit?.time ?? "", group, reason, tone, mine: true, ward: false, clinic: Boolean(visit), open: true };
   });
-  const synthetic = useMemo(() => (census ? syntheticCensus(106) : []), [census]);
+  // Connected: everyone else on the list is the hospital record's (the ward's patients, read from the server), never the synthetic census.
+  const others = useServerCensus(patients);
+  const synthetic = useMemo(() => others ?? (census ? syntheticCensus(106) : []), [census, others]);
   const rows = useMemo(() => [...real, ...synthetic], [real, synthetic]); // eslint-disable-line react-hooks/exhaustive-deps
   const count = (t: Tab) => t === "continue" ? entries.length : t === "needs" ? rows.filter(r => r.group === "needs").length : t === "all" ? rows.length : rows.filter(r => r[t]).length;
   const tabs = TABS.filter(t => t.id === "needs" || t.id === "all" || count(t.id) > 0);
@@ -99,8 +102,8 @@ export function PatientScreen() {
     const r = item.row;
     return <ListRow title={r.name} badge={r.id === patient?.id ? <Text style={{ fontWeight: "500", color: palette.blue }}>  · current</Text> : undefined} detail={r.reason} tone={r.tone} initials={r.initials} trailing={r.where.replace(/^(Clinic|Bed) /, "")}
       edges={{ first, last }} onPress={r.open ? () => setOpen(r.id) : undefined} accessibilityHint={r.open ? "Shows the patient summary and actions" : undefined}
-      accessibilityLabel={`${r.name}, ${r.where}, ${r.reason}${r.open ? "" : ". Synthetic census row"}`} />;
-  }, [items, patient?.id]);
+      accessibilityLabel={`${r.name}, ${r.where}, ${r.reason}${r.open || others ? "" : ". Synthetic census row"}`} />;
+  }, [items, patient?.id, others]);
 
   const chosen = patients.find(p => p.id === open);
   // Opened to pick a visit for something (a question, a tool, a switch) it says so; from the sidebar it is the Patients page.
